@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murderwin at Sirwin Manor</title>
+<meta name="description" content="The Murderwin Mystery Party — a Victorian murder mystery in celebration of the first birthday of Master Irwin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="playbill" role="main">
+  <div class="frame">
+    <span class="corner tl">&#10087;</span>
+    <span class="corner tr">&#10087;</span>
+    <span class="corner bl">&#10087;</span>
+    <span class="corner br">&#10087;</span>
+
+    <p class="eyebrow">By Order of the Estate &mdash; Admittance by Invitation Only</p>
+
+    <div class="rule"><span class="rule-line"></span><span class="rule-orn">&#10086;</span><span class="rule-line"></span></div>
+
+    <p class="presents">The Household of Sirwin Manor most solemnly presents</p>
+
+    <h1 class="title">
+      <span class="title-main">Murderwin</span>
+      <span class="title-sub"><em>at</em> Sirwin Manor</span>
+    </h1>
+
+    <div class="rule wide"><span class="rule-line"></span><span class="rule-orn">&#10070;</span><span class="rule-line"></span></div>
+
+    <p class="tagline">The Murderwin Mystery Party</p>
+
+    <p class="blurb">
+      <span class="drop">A</span>s the dear boy, Irwin celebrates his furst birthday, something is afoot
+      &mdash; or dare I say <em>paw</em>? Things have been a little ruff around Sirwin Manor. As on this
+      dog-forsaken autumn night there seems to have been a <strong>murderwin</strong>! With so many suspects
+      who could be the most pawsible behind this horrific crime. Was it the birthday boy, himself? Could it
+      have been the delightful Mama or the charming Papa? Or maybe one of the litter of jealous siblings,
+      including the human ones. None of which have an alibi. But the same goes for you&hellip;or am I just
+      barking up the wrong tree?
+    </p>
+
+    <div class="callout">
+      <p class="callout-lead">But wait&hellip;there is another question worth digging up.</p>
+      <p class="callout-hit">Who is the victim?</p>
+      <p class="callout-tail">Could that have been <em>you</em>?</p>
+    </div>
+
+    <p class="closing">
+      Come, sit, and stay with us for the Murderwin Mystery Party as we will shed some light on the
+      goings on here in Sirwin Manor. Are you willing to see how this tail unfolds or will you be
+      placing it between your legs?
+    </p>
+
+    <div class="rule"><span class="rule-line"></span><span class="rule-orn">&#10086;</span><span class="rule-line"></span></div>
+
+    <p class="occasion">
+      In Honour of the <span class="smallcaps">First Birthday</span><br>
+      of <span class="name">Master Irwin</span>
+    </p>
+
+    <a class="enter" href="#" id="enter">Enter the Manor</a>
+    <p class="notyet" id="notyet" hidden>The doors are yet bolted. Return when the hour is struck.</p>
+
+    <p class="footnote">Sirwin Manor &middot; Drawing Room, Library &amp; Grounds &middot; Refreshments Provided</p>
+
+    <!-- Art slot: unstamped wax seal. Drop your own crest/emblem in here (img or svg),
+         or delete this div entirely if you don't want a seal. -->
+    <div class="seal" aria-hidden="true"></div>
+  </div>
+</main>
+
+<script>
+  document.getElementById('enter').addEventListener('click', function (e) {
+    e.preventDefault();
+    var n = document.getElementById('notyet');
+    n.hidden = false;
+    n.classList.add('show');
+  });
+</script>
+</body>
+</html>
