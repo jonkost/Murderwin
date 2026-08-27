@@ -6,6 +6,15 @@
 .idea/
 *.swp
 
-# node, if it ever shows up
+# node
 node_modules/
 npm-debug.log*
+dist/
+hosting/
+.firebase/
+firebase-debug.log
+
+# THE SEAL — sealed content never enters the repo
+**/sealed*
+*.sealed.json
+scripts/.env

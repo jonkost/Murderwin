@@ -1,0 +1,51 @@
+{
+  "openers": {
+    "irwin": ["Oh! You came to talk to ME. Okay. Okay okay okay. Here is what I know.", "I have been waiting all evening for someone to ask.", "I will tell you everything. I am incapable of anything else.", "First — and this is important — you are doing a wonderful job.", "I saw something. I have been carrying it around like a stick."],
+    "boo": ["You again.", "Ask properly.", "Fine. Once.", "I don't repeat myself.", "Closer. I won't say it loudly."],
+    "granolia": ["Oh darling, sit, sit — you will not BELIEVE.", "I've been dying to tell someone, and you have kind eyes.", "Now I only know what I saw, but what I saw was PLENTY.", "Between us — and I mean that, between us and whoever else asks —", "I remember it perfectly. Perfectly-ish."],
+    "zimothy": ["I'll be brief. Brevity is free.", "I keep records. The records keep everyone else honest.", "You want information. Information has value. Luckily for you, I'm feeling charitable.", "Per my ledger — and my ledger does not lie —", "I noticed it the way I notice everything: itemized."],
+    "salem": ["Finally. Someone with the sense to consult the only competent investigator here.", "I have solved it. Sit down.", "What I am about to tell you, I have verified personally, using methods.", "The others will give you facts. I give you TRUTH.", "I was there. In a sense. In the truest sense."]
+  },
+  "closers": {
+    "irwin": ["That is everything. I feel much lighter.", "I hope that helps. I hope everything helps.", "If you learn more, come tell me. I will act surprised.", "You may pet me now. For your trouble.", "I would never lie to you. I don't know how it's done."],
+    "boo": ["That's all you get.", "Don't quote me. Or do. It was true.", "We never spoke.", "Go.", "...you're still here."],
+    "granolia": ["But you didn't hear it from me, dear. Officially.", "Isn't it AWFUL? I've told everyone.", "Of course my memory isn't what it was. It was never what it was.", "Now off you go — and send someone else over, I'm on a roll.", "I'd swear to it. On somebody's grave. There's a fresh one, I hear."],
+    "zimothy": ["That concludes the free portion.", "File it. I did.", "Verify it if you like. Verification is billed separately.", "The rest is in the ledger, and the ledger is not for browsing.", "You'll find I'm rarely wrong. It would be too expensive."],
+    "salem": ["You may thank me for solving this.", "Nobody listens to the cat. History will.", "Cross-reference it if you must. It will hold. It always holds.", "I'd stake my ninth life on it. The others are spoken for.", "Tell no one. Tell everyone. It changes nothing — I am right."]
+  },
+  "pools": {
+    "room": ["the study", "the parlour", "the scullery", "the dining hall", "the vestibule", "the grounds"],
+    "time": ["just past breakfast", "midmorning", "teatime", "dusk", "after midnight", "an ungodly hour"],
+    "duration": ["a full minute", "ten minutes", "an hour", "all afternoon", "four days", "three weeks"],
+    "count": ["twice", "three times", "seven", "eleven", "a dozen", "more than I could count"],
+    "place": ["the market", "the chapel", "the bank", "the milliner's", "the club", "the Grand"],
+    "crowd": ["the whole household", "several guests", "the staff", "everyone, simply everyone", "one unlucky soul"]
+  },
+  "echo_frames": [
+    "...residents further report ███. Authorities have declined to comment...",
+    "...staff describe ███, though none would be quoted directly...",
+    "...witnesses recall ███. The household maintains that all is well...",
+    "...this station has received word of ███. More as the situation develops...",
+    "...rumors persist regarding ███. The vicar urges calm..."
+  ],
+  "templates": [
+    {"id": "receipt", "name": "Receipt", "brief": "Shop letterhead, itemized lines, total box"},
+    {"id": "telegram", "name": "Telegram", "brief": "Office banner, delivery stamps, gummed message strip"},
+    {"id": "notice", "name": "Household notice", "brief": "Pinned handbill, slightly askew, torn corner"},
+    {"id": "citation", "name": "Citation / form", "brief": "Official numbering, field lines, RECEIVED stamp"},
+    {"id": "letter", "name": "Personal letter", "brief": "Writing paper, margin room for a second ink"},
+    {"id": "playbill", "name": "Playbill", "brief": "Ornate border, artwork zone text can deface"},
+    {"id": "mourning", "name": "Mourning card", "brief": "Black border, formal seal"}
+  ],
+  "guides": {
+    "opener": {"what": "The FIRST sentence of a cat's testimony — spoken before any information. Pure personality, zero facts.", "test": "Would it make sense in front of ANY secret?", "examples": ["Shut the door. This stays between us and the fireplace.", "I wasn't going to say anything. That lasted an hour."]},
+    "closer": {"what": "The LAST sentence — the sign-off after the information lands. Deflection, running gag, mic drop.", "test": "Would it make sense after ANY secret?", "examples": ["And that is the last I'll speak of it. Until asked again.", "Now if you'll excuse me, the sunbeam is moving."]},
+    "echo_frame": {"what": "A news-broadcast wrapper. You write the announcer's sentence; the sealed fragment fills the ███.", "test": "Read it in a radio voice — the ███ sits where the juicy part goes.", "examples": ["...neighbors speak of ███, though never above a whisper...", "...the constable was asked about ███ and chose to examine his boots..."]},
+    "room": {"what": "Rooms of the manor — dropped in as WHERE it happened.", "test": "Any Victorian-sounding room pairs with any incident.", "examples": ["the conservatory", "the wine cellar", "the servants' stair"]},
+    "time": {"what": "Times of day — dropped in as WHEN it happened.", "test": "Proper o'clock or dramatic vagueness, both useful.", "examples": ["half past luncheon", "the stroke of nine", "whilst decent folk slept"]},
+    "duration": {"what": "How long it went on.", "test": "Absurdly short and absurdly long are both funny.", "examples": ["the better part of a sermon", "one unforgivable instant", "a fortnight"]},
+    "count": {"what": "How many times it happened.", "test": "Numbers, or number-shaped grievances.", "examples": ["once — once was enough", "nine times, as if practiced", "thirteen"]},
+    "place": {"what": "Spots OUT IN TOWN — shops, venues, institutions.", "test": "Anywhere a Victorian could have a bad day in public.", "examples": ["the haberdasher's", "the opera house", "the fishmonger's queue"]},
+    "crowd": {"what": "WHO witnessed it.", "test": "From one soul to all of society — range helps the shuffle.", "examples": ["the entire choir", "a visiting bishop", "two maids and a startled gardener"]}
+  }
+}

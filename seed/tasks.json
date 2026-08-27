@@ -1,0 +1,21 @@
+{
+  "tasks": [
+    {"order": 1, "status": "todo", "title": "Wire Firebase + auth + deploy rules", "detail": "Sign in once, put Jon's UID into firestore.rules isAdmin(), redeploy."},
+    {"order": 2, "status": "todo", "title": "Seed import + first editor (Boo closers)", "detail": "One-time seed guarded by meta/seeded. Prove the CRUD loop end to end."},
+    {"order": 3, "status": "todo", "title": "Remaining list editors", "detail": "Openers/closers per cat, 6 variable pools, echo frames."},
+    {"order": 4, "status": "todo", "title": "Dashboard progress panel", "detail": "Counts vs goals per area. Goals: 8 per cat per layer, 10 per pool, 8 frames."},
+    {"order": 5, "status": "todo", "title": "Task board + decisions panel", "detail": "This board, editable. Decisions seeded with the #8 tutorial question."},
+    {"order": 6, "status": "todo", "title": "Stationery tracker", "detail": "7 templates, done-check, notes, reference image upload."},
+    {"order": 7, "status": "todo", "title": "generate-sealed.mjs + validator", "detail": "Counts-only output per docs/blind-content-protocol.md. Coverage panel on dashboard."},
+    {"order": 8, "status": "todo", "title": "Revoice seed lines against cat register", "detail": "docs/cat-info.md is canon. Seed openers/closers predate it: Granolia reads as a gossip (should be the snorting, forgetful study nerd), Salem reads as a self-styled detective (should be the gruff groundskeeper who mutters), Boo reads snobbish (should be guarded, not snob). Rewrite in the workshop."},
+    {"order": 9, "status": "todo", "title": "Content sprint: openers/closers to goal", "detail": "Jon writes in the workshop until every voice pool hits 8."},
+    {"order": 10, "status": "todo", "title": "Content sprint: pools + frames to goal", "detail": "10 per variable pool, 8 echo frames."},
+    {"order": 11, "status": "todo", "title": "Design sprint: 7 stationery templates", "detail": "Jon's art pass. Overlay spec: 40–60 words, one emphasis word, second-ink annotation line."},
+    {"order": 12, "status": "todo", "title": "Run sealed generation + validation", "detail": "All 19 codes green on the coverage panel. Optionally send one code to a canary."}
+  ],
+  "decisions": [
+    {"key": "tutorial8", "question": "Promote the burned #8 clue set to the rulebook tutorial example?", "options": ["Promote it", "Keep it buried"], "answer": null},
+    {"key": "grossnola", "question": "Make the \"Grossnola\" nickname canon for Granolia?", "options": ["Canon", "Keep it offstage"], "answer": null},
+    {"key": "salemSgtMajor", "question": "Does Salem's manual-labor affinity include the Sergeant Major?", "options": ["Include", "Farmer-types only"], "answer": null}
+  ]
+}

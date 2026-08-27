@@ -1,0 +1,55 @@
+# Workshop Spec — /workshop
+
+Jon's private content-building dashboard. Everything it can display is SAFE-class
+(see CLAUDE.md). Build this before any player surface — it feeds them all.
+
+## Pages
+
+### 1. Dashboard (home)
+The organized/on-task view. Three panels:
+- **Progress** — one row per content area: Openers (per cat), Closers (per cat),
+  Variable pools (per pool), Echo frames, Stationery templates, Sealed coverage.
+  Each row: count / goal, thin progress bar, tap → its editor.
+  Sealed coverage shows AGGREGATES ONLY (e.g. "19/19 codes have full kernels —
+  validated ✓") pulled from the counts-only validator report.
+- **Task board** — cards from the `tasks` collection: todo / doing / done.
+  Seeded from seed/tasks.json. Jon can add, edit, drag between columns.
+- **Decisions** — open decisions awaiting Jon (e.g. "#8 → rulebook tutorial?").
+  Answering writes to `decisions` and removes the card.
+
+### 2. List editors (one route per content area)
+Boring CRUD on purpose:
+- Full list visible. Add at bottom. Inline edit any line. Soft-delete with undo.
+- Reorder by drag. Per-cat tabs for openers/closers.
+- Field-guide header on each editor: what this layer is, the one-line test,
+  2 examples (copy exists in seed/safe-content.json under `guides`).
+- Autosave (400ms debounce) + saved indicator + offline queue (Firestore default).
+
+### 3. Stationery tracker
+The 7 template briefs with done-checkbox, notes field, and reference image upload
+(Firebase Storage) so Jon can attach his designs.
+
+## Data model (Firestore)
+
+- `safe_content/{area}` — doc per area: `{ items: [{id, text, cat?, pool?, deleted, order}] }`
+  Areas: openers, closers, pools, echo_frames, templates.
+- `workshop_history/{autoId}` — append-only: `{area, itemId, before, after, ts}`.
+- `tasks/{autoId}` — `{title, detail, status, order, ts}`.
+- `decisions/{key}` — `{question, options, answer, answeredAt}`.
+- `sealed/*`, `cases/*` — Cloud Functions only. Client reads DENIED by rules.
+- `validation_reports/{autoId}` — counts-only aggregates, client-readable.
+
+## Non-negotiables (from the artifact post-mortem)
+1. No random task dealer. Jon chooses what to work on.
+2. Nothing hard-deletes. History is append-only.
+3. A save failure must be VISIBLE (banner), never silent.
+4. First load with empty DB runs a one-time seed import from seed/safe-content.json,
+   then never auto-seeds again (guard doc: `meta/seeded`).
+
+## Build order
+1. Firebase project wiring + auth + rules deploy
+2. Seed import + safe_content CRUD (one area end-to-end: Boo closers)
+3. Remaining editors + dashboard progress panel
+4. Task board + decisions panel
+5. Stationery tracker
+6. `scripts/generate-sealed.mjs` + counts-only validator + coverage panel
