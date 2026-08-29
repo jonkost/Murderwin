@@ -67,6 +67,8 @@ button { font: inherit; cursor: pointer; }
 
 .items { list-style: none; margin: 0; padding: 0; }
 .item { display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 0.5rem; }
+.item .check { width: 1.3rem; align-self: center; accent-color: var(--good); }
+.item.done textarea { text-decoration: line-through; opacity: 0.6; }
 .item textarea {
   flex: 1; font: inherit; background: #fffdf6; color: var(--ink);
   border: 1px solid var(--line); padding: 0.5rem 0.7rem; resize: vertical; min-height: 2.4rem;

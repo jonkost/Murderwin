@@ -48,6 +48,22 @@ warp variant per his 60% roll) + closer (random from safe pool).
 Client receives only the final assembled string. Same pattern for documents
 (template id + overlaid text) and echoes (frame + fragment).
 
+## Seal-safe ops constraints
+
+Two places where party prep could pierce the seal by accident:
+
+1. **The rulebook tutorial example** may only ever be built from motive #8
+   (the burned exception, if promoted) or from a wholly invented motive that
+   appears nowhere in seed/motives.json. Never a fresh worked example against
+   any other live motive — a clue chain derived from a real rhyme can converge
+   with the blind-generated kernels for that rhyme.
+2. **Rehearsals and tech checks** must never render sealed-derived text in
+   front of Jon. Cue and kiosk tests run in a dummy/placeholder mode, or
+   BEFORE the real case is generated; kiosk verification asserts idle/chrome
+   states only. If a rehearsal ever exercises real content, regeneration
+   afterward is mandatory and should be enforced by the tooling (the rehearsal
+   mode itself triggers regen), not by memory.
+
 ## Human canary (optional, recommended)
 One coded set can be exported by a Cloud Function to a share link for a trusted
 NON-PLAYER to review for quality ("is this funny and coherent?"). The exporter

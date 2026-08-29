@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { subscribeArea, saveArea } from '../lib/store'
-import { AREAS, CATS, POOLS, GUIDES } from '../lib/content'
+import { AREAS, TAB_KINDS, GUIDES } from '../lib/content'
 
 const DEBOUNCE_MS = 400
 
@@ -10,8 +10,8 @@ export default function Editor() {
   const spec = AREAS[area]
   const [params, setParams] = useSearchParams()
 
-  const tabs = spec?.tabs === 'cats' ? CATS.map(c => c.key)
-    : spec?.tabs === 'pools' ? POOLS : null
+  const tabDef = spec?.tabs ? TAB_KINDS[spec.tabs] : null
+  const tabs = tabDef?.list ?? null
   const tab = tabs ? (params.get('tab') ?? tabs[0]) : null
 
   const [items, setItems] = useState(null)
@@ -60,9 +60,9 @@ export default function Editor() {
     if (!items) return []
     return items
       .filter(i => !i.deleted)
-      .filter(i => !tab || i.cat === tab || i.pool === tab)
+      .filter(i => !tabDef || i[tabDef.field] === tab)
       .sort((a, b) => a.order - b.order)
-  }, [items, tab])
+  }, [items, tab, tabDef])
 
   if (!spec) return <main className="dash"><p>Unknown area. <Link to="/">Back</Link></p></main>
   if (items === null) return <main className="dash"><p>Loading…</p></main>
@@ -77,16 +77,22 @@ export default function Editor() {
   }
 
   const add = () => {
-    const maxOrder = Math.max(-1, ...items.filter(i => !tab || i.cat === tab || i.pool === tab).map(i => i.order))
+    const maxOrder = Math.max(-1, ...items.filter(i => !tabDef || i[tabDef.field] === tab).map(i => i.order))
     const item = {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       text: '',
       deleted: false,
       order: maxOrder + 1,
-      ...(spec.tabs === 'cats' ? { cat: tab } : {}),
-      ...(spec.tabs === 'pools' ? { pool: tab } : {}),
+      ...(spec.checklist ? { done: false } : {}),
+      ...(tabDef ? { [tabDef.field]: tab } : {}),
     }
     applyChange([...items, item], { itemId: item.id, before: null, after: item })
+  }
+
+  const toggleDone = (id) => {
+    const before = items.find(i => i.id === id)
+    const next = items.map(i => (i.id === id ? { ...i, done: !i.done } : i))
+    applyChange(next, { itemId: id, before, after: { ...before, done: !before.done } })
   }
 
   const softDelete = (id) => {
@@ -136,7 +142,7 @@ export default function Editor() {
           {tabs.map(t => (
             <button key={t} className={t === tab ? 'tab active' : 'tab'}
               onClick={() => setParams({ tab: t })}>
-              {spec.tabs === 'cats' ? CATS.find(c => c.key === t).name : t}
+              {tabDef.label(t)}
             </button>
           ))}
         </nav>
@@ -152,7 +158,11 @@ export default function Editor() {
 
       <ul className="items">
         {visible.map((item, idx) => (
-          <li key={item.id} className="item">
+          <li key={item.id} className={item.done ? 'item done' : 'item'}>
+            {spec.checklist && (
+              <input type="checkbox" className="check" checked={!!item.done}
+                onChange={() => toggleDone(item.id)} title="Done" />
+            )}
             <span className="reorder">
               <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
               <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>

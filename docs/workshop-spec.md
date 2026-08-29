@@ -31,8 +31,17 @@ The 7 template briefs with done-checkbox, notes field, and reference image uploa
 
 ## Data model (Firestore)
 
-- `safe_content/{area}` — doc per area: `{ items: [{id, text, cat?, pool?, deleted, order}] }`
-  Areas: openers, closers, pools, echo_frames, templates.
+- `safe_content/{area}` — doc per area: `{ items: [{id, text, cat?, pool?, act?, done?, deleted, order}] }`
+  Areas, grouped as on the dashboard (goals in parentheses; × means per tab):
+  - Cat voices: openers (8×cat), closers (8×cat), refusals (4×cat),
+    smalltalk (8×cat), trailoffs (8, Granolia only), status_lines (3×cat)
+  - World & cast: npc_cards (5), bios (10), lore (4)
+  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12)
+  - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7)
+  - Show night: act_scripts (3×act), ops_docs (12)
+  - Assets (checklists, items carry `done`): art_assets, av_assets
+  Areas added after the first seed import are created by additive migrations
+  guarded by `meta/migrations` — additions only, existing data never rewritten.
 - `workshop_history/{autoId}` — append-only: `{area, itemId, before, after, ts}`.
 - `tasks/{autoId}` — `{title, detail, status, order, ts}`.
 - `decisions/{key}` — `{question, options, answer, answeredAt}`.

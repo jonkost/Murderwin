@@ -52,6 +52,9 @@ Content is divided into two classes:
 Motive #8 ("the dairy air") was authored with Jon and is spoiled for him.
 DECISION PENDING: promote its example clue set to the rulebook tutorial.
 Its real in-game kernels still get regenerated blind either way.
+If a tutorial example is written at all, it comes from #8 or from an invented
+motive outside the 19 — never a fresh worked example against a live motive
+(see docs/blind-content-protocol.md, seal-safe ops constraints).
 
 ## PROJECT CONTEXT (locked decisions — do not re-litigate)
 
