@@ -1,0 +1,15 @@
+{
+  "name": "murderwin-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-sealed.mjs",
+    "validate": "node validate-sealed.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0",
+    "dotenv": "^17.0.0",
+    "firebase-admin": "^13.0.0",
+    "zod": "^3.24.0"
+  }
+}

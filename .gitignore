@@ -18,3 +18,4 @@ firebase-debug.log
 **/sealed*
 *.sealed.json
 scripts/.env
+service-account*.json

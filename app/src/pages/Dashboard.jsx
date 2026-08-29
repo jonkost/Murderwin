@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea } from '../lib/store'
+import { subscribeArea, subscribeLatestValidation } from '../lib/store'
 import { AREAS, AREA_GROUPS, TAB_KINDS } from '../lib/content'
 import TaskBoard from '../components/TaskBoard'
 import DecisionsPanel from '../components/DecisionsPanel'
@@ -44,10 +44,12 @@ function areaRows(area, spec, items) {
 
 export default function Dashboard() {
   const [data, setData] = useState({})
+  const [validation, setValidation] = useState(null)
 
   useEffect(() => {
     const unsubs = Object.keys(AREAS).map(area =>
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
+    unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     return () => unsubs.forEach(u => u())
   }, [])
 
@@ -66,8 +68,26 @@ export default function Dashboard() {
         <h2>Sealed coverage</h2>
         <div className="prow static">
           <span className="plabel">Kernels · documents · echoes</span>
-          <span className="pcount">no validator report yet</span>
+          <span className="pcount">
+            {validation === null
+              ? 'no validator report yet'
+              : `${validation.complete}/${validation.codes} codes complete — ${validation.pass ? 'validated ✓' : 'FAILING'}`}
+          </span>
         </div>
+        {validation !== null && !validation.pass && (
+          <p className="hint">
+            Aggregate issues: {['banned', 'lengthFails', 'placeholderFails', 'granoliaFails', 'salemFails', 'impersonalFails']
+              .filter(k => validation[k] > 0)
+              .map(k => `${k} ${validation[k]}`)
+              .join(' · ') || 'coverage incomplete'}. Re-run generation.
+          </p>
+        )}
+        {validation !== null && validation.bannedGlobal > 0 && (
+          <p className="hint">
+            Advisory: {validation.bannedGlobal} texts share a word with some
+            other motive's rhyme (doesn't gate the pass).
+          </p>
+        )}
       </section>
       <TaskBoard />
       <DecisionsPanel />

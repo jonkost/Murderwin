@@ -1,7 +1,7 @@
 import {
   doc, getDoc, onSnapshot,
   collection, addDoc, updateDoc, serverTimestamp,
-  query, orderBy, runTransaction,
+  query, orderBy, limit, runTransaction,
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../firebase'
@@ -114,6 +114,13 @@ export function subscribeDecisions(onData, onError) {
 export async function answerDecision(key, answer, before) {
   await updateDoc(doc(db, 'decisions', key), { answer, answeredAt: serverTimestamp() })
   await logHistory('decisions', key, before, { ...before, answer })
+}
+
+// ---- Sealed coverage (aggregates only — the seal stays sealed) ----
+export function subscribeLatestValidation(onData, onError) {
+  return onSnapshot(query(collection(db, 'validation_reports'), orderBy('ts', 'desc'), limit(1)),
+    snap => onData(snap.empty ? null : snap.docs[0].data()),
+    onError)
 }
 
 // ---- Reference image upload (stationery tracker) ----

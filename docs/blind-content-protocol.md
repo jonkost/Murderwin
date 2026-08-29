@@ -20,6 +20,10 @@ Node script, run by Jon from the terminal. It:
    manifest + content to Firestore `sealed/*` via Admin SDK.
 4. Prints ONLY: per-code counts, validation pass/fail totals, and a run hash.
    Any error output must redact content (log doc paths + lengths, never text).
+   ORDER is information too: motives are processed in a crypto-shuffled order,
+   progress lines carry counters only (never a code), and per-code count lines
+   print once at the end sorted by code string — a terminal transcript must
+   never let line order reconstruct the code→motive manifest.
 
 Re-running regenerates fresh content (new details/phrasings) — safe and encouraged
 close to party day so nothing half-remembered can match.
@@ -28,7 +32,9 @@ close to party day so nothing half-remembered can match.
 
 Automated, counts-only. Checks per code:
 - full coverage (15 kernels, 3 docs, 3 fragments)
-- banned-word check vs. that code's motive rhyme (and vs. ALL rhyme words globally)
+- banned-word check vs. that code's motive rhyme (gates the pass); overlap with
+  OTHER rhymes' words is counted as `bannedGlobal` but is ADVISORY only — common
+  words recur across 19 rhymes, so zero-tolerance there is infeasible
 - length bounds (kernels ≤ 40 words; documents 40–60; fragments ≤ 15)
 - placeholder integrity (only known [POOL] tokens; Granolia = exactly 1 fewer
   token than sibling truth kernels)
