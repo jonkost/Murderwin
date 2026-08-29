@@ -34,13 +34,46 @@ export async function ensureSeeded() {
     tx.set(guardRef, { at: serverTimestamp() })
     return true
   })
-  if (!seeded) await applyAdditions(ADDITIONS)
+  if (!seeded) {
+    await applyAdditions(ADDITIONS)
+    await repairNestedAreaDocs()
+  }
   return { seeded }
+}
+
+// One-time repair for docs the buggy first migration double-nested.
+// Unwraps in place (data preserved), guarded by meta/migrations.
+async function repairNestedAreaDocs() {
+  const REPAIR_ID = '2026-08-30-unwrap-asset-items'
+  await runTransaction(db, async tx => {
+    const migRef = doc(db, 'meta', 'migrations')
+    const migSnap = await tx.get(migRef)
+    const applied = migSnap.exists() ? migSnap.data().applied ?? [] : []
+    if (applied.includes(REPAIR_ID)) return
+    const areas = ['art_assets', 'av_assets']
+    const snaps = await Promise.all(areas.map(a => tx.get(doc(db, 'safe_content', a))))
+    snaps.forEach((snap, i) => {
+      if (!snap.exists()) return
+      const raw = snap.data().items
+      if (!Array.isArray(raw) && Array.isArray(raw?.items)) {
+        tx.set(doc(db, 'safe_content', areas[i]), { items: raw.items })
+      }
+    })
+    tx.set(migRef, { applied: [...applied, REPAIR_ID] })
+  })
+}
+
+// An early migration bug briefly wrote {items: {items: [...]}} — normalize
+// on every read so a malformed doc can never crash a render.
+function asItems(raw) {
+  if (Array.isArray(raw)) return raw
+  if (Array.isArray(raw?.items)) return raw.items
+  return []
 }
 
 export function subscribeArea(area, onData, onError) {
   return onSnapshot(doc(db, 'safe_content', area),
-    snap => onData(snap.exists() ? snap.data().items ?? [] : []),
+    snap => onData(snap.exists() ? asItems(snap.data().items) : []),
     onError)
 }
 
@@ -64,7 +97,7 @@ export async function saveArea(area, _items, changes) {
   const ref = doc(db, 'safe_content', area)
   await runTransaction(db, async tx => {
     const snap = await tx.get(ref)
-    const remote = snap.exists() ? snap.data().items ?? [] : []
+    const remote = snap.exists() ? asItems(snap.data().items) : []
     tx.set(ref, { items: applyChangesTo(remote, changes) })
     for (const c of changes) {
       tx.set(doc(collection(db, 'workshop_history')), {

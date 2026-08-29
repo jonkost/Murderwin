@@ -39,7 +39,7 @@ export const AREAS = {
   pools: { label: 'Variable pools', group: 'Frames & pools', tabs: 'pools', goalPerTab: 10 },
   echo_frames: { label: 'Echo frames', group: 'Frames & pools', tabs: null, guide: 'echo_frame', goal: 8 },
   epilogue_frames: { label: 'Epilogue frames', group: 'Frames & pools', tabs: null, guide: 'epilogue_frame', goal: 2 },
-  templates: { label: 'Stationery templates', group: 'Frames & pools', tabs: null, goal: 7 },
+  templates: { label: 'Stationery templates', group: 'Frames & pools', tabs: null, guide: 'template', goal: 7 },
   // — Show night —
   act_scripts: { label: 'Act scripts & banners', group: 'Show night', tabs: 'acts', guide: 'act_script', goalPerTab: 3 },
   ops_docs: { label: 'Host & ops documents', group: 'Show night', tabs: null, guide: 'ops_doc', goal: 12 },
@@ -69,6 +69,61 @@ const AV_ASSET_SEED = [
 ]
 
 export const GUIDES = seed.guides
+
+// Live syntax lint — one high-signal warning per line, shown while typing.
+// Mirrors the format rules stated in each area's field guide.
+const VOICE_AREAS = ['openers', 'closers', 'smalltalk', 'refusals', 'trailoffs', 'status_lines']
+const CAPS_PREFIX = /^[A-Z][A-Z0-9 '&/]*:\s/
+
+export function lintItem(area, text) {
+  if (!text?.trim()) return null
+  if (VOICE_AREAS.includes(area)) {
+    if (/\b(meow|meows|meowed|purr|purrs|purring|hiss|hisses|woof|barks?|barked)\b/i.test(text)) {
+      return 'No animal sounds — they just talk.'
+    }
+    if (/\[[A-Za-z_]+\]/.test(text)) return 'Voice lines carry no [TOKENS].'
+    if (/talking (cat|dog|animal)|(cat|dog|animal)s? (can|could) talk/i.test(text)) {
+      return 'Never lampshade the talking.'
+    }
+    if (area === 'status_lines' && !/^(LOCKED|WARMING|IN):\s/.test(text)) {
+      return 'Start with LOCKED: / WARMING: / IN:'
+    }
+    return null
+  }
+  switch (area) {
+    case 'pools':
+      if (/\.\s*$/.test(text)) return 'Pool items are phrases, not sentences — drop the period.'
+      if (/^[A-Z]/.test(text)) return 'Start lowercase — the kernel sentence carries the capital (proper names inside are fine).'
+      return null
+    case 'echo_frames': {
+      const n = (text.match(/█+/g) ?? []).length
+      if (n !== 1) return 'An echo frame needs exactly one ███ slot.'
+      if (!/^(\.\.\.|…)/.test(text) || /(\.\.\.|…)$/.test(text) === false) {
+        return 'Convention: start and end with "..." — we join the broadcast mid-sentence.'
+      }
+      return null
+    }
+    case 'epilogue_frames': {
+      const missing = ['[MURDERER]', '[VICTIM]', '[MOTIVE_RHYME]'].filter(t => !text.includes(t))
+      return missing.length ? `Missing slot${missing.length > 1 ? 's' : ''}: ${missing.join(' ')}` : null
+    }
+    case 'ui_copy':
+    case 'ops_docs':
+    case 'lore':
+    case 'role_cards':
+      return CAPS_PREFIX.test(text) ? null : 'Start with a CAPS label and colon — e.g. "BALLOT: …"'
+    case 'act_scripts':
+      return /^(BANNER|OBJECTIVE|BEATS):\s/.test(text) ? null : 'Start with BANNER: / OBJECTIVE: / BEATS:'
+    case 'event_cards':
+      return /—/.test(text) ? null : 'Format: NAME (Acts) — plain effect line.'
+    case 'rules_text':
+      return /—/.test(text) ? null : 'Format: SECTION TITLE — body.'
+    case 'bios':
+      return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
+    default:
+      return null
+  }
+}
 
 let counter = 0
 function newId() {

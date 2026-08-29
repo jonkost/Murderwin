@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
 import { uploadReference } from '../lib/store'
+import { GUIDES } from '../lib/content'
+import FieldGuide from '../components/FieldGuide'
 
 export default function Stationery() {
   const { items, itemsRef, status, flush, patch } = useAreaEditor('templates')
@@ -53,11 +55,13 @@ export default function Stationery() {
           {status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
         </span>
       </div>
-      <p className="hint">
-        Seven blank designs. Overlay spec: room for 40–60 words, one emphasis
-        word, and a second-ink annotation line. Attach reference images as you
-        design; tick the box when a template is party-ready.
-      </p>
+      {GUIDES.template ? <FieldGuide guide={GUIDES.template} /> : (
+        <p className="hint">
+          Seven blank designs. Overlay spec: room for 40–60 words, one emphasis
+          word, and a second-ink annotation line. Attach reference images as you
+          design; tick the box when a template is party-ready.
+        </p>
+      )}
       <ul className="items stationery">
         {items.filter(i => !i.deleted).sort((a, b) => a.order - b.order).map(item => (
           <li key={item.id} className={item.done ? 'sitem done' : 'sitem'}>

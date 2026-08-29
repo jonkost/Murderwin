@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
-import { AREAS, TAB_KINDS, GUIDES } from '../lib/content'
+import { AREAS, TAB_KINDS, GUIDES, lintItem } from '../lib/content'
+import FieldGuide from '../components/FieldGuide'
 
 export default function Editor() {
   const { area } = useParams()
@@ -121,31 +122,31 @@ function AreaEditor({ area }) {
         </nav>
       )}
 
-      {guide && (
-        <div className="guide">
-          <p><b>{guide.what}</b></p>
-          <p>Test: <i>{guide.test}</i></p>
-          <p className="hint">e.g. {guide.examples.map(e => `“${e}”`).join(' · ')}</p>
-        </div>
-      )}
+      <FieldGuide guide={guide} tab={spec.tabs && spec.tabs !== 'pools' ? tab : null} />
 
       <ul className="items">
-        {visible.map((item, idx) => (
-          <li key={item.id} className={item.done ? 'item done' : 'item'}>
-            {spec.checklist && (
-              <input type="checkbox" className="check" checked={!!item.done}
-                onChange={() => toggleDone(item.id)} title="Done" />
-            )}
-            <span className="reorder">
-              <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
-              <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>
-            </span>
-            <textarea rows={2} value={item.text} placeholder="…"
-              onInput={autoGrow}
-              onChange={e => edit(item.id, e.target.value)} />
-            <button className="ghost" onClick={() => softDelete(item.id)} title="Delete (soft)">✕</button>
-          </li>
-        ))}
+        {visible.map((item, idx) => {
+          const warn = spec.checklist ? null : lintItem(area, item.text)
+          return (
+            <li key={item.id} className={item.done ? 'item done' : 'item'}>
+              <div className="item-row">
+                {spec.checklist && (
+                  <input type="checkbox" className="check" checked={!!item.done}
+                    onChange={() => toggleDone(item.id)} title="Done" />
+                )}
+                <span className="reorder">
+                  <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
+                  <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>
+                </span>
+                <textarea rows={2} value={item.text} placeholder="…"
+                  onInput={autoGrow}
+                  onChange={e => edit(item.id, e.target.value)} />
+                <button className="ghost" onClick={() => softDelete(item.id)} title="Delete (soft)">✕</button>
+              </div>
+              {warn && <p className="lint">⚠ {warn}</p>}
+            </li>
+          )
+        })}
       </ul>
 
       <div className="editor-foot">

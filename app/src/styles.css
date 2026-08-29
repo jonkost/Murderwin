@@ -56,6 +56,15 @@ button { font: inherit; cursor: pointer; }
 
 .guide { border-left: 4px solid var(--accent); background: #faf4e6; padding: 0.6rem 1rem; margin-bottom: 1rem; }
 .guide p { margin: 0.2rem 0; }
+.guide .tabnote { border-top: 1px dotted var(--line); padding-top: 0.4rem; margin-top: 0.4rem; }
+.guide-more { margin-top: 0.5rem; }
+.guide-more summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; padding: 0.3rem 0; }
+.guide-more .syntax { margin: 0.4rem 0; padding-left: 1.2rem; }
+.guide-more .syntax li { margin: 0.25rem 0; }
+.ex { font-size: 0.92rem; margin: 0.35rem 0; }
+.ex.good { color: var(--good); }
+.ex.bad { color: var(--bad); }
+.ex .why { color: #6b5d49; font-style: italic; }
 .hint { color: #6b5d49; font-size: 0.9rem; }
 
 .editor-head { display: flex; align-items: baseline; gap: 1rem; }
@@ -73,7 +82,9 @@ button { font: inherit; cursor: pointer; }
 .banner.error button { min-height: 2.4rem; }
 
 .items { list-style: none; margin: 0; padding: 0; }
-.item { display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 0.5rem; }
+.item { margin-bottom: 0.5rem; }
+.item-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.lint { margin: 0.15rem 0 0 3rem; font-size: 0.8rem; color: #8a6d1a; }
 .item .check { width: 1.5rem; height: 1.5rem; align-self: center; accent-color: var(--good); }
 .item.done textarea { text-decoration: line-through; opacity: 0.6; }
 .item textarea {
