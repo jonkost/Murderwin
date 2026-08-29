@@ -5,6 +5,7 @@ import { auth, signIn, signOutUser } from './firebase'
 import { ensureSeeded } from './lib/store'
 import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
+import Stationery from './pages/Stationery'
 
 function SignInGate() {
   const [err, setErr] = useState(null)
@@ -47,10 +48,13 @@ export default function App() {
     setBoot({ state: 'checking' })
     ensureSeeded()
       .then(r => setBoot({ state: 'ready', seeded: r.seeded }))
-      .catch(e => setBoot({
-        state: e.code === 'permission-denied' ? 'not-admin' : 'error',
-        message: e.message,
-      }))
+      .catch(e => setBoot(
+        // offline: the DB was seeded long ago — open anyway, work from cache
+        e.code === 'unavailable' ? { state: 'ready', seeded: false }
+          : {
+            state: e.code === 'permission-denied' ? 'not-admin' : 'error',
+            message: e.message,
+          }))
   }, [user])
 
   if (user === undefined) return <div className="gate"><p>…</p></div>
@@ -75,6 +79,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/edit/:area" element={<Editor />} />
+        <Route path="/stationery" element={<Stationery />} />
       </Routes>
     </div>
   )

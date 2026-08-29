@@ -1,0 +1,12 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Workshop reference uploads: admin only. Enable Cloud Storage on the
+    // project, add `"storage": {"rules": "storage.rules"}` to firebase.json,
+    // then `firebase deploy --only storage`.
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null &&
+        request.auth.uid == 'JYSmPSQfdMen0leIDYmqUa32Prt1';
+    }
+  }
+}

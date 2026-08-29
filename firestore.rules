@@ -17,12 +17,13 @@ service cloud.firestore {
       allow read, write: if false;   // Admin SDK only
     }
 
-    // ---- WORKSHOP (safe layers): admin read/write ----
-    match /safe_content/{doc=**}     { allow read, write: if isAdmin(); }
+    // ---- WORKSHOP (safe layers): admin read/create/update. NOTHING is ever
+    // hard-deleted — deletes are soft flags, enforced here, not by discipline.
+    match /safe_content/{doc=**}     { allow read, create, update: if isAdmin(); allow delete: if false; }
     match /workshop_history/{doc=**} { allow read, create: if isAdmin(); allow update, delete: if false; }
-    match /tasks/{doc=**}            { allow read, write: if isAdmin(); }
-    match /decisions/{doc=**}        { allow read, write: if isAdmin(); }
-    match /meta/{doc=**}             { allow read, write: if isAdmin(); }
+    match /tasks/{doc=**}            { allow read, create, update: if isAdmin(); allow delete: if false; }
+    match /decisions/{doc=**}        { allow read, create, update: if isAdmin(); allow delete: if false; }
+    match /meta/{doc=**}             { allow read, create, update: if isAdmin(); allow delete: if false; }
 
     // ---- Aggregates only: safe for admin dashboard ----
     match /validation_reports/{doc=**} { allow read: if isAdmin(); allow write: if false; }

@@ -1,60 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { subscribeArea, saveArea } from '../lib/store'
+import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
 import { AREAS, TAB_KINDS, GUIDES } from '../lib/content'
-
-const DEBOUNCE_MS = 400
 
 export default function Editor() {
   const { area } = useParams()
+  // key by area: a fresh instance per area so stale local state can never
+  // be flushed into a different area's document
+  return AREAS[area]
+    ? <AreaEditor key={area} area={area} />
+    : <main className="dash"><p>Unknown area. <Link to="/">Back</Link></p></main>
+}
+
+function AreaEditor({ area }) {
   const spec = AREAS[area]
   const [params, setParams] = useSearchParams()
+  const { items, status, flush, applyChange } = useAreaEditor(area)
+  const [lastDeleted, setLastDeleted] = useState(null)
 
-  const tabDef = spec?.tabs ? TAB_KINDS[spec.tabs] : null
+  const tabDef = spec.tabs ? TAB_KINDS[spec.tabs] : null
   const tabs = tabDef?.list ?? null
   const tab = tabs ? (params.get('tab') ?? tabs[0]) : null
-
-  const [items, setItems] = useState(null)
-  const [status, setStatus] = useState('saved') // saved | saving | error
-  const [lastDeleted, setLastDeleted] = useState(null)
-  const itemsRef = useRef(null)
-  const pendingChanges = useRef([])
-  const timer = useRef(null)
-  const dirty = useRef(false)
-
-  useEffect(() => {
-    if (!spec) return
-    return subscribeArea(area, remote => {
-      // don't clobber local edits mid-typing; single-user app
-      if (!dirty.current) {
-        itemsRef.current = remote
-        setItems(remote)
-      }
-    }, e => setStatus('error'))
-  }, [area])
-
-  const flush = () => {
-    clearTimeout(timer.current)
-    const changes = pendingChanges.current
-    if (!changes.length) return
-    pendingChanges.current = []
-    setStatus('saving')
-    saveArea(area, itemsRef.current, changes)
-      .then(() => { dirty.current = false; setStatus('saved') })
-      .catch(() => {
-        pendingChanges.current = [...changes, ...pendingChanges.current]
-        setStatus('error')
-      })
-  }
-
-  const applyChange = (next, change) => {
-    itemsRef.current = next
-    setItems(next)
-    dirty.current = true
-    pendingChanges.current.push(change)
-    clearTimeout(timer.current)
-    timer.current = setTimeout(flush, DEBOUNCE_MS)
-  }
 
   const visible = useMemo(() => {
     if (!items) return []
@@ -64,7 +30,6 @@ export default function Editor() {
       .sort((a, b) => a.order - b.order)
   }, [items, tab, tabDef])
 
-  if (!spec) return <main className="dash"><p>Unknown area. <Link to="/">Back</Link></p></main>
   if (items === null) return <main className="dash"><p>Loading…</p></main>
 
   const guideKey = spec.tabs === 'pools' ? tab : spec.guide
@@ -92,7 +57,7 @@ export default function Editor() {
   const toggleDone = (id) => {
     const before = items.find(i => i.id === id)
     const next = items.map(i => (i.id === id ? { ...i, done: !i.done } : i))
-    applyChange(next, { itemId: id, before, after: { ...before, done: !before.done } })
+    applyChange(next, { itemId: id, before, after: { ...before, done: !before.done } }, true)
   }
 
   const softDelete = (id) => {
@@ -103,10 +68,10 @@ export default function Editor() {
   }
 
   const undelete = () => {
-    if (!lastDeleted) return
-    const before = items.find(i => i.id === lastDeleted.id)
-    const next = items.map(i => (i.id === lastDeleted.id ? { ...i, deleted: false } : i))
+    const before = lastDeleted && items.find(i => i.id === lastDeleted.id)
     setLastDeleted(null)
+    if (!before) return
+    const next = items.map(i => (i.id === before.id ? { ...i, deleted: false } : i))
     applyChange(next, { itemId: before.id, before, after: { ...before, deleted: false } })
   }
 
@@ -119,7 +84,10 @@ export default function Editor() {
     const next = items.map(i =>
       i.id === a.id ? { ...i, order: b.order } :
       i.id === b.id ? { ...i, order: a.order } : i)
-    applyChange(next, { itemId: a.id, before: a, after: { ...a, order: b.order } })
+    applyChange(next, [
+      { itemId: a.id, before: a, after: { ...a, order: b.order } },
+      { itemId: b.id, before: b, after: { ...b, order: a.order } },
+    ])
   }
 
   return (
@@ -128,6 +96,11 @@ export default function Editor() {
         <div className="banner error" role="alert">
           SAVE FAILED — your latest edits are NOT saved.
           <button onClick={flush}>Retry now</button>
+        </div>
+      )}
+      {status === 'loaderror' && (
+        <div className="banner error" role="alert">
+          Couldn’t load this list — check your connection and reload.
         </div>
       )}
       <div className="editor-head">
@@ -167,7 +140,8 @@ export default function Editor() {
               <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
               <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>
             </span>
-            <textarea rows={1} value={item.text} placeholder="…"
+            <textarea rows={2} value={item.text} placeholder="…"
+              onInput={autoGrow}
               onChange={e => edit(item.id, e.target.value)} />
             <button className="ghost" onClick={() => softDelete(item.id)} title="Delete (soft)">✕</button>
           </li>

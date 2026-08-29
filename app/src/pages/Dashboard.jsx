@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { subscribeArea } from '../lib/store'
-import { AREAS, AREA_GROUPS, TAB_KINDS, CATS } from '../lib/content'
+import { AREAS, AREA_GROUPS, TAB_KINDS } from '../lib/content'
+import TaskBoard from '../components/TaskBoard'
+import DecisionsPanel from '../components/DecisionsPanel'
 
 function Row({ label, count, goal, to, suffix }) {
   const pct = goal ? Math.min(100, Math.round((count / goal) * 100)) : 0
@@ -14,9 +16,10 @@ function Row({ label, count, goal, to, suffix }) {
   )
 }
 
-// Per-cat breakdown rows for the two founding voice layers; every other
-// area gets one row (its editor tabs carry the breakdown).
-const PER_CAT_ROWS = ['openers', 'closers']
+// Per-tab breakdown rows for the founding layers the spec calls out
+// (openers/closers per cat, pools per pool); other tabbed areas get one
+// row — their editor tabs carry the breakdown.
+const PER_TAB_ROWS = ['openers', 'closers', 'pools']
 
 function areaRows(area, spec, items) {
   const live = items.filter(i => !i.deleted)
@@ -24,17 +27,19 @@ function areaRows(area, spec, items) {
     const done = live.filter(i => i.done).length
     return [{ key: area, label: spec.label, count: done, goal: live.length, suffix: ' done', to: `/edit/${area}` }]
   }
-  if (PER_CAT_ROWS.includes(area)) {
-    return CATS.map(c => ({
-      key: `${area}-${c.key}`,
-      label: `${spec.label} — ${c.name}`,
-      count: live.filter(i => i.cat === c.key).length,
+  if (spec.tabs && PER_TAB_ROWS.includes(area)) {
+    const tabDef = TAB_KINDS[spec.tabs]
+    return tabDef.list.map(t => ({
+      key: `${area}-${t}`,
+      label: `${spec.label} — ${tabDef.label(t)}`,
+      count: live.filter(i => i[tabDef.field] === t).length,
       goal: spec.goalPerTab,
-      to: `/edit/${area}?tab=${c.key}`,
+      to: `/edit/${area}?tab=${t}`,
     }))
   }
   const goal = spec.tabs ? spec.goalPerTab * TAB_KINDS[spec.tabs].list.length : spec.goal
-  return [{ key: area, label: spec.label, count: live.length, goal, to: `/edit/${area}` }]
+  const to = area === 'templates' ? '/stationery' : `/edit/${area}`
+  return [{ key: area, label: spec.label, count: live.length, goal, to }]
 }
 
 export default function Dashboard() {
@@ -64,14 +69,8 @@ export default function Dashboard() {
           <span className="pcount">no validator report yet</span>
         </div>
       </section>
-      <section className="panel">
-        <h2>What's next</h2>
-        <p className="hint">
-          Pick a thin bar and fill it. The guides at the top of each editor say
-          what the layer is and how to test a line. Decisions and the task board
-          land on this page next.
-        </p>
-      </section>
+      <TaskBoard />
+      <DecisionsPanel />
     </main>
   )
 }
