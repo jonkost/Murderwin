@@ -19,3 +19,12 @@ firebase-debug.log
 *.sealed.json
 scripts/.env
 service-account*.json
+
+# handoff bundle from the Motives chat — merged into the repo on 25 Sep, never committed
+murderwin-handoff/
+murderwin-handoff.zip
+
+# secrets and environment
+.env
+.env.*
+*.key

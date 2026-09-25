@@ -99,6 +99,12 @@ button { font: inherit; cursor: pointer; }
 }
 .reorder button:disabled { opacity: 0.3; }
 
+/* The fresh line at the bottom of every list: always there, always focused on load. */
+.item.draft .reorder { min-width: 2.4rem; }
+.item.draft .check-gap { width: 1.5rem; flex: none; }
+.item.draft textarea { border-style: dashed; background: #faf4e6; }
+.item.draft .primary { min-width: 3.5rem; }
+
 .editor-foot { display: flex; gap: 1rem; margin-top: 1rem; align-items: center; }
 .primary { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1.1rem; }
 .ghost { background: none; border: 1px solid var(--line); padding: 0.4rem 0.8rem; }

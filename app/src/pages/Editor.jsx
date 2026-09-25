@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
 import { AREAS, TAB_KINDS, GUIDES, lintItem } from '../lib/content'
@@ -18,10 +18,21 @@ function AreaEditor({ area }) {
   const [params, setParams] = useSearchParams()
   const { items, status, flush, applyChange } = useAreaEditor(area)
   const [lastDeleted, setLastDeleted] = useState(null)
+  // The fresh line at the bottom. Local until committed, so an abandoned
+  // empty draft never becomes a junk item in Firestore.
+  const [draft, setDraft] = useState('')
+  const draftText = useRef('')
+  const draftRef = useRef(null)
 
   const tabDef = spec.tabs ? TAB_KINDS[spec.tabs] : null
   const tabs = tabDef?.list ?? null
   const tab = tabs ? (params.get('tab') ?? tabs[0]) : null
+  const loaded = items !== null
+
+  // Cursor lands in the input on load, and again on every tab switch.
+  useEffect(() => {
+    if (loaded) draftRef.current?.focus()
+  }, [loaded, tab])
 
   const visible = useMemo(() => {
     if (!items) return []
@@ -31,7 +42,7 @@ function AreaEditor({ area }) {
       .sort((a, b) => a.order - b.order)
   }, [items, tab, tabDef])
 
-  if (items === null) return <main className="dash"><p>Loading…</p></main>
+  if (!loaded) return <main className="dash"><p>Loading…</p></main>
 
   const guideKey = spec.tabs === 'pools' ? tab : spec.guide
   const guide = guideKey ? GUIDES[guideKey] : null
@@ -42,17 +53,46 @@ function AreaEditor({ area }) {
     applyChange(next, { itemId: id, before, after: { ...before, text } })
   }
 
-  const add = () => {
+  const add = (text) => {
     const maxOrder = Math.max(-1, ...items.filter(i => !tabDef || i[tabDef.field] === tab).map(i => i.order))
     const item = {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      text: '',
+      text,
       deleted: false,
       order: maxOrder + 1,
       ...(spec.checklist ? { done: false } : {}),
       ...(tabDef ? { [tabDef.field]: tab } : {}),
     }
     applyChange([...items, item], { itemId: item.id, before: null, after: item })
+  }
+
+  // Enter commits the draft as a new line and leaves a fresh one under the
+  // cursor. Reads the ref, not state, so a blur followed by a click on Add
+  // can never commit the same text twice.
+  const commitDraft = () => {
+    const text = draftText.current.trim()
+    draftText.current = ''
+    setDraft('')
+    if (draftRef.current) draftRef.current.style.height = 'auto'
+    if (text) add(text)
+  }
+
+  const onDraftKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      commitDraft()
+      draftRef.current?.focus()
+    }
+  }
+
+  // Enter on an existing line commits it and jumps to the fresh line.
+  // Shift+Enter still inserts a line break.
+  const onLineKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      flush()
+      draftRef.current?.focus()
+    }
   }
 
   const toggleDone = (id) => {
@@ -90,6 +130,8 @@ function AreaEditor({ area }) {
       { itemId: b.id, before: b, after: { ...b, order: a.order } },
     ])
   }
+
+  const draftWarn = spec.checklist ? null : lintItem(area, draft)
 
   return (
     <main className="dash">
@@ -140,6 +182,7 @@ function AreaEditor({ area }) {
                 </span>
                 <textarea rows={2} value={item.text} placeholder="…"
                   onInput={autoGrow}
+                  onKeyDown={onLineKey}
                   onChange={e => edit(item.id, e.target.value)} />
                 <button className="ghost" onClick={() => softDelete(item.id)} title="Delete (soft)">✕</button>
               </div>
@@ -147,16 +190,30 @@ function AreaEditor({ area }) {
             </li>
           )
         })}
+        <li className="item draft">
+          <div className="item-row">
+            {spec.checklist && <span className="check-gap" aria-hidden="true" />}
+            <span className="reorder" aria-hidden="true" />
+            <textarea ref={draftRef} rows={2} value={draft}
+              placeholder="New line — Enter adds it"
+              aria-label="New line"
+              onInput={autoGrow}
+              onKeyDown={onDraftKey}
+              onBlur={commitDraft}
+              onChange={e => { draftText.current = e.target.value; setDraft(e.target.value) }} />
+            <button className="primary" onMouseDown={e => e.preventDefault()} onClick={commitDraft} title="Add line">Add</button>
+          </div>
+          {draftWarn && <p className="lint">⚠ {draftWarn}</p>}
+        </li>
       </ul>
 
-      <div className="editor-foot">
-        <button className="primary" onClick={add}>+ Add line</button>
-        {lastDeleted && (
+      {lastDeleted && (
+        <div className="editor-foot">
           <button className="ghost" onClick={undelete}>
             Undo delete: “{lastDeleted.text.slice(0, 30)}…”
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </main>
   )
 }

@@ -2,7 +2,7 @@ import seed from '../../../seed/safe-content.json'
 
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog' },
-  { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper' },
+  { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite' },
   { key: 'granolia', name: 'Granolia Lickspittle', tag: 'the charity case' },
@@ -22,7 +22,9 @@ export const AREAS = {
   // — Cat voices —
   openers: { label: 'Cat openers', group: 'Cat voices', tabs: 'cats', guide: 'opener', goalPerTab: 8 },
   closers: { label: 'Cat closers', group: 'Cat voices', tabs: 'cats', guide: 'closer', goalPerTab: 8 },
-  refusals: { label: 'Refusal / gate lines', group: 'Cat voices', tabs: 'cats', guide: 'refusal', goalPerTab: 4 },
+  // CLAUDE.md calls this layer "cat deflection lines": what a cat says when the
+  // affection roll fails. Firestore key stays `refusals` — the data already lives there.
+  refusals: { label: 'Cat deflection lines', group: 'Cat voices', tabs: 'cats', guide: 'refusal', goalPerTab: 8 },
   smalltalk: { label: 'Idle small talk', group: 'Cat voices', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8 },
   trailoffs: { label: 'Granolia trail-offs', group: 'Cat voices', tabs: null, guide: 'trailoff', goal: 8 },
   status_lines: { label: 'Affection status lines', group: 'Cat voices', tabs: 'cats', guide: 'status_line', goalPerTab: 3 },
@@ -51,7 +53,7 @@ export const AREAS = {
 export const AREA_GROUPS = ['Cat voices', 'World & cast', 'Player screens', 'Frames & pools', 'Show night', 'Assets']
 
 const ART_ASSET_SEED = [
-  'Portrait — Sir Irwin', 'Portrait — Salem Crooknog', 'Portrait — Zimothy Clawford',
+  'Portrait — Sir Irwin', 'Portrait — Salem Crookshank', 'Portrait — Zimothy Clawford',
   'Portrait — Miss Boo LaRue', 'Portrait — Granolia Lickspittle',
   'Sirwin Manor crest / wax seal (splash + mourning card)',
   'Kiosk chrome — cat encounter state', 'Kiosk chrome — echo broadcast state', 'Kiosk chrome — idle state',
@@ -198,6 +200,23 @@ export const ADDITIONS = [
       { key: 'buzzFallback', question: 'iPhones can’t vibrate from the browser. What is the Act 1 blackout signal fallback?', options: ['Screen-flash pattern on ALL phones (uniform, no tells)', 'Room audio sting masks it', 'Mixed per device'] },
       { key: 'hostOps', question: 'Who fires Stream Deck cues while Jon is dispersed playing his own game?', options: ['Timer-driven automation', 'Co-host non-player on the deck', 'Jon fires from phone, in character'] },
       { key: 'scoring', question: 'Winner determination and prizes when zero or several players name all three?', options: ['All-three-or-nothing + gag superlatives', 'Points with partial credit', 'Design session with Claude'] },
+    ],
+  },
+  {
+    // 25 Sep: the Start Here build order, the motive-swap question, and the
+    // gaps the Canon page lists as "safe — Jon writes it".
+    id: '2026-09-25-build-order',
+    tasks: [
+      { order: 18, status: 'todo', title: 'Throwaway slice: one character onto a phone via QR', detail: 'Build order step 3 (Sep 29). Proves the delivery chain end to end: QR → anonymous session → a character on the phone. Throw it away after.' },
+      { order: 19, status: 'todo', title: 'Seed-based case generator + validator', detail: 'Build order step 4 (Oct 2). One seed string in, a full case out, written to cases/* by Admin SDK only. Validator assumes worst-case suppression across Acts 2/4/6 and still proves every player reaches two of three.' },
+      { order: 20, status: 'todo', title: 'Eight fake test players', detail: 'Build order step 5 (Oct 5). A script, not eight friends. Uses a throwaway case that is discarded after the run — never persisted, never printed.' },
+      { order: 21, status: 'todo', title: 'Split dev and live', detail: 'Build order step 6 (Oct 7). So a broken afternoon can’t break the party.' },
+      { order: 22, status: 'todo', title: 'Content sprint: cat deflection lines to 8 per cat', detail: 'Safe content, best drive-time task. What each cat says when the affection roll fails: in character, funny, zero information. Editor: Cat voices → Cat deflection lines.' },
+      { order: 23, status: 'todo', title: 'Innocent-beat content for Acts 2, 4 and 6', detail: 'Safe — Jon writes it. Read-time parity: each innocent beat matches the event choice prompt in length and needs one required interaction before it can be dismissed. Editor: Player screens → Event cards.' },
+      { order: 24, status: 'todo', title: 'Workshop: visible history view', detail: 'workshop_history is append-only but has no screen yet. Canon says history must be visible in the UI.' },
+    ],
+    decisions: [
+      { key: 'swapMotive', question: 'Which of the 19 motives gets swapped, and for what?', options: ['Keep all 19', 'Swap one — tell Claude which'] },
     ],
   },
 ]

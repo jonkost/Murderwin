@@ -28,6 +28,15 @@ Node script, run by Jon from the terminal. It:
 Re-running regenerates fresh content (new details/phrasings) — safe and encouraged
 close to party day so nothing half-remembered can match.
 
+Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep). It is generated
+the same way, under the same counts-only rules, into `sealed/events/*`. Not built
+yet — the Canon page calls it the single biggest hole.
+
+OPEN (25 Sep): CLAUDE.md now says Granolia is "true with exactly one WRONG
+pool-variable". This doc, docs/cat-info.md and the validator implement one
+OMITTED variable (she forgets it). Jon decides; until then the validator stays
+on omission.
+
 ## Validation — scripts/validate-sealed.mjs
 
 Automated, counts-only. Checks per code:
@@ -51,6 +60,9 @@ Cloud Function `assembleTestimony(caseId, cat, playerCtx)`:
 opener (random from safe pool) + kernel (active motive, that cat, random variant,
 pools injected per case seed; Granolia gets one variable omitted; Salem serves the
 warp variant per his 60% roll) + closer (random from safe pool).
+A failed affection roll never reaches a kernel: the function returns a cat
+deflection line from the safe `refusals` layer instead — in character, funny,
+zero information, no penalty.
 Client receives only the final assembled string. Same pattern for documents
 (template id + overlaid text) and echoes (frame + fragment).
 
@@ -74,4 +86,5 @@ Two places where party prep could pierce the seal by accident:
 One coded set can be exported by a Cloud Function to a share link for a trusted
 NON-PLAYER to review for quality ("is this funny and coherent?"). The exporter
 picks the code at random; the link never shows the manifest. One set out of 19
-tells the canary nothing about the party.
+tells the canary nothing about the party. Jon has already chosen the canary;
+the hand-off waits on sealed content existing.

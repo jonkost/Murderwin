@@ -2,6 +2,8 @@
 
 **Status:** consolidated 26 Aug 2026 from the Murderwin Mystery Party session. This is the register document — every line of cat dialogue gets written against it.
 
+**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. Still open: whether Granolia's slip is one variable *omitted* (this doc) or one variable *wrong* (CLAUDE.md).
+
 ---
 
 ## 0. THE FOUNDING RULE — nobody addresses it
@@ -52,7 +54,7 @@ None of them is "random." Every cat is *legible* once you understand them — wh
 
 ---
 
-## 3. SALEM CROOKNOG — the long-time groundskeeper
+## 3. SALEM CROOKSHANK — the long-time groundskeeper
 
 **[DECIDED] Canon phrasing: "the long-time groundskeeper."** Not decorative — the tenure is what licenses his confidence. He's been here longer than anyone, which is exactly why nobody questions him when he's wrong, and why he doesn't bother questioning himself.
 
@@ -148,7 +150,7 @@ Once all four descriptors existed, a shape appeared that nobody designed:
 ## THE CAST
 
 - **Sir Irwin** — the dog
-- **Salem Crooknog** — the long-time groundskeeper
+- **Salem Crookshank** — the long-time groundskeeper
 - **Zimothy Clawford, Esq.** — the old family solicitor
 - **Miss Boo LaRue** — family friend and socialite
 - **Granolia Lickspittle** — the charity case

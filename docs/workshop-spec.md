@@ -8,7 +8,8 @@ Jon's private content-building dashboard. Everything it can display is SAFE-clas
 ### 1. Dashboard (home)
 The organized/on-task view. Three panels:
 - **Progress** — one row per content area: Openers (per cat), Closers (per cat),
-  Variable pools (per pool), Echo frames, Stationery templates, Sealed coverage.
+  Deflections (per cat), Variable pools (per pool), Echo frames, Stationery
+  templates, Sealed coverage.
   Each row: count / goal, thin progress bar, tap → its editor.
   Sealed coverage shows AGGREGATES ONLY (e.g. "19/19 codes have full kernels —
   validated ✓") pulled from the counts-only validator report.
@@ -20,10 +21,13 @@ The organized/on-task view. Three panels:
 ### 2. List editors (one route per content area)
 Boring CRUD on purpose:
 - Full list visible. Add at bottom. Inline edit any line. Soft-delete with undo.
-- Reorder by drag. Per-cat tabs for openers/closers.
+- Reorder by drag. Per-cat tabs for openers/closers/deflections.
 - Field-guide header on each editor: what this layer is, the one-line test,
   2 examples (copy exists in seed/safe-content.json under `guides`).
 - Autosave (400ms debounce) + saved indicator + offline queue (Firestore default).
+- Cursor lands in the input on load. Enter commits the line and opens a fresh one
+  (Shift+Enter for a line break). Click any line to edit it in place. Typing
+  continues when Firestore is unreachable; the queue flushes on reconnect.
 
 ### 3. Stationery tracker
 The 7 template briefs with done-checkbox, notes field, and reference image upload
@@ -33,7 +37,8 @@ The 7 template briefs with done-checkbox, notes field, and reference image uploa
 
 - `safe_content/{area}` — doc per area: `{ items: [{id, text, cat?, pool?, act?, done?, deleted, order}] }`
   Areas, grouped as on the dashboard (goals in parentheses; × means per tab):
-  - Cat voices: openers (8×cat), closers (8×cat), refusals (4×cat),
+  - Cat voices: openers (8×cat), closers (8×cat), refusals = the cat deflection
+    lines (8×cat; the Firestore key predates the name),
     smalltalk (8×cat), trailoffs (8, Granolia only), status_lines (3×cat)
   - World & cast: npc_cards (5), bios (10), lore (4)
   - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12)
@@ -50,7 +55,8 @@ The 7 template briefs with done-checkbox, notes field, and reference image uploa
 
 ## Non-negotiables (from the artifact post-mortem)
 1. No random task dealer. Jon chooses what to work on.
-2. Nothing hard-deletes. History is append-only.
+2. Nothing hard-deletes. History is append-only and visible in the UI (the
+   history screen is still on the task board).
 3. A save failure must be VISIBLE (banner), never silent.
 4. First load with empty DB runs a one-time seed import from seed/safe-content.json,
    then never auto-seeds again (guard doc: `meta/seeded`).

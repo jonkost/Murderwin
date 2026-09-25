@@ -19,7 +19,7 @@ function Row({ label, count, goal, to, suffix }) {
 // Per-tab breakdown rows for the founding layers the spec calls out
 // (openers/closers per cat, pools per pool); other tabbed areas get one
 // row — their editor tabs carry the breakdown.
-const PER_TAB_ROWS = ['openers', 'closers', 'pools']
+const PER_TAB_ROWS = ['openers', 'closers', 'refusals', 'pools']
 
 function areaRows(area, spec, items) {
   const live = items.filter(i => !i.deleted)

@@ -515,7 +515,7 @@
       ]
     },
     "refusal": {
-      "what": "The line a player's own screen shows when a cat declines to talk to THEM — the personal access layer saying no. The first collision is usually the Act 2 cat encounter (four cats, four rooms, everyone meets one), and it recurs in any dispersed act — Act 4's pair rounds especially — whenever a player tries a cat that has them gated: Boo below affection 4 won't speak at all, Zimothy stonewalls the wrong professions, and the other three deal in rationed deflection. A refusal is still a screen somebody stares at, so it must entertain while handing over nothing.",
+      "what": "The cat deflection line: what a player's own screen shows when a cat declines to talk to THEM, or when their affection roll fails — the personal access layer saying no. The first collision is usually the Act 2 cat encounter (four cats, four rooms, everyone meets one), and it recurs in any dispersed act — Act 4's pair rounds especially — whenever a player tries a cat that has them gated: Boo below affection 4 won't speak at all, Zimothy stonewalls the wrong professions, and the other three deal in rationed deflection. A refusal is still a screen somebody stares at, so it must entertain while handing over nothing.",
       "syntax": [
         "Write only the on-screen line — no cat-name prefix. The tab you're in supplies the cat; the app supplies the portrait.",
         "One or two sentences, 25 words maximum. A refusal is a sting, not a speech.",
@@ -767,7 +767,7 @@
         "The topics are fixed: the Sirwin family (names for Mama, Papa, and the siblings), how each cat came to the manor, the unknown-victim premise, and Sir Irwin's register entry.",
         "One short paragraph per item — 2 to 5 sentences, 80 words at most. It will be quoted whole and in pieces.",
         "Fact-bearing sentences carry their subject's full name, not a pronoun, so any one of them can be lifted onto a screen alone.",
-        "A fact lives here exactly once, and everywhere else by word-for-word quotation, never paraphrase — so lock spellings before writing: Sirwin, Crooknog, Clawford, LaRue, Lickspittle.",
+        "A fact lives here exactly once, and everywhere else by word-for-word quotation, never paraphrase — so lock spellings before writing: Sirwin, Crookshank, Clawford, LaRue, Lickspittle.",
         "Cat facts must agree with docs/cat-info.md, the canon register: restate for players, never contradict, never extend.",
         "The unknown-victim paragraph is certain a murder occurred and silent about who: no name, no gender, no age, no station, no description. (That exactly one life was taken is public — the night ends with everyone naming the victim — so the singular is fine; who it was is not.)",
         "In-fiction only: no 'player', 'game', 'act', 'screen', or mechanics — and, founding rule, not a whisper about animals speaking."
