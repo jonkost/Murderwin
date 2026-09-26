@@ -604,40 +604,44 @@
       }
     },
     "trailoff": {
-      "what": "Granolia's forget-connectives — small spoken stumbles the runtime splices into her assembled testimony at the exact spot where her one forgotten detail dropped out (her sealed kernels always omit exactly one [POOL] variable; these lines are the audible wobble that papers over the hole). Players meet them wherever she testifies: her Act 2 cat-encounter room, any chaos-testimony slot she draws, and Act 4 when delayed lines resurface. You write the stumble; the sealed side owns the sentence around it — so every trailoff must splice cleanly after ANY sentence.",
+      "what": "Granolia's memory-wobbles — small spoken asides the runtime splices into her assembled testimony at a random sentence boundary. Her sealed kernels are true except for exactly one pool detail she misremembers (decided 26 Sep); these lines teach the room that her memory is a sieve WITHOUT pointing at which detail went wrong — the runtime never places one next to the swapped value. Players meet them wherever she testifies: her Act 2 cat-encounter room, any chaos-testimony slot she draws, and Act 4 when delayed lines resurface. You write the wobble; the sealed side owns the sentences around it — so every line must splice cleanly after ANY sentence.",
       "syntax": [
         "Begin with an em dash '—' or an ellipsis '…' so the line splices as an aside mid-testimony; end with normal terminal punctuation.",
         "15 words maximum, snort included.",
         "Include her snort exactly once, canon spelling *snrk.* — lowercase, wrapped in asterisks, with its own period, as its own little beat.",
-        "First person, her voice, present-tense fumbling — never stage narration, never a narrator's '(she pauses)'.",
-        "The subject is the losing of the thought, never the thought: she admits the gap cheerfully and never fills it with a confident guess — she is honest, just leaky.",
-        "Zero real details: no room, town spot, number, clock hour, or person — anything concrete WILL end up in somebody's journal as the missing fact. If she half-guesses, she must retract it in the same line.",
-        "Category-agnostic: the dropped detail might be a where, a how-long, a how-often, or a who-watched — never name the kind of detail that's missing, or the line only fits one gap.",
-        "No [POOL] tokens and no case nouns: the trailoff replaces a detail; it never contains one."
+        "First person, her voice, present-tense — never stage narration, never a narrator's '(she pauses)'.",
+        "The subject is her memory in general, never a specific fact: she stays cheerfully confident and NEVER corrects, retracts, or second-guesses a detail — a retraction would tell the player which piece is wrong.",
+        "Zero real details: no room, town spot, number, clock hour, or person — anything concrete WILL end up in somebody's journal as a fact.",
+        "Category-agnostic: never name a kind of detail (where, how long, who watched), or the line only fits one slot.",
+        "No [POOL] tokens and no case nouns: the wobble sits between details; it never contains one."
       ],
-      "test": "Say any sentence aloud, then this line — does it sound exactly as if she just dropped whichever detail came next?",
+      "test": "Say any two sentences aloud with this line between them — does it sound like her, warn you that her memory leaks, and give away nothing about which sentence to doubt?",
       "good": [
         {
-          "text": "— and the rest of that thought has wandered. *snrk.* It does that.",
-          "why": "Dash lead-in splices after anything; the subject is the forgetting itself; category-agnostic; canon snort in place."
+          "text": "— that's how I remember it, anyway. *snrk.* Mostly.",
+          "why": "Dash lead-in splices after anything; admits the sieve in general; names no detail and doubts no particular sentence."
         },
         {
-          "text": "…hm. I had it a moment ago. *snrk.* It was delicious, apparently.",
-          "why": "Ellipsis splice, and the register joke (she licks everything) explains the gap while handing over zero facts."
+          "text": "…don't quote me. *snrk.* Actually do, I'm usually right.",
+          "why": "Ellipsis splice, cheerful confidence, and the joke lands on her memory as a whole — zero facts, zero retraction."
         },
         {
-          "text": "— the detail escapes me, which is rude, because I fed it. *snrk.*",
-          "why": "Cheerful, zero malice, zero concrete nouns — the hole is admitted, never papered over with a guess."
+          "text": "— I keep everything I hear. *snrk.* Just not in the order it arrived.",
+          "why": "The register joke (she licks and keeps everything) explains the garble without touching a single case noun."
         }
       ],
       "bad": [
         {
           "text": "— it was the scullery, I think? Or near it. *snrk.*",
-          "why": "Names a real pool room. Breaks the zero-real-details rule — players will journal 'the scullery' as the missing detail, turning her honest gap into a false clue."
+          "why": "Names a real pool room. Breaks the zero-real-details rule — players will journal 'the scullery' as a fact."
+        },
+        {
+          "text": "— no, wait, the other one. *snrk.* Yes, the other one.",
+          "why": "A correction. She never retracts — a retraction tells the player exactly which detail was the wrong one and hands the mechanic away."
         },
         {
           "text": "(She pauses, having lost the thread.)",
-          "why": "Third-person narration. Breaks the first-person voice rule — a trailoff is Granolia speaking, spliceable aloud between her own sentences, never a stage direction."
+          "why": "Third-person narration. Breaks the first-person voice rule — a wobble is Granolia speaking, never a stage direction."
         }
       ]
     },

@@ -2,7 +2,7 @@
 
 **Status:** consolidated 26 Aug 2026 from the Murderwin Mystery Party session. This is the register document — every line of cat dialogue gets written against it.
 
-**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. Still open: whether Granolia's slip is one variable *omitted* (this doc) or one variable *wrong* (CLAUDE.md).
+**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — her testimony is true except for exactly one pool variable, which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
 
 ---
 
@@ -48,7 +48,7 @@ Deliberately four different *shapes* of unreliability, not four dials of the sam
 | **Salem** | **Inverted** — confidently backwards | Is this one of the wrong ones? |
 | **Zimothy** | **Withheld** — accurate but rationed | What is he not telling me? |
 | **Boo** | **Gated** — excellent, if she'll speak | How do I get in? |
-| **Granolia** | **Incomplete** — true but three-quarters | Where do I get the rest? |
+| **Granolia** | **Garbled** — true but one detail is wrong | Which detail? Check it against Irwin. |
 
 None of them is "random." Every cat is *legible* once you understand them — which is the whole pleasure. The middling cat you haven't figured out yet is more dangerous than the liar you have.
 
@@ -109,8 +109,8 @@ She snorts. She breathes heavily. She's fat. She licks everything. She is weird 
 - **Open question:** should the "Grossnola" nickname be canon?
 
 **Behavior and mechanics:**
-- Honest but forgetful. She doesn't mean to lie — she just forgets details, so information arrives incomplete. Not gatekeeping; **you can't buy her affection**.
-- She hands you three-quarters of something — exactly the partial-information engine the core loop runs on. You finish the sentence elsewhere.
+- Honest but forgetful. She doesn't mean to lie — she just misremembers, so exactly one detail in what she tells you is wrong (a room, a time, a count…) and she is cheerfully confident about all of it. Not gatekeeping; **you can't buy her affection**.
+- She hands you the whole story with one wrong piece — the cross-check engine the core loop runs on. You find the bad piece by checking her against someone reliable.
 - She *wants to learn*, so she's close to the knowledgeable roles: **Librarian, Scientist, Professors**, and the **Baker** (she'd love the Baker off the bat).
 - Lives alone in the study — the best-equipped room — so visiting her is a deliberate trip.
 - Earlier "circus runaway / Barnum" concept was scrapped in favor of the nerd.

@@ -64,10 +64,10 @@ HARD RULES:
 3. NPC natures (kernel variants must obey):
    - irwin: plainly, earnestly true.
    - boo: true and precise — the best information in the house.
-   - granolia: true but with EXACTLY ONE placeholder token omitted compared to
-     the other cats' kernels — she forgot that detail; write the sentence so it
-     reads naturally with the gap (trailing off is fine). Her remaining tokens
-     must be a subset of the tokens a truthful kernel carries.
+   - granolia: true, and carrying EXACTLY the same set of placeholder tokens
+     as one of the truthful kernels (irwin/boo/zimothy) — same tokens, same
+     counts, at least one token. The runtime later swaps ONE injected value
+     for a wrong one; you write her as fully confident and fully truthful.
    - zimothy: true but rationed — accurate, minimal, transactional in what it
      covers (not in voice; voice is added elsewhere).
    - salem: confidently WRONG: take a true fact from the other kernels and warp

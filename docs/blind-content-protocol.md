@@ -12,8 +12,9 @@ Node script, run by Jon from the terminal. It:
    - impersonal (Ghost protection: never addressed to anyone, no personal memories)
    - no kernel/document/fragment may contain ANY word from its motive's rhyme line
    - Salem variants must warp a true fact from sibling kernels
-   - Granolia variants must match truth with exactly one [POOL] variable
-     omitted (she trails off / forgets it — incomplete, never wrong)
+   - Granolia variants carry EXACTLY the same [POOL] tokens as a truthful sibling
+     kernel; at runtime one of her injected values is swapped for a different
+     item from the same pool (she misremembers one detail — decided 26 Sep)
    - kernels use [ROOM]/[TIME]/[DURATION]/[COUNT]/[PLACE]/[CROWD] placeholders;
      the runtime injects pool items per seed
 3. Assigns opaque codes (shuffled, no relation to motive order) and writes the
@@ -32,11 +33,6 @@ Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep). It is generate
 the same way, under the same counts-only rules, into `sealed/events/*`. Not built
 yet — the Canon page calls it the single biggest hole.
 
-OPEN (25 Sep): CLAUDE.md now says Granolia is "true with exactly one WRONG
-pool-variable". This doc, docs/cat-info.md and the validator implement one
-OMITTED variable (she forgets it). Jon decides; until then the validator stays
-on omission.
-
 ## Validation — scripts/validate-sealed.mjs
 
 Automated, counts-only. Checks per code:
@@ -45,8 +41,9 @@ Automated, counts-only. Checks per code:
   OTHER rhymes' words is counted as `bannedGlobal` but is ADVISORY only — common
   words recur across 19 rhymes, so zero-tolerance there is infeasible
 - length bounds (kernels ≤ 40 words; documents 40–60; fragments ≤ 15)
-- placeholder integrity (only known [POOL] tokens; Granolia = exactly 1 fewer
-  token than sibling truth kernels)
+- placeholder integrity (only known [POOL] tokens; Granolia = the same token
+  multiset as some sibling truth kernel, at least one token, so the runtime
+  always has something to swap)
 - Salem shares ≥1 concrete noun with a sibling truth kernel (the warped fact)
 - no personal pronouns of address ("you", "your") — impersonality guard
 
@@ -58,8 +55,9 @@ The workshop dashboard renders this. No content ever leaves the function.
 
 Cloud Function `assembleTestimony(caseId, cat, playerCtx)`:
 opener (random from safe pool) + kernel (active motive, that cat, random variant,
-pools injected per case seed; Granolia gets one variable omitted; Salem serves the
-warp variant per his 60% roll) + closer (random from safe pool).
+pools injected per case seed; Granolia gets exactly one injected value swapped for
+another item from the same pool, chosen per case seed so it is stable all night;
+Salem serves the warp variant per his 60% roll) + closer (random from safe pool).
 A failed affection roll never reaches a kernel: the function returns a cat
 deflection line from the safe `refusals` layer instead — in character, funny,
 zero information, no penalty.

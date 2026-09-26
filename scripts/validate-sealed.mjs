@@ -38,7 +38,7 @@ export async function validateAll(db) {
     bannedGlobal: 0,  // uses a word from ANY rhyme (advisory — see protocol doc)
     lengthFails: 0,
     placeholderFails: 0,
-    granoliaFails: 0, // tokens not a sub-multiset of a truth kernel, one short
+    granoliaFails: 0, // token multiset differs from every truth kernel, or has no tokens
     salemFails: 0,    // anchor noun absent from his text or from truth kernels
     impersonalFails: 0,
     pass: false,
@@ -90,13 +90,14 @@ export async function validateAll(db) {
       if (wordCount(f) > 15) report.lengthFails++
     }
 
-    // Granolia: tokens are a sub-multiset of SOME truth kernel's tokens,
-    // with exactly one fewer — omitted, never wrong.
+    // Granolia: her tokens equal SOME truth kernel's token multiset, with at
+    // least one token — the runtime swaps one injected value for a wrong one,
+    // so she needs the same slots as the truth (decided 26 Sep: misremembers).
     const truthTokenSets = TRUTH_CATS.flatMap(c => (kernels[c] ?? []).map(poolTokens))
     for (const g of kernels.granolia ?? []) {
       const gTokens = poolTokens(g)
-      const fits = truthTokenSets.some(t =>
-        t.length - gTokens.length === 1 && isSubMultiset(gTokens, t))
+      const fits = gTokens.length >= 1 && truthTokenSets.some(t =>
+        t.length === gTokens.length && isSubMultiset(gTokens, t))
       if (!fits) report.granoliaFails++
     }
 
