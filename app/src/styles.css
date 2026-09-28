@@ -142,3 +142,13 @@ button { font: inherit; cursor: pointer; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
 .thumbs img { height: 64px; border: 1px solid var(--line); display: block; }
 .upload { font-size: 0.85rem; cursor: pointer; }
+
+/* Assets page (pictures + sounds) */
+.editor-head .count { font-size: 0.85rem; font-weight: normal; color: #6b5d49; margin-left: 0.4rem; }
+.upload-new { display: inline-block; cursor: pointer; font-size: 1rem; padding: 0.7rem 1.2rem; min-height: 2.8rem; }
+.upload-new.busy { opacity: 0.6; }
+.asset-file { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; align-items: center; }
+.asset-file img { height: 96px; max-width: 100%; border: 1px solid var(--line); display: block; }
+.asset-file audio { width: 100%; max-width: 22rem; }
+.asset-file .upload { min-height: 2.4rem; display: inline-flex; align-items: center; }
+.draft-name { flex: 1; font: inherit; font-size: 1rem; border: 1px dashed var(--line); background: #faf4e6; color: var(--ink); padding: 0.5rem; min-height: 2.6rem; }

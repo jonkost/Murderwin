@@ -35,7 +35,8 @@ function areaRows(area, spec, items) {
   const live = items.filter(i => !i.deleted)
   if (spec.checklist) {
     const done = live.filter(i => i.done).length
-    return [{ key: area, label: spec.label, count: done, goal: live.length, suffix: ' done', to: `/edit/${area}` }]
+    const to = spec.upload ? `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}` : `/edit/${area}`
+    return [{ key: area, label: spec.label, count: done, goal: live.length, suffix: ' done', to }]
   }
   if (spec.tabs && PER_TAB_ROWS.includes(area)) {
     const tabDef = TAB_KINDS[spec.tabs]

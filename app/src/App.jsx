@@ -6,6 +6,7 @@ import { ensureSeeded } from './lib/store'
 import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
 import Stationery from './pages/Stationery'
+import Assets from './pages/Assets'
 
 function SignInGate() {
   const [err, setErr] = useState(null)
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/edit/:area" element={<Editor />} />
         <Route path="/stationery" element={<Stationery />} />
+        <Route path="/assets" element={<Assets />} />
       </Routes>
     </div>
   )

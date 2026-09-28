@@ -34,6 +34,20 @@ up when you're back online.
 **Stationery tracker** — the seven document designs, each with a done tick, a notes
 box and a place to attach reference images.
 
+**Assets** — every picture and sound the night needs, on two tabs: Pictures and
+Sounds. Each one has a name and a done tick.
+- "+ Upload pictures" (or sounds) adds a new line for each file you pick, named
+  after the file. Rename it any time.
+- You can also type the name of something you still need, before the file exists.
+  "+ Add the picture" puts the file on it later.
+- Pictures show a small preview; sounds get a play button.
+- "Replace file" swaps in a new version. The old one is kept, never thrown away.
+- Uploading needs a connection. Names and ticks still save offline.
+
+**Filler messages** (under Player screens) — what an ordinary player's phone shows
+while the Murderer and the Ghost secretly pick an event. Each message ends with
+"Button: …" so it takes as long as a real choice. Nothing in them is about the case.
+
 ## Promises the workshop makes (learned the hard way)
 
 1. **You pick what to work on.** Nothing random, ever.
@@ -61,11 +75,16 @@ Data model (Firestore):
   - Cat voices: openers (8×cat), closers (8×cat), refusals = the cat deflection
     lines (8×cat; the Firestore key predates the name), smalltalk (8×cat),
     trailoffs (8, Granolia only), status_lines (3×cat)
-  - World & cast: npc_cards (5), bios (10), lore (4)
-  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12)
+  - World & cast: npc_cards (5), bios (14), lore (4)
+  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12),
+    filler (20; innocent-screen beats for event windows, lint wants `Button:`)
   - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7)
   - Show night: act_scripts (3×act), ops_docs (12)
-  - Assets (checklists, items carry `done`): art_assets, av_assets
+  - Assets (checklists, items carry `done`): art_assets (Pictures), av_assets
+    (Sounds). Edited on `/assets`; items may carry `file: {path, url, name, type, size}`.
+    Uploads go to Storage at `assets/{area}/{itemId}/{ts}-{name}`; a replace writes
+    a new path, so old files survive (storage.rules allow staff read/write, no delete
+    guard yet).
   Areas, tasks and decisions added after the first seed import are created by
   additive migrations (`ADDITIONS` in `app/src/lib/content.js`) guarded by
   `meta/migrations` — additions only, existing data never rewritten.

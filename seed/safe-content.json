@@ -1076,16 +1076,16 @@
       ]
     },
     "art_asset": {
-      "what": "Every piece of art the night needs, tracked as a checklist. Check items off as they're finished; add notes or new items freely. Reference uploads land here when the stationery tracker ships.",
-      "test": "If every box were checked, would every screen at the party look finished?",
+      "what": "Every picture the night needs. Each one has a name and a done box. Upload the file when you have it, tick the box when it's party-ready. You can list a picture by name before it exists, so nothing gets forgotten.",
+      "test": "If every box were ticked, would every screen at the party look finished?",
       "examples": [
         "Portrait — Miss Boo LaRue (flapper, mid-decision about you)",
         "Kiosk chrome — idle state"
       ]
     },
     "av_asset": {
-      "what": "Every sound and moving image, tracked as a checklist. Canon rule: audio is generic atmosphere ONLY — chimes, crackle, thunder — never spoken information. Wordless by design.",
-      "test": "Could any clip leak information if played at the wrong moment? (It must not be able to.)",
+      "what": "Every sound the night needs. Each one has a name and a done box. Upload the file when you have it, tick the box when it's party-ready. The rule for sounds: atmosphere only (chimes, crackle, thunder), never a voice saying anything. The cats never speak aloud.",
+      "test": "Could this sound give anything away if it played at the wrong moment? It must not be able to.",
       "examples": [
         "Blackout sting (power-cut)",
         "Echo broadcast bed — static, tuning squeal, attention chime"
@@ -1162,6 +1162,43 @@
         {
           "text": "Fresh strawberry — taste: sweet",
           "why": "Perishable. It spoils or gets eaten, which destroys its own clue. Taste items must be wrapped and shelf-stable."
+        }
+      ]
+    },
+    "filler": {
+      "what": "What an ordinary player's phone shows while the Murderer and the Ghost secretly pick an event in Acts 2, 4 and 6. Every phone lights up at the same moment, so these messages are the cover: if the innocent screens looked different, or finished faster, anyone could spot who holds a role. So each message has to take about as long as a real choice, and it has to ask the player to do something, not just read. It should still be worth having: a small nudge that helps someone play.",
+      "syntax": [
+        "One message per line, then the button words, like this: <message, 2–3 sentences>. Button: <what the button says>.",
+        "The word 'Button:' appears literally. Every message needs one, because a message you only read finishes too fast and becomes a tell.",
+        "About 25–50 words before the button, so it reads as long as a real event choice.",
+        "Good kinds: a stray cat thought in that cat's voice, a nudge to look back over clues you already have, a reminder to go charm a cat, a small prompt about your bag (a sense to notice, a question to ask someone).",
+        "No facts about the case. Nothing about who, why or where: those come only from the game. A filler message is safe to show anyone, on any night, whatever happened.",
+        "Never mention roles, events, or that anything secret is happening right now.",
+        "Talk to the player as 'you'. Plain words; an 11-year-old and a 70-year-old should both get it in one read."
+      ],
+      "test": "Could this message appear on every phone in the room, on any night, without helping or hurting anyone's guess about the case?",
+      "good": [
+        {
+          "text": "Granolia is watching you from the study doorway as if you owe her a lesson. Somebody here has not spoken to her all evening. Who have you not asked a single question yet? Button: I'll go and find them",
+          "why": "A cat thought plus a real, useful nudge, and the button makes the player do something."
+        },
+        {
+          "text": "Open your bag and pick out the one thing you would never want to smell twice. Keep it in mind: somebody tonight may ask about a smell. Button: Done, I've picked one",
+          "why": "A bag prompt that says nothing about the case and fills the time naturally."
+        }
+      ],
+      "bad": [
+        {
+          "text": "Nothing to see here. Button: OK",
+          "why": "Far too short. A two-second screen next to a twenty-second choice gives the game away."
+        },
+        {
+          "text": "Salem saw someone near the study at nine. Button: Noted",
+          "why": "That's a fact about the case. Filler never carries case information."
+        },
+        {
+          "text": "The hidden players are choosing now. Sit tight. Button: OK",
+          "why": "Never say something secret is happening. The whole point is that nothing looks different."
         }
       ]
     }

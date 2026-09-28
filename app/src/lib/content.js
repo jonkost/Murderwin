@@ -30,13 +30,15 @@ export const AREAS = {
   status_lines: { label: 'Affection status lines', group: 'Cat voices', tabs: 'cats', guide: 'status_line', goalPerTab: 3 },
   // — World & cast —
   npc_cards: { label: 'NPC intro cards', group: 'World & cast', tabs: null, guide: 'npc_card', goal: 5 },
-  bios: { label: 'Player character bios', group: 'World & cast', tabs: null, guide: 'bio', goal: 10 },
+  bios: { label: 'Player character bios', group: 'World & cast', tabs: null, guide: 'bio', goal: 14 },
   lore: { label: 'Canon & lore', group: 'World & cast', tabs: null, guide: 'lore', goal: 4 },
   // — Player screens —
   rules_text: { label: 'Rulebook sections', group: 'Player screens', tabs: null, guide: 'rules', goal: 10 },
   ui_copy: { label: 'UI copy & system messages', group: 'Player screens', tabs: null, guide: 'ui_copy', goal: 24 },
   role_cards: { label: 'Role cards & briefings', group: 'Player screens', tabs: null, guide: 'role_card', goal: 6 },
   event_cards: { label: 'Event cards', group: 'Player screens', tabs: null, guide: 'event_card', goal: 12 },
+  // What innocent phones show while the two roles pick events (Acts 2, 4, 6).
+  filler: { label: 'Filler messages', group: 'Player screens', tabs: null, guide: 'filler', goal: 20 },
   // — Frames & pools —
   pools: { label: 'Variable pools', group: 'Frames & pools', tabs: 'pools', goalPerTab: 10 },
   echo_frames: { label: 'Echo frames', group: 'Frames & pools', tabs: null, guide: 'echo_frame', goal: 8 },
@@ -49,9 +51,9 @@ export const AREAS = {
   // — Show night —
   act_scripts: { label: 'Act scripts & banners', group: 'Show night', tabs: 'acts', guide: 'act_script', goalPerTab: 3 },
   ops_docs: { label: 'Host & ops documents', group: 'Show night', tabs: null, guide: 'ops_doc', goal: 12 },
-  // — Assets (checklists) —
-  art_assets: { label: 'Art assets', group: 'Assets', tabs: null, guide: 'art_asset', checklist: true },
-  av_assets: { label: 'Audio / video assets', group: 'Assets', tabs: null, guide: 'av_asset', checklist: true },
+  // — Assets (checklists with file uploads; edited on the Assets page) —
+  art_assets: { label: 'Pictures', group: 'Assets', tabs: null, guide: 'art_asset', checklist: true, upload: 'image' },
+  av_assets: { label: 'Sounds', group: 'Assets', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio' },
 }
 
 export const AREA_GROUPS = ['Cat voices', 'World & cast', 'Player screens', 'Frames & pools', 'Bags', 'Show night', 'Assets']
@@ -127,6 +129,12 @@ export function lintItem(area, text) {
     case 'bag_items':
       return /—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)
         ? null : 'Format: Item — sense: property (e.g. “Mint tea bag — smell: minty”)'
+    case 'filler': {
+      if (!/\sButton:\s*\S/.test(text)) return 'End with “Button: …” — every filler message needs something to tap.'
+      const words = text.split('Button:')[0].trim().split(/\s+/).length
+      if (words < 25) return `Only ${words} words before the button — aim for 25–50 so it takes as long as a real choice.`
+      return null
+    }
     case 'bios':
       return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
     default:
@@ -236,5 +244,12 @@ export const ADDITIONS = [
       { order: 26, status: 'todo', title: 'Blind bag packer', detail: 'Claude builds a tool that decides which items go in which numbered bag, without Jon or Susan ever seeing it, and saves the packing where only Jenna can see it. It checks every bag has at least two clueable properties and every property is in two or three bags, never one.' },
       { order: 27, status: 'todo', title: 'Jenna’s Steward view', detail: 'A page only Jenna can open: the packing list for the bags, and later the secret content to read and edit. Needs Jon’s approval to change the security rules.' },
     ],
+  },
+  {
+    // 28 Sep: filler messages — the innocent screens during event windows.
+    id: '2026-09-28-filler',
+    // (The existing task card "Innocent-beat content for Acts 2, 4 and 6"
+    // covers writing them.)
+    areaDocs: { filler: { items: [] } },
   },
 ]

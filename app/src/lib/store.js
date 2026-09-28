@@ -156,13 +156,19 @@ export function subscribeLatestValidation(onData, onError) {
     onError)
 }
 
-// ---- Reference image upload (stationery tracker) ----
-export async function uploadReference(itemId, file) {
+// ---- File uploads (stationery references, the Assets page) ----
+// Every upload gets a fresh path, so replacing a file never overwrites the
+// old one — it stays in storage and in workshop_history.
+export async function uploadFile(folder, itemId, file) {
   const safeName = file.name.replace(/[^\w.-]+/g, '_')
-  const path = `stationery/${itemId}/${Date.now()}-${safeName}`
-  const snap = await uploadBytes(storageRef(storage, path), file)
+  const path = `${folder}/${itemId}/${Date.now()}-${safeName}`
+  const snap = await uploadBytes(storageRef(storage, path), file, { contentType: file.type })
   const url = await getDownloadURL(snap.ref)
-  return { path, url, name: file.name }
+  return { path, url, name: file.name, type: file.type, size: file.size }
+}
+
+export function uploadReference(itemId, file) {
+  return uploadFile('stationery', itemId, file)
 }
 
 // Additive-only migrations, guarded by meta/migrations. Each entry runs once
