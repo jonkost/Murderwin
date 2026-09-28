@@ -40,6 +40,23 @@ The rules Claude writes to:
   item from the same pool — she misremembers one detail. Salem: confidently wrong,
   twisting a true fact from the others so a careful player can catch it.
 
+## Who writes and who edits
+
+Decided 28 September. You, your wife and Claude draft; Jenna, the Steward,
+edits everything.
+
+- **You draft the safe lines only**: openers, closers, deflection lines, pools,
+  echo frames, innocent beats. Anything you draft you would recognise on the
+  night, so the secrets are never yours to draft.
+- **Your wife and Claude draft the secrets.** Claude's first drafts come from the
+  generator described above.
+- **Jenna edits all of it**, from wherever they are, in a page only their account
+  can open. They never share their screen with you, and they tell you only
+  "done" or "needs more". That page isn't built yet, and making the secrets again
+  must never wipe Jenna's edits.
+- **Jenna also puts the bags together**, since the bags are built from the
+  secrets.
+
 ## The checks
 
 After every run the secrets are checked automatically: every set complete, no

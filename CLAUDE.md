@@ -30,13 +30,35 @@ Content is divided into two classes:
 - Any per-game generated case (murderer, victim, active motive, clue placement)
 - Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels)
 
+### The Steward exception (decided by Jon, 28 Sep 2026)
+The Steward is Jenna (they/them), a REMOTE NON-PLAYER who never visits the
+house. Their job is editing content. They may see and edit EVERYTHING, sealed
+content included, because Jon cannot.
+
+Content workflow: Jon, Jon's wife and Claude draft; Jenna edits.
+- Jon drafts SAFE content only. Anything he drafts he will recognise on the
+  night, so he never drafts sealed content — decline and cite Rule 1 if asked.
+- Jon's wife and Claude draft sealed content. Claude's drafts come from the
+  generator. Anyone who drafts sealed content knows the answers.
+- Jenna edits both, and reports to Jon only "done" or "needs more", never content.
+- Jenna also puts the bags together (the bag system; its details are not in
+  the repo yet — they live in Jon's claude.ai chats).
+
+Build requirements (none built yet):
+- A Steward-only view, by verified Google email, to read and edit `sealed/*`.
+  It never loads for Jon's account. Changing the security rules needs Jon's
+  explicit approval.
+- Regenerating sealed content must never silently overwrite Jenna's edits.
+- Claude Code still never prints, logs or files sealed content. The Steward
+  view is built and debugged blind, exactly like the generator.
+
 ### Enforcement — infrastructure, not discipline
 1. Sealed content lives ONLY in Firestore collections `sealed/*` and `cases/*`.
    It is NEVER committed to this repo — not as JSON, not in seeds, not in fixtures,
    not in test snapshots. `.gitignore` guards known paths; you guard everything else.
 2. Firestore security rules deny all client reads of `sealed/*`. Only Cloud
-   Functions (Admin SDK) may read it, and only to assemble player-facing payloads
-   at game time.
+   Functions (Admin SDK) may read it, to assemble player-facing payloads at game
+   time — and, once built, for the Steward's view (see above).
 3. Generation of sealed content happens via `scripts/generate-sealed.mjs`, which
    calls the Anthropic API and writes straight to Firestore. Its stdout prints
    COUNTS AND PASS/FAIL ONLY. It never prints, logs, or files content.

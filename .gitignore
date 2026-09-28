@@ -28,3 +28,6 @@ murderwin-handoff.zip
 .env
 .env.*
 *.key
+
+# Jon's exported claude.ai chats and file cards — for Claude Code to read, never committed
+chats/
