@@ -1,88 +1,110 @@
-# Blind Content Protocol — sealed generation & validation
+# The secret content — how it gets made without you seeing it
 
-How sealed content gets made, checked, and used without Jon ever seeing it.
-Companion to the SEAL section of CLAUDE.md.
+The game's secrets are: what each cat actually reveals about each motive, the
+documents that get overlaid on the stationery, the news fragments in the echoes,
+and (later) the event copy for Acts 2, 4 and 6. Claude writes all of it. It goes
+straight into the game's database. It never lands in a file on your Mac, never in
+this folder, never on your screen, never in a chat.
 
-## Generation — scripts/generate-sealed.mjs
+This is what lets you host, build and still play.
 
-Node script, run by Jon from the terminal. It:
-1. Reads SAFE inputs only: seed/motives.json, safe_content (voice layers, pools).
-2. Calls the Anthropic API per motive to write: 15 kernels (3 variants × 5 cats),
-   3 document texts, 3 echo fragments. Prompts encode the voice rules:
-   - impersonal (Ghost protection: never addressed to anyone, no personal memories)
-   - no kernel/document/fragment may contain ANY word from its motive's rhyme line
-   - Salem variants must warp a true fact from sibling kernels
-   - Granolia variants carry EXACTLY the same [POOL] tokens as a truthful sibling
-     kernel; at runtime one of her injected values is swapped for a different
-     item from the same pool (she misremembers one detail — decided 26 Sep)
-   - kernels use [ROOM]/[TIME]/[DURATION]/[COUNT]/[PLACE]/[CROWD] placeholders;
-     the runtime injects pool items per seed
-3. Assigns opaque codes (shuffled, no relation to motive order) and writes the
-   manifest + content to Firestore `sealed/*` via Admin SDK.
-4. Prints ONLY: per-code counts, validation pass/fail totals, and a run hash.
-   Any error output must redact content (log doc paths + lengths, never text).
-   ORDER is information too: motives are processed in a crypto-shuffled order,
-   progress lines carry counters only (never a code), and per-code count lines
-   print once at the end sorted by code string — a terminal transcript must
-   never let line order reconstruct the code→motive manifest.
+## What you do
 
-Re-running regenerates fresh content (new details/phrasings) — safe and encouraged
-close to party day so nothing half-remembered can match.
+1. Finish the safe content in the workshop first: openers, closers, deflection
+   lines, the six pools, the echo frames. The secrets are written to fit those.
+2. When that's ready, Claude Code gives you one command to run in the terminal.
+   It takes a few minutes and needs an internet connection.
+3. It prints numbers only: how many sets were made, and PASS or FAIL. Nothing else.
+   The workshop home then shows "19 of 19 motive sets complete — checked ✓".
+4. If it says FAIL, run it again. Every run throws the old secrets away and writes
+   fresh ones with different details. Running it again the week of the party is a
+   good idea: nothing you might half-remember can match what's live.
 
-Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep). It is generated
-the same way, under the same counts-only rules, into `sealed/events/*`. Not built
-yet — the Canon page calls it the single biggest hole.
+## What the secrets are, in words
 
-## Validation — scripts/validate-sealed.mjs
+For each of the 19 motives:
+- **15 cat lines** — 3 versions for each of the 5 cats. This is the middle of a
+  testimony; at game time the game puts one of your openers in front of it and one
+  of your closers after it. Where a line needs a room, a time, a count and so on,
+  it holds a blank like [ROOM], filled from your pools.
+- **3 documents** — the biggest tell for that motive: a receipt, a telegram, a
+  notice… 40 to 60 words, one word printed large, one handwritten annotation.
+- **3 news fragments** — the juicy phrase that fills the ███ in an echo frame.
 
-Automated, counts-only. Checks per code:
-- full coverage (15 kernels, 3 docs, 3 fragments)
-- banned-word check vs. that code's motive rhyme (gates the pass); overlap with
-  OTHER rhymes' words is counted as `bannedGlobal` but is ADVISORY only — common
-  words recur across 19 rhymes, so zero-tolerance there is infeasible
+The rules Claude writes to:
+- Never addressed to anyone. No "you", no names, no professions. Witnesses saw
+  events, not people. (This protects the Ghost.)
+- Never a word from that motive's rhyme, or the riddle solves itself.
+- Irwin: plainly true. Boo: true and precise. Zimothy: true but minimal.
+  Granolia: true, but at game time one of her blanks is filled with the wrong
+  item from the same pool — she misremembers one detail. Salem: confidently wrong,
+  twisting a true fact from the others so a careful player can catch it.
+
+## The checks
+
+After every run the secrets are checked automatically: every set complete, no
+rhyme words, right lengths, blanks in the right shape, Granolia's blanks matching
+the truthful lines so there's always one to swap, Salem's twist catchable, nothing
+that says "you". You only ever see the counts. If something fails, the fix is
+always "run it again".
+
+## Two ways you could get spoiled by accident
+
+1. **The rulebook tutorial example** may only be built from motive #8 (already
+   spoiled for you) or from a made-up motive that isn't one of the 19. Never a
+   worked example against a real motive.
+2. **Rehearsals and screen tests** never show real secret text in front of you.
+   They run in a dummy mode, or before the real case exists. If a rehearsal ever
+   shows real content, the secrets get regenerated afterwards — the tooling should
+   force that, not your memory.
+
+## The canary
+
+One motive's set — chosen at random, never named — can be sent to your canary to
+read for quality: is it funny, does it hold together. One set out of 19 tells them
+nothing about the party. The canary is chosen; this waits on the secrets existing.
+
+---
+
+## For Claude Code (technical appendix)
+
+Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal):
+1. Reads SAFE inputs only: `seed/motives.json`, safe_content (voice layers, pools).
+2. Calls the Anthropic API per motive for 15 kernels (3 variants × 5 cats), 3
+   document texts, 3 echo fragments. Prompt rules: impersonal; no word from the
+   motive's rhyme; Salem variants warp a true fact from sibling kernels and return
+   an `anchor` noun; Granolia variants carry EXACTLY the same [POOL] token multiset
+   as a truthful sibling kernel (decided 26 Sep: she misremembers — the runtime
+   swaps one injected value for another item from the same pool, chosen per case
+   seed so it is stable all night); kernels use [ROOM]/[TIME]/[DURATION]/[COUNT]/
+   [PLACE]/[CROWD]; documents and fragments carry no placeholders.
+3. Assigns opaque codes (crypto-shuffled, unrelated to motive order) and writes
+   manifest + content to Firestore `sealed/*` via Admin SDK. Clears old docs first.
+4. Prints ONLY per-code counts, pass/fail totals and a run hash. Errors are
+   redacted to type/code/length. ORDER is information: motives are processed in a
+   crypto-shuffled order, progress lines carry counters only, per-code count lines
+   print once at the end sorted by code string.
+
+Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
+same counts-only rules, into `sealed/events/*`. Not built yet.
+
+Validation — `scripts/validate-sealed.mjs`, counts-only, per code:
+- coverage (15 kernels, 3 docs, 3 fragments)
+- banned words vs. own rhyme (gates the pass); overlap with OTHER rhymes counted
+  as `bannedGlobal`, advisory only — common words recur across 19 rhymes
 - length bounds (kernels ≤ 40 words; documents 40–60; fragments ≤ 15)
-- placeholder integrity (only known [POOL] tokens; Granolia = the same token
-  multiset as some sibling truth kernel, at least one token, so the runtime
-  always has something to swap)
-- Salem shares ≥1 concrete noun with a sibling truth kernel (the warped fact)
-- no personal pronouns of address ("you", "your") — impersonality guard
+- placeholder integrity (only canonical tokens; Granolia = same token multiset as
+  some truth kernel, ≥ 1 token)
+- Salem's declared anchor appears verbatim in his text and in a truth kernel
+- impersonality guard (no you/your)
+Writes `{codes, complete, banned, bannedGlobal, lengthFails, placeholderFails,
+granoliaFails, salemFails, impersonalFails, pass}` to `validation_reports`.
 
-Writes an aggregate report to `validation_reports` (client-readable):
-`{codes: 19, complete: 19, banned: 0, lengthFails: 0, ... , pass: true}`.
-The workshop dashboard renders this. No content ever leaves the function.
-
-## Runtime use
-
-Cloud Function `assembleTestimony(caseId, cat, playerCtx)`:
-opener (random from safe pool) + kernel (active motive, that cat, random variant,
-pools injected per case seed; Granolia gets exactly one injected value swapped for
-another item from the same pool, chosen per case seed so it is stable all night;
-Salem serves the warp variant per his 60% roll) + closer (random from safe pool).
-A failed affection roll never reaches a kernel: the function returns a cat
-deflection line from the safe `refusals` layer instead — in character, funny,
-zero information, no penalty.
-Client receives only the final assembled string. Same pattern for documents
-(template id + overlaid text) and echoes (frame + fragment).
-
-## Seal-safe ops constraints
-
-Two places where party prep could pierce the seal by accident:
-
-1. **The rulebook tutorial example** may only ever be built from motive #8
-   (the burned exception, if promoted) or from a wholly invented motive that
-   appears nowhere in seed/motives.json. Never a fresh worked example against
-   any other live motive — a clue chain derived from a real rhyme can converge
-   with the blind-generated kernels for that rhyme.
-2. **Rehearsals and tech checks** must never render sealed-derived text in
-   front of Jon. Cue and kiosk tests run in a dummy/placeholder mode, or
-   BEFORE the real case is generated; kiosk verification asserts idle/chrome
-   states only. If a rehearsal ever exercises real content, regeneration
-   afterward is mandatory and should be enforced by the tooling (the rehearsal
-   mode itself triggers regen), not by memory.
-
-## Human canary (optional, recommended)
-One coded set can be exported by a Cloud Function to a share link for a trusted
-NON-PLAYER to review for quality ("is this funny and coherent?"). The exporter
-picks the code at random; the link never shows the manifest. One set out of 19
-tells the canary nothing about the party. Jon has already chosen the canary;
-the hand-off waits on sealed content existing.
+Runtime — Cloud Function `assembleTestimony(caseId, cat, playerCtx)`: opener
+(random, safe) + kernel (active motive, that cat, random variant, pools injected
+per case seed; Granolia gets exactly one value swapped; Salem serves the warp
+variant per his 60% roll) + closer (random, safe). A failed affection roll never
+reaches a kernel: return a deflection line from the safe `refusals` layer. Client
+receives only the final string. Same pattern for documents (template id + overlaid
+text) and echoes (frame + fragment). Canary export: a Function picks a code at
+random and shares that set by link; the link never shows the manifest.

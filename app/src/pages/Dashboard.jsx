@@ -19,6 +19,16 @@ function Row({ label, count, goal, to, suffix }) {
 // Per-tab breakdown rows for the founding layers the spec calls out
 // (openers/closers per cat, pools per pool); other tabbed areas get one
 // row — their editor tabs carry the breakdown.
+// Plain-language names for the validator's counts.
+const ISSUE_LABELS = {
+  banned: 'rhyme words leaked',
+  lengthFails: 'wrong length',
+  placeholderFails: 'blanks in the wrong shape',
+  granoliaFails: 'Granolia’s blanks don’t match',
+  salemFails: 'Salem’s twist can’t be caught',
+  impersonalFails: 'says “you”',
+}
+
 const PER_TAB_ROWS = ['openers', 'closers', 'refusals', 'pools']
 
 function areaRows(area, spec, items) {
@@ -67,25 +77,25 @@ export default function Dashboard() {
       <section className="panel">
         <h2>Sealed coverage</h2>
         <div className="prow static">
-          <span className="plabel">Kernels · documents · echoes</span>
+          <span className="plabel">Secret cat lines · documents · echoes</span>
           <span className="pcount">
             {validation === null
-              ? 'no validator report yet'
-              : `${validation.complete}/${validation.codes} codes complete — ${validation.pass ? 'validated ✓' : 'FAILING'}`}
+              ? 'not generated yet'
+              : `${validation.complete} of ${validation.codes} motive sets complete — ${validation.pass ? 'checked ✓' : 'needs a re-run'}`}
           </span>
         </div>
         {validation !== null && !validation.pass && (
           <p className="hint">
-            Aggregate issues: {['banned', 'lengthFails', 'placeholderFails', 'granoliaFails', 'salemFails', 'impersonalFails']
-              .filter(k => validation[k] > 0)
-              .map(k => `${k} ${validation[k]}`)
-              .join(' · ') || 'coverage incomplete'}. Re-run generation.
+            What went wrong (counts only): {Object.entries(ISSUE_LABELS)
+              .filter(([k]) => validation[k] > 0)
+              .map(([k, label]) => `${label} ×${validation[k]}`)
+              .join(' · ') || 'some sets are incomplete'}. Ask Claude Code to run the generator again.
           </p>
         )}
         {validation !== null && validation.bannedGlobal > 0 && (
           <p className="hint">
-            Advisory: {validation.bannedGlobal} texts share a word with some
-            other motive's rhyme (doesn't gate the pass).
+            Just so you know: {validation.bannedGlobal} lines share a word with a
+            different motive's rhyme. That is allowed.
           </p>
         )}
       </section>

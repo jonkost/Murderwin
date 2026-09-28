@@ -168,13 +168,13 @@
   ],
   "guides": {
     "opener": {
-      "what": "The first sentence of every cat testimony — pure personality, zero facts. At game time the runtime glues OPENER + sealed KERNEL + CLOSER into one speech, so any opener you write can land in front of any secret in the house. Players meet these mainly in the Act 2 solo cat encounter (four cats, four rooms) and again in Act 4 when delayed testimony resurfaces in pairs.",
+      "what": "The first sentence of every cat testimony — pure personality, zero facts. At game time the game glues OPENER + secret MIDDLE + CLOSER into one speech, so any opener you write can land in front of any secret in the house. Players meet these mainly in the Act 2 solo cat encounter (four cats, four rooms) and again in Act 4 when delayed testimony resurfaces in pairs.",
       "syntax": [
-        "One or two short sentences, 15 words maximum — it sits above the kernel, not instead of it.",
-        "First person, speaking to a single visitor. 'You' is welcome here — only sealed kernels ban it.",
+        "One or two short sentences, 15 words maximum — it sits above the secret middle, not instead of it.",
+        "First person, speaking to a single visitor. 'You' is welcome here — only secret middles ban it.",
         "Zero information: no rooms, times, names, objects, numbers, or events. If a noun could be mistaken for evidence, cut it.",
         "End where the fact would begin — a lead-in, a command ('Sit.'), or a hard stop. A question is fine only if it's rhetorical.",
-        "Plain prose only: no [BRACKET] tokens ever — those live inside sealed kernels, never in voice layers.",
+        "Plain prose only: no square-bracket blanks like [ROOM] ever — those live inside secret middles, never in voice layers.",
         "Never remark that a talking animal is unusual, and never write animal sounds — no 'meow', no purring described. Granolia's *snrk* is the one licensed tic.",
         "Write in the tab's voice so hard that the line could not sit in any other cat's tab."
       ],
@@ -182,7 +182,7 @@
       "good": [
         {
           "text": "I did a very good job of noticing something. Are you ready?",
-          "why": "Pure Irwin: proud of the noticing, none of the noticed. Ends by handing the stage to whatever the kernel says."
+          "why": "Pure Irwin: proud of the noticing, none of the noticed. Ends by handing the stage to whatever the secret middle says."
         },
         {
           "text": "Consider this a professional courtesy. The first consultation is complimentary.",
@@ -196,7 +196,7 @@
       "bad": [
         {
           "text": "I heard raised voices in the parlour around teatime.",
-          "why": "Breaks the zero-information rule: a place and a time are kernel territory, and they would collide with the pool values injected right beside them."
+          "why": "Breaks the zero-information rule: a place and a time are secret middle territory, and they would collide with the pool values injected right beside them."
         },
         {
           "text": "Odd, isn't it — a cat holding forth? And yet here I am.",
@@ -207,19 +207,19 @@
         "irwin": "The dog. Earnest, incapable of lying, overjoyed to be consulted. His openers wag: eager, guileless, a little too proud of having noticed something.",
         "boo": "Guarded glamour, not snobbery — an alley cat who became a society lady. If she is speaking at all you have earned it, and she still makes it cost: clipped lines, two to six words is her natural length.",
         "granolia": "The snorting study nerd, honest and entirely without malice. Delighted anyone came to the study at all — chatty, confiding, already apologizing for her memory.",
-        "zimothy": "The old family solicitor: transactional, itemized, everything on the clock. His openers present what follows as a service being rendered — brevity is free, the rest is billed.",
+        "zimothy": "The old family solicitor: transactional, itemized, everything on the clock. His openers present what follows as a service being provided — brevity is free, the rest is billed.",
         "salem": "The long-time groundskeeper who mutters AT you, not with you. Serenely confident; treats being consulted as overdue recognition of the only competent investigator in the house."
       }
     },
     "closer": {
-      "what": "The last sentence of a testimony — the sign-off after the information lands. The runtime picks any closer to follow any kernel, so the line must react to 'what I just said' without knowing what it was. Players see it at the bottom of every Act 2 cat encounter and on any testimony that resurfaces in Act 4.",
+      "what": "The last sentence of a testimony — the sign-off after the information lands. The game picks any closer to follow any secret middle, so the line must react to 'what I just said' without knowing what it was. Players see it at the bottom of every Act 2 cat encounter and on any testimony that resurfaces in Act 4.",
       "syntax": [
         "16 words maximum — one or two sentences, or a chain of clipped fragments. Shorter lands harder.",
         "Refer to what was said only by pronoun — 'that', 'it', 'what I know'. Never characterize it ('about the silver' is out).",
-        "Add nothing: no new place, time, name, number, or object after the kernel has landed.",
+        "Add nothing: no new place, time, name, number, or object after the secret middle has landed.",
         "Keep the cat's relationship to truth intact: Salem never doubts himself, Irwin never hedges, Zimothy never hands over a freebie, Granolia never turns sharp.",
         "Close the exchange — dismissal, deflection, running gag, or mic drop. The player should feel it is time to walk elsewhere.",
-        "Plain prose, no [BRACKET] tokens; no remarks about talking; no written animal sounds (no 'meow', no purring) — Granolia's *snrk* excepted."
+        "Plain prose, no square-bracket blanks like [ROOM]; no remarks about talking; no written animal sounds (no 'meow', no purring) — Granolia's *snrk* excepted."
       ],
       "test": "Would this land just as well after ANY secret — without hinting which one it was?",
       "good": [
@@ -239,7 +239,7 @@
       "bad": [
         {
           "text": "So now you know the business with the missing candlesticks.",
-          "why": "Breaks the pronoun-only rule: it characterizes the content — and invents a specific that will contradict whatever kernel it lands after."
+          "why": "Breaks the pronoun-only rule: it characterizes the content — and invents a specific that will contradict whatever secret middle it lands after."
         },
         {
           "text": "Although — hm. I may have that backwards.",
@@ -250,15 +250,15 @@
         "irwin": "Signs off like a dog relieved of a burden — proud, affectionate, may offer himself for petting. He can never hedge, retract, or wink.",
         "boo": "She exits first, always. Short dismissals that end the audience and revoke the intimacy she just allowed. Six words is her sweet spot; ten is her ceiling.",
         "granolia": "Warm, leaky sign-offs: swears a secrecy she plainly won't keep, cheerfully doubts her own memory. Her self-doubt is charming, never alarming — and never an admission she was wrong.",
-        "zimothy": "Closes like an invoice: files it, bills it, ends the appointment. He may imply more exists at a price — never what the more is.",
+        "zimothy": "Closes like an invoice: files it, bills it, ends the gameointment. He may imply more exists at a price — never what the more is.",
         "salem": "The mic drop. Certainty escalates as he exits — he dares you to verify, wonders nothing, concedes less."
       }
     },
     "echo_frame": {
-      "what": "An echo is the night's news broadcast: one wire-service snippet that surfaces as text on a room kiosk, announced by a wordless static-and-chime cue. Each case carries a single sealed fragment — a juicy phrase of fifteen words or fewer — and at runtime it drops into your frame's ███. The seed decides which kiosk and when, normally amid the dispersed sleuthing of Acts 2 and 4, and event cards can delay it an act — so your frame must play anywhere, anytime.",
+      "what": "An echo is the night's news broadcast: one wire-service snippet that surfaces as text on a room kiosk, announced by a wordless static-and-chime cue. Each case carries a single sealed fragment — a juicy phrase of fifteen words or fewer — and at game time it drops into your frame's ███. The seed decides which kiosk and when, normally amid the dispersed sleuthing of Acts 2 and 4, and event cards can delay it an act — so your frame must play anywhere, anytime.",
       "syntax": [
         "Begin AND end with a literal three-dot ellipsis \"...\" — the room tunes in mid-broadcast and loses the signal after.",
-        "Exactly one ███ (three █ block characters). The sealed fragment replaces it at runtime; a frame with zero slots or two cannot be assembled.",
+        "Exactly one ███ (three █ block characters). The sealed fragment replaces it at game time; a frame with zero slots or two cannot be filled.",
         "Hand off mid-sentence: the fragment is a phrase of fifteen words or fewer that reads as part of YOUR sentence, never a standalone one — so end the lead-in with a word that accepts a phrase (report / describe / recall / word of / rumors regarding), and any full stop belongs to you, after the slot.",
         "Radio-announcer register: detached wire-service Victorian. Attribute to generic sources only — residents, staff, witnesses, this station, the constabulary, an anonymous servant (\"a housemaid\") — never a named person, a cat, or any profession a guest could be playing (no bakers, bankers, or mediums as sources).",
         "Fact-free outside the slot: no rooms, times, counts, or story specifics — the same frame must wrap any fragment in any game — and never a word from any motive rhyme.",
@@ -284,7 +284,7 @@
       "bad": [
         {
           "text": "...residents report ███ at dawn and ███ at dusk, to nobody's surprise...",
-          "why": "Two slots. The rule is exactly one ███ — runtime injects a single fragment, and the leftover block prints as a meaningless censor bar."
+          "why": "Two slots. The rule is exactly one ███ — the game injects a single fragment, and the leftover block prints as a meaningless censor bar."
         },
         {
           "text": "...witnesses in the vestibule recall ███ at teatime...",
@@ -330,9 +330,9 @@
       ]
     },
     "time": {
-      "what": "Times of day injected into sealed testimony as WHEN something happened. They surface inside assembled cat dialogue on room screens from the Act 2 cat encounter onward, spliced between an opener and a closer you also wrote. The pairing with incidents is shuffled per game, so every entry has to sound plausible next to any deed at all.",
+      "what": "Times of day injected into sealed testimony as WHEN something happened. They surface inside finished cat dialogue on room screens from the Act 2 cat encounter onward, dropped in between an opener and a closer you also wrote. The pairing with incidents is shuffled per game, so every entry has to sound plausible next to any deed at all.",
       "syntax": [
-        "Your line replaces [TIME] verbatim. The sealed sentence usually joins it with \"at\" — \"…was seen in [ROOM] at [TIME]…\" — so most phrases should read naturally there; a phrase that opens with its own time word (\"after midnight\", \"just past breakfast\") is welcome too. Never lead with a bare \"at\": that joint is the kernel's to make.",
+        "Your line replaces [TIME] verbatim. The sealed sentence usually joins it with \"at\" — \"…was seen in [ROOM] at [TIME]…\" — so most phrases should read naturally there; a phrase that opens with its own time word (\"after midnight\", \"just past breakfast\") is welcome too. Never lead with a bare \"at\": that joint is the secret middle's to make.",
         "It must be a time of DAY or evening — clock readings, meals, light, bells. Never a date or weekday: \"at last Tuesday\" wrecks the sentence.",
         "A lowercase phrase, one to five words, no verb — usually a noun phrase, though a time word like \"after\" or \"past\" may open it. (A proper name would keep its capitals, but times almost never have one.)",
         "No period or other punctuation at the end — the sentence continues around your phrase.",
@@ -362,14 +362,14 @@
         },
         {
           "text": "At midnight.",
-          "why": "Leads with a bare \"at\" — pure connective, the kernel's job — and the capital letter and full stop break the lowercase, no-terminal-punctuation rules for a phrase spliced mid-sentence."
+          "why": "Leads with a bare \"at\" — pure connective, the secret middle's job — and the capital letter and full stop break the lowercase, no-terminal-punctuation rules for a phrase dropped in mid-sentence."
         }
       ]
     },
     "duration": {
       "what": "Spans of time injected into sealed testimony as HOW LONG something went on. Players read them mid-sentence inside cat testimony on room screens — first at the Act 2 cat encounter, again when suppressed clues resurface in Act 4. A good duration quietly editorializes: too precise, too brief, or far, far too long.",
       "syntax": [
-        "Your line replaces [DURATION] verbatim. The sealed sentence usually joins it with \"for\" — \"…went on for [DURATION], witnessed by [CROWD]…\" — so most spans should read naturally there; a span that stands alone (\"all afternoon\") is welcome too. Never lead with \"for\": that joint is the kernel's to make.",
+        "Your line replaces [DURATION] verbatim. The sealed sentence usually joins it with \"for\" — \"…went on for [DURATION], witnessed by [CROWD]…\" — so most spans should read naturally there; a span that stands alone (\"all afternoon\") is welcome too. Never lead with \"for\": that joint is the secret middle's to make.",
         "A lowercase noun phrase naming a span of time, one to six words, no verb of its own.",
         "No period or other punctuation at the end — the sentence usually keeps going.",
         "Spell numbers as words: \"eleven evenings\", never \"11 evenings\".",
@@ -395,20 +395,20 @@
       "bad": [
         {
           "text": "for ages",
-          "why": "Leads with \"for\" — the joint is the kernel's job, and where the kernel brings its own the line prints as \"for for ages\". The span alone is the item: \"ages\"."
+          "why": "Leads with \"for\" — the joint is the secret middle's job, and where the secret middle brings its own the line prints as \"for for ages\". The span alone is the item: \"ages\"."
         },
         {
           "text": "it lasted an hour",
-          "why": "A full sentence with its own verb — the kernel writes the sentence; you supply only the length. \"an hour\" is the whole item."
+          "why": "A full sentence with its own verb — the secret middle writes the sentence; you supply only the length. \"an hour\" is the whole item."
         }
       ]
     },
     "count": {
       "what": "Tallies injected into sealed testimony as HOW OFTEN something happened. They land mid-sentence on cat room screens from the Act 2 encounter onward — and unlike the other pools they take no preposition: your phrase is the tally itself, a clean standalone answer to \"how many times?\". The shuffle pairs any count with any incident, so repetition itself becomes the joke.",
       "syntax": [
-        "Your line replaces [COUNT] verbatim with no preposition in front. The kernel sets the tally off so that a full adverbial (\"three times\") and a bare tally (\"a dozen\") both land — write yours as a clean answer to \"How many times?\"",
+        "Your line replaces [COUNT] verbatim with no preposition in front. The secret middle sets the tally off so that a full adverbial (\"three times\") and a bare tally (\"a dozen\") both land — write yours as a clean answer to \"How many times?\"",
         "\"times\" is optional: \"nine times\", \"thrice\", a bare \"seven\", and a counting complaint (\"more often than anyone dared admit\") all answer the question — pick what the joke wants.",
-        "A tally with its own verb fails: \"it kept happening\" is a sentence, not a count. The kernel writes the sentence; you supply only the answer.",
+        "A tally with its own verb fails: \"it kept happening\" is a sentence, not a count. The secret middle writes the sentence; you supply only the answer.",
         "Numbers as words, never digits — \"twelve times\", not \"12 times\".",
         "Lowercase, no period or other punctuation at the end, and no verb doing the phrase's main work (a trailing comparison like \"than was strictly decent\" is fine).",
         "Range from once to uncountable; exasperated tallies play beautifully.",
@@ -432,7 +432,7 @@
       "bad": [
         {
           "text": "it kept happening",
-          "why": "Carries its own verb, so it is a sentence, not a tally — asked 'How many times?' it answers with a shrug. The kernel writes the sentence; you supply only the count."
+          "why": "Carries its own verb, so it is a sentence, not a tally — asked 'How many times?' it answers with a shrug. The secret middle writes the sentence; you supply only the count."
         },
         {
           "text": "12 times",
@@ -458,7 +458,7 @@
           "why": "A trade possessive — the classic Victorian shop shape — and \"at the ironmonger's\" reads without a seam."
         },
         {
-          "text": "the assembly rooms",
+          "text": "the putting together rooms",
           "why": "A proper period venue, lowercase, article included; public enough that any incident there becomes everyone's business."
         },
         {
@@ -517,11 +517,11 @@
     "refusal": {
       "what": "The cat deflection line: what a player's own screen shows when a cat declines to talk to THEM, or when their affection roll fails — the personal access layer saying no. The first collision is usually the Act 2 cat encounter (four cats, four rooms, everyone meets one), and it recurs in any dispersed act — Act 4's pair rounds especially — whenever a player tries a cat that has them gated: Boo below affection 4 won't speak at all, Zimothy stonewalls the wrong professions, and the other three deal in rationed deflection. A refusal is still a screen somebody stares at, so it must entertain while handing over nothing.",
       "syntax": [
-        "Write only the on-screen line — no cat-name prefix. The tab you're in supplies the cat; the app supplies the portrait.",
+        "Write only the on-screen line — no cat-name prefix. The tab you're in supplies the cat; the game supplies the portrait.",
         "One or two sentences, 25 words maximum. A refusal is a sting, not a speech.",
         "Second person is allowed and encouraged ('you') — this is personal-layer text, aimed at exactly one player on their own device.",
         "A stage direction in (parentheses) — present tense, describing what the cat does — may be the entire line, or open the line before the speech: \"(She turns a degree colder.) Amuse me first.\"",
-        "Zero case information: no rooms, times, objects, counts, town spots, or events — a refusal must work on any night against any case. No [POOL] tokens, ever.",
+        "Zero case information: no rooms, times, objects, counts, town spots, or events — a refusal must work on any night against any case. No square-bracket blanks like [ROOM] or [TIME], ever.",
         "Never state mechanics: no 'affection', no scores, tiers, thresholds, or levels, and no game words — a harmless comic number (\"four seconds\") is fine, but a number that measures standing is not. The gate is felt in fiction, never explained.",
         "Every line must hint at the SHAPE of its gate in register — Boo's is personal and a path in exists; Zimothy's is professional and points to a person of standing; the other three ration or deflect (see the tabs).",
         "Founding rule holds: no meow, no purr, no remarking on speech. A refusing cat is a household member declining you, not an animal doing a trick."
@@ -568,7 +568,7 @@
         "Address the room or nobody. Never a single visitor and never a profession — guest-specific lines belong in status_lines, not here.",
         "Roughly one line in three may TEACH the cat's public nature by demonstrating it on something harmless (Salem confidently wrong about the compass, Granolia losing her own anecdote). Show the habit; never state the mechanic.",
         "Household gossip about the other cats is allowed and useful — keep it in register and keep it factless.",
-        "No [BRACKET] tokens, no remarks about talking, no written animal sounds — no 'meow', no purring. Granolia's *snrk* is the one licensed noise."
+        "No square-bracket blanks like [ROOM], no remarks about talking, no written animal sounds — no 'meow', no purring. Granolia's *snrk* is the one licensed noise."
       ],
       "test": "Could this exact line run any night of any game and neither spoil nor mislead?",
       "good": [
@@ -604,26 +604,26 @@
       }
     },
     "trailoff": {
-      "what": "Granolia's memory-wobbles — small spoken asides the runtime splices into her assembled testimony at a random sentence boundary. Her sealed kernels are true except for exactly one pool detail she misremembers (decided 26 Sep); these lines teach the room that her memory is a sieve WITHOUT pointing at which detail went wrong — the runtime never places one next to the swapped value. Players meet them wherever she testifies: her Act 2 cat-encounter room, any chaos-testimony slot she draws, and Act 4 when delayed lines resurface. You write the wobble; the sealed side owns the sentences around it — so every line must splice cleanly after ANY sentence.",
+      "what": "Granolia's memory-wobbles — small spoken asides the game drops into her finished testimony at a random sentence boundary. Her secret middles are true except for exactly one pool detail she misremembers (decided 26 Sep); these lines teach the room that her memory is a sieve WITHOUT pointing at which detail went wrong — the game never places one next to the swapped value. Players meet them wherever she testifies: her Act 2 cat-encounter room, any chaos-testimony slot she draws, and Act 4 when delayed lines resurface. You write the wobble; the sealed side owns the sentences around it — so every line must drop in cleanly after ANY sentence.",
       "syntax": [
-        "Begin with an em dash '—' or an ellipsis '…' so the line splices as an aside mid-testimony; end with normal terminal punctuation.",
+        "Begin with an em dash '—' or an ellipsis '…' so the line drops in as an aside mid-testimony; end with normal terminal punctuation.",
         "15 words maximum, snort included.",
         "Include her snort exactly once, canon spelling *snrk.* — lowercase, wrapped in asterisks, with its own period, as its own little beat.",
         "First person, her voice, present-tense — never stage narration, never a narrator's '(she pauses)'.",
         "The subject is her memory in general, never a specific fact: she stays cheerfully confident and NEVER corrects, retracts, or second-guesses a detail — a retraction would tell the player which piece is wrong.",
         "Zero real details: no room, town spot, number, clock hour, or person — anything concrete WILL end up in somebody's journal as a fact.",
         "Category-agnostic: never name a kind of detail (where, how long, who watched), or the line only fits one slot.",
-        "No [POOL] tokens and no case nouns: the wobble sits between details; it never contains one."
+        "No square-bracket blanks like [ROOM] or [TIME] and no case nouns: the wobble sits between details; it never contains one."
       ],
       "test": "Say any two sentences aloud with this line between them — does it sound like her, warn you that her memory leaks, and give away nothing about which sentence to doubt?",
       "good": [
         {
           "text": "— that's how I remember it, anyway. *snrk.* Mostly.",
-          "why": "Dash lead-in splices after anything; admits the sieve in general; names no detail and doubts no particular sentence."
+          "why": "Dash lead-in drops in after anything; admits the sieve in general; names no detail and doubts no particular sentence."
         },
         {
           "text": "…don't quote me. *snrk.* Actually do, I'm usually right.",
-          "why": "Ellipsis splice, cheerful confidence, and the joke lands on her memory as a whole — zero facts, zero retraction."
+          "why": "Ellipsis lead-in, cheerful confidence, and the joke lands on her memory as a whole — zero facts, zero retraction."
         },
         {
           "text": "— I keep everything I hear. *snrk.* Just not in the order it arrived.",
@@ -646,14 +646,14 @@
       ]
     },
     "status_line": {
-      "what": "A PRIVATE line on one player's own device describing where they currently stand with one cat — the personal access layer rendered as relationship, never as numbers. Standing is seeded by profession at the Act 1 role assignment and moves with affection through the night; players check it before the dispersed acts (2 and 4) to decide which cat to visit and when to route through a friend instead. It is also the trust dial for public moments: a room screen shows everyone the same three lines, and your private standing tells you how much yours are worth. Written in the manor narrator's voice, in the player's journal — never on a shared screen.",
+      "what": "A PRIVATE line on one player's own device describing where they currently stand with one cat — the personal access layer shown as relationship, never as numbers. Standing is seeded by profession at the Act 1 role assignment and moves with affection through the night; players check it before the dispersed acts (2 and 4) to decide which cat to visit and when to route through a friend instead. It is also the trust dial for public moments: a room screen shows everyone the same three lines, and your private standing tells you how much yours are worth. Written in the manor narrator's voice, in the player's journal — never on a shared screen.",
       "syntax": [
-        "Begin every line with exactly one tier tag in CAPS plus a colon and a space: 'LOCKED: ', 'WARMING: ', or 'IN: '. The app files the line by its tag — an untagged line cannot render.",
+        "Begin every line with exactly one tier tag in CAPS plus a colon and a space: 'LOCKED: ', 'WARMING: ', or 'IN: '. The game files the line by its tag — an untagged line cannot show.",
         "Tiers map to the two-layer model's access levels: LOCKED = nothing (refusals ahead), WARMING = the short version, IN = the good version. The tag alone carries the tier; the body describes only the relationship.",
         "Manor-narrator voice, never cat dialogue: no quotation marks, never first person as the cat. Address the player as 'you'.",
         "One sentence, two at most; 20 words maximum after the tag.",
         "No numbers, points, scores, or the word 'affection' in the body — standing is described, never measured.",
-        "Relationship only: never hint at what the cat knows, said, or will say. No rooms, times, objects, or anything case-shaped. No [POOL] tokens.",
+        "Relationship only: never hint at what the cat knows, said, or will say. No rooms, times, objects, or anything case-shaped. No square-bracket blanks like [ROOM] or [TIME].",
         "The cat's tastes and professions in general are fair game ('she prefers performers'); other specific players and their standings are not.",
         "LOCKED must always imply movement is possible — a line that reads as permanent teaches the player to quit that cat."
       ],
@@ -669,13 +669,13 @@
         },
         {
           "text": "IN: Granolia has saved you the good chair. This is the highest honor the study offers.",
-          "why": "Full access rendered entirely as fondness — a chair, not a fact. Warm, in her register, and utterly caseless."
+          "why": "Full access shown entirely as fondness — a chair, not a fact. Warm, in her register, and utterly caseless."
         }
       ],
       "bad": [
         {
           "text": "Boo is warming to you nicely.",
-          "why": "Missing the tier tag. Every line must begin with LOCKED: / WARMING: / IN: so the app knows which tier to file it under — this one can never render."
+          "why": "Missing the tier tag. Every line must begin with LOCKED: / WARMING: / IN: so the game knows which tier to file it under — this one can never show."
         },
         {
           "text": "IN: Salem trusts you enough to share what he noticed near the cellar.",
@@ -832,7 +832,7 @@
       "bad": [
         {
           "text": "THE CATS, DOCUMENTS, AND ECHOES — Cats speak on room screens, papers turn up bearing tells, and the wireless interrupts with news; note all of it in your journal as you go.",
-          "why": "Breaks the one-idea rule — the comma-splice title is the giveaway. This is three sections wearing one coat; split it so each survives a single read."
+          "why": "Breaks the one-idea rule — the run-on title is the giveaway. This is three sections wearing one coat; split it so each survives a single read."
         },
         {
           "text": "PERAMBULATION — Whensoever the gong soundeth, kindly repair forthwith unto the chamber appointed.",
@@ -841,18 +841,18 @@
       ]
     },
     "ui_copy": {
-      "what": "Every fixed string the software shows, one string per item — the words on player phones and room kiosks that no character is speaking. Guests meet them from the QR scan at the front entrance (JOIN) through the lobby, act timers, journal and help labels, kiosk idle screens, the Act 7 ballot and its confirmation, the results, and — most importantly — the rescue states when a phone locks or drops off the wifi mid-party. These strings are the same every night and are often read by someone stressed, alone, and mid-panic, so each one is a tiny act of hospitality.",
+      "what": "Every fixed line the software shows, one line per item — the words on player phones and room kiosks that no character is speaking. Guests meet them from the QR scan at the front entrance (JOIN) through the lobby, act timers, journal and help labels, kiosk idle screens, the Act 7 ballot and its confirmation, the results, and — most importantly — the rescue states when a phone locks or drops off the wifi mid-party. These lines are the same every night and are often read by someone stressed, alone, and mid-panic, so each one is a tiny act of hospitality.",
       "syntax": [
-        "One string per item, formatted exactly as LABEL: text — surface label in CAPS, a colon, one space, then the string.",
+        "One line per item, formatted exactly as LABEL: text — surface label in CAPS, a colon, one space, then the line.",
         "Use this surface vocabulary for labels: JOIN, LOBBY, MENU, BALLOT, BALLOT CONFIRM, RESULTS, REJOIN, OFFLINE, WAITING, TIMER, JOURNAL, HELP, KIOSK IDLE, SPILL. Need a new surface? Coin it in CAPS and add a task-board card so the build maps it.",
-        "20 words max after the label. TIMER, BALLOT, and BALLOT CONFIRM strings get 12 max — they render in big type.",
-        "Every string stands completely alone: no 'as before', 'the previous screen', or 'the same link'. Name physical things instead — 'your invitation', 'the card at the entrance'.",
+        "20 words max after the label. TIMER, BALLOT, and BALLOT CONFIRM lines get 12 max — they show in big type.",
+        "Every line stands completely alone: no 'as before', 'the previous screen', or 'the same link'. Name physical things instead — 'your invitation', 'the card at the entrance'.",
         "Rescue states (REJOIN, OFFLINE, WAITING) run in this order: what is true → what to do → reassurance. Never blame the guest; 'nothing is lost' is the house style.",
         "Confirmations (BALLOT CONFIRM, SPILL) state the consequence first and end with exactly ONE yes/no question.",
         "No tech words — session, sync, error, login, network, browser, reload are all banned. When a sentence needs a subject, it is 'the Manor' or 'your phone'.",
-        "Same strings every game: no character names, no word from any motive rhyme, nothing tonight-specific. At most one Victorian flourish per string, and only after the plain instruction is complete."
+        "Same lines every game: no character names, no word from any motive rhyme, nothing tonight-specific. At most one Victorian flourish per line, and only after the plain instruction is complete."
       ],
-      "test": "Read the string alone, as a stressed 70-year-old holding a locked phone at a noisy party: do they now know what is true and what to do next?",
+      "test": "Read the line alone, as a stressed 70-year-old holding a locked phone at a noisy party: do they now know what is true and what to do next?",
       "good": [
         {
           "text": "OFFLINE: The Manor cannot hear your phone. Stay where you are — it will reconnect on its own. Nothing is lost.",
@@ -874,7 +874,7 @@
         },
         {
           "text": "OFFLINE: Connection error — network handshake failed. Re-authenticate or contact your administrator.",
-          "why": "Breaks the no-tech-words rule and gives the guest no doable next step. Every rescue string must say what is true in household words, then what to do."
+          "why": "Breaks the no-tech-words rule and gives the guest no doable next step. Every rescue line must say what is true in household words, then what to do."
         }
       ]
     },
@@ -954,10 +954,10 @@
       ]
     },
     "epilogue_frame": {
-      "what": "This is the last text of the night: the 'and so it was...' storybook narration performed aloud to the whole room at the end of Act 7, after the ballot and after all three reveals have landed in their fixed order — Murderer, then Motive, then Victim. The runtime picks a frame, fills its bracketed slots from the case, and hands the finished story to the night. You write every word blind; the brackets do the knowing.",
+      "what": "This is the last text of the night: the 'and so it was...' storybook narration performed aloud to the whole room at the end of Act 7, after the ballot and after all three reveals have landed in their fixed order — Murderer, then Motive, then Victim. The game picks a frame, fills its bracketed slots from the case, and hands the finished story to the night. You write every word blind; the brackets do the knowing.",
       "syntax": [
-        "Slot tokens, exact and uppercase in square brackets: [MURDERER], [VICTIM], [MOTIVE_RHYME]. Every frame uses each at least once; the runtime swaps them in verbatim. Nothing else may sit in brackets — an unknown token prints as-is, brackets and all.",
-        "[MURDERER] and [VICTIM] each fill with a character's full pun name. Write grammar that survives any name, and write around gendered pronouns entirely — repeat the token or use 'they'; any character can land in either slot.",
+        "The three slots, exact and uppercase in square brackets: [MURDERER], [VICTIM], [MOTIVE_RHYME]. Every frame uses each at least once; the game swaps them in verbatim. Nothing else may sit in brackets — an unknown blank prints as-is, brackets and all.",
+        "[MURDERER] and [VICTIM] each fill with a character's full pun name. Write grammar that survives any name, and write around gendered pronouns entirely — repeat the blank or use 'they'; any character can land in either slot.",
         "[MOTIVE_RHYME] fills with the complete riddle couplet, word for word. Give it its own beat: land it after a colon or a dash, then let the sentence resume — never conjugate it into the middle of a clause.",
         "Write for the voice, not the eye: 60–120 words, short sentences, dashes and ellipses where a breath goes. This gets performed late, over party noise, possibly with punch.",
         "Open on a settling phrase — 'And so...', 'And thus...', 'So concluded...' — the audible signal that the story is closing; finish with a line that releases the room.",
@@ -969,7 +969,7 @@
       "good": [
         {
           "text": "And so it was [MURDERER]. Not for money, not for love, not for anything the law has a drawer for — for this: [MOTIVE_RHYME]. The household nodded as one, for who among us has not known that particular fury? And [VICTIM] — poor, blameless [VICTIM] — mourned, avenged, and secretly delighted by the turnout. The Manor sleeps again tonight. Even so: do count the spoons.",
-          "why": "All three tokens, grammar that survives any names, and the couplet gets its own beat after the colon."
+          "why": "All three blanks, grammar that survives any names, and the couplet gets its own beat after the colon."
         },
         {
           "text": "And thus the tale finds its shape at last: a crime, a couplet, a candle relit. [MOTIVE_RHYME] — so small a grievance, so long a shadow. For seven acts [MURDERER] wore a kind face over it, and poured the tea, and said good evening. [VICTIM], bless them, suspected the weather. Dear guests — the case is closed. The gossip, of course, is only beginning.",
@@ -983,7 +983,7 @@
       "bad": [
         {
           "text": "And so it was [MURDERER] — she never meant it, but she did it, and [VICTIM] knew. [MOTIVE_RHYME].",
-          "why": "'she' — [MURDERER] fills with any of the cast, so the line collapses whenever the seed picks someone it doesn't fit. Repeat the token or use 'they'."
+          "why": "'she' — [MURDERER] fills with any of the cast, so the line collapses whenever the seed picks someone it doesn't fit. Repeat the blank or use 'they'."
         },
         {
           "text": "We learned tonight that [MURDERER] killed [VICTIM] because [MOTIVE_RHYME] happened one evening.",
@@ -1045,8 +1045,8 @@
         "Body shape follows use: anything grabbed mid-party (CUE SHEET, CONTINGENCY SHEET, ROOM MAP) is numbered short lines, one action per line, action first; anything performed or mailed (WELCOME SPEECH, INVITATION) is written out word for word.",
         "Cue names are CAPS-in-brackets — [BLACKOUT], [GATHER CHIME] — and the CUE SHEET is the master vocabulary: every bracketed cue used in an act_scripts BEATS line must appear on it, in firing order, with its Stream Deck key.",
         "TECH CHECKLIST must end on the seal rule in this exact order: fire every cue in DUMMY MODE and verify kiosks against idle/chrome screens only → only after every check passes, generate the real case → touch nothing after generation.",
-        "REHEARSAL PLAN runs only in dummy mode or before the case is generated; no step may put sealed-derived text where Jon can see it, and the doc itself must state that if real content ever renders during rehearsal, regeneration is mandatory.",
-        "Per-guest and per-game blanks are CAPS-in-brackets slots — [GUEST NAME], [CHARACTER], [ROOM NAME] — filled at print time. (Never reuse the six sealed pool tokens as blank names; [ROOM] belongs to the injection grammar.) No doc may mention a specific motive, quote rhyme words, or contain a step that changes with the case.",
+        "REHEARSAL PLAN runs only in dummy mode or before the case is generated; no step may put sealed-derived text where Jon can see it, and the doc itself must state that if real content ever shows during rehearsal, regeneration is mandatory.",
+        "Per-guest and per-game blanks are CAPS-in-brackets slots — [GUEST NAME], [CHARACTER], [ROOM NAME] — filled at print time. (Never reuse the six game blanks ([ROOM], [TIME] and friends) as slot names; [ROOM] belongs to the injection grammar.) No doc may mention a specific motive, quote rhyme words, or contain a step that changes with the case.",
         "Guest-facing docs (INVITATION, GUEST NOTE, ASSIGNMENT NOTE) use plain words — ages 11 and 70, one pass — and never remark that the cats talk."
       ],
       "test": "Could Jon study this doc a hundred times and still play fair — and grab it at minute 90, nine guests staring, and know what to do inside ten seconds?",
@@ -1098,7 +1098,7 @@
         "Every brief parks all three overlay zones and says where each sits: BODY — clean room for 40–60 printed words; EMPHASIS — one spot where a single word from the body prints oversized (a headline slot, a total box, a stamp circle); ANNOTATION — one line's space for handwriting in a second ink (a margin, the foot, slanted across a corner).",
         "Describe the vessel, never the message: stock, borders, rules, stamps, tears, foxing, letterhead furniture. No sample body text, no sample emphasis word, no sample scribble — those are sealed, generated later, and the design must flatter ANY of them.",
         "Fixed wording printed on the template itself (mastheads, form labels, an official stamp) must be generic world flavor that pairs with any motive — and never a word from any motive rhyme.",
-        "Legibility floor: documents render on phones. Screen any texture behind the body zone back to near-nothing; an 11-year-old and a 70-year-old must both manage it at arm's length.",
+        "Legibility floor: documents show on phones. Screen any texture behind the body zone back to near-nothing; an 11-year-old and a 70-year-old must both manage it at arm's length.",
         "Size the emphasis spot for a long word — if a twelve-letter word can't print large there, the spot is too small.",
         "Use the notes field for decisions and to-dos ('ink pair: sepia + oxblood', 'age the paper more'); upload reference images of your actual design — one clean full view first, detail shots after.",
         "Tick done only when the three zones' positions and sizes are locked. Sealed text is fitted to your zones — a box moved after generation is a broken document."

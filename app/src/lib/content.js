@@ -34,7 +34,7 @@ export const AREAS = {
   lore: { label: 'Canon & lore', group: 'World & cast', tabs: null, guide: 'lore', goal: 4 },
   // — Player screens —
   rules_text: { label: 'Rulebook sections', group: 'Player screens', tabs: null, guide: 'rules', goal: 10 },
-  ui_copy: { label: 'UI copy & system strings', group: 'Player screens', tabs: null, guide: 'ui_copy', goal: 24 },
+  ui_copy: { label: 'UI copy & system messages', group: 'Player screens', tabs: null, guide: 'ui_copy', goal: 24 },
   role_cards: { label: 'Role cards & briefings', group: 'Player screens', tabs: null, guide: 'role_card', goal: 6 },
   event_cards: { label: 'Event cards', group: 'Player screens', tabs: null, guide: 'event_card', goal: 12 },
   // — Frames & pools —
@@ -83,7 +83,7 @@ export function lintItem(area, text) {
     if (/\b(meow|meows|meowed|purr|purrs|purring|hiss|hisses|woof|barks?|barked)\b/i.test(text)) {
       return 'No animal sounds — they just talk.'
     }
-    if (/\[[A-Za-z_]+\]/.test(text)) return 'Voice lines carry no [TOKENS].'
+    if (/\[[A-Za-z_]+\]/.test(text)) return 'Voice lines never have square-bracket blanks like [ROOM].'
     if (/talking (cat|dog|animal)|(cat|dog|animal)s? (can|could) talk/i.test(text)) {
       return 'Never lampshade the talking.'
     }
@@ -207,13 +207,13 @@ export const ADDITIONS = [
     // gaps the Canon page lists as "safe — Jon writes it".
     id: '2026-09-25-build-order',
     tasks: [
-      { order: 18, status: 'todo', title: 'Throwaway slice: one character onto a phone via QR', detail: 'Build order step 3 (Sep 29). Proves the delivery chain end to end: QR → anonymous session → a character on the phone. Throw it away after.' },
-      { order: 19, status: 'todo', title: 'Seed-based case generator + validator', detail: 'Build order step 4 (Oct 2). One seed string in, a full case out, written to cases/* by Admin SDK only. Validator assumes worst-case suppression across Acts 2/4/6 and still proves every player reaches two of three.' },
-      { order: 20, status: 'todo', title: 'Eight fake test players', detail: 'Build order step 5 (Oct 5). A script, not eight friends. Uses a throwaway case that is discarded after the run — never persisted, never printed.' },
+      { order: 18, status: 'todo', title: 'Throwaway slice: one character onto a phone via QR', detail: 'Build order step 3 (Sep 29). Proves the whole chain: scan a QR code and a character appears on your phone. Thrown away afterwards.' },
+      { order: 19, status: 'todo', title: 'Seed-based case generator + validator', detail: 'Build order step 4 (Oct 2). Type one seed word, get a whole case: murderer, victim, motive, where every clue goes. It also checks that every player can still reach two of the three answers even if the hidden roles hide as much as the rules allow.' },
+      { order: 20, status: 'todo', title: 'Eight fake test players', detail: 'Build order step 5 (Oct 5). A script that plays as eight people, not eight friends. It plays a throwaway case that is binned afterwards — never kept, never shown to you.' },
       { order: 21, status: 'todo', title: 'Split dev and live', detail: 'Build order step 6 (Oct 7). So a broken afternoon can’t break the party.' },
       { order: 22, status: 'todo', title: 'Content sprint: cat deflection lines to 8 per cat', detail: 'Safe content, best drive-time task. What each cat says when the affection roll fails: in character, funny, zero information. Editor: Cat voices → Cat deflection lines.' },
       { order: 23, status: 'todo', title: 'Innocent-beat content for Acts 2, 4 and 6', detail: 'Safe — Jon writes it. Read-time parity: each innocent beat matches the event choice prompt in length and needs one required interaction before it can be dismissed. Editor: Player screens → Event cards.' },
-      { order: 24, status: 'todo', title: 'Workshop: visible history view', detail: 'workshop_history is append-only but has no screen yet. Canon says history must be visible in the UI.' },
+      { order: 24, status: 'todo', title: 'Workshop: visible history view', detail: 'Every change you make in the workshop is kept, but there is no screen to browse that history yet. The Canon page says there must be one.' },
     ],
     decisions: [
       { key: 'swapMotive', question: 'Which of the 19 motives gets swapped, and for what?', options: ['Keep all 19', 'Swap one — tell Claude which'] },

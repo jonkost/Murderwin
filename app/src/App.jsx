@@ -29,7 +29,7 @@ function NotAdmin({ user }) {
       <p>This UID is not admin yet:</p>
       <code className="uid">{user.uid}</code>
       <p>
-        Put it in <b>firestore.rules → isAdmin()</b> and redeploy, then reload.
+        Copy it and tell Claude Code: “add this UID as admin”. Then reload.
       </p>
       <button onClick={() => navigator.clipboard.writeText(user.uid)}>Copy UID</button>
       <button onClick={signOutUser}>Sign out</button>

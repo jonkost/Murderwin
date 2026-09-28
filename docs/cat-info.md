@@ -2,7 +2,7 @@
 
 **Status:** consolidated 26 Aug 2026 from the Murderwin Mystery Party session. This is the register document — every line of cat dialogue gets written against it.
 
-**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — her testimony is true except for exactly one pool variable, which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
+**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — what she tells you is true except for exactly one detail (a room, a time, a count, a place, a crowd…), which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
 
 ---
 
