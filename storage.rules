@@ -4,9 +4,19 @@ service firebase.storage {
     // Workshop reference uploads: admin only. Enable Cloud Storage on the
     // project, add `"storage": {"rules": "storage.rules"}` to firebase.json,
     // then `firebase deploy --only storage`.
+    // Staff = Jon (UID) + Jenna, the Steward (SHA-256 of verified Google email).
+    // Keep in step with isAdmin() in firestore.rules.
+    function isStaff() {
+      return request.auth != null && (
+        request.auth.uid == 'JYSmPSQfdMen0leIDYmqUa32Prt1' ||
+        (request.auth.token.email_verified == true &&
+          hashing.sha256(request.auth.token.email.lower()).toHexString().lower() in [
+            '2ea18fbeb53147b23ca3afa1e1291934aeea1b6e5c6c2c7b40b6301386ffe2b8'
+          ])
+      );
+    }
     match /{allPaths=**} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == 'JYSmPSQfdMen0leIDYmqUa32Prt1';
+      allow read, write: if isStaff();
     }
   }
 }

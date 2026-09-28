@@ -2,7 +2,8 @@
 
 The game's secrets are: what each cat actually reveals about each motive, the
 documents that get overlaid on the stationery, the news fragments in the echoes,
-and (later) the event copy for Acts 2, 4 and 6. Claude writes all of it. It goes
+(later) the event copy for Acts 2, 4 and 6, and which numbered bag holds which
+items. Claude writes all of it. It goes
 straight into the game's database. It never lands in a file on your Mac, never in
 this folder, never on your screen, never in a chat.
 
@@ -42,20 +43,25 @@ The rules Claude writes to:
 
 ## Who writes and who edits
 
-Decided 28 September. You, your wife and Claude draft; Jenna, the Steward,
-edits everything.
+Decided 28 September. You and Susan draft; Claude drafts the secrets; Jenna, the
+Steward, edits everything.
 
-- **You draft the safe lines only**: openers, closers, deflection lines, pools,
-  echo frames, innocent beats. Anything you draft you would recognise on the
-  night, so the secrets are never yours to draft.
-- **Your wife and Claude draft the secrets.** Claude's first drafts come from the
-  generator described above.
+- **You and Susan draft the safe lines only**: openers, closers, deflection
+  lines, pools, echo frames, innocent beats. You both play, and anything you
+  draft you would recognise on the night.
+- **Claude drafts all the secrets**, through the generator described above.
 - **Jenna edits all of it**, from wherever they are, in a page only their account
   can open. They never share their screen with you, and they tell you only
   "done" or "needs more". That page isn't built yet, and making the secrets again
   must never wipe Jenna's edits.
-- **Jenna also puts the bags together**, since the bags are built from the
-  secrets.
+
+## The bags
+
+You and Susan list the bag items in the workshop (Bags → Bag items). The game
+then decides which items go in which numbered bag, without either of you seeing
+it, and saves that packing as a secret. Only Jenna's page shows the packing list,
+and Jenna packs the bags to it. Because the game decided the packing, it already
+knows what is in every bag when it writes the clues.
 
 ## The checks
 
@@ -102,7 +108,8 @@ Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal
    crypto-shuffled order, progress lines carry counters only, per-code count lines
    print once at the end sorted by code string.
 
-Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
+Bag contents are sealed too: `sealed/bags`, written only by the Steward's form,
+read by the generator as an input. Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
 same counts-only rules, into `sealed/events/*`. Not built yet.
 
 Validation — `scripts/validate-sealed.mjs`, counts-only, per code:

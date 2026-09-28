@@ -1128,6 +1128,42 @@
           "why": "No clean body zone reserved — 40–60 words over edge-to-edge engraving fails the phone legibility floor. Every brief must park the three overlay zones on quiet ground."
         }
       ]
+    },
+    "bag_item": {
+      "what": "The pool of ordinary objects that go into the numbered bags, the one physical part of the night. You and Susan list every item here. The game then decides which items go in which bag without either of you seeing it, and Jenna packs them to that list. Later, clues point at how an item looks, sounds, smells, feels or tastes, never at the item itself, so a clue narrows the room to two or three bags. The goal of 60 assumes about ten bags of six; the final bag count is still open.",
+      "syntax": [
+        "One item per line, in the form: Item — sense: property. For example: Mint tea bag — smell: minty.",
+        "The senses are sight, sound, smell, touch and taste. Pick the one sense a clue would use for this item.",
+        "Think in near-identical pairs: two items that seem the same through that sense and are obviously different once looked at — a click pen and a dog-training clicker, a wrapped mint and a mint tea bag.",
+        "Every property must end up in two or three bags, never one, so list at least two items for every property you use.",
+        "Taste items must be sealed or wrapped and shelf-stable, and check for allergies. An eaten item destroys its own clue mid-game.",
+        "Nothing valuable, sharp, or that anyone will want back."
+      ],
+      "test": "If a clue said this item's property out loud, would it point at two or three bags and never at one person?",
+      "good": [
+        {
+          "text": "Dog-training clicker — sound: clicks",
+          "why": "Pairs with a click pen, so 'I heard clicking' points at two bags, not one person."
+        },
+        {
+          "text": "Mint tea bag — smell: minty",
+          "why": "Pairs with a wrapped mint: the smell is shared, and the objects are obviously different once the bag is open."
+        },
+        {
+          "text": "Velvet ribbon — touch: soft",
+          "why": "Reaching in blind is the funniest channel, and plenty of other things are soft."
+        }
+      ],
+      "bad": [
+        {
+          "text": "Grandma's silver locket — sight: shiny",
+          "why": "Valuable and one of a kind. Nothing precious, and nothing so distinctive it points at one person."
+        },
+        {
+          "text": "Fresh strawberry — taste: sweet",
+          "why": "Perishable. It spoils or gets eaten, which destroys its own clue. Taste items must be wrapped and shelf-stable."
+        }
+      ]
     }
   }
 }

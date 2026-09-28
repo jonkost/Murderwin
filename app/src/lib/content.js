@@ -42,6 +42,10 @@ export const AREAS = {
   echo_frames: { label: 'Echo frames', group: 'Frames & pools', tabs: null, guide: 'echo_frame', goal: 8 },
   epilogue_frames: { label: 'Epilogue frames', group: 'Frames & pools', tabs: null, guide: 'epilogue_frame', goal: 2 },
   templates: { label: 'Stationery templates', group: 'Frames & pools', tabs: null, guide: 'template', goal: 7 },
+  // — Bags (the one physical exception) —
+  // Jon and Susan list the item pool here. The packing (which bag holds what)
+  // is sealed: decided blind, shown only to Jenna.
+  bag_items: { label: 'Bag items', group: 'Bags', tabs: null, guide: 'bag_item', goal: 60 },
   // — Show night —
   act_scripts: { label: 'Act scripts & banners', group: 'Show night', tabs: 'acts', guide: 'act_script', goalPerTab: 3 },
   ops_docs: { label: 'Host & ops documents', group: 'Show night', tabs: null, guide: 'ops_doc', goal: 12 },
@@ -50,7 +54,7 @@ export const AREAS = {
   av_assets: { label: 'Audio / video assets', group: 'Assets', tabs: null, guide: 'av_asset', checklist: true },
 }
 
-export const AREA_GROUPS = ['Cat voices', 'World & cast', 'Player screens', 'Frames & pools', 'Show night', 'Assets']
+export const AREA_GROUPS = ['Cat voices', 'World & cast', 'Player screens', 'Frames & pools', 'Bags', 'Show night', 'Assets']
 
 const ART_ASSET_SEED = [
   'Portrait — Sir Irwin', 'Portrait — Salem Crookshank', 'Portrait — Zimothy Clawford',
@@ -120,6 +124,9 @@ export function lintItem(area, text) {
       return /—/.test(text) ? null : 'Format: NAME (Acts) — plain effect line.'
     case 'rules_text':
       return /—/.test(text) ? null : 'Format: SECTION TITLE — body.'
+    case 'bag_items':
+      return /—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)
+        ? null : 'Format: Item — sense: property (e.g. “Mint tea bag — smell: minty”)'
     case 'bios':
       return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
     default:
@@ -217,6 +224,17 @@ export const ADDITIONS = [
     ],
     decisions: [
       { key: 'swapMotive', question: 'Which of the 19 motives gets swapped, and for what?', options: ['Keep all 19', 'Swap one — tell Claude which'] },
+    ],
+  },
+  {
+    // 28 Sep: Jon and Susan supply the bag items; the packing is decided blind
+    // and shown only to Jenna, the Steward.
+    id: '2026-09-28-bags',
+    areaDocs: { bag_items: { items: [] } },
+    tasks: [
+      { order: 25, status: 'todo', title: 'Bag items: Jon and Susan list the pool', detail: 'Workshop → Bags → Bag items. One line per item: Item — sense: property. Every property needs at least two items.' },
+      { order: 26, status: 'todo', title: 'Blind bag packer', detail: 'Claude builds a tool that decides which items go in which numbered bag, without Jon or Susan ever seeing it, and saves the packing where only Jenna can see it. It checks every bag has at least two clueable properties and every property is in two or three bags, never one.' },
+      { order: 27, status: 'todo', title: 'Jenna’s Steward view', detail: 'A page only Jenna can open: the packing list for the bags, and later the secret content to read and edit. Needs Jon’s approval to change the security rules.' },
     ],
   },
 ]

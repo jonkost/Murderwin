@@ -29,20 +29,27 @@ Content is divided into two classes:
 - The manifest: any mapping between opaque codes and motives
 - Any per-game generated case (murderer, victim, active motive, clue placement)
 - Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels)
+- The bag packing: which numbered bag holds which items (`sealed/bags`)
 
 ### The Steward exception (decided by Jon, 28 Sep 2026)
 The Steward is Jenna (they/them), a REMOTE NON-PLAYER who never visits the
 house. Their job is editing content. They may see and edit EVERYTHING, sealed
 content included, because Jon cannot.
 
-Content workflow: Jon, Jon's wife and Claude draft; Jenna edits.
-- Jon drafts SAFE content only. Anything he drafts he will recognise on the
-  night, so he never drafts sealed content — decline and cite Rule 1 if asked.
-- Jon's wife and Claude draft sealed content. Claude's drafts come from the
-  generator. Anyone who drafts sealed content knows the answers.
+Content workflow (28 Sep): Jon and Susan (Jon's wife, a player) draft; Claude
+drafts the secrets; Jenna edits.
+- Jon and Susan draft SAFE content only. Both play, and anything they draft they
+  would recognise on the night — decline and cite Rule 1 if either asks to
+  draft or see sealed content.
+- Claude drafts all sealed content, through the generator.
 - Jenna edits both, and reports to Jon only "done" or "needs more", never content.
-- Jenna also puts the bags together (the bag system; its details are not in
-  the repo yet — they live in Jon's claude.ai chats).
+- Bags: Jon and Susan supply the item pool as safe content (workshop area
+  `bag_items`). A blind packing script (not built) assigns items to numbered
+  bags under the bag rules and writes `sealed/bags`; the generator reads it.
+  Only Jenna's Steward view shows the packing list, and Jenna packs to it.
+  Claude Code never prints the packing. Jenna also reads rules and bios cold
+  and reviews sealed content. Brief: never volunteer anything, never confirm a
+  guess. Full role: `chats/docs/sirwin-manor-the-steward.md`.
 
 Build requirements (none built yet):
 - A Steward-only view, by verified Google email, to read and edit `sealed/*`.
@@ -88,10 +95,22 @@ Its real in-game kernels still get regenerated blind either way.
 
 When this file and the Canon page disagree, the Canon page wins — fix this file.
 
+## THE DESIGN DOCS FROM JON'S CHATS
+
+`chats/` (gitignored, never committed) holds Jon's eight Murderwin claude.ai
+chats (`murderwin-chats.json`, burned worksheet stripped) and, in `chats/docs/`,
+the final version of every design document those chats produced: game design
+doc, production plan, cat bible and cat info, act skeletons, traces, bio
+worksheet, bag system, the Steward, worksheets 2 and 3, decisions logs. Read
+them before asking Jon anything they might answer. They are safe content, but
+if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
+
 ## PROJECT CONTEXT (locked decisions — do not re-litigate)
 
 - Victorian manor murder mystery for Sir Irwin's first birthday. About 9 players
-  aged 11 to 70, fully digital and multimedia, no physical props, no real locks.
+  aged 11 to 70, fully digital and multimedia, no physical props, no real locks —
+  except the bags: six ordinary objects per numbered bag, the one deliberate
+  physical exception (`chats/docs/sirwin-manor-bag-system.md`).
   14 playable characters with professions, genders and traces, assigned at random
   at runtime and never changed all night.
 - Stack: React + Vite, Firebase Hosting, Firestore, Cloud Functions, anonymous

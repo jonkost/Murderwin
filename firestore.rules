@@ -2,11 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- ADMIN (Jon) ----
+    // ---- STAFF: Jon + Jenna, the Steward (workshop access) ----
+    // Jon by UID. Jenna by the SHA-256 of their verified Google email — the repo
+    // is public, so the address itself never appears here. Staff reach the
+    // workshop only: nothing here opens sealed/* or cases/*.
     function isAdmin() {
-      // Jon's UID (workshop admin).
-      return request.auth != null &&
-        request.auth.uid in ['JYSmPSQfdMen0leIDYmqUa32Prt1'];
+      return request.auth != null && (
+        request.auth.uid in ['JYSmPSQfdMen0leIDYmqUa32Prt1'] ||
+        (request.auth.token.email_verified == true &&
+          hashing.sha256(request.auth.token.email.lower()).toHexString().lower() in [
+            '2ea18fbeb53147b23ca3afa1e1291934aeea1b6e5c6c2c7b40b6301386ffe2b8' // Jenna (Steward), added 28 Sep 2026
+          ])
+      );
     }
 
     // ---- THE SEAL: no client ever reads sealed content or raw cases ----
