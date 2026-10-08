@@ -1,0 +1,11 @@
+{
+  "name": "murderwin",
+  "private": true,
+  "description": "A Murderwin at Sirwin Manor — workshop (app/), phone client (play/), Cloud Functions (functions/), sealed-content scripts (scripts/).",
+  "scripts": {
+    "build:site": "npm --prefix app run build:site && npm --prefix play run build:site",
+    "deploy": "npm run build:site && firebase deploy --only hosting,firestore:rules,functions",
+    "deploy:site": "npm run build:site && firebase deploy --only hosting",
+    "test": "npm --prefix functions test"
+  }
+}

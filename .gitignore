@@ -31,3 +31,6 @@ murderwin-handoff.zip
 
 # Jon's exported claude.ai chats and file cards — for Claude Code to read, never committed
 chats/
+
+# copied from seed/ by `npm --prefix functions run seed` (firebase.json predeploy)
+functions/seed/

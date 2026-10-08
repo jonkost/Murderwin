@@ -1,0 +1,35 @@
+{
+  "_about": "The fourteen playable characters. Safe content: names, professions, genders and traces are locked (character roster, 8 Sep 2026; traces per sirwin-manor-traces.md, 10 Sep 2026). Bios are the one-line display lines. Professor is never in the random pool: Jonathan and Susan Kostington play themselves.",
+  "characters": [
+    { "id": "white", "name": "Preston White", "profession": "Reporter", "gender": "M", "trace": "ink", "traceLabel": "Ink", "bio": "You write for the local paper. You are always taking notes, including now." },
+    { "id": "arms", "name": "Roger Arms", "profession": "Sergeant Major", "gender": "M", "trace": "boot-print", "traceLabel": "Boot print", "bio": "Retired. You were not asked about this, and you are going to explain it anyway." },
+    { "id": "rye", "name": "Dorothy Rye", "profession": "Baker", "gender": "F", "trace": "flour", "traceLabel": "Flour", "bio": "Up since four. You have opinions about everyone else's bread." },
+    { "id": "ledger", "name": "Prudence Ledger", "profession": "Banker", "gender": "F", "trace": "sealing-wax", "traceLabel": "Sealing wax", "bio": "You mind the town's money. You know precisely what everyone here is worth, and you would never say." },
+    { "id": "devine", "name": "Iris DeVine", "profession": "Florist", "gender": "F", "trace": "petals", "traceLabel": "Petals", "bio": "You arrange flowers for weddings and funerals alike. You charge more for funerals." },
+    { "id": "barnes", "name": "Hayward Barnes", "profession": "Farmer", "gender": "M", "trace": "seeds", "traceLabel": "Seeds", "bio": "You farm the land just past the gate. You have brought vegetables nobody asked for." },
+    { "id": "fume", "name": "Ignatius Fume", "profession": "Scientist", "gender": "M", "trace": "glass-fragments", "traceLabel": "Glass fragments", "bio": "You conduct experiments. Several of them are still running at home, unattended." },
+    { "id": "mourningstone", "name": "Madame Opal Mourningstone", "profession": "Medium", "gender": "F", "trace": "candle-wax", "traceLabel": "Candle wax", "bio": "You commune with the departed for a modest fee. Results vary. The fee does not." },
+    { "id": "steeps", "name": "Jasper Steeps", "profession": "Barista", "gender": "M", "trace": "coffee-ring", "traceLabel": "Coffee ring", "bio": "You serve coffee to the entire town. You know what everyone drinks, and what they are like before they've had it." },
+    { "id": "vayne", "name": "Constance Vayne", "profession": "Influencer", "gender": "F", "trace": "face-powder", "traceLabel": "Face powder", "bio": "You document your life for an audience. You have already posted twice this evening." },
+    { "id": "shushwell", "name": "Dr. Paige Shushwell", "profession": "Librarian", "gender": "F", "trace": "cracked-spectacles", "traceLabel": "Cracked spectacles", "bio": "You run the library. You know what everyone borrows, and you have drawn conclusions." },
+    { "id": "leech", "name": "Dr. Bartholomew Leech", "profession": "Doctor", "gender": "M", "trace": "iodine", "traceLabel": "Iodine", "bio": "You are the town physician. Your methods are traditional and you will not hear otherwise." },
+    { "id": "prof-jonathan", "name": "Prof. Jonathan Kostington", "profession": "Professor", "gender": "M", "trace": "chalk-dust", "traceLabel": "Chalk dust", "host": "jonathan", "bio": "You lecture on subjects nobody asked about. It is your dog's birthday and you have prepared remarks." },
+    { "id": "prof-susan", "name": "Prof. Susan Kostington", "profession": "Professor", "gender": "F", "trace": "pencil-shavings", "traceLabel": "Pencil shavings", "host": "susan", "bio": "You lecture at the same institution as your husband, in a field you consider considerably more rigorous." }
+  ],
+  "_affection": "Starting-affection modifiers per profession, -2 to +2 (bio worksheet matrix, 9 Sep 2026). Sir Irwin is absent on purpose: always 5. Professor is flat zero pending Jon's call (flat zero vs mildly negative). Doctor was not in the original matrix; the row below is a default to confirm.",
+  "affection": {
+    "Reporter":       { "granolia": 1,  "boo": 2,  "zimothy": -2, "salem": -2 },
+    "Sergeant Major": { "granolia": 1,  "boo": 0,  "zimothy": 1,  "salem": -1 },
+    "Baker":          { "granolia": 2,  "boo": -1, "zimothy": 0,  "salem": 1 },
+    "Banker":         { "granolia": -1, "boo": 1,  "zimothy": 2,  "salem": -1 },
+    "Florist":        { "granolia": 1,  "boo": 2,  "zimothy": -1, "salem": 2 },
+    "Farmer":         { "granolia": 1,  "boo": -2, "zimothy": 0,  "salem": 2 },
+    "Scientist":      { "granolia": -2, "boo": -1, "zimothy": 1,  "salem": 1 },
+    "Medium":         { "granolia": 2,  "boo": 0,  "zimothy": -2, "salem": 1 },
+    "Influencer":     { "granolia": 0,  "boo": 2,  "zimothy": -1, "salem": -2 },
+    "Barista":        { "granolia": 1,  "boo": 2,  "zimothy": 0,  "salem": 0 },
+    "Librarian":      { "granolia": 1,  "boo": 0,  "zimothy": 2,  "salem": -1 },
+    "Doctor":         { "granolia": 1,  "boo": 0,  "zimothy": 1,  "salem": -1 },
+    "Professor":      { "granolia": 0,  "boo": 0,  "zimothy": 0,  "salem": 0 }
+  }
+}

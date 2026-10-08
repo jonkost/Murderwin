@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 
 // Public web client config — safe to commit.
 const firebaseConfig = {
@@ -21,6 +22,10 @@ export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
 export const storage = getStorage(app)
+// The host's buttons on the Game night page. The function checks the caller
+// is on the staff list; it never returns anything sealed.
+export const functions = getFunctions(app, 'us-central1')
+export const hostCommand = httpsCallable(functions, 'hostCommand')
 
 export function signIn() {
   return signInWithPopup(auth, new GoogleAuthProvider())

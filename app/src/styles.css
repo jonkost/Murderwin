@@ -152,3 +152,20 @@ button { font: inherit; cursor: pointer; }
 .asset-file audio { width: 100%; max-width: 22rem; }
 .asset-file .upload { min-height: 2.4rem; display: inline-flex; align-items: center; }
 .draft-name { flex: 1; font: inherit; font-size: 1rem; border: 1px dashed var(--line); background: #faf4e6; color: var(--ink); padding: 0.5rem; min-height: 2.6rem; }
+
+/* Game night page */
+.navlink { text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
+.night-msg { background: #e9dfc4; border: 1px solid var(--line); padding: 0.6rem 0.9rem; margin: 0 0 1rem; }
+.night-line { margin: 0.3rem 0; }
+.night-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.6rem 0; }
+.night-buttons.acts .tab { min-height: 2.6rem; }
+.night-buttons .primary, .night-buttons .ghost { min-height: 2.6rem; }
+.night-earlier { margin-top: 0.6rem; }
+.night-earlier ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.night-earlier li { margin: 0.3rem 0; }
+.night-join { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
+.qr { width: 220px; height: 220px; border: 1px solid var(--line); background: #f4ecdc; }
+.roster { border-collapse: collapse; width: 100%; }
+.roster td { padding: 0.4rem 0.4rem; border-bottom: 1px dotted var(--line); vertical-align: middle; }
+.dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #c9b992; }
+.dot.on { background: var(--good); }

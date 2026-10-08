@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:site": "vite build && rm -rf ../hosting && mkdir -p ../hosting/workshop && cp ../index.html ../styles.css ../hosting/ && cp -R dist/. ../hosting/workshop/",
+    "build:site": "vite build && mkdir -p ../hosting && rm -rf ../hosting/workshop && mkdir -p ../hosting/workshop && cp ../index.html ../styles.css ../hosting/ && cp -R dist/. ../hosting/workshop/",
     "preview": "vite preview"
   },
   "dependencies": {
     "firebase": "^12.0.0",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0"

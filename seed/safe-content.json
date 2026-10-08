@@ -1201,6 +1201,32 @@
           "why": "Never say something secret is happening. The whole point is that nothing looks different."
         }
       ]
+    },
+    "guest": {
+      "what": "Who is coming tonight, one line per person. This list becomes the “Who are you?” screen when a guest scans the square code at the door: they tap their own name and the game hands them a character at random. The two of you are marked as hosts so you always play the Professors.",
+      "syntax": [
+        "One guest per line: just the name they go by, as they would want it on a place card.",
+        "The two hosts, exactly: “Name — host: Jonathan” and “Name — host: Susan”. Nobody else gets a dash.",
+        "Names must be different from each other at a glance — if two guests share a first name, add an initial or a nickname.",
+        "A guest who may or may not come can stay on the list; an unclaimed name costs nothing on the night."
+      ],
+      "test": "Could an eleven-year-old find their own name on this list in dim light and tap it without help?",
+      "good": [
+        {
+          "text": "Jon — host: Jonathan",
+          "why": "Marks a host; the game always gives this line Prof. Jonathan Kostington."
+        },
+        {
+          "text": "Jessa",
+          "why": "Just the name. The game deals the character."
+        }
+      ],
+      "bad": [
+        {
+          "text": "Grandpa (Stanley) — the Sergeant Major",
+          "why": "Characters are dealt at random on the night, never chosen here. Just write the name."
+        }
+      ]
     }
   }
 }

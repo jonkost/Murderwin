@@ -49,6 +49,9 @@ export const AREAS = {
   // is sealed: decided blind, shown only to Jenna.
   bag_items: { label: 'Bag items', group: 'Bags', tabs: null, guide: 'bag_item', goal: 60 },
   // — Show night —
+  // Who is coming. The play side's "Who are you?" screen lists these names;
+  // the two hosts are marked so they always get the Professors.
+  guests: { label: 'Guest list', group: 'Show night', tabs: null, guide: 'guest', goal: 10 },
   act_scripts: { label: 'Act scripts & banners', group: 'Show night', tabs: 'acts', guide: 'act_script', goalPerTab: 3 },
   ops_docs: { label: 'Host & ops documents', group: 'Show night', tabs: null, guide: 'ops_doc', goal: 12 },
   // — Assets (checklists with file uploads; edited on the Assets page) —
@@ -137,6 +140,9 @@ export function lintItem(area, text) {
     }
     case 'bios':
       return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
+    case 'guests':
+      return !/—/.test(text) || /—\s*host:\s*(Jonathan|Susan)\s*$/i.test(text)
+        ? null : 'Just the name — or “Name — host: Jonathan” / “Name — host: Susan” for the two of you.'
     default:
       return null
   }
@@ -251,5 +257,15 @@ export const ADDITIONS = [
     // (The existing task card "Innocent-beat content for Acts 2, 4 and 6"
     // covers writing them.)
     areaDocs: { filler: { items: [] } },
+  },
+  {
+    // 8 Oct: the play side. The guest list feeds the phones' "Who are you?"
+    // screen; the Game night page in the workshop runs the night.
+    id: '2026-10-08-play-side',
+    areaDocs: { guests: { items: [] } },
+    tasks: [
+      { order: 28, status: 'todo', title: 'Guest list', detail: 'Workshop → Show night → Guest list. One line per guest, just the name. Mark the two of you “— host: Jonathan” and “— host: Susan” so you always get the Professors.' },
+      { order: 29, status: 'todo', title: 'Put the play side live, then scan it', detail: 'Run the deploy command from docs/play-side.md once. Then open Game night in the workshop, start a night, and scan the square code with your own phone. Your character should appear.' },
+    ],
   },
 ]

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
 import Stationery from './pages/Stationery'
 import Assets from './pages/Assets'
+import Night from './pages/Night'
 
 function SignInGate() {
   const [err, setErr] = useState(null)
@@ -75,6 +76,7 @@ export default function App() {
         <Link to="/" className="brand">The Workshop</Link>
         {boot.seeded && <span className="chip">seed imported ✓</span>}
         <span className="spacer" />
+        <Link to="/night" className="ghost navlink">Game night</Link>
         <button className="ghost" onClick={signOutUser}>Sign out</button>
       </header>
       <Routes>
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="/edit/:area" element={<Editor />} />
         <Route path="/stationery" element={<Stationery />} />
         <Route path="/assets" element={<Assets />} />
+        <Route path="/night" element={<Night />} />
       </Routes>
     </div>
   )

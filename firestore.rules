@@ -2,6 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
     // ---- STAFF: Jon + Jenna, the Steward (workshop access) ----
     // Jon by UID. Jenna by the SHA-256 of their verified Google email — the repo
     // is public, so the address itself never appears here. Staff reach the
@@ -35,16 +39,53 @@ service cloud.firestore {
     // ---- Aggregates only: safe for admin dashboard ----
     match /validation_reports/{doc=**} { allow read: if isAdmin(); allow write: if false; }
 
-    // ---- PLAYER SURFACES (game night; session docs written by Functions) ----
-    // Players get assembled payloads via their session doc. They never touch
-    // sealed/cases. Tighten per-surface as those features land.
-    match /sessions/{sessionId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
-      allow write: if false;         // Functions write; clients read their own
-    }
+    // ---- PLAYER SURFACES (game night) ----
+    // Phones sign in anonymously. Everything a phone reads is either public
+    // night state (same for everyone) or its own session doc, which Cloud
+    // Functions write. A phone never reads anyone else's session, and never
+    // touches sealed/* or cases/*. Added 8 Oct 2026 with the play client.
+
+    // Which night is live right now.
     match /public_state/{doc=**} {
-      allow read: if request.auth != null;  // big screen / room kiosks
-      allow write: if false;
+      allow read: if signedIn();
+      allow write: if false;         // Functions only
+    }
+
+    // The night: act, phase, guest list, who plays whom (identities are public).
+    match /nights/{nightId} {
+      allow read: if signedIn();
+      allow write: if false;         // Functions only
+      // Safe content copied for the phones: rules, bios, NPC cards, UI lines.
+      match /public/{doc=**} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+      // The draw order and which phone holds which guest. Nobody reads this.
+      match /private/{doc=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // One doc per phone: your character, bag number, affection, and later your
+    // role and everything dealt to you. Only that phone can read it.
+    match /sessions/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;         // Functions only
+    }
+
+    // Heartbeat from each phone (online dot on the host's page, clock skew).
+    match /presence/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nightId', 'guestKey', 'at']);
+      allow delete: if false;
+    }
+
+    // A player's own scribbles: crossed-off motives, prompts already hidden.
+    // Nothing in here is dealt by the game, so the phone may write it.
+    match /notes/{uid} {
+      allow read, create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
     }
   }
 }
