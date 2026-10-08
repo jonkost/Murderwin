@@ -12,7 +12,7 @@ export default class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children
     return (
       <div className="moment papered">
-        <p className="moment-text">The Manor has lost its place. Nothing is lost — tap below and it will catch up.</p>
+        <p className="moment-text">The Manor has lost its place. Nothing is lost. Tap below and it will catch up.</p>
         <button className="big" onClick={() => window.location.reload()}>Catch up</button>
       </div>
     )

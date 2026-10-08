@@ -126,7 +126,7 @@ function Motives({ uid, content, notes }) {
   if (!list.length) return <p className="moment-text">The motives are on their way.</p>
   return (
     <div>
-      <p className="gloss">Nineteen reasons someone might. Tap one to cross it off — your note, nobody else’s.</p>
+      <p className="gloss">Nineteen reasons someone might. Tap one to cross it off. Your note, nobody else’s.</p>
       <ol className="motives">
         {list.map(m => (
           <li key={m.n}>

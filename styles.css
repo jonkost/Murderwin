@@ -1,355 +1,128 @@
-/* Murderwin at Sirwin Manor — Victorian playbill splash */
+/* Murderwin at Sirwin Manor — the invitation page. One column, the house colours, nothing extra. */
 
 :root {
-  --soot:        #0d0a09;
-  --wood:        #1c1310;
-  --parchment:   #e9dcbe;
-  --parchment-2: #ded0ac;
-  --ink:         #241a12;
-  --ink-soft:    #4a382a;
-  --oxblood:     #6d1f24;
-  --gold:        #b28a3c;
-  --gaslight:    #d9a441;
+  /* The house palette (Jon, 8 Oct 2026). Names are ours; the hex are his. */
+  --brand-blue:   #001925;  /* Manor blue — the ground */
+  --brand-red:    #bf1925;  /* Wax red — buttons, the seal, the wallpaper */
+  --brand-claret: #592F32;  /* Claret — pressed buttons, document ink, warm cards */
+  --brand-soot:   #332526;  /* Soot — deepest warm shadow */
+  --brand-ash:    #332C2D;  /* Ash — neutral dark, borders, dividers */
+  --brand-brass:  #A6A253;  /* Brass — highlights, rules, Irwin's hints, "in" */
+  --brand-peat:   #262500;  /* Peat — darkest olive, idle kiosks */
+  --brand-bottle: #00261E;  /* Bottle green — the orangery, dinner, the Ghost */
+  --brand-charcoal: #1F2124; /* Charcoal — the dark grey, for contrast against the blue */
+  --brand-parchment: #F1E8D6; /* Parchment — the light text colour */
+  --blue: var(--brand-blue);
+  --red: var(--brand-red);
+  --ink: var(--brand-parchment);
+  --dim: #c9bba2;
+  /* Apple's own pair (New York + SF) on Apple devices; Source Serif + the system sans elsewhere. Three sizes only. */
+  --display: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --body: -apple-system, BlinkMacSystemFont, system-ui, 'Source Sans 3', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--soot);
-}
+html, body { margin: 0; padding: 0; background: var(--blue); }
 
 body {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(1rem, 4vw, 3.5rem);
-  font-family: "IM Fell English", "Iowan Old Style", Georgia, serif;
-  color: var(--ink);
-  /* gaslight pooling in a dark room */
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 38%, rgba(217, 164, 65, .16), transparent 70%),
-    radial-gradient(ellipse 120% 90% at 50% 50%, rgba(109, 31, 36, .12), transparent 65%),
-    linear-gradient(160deg, #17100e, var(--soot) 55%, #0a0807);
-}
-
-/* ---------- the bill itself ---------- */
-
-.playbill {
-  width: min(64rem, 100%);
-}
-
-.frame {
   position: relative;
-  padding: clamp(2rem, 5vw, 4.25rem) clamp(1.4rem, 5vw, 4.5rem) clamp(2.5rem, 5vw, 4rem);
+  min-height: 100vh;
+  font-family: var(--body);
+  color: var(--ink);
+  padding-block: clamp(2.5rem, 7vw, 5rem);
+  padding-inline: clamp(1.2rem, 5vw, 3rem);
+}
+/* the house wallpaper, faint */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-color: var(--red);
+  opacity: .22;
+  -webkit-mask: url("brand/pattern.svg") center top / 1400px repeat;
+  mask: url("brand/pattern.svg") center top / 1400px repeat;
+}
+
+.invite {
+  max-width: 38rem;
+  margin: 0 auto;
   text-align: center;
-  color: var(--ink);
-  background-color: var(--parchment);
-  background-image:
-    /* foxing / age spots */
-    radial-gradient(circle at 12% 18%, rgba(120, 84, 40, .10), transparent 22%),
-    radial-gradient(circle at 88% 12%, rgba(120, 84, 40, .08), transparent 18%),
-    radial-gradient(circle at 78% 88%, rgba(120, 84, 40, .11), transparent 24%),
-    radial-gradient(circle at 22% 82%, rgba(120, 84, 40, .07), transparent 20%),
-    /* edge darkening */
-    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(70, 45, 20, .22)),
-    /* paper fibre */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='260' height='260' filter='url(%23n)' opacity='0.35'/></svg>"),
-    linear-gradient(175deg, var(--parchment), var(--parchment-2));
-  background-blend-mode: normal, normal, normal, normal, multiply, soft-light, normal;
-  border: 2px solid var(--ink);
-  outline: 1px solid var(--ink);
-  outline-offset: 6px;
-  box-shadow:
-    0 0 0 10px rgba(13, 10, 9, .55),
-    0 2rem 5rem rgba(0, 0, 0, .8),
-    inset 0 0 5rem rgba(90, 60, 25, .25);
+  display: grid;
+  gap: 1.6rem;
+  justify-items: center;
 }
 
-.corner {
-  position: absolute;
-  font-size: 1.35rem;
-  line-height: 1;
-  color: var(--oxblood);
-  opacity: .75;
-}
-.corner.tl { top: .6rem; left: .8rem; }
-.corner.tr { top: .6rem; right: .8rem; }
-.corner.bl { bottom: .6rem; left: .8rem; }
-.corner.br { bottom: .6rem; right: .8rem; }
+.seal { width: clamp(7rem, 18vw, 10rem); height: auto; filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .55)); }
 
-/* ---------- type ---------- */
-
-.eyebrow {
-  margin: 0 0 1.25rem;
-  font-family: "IM Fell English SC", Georgia, serif;
-  font-size: clamp(.68rem, 1.5vw, .82rem);
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.presents {
-  margin: 1.1rem 0 .4rem;
-  font-style: italic;
-  font-size: clamp(.95rem, 2.2vw, 1.18rem);
-  color: var(--ink-soft);
-}
-
-.title { margin: 0; }
-
+.title { margin: 0; display: grid; gap: .3rem; }
 .title-main {
-  display: block;
-  font-family: "Playfair Display", Georgia, serif;
-  font-weight: 900;
-  font-size: clamp(2.1rem, 11vw, 8rem);
-  line-height: .92;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--oxblood);
-  text-shadow:
-    0 1px 0 rgba(255, 246, 224, .55),
-    0 2px 5px rgba(60, 30, 10, .3);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(3rem, 12vw, 6.5rem);
+  line-height: .95;
+  letter-spacing: .01em;
 }
-
 .title-sub {
-  display: block;
-  margin-top: .5rem;
-  font-family: "Playfair Display", Georgia, serif;
-  font-weight: 700;
-  font-size: clamp(1.15rem, 4vw, 2.4rem);
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-.title-sub em {
-  font-family: "IM Fell English", Georgia, serif;
-  font-weight: 400;
-  text-transform: lowercase;
+  font-family: var(--body);
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
   letter-spacing: .02em;
-  color: var(--ink-soft);
+  color: var(--dim);
 }
-
-.tagline {
-  margin: 1.1rem auto 0;
-  max-width: 34ch;
-  font-style: italic;
-  font-size: clamp(1rem, 2.4vw, 1.32rem);
-  color: var(--ink-soft);
-}
-
-/* ---------- rules & ornaments ---------- */
-
-.rule {
-  display: flex;
-  align-items: center;
-  gap: .85rem;
-  margin: 1.5rem auto;
-  max-width: 26rem;
-  color: var(--oxblood);
-}
-.rule.wide { max-width: 38rem; }
-.rule-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--ink-soft) 20%, var(--ink-soft) 80%, transparent);
-  opacity: .6;
-}
-.rule-orn { font-size: 1.1rem; line-height: 1; }
-
-/* ---------- body copy ---------- */
 
 .blurb {
-  margin: 2.4rem auto 0;
-  max-width: 52ch;
-  font-size: clamp(1rem, 2.1vw, 1.16rem);
-  line-height: 1.72;
-  text-align: justify;
-  text-align-last: center;
-  hyphens: auto;
+  margin: 0;
+  max-width: 34rem;
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  line-height: 1.65;
+}
+.blurb strong { font-weight: 400; color: var(--red); }
+
+.question {
+  margin: .4rem 0;
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  line-height: 1.7;
+  color: var(--dim);
+}
+.question strong {
+  display: inline-block;
+  margin: .3rem 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  line-height: 1.1;
   color: var(--ink);
 }
-.blurb strong {
-  font-family: "IM Fell English SC", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: .06em;
-  color: var(--oxblood);
-}
-.drop {
-  float: left;
-  font-family: "Playfair Display", Georgia, serif;
-  font-weight: 700;
-  font-size: 3.4em;
-  line-height: .78;
-  padding: .06em .12em 0 0;
-  color: var(--oxblood);
-}
+.question em { color: var(--red); }
 
 .occasion {
-  margin: 1.4rem 0 1.9rem;
-  font-family: "Cinzel", Georgia, serif;
-  font-size: clamp(.95rem, 2.2vw, 1.15rem);
-  line-height: 2;
-  letter-spacing: .1em;
-  color: var(--ink-soft);
+  margin: .6rem 0 0;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--dim);
 }
-.smallcaps { color: var(--ink); letter-spacing: .16em; }
-.name {
-  display: inline-block;
-  margin-top: .2rem;
-  font-size: 1.5em;
-  font-weight: 600;
-  letter-spacing: .14em;
-  color: var(--oxblood);
-}
-
-/* ---------- the victim callout ---------- */
-
-.callout {
-  position: relative;
-  margin: 2.2rem auto 0;
-  padding: 1.6rem 1rem 1.7rem;
-  max-width: 34rem;
-  border-top: 1px solid rgba(74, 56, 42, .45);
-  border-bottom: 1px solid rgba(74, 56, 42, .45);
-  background: radial-gradient(ellipse 70% 90% at 50% 50%, rgba(109, 31, 36, .07), transparent 72%);
-}
-.callout p { margin: 0; }
-
-.callout-lead {
-  font-style: italic;
-  font-size: clamp(.95rem, 2.1vw, 1.1rem);
-  color: var(--ink-soft);
-}
-
-.callout-hit {
-  margin: .55rem 0 .35rem !important;
-  font-family: "Playfair Display", Georgia, serif;
-  font-weight: 900;
-  font-size: clamp(1.7rem, 6vw, 3.1rem);
-  line-height: 1.05;
-  letter-spacing: .03em;
-  text-transform: uppercase;
-  color: var(--oxblood);
-  text-shadow: 0 1px 0 rgba(255, 246, 224, .5);
-}
-
-.callout-tail {
-  font-family: "Cinzel", Georgia, serif;
-  font-size: clamp(1rem, 2.4vw, 1.3rem);
-  letter-spacing: .1em;
-  color: var(--ink);
-}
-.callout-tail em {
-  font-style: normal;
-  font-weight: 600;
-  color: var(--oxblood);
-  border-bottom: 2px solid rgba(109, 31, 36, .35);
-}
-
-/* ---------- closing address ---------- */
-
-.closing {
-  margin: 1.9rem auto 0;
-  max-width: 42ch;
-  font-style: italic;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  line-height: 1.7;
-  color: var(--ink);
-}
-
-/* ---------- call to action ---------- */
+.occasion strong { font-weight: 600; color: var(--ink); }
 
 .enter {
   display: inline-block;
   margin-top: .4rem;
-  padding: .85rem 2.6rem;
-  font-family: "IM Fell English SC", Georgia, serif;
-  font-size: clamp(.95rem, 2.2vw, 1.12rem);
-  letter-spacing: .2em;
-  text-transform: uppercase;
+  padding: .95rem 2.8rem;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+  letter-spacing: 0;
   text-decoration: none;
-  color: var(--parchment);
-  background: linear-gradient(180deg, #7d262c, var(--oxblood) 55%, #571a1e);
-  border: 1px solid #3d1114;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 220, 180, .28),
-    0 3px 0 #3d1114,
-    0 8px 18px rgba(50, 20, 10, .38);
-  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  color: #fff;
+  background: var(--red);
+  border-radius: .7rem;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .45);
 }
-.enter:hover,
-.enter:focus-visible {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 220, 180, .35),
-    0 4px 0 #3d1114,
-    0 12px 24px rgba(50, 20, 10, .45),
-    0 0 22px rgba(217, 164, 65, .35);
-}
-.enter:active {
-  transform: translateY(2px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .4), 0 1px 0 #3d1114;
-}
+.enter:hover, .enter:focus-visible { filter: brightness(1.08); outline: 2px solid var(--ink); outline-offset: 3px; }
+.enter:active { background: var(--brand-claret); }
 
-.notyet {
-  margin: 1rem auto 0;
-  font-style: italic;
-  font-size: 1rem;
-  color: var(--ink-soft);
-  opacity: 0;
-  transition: opacity .6s ease;
-}
-.notyet.show { opacity: 1; }
+.small { margin: -0.8rem 0 0; font-style: italic; color: var(--dim); }
 
-.footnote {
-  margin: 2.2rem auto 0;
-  max-width: 32rem;
-  font-family: "IM Fell English SC", Georgia, serif;
-  font-size: clamp(.62rem, 1.4vw, .75rem);
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  opacity: .75;
-}
-
-/* ---------- wax seal ---------- */
-
-.seal {
-  position: absolute;
-  right: clamp(.5rem, 3vw, 2.2rem);
-  bottom: clamp(.5rem, 3vw, 2rem);
-  width: 92px;
-  height: 92px;
-  display: grid;
-  place-items: center;
-  color: #f0d9a8;
-  background: radial-gradient(circle at 34% 30%, #a13740, var(--oxblood) 45%, #4a1216);
-  border-radius: 48% 52% 45% 55% / 52% 45% 55% 48%;
-  box-shadow:
-    inset 0 2px 6px rgba(255, 190, 170, .28),
-    inset 0 -4px 10px rgba(0, 0, 0, .45),
-    0 4px 12px rgba(30, 10, 5, .5);
-  transform: rotate(-8deg);
-}
-
-/* ---------- responsive & motion ---------- */
-
-@media (max-width: 640px) {
-  /* seal drops out of the corner and sits centred beneath the bill */
-  .seal {
-    position: static;
-    width: 66px;
-    height: 66px;
-    margin: 1.6rem auto 0;
-  }
-  .footnote { margin-top: 1.8rem; }
-  .blurb { text-align: center; text-align-last: center; }
-  .drop { float: none; font-size: 1em; padding: 0; }
-}
+.foot { margin: 2rem 0 0; font-size: .9rem; }
+.foot a { color: var(--dim); text-decoration: none; border-bottom: 1px solid var(--brand-ash); }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }

@@ -14,9 +14,9 @@ export const PLAY_URL = 'https://murderwin-at-sirwin-manor.web.app/play/'
 const PHASE_WORDS = {
   lobby: 'doors open, nothing started',
   act: 'playing',
-  blackout: 'BLACKOUT — every phone is dark',
-  prompt: 'power is back — phones are showing their prompt',
-  paused: 'paused — Sir Irwin requires the garden',
+  blackout: 'BLACKOUT, every phone is dark',
+  prompt: 'power is back, phones are showing their prompt',
+  paused: 'paused, Sir Irwin requires the garden',
 }
 
 function describe(command, r) {
@@ -84,7 +84,7 @@ export default function Host({ night, content }) {
         <button className="big wide" disabled={!!busy || night.phase !== 'blackout'} onClick={() => run('power')}>Power returns · Act 2</button>
         {night.phase === 'paused'
           ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
-          : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause — Irwin needs the garden</button>}
+          : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
       </div>
 
       <h3>The doors</h3>

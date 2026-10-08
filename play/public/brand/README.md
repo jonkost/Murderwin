@@ -11,5 +11,6 @@ site serves:
   flat picture, for slides and anywhere CSS is not available.
 - `seal.png` — the red wax seal with Irwin, used as the crest.
 
-Type (decided 8 Oct 2026): Libre Caslon Display for titles and names (Jon: "a
-nice detective feel"), Source Sans 3 for everything people read. Colours: blue #001925, red #bf1925.
+Type (decided 8 Oct 2026, the Apple Invites look): New York for titles and
+names, SF for reading, on Apple devices; Source Serif 4 and the system sans
+elsewhere. Three sizes only: title, heading, reading.

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:site": "vite build && mkdir -p ../hosting && rm -rf ../hosting/workshop && mkdir -p ../hosting/workshop && cp ../index.html ../styles.css ../hosting/ && cp -R dist/. ../hosting/workshop/",
+    "build:site": "vite build && mkdir -p ../hosting && rm -rf ../hosting/workshop && mkdir -p ../hosting/workshop && cp ../index.html ../styles.css ../hosting/ && rm -rf ../hosting/brand && cp -R ../brand ../hosting/brand && cp -R dist/. ../hosting/workshop/",
     "preview": "vite preview"
   },
   "dependencies": {

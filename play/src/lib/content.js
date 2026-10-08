@@ -27,21 +27,21 @@ export const DEFAULT_UI = {
   'JOIN AGAIN': 'Back on a new phone? Tap your name and your character follows.',
   LOBBY: 'The doors are open. Drinks are in the parlour. The game will find you when it starts.',
   BAG: 'Collect bag number',
-  OFFLINE: 'The Manor cannot hear your phone. Stay where you are — it will reconnect on its own. Nothing is lost.',
+  OFFLINE: 'The Manor cannot hear your phone. Stay where you are. It will reconnect on its own, and nothing is lost.',
   PAUSED: 'Sir Irwin requires the garden. Back shortly.',
   SUPERSEDED: 'This character has moved to another phone. If that was not you, find the host.',
   POWER: 'The power is back. Keep your eyes on your own phone. Read, then hide this when you are ready.',
   HIDE: 'Hide this',
   HOLD: 'Keep reading',
-  RETICULE: 'Your Reticule — a small drawstring bag for everything you carry tonight.',
+  RETICULE: 'Your Reticule: a small drawstring bag for everything you carry tonight.',
   'START NIGHT': 'Host? Start the night',
   HOST: 'You are a host. The buttons under Host run the night for every phone.',
 }
 
 export const DEFAULT_RULES = [
-  { title: 'What we are doing tonight', body: 'There has been a murderwin. Our job is to name three things: who did it, why, and who died. The murderer and the victim are both playing alongside us — the victim as the Ghost, the murderer trying to steer us away from the truth.' },
-  { title: 'The three roles', body: 'Most of us are Detectives. One of us is the Murderer: they know they did it, but not why. One of us is the Ghost: they know they are dead, but not who did it. Every role wins the same way — name the murderer, the motive and the victim.' },
-  { title: 'The ghost rule', body: 'One of us died tonight. We can all still see them. None of us has noticed. If someone names the Ghost out loud, nothing happens — the Ghost may not confirm it until the end.' },
+  { title: 'What we are doing tonight', body: 'There has been a murderwin. Our job is to name three things: who did it, why, and who died. The murderer and the victim are both playing alongside us: the victim as the Ghost, the murderer trying to steer us away from the truth.' },
+  { title: 'The three roles', body: 'Most of us are Detectives. One of us is the Murderer: they know they did it, but not why. One of us is the Ghost: they know they are dead, but not who did it. Every role wins the same way: name the murderer, the motive and the victim.' },
+  { title: 'The ghost rule', body: 'One of us died tonight. We can all still see them. None of us has noticed. If someone names the Ghost out loud, nothing happens. The Ghost may not confirm it until the end.' },
   { title: 'The cats', body: 'The household talks. Sir Irwin never lies. If Irwin and anyone else disagree, Irwin is right. Your business with the cats is yours.' },
   { title: 'Share with your mouth', body: 'Nothing you learn can be sent from phone to phone. Tell people out loud, argue, and lie if you must.' },
   { title: 'Eyes on your own paper', body: 'When every phone lights up at once, read your own. Some screens hold for a moment before they can be hidden. That is normal.' },
@@ -104,7 +104,7 @@ export function npcCards(content) {
   const written = items(content, 'npc_cards')
   return CATS.map(cat => {
     const hit = written.find(it => it.text.toLowerCase().includes(cat.name.toLowerCase().split(',')[0]))
-    return { ...cat, text: hit ? hit.text : `${cat.name} — ${cat.tag}. ${cat.blurb}` }
+    return { ...cat, text: hit ? hit.text : `${cat.name}, ${cat.tag}. ${cat.blurb}` }
   })
 }
 

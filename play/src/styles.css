@@ -1,16 +1,24 @@
 /* The phone. Dark, big, readable in a dim room by an eleven-year-old and a
    seventy-year-old. Modern interface, Victorian content. */
 :root {
-  /* Brand colours (Jon, 8 Oct 2026): blue #001925, red #bf1925 */
-  --brand-blue: #001925;
-  --brand-red: #bf1925;
+  /* The house palette (Jon, 8 Oct 2026). Names are ours; the hex are his. */
+  --brand-blue:   #001925;  /* Manor blue — the ground */
+  --brand-red:    #bf1925;  /* Wax red — buttons, the seal, the wallpaper */
+  --brand-claret: #592F32;  /* Claret — pressed buttons, document ink, warm cards */
+  --brand-soot:   #332526;  /* Soot — deepest warm shadow */
+  --brand-ash:    #332C2D;  /* Ash — neutral dark, borders, dividers */
+  --brand-brass:  #A6A253;  /* Brass — highlights, rules, Irwin's hints, "in" */
+  --brand-peat:   #262500;  /* Peat — darkest olive, idle kiosks */
+  --brand-bottle: #00261E;  /* Bottle green — the orangery, dinner, the Ghost */
+  --brand-charcoal: #1F2124; /* Charcoal — the dark grey, for contrast against the blue */
+  --brand-parchment: #F1E8D6; /* Parchment — the light text colour */
   --bg: var(--brand-blue);
   --card: #0c2634;
   --line: #214050;
-  --ink: #f1e8d6;
+  --ink: var(--brand-parchment);
   --dim: #a9b8c0;
   --accent: var(--brand-red);
-  --good: #7fb069;
+  --good: var(--brand-brass);
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -19,14 +27,15 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Source Sans 3', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.45;
   min-height: 100vh;
   min-height: 100dvh;
 }
 button { font: inherit; color: inherit; cursor: pointer; }
-h1, h2, h3, .who, .act-name { font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; }
-.act-name, .who, .ask { font-weight: 400; letter-spacing: 0.01em; }
+/* Apple's pair: New York for titles and names, SF for reading; Source Serif / system sans elsewhere. */
+h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; }
+.act-name, .who, .ask { font-weight: 600; letter-spacing: 0; }
 
 /* in-between screens */
 /* The house wallpaper. One SVG; colour, size and strength are set per use:
@@ -55,7 +64,7 @@ h1, h2, h3, .who, .act-name { font-family: 'Libre Caslon Display', Georgia, seri
 .seal { width: 6.5rem; height: 6.5rem; display: block; margin: 0 auto 0.2rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
 .join .seal { width: 5rem; height: 5rem; }
 .moment.prompt { justify-content: center; }
-.crest { font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); margin: 0; font-size: 0.85rem; }
+.crest { font-weight: 600; letter-spacing: 0.06em; color: var(--dim); margin: 0; font-size: 0.95rem; }
 .moment-text { font-size: 1.25rem; max-width: 24rem; margin: 0; }
 .moment-sub { color: var(--dim); margin: 0; }
 .hold { color: var(--dim); margin: 0.4rem 0 0; min-height: 3.2rem; display: flex; align-items: center; }

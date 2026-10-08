@@ -4,84 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Murderwin at Sirwin Manor</title>
-<meta name="description" content="The Murderwin Mystery Party — a Victorian murder mystery in celebration of the first birthday of Master Irwin.">
+<meta name="description" content="The Murderwin Mystery Party, a Victorian murder mystery in celebration of the first birthday of Master Irwin.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="brand/icon.png">
+<link rel="apple-touch-icon" href="brand/icon.png">
+<meta name="theme-color" content="#001925">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<main class="playbill" role="main">
-  <div class="frame">
-    <span class="corner tl">&#10087;</span>
-    <span class="corner tr">&#10087;</span>
-    <span class="corner bl">&#10087;</span>
-    <span class="corner br">&#10087;</span>
+<main class="invite" role="main">
+  <img class="seal" src="brand/seal.png" alt="">
 
-    <p class="eyebrow">By Order of the Estate &mdash; Admittance by Invitation Only</p>
+  <h1 class="title">
+    <span class="title-main">Murderwin</span>
+    <span class="title-sub">at Sirwin Manor</span>
+  </h1>
 
-    <div class="rule"><span class="rule-line"></span><span class="rule-orn">&#10086;</span><span class="rule-line"></span></div>
+  <p class="blurb">
+    As the dear boy, Irwin celebrates his furst birthday, something is afoot,
+    or dare I say <em>paw</em>? Things have been a little ruff around Sirwin Manor. As on this
+    dog-forsaken autumn night there seems to have been a <strong>murderwin</strong>! With so many suspects
+    who could be the most pawsible behind this horrific crime. Was it the birthday boy, himself? Could it
+    have been the delightful Mama or the charming Papa? Or maybe one of the litter of jealous siblings,
+    including the human ones. None of which have an alibi. But the same goes for you&hellip;or am I just
+    barking up the wrong tree?
+  </p>
 
-    <p class="presents">The Household of Sirwin Manor most solemnly presents</p>
+  <p class="question">But wait&hellip;there is another question worth digging up.<br>
+    <strong>Who is the victim?</strong><br>
+    Could that have been <em>you</em>?</p>
 
-    <h1 class="title">
-      <span class="title-main">Murderwin</span>
-      <span class="title-sub"><em>at</em> Sirwin Manor</span>
-    </h1>
+  <p class="blurb">
+    Come, sit, and stay with us for the Murderwin Mystery Party as we will shed some light on the
+    goings on here in Sirwin Manor. Are you willing to see how this tail unfolds or will you be
+    placing it between your legs?
+  </p>
 
-    <div class="rule wide"><span class="rule-line"></span><span class="rule-orn">&#10070;</span><span class="rule-line"></span></div>
+  <p class="occasion">In honour of the first birthday of <strong>Master Irwin</strong></p>
 
-    <p class="tagline">The Murderwin Mystery Party</p>
+  <a class="enter" href="https://murderwin-at-sirwin-manor.web.app/play/">Enter the Manor</a>
+  <p class="small">On the night, scan the square code at the door.</p>
 
-    <p class="blurb">
-      <span class="drop">A</span>s the dear boy, Irwin celebrates his furst birthday, something is afoot
-      &mdash; or dare I say <em>paw</em>? Things have been a little ruff around Sirwin Manor. As on this
-      dog-forsaken autumn night there seems to have been a <strong>murderwin</strong>! With so many suspects
-      who could be the most pawsible behind this horrific crime. Was it the birthday boy, himself? Could it
-      have been the delightful Mama or the charming Papa? Or maybe one of the litter of jealous siblings,
-      including the human ones. None of which have an alibi. But the same goes for you&hellip;or am I just
-      barking up the wrong tree?
-    </p>
-
-    <div class="callout">
-      <p class="callout-lead">But wait&hellip;there is another question worth digging up.</p>
-      <p class="callout-hit">Who is the victim?</p>
-      <p class="callout-tail">Could that have been <em>you</em>?</p>
-    </div>
-
-    <p class="closing">
-      Come, sit, and stay with us for the Murderwin Mystery Party as we will shed some light on the
-      goings on here in Sirwin Manor. Are you willing to see how this tail unfolds or will you be
-      placing it between your legs?
-    </p>
-
-    <div class="rule"><span class="rule-line"></span><span class="rule-orn">&#10086;</span><span class="rule-line"></span></div>
-
-    <p class="occasion">
-      In Honour of the <span class="smallcaps">First Birthday</span><br>
-      of <span class="name">Master Irwin</span>
-    </p>
-
-    <a class="enter" href="#" id="enter">Enter the Manor</a>
-    <p class="notyet" id="notyet" hidden>The doors are yet bolted. Return when the hour is struck.</p>
-
-    <p class="footnote">Sirwin Manor &middot; Drawing Room, Library &amp; Grounds &middot; Refreshments Provided</p>
-    <p class="footnote"><a href="https://murderwin-at-sirwin-manor.web.app/workshop/" style="color:inherit">Staff Entrance</a></p>
-
-    <!-- Art slot: unstamped wax seal. Drop your own crest/emblem in here (img or svg),
-         or delete this div entirely if you don't want a seal. -->
-    <div class="seal" aria-hidden="true"></div>
-  </div>
+  <p class="foot"><a href="https://murderwin-at-sirwin-manor.web.app/workshop/">Staff entrance</a></p>
 </main>
 
-<script>
-  document.getElementById('enter').addEventListener('click', function (e) {
-    e.preventDefault();
-    var n = document.getElementById('notyet');
-    n.hidden = false;
-    n.classList.add('show');
-  });
-</script>
 </body>
 </html>
