@@ -221,11 +221,35 @@ export async function join(db, { uid, nightId, guestKey: key }) {
     tx.set(sessionRef, {
       nightId, guestKey: key, guestName: guest.name,
       characterId, bag, affection,
+      host: guest.host ?? null, // the two hosts get the Host tab on their own phone
       status: 'active',
       joinedAt: FieldValue.serverTimestamp(),
     })
     return { ok: true, characterId, resumed: false }
   })
+}
+
+// Who may press the host buttons: the admin (Google sign-in in the workshop,
+// or the terminal), or a phone whose session is marked host — the guest-list
+// lines "— host: Jonathan" / "— host: Susan". Nothing here needs Google on
+// the night. The very first night may be started from any phone while no
+// night is live, so the host can bootstrap from the doors screen.
+export async function canHost(db, { uid, isAdmin = false, nightId, command } = {}) {
+  if (isAdmin) return true
+  if (!uid) return false
+  const activeSnap = await db.doc('public_state/active').get()
+  const activeId = activeSnap.exists ? activeSnap.data().nightId ?? null : null
+  if (command === 'create') {
+    if (!activeId) return true
+    const activeNight = await db.doc(`nights/${activeId}`).get()
+    if (!activeNight.exists) return true
+  }
+  const sessionSnap = await db.doc(`sessions/${uid}`).get()
+  if (!sessionSnap.exists) return false
+  const s = sessionSnap.data()
+  if (s.status !== 'active' || !s.host) return false
+  if (command === 'create' || command === 'activate') return s.nightId === activeId
+  return s.nightId === nightId
 }
 
 // The host's buttons. Labelled by function, never by content.

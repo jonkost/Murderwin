@@ -265,7 +265,7 @@ export const ADDITIONS = [
     areaDocs: { guests: { items: [] } },
     tasks: [
       { order: 28, status: 'todo', title: 'Guest list', detail: 'Workshop → Show night → Guest list. One line per guest, just the name. Mark the two of you “— host: Jonathan” and “— host: Susan” so you always get the Professors.' },
-      { order: 29, status: 'todo', title: 'Put the play side live, then scan it', detail: 'Run the deploy command from docs/play-side.md once. Then open Game night in the workshop, start a night, and scan the square code with your own phone. Your character should appear.' },
+      { order: 29, status: 'todo', title: 'Put the play side live, then scan it', detail: 'Run the deploy command from docs/play-side.md once. Then open the play link on your phone, tap “Host? Start the night”, tap your name, and try the Host tab.' },
     ],
   },
 ]

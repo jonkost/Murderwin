@@ -21,5 +21,7 @@ export const auth = getAuth(app)
 export const db = initializeFirestore(app, { localCache: persistentLocalCache() })
 export const functions = getFunctions(app, 'us-central1')
 export const callJoin = httpsCallable(functions, 'join')
+// The host's buttons. The function checks the caller's session is marked host.
+export const callHost = httpsCallable(functions, 'hostCommand')
 
 export { signInAnonymously, onAuthStateChanged }

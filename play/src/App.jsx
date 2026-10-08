@@ -4,6 +4,7 @@ import { uiLines } from './lib/content'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import { Dark, Moment, Blackout, Prompt } from './screens/Moments'
+import { StartNight } from './screens/Host'
 
 // One page. What a phone shows is a pure function of three documents:
 // the active night (public), this phone's session (private), and this
@@ -26,10 +27,10 @@ export default function App() {
 
   if (authError) return <Moment text={ui.OFFLINE} />
   if (!uid || !active.loaded) return <Dark />
-  if (!nightId) return <Moment text={ui.DOORS} crest />
+  if (!nightId) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />
   if (!night.loaded && !night.data) return <Dark />
   const n = night.data
-  if (!n) return <Moment text={ui.DOORS} crest />
+  if (!n) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />
 
   const s = session.data && session.data.nightId === nightId ? session.data : null
   if (s?.status === 'superseded') return <Moment text={ui.SUPERSEDED} crest />

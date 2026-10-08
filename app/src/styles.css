@@ -164,7 +164,9 @@ button { font: inherit; cursor: pointer; }
 .night-earlier ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
 .night-earlier li { margin: 0.3rem 0; }
 .night-join { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
-.qr { width: 220px; height: 220px; border: 1px solid var(--line); background: #f4ecdc; }
+.qr { width: 240px; height: 240px; border: 1px solid var(--line); background: #f4ecdc; }
+.night-steps { padding-left: 1.3rem; }
+.night-steps li { margin: 0.4rem 0; }
 .roster { border-collapse: collapse; width: 100%; }
 .roster td { padding: 0.4rem 0.4rem; border-bottom: 1px dotted var(--line); vertical-align: middle; }
 .dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #c9b992; }

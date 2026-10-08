@@ -6,6 +6,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // A phone whose session is marked host (the guest-list lines
+    // "— host: Jonathan" / "— host: Susan"). Runs the night without Google.
+    function isHost() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/sessions/$(request.auth.uid))
+        && get(/databases/$(database)/documents/sessions/$(request.auth.uid)).data.host != null;
+    }
+
     // ---- STAFF: Jon + Jenna, the Steward (workshop access) ----
     // Jon by UID. Jenna by the SHA-256 of their verified Google email — the repo
     // is public, so the address itself never appears here. Staff reach the
@@ -73,9 +81,9 @@ service cloud.firestore {
       allow write: if false;         // Functions only
     }
 
-    // Heartbeat from each phone (online dot on the host's page, clock skew).
+    // Heartbeat from each phone (online dots on the Host tab, clock skew).
     match /presence/{uid} {
-      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow read: if isAdmin() || isHost() || (signedIn() && request.auth.uid == uid);
       allow create, update: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['nightId', 'guestKey', 'at']);
       allow delete: if false;

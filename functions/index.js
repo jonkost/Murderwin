@@ -1,5 +1,6 @@
-// Cloud Functions for the game night. Players call `join`; the host (Jon,
-// signed in with Google on the workshop) calls `hostCommand`.
+// Cloud Functions for the game night. Players call `join`; a host phone
+// (a session marked host) or the admin calls `hostCommand`. Nothing on the
+// night needs a Google sign-in.
 // SEAL RULE: nothing here touches sealed/* or cases/* yet. When the case
 // generator lands it will live beside this file and keep the same rule:
 // assemble player payloads server-side, return only what that player may see.
@@ -45,12 +46,6 @@ function requireUid(req) {
   return req.auth.uid
 }
 
-function requireAdmin(req) {
-  const uid = requireUid(req)
-  if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Not on the staff list.')
-  return uid
-}
-
 export const join = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, guestKey } = req.data ?? {}
@@ -58,7 +53,9 @@ export const join = onCall({ cors: true }, wrap(async req => {
 }))
 
 export const hostCommand = onCall({ cors: true }, wrap(async req => {
-  requireAdmin(req)
+  const uid = requireUid(req)
   const { nightId, command, arg } = req.data ?? {}
+  const allowed = await night.canHost(db, { uid, isAdmin: ADMIN_UIDS.includes(uid), nightId, command })
+  if (!allowed) throw new HttpsError('permission-denied', 'Only a host can do that.')
   return night.hostCommand(db, { nightId, command, arg })
 }))

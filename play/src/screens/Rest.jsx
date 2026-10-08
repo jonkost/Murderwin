@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { writeNotes } from '../lib/hooks'
+import Host from './Host'
 import {
   ACTS, CATS, actScript, bioFor, characterById, motives, npcCards, rules,
   smalltalk, statusLine,
@@ -25,6 +26,8 @@ export default function Rest({ uid, night, session, content, notes, ui }) {
   const character = characterById(content, session.characterId)
   const script = actScript(content, night.act)
   const act = ACTS[night.act]
+  const tabs = session.host ? [...TABS, { key: 'host', label: 'Host' }] : TABS
+  const shown = tabs.some(t => t.key === tab) ? tab : 'you'
 
   return (
     <main className="rest">
@@ -44,15 +47,16 @@ export default function Rest({ uid, night, session, content, notes, ui }) {
       </header>
 
       <section className="sheet" aria-live="polite">
-        {tab === 'you' && <You character={character} session={session} content={content} ui={ui} />}
-        {tab === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
-        {tab === 'cats' && <Cats session={session} content={content} />}
-        {tab === 'rules' && <Rules content={content} />}
+        {shown === 'you' && <You character={character} session={session} content={content} ui={ui} />}
+        {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
+        {shown === 'cats' && <Cats session={session} content={content} />}
+        {shown === 'rules' && <Rules content={content} />}
+        {shown === 'host' && <Host night={night} content={content} />}
       </section>
 
       <nav className="tabs" aria-label="Your Reticule">
-        {TABS.map(t => (
-          <button key={t.key} className={t.key === tab ? 'tab on' : 'tab'} onClick={() => setTab(t.key)}>
+        {tabs.map(t => (
+          <button key={t.key} className={t.key === shown ? 'tab on' : 'tab'} onClick={() => setTab(t.key)}>
             {t.label}
           </button>
         ))}
@@ -77,6 +81,7 @@ function You({ character, session, content, ui }) {
       <p className="profession">the {character.profession}</p>
       <p className="bio">{bioFor(content, character)}</p>
       {session.bag && <p className="bag">{ui.BAG} <strong>{session.bag}</strong></p>}
+      {session.host && <p className="gloss">{ui.HOST}</p>}
       {idle && (
         <p className="idle"><span className="idle-cat">{idle.cat.name}</span> {idle.text}</p>
       )}

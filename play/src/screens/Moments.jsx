@@ -9,11 +9,12 @@ export function Dark() {
 
 // A single line, held on a near-black screen. Used for the lobby doors, the
 // pause, and the handed-over-phone notice.
-export function Moment({ text, crest }) {
+export function Moment({ text, crest, foot }) {
   return (
     <div className="moment">
       {crest && <p className="crest">Sirwin Manor</p>}
       <p className="moment-text">{text}</p>
+      {foot}
     </div>
   )
 }

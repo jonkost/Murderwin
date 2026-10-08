@@ -34,6 +34,8 @@ export const DEFAULT_UI = {
   HIDE: 'Hide this',
   HOLD: 'Keep reading',
   RETICULE: 'Your Reticule — a small drawstring bag for everything you carry tonight.',
+  'START NIGHT': 'Host? Start the night',
+  HOST: 'You are a host. The buttons under Host run the night for every phone.',
 }
 
 export const DEFAULT_RULES = [

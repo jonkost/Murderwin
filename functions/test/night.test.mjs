@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import {
-  createNight, join, hostCommand, rollAffection, parseGuest, guestKey,
+  createNight, join, hostCommand, canHost, rollAffection, parseGuest, guestKey,
   CHARACTERS, AFFECTION_MODS, CATS,
 } from '../lib/night.js'
 
@@ -61,6 +61,9 @@ test('join: hosts get the Professors, everyone else draws from the deck, bags ar
   assert.equal(new Set(bags).size, 4)
   const s = db.store.get('sessions/u-jessa')
   assert.equal(s.status, 'active')
+  assert.equal(s.host, null)
+  assert.equal(db.store.get('sessions/u-jon').host, 'jonathan')
+  assert.equal(db.store.get('sessions/u-susan').host, 'susan')
   assert.equal(s.affection.irwin, 5)
   assert.ok(CATS.every(c => s.affection[c] >= 1 && s.affection[c] <= 5))
 })
@@ -136,4 +139,26 @@ test('hostCommand: acts, blackout, power, pause and resume move the night', asyn
   await assert.rejects(hostCommand(db, { nightId, command: 'dance' }), e => e.code === 'invalid')
   const r = await hostCommand(db, { nightId, command: 'refresh-guests' })
   assert.equal(r.guests, 8)
+})
+
+test('canHost: hosts run the night from their phones; the first night can start from any phone', async () => {
+  const db = seeded(GUESTS)
+  // nothing live yet: anyone may start the night, nobody may run it
+  assert.equal(await canHost(db, { uid: 'anyone', command: 'create' }), true)
+  assert.equal(await canHost(db, { uid: 'anyone', command: 'act' }), false)
+  assert.equal(await canHost(db, { uid: null, command: 'create' }), false)
+  assert.equal(await canHost(db, { uid: null, isAdmin: true, command: 'act' }), true)
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'u-jon', nightId, guestKey: 'jon' })
+  await join(db, { uid: 'u-jessa', nightId, guestKey: 'jessa' })
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'act' }), true)
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'create' }), true)
+  assert.equal(await canHost(db, { uid: 'u-jessa', nightId, command: 'act' }), false)
+  assert.equal(await canHost(db, { uid: 'u-jessa', nightId, command: 'create' }), false, 'once a night is live only a host may start another')
+  assert.equal(await canHost(db, { uid: 'stranger', nightId, command: 'blackout' }), false)
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId: 'some-other-night', command: 'act' }), false)
+  // the host's phone dies and they rejoin on another: the old phone loses the buttons
+  await join(db, { uid: 'u-jon-2', nightId, guestKey: 'jon' })
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'act' }), false)
+  assert.equal(await canHost(db, { uid: 'u-jon-2', nightId, command: 'act' }), true)
 })

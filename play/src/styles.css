@@ -108,5 +108,29 @@ h1, h2, h3, .crest, .who, .act-name { font-family: 'IM Fell English', Georgia, s
 .rules h3 { margin: 0 0 0.2rem; font-size: 1.3rem; }
 .rules p { margin: 0; }
 
+/* host tab */
+.host h3 { margin: 1.3rem 0 0.5rem; font-size: 1.25rem; }
+.host-status { margin: 0; color: var(--dim); }
+.host-msg { background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.6rem 0.9rem; margin: 0.8rem 0 0; }
+.host-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.4rem 0; }
+.chip {
+  min-height: 2.9rem; min-width: 2.9rem; padding: 0.4rem 0.9rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; font-size: 1rem;
+}
+.chip.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.chip:disabled, .big:disabled { opacity: 0.45; }
+.wide { flex: 1 1 100%; min-width: 0; }
+.host-qr { margin: 0.8rem 0 0; text-align: center; }
+.host-qr img { width: 11rem; height: 11rem; border-radius: 0.4rem; }
+.host-qr figcaption { color: var(--dim); font-size: 0.9rem; margin-top: 0.3rem; }
+.here { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.here li { display: grid; grid-template-columns: auto 1fr; column-gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--line); }
+.who-name { font-size: 1.05rem; }
+.who-char { grid-column: 2; color: var(--dim); font-size: 0.95rem; }
+.dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--line); }
+.dot.on { background: var(--good); }
+.start-night { margin-top: 2.5rem; }
+.quiet { background: none; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--dim); min-height: 2.8rem; padding: 0.4rem 1rem; font-size: 0.95rem; }
+
 /* preview mode only */
 .preview-act { position: fixed; top: 0.4rem; right: 0.4rem; z-index: 9; background: #333; border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.8rem; color: var(--dim); }

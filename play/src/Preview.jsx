@@ -8,7 +8,7 @@ import charactersSeed from '../../seed/characters.json'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
 // data and no night. Nothing here is dealt by the game, nothing is sealed.
-// Screens: doors, join, rest, prompt, paused, blackout.
+// Screens: doors, join, rest, host, prompt, paused, blackout.
 
 // a fixed moment, like a real server timestamp — not Date.now() on every read
 const PHASE_AT = Date.now()
@@ -42,6 +42,7 @@ export default function Preview({ screen }) {
     case 'paused': return <Moment text={ui.PAUSED} crest />
     case 'blackout': return <Blackout />
     case 'prompt': return <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" />
+    case 'host': return <Rest uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} />
     case 'lobby': return <Rest uid="preview" night={{ ...night, act: 0, phase: 'lobby' }} session={SESSION} content={CONTENT} notes={null} ui={ui} />
     case 'rest':
     default:

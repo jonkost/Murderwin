@@ -8,8 +8,8 @@ character, the rules, the nineteen motives, the five of the household.
 
 ## What exists now
 
-**The door.** A guest opens the square code at the entrance (or the link on
-the Game night page). Their phone signs itself in silently — no account, no
+**The door.** A guest opens the square code at the entrance (printable from
+the workshop's Game night page). Their phone signs itself in silently — no account, no
 password — and shows "Who are you? Tap your name." The names come from the
 guest list you write in the workshop. One tap, and the game hands them a
 character at random. You and Susan are marked as hosts on that list, so you
@@ -27,8 +27,7 @@ Reticule — four tabs:
 - *Rules* — the rulebook sections from the workshop, with sensible defaults
   until yours are written.
 
-**The moments.** When you press a button on the Game night page, every phone
-follows at once:
+**The moments.** When a host presses a button, every phone follows at once:
 - *Blackout* — every screen goes dark. Nothing on any phone.
 - *Power returns* — every phone lights at once with the same prompt, held for
   fifteen seconds measured against the server's clock, then a "Hide this"
@@ -38,9 +37,17 @@ follows at once:
 - *Acts 1 to 7* — the act name and its objective line appear at the top of
   every phone.
 
+**The Host tab.** You and Susan are marked as hosts on the guest list, so
+after you tap your names your own phones get a fifth tab, *Host*: the doors
+(open or closed), the seven act buttons, Blackout, Power returns, Pause, who is
+here with a green dot for phones heard from lately, the square code to show a
+guest, and "Start a new night" for rehearsals. Nothing on the night needs the
+workshop or a Google sign-in. The buttons are labelled by what they do; none
+of them can show who the Murderer, the Ghost or the victim is.
+
 **A dead phone.** The guest taps their name on any other phone. The character,
 bag and cat standings move with them. The old phone says the character has
-moved to another phone.
+moved to another phone. If it was a host's phone, the Host tab moves too.
 
 **No signal.** A red strip says the Manor cannot hear the phone and that nothing
 is lost. The phone keeps showing what it last saw and catches up on its own.
@@ -51,13 +58,15 @@ is lost. The phone keeps showing what it last saw and catches up on its own.
    per line. Mark the two of you "— host: Jonathan" and "— host: Susan".
 2. Put it live once (the deploy command is under the technical heading below).
    Claude Code could not run that step itself.
-3. Open **Game night** in the workshop (top right). Press *Start a new night*.
-   Scan the square code with your own phone. Your character appears.
-4. Press the act buttons and watch your phone follow. Press *Blackout*, then
-   *Power returns*, and time the fifteen-second hold.
+3. On your phone, open the play link (the square code is on the workshop's
+   Game night page, for printing). While no night is live the doors screen
+   offers *Host? Start the night*. Tap it, then tap your name. Your character
+   appears, and the Host tab with it.
+4. Press the act buttons and watch the other phones follow. Press *Blackout*,
+   then *Power returns*, and time the fifteen-second hold.
 
-Start a new night as often as you like while testing. Each one is fresh;
-the earlier ones stay listed under "Earlier nights" and can be made live again.
+Start a new night from the Host tab as often as you like while testing. Each
+one is fresh, and every phone taps its name again.
 
 ## What is not built yet (in build order)
 
@@ -99,14 +108,18 @@ Firestore (all authed-read unless stated; Functions write):
 - `nights/{nightId}/public/content` — copy of the safe areas in `PLAYER_AREAS`
   plus `motives` and `characters` (id, name, profession, gender, bio — never trace).
 - `nights/{nightId}/private/deck` — `{ order[], bags[], uids{} }`. No client reads.
-- `sessions/{uid}` — owner read only: `{ nightId, guestKey, guestName, characterId, bag, affection{}, status }`.
+- `sessions/{uid}` — owner read only: `{ nightId, guestKey, guestName, characterId, bag, affection{}, host, status }`.
   Role cards and everything dealt go here later.
 - `presence/{uid}` — owner write `{ nightId, guestKey, at }`; admin read. Doubles
   as the server-clock probe: the phone reads back the stamped `at` and keeps the skew.
 - `notes/{uid}` — owner read/write: `{ crossed{}, seen{} }`.
 
 Callables (region us-central1): `join({ nightId, guestKey })` for any signed-in
-phone; `hostCommand({ nightId, command, arg })` for the admin UID only.
+phone; `hostCommand({ nightId, command, arg })` when `canHost` says yes: the
+admin UID, or a phone whose active session has `host` set for that night. With
+no night live, `create` is open to any signed-in phone (the bootstrap).
+Host phones may also read `presence/*` (rules `isHost()` does a `get` on the
+caller's session).
 Commands: `create`, `activate`, `publish`, `refresh-guests`, `join-open`,
 `join-close`, `act` (1–7), `blackout`, `power`, `pause`, `resume`.
 

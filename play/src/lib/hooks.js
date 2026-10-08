@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { doc, onSnapshot, setDoc, getDocFromServer, serverTimestamp } from 'firebase/firestore'
+import { doc, collection, query, where, onSnapshot, setDoc, getDocFromServer, serverTimestamp } from 'firebase/firestore'
 import { auth, db, signInAnonymously, onAuthStateChanged } from '../firebase'
 
 // Anonymous session: the phone signs itself in the first time it opens and
@@ -80,4 +80,23 @@ export function useOnline() {
 // The player's own scribbles (crossed-off motives, prompts already hidden).
 export function writeNotes(uid, patch) {
   return setDoc(doc(db, 'notes', uid), patch, { merge: true })
+}
+
+// Who has been heard from lately, by guest key → last heartbeat (ms). Only a
+// host phone (or the admin) may read presence; anyone else gets an empty map.
+export function usePresence(nightId) {
+  const [seen, setSeen] = useState({})
+  useEffect(() => {
+    if (!nightId) { setSeen({}); return }
+    const q = query(collection(db, 'presence'), where('nightId', '==', nightId))
+    return onSnapshot(q, snap => {
+      const m = {}
+      snap.forEach(d => {
+        const p = d.data()
+        if (p.guestKey) m[p.guestKey] = Math.max(m[p.guestKey] ?? 0, p.at?.toMillis?.() ?? 0)
+      })
+      setSeen(m)
+    }, () => setSeen({}))
+  }, [nightId])
+  return seen
 }
