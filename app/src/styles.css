@@ -207,15 +207,17 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 
 .brand-seal { width: 2rem; height: 2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-/* The house wallpaper, faint, behind the whole workshop; the seal on the gate. */
-body {
-  background-color: var(--paper);
-  background-image: linear-gradient(rgba(0, 25, 37, 0.9), rgba(0, 25, 37, 0.9)), url('/workshop/pattern.svg');
-  background-size: auto, 1400px;
-  background-position: center top;
-  background-attachment: fixed;
+/* The house wallpaper: the red pattern on blue, behind the whole workshop.
+   One stencil, coloured and sized here, same as the phones. */
+body { background: var(--paper); position: relative; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-color: var(--accent);
+  opacity: 0.5;
+  -webkit-mask: url('/workshop/pattern.svg') center top / 1400px repeat;
+  mask: url('/workshop/pattern.svg') center top / 1400px repeat;
 }
-.topbar { position: relative; }
+.topbar { background: var(--paper); padding-inline: 1rem; margin-inline: -1rem; }
+.panel { background: var(--card); }
 .gate .gate-seal { width: 7rem; height: 7rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); margin-bottom: 0.2rem; }
-.gate h1 { font-size: 2rem; }
-.panel { background: rgba(12, 38, 52, 0.92); }
+.gate h1 { font-size: 2rem; text-shadow: 0 2px 10px rgba(0, 25, 37, 0.9); }

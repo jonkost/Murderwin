@@ -30,8 +30,8 @@ export default function Rest({ uid, night, session, content, notes, ui }) {
   const shown = tabs.some(t => t.key === tab) ? tab : 'you'
 
   return (
-    <main className="rest">
-      <header className="act papered">
+    <main className="rest papered">
+      <header className="act">
         {night.act >= 1 && act ? (
           <>
             <p className="act-num">Act {night.act} · {act.plain}</p>
