@@ -21,9 +21,8 @@ const PHASE_WORDS = {
 
 function describe(command, r) {
   switch (command) {
-    case 'create': return `New night started. ${r.guests} on the guest list. Tap your name again to rejoin it.`
+    case 'create': return 'New night started. Type your name again to rejoin it.'
     case 'publish': return `Sent ${r.lines} lines to the phones.`
-    case 'refresh-guests': return `Guest list refreshed: ${r.guests} names.`
     case 'act': return `Act ${r.act} is on.`
     default: return 'Done.'
   }
@@ -58,16 +57,16 @@ export default function Host({ night, content }) {
     }
   }
 
-  const guests = night.guests ?? []
   const roster = night.roster ?? {}
-  const here = Object.keys(roster).length
+  const people = Object.entries(roster).map(([key, r]) => ({ key, ...r })).sort((a, b) => a.name.localeCompare(b.name))
+  const hostKeys = new Set(Object.values(night.hosts ?? {}).map(h => h.key))
   const now = Date.now()
 
   return (
     <div className="host">
       <p className="host-status">
         {night.act ? `Act ${night.act} · ${ACTS[night.act]?.plain}` : 'Before Act 1'} · {PHASE_WORDS[night.phase] ?? night.phase}
-        <br />Doors {night.joinOpen ? 'open' : 'closed'} · {here} of {guests.length} joined
+        <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
       </p>
       {msg && <p className="host-msg" role="status">{msg}</p>}
 
@@ -93,7 +92,6 @@ export default function Host({ night, content }) {
         <button className="chip wide" disabled={!!busy} onClick={() => run(night.joinOpen ? 'join-close' : 'join-open')}>
           {night.joinOpen ? 'Close the doors' : 'Open the doors'}
         </button>
-        <button className="chip wide" disabled={!!busy} onClick={() => run('refresh-guests')}>Refresh the guest names</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('publish')}>Resend rules &amp; bios</button>
       </div>
       {qr && (
@@ -104,16 +102,16 @@ export default function Host({ night, content }) {
       )}
 
       <h3>Who is here</h3>
+      {people.length === 0 && <p className="gloss">Nobody has typed their name yet.</p>}
       <ul className="here">
-        {guests.map(g => {
-          const r = roster[g.key]
-          const online = now - (presence[g.key] ?? 0) < 2 * 60 * 1000
-          const character = r ? characterById(content, r.characterId) : null
+        {people.map(r => {
+          const online = now - (presence[r.key] ?? 0) < 2 * 60 * 1000
+          const character = characterById(content, r.characterId)
           return (
-            <li key={g.key}>
+            <li key={r.key}>
               <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
-              <span className="who-name">{g.name}{g.host ? ' · host' : ''}</span>
-              <span className="who-char">{r ? (character?.name ?? r.characterId) + ` · bag ${r.bag}` : 'not joined yet'}</span>
+              <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}</span>
+              <span className="who-char">{(character?.name ?? r.characterId)} · bag {r.bag}</span>
             </li>
           )
         })}

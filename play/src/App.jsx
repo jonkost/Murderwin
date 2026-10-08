@@ -34,7 +34,7 @@ export default function App() {
 
   const s = session.data && session.data.nightId === nightId ? session.data : null
   if (s?.status === 'superseded') return <Moment text={ui.SUPERSEDED} crest />
-  if (!s) return <>{banner}<Join uid={uid} night={n} ui={ui} /></>
+  if (!s) return <>{banner}<Join night={n} ui={ui} /></>
 
   if (n.phase === 'paused') return <>{banner}<Moment text={ui.PAUSED} crest /></>
   if (n.phase === 'blackout') return <Blackout />

@@ -1,5 +1,5 @@
 import {
-  doc, getDoc, onSnapshot,
+  doc, getDoc, onSnapshot, setDoc,
   collection, addDoc, updateDoc, serverTimestamp,
   query, orderBy, limit, runTransaction,
 } from 'firebase/firestore'
@@ -197,4 +197,13 @@ export async function applyAdditions(additions) {
       tx.set(migRef, { applied: [...applied, add.id] })
     })
   }
+}
+// ---- Game night settings (the two hosts' names) ----
+export function subscribeGame(onData, onError) {
+  return onSnapshot(doc(db, 'meta', 'game'), snap => onData(snap.exists() ? snap.data() : {}), onError)
+}
+
+export async function saveGame(patch, before) {
+  await setDoc(doc(db, 'meta', 'game'), patch, { merge: true })
+  await logHistory('game', 'settings', before, { ...before, ...patch })
 }

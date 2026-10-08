@@ -9,9 +9,14 @@ export function Dark() {
 
 // A single line, held on a near-black screen. Used for the lobby doors, the
 // pause, and the handed-over-phone notice.
+export function Seal() {
+  return <img className="seal" src={`${import.meta.env.BASE_URL}brand/seal.png`} alt="" />
+}
+
 export function Moment({ text, crest, foot }) {
   return (
     <div className="moment">
+      {crest && <Seal />}
       {crest && <p className="crest">Sirwin Manor</p>}
       <p className="moment-text">{text}</p>
       {foot}
@@ -38,6 +43,7 @@ export function Prompt({ uid, night, ui, serverNow, promptKey }) {
   const hide = () => writeNotes(uid, { seen: { [promptKey]: true } }).catch(() => {})
   return (
     <div className="moment prompt">
+      <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text">{ui.POWER}</p>
       <p className="moment-sub">Act {night.act} begins.</p>

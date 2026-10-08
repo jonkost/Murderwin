@@ -1,12 +1,15 @@
 /* The phone. Dark, big, readable in a dim room by an eleven-year-old and a
    seventy-year-old. Modern interface, Victorian content. */
 :root {
-  --bg: #0f0d0c;
-  --card: #1a1614;
-  --line: #3a312b;
+  /* Brand colours (Jon, 8 Oct 2026): blue #001925, red #bf1925 */
+  --brand-blue: #001925;
+  --brand-red: #bf1925;
+  --bg: var(--brand-blue);
+  --card: #0c2634;
+  --line: #214050;
   --ink: #f1e8d6;
-  --dim: #b3a692;
-  --accent: #c9452f;
+  --dim: #a9b8c0;
+  --accent: var(--brand-red);
   --good: #7fb069;
   color-scheme: dark;
 }
@@ -25,12 +28,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 h1, h2, h3, .crest, .who, .act-name { font-family: 'IM Fell English', Georgia, serif; font-weight: normal; }
 
 /* in-between screens */
+.moment, .join {
+  background: linear-gradient(rgba(0, 25, 37, 0.82), rgba(0, 25, 37, 0.82)), url('/play/brand/wallpaper-phone.jpg') center / cover fixed;
+}
 .moment {
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 1.2rem; padding: 2rem 1.4rem; text-align: center;
 }
 .moment.dark { background: #000; }
+.seal { width: 6.5rem; height: 6.5rem; display: block; margin: 0 auto 0.2rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+.join .seal { width: 5rem; height: 5rem; }
 .moment.prompt { justify-content: center; }
 .crest { font-family: 'IM Fell English SC', 'IM Fell English', Georgia, serif; letter-spacing: 0.14em; color: var(--dim); margin: 0; font-size: 0.95rem; }
 .moment-text { font-size: 1.25rem; max-width: 24rem; margin: 0; }
@@ -47,7 +55,8 @@ h1, h2, h3, .crest, .who, .act-name { font-family: 'IM Fell English', Georgia, s
 }
 
 /* join */
-.join { padding: 2rem 1rem 3rem; max-width: 30rem; margin: 0 auto; text-align: center; }
+.join { min-height: 100vh; min-height: 100dvh; padding: 2rem 1rem 3rem; text-align: center; }
+.join > * { max-width: 30rem; margin-left: auto; margin-right: auto; }
 .ask { font-size: 1.8rem; margin: 0.6rem 0 1.2rem; }
 .names { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
 .name {
@@ -57,6 +66,15 @@ h1, h2, h3, .crest, .who, .act-name { font-family: 'IM Fell English', Georgia, s
 }
 .name:disabled { opacity: 0.5; }
 .name small { font-size: 0.8rem; color: var(--dim); }
+
+.join-form { display: grid; gap: 0.7rem; margin: 0 0 1rem; }
+.name-input {
+  width: 100%; min-height: 3.4rem; padding: 0.6rem 1rem; font: inherit; font-size: 1.3rem; text-align: center;
+  background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 0.8rem;
+}
+.name-input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+.join .big { width: 100%; }
+.again { margin-top: 1.6rem; }
 
 /* at rest */
 .rest { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
@@ -75,11 +93,15 @@ h1, h2, h3, .crest, .who, .act-name { font-family: 'IM Fell English', Georgia, s
 
 .you { text-align: center; }
 .portrait {
-  width: 7.5rem; height: 7.5rem; margin: 0.4rem auto 0.8rem; border-radius: 50%;
+  width: 7.5rem; height: 7.5rem; margin: 0.4rem auto 0.8rem; border-radius: 50%; overflow: hidden;
   background: var(--card); border: 2px solid var(--line);
   display: flex; align-items: center; justify-content: center;
   font-family: 'IM Fell English SC', Georgia, serif; font-size: 2.4rem; color: var(--dim);
 }
+.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* a full-length drawing: show all of it, no crop, no circle */
+.portrait.figure { width: auto; height: 44vh; max-height: 26rem; border-radius: 0.6rem; background: none; border: none; }
+.portrait.figure img { width: auto; height: 100%; object-fit: contain; margin: 0 auto; }
 .who { font-size: 1.9rem; margin: 0; line-height: 1.15; }
 .profession { margin: 0.1rem 0 0.9rem; color: var(--dim); font-style: italic; font-size: 1.1rem; }
 .bio { font-size: 1.15rem; margin: 0 0 1rem; }

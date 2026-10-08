@@ -1,25 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { subscribeArea, subscribeLatestValidation } from '../lib/store'
-import { AREAS, AREA_GROUPS, TAB_KINDS } from '../lib/content'
+import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS } from '../lib/content'
 import TaskBoard from '../components/TaskBoard'
 import DecisionsPanel from '../components/DecisionsPanel'
 
-function Row({ label, count, goal, to, suffix }) {
+// Home. Plain words, one sentence per section, a bar per list. Nothing here
+// blocks anything: bars fill, that is all they do.
+
+function Row({ label, count, goal, to, suffix, why }) {
   const pct = goal ? Math.min(100, Math.round((count / goal) * 100)) : 0
   return (
     <Link to={to} className="prow">
-      <span className="plabel">{label}</span>
-      <span className="pcount">{count} / {goal}{suffix ?? ''}</span>
+      <span className="plabel">{label}<small>{why}</small></span>
+      <span className="pcount">{count} of {goal}{suffix ?? ''}</span>
       <span className="pbar"><span style={{ width: `${pct}%` }} /></span>
     </Link>
   )
 }
 
-// Per-tab breakdown rows for the founding layers the spec calls out
-// (openers/closers per cat, pools per pool); other tabbed areas get one
-// row — their editor tabs carry the breakdown.
-// Plain-language names for the validator's counts.
 const ISSUE_LABELS = {
   banned: 'rhyme words leaked',
   lengthFails: 'wrong length',
@@ -29,28 +28,15 @@ const ISSUE_LABELS = {
   impersonalFails: 'says “you”',
 }
 
-const PER_TAB_ROWS = ['openers', 'closers', 'refusals', 'pools']
-
-function areaRows(area, spec, items) {
+function areaRow(area, spec, items) {
   const live = items.filter(i => !i.deleted)
   if (spec.checklist) {
-    const done = live.filter(i => i.done).length
-    const to = spec.upload ? `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}` : `/edit/${area}`
-    return [{ key: area, label: spec.label, count: done, goal: live.length, suffix: ' done', to }]
-  }
-  if (spec.tabs && PER_TAB_ROWS.includes(area)) {
-    const tabDef = TAB_KINDS[spec.tabs]
-    return tabDef.list.map(t => ({
-      key: `${area}-${t}`,
-      label: `${spec.label} — ${tabDef.label(t)}`,
-      count: live.filter(i => i[tabDef.field] === t).length,
-      goal: spec.goalPerTab,
-      to: `/edit/${area}?tab=${t}`,
-    }))
+    const to = `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}`
+    return { key: area, label: spec.label, why: spec.why, count: live.filter(i => i.done).length, goal: live.length, suffix: ' done', to }
   }
   const goal = spec.tabs ? spec.goalPerTab * TAB_KINDS[spec.tabs].list.length : spec.goal
   const to = area === 'templates' ? '/stationery' : `/edit/${area}`
-  return [{ key: area, label: spec.label, count: live.length, goal, to }]
+  return { key: area, label: spec.label, why: spec.why, count: live.length, goal, to }
 }
 
 export default function Dashboard() {
@@ -64,25 +50,34 @@ export default function Dashboard() {
     return () => unsubs.forEach(u => u())
   }, [])
 
+  const rows = (filter) => Object.entries(AREAS)
+    .filter(([, spec]) => filter(spec))
+    .map(([area, spec]) => areaRow(area, spec, data[area] ?? []))
+
   return (
     <main className="dash">
+      <section className="panel lead">
+        <h2>Game night</h2>
+        <p className="why">Your name and Susan’s, the square code for the Act 1 slide, and how guests join. <Link to="/night">Open Game night</Link></p>
+      </section>
+
       {AREA_GROUPS.map(group => (
         <section className="panel" key={group}>
           <h2>{group}</h2>
-          {Object.entries(AREAS)
-            .filter(([, spec]) => spec.group === group)
-            .flatMap(([area, spec]) => areaRows(area, spec, data[area] ?? []))
-            .map(r => <Row key={r.key} {...r} />)}
+          <p className="why">{GROUP_WHY[group]}</p>
+          {rows(spec => spec.group === group && !spec.hidden).map(r => <Row key={r.key} {...r} />)}
         </section>
       ))}
+
       <section className="panel">
-        <h2>Sealed coverage</h2>
+        <h2>The secrets</h2>
+        <p className="why">What the cats really reveal, the documents, the news fragments. Claude writes these and you never see them. This row only says whether they exist.</p>
         <div className="prow static">
-          <span className="plabel">Secret cat lines · documents · echoes</span>
+          <span className="plabel">🔒 Secret cat lines · documents · echoes</span>
           <span className="pcount">
             {validation === null
-              ? 'not generated yet'
-              : `${validation.complete} of ${validation.codes} motive sets complete — ${validation.pass ? 'checked ✓' : 'needs a re-run'}`}
+              ? 'not made yet'
+              : `${validation.complete} of ${validation.codes} motive sets — ${validation.pass ? 'checked ✓' : 'needs a re-run'}`}
           </span>
         </div>
         {validation !== null && !validation.pass && (
@@ -93,15 +88,14 @@ export default function Dashboard() {
               .join(' · ') || 'some sets are incomplete'}. Ask Claude Code to run the generator again.
           </p>
         )}
-        {validation !== null && validation.bannedGlobal > 0 && (
-          <p className="hint">
-            Just so you know: {validation.bannedGlobal} lines share a word with a
-            different motive's rhyme. That is allowed.
-          </p>
-        )}
       </section>
-      <TaskBoard />
-      <DecisionsPanel />
+
+      <details className="panel more">
+        <summary>Everything else — rarely needed</summary>
+        {rows(spec => spec.hidden).map(r => <Row key={r.key} {...r} />)}
+        <TaskBoard />
+        <DecisionsPanel />
+      </details>
     </main>
   )
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import {
-  ACTS, CATS, actScript, bioFor, characterById, motives, npcCards, rules,
+  ACTS, CATS, actScript, bioFor, characterById, motives, npcCards, portraitUrls, rules,
   smalltalk, statusLine,
 } from '../lib/content'
 
@@ -74,9 +74,7 @@ function You({ character, session, content, ui }) {
   if (!character) return <p className="moment-text">Your character is on its way.</p>
   return (
     <div className="you">
-      <div className="portrait" aria-hidden="true">
-        <span>{initials(character.name)}</span>
-      </div>
+      <Portrait character={character} />
       <h2 className="who">{character.name}</h2>
       <p className="profession">the {character.profession}</p>
       <p className="bio">{bioFor(content, character)}</p>
@@ -86,6 +84,25 @@ function You({ character, session, content, ui }) {
         <p className="idle"><span className="idle-cat">{idle.cat.name}</span> {idle.text}</p>
       )}
       <p className="gloss">{ui.RETICULE}</p>
+    </div>
+  )
+}
+
+// The portrait file if one exists, else initials. Tries .png then .jpg.
+function Portrait({ character }) {
+  const [idx, setIdx] = useState(0)
+  const urls = portraitUrls(character.id)
+  useEffect(() => setIdx(0), [character.id])
+  if (idx < urls.length) {
+    return (
+      <div className="portrait figure">
+        <img src={urls[idx]} alt="" onError={() => setIdx(i => i + 1)} />
+      </div>
+    )
+  }
+  return (
+    <div className="portrait" aria-hidden="true">
+      <span>{initials(character.name)}</span>
     </div>
   )
 }

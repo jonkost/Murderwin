@@ -8,6 +8,20 @@ It's a website: https://murderwin-at-sirwin-manor.web.app/workshop/ — sign in 
 Google. It works on your phone, the iPad or the Mac. It works offline; it catches
 up when you're back online.
 
+## 8 October 2026 — the plain-language pass
+
+Jon asked for less, in plainer words, dark, and more like a form. Now:
+- **Home** has five sections in everyday names (The characters, The household,
+  Words on the phones, Blanks and frames, The bags), one sentence each, a bar
+  per list. The rarely needed lists, the task board and the decisions sit
+  under "Everything else".
+- **Game night** holds the two hosts' names and the square code to save for
+  the Act 1 slide. The night is run from the hosts' phones, not from here.
+- Lists with a fixed shape (bios, rules, phone lines, act banners, bag items…)
+  show two fields instead of one long line with format rules. What is saved
+  does not change shape.
+- The field guide is folded away under "More about this list".
+
 ## The screens
 
 **Home.** Three things:

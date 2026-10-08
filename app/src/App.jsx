@@ -74,8 +74,8 @@ export default function App() {
     <div className="shell">
       <header className="topbar">
         <Link to="/" className="brand">The Workshop</Link>
-        {boot.seeded && <span className="chip">seed imported ✓</span>}
         <span className="spacer" />
+        <Link to="/" className="ghost navlink">Home</Link>
         <Link to="/night" className="ghost navlink">Game night</Link>
         <button className="ghost" onClick={signOutUser}>Sign out</button>
       </header>

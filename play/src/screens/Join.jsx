@@ -1,27 +1,32 @@
 import { useState } from 'react'
 import { callJoin } from '../firebase'
+import { Seal } from './Moments'
 
-// "Who are you?" — one tap on your own name. The game assigns the character.
-export default function Join({ uid, night, ui }) {
-  const [busy, setBusy] = useState(null)
+// "Who are you?" — type your name, and the game hands you a character.
+// Back on a new phone? Tap your name in the list and the character follows.
+export default function Join({ night, ui }) {
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const guests = night.guests ?? []
-  const roster = night.roster ?? {}
+  const roster = Object.values(night.roster ?? {}).sort((a, b) => a.name.localeCompare(b.name))
 
-  const pick = async (guest) => {
-    setBusy(guest.key)
+  const go = async (chosen) => {
+    const n = (chosen ?? name).trim()
+    if (!n) return
+    setBusy(true)
     setError(null)
     try {
-      await callJoin({ nightId: night.nightId, guestKey: guest.key })
+      await callJoin({ nightId: night.nightId, name: n })
       // the session doc arrives through its own listener; nothing else to do
     } catch (e) {
       setError(e?.message || 'The Manor did not answer. Try again.')
-      setBusy(null)
+      setBusy(false)
     }
   }
 
   if (!night.joinOpen) return (
     <div className="moment">
+      <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text">{ui.DOORS}</p>
     </div>
@@ -29,24 +34,41 @@ export default function Join({ uid, night, ui }) {
 
   return (
     <main className="join">
+      <Seal />
       <p className="crest">Sirwin Manor</p>
       <h1 className="ask">{ui.JOIN}</h1>
-      {guests.length === 0 && <p className="moment-text">{ui['JOIN NONE']}</p>}
-      <ul className="names">
-        {guests.map(g => {
-          const taken = !!roster[g.key]
-          return (
-            <li key={g.key}>
-              <button className="name" disabled={busy !== null} onClick={() => pick(g)}>
-                <span>{g.name}</span>
-                {taken && <small>{ui['JOIN TAKEN']}</small>}
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-      {busy && <p className="moment-sub">One moment…</p>}
+      <form className="join-form" onSubmit={e => { e.preventDefault(); go() }}>
+        <input
+          className="name-input"
+          type="text"
+          inputMode="text"
+          autoComplete="given-name"
+          autoCapitalize="words"
+          maxLength={30}
+          placeholder="Your name"
+          aria-label="Your name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          disabled={busy}
+          autoFocus
+        />
+        <button className="big" type="submit" disabled={busy || !name.trim()}>
+          {busy ? 'One moment…' : ui['JOIN BUTTON']}
+        </button>
+      </form>
       {error && <p className="trouble" role="alert">{error}</p>}
+      {roster.length > 0 && (
+        <section className="again">
+          <p className="gloss">{ui['JOIN AGAIN']}</p>
+          <ul className="names">
+            {roster.map(r => (
+              <li key={r.name}>
+                <button className="name" disabled={busy} onClick={() => go(r.name)}>{r.name}</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   )
 }

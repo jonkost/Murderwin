@@ -19,47 +19,65 @@ export const TAB_KINDS = {
 }
 
 export const AREAS = {
-  // — Cat voices —
-  openers: { label: 'Cat openers', group: 'Cat voices', tabs: 'cats', guide: 'opener', goalPerTab: 8 },
-  closers: { label: 'Cat closers', group: 'Cat voices', tabs: 'cats', guide: 'closer', goalPerTab: 8 },
-  // CLAUDE.md calls this layer "cat deflection lines": what a cat says when the
-  // affection roll fails. Firestore key stays `refusals` — the data already lives there.
-  refusals: { label: 'Cat deflection lines', group: 'Cat voices', tabs: 'cats', guide: 'refusal', goalPerTab: 8 },
-  smalltalk: { label: 'Idle small talk', group: 'Cat voices', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8 },
-  trailoffs: { label: 'Granolia trail-offs', group: 'Cat voices', tabs: null, guide: 'trailoff', goal: 8 },
-  status_lines: { label: 'Affection status lines', group: 'Cat voices', tabs: 'cats', guide: 'status_line', goalPerTab: 3 },
-  // — World & cast —
-  npc_cards: { label: 'NPC intro cards', group: 'World & cast', tabs: null, guide: 'npc_card', goal: 5 },
-  bios: { label: 'Player character bios', group: 'World & cast', tabs: null, guide: 'bio', goal: 14 },
-  lore: { label: 'Canon & lore', group: 'World & cast', tabs: null, guide: 'lore', goal: 4 },
-  // — Player screens —
-  rules_text: { label: 'Rulebook sections', group: 'Player screens', tabs: null, guide: 'rules', goal: 10 },
-  ui_copy: { label: 'UI copy & system messages', group: 'Player screens', tabs: null, guide: 'ui_copy', goal: 24 },
-  role_cards: { label: 'Role cards & briefings', group: 'Player screens', tabs: null, guide: 'role_card', goal: 6 },
-  event_cards: { label: 'Event cards', group: 'Player screens', tabs: null, guide: 'event_card', goal: 12 },
-  // What innocent phones show while the two roles pick events (Acts 2, 4, 6).
-  filler: { label: 'Filler messages', group: 'Player screens', tabs: null, guide: 'filler', goal: 20 },
-  // — Frames & pools —
-  pools: { label: 'Variable pools', group: 'Frames & pools', tabs: 'pools', goalPerTab: 10 },
-  echo_frames: { label: 'Echo frames', group: 'Frames & pools', tabs: null, guide: 'echo_frame', goal: 8 },
-  epilogue_frames: { label: 'Epilogue frames', group: 'Frames & pools', tabs: null, guide: 'epilogue_frame', goal: 2 },
-  templates: { label: 'Stationery templates', group: 'Frames & pools', tabs: null, guide: 'template', goal: 7 },
-  // — Bags (the one physical exception) —
-  // Jon and Susan list the item pool here. The packing (which bag holds what)
-  // is sealed: decided blind, shown only to Jenna.
-  bag_items: { label: 'Bag items', group: 'Bags', tabs: null, guide: 'bag_item', goal: 60 },
-  // — Show night —
-  // Who is coming. The play side's "Who are you?" screen lists these names;
-  // the two hosts are marked so they always get the Professors.
-  guests: { label: 'Guest list', group: 'Show night', tabs: null, guide: 'guest', goal: 10 },
-  act_scripts: { label: 'Act scripts & banners', group: 'Show night', tabs: 'acts', guide: 'act_script', goalPerTab: 3 },
-  ops_docs: { label: 'Host & ops documents', group: 'Show night', tabs: null, guide: 'ops_doc', goal: 12 },
-  // — Assets (checklists with file uploads; edited on the Assets page) —
-  art_assets: { label: 'Pictures', group: 'Assets', tabs: null, guide: 'art_asset', checklist: true, upload: 'image' },
-  av_assets: { label: 'Sounds', group: 'Assets', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio' },
+  // Every area gets a plain name and one sentence saying what it is for.
+  // `form` splits a line into two labelled fields on screen (the saved text
+  // stays one line, joined by `sep`, so nothing already written changes).
+  // `hidden` areas live under "Everything else" on the home page.
+
+  // — The characters —
+  bios: { label: 'The fourteen characters', why: 'One line each guest reads about who they are tonight. Name, then the profession, then a line or two, then what to wear.', group: 'The characters', tabs: null, guide: 'bio', goal: 14,
+    form: { sep: ' — ', a: 'Name', b: 'the Profession. Who they are. Costume: what to wear' } },
+
+  // — The household —
+  npc_cards: { label: 'Meet the household', why: 'A short introduction to each cat and to Sir Irwin, shown to everyone in Act 1.', group: 'The household', tabs: null, guide: 'npc_card', goal: 5 },
+  openers: { label: 'How each cat starts talking', why: 'The first thing a cat says when a guest comes to it. The secret middle is written by Claude; you write the greeting.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 8 },
+  closers: { label: 'How each cat finishes', why: 'The last thing a cat says after it has told what it knows.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 8 },
+  refusals: { label: 'How each cat brushes you off', why: 'What a cat says when it will not talk to this guest. Funny, in character, and it gives nothing away.', group: 'The household', tabs: 'cats', guide: 'refusal', goalPerTab: 8 },
+  smalltalk: { label: 'Idle chatter', why: 'A line a cat mutters as it wanders past a phone that is doing nothing. Never about the case.', group: 'The household', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8 },
+  status_lines: { label: 'How a cat feels about you', why: 'The phone never shows a number for affection. It shows one of these lines instead: locked out, warming up, or in.', group: 'The household', tabs: 'cats', guide: 'status_line', goalPerTab: 3,
+    form: { sep: ': ', a: 'Standing', b: 'The line', options: ['LOCKED', 'WARMING', 'IN'] } },
+  trailoffs: { label: 'Granolia trail-offs', why: 'Rarely needed now that Granolia misremembers instead of trailing off.', group: 'The household', tabs: null, guide: 'trailoff', goal: 8, hidden: true },
+
+  // — Words on the phones —
+  rules_text: { label: 'The rules, section by section', why: 'What the Rules tab on every phone says. A heading and a short paragraph each.', group: 'Words on the phones', tabs: null, guide: 'rules', goal: 10,
+    form: { sep: ' — ', a: 'Heading', b: 'What it says' } },
+  ui_copy: { label: 'Little lines the phone says', why: 'The fixed words on screens: the door, the lobby, no signal, paused. Say where it shows, then the line.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: 24,
+    form: { sep: ': ', a: 'Where it shows', b: 'The line', options: ['JOIN', 'JOIN BUTTON', 'JOIN AGAIN', 'DOORS', 'LOBBY', 'BAG', 'OFFLINE', 'PAUSED', 'SUPERSEDED', 'POWER', 'HIDE', 'HOLD', 'RETICULE', 'START NIGHT', 'HOST'] } },
+  act_scripts: { label: 'Act banners', why: 'The title line and one sentence of purpose shown at the top of every phone during each act.', group: 'Words on the phones', tabs: 'acts', guide: 'act_script', goalPerTab: 3,
+    form: { sep: ': ', a: 'Kind', b: 'The line', options: ['BANNER', 'OBJECTIVE', 'BEATS'] } },
+  filler: { label: 'Something to read while others choose', why: 'What an ordinary phone shows while the Murderer and the Ghost secretly pick an event. Ends with a button so it takes as long as a real choice.', group: 'Words on the phones', tabs: null, guide: 'filler', goal: 20 },
+  role_cards: { label: 'Role cards', why: 'What the Murderer, the Ghost and a Detective are told when the power comes back. Same length and shape for all three.', group: 'Words on the phones', tabs: null, guide: 'role_card', goal: 6,
+    form: { sep: ': ', a: 'Role', b: 'The card', options: ['MURDERER', 'GHOST', 'DETECTIVE'] } },
+  event_cards: { label: 'Event cards', why: 'Event copy is written blind by Claude; this list is only for notes.', group: 'Words on the phones', tabs: null, guide: 'event_card', goal: 12, hidden: true },
+  lore: { label: 'House history', why: 'Optional texture about Sirwin Manor for guests who want to read more.', group: 'Words on the phones', tabs: null, guide: 'lore', goal: 4, hidden: true },
+
+  // — Blanks and frames —
+  pools: { label: 'Blanks: rooms, times, counts…', why: 'Cat lines have blanks like [ROOM]. These lists fill them. Short phrases, lowercase.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10 },
+  echo_frames: { label: 'News frames', why: 'A radio or newspaper wrapper with one ███ gap. The gap is filled with a secret fragment on the night.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8 },
+  templates: { label: 'Stationery designs', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
+  epilogue_frames: { label: 'Epilogue frames', why: 'The closing paragraph at the reveal, with blanks for the names.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2, hidden: true },
+
+  // — The bags —
+  bag_items: { label: 'Things in the bags', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 60,
+    form: { sep: ' — ', a: 'Item', b: 'sense: property (smell: minty)' } },
+
+  // — Everything else —
+  ops_docs: { label: 'Host notes', why: 'Notes to yourself for the night.', group: 'Everything else', tabs: null, guide: 'ops_doc', goal: 12, hidden: true,
+    form: { sep: ': ', a: 'Label', b: 'Note' } },
+  art_assets: { label: 'Pictures', why: 'A checklist of pictures still to make.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true },
+  av_assets: { label: 'Sounds', why: 'A checklist of sounds still to make.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true },
 }
 
-export const AREA_GROUPS = ['Cat voices', 'World & cast', 'Player screens', 'Frames & pools', 'Bags', 'Show night', 'Assets']
+export const AREA_GROUPS = ['The characters', 'The household', 'Words on the phones', 'Blanks and frames', 'The bags']
+
+// One sentence under each group heading on the home page.
+export const GROUP_WHY = {
+  'The characters': 'Who the guests become. The game deals these at random on the night.',
+  'The household': 'The four cats and Sir Irwin. You write their manners; Claude writes their secrets.',
+  'Words on the phones': 'Everything a phone says that no character is speaking.',
+  'Blanks and frames': 'The pieces the secret content is poured into.',
+  'The bags': 'The one physical part of the night.',
+}
 
 const ART_ASSET_SEED = [
   'Portrait — Sir Irwin', 'Portrait — Salem Crookshank', 'Portrait — Zimothy Clawford',
@@ -140,9 +158,6 @@ export function lintItem(area, text) {
     }
     case 'bios':
       return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
-    case 'guests':
-      return !/—/.test(text) || /—\s*host:\s*(Jonathan|Susan)\s*$/i.test(text)
-        ? null : 'Just the name — or “Name — host: Jonathan” / “Name — host: Susan” for the two of you.'
     default:
       return null
   }
@@ -269,3 +284,23 @@ export const ADDITIONS = [
     ],
   },
 ]
+
+// Split a saved line into its two form fields, and join them back. Lossless:
+// a line with no separator shows up whole in the second field.
+export function splitFields(area, text) {
+  const form = AREAS[area]?.form
+  if (!form) return null
+  const t = text ?? ''
+  const needle = form.sep.trim() // '—' or ':'
+  const idx = t.indexOf(needle)
+  if (idx < 0) return { a: '', b: t }
+  return { a: t.slice(0, idx).trim(), b: t.slice(idx + needle.length).trim() }
+}
+
+export function joinFields(area, a, b) {
+  const form = AREAS[area]?.form
+  const left = (a ?? '').trim()
+  const right = (b ?? '').trim()
+  if (!form || !left) return right
+  return `${left}${form.sep}${right}`
+}

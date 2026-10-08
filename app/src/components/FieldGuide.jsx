@@ -7,12 +7,12 @@ export default function FieldGuide({ guide, tab }) {
   const rich = guide.syntax || guide.good || guide.bad
   return (
     <div className="guide">
-      <p><b>{guide.what}</b></p>
-      {guide.test && <p>Test: <i>{guide.test}</i></p>}
       {tabNote && <p className="tabnote">{tabNote}</p>}
       {rich ? (
         <details className="guide-more">
-          <summary>Full field guide — format rules &amp; examples</summary>
+          <summary>More about this list — rules and examples</summary>
+          <p>{guide.what}</p>
+          {guide.test && <p>Test: <i>{guide.test}</i></p>}
           {guide.syntax && (
             <ul className="syntax">
               {guide.syntax.map((s, i) => <li key={i}>{s}</li>)}

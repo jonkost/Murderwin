@@ -15,12 +15,8 @@ const PHASE_AT = Date.now()
 
 const NIGHT = {
   nightId: 'preview', act: 2, phase: 'act', joinOpen: true,
-  guests: [
-    { key: 'jon', name: 'Jon', host: 'jonathan' }, { key: 'susan', name: 'Susan', host: 'susan' },
-    { key: 'jessa', name: 'Jessa', host: null }, { key: 'jacob', name: 'Jacob', host: null },
-    { key: 'stanley', name: 'Stanley', host: null }, { key: 'jeanette', name: 'Jeanette', host: null },
-  ],
-  roster: { jon: { name: 'Jon', characterId: 'prof-jonathan', bag: 3 } },
+  hosts: { jonathan: { name: 'Jon', key: 'jon' }, susan: { name: 'Susan', key: 'susan' } },
+  roster: { jon: { name: 'Jon', characterId: 'prof-jonathan', bag: 3 }, jessa: { name: 'Jessa', characterId: 'rye', bag: 6 } },
   phaseAt: { toMillis: () => PHASE_AT },
 }
 const SESSION = { nightId: 'preview', guestKey: 'jessa', guestName: 'Jessa', characterId: 'rye', bag: 6, status: 'active', affection: { irwin: 5, granolia: 4, boo: 2, zimothy: 3, salem: 4 } }
@@ -38,7 +34,7 @@ export default function Preview({ screen }) {
   const serverNow = () => Date.now()
   switch (screen) {
     case 'doors': return <Moment text={ui.DOORS} crest />
-    case 'join': return <Join uid="preview" night={night} ui={ui} />
+    case 'join': return <Join night={night} ui={ui} />
     case 'paused': return <Moment text={ui.PAUSED} crest />
     case 'blackout': return <Blackout />
     case 'prompt': return <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" />

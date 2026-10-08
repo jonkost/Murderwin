@@ -22,9 +22,9 @@ export const CATS = [
 
 export const DEFAULT_UI = {
   DOORS: 'The doors open at four. Make yourself comfortable.',
-  JOIN: 'Who are you? Tap your name.',
-  'JOIN TAKEN': 'already on a phone — tap only if that phone is yours and it died',
-  'JOIN NONE': 'The guest list has not been written yet. Find the host.',
+  JOIN: 'Who are you?',
+  'JOIN BUTTON': 'That’s me',
+  'JOIN AGAIN': 'Back on a new phone? Tap your name and your character follows.',
   LOBBY: 'The doors are open. Drinks are in the parlour. The game will find you when it starts.',
   BAG: 'Collect bag number',
   OFFLINE: 'The Manor cannot hear your phone. Stay where you are — it will reconnect on its own. Nothing is lost.',
@@ -139,4 +139,10 @@ export function characterById(content, id) {
 
 export function motives(content) {
   return Array.isArray(content?.motives) ? content.motives : []
+}
+
+// A portrait dropped into play/public/portraits/<characterId>.png (or .jpg).
+export function portraitUrls(characterId) {
+  const base = import.meta.env.BASE_URL
+  return [`${base}portraits/${characterId}.png`, `${base}portraits/${characterId}.jpg`]
 }

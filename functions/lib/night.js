@@ -57,31 +57,25 @@ async function readArea(db, area) {
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
-// A guest line in the workshop: "Name", or "Name — host: Jonathan" /
-// "Name — host: Susan" for the two hosts, who always play the Professors.
-export function parseGuest(text) {
-  const [namePart, ...rest] = text.split('—')
-  const name = namePart.trim()
-  const m = /^host:\s*(jonathan|susan)\b/i.exec(rest.join('—').trim())
-  return { name, host: m ? m[1].toLowerCase() : null }
+// Names as typed on the phone become roster keys: safe for dotted field paths.
+export function nameKey(name) {
+  return String(name ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
 }
 
-export function guestKey(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
-}
+export const DEFAULT_HOSTS = { jonathan: 'Jon', susan: 'Susan' }
 
-export async function readGuests(db) {
-  const guests = []
-  const seen = new Set()
-  for (const item of await readArea(db, 'guests')) {
-    const g = parseGuest(item.text)
-    if (!g.name) continue
-    const key = guestKey(g.name)
-    if (!key || seen.has(key)) continue
-    seen.add(key)
-    guests.push({ key, ...g })
+// The two hosts, from the workshop's Game night form (meta/game). Whoever
+// types one of these names on a phone plays that Professor and gets the
+// Host tab. Everyone else types any name and draws a character.
+export async function readHosts(db) {
+  const snap = await db.doc('meta/game').get()
+  const data = snap.exists ? snap.data() : {}
+  const hosts = {}
+  for (const host of ['jonathan', 'susan']) {
+    const name = String(data[`host_${host}`] ?? '').trim() || DEFAULT_HOSTS[host]
+    hosts[host] = { name, key: nameKey(name) }
   }
-  return guests
+  return hosts
 }
 
 export async function publishContent(db, nightId) {
@@ -104,11 +98,11 @@ export async function publishContent(db, nightId) {
 }
 
 export async function createNight(db, { label } = {}) {
-  const guests = await readGuests(db)
+  const hosts = await readHosts(db)
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
   const pool = CHARACTERS.filter(c => !c.host).map(c => c.id)
-  const bagCount = Math.max(PLANNING_BAGS, guests.length + 2)
+  const bagCount = Math.max(PLANNING_BAGS, 14)
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}`), {
     nightId,
@@ -120,7 +114,7 @@ export async function createNight(db, { label } = {}) {
     phaseAt: FieldValue.serverTimestamp(),
     actStartedAt: null,
     pausedFrom: null,
-    guests,
+    hosts,
     roster: {},
   })
   // The deck is private: the shuffled draw order and which phone holds which
@@ -134,7 +128,7 @@ export async function createNight(db, { label } = {}) {
   batch.set(db.doc('public_state/active'), { nightId, since: FieldValue.serverTimestamp() })
   await batch.commit()
   const published = await publishContent(db, nightId)
-  return { nightId, guests: guests.length, ...published }
+  return { nightId, ...published }
 }
 
 // Affection to each cat, 1–5, rolled once at character creation and never
@@ -157,12 +151,16 @@ export function characterById(id) {
   return CHARACTERS.find(c => c.id === id) ?? null
 }
 
-// A phone joins the night as a named guest. One phone, one character, all
-// night. The same guest on a NEW phone (dead battery, borrowed iPad) takes
-// the character with them; the old phone is told it has been superseded.
-export async function join(db, { uid, nightId, guestKey: key }) {
+// A phone joins the night by typing a name. One phone, one character, all
+// night. The same name on a NEW phone (dead battery, borrowed iPad) takes the
+// character with it; the old phone is told it has been superseded. A name
+// matching one of the two hosts plays that Professor and gets the Host tab.
+export async function join(db, { uid, nightId, name }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
-  if (!nightId || !key) throw new NightError('invalid', 'Which night, and who are you?')
+  const clean = String(name ?? '').trim().replace(/\s+/g, ' ')
+  const key = nameKey(clean)
+  if (!nightId || !key) throw new NightError('invalid', 'Type your name first.')
+  if (clean.length > 30) throw new NightError('invalid', 'A shorter name, please — thirty letters at most.')
   const nightRef = db.doc(`nights/${nightId}`)
   const deckRef = db.doc(`nights/${nightId}/private/deck`)
   const sessionRef = db.doc(`sessions/${uid}`)
@@ -181,10 +179,9 @@ export async function join(db, { uid, nightId, guestKey: key }) {
       if (existing.guestKey === key) return { ok: true, characterId: existing.characterId, resumed: true }
       throw new NightError('already-joined', `This phone is already ${existing.guestName}. Find the host to change it.`)
     }
-    const guest = (night.guests ?? []).find(g => g.key === key)
-    if (!guest) throw new NightError('no-guest', 'That name is not on the guest list. Find the host.')
     if (!night.joinOpen) throw new NightError('closed', 'The doors are closed for now. Find the host.')
 
+    const hostFor = Object.entries(night.hosts ?? {}).find(([, h]) => h.key === key)?.[0] ?? null
     const roster = night.roster ?? {}
     const entry = roster[key] ?? null
     const oldUid = entry ? (deck.uids?.[key] ?? null) : null
@@ -197,7 +194,7 @@ export async function join(db, { uid, nightId, guestKey: key }) {
       affection = oldSessionSnap?.data()?.affection ?? existing?.affection ?? null
     } else {
       const taken = new Set(Object.values(roster).map(r => r.characterId))
-      if (guest.host) characterId = CHARACTERS.find(c => c.host === guest.host)?.id
+      if (hostFor) characterId = CHARACTERS.find(c => c.host === hostFor)?.id
       else characterId = (deck.order ?? []).find(id => !taken.has(id))
       if (!characterId || taken.has(characterId)) throw new NightError('full', 'Every character is spoken for tonight. Find the host.')
       const usedBags = new Set(Object.values(roster).map(r => r.bag))
@@ -206,6 +203,7 @@ export async function join(db, { uid, nightId, guestKey: key }) {
     const character = characterById(characterId)
     if (!character) throw new NightError('invalid', 'That character does not exist.')
     if (!affection) affection = rollAffection(character.profession)
+    const displayName = entry?.name ?? clean
 
     // then writes
     if (oldSessionSnap?.exists) {
@@ -213,15 +211,15 @@ export async function join(db, { uid, nightId, guestKey: key }) {
     }
     tx.update(nightRef, {
       [`roster.${key}`]: {
-        name: guest.name, characterId, bag,
+        name: displayName, characterId, bag,
         joinedAt: entry?.joinedAt ?? FieldValue.serverTimestamp(),
       },
     })
     tx.update(deckRef, { [`uids.${key}`]: uid })
     tx.set(sessionRef, {
-      nightId, guestKey: key, guestName: guest.name,
+      nightId, guestKey: key, guestName: displayName,
       characterId, bag, affection,
-      host: guest.host ?? null, // the two hosts get the Host tab on their own phone
+      host: hostFor, // the two hosts get the Host tab on their own phone
       status: 'active',
       joinedAt: FieldValue.serverTimestamp(),
     })
@@ -267,10 +265,10 @@ export async function hostCommand(db, { nightId, command, arg } = {}) {
     case 'activate':
       await db.doc('public_state/active').set({ nightId, since: now })
       return { ok: true }
-    case 'refresh-guests': {
-      const guests = await readGuests(db)
-      await ref.update({ guests })
-      return { ok: true, guests: guests.length }
+    case 'refresh-hosts': {
+      const hosts = await readHosts(db)
+      await ref.update({ hosts })
+      return { ok: true }
     }
     case 'join-open':
       await ref.update({ joinOpen: true })

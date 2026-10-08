@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
-import { AREAS, TAB_KINDS, GUIDES, lintItem } from '../lib/content'
+import { AREAS, TAB_KINDS, GUIDES, lintItem, splitFields, joinFields } from '../lib/content'
 import FieldGuide from '../components/FieldGuide'
 
 export default function Editor() {
@@ -21,8 +21,10 @@ function AreaEditor({ area }) {
   // The fresh line at the bottom. Local until committed, so an abandoned
   // empty draft never becomes a junk item in Firestore.
   const [draft, setDraft] = useState('')
+  const [draftA, setDraftA] = useState('')
   const draftText = useRef('')
   const draftRef = useRef(null)
+  const form = spec.form ?? null
 
   const tabDef = spec.tabs ? TAB_KINDS[spec.tabs] : null
   const tabs = tabDef?.list ?? null
@@ -70,10 +72,12 @@ function AreaEditor({ area }) {
   // cursor. Reads the ref, not state, so a blur followed by a click on Add
   // can never commit the same text twice.
   const commitDraft = () => {
-    const text = draftText.current.trim()
+    const text = form ? joinFields(area, draftA, draftText.current) : draftText.current.trim()
+    if (!draftText.current.trim()) return
     draftText.current = ''
     setDraft('')
     if (draftRef.current) draftRef.current.style.height = 'auto'
+    setDraftA('')
     if (text) add(text)
   }
 
@@ -164,6 +168,7 @@ function AreaEditor({ area }) {
         </nav>
       )}
 
+      <p className="why">{spec.why}</p>
       <FieldGuide guide={guide} tab={spec.tabs && spec.tabs !== 'pools' ? tab : null} />
 
       <ul className="items">
@@ -180,10 +185,15 @@ function AreaEditor({ area }) {
                   <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
                   <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>
                 </span>
-                <textarea rows={2} value={item.text} placeholder="…"
-                  onInput={autoGrow}
-                  onKeyDown={onLineKey}
-                  onChange={e => edit(item.id, e.target.value)} />
+                {form ? (
+                  <Fields area={area} form={form} text={item.text} onKeyDown={onLineKey}
+                    onChange={(a, b) => edit(item.id, joinFields(area, a, b))} />
+                ) : (
+                  <textarea rows={2} value={item.text} placeholder="…"
+                    onInput={autoGrow}
+                    onKeyDown={onLineKey}
+                    onChange={e => edit(item.id, e.target.value)} />
+                )}
                 <button className="ghost" onClick={() => softDelete(item.id)} title="Delete (soft)">✕</button>
               </div>
               {warn && <p className="lint">⚠ {warn}</p>}
@@ -194,13 +204,31 @@ function AreaEditor({ area }) {
           <div className="item-row">
             {spec.checklist && <span className="check-gap" aria-hidden="true" />}
             <span className="reorder" aria-hidden="true" />
-            <textarea ref={draftRef} rows={2} value={draft}
-              placeholder="New line — Enter adds it"
-              aria-label="New line"
-              onInput={autoGrow}
-              onKeyDown={onDraftKey}
-              onBlur={commitDraft}
-              onChange={e => { draftText.current = e.target.value; setDraft(e.target.value) }} />
+            {form ? (
+              <div className="fields">
+                {form.options
+                  ? <select value={draftA} aria-label={form.a} onChange={e => setDraftA(e.target.value)}>
+                      <option value="">{form.a}…</option>
+                      {form.options.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  : <input type="text" value={draftA} placeholder={form.a} aria-label={form.a}
+                      onChange={e => setDraftA(e.target.value)} />}
+                <textarea ref={draftRef} rows={2} value={draft}
+                  placeholder={`${form.b} — Enter adds it`}
+                  aria-label={form.b}
+                  onInput={autoGrow}
+                  onKeyDown={onDraftKey}
+                  onChange={e => { draftText.current = e.target.value; setDraft(e.target.value) }} />
+              </div>
+            ) : (
+              <textarea ref={draftRef} rows={2} value={draft}
+                placeholder="New line — Enter adds it"
+                aria-label="New line"
+                onInput={autoGrow}
+                onKeyDown={onDraftKey}
+                onBlur={commitDraft}
+                onChange={e => { draftText.current = e.target.value; setDraft(e.target.value) }} />
+            )}
             <button className="primary" onMouseDown={e => e.preventDefault()} onClick={commitDraft} title="Add line">Add</button>
           </div>
           {draftWarn && <p className="lint">⚠ {draftWarn}</p>}
@@ -215,5 +243,27 @@ function AreaEditor({ area }) {
         </div>
       )}
     </main>
+  )
+}
+
+
+// Two labelled fields for one saved line. The line is split on its separator
+// and joined back on every keystroke, so what is stored never changes shape.
+function Fields({ area, form, text, onChange, onKeyDown }) {
+  const { a, b } = splitFields(area, text)
+  return (
+    <div className="fields">
+      {form.options
+        ? <select value={a} aria-label={form.a} onChange={e => onChange(e.target.value, b)}>
+            <option value="">{form.a}…</option>
+            {form.options.map(o => <option key={o} value={o}>{o}</option>)}
+            {a && !form.options.includes(a) && <option value={a}>{a}</option>}
+          </select>
+        : <input type="text" value={a} placeholder={form.a} aria-label={form.a}
+            onChange={e => onChange(e.target.value, b)} />}
+      <textarea rows={2} value={b} placeholder={form.b} aria-label={form.b}
+        onInput={autoGrow} onKeyDown={onKeyDown}
+        onChange={e => onChange(a, e.target.value)} />
+    </div>
   )
 }

@@ -48,8 +48,8 @@ function requireUid(req) {
 
 export const join = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
-  const { nightId, guestKey } = req.data ?? {}
-  return night.join(db, { uid, nightId, guestKey })
+  const { nightId, name } = req.data ?? {}
+  return night.join(db, { uid, nightId, name })
 }))
 
 export const hostCommand = onCall({ cors: true }, wrap(async req => {
