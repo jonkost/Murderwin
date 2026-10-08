@@ -13,6 +13,7 @@ function SignInGate() {
   const [err, setErr] = useState(null)
   return (
     <div className="gate">
+      <img className="gate-seal" src="/workshop/seal.png" alt="" />
       <h1>The Workshop</h1>
       <p className="sub">Sirwin Manor · staff entrance</p>
       <button className="primary" onClick={() => signIn().catch(e => setErr(e.message))}>
@@ -73,7 +74,7 @@ export default function App() {
   return (
     <div className="shell">
       <header className="topbar">
-        <Link to="/" className="brand">The Workshop</Link>
+        <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" />The Workshop</Link>
         <span className="spacer" />
         <Link to="/" className="ghost navlink">Home</Link>
         <Link to="/night" className="ghost navlink">Game night</Link>

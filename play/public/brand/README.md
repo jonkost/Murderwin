@@ -1,10 +1,15 @@
 # Branding (phone-sized copies)
 
 The originals live in `art/brand/` at full size. These are the copies the
-site serves. Remake them from the originals if the art changes:
+site serves:
 
-- `wallpaper-phone.jpg` — the navy and red wallpaper, portrait, behind the
-  doors, join, prompt and pause screens.
-- `wallpaper-wide.jpg` — the same, landscape, for the big screen and kiosks.
+- `pattern.svg` — the Irwin wallpaper as a stencil with no colour of its own.
+  Any screen gets it with the `papered` class, and sets the colour, size and
+  strength with `--paper-color`, `--paper-size`, `--paper-opacity`. One file,
+  every colour.
+- `wallpaper-phone.jpg`, `wallpaper-wide.jpg` — the navy and red version as a
+  flat picture, for slides and anywhere CSS is not available.
 - `seal.png` — the red wax seal with Irwin, used as the crest.
-- `pattern-red-tile.png` — the red pattern on transparent, for overlays.
+
+Type (decided 8 Oct 2026): Libre Caslon Display for titles and names (Jon: "a
+nice detective feel"), Source Sans 3 for everything people read. Colours: blue #001925, red #bf1925.

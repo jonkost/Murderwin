@@ -15,7 +15,7 @@ export function Seal() {
 
 export function Moment({ text, crest, foot }) {
   return (
-    <div className="moment">
+    <div className="moment papered">
       {crest && <Seal />}
       {crest && <p className="crest">Sirwin Manor</p>}
       <p className="moment-text">{text}</p>
@@ -42,7 +42,7 @@ export function Prompt({ uid, night, ui, serverNow, promptKey }) {
   const canHide = remaining <= 0
   const hide = () => writeNotes(uid, { seen: { [promptKey]: true } }).catch(() => {})
   return (
-    <div className="moment prompt">
+    <div className="moment prompt papered">
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text">{ui.POWER}</p>

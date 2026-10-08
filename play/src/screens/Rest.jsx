@@ -31,7 +31,7 @@ export default function Rest({ uid, night, session, content, notes, ui }) {
 
   return (
     <main className="rest">
-      <header className="act">
+      <header className="act papered">
         {night.act >= 1 && act ? (
           <>
             <p className="act-num">Act {night.act} · {act.plain}</p>

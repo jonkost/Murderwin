@@ -25,7 +25,7 @@ export default function Join({ night, ui }) {
   }
 
   if (!night.joinOpen) return (
-    <div className="moment">
+    <div className="moment papered">
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text">{ui.DOORS}</p>
@@ -33,7 +33,7 @@ export default function Join({ night, ui }) {
   )
 
   return (
-    <main className="join">
+    <main className="join papered">
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <h1 className="ask">{ui.JOIN}</h1>
