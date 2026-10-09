@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
-import { AREAS, TAB_KINDS, GUIDES, lintItem, splitFields, joinFields } from '../lib/content'
+import { AREAS, TAB_KINDS, GUIDES, lintItem, splitFields, joinFields, splitCharacter, joinCharacter, CHARACTER_FIELDS } from '../lib/content'
 import FieldGuide from '../components/FieldGuide'
+import { useDictation } from '../lib/useDictation'
 
 export default function Editor() {
   const { area } = useParams()
@@ -25,11 +26,22 @@ function AreaEditor({ area }) {
   const draftText = useRef('')
   const draftRef = useRef(null)
   const form = spec.form ?? null
+  const multi = spec.fields ? CHARACTER_FIELDS : null
+  const [draftMulti, setDraftMulti] = useState({})
 
   const tabDef = spec.tabs ? TAB_KINDS[spec.tabs] : null
   const tabs = tabDef?.list ?? null
   const tab = tabs ? (params.get('tab') ?? tabs[0]) : null
   const loaded = items !== null
+  // Focus mode: one list, a small goal, nothing else on screen.
+  const focusGoal = Number(params.get('focus')) || 0
+  const [startCount, setStartCount] = useState(null)
+
+  // Speak a line: the words land in the fresh box; Enter or Add keeps them.
+  const dictation = useDictation(
+    text => { draftText.current = text; setDraft(text) },
+    () => draftRef.current?.focus(),
+  )
 
   // Cursor lands in the input on load, and again on every tab switch.
   useEffect(() => {
@@ -44,7 +56,13 @@ function AreaEditor({ area }) {
       .sort((a, b) => a.order - b.order)
   }, [items, tab, tabDef])
 
+  useEffect(() => {
+    if (loaded && focusGoal && startCount === null) setStartCount(visible.length)
+  }, [loaded, focusGoal, startCount, visible.length])
+
   if (!loaded) return <main className="dash"><p>Loading…</p></main>
+  const written = startCount === null ? 0 : Math.max(0, visible.length - startCount)
+  const reached = focusGoal > 0 && written >= focusGoal
 
   const guideKey = spec.tabs === 'pools' ? tab : spec.guide
   const guide = guideKey ? GUIDES[guideKey] : null
@@ -72,6 +90,13 @@ function AreaEditor({ area }) {
   // cursor. Reads the ref, not state, so a blur followed by a click on Add
   // can never commit the same text twice.
   const commitDraft = () => {
+    if (multi) {
+      const text = joinCharacter(draftMulti)
+      if (!Object.values(draftMulti).some(v => v?.trim())) return
+      setDraftMulti({})
+      add(text)
+      return
+    }
     const text = form ? joinFields(area, draftA, draftText.current) : draftText.current.trim()
     if (!draftText.current.trim()) return
     draftText.current = ''
@@ -157,6 +182,8 @@ function AreaEditor({ area }) {
         </span>
       </div>
 
+      <Needs spec={spec} items={items} tabDef={tabDef} tab={tab} />
+
       {tabs && (
         <nav className="tabs">
           {tabs.map(t => (
@@ -168,8 +195,20 @@ function AreaEditor({ area }) {
         </nav>
       )}
 
-      <p className="why">{spec.why}</p>
-      <FieldGuide guide={guide} tab={spec.tabs && spec.tabs !== 'pools' ? tab : null} />
+      {focusGoal > 0 ? (
+        <div className={reached ? 'focus done' : 'focus'} role="status">
+          {reached
+            ? <><b>That’s {written}. Goal met.</b> Stop here, or keep going; either is a win. <Link to="/">Back home</Link></>
+            : <><b>{focusGoal - written} more</b> and you’re done for now. {spec.why}</>}
+          <span className="focus-bar"><span style={{ width: `${Math.min(100, Math.round((written / focusGoal) * 100))}%` }} /></span>
+        </div>
+      ) : (
+        <>
+          <p className="add-line">{spec.add ?? spec.why}</p>
+          {guide?.good?.[0] && <p className="example">For example: “{guide.good[0].text}”</p>}
+          <FieldGuide guide={guide} tab={spec.tabs && spec.tabs !== 'pools' ? tab : null} />
+        </>
+      )}
 
       <ul className="items">
         {visible.map((item, idx) => {
@@ -185,7 +224,10 @@ function AreaEditor({ area }) {
                   <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up">▲</button>
                   <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down">▼</button>
                 </span>
-                {form ? (
+                {multi ? (
+                  <CharacterFields text={item.text} onKeyDown={onLineKey}
+                    onChange={next => edit(item.id, joinCharacter(next))} />
+                ) : form ? (
                   <Fields area={area} form={form} text={item.text} onKeyDown={onLineKey}
                     onChange={(a, b) => edit(item.id, joinFields(area, a, b))} />
                 ) : (
@@ -204,7 +246,22 @@ function AreaEditor({ area }) {
           <div className="item-row">
             {spec.checklist && <span className="check-gap" aria-hidden="true" />}
             <span className="reorder" aria-hidden="true" />
-            {form ? (
+            {multi ? (
+              <div className="fields">
+                {CHARACTER_FIELDS.map((f, i) => (
+                  <label key={f.key} className="field-row">
+                    <span>{f.label}</span>
+                    {f.key === 'persona'
+                      ? <textarea ref={i === 0 ? draftRef : null} rows={2} value={draftMulti[f.key] ?? ''} placeholder={f.placeholder}
+                          onInput={autoGrow} onKeyDown={onDraftKey}
+                          onChange={e => setDraftMulti(d => ({ ...d, [f.key]: e.target.value }))} />
+                      : <input ref={i === 0 ? draftRef : null} type="text" value={draftMulti[f.key] ?? ''} placeholder={f.placeholder}
+                          onKeyDown={onDraftKey}
+                          onChange={e => setDraftMulti(d => ({ ...d, [f.key]: e.target.value }))} />}
+                  </label>
+                ))}
+              </div>
+            ) : form ? (
               <div className="fields">
                 {form.options
                   ? <select value={draftA} aria-label={form.a} onChange={e => setDraftA(e.target.value)}>
@@ -214,7 +271,7 @@ function AreaEditor({ area }) {
                   : <input type="text" value={draftA} placeholder={form.a} aria-label={form.a}
                       onChange={e => setDraftA(e.target.value)} />}
                 <textarea ref={draftRef} rows={2} value={draft}
-                  placeholder={`${form.b} — Enter adds it`}
+                  placeholder={form.b}
                   aria-label={form.b}
                   onInput={autoGrow}
                   onKeyDown={onDraftKey}
@@ -222,15 +279,23 @@ function AreaEditor({ area }) {
               </div>
             ) : (
               <textarea ref={draftRef} rows={2} value={draft}
-                placeholder="New line — Enter adds it"
+                placeholder="Type or speak a line, then press Enter"
                 aria-label="New line"
                 onInput={autoGrow}
                 onKeyDown={onDraftKey}
                 onBlur={commitDraft}
                 onChange={e => { draftText.current = e.target.value; setDraft(e.target.value) }} />
             )}
+            {dictation.supported && (
+              <button className={dictation.listening ? 'mic on' : 'mic'} onMouseDown={e => e.preventDefault()}
+                onClick={() => (dictation.listening ? dictation.stop() : dictation.start())}
+                title={dictation.listening ? 'Stop listening' : 'Speak a line'} aria-pressed={dictation.listening}>
+                {dictation.listening ? 'Stop' : 'Speak'}
+              </button>
+            )}
             <button className="primary" onMouseDown={e => e.preventDefault()} onClick={commitDraft} title="Add line">Add</button>
           </div>
+          {dictation.listening && <p className="lint listening">Listening. Say the line, tap Stop, then press Enter.</p>}
           {draftWarn && <p className="lint">⚠ {draftWarn}</p>}
         </li>
       </ul>
@@ -264,6 +329,47 @@ function Fields({ area, form, text, onChange, onKeyDown }) {
       <textarea rows={2} value={b} placeholder={form.b} aria-label={form.b}
         onInput={autoGrow} onKeyDown={onKeyDown}
         onChange={e => onChange(a, e.target.value)} />
+    </div>
+  )
+}
+
+
+// What this list needs, as a row of counts: one per cat or blank for tabbed
+// lists, one number otherwise. Nothing red, nothing nagging.
+function Needs({ spec, items, tabDef, tab }) {
+  const live = (items ?? []).filter(i => !i.deleted)
+  if (tabDef) {
+    return (
+      <div className="needs">
+        <span className="needs-label">Needs {spec.goalPerTab} each:</span>
+        {tabDef.list.map(t => {
+          const n = live.filter(i => i[tabDef.field] === t).length
+          return <span key={t} className={n >= spec.goalPerTab ? 'need done' : t === tab ? 'need here' : 'need'}>{tabDef.label(t)} {n}</span>
+        })}
+      </div>
+    )
+  }
+  const goal = spec.goal ?? 0
+  if (!goal) return null
+  return <div className="needs"><span className="needs-label">Needs {goal}.</span><span className={live.length >= goal ? 'need done' : 'need'}>{live.length} written</span></div>
+}
+
+// Four boxes for one character line.
+function CharacterFields({ text, onChange, onKeyDown }) {
+  const v = splitCharacter(text)
+  const set = (key, val) => onChange({ ...v, [key]: val })
+  return (
+    <div className="fields">
+      {CHARACTER_FIELDS.map(f => (
+        <label key={f.key} className="field-row">
+          <span>{f.label}</span>
+          {f.key === 'persona'
+            ? <textarea rows={2} value={v[f.key]} placeholder={f.placeholder} onInput={autoGrow} onKeyDown={onKeyDown}
+                onChange={e => set(f.key, e.target.value)} />
+            : <input type="text" value={v[f.key]} placeholder={f.placeholder} onKeyDown={onKeyDown}
+                onChange={e => set(f.key, e.target.value)} />}
+        </label>
+      ))}
     </div>
   )
 }

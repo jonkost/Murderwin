@@ -4,7 +4,7 @@ import {
   query, orderBy, limit, runTransaction,
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from '../firebase'
+import { db, storage, auth } from '../firebase'
 import { seedDocs, seedTasks, ADDITIONS } from './content'
 
 // One-time seed import, guarded by meta/seeded inside a transaction so two
@@ -89,12 +89,34 @@ function applyChangesTo(remote, changes) {
   return items
 }
 
+// Who is making this change, in plain words. Jon by UID; the Steward by the
+// SHA-256 of her verified email (the same test the security rules use), so her
+// address is never written anywhere. Anyone else shows as their email.
+const JON_UID = 'JYSmPSQfdMen0leIDYmqUa32Prt1'
+const STEWARD_HASH = '2ea18fbeb53147b23ca3afa1e1291934aeea1b6e5c6c2c7b40b6301386ffe2b8'
+let whoCache = null
+export async function whoAmI() {
+  const u = auth.currentUser
+  if (!u) return { uid: null, name: 'unknown' }
+  if (whoCache?.uid === u.uid) return whoCache
+  let name = u.email ?? 'unknown'
+  if (u.uid === JON_UID) name = 'Jon'
+  else if (u.email && crypto?.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(u.email.toLowerCase()))
+    const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+    if (hex === STEWARD_HASH) name = 'Jenna'
+  }
+  whoCache = { uid: u.uid, name }
+  return whoCache
+}
+
 // Transactional save: merges the pending changes onto the CURRENT remote
 // items (so an edit from the other device is never erased by a whole-array
 // overwrite) and appends history entries in the same atomic commit.
 // Nothing is ever hard-deleted — deletes are soft flags on items.
 export async function saveArea(area, _items, changes) {
   const ref = doc(db, 'safe_content', area)
+  const by = await whoAmI()
   await runTransaction(db, async tx => {
     const snap = await tx.get(ref)
     const remote = snap.exists() ? asItems(snap.data().items) : []
@@ -104,19 +126,29 @@ export async function saveArea(area, _items, changes) {
         area, itemId: c.itemId,
         before: c.before ?? null,
         after: c.after ?? null,
+        by,
         ts: serverTimestamp(),
       })
     }
   })
 }
 
-function logHistory(area, itemId, before, after) {
+async function logHistory(area, itemId, before, after) {
+  const by = await whoAmI()
   return addDoc(collection(db, 'workshop_history'), {
     area, itemId,
     before: before ?? null,
     after: after ?? null,
+    by,
     ts: serverTimestamp(),
   })
+}
+
+// ---- Who has been working: the last 300 changes, newest first ----
+export function subscribeHistory(onData, onError) {
+  return onSnapshot(query(collection(db, 'workshop_history'), orderBy('ts', 'desc'), limit(300)),
+    snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    onError)
 }
 
 // ---- Task board ----

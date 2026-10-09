@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, NavLink } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, signIn, signOutUser } from './firebase'
 import { ensureSeeded } from './lib/store'
@@ -8,6 +8,8 @@ import Editor from './pages/Editor'
 import Stationery from './pages/Stationery'
 import Assets from './pages/Assets'
 import Night from './pages/Night'
+import ForJenna from './pages/ForJenna'
+import Status from './pages/Status'
 
 function SignInGate() {
   const [err, setErr] = useState(null)
@@ -73,19 +75,22 @@ export default function App() {
 
   return (
     <div className="shell">
-      <header className="topbar">
-        <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" />The Workshop</Link>
-        <span className="spacer" />
-        <Link to="/" className="ghost navlink">Home</Link>
-        <Link to="/night" className="ghost navlink">Game night</Link>
-        <button className="ghost" onClick={signOutUser}>Sign out</button>
-      </header>
+      <nav className="rail" aria-label="Workshop">
+        <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" /><span>Workshop</span></Link>
+        <NavLink to="/" end className="rail-link">Home</NavLink>
+        <NavLink to="/status" className="rail-link">Where we are</NavLink>
+        <NavLink to="/night" className="rail-link">Game night</NavLink>
+        <NavLink to="/jenna" className="rail-link">For Jenna</NavLink>
+        <button className="rail-link quiet" onClick={signOutUser}>Sign out</button>
+      </nav>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/edit/:area" element={<Editor />} />
         <Route path="/stationery" element={<Stationery />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/night" element={<Night />} />
+        <Route path="/jenna" element={<ForJenna />} />
+        <Route path="/status" element={<Status />} />
       </Routes>
     </div>
   )
