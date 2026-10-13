@@ -22,12 +22,13 @@ export const MOTIVES = JSON.parse(readFileSync(joinPath(seedDir, 'motives.json')
 export const CATS = ['granolia', 'boo', 'zimothy', 'salem'] // Irwin is always 5
 export const PLANNING_BAGS = 10 // 8 players → 10 bags (bag doc, 29 Sep)
 
-// Safe-content areas copied onto the phones when a night is created.
-// Never role_cards (per role, delivered through session docs once roles exist)
-// and never bag_items (there is no bag ledger anywhere in the app).
+// Safe-content areas copied onto the phones when a night is created: only
+// the lists a phone actually reads. Never role_cards (per role, delivered
+// through session docs once roles exist), never bag_items (there is no bag
+// ledger anywhere in the app), and not the retired lists (filler, lore).
 export const PLAYER_AREAS = [
-  'bios', 'npc_cards', 'rules_text', 'ui_copy', 'filler', 'smalltalk',
-  'lore', 'act_scripts', 'status_lines',
+  'bios', 'npc_cards', 'rules_text', 'ui_copy', 'smalltalk',
+  'act_scripts', 'status_lines',
 ]
 
 export class NightError extends Error {

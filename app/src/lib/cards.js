@@ -53,7 +53,7 @@ CAT_NOTES.closers = CAT_NOTES.openers
 CAT_NOTES.refusals = CAT_NOTES.openers
 CAT_NOTES.smalltalk = CAT_NOTES.openers
 CAT_NOTES.status_lines = {
-  irwin: 'His affection is always full, so only his In line ever shows on a phone. The other two are spares; keep all three adoring.',
+  irwin: 'His affection is always full, so only an In line can ever show. One adoring line is all he needs.',
   boo: 'LOCKED is old burns behind society polish. WARMING is her noticing you. IN is the polish dropping.',
   granolia: 'Her warmth cannot be bought. She warms fastest to readers and learners. Even LOCKED stays kind.',
   zimothy: 'Standing is an account. LOCKED is no file. WARMING is credit cautiously extended. IN is full client privileges.',
@@ -76,23 +76,20 @@ const CARDS = {
   bios: {
     what: 'The fourteen people a guest can become tonight. Each one is a card.',
     where: 'Dealt at random when a guest taps their name at the door in Act 1. It stays on their phone under You through all seven acts.',
-    howTo: 'Name in capitals, then what they do, then a line or two about how they behave, then what to wear.',
+    howTo: 'Pick who, then write a line or two about how they behave. The fourteen names and jobs are fixed, because the game deals them and the cats judge the job. No costume: dealt at the door, nobody dresses up.',
     example: [
-      { field: 'Name', text: 'DOROTHY RYE' },
-      { field: 'What they do', text: 'Baker' },
+      { field: 'Who', text: 'Dorothy Rye' },
       { field: 'Who they are', text: 'Up since four. Has opinions about everyone else’s bread, and shares them.' },
-      { field: 'What to wear', text: 'Apron, flour on the hands, a wooden spoon.' },
     ],
-    emptyState: 'No characters yet. Start with a name and a job. Keep them clean on paper: no secrets, grudges or alibis, because anyone may be dealt the murderer or the victim.',
-    doneLine: 'Fourteen characters, dressed and ready. The Manor can seat them all.',
+    emptyState: 'Nothing yet. Pick a name and write who they are. Keep them clean on paper: no secrets, grudges or alibis, because anyone may be dealt the murderer or the victim.',
+    doneLine: 'Fourteen characters, named and ready. The Manor can seat them all.',
   },
   npc_cards: {
     what: 'A short introduction to each of the four cats and to Sir Irwin.',
     where: 'Act 1, on the Cats tab of every phone, before anyone walks into a room and finds one of the five waiting.',
-    howTo: 'The name in capitals, then who they are to the house, then two or three sentences about them ending with where they keep themselves.',
+    howTo: 'Pick who, then two or three sentences about them, ending with where they keep themselves. The name and title are filled in for you.',
     example: [
-      { field: 'Name', text: 'MISS BOO LARUE' },
-      { field: 'Who they are to the house', text: 'family friend and socialite' },
+      { field: 'Who', text: 'boo' },
       { field: 'About them', text: 'Arrived for a party some years back and has seen no reason to declare it over. She will learn your name before you learn hers. Found wherever the light is best.' },
     ],
     emptyState: 'No introductions yet. Five to write: Sir Irwin and the four cats.',
@@ -163,7 +160,7 @@ const CARDS = {
   ui_copy: {
     what: 'The phone’s own words, when no character is speaking.',
     where: 'Whenever the phone itself has to speak: scanning in at the door, no signal, paused, the ballot in Act 7. Often read by someone stressed and alone.',
-    howTo: 'Pick which screen, then the line. Twenty words at most, plain, never blaming the guest. “Nothing is lost” is the house style.',
+    howTo: 'Pick which screen, then the line. Fifteen screens, each with a plain default already; yours replaces it. Twenty words at most, never blaming the guest. “Nothing is lost” is the house style.',
     example: [
       { field: 'Which screen', text: 'OFFLINE' },
       { field: 'The line', text: 'The Manor cannot hear your phone. Stay where you are: it will reconnect on its own. Nothing is lost.' },
@@ -172,15 +169,15 @@ const CARDS = {
     doneLine: 'Every door in the house has its little sign. Even the ones that stick.',
   },
   act_scripts: {
-    what: 'The three lines that run each act: a banner, an objective, and the hosts’ beats.',
-    where: 'The top of every phone the moment an act begins shows the banner and the objective. The beats are only for the two hosts.',
-    howTo: 'Pick banner, objective or beats, then the words. Banner: “Act the Fourth: In Which …”. Objective: where to be and what to do, two sentences. Beats: your own run of the act.',
+    what: 'One sentence per act saying where to be and what to do. The act’s name (The Plot Thickens, Paws for Thought) is fixed and already on every phone.',
+    where: 'The top of every phone the moment an act begins, under the act’s name.',
+    howTo: 'Two short sentences at most: where to be (everyone together, scattered alone, in pairs), then what to do. Plain words an eleven-year-old gets in one pass.',
     example: [
-      { field: 'Which line', text: 'BANNER' },
-      { field: 'The words', text: 'Act the Fourth: In Which Two Heads Prove Scarcely Better Than One.' },
+      { field: 'Which line', text: 'OBJECTIVE' },
+      { field: 'The words', text: 'Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight: ask again.' },
     ],
-    emptyState: 'Nothing for this act yet. Start with the banner: a title card with a joke about the shape of the act.',
-    doneLine: 'Seven acts, twenty-one lines, and the curtain knows exactly when to rise.',
+    emptyState: 'Nothing for this act yet. Where should everyone be, and what should they do?',
+    doneLine: 'Seven acts, seven sentences, and the curtain knows exactly when to rise.',
   },
   scenarios: {
     what: 'Silly three-question dilemmas. Every guest answers one at the same moment, on identical screens.',
@@ -198,15 +195,15 @@ const CARDS = {
     doneLine: 'The house is full of very strong opinions about very small things. Just as it should be.',
   },
   role_cards: {
-    what: 'What each phone shows in the blackout: the buzz, then your card, then a briefing for the two hidden roles.',
+    what: 'The card each phone shows in the blackout: Murderer, Ghost or Detective. What each role does is said aloud in the Act 1 welcome, so the card only has to say which one you are.',
     where: 'The dark room at the end of Act 1, when every phone buzzes at once and the roles land. The only moment all night a screen says who you are.',
-    howTo: 'Pick the card, then the words. The three cards (Murderer, Ghost, Detective) must be the same length, so a lit screen gives nothing away. Nobody learns the motive here, not even the Murderer, and the cards say so.',
+    howTo: 'Pick the card, then the words. The three cards must be the same length and shape, so a lit screen gives nothing away from across the room. Nobody learns the motive here, not even the Murderer, and the cards say so. The shared “power is back” message lives in the phone’s own lines.',
     example: [
       { field: 'Which card', text: 'GHOST' },
       { field: 'The card', text: 'The Manor has lost you tonight. No one knows, and no one knows why, not even you. Walk, talk, and play on.' },
     ],
-    emptyState: 'Nothing yet. Six to write: the buzz, three cards, two briefings.',
-    doneLine: 'Six cards, matched to the word. In the dark, every face glows the same.',
+    emptyState: 'Nothing yet. Three cards to write, matched word for word in length.',
+    doneLine: 'Three cards, matched to the word. In the dark, every face glows the same.',
   },
   filler: {
     what: 'The old way of keeping ordinary phones busy while two guests chose an event. Retired.',
@@ -264,8 +261,8 @@ const CARDS = {
   },
   epilogue_frames: {
     what: 'The closing story, read aloud, with blanks for the names.',
-    where: 'Act 7, after the Murderer, the Motive and the Victim have been revealed in that order.',
-    howTo: 'A paragraph with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go. Write for the voice: short sentences, room to breathe.',
+    where: 'Act 7, on the living room screen, after the Murderer, the Motive and the Victim have been revealed in that order.',
+    howTo: 'A paragraph with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go. Written to be read on a big screen across a room: short lines.',
     example: [{ field: 'The paragraph', text: 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. The household nodded as one, and [VICTIM] was remembered fondly, by most.' }],
     emptyState: 'Nothing yet. Two endings to write, with the names left blank.',
     doneLine: 'The last page is written. The spoons, as ever, remain uncounted.',

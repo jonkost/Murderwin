@@ -33,7 +33,7 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   finished example laid out in the shape of the boxes. A button puts the
   example into the boxes to start from. The long rules fold away underneath.
   Focus mode ("three more") keeps the card; it only adds the goal bar.
-- **One box per thing.** A character is four boxes, a rule is a heading and
+- **One box per thing.** A character is three boxes (name, what they do, who they are; no costume, since characters are dealt at the door), a rule is a heading and
   a body, a bag item is the item, a sense and what it notices, a news frame is
   the words before the gap and the words after it (the gap is drawn for you).
   Dropdowns say plain words (Locked out, Warming up, In). What is saved does
@@ -67,6 +67,46 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   *Needs another look*, plus one line of note. A list she has cleared carries
   a small "✓ read" on Home. The For Jenna page now opens the lists she should
   read first, and ends with a map of what every list is for.
+- **Paste a lot at once.** Under the card on every list: "Have a lot written
+  already? Paste it here and it fills itself in." Paste from Notes, a chat
+  or a spreadsheet, or add a .txt, .md or .csv file. The workshop reads it
+  into lines and boxes ("Name · Job" with the bio under it, "LOCKED: the
+  line", "Heading: body", "Item, smell, minty", question sets with their
+  choices and points), shows what it read, names any line it could not read,
+  and adds the lot with one tap. Nothing is added until you tap.
+- **How it looks in the game.** Beside the card, a small sketch of the phone
+  (or room screen) drawn from your boxes as you type, or from the example
+  when the boxes are empty. It shows where the words land and what sits
+  around them: a cat's greeting above the secret middle, a rule on the Rules
+  tab, a blank inside a cat's sentence, a bulletin on the wireless.
+- **Examples say so.** The card's example is badged "Example only. Not yours,
+  not saved." Example text in an empty box starts with "e.g." and appears
+  only in the new-line boxes; a saved line's empty box says "Not written
+  yet" (the fourteen characters all seemed to wear an apron before this).
+- **The household's rank** counts every line written in every list, by
+  everyone, and says so in plain words. There is no per-person count.
+- **Fewer boxes, after a pass for anything the game never reads.** A
+  character is name, what they do, who they are (no costume: dealt at the
+  door). A household card is one pick (who, of the five) and one box; the
+  name and title fill themselves in. Act banners are two lines, banner and
+  objective; the hosts' "beats" line went, nothing on the night read it. The
+  blackout cards are five: three cards and two briefings; the shared "power
+  is back" message is already one of the phone's own lines. The phone's own
+  lines list exactly the fifteen screens the phone has. Sir Irwin needs one
+  standing line, not three; he is always in, so his tab offers only In.
+  Granolia's trail-offs are retired, kept, not shown: she misremembers one
+  detail instead. A second, independent check then found more: the fourteen
+  names and jobs are fixed in the game (it deals them and the cats judge the
+  job), so a character is now a pick of who plus the persona; the act names
+  are fixed too (The Plot Thickens, Paws for Thought), so each act is one
+  sentence of where to be and what to do, under its name; the blackout is
+  three cards of matched length, no private briefings, because what a role
+  does is said aloud in the Act 1 welcome; house history and the old filler
+  are retired and no longer sent to the phones; retired lists are kept but no
+  longer listed on Home. Still on the board for Jon to close by hand: the
+  stale task cards (cast guests, guest list, event cards) and the decisions
+  canon has already answered (Irwin's affection, the event deck, who fires
+  cues).
 - Decisions are Jon's alone; the panel says so and shows the Confirm button
   only to his account. The sign-in page for a new account says what to do in
   plain words.
@@ -161,10 +201,14 @@ Data model (Firestore):
 - `meta/reviews` — `{ [area]: {state: 'clear'|'again'|'', note, by: {name}, at} }`,
   Jenna's two words per list. Written with merge, logged to history as area
   `reviews`.
-- Lines written per person for the ranks: a server count over
-  `workshop_history` where `by.uid == uid` and `before == null`
-  (`countLinesBy` in `store.firestore.js`). Equality filters only, so no
-  composite index is needed.
+- The rank is `rankFor(house.lines)` over the live counts Home already
+  loads; `countLinesBy` in `store.firestore.js` is kept but unused.
+- `app/src/lib/paste.js` (pure, tested) reads pasted text per list:
+  `parsePaste(area, raw, { fields, codec })` and `parseScenarios(raw)`.
+  Header lines ("Name · Job", "LABEL: …") open an entry; plain lines attach
+  to the one above; blank lines separate; bullets are dropped. Added lines go
+  through `applyChange` with one history row each. `PastePanel.jsx` is the
+  UI; `GamePreview.jsx` holds the per-list sketches.
 - One saved line, many boxes: `app/src/lib/codecs.js` (pure, tested with
   `npm --prefix app test`) holds the split/join for every multi-box list. The
   invariant: for a well-formed line, `join(split(x)) === x`; a line that does

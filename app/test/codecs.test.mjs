@@ -45,20 +45,18 @@ test('bag codec', () => {
   assert.equal(bagCodec.join({ item: 'Thing', sense: '', property: '' }), 'Thing')
 })
 
-test('npc codec', () => {
+test('npc codec: one of the five, plus about', () => {
   roundTrips(npcCodec, [
-    'MISS BOO LARUE — family friend and socialite. Arrived for a party some years back and has seen no reason to declare it over. Found wherever the light is best.',
-    'ZIMOTHY CLAWFORD, ESQ. — the old family solicitor. Retained since before anyone can name the year. Receives callers in the library.',
+    'MISS BOO LARUE — family friend and socialite. Arrived for a party some years back. Found wherever the light is best.',
+    'ZIMOTHY CLAWFORD, ESQ. — the old family solicitor. Retained since before anyone can name the year.',
     'SIR IRWIN — the dog.',
-    'SIR IRWIN — ',
     'no dash at all',
   ])
-  assert.deepEqual(npcCodec.split('SIR IRWIN — the dog. Adores you already.'), { name: 'SIR IRWIN', title: 'the dog', about: 'Adores you already.' })
-  assert.equal(npcCodec.join({ name: 'SIR IRWIN', title: 'the dog', about: '' }), 'SIR IRWIN — the dog.')
-  assert.equal(npcCodec.join({ name: '', title: '', about: '' }), '')
-  // a long first sentence with no title picked is the About box, not a title
-  assert.deepEqual(npcCodec.split('MISS BOO LARUE — Arrived for a party some years back and has seen no reason to declare it over. Found in the light.'),
-    { name: 'MISS BOO LARUE', title: '', about: 'Arrived for a party some years back and has seen no reason to declare it over. Found in the light.' })
+  assert.deepEqual(npcCodec.split('SIR IRWIN — the dog. Adores you already.'), { who: 'irwin', about: 'Adores you already.' })
+  assert.deepEqual(npcCodec.split('Sir Irwin — Adores you already.'), { who: 'irwin', about: 'Adores you already.' })
+  assert.equal(npcCodec.join({ who: 'irwin', about: '' }), 'SIR IRWIN — the dog.')
+  assert.equal(npcCodec.join({ who: '', about: 'x' }), 'x')
+  assert.deepEqual(npcCodec.split('LORD NOBODY — a stranger. Not one of the five.'), { who: '', about: 'LORD NOBODY — a stranger. Not one of the five.' })
 })
 
 test('echo codec keeps the gap and its punctuation', () => {
@@ -119,7 +117,7 @@ test('isolation: changing one box leaves the others exactly as they were', () =>
     const base = codec.split(line)
     for (const f of Object.keys(base)) {
       // a label box only ever holds capitals and spaces; every other box takes anything
-      const probes = f === 'label' || f === 'profession' || (f === 'title' && codec === npcCodec) ? ['A B', 'HOLD', 'X'] : ['a b', 'end.', 'x, y', 'Over']
+      const probes = f === 'label' || f === 'profession' ? ['A B', 'HOLD', 'X'] : f === 'who' ? ['boo', 'salem'] : ['a b', 'end.', 'x, y', 'Over']
       for (const v of probes) {
         const next = codec.split(codec.join({ ...base, [f]: v }))
         for (const g of Object.keys(base)) if (g !== f) assert.equal(next[g], base[g], `${f}=${JSON.stringify(v)} moved ${g} in ${line}`)

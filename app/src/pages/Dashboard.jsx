@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeHistory, countLinesBy, whoAmI } from '../lib/store'
-import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS } from '../lib/content'
+import { subscribeArea, subscribeLatestValidation, subscribeHistory, whoAmI } from '../lib/store'
+import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab } from '../lib/content'
 import { isComplete } from '../lib/scenarios'
 import { rankFor, irwinLine, dayKey, RANKS } from '../lib/household'
 import { useReviews } from '../components/ReviewRow'
@@ -45,17 +45,13 @@ function countOf(area, spec, live) {
   return live.length
 }
 
-function goalOf(spec) {
-  return spec.tabs ? spec.goalPerTab * TAB_KINDS[spec.tabs].list.length : (spec.goal ?? 0)
-}
-
 // Where a list opens: its thinnest tab, when it has tabs.
 function linkFor(area, spec, live) {
   if (spec.checklist) return `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}`
   if (area === 'templates') return '/stationery'
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
-    const thin = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length })).sort((a, b) => a.n - b.n)[0]
+    const thin = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
     return `/edit/${area}?tab=${thin.t}`
   }
   return `/edit/${area}`
@@ -76,7 +72,6 @@ export default function Dashboard() {
   const [validation, setValidation] = useState(null)
   const [history, setHistory] = useState([])
   const [me, setMe] = useState(null)
-  const [myLines, setMyLines] = useState(null)
   const reviews = useReviews()
 
   useEffect(() => {
@@ -84,15 +79,7 @@ export default function Dashboard() {
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
     unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeHistory(setHistory, () => {}))
-    whoAmI().then(who => {
-      setMe(who)
-      // the server count needs signal; the last known count stands in meanwhile
-      try { const last = localStorage.getItem(`workshop.lines.${who.uid}`); if (last !== null) setMyLines(Number(last)) } catch {}
-      countLinesBy(who.uid, Object.keys(AREAS)).then(n => {
-        setMyLines(n)
-        try { localStorage.setItem(`workshop.lines.${who.uid}`, String(n)) } catch {}
-      }).catch(() => {})
-    })
+    whoAmI().then(setMe)
     return () => unsubs.forEach(u => u())
   }, [])
 
@@ -118,21 +105,22 @@ export default function Dashboard() {
   }, [history, me])
   const everWritten = !!me && history.some(h => h.by?.uid === me.uid && SAFE_AREAS.has(h.area))
 
-  // Sir Irwin's moment, checked once per visit against the phone's own memory.
-  const rank = myLines === null && !allFull ? null : rankFor(myLines ?? 0, allFull)
+  // The household's rank: every line written in every list, by anyone.
+  // Sir Irwin's moments are checked once per visit against the phone's own memory.
+  const rank = house.loaded ? rankFor(house.lines, allFull) : null
   const [moments, setMoments] = useState({ newRank: false, listJustFull: false })
   const rankName = rank?.name ?? ''
   useEffect(() => {
-    if (!me || !rankName) return
+    if (!rankName) return
     let newRank = false
     try {
-      const k = `workshop.rank.${me.uid}`
+      const k = 'workshop.rank.house'
       const peak = Number(localStorage.getItem(k) ?? -1)
       const idx = RANKS.findIndex(r => r.name === rankName)
       if (idx > peak) { newRank = peak >= 0; localStorage.setItem(k, String(idx)) }
     } catch {}
     setMoments(m => ({ ...m, newRank }))
-  }, [me, rankName])
+  }, [rankName])
   const fullKey = house.loaded
     ? counted.filter(([area, spec]) => countOf(area, spec, (data[area] ?? []).filter(i => !i.deleted)) >= goalOf(spec)).map(([a]) => a).join(',')
     : null
@@ -165,8 +153,9 @@ export default function Dashboard() {
       <section className="panel desk">
         <Irwin line={line} />
         <div className="desk-count">
-          <span className="rank">{rank ? `${rank.name}${myLines !== null ? `, ${myLines} line${myLines === 1 ? '' : 's'}` : ''}` : 'Counting your lines…'}</span>
-          <span className="hint">{rank ? (rank.next ? `${rank.next.name} at ${rank.next.at}. ` : allFull ? 'The whole manor is written. ' : 'The top of the house. ') : 'Needs signal once. '}The house: {house.lines} of {house.goal}.</span>
+          <span className="rank">{rank ? `The household stands at ${rank.name}` : 'Counting the lines…'}</span>
+          <span className="hint">{house.lines} of {house.goal} lines written, across every list, by everyone. {rank?.next ? `${rank.next.name} at ${rank.next.at}.` : allFull ? 'The whole manor is written.' : rank ? 'The top of the house.' : ''}</span>
+          <span className="hint ranks">A game for the writing: every line counts. Ranks, lowest first: {RANKS.map(r => r.name).join(', ')}, then Sir Irwin’s Favourite when every list is full.</span>
           <span className="bar big"><span style={{ width: `${house.goal ? Math.min(100, Math.round((house.lines / house.goal) * 100)) : 0}%` }} /></span>
         </div>
       </section>
@@ -234,8 +223,9 @@ export default function Dashboard() {
       <details className="panel more">
         <summary>Everything else, rarely needed</summary>
         <div className="list-grid">
-          {rows(spec => spec.hidden).map(({ key, ...r }) => <Row key={key} {...r} />)}
+          {rows(spec => spec.hidden && !spec.retired).map(({ key, ...r }) => <Row key={key} {...r} />)}
         </div>
+        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history) are kept with everything in them, but not shown.</p>
         <TaskBoard />
         <DecisionsPanel />
       </details>

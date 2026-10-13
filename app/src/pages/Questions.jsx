@@ -10,6 +10,7 @@ import {
 import ListCard from '../components/ListCard'
 import FocusBar from '../components/FocusBar'
 import ReviewRow from '../components/ReviewRow'
+import PastePanel from '../components/PastePanel'
 
 // The push and pull questions. One scenario is three questions in a row,
 // two choices each (a third or fourth when a question needs one), points on
@@ -87,6 +88,20 @@ export default function Questions({ area }) {
     focusBox('0:q')
   }
 
+  // Many sets at once, from the paste panel.
+  const addMany = (parsed) => {
+    let order = Math.max(-1, ...(items ?? []).map(i => i.order))
+    const fresh = parsed.map(p => ({
+      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      text: titleOf(p.beats),
+      beats: normalizeBeats(p.beats),
+      deleted: false,
+      order: ++order,
+    }))
+    if (!fresh.length) return
+    applyChange([...items, ...fresh], fresh.map(item => ({ itemId: item.id, before: null, after: item })), true)
+  }
+
   const editItem = (id, beats) => {
     patch(id, { beats: normalizeBeats(beats), text: titleOf(beats) })
   }
@@ -155,6 +170,8 @@ export default function Questions({ area }) {
 
       <ListCard area={area} tab={null} onUseExample={useExample} />
       <ReviewRow area={area} />
+      <PastePanel area={area} onAdd={addMany}
+        shape="A question on one line, then each choice with its points under it (Yes +5, No 0). A blank line starts the next set. Or one line per question: Which way? | Over +5 | Under -1" />
 
       {visible.length === 0 && <p className="empty">{card?.emptyState}</p>}
 
@@ -233,7 +250,7 @@ function ScenarioForm({ number, beats, onChange, onKeyDown, onRemove, refs, dash
             <div className={keys.length > 2 ? 'choices many' : 'choices'}>
               {keys.map((k, ci) => (
                 <Choice key={k} tag={CHOICE_LABELS[k]} text={b[k] ?? ''} value={b[`${k}v`] ?? 0}
-                  placeholder={['Yes', 'No', 'Depends', 'Never'][ci]}
+                  placeholder={'e.g. ' + ['Yes', 'No', 'Depends', 'Never'][ci]}
                   refText={refAt(`${i}:${k}`)} refValue={refAt(`${i}:${k}v`)}
                   onKeyText={e => onKeyDown?.(e, `${i}:${k}`)} onKeyValue={e => onKeyDown?.(e, `${i}:${k}v`)}
                   onText={v => set(i, k, v)} onValue={v => set(i, `${k}v`, v)}

@@ -215,10 +215,25 @@ export async function applyAdditions(additions) {
       const areaEntries = Object.entries(add.areaDocs ?? {})
       const areaSnaps = await Promise.all(
         areaEntries.map(([area]) => tx.get(doc(db, 'safe_content', area))))
+      const appendEntries = Object.entries(add.appendItems ?? {})
+      const appendSnaps = await Promise.all(
+        appendEntries.map(([area]) => tx.get(doc(db, 'safe_content', area))))
       const decSnaps = await Promise.all(
         (add.decisions ?? []).map(d => tx.get(doc(db, 'decisions', d.key))))
       areaEntries.forEach(([area, items], i) => {
         if (!areaSnaps[i].exists()) tx.set(doc(db, 'safe_content', area), items)
+      })
+      // Append lines to a list, skipping any whose opening words are already
+      // there (so a line Jon has since edited is never doubled). Adds only.
+      appendEntries.forEach(([area, lines], i) => {
+        const existing = appendSnaps[i].exists() ? asItems(appendSnaps[i].data().items) : []
+        const have = existing.filter(it => !it.deleted).map(it => String(it.text ?? '').toLowerCase())
+        let order = Math.max(-1, ...existing.map(it => it.order ?? 0))
+        const fresh = lines.filter(line => {
+          const head = line.split('—')[0].trim().toLowerCase()
+          return head && !have.some(t => t.startsWith(head))
+        }).map(text => ({ id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, text, deleted: false, order: ++order }))
+        if (fresh.length) tx.set(doc(db, 'safe_content', area), { items: [...existing, ...fresh] })
       })
       for (const t of add.tasks ?? []) {
         tx.set(doc(collection(db, 'tasks')), { ...t, ts: Date.now() })

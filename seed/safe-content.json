@@ -728,39 +728,38 @@
       ]
     },
     "bio": {
-      "what": "One player character: the card a guest receives with the invitation so they can dress and arrive as somebody, and the card that stays on their phone as who they are through all seven acts. The profession is load-bearing — it quietly decides how each cat treats them, per docs/cat-info.md. And because the Murderer, the Ghost, and the victim are cast onto these characters at game time, every bio must work before anyone knows which one it will be.",
+      "what": "One player character: the card a guest is dealt at the door in Act 1 and keeps on their phone as who they are through all seven acts. The profession is load-bearing — it quietly decides how each cat treats them, per docs/cat-info.md. And because the Murderer, the Ghost, and the victim are cast onto these characters at game time, every bio must work before anyone knows which one it will be.",
       "syntax": [
-        "Format, exactly: NAME IN CAPS — the Profession. <persona, 2–4 sentences.> Costume: <one line>. The word 'Costume:' appears literally, and the profession takes 'the'.",
-        "Names follow the Zimothy/Granolia mold: a plausible period name with the job or a joke audible inside it (Bunsworth bakes; Mangelwurzel is a real root crop). Honorifics welcome. Say it aloud — if the pun needs a footnote, retire it.",
-        "One clear profession per character, chosen so at least one cat would have an opinion about it — per docs/cat-info.md: Salem rates labor, Zimothy rates status, Boo rates glamour and performers, Granolia rates learners. 'Gentleman of leisure' gates nothing; give them a job.",
+        "The fourteen names and jobs are fixed (Preston White the Reporter, Dorothy Rye the Baker, and so on): pick who, then write the persona. The game deals the characters and the cats judge the job, so neither can change here.",
+        "Format, exactly: NAME IN CAPS — the Profession. <persona, 2–4 sentences.> The profession takes 'the'.",
         "Persona is present tense and playable from one read: one dominant trait plus one repeatable habit anyone can perform all night. No accents required, no dates, no childhood.",
         "Motive-agnostic, strictly: no secrets, grudges, debts, alibis, rivals, or virtue claims ('wouldn't hurt a fly'). Every character must be equally castable as Murderer, Ghost, or victim when the case is generated.",
         "The character existed before tonight: no mention of the murder, the cats, phones, or anything that happens at the party.",
-        "Costume line: buildable from an ordinary closet plus one signature item, and name the item ('a notebook', 'goggles'). One line only."
+        "No costume line: the character is dealt at random at the door in Act 1, so nobody dresses up in advance."
       ],
       "test": "Could an 11-year-old and a 70-year-old each play this person after one read — and could either one turn out to be the Murderer without changing a word?",
       "good": [
         {
-          "text": "DR. PIPETTA VONBEAKER — the Scientist. Trusts nothing she has not measured twice, including the soup. Announces small findings as if they were large ones. Costume: any long coat worn as a lab coat, spectacles, one instrument carried importantly.",
+          "text": "DR. PIPETTA VONBEAKER — the Scientist. Trusts nothing she has not measured twice, including the soup. Announces small findings as if they were large ones.",
           "why": "Exact format; a learner profession Granolia can adore (per the register); the pun is audible aloud; one habit both an 11-year-old and a 70-year-old can keep up all night."
         },
         {
-          "text": "MRS. IMOGEN STERLINGSHIRE — the Banker. Finishes every sum before you finish asking, and counts on her fingers only to be polite. Suspects the whole county of rounding up. Costume: severe dark dress or suit, small spectacles, a notebook clutched like a firstborn.",
+          "text": "MRS. IMOGEN STERLINGSHIRE — the Banker. Finishes every sum before you finish asking, and counts on her fingers only to be polite. Suspects the whole county of rounding up.",
           "why": "A status profession that opens Zimothy's professional access (per the register), and the persona is fully motive-agnostic — nothing makes her a better or worse suspect than anyone else."
         },
         {
-          "text": "OLD TOBIAS MANGELWURZEL — the Farmer. Distrusts anything he cannot grow, mend, or feed. Compliments people the way he compliments weather: rarely, and mostly regarding usefulness. Costume: shirt-sleeves, braces, battered hat, straw somewhere about the person.",
+          "text": "OLD TOBIAS MANGELWURZEL — the Farmer. Distrusts anything he cannot grow, mend, or feed. Compliments people the way he compliments weather: rarely, and mostly regarding usefulness.",
           "why": "Manual labor is load-bearing (Salem rates honest work), and Mangelwurzel is a genuine Victorian root crop — a real-sounding name with the joke baked in, the Zimothy/Granolia mold exactly."
         }
       ],
       "bad": [
         {
-          "text": "LORD REGINALD ASHWORTH — the Gentleman. Wealthy, idle, and hiding a terrible secret; the staff say he was heard quarrelling the evening the lamps went out. Costume: finery.",
+          "text": "LORD REGINALD ASHWORTH — the Gentleman. Wealthy, idle, and hiding a terrible secret; the staff say he was heard quarrelling the evening the lamps went out.",
           "why": "Breaks the motive-agnostic rule: a secret and a quarrel make him suspect-shaped, and every character must be equally castable as Murderer, Ghost, or victim. ('The Gentleman' also gates no cat — pick a job.)"
         },
         {
           "text": "MISS ABIGAIL QUILLFEATHER — the Novelist. Born in Shropshire in 1841, the third of nine children, she studied composition under a strict aunt before taking rooms in town, where her first serial...",
-          "why": "Breaks the persona rule: 2–4 playable present-tense sentences plus a Costume line. A backstory dump fails the one-read test, and the Costume: line is missing entirely."
+          "why": "Breaks the persona rule: 2–4 playable present-tense sentences plus a Costume line."
         }
       ]
     },
@@ -841,14 +840,14 @@
       ]
     },
     "ui_copy": {
-      "what": "Every fixed line the software shows, one line per item — the words on player phones and room kiosks that no character is speaking. Guests meet them from the QR scan at the front entrance (JOIN) through the lobby, act timers, journal and help labels, kiosk idle screens, the Act 7 ballot and its confirmation, the results, and — most importantly — the rescue states when a phone locks or drops off the wifi mid-party. These lines are the same every night and are often read by someone stressed, alone, and mid-panic, so each one is a tiny act of hospitality.",
+      "what": "Every fixed line the software shows, one line per item — the words on player phones and room kiosks that no character is speaking. Guests meet them from the QR scan at the front entrance (JOIN) through the lobby, act timers, journal and help labels, kiosk idle screens, and — most importantly — the rescue states when a phone locks or drops off the wifi mid-party. These lines are the same every night and are often read by someone stressed, alone, and mid-panic, so each one is a tiny act of hospitality.",
       "syntax": [
         "One line per item, formatted exactly as LABEL: text — surface label in CAPS, a colon, one space, then the line.",
-        "Use this surface vocabulary for labels: JOIN, LOBBY, MENU, BALLOT, BALLOT CONFIRM, RESULTS, REJOIN, OFFLINE, WAITING, TIMER, JOURNAL, HELP, KIOSK IDLE, SPILL. Need a new surface? Coin it in CAPS and add a task-board card so the build maps it.",
-        "20 words max after the label. TIMER, BALLOT, and BALLOT CONFIRM lines get 12 max — they show in big type.",
+        "The screens are the fifteen in the dropdown: DOORS, JOIN, JOIN BUTTON, JOIN AGAIN, LOBBY, BAG, OFFLINE, PAUSED, SUPERSEDED, POWER, HIDE, HOLD, RETICULE, START NIGHT, HOST. Each has a plain default already; yours replaces it. A new screen is added to the dropdown first.",
+        "20 words max after the label. HIDE, HOLD and JOIN BUTTON are buttons: 4 words at most.",
         "Every line stands completely alone: no 'as before', 'the previous screen', or 'the same link'. Name physical things instead — 'your invitation', 'the card at the entrance'.",
-        "Rescue states (REJOIN, OFFLINE, WAITING) run in this order: what is true → what to do → reassurance. Never blame the guest; 'nothing is lost' is the house style.",
-        "Confirmations (BALLOT CONFIRM, SPILL) state the consequence first and end with exactly ONE yes/no question.",
+        "Rescue states (JOIN AGAIN, OFFLINE, SUPERSEDED) run in this order: what is true → what to do → reassurance. Never blame the guest; 'nothing is lost' is the house style.",
+        "POWER is the one line every phone shows at the same moment in the blackout: 20 words or fewer, and it must read the same for every role.",
         "No tech words — session, sync, error, login, network, browser, reload are all banned. When a sentence needs a subject, it is 'the Manor' or 'your phone'.",
         "Same lines every game: no character names, no word from any motive rhyme, nothing tonight-specific. At most one Victorian flourish per line, and only after the plain instruction is complete."
       ],
@@ -859,19 +858,11 @@
           "why": "What happened, then what to do, then reassurance — in exactly that order, with no tech words, and it survives being the only thing on the screen."
         },
         {
-          "text": "BALLOT CONFIRM: You accuse once tonight, and once only. Seal your answer?",
-          "why": "Consequence stated before the ask, ends on exactly one yes/no question, and at ten words it fits big type on one screen."
-        },
-        {
           "text": "JOIN: Aim your camera at the square card by the front entrance, then tap the link that pops up.",
           "why": "A complete physical instruction that names the real object — a 70-year-old who has never scanned a QR code can follow it verb by verb."
         }
       ],
       "bad": [
-        {
-          "text": "REJOIN: Tap the link from before to pick up where you left off.",
-          "why": "Fails the stands-alone rule — 'the link from before' points at a screen the locked-out guest can no longer see. Name the physical thing: 'the card at the entrance'."
-        },
         {
           "text": "OFFLINE: Connection error — network handshake failed. Re-authenticate or contact your administrator.",
           "why": "Breaks the no-tech-words rule and gives the guest no doable next step. Every rescue line must say what is true in household words, then what to do."
@@ -879,23 +870,18 @@
       ]
     },
     "role_card": {
-      "what": "Everything the phones show during the Act 1 blackout, when every screen buzzes at once and roles land: one shared BUZZ message, then each player's secret card — MURDERER, GHOST, or INNOCENT — read in a dark room full of glowing faces, then a fuller private briefing for each of the two hidden roles. This is the only moment of the night a screen says who you are; every later surface treats all players alike. Nobody learns the motive here — not even the Murderer — and the cards themselves must say so.",
+      "what": "The three cards the phones show in the Act 1 blackout, when every screen lights at once and roles land: MURDERER, GHOST, or DETECTIVE, read in a dark room full of glowing faces. The shared 'power is back' message is one of the phone's own lines (POWER). This is the only moment of the night a screen says who you are; every later surface treats all players alike. Nobody learns the motive here, not even the Murderer, and the cards must say so.",
       "syntax": [
-        "Six items, one per label. Start each with its CAPS label and a colon: \"BUZZ:\", \"MURDERER:\", \"GHOST:\", \"INNOCENT:\", \"MURDERER BRIEFING:\", \"GHOST BRIEFING:\".",
-        "BUZZ is one identical message on every phone — 20 words or fewer, zero role information, ending with the single action to take (look at your screen; keep it to yourself).",
-        "The three role cards run 20–30 words each, and all three must land within 5 words and the same line count of one another. Matched length is a hard rule: in a blackout, a lit screen's shape and reading time are visible tells.",
-        "Glanceable in the dark: the role's key fact in the first short sentence, plain words, no long clauses — a nervous 11-year-old and a 70-year-old each get it in one two-second read.",
-        "MURDERER and GHOST — cards AND briefings — must say in plain words that the motive is unknown even to them; they hunt the WHY like everyone else. The INNOCENT card promises nothing about anybody else.",
-        "GHOST copy is impersonal, per the blind-content protocol: status only. No character names, no manner, place, or moment of death, no memories of it — any personal detail could collide with the sealed case.",
-        "Briefings run 60–100 words and appear only on the owner's screen after the blackout: what the role does across the night — event picks in Acts 2, 4, and 6, described only as changing how much information moves and when — plus the shared win condition (name Murderer + Motive + Victim).",
-        "Nothing on any of the six may name a character, profession, room, or time, or use a word from any motive rhyme. Every line must be true no matter which case the night generated."
+        "Three items, one per card: MURDERER, GHOST, DETECTIVE. Pick the card in the first box.",
+        "All three run 20 to 30 words and must land within 5 words and the same line count of one another. Matched length is a hard rule: in a blackout, a lit screen's shape and reading time are visible tells.",
+        "Glanceable in the dark: the role's key fact in the first short sentence, plain words, no long clauses. A nervous eleven-year-old and a seventy-year-old each get it in one two-second read.",
+        "MURDERER and GHOST must say in plain words that the motive is unknown even to them; they hunt the WHY like everyone else. The DETECTIVE card promises nothing about anybody else.",
+        "GHOST copy is impersonal: status only. No character names, no manner, place, or moment of death, no memories of it.",
+        "What each role does all night is said aloud in the Act 1 welcome and lives in the rules, not on the card.",
+        "Nothing on any card may name a character, profession, room, or time, or use a word from any motive rhyme. Every line must be true no matter which case the night generated."
       ],
       "test": "Dark-room test: would the three cards' lit screens look identical from six feet away, and is every line true regardless of which case was generated?",
       "good": [
-        {
-          "text": "BUZZ: The lamps have failed. The Manor has not. Something has happened. Look to your screen — and keep it to yourself.",
-          "why": "One identical line for every phone, exactly 20 words, zero role information — it tells the whole room the same single next action."
-        },
         {
           "text": "GHOST: The Manor has lost you tonight. No one knows — and no one knows why, not even you. Walk, talk, and play on.",
           "why": "Status only — no name, no how, no where — it states outright that the WHY is unknown, and at 22 words it sits inside the 20–30 matched band."
@@ -911,7 +897,7 @@
           "why": "Breaks the impersonal rule — a place, a moment, and memories of the death are case content the blackout cannot know, and any such detail can collide with the sealed case."
         },
         {
-          "text": "INNOCENT: You're in the clear. Relax.",
+          "text": "DETECTIVE: You're in the clear. Relax.",
           "why": "Breaks matched length — six words beside two 20-something-word siblings means 'short card = innocent' is readable across a dark parlour by screen glow alone."
         }
       ]
@@ -1038,12 +1024,11 @@
       }
     },
     "ops_doc": {
-      "what": "Each item is one complete host document — the pack Jon prints or keeps on his phone to run the party: the speech that opens Act 1, the cue sheet under the Stream Deck the whole night, the fix-it sheet for when tech misbehaves, plus everything mailed to guests beforehand. None of it ever appears on a player screen, but every word is read by Jon — who is also a player — so each doc must be spoiler-safe by construction, not by discipline.",
+      "what": "Each item is one complete host document — the pack Jon prints or keeps on his phone to run the party: the speech that opens Act 1, the fix-it sheet for when tech misbehaves, plus everything mailed to guests beforehand. None of it ever appears on a player screen, but every word is read by Jon — who is also a player — so each doc must be spoiler-safe by construction, not by discipline.",
       "syntax": [
         "One whole document per item, opening with a CAPS title and a colon: \"WELCOME SPEECH: <full body>\". Titles are four words or fewer.",
-        "Use these twelve titles, one item each: WELCOME SPEECH (spoken opener), SUSAN BRIEFING (the Detective's crib), CUE SHEET (Stream Deck keys in firing order), ROOM MAP (rooms plus kiosk placement), CONTINGENCY SHEET (night-of fixes), TECH CHECKLIST (pre-party), CANARY ASK (the note to a trusted non-player who reviews one random coded set, plus the rubric they score it on), REHEARSAL PLAN, INVITATION, GUEST NOTE (pre-party what-to-expect), PUZZLE SPECS (the input shape each of the four puzzles accepts, so cat-delivered inputs always fit), ASSIGNMENT NOTE (per-guest template).",
+        "Eight documents, one item each: WELCOME SPEECH (spoken opener), INVITATION (mailed), GUEST NOTE (what to bring, when, the square code), ROOM MAP (rooms and screens), CONTINGENCY SHEET (night-of fixes), TECH CHECKLIST, REHEARSAL PLAN, CANARY ASK (the note to Jenna).",
         "Body shape follows use: anything grabbed mid-party (CUE SHEET, CONTINGENCY SHEET, ROOM MAP) is numbered short lines, one action per line, action first; anything performed or mailed (WELCOME SPEECH, INVITATION) is written out word for word.",
-        "Cue names are CAPS-in-brackets — [BLACKOUT], [GATHER CHIME] — and the CUE SHEET is the master vocabulary: every bracketed cue used in an act_scripts BEATS line must appear on it, in firing order, with its Stream Deck key.",
         "TECH CHECKLIST must end on the seal rule in this exact order: fire every cue in DUMMY MODE and verify kiosks against idle/chrome screens only → only after every check passes, generate the real case → touch nothing after generation.",
         "REHEARSAL PLAN runs only in dummy mode or before the case is generated; no step may put sealed-derived text where Jon can see it, and the doc itself must state that if real content ever shows during rehearsal, regeneration is mandatory.",
         "Per-guest and per-game blanks are CAPS-in-brackets slots — [GUEST NAME], [CHARACTER], [ROOM NAME] — filled at print time. (Never reuse the six game blanks ([ROOM], [TIME] and friends) as slot names; [ROOM] belongs to the injection grammar.) No doc may mention a specific motive, quote rhyme words, or contain a step that changes with the case.",

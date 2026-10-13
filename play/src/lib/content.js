@@ -91,14 +91,20 @@ export function actScript(content, act) {
   return out
 }
 
-// A character's bio: the workshop line that starts with their name, else the seed line.
+// A character's bio: the workshop line that starts with their name, else the
+// seed line. A workshop line is "NAME — the Profession. Persona. Costume: …";
+// the phone shows the persona only (the profession has its own line, and the
+// costume was for dressing up before the night).
 export function bioFor(content, character) {
   if (!character) return ''
   const name = character.name.toLowerCase()
   const hit = items(content, 'bios').find(it => it.text.toLowerCase().startsWith(name))
   if (!hit) return character.bio ?? ''
-  const rest = hit.text.split('—').slice(1).join('—').trim()
-  return rest || hit.text
+  let rest = hit.text.split('—').slice(1).join('—').trim()
+  const costume = rest.search(/Costume:/i)
+  if (costume >= 0) rest = rest.slice(0, costume).trim()
+  rest = rest.replace(/^the\s+[^.]+\.\s*/i, '')
+  return rest || character.bio || hit.text
 }
 
 // NPC intro cards from the workshop, else the five fixed blurbs.

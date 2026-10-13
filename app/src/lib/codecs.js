@@ -68,26 +68,38 @@ export const bagCodec = {
   },
 }
 
-// "NAME IN CAPS — the title. Two or three sentences about them." -> {name, title, about}
+// "MISS BOO LARUE — family friend and socialite. Two or three sentences." -> {who, about}
+// The five of the household have fixed names and titles, so the card is one
+// pick (who) and one box (about); the name and title are filled in from the
+// pick. A line whose name is not one of the five lands whole in About.
+export const HOUSEHOLD = [
+  { key: 'irwin', name: 'SIR IRWIN', title: 'the dog' },
+  { key: 'salem', name: 'SALEM CROOKSHANK', title: 'the long-time groundskeeper' },
+  { key: 'zimothy', name: 'ZIMOTHY CLAWFORD, ESQ.', title: 'the old family solicitor' },
+  { key: 'boo', name: 'MISS BOO LARUE', title: 'family friend and socialite' },
+  { key: 'granolia', name: 'GRANOLIA LICKSPITTLE', title: 'taken in by the family when no one else would' },
+]
+const whoByName = (name) => {
+  const n = (name ?? '').trim().toLowerCase().replace(/[.,]/g, '')
+  return HOUSEHOLD.find(h => h.name.toLowerCase().replace(/[.,]/g, '') === n || n.includes(h.key))?.key ?? ''
+}
 export const npcCodec = {
   split(text) {
     const t = text ?? ''
     const i = t.indexOf('—')
-    if (i < 0) return { name: '', title: '', about: t }
-    const name = t.slice(0, i).trim()
-    const rest = t.slice(i + 1).trim()
-    const m = /^([^.]*)\.\s*/.exec(rest)
-    // the title is a short phrase; a long first sentence is the About box
-    if (!m || m[1].trim().split(/\s+/).length > 8) return { name, title: '', about: rest }
-    return { name, title: m[1].trim(), about: rest.slice(m[0].length) }
+    if (i < 0) return { who: '', about: t }
+    const who = whoByName(t.slice(0, i))
+    if (!who) return { who: '', about: t }
+    let rest = t.slice(i + 1).trim()
+    const h = HOUSEHOLD.find(x => x.key === who)
+    if (rest.toLowerCase().startsWith(h.title.toLowerCase())) rest = rest.slice(h.title.length).replace(/^\.?\s*/, '')
+    return { who, about: rest }
   },
-  join({ name, title, about }) {
-    const n = (name ?? '').trim()
-    const ti = (title ?? '').trim()
+  join({ who, about }) {
+    const h = HOUSEHOLD.find(x => x.key === who)
     const ab = (about ?? '').trim()
-    const body = ti && ab ? `${ti}. ${ab}` : ti ? `${ti}.` : ab
-    if (!n) return body
-    return `${n} — ${body}`
+    if (!h) return ab
+    return ab ? `${h.name} — ${h.title}. ${ab}` : `${h.name} — ${h.title}.`
   },
 }
 

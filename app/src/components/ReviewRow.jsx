@@ -32,6 +32,15 @@ export default function ReviewRow({ area }) {
     saveReview(area, patch, r).then(() => { if ('note' in patch) setNote(null) }).catch(() => setErr(true))
   }
 
+  if (!canSet) {
+    if (!r.state && !r.note) return null
+    const label = REVIEW_STATES.find(s => s.key === r.state)?.label
+    return (
+      <p className="review-line" aria-label="Jenna’s read">
+        <b>Jenna’s read:</b> {label ?? ''}{label && r.note ? '. ' : ''}{r.note ?? ''}
+      </p>
+    )
+  }
   return (
     <div className="review" aria-label="Jenna’s read">
       <span className="review-label">{canSet ? 'Your read, Jenna:' : 'Jenna’s read:'}</span>

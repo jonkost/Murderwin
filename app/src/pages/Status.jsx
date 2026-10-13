@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { subscribeArea, subscribeLatestValidation } from '../lib/store'
-import { AREAS, TAB_KINDS } from '../lib/content'
+import { AREAS, TAB_KINDS, goalForTab } from '../lib/content'
 import { isComplete } from '../lib/scenarios'
 
 // Where we are. The honest state of the whole project in one place: what is
@@ -37,10 +37,10 @@ function suggestion(area, spec, items) {
   if (spec.checklist) return null
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
-    const short = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length })).filter(x => x.n < spec.goalPerTab).sort((a, b) => a.n - b.n)
+    const short = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length, need: goalForTab(spec, t) })).filter(x => x.n < x.need).sort((a, b) => (a.n - a.need) - (b.n - b.need))
     if (!short.length) return { done: true }
     const first = short[0]
-    return { done: false, text: `Thinnest: ${def.label(first.t)} has ${first.n} of ${spec.goalPerTab}. ${short.length} of ${def.list.length} still short.`, to: `/edit/${area}?tab=${first.t}&focus=3` }
+    return { done: false, text: `Thinnest: ${def.label(first.t)} has ${first.n} of ${first.need}. ${short.length} of ${def.list.length} still short.`, to: `/edit/${area}?tab=${first.t}&focus=3` }
   }
   const goal = spec.goal ?? 0
   const n = spec.editor === 'questions' ? live.filter(i => isComplete(i.beats)).length : live.length

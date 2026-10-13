@@ -349,3 +349,36 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .choices.many { grid-template-columns: 1fr 1fr; }
 .choice .field-row > span { display: flex; justify-content: space-between; align-items: center; }
 .linkish.drop { min-height: 0; padding: 0; font-size: 0.8rem; }
+.example-card { border-style: dashed; border-color: rgba(166, 162, 83, 0.55); }
+.example-tag { color: var(--good); }
+.example-row dd { font-style: italic; }
+
+/* ---------- paste a lot at once ---------- */
+.paste { margin: 0 0 1rem; border: 1px dashed var(--line); border-radius: var(--r-group); padding: 0.4rem 0.9rem; background: var(--card); }
+.paste summary { cursor: pointer; color: var(--good); padding: 0.4rem 0; min-height: 32px; font-size: 1rem; }
+.paste textarea { width: 100%; margin: 0.4rem 0; font-size: 1rem; background: var(--field); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-control); padding: 0.55rem 0.8rem; min-height: 6rem; resize: vertical; }
+.paste-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin: 0.2rem 0 0.6rem; }
+.paste-row .primary:disabled { opacity: 0.4; }
+.paste-preview { background: var(--field); border-radius: var(--r-control); padding: 0.5rem 0.8rem; margin-bottom: 0.6rem; }
+.paste-preview ol { margin: 0.3rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; font-size: 0.95rem; }
+.paste-preview i { color: var(--muted); font-style: normal; }
+
+/* ---------- how it looks in the game ---------- */
+.card-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem); gap: 1rem; align-items: start; margin-bottom: 1rem; }
+.card-row .listcard { margin-bottom: 0; }
+@media (max-width: 900px) { .card-row { grid-template-columns: 1fr; } }
+.gp-wrap { display: grid; gap: 0.4rem; }
+.gp { display: grid; gap: 0.3rem; }
+.gp-title { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.gp-screen { background: #06131a; border: 5px solid #1F2124; border-radius: 22px; padding: 1rem 0.9rem; min-height: 11rem; display: grid; align-content: start; gap: 0.5rem; font-size: 0.95rem; line-height: 1.4; }
+.gp.room .gp-screen { border-radius: 8px; border-width: 8px; min-height: 7rem; font-family: var(--display); }
+.gp-screen p { margin: 0; }
+.gp-name { font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.gp-sub { color: var(--muted); font-size: 0.85rem; }
+.gp-grey { color: var(--muted); font-style: italic; }
+.gp-pass { border-top: 1px solid var(--line); padding-top: 0.5rem; margin-top: 0.3rem; font-size: 0.9rem; }
+.gp-gap { background: var(--brand-claret); color: var(--ink); border-radius: 4px; padding: 0 0.3em; font-style: italic; }
+.gp .chip { font-size: 0.7rem; margin-left: 0.3rem; }
+.review-line { margin: 0 0 1rem; color: var(--muted); }
+.review-line b { color: var(--good); font-weight: 600; }
+.hint.ranks { font-size: 0.85rem; }

@@ -34,14 +34,14 @@ export default function ListCard({ area, tab, compact = false, onUseExample }) {
           <p className="where"><b>Where a guest meets it:</b> {card.where}</p>
           <p className="howto"><b>What to type:</b> {card.howTo}</p>
           {card.example?.length > 0 && (
-            <div className="example-card">
-              <span className="example-tag">For example</span>
+            <div className="example-card" aria-label="An example, not one of your lines">
+              <span className="example-tag">Example only. Not yours, not saved. It shows the shape.</span>
               <dl>
                 {card.example.map((e, i) => (
                   <div key={i} className="example-row"><dt>{e.field}</dt><dd>{shown(e, i)}</dd></div>
                 ))}
               </dl>
-              {onUseExample && <button className="linkish" onClick={() => onUseExample(card.example)}>Put this example in the boxes to start from</button>}
+              {onUseExample && <button className="linkish" onClick={() => onUseExample(card.example)}>Copy this example into the boxes, then change it</button>}
             </div>
           )}
           {compact && <button className="linkish" onClick={() => setOpen(false)}>Hide this</button>}

@@ -8,7 +8,7 @@
       "gender": "M",
       "trace": "ink",
       "traceLabel": "Ink",
-      "bio": "You write for the local paper. You are always taking notes, including now."
+      "bio": "You write the society column. Sir Irwin’s birthday is the biggest story of your career, which says a lot about your career."
     },
     {
       "id": "arms",
@@ -17,7 +17,7 @@
       "gender": "M",
       "trace": "boot-print",
       "traceLabel": "Boot print",
-      "bio": "Retired. You were not asked about this, and you are going to explain it anyway."
+      "bio": "On leave from the service, you now guard the Manor. You report to Sir Irwin. He outranks you."
     },
     {
       "id": "rye",
@@ -26,7 +26,7 @@
       "gender": "F",
       "trace": "flour",
       "traceLabel": "Flour",
-      "bio": "Up since four. You have opinions about everyone else's bread."
+      "bio": "Your bakery makes Sir Irwin’s dog biscuits. They now outsell your bread, mostly to people."
     },
     {
       "id": "ledger",
@@ -35,7 +35,7 @@
       "gender": "F",
       "trace": "coins",
       "traceLabel": "Coins",
-      "bio": "You mind the town's money. You know precisely what everyone here is worth, and you would never say."
+      "bio": "You keep the estate’s accounts. The dog has more in savings than you do."
     },
     {
       "id": "devine",
@@ -44,7 +44,7 @@
       "gender": "F",
       "trace": "petals",
       "traceLabel": "Petals",
-      "bio": "You arrange flowers for weddings and funerals alike. You charge more for funerals."
+      "bio": "Sir Irwin waters your flowers every morning. You have asked him to stop."
     },
     {
       "id": "barnes",
@@ -53,7 +53,7 @@
       "gender": "M",
       "trace": "seeds",
       "traceLabel": "Seeds",
-      "bio": "You farm the land just past the gate. You have brought vegetables nobody asked for."
+      "bio": "You farm next door. Sir Irwin herds your livestock whether you ask him to or not."
     },
     {
       "id": "fume",
@@ -62,7 +62,7 @@
       "gender": "M",
       "trace": "shattered-vial",
       "traceLabel": "Shattered vial",
-      "bio": "You conduct experiments. Several of them are still running at home, unattended."
+      "bio": "The Sirwin Estate funds your research. Your latest formula hasn’t done much for science, but Sir Irwin’s coat has never looked better."
     },
     {
       "id": "mourningstone",
@@ -71,7 +71,7 @@
       "gender": "F",
       "trace": "candle-wax",
       "traceLabel": "Candle wax",
-      "bio": "You commune with the departed for a modest fee. Results vary. The fee does not."
+      "bio": "You’ve been hired to read Sir Irwin’s fortune. The spirits keep answering: “Who’s a good boy? You’re a good boy. Yes you are.”"
     },
     {
       "id": "steeps",
@@ -80,7 +80,7 @@
       "gender": "M",
       "trace": "coffee",
       "traceLabel": "Coffee",
-      "bio": "You serve coffee to the entire town. You know what everyone drinks, and what they are like before they've had it."
+      "bio": "You serve Sir Irwin a pup-puccino every morning. He tips in licks."
     },
     {
       "id": "vayne",
@@ -89,7 +89,7 @@
       "gender": "F",
       "trace": "picture",
       "traceLabel": "Picture",
-      "bio": "You document your life for an audience. You have already posted twice this evening."
+      "bio": "You run Sir Irwin’s fan page. It has more followers than yours. You’ve stopped checking."
     },
     {
       "id": "shushwell",
@@ -98,7 +98,7 @@
       "gender": "F",
       "trace": "glasses",
       "traceLabel": "Glasses",
-      "bio": "You run the library. You know what everyone borrows, and you have drawn conclusions."
+      "bio": "Sir Irwin visits you regularly at the library. Even though he’s only turning one, he reads at a seven-year-old level. In dog years."
     },
     {
       "id": "leech",
@@ -107,7 +107,7 @@
       "gender": "M",
       "trace": "iodine",
       "traceLabel": "Iodine",
-      "bio": "You are the town physician. Your methods are traditional and you will not hear otherwise."
+      "bio": "Since the vet retired, you’re Sir Irwin’s doctor too. He’s your healthiest patient, and the only one who’s ever happy to see you."
     },
     {
       "id": "prof-jonathan",
@@ -117,7 +117,7 @@
       "trace": "elbow-patch",
       "traceLabel": "Elbow patch",
       "host": "jonathan",
-      "bio": "You lecture on subjects nobody asked about. It is your dog's birthday and you have prepared remarks."
+      "bio": "The latest heir to Sirwin Estate, and a professor of something nobody can remember. You inherited the manor. Sir Irwin inherited your favorite chair."
     },
     {
       "id": "prof-susan",
@@ -127,7 +127,7 @@
       "trace": "white-sand",
       "traceLabel": "White sand",
       "host": "susan",
-      "bio": "You lecture at the same institution as your husband, in a field you consider considerably more rigorous."
+      "bio": "You married into Sirwin Estate. You and Sir Irwin have spent every day since digging up dirt, in the garden and on everyone in town."
     }
   ],
   "_affection": "Starting-affection modifiers per profession, -2 to +2 (bio worksheet matrix, 9 Sep 2026). Sir Irwin is absent on purpose: always 5. Professor is flat zero pending Jon's call (flat zero vs mildly negative). Doctor was not in the original matrix; the row below is a default to confirm.",

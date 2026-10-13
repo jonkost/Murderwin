@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
-import { AREAS, TAB_KINDS, lintItem, fieldsFor, codecFor, mainFieldKey } from '../lib/content'
+import { AREAS, TAB_KINDS, lintItem, fieldsFor, codecFor, mainFieldKey, goalForTab } from '../lib/content'
 import { hasContent } from '../lib/codecs'
 import { cardFor } from '../lib/cards'
 import ListCard from '../components/ListCard'
 import FocusBar from '../components/FocusBar'
 import ReviewRow from '../components/ReviewRow'
+import PastePanel from '../components/PastePanel'
+import GamePreview from '../components/GamePreview'
 import Questions from './Questions'
 import { useDictation } from '../lib/useDictation'
 
@@ -126,11 +128,31 @@ function AreaEditor({ area }) {
     applyChange([...items, item], { itemId: item.id, before: null, after: item })
   }
 
+  // Many lines at once, from the paste panel: one save, one history row each.
+  const addMany = (parsed) => {
+    let order = Math.max(-1, ...items.filter(i => !tabDef || i[tabDef.field] === tab).map(i => i.order))
+    const fresh = parsed.map(p => ({
+      id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      text: p.text,
+      deleted: false,
+      order: ++order,
+      ...(spec.checklist ? { done: false } : {}),
+      ...(tabDef ? { [tabDef.field]: tab } : {}),
+    }))
+    if (!fresh.length) return
+    applyChange([...items, ...fresh], fresh.map(item => ({ itemId: item.id, before: null, after: item })), true)
+  }
+
   // Enter in the last box (or the Add button) commits the draft as a new
   // line and leaves fresh boxes under the cursor. Reads the ref, not state,
   // so a blur followed by a click on Add can never commit the same text twice.
   const commitDraft = () => {
-    const vals = draftRef.current
+    const vals = { ...draftRef.current }
+    // a dropdown with one allowed choice on this tab picks itself
+    for (const f of fields) {
+      const allowed = f.kind === 'select' ? (f.onlyForTab?.[tab] ?? null) : null
+      if (allowed?.length === 1 && !vals[f.key]) vals[f.key] = allowed[0]
+    }
     if (!fields.some(f => f.kind !== 'select' && (vals[f.key] ?? '').trim())) return
     const text = codec.join(vals)
     draftRef.current = {}
@@ -207,7 +229,7 @@ function AreaEditor({ area }) {
 
   const draftText = codec.join(draft)
   const draftWarn = spec.checklist || !hasContent(draft) ? null : lintItem(area, draftText)
-  const goal = tabDef ? spec.goalPerTab : spec.goal
+  const goal = tabDef ? goalForTab(spec, tab) : spec.goal
   const atGoal = goal > 0 && visible.length >= goal
 
   return (
@@ -234,11 +256,12 @@ function AreaEditor({ area }) {
         <nav className="tabs" aria-label="Which one">
           {tabs.map(t => {
             const n = items.filter(i => !i.deleted && i[tabDef.field] === t).length
-            const full = n >= spec.goalPerTab
+            const need = goalForTab(spec, t)
+            const full = n >= need
             return (
               <button key={t} className={`tab${t === tab ? ' active' : ''}${full ? ' full' : ''}`}
                 onClick={() => setParams(p => { const nx = new URLSearchParams(p); nx.set('tab', t); return nx })}>
-                {shortTab(spec.tabs, t, tabDef)}<span className="tab-count">{full ? 'full' : `${n} of ${spec.goalPerTab}`}</span>
+                {shortTab(spec.tabs, t, tabDef)}<span className="tab-count">{full ? 'full' : `${n} of ${need}`}</span>
               </button>
             )
           })}
@@ -254,8 +277,14 @@ function AreaEditor({ area }) {
         <FocusBar goal={focusGoal} written={written} doneLine={card?.doneLine} />
       )}
 
-      <ListCard area={area} tab={tab} onUseExample={spec.retired || spec.checklist ? null : useExample} />
+      <div className="card-row">
+        <ListCard area={area} tab={tab} onUseExample={spec.retired || spec.checklist ? null : useExample} />
+        <GamePreview area={area} tab={tab} values={draft} example={exampleValues(fields, card?.example)} />
+      </div>
       {!spec.retired && <ReviewRow area={area} />}
+      {!spec.retired && !spec.checklist && (
+        <PastePanel area={area} fields={fields} codec={codec} shape={pasteShape(fields)} onAdd={addMany} />
+      )}
 
       {visible.length === 0 && card?.emptyState && (
         <p className="empty">{card.emptyState}</p>
@@ -268,7 +297,7 @@ function AreaEditor({ area }) {
             <div className="item-row">
               {spec.checklist && <span className="check-gap" aria-hidden="true" />}
               <span className="reorder" aria-hidden="true" />
-              <FieldsForm fields={fields} values={draft} dashed
+              <FieldsForm fields={fields} values={draft} dashed tab={tab}
                 refs={inputRefs} onKeyDown={onDraftKey} onFocusField={i => { lastFocus.current = i }}
                 onChange={setField} />
               <div className="draft-actions">
@@ -300,7 +329,7 @@ function AreaEditor({ area }) {
                   <button onClick={() => move(item.id, -1)} disabled={idx === 0} title="Move up" aria-label="Move up">▲</button>
                   <button onClick={() => move(item.id, +1)} disabled={idx === visible.length - 1} title="Move down" aria-label="Move down">▼</button>
                 </span>
-                <SavedRow fields={fields} codec={codec} text={item.text} onKeyDown={onLineKey}
+                <SavedRow fields={fields} codec={codec} text={item.text} onKeyDown={onLineKey} tab={tab}
                   onSave={text => edit(item.id, text)} />
                 <button className="ghost" onClick={() => softDelete(item.id)} title="Remove (you can undo)" aria-label="Remove this line">✕</button>
               </div>
@@ -325,7 +354,7 @@ function AreaEditor({ area }) {
 // (so a space at the end of a box, or a full stop, is never eaten by the
 // round trip) and the joined line is saved on every keystroke. A change
 // from another device is adopted only when nobody is typing in this row.
-function SavedRow({ fields, codec, text, onSave, onKeyDown }) {
+function SavedRow({ fields, codec, text, onSave, onKeyDown, tab }) {
   const [vals, setVals] = useState(() => codec.split(text))
   const rowRef = useRef(null)
   const lastText = useRef(text)
@@ -347,15 +376,17 @@ function SavedRow({ fields, codec, text, onSave, onKeyDown }) {
   }
   return (
     <div ref={rowRef} className="saved-row" onBlur={onBlur}>
-      <FieldsForm fields={fields} values={vals} onChange={change} onKeyDown={onKeyDown} />
+      <FieldsForm fields={fields} values={vals} onChange={change} onKeyDown={onKeyDown} saved tab={tab} />
     </div>
   )
 }
 
 // One box per field. The saved line is split into the boxes and joined back
 // on every keystroke, so what is stored never changes shape.
-function FieldsForm({ fields, values, onChange, onKeyDown, onFocusField, refs, dashed }) {
+function FieldsForm({ fields, values, onChange, onKeyDown, onFocusField, refs, dashed, saved, tab }) {
   const single = fields.length === 1
+  // A saved line's empty box says so; only the new-line boxes carry an example.
+  const hint = (f) => (saved ? 'Not written yet' : f.placeholder || '')
   return (
     <div className={dashed ? 'fields dashed' : 'fields'}>
       {fields.map((f, i) => {
@@ -369,7 +400,8 @@ function FieldsForm({ fields, values, onChange, onKeyDown, onFocusField, refs, d
         }
         let control
         if (f.kind === 'select') {
-          const opts = f.options.map(o => (typeof o === 'string' ? { value: o, label: o } : o))
+          const allowed = f.onlyForTab?.[tab]
+          const opts = f.options.map(o => (typeof o === 'string' ? { value: o, label: o } : o)).filter(o => !allowed || allowed.includes(o.value))
           control = (
             <select {...common} onKeyDown={e => { if (e.key === 'Enter') onKeyDown?.(e, i) }}>
               <option value="">{f.placeholder || 'Pick one'}…</option>
@@ -378,9 +410,9 @@ function FieldsForm({ fields, values, onChange, onKeyDown, onFocusField, refs, d
             </select>
           )
         } else if (f.kind === 'textarea') {
-          control = <textarea {...common} rows={2} placeholder={f.placeholder || '…'} onInput={autoGrow} />
+          control = <textarea {...common} rows={2} placeholder={hint(f) || '…'} onInput={autoGrow} />
         } else {
-          control = <input {...common} type="text" placeholder={f.placeholder || ''} />
+          control = <input {...common} type="text" placeholder={hint(f)} />
         }
         if (single) return <div key={f.key} className="field-row single">{control}</div>
         return (
@@ -417,4 +449,20 @@ function readMemory(key) {
 }
 function writeMemory(key, value) {
   try { if (value === '' || value == null) localStorage.removeItem(key); else localStorage.setItem(key, value) } catch {}
+}
+
+
+// The example's values keyed by box, for the game preview.
+function exampleValues(fields, example) {
+  const v = {}
+  ;(example ?? []).forEach((e, i) => { if (fields[i]) v[fields[i].key] = e.text })
+  return v
+}
+
+// One line on the paste panel saying what shape a pasted entry takes.
+function pasteShape(fields) {
+  if (!fields || fields.length <= 1) return 'Each line becomes one entry.'
+  const labels = fields.map(f => f.label.split(',')[0].toLowerCase())
+  if (fields.length >= 3 && fields[0].key === 'name') return `A line like “Name · ${labels[1]}”, then the rest on the lines under it.`
+  return `A line like “${labels[0]}: ${labels.slice(1).join(' ')}”, or the ${labels[0]} on its own line with the words under it.`
 }
