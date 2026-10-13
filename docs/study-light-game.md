@@ -229,6 +229,47 @@ Each of these fills a gap. Say the word and any of them changes.
 
 ---
 
+## 12. What is built (13 October 2026)
+
+Built blind, tested against fakes. Not yet run on the real walls.
+
+- **The station**, `station/`: the whole game as a state machine (`lib/study.js`),
+  the Nanoleaf driver, the button-box driver with its own key labels, fakes for
+  both, and the runner `station.mjs`. Twelve tests.
+- **The server side**, `functions/lib/station.js`: *Make the groups* (pairs and
+  trios, the study order), the station key, the station's state and "finished"
+  calls, and the pay-out hook that marks each phone in the group as dealt. The
+  clue itself waits for the case generator. Six tests.
+- **The study screen**: `/play/?kiosk=study` on the M1 Air. Granolia, the three
+  jewels, the clock, her hints, the numbered wall for the map hint and the
+  fallback.
+- **The Host tab**: *Make the groups*, and the station key box.
+
+**To run it, once deployed** (`npm run deploy`, which you run):
+1. Host tab → *The study* → type a station key (any word of four or more
+   letters) → *Save key*.
+2. On the M1 Air: copy `station/.env.example` to `station/.env`, fill in the two
+   Nanoleaf addresses and tokens and the same key. Then in `station/`:
+   `npm install`, then `npm start`. Quit the Elgato app first.
+3. Open `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=study` in a
+   browser on the M1 Air, full screen.
+4. After dinner, Host tab → *Make the groups*. The study greets the first group.
+5. No walls yet? `npm run fake` in `station/` plays the whole game from the
+   keyboard (the key map prints when it starts).
+
+Decisions made while building, on top of §10:
+- **The station presents a key, not an account.** You type a key on the Host
+  tab and the same key into the station's settings file. Simpler than a second
+  sign-in, and it can be changed from your phone.
+- **Who is in the study comes from the groups.** *Make the groups* writes the
+  order; the station pays out to the group the order says is due. The Host tab
+  does not yet reassign a group; if the wrong group walks in, the scheduled one
+  is paid.
+- **Hints the screen shows are defaults** written in the kiosk page. A "study
+  lines" list in the workshop can replace them later.
+
+---
+
 ## For Claude Code (technical)
 
 **Where it lives.** A new top-level `station/` package: a Node process that runs on the M1 Air
@@ -261,18 +302,22 @@ attempt at once and replays.
 between each, from the controller end; otherwise light `n` adjacent segments. Colour by name
 from a six-entry table with the RGB tuned on the real bars.
 
-**Firestore.** `nights/{nightId}/stations/study`:
-`{ state: idle|playing|done, groupId, startedAt, round, patternIndex, pairsLocked, missCount,
-hintRung, outcome: solved|capped, finishedAt }`. Counts and timestamps only. Written by the
-station, readable by the kiosk page and the Host tab. The station authenticates as a Firebase
-user whose UID is allowlisted in rules for `stations/*` writes only. It never holds a
-service-account key and never reads `sealed/*` or `cases/*`.
+**Firestore (as built).** `nights/{nightId}/public/study` is the station's state as the
+machine's snapshot (`state, round, pattern, pairsLocked, misses, hint, entry, outcome,
+startedAt, finishedAt, warned, map, lines, revealed, groupId`) plus `layout`, `elementsOk`,
+`linesOk`, `granolia`, `fallbackPattern`, `updatedAt`. Written only by the function on the
+station's `state` call; readable by any signed-in client (the kiosk page reads it).
+`nights/{nightId}/public/rotation` holds `{ groups[{id, members[{key,name}]}], studyOrder[],
+current, finished{} }`. The station signs in anonymously and presents `meta/game.station_key`
+(set by `hostCommand('station-key')`); it never holds a service-account key and never reads
+`sealed/*` or `cases/*`.
 
-**Pay-out.** Callable `stationCommand({ nightId, station: 'study', command: 'finished',
-groupId, outcome })`. The function (Admin SDK) looks up the seed's study slot, assembles the
-clue from sealed content, and writes it to each group member's `sessions/{uid}`; it then
-advances the Act 4 rotation. Idempotent by `groupId`. The station's call carries no content and
-gets none back.
+**Pay-out (as built).** Callable `stationCommand({ nightId, key, station: 'study', command:
+'finished', payload: { groupId, outcome, seconds, pairs } })` → `dealStudy` writes
+`sessions/{uid}.dealt.study = { at, outcome, groupId }` for each member, records the group in
+`rotation.finished`, advances `rotation.current`, and points `public/study.groupId` at the next
+group. Idempotent by `groupId`. When the case generator lands, `dealStudy` is where the clue is
+assembled from sealed content into each session, server-side only.
 
 **Clock.** The cap is `startedAt + 15 min` on server time. The station keeps server skew the
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock

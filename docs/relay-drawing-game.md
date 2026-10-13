@@ -261,6 +261,30 @@ Each of these fills a gap. Say the word and any of them changes.
 
 ---
 
+## 12. What is built (13 October 2026)
+
+Built and tested against the fake Firestore; the phone screens checked in the browser.
+
+- **The generator**, `functions/lib/relay-gen.js`: three grids and four options each from a
+  seed, with the checks in §6 as tests across hundreds of seeds. Grid 1 draws nine cells,
+  grid 2 about twelve, grid 3 about fourteen.
+- **The clock**, `functions/lib/relay.js`: start, advance, vote, reset. Nineteen tests cover
+  the whole run, the early close, absent phones, the lockout and re-vote until right.
+- **The phones**: the drawer's prompt, the room's view of the cell, the four-picture vote, the
+  lockout, and "the door is open". Preview without a night at
+  `/play/?preview=relay-turn`, `relay-draw`, `relay-vote`, `relay-lockout`, `relay-done`.
+- **The room screens**: `/play/?kiosk=living` on the main-room MacBook (it is also the
+  clock), `/play/?kiosk=bedroom` on the bedroom MacBook (closed until the door opens; the
+  trace lands there once the case generator exists).
+- **The Host tab**: *Start the drawing* and *Clear the drawing* under *The Big Solve*.
+
+**To run it, once deployed** (`npm run deploy`, which you run): open the living room page on
+the main-room MacBook and the bedroom page on the bedroom MacBook, full screen. In Act 6,
+Host tab → *Start the drawing*. Everything else runs itself. The hall light's red-to-green
+is the Mac relay script's job and is not built yet; the TV announces the open door anyway.
+
+---
+
 ## For Claude Code (technical)
 
 **State.** `nights/{nightId}/relay` (public, read by phones and kiosks):
@@ -268,8 +292,8 @@ Each of these fills a gap. Say the word and any of them changes.
 cell: { label, strokes[] }, turnEndsAt, voteEndsAt, options: [svg x4], crossed[], results{},
 startedAt, finishedAt, misses, lightGreenAt }`. Only the current cell is ever in the public doc.
 The full grids, the answer indices and the turn order live in `nights/{nightId}/private/relay`
-(no client reads). Each vote is `nights/{nightId}/relay_votes/{uid}` (owner write, function
-read), reset per vote.
+(no client reads). Votes go through the callable `relayVote` and live in the private doc's
+`votes` map, keyed by guest key; the public doc carries only `votesIn`.
 
 **Driving the clock.** Cloud Functions do not run timers, so a callable `relayAdvance({ nightId,
 expectedTurn })` moves the state machine when server time has passed `turnEndsAt` or
@@ -278,7 +302,7 @@ any phone may also call it; it is idempotent on `expectedTurn` and refuses early
 phone's ten-second bar is rendered from `turnEndsAt` against the phone's server skew, never from
 a local countdown.
 
-**Generation.** `relayStart` (via `hostCommand('relay-start')`) seeds a PRNG, composes the three
+**Generation.** `relay.start` (via `hostCommand('relay-start')`) seeds a PRNG, composes the three
 grids and their option sets, writes the private doc, shuffles the cell order per grid, builds a
 turn order that covers every roster UID at least once before repeating anyone, and writes the
 first turn. Strokes are described on a per-cell anchor lattice (corners, edge midpoints, centre,
