@@ -30,7 +30,7 @@ export default function Assets() {
   const [params, setParams] = useSearchParams()
   const tab = TABS.find(t => t.id === params.get('tab')) ?? TABS[0]
   return (
-    <main className="dash">
+    <main className="dash sheet">
       <nav className="tabs">
         {TABS.map(t => (
           <button key={t.id} className={t.id === tab.id ? 'tab active' : 'tab'}

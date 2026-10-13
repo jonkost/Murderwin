@@ -68,7 +68,7 @@ export default function Questions({ area }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (!loaded) return <main className="dash"><p>Opening the list…</p></main>
+  if (!loaded) return <main className="dash sheet"><p>Opening the list…</p></main>
   const written = startCount === null ? 0 : Math.max(0, complete - startCount)
 
   const commitDraft = () => {
@@ -143,7 +143,7 @@ export default function Questions({ area }) {
   const goal = spec.goal ?? 0
 
   return (
-    <main className="dash">
+    <main className="dash sheet">
       {status === 'error' && (
         <div className="banner error" role="alert">
           SAVE FAILED. Your latest edits are not saved.
@@ -160,8 +160,8 @@ export default function Questions({ area }) {
 
       {goal > 0 && (
         <div className="needs">
-          <span className="needs-label">Needs {goal}.</span>
-          <span className={complete >= goal ? 'need full' : 'need'}>{complete >= goal ? 'Full' : `${complete} written`}</span>
+          <span className="needs-label">This list needs {goal}.</span>
+          <span className={complete >= goal ? 'need full' : 'need'}>{complete >= goal ? 'Full' : `${complete} written, ${goal - complete} to go`}</span>
           {visible.length > complete && <span className="need">{visible.length - complete} half done</span>}
         </div>
       )}

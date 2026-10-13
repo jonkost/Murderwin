@@ -309,15 +309,7 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .scenario-foot .hint { margin: 0; flex: 1; }
 .list-moment { color: var(--good); font-size: 0.85rem; }
 
-/* ---------- Sir Irwin, bars, ranks, Jenna's read (12 Oct) ---------- */
-.desk { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; border-color: rgba(166, 162, 83, 0.5); }
-@media (max-width: 640px) { .desk { grid-template-columns: 1fr; } }
-.irwin { display: flex; gap: 0.8rem; align-items: center; }
-.irwin-face { width: 56px; height: 56px; flex: none; border-radius: 50%; background: var(--field); padding: 6px; border: 1px solid var(--line); }
-.irwin-line { margin: 0; background: var(--field); border: 1px solid var(--line); border-radius: var(--r-group); padding: 0.6rem 0.9rem; position: relative; font-size: 1rem; }
-.irwin.small .irwin-face { width: 40px; height: 40px; }
-.desk-count { display: grid; gap: 0.3rem; min-width: 14rem; }
-.rank { font-family: var(--display); font-weight: 600; font-size: 1.2rem; }
+/* ---------- bars, Jenna's read (12 Oct) ---------- */
 .bar { display: block; height: 6px; background: var(--field); border-radius: 3px; overflow: hidden; margin-top: 0.4rem; }
 .bar span { display: block; height: 100%; background: var(--good); transition: width 150ms; }
 .bar.big { height: 8px; }
@@ -381,4 +373,34 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .gp .chip { font-size: 0.7rem; margin-left: 0.3rem; }
 .review-line { margin: 0 0 1rem; color: var(--muted); }
 .review-line b { color: var(--good); font-weight: 600; }
-.hint.ranks { font-size: 0.85rem; }
+
+/* ---------- the glass sheet behind every list page (13 Oct) ----------
+   The wallpaper stays; the words sit on the same material as the menu:
+   blurred, a shade darker, with a faint rim and a hairline highlight. */
+.dash.sheet {
+  background: var(--card);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  padding: 1.1rem 1.3rem 1.5rem;
+  box-shadow: inset 0 1px 0 rgba(241, 232, 214, 0.08);
+}
+@media (max-width: 760px) { .dash.sheet { padding: 0.9rem 0.8rem 1.3rem; border-radius: var(--r-group); } }
+/* inside the sheet, cards are inset wells, not more glass (blur on blur is heavy) */
+.sheet .listcard, .sheet .scenario-card, .sheet .paste, .sheet .review, .sheet .sitem, .sheet .panel {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  background: rgba(0, 25, 37, 0.38);
+}
+.sheet .beat { background: rgba(0, 25, 37, 0.45); }
+.sheet .example-card, .sheet .paste-preview { background: rgba(0, 25, 37, 0.5); }
+/* boxes you type in: dark enough that the pattern never shows through the words */
+.sheet .item textarea, .sheet .fields input, .sheet .fields select, .sheet .beat input, .sheet .value input,
+.sheet .paste textarea, .sheet .review-note, .sheet .stitle, .sheet .card textarea, .sheet .card input, .sheet .draft-name {
+  background: rgba(0, 25, 37, 0.82);
+}
+.sheet .item.draft textarea, .sheet .item.draft .fields input, .sheet .item.draft .fields select, .sheet .scenario-card.dashed .beat input {
+  background: rgba(0, 25, 37, 0.7);
+}
+.sheet .gp-screen { background: #06131a; }
+.panel.progress .bar.big { margin: 0.4rem 0 0.9rem; }

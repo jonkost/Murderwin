@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeHistory, whoAmI } from '../lib/store'
+import { subscribeArea, subscribeLatestValidation, subscribeHistory } from '../lib/store'
 import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab } from '../lib/content'
 import { isComplete } from '../lib/scenarios'
-import { rankFor, irwinLine, dayKey, RANKS } from '../lib/household'
 import { useReviews } from '../components/ReviewRow'
-import Irwin from '../components/Irwin'
 import TaskBoard from '../components/TaskBoard'
 import DecisionsPanel from '../components/DecisionsPanel'
 
 // Home. Plain words, one sentence per section, a bar per list. Nothing here
-// blocks anything: bars fill, that is all they do. Sir Irwin keeps count.
+// blocks anything: bars fill, that is all they do.
 
 function Row({ label, count, goal, to, suffix, why, moment, review, reviewBy }) {
   const done = goal > 0 && count >= goal
@@ -71,7 +69,6 @@ export default function Dashboard() {
   const [data, setData] = useState({})
   const [validation, setValidation] = useState(null)
   const [history, setHistory] = useState([])
-  const [me, setMe] = useState(null)
   const reviews = useReviews()
 
   useEffect(() => {
@@ -79,7 +76,6 @@ export default function Dashboard() {
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
     unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeHistory(setHistory, () => {}))
-    whoAmI().then(setMe)
     return () => unsubs.forEach(u => u())
   }, [])
 
@@ -97,49 +93,6 @@ export default function Dashboard() {
   }, { lines: 0, goal: 0, full: true, loaded: true })
   const allFull = house.loaded && house.full
 
-  // Today's lines by me, from the recent trail (creates only).
-  const today = useMemo(() => {
-    if (!me) return 0
-    const key = dayKey()
-    return history.filter(h => h.by?.uid === me.uid && h.before === null && SAFE_AREAS.has(h.area) && h.ts?.toDate && dayKey(h.ts.toDate()) === key).length
-  }, [history, me])
-  const everWritten = !!me && history.some(h => h.by?.uid === me.uid && SAFE_AREAS.has(h.area))
-
-  // The household's rank: every line written in every list, by anyone.
-  // Sir Irwin's moments are checked once per visit against the phone's own memory.
-  const rank = house.loaded ? rankFor(house.lines, allFull) : null
-  const [moments, setMoments] = useState({ newRank: false, listJustFull: false })
-  const rankName = rank?.name ?? ''
-  useEffect(() => {
-    if (!rankName) return
-    let newRank = false
-    try {
-      const k = 'workshop.rank.house'
-      const peak = Number(localStorage.getItem(k) ?? -1)
-      const idx = RANKS.findIndex(r => r.name === rankName)
-      if (idx > peak) { newRank = peak >= 0; localStorage.setItem(k, String(idx)) }
-    } catch {}
-    setMoments(m => ({ ...m, newRank }))
-  }, [rankName])
-  const fullKey = house.loaded
-    ? counted.filter(([area, spec]) => countOf(area, spec, (data[area] ?? []).filter(i => !i.deleted)) >= goalOf(spec)).map(([a]) => a).join(',')
-    : null
-  useEffect(() => {
-    if (fullKey === null) return
-    let listJustFull = false
-    try {
-      const fullNow = fullKey ? fullKey.split(',') : []
-      const stored = localStorage.getItem('workshop.full')
-      const seen = stored === null ? null : JSON.parse(stored)
-      const fresh = seen === null ? [] : fullNow.filter(a => !seen.includes(a))
-      if (fresh.length) listJustFull = true // never on the very first visit
-      localStorage.setItem('workshop.full', JSON.stringify(fullNow))
-    } catch {}
-    setMoments(m => ({ ...m, listJustFull }))
-  }, [fullKey])
-
-  const line = irwinLine({ allFull, listJustFull: moments.listJustFull, newRank: moments.newRank, today, everWritten })
-
   // The three lists furthest from their goal, as big cards. Deterministic:
   // nothing is dealt at random, Jon always picks.
   const picks = counted
@@ -148,34 +101,34 @@ export default function Dashboard() {
     .sort((a, b) => (a.count / a.goal) - (b.count / b.goal))
     .slice(0, 3)
 
+  const first = picks[0]
   return (
     <main className="dash">
-      <section className="panel desk">
-        <Irwin line={line} />
-        <div className="desk-count">
-          <span className="rank">{rank ? `The household stands at ${rank.name}` : 'Counting the lines…'}</span>
-          <span className="hint">{house.lines} of {house.goal} lines written, across every list, by everyone. {rank?.next ? `${rank.next.name} at ${rank.next.at}.` : allFull ? 'The whole manor is written.' : rank ? 'The top of the house.' : ''}</span>
-          <span className="hint ranks">A game for the writing: every line counts. Ranks, lowest first: {RANKS.map(r => r.name).join(', ')}, then Sir Irwin’s Favourite when every list is full.</span>
-          <span className="bar big"><span style={{ width: `${house.goal ? Math.min(100, Math.round((house.lines / house.goal) * 100)) : 0}%` }} /></span>
-        </div>
+      <section className="panel progress">
+        <h2>Where the writing stands</h2>
+        <p className="why">
+          {house.loaded ? `${house.lines} of ${house.goal} lines are written across all the lists.` : 'Counting the lines…'}
+          {house.loaded && (allFull
+            ? ' Every list is full. Nothing left to write.'
+            : first ? ` The list that needs you most is ${first.label}: ${first.count} of ${first.goal} written.` : '')}
+        </p>
+        <span className="bar big"><span style={{ width: `${house.goal ? Math.min(100, Math.round((house.lines / house.goal) * 100)) : 0}%` }} /></span>
+        {first && !allFull && (
+          <p className="night-line"><Link className="primary dl" to={`${first.to}${first.to.includes('?') ? '&' : '?'}focus=3`}>Write in {first.label}</Link></p>
+        )}
       </section>
 
-      {allFull ? (
+      {!allFull && (
         <section className="panel pick">
-          <h2>Every list is full</h2>
-          <p className="why">Nothing left to write. Go and photograph a dog.</p>
-        </section>
-      ) : (
-        <section className="panel pick">
-          <h2>Pick one thing</h2>
-          <p className="why">Choose one, add three, stop. Every box has a Speak button if you would rather say it.</p>
+          <h2>What to write next</h2>
+          <p className="why">The three lists furthest from done. Pick one, write three lines, stop. Every box has a Speak button if you would rather say it.</p>
           <div className="pick-cards">
             {picks.map(r => (
               <Link key={r.key} to={`${r.to}${r.to.includes('?') ? '&' : '?'}focus=3`} className="pick-card">
                 <span className="pick-label">{r.label}</span>
                 <span className="list-moment">{r.moment}</span>
                 <span className="pick-why">{r.why}</span>
-                <span className="pick-count">{r.count} of {r.goal} · three more</span>
+                <span className="pick-count">{r.count} of {r.goal} written. Needs {r.goal - r.count} more.</span>
                 <span className="bar"><span style={{ width: `${Math.min(100, Math.round((r.count / r.goal) * 100))}%` }} /></span>
               </Link>
             ))}
@@ -194,8 +147,8 @@ export default function Dashboard() {
       ))}
 
       <section className="panel">
-        <h2>The household staff</h2>
-        <p className="why">Who has been writing, and what. Every change is kept with a name on it. Counts only, never the words.</p>
+        <h2>Who has been writing</h2>
+        <p className="why">Every change is kept with a name on it. Counts only, never the words.</p>
         <Trail history={history} />
       </section>
 

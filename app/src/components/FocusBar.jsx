@@ -8,7 +8,7 @@ export default function FocusBar({ goal, written, doneLine }) {
   return (
     <div className={reached ? 'focus done' : 'focus'} role="status">
       {reached
-        ? <><b>That’s {written}. Goal met.</b> {doneLine ? `${doneLine} ` : ''}Stop here, or keep going; either is a win. <Link to="/">Back home</Link></>
+        ? <><b>That’s {written}. Goal met for this sitting.</b> Stop here, or keep going. <Link to="/">Back home</Link></>
         : <><b>{goal - written} more</b> for this sitting, then stop. Written so far: {written}.</>}
       <span className="focus-bar"><span style={{ width: `${pct}%` }} /></span>
     </div>

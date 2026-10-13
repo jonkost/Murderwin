@@ -56,13 +56,10 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   the clues come out. Which sets the two hidden roles get, and how their
   points map to that, is decided blind on the night, so the numbers Jon
   writes never tell him which way the night moved.
-- **It keeps score.** Sir Irwin sits at the top of Home and says one true
-  thing (the first line of the day, three lines, a list that filled, a save
-  that failed). Every list card has a bar that only fills and reads *Full*
-  with the seal when it is done. Lines you have written earn a household rank
-  (Boots, Scullery, Footman, Cook, Housekeeper, Butler), and every list full
-  makes everyone Sir Irwin's Favourite. Nothing is dealt, nothing nags,
-  nothing turns red except a failed save.
+- **Bars that fill.** Every list card has a bar that only fills and reads
+  *Full* with the seal when it is done. Nothing is dealt, nothing nags,
+  nothing turns red except a failed save. (A rank ladder and Sir Irwin lines
+  were tried and removed; see 13 October below.)
 - **Jenna's two words.** Under the card on every list: *Reads clearly* or
   *Needs another look*, plus one line of note. A list she has cleared carries
   a small "✓ read" on Home. The For Jenna page now opens the lists she should
@@ -83,8 +80,14 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   not saved." Example text in an empty box starts with "e.g." and appears
   only in the new-line boxes; a saved line's empty box says "Not written
   yet" (the fourteen characters all seemed to wear an apron before this).
-- **The household's rank** counts every line written in every list, by
-  everyone, and says so in plain words. There is no per-person count.
+- **Plain progress, no game.** The rank ladder and Sir Irwin's speech bubble
+  were tried for a day and removed on 13 October: Jon could not tell what
+  "the household stands at Cook" was asking of him. Home now says, in plain
+  words, how many lines are written across all the lists, which list needs
+  him most, and has one button into it. The three cards under it say "N of
+  M written. Needs K more." Every list page says "This list needs N. K to go."
+  Rule for every instruction on screen: say what to write and where it goes;
+  never a line that needs decoding.
 - **Fewer boxes, after a pass for anything the game never reads.** A
   character is name, what they do, who they are (no costume: dealt at the
   door). A household card is one pick (who, of the five) and one box; the
@@ -201,8 +204,8 @@ Data model (Firestore):
 - `meta/reviews` — `{ [area]: {state: 'clear'|'again'|'', note, by: {name}, at} }`,
   Jenna's two words per list. Written with merge, logged to history as area
   `reviews`.
-- The rank is `rankFor(house.lines)` over the live counts Home already
-  loads; `countLinesBy` in `store.firestore.js` is kept but unused.
+- `countLinesBy` in `store.firestore.js` is kept but unused (the rank
+  layer that used it was removed on 13 October).
 - `app/src/lib/paste.js` (pure, tested) reads pasted text per list:
   `parsePaste(area, raw, { fields, codec })` and `parseScenarios(raw)`.
   Header lines ("Name · Job", "LABEL: …") open an entry; plain lines attach

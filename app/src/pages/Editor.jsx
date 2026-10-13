@@ -15,7 +15,7 @@ import { useDictation } from '../lib/useDictation'
 export default function Editor() {
   const { area } = useParams()
   const spec = AREAS[area]
-  if (!spec) return <main className="dash"><p>Unknown list. <Link to="/">Back home</Link></p></main>
+  if (!spec) return <main className="dash sheet"><p>Unknown list. <Link to="/">Back home</Link></p></main>
   // key by area: a fresh instance per area so stale local state can never
   // be flushed into a different area's document
   if (spec.editor === 'questions') return <Questions key={area} area={area} />
@@ -106,7 +106,7 @@ function AreaEditor({ area }) {
     if (loaded && focusGoal && startCount === null) setStartCount(visible.length)
   }, [loaded, focusGoal, startCount, visible.length])
 
-  if (!loaded) return <main className="dash"><p>Opening the list…</p></main>
+  if (!loaded) return <main className="dash sheet"><p>Opening the list…</p></main>
   const written = startCount === null ? 0 : Math.max(0, visible.length - startCount)
 
   const edit = (id, text) => {
@@ -233,7 +233,7 @@ function AreaEditor({ area }) {
   const atGoal = goal > 0 && visible.length >= goal
 
   return (
-    <main className="dash">
+    <main className="dash sheet">
       {status === 'error' && (
         <div className="banner error" role="alert">
           SAVE FAILED. Your latest edits are not saved.
@@ -433,7 +433,7 @@ function Needs({ spec, items }) {
   const goal = spec.goal ?? 0
   if (!goal) return null
   const full = live.length >= goal
-  return <div className="needs"><span className="needs-label">Needs {goal}.</span><span className={full ? 'need full' : 'need'}>{full ? 'Full' : `${live.length} written`}</span></div>
+  return <div className="needs"><span className="needs-label">This list needs {goal}.</span><span className={full ? 'need full' : 'need'}>{full ? 'Full' : `${live.length} written, ${goal - live.length} to go`}</span></div>
 }
 
 // Short tab names: first names for the cats, the act's name, the blank's name.

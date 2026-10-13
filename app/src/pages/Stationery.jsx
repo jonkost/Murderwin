@@ -28,10 +28,10 @@ export default function Stationery() {
     }
   }
 
-  if (items === null) return <main className="dash"><p>Loading…</p></main>
+  if (items === null) return <main className="dash sheet"><p>Loading…</p></main>
 
   return (
-    <main className="dash">
+    <main className="dash sheet">
       {status === 'error' && (
         <div className="banner error" role="alert">
           SAVE FAILED. Your latest edits are not saved.
