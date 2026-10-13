@@ -98,6 +98,10 @@ Its real in-game kernels still get regenerated blind either way.
 
 When this file and the Canon page disagree, the Canon page wins — fix this file.
 
+The two big games, designed 13 Oct 2026 (proposals awaiting Jon's yes):
+- Act 4 study light game: `docs/study-light-game.md`
+- Act 6 relay drawing game: `docs/relay-drawing-game.md`
+
 ## THE DESIGN DOCS FROM JON'S CHATS
 
 `chats/` (gitignored, never committed) holds Jon's eight Murderwin claude.ai
