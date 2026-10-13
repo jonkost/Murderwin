@@ -23,5 +23,8 @@ export const functions = getFunctions(app, 'us-central1')
 export const callJoin = httpsCallable(functions, 'join')
 // The host's buttons. The function checks the caller's session is marked host.
 export const callHost = httpsCallable(functions, 'hostCommand')
+// The relay drawing (Act 6): nudge the clock, cast a pick.
+export const callRelayAdvance = httpsCallable(functions, 'relayAdvance')
+export const callRelayVote = httpsCallable(functions, 'relayVote')
 
 export { signInAnonymously, onAuthStateChanged }

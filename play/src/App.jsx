@@ -5,6 +5,7 @@ import Join from './screens/Join'
 import Rest from './screens/Rest'
 import { Dark, Moment, Blackout, Prompt } from './screens/Moments'
 import { StartNight } from './screens/Host'
+import Relay, { RelayDone, ms } from './screens/Relay'
 
 // One page. What a phone shows is a pure function of three documents:
 // the active night (public), this phone's session (private), and this
@@ -18,6 +19,7 @@ export default function App() {
   const content = useDoc(nightId ? `nights/${nightId}/public/content` : null)
   const session = useDoc(uid ? `sessions/${uid}` : null)
   const notes = useDoc(uid ? `notes/${uid}` : null)
+  const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const serverNow = useServerClock(uid, nightId, session.data?.guestKey)
   const online = useOnline()
   const ui = useMemo(() => uiLines(content.data), [content.data])
@@ -42,5 +44,12 @@ export default function App() {
   if (n.phase === 'prompt' && !notes.data?.seen?.[promptKey]) {
     return <Prompt uid={uid} night={n} ui={ui} serverNow={serverNow} promptKey={promptKey} />
   }
+  // The relay drawing (Act 6): while it runs, every phone is its surface.
+  const r = relay.data
+  if (r && ['walk', 'turn', 'vote', 'lockout'].includes(r.state)) {
+    return <>{banner}<Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} /></>
+  }
+  const doneKey = r?.state === 'done' ? `relay-${ms(r.startedAt)}` : null
+  if (doneKey && !notes.data?.seen?.[doneKey]) return <RelayDone uid={uid} relay={r} seenKey={doneKey} />
   return <>{banner}<Rest uid={uid} night={n} session={s} content={content.data} notes={notes.data} ui={ui} /></>
 }

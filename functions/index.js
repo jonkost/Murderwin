@@ -10,6 +10,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import * as night from './lib/night.js'
+import * as relay from './lib/relay.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -57,5 +58,24 @@ export const hostCommand = onCall({ cors: true }, wrap(async req => {
   const { nightId, command, arg } = req.data ?? {}
   const allowed = await night.canHost(db, { uid, isAdmin: ADMIN_UIDS.includes(uid), nightId, command })
   if (!allowed) throw new HttpsError('permission-denied', 'Only a host can do that.')
+  // The relay drawing (Act 6). Structural buttons: they tell the host nothing.
+  if (command === 'relay-start') return relay.start(db, { nightId })
+  if (command === 'relay-reset') return relay.reset(db, { nightId })
   return night.hostCommand(db, { nightId, command, arg })
+}))
+
+// The relay drawing's clock. Any signed-in phone or kiosk may nudge it; it
+// only moves when a deadline on the server's clock has passed, once.
+export const relayAdvance = onCall({ cors: true }, wrap(async req => {
+  requireUid(req)
+  const { nightId } = req.data ?? {}
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  return relay.advance(db, { nightId })
+}))
+
+// One phone's pick during a vote.
+export const relayVote = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, pick } = req.data ?? {}
+  return relay.vote(db, { nightId, uid, pick })
 }))

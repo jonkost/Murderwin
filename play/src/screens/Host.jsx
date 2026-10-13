@@ -24,6 +24,8 @@ function describe(command, r) {
     case 'create': return 'New night started. Type your name again to rejoin it.'
     case 'publish': return `Sent ${r.lines} lines to the phones.`
     case 'act': return `Act ${r.act} is on.`
+    case 'relay-start': return `The drawing has started: ${r.turns} turns.`
+    case 'relay-reset': return 'The drawing is cleared.'
     default: return 'Done.'
   }
 }
@@ -85,6 +87,13 @@ export default function Host({ night, content }) {
         {night.phase === 'paused'
           ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
           : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
+      </div>
+
+      <h3>The Big Solve (Act 6)</h3>
+      <p className="gloss">Starts the relay drawing on every phone and the living room screen. It tells you nothing.</p>
+      <div className="host-row">
+        <button className="big wide" disabled={!!busy} onClick={() => run('relay-start')}>Start the drawing</button>
+        <button className="chip wide" disabled={!!busy} onClick={() => run('relay-reset')}>Clear the drawing</button>
       </div>
 
       <h3>The doors</h3>
