@@ -26,6 +26,8 @@ function describe(command, r) {
     case 'act': return `Act ${r.act} is on.`
     case 'relay-start': return `The drawing has started: ${r.turns} turns.`
     case 'relay-reset': return 'The drawing is cleared.'
+    case 'groups': return `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}. The study knows who is first.`
+    case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     default: return 'Done.'
   }
 }
@@ -89,6 +91,13 @@ export default function Host({ night, content }) {
           : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
       </div>
 
+      <h3>The study (Act 4)</h3>
+      <p className="gloss">Makes the pairs and trios and the order they visit the study. Press once, after dinner.</p>
+      <div className="host-row">
+        <button className="big wide" disabled={!!busy} onClick={() => run('groups')}>Make the groups</button>
+      </div>
+      <StationKey busy={busy} run={run} />
+
       <h3>The Big Solve (Act 6)</h3>
       <p className="gloss">Starts the relay drawing on every phone and the living room screen. It tells you nothing.</p>
       <div className="host-row">
@@ -130,6 +139,17 @@ export default function Host({ night, content }) {
       <p className="gloss">Only for rehearsals or if tonight must start over. It deals new characters to everyone, and every phone must tap its name again.</p>
       <button className="chip wide" disabled={!!busy} onClick={() => run('create')}>Start a new night</button>
     </div>
+  )
+}
+
+// The key the study Mac must present. Typed once; the same text goes in station/.env.
+function StationKey({ busy, run }) {
+  const [key, setKey] = useState('')
+  return (
+    <form className="host-row" onSubmit={e => { e.preventDefault(); if (key.trim()) run('station-key', key.trim()) }}>
+      <input className="field" value={key} onChange={e => setKey(e.target.value)} placeholder="Station key, e.g. study-2026" aria-label="Station key" />
+      <button className="chip" type="submit" disabled={!!busy || key.trim().length < 4}>Save key</button>
+    </form>
   )
 }
 

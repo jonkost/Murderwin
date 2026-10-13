@@ -10,7 +10,9 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import * as night from './lib/night.js'
+import * as run from './lib/run.js'
 import * as relay from './lib/relay.js'
+import * as station from './lib/station.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -27,6 +29,7 @@ const CODE_MAP = {
   closed: 'failed-precondition',
   full: 'resource-exhausted',
   'already-joined': 'already-exists',
+  'window-open': 'failed-precondition',
 }
 
 function wrap(handler) {
@@ -61,7 +64,56 @@ export const hostCommand = onCall({ cors: true }, wrap(async req => {
   // The relay drawing (Act 6). Structural buttons: they tell the host nothing.
   if (command === 'relay-start') return relay.start(db, { nightId })
   if (command === 'relay-reset') return relay.reset(db, { nightId })
-  return night.hostCommand(db, { nightId, command, arg })
+  // Act 4: the groups and the study order; the key the study station presents.
+  if (command === 'groups') return station.makeRotation(db, { nightId })
+  if (command === 'station-key') return station.setStationKey(db, arg)
+  return run.hostCommand(db, { nightId, command, arg })
+}))
+
+// ---- what a player's phone may send back. Each one checks the caller holds
+// an active session for that night; none of them returns content.
+
+export const answer = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, windowId, picks } = req.data ?? {}
+  return run.player.answer(db, { uid, nightId, windowId, picks })
+}))
+
+export const solve = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, cardId, entry } = req.data ?? {}
+  return run.player.solve(db, { uid, nightId, cardId, entry })
+}))
+
+export const ballot = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, murderer, motive, victim } = req.data ?? {}
+  return run.player.ballot(db, { uid, nightId, murderer, motive, victim })
+}))
+
+export const eliminate = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, target } = req.data ?? {}
+  return run.player.eliminate(db, { uid, nightId, target })
+}))
+
+// The drawing: a phone's pick, or a nudge to move the clock when a deadline has passed.
+export const relay = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, command, pick } = req.data ?? {}
+  if (command === 'vote') return run.player.relayVote(db, { uid, nightId, pick })
+  if (command === 'advance') return run.player.relayAdvance(db, { nightId })
+  throw new HttpsError('invalid-argument', 'vote or advance')
+}))
+
+// The study station on the M1 Air. Signed in anonymously like a phone, it
+// presents the host-set key. It sends counts and words; the clue is dealt here.
+export const stationCommand = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, key, station: which, command, payload } = req.data ?? {}
+  const allowed = await station.stationAllowed(db, { key, isAdmin: ADMIN_UIDS.includes(uid) })
+  if (!allowed) throw new HttpsError('permission-denied', 'That is not the station key.')
+  return station.stationCommand(db, { nightId, station: which, command, payload })
 }))
 
 // The relay drawing's clock. Any signed-in phone or kiosk may nudge it; it

@@ -33,7 +33,8 @@ export default function Relay({ uid, night, session, relay, serverNow }) {
       : relay.state === 'vote' ? ms(relay.voteEndsAt)
       : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0
     const now = serverNow()
-    if (deadline && now > deadline + 1500 && now - nudged.current > 3000) {
+    if (night.nightId === 'preview') return
+    if (deadline && now > deadline + 2500 && now - nudged.current > 6000) {
       nudged.current = now
       callRelayAdvance({ nightId: night.nightId }).catch(() => {})
     }

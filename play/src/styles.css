@@ -227,3 +227,16 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk-option .letter { font-size: 2.5vw; top: 1.4vw; left: 1.6vw; }
 .kiosk.bedroom.closed { background: #2a0608; }
 .kiosk.bedroom.open { background: var(--brand-bottle); }
+
+/* the study screen */
+.field { flex: 1; min-height: 3rem; padding: 0 0.8rem; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1rem; }
+.kiosk.study { background: var(--brand-peat); }
+.jewels { display: flex; gap: 2vw; margin: 1vw 0 2vw; }
+.jewel { width: 5vw; height: 5vw; border-radius: 50%; border: 0.4vw solid var(--brand-brass); background: transparent; }
+.jewel.lit { background: var(--brand-brass); box-shadow: 0 0 3vw var(--brand-brass); }
+.granolia { display: flex; align-items: center; gap: 3vw; max-width: 84vw; margin: 1vw 0; }
+.granolia-face { width: 14vw; height: 14vw; flex: none; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #c9b89a, #6b5a3e 70%, #3a3020); box-shadow: inset 0 -2vw 3vw rgba(0,0,0,0.4); }
+.granolia-says { text-align: left; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 3.6vw; }
+.kiosk-big.entry { font-size: 7vw; text-transform: capitalize; color: var(--good); }
+.kiosk-count.warn { color: var(--brand-red); }
+.wall-map { width: 50vw; max-height: 40vh; margin: 1vw 0; }

@@ -17,6 +17,8 @@ export default function Kiosk({ which }) {
   const nightId = active.data?.nightId ?? null
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
+  const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
+  const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
   const serverNow = useServerClock(uid, nightId, `kiosk-${which}`)
   useTick(250)
 
@@ -25,6 +27,7 @@ export default function Kiosk({ which }) {
   if (!uid || !nightId || !n) return <Idle title="Sirwin Manor" line="The house is quiet." />
 
   if (which === 'bedroom') return <Bedroom relay={r} />
+  if (which === 'study') return <Study study={study.data} rotation={rotation.data} serverNow={serverNow} />
   return <Living night={n} relay={r} serverNow={serverNow} nightId={nightId} />
 }
 
@@ -173,5 +176,99 @@ function Bedroom({ relay }) {
       <p className="kiosk-big">{open ? 'The door is open.' : 'The door is closed.'}</p>
       <p className="kiosk-line">{open ? 'What was left behind is on this screen once the case is dealt.' : 'Name the three drawings in the living room.'}</p>
     </div>
+  )
+}
+
+
+// ---- the study screen -----------------------------------------------------
+// The M1 Air's own screen. Granolia, the three jewels, the clock, her hints.
+// Everything here is counts and words from the station; the clue never comes
+// through this screen. (Granolia's lines are defaults; the workshop can
+// replace them once a "study lines" list exists.)
+
+const CAP_MS = 15 * 60_000
+
+const SAY = {
+  idle: 'Touch any panel to begin. The wall will show you a pattern; touch it back.',
+  playing: 'Watch.',
+  reproducing: 'Now you. Touch them in the same order.',
+  entering: 'Look at the other wall. A colour, and a number of bars. Press them on the button box, then Submit.',
+  slow: 'Again, slower. I have all day. Well. Fifteen minutes.',
+  map: 'Here, I have numbered them for you. Follow the numbers.',
+  halfColour: 'The number is right, dear. Look at the colour again.',
+  halfNumber: 'The colour is right, dear. Count the bars again.',
+  neither: 'Neither half, I am afraid. Look again at both.',
+  time: 'Three minutes left, dear. Not that I am counting. I am counting.',
+  solved: 'Oh, well done. Something has been sent to your phones. Off you go.',
+  capped: 'Thank you for trying your best. Here is the rest. Something has been sent to your phones. Off you go.',
+}
+
+function Study({ study, rotation, serverNow }) {
+  const s = study ?? { state: 'idle' }
+  const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
+  const names = group ? group.members.map(m => m.name).join(', ') : null
+  const started = ms(s.startedAt)
+  const left = started && s.state !== 'done' && s.state !== 'idle' ? Math.max(0, CAP_MS - (serverNow() - started)) : null
+  const mm = left != null ? Math.floor(left / 60_000) : null
+  const ss = left != null ? Math.floor((left % 60_000) / 1000) : null
+
+  let line = SAY[s.state] ?? ''
+  if (s.hint === 'slow') line = SAY.slow
+  if (s.hint === 'map') line = SAY.map
+  if (s.state === 'entering' && s.granolia?.hint === 'half') line = s.granolia.colourRight ? SAY.halfNumber : s.granolia.numberRight ? SAY.halfColour : SAY.neither
+  if (s.state === 'entering' && s.granolia?.hint === 'words' && s.lines) line = `It is ${s.lines.colour}, and the number is ${['one', 'two', 'three', 'four', 'five', 'six'][s.lines.number - 1]}. Press those.`
+  if (s.warned && s.state !== 'done' && !s.hint && s.state !== 'entering') line = SAY.time
+  if (s.state === 'done') line = s.outcome === 'capped' ? SAY.capped : SAY.solved
+  const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
+
+  return (
+    <div className={`kiosk study ${s.state ?? 'idle'}`}>
+      <p className="kiosk-crest">The study{names ? ` · ${names}` : ''}</p>
+      <div className="jewels" aria-label="pairs found">
+        {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
+      </div>
+      {s.state !== 'idle' && s.state !== 'done' && (
+        <p className="kiosk-next">Round {(s.round ?? 0) + 1} of 3 · pattern {(s.pattern ?? 0) + 1} of 3</p>
+      )}
+      <div className="granolia">
+        <div className="granolia-face" aria-hidden="true" />
+        <p className="kiosk-line granolia-says">{line}</p>
+      </div>
+      {s.state === 'entering' && (
+        <p className="kiosk-big entry">{s.entry?.colour ?? '…'} and {s.entry?.number ?? '…'}</p>
+      )}
+      {s.state === 'entering' && s.linesOk === false && s.lines && (
+        <p className="kiosk-big">{s.lines.colour}, {s.lines.number}</p>
+      )}
+      {s.map && <WallMap layout={s.layout} order={s.map} />}
+      {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
+      {s.state === 'done' && s.revealed?.length > 0 && (
+        <p className="kiosk-line">The rest: {s.revealed.map(p => `${p.colour} and ${p.number}`).join(' · ')}</p>
+      )}
+      {left != null && <p className={`kiosk-count${s.warned ? ' warn' : ''}`}>{mm}:{String(ss).padStart(2, '0')}</p>}
+      {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
+    </div>
+  )
+}
+
+// A drawing of the wall with the panels numbered in the order they lit.
+function WallMap({ layout = [], order = [], fallback = false }) {
+  if (!layout.length) return null
+  const xs = layout.map(p => p.x), ys = layout.map(p => p.y)
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
+  const w = (maxX - minX) || 1, h = (maxY - minY) || 1
+  const r = Math.max(w, h) / Math.max(4, layout.length) / 1.2
+  return (
+    <svg className="wall-map" viewBox={`${minX - r * 1.5} ${-(maxY + r * 1.5)} ${w + r * 3} ${h + r * 3}`}>
+      {layout.map((p, i) => {
+        const steps = order.map((n, k) => (n === i + 1 ? k + 1 : null)).filter(Boolean)
+        return (
+          <g key={p.id}>
+            <circle cx={p.x} cy={-p.y} r={r} fill={steps.length ? '#F1E8D6' : '#2a3a44'} stroke="#A6A253" strokeWidth={r / 12} />
+            <text x={p.x} y={-p.y + r * 0.35} textAnchor="middle" fontSize={r} fill={steps.length ? '#001925' : '#8a9aa2'}>{fallback ? i + 1 : (steps.join(',') || '')}</text>
+          </g>
+        )
+      })}
+    </svg>
   )
 }

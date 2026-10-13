@@ -1,0 +1,20 @@
+{
+  "name": "murderwin-station",
+  "private": true,
+  "description": "The study station: runs the light game on the M1 MacBook Air. Nanoleaf over wifi, Stream Deck over USB, state to the server. docs/study-light-game.md.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node station.mjs",
+    "fake": "node station.mjs --fake",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
+  },
+  "optionalDependencies": {
+    "@elgato-stream-deck/node": "^7.0.0"
+  }
+}
