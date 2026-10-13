@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { subscribeArea, subscribeLatestValidation } from '../lib/store'
 import { AREAS, TAB_KINDS } from '../lib/content'
+import { isComplete } from '../lib/scenarios'
 
 // Where we are. The honest state of the whole project in one place: what is
 // built and works, what each list still needs (live counts), and what to do
@@ -15,7 +16,8 @@ const BUILT = [
   ['The moments', 'Blackout goes dark on every phone; Power returns holds a prompt fifteen seconds; Pause says Irwin needs the garden.'],
   ['The look', 'Blue and red, the seal, the wallpaper, New York and SF, on the invitation, the phones and here.'],
   ['The art', 'Fourteen portraits and fourteen traces, in the repo, named for the game.'],
-  ['This workshop', 'Lists with forms, Speak buttons, Pick one thing, the trail of who changed what, Jenna’s brief.'],
+  ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons. Sir Irwin keeps count.'],
+  ['The push and pull questions', 'Three silly questions in a row, two choices each, points on each choice, the eight totals, and a phone preview. Written here, dealt to every phone in Acts 2, 4 and 6.'],
 ]
 
 const NEXT = [
@@ -24,7 +26,7 @@ const NEXT = [
   ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
   ['Jenna’s page', 'Her own page for the secrets, opening only for her account. Needs your yes on one security rule.', 'Claude, then Jon'],
   ['Eight fake players', 'A script that plays a whole throwaway night, so the plumbing is proven without anyone reading a clue.', 'Claude'],
-  ['The event windows', 'Acts 2, 4 and 6: every phone lights up, two of them steering. Innocent beats come from the Filler list.', 'Claude'],
+  ['The question windows', 'Acts 2, 4 and 6: every phone lights up with a push and pull question set from the workshop. A Detective’s points move cat affection; the Murderer’s and the Ghost’s move the clarity dial, with the mapping decided blind.', 'Claude'],
   ['Dinner, dessert, the Big Solve, the reveal', 'The bulletin, Irwin’s testimony, the deduction round, the ballot and the reveal on the TV.', 'Claude'],
   ['Kiosks and the study', 'The two laptops as room screens, the Nanoleaf puzzle, the Stream Deck.', 'Claude, then Jon'],
   ['The household photos', 'Faces, full, intro cards, in-play. Folders are ready.', 'Jon'],
@@ -41,8 +43,9 @@ function suggestion(area, spec, items) {
     return { done: false, text: `Thinnest: ${def.label(first.t)} has ${first.n} of ${spec.goalPerTab}. ${short.length} of ${def.list.length} still short.`, to: `/edit/${area}?tab=${first.t}&focus=3` }
   }
   const goal = spec.goal ?? 0
-  if (live.length >= goal) return { done: true }
-  return { done: false, text: `${live.length} of ${goal}. ${goal - live.length} to go.`, to: `${area === 'templates' ? '/stationery' : `/edit/${area}`}?focus=3` }
+  const n = spec.editor === 'questions' ? live.filter(i => isComplete(i.beats)).length : live.length
+  if (n >= goal) return { done: true }
+  return { done: false, text: `${n} of ${goal}. ${goal - n} to go.`, to: `${area === 'templates' ? '/stationery' : `/edit/${area}`}?focus=3` }
 }
 
 export default function Status() {
@@ -54,7 +57,7 @@ export default function Status() {
     return () => unsubs.forEach(u => u())
   }, [])
 
-  const rows = Object.entries(AREAS).filter(([, spec]) => !spec.checklist).map(([area, spec]) => ({ area, spec, s: suggestion(area, spec, data[area] ?? []) }))
+  const rows = Object.entries(AREAS).filter(([, spec]) => !spec.checklist && !spec.retired).map(([area, spec]) => ({ area, spec, s: suggestion(area, spec, data[area] ?? []) }))
   const todo = rows.filter(r => r.s && !r.s.done)
   const done = rows.filter(r => r.s?.done)
 
@@ -78,7 +81,7 @@ export default function Status() {
         {todo.length === 0 && <p className="hint">Every list has reached its goal.</p>}
         <ul className="audit">
           {todo.map(r => (
-            <li key={r.area}><Link to={r.s.to}><b>{r.spec.label}</b></Link>: {r.s.text}</li>
+            <li key={r.area}><Link to={r.s.to}><b>{r.spec.label}</b></Link> <span className="list-moment">{r.spec.moment}</span><br />{r.s.text}</li>
           ))}
         </ul>
         {done.length > 0 && <p className="hint">At goal: {done.map(r => r.spec.label).join(', ')}.</p>}

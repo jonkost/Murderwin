@@ -44,7 +44,7 @@ export default function Night() {
   return (
     <main className="dash night">
       {status === 'error' && (
-        <div className="banner error" role="alert">SAVE FAILED — check your connection and try again.</div>
+        <div className="banner error" role="alert">SAVE FAILED. Check your signal and try again.</div>
       )}
 
       <section className="panel">

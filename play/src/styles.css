@@ -116,18 +116,33 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .tab.on { color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
 
 .you { text-align: center; }
-.portrait {
-  width: 7.5rem; height: 7.5rem; margin: 0.4rem auto 0.8rem; border-radius: 50%; overflow: hidden;
-  background: var(--card); border: 2px solid var(--line);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Libre Caslon Display', Georgia, serif; font-weight: 400; font-size: 2.2rem; color: var(--dim);
+/* The character card. Playing-card shape, 5 by 7, as wide as the phone allows. */
+.card {
+  position: relative; width: min(88%, 20rem); aspect-ratio: 5 / 7; margin: 0.4rem auto 1rem;
+  border-radius: 1rem; overflow: hidden; isolation: isolate;
+  background: var(--tone); color: var(--brand-parchment);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(241, 232, 214, 0.12);
 }
-.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* a full-length drawing: show all of it, no crop, no circle */
-.portrait.figure { width: auto; height: 44vh; max-height: 26rem; border-radius: 0.6rem; background: none; border: none; }
-.portrait.figure img { width: auto; height: 100%; object-fit: contain; margin: 0 auto; }
-.who { font-size: 1.9rem; margin: 0; line-height: 1.15; }
-.profession { margin: 0.1rem 0 0.9rem; color: var(--dim); font-style: italic; font-size: 1.1rem; }
+.card.tone-blue { --tone: var(--brand-blue); }
+.card.tone-red { --tone: var(--brand-red); }
+.card.tone-claret { --tone: var(--brand-claret); }
+.card.tone-bottle { --tone: var(--brand-bottle); }
+.card.tone-peat { --tone: var(--brand-peat); }
+.card.tone-charcoal { --tone: var(--brand-charcoal); }
+.card .who, .card .profession {
+  position: absolute; left: 0; right: 0; z-index: 3; margin: 0; text-align: center;
+  background: rgba(0, 0, 0, 0.28); padding: 0.6rem 0.8rem;
+}
+.card .who { top: 0; font-size: 1.45rem; line-height: 1.12; min-height: 2.9rem; display: flex; align-items: center; justify-content: center; }
+.card .who.long { font-size: 1.15rem; }
+.card .profession { bottom: 0; color: var(--brand-parchment); font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 1.15rem; opacity: 0.92; }
+.card .oval {
+  position: absolute; z-index: 1; left: 50%; top: 17%; width: 74%; height: 66%; transform: translateX(-50%);
+  border-radius: 50%; background: color-mix(in srgb, var(--tone) 78%, var(--brand-parchment));
+  display: flex; align-items: center; justify-content: center;
+}
+.card .initials { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 3.2rem; color: var(--brand-parchment); opacity: 0.8; }
+.card .figure { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); width: auto; max-width: none; pointer-events: none; }
 .bio { font-size: 1.15rem; margin: 0 0 1rem; }
 .bag { margin: 0; font-size: 1.05rem; }
 .bag strong { font-size: 1.4rem; color: var(--ink); }

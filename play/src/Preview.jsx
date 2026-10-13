@@ -44,11 +44,16 @@ export default function Preview({ screen }) {
     default:
       return (
         <>
-          <Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={null} ui={ui} />
+          <Rest uid="preview" night={night} session={{ ...SESSION, characterId: previewCharacter() || SESSION.characterId }} content={CONTENT} notes={null} ui={ui} />
           <button className="preview-act" onClick={() => setAct(a => (a % 7) + 1)} title="Next act (preview only)">act {act} ▸</button>
         </>
       )
   }
+}
+
+// /play/?preview=rest&character=leech shows that character's card instead.
+function previewCharacter() {
+  try { return new URLSearchParams(window.location.search).get('character') } catch { return null }
 }
 
 export function previewScreen() {

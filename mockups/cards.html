@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character cards — options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #001925; --red: #bf1925; --claret: #592F32; --soot: #332526; --ash: #332C2D;
+    --brass: #A6A253; --peat: #262500; --bottle: #00261E; --charcoal: #1F2124; --parchment: #F1E8D6;
+    --serif: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, system-ui, 'Source Sans 3', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  body { margin: 0; background: #0b0f12; color: var(--parchment); font-family: var(--sans); padding: 24px 16px 60px; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: 1.6rem; margin: 0 0 4px; }
+  .lead { color: #a9b8c0; margin: 0 0 28px; max-width: 60ch; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 1.25rem; margin: 36px 0 2px; }
+  .note { color: #a9b8c0; margin: 0 0 14px; font-size: 0.95rem; max-width: 70ch; }
+  .row { display: flex; flex-wrap: wrap; gap: 22px; }
+
+  /* The card. Playing-card proportion, 2.5 by 3.5. */
+  .card {
+    position: relative; width: 250px; height: 350px; border-radius: 16px; overflow: hidden;
+    background: var(--bg); color: var(--ink, var(--parchment));
+    box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px rgba(241,232,214,.12);
+    display: flex; flex-direction: column; align-items: center; isolation: isolate;
+  }
+  .card .name { position: absolute; top: 0; left: 0; right: 0; z-index: 3; text-align: center; padding: 16px 14px 0; margin: 0;
+    font-family: var(--serif); font-weight: 600; font-size: 1.25rem; line-height: 1.12; letter-spacing: 0; }
+  .card .job { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; text-align: center; padding: 0 14px 15px; margin: 0; }
+  .card .figure { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); bottom: 44px; height: 236px; width: auto; }
+  .card .oval { position: absolute; z-index: 1; left: 50%; transform: translateX(-50%); border-radius: 50%; }
+
+  /* A — Cameo. Parchment oval, figure sits inside it. */
+  .a .oval { width: 184px; height: 238px; top: 56px; background: var(--parchment); }
+  .a .figure { height: 226px; bottom: 50px; }
+  .a .job { font-family: var(--serif); font-style: italic; font-size: 1.05rem; opacity: .9; }
+
+  /* B — Wallpaper. The house pattern on the colour, a brass ring, figure breaks over the ring. */
+  .b::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-color: var(--parchment); opacity: .09;
+    -webkit-mask: url('../play/public/brand/pattern.svg') center top / 420px repeat; mask: url('../play/public/brand/pattern.svg') center top / 420px repeat; }
+  .b .oval { width: 176px; height: 226px; top: 66px; background: rgba(0,0,0,.22); box-shadow: 0 0 0 2px var(--brass), inset 0 0 0 1px rgba(241,232,214,.15); }
+  .b .figure { height: 246px; bottom: 46px; }
+  .b .job { font-family: var(--sans); font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); }
+  .b .job::before { content: ''; display: block; width: 44px; height: 1px; background: var(--brass); margin: 0 auto 9px; opacity: .8; }
+
+  /* C — Plate. Bands top and bottom, oval is a lighter tint of the same colour. */
+  .c .name, .c .job { background: rgba(0,0,0,.28); }
+  .c .name { padding: 12px 14px 10px; }
+  .c .job { padding: 10px 14px 12px; font-family: var(--sans); font-size: .95rem; font-weight: 600; letter-spacing: .04em; color: var(--brass); }
+  .c .oval { width: 188px; height: 230px; top: 62px; background: color-mix(in srgb, var(--bg) 78%, var(--parchment)); }
+  .c .figure { height: 232px; bottom: 50px; }
+
+  /* D — Frame. Double brass line, big figure breaking the frame, parchment wash inside. */
+  .d .oval { width: 182px; height: 232px; top: 60px; background: rgba(241,232,214,.08);
+    box-shadow: 0 0 0 1px var(--brass), 0 0 0 4px var(--bg), 0 0 0 5.5px var(--brass); }
+  .d .figure { height: 246px; bottom: 42px; }
+  .d .name { font-size: 1.3rem; }
+  .card .name.long { font-size: 1.05rem; padding-top: 14px; }
+  .d .name.long { font-size: 1.12rem; }
+  .d .job { font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--brass); }
+
+  /* colour variants */
+  .blue { --bg: var(--blue); } .red { --bg: var(--red); } .claret { --bg: var(--claret); }
+  .bottle { --bg: var(--bottle); } .peat { --bg: var(--peat); } .charcoal { --bg: var(--charcoal); }
+  .brass-bg { --bg: var(--brass); --ink: var(--peat); }
+  .brass-bg .job, .brass-bg .job::before { color: var(--peat); background-color: var(--peat); }
+  .brass-bg .job { background-color: transparent; }
+  .c.brass-bg .job { background: rgba(0,0,0,.18); }
+  .b.brass-bg .oval, .d.brass-bg .oval { box-shadow: 0 0 0 2px var(--peat); }
+  .d.brass-bg .oval { box-shadow: 0 0 0 1px var(--peat), 0 0 0 4px var(--bg), 0 0 0 5.5px var(--peat); }
+
+  .legend { margin-top: 40px; color: #a9b8c0; font-size: .9rem; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .sw { width: 64px; height: 36px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; font-size: .7rem; padding-bottom: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+</style>
+</head>
+<body>
+<h1>Character cards — four options</h1>
+<p class="lead">Name on top, job on the bottom, an oval between the colour and the character. Names in New York (the serif), jobs in the second face of each option. Dorothy Rye is in every row so the four styles can be compared side by side.</p>
+
+<h2>A — Cameo</h2>
+<p class="note">A solid parchment oval, like a cameo brooch. The character sits inside it. Job in italic serif. Calmest of the four.</p>
+<div class="row">
+  <div class="card a blue"><h3 class="name">Dorothy Rye</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/rye.png" alt=""><p class="job">The Baker</p></div>
+  <div class="card a red"><h3 class="name">Roger Arms</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/arms.png" alt=""><p class="job">The Sergeant Major</p></div>
+  <div class="card a bottle"><h3 class="name long">Madame Opal Mourningstone</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/mourningstone.png" alt=""><p class="job">The Medium</p></div>
+  <div class="card a claret"><h3 class="name">Jasper Steeps</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/steeps.png" alt=""><p class="job">The Barista</p></div>
+</div>
+
+<h2>B — Wallpaper</h2>
+<p class="note">The house wallpaper faintly on the colour, a brass ring, and the character standing up over the top of it. Job in small capitals with a brass rule. Closest to the phone's look.</p>
+<div class="row">
+  <div class="card b blue"><h3 class="name">Dorothy Rye</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/rye.png" alt=""><p class="job">Baker</p></div>
+  <div class="card b peat"><h3 class="name">Ignatius Fume</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/fume.png" alt=""><p class="job">Scientist</p></div>
+  <div class="card b red"><h3 class="name">Constance Vayne</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/vayne.png" alt=""><p class="job">Influencer</p></div>
+  <div class="card b bottle"><h3 class="name">Iris DeVine</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/devine.png" alt=""><p class="job">Florist</p></div>
+</div>
+
+<h2>C — Plate</h2>
+<p class="note">A darker band top and bottom for the name and the job, and the oval is a lighter tint of the card's own colour. Job in bold sans, brass. Reads well from across a room.</p>
+<div class="row">
+  <div class="card c blue"><h3 class="name">Dorothy Rye</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/rye.png" alt=""><p class="job">The Baker</p></div>
+  <div class="card c charcoal"><h3 class="name">Preston White</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/white.png" alt=""><p class="job">The Reporter</p></div>
+  <div class="card c claret"><h3 class="name">Prudence Ledger</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/ledger.png" alt=""><p class="job">The Banker</p></div>
+  <div class="card c brass-bg"><h3 class="name">Hayward Barnes</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/barnes.png" alt=""><p class="job">The Farmer</p></div>
+</div>
+
+<h2>D — Frame</h2>
+<p class="note">A double brass line as a picture frame, the character drawn biggest and breaking out over it. Job in brass italic serif. Most "playing card" of the four.</p>
+<div class="row">
+  <div class="card d blue"><h3 class="name">Dorothy Rye</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/rye.png" alt=""><p class="job">The Baker</p></div>
+  <div class="card d red"><h3 class="name long">Dr. Bartholomew Leech</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/leech.png" alt=""><p class="job">The Doctor</p></div>
+  <div class="card d bottle"><h3 class="name long">Dr. Paige Shushwell</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/shushwell.png" alt=""><p class="job">The Librarian</p></div>
+  <div class="card d brass-bg"><h3 class="name long">Prof. Susan Kostington</h3><div class="oval"></div><img class="figure" src="../play/public/portraits/prof-susan.png" alt=""><p class="job">The Professor</p></div>
+</div>
+
+<div class="legend">
+  The palette used for the backgrounds:
+  <div class="swatches">
+    <div class="sw" style="background:#001925">blue</div><div class="sw" style="background:#bf1925">red</div>
+    <div class="sw" style="background:#592F32">claret</div><div class="sw" style="background:#00261E">bottle</div>
+    <div class="sw" style="background:#262500">peat</div><div class="sw" style="background:#1F2124">charcoal</div>
+    <div class="sw" style="background:#A6A253;color:#262500">brass</div>
+  </div>
+</div>
+</body>
+</html>

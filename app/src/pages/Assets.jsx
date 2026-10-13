@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAreaEditor } from '../lib/useAreaEditor'
 import { uploadFile } from '../lib/store'
 import { AREAS, GUIDES } from '../lib/content'
-import FieldGuide from '../components/FieldGuide'
+import ListCard from '../components/ListCard'
 
 // One tab per checklist area that takes uploads.
 const TABS = [
@@ -21,9 +21,9 @@ function nameFromFile(file) {
 }
 
 function uploadErrorText(e) {
-  if (!navigator.onLine) return 'Upload failed — you appear to be offline. Names and ticks still save; files need a connection.'
-  if (e.code === 'storage/unauthorized') return 'Upload failed — this account isn’t allowed to upload files.'
-  return `Upload failed — ${e.message}`
+  if (!navigator.onLine) return 'Upload failed: you appear to be offline. Names and ticks still save; files need a connection.'
+  if (e.code === 'storage/unauthorized') return 'Upload failed: this account is not allowed to upload files.'
+  return `Upload failed: ${e.message}`
 }
 
 export default function Assets() {
@@ -123,13 +123,13 @@ function AssetList({ area, noun, accept }) {
     <>
       {status === 'error' && (
         <div className="banner error" role="alert">
-          SAVE FAILED — your latest edits are NOT saved.
+          SAVE FAILED. Your latest edits are not saved.
           <button onClick={flush}>Retry now</button>
         </div>
       )}
       {status === 'loaderror' && (
         <div className="banner error" role="alert">
-          Couldn’t load this list — check your connection and reload.
+          This list did not load. Check your signal and reload.
         </div>
       )}
       {uploadErr && (
@@ -144,7 +144,7 @@ function AssetList({ area, noun, accept }) {
           {status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
         </span>
       </div>
-      <FieldGuide guide={GUIDES[spec.guide]} />
+      <ListCard area={area} tab={null} />
 
       <label className={uploading.new ? 'primary upload-new busy' : 'primary upload-new'}>
         {uploading.new ? `uploading ${uploading.new}…` : `+ Upload ${noun}s`}

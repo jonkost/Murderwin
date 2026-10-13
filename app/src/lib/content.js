@@ -1,71 +1,171 @@
 import seed from '../../../seed/safe-content.json'
+import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES } from './codecs'
 
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog' },
   { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite' },
-  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'the charity case' },
+  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would' },
 ]
 
 export const POOLS = ['room', 'time', 'duration', 'count', 'place', 'crowd']
+export const POOL_NAMES = { room: 'Rooms', time: 'Times of day', duration: 'How long', count: 'How many times', place: 'Places in town', crowd: 'Who was watching' }
 
 export const ACTS = ['act1', 'act2', 'act3', 'act4', 'act5', 'act6', 'act7']
+export const ACT_NAMES = { act1: 'Welcome', act2: 'On your own', act3: 'Dinner', act4: 'In pairs', act5: 'Dessert', act6: 'The Big Solve', act7: 'The reveal' }
 
 export const TAB_KINDS = {
   cats: { list: CATS.map(c => c.key), field: 'cat', label: k => CATS.find(c => c.key === k).name },
-  pools: { list: POOLS, field: 'pool', label: k => k },
-  acts: { list: ACTS, field: 'act', label: k => `Act ${k.slice(3)}` },
+  // Sir Irwin adores everyone and never brushes anyone off, so no Irwin tab here.
+  cats4: { list: CATS.filter(c => c.key !== 'irwin').map(c => c.key), field: 'cat', label: k => CATS.find(c => c.key === k).name },
+  pools: { list: POOLS, field: 'pool', label: k => POOL_NAMES[k] ?? k },
+  acts: { list: ACTS, field: 'act', label: k => `Act ${k.slice(3)}: ${ACT_NAMES[k]}` },
 }
 
-export const AREAS = {
-  // Every area gets a plain name and one sentence saying what it is for.
-  // `form` splits a line into two labelled fields on screen (the saved text
-  // stays one line, joined by `sep`, so nothing already written changes).
-  // `hidden` areas live under "Everything else" on the home page.
+// A field is one box on screen. kind: text | textarea | select. The box
+// marked main takes the cursor and the Speak button.
+const line = (label, placeholder, extra = {}) => ({ key: 'text', label, placeholder, kind: 'textarea', main: true, ...extra })
 
+// Every list. `moment` says which part of the night the list feeds (shown as
+// a chip on Home and at the top of the list). `fields` and `codec` turn one
+// saved line into boxes; a list without them is a single box. `why` is the
+// one-sentence summary on Home; the full card (what it is, where a guest
+// meets it, what goes in each box, an example) lives in cards.js.
+export const AREAS = {
   // — The characters —
-  bios: { add: "Add one character: their name, then what they do, then a line or two about how they act, then what to wear.", label: 'The fourteen characters', why: 'One line each guest reads about who they are tonight. Name, then the profession, then a line or two, then what to wear.', group: 'The characters', tabs: null, guide: 'bio', goal: 14,
-    fields: ['name', 'profession', 'persona', 'costume'] },
+  bios: { label: 'The fourteen characters', moment: 'Act 1, dealt at the door when a guest taps their name, then on the phone all night', why: 'One card each guest reads about who they are tonight: name, what they do, a line or two, what to wear.', group: 'The characters', tabs: null, guide: 'bio', goal: 14,
+    codec: characterCodec,
+    fields: [
+      { key: 'name', label: 'Name', placeholder: 'Dorothy Rye', kind: 'text' },
+      { key: 'profession', label: 'What they do', placeholder: 'Baker', kind: 'text' },
+      { key: 'persona', label: 'Who they are, in a line or two', placeholder: 'Up since four. Has opinions about everyone else’s bread.', kind: 'textarea', main: true },
+      { key: 'costume', label: 'What to wear', placeholder: 'Apron, flour on the hands, a wooden spoon', kind: 'text' },
+    ] },
 
   // — The household —
-  npc_cards: { add: "Add a short introduction to one of the cats or Sir Irwin, the way a guest would meet them in Act 1.", label: 'Meet the household', why: 'A short introduction to each cat and to Sir Irwin, shown to everyone in Act 1.', group: 'The household', tabs: null, guide: 'npc_card', goal: 5 },
-  openers: { add: "Add one thing this cat says first, before it tells a guest anything.", label: 'How each cat starts talking', why: 'The first thing a cat says when a guest comes to it. The secret middle is written by Claude; you write the greeting.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 8 },
-  closers: { add: "Add one thing this cat says last, after it has told what it knows.", label: 'How each cat finishes', why: 'The last thing a cat says after it has told what it knows.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 8 },
-  refusals: { add: "Add one thing this cat says when it will not talk to a guest. Funny, and it gives nothing away.", label: 'How each cat brushes you off', why: 'What a cat says when it will not talk to this guest. Funny, in character, and it gives nothing away.', group: 'The household', tabs: 'cats', guide: 'refusal', goalPerTab: 8 },
-  smalltalk: { add: "Add one line this cat mutters as it wanders past a phone doing nothing. Never about the case.", label: 'Idle chatter', why: 'A line a cat mutters as it wanders past a phone that is doing nothing. Never about the case.', group: 'The household', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8 },
-  status_lines: { add: "Add one line that tells a guest how this cat feels about them, for locked out, warming up, or in.", label: 'How a cat feels about you', why: 'The phone never shows a number for affection. It shows one of these lines instead: locked out, warming up, or in.', group: 'The household', tabs: 'cats', guide: 'status_line', goalPerTab: 3,
-    form: { sep: ': ', a: 'Standing', b: 'The line', options: ['LOCKED', 'WARMING', 'IN'] } },
-  trailoffs: { add: "Add one way Granolia loses her thread mid-sentence.", label: 'Granolia trail-offs', why: 'Rarely needed now that Granolia misremembers instead of trailing off.', group: 'The household', tabs: null, guide: 'trailoff', goal: 8, hidden: true },
+  npc_cards: { label: 'Meet the household', moment: 'Act 1, when guests meet the cats and Sir Irwin', why: 'A short introduction to each cat and to Sir Irwin, read on the phone before anyone goes looking for them.', group: 'The household', tabs: null, guide: 'npc_card', goal: 5,
+    codec: npcCodec,
+    fields: [
+      { key: 'name', label: 'Name', placeholder: 'MISS BOO LARUE', kind: 'text' },
+      { key: 'title', label: 'Who they are to the house', placeholder: 'Pick one', kind: 'select', options: CATS.map(c => c.tag) },
+      { key: 'about', label: 'About them, two or three sentences, ending with where they keep themselves', placeholder: 'Arrived for a party some years back and has seen no reason to declare it over. Found wherever the light is best.', kind: 'textarea', main: true },
+    ] },
+  openers: { label: 'What a cat says first', moment: 'Acts 2 and 4, the moment a cat starts talking to you', why: 'The greeting at the top of a cat’s testimony. Claude writes the secret middle; you write the hello.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 8,
+    fields: [line('The greeting', 'How this cat says hello, before it says anything useful')] },
+  closers: { label: 'What a cat says last', moment: 'Acts 2 and 4, the moment a cat finishes', why: 'The sign-off at the bottom of a cat’s testimony, after the secret middle has landed.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 8,
+    fields: [line('The sign-off', 'One short sentence in this cat’s voice, adding nothing')] },
+  refusals: { label: 'What a cat says to brush you off', moment: 'Acts 2 and 4, when a cat will not talk to you', why: 'What a cat says when it declines to talk to this guest. Funny, in character, and it gives nothing away.', group: 'The household', tabs: 'cats4', guide: 'refusal', goalPerTab: 8,
+    fields: [line('The brush-off', 'How this cat says no, in a sentence or two')] },
+  smalltalk: { label: 'Cat chatter, passing by', moment: 'All night: a passing line on each phone, and on the room screens', why: 'A line a cat mutters as it passes a phone at rest, and on the room screens beside the real lines. Never about the case.', group: 'The household', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8,
+    fields: [line('The line', 'Something this cat would mutter about the house')] },
+  status_lines: { label: 'How a cat feels about you', moment: 'All night, on the Cats tab of each phone', why: 'The phone never shows a number for affection. It shows one of these lines instead: locked out, warming up, or in.', group: 'The household', tabs: 'cats', guide: 'status_line', goalPerTab: 3,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Standing', placeholder: 'Pick one', kind: 'select', options: [
+        { value: 'LOCKED', label: 'Locked out' }, { value: 'WARMING', label: 'Warming up' }, { value: 'IN', label: 'In' }] },
+      { key: 'text', label: 'The line the guest reads', placeholder: 'One sentence about where this guest stands with the cat', kind: 'textarea', main: true },
+    ] },
+  trailoffs: { label: 'Granolia losing her thread', moment: 'Acts 2 and 4, inside Granolia’s testimony', why: 'Rarely needed now that Granolia misremembers instead of trailing off.', group: 'The household', tabs: null, guide: 'trailoff', goal: 8, hidden: true,
+    fields: [line('The aside', '… that’s how I remember it, anyway. *snrk.* Mostly.')] },
 
   // — Words on the phones —
-  rules_text: { add: "Add one rule as a guest reads it on their phone: a heading, then a short paragraph.", label: 'The rules, section by section', why: 'What the Rules tab on every phone says. A heading and a short paragraph each.', group: 'Words on the phones', tabs: null, guide: 'rules', goal: 10,
-    form: { sep: ' — ', a: 'Heading', b: 'What it says' } },
-  ui_copy: { add: "Add one fixed line the phone shows: where it shows, then the words.", label: 'Little lines the phone says', why: 'The fixed words on screens: the door, the lobby, no signal, paused. Say where it shows, then the line.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: 24,
-    form: { sep: ': ', a: 'Where it shows', b: 'The line', options: ['JOIN', 'JOIN BUTTON', 'JOIN AGAIN', 'DOORS', 'LOBBY', 'BAG', 'OFFLINE', 'PAUSED', 'SUPERSEDED', 'POWER', 'HIDE', 'HOLD', 'RETICULE', 'START NIGHT', 'HOST'] } },
-  act_scripts: { add: "Add the banner, the one-line objective, or the beats for this act.", label: 'Act banners', why: 'The title line and one sentence of purpose shown at the top of every phone during each act.', group: 'Words on the phones', tabs: 'acts', guide: 'act_script', goalPerTab: 3,
-    form: { sep: ': ', a: 'Kind', b: 'The line', options: ['BANNER', 'OBJECTIVE', 'BEATS'] } },
-  filler: { add: "Add something an ordinary phone shows while the two secret roles choose. End with the button text.", label: 'Something to read while others choose', why: 'What an ordinary phone shows while the Murderer and the Ghost secretly pick an event. Ends with a button so it takes as long as a real choice.', group: 'Words on the phones', tabs: null, guide: 'filler', goal: 20 },
-  role_cards: { add: "Add what one role is told when the power comes back. Same length and shape for all three.", label: 'Role cards', why: 'What the Murderer, the Ghost and a Detective are told when the power comes back. Same length and shape for all three.', group: 'Words on the phones', tabs: null, guide: 'role_card', goal: 6,
-    form: { sep: ': ', a: 'Role', b: 'The card', options: ['MURDERER', 'GHOST', 'DETECTIVE'] } },
-  event_cards: { add: "Add a note about an event. The real copy is written blind by Claude.", label: 'Event cards', why: 'Event copy is written blind by Claude; this list is only for notes.', group: 'Words on the phones', tabs: null, guide: 'event_card', goal: 12, hidden: true },
-  lore: { add: "Add one piece of house history a curious guest might read.", label: 'House history', why: 'Optional texture about Sirwin Manor for guests who want to read more.', group: 'Words on the phones', tabs: null, guide: 'lore', goal: 4, hidden: true },
+  rules_text: { label: 'The rules, one section each', moment: 'All night, on the Rules tab of each phone', why: 'What the Rules tab on every phone says. A heading and a short paragraph each.', group: 'Words on the phones', tabs: null, guide: 'rules', goal: 10,
+    codec: dashCodec,
+    fields: [
+      { key: 'title', label: 'Heading, in capitals', placeholder: 'YOUR PHONE', kind: 'text' },
+      { key: 'body', label: 'What it says, one to three sentences', placeholder: 'It is your notebook, your map, and your memory tonight. Keep it on you.', kind: 'textarea', main: true },
+    ] },
+  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, no signal, paused, the ballot', why: 'The fixed words on screens that no character is speaking: the door, the lobby, no signal, paused.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: 24,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which screen', placeholder: 'Pick one', kind: 'select', options: [
+        { value: 'JOIN', label: 'JOIN: scanning in at the door' }, { value: 'JOIN BUTTON', label: 'JOIN BUTTON: the button that lets you in' }, { value: 'JOIN AGAIN', label: 'JOIN AGAIN: coming back on a new phone' },
+        { value: 'DOORS', label: 'DOORS: the doors are not open yet' }, { value: 'LOBBY', label: 'LOBBY: in, waiting for Act 1' }, { value: 'BAG', label: 'BAG: which bag to collect' },
+        { value: 'OFFLINE', label: 'OFFLINE: no signal' }, { value: 'PAUSED', label: 'PAUSED: the night is paused' }, { value: 'SUPERSEDED', label: 'SUPERSEDED: this character moved to another phone' },
+        { value: 'POWER', label: 'POWER: the power comes back' }, { value: 'HIDE', label: 'HIDE: the hide-this button' }, { value: 'HOLD', label: 'HOLD: hold on, nearly there' },
+        { value: 'RETICULE', label: 'RETICULE: the tabs at the bottom' }, { value: 'START NIGHT', label: 'START NIGHT: the hosts start the night' }, { value: 'HOST', label: 'HOST: the hosts’ own tab' },
+        { value: 'BALLOT', label: 'BALLOT: Act 7, naming the three' }, { value: 'BALLOT CONFIRM', label: 'BALLOT CONFIRM: are you sure' }, { value: 'RESULTS', label: 'RESULTS: after the reveal' },
+        { value: 'TIMER', label: 'TIMER: the clock on an act' }, { value: 'HELP', label: 'HELP: the help button' }, { value: 'KIOSK IDLE', label: 'KIOSK IDLE: a room screen with nothing to say' }, { value: 'SPILL', label: 'SPILL: spill the beans' }] },
+      { key: 'text', label: 'The line', placeholder: 'The Manor cannot hear your phone. Stay where you are: it will reconnect on its own. Nothing is lost.', kind: 'textarea', main: true },
+    ] },
+  act_scripts: { label: 'The banner for each act', moment: 'The top of every phone when an act begins', why: 'The title line and one sentence of purpose shown at the top of every phone during each act, plus your own run-of-show.', group: 'Words on the phones', tabs: 'acts', guide: 'act_script', goalPerTab: 3,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which line', placeholder: 'Pick one', kind: 'select', options: [
+        { value: 'BANNER', label: 'Banner: the title card' }, { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }, { value: 'BEATS', label: 'Beats: the hosts’ running order' }] },
+      { key: 'text', label: 'The words', placeholder: 'Act the Fourth: In Which Two Heads Prove Scarcely Better Than One.', kind: 'textarea', main: true },
+    ] },
+  scenarios: { label: 'Push and pull questions', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
+  role_cards: { label: 'The cards in the blackout', moment: 'Act 1, the blackout, when roles land', why: 'When the lights come back every phone shows one card: Murderer, Ghost or Detective. All three the same length, so a lit screen gives nothing away.', group: 'Words on the phones', tabs: null, guide: 'role_card', goal: 6,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which card', placeholder: 'Pick one', kind: 'select', options: [
+        { value: 'BUZZ', label: 'Buzz: the one message every phone shows' }, { value: 'MURDERER', label: 'Murderer card' }, { value: 'GHOST', label: 'Ghost card' }, { value: 'DETECTIVE', label: 'Detective card (everyone else)' },
+        { value: 'MURDERER BRIEFING', label: 'Murderer briefing (after the blackout)' }, { value: 'GHOST BRIEFING', label: 'Ghost briefing (after the blackout)' }] },
+      { key: 'text', label: 'The card', placeholder: 'The Manor has lost you tonight. No one knows, and no one knows why, not even you. Walk, talk, and play on.', kind: 'textarea', main: true },
+    ] },
+  filler: { label: 'Old filler messages', moment: 'Retired: the push and pull questions replaced these', why: 'The old way of keeping ordinary phones busy during a question window. Kept, not used.', group: 'Words on the phones', tabs: null, guide: 'filler', goal: 20, hidden: true, retired: true,
+    codec: fillerCodec,
+    fields: [
+      { key: 'message', label: 'The message', placeholder: 'Open your bag and pick out the one thing you would never want to smell twice.', kind: 'textarea', main: true },
+      { key: 'button', label: 'What the button says', placeholder: 'Done, I have picked one', kind: 'text' },
+    ] },
+  event_cards: { label: 'Event notes', moment: 'Notes only: event copy is written blind by Claude', why: 'Event copy is written blind by Claude; this list is only for notes.', group: 'Words on the phones', tabs: null, guide: 'event_card', goal: 12, hidden: true, retired: true,
+    fields: [line('A note', 'A CONVENIENT FOG (Act 2): one room’s screen stays dark this act.')] },
+  lore: { label: 'House history', moment: 'All night, for a curious guest; quoted on screens', why: 'Short paragraphs about the Sirwin family and how each animal came to the house.', group: 'Words on the phones', tabs: null, guide: 'lore', goal: 4, hidden: true,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Title, in capitals', placeholder: 'THE FAMILY', kind: 'text' },
+      { key: 'text', label: 'The paragraph', placeholder: 'Papa Sirwin inherited everything, including his opinions.', kind: 'textarea', main: true },
+    ] },
 
   // — Blanks and frames —
-  pools: { add: "Add one short phrase that can fill a blank in a cat's line. Lowercase, no full stop.", label: 'Blanks: rooms, times, counts…', why: 'Cat lines have blanks like [ROOM]. These lists fill them. Short phrases, lowercase.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10 },
-  echo_frames: { add: "Add one news or radio wrapper with exactly one ███ gap for the secret part.", label: 'News frames', why: 'A radio or newspaper wrapper with one ███ gap. The gap is filled with a secret fragment on the night.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8 },
-  templates: { add: "Tick a stationery design when it is drawn, and attach a reference picture.", label: 'Stationery designs', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
-  epilogue_frames: { add: "Add a closing paragraph for the reveal with [MURDERER], [VICTIM] and [MOTIVE_RHYME] blanks.", label: 'Epilogue frames', why: 'The closing paragraph at the reveal, with blanks for the names.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2, hidden: true },
+  pools: { label: 'Blanks: rooms, times, counts', moment: 'Acts 2 and 4, dropped into a cat’s testimony', why: 'Cat lines have blanks like [ROOM]. These short phrases fill them. Lowercase, no full stop.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10,
+    fields: [line('A short phrase', 'the scullery')] },
+  echo_frames: { label: 'News frames', moment: 'Acts 2 and 4, the news bulletin on a room screen', why: 'A radio or newspaper wrapper with one gap. The gap is filled with a secret fragment on the night.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8,
+    codec: echoCodec,
+    fields: [
+      { key: 'before', label: 'Before the gap (start with ...)', placeholder: '...the morning post brings word of', kind: 'textarea', main: true },
+      { key: 'after', label: 'After the gap (end with ...)', placeholder: ', which the household calls exaggerated and the post calls Tuesday...', kind: 'textarea' },
+    ] },
+  templates: { label: 'Stationery designs', moment: 'Acts 2 and 4, the paper a solved puzzle pays out', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
+  epilogue_frames: { label: 'The closing story', moment: 'Act 7, read aloud after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2, hidden: true,
+    fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
   // — The bags —
-  bag_items: { add: "Add one thing that could go in a bag: the item, then the one sense it stands out to.", label: 'Things in the bags', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 60,
-    form: { sep: ' — ', a: 'Item', b: 'sense: property (smell: minty)' } },
+  bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 60,
+    codec: bagCodec,
+    fields: [
+      { key: 'item', label: 'The item', placeholder: 'Mint tea bag', kind: 'text', main: true },
+      { key: 'sense', label: 'Which sense notices it', placeholder: 'Pick one', kind: 'select', options: SENSES },
+      { key: 'property', label: 'What that sense notices, one word or two', placeholder: 'minty', kind: 'text' },
+    ] },
 
   // — Everything else —
-  ops_docs: { add: "Add a note to yourself for the night.", label: 'Host notes', why: 'Notes to yourself for the night.', group: 'Everything else', tabs: null, guide: 'ops_doc', goal: 12, hidden: true,
-    form: { sep: ': ', a: 'Label', b: 'Note' } },
-  art_assets: { add: "Tick a picture when it is made.", label: 'Pictures', why: 'A checklist of pictures still to make.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true },
-  av_assets: { add: "Tick a sound when it is made.", label: 'Sounds', why: 'A checklist of sounds still to make.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true },
+  ops_docs: { label: 'Host notes', moment: 'Your own notes for running the night', why: 'Notes to yourself for the night: the welcome speech, the cue sheet, the fix-it sheet.', group: 'Everything else', tabs: null, guide: 'ops_doc', goal: 12, hidden: true,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Title, in capitals', placeholder: 'WELCOME SPEECH', kind: 'text' },
+      { key: 'text', label: 'The note', placeholder: 'Good evening, and welcome to Sirwin Manor.', kind: 'textarea', main: true },
+    ] },
+  art_assets: { label: 'Pictures', moment: 'Screens, portraits and the big TV', why: 'A checklist of pictures still to make.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true },
+  av_assets: { label: 'Sounds', moment: 'The speakers: chimes, crackle, thunder', why: 'A checklist of sounds still to make.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true },
+}
+
+// Boxes for a list, and the codec that joins them. A list with no fields is
+// one plain box.
+const PLAIN_FIELDS = [line('The line', '')]
+export function fieldsFor(area) {
+  const spec = AREAS[area]
+  return spec?.fields ?? PLAIN_FIELDS
+}
+export function codecFor(area) {
+  return AREAS[area]?.codec ?? plainCodec
+}
+export function mainFieldKey(area) {
+  const fs = fieldsFor(area)
+  return (fs.find(f => f.main) ?? fs.find(f => f.kind === 'textarea') ?? fs[0]).key
 }
 
 export const AREA_GROUPS = ['The characters', 'The household', 'Words on the phones', 'Blanks and frames', 'The bags']
@@ -74,8 +174,8 @@ export const AREA_GROUPS = ['The characters', 'The household', 'Words on the pho
 export const GROUP_WHY = {
   'The characters': 'Who the guests become. The game deals these at random on the night.',
   'The household': 'The four cats and Sir Irwin. You write their manners; Claude writes their secrets.',
-  'Words on the phones': 'Everything a phone says that no character is speaking.',
-  'Blanks and frames': 'The pieces the secret content is poured into.',
+  'Words on the phones': 'Everything a phone says that no character is speaking, and the questions every phone asks.',
+  'Blanks and frames': 'Fill-in-the-blank pieces. On the night the game drops its secret words into these.',
   'The bags': 'The one physical part of the night.',
 }
 
@@ -99,8 +199,17 @@ const AV_ASSET_SEED = [
 
 export const GUIDES = seed.guides
 
-// Live syntax lint — one high-signal warning per line, shown while typing.
-// Mirrors the format rules stated in each area's field guide.
+// Words that could point at the case, for the question lint: the animals'
+// names and the role words. The motive rhymes are public from Act 1 and the
+// questions are written blind, so a pie or a toilet seat in a question gives
+// nothing away; a cat's name or the word murderer would.
+export const CASE_WORDS = [
+  'irwin', 'boo', 'larue', 'salem', 'crookshank', 'zimothy', 'clawford', 'granolia', 'lickspittle', 'sirwin',
+  'murderer', 'murder', 'ghost', 'victim', 'motive', 'motives', 'detective', 'clue', 'clues', 'suspect', 'alibi',
+]
+
+// Live warnings: one plain sentence per line, shown while typing. Mirrors
+// the format rules in each list's field guide, in the words of the boxes.
 const VOICE_AREAS = ['openers', 'closers', 'smalltalk', 'refusals', 'trailoffs', 'status_lines']
 const CAPS_PREFIX = /^[A-Z][A-Z0-9 '&/]*:\s/
 
@@ -108,56 +217,55 @@ export function lintItem(area, text) {
   if (!text?.trim()) return null
   if (VOICE_AREAS.includes(area)) {
     if (/\b(meow|meows|meowed|purr|purrs|purring|hiss|hisses|woof|barks?|barked)\b/i.test(text)) {
-      return 'No animal sounds — they just talk.'
+      return 'No animal sounds. They just talk.'
     }
-    if (/\[[A-Za-z_]+\]/.test(text)) return 'Voice lines never have square-bracket blanks like [ROOM].'
+    if (/\[[A-Za-z_]+\]/.test(text)) return 'Cat lines never have square-bracket blanks like [ROOM]. Those belong in the Blanks lists.'
     if (/talking (cat|dog|animal)|(cat|dog|animal)s? (can|could) talk/i.test(text)) {
-      return 'Never lampshade the talking.'
+      return 'Nobody ever remarks that the animals talk.'
     }
     if (area === 'status_lines' && !/^(LOCKED|WARMING|IN):\s/.test(text)) {
-      return 'Start with LOCKED: / WARMING: / IN:'
+      return 'Pick a standing (locked, warming or in) in the first box.'
     }
     return null
   }
   switch (area) {
     case 'pools':
-      if (/\.\s*$/.test(text)) return 'Pool items are phrases, not sentences — drop the period.'
-      if (/^[A-Z]/.test(text)) return 'Start lowercase — the kernel sentence carries the capital (proper names inside are fine).'
+      if (/\.\s*$/.test(text)) return 'A blank is a phrase, not a sentence. Drop the full stop.'
+      if (/^[A-Z]/.test(text)) return 'Start lowercase. The cat’s sentence carries the capital (names inside are fine).'
       return null
     case 'echo_frames': {
       const n = (text.match(/█+/g) ?? []).length
-      if (n !== 1) return 'An echo frame needs exactly one ███ slot.'
+      if (n !== 1) return 'A news frame needs words in both boxes, so there is exactly one gap for the secret part.'
       if (!/^(\.\.\.|…)/.test(text) || /(\.\.\.|…)$/.test(text) === false) {
-        return 'Convention: start and end with "..." — we join the broadcast mid-sentence.'
+        return 'Start and end with three dots: the room tunes in mid-sentence and loses the signal after.'
       }
       return null
     }
     case 'epilogue_frames': {
       const missing = ['[MURDERER]', '[VICTIM]', '[MOTIVE_RHYME]'].filter(t => !text.includes(t))
-      return missing.length ? `Missing slot${missing.length > 1 ? 's' : ''}: ${missing.join(' ')}` : null
+      return missing.length ? `Still missing ${missing.join(' and ')}. The game fills those in.` : null
     }
     case 'ui_copy':
+    case 'role_cards':
+      return CAPS_PREFIX.test(text) ? null : 'Pick which screen or card this is in the first box.'
     case 'ops_docs':
     case 'lore':
-    case 'role_cards':
-      return CAPS_PREFIX.test(text) ? null : 'Start with a CAPS label and colon — e.g. "BALLOT: …"'
+      return CAPS_PREFIX.test(text) ? null : 'Give it a title in capitals in the first box, like THE FAMILY.'
     case 'act_scripts':
-      return /^(BANNER|OBJECTIVE|BEATS):\s/.test(text) ? null : 'Start with BANNER: / OBJECTIVE: / BEATS:'
+      return /^(BANNER|OBJECTIVE|BEATS):\s/.test(text) ? null : 'Pick banner, objective or beats in the first box.'
     case 'event_cards':
-      return /—/.test(text) ? null : 'Format: NAME (Acts) — plain effect line.'
+      return null
     case 'rules_text':
-      return /—/.test(text) ? null : 'Format: SECTION TITLE — body.'
+      return /—/.test(text) ? null : 'Give the section a heading in the first box.'
     case 'bag_items':
       return /—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)
-        ? null : 'Format: Item — sense: property (e.g. “Mint tea bag — smell: minty”)'
+        ? null : 'Pick the sense and say what it notices, like smell: minty.'
     case 'filler': {
-      if (!/\sButton:\s*\S/.test(text)) return 'End with “Button: …” — every filler message needs something to tap.'
-      const words = text.split('Button:')[0].trim().split(/\s+/).length
-      if (words < 25) return `Only ${words} words before the button — aim for 25–50 so it takes as long as a real choice.`
+      if (!/\sButton:\s*\S/.test(text)) return 'Every old filler message ended with a button. This list is retired; write questions instead.'
       return null
     }
     case 'bios':
-      return /—/.test(text) ? null : 'Format: NAME — the Profession. Persona… Costume: …'
+      return /—/.test(text) ? null : 'Give the character a name and what they do.'
     default:
       return null
   }
@@ -206,6 +314,7 @@ export function seedDocs() {
     items: seed.templates.map((t, i) =>
       ({ id: t.id, text: `${t.name} — ${t.brief}`, deleted: false, order: i })),
   }
+  docs.scenarios = { items: [] }
   return { ...docs, ...assetDocs() }
 }
 
@@ -269,8 +378,6 @@ export const ADDITIONS = [
   {
     // 28 Sep: filler messages — the innocent screens during event windows.
     id: '2026-09-28-filler',
-    // (The existing task card "Innocent-beat content for Acts 2, 4 and 6"
-    // covers writing them.)
     areaDocs: { filler: { items: [] } },
   },
   {
@@ -283,57 +390,13 @@ export const ADDITIONS = [
       { order: 29, status: 'todo', title: 'Put the play side live, then scan it', detail: 'Run the deploy command from docs/play-side.md once. Then open the play link on your phone, tap “Host? Start the night”, tap your name, and try the Host tab.' },
     ],
   },
-]
-
-// Split a saved line into its two form fields, and join them back. Lossless:
-// a line with no separator shows up whole in the second field.
-export function splitFields(area, text) {
-  const form = AREAS[area]?.form
-  if (!form) return null
-  const t = text ?? ''
-  const needle = form.sep.trim() // '—' or ':'
-  const idx = t.indexOf(needle)
-  if (idx < 0) return { a: '', b: t }
-  return { a: t.slice(0, idx).trim(), b: t.slice(idx + needle.length).trim() }
-}
-
-export function joinFields(area, a, b) {
-  const form = AREAS[area]?.form
-  const left = (a ?? '').trim()
-  const right = (b ?? '').trim()
-  if (!form || !left) return right
-  return `${left}${form.sep}${right}`
-}
-
-// The character line is four things in one saved line:
-//   NAME — the Profession. Who they are. Costume: what to wear
-// Split it into four boxes and join it back, losslessly.
-export function splitCharacter(text) {
-  const t = (text ?? '').trim()
-  const dash = t.indexOf('—')
-  const name = dash >= 0 ? t.slice(0, dash).trim() : ''
-  let rest = dash >= 0 ? t.slice(dash + 1).trim() : t
-  let costume = ''
-  const c = rest.search(/Costume:/i)
-  if (c >= 0) { costume = rest.slice(c + 8).trim(); rest = rest.slice(0, c).trim() }
-  let profession = ''
-  const m = /^(the\s+[^.]+)\.\s*/i.exec(rest)
-  if (m) { profession = m[1].replace(/^the\s+/i, '').trim(); rest = rest.slice(m[0].length) }
-  return { name, profession, persona: rest.trim(), costume }
-}
-
-export function joinCharacter({ name, profession, persona, costume }) {
-  const parts = []
-  if (profession?.trim()) parts.push(`the ${profession.trim().replace(/^the\s+/i, '')}.`)
-  if (persona?.trim()) parts.push(persona.trim().replace(/[.]?$/, '.'))
-  if (costume?.trim()) parts.push(`Costume: ${costume.trim().replace(/[.]?$/, '.')}`)
-  const body = parts.join(' ')
-  return name?.trim() ? `${name.trim().toUpperCase()} — ${body}` : body
-}
-
-export const CHARACTER_FIELDS = [
-  { key: 'name', label: 'Name', placeholder: 'Dorothy Rye' },
-  { key: 'profession', label: 'What they do', placeholder: 'Baker' },
-  { key: 'persona', label: 'Who they are, in a line or two', placeholder: 'Up since four. Has opinions about everyone else’s bread.' },
-  { key: 'costume', label: 'What to wear', placeholder: 'Apron, flour on the hands, a wooden spoon' },
+  {
+    // 12 Oct: the push and pull questions replace the filler messages. Every
+    // phone gets the same kind of question in Acts 2, 4 and 6.
+    id: '2026-10-12-questions',
+    areaDocs: { scenarios: { items: [] } },
+    tasks: [
+      { order: 30, status: 'todo', title: 'Write the push and pull questions', detail: 'Workshop → Words on the phones → Push and pull questions. Three silly questions in a row, two choices each, a number on each choice. Sixteen of them is a full night.' },
+    ],
+  },
 ]

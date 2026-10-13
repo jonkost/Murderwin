@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import {
-  ACTS, CATS, actScript, bioFor, characterById, motives, npcCards, portraitUrls, rules,
+  ACTS, CATS, actScript, bioFor, cardTone, characterById, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine,
 } from '../lib/content'
 
@@ -74,9 +74,7 @@ function You({ character, session, content, ui }) {
   if (!character) return <p className="moment-text">Your character is on its way.</p>
   return (
     <div className="you">
-      <Portrait character={character} />
-      <h2 className="who">{character.name}</h2>
-      <p className="profession">the {character.profession}</p>
+      <Card character={character} />
       <p className="bio">{bioFor(content, character)}</p>
       {session.bag && <p className="bag">{ui.BAG} <strong>{session.bag}</strong></p>}
       {session.host && <p className="gloss">{ui.HOST}</p>}
@@ -88,21 +86,29 @@ function You({ character, session, content, ui }) {
   )
 }
 
-// The portrait file if one exists, else initials. Tries .png then .jpg.
-function Portrait({ character }) {
+// The character card: name on a band at the top, the job on a band at the
+// bottom, and the drawing standing in an oval on one of the house colours.
+// Every figure is drawn the same height whatever the empty space in its file.
+function Card({ character }) {
   const [idx, setIdx] = useState(0)
   const urls = portraitUrls(character.id)
   useEffect(() => setIdx(0), [character.id])
-  if (idx < urls.length) {
-    return (
-      <div className="portrait figure">
-        <img src={urls[idx]} alt="" onError={() => setIdx(i => i + 1)} />
-      </div>
-    )
-  }
+  const fit = portraitFit(character.id)
+  const drawn = Math.max(0.05, fit.bottom - fit.top)
+  const height = 68 / drawn                 // the image, as % of the card, so the drawing is 68% tall
+  const top = 85 - fit.bottom * height      // the drawing's feet land 15% up from the bottom edge
+  const long = character.name.length > 18
   return (
-    <div className="portrait" aria-hidden="true">
-      <span>{initials(character.name)}</span>
+    <div className={`card tone-${cardTone(character.id)}`}>
+      <h2 className={long ? 'who long' : 'who'}>{character.name}</h2>
+      <div className="oval" aria-hidden="true">
+        {idx >= urls.length && <span className="initials">{initials(character.name)}</span>}
+      </div>
+      {idx < urls.length && (
+        <img className="figure" src={urls[idx]} alt="" style={{ height: `${height}%`, top: `${top}%` }}
+          onError={() => setIdx(i => i + 1)} />
+      )}
+      <p className="profession">The {character.profession}</p>
     </div>
   )
 }

@@ -19,6 +19,7 @@ Content is divided into two classes:
 - Voice layers: cat openers, cat closers, cat deflection lines
 - Variable pools: rooms, times, durations, counts, places, witnesses
 - Echo frames (news wrappers with a ███ slot)
+- The push and pull question bank: questions, choices and their points
 - Blank stationery templates (7 designs)
 - All code, schemas, validators, and this file
 
@@ -28,7 +29,9 @@ Content is divided into two classes:
 - Echo fragments: what fills the ███ (per motive)
 - The manifest: any mapping between opaque codes and motives
 - Any per-game generated case (murderer, victim, active motive, clue placement)
-- Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels)
+- Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels),
+  including which push and pull sets the two hidden roles receive and how
+  their points map to the clarity dial
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
 
 ### The Steward exception (decided by Jon, 28 Sep 2026)
@@ -150,9 +153,21 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   Trust ladder, stated at the top of the night: if Irwin and anyone disagree,
   Irwin is right. No cat ever speaks aloud — all dialogue is text; audio is
   generic pre-recorded atmosphere only.
-- Affection to each cat rolled 1–5 at character creation, never changes, Irwin
-  always maxed. Pass comfortably = full answer, narrowly = partial, fail =
-  in-character deflection, no penalty. Cat distortion applied on top.
+- Affection to each cat rolled 1–5 at character creation, Irwin always maxed.
+  Pass comfortably = full answer, narrowly = partial, fail = in-character
+  deflection, no penalty. Cat distortion applied on top.
+  DECIDED 12 Oct 2026 (Jon): affection moves during the night, through the
+  push and pull questions (below). Nothing else moves it.
+- Push and pull questions (decided 12 Oct 2026, Jon's whiteboard): in Acts 2,
+  4 and 6 every phone lights up at once with one set: three silly questions
+  in a row, two choices each (a third or fourth when needed), points on each
+  choice, the same next question whatever was picked. The bank is SAFE
+  content Jon writes in the workshop (`safe_content/scenarios`). For every
+  Detective the points move cat affection. For the Murderer and the Ghost the
+  same kind of set moves the clarity dial instead, and which sets they get
+  and how their points map to the dial is decided blind per night (sealed),
+  so Jon's numbers never tell him which way the night moved. No phone ever
+  shows a number.
 - Event System: the Murderer and the Ghost each pick hidden events — 1 in Act 2,
   2 in Act 4, 1 merged pick in Act 6. Events are nested scenarios three beats deep.
   Events are free; the cost is social. Events change information VOLUME and

@@ -1,3 +1,5 @@
+import portraitFitData from './portrait-fit.json'
+
 // Fixed copy and the helpers that prefer Jon's workshop lines when they exist.
 // Everything here is safe content. Defaults keep every screen readable before
 // the workshop lists are filled in.
@@ -145,4 +147,22 @@ export function motives(content) {
 export function portraitUrls(characterId) {
   const base = import.meta.env.BASE_URL
   return [`${base}portraits/${characterId}.png`, `${base}portraits/${characterId}.jpg`]
+}
+
+// The colour behind each character's card, from the house palette. Six tones
+// go round the fourteen characters; change a name here to recolour a card.
+const CARD_TONES = {
+  white: 'blue', arms: 'red', rye: 'claret', ledger: 'bottle', devine: 'peat', barnes: 'charcoal',
+  fume: 'blue', mourningstone: 'red', steeps: 'claret', vayne: 'bottle', shushwell: 'peat', leech: 'charcoal',
+  'prof-jonathan': 'blue', 'prof-susan': 'red',
+}
+export function cardTone(characterId) {
+  return CARD_TONES[characterId] || 'blue'
+}
+
+// Where the drawing sits inside each portrait file (play/scripts/portrait-fit.py
+// measures it). The card uses it to draw every figure the same height, so a
+// close-up and a full-length drawing fill the oval alike.
+export function portraitFit(characterId) {
+  return portraitFitData[characterId] || { top: 0, bottom: 1, left: 0, right: 1 }
 }

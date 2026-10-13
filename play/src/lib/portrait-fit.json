@@ -1,0 +1,86 @@
+{
+ "arms": {
+  "bottom": 0.9895,
+  "left": 0.1942,
+  "right": 0.8058,
+  "top": 0.0297
+ },
+ "barnes": {
+  "bottom": 0.9598,
+  "left": 0.2758,
+  "right": 0.9161,
+  "top": 0.0972
+ },
+ "devine": {
+  "bottom": 0.9368,
+  "left": 0.2962,
+  "right": 0.7464,
+  "top": 0.0473
+ },
+ "fume": {
+  "bottom": 0.9192,
+  "left": 0.1133,
+  "right": 0.8873,
+  "top": 0.0599
+ },
+ "ledger": {
+  "bottom": 0.9925,
+  "left": 0.3543,
+  "right": 0.7092,
+  "top": 0.0067
+ },
+ "leech": {
+  "bottom": 0.9363,
+  "left": 0.1109,
+  "right": 0.8843,
+  "top": 0.0293
+ },
+ "mourningstone": {
+  "bottom": 0.9493,
+  "left": 0.1691,
+  "right": 0.7896,
+  "top": 0.1554
+ },
+ "prof-jonathan": {
+  "bottom": 0.9946,
+  "left": 0.1972,
+  "right": 0.7008,
+  "top": 0.0637
+ },
+ "prof-susan": {
+  "bottom": 0.9426,
+  "left": 0.1229,
+  "right": 0.946,
+  "top": 0.0695
+ },
+ "rye": {
+  "bottom": 0.8848,
+  "left": 0.1457,
+  "right": 0.6853,
+  "top": 0.0988
+ },
+ "shushwell": {
+  "bottom": 0.9468,
+  "left": 0.3171,
+  "right": 0.7998,
+  "top": 0.0511
+ },
+ "steeps": {
+  "bottom": 0.9812,
+  "left": 0.307,
+  "right": 0.7224,
+  "top": 0.0473
+ },
+ "vayne": {
+  "bottom": 0.964,
+  "left": 0.2428,
+  "right": 0.7686,
+  "top": 0.057
+ },
+ "white": {
+  "bottom": 0.9916,
+  "left": 0.2974,
+  "right": 0.6984,
+  "top": 0.0423
+ }
+}

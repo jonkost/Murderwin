@@ -22,6 +22,55 @@ Jon asked for less, in plainer words, dark, and more like a form. Now:
   does not change shape.
 - The field guide is folded away under "More about this list".
 
+## 12 October 2026 — the "what is this for" pass
+
+Jenna could not tell what a list wanted, and neither could Jon. Now:
+
+- **Every list opens with a card that never hides.** Four things, in this
+  order: *Part of the night* (which act and which moment the list feeds, for
+  example "Acts 2 and 4, the moment a cat starts talking to you"), what the
+  list is, where a guest meets it, and what to type in each box, with one
+  finished example laid out in the shape of the boxes. A button puts the
+  example into the boxes to start from. The long rules fold away underneath.
+  Focus mode ("three more") keeps the card; it only adds the goal bar.
+- **One box per thing.** A character is four boxes, a rule is a heading and
+  a body, a bag item is the item, a sense and what it notices, a news frame is
+  the words before the gap and the words after it (the gap is drawn for you).
+  Dropdowns say plain words (Locked out, Warming up, In). What is saved does
+  not change shape: the boxes are joined back into the same one line.
+- **The new line goes at the top**, right under the card, and the newest
+  lines sit under it. Enter moves to the next box; from the last box, Enter
+  keeps the line. Speak writes into the box you are in. A half-typed line
+  comes back if the tab dies. Lists with tabs remember the tab, and each tab
+  shows its own count ("Boo 3 of 8").
+- **Push and pull questions** replaced the filler messages (the old list is
+  kept under Everything else, retired). One set is three silly questions in a
+  row, two choices each, points on each choice. A question that needs it can
+  take a third or fourth choice ("Add another choice"). Whatever a guest
+  picks, the next question is the same. The ways through add themselves up on
+  the screen (all eight listed; with more choices, the count and the range),
+  and "See it the way a guest will" shows the phone: one question at a time,
+  a button per choice, no numbers. Acts 2, 4 and 6 deal these to every phone
+  at once. Decided by Jon on 12 October: a Detective's points move how the
+  cats feel about them; the Murderer's and the Ghost's points move how clear
+  the clues come out. Which sets the two hidden roles get, and how their
+  points map to that, is decided blind on the night, so the numbers Jon
+  writes never tell him which way the night moved.
+- **It keeps score.** Sir Irwin sits at the top of Home and says one true
+  thing (the first line of the day, three lines, a list that filled, a save
+  that failed). Every list card has a bar that only fills and reads *Full*
+  with the seal when it is done. Lines you have written earn a household rank
+  (Boots, Scullery, Footman, Cook, Housekeeper, Butler), and every list full
+  makes everyone Sir Irwin's Favourite. Nothing is dealt, nothing nags,
+  nothing turns red except a failed save.
+- **Jenna's two words.** Under the card on every list: *Reads clearly* or
+  *Needs another look*, plus one line of note. A list she has cleared carries
+  a small "✓ read" on Home. The For Jenna page now opens the lists she should
+  read first, and ends with a map of what every list is for.
+- Decisions are Jon's alone; the panel says so and shows the Confirm button
+  only to his account. The sign-in page for a new account says what to do in
+  plain words.
+
 ## The screens
 
 **Home.** Three things:
@@ -102,6 +151,27 @@ Data model (Firestore):
   Areas, tasks and decisions added after the first seed import are created by
   additive migrations (`ADDITIONS` in `app/src/lib/content.js`) guarded by
   `meta/migrations` — additions only, existing data never rewritten.
+- `safe_content/scenarios` — the push and pull questions. Items carry
+  `beats: [{q, n, a, av, b, bv, c?, cv?, d?, dv?}] × 3` (`n` = 2 to 4 choices
+  shown; arrays of maps, never nested arrays) and
+  `text` mirroring the first question so the trail and the undo toast can name
+  the set. `app/src/lib/scenarios.js` (pure, tested) normalises, totals the
+  eight paths and lints. The play side should read this area, deal one set per
+  phone per window, and never show a number.
+- `meta/reviews` — `{ [area]: {state: 'clear'|'again'|'', note, by: {name}, at} }`,
+  Jenna's two words per list. Written with merge, logged to history as area
+  `reviews`.
+- Lines written per person for the ranks: a server count over
+  `workshop_history` where `by.uid == uid` and `before == null`
+  (`countLinesBy` in `store.firestore.js`). Equality filters only, so no
+  composite index is needed.
+- One saved line, many boxes: `app/src/lib/codecs.js` (pure, tested with
+  `npm --prefix app test`) holds the split/join for every multi-box list. The
+  invariant: for a well-formed line, `join(split(x)) === x`; a line that does
+  not fit lands whole in the main box and comes back unchanged.
+- Preview mode for looking at screens without signing in (dev server only):
+  `http://localhost:5173/workshop/?preview=1#/` swaps the store for an
+  in-memory one (`app/src/lib/preview.js`). Never built into the live site.
 - `workshop_history/{autoId}` — append-only: `{area, itemId, before, after, ts}`.
 - `tasks/{autoId}` — `{title, detail, status, order, ts}`.
 - `decisions/{key}` — `{question, options, answer, answeredAt}`.

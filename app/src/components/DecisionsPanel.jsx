@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { subscribeDecisions, answerDecision } from '../lib/store'
+import { subscribeDecisions, answerDecision, whoAmI } from '../lib/store'
 
-function Decision({ d, onError, onSaved }) {
+function Decision({ d, onError, onSaved, canAnswer }) {
   const [picked, setPicked] = useState(null)
   return (
     <div className="decision">
@@ -15,7 +15,7 @@ function Decision({ d, onError, onSaved }) {
           </button>
         ))}
       </div>
-      {picked && (
+      {picked && canAnswer && (
         <button className="primary confirm"
           onClick={() => answerDecision(d.key, picked, d).then(onSaved).catch(onError)}>
           Confirm: {picked}
@@ -29,28 +29,32 @@ export default function DecisionsPanel() {
   const [decisions, setDecisions] = useState([])
   const [loadErr, setLoadErr] = useState(false)
   const [saveErr, setSaveErr] = useState(false)
+  const [me, setMe] = useState(null)
 
   useEffect(() => subscribeDecisions(ds => { setDecisions(ds); setLoadErr(false) },
     () => setLoadErr(true)), [])
+  useEffect(() => { whoAmI().then(setMe) }, [])
+  const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
 
   const open = decisions.filter(d => d.answer == null)
   if (!open.length && !loadErr && !saveErr) return null
 
   return (
     <section className="panel">
-      <h2>Decisions awaiting you</h2>
+      <h2>Decisions waiting on Jon</h2>
+      <p className="why">Only Jon answers these. Jenna, skip this box.</p>
       {saveErr && (
         <div className="banner error" role="alert">
-          SAVE FAILED — that answer was NOT recorded. Pick and confirm again.
+          SAVE FAILED. That answer was not recorded. Pick and confirm again.
         </div>
       )}
       {loadErr && (
         <div className="banner error" role="alert">
-          Couldn’t load decisions — check your connection.
+          Decisions did not load. Check your signal.
         </div>
       )}
       {open.sort((a, b) => a.key.localeCompare(b.key)).map(d => (
-        <Decision key={d.key} d={d} onError={() => setSaveErr(true)}
+        <Decision key={d.key} d={d} canAnswer={canAnswer} onError={() => setSaveErr(true)}
           onSaved={() => setSaveErr(false)} />
       ))}
     </section>

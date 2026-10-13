@@ -3,6 +3,7 @@ import { Routes, Route, Link, NavLink } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, signIn, signOutUser } from './firebase'
 import { ensureSeeded } from './lib/store'
+import { PREVIEW } from './lib/previewFlag'
 import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
 import Stationery from './pages/Stationery'
@@ -29,24 +30,22 @@ function SignInGate() {
 function NotAdmin({ user }) {
   return (
     <div className="gate">
-      <h1>Not on the staff list</h1>
+      <h1>Not on the staff list yet</h1>
       <p className="sub">Signed in as {user.email ?? 'unknown'}</p>
-      <p>This UID is not admin yet:</p>
+      <p>Send Jon this code and he will add you:</p>
       <code className="uid">{user.uid}</code>
-      <p>
-        Copy it and tell Claude Code: “add this UID as admin”. Then reload.
-      </p>
-      <button onClick={() => navigator.clipboard.writeText(user.uid)}>Copy UID</button>
+      <p>Reload once Jon says done.</p>
+      <button onClick={() => navigator.clipboard.writeText(user.uid)}>Copy the code</button>
       <button onClick={signOutUser}>Sign out</button>
     </div>
   )
 }
 
 export default function App() {
-  const [user, setUser] = useState(undefined) // undefined = still checking
+  const [user, setUser] = useState(PREVIEW ? { uid: 'preview', email: 'preview' } : undefined) // undefined = still checking
   const [boot, setBoot] = useState({ state: 'idle' })
 
-  useEffect(() => onAuthStateChanged(auth, u => setUser(u)), [])
+  useEffect(() => (PREVIEW ? undefined : onAuthStateChanged(auth, u => setUser(u))), [])
 
   useEffect(() => {
     if (!user) return

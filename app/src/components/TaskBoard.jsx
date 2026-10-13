@@ -106,13 +106,13 @@ export default function TaskBoard() {
       <h2>Task board</h2>
       {saveErr && (
         <div className="banner error" role="alert">
-          SAVE FAILED — your latest board change is NOT saved. It will retry on
+          SAVE FAILED. Your latest board change is not saved. It will retry on
           your next edit.
         </div>
       )}
       {loadErr && (
         <div className="banner error" role="alert">
-          Couldn’t load the board — check your connection.
+          The board did not load. Check your signal.
         </div>
       )}
       <div className="board">
