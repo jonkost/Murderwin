@@ -166,6 +166,27 @@ while the Murderer and the Ghost secretly pick an event. Each message ends with
 5. **The first time the workshop opened, it loaded the starter content once.** It
    never does that again, so nothing you've written can be overwritten by a seed.
 
+## 18 October 2026: the lists the game reads, and the freeze
+
+- Three new lists, each with a plain default the game already uses, so an
+  empty list never leaves a screen blank: **Granolia in the study** (what she
+  says on the study screen at each moment of the light puzzle), **The five
+  stations** (the card a group gets at each Act 4 station; BAGS may say
+  [PROPERTY] and [COUNT], CAT may say [CAT]), and **What was left behind** (one
+  line per trace for the bedroom screen, never a name).
+- **The phone's own little lines** now offers every label the phones and the
+  dealer read: every notice between beats, the safe's numbers (NUMBERS and
+  NOTICE SCRAP, keep [A], [B] and [C]), the five slider words (STOPS), and the
+  lines for the room screens.
+- **Things in the bags** holds Jon's 108 items. A line with two things noticed
+  gets a note: the clue on the night uses the first.
+- **The freeze**, on the Game night page. The week of the party Jon presses
+  Freeze the workshop: every list goes read-only with a banner, the rail says
+  "Frozen for the party", and the phones keep the words exactly as they were.
+  Unfreeze undoes it. Only Jon's account can press either.
+- The task board: cards the night has since answered are marked done, and
+  decisions the canon settled are answered, once.
+
 ## What's left to build here
 
 - The history screen (promise 2).
@@ -184,7 +205,16 @@ Data model (Firestore):
   - World & cast: npc_cards (5), bios (14), lore (4)
   - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12),
     filler (20; innocent-screen beats for event windows, lint wants `Button:`)
-  - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7)
+  - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7),
+    trace_lines (14; `TRACE BOOT PRINT: line`, hyphens become spaces so the label codec keeps them)
+  - Added 18 Oct 2026: study_lines (12; `MOMENT: line`), station_text (5; `STATION: line`),
+    bag_items (108, from `seed/bag-items.json` by migration `2026-10-18-bag-items`, appended once,
+    never doubling a line Jon edited). ui_copy's options are `UI_LABELS` in content.js.
+  - Migrations (`ADDITIONS`) are planned by `lib/additions.js` (pure, tested) and may also
+    `retireTasks` (by order number, once) and `answerDecisions` (only an unanswered one).
+  - The freeze: `meta/game.frozenAt` (a timestamp or null). `lib/frozen.js` reads it;
+    the editors wrap their lists in `inert` and show the banner; the server's
+    `publishContent` is a no-op for a night that already holds its copy.
   - Show night: act_scripts (3×act), ops_docs (12)
   - Assets (checklists, items carry `done`): art_assets (Pictures), av_assets
     (Sounds). Edited on `/assets`; items may carry `file: {path, url, name, type, size}`.

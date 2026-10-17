@@ -5,6 +5,7 @@
   "scripts": {
     "generate": "node generate-sealed.mjs",
     "validate": "node validate-sealed.mjs",
+    "pack-bags": "node pack-bags.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {

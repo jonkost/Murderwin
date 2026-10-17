@@ -81,7 +81,7 @@ test('the generator reads the safe inputs as a stanza and never prints them; its
   const inputs = await readSafeInputs(db)
   assert.deepEqual(inputs.pools.room, ['(synthetic room one)', '(synthetic room two)'])
   assert.deepEqual(inputs.pools.time, ['(synthetic time one)'])
-  assert.deepEqual(stanzaCounts(inputs), { poolValues: 3, voiceLines: 2 })
+  assert.deepEqual(stanzaCounts(inputs), { poolValues: 3, voiceLines: 2, bagProperties: 0, bagsPacked: 0 })
   const stanza = inputStanza(inputs)
   assert.ok(stanza.includes('[ROOM]') && stanza.includes('(synthetic room one)') && stanza.includes('(synthetic closer)'))
   assert.equal(inputStanza({}), '', 'an empty workshop adds nothing')

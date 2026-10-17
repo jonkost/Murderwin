@@ -49,8 +49,9 @@ drafts the secrets; Jenna edits.
 - Claude drafts all sealed content, through the generator.
 - Jenna edits both, and reports to Jon only "done" or "needs more", never content.
 - Bags: Jon and Susan supply the item pool as safe content (workshop area
-  `bag_items`). A blind packing script (not built) assigns items to numbered
-  bags under the bag rules and writes `sealed/bags`; the generator reads it.
+  `bag_items`). A blind packing script (`scripts/pack-bags.mjs`, built 18 Oct
+  2026) assigns items to numbered bags under the bag rules and writes
+  `sealed/bags`, printing counts only; the bags station and the generator read it.
   Only Jenna's Steward view shows the packing list, and Jenna packs to it.
   Claude Code never prints the packing. Jenna also reads rules and bios cold
   and reviews sealed content. Brief: never volunteer anything, never confirm a

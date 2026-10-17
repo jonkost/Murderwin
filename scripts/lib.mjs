@@ -104,7 +104,43 @@ export async function readSafeInputs(db) {
       refusals: refusals.filter(i => i.cat === cat).map(i => i.text),
     }
   }
-  return { pools: byPool, voice }
+  return { pools: byPool, voice, bags: await readBagInputs(db) }
+}
+
+// ---- the bags (G, 18 Oct 2026) --------------------------------------------
+// The bags station deals its clue at runtime from the packing (sealed/bags,
+// scripts/pack-bags.mjs): "something minty is in two of the bags". That clue
+// must stay independent of the sealed text, so the generator is told which
+// property words are in play and asked to keep them out of the kernels,
+// documents and fragments. The words themselves are safe content (Jon's bag
+// items); which bags hold them is not, and never leaves sealed/bags.
+export async function readBagInputs(db) {
+  const snap = await db.collection('sealed').doc('bags').get()
+  const packed = snap.exists ? Object.keys(snap.data()?.properties ?? {}) : []
+  const items = await areaItems(db, 'bag_items')
+  const pool = []
+  for (const it of items) {
+    const dash = it.text.indexOf('—')
+    if (dash < 0) continue
+    for (const part of it.text.slice(dash + 1).split(';')) {
+      const c = part.indexOf(':')
+      if (c >= 0) pool.push(part.slice(c + 1).trim().toLowerCase())
+    }
+  }
+  const properties = [...new Set([...packed, ...pool].filter(Boolean))].sort()
+  return { properties, packed: packed.length, stackedPairs: snap.exists ? (snap.data()?.stackedPairs?.length ?? 0) : 0 }
+}
+
+export function bagStanza(bags) {
+  const props = bags?.properties ?? []
+  if (!props.length) return ''
+  return [
+    'The bags. Each guest carries a numbered bag of ordinary objects, and a separate',
+    'clue names one of these properties on the night; keep every one of these words',
+    '(and their senses: smells, sounds, textures, tastes, colours) OUT of all content,',
+    'so the bag clue stays independent of the text:',
+    `  ${props.join('; ')}`,
+  ].join('\n')
 }
 
 // The stanza that goes into the prompt. Counts of what it holds are safe
@@ -125,10 +161,12 @@ export function inputStanza({ pools = {}, voice = {} } = {}, { perList = 4 } = {
   if (voiceLines.length) lines.push('Each kernel is spliced between an opener and a closer in the cat\'s own voice; write the middle so it reads naturally between them:', ...voiceLines)
   return lines.join('\n')
 }
-export function stanzaCounts({ pools = {}, voice = {} } = {}) {
+export function stanzaCounts({ pools = {}, voice = {}, bags = null } = {}) {
   return {
     poolValues: POOL_KEYS.reduce((n, k) => n + (pools[k]?.length ?? 0), 0),
     voiceLines: CATS.reduce((n, c) => n + (voice[c]?.openers?.length ?? 0) + (voice[c]?.closers?.length ?? 0) + (voice[c]?.refusals?.length ?? 0), 0),
+    bagProperties: bags?.properties?.length ?? 0,
+    bagsPacked: bags?.packed ?? 0,
   }
 }
 
