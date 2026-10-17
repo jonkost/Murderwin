@@ -79,8 +79,11 @@ game; it serves the bulb and the speakers.
   Every phone shows its role card, held fifteen seconds. Yours too.
 - A Parlour Game is a window: every phone at once, sixty seconds on the
   server's clock, and it never closes early. **Next** waits for it. When the
-  time is up, **Pick for the rest** chooses for anyone who did not. Press
-  **Parlour Game now** for an extra one in Acts 2, 4 or 6.
+  time is up, the server picks for anyone who did not, within a minute, on
+  its own; **Pick for the rest** does the same thing sooner if you are
+  standing there. Press **Parlour Game now** for an extra one in Acts 2, 4
+  or 6. A phone that answers after the time is up sees the same thank-you as
+  everyone else, and its late answer changes nothing.
 - Act 3: **Next** makes the pairs and trios after dinner. **Make the groups**
   does the same thing if you want it before the beat.
 - Act 4: the study is the clock. When a group finishes the light puzzle, the
@@ -156,6 +159,17 @@ them: `VITE_EMULATOR=1 npm --prefix play run dev` (`VITE_EMULATOR_HOST` for a
 real phone on the LAN). The relay, the station and the terminal host:
 `MURDERWIN_EMULATOR=1`. `scripts/seed-emulator.mjs` writes with the token
 `owner`, which only the emulator honours.
+
+*The clock.* `functions/index.js` exports `tick`, a scheduled function
+(`every 1 minutes`, Cloud Scheduler, which the Blaze plan includes) that runs
+`lib/windows.js tick` for the live night (`public_state/active`): a window
+past `closesAt` plus a five-second grace is settled, a twelve-minute study
+slot that ran out is ended (`station.tickStudy`), a paused night is skipped.
+The Host tab calls the same host command `tick` once when it opens. `node
+functions/host.mjs tick` is the hand version. Logs are counts only.
+`note-exposure <murderer|ghost>` records the exposure safeguard's silent
+tap in `cases/{id}.exposure`; from then on that role's Parlour Game answers
+still move a cat but move the dial by 0, logged `hushed`.
 
 *The spare host.* `functions/host.mjs` against the live project needs
 `GOOGLE_APPLICATION_CREDENTIALS` pointing at a service-account key kept out

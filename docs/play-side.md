@@ -149,8 +149,6 @@ named after the character (the README in that folder lists the names), then
   Jenna reads every set. Until then every night deals bracketed stand-ins.
 - The room screens for the news flash, the Act 3 bulletin, Sir Irwin at cake
   and the elimination board, with a sound for every cue.
-- A server clock that settles every Parlour Game on time with no host pressing
-  anything; today Next and "Pick for the rest" do it.
 - The bag packing (a blind script) and the seven stationery pictures; the
   stand-ins work until then.
 - The finale staging on the TV and tappable achievements.
@@ -352,11 +350,23 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
 - Windows: `nights/{id}.window = { id, kind, opensAt, closesAt, settled }`
   (Dates on the server clock). Each phone's set is in
   `sessions/{uid}.windows[id]` WITHOUT point values; the values and the cat
-  are in `nights/{id}/private/windows`. Points: every phone's total nudges
+  are in `nights/{id}/private/windows`. Which set: every detective gets the
+  same set for that window, drawn among the sets that read about as long as
+  the hidden roles' sets; the Murderer and the Ghost get the set their case
+  names in `cases/{id}.hiddenSets[role][act2|act4a|act4b|act6]`
+  (`functions/lib/windows.js` pickSets). A scheduled `tick` (index.js, every
+  minute) settles a window five seconds after `closesAt`; an answer after
+  that returns `{ ok, late: true }` and the phone shows the same Thanks.
+  Points: every phone's total nudges
   that cat's affection one step (sign only), whatever the role; a hidden
-  role's total ALSO moves `cases/{id}.dial` by that night's `dialSign`
-  (Jon, 16 Oct: no slider for the dial, revealed at the end). No phone ever
-  sees a number.
+  role's total ALSO moves `cases/{id}.dial` by that night's `dialMap`
+  (ghost +1, murderer -1) in one transaction (`pushDial`), logged to
+  `dialLog`; after `note-exposure <role>` that role's pushes log delta 0
+  and `hushed: true` (Jon, 16 Oct: no slider for the dial, revealed at the
+  end). No phone ever sees a number. The three role cards go through
+  `parityCheck` before they are dealt: a card more than 20 percent shorter
+  than the longest is padded with the workshop's `FILLER:` line (ui_copy),
+  and the dealer logs a count.
 - Groups and Act 4 come from `station.js` (`makeRotation`, `public/rotation`),
   with the case's murderer and ghost passed as `apart`. A group at study
   position p is at station `(r - p) mod 5` at rotation r, so the study is the

@@ -40,6 +40,7 @@ function describe(command, r) {
     case 'study-finish': return r.repeated ? 'That group was already paid.' : r.rotated ? 'The group is paid and the house has moved on.' : 'The group is paid. The house moves on at the next station.'
     case 'study-reassign': return r.already ? 'That group was already the one due.' : 'Noted. The study pays that group when it finishes.'
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
+    case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.study?.ticked ? 'The study slot ran out: the house has moved on.' : 'Every clock is where it should be.'
     case 'hall': return `The hall light is ${r.hall}.`
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     case 'next': case 'beat': case 'back': return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
@@ -82,6 +83,13 @@ export default function Host({ night, content, serverNow }) {
     const id = setInterval(tick, 60_000)
     return () => clearInterval(id)
   }, [live, night.nightId, night.act])
+
+  // The clock, once, when this tab opens: a window or a study slot that ran out while nobody
+  // was looking is settled now. The server does the same every minute on its own.
+  useEffect(() => {
+    if (!live) return
+    callHost({ nightId: night.nightId, command: 'tick' }).catch(() => {})
+  }, [live, night.nightId])
 
   const run = async (command, arg) => {
     setBusy(command)

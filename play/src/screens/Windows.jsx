@@ -3,6 +3,7 @@ import { callAnswer, callBallot, callEliminate } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
+import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
 import { CatFace } from './Cards'
 import { Seal } from './Moments'
 
@@ -24,28 +25,48 @@ function Clock({ w, serverNow }) {
   )
 }
 
+// The same last screen for every answer: in time, late (the server had
+// already picked for this phone), or sent twice. One tap to put it away.
+export function Thanks({ onDone }) {
+  return (
+    <div className="moment window papered">
+      <Seal />
+      <p className="crest">{THANKS.title}</p>
+      <p className="moment-text">{THANKS.text}</p>
+      <button className="big" onClick={onDone}>{THANKS.button}</button>
+    </div>
+  )
+}
+
 // Three silly questions, one at a time, big buttons. A cat is asking.
 export function Questions({ w, nightId, serverNow, onDone }) {
   const set = w.mine
   const [i, setI] = useState(0)
   const [picks, setPicks] = useState([])
   const [busy, setBusy] = useState(false)
+  const [sent, setSent] = useState(false)
   const [error, setError] = useState(null)
   const beat = set.beats?.[i]
 
+  const retry = (message) => {
+    setError(message || 'The Manor did not hear that. Try again.')
+    setPicks([]); setI(0); setBusy(false)
+  }
   const choose = async (k) => {
     const next = [...picks, k]
     if (next.length < set.beats.length) { setPicks(next); setI(i + 1); return }
     setBusy(true); setError(null)
     try {
-      await callAnswer({ nightId, windowId: w.id, picks: next })
-      onDone?.()
+      const r = await callAnswer({ nightId, windowId: w.id, picks: next })
+      if (answerOutcome(r) === 'thanks') setSent(true)
+      else retry()
     } catch (e) {
-      setError(e?.message || 'The Manor did not hear that. Try again.')
-      setPicks([]); setI(0); setBusy(false)
+      if (outcomeForError(e) === 'thanks') setSent(true)
+      else retry(e?.message)
     }
   }
 
+  if (sent) return <Thanks onDone={onDone} />
   if (!beat) return null
   return (
     <div className="moment window papered">

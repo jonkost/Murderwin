@@ -28,6 +28,7 @@ import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './nigh
 import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 import { bagsClue, bagsText } from './bags.js'
+import { pickSets, setFor, pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -501,8 +502,11 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
   if (kind === 'questions') {
     const bank = await questionBank(db)
     const cats = CAT_KEYS.filter(k => k !== 'irwin')
+    // one set for every detective this window; the hidden roles get the set their case names (windows.js)
+    const c = await readCase(db, nightId)
+    const sets = pickSets({ bank, c, act, beat, pick: pickInt })
     for (const g of list) {
-      const set = choice(bank)
+      const set = bank[setFor(sets, roleOf(c, g.key))]
       const cat = choice(cats)
       priv[g.key] = { cat, values: valuesOf(set) }
       await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, cat, catName: CAT_NAMES[cat], beats: stripValues(set) } })
@@ -532,19 +536,9 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
     const next = Math.max(1, Math.min(5, level + Math.sign(total)))
     if (next !== level) await sref.update({ [`affection.${w.cat}`]: next })
   }
-  const role = roleOf(c, key)
-  if (role !== 'detective') {
-    const sign = c?.dialSign?.[role] ?? 1
-    const caseRef = db.doc(`cases/${nightId}`)
-    const delta = sign * total
-    // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then.
-    // A transaction: the Ghost's and the Murderer's answers land in the same minute.
-    await db.runTransaction(async tx => {
-      const cur = (await tx.get(caseRef)).data() ?? {}
-      const log = Array.isArray(cur.dialLog) ? cur.dialLog : []
-      tx.update(caseRef, { dial: (cur.dial ?? 0) + delta, dialLog: [...log, { act: act ?? null, role, delta, at: new Date() }] })
-    })
-  }
+  // a hidden role's total also moves the dial, through the case's map, in one transaction (windows.js);
+  // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then
+  await pushDial(db, nightId, { c, role: roleOf(c, key), total, act })
 }
 
 function validPicks(set, picks) {
@@ -564,9 +558,14 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
     if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
     const night = nightSnap.data()
     const w = night?.window
-    if (!w || w.id !== windowId || w.kind !== 'questions') throw new NightError('closed', 'Nothing to answer right now.')
-    if (now > ms(w.closesAt) + 5000 || w.settled) throw new NightError('closed', 'That window has closed.')
-    if (s.answers?.[windowId]) return { already: true }
+    if (s.answers?.[windowId] && !s.answers[windowId].defaulted) return { already: true }
+    // a tap after the close and its grace, or after the settle picked for this phone, is a late one:
+    // it changes nothing and is thanked like any other, so the phone shows no pattern (windows.js)
+    if (!w || w.id !== windowId || w.kind !== 'questions') {
+      if (s.windows?.[windowId]) return { late: true }
+      throw new NightError('closed', 'Nothing to answer right now.')
+    }
+    if (now > ms(w.closesAt) + GRACE_MS || w.settled || s.answers?.[windowId]) return { late: true }
     const set = s.windows?.[windowId]
     if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
     tx.update(sessionRef, { [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
@@ -574,6 +573,7 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
     return { key: s.guestKey, act: w.act ?? night.act ?? null }
   })
   if (got.already) return { ok: true, already: true }
+  if (got.late) return { ok: true, late: true }
   const c = await readCase(db, nightId)
   await applyPoints(db, nightId, got.key, windowId, picks, c, got.act)
   return { ok: true }
@@ -1056,13 +1056,25 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
 export async function dealRoles(db, nightId) {
   await ensureCase(db, nightId)
   const { list } = await guests(db, nightId)
-  const written = labelled(await readArea(db, 'role_cards'))
+  const written = await roleCardsFor(db)
   let dealt = 0
   for (const g of list) {
     const r = await dealRoleTo(db, nightId, g.uid, { written })
     dealt += r.dealt
   }
   return { ok: true, dealt }
+}
+
+// The three role cards as dealt: the workshop's lines over the defaults, then
+// the parity check (windows.js): a card much shorter than the others is padded
+// with the workshop's FILLER line, so how long a phone is read says nothing.
+// Logs a count, never a card.
+export async function roleCardsFor(db, { log = defaultLog } = {}) {
+  const written = labelled(await readArea(db, 'role_cards'))
+  const base = { MURDERER: ROLE_CARDS.MURDERER, GHOST: ROLE_CARDS.GHOST, DETECTIVE: ROLE_CARDS.DETECTIVE, ...written }
+  const r = parityCheck(base, { filler: await fillerLine(db) })
+  if (r.padded) log(`role cards ${JSON.stringify({ padded: r.padded, within: r.within })}`)
+  return r.cards
 }
 
 export const ROLE_CARD_ID = '2-power-role'
@@ -1082,7 +1094,7 @@ export async function dealRoleTo(db, nightId, uid, { written = null } = {}) {
     await db.doc(`cases/${nightId}`).update({ [`roles.${s.guestKey}`]: 'detective' })
     c.roles[s.guestKey] = 'detective'
   }
-  const cards = written ?? labelled(await readArea(db, 'role_cards'))
+  const cards = written ?? await roleCardsFor(db)
   const role = roleOf(c, s.guestKey).toUpperCase()
   const text = cards[role] ?? ROLE_CARDS[role] ?? ROLE_CARDS.DETECTIVE
   const card = { id: ROLE_CARD_ID, act: 2, beat: 'orient', kind: 'role', text }

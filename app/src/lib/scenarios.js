@@ -113,6 +113,14 @@ function words(text) {
   return (text ?? '').toLowerCase().replace(/['’]s\b/g, '').split(/[^a-z0-9]+/).filter(Boolean)
 }
 
+// How long a line reads, in words. The same rule the server uses to keep
+// the three role cards and the Parlour Game sets about the same length
+// (functions/lib/windows.js), so what the workshop shows and what the night
+// measures agree.
+export function wordCount(text) {
+  return String(text ?? '').trim().split(/\s+/).filter(Boolean).length
+}
+
 // One high-signal warning for a scenario, or null. `banned` carries the
 // words that could point at the case (animal names, role words); it is
 // built by the caller.
