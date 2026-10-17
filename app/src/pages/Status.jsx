@@ -23,12 +23,12 @@ const BUILT = [
   ['The study light game', 'The station on the M1 Air, the Nanoleaf walls, the Stream Deck, Granolia’s screen. Finishing the study rotates the house.'],
   ['The relay drawing and the room screens', 'The living room TV, the bedroom door and the trace at the dial’s level. Hall light red to green through the cue relay.'],
   ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night.'],
+  ['Jenna’s page', 'Her own page for the secrets and the packing list, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited.'],
   ['Rehearsing without the party', 'A pretend Firebase on your Mac, eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook.'],
 ]
 
 const NEXT = [
   ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
-  ['Jenna’s page', 'Her own page for the secrets, opening only for her account. Needs your yes on one security rule.', 'Claude, then Jon'],
   ['The bags and the stationery', 'A blind script packs the numbered bags; the bags station reads it. Seven paper stand-ins for the documents. The Freeze button for 7 November.', 'Claude, then Jon packs'],
   ['The room screens for the news', 'The news flash, the Act 3 bulletin, Sir Irwin at cake and the elimination board on the TV, with a sound for every cue.', 'Claude'],
   ['Windows on a server clock', 'Every Parlour Game settles on time even if nobody presses anything.', 'Claude'],
