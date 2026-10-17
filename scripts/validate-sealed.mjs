@@ -49,13 +49,19 @@ export async function validateAll(db) {
     impersonalFails: 0,
     studyClueFails: 0, // study line out of length, carrying a token, or not a string
     irwinFails: 0,     // an Irwin line that fails the dog filter
+    edited: 0,         // sets the Steward has edited (editedAt set); checked exactly like the rest
+    reviewed: 0,       // sets the Steward has marked done or needs more
     pass: false,
   }
 
   for (const code of codeIds) {
     const snap = await db.collection('sealed').doc(code).get()
     if (!snap.exists) continue
-    const { kernels = {}, documents = [], fragments = [], studyClue = [], irwin = [] } = snap.data()
+    // an edited doc also carries original, editedAt, editedBy, version, review:
+    // the checks read the five content fields and nothing else
+    const { kernels = {}, documents = [], fragments = [], studyClue = [], irwin = [], editedAt = null, review = '' } = snap.data()
+    if (editedAt) report.edited++
+    if (review === 'done' || review === 'more') report.reviewed++
 
     const kCount = CATS.reduce((n, c) => n + (kernels[c]?.length ?? 0), 0)
     const isComplete = kCount === 15 && documents.length === 3 && fragments.length === 3 &&
