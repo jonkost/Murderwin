@@ -8,11 +8,15 @@
   },
   "scripts": {
     "seed": "mkdir -p seed && cp ../seed/characters.json ../seed/motives.json ../seed/night.json seed/",
-    "serve": "npm run seed && firebase emulators:start --only functions",
+    "serve": "npm run seed && cd .. && npm run emulate",
     "test": "npm run seed && node --test test/*.test.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
-    "firebase-functions": "^6.0.0"
+    "firebase-functions": "^7.0.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.0.0"
   }
 }
