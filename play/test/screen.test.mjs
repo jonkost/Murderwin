@@ -19,7 +19,7 @@ test('the living room: the phase wins, then the finale, the ballot, a drawing, t
   assert.equal(livingView({ night: { ...NIGHT, phase: 'paused' }, screen: { kind: 'news' } }), 'paused')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'black', title: 'One moment' } }), 'paused')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'black', title: '' } }), 'dark')
-  assert.equal(livingView({ night: { ...NIGHT, reveal: {} }, finale: { at: 1 }, screen: { kind: 'board' } }), 'finale')
+  assert.equal(livingView({ night: { ...NIGHT, act: 7 }, finale: { at: 1 }, screen: { kind: 'board' } }), 'finale')
   assert.equal(livingView({ night: { ...NIGHT, window: { kind: 'ballot', settled: false } }, screen: { kind: 'board' } }), 'ballot')
   assert.equal(livingView({ night: { ...NIGHT, window: { kind: 'ballot', settled: true } }, screen: { kind: 'board' } }), 'board')
   for (const state of ['walk', 'turn', 'vote', 'lockout']) assert.equal(livingView({ night: NIGHT, relay: { state }, screen: { kind: 'news' } }), 'relay')
