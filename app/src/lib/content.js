@@ -1,7 +1,8 @@
-import seed from '../../../seed/safe-content.json'
-import charactersFile from '../../../seed/characters.json'
-import motivesFile from '../../../seed/motives.json'
-import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs'
+import seed from '../../../seed/safe-content.json' with { type: 'json' }
+import charactersFile from '../../../seed/characters.json' with { type: 'json' }
+import motivesFile from '../../../seed/motives.json' with { type: 'json' }
+import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
+import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
 // them and keys the cats' moods off the job. The workshop writes the persona
@@ -156,7 +157,7 @@ export const AREAS = {
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
   // — The bags —
-  bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 60,
+  bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 108,
     codec: bagCodec,
     fields: [
       { key: 'item', label: 'The item', placeholder: 'e.g. Mint tea bag', kind: 'text', main: true },
@@ -289,9 +290,12 @@ export function lintItem(area, text) {
       return null
     case 'rules_text':
       return /—/.test(text) ? null : 'Give the section a heading in the first box.'
-    case 'bag_items':
-      return /—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)
-        ? null : 'Pick the sense and say what it notices, like smell: minty.'
+    case 'bag_items': {
+      if (!/—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)) return 'Pick the sense and say what it notices, like smell: minty.'
+      const m = /—\s*[a-z]+\s*:\s*([^;]+);/i.exec(text)
+      if (m) return `Two things noticed on one line. The clue on the night uses the first one (${m[1].trim()}); the packer counts both.`
+      return null
+    }
     case 'filler': {
       if (!/\sButton:\s*\S/.test(text)) return 'Every old filler message ended with a button. This list is retired; write questions instead.'
       return null
@@ -440,4 +444,14 @@ export const ADDITIONS = [
       { order: 30, status: 'todo', title: 'Write the Parlour Games', detail: 'Workshop → Words on the phones → Parlour Games. Three silly questions in a row, two choices each, a number on each choice. Sixteen of them is a full night.' },
     ],
   },
+  {
+    // 18 Oct: Jon's 108 bag items (docs/bag-items-for-claude-code.md) go into
+    // the bag items list, skipping any item already written there.
+    id: '2026-10-18-bag-items',
+    appendItems: { bag_items: bagItemsFile.items },
+  },
 ]
+
+// The bag item pool as the seed holds it, for the packer's tests and the
+// Steward's packing list.
+export const BAG_ITEM_SEED = bagItemsFile.items
