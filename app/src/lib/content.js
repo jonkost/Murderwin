@@ -45,6 +45,59 @@ export const TAB_KINDS = {
   acts: { list: ACTS, field: 'act', label: k => `Act ${k.slice(3)}: ${ACT_NAMES[k]}` },
 }
 
+// Every label a phone or the dealer reads from the phone's own lines. The
+// notices are the cards between beats (NOTICE MEET is the Act 1 "meet the
+// household" card); NUMBERS and NOTICE SCRAP carry the safe's three numbers
+// with [A] [B] [C] where they go; STOPS is the five words of the Cats tab
+// slider, low to high, with commas.
+export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']
+const NOTICE_WHAT = {
+  meet: 'Act 1, meet the household', introduce: 'Act 1, say who you are out loud', ready: 'Act 1, settle in before the dark', orient: 'Act 2, where things are on the phone',
+  news: 'Act 2, eyes up at the big screen', checkin: 'Act 2, read your clues before dinner', down: 'Act 3, phones down at dinner', bulletin: 'Act 3, the bulletin was heard',
+  roam: 'Act 5, cake in hand', irwin: 'Act 5, Sir Irwin is about to speak', door: 'Act 6, the door is open', eyes: 'Act 7, eyes on the screen for the reveal',
+}
+export const UI_LABELS = [
+  { value: 'DOORS', label: 'DOORS: the doors are not open yet' }, { value: 'JOIN', label: 'JOIN: who are you, tap your name' }, { value: 'JOIN BUTTON', label: 'JOIN BUTTON: the button that lets you in' },
+  { value: 'JOIN AGAIN', label: 'JOIN AGAIN: coming back on a new phone' }, { value: 'LOBBY', label: 'LOBBY: in, waiting for Act 1' }, { value: 'BAG', label: 'BAG: which bag to collect' },
+  { value: 'OFFLINE', label: 'OFFLINE: no signal' }, { value: 'PAUSED', label: 'PAUSED: the night is paused' }, { value: 'PAUSED BY HOST', label: 'PAUSED BY HOST: the strip on a paused phone' },
+  { value: 'SUPERSEDED', label: 'SUPERSEDED: this character moved to another phone' },
+  { value: 'POWER', label: 'POWER: the power comes back' }, { value: 'ORIENT', label: 'ORIENT: the power is back, for a phone with no card yet' },
+  { value: 'YOUR ROLE', label: 'YOUR ROLE: the heading over the role card' }, { value: 'SHOW ROLE', label: 'SHOW ROLE: the button that shows the role card again' }, { value: 'HIDE ROLE', label: 'HIDE ROLE: the button that puts it away' },
+  { value: 'HIDE', label: 'HIDE: the hide-this button' }, { value: 'HOLD', label: 'HOLD: keep reading, nearly there' },
+  { value: 'RETICULE', label: 'RETICULE: the tabs at the bottom' }, { value: 'START NIGHT', label: 'START NIGHT: the hosts start the night' }, { value: 'HOST', label: 'HOST: the hosts’ own tab' },
+  { value: 'NOT FOR YOU', label: 'NOT FOR YOU: a hosts-only page opened by a guest' },
+  { value: 'STOPS', label: 'STOPS: the five words of the Cats tab slider, low to high, with commas' },
+  { value: 'NUMBERS', label: 'NUMBERS: the safe’s three numbers inside a testimony, with [A], [B] and [C]' },
+  { value: 'NOTICE SCRAP', label: 'NOTICE SCRAP: the scrap of paper a cat leaves when it will not talk, with [A], [B] and [C]' },
+  { value: 'FILLER', label: 'FILLER: a phone with nothing to do while others are choosing' },
+  { value: 'RELAY RULES', label: 'RELAY RULES: the rules of the drawing, on the living room screen' },
+  ...NOTICE_KEYS.map(k => ({ value: `NOTICE ${k.toUpperCase()}`, label: `NOTICE ${k.toUpperCase()}: ${NOTICE_WHAT[k]}` })),
+]
+
+// Granolia's lines on the study screen, by moment. The screen has a plain
+// default for each until one is written here.
+export const STUDY_LABELS = [
+  { value: 'IDLE', label: 'IDLE: before anyone touches a panel' }, { value: 'PLAYING', label: 'PLAYING: the wall is showing a pattern' },
+  { value: 'REPRODUCING', label: 'REPRODUCING: now the group touches it back' }, { value: 'ENTERING', label: 'ENTERING: press the colour and number on the button box' },
+  { value: 'SLOW', label: 'SLOW: after a few misses, the pattern again, slower' }, { value: 'MAP', label: 'MAP: the panels numbered on screen' },
+  { value: 'HALF COLOUR', label: 'HALF COLOUR: the number was right, the colour was not' }, { value: 'HALF NUMBER', label: 'HALF NUMBER: the colour was right, the number was not' },
+  { value: 'NEITHER', label: 'NEITHER: both halves wrong' }, { value: 'TIME', label: 'TIME: three minutes left' },
+  { value: 'SOLVED', label: 'SOLVED: the three jewels are lit' }, { value: 'CAPPED', label: 'CAPPED: fifteen minutes are up' },
+]
+
+// The Act 4 station cards, one line each. CAT may carry [CAT] for the cat's
+// name; BAGS may carry [PROPERTY] and [COUNT] (two or three).
+export const STATION_LABELS = [
+  { value: 'STUDY', label: 'STUDY: go up to the study' }, { value: 'CAT', label: 'CAT: find the cat, with [CAT] for its name' },
+  { value: 'BAGS', label: 'BAGS: the bags, with [PROPERTY] and [COUNT]' }, { value: 'PUZZLE', label: 'PUZZLE: the small shape puzzle on the phones' },
+  { value: 'CHECKIN', label: 'CHECKIN: sit down together and compare' },
+]
+
+// The fourteen traces, one line each: what the bedroom screen says was left
+// behind when the dial reads clearest. Never a name.
+const traceLabel = (trace) => `TRACE ${String(trace).toUpperCase().split('-').join(' ')}`
+export const TRACE_LABELS = charactersFile.characters.map(c => ({ value: traceLabel(c.trace), label: `${traceLabel(c.trace)}: ${c.traceLabel}` }))
+
 // A field is one box on screen. kind: text | textarea | select. The box
 // marked main takes the cursor and the Speak button.
 const line = (label, placeholder, extra = {}) => ({ key: 'text', label, placeholder, kind: 'textarea', main: true, ...extra })
@@ -86,6 +139,12 @@ export const AREAS = {
         onlyForTab: { irwin: ['IN'] } },
       { key: 'text', label: 'The line the guest reads', placeholder: 'One sentence about where this guest stands with the cat', kind: 'textarea', main: true },
     ] },
+  study_lines: { label: 'Granolia in the study', moment: 'Act 4, on the study screen while a group plays the light puzzle', why: 'What Granolia says on the study screen at each moment of the light puzzle: before it starts, while the wall plays, after a miss, when time is short. The screen has a plain default for each.', group: 'The household', tabs: null, guide: null, goal: STUDY_LABELS.length,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which moment', placeholder: 'Pick one', kind: 'select', options: STUDY_LABELS },
+      { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Fifteen minutes.', kind: 'textarea', main: true },
+    ] },
   trailoffs: { label: 'Granolia losing her thread (retired)', moment: 'Retired: Granolia misremembers one detail instead', why: 'The old way. Granolia now gets one detail wrong instead of trailing off, so nothing reads these.', group: 'The household', tabs: null, guide: 'trailoff', goal: 8, hidden: true, retired: true,
     fields: [line('The aside', 'e.g. … that’s how I remember it, anyway. *snrk.* Mostly.')] },
 
@@ -96,15 +155,10 @@ export const AREAS = {
       { key: 'title', label: 'Heading, in capitals', placeholder: 'e.g. YOUR PHONE', kind: 'text' },
       { key: 'body', label: 'What it says, one to three sentences', placeholder: 'e.g. It is your notebook, your map, and your memory tonight. Keep it on you.', kind: 'textarea', main: true },
     ] },
-  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused', why: 'The fixed words on the fifteen screens that no character is speaking: the door, the lobby, no signal, paused. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: 15,
+  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused, every notice', why: 'The fixed words that no character is speaking: the door, the lobby, no signal, paused, the notices between beats, the safe’s numbers. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: UI_LABELS.length,
     codec: labelCodec,
     fields: [
-      { key: 'label', label: 'Which screen', placeholder: 'Pick one', kind: 'select', options: [
-        { value: 'DOORS', label: 'DOORS: the doors are not open yet' }, { value: 'JOIN', label: 'JOIN: who are you, tap your name' }, { value: 'JOIN BUTTON', label: 'JOIN BUTTON: the button that lets you in' },
-        { value: 'JOIN AGAIN', label: 'JOIN AGAIN: coming back on a new phone' }, { value: 'LOBBY', label: 'LOBBY: in, waiting for Act 1' }, { value: 'BAG', label: 'BAG: which bag to collect' },
-        { value: 'OFFLINE', label: 'OFFLINE: no signal' }, { value: 'PAUSED', label: 'PAUSED: the night is paused' }, { value: 'SUPERSEDED', label: 'SUPERSEDED: this character moved to another phone' },
-        { value: 'POWER', label: 'POWER: the power comes back' }, { value: 'HIDE', label: 'HIDE: the hide-this button' }, { value: 'HOLD', label: 'HOLD: keep reading, nearly there' },
-        { value: 'RETICULE', label: 'RETICULE: the tabs at the bottom' }, { value: 'START NIGHT', label: 'START NIGHT: the hosts start the night' }, { value: 'HOST', label: 'HOST: the hosts’ own tab' }] },
+      { key: 'label', label: 'Which screen', placeholder: 'Pick one', kind: 'select', options: UI_LABELS },
       { key: 'text', label: 'The line', placeholder: 'e.g. The Manor cannot hear your phone. Stay where you are: it will reconnect on its own. Nothing is lost.', kind: 'textarea', main: true },
     ] },
   act_scripts: { label: 'What each act asks of you', moment: 'The top of every phone when an act begins, under the act’s name', why: 'One sentence per act, under its fixed name, saying where to be and what to do.', group: 'Words on the phones', tabs: 'acts', guide: 'act_script', goalPerTab: 1,
@@ -113,6 +167,12 @@ export const AREAS = {
       { key: 'label', label: 'Which line', placeholder: 'Pick one', kind: 'select', options: [
         { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }] },
       { key: 'text', label: 'The words', placeholder: 'e.g. Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight.', kind: 'textarea', main: true },
+    ] },
+  station_text: { label: 'The five stations', moment: 'Act 4, the card a group gets at each station', why: 'One line per station: the study, a cat, the bags, the small puzzle, the check-in. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which station', placeholder: 'Pick one', kind: 'select', options: STATION_LABELS },
+      { key: 'text', label: 'The line', placeholder: 'e.g. Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.', kind: 'textarea', main: true },
     ] },
   scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
   motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
@@ -156,6 +216,13 @@ export const AREAS = {
   epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2, hidden: true,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
+  trace_lines: { label: 'What was left behind', moment: 'Act 6, the bedroom screen, when the night has gone clearly enough to say', why: 'One line per trace, naming the object and where it lay, never whose it is. The screen has a plain default for each.', group: 'Blanks and frames', tabs: null, guide: null, goal: TRACE_LABELS.length,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which trace', placeholder: 'Pick one', kind: 'select', options: TRACE_LABELS },
+      { key: 'text', label: 'The line', placeholder: 'e.g. a splash of ink, still wet, beside the writing desk', kind: 'textarea', main: true },
+    ] },
+
   // — The bags —
   bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 108,
     codec: bagCodec,
@@ -172,6 +239,8 @@ export const AREAS = {
       { key: 'label', label: 'Title, in capitals', placeholder: 'e.g. WELCOME SPEECH', kind: 'text' },
       { key: 'text', label: 'The note', placeholder: 'e.g. Good evening, and welcome to Sirwin Manor.', kind: 'textarea', main: true },
     ] },
+  guests: { label: 'Guest list (retired)', moment: 'Retired: guests type their name on their own phone', why: 'The old guest list. Nobody is cast ahead of the night: a guest types their name at the door and is dealt a character.', group: 'Everything else', tabs: null, guide: 'guest', goal: 0, hidden: true, retired: true,
+    fields: [line('A name', 'e.g. Jessa')] },
   art_assets: { label: 'Pictures', moment: 'Screens, portraits and the big TV', why: 'A checklist of pictures still to make.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true },
   av_assets: { label: 'Sounds', moment: 'The speakers: chimes, crackle, thunder', why: 'A checklist of sounds still to make.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true },
 }
@@ -280,7 +349,17 @@ export function lintItem(area, text) {
     }
     case 'ui_copy':
     case 'role_cards':
-      return CAPS_PREFIX.test(text) ? null : 'Pick which screen or card this is in the first box.'
+      if (!CAPS_PREFIX.test(text)) return 'Pick which screen or card this is in the first box.'
+      if (/^(NUMBERS|NOTICE SCRAP):/.test(text) && !(text.includes('[A]') && text.includes('[B]') && text.includes('[C]'))) return 'Keep [A], [B] and [C] in the line: the safe’s numbers go there.'
+      if (/^STOPS:/.test(text) && text.replace(/^STOPS:\s*/, '').split(',').filter(w => w.trim()).length !== 5) return 'Five words, low to high, with commas between them.'
+      return null
+    case 'study_lines':
+      return CAPS_PREFIX.test(text) ? null : 'Pick which moment this is in the first box.'
+    case 'station_text':
+      return CAPS_PREFIX.test(text) ? null : 'Pick which station this is in the first box.'
+    case 'trace_lines':
+      if (!CAPS_PREFIX.test(text)) return 'Pick which trace this is in the first box.'
+      return CHARACTERS.some(c => text.toLowerCase().includes(c.name.toLowerCase().split(' ').pop())) ? 'Never a name. The screen says what was left, not whose it is.' : null
     case 'ops_docs':
     case 'lore':
       return CAPS_PREFIX.test(text) ? null : 'Give it a title in capitals in the first box, like THE FAMILY.'
@@ -449,6 +528,27 @@ export const ADDITIONS = [
     // the bag items list, skipping any item already written there.
     id: '2026-10-18-bag-items',
     appendItems: { bag_items: bagItemsFile.items },
+  },
+  {
+    // 18 Oct: the lists the game reads that the workshop could not edit, and
+    // the board tidied: tasks the night has since answered are marked done,
+    // decisions the canon has settled are answered.
+    id: '2026-10-18-missing-lists',
+    areaDocs: { study_lines: { items: [] }, station_text: { items: [] }, trace_lines: { items: [] } },
+    retireTasks: [
+      { order: 14, detail: 'Retired 18 Oct 2026: a guest types their name on their own phone and is dealt a character; a dead phone is replaced by typing the same name on any other.' },
+      { order: 15, detail: 'Retired 18 Oct 2026: characters are dealt at random on the night and never cast ahead.' },
+      { order: 23, detail: 'Retired 18 Oct 2026: the Parlour Games do this on every phone at once.' },
+      { order: 26, detail: 'Built 18 Oct 2026: scripts/pack-bags.mjs, counts only.' },
+      { order: 28, detail: 'Retired 18 Oct 2026: there is no guest list; the two hosts’ names are on the Game night page.' },
+    ],
+    answerDecisions: {
+      irwinAffection: 'Loves everyone — always max',
+      affectionEconomy: 'Moves through the Parlour Games, nothing else (12 Oct 2026)',
+      act4Pairing: 'App-assigned at random',
+      hostOps: 'Jon fires from phone, in character',
+      buzzFallback: 'Screen-flash pattern on ALL phones (uniform, no tells)',
+    },
   },
 ]
 

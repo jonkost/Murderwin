@@ -3,7 +3,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuthUid, useDoc } from '../lib/hooks'
 import { mayCheck } from '../lib/night'
-import { ACTS, CATS, actScript, bioFor, motiveNotes, motives, npcCards, rules, statusLine, uiLines } from '../lib/content'
+import { ACTS, CATS, actScript, bioFor, motiveNotes, motives, npcCards, rules, statusLine, uiLines, studyLines, stationText } from '../lib/content'
 
 // /play/?check=1 — does the phone say what the workshop says?
 // Reads the copy of the workshop lines the phones receive (made when a night
@@ -164,6 +164,24 @@ function build(c) {
 
   // cat chatter: shown whole, as written
   out.push({ area: 'smalltalk', title: 'Cat chatter, passing by', rows: list('smalltalk').map(it => row(CATS.find(k => k.key === it.cat)?.name ?? it.cat, it.text, it.text)) })
+
+  // Granolia on the study screen, by moment
+  const sl = studyLines(c)
+  out.push({ area: 'study_lines', title: 'Granolia in the study', rows: list('study_lines').map(it => {
+    const { label, body } = labelOf(it.text.trim())
+    return row(label || 'no moment picked', body, label ? sl[label] : '')
+  }) })
+
+  // the five station cards, as the dealer reads them
+  const st = stationText(c)
+  out.push({ area: 'station_text', title: 'The five stations', rows: list('station_text').map(it => {
+    const { label, body } = labelOf(it.text.trim())
+    return row(label || 'no station picked', body, label ? st[label] : '')
+  }) })
+
+  // news frames and the closing story: shown whole, as written; the room screens read them
+  out.push({ area: 'echo_frames', title: 'News frames', rows: list('echo_frames').map(it => row('a room screen', it.text, it.text)) })
+  out.push({ area: 'epilogue_frames', title: 'The closing story', rows: list('epilogue_frames').map(it => row('the living room screen, Act 7', it.text, it.text)) })
 
   return out
 }

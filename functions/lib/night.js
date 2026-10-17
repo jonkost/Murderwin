@@ -32,6 +32,8 @@ export const PLANNING_BAGS = 10 // 8 players → 10 bags (bag doc, 29 Sep)
 export const PLAYER_AREAS = [
   'bios', 'npc_cards', 'rules_text', 'ui_copy', 'smalltalk',
   'act_scripts', 'status_lines', 'motive_notes',
+  // 18 Oct 2026 (G): the room screens read these from the same copy
+  'study_lines', 'echo_frames', 'epilogue_frames', 'station_text',
 ]
 
 export class NightError extends Error {
