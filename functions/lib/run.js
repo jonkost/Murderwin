@@ -11,6 +11,7 @@ import * as night from './night.js'
 import * as deal from './deal.js'
 import * as relay from './relay.js'
 import * as station from './station.js'
+import * as discard from './discard.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -152,6 +153,14 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       return deal.dealGroups(db, nightId, n.act || 3, 'groups')
     case 'station-key':
       return station.setStationKey(db, arg)
+    case 'dry-run':
+      return discard.markDryRun(db, { nightId })
+    case 'settle-now':
+      // a dry run may close a window early; the party never does (CLIENT RULES)
+      if (n.dryRun !== true) throw new NightError('invalid', 'Only a dry run night may close a window early.')
+      return deal.settleWindow(db, nightId, { now, force: true })
+    case 'discard-night':
+      return discard.discardNight(db, { nightId })
     default:
       return night.hostCommand(db, { nightId, command, arg })
   }

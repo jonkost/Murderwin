@@ -10,7 +10,8 @@ import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
 // Every button is labelled by what it does, never by content, and nothing on
 // it can show who the Murderer, the Ghost or the victim is.
 
-export const PLAY_URL = 'https://murderwin-at-sirwin-manor.web.app/play/'
+import { PLAY_URL } from '../lib/config'
+export { PLAY_URL }
 
 // nights/{id}.caseWarning, set when the case is built at the blackout. Plain words, never content.
 const CASE_WARNINGS = {

@@ -2,6 +2,9 @@
 // lib/night.js uses: doc/collection get, set (with merge), update with dotted
 // paths, batches and transactions. Enough to prove the night logic without
 // credentials. Never a substitute for the real rules.
+// Added 17 Oct for discard-night: delete (doc, batch, transaction),
+// FieldValue.delete() in an update, where('field', '==', v).get() on a
+// collection, and listDocuments on a subcollection.
 import { FieldValue } from 'firebase-admin/firestore'
 
 function isSentinel(v) {
@@ -28,6 +31,23 @@ function setPath(obj, path, value) {
   }
   cur[parts[parts.length - 1]] = value
 }
+function deletePath(obj, path) {
+  const parts = path.split('.')
+  let cur = obj
+  for (const p of parts.slice(0, -1)) {
+    if (typeof cur[p] !== 'object' || cur[p] === null) return
+    cur = cur[p]
+  }
+  delete cur[parts[parts.length - 1]]
+}
+function isDeleteSentinel(v) {
+  return isSentinel(v) && v.isEqual(FieldValue.delete())
+}
+function getPath(obj, path) {
+  let cur = obj
+  for (const p of path.split('.')) { if (cur === null || typeof cur !== 'object') return undefined; cur = cur[p] }
+  return cur
+}
 
 export class FakeFirestore {
   constructor() { this.store = new Map(); this.versions = new Map() }
@@ -46,7 +66,10 @@ export class FakeFirestore {
   _update(path, fields) {
     if (!this.store.has(path)) throw new Error(`update on missing doc ${path}`)
     const cur = structuredClone(this.store.get(path))
-    for (const [k, v] of Object.entries(fields)) setPath(cur, k, resolve(v))
+    for (const [k, v] of Object.entries(fields)) {
+      if (isDeleteSentinel(v)) deletePath(cur, k)
+      else setPath(cur, k, resolve(v))
+    }
     this.store.set(path, cur)
     this._bump(path)
   }
@@ -61,13 +84,31 @@ export class FakeFirestore {
       set: async (data, opts) => db._set(path, data, opts),
       update: async (fields) => db._update(path, fields),
       delete: async () => db._delete(path),
+      collection: (sub) => db.collection(`${path}/${sub}`),
     }
   }
   collection(name) {
     const db = this
+    const depth = name.split('/').length + 1
+    const keys = () => [...db.store.keys()].filter(k => k.startsWith(`${name}/`) && k.split('/').length === depth)
+    const snapshotOf = (ks) => {
+      const docs = ks.map(k => db._get(k))
+      return { docs, empty: docs.length === 0, size: docs.length }
+    }
+    const query = (filters) => ({
+      where: (field, op, value) => query([...filters, { field, op, value }]),
+      get: async () => snapshotOf(keys().filter(k => filters.every(f => {
+        const v = getPath(db.store.get(k), f.field)
+        if (f.op === '==') return v === f.value
+        if (f.op === '!=') return v !== f.value
+        throw new Error(`fake where: unsupported op ${f.op}`)
+      }))),
+    })
     return {
       doc: (id) => db.doc(`${name}/${id}`),
-      listDocuments: async () => [...db.store.keys()].filter(k => k.startsWith(`${name}/`) && k.split('/').length === 2).map(k => db.doc(k)),
+      listDocuments: async () => keys().map(k => db.doc(k)),
+      where: (field, op, value) => query([{ field, op, value }]),
+      get: async () => snapshotOf(keys()),
     }
   }
   batch() {

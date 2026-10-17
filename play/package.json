@@ -7,7 +7,8 @@
     "dev": "vite --port 5174 --host",
     "build": "vite build",
     "build:site": "vite build && rm -rf ../hosting/play && mkdir -p ../hosting/play && cp -R dist/. ../hosting/play/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.0.0",

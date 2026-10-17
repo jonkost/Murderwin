@@ -6,7 +6,7 @@ import { subscribeGame, saveGame } from '../lib/store'
 // and how guests join. The night itself is run from the hosts' phones (the
 // Host tab), never from here, so nothing on the night needs this page.
 
-const PLAY_URL = 'https://murderwin-at-sirwin-manor.web.app/play/'
+import { PLAY_URL } from '../lib/config'
 
 const HOSTS = [
   { key: 'host_jonathan', label: 'Who plays Prof. Jonathan Kostington', placeholder: 'Jon' },

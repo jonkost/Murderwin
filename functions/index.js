@@ -1,9 +1,12 @@
 // Cloud Functions for the game night. Players call `join`; a host phone
 // (a session marked host) or the admin calls `hostCommand`. Nothing on the
 // night needs a Google sign-in.
-// SEAL RULE: nothing here touches sealed/* or cases/* yet. When the case
-// generator lands it will live beside this file and keep the same rule:
-// assemble player payloads server-side, return only what that player may see.
+// SEAL RULE: this file never reads sealed/* or cases/* itself. The dealer
+// (lib/deal.js) reads cases/{nightId} with the Admin SDK to assemble each
+// phone's own cards, and writes them only into that phone's session doc.
+// Every callable here returns counts, keys and ok flags: never content.
+// The terminal host (host.mjs) and the fake players (scripts/fake-players.mjs)
+// go through the same lib/ code paths, so what they can do, a phone can do.
 
 import { setGlobalOptions } from 'firebase-functions/v2'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
@@ -12,6 +15,7 @@ import { getFirestore } from 'firebase-admin/firestore'
 import * as night from './lib/night.js'
 import * as run from './lib/run.js'
 import * as station from './lib/station.js'
+import { mayTouchNight } from './lib/access.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -104,12 +108,15 @@ export const stationCommand = onCall({ cors: true }, wrap(async req => {
   return station.stationCommand(db, { nightId, station: which, command, payload })
 }))
 
-// The relay drawing's clock. Any signed-in phone or kiosk may nudge it; it
-// only moves when a deadline on the server's clock has passed, once.
+// The relay drawing's clock. A phone at the party, a host or a room screen
+// (a kiosk with its presence heartbeat for that night) may nudge it; it only
+// moves when a deadline on the server's clock has passed, once.
 export const relayAdvance = onCall({ cors: true }, wrap(async req => {
-  requireUid(req)
+  const uid = requireUid(req)
   const { nightId } = req.data ?? {}
   if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  const allowed = await mayTouchNight(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) })
+  if (!allowed) throw new HttpsError('permission-denied', 'This phone is not at the party.')
   return run.player.relayAdvance(db, { nightId })
 }))
 
