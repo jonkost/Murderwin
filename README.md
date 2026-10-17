@@ -33,7 +33,9 @@ and never appears on your screen. That is on purpose: you are a player too.
   explains it. The **Game night** page in the workshop runs it.
 - `functions/` — the game's server side (joining, the acts, and later the case).
 - `scripts/` — the tool that writes the secret content. You run it once when asked;
-  it prints only numbers.
+  it prints only numbers. Also the eight fake players (`npm run fake-night`).
+- `docs/on-the-night.md` — what to start, in what order, and what to do when
+  something dies on the day.
 - Anything else is plumbing.
 
 ## For Claude Code (technical)
@@ -43,8 +45,11 @@ and never appears on your screen. That is on purpose: you are a player too.
   (`?preview=rest` etc. renders screens with sample data, no night needed)
 - Deploy everything (site + rules + functions): `npm run deploy` at the repo root.
   Site only: `npm run deploy:site`
-- Tests (night logic, no credentials needed): `npm test` at the repo root
-- Deploy rules: `firebase deploy --only firestore:rules,storage`
+- Tests (every suite, no credentials needed): `npm test` at the repo root
+- Deploy rules: `npm run deploy:rules`; functions only: `npm run deploy:functions`
+- The local emulators: `npm run emulate`, then `npm run emulate:seed`; rules tests on them: `npm run test:rules`
+- Eight fake players play a whole night and discard it: `npm run fake-night` (`-- --emulator` against the emulators)
+- The day-of runbook for Jon: `docs/on-the-night.md`
 - Splash locally: `python3 -m http.server 4173`
 - The splash is also published to GitHub Pages from `main` (jonkost.com/Murderwin), so
   pushing publishes it. Commit and push only when Jon says so.
