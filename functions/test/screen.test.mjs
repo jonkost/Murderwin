@@ -359,6 +359,8 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   await host('settle')
   await next() // reveal
   assert.equal((await currentSound(db, nightId)).id, 'sting-reveal')
+  // the screen names one at a time on the host's press (I, 18 Oct): the result waits for all three
+  for (let i = 0; i < 3; i++) { now += 1000; await host('reveal-stage') }
   await next() // result
   assert.equal((await currentSound(db, nightId)).id, 'sting-result')
 
