@@ -13,13 +13,15 @@ import { z } from 'zod'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import {
   adminDb, readMotives, rhymeWords, sha12, redactedError, printFatal,
-  CATS, POOL_TOKENS,
+  CATS, POOL_TOKENS, IRWIN_MAX_WORDS, STUDY_MIN_WORDS, STUDY_MAX_WORDS,
+  readSafeInputs, inputStanza, stanzaCounts, characterNameWords, say, printReport,
 } from './lib.mjs'
 import { validateAll } from './validate-sealed.mjs'
 
 const MODEL = process.env.MODEL ?? 'claude-opus-5'
 
-const CodeContent = z.object({
+// The shape of one sealed motive set: see THE SEALED SHAPE in lib.mjs.
+export const CodeContent = z.object({
   kernels: z.object({
     irwin: z.array(z.string()).length(3),
     boo: z.array(z.string()).length(3),
@@ -36,6 +38,8 @@ const CodeContent = z.object({
     annotation: z.string(),
   })).length(3),
   fragments: z.array(z.string()).length(3),
+  studyClue: z.array(z.string()).length(3).describe('the written clue the study pays a whole group'),
+  irwin: z.array(z.string()).length(3).describe("Sir Irwin's three short Act 5 lines, through the dog filter"),
 })
 
 const SYSTEM = `You write sealed clue content for a Victorian manor murder-mystery
@@ -52,6 +56,14 @@ party game. For ONE motive you produce:
   line in a second ink.
 - FRAGMENTS: 3 variants of a juicy phrase (≤15 words) that slots into a news
   broadcast: "...residents further report ███..." — write what fills the ███.
+- STUDY CLUE: 3 variants of a written clue that a locked study pays out to a
+  whole group at once, ${STUDY_MIN_WORDS}–${STUDY_MAX_WORDS} words, a second
+  angle on the same facts as the documents (not a copy of one), no placeholders.
+- IRWIN LINES: 3 short lines Sir Irwin, the birthday dog, says on the living
+  room screen late in the evening. THE DOG FILTER: at most ${IRWIN_MAX_WORDS}
+  words each, plainly and earnestly true, pointing at this motive, no
+  placeholders, impersonal, and NEVER a person's name (a list of names that
+  must not appear follows).
 
 HARD RULES:
 1. IMPERSONAL: never address anyone. No "you/your". No names of people, no
@@ -59,8 +71,12 @@ HARD RULES:
    "someone", "a figure", "a guest".
 2. VARIABLES: where a kernel mentions where/when/how long/how often/where in
    town/who watched, use EXACTLY these placeholder tokens, exact uppercase:
-   ${POOL_TOKENS.join(' ')}. Real values are injected later. Documents and
-   fragments use NO placeholders in ANY field (text, emphasis, annotation).
+   ${POOL_TOKENS.join(' ')}. Real values are injected later. Documents,
+   fragments, the study clue and Irwin's lines use NO placeholders in ANY
+   field (text, emphasis, annotation).
+   A stanza of the pool vocabulary follows, so a kernel reads naturally once a
+   token is filled; and a stanza of each cat's openers and closers, so the
+   kernel sits naturally between them.
 3. NPC natures (kernel variants must obey):
    - irwin: plainly, earnestly true.
    - boo: true and precise — the best information in the house.
@@ -99,18 +115,25 @@ function shuffled(n) {
   return order
 }
 
-async function generateOne(client, motive) {
+// The user turn for one motive: the riddle, its banned words, the names the
+// dog filter forbids, and the safe-input stanza (pools and voice layers).
+export function userPrompt(motive, { stanza = '', names = [] } = {}) {
   const banned = rhymeWords(motive.rhyme)
+  return [
+    `Motive riddle (players see only this): "${motive.rhyme}"`,
+    `Banned words (never use any of these or close derivatives): ${banned.join(', ')}`,
+    `Names that must never appear anywhere, least of all in Irwin's lines: ${names.join(', ')}`,
+    stanza,
+    'Produce the full content set for this motive.',
+  ].filter(Boolean).join('\n')
+}
+
+async function generateOne(client, motive, extras) {
   const response = await client.beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
     system: SYSTEM,
-    messages: [{
-      role: 'user',
-      content: `Motive riddle (players see only this): "${motive.rhyme}"
-Banned words (never use any of these or close derivatives): ${banned.join(', ')}
-Produce the full content set for this motive.`,
-    }],
+    messages: [{ role: 'user', content: userPrompt(motive, extras) }],
     output_format: betaZodOutputFormat(CodeContent),
   })
   if (!response.parsed_output) {
@@ -125,12 +148,18 @@ async function main() {
   const motives = readMotives()
   const codes = makeCodes(motives.length)
 
-  console.log(`generating sealed content: ${motives.length} motives, model ${MODEL}`)
+  say(`generating sealed content: ${motives.length} motives, model ${MODEL}`)
+
+  // Safe inputs: the workshop's pools and voice layers shape the kernels.
+  const inputs = await readSafeInputs(db)
+  const counts = stanzaCounts(inputs)
+  say(`safe inputs read: ${counts.poolValues} pool values, ${counts.voiceLines} voice lines`)
+  const extras = { stanza: inputStanza(inputs), names: [...characterNameWords()].sort() }
 
   // Regeneration invalidates everything: clear old sealed docs first.
   const old = await db.collection('sealed').listDocuments()
   for (const ref of old) await ref.delete()
-  console.log(`cleared ${old.length} previous sealed docs`)
+  say(`cleared ${old.length} previous sealed docs`)
 
   const manifest = {}
   const countsByCode = {}
@@ -143,41 +172,46 @@ async function main() {
     let content = null
     for (let attempt = 1; attempt <= 3 && !content; attempt++) {
       try {
-        content = await generateOne(client, motive)
+        content = await generateOne(client, motive, extras)
       } catch (e) {
         if (attempt === 3) throw redactedError('generation (code withheld)', e)
-        console.log(`one motive: attempt ${attempt} failed, retrying`)
+        say(`one motive: attempt ${attempt} failed, retrying`)
       }
     }
     await db.collection('sealed').doc(code).set({
       kernels: content.kernels,
       documents: content.documents,
       fragments: content.fragments,
+      studyClue: content.studyClue,
+      irwin: content.irwin,
       generatedAt: new Date(),
     })
     ok++
     const kCount = CATS.reduce((n, c) => n + content.kernels[c].length, 0)
-    countsByCode[code] = `${kCount} kernels, ${content.documents.length} docs, ${content.fragments.length} fragments`
-    console.log(`generated ${ok}/${motives.length}`)
+    countsByCode[code] = `${kCount} kernels, ${content.documents.length} docs, ${content.fragments.length} fragments, ${content.studyClue.length} study, ${content.irwin.length} irwin`
+    say(`generated ${ok}/${motives.length}`)
   }
 
   await db.collection('sealed').doc('manifest').set({ codes: manifest, generatedAt: new Date() })
   // per-code counts, sorted by code string — order says nothing about motives
   for (const code of Object.keys(countsByCode).sort()) {
-    console.log(`code ${code}: ${countsByCode[code]} ✓`)
+    say(`code ${code}: ${countsByCode[code]} ok`)
   }
   const all = await db.collection('sealed').get()
   const runHash = sha12(all.docs.map(d => [d.id, sha12(d.data())]).sort())
-  console.log(`manifest written. run hash ${runHash}`)
+  say(`manifest written. run hash ${runHash}`)
 
-  console.log('validating…')
+  say('validating')
   const report = await validateAll(db)
-  console.log(`validation: ${JSON.stringify(report)}`)
-  console.log(report.pass ? 'PASS' : 'FAIL — re-run generation or inspect aggregates above')
+  printReport(report)
+  say(report.pass ? 'PASS' : 'FAIL: run the generation again, or read the counts above')
   process.exit(report.pass ? 0 : 1)
 }
 
-main().catch(e => {
-  printFatal(e) // never prints raw error text — it could carry content
-  process.exit(1)
-})
+// CLI entry: node generate-sealed.mjs (importing this module runs nothing)
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) {
+  main().catch(e => {
+    printFatal(e) // never prints raw error text — it could carry content
+    process.exit(1)
+  })
+}

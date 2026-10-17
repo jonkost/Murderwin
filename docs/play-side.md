@@ -293,11 +293,16 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
   with the case's murderer and ghost passed as `apart`. A group at study
   position p is at station `(r - p) mod 5` at rotation r, so the study is the
   clock. In rehearsal the study's pay-out card lands with the station card.
-- The rehearsal case: `cases/{nightId}` `{ rehearsal: true, roles, murderer,
-  ghost, motive, victimCharacterId, dialSign, dial }`, created by
-  `ensureCase` the first time roles are needed and only when no case exists.
-  The generator writes the real one (with `kernels`, `documents`) before the
-  night and sets `rehearsal: false`. Nothing in `cases/*` is ever returned.
+- The case (17 Oct 2026): `cases/{nightId}` is built once, at the blackout,
+  by `deal.buildCaseForNight`; its full shape is CASE_SHAPE in
+  `functions/lib/case.js`. Every night rehearses unless
+  `nights/{id}.forceRehearsal` is false (the workshop's "This is the party
+  night" checkbox), in which case one sealed motive set is drawn and checked;
+  a failure falls back to rehearsal with `nights/{id}.caseWarning`. The
+  rehearsal case has the same keys with bracketed stand-ins, and
+  `card.placeholder` follows `cases.rehearsal`. A case with roles is never
+  replaced. Nothing in `cases/*` is ever returned. Details:
+  `docs/blind-content-protocol.md`, Runtime.
 - Seal check in `functions/test/run.test.mjs`: after a whole night, no
   session carries a role field, no window on a phone carries values, and the
   night doc and public content carry no roles and no dial.

@@ -117,6 +117,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       if (act === 2 && n.act < 2) {
         // Act 2 begins with the power returning; jumping straight there deals the roles too
         await night.hostCommand(db, { nightId, command: 'power' })
+        await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
         await deal.dealRoles(db, nightId)
         return enterBeat(db, nightId, 2, firstBeat(2), { now, phase: 'prompt' })
       }
@@ -127,6 +128,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // The lights come back: roles land on every phone, held fifteen seconds.
       await night.publishContent(db, nightId)
       const r = await night.hostCommand(db, { nightId, command: 'power' })
+      await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
       await deal.dealRoles(db, nightId)
       await ref.update({ beat: firstBeat(2), beatAt: FieldValue.serverTimestamp() })
       await deal.runAction(db, nightId, 2, firstBeat(2), deal.beatSpec(2, firstBeat(2))?.action, { now })
