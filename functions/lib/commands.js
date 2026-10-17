@@ -35,6 +35,7 @@ export const HOST_COMMANDS = [
   { name: 'relay-start', arg: '[force]', what: 'Start the Act 6 drawing. A drawing under way is kept unless you say force.' },
   { name: 'relay-reset', arg: '', what: 'Clear the drawing.' },
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },
+  { name: 'tv-trace', arg: '[off]', what: 'Show the trace on the living room TV once the door is open (if the bedroom screen has died). Say off to take it down.' },
   // dry runs only (run.js, discard.js)
   { name: 'dry-run', arg: '', what: 'Mark this night a dry run: it may close windows early and be discarded.' },
   { name: 'settle-now', arg: '', what: 'Close the open window early. Dry run nights only.' },

@@ -12,6 +12,7 @@ import * as deal from './deal.js'
 import * as relay from './relay.js'
 import * as station from './station.js'
 import * as discard from './discard.js'
+import * as screen from './screen.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -48,6 +49,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
+  await screen.onBeat(db, nightId, { act, beat, spec, phase, now, run }) // the room screens and the beat's sound (screen.js)
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
@@ -131,6 +133,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       await deal.dealRoles(db, nightId)
       await ref.update({ beat: firstBeat(2), beatAt: FieldValue.serverTimestamp() })
       await deal.runAction(db, nightId, 2, firstBeat(2), deal.beatSpec(2, firstBeat(2))?.action, { now })
+      await screen.onPhase(db, nightId, 'power', { now }) // the TV stays dark through the prompt; the power sound
       return r
     }
     case 'light-up':
@@ -181,9 +184,15 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       return deal.settleWindow(db, nightId, { now, force: true })
     case 'discard-night':
       return discard.discardNight(db, { nightId })
-    default:
+    case 'tv-trace':
+      // the living room TV shows the trace after the door (the bedroom screen's fallback); 'off' takes it down
+      return screen.tvTrace(db, nightId, arg !== 'off', { now })
+    default: {
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
-      return night.hostCommand(db, { nightId, command, arg, now })
+      const r = await night.hostCommand(db, { nightId, command, arg, now })
+      if (['blackout', 'pause', 'resume'].includes(command)) await screen.onPhase(db, nightId, command, { now }) // the room screens follow (screen.js)
+      return r
+    }
   }
 }
 
@@ -210,6 +219,7 @@ export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
 export async function studyFinished(db, { nightId, payload = {}, now = Date.now() } = {}) {
   const r = await station.stationCommand(db, { nightId, station: 'study', command: 'finished', payload })
   if (r.repeated) return r
+  if (payload.outcome === 'solved') await screen.play(db, nightId, 'sting-solved', { now }) // the house hears the study solved
   const snap = await db.doc(`nights/${nightId}`).get()
   const n = snap.exists ? snap.data() : null
   if (!n || n.act !== 4 || n.phase !== 'act') return { ...r, rotated: false, reason: 'not-act-4' }
