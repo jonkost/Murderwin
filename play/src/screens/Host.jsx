@@ -179,6 +179,11 @@ function RunPanel({ night, busy, run, serverNow }) {
           <p className="gloss run-what">{here.what}</p>
         </>
       ) : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
+      {night.act === 7 && night.beat === 'reveal' && night.reveal && serverNow && (
+        <p className="host-msg" role="status">
+          {(() => { const left = Math.max(0, Math.ceil((ms(night.reveal.at) + 110_000 - serverNow()) / 1000)); return left > 0 ? `The screen is revealing. ${left} seconds to go, then press Next.` : 'The screen has revealed all three. Press Next for everyone’s result.' })()}
+        </p>
+      )}
       {open && (
         <p className="host-msg" role="status">
           {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}

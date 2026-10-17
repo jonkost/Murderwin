@@ -144,7 +144,10 @@ named after the character (the README in that folder lists the names), then
 - The event windows (Acts 2, 4 and 6), the ballot in Act 7, the reveal.
 - The Cats tab as sliders (spec below, decided 13 Oct 2026).
 - Eight fake test players (a script).
-- The room kiosks and the study.
+
+Built since: the study light game and its station (`docs/study-light-game.md`),
+the relay drawing and the room screens for Acts 6 and 7 (`docs/relay-drawing-game.md`),
+and the cue relay for the hall light and sounds (`docs/cues-relay.md`).
 
 ## Cats tab: where you stand (built 16 Oct 2026)
 
