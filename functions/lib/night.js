@@ -246,17 +246,23 @@ async function joinOnly(db, { uid, nightId, name }) {
     const entry = roster[key] ?? null
     const oldUid = entry ? (deck.uids?.[key] ?? null) : null
     const oldSessionSnap = oldUid && oldUid !== uid ? await tx.get(db.doc(`sessions/${oldUid}`)) : null
+    // The old phone is theirs only while its session still carries their
+    // name. After a handover the pointer is gone (see handover) and someone
+    // else may own that uid by now: their session is never read or touched.
+    const oldSession = oldSessionSnap?.exists && oldSessionSnap.data().guestKey === key ? oldSessionSnap.data() : null
+    const parked = entry ? (deck.handed?.[key] ?? null) : null
 
     let characterId, bag, affection
     // The same guest on a new phone: the character comes with them, and so
     // does everything their old phone was dealt (cards, windows, answers,
     // the group), so a dead battery costs nothing. The old phone is told it
-    // has been superseded and shows the doors.
+    // has been superseded and shows the doors. After a handover the same
+    // things come back from the parked copy the handover made.
     const carried = {}
     if (entry) {
       characterId = entry.characterId
       bag = entry.bag
-      const old = oldSessionSnap?.data() ?? (existing?.guestKey === key ? existing : null)
+      const old = parked ?? oldSession ?? (existing?.guestKey === key ? existing : null)
       affection = old?.affection ?? null
       for (const f of CARRIED_FIELDS) if (old?.[f] !== undefined) carried[f] = old[f]
     } else {
@@ -273,7 +279,7 @@ async function joinOnly(db, { uid, nightId, name }) {
     const displayName = entry?.name ?? clean
 
     // then writes
-    if (oldSessionSnap?.exists) {
+    if (oldSession) {
       tx.set(oldSessionSnap.ref, { status: 'superseded', supersededAt: FieldValue.serverTimestamp() }, { merge: true })
     }
     tx.update(nightRef, {
@@ -282,7 +288,7 @@ async function joinOnly(db, { uid, nightId, name }) {
         joinedAt: entry?.joinedAt ?? FieldValue.serverTimestamp(),
       },
     })
-    tx.update(deckRef, { [`uids.${key}`]: uid })
+    tx.update(deckRef, { [`uids.${key}`]: uid, ...(parked ? { [`handed.${key}`]: FieldValue.delete() } : {}) })
     tx.set(sessionRef, {
       ...carried,
       nightId, guestKey: key, guestName: displayName,
@@ -298,28 +304,42 @@ async function joinOnly(db, { uid, nightId, name }) {
 // What follows a guest from a dead phone to a new one.
 export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt']
 
-// A borrowed phone (host button). The previous owner's cards and windows
-// are wiped from the session so the next person to pick the phone up sees
-// nothing of theirs, and `generation` is bumped (a timestamp, so it is
-// always newer): the phone sees the change, forgets its local copy and
-// reloads to the doors. The previous owner keeps their character; tapping
-// their name on any other phone brings it back, cards and all, since the
-// roster and the dealer's copies on the server are untouched. `arg` is the
-// guest's roster key as the Host tab knows it, or a session uid.
+// A borrowed phone (host button). The previous owner's cards, windows and
+// everything else they were dealt are moved off the session into the
+// private deck (`handed[guestKey]`, which no phone can read), the deck's
+// pointer from their name to this phone is dropped, their notes for this
+// night are wiped, and `generation` is bumped (a timestamp, so it is always
+// newer): the phone sees the change, forgets its local copy and reloads to
+// the doors. The next person to pick the phone up joins as themselves, on
+// this uid, with nothing of the previous owner's. The previous owner keeps
+// their character; tapping their name on any other phone brings it back
+// from the parked copy, cards, affection and all, and never touches whoever
+// holds the handed phone now. `arg` is the guest's roster key as the Host
+// tab knows it, or a session uid.
 export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
   const who = String(arg ?? '').trim()
   if (!who) throw new NightError('invalid', 'Whose phone?')
-  const deck = (await db.doc(`nights/${nightId}/private/deck`).get()).data() ?? {}
+  const deckRef = db.doc(`nights/${nightId}/private/deck`)
+  const deck = (await deckRef.get()).data() ?? {}
   const uid = deck.uids?.[who] ?? (Object.values(deck.uids ?? {}).includes(who) ? who : null)
   if (!uid) throw new NightError('no-guest', 'Nobody at the party has that phone.')
   const ref = db.doc(`sessions/${uid}`)
   const snap = await ref.get()
   if (!snap.exists || snap.data().nightId !== nightId) throw new NightError('no-guest', 'That phone is not at this party.')
-  await ref.update({
-    cards: [], windows: {}, answers: {},
-    status: 'handed', handedAt: new Date(now),
-    generation: now,
-  })
+  const s = snap.data()
+  const key = s.guestKey ?? Object.entries(deck.uids ?? {}).find(([, u]) => u === uid)?.[0] ?? null
+  const parked = { affection: s.affection ?? null, handedAt: new Date(now) }
+  for (const f of CARRIED_FIELDS) if (s[f] !== undefined) parked[f] = s[f]
+  const batch = db.batch()
+  if (key) batch.update(deckRef, { [`uids.${key}`]: FieldValue.delete(), [`handed.${key}`]: parked })
+  const wiped = { cards: [], windows: {}, answers: {}, status: 'handed', handedAt: new Date(now), generation: now }
+  for (const f of CARRIED_FIELDS) if (!(f in wiped) && s[f] !== undefined) wiped[f] = FieldValue.delete()
+  batch.update(ref, wiped)
+  // the phone keeps its uid through the reset, so its notes go too (crossed-off motives, prompts seen)
+  const notesRef = db.doc(`notes/${uid}`)
+  const notes = await notesRef.get()
+  if (notes.exists && notes.data()?.byNight?.[nightId] !== undefined) batch.update(notesRef, { [`byNight.${nightId}`]: FieldValue.delete() })
+  await batch.commit()
   return { ok: true }
 }
 

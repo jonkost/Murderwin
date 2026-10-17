@@ -179,7 +179,7 @@ test('join: host names come from the settings form, any spelling of case or spac
 // phone and a pause. The dealer's rehearsal case is thrown away with the db.
 
 import { hostCommand as runCommand, player } from '../lib/run.js'
-import { NIGHT, ms as msOf } from '../lib/deal.js'
+import { NIGHT, ROLE_CARDS, ms as msOf } from '../lib/deal.js'
 import { CARRIED_FIELDS, PAUSE_SHIFTED } from '../lib/night.js'
 
 const sessionOf = (db, uid) => db.store.get(`sessions/${uid}`)
@@ -236,9 +236,13 @@ test('handover clears cards and bumps generation; only a host may call it', asyn
   await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
   await join(db, { uid: 'u-jessa', nightId, name: 'Jessa' })
   await runCommand(db, { nightId, command: 'act', arg: 2 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'cat', now: 1_000_000 })
   await runCommand(db, { nightId, command: 'beat', arg: 'questions', now: 1_000_000 })
   assert.ok(cardsOf(db, 'u-jessa').length > 0)
   assert.ok(Object.keys(sessionOf(db, 'u-jessa').windows).length === 1)
+  const before = sessionOf(db, 'u-jessa')
+  // the phone's own notes for this night (and another night's, which must stay)
+  db.store.set('notes/u-jessa', { byNight: { [nightId]: { seen: { welcome: true, 'prompt-2': true }, crossed: { 3: true } }, 'other-night': { crossed: { 1: true } } } })
   const t = 1_010_000
   const r = await runCommand(db, { nightId, command: 'handover', arg: 'jessa', now: t })
   assert.equal(r.ok, true)
@@ -248,6 +252,11 @@ test('handover clears cards and bumps generation; only a host may call it', asyn
   assert.equal(s.generation, t)
   assert.equal(s.status, 'handed')
   assert.equal(s.characterId !== undefined, true, 'the character stays with the guest on the roster')
+  // the previous owner's pointer is gone, so nothing dealt to this phone can be hers from now on
+  assert.equal(db.store.get(`nights/${nightId}/private/deck`).uids.jessa, undefined)
+  // her notes for this night are wiped with the phone; another night's are left alone
+  assert.equal(db.store.get('notes/u-jessa').byNight[nightId], undefined)
+  assert.deepEqual(db.store.get('notes/u-jessa').byNight['other-night'], { crossed: { 1: true } })
   // the gate: a plain guest is refused, a host phone is not
   assert.equal(await canHost(db, { uid: 'u-jessa', nightId, command: 'handover' }), false)
   assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'handover' }), true)
@@ -263,8 +272,32 @@ test('handover clears cards and bumps generation; only a host may call it', asyn
   assert.equal(next.resumed, false)
   assert.equal(sessionOf(db, 'u-jessa').guestKey, 'mari')
   assert.equal(cardsOf(db, 'u-jessa', 'role').length, 1, 'the new owner gets a role card at once')
+  assert.equal(cardsOf(db, 'u-jessa').length, 1, 'and nothing of the previous owner\'s')
+  const mariBefore = sessionOf(db, 'u-jessa')
   const back = await join(db, { uid: 'u-spare', nightId, name: 'Jessa' })
   assert.equal(back.characterId, db.store.get(`nights/${nightId}`).roster.jessa.characterId)
+  // Jessa comes back whole: every card, her window, her affection, as they were before the handover
+  const jessa = sessionOf(db, 'u-spare')
+  assert.deepEqual(cardsOf(db, 'u-spare').map(c => c.id), before.cards.map(c => c.id))
+  assert.deepEqual(Object.keys(jessa.windows), Object.keys(before.windows))
+  assert.deepEqual(jessa.affection, before.affection)
+  const roles = db.store.get(`cases/${nightId}`).roles
+  assert.equal(cardsOf(db, 'u-spare', 'role')[0].text, ROLE_CARDS[roles.jessa.toUpperCase()], 'her own role card, never the new owner\'s')
+  // and Mari, on the handed phone, is untouched: still active, still her own cards
+  const mari = sessionOf(db, 'u-jessa')
+  assert.equal(mari.status, 'active')
+  assert.equal(mari.guestKey, 'mari')
+  assert.deepEqual(mari.cards.map(c => c.id), mariBefore.cards.map(c => c.id))
+  assert.deepEqual(mari.affection, mariBefore.affection)
+  assert.deepEqual(db.store.get(`nights/${nightId}/private/deck`).uids, { jessa: 'u-spare', mari: 'u-jessa' }, 'Jon\'s phone was handed on too, so his pointer waits for his return')
+  assert.equal(db.store.get(`nights/${nightId}/private/deck`).handed?.jessa, undefined, 'the parked copy is spent')
+  // a handed phone with no cards yet: the owner's return deals the role card fresh
+  await runCommand(db, { nightId, command: 'handover', arg: 'jessa', now: t + 2 })
+  assert.equal(db.store.get(`nights/${nightId}/private/deck`).uids.jessa, undefined)
+  const again = await join(db, { uid: 'u-third', nightId, name: 'Jessa' })
+  assert.equal(again.characterId, back.characterId)
+  assert.deepEqual(cardsOf(db, 'u-third').map(c => c.id), before.cards.map(c => c.id), 'the second handover parked her cards too')
+  assert.equal(sessionOf(db, 'u-spare').status, 'handed', 'the phone she left is handed, not superseded')
 })
 
 test('a pause freezes every clock in one batch and resume moves them all on by the pause length', async () => {
