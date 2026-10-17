@@ -117,7 +117,12 @@ export async function signUpAnonymous(t) {
 
 // A callable Cloud Function. Returns { ok, data } or { ok:false, code, message }.
 export async function call(t, name, data, token) {
-  const r = await send(`${t.functions}/${name}`, { method: 'POST', body: { data }, token })
+  let r
+  try {
+    r = await send(`${t.functions}/${name}`, { method: 'POST', body: { data }, token })
+  } catch (e) {
+    return { ok: false, status: 0, code: 'unreachable', message: String(e?.message ?? e) }
+  }
   if (r.ok && r.json && 'result' in r.json) return { ok: true, data: r.json.result }
   const err = r.json?.error ?? {}
   return { ok: false, status: r.status, code: String(err.status ?? 'ERROR').toLowerCase().replace(/_/g, '-'), message: String(err.message ?? '') }
