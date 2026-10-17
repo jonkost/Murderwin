@@ -16,6 +16,7 @@ import * as night from './lib/night.js'
 import * as run from './lib/run.js'
 import * as station from './lib/station.js'
 import { mayTouchNight } from './lib/access.js'
+import { stewardRequest } from './lib/steward.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -34,6 +35,8 @@ const CODE_MAP = {
   'already-joined': 'already-exists',
   'window-open': 'failed-precondition',
   running: 'failed-precondition',
+  'permission-denied': 'permission-denied',
+  'no-doc': 'not-found',
 }
 
 function wrap(handler) {
@@ -125,4 +128,14 @@ export const relayVote = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, pick } = req.data ?? {}
   return run.player.relayVote(db, { nightId, uid, pick })
+}))
+
+// The Steward's door to the secrets (lib/steward.js). Jenna reads and edits
+// sealed/* here, and only here: the gate is the SHA-256 of a verified Google
+// email, never a UID, so Jon's admin account is refused with the rest. The
+// result carries sealed text to that one screen; the log carries the op and
+// the code only.
+export const steward = onCall({ cors: true }, wrap(async req => {
+  requireUid(req)
+  return stewardRequest(db, req)
 }))

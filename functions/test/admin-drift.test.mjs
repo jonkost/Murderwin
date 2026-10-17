@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url'
 // isAdmin() in firestore.rules and isStaff() in storage.rules. They are kept
 // in step by hand, so this test fails the moment one of them changes alone.
 // Jenna (the Steward) is in the two rules files by email hash and, by
-// design, NOT in the functions list: the Steward's server-side identity
-// is workstream H's to add. That difference is listed here as expected.
+// design, NOT in the functions UID list: the Steward's server-side identity
+// is the same hash in functions/lib/steward.js, checked by the last test.
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..', '..')
@@ -43,10 +43,12 @@ test('storage.rules isStaff() lists the same UIDs and the same email hashes as f
   assert.deepEqual(all(HASH, fs).sort(), all(HASH, st).sort(), 'email hashes agree')
 })
 
-test('expected extra: Jenna is in the rules by email hash and not in the functions list (until the Steward view lands)', () => {
+test('Jenna is in the rules by email hash, not in the functions UID list, and functions/lib/steward.js carries the same hash', () => {
   const fs = block(read('firestore.rules'), 'isAdmin')
   const hashes = all(HASH, fs)
   assert.equal(hashes.length, 1, 'exactly one Steward hash in the rules')
   const index = read('functions/index.js')
-  assert.ok(!index.includes(hashes[0]), 'the functions list has no email hash; the Steward is identified server-side by workstream H')
+  assert.ok(!index.includes(hashes[0]), 'the functions UID list has no email hash; the Steward is identified by lib/steward.js')
+  const steward = read('functions/lib/steward.js')
+  assert.deepEqual(all(HASH, steward), hashes, 'RULES_STEWARD_HASH in functions/lib/steward.js equals the hash in firestore.rules')
 })
