@@ -3,7 +3,7 @@ import QRCode from 'qrcode'
 import { callHost } from '../firebase'
 import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
-import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
+import { beatsOf, beatSpec, secondsLeft } from '../lib/night'
 import { houseView } from '../lib/house'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME } from '../lib/finale'
 
