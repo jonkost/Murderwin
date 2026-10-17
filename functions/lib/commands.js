@@ -14,7 +14,7 @@ export const HOST_COMMANDS = [
   { name: 'refresh-hosts', arg: '', what: 'Re-read the two host names from the Game night form.' },
   { name: 'join-open', arg: '', what: 'Open the doors.' },
   { name: 'join-close', arg: '', what: 'Close the doors.' },
-  { name: 'act', arg: '<1-7>', what: 'Jump to an act (jumping to 2 deals the roles).' },
+  { name: 'act', arg: '<1-7>', what: 'Jump to an act (a jump to 2 or past it deals the roles first if they are not out yet).' },
   { name: 'blackout', arg: '', what: 'Every phone goes dark.' },
   { name: 'power', arg: '', what: 'The power returns: roles land, Act 2 begins.' },
   { name: 'pause', arg: '', what: 'Pause: Sir Irwin requires the garden.' },

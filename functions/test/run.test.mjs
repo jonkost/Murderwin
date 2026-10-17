@@ -82,7 +82,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
     assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')
     if (go[0].cat === 'granolia') assert.equal(go[0].room, 'the study')
   }
-  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe[uids[0]].length === 3)
+  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe.jon.length === 3, 'the safe answer is kept by guest key')
   await next() // puzzle
   for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
   await next() // questions window
@@ -211,6 +211,74 @@ test('back moves without dealing; act jump to 2 deals the roles; light-up opens 
   await assert.rejects(() => hostCommand(db, { nightId, command: 'settle' }), /still choosing/)
 })
 
+test('an act jump that skips the power beat still builds the case and deals every phone its role card', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  await hostCommand(db, { nightId, command: 'act', arg: 1 })
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'Act 1: no case yet')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 0)
+  // the host taps 3 on the acts row, then Next to the groups
+  await hostCommand(db, { nightId, command: 'act', arg: 3 })
+  const n = night(db, nightId)
+  assert.equal(n.act, 3)
+  assert.equal(n.phase, 'prompt', 'the roles have just landed: every phone shows its card first')
+  const c = db.store.get(`cases/${nightId}`)
+  assert.ok(c?.roles, 'the case was built on the way')
+  for (const uid of uids) {
+    const role = cards(db, uid, 'role')
+    assert.equal(role.length, 1, 'exactly one role card on every phone')
+    assert.equal(role[0].id, '2-power-role')
+  }
+  await hostCommand(db, { nightId, command: 'next' })
+  await hostCommand(db, { nightId, command: 'next' })
+  assert.equal(night(db, nightId).beat, 'groups')
+  assert.equal(night(db, nightId).phase, 'act')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1, 'still one, never two')
+  // a later jump deals nothing twice; a jump back to 1 deals nothing either
+  await hostCommand(db, { nightId, command: 'act', arg: 5 })
+  assert.equal(night(db, nightId).phase, 'act', 'the roles were already out: no prompt again')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
+  const { db: db2, nightId: n2, phones: p2 } = await party()
+  await hostCommand(db2, { nightId: n2, command: 'act', arg: 1 })
+  assert.equal(db2.store.get(`cases/${n2}`), undefined)
+  for (const uid of Object.values(p2)) assert.equal(cards(db2, uid, 'role').length, 0)
+})
+
+test('a beat\'s window is keyed by the beat: re-running it opens nothing twice and pushes the dial once; light-up is always fresh', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  let now = 3_000_000
+  await hostCommand(db, { nightId, command: 'act', arg: 2, now })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  const w1 = night(db, nightId).window
+  assert.equal(w1.id, 'questions-2-questions', 'the id names the act and the beat, not the moment')
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'settle', now })
+  assert.equal(night(db, nightId).window.settled, true)
+  const dialLog = db.store.get(`cases/${nightId}`).dialLog.length
+  const sets = Object.fromEntries(uids.map(u => [u, Object.keys(session(db, u).windows)]))
+  // the host taps the beat in the list, then Back and Next: the same window stands, settled
+  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  assert.equal(night(db, nightId).window.id, w1.id)
+  assert.equal(night(db, nightId).window.settled, true)
+  await hostCommand(db, { nightId, command: 'back', now })
+  await hostCommand(db, { nightId, command: 'next', now })
+  assert.equal(night(db, nightId).beat, 'questions')
+  assert.equal(night(db, nightId).window.id, w1.id)
+  for (const u of uids) assert.deepEqual(Object.keys(session(db, u).windows), sets[u], 'no second set on any phone')
+  assert.equal(db.store.get(`cases/${nightId}`).dialLog.length, dialLog, 'the dial moved once for this act')
+  // the explicit button is a fresh window every time
+  const lit = await hostCommand(db, { nightId, command: 'light-up', now })
+  assert.notEqual(lit.id, w1.id)
+  assert.equal(night(db, nightId).window.id, lit.id)
+  assert.equal(night(db, nightId).window.settled, false)
+  for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
+  // and a beat the night has not seen opens as before
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now })
+  assert.equal(night(db, nightId).window.id, 'questions-6-merged')
+})
+
 test('the safe: wrong twice, then it gives way; right pays a document once', async () => {
   const { db, nightId, phones } = await party()
   await hostCommand(db, { nightId, command: 'act', arg: 2 })
@@ -218,13 +286,24 @@ test('the safe: wrong twice, then it gives way; right pays a document once', asy
   await hostCommand(db, { nightId, command: 'beat', arg: 'puzzle' })
   const uid = phones.jessa
   const puzzle = cards(db, uid, 'puzzle')[0]
-  const answer = db.store.get(`nights/${nightId}/private/puzzles`).safe[uid]
+  const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
+  assert.deepEqual(Object.keys(safe).sort(), ['jacob', 'jessa', 'jon', 'marie'], 'the safe is kept by guest, never by phone')
+  const answer = safe.jessa
   const right = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
   assert.equal(right.right, true)
   assert.equal(cards(db, uid, 'document').length, 1)
   const again = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
   assert.equal(again.already, true)
   assert.equal(cards(db, uid, 'document').length, 1)
+
+  // Marie's battery dies: her right numbers open the safe on her new phone first try
+  await join(db, { uid: 'uid-marie-2', nightId, name: 'Marie' })
+  const p3 = cards(db, 'uid-marie-2', 'puzzle')[0]
+  assert.ok(p3, 'the puzzle card came along')
+  const moved = await player.solve(db, { nightId, uid: 'uid-marie-2', cardId: p3.id, entry: safe.marie })
+  assert.equal(moved.right, true)
+  assert.equal(moved.tries, 1)
+  assert.equal(cards(db, 'uid-marie-2', 'document')[0].gaveWay, undefined)
 
   const uid2 = phones.jacob
   const p2 = cards(db, uid2, 'puzzle')[0]

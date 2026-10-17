@@ -26,6 +26,7 @@ export function createRunner({
   let machine = fresh()
   let granolia = null
   let pendingFinished = null
+  let pausedAt = null             // the moment the host paused the night (server clock), while it is paused
 
   // ---- the effect queue: one effect at a time, never waited on from inside an effect
   let queue = Promise.resolve()
@@ -127,19 +128,38 @@ export function createRunner({
     // a panel was touched (gestures 0 and 1 are taps; swipes are the app's business)
     touch(panelId, gesture = 0) {
       if (gesture !== 0 && gesture !== 1) return
+      if (pausedAt != null) return                // the house is paused: the wall waits with it
       machine.touch(panelId, serverNow())
       drain()
     },
     // a button-box key; with the Elements down the number keys stand in for panels 1–6
     key(name) {
+      if (pausedAt != null) return
       if (!elementsOk && /^[1-6]$/.test(name) && machine.state !== 'entering') machine.touch(Number(name), serverNow())
       else machine.key(name, serverNow())
       drain()
     },
+    // The host paused or resumed the night (nights/{id}.phase, through the
+    // follower). While paused the clock stands still and the wall ignores
+    // touches; on resume the game's start moves on by the length of the
+    // pause, so the group gets its whole fifteen minutes, and the kiosk's
+    // clock is told. `at` is the server's moment of the change.
+    paused(flag, at = serverNow()) {
+      if (flag) {
+        if (pausedAt == null) { pausedAt = at; log('paused') }
+        return
+      }
+      if (pausedAt == null) return
+      const length = Math.max(0, at - pausedAt)
+      pausedAt = null
+      log(`resumed after ${Math.round(length / 1000)}s`)
+      machine.shift(length) // its screen effect carries the moved start to the kiosk
+      drain()
+    },
+    get isPaused() { return pausedAt != null },
     // once a second: the cap, the warning, and any "finished" the server missed
     tick() {
-      machine.tick(serverNow())
-      drain()
+      if (pausedAt == null) { machine.tick(serverNow()); drain() }
       if (pendingFinished && nightId) {
         const e = pendingFinished; pendingFinished = null
         call('finished', { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs })
@@ -155,6 +175,7 @@ export function createRunner({
       settings = {}
       granolia = null
       pendingFinished = null
+      pausedAt = null
       machine = fresh()
       log('night:', nightId ?? 'none')
       drain()

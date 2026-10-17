@@ -16,6 +16,8 @@ import * as finale from './finale.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
+// The host commands a pause holds back (everything that moves the night or lights the phones).
+export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout'])
 
 export function firstBeat(act) { return deal.beatsOf(act)[0]?.key ?? null }
 
@@ -85,6 +87,11 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
   if (!snap.exists) throw new NightError('no-night', 'No such night.')
   const n = snap.data()
 
+  // A paused night stands still: nothing that moves the beat, the act or the
+  // phones runs until the host resumes, so no clock is quietly un-paused
+  // without being shifted (resume is what moves them).
+  if (n.phase === 'paused' && PAUSE_HELD.has(command)) throw new NightError('invalid', 'The night is paused. Resume first.')
+
   switch (command) {
     case 'next': {
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
@@ -117,12 +124,17 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       if (!ACT_KEYS.includes(act)) throw new NightError('invalid', 'Acts run 1 to 7.')
       await settleIfDue(db, nightId, now)
       await night.publishContent(db, nightId) // the latest workshop lines, every time an act is chosen
-      if (act === 2 && n.act < 2) {
-        // Act 2 begins with the power returning; jumping straight there deals the roles too
+      // Act 2 begins with the power returning. Jumping to Act 2 or past it
+      // before the roles are out (a phone died mid-blackout, a rehearsal
+      // shortcut) does what Power returns does first: the case is built,
+      // blind, once, and every phone gets its role card and shows it before
+      // the act starts. A night whose roles are already out jumps straight.
+      const rolesOut = !!(await deal.readCase(db, nightId))?.roles
+      if (act >= 2 && !rolesOut) {
         await night.hostCommand(db, { nightId, command: 'power' })
         await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
         await deal.dealRoles(db, nightId)
-        return enterBeat(db, nightId, 2, firstBeat(2), { now, phase: 'prompt' })
+        return enterBeat(db, nightId, act, firstBeat(act), { now, phase: 'prompt' })
       }
       if (act < 7) await finale.unreveal(db, nightId) // a jump back from the reveal forgets it
       await ref.update({ actStartedAt: FieldValue.serverTimestamp() })
@@ -142,7 +154,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // Every phone lights up with three questions, any time in Acts 2, 4 and 6.
       if (![2, 4, 6].includes(n.act)) throw new NightError('invalid', 'The phones light up in Acts 2, 4 and 6.')
       await settleIfDue(db, nightId, now)
-      return deal.openWindow(db, nightId, 'questions', { now, act: n.act, beat: n.beat })
+      return deal.openWindow(db, nightId, 'questions', { now, act: n.act }) // no beat: a fresh window every press
     case 'settle':
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':
@@ -155,8 +167,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'groups':
       // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart;
       // once the house has started rotating the groups are set, and remaking them would scramble Act 4
-      if ((n.rotation ?? -1) >= 0 && arg !== 'force') return { ok: true, already: true, reason: 'Groups are set' }
-      return deal.dealGroups(db, nightId, n.act || 3, 'groups')
+      return deal.dealGroups(db, nightId, n.act || 3, 'groups', { force: arg === 'force' })
     case 'station-key':
       return station.setStationKey(db, arg)
     case 'study-tick':
