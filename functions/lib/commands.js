@@ -19,6 +19,7 @@ export const HOST_COMMANDS = [
   { name: 'power', arg: '', what: 'The power returns: roles land, Act 2 begins.' },
   { name: 'pause', arg: '', what: 'Pause: Sir Irwin requires the garden.' },
   { name: 'resume', arg: '', what: 'Carry on from the pause.' },
+  { name: 'handover', arg: '<guestKey>', what: 'Hand a guest\'s phone on: wipe what it holds so another phone can take the character.' },
   // running the beats (run.js)
   { name: 'next', arg: '', what: 'The next beat. The one button that runs the night.' },
   { name: 'back', arg: '', what: 'One beat back, dealing nothing.' },
