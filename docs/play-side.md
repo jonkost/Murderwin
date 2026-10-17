@@ -153,7 +153,6 @@ named after the character (the README in that folder lists the names), then
   anything; today Next and "Pick for the rest" do it.
 - The bag packing (a blind script) and the seven stationery pictures; the
   stand-ins work until then.
-- The finale staging on the TV and tappable achievements.
 - Spill the Beans and the Hush: your two safeguard buttons.
 - The workshop's Freeze button for 7 November.
 
