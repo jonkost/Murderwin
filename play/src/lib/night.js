@@ -66,12 +66,28 @@ export function seen(notes, nightId, key) {
   return !!notesFor(notes, nightId).seen?.[key]
 }
 
+// The phase a phone should behave as if it is in. A pause keeps the phase it
+// was taken from (nights.pausedFrom), so a pause during the blackout is still
+// the blackout and a pause during the role prompt is still the prompt.
+export function effectivePhase(night) {
+  if (!night) return null
+  if (night.phase === 'paused') return night.pausedFrom || 'act'
+  return night.phase
+}
+
+// Phones stay near-black through the blackout, and through a pause taken
+// during it: the host pausing to deal with the dog must not light the room.
+export function isDark(night) {
+  return effectivePhase(night) === 'blackout'
+}
+
 // The Welcome tour shows the first time a phone has a character on this
 // night, whatever the act (a late arrival at Act 3 still gets it), but never
-// over the blackout or the role prompt.
+// over the blackout or the role prompt, paused or not.
 export function wantsWelcome(night, notes, nightId) {
   if (!night || !nightId) return false
-  if (night.phase === 'blackout' || night.phase === 'prompt') return false
+  const phase = effectivePhase(night)
+  if (phase === 'blackout' || phase === 'prompt') return false
   return !seen(notes, nightId, 'welcome')
 }
 
