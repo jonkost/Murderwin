@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { callSolve } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl } from '../lib/night'
+import { STATIONERY, templateSlug, stationeryUrl } from '../lib/stationery'
 
 // Everything a phone is dealt during an act, one component per kind of card.
 // Every card that needs an answer has a required tap before it goes away
@@ -138,11 +139,20 @@ function Safe({ card, nightId, session, onDone }) {
   )
 }
 
-// A document, printed live onto one of the seven stationery designs.
+// A document, printed live onto one of the seven stationery designs: the
+// blank design is the paper's background (play/public/stationery/<slug>.svg,
+// a stand-in until Jon's art replaces the file) and the case's text, big
+// word and note are laid over it in that design's ink. A design the phone
+// does not know prints on the plain block.
 export function Document({ card }) {
+  const slug = templateSlug(card.template)
+  const design = slug ? STATIONERY[slug] : null
+  const base = import.meta.env?.BASE_URL ?? '/'
+  const cls = design ? `paper paper-on paper-${slug} ink-${design.ink}` : 'paper'
+  const style = design ? { backgroundImage: `url(${stationeryUrl(slug, base)})` } : undefined
   return (
     <section className="dealt document">
-      <div className="paper">
+      <div className={cls} style={style}>
         <p className="paper-kind">{card.template}{card.gaveWay ? ' · fell out of the safe' : ''}</p>
         <p className="paper-big">{card.bigWord}</p>
         <p className="paper-text">{card.text}</p>

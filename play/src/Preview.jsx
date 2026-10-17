@@ -9,6 +9,7 @@ import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
 import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study } from './screens/Kiosk'
+import { TEMPLATE_NAMES, templateSlug } from './lib/stationery'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
@@ -184,6 +185,8 @@ export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
   const [act, setAct] = useState(NIGHT.act)
   const [step, setStep] = useState(0)
+  // ?preview=document cycles the seven stationery designs (or ?template=playbill)
+  const [paper, setPaper] = useState(() => (previewTemplate() ? TEMPLATE_NAMES.findIndex(n => templateSlug(n) === templateSlug(previewTemplate())) : 0))
   const night = { ...NIGHT, act }
   const serverNow = () => Date.now()
   const which = screen === 'tour' ? TOUR[step] : screen
@@ -218,8 +221,16 @@ export default function Preview({ screen }) {
     case 'lobby': body = <Rest uid="preview" night={{ ...night, act: 0, phase: 'lobby' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     default:
       if (dealt) {
-        body = <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
-          session={{ ...SESSION, cards: dealt.cards, solved: which === 'document' ? { '2-puzzle-safe': true } : {} }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
+        // an unknown ?template= shows the plain block; the button then cycles the seven
+        const template = paper >= 0 ? TEMPLATE_NAMES[paper] : previewTemplate()
+        const dealtCards = which === 'document' ? dealt.cards.map(c => (c.kind === 'document' ? { ...c, template } : c)) : dealt.cards
+        body = (
+          <>
+            <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
+              session={{ ...SESSION, cards: dealtCards, solved: which === 'document' ? { '2-puzzle-safe': true } : {} }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
+            {which === 'document' && <button className="preview-paper chip" onClick={() => setPaper(p => (p + 1) % TEMPLATE_NAMES.length)} title="Next stationery design (preview only)">{template} ▸</button>}
+          </>
+        )
       } else {
         body = (
           <>
@@ -240,6 +251,11 @@ export default function Preview({ screen }) {
       </div>
     </>
   )
+}
+
+// /play/?preview=document&template=playbill starts on that design.
+function previewTemplate() {
+  try { return new URLSearchParams(window.location.search).get('template') } catch { return null }
 }
 
 // /play/?preview=rest&character=leech shows that character's card instead.

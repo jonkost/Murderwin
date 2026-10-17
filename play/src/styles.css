@@ -479,3 +479,30 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .reveal-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 6.5vw; line-height: 1.05; margin: 0; }
 .reveal-name.motive { font-size: 5vw; color: var(--good); }
 .reveal-sub { font-size: 2.6vw; color: var(--dim); margin: 1vw 0 0; }
+
+/* a document on one of the seven stationery designs (G, 18 Oct 2026): the
+   blank design is the background, the text sits inside its margins and wraps
+   at phone width; a design the phone does not know keeps the plain block */
+.document .paper.paper-on { background-color: var(--brand-parchment); background-repeat: no-repeat; background-size: 100% 100%; background-position: center; min-height: 24rem; padding: 3.6rem 2rem 3rem; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+.document .paper.paper-on .paper-kind { color: #6b5a4e; }
+.paper-on .paper-text { font-size: 1.02rem; }
+.paper-on .paper-big { font-size: clamp(1.3rem, 7vw, 2rem); overflow-wrap: normal; hyphens: auto; }
+.ink-mono .paper-text, .ink-mono .paper-kind { font-family: ui-monospace, 'Courier New', Menlo, monospace; }
+.ink-mono .paper-big { font-family: ui-monospace, 'Courier New', Menlo, monospace; letter-spacing: 0.08em; }
+.ink-poster .paper-big { font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.02em; }
+.ink-poster .paper-text { font-family: ui-serif, 'New York', Georgia, serif; }
+.ink-hand .paper-text { font-family: 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', 'Segoe Script', cursive; font-size: 1.15rem; line-height: 1.5; }
+.ink-hand .paper-big { font-family: 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', 'Segoe Script', cursive; }
+.ink-serif .paper-big { font-family: ui-serif, 'New York', Georgia, serif; font-variant: small-caps; }
+.paper-telegram { padding-top: 4.4rem; }
+.paper-telegram .paper-text { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.95rem; }
+.paper-receipt { padding-top: 3.8rem; }
+.paper-household-notice { padding: 3.2rem 2.6rem 3.6rem; }
+.paper-citation-form { padding: 3.4rem 2.4rem 4rem; }
+.paper-personal-letter { padding: 2.6rem 1.6rem 2.6rem 4.2rem; }
+.paper-playbill { padding: 5.8rem 2.6rem 5.6rem; text-align: center; }
+.paper-playbill .paper-note { justify-self: center; }
+.paper-mourning-card { padding: 3.6rem 2.6rem 6.6rem; min-height: 27rem; text-align: center; color: #1a1614; }
+.paper-mourning-card .paper-big { color: #1a1614; }
+.paper-mourning-card .paper-note { justify-self: center; }
+.preview-paper { position: fixed; right: 0.6rem; top: 0.6rem; z-index: 50; opacity: 0.85; background: var(--card); }
