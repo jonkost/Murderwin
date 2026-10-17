@@ -17,6 +17,9 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
+import { connectAuthEmulator } from 'firebase/auth'
+import { connectFirestoreEmulator } from 'firebase/firestore'
+import { connectFunctionsEmulator } from 'firebase/functions'
 import { createStudy, COLOURS } from './lib/study.js'
 import { Nanoleaf, COLOUR_RGB, countSegments } from './lib/nanoleaf.js'
 import { openDeck } from './lib/streamdeck.js'
@@ -49,6 +52,7 @@ const firebaseConfig = {
   messagingSenderId: '155269832197',
   appId: '1:155269832197:web:09f0ff7a92255b97b4466c',
 }
+if (env.MURDERWIN_EMULATOR === '1') firebaseConfig.projectId = env.MURDERWIN_PROJECT_ID || 'demo-murderwin'
 
 // ---- devices -------------------------------------------------------------
 async function openWalls() {
@@ -73,6 +77,14 @@ const auth = getAuth(app)
 const db = getFirestore(app)
 const fns = getFunctions(app, 'us-central1')
 const callStation = httpsCallable(fns, 'stationCommand')
+// Dev split: MURDERWIN_EMULATOR=1 points this at the local emulators (npm run emulate at the repo root), never the party database.
+if (env.MURDERWIN_EMULATOR === '1') {
+  const host = env.MURDERWIN_EMULATOR_HOST || '127.0.0.1'
+  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true })
+  connectFirestoreEmulator(db, host, 8080)
+  connectFunctionsEmulator(fns, host, 5001)
+  log('emulator mode:', host)
+}
 
 const { elements, lines } = await openWalls()
 let elementsOk = true, linesOk = true

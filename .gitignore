@@ -37,3 +37,7 @@ functions/seed/
 
 # full-size art originals are kept locally; phone-sized copies live in play/public/*
 art/
+
+# the local emulators (npm run emulate): their logs and any exported data
+.emulator-data/
+*-debug.log

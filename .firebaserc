@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "murderwin-at-sirwin-manor"
+    "default": "murderwin-at-sirwin-manor",
+    "live": "murderwin-at-sirwin-manor",
+    "dev": "murderwin-dev-placeholder"
   }
 }

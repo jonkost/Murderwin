@@ -10,7 +10,8 @@ import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
 // Every button is labelled by what it does, never by content, and nothing on
 // it can show who the Murderer, the Ghost or the victim is.
 
-export const PLAY_URL = 'https://murderwin-at-sirwin-manor.web.app/play/'
+import { PLAY_URL } from '../lib/config'
+export { PLAY_URL }
 
 const PHASE_WORDS = {
   lobby: 'doors open, nothing started',

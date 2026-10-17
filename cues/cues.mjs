@@ -17,6 +17,8 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
+import { connectAuthEmulator } from 'firebase/auth'
+import { connectFirestoreEmulator } from 'firebase/firestore'
 import { plan, soundCandidates } from './lib/cues.js'
 import { Hue } from './lib/hue.js'
 
@@ -47,6 +49,7 @@ const firebaseConfig = {
   messagingSenderId: '155269832197',
   appId: '1:155269832197:web:09f0ff7a92255b97b4466c',
 }
+if (env.MURDERWIN_EMULATOR === '1') firebaseConfig.projectId = env.MURDERWIN_PROJECT_ID || 'demo-murderwin'
 
 // ---- the two things it can do --------------------------------------------
 let hue = null
@@ -83,6 +86,13 @@ function playSound(id) {
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getFirestore(app)
+// Dev split: MURDERWIN_EMULATOR=1 points this at the local emulators (npm run emulate at the repo root), never the party database.
+if (env.MURDERWIN_EMULATOR === '1') {
+  const host = env.MURDERWIN_EMULATOR_HOST || '127.0.0.1'
+  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true })
+  connectFirestoreEmulator(db, host, 8080)
+  log('emulator mode:', host)
+}
 await signInAnonymously(auth)
 
 let nightId = null
