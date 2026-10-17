@@ -12,6 +12,12 @@ import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
 
 export const PLAY_URL = 'https://murderwin-at-sirwin-manor.web.app/play/'
 
+// nights/{id}.caseWarning, set when the case is built at the blackout. Plain words, never content.
+const CASE_WARNINGS = {
+  'rehearsal-fallback': 'The secret content could not be used tonight, so this night is running on rehearsal text. Run the generator again before the next night.',
+  'trace-partner': 'One trace at the party has no look-alike among the guests here. The bedroom clue may come out clearer than planned.',
+}
+
 const PHASE_WORDS = {
   lobby: 'doors open, nothing started',
   act: 'playing',
@@ -78,6 +84,7 @@ export default function Host({ night, content, serverNow }) {
         <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
       </p>
       {msg && <p className="host-msg" role="status">{msg}</p>}
+      {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
 
       <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} />
 

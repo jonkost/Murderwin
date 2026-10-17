@@ -61,6 +61,16 @@ export default function Night() {
       </section>
 
       <section className="panel">
+        <h2>Rehearsal or the real thing</h2>
+        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats read bracketed stand-in text and the secrets stay sealed. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
+        <label className="field check">
+          <input type="checkbox" checked={draft.party_night === true} onChange={e => change('party_night', e.target.checked)} />
+          <span>This is the party night</span>
+        </label>
+        <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
+      </section>
+
+      <section className="panel">
         <h2>The square code for the Act 1 slide</h2>
         <p className="why">Save the picture and drop it on the slide. Guests scan it, type their name, and get their character.</p>
         <div className="night-join">

@@ -404,3 +404,8 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 }
 .sheet .gp-screen { background: #06131a; }
 .panel.progress .bar.big { margin: 0.4rem 0 0.9rem; }
+
+/* the one checkbox on the Game night page */
+.field.check { grid-template-columns: auto 1fr; align-items: center; }
+.field.check input { width: 1.3rem; height: 1.3rem; margin: 0; }
+.field.check span { color: var(--ink, inherit); font-size: 1rem; }
