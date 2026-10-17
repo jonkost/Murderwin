@@ -491,6 +491,8 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
   const { night, list } = await guests(db, nightId)
   const w = night.window
   if (!w || w.settled) return { ok: true, settled: 0 }
+  // a paused night is never due: the clocks stand still until the host resumes
+  if (!force && night.phase === 'paused') throw new NightError('window-open', 'The night is paused. Resume first.')
   if (!force && now < ms(w.closesAt)) {
     throw new NightError('window-open', `The phones are still choosing. ${Math.ceil((ms(w.closesAt) - now) / 1000)} seconds left.`)
   }
@@ -556,10 +558,12 @@ export async function dealGroups(db, nightId, act, beat) {
   let dealt = 0
   for (const grp of rotation?.groups ?? []) {
     const members = grp.members.map(m => ({ key: m.key, name: m.name, characterName: characterById(byKey[m.key]?.characterId)?.name ?? '' }))
+    const groupAffection = await groupAffectionOf(db, grp.members.map(m => byKey[m.key]?.uid).filter(Boolean))
     for (const m of grp.members) {
       const g = byKey[m.key]
       if (!g) continue
-      await db.doc(`sessions/${g.uid}`).update({ group: grp.id })
+      // where the whole group stands with each cat: the Cats tab's second marker in Act 4 (never a number on screen)
+      await db.doc(`sessions/${g.uid}`).update({ group: grp.id, groupAffection })
       const others = members.filter(x => x.key !== m.key)
       const card = {
         id: `${act}-${beat}-group`, act, beat, kind: 'group', group: grp.id, members,
@@ -570,6 +574,18 @@ export async function dealGroups(db, nightId, act, beat) {
     }
   }
   return { ok: true, groups: made.groups, trios: made.trios, dealt }
+}
+
+// The rounded average of a group's affection to each cat, 1 to 5.
+async function groupAffectionOf(db, uids) {
+  const levels = []
+  for (const uid of uids) levels.push((await db.doc(`sessions/${uid}`).get()).data()?.affection ?? {})
+  const out = {}
+  for (const cat of CAT_KEYS) {
+    const vals = levels.map(l => l[cat]).filter(v => typeof v === 'number')
+    out[cat] = vals.length ? Math.max(1, Math.min(5, Math.round(vals.reduce((a, b) => a + b, 0) / vals.length))) : 3
+  }
+  return out
 }
 
 async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, pick = pickInt }) {
@@ -712,15 +728,38 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
 // The power returns: roles land. Every phone gets its role card (safe copy)
 // and the same orientation card. Structurally identical on every phone.
 export async function dealRoles(db, nightId) {
-  const c = await ensureCase(db, nightId)
+  await ensureCase(db, nightId)
   const { list } = await guests(db, nightId)
   const written = labelled(await readArea(db, 'role_cards'))
   let dealt = 0
   for (const g of list) {
-    const role = roleOf(c, g.key).toUpperCase()
-    const text = written[role] ?? ROLE_CARDS[role] ?? ROLE_CARDS.DETECTIVE
-    const card = { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text }
-    if (await dealCard(db, g.uid, card)) dealt++
+    const r = await dealRoleTo(db, nightId, g.uid, { written })
+    dealt += r.dealt
   }
   return { ok: true, dealt }
+}
+
+export const ROLE_CARD_ID = '2-power-role'
+
+// One phone's role card, from the case as it stands. Used by dealRoles for
+// everyone at the power beat, and by join() for a guest who arrives after it
+// (17 Oct 2026): a late joiner is written into the case as a detective, never
+// promoted, and gets the same card id as everyone else. Before the case has
+// roles (Act 1, or no case yet) this deals nothing and makes no case.
+export async function dealRoleTo(db, nightId, uid, { written = null } = {}) {
+  const c = await readCase(db, nightId)
+  if (!c?.roles) return { ok: true, dealt: 0 }
+  const sessionSnap = await db.doc(`sessions/${uid}`).get()
+  const s = sessionSnap.exists ? sessionSnap.data() : null
+  if (!s || s.nightId !== nightId || !s.guestKey) return { ok: true, dealt: 0 }
+  if (!c.roles[s.guestKey]) {
+    await db.doc(`cases/${nightId}`).update({ [`roles.${s.guestKey}`]: 'detective' })
+    c.roles[s.guestKey] = 'detective'
+  }
+  const cards = written ?? labelled(await readArea(db, 'role_cards'))
+  const role = roleOf(c, s.guestKey).toUpperCase()
+  const text = cards[role] ?? ROLE_CARDS[role] ?? ROLE_CARDS.DETECTIVE
+  const card = { id: ROLE_CARD_ID, act: 2, beat: 'orient', kind: 'role', text }
+  const dealt = await dealCard(db, uid, card)
+  return { ok: true, dealt: dealt ? 1 : 0 }
 }

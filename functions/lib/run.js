@@ -121,7 +121,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'relay-advance':
       return relay.advance(db, { nightId, now })
     default:
-      return night.hostCommand(db, { nightId, command, arg })
+      // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
+      return night.hostCommand(db, { nightId, command, arg, now })
   }
 }
 

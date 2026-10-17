@@ -2,9 +2,12 @@
 // act controls. Pure logic over a Firestore `db`, shared by the Cloud
 // Functions (index.js) and the terminal host script (scripts/host.mjs).
 //
-// SEAL RULE: nothing in this file reads or writes sealed/* or cases/*.
-// Everything it handles is safe content: the guest list, the fourteen
-// characters, the published player copy, who holds which bag number.
+// SEAL RULE: nothing in this file reads sealed/* or cases/*, with one
+// narrow exception: a guest who joins after the power has returned is handed
+// to deal.dealRoleTo (loaded at call time, never at import), which adds them
+// to the case as a detective and deals their role card. Nothing from the
+// case comes back here. Everything else is safe content: the guest list, the
+// fourteen characters, the published player copy, who holds which bag number.
 
 import { randomInt, randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -164,6 +167,16 @@ export async function join(db, { uid, nightId, name }) {
   // Every name tapped refreshes the phones' copy of the workshop lines, so a
   // night can never show stale words (16 Oct 2026). Cheap: seven small reads.
   try { await publishContent(db, nightId) } catch { /* the join itself stands */ }
+  // Arrived after the power came back? The case already has its roles; this
+  // phone is written in as a detective (never promoted) and gets the same
+  // role card as everyone else. Before that moment nothing is dealt.
+  if (!result.resumed) {
+    try {
+      const deal = await import('./deal.js')
+      const r = await deal.dealRoleTo(db, nightId, uid)
+      result.roleDealt = r.dealt
+    } catch { /* the join itself stands; the host's Power button deals it */ }
+  }
   return result
 }
 
@@ -200,10 +213,17 @@ async function joinOnly(db, { uid, nightId, name }) {
     const oldSessionSnap = oldUid && oldUid !== uid ? await tx.get(db.doc(`sessions/${oldUid}`)) : null
 
     let characterId, bag, affection
+    // The same guest on a new phone: the character comes with them, and so
+    // does everything their old phone was dealt (cards, windows, answers,
+    // the group), so a dead battery costs nothing. The old phone is told it
+    // has been superseded and shows the doors.
+    const carried = {}
     if (entry) {
       characterId = entry.characterId
       bag = entry.bag
-      affection = oldSessionSnap?.data()?.affection ?? existing?.affection ?? null
+      const old = oldSessionSnap?.data() ?? (existing?.guestKey === key ? existing : null)
+      affection = old?.affection ?? null
+      for (const f of CARRIED_FIELDS) if (old?.[f] !== undefined) carried[f] = old[f]
     } else {
       const taken = new Set(Object.values(roster).map(r => r.characterId))
       if (hostFor) characterId = CHARACTERS.find(c => c.host === hostFor)?.id
@@ -229,6 +249,7 @@ async function joinOnly(db, { uid, nightId, name }) {
     })
     tx.update(deckRef, { [`uids.${key}`]: uid })
     tx.set(sessionRef, {
+      ...carried,
       nightId, guestKey: key, guestName: displayName,
       characterId, bag, affection,
       host: hostFor, // the two hosts get the Host tab on their own phone
@@ -237,6 +258,94 @@ async function joinOnly(db, { uid, nightId, name }) {
     })
     return { ok: true, characterId, resumed: false }
   })
+}
+
+// What follows a guest from a dead phone to a new one.
+export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt']
+
+// A borrowed phone (host button). The previous owner's cards and windows
+// are wiped from the session so the next person to pick the phone up sees
+// nothing of theirs, and `generation` is bumped (a timestamp, so it is
+// always newer): the phone sees the change, forgets its local copy and
+// reloads to the doors. The previous owner keeps their character; tapping
+// their name on any other phone brings it back, cards and all, since the
+// roster and the dealer's copies on the server are untouched. `arg` is the
+// guest's roster key as the Host tab knows it, or a session uid.
+export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
+  const who = String(arg ?? '').trim()
+  if (!who) throw new NightError('invalid', 'Whose phone?')
+  const deck = (await db.doc(`nights/${nightId}/private/deck`).get()).data() ?? {}
+  const uid = deck.uids?.[who] ?? (Object.values(deck.uids ?? {}).includes(who) ? who : null)
+  if (!uid) throw new NightError('no-guest', 'Nobody at the party has that phone.')
+  const ref = db.doc(`sessions/${uid}`)
+  const snap = await ref.get()
+  if (!snap.exists || snap.data().nightId !== nightId) throw new NightError('no-guest', 'That phone is not at this party.')
+  await ref.update({
+    cards: [], windows: {}, answers: {},
+    status: 'handed', handedAt: new Date(now),
+    generation: now,
+  })
+  return { ok: true }
+}
+
+// Pause and resume. Pausing stores the moment; resuming measures how long the
+// pause lasted and moves every deadline on by that much, in one batch, so no
+// window settles, no relay turn ends and no study slot expires while the
+// host is dealing with a dog in the garden. The fields that move:
+//   nights/{id}.window.opensAt, .window.closesAt
+//   nights/{id}/public/relay: turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
+//   nights/{id}/public/study: slotEndsAt
+//   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it)
+// Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
+export const PAUSE_SHIFTED = {
+  night: ['window.opensAt', 'window.closesAt'],
+  'public/relay': ['turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
+  'public/study': ['slotEndsAt'],
+  'public/finale': ['at'],
+}
+
+function msOf(t) {
+  if (!t) return 0
+  if (typeof t.toMillis === 'function') return t.toMillis()
+  if (t instanceof Date) return t.getTime()
+  return Number(t) || 0
+}
+function pathGet(obj, path) { return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj) }
+
+export async function pauseNight(db, { nightId, now = Date.now() } = {}) {
+  const ref = db.doc(`nights/${nightId}`)
+  const night = (await ref.get()).data()
+  if (!night) throw new NightError('no-night', 'No such night.')
+  if (night.phase === 'paused') return { ok: true, already: true }
+  await ref.update({ phase: 'paused', pausedFrom: night.phase, phaseAt: FieldValue.serverTimestamp(), pausedAt: new Date(now) })
+  return { ok: true }
+}
+
+export async function resumeNight(db, { nightId, now = Date.now() } = {}) {
+  const ref = db.doc(`nights/${nightId}`)
+  const night = (await ref.get()).data()
+  if (!night) throw new NightError('no-night', 'No such night.')
+  if (night.phase !== 'paused') return { ok: true, already: true }
+  const shift = Math.max(0, now - msOf(night.pausedAt))
+  const batch = db.batch()
+  let moved = 0
+  const nightPatch = { phase: night.pausedFrom ?? 'act', pausedFrom: null, pausedAt: null, phaseAt: FieldValue.serverTimestamp() }
+  for (const f of PAUSE_SHIFTED.night) {
+    const v = pathGet(night, f)
+    if (v) { nightPatch[f] = new Date(msOf(v) + shift); moved++ }
+  }
+  batch.update(ref, nightPatch)
+  for (const sub of Object.keys(PAUSE_SHIFTED).filter(k => k !== 'night')) {
+    const subRef = db.doc(`nights/${nightId}/${sub}`)
+    const snap = await subRef.get()
+    if (!snap.exists) continue
+    const data = snap.data()
+    const patch = {}
+    for (const f of PAUSE_SHIFTED[sub]) if (data[f]) { patch[f] = new Date(msOf(data[f]) + shift); moved++ }
+    if (Object.keys(patch).length) batch.update(subRef, patch)
+  }
+  await batch.commit()
+  return { ok: true, shiftMs: shift, moved }
 }
 
 // Who may press the host buttons: the admin (Google sign-in in the workshop,
@@ -263,19 +372,19 @@ export async function canHost(db, { uid, isAdmin = false, nightId, command } = {
 }
 
 // The host's buttons. Labelled by function, never by content.
-export async function hostCommand(db, { nightId, command, arg } = {}) {
+export async function hostCommand(db, { nightId, command, arg, now = Date.now() } = {}) {
   if (command === 'create') return createNight(db, { label: arg })
   if (!nightId) throw new NightError('invalid', 'Which night?')
   const ref = db.doc(`nights/${nightId}`)
   const snap = await ref.get()
   if (!snap.exists) throw new NightError('no-night', 'No such night.')
   const night = snap.data()
-  const now = FieldValue.serverTimestamp()
+  const stamp = FieldValue.serverTimestamp()
   switch (command) {
     case 'publish':
       return publishContent(db, nightId)
     case 'activate':
-      await db.doc('public_state/active').set({ nightId, since: now })
+      await db.doc('public_state/active').set({ nightId, since: stamp })
       return { ok: true }
     case 'refresh-hosts': {
       const hosts = await readHosts(db)
@@ -291,25 +400,23 @@ export async function hostCommand(db, { nightId, command, arg } = {}) {
     case 'act': {
       const act = Number(arg)
       if (!(act >= 1 && act <= 7)) throw new NightError('invalid', 'Acts run 1 to 7.')
-      await ref.update({ act, phase: 'act', phaseAt: now, actStartedAt: now, pausedFrom: null })
+      await ref.update({ act, phase: 'act', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null })
       return { ok: true, act }
     }
     case 'blackout':
       // Every phone goes dark. Nothing on any screen until the power returns.
-      await ref.update({ phase: 'blackout', phaseAt: now, pausedFrom: null })
+      await ref.update({ phase: 'blackout', phaseAt: stamp, pausedFrom: null })
       return { ok: true }
     case 'power':
       // Power returns: every phone lights at once with its prompt, held 15 s.
-      await ref.update({ act: 2, phase: 'prompt', phaseAt: now, actStartedAt: now, pausedFrom: null })
+      await ref.update({ act: 2, phase: 'prompt', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null })
       return { ok: true }
     case 'pause':
-      if (night.phase === 'paused') return { ok: true }
-      await ref.update({ phase: 'paused', pausedFrom: night.phase, phaseAt: now })
-      return { ok: true }
+      return pauseNight(db, { nightId, now })
     case 'resume':
-      if (night.phase !== 'paused') return { ok: true }
-      await ref.update({ phase: night.pausedFrom ?? 'act', pausedFrom: null, phaseAt: now })
-      return { ok: true }
+      return resumeNight(db, { nightId, now })
+    case 'handover':
+      return handover(db, { nightId, arg, now })
     default:
       throw new NightError('invalid', `Unknown command: ${command}`)
   }

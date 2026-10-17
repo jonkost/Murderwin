@@ -120,6 +120,7 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
   const { pub, priv } = relayPaths(nightId)
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   const roster = nightSnap.exists ? (nightSnap.data().roster ?? {}) : {}
+  if (nightSnap.exists && nightSnap.data().phase === 'paused') return { moved: false, state: 'paused' } // the host's pause holds every deadline (resume shifts them)
   return db.runTransaction(async tx => {
     const [pubSnap, privSnap] = await Promise.all([tx.get(db.doc(pub)), tx.get(db.doc(priv))])
     if (!pubSnap.exists || !privSnap.exists) return { moved: false, state: 'idle' }

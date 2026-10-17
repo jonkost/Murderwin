@@ -173,3 +173,162 @@ test('join: host names come from the settings form, any spelling of case or spac
   const other = await join(db, { uid: 'u3', nightId, name: 'Jon' })
   assert.notEqual(other.characterId, 'prof-jonathan', 'a name that is not the host name is just a guest')
 })
+
+// ---------------------------------------------------------------------------
+// Phone safety nets (17 Oct 2026): a late joiner, a dead phone, a borrowed
+// phone and a pause. The dealer's rehearsal case is thrown away with the db.
+
+import { hostCommand as runCommand, player } from '../lib/run.js'
+import { NIGHT, ms as msOf } from '../lib/deal.js'
+import { CARRIED_FIELDS, PAUSE_SHIFTED } from '../lib/night.js'
+
+const sessionOf = (db, uid) => db.store.get(`sessions/${uid}`)
+const cardsOf = (db, uid, kind) => (sessionOf(db, uid).cards ?? []).filter(c => !kind || c.kind === kind)
+
+test('a late joiner after the power returns gets one role card as a detective; a join in Act 1 deals none', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
+  await join(db, { uid: 'u-jessa', nightId, name: 'Jessa' })
+  await join(db, { uid: 'u-jacob', nightId, name: 'Jacob' })
+  await runCommand(db, { nightId, command: 'act', arg: 1 })
+  const early = await join(db, { uid: 'u-mari', nightId, name: 'Mari' })
+  assert.equal(early.roleDealt, 0)
+  assert.equal(cardsOf(db, 'u-mari', 'role').length, 0, 'Act 1: no case yet, nothing dealt')
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'and no case is made by a join')
+  await runCommand(db, { nightId, command: 'blackout' })
+  await runCommand(db, { nightId, command: 'power' })
+  for (const uid of ['u-jon', 'u-jessa', 'u-jacob', 'u-mari']) assert.equal(cardsOf(db, uid, 'role').length, 1)
+  const late = await join(db, { uid: 'u-stan', nightId, name: 'Stanley' })
+  assert.equal(late.roleDealt, 1)
+  const role = cardsOf(db, 'u-stan', 'role')
+  assert.equal(role.length, 1)
+  assert.equal(role[0].id, '2-power-role', 'the same card id as everyone else')
+  assert.equal(db.store.get(`cases/${nightId}`).roles.stanley, 'detective', 'never promoted')
+  assert.equal(sessionOf(db, 'u-stan').role, undefined, 'no session carries a role field')
+  // the power pressed again deals nothing twice, to anyone
+  await runCommand(db, { nightId, command: 'power' })
+  assert.equal(cardsOf(db, 'u-stan', 'role').length, 1)
+  // the hidden roles are untouched by the late arrival
+  const c = db.store.get(`cases/${nightId}`)
+  assert.equal(Object.values(c.roles).filter(r => r === 'murderer').length, 1)
+  assert.equal(Object.values(c.roles).filter(r => r === 'ghost').length, 1)
+})
+
+test('a dead phone: the same name on a new phone brings the cards along', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
+  await join(db, { uid: 'old', nightId, name: 'Stanley' })
+  await runCommand(db, { nightId, command: 'act', arg: 2 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'cat' })
+  const before = cardsOf(db, 'old')
+  assert.ok(before.length >= 3, 'role, go, testimony')
+  await join(db, { uid: 'new', nightId, name: 'Stanley' })
+  assert.deepEqual(cardsOf(db, 'new').map(c => c.id), before.map(c => c.id))
+  assert.equal(sessionOf(db, 'old').status, 'superseded')
+  assert.ok(CARRIED_FIELDS.includes('cards') && CARRIED_FIELDS.includes('windows'))
+})
+
+test('handover clears cards and bumps generation; only a host may call it', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
+  await join(db, { uid: 'u-jessa', nightId, name: 'Jessa' })
+  await runCommand(db, { nightId, command: 'act', arg: 2 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'questions', now: 1_000_000 })
+  assert.ok(cardsOf(db, 'u-jessa').length > 0)
+  assert.ok(Object.keys(sessionOf(db, 'u-jessa').windows).length === 1)
+  const t = 1_010_000
+  const r = await runCommand(db, { nightId, command: 'handover', arg: 'jessa', now: t })
+  assert.equal(r.ok, true)
+  const s = sessionOf(db, 'u-jessa')
+  assert.deepEqual(s.cards, [])
+  assert.deepEqual(s.windows, {})
+  assert.equal(s.generation, t)
+  assert.equal(s.status, 'handed')
+  assert.equal(s.characterId !== undefined, true, 'the character stays with the guest on the roster')
+  // the gate: a plain guest is refused, a host phone is not
+  assert.equal(await canHost(db, { uid: 'u-jessa', nightId, command: 'handover' }), false)
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'handover' }), true)
+  // a stranger is refused in words
+  await assert.rejects(runCommand(db, { nightId, command: 'handover', arg: 'nobody' }), e => e.code === 'no-guest')
+  await assert.rejects(runCommand(db, { nightId, command: 'handover', arg: '' }), e => e.code === 'invalid')
+  // by uid works too, and a handed-over host phone loses the buttons
+  await runCommand(db, { nightId, command: 'handover', arg: 'u-jon', now: t + 1 })
+  assert.equal(sessionOf(db, 'u-jon').generation, t + 1)
+  assert.equal(await canHost(db, { uid: 'u-jon', nightId, command: 'handover' }), false)
+  // the next person to pick the phone up joins as themselves; Jessa's character is still hers elsewhere
+  const next = await join(db, { uid: 'u-jessa', nightId, name: 'Mari' })
+  assert.equal(next.resumed, false)
+  assert.equal(sessionOf(db, 'u-jessa').guestKey, 'mari')
+  assert.equal(cardsOf(db, 'u-jessa', 'role').length, 1, 'the new owner gets a role card at once')
+  const back = await join(db, { uid: 'u-spare', nightId, name: 'Jessa' })
+  assert.equal(back.characterId, db.store.get(`nights/${nightId}`).roster.jessa.characterId)
+})
+
+test('a pause freezes every clock in one batch and resume moves them all on by the pause length', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob']]) await join(db, { uid, nightId, name })
+  const t0 = 1_000_000
+  await runCommand(db, { nightId, command: 'act', arg: 2, now: t0 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'questions', now: t0 })
+  const night = () => db.store.get(`nights/${nightId}`)
+  const w = night().window
+  const closes = msOf(w.closesAt)
+  assert.equal(closes, t0 + NIGHT.windows.questions.ms)
+  // other clocks that must move with it
+  db.store.set(`nights/${nightId}/public/relay`, { state: 'turn', turnEndsAt: new Date(t0 + 40_000), walkEndsAt: null, voteEndsAt: null, lockoutEndsAt: null })
+  db.store.set(`nights/${nightId}/public/study`, { state: 'playing', slotEndsAt: new Date(t0 + 700_000) })
+  // pause thirty seconds before the window closes
+  const tPause = closes - 30_000
+  await runCommand(db, { nightId, command: 'pause', now: tPause })
+  assert.equal(night().phase, 'paused')
+  assert.equal(msOf(night().pausedAt), tPause)
+  // nothing settles while paused, even past the old deadline
+  await assert.rejects(runCommand(db, { nightId, command: 'settle', now: closes + 1 }), /paused/)
+  await assert.rejects(runCommand(db, { nightId, command: 'next', now: closes + 1 }), /paused/)
+  // resume five minutes later
+  const tResume = tPause + 300_000
+  const r = await runCommand(db, { nightId, command: 'resume', now: tResume })
+  assert.equal(r.shiftMs, 300_000)
+  assert.equal(night().phase, 'act')
+  assert.equal(night().pausedAt, null)
+  assert.equal(msOf(night().window.closesAt), closes + 300_000, 'closesAt moved by five minutes')
+  assert.equal(msOf(night().window.opensAt), t0 + 300_000)
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/relay`).turnEndsAt), t0 + 40_000 + 300_000, 'the relay turn moved by the same amount')
+  assert.equal(db.store.get(`nights/${nightId}/public/relay`).walkEndsAt, null, 'empty deadlines stay empty')
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/study`).slotEndsAt), t0 + 700_000 + 300_000, 'the study slot moved by the same amount')
+  // an answer at the old deadline plus one second is accepted, and no defaults fired
+  const set = db.store.get('sessions/u-jessa').windows[w.id]
+  await player.answer(db, { nightId, uid: 'u-jessa', windowId: w.id, picks: set.beats.map(b => b.choices[0].k), now: closes + 1000 })
+  assert.equal(db.store.get('sessions/u-jessa').answers[w.id].defaulted, false)
+  await assert.rejects(runCommand(db, { nightId, command: 'settle', now: closes + 1000 }), /still choosing/)
+  for (const uid of ['u-jon', 'u-jacob']) assert.equal(db.store.get(`sessions/${uid}`).answers, undefined, 'no defaults fired')
+  // resume again is harmless; the list of shifted fields is documented
+  const again = await runCommand(db, { nightId, command: 'resume', now: tResume + 1 })
+  assert.equal(again.already, true)
+  assert.ok(PAUSE_SHIFTED['public/relay'].includes('turnEndsAt') && PAUSE_SHIFTED['public/study'].includes('slotEndsAt'))
+})
+
+test('the Act 4 groups write where the house stands with each cat; nothing before that', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob'], ['u-mari', 'Mari']]) await join(db, { uid, nightId, name })
+  await runCommand(db, { nightId, command: 'act', arg: 2 })
+  assert.equal(sessionOf(db, 'u-jessa').groupAffection, undefined, 'absent before the groups are made')
+  await runCommand(db, { nightId, command: 'act', arg: 3 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'groups' })
+  for (const uid of ['u-jon', 'u-jessa', 'u-jacob', 'u-mari']) {
+    const s = sessionOf(db, uid)
+    assert.ok(s.groupAffection, 'the group average is on every member')
+    for (const cat of ['irwin', 'granolia', 'boo', 'zimothy', 'salem']) {
+      const v = s.groupAffection[cat]
+      assert.ok(Number.isInteger(v) && v >= 1 && v <= 5, `${cat}: a rounded stop 1 to 5`)
+    }
+    assert.equal(s.groupAffection.irwin, 5)
+  }
+  // the windows a phone can read still carry no numbers
+  for (const uid of ['u-jon', 'u-jessa']) for (const set of Object.values(sessionOf(db, uid).windows ?? {})) assert.ok(!JSON.stringify(set).includes('"av"'))
+})
