@@ -537,8 +537,8 @@ test('the fastest safe is the quickest right open, counted from the puzzle landi
   const landedAgo = (uid, msAgo) => db.store.set(`sessions/${uid}`, { ...db.store.get(`sessions/${uid}`), cards: cards(db, uid).map(c => (c.kind === 'puzzle' ? { ...c, at: new Date(t.now - msAgo) } : c)) })
   // the first phone opens it right in two minutes, the second in one, the third forces it open in three tries
   landedAgo(first, 120_000); landedAgo(second, 60_000); landedAgo(third, 10_000)
-  await solve(db, { nightId, uid: first, cardId: cardOf(first).id, entry: puzzles.safe[first] })
-  await solve(db, { nightId, uid: second, cardId: cardOf(second).id, entry: puzzles.safe[second] })
+  await solve(db, { nightId, uid: first, cardId: cardOf(first).id, entry: puzzles.safe[names[0].toLowerCase()] })
+  await solve(db, { nightId, uid: second, cardId: cardOf(second).id, entry: puzzles.safe[names[1].toLowerCase()] })
   for (let i = 0; i < 3; i++) await solve(db, { nightId, uid: third, cardId: cardOf(third).id, entry: [0, 0, 0] })
   assert.ok(db.store.get(`sessions/${first}`).solvedAt[cardOf(first).id])
   assert.equal(db.store.get(`sessions/${third}`).gaveWay[cardOf(third).id], true)

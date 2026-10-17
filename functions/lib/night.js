@@ -349,7 +349,7 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 // window settles, no relay turn ends and no study slot expires while the
 // host is dealing with a dog in the garden. The fields that move:
 //   nights/{id}.window.opensAt, .window.closesAt
-//   nights/{id}.reveal.at (the Host tab's reveal countdown)
+//   nights/{id}.reveal.at (older nights only; since 18 Oct the reveal lives in public/finale, below)
 //   nights/{id}/public/relay: turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
 //   nights/{id}/public/study: slotEndsAt (the twelve-minute slot with no station;
 //     a live station keeps its own fifteen-minute clock and freezes it itself
