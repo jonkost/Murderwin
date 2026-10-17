@@ -30,8 +30,9 @@ function setPath(obj, path, value) {
 }
 
 export class FakeFirestore {
-  constructor() { this.store = new Map() }
+  constructor() { this.store = new Map(); this.versions = new Map() }
 
+  _bump(path) { this.versions.set(path, (this.versions.get(path) ?? 0) + 1) }
   _get(path) {
     const data = this.store.get(path)
     return { exists: data !== undefined, data: () => (data === undefined ? undefined : structuredClone(data)), ref: this.doc(path), id: path.split('/').pop() }
@@ -40,13 +41,16 @@ export class FakeFirestore {
     const next = resolve(data)
     if (opts?.merge && this.store.has(path)) this.store.set(path, { ...this.store.get(path), ...next })
     else this.store.set(path, next)
+    this._bump(path)
   }
   _update(path, fields) {
     if (!this.store.has(path)) throw new Error(`update on missing doc ${path}`)
     const cur = structuredClone(this.store.get(path))
     for (const [k, v] of Object.entries(fields)) setPath(cur, k, resolve(v))
     this.store.set(path, cur)
+    this._bump(path)
   }
+  _delete(path) { this.store.delete(path); this._bump(path) }
 
   doc(path) {
     const db = this
@@ -56,6 +60,7 @@ export class FakeFirestore {
       get: async () => db._get(path),
       set: async (data, opts) => db._set(path, data, opts),
       update: async (fields) => db._update(path, fields),
+      delete: async () => db._delete(path),
     }
   }
   collection(name) {
@@ -70,18 +75,28 @@ export class FakeFirestore {
     return {
       set: (ref, data, opts) => ops.push(() => this._set(ref.path, data, opts)),
       update: (ref, fields) => ops.push(() => this._update(ref.path, fields)),
+      delete: (ref) => ops.push(() => this._delete(ref.path)),
       commit: async () => { for (const op of ops) op() },
     }
   }
+  // Like the real thing: if a doc read inside the transaction changed before
+  // the writes land (another call got there first), the function runs again.
   async runTransaction(fn) {
-    const writes = []
-    const tx = {
-      get: async (ref) => this._get(ref.path),
-      set: (ref, data, opts) => writes.push(() => this._set(ref.path, data, opts)),
-      update: (ref, fields) => writes.push(() => this._update(ref.path, fields)),
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const writes = []
+      const read = new Map()
+      const tx = {
+        get: async (ref) => { read.set(ref.path, this.versions.get(ref.path) ?? 0); return this._get(ref.path) },
+        set: (ref, data, opts) => writes.push(() => this._set(ref.path, data, opts)),
+        update: (ref, fields) => writes.push(() => this._update(ref.path, fields)),
+        delete: (ref) => writes.push(() => this._delete(ref.path)),
+      }
+      const result = await fn(tx)
+      const stale = [...read].some(([path, v]) => (this.versions.get(path) ?? 0) !== v)
+      if (stale) continue
+      for (const w of writes) w()
+      return result
     }
-    const result = await fn(tx)
-    for (const w of writes) w()
-    return result
+    throw new Error('transaction: too much contention')
   }
 }

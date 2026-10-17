@@ -68,7 +68,9 @@ any hardware and prints what it would have done; press `r`, `g` or `s` to try it
 `public_state/active`, then `nights/{id}/public/cues`, `public/relay` and
 `public/sounds`. `lib/cues.js` is the pure planner: `plan(prevState, docs)`
 returns `{ actions, state }`, idempotent on a reload (state remembers the last
-hall colour and the last `id@stamp` sound), and `hallColour` treats
+hall colour and the last `id@stamp` sound; a sound stamped more than
+`SOUND_STALE_MS` = 30 s ago is remembered but not played, so a relay restarted
+mid-night never replays the last cue), and `hallColour` treats
 `relay.doorOpen` as green even without a cues doc. `lib/hue.js` builds CLIP v2
 requests (`PUT /clip/v2/resource/light/{id}` with `hue-application-key`,
 body `{ on, dimming, color: { xy } }`) over `node:https` with

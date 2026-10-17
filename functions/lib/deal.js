@@ -23,7 +23,7 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
-import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive } from './station.js'
+import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy } from './station.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -424,11 +424,14 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
   if (role !== 'detective') {
     const sign = c?.dialSign?.[role] ?? 1
     const caseRef = db.doc(`cases/${nightId}`)
-    const cur = (await caseRef.get()).data() ?? {}
     const delta = sign * total
-    // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then
-    const log = Array.isArray(cur.dialLog) ? cur.dialLog : []
-    await caseRef.update({ dial: (cur.dial ?? 0) + delta, dialLog: [...log, { act: act ?? null, role, delta, at: new Date() }] })
+    // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then.
+    // A transaction: the Ghost's and the Murderer's answers land in the same minute.
+    await db.runTransaction(async tx => {
+      const cur = (await tx.get(caseRef)).data() ?? {}
+      const log = Array.isArray(cur.dialLog) ? cur.dialLog : []
+      tx.update(caseRef, { dial: (cur.dial ?? 0) + delta, dialLog: [...log, { act: act ?? null, role, delta, at: new Date() }] })
+    })
   }
 }
 
@@ -441,18 +444,25 @@ function randomPicks(set) { return set.beats.map(b => choice(b.choices).k) }
 export async function answer(db, { nightId, uid, windowId, picks, now = Date.now() }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
   const sessionRef = db.doc(`sessions/${uid}`)
-  const s = (await sessionRef.get()).data()
-  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
-  const night = (await db.doc(`nights/${nightId}`).get()).data()
-  const w = night?.window
-  if (!w || w.id !== windowId || w.kind !== 'questions') throw new NightError('closed', 'Nothing to answer right now.')
-  if (now > ms(w.closesAt) + 5000 || w.settled) throw new NightError('closed', 'That window has closed.')
-  if (s.answers?.[windowId]) return { ok: true, already: true }
-  const set = s.windows?.[windowId]
-  if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
-  await sessionRef.update({ [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
+  // One transaction: the answer is written only if nobody (this phone again,
+  // or the settle that gives late phones a random pick) got there first.
+  const got = await db.runTransaction(async tx => {
+    const [sessionSnap, nightSnap] = await Promise.all([tx.get(sessionRef), tx.get(db.doc(`nights/${nightId}`))])
+    const s = sessionSnap.data()
+    if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+    const night = nightSnap.data()
+    const w = night?.window
+    if (!w || w.id !== windowId || w.kind !== 'questions') throw new NightError('closed', 'Nothing to answer right now.')
+    if (now > ms(w.closesAt) + 5000 || w.settled) throw new NightError('closed', 'That window has closed.')
+    if (s.answers?.[windowId]) return { already: true }
+    const set = s.windows?.[windowId]
+    if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
+    tx.update(sessionRef, { [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
+    return { key: s.guestKey, act: w.act ?? night.act ?? null }
+  })
+  if (got.already) return { ok: true, already: true }
   const c = await readCase(db, nightId)
-  await applyPoints(db, nightId, s.guestKey, windowId, picks, c, w.act ?? night.act ?? null)
+  await applyPoints(db, nightId, got.key, windowId, picks, c, got.act)
   return { ok: true }
 }
 
@@ -505,10 +515,17 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
     const s = (await ref.get()).data()
     if (!s) continue
     if (w.kind === 'questions') {
-      const set = s.windows?.[w.id]
-      if (!set || s.answers?.[w.id]) continue
-      const picks = randomPicks(set)
-      await ref.update({ [`answers.${w.id}`]: { picks, at: new Date(), defaulted: true } })
+      // the random pick is written only if the phone has not answered by then (a late tap in the
+      // grace period races this loop); the points land once either way
+      const picks = await db.runTransaction(async tx => {
+        const cur = (await tx.get(ref)).data()
+        const set = cur?.windows?.[w.id]
+        if (!set || cur.answers?.[w.id]) return null
+        const p = randomPicks(set)
+        tx.update(ref, { [`answers.${w.id}`]: { picks: p, at: new Date(), defaulted: true } })
+        return p
+      })
+      if (!picks) continue
       await applyPoints(db, nightId, g.key, w.id, picks, c, w.act ?? night.act ?? null)
       settled++
     } else if (w.kind === 'ballot') {
@@ -622,6 +639,21 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   // With no station running (a rehearsal on phones alone) the study's clue
   // lands with the card; with the station alive it is earned in the room.
   const alive = await stationAlive(db, nightId, now)
+  const studySnap = await db.doc(studyPath(nightId)).get()
+  const study = studySnap.data() ?? {}
+  const running = ['playing', 'reproducing', 'entering'].includes(study.state)
+  // Delay, never destroy: every group whose turn in the study has passed
+  // leaves with the clue whatever happened there (the station died, nobody
+  // touched a panel), unless the station is alive and still running their game.
+  let paid = 0
+  for (let p = 0; p < r; p++) {
+    const gid = rot.studyOrder?.[p]
+    if (!gid || rot.finished?.[gid]) continue
+    if (alive && running && study.groupId === gid) continue
+    await finishStudy(db, { nightId, groupId: gid, outcome: 'absent' })
+    paid++
+  }
+  if (paid) rot = await readRotation(db, nightId)
   let dealt = 0
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
@@ -636,8 +668,6 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   }
   // the study is the clock: tell the station which group is due, unless a game is running
   const due = rot.studyOrder?.[r] ?? null
-  const studySnap = await db.doc(studyPath(nightId)).get()
-  const running = ['playing', 'reproducing', 'entering'].includes(studySnap.data()?.state)
   if (!running) await db.doc(studyPath(nightId)).set({ groupId: due, state: studySnap.data()?.state === 'done' ? 'idle' : (studySnap.data()?.state ?? 'idle') }, { merge: true })
   await db.doc(`nights/${nightId}`).update({ rotation: r })
   return { ok: true, rotation: r, dealt }
@@ -781,16 +811,24 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   }
   const lines = labelled(await readArea(db, 'trace_lines'))
   const context = lines[`TRACE ${murdererChar.trace.toUpperCase()}`] ?? TRACE_CONTEXT[murdererChar.trace] ?? null
-  const doc = {
-    level, trace: murdererChar.trace,
+  const base = { level, placeholder: !!c.rehearsal, at: new Date(now) }
+  const full = {
+    ...base, trace: murdererChar.trace,
     label: level >= 4 ? murdererChar.traceLabel : null,
     context: level === 5 ? context : null,
     partner: level === 2 ? partner : null,
-    placeholder: !!c.rehearsal,
-    at: new Date(now),
   }
-  await ref.set(doc)
-  await db.doc(`nights/${nightId}/public/cues`).set({ hall: 'green', changedAt: new Date(now) }, { merge: true })
+  // Any phone can read public/*, so the public doc carries only what the
+  // level allows the room to see: nothing to name at level 1, two pictures
+  // in no particular order at level 2, the trace itself from level 3 up.
+  const shown = level >= 3 ? { ...base, trace: full.trace, label: full.label, context: full.context }
+    : level === 2 ? { ...base, images: shuffled([full.trace, partner]) }
+    : base
+  const batch = db.batch()
+  batch.set(db.doc(`nights/${nightId}/private/trace`), full)
+  batch.set(ref, shown)
+  batch.set(db.doc(`nights/${nightId}/public/cues`), { hall: 'green', changedAt: new Date(now) }, { merge: true })
+  await batch.commit()
   return { ok: true, level }
 }
 

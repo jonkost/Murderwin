@@ -54,10 +54,21 @@ export function turnOrder(keys, turns, pickInt = randomInt) {
   return out.slice(0, turns)
 }
 
-// Start the drawing. Host button; it tells the host nothing.
+export const RUNNING = ['walk', 'turn', 'vote', 'lockout']
+
+// Is a drawing under way (or finished and still on the screens)?
+export async function state(db, nightId) {
+  const snap = await db.doc(relayPaths(nightId).pub).get()
+  return snap.exists ? (snap.data().state ?? 'idle') : 'idle'
+}
+
+// Start the drawing. Host button; it tells the host nothing. A drawing that
+// is already running (or done) is never wiped by a second press: Clear first.
 export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 ** 31) } = {}) {
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   if (!nightSnap.exists) throw new NightError('no-night', 'No such night.')
+  const current = await state(db, nightId)
+  if (RUNNING.includes(current) || current === 'done') throw new NightError('running', 'The drawing is already running. Clear it first.')
   const roster = nightSnap.data().roster ?? {}
   const keys = Object.keys(roster)
   if (keys.length < 2) throw new NightError('invalid', 'The drawing needs at least two people.')
@@ -85,11 +96,16 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
   return { ok: true, turns }
 }
 
-// Clear it, for rehearsals.
-export async function reset(db, { nightId }) {
+// Clear it, for rehearsals. The trace behind the door and the green hall
+// light go with it, so the next run's finish is a real moment again.
+export async function reset(db, { nightId, now = Date.now() }) {
   const { pub, priv } = relayPaths(nightId)
   await db.doc(pub).set({ state: 'idle', doorOpen: false })
   await db.doc(priv).set({ grids: null, order: null, votes: {} })
+  await db.doc(`nights/${nightId}/public/trace`).delete()
+  await db.doc(`nights/${nightId}/private/trace`).delete()
+  const cues = db.doc(`nights/${nightId}/public/cues`)
+  if ((await cues.get()).exists) await cues.set({ hall: 'red', changedAt: new Date(now) }, { merge: true })
   return { ok: true }
 }
 

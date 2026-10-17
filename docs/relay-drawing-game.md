@@ -339,13 +339,20 @@ then a new vote over the remaining options, repeating until the majority lands o
 (at most three rounds of lockout per grid). Right → the next grid or `done`. There is no
 reveal state.
 
-**The door (as built, 17 Oct).** `run.advanceRelay` wraps `relay.advance`; when it returns
-`{ moved, state: 'done' }` it calls `deal.revealTrace`, which reads the case, picks the level
-with `traceLevel(dial)` (one rung per `TRACE_STEP` = 4 points, symmetric rounding), picks a
-level-2 partner with `pickPartner` from `TRACE_BUCKETS` (in-play, not the victim's, Professors
-last), and writes `nights/{id}/public/trace` `{ level, trace, label, context, partner,
-placeholder, at }` plus `public/cues { hall: 'green' }`. Idempotent: a second call is a no-op.
-The bedroom kiosk renders `TraceView` from that doc with CSS haze by level over
+**The door (as built, 17 Oct).** `run.advanceRelay` wraps `relay.advance`; whenever the relay
+is `done` it calls `deal.revealTrace` (so a reveal that failed once is retried by the next
+nudge; Next into "The door opens" and into the ballot ask again too), which reads the case,
+picks the level with `traceLevel(dial)` (one rung per `TRACE_STEP` = 4 points, symmetric
+rounding), picks a level-2 partner with `pickPartner` from `TRACE_BUCKETS` (in-play, not the
+victim's, Professors last), and writes, in one batch, the whole of it to
+`nights/{id}/private/trace` `{ level, trace, label, context, partner, placeholder, at }`, the
+part the room may see to `nights/{id}/public/trace` (level 1: `{ level }` only; level 2:
+`{ level, images: [two ids, shuffled] }`; level 3 up: `{ level, trace, label, context }`; any
+signed-in phone can read `public/*`, so the dial's work never leaks through one read), plus
+`public/cues { hall: 'green' }`. Idempotent: a second call is a no-op. *Clear the drawing*
+deletes both trace docs and puts the hall back to red. The host's Next refuses to leave "The
+drawing" while it runs, and a second *Start the drawing* keeps the running one.
+The bedroom kiosk renders `TraceView` from the public doc with CSS haze by level over
 `play/public/traces/<trace>.png`. The living kiosk shows the same during the ballot window and
 runs `Finale` from `public/finale` (`deal.finaleDoc`: `schedule` offsets, `stats` strings,
 `graph.points`/`graph.running` from `cases.dialLog`, which `applyPoints` appends to). Reveal

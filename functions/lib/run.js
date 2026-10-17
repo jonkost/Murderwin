@@ -39,15 +39,36 @@ export function prevOf(act, beatKey) {
 async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true, phase = 'act' } = {}) {
   const ref = db.doc(`nights/${nightId}`)
   const spec = deal.beatSpec(act, beat)
+  let started = {}
+  if (run && spec?.action === 'relay:start') {
+    // the drawing starts before the beat moves, so a failed start leaves Next on this beat to try again
+    try { started = await relay.start(db, { nightId, now }) } catch (e) {
+      if (e?.code !== 'running') throw e // a drawing already running is kept, never wiped
+      started = { ok: true, kept: true }
+    }
+  }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
   if (!run || !spec?.action) return { ok: true, act, beat }
-  if (spec.action === 'relay:start') {
-    const r = await relay.start(db, { nightId, now })
-    return { ok: true, act, beat, ...r }
-  }
+  if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
+  // the door and the ballot both lean on the trace: make sure it is there if the drawing is done
+  if (spec.action === 'notice:door' || spec.action === 'window:ballot') await ensureTrace(db, nightId, now)
   return { ok: true, act, beat, ...r }
+}
+
+// Once the drawing is done, the trace must be behind the door and the hall
+// light green. revealTrace is idempotent, so every caller may ask again.
+async function ensureTrace(db, nightId, now) {
+  if (await relay.state(db, nightId) !== 'done') return null
+  try { return await deal.revealTrace(db, nightId, { now }) } catch (e) { return { trace: e?.code ?? 'failed' } }
+}
+
+// Leaving the drawing beat while the drawing is running would pull every
+// phone off it; the host's button refuses, the same way an open window does.
+async function refuseIfDrawing(db, nightId, n) {
+  if (deal.beatSpec(n.act, n.beat)?.action !== 'relay:start') return
+  if (relay.RUNNING.includes(await relay.state(db, nightId))) throw new NightError('running', 'The drawing is still running.')
 }
 
 // A window that has run its course is settled before anything else moves.
@@ -67,6 +88,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
   switch (command) {
     case 'next': {
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
+      await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
       const to = nextOf(n.act, n.beat)
       if (!to) throw new NightError('invalid', n.act === 1 ? 'That is the end of Act 1. Press Blackout.' : 'That is the end of the night.')
@@ -83,6 +105,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // jump to a named beat of the current act and run it (re-running is harmless: cards deal once)
       const spec = deal.beatSpec(n.act, arg)
       if (!spec) throw new NightError('invalid', 'No such beat in this act.')
+      if (arg !== n.beat) await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
       return enterBeat(db, nightId, n.act, arg, { now })
     }
@@ -119,7 +142,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'relay-start':
       return relay.start(db, { nightId, now })
     case 'relay-reset':
-      return relay.reset(db, { nightId })
+      return relay.reset(db, { nightId, now })
     case 'relay-advance':
       return advanceRelay(db, { nightId, now })
     case 'groups':
@@ -134,10 +157,13 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
 
 // The relay's clock, plus what happens the moment the drawing is done: the
 // trace lands behind the bedroom door and the hall light goes green.
+// Every nudge after the drawing is done asks again, so a reveal that failed
+// once (a dropped write, a function cut short) is retried by the next nudge.
 export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
   const r = await relay.advance(db, { nightId, now })
-  if (r?.moved && r.state === 'done') {
-    try { await deal.revealTrace(db, nightId, { now }) } catch (e) { r.trace = e?.code ?? 'failed' }
+  if (r?.state === 'done') {
+    const t = await ensureTrace(db, nightId, now)
+    if (t?.trace) r.trace = t.trace
   }
   return r
 }
@@ -153,6 +179,9 @@ export async function studyFinished(db, { nightId, payload = {}, now = Date.now(
   const spec = deal.beatSpec(4, n.beat)
   const to = nextOf(4, n.beat)
   if (spec?.action !== 'rotate' || !to || to.act !== 4) return { ...r, rotated: false, reason: 'not-a-rotate-beat' }
+  // a finish from an earlier rotation (the host already moved the house on) must not move it again
+  const rot = (await db.doc(`nights/${nightId}/public/rotation`).get()).data()
+  if ((rot?.studyOrder ?? []).indexOf(payload.groupId) !== (n.rotation ?? -1)) return { ...r, rotated: false, reason: 'already-rotated' }
   if (n.window && !n.window.settled) {
     if (now < deal.ms(n.window.closesAt)) return { ...r, rotated: false, reason: 'window-open' }
     await deal.settleWindow(db, nightId, { now })

@@ -29,6 +29,7 @@ const CODE_MAP = {
   full: 'resource-exhausted',
   'already-joined': 'already-exists',
   'window-open': 'failed-precondition',
+  running: 'failed-precondition',
 }
 
 function wrap(handler) {

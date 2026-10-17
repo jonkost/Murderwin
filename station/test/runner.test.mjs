@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { keyImage } from '../lib/streamdeck.js'
 import { countSegments, Nanoleaf } from '../lib/nanoleaf.js'
 import { FakeWall, FakeDeck } from '../lib/fakes.js'
+import { createRunner } from '../lib/runner.js'
 
 test('key images: the right size, a solid blank, text on the lit keys', () => {
   const size = 72
@@ -65,4 +66,131 @@ test('fakes: the wall reports what it lit and the deck relays presses', async ()
   deck.onKey((n) => presses.push(n))
   deck.press('submit')
   assert.deepEqual(presses, ['submit'])
+})
+
+// ---- the runner, with fakes for the walls, the deck and the server ---------
+
+const PANELS = [11, 12, 13, 14, 15, 16, 17]
+
+// A station with no hardware: the sleeps are instant unless `gate` names one
+// to hold (the rest after a finish), and the server is a stub that records
+// what it was sent and answers like the real function.
+function station({ elementsOk = true, nextGroup = 'g2', gate = {} } = {}) {
+  const elements = new FakeWall({ name: 'elements', panelIds: PANELS, log: () => {} })
+  const lines = new FakeWall({ name: 'lines', panelIds: [21, 22, 23, 24, 25, 26, 27], log: () => {} })
+  const deck = new FakeDeck({ log: () => {} })
+  const sent = []
+  const callStation = async (args) => {
+    sent.push(args)
+    if (args.command === 'finished') return { data: { ok: true, dealt: 2, nextGroup, serverTime: Date.now() } }
+    return { data: { ok: true, serverTime: Date.now() } }
+  }
+  const panelIds = elementsOk ? PANELS : [1, 2, 3, 4, 5, 6]
+  const runner = createRunner({
+    elements, lines, deck, elementsOk, panelIds, layout: panelIds.map((id, i) => ({ id, x: i * 100, y: 0 })),
+    callStation, stationKey: 'k', restMs: 20_000,
+    sleep: (ms) => (gate[ms] ? gate[ms] : Promise.resolve()),
+  })
+  runner.night('n1')
+  runner.due('g1')
+  return { runner, elements, lines, deck, sent }
+}
+// Everything queued so far, and everything that queued while waiting, has run.
+async function flush(runner) {
+  let q
+  do { q = runner.settled(); await q } while (q !== runner.settled())
+}
+async function reproduce(runner) {
+  await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'the wall has finished playing, now the group')
+  const snap = runner.machine.snapshot
+  for (const p of runner.machine.patterns[snap.round][snap.pattern]) runner.touch(p)
+  await flush(runner)
+}
+async function enter(runner, pair) {
+  runner.key(pair.colour); runner.key(String(pair.number)); runner.key('submit')
+  await flush(runner)
+}
+const defer = () => { let resolve; const p = new Promise(r => { resolve = r }); p.resolve = resolve; return p }
+
+test('the runner plays every pattern, not only the first: a correct answer brings the next one', { timeout: 5000 }, async () => {
+  const { runner, elements } = station()
+  await flush(runner)
+  runner.touch(PANELS[0])
+  await reproduce(runner)
+  assert.equal(runner.machine.snapshot.pattern, 1)
+  assert.equal(runner.machine.state, 'reproducing', 'pattern 2 played and is waiting on the group')
+  await reproduce(runner)
+  await reproduce(runner)
+  assert.equal(runner.machine.state, 'entering', 'three patterns clear: the Lines answer')
+  const lit = elements.frames.filter(f => Object.values(f).some(v => v[0] === 255)).length
+  assert.ok(lit >= 3 + 4 + 5, 'every panel of every pattern lit the wall')
+})
+
+test('after a finish the station waits for whichever group the server says is next', { timeout: 5000 }, async () => {
+  const rest = defer()
+  const { runner, sent } = station({ nextGroup: 'g2', gate: { 20_000: rest } })
+  await flush(runner)
+  runner.touch(PANELS[0])
+  for (let round = 0; round < 3; round++) {
+    for (let pat = 0; pat < 3; pat++) await reproduce(runner)
+    if (round < 2) await enter(runner, runner.machine.code[round])
+  }
+  // the last pair: the walls then rest behind the gate, so no flush here
+  const last = runner.machine.code[2]
+  runner.key(last.colour); runner.key(String(last.number)); runner.key('submit')
+  assert.equal(runner.machine.state, 'done')
+  await new Promise(r => setTimeout(r, 0))
+  const finished = sent.filter(a => a.command === 'finished')
+  assert.equal(finished.length, 1)
+  assert.equal(finished[0].payload.groupId, 'g1')
+  assert.equal(finished[0].payload.outcome, 'solved')
+  // the server's snapshot names the next group while the walls are still resting
+  runner.due('g2')
+  assert.equal(runner.machine.state, 'done', 'a resting station is not rebuilt mid-rest')
+  rest.resolve()
+  await flush(runner)
+  assert.equal(runner.machine.state, 'idle')
+  assert.equal(runner.groupId, 'g2')
+  assert.equal(runner.machine.snapshot.groupId, 'g2', 'the next group, never the one just paid')
+  // the next group's finish names them
+  runner.touch(PANELS[1])
+  for (let round = 0; round < 3; round++) {
+    for (let pat = 0; pat < 3; pat++) await reproduce(runner)
+    if (round < 2) await enter(runner, runner.machine.code[round])
+  }
+  const last2 = runner.machine.code[2]
+  runner.key(last2.colour); runner.key(String(last2.number)); runner.key('submit')
+  await new Promise(r => setTimeout(r, 0))
+  assert.equal(sent.filter(a => a.command === 'finished').at(-1).payload.groupId, 'g2')
+})
+
+test("Granolia's word about a wrong pair is spent once the pair is right", { timeout: 5000 }, async () => {
+  const { runner } = station()
+  await flush(runner)
+  runner.touch(PANELS[0])
+  for (let pat = 0; pat < 3; pat++) await reproduce(runner)
+  const want = runner.machine.code[0]
+  const otherColour = ['red', 'yellow', 'green', 'blue', 'pink', 'white'].find(c => c !== want.colour)
+  await enter(runner, { colour: otherColour, number: want.number })
+  assert.equal(runner.granolia?.hint, 'half')
+  await enter(runner, want)
+  assert.equal(runner.granolia, null, 'round 2 starts with nothing to say')
+  assert.equal(runner.machine.snapshot.round, 1)
+})
+
+test('with the Elements down the wall is left alone and the screen gets the pattern while it plays', { timeout: 5000 }, async () => {
+  const { runner, elements, sent } = station({ elementsOk: false })
+  await flush(runner)
+  runner.key('1') // a number key stands in for a panel: the game begins
+  await flush(runner)
+  assert.equal(elements.frames.length, 0, 'no frames to a wall that is down')
+  const playing = sent.filter(a => a.command === 'state' && a.payload.state === 'playing')
+  assert.ok(playing.length >= 1)
+  assert.ok(Array.isArray(playing[0].payload.fallbackPattern) && playing[0].payload.fallbackPattern.length === 3, 'the screen knows the pattern as it plays')
+  assert.equal(runner.machine.state, 'reproducing')
+  const pattern = runner.machine.patterns[0][0]
+  for (const p of pattern) runner.key(String(p))
+  await flush(runner)
+  assert.equal(runner.machine.snapshot.pattern, 1, 'the number keys reproduce it')
 })

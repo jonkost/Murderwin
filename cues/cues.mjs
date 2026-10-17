@@ -17,7 +17,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
-import { plan, soundCandidates } from './lib/cues.js'
+import { plan, soundCandidates, parseEnv, bridgeHostProblem } from './lib/cues.js'
 import { Hue } from './lib/hue.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -27,13 +27,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a)
 
 function loadEnv() {
   const p = join(here, '.env')
-  if (!existsSync(p)) return {}
-  const out = {}
-  for (const line of readFileSync(p, 'utf8').split('\n')) {
-    const m = /^\s*([A-Z_]+)\s*=\s*(.*)\s*$/.exec(line)
-    if (m && !line.trim().startsWith('#')) out[m[1]] = m[2]
-  }
-  return out
+  return existsSync(p) ? parseEnv(readFileSync(p, 'utf8')) : {}
 }
 const env = { ...loadEnv(), ...process.env }
 const MEDIA_DIR = resolve(here, env.MEDIA_DIR || '../media')
@@ -51,7 +45,11 @@ const firebaseConfig = {
 // ---- the two things it can do --------------------------------------------
 let hue = null
 if (!FAKE) {
-  try { hue = new Hue({ host: env.HUE_BRIDGE_HOST, key: env.HUE_APP_KEY, log }) } catch (e) { log(e.message, '— the hall light is off duty; the TV announces the door anyway') }
+  const problem = bridgeHostProblem(env.HUE_BRIDGE_HOST)
+  if (problem) log(`${problem} (cues/.env) — the hall light is off duty; the TV announces the door anyway`)
+  else {
+    try { hue = new Hue({ host: env.HUE_BRIDGE_HOST, key: env.HUE_APP_KEY, log }) } catch (e) { log(e.message, '— the hall light is off duty; the TV announces the door anyway') }
+  }
 }
 if (LIST) {
   if (!hue) { console.log('fill HUE_BRIDGE_HOST and HUE_APP_KEY in cues/.env first'); process.exit(2) }
@@ -91,7 +89,7 @@ let state = { hall: null, sound: null }
 let stops = []
 
 function apply() {
-  const { actions, state: next } = plan(state, docs)
+  const { actions, state: next } = plan(state, docs, Date.now())
   state = next
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)

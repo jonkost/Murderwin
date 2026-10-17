@@ -95,8 +95,9 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
     m.current = m.patterns[m.round][m.pattern]
     m.progress = 0
     m.state = 'playing'
-    emit({ type: 'elements.play', panels: m.current, onMs: slow ? r.onMs * 2 : r.onMs, gapMs: slow ? r.gapMs * 2 : r.gapMs })
+    // the screen first, so with the wall down it shows the pattern while it "plays"
     show()
+    emit({ type: 'elements.play', panels: m.current, onMs: slow ? r.onMs * 2 : r.onMs, gapMs: slow ? r.gapMs * 2 : r.gapMs })
   }
 
   function begin(now) {
@@ -189,6 +190,7 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
         m.pairs.push({ ...want })
         emit({ type: 'deck.off' }); emit({ type: 'lines.rest' })
         m.hint = null; m.entry = { colour: null, number: null }
+        emit({ type: 'granolia', hint: null }) // her word about this pair is spent; the next round starts clean
         if (m.round >= 2) { finish(now, 'solved'); return }
         m.round += 1; m.pattern = 0
         emit({ type: 'wait', ms: s.restMs })

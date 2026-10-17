@@ -106,13 +106,14 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
 
   // Act 7: the finale runs on this screen against the server's clock
   if (finale && night?.reveal) return <Finale night={night} finale={finale} serverNow={serverNow} />
-  // Act 7: while the phones decide, the trace is back on the big screen
-  if (night?.window?.kind === 'ballot' && !night.window.settled && trace) {
+  // Act 7: while the phones decide, the clock is on the big screen, with the
+  // trace when there is one (the drawing may have been cut, or never run)
+  if (night?.window?.kind === 'ballot' && !night.window.settled) {
     const left = Math.max(0, Math.ceil((ms(night.window.closesAt) - serverNow()) / 1000))
     return (
       <div className="kiosk ballot-screen">
         <p className="kiosk-crest">Two minutes to decide</p>
-        <TraceView trace={trace} compact />
+        {trace ? <TraceView trace={trace} compact /> : <p className="kiosk-big">Decide.</p>}
         <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
       </div>
     )
@@ -209,15 +210,20 @@ export function Bedroom({ relay, trace }) {
 
 // ---- the trace, at one of five levels -------------------------------------
 // 1 heavy haze · 2 two traces overlaid · 3 clear, no name · 4 named · 5 named with a line
+// The doc carries only what the level allows (any phone can read it): at
+// level 1 no picture at all, at level 2 two pictures in no particular order.
 export function TraceView({ trace, compact = false }) {
   const level = Math.max(1, Math.min(5, Number(trace?.level) || 3))
   const base = import.meta.env.BASE_URL
   const src = (id) => `${base}traces/${id}.png`
+  const images = level === 2 ? (trace.images ?? []) : level >= 3 && trace.trace ? [trace.trace] : []
   return (
     <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
       <div className="trace-frame">
-        <img className="trace-img main" src={src(trace.trace)} alt={level >= 4 ? trace.label : 'something left behind'} onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
-        {level === 2 && trace.partner && <img className="trace-img partner" src={src(trace.partner)} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />}
+        {level === 1 && <div className="trace-blob" aria-label="something left behind" />}
+        {images.map((id, i) => (
+          <img key={id} className={`trace-img ${i === 0 ? 'main' : 'partner'}`} src={src(id)} alt={level >= 4 ? trace.label : 'something left behind'} onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
+        ))}
         {level === 1 && <div className="trace-haze" aria-hidden="true" />}
       </div>
       {level >= 4 && trace.label && <p className="trace-label">{trace.label}</p>}
@@ -305,17 +311,10 @@ export function TugOfWar({ graph }) {
   const running = graph?.running ?? [{ act: 2, value: 0 }, { act: 4, value: 0 }, { act: 6, value: 0 }]
   const acts = [2, 4, 6]
   const W = 1000, H = 520, L = 190, R = 150, T = 50, B = 70
-  const maxAbs = Math.max(6, ...running.map(p => Math.abs(p.value)), ...points.map(p => Math.abs(p.delta)))
-  const x = (act) => L + ((acts.indexOf(act) + 0.5) / acts.length) * (W - L - R)
-  const y = (v) => T + (H - T - B) / 2 - (v / maxAbs) * ((H - T - B) / 2)
-  const mid = y(0)
-  const pathD = running.map((p, i) => `${i ? 'L' : 'M'} ${x(p.act)} ${y(p.value)}`).join(' ')
-  // bars: each push drawn from the running value before it
+  // bars: each push drawn from the running value before it, a role's pushes in one act chained
   const bars = []
-  const before = {}
   let acc = 0
   for (const act of acts) {
-    before[act] = acc
     const here = points.filter(p => p.act === act)
     let ghostFrom = acc, murdererFrom = acc
     for (const p of here) {
@@ -326,6 +325,12 @@ export function TugOfWar({ graph }) {
     }
     acc = running.find(r => r.act === act)?.value ?? acc
   }
+  // the scale fits every bar end, not only the line: two strong pulls that cancel still fit the frame
+  const maxAbs = Math.max(6, ...running.map(p => Math.abs(p.value)), ...bars.flatMap(b => [Math.abs(b.from), Math.abs(b.to)]))
+  const x = (act) => L + ((acts.indexOf(act) + 0.5) / acts.length) * (W - L - R)
+  const y = (v) => T + (H - T - B) / 2 - (v / maxAbs) * ((H - T - B) / 2)
+  const mid = y(0)
+  const pathD = running.map((p, i) => `${i ? 'L' : 'M'} ${x(p.act)} ${y(p.value)}`).join(' ')
   return (
     <svg className="tug" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="the clarity dial across the night">
       <text x={L - 12} y={T + 14} textAnchor="end" className="tug-side">Ghost</text>
@@ -368,7 +373,7 @@ const SAY = {
   capped: 'Thank you for trying your best. Here is the rest. Something has been sent to your phones. Off you go.',
 }
 
-function Study({ study, rotation, serverNow }) {
+export function Study({ study, rotation, serverNow }) {
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
   const names = group ? group.members.map(m => m.name).join(', ') : null
@@ -416,7 +421,9 @@ function Study({ study, rotation, serverNow }) {
   )
 }
 
-// A drawing of the wall with the panels numbered in the order they lit.
+// A drawing of the wall with the panels numbered in the order they lit. With
+// the wall down (fallback) every panel also carries its own number, the key
+// to press on the button box, with the order above it.
 function WallMap({ layout = [], order = [], fallback = false }) {
   if (!layout.length) return null
   const xs = layout.map(p => p.x), ys = layout.map(p => p.y)
@@ -427,10 +434,16 @@ function WallMap({ layout = [], order = [], fallback = false }) {
     <svg className="wall-map" viewBox={`${minX - r * 1.5} ${-(maxY + r * 1.5)} ${w + r * 3} ${h + r * 3}`}>
       {layout.map((p, i) => {
         const steps = order.map((n, k) => (n === i + 1 ? k + 1 : null)).filter(Boolean)
+        const lit = steps.length > 0
         return (
           <g key={p.id}>
-            <circle cx={p.x} cy={-p.y} r={r} fill={steps.length ? '#F1E8D6' : '#2a3a44'} stroke="#A6A253" strokeWidth={r / 12} />
-            <text x={p.x} y={-p.y + r * 0.35} textAnchor="middle" fontSize={r} fill={steps.length ? '#001925' : '#8a9aa2'}>{fallback ? i + 1 : (steps.join(',') || '')}</text>
+            <circle cx={p.x} cy={-p.y} r={r} fill={lit ? '#F1E8D6' : '#2a3a44'} stroke="#A6A253" strokeWidth={r / 12} />
+            {fallback
+              ? <>
+                  <text x={p.x} y={-p.y + r * 0.55} textAnchor="middle" fontSize={r * 0.9} fill={lit ? '#001925' : '#8a9aa2'}>{i + 1}</text>
+                  {lit && <text x={p.x} y={-p.y - r * 0.25} textAnchor="middle" fontSize={r * 0.42} fill="#001925">{steps.length === 1 ? `${steps[0]}${['st', 'nd', 'rd'][steps[0] - 1] ?? 'th'}` : steps.join(',')}</text>}
+                </>
+              : <text x={p.x} y={-p.y + r * 0.35} textAnchor="middle" fontSize={r} fill={lit ? '#001925' : '#8a9aa2'}>{steps.join(',') || ''}</text>}
           </g>
         )
       })}

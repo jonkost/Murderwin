@@ -134,6 +134,32 @@ export async function stationAllowed(db, { key, isAdmin = false } = {}) {
   return !!want && want.length >= 4 && String(key ?? '').trim() === want
 }
 
+// A group is done with the study, whether the station said so (solved or
+// capped) or the house moved on without them (absent: the dealer pays them
+// at the next rotation). The clue is dealt and the order moves on, once per
+// group.
+export async function finishStudy(db, { nightId, groupId, outcome = 'solved', seconds = null, pairs = null, reportedIn = false }) {
+  if (!groupId) throw new NightError('invalid', 'Which group?')
+  const now = FieldValue.serverTimestamp()
+  const rotRef = db.doc(rotationPath(nightId))
+  const rotSnap = await rotRef.get()
+  if (!rotSnap.exists) throw new NightError('invalid', 'No groups yet. Make the groups on the Host tab first.')
+  const rot = rotSnap.data()
+  if (rot.finished?.[groupId]) return { ok: true, repeated: true }
+  const dealt = await dealStudy(db, { nightId, groupId, outcome })
+  const idx = rot.studyOrder.indexOf(groupId)
+  const current = Math.max(rot.current ?? 0, idx + 1)
+  const nextGroup = rot.studyOrder[current] ?? null
+  await rotRef.update({
+    [`finished.${groupId}`]: { outcome, seconds, pairs, at: now },
+    current, rotatedAt: now,
+  })
+  // the station's own report points the study at the next group; an absent pay-out leaves the
+  // study doc alone (the rotation sets it, and a game may be running in there)
+  if (reportedIn) await db.doc(studyPath(nightId)).set({ state: 'idle', groupId: nextGroup, lastOutcome: outcome, updatedAt: now }, { merge: true })
+  return { ok: true, dealt, nextGroup }
+}
+
 export async function stationCommand(db, { nightId, station = 'study', command, payload = {} } = {}) {
   if (station !== 'study') throw new NightError('invalid', 'Unknown station.')
   if (!nightId) throw new NightError('invalid', 'Which night?')
@@ -141,30 +167,19 @@ export async function stationCommand(db, { nightId, station = 'study', command, 
   switch (command) {
     case 'state': {
       // Counts, words and the wall's layout. Whatever the station sends is
-      // public to the phones, so the station never sends a clue.
+      // public to the phones, so the station never sends a clue. Which group
+      // is due is the server's to say (the rotation and `finished` own it),
+      // so the station's copy of it is dropped too.
       const clean = { ...payload }
       delete clean.clue
+      delete clean.groupId
       await db.doc(studyPath(nightId)).set({ ...clean, updatedAt: now }, { merge: true })
       return { ok: true, serverTime: Date.now() }
     }
     case 'finished': {
       const { groupId, outcome = 'solved', seconds = null, pairs = null } = payload
-      if (!groupId) throw new NightError('invalid', 'Which group?')
-      const rotRef = db.doc(rotationPath(nightId))
-      const rotSnap = await rotRef.get()
-      if (!rotSnap.exists) throw new NightError('invalid', 'No groups yet. Make the groups on the Host tab first.')
-      const rot = rotSnap.data()
-      if (rot.finished?.[groupId]) return { ok: true, repeated: true, serverTime: Date.now() }
-      const dealt = await dealStudy(db, { nightId, groupId, outcome })
-      const idx = rot.studyOrder.indexOf(groupId)
-      const current = Math.max(rot.current ?? 0, idx + 1)
-      const nextGroup = rot.studyOrder[current] ?? null
-      await rotRef.update({
-        [`finished.${groupId}`]: { outcome, seconds, pairs, at: now },
-        current, rotatedAt: now,
-      })
-      await db.doc(studyPath(nightId)).set({ state: 'idle', groupId: nextGroup, lastOutcome: outcome, updatedAt: now }, { merge: true })
-      return { ok: true, dealt, nextGroup, serverTime: Date.now() }
+      const r = await finishStudy(db, { nightId, groupId, outcome, seconds, pairs, reportedIn: true })
+      return { ...r, serverTime: Date.now() }
     }
     case 'ping':
       return { ok: true, serverTime: Date.now() }

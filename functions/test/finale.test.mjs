@@ -185,7 +185,8 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
     await db.doc(`cases/${nightId}`).update({ dial })
     const c = db.store.get(`cases/${nightId}`)
     const r = await revealTrace(db, nightId, { now: t.now })
-    const doc = db.store.get(`nights/${nightId}/public/trace`)
+    // the whole of it lives where no phone reads
+    const doc = db.store.get(`nights/${nightId}/private/trace`)
     const murdererTrace = CHARACTERS.find(ch => ch.id === night(db, nightId).roster[c.murderer].characterId)
     assert.equal(doc.trace, murdererTrace.trace)
     assert.equal(r.level, doc.level)
@@ -201,7 +202,20 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
       assert.ok(inPlay.includes(doc.partner))
     } else assert.equal(doc.partner, null)
     assert.equal(doc.placeholder, true)
-    const text = JSON.stringify(doc)
+    // what the room screens read carries only what the level allows: the dial's work is not undone by one read
+    const pub = db.store.get(`nights/${nightId}/public/trace`)
+    assert.equal(pub.level, doc.level)
+    assert.ok(!('partner' in pub), 'the public doc never says which picture is the real one')
+    if (doc.level >= 3) {
+      assert.equal(pub.trace, doc.trace)
+      assert.equal(pub.label, doc.label)
+      assert.equal(pub.context, doc.context)
+    } else {
+      assert.ok(!('trace' in pub), `no trace id below level 3 (level ${doc.level})`)
+      if (doc.level === 2) assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
+      else assert.ok(!('images' in pub))
+    }
+    const text = JSON.stringify([doc, pub])
     for (const forbidden of ['murderer', 'ghost', 'motive', 'roles', 'kernel', 'document', c.murderer, c.ghost]) {
       assert.ok(!text.includes(forbidden), `trace doc must not carry ${forbidden}`)
     }
@@ -209,6 +223,184 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
     const again = await revealTrace(db, nightId, { now: t.now + 1 })
     assert.equal(again.already, true)
   }
+})
+
+// Play the Act 6 drawing through to its last vote, everyone picking right,
+// and leave `t.now` at the moment that vote can be closed.
+async function playToLastVote(db, nightId, uids, names, t) {
+  const { pub, priv } = relayPaths(nightId)
+  const { vote } = await import('../lib/relay.js')
+  let guard = 0
+  while (guard++ < 400) {
+    const p = db.store.get(pub)
+    if (p.state === 'vote') {
+      const answer = db.store.get(priv).grids[p.grid - 1].answer
+      for (const name of names) await vote(db, { nightId, uid: uids[name.toLowerCase()], pick: answer })
+      if (p.grid === 3) return
+      await advanceRelay(db, { nightId, now: t.now + 1 })
+      continue
+    }
+    t.now += p.state === 'walk' ? Math.max(WALK_MS, PULL_MS) : TURN_MS
+    await advanceRelay(db, { nightId, now: t.now })
+  }
+  assert.fail('the drawing never reached its last vote')
+}
+
+test('the trace reveal heals itself: a failed write is retried by the next nudge, and by Next into the door', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 8_000_000 }
+  await walkTo(db, nightId, 6, 'drawing', t)
+  await playToLastVote(db, nightId, uids, names, t)
+  // the last vote closes, but the trace's write fails (a dropped connection) just after the relay commits 'done'
+  const realBatch = db.batch.bind(db)
+  let failures = 1
+  db.batch = () => { const b = realBatch(); if (failures-- > 0) b.commit = async () => { throw new Error('UNAVAILABLE') }; return b }
+  const r = await advanceRelay(db, { nightId, now: t.now + 1 })
+  assert.equal(r.state, 'done')
+  assert.equal(r.trace, 'failed')
+  assert.equal(db.store.get(`nights/${nightId}/public/trace`), undefined)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
+  // the kiosk nudges again (nothing moves) and the trace lands
+  const again = await advanceRelay(db, { nightId, now: t.now + 2 })
+  assert.equal(again.moved, false)
+  assert.ok(db.store.get(`nights/${nightId}/public/trace`))
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
+  // and Next into the door is a second safety net
+  db.store.delete(`nights/${nightId}/public/trace`)
+  db.store.set(`nights/${nightId}/public/cues`, { hall: 'red' })
+  await hostCommand(db, { nightId, command: 'next', now: t.now + 3 })
+  assert.equal(night(db, nightId).beat, 'door')
+  assert.ok(db.store.get(`nights/${nightId}/public/trace`))
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
+})
+
+test('Clear the drawing takes the trace and the green light with it; the next run turns it green again', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 9_000_000 }
+  await walkTo(db, nightId, 6, 'drawing', t)
+  await playToLastVote(db, nightId, uids, names, t)
+  await advanceRelay(db, { nightId, now: t.now + 1 })
+  assert.ok(db.store.get(`nights/${nightId}/public/trace`))
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
+  await hostCommand(db, { nightId, command: 'relay-reset', now: t.now + 2 })
+  assert.equal(db.store.get(`nights/${nightId}/public/trace`), undefined)
+  assert.equal(db.store.get(`nights/${nightId}/private/trace`), undefined)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
+  assert.equal(await ensureHallRed(db, nightId, t.now + 3), false, 'red already')
+  // run it again: a fresh trace, a fresh green
+  await hostCommand(db, { nightId, command: 'relay-start', now: t.now + 4 })
+  await playToLastVote(db, nightId, uids, names, t)
+  await advanceRelay(db, { nightId, now: t.now + 1 })
+  assert.ok(db.store.get(`nights/${nightId}/public/trace`))
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
+})
+
+test('a running drawing is never wiped or walked away from: Next and the beat list refuse, Start keeps it, Clear frees it', async () => {
+  const { db, nightId } = await party(3)
+  const t = { now: 10_000_000 }
+  await walkTo(db, nightId, 6, 'drawing', t)
+  const { pub, priv } = relayPaths(nightId)
+  const seed = db.store.get(priv).seed
+  assert.equal(db.store.get(pub).state, 'walk')
+  await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /still running/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'beat', arg: 'door', now: t.now }), /still running/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'relay-start', now: t.now }), /already running/)
+  const r = await hostCommand(db, { nightId, command: 'beat', arg: 'drawing', now: t.now })
+  assert.equal(r.kept, true)
+  assert.equal(db.store.get(priv).seed, seed, 'the same drawing is still on the paper')
+  assert.equal(night(db, nightId).beat, 'drawing')
+  await hostCommand(db, { nightId, command: 'relay-reset', now: t.now })
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  assert.equal(night(db, nightId).beat, 'door')
+})
+
+test('a start that fails leaves Next on the drawing beat, so trying again tries the drawing again', async () => {
+  const { db, nightId } = await party(1) // one person: the drawing cannot start
+  const t = { now: 11_000_000 }
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now })
+  assert.equal(night(db, nightId).beat, 'merged')
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /at least two/)
+  assert.equal(night(db, nightId).beat, 'merged', 'the beat did not move')
+  assert.equal(db.store.get(relayPaths(nightId).pub), undefined)
+})
+
+test('the group due in the study is paid when the house moves on without the station saying so', async () => {
+  const { db, nightId, uids } = await party(6)
+  const t = { now: 12_000_000 }
+  await walkTo(db, nightId, 3, 'groups', t)
+  const alive = (extra = {}) => db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), state: 'idle', updatedAt: new Date(t.now), ...extra })
+  alive()
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station1
+  const rot = db.store.get(rotationPath(nightId))
+  const [g1, g2, g3] = rot.studyOrder.map(id => rot.groups.find(g => g.id === id))
+  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 0, 'nothing yet: the station is alive')
+  // the station dies (no touch ever came); the host presses Next anyway
+  alive()
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station2
+  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1, 'g1 leaves the study with the clue')
+  assert.equal(db.store.get(rotationPath(nightId)).finished[g1.id].outcome, 'absent')
+  assert.equal(db.store.get(studyPath(nightId)).groupId, g2.id)
+  // a late word from the station about g1 deals nothing twice
+  const late = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: g1.id, outcome: 'solved' } })
+  assert.equal(late.repeated, true)
+  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
+  // g2 is mid-game with the station alive when the house rotates: left to the station, not paid yet
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // questions1
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  alive({ state: 'playing' })
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station3
+  assert.equal(night(db, nightId).beat, 'station3')
+  for (const m of g2.members) assert.equal(cards(db, uids[m.key], 'clue').length, 0, 'the station still has g2')
+  assert.equal(db.store.get(rotationPath(nightId)).finished[g2.id], undefined)
+  assert.equal(db.store.get(studyPath(nightId)).groupId, g2.id, 'the running game is left alone')
+  // and when the station is not alive the mid-game group is paid at the next rotation
+  db.store.set(studyPath(nightId), { ...db.store.get(studyPath(nightId)), updatedAt: new Date(t.now - 10 * 60_000) })
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station4
+  for (const m of g2.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
+  assert.ok(g3)
+})
+
+test('a finish from a rotation the host already moved past does not move the house again', async () => {
+  const { db, nightId, uids } = await party(6)
+  const t = { now: 13_000_000 }
+  await walkTo(db, nightId, 3, 'groups', t)
+  db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), state: 'idle', updatedAt: new Date(t.now) })
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station1, rotation 0
+  const rot = db.store.get(rotationPath(nightId))
+  const g1 = rot.groups.find(g => g.id === rot.studyOrder[0])
+  // g1 overruns in the study; the host keeps the other groups moving
+  db.store.set(studyPath(nightId), { ...db.store.get(studyPath(nightId)), state: 'playing', groupId: g1.id, updatedAt: new Date(t.now) })
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station2, rotation 1
+  assert.equal(night(db, nightId).rotation, 1)
+  // two minutes later g1 finishes: the clue lands, the house stays where it is
+  const r = await studyFinished(db, { nightId, payload: { groupId: g1.id, outcome: 'solved', seconds: 700, pairs: 3 }, now: t.now + 120_000 })
+  assert.equal(r.rotated, false)
+  assert.equal(r.reason, 'already-rotated')
+  assert.equal(night(db, nightId).beat, 'station2')
+  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
+})
+
+test('both hidden roles answering at the same moment push the dial twice, and a late answer during settle counts once', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 14_000_000 }
+  await walkTo(db, nightId, 2, 'questions', t)
+  const n2 = night(db, nightId)
+  const { answer } = await import('../lib/deal.js')
+  const picksFor = (uid) => db.store.get(`sessions/${uid}`).windows[n2.window.id].beats.map(b => b.choices[0].k)
+  // every phone taps at once
+  await Promise.all(names.slice(0, 3).map(name => { const uid = uids[name.toLowerCase()]; return answer(db, { nightId, uid, windowId: n2.window.id, picks: picksFor(uid), now: t.now }) }))
+  // the fourth answers in the grace period while the host's Next is settling
+  t.now = ms(n2.window.closesAt) + 1
+  const lastUid = uids[names[3].toLowerCase()]
+  await Promise.all([
+    hostCommand(db, { nightId, command: 'next', now: t.now }),
+    answer(db, { nightId, uid: lastUid, windowId: n2.window.id, picks: picksFor(lastUid), now: t.now }).catch(e => { if (e.code !== 'closed') throw e }),
+  ])
+  const c = db.store.get(`cases/${nightId}`)
+  assert.equal(c.dialLog.length, 2, 'one push per hidden role, none lost, none doubled')
+  assert.deepEqual([...c.dialLog.map(e => e.role)].sort(), ['ghost', 'murderer'])
+  assert.equal(c.dial, c.dialLog.reduce((s, e) => s + e.delta, 0))
 })
 
 test('the hall light is red from Act 1 and green when the drawing is done', async () => {

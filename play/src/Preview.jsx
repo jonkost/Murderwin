@@ -8,7 +8,7 @@ import { uiLines } from './lib/content'
 import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
 import Relay, { RelayDone } from './screens/Relay'
-import { Living, Bedroom } from './screens/Kiosk'
+import { Living, Bedroom, Study } from './screens/Kiosk'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
@@ -16,8 +16,9 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // Sample cards are stage directions in brackets, never content.
 //
 // Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
-// kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal, kiosk-finale-done,
-// kiosk-living-turn, kiosk-living-vote (full-bleed, as on the MacBooks).
+// kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal,
+// kiosk-finale-done, kiosk-living-turn, kiosk-living-vote, kiosk-study,
+// kiosk-study-fallback (full-bleed, as on the MacBooks).
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
 // then one per thing a phone is dealt: act1, orient, news, go, testimony,
 // deflect, puzzle, document, questions, checkin, dinner, groups, study, cat,
@@ -105,7 +106,20 @@ function relayDoc(state) {
 }
 
 // Room-screen previews: the trace at each level, the ballot screen, the finale.
-const TRACE = (level) => ({ level, trace: 'ink', label: level >= 4 ? 'Ink' : null, context: level === 5 ? 'a splash of ink, still wet, beside the writing desk' : null, partner: level === 2 ? 'iodine' : null, placeholder: true, at: stamp(PHASE_AT) })
+// the public trace doc, as the server shapes it by level: no picture at 1, two unnamed at 2
+const TRACE = (level) => ({
+  level, placeholder: true, at: stamp(PHASE_AT),
+  ...(level === 2 ? { images: ['iodine', 'ink'] } : {}),
+  ...(level >= 3 ? { trace: 'ink', label: level >= 4 ? 'Ink' : null, context: level === 5 ? 'a splash of ink, still wet, beside the writing desk' : null } : {}),
+})
+// the study station's state: `startedAt` is a plain number from the station's clock, not a Firestore stamp
+const STUDY_LAYOUT = [11, 12, 13, 14, 15, 16, 17].map((id, i) => ({ id, x: (i % 4) * 100 + (i >= 4 ? 50 : 0), y: i >= 4 ? -90 : 0 }))
+const STUDY_ROTATION = { groups: [{ id: 'g1', members: [{ key: 'jessa', name: 'Jessa' }, { key: 'jacob', name: 'Jacob' }] }], studyOrder: ['g1'] }
+const STUDY = (extra = {}) => ({
+  state: 'reproducing', round: 1, pattern: 0, pairsLocked: 1, misses: 0, hint: null, entry: { colour: null, number: null }, outcome: null,
+  startedAt: Date.now() - 4 * 60_000, finishedAt: null, warned: false, map: null, lines: null, revealed: null, groupId: 'g1',
+  layout: STUDY_LAYOUT, elementsOk: true, linesOk: true, granolia: null, fallbackPattern: null, updatedAt: stamp(Date.now()), ...extra,
+})
 const REVEAL = { murderer: { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }, motive: { n: 4, rhyme: motivesSeed.motives[3]?.rhyme ?? 'A motive' }, victim: { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }, rehearsal: true, at: stamp(PHASE_AT) }
 const FINALE = (agoMs) => ({
   at: stamp(Date.now() - agoMs),
@@ -127,6 +141,9 @@ const KIOSK = {
   'kiosk-bedroom-4': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(4)} />,
   'kiosk-bedroom-5': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(5)} />,
   'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
+  'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
+  'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} />,
+  'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} />,
   'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(40000)} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-reveal': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(82000)} serverNow={serverNow} nightId="preview" />,

@@ -54,12 +54,14 @@ test('the station key: refused without one, allowed with the host-set key or the
 test('state: counts and words land on the public study doc; a clue field is dropped', async () => {
   const { db, nightId } = await party(4)
   await makeRotation(db, { nightId })
-  const r = await stationCommand(db, { nightId, command: 'state', payload: { state: 'playing', round: 1, pairsLocked: 0, clue: 'never' } })
+  const due = db.store.get(studyPath(nightId)).groupId
+  const r = await stationCommand(db, { nightId, command: 'state', payload: { state: 'playing', round: 1, pairsLocked: 0, clue: 'never', groupId: 'stale' } })
   assert.ok(r.serverTime > 0)
   const s = db.store.get(studyPath(nightId))
   assert.equal(s.state, 'playing')
   assert.equal(s.round, 1)
   assert.ok(!('clue' in s))
+  assert.equal(s.groupId, due, 'the station cannot move the pointer at the next group')
 })
 
 test('finished: deals to every phone in the group, advances the study order, and repeats harmlessly', async () => {

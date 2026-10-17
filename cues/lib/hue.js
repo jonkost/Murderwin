@@ -25,23 +25,29 @@ export function lightBody(colour, { brightness = 60 } = {}) {
 }
 
 // A fetch-shaped request over node:https that accepts the bridge's own
-// certificate. Returns { ok, status, text() } like fetch does.
-export function bridgeFetch(url, { method = 'GET', headers = {}, body, timeoutMs = 5000 } = {}) {
+// certificate. Returns { ok, status, text() } like fetch does. It always
+// settles: a connection the bridge drops mid-response rejects instead of
+// hanging (`requestImpl` is node's request; the tests hand in a fake).
+export function bridgeFetch(url, { method = 'GET', headers = {}, body, timeoutMs = 5000, requestImpl = httpsRequest } = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url)
-    const req = httpsRequest({
+    let done = false
+    const settle = (fn, v) => { if (!done) { done = true; fn(v) } }
+    const req = requestImpl({
       hostname: u.hostname, port: u.port || 443, path: u.pathname + u.search, method, headers,
       rejectUnauthorized: false, timeout: timeoutMs,
     }, res => {
       let text = ''
       res.setEncoding('utf8')
       res.on('data', chunk => { text += chunk })
-      res.on('end', () => resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, text: async () => text }))
+      res.on('end', () => settle(resolve, { ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, text: async () => text }))
+      res.on('error', e => settle(reject, e))
+      res.on('close', () => { if (!res.complete) settle(reject, new Error('hue: connection dropped')) })
     })
     req.on('timeout', () => req.destroy(new Error('hue: timed out')))
-    req.on('error', reject)
-    if (body) req.write(body)
-    req.end()
+    req.on('error', e => settle(reject, e))
+    req.on('close', () => settle(reject, new Error('hue: connection closed before a reply')))
+    req.end(body) // the body in one piece, so the bridge sees a Content-Length
   })
 }
 

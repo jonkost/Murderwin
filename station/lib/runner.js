@@ -1,0 +1,170 @@
+// The study station's runner: carries out the machine's effects (lib/study.js)
+// on the two walls, the button box and the server, one after another. The
+// devices, the server call and the clock are handed in, so the tests drive
+// the real runner with fakes and no hardware (station.mjs hands in the real
+// ones). It never handles a clue.
+
+import { createStudy } from './study.js'
+import { COLOUR_RGB, countSegments } from './nanoleaf.js'
+
+const DIM = [40, 40, 40], LIT = [255, 255, 255], OFF = [0, 0, 0]
+function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
+const defaultSleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+export const REST_MS = 20_000 // the walls rest after a group finishes, then the next group is greeted
+
+export function createRunner({
+  elements, lines, deck, elementsOk = true, linesOk = true, panelIds, layout,
+  callStation, stationKey = '', log = () => {}, sleep = defaultSleep, restMs = REST_MS, now = Date.now,
+} = {}) {
+  let nightId = null
+  let groupId = null              // the group the server says is due; the server owns this
+  let skew = 0
+  const serverNow = () => now() + skew
+  let machine = createStudy({ panelIds, groupId })
+  let granolia = null
+  let pendingFinished = null
+
+  // ---- the effect queue: one effect at a time, never waited on from inside an effect
+  let queue = Promise.resolve()
+  const run = (fn) => { queue = queue.then(fn).catch(e => log('effect failed:', e?.message ?? e)) }
+  function drain() {
+    for (const e of machine.drain()) run(() => apply(e))
+  }
+  // for the tests: everything queued so far has been carried out
+  const settled = () => queue
+
+  async function safe(wall, ok, fn) {
+    if (!ok) return
+    try { await fn() } catch (e) { log(`${wall.name}: ${e?.message ?? e}`) }
+  }
+
+  function call(command, payload) {
+    return callStation({ nightId, key: stationKey, station: 'study', command, payload })
+  }
+
+  function sendState(extra = {}) {
+    if (!nightId) return
+    const snap = machine.snapshot
+    const payload = {
+      ...snap, layout, elementsOk, linesOk, granolia, ...extra,
+      fallbackPattern: !elementsOk && (snap.state === 'playing' || snap.state === 'reproducing') ? currentPatternIndexes() : null,
+    }
+    call('state', payload)
+      .then(r => { if (r?.data?.serverTime) skew = r.data.serverTime - now() })
+      .catch(e => log('state not sent:', e?.message ?? e))
+  }
+  function currentPatternIndexes() {
+    const p = machine.patterns?.[machine.snapshot.round]?.[machine.snapshot.pattern] ?? []
+    return p.map(id => panelIds.indexOf(id) + 1)
+  }
+
+  async function apply(e) {
+    switch (e.type) {
+      case 'elements.rest': return safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 10))
+      case 'elements.dim': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, OFF), 2); await sleep(500); await elements.frame(allPanels(elements, DIM), 3) })
+      case 'elements.pulse': return safe(elements, elementsOk, async () => { await elements.frame({ ...allPanels(elements, DIM), [e.panel]: LIT }, 1); await sleep(160); await elements.frame(allPanels(elements, DIM), 2) })
+      case 'elements.ripple':
+      case 'elements.celebrate': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, LIT), 2); await sleep(e.type === 'elements.celebrate' ? 1200 : 400); await elements.frame(allPanels(elements, DIM), 5) })
+      case 'elements.replay': return sleep(400)
+      case 'elements.play': {
+        // with the wall down the pattern plays on the screen instead: same timing, no frames to send
+        await sleep(500)
+        for (const id of e.panels) {
+          await safe(elements, elementsOk, () => elements.frame({ ...allPanels(elements, DIM), [id]: LIT }, 1))
+          await sleep(e.onMs)
+          await safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 1))
+          await sleep(e.gapMs)
+        }
+        machine.played(serverNow())
+        drain()
+        return
+      }
+      case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, [20, 10, 30]), 10))
+      case 'lines.show': {
+        const ids = countSegments(lines.panels.map(p => p.id), e.number)
+        const frame = allPanels(lines, OFF)
+        for (const id of ids) frame[id] = COLOUR_RGB[e.colour]
+        return safe(lines, linesOk, () => lines.frame(frame, 3))
+      }
+      case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, [20, 10, 30]), 8) })
+      case 'deck.on': return deck.paint(true)
+      case 'deck.off': return deck.paint(false)
+      case 'deck.shiver': return deck.shiver()
+      case 'wait': return sleep(e.ms)
+      case 'granolia': granolia = e.hint ? { ...e, at: serverNow() } : null; return
+      case 'screen': return sendState()
+      case 'server.finished': {
+        log(`group ${e.groupId ?? '?'} finished: ${e.outcome}, ${e.pairs} pairs, ${e.seconds}s`)
+        const payload = { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs }
+        if (nightId) {
+          try {
+            const r = await call('finished', payload)
+            if (r?.data && 'nextGroup' in r.data) groupId = r.data.nextGroup ?? null
+          } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
+        }
+        // the walls rest, then the station is ready for whichever group the server says is next
+        await sleep(restMs)
+        granolia = null
+        machine = createStudy({ panelIds, groupId })
+        drain()
+        return
+      }
+      default: return
+    }
+  }
+
+  return {
+    get machine() { return machine },
+    get groupId() { return groupId },
+    get granolia() { return granolia },
+    serverNow,
+    drain,
+    settled,
+    sendState,
+
+    // a panel was touched (gestures 0 and 1 are taps; swipes are the app's business)
+    touch(panelId, gesture = 0) {
+      if (gesture !== 0 && gesture !== 1) return
+      machine.touch(panelId, serverNow())
+      drain()
+    },
+    // a button-box key; with the Elements down the number keys stand in for panels 1–6
+    key(name) {
+      if (!elementsOk && /^[1-6]$/.test(name) && machine.state !== 'entering') machine.touch(Number(name), serverNow())
+      else machine.key(name, serverNow())
+      drain()
+    },
+    // once a second: the cap, the warning, and any "finished" the server missed
+    tick() {
+      machine.tick(serverNow())
+      drain()
+      if (pendingFinished && nightId) {
+        const e = pendingFinished; pendingFinished = null
+        call('finished', { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs })
+          .then(r => { if (r?.data && 'nextGroup' in r.data) groupId = r.data.nextGroup ?? null })
+          .catch(() => { pendingFinished = e })
+      }
+    },
+    // the live night changed
+    night(id) {
+      if (id === nightId) return
+      nightId = id
+      log('night:', nightId ?? 'none')
+      sendState()
+    },
+    // the server says which group is due. Always remembered; the machine is
+    // rebuilt for them only when it is idle (a running game is never cut short).
+    due(next) {
+      next = next ?? null
+      if (next === groupId) return
+      groupId = next
+      log('next group:', groupId ?? 'none')
+      if (machine.state === 'idle') { machine = createStudy({ panelIds, groupId }); drain() }
+    },
+    // the host's reset key in fake mode
+    reset() {
+      machine = createStudy({ panelIds, groupId }); granolia = null; drain()
+    },
+  }
+}

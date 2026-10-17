@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { plan, hallColour, soundCandidates } from '../lib/cues.js'
-import { lightBody, XY, Hue } from '../lib/hue.js'
+import { EventEmitter } from 'node:events'
+import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, SOUND_STALE_MS } from '../lib/cues.js'
+import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
 
 test('hall: red when the night says red, green when it says green or the door is open', () => {
   assert.equal(hallColour({}), null)
@@ -29,14 +30,59 @@ test('plan: red → green once; the same docs again do nothing; a reload does no
 
 test('plan: a sound id plays once per arrival, and again only when re-sent with a new stamp', () => {
   let s = { hall: null, sound: null }
-  let r = plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } })
+  let r = plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } }, 1000)
   assert.deepEqual(r.actions, [{ type: 'sound', id: '7F3A' }])
   s = r.state
-  assert.deepEqual(plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } }).actions, [])
-  r = plan(s, { sounds: { current: { id: '7F3A', at: 2000 } } })
+  assert.deepEqual(plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } }, 1000).actions, [])
+  r = plan(s, { sounds: { current: { id: '7F3A', at: 2000 } } }, 2000)
   assert.deepEqual(r.actions, [{ type: 'sound', id: '7F3A' }])
-  r = plan(r.state, { sounds: { current: { id: 'B2C4', at: { toMillis: () => 3000 } } } })
+  r = plan(r.state, { sounds: { current: { id: 'B2C4', at: { toMillis: () => 3000 } } } }, 3000)
   assert.deepEqual(r.actions, [{ type: 'sound', id: 'B2C4' }])
+})
+
+test('plan: a relay that starts an hour in does not replay the last sound; the next new one still plays', () => {
+  const t = 10_000_000
+  const fresh = { hall: null, sound: null }
+  const old = plan(fresh, { sounds: { current: { id: '7F3A', at: t - 60 * 60_000 } } }, t)
+  assert.deepEqual(old.actions, [], 'an old cue is remembered, not performed')
+  assert.equal(old.state.sound, `7F3A@${t - 60 * 60_000}`)
+  const next = plan(old.state, { sounds: { current: { id: '7F3A', at: t + 5000 } } }, t + 5000)
+  assert.deepEqual(next.actions, [{ type: 'sound', id: '7F3A' }])
+  const edge = plan(fresh, { sounds: { current: { id: 'B2C4', at: t - SOUND_STALE_MS + 1000 } } }, t)
+  assert.deepEqual(edge.actions, [{ type: 'sound', id: 'B2C4' }], 'inside the window still plays')
+})
+
+test('.env values lose a trailing space and one pair of quotes; a bad bridge address is named', () => {
+  const env = parseEnv('HUE_BRIDGE_HOST=192.168.1.40 \nHUE_APP_KEY="abc-123"\n# a comment\nHUE_HALL_LIGHT_ID=\'id\'\nMEDIA_DIR=/m \n')
+  assert.deepEqual(env, { HUE_BRIDGE_HOST: '192.168.1.40', HUE_APP_KEY: 'abc-123', HUE_HALL_LIGHT_ID: 'id', MEDIA_DIR: '/m' })
+  assert.equal(bridgeHostProblem('192.168.1.40'), null)
+  assert.ok(bridgeHostProblem('192.168.1.40 '))
+  assert.ok(bridgeHostProblem(''))
+})
+
+// A stand-in for node's https.request: the handler gets a response that
+// sends headers and part of a body, then the connection drops.
+function droppedRequest(opts, onResponse) {
+  const req = new EventEmitter()
+  req.destroy = () => {}
+  req.end = () => {
+    const res = new EventEmitter()
+    res.statusCode = 200; res.complete = false; res.setEncoding = () => {}
+    queueMicrotask(() => { onResponse(res); res.emit('data', '{"da'); res.emit('close') })
+  }
+  return req
+}
+
+test('bridgeFetch settles when the bridge drops the connection mid-response', async () => {
+  await assert.rejects(bridgeFetch('https://10.0.0.4/clip/v2/resource/light', { requestImpl: droppedRequest }), /connection dropped/)
+  // and the body goes out in one piece, with end()
+  let sent = null
+  const req = new EventEmitter()
+  req.destroy = () => {}
+  req.end = (body) => { sent = body; const res = new EventEmitter(); res.statusCode = 200; res.complete = true; res.setEncoding = () => {}; queueMicrotask(() => { req.handler(res); res.emit('data', 'ok'); res.emit('end'); res.emit('close') }) }
+  const r = await bridgeFetch('https://10.0.0.4/x', { method: 'PUT', body: '{"on":1}', requestImpl: (opts, h) => { req.handler = h; return req } })
+  assert.equal(sent, '{"on":1}')
+  assert.equal(await r.text(), 'ok')
 })
 
 test('sound files are looked up by id and extension, and ids are kept to safe characters', () => {

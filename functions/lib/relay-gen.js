@@ -346,20 +346,24 @@ export function generateSet(seed) {
     out.push(withOptions(r, 2, m.grid, decoys))
   }
 
-  // Grid 3: the rotated copy, one stroke moved, and one other pattern.
+  // Grid 3: the rotated copy, one stroke moved, and one other pattern. A
+  // pattern that cannot be nudged (or matched) is thrown away for a fresh one,
+  // so a seed never fails on the night.
   {
-    const real = makePattern(r, 5)
-    const rotated = rotateGrid(real)
-    let nudged = null
-    let guard = 0
-    while (!nudged && guard++ < 50) nudged = nudgeOne(r, real)
-    if (!nudged) throw new Error('grid 3 nudge')
-    let other = null
-    guard = 0
-    while (!other && guard++ < 50) {
-      const p = makePattern(r, 5)
-      if (cellDifference(p, real) >= 8) other = p
+    let real = null, rotated = null, nudged = null, other = null
+    for (let attempt = 0; attempt < 20 && !(nudged && other); attempt++) {
+      real = makePattern(r, 5)
+      rotated = rotateGrid(real)
+      nudged = null; other = null
+      let guard = 0
+      while (!nudged && guard++ < 50) nudged = nudgeOne(r, real)
+      guard = 0
+      while (!other && guard++ < 50) {
+        const p = makePattern(r, 5)
+        if (cellDifference(p, real) >= 8) other = p
+      }
     }
+    if (!nudged) throw new Error('grid 3 nudge')
     if (!other) throw new Error('grid 3 other')
     out.push(withOptions(r, 3, real, [rotated, nudged, other]))
   }

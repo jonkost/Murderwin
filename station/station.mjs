@@ -1,8 +1,8 @@
 // The study station. Runs on the M1 MacBook Air in the study all night.
 // Owns the two Nanoleaf walls and the Stream Deck, runs the light game
-// (lib/study.js), and tells the server where the group is up to. It never
-// handles a clue: when a group finishes it says "group G is done" and the
-// server deals the clue to their phones. docs/study-light-game.md.
+// (lib/study.js through lib/runner.js), and tells the server where the group
+// is up to. It never handles a clue: when a group finishes it says "group G
+// is done" and the server deals the clue to their phones. docs/study-light-game.md.
 //
 //   npm start          the real walls and deck (station/.env)
 //   npm run fake       no hardware: the terminal stands in
@@ -17,8 +17,8 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
-import { createStudy, COLOURS } from './lib/study.js'
-import { Nanoleaf, COLOUR_RGB, countSegments } from './lib/nanoleaf.js'
+import { createRunner } from './lib/runner.js'
+import { Nanoleaf } from './lib/nanoleaf.js'
 import { openDeck } from './lib/streamdeck.js'
 import { FakeWall, FakeDeck } from './lib/fakes.js'
 
@@ -27,13 +27,14 @@ const FAKE = process.argv.includes('--fake')
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a)
 
 // ---- settings ----------------------------------------------------------
+// KEY=value lines; a trailing space or a pair of quotes around the value is forgiven.
 function loadEnv() {
   const p = join(here, '.env')
   if (!existsSync(p)) return {}
   const out = {}
   for (const line of readFileSync(p, 'utf8').split('\n')) {
-    const m = /^\s*([A-Z_]+)\s*=\s*(.*)\s*$/.exec(line)
-    if (m && !line.trim().startsWith('#')) out[m[1]] = m[2]
+    const m = /^\s*([A-Z_]+)\s*=\s*(.*)$/.exec(line)
+    if (m && !line.trim().startsWith('#')) out[m[1]] = m[2].trim().replace(/^(["'])(.*)\1$/, '$2')
   }
   return out
 }
@@ -63,10 +64,6 @@ async function openWalls() {
   return { elements, lines }
 }
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms))
-const DIM = [40, 40, 40], LIT = [255, 255, 255], OFF = [0, 0, 0]
-function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
-
 // ---- main ----------------------------------------------------------------
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
@@ -89,138 +86,28 @@ const layout = elementsOk
   ? elements.panels.map(p => ({ id: p.id, x: p.x, y: p.y }))
   : panelIds.map((id, i) => ({ id, x: i * 100, y: 0 }))
 
-let nightId = null
-let groupId = null
-let skew = 0
-const serverNow = () => Date.now() + skew
-let machine = createStudy({ panelIds, groupId })
-let granolia = null
-
-// ---- effects ------------------------------------------------------------
-let queue = Promise.resolve()
-const run = (fn) => { queue = queue.then(fn).catch(e => log('effect failed:', e?.message ?? e)); return queue }
-
-async function safe(wall, flag, fn) {
-  try { await fn() } catch (e) { log(`${wall.name}: ${e?.message ?? e}`) }
-}
-
-function sendState(extra = {}) {
-  if (!nightId) return
-  const snap = machine.snapshot
-  const payload = {
-    ...snap, layout, elementsOk, linesOk, granolia, ...extra,
-    fallbackPattern: !elementsOk && (snap.state === 'playing' || snap.state === 'reproducing') ? currentPatternIndexes() : null,
-  }
-  callStation({ nightId, key: STATION_KEY, station: 'study', command: 'state', payload })
-    .then(r => { if (r.data?.serverTime) skew = r.data.serverTime - Date.now() })
-    .catch(e => log('state not sent:', e?.message ?? e))
-}
-function currentPatternIndexes() {
-  const p = machine.patterns?.[machine.snapshot.round]?.[machine.snapshot.pattern] ?? []
-  return p.map(id => panelIds.indexOf(id) + 1)
-}
-
-async function apply(e) {
-  switch (e.type) {
-    case 'elements.rest': return safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 10))
-    case 'elements.dim': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, OFF), 2); await sleep(500); await elements.frame(allPanels(elements, DIM), 3) })
-    case 'elements.pulse': return safe(elements, elementsOk, async () => { await elements.frame({ ...allPanels(elements, DIM), [e.panel]: LIT }, 1); await sleep(160); await elements.frame(allPanels(elements, DIM), 2) })
-    case 'elements.ripple':
-    case 'elements.celebrate': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, LIT), 2); await sleep(e.type === 'elements.celebrate' ? 1200 : 400); await elements.frame(allPanels(elements, DIM), 5) })
-    case 'elements.replay': return sleep(400)
-    case 'elements.play': {
-      await sleep(500)
-      for (const id of e.panels) {
-        await safe(elements, elementsOk, () => elements.frame({ ...allPanels(elements, DIM), [id]: LIT }, 1))
-        await sleep(e.onMs)
-        await safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 1))
-        await sleep(e.gapMs)
-      }
-      machine.played(serverNow())
-      return drain()
-    }
-    case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, [20, 10, 30]), 10))
-    case 'lines.show': {
-      const ids = countSegments(lines.panels.map(p => p.id), e.number)
-      const frame = allPanels(lines, OFF)
-      for (const id of ids) frame[id] = COLOUR_RGB[e.colour]
-      return safe(lines, linesOk, () => lines.frame(frame, 3))
-    }
-    case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, [20, 10, 30]), 8) })
-    case 'deck.on': return deck.paint(true)
-    case 'deck.off': return deck.paint(false)
-    case 'deck.shiver': return deck.shiver()
-    case 'wait': return sleep(e.ms)
-    case 'granolia': granolia = { ...e, at: serverNow() }; return
-    case 'screen': return sendState()
-    case 'server.finished': {
-      log(`group ${e.groupId ?? '?'} finished: ${e.outcome}, ${e.pairs} pairs, ${e.seconds}s`)
-      if (!nightId) return
-      try {
-        await callStation({ nightId, key: STATION_KEY, station: 'study', command: 'finished', payload: { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs } })
-      } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
-      // the walls rest, then the station is ready for the next group
-      await sleep(20_000)
-      granolia = null
-      machine = createStudy({ panelIds, groupId })
-      return drain()
-    }
-    default: return
-  }
-}
-let pendingFinished = null
-function drain() {
-  const fx = machine.drain()
-  for (const e of fx) run(() => apply(e))
-  return queue
-}
+const runner = createRunner({ elements, lines, deck, elementsOk, linesOk, panelIds, layout, callStation, stationKey: STATION_KEY, log })
 
 // ---- inputs ----------------------------------------------------------------
-elements.listenTouch((panelId, gesture) => {
-  if (gesture !== 0 && gesture !== 1) return   // taps only; swipes are the app's business
-  machine.touch(panelId, serverNow())
-  drain()
-})
-deck.onKey((name) => {
-  if (!elementsOk && /^[1-6]$/.test(name) && machine.state !== 'entering') {
-    machine.touch(Number(name), serverNow())   // fallback: numbers are panels
-  } else {
-    machine.key(name, serverNow())
-  }
-  drain()
-})
+elements.listenTouch((panelId, gesture) => runner.touch(panelId, gesture))
+deck.onKey((name) => runner.key(name))
 
-// ---- the clock, retries, and which group is due ---------------------------
-setInterval(() => {
-  machine.tick(serverNow())
-  drain()
-  if (pendingFinished && nightId) {
-    const e = pendingFinished; pendingFinished = null
-    callStation({ nightId, key: STATION_KEY, station: 'study', command: 'finished', payload: { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs } })
-      .catch(() => { pendingFinished = e })
-  }
-}, 1000)
-setInterval(() => sendState(), 30_000)   // a heartbeat, so the kiosk knows the station is alive
+// ---- the clock, and which night and group are live --------------------------
+setInterval(() => runner.tick(), 1000)
+setInterval(() => runner.sendState(), 30_000)   // a heartbeat, so the kiosk knows the station is alive
 
 await signInAnonymously(auth)
+let nightId = null
+let stopStudy = null
 onSnapshot(doc(db, 'public_state/active'), (snap) => {
   const id = snap.data()?.nightId ?? null
-  if (id !== nightId) { nightId = id; log('night:', nightId ?? 'none'); sendState() }
+  if (id === nightId) return
+  nightId = id
+  runner.night(id)
+  if (stopStudy) { stopStudy(); stopStudy = null }
+  if (!id) return
+  stopStudy = onSnapshot(doc(db, `nights/${id}/public/study`), (s) => runner.due(s.data()?.groupId ?? null))
 })
-let stopRotation = null
-setInterval(() => {
-  if (!nightId || stopRotation) return
-  const id = nightId
-  stopRotation = onSnapshot(doc(db, `nights/${id}/public/study`), (snap) => {
-    const next = snap.data()?.groupId ?? null
-    if (next !== groupId && machine.state === 'idle') {
-      groupId = next
-      machine = createStudy({ panelIds, groupId })
-      log('next group:', groupId ?? 'none')
-      drain()
-    }
-  })
-}, 2000)
 
 // ---- the terminal stands in for the hardware in fake mode ----------------
 if (FAKE && process.stdin.isTTY) {
@@ -236,9 +123,9 @@ if (FAKE && process.stdin.isTTY) {
     else if (/^[1-6]$/.test(ch)) deck.press(ch)
     else if (ch === '-') deck.press('undo')
     else if (ch === '\r' || ch === '\n') deck.press('submit')
-    else if (ch === 'x') { machine = createStudy({ panelIds, groupId }); granolia = null; drain() }
+    else if (ch === 'x') runner.reset()
   })
   log('fake mode: q–o touch panels 1–9 · R Y G B P W colours · 1–6 numbers · - undo · Enter submit · x reset')
 }
-drain()
+runner.drain()
 log('study station up', FAKE ? '(fake walls)' : '')

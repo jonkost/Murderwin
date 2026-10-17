@@ -13,16 +13,21 @@ export function hallColour({ cues, relay } = {}) {
   return null
 }
 
+// A sound older than this is remembered but not played: a relay started (or
+// restarted) an hour into the night must not replay the last cue.
+export const SOUND_STALE_MS = 30_000
+
 // What changed since last time. `prev` is the last planned state, not the
 // last docs, so a reload that replays the same docs produces nothing.
-export function plan(prev, next) {
+export function plan(prev, next, now = Date.now()) {
   const actions = []
   const hall = hallColour(next)
   if (hall && hall !== prev.hall) actions.push({ type: 'hall', colour: hall })
   const soundId = next.sounds?.current?.id ?? null
   const soundAt = stamp(next.sounds?.current?.at)
   const key = soundId ? `${soundId}@${soundAt}` : null
-  if (key && key !== prev.sound) actions.push({ type: 'sound', id: soundId })
+  const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
+  if (key && key !== prev.sound && fresh) actions.push({ type: 'sound', id: soundId })
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
 }
 
@@ -39,4 +44,22 @@ export function soundCandidates(dir, id) {
   const clean = String(id ?? '').replace(/[^A-Za-z0-9_-]/g, '')
   if (!clean) return []
   return SOUND_EXTENSIONS.map(ext => `${dir}/${clean}.${ext}`)
+}
+
+// KEY=value lines from a .env file. A trailing space or a pair of quotes
+// around the value (as pasted from curl's output) is forgiven.
+export function parseEnv(text) {
+  const out = {}
+  for (const line of String(text ?? '').split('\n')) {
+    const m = /^\s*([A-Z_]+)\s*=\s*(.*)$/.exec(line)
+    if (m && !line.trim().startsWith('#')) out[m[1]] = m[2].trim().replace(/^(["'])(.*)\1$/, '$2')
+  }
+  return out
+}
+
+// The bridge address, checked once at start so a bad .env says so in words.
+export function bridgeHostProblem(host) {
+  if (!host) return 'HUE_BRIDGE_HOST is not set'
+  try { new URL(`https://${host}/`) } catch { return `HUE_BRIDGE_HOST "${host}" is not an address` }
+  return null
 }

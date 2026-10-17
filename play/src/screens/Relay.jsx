@@ -9,7 +9,11 @@ import { Seal } from './Moments'
 // is showing, so nobody has to squint. At vote time every phone lights up
 // with four pictures. All timing is read from server deadlines.
 
-export function ms(t) { return t?.toMillis?.() ?? (t instanceof Date ? t.getTime() : 0) }
+// A server timestamp, a Date, or a plain millisecond number (the study station sends numbers).
+export function ms(t) {
+  if (typeof t === 'number') return t
+  return t?.toMillis?.() ?? (t instanceof Date ? t.getTime() : 0)
+}
 
 function Bar({ endsAt, total, serverNow }) {
   const left = Math.max(0, ms(endsAt) - serverNow())
