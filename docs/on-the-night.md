@@ -108,6 +108,8 @@ game; it serves the bulb and the speakers.
 | The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue. |
 | The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, **Pause, Irwin needs the garden**. |
 | The wrong group walks into the study | The group that was due is paid. Carry on. |
+| Somebody gives a hidden role away out loud | **Hush the Murderer** or **Hush the Ghost**, whichever role was given away. Nothing on any phone changes; from then on that player's Parlour Game answers move nothing, and the reveal says one line about it. You never learn who it was from the button. |
+| The story itself needs to change (a guess that landed too early, a secret blurted) | **Spill the Beans**. The Manor decides on its own whether the story can still change (only through Act 5, and only before a document, the study's clue or the news has reached anyone) and says nothing either way; the phone's message is the same whether it worked or not. If it did, the Murderer stays, everyone keeps their character, and the rest is re-drawn. |
 | The night itself | Before the blackout, **Start a new night** deals new characters and every phone types its name again. After the blackout, pause and think; a new night is a new case. |
 
 ## After the freeze, 7 November
@@ -161,6 +163,21 @@ real phone on the LAN). The relay, the station and the terminal host:
 `GOOGLE_APPLICATION_CREDENTIALS` pointing at a service-account key kept out
 of the repo (`service-account*.json` is gitignored). `--help` lists every
 command from `HOST_COMMANDS`.
+
+*The safeguards* (`functions/lib/safeguards.js`, host commands `spill` and
+`hush <murderer|ghost>`). The ledger `cases/{nightId}.dealtClues` records a
+kind, act, beat and guest key or group id (never a word of content) whenever a
+document lands (`deal.solve`), the study pays out (`station.dealStudy`, and
+`deal.rotate` with no station) or the News flash beat runs (the echo).
+`spillAllowed(night, case)` is the whole rule: Acts 2 to 5, not in a
+blackout, no open window, no blocking kind in the ledger. A legal spill
+builds a fresh case from another sealed code (a different motive) or a fresh
+rehearsal, then `case.rerollCase` keeps the Murderer, the pools, the template
+and the hidden sets, picks a new Ghost, restarts the dial and the exposure
+record, and the role cards are replaced in place under the same card id.
+The Hush writes `cases/{nightId}.exposure[role] = { hushedAt, act }`;
+`deal.applyPoints` skips the dial for a hushed role and `finaleDoc` adds
+`spotlight[]` only when the record exists.
 
 *A dry run with the real secrets* (blind-content-protocol.md): on the brain,
 with the key, `npm run fake-night -- --live --i-know-this-is-the-party-database --real-secrets`.

@@ -48,6 +48,8 @@ function describe(command, r) {
     case 'handover': return 'That phone is wiped. The next person to pick it up types their own name; the previous owner taps theirs on any other phone.'
     case 'pause': return 'Paused. Every clock in the house is standing still.'
     case 'resume': return `Resumed. Every clock moved on by ${Math.round((r.shiftMs ?? 0) / 1000)} seconds.`
+    case 'spill': return 'Noted. The Manor has decided on its own whether the story could still change. It says nothing either way, and neither does this phone.'
+    case 'hush': return r.already ? 'Already hushed. Nothing more to do.' : 'Hushed. Nothing on any phone changes. From now on that player’s answers move nothing, and the reveal will say so.'
     default: return 'Done.'
   }
 }
@@ -136,6 +138,8 @@ export default function Host({ night, content, serverNow }) {
       </div>
 
       <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+
+      <Safeguards night={night} busy={busy} run={run} />
 
       <h3>The study (Act 4)</h3>
       <p className="gloss">Makes the pairs and trios and the order they visit the study. Press once, after dinner.</p>
@@ -324,6 +328,44 @@ function StationKey({ busy, run }) {
       <input className="field" value={key} onChange={e => setKey(e.target.value)} placeholder="Station key, e.g. study-2026" aria-label="Station key" />
       <button className="chip" type="submit" disabled={!!busy || key.trim().length < 4}>Save key</button>
     </form>
+  )
+}
+
+// The two safeguards (CLAUDE.md). Spill the Beans asks the Manor to change
+// the story; the Manor decides on its own, silently, and this phone is told
+// nothing either way, so the button looks the same whether it worked or not.
+// It greys out after Act 5. The Hush is for a hidden player who has been
+// found out in the room: their answers move nothing from then on, no phone
+// changes, and the reveal says one line about it. Neither button can show
+// who holds a role.
+export function Safeguards({ night, busy, run }) {
+  const [confirm, setConfirm] = useState(null)
+  const afterFive = (night.act ?? 0) > 5
+  const started = (night.act ?? 0) >= 2
+  const ask = (what) => setConfirm(what)
+  const go = () => {
+    const what = confirm
+    setConfirm(null)
+    if (what === 'spill') run('spill')
+    else if (what) run('hush', what)
+  }
+  return (
+    <section className="safeguards">
+      <h3>If something goes wrong</h3>
+      <p className="gloss">Spill the Beans asks the Manor to change the story, if it still can. It works through Act 5 and never says whether it did. The Hush is for when someone has been found out: say which role out loud was given away, and their answers stop counting. Nobody is told.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy || afterFive || !started || !!confirm} onClick={() => ask('spill')}>Spill the Beans</button>
+        <button className="chip" disabled={!!busy || !started || !!confirm} onClick={() => ask('murderer')}>Hush the Murderer</button>
+        <button className="chip" disabled={!!busy || !started || !!confirm} onClick={() => ask('ghost')}>Hush the Ghost</button>
+      </div>
+      {confirm && (
+        <div className="host-row" role="alertdialog" aria-label="Are you sure?">
+          <span className="gloss">{confirm === 'spill' ? 'Ask the Manor to change the story?' : `Hush the ${confirm === 'murderer' ? 'Murderer' : 'Ghost'}? This cannot be undone.`}</span>
+          <button className="chip" disabled={!!busy} onClick={go}>Yes</button>
+          <button className="chip" onClick={() => setConfirm(null)}>Never mind</button>
+        </div>
+      )}
+    </section>
   )
 }
 
