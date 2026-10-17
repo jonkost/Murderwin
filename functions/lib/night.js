@@ -151,7 +151,7 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
     rehearsal: false,  // true once a throwaway case is dealt
     forceRehearsal,    // true: the case is always a throwaway, whatever is sealed (the default)
     dryRun,            // true: a fake-players run with real sealed content; discarded afterwards
-    caseWarning: null, // 'rehearsal-fallback' and/or 'trace-partner', shown on the Host tab
+    caseWarning: null, // 'rehearsal-fallback', 'no-sealed-content' and/or 'trace-partner', shown on the Host tab
     phase: 'lobby',
     phaseAt: FieldValue.serverTimestamp(),
     actStartedAt: null,

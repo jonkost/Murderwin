@@ -218,11 +218,22 @@ test('a code missing fragments is skipped and the next used; all codes broken fa
   assert.equal(night(b.db, b.nightId).caseWarning, 'rehearsal-fallback')
   assert.equal(JSON.parse(lines[1].replace(/^case /, '')).triedCodes, MAX_CODE_TRIES)
 
-  // a missing manifest on a party night: rehearsal, no warning (there is nothing to fall back from)
+  // a missing manifest on a party night: rehearsal, and the Host tab is told, since the party
+  // would otherwise look like it was working until the first cat spoke
   const d = await party({ partyNight: true })
   const c3 = await buildCaseForNight(d.db, d.nightId, { now: 3_000_002, log: l => lines.push(l) })
   assert.equal(c3.rehearsal, true)
-  assert.equal(night(d.db, d.nightId).caseWarning, null)
+  assert.equal(night(d.db, d.nightId).rehearsal, true)
+  assert.equal(night(d.db, d.nightId).caseWarning, 'no-sealed-content')
+  // a manifest with no codes is the same
+  const e = await party({ partyNight: true, manifest: {} })
+  await buildCaseForNight(e.db, e.nightId, { now: 3_000_003, log: l => lines.push(l) })
+  assert.equal(night(e.db, e.nightId).caseWarning, 'no-sealed-content')
+  // a rehearsal night with no manifest is what it says it is: no warning
+  const f = await party()
+  await buildCaseForNight(f.db, f.nightId, { now: 3_000_004, log: l => lines.push(l) })
+  assert.equal(night(f.db, f.nightId).caseWarning, null)
+  for (const l of lines) assert.ok(!/Synthetic|kernels:/.test(l))
   assertNothingLeaked()
 })
 

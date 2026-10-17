@@ -169,7 +169,8 @@ export const MAX_CODE_TRIES = 5
 //  - nights/{id}.forceRehearsal is true (the default when a night is made;
 //    the workshop's Game night page has one checkbox, "This is the party
 //    night", that makes it false), or there is no sealed manifest: write
-//    the rehearsal case and nights/{id}.rehearsal = true.
+//    the rehearsal case and nights/{id}.rehearsal = true (and, on a party
+//    night with no manifest or no codes, caseWarning 'no-sealed-content').
 //  - otherwise draw one code with crypto randomness, read sealed/{code},
 //    run the structural check (case.js checkSealed); on a failure draw
 //    another, up to five, and only then fall back to rehearsal with
@@ -209,6 +210,10 @@ export async function buildCaseForNight(db, nightId, { pick = pickInt, now = Dat
       }
     }
     if (!c) warnings.push('rehearsal-fallback')
+  } else if (!forceRehearsal) {
+    // the party night with nothing sealed to draw from (the generator was never run, or ran
+    // against the other project): the Host tab must say so, or the night looks fine until a cat speaks
+    warnings.push('no-sealed-content')
   }
   if (!c) c = rehearsalCase(common)
 

@@ -17,6 +17,7 @@ export { PLAY_URL }
 // nights/{id}.caseWarning, set when the case is built at the blackout. Plain words, never content.
 const CASE_WARNINGS = {
   'rehearsal-fallback': 'The secret content could not be used tonight, so this night is running on rehearsal text. Run the generator again before the next night.',
+  'no-sealed-content': 'This is marked as the party night, but there is no secret content in this project, so every cat is speaking rehearsal text. Run the generator against this project, then start a new night.',
   'trace-partner': 'One trace at the party has no look-alike among the guests here. The bedroom clue may come out clearer than planned.',
 }
 
