@@ -203,7 +203,9 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       const n = await nightDoc()
       if (n.act !== 4) break
       rotations = Math.max(rotations, (n.rotation ?? -1) + 1)
-      if (n.window && !n.window.settled) { answered4 += await answerWindow(); await next(); continue }
+      // a Parlour Game opened by a study finish sits on a rotate beat: answer it and let the next study finish move the house;
+      // one opened by its own beat (autoAfterStudy off) needs Next to move on
+      if (n.window && !n.window.settled) { answered4 += await answerWindow(); if (deal.beatSpec(4, n.beat)?.action !== 'rotate') await next(); continue }
       if (deal.beatSpec(4, n.beat)?.action !== 'rotate') { await next(); continue }
       await heartbeat()
       const due = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
