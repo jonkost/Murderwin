@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
-import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, roleCard, wantsWelcome } from './lib/night'
+import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, presenceKey, roleCard, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -23,7 +23,9 @@ export default function App() {
   const session = useDoc(uid ? `sessions/${uid}` : null)
   const notesDoc = useDoc(uid ? `notes/${uid}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
-  const serverNow = useServerClock(uid, nightId, session.data?.guestKey)
+  // The heartbeat names this guest only while the phone holds an active
+  // character on this night; a handed-over phone at the doors reports nobody.
+  const serverNow = useServerClock(uid, nightId, presenceKey(session.data, nightId))
   const online = useOnline()
   const ui = useMemo(() => uiLines(content.data), [content.data])
   const [tour, setTour] = useState(false)

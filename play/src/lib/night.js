@@ -91,6 +91,16 @@ export function wantsWelcome(night, notes, nightId) {
   return !seen(notes, nightId, 'welcome')
 }
 
+// What this phone reports in its heartbeat: its guest key only while it
+// holds an active character on this night. A handed-over phone sitting at
+// the doors, or one superseded by another phone, reports nobody, so the Host
+// tab's "heard from" list never shows a guest who has no phone in hand.
+export function presenceKey(session, nightId) {
+  if (!session || !nightId) return null
+  if (session.nightId !== nightId || session.status !== 'active') return null
+  return session.guestKey ?? null
+}
+
 // Buzz once per card id. Guarded twice: in the night's notes (so a reload
 // never buzzes the same card again) and in memory (so a cache paint that
 // lands before the notes do cannot buzz twice in one page load).
