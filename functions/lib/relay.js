@@ -22,8 +22,19 @@ import { NightError } from './night.js'
 export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
 export const WALK_MS = 12_000      // the next drawer walks to the paper
 export const PULL_MS = 20_000      // pull the paper down to the next grid
-export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all are in
+export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
 export const LOCKOUT_MS = 10_000   // after a wrong pick
+export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS }
+
+// The time budget: the drawing itself (every turn plus the walk before it)
+// fits twelve minutes (docs/relay-drawing-game.md §5). The generator caps
+// the drawn cells per grid so the turns never add up to more than this.
+export const DRAW_BUDGET_MS = 12 * 60_000
+export const MAX_TURNS = Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))
+
+// A phone heard from this recently counts as present: a vote closes when
+// every present phone has picked, so an absent phone never holds the room.
+export const PRESENT_MS = 2 * 60_000
 
 function ms(t) {
   if (!t) return 0
@@ -63,17 +74,22 @@ export async function state(db, nightId) {
 }
 
 // Start the drawing. Host button; it tells the host nothing. A drawing that
-// is already running (or done) is never wiped by a second press: Clear first.
-export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 ** 31) } = {}) {
+// is already running (or done, with the trace behind the door) is never
+// wiped by a second press: it answers { already: true } unless the host said
+// "restart" (force), which the Host tab asks about first. The beat never forces.
+export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 ** 31), force = false } = {}) {
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   if (!nightSnap.exists) throw new NightError('no-night', 'No such night.')
   const current = await state(db, nightId)
-  if (RUNNING.includes(current) || current === 'done') throw new NightError('running', 'The drawing is already running. Clear it first.')
+  if ((RUNNING.includes(current) || current === 'done') && !force) return { ok: true, already: true, state: current }
+  if (force && current !== 'idle') await reset(db, { nightId, now })
   const roster = nightSnap.data().roster ?? {}
   const keys = Object.keys(roster)
   if (keys.length < 2) throw new NightError('invalid', 'The drawing needs at least two people.')
   const set = generateSet(seed)
   const turns = set.grids.reduce((n, g) => n + g.order.length, 0)
+  if (turns > MAX_TURNS) throw new NightError('invalid', 'The drawing would run over its time.')
+  const present = await presentKeys(db, nightId, keys, now)
   const order = turnOrder(keys, turns)
   const { pub, priv } = relayPaths(nightId)
   const batch = db.batch()
@@ -89,24 +105,40 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
     nextKey: order[0], nextName: roster[order[0]].name,
     cell: null,
     turnEndsAt: null, walkEndsAt: at(now, PULL_MS), voteEndsAt: null, lockoutEndsAt: null,
-    options: null, crossed: [], votesIn: 0, votesNeeded: keys.length, lastResult: null,
+    options: null, crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
     doorOpen: false, startedAt: at(now, 0), finishedAt: null, stats: null,
+    timing: { ...TIMING }, // the phones draw their bars from these, never from their own constants
   })
   await batch.commit()
   return { ok: true, turns }
 }
 
 // Clear it, for rehearsals. The trace behind the door and the green hall
-// light go with it, so the next run's finish is a real moment again.
+// light go with it, so the next run's finish is a real moment again and the
+// door can open a second time (deal.revealTrace runs again once the public
+// trace doc is gone).
 export async function reset(db, { nightId, now = Date.now() }) {
   const { pub, priv } = relayPaths(nightId)
   await db.doc(pub).set({ state: 'idle', doorOpen: false })
   await db.doc(priv).set({ grids: null, order: null, votes: {} })
   await db.doc(`nights/${nightId}/public/trace`).delete()
   await db.doc(`nights/${nightId}/private/trace`).delete()
-  const cues = db.doc(`nights/${nightId}/public/cues`)
-  if ((await cues.get()).exists) await cues.set({ hall: 'red', changedAt: new Date(now) }, { merge: true })
+  await db.doc(`nights/${nightId}/public/cues`).set({ hall: 'red', changedAt: new Date(now) }, { merge: true })
   return { ok: true }
+}
+
+// Which roster phones have been heard from lately (presence rows for this
+// night, written by every phone's heartbeat). With nobody heard from, every
+// phone counts, so the window still has a size.
+export async function presentKeys(db, nightId, keys, now = Date.now()) {
+  let rows = []
+  try { rows = (await db.collection('presence').where('nightId', '==', nightId).get()).docs } catch { rows = [] }
+  const seen = new Set()
+  for (const d of rows) {
+    const p = d.data() ?? {}
+    if (p.guestKey && keys.includes(p.guestKey) && now - ms(p.at) < PRESENT_MS) seen.add(p.guestKey)
+  }
+  return seen.size ? keys.filter(k => seen.has(k)) : [...keys]
 }
 
 // One phone's pick, during a vote. Recorded privately; the public doc only
@@ -137,6 +169,7 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   const roster = nightSnap.exists ? (nightSnap.data().roster ?? {}) : {}
   if (nightSnap.exists && nightSnap.data().phase === 'paused') return { moved: false, state: 'paused' } // the host's pause holds every deadline (resume shifts them)
+  const present = await presentKeys(db, nightId, Object.keys(roster), now)
   return db.runTransaction(async tx => {
     const [pubSnap, privSnap] = await Promise.all([tx.get(db.doc(pub)), tx.get(db.doc(priv))])
     if (!pubSnap.exists || !privSnap.exists) return { moved: false, state: 'idle' }
@@ -155,7 +188,7 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
         tx.update(db.doc(pub), {
           state: 'vote', gridDone, cell: null, drawerKey: null, drawerName: null, nextKey: null, nextName: null,
           turnEndsAt: null, voteEndsAt: at(now, VOTE_MS), options: g.options.map(cells => ({ size: g.size, cells })),
-          crossed: [], votesIn: 0, votesNeeded: Object.keys(roster).length, lastResult: null,
+          crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
         })
         return { moved: true, state: 'vote' }
       }
@@ -190,7 +223,9 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
 
     // ---- the vote closes → right or wrong
     if (p.state === 'vote') {
-      const allIn = p.votesIn >= Object.keys(roster).length
+      // every phone heard from lately has picked: close now; the rest get a random pick below
+      const votes0 = d.votes ?? {}
+      const allIn = present.every(k => k in votes0)
       if (!allIn && now < ms(p.voteEndsAt)) return { moved: false, state: p.state }
       const standing = [0, 1, 2, 3].filter(i => !(p.crossed ?? []).includes(i))
       const votes = { ...(d.votes ?? {}) }
@@ -238,7 +273,7 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
     // ---- the lockout ends → vote again over what is left
     if (p.state === 'lockout') {
       if (now < ms(p.lockoutEndsAt)) return { moved: false, state: p.state }
-      tx.update(db.doc(pub), { state: 'vote', lockoutEndsAt: null, voteEndsAt: at(now, VOTE_MS), votesIn: 0, lastResult: null })
+      tx.update(db.doc(pub), { state: 'vote', lockoutEndsAt: null, voteEndsAt: at(now, VOTE_MS), votesIn: 0, votesNeeded: present.length, lastResult: null })
       return { moved: true, state: 'vote' }
     }
     return { moved: false, state: p.state }
