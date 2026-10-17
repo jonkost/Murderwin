@@ -11,6 +11,7 @@ import ListCard from '../components/ListCard'
 import FocusBar from '../components/FocusBar'
 import ReviewRow from '../components/ReviewRow'
 import PastePanel from '../components/PastePanel'
+import { useFrozen, FrozenBanner } from '../components/Frozen'
 
 // The Parlour Games. One scenario is three questions in a row,
 // two choices each (a third or fourth when a question needs one), points on
@@ -34,6 +35,7 @@ export default function Questions({ area }) {
   const card = cardFor(area, null)
   const [params] = useSearchParams()
   const { items, status, flush, applyChange, patch } = useAreaEditor(area)
+  const frozen = useFrozen()
   const [draft, setDraft] = useState(emptyBeats())
   const draftRef = useRef(draft)
   const refs = useRef(new Map())
@@ -153,9 +155,10 @@ export default function Questions({ area }) {
       {status === 'loaderror' && (
         <div className="banner error" role="alert">Could not load this list. Check your connection and reload.</div>
       )}
+      <FrozenBanner state={frozen} />
       <div className="editor-head">
         <h2>{spec.label}</h2>
-        <span className={`save-dot ${status}`}>{status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span>
+        <span className={`save-dot ${status}`}>{frozen.readOnly ? 'read-only' : status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span>
       </div>
 
       {goal > 0 && (
@@ -168,15 +171,15 @@ export default function Questions({ area }) {
 
       {focusGoal > 0 && <FocusBar goal={focusGoal} written={written} doneLine={card?.doneLine} />}
 
-      <ListCard area={area} tab={null} onUseExample={useExample} />
+      <ListCard area={area} tab={null} onUseExample={frozen.readOnly ? null : useExample} />
       <ReviewRow area={area} />
-      <PastePanel area={area} onAdd={addMany}
-        shape="A question on one line, then each choice with its points under it (Yes +5, No 0). A blank line starts the next set. Or one line per question: Which way? | Over +5 | Under -1" />
+      {!frozen.readOnly && <PastePanel area={area} onAdd={addMany}
+        shape="A question on one line, then each choice with its points under it (Yes +5, No 0). A blank line starts the next set. Or one line per question: Which way? | Over +5 | Under -1" />}
 
       {visible.length === 0 && <p className="empty">{card?.emptyState}</p>}
 
-      <ol className="scenarios">
-        <li className="scenario draft">
+      <ol className={frozen.readOnly ? 'scenarios frozen' : 'scenarios'} inert={frozen.readOnly || undefined}>
+        {!frozen.readOnly && <li className="scenario draft">
           <ScenarioForm key={draftGen} number={visible.length + 1} beats={draft} refs={refs} dashed
             label={visible.length === 0 ? 'Your first set goes here' : 'A new set goes here'}
             onKeyDown={onDraftKey} onChange={setDraftBeats} />
@@ -185,7 +188,7 @@ export default function Questions({ area }) {
             <p className="hint keys">Enter moves to the next box. From the last box, Enter saves the set.</p>
             <button className="primary" onMouseDown={e => e.preventDefault()} onClick={commitDraft}>Save this set</button>
           </div>
-        </li>
+        </li>}
         {visible.map((item, idx) => (
           <li key={item.id} className="scenario">
             <ScenarioForm number={visible.length - idx} beats={normalizeBeats(item.beats)} onKeyDown={onLineKey}
@@ -195,7 +198,7 @@ export default function Questions({ area }) {
         ))}
       </ol>
 
-      {lastDeleted && (
+      {lastDeleted && !frozen.readOnly && (
         <div className="editor-foot">
           <button className="ghost" onClick={undelete}>Undo remove: “{(lastDeleted.text ?? '').slice(0, 30)}…”</button>
         </div>

@@ -11,6 +11,7 @@ import PastePanel from '../components/PastePanel'
 import GamePreview from '../components/GamePreview'
 import Questions from './Questions'
 import { useDictation } from '../lib/useDictation'
+import { useFrozen, FrozenBanner } from '../components/Frozen'
 
 export default function Editor() {
   const { area } = useParams()
@@ -29,6 +30,7 @@ function AreaEditor({ area }) {
   const mainKey = mainFieldKey(area)
   const [params, setParams] = useSearchParams()
   const { items, status, flush, applyChange } = useAreaEditor(area)
+  const frozen = useFrozen()
   const [lastDeleted, setLastDeleted] = useState(null)
   // The fresh line at the bottom. Local until committed, so an abandoned
   // empty draft never becomes a junk item in the database.
@@ -245,10 +247,11 @@ function AreaEditor({ area }) {
           Could not load this list. Check your connection and reload.
         </div>
       )}
+      <FrozenBanner state={frozen} />
       <div className="editor-head">
         <h2>{spec.label}</h2>
         <span className={`save-dot ${status}`}>
-          {status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
+          {frozen.readOnly ? 'read-only' : status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
         </span>
       </div>
 
@@ -278,11 +281,11 @@ function AreaEditor({ area }) {
       )}
 
       <div className="card-row">
-        <ListCard area={area} tab={tab} onUseExample={spec.retired || spec.checklist ? null : useExample} />
+        <ListCard area={area} tab={tab} onUseExample={spec.retired || spec.checklist || frozen.readOnly ? null : useExample} />
         <GamePreview area={area} tab={tab} values={draft} example={exampleValues(fields, card?.example)} />
       </div>
       {!spec.retired && <ReviewRow area={area} />}
-      {!spec.retired && !spec.checklist && (
+      {!spec.retired && !spec.checklist && !frozen.readOnly && (
         <PastePanel area={area} fields={fields} codec={codec} shape={pasteShape(fields)} onAdd={addMany} />
       )}
 
@@ -290,8 +293,9 @@ function AreaEditor({ area }) {
         <p className="empty">{card.emptyState}</p>
       )}
 
-      <ul className="items">
-        {!spec.retired && (
+      {/* frozen: the lines stay on screen to read, and nothing in them can be touched */}
+      <ul className={frozen.readOnly ? 'items frozen' : 'items'} inert={frozen.readOnly || undefined}>
+        {!spec.retired && !frozen.readOnly && (
           <li className="item draft">
             <p className="draft-label">{visible.length === 0 ? 'Your first one goes here' : atGoal ? 'One more, if you like' : 'A new one goes here'}</p>
             <div className="item-row">
@@ -339,7 +343,7 @@ function AreaEditor({ area }) {
         })}
       </ul>
 
-      {lastDeleted && (
+      {lastDeleted && !frozen.readOnly && (
         <div className="editor-foot">
           <button className="ghost" onClick={undelete}>
             Undo remove: “{(codec.split(lastDeleted.text)[mainKey] ?? lastDeleted.text ?? '').slice(0, 30)}…”

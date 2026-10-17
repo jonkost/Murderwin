@@ -11,6 +11,8 @@ import Assets from './pages/Assets'
 import Night from './pages/Night'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
+import { useFrozen } from './components/Frozen'
+import { FROZEN_CHIP } from './lib/frozen'
 
 function SignInGate() {
   const [err, setErr] = useState(null)
@@ -72,10 +74,16 @@ export default function App() {
   )
   if (boot.state !== 'ready') return <div className="gate"><p>Opening the workshop…</p></div>
 
+  return <Shell />
+}
+
+function Shell() {
+  const frozen = useFrozen()
   return (
     <div className="shell">
       <nav className="rail" aria-label="Workshop">
         <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" /><span>Workshop</span></Link>
+        {frozen.frozen && <span className="rail-frozen" title={frozen.banner}>{FROZEN_CHIP}</span>}
         <NavLink to="/" end className="rail-link">Home</NavLink>
         <NavLink to="/status" className="rail-link">Where we are</NavLink>
         <NavLink to="/night" className="rail-link">Game night</NavLink>

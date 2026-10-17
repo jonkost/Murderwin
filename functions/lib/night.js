@@ -84,7 +84,29 @@ export async function readHosts(db) {
   return hosts
 }
 
-export async function publishContent(db, nightId) {
+// Counts only, and quiet under node:test unless a test passes its own `log`.
+const quietLog = line => { if (!process.env.NODE_TEST_CONTEXT) console.log(line) }
+
+// The freeze (18 Oct 2026): once meta/game.frozenAt is set from the
+// workshop's Game night page, a night that already holds its copy of the
+// lines keeps it, whatever happens in the workshop. A brand-new night still
+// gets its first copy (the lists are read-only while frozen, so it is the
+// frozen copy). Logs one count line either way.
+export async function isFrozen(db) {
+  const snap = await db.doc('meta/game').get()
+  const at = snap.exists ? snap.data().frozenAt : null
+  return !!at && (typeof at.toMillis === 'function' ? at.toMillis() : Number(at) || (at instanceof Date ? at.getTime() : 0)) > 0
+}
+
+export async function publishContent(db, nightId, { log = quietLog } = {}) {
+  if (await isFrozen(db)) {
+    const ref = db.doc(`nights/${nightId}/public/content`)
+    const have = await ref.get()
+    if (have.exists) {
+      log(`publish ${JSON.stringify({ nightId, frozen: true, areas: 0, lines: 0 })}`)
+      return { areas: 0, lines: 0, frozen: true }
+    }
+  }
   const content = { publishedAt: FieldValue.serverTimestamp() }
   let lines = 0
   for (const area of PLAYER_AREAS) {
@@ -100,6 +122,7 @@ export async function publishContent(db, nightId) {
   // Identities are public; traces are not. Traces never leave the server here.
   content.characters = CHARACTERS.map(({ id, name, profession, gender, bio }) => ({ id, name, profession, gender, bio }))
   await db.doc(`nights/${nightId}/public/content`).set(content)
+  log(`publish ${JSON.stringify({ nightId, frozen: false, areas: PLAYER_AREAS.length, lines })}`)
   return { areas: PLAYER_AREAS.length, lines }
 }
 

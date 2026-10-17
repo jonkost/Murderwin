@@ -32,3 +32,33 @@ test('publishContent copies the four room-screen lists along with the phone list
   assert.equal(r.areas, PLAYER_AREAS.length)
   assert.equal(r.lines, 5)
 })
+
+test('frozen: publishContent changes nothing for a night that has its copy, and logs one count line', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  const path = `nights/${nightId}/public/content`
+  const before = JSON.stringify(db.store.get(path))
+  const version = db.versions.get(path)
+  db.store.set('meta/game', { ...db.store.get('meta/game'), frozenAt: new Date(1_700_000_000_000) })
+  // a workshop edit after the freeze
+  db.store.set('safe_content/study_lines', { items: [{ id: 'a', text: 'SLOW: (changed after the freeze)', deleted: false, order: 0 }] })
+  const lines = []
+  const r = await publishContent(db, nightId, { log: l => lines.push(l) })
+  assert.deepEqual(r, { areas: 0, lines: 0, frozen: true })
+  assert.equal(JSON.stringify(db.store.get(path)), before, 'the phones keep the frozen copy')
+  assert.equal(db.versions.get(path), version, 'not even rewritten in place')
+  assert.equal(lines.length, 1)
+  assert.ok(lines[0].includes('"frozen":true') && !lines[0].includes('changed after'))
+  // the host's Resend button and a join go through the same door
+  const again = await publishContent(db, nightId)
+  assert.equal(again.frozen, true)
+  // a brand-new night started while frozen still gets its one copy
+  const second = await createNight(db)
+  assert.ok(db.store.get(`nights/${second.nightId}/public/content`), 'a new night has content')
+  assert.equal(second.lines, 5)
+  // unfreeze: the next publish copies again
+  db.store.set('meta/game', { ...db.store.get('meta/game'), frozenAt: null })
+  const thawed = await publishContent(db, nightId, { log: () => {} })
+  assert.equal(thawed.frozen, undefined)
+  assert.equal(db.store.get(path).study_lines[0].text, 'SLOW: (changed after the freeze)')
+})
