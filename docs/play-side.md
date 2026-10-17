@@ -302,12 +302,17 @@ the length of the pause in one batch (the window's `opensAt` and `closesAt`, the
 relay's four `*EndsAt`, the study's `slotEndsAt`, the finale's `at`; the list is
 `PAUSE_SHIFTED` in `functions/lib/night.js`). Nothing settles and the relay does
 not advance while paused. A paused phone keeps an open window on screen, greyed,
-with its clock standing still. `handover` (arg: a roster key or a uid) wipes a
-phone's cards and windows, marks the session `handed` and bumps `generation`;
-the phone sees the newer generation, clears its local cache and reloads to the
-doors. A guest who joins after the power has returned is written into the case
-as a detective and dealt the same role card as everyone else; a guest who
-rejoins on a new phone brings their cards with them. The role card is kept all
+with its clock standing still. `handover` (arg: a roster key or a uid) moves a
+phone's cards, windows and affection into the private deck (`handed[guestKey]`,
+unreadable by any phone), drops the deck's pointer from that guest to the phone,
+wipes the phone's notes for the night, marks the session `handed` and bumps
+`generation`; the phone sees the newer generation, clears its local cache and
+reloads to the doors. The next person types their own name on it and gets a
+fresh session; the previous owner taps their name on any other phone and gets
+everything back from the parked copy, without touching the new owner. A guest
+who joins after the power has returned is written into the case as a detective
+and dealt the same role card as everyone else; a guest who rejoins on a new
+phone brings their cards with them. The role card is kept all
 night and re-read from the You tab behind a tap. The prompt renders near-black
 and buzzes once per card. The offline strip shows when the phone is off the
 network OR the night doc has painted from cache for twenty seconds, and says how

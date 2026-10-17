@@ -85,6 +85,7 @@ function describeError(e) {
 
 const CASE_WARNINGS = {
   'rehearsal-fallback': 'the sealed content could not be used, so stand-ins were dealt',
+  'no-sealed-content': 'the party night found no sealed content in this project, so stand-ins were dealt',
   'trace-partner': 'one trace at the party has no look-alike among the guests',
 }
 

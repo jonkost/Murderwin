@@ -379,6 +379,12 @@ assembled from sealed content into each session, server-side only.
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock
 from `startedAt`, never from its own timer.
 
+**Pause.** The station also watches `nights/{id}` (station/lib/follow.js). While `phase` is
+`paused` its clock stands still and the wall ignores touches; on resume the game's `startedAt`
+moves on by the length of the pause (`runner.paused`), the next state write carries the moved
+start to the kiosk, and the group gets its whole fifteen minutes. The no-station slot
+(`public/study.slotEndsAt`) is moved by the server's `resume` instead (`PAUSE_SHIFTED`).
+
 **Which group.** The rotation engine (not yet built) publishes who is due in the study. The
 station greets that group and pays out to it. It does not try to detect who is physically
 present. If a different group starts, the Host tab can reassign before pay-out; otherwise the

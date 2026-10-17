@@ -185,7 +185,9 @@ Runtime (built 17 Oct 2026):
   `nights/{id}.rehearsal = true`. Otherwise it draws a code with crypto
   randomness, reads `sealed/{code}`, runs `checkSealed`, tries up to five
   codes, then falls back to rehearsal with `nights/{id}.caseWarning =
-  'rehearsal-fallback'`. The cast-lock check adds `'trace-partner'` when an
+  'rehearsal-fallback'`. A party night with no manifest, or one with no
+  codes, rehearses with `caseWarning = 'no-sealed-content'`, so the Host tab
+  says so before the first cat speaks. The cast-lock check adds `'trace-partner'` when an
   in-play trace has no in-play look-alike. The Host tab shows `caseWarning`
   as one plain line. It logs `{ nightId, kernelCount, docCount, rehearsal,
   triedCodes }` and nothing else.

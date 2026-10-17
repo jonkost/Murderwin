@@ -169,7 +169,8 @@ export const MAX_CODE_TRIES = 5
 //  - nights/{id}.forceRehearsal is true (the default when a night is made;
 //    the workshop's Game night page has one checkbox, "This is the party
 //    night", that makes it false), or there is no sealed manifest: write
-//    the rehearsal case and nights/{id}.rehearsal = true.
+//    the rehearsal case and nights/{id}.rehearsal = true (and, on a party
+//    night with no manifest or no codes, caseWarning 'no-sealed-content').
 //  - otherwise draw one code with crypto randomness, read sealed/{code},
 //    run the structural check (case.js checkSealed); on a failure draw
 //    another, up to five, and only then fall back to rehearsal with
@@ -209,6 +210,10 @@ export async function buildCaseForNight(db, nightId, { pick = pickInt, now = Dat
       }
     }
     if (!c) warnings.push('rehearsal-fallback')
+  } else if (!forceRehearsal) {
+    // the party night with nothing sealed to draw from (the generator was never run, or ran
+    // against the other project): the Host tab must say so, or the night looks fine until a cat speaks
+    warnings.push('no-sealed-content')
   }
   if (!c) c = rehearsalCase(common)
 
@@ -379,14 +384,14 @@ export async function dealEncounter(db, nightId, act, beat) {
   for (const cat of CAT_KEYS.filter(k => k !== 'granolia')) catRoom[cat] = rooms.pop() ?? 'the parlour'
   let cats = shuffled(CAT_KEYS)
   let dealt = 0
-  const codesByUid = {}
+  const codesByGuest = {} // by roster key, so the numbers follow a guest to a replacement phone
   for (const g of shuffled(list)) {
     if (!cats.length) cats = shuffled(CAT_KEYS)
     const cat = cats.pop()
     const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
     const level = sessionSnap.data()?.affection?.[cat] ?? 3
     const codes = [pickInt(90) + 10, pickInt(90) + 10, pickInt(90) + 10]
-    codesByUid[g.uid] = codes
+    codesByGuest[g.key] = codes
     const room = catRoom[cat]
     const go = { id: `${act}-${beat}-go`, act, beat, kind: 'go', room, cat, catName: CAT_NAMES[cat], text: `Go to ${room}. ${CAT_NAMES[cat]} is waiting for you there.` }
     const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room, codes, voice, nightId, guestKey: g.key })
@@ -395,8 +400,8 @@ export async function dealEncounter(db, nightId, act, beat) {
     // a brush-off still leaves the numbers behind, so the safe is always solvable
     if (t.outcome === 'deflect') await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
   }
-  // the safe's answers live where no phone can read them
-  await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByUid }, { merge: true })
+  // the safe's answers live where no phone can read them, keyed by guest
+  await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByGuest }, { merge: true })
   return { dealt }
 }
 
@@ -439,7 +444,7 @@ export async function solve(db, { nightId, uid, cardId, entry }) {
   if (!card) throw new NightError('invalid', 'No such puzzle on this phone.')
   if (s.solved?.[cardId]) return { ok: true, right: true, already: true }
   const puzzles = (await db.doc(`nights/${nightId}/private/puzzles`).get()).data() ?? {}
-  const answer = puzzles.safe?.[uid]
+  const answer = puzzles.safe?.[s.guestKey]
   const given = (Array.isArray(entry) ? entry : []).map(Number)
   const right = Array.isArray(answer) && answer.length === given.length && answer.every((n, i) => n === given[i])
   const tries = (s.tries?.[cardId] ?? 0) + 1
@@ -476,12 +481,21 @@ function valuesOf(beats) {
   return beats.map(b => Object.fromEntries(['a', 'b', 'c', 'd'].filter(k => b[k]).map(k => [k, Number(b[`${k}v`]) || 0])))
 }
 
+// A window a beat opens is keyed by its act and beat, so re-running the beat
+// (the beat list, or Back then Next) finds the window it already opened and
+// leaves it be: no second set lands on any phone and the hidden roles'
+// points reach the dial once per window. The host's own "light-up" button
+// passes no beat and is a fresh window every time.
 export async function openWindow(db, nightId, kind, { now = Date.now(), beat = null, act = null } = {}) {
   const spec = WINDOWS[kind]
   if (!spec) throw new NightError('invalid', `No such window: ${kind}`)
   const { night, list } = await guests(db, nightId)
+  const id = beat ? `${kind}-${act}-${beat}` : `${kind}-${now}`
+  if (beat) {
+    const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
+    if (night.window?.id === id || (privSnap.exists && privSnap.data()[id])) return { ok: true, id, phones: list.length, already: true }
+  }
   if (night.window && !night.window.settled) await settleWindow(db, nightId, { now, force: true })
-  const id = `${kind}-${now}`
   const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat }
   const priv = {}
   if (kind === 'questions') {
@@ -667,8 +681,18 @@ export function stationFor(rotation, groupId, r) {
   return STATIONS[((r - p) % STATIONS.length + STATIONS.length) % STATIONS.length]
 }
 
-export async function dealGroups(db, nightId, act, beat) {
+export async function dealGroups(db, nightId, act, beat, { force = false } = {}) {
   const c = await ensureCase(db, nightId)
+  // Once the house has started rotating the groups are set: remaking them
+  // would scramble who is where, point the study at a fresh first group and
+  // throw away the pay-out ledger. A re-run of the beat (Back, then Next)
+  // or a mis-tap on the Host button leaves everything as it is; only the
+  // host's explicit "force" makes new ones.
+  const standing = await readRotation(db, nightId)
+  const { night: n0 } = await guests(db, nightId)
+  if (standing && (n0.rotation ?? -1) >= 0 && !force) {
+    return { ok: true, already: true, reason: 'Groups are set', groups: standing.groups?.length ?? 0, trios: (standing.groups ?? []).filter(g => g.members.length === 3).length }
+  }
   const apart = [c.murderer, c.ghost].filter(Boolean)
   const made = await makeRotation(db, { nightId, apart })
   const rotation = await readRotation(db, nightId)

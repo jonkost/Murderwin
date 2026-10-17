@@ -194,3 +194,69 @@ test('with the Elements down the wall is left alone and the screen gets the patt
   await flush(runner)
   assert.equal(runner.machine.snapshot.pattern, 1, 'the number keys reproduce it')
 })
+
+// ---- a pause: the fifteen-minute clock stands still with the rest of the house
+
+// A station on a clock the test turns by hand; the server answers with the same clock, so skew is zero.
+function stationOnClock() {
+  const clock = { t: 1_000_000 }
+  const elements = new FakeWall({ name: 'elements', panelIds: PANELS, log: () => {} })
+  const lines = new FakeWall({ name: 'lines', panelIds: [21, 22, 23, 24, 25, 26, 27], log: () => {} })
+  const deck = new FakeDeck({ log: () => {} })
+  const sent = []
+  const callStation = async (args) => { sent.push(args); return { data: { ok: true, serverTime: clock.t } } }
+  const runner = createRunner({
+    elements, lines, deck, panelIds: PANELS, layout: PANELS.map((id, i) => ({ id, x: i * 100, y: 0 })),
+    callStation, stationKey: 'k', restMs: 20_000, sleep: () => Promise.resolve(), now: () => clock.t,
+  })
+  runner.night('n1')
+  runner.due('g1')
+  return { runner, clock, sent }
+}
+
+test('the host pauses the night: the cap waits out the pause and the group gets its whole fifteen minutes', { timeout: 5000 }, async () => {
+  const { runner, clock, sent } = stationOnClock()
+  await flush(runner)
+  const cap = runner.machine.settings.capMs
+  runner.touch(PANELS[0])
+  await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing')
+  const startedAt = runner.machine.snapshot.startedAt
+  assert.equal(startedAt, clock.t)
+  // eleven minutes in, the host pauses for six
+  clock.t += 11 * 60_000
+  runner.tick(); await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing')
+  runner.paused(true, clock.t)
+  assert.equal(runner.isPaused, true)
+  const patternBefore = runner.machine.snapshot.pattern
+  runner.touch(runner.machine.patterns[0][0][0]) // a touch during the pause does nothing
+  await flush(runner)
+  assert.equal(runner.machine.snapshot.pattern, patternBefore)
+  clock.t += 6 * 60_000
+  runner.tick(); await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'seventeen minutes on the wall clock, but only eleven of them count')
+  assert.equal(runner.machine.snapshot.outcome, null, 'not capped during the pause')
+  // the host resumes: the clock picks up at eleven minutes
+  runner.paused(false, clock.t)
+  await flush(runner)
+  assert.equal(runner.isPaused, false)
+  assert.equal(runner.machine.snapshot.startedAt, startedAt + 6 * 60_000, 'the start moved on by the length of the pause')
+  const lastState = sent.filter(a => a.command === 'state').at(-1)
+  assert.equal(lastState.payload.startedAt, startedAt + 6 * 60_000, 'the kiosk clock is told')
+  clock.t = startedAt + 6 * 60_000 + cap - 1
+  runner.tick(); await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'one second short of the cap')
+  clock.t += 1
+  runner.tick()
+  assert.equal(runner.machine.state, 'done')
+  assert.equal(runner.machine.snapshot.outcome, 'capped')
+  await flush(runner) // the walls rest (instantly here) and the station re-arms
+  assert.equal(runner.machine.state, 'idle')
+  const fin = sent.filter(a => a.command === 'finished').at(-1)
+  assert.equal(fin.payload.outcome, 'capped')
+  assert.equal(fin.payload.seconds, cap / 1000, 'the seconds reported leave the pause out')
+  // a pause with no game running, and a resume twice, change nothing
+  runner.paused(true, clock.t); runner.paused(false, clock.t + 5000); runner.paused(false, clock.t + 9000)
+  assert.equal(runner.isPaused, false)
+})
