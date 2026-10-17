@@ -667,8 +667,18 @@ export function stationFor(rotation, groupId, r) {
   return STATIONS[((r - p) % STATIONS.length + STATIONS.length) % STATIONS.length]
 }
 
-export async function dealGroups(db, nightId, act, beat) {
+export async function dealGroups(db, nightId, act, beat, { force = false } = {}) {
   const c = await ensureCase(db, nightId)
+  // Once the house has started rotating the groups are set: remaking them
+  // would scramble who is where, point the study at a fresh first group and
+  // throw away the pay-out ledger. A re-run of the beat (Back, then Next)
+  // or a mis-tap on the Host button leaves everything as it is; only the
+  // host's explicit "force" makes new ones.
+  const standing = await readRotation(db, nightId)
+  const { night: n0 } = await guests(db, nightId)
+  if (standing && (n0.rotation ?? -1) >= 0 && !force) {
+    return { ok: true, already: true, reason: 'Groups are set', groups: standing.groups?.length ?? 0, trios: (standing.groups ?? []).filter(g => g.members.length === 3).length }
+  }
   const apart = [c.murderer, c.ghost].filter(Boolean)
   const made = await makeRotation(db, { nightId, apart })
   const rotation = await readRotation(db, nightId)

@@ -155,8 +155,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'groups':
       // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart;
       // once the house has started rotating the groups are set, and remaking them would scramble Act 4
-      if ((n.rotation ?? -1) >= 0 && arg !== 'force') return { ok: true, already: true, reason: 'Groups are set' }
-      return deal.dealGroups(db, nightId, n.act || 3, 'groups')
+      return deal.dealGroups(db, nightId, n.act || 3, 'groups', { force: arg === 'force' })
     case 'station-key':
       return station.setStationKey(db, arg)
     case 'study-tick':
