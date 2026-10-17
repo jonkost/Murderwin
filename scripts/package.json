@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "generate": "node generate-sealed.mjs",
-    "validate": "node validate-sealed.mjs"
+    "validate": "node validate-sealed.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
