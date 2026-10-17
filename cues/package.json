@@ -1,0 +1,15 @@
+{
+  "name": "murderwin-cues",
+  "private": true,
+  "description": "The cue relay: runs on the game-server Mac, watches the public night state and performs cues (the hall light, named sound files). Blind by design. docs/cues-relay.md.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node cues.mjs",
+    "fake": "node cues.mjs --fake",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
+  }
+}
