@@ -190,6 +190,12 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .who-char { grid-column: 2; color: var(--dim); font-size: 0.95rem; }
 .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--line); }
 .dot.on { background: var(--good); }
+.dot.hidden { background: transparent; }
+.house { margin-top: 1rem; }
+.machines { list-style: none; margin: 0 0 0.4rem; padding: 0; display: grid; gap: 0.3rem; }
+.machines li { display: grid; grid-template-columns: auto 1fr; column-gap: 0.6rem; align-items: center; padding: 0.25rem 0; }
+.house-study { background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.5rem 0.9rem; margin: 0.4rem 0; }
+.house-study .gloss { margin: 0.2rem 0; }
 .start-night { margin-top: 2.5rem; }
 .quiet { background: none; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--dim); min-height: 2.8rem; padding: 0.4rem 1rem; font-size: 0.95rem; }
 

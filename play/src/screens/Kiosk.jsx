@@ -376,7 +376,7 @@ const SAY = {
 export function Study({ study, rotation, serverNow }) {
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
-  const names = group ? group.members.map(m => m.name).join(', ') : null
+  const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null
   const started = ms(s.startedAt)
   const left = started && s.state !== 'done' && s.state !== 'idle' ? Math.max(0, CAP_MS - (serverNow() - started)) : null
   const mm = left != null ? Math.floor(left / 60_000) : null
