@@ -24,7 +24,10 @@ blind"), the game design doc's "blind relay" section, and
 
 It reads only public documents, the same ones any phone may read. It never
 calls the server, never sees a clue, and never prints anything but "hall
-green" or "sound 7F3A".
+green" or "sound 7F3A". Once a minute it writes one small heartbeat (the same
+row every phone writes), so the Host tab's house panel can show it alive.
+The Host tab can also set the hall light by hand, red or green, under *The
+house*.
 
 ## Setting it up (once)
 
