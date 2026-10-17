@@ -16,8 +16,8 @@ import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
-import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
-import { plan, soundCandidates, parseEnv, bridgeHostProblem } from './lib/cues.js'
+import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
+import { plan, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS } from './lib/cues.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue } from './lib/hue.js'
@@ -124,7 +124,17 @@ onSnapshot(doc(db, 'public_state/active'), snap => {
   log('night:', nightId ?? 'none')
   state = { hall: null, sound: null }
   watchNight(nightId)
+  heartbeat()
 })
+
+// ---- the heartbeat: a presence row once a minute, so the Host tab's house
+// panel shows this relay alive (guest key 'cues'). Nothing else is written.
+async function heartbeat() {
+  const uid = auth.currentUser?.uid
+  if (!uid) return
+  try { await setDoc(doc(db, 'presence', uid), { ...presenceRow(nightId), at: serverTimestamp() }) } catch (e) { log('presence:', e.message) }
+}
+setInterval(heartbeat, PRESENCE_MS)
 
 if (FAKE && process.stdin.isTTY) {
   process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding('utf8')

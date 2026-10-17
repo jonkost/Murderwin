@@ -38,6 +38,16 @@ function stamp(t) {
   return Number(t) || 0
 }
 
+// The relay's heartbeat row, so the Host tab can show it alive: the same
+// shape every phone writes to presence/{uid} (firestore.rules allows exactly
+// these keys), with the guest key 'cues'. The caller adds `at` as a server
+// timestamp. Written once a minute.
+export const PRESENCE_KEY = 'cues'
+export const PRESENCE_MS = 60_000
+export function presenceRow(nightId) {
+  return { nightId: nightId ?? null, guestKey: PRESENCE_KEY }
+}
+
 // Sound files are named after the event id, nothing else. First match wins.
 export const SOUND_EXTENSIONS = ['m4a', 'mp3', 'wav', 'aiff']
 export function soundCandidates(dir, id) {
