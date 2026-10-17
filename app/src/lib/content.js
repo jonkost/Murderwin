@@ -98,6 +98,22 @@ export const STATION_LABELS = [
 const traceLabel = (trace) => `TRACE ${String(trace).toUpperCase().split('-').join(' ')}`
 export const TRACE_LABELS = charactersFile.characters.map(c => ({ value: traceLabel(c.trace), label: `${traceLabel(c.trace)}: ${c.traceLabel}` }))
 
+// "Title: one line" for the achievements list. The title keeps its case; the
+// first colon splits the line.
+export const achievementCodec = {
+  split(text) {
+    const t = text ?? ''
+    const m = /^([^:\n]+):[ \t]*/.exec(t)
+    if (!m) return { title: '', text: t }
+    return { title: m[1].trim(), text: t.slice(m[0].length) }
+  },
+  join({ title, text }) {
+    const a = (title ?? '').trim()
+    const b = text ?? ''
+    return a ? `${a}: ${b}` : b
+  },
+}
+
 // A field is one box on screen. kind: text | textarea | select. The box
 // marked main takes the cursor and the Speak button.
 const line = (label, placeholder, extra = {}) => ({ key: 'text', label, placeholder, kind: 'textarea', main: true, ...extra })
@@ -174,6 +190,12 @@ export const AREAS = {
       { key: 'label', label: 'Which station', placeholder: 'Pick one', kind: 'select', options: STATION_LABELS },
       { key: 'text', label: 'The line', placeholder: 'e.g. Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.', kind: 'textarea', main: true },
     ] },
+  achievements: { label: 'Achievements', moment: 'Acts 1 to 5, given from the Host tab with a tap; on the phone at once and on the living room screen at the end', why: 'Pre-written achievements, a title and one line each. On the night you tap a guest, then one of these. Nothing is typed on the night.', group: 'Words on the phones', tabs: null, guide: null, goal: 20,
+    codec: achievementCodec,
+    fields: [
+      { key: 'title', label: 'The title', placeholder: 'e.g. Clean Plate Club', kind: 'text' },
+      { key: 'text', label: 'One line, read out on the screen', placeholder: 'e.g. Nothing left on the plate, not even the garnish.', kind: 'textarea', main: true },
+    ] },
   scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
   motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
     codec: labelCodec,
@@ -213,7 +235,7 @@ export const AREAS = {
       { key: 'after', label: 'After the gap (end with ...)', placeholder: 'e.g. , which the household calls exaggerated and the post calls Tuesday...', kind: 'textarea' },
     ] },
   templates: { label: 'Stationery designs', moment: 'Acts 2 and 4, the paper a solved puzzle pays out', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
-  epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2, hidden: true,
+  epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
   trace_lines: { label: 'What was left behind', moment: 'Act 6, the bedroom screen, when the night has gone clearly enough to say', why: 'One line per trace, naming the object and where it lay, never whose it is. The screen has a plain default for each.', group: 'Blanks and frames', tabs: null, guide: null, goal: TRACE_LABELS.length,
@@ -347,6 +369,8 @@ export function lintItem(area, text) {
       const missing = ['[MURDERER]', '[VICTIM]', '[MOTIVE_RHYME]'].filter(t => !text.includes(t))
       return missing.length ? `Still missing ${missing.join(' and ')}. The game fills those in.` : null
     }
+    case 'achievements':
+      return /^[^:\n]+:\s*\S/.test(text) ? null : 'Give it a title in the first box and a line in the second.'
     case 'ui_copy':
     case 'role_cards':
       if (!CAPS_PREFIX.test(text)) return 'Pick which screen or card this is in the first box.'
