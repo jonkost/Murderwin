@@ -3,9 +3,11 @@ import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
 import { uploadReference } from '../lib/store'
 import ListCard from '../components/ListCard'
 import ReviewRow from '../components/ReviewRow'
+import { useFrozen, FrozenBanner } from '../components/Frozen'
 
 export default function Stationery() {
   const { items, itemsRef, status, flush, patch } = useAreaEditor('templates')
+  const frozen = useFrozen()
   const [uploadErr, setUploadErr] = useState(null)
   const [uploading, setUploading] = useState({})
 
@@ -49,15 +51,16 @@ export default function Stationery() {
           <button onClick={() => setUploadErr(null)}>Dismiss</button>
         </div>
       )}
+      <FrozenBanner state={frozen} />
       <div className="editor-head">
         <h2>Stationery designs</h2>
         <span className={`save-dot ${status}`}>
-          {status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
+          {frozen.readOnly ? 'read-only' : status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}
         </span>
       </div>
       <ListCard area="templates" tab={null} />
       <ReviewRow area="templates" />
-      <ul className="items stationery">
+      <ul className={frozen.readOnly ? 'items stationery frozen' : 'items stationery'} inert={frozen.readOnly || undefined}>
         {items.filter(i => !i.deleted).sort((a, b) => a.order - b.order).map(item => (
           <li key={item.id} className={item.done ? 'sitem done' : 'sitem'}>
             <div className="sitem-head">

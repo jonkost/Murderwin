@@ -27,6 +27,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
 import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
+import { bagsClue, bagsText } from './bags.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -707,26 +708,27 @@ async function groupAffectionOf(db, uids) {
   return out
 }
 
-async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, nightId = '', pick = pickInt }) {
+// `over` is the workshop's station_text list ("STUDY: ...", "CAT: ..." with
+// [CAT], "BAGS: ..." with [PROPERTY] and [COUNT], "PUZZLE: ...", "CHECKIN: ...");
+// a line that is written replaces the default sentence, the title stays.
+async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, nightId = '', pick = pickInt, over = {}, roster = {} }) {
   const base = STATION_TEXT[station.key]
   const id = `${act}-${beat}-${station.key}`
-  const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: base.text }
+  const written = over[station.key.toUpperCase()]
+  const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: written || base.text }
   if (station.key === 'cat') {
     const cat = choice(CAT_KEYS, pick)
     const avg = Math.round(members.reduce((s, m) => s + (levels[m]?.[cat] ?? 3), 0) / Math.max(1, members.length))
     const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: null, voice, nightId, guestKey: gid })
-    return { ...card, cat, catName: CAT_NAMES[cat], text: `Find ${CAT_NAMES[cat]}. The cat talks to all of you at once.`, testimony: t }
+    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]) : `Find ${CAT_NAMES[cat]}. The cat talks to all of you at once.`
+    return { ...card, cat, catName: CAT_NAMES[cat], text: catText, testimony: t }
   }
   if (station.key === 'bags') {
-    // a bag item is saved as "Item — sense: property" (the workshop's bag codec)
-    const items = await readArea(db, 'bag_items')
-    const props = items.map(i => {
-      const dash = i.text.indexOf('—'); if (dash < 0) return ''
-      const rest = i.text.slice(dash + 1); const colon = rest.indexOf(':')
-      return colon >= 0 ? rest.slice(colon + 1).trim() : ''
-    }).filter(Boolean)
-    const property = choice(props, pick) ?? '(rehearsal: a property, like minty or rough)'
-    return { ...card, property, text: `Something ${property} is in two or three of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.` }
+    // from the packing (sealed/bags) on the night: a property in two or three
+    // bags, one of them the murderer's or the victim's; a random bag item's
+    // property in a rehearsal (bags.js). Never a bag number.
+    const clue = await bagsClue(db, { c, roster, pick })
+    return { ...card, property: clue.property, count: clue.count, placeholder: clue.placeholder, text: bagsText(clue.property, clue.count, written) }
   }
   if (station.key === 'study') {
     // the clue itself is dealt by the station's "finished" call (station.js dealStudy), never carried here
@@ -734,7 +736,7 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
   }
   if (station.key === 'puzzle') {
     const symbols = shuffled(['circle', 'square', 'triangle', 'star', 'moon', 'cross'], pick).slice(0, 4)
-    return { ...card, sequence: symbols, text: 'Watch the four shapes, then tap them back in the same order. Do it together; argue if you must.' }
+    return { ...card, sequence: symbols, text: written || 'Watch the four shapes, then tap them back in the same order. Do it together; argue if you must.' }
   }
   return card
 }
@@ -747,6 +749,7 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   const r = (night.rotation ?? -1) + 1
   if (r >= STATIONS.length) return { ok: true, rotation: night.rotation, done: true }
   const voice = await voicePools(db)
+  const over = labelled(await readArea(db, 'station_text'))
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const levels = {}
   for (const g of list) levels[g.key] = (await db.doc(`sessions/${g.uid}`).get()).data()?.affection ?? {}
@@ -772,7 +775,7 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
     const members = grp.members.map(m => m.key)
-    const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice, nightId })
+    const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice, nightId, over, roster: night.roster ?? {} })
     for (const k of members) {
       const g = byKey[k]
       if (!g) continue
@@ -928,7 +931,8 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
     if (!partner) level = 3 // nobody to be confused with: the coin flip collapses to a clear image
   }
   const lines = labelled(await readArea(db, 'trace_lines'))
-  const context = lines[`TRACE ${murdererChar.trace.toUpperCase()}`] ?? TRACE_CONTEXT[murdererChar.trace] ?? null
+  // a workshop label has no hyphen (the label codec): TRACE BOOT PRINT
+  const context = lines[`TRACE ${murdererChar.trace.toUpperCase().replace(/-/g, ' ')}`] ?? lines[`TRACE ${murdererChar.trace.toUpperCase()}`] ?? TRACE_CONTEXT[murdererChar.trace] ?? null
   const base = { level, placeholder: !!c.rehearsal, at: new Date(now) }
   const full = {
     ...base, trace: murdererChar.trace,

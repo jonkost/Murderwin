@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import { subscribeGame, saveGame } from '../lib/store'
+import { subscribeGame, saveGame, whoAmI } from '../lib/store'
+import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
 
 // Game night: the two hosts' names, the square code for the Act 1 slide,
 // and how guests join. The night itself is run from the hosts' phones (the
@@ -18,6 +19,8 @@ export default function Night() {
   const [draft, setDraft] = useState({})
   const [status, setStatus] = useState('saved')
   const [qr, setQr] = useState(null)
+  const [me, setMe] = useState(null)
+  useEffect(() => { whoAmI().then(setMe) }, [])
   const timer = useRef(null)
   const latest = useRef({})
 
@@ -40,6 +43,13 @@ export default function Night() {
   }
 
   if (game === null) return <main className="dash"><p>…</p></main>
+  const frozen = frozenState(game)
+  const canFreeze = me?.name === 'Jon' || me?.name === 'Preview'
+  const setFrozen = (on) => {
+    const patch = on ? freezePatch() : unfreezePatch()
+    setStatus('saving')
+    saveGame(patch, latest.current).then(() => setStatus('saved')).catch(() => setStatus('error'))
+  }
 
   return (
     <main className="dash night">
@@ -68,6 +78,21 @@ export default function Night() {
           <span>This is the party night</span>
         </label>
         <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
+      </section>
+
+      <section className="panel">
+        <h2>The freeze</h2>
+        <p className="why">The week of the party, freeze the workshop. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
+        {frozen.frozen
+          ? <p className="night-line"><b>Frozen for the party</b> since {frozen.since.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.</p>
+          : <p className="night-line">Not frozen. The lists can be edited and the phones pick up new words.</p>}
+        {canFreeze
+          ? <p className="night-line">
+              {frozen.frozen
+                ? <button className="ghost" onClick={() => setFrozen(false)}>Unfreeze the workshop</button>
+                : <button className="primary" onClick={() => setFrozen(true)}>Freeze the workshop</button>}
+            </p>
+          : <p className="hint">Only Jon can freeze or unfreeze.</p>}
       </section>
 
       <section className="panel">

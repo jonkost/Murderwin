@@ -145,8 +145,14 @@ Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal
    crypto-shuffled order, progress lines carry counters only, per-code count
    lines print once at the end sorted by code string.
 
-Bag contents are sealed too: `sealed/bags`, written only by the Steward's form,
-read by the generator as an input. Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
+Bag contents are sealed too: `sealed/bags`, written by the blind packer
+(`npm --prefix scripts run pack-bags`, built 18 Oct 2026). It reads the bag
+items from the workshop, packs ten bags of six under the bag rules, prints
+counts and PASS or FAIL only, and refuses to replace a packing that is already
+there (or one the Steward edited) unless run with `--repack`. The bags station
+reads it on the night: the property on the card is in two or three bags, one of
+them the murderer's or the victim's, and the card never carries a bag number.
+The generator reads only the property words, as words to keep out of the text. Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
 same counts-only rules, into `sealed/events/*`. Not built yet.
 
 Validation — `scripts/validate-sealed.mjs`, counts-only, per code:

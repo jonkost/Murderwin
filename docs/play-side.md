@@ -205,6 +205,29 @@ The rules deck (slide "How the cats feel about you") already shows this design.
 
 ---
 
+## The bags, the paper and the freeze (built 18 October 2026)
+
+- **The bags clue is true.** The bags station card says "something minty is in
+  two of the bags" from the real packing, and the property it picks sits in
+  the murderer's or the victim's bag. It never says a bag number. Before the
+  bags are packed, or in a rehearsal, it draws a property from the bag items
+  list at random and wears the Rehearsal chip, as before.
+- **The document looks like paper.** A solved safe pays out its document on
+  one of the seven stationery designs, with a font to match (typewriter for a
+  telegram, handwriting for a letter). The designs are blank stand-ins in
+  `play/public/stationery/`, one file per design, so your art drops in later
+  file for file. A design the phone does not know prints on the plain block.
+  See them on a phone at `/play/?preview=document` and tap the name in the
+  corner to cycle; `?template=playbill` starts on one.
+- **The freeze.** On the workshop's Game night page, Freeze the workshop the
+  week of the party. The phones keep the words exactly as they are; nothing
+  typed in a list after that can change a phone mid-night. The host's Resend
+  button and every join still work; they simply find nothing new to copy.
+- **The room screens read the workshop too.** Granolia's lines on the study
+  screen, the five station cards, the news frames and the closing story are
+  copied to the phones' content with everything else, and the Check page
+  (`?check=1`) lists them.
+
 ## For Claude Code (technical)
 
 Layout: `play/` is the phone client (React + Vite, base `/play/`, one page,

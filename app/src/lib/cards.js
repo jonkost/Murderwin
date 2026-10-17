@@ -194,6 +194,17 @@ const CARDS = {
     emptyState: 'No questions yet. Ask something nobody can answer well: ice in orange juice, socks in bed, which way the toilet paper sits.',
     doneLine: 'The house is full of very strong opinions about very small things. Just as it should be.',
   },
+  motive_notes: {
+    what: 'A plain explanation of each motive rhyme, for anyone who does not get the joke.',
+    where: 'All night, behind the small i beside a rhyme on the Motives tab. Everyone can read every one from Act 1.',
+    howTo: 'Pick the motive, then say what the rhyme means in a sentence or two. Everyone reads these before anything has happened, so never a hint about tonight.',
+    example: [
+      { field: 'Which motive', text: 'MOTIVE 1' },
+      { field: 'What it means', text: 'Someone ate the last slice and left the empty tin in the pantry.' },
+    ],
+    emptyState: 'Nothing yet. Nineteen rhymes, one plain line each.',
+    doneLine: 'Nineteen rhymes explained. The jokes still land; now everybody gets them.',
+  },
   role_cards: {
     what: 'The card each phone shows in the blackout: Murderer, Ghost or Detective. What each role does is said aloud in the Act 1 welcome, so the card only has to say which one you are.',
     where: 'The dark room at the end of Act 1, when every phone buzzes at once and the roles land. The only moment all night a screen says who you are.',
@@ -266,6 +277,47 @@ const CARDS = {
     example: [{ field: 'The paragraph', text: 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. The household nodded as one, and [VICTIM] was remembered fondly, by most.' }],
     emptyState: 'Nothing yet. Two endings to write, with the names left blank.',
     doneLine: 'The last page is written. The spoons, as ever, remain uncounted.',
+  },
+  study_lines: {
+    what: 'What Granolia says on the study screen at each moment of the light puzzle. She helps; she never gives the answer away before the group has tried.',
+    where: 'Act 4, on the study screen beside the wall of light, while one group at a time plays. Nothing she says here reaches a phone.',
+    howTo: 'Pick the moment, then one or two sentences in her voice: bookish, kind, a little forgetful, the snort (*snrk.*) now and then. Twenty words at most, read from across a room.',
+    example: [
+      { field: 'Which moment', text: 'SLOW' },
+      { field: 'What Granolia says', text: 'Again, slower. I have all day. Well. Fifteen minutes.' },
+    ],
+    emptyState: 'Nothing yet. Twelve moments, each with a plain default already. Start with IDLE: what she says before anyone touches the wall.',
+    doneLine: 'Granolia has something to say at every moment. Most of it is helpful.',
+  },
+  station_text: {
+    what: 'The card a group gets at each of the five Act 4 stations: where to go and what to do there.',
+    where: 'Act 4, on every phone in the group, each time the house rotates. The study is the clock; the other four follow it.',
+    howTo: 'Pick the station, then one or two plain sentences. CAT may say [CAT] where the cat’s name goes. BAGS may say [PROPERTY] and [COUNT]; the game fills in the word and whether it is two or three bags.',
+    example: [
+      { field: 'Which station', text: 'BAGS' },
+      { field: 'The line', text: 'Something [PROPERTY] is in [COUNT] of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.' },
+    ],
+    emptyState: 'Nothing yet. Five stations, each with a plain default already.',
+    doneLine: 'Five stations, five cards. The house knows where to send everyone.',
+  },
+  trace_lines: {
+    what: 'What the bedroom screen says was left behind, one line per trace, when the night has gone clearly enough to say so.',
+    where: 'Act 6, on the bedroom screen when the hall light goes green. Everyone goes to look.',
+    howTo: 'Pick the trace, then one line naming the object and where it lay. Never a name, never whose it is: anyone can be the murderer.',
+    example: [
+      { field: 'Which trace', text: 'TRACE INK' },
+      { field: 'The line', text: 'a splash of ink, still wet, beside the writing desk' },
+    ],
+    emptyState: 'Nothing yet. Fourteen traces, each with a plain default already.',
+    doneLine: 'Fourteen traces, each with its line. The bedroom can speak.',
+  },
+  guests: {
+    what: 'The old guest list. Retired: a guest types their name at the door.',
+    where: 'Nowhere now.',
+    howTo: 'Leave this list alone.',
+    example: [],
+    emptyState: 'Retired.',
+    doneLine: 'Retired.',
   },
   bag_items: {
     what: 'Every ordinary object that could go in a numbered bag, with the one sense it stands out to.',

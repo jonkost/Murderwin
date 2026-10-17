@@ -14,7 +14,7 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import {
   adminDb, readMotives, rhymeWords, sha12, redactedError, printFatal,
   CATS, POOL_TOKENS, IRWIN_MAX_WORDS, STUDY_MIN_WORDS, STUDY_MAX_WORDS,
-  readSafeInputs, inputStanza, stanzaCounts, characterNameWords, say, printReport,
+  readSafeInputs, inputStanza, stanzaCounts, characterNameWords, say, printReport, bagStanza,
 } from './lib.mjs'
 import { validateAll } from './validate-sealed.mjs'
 
@@ -76,7 +76,8 @@ HARD RULES:
    field (text, emphasis, annotation).
    A stanza of the pool vocabulary follows, so a kernel reads naturally once a
    token is filled; and a stanza of each cat's openers and closers, so the
-   kernel sits naturally between them.
+   kernel sits naturally between them. A stanza may also list the bag
+   property words (minty, rough, red): never use those words or their senses.
 3. NPC natures (kernel variants must obey):
    - irwin: plainly, earnestly true.
    - boo: true and precise — the best information in the house.
@@ -154,7 +155,8 @@ async function main() {
   const inputs = await readSafeInputs(db)
   const counts = stanzaCounts(inputs)
   say(`safe inputs read: ${counts.poolValues} pool values, ${counts.voiceLines} voice lines`)
-  const extras = { stanza: inputStanza(inputs), names: [...characterNameWords()].sort() }
+  say(`bag inputs read: ${counts.bagProperties} property words, ${counts.bagsPacked} packed`)
+  const extras = { stanza: [inputStanza(inputs), bagStanza(inputs.bags)].filter(Boolean).join('\n'), names: [...characterNameWords()].sort() }
 
   // Regeneration invalidates everything: clear old sealed docs first.
   const old = await db.collection('sealed').listDocuments()

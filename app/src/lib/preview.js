@@ -77,8 +77,9 @@ export function uploadReference(itemId, file) { return uploadFile('stationery', 
 export async function applyAdditions() {}
 
 let game = {}
-export function subscribeGame(onData) { queueMicrotask(() => onData(game)); return () => {} }
-export async function saveGame(patch) { game = { ...game, ...patch } }
+const gameListeners = []
+export function subscribeGame(onData) { gameListeners.push(onData); queueMicrotask(() => onData(game)); return () => { const i = gameListeners.indexOf(onData); if (i >= 0) gameListeners.splice(i, 1) } }
+export async function saveGame(patch) { game = { ...game, ...patch }; gameListeners.forEach(fn => fn(game)) }
 
 let reviews = { rules_text: { state: 'again', note: 'The second rule reads like a legal notice.', by: { name: 'Jenna' }, at: Date.now() } }
 const reviewListeners = []

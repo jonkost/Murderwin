@@ -162,6 +162,27 @@ function render(area, tab, v) {
           <p><G>The item itself ({v.item || 'the item'}) is never named. Two or three bags will fit; that is the point.</G></p>
         </Frame>
       )
+    case 'study_lines':
+      return (
+        <Frame kind="room" title="The study screen, Act 4">
+          <p className="gp-sub">THE STUDY · {(v.label || 'a moment').toLowerCase()}</p>
+          <p><b>{v.text || <G>what Granolia says</G>}</b></p>
+        </Frame>
+      )
+    case 'station_text':
+      return (
+        <Frame title="A station card, Act 4">
+          <p className="gp-sub">Station · {v.label === 'STUDY' ? 'The study' : v.label === 'CAT' ? 'A cat' : v.label === 'BAGS' ? 'The bags' : v.label === 'PUZZLE' ? 'A small puzzle' : v.label === 'CHECKIN' ? 'Check-in' : 'which one'}</p>
+          <p>{(v.text || '').split('[CAT]').join('Miss Boo LaRue').split('[PROPERTY]').join('minty').split('[COUNT]').join('two') || <G>the line</G>}</p>
+        </Frame>
+      )
+    case 'trace_lines':
+      return (
+        <Frame kind="room" title="The bedroom screen, Act 6">
+          <p className="gp-sub">WHAT WAS LEFT BEHIND</p>
+          <p><b>{v.text || <G>the line</G>}</b></p>
+        </Frame>
+      )
     case 'lore':
     case 'ops_docs':
       return (

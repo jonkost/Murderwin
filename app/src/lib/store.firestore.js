@@ -6,6 +6,7 @@ import {
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage, auth } from '../firebase'
 import { seedDocs, seedTasks, ADDITIONS } from './content'
+import { planAddition } from './additions'
 
 // One-time seed import, guarded by meta/seeded inside a transaction so two
 // concurrent boots cannot double-seed. Never auto-seeds again. A fresh seed
@@ -204,44 +205,42 @@ export function uploadReference(itemId, file) {
 }
 
 // Additive-only migrations, guarded by meta/migrations. Each entry runs once
-// in a transaction (reads before writes), only ADDS, never rewrites.
+// in a transaction (reads before writes), only ADDS, never rewrites. The
+// writes are worked out by lib/additions.js (pure, tested); this only reads
+// the snapshot and makes them.
 export async function applyAdditions(additions) {
   const migRef = doc(db, 'meta', 'migrations')
   for (const add of additions) {
+    // task cards to retire are found outside the transaction (the web SDK
+    // cannot query inside one); the plan patches them by id, once
+    let taskRows = []
+    if (add.retireTasks?.length) {
+      const { getDocs, where } = await import('firebase/firestore')
+      const snap = await getDocs(query(collection(db, 'tasks'), where('order', 'in', add.retireTasks.map(r => r.order).slice(0, 30))))
+      taskRows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    }
     await runTransaction(db, async tx => {
       const migSnap = await tx.get(migRef)
       const applied = migSnap.exists() ? migSnap.data().applied ?? [] : []
       if (applied.includes(add.id)) return
-      const areaEntries = Object.entries(add.areaDocs ?? {})
-      const areaSnaps = await Promise.all(
-        areaEntries.map(([area]) => tx.get(doc(db, 'safe_content', area))))
-      const appendEntries = Object.entries(add.appendItems ?? {})
-      const appendSnaps = await Promise.all(
-        appendEntries.map(([area]) => tx.get(doc(db, 'safe_content', area))))
-      const decSnaps = await Promise.all(
-        (add.decisions ?? []).map(d => tx.get(doc(db, 'decisions', d.key))))
-      areaEntries.forEach(([area, items], i) => {
-        if (!areaSnaps[i].exists()) tx.set(doc(db, 'safe_content', area), items)
-      })
-      // Append lines to a list, skipping any whose opening words are already
-      // there (so a line Jon has since edited is never doubled). Adds only.
-      appendEntries.forEach(([area, lines], i) => {
-        const existing = appendSnaps[i].exists() ? asItems(appendSnaps[i].data().items) : []
-        const have = existing.filter(it => !it.deleted).map(it => String(it.text ?? '').toLowerCase())
-        let order = Math.max(-1, ...existing.map(it => it.order ?? 0))
-        const fresh = lines.filter(line => {
-          const head = line.split('—')[0].trim().toLowerCase()
-          return head && !have.some(t => t.startsWith(head))
-        }).map(text => ({ id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, text, deleted: false, order: ++order }))
-        if (fresh.length) tx.set(doc(db, 'safe_content', area), { items: [...existing, ...fresh] })
-      })
-      for (const t of add.tasks ?? []) {
-        tx.set(doc(collection(db, 'tasks')), { ...t, ts: Date.now() })
+      const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.appendItems ?? {})])]
+      const areaSnaps = await Promise.all(areaNames.map(a => tx.get(doc(db, 'safe_content', a))))
+      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {})])]
+      const decSnaps = await Promise.all(decisionKeys.map(k => tx.get(doc(db, 'decisions', k))))
+      const snapshot = {
+        applied,
+        areas: Object.fromEntries(areaNames.map((a, i) => [a, areaSnaps[i].exists() ? areaSnaps[i].data() : null])),
+        decisions: Object.fromEntries(decisionKeys.map((k, i) => [k, decSnaps[i].exists() ? decSnaps[i].data() : null])),
+        tasks: taskRows,
       }
-      ;(add.decisions ?? []).forEach((d, i) => {
-        if (!decSnaps[i].exists()) tx.set(doc(db, 'decisions', d.key), { ...d, answeredAt: null })
-      })
-      tx.set(migRef, { applied: [...applied, add.id] })
+      const plan = planAddition(add, snapshot)
+      if (plan.skip) return
+      for (const [area, data] of Object.entries(plan.areaDocs)) tx.set(doc(db, 'safe_content', area), data)
+      for (const t of plan.tasks) tx.set(doc(collection(db, 'tasks')), t)
+      for (const [key, d] of Object.entries(plan.decisions)) tx.set(doc(db, 'decisions', key), d)
+      for (const { id, patch } of plan.taskPatches) tx.update(doc(db, 'tasks', id), patch)
+      for (const [key, patch] of Object.entries(plan.decisionPatches)) tx.update(doc(db, 'decisions', key), patch)
+      tx.set(migRef, { applied: plan.applied })
     })
   }
 }

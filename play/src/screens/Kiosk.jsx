@@ -3,7 +3,7 @@ import { useAuthUid, useDoc, useServerClock, useTick } from '../lib/hooks'
 import { callRelayAdvance } from '../firebase'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
-import { ACTS } from '../lib/content'
+import { ACTS, studyLines } from '../lib/content'
 
 // The room screens: /play/?kiosk=living | bedroom. A kiosk is a browser on a
 // MacBook pointed at the host, signed in anonymously like a phone. It shows
@@ -19,6 +19,7 @@ export default function Kiosk({ which }) {
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
   const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
+  const content = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/content` : null)
   const trace = useDoc(nightId && which !== 'study' ? `nights/${nightId}/public/trace` : null)
   const finale = useDoc(nightId && which === 'living' ? `nights/${nightId}/public/finale` : null)
   const serverNow = useServerClock(uid, nightId, `kiosk-${which}`)
@@ -29,7 +30,7 @@ export default function Kiosk({ which }) {
   if (!uid || !nightId || !n) return <Idle title="Sirwin Manor" line="The house is quiet." />
 
   if (which === 'bedroom') return <Bedroom relay={r} trace={trace.data} />
-  if (which === 'study') return <Study study={study.data} rotation={rotation.data} serverNow={serverNow} />
+  if (which === 'study') return <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
   return <Living night={n} relay={r} trace={trace.data} finale={finale.data} serverNow={serverNow} nightId={nightId} />
 }
 
@@ -353,27 +354,17 @@ export function TugOfWar({ graph }) {
 // ---- the study screen -----------------------------------------------------
 // The M1 Air's own screen. Granolia, the three jewels, the clock, her hints.
 // Everything here is counts and words from the station; the clue never comes
-// through this screen. (Granolia's lines are defaults; the workshop can
-// replace them once a "study lines" list exists.)
+// through this screen. Granolia's lines: the workshop's study lines list,
+// with a plain default for each moment.
 
 const CAP_MS = 15 * 60_000
 
-const SAY = {
-  idle: 'Touch any panel to begin. The wall will show you a pattern; touch it back.',
-  playing: 'Watch.',
-  reproducing: 'Now you. Touch them in the same order.',
-  entering: 'Look at the other wall. A colour, and a number of bars. Press them on the button box, then Submit.',
-  slow: 'Again, slower. I have all day. Well. Fifteen minutes.',
-  map: 'Here, I have numbered them for you. Follow the numbers.',
-  halfColour: 'The number is right, dear. Look at the colour again.',
-  halfNumber: 'The colour is right, dear. Count the bars again.',
-  neither: 'Neither half, I am afraid. Look again at both.',
-  time: 'Three minutes left, dear. Not that I am counting. I am counting.',
-  solved: 'Oh, well done. Something has been sent to your phones. Off you go.',
-  capped: 'Thank you for trying your best. Here is the rest. Something has been sent to your phones. Off you go.',
-}
+// Granolia's lines come from the workshop's study lines list (published with
+// the night's content) over the phone's defaults; see lib/content.js.
 
-export function Study({ study, rotation, serverNow }) {
+export function Study({ study, rotation, serverNow, lines = null }) {
+  const L = lines ?? studyLines(null)
+  const SAY = { idle: L.IDLE, playing: L.PLAYING, reproducing: L.REPRODUCING, entering: L.ENTERING, slow: L.SLOW, map: L.MAP, halfColour: L['HALF COLOUR'], halfNumber: L['HALF NUMBER'], neither: L.NEITHER, time: L.TIME, solved: L.SOLVED, capped: L.CAPPED }
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
   const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null

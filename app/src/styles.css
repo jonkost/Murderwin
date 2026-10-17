@@ -409,3 +409,8 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .field.check { grid-template-columns: auto 1fr; align-items: center; }
 .field.check input { width: 1.3rem; height: 1.3rem; margin: 0; }
 .field.check span { color: var(--ink, inherit); font-size: 1rem; }
+
+/* the freeze (18 Oct 2026): read-only lists carry a banner; the rail says so */
+.banner.frozen { background: var(--field); color: var(--ink); border: 1px solid var(--line, rgba(0,0,0,0.15)); padding: 0.7rem 1rem; margin-bottom: 1rem; font-weight: 600; position: sticky; top: 0.5rem; z-index: 10; border-radius: var(--r-group); }
+.items.frozen, .scenarios.frozen { opacity: 0.85; }
+.rail-frozen { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); padding: 0.2rem 0.8rem 0.6rem; }
