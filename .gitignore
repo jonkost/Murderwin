@@ -41,3 +41,7 @@ art/
 # the local emulators (npm run emulate): their logs and any exported data
 .emulator-data/
 *-debug.log
+
+# the sound files themselves (one per cue, media/README.md): Jon's recordings and the stand-in tones stay local
+media/*
+!media/README.md

@@ -8,7 +8,11 @@
 //   npm start            the real bridge and speaker (cues/.env)
 //   npm start -- --lights   list the bridge's lights and their ids, then quit
 //   npm run fake         no hardware: prints what it would do
-//     keys in fake mode: r → hall red, g → hall green, s → a test sound id
+//     keys in fake mode: r → hall red, g → hall green, s → the next sound in the catalogue
+//
+// It refuses to start while any id in the catalogue (lib/cues.js SOUND_IDS)
+// has no file under media/; scripts/make-placeholder-sounds.mjs makes a
+// stand-in tone for each until the real recordings are in.
 
 import { readFileSync, existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -17,7 +21,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { plan, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS } from './lib/cues.js'
+import { plan, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, missingSoundFiles } from './lib/cues.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue } from './lib/hue.js'
@@ -34,6 +38,16 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env }
 const MEDIA_DIR = resolve(here, env.MEDIA_DIR || '../media')
 
+// Every sound in the catalogue needs a file before the night starts. The
+// missing ids are printed (ids only, never what they are for) and the relay
+// quits; in fake mode it carries on and says what it would have played.
+const missing = missingSoundFiles(MEDIA_DIR, existsSync)
+if (missing.length && !LIST) {
+  console.log(`${missing.length} of ${SOUND_IDS.length} sounds have no file in ${MEDIA_DIR}: ${missing.join(' ')}`)
+  console.log('run `node scripts/make-placeholder-sounds.mjs` for stand-in tones, or drop the recordings in (media/README.md)')
+  if (!FAKE) process.exit(2)
+}
+
 // Same public web config as the phones (play/src/firebase.js).
 const firebaseConfig = {
   apiKey: 'AIzaSyBmb8V5vrj1Qt5l2m8Ook24vHWUfLiXGbA',
@@ -49,9 +63,9 @@ if (env.MURDERWIN_EMULATOR === '1') firebaseConfig.projectId = env.MURDERWIN_PRO
 let hue = null
 if (!FAKE) {
   const problem = bridgeHostProblem(env.HUE_BRIDGE_HOST)
-  if (problem) log(`${problem} (cues/.env) — the hall light is off duty; the TV announces the door anyway`)
+  if (problem) log(`${problem} (cues/.env): the hall light is off duty; the TV announces the door anyway`)
   else {
-    try { hue = new Hue({ host: env.HUE_BRIDGE_HOST, key: env.HUE_APP_KEY, log }) } catch (e) { log(e.message, '— the hall light is off duty; the TV announces the door anyway') }
+    try { hue = new Hue({ host: env.HUE_BRIDGE_HOST, key: env.HUE_APP_KEY, log }) } catch (e) { log(e.message, 'the hall light is off duty; the TV announces the door anyway') }
   }
 }
 if (LIST) {
@@ -104,6 +118,7 @@ function apply() {
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
     if (a.type === 'sound') playSound(a.id)
+    if (a.type === 'refused') log(`[sound] refused ${a.count} id outside the catalogue`)
   }
 }
 
@@ -136,14 +151,15 @@ async function heartbeat() {
 }
 setInterval(heartbeat, PRESENCE_MS)
 
+let fakeSound = 0
 if (FAKE && process.stdin.isTTY) {
   process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding('utf8')
   process.stdin.on('data', ch => {
     if (ch === '\u0003') process.exit(0)
     if (ch === 'r') { docs = { ...docs, cues: { hall: 'red' } }; apply() }
     if (ch === 'g') { docs = { ...docs, cues: { hall: 'green' } }; apply() }
-    if (ch === 's') { docs = { ...docs, sounds: { current: { id: 'TEST', at: Date.now() } } }; apply() }
+    if (ch === 's') { docs = { ...docs, sounds: { current: { id: SOUND_IDS[fakeSound++ % SOUND_IDS.length], at: Date.now() } } }; apply() }
   })
-  log('fake mode: r hall red · g hall green · s test sound')
+  log('fake mode: r hall red · g hall green · s the next sound in the catalogue')
 }
 log('cue relay up', FAKE ? '(fake)' : '', `media: ${MEDIA_DIR}`)

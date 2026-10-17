@@ -13,6 +13,19 @@ export function hallColour({ cues, relay } = {}) {
   return null
 }
 
+// The sound catalogue: one file per id in media/ (media/README.md). This is
+// a copy of functions/lib/screen.js SOUND_IDS; a test on each side checks
+// the two agree. An id outside it is refused, counted, never played.
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power']
+export function knownSound(id) { return SOUND_IDS.includes(id) }
+
+// Which ids have no file under `dir` (by any accepted extension). The relay
+// refuses to start while this is not empty, so a missing file is found at
+// the start of the evening, not at the beat.
+export function missingSoundFiles(dir, exists, ids = SOUND_IDS) {
+  return ids.filter(id => !soundCandidates(dir, id).some(f => exists(f)))
+}
+
 // A sound older than this is remembered but not played: a relay started (or
 // restarted) an hour into the night must not replay the last cue.
 export const SOUND_STALE_MS = 30_000
@@ -27,7 +40,8 @@ export function plan(prev, next, now = Date.now()) {
   const soundAt = stamp(next.sounds?.current?.at)
   const key = soundId ? `${soundId}@${soundAt}` : null
   const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
-  if (key && key !== prev.sound && fresh) actions.push({ type: 'sound', id: soundId })
+  // an unknown id is refused once (counted, never named in the log); a known one plays
+  if (key && key !== prev.sound && fresh) actions.push(knownSound(soundId) ? { type: 'sound', id: soundId } : { type: 'refused', count: 1 })
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
 }
 
