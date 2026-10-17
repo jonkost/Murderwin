@@ -245,6 +245,7 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
             state: 'done', doorOpen: true, lastResult: 'right', options: null, votesIn: 0,
             finishedAt: at(now, 0), stats: { totalSeconds, misses },
           })
+          tx.set(db.doc(`nights/${nightId}/public/sounds`), { current: { id: 'sting-door', at: at(now, 0) } }, { merge: true }) // the door sting (screen.js SOUND_IDS)
           return { moved: true, state: 'done' }
         }
         const nextGrid = d.grids[p.grid]

@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS } from '../lib/cues.js'
+import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles } from '../lib/cues.js'
+import { SOUND_IDS as SERVER_SOUND_IDS } from '../../functions/lib/screen.js'
 import { readFileSync } from 'node:fs'
 import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
 
@@ -31,26 +32,58 @@ test('plan: red → green once; the same docs again do nothing; a reload does no
 
 test('plan: a sound id plays once per arrival, and again only when re-sent with a new stamp', () => {
   let s = { hall: null, sound: null }
-  let r = plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } }, 1000)
-  assert.deepEqual(r.actions, [{ type: 'sound', id: '7F3A' }])
+  let r = plan(s, { sounds: { current: { id: 'chime-news', at: 1000 } } }, 1000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news' }])
   s = r.state
-  assert.deepEqual(plan(s, { sounds: { current: { id: '7F3A', at: 1000 } } }, 1000).actions, [])
-  r = plan(s, { sounds: { current: { id: '7F3A', at: 2000 } } }, 2000)
-  assert.deepEqual(r.actions, [{ type: 'sound', id: '7F3A' }])
-  r = plan(r.state, { sounds: { current: { id: 'B2C4', at: { toMillis: () => 3000 } } } }, 3000)
-  assert.deepEqual(r.actions, [{ type: 'sound', id: 'B2C4' }])
+  assert.deepEqual(plan(s, { sounds: { current: { id: 'chime-news', at: 1000 } } }, 1000).actions, [])
+  r = plan(s, { sounds: { current: { id: 'chime-news', at: 2000 } } }, 2000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news' }])
+  r = plan(r.state, { sounds: { current: { id: 'sting-door', at: { toMillis: () => 3000 } } } }, 3000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'sting-door' }])
 })
 
 test('plan: a relay that starts an hour in does not replay the last sound; the next new one still plays', () => {
   const t = 10_000_000
   const fresh = { hall: null, sound: null }
-  const old = plan(fresh, { sounds: { current: { id: '7F3A', at: t - 60 * 60_000 } } }, t)
+  const old = plan(fresh, { sounds: { current: { id: 'chime-news', at: t - 60 * 60_000 } } }, t)
   assert.deepEqual(old.actions, [], 'an old cue is remembered, not performed')
-  assert.equal(old.state.sound, `7F3A@${t - 60 * 60_000}`)
-  const next = plan(old.state, { sounds: { current: { id: '7F3A', at: t + 5000 } } }, t + 5000)
-  assert.deepEqual(next.actions, [{ type: 'sound', id: '7F3A' }])
-  const edge = plan(fresh, { sounds: { current: { id: 'B2C4', at: t - SOUND_STALE_MS + 1000 } } }, t)
-  assert.deepEqual(edge.actions, [{ type: 'sound', id: 'B2C4' }], 'inside the window still plays')
+  assert.equal(old.state.sound, `chime-news@${t - 60 * 60_000}`)
+  const next = plan(old.state, { sounds: { current: { id: 'chime-news', at: t + 5000 } } }, t + 5000)
+  assert.deepEqual(next.actions, [{ type: 'sound', id: 'chime-news' }])
+  const edge = plan(fresh, { sounds: { current: { id: 'sting-door', at: t - SOUND_STALE_MS + 1000 } } }, t)
+  assert.deepEqual(edge.actions, [{ type: 'sound', id: 'sting-door' }], 'inside the window still plays')
+})
+
+test('the catalogue: every id is accepted, an unknown one is refused with a count and no id, and the server list is the same', () => {
+  assert.deepEqual(SOUND_IDS, SERVER_SOUND_IDS, 'cues/lib/cues.js and functions/lib/screen.js agree')
+  let s = { hall: null, sound: null }
+  let t = 1000
+  for (const id of SOUND_IDS) {
+    assert.ok(knownSound(id))
+    const r = plan(s, { sounds: { current: { id, at: t } } }, t)
+    assert.deepEqual(r.actions, [{ type: 'sound', id }])
+    s = r.state; t += 10
+  }
+  assert.ok(!knownSound('7F3A'))
+  const refused = plan(s, { sounds: { current: { id: '7F3A', at: t } } }, t)
+  assert.deepEqual(refused.actions, [{ type: 'refused', count: 1 }], 'a count, never the id')
+  assert.equal(refused.state.sound, `7F3A@${t}`, 'remembered, so it is refused once, not on every snapshot')
+  assert.deepEqual(plan(refused.state, { sounds: { current: { id: '7F3A', at: t } } }, t).actions, [])
+  // the relay logs the refusal as a count only
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes("a.type === 'refused'") && src.includes('refused ${a.count} id'), 'a count-only log line')
+})
+
+test('missing files: the ids with no file under media, by any accepted extension; the relay refuses to start on any', () => {
+  const have = new Set(['/m/chime-news.m4a', '/m/sting-door.wav', '/m/power.mp3'])
+  const missing = missingSoundFiles('/m', f => have.has(f))
+  assert.equal(missing.length, SOUND_IDS.length - 3)
+  assert.ok(!missing.includes('chime-news') && !missing.includes('sting-door') && !missing.includes('power'))
+  assert.deepEqual(missingSoundFiles('/m', () => true), [])
+  assert.deepEqual(missingSoundFiles('/m', () => false, ['x']), ['x'])
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('missingSoundFiles(MEDIA_DIR, existsSync)') && src.includes('process.exit(2)'), 'quits before watching anything')
+  assert.ok(src.indexOf('missingSoundFiles(MEDIA_DIR') < src.indexOf('initializeApp('), 'the check runs before the sign-in')
 })
 
 test('the heartbeat row is the shape the rules allow, under the guest key cues, once a minute', () => {
@@ -100,7 +133,7 @@ test('bridgeFetch settles when the bridge drops the connection mid-response', as
 })
 
 test('sound files are looked up by id and extension, and ids are kept to safe characters', () => {
-  assert.deepEqual(soundCandidates('/m', '7F3A'), ['/m/7F3A.m4a', '/m/7F3A.mp3', '/m/7F3A.wav', '/m/7F3A.aiff'])
+  assert.deepEqual(soundCandidates('/m', 'chime-news'), ['/m/chime-news.m4a', '/m/chime-news.mp3', '/m/chime-news.wav', '/m/chime-news.aiff'])
   assert.deepEqual(soundCandidates('/m', '../etc'), ['/m/etc.m4a', '/m/etc.mp3', '/m/etc.wav', '/m/etc.aiff'])
   assert.deepEqual(soundCandidates('/m', ''), [])
 })

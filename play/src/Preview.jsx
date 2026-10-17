@@ -21,8 +21,10 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
 // kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal,
 // kiosk-finale-done, kiosk-living-turn, kiosk-living-vote, kiosk-study,
-// kiosk-study-fallback (full-bleed, as on the MacBooks). The Host tab's house
-// panel: host-house, host-house-window.
+// kiosk-study-fallback (full-bleed, as on the MacBooks), and the screens the
+// beats name: kiosk-news, kiosk-bulletin, kiosk-irwin, kiosk-black,
+// kiosk-board, kiosk-ipad, kiosk-living-done, kiosk-living-rules. The Host
+// tab's house panel: host-house, host-house-window.
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
 // then one per thing a phone is dealt: act1, orient, news, go, testimony,
 // deflect, puzzle, document, questions, checkin, dinner, groups, study, cat,
@@ -140,7 +142,27 @@ const FINALE = (agoMs) => ({
     running: [{ act: 2, value: 1 }, { act: 4, value: -2 }, { act: 6, value: 1 }] },
   rehearsal: true,
 })
+// the public screen doc, as the server shapes it (functions/lib/screen.js): kind, title, lines, never a secret
+const SCREEN = (kind, extra = {}) => ({ kind, title: '', lines: [], at: stamp(PHASE_AT), holdMs: 0, rehearsal: true, act: 2, beat: 'news', captions: null, ...extra })
+const NEWS_LINES = ['...residents further report (Rehearsal. The news fragment for this motive fills the gap here.). Authorities have declined to comment...']
+const BULLETIN = SCREEN('bulletin', { title: 'The bulletin', act: 3, beat: 'bulletin',
+  lines: [...NEWS_LINES, `The constable has ruled out number 4, "${motivesSeed.motives[3]?.rhyme}".`, `The constable has ruled out number 11, "${motivesSeed.motives[10]?.rhyme}".`],
+  struck: [{ n: 4, rhyme: motivesSeed.motives[3]?.rhyme }, { n: 11, rhyme: motivesSeed.motives[10]?.rhyme }] })
+const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', lines: ['Oh! Everyone is here. I have something to say.', '(Rehearsal. Irwin line two.)', 'That is everything. I am a good boy.'] })
+// nine guests with a strike each, two of them picked by the server for a silent phone: the board must not tell
+const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2 }, ana: { name: 'Ana', characterId: 'devine', bag: 4 }, kit: { name: 'Kit', characterId: 'barnes', bag: 5 }, ren: { name: 'Ren', characterId: 'steeps', bag: 7 }, oli: { name: 'Oli', characterId: 'vayne', bag: 9 } }
+const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
 const KIOSK = {
+  'kiosk-news': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'news' }} relay={null} trace={null} finale={null} screen={SCREEN('news', { title: 'News', lines: NEWS_LINES })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-bulletin': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'bulletin' }} relay={null} trace={null} finale={null} screen={BULLETIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-irwin': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'irwin' }} relay={null} trace={null} finale={null} screen={IRWIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-black': (night, serverNow) => <Living night={{ ...night, act: 1, beat: 'ready', phase: 'blackout' }} relay={null} trace={null} finale={null} screen={SCREEN('black')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-paused': (night, serverNow) => <Living night={{ ...night, phase: 'paused' }} relay={null} trace={null} finale={null} screen={SCREEN('black', { title: 'One moment' })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-board': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'eliminate', roster: NINE, eliminations: STRIKES, window: { id: 'e', kind: 'eliminate', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 90000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('board', { title: 'The deduction round', act: 6, beat: 'eliminate' })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-ipad': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'Supper Is Served', act: 3, beat: 'groups', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
+  'kiosk-living-done': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now() - 12000), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-hold': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now()), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-rules': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={{ ...relayDoc('walk'), gridDone: [], turnIndex: 0, walkEndsAt: stamp(Date.now() + 19000) }} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-bedroom-closed': () => <Bedroom relay={null} trace={null} />,
   'kiosk-bedroom-1': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(1)} />,
   'kiosk-bedroom-2': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(2)} />,

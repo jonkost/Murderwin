@@ -39,7 +39,7 @@ phone's Host tab are in bold type. A test checks that every one of them exists.
 | Living room MacBook Pro | The TV: the drawing, the ballot clock, the reveal. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Bedroom MacBook Pro | The trace behind the door. | The same address with `?kiosk=bedroom`. Door closed. |
 | Study M1 Air | The light puzzle and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
-| The iPad | A spare screen or a spare phone. | Open the game address. The same page does both. |
+| The iPad | The words of the news and the bulletin, kept up through dinner. A spare phone. | `?kiosk=ipad` on a stand in the orangery, or the plain game address to use it as a phone. |
 | Your phone and Susan's | The Host tab. | Type your names at the door. The tab appears on its own. |
 
 The game itself lives on the internet at https://murderwin-at-sirwin-manor.web.app/play/.
@@ -64,10 +64,19 @@ game; it serves the bulb and the speakers.
    the M1 Air, then `cd station && npm start`. Alive when the terminal prints
    `study station up` with the panel counts. `DOWN` beside either wall means
    the game runs on the screen instead; the clue still lands.
-5. *The screens.* Open the three kiosk addresses, full screen. Each shows
-   its crest and a waiting line. They follow the night on their own; nothing
-   on them is ever pressed.
-6. *The guests.* They scan the slide, type their name, and are dealt a
+5. *The screens.* Open the three kiosk addresses (and the iPad's), full
+   screen. Each one asks for one tap to wake, so the browser lets it make a
+   sound; tap it once and leave it. Then each shows its crest and a waiting
+   line. They follow the night on their own; nothing else on them is ever
+   pressed. A small dot in the bottom left corner is green while the screen
+   can hear the house, amber if it has gone quiet, red if it is off the wifi.
+   A bell in the top right corner shows for three seconds whenever a sound
+   is called for, so you can tell a silent speaker from a missed cue.
+6. *The sounds.* The brain will not start the cue relay while any of the
+   nine sound files is missing from `media/`; it prints which. Until you have
+   recorded them, `node scripts/make-placeholder-sounds.mjs` makes a stand-in
+   tone for each (`media/README.md` lists what each one is for).
+7. *The guests.* They scan the slide, type their name, and are dealt a
    character and a bag number. Watch the green dots fill in.
 
 ## Running the night
@@ -91,7 +100,13 @@ game; it serves the bulb and the speakers.
   long: the group still in there is paid its clue when the house moves on.
 - Act 6: **Next** starts the drawing. While it runs, **Next** refuses to leave
   it. **Clear the drawing** only if the drawing must be abandoned; the trace
-  then comes out at its plain level.
+  then comes out at its plain level. When the third drawing is named the TV
+  says the door is open; **Next** then opens the deduction round, and the TV
+  shows every character with the thing they struck out beneath.
+- The TV shows the news in Act 2, the bulletin in Act 3 and Sir Irwin in Act
+  5 on its own when **Next** reaches those beats; the phones say where to
+  look. The iPad keeps the words of the news and the bulletin up through
+  dinner for anyone who missed them.
 - Act 7: **Next** opens the ballot, two minutes. **Next** again reveals on the
   TV; wait for the screen to finish, then **Next** for everyone's result.
 - **Pause, Irwin needs the garden** stops every clock in the house. **Resume**
@@ -105,10 +120,10 @@ game; it serves the bulb and the speakers.
 | A borrowed phone that must change hands | **Hand this phone on** wipes it. The next person types their own name; the previous owner taps theirs on another phone and gets everything back. |
 | Your phone | Tap your name on Susan's phone or the iPad; the Host tab moves with you. The brain is the spare host: `node functions/host.mjs status` says where the night is, `node functions/host.mjs next` presses Next. It needs the key file described at the top of `functions/host.mjs`. |
 | The living room screen | Open the iPad at the same address and stand it on the TV. |
-| The bedroom screen | Nobody goes to the bedroom. The TV shows the trace at the ballot. |
+| The bedroom screen | Nobody goes to the bedroom. Press **Show the trace on the TV** under The Big Solve: ten seconds after the door opens, the TV shows the trace, and again at the ballot. |
 | The study station | Keep going. The group in the study is paid its clue when the house moves on, and Granolia's lines show on their phones. |
 | The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
-| The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue. |
+| The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers and nothing else. |
 | The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, **Pause, Irwin needs the garden**. |
 | The wrong group walks into the study | The group that was due is paid. Carry on. |
 | The night itself | Before the blackout, **Start a new night** deals new characters and every phone types its name again. After the blackout, pause and think; a new night is a new case. |

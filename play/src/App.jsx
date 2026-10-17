@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
+import { relayRules } from './lib/screen'
 import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, presenceKey, roleCard, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
@@ -98,7 +99,7 @@ export default function App() {
   // The relay drawing (Act 6): while it runs, every phone is its surface.
   const r = relay.data
   if (r && ['walk', 'turn', 'vote', 'lockout'].includes(r.state)) {
-    return <>{banner}<Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} /></>
+    return <>{banner}<Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} rules={relayRules(ui['RELAY RULES'])} /></>
   }
   const doneKey = r?.state === 'done' ? `relay-${ms(r.startedAt)}` : null
   if (doneKey && !notes.seen[doneKey]) return <RelayDone uid={uid} relay={r} seenKey={doneKey} />

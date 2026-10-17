@@ -30,7 +30,7 @@ export function timingOf(relay) {
   return { TURN_MS: pick('turnMs'), WALK_MS: pick('walkMs'), PULL_MS: pick('pullMs'), VOTE_MS: pick('voteMs'), LOCKOUT_MS: pick('lockoutMs') }
 }
 
-export default function Relay({ uid, night, session, relay, serverNow }) {
+export default function Relay({ uid, night, session, relay, serverNow, rules = null }) {
   useTick(250)
   const me = session.guestKey
   const { TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } = timingOf(relay)
@@ -73,6 +73,7 @@ export default function Relay({ uid, night, session, relay, serverNow }) {
       <div className="moment relay papered">
         <Seal />
         <p className="crest">Grid {relay.grid} · {relay.gridSize} by {relay.gridSize}</p>
+        {first && (relay.grid ?? 1) === 1 && rules && <ol className="relay-rules">{rules.map((l, i) => <li key={i}>{l}</li>)}</ol>}
         {mine ? (
           <>
             <p className="moment-text">You’re up next. Walk to the paper.</p>

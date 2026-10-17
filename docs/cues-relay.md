@@ -18,9 +18,16 @@ blind"), the game design doc's "blind relay" section, and
   is open" anyway, so the game never depends on it.
 - **Sounds.** When the night asks for a sound, the relay plays the file with
   that name from the `media` folder, through whatever the Mac's sound is
-  pointed at (the AirPlay group). A file is named after its id and nothing else:
-  `7F3A.m4a`. Adding a sound is dropping a file in; no code changes. A missing
-  file is one line in the log, not a crash.
+  pointed at (the AirPlay group). There are nine, listed in `media/README.md`
+  with the moment each one plays: `chime-news`, `sounder-bulletin`,
+  `chime-irwin`, `sting-solved`, `sting-door`, `sting-reveal`, `sting-result`,
+  `blackout` and `power`. A file is named after its id and nothing else:
+  `chime-news.m4a`. Every file starts with one second of silence (the pad
+  rule) so the speakers have woken up before the sound begins. The relay
+  refuses to start while any of the nine has no file, and says which; until
+  you have recorded them, `node scripts/make-placeholder-sounds.mjs` writes a
+  stand-in tone for each. An id it does not know is refused and counted,
+  never played.
 
 It reads only public documents, the same ones any phone may read. It never
 calls the server, never sees a clue, and never prints anything but "hall
@@ -53,15 +60,22 @@ controllers, so it is where the relay expects it on the night.
 - [ ] `npm start` in `cues/` is running in a terminal window you can see.
 - [ ] Start the night from the Host tab: the log says `[hall] red` and the bulb
       agrees. If it says `failed … retrying`, check the bridge address.
-- [ ] Sound files are in `media/`, named by id, and the Mac's output is the
-      right speaker group. Play one with `afplay media/<id>.m4a` to check.
+- [ ] All nine sound files are in `media/` (the relay will not start without
+      them) and the Mac's output is the right speaker group. Play one with
+      `afplay media/chime-news.m4a` (or `.wav` for a stand-in) to check.
+- [ ] The living room screen shows a small bell in the corner for three
+      seconds whenever a sound is called for. If you see the bell and hear
+      nothing, the relay or the speakers are the problem, not the night.
 
 ## If it fails
 
 The bulb stays whatever colour it was. The TV announces the open door, the
 phones say "the light in the hall is green" regardless, and the bedroom screen
-shows the trace. Nothing waits on the relay. `npm run fake` runs it without
-any hardware and prints what it would have done; press `r`, `g` or `s` to try it.
+shows the trace. Nothing waits on the relay. The living room screen rings its
+own small chime and shows the bell for every cue, so a dead relay costs the
+room the big speakers, not the moment. `npm run fake` runs it without any
+hardware and prints what it would have done; press `r`, `g` or `s` to try it
+(`s` steps through the nine sounds in turn).
 
 ---
 
@@ -79,15 +93,24 @@ requests (`PUT /clip/v2/resource/light/{id}` with `hue-application-key`,
 body `{ on, dimming, color: { xy } }`) over `node:https` with
 `rejectUnauthorized: false` for that connection only; `--lights` lists ids.
 Sounds: `afplay` on the first of `<id>.m4a|mp3|wav|aiff` under `MEDIA_DIR`
-(default `../media`), ids stripped to `[A-Za-z0-9_-]`.
+(default `../media`), ids stripped to `[A-Za-z0-9_-]`. `SOUND_IDS` in
+`lib/cues.js` mirrors `functions/lib/screen.js` (tests on both sides assert
+equality); `plan` turns an unknown id into `{ type: 'refused', count: 1 }`,
+logged as a count; `missingSoundFiles(dir, exists)` runs before the sign-in
+and exits 2 on any missing id (fake mode warns and carries on).
+`scripts/make-placeholder-sounds.mjs` writes a 22 kHz mono WAV per id, one
+second of silence then a distinct figure (`FIGURES`), counts-only output.
 
 Docs it reads:
-- `nights/{id}/public/cues` `{ hall: 'red'|'green', changedAt }` — written by
+- `nights/{id}/public/cues` `{ hall: 'red'|'green', changedAt }`: written by
   `deal.ensureHallRed` when a night enters Act 1 and by `deal.revealTrace`
   when the relay drawing is done.
-- `nights/{id}/public/relay.doorOpen` — the relay's own flag, as a second source.
-- `nights/{id}/public/sounds` `{ current: { id, at } }` — nothing writes this
-  yet; the event system will. The relay plays whatever id arrives.
+- `nights/{id}/public/relay.doorOpen`: the relay's own flag, as a second source.
+- `nights/{id}/public/sounds` `{ current: { id, at } }`: written by
+  `screen.play` (functions/lib/screen.js): a beat's `sound` from
+  `seed/night.json` in `run.enterBeat`, the blackout and power commands, the
+  study finish (`sting-solved`) and the relay's done transition (`sting-door`,
+  one line in `relay.advance`). The relay plays any id in the catalogue.
 
 Tests: `node --test cues/test/*.test.mjs` (the planner, the Hue body and
 request shape, the file lookup). Fake mode: `npm run fake`.

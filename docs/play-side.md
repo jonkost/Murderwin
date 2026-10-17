@@ -147,8 +147,6 @@ named after the character (the README in that folder lists the names), then
   refused by code.
 - The secrets themselves: the generator needs your Anthropic key once, then
   Jenna reads every set. Until then every night deals bracketed stand-ins.
-- The room screens for the news flash, the Act 3 bulletin, Sir Irwin at cake
-  and the elimination board, with a sound for every cue.
 - The bag packing (a blind script) and the seven stationery pictures; the
   stand-ins work until then.
 - The finale staging on the TV and tappable achievements.
@@ -160,7 +158,11 @@ bridge and cat testimony with the safe, the Parlour Game windows, dinner to
 the reveal, the study light game and its station (`docs/study-light-game.md`),
 the relay drawing and the room screens for Acts 6 and 7
 (`docs/relay-drawing-game.md`), the cue relay (`docs/cues-relay.md`), the
-emulator, the eight fake players and the day-of runbook (`docs/on-the-night.md`).
+emulator, the eight fake players and the day-of runbook (`docs/on-the-night.md`),
+and (18 October) the screens for every beat that says look at the screen:
+the news flash, the Act 3 bulletin, Sir Irwin at cake, the board of strikes
+and the door on the TV, the iPad as a captions screen, and a sound for every
+cue (`docs/room-screens.md`).
 
 ## Cats tab: where you stand (built 16 Oct 2026)
 
