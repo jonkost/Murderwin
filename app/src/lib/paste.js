@@ -193,7 +193,7 @@ export function parsePaste(area, raw, { fields, codec, options = {} } = {}) {
   return out
 }
 
-// Push and pull sets. A set is three questions, each followed by its
+// Parlour Game sets. A set is three questions, each followed by its
 // choices with points, like:
 //   Do you care which way your toilet paper sits?
 //   Yes +5

@@ -169,7 +169,7 @@ const CARDS = {
     doneLine: 'Every door in the house has its little sign. Even the ones that stick.',
   },
   act_scripts: {
-    what: 'One sentence per act saying where to be and what to do. The act’s name (The Plot Thickens, Paws for Thought) is fixed and already on every phone.',
+    what: 'One sentence per act saying where to be and what to do. The act’s name (Behind Closed Doors, The Final Hour) is fixed and already on every phone.',
     where: 'The top of every phone the moment an act begins, under the act’s name.',
     howTo: 'Two short sentences at most: where to be (everyone together, scattered alone, in pairs), then what to do. Plain words an eleven-year-old gets in one pass.',
     example: [
@@ -207,10 +207,10 @@ const CARDS = {
   },
   filler: {
     what: 'The old way of keeping ordinary phones busy while two guests chose an event. Retired.',
-    where: 'Nowhere now. The push and pull questions do this job, on every phone at once.',
+    where: 'Nowhere now. The Parlour Games do this job, on every phone at once.',
     howTo: 'Leave this list alone. Write questions instead.',
     example: [],
-    emptyState: 'Retired. Write push and pull questions instead.',
+    emptyState: 'Retired. Write Parlour Games instead.',
     doneLine: 'Retired with honours.',
   },
   event_cards: {

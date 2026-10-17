@@ -19,7 +19,7 @@ Content is divided into two classes:
 - Voice layers: cat openers, cat closers, cat deflection lines
 - Variable pools: rooms, times, durations, counts, places, witnesses
 - Echo frames (news wrappers with a ███ slot)
-- The push and pull question bank: questions, choices and their points
+- The Parlour Games bank: questions, choices and their points
 - Blank stationery templates (7 designs)
 - All code, schemas, validators, and this file
 
@@ -30,8 +30,10 @@ Content is divided into two classes:
 - The manifest: any mapping between opaque codes and motives
 - Any per-game generated case (murderer, victim, active motive, clue placement)
 - Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels),
-  including which push and pull sets the two hidden roles receive and how
-  their points map to the clarity dial
+  including which Parlour Game sets the two hidden roles receive and how
+  their points map to the clarity dial. The dial has no slider on any phone
+  (Jon, 16 Oct 2026): it is revealed in the Act 7 graph. The hidden roles'
+  answers move their cat sliders like everyone else's, so no phone is a tell.
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
 
 ### The Steward exception (decided by Jon, 28 Sep 2026)
@@ -161,8 +163,9 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   Pass comfortably = full answer, narrowly = partial, fail = in-character
   deflection, no penalty. Cat distortion applied on top.
   DECIDED 12 Oct 2026 (Jon): affection moves during the night, through the
-  push and pull questions (below). Nothing else moves it.
-- Push and pull questions (decided 12 Oct 2026, Jon's whiteboard): in Acts 2,
+  Parlour Games (below). Nothing else moves it.
+- Parlour Games (decided 12 Oct 2026, Jon's whiteboard; called "push and pull
+  questions" in docs before 13 Oct): in Acts 2,
   4 and 6 every phone lights up at once with one set: three silly questions
   in a row, two choices each (a third or fourth when needed), points on each
   choice, the same next question whatever was picked. The bank is SAFE

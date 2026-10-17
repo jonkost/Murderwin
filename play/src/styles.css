@@ -45,11 +45,11 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background-color: var(--paper-color, var(--brand-red));
   opacity: var(--paper-opacity, 0.55);
-  -webkit-mask: url('/play/brand/pattern.svg') center top / var(--paper-size, 160vw) repeat;
-  mask: url('/play/brand/pattern.svg') center top / var(--paper-size, 160vw) repeat;
+  -webkit-mask: url('/play/brand/pattern.svg') center top / var(--paper-size, 210vw) repeat;
+  mask: url('/play/brand/pattern.svg') center top / var(--paper-size, 210vw) repeat;
 }
 .moment, .join { background: var(--bg); }
-.act.papered { --paper-opacity: 0.35; --paper-size: 160vw; }
+.act.papered { --paper-opacity: 0.35; --paper-size: 210vw; }
 /* the whole phone sits on the wallpaper; the sheet and cards are solid so text stays easy */
 .rest { background: var(--bg); }
 .rest.papered { --paper-opacity: 0.35; }
@@ -240,3 +240,185 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk-big.entry { font-size: 7vw; text-transform: capitalize; color: var(--good); }
 .kiosk-count.warn { color: var(--brand-red); }
 .wall-map { width: 50vw; max-height: 40vh; margin: 1vw 0; }
+
+/* ---- what a phone is dealt (the Now tab, the Clues tab) ---- */
+.now { display: grid; gap: 1rem; }
+.quiet-line { text-align: center; color: var(--dim); margin: 1.4rem 0 0.4rem; }
+.dealt { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 1rem 1.1rem; display: grid; gap: 0.7rem; }
+.dealt h3 { margin: 0; font-size: 1.35rem; line-height: 1.2; }
+.dealt p { margin: 0; }
+.dealt .big { justify-self: center; margin-top: 0.3rem; }
+.dealt .eyebrow, .clues .eyebrow { margin: 0; color: var(--dim); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.dealt.go, .dealt.notice { text-align: center; justify-items: center; }
+.chip-tag { justify-self: start; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--brand-parchment); background: var(--brand-claret); border-radius: 0.4rem; padding: 0.15rem 0.5rem; }
+.badge { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--accent); margin-left: 0.35rem; vertical-align: middle; }
+
+/* cat faces */
+.face { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; flex: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5)); }
+.face img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.face-initial { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--brand-claret); }
+.face-l { width: 5.5rem; height: 5.5rem; }
+.face-initial { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 1.4rem; }
+
+/* a cat speaks */
+.speaker { display: flex; align-items: center; gap: 0.8rem; }
+.speaker .where { color: var(--dim); font-size: 0.9rem; }
+.speaker .chip-tag { margin-left: auto; }
+.said { display: grid; gap: 0.55rem; font-size: 1.1rem; }
+.said.deflect { font-style: italic; color: var(--dim); }
+.testimony.compact .said { font-size: 1rem; }
+
+/* the safe */
+.safe { display: grid; gap: 0.8rem; justify-items: center; }
+.dials { display: flex; gap: 0.6rem; }
+.dial { width: 4rem; height: 3.6rem; text-align: center; font: inherit; font-size: 1.6rem; font-variant-numeric: tabular-nums; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 0.6rem; }
+.dial:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+
+/* a document on stationery */
+.document .paper { background: var(--brand-parchment); color: #2a1f1a; border-radius: 0.4rem; padding: 1.1rem 1.2rem; display: grid; gap: 0.6rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transform: rotate(-0.6deg); }
+.paper-kind { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b5a4e; }
+.paper-big { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 2rem; font-weight: 700; letter-spacing: 0.04em; line-height: 1; color: var(--brand-claret); }
+.paper-text { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 1.05rem; line-height: 1.4; }
+.paper-note { font-style: italic; color: #3b2d6b; font-size: 1rem; transform: rotate(1.2deg); justify-self: end; }
+
+/* groups and stations */
+.members { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 1.1rem; }
+.dim { color: var(--dim); }
+.station { justify-items: start; }
+.station .face-l { justify-self: center; }
+.station .big { justify-self: center; }
+.property { font-size: 1.4rem; justify-self: center; }
+.property strong { color: var(--good); font-size: 1.8rem; }
+.sequence { display: grid; gap: 0.6rem; justify-items: center; width: 100%; }
+.glyphs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; width: 100%; }
+.glyph { font-size: 2rem; min-height: 3.6rem; background: var(--bg); border: 1px solid var(--line); border-radius: 0.6rem; }
+.big-glyph { font-size: 4rem; min-height: 5rem; line-height: 5rem; margin: 0; }
+.sequence-done { color: var(--good); font-size: 1.2rem; }
+
+/* the result */
+.verdicts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.verdicts li { display: grid; grid-template-columns: 2rem 1fr; gap: 0.6rem; align-items: start; }
+.verdicts .mark { font-size: 1.5rem; line-height: 1.2; }
+.verdicts .right .mark { color: var(--good); }
+.verdicts .wrong .mark { color: var(--accent); }
+.eliminations ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+
+/* clues */
+.clues { display: grid; gap: 1rem; }
+.clues-act { display: grid; gap: 0.8rem; }
+
+/* ---- every phone lights up ---- */
+.window { justify-content: flex-start; padding-top: 1.6rem; }
+.window .ask { font-size: 1.7rem; margin: 0.4rem 0 0.6rem; }
+.asker { display: grid; justify-items: center; gap: 0.5rem; }
+.choices { display: grid; gap: 0.7rem; width: min(92vw, 24rem); }
+.choice { min-height: 3.8rem; font-size: 1.25rem; background: var(--card); border: 2px solid var(--line); border-radius: 0.9rem; padding: 0.6rem 1rem; }
+.choice:active { border-color: var(--accent); }
+.clock { display: grid; justify-items: center; margin-top: auto; padding-top: 1rem; }
+.clock .bar { margin-top: 0; }
+.clock .gloss { margin: 0.4rem 0 0; }
+.pick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; width: min(94vw, 26rem); }
+.pick { width: 100%; min-height: 3.2rem; text-align: left; display: flex; gap: 0.7rem; align-items: baseline; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.6rem 0.9rem; font-size: 1.05rem; }
+.pick .n { color: var(--dim); min-width: 1.4rem; flex: none; }
+.pick.on { border-color: var(--good); box-shadow: inset 0 0 0 1px var(--good); }
+.summary { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; font-size: 1.15rem; text-align: left; width: min(92vw, 24rem); }
+.summary .dim { display: block; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.role-card { font-size: 1.3rem; max-width: 22rem; }
+
+/* ---- getting started ---- */
+.welcome { justify-content: flex-start; padding-top: 2rem; }
+.welcome-body { display: grid; gap: 0.8rem; justify-items: center; max-width: 26rem; }
+.welcome-nav { justify-content: center; }
+.skip { border: none; }
+.bag-big { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 4rem; margin: 0; line-height: 1; color: var(--good); }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 0.8rem 1rem; width: 100%; text-align: left; }
+.household { list-style: none; margin: 0; display: grid; gap: 0.7rem; }
+.household li { display: flex; align-items: center; gap: 0.9rem; }
+.household .face-l { width: 3.6rem; height: 3.6rem; }
+.household-who { display: grid; gap: 0.05rem; min-width: 0; }
+.household-who strong { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
+.household-who .tag { color: var(--dim); font-size: 0.95rem; line-height: 1.25; }
+.tabs-explained { margin: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 0.9rem; row-gap: 0.55rem; align-items: baseline; }
+.tabs-explained dt { font-weight: 700; font-size: 1.05rem; }
+.tabs-explained dd { margin: 0; color: var(--ink); }
+.welcome .card { width: min(64%, 13rem); margin: 0.2rem auto 0.6rem; }
+.welcome .card .who { font-size: 1.1rem; min-height: 2.4rem; }
+.welcome .card .who.long { font-size: 0.95rem; }
+.welcome .card .profession { font-size: 0.95rem; padding: 0.4rem 0.6rem; }
+.welcome .moment-text { font-size: 1.1rem; }
+
+/* ---- the host's Run panel ---- */
+.run { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 0.9rem 1rem; margin: 0.9rem 0 0; }
+.run h3 { margin: 0 0 0.4rem; }
+.run-here { margin: 0; font-size: 1.15rem; }
+.run-what { margin: 0.2rem 0 0.6rem; }
+.run .host-msg { margin: 0 0 0.6rem; }
+.run-beats { margin-top: 0.4rem; }
+.run-beats summary { cursor: pointer; margin: 0; }
+.beat-list { margin: 0.5rem 0 0; padding-left: 1.4rem; display: grid; gap: 0.3rem; }
+.beat-list li.on { color: var(--good); }
+.beat-list li.done { color: var(--dim); }
+.beat { background: none; border: none; padding: 0.2rem 0; color: inherit; font-size: 1rem; text-align: left; }
+.tab { font-size: 0.95rem; padding: 0 0.2rem; }
+
+/* preview tour */
+.preview-tour { position: fixed; top: 0.4rem; left: 50%; transform: translateX(-50%); z-index: 9; display: flex; gap: 0.5rem; align-items: center; background: #333; border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.2rem 0.5rem; font-size: 0.8rem; color: var(--dim); }
+.preview-tour button { background: none; border: none; color: var(--ink); font-size: 1rem; padding: 0 0.3rem; }
+
+/* ---- the Cats tab: five gauges in a column, tap to open (16 Oct) ---- */
+.gauges { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.gauge-item { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; overflow: hidden; }
+.gauge-item.on { border-color: var(--good); }
+.gauge-row { width: 100%; display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.9rem 0.6rem 0.6rem; background: none; border: none; text-align: left; }
+.gauge-row .face-l { width: 4.6rem; height: 4.6rem; }
+.gauge-body { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
+.gauge-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
+.slider { display: grid; gap: 0.15rem; }
+.track { position: relative; height: 10px; border-radius: 5px; background: rgba(241, 232, 214, 0.15); display: flex; justify-content: space-between; align-items: center; margin: 0.7rem 0.8rem 0.3rem; }
+.stop { width: 10px; height: 10px; border-radius: 50%; background: rgba(241, 232, 214, 0.35); }
+.stop.lit { background: var(--good); }
+.marker { position: absolute; top: 50%; width: 28px; height: 28px; border-radius: 50%; background: var(--good); border: 3px solid var(--brand-parchment); box-shadow: 0 2px 10px rgba(0,0,0,0.5); transform: translate(-50%, -50%); transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.stop-word { margin: 0; font-size: 0.95rem; color: var(--dim); }
+.gauge-more { padding: 0.2rem 0.9rem 0.9rem; display: grid; gap: 0.5rem; border-top: 1px solid var(--line); }
+.gauge-more p { margin: 0; }
+.gauge-more .meaning { padding-top: 0.6rem; font-size: 1.05rem; }
+.gauge-more .cat-text { font-size: 0.95rem; }
+.gauge-more .standing { margin: 0; }
+
+/* the join screen when this phone's character moved elsewhere */
+.notice-line { max-width: 24rem; margin: 0.4rem auto 0; color: var(--dim); font-size: 1rem; }
+
+/* ---- a phone on a big screen: ?phone=1 ---- */
+.phone-stage { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: #0a0f14; padding: 1.5rem; }
+.phone-shell { position: relative; width: 393px; height: 852px; max-height: calc(100vh - 5rem); aspect-ratio: 393 / 852; border-radius: 48px; background: #000; padding: 12px; box-shadow: 0 0 0 2px #333, 0 30px 80px rgba(0,0,0,0.7); }
+.phone-screen { width: 100%; height: 100%; border: none; border-radius: 38px; background: var(--bg); display: block; }
+.phone-hint { color: var(--dim); font-size: 0.9rem; margin: 0; text-align: center; max-width: 24rem; }
+
+/* ---- the check page: ?check=1 ---- */
+.check { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.2rem 4rem; }
+.check h1 { font-size: 1.7rem; margin: 0 0 0.6rem; }
+.check h2 { font-size: 1.25rem; margin: 1.6rem 0 0.5rem; }
+.check h2 .gloss { font-size: 0.9rem; margin: 0 0 0 0.5rem; }
+.check-sum { font-size: 1.1rem; }
+.check .ok { color: var(--good); }
+.check .bad { color: #f0a090; }
+.check ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.check li { display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.4rem; align-items: start; padding: 0.5rem 0.7rem; background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; color: var(--ink); }
+.check li.bad { border-color: #8a3a2e; }
+.check .mark { font-size: 1.2rem; line-height: 1.3; }
+.check .where { color: var(--dim); }
+.check .shows { color: #f0a090; }
+
+/* a cat passing by, on the You tab */
+.passing { display: flex; align-items: center; gap: 0.8rem; text-align: left; margin: 1.4rem auto 0; max-width: 24rem; background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 0.7rem 0.9rem; }
+.passing p { margin: 0; font-style: italic; color: var(--dim); }
+.passing .idle-cat { font-style: normal; color: var(--ink); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* the i beside a motive, and its note */
+.motive-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: stretch; }
+.motive-row .motive-note { grid-column: 1 / -1; margin: 0; padding: 0.5rem 0.9rem 0.6rem; color: var(--dim); font-size: 0.95rem; border-left: 2px solid var(--good); }
+.info { width: 3rem; min-height: 3rem; border-radius: 0.6rem; background: var(--card); border: 1px solid var(--line); font-family: ui-serif, 'New York', Georgia, serif; font-style: italic; font-size: 1.3rem; color: var(--dim); }
+.info.on { color: var(--ink); border-color: var(--good); }
+
+.gauge-more .trust { margin-top: 0.4rem; }
+.gauge-more .trust strong { color: var(--good); }

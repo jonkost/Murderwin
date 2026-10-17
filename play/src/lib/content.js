@@ -5,18 +5,18 @@ import portraitFitData from './portrait-fit.json'
 // the workshop lists are filled in.
 
 export const ACTS = {
-  1: { name: 'Fur Better or Furse', plain: 'Welcome' },
-  2: { name: 'The First Sniff', plain: 'First investigation' },
-  3: { name: 'The Repast', plain: 'Dinner' },
-  4: { name: 'The Plot Thickens', plain: 'Rotation' },
-  5: { name: 'the Entremets', plain: 'Dessert' },
-  6: { name: 'Paws for Thought', plain: 'The Big Solve' },
-  7: { name: 'Who Let the Dog Out', plain: 'The Reveal' },
+  1: { name: 'The Invitation', plain: 'Welcome' },
+  2: { name: 'Lights Out', plain: 'First investigation' },
+  3: { name: 'Supper Is Served', plain: 'Dinner' },
+  4: { name: 'Behind Closed Doors', plain: 'Rotation' },
+  5: { name: 'One Candle', plain: 'Dessert' },
+  6: { name: 'The Final Hour', plain: 'The Big Solve' },
+  7: { name: 'Unmasked', plain: 'The Reveal' },
 }
 
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. Only one year old, so he knows less than he thinks. If Irwin and anyone disagree, Irwin is right.' },
-  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true except for one detail, and she is cheerfully confident about all of it.' },
+  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true except for one detail, and she is cheerfully confident about all of it.' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Not staff. Guarded, not snobbish. She only speaks to people she has decided about, and then only five words.' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate and rationed. Openly transactional. Where money is involved, he shades it.' },
   { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper', blurb: 'Been here longer than anyone, which is why nobody questions him when he is wrong. Confidently backwards more often than not.' },
@@ -31,13 +31,15 @@ export const DEFAULT_UI = {
   BAG: 'Collect bag number',
   OFFLINE: 'The Manor cannot hear your phone. Stay where you are. It will reconnect on its own, and nothing is lost.',
   PAUSED: 'Sir Irwin requires the garden. Back shortly.',
-  SUPERSEDED: 'This character has moved to another phone. If that was not you, find the host.',
+  SUPERSEDED: 'This character has moved to another phone. Tap your name to bring it back here, or type another name to join as someone else.',
   POWER: 'The power is back. Keep your eyes on your own phone. Read, then hide this when you are ready.',
   HIDE: 'Hide this',
   HOLD: 'Keep reading',
   RETICULE: 'Your Reticule: a small drawstring bag for everything you carry tonight.',
   'START NIGHT': 'Host? Start the night',
   HOST: 'You are a host. The buttons under Host run the night for every phone.',
+  // The five stops of the Cats tab slider, low to high, comma-separated (Jon, 13 Oct 2026).
+  STOPS: 'Cold shoulder, Wary, Undecided, Fond, Devoted',
 }
 
 export const DEFAULT_RULES = [
@@ -97,8 +99,15 @@ export function actScript(content, act) {
 // costume was for dressing up before the night).
 export function bioFor(content, character) {
   if (!character) return ''
-  const name = character.name.toLowerCase()
-  const hit = items(content, 'bios').find(it => it.text.toLowerCase().startsWith(name))
+  const want = plainName(character.name)
+  const surname = want.split(' ').pop()
+  const lines = items(content, 'bios').map(it => ({ it, head: plainName(it.text.split('—')[0]) })).filter(x => x.head)
+  // the full name first; the surname alone only when it names one person (the Kostingtons share theirs)
+  let hit = lines.find(x => x.head === want)?.it
+  if (!hit) {
+    const bySurname = lines.filter(x => x.head.endsWith(surname) || want.endsWith(x.head))
+    if (bySurname.length === 1) hit = bySurname[0].it
+  }
   if (!hit) return character.bio ?? ''
   let rest = hit.text.split('—').slice(1).join('—').trim()
   const costume = rest.search(/Costume:/i)
@@ -107,13 +116,43 @@ export function bioFor(content, character) {
   return rest || character.bio || hit.text
 }
 
-// NPC intro cards from the workshop, else the five fixed blurbs.
+// A name without its title, punctuation or capitals, for matching lines.
+function plainName(name) {
+  return String(name ?? '').toLowerCase()
+    .replace(/\b(prof|dr|madame|miss|mrs|mr|ms)\.?\s+/g, '')
+    .replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+// NPC intro cards from the workshop, else the five fixed blurbs. A workshop
+// line is saved as "SIR IRWIN — the dog. About them." (the npc codec); the
+// phone shows the About exactly as written, since the name and title are
+// already on the card.
 export function npcCards(content) {
   const written = items(content, 'npc_cards')
   return CATS.map(cat => {
-    const hit = written.find(it => it.text.toLowerCase().includes(cat.name.toLowerCase().split(',')[0]))
-    return { ...cat, text: hit ? hit.text : `${cat.name}, ${cat.tag}. ${cat.blurb}` }
+    const first = cat.name.toLowerCase().split(',')[0]
+    const hit = written.find(it => it.text.toLowerCase().split('—')[0].includes(first))
+    if (!hit) return { ...cat, text: `${cat.name}, ${cat.tag}. ${cat.blurb}` }
+    const dash = hit.text.indexOf('—')
+    let about = dash >= 0 ? hit.text.slice(dash + 1).trim() : hit.text.trim()
+    if (about.toLowerCase().startsWith(cat.tag.toLowerCase())) about = about.slice(cat.tag.length).replace(/^\.?\s*/, '')
+    return { ...cat, text: about || hit.text }
   })
+}
+
+// The five stop words of the Cats tab, from the workshop's STOPS line or the default.
+// What each stop means for you, low to high. Plain words, no numbers.
+export const STOP_MEANINGS = [
+  'A brush-off, most times. This cat has not warmed to you yet.',
+  'Short answers, when there are any. Half a story at best.',
+  'Could go either way. The next Parlour Game may tip it.',
+  'Most of what this cat knows, most of the time.',
+  'Everything this cat knows, every time you ask.',
+]
+
+export function stopWords(ui) {
+  const words = String(ui?.STOPS ?? DEFAULT_UI.STOPS).split(',').map(w => w.trim()).filter(Boolean)
+  return words.length === 5 ? words : DEFAULT_UI.STOPS.split(',').map(w => w.trim())
 }
 
 export function affectionBand(level) {
@@ -143,6 +182,16 @@ export function smalltalk(content) {
 
 export function characterById(content, id) {
   return (content?.characters ?? []).find(c => c.id === id) ?? null
+}
+
+// "MOTIVE 7: what it means" lines from the workshop, by motive number.
+export function motiveNotes(content) {
+  const out = {}
+  for (const it of items(content, 'motive_notes')) {
+    const m = /^MOTIVE\s+(\d+):\s*(.+)$/s.exec(it.text.trim())
+    if (m) out[Number(m[1])] = m[2].trim()
+  }
+  return out
 }
 
 export function motives(content) {

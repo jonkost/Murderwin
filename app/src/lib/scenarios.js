@@ -1,4 +1,4 @@
-// The push and pull questions: one scenario is three questions in a row.
+// The Parlour Games: one scenario is three questions in a row.
 // Each question has two choices to start with, and a third or fourth when a
 // question needs one. Every choice carries a number (points). Whatever a
 // guest picks, the next question is the same, so a guest's path adds up

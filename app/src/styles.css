@@ -268,7 +268,7 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
   .draft-actions { flex-direction: row; margin-left: auto; }
 }
 
-/* ---------- the push and pull questions ---------- */
+/* ---------- the Parlour Games ---------- */
 .scenarios { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
 .scenario-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-group); padding: 0.9rem 1rem 1rem; display: grid; gap: 0.8rem; }
 .scenario-card.dashed { border-style: dashed; }

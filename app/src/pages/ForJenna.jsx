@@ -9,7 +9,7 @@ import { cardFor } from '../lib/cards'
 const FIRST = [
   { to: '/edit/rules_text', label: 'The rules', why: 'Read them cold, as a guest would at a noisy party. Fix anything that reads wrong.' },
   { to: '/edit/bios', label: 'The fourteen characters', why: 'Each one should be playable by an eleven-year-old and a seventy-year-old after one read.' },
-  { to: '/edit/scenarios', label: 'Push and pull questions', why: 'Silly, never heavy, nothing about the case. If one would make somebody at the table feel bad, say so.' },
+  { to: '/edit/scenarios', label: 'Parlour Games', why: 'Silly, never heavy, nothing about the case. If one would make somebody at the table feel bad, say so.' },
   { to: '/edit/openers?tab=boo', label: 'What a cat says first', why: 'Each cat has one voice. If a line slips out of it, fix it in place. Then the other cat lists.' },
 ]
 

@@ -43,7 +43,7 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   keeps the line. Speak writes into the box you are in. A half-typed line
   comes back if the tab dies. Lists with tabs remember the tab, and each tab
   shows its own count ("Boo 3 of 8").
-- **Push and pull questions** replaced the filler messages (the old list is
+- **Parlour Games** replaced the filler messages (the old list is
   kept under Everything else, retired). One set is three silly questions in a
   row, two choices each, points on each choice. A question that needs it can
   take a third or fourth choice ("Add another choice"). Whatever a guest
@@ -101,7 +101,7 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   detail instead. A second, independent check then found more: the fourteen
   names and jobs are fixed in the game (it deals them and the cats judge the
   job), so a character is now a pick of who plus the persona; the act names
-  are fixed too (The Plot Thickens, Paws for Thought), so each act is one
+  are fixed too (Behind Closed Doors, The Final Hour), so each act is one
   sentence of where to be and what to do, under its name; the blackout is
   three cards of matched length, no private briefings, because what a role
   does is said aloud in the Act 1 welcome; house history and the old filler
@@ -194,7 +194,7 @@ Data model (Firestore):
   Areas, tasks and decisions added after the first seed import are created by
   additive migrations (`ADDITIONS` in `app/src/lib/content.js`) guarded by
   `meta/migrations` — additions only, existing data never rewritten.
-- `safe_content/scenarios` — the push and pull questions. Items carry
+- `safe_content/scenarios` — the Parlour Games. Items carry
   `beats: [{q, n, a, av, b, bv, c?, cv?, d?, dv?}] × 3` (`n` = 2 to 4 choices
   shown; arrays of maps, never nested arrays) and
   `text` mirroring the first question so the trail and the undo toast can name

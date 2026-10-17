@@ -1,5 +1,6 @@
 import seed from '../../../seed/safe-content.json'
 import charactersFile from '../../../seed/characters.json'
+import motivesFile from '../../../seed/motives.json'
 import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -32,7 +33,8 @@ export const POOLS = ['room', 'time', 'duration', 'count', 'place', 'crowd']
 export const POOL_NAMES = { room: 'Rooms', time: 'Times of day', duration: 'How long', count: 'How many times', place: 'Places in town', crowd: 'Who was watching' }
 
 export const ACTS = ['act1', 'act2', 'act3', 'act4', 'act5', 'act6', 'act7']
-export const ACT_NAMES = { act1: 'Fur Better or Furse', act2: 'The First Sniff', act3: 'The Repast', act4: 'The Plot Thickens', act5: 'the Entremets', act6: 'Paws for Thought', act7: 'Who Let the Dog Out' }
+// Decided 13 Oct 2026 (Canon page).
+export const ACT_NAMES = { act1: 'The Invitation', act2: 'Lights Out', act3: 'Supper Is Served', act4: 'Behind Closed Doors', act5: 'One Candle', act6: 'The Final Hour', act7: 'Unmasked' }
 
 export const TAB_KINDS = {
   cats: { list: CATS.map(c => c.key), field: 'cat', label: k => CATS.find(c => c.key === k).name },
@@ -111,7 +113,13 @@ export const AREAS = {
         { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }] },
       { key: 'text', label: 'The words', placeholder: 'e.g. Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight.', kind: 'textarea', main: true },
     ] },
-  scenarios: { label: 'Push and pull questions', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
+  scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
+  motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
+    codec: labelCodec,
+    fields: [
+      { key: 'label', label: 'Which motive', placeholder: 'Pick one', kind: 'select', options: motivesFile.motives.map(m => ({ value: `MOTIVE ${m.n}`, label: `${m.n} · ${m.rhyme}` })) },
+      { key: 'text', label: 'What it means, in a sentence or two', placeholder: 'e.g. Someone ate the last slice and left the empty tin in the pantry.', kind: 'textarea', main: true },
+    ] },
   role_cards: { label: 'The cards in the blackout', moment: 'Act 1, the blackout, when roles land', why: 'When the lights come back every phone shows one card: Murderer, Ghost or Detective. All three the same length and shape, so a lit screen gives nothing away.', group: 'Words on the phones', tabs: null, guide: 'role_card', goal: 3,
     codec: labelCodec,
     fields: [
@@ -119,7 +127,7 @@ export const AREAS = {
         { value: 'MURDERER', label: 'Murderer card' }, { value: 'GHOST', label: 'Ghost card' }, { value: 'DETECTIVE', label: 'Detective card (everyone else)' }] },
       { key: 'text', label: 'The card', placeholder: 'e.g. The Manor has lost you tonight. No one knows, and no one knows why, not even you. Walk, talk, and play on.', kind: 'textarea', main: true },
     ] },
-  filler: { label: 'Old filler messages', moment: 'Retired: the push and pull questions replaced these', why: 'The old way of keeping ordinary phones busy during a question window. Kept, not used.', group: 'Words on the phones', tabs: null, guide: 'filler', goal: 20, hidden: true, retired: true,
+  filler: { label: 'Old filler messages', moment: 'Retired: the Parlour Games replaced these', why: 'The old way of keeping ordinary phones busy during a question window. Kept, not used.', group: 'Words on the phones', tabs: null, guide: 'filler', goal: 20, hidden: true, retired: true,
     codec: fillerCodec,
     fields: [
       { key: 'message', label: 'The message', placeholder: 'e.g. Open your bag and pick out the one thing you would never want to smell twice.', kind: 'textarea', main: true },
@@ -424,12 +432,12 @@ export const ADDITIONS = [
     },
   },
   {
-    // 12 Oct: the push and pull questions replace the filler messages. Every
+    // 12 Oct: the Parlour Games replace the filler messages. Every
     // phone gets the same kind of question in Acts 2, 4 and 6.
     id: '2026-10-12-questions',
     areaDocs: { scenarios: { items: [] } },
     tasks: [
-      { order: 30, status: 'todo', title: 'Write the push and pull questions', detail: 'Workshop → Words on the phones → Push and pull questions. Three silly questions in a row, two choices each, a number on each choice. Sixteen of them is a full night.' },
+      { order: 30, status: 'todo', title: 'Write the Parlour Games', detail: 'Workshop → Words on the phones → Parlour Games. Three silly questions in a row, two choices each, a number on each choice. Sixteen of them is a full night.' },
     ],
   },
 ]

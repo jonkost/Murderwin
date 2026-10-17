@@ -35,7 +35,7 @@ const HOLD_MS = 15_000
 // holds for fifteen seconds measured against the SERVER clock, then a hide
 // button appears. Slower readers take as long as they like. Hiding is
 // remembered, so a reload never shows it twice.
-export function Prompt({ uid, night, ui, serverNow, promptKey }) {
+export function Prompt({ uid, night, ui, serverNow, promptKey, card }) {
   useTick(500)
   const phaseAt = night.phaseAt?.toMillis?.() ?? 0
   const remaining = phaseAt ? phaseAt + HOLD_MS - serverNow() : HOLD_MS
@@ -45,8 +45,10 @@ export function Prompt({ uid, night, ui, serverNow, promptKey }) {
     <div className="moment prompt papered">
       <Seal />
       <p className="crest">Sirwin Manor</p>
-      <p className="moment-text">{ui.POWER}</p>
-      <p className="moment-sub">Act {night.act} begins.</p>
+      {card
+        ? <p className="moment-text role-card">{card.text}</p>
+        : <p className="moment-text">{ui.POWER}</p>}
+      <p className="moment-sub">Act {night.act} begins. Eyes on your own phone.</p>
       {canHide
         ? <button className="big" onClick={hide}>{ui.HIDE}</button>
         : <p className="hold" aria-live="polite">{ui.HOLD}</p>}

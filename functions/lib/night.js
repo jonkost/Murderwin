@@ -28,7 +28,7 @@ export const PLANNING_BAGS = 10 // 8 players → 10 bags (bag doc, 29 Sep)
 // ledger anywhere in the app), and not the retired lists (filler, lore).
 export const PLAYER_AREAS = [
   'bios', 'npc_cards', 'rules_text', 'ui_copy', 'smalltalk',
-  'act_scripts', 'status_lines',
+  'act_scripts', 'status_lines', 'motive_notes',
 ]
 
 export class NightError extends Error {
@@ -50,7 +50,7 @@ function asItems(raw) {
   return []
 }
 
-async function readArea(db, area) {
+export async function readArea(db, area) {
   const snap = await db.collection('safe_content').doc(area).get()
   if (!snap.exists) return []
   return asItems(snap.data().items)
@@ -111,6 +111,9 @@ export async function createNight(db, { label } = {}) {
     createdAt: FieldValue.serverTimestamp(),
     joinOpen: true,
     act: 0,
+    beat: 'arrive',    // which beat of the act (seed/night.json); the host steps through them
+    window: null,      // { id, kind, opensAt, closesAt, settled } when every phone is choosing
+    rehearsal: false,  // true once a throwaway case is dealt (no generator yet)
     phase: 'lobby',
     phaseAt: FieldValue.serverTimestamp(),
     actStartedAt: null,
@@ -157,6 +160,14 @@ export function characterById(id) {
 // character with it; the old phone is told it has been superseded. A name
 // matching one of the two hosts plays that Professor and gets the Host tab.
 export async function join(db, { uid, nightId, name }) {
+  const result = await joinOnly(db, { uid, nightId, name })
+  // Every name tapped refreshes the phones' copy of the workshop lines, so a
+  // night can never show stale words (16 Oct 2026). Cheap: seven small reads.
+  try { await publishContent(db, nightId) } catch { /* the join itself stands */ }
+  return result
+}
+
+async function joinOnly(db, { uid, nightId, name }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
   const clean = String(name ?? '').trim().replace(/\s+/g, ' ')
   const key = nameKey(clean)

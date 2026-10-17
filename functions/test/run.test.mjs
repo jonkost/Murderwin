@@ -1,0 +1,271 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { FakeFirestore } from './fake-firestore.mjs'
+import { createNight, join, MOTIVES } from '../lib/night.js'
+import { hostCommand, nextOf, prevOf, firstBeat, player } from '../lib/run.js'
+import {
+  NIGHT, STATIONS, affectionOutcome, fillPools, assembleTestimony, stationFor, beatsOf, ms,
+} from '../lib/deal.js'
+
+// A throwaway night with four phones. Nothing here is a real case; the
+// rehearsal case is generated fresh by the dealer and thrown away with the db.
+async function party() {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  db.store.set('safe_content/pools', { items: [
+    { id: 'p1', text: 'the scullery', pool: 'room', order: 0 }, { id: 'p2', text: 'the parlour', pool: 'room', order: 1 },
+    { id: 'p3', text: 'a quarter past six', pool: 'time', order: 0 }, { id: 'p4', text: 'nearly seven', pool: 'time', order: 1 },
+  ] })
+  const { nightId } = await createNight(db)
+  const phones = { jon: 'uid-jon', jessa: 'uid-jessa', jacob: 'uid-jacob', marie: 'uid-marie' }
+  for (const [name, uid] of Object.entries(phones)) await join(db, { uid, nightId, name: name[0].toUpperCase() + name.slice(1) })
+  return { db, nightId, phones }
+}
+const night = (db, id) => db.store.get(`nights/${id}`)
+const session = (db, uid) => db.store.get(`sessions/${uid}`)
+const cards = (db, uid, kind) => (session(db, uid).cards ?? []).filter(c => !kind || c.kind === kind)
+
+test('the beat list walks every act in order and stops where the host has their own button', () => {
+  assert.equal(firstBeat(1), 'arrive')
+  assert.deepEqual(nextOf(1, 'arrive'), { act: 1, beat: 'meet' })
+  assert.equal(nextOf(1, 'ready'), null, 'Act 1 ends in the blackout, not in Next')
+  assert.deepEqual(nextOf(2, 'checkin'), { act: 3, beat: 'down' })
+  assert.equal(nextOf(7, 'result'), null)
+  assert.deepEqual(prevOf(3, 'down'), { act: 2, beat: 'checkin' })
+  assert.equal(prevOf(2, 'orient'), null, 'nothing before the power returning')
+  for (const act of Object.keys(NIGHT.acts)) assert.ok(beatsOf(act).length > 0, `act ${act} has beats`)
+})
+
+test('the whole night, one Next at a time: every phone gets the same shape of thing at every beat', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  let now = 1_000_000
+  const next = async () => hostCommand(db, { nightId, command: 'next', now })
+
+  // Act 0 → Act 1 and through its beats
+  await next()
+  assert.equal(night(db, nightId).act, 1)
+  assert.equal(night(db, nightId).beat, 'arrive')
+  await next(); await next(); await next()
+  for (const uid of uids) assert.deepEqual(cards(db, uid, 'notice').map(c => c.key), ['meet', 'introduce', 'ready'])
+  await assert.rejects(next, /Blackout/)
+
+  // Blackout, then the power returns: roles land, held on every phone the same way
+  await hostCommand(db, { nightId, command: 'blackout' })
+  await assert.rejects(next, /Power/)
+  await hostCommand(db, { nightId, command: 'power', now })
+  const n2 = night(db, nightId)
+  assert.equal(n2.act, 2); assert.equal(n2.phase, 'prompt'); assert.equal(n2.beat, 'orient'); assert.equal(n2.rehearsal, true)
+  const c = db.store.get(`cases/${nightId}`)
+  assert.equal(Object.values(c.roles).filter(r => r === 'murderer').length, 1)
+  assert.equal(Object.values(c.roles).filter(r => r === 'ghost').length, 1)
+  for (const uid of uids) {
+    const role = cards(db, uid, 'role')
+    assert.equal(role.length, 1)
+    assert.equal(role[0].id, '2-power-role')
+    assert.ok(role[0].text.length > 40)
+    assert.equal(cards(db, uid, 'notice').at(-1).key, 'orient')
+    assert.equal(session(db, uid).role, undefined, 'a session never carries its role as a field')
+  }
+  // pressing Power twice deals nothing twice
+  await hostCommand(db, { nightId, command: 'power', now })
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
+
+  // Act 2: news, cat, puzzle, questions, check-in
+  await next() // news
+  await next() // cat
+  for (const uid of uids) {
+    const go = cards(db, uid, 'go'); const t = cards(db, uid, 'testimony')
+    assert.equal(go.length, 1); assert.equal(t.length, 1)
+    assert.ok(['full', 'partial', 'deflect'].includes(t[0].outcome))
+    assert.ok(t[0].lines.length >= 1)
+    assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')
+    if (go[0].cat === 'granolia') assert.equal(go[0].room, 'the study')
+  }
+  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe[uids[0]].length === 3)
+  await next() // puzzle
+  for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
+  await next() // questions window
+  const w = night(db, nightId).window
+  assert.equal(w.kind, 'questions'); assert.equal(w.settled, false)
+  assert.equal(ms(w.closesAt) - ms(w.opensAt), NIGHT.windows.questions.ms)
+  for (const uid of uids) {
+    const set = session(db, uid).windows[w.id]
+    assert.equal(set.beats.length, 3)
+    for (const b of set.beats) {
+      assert.ok(b.choices.length >= 2)
+      for (const ch of b.choices) assert.deepEqual(Object.keys(ch).sort(), ['k', 'text'], 'no numbers on a phone')
+    }
+    assert.ok(['granolia', 'boo', 'zimothy', 'salem'].includes(set.cat))
+  }
+  // two phones answer; Next refuses while the window is open; after it closes the other two get random picks
+  const first = session(db, uids[1]).windows[w.id]
+  await player.answer(db, { nightId, uid: uids[1], windowId: w.id, picks: first.beats.map(b => b.choices[0].k), now })
+  await player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['a', 'b', 'a'], now })
+  await assert.rejects(() => player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['x', 'b', 'a'], now }).then(r => { if (r.already) throw new Error('already') }), /already/)
+  await assert.rejects(next, /still choosing/)
+  now += NIGHT.windows.questions.ms + 1
+  await next() // check-in (settles first)
+  assert.equal(night(db, nightId).window.settled, true)
+  for (const uid of uids) assert.ok(session(db, uid).answers[w.id].picks.length === 3)
+  assert.equal(session(db, uids[0]).answers[w.id].defaulted, true)
+  assert.equal(session(db, uids[1]).answers[w.id].defaulted, false)
+  for (const uid of uids) for (const v of Object.values(session(db, uid).affection)) assert.ok(v >= 1 && v <= 5)
+  // the hidden roles' points reach the dial; their phones look like everyone else's
+  assert.equal(typeof db.store.get(`cases/${nightId}`).dial, 'number')
+
+  // Act 3: dinner, bulletin, groups
+  await next(); assert.equal(night(db, nightId).act, 3)
+  await next()
+  await next() // groups
+  const rot = db.store.get(`nights/${nightId}/public/rotation`)
+  assert.equal(rot.groups.length, 2)
+  assert.equal(rot.studyOrder.length, 2)
+  const m = c.murderer, g = c.ghost
+  assert.ok(!rot.groups.some(grp => grp.members.some(x => x.key === m) && grp.members.some(x => x.key === g)), 'hidden roles apart')
+  for (const uid of uids) {
+    assert.equal(cards(db, uid, 'group').length, 1)
+    assert.ok(session(db, uid).group)
+  }
+
+  // Act 4: five stations, two windows; everyone visits the study exactly once
+  const visited = Object.fromEntries(uids.map(u => [u, []]))
+  for (const b of beatsOf(4)) {
+    await next()
+    assert.equal(night(db, nightId).beat, b.key)
+    if (b.action === 'window:questions') now += NIGHT.windows.questions.ms + 1
+    if (b.action === 'rotate') for (const uid of uids) visited[uid].push(cards(db, uid, 'station').at(-1).station)
+  }
+  for (const uid of uids) {
+    assert.equal(visited[uid].length, 5)
+    assert.deepEqual([...visited[uid]].sort(), STATIONS.map(s => s.key).sort(), 'every station once')
+    assert.ok(cards(db, uid, 'clue').length >= 1, 'the study paid out in rehearsal')
+  }
+
+  // Act 5, Act 6
+  await next(); await next()
+  assert.equal(night(db, nightId).act, 5)
+  await next() // Act 6 merged questions
+  assert.equal(night(db, nightId).act, 6)
+  now += NIGHT.windows.questions.ms + 1
+  await next() // drawing
+  assert.equal(db.store.get(`nights/${nightId}/public/relay`).state, 'walk')
+  await next() // door
+  await next() // eliminate
+  const ew = night(db, nightId).window
+  assert.equal(ew.kind, 'eliminate')
+  await player.eliminate(db, { nightId, uid: uids[0], target: { kind: 'motive', n: 3 }, now })
+  await player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'jacob' }, now })
+  await assert.rejects(() => player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'nobody' }, now }), /Pick/)
+  now += NIGHT.windows.eliminate.ms + 1
+
+  // Act 7: ballot, reveal, result
+  await next()
+  const bw = night(db, nightId).window
+  assert.equal(bw.kind, 'ballot')
+  assert.equal(Object.keys(night(db, nightId).eliminations).length, 4, 'two picked, two defaulted')
+  await player.ballot(db, { nightId, uid: uids[1], murderer: m, motive: c.motive, victim: g, now })
+  await assert.rejects(() => player.ballot(db, { nightId, uid: uids[2], murderer: 'nobody', motive: 1, victim: g, now }), /party/)
+  await assert.rejects(next, /still choosing/)
+  now += NIGHT.windows.ballot.ms + 1
+  await next() // reveal
+  const r = night(db, nightId).reveal
+  assert.equal(r.murderer.key, m); assert.equal(r.victim.key, g); assert.equal(r.motive.n, c.motive)
+  await next() // results
+  const res = session(db, uids[1]).result
+  assert.deepEqual([res.murderer, res.motive, res.victim], [true, true, true])
+  assert.equal(night(db, nightId).tally.of, 4)
+  assert.ok(cards(db, uids[1], 'result').length === 1)
+  await assert.rejects(next, /end of the night/)
+
+  // The seal, checked after the whole walk: nothing a phone can read names a role.
+  for (const uid of uids) {
+    const s = session(db, uid)
+    assert.equal(s.role, undefined)
+    for (const [, set] of Object.entries(s.windows)) assert.ok(!JSON.stringify(set).includes('"av"'))
+  }
+  const pub = JSON.stringify({ n: night(db, nightId), content: db.store.get(`nights/${nightId}/public/content`), rot })
+  assert.ok(!/"roles"|dialSign|"dial"/.test(pub), 'the night doc carries no roles and no dial')
+})
+
+test('back moves without dealing; act jump to 2 deals the roles; light-up opens a window in Acts 2, 4 and 6 only', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'light-up' }), /Acts 2, 4 and 6/)
+  await hostCommand(db, { nightId, command: 'act', arg: 2 })
+  assert.equal(night(db, nightId).phase, 'prompt')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
+  await hostCommand(db, { nightId, command: 'next' })
+  await hostCommand(db, { nightId, command: 'back' })
+  assert.equal(night(db, nightId).beat, 'orient')
+  for (const uid of uids) assert.equal(cards(db, uid, 'notice').filter(c => c.key === 'news').length, 1, 'back deals nothing new')
+  const r = await hostCommand(db, { nightId, command: 'light-up' })
+  assert.equal(r.phones, 4)
+  assert.equal(night(db, nightId).window.kind, 'questions')
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'settle' }), /still choosing/)
+})
+
+test('the safe: wrong twice, then it gives way; right pays a document once', async () => {
+  const { db, nightId, phones } = await party()
+  await hostCommand(db, { nightId, command: 'act', arg: 2 })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat' })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'puzzle' })
+  const uid = phones.jessa
+  const puzzle = cards(db, uid, 'puzzle')[0]
+  const answer = db.store.get(`nights/${nightId}/private/puzzles`).safe[uid]
+  const right = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
+  assert.equal(right.right, true)
+  assert.equal(cards(db, uid, 'document').length, 1)
+  const again = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
+  assert.equal(again.already, true)
+  assert.equal(cards(db, uid, 'document').length, 1)
+
+  const uid2 = phones.jacob
+  const p2 = cards(db, uid2, 'puzzle')[0]
+  assert.equal((await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })).right, false)
+  assert.equal((await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })).right, false)
+  const gave = await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })
+  assert.equal(gave.gaveWay, true)
+  assert.equal(cards(db, uid2, 'document')[0].gaveWay, true)
+})
+
+test('affection gates a testimony: Irwin never fails, Boo needs four, the others roll', () => {
+  for (let i = 0; i < 20; i++) assert.equal(affectionOutcome('irwin', 1), 'full')
+  assert.equal(affectionOutcome('boo', 3), 'deflect')
+  assert.equal(affectionOutcome('boo', 4), 'full')
+  assert.equal(affectionOutcome('salem', 5, () => 4), 'partial')   // roll 5, level 5
+  assert.equal(affectionOutcome('salem', 5, () => 0), 'full')      // roll 1
+  assert.equal(affectionOutcome('zimothy', 1, () => 2), 'deflect') // roll 3
+})
+
+test('pools fill every blank; Granolia gets exactly one blank wrong; a partial answer is one sentence', () => {
+  const pools = { room: ['the scullery', 'the parlour'], time: ['six', 'seven'] }
+  const k = 'Seen in [ROOM] at [TIME], and again in [ROOM].'
+  const straight = fillPools(k, pools, { pick: () => 0 })
+  assert.equal(straight, 'Seen in the scullery at six, and again in the scullery.')
+  const garbled = fillPools(k, pools, { garble: true, pick: () => 0 })
+  assert.equal(garbled, 'Seen in the parlour at six, and again in the scullery.')
+  const t = assembleTestimony({ cat: 'salem', outcome: 'partial', opener: 'Hm.', closer: 'There.', refusal: 'No.', kernel: 'One thing. Two things.' })
+  assert.deepEqual(t.lines, ['Hm.', 'One thing.', 'There.'])
+  const d = assembleTestimony({ cat: 'salem', outcome: 'deflect', opener: 'Hm.', closer: 'There.', refusal: 'No.', kernel: 'One thing.' })
+  assert.deepEqual(d.lines, ['No.'])
+})
+
+test('the study is the clock: a group at study position p is in the study at rotation p', () => {
+  const rot = { studyOrder: ['g2', 'g1', 'g3'] }
+  assert.equal(stationFor(rot, 'g2', 0).key, 'study')
+  assert.equal(stationFor(rot, 'g1', 1).key, 'study')
+  assert.equal(stationFor(rot, 'g3', 2).key, 'study')
+  assert.equal(stationFor(rot, 'g1', 0).key, STATIONS[4].key)
+  const seen = new Set([0, 1, 2, 3, 4].map(r => stationFor(rot, 'g3', r).key))
+  assert.equal(seen.size, 5)
+})
+
+test('the rehearsal case is thrown away with the night: a new night deals a new one', async () => {
+  const a = await party()
+  await hostCommand(a.db, { nightId: a.nightId, command: 'act', arg: 2 })
+  const b = await party()
+  await hostCommand(b.db, { nightId: b.nightId, command: 'act', arg: 2 })
+  assert.ok(MOTIVES.some(m => m.n === a.db.store.get(`cases/${a.nightId}`).motive))
+  assert.notEqual(a.nightId, b.nightId)
+})

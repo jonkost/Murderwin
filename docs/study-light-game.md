@@ -207,7 +207,7 @@ Each of these fills a gap. Say the word and any of them changes.
 2. **Begin by touching the wall.** No start button, so the blank key stays blank and nobody has
    to touch the computer.
 3. **Hints are offered, not requested.** There is nothing to press, so Granolia watches for
-   struggle and steps in. No cost: affection moves only through the push and pull questions
+   struggle and steps in. No cost: affection moves only through the Parlour Games
    (decided 12 October), so her help cannot cost affection. That closes the act skeleton's open
    question.
 4. **Granolia is always right in the study.** Her one-wrong-detail trait applies to her

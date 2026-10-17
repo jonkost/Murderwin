@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { callHost } from '../firebase'
 import { usePresence, useTick } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
+import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -28,6 +29,10 @@ function describe(command, r) {
     case 'relay-reset': return 'The drawing is cleared.'
     case 'groups': return `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}. The study knows who is first.`
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
+    case 'next': case 'beat': case 'back': return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
+    case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
+    case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
+    case 'power': return 'The power is back. Every phone is showing its card.'
     default: return 'Done.'
   }
 }
@@ -41,7 +46,7 @@ export function useQr(text) {
   return qr
 }
 
-export default function Host({ night, content }) {
+export default function Host({ night, content, serverNow }) {
   const [busy, setBusy] = useState(null)
   const [msg, setMsg] = useState(null)
   const presence = usePresence(night.nightId)
@@ -73,6 +78,8 @@ export default function Host({ night, content }) {
         <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
       </p>
       {msg && <p className="host-msg" role="status">{msg}</p>}
+
+      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} />
 
       <h3>The acts</h3>
       <div className="host-row">
@@ -139,6 +146,65 @@ export default function Host({ night, content }) {
       <p className="gloss">Only for rehearsals or if tonight must start over. It deals new characters to everyone, and every phone must tap its name again.</p>
       <button className="chip wide" disabled={!!busy} onClick={() => run('create')}>Start a new night</button>
     </div>
+  )
+}
+
+// Running the night: one button. The beats come from seed/night.json; the
+// server does whatever the next beat needs (deal, light up, group, reveal)
+// and says only how many phones it reached. Nothing here can show content.
+function RunPanel({ night, busy, run, serverNow }) {
+  useTick(1000)
+  const beats = beatsOf(night.act)
+  const idx = beats.findIndex(b => b.key === night.beat)
+  const here = idx >= 0 ? beats[idx] : null
+  const after = idx >= 0 && idx + 1 < beats.length ? beats[idx + 1] : null
+  const nextAct = night.act >= 1 && night.act < 7 && !after ? ACTS[night.act + 1] : null
+  const w = night.window
+  const open = w && !w.settled
+  const left = open && serverNow ? secondsLeft(w, serverNow) : 0
+  const nextLabel = night.phase === 'blackout' ? 'Press Power returns'
+    : night.act === 0 ? 'Begin Act 1'
+    : after ? `Next: ${after.name}`
+    : night.act === 1 ? 'Then: Blackout'
+    : nextAct ? `Next: Act ${night.act + 1}, ${nextAct.plain}`
+    : 'The night is over'
+  const atEnd = (night.act === 1 || night.act === 7) && !after
+  const canNext = !busy && night.phase !== 'blackout' && !atEnd && !(open && left > 0)
+  return (
+    <section className="run">
+      <h3>Run the night</h3>
+      {here ? (
+        <>
+          <p className="run-here"><strong>{here.name}</strong></p>
+          <p className="gloss run-what">{here.what}</p>
+        </>
+      ) : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
+      {open && (
+        <p className="host-msg" role="status">
+          {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}
+          {left === 0 && <> <button className="chip" disabled={!!busy} onClick={() => run('settle')}>Pick for the rest</button></>}
+        </p>
+      )}
+      <div className="host-row">
+        <button className="big wide" disabled={!canNext} onClick={() => run('next')}>{nextLabel}</button>
+      </div>
+      <div className="host-row">
+        <button className="chip" disabled={!!busy || !here || idx === 0 && night.act <= 2} onClick={() => run('back')}>Back one</button>
+        {[2, 4, 6].includes(night.act) && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
+      </div>
+      {beats.length > 0 && (
+        <details className="run-beats">
+          <summary className="gloss">All of Act {night.act}'s beats</summary>
+          <ol className="beat-list">
+            {beats.map((b, i) => (
+              <li key={b.key} className={i === idx ? 'on' : i < idx ? 'done' : ''}>
+                <button className="beat" disabled={!!busy} onClick={() => run('beat', b.key)}>{b.name}</button>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </section>
   )
 }
 

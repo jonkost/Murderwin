@@ -1,0 +1,60 @@
+{
+  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026.",
+  "windows": {
+    "questions": { "ms": 60000, "title": "Parlour Game" },
+    "eliminate": { "ms": 90000, "title": "The deduction round" },
+    "ballot": { "ms": 120000, "title": "Two minutes to decide" }
+  },
+  "stations": [
+    { "key": "study", "name": "The study", "what": "The light puzzle. Fifteen minutes, then out." },
+    { "key": "cat", "name": "A cat", "what": "A cat talks to the whole group." },
+    { "key": "bags", "name": "The bags", "what": "Something in two or three bags. Ask to open them." },
+    { "key": "puzzle", "name": "A small puzzle", "what": "A puzzle on your phones, together." },
+    { "key": "checkin", "name": "Check-in", "what": "Tidy your clues. Cross off motives." }
+  ],
+  "acts": {
+    "1": { "name": "The Invitation", "plain": "Welcome", "beats": [
+      { "key": "arrive", "name": "Arrivals", "what": "Doors open. Guests type their name, get a character and a bag, and look around their phone." },
+      { "key": "meet", "name": "Meet the household", "what": "Point everyone at the Cats tab: who the five are and how each one stands with them.", "action": "notice:meet" },
+      { "key": "introduce", "name": "Introductions", "what": "Everyone says their name and profession out loud. Phones ask for it.", "action": "notice:introduce" },
+      { "key": "ready", "name": "Ready for the dark", "what": "Last beat before the blackout. Press Blackout when the room is settled, then Power returns.", "action": "notice:ready" }
+    ] },
+    "2": { "name": "Lights Out", "plain": "First investigation", "beats": [
+      { "key": "orient", "name": "Orientation", "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.", "action": "notice:orient" },
+      { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news" },
+      { "key": "cat", "name": "Go to a cat", "what": "Every phone sends its guest to a room. A cat is waiting there with something to say.", "action": "deal:encounter" },
+      { "key": "puzzle", "name": "The first puzzle", "what": "A small puzzle on each phone. It needs what the cat just said. Solving it pays out a document.", "action": "deal:puzzle" },
+      { "key": "questions", "name": "Parlour Game", "what": "A Parlour Game: three silly questions on every phone at once. Sixty seconds.", "action": "window:questions" },
+      { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
+    ] },
+    "3": { "name": "Supper Is Served", "plain": "Dinner", "beats": [
+      { "key": "down", "name": "Phones down", "what": "Dinner in the orangery. Phones down and charging. The radio plays.", "action": "notice:down" },
+      { "key": "bulletin", "name": "The bulletin", "what": "The news bulletin plays through the house. The table argues about it. Nothing on the phones.", "action": "notice:bulletin" },
+      { "key": "groups", "name": "Groups for Act 4", "what": "Phones come back up with who you are working with next and where to start.", "action": "groups" }
+    ] },
+    "4": { "name": "Behind Closed Doors", "plain": "Rotation", "beats": [
+      { "key": "station1", "name": "First station", "what": "Groups go to their first station. The study is the clock.", "action": "rotate" },
+      { "key": "station2", "name": "Second station", "what": "Rotate. Every group moves on one.", "action": "rotate" },
+      { "key": "questions1", "name": "Parlour Game", "what": "Three silly questions on every phone at once.", "action": "window:questions" },
+      { "key": "station3", "name": "Third station", "what": "Rotate.", "action": "rotate" },
+      { "key": "station4", "name": "Fourth station", "what": "Rotate.", "action": "rotate" },
+      { "key": "questions2", "name": "Parlour Game, second round", "what": "Three more questions, every phone at once.", "action": "window:questions" },
+      { "key": "station5", "name": "Fifth station", "what": "Rotate. The last station for every group.", "action": "rotate" }
+    ] },
+    "5": { "name": "One Candle", "plain": "Dessert", "beats": [
+      { "key": "roam", "name": "Cake", "what": "Cake in hand, wander anywhere. The bags may be talked about now.", "action": "notice:roam" },
+      { "key": "irwin", "name": "Sir Irwin speaks", "what": "The chime, then Sir Irwin on the living room screen and only that screen. Phones say: go to the living room.", "action": "notice:irwin" }
+    ] },
+    "6": { "name": "The Final Hour", "plain": "The Big Solve", "beats": [
+      { "key": "merged", "name": "Parlour Game", "what": "The last Parlour Game, every phone at once.", "action": "window:questions" },
+      { "key": "drawing", "name": "The drawing", "what": "The relay drawing. The TV shows a square; one person draws blind; the room shouts. Phones buzz the drawer and take the votes.", "action": "relay:start" },
+      { "key": "door", "name": "The door opens", "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.", "action": "notice:door" },
+      { "key": "eliminate", "name": "The deduction round", "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.", "action": "window:eliminate" }
+    ] },
+    "7": { "name": "Unmasked", "plain": "The Reveal", "beats": [
+      { "key": "ballot", "name": "The ballot", "what": "Two minutes. Every phone picks the murderer, the motive and the victim. A phone that does not pick gets a random pick.", "action": "window:ballot" },
+      { "key": "reveal", "name": "The reveal", "what": "Murderer, then motive, then victim, on the living room screen. Phones say: eyes on the screen.", "action": "reveal" },
+      { "key": "result", "name": "Your result", "what": "Every phone shows its own three answers against the truth.", "action": "results" }
+    ] }
+  }
+}

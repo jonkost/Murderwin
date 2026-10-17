@@ -12,7 +12,7 @@ import FocusBar from '../components/FocusBar'
 import ReviewRow from '../components/ReviewRow'
 import PastePanel from '../components/PastePanel'
 
-// The push and pull questions. One scenario is three questions in a row,
+// The Parlour Games. One scenario is three questions in a row,
 // two choices each (a third or fourth when a question needs one), points on
 // each choice. Whatever a guest picks, the next question is the same. Stored
 // as item.beats (three maps), with item.text mirroring the first question so

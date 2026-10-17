@@ -97,15 +97,6 @@ export const eliminate = onCall({ cors: true }, wrap(async req => {
   return run.player.eliminate(db, { uid, nightId, target })
 }))
 
-// The drawing: a phone's pick, or a nudge to move the clock when a deadline has passed.
-export const relay = onCall({ cors: true }, wrap(async req => {
-  const uid = requireUid(req)
-  const { nightId, command, pick } = req.data ?? {}
-  if (command === 'vote') return run.player.relayVote(db, { uid, nightId, pick })
-  if (command === 'advance') return run.player.relayAdvance(db, { nightId })
-  throw new HttpsError('invalid-argument', 'vote or advance')
-}))
-
 // The study station on the M1 Air. Signed in anonymously like a phone, it
 // presents the host-set key. It sends counts and words; the clue is dealt here.
 export const stationCommand = onCall({ cors: true }, wrap(async req => {

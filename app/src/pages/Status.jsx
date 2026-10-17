@@ -17,7 +17,7 @@ const BUILT = [
   ['The look', 'Blue and red, the seal, the wallpaper, New York and SF, on the invitation, the phones and here.'],
   ['The art', 'Fourteen portraits and fourteen traces, in the repo, named for the game.'],
   ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons. Sir Irwin keeps count.'],
-  ['The push and pull questions', 'Three silly questions in a row, two choices each, points on each choice, the eight totals, and a phone preview. Written here, dealt to every phone in Acts 2, 4 and 6.'],
+  ['The Parlour Games', 'Three silly questions in a row, two choices each, points on each choice, the eight totals, and a phone preview. Written here, dealt to every phone in Acts 2, 4 and 6.'],
 ]
 
 const NEXT = [
@@ -26,7 +26,7 @@ const NEXT = [
   ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
   ['Jenna’s page', 'Her own page for the secrets, opening only for her account. Needs your yes on one security rule.', 'Claude, then Jon'],
   ['Eight fake players', 'A script that plays a whole throwaway night, so the plumbing is proven without anyone reading a clue.', 'Claude'],
-  ['The question windows', 'Acts 2, 4 and 6: every phone lights up with a push and pull question set from the workshop. A Detective’s points move cat affection; the Murderer’s and the Ghost’s move the clarity dial, with the mapping decided blind.', 'Claude'],
+  ['The question windows', 'Acts 2, 4 and 6: every phone lights up with a Parlour Game set from the workshop. A Detective’s points move cat affection; the Murderer’s and the Ghost’s move the clarity dial, with the mapping decided blind.', 'Claude'],
   ['Dinner, dessert, the Big Solve, the reveal', 'The bulletin, Irwin’s testimony, the deduction round, the ballot and the reveal on the TV.', 'Claude'],
   ['Kiosks and the study', 'The two laptops as room screens, the Nanoleaf puzzle, the Stream Deck.', 'Claude, then Jon'],
   ['The household photos', 'Faces, full, intro cards, in-play. Folders are ready.', 'Jon'],

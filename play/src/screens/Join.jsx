@@ -4,7 +4,7 @@ import { Seal } from './Moments'
 
 // "Who are you?" — type your name, and the game hands you a character.
 // Back on a new phone? Tap your name in the list and the character follows.
-export default function Join({ night, ui }) {
+export default function Join({ night, ui, notice = null }) {
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -36,7 +36,8 @@ export default function Join({ night, ui }) {
     <main className="join papered">
       <Seal />
       <p className="crest">Sirwin Manor</p>
-      <h1 className="ask">{ui.JOIN}</h1>
+      {notice && <p className="notice-line" role="status">{notice}</p>}
+      <h1 className="ask">{notice ? 'Who are you now?' : ui.JOIN}</h1>
       <form className="join-form" onSubmit={e => { e.preventDefault(); go() }}>
         <input
           className="name-input"
