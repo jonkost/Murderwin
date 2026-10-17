@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   notesFor, notesPatch, mergeNotes, seen, wantsWelcome, buzzOnce, resetBuzzGuard, mayCheck, needsHandoverReset,
-  clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS,
+  clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, effectivePhase, isDark, presenceKey,
 } from '../src/lib/night.js'
 import { isStale, secondsSinceHeard, watchWake, STALE_MS } from '../src/lib/clock.js'
 
@@ -130,4 +130,35 @@ test('a wake event re-measures the clock skew at once', () => {
   stop()
   win.dispatchEvent(new Event('online'))
   assert.equal(woke.length, 3, 'listeners come off cleanly')
+})
+
+test('a pause taken during the blackout keeps every phone dark', () => {
+  // the host taps Pause while the roles are being handed out
+  const paused = { act: 1, phase: 'paused', pausedFrom: 'blackout', pausedAt: new Date(1_000) }
+  assert.equal(isDark({ act: 1, phase: 'blackout' }), true)
+  assert.equal(isDark(paused), true, 'the room stays near-black while paused')
+  assert.equal(effectivePhase(paused), 'blackout')
+  assert.equal(wantsWelcome(paused, {}, 'N'), false, 'no tour lights up an untoured phone either')
+  // a pause during the role prompt is still the prompt
+  const promptPause = { act: 2, phase: 'paused', pausedFrom: 'prompt', pausedAt: new Date(1_000) }
+  assert.equal(effectivePhase(promptPause), 'prompt')
+  assert.equal(isDark(promptPause), false)
+  assert.equal(wantsWelcome(promptPause, {}, 'N'), false)
+  // an ordinary pause is an ordinary pause
+  assert.equal(isDark({ act: 2, phase: 'paused', pausedFrom: 'act' }), false)
+  assert.equal(effectivePhase({ act: 2, phase: 'paused', pausedFrom: 'act' }), 'act')
+  assert.equal(effectivePhase({ act: 2, phase: 'paused' }), 'act', 'an old pause with no origin behaves as a running act')
+  assert.equal(effectivePhase({ act: 2, phase: 'act' }), 'act')
+  assert.equal(isDark(null), false)
+})
+
+test('a handed-over phone stops heartbeating as the previous owner', () => {
+  const active = { nightId: 'N', status: 'active', guestKey: 'jessa' }
+  assert.equal(presenceKey(active, 'N'), 'jessa')
+  // the host pressed "hand on": the session is kept but marked handed
+  assert.equal(presenceKey({ ...active, status: 'handed' }, 'N'), null, 'nobody is reported from the doors')
+  assert.equal(presenceKey({ ...active, status: 'superseded' }, 'N'), null, 'a phone another phone took over reports nobody')
+  assert.equal(presenceKey(active, 'M'), null, 'a session from another night reports nobody')
+  assert.equal(presenceKey(null, 'N'), null)
+  assert.equal(presenceKey(active, null), null)
 })

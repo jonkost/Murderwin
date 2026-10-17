@@ -118,6 +118,10 @@ export function writeNotes(uid, patch, nightId = notesNight) {
 // A borrowed phone (the host pressed "hand on"): forget everything this
 // browser holds about the previous owner, then come back as a fresh phone at
 // the doors. Firestore must be stopped before its cache can be cleared.
+// Firebase Auth keeps its own store, so the phone comes back with the SAME
+// anonymous uid; the previous owner's notes for this night are dropped by
+// the server in the handover itself (functions/lib/night.js), not here, so
+// a phone that is offline when it resets still comes back clean.
 export async function handoverReset(generation) {
   try { localStorage.clear(); sessionStorage.clear() } catch {}
   try { localStorage.setItem('handover-seen', String(generation)) } catch {}

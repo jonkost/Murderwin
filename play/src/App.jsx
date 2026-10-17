@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
-import { clockFor, needsHandoverReset, notesFor, openWindow, roleCard, wantsWelcome } from './lib/night'
+import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, presenceKey, roleCard, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -23,7 +23,9 @@ export default function App() {
   const session = useDoc(uid ? `sessions/${uid}` : null)
   const notesDoc = useDoc(uid ? `notes/${uid}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
-  const serverNow = useServerClock(uid, nightId, session.data?.guestKey)
+  // The heartbeat names this guest only while the phone holds an active
+  // character on this night; a handed-over phone at the doors reports nobody.
+  const serverNow = useServerClock(uid, nightId, presenceKey(session.data, nightId))
   const online = useOnline()
   const ui = useMemo(() => uiLines(content.data), [content.data])
   const [tour, setTour] = useState(false)
@@ -60,10 +62,13 @@ export default function App() {
   if (s?.status === 'superseded') return <>{banner}<Join night={n} ui={ui} notice={ui.SUPERSEDED} /></>
   if (!s || s.status !== 'active') return <>{banner}<Join night={n} ui={ui} /></>
 
-  if (n.phase === 'blackout') return <Blackout />
+  // The blackout, and a pause taken during it, keep every phone near-black.
+  // A pause taken during the role prompt keeps the prompt up on the frozen
+  // clock, so nothing bright appears in the dark room either way.
+  if (isDark(n)) return <Blackout />
   const promptKey = `prompt-${n.act}`
-  if (n.phase === 'prompt' && !notes.seen[promptKey]) {
-    return <Prompt uid={uid} night={n} ui={ui} serverNow={serverNow} promptKey={promptKey} card={roleCard(s)} notes={notes} />
+  if (effectivePhase(n) === 'prompt' && !notes.seen[promptKey]) {
+    return <Prompt uid={uid} night={n} ui={ui} serverNow={clockFor(n, serverNow)} promptKey={promptKey} card={roleCard(s)} notes={notes} />
   }
 
   // Getting started: the first time this phone has a character on this
