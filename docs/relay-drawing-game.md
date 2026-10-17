@@ -300,6 +300,25 @@ Host tab → *Next* at "The drawing" (or *Start the drawing*). Everything else r
   `kiosk-ballot`, `kiosk-finale`, `kiosk-finale-graph`, `kiosk-finale-reveal`,
   `kiosk-finale-done`.
 
+**Added 17 October 2026, second pass (the Act 6 door cannot misfire).**
+- **Start keeps a drawing.** Pressing *Start the drawing* (or the beat's own start) while a
+  drawing is under way, or done with the trace behind the door, keeps it and says so. The
+  Host tab asks *Restart it from the beginning?* and only then wipes it. The beat never
+  wipes anything.
+- **Clear re-opens the door.** *Clear the drawing* puts the hall light back to red and takes
+  the trace off the bedroom screen, so a second run (a rehearsal, say) opens the door again
+  with a fresh trace.
+- **The groups stay set.** *Make the groups* answers "the groups are set" once the house has
+  started rotating. Remaking them mid-Act 4 would scramble who is where.
+- **The time budget.** The drawing itself fits twelve minutes: 9 + up to 11 + up to 12 cells,
+  at ten seconds a turn and twelve to walk. The generator never draws more.
+- **Nobody waits on an absent phone.** A vote closes as soon as every phone heard from in the
+  last two minutes has picked. A phone that has gone quiet gets its random pick at the close,
+  as before, and the window still runs its full forty-five seconds if nobody is heard from
+  at all.
+- **The phones' bars** come from the server's timings, written when the drawing starts, so
+  changing a timing is one change, in one place.
+
 ---
 
 ## For Claude Code (technical)
@@ -311,6 +330,22 @@ startedAt, finishedAt, misses, lightGreenAt }`. Only the current cell is ever in
 The full grids, the answer indices and the turn order live in `nights/{nightId}/private/relay`
 (no client reads). Votes go through the callable `relayVote` and live in the private doc's
 `votes` map, keyed by guest key; the public doc carries only `votesIn`.
+
+**Guards (17 Oct, second pass).** `relay.start` returns `{ already: true, state }` when the
+public state is in `RUNNING` or `done`, unless `force` (then it resets first); host command
+`relay-start force` is what the Host tab sends after its confirm; `enterBeat` never forces.
+`relay.reset` also deletes both trace docs and sets `public/cues.hall = 'red'` (the doc is
+written whether or not it existed), so `deal.revealTrace`, keyed on `public/trace` existing,
+runs again. `hostCommand('groups')` returns `{ already: true }` once `nights/{id}.rotation >= 0`
+unless `arg === 'force'`. `start` writes `public/relay.timing` (`relay.TIMING`:
+`turnMs, walkMs, pullMs, voteMs, lockoutMs`); `Relay.jsx timingOf(relay)` reads it with the
+old constants as fallback. Budget: `relay.MAX_TURNS = floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))`
+= 32; `relay-gen.CELL_CAPS = [9, 11, 12]` cap drawn cells per grid (`makeMerged` and
+`makePattern` take a `cap`), and `start` refuses a set over `MAX_TURNS` (none is, across
+thousands of seeds in the tests). Presence: `relay.presentKeys(db, nightId, keys, now)` reads
+`presence` rows for the night within `PRESENT_MS` (2 min); `votesNeeded` is the present count
+at vote open and the vote closes when every present key has a vote (falling back to the whole
+roster when nobody has been heard from).
 
 **Driving the clock.** Cloud Functions do not run timers, so a callable `relayAdvance({ nightId,
 expectedTurn })` moves the state machine when server time has passed `turnEndsAt` or

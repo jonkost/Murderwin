@@ -9,6 +9,8 @@ import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
 import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study } from './screens/Kiosk'
+import { HousePanel } from './screens/Host'
+import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
@@ -18,7 +20,8 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
 // kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal,
 // kiosk-finale-done, kiosk-living-turn, kiosk-living-vote, kiosk-study,
-// kiosk-study-fallback (full-bleed, as on the MacBooks).
+// kiosk-study-fallback (full-bleed, as on the MacBooks). The Host tab's house
+// panel: host-house, host-house-window.
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
 // then one per thing a phone is dealt: act1, orient, news, go, testimony,
 // deflect, puzzle, document, questions, checkin, dinner, groups, study, cat,
@@ -114,7 +117,10 @@ const TRACE = (level) => ({
 })
 // the study station's state: `startedAt` is a plain number from the station's clock, not a Firestore stamp
 const STUDY_LAYOUT = [11, 12, 13, 14, 15, 16, 17].map((id, i) => ({ id, x: (i % 4) * 100 + (i >= 4 ? 50 : 0), y: i >= 4 ? -90 : 0 }))
-const STUDY_ROTATION = { groups: [{ id: 'g1', members: [{ key: 'jessa', name: 'Jessa' }, { key: 'jacob', name: 'Jacob' }] }], studyOrder: ['g1'] }
+const STUDY_ROTATION = { groups: [
+  { id: 'g1', members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }] },
+  { id: 'g2', members: [{ key: 'jon', name: 'Jon', characterName: 'Professor Jonathan' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }] },
+], studyOrder: ['g1', 'g2'], finished: {} }
 const STUDY = (extra = {}) => ({
   state: 'reproducing', round: 1, pattern: 0, pairsLocked: 1, misses: 0, hint: null, entry: { colour: null, number: null }, outcome: null,
   startedAt: Date.now() - 4 * 60_000, finishedAt: null, warned: false, map: null, lines: null, revealed: null, groupId: 'g1',
@@ -143,6 +149,19 @@ const KIOSK = {
   'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} />,
+  // the Host tab's house panel: station and screens alive, a group in the study, the hall light
+  'host-house': (night) => {
+    const n = { ...night, act: 4, beat: 'station2' }
+    const presence = { 'kiosk-living': Date.now(), 'kiosk-bedroom': Date.now() - 5 * 60_000, cues: Date.now() }
+    const house = houseView({ night: n, study: STUDY(), rotation: STUDY_ROTATION, presence, now: Date.now() })
+    return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /></div>
+  },
+  // the same with a Parlour Game open and no station in the room: a count of answers, nothing per guest
+  'host-house-window': (night) => {
+    const n = { ...night, act: 4, beat: 'station3', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 60000), settled: false, answered: 2 } }
+    const house = houseView({ night: n, study: { state: 'absent', groupId: 'g2', slotEndsAt: stamp(Date.now() + 7 * 60_000), updatedAt: stamp(Date.now() - 9 * 60_000) }, rotation: STUDY_ROTATION, presence: { 'kiosk-living': Date.now() }, now: Date.now() })
+    return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /><p className="gloss">{house.answered.n} of {house.answered.of} have answered.</p></div>
+  },
   'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} />,
   'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(40000)} serverNow={serverNow} nightId="preview" />,

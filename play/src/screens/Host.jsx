@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
 import { callHost } from '../firebase'
-import { usePresence, useTick } from '../lib/hooks'
+import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
+import { houseView } from '../lib/house'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -32,9 +33,13 @@ function describe(command, r) {
     case 'create': return 'New night started. Type your name again to rejoin it.'
     case 'publish': return `Sent ${r.lines} lines to the phones.`
     case 'act': return `Act ${r.act} is on.`
-    case 'relay-start': return `The drawing has started: ${r.turns} turns.`
-    case 'relay-reset': return 'The drawing is cleared.'
-    case 'groups': return `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}. The study knows who is first.`
+    case 'relay-start': return r.already ? 'A drawing is already on the paper. It is kept. Clear it first if you want a fresh one.' : `The drawing has started: ${r.turns} turns.`
+    case 'relay-reset': return 'The drawing is cleared. The door is shut again and the hall light is red.'
+    case 'groups': return r.already ? 'The groups are set; the house has started rotating. They stay as they are.' : `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}. The study knows who is first.`
+    case 'study-finish': return r.repeated ? 'That group was already paid.' : r.rotated ? 'The group is paid and the house has moved on.' : 'The group is paid. The house moves on at the next station.'
+    case 'study-reassign': return r.already ? 'That group was already the one due.' : 'Noted. The study pays that group when it finishes.'
+    case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
+    case 'hall': return `The hall light is ${r.hall}.`
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     case 'next': case 'beat': case 'back': return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
     case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
@@ -62,6 +67,20 @@ export default function Host({ night, content, serverNow }) {
   const presence = usePresence(night.nightId)
   const qr = useQr(PLAY_URL)
   useTick(15_000) // online dots age out on their own
+  const live = night.nightId && night.nightId !== 'preview'
+  const study = useDoc(live ? `nights/${night.nightId}/public/study` : null)
+  const rotation = useDoc(live ? `nights/${night.nightId}/public/rotation` : null)
+  const cues = useDoc(live ? `nights/${night.nightId}/public/cues` : null)
+  const relay = useDoc(live ? `nights/${night.nightId}/public/relay` : null)
+  // With no station the study slots are twelve minutes: this tab is their clock,
+  // on load and once a minute through Act 4. The server acts once per group.
+  useEffect(() => {
+    if (!live || night.act !== 4) return
+    const tick = () => callHost({ nightId: night.nightId, command: 'study-tick' }).catch(() => {})
+    tick()
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [live, night.nightId, night.act])
 
   const run = async (command, arg) => {
     setBusy(command)
@@ -80,6 +99,13 @@ export default function Host({ night, content, serverNow }) {
   const people = Object.entries(roster).map(([key, r]) => ({ key, ...r })).sort((a, b) => a.name.localeCompare(b.name))
   const hostKeys = new Set(Object.values(night.hosts ?? {}).map(h => h.key))
   const now = Date.now()
+  const house = houseView({ night, study: study.data, rotation: rotation.data, presence, now: serverNow ? serverNow() : now })
+  const startDrawing = () => {
+    // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
+    const underWay = ['walk', 'turn', 'vote', 'lockout', 'done'].includes(relay.data?.state)
+    if (underWay && !window.confirm('A drawing is already on the paper. Restart it from the beginning?')) return
+    run('relay-start', underWay ? 'force' : undefined)
+  }
 
   return (
     <div className="host">
@@ -109,6 +135,8 @@ export default function Host({ night, content, serverNow }) {
           : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
       </div>
 
+      <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+
       <h3>The study (Act 4)</h3>
       <p className="gloss">Makes the pairs and trios and the order they visit the study. Press once, after dinner.</p>
       <div className="host-row">
@@ -117,9 +145,9 @@ export default function Host({ night, content, serverNow }) {
       <StationKey busy={busy} run={run} />
 
       <h3>The Big Solve (Act 6)</h3>
-      <p className="gloss">Starts the relay drawing on every phone and the living room screen. It tells you nothing.</p>
+      <p className="gloss">Starts the relay drawing on every phone and the living room screen. It tells you nothing. A drawing already on the paper is kept unless you say restart.</p>
       <div className="host-row">
-        <button className="big wide" disabled={!!busy} onClick={() => run('relay-start')}>Start the drawing</button>
+        <button className="big wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('relay-reset')}>Clear the drawing</button>
       </div>
 
@@ -139,13 +167,16 @@ export default function Host({ night, content, serverNow }) {
 
       <h3>Who is here</h3>
       {people.length === 0 && <p className="gloss">Nobody has typed their name yet.</p>}
+      {house.answered && <p className="gloss">{house.answered.n} of {house.answered.of} have answered. Who is online shows again when the window closes.</p>}
       <ul className="here">
         {people.map(r => {
-          const online = now - (presence[r.key] ?? 0) < 2 * 60 * 1000
+          const online = house.showGuests && now - (presence[r.key] ?? 0) < 2 * 60 * 1000
           const character = characterById(content, r.characterId)
           return (
             <li key={r.key}>
-              <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
+              {house.showGuests
+                ? <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
+                : <span className="dot hidden" aria-hidden="true" />}
               <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}</span>
               <span className="who-char">{(character?.name ?? r.characterId)} · bag {r.bag}</span>
               <button className="chip handover" disabled={!!busy} onClick={() => run('handover', r.key)} title="Wipe this phone so someone else can use it">Hand this phone on</button>
@@ -158,6 +189,66 @@ export default function Host({ night, content, serverNow }) {
       <p className="gloss">Only for rehearsals or if tonight must start over. It deals new characters to everyone, and every phone must tap its name again.</p>
       <button className="chip wide" disabled={!!busy} onClick={() => run('create')}>Start a new night</button>
     </div>
+  )
+}
+
+// The house at a glance: the study station, the room screens and the cue
+// relay (alive when heard from within two minutes), the group due in the
+// study and its clock, a picker for the group that actually walked in, and
+// the hall light by hand. Everything here is a count, a name or a dot.
+// While a window is open the per-guest dots are hidden (see houseView).
+export function HousePanel({ house, cues, night, busy, run }) {
+  const [picking, setPicking] = useState(false)
+  const s = house.station
+  const st = house.study
+  const hall = cues?.hall ?? null
+  const act4 = night.act === 4
+  return (
+    <section className="house">
+      <h3>The house</h3>
+      <ul className="machines">
+        <li>
+          <span className={s.alive ? 'dot on' : 'dot'} aria-label={s.alive ? 'study station is alive' : 'study station is quiet'} />
+          <span className="who-name">Study station</span>
+          <span className="who-char">{s.alive ? `alive, ${s.state}` : s.quietFor ? `quiet since ${s.quietFor} ago` : 'never heard from'}</span>
+        </li>
+        {house.machines.map(m => (
+          <li key={m.key}>
+            <span className={m.alive ? 'dot on' : 'dot'} aria-label={m.alive ? `${m.label} is alive` : `${m.label} is quiet`} />
+            <span className="who-name">{m.label}</span>
+          </li>
+        ))}
+      </ul>
+      {night.caseWarning && <p className="gloss">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
+      {act4 && (
+        <div className="house-study">
+          {st ? (
+            <p className="gloss">
+              In the study: <strong>{st.names}</strong>{st.paid ? ' (paid)' : st.clockLeft ? ` · ${st.clockLeft} left` : st.running ? '' : ' · waiting for the first touch'}
+              {!s.alive && st.state === 'absent' ? ' · no station: twelve minutes, then the house moves on' : ''}
+            </p>
+          ) : <p className="gloss">Nobody is due in the study.</p>}
+          {!s.alive && <p className="gloss">Station quiet{s.quietFor ? ` since ${s.quietFor} ago` : ''}. The slots run on this phone's clock.</p>}
+          <div className="host-row">
+            {st && !st.paid && <button className="chip" disabled={!!busy} onClick={() => run('study-finish')}>Finish this group now</button>}
+            {house.canReassign && !picking && <button className="chip" disabled={!!busy} onClick={() => setPicking(true)}>This group is in the study</button>}
+          </div>
+          {picking && (
+            <div className="host-row">
+              {house.groups.filter(g => !g.paid && !g.due).map(g => (
+                <button key={g.id} className="chip" disabled={!!busy} onClick={() => { setPicking(false); run('study-reassign', g.id) }}>{g.names}</button>
+              ))}
+              <button className="chip" onClick={() => setPicking(false)}>Never mind</button>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="host-row">
+        <span className="gloss">Hall light: {hall ?? 'not set'}</span>
+        <button className="chip" disabled={!!busy || hall === 'red'} onClick={() => run('hall', 'red')}>Red</button>
+        <button className="chip" disabled={!!busy || hall === 'green'} onClick={() => run('hall', 'green')}>Green</button>
+      </div>
+    </section>
   )
 }
 

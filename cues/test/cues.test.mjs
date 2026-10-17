@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, SOUND_STALE_MS } from '../lib/cues.js'
+import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS } from '../lib/cues.js'
+import { readFileSync } from 'node:fs'
 import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
 
 test('hall: red when the night says red, green when it says green or the door is open', () => {
@@ -50,6 +51,19 @@ test('plan: a relay that starts an hour in does not replay the last sound; the n
   assert.deepEqual(next.actions, [{ type: 'sound', id: '7F3A' }])
   const edge = plan(fresh, { sounds: { current: { id: 'B2C4', at: t - SOUND_STALE_MS + 1000 } } }, t)
   assert.deepEqual(edge.actions, [{ type: 'sound', id: 'B2C4' }], 'inside the window still plays')
+})
+
+test('the heartbeat row is the shape the rules allow, under the guest key cues, once a minute', () => {
+  assert.deepEqual(presenceRow('n1'), { nightId: 'n1', guestKey: 'cues' })
+  assert.deepEqual(presenceRow(null), { nightId: null, guestKey: 'cues' })
+  assert.equal(PRESENCE_KEY, 'cues')
+  assert.equal(PRESENCE_MS, 60_000)
+  // firestore.rules: presence rows may hold only nightId, guestKey and at
+  const rules = readFileSync(new URL('../../firestore.rules', import.meta.url), 'utf8')
+  const allowed = /presence\/\{uid\}[\s\S]*?hasOnly\(\[([^\]]*)\]\)/.exec(rules)[1].replace(/['\s]/g, '').split(',')
+  for (const k of [...Object.keys(presenceRow('n1')), 'at']) assert.ok(allowed.includes(k), `${k} is allowed by the rules`)
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes("'presence'") && src.includes('serverTimestamp()'), 'the relay writes its row with a server stamp')
 })
 
 test('.env values lose a trailing space and one pair of quotes; a bad bridge address is named', () => {

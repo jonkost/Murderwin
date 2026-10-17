@@ -25,7 +25,7 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
-import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy } from './station.js'
+import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -555,6 +555,7 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
     const set = s.windows?.[windowId]
     if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
     tx.update(sessionRef, { [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
+    tx.update(db.doc(`nights/${nightId}`), { 'window.answered': (w.answered ?? 0) + 1 }) // a count only, never who
     return { key: s.guestKey, act: w.act ?? night.act ?? null }
   })
   if (got.already) return { ok: true, already: true }
@@ -781,7 +782,11 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   }
   // the study is the clock: tell the station which group is due, unless a game is running
   const due = rot.studyOrder?.[r] ?? null
-  if (!running) await db.doc(studyPath(nightId)).set({ groupId: due, state: studySnap.data()?.state === 'done' ? 'idle' : (studySnap.data()?.state ?? 'idle') }, { merge: true })
+  if (!running) {
+    const state = alive ? (study.state === 'done' ? 'idle' : (study.state ?? 'idle')) : 'absent'
+    // with no station the slot is a fixed twelve minutes (station.tickStudy ends it); a host's reassign is spent
+    await db.doc(studyPath(nightId)).set({ groupId: due, state, reassignedFrom: null, slotEndsAt: alive ? null : new Date(now + ABSENT_SLOT_MS) }, { merge: true })
+  }
   await db.doc(`nights/${nightId}`).update({ rotation: r })
   return { ok: true, rotation: r, dealt }
 }

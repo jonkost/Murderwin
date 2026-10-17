@@ -42,11 +42,9 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   const spec = deal.beatSpec(act, beat)
   let started = {}
   if (run && spec?.action === 'relay:start') {
-    // the drawing starts before the beat moves, so a failed start leaves Next on this beat to try again
-    try { started = await relay.start(db, { nightId, now }) } catch (e) {
-      if (e?.code !== 'running') throw e // a drawing already running is kept, never wiped
-      started = { ok: true, kept: true }
-    }
+    // the drawing starts before the beat moves, so a failed start leaves Next on this beat to try again;
+    // the beat never forces, so a drawing already running (or done) is kept, never wiped
+    started = await relay.start(db, { nightId, now })
   }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
@@ -143,16 +141,38 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'settle':
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':
-      return relay.start(db, { nightId, now })
+      // a drawing under way is kept unless the host said "restart" (the Host tab asks first)
+      return relay.start(db, { nightId, now, force: arg === 'force' })
     case 'relay-reset':
       return relay.reset(db, { nightId, now })
     case 'relay-advance':
       return advanceRelay(db, { nightId, now })
     case 'groups':
-      // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart
+      // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart;
+      // once the house has started rotating the groups are set, and remaking them would scramble Act 4
+      if ((n.rotation ?? -1) >= 0 && arg !== 'force') return { ok: true, already: true, reason: 'Groups are set' }
       return deal.dealGroups(db, nightId, n.act || 3, 'groups')
     case 'station-key':
       return station.setStationKey(db, arg)
+    case 'study-tick':
+      // the clock for a study with no station: ends a twelve-minute slot that has run out, once
+      return station.tickStudy(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
+    case 'study-finish': {
+      // the host moves the house on without waiting for the study (the group is paid, outcome 'absent')
+      const studySnap = await db.doc(station.studyPath(nightId)).get()
+      const groupId = arg || studySnap.data()?.groupId || null
+      if (!groupId) throw new NightError('invalid', 'No group is in the study.')
+      return studyFinished(db, { nightId, payload: { groupId, outcome: 'absent' }, now })
+    }
+    case 'study-reassign':
+      // "this group is in the study": the pointer moves, and the next finish pays the group named
+      return station.reassignStudy(db, { nightId, groupId: arg })
+    case 'hall': {
+      // the hall light by hand (the cue relay follows public/cues)
+      if (!['red', 'green'].includes(arg)) throw new NightError('invalid', 'The hall light is red or green.')
+      await db.doc(`nights/${nightId}/public/cues`).set({ hall: arg, changedAt: new Date(now), byHand: true }, { merge: true })
+      return { ok: true, hall: arg }
+    }
     case 'dry-run':
       return discard.markDryRun(db, { nightId })
     case 'settle-now':
@@ -182,6 +202,11 @@ export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
 
 // The study station says a group is done: the clue is dealt (station.js),
 // and in Act 4 the whole house rotates, exactly as the host's Next would.
+// When the next beat is a Parlour Game marked autoAfterStudy (seed/night.json),
+// the same call opens that window AND moves on to the following station, so
+// one study finish always moves every group: the study is the clock at every
+// slot and the host never needs Next between finishes. With the flag off the
+// finish moves one beat only, and Next does the rest.
 export async function studyFinished(db, { nightId, payload = {}, now = Date.now() } = {}) {
   const r = await station.stationCommand(db, { nightId, station: 'study', command: 'finished', payload })
   if (r.repeated) return r
@@ -191,12 +216,22 @@ export async function studyFinished(db, { nightId, payload = {}, now = Date.now(
   const spec = deal.beatSpec(4, n.beat)
   const to = nextOf(4, n.beat)
   if (spec?.action !== 'rotate' || !to || to.act !== 4) return { ...r, rotated: false, reason: 'not-a-rotate-beat' }
-  // a finish from an earlier rotation (the host already moved the house on) must not move it again
+  // a finish from an earlier rotation (the host already moved the house on) must not move it again;
+  // a finish the host redirected to another group counts for the slot that was due
   const rot = (await db.doc(`nights/${nightId}/public/rotation`).get()).data()
-  if ((rot?.studyOrder ?? []).indexOf(payload.groupId) !== (n.rotation ?? -1)) return { ...r, rotated: false, reason: 'already-rotated' }
+  if (!r.reassigned && (rot?.studyOrder ?? []).indexOf(r.groupId ?? payload.groupId) !== (n.rotation ?? -1)) return { ...r, rotated: false, reason: 'already-rotated' }
   if (n.window && !n.window.settled) {
     if (now < deal.ms(n.window.closesAt)) return { ...r, rotated: false, reason: 'window-open' }
     await deal.settleWindow(db, nightId, { now })
+  }
+  const toSpec = deal.beatSpec(to.act, to.beat)
+  if (toSpec?.action === 'window:questions' && toSpec.autoAfterStudy) {
+    const after = nextOf(to.act, to.beat)
+    if (after && after.act === 4 && deal.beatSpec(after.act, after.beat)?.action === 'rotate') {
+      const lit = await enterBeat(db, nightId, to.act, to.beat, { now })
+      const moved = await enterBeat(db, nightId, after.act, after.beat, { now })
+      return { ...r, rotated: true, beat: moved.beat, window: lit.beat, phones: lit.phones ?? null }
+    }
   }
   const moved = await enterBeat(db, nightId, to.act, to.beat, { now })
   return { ...r, rotated: true, beat: moved.beat }

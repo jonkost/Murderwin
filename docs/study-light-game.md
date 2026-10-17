@@ -271,6 +271,48 @@ Built blind, tested against fakes. Not yet run on the real walls.
   Ghost are kept apart there too.
 - **Fastest light puzzle** reaches the Act 7 stats reel from the groups' finish times.
 
+**Added 17 October 2026, second pass (the Act 4 clock cannot misfire).**
+- **The study is the clock at every slot.** The two Parlour Games in Act 4 sit between
+  stations. Before this, a group finishing the study right before a Parlour Game lit the
+  phones and then waited for you to press Next. Now one finish does both: every phone lights
+  up with its three questions AND the whole house moves to its next station, in the same
+  moment. People answer as they walk. You never need Next between study finishes. Next still
+  works as the backup if the station is ever stuck.
+  The flag that does this is `autoAfterStudy: true` on the two Parlour Game beats in
+  `seed/night.json`. Set it to `false` and the old behaviour returns: a finish opens the
+  Parlour Game and the house waits for Next.
+- **The server decides who is due in the study.** The station only ever says "the group I
+  was told about is done". Which group that was, and who comes next, is the rotation's. The
+  station re-arms for whichever group the server's study document names, never from its own
+  memory, so a second group is never greeted as the first and paid as the first.
+- **No station? Twelve minutes a group.** If the study station has not reported in for two
+  minutes when a rotation happens, the study runs on a twelve-minute timer instead: the clue
+  rides with the station card, and when the twelve minutes are up the house moves on, paid
+  as "absent". Your Host tab keeps that clock (it asks the server once a minute through
+  Act 4), and the Host tab also has *Finish this group now* for when you would rather not
+  wait.
+- **The wrong group walked in.** On the Host tab under *The house*, *This group is in the
+  study* lets you name the group that actually went up, before they finish. The study then
+  pays that group. Once a group has been paid the button goes away; the house moves on at the
+  next station.
+- **The study greets by character name.** The study screen says *The study · Dorothy Rye,
+  Roger Arms* rather than the guests' own names.
+- **Settings without a code change.** The station reads the pattern lengths, pace and the cap
+  from the study document when they are there (`nights/{id}/public/study.settings`), and
+  uses the defaults in §4 otherwise. Nonsense values are ignored.
+- **The house panel on the Host tab** shows whether the study station, the two room screens,
+  the study screen and the cue relay are alive (heard from in the last two minutes), who is
+  in the study and how long they have, and a red/green switch for the hall light. While a
+  Parlour Game is open the guest list shows only "3 of 9 have answered", never who, so a host
+  who happens to be the Ghost or the Murderer learns nothing from it.
+- **The hardware check.** `node scripts/hardware-check.mjs` prints PASS or FAIL for the
+  Nanoleaf walls, the Hue bridge and the Stream Deck, and nothing else. Run it one evening
+  before the freeze with everything plugged in. `--fake` runs it with no hardware.
+
+One question for you, deferred: the Parlour Games now fire on a study finish. If you would
+rather they fired on your Next (so the room is seated, say), flip `autoAfterStudy` to `false`
+on either beat. It is one word in the seed.
+
 Decisions made while building, on top of §10:
 - **The station presents a key, not an account.** You type a key on the Host
   tab and the same key into the station's settings file. Simpler than a second
@@ -344,8 +386,37 @@ scheduled group is paid.
 
 **Fallbacks.** Elements unreachable for 5 s → the kiosk page shows the numbered wall and the
 station accepts number keys as the answer. Lines unreachable → colour and count rendered on the
-kiosk page. Station offline → the Host tab's Act 4 runs a fixed 12-minute rotation and
-`stationCommand` is called by the server at each slot end with `outcome: 'absent'`.
+kiosk page. Station offline → `deal.rotate` sees `stationAlive` false and writes
+`public/study { state: 'absent', slotEndsAt: now + ABSENT_SLOT_MS (12 min), groupId }`;
+`station.tickStudy(db, nightId, now)` (host command `study-tick`, called by the Host tab on load
+and once a minute in Act 4; any scheduled tick may call it too) ends a slot that has passed by
+calling `run.studyFinished` with `outcome: 'absent'`, once per group (`rotation.finished` is the
+guard). A station that died mid-act never wrote a slot, so the beat's `beatAt` plus twelve
+minutes stands in. A live heartbeat (`updatedAt` within `STATION_QUIET_MS`) stops the tick.
+
+**Who owns `public/study.groupId` (17 Oct, second pass).** `deal.rotate` (and `makeRotation`
+for the first group) are the only writers. `stationCommand('state')` drops `groupId`,
+`slotEndsAt`, `reassignedFrom` and `settings` from whatever the station sends, and accepts
+`state` only from `STATION_STATES` (`idle | playing | reproducing | entering | done`; `absent`
+is the server's word). `finishStudy` no longer moves the pointer. The runner
+(`station/lib/runner.js`) ignores `nextGroup` in the answer and re-arms from the latest
+`public/study` snapshot after the rest; `station/lib/follow.js` watches `public_state/active`
+and swaps the study listener when the night changes (the machine resets to idle).
+
+**Reassign.** `stationCommand('reassign', { groupId })` or host command `study-reassign`
+→ `reassignStudy`: refused once the group due has been paid, or for a paid target. It writes
+`groupId: <picked>, reassignedFrom: <was due>`; a `finished` that names `reassignedFrom` pays
+`groupId` instead and `run.studyFinished` still rotates (the `reassigned` flag bypasses the
+slot check). `rotate` clears `reassignedFrom`.
+
+**autoAfterStudy.** `run.studyFinished` on a rotate beat whose next beat is a questions beat
+with `autoAfterStudy: true` enters that beat (opens the window) and then the following rotate
+beat, in one call. With the flag false it enters the questions beat only.
+
+**Settings.** `station/lib/study.js settingsFrom(input)` takes `capMs, warnMs, rounds (3 of
+{lengths[3], onMs, gapMs}), replayHintMisses, mapHintMisses, restMs` within sane ranges; the
+rest falls back to `DEFAULT_SETTINGS`. The runner rebuilds the machine with new settings when
+it is idle. Nothing writes `settings` yet; a host or the workshop may, with the Admin SDK.
 
 **Tests.** A fake Nanoleaf (layout + event emitter) and a fake Stream Deck, so the whole state
 machine runs in `npm test`: clean solve, cap, wrong tap replays, wrong pair feedback, hint rungs

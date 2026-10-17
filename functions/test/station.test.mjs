@@ -81,15 +81,27 @@ test('finished: deals to every phone in the group, advances the study order, and
   const after = db.store.get(rotationPath(nightId))
   assert.equal(after.current, 1)
   assert.equal(after.finished[first].seconds, 301)
-  assert.equal(db.store.get(studyPath(nightId)).groupId, rot.studyOrder[1])
+  // the pointer at the group due is the rotation's to move (deal.rotate), never the station's report
+  assert.equal(db.store.get(studyPath(nightId)).groupId, rot.studyOrder[0])
   assert.equal(db.store.get(studyPath(nightId)).state, 'idle')
   const again = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first } })
   assert.equal(again.repeated, true)
   assert.equal(db.store.get(rotationPath(nightId)).current, 1)
-  // the last group finishing leaves no next group
+  // every group finishing leaves no next group in the order
   for (const id of rot.studyOrder.slice(1)) await stationCommand(db, { nightId, command: 'finished', payload: { groupId: id, outcome: 'capped' } })
-  assert.equal(db.store.get(studyPath(nightId)).groupId, null)
   assert.equal(db.store.get(rotationPath(nightId)).current, rot.studyOrder.length)
+  assert.equal(Object.keys(db.store.get(rotationPath(nightId)).finished).length, rot.studyOrder.length)
+})
+
+test('state: only the words the study knows; the server\'s own fields never come from the station', async () => {
+  const { db, nightId } = await party(4)
+  await makeRotation(db, { nightId })
+  await assert.rejects(stationCommand(db, { nightId, command: 'state', payload: { state: 'absent' } }), e => e.code === 'invalid')
+  await assert.rejects(stationCommand(db, { nightId, command: 'state', payload: { state: 'winning' } }), e => e.code === 'invalid')
+  await stationCommand(db, { nightId, command: 'state', payload: { state: 'entering', slotEndsAt: 5, reassignedFrom: 'g9', settings: { capMs: 1 } } })
+  const s = db.store.get(studyPath(nightId))
+  assert.equal(s.state, 'entering')
+  assert.ok(!('slotEndsAt' in s) && !('reassignedFrom' in s) && !('settings' in s))
 })
 
 test('finished before the groups exist is refused in words', async () => {

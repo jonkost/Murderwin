@@ -42,6 +42,11 @@ export function rng(seed) {
 export const COLS = 'ABCDEFG'
 export function cellLabel(r, c) { return `${COLS[c]}${r + 1}` }
 
+// The most drawn cells (turns) each grid may have, so the three grids fit
+// the drawing's time budget (relay.js MAX_TURNS): 9 + 11 + 12 = 32 turns.
+export const CELL_CAPS = [9, 11, 12]
+export const MAX_CELLS = CELL_CAPS.reduce((a, b) => a + b, 0)
+
 // --- strokes -------------------------------------------------------------
 const P = (x, y) => [x, y]
 // Points on each side of a cell, named by side. Corners belong to two sides.
@@ -166,20 +171,24 @@ export function makeShape(r, size = 3) {
 // --- grid 2: a shape plus an abstract extra ------------------------------
 export function makeMerged(r, size = 4, opts = {}) {
   const span = 3
+  const cap = opts.cap ?? CELL_CAPS[1]
   const top = opts.top ?? r.int(size - span + 1)
   const left = opts.left ?? r.int(size - span + 1)
   for (let attempt = 0; attempt < 20; attempt++) {
     const grid = emptyGrid(size)
     if (!drawRing(r, grid, top, left, span, r.pick([null, 'line', 'arc']))) continue
     if (r.chance(0.6)) add(grid, top + 1, left + 1, feature(r))
-    // the extra: dots, rays or rings in the cells outside the shape
+    // the extra: dots, rays or rings in the cells outside the shape, within
+    // the cap and leaving room for two dots of noise
     const outside = []
     for (let rr = 0; rr < size; rr++) for (let cc = 0; cc < size; cc++) {
       const inside = rr >= top && rr < top + span && cc >= left && cc < left + span
       if (!inside) outside.push([rr, cc])
     }
     const overlay = opts.overlay ?? r.pick(['dots', 'rays', 'rings', 'mixed'])
-    const chosen = r.shuffle(outside).slice(0, Math.min(outside.length, 2 + r.int(2)))
+    const room = cap - drawnCells(grid).length
+    const want = overlay === 'dots' ? room : room - 2
+    const chosen = r.shuffle(outside).slice(0, Math.max(0, Math.min(outside.length, want, 2 + r.int(2))))
     let dots = 0
     for (const [rr, cc] of chosen) {
       let s
@@ -188,11 +197,11 @@ export function makeMerged(r, size = 4, opts = {}) {
       else s = feature(r, r.pick(['line', 'arc']))
       add(grid, rr, cc, s)
     }
-    // two dots in grid 2, as noise, wherever there is room
+    // two dots in grid 2, as noise, wherever there is room under the cap
     const empties = r.shuffle(Object.keys(grid.cells).filter(k => grid.cells[k].length === 0))
-    while (dots < 2 && empties.length) { grid.cells[empties.pop()].push({ kind: 'dot', at: CENTRE }); dots++ }
+    while (dots < 2 && empties.length && drawnCells(grid).length < cap) { grid.cells[empties.pop()].push({ kind: 'dot', at: CENTRE }); dots++ }
     const drawn = drawnCells(grid).length
-    if (drawn >= 10 && drawn <= 13) return { grid, top, left, overlay }
+    if (drawn >= 10 && drawn <= cap && dots >= 2) return { grid, top, left, overlay }
   }
   throw new Error('merged generation failed')
 }
@@ -205,11 +214,11 @@ function mirrorStroke(s) {
   if (s.kind === 'line') return { kind: 'line', from: m(s.from), to: m(s.to) }
   return { kind: 'arc', from: m(s.from), to: m(s.to), bulge: -s.bulge }
 }
-export function makePattern(r, size = 5) {
+export function makePattern(r, size = 5, { cap = CELL_CAPS[2] } = {}) {
   const mid = Math.floor(size / 2)
   for (let attempt = 0; attempt < 40; attempt++) {
     const grid = emptyGrid(size)
-    const target = 10 + r.int(2) // drawn cells before dots: 10–11, then 3 dots
+    const target = cap - 3 // drawn cells before dots (one short when a mirrored pair lands last), then dots up to the cap
     // left half, including the centre column
     const candidates = []
     for (let rr = 0; rr < size; rr++) for (let cc = 0; cc <= mid; cc++) candidates.push([rr, cc])
@@ -237,15 +246,15 @@ export function makePattern(r, size = 5) {
         drawn += 2
       }
     }
-    // three dots as noise, mirrored in pairs where possible
+    // up to three dots as noise, never past the cap
     const empties = r.shuffle(Object.keys(grid.cells).filter(k => grid.cells[k].length === 0))
     let dots = 0
-    while (dots < 3 && empties.length) {
+    while (dots < 3 && empties.length && drawnCells(grid).length < cap) {
       grid.cells[empties.pop()].push({ kind: 'dot', at: CENTRE })
       dots++
     }
     const count = drawnCells(grid).length
-    if (count < 12 || count > 15) continue
+    if (count < cap - 1 || count > cap || dots < 1) continue
     if (sameGrid(grid, rotateGrid(grid))) continue // a quarter turn must change it
     return grid
   }

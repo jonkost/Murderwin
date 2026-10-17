@@ -18,6 +18,7 @@ import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { createRunner } from './lib/runner.js'
+import { createFollower } from './lib/follow.js'
 import { Nanoleaf } from './lib/nanoleaf.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
@@ -109,17 +110,13 @@ setInterval(() => runner.tick(), 1000)
 setInterval(() => runner.sendState(), 30_000)   // a heartbeat, so the kiosk knows the station is alive
 
 await signInAnonymously(auth)
-let nightId = null
-let stopStudy = null
-onSnapshot(doc(db, 'public_state/active'), (snap) => {
-  const id = snap.data()?.nightId ?? null
-  if (id === nightId) return
-  nightId = id
-  runner.night(id)
-  if (stopStudy) { stopStudy(); stopStudy = null }
-  if (!id) return
-  stopStudy = onSnapshot(doc(db, `nights/${id}/public/study`), (s) => runner.due(s.data()?.groupId ?? null))
+// Which night is live, and which group is due in it (the server's rotation
+// owns that; this station only reads it). Settings ride on the same doc.
+const follower = createFollower({
+  runner, log,
+  watch: (path, onData) => onSnapshot(doc(db, ...path.split('/')), (snap) => onData(snap.data() ?? null), (e) => log(`${path}: ${e.message}`)),
 })
+follower.start()
 
 // ---- the terminal stands in for the hardware in fake mode ----------------
 if (FAKE && process.stdin.isTTY) {

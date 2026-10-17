@@ -4,7 +4,7 @@
 // the real runner with fakes and no hardware (station.mjs hands in the real
 // ones). It never handles a clue.
 
-import { createStudy } from './study.js'
+import { createStudy, settingsFrom } from './study.js'
 import { COLOUR_RGB, countSegments } from './nanoleaf.js'
 
 const DIM = [40, 40, 40], LIT = [255, 255, 255], OFF = [0, 0, 0]
@@ -19,9 +19,11 @@ export function createRunner({
 } = {}) {
   let nightId = null
   let groupId = null              // the group the server says is due; the server owns this
+  let settings = {}               // from public/study.settings when the night carries any
   let skew = 0
   const serverNow = () => now() + skew
-  let machine = createStudy({ panelIds, groupId })
+  const fresh = () => createStudy({ panelIds, groupId, settings })
+  let machine = fresh()
   let granolia = null
   let pendingFinished = null
 
@@ -98,15 +100,14 @@ export function createRunner({
         log(`group ${e.groupId ?? '?'} finished: ${e.outcome}, ${e.pairs} pairs, ${e.seconds}s`)
         const payload = { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs }
         if (nightId) {
-          try {
-            const r = await call('finished', payload)
-            if (r?.data && 'nextGroup' in r.data) groupId = r.data.nextGroup ?? null
-          } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
+          // the answer says only that it landed; which group is due next comes
+          // from the public/study snapshot (the server's rotation owns it)
+          try { await call('finished', payload) } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
         }
-        // the walls rest, then the station is ready for whichever group the server says is next
+        // the walls rest, then the station is re-armed for whichever group the latest snapshot says
         await sleep(restMs)
         granolia = null
-        machine = createStudy({ panelIds, groupId })
+        machine = fresh()
         drain()
         return
       }
@@ -142,29 +143,39 @@ export function createRunner({
       if (pendingFinished && nightId) {
         const e = pendingFinished; pendingFinished = null
         call('finished', { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs })
-          .then(r => { if (r?.data && 'nextGroup' in r.data) groupId = r.data.nextGroup ?? null })
           .catch(() => { pendingFinished = e })
       }
     },
-    // the live night changed
+    // the live night changed: whatever was running belonged to the old night,
+    // so the machine goes back to idle and waits for the new night's snapshot
     night(id) {
       if (id === nightId) return
       nightId = id
+      groupId = null
+      settings = {}
+      granolia = null
+      pendingFinished = null
+      machine = fresh()
       log('night:', nightId ?? 'none')
+      drain()
       sendState()
     },
-    // the server says which group is due. Always remembered; the machine is
-    // rebuilt for them only when it is idle (a running game is never cut short).
-    due(next) {
+    // the server says which group is due (and may send settings). Always
+    // remembered; the machine is rebuilt for them when it is idle, and after
+    // the rest that follows a finish (a running game is never cut short).
+    due(next, nextSettings = null) {
       next = next ?? null
-      if (next === groupId) return
-      groupId = next
-      log('next group:', groupId ?? 'none')
-      if (machine.state === 'idle') { machine = createStudy({ panelIds, groupId }); drain() }
+      const s = settingsFrom(nextSettings)
+      const settingsChanged = JSON.stringify(s) !== JSON.stringify(settings)
+      if (settingsChanged) { settings = s; log('settings:', Object.keys(s).length ? Object.keys(s).join(' ') : 'defaults') }
+      if (next === groupId && !settingsChanged) return
+      if (next !== groupId) { groupId = next; log('next group:', groupId ?? 'none') }
+      if (machine.state === 'idle') { machine = fresh(); drain() }
     },
+    get settings() { return settings },
     // the host's reset key in fake mode
     reset() {
-      machine = createStudy({ panelIds, groupId }); granolia = null; drain()
+      machine = fresh(); granolia = null; drain()
     },
   }
 }

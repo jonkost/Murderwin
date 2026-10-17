@@ -21,11 +21,19 @@ function Bar({ endsAt, total, serverNow }) {
   return <div className="bar" aria-hidden="true"><div className="bar-fill" style={{ width: `${pct}%` }} /></div>
 }
 
-const TURN_MS = 10_000, WALK_MS = 12_000, PULL_MS = 20_000, VOTE_MS = 45_000, LOCKOUT_MS = 10_000
+// The bar totals come from the server (public/relay.timing, written at start);
+// these stand in only for a doc written before the server sent them.
+const FALLBACK = { turnMs: 10_000, walkMs: 12_000, pullMs: 20_000, voteMs: 45_000, lockoutMs: 10_000 }
+export function timingOf(relay) {
+  const t = relay?.timing ?? {}
+  const pick = (k) => (typeof t[k] === 'number' && t[k] > 0 ? t[k] : FALLBACK[k])
+  return { TURN_MS: pick('turnMs'), WALK_MS: pick('walkMs'), PULL_MS: pick('pullMs'), VOTE_MS: pick('voteMs'), LOCKOUT_MS: pick('lockoutMs') }
+}
 
 export default function Relay({ uid, night, session, relay, serverNow }) {
   useTick(250)
   const me = session.guestKey
+  const { TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } = timingOf(relay)
   const [pick, setPick] = useState(null)
   const [busy, setBusy] = useState(false)
   const nudged = useRef(0)

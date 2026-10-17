@@ -36,6 +36,33 @@ export function deckKeys() {
   return keys
 }
 
+// Settings may arrive from the server (nights/{id}/public/study.settings,
+// written by a host or the workshop). Only known keys with sane values are
+// taken; anything else falls back to DEFAULT_SETTINGS. A round is three
+// lengths of 2 to 9 touches with an on and a gap time in milliseconds.
+export function settingsFrom(input) {
+  const out = {}
+  if (!input || typeof input !== 'object') return out
+  const num = (k, lo, hi) => { const v = Number(input[k]); if (Number.isFinite(v) && v >= lo && v <= hi) out[k] = v }
+  num('capMs', 60_000, 60 * 60_000)
+  num('warnMs', 30_000, 60 * 60_000)
+  num('replayHintMisses', 1, 20)
+  num('mapHintMisses', 1, 20)
+  num('restMs', 0, 10_000)
+  if (out.warnMs != null && out.capMs != null && out.warnMs >= out.capMs) delete out.warnMs
+  if (Array.isArray(input.rounds) && input.rounds.length === 3) {
+    const rounds = input.rounds.map(r => {
+      const lengths = Array.isArray(r?.lengths) ? r.lengths.map(Number) : null
+      if (!lengths || lengths.length !== 3 || !lengths.every(n => Number.isInteger(n) && n >= 2 && n <= 9)) return null
+      const onMs = Number(r.onMs), gapMs = Number(r.gapMs)
+      if (!(onMs >= 100 && onMs <= 3000) || !(gapMs >= 50 && gapMs <= 2000)) return null
+      return { lengths, onMs, gapMs }
+    })
+    if (rounds.every(Boolean)) out.rounds = rounds
+  }
+  return out
+}
+
 function pickInt(rand, n) { return Math.floor(rand() * n) }
 
 // A pattern: `len` panels in a row, the same panel never twice running.

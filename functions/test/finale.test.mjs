@@ -108,7 +108,7 @@ test('rotate does not clobber a running study game, and the rehearsal shortcut f
   assert.equal(db.store.get(studyPath(nightId)).state, 'idle')
 })
 
-test('studyFinished rotates the house in Act 4, and only there', async () => {
+test('studyFinished rotates the house in Act 4, and only there; a Parlour Game beat marked autoAfterStudy is opened and passed in the same call', async () => {
   const { db, nightId } = await party(6)
   const t = { now: 3_000_000 }
   await walkTo(db, nightId, 4, 'station1', t)
@@ -116,15 +116,18 @@ test('studyFinished rotates the house in Act 4, and only there', async () => {
   const r = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0], outcome: 'solved', seconds: 300, pairs: 3 }, now: t.now })
   assert.equal(r.rotated, true)
   assert.equal(night(db, nightId).beat, 'station2')
-  // station2 is followed by the Parlour Game: finishing moves the house on to it (the beats run in order)
+  // station2 is followed by the Parlour Game (autoAfterStudy): finishing lights every phone AND moves the house on
   const r2 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[1], outcome: 'capped' }, now: t.now })
   assert.equal(r2.rotated, true, 'next beat exists in Act 4')
-  assert.equal(night(db, nightId).beat, 'questions1')
-  // during the Parlour Game the host's Next owns the clock: a finish does not rotate
+  assert.equal(r2.window, 'questions1')
+  assert.equal(night(db, nightId).beat, 'station3')
+  assert.equal(night(db, nightId).window.kind, 'questions')
+  assert.equal(night(db, nightId).window.settled, false)
+  // while that window is open a finish waits for it: the host's Next (or the next finish) carries on after it closes
   const r3 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[2], outcome: 'solved', seconds: 500, pairs: 3 }, now: t.now + 1000 })
   assert.equal(r3.rotated, false)
-  assert.equal(r3.reason, 'not-a-rotate-beat')
-  assert.equal(night(db, nightId).beat, 'questions1')
+  assert.equal(r3.reason, 'window-open')
+  assert.equal(night(db, nightId).beat, 'station3')
   // a repeat is harmless
   const r4 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0] }, now: t.now })
   assert.equal(r4.repeated, true)
@@ -304,9 +307,9 @@ test('a running drawing is never wiped or walked away from: Next and the beat li
   assert.equal(db.store.get(pub).state, 'walk')
   await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /still running/)
   await assert.rejects(hostCommand(db, { nightId, command: 'beat', arg: 'door', now: t.now }), /still running/)
-  await assert.rejects(hostCommand(db, { nightId, command: 'relay-start', now: t.now }), /already running/)
+  assert.equal((await hostCommand(db, { nightId, command: 'relay-start', now: t.now })).already, true)
   const r = await hostCommand(db, { nightId, command: 'beat', arg: 'drawing', now: t.now })
-  assert.equal(r.kept, true)
+  assert.equal(r.already, true)
   assert.equal(db.store.get(priv).seed, seed, 'the same drawing is still on the paper')
   assert.equal(night(db, nightId).beat, 'drawing')
   await hostCommand(db, { nightId, command: 'relay-reset', now: t.now })
