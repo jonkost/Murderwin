@@ -33,6 +33,9 @@ function describe(command, r) {
     case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
     case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
     case 'power': return 'The power is back. Every phone is showing its card.'
+    case 'handover': return 'That phone is wiped. The next person to pick it up types their own name; the previous owner taps theirs on any other phone.'
+    case 'pause': return 'Paused. Every clock in the house is standing still.'
+    case 'resume': return `Resumed. Every clock moved on by ${Math.round((r.shiftMs ?? 0) / 1000)} seconds.`
     default: return 'Done.'
   }
 }
@@ -137,6 +140,7 @@ export default function Host({ night, content, serverNow }) {
               <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
               <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}</span>
               <span className="who-char">{(character?.name ?? r.characterId)} · bag {r.bag}</span>
+              <button className="chip handover" disabled={!!busy} onClick={() => run('handover', r.key)} title="Wipe this phone so someone else can use it">Hand this phone on</button>
             </li>
           )
         })}

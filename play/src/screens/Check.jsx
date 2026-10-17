@@ -1,12 +1,28 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import { useAuthUid, useDoc } from '../lib/hooks'
+import { mayCheck } from '../lib/night'
 import { ACTS, CATS, actScript, bioFor, motiveNotes, motives, npcCards, rules, statusLine, uiLines } from '../lib/content'
 
 // /play/?check=1 — does the phone say what the workshop says?
 // Reads the copy of the workshop lines the phones receive (made when a night
 // starts, when an act begins, and by "Resend rules & bios"), runs each line
 // through the phone's own code, and shows a tick when the phone shows it
-// word for word, or the difference when it does not. Safe content only.
+// word for word, or the difference when it does not. Safe content only, but
+// every line at once, so only a host phone or the admin may open it (17 Oct
+// 2026); a plain guest sees "Not for you".
+
+// Is this sign-in the admin? The workshop's settings doc is admin-only to
+// read, so one small read answers it without a list of UIDs on the phone.
+function useAdmin(uid) {
+  const [admin, setAdmin] = useState(false)
+  useEffect(() => {
+    if (!uid) return
+    getDoc(doc(db, 'meta', 'game')).then(() => setAdmin(true)).catch(() => setAdmin(false))
+  }, [uid])
+  return admin
+}
 
 function norm(s) { return String(s ?? '').replace(/\s+/g, ' ').trim() }
 
@@ -33,11 +49,18 @@ export default function Check() {
   const nightId = active.data?.nightId ?? null
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const content = useDoc(nightId ? `nights/${nightId}/public/content` : null)
+  const session = useDoc(uid ? `sessions/${uid}` : null)
+  const admin = useAdmin(uid)
   const c = content.data
   const report = useMemo(() => (c ? build(c) : null), [c])
 
   if (!uid || !active.loaded) return <main className="check"><p>One moment.</p></main>
   if (!nightId || !c) return <main className="check"><h1>Nothing to check yet</h1><p>No night is live, or its copy of the workshop lines has not arrived. Start a night from a host phone.</p></main>
+  if (!session.loaded) return <main className="check"><p>One moment.</p></main>
+  const mine = session.data && session.data.nightId === nightId ? session.data : null
+  if (!mayCheck({ session: mine, night: night.data, admin })) {
+    return <main className="check"><h1>Not for you</h1><p>{uiLines(c)['NOT FOR YOU']}</p></main>
+  }
 
   const when = c.publishedAt?.toDate?.() ?? null
   const total = report.reduce((n, a) => n + a.rows.length, 0)

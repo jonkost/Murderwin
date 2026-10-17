@@ -33,6 +33,13 @@ export const DEFAULT_UI = {
   PAUSED: 'Sir Irwin requires the garden. Back shortly.',
   SUPERSEDED: 'This character has moved to another phone. Tap your name to bring it back here, or type another name to join as someone else.',
   POWER: 'The power is back. Keep your eyes on your own phone. Read, then hide this when you are ready.',
+  // Shown in the card's place on a phone that has no role card yet (a late arrival): the same shape as everyone else's screen.
+  ORIENT: 'The power is back. The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Read, then hide this when you are ready.',
+  'PAUSED BY HOST': 'Paused by the host. Nothing on this phone can run out. It carries on when the host says.',
+  'YOUR ROLE': 'Your role',
+  'SHOW ROLE': 'Show me my card',
+  'HIDE ROLE': 'Put it away',
+  'NOT FOR YOU': 'Not for you. This page is for the hosts.',
   HIDE: 'Hide this',
   HOLD: 'Keep reading',
   RETICULE: 'Your Reticule: a small drawstring bag for everything you carry tonight.',
