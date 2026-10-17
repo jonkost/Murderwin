@@ -42,8 +42,8 @@ export default function ForJenna() {
           {FIRST.map(f => (
             <li key={f.to}><Link className="ghost open" to={f.to}>Open {f.label}</Link><br /><span className="hint">{f.why}</span></li>
           ))}
-          <li><b>Later, when the secrets exist</b>, you will be told. Then: read every set for sense, tone and typos on your own page, and mark each one done or needs more.</li>
-          <li><b>Later still: the bags.</b> The game decides what goes in each numbered bag; your page will show the packing list, and you pack them.</li>
+          <li><b>Later, when the secrets exist</b>, you will be told. Then: <Link className="ghost open" to="/steward">Open your page</Link> and read every set for sense, tone and typos, change a line in place if it needs it, and mark each one done or needs more. That page opens for your account only; Jon's is refused.</li>
+          <li><b>Later still: the bags.</b> The game decides what goes in each numbered bag; the same page shows the packing list, and you pack to it.</li>
         </ol>
       </section>
 
