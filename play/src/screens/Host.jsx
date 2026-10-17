@@ -5,6 +5,7 @@ import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, ms, secondsLeft } from '../lib/night'
 import { houseView } from '../lib/house'
+import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME } from '../lib/finale'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -47,6 +48,10 @@ function describe(command, r) {
     case 'power': return 'The power is back. Every phone is showing its card.'
     case 'handover': return 'That phone is wiped. The next person to pick it up types their own name; the previous owner taps theirs on any other phone.'
     case 'pause': return 'Paused. Every clock in the house is standing still.'
+    case 'reveal-stage': return r.already ? 'All three are named. Press Next for everyone’s result.' : `The screen is naming the ${r.stage}.`
+    case 'finale-hold': return r.already ? 'The screen is already held.' : 'The screen is held where it is.'
+    case 'finale-go': return r.already ? 'The screen was not held.' : `Carrying on. The screen was held for ${Math.round((r.heldMs ?? 0) / 1000)} seconds.`
+    case 'award': return r.already ? 'They already have that one.' : 'Given. It is on their phone now, and on the screen at the end.'
     case 'resume': return `Resumed. Every clock moved on by ${Math.round((r.shiftMs ?? 0) / 1000)} seconds.`
     default: return 'Done.'
   }
@@ -72,6 +77,8 @@ export default function Host({ night, content, serverNow }) {
   const rotation = useDoc(live ? `nights/${night.nightId}/public/rotation` : null)
   const cues = useDoc(live ? `nights/${night.nightId}/public/cues` : null)
   const relay = useDoc(live ? `nights/${night.nightId}/public/relay` : null)
+  const finale = useDoc(live && night.act === 7 ? `nights/${night.nightId}/public/finale` : null)
+  const awards = useDoc(live && night.act <= 5 ? `nights/${night.nightId}/public/achievements` : null)
   // With no station the study slots are twelve minutes: this tab is their clock,
   // on load and once a minute through Act 4. The server acts once per group.
   useEffect(() => {
@@ -116,7 +123,8 @@ export default function Host({ night, content, serverNow }) {
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
 
-      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} />
+      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} />
+      <RevealPanel night={night} finale={finale.data} busy={busy} run={run} serverNow={serverNow} />
 
       <h3>The acts</h3>
       <div className="host-row">
@@ -136,6 +144,7 @@ export default function Host({ night, content, serverNow }) {
       </div>
 
       <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+      <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
 
       <h3>The study (Act 4)</h3>
       <p className="gloss">Makes the pairs and trios and the order they visit the study. Press once, after dinner.</p>
@@ -255,7 +264,7 @@ export function HousePanel({ house, cues, night, busy, run }) {
 // Running the night: one button. The beats come from seed/night.json; the
 // server does whatever the next beat needs (deal, light up, group, reveal)
 // and says only how many phones it reached. Nothing here can show content.
-function RunPanel({ night, busy, run, serverNow }) {
+function RunPanel({ night, busy, run, serverNow, finale = null }) {
   useTick(1000)
   const beats = beatsOf(night.act)
   const idx = beats.findIndex(b => b.key === night.beat)
@@ -272,7 +281,8 @@ function RunPanel({ night, busy, run, serverNow }) {
     : nextAct ? `Next: Act ${night.act + 1}, ${nextAct.plain}`
     : 'The night is over'
   const atEnd = (night.act === 1 || night.act === 7) && !after
-  const canNext = !busy && night.phase !== 'blackout' && !atEnd && !(open && left > 0)
+  const naming = night.act === 7 && here?.action === 'reveal' && finale?.stage !== 'victim' // the screen names all three before Next
+  const canNext = !busy && night.phase !== 'blackout' && !atEnd && !(open && left > 0) && !naming
   return (
     <section className="run">
       <h3>Run the night</h3>
@@ -282,11 +292,7 @@ function RunPanel({ night, busy, run, serverNow }) {
           <p className="gloss run-what">{here.what}</p>
         </>
       ) : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
-      {night.act === 7 && night.beat === 'reveal' && night.reveal && serverNow && (
-        <p className="host-msg" role="status">
-          {(() => { const left = Math.max(0, Math.ceil((ms(night.reveal.at) + 110_000 - serverNow()) / 1000)); return left > 0 ? `The screen is revealing. ${left} seconds to go, then press Next.` : 'The screen has revealed all three. Press Next for everyone’s result.' })()}
-        </p>
-      )}
+      {naming && <p className="host-msg" role="status">The screen is revealing. Name all three below, then press Next.</p>}
       {open && (
         <p className="host-msg" role="status">
           {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}
@@ -312,6 +318,80 @@ function RunPanel({ night, busy, run, serverNow }) {
           </ol>
         </details>
       )}
+    </section>
+  )
+}
+
+// Act 7: the reveal, one name at a time. The screen plays the stats and the
+// graph on its own clock; each name waits for a press here. Nothing on this
+// panel can show a name: the button says which, never who.
+const NAME_BUTTONS = { murderer: 'Name the Murderer', motive: 'Name the Motive', victim: 'Name the Victim' }
+export function RevealPanel({ night, finale, busy, run, serverNow }) {
+  useTick(1000)
+  if (night.act !== 7 || !finale) return null
+  const now = serverNow ? serverNow() : Date.now()
+  const stage = finale.stage ?? 'stats'
+  const next = NEXT_NAME[stage] ?? null
+  const ready = namesReady(finale, now)
+  const wait = secondsUntilNames(finale, now)
+  const held = !!finale.holdAt
+  const line = held ? 'The screen is held where it is.'
+    : !ready ? `The screen is counting. ${wait} seconds until the first name.`
+    : next ? 'The screen is ready for the next name.'
+    : 'All three are named. Press Next for everyone’s result.'
+  return (
+    <section className="run reveal-panel">
+      <h3>The reveal</h3>
+      <p className="gloss">{line}</p>
+      {next && (
+        <div className="host-row">
+          <button className="big wide" disabled={!!busy || !ready || held} onClick={() => run('reveal-stage')}>{NAME_BUTTONS[next]}</button>
+        </div>
+      )}
+      <div className="host-row">
+        {held
+          ? <button className="chip wide" disabled={!!busy} onClick={() => run('finale-go')}>Carry on</button>
+          : <button className="chip wide" disabled={!!busy} onClick={() => run('finale-hold')}>Hold the screen</button>}
+      </div>
+    </section>
+  )
+}
+
+// Achievements: pre-written in the workshop, given here with two taps (a
+// guest, then the achievement). On the guest's phone at once, on the screen
+// at the end. Closes at the end of Act 5, when the hosts have no hands free.
+export function AchievementsPanel({ night, content, awards, busy, run }) {
+  const [who, setWho] = useState(null)
+  if (!(night.act >= 1 && night.act <= 5)) return null
+  const list = achievementsOf(content)
+  const given = awards?.awards ?? {}
+  const people = Object.entries(night.roster ?? {}).map(([key, r]) => ({ key, name: r.name })).sort((a, b) => a.name.localeCompare(b.name))
+  const count = Object.keys(given).length
+  return (
+    <section className="achievements">
+      <h3>Achievements</h3>
+      <p className="gloss">Tap a guest, then an achievement. It lands on their phone now and on the screen at the end. Closes at the end of Act 5.</p>
+      {!list.length && <p className="gloss">None written yet. They are the Achievements list in the workshop.</p>}
+      {list.length > 0 && (
+        <div className="host-row">
+          {people.map(p => (
+            <button key={p.key} className={who === p.key ? 'chip on' : 'chip'} disabled={!!busy} onClick={() => setWho(who === p.key ? null : p.key)}>{p.name}</button>
+          ))}
+        </div>
+      )}
+      {who && (
+        <ul className="award-list">
+          {list.map(a => {
+            const done = !!given[`${who}_${a.n}`]
+            return (
+              <li key={a.n}>
+                <button className={done ? 'chip on' : 'chip'} disabled={!!busy || done} onClick={() => run('award', `${who}:${a.n}`)} title={a.line}>{a.title}{done ? ' · given' : ''}</button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {count > 0 && <p className="gloss">{count} given so far.</p>}
     </section>
   )
 }

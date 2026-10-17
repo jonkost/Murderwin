@@ -19,8 +19,8 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // Sample cards are stage directions in brackets, never content.
 //
 // Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
-// kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal,
-// kiosk-finale-done, kiosk-living-turn, kiosk-living-vote, kiosk-study,
+// kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-awards, kiosk-finale-graph,
+// kiosk-finale-reveal, kiosk-finale-done, kiosk-living-turn, kiosk-living-vote, kiosk-study,
 // kiosk-study-fallback (full-bleed, as on the MacBooks). The Host tab's house
 // panel: host-house, host-house-window.
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
@@ -81,6 +81,7 @@ const CARDS = {
   irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the living room screen and nowhere else. Go.', button: 'On my way' },
   door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the living room.', button: 'I have seen it' },
   eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the living room screen.', button: 'Watching' },
+  award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crookshank's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
   result: { id: '7-result-result', act: 7, beat: 'result', kind: 'result', murderer: true, motive: false, victim: true, defaulted: false, picks: { murderer: 'Jacob', motive: 'A sneeze set free, for all to see', victim: 'Mari' } },
   role: { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text: 'The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Name all three before the night is out.' },
 }
@@ -127,18 +128,33 @@ const STUDY = (extra = {}) => ({
   startedAt: Date.now() - 4 * 60_000, finishedAt: null, warned: false, map: null, lines: null, revealed: null, groupId: 'g1',
   layout: STUDY_LAYOUT, elementsOk: true, linesOk: true, granolia: null, fallbackPattern: null, updatedAt: stamp(Date.now()), ...extra,
 })
-const REVEAL = { murderer: { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }, motive: { n: 4, rhyme: motivesSeed.motives[3]?.rhyme ?? 'A motive' }, victim: { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }, rehearsal: true, at: stamp(PHASE_AT) }
-const FINALE = (agoMs) => ({
+// the finale doc as the server shapes it: the reel and the graph on the clock, the names only as the host releases them
+const NAMES = { murderer: { name: 'Jacob', characterName: 'Roger Arms' }, motive: { n: 4, rhyme: motivesSeed.motives[3]?.rhyme ?? 'A motive' }, victim: { name: 'Mari', characterName: 'Ignatius Fume' } }
+const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
   at: stamp(Date.now() - agoMs),
-  schedule: { stats: 0, graph: 35000, murderer: 65000, motive: 80000, victim: 95000, done: 110000 },
+  stage,
+  schedule: { stats: 0, awards: 34000, graph: 50000, names: 80000 },
   stats: [
-    { label: 'Fastest light puzzle', value: 'Jon and Jessa, 6 min 12 s' },
-    { label: 'Time on the drawing', value: '17 min' },
-    { label: 'Pictures that took more than one guess', value: 'Grid 2' },
+    { label: 'Fastest safe', value: 'Jessa, 1 min 40 s', showAt: 0 },
+    { label: 'Fastest light puzzle', value: 'Jon and Jessa, 6 min 12 s', showAt: 4000 },
+    { label: 'Time on the drawing', value: '17 min', showAt: 8000 },
+    { label: 'Pictures that took more than one guess', value: 'Grid 2', showAt: 12000 },
+    { label: "The cats' favourites", value: 'Granolia: Jon · Boo: Mari · Zimothy: Jessa · Salem: Jacob', showAt: 16000 },
+    { label: "The cats' least favourites", value: 'Granolia: Mari · Boo: Jacob · Zimothy: Jon · Salem: Jessa', showAt: 20000 },
+    { label: 'Quickest on the Parlour Games', value: 'Jessa, 4 of 4', showAt: 24000 },
+  ],
+  achievements: [
+    { name: 'Jessa', title: "Crookshank's Confidant", line: 'First to pet Salem.', showAt: 34000 },
+    { name: 'Jon', title: 'Clean Plate Club', line: 'Nothing left, not even the garnish.', showAt: 37000 },
   ],
   graph: { points: [{ act: 2, role: 'ghost', delta: 3 }, { act: 2, role: 'murderer', delta: -2 }, { act: 4, role: 'ghost', delta: 1 }, { act: 4, role: 'murderer', delta: -4 }, { act: 6, role: 'ghost', delta: 4 }, { act: 6, role: 'murderer', delta: -1 }],
-    running: [{ act: 2, value: 1 }, { act: 4, value: -2 }, { act: 6, value: 1 }] },
+    running: [{ act: 2, value: 1 }, { act: 4, value: -2 }, { act: 6, value: 1 }], sides: { up: 'ghost', down: 'murderer' }, hush: false },
+  names: stage === 'stats' ? {} : stage === 'murderer' ? { murderer: NAMES.murderer } : stage === 'motive' ? { murderer: NAMES.murderer, motive: NAMES.motive } : NAMES,
+  epilogue: stage === 'victim' ? `And so it was ${NAMES.murderer.name}. Not for money, not for love, for this: ${NAMES.motive.rhyme}. And ${NAMES.victim.name} never saw it coming.` : null,
+  victimAt: stage === 'victim' ? stamp(Date.now() - 20000) : null,
+  holdAt: null, held: 0,
   rehearsal: true,
+  ...extra,
 })
 const KIOSK = {
   'kiosk-bedroom-closed': () => <Bedroom relay={null} trace={null} />,
@@ -164,10 +180,11 @@ const KIOSK = {
     return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /><p className="gloss">{house.answered.n} of {house.answered.of} have answered.</p></div>
   },
   'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} />,
-  'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
-  'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(40000)} serverNow={serverNow} nightId="preview" />,
-  'kiosk-finale-reveal': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(82000)} serverNow={serverNow} nightId="preview" />,
-  'kiosk-finale-done': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(120000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-awards': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(38000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(55000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-reveal': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(90000, 'motive')} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-done': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(120000, 'victim')} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-turn': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-vote': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('vote')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
 }
@@ -184,6 +201,7 @@ const DEALT = {
   document: { act: 2, beat: 'puzzle', cards: [CARDS.testimony, CARDS.puzzle, CARDS.document], seen: { '2-cat-go': true, '2-puzzle-safe': true } },
   checkin: { act: 2, beat: 'checkin', cards: [CARDS.testimony, CARDS.document, CARDS.checkin], seen: { '2-cat-go': true } },
   dinner: { act: 3, beat: 'down', cards: [CARDS.dinner] },
+  award: { act: 3, beat: 'down', cards: [CARDS.award] },
   groups: { act: 3, beat: 'groups', cards: [CARDS.group] },
   study: { act: 4, beat: 'station1', cards: [CARDS.study, CARDS.clue] },
   cat: { act: 4, beat: 'station2', cards: [CARDS.cat] },
@@ -198,7 +216,7 @@ const DEALT = {
   clues: { act: 4, beat: 'station5', cards: [CARDS.testimony, CARDS.document, CARDS.clue, CARDS.bags, { ...CARDS.cat.testimony }], tab: 'clues', seen: { '2-cat-go': true, '4-station3-bags': true } },
 }
 
-export const TOUR = ['doors', 'join', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'go', 'testimony', 'deflect', 'puzzle', 'document', 'questions', 'checkin', 'dinner', 'groups', 'study', 'cat', 'bags', 'puzzle4', 'checkin4', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'go', 'testimony', 'deflect', 'puzzle', 'document', 'questions', 'checkin', 'dinner', 'groups', 'study', 'cat', 'bags', 'puzzle4', 'checkin4', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)

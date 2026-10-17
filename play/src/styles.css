@@ -512,3 +512,17 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .paper-mourning-card .paper-big { color: #1a1614; }
 .paper-mourning-card .paper-note { justify-self: center; }
 .preview-paper { position: fixed; right: 0.6rem; top: 0.6rem; z-index: 50; opacity: 0.85; background: var(--card); }
+
+/* ---- Act 7 (I, 18 Oct 2026): the calculating bar, the achievements reel, the closing story, the award card ---- */
+.calc { width: 70vw; height: 1.6vw; border-radius: 1vw; background: rgba(241,232,214,0.12); overflow: hidden; margin: 0 0 2vw; }
+.calc-bar { height: 100%; width: 0; background: var(--good); border-radius: 1vw; animation-name: calc; animation-timing-function: cubic-bezier(0.05, 0.85, 0.3, 1); animation-fill-mode: forwards; }
+@keyframes calc { from { width: 0; } to { width: 100%; } }
+.awards-reel { list-style: none; margin: 1vw 0 0; padding: 0; display: grid; gap: 1.4vw; width: 70vw; }
+.awards-reel li { display: grid; grid-template-columns: 1fr auto; column-gap: 2vw; text-align: left; font-size: 3vw; opacity: 0.75; animation: statin 0.9s ease-out; }
+.awards-reel li.fresh { opacity: 1; }
+.award-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; }
+.award-name { color: var(--good); }
+.award-line { grid-column: 1 / -1; font-size: 2.2vw; color: var(--dim); }
+.epilogue { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 3.4vw; line-height: 1.35; max-width: 80vw; margin: 3vw 0 0; animation: statin 1.2s ease-out; }
+.dealt.award h3 { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; }
+.award-list { list-style: none; margin: 0.5rem 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }

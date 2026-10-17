@@ -4,6 +4,7 @@ import { callRelayAdvance } from '../firebase'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines } from '../lib/content'
+import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed } from '../lib/finale'
 
 // The room screens: /play/?kiosk=living | bedroom. A kiosk is a browser on a
 // MacBook pointed at the host, signed in anonymously like a phone. It shows
@@ -68,7 +69,7 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
   const lastReveal = useRef(null)
 
   // a soft note at each reveal
-  const stage = finale && night?.reveal ? finaleStage(finale, serverNow()) : null
+  const stage = finale && night?.act === 7 ? finaleStage(finale, serverNow()) : null
   useEffect(() => {
     if (!stage) return
     if (['murderer', 'motive', 'victim'].includes(stage) && lastReveal.current !== stage) { chime('right'); lastReveal.current = stage }
@@ -105,8 +106,8 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
     lastState.current = key
   }, [relay?.state, relay?.turnIndex, relay?.lastResult, relay?.crossed?.length])
 
-  // Act 7: the finale runs on this screen against the server's clock
-  if (finale && night?.reveal) return <Finale night={night} finale={finale} serverNow={serverNow} />
+  // Act 7: the finale runs on this screen against the server's clock; each name waits for the host
+  if (finale && night?.act === 7) return <Finale night={night} finale={finale} serverNow={serverNow} />
   // Act 7: while the phones decide, the clock is on the big screen, with the
   // trace when there is one (the drawing may have been cut, or never run)
   if (night?.window?.kind === 'ballot' && !night.window.settled) {
@@ -238,77 +239,118 @@ export function TraceView({ trace, compact = false }) {
 
 // ---- Act 7: the finale ----------------------------------------------------
 // Everything on this screen is a function of the server's clock and the
-// finale doc the server wrote at the reveal beat. Nothing is a timer.
-export function finaleStage(finale, now) {
-  const t = now - ms(finale.at)
-  const s = finale.schedule ?? {}
-  if (t >= (s.done ?? 110_000)) return 'done'
-  if (t >= (s.victim ?? 95_000)) return 'victim'
-  if (t >= (s.motive ?? 80_000)) return 'motive'
-  if (t >= (s.murderer ?? 65_000)) return 'murderer'
-  if (t >= (s.graph ?? 35_000)) return 'graph'
-  return 'stats'
-}
+// finale doc the server wrote at the reveal beat. Nothing is a timer. The
+// stats, the achievements and the graph play on the clock; each name shows
+// only once the host has pressed for it (finale.names fills one at a time,
+// Murderer, Motive, Victim); the closing story follows the Victim. A hold
+// freezes the clock where it stood. See lib/finale.js.
+export { finaleStage }
+
+const NAME_CREST = { murderer: 'The murderer', motive: 'The motive', victim: 'The one who died', done: 'Unmasked' }
+const NAME_WHAT = { murderer: 'Murderer', motive: 'Motive', victim: 'Victim' }
 
 export function Finale({ night, finale, serverNow }) {
   const now = serverNow()
   const stage = finaleStage(finale, now)
-  const r = night.reveal ?? {}
-  if (stage === 'stats') return <StatsReel finale={finale} now={now} />
+  const held = !!finale.holdAt
+  if (stage === 'stats' || stage === 'awards') return (
+    <div className={`kiosk finale ${stage}`}>
+      <p className="kiosk-crest">While the Manor counts</p>
+      <CalcBar finale={finale} now={now} />
+      {stage === 'stats' ? <StatsReel finale={finale} now={now} /> : <AwardsReel finale={finale} now={now} />}
+      {held && <p className="kiosk-next">Held</p>}
+    </div>
+  )
   if (stage === 'graph') return (
     <div className="kiosk finale">
       <p className="kiosk-crest">All night, two of you were pulling</p>
       <TugOfWar graph={finale.graph} />
       <p className="kiosk-line">Every Parlour Game answer from two phones moved this. Nobody knew. Not even them.</p>
+      {finale.graph?.hush && <p className="kiosk-next">Hush. Somebody was found out, and the Manor said nothing.</p>}
+      {held && <p className="kiosk-next">Held</p>}
     </div>
   )
-  const order = ['murderer', 'motive', 'victim']
-  const upto = stage === 'done' ? 3 : order.indexOf(stage) + 1
+  const names = finale.names ?? {}
+  const shown = releasedNames(finale)
+  const current = stage === 'done' ? 'victim' : stage
   return (
     <div className={`kiosk finale reveal ${stage}`}>
-      <p className="kiosk-crest">{stage === 'done' ? 'Unmasked' : stage === 'murderer' ? 'The murderer' : stage === 'motive' ? 'The motive' : 'The one who died'}</p>
-      <div className={`reveal-row count-${upto}`}>
-        {order.slice(0, upto).map(k => (
-          <div key={k} className={`reveal-card ${k}${k === stage ? ' now' : ''}`}>
-            <p className="reveal-what">{k === 'murderer' ? 'Murderer' : k === 'motive' ? 'Motive' : 'Victim'}</p>
+      <p className="kiosk-crest">{NAME_CREST[stage]}</p>
+      <div className={`reveal-row count-${shown.length}`}>
+        {shown.map(k => (
+          <div key={k} className={`reveal-card ${k}${k === current && stage !== 'done' ? ' now' : ''}`}>
+            <p className="reveal-what">{NAME_WHAT[k]}</p>
             {k === 'motive'
-              ? <><p className="reveal-name motive">{r.motive?.n ? `${r.motive.n}.` : ''}</p><p className="reveal-sub">{r.motive?.rhyme ?? ''}</p></>
-              : <><p className="reveal-name">{r[k]?.name ?? '…'}</p><p className="reveal-sub">{r[k]?.characterName ?? ''}{k === 'victim' ? ' · was the one who died' : ''}</p></>}
+              ? <><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
+              : <><p className="reveal-name">{names[k]?.name ?? '…'}</p><p className="reveal-sub">{names[k]?.characterName ?? ''}{k === 'victim' ? ' · was the one who died' : ''}</p></>}
           </div>
         ))}
       </div>
+      {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
+      {held && <p className="kiosk-next">Held</p>}
+    </div>
+  )
+}
+
+// The calculating bar: starts fast and slows, pure CSS against the schedule.
+// A screen that loads late lands at the right point (a negative delay), and
+// a hold pauses it where it stands.
+function CalcBar({ finale, now }) {
+  const span = Math.max(1000, finale.schedule?.graph ?? 50_000)
+  const t = Math.min(span, elapsed(finale, now))
+  return (
+    <div className="calc" role="progressbar" aria-label="the Manor is counting" aria-valuemin={0} aria-valuemax={span} aria-valuenow={t}>
+      <div className="calc-bar" style={{ animationDuration: `${span}ms`, animationDelay: `-${t}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }} />
     </div>
   )
 }
 
 // Lines fade in one by one across the stats window. Mid-credits energy.
 function StatsReel({ finale, now }) {
-  const stats = finale.stats ?? []
-  const span = (finale.schedule?.graph ?? 35_000)
-  const t = Math.max(0, now - ms(finale.at))
-  const each = span / Math.max(1, stats.length + 1)
-  const shown = Math.min(stats.length, Math.floor(t / each))
+  const stats = shownStats(finale, now)
   return (
-    <div className="kiosk finale stats">
-      <p className="kiosk-crest">While the Manor counts</p>
-      <ul className="stats-reel">
-        {stats.slice(0, shown).map((s, i) => (
-          <li key={i} className={i === shown - 1 ? 'fresh' : ''}>
-            <span className="stat-label">{s.label}</span>
-            <span className="stat-value">{s.value}</span>
+    <ul className="stats-reel">
+      {stats.map((s, i) => (
+        <li key={i} className={i === stats.length - 1 ? 'fresh' : ''}>
+          <span className="stat-label">{s.label}</span>
+          <span className="stat-value">{s.value}</span>
+        </li>
+      ))}
+      {!stats.length && <li className="fresh"><span className="stat-label">The Manor is counting.</span><span className="stat-value" /></li>}
+    </ul>
+  )
+}
+
+// The achievements the host gave during the night, one at a time.
+function AwardsReel({ finale, now }) {
+  const list = shownAchievements(finale, now)
+  return (
+    <>
+      <p className="kiosk-line">Achievements</p>
+      <ul className="awards-reel">
+        {list.map((a, i) => (
+          <li key={i} className={i === list.length - 1 ? 'fresh' : ''}>
+            <span className="award-title">{a.title}</span>
+            <span className="award-name">{a.name}</span>
+            {a.line && <span className="award-line">{a.line}</span>}
           </li>
         ))}
       </ul>
-      {!stats.length && <p className="kiosk-line">The Manor is counting.</p>}
-    </div>
+    </>
   )
+}
+
+function Epilogue({ text }) {
+  return <p className="epilogue">{text}</p>
 }
 
 // The clarity dial across the night: the Ghost pulls up, the Murderer pulls
 // down, and the line is where it landed after each act.
 export function TugOfWar({ graph }) {
   const points = graph?.points ?? []
+  const sides = graph?.sides ?? { up: 'ghost', down: 'murderer' }
+  const sideName = (role) => (role === 'ghost' ? 'Ghost' : 'Murderer')
   const running = graph?.running ?? [{ act: 2, value: 0 }, { act: 4, value: 0 }, { act: 6, value: 0 }]
   const acts = [2, 4, 6]
   const W = 1000, H = 520, L = 190, R = 150, T = 50, B = 70
@@ -334,14 +376,14 @@ export function TugOfWar({ graph }) {
   const pathD = running.map((p, i) => `${i ? 'L' : 'M'} ${x(p.act)} ${y(p.value)}`).join(' ')
   return (
     <svg className="tug" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="the clarity dial across the night">
-      <text x={L - 12} y={T + 14} textAnchor="end" className="tug-side">Ghost</text>
-      <text x={L - 12} y={H - B - 4} textAnchor="end" className="tug-side">Murderer</text>
+      <text x={L - 12} y={T + 14} textAnchor="end" className="tug-side">{sideName(sides.up)}</text>
+      <text x={L - 12} y={H - B - 4} textAnchor="end" className="tug-side">{sideName(sides.down)}</text>
       <line x1={L} x2={W - R} y1={mid} y2={mid} className="tug-mid" />
       <text x={W - R + 8} y={mid + 6} className="tug-neutral">neutral</text>
       {acts.map(a => <text key={a} x={x(a)} y={H - 24} textAnchor="middle" className="tug-act">Act {a}</text>)}
       {bars.map((b, i) => (
         <rect key={i} className={`tug-bar ${b.role}`}
-          x={x(b.act) + (b.role === 'ghost' ? -70 : 10)} width={60}
+          x={x(b.act) + (b.role === sides.up ? -70 : 10)} width={60}
           y={Math.min(y(b.from), y(b.to))} height={Math.max(2, Math.abs(y(b.from) - y(b.to)))} rx={4} />
       ))}
       <path d={pathD} className="tug-line" />

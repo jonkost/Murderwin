@@ -114,7 +114,7 @@ export function cardsOf(session) { return Array.isArray(session?.cards) ? sessio
 // Notices and instructions go away once tapped; clues stay in Clues. The role
 // card is kept all night too (re-readable from the You tab, behind a tap),
 // but it is never listed among the clues.
-export const TRANSIENT = new Set(['notice', 'go', 'group', 'station', 'puzzle', 'result'])
+export const TRANSIENT = new Set(['notice', 'go', 'group', 'station', 'puzzle', 'result', 'award'])
 export const KEEPS = new Set(['testimony', 'document', 'clue', 'result', 'role'])
 
 export function nowCards(session, notes, act) {
