@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createStudy, makePattern, DECK, deckKeys, COLOURS, DEFAULT_SETTINGS } from '../lib/study.js'
+import { createStudy, makePattern, settingsFrom, DECK, deckKeys, COLOURS, DEFAULT_SETTINGS } from '../lib/study.js'
 
 const PANELS = [101, 102, 103, 104, 105, 106, 107]
 function seeded(seed = 1) {
@@ -198,4 +198,25 @@ test('the screen state never carries the code or the patterns while playing', ()
   assert.ok(!('code' in snap) && !('patterns' in snap))
   assert.equal(snap.lines, null)
   assert.equal(snap.revealed, null)
+})
+
+test('settings from the server override the defaults: a shorter cap and gentler rounds; nonsense is dropped', () => {
+  const taken = settingsFrom({ capMs: 10 * 60_000, warnMs: 8 * 60_000, rounds: [
+    { lengths: [3, 3, 4], onMs: 900, gapMs: 300 }, { lengths: [4, 4, 5], onMs: 700, gapMs: 250 }, { lengths: [5, 5, 6], onMs: 500, gapMs: 200 },
+  ], replayHintMisses: 1, extra: 'no' })
+  assert.deepEqual(Object.keys(taken).sort(), ['capMs', 'replayHintMisses', 'rounds', 'warnMs'])
+  const m = createStudy({ panelIds: PANELS, rand: seeded(9), settings: taken })
+  assert.equal(m.settings.capMs, 10 * 60_000)
+  assert.equal(m.settings.mapHintMisses, DEFAULT_SETTINGS.mapHintMisses, 'untouched settings keep their defaults')
+  m.touch(101, 1000)
+  const play = m.drain().find(e => e.type === 'elements.play')
+  assert.equal(play.panels.length, 3)
+  assert.equal(play.onMs, 900)
+  m.tick(1000 + 10 * 60_000)
+  assert.equal(m.state, 'done', 'the shorter cap applies')
+  assert.equal(m.drain().find(e => e.type === 'server.finished').outcome, 'capped')
+  // nonsense: a warning after the cap, a round with the wrong shape, a cap of five milliseconds
+  assert.deepEqual(settingsFrom({ capMs: 5, rounds: [{ lengths: [1] }], restMs: 'soon' }), {})
+  assert.deepEqual(settingsFrom(null), {})
+  assert.deepEqual(settingsFrom({ capMs: 12 * 60_000, warnMs: 13 * 60_000 }), { capMs: 12 * 60_000 }, 'a warning past the cap is dropped')
 })
