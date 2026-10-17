@@ -18,18 +18,32 @@ const BUILT = [
   ['The art', 'Fourteen portraits and fourteen traces, in the repo, named for the game.'],
   ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons. Sir Irwin keeps count.'],
   ['The Parlour Games', 'Three silly questions in a row, two choices each, points on each choice, the eight totals, and a phone preview. Written here, dealt to every phone in Acts 2, 4 and 6.'],
+  ['The whole night on the phone', 'One button, Next, runs every beat of every act. Role cards at the blackout, the cat and the safe, the groups, five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
+  ['The case, built blind', 'At the blackout the server picks who did it, who died and why, and deals the cat testimony with the blanks filled. Rehearsals use bracketed stand-ins; the party night box on the Game night page uses the secrets.'],
+  ['The study light game', 'The station on the M1 Air, the Nanoleaf walls, the Stream Deck, Granolia’s screen. Finishing the study rotates the house.'],
+  ['The relay drawing and the room screens', 'The living room TV, the bedroom door and the trace at the dial’s level. Hall light red to green through the cue relay.'],
+  ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night.'],
+  ['Rehearsing without the party', 'A pretend Firebase on your Mac, eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook.'],
 ]
 
 const NEXT = [
-  ['The case generator', 'Who did it, who died, which motive, where every clue goes. Sealed, made blind. The role prompts for the blackout come from it.', 'Claude'],
-  ['Cat testimony on the phone', 'A cat greets you, gives its secret middle with the blanks filled, and closes. Affection decides how much.', 'Claude'],
   ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
   ['Jenna’s page', 'Her own page for the secrets, opening only for her account. Needs your yes on one security rule.', 'Claude, then Jon'],
-  ['Eight fake players', 'A script that plays a whole throwaway night, so the plumbing is proven without anyone reading a clue.', 'Claude'],
-  ['The question windows', 'Acts 2, 4 and 6: every phone lights up with a Parlour Game set from the workshop. A Detective’s points move cat affection; the Murderer’s and the Ghost’s move the clarity dial, with the mapping decided blind.', 'Claude'],
-  ['Dinner, dessert, the Big Solve, the reveal', 'The bulletin, Irwin’s testimony, the deduction round, the ballot and the reveal on the TV.', 'Claude'],
-  ['Kiosks and the study', 'The two laptops as room screens, the Nanoleaf puzzle, the Stream Deck.', 'Claude, then Jon'],
+  ['The bags and the stationery', 'A blind script packs the numbered bags; the bags station reads it. Seven paper stand-ins for the documents. The Freeze button for 7 November.', 'Claude, then Jon packs'],
+  ['The room screens for the news', 'The news flash, the Act 3 bulletin, Sir Irwin at cake and the elimination board on the TV, with a sound for every cue.', 'Claude'],
+  ['Windows on a server clock', 'Every Parlour Game settles on time even if nobody presses anything.', 'Claude'],
+  ['The finale on the TV', 'The reveal staged so nothing is readable early, the stats reel, the dial graph, and achievements you award by tapping.', 'Claude'],
+  ['Spill the Beans and the Hush', 'Your two safeguard buttons, greyed out after Act 5.', 'Claude'],
+  ['The hardware evening', 'The Nanoleaf wall, the Stream Deck and the Hue bulb plugged in, one run of the study and one grid of the drawing.', 'Jon'],
   ['The household photos', 'Faces, full, intro cards, in-play. Folders are ready.', 'Jon'],
+]
+
+// Decided for after the party. Listed so they are not mistaken for gaps.
+const AFTER = [
+  ['The full hidden-event system', 'Nested scenarios three beats deep. The Parlour Games are the event system for this party.'],
+  ['The ten-thousand-run solvability proof', 'The validator assuming worst-case suppression across Acts 2, 4 and 6.'],
+  ['More puzzle slot-pools', 'Beyond the safe and the shape game.'],
+  ['A recap button and idle art', 'Nice to have. Not for the first birthday.'],
 ]
 
 function suggestion(area, spec, items) {
@@ -95,6 +109,14 @@ export default function Status() {
         <ol className="night-steps">
           {NEXT.map(([t, d, who]) => <li key={t}><b>{t}</b> <span className="hint">({who})</span><br />{d}</li>)}
         </ol>
+      </section>
+
+      <section className="panel">
+        <h2>After the party</h2>
+        <p className="why">Decided, not forgotten. None of these is needed on the night.</p>
+        <ul className="audit">
+          {AFTER.map(([t, d]) => <li key={t}><b>{t}.</b> {d}</li>)}
+        </ul>
       </section>
     </main>
   )

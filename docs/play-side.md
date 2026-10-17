@@ -29,10 +29,9 @@ Reticule — four tabs:
 
 **The moments.** When a host presses a button, every phone follows at once:
 - *Blackout* — every screen goes dark. Nothing on any phone.
-- *Power returns* — every phone lights at once with the same prompt, held for
+- *Power returns* — every phone lights at once with its role card, held for
   fifteen seconds measured against the server's clock, then a "Hide this"
-  button. Act 2 begins. (The role prompts arrive here once the case generator
-  exists; the hold and the parity are already built.)
+  button. Act 2 begins. The case is built at this moment, blind (17 Oct).
 - *Pause* — "Sir Irwin requires the garden."
 - *Acts 1 to 7* — the act name and its objective line appear at the top of
   every phone.
@@ -132,22 +131,38 @@ with arrows at the top.
 Start a new night from the Host tab as often as you like while testing. Each
 one is fresh, and every phone types its name again.
 
+**Rehearsing without anyone (17 Oct 2026).** `npm run fake-night` plays a whole
+night with eight fake phones and throws it away: one line per act, a tally,
+PASS. `npm run emulate` starts a pretend Firebase on your Mac so a rehearsal on
+real phones never touches the party; `docs/on-the-night.md` has the steps, and
+is the page to have open on the day.
+
 **Portraits.** Drop one picture per character into `play/public/portraits/`,
 named after the character (the README in that folder lists the names), then
 `npm run deploy:site`. A character without a picture shows initials.
 
-## What is not built yet (in build order)
+## What is not built yet (17 October 2026)
 
-- The case generator: who did it, who died, which motive, and the role prompts
-  for the blackout. Sealed, generated blind.
-- Cat testimony on the phone, the document puzzles, the echoes.
-- The event windows (Acts 2, 4 and 6), the ballot in Act 7, the reveal.
-- The Cats tab as sliders (spec below, decided 13 Oct 2026).
-- Eight fake test players (a script).
+- Jenna's page: the Steward reads and edits the secrets; your account is
+  refused by code.
+- The secrets themselves: the generator needs your Anthropic key once, then
+  Jenna reads every set. Until then every night deals bracketed stand-ins.
+- The room screens for the news flash, the Act 3 bulletin, Sir Irwin at cake
+  and the elimination board, with a sound for every cue.
+- A server clock that settles every Parlour Game on time with no host pressing
+  anything; today Next and "Pick for the rest" do it.
+- The bag packing (a blind script) and the seven stationery pictures; the
+  stand-ins work until then.
+- The finale staging on the TV and tappable achievements.
+- Spill the Beans and the Hush: your two safeguard buttons.
+- The workshop's Freeze button for 7 November.
 
-Built since: the study light game and its station (`docs/study-light-game.md`),
-the relay drawing and the room screens for Acts 6 and 7 (`docs/relay-drawing-game.md`),
-and the cue relay for the hall light and sounds (`docs/cues-relay.md`).
+Built since the first slice: the whole night on the phone (above), the case
+bridge and cat testimony with the safe, the Parlour Game windows, dinner to
+the reveal, the study light game and its station (`docs/study-light-game.md`),
+the relay drawing and the room screens for Acts 6 and 7
+(`docs/relay-drawing-game.md`), the cue relay (`docs/cues-relay.md`), the
+emulator, the eight fake players and the day-of runbook (`docs/on-the-night.md`).
 
 ## Cats tab: where you stand (built 16 Oct 2026)
 
@@ -234,7 +249,11 @@ Layout: `play/` is the phone client (React + Vite, base `/play/`, one page,
 no router). `functions/` holds the Cloud Functions (Node 22, ESM,
 firebase-functions v2). `functions/lib/night.js` is the night logic, pure over
 a Firestore `db`, shared by the callables and `functions/host.mjs`.
-`functions/test/` proves it against an in-memory fake (`npm test` at the root).
+`functions/test/` proves it against an in-memory fake (`npm test` at the root
+runs every suite: functions, cues, station, app, play, scripts). The emulators
+(`npm run emulate`, `firebase.json`), the fake players (`npm run fake-night`,
+`scripts/fake-players.mjs`) and the rules tests (`npm run test:rules`) are
+described in `docs/on-the-night.md` under its technical heading.
 
 Deploy (Jon runs this; it was denied to Claude Code as a production deploy):
 
@@ -270,7 +289,11 @@ no night live, `create` is open to any signed-in phone (the bootstrap).
 Host phones may also read `presence/*` (rules `isHost()` does a `get` on the
 caller's session).
 Commands: `create`, `activate`, `publish`, `refresh-hosts`, `join-open`,
-`join-close`, `act` (1–7), `blackout`, `power`, `pause`, `resume`, `handover`.
+`join-close`, `act` (1–7), `blackout`, `power`, `pause`, `resume`, `handover`,
+plus the run.js ones below and the dry-run trio `dry-run`, `settle-now`,
+`discard-night`. The one list is `HOST_COMMANDS` in `functions/lib/commands.js`;
+`node functions/host.mjs --help` prints it and a test keeps it in step with
+the switch statements.
 
 Safety nets (17 Oct): `pause` stores `pausedAt`; `resume` moves every deadline on by
 the length of the pause in one batch (the window's `opensAt` and `closesAt`, the
