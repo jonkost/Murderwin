@@ -240,6 +240,41 @@ test('an act jump that skips the power beat still builds the case and deals ever
   for (const uid of Object.values(p2)) assert.equal(cards(db2, uid, 'role').length, 0)
 })
 
+test('a beat\'s window is keyed by the beat: re-running it opens nothing twice and pushes the dial once; light-up is always fresh', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  let now = 3_000_000
+  await hostCommand(db, { nightId, command: 'act', arg: 2, now })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  const w1 = night(db, nightId).window
+  assert.equal(w1.id, 'questions-2-questions', 'the id names the act and the beat, not the moment')
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'settle', now })
+  assert.equal(night(db, nightId).window.settled, true)
+  const dialLog = db.store.get(`cases/${nightId}`).dialLog.length
+  const sets = Object.fromEntries(uids.map(u => [u, Object.keys(session(db, u).windows)]))
+  // the host taps the beat in the list, then Back and Next: the same window stands, settled
+  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  assert.equal(night(db, nightId).window.id, w1.id)
+  assert.equal(night(db, nightId).window.settled, true)
+  await hostCommand(db, { nightId, command: 'back', now })
+  await hostCommand(db, { nightId, command: 'next', now })
+  assert.equal(night(db, nightId).beat, 'questions')
+  assert.equal(night(db, nightId).window.id, w1.id)
+  for (const u of uids) assert.deepEqual(Object.keys(session(db, u).windows), sets[u], 'no second set on any phone')
+  assert.equal(db.store.get(`cases/${nightId}`).dialLog.length, dialLog, 'the dial moved once for this act')
+  // the explicit button is a fresh window every time
+  const lit = await hostCommand(db, { nightId, command: 'light-up', now })
+  assert.notEqual(lit.id, w1.id)
+  assert.equal(night(db, nightId).window.id, lit.id)
+  assert.equal(night(db, nightId).window.settled, false)
+  for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
+  // and a beat the night has not seen opens as before
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now })
+  assert.equal(night(db, nightId).window.id, 'questions-6-merged')
+})
+
 test('the safe: wrong twice, then it gives way; right pays a document once', async () => {
   const { db, nightId, phones } = await party()
   await hostCommand(db, { nightId, command: 'act', arg: 2 })

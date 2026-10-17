@@ -149,7 +149,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // Every phone lights up with three questions, any time in Acts 2, 4 and 6.
       if (![2, 4, 6].includes(n.act)) throw new NightError('invalid', 'The phones light up in Acts 2, 4 and 6.')
       await settleIfDue(db, nightId, now)
-      return deal.openWindow(db, nightId, 'questions', { now, act: n.act, beat: n.beat })
+      return deal.openWindow(db, nightId, 'questions', { now, act: n.act }) // no beat: a fresh window every press
     case 'settle':
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':

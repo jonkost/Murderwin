@@ -476,12 +476,21 @@ function valuesOf(beats) {
   return beats.map(b => Object.fromEntries(['a', 'b', 'c', 'd'].filter(k => b[k]).map(k => [k, Number(b[`${k}v`]) || 0])))
 }
 
+// A window a beat opens is keyed by its act and beat, so re-running the beat
+// (the beat list, or Back then Next) finds the window it already opened and
+// leaves it be: no second set lands on any phone and the hidden roles'
+// points reach the dial once per window. The host's own "light-up" button
+// passes no beat and is a fresh window every time.
 export async function openWindow(db, nightId, kind, { now = Date.now(), beat = null, act = null } = {}) {
   const spec = WINDOWS[kind]
   if (!spec) throw new NightError('invalid', `No such window: ${kind}`)
   const { night, list } = await guests(db, nightId)
+  const id = beat ? `${kind}-${act}-${beat}` : `${kind}-${now}`
+  if (beat) {
+    const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
+    if (night.window?.id === id || (privSnap.exists && privSnap.data()[id])) return { ok: true, id, phones: list.length, already: true }
+  }
   if (night.window && !night.window.settled) await settleWindow(db, nightId, { now, force: true })
-  const id = `${kind}-${now}`
   const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat }
   const priv = {}
   if (kind === 'questions') {
