@@ -34,6 +34,7 @@ export const PLAYER_AREAS = [
   'act_scripts', 'status_lines', 'motive_notes',
   // 18 Oct 2026 (G): the room screens read these from the same copy
   'study_lines', 'echo_frames', 'epilogue_frames', 'station_text',
+  'achievements', // 18 Oct 2026 (I): the Host tab's tap list reads the titles from here
 ]
 
 export class NightError extends Error {
@@ -336,7 +337,7 @@ export const PAUSE_SHIFTED = {
   night: ['window.opensAt', 'window.closesAt'],
   'public/relay': ['turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
-  'public/finale': ['at'],
+  'public/finale': ['at', 'holdAt', 'victimAt'],
 }
 
 function msOf(t) {

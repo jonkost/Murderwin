@@ -12,6 +12,7 @@ import * as deal from './deal.js'
 import * as relay from './relay.js'
 import * as station from './station.js'
 import * as discard from './discard.js'
+import * as finale from './finale.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -91,6 +92,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       await settleIfDue(db, nightId, now)
       const to = nextOf(n.act, n.beat)
       if (!to) throw new NightError('invalid', n.act === 1 ? 'That is the end of Act 1. Press Blackout.' : 'That is the end of the night.')
+      if (deal.beatSpec(to.act, to.beat)?.action === 'results') await finale.requireNamed(db, nightId) // the screen names all three first
       // Act 1 begins: copy the latest workshop lines (rules, bios, cat cards) to the phones first
       if (n.act === 0) await night.publishContent(db, nightId)
       return enterBeat(db, nightId, to.act, to.beat, { now })
@@ -98,6 +100,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'back': {
       const to = prevOf(n.act, n.beat)
       if (!to) throw new NightError('invalid', 'Nothing before this.')
+      if (deal.beatSpec(n.act, n.beat)?.action === 'reveal') await finale.unreveal(db, nightId) // the screen forgets; nothing was named early
       return enterBeat(db, nightId, to.act, to.beat, { now, run: false })
     }
     case 'beat': {
@@ -105,6 +108,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       const spec = deal.beatSpec(n.act, arg)
       if (!spec) throw new NightError('invalid', 'No such beat in this act.')
       if (arg !== n.beat) await refuseIfDrawing(db, nightId, n)
+      if (spec.action === 'results') await finale.requireNamed(db, nightId)
       await settleIfDue(db, nightId, now)
       return enterBeat(db, nightId, n.act, arg, { now })
     }
@@ -120,6 +124,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
         await deal.dealRoles(db, nightId)
         return enterBeat(db, nightId, 2, firstBeat(2), { now, phase: 'prompt' })
       }
+      if (act < 7) await finale.unreveal(db, nightId) // a jump back from the reveal forgets it
       await ref.update({ actStartedAt: FieldValue.serverTimestamp() })
       return enterBeat(db, nightId, act, firstBeat(act), { now })
     }
@@ -173,6 +178,16 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       await db.doc(`nights/${nightId}/public/cues`).set({ hall: arg, changedAt: new Date(now), byHand: true }, { merge: true })
       return { ok: true, hall: arg }
     }
+    case 'reveal-stage':
+      // Act 7: one more name onto the living room screen, Murderer, then Motive, then Victim
+      return finale.stage(db, nightId, { now })
+    case 'finale-hold':
+      return finale.hold(db, nightId, { now })
+    case 'finale-go':
+      return finale.go(db, nightId, { now })
+    case 'award':
+      // an achievement from the workshop list onto a guest's phone (guestKey:n), through Act 5
+      return finale.award(db, nightId, { arg, now })
     case 'dry-run':
       return discard.markDryRun(db, { nightId })
     case 'settle-now':
