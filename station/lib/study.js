@@ -232,6 +232,14 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
       show()
     },
 
+    // The house was paused for `ms`: the game's start moves on by that much,
+    // so the cap and the warning wait out the pause. Nothing else changes.
+    shift(ms) {
+      if (m.startedAt == null || !(ms > 0)) return
+      m.startedAt += ms
+      show()
+    },
+
     // The clock. Called often; only the cap and the warning live here.
     tick(now) {
       if (m.state === 'idle' || m.state === 'done' || !m.startedAt) return
