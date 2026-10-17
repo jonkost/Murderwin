@@ -35,10 +35,10 @@
     "4": { "name": "Behind Closed Doors", "plain": "Rotation", "beats": [
       { "key": "station1", "name": "First station", "what": "Groups go to their first station. The study is the clock.", "action": "rotate" },
       { "key": "station2", "name": "Second station", "what": "Rotate. Every group moves on one.", "action": "rotate" },
-      { "key": "questions1", "name": "Parlour Game", "what": "Three silly questions on every phone at once.", "action": "window:questions" },
+      { "key": "questions1", "name": "Parlour Game", "what": "Three silly questions on every phone at once.", "action": "window:questions", "autoAfterStudy": true },
       { "key": "station3", "name": "Third station", "what": "Rotate.", "action": "rotate" },
       { "key": "station4", "name": "Fourth station", "what": "Rotate.", "action": "rotate" },
-      { "key": "questions2", "name": "Parlour Game, second round", "what": "Three more questions, every phone at once.", "action": "window:questions" },
+      { "key": "questions2", "name": "Parlour Game, second round", "what": "Three more questions, every phone at once.", "action": "window:questions", "autoAfterStudy": true },
       { "key": "station5", "name": "Fifth station", "what": "Rotate. The last station for every group.", "action": "rotate" }
     ] },
     "5": { "name": "One Candle", "plain": "Dessert", "beats": [

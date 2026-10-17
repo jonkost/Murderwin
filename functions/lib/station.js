@@ -12,7 +12,7 @@
 
 import { randomInt } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
-import { NightError } from './night.js'
+import { NightError, characterById } from './night.js'
 
 export function rotationPath(nightId) { return `nights/${nightId}/public/rotation` }
 export function studyPath(nightId) { return `nights/${nightId}/public/study` }
@@ -52,7 +52,7 @@ export async function makeRotation(db, { nightId, apart = [], pickInt = randomIn
   const keys = Object.keys(roster)
   const groups = makeGroups(keys, { apart, pickInt }).map((members, i) => ({
     id: `g${i + 1}`,
-    members: members.map(k => ({ key: k, name: roster[k].name })),
+    members: members.map(k => ({ key: k, name: roster[k].name, characterName: characterById(roster[k].characterId)?.name ?? '' })),
   }))
   const studyOrder = shuffled(groups.map(g => g.id), pickInt)
   await db.doc(rotationPath(nightId)).set({
@@ -93,12 +93,30 @@ async function dealOnce(db, uid, card) {
 }
 
 // Has the study station reported in lately? (Within two minutes.)
+export const STATION_QUIET_MS = 120_000
+// With no station, a group's turn in the study is a fixed twelve minutes
+// (docs/study-light-game.md §8): rotate() writes the slot, tickStudy ends it.
+export const ABSENT_SLOT_MS = 12 * 60_000
+// The only words the station may use for its state. 'absent' is the server's
+// own word (a slot with no station), so the station can never claim it.
+export const STATION_STATES = ['idle', 'playing', 'reproducing', 'entering', 'done']
+
+export function ms(t) {
+  if (!t) return 0
+  if (typeof t.toMillis === 'function') return t.toMillis()
+  if (t instanceof Date) return t.getTime()
+  return Number(t) || 0
+}
+
+export function stationAliveAt(study, now = Date.now()) {
+  const t = ms(study?.updatedAt)
+  return !!t && Math.abs(now - t) < STATION_QUIET_MS
+}
+
 export async function stationAlive(db, nightId, now = Date.now()) {
   const snap = await db.doc(studyPath(nightId)).get()
   if (!snap.exists) return false
-  const at = snap.data().updatedAt
-  const t = at?.toMillis?.() ?? (at instanceof Date ? at.getTime() : 0)
-  return !!t && Math.abs(now - t) < 120_000
+  return stationAliveAt(snap.data(), now)
 }
 
 export async function dealStudy(db, { nightId, groupId, outcome }) {
@@ -144,22 +162,81 @@ export async function finishStudy(db, { nightId, groupId, outcome = 'solved', se
   if (!groupId) throw new NightError('invalid', 'Which group?')
   const now = FieldValue.serverTimestamp()
   const rotRef = db.doc(rotationPath(nightId))
-  const rotSnap = await rotRef.get()
+  const [rotSnap, studySnap] = await Promise.all([rotRef.get(), db.doc(studyPath(nightId)).get()])
   if (!rotSnap.exists) throw new NightError('invalid', 'No groups yet. Make the groups on the Host tab first.')
   const rot = rotSnap.data()
-  if (rot.finished?.[groupId]) return { ok: true, repeated: true }
+  const study = studySnap.exists ? studySnap.data() : {}
+  // The host said another group walked in: the station still reports the
+  // group it was told about, and the server pays the group the host named.
+  let reassigned = false
+  let slotGroup = groupId
+  if (study.reassignedFrom && groupId === study.reassignedFrom && study.groupId && study.groupId !== groupId) {
+    groupId = study.groupId
+    reassigned = true
+  }
+  if (!(rot.studyOrder ?? []).includes(groupId)) throw new NightError('invalid', 'No such group.')
+  if (rot.finished?.[groupId]) return { ok: true, repeated: true, groupId }
   const dealt = await dealStudy(db, { nightId, groupId, outcome })
-  const idx = rot.studyOrder.indexOf(groupId)
+  const idx = rot.studyOrder.indexOf(reassigned ? slotGroup : groupId)
   const current = Math.max(rot.current ?? 0, idx + 1)
   const nextGroup = rot.studyOrder[current] ?? null
   await rotRef.update({
     [`finished.${groupId}`]: { outcome, seconds, pairs, at: now },
     current, rotatedAt: now,
   })
-  // the station's own report points the study at the next group; an absent pay-out leaves the
-  // study doc alone (the rotation sets it, and a game may be running in there)
-  if (reportedIn) await db.doc(studyPath(nightId)).set({ state: 'idle', groupId: nextGroup, lastOutcome: outcome, updatedAt: now }, { merge: true })
-  return { ok: true, dealt, nextGroup }
+  // The station's own report puts the study at rest. Which group is due next
+  // is the rotation's to say (deal.rotate is the only writer of groupId), so
+  // the pointer is left where it is; an absent pay-out leaves the doc alone,
+  // since a game may be running in there.
+  if (reportedIn) await db.doc(studyPath(nightId)).set({ state: 'idle', lastOutcome: outcome, reassignedFrom: null, updatedAt: now }, { merge: true })
+  return { ok: true, dealt, nextGroup, groupId, reassigned }
+}
+
+// Host button, before a pay-out: the group in the study is not the one the
+// order said. The pointer moves to the group the host named; the station's
+// next "finished" (which still names the old group) pays the new one.
+export async function reassignStudy(db, { nightId, groupId }) {
+  if (!groupId) throw new NightError('invalid', 'Which group?')
+  const [rotSnap, studySnap] = await Promise.all([db.doc(rotationPath(nightId)).get(), db.doc(studyPath(nightId)).get()])
+  if (!rotSnap.exists) throw new NightError('invalid', 'No groups yet. Make the groups on the Host tab first.')
+  const rot = rotSnap.data()
+  const study = studySnap.exists ? studySnap.data() : {}
+  if (!(rot.studyOrder ?? []).includes(groupId)) throw new NightError('invalid', 'No such group.')
+  if (rot.finished?.[groupId]) throw new NightError('invalid', 'That group has already been paid.')
+  const due = study.groupId ?? null
+  if (due && rot.finished?.[due]) throw new NightError('invalid', 'The group in the study has already been paid. The house moves on at the next station.')
+  if (due === groupId) return { ok: true, already: true, groupId }
+  // the station reports the group it was first told about, even after a swap mid-game
+  const from = study.reassignedFrom ?? due
+  await db.doc(studyPath(nightId)).set({ groupId, reassignedFrom: from && from !== groupId ? from : null }, { merge: true })
+  return { ok: true, groupId, from: from ?? null }
+}
+
+// The clock for a study with no station. On a rotate beat with the station
+// quiet, deal.rotate writes { state: 'absent', slotEndsAt }. Once that moment
+// has passed and the group has not been paid, the house moves on exactly as
+// a station's "finished" would (run.studyFinished deals and rotates). Called
+// by the Host tab on load and once a minute in Act 4, and by any scheduled
+// tick; safe to call as often as you like, it acts once per group.
+export async function tickStudy(db, nightId, now = Date.now(), { finished = null } = {}) {
+  const [studySnap, rotSnap, nightSnap] = await Promise.all([
+    db.doc(studyPath(nightId)).get(), db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}`).get(),
+  ])
+  if (!rotSnap.exists || !nightSnap.exists) return { ok: true, ticked: false, reason: 'no-groups' }
+  const study = studySnap.exists ? studySnap.data() : {}
+  const night = nightSnap.data()
+  if (night.phase === 'paused') return { ok: true, ticked: false, reason: 'paused' }
+  if (stationAliveAt(study, now)) return { ok: true, ticked: false, reason: 'station-alive' }
+  const rot = rotSnap.data()
+  const groupId = study.groupId ?? null
+  if (!groupId) return { ok: true, ticked: false, reason: 'no-group-due' }
+  if (rot.finished?.[groupId]) return { ok: true, ticked: false, reason: 'already-paid' }
+  // the slot the rotation wrote; a station that died mid-act never wrote one, so the beat's start stands in
+  const endsAt = ms(study.slotEndsAt) || (ms(night.beatAt) ? ms(night.beatAt) + ABSENT_SLOT_MS : 0)
+  if (!endsAt || now < endsAt) return { ok: true, ticked: false, reason: 'slot-open', endsAt: endsAt || null }
+  const payload = { groupId, outcome: 'absent', seconds: null, pairs: null }
+  const r = finished ? await finished(payload) : await finishStudy(db, { nightId, ...payload })
+  return { ok: true, ticked: !r?.repeated, ...r }
 }
 
 export async function stationCommand(db, { nightId, station = 'study', command, payload = {} } = {}) {
@@ -175,9 +252,15 @@ export async function stationCommand(db, { nightId, station = 'study', command, 
       const clean = { ...payload }
       delete clean.clue
       delete clean.groupId
+      delete clean.reassignedFrom
+      delete clean.slotEndsAt
+      delete clean.settings
+      if ('state' in clean && !STATION_STATES.includes(clean.state)) throw new NightError('invalid', 'The station sent a state the study does not know.')
       await db.doc(studyPath(nightId)).set({ ...clean, updatedAt: now }, { merge: true })
       return { ok: true, serverTime: Date.now() }
     }
+    case 'reassign':
+      return reassignStudy(db, { nightId, groupId: payload.groupId })
     case 'finished': {
       const { groupId, outcome = 'solved', seconds = null, pairs = null } = payload
       const r = await finishStudy(db, { nightId, groupId, outcome, seconds, pairs, reportedIn: true })

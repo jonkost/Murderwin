@@ -28,7 +28,11 @@ export const HOST_COMMANDS = [
   { name: 'settle', arg: '', what: 'Pick for the phones that did not, once the window has run out.' },
   { name: 'groups', arg: '', what: 'Make the Act 4 groups and the study order.' },
   { name: 'station-key', arg: '<key>', what: 'Set the key the study station presents.' },
-  { name: 'relay-start', arg: '', what: 'Start the Act 6 drawing.' },
+  { name: 'study-tick', arg: '', what: 'With no station: end a study slot that has run its twelve minutes (the Host tab does this on its own).' },
+  { name: 'study-finish', arg: '[groupId]', what: 'Move the house on without waiting for the study. The group is paid.' },
+  { name: 'study-reassign', arg: '<groupId>', what: 'Say which group is actually in the study, before it pays out.' },
+  { name: 'hall', arg: '<red|green>', what: 'Set the hall light by hand.' },
+  { name: 'relay-start', arg: '[force]', what: 'Start the Act 6 drawing. A drawing under way is kept unless you say force.' },
   { name: 'relay-reset', arg: '', what: 'Clear the drawing.' },
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },
   // dry runs only (run.js, discard.js)
