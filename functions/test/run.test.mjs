@@ -82,7 +82,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
     assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')
     if (go[0].cat === 'granolia') assert.equal(go[0].room, 'the study')
   }
-  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe[uids[0]].length === 3)
+  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe.jon.length === 3, 'the safe answer is kept by guest key')
   await next() // puzzle
   for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
   await next() // questions window
@@ -214,13 +214,24 @@ test('the safe: wrong twice, then it gives way; right pays a document once', asy
   await hostCommand(db, { nightId, command: 'beat', arg: 'puzzle' })
   const uid = phones.jessa
   const puzzle = cards(db, uid, 'puzzle')[0]
-  const answer = db.store.get(`nights/${nightId}/private/puzzles`).safe[uid]
+  const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
+  assert.deepEqual(Object.keys(safe).sort(), ['jacob', 'jessa', 'jon', 'marie'], 'the safe is kept by guest, never by phone')
+  const answer = safe.jessa
   const right = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
   assert.equal(right.right, true)
   assert.equal(cards(db, uid, 'document').length, 1)
   const again = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
   assert.equal(again.already, true)
   assert.equal(cards(db, uid, 'document').length, 1)
+
+  // Marie's battery dies: her right numbers open the safe on her new phone first try
+  await join(db, { uid: 'uid-marie-2', nightId, name: 'Marie' })
+  const p3 = cards(db, 'uid-marie-2', 'puzzle')[0]
+  assert.ok(p3, 'the puzzle card came along')
+  const moved = await player.solve(db, { nightId, uid: 'uid-marie-2', cardId: p3.id, entry: safe.marie })
+  assert.equal(moved.right, true)
+  assert.equal(moved.tries, 1)
+  assert.equal(cards(db, 'uid-marie-2', 'document')[0].gaveWay, undefined)
 
   const uid2 = phones.jacob
   const p2 = cards(db, uid2, 'puzzle')[0]

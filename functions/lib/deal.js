@@ -379,14 +379,14 @@ export async function dealEncounter(db, nightId, act, beat) {
   for (const cat of CAT_KEYS.filter(k => k !== 'granolia')) catRoom[cat] = rooms.pop() ?? 'the parlour'
   let cats = shuffled(CAT_KEYS)
   let dealt = 0
-  const codesByUid = {}
+  const codesByGuest = {} // by roster key, so the numbers follow a guest to a replacement phone
   for (const g of shuffled(list)) {
     if (!cats.length) cats = shuffled(CAT_KEYS)
     const cat = cats.pop()
     const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
     const level = sessionSnap.data()?.affection?.[cat] ?? 3
     const codes = [pickInt(90) + 10, pickInt(90) + 10, pickInt(90) + 10]
-    codesByUid[g.uid] = codes
+    codesByGuest[g.key] = codes
     const room = catRoom[cat]
     const go = { id: `${act}-${beat}-go`, act, beat, kind: 'go', room, cat, catName: CAT_NAMES[cat], text: `Go to ${room}. ${CAT_NAMES[cat]} is waiting for you there.` }
     const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room, codes, voice, nightId, guestKey: g.key })
@@ -395,8 +395,8 @@ export async function dealEncounter(db, nightId, act, beat) {
     // a brush-off still leaves the numbers behind, so the safe is always solvable
     if (t.outcome === 'deflect') await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
   }
-  // the safe's answers live where no phone can read them
-  await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByUid }, { merge: true })
+  // the safe's answers live where no phone can read them, keyed by guest
+  await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByGuest }, { merge: true })
   return { dealt }
 }
 
@@ -439,7 +439,7 @@ export async function solve(db, { nightId, uid, cardId, entry }) {
   if (!card) throw new NightError('invalid', 'No such puzzle on this phone.')
   if (s.solved?.[cardId]) return { ok: true, right: true, already: true }
   const puzzles = (await db.doc(`nights/${nightId}/private/puzzles`).get()).data() ?? {}
-  const answer = puzzles.safe?.[uid]
+  const answer = puzzles.safe?.[s.guestKey]
   const given = (Array.isArray(entry) ? entry : []).map(Number)
   const right = Array.isArray(answer) && answer.length === given.length && answer.every((n, i) => n === given[i])
   const tries = (s.tries?.[cardId] ?? 0) + 1

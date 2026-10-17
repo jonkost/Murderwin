@@ -250,9 +250,9 @@ async function wholeNight({ partyNight }) {
   await next() // cat
   await next() // puzzle
   const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
-  for (const uid of Object.values(uids)) {
+  for (const [key, uid] of Object.entries(uids)) {
     const puzzle = cards(db, uid, 'puzzle')[0]
-    const r = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: safe[uid] })
+    const r = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: safe[key] })
     assert.equal(r.right, true)
   }
   await next() // questions
@@ -391,14 +391,14 @@ test('the safe numbers reach the phone for every outcome, and open the safe firs
   await next(); await next(); await next()
   const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
   let deflected = 0
-  for (const uid of Object.values(uids)) {
+  for (const [key, uid] of Object.entries(uids)) {
     const t = cards(db, uid, 'testimony')[0]
     const scrapN = cards(db, uid, 'notice').find(n => n.key === 'scrap')
     const text = t.lines.join(' ') + ' ' + (scrapN?.text ?? '')
-    assert.ok(has(text, safe[uid]), `phone holds all three numbers (${t.outcome})`)
+    assert.ok(has(text, safe[key]), `phone holds all three numbers (${t.outcome})`)
     if (t.outcome === 'deflect') { deflected++; assert.ok(scrapN, 'a brush-off leaves a scrap of paper') } else assert.ok(!scrapN)
     const puzzle = cards(db, uid, 'puzzle')[0]
-    const r = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: safe[uid] })
+    const r = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: safe[key] })
     assert.equal(r.right, true); assert.equal(r.tries, 1)
     const d = cards(db, uid, 'document')[0]
     assert.equal(d.placeholder, false); assert.equal(d.gaveWay, undefined)
