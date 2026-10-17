@@ -267,6 +267,35 @@ test('handover clears cards and bumps generation; only a host may call it', asyn
   assert.equal(back.characterId, db.store.get(`nights/${nightId}`).roster.jessa.characterId)
 })
 
+test('handover wipes the previous owner\'s notes for this night, so the next person inherits nothing', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
+  await join(db, { uid: 'u-jessa', nightId, name: 'Jessa' })
+  await join(db, { uid: 'u-jacob', nightId, name: 'Jacob' })
+  // Jessa's phone has hidden the tour and the Act 2 prompt and crossed off two motives;
+  // the same phone rehearsed under an earlier night too (flags only, never content)
+  db.store.set('notes/u-jessa', {
+    byNight: {
+      [nightId]: { seen: { welcome: true, 'prompt-2': true }, buzzed: { '2-power-role': true }, crossed: { 3: true, 7: true } },
+      'old-night': { seen: { welcome: true }, crossed: { 1: true } },
+    },
+  })
+  await runCommand(db, { nightId, command: 'handover', arg: 'jessa', now: 1_010_000 })
+  const notes = db.store.get('notes/u-jessa')
+  assert.equal(notes.byNight[nightId], undefined, 'nothing of Jessa\'s is left under this night for the next person')
+  assert.deepEqual(notes.byNight['old-night'], { seen: { welcome: true }, crossed: { 1: true } }, 'another night\'s branch is left alone')
+  assert.equal(sessionOf(db, 'u-jessa').status, 'handed', 'the session is handed in the same stroke')
+  // a phone that never wrote a note is handed over just the same
+  await runCommand(db, { nightId, command: 'handover', arg: 'jacob', now: 1_010_001 })
+  assert.equal(db.store.has('notes/u-jacob'), false)
+  assert.equal(sessionOf(db, 'u-jacob').status, 'handed')
+  // a notes doc with no branch for this night is left as it is
+  db.store.set('notes/u-jon', { byNight: { 'old-night': { seen: { welcome: true } } } })
+  await runCommand(db, { nightId, command: 'handover', arg: 'jon', now: 1_010_002 })
+  assert.deepEqual(db.store.get('notes/u-jon'), { byNight: { 'old-night': { seen: { welcome: true } } } })
+})
+
 test('a pause freezes every clock in one batch and resume moves them all on by the pause length', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)

@@ -302,10 +302,15 @@ export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries',
 // are wiped from the session so the next person to pick the phone up sees
 // nothing of theirs, and `generation` is bumped (a timestamp, so it is
 // always newer): the phone sees the change, forgets its local copy and
-// reloads to the doors. The previous owner keeps their character; tapping
-// their name on any other phone brings it back, cards and all, since the
-// roster and the dealer's copies on the server are untouched. `arg` is the
-// guest's roster key as the Host tab knows it, or a session uid.
+// reloads to the doors. The phone keeps its anonymous uid through that
+// reload, so the previous owner's notes for this night (the tour and prompt
+// already hidden, the motives crossed off) are dropped from notes/{uid} in
+// the same batch: the next person gets the tour, their own role prompt and
+// a clean motive list, and nobody's deductions leak. The previous owner
+// keeps their character; tapping their name on any other phone brings it
+// back, cards and all, since the roster and the dealer's copies on the
+// server are untouched. `arg` is the guest's roster key as the Host tab
+// knows it, or a session uid.
 export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
   const who = String(arg ?? '').trim()
   if (!who) throw new NightError('invalid', 'Whose phone?')
@@ -315,11 +320,18 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
   const ref = db.doc(`sessions/${uid}`)
   const snap = await ref.get()
   if (!snap.exists || snap.data().nightId !== nightId) throw new NightError('no-guest', 'That phone is not at this party.')
-  await ref.update({
+  const batch = db.batch()
+  batch.update(ref, {
     cards: [], windows: {}, answers: {},
     status: 'handed', handedAt: new Date(now),
     generation: now,
   })
+  const notesRef = db.doc(`notes/${uid}`)
+  const notes = await notesRef.get()
+  if (notes.exists && notes.data()?.byNight?.[nightId] !== undefined) {
+    batch.update(notesRef, { [`byNight.${nightId}`]: FieldValue.delete() })
+  }
+  await batch.commit()
   return { ok: true }
 }
 
