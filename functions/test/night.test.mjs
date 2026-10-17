@@ -345,6 +345,32 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   assert.ok(PAUSE_SHIFTED['public/relay'].includes('turnEndsAt') && PAUSE_SHIFTED['public/study'].includes('slotEndsAt'))
 })
 
+test('while paused with no window open, nothing moves the night on until the host resumes', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob']]) await join(db, { uid, nightId, name })
+  const t0 = 2_000_000
+  await runCommand(db, { nightId, command: 'act', arg: 2, now: t0 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'news', now: t0 })
+  const night = () => db.store.get(`nights/${nightId}`)
+  assert.equal(night().window, null)
+  await runCommand(db, { nightId, command: 'pause', now: t0 + 1000 })
+  assert.equal(night().phase, 'paused')
+  for (const [command, arg] of [['next'], ['back'], ['beat', 'cat'], ['act', 3], ['light-up'], ['power'], ['blackout']]) {
+    await assert.rejects(runCommand(db, { nightId, command, arg, now: t0 + 2000 }), /paused/, `${command} is refused in words`)
+    assert.equal(night().phase, 'paused', `${command} left the night paused`)
+    assert.equal(night().beat, 'news', `${command} moved nothing`)
+    assert.equal(msOf(night().pausedAt), t0 + 1000, `${command} kept the moment of the pause`)
+  }
+  // the pause can still be lifted, and the clocks move by the whole length of it
+  const r = await runCommand(db, { nightId, command: 'resume', now: t0 + 61_000 })
+  assert.equal(r.shiftMs, 60_000)
+  assert.equal(night().phase, 'act')
+  assert.equal(night().pausedAt, null)
+  await runCommand(db, { nightId, command: 'next', now: t0 + 62_000 })
+  assert.equal(night().beat, 'cat')
+})
+
 test('the Act 4 groups write where the house stands with each cat; nothing before that', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)

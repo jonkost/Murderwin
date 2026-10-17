@@ -15,6 +15,8 @@ import * as discard from './discard.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
+// The host commands a pause holds back (everything that moves the night or lights the phones).
+export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout'])
 
 export function firstBeat(act) { return deal.beatsOf(act)[0]?.key ?? null }
 
@@ -83,6 +85,11 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
   const snap = await ref.get()
   if (!snap.exists) throw new NightError('no-night', 'No such night.')
   const n = snap.data()
+
+  // A paused night stands still: nothing that moves the beat, the act or the
+  // phones runs until the host resumes, so no clock is quietly un-paused
+  // without being shifted (resume is what moves them).
+  if (n.phase === 'paused' && PAUSE_HELD.has(command)) throw new NightError('invalid', 'The night is paused. Resume first.')
 
   switch (command) {
     case 'next': {
