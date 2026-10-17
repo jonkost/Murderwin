@@ -77,7 +77,7 @@ export const DEFAULT_POOLS = {
   crowd: ['the whole household', 'several guests', 'the staff', 'everyone, simply everyone', 'one unlucky soul'],
 }
 
-export const CASE_WARNINGS = ['rehearsal-fallback', 'trace-partner']
+export const CASE_WARNINGS = ['rehearsal-fallback', 'no-sealed-content', 'trace-partner']
 
 // ---------------------------------------------------------------------------
 // Small helpers. `rng(n)` returns an integer in [0, n).
