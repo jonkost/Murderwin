@@ -98,8 +98,15 @@ export async function publishContent(db, nightId) {
   return { areas: PLAYER_AREAS.length, lines }
 }
 
-export async function createNight(db, { label } = {}) {
+export async function createNight(db, { label, forceRehearsal, dryRun = false } = {}) {
   const hosts = await readHosts(db)
+  // Nights rehearse by default. Only the workshop's "This is the party night"
+  // checkbox (meta/game.party_night) or an explicit caller (the fake players'
+  // dry run) makes a night use the sealed content.
+  if (typeof forceRehearsal !== 'boolean') {
+    const gameSnap = await db.doc('meta/game').get()
+    forceRehearsal = !(gameSnap.exists && gameSnap.data().party_night === true)
+  }
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
   const pool = CHARACTERS.filter(c => !c.host).map(c => c.id)
@@ -113,7 +120,10 @@ export async function createNight(db, { label } = {}) {
     act: 0,
     beat: 'arrive',    // which beat of the act (seed/night.json); the host steps through them
     window: null,      // { id, kind, opensAt, closesAt, settled } when every phone is choosing
-    rehearsal: false,  // true once a throwaway case is dealt (no generator yet)
+    rehearsal: false,  // true once a throwaway case is dealt
+    forceRehearsal,    // true: the case is always a throwaway, whatever is sealed (the default)
+    dryRun,            // true: a fake-players run with real sealed content; discarded afterwards
+    caseWarning: null, // 'rehearsal-fallback' and/or 'trace-partner', shown on the Host tab
     phase: 'lobby',
     phaseAt: FieldValue.serverTimestamp(),
     actStartedAt: null,

@@ -13,9 +13,11 @@
 //    Read ONLY from cases/{nightId} (Admin SDK). Never logged, never returned
 //    to a caller, never written anywhere a client can read except the one
 //    phone it is dealt to, as its own card.
-// Until the case generator exists, a night with no case gets a THROWAWAY
-// rehearsal case with placeholder text in brackets. It is created fresh for
-// every night and discarded with it. Nothing in it is ever printed.
+// The case is built at the Act 1 blackout (buildCaseForNight, below): from
+// one sealed motive set when the night is the party, or a THROWAWAY
+// rehearsal case with placeholder text in brackets otherwise. Both have the
+// shape in case.js. The rehearsal case is created fresh for every night and
+// discarded with it. Nothing in either is ever printed.
 
 import { randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -24,6 +26,7 @@ import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
 import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive } from './station.js'
+import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -150,38 +153,78 @@ export function noticeCard(key, act, beat, overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// The case. Read from cases/{nightId}; a night without one (no generator yet)
-// gets a throwaway rehearsal case so every screen can be walked through.
+// The case. Read from cases/{nightId}. Built once, at the Act 1 blackout
+// (the host's Power returns), by buildCaseForNight; never replaced once it
+// has roles, so a second press, a jump or a late call all find the same case.
 
 export async function readCase(db, nightId) {
   const snap = await db.doc(`cases/${nightId}`).get()
   return snap.exists ? snap.data() : null
 }
 
-export async function ensureCase(db, nightId, { pick = pickInt } = {}) {
+export const MAX_CODE_TRIES = 5
+
+// The decision for the night, blind:
+//  - nights/{id}.forceRehearsal is true (the default when a night is made;
+//    the workshop's Game night page has one checkbox, "This is the party
+//    night", that makes it false), or there is no sealed manifest: write
+//    the rehearsal case and nights/{id}.rehearsal = true.
+//  - otherwise draw one code with crypto randomness, read sealed/{code},
+//    run the structural check (case.js checkSealed); on a failure draw
+//    another, up to five, and only then fall back to rehearsal with
+//    nights/{id}.caseWarning = 'rehearsal-fallback'.
+// Also the cast-lock check: every in-play trace needs an in-play look-alike,
+// else caseWarning 'trace-partner'. Logs counts only.
+// Counts only, and quiet under node:test unless a test passes its own `log`.
+const defaultLog = line => { if (!process.env.NODE_TEST_CONTEXT) console.log(line) }
+
+export async function buildCaseForNight(db, nightId, { pick = pickInt, now = Date.now(), log = defaultLog } = {}) {
   const existing = await readCase(db, nightId)
   if (existing?.roles) return existing
-  const { list } = await guests(db, nightId)
-  const keys = shuffled(list.map(g => g.key), pick)
-  const roles = {}
-  for (const k of keys) roles[k] = 'detective'
-  const murderer = keys[0] ?? null
-  const ghost = keys[1] ?? null
-  if (murderer) roles[murderer] = 'murderer'
-  if (ghost) roles[ghost] = 'ghost'
-  const motive = MOTIVES[pick(MOTIVES.length)].n
-  const c = {
-    rehearsal: true, createdAt: new Date(),
-    roles, murderer, ghost, motive,
-    victimCharacterId: ghost ? list.find(g => g.key === ghost)?.characterId ?? null : null,
-    // how each hidden role's points move the dial this night, decided here, never shown
-    dialSign: { murderer: pick(2) ? 1 : -1, ghost: pick(2) ? 1 : -1 },
-    dial: 0,
+  const { night, list } = await guests(db, nightId)
+  const [templates, poolItems, bank] = await Promise.all([readArea(db, 'templates'), readArea(db, 'pools'), questionBank(db)])
+  const pools = {}
+  for (const k of POOL_KEYS) pools[k.toLowerCase()] = poolItems.filter(i => i.pool === k.toLowerCase()).map(i => i.text)
+  const common = { nightId, roster: list, templates, pools, rng: pick, bankSize: bank.length, now }
+
+  const warnings = []
+  let c = null
+  let tried = 0
+  const forceRehearsal = night.forceRehearsal !== false
+  const manifestSnap = forceRehearsal ? null : await db.doc('sealed/manifest').get()
+  const codes = manifestSnap?.exists ? Object.keys(manifestSnap.data().codes ?? {}) : []
+  if (!forceRehearsal && codes.length) {
+    const order = shuffled(codes, pick).slice(0, MAX_CODE_TRIES)
+    for (const code of order) {
+      tried++
+      const snap = await db.doc(`sealed/${code}`).get()
+      const sealedDoc = snap.exists ? snap.data() : null
+      if (!sealedDoc || !checkSealed(sealedDoc).ok) continue
+      try {
+        c = buildCase({ ...common, sealedDoc, motiveN: manifestSnap.data().codes[code] })
+        break
+      } catch (e) {
+        if (e?.code !== 'sealed-shape') throw new NightError('invalid', 'The case could not be built.')
+      }
+    }
+    if (!c) warnings.push('rehearsal-fallback')
   }
+  if (!c) c = rehearsalCase(common)
+
+  // cast lock: every trace at the party needs a look-alike at the party
+  const inPlay = [...new Set(list.map(g => traceOf(g.characterId)?.trace).filter(Boolean))]
+  if (inPlay.length >= 2 && inPlay.some(tr => !pickPartner(tr, inPlay, { pick }))) warnings.push('trace-partner')
+
   await db.doc(`cases/${nightId}`).set(c)
-  await db.doc(`nights/${nightId}`).update({ rehearsal: true })
+  await db.doc(`nights/${nightId}`).update({ rehearsal: c.rehearsal, caseWarning: warnings.length ? warnings.join(',') : null })
+  const kernelCount = CAT_KEYS.reduce((n, cat) => n + (c.kernels[cat]?.length ?? 0), 0)
+  log(`case ${JSON.stringify({ nightId, kernelCount, docCount: c.documents.length, rehearsal: c.rehearsal, triedCodes: tried })}`)
   return c
 }
+
+// The older name, kept for every caller that needs a case before the host
+// has pressed Power returns (a rehearsal jump, a test). Same rules.
+export const ensureCase = buildCaseForNight
 
 export function roleOf(c, key) { return c?.roles?.[key] ?? 'detective' }
 
@@ -199,21 +242,34 @@ export function affectionOutcome(cat, level, pick = pickInt) {
   return 'deflect'
 }
 
-// Fill [ROOM], [TIME] and the rest from the pools. Granolia misremembers:
-// exactly one filled blank is swapped for another item from the same pool.
-export function fillPools(kernel, pools, { garble = false, pick = pickInt } = {}) {
+// Fill [ROOM], [TIME] and the rest. Pure when the case carries its pools
+// (one value per key, fixed for the night): every blank gets the case's
+// value, and Granolia's one wrong blank is exactly `slot` ({ key, value }),
+// the same for every listener. It rolls from lists only when the case has
+// no pools (an old case doc, or the unit test), swapping one blank at random
+// for Granolia.
+export function fillPools(kernel, pools, { garble = false, pick = pickInt, slot = null } = {}) {
+  const fixed = pools && POOL_KEYS.some(k => typeof pools[k.toLowerCase()] === 'string')
+  if (fixed) {
+    let swapped = false
+    return kernel.replace(/\[(ROOM|TIME|DURATION|COUNT|PLACE|CROWD)\]/g, (_, k) => {
+      const key = k.toLowerCase()
+      if (garble && slot && slot.key === key && !swapped) { swapped = true; return slot.value }
+      return typeof pools[key] === 'string' ? pools[key] : `[${key}]`
+    })
+  }
   const used = []
   let text = kernel.replace(/\[(ROOM|TIME|DURATION|COUNT|PLACE|CROWD)\]/g, (_, k) => {
-    const list = pools[k.toLowerCase()] ?? []
+    const list = pools?.[k.toLowerCase()] ?? []
     const v = choice(list, pick) ?? `[${k.toLowerCase()}]`
     used.push({ k, v })
     return v
   })
   if (garble && used.length) {
-    const slot = used[pick(used.length)]
-    const others = (pools[slot.k.toLowerCase()] ?? []).filter(x => x !== slot.v)
+    const s = used[pick(used.length)]
+    const others = (pools?.[s.k.toLowerCase()] ?? []).filter(x => x !== s.v)
     const swap = choice(others, pick)
-    if (swap) text = text.replace(slot.v, swap)
+    if (swap) text = text.replace(s.v, swap)
   }
   return text
 }
@@ -223,29 +279,58 @@ function firstSentence(text) {
   return m ? m[1] : text
 }
 
-export function assembleTestimony({ cat, outcome, opener, closer, refusal, kernel }) {
+// The safe's three numbers ride on the testimony in a safe sentence, never
+// inside the kernel: ui_copy "NUMBERS: ..." with [A] [B] [C] slots.
+export const DEFAULT_NUMBERS_LINE = 'If it matters, the numbers were [A], [B] and [C].'
+export const DEFAULT_SCRAP = { title: 'A scrap of paper', text: 'The cat would not talk, but left a scrap of paper behind. On it, in a careful paw: [A], [B] and [C].', button: 'Keep it' }
+export function numbersSentence(codes, line = DEFAULT_NUMBERS_LINE) {
+  if (!Array.isArray(codes) || codes.length !== 3) return ''
+  return line.replace('[A]', String(codes[0])).replace('[B]', String(codes[1])).replace('[C]', String(codes[2]))
+}
+
+export function assembleTestimony({ cat, outcome, opener, closer, refusal, kernel, numbers = '' }) {
   if (outcome === 'deflect') return { cat, outcome, lines: [refusal] }
   const middle = outcome === 'partial' ? firstSentence(kernel) : kernel
-  return { cat, outcome, lines: [opener, middle, closer].filter(Boolean) }
+  return { cat, outcome, lines: [opener, middle, numbers, closer].filter(Boolean) }
 }
 
 async function voicePools(db) {
-  const [openers, closers, refusals, poolItems] = await Promise.all([
-    readArea(db, 'openers'), readArea(db, 'closers'), readArea(db, 'refusals'), readArea(db, 'pools'),
+  const [openers, closers, refusals, poolItems, uiItems] = await Promise.all([
+    readArea(db, 'openers'), readArea(db, 'closers'), readArea(db, 'refusals'), readArea(db, 'pools'), readArea(db, 'ui_copy'),
   ])
   const by = (items, cat) => items.filter(i => i.cat === cat).map(i => i.text)
   const pools = {}
   for (const k of POOL_KEYS) pools[k.toLowerCase()] = poolItems.filter(i => i.pool === k.toLowerCase()).map(i => i.text)
-  return { openers: c => by(openers, c), closers: c => by(closers, c), refusals: c => by(refusals, c), pools }
+  const ui = labelled(uiItems)
+  const numbersLine = ui.NUMBERS && ui.NUMBERS.includes('[A]') ? ui.NUMBERS : DEFAULT_NUMBERS_LINE
+  const scrap = ui['NOTICE SCRAP'] && ui['NOTICE SCRAP'].includes('[A]') ? { text: ui['NOTICE SCRAP'] } : {}
+  return { openers: c => by(openers, c), closers: c => by(closers, c), refusals: c => by(refusals, c), pools, numbersLine, scrap }
 }
 
-// The middle of a testimony. From the case when the generator has written one;
-// a bracketed placeholder in rehearsal. Never addressed to anyone.
-function kernelFor(c, cat, codes) {
-  const real = c?.kernels?.[cat]
-  if (Array.isArray(real) && real.length) return choice(real)
-  const numbers = codes ? ` The numbers that matter are ${codes.join(', ')}.` : ''
-  return `(Rehearsal. Here ${CAT_NAMES[cat]} says something true about what happened in [ROOM] at [TIME], in two or three sentences, with one detail only this cat would notice.${numbers})`
+// The middle of a testimony: the case's kernel for this cat, at the one
+// variant the case fixed for the night (so two guests compare identical
+// wording). Salem inverts about 60 percent of the time: a roll seeded on
+// (nightId, guestKey) picks his warped variant or the true line (Irwin's
+// kernel at salemTruthIndex), and the same guest always gets the same
+// branch. Never addressed to anyone. A case doc with no kernels (an old
+// night) gets the bracketed stand-in.
+export function kernelFor(c, cat, { nightId = '', guestKey = '' } = {}) {
+  const list = c?.kernels?.[cat]
+  if (!Array.isArray(list) || !list.length) {
+    return { text: `(Rehearsal. Here ${CAT_NAMES[cat]} says something true about what happened in [ROOM] at [TIME], in two or three sentences, with one detail only this cat would notice.)`, warped: false }
+  }
+  const i = Math.min(list.length - 1, Math.max(0, Number(c.variant?.[cat]) || 0))
+  const pickText = k => (typeof k === 'string' ? k : k?.text ?? '')
+  if (cat === 'salem') {
+    const truth = c.kernels?.irwin
+    const warped = seededUnit(nightId, guestKey, 'salem') < SALEM_WARP_SHARE
+    if (!warped && Array.isArray(truth) && truth.length) {
+      const t = Math.min(truth.length - 1, Math.max(0, Number(c.salemTruthIndex) || 0))
+      return { text: pickText(truth[t]), warped: false }
+    }
+    return { text: pickText(list[i]), warped: true }
+  }
+  return { text: pickText(list[i]), warped: false }
 }
 
 const DEFAULT_VOICE = {
@@ -254,20 +339,30 @@ const DEFAULT_VOICE = {
   refusal: { irwin: '', granolia: 'Not now, dear. I have lost my thread.', boo: 'No.', zimothy: 'My time is billable. Yours is not.', salem: 'I do not talk to people who stand like that.' },
 }
 
-export async function testimonyCard(db, { c, cat, level, act, beat, id, room, codes, voice }) {
+// One cat's card for one listener (a guest in Act 2, a group in Act 4).
+// `codes` are the safe's three numbers, carried in a safe sentence for a
+// full or partial answer; `roll` lets a test fix the affection outcome.
+export async function testimonyCard(db, { c, cat, level, act, beat, id, room, codes = null, voice, nightId = '', guestKey = '', roll = pickInt }) {
   const v = voice ?? await voicePools(db)
   const pick = (list, fallback) => choice(list) ?? fallback
-  const outcome = affectionOutcome(cat, level)
-  const rawKernel = kernelFor(c, cat, codes)
-  const kernel = fillPools(rawKernel, v.pools, { garble: cat === 'granolia' })
+  const outcome = affectionOutcome(cat, level, roll)
+  const raw = kernelFor(c, cat, { nightId, guestKey })
+  const kernel = fillPools(raw.text, c?.pools ?? v.pools, { garble: cat === 'granolia', slot: c?.granoliaSlot ?? null })
   const t = assembleTestimony({
     cat, outcome,
     opener: pick(v.openers(cat), DEFAULT_VOICE.opener[cat]),
     closer: pick(v.closers(cat), DEFAULT_VOICE.closer[cat]),
     refusal: pick(v.refusals(cat), DEFAULT_VOICE.refusal[cat]),
     kernel,
+    numbers: numbersSentence(codes, v.numbersLine),
   })
-  return { id, act, beat, kind: 'testimony', cat, catName: CAT_NAMES[cat], room, outcome, lines: t.lines, placeholder: !c?.kernels }
+  return { id, act, beat, kind: 'testimony', cat, catName: CAT_NAMES[cat], room, outcome, lines: t.lines, placeholder: !!c?.rehearsal }
+}
+
+// When a cat will not talk, the numbers still reach the phone: a second card.
+export function scrapCard(act, beat, codes, over = {}) {
+  const s = { ...DEFAULT_SCRAP, ...over }
+  return { id: `${act}-${beat}-scrap`, act, beat, kind: 'notice', key: 'scrap', title: s.title, text: numbersSentence(codes, s.text), button: s.button }
 }
 
 // ---------------------------------------------------------------------------
@@ -293,9 +388,11 @@ export async function dealEncounter(db, nightId, act, beat) {
     codesByUid[g.uid] = codes
     const room = catRoom[cat]
     const go = { id: `${act}-${beat}-go`, act, beat, kind: 'go', room, cat, catName: CAT_NAMES[cat], text: `Go to ${room}. ${CAT_NAMES[cat]} is waiting for you there.` }
-    const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room, codes, voice })
+    const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room, codes, voice, nightId, guestKey: g.key })
     if (await dealCard(db, g.uid, go)) dealt++
     await dealCard(db, g.uid, t)
+    // a brush-off still leaves the numbers behind, so the safe is always solvable
+    if (t.outcome === 'deflect') await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
   }
   // the safe's answers live where no phone can read them
   await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByUid }, { merge: true })
@@ -316,18 +413,18 @@ export async function dealPuzzle(db, nightId, act, beat) {
   return { dealt }
 }
 
-// A document, overlaid live on one of the seven stationery designs.
+// A document, overlaid live on one of the seven stationery designs: the
+// case's documents[0], the safe's pay-out. Rehearsal text only when the
+// case is a rehearsal.
 export async function documentCard(db, { c, act, beat, id }) {
-  const templates = (await readArea(db, 'templates')).map(i => i.text)
-  const real = c?.documents
-  const doc = Array.isArray(real) && real.length ? choice(real) : null
+  const doc = Array.isArray(c?.documents) && c.documents.length ? c.documents[0] : null
   return {
     id, act, beat, kind: 'document',
-    template: doc?.template ?? choice(templates) ?? 'Receipt',
+    template: doc?.template ?? 'Receipt',
     bigWord: doc?.bigWord ?? 'REHEARSAL',
     text: doc?.text ?? '(Rehearsal. The document for this motive goes here: forty to sixty words of a receipt, a telegram or a notice, with one word printed large and one handwritten note in the margin.)',
     annotation: doc?.annotation ?? '(a handwritten note)',
-    placeholder: !doc,
+    placeholder: !doc || !!c?.rehearsal,
   }
 }
 
@@ -576,14 +673,14 @@ export async function dealGroups(db, nightId, act, beat) {
   return { ok: true, groups: made.groups, trios: made.trios, dealt }
 }
 
-async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, pick = pickInt }) {
+async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, nightId = '', pick = pickInt }) {
   const base = STATION_TEXT[station.key]
   const id = `${act}-${beat}-${station.key}`
   const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: base.text }
   if (station.key === 'cat') {
     const cat = choice(CAT_KEYS, pick)
     const avg = Math.round(members.reduce((s, m) => s + (levels[m]?.[cat] ?? 3), 0) / Math.max(1, members.length))
-    const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: null, voice })
+    const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: null, voice, nightId, guestKey: gid })
     return { ...card, cat, catName: CAT_NAMES[cat], text: `Find ${CAT_NAMES[cat]}. The cat talks to all of you at once.`, testimony: t }
   }
   if (station.key === 'bags') {
@@ -626,7 +723,7 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
     const members = grp.members.map(m => m.key)
-    const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice })
+    const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice, nightId })
     for (const k of members) {
       const g = byKey[k]
       if (!g) continue

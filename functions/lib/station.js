@@ -71,11 +71,13 @@ export async function makeRotation(db, { nightId, apart = [], pickInt = randomIn
 export const STUDY_PLACEHOLDER = '(Rehearsal. The study pays its clue out to every phone in the group here, when the three jewels are lit or the fifteen minutes are up.)'
 
 export function studyClueCard(c, act, beat) {
+  // reads cases.studyClue only; the bracketed text appears only when the case is a rehearsal
   const real = c?.studyClue?.text
+  const has = typeof real === 'string' && real.trim().length > 0
   return {
     id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the study',
-    text: typeof real === 'string' && real.trim() ? real : STUDY_PLACEHOLDER,
-    placeholder: !(typeof real === 'string' && real.trim()),
+    text: has ? real : STUDY_PLACEHOLDER,
+    placeholder: !has || !!c?.rehearsal,
   }
 }
 
