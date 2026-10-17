@@ -35,6 +35,9 @@ export const HOST_COMMANDS = [
   { name: 'relay-start', arg: '[force]', what: 'Start the Act 6 drawing. A drawing under way is kept unless you say force.' },
   { name: 'relay-reset', arg: '', what: 'Clear the drawing.' },
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },
+  // the safeguards (run.js, safeguards.js)
+  { name: 'spill', arg: '', what: 'Spill the Beans: ask the Manor to change the story. Through Act 5 only. It decides silently and says nothing either way.' },
+  { name: 'hush', arg: '<murderer|ghost>', what: 'The Hush: that role has been found out. Their answers move nothing from now on. No phone changes.' },
   // dry runs only (run.js, discard.js)
   { name: 'dry-run', arg: '', what: 'Mark this night a dry run: it may close windows early and be discarded.' },
   { name: 'settle-now', arg: '', what: 'Close the open window early. Dry run nights only.' },

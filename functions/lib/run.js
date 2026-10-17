@@ -12,6 +12,7 @@ import * as deal from './deal.js'
 import * as relay from './relay.js'
 import * as station from './station.js'
 import * as discard from './discard.js'
+import * as safeguards from './safeguards.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -181,6 +182,12 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       return deal.settleWindow(db, nightId, { now, force: true })
     case 'discard-night':
       return discard.discardNight(db, { nightId })
+    case 'spill':
+      // Spill the Beans: the engine decides silently (safeguards.js); { did: false } carries no reason
+      return safeguards.spill(db, { nightId, now })
+    case 'hush':
+      // the Hush: that role's answers move no dial from now on; no phone changes
+      return safeguards.hush(db, { nightId, role: arg, now })
     default:
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       return night.hostCommand(db, { nightId, command, arg, now })

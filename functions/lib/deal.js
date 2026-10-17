@@ -28,6 +28,7 @@ import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './nigh
 import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 import { bagsClue, bagsText } from './bags.js'
+import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -452,6 +453,7 @@ export async function solve(db, { nightId, uid, cardId, entry }) {
   const doc = await documentCard(db, { c, act: card.act, beat: card.beat, id: `${cardId}-payout` })
   await sessionRef.update({ [`solved.${cardId}`]: true, [`tries.${cardId}`]: tries })
   await dealCard(db, uid, { ...doc, ...(right ? {} : { gaveWay: true }) })
+  await noteDealt(db, nightId, { kind: 'document', act: card.act, beat: card.beat, key: s.guestKey }) // the ledger: a document is out (safeguards)
   return { ok: true, right, gaveWay: !right, tries }
 }
 
@@ -519,7 +521,7 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
     if (next !== level) await sref.update({ [`affection.${w.cat}`]: next })
   }
   const role = roleOf(c, key)
-  if (role !== 'detective') {
+  if (role !== 'detective' && !isHushed(c, role)) { // a hushed role (the Hush, safeguards.js) moves no dial
     const sign = c?.dialSign?.[role] ?? 1
     const caseRef = db.doc(`cases/${nightId}`)
     const delta = sign * total
@@ -772,6 +774,7 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
   }
   if (paid) rot = await readRotation(db, nightId)
   let dealt = 0
+  const cluesOut = [] // groups whose study clue landed here (the safeguards' ledger, below)
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
     const members = grp.members.map(m => m.key)
@@ -780,9 +783,10 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
       const g = byKey[k]
       if (!g) continue
       if (await dealCard(db, g.uid, card)) dealt++
-      if (station.key === 'study' && !alive) await dealCard(db, g.uid, studyClueCard(c, act, beat))
+      if (station.key === 'study' && !alive && await dealCard(db, g.uid, studyClueCard(c, act, beat))) cluesOut.push(grp.id)
     }
   }
+  for (const gid of [...new Set(cluesOut)]) await noteDealt(db, nightId, { kind: 'study', act, beat, groupId: gid })
   // the study is the clock: tell the station which group is due, unless a game is running
   const due = rot.studyOrder?.[r] ?? null
   if (!running) {
@@ -848,7 +852,8 @@ export async function finaleDoc(db, nightId, c, now = Date.now()) {
     value += points.filter(p => p.act === act).reduce((sum, p) => sum + p.delta, 0)
     running.push({ act, value })
   }
-  return { at: new Date(now), schedule: FINALE_SCHEDULE, stats, graph: { points, running }, rehearsal: !!c?.rehearsal }
+  const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it (safeguards.js); absent otherwise
+  return { at: new Date(now), schedule: FINALE_SCHEDULE, stats, graph: { points, running }, rehearsal: !!c?.rehearsal, ...(spotlight.length ? { spotlight } : {}) }
 }
 
 // ---------------------------------------------------------------------------
@@ -995,6 +1000,7 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
   const [verb, arg] = action.split(':')
   switch (verb) {
     case 'notice': {
+      if (arg === 'news') await noteDealt(db, nightId, { kind: 'echo', act, beat }) // the ledger: the echo is on the screen (safeguards)
       const { list } = await guests(db, nightId)
       const ui = labelled(await readArea(db, 'ui_copy'))
       const over = ui[`NOTICE ${arg.toUpperCase()}`] ? { text: ui[`NOTICE ${arg.toUpperCase()}`] } : {}
@@ -1042,6 +1048,14 @@ export async function dealRoles(db, nightId) {
 }
 
 export const ROLE_CARD_ID = '2-power-role'
+
+// The role card's text (safe copy): the workshop's line for that role, else
+// the default. Shared with safeguards.js, which replaces cards after a spill.
+export async function roleCardTexts(db) { return labelled(await readArea(db, 'role_cards')) }
+export function roleCardText(role, written = {}) {
+  const r = String(role ?? 'detective').toUpperCase()
+  return written?.[r] ?? ROLE_CARDS[r] ?? ROLE_CARDS.DETECTIVE
+}
 
 // One phone's role card, from the case as it stands. Used by dealRoles for
 // everyone at the power beat, and by join() for a guest who arrives after it
