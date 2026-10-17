@@ -13,6 +13,7 @@
 import { randomInt } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import { NightError, characterById } from './night.js'
+import { noteDealt } from './ledger.js' // the safeguards' ledger (never content)
 
 export function rotationPath(nightId) { return `nights/${nightId}/public/rotation` }
 export function studyPath(nightId) { return `nights/${nightId}/public/study` }
@@ -143,6 +144,7 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
     await ref.set({ dealt: { study: { at: FieldValue.serverTimestamp(), outcome, groupId } } }, { merge: true })
     if (await dealOnce(db, uid, studyClueCard(c, act, beat))) dealt++
   }
+  if (dealt) await noteDealt(db, nightId, { kind: 'study', act: night.act ?? 4, beat: night.beat ?? 'station', groupId }) // the ledger: the study's clue is out (safeguards)
   return dealt
 }
 

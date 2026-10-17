@@ -43,6 +43,9 @@ export const HOST_COMMANDS = [
   { name: 'finale-hold', arg: '', what: 'Hold the living room screen where it is.' },
   { name: 'finale-go', arg: '', what: 'Carry on after a hold. Everything later on the screen moves by the length of the hold.' },
   { name: 'award', arg: '<guestKey:n>', what: 'Give achievement n from the workshop list to a guest. Through Act 5 only.' },
+  // the safeguards (run.js, safeguards.js)
+  { name: 'spill', arg: '', what: 'Spill the Beans: ask the Manor to change the story. Through Act 5 only. It decides silently and says nothing either way.' },
+  { name: 'hush', arg: '<murderer|ghost>', what: 'The Hush: that role has been found out. Their answers move nothing from now on. No phone changes.' },
   // dry runs only (run.js, discard.js)
   { name: 'dry-run', arg: '', what: 'Mark this night a dry run: it may close windows early and be discarded.' },
   { name: 'settle-now', arg: '', what: 'Close the open window early. Dry run nights only.' },

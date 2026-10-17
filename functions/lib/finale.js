@@ -14,6 +14,7 @@
 import { randomInt } from 'node:crypto'
 import { MOTIVES, NightError, readArea, characterById } from './night.js'
 import { rotationPath } from './station.js'
+import { spotlightLines } from './ledger.js' // the Hush's plain-words line for the screen (safeguards)
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -181,11 +182,13 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const schedule = { ...FINALE_SCHEDULE }
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 
+  const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
     graph: { points, running, sides, hush },
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,
+    ...(spotlight.length ? { spotlight } : {}),
   }
 }
 

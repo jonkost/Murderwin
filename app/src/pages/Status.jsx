@@ -26,6 +26,7 @@ const BUILT = [
   ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night.'],
   ['Jenna’s page', 'Her own page for the secrets and the packing list, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited.'],
   ['Rehearsing without the party', 'A pretend Firebase on your Mac, eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook.'],
+  ['Spill the Beans and the Hush', 'Your two safeguard buttons on the Host tab, under "If something goes wrong". Spill works through Act 5 and the Manor decides silently; the Hush stops a found-out player’s answers from counting.'],
 ]
 
 const NEXT = [
@@ -34,7 +35,6 @@ const NEXT = [
   ['The nine sounds', 'Record one short sound per cue (media/README.md lists them, one second of silence first). Stand-in tones play until then.', 'Jon'],
   ['Windows on a server clock', 'Every Parlour Game settles on time even if nobody presses anything.', 'Claude'],
   ['The finale on the TV', 'The reveal staged so nothing is readable early, the stats reel, the dial graph, and achievements you award by tapping.', 'Claude'],
-  ['Spill the Beans and the Hush', 'Your two safeguard buttons, greyed out after Act 5.', 'Claude'],
   ['The hardware evening', 'The Nanoleaf wall, the Stream Deck and the Hue bulb plugged in, one run of the study and one grid of the drawing.', 'Jon'],
   ['The household photos', 'Faces, full, intro cards, in-play. Folders are ready.', 'Jon'],
 ]

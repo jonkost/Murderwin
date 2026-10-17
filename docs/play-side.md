@@ -149,8 +149,16 @@ named after the character (the README in that folder lists the names), then
   Jenna reads every set. Until then every night deals bracketed stand-ins.
 - The bag packing (a blind script) and the seven stationery pictures; the
   stand-ins work until then.
-- Spill the Beans and the Hush: your two safeguard buttons.
 - The workshop's Freeze button for 7 November.
+
+**The safeguards (17 October).** The Host tab has Spill the Beans and the
+Hush under "If something goes wrong". Spill the Beans works through Act 5
+and only while nothing that pins the story (a document, the study's clue,
+the news) has reached anyone; the Manor decides silently and the phone says
+the same thing either way. The Hush is for a role given away out loud: that
+player's Parlour Game answers stop counting, nothing on any phone changes,
+and the reveal says one line about it. `docs/on-the-night.md` has the
+what-to-do rows.
 
 Built since the first slice: the whole night on the phone (above), the case
 bridge and cat testimony with the safe, the Parlour Game windows, dinner to
