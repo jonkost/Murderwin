@@ -313,7 +313,9 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   assert.equal(closes, t0 + NIGHT.windows.questions.ms)
   // other clocks that must move with it
   db.store.set(`nights/${nightId}/public/relay`, { state: 'turn', turnEndsAt: new Date(t0 + 40_000), walkEndsAt: null, voteEndsAt: null, lockoutEndsAt: null })
-  db.store.set(`nights/${nightId}/public/study`, { state: 'playing', slotEndsAt: new Date(t0 + 700_000) })
+  db.store.set(`nights/${nightId}/public/study`, { state: 'absent', slotEndsAt: new Date(t0 + 700_000) })
+  db.store.set(`nights/${nightId}/public/finale`, { at: new Date(t0 + 5_000), schedule: { done: 110_000 } })
+  db.store.set(`nights/${nightId}`, { ...night(), reveal: { at: new Date(t0 + 5_000) } })
   // pause thirty seconds before the window closes
   const tPause = closes - 30_000
   await runCommand(db, { nightId, command: 'pause', now: tPause })
@@ -333,6 +335,8 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   assert.equal(msOf(db.store.get(`nights/${nightId}/public/relay`).turnEndsAt), t0 + 40_000 + 300_000, 'the relay turn moved by the same amount')
   assert.equal(db.store.get(`nights/${nightId}/public/relay`).walkEndsAt, null, 'empty deadlines stay empty')
   assert.equal(msOf(db.store.get(`nights/${nightId}/public/study`).slotEndsAt), t0 + 700_000 + 300_000, 'the study slot moved by the same amount')
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/finale`).at), t0 + 5_000 + 300_000, 'the finale reel moved')
+  assert.equal(msOf(night().reveal.at), t0 + 5_000 + 300_000, 'and the Host tab\'s reveal countdown moved with it')
   // an answer at the old deadline plus one second is accepted, and no defaults fired
   const set = db.store.get('sessions/u-jessa').windows[w.id]
   await player.answer(db, { nightId, uid: 'u-jessa', windowId: w.id, picks: set.beats.map(b => b.choices[0].k), now: closes + 1000 })

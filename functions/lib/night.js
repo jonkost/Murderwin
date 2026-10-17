@@ -348,12 +348,15 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 // window settles, no relay turn ends and no study slot expires while the
 // host is dealing with a dog in the garden. The fields that move:
 //   nights/{id}.window.opensAt, .window.closesAt
+//   nights/{id}.reveal.at (the Host tab's reveal countdown)
 //   nights/{id}/public/relay: turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
-//   nights/{id}/public/study: slotEndsAt
+//   nights/{id}/public/study: slotEndsAt (the twelve-minute slot with no station;
+//     a live station keeps its own fifteen-minute clock and freezes it itself
+//     by watching this night's phase, station/lib/follow.js)
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
 export const PAUSE_SHIFTED = {
-  night: ['window.opensAt', 'window.closesAt'],
+  night: ['window.opensAt', 'window.closesAt', 'reveal.at'],
   'public/relay': ['turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
   'public/finale': ['at'],
