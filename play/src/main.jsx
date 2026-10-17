@@ -9,7 +9,7 @@ import Check from './screens/Check'
 import './styles.css'
 
 const preview = previewScreen()
-// A room screen: /play/?kiosk=living | bedroom. Same page, same sign-in, no router.
+// A room screen: /play/?kiosk=living | bedroom | study | ipad (the living room's words only). Same page, same sign-in, no router.
 const kiosk = new URLSearchParams(window.location.search).get('kiosk')
 // A phone-shaped frame on a big screen: /play/?phone=1 (testing on a Mac).
 const phone = new URLSearchParams(window.location.search).get('phone')

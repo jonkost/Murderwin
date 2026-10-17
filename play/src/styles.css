@@ -512,3 +512,51 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .paper-mourning-card .paper-big { color: #1a1614; }
 .paper-mourning-card .paper-note { justify-self: center; }
 .preview-paper { position: fixed; right: 0.6rem; top: 0.6rem; z-index: 50; opacity: 0.85; background: var(--card); }
+
+/* ---- the room screens (D, 18 Oct 2026): the beats' screens, the board, the three corners ---- */
+.kiosk.dark { background: #050505; color: #050505; }
+.kiosk.dark.paused { color: #3a3a3a; }
+.kiosk-line.dim { color: #3a3a3a; font-size: 3vw; }
+.kiosk.card-screen { background: var(--brand-charcoal); }
+.kiosk.card-screen.news { background: var(--brand-blue); }
+.kiosk.card-screen.bulletin { background: var(--brand-bottle); }
+.kiosk.card-screen.irwin { background: var(--brand-claret); }
+.kiosk.captions { background: #050505; justify-content: flex-end; padding-bottom: 6vh; }
+.kiosk-lines { max-width: 84vw; display: grid; gap: 1.6vw; }
+.kiosk-lines .kiosk-line { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 3.8vw; line-height: 1.35; max-width: none; margin: 0; }
+.kiosk.captions .kiosk-line { font-size: 4.2vw; text-shadow: 0 2px 12px rgba(0,0,0,0.8); }
+.kiosk.irwin .kiosk-lines .kiosk-line { font-size: 4.6vw; }
+.irwin-face { width: 16vw; height: 16vw; border-radius: 50%; margin: 0 0 2vw; background: radial-gradient(circle at 40% 35%, #d9c8a8, #7a5a3e 70%, #3a2a1a); box-shadow: inset 0 -2vw 3vw rgba(0,0,0,0.4), 0 0 4vw rgba(166,162,83,0.35); border: 0.4vw solid var(--brand-brass); }
+.strikes { margin-top: 2vw; }
+.strikes ul { list-style: none; margin: 0.6vw 0 0; padding: 0; display: grid; gap: 0.8vw; }
+.strikes li { font-size: 3.2vw; color: var(--dim); }
+.strikes s { text-decoration-thickness: 0.3vw; text-decoration-color: var(--brand-red); }
+.kiosk.board { background: var(--brand-charcoal); justify-content: flex-start; padding-top: 4vh; }
+.board-rows { list-style: none; margin: 1vw 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; width: 92vw; }
+.board-rows li { background: var(--card); border: 2px solid var(--line); border-radius: 1vw; padding: 1.2vw 1.4vw; display: grid; gap: 0.3vw; text-align: left; min-height: 9vw; }
+.board-rows li.struck { border-color: var(--good); }
+.board-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 2.8vw; }
+.board-char { font-size: 1.6vw; color: var(--dim); }
+.board-strike { font-size: 2vw; color: var(--ink); margin-top: 0.4vw; }
+.board-rows li.waiting .board-strike { color: var(--dim); font-style: italic; }
+.board-rows li.struck .board-strike::before { content: '\2716\00a0'; color: var(--brand-red); }
+.kiosk.board.compact { min-height: 0; padding: 1vw 0 0; background: transparent; width: 92vw; }
+.kiosk.board.compact .board-rows { grid-template-columns: repeat(5, 1fr); gap: 0.8vw; }
+.kiosk.board.compact .board-rows li { min-height: 0; padding: 0.6vw 0.9vw; }
+.kiosk.board.compact .board-name { font-size: 1.8vw; }
+.kiosk.board.compact .board-char { display: none; }
+.kiosk.board.compact .board-strike { font-size: 1.4vw; }
+.kiosk.ballot-screen .trace.compact .trace-frame { width: 30vh; height: 30vh; }
+.kiosk.door.trace-on-tv { background: var(--brand-bottle); }
+.kiosk-rules { list-style: decimal; margin: 0 0 2vw; padding-left: 3vw; text-align: left; max-width: 70vw; font-size: 2.6vw; color: var(--ink); display: grid; gap: 0.6vw; }
+.kiosk-wake { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vw; background: var(--brand-blue); color: var(--ink); border: 0; cursor: pointer; font: inherit; }
+.kiosk-wake .kiosk-big { font-size: 7vw; }
+.kiosk-bell { position: fixed; top: 1.2vw; right: 1.4vw; z-index: 80; font-size: 3.2vw; color: var(--good); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.kiosk-bell.ring { opacity: 1; animation: bellpulse 0.6s ease-in-out 5; }
+@keyframes bellpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+.kiosk-dot { position: fixed; left: 1.4vw; bottom: 1.2vw; z-index: 80; display: flex; align-items: center; gap: 0.6vw; font-size: 1.4vw; color: var(--dim); pointer-events: none; }
+.kiosk-dot .dot-mark { width: 1.2vw; height: 1.2vw; border-radius: 50%; background: #3cae5c; box-shadow: 0 0 0.6vw rgba(0,0,0,0.5); }
+.kiosk-dot.amber .dot-mark { background: #d9a023; }
+.kiosk-dot.red .dot-mark { background: var(--brand-red); }
+.kiosk.dark ~ .kiosk-dot, .kiosk.dark ~ .kiosk-bell { opacity: 0.35; }
+.relay-rules { margin: 0 0 1rem; padding-left: 1.4rem; text-align: left; display: grid; gap: 0.4rem; color: var(--ink); font-size: 1rem; }

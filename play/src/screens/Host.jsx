@@ -40,6 +40,7 @@ function describe(command, r) {
     case 'study-reassign': return r.already ? 'That group was already the one due.' : 'Noted. The study pays that group when it finishes.'
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
     case 'hall': return `The hall light is ${r.hall}.`
+    case 'tv-trace': return r.tvTrace ? 'The living room screen shows the trace once the door has been open ten seconds.' : 'The trace is off the living room screen.'
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     case 'next': case 'beat': case 'back': return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
     case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
@@ -149,6 +150,7 @@ export default function Host({ night, content, serverNow }) {
       <div className="host-row">
         <button className="big wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('relay-reset')}>Clear the drawing</button>
+        <button className="chip wide" disabled={!!busy} onClick={() => run('tv-trace', cues.data?.tvTrace ? 'off' : undefined)} title="If the bedroom screen has died, the TV shows the trace after the door opens">{cues.data?.tvTrace ? 'Take the trace off the TV' : 'Show the trace on the TV'}</button>
       </div>
 
       <h3>The doors</h3>

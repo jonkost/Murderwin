@@ -1,37 +1,76 @@
-import { useEffect, useRef } from 'react'
-import { useAuthUid, useDoc, useServerClock, useTick } from '../lib/hooks'
+import { useEffect, useRef, useState } from 'react'
+import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance } from '../firebase'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
-import { ACTS, studyLines } from '../lib/content'
+import { ACTS, studyLines, uiLines } from '../lib/content'
+import { livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules } from '../lib/screen'
 
-// The room screens: /play/?kiosk=living | bedroom. A kiosk is a browser on a
-// MacBook pointed at the host, signed in anonymously like a phone. It shows
-// the room what the public night state says and nothing more. The living
-// room kiosk is also the relay's clock: it nudges the server whenever a
-// deadline has passed. (The study kiosk lives with the station: ?kiosk=study.)
+// The room screens: /play/?kiosk=living | bedroom | study | ipad. A kiosk is
+// a browser on a MacBook pointed at the host, signed in anonymously like a
+// phone. It shows the room what the public night state says and nothing
+// more. The living room kiosk is also the relay's clock: it nudges the
+// server whenever a deadline has passed. (The study kiosk lives with the
+// station: ?kiosk=study.) The iPad (?kiosk=ipad) is the living room screen
+// with the words only: it keeps the news and the bulletin up through dinner.
+//
+// What the living room shows comes from nights/{id}/public/screen (written
+// by the server beat by beat: news, bulletin, Sir Irwin, the door, the
+// board) and public/sounds (the bell in the corner, and this screen's own
+// chime). Three things sit in the corners of every kiosk: a one-time
+// "tap to wake" so the browser lets it make a sound, a bell for three
+// seconds whenever a sound is called for, and a dot that says whether the
+// house can still be heard. None of them ever covers the content.
 
 export default function Kiosk({ which }) {
   const { uid } = useAuthUid()
+  const living = which === 'living' || which === 'ipad'
   const active = useDoc(uid ? 'public_state/active' : null)
   const nightId = active.data?.nightId ?? null
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
   const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
-  const content = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/content` : null)
+  const content = useDoc(nightId && (which === 'study' || living) ? `nights/${nightId}/public/content` : null)
   const trace = useDoc(nightId && which !== 'study' ? `nights/${nightId}/public/trace` : null)
-  const finale = useDoc(nightId && which === 'living' ? `nights/${nightId}/public/finale` : null)
-  const serverNow = useServerClock(uid, nightId, `kiosk-${which}`)
+  const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
+  const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
+  const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
+  const cues = useDoc(nightId && living ? `nights/${nightId}/public/cues` : null)
+  const serverNow = useServerClock(uid, nightId, `kiosk-${which === 'ipad' ? 'living' : which}`)
+  const online = useOnline()
   useTick(250)
 
   const n = night.data
   const r = relay.data
-  if (!uid || !nightId || !n) return <Idle title="Sirwin Manor" line="The house is quiet." />
+  let body
+  if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." />
+  else if (roomDark(n)) body = <Dark />
+  else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
+  else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
+  else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
+  return (
+    <>
+      {body}
+      <Bell sounds={sounds.data} serverNow={serverNow} />
+      <StaleDot view={night} online={online} />
+      <Wake />
+    </>
+  )
+}
 
-  if (which === 'bedroom') return <Bedroom relay={r} trace={trace.data} />
-  if (which === 'study') return <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
-  return <Living night={n} relay={r} trace={trace.data} finale={finale.data} serverNow={serverNow} nightId={nightId} />
+// Every screen is dark through the blackout and the prompt: near-black, nothing on it.
+export function Dark() {
+  return <div className="kiosk dark" aria-label="Sirwin Manor" />
+}
+
+// The host's pause, on a room screen: near-black with two words.
+export function OneMoment() {
+  return (
+    <div className="kiosk dark paused">
+      <p className="kiosk-line dim">One moment</p>
+    </div>
+  )
 }
 
 function Idle({ title, line }) {
@@ -41,6 +80,16 @@ function Idle({ title, line }) {
       <p className="kiosk-line">{line}</p>
     </div>
   )
+}
+
+// The browser lets a page make a sound only after a tap. The first tap on a
+// kiosk makes (or resumes) the one AudioContext every chime uses.
+export function wakeAudio() {
+  try {
+    const ctx = chime.ctx ?? (chime.ctx = new (window.AudioContext || window.webkitAudioContext)())
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+    return ctx
+  } catch { return null }
 }
 
 // A short chime from the kiosk's own speaker (no AirPlay spin-up).
@@ -62,10 +111,11 @@ function chime(kind) {
   } catch {}
 }
 
-export function Living({ night, relay, trace, finale, serverNow, nightId }) {
+export function Living({ night, relay, trace, finale, screen = null, cues = null, content = null, serverNow, nightId, captionsOnly = false }) {
   const lastState = useRef(null)
   const nudged = useRef(0)
   const lastReveal = useRef(null)
+  const view = livingView({ night, relay, screen, finale, captionsOnly })
 
   // a soft note at each reveal
   const stage = finale && night?.reveal ? finaleStage(finale, serverNow()) : null
@@ -105,21 +155,29 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
     lastState.current = key
   }, [relay?.state, relay?.turnIndex, relay?.lastResult, relay?.crossed?.length])
 
+  if (view === 'dark') return <Dark />
+  if (view === 'paused') return <OneMoment />
   // Act 7: the finale runs on this screen against the server's clock
-  if (finale && night?.reveal) return <Finale night={night} finale={finale} serverNow={serverNow} />
+  if (view === 'finale') return <Finale night={night} finale={finale} serverNow={serverNow} />
   // Act 7: while the phones decide, the clock is on the big screen, with the
   // trace when there is one (the drawing may have been cut, or never run)
-  if (night?.window?.kind === 'ballot' && !night.window.settled) {
+  // and the board of strikes from the deduction round beneath
+  if (view === 'ballot') {
     const left = Math.max(0, Math.ceil((ms(night.window.closesAt) - serverNow()) / 1000))
     return (
       <div className="kiosk ballot-screen">
         <p className="kiosk-crest">Two minutes to decide</p>
         {trace ? <TraceView trace={trace} compact /> : <p className="kiosk-big">Decide.</p>}
         <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
+        <Board night={night} content={content} compact />
       </div>
     )
   }
-  if (!relay || relay.state === 'idle' || !relay.state) {
+  if (view === 'captions') return <Captions captions={captionsOf(screen)} rehearsal={screen?.rehearsal} />
+  if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
+  if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
+  if (view === 'card') return <ScreenCard screen={screen} />
+  if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
     const act = ACTS[night.act]
     return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} />
   }
@@ -130,9 +188,11 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
 
   if (relay.state === 'walk') {
     const first = done === 0
+    const rules = showRules(relay) ? relayRules(uiLines(content)['RELAY RULES']) : null
     return (
       <div className="kiosk walk">
         {head}
+        {rules && <ol className="kiosk-rules" aria-label="the rules of the drawing">{rules.map((l, i) => <li key={i}>{l}</li>)}</ol>}
         <p className="kiosk-big">{relay.nextName}</p>
         <p className="kiosk-line">{first ? 'to the paper. Pull it down to the next grid.' : 'to the paper.'}</p>
         <Countdown endsAt={relay.walkEndsAt} serverNow={serverNow} />
@@ -173,16 +233,132 @@ export function Living({ night, relay, trace, finale, serverNow, nightId }) {
       </div>
     )
   }
-  if (relay.state === 'done') {
-    return (
-      <div className="kiosk done">
-        <p className="kiosk-crest">All three drawings named</p>
-        <p className="kiosk-big">The door is open.</p>
-        <p className="kiosk-line">The light outside the bedroom is green. Go and see.</p>
-      </div>
-    )
-  }
+  if (relay.state === 'done') return <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
   return null
+}
+
+// ---- the screens the beats name ------------------------------------------
+
+// News (Act 2), the bulletin (Act 3) and Sir Irwin (Act 5): a title and a
+// few lines, nothing else. The bulletin's struck motives are listed with a
+// line through them.
+export function ScreenCard({ screen }) {
+  const lines = screen?.lines ?? []
+  const struck = Array.isArray(screen?.struck) ? screen.struck : []
+  const text = struck.length ? lines.slice(0, Math.max(0, lines.length - struck.length)) : lines
+  return (
+    <div className={`kiosk card-screen ${screen?.kind ?? ''}`}>
+      <p className="kiosk-crest">{screen?.title ?? ''}</p>
+      {screen?.kind === 'irwin' && <div className="irwin-face" aria-hidden="true" />}
+      <div className="kiosk-lines">
+        {text.map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+      </div>
+      {struck.length > 0 && (
+        <div className="strikes">
+          <p className="kiosk-next">The constable has ruled out</p>
+          <ul>{struck.map(s => <li key={s.n}><s>{s.n}. {s.rhyme}</s></li>)}</ul>
+        </div>
+      )}
+      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
+    </div>
+  )
+}
+
+// The iPad's view: the words of the last news, bulletin or Irwin, kept up.
+export function Captions({ captions, rehearsal = false }) {
+  if (!captions) return <Idle title="Sirwin Manor" line="Nothing to read yet." />
+  return (
+    <div className={`kiosk captions ${captions.kind ?? ''}`}>
+      {captions.title && <p className="kiosk-crest">{captions.title}</p>}
+      <div className="kiosk-lines">
+        {(captions.lines ?? []).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+      </div>
+      {rehearsal && <p className="kiosk-next">Rehearsal</p>}
+    </div>
+  )
+}
+
+// After the third drawing is named: the door is open, held for ten seconds
+// on the server's clock, then the trace if the host has put it on the TV.
+export function DoorScreen({ screen, cues, trace, serverNow }) {
+  const stage = doorStage({ screen, cues, trace, now: serverNow() })
+  if (stage === 'trace') return (
+    <div className="kiosk door trace-on-tv">
+      <p className="kiosk-crest">What was left behind</p>
+      <TraceView trace={trace} compact />
+    </div>
+  )
+  return (
+    <div className="kiosk done">
+      <p className="kiosk-crest">All three drawings named</p>
+      <p className="kiosk-big">The door is open.</p>
+      <p className="kiosk-line">{screen?.lines?.[0] ?? 'The light outside the bedroom is green. Go and see.'}</p>
+    </div>
+  )
+}
+
+// The deduction round and the ballot: every character at the party with
+// their strike beneath. A strike the server made for a silent phone looks
+// the same as a chosen one. A row with no strike yet says so.
+export function Board({ night, content, title = 'The deduction round', compact = false }) {
+  const rows = boardRows({ night, characters: content?.characters ?? [], motives: content?.motives ?? [] })
+  return (
+    <div className={`kiosk board${compact ? ' compact' : ''}`}>
+      {!compact && <p className="kiosk-crest">{title}</p>}
+      <ul className="board-rows">
+        {rows.map(r => (
+          <li key={r.key} className={r.strike ? `struck ${r.strike.kind}` : 'waiting'}>
+            <span className="board-name">{r.name}</span>
+            <span className="board-char">{r.characterName}</span>
+            <span className="board-strike">{r.strike ? r.strike.text : 'choosing'}</span>
+          </li>
+        ))}
+      </ul>
+      {!rows.length && <p className="kiosk-line">Nobody is at the party yet.</p>}
+    </div>
+  )
+}
+
+// ---- the three corners -----------------------------------------------------
+
+// One tap, once per load, so the browser lets this screen make a sound.
+export function Wake() {
+  const [woke, setWoke] = useState(false)
+  if (woke) return null
+  const wake = () => { wakeAudio(); setWoke(true) }
+  return (
+    <button type="button" className="kiosk-wake" onClick={wake}>
+      <span className="kiosk-big">Tap once to wake this screen</span>
+      <span className="kiosk-line">Then leave it be.</span>
+    </button>
+  )
+}
+
+// A bell for three seconds whenever the night calls for a sound, and this
+// screen's own small chime, so a cue never silently vanishes.
+export function Bell({ sounds, serverNow }) {
+  const lastAt = useRef(0)
+  const at = ms(sounds?.current?.at)
+  useEffect(() => {
+    if (!at || at === lastAt.current) return
+    const first = lastAt.current === 0
+    lastAt.current = at
+    if (!first && soundFresh(sounds, serverNow())) chime('start')
+  }, [at])
+  const shown = bellShown(sounds, serverNow())
+  return <div className={`kiosk-bell${shown ? ' ring' : ''}`} aria-hidden={!shown} aria-label="a sound is playing">&#9835;</div>
+}
+
+// The dot: green live, amber painting from cache for twenty seconds, red
+// offline, with how long since the house was last heard from.
+export function StaleDot({ view, online }) {
+  const d = dotState(view, online, Date.now())
+  return (
+    <div className={`kiosk-dot ${d.colour}`} role="status" aria-label={`${d.label}, ${heardText(d.seconds)}`}>
+      <span className="dot-mark" />
+      <span className="dot-text">{d.colour === 'green' ? '' : `${d.label} · ${heardText(d.seconds)}`}</span>
+    </div>
+  )
 }
 
 function Countdown({ endsAt, serverNow }) {
