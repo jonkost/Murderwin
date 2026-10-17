@@ -1,12 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
-import { createNight, join, CHARACTERS } from '../lib/night.js'
+import { createNight, join, CHARACTERS, NightError } from '../lib/night.js'
 import { hostCommand, studyFinished, advanceRelay, nextOf } from '../lib/run.js'
 import { stationCommand, studyClueCard, rotationPath, studyPath, STUDY_PLACEHOLDER } from '../lib/station.js'
 import {
-  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms,
+  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results,
 } from '../lib/deal.js'
+import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, fillEpilogue, DEFAULT_EPILOGUE, go } from '../lib/finale.js'
 import { relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS } from '../lib/relay.js'
 
 // A throwaway night. The rehearsal case the dealer makes is never printed.
@@ -441,47 +442,251 @@ test('the hall light is red from Act 1 and green when the drawing is done', asyn
 
 // ---- the dial log and the finale -----------------------------------------
 
-test('the finale: stats as strings, the graph from the dial log, nothing sealed', async () => {
-  const { db, nightId, uids, names } = await party(5)
-  const t = { now: 7_000_000 }
-  await walkTo(db, nightId, 2, 'questions', t)
-  // everyone answers the Act 2 questions; the hidden roles' points go to the dial log
-  const n2 = night(db, nightId)
+// Everyone answers the open Parlour Game with their first choice.
+async function answerAll(db, nightId, uids, names, t) {
+  const n = night(db, nightId)
+  const { answer } = await import('../lib/deal.js')
   for (const name of names) {
     const uid = uids[name.toLowerCase()]
-    const set = db.store.get(`sessions/${uid}`).windows[n2.window.id]
-    const picks = set.beats.map(b => b.choices[0].k)
-    const { answer } = await import('../lib/deal.js')
-    await answer(db, { nightId, uid, windowId: n2.window.id, picks, now: t.now })
+    const set = db.store.get(`sessions/${uid}`).windows[n.window.id]
+    await answer(db, { nightId, uid, windowId: n.window.id, picks: set.beats.map(b => b.choices[0].k), now: t.now })
   }
-  const c = db.store.get(`cases/${nightId}`)
-  assert.ok(Array.isArray(c.dialLog) && c.dialLog.length === 2, 'two hidden roles pushed once each')
-  assert.ok(c.dialLog.every(e => e.act === 2 && ['murderer', 'ghost'].includes(e.role) && typeof e.delta === 'number'))
-  // a study time and a drawing result, as the night would have left them
+}
+
+// The night as it would stand at the reveal: Act 2 answered, a study solved
+// and one capped, a drawing done, then the reveal beat written.
+async function revealed(n = 5) {
+  const { db, nightId, uids, names } = await party(n)
+  const t = { now: 7_000_000 }
+  await walkTo(db, nightId, 2, 'questions', t)
+  await answerAll(db, nightId, uids, names, t)
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'settle', now: t.now })
   await hostCommand(db, { nightId, command: 'groups', now: t.now })
   const rot = db.store.get(rotationPath(nightId))
   await stationCommand(db, { nightId, command: 'finished', payload: { groupId: rot.studyOrder[0], outcome: 'solved', seconds: 372, pairs: 3 } })
   await stationCommand(db, { nightId, command: 'finished', payload: { groupId: rot.studyOrder[1], outcome: 'capped', seconds: 900, pairs: 1 } })
   db.store.set(`nights/${nightId}/public/relay`, { state: 'done', doorOpen: true, stats: { totalSeconds: 1020, misses: [0, 2, 0] } })
   await reveal(db, nightId, { now: t.now })
-  const f = db.store.get(`nights/${nightId}/public/finale`)
-  assert.deepEqual(Object.keys(f.schedule), ['stats', 'graph', 'murderer', 'motive', 'victim', 'done'])
-  assert.ok(f.schedule.murderer < f.schedule.motive && f.schedule.motive < f.schedule.victim, 'Murderer, then Motive, then Victim')
+  return { db, nightId, uids, names, t, c: db.store.get(`cases/${nightId}`) }
+}
+
+// everything a client can read: the night doc, its public docs, and every session (less that phone's own ballot and result, which are its own picks)
+const publicDocs = (db, nightId) => [...db.store.keys()].filter(k => k === `nights/${nightId}` || k.startsWith(`nights/${nightId}/public/`) || k.startsWith('sessions/')).map(k => { const { ballot, result, ...rest } = db.store.get(k); return [k, rest] })
+
+test('the finale: the seven canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
+  const { db, nightId, c } = await revealed(5)
+  assert.ok(Array.isArray(c.dialLog) && c.dialLog.length === 2, 'two hidden roles pushed once each')
+  assert.ok(c.dialLog.every(e => e.act === 2 && ['murderer', 'ghost'].includes(e.role) && typeof e.delta === 'number'))
+  const f = db.store.get(finalePath(nightId))
+  assert.deepEqual(Object.keys(f.schedule), ['stats', 'awards', 'graph', 'names'])
+  assert.ok(f.schedule.stats < f.schedule.graph && f.schedule.graph < f.schedule.names, 'the reel, the graph, then the names')
+  assert.equal(f.schedule.awards, f.schedule.graph, 'no achievements given: the awards segment has no length')
   const labels = f.stats.map(s => s.label)
-  assert.ok(labels.includes('Fastest light puzzle'))
-  assert.ok(labels.includes('Light puzzle groups that ran out of time'))
-  assert.ok(labels.includes('Time on the drawing'))
+  for (const l of CANON_LABELS) assert.ok(labels.includes(l), `the reel carries "${l}"`)
+  assert.equal(labels.length, CANON_LABELS.length, 'no Hush line without an exposure')
+  assert.ok(labels.every(l => !/ran out|slowest/i.test(l)), 'nobody is called out')
+  assert.ok(f.stats.every(s => typeof s.value === 'string' && typeof s.showAt === 'number'))
+  assert.deepEqual(f.stats.map(s => s.showAt), f.stats.map((_, i) => i * 4000), 'one line every four seconds')
   assert.equal(f.stats.find(s => s.label === 'Time on the drawing').value, '17 min')
   assert.equal(f.stats.find(s => s.label === 'Pictures that took more than one guess').value, 'Grid 2')
-  assert.ok(f.stats.every(s => typeof s.value === 'string' && !/slowest/i.test(s.label)))
+  assert.match(f.stats.find(s => s.label === 'Fastest light puzzle').value, /6 min 12 s$/)
+  assert.equal(f.stats.find(s => s.label === 'Fastest safe').value, 'Nobody opened one')
+  assert.match(f.stats.find(s => s.label === "The cats' favourites").value, /^Granolia: .+ · Boo: .+ · Zimothy: .+ · Salem: .+$/)
+  assert.ok(!/tie/i.test(JSON.stringify(f.stats)), 'a tie is never shown as one')
   assert.equal(f.graph.points.length, 2)
   assert.deepEqual(f.graph.running.map(r => r.act), [2, 4, 6])
   assert.equal(f.graph.running[0].value, c.dialLog.reduce((s, e) => s + e.delta, 0))
+  // the two roles pull toward opposite sides, named from the case's fixed signs, never assumed
+  assert.notEqual(f.graph.sides.up, f.graph.sides.down)
+  assert.deepEqual([f.graph.sides.up, f.graph.sides.down].sort(), ['ghost', 'murderer'])
+  assert.equal(f.graph.sides.up, c.dialSign.ghost > 0 ? 'ghost' : 'murderer')
+  assert.equal(f.graph.hush, false)
   assert.equal(f.rehearsal, true)
+  assert.equal(f.stage, 'stats')
+  assert.deepEqual(f.names, {})
   const text = JSON.stringify(f)
-  for (const forbidden of ['roles', 'kernel', 'document', c.murderer, c.ghost, 'dialSign']) assert.ok(!text.includes(forbidden), `finale must not carry ${forbidden}`)
-  const r = night(db, nightId).reveal
+  for (const forbidden of ['roles', 'kernel', 'document', 'dialSign', '"dial"', c.murderer, c.ghost]) assert.ok(!text.includes(forbidden), `finale must not carry ${forbidden}`)
+  // the answer lives only where no client reads
+  const r = db.store.get(revealPath(nightId))
   assert.ok(r.murderer.name && r.motive.rhyme && r.victim.name)
+  assert.equal(night(db, nightId).reveal, undefined)
+})
+
+test('a Hush line and a hush on the graph when the exposure safeguard fired, never which role', async () => {
+  const { db, nightId } = await party(4)
+  const t = { now: 7_500_000 }
+  await walkTo(db, nightId, 2, 'orient', t)
+  await db.doc(`cases/${nightId}`).update({ 'exposure.ghost': { at: new Date(t.now) } })
+  await reveal(db, nightId, { now: t.now })
+  const f = db.store.get(finalePath(nightId))
+  const hush = f.stats.find(s => s.label === HUSH_LABEL)
+  assert.ok(hush && !/ghost|murderer|victim/i.test(hush.value))
+  assert.equal(f.graph.hush, true)
+  assert.equal(f.stats.length, CANON_LABELS.length + 1)
+})
+
+test('the fastest safe is the quickest right open, counted from the puzzle landing; a safe that gave way does not count', async () => {
+  const { db, nightId, uids, names } = await party(3)
+  const t = { now: 7_600_000 }
+  await walkTo(db, nightId, 2, 'puzzle', t)
+  const { solve } = await import('../lib/deal.js')
+  const puzzles = db.store.get(`nights/${nightId}/private/puzzles`)
+  const [first, second, third] = names.map(n => uids[n.toLowerCase()])
+  const cardOf = uid => cards(db, uid, 'puzzle')[0]
+  const landedAgo = (uid, msAgo) => db.store.set(`sessions/${uid}`, { ...db.store.get(`sessions/${uid}`), cards: cards(db, uid).map(c => (c.kind === 'puzzle' ? { ...c, at: new Date(t.now - msAgo) } : c)) })
+  // the first phone opens it right in two minutes, the second in one, the third forces it open in three tries
+  landedAgo(first, 120_000); landedAgo(second, 60_000); landedAgo(third, 10_000)
+  await solve(db, { nightId, uid: first, cardId: cardOf(first).id, entry: puzzles.safe[names[0].toLowerCase()] })
+  await solve(db, { nightId, uid: second, cardId: cardOf(second).id, entry: puzzles.safe[names[1].toLowerCase()] })
+  for (let i = 0; i < 3; i++) await solve(db, { nightId, uid: third, cardId: cardOf(third).id, entry: [0, 0, 0] })
+  assert.ok(db.store.get(`sessions/${first}`).solvedAt[cardOf(first).id])
+  assert.equal(db.store.get(`sessions/${third}`).gaveWay[cardOf(third).id], true)
+  await reveal(db, nightId, { now: t.now })
+  const f = db.store.get(finalePath(nightId))
+  const line = f.stats.find(s => s.label === 'Fastest safe').value
+  assert.ok(line.startsWith(`${names[1]}, `), line)
+  assert.ok(!line.includes(names[2]), 'the forced safe is not the fastest')
+})
+
+test('the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {
+  const { db, nightId, t, c } = await revealed(5)
+  const r = db.store.get(revealPath(nightId))
+  const keyTokens = ['"murderer":', '"motive":', '"victim":']
+  const nothingNamed = () => {
+    for (const [k, doc] of publicDocs(db, nightId)) {
+      const text = JSON.stringify(doc)
+      for (const tok of keyTokens) assert.ok(!text.includes(tok), `${k} carries ${tok}`)
+      if (k.endsWith('/public/finale')) assert.ok(!text.includes(r.motive.rhyme), `${k} carries the rhyme`)
+    }
+  }
+  // the host reaches the reveal beat: the reel already written is kept, nothing is named
+  await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  assert.equal(night(db, nightId).beat, 'reveal')
+  nothingNamed()
+  assert.equal(db.store.get(finalePath(nightId)).stage, 'stats')
+  await assert.rejects(results(db, nightId, 7, 'result'), e => e instanceof NightError && /named/.test(e.message))
+  await assert.rejects(hostCommand(db, { nightId, command: 'beat', arg: 'result', now: t.now }), /named/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /named/)
+  assert.equal(night(db, nightId).beat, 'reveal', 'the beat did not move')
+  // one name per press
+  for (const [i, stage] of STAGES.slice(1).entries()) {
+    const res = await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now + i })
+    assert.equal(res.stage, stage)
+    const f = db.store.get(finalePath(nightId))
+    assert.equal(f.stage, stage)
+    assert.deepEqual(Object.keys(f.names), STAGES.slice(1, i + 2), 'exactly one more name')
+    if (stage === 'murderer') { assert.equal(f.names.murderer.name, r.murderer.name); assert.ok(!('victim' in f.names)); assert.ok(!JSON.stringify(f).includes(r.motive.rhyme)) }
+    if (stage === 'motive') assert.equal(f.names.motive.rhyme, r.motive.rhyme)
+    if (stage === 'victim') { assert.equal(f.names.victim.name, r.victim.name); assert.ok(f.victimAt); assert.ok(f.epilogue) }
+    if (stage !== 'victim') await assert.rejects(results(db, nightId, 7, 'result'), /named/)
+  }
+  const again = await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.equal(again.already, true)
+  // the answer never reached the night doc or a session
+  for (const [k, doc] of publicDocs(db, nightId)) if (!k.endsWith('/public/finale')) for (const tok of keyTokens) assert.ok(!JSON.stringify(doc).includes(tok), `${k} carries ${tok}`)
+  assert.ok(c.murderer && c.ghost)
+  // the reveal beat run again (a jump) keeps what the screen has shown
+  await hostCommand(db, { nightId, command: 'beat', arg: 'reveal', now: t.now })
+  assert.equal(db.store.get(finalePath(nightId)).stage, 'victim')
+  // back one from the reveal takes the finale and the answer with it
+  await hostCommand(db, { nightId, command: 'back', now: t.now })
+  assert.equal(night(db, nightId).beat, 'ballot')
+  assert.equal(db.store.get(finalePath(nightId)), undefined)
+  assert.equal(db.store.get(revealPath(nightId)), undefined)
+  // and Next writes a fresh reel with nothing named
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  assert.equal(db.store.get(finalePath(nightId)).stage, 'stats')
+  nothingNamed()
+  // a jump back to an earlier act forgets it too
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now })
+  assert.equal(db.store.get(finalePath(nightId)), undefined)
+})
+
+test('Next from the reveal waits for all three names; results then land', async () => {
+  const { db, nightId, uids, names, t } = await revealed(4)
+  await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // reveal
+  await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /named/)
+  assert.equal(night(db, nightId).beat, 'reveal', 'the beat did not move')
+  for (const name of names) assert.equal(cards(db, uids[name.toLowerCase()], 'result').length, 0)
+  for (let i = 0; i < 3; i++) await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  assert.equal(night(db, nightId).beat, 'result')
+  for (const name of names) assert.equal(cards(db, uids[name.toLowerCase()], 'result').length, 1)
+})
+
+test('the closing story: every blank filled at the Victim stage, from the workshop frame', async () => {
+  assert.equal(fillEpilogue(DEFAULT_EPILOGUE, { murderer: { name: 'A' }, victim: { name: 'B' }, motive: { rhyme: 'C' } }), 'And so it was A. Not for money, not for love, for this: C. And B never saw it coming.')
+  const { db, nightId } = await party(4)
+  const t = { now: 7_700_000 }
+  db.store.set('safe_content/epilogue_frames', { items: [{ id: 'e1', text: 'It was [MURDERER], over [MOTIVE_RHYME]; [VICTIM] minded.', order: 0 }] })
+  await walkTo(db, nightId, 2, 'orient', t)
+  await reveal(db, nightId, { now: t.now })
+  const r = db.store.get(revealPath(nightId))
+  for (let i = 0; i < 3; i++) await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  const f = db.store.get(finalePath(nightId))
+  assert.equal(f.epilogue, `It was ${r.murderer.name}, over ${r.motive.rhyme}; ${r.victim.name} minded.`)
+  assert.ok(!/\[(MURDERER|VICTIM|MOTIVE_RHYME)\]/.test(f.epilogue))
+})
+
+test('a hold stands the screen still, and go moves every later moment on the schedule by the length of the hold', async () => {
+  const { db, nightId, t } = await revealed(4)
+  const before = db.store.get(finalePath(nightId))
+  const t0 = 10_000 // held ten seconds into the reel
+  await hostCommand(db, { nightId, command: 'finale-hold', now: t.now + t0 })
+  assert.equal(ms(db.store.get(finalePath(nightId)).holdAt), t.now + t0)
+  assert.equal((await hostCommand(db, { nightId, command: 'finale-hold', now: t.now + t0 + 1 })).already, true)
+  const r = await hostCommand(db, { nightId, command: 'finale-go', now: t.now + t0 + 20_000 })
+  assert.equal(r.heldMs, 20_000)
+  const after = db.store.get(finalePath(nightId))
+  assert.equal(after.holdAt, null)
+  assert.equal(after.held, 20_000)
+  assert.equal(ms(after.at), ms(before.at), 'the start never moves')
+  for (const k of Object.keys(before.schedule)) assert.equal(after.schedule[k], before.schedule[k] + (before.schedule[k] > t0 ? 20_000 : 0), `schedule.${k}`)
+  for (const [i, s] of before.stats.entries()) assert.equal(after.stats[i].showAt, s.showAt + (s.showAt > t0 ? 20_000 : 0), `stat ${i}`)
+  assert.ok(before.stats.some(s => s.showAt <= t0) && before.stats.some(s => s.showAt > t0), 'the hold fell in the middle of the reel')
+  assert.equal((await go(db, nightId, { now: t.now })).already, true)
+})
+
+test('achievements: given by a tap through Act 5, on the phone at once and in the reel at the end; refused in Act 6', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 7_800_000 }
+  db.store.set('safe_content/achievements', { items: [
+    { id: 'a1', text: 'Clean Plate Club: left nothing on the plate, not even the garnish.', order: 0 },
+    { id: 'a2', text: "Crookshank's Confidant: first to pet Salem.", order: 1 },
+  ] })
+  await walkTo(db, nightId, 3, 'down', t)
+  const key = names[1].toLowerCase(), uid = uids[key]
+  const r = await hostCommand(db, { nightId, command: 'award', arg: `${key}:2`, now: t.now })
+  assert.equal(r.dealt, true)
+  assert.equal(r.awards, 1)
+  const card = cards(db, uid, 'award')
+  assert.equal(card.length, 1)
+  assert.equal(card[0].title, "Crookshank's Confidant")
+  assert.equal(card[0].text, 'first to pet Salem.')
+  assert.ok(card[0].button)
+  assert.equal(cards(db, uids[names[0].toLowerCase()], 'award').length, 0, 'nobody else got it')
+  assert.equal((await hostCommand(db, { nightId, command: 'award', arg: `${key}:2`, now: t.now })).already, true)
+  await assert.rejects(hostCommand(db, { nightId, command: 'award', arg: `${key}:9`, now: t.now }), /No such achievement/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'award', arg: `nobody:1`, now: t.now }), /No such guest/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'award', arg: 'bad', now: t.now }), /which guest/)
+  const doc = db.store.get(awardsPath(nightId))
+  assert.equal(Object.keys(doc.awards).length, 1)
+  assert.ok(!JSON.stringify(doc).includes('"role"'))
+  // Act 6: closed
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now })
+  await assert.rejects(hostCommand(db, { nightId, command: 'award', arg: `${key}:1`, now: t.now }), /close at the end of Act 5/)
+  // the reel carries the segment, after the stats and before the graph
+  await reveal(db, nightId, { now: t.now })
+  const f = db.store.get(finalePath(nightId))
+  assert.equal(f.achievements.length, 1)
+  assert.deepEqual(f.achievements[0], { name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards })
+  assert.ok(f.schedule.awards < f.schedule.graph, 'the segment has length when there is something to show')
+  assert.ok(f.stats.every(s => s.showAt < f.schedule.awards))
 })
 
 test('nextOf still ends Act 4 at the fifth station', () => {

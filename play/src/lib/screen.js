@@ -29,7 +29,7 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   if (phase === 'blackout' || phase === 'prompt') return 'dark'
   if (phase === 'paused') return 'paused'
   if (screen?.kind === 'black') return screen.title ? 'paused' : 'dark'
-  if (finale && night?.reveal) return 'finale'
+  if (finale && night?.act === 7) return 'finale'
   if (night?.window?.kind === 'ballot' && !night.window.settled) return 'ballot'
   if (RELAY_RUNNING.includes(relay?.state)) return 'relay'
   if (captionsOnly) return screen?.captions || CAPTION_KINDS.includes(screen?.kind) ? 'captions' : 'idle'

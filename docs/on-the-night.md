@@ -107,8 +107,17 @@ game; it serves the bulb and the speakers.
   5 on its own when **Next** reaches those beats; the phones say where to
   look. The iPad keeps the words of the news and the bulletin up through
   dinner for anyone who missed them.
-- Act 7: **Next** opens the ballot, two minutes. **Next** again reveals on the
-  TV; wait for the screen to finish, then **Next** for everyone's result.
+- Act 7: **Next** opens the ballot, two minutes. **Next** again starts the
+  TV: the stats, the achievements, then the graph. Nobody is named until you
+  press. When the Host tab says the screen is ready, press
+  **Name the Murderer**, then **Name the Motive**, then **Name the Victim**,
+  each when the room is ready for it. The closing story follows the Victim
+  on its own. **Hold the screen** stops it where it is (a toast, a
+  photograph); **Carry on** resumes, and nothing on the screen is skipped.
+  **Next** for everyone's result only works once all three are named.
+- Achievements: through Act 5, on the Host tab, tap a guest, then an
+  achievement from the workshop's list. It lands on their phone at once and
+  plays on the TV at the end. After Act 5 the list is closed.
 - **Pause, Irwin needs the garden** stops every clock in the house. **Resume**
   carries on from where it stopped; nobody loses time.
 

@@ -38,6 +38,11 @@ export const HOST_COMMANDS = [
   { name: 'relay-reset', arg: '', what: 'Clear the drawing.' },
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },
   { name: 'tv-trace', arg: '[off]', what: 'Show the trace on the living room TV once the door is open (if the bedroom screen has died). Say off to take it down.' },
+  // Act 7 on the living room screen (finale.js)
+  { name: 'reveal-stage', arg: '', what: 'Put the next name on the screen: the Murderer, then the Motive, then the Victim.' },
+  { name: 'finale-hold', arg: '', what: 'Hold the living room screen where it is.' },
+  { name: 'finale-go', arg: '', what: 'Carry on after a hold. Everything later on the screen moves by the length of the hold.' },
+  { name: 'award', arg: '<guestKey:n>', what: 'Give achievement n from the workshop list to a guest. Through Act 5 only.' },
   // dry runs only (run.js, discard.js)
   { name: 'dry-run', arg: '', what: 'Mark this night a dry run: it may close windows early and be discarded.' },
   { name: 'settle-now', arg: '', what: 'Close the open window early. Dry run nights only.' },

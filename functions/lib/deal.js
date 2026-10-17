@@ -29,6 +29,7 @@ import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, fin
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 import { bagsClue, bagsText } from './bags.js'
 import { pickSets, setFor, pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
+import * as finale from './finale.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -456,7 +457,7 @@ export async function solve(db, { nightId, uid, cardId, entry }) {
   }
   const c = await readCase(db, nightId)
   const doc = await documentCard(db, { c, act: card.act, beat: card.beat, id: `${cardId}-payout` })
-  await sessionRef.update({ [`solved.${cardId}`]: true, [`tries.${cardId}`]: tries })
+  await sessionRef.update({ [`solved.${cardId}`]: true, [`tries.${cardId}`]: tries, [`solvedAt.${cardId}`]: new Date(), ...(right ? {} : { [`gaveWay.${cardId}`]: true }) })
   await dealCard(db, uid, { ...doc, ...(right ? {} : { gaveWay: true }) })
   return { ok: true, right, gaveWay: !right, tries }
 }
@@ -823,57 +824,13 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
 
 export async function reveal(db, nightId, { now = Date.now() } = {}) {
   const c = await ensureCase(db, nightId)
-  const { night } = await guests(db, nightId)
-  const roster = night.roster ?? {}
-  const person = key => key && roster[key] ? { key, name: roster[key].name, characterName: characterById(roster[key].characterId)?.name ?? '' } : null
-  const motive = MOTIVES.find(m => m.n === c.motive) ?? null
-  const r = { murderer: person(c.murderer), motive, victim: person(c.ghost), rehearsal: !!c.rehearsal, at: new Date(now) }
-  await db.doc(`nights/${nightId}`).update({ reveal: r })
-  await db.doc(`nights/${nightId}/public/finale`).set(await finaleDoc(db, nightId, c, now))
-  return { ok: true }
+  return finale.reveal(db, nightId, c, { now })
 }
 
-// ---------------------------------------------------------------------------
-// Act 7: the finale on the living room screen. Written at the reveal beat:
-// the stats reel (strings only, never a "slowest"), the tug-of-war graph
-// (the dial's pushes, sealed all night, shown now), and the schedule the
-// screen keeps against the server's clock. Reveal order on screen: Murderer,
-// Motive, Victim.
-export const FINALE_SCHEDULE = { stats: 0, graph: 35_000, murderer: 65_000, motive: 80_000, victim: 95_000, done: 110_000 }
-
-function minutesAndSeconds(seconds) {
-  const s = Math.max(0, Math.round(seconds))
-  const m = Math.floor(s / 60), r = s % 60
-  if (!m) return `${r} s`
-  return r ? `${m} min ${r} s` : `${m} min`
-}
-
-export async function finaleDoc(db, nightId, c, now = Date.now()) {
-  const [rotSnap, relaySnap] = await Promise.all([db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/public/relay`).get()])
-  const rot = rotSnap.exists ? rotSnap.data() : null
-  const relay = relaySnap.exists ? relaySnap.data() : null
-  const stats = []
-  const names = (gid) => (rot?.groups ?? []).find(g => g.id === gid)?.members.map(m => m.name).join(' and ') ?? gid
-  const finished = Object.entries(rot?.finished ?? {})
-  const solved = finished.filter(([, f]) => f.outcome === 'solved' && f.seconds > 0).sort((a, b) => a[1].seconds - b[1].seconds)
-  if (solved.length) stats.push({ label: 'Fastest light puzzle', value: `${names(solved[0][0])}, ${minutesAndSeconds(solved[0][1].seconds)}` })
-  const capped = finished.filter(([, f]) => f.outcome === 'capped')
-  if (capped.length) stats.push({ label: 'Light puzzle groups that ran out of time', value: capped.map(([gid]) => names(gid)).join('; ') })
-  if (relay?.stats?.totalSeconds) stats.push({ label: 'Time on the drawing', value: minutesAndSeconds(relay.stats.totalSeconds) })
-  if (Array.isArray(relay?.stats?.misses)) {
-    const hard = relay.stats.misses.map((m, i) => (m > 0 ? `Grid ${i + 1}` : null)).filter(Boolean)
-    stats.push({ label: 'Pictures that took more than one guess', value: hard.length ? hard.join(', ') : 'None' })
-  }
-  const log = Array.isArray(c?.dialLog) ? c.dialLog : []
-  const points = log.map(e => ({ act: e.act ?? 0, role: e.role, delta: e.delta }))
-  const running = []
-  let value = 0
-  for (const act of [2, 4, 6]) {
-    value += points.filter(p => p.act === act).reduce((sum, p) => sum + p.delta, 0)
-    running.push({ act, value })
-  }
-  return { at: new Date(now), schedule: FINALE_SCHEDULE, stats, graph: { points, running }, rehearsal: !!c?.rehearsal }
-}
+// The finale on the living room screen lives in finale.js (18 Oct 2026):
+// the answer goes to private/reveal, the reel to public/finale, and a name
+// reaches the public doc only when the host presses reveal-stage.
+export const { finaleDoc, FINALE_SCHEDULE } = finale
 
 // ---------------------------------------------------------------------------
 // Act 6: the trace behind the bedroom door, at the level the dial reached.
@@ -989,8 +946,9 @@ export async function ensureHallRed(db, nightId, now = Date.now()) {
 
 export async function results(db, nightId, act, beat) {
   const { night, list } = await guests(db, nightId)
-  if (!night.reveal) { await reveal(db, nightId); return results(db, nightId, act, beat) }
-  const r = night.reveal
+  // the screen must have named all three (finale.js): results never run early
+  await finale.requireNamed(db, nightId)
+  const r = (await db.doc(finale.revealPath(nightId)).get()).data()
   const tally = { murderer: 0, motive: 0, victim: 0, of: 0 }
   for (const g of list) {
     const ref = db.doc(`sessions/${g.uid}`)

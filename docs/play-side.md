@@ -149,7 +149,6 @@ named after the character (the README in that folder lists the names), then
   Jenna reads every set. Until then every night deals bracketed stand-ins.
 - The bag packing (a blind script) and the seven stationery pictures; the
   stand-ins work until then.
-- The finale staging on the TV and tappable achievements.
 - Spill the Beans and the Hush: your two safeguard buttons.
 - The workshop's Freeze button for 7 November.
 

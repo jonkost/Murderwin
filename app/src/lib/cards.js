@@ -270,6 +270,17 @@ const CARDS = {
     emptyState: 'Seven designs to make.',
     doneLine: 'Seven papers, blank as a butler’s face, ready to be printed upon.',
   },
+  achievements: {
+    what: 'Pre-written achievements: a title and one line each, given to a guest with a tap during the night.',
+    where: 'Acts 1 to 5, from the Host tab: tap a guest, then an achievement. It lands on their phone at once and plays on the living room screen at the end, after the stats and before the graph. Nothing can be given after Act 5.',
+    howTo: 'A title in the first box, one line in the second. Funny, kind, and about things you can see from across a room: the first to pet Salem, the cleanest plate, the loudest laugh. Twenty or so, written before the night, so nothing is typed on the night.',
+    example: [
+      { field: 'The title', text: 'Clean Plate Club' },
+      { field: 'One line, read out on the screen', text: 'Nothing left on the plate, not even the garnish.' },
+    ],
+    emptyState: 'Nothing yet. Twenty would do; the night only uses the ones you tap.',
+    doneLine: 'Twenty achievements, ready to be handed out like sweets.',
+  },
   epilogue_frames: {
     what: 'The closing story, read aloud, with blanks for the names.',
     where: 'Act 7, on the living room screen, after the Murderer, the Motive and the Victim have been revealed in that order.',

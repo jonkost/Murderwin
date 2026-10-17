@@ -22,6 +22,7 @@ export function Card({ card, uid, nightId, notes, session }) {
     case 'station': return <Station card={card} uid={uid} notes={notes} onDone={put} />
     case 'clue': return <Clue card={card} />
     case 'result': return <Result card={card} onDone={put} seen={seen} />
+    case 'award': return <Award card={card} onDone={put} />
     default: return null
   }
 }
@@ -243,6 +244,19 @@ export function Clue({ card }) {
       <h3>{card.title}</h3>
       <p>{card.text || '(Nothing came through. Ask the host.)'}</p>
       <Rehearsal card={card} />
+    </section>
+  )
+}
+
+// An achievement the host gave this guest (I, 18 Oct 2026): a title and a
+// line, kept until tapped. The screen shows it again at the end.
+function Award({ card, onDone }) {
+  return (
+    <section className="dealt award">
+      <p className="eyebrow">Achievement</p>
+      <h3>{card.title}</h3>
+      {card.text && <p>{card.text}</p>}
+      <button className="big" onClick={onDone}>{card.button || 'Keep it'}</button>
     </section>
   )
 }
