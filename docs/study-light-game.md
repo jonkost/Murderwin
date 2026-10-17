@@ -257,6 +257,20 @@ Built blind, tested against fakes. Not yet run on the real walls.
 5. No walls yet? `npm run fake` in `station/` plays the whole game from the
    keyboard (the key map prints when it starts).
 
+**Added 17 October 2026.**
+- **The clue is dealt for real.** When the station says a group is done (or the cap falls),
+  the server deals one clue card to every phone in the group: the study's clue from the case
+  when the generator has written it, a bracketed rehearsal line until then. The station card
+  on the phone no longer carries the clue text; nothing is on a phone before it is earned.
+- **The study is the clock.** The same "done" moves the whole house to the next station,
+  exactly as pressing *Next* would, as long as the night is in Act 4 on a station beat. During
+  a Parlour Game the host's *Next* stays in charge.
+- **Rehearsing without the walls.** If no station has reported in for two minutes, a rotation
+  deals the study's clue with the station card, so a phones-only rehearsal still pays out.
+- **Make the groups** on the Host tab now goes through the dealer, so the Murderer and the
+  Ghost are kept apart there too.
+- **Fastest light puzzle** reaches the Act 7 stats reel from the groups' finish times.
+
 Decisions made while building, on top of §10:
 - **The station presents a key, not an account.** You type a key on the Host
   tab and the same key into the station's settings file. Simpler than a second

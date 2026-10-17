@@ -280,8 +280,25 @@ Built and tested against the fake Firestore; the phone screens checked in the br
 
 **To run it, once deployed** (`npm run deploy`, which you run): open the living room page on
 the main-room MacBook and the bedroom page on the bedroom MacBook, full screen. In Act 6,
-Host tab → *Start the drawing*. Everything else runs itself. The hall light's red-to-green
-is the Mac relay script's job and is not built yet; the TV announces the open door anyway.
+Host tab → *Next* at "The drawing" (or *Start the drawing*). Everything else runs itself.
+
+**Added 17 October 2026.**
+- **The door opens for real.** The moment the third drawing is named, the server writes the
+  trace behind the door at the level the dial reached (the ladder in §4) and turns the hall
+  cue green. The bedroom screen shows it: heavy haze at level 1, two traces overlaid at 2, a
+  clear picture at 3, the name at 4, the name and a line at 5. The look-alike at level 2 is
+  always a trace of someone at the party, never the victim's own, and never a Professor's
+  unless nobody else fits (that settles the traces doc's open question).
+- **The hall light** is now the cue relay's job: `docs/cues-relay.md`. Red from Act 1, green
+  at the door. The TV announces the door anyway.
+- **Act 7 on the living room screen.** During the two-minute ballot the trace is back on the
+  TV with the clock. At the reveal beat the TV runs the finale on the server's clock: the
+  stats reel (fastest light puzzle, time on the drawing, which pictures took more than one
+  guess; never a "slowest"), then the tug-of-war graph of the clarity dial across Acts 2, 4
+  and 6 (the thing nobody knew was happening), then Murderer, Motive, Victim, one at a time.
+  Preview without a night: `/play/?preview=kiosk-bedroom-1` … `kiosk-bedroom-5`,
+  `kiosk-ballot`, `kiosk-finale`, `kiosk-finale-graph`, `kiosk-finale-reveal`,
+  `kiosk-finale-done`.
 
 ---
 
@@ -322,13 +339,17 @@ then a new vote over the remaining options, repeating until the majority lands o
 (at most three rounds of lockout per grid). Right → the next grid or `done`. There is no
 reveal state.
 
-**The door.** On `done`, the function writes `lightGreenAt` and sets `nights/{nightId}/cues/hall`
-to `green`. The Mac relay watches that field and runs the Hue call (API v2, `hue-application-key`
-header, the hall bulb's id in the relay's table). The bedroom kiosk page watches `done` and asks
-the server for the reveal payload through a callable that assembles it from `cases/{nightId}`:
-the trace image id, the level, and for level 2 the partner trace id drawn by the bucket rules in
-the traces doc. Haze is a client-side filter by level over one image per trace. The living room
-kiosk re-shows the same payload during Act 7's deliberation window.
+**The door (as built, 17 Oct).** `run.advanceRelay` wraps `relay.advance`; when it returns
+`{ moved, state: 'done' }` it calls `deal.revealTrace`, which reads the case, picks the level
+with `traceLevel(dial)` (one rung per `TRACE_STEP` = 4 points, symmetric rounding), picks a
+level-2 partner with `pickPartner` from `TRACE_BUCKETS` (in-play, not the victim's, Professors
+last), and writes `nights/{id}/public/trace` `{ level, trace, label, context, partner,
+placeholder, at }` plus `public/cues { hall: 'green' }`. Idempotent: a second call is a no-op.
+The bedroom kiosk renders `TraceView` from that doc with CSS haze by level over
+`play/public/traces/<trace>.png`. The living kiosk shows the same during the ballot window and
+runs `Finale` from `public/finale` (`deal.finaleDoc`: `schedule` offsets, `stats` strings,
+`graph.points`/`graph.running` from `cases.dialLog`, which `applyPoints` appends to). Reveal
+order on screen is Murderer, Motive, Victim.
 
 **Audio.** The turn chime and the walk cue play from the living room kiosk's own speaker,
 not through AirPlay, because a ten-second cadence cannot absorb two seconds of spin-up. Longer

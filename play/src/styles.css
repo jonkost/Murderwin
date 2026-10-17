@@ -422,3 +422,38 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 
 .gauge-more .trust { margin-top: 0.4rem; }
 .gauge-more .trust strong { color: var(--good); }
+
+/* ---- the trace, the ballot screen and the finale (room screens) ---- */
+.kiosk.ballot-screen { background: var(--brand-charcoal); }
+.trace { display: flex; flex-direction: column; align-items: center; gap: 1.2vw; }
+.trace-frame { position: relative; width: 56vh; height: 56vh; border-radius: 1.2vh; background: var(--brand-parchment); overflow: hidden; box-shadow: 0 12px 70px rgba(0,0,0,0.6); }
+.trace.compact .trace-frame { width: 42vh; height: 42vh; }
+.trace-img { position: absolute; inset: 6%; width: 88%; height: 88%; object-fit: contain; }
+.trace.level-1 .trace-img { filter: blur(26px) contrast(0.5) brightness(0.9); opacity: 0.85; }
+.trace-haze { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(241,232,214,0.1), rgba(60,50,40,0.75) 75%); }
+.trace.level-2 .trace-img { filter: blur(5px); opacity: 0.55; }
+.trace-label { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 6vw; margin: 0; }
+.trace-context { font-size: 3vw; color: var(--dim); margin: 0; max-width: 70vw; font-style: italic; }
+.kiosk.finale { background: var(--brand-blue); }
+.stats-reel { list-style: none; margin: 1vw 0 0; padding: 0; display: grid; gap: 1.2vw; width: 70vw; }
+.stats-reel li { display: flex; justify-content: space-between; gap: 2vw; font-size: 3.2vw; opacity: 0.75; animation: statin 0.9s ease-out; }
+.stats-reel li.fresh { opacity: 1; }
+.stat-label { color: var(--dim); }
+.stat-value { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; }
+@keyframes statin { from { opacity: 0; transform: translateY(1vw); } to { opacity: 1; transform: none; } }
+.tug { width: 86vw; max-height: 60vh; }
+.tug-mid { stroke: var(--line); stroke-width: 3; stroke-dasharray: 10 10; }
+.tug-side, .tug-neutral, .tug-act { fill: var(--dim); font-size: 26px; font-family: system-ui, sans-serif; }
+.tug-side { font-size: 30px; fill: var(--ink); }
+.tug-bar.ghost { fill: var(--brand-bottle); stroke: var(--good); stroke-width: 2; }
+.tug-bar.murderer { fill: var(--brand-claret); stroke: var(--brand-red); stroke-width: 2; }
+.tug-line { fill: none; stroke: var(--good); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.tug-dot { fill: var(--good); }
+.reveal-row { display: flex; gap: 3vw; align-items: stretch; justify-content: center; width: 94vw; }
+.reveal-card { flex: 1; background: var(--card); border: 2px solid var(--line); border-radius: 1.5vw; padding: 2vw; min-height: 36vh; display: flex; flex-direction: column; justify-content: center; opacity: 0.7; transition: opacity 0.6s; }
+.reveal-card.now { opacity: 1; border-color: var(--good); box-shadow: 0 0 4vw rgba(166,162,83,0.35); }
+.reveal-row.count-1 .reveal-card { max-width: 60vw; }
+.reveal-what { color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; font-size: 2vw; margin: 0 0 1vw; }
+.reveal-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 6.5vw; line-height: 1.05; margin: 0; }
+.reveal-name.motive { font-size: 5vw; color: var(--good); }
+.reveal-sub { font-size: 2.6vw; color: var(--dim); margin: 1vw 0 0; }

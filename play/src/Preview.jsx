@@ -8,12 +8,16 @@ import { uiLines } from './lib/content'
 import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
 import Relay, { RelayDone } from './screens/Relay'
+import { Living, Bedroom } from './screens/Kiosk'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
 // data and no night. Nothing here is dealt by the game, nothing is sealed.
 // Sample cards are stage directions in brackets, never content.
 //
+// Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
+// kiosk-finale, kiosk-finale-graph, kiosk-finale-reveal, kiosk-finale-done,
+// kiosk-living-turn, kiosk-living-vote (full-bleed, as on the MacBooks).
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
 // then one per thing a phone is dealt: act1, orient, news, go, testimony,
 // deflect, puzzle, document, questions, checkin, dinner, groups, study, cat,
@@ -100,6 +104,37 @@ function relayDoc(state) {
   return base
 }
 
+// Room-screen previews: the trace at each level, the ballot screen, the finale.
+const TRACE = (level) => ({ level, trace: 'ink', label: level >= 4 ? 'Ink' : null, context: level === 5 ? 'a splash of ink, still wet, beside the writing desk' : null, partner: level === 2 ? 'iodine' : null, placeholder: true, at: stamp(PHASE_AT) })
+const REVEAL = { murderer: { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }, motive: { n: 4, rhyme: motivesSeed.motives[3]?.rhyme ?? 'A motive' }, victim: { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }, rehearsal: true, at: stamp(PHASE_AT) }
+const FINALE = (agoMs) => ({
+  at: stamp(Date.now() - agoMs),
+  schedule: { stats: 0, graph: 35000, murderer: 65000, motive: 80000, victim: 95000, done: 110000 },
+  stats: [
+    { label: 'Fastest light puzzle', value: 'Jon and Jessa, 6 min 12 s' },
+    { label: 'Time on the drawing', value: '17 min' },
+    { label: 'Pictures that took more than one guess', value: 'Grid 2' },
+  ],
+  graph: { points: [{ act: 2, role: 'ghost', delta: 3 }, { act: 2, role: 'murderer', delta: -2 }, { act: 4, role: 'ghost', delta: 1 }, { act: 4, role: 'murderer', delta: -4 }, { act: 6, role: 'ghost', delta: 4 }, { act: 6, role: 'murderer', delta: -1 }],
+    running: [{ act: 2, value: 1 }, { act: 4, value: -2 }, { act: 6, value: 1 }] },
+  rehearsal: true,
+})
+const KIOSK = {
+  'kiosk-bedroom-closed': () => <Bedroom relay={null} trace={null} />,
+  'kiosk-bedroom-1': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(1)} />,
+  'kiosk-bedroom-2': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(2)} />,
+  'kiosk-bedroom-3': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(3)} />,
+  'kiosk-bedroom-4': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(4)} />,
+  'kiosk-bedroom-5': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(5)} />,
+  'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(40000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-reveal': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(82000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-done': (night, serverNow) => <Living night={{ ...night, act: 7, reveal: REVEAL }} relay={null} trace={TRACE(3)} finale={FINALE(120000)} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-turn': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-vote': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('vote')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
+}
+
 // Each dealt-card screen: the act it belongs to and the cards on the phone.
 const DEALT = {
   act1: { act: 1, beat: 'meet', cards: [CARDS.meet] },
@@ -138,6 +173,7 @@ export default function Preview({ screen }) {
   const dealt = DEALT[which]
   try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'cats' ? 'cats' : 'you') } catch {}
   let body
+  if (KIOSK[which]) return KIOSK[which](night, serverNow)
   switch (which) {
     case 'doors': body = <Moment text={ui.DOORS} crest />; break
     case 'welcome': body = <Welcome uid="preview" session={SESSION} content={CONTENT} ui={ui} onDone={() => {}} />; break
