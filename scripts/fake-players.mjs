@@ -251,7 +251,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       await run.player.ballot(db, { nightId, uid, murderer: choice(keys), motive: choice(night.MOTIVES).n, victim: choice(keys) }); ballots++
     }
     await host('settle-now')
-    await next() // reveal
+    await next() // reveal: the reel on the screen, no name out yet
+    for (let i = 0; i < 3; i++) await host('reveal-stage') // the Murderer, the Motive, the Victim, one press each
     const r7 = await next() // results
     const results = await countCards('result')
     actLine(7, [`${ballots} ballots`, `${results} results`])

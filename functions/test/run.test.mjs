@@ -170,9 +170,13 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   await assert.rejects(() => player.ballot(db, { nightId, uid: uids[2], murderer: 'nobody', motive: 1, victim: g, now }), /party/)
   await assert.rejects(next, /still choosing/)
   now += NIGHT.windows.ballot.ms + 1
-  await next() // reveal
-  const r = night(db, nightId).reveal
+  await next() // reveal: the answer goes where no phone reads; the screen names nothing until the host presses
+  const r = db.store.get(`nights/${nightId}/private/reveal`)
   assert.equal(r.murderer.key, m); assert.equal(r.victim.key, g); assert.equal(r.motive.n, c.motive)
+  assert.equal(night(db, nightId).reveal, undefined)
+  assert.deepEqual(db.store.get(`nights/${nightId}/public/finale`).names, {})
+  await assert.rejects(next, /named/)
+  for (let i = 0; i < 3; i++) await hostCommand(db, { nightId, command: 'reveal-stage', now })
   await next() // results
   const res = session(db, uids[1]).result
   assert.deepEqual([res.murderer, res.motive, res.victim], [true, true, true])
