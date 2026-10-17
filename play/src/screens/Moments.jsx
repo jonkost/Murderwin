@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useTick, writeNotes } from '../lib/hooks'
+import { buzzOnce } from '../lib/night'
 
 // The in-between screens. Every one of them is a real state, never an
 // error view, and they look the same on every phone in the room.
@@ -29,25 +31,52 @@ export function Blackout() {
   return <div className="moment dark" aria-label="Blackout" />
 }
 
+// The strip across the top when the house cannot be reached: the phone is
+// off the network, or Firestore has painted from its cache for twenty
+// seconds. Says how long ago the house was last heard from, so the host can
+// tell a blink from an outage. Nothing is lost either way.
+export function Offline({ ui, seconds }) {
+  return (
+    <div className="offline" role="status">
+      {ui.OFFLINE}
+      {seconds != null && seconds >= 5 ? <span className="offline-since"> Last heard from the house {seconds} s ago.</span> : null}
+    </div>
+  )
+}
+
+// The strip over a window the host has paused: the choices stay on screen
+// but nothing can be tapped and the clock stands still.
+export function PausedStrip({ ui }) {
+  return <div className="paused-strip" role="status">{ui['PAUSED BY HOST']}</div>
+}
+
 const HOLD_MS = 15_000
 
-// The power returns: every phone lights at once with its prompt. The prompt
-// holds for fifteen seconds measured against the SERVER clock, then a hide
-// button appears. Slower readers take as long as they like. Hiding is
-// remembered, so a reload never shows it twice.
-export function Prompt({ uid, night, ui, serverNow, promptKey, card }) {
+// The power returns: every phone lights at once with its prompt, on a
+// near-black ground like the blackout it follows, and buzzes once. The
+// prompt holds for fifteen seconds measured against the SERVER clock, then a
+// hide button appears. Slower readers take as long as they like. Hiding is
+// remembered per night, so a reload never shows it twice and a rehearsal
+// never hides it on the real night. A phone with no role card yet (a late
+// arrival) shows the same shape of screen with the orientation line in the
+// card's place, so no phone in the room looks different from the rest.
+export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes }) {
   useTick(500)
   const phaseAt = night.phaseAt?.toMillis?.() ?? 0
   const remaining = phaseAt ? phaseAt + HOLD_MS - serverNow() : HOLD_MS
   const canHide = remaining <= 0
+  const buzzKey = card?.id ?? promptKey
+  useEffect(() => {
+    if (!uid || uid === 'preview') return
+    const vibrate = typeof navigator !== 'undefined' && navigator.vibrate ? p => navigator.vibrate(p) : null
+    if (buzzOnce(buzzKey, notes, vibrate)) writeNotes(uid, { buzzed: { [buzzKey]: true } }).catch(() => {})
+  }, [uid, buzzKey, notes])
   const hide = () => writeNotes(uid, { seen: { [promptKey]: true } }).catch(() => {})
   return (
-    <div className="moment prompt papered">
+    <div className="moment prompt">
       <Seal />
       <p className="crest">Sirwin Manor</p>
-      {card
-        ? <p className="moment-text role-card">{card.text}</p>
-        : <p className="moment-text">{ui.POWER}</p>}
+      <p className="moment-text role-card">{card ? card.text : ui.ORIENT}</p>
       <p className="moment-sub">Act {night.act} begins. Eyes on your own phone.</p>
       {canHide
         ? <button className="big" onClick={hide}>{ui.HIDE}</button>

@@ -3,7 +3,7 @@ import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
 import { Questions, Ballot, Eliminate } from './screens/Windows'
-import { Dark, Moment, Blackout, Prompt } from './screens/Moments'
+import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { uiLines } from './lib/content'
 import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
@@ -188,7 +188,7 @@ export default function Preview({ screen }) {
   const serverNow = () => Date.now()
   const which = screen === 'tour' ? TOUR[step] : screen
   const dealt = DEALT[which]
-  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'cats' ? 'cats' : 'you') } catch {}
+  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'cats' || which === 'cats-act4' ? 'cats' : 'you') } catch {}
   let body
   if (KIOSK[which]) return KIOSK[which](night, serverNow)
   switch (which) {
@@ -207,7 +207,12 @@ export default function Preview({ screen }) {
     case 'superseded': body = <Join night={night} ui={ui} notice={ui.SUPERSEDED} />; break
     case 'paused': body = <Moment text={ui.PAUSED} crest />; break
     case 'blackout': body = <Blackout />; break
-    case 'prompt': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" card={CARDS.role} />; break
+    case 'prompt': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" card={CARDS.role} notes={null} />; break
+    case 'prompt-late': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" card={null} notes={null} />; break
+    case 'you': body = <Rest uid="preview" night={night} session={{ ...SESSION, cards: [CARDS.role] }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
+    case 'offline': body = <><Offline ui={ui} seconds={47} /><Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} /></>; break
+    case 'paused-window': body = <><PausedStrip ui={ui} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break
+    case 'cats-act4': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2' }} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 }, groupAffection: { granolia: 2, boo: 3, zimothy: 4, salem: 4 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'host': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + 60000), settled: false } }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     case 'cats': body = <Rest uid="preview" night={night} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'lobby': body = <Rest uid="preview" night={{ ...night, act: 0, phase: 'lobby' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break

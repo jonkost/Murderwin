@@ -162,7 +162,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'discard-night':
       return discard.discardNight(db, { nightId })
     default:
-      return night.hostCommand(db, { nightId, command, arg })
+      // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
+      return night.hostCommand(db, { nightId, command, arg, now })
   }
 }
 

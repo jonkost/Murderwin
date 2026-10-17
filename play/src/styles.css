@@ -388,6 +388,26 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 /* the join screen when this phone's character moved elsewhere */
 .notice-line { max-width: 24rem; margin: 0.4rem auto 0; color: var(--dim); font-size: 1rem; }
 
+/* ---- the role prompt: near-black like the blackout it follows (17 Oct) ---- */
+.moment.prompt { background: #050505; }
+.moment.prompt .moment-text, .moment.prompt .ask { text-shadow: none; }
+.moment.prompt .seal { filter: drop-shadow(0 6px 14px rgba(0,0,0,0.9)) brightness(0.85); }
+/* the same card, re-read from the You tab, behind a tap */
+.role-row { margin: 1rem auto 0; max-width: 24rem; background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 0.8rem 1rem; display: grid; gap: 0.5rem; justify-items: center; }
+.role-row .eyebrow { margin: 0; color: var(--dim); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.role-row .role-hint { margin: 0; }
+.role-row .role-again { margin: 0; font-size: 1.15rem; }
+/* the offline strip says how long ago the house was last heard from */
+.offline-since { display: block; font-size: 0.85rem; opacity: 0.85; margin-top: 0.2rem; }
+/* a window the host has paused: still there, nothing can be tapped, the clock stands still */
+.paused-strip { position: sticky; top: 0; z-index: 6; background: var(--brand-claret); color: var(--brand-parchment); padding: 0.7rem 1rem; text-align: center; font-size: 0.95rem; }
+.paused-shell { opacity: 0.55; filter: grayscale(0.4); pointer-events: none; }
+/* the second marker on a Cats slider: the house (Act 4) */
+.marker.house { width: 16px; height: 16px; background: var(--brand-parchment); border: 2px solid var(--good); box-shadow: 0 1px 6px rgba(0,0,0,0.5); z-index: 1; }
+.house-word { color: var(--good); }
+/* the hand-on button beside a name on the host's list */
+.here .handover { grid-column: 2; justify-self: start; margin-top: 0.3rem; min-height: 2.4rem; font-size: 0.9rem; }
+
 /* ---- a phone on a big screen: ?phone=1 ---- */
 .phone-stage { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: #0a0f14; padding: 1.5rem; }
 .phone-shell { position: relative; width: 393px; height: 852px; max-height: calc(100vh - 5rem); aspect-ratio: 393 / 852; border-radius: 48px; background: #000; padding: 12px; box-shadow: 0 0 0 2px #333, 0 30px 80px rgba(0,0,0,0.7); }

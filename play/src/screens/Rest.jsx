@@ -4,7 +4,7 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace } from './Cards'
 import { Eliminations } from './Windows'
-import { nowCards } from '../lib/night'
+import { nowCards, roleCard } from '../lib/night'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -63,7 +63,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
-        {shown === 'cats' && <Cats session={session} content={content} ui={ui} />}
+        {shown === 'cats' && <Cats session={session} content={content} ui={ui} act={night.act} />}
         {shown === 'rules' && <Rules content={content} />}
         {shown === 'host' && <Host night={night} content={content} serverNow={serverNow} />}
       </section>
@@ -96,6 +96,8 @@ function Now({ uid, night, session, content, notes, cards }) {
 
 function You({ character, session, content, ui, onTour }) {
   const [idle, setIdle] = useState(() => smalltalk(content))
+  const [showRole, setShowRole] = useState(false)
+  const role = roleCard(session)
   useEffect(() => {
     const id = setInterval(() => setIdle(smalltalk(content)), 90_000)
     return () => clearInterval(id)
@@ -107,6 +109,15 @@ function You({ character, session, content, ui, onTour }) {
       <p className="bio">{bioFor(content, character)}</p>
       {session.bag && <p className="bag">{ui.BAG} <strong>{session.bag}</strong></p>}
       {session.host && <p className="gloss">{ui.HOST}</p>}
+      {role && (
+        <section className="role-row" aria-label={ui['YOUR ROLE']}>
+          <p className="eyebrow">{ui['YOUR ROLE']}</p>
+          {showRole
+            ? <p className="role-card role-again">{role.text}</p>
+            : <p className="gloss role-hint">Your card from when the power came back. Nobody else can see it.</p>}
+          <button className="quiet" onClick={() => setShowRole(v => !v)} aria-expanded={showRole}>{showRole ? ui['HIDE ROLE'] : ui['SHOW ROLE']}</button>
+        </section>
+      )}
       <p className="gloss">{ui.RETICULE}</p>
       {onTour && <button className="quiet" onClick={onTour}>Show me around again</button>}
       {idle && (
@@ -190,9 +201,12 @@ function Motives({ uid, content, notes }) {
 // five stops and a marker that cannot be dragged. Never a number. Tap a row
 // to read what that level means for you, who the cat is, and the house's
 // own line about where you stand. Sir Irwin is locked on the top stop.
-function Cats({ session, content, ui }) {
+// In Act 4 a second, smaller marker shows where the whole group stands with
+// each cat ("the house"), since a cat talks to the group together then.
+function Cats({ session, content, ui, act }) {
   const cards = useMemo(() => npcCards(content), [content])
   const words = stopWords(ui)
+  const house = act === 4 && session.groupAffection && typeof session.groupAffection === 'object' ? session.groupAffection : null
   const [open, setOpen] = useState(null)
   const lines = useMemo(() =>
     Object.fromEntries(CATS.map(c => [c.key, statusLine(content, c.key, session.affection?.[c.key] ?? 3)])),
@@ -203,6 +217,7 @@ function Cats({ session, content, ui }) {
       <ul className="gauges">
         {cards.map(cat => {
           const level = cat.key === 'irwin' ? 5 : Math.max(1, Math.min(5, session.affection?.[cat.key] ?? 3))
+          const houseLevel = house && cat.key !== 'irwin' && house[cat.key] ? Math.max(1, Math.min(5, Math.round(house[cat.key]))) : null
           const on = open === cat.key
           return (
             <li key={cat.key} className={on ? 'gauge-item on' : 'gauge-item'}>
@@ -210,7 +225,7 @@ function Cats({ session, content, ui }) {
                 <CatFace cat={cat.key} name={cat.name} size="l" />
                 <span className="gauge-body">
                   <span className="gauge-name">{cat.name}</span>
-                  <Slider level={level} words={words} locked={cat.key === 'irwin'} />
+                  <Slider level={level} words={words} locked={cat.key === 'irwin'} house={houseLevel} />
                 </span>
               </button>
               {on && (
@@ -245,8 +260,9 @@ function About({ text }) {
 }
 
 // A picture of a slider, not a control. Remembers the last stop it showed so
-// the marker slides from there when the tab opens on a new value.
-function Slider({ level, words, locked = false }) {
+// the marker slides from there when the tab opens on a new value. `house`
+// adds the smaller second marker for the group (Act 4 only). Never a number.
+function Slider({ level, words, locked = false, house = null }) {
   const key = `stop-${words.length}-${level}`
   const [shown, setShown] = useState(() => {
     try { return Number(sessionStorage.getItem(`slider-${words[0]}-${level}`)) || level } catch { return level }
@@ -268,8 +284,9 @@ function Slider({ level, words, locked = false }) {
       <div className="track">
         {words.map((w, i) => <span key={w} className={`stop${i + 1 <= level ? ' lit' : ''}`} />)}
         <span className="marker" style={{ left: `${pct}%` }} />
+        {house && <span className="marker house" style={{ left: `${((house - 1) / 4) * 100}%` }} title="the house" />}
       </div>
-      <p className="stop-word">{words[level - 1]}{locked && <span className="locked"> · <span aria-hidden="true">🔒</span> Locked</span>}</p>
+      <p className="stop-word">{words[level - 1]}{locked && <span className="locked"> · <span aria-hidden="true">🔒</span> Locked</span>}{house && <span className="house-word"> · the house: {words[house - 1]}</span>}</p>
     </div>
   )
 }

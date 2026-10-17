@@ -225,7 +225,7 @@ First functions deploy enables Cloud Build / Artifact Registry on the project
 and takes a few minutes. Dev servers: `npm --prefix play run dev` on 5174
 (`.claude/launch.json` → `play`); the workshop stays on 5173.
 
-Preview without a night: `http://localhost:5174/play/?preview=join|rest|lobby|prompt|paused|blackout|doors`.
+Preview without a night: `http://localhost:5174/play/?preview=join|rest|lobby|prompt|prompt-late|you|offline|paused|paused-window|cats-act4|blackout|doors`.
 
 Firestore (all authed-read unless stated; Functions write):
 - `public_state/active` `{ nightId }` — which night is live.
@@ -238,7 +238,7 @@ Firestore (all authed-read unless stated; Functions write):
   Role cards and everything dealt go here later.
 - `presence/{uid}` — owner write `{ nightId, guestKey, at }`; admin read. Doubles
   as the server-clock probe: the phone reads back the stamped `at` and keeps the skew.
-- `notes/{uid}` — owner read/write: `{ crossed{}, seen{} }`.
+- `notes/{uid}`, owner read/write, kept per night since 17 Oct: `{ byNight: { [nightId]: { seen{}, crossed{}, buzzed{} } } }`. A phone that rehearsed starts the real night with nothing hidden and nothing crossed off. Anything written flat at the top level (the old shape) is ignored.
 
 Callables (region us-central1): `join({ nightId, name })` for any signed-in
 phone; `hostCommand({ nightId, command, arg })` when `canHost` says yes: the
@@ -247,7 +247,24 @@ no night live, `create` is open to any signed-in phone (the bootstrap).
 Host phones may also read `presence/*` (rules `isHost()` does a `get` on the
 caller's session).
 Commands: `create`, `activate`, `publish`, `refresh-hosts`, `join-open`,
-`join-close`, `act` (1–7), `blackout`, `power`, `pause`, `resume`.
+`join-close`, `act` (1–7), `blackout`, `power`, `pause`, `resume`, `handover`.
+
+Safety nets (17 Oct): `pause` stores `pausedAt`; `resume` moves every deadline on by
+the length of the pause in one batch (the window's `opensAt` and `closesAt`, the
+relay's four `*EndsAt`, the study's `slotEndsAt`, the finale's `at`; the list is
+`PAUSE_SHIFTED` in `functions/lib/night.js`). Nothing settles and the relay does
+not advance while paused. A paused phone keeps an open window on screen, greyed,
+with its clock standing still. `handover` (arg: a roster key or a uid) wipes a
+phone's cards and windows, marks the session `handed` and bumps `generation`;
+the phone sees the newer generation, clears its local cache and reloads to the
+doors. A guest who joins after the power has returned is written into the case
+as a detective and dealt the same role card as everyone else; a guest who
+rejoins on a new phone brings their cards with them. The role card is kept all
+night and re-read from the You tab behind a tap. The prompt renders near-black
+and buzzes once per card. The offline strip shows when the phone is off the
+network OR the night doc has painted from cache for twenty seconds, and says how
+long ago the house was last heard from. `?check=1` opens for host phones and the
+admin only.
 
 Hosts come from `meta/game` (`host_jonathan`, `host_susan`, written by the
 workshop's Game night form; defaults Jon / Susan) and are copied onto the night
