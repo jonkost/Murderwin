@@ -12,6 +12,7 @@ import * as deal from './deal.js'
 import * as relay from './relay.js'
 import * as station from './station.js'
 import * as discard from './discard.js'
+import * as windows from './windows.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -173,6 +174,13 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       await db.doc(`nights/${nightId}/public/cues`).set({ hall: arg, changedAt: new Date(now), byHand: true }, { merge: true })
       return { ok: true, hall: arg }
     }
+    case 'tick':
+      // the once-a-minute clock (the schedule in index.js, the Host tab on load): settles a window past
+      // its close and its grace, ends a study slot that has run out; a paused night is left alone
+      return windows.tick(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
+    case 'note-exposure':
+      // the exposure safeguard: a silent tap that a hidden role was seen; its dial pushes are hushed from here on
+      return windows.noteExposure(db, nightId, arg, { now })
     case 'dry-run':
       return discard.markDryRun(db, { nightId })
     case 'settle-now':

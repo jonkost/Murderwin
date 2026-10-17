@@ -10,11 +10,13 @@
 
 import { setGlobalOptions } from 'firebase-functions/v2'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import * as night from './lib/night.js'
 import * as run from './lib/run.js'
 import * as station from './lib/station.js'
+import * as windows from './lib/windows.js'
 import { mayTouchNight } from './lib/access.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
@@ -126,3 +128,18 @@ export const relayVote = onCall({ cors: true }, wrap(async req => {
   const { nightId, pick } = req.data ?? {}
   return run.player.relayVote(db, { nightId, uid, pick })
 }))
+
+// The clock. Once a minute, for the live night: a window that has run out
+// is settled (defaults for the phones that did not answer) and a study slot
+// that has run out ends, with no host pressing anything. The same path as
+// the host command `tick` (lib/windows.js). Logs counts only.
+export const tick = onSchedule({ schedule: 'every 1 minutes', region: 'us-central1' }, async () => {
+  const nightId = await windows.activeNightId(db)
+  if (!nightId) return
+  try {
+    const r = await run.hostCommand(db, { nightId, command: 'tick' })
+    console.log('tick', JSON.stringify({ settled: r.settled, windowSettled: r.windowSettled, study: r.study?.reason ?? null, skipped: r.skipped ?? null }))
+  } catch (e) {
+    console.error('tick failed', e?.code ?? e?.name ?? 'error')
+  }
+})
