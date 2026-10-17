@@ -17,9 +17,10 @@ This is what lets you host, build and still play.
    It takes a few minutes and needs an internet connection.
 3. It prints numbers only: how many sets were made, and PASS or FAIL. Nothing else.
    The workshop home then shows "19 of 19 motive sets complete — checked ✓".
-4. If it says FAIL, run it again. Every run throws the old secrets away and writes
-   fresh ones with different details. Running it again the week of the party is a
-   good idea: nothing you might half-remember can match what's live.
+4. If it says FAIL, run it again. Every run writes fresh sets with different
+   details, except the ones Jenna has already edited: those are kept exactly as
+   they are (see "Who writes and who edits"). Running it again the week of the
+   party is a good idea: nothing you might half-remember can match what's live.
 
 ## What the secrets are, in words
 
@@ -55,10 +56,13 @@ Steward, edits everything.
   lines, pools, echo frames, innocent beats. You both play, and anything you
   draft you would recognise on the night.
 - **Claude drafts all the secrets**, through the generator described above.
-- **Jenna edits all of it**, from wherever they are, in a page only their account
-  can open. They never share their screen with you, and they tell you only
-  "done" or "needs more". That page isn't built yet, and making the secrets again
-  must never wipe Jenna's edits.
+- **Jenna edits all of it**, from wherever they are, on their own page in the
+  workshop (For Jenna, then **Open your page**; built 17 October, see
+  `docs/steward-view.md`). The server opens it for their account only: yours
+  is refused by code, with no rule change. They never share their screen with
+  you, and they tell you only "done" or "needs more". Making the secrets again
+  never wipes Jenna's edits: an edited set is kept as it is, and the only two
+  ways to replace one copy it to a safe place first.
 
 ## The bags
 
@@ -138,7 +142,15 @@ Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal
    fragments, study clues and Irwin lines carry no placeholders; Irwin lines
    pass the dog filter (at most 12 words, never a character's name).
 3. Assigns opaque codes (crypto-shuffled, unrelated to motive order) and writes
-   manifest + content to Firestore `sealed/*` via Admin SDK. Clears old docs first.
+   manifest + content to Firestore `sealed/*` via Admin SDK. Since 17 Oct it
+   never clears `sealed/*` first: a doc with `editedAt` (the Steward's edit
+   mark, `functions/lib/steward.js`) is kept and counted, every other set is
+   rewritten, and the manifest keeps its codes. `--regenerate-all` copies each
+   edited doc to `sealed/_archive/items/{code}-{ts}` and then replaces all 19;
+   `--force-code CODE` replaces that one set (archived first if edited) and
+   keeps the rest. The counts line reads `kept N, generated M, archived K`.
+   `runGenerate(db, { generate, ... })` is exported and tested on a memory db
+   (`scripts/test/generate.test.mjs`).
 4. Prints ONLY per-code counts, pass/fail totals and a run hash, every line
    through `say()` (80 characters at most). Errors are redacted to
    type/code/length. ORDER is information: motives are processed in a
@@ -167,8 +179,9 @@ Validation — `scripts/validate-sealed.mjs`, counts-only, per code:
 - study clues by form (3 strings, 20 to 60 words, no tokens); Irwin lines by
   the dog filter (3 strings, at most 12 words, no character name, no tokens)
 Writes `{codes, complete, banned, bannedGlobal, lengthFails, placeholderFails,
-granoliaFails, salemFails, impersonalFails, studyClueFails, irwinFails, pass}`
-to `validation_reports`. `node validate-sealed.mjs --dry` runs the same checks
+granoliaFails, salemFails, impersonalFails, studyClueFails, irwinFails, edited,
+reviewed, pass}` to `validation_reports` (`edited` and `reviewed` count the
+Steward's marks; an edited doc is checked exactly like the rest). `node validate-sealed.mjs --dry` runs the same checks
 on a synthetic set in memory (`lib.mjs syntheticSealedSet`) and touches
 nothing; `npm --prefix scripts test` covers it.
 

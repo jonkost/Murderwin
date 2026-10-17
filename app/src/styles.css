@@ -414,3 +414,25 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .banner.frozen { background: var(--field); color: var(--ink); border: 1px solid var(--line, rgba(0,0,0,0.15)); padding: 0.7rem 1rem; margin-bottom: 1rem; font-weight: 600; position: sticky; top: 0.5rem; z-index: 10; border-radius: var(--r-group); }
 .items.frozen, .scenarios.frozen { opacity: 0.85; }
 .rail-frozen { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); padding: 0.2rem 0.8rem 0.6rem; }
+
+/* ---- Jenna's page (the Steward's desk), 17 Oct 2026 ---- */
+.steward .codes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
+.steward .code { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; border: 1px solid var(--line); background: var(--field); border-radius: var(--r-control); padding: 0.5rem 0.8rem; min-height: 44px; min-width: 7.5rem; text-align: left; }
+.steward .code.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.steward .code-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; letter-spacing: 0.08em; }
+.steward .code-marks { font-size: 0.8rem; opacity: 0.85; min-height: 1em; }
+.steward .code.review-done .code-marks { color: var(--good); }
+.steward .code.on .code-marks { color: inherit; }
+.steward .rhyme { font-size: 1.05rem; margin: 0.3rem 0 0.6rem; }
+.steward .set-section { margin: 1.2rem 0 0; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.steward .set-section h3 { margin: 0 0 0.2rem; }
+.steward .set-section .field { margin: 0.5rem 0; }
+.steward .set-section textarea { width: 100%; font: inherit; line-height: 1.45; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); resize: vertical; }
+.steward .original { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+.steward .ghost.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.steward .review-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.steward .banner.frozen ul { margin: 0.4rem 0 0 1.2rem; font-weight: 400; }
+.steward .bag { margin: 0.8rem 0; }
+.steward .bag h3 { margin: 0 0 0.2rem; }
+.steward .bag ol { margin: 0 0 0 1.4rem; }
+.steward .bag li { margin: 0.15rem 0; }

@@ -11,6 +11,7 @@ import Assets from './pages/Assets'
 import Night from './pages/Night'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
+import Steward from './pages/Steward'
 import { useFrozen } from './components/Frozen'
 import { FROZEN_CHIP } from './lib/frozen'
 
@@ -74,10 +75,10 @@ export default function App() {
   )
   if (boot.state !== 'ready') return <div className="gate"><p>Opening the workshop…</p></div>
 
-  return <Shell />
+  return <Shell user={user} />
 }
 
-function Shell() {
+function Shell({ user }) {
   const frozen = useFrozen()
   return (
     <div className="shell">
@@ -98,6 +99,8 @@ function Shell() {
         <Route path="/night" element={<Night />} />
         <Route path="/jenna" element={<ForJenna />} />
         <Route path="/status" element={<Status />} />
+        {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}
+        <Route path="/steward" element={<Steward user={user} />} />
       </Routes>
     </div>
   )

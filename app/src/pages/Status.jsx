@@ -24,12 +24,12 @@ const BUILT = [
   ['The relay drawing and the room screens', 'The living room TV, the bedroom door and the trace at the dial’s level. Hall light red to green through the cue relay.'],
   ['The screens for every beat', 'The news flash, the Act 3 bulletin, Sir Irwin at cake, the board of strikes and the door on the TV; the iPad keeps the words up through dinner; a sound for every cue, with stand-in tones until you record yours.'],
   ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night.'],
+  ['Jenna’s page', 'Her own page for the secrets and the packing list, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited.'],
   ['Rehearsing without the party', 'A pretend Firebase on your Mac, eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook.'],
 ]
 
 const NEXT = [
   ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
-  ['Jenna’s page', 'Her own page for the secrets, opening only for her account. Needs your yes on one security rule.', 'Claude, then Jon'],
   ['The bags and the stationery', 'A blind script packs the numbered bags; the bags station reads it. Seven paper stand-ins for the documents. The Freeze button for 7 November.', 'Claude, then Jon packs'],
   ['The nine sounds', 'Record one short sound per cue (media/README.md lists them, one second of silence first). Stand-in tones play until then.', 'Jon'],
   ['Windows on a server clock', 'Every Parlour Game settles on time even if nobody presses anything.', 'Claude'],

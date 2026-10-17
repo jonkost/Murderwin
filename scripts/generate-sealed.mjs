@@ -6,6 +6,19 @@
 // - stdout ORDER must never correlate with motive order: motives are
 //   processed in a crypto-shuffled order, progress lines carry no code, and
 //   the per-code count lines print once at the end, sorted by code string.
+//
+// THE STEWARD'S EDITS SURVIVE (H, 17 Oct 2026). A sealed doc that Jenna has
+// edited carries editedAt (functions/lib/steward.js). This script never
+// deletes sealed/* first any more:
+//   node generate-sealed.mjs                  regenerate every set that has
+//                                             no editedAt; keep the edited
+//                                             ones; the manifest keeps its codes
+//   node generate-sealed.mjs --regenerate-all copy every edited set to
+//                                             sealed/_archive/items/{code}-{ts}
+//                                             first, then regenerate all 19
+//   node generate-sealed.mjs --force-code X   replace that one set (archived
+//                                             first if edited); keep the rest
+// The counts line reads "kept N, generated M" (and "archived K" when any).
 
 import { randomBytes, randomInt } from 'node:crypto'
 import Anthropic from '@anthropic-ai/sdk'
@@ -99,10 +112,11 @@ HARD RULES:
 6. Every variant must be self-consistent with the others (same underlying facts,
    different surface details).`
 
-function makeCodes(n) {
+function makeCodes(n, taken = new Set()) {
   const codes = new Set()
   while (codes.size < n) {
-    codes.add(randomBytes(4).toString('base64url').replace(/[-_]/g, 'Q').slice(0, 5).toUpperCase())
+    const code = randomBytes(4).toString('base64url').replace(/[-_]/g, 'Q').slice(0, 5).toUpperCase()
+    if (!taken.has(code)) codes.add(code)
   }
   return [...codes]
 }
@@ -143,13 +157,100 @@ async function generateOne(client, motive, extras) {
   return response.parsed_output
 }
 
+export const ARCHIVE = 'sealed/_archive/items' // under sealed/, so the rules deny every client read of it too
+const CODE_RE = /^[A-Z0-9]{3,12}$/
+
+// One run, against any Firestore-shaped db (the Admin SDK, or lib.mjs
+// memoryDb in the tests). `generate(motive, extras)` makes one set; the CLI
+// passes the API call, the tests pass a synthetic maker. Returns counts only.
+export async function runGenerate(db, {
+  generate, motives = readMotives(), extras = {}, regenerateAll = false, forceCode = null, now = () => new Date(), log = say,
+} = {}) {
+  if (typeof generate !== 'function') throw new Error('runGenerate needs a generate function')
+  if (forceCode && !CODE_RE.test(forceCode)) throw new Error('--force-code takes one code')
+
+  // The manifest keeps its codes: a set Jenna edited stays findable under the
+  // same code, and a code is never reused for another motive.
+  const manifestRef = db.collection('sealed').doc('manifest')
+  const manifestSnap = await manifestRef.get()
+  const prior = manifestSnap.exists ? manifestSnap.data()?.codes ?? {} : {}
+  const codeByN = {}
+  for (const [code, n] of Object.entries(prior)) if (CODE_RE.test(code) && !(n in codeByN)) codeByN[n] = code
+  const missing = motives.filter(m => !(m.n in codeByN))
+  const fresh = makeCodes(missing.length, new Set(Object.keys(prior)))
+  missing.forEach((m, i) => { codeByN[m.n] = fresh[i] })
+  if (forceCode && !Object.values(codeByN).includes(forceCode)) throw new Error('--force-code: no set has that code')
+
+  const manifest = {}
+  const countsByCode = {}
+  let kept = 0, generated = 0, archived = 0
+  // crypto-shuffled processing order: line order carries no motive information
+  for (const i of shuffled(motives.length)) {
+    const motive = motives[i]
+    const code = codeByN[motive.n]
+    manifest[code] = motive.n
+    const ref = db.collection('sealed').doc(code)
+    const snap = await ref.get()
+    const existing = snap.exists ? snap.data() : null
+    const edited = Boolean(existing?.editedAt)
+    const replaceThis = regenerateAll || forceCode === code
+    const keepThis = Boolean(existing) && (forceCode ? !replaceThis : (edited && !replaceThis))
+    if (keepThis) {
+      kept++
+      countsByCode[code] = edited ? 'kept (edited by the Steward)' : 'kept'
+      continue
+    }
+    if (existing && edited) {
+      await db.doc(`${ARCHIVE}/${code}-${now().getTime()}`).set({ ...existing, code, archivedAt: now() })
+      archived++
+    }
+    let content = null
+    for (let attempt = 1; attempt <= 3 && !content; attempt++) {
+      try {
+        content = await generate(motive, extras)
+      } catch (e) {
+        if (attempt === 3) throw redactedError('generation (code withheld)', e)
+        log(`one motive: attempt ${attempt} failed, retrying`)
+      }
+    }
+    await ref.set({
+      kernels: content.kernels,
+      documents: content.documents,
+      fragments: content.fragments,
+      studyClue: content.studyClue,
+      irwin: content.irwin,
+      generatedAt: now(),
+    })
+    generated++
+    const kCount = CATS.reduce((n, c) => n + content.kernels[c].length, 0)
+    countsByCode[code] = `${kCount} kernels, ${content.documents.length} docs, ${content.fragments.length} fragments, ${content.studyClue.length} study, ${content.irwin.length} irwin`
+    log(`generated ${generated}`)
+  }
+
+  await manifestRef.set({ codes: manifest, generatedAt: now() })
+  // per-code counts, sorted by code string — order says nothing about motives
+  for (const code of Object.keys(countsByCode).sort()) {
+    log(`code ${code}: ${countsByCode[code]}`)
+  }
+  const all = await db.collection('sealed').get()
+  const runHash = sha12(all.docs.map(d => [d.id, sha12(d.data())]).sort())
+  log(`kept ${kept}, generated ${generated}${archived ? `, archived ${archived}` : ''}`)
+  log(`manifest written (${Object.keys(manifest).length} codes). run hash ${runHash}`)
+  return { kept, generated, archived, codes: Object.keys(manifest).length }
+}
+
 async function main() {
+  const regenerateAll = process.argv.includes('--regenerate-all')
+  const forceAt = process.argv.indexOf('--force-code')
+  const forceCode = forceAt >= 0 ? String(process.argv[forceAt + 1] ?? '').toUpperCase() : null
   const db = adminDb()
   const client = new Anthropic()
   const motives = readMotives()
-  const codes = makeCodes(motives.length)
 
   say(`generating sealed content: ${motives.length} motives, model ${MODEL}`)
+  if (regenerateAll) say('regenerate all: edited sets are archived first, then replaced')
+  else if (forceCode) say('force one code: that set is replaced, every other set is kept')
+  else say('edited sets are kept; every other set is written fresh')
 
   // Safe inputs: the workshop's pools and voice layers shape the kernels.
   const inputs = await readSafeInputs(db)
@@ -158,50 +259,7 @@ async function main() {
   say(`bag inputs read: ${counts.bagProperties} property words, ${counts.bagsPacked} packed`)
   const extras = { stanza: [inputStanza(inputs), bagStanza(inputs.bags)].filter(Boolean).join('\n'), names: [...characterNameWords()].sort() }
 
-  // Regeneration invalidates everything: clear old sealed docs first.
-  const old = await db.collection('sealed').listDocuments()
-  for (const ref of old) await ref.delete()
-  say(`cleared ${old.length} previous sealed docs`)
-
-  const manifest = {}
-  const countsByCode = {}
-  let ok = 0
-  // crypto-shuffled processing order: line order carries no motive information
-  for (const i of shuffled(motives.length)) {
-    const motive = motives[i]
-    const code = codes[i]
-    manifest[code] = motive.n
-    let content = null
-    for (let attempt = 1; attempt <= 3 && !content; attempt++) {
-      try {
-        content = await generateOne(client, motive, extras)
-      } catch (e) {
-        if (attempt === 3) throw redactedError('generation (code withheld)', e)
-        say(`one motive: attempt ${attempt} failed, retrying`)
-      }
-    }
-    await db.collection('sealed').doc(code).set({
-      kernels: content.kernels,
-      documents: content.documents,
-      fragments: content.fragments,
-      studyClue: content.studyClue,
-      irwin: content.irwin,
-      generatedAt: new Date(),
-    })
-    ok++
-    const kCount = CATS.reduce((n, c) => n + content.kernels[c].length, 0)
-    countsByCode[code] = `${kCount} kernels, ${content.documents.length} docs, ${content.fragments.length} fragments, ${content.studyClue.length} study, ${content.irwin.length} irwin`
-    say(`generated ${ok}/${motives.length}`)
-  }
-
-  await db.collection('sealed').doc('manifest').set({ codes: manifest, generatedAt: new Date() })
-  // per-code counts, sorted by code string — order says nothing about motives
-  for (const code of Object.keys(countsByCode).sort()) {
-    say(`code ${code}: ${countsByCode[code]} ok`)
-  }
-  const all = await db.collection('sealed').get()
-  const runHash = sha12(all.docs.map(d => [d.id, sha12(d.data())]).sort())
-  say(`manifest written. run hash ${runHash}`)
+  await runGenerate(db, { generate: (motive, x) => generateOne(client, motive, x), motives, extras, regenerateAll, forceCode })
 
   say('validating')
   const report = await validateAll(db)
