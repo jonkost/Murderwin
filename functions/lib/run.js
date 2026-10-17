@@ -113,12 +113,17 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       if (!ACT_KEYS.includes(act)) throw new NightError('invalid', 'Acts run 1 to 7.')
       await settleIfDue(db, nightId, now)
       await night.publishContent(db, nightId) // the latest workshop lines, every time an act is chosen
-      if (act === 2 && n.act < 2) {
-        // Act 2 begins with the power returning; jumping straight there deals the roles too
+      // Act 2 begins with the power returning. Jumping to Act 2 or past it
+      // before the roles are out (a phone died mid-blackout, a rehearsal
+      // shortcut) does what Power returns does first: the case is built,
+      // blind, once, and every phone gets its role card and shows it before
+      // the act starts. A night whose roles are already out jumps straight.
+      const rolesOut = !!(await deal.readCase(db, nightId))?.roles
+      if (act >= 2 && !rolesOut) {
         await night.hostCommand(db, { nightId, command: 'power' })
         await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
         await deal.dealRoles(db, nightId)
-        return enterBeat(db, nightId, 2, firstBeat(2), { now, phase: 'prompt' })
+        return enterBeat(db, nightId, act, firstBeat(act), { now, phase: 'prompt' })
       }
       await ref.update({ actStartedAt: FieldValue.serverTimestamp() })
       return enterBeat(db, nightId, act, firstBeat(act), { now })

@@ -207,6 +207,39 @@ test('back moves without dealing; act jump to 2 deals the roles; light-up opens 
   await assert.rejects(() => hostCommand(db, { nightId, command: 'settle' }), /still choosing/)
 })
 
+test('an act jump that skips the power beat still builds the case and deals every phone its role card', async () => {
+  const { db, nightId, phones } = await party()
+  const uids = Object.values(phones)
+  await hostCommand(db, { nightId, command: 'act', arg: 1 })
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'Act 1: no case yet')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 0)
+  // the host taps 3 on the acts row, then Next to the groups
+  await hostCommand(db, { nightId, command: 'act', arg: 3 })
+  const n = night(db, nightId)
+  assert.equal(n.act, 3)
+  assert.equal(n.phase, 'prompt', 'the roles have just landed: every phone shows its card first')
+  const c = db.store.get(`cases/${nightId}`)
+  assert.ok(c?.roles, 'the case was built on the way')
+  for (const uid of uids) {
+    const role = cards(db, uid, 'role')
+    assert.equal(role.length, 1, 'exactly one role card on every phone')
+    assert.equal(role[0].id, '2-power-role')
+  }
+  await hostCommand(db, { nightId, command: 'next' })
+  await hostCommand(db, { nightId, command: 'next' })
+  assert.equal(night(db, nightId).beat, 'groups')
+  assert.equal(night(db, nightId).phase, 'act')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1, 'still one, never two')
+  // a later jump deals nothing twice; a jump back to 1 deals nothing either
+  await hostCommand(db, { nightId, command: 'act', arg: 5 })
+  assert.equal(night(db, nightId).phase, 'act', 'the roles were already out: no prompt again')
+  for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
+  const { db: db2, nightId: n2, phones: p2 } = await party()
+  await hostCommand(db2, { nightId: n2, command: 'act', arg: 1 })
+  assert.equal(db2.store.get(`cases/${n2}`), undefined)
+  for (const uid of Object.values(p2)) assert.equal(cards(db2, uid, 'role').length, 0)
+})
+
 test('the safe: wrong twice, then it gives way; right pays a document once', async () => {
   const { db, nightId, phones } = await party()
   await hostCommand(db, { nightId, command: 'act', arg: 2 })
