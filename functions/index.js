@@ -11,7 +11,6 @@ import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import * as night from './lib/night.js'
 import * as run from './lib/run.js'
-import * as relay from './lib/relay.js'
 import * as station from './lib/station.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
@@ -61,12 +60,7 @@ export const hostCommand = onCall({ cors: true }, wrap(async req => {
   const { nightId, command, arg } = req.data ?? {}
   const allowed = await night.canHost(db, { uid, isAdmin: ADMIN_UIDS.includes(uid), nightId, command })
   if (!allowed) throw new HttpsError('permission-denied', 'Only a host can do that.')
-  // The relay drawing (Act 6). Structural buttons: they tell the host nothing.
-  if (command === 'relay-start') return relay.start(db, { nightId })
-  if (command === 'relay-reset') return relay.reset(db, { nightId })
-  // Act 4: the groups and the study order; the key the study station presents.
-  if (command === 'groups') return station.makeRotation(db, { nightId })
-  if (command === 'station-key') return station.setStationKey(db, arg)
+  // Every host button goes through run.js, so the beat path and the buttons agree.
   return run.hostCommand(db, { nightId, command, arg })
 }))
 
@@ -104,6 +98,8 @@ export const stationCommand = onCall({ cors: true }, wrap(async req => {
   const { nightId, key, station: which, command, payload } = req.data ?? {}
   const allowed = await station.stationAllowed(db, { key, isAdmin: ADMIN_UIDS.includes(uid) })
   if (!allowed) throw new HttpsError('permission-denied', 'That is not the station key.')
+  // "finished" also deals the clue and rotates the house (run.js); the rest is state.
+  if (command === 'finished') return run.studyFinished(db, { nightId, payload })
   return station.stationCommand(db, { nightId, station: which, command, payload })
 }))
 
@@ -113,12 +109,12 @@ export const relayAdvance = onCall({ cors: true }, wrap(async req => {
   requireUid(req)
   const { nightId } = req.data ?? {}
   if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
-  return relay.advance(db, { nightId })
+  return run.player.relayAdvance(db, { nightId })
 }))
 
 // One phone's pick during a vote.
 export const relayVote = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, pick } = req.data ?? {}
-  return relay.vote(db, { nightId, uid, pick })
+  return run.player.relayVote(db, { nightId, uid, pick })
 }))

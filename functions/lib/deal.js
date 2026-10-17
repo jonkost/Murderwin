@@ -22,8 +22,8 @@ import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
-import { MOTIVES, NightError, readArea, characterById } from './night.js'
-import { makeRotation, rotationPath } from './station.js'
+import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
+import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive } from './station.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -407,7 +407,7 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
 // tab behaves the same whatever the role (Jon, 16 Oct 2026: no slider for
 // the dial; it is revealed at the end). A hidden role's total ALSO moves the
 // clarity dial by that night's sign. Nothing is returned.
-async function applyPoints(db, nightId, key, windowId, picks, c) {
+async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
   const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
   const w = privSnap.exists ? privSnap.data()[windowId]?.[key] : null
   if (!w) return
@@ -423,8 +423,12 @@ async function applyPoints(db, nightId, key, windowId, picks, c) {
   const role = roleOf(c, key)
   if (role !== 'detective') {
     const sign = c?.dialSign?.[role] ?? 1
-    const cur = (await db.doc(`cases/${nightId}`).get()).data()?.dial ?? 0
-    await db.doc(`cases/${nightId}`).update({ dial: cur + sign * total })
+    const caseRef = db.doc(`cases/${nightId}`)
+    const cur = (await caseRef.get()).data() ?? {}
+    const delta = sign * total
+    // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then
+    const log = Array.isArray(cur.dialLog) ? cur.dialLog : []
+    await caseRef.update({ dial: (cur.dial ?? 0) + delta, dialLog: [...log, { act: act ?? null, role, delta, at: new Date() }] })
   }
 }
 
@@ -448,7 +452,7 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
   if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
   await sessionRef.update({ [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
   const c = await readCase(db, nightId)
-  await applyPoints(db, nightId, s.guestKey, windowId, picks, c)
+  await applyPoints(db, nightId, s.guestKey, windowId, picks, c, w.act ?? night.act ?? null)
   return { ok: true }
 }
 
@@ -505,7 +509,7 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
       if (!set || s.answers?.[w.id]) continue
       const picks = randomPicks(set)
       await ref.update({ [`answers.${w.id}`]: { picks, at: new Date(), defaulted: true } })
-      await applyPoints(db, nightId, g.key, w.id, picks, c)
+      await applyPoints(db, nightId, g.key, w.id, picks, c, w.act ?? night.act ?? null)
       settled++
     } else if (w.kind === 'ballot') {
       if (s.ballot && !s.ballot.defaulted) continue
@@ -594,7 +598,8 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
     return { ...card, property, text: `Something ${property} is in two or three of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.` }
   }
   if (station.key === 'study') {
-    return { ...card, payout: { id: `${id}-clue`, act, beat, kind: 'clue', title: 'From the study', text: c?.kernels ? '' : '(Rehearsal. The study pays its clue out to every phone in the group here, when the three jewels are lit or the fifteen minutes are up.)', placeholder: !c?.kernels } }
+    // the clue itself is dealt by the station's "finished" call (station.js dealStudy), never carried here
+    return { ...card, payoutId: `${id}-clue` }
   }
   if (station.key === 'puzzle') {
     const symbols = shuffled(['circle', 'square', 'triangle', 'star', 'moon', 'cross'], pick).slice(0, 4)
@@ -603,7 +608,7 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
   return card
 }
 
-export async function rotate(db, nightId, act, beat) {
+export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) {
   let rot = await readRotation(db, nightId)
   if (!rot) { await dealGroups(db, nightId, act, 'groups'); rot = await readRotation(db, nightId) }
   const { night, list } = await guests(db, nightId)
@@ -614,6 +619,9 @@ export async function rotate(db, nightId, act, beat) {
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const levels = {}
   for (const g of list) levels[g.key] = (await db.doc(`sessions/${g.uid}`).get()).data()?.affection ?? {}
+  // With no station running (a rehearsal on phones alone) the study's clue
+  // lands with the card; with the station alive it is earned in the room.
+  const alive = await stationAlive(db, nightId, now)
   let dealt = 0
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
@@ -623,10 +631,14 @@ export async function rotate(db, nightId, act, beat) {
       const g = byKey[k]
       if (!g) continue
       if (await dealCard(db, g.uid, card)) dealt++
-      // the study is not built yet: in rehearsal its pay-out lands with the card
-      if (card.payout && c?.rehearsal) await dealCard(db, g.uid, card.payout)
+      if (station.key === 'study' && !alive) await dealCard(db, g.uid, studyClueCard(c, act, beat))
     }
   }
+  // the study is the clock: tell the station which group is due, unless a game is running
+  const due = rot.studyOrder?.[r] ?? null
+  const studySnap = await db.doc(studyPath(nightId)).get()
+  const running = ['playing', 'reproducing', 'entering'].includes(studySnap.data()?.state)
+  if (!running) await db.doc(studyPath(nightId)).set({ groupId: due, state: studySnap.data()?.state === 'done' ? 'idle' : (studySnap.data()?.state ?? 'idle') }, { merge: true })
   await db.doc(`nights/${nightId}`).update({ rotation: r })
   return { ok: true, rotation: r, dealt }
 }
@@ -634,15 +646,161 @@ export async function rotate(db, nightId, act, beat) {
 // ---------------------------------------------------------------------------
 // Act 7: the reveal and each phone's own result.
 
-export async function reveal(db, nightId) {
+export async function reveal(db, nightId, { now = Date.now() } = {}) {
   const c = await ensureCase(db, nightId)
   const { night } = await guests(db, nightId)
   const roster = night.roster ?? {}
   const person = key => key && roster[key] ? { key, name: roster[key].name, characterName: characterById(roster[key].characterId)?.name ?? '' } : null
   const motive = MOTIVES.find(m => m.n === c.motive) ?? null
-  const r = { murderer: person(c.murderer), motive, victim: person(c.ghost), rehearsal: !!c.rehearsal, at: new Date() }
+  const r = { murderer: person(c.murderer), motive, victim: person(c.ghost), rehearsal: !!c.rehearsal, at: new Date(now) }
   await db.doc(`nights/${nightId}`).update({ reveal: r })
+  await db.doc(`nights/${nightId}/public/finale`).set(await finaleDoc(db, nightId, c, now))
   return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Act 7: the finale on the living room screen. Written at the reveal beat:
+// the stats reel (strings only, never a "slowest"), the tug-of-war graph
+// (the dial's pushes, sealed all night, shown now), and the schedule the
+// screen keeps against the server's clock. Reveal order on screen: Murderer,
+// Motive, Victim.
+export const FINALE_SCHEDULE = { stats: 0, graph: 35_000, murderer: 65_000, motive: 80_000, victim: 95_000, done: 110_000 }
+
+function minutesAndSeconds(seconds) {
+  const s = Math.max(0, Math.round(seconds))
+  const m = Math.floor(s / 60), r = s % 60
+  if (!m) return `${r} s`
+  return r ? `${m} min ${r} s` : `${m} min`
+}
+
+export async function finaleDoc(db, nightId, c, now = Date.now()) {
+  const [rotSnap, relaySnap] = await Promise.all([db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/public/relay`).get()])
+  const rot = rotSnap.exists ? rotSnap.data() : null
+  const relay = relaySnap.exists ? relaySnap.data() : null
+  const stats = []
+  const names = (gid) => (rot?.groups ?? []).find(g => g.id === gid)?.members.map(m => m.name).join(' and ') ?? gid
+  const finished = Object.entries(rot?.finished ?? {})
+  const solved = finished.filter(([, f]) => f.outcome === 'solved' && f.seconds > 0).sort((a, b) => a[1].seconds - b[1].seconds)
+  if (solved.length) stats.push({ label: 'Fastest light puzzle', value: `${names(solved[0][0])}, ${minutesAndSeconds(solved[0][1].seconds)}` })
+  const capped = finished.filter(([, f]) => f.outcome === 'capped')
+  if (capped.length) stats.push({ label: 'Light puzzle groups that ran out of time', value: capped.map(([gid]) => names(gid)).join('; ') })
+  if (relay?.stats?.totalSeconds) stats.push({ label: 'Time on the drawing', value: minutesAndSeconds(relay.stats.totalSeconds) })
+  if (Array.isArray(relay?.stats?.misses)) {
+    const hard = relay.stats.misses.map((m, i) => (m > 0 ? `Grid ${i + 1}` : null)).filter(Boolean)
+    stats.push({ label: 'Pictures that took more than one guess', value: hard.length ? hard.join(', ') : 'None' })
+  }
+  const log = Array.isArray(c?.dialLog) ? c.dialLog : []
+  const points = log.map(e => ({ act: e.act ?? 0, role: e.role, delta: e.delta }))
+  const running = []
+  let value = 0
+  for (const act of [2, 4, 6]) {
+    value += points.filter(p => p.act === act).reduce((sum, p) => sum + p.delta, 0)
+    running.push({ act, value })
+  }
+  return { at: new Date(now), schedule: FINALE_SCHEDULE, stats, graph: { points, running }, rehearsal: !!c?.rehearsal }
+}
+
+// ---------------------------------------------------------------------------
+// Act 6: the trace behind the bedroom door, at the level the dial reached.
+// Written when the relay drawing is done. Everything here is the murderer's
+// trace and, at level 2, one look-alike; never a name, never a role.
+
+export const TRACE_STEP = 4 // dial points per rung of the ladder
+export function traceLevel(dial) {
+  const d = Number(dial) || 0
+  const rungs = Math.sign(d) * Math.round(Math.abs(d) / TRACE_STEP) // symmetric: -2 and +2 are one rung each way
+  return Math.max(1, Math.min(5, 3 + rungs))
+}
+
+// Visually confusable traces (the current fourteen, seed/characters.json).
+// Every trace sits in at least two buckets; the two Professors (elbow-patch,
+// white-sand) share none, so a level-2 overlay can never narrow to them.
+export const TRACE_BUCKETS = {
+  'pale-powder': ['flour', 'white-sand', 'petals', 'candle-wax'],
+  scattered: ['seeds', 'petals', 'coins', 'shattered-vial', 'glasses', 'flour', 'white-sand'],
+  'wet-stain': ['ink', 'iodine', 'coffee', 'candle-wax'],
+  glass: ['shattered-vial', 'glasses', 'candle-wax', 'coins'],
+  pressed: ['boot-print', 'coffee', 'elbow-patch', 'picture'],
+  dark: ['ink', 'iodine', 'boot-print', 'seeds', 'coffee'],
+  'paper-cloth': ['picture', 'elbow-patch', 'glasses'],
+}
+const PROFESSOR_TRACES = new Set(['elbow-patch', 'white-sand'])
+
+// One line of context for level 5. Safe copy: it names the object, never the owner.
+export const TRACE_CONTEXT = {
+  ink: 'a splash of ink, still wet, beside the writing desk',
+  'boot-print': 'a muddy boot print, pointing away from the door',
+  flour: 'a dusting of flour along the sideboard',
+  coins: 'a scatter of coins, dropped and not picked up',
+  petals: 'a trail of petals from the vase to the door',
+  seeds: 'seeds, spilled from a pocket and trodden in',
+  'shattered-vial': 'a shattered vial, its contents long gone',
+  'candle-wax': 'a drip of candle wax, set hard on the floor',
+  coffee: 'a coffee ring on the polished wood',
+  picture: 'a small picture, face down, its frame cracked',
+  glasses: 'a pair of glasses, one lens cracked',
+  iodine: 'an iodine stain, brown and spreading',
+  'elbow-patch': 'a leather elbow patch, torn clean off',
+  'white-sand': 'a sprinkling of white sand on the rug',
+}
+
+export function traceOf(characterId) {
+  return CHARACTERS.find(ch => ch.id === characterId) ?? null
+}
+
+// A second real trace that could be mistaken for `trace`, from a character at
+// the party, never the victim's own, Professors only when nobody else fits.
+export function pickPartner(trace, inPlayTraces, { exclude = [], pick = pickInt } = {}) {
+  const buckets = shuffled(Object.values(TRACE_BUCKETS).filter(b => b.includes(trace)), pick)
+  const candidates = (list) => list.filter(t => t !== trace && inPlayTraces.includes(t) && !exclude.includes(t))
+  for (const bucket of buckets) {
+    const all = candidates(bucket)
+    if (!all.length) continue
+    const plain = all.filter(t => !PROFESSOR_TRACES.has(t))
+    return choice(plain.length ? plain : all, pick)
+  }
+  return null
+}
+
+export async function revealTrace(db, nightId, { now = Date.now(), force = false } = {}) {
+  const ref = db.doc(`nights/${nightId}/public/trace`)
+  const existing = await ref.get()
+  if (existing.exists && !force) return { ok: true, already: true }
+  const c = await ensureCase(db, nightId)
+  const { night } = await guests(db, nightId)
+  const roster = night.roster ?? {}
+  const murdererChar = traceOf(roster[c.murderer]?.characterId)
+  if (!murdererChar) throw new NightError('invalid', 'The case has no murderer at the party.')
+  const inPlay = Object.values(roster).map(r => traceOf(r.characterId)?.trace).filter(Boolean)
+  const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
+  let level = traceLevel(c.dial)
+  let partner = null
+  if (level === 2) {
+    partner = pickPartner(murdererChar.trace, inPlay, { exclude: [victimTrace].filter(Boolean) })
+    if (!partner) level = 3 // nobody to be confused with: the coin flip collapses to a clear image
+  }
+  const lines = labelled(await readArea(db, 'trace_lines'))
+  const context = lines[`TRACE ${murdererChar.trace.toUpperCase()}`] ?? TRACE_CONTEXT[murdererChar.trace] ?? null
+  const doc = {
+    level, trace: murdererChar.trace,
+    label: level >= 4 ? murdererChar.traceLabel : null,
+    context: level === 5 ? context : null,
+    partner: level === 2 ? partner : null,
+    placeholder: !!c.rehearsal,
+    at: new Date(now),
+  }
+  await ref.set(doc)
+  await db.doc(`nights/${nightId}/public/cues`).set({ hall: 'green', changedAt: new Date(now) }, { merge: true })
+  return { ok: true, level }
+}
+
+// The hall light is red from the moment the night begins.
+export async function ensureHallRed(db, nightId, now = Date.now()) {
+  const ref = db.doc(`nights/${nightId}/public/cues`)
+  const snap = await ref.get()
+  if (snap.exists && snap.data().hall) return false
+  await ref.set({ hall: 'red', changedAt: new Date(now) }, { merge: true })
+  return true
 }
 
 export async function results(db, nightId, act, beat) {
@@ -693,12 +851,12 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
     case 'groups':
       return dealGroups(db, nightId, act, beat)
     case 'rotate':
-      return rotate(db, nightId, act, beat)
+      return rotate(db, nightId, act, beat, { now })
     case 'relay':
       return { ok: true, relay: arg } // started by night.js, which owns the relay module
     case 'reveal': {
       const { list } = await guests(db, nightId)
-      await reveal(db, nightId)
+      await reveal(db, nightId, { now })
       for (const g of list) await dealCard(db, g.uid, noticeCard('eyes', act, beat))
       return { ok: true }
     }

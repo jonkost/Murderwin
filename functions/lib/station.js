@@ -39,7 +39,7 @@ export function makeGroups(keys, { apart = [], pickInt = randomInt } = {}) {
       groups.push(order.slice(i, i + size)); i += size
     }
     const together = groups.some(g => apart.filter(k => g.includes(k)).length >= 2)
-    if (!together || apart.length < 2) return groups
+    if (!together || apart.length < 2 || keys.length < 4) return groups // under four people there is only one way to group
   }
   throw new NightError('invalid', 'Could not split the hidden roles apart.')
 }
@@ -58,26 +58,70 @@ export async function makeRotation(db, { nightId, apart = [], pickInt = randomIn
   await db.doc(rotationPath(nightId)).set({
     groups, studyOrder, current: 0, finished: {}, madeAt: FieldValue.serverTimestamp(), rotatedAt: null,
   })
-  await db.doc(studyPath(nightId)).set({ state: 'idle', groupId: studyOrder[0], updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+  // no updatedAt here: that stamp means "the station itself reported in"
+  await db.doc(studyPath(nightId)).set({ state: 'idle', groupId: studyOrder[0] }, { merge: true })
   return { ok: true, groups: groups.length, trios: groups.filter(g => g.members.length === 3).length }
 }
 
-// The clue the study pays out. Until the case generator exists this writes
-// the fact of the pay-out and nothing else; the generator will fill `clue`
-// from sealed content server-side, per member, never through the station.
+// The clue the study pays out: one card, the same for every phone in the
+// group. The text comes from the case when the generator has written one
+// (cases/{nightId}.studyClue.text, read here with the Admin SDK and written
+// only into each member's own session); in rehearsal it is a bracketed
+// placeholder. The station never sees it either way.
+export const STUDY_PLACEHOLDER = '(Rehearsal. The study pays its clue out to every phone in the group here, when the three jewels are lit or the fifteen minutes are up.)'
+
+export function studyClueCard(c, act, beat) {
+  const real = c?.studyClue?.text
+  return {
+    id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the study',
+    text: typeof real === 'string' && real.trim() ? real : STUDY_PLACEHOLDER,
+    placeholder: !(typeof real === 'string' && real.trim()),
+  }
+}
+
+// Add one card to a phone, once (the same rule as the dealer's).
+async function dealOnce(db, uid, card) {
+  const ref = db.doc(`sessions/${uid}`)
+  const snap = await ref.get()
+  if (!snap.exists) return false
+  const cards = snap.data().cards ?? []
+  if (cards.some(x => x.id === card.id)) return false
+  await ref.update({ cards: [...cards, { ...card, at: new Date() }] })
+  return true
+}
+
+// Has the study station reported in lately? (Within two minutes.)
+export async function stationAlive(db, nightId, now = Date.now()) {
+  const snap = await db.doc(studyPath(nightId)).get()
+  if (!snap.exists) return false
+  const at = snap.data().updatedAt
+  const t = at?.toMillis?.() ?? (at instanceof Date ? at.getTime() : 0)
+  return !!t && Math.abs(now - t) < 120_000
+}
+
 export async function dealStudy(db, { nightId, groupId, outcome }) {
-  const [rotSnap, deckSnap] = await Promise.all([db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/private/deck`).get()])
+  const [rotSnap, deckSnap, nightSnap, caseSnap] = await Promise.all([
+    db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/private/deck`).get(),
+    db.doc(`nights/${nightId}`).get(), db.doc(`cases/${nightId}`).get(),
+  ])
   const group = (rotSnap.data()?.groups ?? []).find(g => g.id === groupId)
   if (!group) throw new NightError('invalid', 'No such group.')
   const uids = deckSnap.data()?.uids ?? {}
+  const night = nightSnap.exists ? nightSnap.data() : {}
+  const c = caseSnap.exists ? caseSnap.data() : null
   let dealt = 0
   for (const m of group.members) {
     const uid = uids[m.key]
     if (!uid) continue
-    await db.doc(`sessions/${uid}`).set({
-      dealt: { study: { at: FieldValue.serverTimestamp(), outcome, groupId } },
-    }, { merge: true })
-    dealt++
+    const ref = db.doc(`sessions/${uid}`)
+    const s = (await ref.get()).data()
+    if (!s) continue
+    // the study station card this phone was dealt says which act and beat it was
+    const stationCard = (s.cards ?? []).filter(x => x.kind === 'station' && x.station === 'study').at(-1)
+    const act = stationCard?.act ?? night.act ?? 4
+    const beat = stationCard?.beat ?? night.beat ?? 'station'
+    await ref.set({ dealt: { study: { at: FieldValue.serverTimestamp(), outcome, groupId } } }, { merge: true })
+    if (await dealOnce(db, uid, studyClueCard(c, act, beat))) dealt++
   }
   return dealt
 }

@@ -10,6 +10,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import * as night from './night.js'
 import * as deal from './deal.js'
 import * as relay from './relay.js'
+import * as station from './station.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -39,6 +40,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   const ref = db.doc(`nights/${nightId}`)
   const spec = deal.beatSpec(act, beat)
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
+  if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') {
     const r = await relay.start(db, { nightId, now })
@@ -119,10 +121,44 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'relay-reset':
       return relay.reset(db, { nightId })
     case 'relay-advance':
-      return relay.advance(db, { nightId, now })
+      return advanceRelay(db, { nightId, now })
+    case 'groups':
+      // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart
+      return deal.dealGroups(db, nightId, n.act || 3, 'groups')
+    case 'station-key':
+      return station.setStationKey(db, arg)
     default:
       return night.hostCommand(db, { nightId, command, arg })
   }
+}
+
+// The relay's clock, plus what happens the moment the drawing is done: the
+// trace lands behind the bedroom door and the hall light goes green.
+export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
+  const r = await relay.advance(db, { nightId, now })
+  if (r?.moved && r.state === 'done') {
+    try { await deal.revealTrace(db, nightId, { now }) } catch (e) { r.trace = e?.code ?? 'failed' }
+  }
+  return r
+}
+
+// The study station says a group is done: the clue is dealt (station.js),
+// and in Act 4 the whole house rotates, exactly as the host's Next would.
+export async function studyFinished(db, { nightId, payload = {}, now = Date.now() } = {}) {
+  const r = await station.stationCommand(db, { nightId, station: 'study', command: 'finished', payload })
+  if (r.repeated) return r
+  const snap = await db.doc(`nights/${nightId}`).get()
+  const n = snap.exists ? snap.data() : null
+  if (!n || n.act !== 4 || n.phase !== 'act') return { ...r, rotated: false, reason: 'not-act-4' }
+  const spec = deal.beatSpec(4, n.beat)
+  const to = nextOf(4, n.beat)
+  if (spec?.action !== 'rotate' || !to || to.act !== 4) return { ...r, rotated: false, reason: 'not-a-rotate-beat' }
+  if (n.window && !n.window.settled) {
+    if (now < deal.ms(n.window.closesAt)) return { ...r, rotated: false, reason: 'window-open' }
+    await deal.settleWindow(db, nightId, { now })
+  }
+  const moved = await enterBeat(db, nightId, to.act, to.beat, { now })
+  return { ...r, rotated: true, beat: moved.beat }
 }
 
 // What a player phone may call, besides join.
@@ -132,5 +168,5 @@ export const player = {
   ballot: (db, args) => deal.castBallot(db, args),
   eliminate: (db, args) => deal.eliminate(db, args),
   relayVote: (db, args) => relay.vote(db, args),
-  relayAdvance: (db, args) => relay.advance(db, args),
+  relayAdvance: (db, args) => advanceRelay(db, args),
 }
