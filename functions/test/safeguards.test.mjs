@@ -341,7 +341,8 @@ test('hush: that role\'s answers move no dial from then on; the other role still
   assert.ok(isHushed(caseOf(db, nightId), 'ghost'))
   assert.equal(caseOf(db, nightId).exposure.ghost.act, 2)
   assert.ok(!isHushed(caseOf(db, nightId), 'murderer'))
-  for (const uid of [ghostUid, murdererUid]) assert.equal(JSON.stringify(session(db, uid)).includes('hush'), false, 'no phone carries a trace of it')
+  // a field name, not a substring: Dr. Paige Shushwell's name contains the letters "hush"
+  for (const uid of [ghostUid, murdererUid]) assert.equal(/"(hush|hushed|hushedAt|exposure)"\s*:/.test(JSON.stringify(session(db, uid))), false, 'no phone carries a trace of it')
 
   const w = await hostCommand(db, { nightId, command: 'light-up', now })
   await player.answer(db, { nightId, uid: ghostUid, windowId: w.id, picks: bestPicks(db, nightId, w.id, c.ghost), now: now + 1000 })
