@@ -41,6 +41,21 @@ test('the living room: the phase wins, then the finale, the ballot, a drawing, t
   assert.equal(roomDark(null), false)
 })
 
+test('a pause during the blackout or the prompt keeps every room screen dark', () => {
+  // the host presses Blackout, then Pause (Irwin needs the garden): the phones
+  // stay dark through effectivePhase, and so do the bedroom, the study, the
+  // TV and the iPad; "One moment" shows only for a pause taken in an act
+  for (const from of ['blackout', 'prompt']) {
+    const paused = { ...NIGHT, phase: 'paused', pausedFrom: from }
+    assert.equal(roomDark(paused), true, `bedroom and study dark, paused from ${from}`)
+    assert.equal(livingView({ night: paused, screen: { kind: 'news' } }), 'dark', `TV dark, paused from ${from}`)
+    assert.equal(livingView({ night: paused, screen: { kind: 'idle' }, captionsOnly: true }), 'dark', `iPad dark, paused from ${from}`)
+  }
+  assert.equal(roomDark({ ...NIGHT, phase: 'paused', pausedFrom: 'act' }), false)
+  assert.equal(livingView({ night: { ...NIGHT, phase: 'paused', pausedFrom: 'act' }, screen: { kind: 'news' } }), 'paused')
+  assert.equal(livingView({ night: { ...NIGHT, phase: 'paused' }, screen: { kind: 'news' } }), 'paused', 'no pausedFrom: an act')
+})
+
 test('captions: the card while it is up, else the last ones the server carried', () => {
   assert.deepEqual(captionsOf({ kind: 'bulletin', title: 'The bulletin', lines: ['a', 'b'] }), { kind: 'bulletin', title: 'The bulletin', lines: ['a', 'b'] })
   assert.deepEqual(captionsOf({ kind: 'idle', captions: { kind: 'news', lines: ['a'] } }), { kind: 'news', title: '', lines: ['a'] })
