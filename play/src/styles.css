@@ -549,8 +549,7 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk.ballot-screen .trace.compact .trace-frame { width: 30vh; height: 30vh; }
 .kiosk.door.trace-on-tv { background: var(--brand-bottle); }
 .kiosk-rules { list-style: decimal; margin: 0 0 2vw; padding-left: 3vw; text-align: left; max-width: 70vw; font-size: 2.6vw; color: var(--ink); display: grid; gap: 0.6vw; }
-.kiosk-wake { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vw; background: var(--brand-blue); color: var(--ink); border: 0; cursor: pointer; font: inherit; }
-.kiosk-wake .kiosk-big { font-size: 7vw; }
+.kiosk-wake { position: fixed; right: 1.4vw; bottom: 1.2vw; z-index: 80; padding: 0.6vw 1.2vw; border-radius: 1vw; background: rgba(241,232,214,0.12); color: var(--dim); border: 0; cursor: pointer; font: inherit; font-size: 1.4vw; }
 .kiosk-bell { position: fixed; top: 1.2vw; right: 1.4vw; z-index: 80; font-size: 3.2vw; color: var(--good); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .kiosk-bell.ring { opacity: 1; animation: bellpulse 0.6s ease-in-out 5; }
 @keyframes bellpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }

@@ -149,6 +149,15 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
+  // the wake control: a corner control that never shows while the room is dark
+  assert.ok(kiosk.includes('<Wake hidden={dark} />'), 'the wake control is hidden while dark')
+  assert.ok(kiosk.includes("window.addEventListener('pointerdown', wake)"), 'any tap on the page wakes the screen')
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  const wake = css.split('\n').find(l => l.startsWith('.kiosk-wake {')) ?? ''
+  assert.ok(wake, 'the wake style exists')
+  assert.ok(!/inset:\s*0/.test(wake), 'the wake control is not a full-screen wall')
+  assert.ok(/right:/.test(wake) && /bottom:/.test(wake), 'the wake control sits in a corner')
+  assert.ok(!/brand-blue/.test(wake), 'the wake control is not a bright blue wall')
   const main = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
   assert.ok(main.includes('ipad'))
 })

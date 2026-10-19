@@ -18,10 +18,13 @@ import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed } fr
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
 // board) and public/sounds (the bell in the corner, and this screen's own
-// chime). Three things sit in the corners of every kiosk: a one-time
-// "tap to wake" so the browser lets it make a sound, a bell for three
-// seconds whenever a sound is called for, and a dot that says whether the
-// house can still be heard. None of them ever covers the content.
+// chime). Three things sit in the corners of every kiosk: a small "tap to
+// wake" (bottom right, until the first tap or key anywhere on the page) so
+// the browser lets it make a sound, a bell for three seconds whenever a
+// sound is called for, and a dot that says whether the house can still be
+// heard. None of them ever covers the content, and none of them shows while
+// the room is dark: a kiosk that reloads during the blackout stays
+// near-black.
 
 export default function Kiosk({ which }) {
   const { uid } = useAuthUid()
@@ -44,6 +47,9 @@ export default function Kiosk({ which }) {
 
   const n = night.data
   const r = relay.data
+  // dark: the blackout and the prompt (paused or not), or a black screen the
+  // server wrote; nothing in the corners shows while the room is dark
+  const dark = !!n && (roomDark(n) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
   let body
   if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." />
   else if (roomDark(n)) body = <Dark />
@@ -55,7 +61,7 @@ export default function Kiosk({ which }) {
       {body}
       <Bell sounds={sounds.data} serverNow={serverNow} />
       <StaleDot view={night} online={online} />
-      <Wake />
+      <Wake hidden={dark} />
     </>
   )
 }
@@ -322,15 +328,24 @@ export function Board({ night, content, title = 'The deduction round', compact =
 
 // ---- the three corners -----------------------------------------------------
 
-// One tap, once per load, so the browser lets this screen make a sound.
-export function Wake() {
-  const [woke, setWoke] = useState(false)
-  if (woke) return null
-  const wake = () => { wakeAudio(); setWoke(true) }
+// One tap, once per load, so the browser lets this screen make a sound: a
+// small control in the bottom right corner, never over the content, and
+// never shown while the room is dark. The first tap or key anywhere on the
+// page counts, so nobody has to find the corner; the screen works without
+// it (the chime is only a fallback for the bell).
+export function Wake({ hidden = false }) {
+  const [woke, setWoke] = useState(() => chime.ctx?.state === 'running')
+  useEffect(() => {
+    if (woke) return
+    const wake = () => { wakeAudio(); setWoke(true) }
+    window.addEventListener('pointerdown', wake)
+    window.addEventListener('keydown', wake)
+    return () => { window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', wake) }
+  }, [woke])
+  if (woke || hidden) return null
   return (
-    <button type="button" className="kiosk-wake" onClick={wake}>
-      <span className="kiosk-big">Tap once to wake this screen</span>
-      <span className="kiosk-line">Then leave it be.</span>
+    <button type="button" className="kiosk-wake" onClick={() => { wakeAudio(); setWoke(true) }}>
+      Tap once to wake this screen
     </button>
   )
 }
