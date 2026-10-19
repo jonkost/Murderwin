@@ -424,3 +424,16 @@ test('the Act 4 groups write where the house stands with each cat; nothing befor
   // the windows a phone can read still carry no numbers
   for (const uid of ['u-jon', 'u-jessa']) for (const set of Object.values(sessionOf(db, uid).windows ?? {})) assert.ok(!JSON.stringify(set).includes('"av"'))
 })
+
+
+test('the deck deals only the bag numbers the packer packed; fourteen when there is no packing', async () => {
+  const bare = seeded()
+  const a = await createNight(bare)
+  assert.equal(bare.store.get(`nights/${a.nightId}/private/deck`).bags.length, 14)
+  const packed = seeded()
+  packed.store.set('sealed/bags', { properties: { '[a property]': [2, 7], '[another]': [1, 10, 4] } })
+  const b = await createNight(packed)
+  const bags = packed.store.get(`nights/${b.nightId}/private/deck`).bags
+  assert.equal(bags.length, 10)
+  assert.deepEqual([...bags].sort((x, y) => x - y), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+})

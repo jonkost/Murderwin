@@ -127,6 +127,17 @@ export async function publishContent(db, nightId, { log = quietLog } = {}) {
   return { areas: PLAYER_AREAS.length, lines }
 }
 
+// How many bags the blind packer packed: the highest bag number any property
+// names. Null when there is no packing. Nothing else from the doc is read.
+export async function packedBagCount(db) {
+  const snap = await db.doc('sealed/bags').get()
+  const d = snap.exists ? snap.data() : null
+  if (!d || !d.properties || typeof d.properties !== 'object') return null
+  const nums = Object.values(d.properties).flat().map(Number).filter(n => Number.isFinite(n) && n > 0)
+  if (!nums.length) return null
+  return Math.max(...nums)
+}
+
 export async function createNight(db, { label, forceRehearsal, dryRun = false } = {}) {
   const hosts = await readHosts(db)
   // Nights rehearse by default. Only the workshop's "This is the party night"
@@ -139,7 +150,10 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
   const pool = CHARACTERS.filter(c => !c.host).map(c => c.id)
-  const bagCount = Math.max(PLANNING_BAGS, 14)
+  // Bag numbers come from the packing when one exists (sealed/bags, read here
+  // with the Admin SDK; only the count is used, never an item), so every
+  // guest's bag is a real one. With no packing yet, fourteen numbers, one per character.
+  const bagCount = await packedBagCount(db) ?? Math.max(PLANNING_BAGS, 14)
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}`), {
     nightId,
