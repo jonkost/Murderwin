@@ -359,18 +359,22 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
 - Windows: `nights/{id}.window = { id, kind, opensAt, closesAt, settled }`
   (Dates on the server clock). Each phone's set is in
   `sessions/{uid}.windows[id]` WITHOUT point values; the values and the cat
-  are in `nights/{id}/private/windows`. Which set: every detective gets the
-  same set for that window, drawn among the sets that read about as long as
-  the hidden roles' sets; the Murderer and the Ghost get the set their case
+  are in `nights/{id}/private/windows`. Which set: every detective draws
+  their own set for that window, among the sets that read about as long as
+  the hidden roles' sets, so no two phones are expected to match and nobody
+  is the odd one out; the Murderer and the Ghost get the set their case
   names in `cases/{id}.hiddenSets[role][act2|act4a|act4b|act6]`
-  (`functions/lib/windows.js` pickSets). A scheduled `tick` (index.js, every
+  (`functions/lib/windows.js` pickSets, setFor). The host's own Light up
+  button passes no beat, so every phone, hidden roles included, draws at
+  random for that round. A scheduled `tick` (index.js, every
   minute) settles a window five seconds after `closesAt`; an answer after
   that returns `{ ok, late: true }` and the phone shows the same Thanks.
   Points: every phone's total nudges
   that cat's affection one step (sign only), whatever the role; a hidden
   role's total ALSO moves `cases/{id}.dial` by that night's `dialMap`
   (ghost +1, murderer -1) in one transaction (`pushDial`), logged to
-  `dialLog`; after `note-exposure <role>` that role's pushes log delta 0
+  `dialLog`; after `hush <role>` (or its older name `note-exposure`, the
+  same path through `ledger.noteExposure`) that role's pushes log delta 0
   and `hushed: true` (Jon, 16 Oct: no slider for the dial, revealed at the
   end). No phone ever sees a number. The three role cards go through
   `parityCheck` before they are dealt: a card more than 20 percent shorter

@@ -199,8 +199,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // its close and its grace, ends a study slot that has run out; a paused night is left alone
       return windows.tick(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
     case 'note-exposure':
-      // the exposure safeguard: a silent tap that a hidden role was seen; its dial pushes are hushed from here on
-      return windows.noteExposure(db, nightId, arg, { now })
+      // the older name for the Hush: the same record, through the same path (safeguards.js, ledger.js)
+      return safeguards.hush(db, { nightId, role: arg, now })
     case 'reveal-stage':
       // Act 7: one more name onto the living room screen, Murderer, then Motive, then Victim
       return finale.stage(db, nightId, { now })
@@ -231,7 +231,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     default: {
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       const r = await night.hostCommand(db, { nightId, command, arg, now })
-      if (['blackout', 'pause', 'resume'].includes(command)) await screen.onPhase(db, nightId, command, { now }) // the room screens follow (screen.js)
+      // the room screens follow (screen.js); a second Pause or Resume that changed nothing moves no screen either
+      if (['blackout', 'pause', 'resume'].includes(command) && !r?.already) await screen.onPhase(db, nightId, command, { now })
       return r
     }
   }

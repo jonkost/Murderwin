@@ -33,7 +33,7 @@ export const HOST_COMMANDS = [
   { name: 'study-reassign', arg: '<groupId>', what: 'Say which group is actually in the study, before it pays out.' },
   { name: 'hall', arg: '<red|green>', what: 'Set the hall light by hand.' },
   { name: 'tick', arg: '', what: 'The clock: settle a window that has run out, end a study slot that has run out. The server does this once a minute on its own.' },
-  { name: 'note-exposure', arg: '<murderer|ghost>', what: 'Note that a hidden role was seen. Nothing shows until Act 7.' },
+  { name: 'note-exposure', arg: '<murderer|ghost>', what: 'The older name for hush: the same record, the same path. Nothing shows until Act 7.' },
   { name: 'relay-start', arg: '[force]', what: 'Start the Act 6 drawing. A drawing under way is kept unless you say force.' },
   { name: 'relay-reset', arg: '', what: 'Clear the drawing.' },
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },

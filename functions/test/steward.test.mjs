@@ -90,13 +90,23 @@ test('the gate: Jon\'s admin UID, an unverified email and a stranger are refused
   assert.equal(isSteward({ email: STEWARD_EMAIL, email_verified: true }, { hash: 'not-a-hash' }), false)
   assert.equal(isSteward(null, { hash: HASH }), false)
   assert.equal(isSteward({ uid: JON_UID }, { hash: HASH }), false)
-  // the default hash is the one in firestore.rules unless the env overrides it with a real hash
+  // the hash is the one in firestore.rules; the env override counts on the emulator only
+  assert.equal(stewardHash({}), RULES_STEWARD_HASH)
+  assert.equal(stewardHash({ STEWARD_EMAIL_HASH: HASH }), RULES_STEWARD_HASH, 'a deployed function ignores the override')
+  assert.equal(stewardHash({ STEWARD_EMAIL_HASH: HASH, FUNCTIONS_EMULATOR: 'false' }), RULES_STEWARD_HASH)
+  assert.equal(stewardHash({ STEWARD_EMAIL_HASH: 'junk', FUNCTIONS_EMULATOR: 'true' }), RULES_STEWARD_HASH)
+  assert.equal(stewardHash({ STEWARD_EMAIL_HASH: HASH.toUpperCase(), FUNCTIONS_EMULATOR: 'true' }), HASH, 'the emulator takes a stand-in')
+  // the same through the real process env
+  const saved = { hash: process.env.STEWARD_EMAIL_HASH, emu: process.env.FUNCTIONS_EMULATOR }
+  delete process.env.FUNCTIONS_EMULATOR
+  process.env.STEWARD_EMAIL_HASH = HASH
   assert.equal(stewardHash(), RULES_STEWARD_HASH)
-  process.env.STEWARD_EMAIL_HASH = 'junk'
-  assert.equal(stewardHash(), RULES_STEWARD_HASH)
-  process.env.STEWARD_EMAIL_HASH = HASH.toUpperCase()
+  await refused(stewardRequest(db, asSteward({ op: 'whoami' }), { log: quiet.log }), 'permission-denied')
+  process.env.FUNCTIONS_EMULATOR = 'true'
   assert.equal(stewardHash(), HASH)
-  delete process.env.STEWARD_EMAIL_HASH
+  assert.deepEqual(await stewardRequest(db, asSteward({ op: 'whoami' }), { log: quiet.log }), { ok: true })
+  if (saved.hash === undefined) delete process.env.STEWARD_EMAIL_HASH; else process.env.STEWARD_EMAIL_HASH = saved.hash
+  if (saved.emu === undefined) delete process.env.FUNCTIONS_EMULATOR; else process.env.FUNCTIONS_EMULATOR = saved.emu
 })
 
 test('list: the codes with edited ticks, never the motive; read: one set with the motive it serves', async () => {

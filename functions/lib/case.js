@@ -49,6 +49,9 @@
 //                               which Parlour Game set each hidden role is
 //                               dealt per window, as an index into the bank
 //                               (consumers take index mod bank length)
+//   screenSalt: hex string      a secret the room screens seed their picks on
+//                               (the bulletin's strikes, the news frame), so
+//                               nothing public can replay them from the night id
 //   exposure: {}                the exposure safeguard's record: { murderer?: { hushedAt, act },
 //                               ghost?: { hushedAt, act } } (ledger.js noteExposure; the Hush)
 //   dealtClues: []              the ledger of what went to whom (safeguards): entries
@@ -204,6 +207,12 @@ export function templateNames(items) {
   return (items ?? []).map(i => (typeof i === 'string' ? i : i?.text ?? '')).map(t => t.split(/\s[—–-]\s/)[0].trim()).filter(Boolean)
 }
 
+// The screens' secret: 128 bits from the case's rng, as hex. Never leaves
+// cases/{nightId} (screen.js refuses a public doc that carries it).
+export function screenSalt(rng) {
+  return Array.from({ length: 8 }, () => rng(65536).toString(16).padStart(4, '0')).join('')
+}
+
 function common({ nightId, roster, rng, now, templates, poolLists, bankSize }) {
   const list = Array.isArray(roster) ? roster : Object.entries(roster ?? {}).map(([key, r]) => ({ key, ...r }))
   const { roles, murderer, ghost } = pickRoles(list.map(g => g.key), rng)
@@ -214,6 +223,7 @@ function common({ nightId, roster, rng, now, templates, poolLists, bankSize }) {
     template: choice(names, rng) ?? 'Receipt',
     pools: fixedPools(poolLists, rng),
     hiddenSets: pickHiddenSets(rng, bankSize),
+    screenSalt: screenSalt(rng),
     createdAt: new Date(now ?? Date.now()),
     nightId,
   }
@@ -250,7 +260,7 @@ export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [],
     documents: docs, studyClue, echo: { fragment: choice(fragments, rng) }, irwin: { lines: irwinLines },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[variant.granolia], base.pools, pools, rng),
-    hiddenSets: base.hiddenSets, exposure: {}, dealtClues: [],
+    hiddenSets: base.hiddenSets, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
   }
 }
 
@@ -286,7 +296,7 @@ export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng
     irwin: { lines: ['(Rehearsal. Irwin line one.)', '(Rehearsal. Irwin line two.)', '(Rehearsal. Irwin line three.)'] },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[0], base.pools, pools, rng),
-    hiddenSets: base.hiddenSets, exposure: {}, dealtClues: [],
+    hiddenSets: base.hiddenSets, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
   }
 }
 
@@ -332,6 +342,7 @@ export function rerollCase({ prev, fresh, roster = [], poolLists = {}, rng = ran
     pools,
     granoliaSlot: granoliaSlot(granoliaKernel, pools, poolLists, rng),
     hiddenSets: prev?.hiddenSets ?? fresh.hiddenSets,
+    screenSalt: prev?.screenSalt ?? fresh.screenSalt,
     exposure: {},
     dealtClues: Array.isArray(prev?.dealtClues) ? prev.dealtClues : [],
     spills: (prev?.spills ?? 0) + 1,

@@ -77,9 +77,11 @@ async function freshCase(db, { c, common, pick }) {
 }
 
 // The role card on each phone is replaced in place, same id, so the You tab
-// shows the role the case now holds. Only phones whose text changes are touched.
+// shows the role the case now holds. The cards come through the same parity
+// check as at the power beat (deal.roleCardsFor), so a spill never hands one
+// phone a shorter card than the rest; only phones whose text changes are touched.
 async function replaceRoleCards(db, nightId, list, c) {
-  const written = await deal.roleCardTexts(db)
+  const cards = await deal.roleCardsFor(db)
   let changed = 0
   for (const g of list) {
     if (!g.uid) continue
@@ -88,13 +90,13 @@ async function replaceRoleCards(db, nightId, list, c) {
     if (!snap.exists) continue
     const s = snap.data()
     if (s.nightId !== nightId) continue
-    const cards = Array.isArray(s.cards) ? s.cards : []
-    const i = cards.findIndex(x => x.id === deal.ROLE_CARD_ID)
+    const held = Array.isArray(s.cards) ? s.cards : []
+    const i = held.findIndex(x => x.id === deal.ROLE_CARD_ID)
     if (i < 0) continue
-    const text = deal.roleCardText(deal.roleOf(c, g.key), written)
-    if (cards[i].text === text) continue
-    const next = [...cards]
-    next[i] = { ...cards[i], text, at: new Date() }
+    const text = deal.roleCardText(deal.roleOf(c, g.key), cards)
+    if (held[i].text === text) continue
+    const next = [...held]
+    next[i] = { ...held[i], text, at: new Date() }
     await ref.update({ cards: next })
     changed++
   }

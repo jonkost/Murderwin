@@ -68,7 +68,10 @@ counts only: kept, generated, archived.
   `RULES_STEWARD_HASH`, the same hash `firestore.rules isAdmin()` carries
   (`functions/test/admin-drift.test.mjs` keeps them equal). The env var
   `STEWARD_EMAIL_HASH` overrides it when it holds a 64-character hex hash, for
-  a stand-in Steward on the emulator. A UID never opens it; Jon's admin UID is
+  a stand-in Steward on the emulator only: `stewardHash()` reads it when
+  `FUNCTIONS_EMULATOR` is `true` and ignores it everywhere else, so a line in
+  `functions/.env` can never open the sealed sets to another account on the
+  deployed function. A UID never opens it; Jon's admin UID is
   refused with everyone else. No `firestore.rules` change: clients still cannot
   read `sealed/*`, and the callable is the only road.
 - One callable, `steward` in `functions/index.js`, ops `whoami`, `list`,

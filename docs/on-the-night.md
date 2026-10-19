@@ -193,9 +193,11 @@ past `closesAt` plus a five-second grace is settled, a twelve-minute study
 slot that ran out is ended (`station.tickStudy`), a paused night is skipped.
 The Host tab calls the same host command `tick` once when it opens. `node
 functions/host.mjs tick` is the hand version. Logs are counts only.
-`note-exposure <murderer|ghost>` records the exposure safeguard's silent
-tap in `cases/{id}.exposure`; from then on that role's Parlour Game answers
-still move a cat but move the dial by 0, logged `hushed`.
+`note-exposure <murderer|ghost>` is the older name for `hush`: the same
+record in `cases/{id}.exposure[role] = { hushedAt, act }`, written only by
+`ledger.noteExposure` and read only by `ledger.isHushed`; from then on that
+role's Parlour Game answers still move a cat but move the dial by 0, logged
+`hushed`, and the Act 7 screen says one line about it.
 
 *The spare host.* `functions/host.mjs` against the live project needs
 `GOOGLE_APPLICATION_CREDENTIALS` pointing at a service-account key kept out

@@ -14,7 +14,7 @@
 import { randomInt } from 'node:crypto'
 import { MOTIVES, NightError, readArea, characterById } from './night.js'
 import { rotationPath } from './station.js'
-import { spotlightLines } from './ledger.js' // the Hush's plain-words line for the screen (safeguards)
+import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -152,15 +152,15 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   put(CANON_LABELS[4], favourites.length ? favourites.join(' · ') : 'Nobody')
   put(CANON_LABELS[5], least.length ? least.join(' · ') : 'Nobody')
 
-  // 7. the guest who answered the most Parlour Games before the bell
-  const quick = best(people, ({ s }) => {
-    const n = Object.values(s.answers ?? {}).filter(a => a && !a.defaulted).length
-    return n > 0 ? n : null
-  }, pick)
-  put(CANON_LABELS[6], quick ? `${quick.guest.name}, ${Object.values(quick.s.answers ?? {}).filter(a => a && !a.defaulted).length} of ${Object.keys(quick.s.windows ?? {}).length || 1}` : 'Nobody')
+  // 7. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
+  // their phone was dealt (the eliminate and ballot windows are not Parlour Games)
+  const answered = s => Object.values(s.answers ?? {}).filter(a => a && !a.defaulted).length
+  const gamesDealt = s => Object.values(s.windows ?? {}).filter(w => w?.kind === 'questions').length || 1
+  const quick = best(people, ({ s }) => (answered(s) > 0 ? answered(s) : null), pick)
+  put(CANON_LABELS[6], quick ? `${quick.guest.name}, ${answered(quick.s)} of ${gamesDealt(quick.s)}` : 'Nobody')
 
-  // the exposure safeguard: a silent tap all night, one line now, never which role
-  const hush = !!(c?.exposure && Object.values(c.exposure).some(e => e && (e.at || e === true)))
+  // the exposure safeguard: a silent tap all night, one line now, never which role (ledger.isHushed is the one reader)
+  const hush = HUSH_ROLES.some(role => isHushed(c, role))
   if (hush) put(HUSH_LABEL, HUSH_LINE)
 
   // the graph: every push, and which side each role pulls toward (fixed per case, never assumed)
@@ -285,7 +285,10 @@ export async function go(db, nightId, { now = Date.now() } = {}) {
   const schedule = Object.fromEntries(Object.entries(f.schedule ?? {}).map(([k, v]) => [k, shift(v)]))
   const stats = (f.stats ?? []).map(s => ({ ...s, showAt: shift(s.showAt) }))
   const achievements = (f.achievements ?? []).map(a => ({ ...a, showAt: shift(a.showAt) }))
-  await ref.update({ holdAt: null, held: (f.held ?? 0) + held, schedule, stats, achievements })
+  const patch = { holdAt: null, held: (f.held ?? 0) + held, schedule, stats, achievements }
+  // a hold after the Victim was named: the wait before the closing story carries on where it stood
+  if (f.victimAt && ms(f.holdAt) >= ms(f.victimAt)) patch.victimAt = new Date(ms(f.victimAt) + held)
+  await ref.update(patch)
   return { ok: true, heldMs: held }
 }
 

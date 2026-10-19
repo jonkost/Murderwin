@@ -9,6 +9,7 @@ import { rerollCase, rehearsalCase, buildCase, CASE_KEYS, CAT_KEYS } from '../li
 import { MOTIVES } from '../lib/night.js'
 import { spill, hush, spillAllowed, noteDealt, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from '../lib/safeguards.js'
 import { studyPath } from '../lib/station.js'
+import { wordCount, PARITY_TOLERANCE } from '../lib/windows.js'
 
 // THE SEAL IN THIS FILE. Every "sealed" string below is a throwaway made
 // here, in brackets, from a word the test picks; it is never a real kernel,
@@ -209,6 +210,32 @@ test('spill before any document: the motive and the Ghost change, the Murderer s
   assert.equal(third.murderer, before.murderer)
   assert.equal(third.spills, 2)
   assertNothingLeaked(JSON.stringify([r, r2]))
+})
+
+test('spill deals the role cards through the parity check: uneven workshop cards stay padded and only the two phones whose role moved are touched', async () => {
+  const { db, nightId } = await realParty()
+  const now = 1_700_000_000_000
+  // a five-word Murderer card against two long ones: the parity check pads it at the power beat
+  db.store.set('safe_content/role_cards', { items: [
+    { id: 'm', order: 0, text: 'MURDERER: (You did it. Hush.)' },
+    { id: 'g', order: 1, text: `GHOST: (You are the one who died tonight, and you know it, though not who did it to you; say nothing to anyone.)` },
+    { id: 'd', order: 2, text: `DETECTIVE: (You are here to find out who did it, why, and to whom; listen to the cats and trust Sir Irwin above all.)` },
+  ] })
+  await toPower(db, nightId, now)
+  const before = caseOf(db, nightId)
+  const counts = () => Object.fromEntries(Object.keys(before.roles).map(k => [k, wordCount(roleCardOf(db, uidOf(db, nightId, k)).text)]))
+  const spreadOf = cs => { const v = Object.values(cs); return (Math.max(...v) - Math.min(...v)) / Math.max(...v) }
+  assert.ok(spreadOf(counts()) <= PARITY_TOLERANCE, `padded at the power beat: ${JSON.stringify(counts())}`)
+  const stamps = Object.fromEntries(Object.keys(before.roles).map(k => [k, roleCardOf(db, uidOf(db, nightId, k)).at]))
+  const r = await hostCommand(db, { nightId, command: 'spill', now })
+  assert.equal(r.did, true)
+  const after = caseOf(db, nightId)
+  assert.ok(spreadOf(counts()) <= PARITY_TOLERANCE, `still padded after the spill: ${JSON.stringify(counts())}`)
+  const murdererCount = counts()[after.murderer]
+  assert.ok(murdererCount > 5, 'the Murderer, whose role did not change, does not hold the one short card')
+  const touched = Object.keys(after.roles).filter(k => roleCardOf(db, uidOf(db, nightId, k)).at !== stamps[k])
+  assert.deepEqual(touched.sort(), [before.ghost, after.ghost].sort(), 'only the old Ghost and the new Ghost were rewritten')
+  assertNothingLeaked(JSON.stringify(r))
 })
 
 test('spill on a rehearsal case: a fresh rehearsal story with another motive and another Ghost; nothing is ever printed', async () => {

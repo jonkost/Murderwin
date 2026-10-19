@@ -10,8 +10,10 @@
 // motive number, who died, or anything that joins a fragment to a motive.
 // The only case fields read are echo.fragment, irwin.lines, dial (to pick a
 // band, never written), motive (to keep it OUT of the strike list, never
-// written) and rehearsal. checkScreen refuses a doc with a forbidden key
-// before it is written, and the tests walk a whole night to prove it.
+// written), screenSalt (the secret the strikes and the frame pick are
+// seeded on, never written) and rehearsal. checkScreen refuses a doc with a
+// forbidden key before it is written, and the tests walk a whole night to
+// prove it.
 //
 // SEAL RULE: nothing here prints, logs or returns content. Results are ok
 // flags, kinds and counts.
@@ -35,7 +37,7 @@ export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'stin
 export const FORBIDDEN_SCREEN_KEYS = [
   'roles', 'role', 'dial', 'dialSign', 'dialMap', 'dialLog', 'motive', 'murderer', 'ghost', 'victim', 'victimCharacterId',
   'fragment', 'echo', 'kernels', 'documents', 'hiddenSets', 'studyClue', 'salemTruthIndex', 'granoliaSlot', 'variant',
-  'pools', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level',
+  'pools', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level', 'screenSalt',
 ]
 
 export const DOOR_HOLD_MS = 10_000
@@ -66,6 +68,15 @@ function msOf(t) {
 function unit(...parts) {
   const h = createHash('sha256').update(parts.map(String).join('\u0000')).digest()
   return h.readUInt32BE(0) / 0x100000000
+}
+
+// What the screens seed their picks on: the case's secret salt. The night
+// id is public (every phone has it) and this repo is public to Jon, so a
+// pick seeded on the night id could be replayed from outside; the salt
+// never leaves the case. A case from before the salt falls back to the
+// night id.
+export function screenSeed(c, nightId) {
+  return typeof c?.screenSalt === 'string' && c.screenSalt ? c.screenSalt : String(nightId ?? '')
 }
 
 // "LABEL: text" lines from a workshop list (the dealer has the same rule).
@@ -129,13 +140,16 @@ export function echoLines(c, frames, { seed = '' } = {}) {
 
 // ---------------------------------------------------------------------------
 // Act 3: the bulletin. The echo again, plus up to two motives the constable
-// has ruled out, never the active one, seeded on the night.
+// has ruled out, never the active one, seeded on the case's secret. Every
+// motive is ranked by the seed and its own number alone (never by its place
+// in a list the active motive was taken out of), so the ranking says
+// nothing about which motive is missing.
 
 export function struckMotives(c, { seed = '', motives = MOTIVES } = {}) {
   const count = strikeCount(c?.dial)
   if (!count) return []
   const others = motives.filter(m => m.n !== Number(c?.motive))
-  const order = others.map((m, i) => ({ m, r: unit(seed, 'strike', m.n, i) })).sort((a, b) => a.r - b.r).map(x => x.m)
+  const order = others.map(m => ({ m, r: unit(seed, 'strike', m.n) })).sort((a, b) => a.r - b.r).map(x => x.m)
   return order.slice(0, count).map(m => ({ n: m.n, rhyme: m.rhyme }))
 }
 
@@ -276,13 +290,14 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   if (kind === 'news' || kind === 'bulletin' || kind === 'irwin') {
     const c = await caseOf(db, nightId)
     const rehearsal = c?.rehearsal !== false
+    const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      const lines = echoLines(c, await linesOf(db, nightId, 'echo_frames'), { seed: nightId })
+      const lines = echoLines(c, await linesOf(db, nightId, 'echo_frames'), { seed })
       doc = screenDoc('news', { ...base, title: 'News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else if (kind === 'bulletin') {
       const ui = labelled(await linesOf(db, nightId, 'ui_copy'))
       const strikeLine = ui['STRIKE LINE']?.includes('[RHYME]') ? ui['STRIKE LINE'] : STRIKE_LINE
-      const { lines, struck } = bulletinLines(c, await linesOf(db, nightId, 'echo_frames'), { seed: nightId, strikeLine })
+      const { lines, struck } = bulletinLines(c, await linesOf(db, nightId, 'echo_frames'), { seed, strikeLine })
       doc = screenDoc('bulletin', { ...base, title: 'The bulletin', lines, struck, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)
@@ -307,9 +322,17 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   return { ...r, sound }
 }
 
+// The near-black "One moment" card the pause puts up.
+export function isPauseCard(doc) {
+  return doc?.kind === 'black' && Boolean(doc.title)
+}
+
 // The host's phase buttons: the room screens follow. Blackout and the
 // power each have a sound; a pause parks the screen under a near-black
-// "One moment" and the resume brings it back.
+// "One moment" and the resume brings it back. A second pause on top of the
+// first changes nothing (the parked screen is kept), and a resume with
+// nothing parked puts up the beat's idle screen rather than leaving "One
+// moment" on the TV.
 export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   if (command === 'blackout') {
     await writeScreen(db, nightId, screenDoc('black', { now, title: '' }))
@@ -323,6 +346,7 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   }
   if (command === 'pause') {
     const prev = await readScreen(db, nightId)
+    if (isPauseCard(prev)) return { ok: true, kind: 'black', already: true } // already parked: never park the card over itself
     const parked = prev ? { ...prev, parked: null } : null
     await writeScreen(db, nightId, screenDoc('black', { now, title: 'One moment', act: prev?.act ?? null, beat: prev?.beat ?? null, captions: prev?.captions ?? null, parked }))
     return { ok: true, kind: 'black' }
@@ -330,15 +354,45 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   if (command === 'resume') {
     const prev = await readScreen(db, nightId)
     if (prev?.parked) { await writeScreen(db, nightId, { ...prev.parked, parked: null }); return { ok: true, kind: prev.parked.kind } }
+    if (isPauseCard(prev)) {
+      // nothing was parked (a pause before any screen): the beat's own screen, dark through the blackout and the prompt
+      const nightSnap = await db.doc(`nights/${nightId}`).get()
+      const night = nightSnap.exists ? nightSnap.data() : {}
+      const act = prev.act ?? night.act ?? null
+      const beat = prev.beat ?? night.beat ?? null
+      const dark = night.phase === 'blackout' || night.phase === 'prompt'
+      const doc = dark
+        ? screenDoc('black', { now, title: '', act, beat, captions: null })
+        : screenDoc('idle', { now, act, beat, title: NIGHT.acts[String(act)]?.name ?? 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal, captions: prev.captions ?? null })
+      await writeScreen(db, nightId, doc)
+      return { ok: true, kind: doc.kind }
+    }
     return { ok: true, kind: prev?.kind ?? null }
   }
   return { ok: true }
 }
 
+// Has the night reached the Act 6 door beat (or gone past it)? The trace
+// may go on the TV only from there, so it is never up before the door opens.
+export function doorReached(night) {
+  const act = Number(night?.act) || 0
+  if (act > 6) return true
+  if (act !== 6) return false
+  const beats = NIGHT.acts['6']?.beats ?? []
+  const door = beats.findIndex(b => b.action === 'notice:door')
+  const here = beats.findIndex(b => b.key === night?.beat)
+  return door >= 0 && here >= door
+}
+
 // The host's "Show the trace on the TV" (hostCommand tv-trace): the living
 // room screen shows the trace after the door's hold, for a night where the
-// bedroom screen has died. Off again with the arg 'off'.
+// bedroom screen has died. Refused before the door beat; off again with the
+// arg 'off' at any time.
 export async function tvTrace(db, nightId, on, { now = Date.now() } = {}) {
+  if (on) {
+    const snap = await db.doc(`nights/${nightId}`).get()
+    if (!doorReached(snap.exists ? snap.data() : null)) throw new NightError('invalid', 'The trace goes on the TV once the door is open. Press Next to the door first.')
+  }
   await db.doc(`nights/${nightId}/public/cues`).set({ tvTrace: !!on, tvTraceAt: new Date(now) }, { merge: true })
   return { ok: true, tvTrace: !!on }
 }

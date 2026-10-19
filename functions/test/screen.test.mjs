@@ -12,7 +12,9 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES,
   echoLines, bulletinLines, struckMotives, strikeCount, dialBand, irwinTier, irwinLines, dogFilter, castNames, parseFrame, frameList,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, onBeat, onPhase, tvTrace, relayRules, labelled,
+  screenSeed, doorReached, isPauseCard,
 } from '../lib/screen.js'
+import { rehearsalCase, buildCase, screenSalt } from '../lib/case.js'
 
 // Everything here is a throwaway: synthetic bracketed fragments made in the
 // test and discarded with the process, and the dealer's own rehearsal case
@@ -81,6 +83,42 @@ test('the band follows the trace ladder exactly, and the strike count is 0, 1 or
   assert.equal(strikeCount(8), 2)
   assert.equal(strikeCount(4), 2)
   assert.equal(irwinTier(-8), 0); assert.equal(irwinTier(0), 1); assert.equal(irwinTier(8), 2)
+})
+
+test('the strikes are seeded on the case\'s secret salt, never the public night id, and the ranking does not move when the active motive changes', () => {
+  // every case carries a salt from its own rng, 32 hex characters, different case to case
+  const a = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
+  const b = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
+  assert.match(a.screenSalt, /^[0-9a-f]{32}$/)
+  assert.notEqual(a.screenSalt, b.screenSalt)
+  assert.equal(screenSalt(() => 0), '0'.repeat(32))
+  assert.equal(screenSeed(a, 'n1'), a.screenSalt, 'the screens seed on the salt')
+  assert.equal(screenSeed({}, 'n1'), 'n1', 'a case from before the salt falls back to the night id')
+  assert.ok(FORBIDDEN_SCREEN_KEYS.includes('screenSalt'), 'a public doc may never carry it')
+  // two cases that share a night id and a motive but not a salt strike different motives
+  const c1 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: a.screenSalt }
+  const c2 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: b.screenSalt }
+  const s1 = struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s2 = struckMotives(c2, { seed: screenSeed(c2, 'n1') })
+  assert.notDeepEqual(s1, s2)
+  assert.deepEqual(struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s1, 'and the same ones on the host\'s second press')
+  // the public replay: from the night id alone, no candidate motive reproduces the strikes more often than chance
+  let pinned = 0
+  const trials = 300
+  for (let t = 0; t < trials; t++) {
+    const c = { ...fixtureCase({ dial: 8, motive: 1 + (t % MOTIVES.length) }), screenSalt: screenSalt(randomInt) }
+    const shown = struckMotives(c, { seed: screenSeed(c, `night-${t}`) }).map(s => s.n).join(',')
+    const fits = MOTIVES.filter(m => struckMotives({ dial: 8, motive: m.n }, { seed: `night-${t}` }).map(s => s.n).join(',') === shown)
+    if (fits.length === 1 && fits[0].n === c.motive) pinned++
+  }
+  assert.ok(pinned <= 3, `the night id replay pinned the motive ${pinned} times in ${trials}`)
+  // with one secret ranking, taking the active motive out never reorders the rest: no index rides along
+  const seed = a.screenSalt
+  const full = struckMotives({ dial: 8, motive: 0 }, { seed }).map(s => s.n)
+  for (const m of MOTIVES) {
+    const without = struckMotives({ dial: 8, motive: m.n }, { seed }).map(s => s.n)
+    const expect = [...full, ...struckMotives({ dial: 8, motive: 0 }, { seed, motives: MOTIVES.filter(x => !full.includes(x.n)) }).map(s => s.n)].filter(n => n !== m.n).slice(0, 2)
+    assert.deepEqual(without, expect, `motive ${m.n} out: the next in the one ranking steps up`)
+  }
 })
 
 test('the bulletin strikes 1 motive at dial 0, 0 at strong negative, 2 at strong positive, never the active one, and the same ones on a re-run', () => {
@@ -190,7 +228,7 @@ test('the seed names a screen and a sound only from the catalogues', () => {
 // sound in the catalogue is written once, and no screen doc ever carries a
 // forbidden field. The fake-players' public-doc tokens are checked too.
 
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"', '"screenSalt"']
 
 async function party() {
   const db = new FakeFirestore()
@@ -254,14 +292,20 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   await next() // cat: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
   assert.deepEqual(screen().captions.lines, news.lines)
-  // a pause parks the screen under a near-black "One moment"; the resume brings it back
+  // a pause parks the screen under a near-black "One moment"; a second press (a double tap, a second
+  // host phone) changes nothing; the resume brings the parked screen back
   await host('pause')
   assert.equal(screen().kind, 'black')
   assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked.kind, 'idle')
+  assert.equal((await host('pause')).already, true)
+  assert.equal(screen().parked.kind, 'idle', 'the second press did not park the card over itself')
+  assert.equal(await onPhase(db, nightId, 'pause', { now }).then(r => r.already), true, 'and the screen hook alone refuses too')
   now += 30_000
   await host('resume')
-  assert.equal(screen().kind, 'idle')
+  assert.equal(screen().kind, 'idle', 'the TV is back on the beat, not on One moment')
   assert.equal(screen().parked, null)
+  assert.ok(!JSON.stringify(screen()).includes(db.store.get(`cases/${nightId}`).screenSalt), 'the salt never reaches the screen')
   await next() // puzzle
   await next() // questions
   now += 61_000
@@ -338,6 +382,9 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(db.store.get(pub).state, 'done')
   assert.equal((await currentSound(db, nightId)).id, 'sting-door')
   const stingAt = (await currentSound(db, nightId)).at
+  // the trace cannot go on the TV before the door beat, even with the drawing done
+  await assert.rejects(host('tv-trace'), /once the door is open/)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`)?.tvTrace, undefined)
   await next() // the door: the sting is not played twice
   assert.equal(screen().kind, 'door')
   assert.equal(screen().holdMs, 10_000)
@@ -381,11 +428,50 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
   await onBeat(db, nightId, { act: 2, beat: 'news', spec: beatSpec(2, 'news'), now: 11 })
   assert.equal((await currentSound(db, nightId)).id, 'chime-news')
   assert.deepEqual(await onPhase(db, nightId, 'handover'), { ok: true })
-  // resume with nothing parked leaves the screen alone
+  // resume with nothing parked and no pause card leaves the screen alone
   await onPhase(db, nightId, 'resume')
   assert.equal((await readScreen(db, nightId)).kind, 'news')
-  await tvTrace(db, nightId, true, { now: 12 })
+  // the trace on the TV: refused before the door beat, on from the door beat, off at any time
+  await assert.rejects(tvTrace(db, nightId, true, { now: 12 }), /once the door is open/)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`)?.tvTrace, undefined)
+  await tvTrace(db, nightId, false, { now: 12 })
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, false)
+  await db.doc(`nights/${nightId}`).update({ act: 6, beat: 'door' })
+  await tvTrace(db, nightId, true, { now: 13 })
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
+  assert.equal(doorReached({ act: 6, beat: 'drawing' }), false)
+  assert.equal(doorReached({ act: 6, beat: 'door' }), true)
+  assert.equal(doorReached({ act: 6, beat: 'eliminate' }), true)
+  assert.equal(doorReached({ act: 7, beat: 'ballot' }), true)
+  assert.equal(doorReached({ act: 5, beat: 'irwin' }), false)
+  assert.equal(doorReached(null), false)
+})
+
+test('a pause before any screen, then a resume, leaves the beat\'s screen up and not One moment; a pause in the dark stays dark', async () => {
+  const { db, nightId } = await party()
+  let now = 2_000_000
+  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now })
+  const screen = () => db.store.get(`nights/${nightId}/public/screen`)
+  assert.equal(screen(), undefined, 'no screen doc yet')
+  await host('pause')
+  assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked, undefined)
+  assert.ok(isPauseCard(screen()))
+  now += 5_000
+  await host('resume')
+  assert.equal(screen().kind, 'idle', 'nothing was parked: the beat\'s idle screen, not One moment')
+  assert.equal(screen().title, 'Sirwin Manor')
+  assert.ok(!isPauseCard(screen()))
+  // into Act 1, blackout, then a pause and a resume in the dark: the TV stays dark throughout
+  await host('next'); await host('next'); await host('next'); await host('next')
+  await host('blackout')
+  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
+  await host('pause')
+  assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked.kind, 'black')
+  await host('resume')
+  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '', 'dark again, not One moment')
+  assert.equal(db.store.get(`nights/${nightId}`).phase, 'blackout')
 })
 
 test('the cue relay carries the same catalogue', () => {
