@@ -513,17 +513,75 @@ test('the finale: the seven canon lines as strings, no slowest, the graph from t
   assert.equal(night(db, nightId).reveal, undefined)
 })
 
-test('a Hush line and a hush on the graph when the exposure safeguard fired, never which role', async () => {
+test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hush on the graph and a spotlight line, never which role', async () => {
   const { db, nightId } = await party(4)
   const t = { now: 7_500_000 }
   await walkTo(db, nightId, 2, 'orient', t)
-  await db.doc(`cases/${nightId}`).update({ 'exposure.ghost': { at: new Date(t.now) } })
+  // the real path: the Host tab's button, through safeguards.hush and the ledger, not a record written by hand
+  const r = await hostCommand(db, { nightId, command: 'hush', arg: 'ghost', now: t.now })
+  assert.equal(r.hushed, true)
+  assert.deepEqual(Object.keys(db.store.get(`cases/${nightId}`).exposure.ghost).sort(), ['act', 'hushedAt'], 'one record shape')
   await reveal(db, nightId, { now: t.now })
   const f = db.store.get(finalePath(nightId))
   const hush = f.stats.find(s => s.label === HUSH_LABEL)
   assert.ok(hush && !/ghost|murderer|victim/i.test(hush.value))
-  assert.equal(f.graph.hush, true)
+  assert.equal(f.graph.hush, true, 'the graph line the living room renders')
   assert.equal(f.stats.length, CANON_LABELS.length + 1)
+  assert.equal(f.spotlight.length, 1)
+  assert.equal(f.spotlight[0].act, 2)
+  assert.ok(!/"(roles|dial)"/.test(JSON.stringify(f)))
+  // both roles hushed through the older note-exposure name: still one line, still hush on the graph
+  await hostCommand(db, { nightId, command: 'note-exposure', arg: 'murderer', now: t.now + 1 })
+  const f2 = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now + 2)
+  assert.equal(f2.graph.hush, true)
+  assert.equal(f2.stats.filter(s => s.label === HUSH_LABEL).length, 1)
+  assert.equal(f2.spotlight.length, 2)
+})
+
+test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the eliminate or ballot windows', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 7_600_000 }
+  await walkTo(db, nightId, 2, 'questions', t)
+  await answerAll(db, nightId, uids, names, t)
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'settle', now: t.now })
+  // the two windows that are not Parlour Games land on every phone too
+  const { openWindow } = await import('../lib/deal.js')
+  for (const [kind, act, beat] of [['eliminate', 6, 'eliminate'], ['ballot', 7, 'ballot']]) {
+    await openWindow(db, nightId, kind, { now: t.now, act, beat })
+    t.now = ms(night(db, nightId).window.closesAt) + 1
+    await hostCommand(db, { nightId, command: 'settle', now: t.now })
+  }
+  const anyone = db.store.get(`sessions/${uids[names[0].toLowerCase()]}`)
+  assert.equal(Object.keys(anyone.windows).length, 3, 'three windows on the phone')
+  const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
+  const quick = f.stats.find(s => s.label === CANON_LABELS[6])
+  assert.match(quick.value, /, 1 of 1$/, `one Parlour Game dealt, one answered: ${quick.value}`)
+})
+
+test('Carry on after a hold during the Victim stage keeps the wait before the closing story', async () => {
+  const { db, nightId, t } = await revealed(4)
+  const { EPILOGUE_AFTER_MS } = await import('../lib/finale.js')
+  for (let i = 0; i < 3; i++) { t.now += 1000; await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now }) }
+  const named = db.store.get(finalePath(nightId))
+  assert.equal(named.stage, 'victim')
+  const victimAt = ms(named.victimAt)
+  assert.equal(victimAt, t.now)
+  // held three seconds after the Victim's name, carried on thirty seconds later
+  await hostCommand(db, { nightId, command: 'finale-hold', now: victimAt + 3_000 })
+  const r = await hostCommand(db, { nightId, command: 'finale-go', now: victimAt + 33_000 })
+  assert.equal(r.heldMs, 30_000)
+  const after = db.store.get(finalePath(nightId))
+  assert.equal(ms(after.victimAt), victimAt + 30_000, 'victimAt moved by the length of the hold')
+  assert.ok(victimAt + 33_000 - ms(after.victimAt) < EPILOGUE_AFTER_MS, 'the screen still waits for the closing story')
+  assert.equal(after.held, 30_000)
+  // a hold taken before the Victim was named leaves victimAt alone (the pause path already shifts it)
+  const { db: db2, nightId: id2, t: t2 } = await revealed(4)
+  await hostCommand(db2, { nightId: id2, command: 'finale-hold', now: t2.now + 5_000 })
+  for (let i = 0; i < 3; i++) await hostCommand(db2, { nightId: id2, command: 'reveal-stage', now: t2.now + 6_000 })
+  const v2 = ms(db2.store.get(finalePath(id2)).victimAt)
+  await hostCommand(db2, { nightId: id2, command: 'finale-go', now: t2.now + 40_000 })
+  assert.equal(ms(db2.store.get(finalePath(id2)).victimAt), v2, 'a hold that began before the name does not move it')
 })
 
 test('the fastest safe is the quickest right open, counted from the puzzle landing; a safe that gave way does not count', async () => {
