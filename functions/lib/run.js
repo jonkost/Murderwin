@@ -231,7 +231,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     default: {
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       const r = await night.hostCommand(db, { nightId, command, arg, now })
-      if (['blackout', 'pause', 'resume'].includes(command)) await screen.onPhase(db, nightId, command, { now }) // the room screens follow (screen.js)
+      // the room screens follow (screen.js); a second Pause or Resume that changed nothing moves no screen either
+      if (['blackout', 'pause', 'resume'].includes(command) && !r?.already) await screen.onPhase(db, nightId, command, { now })
       return r
     }
   }

@@ -292,14 +292,20 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   await next() // cat: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
   assert.deepEqual(screen().captions.lines, news.lines)
-  // a pause parks the screen under a near-black "One moment"; the resume brings it back
+  // a pause parks the screen under a near-black "One moment"; a second press (a double tap, a second
+  // host phone) changes nothing; the resume brings the parked screen back
   await host('pause')
   assert.equal(screen().kind, 'black')
   assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked.kind, 'idle')
+  assert.equal((await host('pause')).already, true)
+  assert.equal(screen().parked.kind, 'idle', 'the second press did not park the card over itself')
+  assert.equal(await onPhase(db, nightId, 'pause', { now }).then(r => r.already), true, 'and the screen hook alone refuses too')
   now += 30_000
   await host('resume')
-  assert.equal(screen().kind, 'idle')
+  assert.equal(screen().kind, 'idle', 'the TV is back on the beat, not on One moment')
   assert.equal(screen().parked, null)
+  assert.ok(!JSON.stringify(screen()).includes(db.store.get(`cases/${nightId}`).screenSalt), 'the salt never reaches the screen')
   await next() // puzzle
   await next() // questions
   now += 61_000

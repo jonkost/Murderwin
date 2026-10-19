@@ -322,9 +322,17 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   return { ...r, sound }
 }
 
+// The near-black "One moment" card the pause puts up.
+export function isPauseCard(doc) {
+  return doc?.kind === 'black' && Boolean(doc.title)
+}
+
 // The host's phase buttons: the room screens follow. Blackout and the
 // power each have a sound; a pause parks the screen under a near-black
-// "One moment" and the resume brings it back.
+// "One moment" and the resume brings it back. A second pause on top of the
+// first changes nothing (the parked screen is kept), and a resume with
+// nothing parked puts up the beat's idle screen rather than leaving "One
+// moment" on the TV.
 export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   if (command === 'blackout') {
     await writeScreen(db, nightId, screenDoc('black', { now, title: '' }))
@@ -338,6 +346,7 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   }
   if (command === 'pause') {
     const prev = await readScreen(db, nightId)
+    if (isPauseCard(prev)) return { ok: true, kind: 'black', already: true } // already parked: never park the card over itself
     const parked = prev ? { ...prev, parked: null } : null
     await writeScreen(db, nightId, screenDoc('black', { now, title: 'One moment', act: prev?.act ?? null, beat: prev?.beat ?? null, captions: prev?.captions ?? null, parked }))
     return { ok: true, kind: 'black' }
@@ -345,6 +354,19 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   if (command === 'resume') {
     const prev = await readScreen(db, nightId)
     if (prev?.parked) { await writeScreen(db, nightId, { ...prev.parked, parked: null }); return { ok: true, kind: prev.parked.kind } }
+    if (isPauseCard(prev)) {
+      // nothing was parked (a pause before any screen): the beat's own screen, dark through the blackout and the prompt
+      const nightSnap = await db.doc(`nights/${nightId}`).get()
+      const night = nightSnap.exists ? nightSnap.data() : {}
+      const act = prev.act ?? night.act ?? null
+      const beat = prev.beat ?? night.beat ?? null
+      const dark = night.phase === 'blackout' || night.phase === 'prompt'
+      const doc = dark
+        ? screenDoc('black', { now, title: '', act, beat, captions: null })
+        : screenDoc('idle', { now, act, beat, title: NIGHT.acts[String(act)]?.name ?? 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal, captions: prev.captions ?? null })
+      await writeScreen(db, nightId, doc)
+      return { ok: true, kind: doc.kind }
+    }
     return { ok: true, kind: prev?.kind ?? null }
   }
   return { ok: true }
