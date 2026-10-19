@@ -10,8 +10,10 @@
 // motive number, who died, or anything that joins a fragment to a motive.
 // The only case fields read are echo.fragment, irwin.lines, dial (to pick a
 // band, never written), motive (to keep it OUT of the strike list, never
-// written) and rehearsal. checkScreen refuses a doc with a forbidden key
-// before it is written, and the tests walk a whole night to prove it.
+// written), screenSalt (the secret the strikes and the frame pick are
+// seeded on, never written) and rehearsal. checkScreen refuses a doc with a
+// forbidden key before it is written, and the tests walk a whole night to
+// prove it.
 //
 // SEAL RULE: nothing here prints, logs or returns content. Results are ok
 // flags, kinds and counts.
@@ -35,7 +37,7 @@ export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'stin
 export const FORBIDDEN_SCREEN_KEYS = [
   'roles', 'role', 'dial', 'dialSign', 'dialMap', 'dialLog', 'motive', 'murderer', 'ghost', 'victim', 'victimCharacterId',
   'fragment', 'echo', 'kernels', 'documents', 'hiddenSets', 'studyClue', 'salemTruthIndex', 'granoliaSlot', 'variant',
-  'pools', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level',
+  'pools', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level', 'screenSalt',
 ]
 
 export const DOOR_HOLD_MS = 10_000
@@ -66,6 +68,15 @@ function msOf(t) {
 function unit(...parts) {
   const h = createHash('sha256').update(parts.map(String).join('\u0000')).digest()
   return h.readUInt32BE(0) / 0x100000000
+}
+
+// What the screens seed their picks on: the case's secret salt. The night
+// id is public (every phone has it) and this repo is public to Jon, so a
+// pick seeded on the night id could be replayed from outside; the salt
+// never leaves the case. A case from before the salt falls back to the
+// night id.
+export function screenSeed(c, nightId) {
+  return typeof c?.screenSalt === 'string' && c.screenSalt ? c.screenSalt : String(nightId ?? '')
 }
 
 // "LABEL: text" lines from a workshop list (the dealer has the same rule).
@@ -129,13 +140,16 @@ export function echoLines(c, frames, { seed = '' } = {}) {
 
 // ---------------------------------------------------------------------------
 // Act 3: the bulletin. The echo again, plus up to two motives the constable
-// has ruled out, never the active one, seeded on the night.
+// has ruled out, never the active one, seeded on the case's secret. Every
+// motive is ranked by the seed and its own number alone (never by its place
+// in a list the active motive was taken out of), so the ranking says
+// nothing about which motive is missing.
 
 export function struckMotives(c, { seed = '', motives = MOTIVES } = {}) {
   const count = strikeCount(c?.dial)
   if (!count) return []
   const others = motives.filter(m => m.n !== Number(c?.motive))
-  const order = others.map((m, i) => ({ m, r: unit(seed, 'strike', m.n, i) })).sort((a, b) => a.r - b.r).map(x => x.m)
+  const order = others.map(m => ({ m, r: unit(seed, 'strike', m.n) })).sort((a, b) => a.r - b.r).map(x => x.m)
   return order.slice(0, count).map(m => ({ n: m.n, rhyme: m.rhyme }))
 }
 
@@ -276,13 +290,14 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   if (kind === 'news' || kind === 'bulletin' || kind === 'irwin') {
     const c = await caseOf(db, nightId)
     const rehearsal = c?.rehearsal !== false
+    const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      const lines = echoLines(c, await linesOf(db, nightId, 'echo_frames'), { seed: nightId })
+      const lines = echoLines(c, await linesOf(db, nightId, 'echo_frames'), { seed })
       doc = screenDoc('news', { ...base, title: 'News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else if (kind === 'bulletin') {
       const ui = labelled(await linesOf(db, nightId, 'ui_copy'))
       const strikeLine = ui['STRIKE LINE']?.includes('[RHYME]') ? ui['STRIKE LINE'] : STRIKE_LINE
-      const { lines, struck } = bulletinLines(c, await linesOf(db, nightId, 'echo_frames'), { seed: nightId, strikeLine })
+      const { lines, struck } = bulletinLines(c, await linesOf(db, nightId, 'echo_frames'), { seed, strikeLine })
       doc = screenDoc('bulletin', { ...base, title: 'The bulletin', lines, struck, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)

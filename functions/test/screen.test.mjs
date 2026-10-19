@@ -12,7 +12,9 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES,
   echoLines, bulletinLines, struckMotives, strikeCount, dialBand, irwinTier, irwinLines, dogFilter, castNames, parseFrame, frameList,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, onBeat, onPhase, tvTrace, relayRules, labelled,
+  screenSeed, doorReached, isPauseCard,
 } from '../lib/screen.js'
+import { rehearsalCase, buildCase, screenSalt } from '../lib/case.js'
 
 // Everything here is a throwaway: synthetic bracketed fragments made in the
 // test and discarded with the process, and the dealer's own rehearsal case
@@ -81,6 +83,42 @@ test('the band follows the trace ladder exactly, and the strike count is 0, 1 or
   assert.equal(strikeCount(8), 2)
   assert.equal(strikeCount(4), 2)
   assert.equal(irwinTier(-8), 0); assert.equal(irwinTier(0), 1); assert.equal(irwinTier(8), 2)
+})
+
+test('the strikes are seeded on the case\'s secret salt, never the public night id, and the ranking does not move when the active motive changes', () => {
+  // every case carries a salt from its own rng, 32 hex characters, different case to case
+  const a = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
+  const b = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
+  assert.match(a.screenSalt, /^[0-9a-f]{32}$/)
+  assert.notEqual(a.screenSalt, b.screenSalt)
+  assert.equal(screenSalt(() => 0), '0'.repeat(32))
+  assert.equal(screenSeed(a, 'n1'), a.screenSalt, 'the screens seed on the salt')
+  assert.equal(screenSeed({}, 'n1'), 'n1', 'a case from before the salt falls back to the night id')
+  assert.ok(FORBIDDEN_SCREEN_KEYS.includes('screenSalt'), 'a public doc may never carry it')
+  // two cases that share a night id and a motive but not a salt strike different motives
+  const c1 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: a.screenSalt }
+  const c2 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: b.screenSalt }
+  const s1 = struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s2 = struckMotives(c2, { seed: screenSeed(c2, 'n1') })
+  assert.notDeepEqual(s1, s2)
+  assert.deepEqual(struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s1, 'and the same ones on the host\'s second press')
+  // the public replay: from the night id alone, no candidate motive reproduces the strikes more often than chance
+  let pinned = 0
+  const trials = 300
+  for (let t = 0; t < trials; t++) {
+    const c = { ...fixtureCase({ dial: 8, motive: 1 + (t % MOTIVES.length) }), screenSalt: screenSalt(randomInt) }
+    const shown = struckMotives(c, { seed: screenSeed(c, `night-${t}`) }).map(s => s.n).join(',')
+    const fits = MOTIVES.filter(m => struckMotives({ dial: 8, motive: m.n }, { seed: `night-${t}` }).map(s => s.n).join(',') === shown)
+    if (fits.length === 1 && fits[0].n === c.motive) pinned++
+  }
+  assert.ok(pinned <= 3, `the night id replay pinned the motive ${pinned} times in ${trials}`)
+  // with one secret ranking, taking the active motive out never reorders the rest: no index rides along
+  const seed = a.screenSalt
+  const full = struckMotives({ dial: 8, motive: 0 }, { seed }).map(s => s.n)
+  for (const m of MOTIVES) {
+    const without = struckMotives({ dial: 8, motive: m.n }, { seed }).map(s => s.n)
+    const expect = [...full, ...struckMotives({ dial: 8, motive: 0 }, { seed, motives: MOTIVES.filter(x => !full.includes(x.n)) }).map(s => s.n)].filter(n => n !== m.n).slice(0, 2)
+    assert.deepEqual(without, expect, `motive ${m.n} out: the next in the one ranking steps up`)
+  }
 })
 
 test('the bulletin strikes 1 motive at dial 0, 0 at strong negative, 2 at strong positive, never the active one, and the same ones on a re-run', () => {
@@ -190,7 +228,7 @@ test('the seed names a screen and a sound only from the catalogues', () => {
 // sound in the catalogue is written once, and no screen doc ever carries a
 // forbidden field. The fake-players' public-doc tokens are checked too.
 
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"', '"screenSalt"']
 
 async function party() {
   const db = new FakeFirestore()
