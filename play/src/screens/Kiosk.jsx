@@ -5,7 +5,7 @@ import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed } from '../lib/finale'
+import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hushLines } from '../lib/finale'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad. A kiosk is
 // a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -457,7 +457,7 @@ export function Finale({ night, finale, serverNow }) {
       <p className="kiosk-crest">All night, two of you were pulling</p>
       <TugOfWar graph={finale.graph} />
       <p className="kiosk-line">Every Parlour Game answer from two phones moved this. Nobody knew. Not even them.</p>
-      {finale.graph?.hush && <p className="kiosk-next">Hush. Somebody was found out, and the Manor said nothing.</p>}
+      {hushLines(finale).map(t => <p key={t} className="kiosk-next">{t}</p>)}
       {held && <p className="kiosk-next">Held</p>}
     </div>
   )

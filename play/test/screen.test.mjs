@@ -161,6 +161,8 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   assert.ok(!/inset:\s*0/.test(wake), 'the wake control is not a full-screen wall')
   assert.ok(/right:/.test(wake) && /bottom:/.test(wake), 'the wake control sits in a corner')
   assert.ok(!/brand-blue/.test(wake), 'the wake control is not a bright blue wall')
+  // the hush line under the graph comes from the finale doc's spotlight
+  assert.ok(kiosk.includes('hushLines(finale)'), 'the graph renders the spotlight lines')
   const main = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
   assert.ok(main.includes('ipad'))
 })

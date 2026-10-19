@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { finaleStage, elapsed, namesReady, secondsUntilNames, shownStats, shownAchievements, releasedNames, achievementsOf, EPILOGUE_AFTER_MS } from '../src/lib/finale.js'
+import { finaleStage, elapsed, namesReady, secondsUntilNames, shownStats, shownAchievements, releasedNames, achievementsOf, EPILOGUE_AFTER_MS, hushLines, HUSH_LINE } from '../src/lib/finale.js'
 
 // Pure helpers for the living room screen in Act 7. Sample docs are shaped
 // as the server writes them; no names in them are anything but samples.
@@ -66,4 +66,16 @@ test('achievementsOf reads the workshop list as Title: line, numbered as the hos
   ])
   assert.deepEqual(achievementsOf(null), [])
   assert.deepEqual(achievementsOf({ achievements: { items: [{ text: 'A: b' }] } }), [{ n: 1, title: 'A', line: 'b' }])
+})
+
+test('the hush under the graph: the spotlight lines when the host pressed Hush, nothing otherwise', () => {
+  // the Host tab promised "the reveal will say so": the server writes
+  // finale.spotlight from the one exposure record, and the TV shows it
+  const spot = [{ role: 'ghost', act: 4, text: '[hush line for one role]' }]
+  assert.deepEqual(hushLines({ graph: { hush: true }, spotlight: spot }), ['[hush line for one role]'])
+  assert.deepEqual(hushLines({ graph: { hush: true }, spotlight: [...spot, { role: 'murderer', act: 2, text: '[hush line for the other]' }] }), ['[hush line for one role]', '[hush line for the other]'])
+  assert.deepEqual(hushLines({ graph: { hush: true } }), [HUSH_LINE], 'the flag alone still says so')
+  assert.deepEqual(hushLines({ graph: { hush: false } }), [])
+  assert.deepEqual(hushLines({ graph: { hush: false }, spotlight: [] }), [])
+  assert.deepEqual(hushLines(null), [])
 })
