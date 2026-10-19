@@ -70,6 +70,38 @@ test('a plain run keeps the edited set, regenerates the other eighteen, keeps ev
   assert.equal(report.reviewed, 1)
 })
 
+test('a set Jenna marked done (or needs more) but did not edit is kept on a plain run, counted, and archived before --regenerate-all or --force-code replaces it', async () => {
+  const db = seeded()
+  // DRY09 read and marked done, DRY12 marked needs more: no editedAt on either
+  for (const [code, review] of [['DRY09', 'done'], ['DRY12', 'more']]) {
+    const d = db.store.get(`sealed/${code}`)
+    d.review = review
+    d.reviewedAt = new Date(7000)
+  }
+  const nine = JSON.stringify(db.store.get('sealed/DRY09')), twelve = JSON.stringify(db.store.get('sealed/DRY12'))
+  const plain = await capture(log => runGenerate(db, { generate: fresh, motives, now: () => new Date(9000), log }))
+  assert.deepEqual(plain.r, { kept: 3, generated: 16, archived: 0, codes: 19 })
+  assert.equal(JSON.stringify(db.store.get('sealed/DRY09')), nine, 'the set marked done is exactly as it was')
+  assert.equal(JSON.stringify(db.store.get('sealed/DRY12')), twelve, 'the set marked needs more is exactly as it was')
+  assert.ok(plain.lines.includes('kept 3, generated 16'))
+  assert.ok(plain.lines.includes("3 of the kept sets are the Steward's (edited or reviewed)"), plain.lines.join('\n'))
+  assert.ok(plain.lines.some(l => l === 'code DRY09: kept (reviewed by the Steward)'))
+  assert.ok(plain.lines.some(l => l === 'code DRY12: kept (reviewed by the Steward)'))
+  assert.ok(plain.lines.some(l => l === 'code DRY05: kept (edited by the Steward)'))
+  // --force-code on the reviewed set: archived first, the review carried into the archive
+  const forced = await capture(log => runGenerate(db, { generate: fresh, motives, forceCode: 'DRY09', now: () => new Date(11000), log }))
+  assert.deepEqual(forced.r, { kept: 18, generated: 1, archived: 1, codes: 19 })
+  const a = db.store.get(`${ARCHIVE}/DRY09-11000`)
+  assert.equal(a.review, 'done'); assert.equal(a.reviewedAt.getTime(), 7000); assert.equal(a.code, 'DRY09')
+  assert.equal(db.store.get('sealed/DRY09').review, undefined, 'the fresh set carries no review mark')
+  // --regenerate-all: the edited set and the remaining reviewed set are both archived
+  const all = await capture(log => runGenerate(db, { generate: fresh, motives, regenerateAll: true, now: () => new Date(13000), log }))
+  assert.deepEqual(all.r, { kept: 0, generated: 19, archived: 2, codes: 19 })
+  assert.ok(db.store.has(`${ARCHIVE}/DRY05-13000`) && db.store.has(`${ARCHIVE}/DRY12-13000`))
+  assert.ok(!all.lines.some(l => /Steward's/.test(l)), 'no kept line when nothing was kept')
+  for (const l of [...plain.lines, ...forced.lines, ...all.lines]) { assert.ok(!NO_CONTENT.test(l), `content in: ${l.length} chars`); assert.ok(l.length <= 80) }
+})
+
 test('--regenerate-all archives the edited set under sealed/_archive first, then replaces all nineteen', async () => {
   const db = seeded()
   const edited = structuredClone(db.store.get('sealed/DRY05'))

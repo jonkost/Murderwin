@@ -7,18 +7,22 @@
 //   processed in a crypto-shuffled order, progress lines carry no code, and
 //   the per-code count lines print once at the end, sorted by code string.
 //
-// THE STEWARD'S EDITS SURVIVE (H, 17 Oct 2026). A sealed doc that Jenna has
-// edited carries editedAt (functions/lib/steward.js). This script never
-// deletes sealed/* first any more:
+// THE STEWARD'S WORK SURVIVES (H, 17 Oct 2026). A sealed doc that Jenna has
+// edited carries editedAt, and one Jenna has read and marked carries review
+// 'done' or 'more' (functions/lib/steward.js). Both are her work product,
+// and a plain run keeps both. This script never deletes sealed/* first:
 //   node generate-sealed.mjs                  regenerate every set that has
-//                                             no editedAt; keep the edited
+//                                             no editedAt and no review mark;
+//                                             keep the edited and the reviewed
 //                                             ones; the manifest keeps its codes
-//   node generate-sealed.mjs --regenerate-all copy every edited set to
-//                                             sealed/_archive/items/{code}-{ts}
+//   node generate-sealed.mjs --regenerate-all copy every edited or reviewed set
+//                                             to sealed/_archive/items/{code}-{ts}
 //                                             first, then regenerate all 19
 //   node generate-sealed.mjs --force-code X   replace that one set (archived
-//                                             first if edited); keep the rest
-// The counts line reads "kept N, generated M" (and "archived K" when any).
+//                                             first if edited or reviewed);
+//                                             keep the rest
+// The counts line reads "kept N, generated M" (and "archived K" when any),
+// and a second line says how many of the kept sets were the Steward's.
 
 import { randomBytes, randomInt } from 'node:crypto'
 import Anthropic from '@anthropic-ai/sdk'
@@ -158,6 +162,7 @@ async function generateOne(client, motive, extras) {
 }
 
 export const ARCHIVE = 'sealed/_archive/items' // under sealed/, so the rules deny every client read of it too
+export const REVIEWED = ['done', 'more'] // the Steward's two marks (steward.js REVIEWS, less the blank)
 const CODE_RE = /^[A-Z0-9]{3,12}$/
 
 // One run, against any Firestore-shaped db (the Admin SDK, or lib.mjs
@@ -183,7 +188,7 @@ export async function runGenerate(db, {
 
   const manifest = {}
   const countsByCode = {}
-  let kept = 0, generated = 0, archived = 0
+  let kept = 0, generated = 0, archived = 0, stewards = 0
   // crypto-shuffled processing order: line order carries no motive information
   for (const i of shuffled(motives.length)) {
     const motive = motives[i]
@@ -193,14 +198,18 @@ export async function runGenerate(db, {
     const snap = await ref.get()
     const existing = snap.exists ? snap.data() : null
     const edited = Boolean(existing?.editedAt)
+    const reviewed = REVIEWED.includes(existing?.review)
+    const hers = edited || reviewed // the Steward's work product: her edits, or her mark that a set is done or needs more
     const replaceThis = regenerateAll || forceCode === code
-    const keepThis = Boolean(existing) && (forceCode ? !replaceThis : (edited && !replaceThis))
+    const keepThis = Boolean(existing) && (forceCode ? !replaceThis : (hers && !replaceThis))
     if (keepThis) {
       kept++
-      countsByCode[code] = edited ? 'kept (edited by the Steward)' : 'kept'
+      if (hers) stewards++
+      countsByCode[code] = edited ? 'kept (edited by the Steward)' : reviewed ? 'kept (reviewed by the Steward)' : 'kept'
       continue
     }
-    if (existing && edited) {
+    if (existing && hers) {
+      // the archive carries the whole doc: the text, the edit marks, the review and when it was made
       await db.doc(`${ARCHIVE}/${code}-${now().getTime()}`).set({ ...existing, code, archivedAt: now() })
       archived++
     }
@@ -235,6 +244,7 @@ export async function runGenerate(db, {
   const all = await db.collection('sealed').get()
   const runHash = sha12(all.docs.map(d => [d.id, sha12(d.data())]).sort())
   log(`kept ${kept}, generated ${generated}${archived ? `, archived ${archived}` : ''}`)
+  if (stewards) log(`${stewards} of the kept sets are the Steward's (edited or reviewed)`)
   log(`manifest written (${Object.keys(manifest).length} codes). run hash ${runHash}`)
   return { kept, generated, archived, codes: Object.keys(manifest).length }
 }
