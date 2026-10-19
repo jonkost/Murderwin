@@ -32,11 +32,17 @@ import { checkSealed, CAT_KEYS } from './case.js'
 // The Steward's hash: the SHA-256 of their verified Google email, lower
 // case. The same value as isAdmin() in firestore.rules (the admin-drift
 // test keeps them equal). STEWARD_EMAIL_HASH in the functions env overrides
-// it, for a stand-in Steward on the emulator.
+// it for a stand-in Steward, but ONLY on the emulator (FUNCTIONS_EMULATOR is
+// 'true' there and nowhere else): a deployed function always uses the hash
+// in the rules, so no .env line can open the sealed sets to another account.
 export const RULES_STEWARD_HASH = '2ea18fbeb53147b23ca3afa1e1291934aeea1b6e5c6c2c7b40b6301386ffe2b8'
-export function stewardHash() {
-  const env = String(process.env.STEWARD_EMAIL_HASH ?? '').trim().toLowerCase()
-  return /^[a-f0-9]{64}$/.test(env) ? env : RULES_STEWARD_HASH
+export function onEmulator(env = process.env) {
+  return String(env.FUNCTIONS_EMULATOR ?? '').trim().toLowerCase() === 'true'
+}
+export function stewardHash(env = process.env) {
+  if (!onEmulator(env)) return RULES_STEWARD_HASH
+  const override = String(env.STEWARD_EMAIL_HASH ?? '').trim().toLowerCase()
+  return /^[a-f0-9]{64}$/.test(override) ? override : RULES_STEWARD_HASH
 }
 
 export function emailHash(email) {
