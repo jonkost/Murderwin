@@ -84,3 +84,14 @@ export function achievementsOf(content) {
     return { n: i + 1, title: (m ? m[1] : text).trim(), line: (m ? m[2] : '').trim() }
   }).filter(a => a.title)
 }
+
+// The line under the graph when the host pressed Hush: the server's plain
+// words for each role found out (finale.spotlight), or, when the doc carries
+// only the flag, one generic line. Nothing when nobody was hushed.
+export const HUSH_LINE = 'Hush. Somebody was found out, and the Manor said nothing.'
+export function hushLines(finale) {
+  const spot = Array.isArray(finale?.spotlight) ? finale.spotlight : []
+  const lines = spot.map(s => String(s?.text ?? '').trim()).filter(Boolean)
+  if (lines.length) return lines
+  return finale?.graph?.hush ? [HUSH_LINE] : []
+}

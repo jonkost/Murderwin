@@ -65,9 +65,9 @@ game; it serves the bulb and the speakers.
    `study station up` with the panel counts. `DOWN` beside either wall means
    the game runs on the screen instead; the clue still lands.
 5. *The screens.* Open the three kiosk addresses (and the iPad's), full
-   screen. Each one asks for one tap to wake, so the browser lets it make a
-   sound; tap it once and leave it. Then each shows its crest and a waiting
-   line. They follow the night on their own; nothing else on them is ever
+   screen. Each one shows a small "tap once to wake" note in the bottom
+   right corner, so the browser lets it make a sound; tap anywhere once and
+   leave it. Each shows its crest and a waiting line. They follow the night on their own; nothing else on them is ever
    pressed. A small dot in the bottom left corner is green while the screen
    can hear the house, amber if it has gone quiet, red if it is off the wifi.
    A bell in the top right corner shows for three seconds whenever a sound

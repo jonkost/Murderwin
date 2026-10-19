@@ -41,6 +41,21 @@ test('the living room: the phase wins, then the finale, the ballot, a drawing, t
   assert.equal(roomDark(null), false)
 })
 
+test('a pause during the blackout or the prompt keeps every room screen dark', () => {
+  // the host presses Blackout, then Pause (Irwin needs the garden): the phones
+  // stay dark through effectivePhase, and so do the bedroom, the study, the
+  // TV and the iPad; "One moment" shows only for a pause taken in an act
+  for (const from of ['blackout', 'prompt']) {
+    const paused = { ...NIGHT, phase: 'paused', pausedFrom: from }
+    assert.equal(roomDark(paused), true, `bedroom and study dark, paused from ${from}`)
+    assert.equal(livingView({ night: paused, screen: { kind: 'news' } }), 'dark', `TV dark, paused from ${from}`)
+    assert.equal(livingView({ night: paused, screen: { kind: 'idle' }, captionsOnly: true }), 'dark', `iPad dark, paused from ${from}`)
+  }
+  assert.equal(roomDark({ ...NIGHT, phase: 'paused', pausedFrom: 'act' }), false)
+  assert.equal(livingView({ night: { ...NIGHT, phase: 'paused', pausedFrom: 'act' }, screen: { kind: 'news' } }), 'paused')
+  assert.equal(livingView({ night: { ...NIGHT, phase: 'paused' }, screen: { kind: 'news' } }), 'paused', 'no pausedFrom: an act')
+})
+
 test('captions: the card while it is up, else the last ones the server carried', () => {
   assert.deepEqual(captionsOf({ kind: 'bulletin', title: 'The bulletin', lines: ['a', 'b'] }), { kind: 'bulletin', title: 'The bulletin', lines: ['a', 'b'] })
   assert.deepEqual(captionsOf({ kind: 'idle', captions: { kind: 'news', lines: ['a'] } }), { kind: 'news', title: '', lines: ['a'] })
@@ -134,6 +149,20 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
+  // the iPad heartbeats under its own key, never as the living room TV
+  assert.ok(kiosk.includes('`kiosk-${which}`'), 'the heartbeat key is the kiosk name itself')
+  assert.ok(!kiosk.includes("which === 'ipad' ? 'living'"), 'the iPad never borrows the TV key')
+  // the wake control: a corner control that never shows while the room is dark
+  assert.ok(kiosk.includes('<Wake hidden={dark} />'), 'the wake control is hidden while dark')
+  assert.ok(kiosk.includes("window.addEventListener('pointerdown', wake)"), 'any tap on the page wakes the screen')
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  const wake = css.split('\n').find(l => l.startsWith('.kiosk-wake {')) ?? ''
+  assert.ok(wake, 'the wake style exists')
+  assert.ok(!/inset:\s*0/.test(wake), 'the wake control is not a full-screen wall')
+  assert.ok(/right:/.test(wake) && /bottom:/.test(wake), 'the wake control sits in a corner')
+  assert.ok(!/brand-blue/.test(wake), 'the wake control is not a bright blue wall')
+  // the hush line under the graph comes from the finale doc's spotlight
+  assert.ok(kiosk.includes('hushLines(finale)'), 'the graph renders the spotlight lines')
   const main = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
   assert.ok(main.includes('ipad'))
 })

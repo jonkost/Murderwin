@@ -47,8 +47,11 @@ near-black with "One moment" while the night is paused.
 
 ## The three corners of every screen
 
-- *Tap once to wake.* The first thing each screen asks. Browsers will not
-  play a sound until someone has touched the page; one tap, then leave it.
+- *Tap once to wake.* A small note in the bottom right corner. Browsers will
+  not play a sound until someone has touched the page; one tap anywhere on
+  the page (or any key), then leave it. It never covers the screen, and it
+  does not show while the room is dark, so a screen that reloads during the
+  blackout stays black.
 - *The bell.* Top right, for three seconds, whenever a sound is called for.
   The screen rings a small chime of its own at the same moment. If you see
   the bell and hear nothing from the speakers, the brain or the speakers are

@@ -6,6 +6,7 @@
 // that is still in play.
 
 import { isStale, secondsSinceHeard } from './clock.js'
+import { effectivePhase } from './night.js'
 
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
@@ -24,10 +25,12 @@ export function ms(t) {
 // (dark through the blackout and the prompt, "One moment" while paused),
 // then the finale, the ballot clock, a drawing under way, the board, the
 // open door, a card (news, bulletin, Irwin) and finally the idle crest.
+// A pause taken during the blackout or the prompt keeps the room dark: the
+// phase the night was paused from decides, the same as on the phones.
 export function livingView({ night, relay, screen, finale, captionsOnly = false } = {}) {
-  const phase = night?.phase
+  const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return 'dark'
-  if (phase === 'paused') return 'paused'
+  if (night?.phase === 'paused') return 'paused'
   if (screen?.kind === 'black') return screen.title ? 'paused' : 'dark'
   if (finale && night?.act === 7) return 'finale'
   if (night?.window?.kind === 'ballot' && !night.window.settled) return 'ballot'
@@ -39,9 +42,11 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   return 'idle'
 }
 
-// The bedroom and the study go dark with everyone else.
+// The bedroom and the study go dark with everyone else, and stay dark when
+// the host pauses in the middle of the blackout or the prompt.
 export function roomDark(night) {
-  return night?.phase === 'blackout' || night?.phase === 'prompt'
+  const phase = effectivePhase(night)
+  return phase === 'blackout' || phase === 'prompt'
 }
 
 // The captions the iPad shows: the card itself while it is up, else the

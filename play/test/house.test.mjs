@@ -28,7 +28,7 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(v.station.alive, true)
   assert.equal(v.station.quietFor, '0:45')
   const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
-  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-bedroom': false, 'kiosk-study': false, cues: true })
+  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, cues: true })
   assert.equal(v.machines.length, MACHINES.length)
   const quiet = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g2', updatedAt: stamp(NOW - QUIET_MS - 1000) }, rotation: ROTATION, now: NOW })
   assert.equal(quiet.station.alive, false)
@@ -77,4 +77,17 @@ test('while a window is open the panel shows a count of answers and no per-guest
   assert.equal(over.answered, null)
   const settled = houseView({ night: { ...open, window: { ...open.window, settled: true } }, now: NOW })
   assert.equal(settled.showGuests, true)
+})
+
+test('the iPad has its own row: an awake iPad never shows the living room TV as alive', () => {
+  // the living room MacBook dies during Act 6 (it is the relay clock); the
+  // wandering iPad is still awake. Its heartbeat is kiosk-ipad, so the TV's
+  // dot goes quiet and the host can see it is gone.
+  const presence = { 'kiosk-ipad': NOW, 'kiosk-living': NOW - 3 * 60_000 }
+  const v = houseView({ night: NIGHT, study: null, rotation: ROTATION, presence, now: NOW })
+  const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
+  assert.equal(by['kiosk-ipad'], true)
+  assert.equal(by['kiosk-living'], false)
+  assert.ok(MACHINES.some(m => m.key === 'kiosk-ipad' && m.label), 'the iPad is a row of its own')
+  assert.equal(new Set(MACHINES.map(m => m.key)).size, MACHINES.length, 'every machine key is unique')
 })
