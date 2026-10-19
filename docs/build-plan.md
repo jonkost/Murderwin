@@ -1,6 +1,9 @@
-# The major build, 17 October 2026
+# The major build, 17 to 19 October 2026
 
-What is being built between now and the freeze on 7 November, in plain words.
+**Status, 19 October: all ten pieces are built, reviewed and merged on main.**
+Nothing is deployed until you run the deploy command below.
+
+What was built between 17 and 19 October, in plain words.
 Written from a full map of the game against the Canon (six readers, three
 planners, three judges, one plan). Everything here is safe for you to read.
 
@@ -54,18 +57,36 @@ each with tests. I merge them and check them before anything goes live.
 
 ## What needs your hands
 
-Nothing yet. When a wave is merged I will say so, and then:
+In this order:
 
-- Deploy: `npm run deploy`. Nothing goes live until you run it.
-- Make the secrets for real: put your Anthropic key and the service-account
-  file in `scripts/.env`, run the two scripts I name, read only the PASS line.
+1. **Deploy.** Run `npm run deploy`. It may ask to turn on the Cloud Scheduler
+   service for the once-a-minute clock; say yes. Nothing goes live until you do.
+2. **Try a rehearsal.** Start a new night from your phone's Host tab and press
+   Next. Open `/play/?check=1` on the Mac to confirm your lines; open
+   `/play/?phone=1` for a second guest; `/play/?kiosk=living` on the TV.
+3. **Make the secrets for real** (any evening): put your Anthropic key and the
+   service-account file in `scripts/.env` (copy `scripts/.env.example`), then
+   run `npm --prefix scripts run generate` and `node scripts/pack-bags.mjs`.
+   Read only the PASS line of each.
+4. **On the party day**, tick "This is the party night" on the workshop's
+   Game night page before you start the night.
+
+Then, when you have them:
+
 - Dry runs with real secrets are for the fake players only. You watch the
   Host tab and the TV. Your phone and Susan's never join that night.
-- On the party day, tick "This is the party night" when you create the night.
 - One evening before 7 November with the Nanoleaf wall, the Stream Deck and
   the Hue bulb plugged in, to run a hardware check.
 - Sound files and the seven stationery pictures, whenever you have them.
   Stand-ins work until then.
+
+## Three questions, one line each, no hurry
+
+- The iPad: stand it in the orangery as the captions screen through dinner
+  (what the design says), or keep it as the spare phone only?
+- The nine sounds: will you record them before the freeze, or should the
+  stand-in tones play at the party?
+- Hand this phone on: one tap on the Host tab, or ask twice?
 
 ## Decisions I am taking unless you say otherwise
 
@@ -76,6 +97,12 @@ Nothing yet. When a wave is merged I will say so, and then:
 - The murderer clue at the bags station is a property from the murderer's
   real bag.
 - Rehearsals use the emulator rather than a second Firebase project.
+- Every Detective draws their own Parlour Game set, so no two phones are
+  expected to match and the two hidden roles never stand out (the review
+  caught this; the first build gave every Detective one shared set).
+- Spill the Beans works until the first clue has been shown to the room.
+- The deck hands out only the bag numbers the packer packed.
+- Jenna's page shows each set's riddle at the top, as the rules allow.
 
 ## Not in this build
 
