@@ -199,8 +199,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // its close and its grace, ends a study slot that has run out; a paused night is left alone
       return windows.tick(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
     case 'note-exposure':
-      // the exposure safeguard: a silent tap that a hidden role was seen; its dial pushes are hushed from here on
-      return windows.noteExposure(db, nightId, arg, { now })
+      // the older name for the Hush: the same record, through the same path (safeguards.js, ledger.js)
+      return safeguards.hush(db, { nightId, role: arg, now })
     case 'reveal-stage':
       // Act 7: one more name onto the living room screen, Murderer, then Motive, then Victim
       return finale.stage(db, nightId, { now })

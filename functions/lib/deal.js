@@ -505,11 +505,12 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
   if (kind === 'questions') {
     const bank = await questionBank(db)
     const cats = CAT_KEYS.filter(k => k !== 'irwin')
-    // one set for every detective this window; the hidden roles get the set their case names (windows.js)
+    // every detective draws their own set this window, among the sets that read as long as the
+    // hidden roles' sets; the hidden roles get the set their case names (windows.js)
     const c = await readCase(db, nightId)
     const sets = pickSets({ bank, c, act, beat, pick: pickInt })
     for (const g of list) {
-      const set = bank[setFor(sets, roleOf(c, g.key))]
+      const set = bank[setFor(sets, roleOf(c, g.key), pickInt)]
       const cat = choice(cats)
       priv[g.key] = { cat, values: valuesOf(set) }
       await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, cat, catName: CAT_NAMES[cat], beats: stripValues(set) } })

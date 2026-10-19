@@ -1,11 +1,13 @@
 // The windows engine: the clock that settles every window on time, the
-// clarity dial, which Parlour Game set each phone is dealt, the parity of
-// the three role cards, and the exposure record.
+// clarity dial, which Parlour Game set each phone is dealt, and the parity
+// of the three role cards.
 //
 // A window is the minute (or two) when every phone lights up at once. The
 // dealer (deal.js) opens them and settles them; this file decides WHEN they
 // settle with nobody pressing anything (tick), WHICH set each phone gets
-// (pickSets), and what a hidden role's answers do to the dial (pushDial).
+// (pickSets, setFor), and what a hidden role's answers do to the dial
+// (pushDial). The exposure record (the Hush) lives in ledger.js: one writer,
+// one reader, one shape.
 //
 // SEAL RULE. The case (cases/{nightId}) is read here only to pick sets and
 // to move the dial. Nothing here returns content, prints content, or writes
@@ -16,13 +18,14 @@ import { NightError, readArea } from './night.js'
 import { settleWindow, ms, beatsOf } from './deal.js'
 import { tickStudy } from './station.js'
 import { DIAL_SIGN, WINDOW_SLOTS } from './case.js'
+import { isHushed } from './ledger.js'
 
 // A phone that taps inside the grace after closesAt is still heard; after
 // that the server's default has fired and the tap is a late one.
 export const GRACE_MS = 5000
 // The three role cards may differ in length by this much (word counts).
 export const PARITY_TOLERANCE = 0.2
-// The detectives' set is chosen within this much of the hidden roles' sets.
+// A detective's set is drawn within this much of the hidden roles' sets.
 export const SET_TOLERANCE = 0.15
 export const HIDDEN_ROLES = ['murderer', 'ghost']
 // Padding for a short role card, when the workshop has no 'FILLER:' line.
@@ -47,9 +50,12 @@ export function setLength(beats) {
 
 // The four windows of the night, as the case names them (case.js
 // WINDOW_SLOTS): act2, act4a, act4b, act6. Act 4 has two: the first up to
-// and at the beat 'questions1', the second after it. A window the host opens
-// by hand in another act has no slot and the hidden roles draw at random.
+// and at the beat 'questions1', the second after it. A window with no beat
+// (the host's own Light up button) has no slot: every phone, hidden roles
+// included, draws at random, so a bonus round never repeats a set on two
+// phones only.
 export function slotFor(act, beat = null) {
+  if (!beat) return null
   const a = Number(act)
   if (a === 2) return 'act2'
   if (a === 6) return 'act6'
@@ -65,11 +71,12 @@ export function slotFor(act, beat = null) {
 function near(a, b) { return Math.abs(a - b) <= SET_TOLERANCE * Math.max(a, b, 1) }
 function apart(a, b) { return Math.abs(a - b) / Math.max(a, b, 1) }
 
-// One set for every detective, and the case's set for each hidden role.
-// The detectives' set is drawn among the sets that read about as long as
-// the hidden roles' sets, so nobody's screen is fuller than the next; when
-// no set is that close to both, the closest ones. Returns indices into the
-// bank, never the sets themselves.
+// The case's set for each hidden role, and the candidates every detective
+// draws from: the sets that read about as long as the hidden roles' sets,
+// so nobody's screen is fuller than the next; when no set is that close to
+// both, the closest ones. Each detective draws on their own (setFor), so no
+// two phones are expected to match and the hidden roles are never the odd
+// ones out. Returns indices into the bank, never the sets themselves.
 export function pickSets({ bank, c = null, act = null, beat = null, pick = n => Math.floor(Math.random() * n) } = {}) {
   const n = Array.isArray(bank) ? bank.length : 0
   if (!n) throw new NightError('invalid', 'There are no Parlour Games to deal.')
@@ -87,12 +94,16 @@ export function pickSets({ bank, c = null, act = null, beat = null, pick = n => 
     const best = Math.min(...lengths.map((len, i) => worst(i)))
     candidates = lengths.map((len, i) => i).filter(i => worst(i) === best)
   }
-  sets.detective = candidates[pick(candidates.length)]
+  sets.candidates = candidates
   return sets
 }
 
-export function setFor(sets, role) {
-  return Number.isInteger(sets?.[role]) ? sets[role] : sets.detective
+// One phone's set: a hidden role's fixed index, or a fresh draw from the
+// candidates for everyone else. Called once per phone.
+export function setFor(sets, role, pick = n => Math.floor(Math.random() * n)) {
+  if (Number.isInteger(sets?.[role])) return sets[role]
+  const list = Array.isArray(sets?.candidates) && sets.candidates.length ? sets.candidates : [0]
+  return list[pick(list.length)]
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +120,7 @@ export async function pushDial(db, nightId, { c = null, role, total, act = null,
     if (!snap.exists) return null
     const cur = snap.data()
     const sign = Number(cur.dialMap?.[role] ?? cur.dialSign?.[role] ?? c?.dialMap?.[role] ?? DIAL_SIGN[role] ?? 0)
-    const hushed = Boolean(cur.exposure?.[role])
+    const hushed = isHushed(cur, role) // the one reader of the exposure record (ledger.js)
     const delta = hushed ? 0 : sign * (Number(total) || 0)
     const log = Array.isArray(cur.dialLog) ? cur.dialLog : []
     const entry = { act: act ?? null, role, delta, at: new Date(now) }
@@ -117,19 +128,6 @@ export async function pushDial(db, nightId, { c = null, role, total, act = null,
     tx.update(caseRef, { dial: (cur.dial ?? 0) + delta, dialLog: [...log, entry] })
     return { delta, hushed }
   })
-}
-
-// The exposure record: a silent tap that a hidden role has been seen. From
-// then on that role's answers move no dial. Nothing is shown to any phone
-// until Act 7; the finale and the safeguards read cases/{id}.exposure.
-export async function noteExposure(db, nightId, role, { now = Date.now() } = {}) {
-  if (!HIDDEN_ROLES.includes(role)) throw new NightError('invalid', 'Say which: murderer or ghost.')
-  const caseRef = db.doc(`cases/${nightId}`)
-  const snap = await caseRef.get()
-  if (!snap.exists || !snap.data().roles) throw new NightError('invalid', 'No case yet. Press Power returns first.')
-  if (snap.data().exposure?.[role]) return { ok: true, role, already: true }
-  await caseRef.update({ [`exposure.${role}`]: { at: new Date(now) } })
-  return { ok: true, role }
 }
 
 // ---------------------------------------------------------------------------
