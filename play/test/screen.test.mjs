@@ -149,6 +149,9 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
+  // the iPad heartbeats under its own key, never as the living room TV
+  assert.ok(kiosk.includes('`kiosk-${which}`'), 'the heartbeat key is the kiosk name itself')
+  assert.ok(!kiosk.includes("which === 'ipad' ? 'living'"), 'the iPad never borrows the TV key')
   // the wake control: a corner control that never shows while the room is dark
   assert.ok(kiosk.includes('<Wake hidden={dark} />'), 'the wake control is hidden while dark')
   assert.ok(kiosk.includes("window.addEventListener('pointerdown', wake)"), 'any tap on the page wakes the screen')

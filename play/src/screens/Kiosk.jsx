@@ -41,7 +41,7 @@ export default function Kiosk({ which }) {
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
   const cues = useDoc(nightId && living ? `nights/${nightId}/public/cues` : null)
-  const serverNow = useServerClock(uid, nightId, `kiosk-${which === 'ipad' ? 'living' : which}`)
+  const serverNow = useServerClock(uid, nightId, `kiosk-${which}`) // the iPad is kiosk-ipad, its own row on the Host tab
   const online = useOnline()
   useTick(250)
 
