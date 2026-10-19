@@ -372,10 +372,27 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   return { ok: true }
 }
 
+// Has the night reached the Act 6 door beat (or gone past it)? The trace
+// may go on the TV only from there, so it is never up before the door opens.
+export function doorReached(night) {
+  const act = Number(night?.act) || 0
+  if (act > 6) return true
+  if (act !== 6) return false
+  const beats = NIGHT.acts['6']?.beats ?? []
+  const door = beats.findIndex(b => b.action === 'notice:door')
+  const here = beats.findIndex(b => b.key === night?.beat)
+  return door >= 0 && here >= door
+}
+
 // The host's "Show the trace on the TV" (hostCommand tv-trace): the living
 // room screen shows the trace after the door's hold, for a night where the
-// bedroom screen has died. Off again with the arg 'off'.
+// bedroom screen has died. Refused before the door beat; off again with the
+// arg 'off' at any time.
 export async function tvTrace(db, nightId, on, { now = Date.now() } = {}) {
+  if (on) {
+    const snap = await db.doc(`nights/${nightId}`).get()
+    if (!doorReached(snap.exists ? snap.data() : null)) throw new NightError('invalid', 'The trace goes on the TV once the door is open. Press Next to the door first.')
+  }
   await db.doc(`nights/${nightId}/public/cues`).set({ tvTrace: !!on, tvTraceAt: new Date(now) }, { merge: true })
   return { ok: true, tvTrace: !!on }
 }

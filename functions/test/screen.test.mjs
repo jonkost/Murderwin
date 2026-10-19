@@ -382,6 +382,9 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(db.store.get(pub).state, 'done')
   assert.equal((await currentSound(db, nightId)).id, 'sting-door')
   const stingAt = (await currentSound(db, nightId)).at
+  // the trace cannot go on the TV before the door beat, even with the drawing done
+  await assert.rejects(host('tv-trace'), /once the door is open/)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`)?.tvTrace, undefined)
   await next() // the door: the sting is not played twice
   assert.equal(screen().kind, 'door')
   assert.equal(screen().holdMs, 10_000)
@@ -425,11 +428,50 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
   await onBeat(db, nightId, { act: 2, beat: 'news', spec: beatSpec(2, 'news'), now: 11 })
   assert.equal((await currentSound(db, nightId)).id, 'chime-news')
   assert.deepEqual(await onPhase(db, nightId, 'handover'), { ok: true })
-  // resume with nothing parked leaves the screen alone
+  // resume with nothing parked and no pause card leaves the screen alone
   await onPhase(db, nightId, 'resume')
   assert.equal((await readScreen(db, nightId)).kind, 'news')
-  await tvTrace(db, nightId, true, { now: 12 })
+  // the trace on the TV: refused before the door beat, on from the door beat, off at any time
+  await assert.rejects(tvTrace(db, nightId, true, { now: 12 }), /once the door is open/)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`)?.tvTrace, undefined)
+  await tvTrace(db, nightId, false, { now: 12 })
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, false)
+  await db.doc(`nights/${nightId}`).update({ act: 6, beat: 'door' })
+  await tvTrace(db, nightId, true, { now: 13 })
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
+  assert.equal(doorReached({ act: 6, beat: 'drawing' }), false)
+  assert.equal(doorReached({ act: 6, beat: 'door' }), true)
+  assert.equal(doorReached({ act: 6, beat: 'eliminate' }), true)
+  assert.equal(doorReached({ act: 7, beat: 'ballot' }), true)
+  assert.equal(doorReached({ act: 5, beat: 'irwin' }), false)
+  assert.equal(doorReached(null), false)
+})
+
+test('a pause before any screen, then a resume, leaves the beat\'s screen up and not One moment; a pause in the dark stays dark', async () => {
+  const { db, nightId } = await party()
+  let now = 2_000_000
+  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now })
+  const screen = () => db.store.get(`nights/${nightId}/public/screen`)
+  assert.equal(screen(), undefined, 'no screen doc yet')
+  await host('pause')
+  assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked, undefined)
+  assert.ok(isPauseCard(screen()))
+  now += 5_000
+  await host('resume')
+  assert.equal(screen().kind, 'idle', 'nothing was parked: the beat\'s idle screen, not One moment')
+  assert.equal(screen().title, 'Sirwin Manor')
+  assert.ok(!isPauseCard(screen()))
+  // into Act 1, blackout, then a pause and a resume in the dark: the TV stays dark throughout
+  await host('next'); await host('next'); await host('next'); await host('next')
+  await host('blackout')
+  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
+  await host('pause')
+  assert.equal(screen().title, 'One moment')
+  assert.equal(screen().parked.kind, 'black')
+  await host('resume')
+  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '', 'dark again, not One moment')
+  assert.equal(db.store.get(`nights/${nightId}`).phase, 'blackout')
 })
 
 test('the cue relay carries the same catalogue', () => {
