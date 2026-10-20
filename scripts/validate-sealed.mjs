@@ -51,8 +51,10 @@ export async function validateAll(db) {
     irwinFails: 0,     // an Irwin line that fails the dog filter
     edited: 0,         // sets the Steward has edited (editedAt set); checked exactly like the rest
     reviewed: 0,       // sets the Steward has marked done or needs more
+    failingCodes: [],  // the opaque codes of sets that fail a gating check (never a motive)
     pass: false,
   }
+  const GATES = ['banned', 'lengthFails', 'placeholderFails', 'granoliaFails', 'salemFails', 'impersonalFails', 'studyClueFails', 'irwinFails']
 
   for (const code of codeIds) {
     const snap = await db.collection('sealed').doc(code).get()
@@ -67,6 +69,7 @@ export async function validateAll(db) {
     const isComplete = kCount === 15 && documents.length === 3 && fragments.length === 3 &&
       Array.isArray(studyClue) && studyClue.length === 3 && Array.isArray(irwin) && irwin.length === 3
     if (isComplete) report.complete++
+    const before = Object.fromEntries(GATES.map(g => [g, report[g]]))
 
     const motive = byN.get(manifest[code])
     const ownBanned = new Set(motive ? rhymeWords(motive.rhyme) : [])
@@ -140,7 +143,9 @@ export async function validateAll(db) {
         truthBlob.includes(anchor)
       if (!ok) report.salemFails++
     }
+    if (!isComplete || GATES.some(g => report[g] !== before[g])) report.failingCodes.push(code)
   }
+  report.failingCodes.sort()
 
   report.pass = report.codes === 19 && report.complete === 19 &&
     report.banned === 0 && report.lengthFails === 0 &&

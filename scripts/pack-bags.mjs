@@ -25,7 +25,8 @@
 //   bags:         { "1": [itemId, ...], ... "10": [...] }   six workshop item ids per bag
 //   doubles:      { "n": [itemId] }        the taste items to pack twice in that bag
 //   properties:   { property: [n, ...] }   which bags carry each property (2 or 3)
-//   stackedPairs: [[property, property]]   the pairs the generator keeps apart
+//   stackedPairs: [{ a: property, b: property }]   the pairs the generator keeps apart
+//                 (objects, not pairs: Firestore refuses arrays nested in arrays)
 //   counts:       { bags, items, properties, stackedPairs }
 //   packedAt:     Date, packedBy: 'packer' | 'steward', poolHash
 // }
@@ -233,7 +234,7 @@ export function sealedDoc(result, pool, { now = new Date() } = {}) {
     bags: result.bags,
     doubles: result.doubles,
     properties: result.check.properties,
-    stackedPairs: result.check.stacked,
+    stackedPairs: result.check.stacked.map(([a, b]) => ({ a, b })),
     counts: {
       bags: Object.keys(result.bags).length,
       items: Object.values(result.bags).reduce((n, l) => n + l.length, 0),
