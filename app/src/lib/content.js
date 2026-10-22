@@ -4,6 +4,7 @@ import motivesFile from '../../../seed/motives.json' with { type: 'json' }
 import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
 import parlourFile from '../../../seed/parlour-games.json' with { type: 'json' }
 import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
 // them and keys the cats' moods off the job. The workshop writes the persona
@@ -583,6 +584,15 @@ export const ADDITIONS = [
     retireTasks: [
       { order: 30, detail: 'Filled 21 Oct 2026: the seventeen sets from docs/parlour-games.md are in the list. Change any words or points there.' },
     ],
+  },
+  {
+    // 22 Oct: the board filed under the night. Every new card carries the
+    // moment it belongs to on the Timeline page (lib/timeline.js); the
+    // old cards it replaces are marked done with the reason.
+    id: '2026-10-22-night-timeline',
+    tasks: TIMELINE_TASKS,
+    decisions: TIMELINE_DECISIONS,
+    retireTasks: RETIRED_FOR_TIMELINE,
   },
 ]
 

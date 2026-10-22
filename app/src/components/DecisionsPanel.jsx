@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { subscribeDecisions, answerDecision, whoAmI } from '../lib/store'
 
-function Decision({ d, onError, onSaved, canAnswer }) {
+export function Decision({ d, onError, onSaved, canAnswer }) {
   const [picked, setPicked] = useState(null)
   return (
     <div className="decision">

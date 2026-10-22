@@ -1,6 +1,7 @@
 // Pretend data for preview mode. Everything here is safe content: the seed
 // lines plus the examples from the cards. Nothing is saved anywhere.
-import { seedDocs, AREAS, fieldsFor, codecFor } from './content'
+import { seedDocs, AREAS, ADDITIONS, fieldsFor, codecFor } from './content'
+import { planAddition, applyPlan } from './additions'
 import { ALL_CARDS } from './cards'
 import tasksFile from '../../../seed/tasks.json'
 
@@ -58,13 +59,20 @@ export async function saveArea(area, _items, changes) {
 
 export function subscribeHistory(onData) { queueMicrotask(() => onData(history)); return () => {} }
 
-let tasks = tasksFile.tasks.map(t => ({ ...t, id: id() }))
+// The board as the live one has it: the seed's cards and decisions, then
+// every addition, so the timeline's cards show up filed under the night.
+const board = ADDITIONS.reduce((st, add) => applyPlan(planAddition(add, st, { newId: id }), st), {
+  applied: [], areas: {},
+  decisions: Object.fromEntries(tasksFile.decisions.map(d => [d.key, { ...d }])),
+  tasks: tasksFile.tasks.map(t => ({ ...t, id: id() })),
+})
+let tasks = board.tasks
 const taskListeners = []
 export function subscribeTasks(onData) { taskListeners.push(onData); queueMicrotask(() => onData(tasks)); return () => {} }
 export async function updateTask(tid, patch) { tasks = tasks.map(t => (t.id === tid ? { ...t, ...patch } : t)); taskListeners.forEach(fn => fn(tasks)) }
 export async function addTask(task) { const t = { ...task, id: id() }; tasks = [...tasks, t]; taskListeners.forEach(fn => fn(tasks)); return t.id }
 
-let decisions = tasksFile.decisions.map(d => ({ ...d }))
+let decisions = Object.entries(board.decisions).map(([key, d]) => ({ ...d, key }))
 export function subscribeDecisions(onData) { queueMicrotask(() => onData(decisions)); return () => {} }
 export async function answerDecision(key, answer) { decisions = decisions.map(d => (d.key === key ? { ...d, answer } : d)) }
 

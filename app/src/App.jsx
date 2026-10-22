@@ -9,6 +9,7 @@ import Editor from './pages/Editor'
 import Stationery from './pages/Stationery'
 import Assets from './pages/Assets'
 import Night from './pages/Night'
+import Timeline from './pages/Timeline'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
 import Steward from './pages/Steward'
@@ -86,6 +87,7 @@ function Shell({ user }) {
         <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" /><span>Workshop</span></Link>
         {frozen.frozen && <span className="rail-frozen" title={frozen.banner}>{FROZEN_CHIP}</span>}
         <NavLink to="/" end className="rail-link">Home</NavLink>
+        <NavLink to="/timeline" className="rail-link">Timeline</NavLink>
         <NavLink to="/status" className="rail-link">Where we are</NavLink>
         <NavLink to="/night" className="rail-link">Game night</NavLink>
         <NavLink to="/jenna" className="rail-link">For Jenna</NavLink>
@@ -97,6 +99,7 @@ function Shell({ user }) {
         <Route path="/stationery" element={<Stationery />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/night" element={<Night />} />
+        <Route path="/timeline" element={<Timeline />} />
         <Route path="/jenna" element={<ForJenna />} />
         <Route path="/status" element={<Status />} />
         {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}

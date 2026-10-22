@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { subscribeTasks, updateTask, addTask } from '../lib/store'
+import { momentName } from '../lib/timeline'
 
 const COLS = [
   { key: 'todo', label: 'To do' },
@@ -7,10 +8,11 @@ const COLS = [
   { key: 'done', label: 'Done' },
 ]
 
-function Card({ task, onError, onSaved }) {
+// A task's title and detail as the person types them, saved after a short
+// pause. Shared by the board's cards and the lines on the Timeline page.
+export function useTaskDraft(task, onError, onSaved) {
   const [title, setTitle] = useState(task.title)
   const [detail, setDetail] = useState(task.detail ?? '')
-  const [open, setOpen] = useState(!task.title)
   const pending = useRef(null) // merged patch awaiting flush
   const timer = useRef(null)
 
@@ -56,6 +58,18 @@ function Card({ task, onError, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  return {
+    title, detail,
+    setTitle: (v) => { setTitle(v); save({ title: v }) },
+    setDetail: (v) => { setDetail(v); save({ detail: v }) },
+  }
+}
+
+function Card({ task, onError, onSaved }) {
+  const { title, detail, setTitle, setDetail } = useTaskDraft(task, onError, onSaved)
+  const [open, setOpen] = useState(!task.title)
+  const moment = task.moment ? momentName(task.moment) : null
+
   const moveTo = (statusKey) => {
     updateTask(task.id, { status: statusKey }, task).then(onSaved).catch(onError)
   }
@@ -67,13 +81,14 @@ function Card({ task, onError, onSaved }) {
   return (
     <div className="card">
       <input value={title} placeholder="task…"
-        onChange={e => { setTitle(e.target.value); save({ title: e.target.value }) }} />
+        onChange={e => setTitle(e.target.value)} />
+      {moment && <span className="list-moment">{moment}</span>}
       <button className="card-toggle" onClick={() => setOpen(o => !o)}>
         {open ? 'hide detail' : 'detail'}
       </button>
       {open && (
         <textarea rows={3} value={detail} placeholder="detail…"
-          onChange={e => { setDetail(e.target.value); save({ detail: e.target.value }) }} />
+          onChange={e => setDetail(e.target.value)} />
       )}
       <div className="card-foot">
         {prev && <button onClick={() => moveTo(prev.key)}>‹ {prev.label}</button>}

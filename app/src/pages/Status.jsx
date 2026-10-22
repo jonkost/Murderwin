@@ -107,6 +107,7 @@ export default function Status() {
 
       <section className="panel">
         <h2>What comes next, in order</h2>
+        <p className="why">Every task, filed under the moment of the night it serves, is on the <Link to="/timeline">Timeline</Link>.</p>
         <ol className="night-steps">
           {NEXT.map(([t, d, who]) => <li key={t}><b>{t}</b> <span className="hint">({who})</span><br />{d}</li>)}
         </ol>
