@@ -19,6 +19,11 @@
 //   mark   { code, review }         'done' | 'more' | '' (Jenna's two words per set)
 //   bags              sealed/bags as a packing list by bag number, items named
 //                     from the workshop's bag lines
+//   leans             the Parlour Games lean table (sealed/parlour_leans): every
+//                     set in the workshop bank, its questions and answers, and
+//                     which answer each cat leans toward (docs/parlour-games.md)
+//   lean   { setId, q, cat, value }   one cat's leaning answer for one question:
+//                     'a', 'b', or '' to clear it
 //
 // The sealed doc after an edit:
 //   { ...the five content fields (edited), original: { the five as generated },
@@ -28,6 +33,7 @@
 import { createHash } from 'node:crypto'
 import { NightError, readArea, MOTIVES } from './night.js'
 import { checkSealed, CAT_KEYS } from './case.js'
+import { LISTENERS, ANSWERS, QUESTIONS } from './parlour.js'
 
 // The Steward's hash: the SHA-256 of their verified Google email, lower
 // case. The same value as isAdmin() in firestore.rules (the admin-drift
@@ -60,7 +66,8 @@ export function isSteward(token, { hash = stewardHash() } = {}) {
 }
 
 export const CONTENT_FIELDS = ['kernels', 'documents', 'fragments', 'studyClue', 'irwin']
-export const OPS = ['whoami', 'list', 'read', 'write', 'mark', 'bags']
+export const OPS = ['whoami', 'list', 'read', 'write', 'mark', 'bags', 'leans', 'lean']
+export const LEANS_DOC = 'sealed/parlour_leans' // the same doc deal.js reads at the case deal
 export const REVIEWS = ['done', 'more', '']
 export const VALUE_MAX = 2000
 
@@ -236,6 +243,46 @@ async function opBags(db) {
   }
 }
 
+// The lean table beside the bank it belongs to. The questions and answers are
+// safe (Jon wrote them); which answer a cat leans toward is sealed.
+async function opLeans(db) {
+  const items = await readArea(db, 'scenarios')
+  const snap = await db.doc(LEANS_DOC).get()
+  const table = snap.exists ? (snap.data().sets ?? {}) : {}
+  const sets = items
+    .filter(i => Array.isArray(i.beats) && i.beats.length === QUESTIONS)
+    .map(i => ({
+      id: String(i.id),
+      questions: i.beats.map((b, q) => ({
+        q: String(b?.q ?? ''), a: String(b?.a ?? ''), b: String(b?.b ?? ''),
+        leans: Object.fromEntries(LISTENERS.map(cat => [cat, ANSWERS.includes(table[i.id]?.[q]?.[cat]) ? table[i.id][q][cat] : ''])),
+      })),
+    }))
+  const filled = sets.reduce((n, s) => n + s.questions.reduce((m, q) => m + LISTENERS.filter(c => q.leans[c]).length, 0), 0)
+  return { ok: true, sets, filled, of: sets.length * QUESTIONS * LISTENERS.length, editedAt: millis(snap.exists ? snap.data().editedAt : null) }
+}
+
+async function opLean(db, data, { now }) {
+  const { setId, q, cat, value } = data ?? {}
+  if (typeof setId !== 'string' || !/^[\w-]{1,80}$/.test(setId)) throw new NightError('invalid', 'Which set?')
+  if (!Number.isInteger(q) || q < 0 || q >= QUESTIONS) throw new NightError('invalid', 'Which question?')
+  if (!LISTENERS.includes(cat)) throw new NightError('invalid', 'Which cat?')
+  if (!['', ...ANSWERS].includes(value)) throw new NightError('invalid', 'The first answer, the second, or neither.')
+  const items = await readArea(db, 'scenarios')
+  if (!items.some(i => String(i.id) === setId)) throw new NightError('no-doc', 'No such set.')
+  const ref = db.doc(LEANS_DOC)
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    const sets = structuredClone(snap.exists ? (snap.data().sets ?? {}) : {})
+    sets[setId] ??= {}
+    sets[setId][q] ??= {}
+    if (value) sets[setId][q][cat] = value
+    else delete sets[setId][q][cat]
+    tx.set(ref, { sets, editedAt: now, editedBy: 'steward' }) // the whole table: a cleared lean is gone, not merged back
+  })
+  return { ok: true, setId, q, cat }
+}
+
 // One entry point for the callable and the tests. `log` gets the op and the
 // code only.
 export async function stewardOp(db, data, { now = new Date(), log = (...a) => console.log(...a) } = {}) {
@@ -249,6 +296,8 @@ export async function stewardOp(db, data, { now = new Date(), log = (...a) => co
     case 'write': return opWrite(db, data, { now })
     case 'mark': return opMark(db, data, { now })
     case 'bags': return opBags(db)
+    case 'leans': return opLeans(db)
+    case 'lean': return opLean(db, data, { now })
     default: throw new NightError('invalid', 'Which op?')
   }
 }

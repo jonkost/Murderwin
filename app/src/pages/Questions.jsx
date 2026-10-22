@@ -5,7 +5,7 @@ import { AREAS, CASE_WORDS } from '../lib/content'
 import { cardFor } from '../lib/cards'
 import {
   emptyBeats, normalizeBeats, pathTotals, pathCount, lintScenario, isComplete, hasAnyText, titleOf,
-  clampValue, fmtValue, choicesOf, CHOICE_KEYS, CHOICE_LABELS, MAX_CHOICES, MIN_CHOICES, VALUE_MIN, VALUE_MAX,
+  clampValue, fmtValue, choicesOf, CHOICE_LABELS, MIN_CHOICES, VALUE_MIN, VALUE_MAX,
 } from '../lib/scenarios'
 import ListCard from '../components/ListCard'
 import FocusBar from '../components/FocusBar'
@@ -13,9 +13,11 @@ import ReviewRow from '../components/ReviewRow'
 import PastePanel from '../components/PastePanel'
 import { useFrozen, FrozenBanner } from '../components/Frozen'
 
-// The Parlour Games. One scenario is three questions in a row,
-// two choices each (a third or fourth when a question needs one), points on
-// each choice. Whatever a guest picks, the next question is the same. Stored
+// The Parlour Games. One scenario is three questions in a row, exactly two
+// choices each (docs/parlour-games.md, 21 Oct), points on each choice.
+// Whatever a guest picks, the next question is the same. An older set
+// written with a third or fourth choice still shows it, so the words are
+// not lost, but the night deals only the first two. Stored
 // as item.beats (three maps), with item.text mirroring the first question so
 // lists and history can name it.
 
@@ -214,13 +216,6 @@ function ScenarioForm({ number, beats, onChange, onKeyDown, onRemove, refs, dash
     const next = beats.map((b, j) => (j === i ? { ...b, [key]: value } : b))
     onChange(next)
   }
-  // Add a choice: the next letter appears with empty words and 0 points.
-  const addChoice = (i) => {
-    const b = beats[i]
-    const n = Math.min(MAX_CHOICES, choicesOf(b).length + 1)
-    const k = CHOICE_KEYS[n - 1]
-    onChange(beats.map((x, j) => (j === i ? { ...x, n, [k]: x[k] ?? '', [`${k}v`]: x[`${k}v`] ?? 0 } : x)))
-  }
   // Remove the last extra choice (its words go with it; undo by adding again).
   const dropChoice = (i) => {
     const b = beats[i]
@@ -260,11 +255,7 @@ function ScenarioForm({ number, beats, onChange, onKeyDown, onRemove, refs, dash
                   onDrop={ci === keys.length - 1 && keys.length > MIN_CHOICES ? () => dropChoice(i) : null} />
               ))}
             </div>
-            {keys.length < MAX_CHOICES && (
-              <button className="linkish" onMouseDown={e => e.preventDefault()} onClick={() => addChoice(i)}>
-                + Add another choice{keys.length === 2 ? ' (a third button, if this question needs one)' : ''}
-              </button>
-            )}
+            {keys.length > MIN_CHOICES && <p className="lint">⚠ The phones show only the first two choices. Remove the others, or fold them into these two.</p>}
           </div>
         )
       })}

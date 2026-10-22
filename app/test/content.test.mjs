@@ -110,3 +110,27 @@ test('retired tasks are marked done once, and settled decisions answered once', 
   // freshLines on its own
   assert.deepEqual(freshLines([{ text: 'A — smell: x', order: 3 }], ['A — smell: y', 'B — smell: z', 'B — smell: z'], () => 'i').map(it => [it.text, it.order]), [['B — smell: z', 4]])
 })
+
+test('the Parlour Games bank lands once: seventeen sets of three questions with two answers, none doubled, Jon\'s own sets left alone', async () => {
+  const { freshScenarios } = await import('../src/lib/additions.js')
+  const add = ADDITIONS.find(a => a.id === '2026-10-21-parlour-bank')
+  assert.ok(add)
+  const sets = add.appendScenarios.scenarios
+  assert.equal(sets.length, 17)
+  for (const beats of sets) {
+    assert.equal(beats.length, 3)
+    for (const b of beats) { assert.equal(b.n, 2); assert.ok(b.q && b.a && b.b); assert.equal(b.c, undefined) }
+  }
+  let n = 0
+  const newId = () => `id${++n}`
+  const mine = { id: 'mine', text: 'Pineapple on pizza?', order: 4, deleted: false, beats: [{ q: 'Pineapple on pizza?', n: 2, a: 'Sure', av: 0, b: 'No', bv: 0 }, { q: '', n: 2, a: '', av: 0, b: '', bv: 0 }, { q: '', n: 2, a: '', av: 0, b: '', bv: 0 }] }
+  const state = { applied: [], areas: { scenarios: { items: [mine] } }, decisions: {}, tasks: [] }
+  const plan = planAddition(add, state, { newId, now: 1 })
+  const items = plan.areaDocs.scenarios.items
+  assert.equal(items.length, 17, 'sixteen new and Jon\'s own pizza set, kept as he wrote it')
+  assert.deepEqual(items[0], mine)
+  assert.ok(items.slice(1).every(i => i.order > 4 && i.text === i.beats[0].q && i.deleted === false))
+  const after = applyPlan(plan, state)
+  assert.equal(planAddition(add, after).skip, true, 'once only')
+  assert.equal(freshScenarios(items, sets).length, 0, 'nothing doubled even if asked again')
+})

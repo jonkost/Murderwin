@@ -209,9 +209,15 @@ pull questions, renamed by Jon on 13 Oct) in Acts 2, 4 and 6 (decided 12 Oct). W
 has changed, the marker slides to its new stop the next time the Cats tab is
 shown. A short, slow slide; no sound, no "+1", nothing that reads as a score.
 
-**Settled 16 Oct.** The Murderer's and the Ghost's markers move exactly like
-everyone else's; their points also move the clarity dial, which has no slider
-on any phone and is revealed in the Act 7 graph.
+**Settled 21 Oct (`docs/parlour-games.md`).** Each question has one cat
+secretly listening (never Irwin). A Detective's answer warms it by half a stop
+or a full stop when it matches the cat's lean, and cools it by the same when
+it does not. Affection is kept in half steps; the slider shows the nearest
+stop. The Murderer's and the Ghost's markers move for real with the same odds
+and sizes, a coin flip in place of their answer; their points also move the
+clarity dial, which has no slider on any phone and is revealed in the Act 7
+graph (16 Oct). This closes the earlier open question about how far a
+marker moves.
 
 **Rules that still apply.**
 - Murderer and Ghost phones show the same sliders, built from the same data
@@ -357,20 +363,32 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
   rehearsal line; `fillPools` fills `[ROOM]` etc. from the workshop pools and
   swaps exactly one for Granolia.
 - Windows: `nights/{id}.window = { id, kind, opensAt, closesAt, settled }`
-  (Dates on the server clock). Each phone's set is in
-  `sessions/{uid}.windows[id]` WITHOUT point values; the values and the cat
-  are in `nights/{id}/private/windows`. Which set: every detective draws
-  their own set for that window, among the sets that read about as long as
-  the hidden roles' sets, so no two phones are expected to match and nobody
-  is the odd one out; the Murderer and the Ghost get the set their case
-  names in `cases/{id}.hiddenSets[role][act2|act4a|act4b|act6]`
-  (`functions/lib/windows.js` pickSets, setFor). The host's own Light up
-  button passes no beat, so every phone, hidden roles included, draws at
-  random for that round. A scheduled `tick` (index.js, every
-  minute) settles a window five seconds after `closesAt`; an answer after
+  (Dates on the server clock). The Parlour Games (`docs/parlour-games.md`,
+  21 Oct): twelve a night, four in each of Acts 2, 4 and 6, with no beat of
+  their own. The case deal (`functions/lib/parlour.js` planParlour, from a
+  seed in the case) picks twelve different sets from the workshop bank, the
+  time of each as an offset from the start of its act (`seed/night.json`
+  `parlour`: at least 4 minutes apart, none in the first or last 2 minutes
+  of a planned 30, 60 and 30 minute act), and for every question the
+  listening cat, its size and its lean; all of it in
+  `cases/{id}.parlourPlan`, with the lean table (`sealed/parlour_leans`,
+  Jenna's, from the Steward page) copied in at the deal for the party only.
+  When an act begins the dealer writes its times to
+  `nights/{id}/private/parlour` (`windows.startParlour`); the once-a-minute
+  `tick` opens a game when it is due (`windows.tickParlour`), never while
+  another window is open or the drawing is running, never closer than the
+  gap to the last one; a game the act ends before is not played. Every phone
+  gets the same set, `sessions/{uid}.windows[id] = { kind, beats }`, two
+  choices a question, no points and no cat; the points are in
+  `nights/{id}/private/windows[id].values`. On the phone the game sits on top
+  of the screen it was on, which stays mounted underneath, so the guest comes
+  back exactly where they were (App.jsx, F19). The host's Light up button
+  opens an extra game with a set not used yet that night. The `tick` also
+  settles a window five seconds after `closesAt`; an answer after
   that returns `{ ok, late: true }` and the phone shows the same Thanks.
-  Points: every phone's total nudges
-  that cat's affection one step (sign only), whatever the role; a hidden
+  Points: each question's listening cat warms or cools by its size (a
+  Detective by their answer against its lean, a hidden role by a coin), kept
+  in half steps between 1 and 5 (`parlour.catMoves`, `applyMoves`); a hidden
   role's total ALSO moves `cases/{id}.dial` by that night's `dialMap`
   (ghost +1, murderer -1) in one transaction (`pushDial`), logged to
   `dialLog`; after `hush <role>` (or its older name `note-exposure`, the

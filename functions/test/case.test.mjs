@@ -8,7 +8,7 @@ import {
   buildCaseForNight, ensureCase, testimonyCard, kernelFor, fillPools, scrapCard, numbersSentence, ms, MAX_CODE_TRIES,
 } from '../lib/deal.js'
 import {
-  buildCase, rehearsalCase, checkSealed, CASE_KEYS, CAT_KEYS, DIAL_SIGN, WINDOW_SLOTS, poolTokens, seededUnit, SALEM_WARP_SHARE,
+  buildCase, rehearsalCase, checkSealed, CASE_KEYS, CAT_KEYS, DIAL_SIGN, poolTokens, seededUnit, SALEM_WARP_SHARE,
 } from '../lib/case.js'
 import { studyClueCard } from '../lib/station.js'
 
@@ -103,7 +103,7 @@ test('buildCase returns every field of CASE_SHAPE with the right types; the rehe
   for (let seed = 0; seed < 20; seed++) {
     let n = seed
     const rng = max => (n = (n * 1103515245 + 12345) & 0x7fffffff) % max
-    const c = buildCase({ nightId: 'n1', roster, sealedDoc: sealed, motiveN: 5, templates, pools, rng, bankSize: 4, now: 1000 })
+    const c = buildCase({ nightId: 'n1', roster, sealedDoc: sealed, motiveN: 5, templates, pools, rng, parlour: { bankIds: ['s1', 's2', 's3', 's4'] }, now: 1000 })
     assert.deepEqual(Object.keys(c).sort(), CASE_KEYS)
     assert.equal(c.rehearsal, false)
     assert.ok(c.createdAt instanceof Date)
@@ -129,9 +129,10 @@ test('buildCase returns every field of CASE_SHAPE with the right types; the rehe
     assert.ok(['the scullery', 'the parlour'].includes(c.pools.room), 'the workshop pool wins')
     assert.ok(['room', 'time'].includes(c.granoliaSlot.key))
     assert.notEqual(c.granoliaSlot.value, c.pools[c.granoliaSlot.key])
-    for (const role of ['murderer', 'ghost']) {
-      assert.deepEqual(Object.keys(c.hiddenSets[role]), WINDOW_SLOTS)
-      for (const i of Object.values(c.hiddenSets[role])) assert.ok(Number.isInteger(i) && i >= 0 && i < 4)
+    assert.deepEqual(Object.keys(c.parlourPlan.acts).sort(), ['2', '4', '6'])
+    for (const slots of Object.values(c.parlourPlan.acts)) {
+      assert.equal(slots.length, 4)
+      for (const p of slots) { assert.ok(['s1', 's2', 's3', 's4'].includes(p.setId)); assert.equal(p.listeners.length, 3) }
     }
     assert.deepEqual(c.exposure, {}); assert.deepEqual(c.dealtClues, [])
     assert.equal(c.code, undefined, 'the case never carries the sealed code')

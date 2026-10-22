@@ -103,6 +103,8 @@ test('a host phone reads presence; the admin reads and writes safe content but n
     await assertFails(deleteDoc(doc(admin, 'safe_content/pools')))
     await assertSucceeds(getDoc(doc(admin, `presence/${OTHER}`)))
     await assertFails(getDoc(doc(admin, 'sealed/x')))
+    await assertFails(getDoc(doc(admin, 'sealed/parlour_leans')), 'L05: Jon\'s account cannot read the cats\' leans')
+    await assertFails(getDoc(doc(admin, `nights/${NIGHT}/private/parlour`)), 'nor when the next Parlour Game is due')
     await assertFails(getDoc(doc(admin, `cases/${NIGHT}`)))
     await assertFails(setDoc(doc(admin, 'sealed/y'), { structural: true }))
     await assertFails(getDoc(doc(admin, `nights/${NIGHT}/private/deck`)))

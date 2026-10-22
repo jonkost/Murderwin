@@ -237,7 +237,7 @@ test('handover clears cards and bumps generation; only a host may call it', asyn
   await join(db, { uid: 'u-jessa', nightId, name: 'Jessa' })
   await runCommand(db, { nightId, command: 'act', arg: 2 })
   await runCommand(db, { nightId, command: 'beat', arg: 'cat', now: 1_000_000 })
-  await runCommand(db, { nightId, command: 'beat', arg: 'questions', now: 1_000_000 })
+  await runCommand(db, { nightId, command: 'light-up', now: 1_000_000 })
   assert.ok(cardsOf(db, 'u-jessa').length > 0)
   assert.ok(Object.keys(sessionOf(db, 'u-jessa').windows).length === 1)
   const before = sessionOf(db, 'u-jessa')
@@ -335,8 +335,10 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob']]) await join(db, { uid, nightId, name })
   const t0 = 1_000_000
   await runCommand(db, { nightId, command: 'act', arg: 2, now: t0 })
-  await runCommand(db, { nightId, command: 'beat', arg: 'questions', now: t0 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'orient', now: t0 })
+  await runCommand(db, { nightId, command: 'light-up', now: t0 })
   const night = () => db.store.get(`nights/${nightId}`)
+  const due0 = msOf(db.store.get(`nights/${nightId}/private/parlour`).due0)
   const w = night().window
   const closes = msOf(w.closesAt)
   assert.equal(closes, t0 + NIGHT.windows.questions.ms)
@@ -366,6 +368,7 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   assert.equal(msOf(db.store.get(`nights/${nightId}/public/study`).slotEndsAt), t0 + 700_000 + 300_000, 'the study slot moved by the same amount')
   assert.equal(msOf(db.store.get(`nights/${nightId}/public/finale`).at), t0 + 5_000 + 300_000, 'the finale reel moved')
   assert.equal(msOf(night().reveal.at), t0 + 5_000 + 300_000, 'and the Host tab\'s reveal countdown moved with it')
+  assert.equal(msOf(db.store.get(`nights/${nightId}/private/parlour`).due0), due0 + 300_000, 'the next Parlour Game moved too')
   // an answer at the old deadline plus one second is accepted, and no defaults fired
   const set = db.store.get('sessions/u-jessa').windows[w.id]
   await player.answer(db, { nightId, uid: 'u-jessa', windowId: w.id, picks: set.beats.map(b => b.choices[0].k), now: closes + 1000 })

@@ -408,6 +408,9 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 /* a window the host has paused: still there, nothing can be tapped, the clock stands still */
 .paused-strip { position: sticky; top: 0; z-index: 6; background: var(--brand-claret); color: var(--brand-parchment); padding: 0.7rem 1rem; text-align: center; font-size: 0.95rem; }
 .paused-shell { opacity: 0.55; filter: grayscale(0.4); pointer-events: none; }
+/* A Parlour Game on top of whatever the phone was on; the screen beneath
+   stays as it was (App.jsx). */
+.overlay { position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
 /* the second marker on a Cats slider: the house (Act 4) */
 .marker.house { width: 16px; height: 16px; background: var(--brand-parchment); border: 2px solid var(--good); box-shadow: 0 1px 6px rgba(0,0,0,0.5); z-index: 1; }
 .house-word { color: var(--good); }

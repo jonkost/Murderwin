@@ -4,7 +4,6 @@ import { useTick } from '../lib/hooks'
 import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
 import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
-import { CatFace } from './Cards'
 import { Seal } from './Moments'
 
 // The moments when every phone lights up at once. Each one is a full
@@ -38,7 +37,8 @@ export function Thanks({ onDone }) {
   )
 }
 
-// Three silly questions, one at a time, big buttons. A cat is asking.
+// Three silly questions, one at a time, two big buttons. A cat is secretly
+// listening to each question, and the phone never says which.
 export function Questions({ w, nightId, serverNow, onDone }) {
   const set = w.mine
   const [i, setI] = useState(0)
@@ -71,8 +71,8 @@ export function Questions({ w, nightId, serverNow, onDone }) {
   return (
     <div className="moment window papered">
       <header className="asker">
-        <CatFace cat={set.cat} name={set.catName} size="l" />
-        <p className="crest">{set.catName || 'A question'} · {i + 1} of {set.beats.length}</p>
+        <Seal />
+        <p className="crest">{w.title || 'Parlour Game'} · {i + 1} of {set.beats.length}</p>
       </header>
       <h1 className="ask">{beat.q}</h1>
       <div className="choices">

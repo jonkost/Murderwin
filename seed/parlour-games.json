@@ -1,0 +1,515 @@
+{
+  "_about": "The Parlour Games bank as Jon and Susan wrote it (docs/parlour-games.md, 21 Oct 2026). SAFE content. The workshop adds any set it does not already have (by first question) to the Parlour Games list, and Jon edits them there; the live list is the bank the night deals from. Points move the clarity dial for the Murderer and the Ghost only, through that night's map; they start at +1 and -1, alternating by question, and Jon may change them.",
+  "sets": [
+    {
+      "key": "parlour-01",
+      "title": "Orange juice",
+      "beats": [
+        {
+          "q": "Do you like orange juice?",
+          "n": 2,
+          "a": "Love it",
+          "av": 1,
+          "b": "Not for me",
+          "bv": -1
+        },
+        {
+          "q": "Ice in orange juice?",
+          "n": 2,
+          "a": "Obviously",
+          "av": -1,
+          "b": "Absolutely not",
+          "bv": 1
+        },
+        {
+          "q": "Pulp or no pulp?",
+          "n": 2,
+          "a": "The more the better",
+          "av": 1,
+          "b": "Pulp is a crime",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-02",
+      "title": "Toilet paper",
+      "beats": [
+        {
+          "q": "Do you care which way the toilet paper hangs?",
+          "n": 2,
+          "a": "Deeply",
+          "av": 1,
+          "b": "It's just paper",
+          "bv": -1
+        },
+        {
+          "q": "Over or under?",
+          "n": 2,
+          "a": "Over, of course",
+          "av": -1,
+          "b": "Under, of course",
+          "bv": 1
+        },
+        {
+          "q": "Would you fix it at someone else's house?",
+          "n": 2,
+          "a": "Already did",
+          "av": 1,
+          "b": "Wouldn't want to be rude",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-03",
+      "title": "Potatoes",
+      "beats": [
+        {
+          "q": "Potatoes: baked or fried?",
+          "n": 2,
+          "a": "Baked",
+          "av": 1,
+          "b": "Fried",
+          "bv": -1
+        },
+        {
+          "q": "Chips or fries?",
+          "n": 2,
+          "a": "Chips",
+          "av": -1,
+          "b": "Fries",
+          "bv": 1
+        },
+        {
+          "q": "Fries dipped in a milkshake?",
+          "n": 2,
+          "a": "Genius",
+          "av": 1,
+          "b": "Disgusting",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-04",
+      "title": "Pizza",
+      "beats": [
+        {
+          "q": "Pineapple on pizza?",
+          "n": 2,
+          "a": "Yes, please",
+          "av": 1,
+          "b": "Never",
+          "bv": -1
+        },
+        {
+          "q": "Crust: eat it or leave it?",
+          "n": 2,
+          "a": "Eat it",
+          "av": -1,
+          "b": "Leave it",
+          "bv": 1
+        },
+        {
+          "q": "Leftover pizza: cold or reheated?",
+          "n": 2,
+          "a": "Cold",
+          "av": 1,
+          "b": "Reheated",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-05",
+      "title": "Cereal",
+      "beats": [
+        {
+          "q": "Cereal first or milk first?",
+          "n": 2,
+          "a": "Cereal first",
+          "av": 1,
+          "b": "Milk first",
+          "bv": -1
+        },
+        {
+          "q": "Drink the leftover milk?",
+          "n": 2,
+          "a": "Best part",
+          "av": -1,
+          "b": "Gross",
+          "bv": 1
+        },
+        {
+          "q": "Cereal for dinner?",
+          "n": 2,
+          "a": "Totally fine",
+          "av": 1,
+          "b": "That's not dinner",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-06",
+      "title": "Animals",
+      "beats": [
+        {
+          "q": "Cats or dogs?",
+          "n": 2,
+          "a": "Cats",
+          "av": 1,
+          "b": "Dogs",
+          "bv": -1
+        },
+        {
+          "q": "Pets on the bed?",
+          "n": 2,
+          "a": "Of course",
+          "av": -1,
+          "b": "Not a chance",
+          "bv": 1
+        },
+        {
+          "q": "Dogs in sweaters?",
+          "n": 2,
+          "a": "Adorable",
+          "av": 1,
+          "b": "Let dogs be dogs",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-07",
+      "title": "The great debates",
+      "beats": [
+        {
+          "q": "Is a hot dog a sandwich?",
+          "n": 2,
+          "a": "Obviously, yes",
+          "av": 1,
+          "b": "How dare you",
+          "bv": -1
+        },
+        {
+          "q": "Is cereal a soup?",
+          "n": 2,
+          "a": "Technically, yes",
+          "av": -1,
+          "b": "Stop it",
+          "bv": 1
+        },
+        {
+          "q": "Is water wet?",
+          "n": 2,
+          "a": "Of course it is",
+          "av": 1,
+          "b": "No, it makes things wet",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-08",
+      "title": "Teeth",
+      "beats": [
+        {
+          "q": "Brush before or after breakfast?",
+          "n": 2,
+          "a": "Before",
+          "av": 1,
+          "b": "After",
+          "bv": -1
+        },
+        {
+          "q": "Squeeze the toothpaste from the middle or the end?",
+          "n": 2,
+          "a": "The middle",
+          "av": -1,
+          "b": "The end",
+          "bv": 1
+        },
+        {
+          "q": "How often do you floss?",
+          "n": 2,
+          "a": "Every day",
+          "av": 1,
+          "b": "The night before the dentist",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-09",
+      "title": "Tech",
+      "beats": [
+        {
+          "q": "Apple or PC?",
+          "n": 2,
+          "a": "Apple",
+          "av": 1,
+          "b": "PC",
+          "bv": -1
+        },
+        {
+          "q": "Call or text?",
+          "n": 2,
+          "a": "Call me",
+          "av": -1,
+          "b": "Just text",
+          "bv": 1
+        },
+        {
+          "q": "Do you read the terms and conditions?",
+          "n": 2,
+          "a": "Every word",
+          "av": 1,
+          "b": "Just click agree",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-10",
+      "title": "Books and movies",
+      "beats": [
+        {
+          "q": "A good book or a good movie?",
+          "n": 2,
+          "a": "Book",
+          "av": 1,
+          "b": "Movie",
+          "bv": -1
+        },
+        {
+          "q": "Binge the whole season or one episode a week?",
+          "n": 2,
+          "a": "Binge it",
+          "av": -1,
+          "b": "One a week",
+          "bv": 1
+        },
+        {
+          "q": "Can you spoil a show for someone?",
+          "n": 2,
+          "a": "Never",
+          "av": 1,
+          "b": "If it's been a year, no",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-11",
+      "title": "Rain",
+      "beats": [
+        {
+          "q": "Umbrella or raincoat?",
+          "n": 2,
+          "a": "Umbrella",
+          "av": 1,
+          "b": "Raincoat",
+          "bv": -1
+        },
+        {
+          "q": "See a puddle?",
+          "n": 2,
+          "a": "Splash right in",
+          "av": -1,
+          "b": "Walk around it",
+          "bv": 1
+        },
+        {
+          "q": "Dancing in the rain?",
+          "n": 2,
+          "a": "Absolutely",
+          "av": 1,
+          "b": "Get me inside",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-12",
+      "title": "Mountains or beach",
+      "beats": [
+        {
+          "q": "Mountains or beach?",
+          "n": 2,
+          "a": "Mountains",
+          "av": 1,
+          "b": "Beach",
+          "bv": -1
+        },
+        {
+          "q": "Pool or ocean?",
+          "n": 2,
+          "a": "Pool",
+          "av": -1,
+          "b": "Ocean",
+          "bv": 1
+        },
+        {
+          "q": "A night in a tent?",
+          "n": 2,
+          "a": "Bring it on",
+          "av": 1,
+          "b": "Hotel, please",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-13",
+      "title": "Fruit and veg",
+      "beats": [
+        {
+          "q": "Is a tomato a fruit?",
+          "n": 2,
+          "a": "Yes, a fruit",
+          "av": 1,
+          "b": "No, a veggie",
+          "bv": -1
+        },
+        {
+          "q": "Bananas: green or spotty?",
+          "n": 2,
+          "a": "A bit green",
+          "av": -1,
+          "b": "Nice and spotty",
+          "bv": 1
+        },
+        {
+          "q": "Raisins in cookies?",
+          "n": 2,
+          "a": "Love them",
+          "av": 1,
+          "b": "A betrayal",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-14",
+      "title": "Theme parks",
+      "beats": [
+        {
+          "q": "Disney or Universal?",
+          "n": 2,
+          "a": "Disney",
+          "av": 1,
+          "b": "Universal",
+          "bv": -1
+        },
+        {
+          "q": "Roller coasters?",
+          "n": 2,
+          "a": "Front row, hands up",
+          "av": -1,
+          "b": "I'll hold the bags",
+          "bv": 1
+        },
+        {
+          "q": "Matching family T-shirts?",
+          "n": 2,
+          "a": "Love it",
+          "av": 1,
+          "b": "So embarrassing",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-15",
+      "title": "Movie snacks",
+      "beats": [
+        {
+          "q": "Popcorn or candy?",
+          "n": 2,
+          "a": "Popcorn",
+          "av": 1,
+          "b": "Candy",
+          "bv": -1
+        },
+        {
+          "q": "Sneak in your own snacks?",
+          "n": 2,
+          "a": "Every time",
+          "av": -1,
+          "b": "Never, it's the rules",
+          "bv": 1
+        },
+        {
+          "q": "Share your snacks?",
+          "n": 2,
+          "a": "Of course",
+          "av": 1,
+          "b": "Get your own",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-16",
+      "title": "The holidays",
+      "beats": [
+        {
+          "q": "Christmas music before Thanksgiving?",
+          "n": 2,
+          "a": "The sooner the better",
+          "av": 1,
+          "b": "Wait your turn",
+          "bv": -1
+        },
+        {
+          "q": "Real tree or fake?",
+          "n": 2,
+          "a": "Real, always",
+          "av": -1,
+          "b": "Fake, no mess",
+          "bv": 1
+        },
+        {
+          "q": "Ugly holiday sweaters?",
+          "n": 2,
+          "a": "The uglier the better",
+          "av": 1,
+          "b": "Not in public",
+          "bv": -1
+        }
+      ]
+    },
+    {
+      "key": "parlour-17",
+      "title": "Birthday",
+      "beats": [
+        {
+          "q": "Cake or pie?",
+          "n": 2,
+          "a": "Cake",
+          "av": 1,
+          "b": "Pie",
+          "bv": -1
+        },
+        {
+          "q": "Frosting?",
+          "n": 2,
+          "a": "The best part",
+          "av": -1,
+          "b": "Scrape it off",
+          "bv": 1
+        },
+        {
+          "q": "Everyone sings Happy Birthday to you. Do you...",
+          "n": 2,
+          "a": "Conduct the choir",
+          "av": 1,
+          "b": "Melt into the floor",
+          "bv": -1
+        }
+      ]
+    }
+  ]
+}

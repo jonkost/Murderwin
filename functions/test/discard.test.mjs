@@ -16,7 +16,7 @@ async function rehearsed() {
   for (let i = 0; i < uids.length; i++) await join(db, { uid: uids[i], nightId, name: names[i] })
   await hostCommand(db, { nightId, command: 'act', arg: 2 })
   await hostCommand(db, { nightId, command: 'beat', arg: 'cat' })
-  await hostCommand(db, { nightId, command: 'beat', arg: 'questions' })
+  await hostCommand(db, { nightId, command: 'light-up' })
   for (const uid of uids) {
     db.store.set(`presence/${uid}`, { nightId, guestKey: uid.slice(4), at: new Date() })
     db.store.set(`notes/${uid}`, { crossed: { 3: true }, nights: { [nightId]: { seen: { welcome: true } }, 'other-night': { seen: {} } } })

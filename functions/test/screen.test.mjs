@@ -228,7 +228,7 @@ test('the seed names a screen and a sound only from the catalogues', () => {
 // sound in the catalogue is written once, and no screen doc ever carries a
 // forbidden field. The fake-players' public-doc tokens are checked too.
 
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"', '"screenSalt"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"', '"screenSalt"']
 
 async function party() {
   const db = new FakeFirestore()
@@ -307,8 +307,6 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(screen().parked, null)
   assert.ok(!JSON.stringify(screen()).includes(db.store.get(`cases/${nightId}`).screenSalt), 'the salt never reaches the screen')
   await next() // puzzle
-  await next() // questions
-  now += 61_000
   await next() // checkin
 
   // Act 3: the bulletin as captions, with the strike lines (one at dial 0), never the active motive
@@ -362,10 +360,7 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin')
 
   // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, the board
-  await next() // merged
-  now += 61_000
-  await host('settle')
-  await next() // the drawing starts
+  await next() // Act 6 opens on the drawing
   const { pub, priv } = relayPaths(nightId)
   for (let g = 1; g <= 3; g++) {
     let p = db.store.get(pub)

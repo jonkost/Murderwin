@@ -4,7 +4,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES } from '../lib/night.js'
 import { hostCommand, nextOf, prevOf, firstBeat, player } from '../lib/run.js'
 import {
-  NIGHT, STATIONS, affectionOutcome, fillPools, assembleTestimony, stationFor, beatsOf, ms,
+  NIGHT, STATIONS, affectionOutcome, fillPools, assembleTestimony, stationFor, beatsOf, ms, openWindow,
 } from '../lib/deal.js'
 
 // A throwaway night with four phones. Nothing here is a real case; the
@@ -71,7 +71,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   await hostCommand(db, { nightId, command: 'power', now })
   for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
 
-  // Act 2: news, cat, puzzle, questions, check-in
+  // Act 2: news, cat, puzzle, a Parlour Game when it is due, check-in
   await next() // news
   await next() // cat
   for (const uid of uids) {
@@ -85,18 +85,27 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe.jon.length === 3, 'the safe answer is kept by guest key')
   await next() // puzzle
   for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
-  await next() // questions window
+  // the first Parlour Game pops up on its own when it is due: the once-a-minute tick
+  const sched = db.store.get(`nights/${nightId}/private/parlour`)
+  assert.equal(sched.act, 2); assert.equal(sched.count, 4)
+  await hostCommand(db, { nightId, command: 'tick', now: ms(sched.due0) - 1 })
+  assert.ok(!night(db, nightId).window, 'not a moment early')
+  now = ms(sched.due0)
+  await hostCommand(db, { nightId, command: 'tick', now })
   const w = night(db, nightId).window
   assert.equal(w.kind, 'questions'); assert.equal(w.settled, false)
+  assert.equal(w.id, 'questions-2-p0')
   assert.equal(ms(w.closesAt) - ms(w.opensAt), NIGHT.windows.questions.ms)
+  const shown = session(db, uids[0]).windows[w.id]
   for (const uid of uids) {
     const set = session(db, uid).windows[w.id]
+    assert.deepEqual(Object.keys(set).sort(), ['beats', 'kind'], 'no cat, no numbers: the listening cat is a secret')
+    assert.deepEqual(set, shown, 'every phone gets the same set')
     assert.equal(set.beats.length, 3)
     for (const b of set.beats) {
-      assert.ok(b.choices.length >= 2)
+      assert.equal(b.choices.length, 2, 'exactly two answers')
       for (const ch of b.choices) assert.deepEqual(Object.keys(ch).sort(), ['k', 'text'], 'no numbers on a phone')
     }
-    assert.ok(['granolia', 'boo', 'zimothy', 'salem'].includes(set.cat))
   }
   // two phones answer; Next refuses while the window is open; after it closes the other two get random picks
   const first = session(db, uids[1]).windows[w.id]
@@ -128,12 +137,11 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
     assert.ok(session(db, uid).group)
   }
 
-  // Act 4: five stations, two windows; everyone visits the study exactly once
+  // Act 4: five stations; everyone visits the study exactly once
   const visited = Object.fromEntries(uids.map(u => [u, []]))
   for (const b of beatsOf(4)) {
     await next()
     assert.equal(night(db, nightId).beat, b.key)
-    if (b.action === 'window:questions') now += NIGHT.windows.questions.ms + 1
     if (b.action === 'rotate') for (const uid of uids) visited[uid].push(cards(db, uid, 'station').at(-1).station)
   }
   for (const uid of uids) {
@@ -145,10 +153,8 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   // Act 5, Act 6
   await next(); await next()
   assert.equal(night(db, nightId).act, 5)
-  await next() // Act 6 merged questions
+  await next() // Act 6 opens on the drawing
   assert.equal(night(db, nightId).act, 6)
-  now += NIGHT.windows.questions.ms + 1
-  await next() // drawing
   assert.equal(db.store.get(`nights/${nightId}/public/relay`).state, 'walk')
   await assert.rejects(next, /still running/) // the phones stay on the drawing until it is done or cleared
   await hostCommand(db, { nightId, command: 'relay-reset', now })
@@ -244,39 +250,51 @@ test('an act jump that skips the power beat still builds the case and deals ever
   for (const uid of Object.values(p2)) assert.equal(cards(db2, uid, 'role').length, 0)
 })
 
-test('a beat\'s window is keyed by the beat: re-running it opens nothing twice and pushes the dial once; light-up is always fresh', async () => {
+test('a Parlour Game opens once at its time: a second tick opens nothing twice and pushes the dial once; light-up is always fresh; none during the drawing', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   let now = 3_000_000
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  await hostCommand(db, { nightId, command: 'next', now }) // news: the role prompt is over
+  const sched = () => db.store.get(`nights/${nightId}/private/parlour`)
+  now = ms(sched().due0)
+  await hostCommand(db, { nightId, command: 'tick', now })
   const w1 = night(db, nightId).window
-  assert.equal(w1.id, 'questions-2-questions', 'the id names the act and the beat, not the moment')
+  assert.equal(w1.id, 'questions-2-p0', 'the id names the act and the slot, not the moment')
   now += NIGHT.windows.questions.ms + 1
   await hostCommand(db, { nightId, command: 'settle', now })
   assert.equal(night(db, nightId).window.settled, true)
   const dialLog = db.store.get(`cases/${nightId}`).dialLog.length
   const sets = Object.fromEntries(uids.map(u => [u, Object.keys(session(db, u).windows)]))
-  // the host taps the beat in the list, then Back and Next: the same window stands, settled
-  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  // the tick again, and the dealer asked for the same slot again: the same window stands, settled
+  await hostCommand(db, { nightId, command: 'tick', now })
+  await openWindow(db, nightId, 'questions', { now, act: 2, beat: 'p0' })
   assert.equal(night(db, nightId).window.id, w1.id)
   assert.equal(night(db, nightId).window.settled, true)
-  await hostCommand(db, { nightId, command: 'back', now })
-  await hostCommand(db, { nightId, command: 'next', now })
-  assert.equal(night(db, nightId).beat, 'questions')
-  assert.equal(night(db, nightId).window.id, w1.id)
   for (const u of uids) assert.deepEqual(Object.keys(session(db, u).windows), sets[u], 'no second set on any phone')
-  assert.equal(db.store.get(`cases/${nightId}`).dialLog.length, dialLog, 'the dial moved once for this act')
-  // the explicit button is a fresh window every time
+  assert.equal(db.store.get(`cases/${nightId}`).dialLog.length, dialLog, 'the dial moved once for this game')
+  // the next one waits for its own time and for the gap after the last one
+  const gap = NIGHT.parlour.minGapMin * 60_000
+  await hostCommand(db, { nightId, command: 'tick', now: Math.max(ms(sched().due1), ms(sched().lastAt) + gap) - 1 })
+  assert.equal(night(db, nightId).window.id, w1.id)
+  // the explicit button is a fresh window every time, and no set is used twice
   const lit = await hostCommand(db, { nightId, command: 'light-up', now })
   assert.notEqual(lit.id, w1.id)
   assert.equal(night(db, nightId).window.id, lit.id)
   assert.equal(night(db, nightId).window.settled, false)
   for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
-  // and a beat the night has not seen opens as before
+  const priv = db.store.get(`nights/${nightId}/private/windows`)
+  assert.notEqual(priv[lit.id].setId, priv[w1.id].setId, 'light-up picks a set not used tonight')
+  // Act 6 opens on the drawing: a game that falls due waits until the drawing is over
   now += NIGHT.windows.questions.ms + 1
   await hostCommand(db, { nightId, command: 'act', arg: 6, now })
-  assert.equal(night(db, nightId).window.id, 'questions-6-merged')
+  assert.equal(sched().act, 6)
+  now = ms(sched().due0)
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(night(db, nightId).window.id, lit.id, 'nothing pops up over the drawing')
+  await hostCommand(db, { nightId, command: 'relay-reset', now })
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(night(db, nightId).window.id, 'questions-6-p0')
 })
 
 test('the safe: wrong twice, then it gives way; right pays a document once', async () => {

@@ -4,7 +4,7 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace } from './Cards'
 import { Eliminations } from './Windows'
-import { nowCards, roleCard } from '../lib/night'
+import { nowCards, roleCard, stopOf } from '../lib/night'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -209,14 +209,14 @@ function Cats({ session, content, ui, act }) {
   const house = act === 4 && session.groupAffection && typeof session.groupAffection === 'object' ? session.groupAffection : null
   const [open, setOpen] = useState(null)
   const lines = useMemo(() =>
-    Object.fromEntries(CATS.map(c => [c.key, statusLine(content, c.key, session.affection?.[c.key] ?? 3)])),
+    Object.fromEntries(CATS.map(c => [c.key, statusLine(content, c.key, stopOf(session.affection?.[c.key] ?? 3))])),
     [content, session.affection])
   return (
     <div>
       <p className="gloss">Where you stand with each of the household. Tap one to learn more.</p>
       <ul className="gauges">
         {cards.map(cat => {
-          const level = cat.key === 'irwin' ? 5 : Math.max(1, Math.min(5, session.affection?.[cat.key] ?? 3))
+          const level = cat.key === 'irwin' ? 5 : stopOf(session.affection?.[cat.key] ?? 3) // kept in half steps; shown at the nearest stop
           const houseLevel = house && cat.key !== 'irwin' && house[cat.key] ? Math.max(1, Math.min(5, Math.round(house[cat.key]))) : null
           const on = open === cat.key
           return (

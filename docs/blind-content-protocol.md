@@ -206,8 +206,9 @@ Runtime (built 17 Oct 2026):
   triedCodes }` and nothing else.
 - Fixed per case: one pool value per key (`pools`), Granolia's one wrong blank
   (`granoliaSlot`), one kernel variant per cat (`variant`), the stationery
-  template, `dialSign { ghost: +1, murderer: -1 }` (never random), the hidden
-  roles' Parlour Game set indexes (`hiddenSets`).
+  template, `dialSign { ghost: +1, murderer: -1 }` (never random), the night's
+  Parlour Games (`parlourPlan`: the twelve sets, their times, the listening
+  cats and their leans, with the lean table as Jenna left it).
 - Testimony: opener (safe) + kernel (`kernelFor`: the case's variant; Salem
   rolls per (nightId, guestKey) with a seeded hash, 60 percent his warp, 40
   percent Irwin's kernel at `salemTruthIndex`) + the safe's three numbers in a

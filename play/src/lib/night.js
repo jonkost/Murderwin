@@ -179,6 +179,21 @@ export function openWindow(night, session, serverNow) {
   return { ...w, mine }
 }
 
+// A Parlour Game shows on top of whatever the phone was on; the screen
+// underneath stays mounted, so when the game is done the guest is back
+// exactly where they were: the same tab, the same half-typed answer, the
+// same scroll (docs/parlour-games.md, F19). The other windows (the
+// deduction round, the ballot) are beats of their own and take the screen.
+export function overlays(w) { return w?.kind === 'questions' }
+
+// Affection is kept in half steps on the server; the slider and every word
+// about it show the nearest of the five stops. Irwin is always the top one.
+export function stopOf(level) {
+  const n = Number(level)
+  if (!Number.isFinite(n)) return 3
+  return Math.max(1, Math.min(5, Math.round(n)))
+}
+
 export function secondsLeft(w, serverNow) {
   return Math.max(0, Math.ceil((ms(w.closesAt) - serverNow()) / 1000))
 }

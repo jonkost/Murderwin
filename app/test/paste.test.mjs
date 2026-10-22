@@ -80,7 +80,7 @@ test('household cards and news frames', () => {
   assert.equal(echo.items[1].text, '...reports describe ███ at the Grand...')
 })
 
-test('push and pull sets: questions with choices under them, or one line per question', () => {
+test('Parlour Game sets: questions with choices under them, or one line per question', () => {
   const raw = `Do you care which way your toilet paper sits?
 Yes +5
 No 0

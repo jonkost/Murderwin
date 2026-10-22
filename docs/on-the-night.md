@@ -86,8 +86,12 @@ game; it serves the bulb and the speakers.
   are on and what it is for are written above the button.
 - Act 1 ends with **Blackout**. When the room is settled, **Power returns · Act 2**.
   Every phone shows its role card, held fifteen seconds. Yours too.
-- A Parlour Game is a window: every phone at once, sixty seconds on the
-  server's clock, and it never closes early. **Next** waits for it. When the
+- The Parlour Games pop up on their own: four in each of Acts 2, 4 and 6,
+  at times nobody knows, you included. Every phone at once, the same three
+  questions, sixty seconds on the server's clock, and it never closes early.
+  It sits on top of whatever the phone was showing and hands it back when
+  it is done. None pops up during the drawing; a game the act ends before
+  is simply not played. **Next** waits for an open one. When the
   time is up, the server picks for anyone who did not, within a minute, on
   its own; **Pick for the rest** does the same thing sooner if you are
   standing there. Press **Parlour Game now** for an extra one in Acts 2, 4

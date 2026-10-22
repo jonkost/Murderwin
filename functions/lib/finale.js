@@ -15,6 +15,7 @@ import { randomInt } from 'node:crypto'
 import { MOTIVES, NightError, readArea, characterById } from './night.js'
 import { rotationPath } from './station.js'
 import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
+import { parlourAwards, AWARD_TITLES } from './parlour.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -46,6 +47,22 @@ export const HUSH_LABEL = 'Hush'
 export const HUSH_LINE = 'Somebody was found out tonight and said nothing. The Manor noticed.'
 
 export const DEFAULT_EPILOGUE = 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.'
+
+// The Parlour Games awards (docs/parlour-games.md, draft: Jon may rewrite the
+// titles and lines). They compare the guests with each other from their own
+// answers only, never the cats' leans, so nobody looks like the cats'
+// favourite while their slider says otherwise.
+export const PARLOUR_AWARD_LINES = Object.freeze({
+  rebel: 'Sided with the smaller half of the room most often.',
+  crowd: 'Sided with the bigger half of the room most often.',
+  kindred: 'Answered alike more often than any other two.',
+  rivals: 'Agreed less often than any other two.',
+})
+
+function andList(names) {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
 
 const CAT_SHORT = { granolia: 'Granolia', boo: 'Boo', zimothy: 'Zimothy', salem: 'Salem' }
 
@@ -176,9 +193,18 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const up = (sign.ghost ?? 1) > 0 ? 'ghost' : 'murderer'
   const sides = { up, down: up === 'ghost' ? 'murderer' : 'ghost' }
 
-  // the achievements the host gave during the night, in the order given
+  // the achievements the host gave during the night, in the order given, then the Parlour Games awards
   const given = Object.values(awardsSnap.exists ? (awardsSnap.data().awards ?? {}) : {}).sort((a, b) => ms(a.at) - ms(b.at))
-  const achievements = given.map((a, i) => ({ name: a.name, title: a.title, line: a.line, showAt: FINALE_SCHEDULE.awards + Math.min(i * AWARD_EVERY_MS, FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards - 2_000) }))
+  const nameOf = Object.fromEntries(people.map(({ guest }) => [guest.key, guest.name]))
+  const won = parlourAwards(Object.fromEntries(people.map(({ guest, s }) => [guest.key, s.answers ?? {}])))
+  const parlour = []
+  for (const key of ['rebel', 'crowd']) if (won[key].length) parlour.push({ key, name: andList(won[key].map(k => nameOf[k])) })
+  for (const key of ['kindred', 'rivals']) if (won[key].length) parlour.push({ key, name: won[key].map(pair => andList(pair.map(k => nameOf[k]))).join('; ') })
+  const shown = [
+    ...given.map(a => ({ name: a.name, title: a.title, line: a.line })),
+    ...parlour.map(a => ({ name: a.name, title: AWARD_TITLES[a.key], line: PARLOUR_AWARD_LINES[a.key], parlour: true })),
+  ]
+  const achievements = shown.map((a, i) => ({ ...a, showAt: FINALE_SCHEDULE.awards + Math.min(i * AWARD_EVERY_MS, FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards - 2_000) }))
   const schedule = { ...FINALE_SCHEDULE }
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 

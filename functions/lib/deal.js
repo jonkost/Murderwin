@@ -8,7 +8,7 @@
 //
 // SEAL RULE. Two kinds of content pass through here:
 //  - SAFE: notices, role cards (all three are safe copy), openers, closers,
-//    brush-offs, pools, the push and pull questions, station text.
+//    brush-offs, pools, the Parlour Games bank, station text.
 //  - CASE: who did it, who died, the motive, the kernels, the documents.
 //    Read ONLY from cases/{nightId} (Admin SDK). Never logged, never returned
 //    to a caller, never written anywhere a client can read except the one
@@ -28,7 +28,9 @@ import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './nigh
 import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 import { bagsClue, bagsText } from './bags.js'
-import { pickSets, setFor, pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
+import { pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
+import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlour.js'
+import { LEANS_DOC } from './steward.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 
@@ -36,6 +38,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
 export const STATIONS = NIGHT.stations
 export const WINDOWS = NIGHT.windows
+export const PARLOUR = configOf(NIGHT.parlour)
 
 export const CAT_KEYS = ['irwin', 'granolia', 'boo', 'zimothy', 'salem']
 export const CAT_NAMES = {
@@ -78,24 +81,24 @@ export const STATION_TEXT = {
   checkin: { title: 'Check-in', text: 'Sit down together. Read your clues out to each other. Cross off motives.' },
 }
 
-// Built-in push and pull sets, used only when the workshop bank is empty.
+// Built-in Parlour Game sets, used only when the workshop bank is empty.
 // Silly, light, about nothing. Points are kept on the server; no phone sees them.
 export const REHEARSAL_SETS = [
-  [
+  { id: 'rehearsal-1', beats: [
     { q: 'Ice in orange juice?', n: 2, a: 'Always', av: 2, b: 'Never', bv: -1 },
     { q: 'A hat indoors is', n: 2, a: 'Fine', av: 1, b: 'A crime', bv: -2 },
     { q: 'The best stair is', n: 2, a: 'The top one', av: 1, b: 'The bottom one', bv: 1 },
-  ],
-  [
+  ] },
+  { id: 'rehearsal-2', beats: [
     { q: 'Soup is a drink', n: 2, a: 'Yes', av: -2, b: 'No', bv: 2 },
-    { q: 'Pick a sock', n: 3, a: 'Left', av: 1, b: 'Right', bv: -1, c: 'Neither', cv: 0 },
+    { q: 'Pick a sock', n: 2, a: 'Left', av: 1, b: 'Right', bv: -1 },
     { q: 'A pigeon with a tiny hat', n: 2, a: 'Trust it', av: 2, b: 'Do not', bv: -2 },
-  ],
-  [
+  ] },
+  { id: 'rehearsal-3', beats: [
     { q: 'Would you rather hum or whistle for a week', n: 2, a: 'Hum', av: -1, b: 'Whistle', bv: 1 },
     { q: 'Bread, buttered', n: 2, a: 'Edge to edge', av: 2, b: 'A dab', bv: -1 },
     { q: 'The moon is', n: 2, a: 'Too close', av: 0, b: 'Too far', bv: 1 },
-  ],
+  ] },
 ]
 
 // ---------------------------------------------------------------------------
@@ -190,12 +193,15 @@ export async function buildCaseForNight(db, nightId, { pick = pickInt, now = Dat
   const [templates, poolItems, bank] = await Promise.all([readArea(db, 'templates'), readArea(db, 'pools'), questionBank(db)])
   const pools = {}
   for (const k of POOL_KEYS) pools[k.toLowerCase()] = poolItems.filter(i => i.pool === k.toLowerCase()).map(i => i.text)
-  const common = { nightId, roster: list, templates, pools, rng: pick, bankSize: bank.length, now }
+  const forceRehearsal = night.forceRehearsal !== false
+  // the cats' leans are sealed (Jenna's lean table): read only for the party, never for a rehearsal
+  const leans = forceRehearsal ? null : await parlourLeans(db)
+  const parlour = { bankIds: bank.map(b => b.id), leans, config: PARLOUR }
+  const common = { nightId, roster: list, templates, pools, rng: pick, parlour, now }
 
   const warnings = []
   let c = null
   let tried = 0
-  const forceRehearsal = night.forceRehearsal !== false
   const manifestSnap = forceRehearsal ? null : await db.doc('sealed/manifest').get()
   const codes = manifestSnap?.exists ? Object.keys(manifestSnap.data().codes ?? {}) : []
   if (!forceRehearsal && codes.length) {
@@ -392,7 +398,7 @@ export async function dealEncounter(db, nightId, act, beat) {
     if (!cats.length) cats = shuffled(CAT_KEYS)
     const cat = cats.pop()
     const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
-    const level = sessionSnap.data()?.affection?.[cat] ?? 3
+    const level = stopOf(sessionSnap.data()?.affection?.[cat] ?? 3)
     const codes = [pickInt(90) + 10, pickInt(90) + 10, pickInt(90) + 10]
     codesByGuest[g.key] = codes
     const room = catRoom[cat]
@@ -466,55 +472,74 @@ export async function solve(db, { nightId, uid, cardId, entry }) {
 
 // ---------------------------------------------------------------------------
 // Windows: every phone at once. The night doc carries the window; each phone's
-// session carries its own set (no numbers); the numbers stay in private/.
+// session carries the set (no numbers, no cat); the numbers stay in private/
+// and the cats' leans in the case.
 
+// The workshop bank: sets of three questions with exactly two answers each.
+// A question written with a third or fourth choice is dealt with its first two.
 async function questionBank(db) {
   const items = await readArea(db, 'scenarios')
-  const sets = items.map(i => i.beats).filter(b => Array.isArray(b) && b.length === 3 && b.every(x => x.q && x.a && x.b))
+  const sets = items
+    .filter(i => Array.isArray(i.beats) && i.beats.length === 3 && i.beats.every(x => x?.q && x?.a && x?.b))
+    .map(i => ({ id: String(i.id), beats: i.beats }))
   return sets.length ? sets : REHEARSAL_SETS
 }
 
+// The lean table (sealed/parlour_leans), as Jenna left it: { setId: { q: { cat: 'a' | 'b' } } }.
+async function parlourLeans(db) {
+  const snap = await db.doc(LEANS_DOC).get()
+  return snap.exists ? (snap.data().sets ?? {}) : {}
+}
+
 function stripValues(beats) {
-  return beats.map(b => {
-    const n = Math.max(2, Math.min(4, Number(b.n) || 2))
-    const keys = ['a', 'b', 'c', 'd'].slice(0, n).filter(k => b[k])
-    return { q: b.q, choices: keys.map(k => ({ k, text: b[k] })) }
-  })
+  return beats.map(b => ({ q: b.q, choices: ['a', 'b'].map(k => ({ k, text: b[k] })) }))
 }
 function valuesOf(beats) {
-  return beats.map(b => Object.fromEntries(['a', 'b', 'c', 'd'].filter(k => b[k]).map(k => [k, Number(b[`${k}v`]) || 0])))
+  return beats.map(b => Object.fromEntries(['a', 'b'].map(k => [k, Number(b[`${k}v`]) || 0])))
+}
+
+// The planned Parlour Game for a window, or null for the host's own button.
+// Slots are named p0, p1, … within an act (the tick opens them, windows.js).
+export function plannedSlot(c, act, beat) {
+  const m = /^p(\d+)$/.exec(String(beat ?? ''))
+  if (!m) return null
+  return c?.parlourPlan?.acts?.[act]?.[Number(m[1])] ?? null
+}
+
+// The cats listening to each question of a window: the plan's, or for a
+// window the plan does not know, rolled from the case's seed and the window.
+function listenersFor(c, w) {
+  if (Array.isArray(w?.listeners)) return w.listeners
+  const plan = c?.parlourPlan
+  return extraListeners({ seed: plan?.seed ?? 'none', windowId: w?.id ?? '', setId: w?.setId ?? null, leans: plan?.leans ?? null })
 }
 
 // A window a beat opens is keyed by its act and beat, so re-running the beat
-// (the beat list, or Back then Next) finds the window it already opened and
-// leaves it be: no second set lands on any phone and the hidden roles'
-// points reach the dial once per window. The host's own "light-up" button
-// passes no beat and is a fresh window every time.
+// (the beat list, or Back then Next) or the tick asking twice finds the
+// window it already opened and leaves it be: no second set lands on any
+// phone and the hidden roles' points reach the dial once per window. The
+// host's own "light-up" button passes no beat and is a fresh window every time.
 export async function openWindow(db, nightId, kind, { now = Date.now(), beat = null, act = null } = {}) {
   const spec = WINDOWS[kind]
   if (!spec) throw new NightError('invalid', `No such window: ${kind}`)
   const { night, list } = await guests(db, nightId)
   const id = beat ? `${kind}-${act}-${beat}` : `${kind}-${now}`
-  if (beat) {
-    const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
-    if (night.window?.id === id || (privSnap.exists && privSnap.data()[id])) return { ok: true, id, phones: list.length, already: true }
-  }
+  const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
+  if (beat && (night.window?.id === id || (privSnap.exists && privSnap.data()[id]))) return { ok: true, id, phones: list.length, already: true }
   if (night.window && !night.window.settled) await settleWindow(db, nightId, { now, force: true })
   const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat }
-  const priv = {}
+  let priv = {}
   if (kind === 'questions') {
+    // one set for the whole room: the plan's for this slot, or for the host's own button
+    // a set not yet used tonight (any set, once the bank has gone round)
     const bank = await questionBank(db)
-    const cats = CAT_KEYS.filter(k => k !== 'irwin')
-    // every detective draws their own set this window, among the sets that read as long as the
-    // hidden roles' sets; the hidden roles get the set their case names (windows.js)
     const c = await readCase(db, nightId)
-    const sets = pickSets({ bank, c, act, beat, pick: pickInt })
-    for (const g of list) {
-      const set = bank[setFor(sets, roleOf(c, g.key), pickInt)]
-      const cat = choice(cats)
-      priv[g.key] = { cat, values: valuesOf(set) }
-      await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, cat, catName: CAT_NAMES[cat], beats: stripValues(set) } })
-    }
+    const planned = plannedSlot(c, act, beat)
+    const used = new Set(Object.values(privSnap.exists ? privSnap.data() : {}).map(v => v?.setId).filter(Boolean))
+    const fresh = bank.filter(b => !used.has(b.id))
+    const set = bank.find(b => b.id === planned?.setId) ?? choice(fresh.length ? fresh : bank)
+    priv = { setId: set.id, values: valuesOf(set.beats), slot: planned ? Number(String(beat).slice(1)) : null }
+    for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, beats: stripValues(set.beats) } })
   } else {
     for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind } })
   }
@@ -523,26 +548,32 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
   return { ok: true, id, phones: list.length }
 }
 
-// Points land. Every phone's total nudges one cat by one step, so the Cats
-// tab behaves the same whatever the role (Jon, 16 Oct 2026: no slider for
-// the dial; it is revealed at the end). A hidden role's total ALSO moves the
-// clarity dial by that night's sign. Nothing is returned.
+// Answers land (docs/parlour-games.md). Each question has one cat secretly
+// listening. A Detective's answer warms it when it matches the cat's lean
+// and cools it when it does not, by half a stop or a full stop. The
+// Murderer's and the Ghost's sliders move just the same, with a coin flip in
+// place of the answer, so no slider is a tell; their points ALSO move the
+// clarity dial by that night's map. Nothing is returned.
 async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
   const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
-  const w = privSnap.exists ? privSnap.data()[windowId]?.[key] : null
-  if (!w) return
-  const total = picks.reduce((sum, k, i) => sum + (w.values[i]?.[k] ?? 0), 0)
+  const w = privSnap.exists ? privSnap.data()[windowId] : null
+  if (!w?.values) return
+  const role = roleOf(c, key)
+  const hidden = role === 'murderer' || role === 'ghost'
+  const planned = Number.isInteger(w.slot) ? c?.parlourPlan?.acts?.[act]?.[w.slot] : null
+  const listeners = listenersFor(c, { id: windowId, setId: w.setId, listeners: planned?.setId === w.setId ? planned.listeners : null })
+  const moves = catMoves({ listeners, picks, hidden, seed: c?.parlourPlan?.seed ?? 'none', windowId, key })
   const deck = (await db.doc(`nights/${nightId}/private/deck`).get()).data() ?? {}
   const uid = deck.uids?.[key]
   if (uid) {
     const sref = db.doc(`sessions/${uid}`)
-    const level = (await sref.get()).data()?.affection?.[w.cat] ?? 3
-    const next = Math.max(1, Math.min(5, level + Math.sign(total)))
-    if (next !== level) await sref.update({ [`affection.${w.cat}`]: next })
+    const patch = applyMoves((await sref.get()).data()?.affection ?? {}, moves)
+    if (Object.keys(patch).length) await sref.update(Object.fromEntries(Object.entries(patch).map(([cat, v]) => [`affection.${cat}`, v])))
   }
-  // a hidden role's total also moves the dial, through the case's map, in one transaction (windows.js);
+  // a hidden role's points also move the dial, through the case's map, in one transaction (windows.js);
   // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then
-  await pushDial(db, nightId, { c, role: roleOf(c, key), total, act })
+  const total = picks.reduce((sum, k, i) => sum + (w.values[i]?.[k] ?? 0), 0)
+  await pushDial(db, nightId, { c, role, total, act })
 }
 
 function validPicks(set, picks) {

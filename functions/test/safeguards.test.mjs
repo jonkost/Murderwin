@@ -129,7 +129,7 @@ test('rerollCase keeps the Murderer, the characters, the pools, the template and
     assert.equal(next.victimCharacterId, roster.find(g => g.key === next.ghost).characterId)
     assert.deepEqual(next.pools, prev.pools)
     assert.ok(next.documents.every(d => d.template === prev.documents[0].template), 'the paper stays the same')
-    assert.deepEqual(next.hiddenSets, prev.hiddenSets)
+    assert.deepEqual(next.parlourPlan, prev.parlourPlan, 'the night\'s Parlour Games carry on as planned')
     assert.equal(next.createdAt, prev.createdAt)
     assert.equal(next.dial, 0); assert.deepEqual(next.dialLog, []); assert.deepEqual(next.exposure, {})
     assert.equal(next.spills, 1)
@@ -352,7 +352,7 @@ test('spill is off once the echo is on the screen, once the study has paid out, 
 
 // Picks that score as high as the set allows, from the numbers the server keeps.
 function bestPicks(db, nightId, windowId, key) {
-  const values = db.store.get(`nights/${nightId}/private/windows`)[windowId][key].values
+  const values = db.store.get(`nights/${nightId}/private/windows`)[windowId].values // one set for the whole room
   return values.map(v => Object.entries(v).sort((a, b) => b[1] - a[1])[0][0])
 }
 

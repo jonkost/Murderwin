@@ -90,9 +90,7 @@ test('start twice keeps the drawing: turnIndex and seed stand; force restarts it
 test('reset re-opens the door: after a full run, Clear, then a second full run reveals a new trace and the hall goes green again', async () => {
   const { db, nightId, uids } = await party(3)
   const t = { now: 2_000_000 }
-  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now })
-  t.now = ms(night(db, nightId).window.closesAt) + 1
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // the drawing starts
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now }) // Act 6 opens on the drawing
   assert.equal(night(db, nightId).beat, 'drawing')
   const cues = `nights/${nightId}/public/cues`, trace = `nights/${nightId}/public/trace`
   assert.equal(db.store.get(cues).hall, 'red')

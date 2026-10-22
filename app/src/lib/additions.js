@@ -6,11 +6,15 @@
 // An entry may carry:
 //   areaDocs:        { area: doc }        create the list doc if it is missing
 //   appendItems:     { area: [text] }     add lines not already there
+//   appendScenarios: { area: [beats] }    add Parlour Game sets whose first
+//                                         question is not already there
 //   tasks:           [task]               add task cards
 //   decisions:       [decision]           add decisions not already there
 //   retireTasks:     [{ order, detail }]  move those task cards to done, once
 //   answerDecisions: { key: answer }      answer a decision nobody has answered
 // Nothing here ever deletes, reorders or rewrites a line.
+
+import { normalizeBeats, titleOf } from './scenarios.js'
 
 function asItems(raw) {
   if (Array.isArray(raw)) return raw
@@ -36,6 +40,23 @@ export function freshLines(existing, lines, newId = defaultNewId) {
   }).map(text => ({ id: newId(), text, deleted: false, order: ++order }))
 }
 
+// Parlour Game sets to append: those whose first question is not already a
+// first question in the list. A set Jon has since reworded is never doubled.
+export function freshScenarios(existing, sets, newId = defaultNewId) {
+  const norm = t => String(t ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
+  const have = new Set(existing.filter(it => !it.deleted).map(it => norm(titleOf(it.beats) || it.text)))
+  let order = Math.max(-1, ...existing.map(it => it.order ?? 0))
+  const out = []
+  for (const raw of sets) {
+    const beats = normalizeBeats(raw)
+    const head = norm(titleOf(beats))
+    if (!head || have.has(head)) continue
+    have.add(head)
+    out.push({ id: newId(), text: titleOf(beats), beats, deleted: false, order: ++order })
+  }
+  return out
+}
+
 // snapshot: { applied: [id], areas: { area: rawDocOrNull }, decisions: { key: dataOrNull }, tasks: [{ id, order, status, detail }] }
 export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.now() } = {}) {
   const applied = snapshot.applied ?? []
@@ -47,6 +68,11 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
   for (const [area, lines] of Object.entries(add.appendItems ?? {})) {
     const existing = asItems(snapshot.areas?.[area]?.items)
     const fresh = freshLines(existing, lines, newId)
+    if (fresh.length) plan.areaDocs[area] = { items: [...existing, ...fresh] }
+  }
+  for (const [area, sets] of Object.entries(add.appendScenarios ?? {})) {
+    const existing = asItems(plan.areaDocs[area]?.items ?? snapshot.areas?.[area]?.items)
+    const fresh = freshScenarios(existing, sets, newId)
     if (fresh.length) plan.areaDocs[area] = { items: [...existing, ...fresh] }
   }
   for (const t of add.tasks ?? []) plan.tasks.push({ ...t, ts: now })

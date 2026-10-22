@@ -263,8 +263,8 @@ Built blind, tested against fakes. Not yet run on the real walls.
   when the generator has written it, a bracketed rehearsal line until then. The station card
   on the phone no longer carries the clue text; nothing is on a phone before it is earned.
 - **The study is the clock.** The same "done" moves the whole house to the next station,
-  exactly as pressing *Next* would, as long as the night is in Act 4 on a station beat. During
-  a Parlour Game the host's *Next* stays in charge.
+  exactly as pressing *Next* would, as long as the night is in Act 4 on a station beat. A
+  Parlour Game on the phones keeps running through the rotation (21 Oct).
 - **Rehearsing without the walls.** If no station has reported in for two minutes, a rotation
   deals the study's clue with the station card, so a phones-only rehearsal still pays out.
 - **Make the groups** on the Host tab now goes through the dealer, so the Murderer and the
@@ -278,9 +278,9 @@ Built blind, tested against fakes. Not yet run on the real walls.
   up with its three questions AND the whole house moves to its next station, in the same
   moment. People answer as they walk. You never need Next between study finishes. Next still
   works as the backup if the station is ever stuck.
-  The flag that does this is `autoAfterStudy: true` on the two Parlour Game beats in
-  `seed/night.json`. Set it to `false` and the old behaviour returns: a finish opens the
-  Parlour Game and the house waits for Next.
+  **Changed 21 Oct:** the Parlour Games no longer have beats of their own; four pop up at
+  random times during Act 4 (`docs/parlour-games.md`), so the `autoAfterStudy` flag is gone.
+  A study finish during a Parlour Game still moves the house on, and the game keeps running.
 - **The server decides who is due in the study.** The station only ever says "the group I
   was told about is done". Which group that was, and who comes next, is the rotation's. The
   station re-arms for whichever group the server's study document names, never from its own
@@ -309,9 +309,8 @@ Built blind, tested against fakes. Not yet run on the real walls.
   Nanoleaf walls, the Hue bridge and the Stream Deck, and nothing else. Run it one evening
   before the freeze with everything plugged in. `--fake` runs it with no hardware.
 
-One question for you, deferred: the Parlour Games now fire on a study finish. If you would
-rather they fired on your Next (so the room is seated, say), flip `autoAfterStudy` to `false`
-on either beat. It is one word in the seed.
+(The deferred question about firing the Parlour Games on a study finish is moot since 21 Oct:
+they pop up on their own times.)
 
 Decisions made while building, on top of §10:
 - **The station presents a key, not an account.** You type a key on the Host
@@ -415,9 +414,8 @@ and swaps the study listener when the night changes (the machine resets to idle)
 `groupId` instead and `run.studyFinished` still rotates (the `reassigned` flag bypasses the
 slot check). `rotate` clears `reassignedFrom`.
 
-**autoAfterStudy.** `run.studyFinished` on a rotate beat whose next beat is a questions beat
-with `autoAfterStudy: true` enters that beat (opens the window) and then the following rotate
-beat, in one call. With the flag false it enters the questions beat only.
+**autoAfterStudy** (removed 21 Oct). The Parlour Games have no beats; `run.studyFinished`
+rotates even while a questions window is open, and the window settles on its own clock.
 
 **Settings.** `station/lib/study.js settingsFrom(input)` takes `capMs, warnMs, rounds (3 of
 {lengths[3], onMs, gapMs}), replayHintMisses, mapHintMisses, restMs` within sane ranges; the

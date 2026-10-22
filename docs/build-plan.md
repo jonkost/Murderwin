@@ -100,6 +100,9 @@ Then, when you have them:
 - Every Detective draws their own Parlour Game set, so no two phones are
   expected to match and the two hidden roles never stand out (the review
   caught this; the first build gave every Detective one shared set).
+  **Replaced 21 Oct** (`docs/parlour-games.md`): every phone, all three
+  roles, now gets the same set at the same moment, so nobody can stand out;
+  twelve a night pop up at random times.
 - Spill the Beans works until the first clue has been shown to the room.
 - The deck hands out only the bag numbers the packer packed.
 - Jenna's page shows each set's riddle at the top, as the rules allow.

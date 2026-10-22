@@ -45,10 +45,13 @@
 //   granoliaSlot: { key, value } | null   the one blank Granolia gets wrong,
 //                               the same blank and the same wrong value for
 //                               every listener
-//   hiddenSets: { murderer: { act2: i, act4a: i, act4b: i, act6: i }, ghost: {...} }
-//                               which Parlour Game set each hidden role is
-//                               dealt per window, as an index into the bank
-//                               (consumers take index mod bank length)
+//   parlourPlan: { seed, acts: { '2': [{ setId, atMs, listeners: [{ cat, size, fits, lean }] x3 }] x4, '4', '6' },
+//                  leans }      the night's twelve Parlour Games (parlour.js
+//                               planParlour): which set, when, which cat is
+//                               secretly listening to each question and which
+//                               answer it leans toward; `leans` is the lean
+//                               table as Jenna left it at the deal. Every
+//                               phone gets the same set at the same moment.
 //   screenSalt: hex string      a secret the room screens seed their picks on
 //                               (the bulletin's strikes, the news frame), so
 //                               nothing public can replay them from the night id
@@ -66,11 +69,11 @@
 import { randomInt, createHash } from 'node:crypto'
 import { MOTIVES } from './night.js'
 import { STUDY_PLACEHOLDER } from './station.js'
+import { newSeed, planParlour } from './parlour.js'
 
 export const CAT_KEYS = ['irwin', 'granolia', 'boo', 'zimothy', 'salem']
 export const TRUTH_CATS = ['irwin', 'boo', 'zimothy']
 export const POOL_KEYS = ['ROOM', 'TIME', 'DURATION', 'COUNT', 'PLACE', 'CROWD']
-export const WINDOW_SLOTS = ['act2', 'act4a', 'act4b', 'act6'] // the four Parlour Game windows of the night
 export const DIAL_SIGN = Object.freeze({ ghost: 1, murderer: -1 })
 export const SALEM_WARP_SHARE = 0.6
 
@@ -194,12 +197,12 @@ export function granoliaSlot(kernelText, pools, lists, rng) {
   return { key, value: choice(others.length ? others : list, rng) }
 }
 
-// Which bank set each hidden role gets at each window. Decided here, sealed,
-// so Jon's own numbers never tell him which way the night moved.
-export function pickHiddenSets(rng, bankSize = 3) {
-  const n = Math.max(1, bankSize | 0)
-  const one = () => Object.fromEntries(WINDOW_SLOTS.map(w => [w, rng(n)]))
-  return { murderer: one(), ghost: one() }
+// The night's Parlour Games, from a seed of the case's own (parlour.js).
+// The lean table rides along, so a window the plan does not know (the host's
+// Light up button) can still find a cat's fitting answer.
+export function parlourPlanFor(rng, { bankIds = [], leans = null, config = null } = {}) {
+  const seed = newSeed(rng)
+  return { ...planParlour({ seed, bankIds, config, leans }), leans: leans ?? {} }
 }
 
 // Workshop template lines are "Name — brief". The name is what the phone prints.
@@ -213,7 +216,7 @@ export function screenSalt(rng) {
   return Array.from({ length: 8 }, () => rng(65536).toString(16).padStart(4, '0')).join('')
 }
 
-function common({ nightId, roster, rng, now, templates, poolLists, bankSize }) {
+function common({ nightId, roster, rng, now, templates, poolLists, parlour }) {
   const list = Array.isArray(roster) ? roster : Object.entries(roster ?? {}).map(([key, r]) => ({ key, ...r }))
   const { roles, murderer, ghost } = pickRoles(list.map(g => g.key), rng)
   const names = templateNames(templates)
@@ -222,7 +225,7 @@ function common({ nightId, roster, rng, now, templates, poolLists, bankSize }) {
     victimCharacterId: ghost ? list.find(g => g.key === ghost)?.characterId ?? null : null,
     template: choice(names, rng) ?? 'Receipt',
     pools: fixedPools(poolLists, rng),
-    hiddenSets: pickHiddenSets(rng, bankSize),
+    parlourPlan: parlourPlanFor(rng, parlour),
     screenSalt: screenSalt(rng),
     createdAt: new Date(now ?? Date.now()),
     nightId,
@@ -232,10 +235,10 @@ function common({ nightId, roster, rng, now, templates, poolLists, bankSize }) {
 // ---------------------------------------------------------------------------
 // The real case, from one sealed motive set.
 
-export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [], pools = {}, rng = randomInt, bankSize = 3, now } = {}) {
+export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [], pools = {}, rng = randomInt, parlour = {}, now } = {}) {
   const check = checkSealed(sealedDoc)
   if (!check.ok) { const e = new Error('sealed set failed its structural check'); e.code = 'sealed-shape'; e.fails = check.fails; throw e }
-  const base = common({ nightId, roster, rng, now, templates, poolLists: pools, bankSize })
+  const base = common({ nightId, roster, rng, now, templates, poolLists: pools, parlour })
   const variant = {}
   const kernels = {}
   for (const cat of CAT_KEYS) {
@@ -260,7 +263,7 @@ export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [],
     documents: docs, studyClue, echo: { fragment: choice(fragments, rng) }, irwin: { lines: irwinLines },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[variant.granolia], base.pools, pools, rng),
-    hiddenSets: base.hiddenSets, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
+    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
   }
 }
 
@@ -274,8 +277,8 @@ const CAT_NAMES = {
   zimothy: 'Zimothy Clawford, Esq.', salem: 'Salem Crookshank',
 }
 
-export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng = randomInt, bankSize = 3, now } = {}) {
-  const base = common({ nightId, roster, rng, now, templates, poolLists: pools, bankSize })
+export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng = randomInt, parlour = {}, now } = {}) {
+  const base = common({ nightId, roster, rng, now, templates, poolLists: pools, parlour })
   const kernels = {}
   const variant = {}
   for (const cat of CAT_KEYS) {
@@ -296,7 +299,7 @@ export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng
     irwin: { lines: ['(Rehearsal. Irwin line one.)', '(Rehearsal. Irwin line two.)', '(Rehearsal. Irwin line three.)'] },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[0], base.pools, pools, rng),
-    hiddenSets: base.hiddenSets, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
+    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
   }
 }
 
@@ -308,7 +311,7 @@ export const CASE_KEYS = Object.keys(rehearsalCase({ nightId: 'shape', roster: [
 // `prev` is the case as it stands, `fresh` a case just built from another
 // sealed set (buildCase) or a fresh rehearsal (rehearsalCase). The result
 // keeps the Murderer, every guest's character, the night's fixed pools, the
-// stationery template and the hidden-role sets; it takes the new motive and
+// stationery template and the night's Parlour Games; it takes the new motive and
 // everything that hangs off it; it picks a new Ghost (never the Murderer,
 // never the old Ghost when a third guest exists) and starts the dial again.
 // Pure: no database, nothing printed.
@@ -341,7 +344,7 @@ export function rerollCase({ prev, fresh, roster = [], poolLists = {}, rng = ran
     documents: (fresh.documents ?? []).map(d => ({ ...d, template })),
     pools,
     granoliaSlot: granoliaSlot(granoliaKernel, pools, poolLists, rng),
-    hiddenSets: prev?.hiddenSets ?? fresh.hiddenSets,
+    parlourPlan: prev?.parlourPlan ?? fresh.parlourPlan,
     screenSalt: prev?.screenSalt ?? fresh.screenSalt,
     exposure: {},
     dealtClues: Array.isArray(prev?.dealtClues) ? prev.dealtClues : [],

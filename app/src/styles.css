@@ -426,6 +426,12 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .steward .rhyme { font-size: 1.05rem; margin: 0.3rem 0 0.6rem; }
 .steward .set-section { margin: 1.2rem 0 0; padding-top: 0.8rem; border-top: 1px solid var(--line); }
 .steward .set-section h3 { margin: 0 0 0.2rem; }
+.steward .lean-set { margin: 1rem 0 0; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.steward .lean-q h3 { margin: 0.8rem 0 0.3rem; font-size: 1.05rem; }
+.steward .lean-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.25rem 0; }
+.steward .lean-cat { min-width: 6.5rem; font-weight: 600; }
+.steward .lean-pick { border: 1px solid var(--line); background: var(--field); border-radius: var(--r-control); padding: 0.45rem 0.8rem; min-height: 44px; text-align: left; }
+.steward .lean-pick.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .steward .set-section .field { margin: 0.5rem 0; }
 .steward .set-section textarea { width: 100%; font: inherit; line-height: 1.45; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); resize: vertical; }
 .steward .original { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }

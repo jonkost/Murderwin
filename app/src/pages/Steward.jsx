@@ -50,10 +50,12 @@ function StewardDesk({ api }) {
         <div className="tabs">
           <button className={`tab ${tab === 'sets' ? 'active' : ''}`} onClick={() => setTab('sets')}>The secrets</button>
           <button className={`tab ${tab === 'bags' ? 'active' : ''}`} onClick={() => setTab('bags')}>The packing list</button>
+          <button className={`tab ${tab === 'leans' ? 'active' : ''}`} onClick={() => setTab('leans')}>The cats' leans</button>
         </div>
       </section>
 
       {tab === 'bags' && <Packing api={api} />}
+      {tab === 'leans' && <Leans api={api} />}
 
       {tab === 'sets' && (
         <>
@@ -183,6 +185,68 @@ function Packing({ api }) {
           <ol>
             {b.items.map(it => <li key={it.id}>{it.name}{it.twice ? <b> (pack two)</b> : ''}<span className="hint"> {it.line.includes('—') ? it.line.slice(it.line.indexOf('—') + 1).trim() : ''}</span></li>)}
           </ol>
+        </div>
+      ))}
+    </section>
+  )
+}
+
+// The Parlour Games lean table (docs/parlour-games.md). For every question in
+// the bank, the answer each cat would pick. The night leans the other way one
+// time in four on its own, so pick the answer that fits the cat. Each tap
+// saves at once. Sealed: Jon must never see which way a cat leans.
+const LEAN_CATS = [
+  { key: 'granolia', name: 'Granolia', vibe: 'nerdy' },
+  { key: 'boo', name: 'Miss Boo', vibe: 'posh' },
+  { key: 'zimothy', name: 'Zimothy', vibe: 'fussy' },
+  { key: 'salem', name: 'Salem', vibe: 'grumpy and outdoorsy' },
+]
+
+function Leans({ api }) {
+  const [table, setTable] = useState(null)
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(null)
+  useEffect(() => { api.call({ op: 'leans' }).then(setTable).catch(e => setError(e?.message ?? 'Could not load the leans.')) }, [])
+  const choose = async (setId, q, cat, value) => {
+    const key = `${setId}-${q}-${cat}`
+    setSaving(key); setError(null)
+    try {
+      await api.call({ op: 'lean', setId, q, cat, value })
+      setTable(t => ({
+        ...t,
+        filled: t.filled + (value ? 1 : 0) - (t.sets.find(s => s.id === setId).questions[q].leans[cat] ? 1 : 0),
+        sets: t.sets.map(s => s.id !== setId ? s : { ...s, questions: s.questions.map((x, i) => i !== q ? x : { ...x, leans: { ...x.leans, [cat]: value } }) }),
+      }))
+    } catch (e) { setError(e?.message ?? 'That did not save. Try again.') }
+    setSaving(null)
+  }
+  if (!table) return <section className="panel">{error ? <div className="banner error" role="alert">{error}</div> : <p>…</p>}</section>
+  return (
+    <section className="panel leans">
+      <h2>The cats' leans</h2>
+      <p className="why">During each Parlour Game one cat is secretly listening to each question. For every question, tap the answer each cat would pick: {LEAN_CATS.map((c, i) => <span key={c.key}>{i ? ', ' : ''}{c.name} is {c.vibe}</span>)}. Irwin never listens. The game picks the other answer one time in four by itself, so you only need the one that fits. Each tap saves at once. Jon must never see this page.</p>
+      <p className="hint">{table.filled} of {table.of} filled in. A question left blank still works on the night: the game picks for that cat at random.</p>
+      {error && <div className="banner error" role="alert">{error}</div>}
+      {table.sets.length === 0 && <p className="why">The Parlour Games list in the workshop is empty, so there is nothing to lean on yet.</p>}
+      {table.sets.map(set => (
+        <div key={set.id} className="lean-set">
+          {set.questions.map((x, q) => (
+            <div key={q} className="lean-q">
+              <h3>{x.q || '(a question with no words yet)'}</h3>
+              {LEAN_CATS.map(cat => (
+                <div key={cat.key} className="lean-row">
+                  <span className="lean-cat">{cat.name}</span>
+                  {['a', 'b'].map(k => {
+                    const on = x.leans[cat.key] === k
+                    return (
+                      <button key={k} className={on ? 'lean-pick on' : 'lean-pick'} aria-pressed={on} disabled={saving === `${set.id}-${q}-${cat.key}`}
+                        onClick={() => choose(set.id, q, cat.key, on ? '' : k)}>{x[k] || k.toUpperCase()}</button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ))}
     </section>

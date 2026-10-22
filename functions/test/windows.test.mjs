@@ -6,9 +6,10 @@ import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, ROLE_CARDS, REHEARSAL_SETS, ms, roleCardsFor, ROLE_CARD_ID } from '../lib/deal.js'
 import { studyPath, rotationPath, ABSENT_SLOT_MS } from '../lib/station.js'
 import {
-  tick, activeNightId, pushDial, pickSets, setFor, slotFor, setLength, wordCount,
-  parityCheck, fillerLine, GRACE_MS, PARITY_TOLERANCE, SET_TOLERANCE, DEFAULT_FILLER, HIDDEN_ROLES,
+  tick, activeNightId, pushDial, wordCount, dueSlot, parlourPath,
+  parityCheck, fillerLine, GRACE_MS, PARITY_TOLERANCE, DEFAULT_FILLER, HIDDEN_ROLES,
 } from '../lib/windows.js'
+import { extraListeners, catMoves, applyMoves } from '../lib/parlour.js'
 import { noteExposure, isHushed } from '../lib/ledger.js'
 import { wordCount as workshopWordCount } from '../../app/src/lib/scenarios.js'
 
@@ -38,10 +39,12 @@ async function litUp(db, nightId, now) {
   await hostCommand(db, { nightId, command: 'light-up', now })
   return night(db, nightId).window
 }
-// Into Act 2, then the Act 2 Parlour Game beat itself (the window the case names a slot for).
-async function beatWindow(db, nightId, now) {
+// Into Act 2, then the clock to the act's first Parlour Game: it pops up on its own.
+async function firstGame(db, nightId, now) {
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'beat', arg: 'questions', now })
+  await hostCommand(db, { nightId, command: 'next', now }) // news: the role prompt is over
+  const due = ms(db.store.get(parlourPath(nightId)).due0)
+  await hostCommand(db, { nightId, command: 'tick', now: due })
   return night(db, nightId).window
 }
 // A deterministic picker, so a statistical test is the same run after run.
@@ -51,11 +54,11 @@ function seededPick(seed) {
 }
 // The picks that score the most (or the least) for one phone, from the private values.
 function bestPicks(db, nightId, windowId, key, sign = 1) {
-  const w = db.store.get(`nights/${nightId}/private/windows`)[windowId][key]
+  const w = db.store.get(`nights/${nightId}/private/windows`)[windowId] // one set for the whole room
   return w.values.map(v => Object.entries(v).sort((a, b) => sign * (b[1] - a[1]))[0][0])
 }
 function totalOf(db, nightId, windowId, key, picks) {
-  const w = db.store.get(`nights/${nightId}/private/windows`)[windowId][key]
+  const w = db.store.get(`nights/${nightId}/private/windows`)[windowId] // one set for the whole room
   return picks.reduce((s, k, i) => s + (w.values[i][k] ?? 0), 0)
 }
 // A throwaway bank of bracketed sets, each a different length, written as the workshop would.
@@ -227,154 +230,66 @@ test('a late answer is thanked, changes nothing, and the default stands', async 
 // ---------------------------------------------------------------------------
 // Which set each phone gets
 
-test('slotFor names the four windows of the night as the case does; a window with no beat has no slot', () => {
-  assert.equal(slotFor(2, 'questions'), 'act2')
-  assert.equal(slotFor(4, 'station1'), 'act4a')
-  assert.equal(slotFor(4, 'station2'), 'act4a')
-  assert.equal(slotFor(4, 'questions1'), 'act4a')
-  assert.equal(slotFor(4, 'station3'), 'act4b', 'a window opened by hand after the first Parlour Game is the second')
-  assert.equal(slotFor(4, 'questions2'), 'act4b')
-  assert.equal(slotFor(4, 'station5'), 'act4b')
-  assert.equal(slotFor(6, 'merged'), 'act6')
-  assert.equal(slotFor(5, 'roam'), null)
-  // the host's Light up button passes no beat: no slot, in any act
-  for (const act of [2, 4, 6]) assert.equal(slotFor(act, null), null, `act ${act} by hand`)
-  assert.equal(slotFor(2), null)
-})
-
-test('pickSets: the hidden roles get their case\'s set; every detective draws their own among the sets near them in length; no slot draws at random for everyone', () => {
-  const bank = [
-    [{ q: '(short)', a: '(a)', b: '(b)' }],
-    [{ q: '(a longer question with many more words in it)', a: '(choice a)', b: '(choice b)' }],
-    [{ q: '(short two)', a: '(a)', b: '(b)' }],
-    [{ q: '(another long question with a good many words)', a: '(choice a)', b: '(choice b)' }],
-  ]
-  const c = { hiddenSets: { murderer: { act2: 1, act4a: 0, act4b: 3, act6: 5 }, ghost: { act2: 3, act4a: 2, act4b: 3, act6: 1 } } }
-  const s = pickSets({ bank, c, act: 2, beat: 'questions', pick: () => 0 })
-  assert.equal(s.murderer, 1); assert.equal(s.ghost, 3)
-  assert.deepEqual(s.candidates, [1, 3], 'the detectives read a long set like the hidden roles')
-  assert.equal(setFor(s, 'detective', () => 0), 1)
-  assert.equal(setFor(s, 'detective', () => 1), 3)
-  assert.equal(setFor(s, 'murderer', () => 1), 1, 'a hidden role never draws')
-  assert.equal(setFor(s, 'nobody', () => 1), 3, 'an unknown role is a detective')
-  // each detective draws on their own: two draws in a row can differ
-  let i = 0
-  const draws = [0, 1, 2, 3].map(() => setFor(s, 'detective', n => (i++) % n))
-  assert.deepEqual(draws, [1, 3, 1, 3])
-  const s6 = pickSets({ bank, c, act: 6, beat: 'merged', pick: () => 0 })
-  assert.equal(s6.murderer, 1, 'an index past the bank wraps (5 mod 4)')
-  assert.equal(s6.ghost, 1)
-  const s4 = pickSets({ bank, c, act: 4, beat: 'questions1', pick: () => 0 })
-  assert.equal(s4.murderer, 0); assert.equal(s4.ghost, 2)
-  assert.deepEqual(s4.candidates, [0, 2], 'short with short')
-  // no slot: the hidden roles draw at random too (two draws, one each), and the detectives after them
-  let calls = 0
-  const s5 = pickSets({ bank, c, act: 5, beat: 'roam', pick: n => { calls++; return n - 1 } })
-  assert.equal(calls, 2)
-  assert.equal(s5.murderer, 3); assert.equal(s5.ghost, 3)
-  calls = 0
-  const byHand = pickSets({ bank, c, act: 2, beat: null, pick: n => { calls++; return 0 } })
-  assert.equal(calls, 2, 'a by-hand window in Act 2 draws for the hidden roles too')
-  assert.equal(byHand.murderer, 0); assert.equal(byHand.ghost, 0)
-  // a mixed pair (3 and 13 words): no set is near both, so the set least far from either (set 2, 4 words) is the one
-  const mixed = pickSets({ bank, c: { hiddenSets: { murderer: { act2: 0 }, ghost: { act2: 1 } } }, act: 2, beat: 'questions', pick: n => n - 1 })
-  assert.deepEqual(mixed.candidates, [2])
-  assert.throws(() => pickSets({ bank: [], c, act: 2 }), /no Parlour Games/)
-  assert.ok(SET_TOLERANCE > 0 && SET_TOLERANCE < 1)
-  assert.equal(setLength([{ q: 'one two', a: 'three', b: 'four five', c: '', d: undefined }]), 5)
-})
-
-test('over twenty thousand windows the hidden roles are the odd ones out no more often than any two detectives', () => {
-  // a bank of three sets that read alike (the rehearsal bank's size), the case's draw for the hidden
-  // roles exactly as pickHiddenSets makes it, and a fresh draw per detective; one seeded picker throughout
-  const bank = [0, 1, 2].map(i => [{ q: `(Question ${i} of a few words)`, a: '(one)', b: '(two)' }])
-  const pick = seededPick(2026)
-  const phones = ['murderer', 'ghost', 'd1', 'd2', 'd3', 'd4']
-  const roleOf = p => (p.startsWith('d') ? 'detective' : p)
-  const pairs = []
-  for (let i = 0; i < phones.length; i++) for (let j = i + 1; j < phones.length; j++) pairs.push([phones[i], phones[j]])
-  const oddPair = Object.fromEntries(pairs.map(p => [p.join('+'), 0])) // exactly this pair differs from everyone else
-  const oddOne = Object.fromEntries(phones.map(p => [p, 0]))           // this phone's set is on no other phone
-  const N = 20_000
-  for (let w = 0; w < N; w++) {
-    const c = { hiddenSets: { murderer: { act2: pick(bank.length) }, ghost: { act2: pick(bank.length) } } }
-    const sets = pickSets({ bank, c, act: 2, beat: 'questions', pick })
-    const held = Object.fromEntries(phones.map(p => [p, setFor(sets, roleOf(p), pick)]))
-    for (const p of phones) if (!phones.some(o => o !== p && held[o] === held[p])) oddOne[p]++
-    for (const [a, b] of pairs) {
-      const rest = phones.filter(p => p !== a && p !== b).map(p => held[p])
-      const same = rest.every(x => x === rest[0])
-      if (same && held[a] !== rest[0] && held[b] !== rest[0]) oddPair[`${a}+${b}`]++
-    }
-  }
-  const detectivePairs = pairs.filter(([a, b]) => a.startsWith('d') && b.startsWith('d')).map(p => oddPair[p.join('+')])
-  const hiddenPair = oddPair['murderer+ghost']
-  const mean = list => list.reduce((s, x) => s + x, 0) / list.length
-  assert.ok(hiddenPair > 0 && Math.min(...detectivePairs) > 0, 'the event happens for everyone')
-  assert.ok(hiddenPair <= Math.max(...detectivePairs), `the hidden pair (${hiddenPair}) stands out no more than a detective pair (${detectivePairs.join(', ')})`)
-  assert.ok(Math.abs(hiddenPair - mean(detectivePairs)) <= 0.15 * mean(detectivePairs), `the hidden pair (${hiddenPair}) reads like a detective pair (${mean(detectivePairs)})`)
-  const detectiveOnes = ['d1', 'd2', 'd3', 'd4'].map(p => oddOne[p])
-  for (const h of HIDDEN_ROLES) assert.ok(Math.abs(oddOne[h] - mean(detectiveOnes)) <= 0.1 * mean(detectiveOnes), `${h} alone (${oddOne[h]}) reads like a detective (${mean(detectiveOnes)})`)
-})
-
-test('across thirty nights the hidden roles hold their case\'s set at the Act 2 beat, every detective draws within tolerance, and no values or hint reach a phone or a public doc', async () => {
-  let differ = 0
+test('across thirty nights every phone holds the same set at the same moment, the set is the case\'s for that slot, and no value, lean or listening cat reaches a phone or a public doc', async () => {
+  const seen = new Set()
   for (let run = 0; run < 30; run++) {
     const { db, nightId, uids } = await party(6)
     writeBank(db, [3, 9, 4, 8, 12, 9, 8])
-    const now = 7_000_000 + run
-    const w = await beatWindow(db, nightId, now)
+    const w = await firstGame(db, nightId, 7_000_000 + run)
+    assert.equal(w.id, 'questions-2-p0')
     const c = caseOf(db, nightId)
-    const bank = db.store.get('safe_content/scenarios').items.map(i => i.beats)
-    const firstQ = uid => session(db, uid).windows[w.id].beats[0].q
-    for (const role of HIDDEN_ROLES) {
-      const want = bank[c.hiddenSets[role].act2 % bank.length][0].q
-      assert.equal(firstQ(uidOf(db, nightId, c[role])), want, `${role} holds the set the case names`)
-    }
-    const detectives = uids.filter(uid => c.roles[keyOf(db, uid)] === 'detective')
-    assert.equal(detectives.length, 4)
-    if (new Set(detectives.map(firstQ)).size > 1) differ++
-    // parity: every detective's set reads within tolerance of both hidden sets whenever the bank has such a set
-    const len = uid => setLength(session(db, uid).windows[w.id].beats.map(b => ({ q: b.q, ...Object.fromEntries(b.choices.map(ch => [ch.k, ch.text])) })))
-    const hidden = HIDDEN_ROLES.map(role => len(uidOf(db, nightId, c[role])))
-    const nearBoth = x => hidden.every(h => Math.abs(x - h) <= SET_TOLERANCE * Math.max(x, h) + 0.001)
-    if (bank.map(setLength).some(nearBoth)) for (const uid of detectives) assert.ok(nearBoth(len(uid)), `a detective's set (${len(uid)} words) reads like the hidden roles' (${hidden.join(', ')})`)
-    // the seal: no phone and no public doc carries a value, a set index, or a role
+    const planned = c.parlourPlan.acts[2][0]
+    const bank = db.store.get('safe_content/scenarios').items
+    const want = bank.find(i => i.id === planned.setId).beats[0].q
+    for (const uid of uids) assert.equal(session(db, uid).windows[w.id].beats[0].q, want, 'every phone, every role: the set the case planned')
+    seen.add(planned.setId)
+    // the seal: no phone and no public doc carries a value, a set id, a lean, a listening cat, or a role
     for (const uid of uids) {
       const text = JSON.stringify(session(db, uid))
-      for (const token of ['"av":', '"bv":', '"values":', '"set":', '"setIndex":', '"hiddenSets":', '"role":', '"dial":', '"exposure":']) assert.ok(!text.includes(token), `session carries ${token}`)
-      assert.deepEqual(Object.keys(session(db, uid).windows[w.id]).sort(), ['beats', 'cat', 'catName', 'kind'], 'the same shape on every phone')
+      for (const token of ['"av":', '"bv":', '"values":', '"setId":', '"lean":', '"listeners":', '"parlourPlan":', '"cat":', '"role":', '"dial":', '"exposure":']) assert.ok(!text.includes(token), `session carries ${token}`)
+      assert.deepEqual(Object.keys(session(db, uid).windows[w.id]).sort(), ['beats', 'kind'], 'the same shape on every phone')
     }
     const pub = JSON.stringify([night(db, nightId), ...[...db.store.keys()].filter(k => k.startsWith(`nights/${nightId}/public/`)).map(k => db.store.get(k))])
-    for (const token of ['"hiddenSets":', '"dial":', '"roles":', '"murderer":', '"ghost":', '"values":', '"set":', '"exposure":']) assert.ok(!pub.includes(token), `public carries ${token}`)
+    for (const token of ['"parlourPlan":', '"lean":', '"listeners":', '"dial":', '"roles":', '"murderer":', '"ghost":', '"values":', '"setId":', '"exposure":', '"due0":']) assert.ok(!pub.includes(token), `public carries ${token}`)
   }
-  assert.ok(differ > 0, 'the detectives do not all hold one set night after night')
+  assert.ok(seen.size > 1, 'the first game of the night is not the same set night after night')
 })
 
-test('a by-hand light-up after the beat draws afresh for every role: the hidden roles repeat their set no more often than the detectives', async () => {
-  let hiddenRepeats = 0, hiddenTrials = 0, detectiveRepeats = 0, detectiveTrials = 0
-  for (let run = 0; run < 20; run++) {
+test('a by-hand light-up deals a set the night has not used yet, the same set on every phone', async () => {
+  for (let run = 0; run < 10; run++) {
     const { db, nightId, uids } = await party(6)
-    writeBank(db, [5, 5, 5, 5, 5, 5, 5, 5])
+    writeBank(db, [5, 5, 5])
     const now = 7_500_000 + run
-    const first = await beatWindow(db, nightId, now)
-    const bonus = (await hostCommand(db, { nightId, command: 'light-up', now: now + 100_000 })).id
-    assert.notEqual(bonus, first.id)
-    const c = caseOf(db, nightId)
-    const firstQ = (uid, id) => session(db, uid).windows[id].beats[0].q
-    for (const uid of uids) {
-      const repeat = firstQ(uid, first.id) === firstQ(uid, bonus)
-      if (HIDDEN_ROLES.includes(c.roles[keyOf(db, uid)])) { hiddenTrials++; if (repeat) hiddenRepeats++ } else { detectiveTrials++; if (repeat) detectiveRepeats++ }
+    const first = await firstGame(db, nightId, now)
+    const bonus = (await hostCommand(db, { nightId, command: 'light-up', now: now + 1_000_000 })).id
+    const third = (await hostCommand(db, { nightId, command: 'light-up', now: now + 2_000_000 })).id
+    const priv = db.store.get(`nights/${nightId}/private/windows`)
+    assert.equal(new Set([first.id, bonus, third].map(id => priv[id].setId)).size, 3, 'three games, three different sets')
+    for (const id of [bonus, third]) {
+      const q = session(db, uids[0]).windows[id].beats[0].q
+      for (const uid of uids) assert.equal(session(db, uid).windows[id].beats[0].q, q)
     }
   }
-  assert.equal(hiddenTrials, 40); assert.equal(detectiveTrials, 80)
-  assert.ok(hiddenRepeats < hiddenTrials / 2, `the hidden roles repeated ${hiddenRepeats} of ${hiddenTrials}: a bonus round must not hand them the same set again`)
-  assert.ok(hiddenRepeats / hiddenTrials <= detectiveRepeats / detectiveTrials + 0.25, `hidden ${hiddenRepeats}/${hiddenTrials}, detectives ${detectiveRepeats}/${detectiveTrials}`)
 })
 
-test('the built-in rehearsal sets read about as long as each other, so the fallback bank never gives a role away by length', () => {
-  const lens = REHEARSAL_SETS.map(setLength)
-  assert.ok(Math.max(...lens) - Math.min(...lens) <= SET_TOLERANCE * Math.max(...lens) + 3, `lengths ${lens.join(', ')}`)
+test('dueSlot: a game is due at its time, in order, never closer than the gap to the last one', () => {
+  const gap = 4 * 60_000
+  const sched = { count: 3, fired: {}, lastAt: null, due0: new Date(10_000), due1: new Date(20_000), due2: new Date(500_000) }
+  assert.equal(dueSlot(sched, { now: 9_999, gapMs: gap }), null)
+  assert.equal(dueSlot(sched, { now: 10_000, gapMs: gap }), 0)
+  const after = { ...sched, fired: { 0: true }, lastAt: new Date(10_000) }
+  assert.equal(dueSlot(after, { now: 20_000, gapMs: gap }), null, 'due, but too close to the last one')
+  assert.equal(dueSlot(after, { now: 10_000 + gap, gapMs: gap }), 1)
+  assert.equal(dueSlot({ ...after, fired: { 0: true, 1: true, 2: true } }, { now: 1e9, gapMs: gap }), null, 'all played')
+  assert.equal(dueSlot(null, { now: 1e9 }), null)
+})
+
+test('the built-in rehearsal sets have three questions with exactly two answers each, and ids', () => {
+  for (const set of REHEARSAL_SETS) {
+    assert.ok(set.id)
+    assert.equal(set.beats.length, 3)
+    for (const b of set.beats) { assert.ok(b.q && b.a && b.b); assert.equal(b.c, undefined); assert.equal(b.d, undefined) }
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -441,17 +356,19 @@ test('after note-exposure (the older name for hush) a hushed role still moves a 
   assert.ok(isHushed(c, 'ghost') && !isHushed(c, 'murderer'))
   assert.equal(c.exposure.murderer, undefined)
   const ghostUid = uidOf(db, nightId, c.ghost)
-  const priv = db.store.get(`nights/${nightId}/private/windows`)[w.id][c.ghost]
+  const priv = db.store.get(`nights/${nightId}/private/windows`)[w.id]
   const picks = bestPicks(db, nightId, w.id, c.ghost)
   const total = totalOf(db, nightId, w.id, c.ghost, picks)
   assert.ok(total > 0, 'the best picks score')
-  const before = session(db, ghostUid).affection[priv.cat]
+  const before = { ...session(db, ghostUid).affection }
+  const listeners = extraListeners({ seed: c.parlourPlan.seed, windowId: w.id, setId: priv.setId, leans: c.parlourPlan.leans })
+  const expected = applyMoves(before, catMoves({ listeners, picks, hidden: true, seed: c.parlourPlan.seed, windowId: w.id, key: c.ghost }))
   await player.answer(db, { nightId, uid: ghostUid, windowId: w.id, picks, now: now + 10 })
   const after = caseOf(db, nightId)
   assert.equal(after.dial, 0, 'the dial did not move')
   assert.equal(after.dialLog.length, 1)
   assert.deepEqual({ role: after.dialLog[0].role, delta: after.dialLog[0].delta, hushed: after.dialLog[0].hushed }, { role: 'ghost', delta: 0, hushed: true })
-  assert.equal(session(db, ghostUid).affection[priv.cat], Math.min(5, before + 1), 'the cat still moved (the placebo)')
+  assert.deepEqual(session(db, ghostUid).affection, { ...before, ...expected }, 'the cats still moved, by the coin, as for anyone (the placebo)')
   // the murderer is not hushed
   const mUid = uidOf(db, nightId, c.murderer)
   const mPicks = bestPicks(db, nightId, w.id, c.murderer)

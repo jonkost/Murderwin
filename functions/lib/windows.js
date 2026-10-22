@@ -1,23 +1,24 @@
-// The windows engine: the clock that settles every window on time, the
-// clarity dial, which Parlour Game set each phone is dealt, and the parity
-// of the three role cards.
+// The windows engine: the clock that settles every window on time and pops
+// up the Parlour Games, the clarity dial, and the parity of the three role
+// cards.
 //
 // A window is the minute (or two) when every phone lights up at once. The
 // dealer (deal.js) opens them and settles them; this file decides WHEN they
-// settle with nobody pressing anything (tick), WHICH set each phone gets
-// (pickSets, setFor), and what a hidden role's answers do to the dial
-// (pushDial). The exposure record (the Hush) lives in ledger.js: one writer,
+// open and settle with nobody pressing anything (tick, startParlour), and
+// what a hidden role's answers do to the dial (pushDial). The exposure record (the Hush) lives in ledger.js: one writer,
 // one reader, one shape.
 //
-// SEAL RULE. The case (cases/{nightId}) is read here only to pick sets and
-// to move the dial. Nothing here returns content, prints content, or writes
+// SEAL RULE. The case (cases/{nightId}) is read here only for the Parlour
+// Games' times and to move the dial. Nothing here returns content, prints content, or writes
 // the case's secrets anywhere a client can read. Results are counts, keys
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, ms, beatsOf } from './deal.js'
+import { settleWindow, openWindow, ms, PARLOUR } from './deal.js'
 import { tickStudy } from './station.js'
-import { DIAL_SIGN, WINDOW_SLOTS } from './case.js'
+import { DIAL_SIGN } from './case.js'
+import { RUNNING } from './relay.js'
+import { PARLOUR_ACTS } from './parlour.js'
 import { isHushed } from './ledger.js'
 
 // A phone that taps inside the grace after closesAt is still heard; after
@@ -25,8 +26,6 @@ import { isHushed } from './ledger.js'
 export const GRACE_MS = 5000
 // The three role cards may differ in length by this much (word counts).
 export const PARITY_TOLERANCE = 0.2
-// A detective's set is drawn within this much of the hidden roles' sets.
-export const SET_TOLERANCE = 0.15
 export const HIDDEN_ROLES = ['murderer', 'ghost']
 // Padding for a short role card, when the workshop has no 'FILLER:' line.
 export const DEFAULT_FILLER = 'Keep this to yourself, and keep your phone on you.'
@@ -40,70 +39,68 @@ export function wordCount(text) {
   return String(text ?? '').trim().split(/\s+/).filter(Boolean).length
 }
 
-// How long a Parlour Game set reads: every question and every choice.
-export function setLength(beats) {
-  return (Array.isArray(beats) ? beats : []).reduce((n, b) => n + wordCount(b?.q) + ['a', 'b', 'c', 'd'].reduce((m, k) => m + wordCount(b?.[k]), 0), 0)
+// ---------------------------------------------------------------------------
+// When the Parlour Games pop up (docs/parlour-games.md). Four in each of
+// Acts 2, 4 and 6, at offsets from the start of the act that the case's plan
+// rolled from its seed. The schedule for the act in progress lives in
+// nights/{id}/private/parlour, which no client can read, so no phone and no
+// host page knows when the next one is coming:
+//   { act, startedAt, count, due0..dueN: Date, fired: { i: true }, lastAt }
+// The tick opens a game once it is due, never while another window is open
+// or the drawing is running, and never closer than the gap to the last one.
+// A game the act ends before is not played.
+
+export const parlourPath = (nightId) => `nights/${nightId}/private/parlour`
+export const MAX_PARLOUR_SLOTS = 8 // the due fields a pause shifts (night.js PAUSE_SHIFTED)
+
+// The act has begun: lay out its games. Once per act; a second call keeps
+// the schedule (and what already fired) as it is.
+export async function startParlour(db, nightId, act, { now = Date.now() } = {}) {
+  if (!PARLOUR_ACTS.includes(Number(act))) return { ok: true, skipped: 'not-a-parlour-act' }
+  const ref = db.doc(parlourPath(nightId))
+  const snap = await ref.get()
+  if (snap.exists && snap.data().act === Number(act)) return { ok: true, already: true }
+  const caseSnap = await db.doc(`cases/${nightId}`).get()
+  const plan = caseSnap.exists ? (caseSnap.data().parlourPlan?.acts?.[act] ?? []) : []
+  const slots = plan.slice(0, MAX_PARLOUR_SLOTS)
+  const doc = { act: Number(act), startedAt: new Date(now), count: slots.length, fired: {}, lastAt: null }
+  slots.forEach((p, i) => { doc[`due${i}`] = new Date(now + (Number(p.atMs) || 0)) })
+  await ref.set(doc)
+  return { ok: true, count: slots.length }
 }
 
-// ---------------------------------------------------------------------------
-// Which set each phone is dealt.
-
-// The four windows of the night, as the case names them (case.js
-// WINDOW_SLOTS): act2, act4a, act4b, act6. Act 4 has two: the first up to
-// and at the beat 'questions1', the second after it. A window with no beat
-// (the host's own Light up button) has no slot: every phone, hidden roles
-// included, draws at random, so a bonus round never repeats a set on two
-// phones only.
-export function slotFor(act, beat = null) {
-  if (!beat) return null
-  const a = Number(act)
-  if (a === 2) return 'act2'
-  if (a === 6) return 'act6'
-  if (a === 4) {
-    const keys = beatsOf(4).map(b => b.key)
-    const i = keys.indexOf(beat)
-    const first = keys.indexOf('questions1')
-    return first >= 0 && i > first ? 'act4b' : 'act4a'
+// Which game, if any, is due now. Pure, for the tick and the tests.
+export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {}) {
+  if (!sched) return null
+  for (let i = 0; i < (sched.count ?? 0); i++) {
+    if (sched.fired?.[i]) continue
+    if (now < ms(sched[`due${i}`])) return null
+    if (sched.lastAt && now < ms(sched.lastAt) + gapMs) return null
+    return i
   }
   return null
 }
 
-function near(a, b) { return Math.abs(a - b) <= SET_TOLERANCE * Math.max(a, b, 1) }
-function apart(a, b) { return Math.abs(a - b) / Math.max(a, b, 1) }
-
-// The case's set for each hidden role, and the candidates every detective
-// draws from: the sets that read about as long as the hidden roles' sets,
-// so nobody's screen is fuller than the next; when no set is that close to
-// both, the closest ones. Each detective draws on their own (setFor), so no
-// two phones are expected to match and the hidden roles are never the odd
-// ones out. Returns indices into the bank, never the sets themselves.
-export function pickSets({ bank, c = null, act = null, beat = null, pick = n => Math.floor(Math.random() * n) } = {}) {
-  const n = Array.isArray(bank) ? bank.length : 0
-  if (!n) throw new NightError('invalid', 'There are no Parlour Games to deal.')
-  const slot = slotFor(act, beat)
-  const sets = {}
-  for (const role of HIDDEN_ROLES) {
-    const i = slot ? c?.hiddenSets?.[role]?.[slot] : undefined
-    sets[role] = Number.isInteger(i) ? ((i % n) + n) % n : pick(n)
-  }
-  const lengths = bank.map(setLength)
-  const targets = HIDDEN_ROLES.map(r => lengths[sets[r]])
-  let candidates = lengths.map((len, i) => i).filter(i => targets.every(t => near(lengths[i], t)))
-  if (!candidates.length) {
-    const worst = i => Math.max(...targets.map(t => apart(lengths[i], t)))
-    const best = Math.min(...lengths.map((len, i) => worst(i)))
-    candidates = lengths.map((len, i) => i).filter(i => worst(i) === best)
-  }
-  sets.candidates = candidates
-  return sets
-}
-
-// One phone's set: a hidden role's fixed index, or a fresh draw from the
-// candidates for everyone else. Called once per phone.
-export function setFor(sets, role, pick = n => Math.floor(Math.random() * n)) {
-  if (Number.isInteger(sets?.[role])) return sets[role]
-  const list = Array.isArray(sets?.candidates) && sets.candidates.length ? sets.candidates : [0]
-  return list[pick(list.length)]
+export async function tickParlour(db, nightId, now) {
+  const night = (await db.doc(`nights/${nightId}`).get()).data()
+  if (!night || night.phase !== 'act' || !PARLOUR_ACTS.includes(Number(night.act))) return { opened: false }
+  if (night.window && !night.window.settled) return { opened: false, reason: 'window-open' }
+  const relay = (await db.doc(`nights/${nightId}/public/relay`).get()).data()
+  if (relay && RUNNING.includes(relay.state)) return { opened: false, reason: 'drawing' }
+  const ref = db.doc(parlourPath(nightId))
+  // claim the slot in one transaction, so two ticks in the same second open it once
+  const slot = await db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    const sched = snap.exists ? snap.data() : null
+    if (!sched || sched.act !== Number(night.act)) return null
+    const i = dueSlot(sched, { now })
+    if (i === null) return null
+    tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
+    return i
+  })
+  if (slot === null) return { opened: false }
+  const r = await openWindow(db, nightId, 'questions', { now, act: Number(night.act), beat: `p${slot}` })
+  return { opened: true, slot, phones: r.phones ?? 0 }
 }
 
 // ---------------------------------------------------------------------------
@@ -165,8 +162,9 @@ export async function fillerLine(db) {
 
 // ---------------------------------------------------------------------------
 // The tick. Once a minute, for the live night: a window past its close and
-// its grace is settled (defaults for every phone that did not answer), and
-// a study slot that has run out ends (station.tickStudy). A paused night is
+// its grace is settled (defaults for every phone that did not answer), a
+// study slot that has run out ends (station.tickStudy), and a Parlour Game
+// that is due pops up on every phone. A paused night is
 // left alone. Safe to call as often as you like: each thing happens once.
 
 export async function activeNightId(db) {
@@ -188,5 +186,6 @@ export async function tick(db, nightId, now = Date.now(), { finished = null } = 
     windowSettled = true
   }
   const study = await tickStudy(db, nightId, now, { finished })
-  return { ok: true, settled, windowSettled, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null } }
+  const parlour = await tickParlour(db, nightId, now)
+  return { ok: true, settled, windowSettled, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
 }

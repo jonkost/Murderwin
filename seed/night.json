@@ -1,5 +1,6 @@
 {
   "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the living room TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026.",
+  "parlour": { "_about": "The Parlour Games pop up on their own, four in each of Acts 2, 4 and 6, at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.", "perAct": 4, "minGapMin": 4, "edgeMin": 2, "actMinutes": { "2": 30, "4": 60, "6": 30 } },
   "windows": {
     "questions": { "ms": 60000, "title": "Parlour Game" },
     "eliminate": { "ms": 90000, "title": "The deduction round" },
@@ -24,7 +25,6 @@
       { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news", "screen": "news", "sound": "chime-news" },
       { "key": "cat", "name": "Go to a cat", "what": "Every phone sends its guest to a room. A cat is waiting there with something to say.", "action": "deal:encounter" },
       { "key": "puzzle", "name": "The first puzzle", "what": "A small puzzle on each phone. It needs what the cat just said. Solving it pays out a document.", "action": "deal:puzzle" },
-      { "key": "questions", "name": "Parlour Game", "what": "A Parlour Game: three silly questions on every phone at once. Sixty seconds.", "action": "window:questions" },
       { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
     ] },
     "3": { "name": "Supper Is Served", "plain": "Dinner", "beats": [
@@ -35,10 +35,8 @@
     "4": { "name": "Behind Closed Doors", "plain": "Rotation", "beats": [
       { "key": "station1", "name": "First station", "what": "Groups go to their first station. The study is the clock.", "action": "rotate" },
       { "key": "station2", "name": "Second station", "what": "Rotate. Every group moves on one.", "action": "rotate" },
-      { "key": "questions1", "name": "Parlour Game", "what": "Three silly questions on every phone at once.", "action": "window:questions", "autoAfterStudy": true },
       { "key": "station3", "name": "Third station", "what": "Rotate.", "action": "rotate" },
       { "key": "station4", "name": "Fourth station", "what": "Rotate.", "action": "rotate" },
-      { "key": "questions2", "name": "Parlour Game, second round", "what": "Three more questions, every phone at once.", "action": "window:questions", "autoAfterStudy": true },
       { "key": "station5", "name": "Fifth station", "what": "Rotate. The last station for every group.", "action": "rotate" }
     ] },
     "5": { "name": "One Candle", "plain": "Dessert", "beats": [
@@ -46,7 +44,6 @@
       { "key": "irwin", "name": "Sir Irwin speaks", "what": "The chime, then Sir Irwin on the living room screen and only that screen. Phones say: go to the living room.", "action": "notice:irwin", "screen": "irwin", "sound": "chime-irwin" }
     ] },
     "6": { "name": "The Final Hour", "plain": "The Big Solve", "beats": [
-      { "key": "merged", "name": "Parlour Game", "what": "The last Parlour Game, every phone at once.", "action": "window:questions" },
       { "key": "drawing", "name": "The drawing", "what": "The relay drawing. The TV shows a square; one person draws blind; the room shouts. Phones buzz the drawer and take the votes.", "action": "relay:start" },
       { "key": "door", "name": "The door opens", "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.", "action": "notice:door", "screen": "door", "sound": "sting-door", "soundOnce": true },
       { "key": "eliminate", "name": "The deduction round", "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.", "action": "window:eliminate", "screen": "board" }

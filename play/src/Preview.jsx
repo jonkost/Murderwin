@@ -90,12 +90,12 @@ const CARDS = {
 
 const SET = [
   { q: 'Ice in orange juice?', choices: [{ k: 'a', text: 'Always' }, { k: 'b', text: 'Never' }] },
-  { q: 'Pick a sock', choices: [{ k: 'a', text: 'Left' }, { k: 'b', text: 'Right' }, { k: 'c', text: 'Neither' }] },
+  { q: 'Pick a sock', choices: [{ k: 'a', text: 'Left' }, { k: 'b', text: 'Right' }] },
   { q: 'A pigeon with a tiny hat', choices: [{ k: 'a', text: 'Trust it' }, { k: 'b', text: 'Do not' }] },
 ]
 function windowDoc(kind, ms) {
   return { id: `${kind}-preview`, kind, title: '', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + ms), settled: false,
-    mine: kind === 'questions' ? { kind, cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', beats: SET } : { kind } }
+    mine: kind === 'questions' ? { kind, beats: SET } : { kind } }
 }
 
 // Relay previews: a throwaway set from a fixed seed, as the public doc would carry it.

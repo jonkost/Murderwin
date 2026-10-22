@@ -54,6 +54,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
+  if (run) await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
   await screen.onBeat(db, nightId, { act, beat, spec, phase, now, run }) // the room screens and the beat's sound (screen.js)
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
@@ -150,6 +151,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       const r = await night.hostCommand(db, { nightId, command: 'power' })
       await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
       await deal.dealRoles(db, nightId)
+      await windows.startParlour(db, nightId, 2, { now }) // Act 2 begins: its four Parlour Games
       await ref.update({ beat: firstBeat(2), beatAt: FieldValue.serverTimestamp() })
       await deal.runAction(db, nightId, 2, firstBeat(2), deal.beatSpec(2, firstBeat(2))?.action, { now })
       await screen.onPhase(db, nightId, 'power', { now }) // the TV stays dark through the prompt; the power sound
@@ -252,12 +254,10 @@ export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
 }
 
 // The study station says a group is done: the clue is dealt (station.js),
-// and in Act 4 the whole house rotates, exactly as the host's Next would.
-// When the next beat is a Parlour Game marked autoAfterStudy (seed/night.json),
-// the same call opens that window AND moves on to the following station, so
-// one study finish always moves every group: the study is the clock at every
-// slot and the host never needs Next between finishes. With the flag off the
-// finish moves one beat only, and Next does the rest.
+// and in Act 4 the whole house rotates, exactly as the host's Next would, so
+// the study is the clock at every slot and the host never needs Next between
+// finishes. A Parlour Game that is up on the phones keeps running through the
+// rotation: the new station cards wait underneath it.
 export async function studyFinished(db, { nightId, payload = {}, now = Date.now() } = {}) {
   const r = await station.stationCommand(db, { nightId, station: 'study', command: 'finished', payload })
   if (r.repeated) return r
@@ -272,18 +272,9 @@ export async function studyFinished(db, { nightId, payload = {}, now = Date.now(
   // a finish the host redirected to another group counts for the slot that was due
   const rot = (await db.doc(`nights/${nightId}/public/rotation`).get()).data()
   if (!r.reassigned && (rot?.studyOrder ?? []).indexOf(r.groupId ?? payload.groupId) !== (n.rotation ?? -1)) return { ...r, rotated: false, reason: 'already-rotated' }
-  if (n.window && !n.window.settled) {
+  if (n.window && !n.window.settled && n.window.kind !== 'questions') {
     if (now < deal.ms(n.window.closesAt)) return { ...r, rotated: false, reason: 'window-open' }
     await deal.settleWindow(db, nightId, { now })
-  }
-  const toSpec = deal.beatSpec(to.act, to.beat)
-  if (toSpec?.action === 'window:questions' && toSpec.autoAfterStudy) {
-    const after = nextOf(to.act, to.beat)
-    if (after && after.act === 4 && deal.beatSpec(after.act, after.beat)?.action === 'rotate') {
-      const lit = await enterBeat(db, nightId, to.act, to.beat, { now })
-      const moved = await enterBeat(db, nightId, after.act, after.beat, { now })
-      return { ...r, rotated: true, beat: moved.beat, window: lit.beat, phones: lit.phones ?? null }
-    }
   }
   const moved = await enterBeat(db, nightId, to.act, to.beat, { now })
   return { ...r, rotated: true, beat: moved.beat }

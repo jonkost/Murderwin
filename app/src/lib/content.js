@@ -2,6 +2,7 @@ import seed from '../../../seed/safe-content.json' with { type: 'json' }
 import charactersFile from '../../../seed/characters.json' with { type: 'json' }
 import motivesFile from '../../../seed/motives.json' with { type: 'json' }
 import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
+import parlourFile from '../../../seed/parlour-games.json' with { type: 'json' }
 import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -196,7 +197,7 @@ export const AREAS = {
       { key: 'title', label: 'The title', placeholder: 'e.g. Clean Plate Club', kind: 'text' },
       { key: 'text', label: 'One line, read out on the screen', placeholder: 'e.g. Nothing left on the plate, not even the garnish.', kind: 'textarea', main: true },
     ] },
-  scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, when every phone lights up with a question', why: 'Silly three-question dilemmas every guest answers at the same moment. The points move how the cats feel about a Detective, and how clear the clues come out for the two hidden roles.', group: 'Words on the phones', tabs: null, guide: null, goal: 16, editor: 'questions' },
+  scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, four times each, popping up on every phone at once', why: 'Silly sets of three questions with two answers each. Every guest answers the same set at the same moment. Each night deals twelve of these at random, so seventeen means five spare. The points only matter for the Murderer and the Ghost: they move how clear the clues come out. How the cats feel about a Detective is decided by the cats, not the points.', group: 'Words on the phones', tabs: null, guide: null, goal: 17, editor: 'questions' },
   motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
     codec: labelCodec,
     fields: [
@@ -544,7 +545,7 @@ export const ADDITIONS = [
     id: '2026-10-12-questions',
     areaDocs: { scenarios: { items: [] } },
     tasks: [
-      { order: 30, status: 'todo', title: 'Write the Parlour Games', detail: 'Workshop → Words on the phones → Parlour Games. Three silly questions in a row, two choices each, a number on each choice. Sixteen of them is a full night.' },
+      { order: 30, status: 'todo', title: 'Write the Parlour Games', detail: 'Workshop → Words on the phones → Parlour Games. Three silly questions in a row, two choices each, a number on each choice. Seventeen of them is a full bank.' },
     ],
   },
   {
@@ -573,6 +574,15 @@ export const ADDITIONS = [
       hostOps: 'Jon fires from phone, in character',
       buzzFallback: 'Screen-flash pattern on ALL phones (uniform, no tells)',
     },
+  },
+  {
+    // 21 Oct: the seventeen Parlour Games from docs/parlour-games.md go into
+    // the list, skipping any set whose first question is already there.
+    id: '2026-10-21-parlour-bank',
+    appendScenarios: { scenarios: parlourFile.sets.map(s => s.beats) },
+    retireTasks: [
+      { order: 30, detail: 'Filled 21 Oct 2026: the seventeen sets from docs/parlour-games.md are in the list. Change any words or points there.' },
+    ],
   },
 ]
 

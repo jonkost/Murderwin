@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, presenceKey, roleCard, wantsWelcome } from './lib/night'
+import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, overlays, presenceKey, roleCard, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -84,24 +84,33 @@ export default function App() {
   const paused = n.phase === 'paused'
   const clock = clockFor(n, serverNow)
   const w = openWindow(n, s, clock)
+  let screen = null
   if (w && sent !== w.id) {
     const done = () => setSent(w.id)
-    let screen = null
     if (w.kind === 'questions') screen = <Questions w={w} nightId={nightId} serverNow={clock} onDone={done} />
     if (w.kind === 'ballot') screen = <Ballot w={w} night={n} session={s} content={content.data} nightId={nightId} serverNow={clock} onDone={done} />
     if (w.kind === 'eliminate') screen = <Eliminate w={w} night={n} session={s} content={content.data} nightId={nightId} serverNow={clock} onDone={done} />
-    if (screen && paused) return <>{banner}<PausedStrip ui={ui} /><div className="paused-shell" inert>{screen}</div></>
-    if (screen) return <>{banner}{screen}</>
   }
+  const held = screen && paused ? <><PausedStrip ui={ui} /><div className="paused-shell" inert>{screen}</div></> : screen
+  const over = Boolean(screen) && overlays(w)
+  if (screen && !over) return <>{banner}{held}</>
 
-  if (paused) return <>{banner}<Moment text={ui.PAUSED} crest /></>
+  // A Parlour Game sits on top of the screen the phone was on, which stays
+  // mounted underneath (inert, hidden from screen readers) and comes back
+  // exactly as it was when the game is done.
+  const top = over ? <div className="overlay" role="dialog" aria-modal="true" aria-label={w.title || 'Parlour Game'}>{held}</div> : null
+  if (paused && !over) return <>{banner}<Moment text={ui.PAUSED} crest /></>
 
   // The relay drawing (Act 6): while it runs, every phone is its surface.
   const r = relay.data
-  if (r && ['walk', 'turn', 'vote', 'lockout'].includes(r.state)) {
-    return <>{banner}<Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} rules={relayRules(ui['RELAY RULES'])} /></>
-  }
   const doneKey = r?.state === 'done' ? `relay-${ms(r.startedAt)}` : null
-  if (doneKey && !notes.seen[doneKey]) return <RelayDone uid={uid} relay={r} seenKey={doneKey} />
-  return <>{banner}<Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} /></>
+  let base
+  if (r && ['walk', 'turn', 'vote', 'lockout'].includes(r.state)) {
+    base = <Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} rules={relayRules(ui['RELAY RULES'])} />
+  } else if (doneKey && !notes.seen[doneKey]) {
+    base = <RelayDone uid={uid} relay={r} seenKey={doneKey} />
+  } else {
+    base = <Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} />
+  }
+  return <>{banner}<div className={over ? 'beneath covered' : 'beneath'} inert={over || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
 }

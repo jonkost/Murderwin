@@ -140,7 +140,8 @@ For **each question**, the deal picks one cat who is secretly listening: **Salem
 
 In Act 4, cat information uses the group's average affection, as Canon says.
 
-**Placeholder — the lean table.** Each question needs one "leaning answer" for each of the four cats. **Jon must never see this table**, because it would give him an edge. Build the field and leave it empty. Jenna fills it in from her Steward view. It must not go in the repo, and Jon's workshop account must not be able to read it. Treat it like sealed content.
+**The lean table.** Each question needs one "leaning answer" for each of the four cats. **Jon must never see this table**, because it would give him an edge. It must not go in the repo, and Jon's workshop account must not be able to read it. Treat it like sealed content.
+*Built 22 Oct:* `npm --prefix scripts run leans` fills every blank lean blind through the Claude API, straight into `sealed/parlour_leans`, printing counts only (Jon's call, 22 Oct: generated, since Jenna may not have time). It never overwrites a lean already there. Jenna can still change any lean on her Steward page, tab "The cats' leans".
 
 ---
 

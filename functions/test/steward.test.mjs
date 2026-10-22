@@ -253,3 +253,31 @@ test('stewardOp with no manifest: list is empty and says so; the default log goe
   assert.deepEqual(list, { ok: true, generated: false, generatedAt: null, codes: [], bags: false })
   assert.deepEqual(captured, ['steward list -'])
 })
+
+test('leans and lean: the Parlour Games lean table beside its bank; one cat, one question at a time; cleared is gone; refused off the shape', async () => {
+  const db = sealedDb()
+  db.store.set('safe_content/scenarios', { items: [
+    { id: 'set-1', order: 0, text: '(x)', beats: [0, 1, 2].map(i => ({ q: `(Question ${i})`, n: 2, a: '(One)', av: 1, b: '(Two)', bv: -1 })) },
+    { id: 'set-2', order: 1, text: '(gone)', deleted: true, beats: [0, 1, 2].map(i => ({ q: `(Old ${i})`, n: 2, a: '(One)', av: 1, b: '(Two)', bv: -1 })) },
+  ] })
+  let r = await stewardOp(db, { op: 'leans' })
+  assert.deepEqual(r.sets.map(s => s.id), ['set-1'], 'a deleted set is not on the table')
+  assert.equal(r.filled, 0); assert.equal(r.of, 12)
+  assert.deepEqual(r.sets[0].questions[0].leans, { granolia: '', boo: '', zimothy: '', salem: '' }, 'never Irwin')
+  await stewardOp(db, { op: 'lean', setId: 'set-1', q: 0, cat: 'boo', value: 'b' }, { now: new Date(5000) })
+  await stewardOp(db, { op: 'lean', setId: 'set-1', q: 2, cat: 'salem', value: 'a' })
+  r = await stewardOp(db, { op: 'leans' })
+  assert.equal(r.sets[0].questions[0].leans.boo, 'b')
+  assert.equal(r.sets[0].questions[2].leans.salem, 'a')
+  assert.equal(r.filled, 2)
+  assert.equal(db.store.get('sealed/parlour_leans').sets['set-1'][0].boo, 'b', 'the doc the dealer reads at the case deal')
+  await stewardOp(db, { op: 'lean', setId: 'set-1', q: 0, cat: 'boo', value: '' })
+  assert.equal(db.store.get('sealed/parlour_leans').sets['set-1'][0].boo, undefined, 'cleared is gone')
+  for (const bad of [
+    { setId: 'nope', q: 0, cat: 'boo', value: 'a' }, { setId: 'set-1', q: 3, cat: 'boo', value: 'a' },
+    { setId: 'set-1', q: 0, cat: 'irwin', value: 'a' }, { setId: 'set-1', q: 0, cat: 'boo', value: 'c' },
+    { setId: '../x', q: 0, cat: 'boo', value: 'a' },
+  ]) await assert.rejects(() => stewardOp(db, { op: 'lean', ...bad }), NightError)
+  // Jon's admin account is refused like anyone else's
+  await assert.rejects(() => stewardRequest(db, { auth: { uid: JON_UID, token: { email: 'jon@example.test', email_verified: true } }, data: { op: 'leans' } }, { hash: HASH }), /Not for you/)
+})

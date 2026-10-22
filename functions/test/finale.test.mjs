@@ -40,6 +40,14 @@ async function walkTo(db, nightId, act, beat, t) {
   assert.equal(night(db, nightId).beat, beat, `reached act ${act} ${beat}`)
 }
 
+// Act 2 up to the puzzle, then the clock to the first Parlour Game: it pops up on its own.
+async function firstParlour(db, nightId, t) {
+  await walkTo(db, nightId, 2, 'puzzle', t)
+  t.now = ms(db.store.get(`nights/${nightId}/private/parlour`).due0)
+  await hostCommand(db, { nightId, command: 'tick', now: t.now })
+  assert.equal(night(db, nightId).window?.id, 'questions-2-p0')
+}
+
 // ---- the study pay-out --------------------------------------------------
 
 test('the study station card carries no clue text; the clue is dealt once when the station says finished', async () => {
@@ -99,17 +107,13 @@ test('rotate does not clobber a running study game, and the rehearsal shortcut f
   assert.equal(db.store.get(studyPath(nightId)).groupId, 'running')
   // idle again: the next rotation points at the group due at that rotation
   db.store.set(studyPath(nightId), { state: 'done', groupId: 'running', updatedAt: new Date(t.now) })
-  t.now += 1 // the questions window between station2 and station3
-  await hostCommand(db, { nightId, command: 'next', now: t.now })
-  const n = night(db, nightId)
-  if (n.window && !n.window.settled) t.now = ms(n.window.closesAt) + 1
   await hostCommand(db, { nightId, command: 'next', now: t.now }) // station3
   assert.equal(night(db, nightId).beat, 'station3')
   assert.equal(db.store.get(studyPath(nightId)).groupId, rot.studyOrder[2] ?? null)
   assert.equal(db.store.get(studyPath(nightId)).state, 'idle')
 })
 
-test('studyFinished rotates the house in Act 4, and only there; a Parlour Game beat marked autoAfterStudy is opened and passed in the same call', async () => {
+test('studyFinished rotates the house in Act 4, and only there; a Parlour Game on the phones keeps running through the rotation', async () => {
   const { db, nightId } = await party(6)
   const t = { now: 3_000_000 }
   await walkTo(db, nightId, 4, 'station1', t)
@@ -117,18 +121,14 @@ test('studyFinished rotates the house in Act 4, and only there; a Parlour Game b
   const r = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0], outcome: 'solved', seconds: 300, pairs: 3 }, now: t.now })
   assert.equal(r.rotated, true)
   assert.equal(night(db, nightId).beat, 'station2')
-  // station2 is followed by the Parlour Game (autoAfterStudy): finishing lights every phone AND moves the house on
-  const r2 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[1], outcome: 'capped' }, now: t.now })
+  // a Parlour Game pops up; the next finish still moves the house on, and the game keeps running
+  await hostCommand(db, { nightId, command: 'light-up', now: t.now })
+  const w = night(db, nightId).window
+  const r2 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[1], outcome: 'capped' }, now: t.now + 1000 })
   assert.equal(r2.rotated, true, 'next beat exists in Act 4')
-  assert.equal(r2.window, 'questions1')
   assert.equal(night(db, nightId).beat, 'station3')
-  assert.equal(night(db, nightId).window.kind, 'questions')
-  assert.equal(night(db, nightId).window.settled, false)
-  // while that window is open a finish waits for it: the host's Next (or the next finish) carries on after it closes
-  const r3 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[2], outcome: 'solved', seconds: 500, pairs: 3 }, now: t.now + 1000 })
-  assert.equal(r3.rotated, false)
-  assert.equal(r3.reason, 'window-open')
-  assert.equal(night(db, nightId).beat, 'station3')
+  assert.equal(night(db, nightId).window.id, w.id)
+  assert.equal(night(db, nightId).window.settled, false, 'the game was not closed early')
   // a repeat is harmless
   const r4 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0] }, now: t.now })
   assert.equal(r4.repeated, true)
@@ -321,11 +321,11 @@ test('a running drawing is never wiped or walked away from: Next and the beat li
 test('a start that fails leaves Next on the drawing beat, so trying again tries the drawing again', async () => {
   const { db, nightId } = await party(1) // one person: the drawing cannot start
   const t = { now: 11_000_000 }
-  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now })
-  assert.equal(night(db, nightId).beat, 'merged')
-  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'act', arg: 5, now: t.now })
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // irwin
+  assert.equal(night(db, nightId).beat, 'irwin')
   await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /at least two/)
-  assert.equal(night(db, nightId).beat, 'merged', 'the beat did not move')
+  assert.equal(night(db, nightId).beat, 'irwin', 'the beat did not move')
   assert.equal(db.store.get(relayPaths(nightId).pub), undefined)
 })
 
@@ -350,8 +350,6 @@ test('the group due in the study is paid when the house moves on without the sta
   assert.equal(late.repeated, true)
   for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
   // g2 is mid-game with the station alive when the house rotates: left to the station, not paid yet
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // questions1
-  t.now = ms(night(db, nightId).window.closesAt) + 1
   alive({ state: 'playing' })
   await hostCommand(db, { nightId, command: 'next', now: t.now }) // station3
   assert.equal(night(db, nightId).beat, 'station3')
@@ -388,7 +386,7 @@ test('a finish from a rotation the host already moved past does not move the hou
 test('both hidden roles answering at the same moment push the dial twice, and a late answer during settle counts once', async () => {
   const { db, nightId, uids, names } = await party(4)
   const t = { now: 14_000_000 }
-  await walkTo(db, nightId, 2, 'questions', t)
+  await firstParlour(db, nightId, t)
   const n2 = night(db, nightId)
   const { answer } = await import('../lib/deal.js')
   const picksFor = (uid) => db.store.get(`sessions/${uid}`).windows[n2.window.id].beats.map(b => b.choices[0].k)
@@ -458,7 +456,7 @@ async function answerAll(db, nightId, uids, names, t) {
 async function revealed(n = 5) {
   const { db, nightId, uids, names } = await party(n)
   const t = { now: 7_000_000 }
-  await walkTo(db, nightId, 2, 'questions', t)
+  await firstParlour(db, nightId, t)
   await answerAll(db, nightId, uids, names, t)
   t.now = ms(night(db, nightId).window.closesAt) + 1
   await hostCommand(db, { nightId, command: 'settle', now: t.now })
@@ -541,7 +539,7 @@ test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hu
 test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the eliminate or ballot windows', async () => {
   const { db, nightId, uids, names } = await party(4)
   const t = { now: 7_600_000 }
-  await walkTo(db, nightId, 2, 'questions', t)
+  await firstParlour(db, nightId, t)
   await answerAll(db, nightId, uids, names, t)
   t.now = ms(night(db, nightId).window.closesAt) + 1
   await hostCommand(db, { nightId, command: 'settle', now: t.now })
@@ -749,4 +747,25 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
 
 test('nextOf still ends Act 4 at the fifth station', () => {
   assert.deepEqual(nextOf(4, 'station5'), { act: 5, beat: 'roam' })
+})
+
+test('the Parlour Games awards join the achievements at the reveal: names only, from the guests\' own answers, never a missed window', async () => {
+  const { db, nightId, uids, names } = await party(4)
+  const t = { now: 7_800_000 }
+  await firstParlour(db, nightId, t)
+  const w = night(db, nightId).window
+  const { answer } = await import('../lib/deal.js')
+  const picks = [['a', 'a', 'a'], ['a', 'a', 'a'], ['a', 'a', 'b'], ['b', 'b', 'b']]
+  for (let i = 0; i < 3; i++) await answer(db, { nightId, uid: uids[names[i].toLowerCase()], windowId: w.id, picks: picks[i], now: t.now })
+  t.now = ms(w.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'settle', now: t.now }) // the fourth phone is picked for: it does not count
+  const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
+  const won = f.achievements.filter(a => a.parlour)
+  assert.ok(won.length >= 1, 'at least one Parlour Games award')
+  const titles = won.map(a => a.title)
+  assert.ok(titles.includes('Kindred Spirits'))
+  assert.equal(won.find(a => a.title === 'Kindred Spirits').name, `${names[0]} and ${names[1]}`)
+  assert.ok(won.every(a => !a.name.includes(names[3])), 'answers picked for a missed window do not count')
+  assert.ok(f.schedule.awards < f.schedule.graph, 'the awards get their moment on the screen')
+  for (const a of won) assert.deepEqual(Object.keys(a).sort(), ['line', 'name', 'parlour', 'showAt', 'title'], 'names, a title and a line: nothing else')
 })

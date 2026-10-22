@@ -35,73 +35,43 @@ async function intoAct4(db, nightId, t, { alive = true } = {}) {
   assert.equal(night(db, nightId).rotation, 0)
 }
 
-test('the study is the clock at every slot: five groups, five finishes, five rotations, two Parlour Games, no Next', async () => {
+test('the study is the clock at every slot: five groups, five finishes, five rotations, no Next; a Parlour Game on the phones never holds the house up', async () => {
   const { db, nightId, uids } = await party(10)
   const t = { now: 5_000_000 }
   await intoAct4(db, nightId, t)
   const rot = db.store.get(rotationPath(nightId))
   assert.equal(rot.studyOrder.length, 5)
+  assert.equal(db.store.get(`nights/${nightId}/private/parlour`).act, 4, 'Act 4 laid out its Parlour Games')
   let windows = 0
   const beatsSeen = ['station1']
   for (let r = 0; r < 5; r++) {
+    // twelve minutes a slot; the once-a-minute clock pops up whatever is due
+    await hostCommand(db, { nightId, command: 'tick', now: t.now })
+    const w = night(db, nightId).window
+    if (w && !w.settled) windows++
     heartbeat(db, nightId, t.now)
     const gid = rot.studyOrder[r]
     assert.equal(db.store.get(studyPath(nightId)).groupId, gid, `rotation ${r}: the study points at the group due`)
-    const res = await studyFinished(db, { nightId, payload: { groupId: gid, outcome: r % 2 ? 'capped' : 'solved', seconds: 200 + r, pairs: 3 }, now: t.now })
+    const res = await studyFinished(db, { nightId, payload: { groupId: gid, outcome: r % 2 ? 'capped' : 'solved', seconds: 200 + r, pairs: 3 }, now: t.now + 1000 })
     assert.ok(!res.repeated)
     for (const k of members(db, nightId, gid)) assert.equal(cards(db, uidOf(db, nightId, k), 'clue').length, 1, 'the group holds its clue, once')
     if (r < 4) {
       assert.equal(res.rotated, true, `finish ${r} moved the house`)
       assert.equal(night(db, nightId).rotation, r + 1)
-      if (res.window) {
-        windows++
-        const w = night(db, nightId).window
-        assert.equal(w.kind, 'questions')
-        assert.equal(w.settled, false)
-        t.now = ms(w.closesAt) + 1 // the next study takes longer than a Parlour Game
-      }
+      if (w && !w.settled) assert.equal(night(db, nightId).window.settled, false, 'the game kept running')
       beatsSeen.push(night(db, nightId).beat)
     } else {
       assert.equal(res.rotated, false, 'the fifth station is the last: Act 5 is the host\'s to call')
     }
-    t.now += 60_000
+    t.now += 12 * 60_000
   }
-  assert.equal(windows, 2, 'exactly two Parlour Games, one after station2 and one after station4')
+  assert.ok(windows >= 1, 'at least one Parlour Game popped up during the rotation')
   assert.deepEqual(beatsSeen, ['station1', 'station2', 'station3', 'station4', 'station5'])
   assert.equal(Object.keys(db.store.get(rotationPath(nightId)).finished).length, 5, 'every group was paid by its own finish')
   for (const uid of Object.values(uids)) {
     assert.equal(cards(db, uid, 'station').length, 5, 'every phone visited five stations')
     assert.equal(cards(db, uid, 'clue').length, 1)
   }
-})
-
-test('with autoAfterStudy off a finish moves one beat only, and the host\'s Next does the rest', async () => {
-  const beats = beatsOf(4)
-  const q1 = beats.find(b => b.key === 'questions1')
-  const was = q1.autoAfterStudy
-  q1.autoAfterStudy = false
-  try {
-    const { db, nightId } = await party(6)
-    const t = { now: 6_000_000 }
-    await intoAct4(db, nightId, t)
-    const rot = db.store.get(rotationPath(nightId))
-    heartbeat(db, nightId, t.now)
-    await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0] }, now: t.now })
-    assert.equal(night(db, nightId).beat, 'station2')
-    heartbeat(db, nightId, t.now)
-    const r = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[1] }, now: t.now })
-    assert.equal(r.rotated, true)
-    assert.equal(r.window, undefined)
-    assert.equal(night(db, nightId).beat, 'questions1', 'the old behaviour: the window opens and the house waits for Next')
-    assert.equal(night(db, nightId).rotation, 1)
-    t.now = ms(night(db, nightId).window.closesAt) + 1
-    await hostCommand(db, { nightId, command: 'next', now: t.now })
-    assert.equal(night(db, nightId).beat, 'station3')
-    assert.equal(night(db, nightId).rotation, 2)
-  } finally {
-    q1.autoAfterStudy = was
-  }
-  assert.equal(NIGHT.acts['4'].beats.find(b => b.key === 'questions1').autoAfterStudy, true, 'the seed ships with the flag on')
 })
 
 test('no station: the rotation writes a twelve-minute slot, and tickStudy ends it once with outcome absent', async () => {

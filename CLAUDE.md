@@ -30,10 +30,12 @@ Content is divided into two classes:
 - The manifest: any mapping between opaque codes and motives
 - Any per-game generated case (murderer, victim, active motive, clue placement)
 - The Parlour Games lean table: which answer each cat leans toward, per
-  question (Jenna fills it in; Jon's account must never read it)
+  question (generated blind by `scripts/generate-leans.mjs`, Jon 22 Oct;
+  Jenna may change any lean on her Steward page; Jon's account must never
+  read it)
 - Event copy for Acts 4 and 6 (generated blind, same rules as kernels),
-  including which Parlour Game sets the two hidden roles receive and how
-  their points map to the clarity dial. The dial has no slider on any phone
+  including how the two hidden roles' points map to the clarity dial (every
+  phone gets the same Parlour Game set since 21 Oct). The dial has no slider on any phone
   (Jon, 16 Oct 2026): it is revealed in the Act 7 graph. The hidden roles'
   answers move their cat sliders like everyone else's, so no phone is a tell.
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
@@ -181,8 +183,8 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   the workshop (`safe_content/scenarios`). For every Detective a secretly
   listening cat (never Irwin) warms or cools by its hidden lean (sealed, see
   above). For the Murderer and the Ghost the
-  same kind of set moves the clarity dial instead, and which sets they get
-  and how their points map to the dial is decided blind per night (sealed),
+  same set moves the clarity dial instead, and how their points map to the
+  dial is decided blind per night (sealed),
   so Jon's numbers never tell him which way the night moved. Their cat
   sliders still move for real, by coin flip, with a Detective's odds and
   sizes. No phone ever shows a number.

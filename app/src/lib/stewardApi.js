@@ -34,6 +34,11 @@ function previewApi() {
       { n: 2, items: [{ id: 'c', text: '(Preview item three) — touch: preview', twice: false }] },
     ],
   }
+  const blank = () => ({ granolia: '', boo: '', zimothy: '', salem: '' })
+  const leans = {
+    of: 24,
+    sets: [1, 2].map(n => ({ id: `preview-${n}`, questions: [1, 2, 3].map(i => ({ q: `(Preview question ${n}.${i})`, a: '(First answer)', b: '(Second answer)', leans: blank() })) })),
+  }
   return {
     call: async data => {
       await new Promise(r => setTimeout(r, 120))
@@ -50,6 +55,8 @@ function previewApi() {
         }
         case 'mark': sets[data.code].review = data.review; return { ok: true, code: data.code, review: data.review }
         case 'bags': return bags
+        case 'leans': return { ok: true, ...leans, filled: leans.sets.reduce((n, x) => n + x.questions.reduce((m, q) => m + Object.values(q.leans).filter(Boolean).length, 0), 0) }
+        case 'lean': leans.sets.find(x => x.id === data.setId).questions[data.q].leans[data.cat] = data.value; return { ok: true }
         default: throw new Error('Which op?')
       }
     },

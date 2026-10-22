@@ -180,9 +180,9 @@ const CARDS = {
     doneLine: 'Seven acts, seven sentences, and the curtain knows exactly when to rise.',
   },
   scenarios: {
-    what: 'Silly three-question dilemmas. Every guest answers one at the same moment, on identical screens.',
-    where: 'Acts 2, 4 and 6: every phone in the house lights up at once with three questions in a row. For a Detective the answers move how the cats feel about them. For the Murderer and the Ghost, the same kind of set moves how clear the clues come out, and nobody can tell which two phones those are.',
-    howTo: 'Question 1, its two choices, and points for each. Then question 2 and question 3 the same way. Whatever a guest picks, the next question is the same. The eight totals add themselves up underneath.',
+    what: 'Silly sets of three questions, two answers each. Every guest answers the same set at the same moment, on identical screens.',
+    where: 'Acts 2, 4 and 6, four times each, at moments nobody knows: every phone in the house lights up at once. A cat is secretly listening to each question, and warms or cools to a Detective by their answer. For the Murderer and the Ghost, the points move how clear the clues come out, and nobody can tell which two phones those are.',
+    howTo: 'Question 1, its two choices, and points for each. Then question 2 and question 3 the same way. Whatever a guest picks, the next question is the same. Anyone must be able to answer, aged 11 to 70, and no Santa. The eight totals add themselves up underneath.',
     example: [
       { field: 'Question 1', text: 'Do you care which way your toilet paper sits?' },
       { field: 'Choices', text: 'Yes (+5) or No (0)' },

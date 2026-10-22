@@ -52,6 +52,7 @@ const run = await import('../functions/lib/run.js')
 const deal = await import('../functions/lib/deal.js')
 const station = await import('../functions/lib/station.js')
 const relay = await import('../functions/lib/relay.js')
+const windows = await import('../functions/lib/windows.js')
 
 export const PHONES = 8
 const choice = list => list[randomInt(list.length)]
@@ -91,7 +92,7 @@ const CASE_WARNINGS = {
 
 // Words a phone-readable document must never carry. Checked as JSON keys
 // (with the quotes) so "motives", the public list, does not trip "motive".
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"hiddenSets"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"']
 const NEVER_BEFORE_REVEAL = ['"murderer"', '"ghost"', '"victim"']
 
 export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players' } = {}) {
@@ -129,6 +130,23 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     await host('settle-now')
     return answered
+  }
+  // the act's next Parlour Game, at its own time: the clock is wound forward to it (and past the gap
+  // after the last one), the game pops up on every phone, every phone answers, the dry run closes it
+  async function nextParlour() {
+    const ref = db.doc(windows.parlourPath(nightId))
+    const sched = (await ref.get()).data()
+    const i = Array.from({ length: sched?.count ?? 0 }, (_, k) => k).find(k => !sched.fired?.[k])
+    if (i === undefined) return null
+    const gap = deal.PARLOUR.minGapMin * 60_000
+    const at = Math.max(deal.ms(sched[`due${i}`]), sched.lastAt ? deal.ms(sched.lastAt) + gap : 0)
+    const r = await windows.tickParlour(db, nightId, at)
+    return r.opened ? answerWindow() : null
+  }
+  async function allParlours() {
+    let games = 0, answered = 0
+    for (let a = await nextParlour(); a !== null; a = await nextParlour()) { games++; answered += a }
+    return { games, answered }
   }
   const heartbeat = () => station.stationCommand(db, { nightId, station: 'study', command: 'state', payload: { state: 'idle' } })
 
@@ -186,28 +204,26 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       if (r?.right) opened++; else if (r?.gaveWay) gaveWay++
     }
     const documents = await countCards('document')
-    await next() // Parlour Game
-    const answered2 = await answerWindow()
+    const p2 = await allParlours() // the act's Parlour Games, each at its own time
     await next() // check-in
-    actLine(2, [`${roleCards} role cards`, `${uids.length} cat visits (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs)`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${answered2} Parlour Game answers`])
+    actLine(2, [`${roleCards} role cards`, `${uids.length} cat visits (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs)`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
     // ---- Act 3: dinner, the bulletin, the groups
     await next(); await next()
     const r3 = await next()
     actLine(3, [`${await countCards('notice', 3)} notices`, `${r3.groups} groups (${r3.trios} of three)`])
 
-    // ---- Act 4: five stations, the study finishing each group, two Parlour Games
+    // ---- Act 4: five stations, the study finishing each group, a Parlour Game popping up between finishes
     await heartbeat() // the station is alive: the study's clue is earned in the room, not dealt with the card
     await next() // station1
-    let rotations = 0, throughStudy = 0, answered4 = 0, guard = 0
+    let rotations = 0, throughStudy = 0, answered4 = 0, games4 = 0, guard = 0
     while (guard++ < 40) {
       const n = await nightDoc()
       if (n.act !== 4) break
       rotations = Math.max(rotations, (n.rotation ?? -1) + 1)
-      // a Parlour Game opened by a study finish sits on a rotate beat: answer it and let the next study finish move the house;
-      // one opened by its own beat (autoAfterStudy off) needs Next to move on
-      if (n.window && !n.window.settled) { answered4 += await answerWindow(); if (deal.beatSpec(4, n.beat)?.action !== 'rotate') await next(); continue }
       if (deal.beatSpec(4, n.beat)?.action !== 'rotate') { await next(); continue }
+      const a4 = await nextParlour() // one pops up while the groups are at their stations
+      if (a4 !== null) { games4++; answered4 += a4 }
       await heartbeat()
       const due = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
       const rot = (await db.doc(station.rotationPath(nightId)).get()).data() ?? {}
@@ -221,17 +237,16 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     if ((await nightDoc()).act !== 5) throw new Error('Act 4 did not end')
     const stationCards = await countCards('station')
     const clues = await countCards('clue')
-    actLine(4, [`${rotations} rotations`, `${throughStudy} groups through the study`, `${stationCards} station cards`, `${clues} clues`, `${answered4} Parlour Game answers`])
+    actLine(4, [`${rotations} rotations`, `${throughStudy} groups through the study`, `${stationCards} station cards`, `${clues} clues`, `${games4} Parlour Games, ${answered4} answers`])
 
     // ---- Act 5: cake, the chime
     await next()
     actLine(5, [`${await countCards('notice', 5)} notices`])
 
-    // ---- Act 6: the last Parlour Game, the drawing, the door, the deduction round
-    await next() // merged
-    const answered6 = await answerWindow()
+    // ---- Act 6: the drawing, the Parlour Games once it is done, the door, the deduction round
     await next() // the drawing starts
     const drawing = await playDrawing()
+    const p6 = await allParlours() // none pops up over the drawing
     await next() // the door
     await next() // the deduction round
     const n6 = await nightDoc()
@@ -243,7 +258,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     await host('settle-now')
     await sealCheck('before-reveal')
-    actLine(6, [`${answered6} Parlour Game answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} votes (${drawing.misses} misses)`, `${struck} strikes`])
+    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} votes (${drawing.misses} misses)`, `${struck} strikes`])
 
     // ---- Act 7: the ballot, the reveal, every phone's result
     await next() // ballot

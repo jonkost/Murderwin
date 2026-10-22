@@ -84,7 +84,7 @@ export function dogFilterOk(line, names = characterNameWords()) {
 // The generator reads the workshop's pools and voice layers (SAFE content)
 // so kernels use the pool vocabulary and sit well between the openers and
 // closers. Read with the Admin SDK; never printed.
-async function areaItems(db, area) {
+export async function areaItems(db, area) {
   const snap = await db.collection('safe_content').doc(area).get()
   if (!snap.exists) return []
   const raw = snap.data()?.items
