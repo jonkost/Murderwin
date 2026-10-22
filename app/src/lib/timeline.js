@@ -11,11 +11,19 @@
 //   { list, also: true }     a list used again here, shown but not counted
 // Tasks and decisions find their place by their `moment` field, a row key
 // below (lib/timelineTasks.js).
+//
+// Every item also says when it can be done (22 Oct 2026, Jon: "what I can
+// do now, separately from what only happens later"): `now`, before the
+// freeze, or `later`, the week before, on the day or after. Whether the
+// night already covers it with a stand-in. And whether it is someone else's
+// to do (Claude's or Jenna's), so the page can point at the next thing that
+// truly needs Jon.
 
 import night from '../../../seed/night.json' with { type: 'json' }
 import { AREAS, TAB_KINDS, ACT_NAMES, goalOf, goalForTab } from './content.js'
 import { labelCodec } from './codecs.js'
 import { isComplete } from './scenarios.js'
+import { ALL_TIMELINE_TASKS } from './timelineTasks.js'
 
 const ui = (...labels) => ({ list: 'ui_copy', labels })
 const station = (label) => ({ list: 'station_text', labels: [label] })
@@ -74,7 +82,7 @@ export const NEEDS = {
 const BEFORE = [
   { key: 'freeze', clock: 'By Saturday 7 November', title: 'Before the freeze', what: 'Everything that has to work before the workshop locks. After the freeze, anything not working is cut, not fixed.' },
   { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The secrets made, read by Jenna, and the bags packed. A dry run with nobody in the room.' },
-  { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.' },
+  { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.', link: { to: '/devices', label: 'Every device, room by room, with its address' } },
   { key: 'allnight', clock: 'From 4:00pm, all night', title: 'On every phone, all night', what: 'What a guest can read from the moment they join: the Rules tab, the Motives tab, the Cats tab, and the small lines a phone shows when the signal drops or the night is paused.' },
 ]
 const AFTER = [
@@ -93,7 +101,7 @@ function parlourRow(act) {
 // The whole night as sections, each with rows. Act 4's rows are its five
 // stations: every group visits each one, so the station is the moment.
 export function nightTimeline(file = night) {
-  const sections = BEFORE.map(b => ({ key: b.key, clock: b.clock, title: b.title, rows: [{ key: b.key, name: b.title, what: b.what }] }))
+  const sections = BEFORE.map(b => ({ key: b.key, clock: b.clock, title: b.title, rows: [{ key: b.key, name: b.title, what: b.what, link: b.link }] }))
   for (const [n, act] of Object.entries(file.acts)) {
     const rows = []
     if (file.parlour?.counts?.[n]) rows.push(parlourRow(n))
@@ -132,6 +140,68 @@ export function momentName(key) {
 
 // The list names the timeline reads, to subscribe to each once.
 export const TIMELINE_LISTS = [...new Set(TIMELINE.flatMap(s => [...s.needs, ...s.rows.flatMap(r => r.needs)]).filter(n => n.list).map(n => n.list))]
+
+// ---- when, and stand-ins ---------------------------------------------------
+
+export const WHEN = { now: 'Do now', later: 'Happens later' }
+
+// Lists the night already covers with its own plain words until Jon writes
+// his: every slot it reads has a default in code. Where each default lives:
+//   ui_copy         play/src/lib/content.js DEFAULT_UI, functions/lib/deal.js
+//                   NOTICES, DEFAULT_NUMBERS_LINE, DEFAULT_SCRAP, the relay
+//                   rules in play/src/lib/screen.js, the filler in windows.js
+//   station_text    deal.js STATION_TEXT
+//   study_lines     play/src/lib/content.js DEFAULT_STUDY_LINES
+//   rules_text      play/src/lib/content.js DEFAULT_RULES
+//   status_lines    play/src/lib/content.js DEFAULT_STATUS
+//   openers, closers, refusals   deal.js DEFAULT_VOICE, one line per cat
+//   pools           case.js DEFAULT_POOLS
+//   echo_frames     screen.js DEFAULT_FRAME
+//   trace_lines     deal.js TRACE_CONTEXT
+//   role_cards      deal.js ROLE_CARDS
+//   epilogue_frames finale.js DEFAULT_EPILOGUE
+//   bios            play/src/lib/content.js bioFor, the seed's own bios
+//   npc_cards       play/src/lib/content.js CATS blurbs
+//   templates       play/public/stationery, the seven paper stand-ins
+// Not here, because the night simply leaves them out until written: what
+// each motive means, cat chatter, achievements, the act scripts.
+export const STANDIN_LISTS = new Set([
+  'ui_copy', 'station_text', 'study_lines', 'rules_text', 'status_lines',
+  'openers', 'closers', 'refusals', 'pools', 'echo_frames',
+  'trace_lines', 'role_cards', 'epilogue_frames', 'bios', 'npc_cards', 'templates',
+])
+// The phone's own rules show only while the list is empty: once Jon writes
+// one rule, his replace all eight (play/src/lib/content.js rules()).
+const STANDIN_ONLY_WHILE_EMPTY = new Set(['rules_text'])
+function needStandin(need, status) {
+  if (need.secret || !STANDIN_LISTS.has(need.list)) return false
+  return !(STANDIN_ONLY_WHILE_EMPTY.has(need.list) && status.count > 0)
+}
+
+// The rows that can only happen close to the night.
+const LATER_ROWS = new Set(['week', 'setup', 'after'])
+const SEEDED = new Map(ALL_TIMELINE_TASKS.map(t => [t.order, t]))
+
+// A card's when: Jon's own choice, else the seeded card's, else its row's.
+export function taskWhen(task) {
+  if (task.when === 'now' || task.when === 'later') return task.when
+  const seeded = SEEDED.get(task.order)
+  if (seeded?.when) return seeded.when
+  return LATER_ROWS.has(task.moment) ? 'later' : 'now'
+}
+// A stand-in that needs another card done first (the sound cards need the
+// stand-in sounds made) counts only once that card is ticked.
+export function taskStandin(task, tasks = []) {
+  const seeded = SEEDED.get(task.order)
+  if (!(task.standin ?? seeded?.standin)) return false
+  const first = task.standinOnceDone ?? seeded?.standinOnceDone
+  if (first == null) return true
+  return tasks.some(t => t.order === first && !t.deleted && t.status === 'done')
+}
+// Someone else's card: Claude's or Jenna's alone. "Jon and Claude" is Jon's.
+export function taskNotYou(task) {
+  return /^(Claude|Jenna)$/.test(String(task.who ?? '').trim())
+}
 
 // ---- status, from live data ------------------------------------------------
 
@@ -200,27 +270,52 @@ export function timelineItems({ areas = {}, validation = null, tasks = [], decis
   const seen = new Set()
   const byMoment = (arr, key) => arr.filter(x => x.moment === key)
   for (const s of TIMELINE) {
-    for (const need of s.needs) out.push({ kind: 'need', section: s.key, row: null, need, status: needStatus(need, { areas, validation }) })
+    for (const need of s.needs) {
+      const status = needStatus(need, { areas, validation })
+      out.push({ kind: 'need', section: s.key, row: null, need, when: 'now', standin: needStandin(need, status), notYou: false, status })
+    }
     for (const r of s.rows) {
       for (const need of r.needs) {
         if (need.also) continue
         const id = need.secret ? `secret:${need.secret}` : `${need.list}:${need.tab ?? ''}:${(need.labels ?? []).join(',')}`
         if (seen.has(id)) continue
         seen.add(id)
-        out.push({ kind: 'need', section: s.key, row: r.key, need, status: needStatus(need, { areas, validation }) })
+        const status = needStatus(need, { areas, validation })
+        // The secrets are made the week before (Make the secrets), blind, by
+        // Claude: never Jon's, never before the freeze.
+        out.push({ kind: 'need', section: s.key, row: r.key, need, when: need.secret ? 'later' : 'now', standin: needStandin(need, status), notYou: Boolean(need.secret), status })
       }
-      for (const d of byMoment(decisions, r.key)) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, status: { done: d.answer != null } })
+      for (const d of byMoment(decisions, r.key)) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, when: 'now', standin: false, notYou: false, status: { done: d.answer != null } })
       for (const t of byMoment(tasks, r.key).filter(t => !t.deleted).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
-        out.push({ kind: 'task', section: s.key, row: r.key, task: t, status: { done: !isOpenTask(t) } })
+        out.push({ kind: 'task', section: s.key, row: r.key, task: t, when: taskWhen(t), standin: taskStandin(t, tasks), notYou: taskNotYou(t), status: { done: !isOpenTask(t) } })
       }
     }
   }
   return out
 }
 
-// { ready, total, first }: how much of the night is ready, and the first
-// thing that is not, in night order.
+// How much is ready in one bucket of items: { ready, total, left, standin,
+// others, needsYou, first }. Of what is left, `standin` is already covered
+// by a stand-in, `others` is Claude's or Jenna's to do, and `needsYou` is
+// the rest; `first` is the first of those, in night order.
+const needsJon = (i) => !i.status.done && !i.standin && !i.notYou
+export function bucketProgress(items) {
+  const left = items.filter(i => !i.status.done)
+  const standin = left.filter(i => i.standin).length
+  const others = left.filter(i => !i.standin && i.notYou).length
+  return {
+    ready: items.length - left.length, total: items.length, left: left.length,
+    standin, others, needsYou: left.length - standin - others,
+    first: items.find(needsJon) ?? null,
+  }
+}
+
+// The whole night, and each when on its own.
 export function timelineProgress(data) {
   const items = timelineItems(data)
-  return { ready: items.filter(i => i.status.done).length, total: items.length, first: items.find(i => !i.status.done) ?? null }
+  return {
+    ...bucketProgress(items),
+    now: bucketProgress(items.filter(i => i.when === 'now')),
+    later: bucketProgress(items.filter(i => i.when === 'later')),
+  }
 }

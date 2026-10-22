@@ -3,11 +3,19 @@
 // (lib/timeline.js). Added once by the ADDITIONS entry
 // '2026-10-22-night-timeline' in content.js, which also retires the old
 // cards these replace. Safe content only: nothing here says who did what.
+//
+// `when: 'later'` marks a card that can only happen on the day (the cards
+// under The week before, Setting up the house and After the party are later
+// anyway). `standin: true` marks one the night already covers with a
+// stand-in; `standinOnceDone` names the card that has to be done first for
+// that stand-in to exist (the sound cards wait on the stand-in sounds). The
+// Timeline reads all three by the card's order, so the live cards written
+// before these fields existed are sorted the same way.
 
 const sound = (order, moment, id, when) => ({
-  order, moment, status: 'todo', who: 'Jon',
+  order, moment, status: 'todo', who: 'Jon', standin: true, standinOnceDone: 105,
   title: `Sound: ${id}`,
-  detail: `Plays when ${when}. Two to five seconds, with one second of silence first. Name the file ${id} and put it in media/ on the brain. A stand-in tone plays until you do.`,
+  detail: `Plays when ${when}. Two to five seconds, with one second of silence first. Name the file ${id} and put it in media/ on the brain. A stand-in tone plays until you do, once the stand-in sounds are made (Before the freeze).`,
 })
 
 export const TIMELINE_TASKS = [
@@ -16,7 +24,7 @@ export const TIMELINE_TASKS = [
   { order: 101, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Bring in the 21 October build', detail: 'The "how the case gets solved" build (the Act 2 cat rooms, the memory match, the study paying the Ghost’s trace) is waiting in a side copy and is not committed yet. Ask Claude to merge it.' },
   { order: 102, moment: 'freeze', status: 'todo', who: 'Jon and Susan', title: 'A rehearsal on your phones', detail: 'Open the game, tap "Host? Start the night", type your name, and press Next through every act with Susan’s phone and a spare joined. Every night is a rehearsal unless the party box is ticked.' },
   { order: 103, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The hardware evening', detail: 'The Nanoleaf wall, the Stream Deck and the Hue bulb plugged in. node scripts/hardware-check.mjs prints PASS or FAIL. One run of the study and one grid of the drawing.' },
-  { order: 104, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Press Freeze', detail: 'Saturday 7 November, on the Game night page. Every list goes read-only. After this, anything not working is cut, not fixed.' },
+  { order: 104, moment: 'freeze', status: 'todo', when: 'later', who: 'Jon', title: 'Press Freeze', detail: 'Saturday 7 November, on the Game night page. Every list goes read-only. After this, anything not working is cut, not fixed.' },
 
   // The week before
   { order: 110, moment: 'week', status: 'todo', who: 'Jon', title: 'Make the secrets', detail: 'In Terminal: npm --prefix scripts run generate, then npm --prefix scripts run validate. Read only the PASS line. The secrets rows on this page turn green.' },
@@ -38,8 +46,8 @@ export const TIMELINE_TASKS = [
   { order: 127, moment: 'setup', status: 'todo', who: 'Jon', title: 'Tick "This is the party night"', detail: 'On the Game night page, before you start the night. Untick it afterwards.' },
 
   // Act 1
-  { order: 130, moment: 'act1.arrive', status: 'todo', who: 'Jon', title: 'The square code up at the door', detail: 'Save it from the Game night page. Guests scan it, type a name, and get a character and a bag number.' },
-  { order: 131, moment: 'act1.arrive', status: 'todo', who: 'Jon and Susan', title: 'The numbered bags at the door', detail: 'Handed out at sign-in. A guest may look in their own; the others stay closed unless the holder is asked.' },
+  { order: 130, moment: 'act1.arrive', status: 'todo', when: 'later', who: 'Jon', title: 'The square code up at the door', detail: 'Save it from the Game night page. Guests scan it, type a name, and get a character and a bag number.' },
+  { order: 131, moment: 'act1.arrive', status: 'todo', when: 'later', who: 'Jon and Susan', title: 'The numbered bags at the door', detail: 'Handed out at sign-in. A guest may look in their own; the others stay closed unless the holder is asked.' },
   { order: 132, moment: 'act1.arrive', status: 'todo', who: 'Jon', title: 'The welcome speech', detail: 'Out loud, near the start: the rules, and what a Murderer and a Ghost each do, so nobody has to ask later and give themselves away. Notes for yourself can go in Host notes.' },
   { order: 133, moment: 'act1.meet', status: 'todo', who: 'Jon and Susan', title: 'The household photos', detail: 'Faces, full, intro cards and in-play pictures of the four cats and Sir Irwin. The folders are ready.' },
   sound(134, 'act1.ready', 'blackout', 'every phone goes dark at the end of Act 1'),
@@ -47,12 +55,12 @@ export const TIMELINE_TASKS = [
   // Act 2
   sound(140, 'act2.orient', 'power', 'the power returns and Act 2 begins'),
   sound(141, 'act2.news', 'chime-news', 'the news flash comes up on the living room screen'),
-  { order: 142, moment: 'act2.news', status: 'todo', who: 'Claude', title: 'The news voiceover, written blind', detail: 'Rules out one or two motive families for everyone. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
-  { order: 143, moment: 'act2.cat', status: 'todo', who: 'Claude', title: 'Each cat’s private hint, written blind', detail: 'The one hint a cat greets a guest with, ruling out another motive family. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
-  { order: 144, moment: 'act2.puzzle', status: 'todo', who: 'Jon', title: 'The seven stationery pictures', detail: 'The blank papers the documents are printed on. Upload them on the Stationery page. Stand-ins work until then.' },
+  { order: 142, moment: 'act2.news', status: 'todo', standin: true, who: 'Claude', title: 'The news voiceover, written blind', detail: 'Rules out one or two motive families for everyone. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
+  { order: 143, moment: 'act2.cat', status: 'todo', standin: true, who: 'Claude', title: 'Each cat’s private hint, written blind', detail: 'The one hint a cat greets a guest with, ruling out another motive family. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
+  { order: 144, moment: 'act2.puzzle', status: 'todo', standin: true, who: 'Jon', title: 'The seven stationery pictures', detail: 'The blank papers the documents are printed on. Upload them on the Stationery page. Stand-ins work until then.' },
 
   // Act 3
-  { order: 150, moment: 'act3.down', status: 'todo', who: 'Jon and Susan', title: 'Dinner on the table in the orangery', detail: 'Phones down and charging while everyone eats.' },
+  { order: 150, moment: 'act3.down', status: 'todo', when: 'later', who: 'Jon and Susan', title: 'Dinner on the table in the orangery', detail: 'Phones down and charging while everyone eats.' },
   { order: 151, moment: 'act3.down', status: 'todo', who: 'Jon', title: 'Music for the radio', detail: 'Atmosphere only: no sound in the game ever carries information.' },
   sound(152, 'act3.bulletin', 'sounder-bulletin', 'the bulletin comes up during dinner'),
 
@@ -61,7 +69,7 @@ export const TIMELINE_TASKS = [
   { order: 161, moment: 'act4.puzzle', status: 'todo', who: 'Jon', title: 'Pick where the memory match iPad sits', detail: 'Somewhere a group can sit together while another group is in the study.' },
 
   // Act 5
-  { order: 170, moment: 'act5.roam', status: 'todo', who: 'Jon and Susan', title: 'The cake, with one candle', detail: 'Sir Irwin’s first birthday.' },
+  { order: 170, moment: 'act5.roam', status: 'todo', when: 'later', who: 'Jon and Susan', title: 'The cake, with one candle', detail: 'Sir Irwin’s first birthday.' },
   sound(171, 'act5.irwin', 'chime-irwin', 'Sir Irwin is about to speak on the living room screen'),
 
   // Act 6
@@ -77,6 +85,17 @@ export const TIMELINE_TASKS = [
   { order: 195, moment: 'after', status: 'todo', who: 'Jon', title: 'Untick "This is the party night"', detail: 'On the Game night page, so the next night you start is a rehearsal again.' },
   { order: 196, moment: 'after', status: 'todo', who: 'Claude', title: 'The morning after: open the case to you', detail: 'Built after the party: once a post-party switch is flipped, the case that ran opens to you, it is archived, and you decide whether to keep or clear the secrets.' },
 ]
+
+// Added after the first timeline cards were live (review, 22 Oct 2026):
+// the brain refuses to start while any of the nine sound files is missing,
+// so the stand-in tones have to be made once, before the freeze. Applied by
+// its own ADDITIONS entry, '2026-10-22-standin-sounds'.
+export const STANDIN_SOUND_TASKS = [
+  { order: 105, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Make the stand-in sounds on the brain', detail: 'Once, on the M3 Air, in Terminal, in the Murderwin folder: node scripts/make-placeholder-sounds.mjs. It makes a stand-in tone for every sound you have not recorded yet. The brain will not start until all nine sounds have a file.' },
+]
+
+// Every card the timeline seeded, for looking a live card up by its order.
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

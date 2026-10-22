@@ -10,6 +10,7 @@ import Stationery from './pages/Stationery'
 import Assets from './pages/Assets'
 import Night from './pages/Night'
 import Timeline from './pages/Timeline'
+import Devices from './pages/Devices'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
 import Steward from './pages/Steward'
@@ -100,6 +101,8 @@ function Shell({ user }) {
         <Route path="/assets" element={<Assets />} />
         <Route path="/night" element={<Night />} />
         <Route path="/timeline" element={<Timeline />} />
+        {/* Reached from Game night and the Timeline's Setting up the house; the rail is full on a phone. */}
+        <Route path="/devices" element={<Devices />} />
         <Route path="/jenna" element={<ForJenna />} />
         <Route path="/status" element={<Status />} />
         {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}

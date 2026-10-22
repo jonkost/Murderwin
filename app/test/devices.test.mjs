@@ -1,0 +1,46 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { DEVICE_ROOMS, DEVICES, deviceUrl } from '../src/lib/devices.js'
+
+// The devices page: every room screen the phone client knows is listed,
+// every address is one the client answers, and nothing is a guest's phone.
+
+const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
+const kioskSrc = read('../../play/src/screens/Kiosk.jsx')
+const handled = (k) => k === 'living' || new RegExp(`which === '${k}'`).test(kioskSrc)
+
+test('every room screen the client answers has a device, and every kiosk address is answered or says why not', () => {
+  for (const k of ['living', 'bedroom', 'study', 'ipad']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
+  for (const d of DEVICES.filter(x => x.kiosk)) {
+    if (handled(d.kiosk)) assert.ok(!d.pending, `${d.key}: the client answers ?kiosk=${d.kiosk} now, so drop the pending note`)
+    else assert.ok(d.pending, `${d.key}: ?kiosk=${d.kiosk} is not answered yet, so the page must say why`)
+  }
+})
+
+test('addresses are built from the game address, and a device with none says how it starts', () => {
+  const base = 'https://example.test/play/'
+  assert.equal(deviceUrl(base, { kiosk: 'living' }), 'https://example.test/play/?kiosk=living')
+  assert.equal(deviceUrl('https://example.test/play/?x=1', { kiosk: 'study' }), 'https://example.test/play/?x=1&kiosk=study')
+  assert.equal(deviceUrl(base, { plain: true }), base)
+  assert.equal(deviceUrl(base, { key: 'router' }), null)
+  assert.equal(deviceUrl('', { kiosk: 'living' }), null)
+  for (const d of DEVICES) assert.ok(d.start?.length, `${d.key} says how it starts`)
+})
+
+test('keys are unique, nothing is a guest phone, and no em dash reaches the screen', () => {
+  const keys = DEVICES.map(d => d.key)
+  assert.equal(new Set(keys).size, keys.length)
+  assert.equal(new Set(DEVICE_ROOMS.map(r => r.key)).size, DEVICE_ROOMS.length)
+  for (const d of DEVICES) {
+    for (const k of ['name', 'machine', 'what', 'alive', 'pending']) assert.ok(!String(d[k] ?? '').includes('—'), `${d.key}.${k}`)
+    for (const s of d.start) assert.ok(!s.includes('—'), d.key)
+  }
+})
+
+test('the commands a device names exist', () => {
+  const pkg = (p) => JSON.parse(read(p)).scripts ?? {}
+  const cmds = DEVICES.flatMap(d => d.start).join('\n')
+  if (cmds.includes('cd cues && npm start')) assert.ok(pkg('../../cues/package.json').start)
+  if (cmds.includes('cd station && npm start')) assert.ok(pkg('../../station/package.json').start)
+})

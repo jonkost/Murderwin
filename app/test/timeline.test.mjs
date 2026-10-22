@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
-import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, listStatus, secretStatus } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE } from '../src/lib/timelineTasks.js'
+import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, secretStatus, taskWhen, taskStandin, taskNotYou } from '../src/lib/timeline.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -62,7 +62,7 @@ test('every list the night reads is on the timeline, and every label is filed ex
 })
 
 test('every new task and decision is filed under a real moment, with no em dash', () => {
-  for (const t of TIMELINE_TASKS) {
+  for (const t of ALL_TIMELINE_TASKS) {
     assert.ok(MOMENT_KEYS.includes(t.moment), `${t.title}: ${t.moment}`)
     assert.ok(momentName(t.moment), t.moment)
     for (const k of ['title', 'detail', 'who']) assert.ok(!String(t[k] ?? '').includes('—'), `${t.title}.${k}`)
@@ -77,7 +77,8 @@ test('every new task and decision is filed under a real moment, with no em dash'
 test('task orders never collide with any earlier card', () => {
   const earlier = [...tasksFile.tasks, ...ADDITIONS.filter(a => a.id !== '2026-10-22-night-timeline').flatMap(a => a.tasks ?? [])].map(t => t.order)
   const mine = TIMELINE_TASKS.map(t => t.order)
-  assert.equal(new Set(mine).size, mine.length, 'unique among themselves')
+  const all = ALL_TIMELINE_TASKS.map(t => t.order)
+  assert.equal(new Set(all).size, all.length, 'unique among themselves, the stand-in sounds card too')
   for (const o of mine) assert.ok(!earlier.includes(o), `order ${o} is new`)
   for (const r of RETIRED_FOR_TIMELINE) assert.ok(earlier.includes(r.order), `retired order ${r.order} was a card`)
 })
@@ -128,7 +129,8 @@ test('status: lists count live lines, labels need words, secrets give counts onl
 test('progress: one entry per need, task and decision, in night order', () => {
   const empty = timelineProgress({})
   assert.equal(empty.ready, 0)
-  assert.equal(empty.first.section, 'setup', 'the first gap with no tasks loaded is the first list')
+  assert.equal(empty.first.section, 'allnight', 'the first gap with nothing written skips the stand-in lines and lands on the first list without one')
+  assert.ok(!empty.first.standin)
   const tasks = [{ id: 'a', moment: 'freeze', status: 'todo', title: 'A', order: 1 }, { id: 'b', moment: 'after', status: 'done', title: 'B', order: 2 }, { id: 'c', moment: 'after', status: 'todo', title: 'C', deleted: true, order: 3 }]
   const decisions = [{ key: 'k', moment: 'act2.news', answer: null }]
   const items = timelineItems({ tasks, decisions })
@@ -137,6 +139,8 @@ test('progress: one entry per need, task and decision, in night order', () => {
   const p = timelineProgress({ tasks, decisions })
   assert.equal(p.first.kind, 'task')
   assert.equal(p.ready, 1)
+  assert.equal(p.now.total + p.later.total, p.total, 'every item is either now or later')
+  assert.equal(p.later.ready, 1, 'the done card under After the party is later')
   const keys = new Set(items.filter(i => i.kind === 'need').map(i => `${i.need.list ?? i.need.secret}:${i.need.tab ?? ''}:${(i.need.labels ?? []).join()}`))
   assert.equal(keys.size, items.filter(i => i.kind === 'need').length, 'each need counted once')
 })
@@ -148,4 +152,107 @@ test('the timeline follows night.json: a renamed beat or station shows up by its
   const t = nightTimeline(file)
   assert.equal(t.find(s => s.key === 'act4').rows.find(r => r.key === 'act4.study').name, 'Renamed')
   assert.ok(t.find(s => s.key === 'act2').rows.some(r => r.key === 'act2.extra'))
+})
+
+test('when: the week before, the day and after are later; everything else is now, and Jon can move a card', () => {
+  for (const t of TIMELINE_TASKS) {
+    const w = taskWhen(t)
+    if (['week', 'setup', 'after'].includes(t.moment)) assert.equal(w, 'later', t.title)
+    else if (t.when) assert.equal(w, t.when, t.title)
+    else assert.equal(w, 'now', t.title)
+  }
+  // the live cards were written before `when` existed: the order finds the seeded card
+  const cake = TIMELINE_TASKS.find(t => t.title.startsWith('The cake'))
+  const { when, standin, ...live } = cake
+  assert.equal(taskWhen(live), 'later')
+  assert.equal(taskWhen({ ...live, when: 'now' }), 'now', 'Jon’s own choice wins')
+  assert.equal(taskWhen({ moment: 'setup', order: 999 }), 'later', 'a new card under Setting up is later')
+  assert.equal(taskWhen({ moment: 'act2.news', order: 999 }), 'now')
+  assert.equal(taskWhen({ moment: 'setup', order: 999, when: 'now' }), 'now')
+  for (const title of ['The square code up at the door', 'The numbered bags at the door', 'Dinner on the table in the orangery', 'The cake, with one candle']) {
+    assert.equal(taskWhen(TIMELINE_TASKS.find(t => t.title === title)), 'later', title)
+  }
+})
+
+test('stand-ins: every sound card, the blind-written stand-in cards and the paper stand-ins, and only lists the night has its own words for', () => {
+  const covered = new Set([142, 143, 144])
+  const soundsMade = [{ order: 105, status: 'done' }]
+  for (const t of ALL_TIMELINE_TASKS) assert.equal(taskStandin(t, soundsMade), t.title.startsWith('Sound: ') || covered.has(t.order), t.title)
+  const { standin, standinOnceDone, ...liveSound } = TIMELINE_TASKS.find(t => t.title.startsWith('Sound: '))
+  assert.equal(taskStandin(liveSound, soundsMade), true, 'found by order on a live card')
+  assert.equal(taskStandin(liveSound, []), false, 'no stand-in sound exists until the stand-in sounds are made')
+  assert.equal(taskStandin(liveSound, [{ order: 105, status: 'todo' }]), false)
+  assert.equal(taskStandin(liveSound, [{ order: 105, status: 'done', deleted: true }]), false)
+  assert.equal(taskStandin(TIMELINE_TASKS.find(t => t.order === 144), []), true, 'the paper stand-ins need nothing first')
+  for (const l of STANDIN_LISTS) assert.ok(AREAS[l], l)
+  for (const l of ['motive_notes', 'smalltalk', 'achievements', 'act_scripts', 'scenarios', 'bag_items']) assert.ok(!STANDIN_LISTS.has(l), `${l} has no stand-in`)
+  const items = timelineItems({})
+  assert.ok(items.filter(i => i.kind === 'need' && i.need.secret).every(i => !i.standin), 'a secret is never a stand-in')
+  assert.ok(items.filter(i => i.kind === 'decision').every(i => i.when === 'now' && !i.standin))
+})
+
+test('the stand-ins the page claims are really in the code', () => {
+  const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
+  const play = read('../../play/src/lib/content.js')
+  const deal = read('../../functions/lib/deal.js')
+  const where = {
+    ui_copy: [play, 'export const DEFAULT_UI'], station_text: [deal, 'export const STATION_TEXT'], study_lines: [play, 'export const DEFAULT_STUDY_LINES'],
+    rules_text: [play, 'export const DEFAULT_RULES'], status_lines: [play, 'export const DEFAULT_STATUS'],
+    openers: [deal, 'DEFAULT_VOICE.opener'], closers: [deal, 'DEFAULT_VOICE.closer'], refusals: [deal, 'DEFAULT_VOICE.refusal'],
+    pools: [read('../../functions/lib/case.js'), 'export const DEFAULT_POOLS'], echo_frames: [read('../../functions/lib/screen.js'), 'export const DEFAULT_FRAME'],
+    trace_lines: [deal, 'TRACE_CONTEXT['], role_cards: [deal, 'ROLE_CARDS.MURDERER'], epilogue_frames: [read('../../functions/lib/finale.js'), 'export const DEFAULT_EPILOGUE'],
+    bios: [play, 'return character.bio'], npc_cards: [play, '${cat.name}, ${cat.tag}. ${cat.blurb}'],
+  }
+  const paper = readdirSync(new URL('../../play/public/stationery/', import.meta.url)).filter(f => f.endsWith('.svg'))
+  assert.equal(paper.length, 7, 'templates: seven paper stand-ins')
+  where.templates = [paper.join(), paper[0]]
+  assert.deepEqual(Object.keys(where).sort(), [...STANDIN_LISTS].sort(), 'every stand-in list has a place to check')
+  for (const [list, [src, needle]] of Object.entries(where)) assert.ok(src.includes(needle), `${list}: ${needle}`)
+  for (const key of ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']) assert.match(deal, new RegExp(`^  ${key}: \\{ title:`, 'm'), `NOTICE ${key.toUpperCase()} has a default`)
+})
+
+test('the secrets and Claude’s or Jenna’s cards never count as needing Jon', () => {
+  const items = timelineItems({})
+  for (const i of items.filter(x => x.kind === 'need' && x.need.secret)) {
+    assert.equal(i.when, 'later', `${i.need.secret} is made the week before`)
+    assert.equal(i.notYou, true)
+  }
+  assert.equal(taskNotYou({ who: 'Claude' }), true)
+  assert.equal(taskNotYou({ who: 'Jenna' }), true)
+  assert.equal(taskNotYou({ who: 'Jon and Claude' }), false)
+  assert.equal(taskNotYou({ who: 'Jon' }), false)
+  assert.equal(taskNotYou({}), false, 'a card Jon adds is his')
+  const mine = { kind: 'task', status: { done: false }, standin: false, notYou: false }
+  const claudes = { kind: 'task', status: { done: false }, standin: false, notYou: true }
+  const covered = { kind: 'task', status: { done: false }, standin: true, notYou: false }
+  const p = bucketProgress([claudes, covered, mine])
+  assert.deepEqual([p.left, p.standin, p.others, p.needsYou], [3, 1, 1, 1])
+  assert.equal(p.first, mine, 'the pointer skips stand-ins and other people’s cards')
+})
+
+test('Press Freeze is later, so the pointer never sends Jon to freeze early', () => {
+  const freeze = TIMELINE_TASKS.find(t => t.title === 'Press Freeze')
+  const { when, ...live } = freeze
+  assert.equal(taskWhen(live), 'later')
+  const tasks = ALL_TIMELINE_TASKS.map((t, i) => ({ ...t, id: `t${i}`, when: undefined, standin: undefined, status: t.moment === 'freeze' && t.order !== 104 ? 'done' : 'todo' }))
+  const p = timelineProgress({ tasks })
+  assert.notEqual(p.now.first?.task?.title, 'Press Freeze')
+})
+
+test('the rules stand-in holds only while the list is empty', () => {
+  const rules = { list: 'rules_text' }
+  const empty = timelineItems({}).find(i => i.kind === 'need' && i.need.list === 'rules_text')
+  assert.equal(empty.standin, true)
+  const one = timelineItems({ areas: { rules_text: [{ text: 'A rule — its words', deleted: false }] } }).find(i => i.kind === 'need' && i.need.list === 'rules_text')
+  assert.equal(one.standin, false, 'one rule written replaces all eight of the phone’s own, so it needs finishing')
+  assert.equal(listStatus(rules, []).done, false)
+})
+
+test('the stand-in sounds card is added once, under Before the freeze', () => {
+  const add = ADDITIONS.find(a => a.id === '2026-10-22-standin-sounds')
+  assert.ok(add)
+  assert.deepEqual(add.tasks, STANDIN_SOUND_TASKS)
+  assert.ok(STANDIN_SOUND_TASKS.every(t => t.moment === 'freeze' && taskWhen(t) === 'now' && !taskStandin(t)))
+  const timeline = ADDITIONS.find(a => a.id === '2026-10-22-night-timeline')
+  assert.ok(!timeline.tasks.some(t => STANDIN_SOUND_TASKS.some(x => x.order === t.order)), 'never seeded twice')
 })

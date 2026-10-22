@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { subscribeGame, saveGame, whoAmI } from '../lib/store'
 import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
@@ -56,6 +57,12 @@ export default function Night() {
       {status === 'error' && (
         <div className="banner error" role="alert">SAVE FAILED. Check your signal and try again.</div>
       )}
+
+      <section className="panel">
+        <h2>The devices</h2>
+        <p className="why">Every screen and machine for each room, with the address to open on it, how to start it and how to tell it is working. Not the phones.</p>
+        <p className="night-line"><Link className="primary dl" to="/devices">Every device, room by room</Link></p>
+      </section>
 
       <section className="panel">
         <h2>The two hosts <span className={`save-dot ${status}`}>{status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span></h2>
