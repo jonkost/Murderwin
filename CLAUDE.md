@@ -29,7 +29,9 @@ Content is divided into two classes:
 - Echo fragments: what fills the ███ (per motive)
 - The manifest: any mapping between opaque codes and motives
 - Any per-game generated case (murderer, victim, active motive, clue placement)
-- Event copy for Acts 2, 4 and 6 (generated blind, same rules as kernels),
+- The Parlour Games lean table: which answer each cat leans toward, per
+  question (Jenna fills it in; Jon's account must never read it)
+- Event copy for Acts 4 and 6 (generated blind, same rules as kernels),
   including which Parlour Game sets the two hidden roles receive and how
   their points map to the clarity dial. The dial has no slider on any phone
   (Jon, 16 Oct 2026): it is revealed in the Act 7 graph. The hidden roles'
@@ -105,6 +107,11 @@ The two big games, designed 13 Oct 2026 (proposals awaiting Jon's yes):
 - Act 4 study light game: `docs/study-light-game.md`
 - Act 6 relay drawing game: `docs/relay-drawing-game.md`
 
+Decided with Jon on 21 Oct 2026 (Canon updated to match):
+- Parlour Games (12 a night, the bank, how the cats lean): `docs/parlour-games.md`
+- How the case gets solved (motive funnel, Act 2 rooms, Act 4 memory match): `docs/solving-the-case.md`
+- Every automated check, and the Health page: `docs/test-plan.md`
+
 ## THE DESIGN DOCS FROM JON'S CHATS
 
 `chats/` (gitignored, never committed) holds Jon's eight Murderwin claude.ai
@@ -166,23 +173,26 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   DECIDED 12 Oct 2026 (Jon): affection moves during the night, through the
   Parlour Games (below). Nothing else moves it.
 - Parlour Games (decided 12 Oct 2026, Jon's whiteboard; called "push and pull
-  questions" in docs before 13 Oct): in Acts 2,
-  4 and 6 every phone lights up at once with one set: three silly questions
-  in a row, two choices each (a third or fourth when needed), points on each
-  choice, the same next question whatever was picked. The bank is SAFE
-  content Jon writes in the workshop (`safe_content/scenarios`). For every
-  Detective the points move cat affection. For the Murderer and the Ghost the
+  questions" in docs before 13 Oct; updated 21 Oct, `docs/parlour-games.md`):
+  twelve a night, four each in Acts 2, 4 and 6, at random times rolled from
+  the seed. Every phone lights up at once with one set: three silly questions
+  in a row, exactly two choices each, the same next question whatever was
+  picked. The bank (17 sets, 12 dealt a night) is SAFE content Jon writes in
+  the workshop (`safe_content/scenarios`). For every Detective a secretly
+  listening cat (never Irwin) warms or cools by its hidden lean (sealed, see
+  above). For the Murderer and the Ghost the
   same kind of set moves the clarity dial instead, and which sets they get
   and how their points map to the dial is decided blind per night (sealed),
-  so Jon's numbers never tell him which way the night moved. No phone ever
-  shows a number.
-- Event System: the Murderer and the Ghost each pick hidden events — 1 in Act 2,
-  2 in Act 4, 1 merged pick in Act 6. Events are nested scenarios three beats deep.
+  so Jon's numbers never tell him which way the night moved. Their cat
+  sliders still move for real, by coin flip, with a Detective's odds and
+  sizes. No phone ever shows a number.
+- Event System: the Murderer and the Ghost each pick hidden events — none in
+  Act 2 (decided 21 Oct), 2 in Act 4, 1 merged pick in Act 6. Events are nested scenarios three beats deep.
   Events are free; the cost is social. Events change information VOLUME and
   TIMING, never content — "delay, never destroy." The clarity dial stacks across
   the whole night and never resets; strong-vs-strong lands neutral and neither
   player learns they cancelled out. The validator must assume worst-case
-  suppression across Acts 2, 4 and 6 and still prove every player can reach two
+  suppression across Acts 4 and 6 and still prove every player can reach two
   of three before Act 1.
 - Safeguards: Spill the Beans (the outward reset) is allowed through the end of
   Act 5, never after; the engine decides legality silently — only if another
