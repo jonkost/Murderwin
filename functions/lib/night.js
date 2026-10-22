@@ -375,7 +375,7 @@ export const PAUSE_SHIFTED = {
   'public/relay': ['turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
   'public/finale': ['at', 'holdAt', 'victimAt'],
-  'private/parlour': ['due0', 'due1', 'due2', 'due3', 'due4', 'due5', 'due6', 'due7', 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
+  'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
 }
 
 function msOf(t) {

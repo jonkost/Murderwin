@@ -1,10 +1,14 @@
-// The Parlour Games (docs/parlour-games.md): twelve a night, four each in
-// Acts 2, 4 and 6, at times nobody knows, drawn from the workshop's bank.
+// The Parlour Games (docs/parlour-games.md): twelve a night in Acts 2, 4 and
+// 6, at times nobody knows, drawn from the workshop's bank. The twelve are one
+// budget for the night (Jon, 22 Oct): five planned in Act 2, five in Act 4,
+// two in Act 6 (it opens on the drawing), and a game an act runs out of time
+// for carries into the next act (windows.startParlour). Whatever Act 6 cannot
+// fit is not played.
 // Pure functions over plain objects, so the plan for a night is the same
 // every time for the same seed.
 //
 // What the case deal decides, from the case's own seed (planParlour):
-//  - which twelve sets, four per act, in what order (no set twice a night)
+//  - which twelve sets, how many per act, in what order (no set twice a night)
 //  - when each one pops up, as an offset from the start of its act
 //  - for every question, which cat is secretly listening (never Irwin), how
 //    much it cares (half a stop or a full stop), and which answer it leans
@@ -29,7 +33,7 @@ export const QUESTIONS = 3
 export const AFFECTION_MIN = 1
 export const AFFECTION_MAX = 5
 // The defaults when seed/night.json has no parlour block (Jon may change them there).
-export const DEFAULT_CONFIG = Object.freeze({ perAct: 4, minGapMin: 4, edgeMin: 2, actMinutes: { 2: 30, 4: 60, 6: 30 } })
+export const DEFAULT_CONFIG = Object.freeze({ counts: { 2: 5, 4: 5, 6: 2 }, minGapMin: 4, edgeMin: 2, actMinutes: { 2: 30, 4: 60, 6: 30 } })
 
 // ---------------------------------------------------------------------------
 // The seed. One string per case; everything below draws from it in order.
@@ -62,10 +66,14 @@ function shuffle(list, pick) {
 export function configOf(raw) {
   const c = raw && typeof raw === 'object' ? raw : {}
   const num = (v, d) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : d)
-  const actMinutes = {}
-  for (const act of PARLOUR_ACTS) actMinutes[act] = num(c.actMinutes?.[act], DEFAULT_CONFIG.actMinutes[act])
+  const actMinutes = {}, counts = {}
+  for (const act of PARLOUR_ACTS) {
+    actMinutes[act] = num(c.actMinutes?.[act], DEFAULT_CONFIG.actMinutes[act])
+    counts[act] = Math.max(0, Math.round(num(c.counts?.[act], DEFAULT_CONFIG.counts[act])))
+  }
   return {
-    perAct: Math.max(0, Math.round(num(c.perAct, DEFAULT_CONFIG.perAct))),
+    counts,
+    total: PARLOUR_ACTS.reduce((n, act) => n + counts[act], 0),
     minGapMin: num(c.minGapMin, DEFAULT_CONFIG.minGapMin),
     edgeMin: num(c.edgeMin, DEFAULT_CONFIG.edgeMin),
     actMinutes,
@@ -125,21 +133,30 @@ export function rollListener(unit, pick, { leans, seed, setId, q }) {
 }
 
 // The whole night's plan. `leans` is the lean table as Jenna left it.
-//   { seed, acts: { '2': [{ setId, atMs, listeners: [{ cat, size, fits, lean }] x3 }] x perAct, '4': …, '6': … } }
+//   { seed, acts: { '2': [{ setId, atMs, listeners: [{ cat, size, fits, lean }] x3 }] x counts[2], '4': …, '6': … } }
 export function planParlour({ seed, bankIds, config, leans = null }) {
   const cfg = configOf(config)
   const { unit, pick } = stream(seed, 'plan')
-  const setIds = pickSetIds(bankIds, cfg.perAct * PARLOUR_ACTS.length, pick)
+  const setIds = pickSetIds(bankIds, cfg.total, pick)
   const acts = {}
-  PARLOUR_ACTS.forEach((act, a) => {
-    const times = rollTimes(unit, { minutes: cfg.actMinutes[act], count: cfg.perAct, gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
+  let next = 0
+  PARLOUR_ACTS.forEach(act => {
+    const times = rollTimes(unit, { minutes: cfg.actMinutes[act], count: cfg.counts[act], gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
     acts[act] = times.map((atMs, slot) => {
-      const setId = setIds[a * cfg.perAct + slot] ?? null
+      const setId = setIds[next++] ?? null
       const listeners = Array.from({ length: QUESTIONS }, (_, q) => rollListener(unit, pick, { leans, seed, setId, q }))
       return { setId, atMs, listeners }
     })
   })
   return { seed, acts }
+}
+
+// Times for an act that has games carried in from the act before: the
+// carried ones and the act's own, laid out afresh over the act, from the
+// seed, so a re-read agrees.
+export function carriedTimes({ seed, act, count, config }) {
+  const cfg = configOf(config)
+  return rollTimes(stream(seed, `carry\u0000${act}\u0000${count}`).unit, { minutes: cfg.actMinutes[act], count, gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
 }
 
 // The listeners for a window the plan does not know (the host's own Light up

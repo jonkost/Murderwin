@@ -64,10 +64,10 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   assert.match(line(2), /safe opened on 8 phones \(0 gave way\)/)
   assert.match(line(2), /8 documents/)
   assert.match(line(3), /4 groups/)
-  // twelve Parlour Games a night, four in each of Acts 2, 4 and 6, every phone answering
-  assert.match(line(2), /4 Parlour Games, 32 answers/)
-  assert.match(line(4), /5 rotations, 4 groups through the study, 40 station cards, 8 clues, 4 Parlour Games, 32 answers/)
-  assert.match(line(6), /4 Parlour Games, 32 answers/)
+  // twelve Parlour Games a night, planned five, five and two in Acts 2, 4 and 6, every phone answering
+  assert.match(line(2), /5 Parlour Games, 40 answers/)
+  assert.match(line(4), /5 rotations, 4 groups through the study, 40 station cards, 8 clues, 5 Parlour Games, 40 answers/)
+  assert.match(line(6), /2 Parlour Games, 16 answers/)
   assert.match(line(6), /drawing done in \d+ turns and \d+ votes/)
   assert.match(line(6), /8 strikes/)
   assert.match(line(7), /8 ballots, 8 results/)

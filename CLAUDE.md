@@ -176,7 +176,9 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   Parlour Games (below). Nothing else moves it.
 - Parlour Games (decided 12 Oct 2026, Jon's whiteboard; called "push and pull
   questions" in docs before 13 Oct; updated 21 Oct, `docs/parlour-games.md`):
-  twelve a night, four each in Acts 2, 4 and 6, at random times rolled from
+  twelve a night in Acts 2, 4 and 6 (planned five, five and two; one budget
+  for the night: a game an act runs out of time for carries into the next
+  act, and one Act 6 cannot fit is skipped; Jon 22 Oct), at random times rolled from
   the seed. Every phone lights up at once with one set: three silly questions
   in a row, exactly two choices each, the same next question whatever was
   picked. The bank (17 sets, 12 dealt a night) is SAFE content Jon writes in

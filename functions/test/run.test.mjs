@@ -87,7 +87,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
   // the first Parlour Game pops up on its own when it is due: the once-a-minute tick
   const sched = db.store.get(`nights/${nightId}/private/parlour`)
-  assert.equal(sched.act, 2); assert.equal(sched.count, 4)
+  assert.equal(sched.act, 2); assert.equal(sched.count, 5)
   await hostCommand(db, { nightId, command: 'tick', now: ms(sched.due0) - 1 })
   assert.ok(!night(db, nightId).window, 'not a moment early')
   now = ms(sched.due0)
@@ -285,16 +285,26 @@ test('a Parlour Game opens once at its time: a second tick opens nothing twice a
   for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
   const priv = db.store.get(`nights/${nightId}/private/windows`)
   assert.notEqual(priv[lit.id].setId, priv[w1.id].setId, 'light-up picks a set not used tonight')
-  // Act 6 opens on the drawing: a game that falls due waits until the drawing is over
+  // Act 6 opens on the drawing. The four Act 2 games that never got their turn come along
+  // (the twelve are one budget for the night), first in line, then Act 6's own two
   now += NIGHT.windows.questions.ms + 1
   await hostCommand(db, { nightId, command: 'act', arg: 6, now })
   assert.equal(sched().act, 6)
+  assert.equal(sched().count, 4 + 2)
+  assert.deepEqual(sched().slots.map(s => `${s.act}-${s.slot}`), ['2-1', '2-2', '2-3', '2-4', '6-0', '6-1'])
+  for (let i = 1; i < 6; i++) assert.ok(ms(sched()[`due${i}`]) >= ms(sched()[`due${i - 1}`]), 'in time order')
+  // a game that falls due waits until the drawing is over
   now = ms(sched().due0)
   await hostCommand(db, { nightId, command: 'tick', now })
   assert.equal(night(db, nightId).window.id, lit.id, 'nothing pops up over the drawing')
   await hostCommand(db, { nightId, command: 'relay-reset', now })
   await hostCommand(db, { nightId, command: 'tick', now })
-  assert.equal(night(db, nightId).window.id, 'questions-6-p0')
+  const carried = night(db, nightId).window
+  assert.equal(carried.id, 'questions-6-p2-1', 'game 1 of Act 2, played in Act 6')
+  const c = db.store.get(`cases/${nightId}`)
+  const priv6 = db.store.get(`nights/${nightId}/private/windows`)[carried.id]
+  assert.equal(priv6.planAct, 2); assert.equal(priv6.slot, 1)
+  assert.equal(priv6.setId, c.parlourPlan.acts[2][1].setId, 'the set the plan named for it')
 })
 
 test('the safe: wrong twice, then it gives way; right pays a document once', async () => {

@@ -69,7 +69,7 @@ How it plays, start to finish:
 3. **The news flash.** A voiceover rules out a family or two of motives for everyone.
 4. **Players go off alone,** in small waves, to different rooms.
 5. **A cat greets each player** with one private hint (see rooms below). How much the cat says depends on affection.
-6. **Parlour Games pop up** at random times (four in Act 2; see `docs/parlour-games.md`).
+6. **Parlour Games pop up** at random times (about five in Act 2; see `docs/parlour-games.md`).
 7. **The chime calls everyone to supper** in the Orangerie.
 
 Players may tell nobody anything in Act 2.

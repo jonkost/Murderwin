@@ -130,8 +130,8 @@ test('buildCase returns every field of CASE_SHAPE with the right types; the rehe
     assert.ok(['room', 'time'].includes(c.granoliaSlot.key))
     assert.notEqual(c.granoliaSlot.value, c.pools[c.granoliaSlot.key])
     assert.deepEqual(Object.keys(c.parlourPlan.acts).sort(), ['2', '4', '6'])
-    for (const slots of Object.values(c.parlourPlan.acts)) {
-      assert.equal(slots.length, 4)
+    for (const [act, slots] of Object.entries(c.parlourPlan.acts)) {
+      assert.equal(slots.length, { 2: 5, 4: 5, 6: 2 }[act], 'five, five and two: twelve a night')
       for (const p of slots) { assert.ok(['s1', 's2', 's3', 's4'].includes(p.setId)); assert.equal(p.listeners.length, 3) }
     }
     assert.deepEqual(c.exposure, {}); assert.deepEqual(c.dealtClues, [])

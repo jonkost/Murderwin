@@ -498,12 +498,16 @@ function valuesOf(beats) {
   return beats.map(b => Object.fromEntries(['a', 'b'].map(k => [k, Number(b[`${k}v`]) || 0])))
 }
 
-// The planned Parlour Game for a window, or null for the host's own button.
-// Slots are named p0, p1, … within an act (the tick opens them, windows.js).
+// Which planned Parlour Game a window's beat names: p0, p1, … within the act,
+// or p2-3 for game 3 of Act 2 carried into a later act (windows.slotBeat).
+// Null for the host's own button.
+export function slotOf(act, beat) {
+  const m = /^p(?:(\d+)-)?(\d+)$/.exec(String(beat ?? ''))
+  return m ? { act: Number(m[1] ?? act), slot: Number(m[2]) } : null
+}
 export function plannedSlot(c, act, beat) {
-  const m = /^p(\d+)$/.exec(String(beat ?? ''))
-  if (!m) return null
-  return c?.parlourPlan?.acts?.[act]?.[Number(m[1])] ?? null
+  const at = slotOf(act, beat)
+  return at ? c?.parlourPlan?.acts?.[at.act]?.[at.slot] ?? null : null
 }
 
 // The cats listening to each question of a window: the plan's, or for a
@@ -538,7 +542,8 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
     const used = new Set(Object.values(privSnap.exists ? privSnap.data() : {}).map(v => v?.setId).filter(Boolean))
     const fresh = bank.filter(b => !used.has(b.id))
     const set = bank.find(b => b.id === planned?.setId) ?? choice(fresh.length ? fresh : bank)
-    priv = { setId: set.id, values: valuesOf(set.beats), slot: planned ? Number(String(beat).slice(1)) : null }
+    const at = planned ? slotOf(act, beat) : null
+    priv = { setId: set.id, values: valuesOf(set.beats), slot: at?.slot ?? null, planAct: at?.act ?? null }
     for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, beats: stripValues(set.beats) } })
   } else {
     for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind } })
@@ -560,7 +565,7 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
   if (!w?.values) return
   const role = roleOf(c, key)
   const hidden = role === 'murderer' || role === 'ghost'
-  const planned = Number.isInteger(w.slot) ? c?.parlourPlan?.acts?.[act]?.[w.slot] : null
+  const planned = Number.isInteger(w.slot) ? c?.parlourPlan?.acts?.[w.planAct ?? act]?.[w.slot] : null
   const listeners = listenersFor(c, { id: windowId, setId: w.setId, listeners: planned?.setId === w.setId ? planned.listeners : null })
   const moves = catMoves({ listeners, picks, hidden, seed: c?.parlourPlan?.seed ?? 'none', windowId, key })
   const deck = (await db.doc(`nights/${nightId}/private/deck`).get()).data() ?? {}

@@ -10,6 +10,7 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 ## What happens on the night
 
 - **Twelve Parlour Games a night:** four each in Acts 2, 4 and 6 (decided 21 Oct; this replaces "three a night").
+  *Changed 22 Oct (Jon):* the twelve are one budget for the whole night: planned five in Act 2, five in Act 4 and two in Act 6 (it opens on the drawing, and none pops up during it). A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
 - **They pop up at random times** during the act, so nobody knows when the next one is coming. The times are rolled from the case seed.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
   - If a phone is on another screen (a cat greeting, a puzzle), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.

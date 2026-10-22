@@ -14,11 +14,11 @@
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, openWindow, ms, PARLOUR } from './deal.js'
+import { settleWindow, openWindow, ms, PARLOUR, NIGHT } from './deal.js'
 import { tickStudy } from './station.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
-import { PARLOUR_ACTS } from './parlour.js'
+import { PARLOUR_ACTS, carriedTimes } from './parlour.js'
 import { isHushed } from './ledger.js'
 
 // A phone that taps inside the grace after closesAt is still heard; after
@@ -40,18 +40,28 @@ export function wordCount(text) {
 }
 
 // ---------------------------------------------------------------------------
-// When the Parlour Games pop up (docs/parlour-games.md). Four in each of
-// Acts 2, 4 and 6, at offsets from the start of the act that the case's plan
-// rolled from its seed. The schedule for the act in progress lives in
-// nights/{id}/private/parlour, which no client can read, so no phone and no
-// host page knows when the next one is coming:
-//   { act, startedAt, count, due0..dueN: Date, fired: { i: true }, lastAt }
+// When the Parlour Games pop up (docs/parlour-games.md). Twelve a night over
+// Acts 2, 4 and 6 (five, five and two by default), at offsets from the start
+// of the act that the case's plan rolled from its seed. The schedule for the
+// act in progress lives in nights/{id}/private/parlour, which no client can
+// read, so no phone and no host page knows when the next one is coming:
+//   { act, startedAt, count, slots: [{ act, slot }], due0..dueN: Date, fired: { i: true }, lastAt }
+// slots[i] names the planned game: its own act's, or one carried in from the
+// act before because that act ran out of time for it (the twelve are one
+// budget for the night, Jon 22 Oct).
 // The tick opens a game once it is due, never while another window is open
 // or the drawing is running, and never closer than the gap to the last one.
-// A game the act ends before is not played.
+// A game the act ends before carries into the next act; one Act 6 cannot fit
+// is not played.
 
 export const parlourPath = (nightId) => `nights/${nightId}/private/parlour`
-export const MAX_PARLOUR_SLOTS = 8 // the due fields a pause shifts (night.js PAUSE_SHIFTED)
+export const MAX_PARLOUR_SLOTS = 12 // the due fields a pause shifts (night.js PAUSE_SHIFTED)
+
+// The beat a slot's window is opened with: p0, p1, … for the act's own games,
+// p2-3 for game 3 planned in Act 2 and carried into a later act.
+export function slotBeat(act, entry) {
+  return Number(entry.act) === Number(act) ? `p${entry.slot}` : `p${entry.act}-${entry.slot}`
+}
 
 // The act has begun: lay out its games. Once per act; a second call keeps
 // the schedule (and what already fired) as it is.
@@ -59,14 +69,26 @@ export async function startParlour(db, nightId, act, { now = Date.now() } = {}) 
   if (!PARLOUR_ACTS.includes(Number(act))) return { ok: true, skipped: 'not-a-parlour-act' }
   const ref = db.doc(parlourPath(nightId))
   const snap = await ref.get()
-  if (snap.exists && snap.data().act === Number(act)) return { ok: true, already: true }
+  const prev = snap.exists ? snap.data() : null
+  if (prev && prev.act === Number(act)) return { ok: true, already: true }
   const caseSnap = await db.doc(`cases/${nightId}`).get()
-  const plan = caseSnap.exists ? (caseSnap.data().parlourPlan?.acts?.[act] ?? []) : []
-  const slots = plan.slice(0, MAX_PARLOUR_SLOTS)
-  const doc = { act: Number(act), startedAt: new Date(now), count: slots.length, fired: {}, lastAt: null }
-  slots.forEach((p, i) => { doc[`due${i}`] = new Date(now + (Number(p.atMs) || 0)) })
+  const planned = caseSnap.exists ? caseSnap.data().parlourPlan : null
+  const own = (planned?.acts?.[act] ?? []).map((p, slot) => ({ act: Number(act), slot, atMs: Number(p.atMs) || 0 }))
+  // the games the act before ran out of time for come along, first in line
+  let carried = []
+  if (prev && PARLOUR_ACTS.includes(Number(prev.act)) && Number(prev.act) < Number(act)) {
+    const was = Array.isArray(prev.slots) ? prev.slots : Array.from({ length: prev.count ?? 0 }, (_, slot) => ({ act: prev.act, slot }))
+    carried = was.filter((_, i) => !prev.fired?.[i]).map(e => ({ act: Number(e.act), slot: Number(e.slot) }))
+  }
+  const slots = [...carried, ...own].slice(0, MAX_PARLOUR_SLOTS)
+  if (carried.length) {
+    const times = carriedTimes({ seed: planned?.seed ?? 'none', act: Number(act), count: slots.length, config: NIGHT.parlour })
+    slots.forEach((s, i) => { s.atMs = times[i] })
+  }
+  const doc = { act: Number(act), startedAt: new Date(now), count: slots.length, slots: slots.map(({ act: a, slot }) => ({ act: a, slot })), fired: {}, lastAt: null }
+  slots.forEach((s, i) => { doc[`due${i}`] = new Date(now + s.atMs) })
   await ref.set(doc)
-  return { ok: true, count: slots.length }
+  return { ok: true, count: slots.length, carried: carried.length }
 }
 
 // Which game, if any, is due now. Pure, for the tick and the tests.
@@ -96,11 +118,11 @@ export async function tickParlour(db, nightId, now) {
     const i = dueSlot(sched, { now })
     if (i === null) return null
     tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
-    return i
+    return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i } }
   })
   if (slot === null) return { opened: false }
-  const r = await openWindow(db, nightId, 'questions', { now, act: Number(night.act), beat: `p${slot}` })
-  return { opened: true, slot, phones: r.phones ?? 0 }
+  const r = await openWindow(db, nightId, 'questions', { now, act: Number(night.act), beat: slotBeat(night.act, slot.entry) })
+  return { opened: true, slot: slot.i, phones: r.phones ?? 0 }
 }
 
 // ---------------------------------------------------------------------------

@@ -364,7 +364,8 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
   swaps exactly one for Granolia.
 - Windows: `nights/{id}.window = { id, kind, opensAt, closesAt, settled }`
   (Dates on the server clock). The Parlour Games (`docs/parlour-games.md`,
-  21 Oct): twelve a night, four in each of Acts 2, 4 and 6, with no beat of
+  21 Oct; counts 22 Oct): twelve a night, planned five, five and two in
+  Acts 2, 4 and 6 (`parlour.counts`), with no beat of
   their own. The case deal (`functions/lib/parlour.js` planParlour, from a
   seed in the case) picks twelve different sets from the workshop bank, the
   time of each as an offset from the start of its act (`seed/night.json`
@@ -377,7 +378,10 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
   `nights/{id}/private/parlour` (`windows.startParlour`); the once-a-minute
   `tick` opens a game when it is due (`windows.tickParlour`), never while
   another window is open or the drawing is running, never closer than the
-  gap to the last one; a game the act ends before is not played. Every phone
+  gap to the last one. The twelve are one budget for the night: a game the
+  act ends before is carried into the next act's schedule (`slots` names
+  each game's planned act and slot; the times are laid out afresh), and one
+  Act 6 cannot fit is not played. Every phone
   gets the same set, `sessions/{uid}.windows[id] = { kind, beats }`, two
   choices a question, no points and no cat; the points are in
   `nights/{id}/private/windows[id].values`. On the phone the game sits on top

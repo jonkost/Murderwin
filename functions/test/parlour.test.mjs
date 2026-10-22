@@ -21,11 +21,11 @@ const CFG = configOf(NIGHT.parlour)
 const plans = (n, extra = {}) => Array.from({ length: n }, (_, i) => planParlour({ seed: `seed-${i}`, bankIds: IDS, config: NIGHT.parlour, ...extra }))
 const slotsOf = (p) => PARLOUR_ACTS.flatMap(act => p.acts[act])
 
-test('G25 each case uses 12 different sets from the bank, four per act in Acts 2, 4 and 6; every set is picked about equally often across 1,000 cases', () => {
+test('G25 each case uses 12 different sets from the bank, planned five, five and two in Acts 2, 4 and 6; every set is picked about equally often across 1,000 cases', () => {
   assert.equal(BANK.length, 17)
   const counts = Object.fromEntries(IDS.map(id => [id, 0]))
   for (const p of plans(1000)) {
-    for (const act of PARLOUR_ACTS) assert.equal(p.acts[act].length, 4, `four in Act ${act}`)
+    for (const act of PARLOUR_ACTS) assert.equal(p.acts[act].length, CFG.counts[act], `${CFG.counts[act]} in Act ${act}`)
     const ids = slotsOf(p).map(s => s.setId)
     assert.equal(ids.length, 12)
     assert.equal(new Set(ids).size, 12, 'no set twice in one night')
