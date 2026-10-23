@@ -856,7 +856,7 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
     const set = bank.find(b => b.id === planned?.setId) ?? choice(fresh.length ? fresh : bank)
     const at = planned ? slotOf(act, beat) : null
     priv = { setId: set.id, values: valuesOf(set.beats), slot: at?.slot ?? null, planAct: at?.act ?? null }
-    for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, beats: stripValues(set.beats) } })
+    for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind, beats: stripValues(set.beats), opensAt: window.opensAt } })
   } else {
     for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind } })
   }
@@ -1246,6 +1246,9 @@ export async function memoryCleared(db, { nightId, boardId, pairs, now = Date.no
   const whole = Array.isArray(pairs) && pairs.length === cards.length / 2 && new Set(flat).size === cards.length && flat.every(i => i >= 0 && i < cards.length)
   if (!whole || !pairs.every(([a, b]) => cards[a] === cards[b])) throw new NightError('invalid', 'Those pairs do not match.')
   await ref.update({ cleared: true, clearedAt: new Date(now) })
+  // how long the group took, for the end credits' Sharpest Memory (finale.js)
+  const seconds = Math.max(0, Math.round((now - ms(board.at)) / 1000))
+  await db.doc(`nights/${nightId}/private/memoryTimes`).set({ [board.groupId]: seconds }, { merge: true })
   const r = await payMemory(db, nightId, board.groupId, { outcome: 'cleared', now })
   return { ok: true, paid: r.paid }
 }
@@ -1302,6 +1305,7 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
     const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice, nightId, over, roster: night.roster ?? {} })
     // no station: the study's pay-out lands with the card, worked out once for the group
     const reveal = station.key === 'study' && !alive ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
+    if (reveal?.level) await db.doc(`nights/${nightId}/private/dialClues`).set({ study: { [grp.id]: reveal.level } }, { merge: true }) // for the end credits
     for (const k of members) {
       const g = byKey[k]
       if (!g) continue

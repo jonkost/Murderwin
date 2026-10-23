@@ -247,7 +247,7 @@ test('across thirty nights every phone holds the same set at the same moment, th
     for (const uid of uids) {
       const text = JSON.stringify(session(db, uid))
       for (const token of ['"av":', '"bv":', '"values":', '"setId":', '"lean":', '"listeners":', '"parlourPlan":', '"cat":', '"role":', '"dial":', '"exposure":']) assert.ok(!text.includes(token), `session carries ${token}`)
-      assert.deepEqual(Object.keys(session(db, uid).windows[w.id]).sort(), ['beats', 'kind'], 'the same shape on every phone')
+      assert.deepEqual(Object.keys(session(db, uid).windows[w.id]).sort(), ['beats', 'kind', 'opensAt'], 'the same shape on every phone')
     }
     const pub = JSON.stringify([night(db, nightId), ...[...db.store.keys()].filter(k => k.startsWith(`nights/${nightId}/public/`)).map(k => db.store.get(k))])
     for (const token of ['"parlourPlan":', '"lean":', '"listeners":', '"dial":', '"roles":', '"murderer":', '"ghost":', '"values":', '"setId":', '"exposure":', '"due0":']) assert.ok(!pub.includes(token), `public carries ${token}`)

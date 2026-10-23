@@ -143,6 +143,8 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
   const c = caseSnap.exists ? caseSnap.data() : null
   // the dial as it stands right now, once for the whole group
   const reveal = c ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
+  // the level it landed at, kept privately for the end credits' dial journey (finale.js)
+  if (reveal?.level) await db.doc(`nights/${nightId}/private/dialClues`).set({ study: { [groupId]: reveal.level } }, { merge: true })
   let dealt = 0
   for (const m of group.members) {
     const uid = uids[m.key]

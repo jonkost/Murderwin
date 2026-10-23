@@ -87,12 +87,14 @@ export function plan(prev, next, now = Date.now()) {
   if (hall && hall !== prev.hall) actions.push({ type: 'hall', colour: hall })
   const soundId = next.sounds?.current?.id ?? null
   const soundAt = stamp(next.sounds?.current?.at)
-  const key = soundId ? `${soundId}@${soundAt}` : null
+  const clipsOnly = !soundId && (next.sounds?.current?.clips ?? []).some(knownClip)
+  const key = soundId || clipsOnly ? `${soundId ?? 'clips'}@${soundAt}` : null
   const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
   // an unknown id is refused once (counted, never named in the log); a known one plays
   if (key && key !== prev.sound && fresh) {
     const clips = (next.sounds?.current?.clips ?? []).filter(knownClip)
-    actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...(clips.length ? { clips } : {}) } : { type: 'refused', count: 1 })
+    if (clipsOnly) actions.push({ type: 'sound', id: null, clips })
+    else actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...(clips.length ? { clips } : {}) } : { type: 'refused', count: 1 })
   }
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
 }

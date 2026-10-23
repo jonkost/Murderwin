@@ -12,10 +12,12 @@
 // SEAL RULE: nothing here returns content. Counts, stages and ok flags.
 
 import { randomInt } from 'node:crypto'
-import { MOTIVES, NightError, readArea, characterById } from './night.js'
+import { MOTIVES, NightError, readArea, characterById, nameKey } from './night.js'
 import { rotationPath } from './station.js'
 import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
-import { parlourAwards, AWARD_TITLES } from './parlour.js'
+import { stopOf } from './parlour.js'
+import { closingParts } from './news.js'
+import { play } from './screen.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -33,14 +35,13 @@ export const AWARD_EVERY_MS = 3_000     // one achievement every three seconds
 export const EPILOGUE_AFTER_MS = 12_000 // the closing story, this long after the Victim is named
 export const AWARDS_CLOSE_AFTER_ACT = 5 // the last act in which an achievement may be given
 
-// The seven lines the reel always carries, in this order. Never a "slowest".
+// The lines the reel always carries, in this order. The cats' favourites
+// moved to the awards (22 Oct), where a tie shows everyone tied.
 export const CANON_LABELS = [
   'Fastest safe',
   'Fastest light puzzle',
   'Time on the drawing',
   'Pictures that took more than one guess',
-  "The cats' favourites",
-  "The cats' least favourites",
   'Quickest on the Parlour Games',
 ]
 export const HUSH_LABEL = 'Hush'
@@ -48,16 +49,51 @@ export const HUSH_LINE = 'Somebody was found out tonight and said nothing. The M
 
 export const DEFAULT_EPILOGUE = 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.'
 
-// The Parlour Games awards (docs/parlour-games.md, draft: Jon may rewrite the
-// titles and lines). They compare the guests with each other from their own
-// answers only, never the cats' leans, so nobody looks like the cats'
-// favourite while their slider says otherwise.
-export const PARLOUR_AWARD_LINES = Object.freeze({
-  rebel: 'Sided with the smaller half of the room most often.',
-  crowd: 'Sided with the bigger half of the room most often.',
-  kindred: 'Answered alike more often than any other two.',
-  rivals: 'Agreed less often than any other two.',
+// The end credits' awards (docs/handoff-2026-10-22.md §8). One person (or
+// one group) each, never one player against another. The cats' awards come
+// from the FINAL sliders, never the hidden leans (G31). A tie shows everyone
+// tied. Answers a phone was given when its window closed do not count.
+export const AWARD_TEXT = Object.freeze({
+  irwinFavourite: { title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy. But a toy.' },
+  irwinLeast: { title: "Sir Irwin's Least Favorite", line: 'He thinks you\'re wonderful. From across the room. But treats are still very welcome. You can toss them.' },
+  quickest: { title: 'Quickest Paw', line: 'First to answer the Parlour Games, again and again.' },
+  slowest: { title: 'Took Their Sweet Time', line: 'Thought hard about every Parlour Game. Very hard.' },
+  napping: { title: 'Napping With Irwin', line: 'Missed the most Parlour Games. Sir Irwin understands.' },
+  sharpest: { title: 'Sharpest Memory', line: 'Matched Zimothy\'s files the fastest.' },
+  bright: { title: 'Bright Sparks', line: 'Cracked the study lights the fastest.' },
+  dark: { title: 'Left in the Dark', line: 'The study lights won this one. Granolia still believes in you.' },
+  satOn: { title: 'Sat On by Granolia', line: 'She loves you. She would like to sit on you.' },
+  knockedOff: { title: 'Knocked Off by Boo', line: 'Your glass, the table, the floor. In that order.' },
+  billed: { title: 'Billed by Zimothy', line: 'The invoice is in the mail.' },
+  hissed: { title: 'Hissed At by Salem', line: 'Stay off the lawn.' },
+  fur: { title: 'Covered in Fur', line: 'Every cat in the house left a little of itself on you.' },
+  fetch: { title: 'Fetch Champion', line: 'The first person the real Sir Irwin brought a toy to.' },
+  salemFriend: { title: 'True Friend of the Groundskeeper', line: 'Salem chose you. He told it to you straight.' },
 })
+const CAT_NAMES_LONG = { granolia: 'Granolia', boo: 'Boo', zimothy: 'Zimothy', salem: 'Salem' }
+
+// The joke counters that keep climbing on the screen, and the thanks.
+export const COUNTERS = [
+  { key: 'barks', label: 'Times Irwin barked' },
+  { key: 'hairballs', label: 'Hairballs Zimothy billed the family for' },
+  { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.' },
+  { key: 'forgot', label: 'Things Granolia forgot tonight', note: "She's forgotten the count." },
+]
+export const THANKS = ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crookshank', 'Sir Irwin', 'Jon', 'Susan', 'Jenna']
+export const IN_MEMORY = { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' }
+export const LAST_CARD = { cat: 'irwin', line: 'Can we play again?' }
+
+// Every top scorer, ties included; nobody when nobody scored.
+function allBest(items, score, { low = false } = {}) {
+  let top = null, winners = []
+  for (const it of items) {
+    const v = score(it)
+    if (v == null) continue
+    if (top === null || (low ? v < top : v > top)) { top = v; winners = [it] }
+    else if (v === top) winners.push(it)
+  }
+  return winners
+}
 
 function andList(names) {
   if (names.length <= 1) return names[0] ?? ''
@@ -114,6 +150,75 @@ function best(items, score, pick, { low = false } = {}) {
   return winners.length ? choice(winners, pick) : null
 }
 
+// The end credits' awards, worked out from the final state of the night.
+// Returns [{ title, name, line }], each name a list when tied.
+export function creditAwards({ people = [], rot = null, memoryTimes = {}, night = {}, game = {} } = {}) {
+  const out = []
+  const put = (key, winners, nameOf = w => w.guest.name) => { if (winners.length) out.push({ key, title: AWARD_TEXT[key].title, name: andList(winners.map(nameOf)), line: AWARD_TEXT[key].line }) }
+  const stop = (s, cat) => (typeof s.affection?.[cat] === 'number' ? stopOf(s.affection[cat]) : null)
+  // each cat's favourite and least favourite, from the final sliders
+  for (const cat of Object.keys(CAT_NAMES_LONG)) {
+    const fav = allBest(people, ({ s }) => stop(s, cat))
+    const least = allBest(people, ({ s }) => stop(s, cat), { low: true })
+    if (fav.length && fav.length < people.length) out.push({ key: `fav-${cat}`, title: `${CAT_NAMES_LONG[cat]}'s Favorite`, name: andList(fav.map(w => w.guest.name)), line: null })
+    if (least.length && least.length < people.length) out.push({ key: `least-${cat}`, title: `${CAT_NAMES_LONG[cat]}'s Least Favorite`, name: andList(least.map(w => w.guest.name)), line: null })
+  }
+  // Sir Irwin's: always Jessa's character, and always Jake's (the Game night page can name others)
+  const seat = (who) => people.find(p => nameKey(p.guest.name) === nameKey(who))
+  const asCharacter = p => characterById(p.guest.characterId)?.name ?? p.guest.name
+  const fav = seat(game.irwin_favourite || 'Jessa'), least = seat(game.irwin_least || 'Jake')
+  if (fav) put('irwinFavourite', [fav], asCharacter)
+  if (least) put('irwinLeast', [least], asCharacter)
+  // the Parlour Games: how fast each guest answered, and who missed the most; missed windows never count as answers
+  const speeds = p => Object.entries(p.s.answers ?? {}).filter(([wid, a]) => a && !a.defaulted && p.s.windows?.[wid]?.kind === 'questions' && p.s.windows?.[wid]?.opensAt)
+    .map(([wid, a]) => (ms(a.at) - ms(p.s.windows[wid].opensAt)) / 1000).filter(x => x >= 0)
+  const avg = p => { const v = speeds(p); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null }
+  const quick = allBest(people, avg, { low: true }), slow = allBest(people, avg)
+  if (quick.length && quick.length < people.length) put('quickest', quick)
+  if (slow.length && slow.length < people.length && slow[0] !== quick[0]) put('slowest', slow)
+  const missed = p => Object.values(p.s.answers ?? {}).filter(a => a?.defaulted).length || null
+  put('napping', allBest(people, missed))
+  // the puzzle awards go to groups
+  const groupName = gid => (rot?.groups ?? []).find(g => g.id === gid)?.members.map(m => m.name).join(' and ') ?? null
+  const mem = Object.entries(memoryTimes ?? {}).map(([gid, seconds]) => ({ gid, seconds }))
+  put('sharpest', allBest(mem, x => x.seconds, { low: true }), w => groupName(w.gid))
+  const study = Object.entries(rot?.finished ?? {}).map(([gid, f]) => ({ gid, ...f }))
+  const solvedStudy = study.filter(f => f.outcome === 'solved' && f.seconds > 0)
+  put('bright', allBest(solvedStudy, x => x.seconds, { low: true }), w => groupName(w.gid))
+  const unsolved = study.filter(f => f.outcome !== 'solved')
+  put('dark', unsolved.length ? unsolved : allBest(solvedStudy.length > 1 ? solvedStudy : [], x => x.seconds), w => groupName(w.gid))
+  // the fun ones, matched to the sliders so they never contradict them
+  put('satOn', people.filter(({ s }) => stop(s, 'granolia') === 5))
+  put('knockedOff', people.filter(({ s }) => stop(s, 'boo') === 1))
+  put('billed', people.filter(({ s }) => stop(s, 'zimothy') === 1))
+  put('hissed', people.filter(({ s }) => stop(s, 'salem') === 1))
+  put('fur', people.filter(({ s }) => { const v = Object.keys(CAT_NAMES_LONG).map(c => stop(s, c) ?? 3); return v.reduce((a, b) => a + b, 0) / v.length >= 4 }))
+  if (night.fetchChampion) put('fetch', people.filter(p => p.guest.key === night.fetchChampion))
+  put('salemFriend', people.filter(({ s }) => s.salemFriend))
+  return out
+}
+
+// The room's split on every Parlour Game question, in the order played.
+export function roomSplits(people = []) {
+  const qs = new Map()
+  for (const { s } of people) {
+    for (const [wid, w] of Object.entries(s.windows ?? {})) {
+      if (w?.kind !== 'questions' || !Array.isArray(w.beats)) continue
+      w.beats.forEach((b, i) => { const id = `${wid}#${i}`; if (!qs.has(id)) qs.set(id, { q: b.q, a: b.choices?.[0]?.text ?? '', b: b.choices?.[1]?.text ?? '', counts: { a: 0, b: 0 } }) })
+      const a = s.answers?.[wid]
+      if (a && !a.defaulted && Array.isArray(a.picks)) a.picks.forEach((p, i) => { const q = qs.get(`${wid}#${i}`); if (q && (p === 'a' || p === 'b')) q.counts[p]++ })
+    }
+  }
+  return [...qs.values()].filter(q => q.counts.a + q.counts.b > 0).map(q => ({ q: q.q, a: { text: q.a, count: q.counts.a }, b: { text: q.b, count: q.counts.b } }))
+}
+
+// The joke counters: big, silly, the same every time for the same night.
+export function jokeCounters(nightId) {
+  const n = (key, lo, hi) => { let h = 0; for (const ch of `${nightId}:${key}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return lo + (h % (hi - lo + 1)) }
+  const value = { barks: n('barks', 200, 900), hairballs: n('hairballs', 12, 60), salemWrong: n('salemWrong', 30, 99), forgot: n('forgot', 40, 140) }
+  return COUNTERS.map(c => ({ ...c, value: value[c.key] }))
+}
+
 // ---------------------------------------------------------------------------
 // The public finale doc. Stats are strings; the graph is the dial's pushes
 // with its sides named from the case's fixed signs; names are empty until
@@ -127,6 +232,10 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const relay = relaySnap.exists ? relaySnap.data() : null
   const { list } = await roster(db, nightId)
   const people = await sessionsOf(db, list)
+  const [clueSnap, memSnap, bulletinSnap, traceSnap, gameSnap] = await Promise.all([
+    db.doc(`nights/${nightId}/private/dialClues`).get(), db.doc(`nights/${nightId}/private/memoryTimes`).get(),
+    db.doc(`nights/${nightId}/private/bulletin`).get(), db.doc(`nights/${nightId}/public/trace`).get(), db.doc('meta/game').get(),
+  ])
 
   const stats = []
   const put = (label, value) => stats.push({ label, value: String(value), showAt: stats.length * STAT_EVERY_MS })
@@ -157,24 +266,12 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const hard = Array.isArray(relay?.stats?.misses) ? relay.stats.misses.map((m, i) => (m > 0 ? `Grid ${i + 1}` : null)).filter(Boolean) : []
   put(CANON_LABELS[3], hard.length ? hard.join(', ') : 'None')
 
-  // 5. and 6. each cat's favourite and least favourite guest (Irwin loves everyone the same)
-  const favourites = [], least = []
-  for (const cat of Object.keys(CAT_SHORT)) {
-    const score = ({ s }) => (typeof s.affection?.[cat] === 'number' ? s.affection[cat] : null)
-    const top = best(people, score, pick)
-    const low = best(people, score, pick, { low: true })
-    if (top) favourites.push(`${CAT_SHORT[cat]}: ${top.guest.name}`)
-    if (low) least.push(`${CAT_SHORT[cat]}: ${low.guest.name}`)
-  }
-  put(CANON_LABELS[4], favourites.length ? favourites.join(' · ') : 'Nobody')
-  put(CANON_LABELS[5], least.length ? least.join(' · ') : 'Nobody')
-
-  // 7. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
+  // 5. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
   // their phone was dealt (the eliminate and ballot windows are not Parlour Games)
   const answered = s => Object.values(s.answers ?? {}).filter(a => a && !a.defaulted).length
   const gamesDealt = s => Object.values(s.windows ?? {}).filter(w => w?.kind === 'questions').length || 1
   const quick = best(people, ({ s }) => (answered(s) > 0 ? answered(s) : null), pick)
-  put(CANON_LABELS[6], quick ? `${quick.guest.name}, ${answered(quick.s)} of ${gamesDealt(quick.s)}` : 'Nobody')
+  put(CANON_LABELS[4], quick ? `${quick.guest.name}, ${answered(quick.s)} of ${gamesDealt(quick.s)}` : 'Nobody')
 
   // the exposure safeguard: a silent tap all night, one line now, never which role (ledger.isHushed is the one reader)
   const hush = HUSH_ROLES.some(role => isHushed(c, role))
@@ -189,20 +286,28 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
     value += points.filter(p => p.act === act).reduce((sum, p) => sum + p.delta, 0)
     running.push({ act, value })
   }
+  // the dial's journey: its highs and lows through the night, and the level each dial clue landed at
+  let walk = 0, high = 0, low = 0
+  for (const p of points) { walk += p.delta; high = Math.max(high, walk); low = Math.min(low, walk) }
+  const clues = clueSnap?.exists ? clueSnap.data() : {}
+  const studyLevels = Object.values(clues.study ?? {})
+  const clueLevels = [
+    { label: 'The supper bulletin', level: bulletinSnap?.exists ? bulletinSnap.data().level ?? null : null },
+    { label: "Sir Irwin's countdown", level: clues.irwin ?? null },
+    { label: 'The study trace', level: studyLevels.length ? Math.round(studyLevels.reduce((a, b) => a + b, 0) / studyLevels.length) : null },
+    { label: 'The trace reveal', level: traceSnap?.exists ? traceSnap.data().level ?? null : null },
+  ].filter(x => x.level != null)
   const sign = c?.dialSign ?? { ghost: 1, murderer: -1 }
   const up = (sign.ghost ?? 1) > 0 ? 'ghost' : 'murderer'
   const sides = { up, down: up === 'ghost' ? 'murderer' : 'ghost' }
 
-  // the achievements the host gave during the night, in the order given, then the Parlour Games awards
+  // the achievements the host gave during the night, in the order given, then the end credits' awards
   const given = Object.values(awardsSnap.exists ? (awardsSnap.data().awards ?? {}) : {}).sort((a, b) => ms(a.at) - ms(b.at))
-  const nameOf = Object.fromEntries(people.map(({ guest }) => [guest.key, guest.name]))
-  const won = parlourAwards(Object.fromEntries(people.map(({ guest, s }) => [guest.key, s.answers ?? {}])))
-  const parlour = []
-  for (const key of ['rebel', 'crowd']) if (won[key].length) parlour.push({ key, name: andList(won[key].map(k => nameOf[k])) })
-  for (const key of ['kindred', 'rivals']) if (won[key].length) parlour.push({ key, name: won[key].map(pair => andList(pair.map(k => nameOf[k]))).join('; ') })
+  const night = (await db.doc(`nights/${nightId}`).get()).data() ?? {}
+  const credits = creditAwards({ people, rot, memoryTimes: memSnap.exists ? memSnap.data() : {}, night, game: gameSnap.exists ? gameSnap.data() : {} })
   const shown = [
     ...given.map(a => ({ name: a.name, title: a.title, line: a.line })),
-    ...parlour.map(a => ({ name: a.name, title: AWARD_TITLES[a.key], line: PARLOUR_AWARD_LINES[a.key], parlour: true })),
+    ...credits,
   ]
   const achievements = shown.map((a, i) => ({ ...a, showAt: FINALE_SCHEDULE.awards + Math.min(i * AWARD_EVERY_MS, FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards - 2_000) }))
   const schedule = { ...FINALE_SCHEDULE }
@@ -211,7 +316,9 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
-    graph: { points, running, sides, hush },
+    graph: { points, running, sides, hush, high, low, clues: clueLevels },
+    credits: { counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
+    news: {},
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,
     ...(spotlight.length ? { spotlight } : {}),
@@ -273,7 +380,14 @@ export async function stage(db, nightId, { now = Date.now() } = {}) {
     patch.victimAt = new Date(now)
     patch.epilogue = fillEpilogue(r.frame, r)
   }
+  // the closing W-O-O-F News bulletin (news.js): the recorded parts before this card play, and
+  // their words go up with it. Murderer: the studio, then Mic's first line; Motive: his second;
+  // Victim: his third, his sign-off and the studio's close.
+  const parts = closingParts()
+  const before = { murderer: parts.slice(0, 2), motive: parts.slice(2, 3), victim: parts.slice(3) }[next] ?? []
+  patch[`news.${next}`] = before.map(p => ({ who: p.who, text: p.text, card: p.card }))
   await pubRef.update(patch)
+  if (before.length) await play(db, nightId, null, { now, clips: before.map(p => p.clip) })
   return { ok: true, stage: next }
 }
 

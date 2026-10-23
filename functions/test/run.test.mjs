@@ -116,7 +116,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   const shown = session(db, uids[0]).windows[w.id]
   for (const uid of uids) {
     const set = session(db, uid).windows[w.id]
-    assert.deepEqual(Object.keys(set).sort(), ['beats', 'kind'], 'no cat, no numbers: the listening cat is a secret')
+    assert.deepEqual(Object.keys(set).sort(), ['beats', 'kind', 'opensAt'], 'no cat, no numbers: the listening cat is a secret')
     assert.deepEqual(set, shown, 'every phone gets the same set')
     assert.equal(set.beats.length, 3)
     for (const b of set.beats) {

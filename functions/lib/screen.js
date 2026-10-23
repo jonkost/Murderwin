@@ -281,8 +281,9 @@ export async function writeScreen(db, nightId, doc) {
 // The sound writer. One id at a time; the relay plays whichever arrives,
 // then the recorded clips after it, in order (a W-O-O-F News bulletin).
 export async function play(db, nightId, id, { now = Date.now(), clips = null } = {}) {
-  if (!SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
   const list = (clips ?? []).filter(x => CLIP_IDS.includes(x))
+  // id null: recorded lines only (the closing bulletin between the reveal's cards)
+  if (id === null ? !list.length : !SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
   await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(list.length ? { clips: list } : {}) } })
   return { ok: true, sound: id }
 }
@@ -353,6 +354,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
       const lines = irwinLines(c, { ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
       const said = [...lines.slice(0, -1), ...clue.choices.map(x => `${x.n}. ${x.rhyme}`), ...lines.slice(-1)]
       doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices: clue.choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
+      if (run) await db.doc(`nights/${nightId}/private/dialClues`).set({ irwin: clue.mood }, { merge: true }) // for the end credits
     }
   } else if (kind === 'door') {
     doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })

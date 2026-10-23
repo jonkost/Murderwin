@@ -161,3 +161,9 @@ test('plan: a bulletin\'s recorded clips ride with its sound, in order; an unkno
   const r = plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 1000, clips: ['newsflash-opening', 'nope', 'newsflash-signoff'] } } }, 1000)
   assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news', clips: ['newsflash-opening', 'newsflash-signoff'] }])
 })
+
+test('plan: a cue of recorded lines alone (the closing bulletin) plays them, once', () => {
+  const r = plan({ hall: null, sound: null }, { sounds: { current: { id: null, at: 5000, clips: ['woof-close-field-motive'] } } }, 5000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: null, clips: ['woof-close-field-motive'] }])
+  assert.deepEqual(plan(r.state, { sounds: { current: { id: null, at: 5000, clips: ['woof-close-field-motive'] } } }, 5000).actions, [])
+})

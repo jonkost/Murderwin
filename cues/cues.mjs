@@ -90,7 +90,7 @@ setInterval(() => { if (wantHall && !FAKE && hue) setHall(wantHall) }, 5000)
 let sequence = 0
 function playSound(id, clips = []) {
   const mine = ++sequence
-  const files = [id, ...clips].map(x => ({ id: x, file: soundCandidates(MEDIA_DIR, x).find(f => existsSync(f)) }))
+  const files = [...(id ? [id] : []), ...clips].map(x => ({ id: x, file: soundCandidates(MEDIA_DIR, x).find(f => existsSync(f)) }))
   const missing = files.filter(f => !f.file).length
   if (missing) log(`[sound] ${missing} of ${files.length} files missing; skipped (the screen shows the words)`)
   const queue = files.filter(f => f.file)

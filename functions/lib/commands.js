@@ -42,6 +42,7 @@ export const HOST_COMMANDS = [
   { name: 'reveal-stage', arg: '', what: 'Put the next name on the screen: the Murderer, then the Motive, then the Victim.' },
   { name: 'finale-hold', arg: '', what: 'Hold the living room screen where it is.' },
   { name: 'finale-go', arg: '', what: 'Carry on after a hold. Everything later on the screen moves by the length of the hold.' },
+  { name: 'fetch-champion', arg: '<guestKey>', what: 'The first guest the real Sir Irwin brings a toy to. Once. It shows in the end credits.' },
   { name: 'salem-petted', arg: '<guestKey>', what: 'The real Salem chose this guest: their Salem goes to the top and tells it straight. Never the two hosts.' },
   { name: 'award', arg: '<guestKey:n>', what: 'Give achievement n from the workshop list to a guest. Through Act 5 only.' },
   // the safeguards (run.js, safeguards.js)

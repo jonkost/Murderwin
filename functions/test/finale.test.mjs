@@ -7,7 +7,9 @@ import { stationCommand, studyClueCard, rotationPath, studyPath, STUDY_PLACEHOLD
 import {
   traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results, NIGHT,
 } from '../lib/deal.js'
-import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, fillEpilogue, DEFAULT_EPILOGUE, go } from '../lib/finale.js'
+import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, fillEpilogue, DEFAULT_EPILOGUE, go, creditAwards, roomSplits } from '../lib/finale.js'
+import { characterById } from '../lib/night.js'
+import { readFileSync } from 'node:fs'
 import { relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS } from '../lib/relay.js'
 
 // A throwaway night. The rehearsal case the dealer makes is never printed.
@@ -476,14 +478,14 @@ async function revealed(n = 5) {
 // everything a client can read: the night doc, its public docs, and every session (less that phone's own ballot and result, which are its own picks)
 const publicDocs = (db, nightId) => [...db.store.keys()].filter(k => k === `nights/${nightId}` || k.startsWith(`nights/${nightId}/public/`) || k.startsWith('sessions/')).map(k => { const { ballot, result, ...rest } = db.store.get(k); return [k, rest] })
 
-test('the finale: the seven canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
+test('the finale: the canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
   const { db, nightId, c } = await revealed(5)
   assert.ok(Array.isArray(c.dialLog) && c.dialLog.length === 2, 'two hidden roles pushed once each')
   assert.ok(c.dialLog.every(e => e.act === 2 && ['murderer', 'ghost'].includes(e.role) && typeof e.delta === 'number'))
   const f = db.store.get(finalePath(nightId))
   assert.deepEqual(Object.keys(f.schedule), ['stats', 'awards', 'graph', 'names'])
   assert.ok(f.schedule.stats < f.schedule.graph && f.schedule.graph < f.schedule.names, 'the reel, the graph, then the names')
-  assert.equal(f.schedule.awards, f.schedule.graph, 'no achievements given: the awards segment has no length')
+  assert.ok(f.schedule.awards < f.schedule.graph, 'the cats\' favourites always give the awards a moment')
   const labels = f.stats.map(s => s.label)
   for (const l of CANON_LABELS) assert.ok(labels.includes(l), `the reel carries "${l}"`)
   assert.equal(labels.length, CANON_LABELS.length, 'no Hush line without an exposure')
@@ -494,7 +496,10 @@ test('the finale: the seven canon lines as strings, no slowest, the graph from t
   assert.equal(f.stats.find(s => s.label === 'Pictures that took more than one guess').value, 'Grid 2')
   assert.match(f.stats.find(s => s.label === 'Fastest light puzzle').value, /6 min 12 s$/)
   assert.equal(f.stats.find(s => s.label === 'Fastest safe').value, 'Nobody opened one')
-  assert.match(f.stats.find(s => s.label === "The cats' favourites").value, /^Granolia: .+ · Boo: .+ · Zimothy: .+ · Salem: .+$/)
+  assert.ok(f.achievements.some(a => /^(Granolia|Boo|Zimothy|Salem)'s (Least )?Favorite$/.test(a.title)), 'the cats\' awards, from the final sliders')
+  assert.ok(f.credits.thanks.includes('Jenna') && f.credits.memory.line.includes('Sydney') && f.credits.last.line === 'Can we play again?')
+  assert.equal(f.credits.counters.length, 4)
+  assert.deepEqual(f.news, {}, 'no closing bulletin before the first name')
   assert.ok(!/tie/i.test(JSON.stringify(f.stats)), 'a tie is never shown as one')
   assert.equal(f.graph.points.length, 2)
   assert.deepEqual(f.graph.running.map(r => r.act), [2, 4, 6])
@@ -557,7 +562,7 @@ test('Quickest on the Parlour Games counts only the Parlour Games a phone was de
   const anyone = db.store.get(`sessions/${uids[names[0].toLowerCase()]}`)
   assert.equal(Object.keys(anyone.windows).length, 3, 'three windows on the phone')
   const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
-  const quick = f.stats.find(s => s.label === CANON_LABELS[6])
+  const quick = f.stats.find(s => s.label === 'Quickest on the Parlour Games')
   assert.match(quick.value, /, 1 of 1$/, `one Parlour Game dealt, one answered: ${quick.value}`)
 })
 
@@ -743,8 +748,7 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
   // the reel carries the segment, after the stats and before the graph
   await reveal(db, nightId, { now: t.now })
   const f = db.store.get(finalePath(nightId))
-  assert.equal(f.achievements.length, 1)
-  assert.deepEqual(f.achievements[0], { name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards })
+  assert.deepEqual(f.achievements[0], { name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards }, 'the host\'s come first')
   assert.ok(f.schedule.awards < f.schedule.graph, 'the segment has length when there is something to show')
   assert.ok(f.stats.every(s => s.showAt < f.schedule.awards))
 })
@@ -753,23 +757,55 @@ test('nextOf still ends Act 4 at the fifth station', () => {
   assert.deepEqual(nextOf(4, 'station5'), { act: 5, beat: 'roam' })
 })
 
-test('the Parlour Games awards join the achievements at the reveal: names only, from the guests\' own answers, never a missed window', async () => {
-  const { db, nightId, uids, names } = await party(4)
-  const t = { now: 7_800_000 }
-  await firstParlour(db, nightId, t)
-  const w = night(db, nightId).window
-  const { answer } = await import('../lib/deal.js')
-  const picks = [['a', 'a', 'a'], ['a', 'a', 'a'], ['a', 'a', 'b'], ['b', 'b', 'b']]
-  for (let i = 0; i < 3; i++) await answer(db, { nightId, uid: uids[names[i].toLowerCase()], windowId: w.id, picks: picks[i], now: t.now })
-  t.now = ms(w.closesAt) + 1
-  await hostCommand(db, { nightId, command: 'settle', now: t.now }) // the fourth phone is picked for: it does not count
-  const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
-  const won = f.achievements.filter(a => a.parlour)
-  assert.ok(won.length >= 1, 'at least one Parlour Games award')
-  const titles = won.map(a => a.title)
-  assert.ok(titles.includes('Kindred Spirits'))
-  assert.equal(won.find(a => a.title === 'Kindred Spirits').name, `${names[0]} and ${names[1]}`)
-  assert.ok(won.every(a => !a.name.includes(names[3])), 'answers picked for a missed window do not count')
-  assert.ok(f.schedule.awards < f.schedule.graph, 'the awards get their moment on the screen')
-  for (const a of won) assert.deepEqual(Object.keys(a).sort(), ['line', 'name', 'parlour', 'showAt', 'title'], 'names, a title and a line: nothing else')
+test('G31 the end credits\' awards: final sliders never leans, ties shown tied, missed windows never count, Irwin\'s seats, the groups, the fun ones', () => {
+  const g = (key, name, s, characterId = 'rye') => ({ guest: { key, name, characterId }, s })
+  const win = (opensAt) => ({ kind: 'questions', opensAt, beats: [{ q: 'Cake or pie?', choices: [{ k: 'a', text: 'Cake' }, { k: 'b', text: 'Pie' }] }] })
+  const people = [
+    g('jessa', 'Jessa', { affection: { granolia: 5, boo: 1, zimothy: 3, salem: 3 }, windows: { w1: win(1000) }, answers: { w1: { picks: ['a'], at: 3000, defaulted: false } } }, 'devine'),
+    g('jake', 'Jake', { affection: { granolia: 5, boo: 4, zimothy: 1, salem: 1 }, windows: { w1: win(1000) }, answers: { w1: { picks: ['b'], at: 9000, defaulted: false } } }, 'barnes'),
+    g('pat', 'Pat', { affection: { granolia: 2, boo: 4, zimothy: 4, salem: 5 }, salemFriend: true, windows: { w1: win(1000) }, answers: { w1: { picks: ['a'], at: 2000, defaulted: true } } }),
+  ]
+  const rot = { groups: [{ id: 'g1', members: [{ name: 'Jessa' }, { name: 'Pat' }] }, { id: 'g2', members: [{ name: 'Jake' }] }], finished: { g1: { outcome: 'solved', seconds: 300 }, g2: { outcome: 'timeout', seconds: 900 } } }
+  const out = creditAwards({ people, rot, memoryTimes: { g1: 200, g2: 150 }, night: { fetchChampion: 'jake' }, game: {} })
+  const by = t => out.find(a => a.title === t)
+  assert.equal(by("Granolia's Favorite").name, 'Jessa and Jake', 'a tie shows everyone tied')
+  assert.equal(by("Boo's Least Favorite").name, 'Jessa')
+  assert.equal(by("Sir Irwin's Favorite").name, characterById('devine').name, 'always Jessa\'s character')
+  assert.equal(by("Sir Irwin's Least Favorite").name, characterById('barnes').name, 'always Jake\'s character')
+  assert.match(by("Sir Irwin's Least Favorite").line, /You can toss them/)
+  assert.equal(by('Quickest Paw').name, 'Jessa', 'a missed window never counts as an answer')
+  assert.equal(by('Took Their Sweet Time').name, 'Jake')
+  assert.equal(by('Napping With Irwin').name, 'Pat')
+  assert.equal(by('Sharpest Memory').name, 'Jake')
+  assert.equal(by('Bright Sparks').name, 'Jessa and Pat')
+  assert.equal(by('Left in the Dark').name, 'Jake')
+  assert.equal(by('Sat On by Granolia').name, 'Jessa and Jake')
+  assert.equal(by('Knocked Off by Boo').name, 'Jessa')
+  assert.equal(by('Billed by Zimothy').name, 'Jake')
+  assert.equal(by('Hissed At by Salem').name, 'Jake')
+  assert.equal(by('Fetch Champion').name, 'Jake')
+  assert.equal(by('True Friend of the Groundskeeper').name, 'Pat')
+  for (const old of ['Biggest Rebel', 'Crowd Pleaser', 'Kindred Spirits', 'Sworn Rivals']) assert.equal(by(old), undefined, `${old} is gone`)
+  // the room's split counts real answers only
+  assert.deepEqual(roomSplits(people), [{ q: 'Cake or pie?', a: { text: 'Cake', count: 1 }, b: { text: 'Pie', count: 1 } }])
+  // the source never reads a lean
+  const src = readFileSync(new URL('../lib/finale.js', import.meta.url), 'utf8')
+  assert.ok(!/lean/i.test(src.slice(src.indexOf('export function creditAwards'), src.indexOf('export function roomSplits'))), 'G31: no lean in the awards')
+})
+
+test('the closing W-O-O-F News bulletin: each name press plays its recorded parts and puts their words up with the card, Murderer, Motive, Victim', async () => {
+  const { db, nightId, t } = await revealed(5)
+  await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // the reveal
+  const clipsNow = () => db.store.get(`nights/${nightId}/public/sounds`)?.current?.clips
+  t.now += 90_000
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.deepEqual(clipsNow(), ['woof-close-studio-open', 'woof-close-field-murderer'])
+  assert.equal(db.store.get(finalePath(nightId)).news.murderer.length, 2)
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.deepEqual(clipsNow(), ['woof-close-field-motive'])
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.deepEqual(clipsNow(), ['woof-close-field-victim', 'woof-close-field-out', 'woof-close-studio-close'])
+  assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, null, 'recorded lines only, no sting')
 })

@@ -5,7 +5,7 @@ import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hushLines } from '../lib/finale'
+import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory. A kiosk is
 // a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -522,13 +522,32 @@ export function Finale({ night, finale, serverNow }) {
       {held && <p className="kiosk-next">Held</p>}
     </div>
   )
+  // the dial's journey waits until after the reveal (handoff §8); before the names, W-O-O-F News is coming
   if (stage === 'graph') return (
     <div className="kiosk finale">
+      <p className="kiosk-crest">W-O-O-F News</p>
+      <p className="kiosk-line">Breaking news from Sirwin Manor. Stay tuned.</p>
+      {held && <p className="kiosk-next">Held</p>}
+    </div>
+  )
+  if (stage === 'journey') return (
+    <div className="kiosk finale journey">
       <p className="kiosk-crest">All night, two of you were pulling</p>
       <TugOfWar graph={finale.graph} />
       <p className="kiosk-line">Every Parlour Game answer from two phones moved this. Nobody knew. Not even them.</p>
+      {(finale.graph?.clues ?? []).length > 0 && (
+        <ul className="journey-clues">
+          {finale.graph.clues.map(c => <li key={c.label}><span>{c.label}</span><span className="clue-level">{'●'.repeat(c.level)}{'○'.repeat(5 - c.level)}</span></li>)}
+        </ul>
+      )}
       {hushLines(finale).map(t => <p key={t} className="kiosk-next">{t}</p>)}
-      {held && <p className="kiosk-next">Held</p>}
+    </div>
+  )
+  if (stage === 'credits') return <Credits finale={finale} now={now} />
+  if (stage === 'last') return (
+    <div className="kiosk finale last">
+      <img className="last-irwin" src={`${import.meta.env.BASE_URL}household/full/Irwin 5.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
+      <p className="kiosk-crest">{finale.credits?.last?.line ?? 'Can we play again?'}</p>
     </div>
   )
   const names = finale.names ?? {}
@@ -547,6 +566,7 @@ export function Finale({ night, finale, serverNow }) {
           </div>
         ))}
       </div>
+      {stage !== 'done' && (finale.news?.[current] ?? []).map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
       {held && <p className="kiosk-next">Held</p>}
@@ -599,6 +619,43 @@ function AwardsReel({ finale, now }) {
         ))}
       </ul>
     </>
+  )
+}
+
+// The end credits: the awards, the joke counters, the room's split on every
+// Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
+function Credits({ finale, now }) {
+  const c = finale.credits ?? {}
+  const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - CREDITS_AFTER_MS)
+  const span = LAST_AFTER_MS - CREDITS_AFTER_MS
+  const climb = Math.min(1, since / 20_000)
+  return (
+    <div className="kiosk finale credits">
+      <div className="credits-roll" style={{ animationDuration: `${span}ms`, animationDelay: `-${since}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }}>
+        <p className="kiosk-crest">Awards</p>
+        <ul className="awards-reel">
+          {(finale.achievements ?? []).map((a, i) => (
+            <li key={i}><span className="award-title">{a.title}</span><span className="award-name">{a.name}</span>{a.line && <span className="award-line">{a.line}</span>}</li>
+          ))}
+        </ul>
+        <p className="kiosk-crest">By the numbers</p>
+        <ul className="counters">
+          {(c.counters ?? []).map(k => <li key={k.key}><span className="counter-n">{Math.round(k.value * climb)}</span> <span>{k.label}</span>{k.note && <span className="counter-note">{k.note}</span>}</li>)}
+        </ul>
+        {(c.splits ?? []).length > 0 && <p className="kiosk-crest">How the room split</p>}
+        <ul className="splits">
+          {(c.splits ?? []).map((q, i) => <li key={i}><span className="split-q">{q.q}</span><span>{q.a.text} {q.a.count} · {q.b.text} {q.b.count}</span></li>)}
+        </ul>
+        <p className="kiosk-crest">Thank you</p>
+        <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
+        {c.memory && (
+          <div className="in-memory">
+            <img src={`${import.meta.env.BASE_URL}${c.memory.photo}`} alt="" onError={e => { e.currentTarget.style.display = 'none' }} />
+            <p>{c.memory.line}</p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

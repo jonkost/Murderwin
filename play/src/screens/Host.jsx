@@ -56,6 +56,7 @@ function describe(command, r) {
     case 'finale-hold': return r.already ? 'The screen is already held.' : 'The screen is held where it is.'
     case 'finale-go': return r.already ? 'The screen was not held.' : `Carrying on. The screen was held for ${Math.round((r.heldMs ?? 0) / 1000)} seconds.`
     case 'award': return r.already ? 'They already have that one.' : 'Given. It is on their phone now, and on the screen at the end.'
+    case 'fetch-champion': return r.already ? 'Fetch Champion is already given.' : 'Fetch Champion. It shows in the end credits.'
     case 'salem-petted': return r.already ? 'Salem already chose them.' : 'Done. Salem tells them the truth from now on, and their phone says so.'
     case 'resume': return `Resumed. Every clock moved on by ${Math.round((r.shiftMs ?? 0) / 1000)} seconds.`
     case 'spill': return 'Noted. The Manor has decided on its own whether the story could still change. It says nothing either way, and neither does this phone.'
@@ -160,6 +161,7 @@ export default function Host({ night, content, serverNow }) {
       <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
       <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
       <SalemPanel night={night} busy={busy} run={run} />
+      <FetchPanel night={night} busy={busy} run={run} />
 
       <Safeguards night={night} busy={busy} run={run} />
 
@@ -431,6 +433,30 @@ export function SalemPanel({ night, busy, run }) {
         ))}
       </div>
       {sure && <div className="host-row"><button className="big wide" disabled={!!busy} onClick={() => { run('salem-petted', sure); setSure(null) }}>Yes, Salem chose {people.find(p => p.key === sure)?.name}</button></div>}
+    </section>
+  )
+}
+
+// Fetch Champion: the first guest the real Sir Irwin brings a toy to. Once.
+export function FetchPanel({ night, busy, run }) {
+  const [sure, setSure] = useState(null)
+  if (!(night.act >= 1 && night.act <= 6)) return null
+  const people = Object.entries(night.roster ?? {}).map(([key, r]) => ({ key, name: r.name })).sort((a, b) => a.name.localeCompare(b.name))
+  const given = night.fetchChampion ? night.roster?.[night.fetchChampion]?.name : null
+  return (
+    <section className="fetch-champion">
+      <h3>Fetch Champion</h3>
+      {given
+        ? <p className="gloss">Given to {given}.</p>
+        : <>
+          <p className="gloss">Tap the first person the real Sir Irwin brings a toy to, then Yes.</p>
+          <div className="host-row">
+            {people.map(p => (
+              <button key={p.key} className={sure === p.key ? 'chip on' : 'chip'} disabled={!!busy} onClick={() => setSure(sure === p.key ? null : p.key)}>{p.name}</button>
+            ))}
+          </div>
+          {sure && <div className="host-row"><button className="big wide" disabled={!!busy} onClick={() => { run('fetch-champion', sure); setSure(null) }}>Yes, {people.find(p => p.key === sure)?.name}</button></div>}
+        </>}
     </section>
   )
 }

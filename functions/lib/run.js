@@ -229,6 +229,14 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'award':
       // an achievement from the workshop list onto a guest's phone (guestKey:n), through Act 5
       return finale.award(db, nightId, { arg, now })
+    case 'fetch-champion': {
+      // the first guest the real Sir Irwin brings a toy to: once, an achievement in the end credits
+      const key = String(arg ?? '').trim()
+      if (!n.roster?.[key]) throw new NightError('no-guest', 'Pick a guest who is at the party.')
+      if (n.fetchChampion) return { ok: true, already: true }
+      await ref.update({ fetchChampion: key })
+      return { ok: true }
+    }
     case 'salem-petted':
       // the real Salem chose a guest: their Salem goes to 5 (never the hosts)
       return deal.salemPetted(db, nightId, { arg, now })

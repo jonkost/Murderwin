@@ -45,6 +45,10 @@ const HOSTS = [
   { key: 'host_jonathan', label: 'Who plays Prof. Jonathan Kostington', placeholder: 'Jon' },
   { key: 'host_susan', label: 'Who plays Prof. Susan Kostington', placeholder: 'Susan' },
 ]
+const IRWIN_SEATS = [
+  { key: 'irwin_favourite', label: "Sir Irwin's Favorite", placeholder: 'Jessa' },
+  { key: 'irwin_least', label: "Sir Irwin's Least Favorite", placeholder: 'Jake' },
+]
 
 export default function Night() {
   const [game, setGame] = useState(null)
@@ -106,6 +110,18 @@ export default function Night() {
           </label>
         ))}
         <p className="hint">Takes effect the next time a night is started from a phone.</p>
+      </section>
+
+      <section className="panel">
+        <h2>Sir Irwin's two awards</h2>
+        <p className="why">At the end, Sir Irwin's Favorite always goes to Jessa's character and his Least Favorite to Jake's. Type the name each of them will type on their phone. Left empty, the game looks for Jessa and Jake.</p>
+        {IRWIN_SEATS.map(h => (
+          <label key={h.key} className="field">
+            <span>{h.label}</span>
+            <input type="text" maxLength={30} placeholder={h.placeholder} value={draft[h.key] ?? ''}
+              onChange={e => change(h.key, e.target.value)} />
+          </label>
+        ))}
       </section>
 
       <section className="panel">

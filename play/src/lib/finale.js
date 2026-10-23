@@ -13,6 +13,10 @@ export function ms(t) {
 }
 
 export const EPILOGUE_AFTER_MS = 12_000
+// After the Victim: the closing story, then the dial's journey, the credits and Irwin's last card (handoff §8).
+export const JOURNEY_AFTER_MS = 27_000
+export const CREDITS_AFTER_MS = 52_000
+export const LAST_AFTER_MS = 125_000
 export const HOST_STAGES = ['stats', 'murderer', 'motive', 'victim']
 export const NEXT_NAME = { stats: 'murderer', murderer: 'motive', motive: 'victim', victim: null }
 
@@ -33,6 +37,9 @@ export function finaleStage(finale, now) {
   if (stage !== 'stats') {
     if (stage === 'victim' && finale.epilogue && finale.victimAt) {
       const since = (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt)
+      if (since >= LAST_AFTER_MS) return 'last'
+      if (since >= CREDITS_AFTER_MS) return 'credits'
+      if (since >= JOURNEY_AFTER_MS) return 'journey'
       if (since >= EPILOGUE_AFTER_MS) return 'done'
     }
     return stage

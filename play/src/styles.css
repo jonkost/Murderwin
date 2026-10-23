@@ -606,3 +606,26 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .host-line { display: flex; gap: 0.6rem; align-items: flex-start; font-style: italic; margin: 0.5rem 0 1rem; }
 .host-line .face { flex: none; width: 2.4rem; height: 2.4rem; }
 .trace-irwin { font-size: 1.4em; margin-top: 1rem; }
+
+/* Act 7: the closing bulletin's words with each card, the dial's journey, the end credits */
+.news-caption { font-size: 1.3em; max-width: 46rem; margin: 1rem auto 0; text-align: center; }
+.news-who { font-weight: 700; margin-right: 0.4rem; }
+.journey-clues { list-style: none; padding: 0; margin: 1.2rem auto 0; max-width: 34rem; }
+.journey-clues li { display: flex; justify-content: space-between; gap: 1rem; font-size: 1.25em; padding: 0.25rem 0; }
+.clue-level { letter-spacing: 0.15em; }
+.finale.credits { overflow: hidden; }
+.credits-roll { animation-name: credits-roll; animation-timing-function: linear; animation-fill-mode: forwards; text-align: center; }
+@keyframes credits-roll { from { transform: translateY(70vh); } to { transform: translateY(-100%); } }
+.credits-roll ul { list-style: none; padding: 0; margin: 0 auto 2.5rem; max-width: 40rem; }
+.credits-roll li { margin: 0.6rem 0; font-size: 1.2em; }
+.counter-n { font-weight: 700; font-size: 1.4em; }
+.counter-note { display: block; font-style: italic; opacity: 0.8; }
+.split-q { display: block; font-weight: 700; }
+.in-memory img { max-width: 16rem; border-radius: 0.6rem; display: block; margin: 0 auto 1rem; }
+.in-memory p { font-size: 1.4em; font-style: italic; }
+.finale.last { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; }
+.last-irwin { max-height: 50vh; }
+@media (prefers-reduced-motion: reduce) { .credits-roll { animation: none; } }
+.credits-roll .awards-reel li { opacity: 1; animation: none; display: block; text-align: center; }
+.credits-roll .award-title, .credits-roll .award-name, .credits-roll .award-line { display: block; }
+.finale.last .kiosk-crest { font-size: 2.6em; text-transform: none; letter-spacing: 0; }
