@@ -101,6 +101,33 @@ export const eliminate = onCall({ cors: true }, wrap(async req => {
   return run.player.eliminate(db, { uid, nightId, target })
 }))
 
+// Act 2, Lights Out: the guest scans the code in a cat's room (the play URL
+// with ?meet=<cat>), and taps when they have heard the cat. Only the guest
+// the line sent may meet that cat (lib/deal.js meetCat).
+export const meetCat = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, cat } = req.data ?? {}
+  return run.player.meetCat(db, { uid, nightId, cat })
+}))
+
+export const leaveCat = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId } = req.data ?? {}
+  return run.player.leaveCat(db, { uid, nightId })
+}))
+
+// Act 4: the memory match on the iPad (?kiosk=memory) is clear. A room
+// screen (its presence heartbeat), a phone at the party or a host may say so;
+// the server checks the pairs against the board before it pays the group.
+export const memoryCleared = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, boardId, pairs } = req.data ?? {}
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  const allowed = await mayTouchNight(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) })
+  if (!allowed) throw new HttpsError('permission-denied', 'This screen is not at the party.')
+  return run.player.memoryCleared(db, { nightId, boardId, pairs })
+}))
+
 // The study station on the M1 Air. Signed in anonymously like a phone, it
 // presents the host-set key. It sends counts and words; the clue is dealt here.
 export const stationCommand = onCall({ cors: true }, wrap(async req => {

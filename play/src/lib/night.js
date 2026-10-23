@@ -140,7 +140,7 @@ export function cardsOf(session) { return Array.isArray(session?.cards) ? sessio
 // Notices and instructions go away once tapped; clues stay in Clues. The role
 // card is kept all night too (re-readable from the You tab, behind a tap),
 // but it is never listed among the clues.
-export const TRANSIENT = new Set(['notice', 'go', 'group', 'station', 'puzzle', 'result', 'award'])
+export const TRANSIENT = new Set(['notice', 'group', 'station', 'puzzle', 'result', 'award'])
 export const KEEPS = new Set(['testimony', 'document', 'clue', 'result', 'role'])
 
 export function nowCards(session, notes, act) {
@@ -149,10 +149,27 @@ export function nowCards(session, notes, act) {
     .filter(c => c.act === act)
     .filter(c => c.kind !== 'role')
     .filter(c => !(TRANSIENT.has(c.kind) && seen[c.id]))
-    .filter(c => !(c.kind === 'testimony' && !seen[`${c.act}-${c.beat}-go`] && hasGo(session, c)))
     .reverse()
 }
-function hasGo(session, t) { return cardsOf(session).some(c => c.kind === 'go' && c.act === t.act && c.beat === t.beat) }
+
+// Act 2, Lights Out: this phone's next step in the cat rooms (the server's
+// sessions/{uid}.lights: wait, go, with, done), shown at the top of Now
+// through Act 2. Null outside Act 2 or before the first wave.
+export const LIGHTS_STEPS = ['wait', 'go', 'with', 'done']
+export function lightsStep(session, act) {
+  const l = session?.lights
+  if (act !== 2 || !l || !LIGHTS_STEPS.includes(l.step)) return null
+  return l
+}
+
+// The cat a room's square code names (/play/?meet=granolia). Null when there is none.
+export const MEET_CATS = ['granolia', 'salem', 'zimothy', 'boo']
+export function meetParam(search) {
+  try {
+    const cat = new URLSearchParams(search ?? window.location.search).get('meet')
+    return MEET_CATS.includes(cat) ? cat : null
+  } catch { return null }
+}
 
 export function clueCards(session) {
   return cardsOf(session).filter(c => c.kind !== 'role' && (KEEPS.has(c.kind) || (c.kind === 'station' && c.station === 'bags'))).reverse()

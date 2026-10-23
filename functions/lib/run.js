@@ -56,12 +56,23 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
   if (run) await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
   await screen.onBeat(db, nightId, { act, beat, spec, phase, now, run }) // the room screens and the beat's sound (screen.js)
+  if (run) await onSolving(db, nightId, act, beat, now) // the Act 2 rooms and the Act 4 memory match close out on time
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
   // the door and the ballot both lean on the trace: make sure it is there if the drawing is done
   if (spec.action === 'notice:door' || spec.action === 'window:ballot') await ensureTrace(db, nightId, now)
   return { ok: true, act, beat, ...r }
+}
+
+// How the case gets solved (docs/solving-the-case.md): the last beat of Act 2
+// (or any jump past it) hands every guest still in a cat's line their greeting
+// and sends everyone to supper; Act 5 pays any group whose turn at the memory
+// match passed without a pay-out. Both are idempotent.
+async function onSolving(db, nightId, act, beat, now) {
+  const last2 = deal.beatsOf(2).at(-1)?.key
+  if (act > 2 || (act === 2 && beat === last2)) await deal.flushLights(db, nightId, { now })
+  if (act >= 5) await deal.flushMemory(db, nightId, { now })
 }
 
 // Once the drawing is done, the trace must be behind the door and the hall
@@ -288,4 +299,9 @@ export const player = {
   eliminate: (db, args) => deal.eliminate(db, args),
   relayVote: (db, args) => relay.vote(db, args),
   relayAdvance: (db, args) => advanceRelay(db, args),
+  // Act 2: a guest scans the code in a cat's room, then taps when they have heard it
+  meetCat: (db, args) => deal.meetCat(db, args),
+  leaveCat: (db, args) => deal.leaveCat(db, args),
+  // Act 4: the iPad says the memory match is clear
+  memoryCleared: (db, args) => deal.memoryCleared(db, args),
 }

@@ -239,7 +239,8 @@ export const AREAS = {
   epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
-  trace_lines: { label: 'What was left behind', moment: 'Act 6, the bedroom screen, when the night has gone clearly enough to say', why: 'One line per trace, naming the object and where it lay, never whose it is. The screen has a plain default for each.', group: 'Blanks and frames', tabs: null, guide: null, goal: TRACE_LABELS.length,
+  // retired 22 Oct 2026 (Jon): the trace's top level is the picture and its name, nothing more; lines already written are kept
+  trace_lines: { label: 'What was left behind (retired)', moment: 'Retired: the trace now shows just its name at the top level', why: 'The old one-line description under a trace. The screens now show the picture and the trace\'s name only, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: null, guide: null, goal: TRACE_LABELS.length, hidden: true, retired: true,
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which trace', placeholder: 'Pick one', kind: 'select', options: TRACE_LABELS },

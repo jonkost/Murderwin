@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
+import { walkLights } from './lights-walk.mjs'
 import { createNight, join, MOTIVES } from '../lib/night.js'
 import { hostCommand, nextOf, prevOf, firstBeat, player } from '../lib/run.js'
 import {
@@ -73,14 +74,25 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
 
   // Act 2: news, cat, puzzle, a Parlour Game when it is due, check-in
   await next() // news
-  await next() // cat
+  await next() // cat: the first wave goes, one guest to each cat; everyone else waits in the living room
+  const sent = uids.filter(uid => session(db, uid).lights?.step === 'go')
+  assert.equal(sent.length, Math.min(4, uids.length), 'one guest at each of the four cats')
   for (const uid of uids) {
-    const go = cards(db, uid, 'go'); const t = cards(db, uid, 'testimony')
-    assert.equal(go.length, 1); assert.equal(t.length, 1)
+    assert.ok(['wait', 'go'].includes(session(db, uid).lights.step), 'every phone has a next step')
+    assert.equal(cards(db, uid, 'testimony').length, 0, 'nothing is said until the guest is with the cat')
+  }
+  const walked = await walkLights(db, nightId, { now })
+  assert.equal(walked.meetings, uids.length); assert.equal(walked.worst, 1, 'never two guests at a cat')
+  for (const uid of uids) {
+    const t = cards(db, uid, 'testimony')
+    assert.equal(t.length, 1)
     assert.ok(['full', 'partial', 'deflect'].includes(t[0].outcome))
     assert.ok(t[0].lines.length >= 1)
     assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')
-    if (go[0].cat === 'granolia') assert.equal(go[0].room, 'the study')
+    assert.ok(t[0].hint?.text, 'the greeting carries the private hint (a marked stand-in until it is written)')
+    assert.notEqual(t[0].cat, 'irwin', 'Sir Irwin keeps no room in Act 2')
+    if (t[0].cat === 'granolia') assert.equal(t[0].room, 'the Study')
+    assert.equal(session(db, uid).lights.step, 'done')
   }
   assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe.jon.length === 3, 'the safe answer is kept by guest key')
   await next() // puzzle

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, effectivePhase, isDark, needsHandoverReset, notesFor, openWindow, overlays, presenceKey, roleCard, wantsWelcome } from './lib/night'
+import { clockFor, effectivePhase, isDark, meetParam, needsHandoverReset, notesFor, openWindow, overlays, presenceKey, roleCard, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -43,6 +44,21 @@ export default function App() {
   useEffect(() => {
     if (needsHandoverReset({ generation }, lastHandoverSeen())) handoverReset(generation)
   }, [generation])
+
+  // A cat's room code (/play/?meet=granolia, Act 2): once this phone holds a
+  // character on the night, it tells the server the guest is with that cat,
+  // once, and takes the code out of the address so a reload does not repeat
+  // it. A refusal ("not yet", "not this room") shows under the next step.
+  const meetRef = useRef(meetParam())
+  const [meetNote, setMeetNote] = useState(null)
+  const activeKey = session.data?.nightId === nightId && session.data?.status === 'active' ? session.data.guestKey : null
+  useEffect(() => {
+    const cat = meetRef.current
+    if (!cat || !activeKey || !nightId) return
+    meetRef.current = null
+    try { const u = new URL(window.location.href); u.searchParams.delete('meet'); window.history.replaceState(null, '', u) } catch { /* the address stays; harmless */ }
+    callMeet({ nightId, cat }).then(() => setMeetNote(null)).catch(e => setMeetNote(e?.message || 'The cat did not answer. Try the code again.'))
+  }, [activeKey, nightId])
 
   // Off the network, or the house has not confirmed the night for twenty
   // seconds (a dead LAN looks exactly like this): say so, and since when.
@@ -110,7 +126,7 @@ export default function App() {
   } else if (doneKey && !notes.seen[doneKey]) {
     base = <RelayDone uid={uid} relay={r} seenKey={doneKey} />
   } else {
-    base = <Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} />
+    base = <Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} />
   }
   return <>{banner}<div className={over ? 'beneath covered' : 'beneath'} inert={over || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
 }

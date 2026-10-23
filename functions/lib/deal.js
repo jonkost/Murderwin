@@ -25,14 +25,16 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
-import { makeRotation, rotationPath, studyPath, studyClueCard, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
+import { makeRotation, rotationPath, studyPath, studyClueCard, studyReveal, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
 import { buildCase, rehearsalCase, checkSealed, seededUnit, SALEM_WARP_SHARE } from './case.js'
 import { bagsClue, bagsText } from './bags.js'
 import { pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
 import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlour.js'
 import { LEANS_DOC } from './steward.js'
+import { hintFamilyFor, memoryPick } from './families.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
+import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -77,7 +79,7 @@ export const STATION_TEXT = {
   study: { title: 'The study', text: 'Go up to the study. Touch any panel to begin. Granolia is in there somewhere; she helps. Fifteen minutes, then out, whatever happened.' },
   cat: { title: 'A cat', text: 'Find the cat named on your phone. It will talk to the group together.' },
   bags: { title: 'The bags', text: 'Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.' },
-  puzzle: { title: 'A small puzzle', text: 'Do this one together.' },
+  puzzle: { title: 'The memory match', text: 'Go to the iPad. Turn two cards at a time and find the six pairs together. Clear the board and one motive comes off your list.' },
   checkin: { title: 'Check-in', text: 'Sit down together. Read your clues out to each other. Cross off motives.' },
 }
 
@@ -381,37 +383,274 @@ export function scrapCard(act, beat, codes, over = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Act 2: go to a cat. One cat per guest, spread across the five; Granolia is
-// always in the study; the other rooms are drawn fresh each night.
+// Act 2, Lights Out: the phones run the room rotation (docs/solving-the-case.md,
+// decided 21 Oct 2026). Four cats wait in four rooms (seed/night.json
+// solving.catRooms: Granolia in the Study, Salem in the Orangerie, Zimothy in
+// the Library, Boo in the Entryway; never Irwin, never the living room). Each
+// guest is given one cat. Only one guest is at a cat at a time, so nobody
+// overhears a private hint: the phones send guests off in waves and everyone
+// else waits in the living room. A guest scans the code in the room (the
+// play URL with ?meet=<cat>), the cat greets them on their phone with one
+// private hint, they tap done, and the next guest in that cat's line is sent.
+//
+// Every guest always has a next step on the phone (sessions/{uid}.lights):
+//   wait  stay in the living room; the phone will send you
+//   go    go to <room>; <cat> is waiting; scan the code there
+//   with  the cat is talking to you; tap when you have heard it
+//   done  back to the living room; tell nobody; the chime calls you to supper
+// A guest who never turns up (goMinutes) or never taps done (withMinutes) is
+// moved on by the tick, and gets the greeting on the phone anyway: delay,
+// never destroy. The end of the act hands every guest still waiting their
+// greeting the same way (flushLights).
+//
+// The line itself is server-only: nights/{id}/private/lights
+//   { act, beat, cats: { cat: { queue: [guestKey], at: guestKey | null, since } },
+//     guests: { guestKey: { cat, step, since } } }
+// Every move goes through one transaction, so two guests are never at a cat at once (F20).
 
-export async function dealEncounter(db, nightId, act, beat) {
-  const c = await ensureCase(db, nightId)
+export const CAT_ROOMS = NIGHT.solving?.catRooms ?? { granolia: 'the Study', salem: 'the Orangerie', zimothy: 'the Library', boo: 'the Entryway' }
+export const LIGHTS_CATS = Object.keys(CAT_ROOMS)
+export const GO_MS = (Number(NIGHT.solving?.goMinutes) || 4) * 60_000
+export const WITH_MS = (Number(NIGHT.solving?.withMinutes) || 5) * 60_000
+export const LIGHTS_STEPS = ['wait', 'go', 'with', 'done']
+export function lightsPath(nightId) { return `nights/${nightId}/private/lights` }
+
+// What each step says on the phone. Safe copy; the workshop's ui_copy lines
+// LIGHTS WAIT, LIGHTS GO, LIGHTS WITH and LIGHTS DONE win ([CAT] and [ROOM] filled in).
+export const LIGHTS_TEXT = {
+  wait: { title: 'Stay in the living room', text: 'Your phone will send you to a room when a cat is free. It will not be long.' },
+  go: { title: 'Go to [ROOM]', text: '[CAT] is waiting for you there. Go alone, and scan the square code in the room.' },
+  with: { title: '[CAT] is talking to you', text: 'Read what the cat says. It is for you alone. Tap when you have heard it.' },
+  done: { title: 'Back to the living room', text: 'Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.' },
+}
+
+// The private hint on a cat's greeting: rules out one wrong family of
+// motives (families.js). The wording is sealed and NOT WRITTEN YET (Jenna's
+// job, docs/solving-the-case.md "not designed yet"); until it is, the card
+// carries this marked stand-in, which names no family.
+export const HINT_PLACEHOLDER = '(Not written yet. Here the cat privately rules out one family of motives.)'
+export function hintLine(c, family) {
+  return { text: HINT_PLACEHOLDER, placeholder: true, ...(family ? {} : { none: true }) }
+}
+
+// Guests shared out over the four cats as evenly as can be, in a random order.
+export function planWaves(keys, pick = pickInt) {
+  const cats = shuffled(LIGHTS_CATS, pick)
+  const queues = Object.fromEntries(LIGHTS_CATS.map(cat => [cat, []]))
+  const assign = {}
+  shuffled(keys, pick).forEach((k, i) => { const cat = cats[i % cats.length]; assign[k] = cat; queues[cat].push(k) })
+  return { assign, queues }
+}
+
+// The step a phone shows, with its words filled in.
+export function lightsCard(step, cat, ui = {}) {
+  const base = LIGHTS_TEXT[step] ?? LIGHTS_TEXT.wait
+  const label = `LIGHTS ${String(step).toUpperCase()}`
+  const fill = t => String(t).replace(/\[CAT\]/g, CAT_NAMES[cat] ?? 'A cat').replace(/\[ROOM\]/g, CAT_ROOMS[cat] ?? 'the room')
+  return { step, cat: cat ?? null, catName: CAT_NAMES[cat] ?? null, room: CAT_ROOMS[cat] ?? null, title: fill(base.title), text: fill(ui[label] ?? base.text) }
+}
+
+// The next guest in a cat's line, if the cat is free. Mutates the state.
+function sendNext(state, cat, now) {
+  const line = state.cats[cat]
+  if (!line || line.at) return null
+  const k = line.queue.shift()
+  if (!k) return null
+  line.at = k
+  line.since = now
+  state.guests[k] = { ...state.guests[k], step: 'go', since: now }
+  return k
+}
+
+// One move on the line, in a transaction. `fn(state)` mutates and returns
+// { changed: [guestKey], greet: [guestKey], ...extra }. Phones and cards follow after.
+async function moveLights(db, nightId, fn) {
+  const ref = db.doc(lightsPath(nightId))
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) return { none: true, changed: [], greet: [] }
+    const state = snap.data()
+    const out = fn(state) ?? {}
+    if (out.changed?.length || out.greet?.length) tx.set(ref, state)
+    return { changed: [], greet: [], ...out, state }
+  })
+}
+
+// After a move: every phone whose step changed is told, and every guest due
+// a greeting gets it (once: the card ids are fixed).
+async function followLights(db, nightId, r, { now = Date.now() } = {}) {
+  if (r.none || (!r.changed.length && !r.greet.length)) return { greeted: 0 }
   const { list } = await guests(db, nightId)
-  const voice = await voicePools(db)
-  const rooms = shuffled(ROOMS.filter(r => r !== 'the study'))
-  const catRoom = { granolia: 'the study' }
-  for (const cat of CAT_KEYS.filter(k => k !== 'granolia')) catRoom[cat] = rooms.pop() ?? 'the parlour'
-  let cats = shuffled(CAT_KEYS)
-  let dealt = 0
-  const codesByGuest = {} // by roster key, so the numbers follow a guest to a replacement phone
-  for (const g of shuffled(list)) {
-    if (!cats.length) cats = shuffled(CAT_KEYS)
-    const cat = cats.pop()
-    const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
-    const level = stopOf(sessionSnap.data()?.affection?.[cat] ?? 3)
-    const codes = [pickInt(90) + 10, pickInt(90) + 10, pickInt(90) + 10]
-    codesByGuest[g.key] = codes
-    const room = catRoom[cat]
-    const go = { id: `${act}-${beat}-go`, act, beat, kind: 'go', room, cat, catName: CAT_NAMES[cat], text: `Go to ${room}. ${CAT_NAMES[cat]} is waiting for you there.` }
-    const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room, codes, voice, nightId, guestKey: g.key })
-    if (await dealCard(db, g.uid, go)) dealt++
-    await dealCard(db, g.uid, t)
-    // a brush-off still leaves the numbers behind, so the safe is always solvable
-    if (t.outcome === 'deflect') await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
+  const byKey = Object.fromEntries(list.map(g => [g.key, g]))
+  const ui = labelled(await readArea(db, 'ui_copy'))
+  const c = r.greet.length ? await readCase(db, nightId) : null
+  const voice = r.greet.length ? await voicePools(db) : null
+  let greeted = 0
+  for (const k of r.greet) {
+    const g = byKey[k]
+    if (g && await greetGuest(db, nightId, { c, g, cat: r.state.guests[k]?.cat, act: r.state.act, beat: r.state.beat, voice })) greeted++
   }
+  for (const k of new Set([...r.changed, ...r.greet])) {
+    const g = byKey[k]
+    const st = r.state.guests[k]
+    if (!g || !st) continue
+    await db.doc(`sessions/${g.uid}`).update({ lights: { ...lightsCard(st.step, st.cat, ui), at: new Date(now) } })
+  }
+  return { greeted }
+}
+
+// The cat's greeting for one guest: the testimony (gated by affection, the
+// safe's numbers in it), the private hint, and a scrap of paper with the
+// numbers when the cat would not talk.
+async function greetGuest(db, nightId, { c, g, cat, act, beat, voice }) {
+  if (!cat) return false
+  const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
+  if (!sessionSnap.exists) return false
+  const level = stopOf(sessionSnap.data()?.affection?.[cat] ?? 3)
+  const puzzles = (await db.doc(`nights/${nightId}/private/puzzles`).get()).data() ?? {}
+  const codes = puzzles.safe?.[g.key] ?? null
+  let family = c?.solving?.hints?.[g.key] ?? null
+  if (!family && c?.solving) {
+    // a guest the case does not know yet (a late joiner): the least-held wrong family, written into the case
+    family = hintFamilyFor(c.solving, g.key)
+    if (family) { await db.doc(`cases/${nightId}`).update({ [`solving.hints.${g.key}`]: family }); c.solving.hints = { ...(c.solving.hints ?? {}), [g.key]: family } }
+  }
+  const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room: CAT_ROOMS[cat], codes, voice, nightId, guestKey: g.key })
+  const dealt = await dealCard(db, g.uid, { ...t, hint: hintLine(c, family) })
+  // a brush-off still leaves the numbers behind, so the safe is always solvable
+  if (t.outcome === 'deflect' && codes) await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
+  if (dealt && family) await noteDealt(db, nightId, { kind: 'hint', act, beat, key: g.key }) // the ledger: a hint is out (safeguards)
+  return dealt
+}
+
+// The beat: the line is made and the first wave sent. Run twice, it changes nothing.
+export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), pick = pickInt } = {}) {
+  await ensureCase(db, nightId)
+  const ref = db.doc(lightsPath(nightId))
+  if ((await ref.get()).exists) return { ok: true, already: true }
+  const { list } = await guests(db, nightId)
+  const { assign, queues } = planWaves(list.map(g => g.key), pick)
+  const codesByGuest = {} // by roster key, so the numbers follow a guest to a replacement phone
+  for (const g of list) codesByGuest[g.key] = [pick(90) + 10, pick(90) + 10, pick(90) + 10]
   // the safe's answers live where no phone can read them, keyed by guest
   await db.doc(`nights/${nightId}/private/puzzles`).set({ safe: codesByGuest }, { merge: true })
-  return { dealt }
+  const state = {
+    act, beat, startedAt: new Date(now),
+    cats: Object.fromEntries(LIGHTS_CATS.map(cat => [cat, { queue: queues[cat], at: null, since: null }])),
+    guests: Object.fromEntries(list.map(g => [g.key, { cat: assign[g.key], step: 'wait', since: now }])),
+  }
+  for (const cat of LIGHTS_CATS) sendNext(state, cat, now)
+  await ref.set(state)
+  await followLights(db, nightId, { state, changed: list.map(g => g.key), greet: [] }, { now })
+  return { ok: true, dealt: list.length, sent: LIGHTS_CATS.filter(cat => state.cats[cat].at).length }
+}
+
+// A guest scans the code in a cat's room (or taps "I'm here" when the phone
+// cannot scan). Only the guest the line sent may meet that cat; anyone else
+// is told kindly where they should be, and nothing changes.
+export async function meetCat(db, { nightId, uid, cat, now = Date.now() }) {
+  if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
+  if (!LIGHTS_CATS.includes(cat)) throw new NightError('invalid', 'That code is not one of the cats.')
+  const s = (await db.doc(`sessions/${uid}`).get()).data()
+  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+  const key = s.guestKey
+  const r = await moveLights(db, nightId, state => {
+    const me = state.guests[key]
+    if (!me) return { refused: 'unknown' }
+    if (me.step === 'with' || me.step === 'done') return { already: true }
+    if (me.cat !== cat) return { refused: 'wrong', mine: me.cat }
+    if (me.step !== 'go' || state.cats[cat]?.at !== key) return { refused: 'wait' }
+    me.step = 'with'
+    me.since = now
+    state.cats[cat].since = now
+    return { changed: [key], greet: [key] }
+  })
+  if (r.none) throw new NightError('closed', 'The cats are not receiving anyone just now.')
+  if (r.refused === 'wrong') throw new NightError('invalid', `Not this room. ${CAT_NAMES[r.mine]} is waiting for you in ${CAT_ROOMS[r.mine]}.`)
+  if (r.refused === 'wait') throw new NightError('invalid', 'Not yet. Wait in the living room; your phone will send you.')
+  if (r.refused) throw new NightError('invalid', 'Wait in the living room; your phone will send you.')
+  if (r.already) return { ok: true, already: true }
+  await followLights(db, nightId, r, { now })
+  return { ok: true }
+}
+
+// "I have heard it": the guest goes back to the living room and the cat is free for the next.
+export async function leaveCat(db, { nightId, uid, now = Date.now() }) {
+  if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
+  const s = (await db.doc(`sessions/${uid}`).get()).data()
+  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+  const key = s.guestKey
+  const r = await moveLights(db, nightId, state => {
+    const me = state.guests[key]
+    if (!me || me.step !== 'with') return { already: true }
+    me.step = 'done'
+    me.since = now
+    if (state.cats[me.cat]?.at === key) state.cats[me.cat].at = null
+    const next = sendNext(state, me.cat, now)
+    return { changed: [key, next].filter(Boolean) }
+  })
+  if (r.none || r.already) return { ok: true, already: true }
+  await followLights(db, nightId, r, { now })
+  return { ok: true }
+}
+
+// The clock (windows.tick, once a minute): a guest who never turned up, or
+// never tapped done, is moved on and greeted anyway; a guest who joined
+// after the line was made joins the shortest line; every free cat sends its next.
+export async function tickLights(db, nightId, now = Date.now()) {
+  if (!(await db.doc(lightsPath(nightId)).get()).exists) return { ok: true, moved: 0 }
+  const { list } = await guests(db, nightId)
+  const keys = list.map(g => g.key)
+  const r = await moveLights(db, nightId, state => {
+    const changed = []
+    const greet = []
+    for (const k of keys) {
+      if (state.guests[k]) continue
+      const cat = [...LIGHTS_CATS].sort((a, b) => (state.cats[a].queue.length + (state.cats[a].at ? 1 : 0)) - (state.cats[b].queue.length + (state.cats[b].at ? 1 : 0)))[0]
+      state.guests[k] = { cat, step: 'wait', since: now }
+      state.cats[cat].queue.push(k)
+      changed.push(k)
+    }
+    for (const cat of LIGHTS_CATS) {
+      const line = state.cats[cat]
+      const k = line.at
+      const me = k ? state.guests[k] : null
+      if (me && ((me.step === 'go' && now - ms(line.since) >= GO_MS) || (me.step === 'with' && now - ms(line.since) >= WITH_MS))) {
+        if (me.step === 'go') greet.push(k)
+        me.step = 'done'
+        me.since = now
+        line.at = null
+        changed.push(k)
+      }
+      const next = sendNext(state, cat, now)
+      if (next) changed.push(next)
+    }
+    return { changed, greet }
+  })
+  if (r.none) return { ok: true, moved: 0 }
+  await followLights(db, nightId, r, { now })
+  return { ok: true, moved: r.changed.length }
+}
+
+// The end of the act: every guest still in a line gets the greeting on the
+// phone and goes to supper with the rest. Safe to call again.
+export async function flushLights(db, nightId, { now = Date.now() } = {}) {
+  const r = await moveLights(db, nightId, state => {
+    const changed = []
+    const greet = []
+    for (const [k, me] of Object.entries(state.guests)) {
+      if (me.step === 'done') continue
+      if (me.step !== 'with') greet.push(k)
+      me.step = 'done'
+      me.since = now
+      changed.push(k)
+    }
+    for (const cat of LIGHTS_CATS) { state.cats[cat].at = null; state.cats[cat].queue = [] }
+    return { changed, greet }
+  })
+  if (r.none) return { ok: true, flushed: 0 }
+  await followLights(db, nightId, r, { now })
+  return { ok: true, flushed: r.changed.length }
 }
 
 // Act 2: the safe. Three numbers the cat gave you open it; the pay-out is a document.
@@ -799,10 +1038,115 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
     return { ...card, payoutId: `${id}-clue` }
   }
   if (station.key === 'puzzle') {
-    const symbols = shuffled(['circle', 'square', 'triangle', 'star', 'moon', 'cross'], pick).slice(0, 4)
-    return { ...card, sequence: symbols, text: written || 'Watch the four shapes, then tap them back in the same order. Do it together; argue if you must.' }
+    // the memory match: the board is on the iPad (public/memory), never on the phones
+    return { ...card, title: 'The memory match' }
   }
   return card
+}
+
+// ---------------------------------------------------------------------------
+// Act 4: the memory match (docs/solving-the-case.md, decided 21 Oct 2026).
+// The small puzzle station, on the iPad (?kiosk=memory): twelve cards face
+// down, six pairs of traces, only traces of characters at the party, no
+// names, shuffled fresh for each group. The group turns two at a time; when
+// the board is clear the iPad says so (memoryCleared) and the server crosses
+// one wrong motive off that group's list: a card on each member's phone
+// (families.memoryPick: never the real motive, one they might still have).
+// A group whose turn passes without clearing it is paid all the same at the
+// next rotation, and any group still unpaid at Act 5 (flushMemory): delay,
+// never destroy.
+//
+// nights/{id}/public/memory  { groupId, boardId, cards: [trace x12], cleared, at }
+//   Public: any phone may read it. It carries traces only, never a name, a
+//   role or which motive was crossed off. The pay-out lives in
+//   cases/{id}.solving.memory and on the group's own phones.
+
+export const MEMORY_PAIRS = 6
+export function memoryPath(nightId) { return `nights/${nightId}/public/memory` }
+
+// Twelve cards from the traces at the party: six different ones when there
+// are six at the party, else the ones there are, round again.
+export function memoryBoard(roster, pick = pickInt) {
+  const inPlay = shuffled([...new Set(Object.values(roster ?? {}).map(r => traceOf(r?.characterId)?.trace).filter(Boolean))], pick)
+  if (!inPlay.length) return []
+  const faces = Array.from({ length: MEMORY_PAIRS }, (_, i) => inPlay[i % inPlay.length])
+  return shuffled([...faces, ...faces], pick)
+}
+
+// The rotation's puzzle station for a group at rotation r.
+function atPuzzle(rot, gid, r) { return r >= 0 && stationFor(rot, gid, r)?.key === 'puzzle' }
+
+// A fresh board for the group now at the puzzle station.
+async function setMemoryBoard(db, nightId, { rot, r, roster, now = Date.now(), pick = pickInt }) {
+  const grp = (rot?.groups ?? []).find(g => atPuzzle(rot, g.id, r))
+  if (!grp) { await db.doc(memoryPath(nightId)).set({ groupId: null, boardId: null, cards: [], cleared: false, at: new Date(now) }); return null }
+  const boardId = `${grp.id}-${r}`
+  const snap = await db.doc(memoryPath(nightId)).get()
+  if (snap.exists && snap.data().boardId === boardId) return boardId
+  await db.doc(memoryPath(nightId)).set({ groupId: grp.id, boardId, cards: memoryBoard(roster, pick), cleared: false, at: new Date(now) })
+  return boardId
+}
+
+// One group's pay-out, once: the motive is picked and written into the case
+// in one transaction (so two groups never get the same one by racing), then
+// the card lands on every member's phone.
+export async function payMemory(db, nightId, groupId, { outcome = 'cleared', now = Date.now() } = {}) {
+  const rot = await readRotation(db, nightId)
+  const grp = (rot?.groups ?? []).find(g => g.id === groupId)
+  if (!grp) throw new NightError('invalid', 'No such group.')
+  const members = grp.members.map(m => m.key)
+  const ref = db.doc(`cases/${nightId}`)
+  const got = await db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    const c = snap.exists ? snap.data() : null
+    if (!c?.solving) return null
+    const had = c.solving.memory?.[groupId]
+    if (had) return { n: Number(had), already: true }
+    const n = memoryPick(c, { groupId, members, seed: c.screenSalt ?? nightId })
+    tx.update(ref, { [`solving.memory.${groupId}`]: n })
+    return { n, already: false }
+  })
+  if (!got) return { ok: true, paid: 0 }
+  const m = MOTIVES.find(x => x.n === got.n)
+  const night = (await db.doc(`nights/${nightId}`).get()).data() ?? {}
+  const { list } = await guests(db, nightId)
+  const byKey = Object.fromEntries(list.map(g => [g.key, g]))
+  const card = {
+    id: `4-memory-${groupId}`, act: 4, beat: night.act === 4 ? night.beat : 'memory', kind: 'clue', title: 'From the memory match',
+    text: `Not this one: number ${got.n}, “${m?.rhyme ?? ''}”. Cross it off.`, cross: got.n,
+  }
+  let dealt = 0
+  for (const k of members) if (byKey[k] && await dealCard(db, byKey[k].uid, card)) dealt++
+  if (!got.already) await noteDealt(db, nightId, { kind: 'memory', act: 4, beat: card.beat, groupId }) // the ledger (safeguards)
+  return { ok: true, paid: dealt, outcome, already: got.already }
+}
+
+// The iPad: the board is clear. `pairs` are the six pairs of card positions
+// it matched; each pair must show the same trace and every card must be in one.
+export async function memoryCleared(db, { nightId, boardId, pairs, now = Date.now() }) {
+  const ref = db.doc(memoryPath(nightId))
+  const snap = await ref.get()
+  const board = snap.exists ? snap.data() : null
+  if (!board?.boardId || board.boardId !== boardId) throw new NightError('closed', 'That board is not the one on the table.')
+  if (board.cleared) return { ok: true, already: true }
+  const cards = board.cards ?? []
+  const flat = (Array.isArray(pairs) ? pairs : []).flat().map(Number)
+  const whole = Array.isArray(pairs) && pairs.length === cards.length / 2 && new Set(flat).size === cards.length && flat.every(i => i >= 0 && i < cards.length)
+  if (!whole || !pairs.every(([a, b]) => cards[a] === cards[b])) throw new NightError('invalid', 'Those pairs do not match.')
+  await ref.update({ cleared: true, clearedAt: new Date(now) })
+  const r = await payMemory(db, nightId, board.groupId, { outcome: 'cleared', now })
+  return { ok: true, paid: r.paid }
+}
+
+// Act 5 (and any jump past Act 4): every group still unpaid is paid now.
+export async function flushMemory(db, nightId, { now = Date.now() } = {}) {
+  const rot = await readRotation(db, nightId)
+  if (!rot?.groups?.length) return { ok: true, paid: 0 }
+  const c = await readCase(db, nightId)
+  if (!c?.solving) return { ok: true, paid: 0 }
+  let paid = 0
+  for (const g of rot.groups) if (!c.solving.memory?.[g.id]) { await payMemory(db, nightId, g.id, { outcome: 'absent', now }); paid++ }
+  return { ok: true, paid }
 }
 
 export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) {
@@ -835,17 +1179,22 @@ export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) 
     paid++
   }
   if (paid) rot = await readRotation(db, nightId)
+  // the memory match: the group whose turn there has just passed is paid if the board beat them
+  for (const grp of rot.groups ?? []) if (atPuzzle(rot, grp.id, r - 1)) await payMemory(db, nightId, grp.id, { outcome: 'absent', now })
+  await setMemoryBoard(db, nightId, { rot, r, roster: night.roster ?? {}, now })
   let dealt = 0
   const cluesOut = [] // groups whose study clue landed here (the safeguards' ledger, below)
   for (const grp of rot.groups ?? []) {
     const station = stationFor(rot, grp.id, r)
     const members = grp.members.map(m => m.key)
     const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, voice, nightId, over, roster: night.roster ?? {} })
+    // no station: the study's pay-out lands with the card, worked out once for the group
+    const reveal = station.key === 'study' && !alive ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
     for (const k of members) {
       const g = byKey[k]
       if (!g) continue
       if (await dealCard(db, g.uid, card)) dealt++
-      if (station.key === 'study' && !alive && await dealCard(db, g.uid, studyClueCard(c, act, beat))) cluesOut.push(grp.id)
+      if (station.key === 'study' && !alive && await dealCard(db, g.uid, studyClueCard(c, act, beat, reveal))) cluesOut.push(grp.id)
     }
   }
   for (const gid of [...new Set(cluesOut)]) await noteDealt(db, nightId, { kind: 'study', act, beat, groupId: gid })
@@ -876,64 +1225,11 @@ export const { finaleDoc, FINALE_SCHEDULE } = finale
 // ---------------------------------------------------------------------------
 // Act 6: the trace behind the bedroom door, at the level the dial reached.
 // Written when the relay drawing is done. Everything here is the murderer's
-// trace and, at level 2, one look-alike; never a name, never a role.
+// trace and, at level 3, one look-alike; never a person's name, never a role.
 
-export const TRACE_STEP = 4 // dial points per rung of the ladder
-export function traceLevel(dial) {
-  const d = Number(dial) || 0
-  const rungs = Math.sign(d) * Math.round(Math.abs(d) / TRACE_STEP) // symmetric: -2 and +2 are one rung each way
-  return Math.max(1, Math.min(5, 3 + rungs))
-}
-
-// Visually confusable traces (the current fourteen, seed/characters.json).
-// Every trace sits in at least two buckets; the two Professors (elbow-patch,
-// white-sand) share none, so a level-2 overlay can never narrow to them.
-export const TRACE_BUCKETS = {
-  'pale-powder': ['flour', 'white-sand', 'petals', 'candle-wax'],
-  scattered: ['seeds', 'petals', 'coins', 'shattered-vial', 'glasses', 'flour', 'white-sand'],
-  'wet-stain': ['ink', 'iodine', 'coffee', 'candle-wax'],
-  glass: ['shattered-vial', 'glasses', 'candle-wax', 'coins'],
-  pressed: ['boot-print', 'coffee', 'elbow-patch', 'picture'],
-  dark: ['ink', 'iodine', 'boot-print', 'seeds', 'coffee'],
-  'paper-cloth': ['picture', 'elbow-patch', 'glasses'],
-}
-const PROFESSOR_TRACES = new Set(['elbow-patch', 'white-sand'])
-
-// One line of context for level 5. Safe copy: it names the object, never the owner.
-export const TRACE_CONTEXT = {
-  ink: 'a splash of ink, still wet, beside the writing desk',
-  'boot-print': 'a muddy boot print, pointing away from the door',
-  flour: 'a dusting of flour along the sideboard',
-  coins: 'a scatter of coins, dropped and not picked up',
-  petals: 'a trail of petals from the vase to the door',
-  seeds: 'seeds, spilled from a pocket and trodden in',
-  'shattered-vial': 'a shattered vial, its contents long gone',
-  'candle-wax': 'a drip of candle wax, set hard on the floor',
-  coffee: 'a coffee ring on the polished wood',
-  picture: 'a small picture, face down, its frame cracked',
-  glasses: 'a pair of glasses, one lens cracked',
-  iodine: 'an iodine stain, brown and spreading',
-  'elbow-patch': 'a leather elbow patch, torn clean off',
-  'white-sand': 'a sprinkling of white sand on the rug',
-}
-
-export function traceOf(characterId) {
-  return CHARACTERS.find(ch => ch.id === characterId) ?? null
-}
-
-// A second real trace that could be mistaken for `trace`, from a character at
-// the party, never the victim's own, Professors only when nobody else fits.
-export function pickPartner(trace, inPlayTraces, { exclude = [], pick = pickInt } = {}) {
-  const buckets = shuffled(Object.values(TRACE_BUCKETS).filter(b => b.includes(trace)), pick)
-  const candidates = (list) => list.filter(t => t !== trace && inPlayTraces.includes(t) && !exclude.includes(t))
-  for (const bucket of buckets) {
-    const all = candidates(bucket)
-    if (!all.length) continue
-    const plain = all.filter(t => !PROFESSOR_TRACES.has(t))
-    return choice(plain.length ? plain : all, pick)
-  }
-  return null
-}
+// The ladder, the look-alike buckets and the context lines live in traces.js,
+// shared with the study's pay-out in Act 4 (the Ghost's trace).
+export { TRACE_STEP, traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, traceOf, pickPartner } from './traces.js'
 
 export async function revealTrace(db, nightId, { now = Date.now(), force = false } = {}) {
   const ref = db.doc(`nights/${nightId}/public/trace`)
@@ -946,28 +1242,17 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   if (!murdererChar) throw new NightError('invalid', 'The case has no murderer at the party.')
   const inPlay = Object.values(roster).map(r => traceOf(r.characterId)?.trace).filter(Boolean)
   const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
-  let level = traceLevel(c.dial)
-  let partner = null
-  if (level === 2) {
-    partner = pickPartner(murdererChar.trace, inPlay, { exclude: [victimTrace].filter(Boolean) })
-    if (!partner) level = 3 // nobody to be confused with: the coin flip collapses to a clear image
-  }
-  const lines = labelled(await readArea(db, 'trace_lines'))
-  // a workshop label has no hyphen (the label codec): TRACE BOOT PRINT
-  const context = lines[`TRACE ${murdererChar.trace.toUpperCase().replace(/-/g, ' ')}`] ?? lines[`TRACE ${murdererChar.trace.toUpperCase()}`] ?? TRACE_CONTEXT[murdererChar.trace] ?? null
+  // the look-alike is never the Ghost's own trace: the study shows that one (G36)
+  const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial })
   const base = { level, placeholder: !!c.rehearsal, at: new Date(now) }
   const full = {
     ...base, trace: murdererChar.trace,
-    label: level >= 4 ? murdererChar.traceLabel : null,
-    context: level === 5 ? context : null,
-    partner: level === 2 ? partner : null,
+    label: level === 5 ? murdererChar.traceLabel : null,
+    partner: level === 3 ? partner : null,
   }
   // Any phone can read public/*, so the public doc carries only what the
-  // level allows the room to see: nothing to name at level 1, two pictures
-  // in no particular order at level 2, the trace itself from level 3 up.
-  const shown = level >= 3 ? { ...base, trace: full.trace, label: full.label, context: full.context }
-    : level === 2 ? { ...base, images: shuffled([full.trace, partner]) }
-    : base
+  // level allows the room to see (traces.shownReveal).
+  const shown = { ...base, ...shownReveal({ level, trace: full.trace, label: full.label, partner }) }
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}/private/trace`), full)
   batch.set(ref, shown)
@@ -1027,7 +1312,7 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
       return { ok: true, dealt }
     }
     case 'deal':
-      if (arg === 'encounter') return dealEncounter(db, nightId, act, beat)
+      if (arg === 'encounter') return dealEncounter(db, nightId, act, beat, { now })
       if (arg === 'puzzle') return dealPuzzle(db, nightId, act, beat)
       throw new NightError('invalid', `Unknown deal: ${arg}`)
     case 'window':

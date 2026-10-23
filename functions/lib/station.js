@@ -6,14 +6,15 @@
 // and words — never a clue. When a group finishes, THIS file deals the clue:
 // the station only says "group G is done".
 //
-// SEAL RULE: nothing here reads sealed/* or cases/* yet. `dealStudy` is the
-// one hook that will, once the case generator exists; it is written so the
-// payload goes straight into each member's session doc and nowhere else.
+// SEAL RULE: `dealStudy` is the one place here that reads cases/*: the
+// Ghost's trace, at the level the dial allows (traces.js), goes straight into
+// each member's session doc and nowhere else.
 
 import { randomInt } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import { NightError, characterById } from './night.js'
 import { noteDealt } from './ledger.js' // the safeguards' ledger (never content)
+import { traceOf, workReveal, shownReveal } from './traces.js'
 
 export function rotationPath(nightId) { return `nights/${nightId}/public/rotation` }
 export function studyPath(nightId) { return `nights/${nightId}/public/study` }
@@ -64,21 +65,31 @@ export async function makeRotation(db, { nightId, apart = [], pickInt = randomIn
   return { ok: true, groups: groups.length, trios: groups.filter(g => g.members.length === 3).length }
 }
 
-// The clue the study pays out: one card, the same for every phone in the
-// group. The text comes from the case when the generator has written one
-// (cases/{nightId}.studyClue.text, read here with the Admin SDK and written
-// only into each member's own session); in rehearsal it is a bracketed
-// placeholder. The station never sees it either way.
-export const STUDY_PLACEHOLDER = '(Rehearsal. The study pays its clue out to every phone in the group here, when the three jewels are lit or the fifteen minutes are up.)'
+// What the study pays out (decided 21 Oct 2026, docs/solving-the-case.md):
+// the Ghost's trace, shown at whatever level the clarity dial is at the
+// moment the group finishes (or the cap runs out), on the same five-level
+// ladder as the bedroom door in Act 6 (traces.js). One card, the same for
+// every phone in the group. It names the trace (at level 5), never the
+// person. At level 3 the second option is never the Murderer's trace, so the
+// study never spoils the door. The station never sees any of it.
+export const STUDY_PLACEHOLDER = '(Rehearsal. The study pays out the trace the victim left behind, when the three jewels are lit or the fifteen minutes are up.)'
 
-export function studyClueCard(c, act, beat) {
-  // reads cases.studyClue only; the bracketed text appears only when the case is a rehearsal
-  const real = c?.studyClue?.text
-  const has = typeof real === 'string' && real.trim().length > 0
+// The pay-out, worked out once per group: { level, trace, label } or, at level 3, { level, images }.
+export async function studyReveal(db, { c, roster = {}, pick = randomInt }) {
+  const owner = traceOf(roster?.[c?.ghost]?.characterId)
+  if (!owner) return null
+  const inPlay = Object.values(roster ?? {}).map(r => traceOf(r?.characterId)?.trace).filter(Boolean)
+  const murdererTrace = traceOf(roster?.[c?.murderer]?.characterId)?.trace ?? null
+  const { level, partner } = workReveal({ owner, inPlay, exclude: [murdererTrace].filter(Boolean), dial: c?.dial, pick })
+  return shownReveal({ level, trace: owner.trace, label: owner.traceLabel, partner, pick })
+}
+
+export function studyClueCard(c, act, beat, reveal = null) {
   return {
     id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the study',
-    text: has ? real : STUDY_PLACEHOLDER,
-    placeholder: !has || !!c?.rehearsal,
+    text: reveal ? 'Something was left behind.' : STUDY_PLACEHOLDER,
+    ...(reveal ? { trace: reveal } : {}),
+    placeholder: !reveal || !!c?.rehearsal,
   }
 }
 
@@ -130,6 +141,8 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
   const uids = deckSnap.data()?.uids ?? {}
   const night = nightSnap.exists ? nightSnap.data() : {}
   const c = caseSnap.exists ? caseSnap.data() : null
+  // the dial as it stands right now, once for the whole group
+  const reveal = c ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
   let dealt = 0
   for (const m of group.members) {
     const uid = uids[m.key]
@@ -142,7 +155,7 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
     const act = stationCard?.act ?? night.act ?? 4
     const beat = stationCard?.beat ?? night.beat ?? 'station'
     await ref.set({ dealt: { study: { at: FieldValue.serverTimestamp(), outcome, groupId } } }, { merge: true })
-    if (await dealOnce(db, uid, studyClueCard(c, act, beat))) dealt++
+    if (await dealOnce(db, uid, studyClueCard(c, act, beat, reveal))) dealt++
   }
   if (dealt) await noteDealt(db, nightId, { kind: 'study', act: night.act ?? 4, beat: night.beat ?? 'station', groupId }) // the ledger: the study's clue is out (safeguards)
   return dealt

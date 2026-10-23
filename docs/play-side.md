@@ -256,6 +256,62 @@ The rules deck (slide "How the cats feel about you") already shows this design.
   copied to the phones' content with everything else, and the Check page
   (`?check=1`) lists them.
 
+## How the case gets solved (built 22 October 2026)
+
+What `docs/solving-the-case.md` describes (decided with Jon on 21 October) is
+now in the game. None of it shows you an answer, and none of the clue
+wording is written: every line a cat, the news flash or Sir Irwin would say
+about the motive is a marked stand-in until Jenna writes it.
+
+- **Five motive families.** Food, Bathroom, Screens, Out and about, and
+  Personal slights, matched to the nineteen motive numbers in
+  `seed/families.json`. Players never see a family name; the game uses them
+  to narrow the motive across the night.
+- **Act 2, Lights Out, runs the rooms.** After the news, every phone says
+  where to go next, at the top of Now: *Stay in the living room*, then *Go to
+  the Study, Granolia is waiting*, then the cat's greeting, then *Back to the
+  living room*. Granolia is in the Study, Salem in the Orangerie, Zimothy in
+  the Library and Boo in the Entryway. Only one guest is at a cat at a time:
+  the phones send guests off in waves and buzz when it is their turn. In the
+  room, the guest scans the square code on the wall (or taps *I am with
+  Granolia* if their phone cannot scan). A guest who never turns up, or never
+  taps done, is moved on after a few minutes and gets the greeting on the
+  phone anyway, and the last beat of Act 2 hands everyone still waiting their
+  greeting and sends them to supper.
+- **The four room codes** are on the workshop's Game night page, under *The
+  four cat rooms (Act 2)*. Print them and put each one up in its room.
+- **Each greeting carries one private hint** that rules out a wrong family of
+  motives. The news flash rules out one or two more for everyone. Both are
+  stand-ins in brackets today. Never the real family.
+- **Act 4, the study pays the Ghost's trace**, shown at whatever level the
+  clarity dial is at when the group finishes, on the same ladder as the
+  bedroom door in Act 6. It names the thing, never the person.
+- **The trace ladder (Jon, 22 October), for both:** 1 black and white and
+  hazy; 2 colour and less hazy; 3 two similar options side by side; 4 just
+  the picture; 5 the picture and the name of the trace. At level 3 the
+  study's second option is never the Murderer's trace, and the bedroom's is
+  never the Ghost's. The one-line description that used to come with level 5
+  is no longer shown, so the workshop's *What was left behind* list is
+  retired: hidden from the dashboard, with anything already written kept.
+- **Act 4, the small puzzle is now the memory match**, on an iPad pointed at
+  `/play/?kiosk=memory`: twelve cards, six pairs of traces of people at the
+  party, no names, shuffled fresh for each group. Clearing the board crosses
+  one motive off that group's list (a card on each phone with a *Cross it
+  off* button). Never the real motive. A group that runs out of time is
+  given its cross-off anyway.
+- **Act 5, Sir Irwin names the motive**, on the living room screen, as sure as
+  the dial lets him: one of three, one of two, or just the one. The real one
+  is always among them, and the others are from its family. His picture is
+  one of his five moods (`play/public/household/full/Irwin 1.png` to
+  `Irwin 5.png`), the same five steps as the trace.
+- **No hidden events in Act 2.** The Murderer and the Ghost only answer the
+  Parlour Games there, like everyone else.
+
+Still open, from the doc's *not designed yet* list: how many families the
+news flash removes (set to one for now in `seed/night.json`, `solving.newsFamilies`),
+how the private hints are shared out (for now, round the room in turn), all
+the wording, and where the memory match iPad sits.
+
 ## For Claude Code (technical)
 
 Layout: `play/` is the phone client (React + Vite, base `/play/`, one page,
@@ -416,12 +472,67 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
   `card.placeholder` follows `cases.rehearsal`. A case with roles is never
   replaced. Nothing in `cases/*` is ever returned. Details:
   `docs/blind-content-protocol.md`, Runtime.
+- How the case gets solved (22 Oct 2026, `docs/solving-the-case.md`):
+  - `functions/lib/families.js` (pure): `FAMILIES` from `seed/families.json`
+    (copied to `functions/seed/` by `npm --prefix functions run seed` and by
+    the fake players), `solvingPlan` (dealt with the case: real family,
+    `newsOut` families, one wrong family per guest in `hints`; round-robin
+    over the wrong families the news did not take), `hintFamilyFor` (late
+    joiner), `memoryPick`, `irwinOptions`/`irwinCount`, and the solver
+    `remainingMotives`/`roomClues`. `cases/{id}.solving = { family, newsOut,
+    hints, memory: { groupId: n }, struck: [n] }`; `rerollCase` makes a fresh
+    plan for the new motive. `struck` is written by `screen.onBeat` at the
+    bulletin. Hint and memory pay-outs go in the ledger (`BLOCKING_KINDS`), so
+    Spill the Beans is off once either is out.
+  - Act 2 rooms (`deal.js`, Lights Out section): `dealEncounter` makes the line
+    in `nights/{id}/private/lights` (`planWaves`: guests spread over the four
+    cats of `night.json solving.catRooms`) and sends the first wave;
+    `meetCat`/`leaveCat` (callables `meetCat`, `leaveCat`; `?meet=<cat>` on the
+    phone) move it in one transaction; `tickLights` (in `windows.tick`, Act 2
+    only) moves on a no-show after `goMinutes` or a stayer after
+    `withMinutes`, and adds late joiners; `flushLights` (run.enterBeat, last
+    Act 2 beat or any later act) greets everyone left. Each phone's step is
+    `sessions/{uid}.lights = { step: wait|go|with|done, cat, catName, room,
+    title, text }` (ui_copy `LIGHTS WAIT|GO|WITH|DONE` override the text) and
+    is a `CARRIED_FIELD`. The greeting is the testimony card plus `hint: {
+    text, placeholder }` (`HINT_PLACEHOLDER` until written; it names no
+    family) and the scrap on a brush-off.
+  - Study: `station.studyReveal` works out the Ghost's trace once per group
+    (`traces.workReveal` with the Murderer's trace excluded, `shownReveal`),
+    and `studyClueCard(c, act, beat, reveal)` carries it as `card.trace`. The
+    ladder, buckets and context lines moved to `functions/lib/traces.js`
+    (`deal.js` re-exports them); `revealTrace` excludes the Ghost's trace.
+    Ladder since 22 Oct (`traces.workReveal`/`shownReveal`, `TraceView`): the
+    partner is picked at level 3 (none to pick: level 4); the public doc is
+    `{ level, images }` at 3, else `{ level, trace, label }` with the label
+    only at 5; no context line anywhere (`TRACE_CONTEXT`/`traceContext` are
+    kept but unused).
+    `cases.studyClue` is no longer dealt (the generator still writes it).
+  - Memory match (`deal.js`): `rotate` writes `nights/{id}/public/memory`
+    `{ groupId, boardId, cards[12], cleared }` for the group at the puzzle
+    station (`memoryBoard`), and pays the group whose turn just passed
+    (`payMemory`, outcome absent). The iPad kiosk (`?kiosk=memory`,
+    `MemoryMatch` in Kiosk.jsx) calls `memoryCleared { boardId, pairs }`
+    (presence-gated like `relayAdvance`); the server checks the pairs and
+    deals `{ kind: 'clue', id: '4-memory-<gid>', cross: n }`. `flushMemory`
+    pays every unpaid group from Act 5.
+  - Sir Irwin: `screen.irwinMotiveClue` adds `choices: [{ n, rhyme }]` and
+    `mood` (the dial band) to the Act 5 screen doc, plus the line from
+    `IRWIN_OPTION_LINES` (ui_copy `IRWIN THREE|TWO|ONE` override). The news
+    screen adds `NEWS_FLASH_PLACEHOLDER` after the echo. `FORBIDDEN_SCREEN_KEYS`
+    now also refuses `solving`, `family`, `families`, `newsOut`, `hints`.
+  - Checks: `functions/test/solving.test.mjs` (G32 to G38, F20, F21, 1,000
+    seeded throwaway cases where it says so); `functions/test/lights-walk.mjs`
+    walks the rooms for other tests; `scripts/fake-players.mjs` prints the
+    Act 2 rooms line (F20, F21) and the motive funnel (G32) as PASS or FAIL.
+  - Not built on purpose (not designed): any hint, news flash or Irwin
+    wording; where real hint text will live in `sealed/*`.
 - Seal check in `functions/test/run.test.mjs`: after a whole night, no
   session carries a role field, no window on a phone carries values, and the
   night doc and public content carry no roles and no dial.
 - Previews: `?preview=` doors | join | welcome | lobby | act1 | prompt |
-  orient | news | go | testimony | deflect | puzzle | document | questions |
-  checkin | dinner | groups | study | cat | bags | puzzle4 | checkin4 | roam |
+  orient | news | wait | go | testimony | deflect | back | puzzle | document | questions |
+  checkin | dinner | groups | study | cat | bags | puzzle4 | memory-clue | checkin4 | roam |
   irwin | door | eliminate | ballot | reveal | result | clues | host |
-  relay-* | tour. A second dev server config, `play-5175`, exists for when
+  relay-* | kiosk-memory | kiosk-memory-clear | kiosk-irwin | tour. A second dev server config, `play-5175`, exists for when
   another session already holds 5174.

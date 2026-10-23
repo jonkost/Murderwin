@@ -36,5 +36,10 @@ export const callAnswer = httpsCallable(functions, 'answer')
 export const callSolve = httpsCallable(functions, 'solve')
 export const callBallot = httpsCallable(functions, 'ballot')
 export const callEliminate = httpsCallable(functions, 'eliminate')
+// Act 2: the code in a cat's room (?meet=<cat>), and "I have heard it".
+export const callMeet = httpsCallable(functions, 'meetCat')
+export const callLeave = httpsCallable(functions, 'leaveCat')
+// Act 4: the iPad's memory match is clear (?kiosk=memory).
+export const callMemoryCleared = httpsCallable(functions, 'memoryCleared')
 
 export { signInAnonymously, onAuthStateChanged }

@@ -4,10 +4,12 @@
 // The phones hold nothing: each one is a signed-in id with a session the
 // dealer fills, exactly as a real phone's would be. The script drives the
 // host's Next through every beat of every act (seed/night.json), and at each
-// beat does what the room would do: dismisses notices, reads the cat's
+// beat does what the room would do: dismisses notices, goes to its cat when
+// the phone sends it (one guest at a cat at a time), reads the cat's
 // numbers and opens the safe, answers every Parlour Game, finishes the study
-// for each group, votes in the drawing, strikes one thing out, casts a
-// ballot. At the end it checks the seal (no phone can read a role, no public
+// for each group, clears the memory match, votes in the drawing, strikes one
+// thing out, casts a ballot. It checks the Act 2 rooms (F20, F21) and that
+// the motive funnel leaves the real motive standing (G32, counts only). At the end it checks the seal (no phone can read a role, no public
 // document carries the case), prints one line per act and a tally, and
 // discards the night: the case, the night, every session. Nothing it prints
 // is ever a card. Counts, keys and act names only.
@@ -40,7 +42,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
@@ -53,6 +55,7 @@ const deal = await import('../functions/lib/deal.js')
 const station = await import('../functions/lib/station.js')
 const relay = await import('../functions/lib/relay.js')
 const windows = await import('../functions/lib/windows.js')
+const families = await import('../functions/lib/families.js')
 
 export const PHONES = 8
 const choice = list => list[randomInt(list.length)]
@@ -92,14 +95,14 @@ const CASE_WARNINGS = {
 
 // Words a phone-readable document must never carry. Checked as JSON keys
 // (with the quotes) so "motives", the public list, does not trip "motive".
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"solving"', '"hints"', '"newsOut"', '"family"']
 const NEVER_BEFORE_REVEAL = ['"murderer"', '"ghost"', '"victim"']
 
 export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players' } = {}) {
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
-  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, tally: null, discard: null, ok: false, error: null }
+  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, discard: null, ok: false, error: null }
 
   const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label }
   const { nightId } = await night.createNight(db, nightOpts)
@@ -150,6 +153,47 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
   const heartbeat = () => station.stationCommand(db, { nightId, station: 'study', command: 'state', payload: { state: 'idle' } })
 
+  // Act 2, Lights Out: each phone goes to its cat when it is sent, scans the
+  // room's code, reads, taps done. At every step: never two guests at a cat
+  // (F20), and every phone has a next step (F21). Counts only.
+  async function walkRooms() {
+    const deckUids = (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.uids ?? {}
+    let meetings = 0, waves = 0, twoAtACat = 0, untold = 0
+    const look = async () => {
+      const state = (await db.doc(deal.lightsPath(nightId)).get()).data()
+      const at = {}
+      for (const g of Object.values(state?.guests ?? {})) if (g.step === 'go' || g.step === 'with') at[g.cat] = (at[g.cat] ?? 0) + 1
+      if (Object.values(at).some(n => n > 1)) twoAtACat++
+      for (const uid of Object.values(deckUids)) { const l = (await sessionOf(uid)).lights; if (!l?.step || !l.title || !l.text) untold++ }
+      return state
+    }
+    for (let guard = 0; guard < 50; guard++) {
+      const state = await look()
+      const due = Object.entries(state?.guests ?? {}).filter(([, g]) => g.step === 'go')
+      if (!due.length) break
+      waves++
+      for (const [key, g] of due) {
+        await run.player.meetCat(db, { nightId, uid: deckUids[key], cat: g.cat })
+        await look()
+        await run.player.leaveCat(db, { nightId, uid: deckUids[key] })
+        meetings++
+      }
+    }
+    await look()
+    return { meetings, waves, ok: twoAtACat === 0 && untold === 0, twoAtACat, untold }
+  }
+
+  // Act 4: the group at the memory match turns every card and finds the six pairs (the board is public)
+  async function clearMemory() {
+    const board = (await db.doc(deal.memoryPath(nightId)).get()).data()
+    if (!board?.boardId || board.cleared) return 0
+    const open = new Map()
+    const pairs = []
+    board.cards.forEach((t, i) => { const o = open.get(t) ?? []; if (o.length) pairs.push([o.pop(), i]); else o.push(i); open.set(t, o) })
+    const r = await run.player.memoryCleared(db, { nightId, boardId: board.boardId, pairs })
+    return r.paid ? 1 : 0
+  }
+
   // the seal, as a phone or a room screen would see it: counts of checks and short codes for failures
   async function sealCheck(stage) {
     const failed = []
@@ -186,7 +230,9 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Case: ${summary.rehearsal ? 'stand-ins' : 'sealed'}${n2.caseWarning ? `; warning: ${String(n2.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join('; ')}` : ''}`)
     const roleCards = await countCards('role')
     await next() // news
-    await next() // cat
+    await next() // cat: the first wave goes
+    const rooms = await walkRooms()
+    if (!rooms.ok) summary.checks.push(...(rooms.twoAtACat ? ['F20'] : []), ...(rooms.untold ? ['F21'] : []))
     const outcomes = { full: 0, partial: 0, deflect: 0 }
     for (const uid of uids) for (const t of cardsOf(await sessionOf(uid), 'testimony')) outcomes[t.outcome] = (outcomes[t.outcome] ?? 0) + 1
     await next() // the safe
@@ -206,7 +252,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const documents = await countCards('document')
     const p2 = await allParlours() // the act's Parlour Games, each at its own time
     await next() // check-in
-    actLine(2, [`${roleCards} role cards`, `${uids.length} cat visits (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs)`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
+    say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}`)
+    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs)`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
     // ---- Act 3: dinner, the bulletin, the groups
     await next(); await next()
@@ -216,7 +263,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     // ---- Act 4: five stations, the study finishing each group, a Parlour Game popping up between finishes
     await heartbeat() // the station is alive: the study's clue is earned in the room, not dealt with the card
     await next() // station1
-    let rotations = 0, throughStudy = 0, answered4 = 0, games4 = 0, guard = 0
+    let rotations = 0, throughStudy = 0, answered4 = 0, games4 = 0, memoryClears = 0, guard = 0
     while (guard++ < 40) {
       const n = await nightDoc()
       if (n.act !== 4) break
@@ -224,6 +271,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       if (deal.beatSpec(4, n.beat)?.action !== 'rotate') { await next(); continue }
       const a4 = await nextParlour() // one pops up while the groups are at their stations
       if (a4 !== null) { games4++; answered4 += a4 }
+      if (randomInt(4)) memoryClears += await clearMemory() // most groups clear the board; the rest are paid at the next rotation
       await heartbeat()
       const due = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
       const rot = (await db.doc(station.rotationPath(nightId)).get()).data() ?? {}
@@ -237,11 +285,15 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     if ((await nightDoc()).act !== 5) throw new Error('Act 4 did not end')
     const stationCards = await countCards('station')
     const clues = await countCards('clue')
-    actLine(4, [`${rotations} rotations`, `${throughStudy} groups through the study`, `${stationCards} station cards`, `${clues} clues`, `${games4} Parlour Games, ${answered4} answers`])
+    actLine(4, [`${rotations} rotations`, `${throughStudy} groups through the study`, `${memoryClears} memory matches cleared`, `${stationCards} station cards`, `${clues} clues`, `${games4} Parlour Games, ${answered4} answers`])
 
-    // ---- Act 5: cake, the chime
-    await next()
-    actLine(5, [`${await countCards('notice', 5)} notices`])
+    // ---- Act 5: cake, the chime, Sir Irwin
+    // Act 4's last rotation brought the house to the cake: any group the memory match never paid was paid then
+    await next() // Sir Irwin on the screen
+    const funnel = await motiveFunnel()
+    if (!funnel.ok) summary.checks.push('G32')
+    say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
+    actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the memory match`])
 
     // ---- Act 6: the drawing, the Parlour Games once it is done, the door, the deduction round
     await next() // the drawing starts
@@ -278,7 +330,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await sealCheck('end')
     if (summary.seal.failed.length) say(`Seal: FAIL, ${summary.seal.failed.length} of ${summary.seal.checks} checks: ${summary.seal.failed.join(' ')}`)
     else say(`Seal: PASS, ${summary.seal.checks} checks`)
-    summary.ok = summary.seal.failed.length === 0
+    if (summary.checks.length) say(`Checks: FAIL ${summary.checks.join(' ')}`)
+    summary.ok = summary.seal.failed.length === 0 && summary.checks.length === 0
   } catch (e) {
     summary.error = describeError(e)
     summary.ok = false
@@ -298,6 +351,21 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
   say(summary.ok ? 'PASS' : 'FAIL')
   return summary
+
+  // G32 on this night: every structured clue the room shared by the end of
+  // Act 5 (the news flash, every guest's hint, the bulletin, the memory
+  // matches) and the motives Sir Irwin named on the screen. The real motive
+  // must still stand; at dial 3 it must be the only one. The case is read in
+  // the process and nothing of it is printed: counts and PASS or FAIL.
+  async function motiveFunnel() {
+    const c = (await db.doc(`cases/${nightId}`).get()).data()
+    const screenDoc = (await db.doc(`nights/${nightId}/public/screen`).get()).data()
+    const named = (screenDoc?.choices ?? []).map(x => x.n)
+    const left = families.remainingMotives(families.roomClues(c, { irwin: named }))
+    const band = Number(screenDoc?.mood) || 3
+    const ok = named.length === families.irwinCount(band) && left.includes(Number(c?.motive)) && (band !== 3 || left.length === 1)
+    return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length }
+  }
 
   // The Act 6 drawing on its own clock: every phone picks a picture at random
   // (the phones hold nothing, so nobody knows the answer), the relay crosses

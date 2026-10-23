@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import Clues from './Clues'
-import { Card, CatFace } from './Cards'
+import { Card, CatFace, LightsStep } from './Cards'
 import { Eliminations } from './Windows'
-import { nowCards, roleCard, stopOf } from '../lib/night'
+import { nowCards, roleCard, stopOf, lightsStep } from '../lib/night'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -23,7 +23,7 @@ const TABS = [
 // This is what a phone shows whenever nothing else is happening — the idle
 // screen is a real state, indistinguishable from a phone that just finished
 // something.
-export default function Rest({ uid, night, session, content, notes, ui, onTour, serverNow }) {
+export default function Rest({ uid, night, session, content, notes, ui, onTour, serverNow, meetNote = null }) {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('reticule-tab') || 'you' } catch { return 'you' }
   })
@@ -37,8 +37,10 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   const now = nowCards(session, notes, night.act)
   const waiting = now.filter(c => c.kind !== 'testimony' && c.kind !== 'document' && c.kind !== 'clue').length
 
-  // When something new lands for this act, the phone goes to Now on its own.
-  const newest = now[0]?.id ?? null
+  // When something new lands for this act (a card, or a new step in the Act 2
+  // rooms), the phone goes to Now on its own.
+  const lights = lightsStep(session, night.act)
+  const newest = [now[0]?.id, lights && `${lights.step}-${lights.cat}`, meetNote].filter(Boolean).join('|') || null
   useEffect(() => { if (newest) setTab('now') }, [newest])
 
   return (
@@ -59,7 +61,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       </header>
 
       <section className="sheet" aria-live="polite">
-        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} />}
+        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} meetNote={meetNote} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
@@ -82,10 +84,11 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // What to do at this moment: the cards dealt for this act, newest first,
 // each one gone once it has been answered. When there is nothing to do the
 // screen says so plainly; that is a real state, not an error.
-function Now({ uid, night, session, content, notes, cards }) {
+function Now({ uid, night, session, content, notes, cards, lights = null, meetNote = null }) {
   return (
     <div className="now">
-      {cards.length === 0 && (
+      {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
+      {cards.length === 0 && !lights && (
         <p className="moment-text quiet-line">{night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'}</p>
       )}
       {cards.map(c => <Card key={c.id} card={c} uid={uid} nightId={night.nightId} notes={notes} session={session} />)}

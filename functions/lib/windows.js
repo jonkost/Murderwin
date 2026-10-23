@@ -14,7 +14,7 @@
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, openWindow, ms, PARLOUR, NIGHT } from './deal.js'
+import { settleWindow, openWindow, ms, PARLOUR, NIGHT, tickLights } from './deal.js'
 import { tickStudy } from './station.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
@@ -185,8 +185,9 @@ export async function fillerLine(db) {
 // ---------------------------------------------------------------------------
 // The tick. Once a minute, for the live night: a window past its close and
 // its grace is settled (defaults for every phone that did not answer), a
-// study slot that has run out ends (station.tickStudy), and a Parlour Game
-// that is due pops up on every phone. A paused night is
+// study slot that has run out ends (station.tickStudy), a guest in the Act 2
+// rooms who never turned up or never tapped done is moved on (deal.tickLights),
+// and a Parlour Game that is due pops up on every phone. A paused night is
 // left alone. Safe to call as often as you like: each thing happens once.
 
 export async function activeNightId(db) {
@@ -208,6 +209,7 @@ export async function tick(db, nightId, now = Date.now(), { finished = null } = 
     windowSettled = true
   }
   const study = await tickStudy(db, nightId, now, { finished })
+  const lights = night.act === 2 ? await tickLights(db, nightId, now) : { moved: 0 }
   const parlour = await tickParlour(db, nightId, now)
-  return { ok: true, settled, windowSettled, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
+  return { ok: true, settled, windowSettled, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, lights: { moved: lights.moved ?? 0 }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
 }

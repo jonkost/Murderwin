@@ -9,7 +9,7 @@ import { beatsOf, beatSpec, traceLevel, ms } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
-  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES,
+  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
   echoLines, bulletinLines, struckMotives, strikeCount, dialBand, irwinTier, irwinLines, dogFilter, castNames, parseFrame, frameList,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, onBeat, onPhase, tvTrace, relayRules, labelled,
   screenSeed, doorReached, isPauseCard,
@@ -283,7 +283,8 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   await next() // news
   const news = screen()
   assert.equal(news.kind, 'news')
-  assert.equal(news.lines.length, 1)
+  assert.equal(news.lines.length, 2, 'the echo, then the news flash')
+  assert.equal(news.lines[1], NEWS_FLASH_PLACEHOLDER, 'the news flash is a marked stand-in that names no family')
   assert.ok(!news.lines[0].includes('███'))
   assert.ok(news.lines[0].includes('(Rehearsal'), 'a rehearsal night shows the bracketed stand-in')
   assert.equal(news.rehearsal, true)
@@ -346,12 +347,14 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(nightDoc().act, 5)
   assert.ok(sounds.has('sting-solved'))
 
-  // Act 5: Sir Irwin, the workshop opener, three short lines, no names
+  // Act 5: Sir Irwin, the workshop opener, his line, how sure he is of the motive, the closer; no names
   await next() // irwin
   const irwin = screen()
   assert.equal(irwin.kind, 'irwin')
-  assert.equal(irwin.lines.length, 3)
+  assert.equal(irwin.lines.length, 4)
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
+  assert.ok([1, 2, 3].includes(irwin.choices.length), 'one, two or three motives named')
+  assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {
     assert.ok(l.split(' ').length <= 12)
