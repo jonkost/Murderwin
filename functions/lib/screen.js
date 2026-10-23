@@ -57,13 +57,16 @@ export const STRIKE_LINE = 'The constable has ruled out number [N], "[RHYME]".'
 // for everyone (docs/solving-the-case.md). Its wording is sealed and NOT
 // WRITTEN YET (Jenna's job); until it is, the screen carries this marked
 // stand-in, which names no family.
-export const NEWS_FLASH_PLACEHOLDER = '(Not written yet. Here the news flash rules out a family or two of motives for everyone.)'
-// Sir Irwin's motive clue (Act 5): how sure he sounds, by the dial. Safe copy;
-// the workshop's ui_copy IRWIN THREE / IRWIN TWO / IRWIN ONE lines win.
+export const NEWS_FLASH_PLACEHOLDER = '(Not written yet. Here the news flash rules out one family of motives for everyone.)'
+// Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
+// shows. Open copy, from docs/handoff-2026-10-22.md §5; the workshop's
+// ui_copy IRWIN FIVE to IRWIN ONE lines win.
 export const IRWIN_OPTION_LINES = {
-  3: 'It was one of these three.',
-  2: 'It was one of these two.',
-  1: 'It was this one.',
+  5: "I sniffed the whole house! Twice! It's one of these five. Is that too many? Can I still have a treat?",
+  4: "I sniffed really, really hard, and it's one of these four! Keep sniffing with me!",
+  3: "Ooh! It's one of these three! My tail is wagging, so I'm pretty sure!",
+  2: "It's one of these two! I'm sure! Well, mostly sure! Okay, very sure!",
+  1: "It's THIS one! I sniffed it out all by myself! Who's a good boy? Me!",
 }
 
 export function screenPath(nightId) { return `nights/${nightId}/public/screen` }
@@ -224,7 +227,7 @@ export function irwinMotiveClue(c, { seed = '', ui = {} } = {}) {
   const band = dialBand(c?.dial)
   const ns = irwinOptions(c, { band, seed })
   const count = irwinCount(band)
-  const label = { 3: 'IRWIN THREE', 2: 'IRWIN TWO', 1: 'IRWIN ONE' }[count]
+  const label = { 5: 'IRWIN FIVE', 4: 'IRWIN FOUR', 3: 'IRWIN THREE', 2: 'IRWIN TWO', 1: 'IRWIN ONE' }[count]
   return {
     choices: ns.map(n => ({ n, rhyme: MOTIVES.find(m => m.n === n)?.rhyme ?? '' })),
     optionLine: ns.length ? ui[label] || IRWIN_OPTION_LINES[count] : null,

@@ -282,7 +282,7 @@ test('a whole night with a real case deals testimony, document and study clue wi
   assert.equal(c.rehearsal, false)
   let clues = 0
   for (const uid of Object.values(uids)) {
-    const t = cards(db, uid, 'testimony')[0]
+    const t = cards(db, uid, 'testimony').find(x => x.outcome !== 'greet')
     assert.equal(t.placeholder, false)
     const said = t.lines.join(' ')
     assert.ok(!said.includes('[object Object]'))
@@ -407,7 +407,7 @@ test('the safe numbers reach the phone for every outcome, and open the safe firs
   const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
   let deflected = 0
   for (const [key, uid] of Object.entries(uids)) {
-    const t = cards(db, uid, 'testimony')[0]
+    const t = cards(db, uid, 'testimony').find(x => x.outcome !== 'greet')
     const scrapN = cards(db, uid, 'notice').find(n => n.key === 'scrap')
     const text = t.lines.join(' ') + ' ' + (scrapN?.text ?? '')
     assert.ok(has(text, safe[key]), `phone holds all three numbers (${t.outcome})`)

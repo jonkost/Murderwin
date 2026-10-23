@@ -81,7 +81,7 @@ test('G33 Act 2 hints only ever rule out wrong families; the real family is neve
     const c = rehearsalCase({ nightId: `g-${seed}`, roster, rng })
     const s = c.solving
     assert.equal(s.family, familyOf(c.motive), `seed ${seed}: the plan knows the real family`)
-    assert.equal(s.newsOut.length, 1, `seed ${seed}: the news flash rules out one family (night.json newsFamilies)`)
+    assert.equal(s.newsOut.length, 1, `seed ${seed}: bulletin 1 crosses off exactly one family`)
     assert.ok(!s.newsOut.includes(s.family), `seed ${seed}: the news never rules out the real family`)
     for (const k of roster.map(g => g.key)) {
       assert.ok(s.hints[k], `seed ${seed}: every guest gets a hint`)
@@ -91,10 +91,6 @@ test('G33 Act 2 hints only ever rule out wrong families; the real family is neve
     // with enough guests, every wrong family reaches the room one way or another
     if (roster.length >= 3) assert.equal(new Set([...s.newsOut, ...Object.values(s.hints)]).size, FAMILIES.length - 1, `seed ${seed}`)
   }
-  // two families on the news, if Jon settles on two
-  const two = solvingPlan({ motive: 3, keys: ['a', 'b', 'c'], rng: seeded(7), config: { newsFamilies: 2 } })
-  assert.equal(two.newsOut.length, 2)
-  assert.ok(!two.newsOut.includes('screens') && !Object.values(two.hints).includes('screens'))
 })
 
 test('the five families hold all nineteen motives, each exactly once', () => {
@@ -106,22 +102,27 @@ test('the five families hold all nineteen motives, each exactly once', () => {
 
 // ---- G34 ------------------------------------------------------------------
 
-test('G34 Irwin: three options at dial 1 or 2, two at 3, one at 4 or 5; the real motive always, the others from its family', () => {
+test('G34 Irwin\'s countdown: five cards at dial 1 down to one at 5; the real motive always; filler from its family first, then from families already ruled out', () => {
   for (const m of MOTIVES) {
     for (const band of [1, 2, 3, 4, 5]) {
-      const c = { motive: m.n, solving: { memory: {}, struck: [] } }
+      const family = familyOf(m.n)
+      const others = FAMILIES.map(f => f.key).filter(k => k !== family)
+      const c = { motive: m.n, solving: { family, newsOut: [others[0]], hints: { a: others[1] }, memory: {}, struck: [] } }
       const opts = irwinOptions(c, { band, seed: `s${m.n}` })
       assert.equal(opts.length, irwinCount(band), `motive ${m.n} band ${band}`)
-      assert.equal(opts.length, band <= 2 ? 3 : band === 3 ? 2 : 1)
+      assert.equal(opts.length, 6 - band)
       assert.ok(opts.includes(m.n), 'the real motive is always named')
-      for (const n of opts) assert.equal(familyOf(n), familyOf(m.n), 'the others share its family')
+      const mates = familyMates(m.n)
+      const inFamily = opts.filter(n => n !== m.n && familyOf(n) === family).length
+      assert.equal(inFamily, Math.min(mates.length, opts.length - 1), 'the real family fills first')
+      for (const n of opts) assert.ok(familyOf(n) === family || others.slice(0, 2).includes(familyOf(n)), 'then only families already ruled out')
       assert.deepEqual(opts, [...opts].sort((a, b) => a - b), 'in number order, so the order says nothing')
     }
   }
   // on the screen: the line matches the count, the choices carry rhymes only
   const clue = irwinMotiveClue({ motive: 11, dial: 0, solving: { memory: {}, struck: [] } }, { seed: 'x' })
-  assert.equal(clue.choices.length, 2)
-  assert.equal(clue.optionLine, 'It was one of these two.')
+  assert.equal(clue.choices.length, 3)
+  assert.match(clue.optionLine, /one of these three/)
   assert.equal(clue.mood, 3)
   for (const ch of clue.choices) assert.deepEqual(Object.keys(ch).sort(), ['n', 'rhyme'])
 })
@@ -307,8 +308,11 @@ test('F20 only one player is at a cat\'s code at a time in Act 2, for every part
     const { db, nightId, uids } = await lightsParty(n)
     const r = await walkLights(db, nightId)
     assert.equal(r.worst, 1, `${n} players: never two at a cat`)
-    assert.equal(r.meetings, n, `${n} players: every guest met a cat`)
-    for (const uid of Object.values(uids)) assert.equal(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony').length, 1)
+    assert.equal(r.meetings, 4 * n, `${n} players: every guest met all four cats`)
+    for (const uid of Object.values(uids)) {
+      const said = db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony')
+      assert.deepEqual(said.map(c => c.cat).sort(), [...LIGHTS_CATS].sort(), `${n} players: one card from each cat`)
+    }
   }
   // the four rooms, and never Irwin or the living room
   assert.deepEqual(CAT_ROOMS, { granolia: 'the Study', salem: 'the Orangerie', zimothy: 'the Library', boo: 'the Entryway' })
@@ -343,8 +347,8 @@ test('F21 every player is always told where to go next: through the waves, a no-
   await hostCommand(db, { nightId, command: 'tick', now: now + GO_MS - 1 })
   assert.equal(stepOf(db, deck[noShow]), 'go', 'not a moment early')
   await hostCommand(db, { nightId, command: 'tick', now: now + GO_MS })
-  assert.equal(stepOf(db, deck[noShow]), 'done')
-  assert.equal(db.store.get(`sessions/${deck[noShow]}`).cards.filter(c => c.kind === 'testimony').length, 1, 'delay, never destroy')
+  assert.ok(['wait', 'go'].includes(stepOf(db, deck[noShow])), 'moved on to the next cat')
+  assert.equal(db.store.get(`sessions/${deck[noShow]}`).cards.filter(c => c.kind === 'testimony' && c.cat === state.guests[noShow].cat).length, 1, 'delay, never destroy')
   told()
   // a guest who arrives late joins the shortest line at the next tick
   await join(db, { uid: 'u-late', nightId, name: 'Lou' })
@@ -355,7 +359,8 @@ test('F21 every player is always told where to go next: through the waves, a no-
   await hostCommand(db, { nightId, command: 'beat', arg: beatsOf(2).at(-1).key, now: now + GO_MS + 120_000 })
   for (const uid of all()) {
     assert.equal(stepOf(db, uid), 'done', 'everyone goes to supper')
-    assert.equal(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony').length, 1, 'everyone holds their greeting')
+    assert.match(db.store.get(`sessions/${uid}`).lights.title, /Supper/)
+    assert.equal(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony' && c.outcome !== 'greet').length, 1, 'everyone holds their real hint')
   }
   told()
   assert.ok(Object.keys(uids).length === 9)
@@ -367,7 +372,8 @@ test('the Act 2 hint rides on the greeting as a marked stand-in that names no fa
   const c = db.store.get(`cases/${nightId}`)
   const deck = db.store.get(`nights/${nightId}/private/deck`).uids
   for (const [key, uid] of Object.entries(deck)) {
-    const t = db.store.get(`sessions/${uid}`).cards.find(x => x.kind === 'testimony')
+    const t = db.store.get(`sessions/${uid}`).cards.find(x => x.kind === 'testimony' && x.outcome !== 'greet')
+    assert.equal(t.cat, c.solving.hintCats[key], 'the real hint comes from the guest\'s hint cat')
     assert.equal(t.hint.placeholder, true)
     const text = JSON.stringify(t.hint)
     for (const f of FAMILIES) assert.ok(!text.toLowerCase().includes(`"${f.key}"`) && !text.includes(f.name), 'no family name on a phone')
@@ -375,6 +381,33 @@ test('the Act 2 hint rides on the greeting as a marked stand-in that names no fa
     assert.notEqual(c.solving.hints[key], c.solving.family)
   }
   assert.ok(c.dealtClues.some(e => e.kind === 'hint'), 'the ledger notes the hints (Spill the Beans is off once one is out)')
+})
+
+// ---- G39 ------------------------------------------------------------------
+
+test('G39 each player gets exactly one real Act 2 hint; the other three cats only greet (2 to 12 players)', async () => {
+  for (let n = 2; n <= 12; n++) {
+    const { db, nightId } = await lightsParty(n)
+    await walkLights(db, nightId)
+    const c = db.store.get(`cases/${nightId}`)
+    const deck = db.store.get(`nights/${nightId}/private/deck`).uids
+    for (const [key, uid] of Object.entries(deck)) {
+      const said = db.store.get(`sessions/${uid}`).cards.filter(x => x.kind === 'testimony')
+      const real = said.filter(x => x.outcome !== 'greet')
+      assert.equal(real.length, 1, `${n} players: one real hint`)
+      assert.ok(real[0].hint, `${n} players: the real one carries the hint`)
+      assert.equal(said.filter(x => x.outcome === 'greet' && !x.hint).length, 3, `${n} players: three greetings, no hint`)
+      assert.ok(LIGHTS_CATS.includes(c.solving.hintCats[key]))
+    }
+  }
+  // across many deals, every cat is somebody's hint cat about equally often
+  const counts = Object.fromEntries(LIGHTS_CATS.map(cat => [cat, 0]))
+  for (let seed = 1; seed <= 1000; seed++) {
+    const rng = seeded(seed)
+    const roster = rosterOf(9, rng)
+    for (const cat of Object.values(rehearsalCase({ nightId: `h-${seed}`, roster, rng }).solving.hintCats)) counts[cat]++
+  }
+  for (const cat of LIGHTS_CATS) assert.ok(counts[cat] > 9000 / 4 * 0.85 && counts[cat] < 9000 / 4 * 1.15, `${cat}: ${counts[cat]}`)
 })
 
 test('family mates are the rest of the family', () => {

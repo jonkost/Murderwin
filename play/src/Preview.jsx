@@ -166,7 +166,7 @@ const NEWS_LINES = ['...residents further report (Rehearsal. The news fragment f
 const BULLETIN = SCREEN('bulletin', { title: 'The bulletin', act: 3, beat: 'bulletin',
   lines: [...NEWS_LINES, `The constable has ruled out number 4, "${motivesSeed.motives[3]?.rhyme}".`, `The constable has ruled out number 11, "${motivesSeed.motives[10]?.rhyme}".`],
   struck: [{ n: 4, rhyme: motivesSeed.motives[3]?.rhyme }, { n: 11, rhyme: motivesSeed.motives[10]?.rhyme }] })
-const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', mood: 3, lines: ['Oh! Everyone is here. I have something to say.', '(Rehearsal. Irwin line two.)', 'It was one of these two.', 'That is everything. I am a good boy.'],
+const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', mood: 3, lines: ['Oh! Everyone is here. I have something to say.', '(Rehearsal. Irwin line two.)', 'Ooh! It\'s one of these three! My tail is wagging, so I\'m pretty sure!', 'That is everything. I am a good boy.'],
   choices: [12, 17].map(n => ({ n, rhyme: motivesSeed.motives[n - 1]?.rhyme })) })
 // the memory match board as the server shapes it: twelve trace ids, no names
 const MEMORY = (cleared = false) => ({ groupId: 'g1', boardId: 'g1-3', cleared, cards: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'coffee', 'ink', 'seeds', 'coins', 'flour', 'petals'] })

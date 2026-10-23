@@ -233,7 +233,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await next() // cat: the first wave goes
     const rooms = await walkRooms()
     if (!rooms.ok) summary.checks.push(...(rooms.twoAtACat ? ['F20'] : []), ...(rooms.untold ? ['F21'] : []))
-    const outcomes = { full: 0, partial: 0, deflect: 0 }
+    const outcomes = { full: 0, partial: 0, deflect: 0, greet: 0 }
     for (const uid of uids) for (const t of cardsOf(await sessionOf(uid), 'testimony')) outcomes[t.outcome] = (outcomes[t.outcome] ?? 0) + 1
     await next() // the safe
     const templates = await numbersTemplates(db)
@@ -253,7 +253,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const p2 = await allParlours() // the act's Parlour Games, each at its own time
     await next() // check-in
     say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}`)
-    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs)`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
+    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${outcomes.full + outcomes.partial + outcomes.deflect} real hints (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs) and ${outcomes.greet} greetings`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
     // ---- Act 3: dinner, the bulletin, the groups
     await next(); await next()

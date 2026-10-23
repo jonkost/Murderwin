@@ -82,10 +82,15 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
     assert.equal(cards(db, uid, 'testimony').length, 0, 'nothing is said until the guest is with the cat')
   }
   const walked = await walkLights(db, nightId, { now })
-  assert.equal(walked.meetings, uids.length); assert.equal(walked.worst, 1, 'never two guests at a cat')
+  assert.equal(walked.meetings, 4 * uids.length, 'every guest visits all four cats'); assert.equal(walked.worst, 1, 'never two guests at a cat')
   for (const uid of uids) {
-    const t = cards(db, uid, 'testimony')
-    assert.equal(t.length, 1)
+    const all = cards(db, uid, 'testimony')
+    assert.equal(all.length, 4, 'one card from each cat')
+    const greets = all.filter(x => x.outcome === 'greet')
+    assert.equal(greets.length, 3, 'three cats only greet')
+    for (const g of greets) assert.ok(!g.hint && g.lines.length === 1, 'a greeting carries no hint')
+    const t = all.filter(x => x.outcome !== 'greet')
+    assert.equal(t.length, 1, 'one real hint')
     assert.ok(['full', 'partial', 'deflect'].includes(t[0].outcome))
     assert.ok(t[0].lines.length >= 1)
     assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')

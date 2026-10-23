@@ -3,11 +3,12 @@
 // to one across the night. No database here; the dealer (deal.js), the room
 // screens (screen.js) and the case builder (case.js) call these.
 //
-//  Act 2  the news flash rules out a wrong family or two for everyone; each
-//         guest's cat greeting privately rules out another wrong family.
+//  Act 2  W-O-O-F News bulletin 1 rules out exactly one wrong family for
+//         everyone; one of the four cats each guest visits privately rules
+//         out another wrong family.
 //  Act 4  the memory match crosses one wrong motive off a group's list.
-//  Act 5  Sir Irwin names three, two or one motive by the clarity dial; the
-//         real one is always among them, the others share its family.
+//  Act 5  Sir Irwin's countdown: five motive cards at dial 1 down to one at
+//         dial 5; the real one is always among them (22 Oct 2026).
 //
 // SEAL RULE. Which family is real, which families a guest is told about,
 // what the memory match crossed off and what Irwin names are all case
@@ -18,7 +19,8 @@
 // cases/{nightId}.solving = {
 //   family: key               the real motive's family
 //   newsOut: [key]            the wrong families the Act 2 news flash rules out
-//   hints: { guestKey: key }  the wrong family each guest's cat rules out
+//   hints: { guestKey: key }  the wrong family each guest's real hint rules out
+//   hintCats: { guestKey: cat } the one cat of the four that gives a guest that hint (Act 2)
 //   memory: { groupId: n }    the motive the memory match crossed off for a group (Act 4)
 //   struck: [n]               the motives the Act 3 bulletin struck (screen.js)
 // }
@@ -35,10 +37,10 @@ const NIGHT = JSON.parse(readFileSync(joinPath(seedDir, 'night.json'), 'utf8'))
 export const SOLVING = NIGHT.solving ?? {}
 export const ALL_MOTIVES = FAMILIES.flatMap(f => f.motives).sort((a, b) => a - b)
 
-// How many wrong families the news flash rules out: 1 or 2 (not settled; night.json).
-export function newsCount(config = SOLVING) {
-  const n = Number(config?.newsFamilies)
-  return n === 2 ? 2 : 1
+// How many wrong families W-O-O-F News bulletin 1 rules out: exactly one
+// (settled 22 Oct 2026, docs/handoff-2026-10-22.md §3).
+export function newsCount() {
+  return 1
 }
 
 function shuffled(list, rng) {
@@ -75,6 +77,8 @@ export function familyMates(n) {
 // stand-in rule until Jon decides), so every one of them reaches someone
 // once there are enough guests. Never the real family.
 
+export const HINT_CATS = Object.keys(SOLVING.catRooms ?? { granolia: 1, salem: 1, zimothy: 1, boo: 1 })
+
 export function solvingPlan({ motive, keys = [], rng = randomInt, config = SOLVING } = {}) {
   const family = familyOf(motive)
   const wrong = shuffled(FAMILIES.map(f => f.key).filter(k => k !== family), rng)
@@ -82,7 +86,16 @@ export function solvingPlan({ motive, keys = [], rng = randomInt, config = SOLVI
   const rest = wrong.slice(newsOut.length)
   const hints = {}
   shuffled(keys, rng).forEach((k, i) => { if (rest.length) hints[k] = rest[i % rest.length] })
-  return { family, newsOut, hints, memory: {}, struck: [] }
+  // Every guest visits all four cats in Act 2; only one of them, picked
+  // here at random per guest, gives the real hint (handoff 22 Oct §6b).
+  const hintCats = Object.fromEntries(keys.map(k => [k, HINT_CATS[rng(HINT_CATS.length)]]))
+  return { family, newsOut, hints, hintCats, memory: {}, struck: [] }
+}
+
+// The cat that gives a guest their real Act 2 hint. A guest the case does
+// not know yet (a late joiner) gets one fixed by the case and their key.
+export function hintCatFor(solving, key) {
+  return solving?.hintCats?.[key] ?? HINT_CATS[Math.floor(unit('hint-cat', solving?.family, key) * HINT_CATS.length)]
 }
 
 // The family a guest who has none yet is told about (a late joiner): the
@@ -118,26 +131,30 @@ export function memoryPick(c, { groupId = '', members = [], seed = '' } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Sir Irwin's motive clue (Act 5). By the clarity dial's band (1 to 5):
-// three options at 1 or 2, two at 3, one at 4 or 5. The real motive is
-// always one of them; the others come from its family. At band 3 the other
-// option is one the room has already crossed off (the memory match, the
-// bulletin) when there is one, so the room can name the motive by the end
-// of Act 5. Returned in number order, so the order says nothing.
+// Sir Irwin's countdown (Act 5, docs/handoff-2026-10-22.md §5). By the
+// clarity dial's band (1 to 5): five motive cards at 1, four at 2, three at
+// 3, two at 4, one at 5. The real motive is always one of them. The filler
+// comes from the real family first (the ones the room has already crossed
+// off, by the memory match or the bulletin, before the rest), then from the
+// families already ruled out (the news flash, then the guests' hints), so
+// the room can name the motive by the end of Act 5. Returned in number
+// order, so the order says nothing.
 
 export function irwinCount(band) {
-  const b = Number(band) || 3
-  return b <= 2 ? 3 : b === 3 ? 2 : 1
+  const b = Math.min(5, Math.max(1, Math.round(Number(band) || 3)))
+  return 6 - b
 }
 
 export function irwinOptions(c, { band = 3, seed = '' } = {}) {
   const real = Number(c?.motive)
   if (!ALL_MOTIVES.includes(real)) return []
   const want = irwinCount(band) - 1
-  const mates = seededOrder(familyMates(real), seed, 'irwin')
   const s = c?.solving ?? {}
   const gone = new Set([...Object.values(s.memory ?? {}), ...(s.struck ?? [])].map(Number))
-  const order = Number(band) === 3 ? [...mates.filter(n => gone.has(n)), ...mates.filter(n => !gone.has(n))] : mates
+  const mates = seededOrder(familyMates(real), seed, 'irwin')
+  const ruledOut = [...new Set([...(s.newsOut ?? []), ...Object.values(s.hints ?? {})])]
+    .flatMap(k => seededOrder(motivesOf(k), seed, 'irwin', k))
+  const order = [...mates.filter(n => gone.has(n)), ...mates.filter(n => !gone.has(n)), ...ruledOut]
   return [real, ...order.slice(0, want)].sort((a, b) => a - b)
 }
 

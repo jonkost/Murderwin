@@ -63,7 +63,8 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   // the counts say the whole night happened
   const line = n => lines.find(l => l.startsWith(`Act ${n}, `))
   assert.match(line(2), /8 role cards/)
-  assert.match(line(2), /8 cat visits/)
+  assert.match(line(2), /32 cat visits/)
+  assert.match(line(2), /8 real hints .* and 24 greetings/)
   assert.match(line(2), /safe opened on 8 phones \(0 gave way\)/)
   assert.match(line(2), /8 documents/)
   assert.match(line(3), /4 groups/)
@@ -73,8 +74,8 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   assert.match(line(4), /5 rotations, 4 groups through the study, \d+ memory matches cleared, 40 station cards, (1[2-6]) clues, 5 Parlour Games, 40 answers/)
   assert.match(line(5), /4 motives crossed off by the memory match/, 'every group crossed one off by the end of Act 4')
   // the Act 2 rooms (F20, F21) and the motive funnel (G32), as pass or fail and counts
-  assert.ok(lines.some(l => /^Act 2 rooms: 8 visits in \d+ waves; one guest at a cat at a time \(F20\) PASS; every phone told where to go \(F21\) PASS$/.test(l)))
-  assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [123]$/.test(l)))
+  assert.ok(lines.some(l => /^Act 2 rooms: 32 visits in \d+ waves; one guest at a cat at a time \(F20\) PASS; every phone told where to go \(F21\) PASS$/.test(l)))
+  assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [1-5]$/.test(l)))
   assert.deepEqual(summary.checks, [])
   assert.match(line(6), /2 Parlour Games, 16 answers/)
   assert.match(line(6), /drawing done in \d+ turns and \d+ votes/)
