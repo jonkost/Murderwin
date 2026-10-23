@@ -1,8 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles } from '../lib/cues.js'
+import { CLIP_IDS, plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles } from '../lib/cues.js'
 import { SOUND_IDS as SERVER_SOUND_IDS } from '../../functions/lib/screen.js'
+import { CLIP_IDS as SERVER_CLIP_IDS } from '../../functions/lib/news.js'
 import { readFileSync } from 'node:fs'
 import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
 
@@ -153,4 +154,10 @@ test('hue: the request body for red and green, and the request shape to the brid
   assert.equal(put.opts.headers['hue-application-key'], 'k')
   assert.deepEqual(JSON.parse(put.opts.body).color.xy, XY.green)
   assert.throws(() => new Hue({ host: '', key: 'k' }))
+})
+
+test('plan: a bulletin\'s recorded clips ride with its sound, in order; an unknown clip is dropped', () => {
+  assert.deepEqual(CLIP_IDS, SERVER_CLIP_IDS, 'cues/lib/cues.js and functions/lib/news.js agree')
+  const r = plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 1000, clips: ['newsflash-opening', 'nope', 'newsflash-signoff'] } } }, 1000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news', clips: ['newsflash-opening', 'newsflash-signoff'] }])
 })

@@ -1,0 +1,203 @@
+{
+ "_about": "W-O-O-F News, the open line bank (docs/handoff-2026-10-22.md §4 and §7b, and the Claude Doc 'W-O-O-F News Recording Script'). Every line is written and Jon may see them all; only which one plays is the case's. Each line's clip is the file name Jon records it under, in media/ on the brain. A clip with no file yet is skipped and the words show as captions instead.",
+ "team": {
+  "anchor": "Ava Waves",
+  "field": "Mic Cameron",
+  "weather": "Haley Stratton",
+  "sports": "Mitt Kickwell"
+ },
+ "bulletin1": {
+  "about": "Act 2, lights out, video on the living room screen. Always clarity level 3: the opening, one family line (a wrong family, crossed off for everyone), the sign-off.",
+  "opening": {
+   "clip": "newsflash-opening",
+   "text": "Good evening, ladies and gentlemen, and all the dogs at sea! This is W-O-O-F News. We interrupt this program for a special bulletin from Sirwin Manor. At Sir Irwin's birthday party tonight, someone has been... Murderwined!"
+  },
+  "families": {
+   "food": {
+    "clip": "newsflash-food",
+    "text": "Our man on the scene reports the kitchen is clean as a whistle. Whatever happened tonight, it had nothing to do with the pie, the snacks, or anybody's chewing."
+   },
+   "bathroom": {
+    "clip": "newsflash-bathroom",
+    "text": "Meanwhile, detectives have inspected the powder room. The roll is full, the seat is down, the air is fresh, and nobody's so much as sneezed. Nothing to see there, folks."
+   },
+   "screens": {
+    "clip": "newsflash-screens",
+    "text": "In the world of technology, every gadget in the manor is behaving itself. Not a peep too loud, every charger where it belongs, no progress deleted, no message left on read, and not a single reply-all. Nothing on the airwaves tonight."
+   },
+   "out": {
+    "clip": "newsflash-out-and-about",
+    "text": "Out on the roads, traffic is moving nicely. Everybody stayed in their lane, every door was held open, and every shopping cart made it home to the corral."
+   },
+   "slights": {
+    "clip": "newsflash-personal-slights",
+    "text": "And in society news, manners at the manor are impeccable. No anniversary forgotten, no top stained, no grammar corrected, and nobody's spoiled the ending."
+   }
+  },
+  "signoff": {
+   "clip": "newsflash-signoff",
+   "text": "Don't touch that dial! Stay tuned for more updates."
+  }
+ },
+ "bulletin2": {
+  "about": "Act 3, near the end of supper, audio on the Orangerie HomePod with captions on the iPad. Jon arms it; it plays 3 to 5 minutes later. The opening, the real family's line at the clarity dial's level (1 very obscure, 5 plain), the sign-off.",
+  "opening": {
+   "clip": "bulletin2-opening",
+   "text": "This is W-O-O-F, the Voice of Sirwin Manor! Ladies and gentlemen, pardon the interruption. Finish that bite, but listen closely. Our reporters on the scene have fresh information about tonight's Murderwined."
+  },
+  "families": {
+   "food": [
+    {
+     "clip": "bulletin2-food-1",
+     "text": "Reports say tempers at the manor have been simmering all evening."
+    },
+    {
+     "clip": "bulletin2-food-2",
+     "text": "Sources say somebody bit off more than they could chew."
+    },
+    {
+     "clip": "bulletin2-food-3",
+     "text": "Police say tonight's trouble has a distinct flavor to it."
+    },
+    {
+     "clip": "bulletin2-food-4",
+     "text": "Detectives are certain: somebody's stomach got the better of them."
+    },
+    {
+     "clip": "bulletin2-food-5",
+     "text": "It's official, folks: this whole mess was about food, and somebody's going to have to eat their words."
+    }
+   ],
+   "bathroom": [
+    {
+     "clip": "bulletin2-bathroom-1",
+     "text": "Reports say something at the manor tonight just doesn't smell right."
+    },
+    {
+     "clip": "bulletin2-bathroom-2",
+     "text": "Sources say somebody left a real mess behind them."
+    },
+    {
+     "clip": "bulletin2-bathroom-3",
+     "text": "Police expect to flush out the culprit before the night is through."
+    },
+    {
+     "clip": "bulletin2-bathroom-4",
+     "text": "Detectives are certain: it all happened behind the powder room door."
+    },
+    {
+     "clip": "bulletin2-bathroom-5",
+     "text": "It's official, folks: this whole mess went down in the bathroom."
+    }
+   ],
+   "screens": [
+    {
+     "clip": "bulletin2-screens-1",
+     "text": "Reports say there's been a lot of static at the manor tonight."
+    },
+    {
+     "clip": "bulletin2-screens-2",
+     "text": "Sources say somebody's been pushing all the wrong buttons."
+    },
+    {
+     "clip": "bulletin2-screens-3",
+     "text": "Police say tonight's trouble has everyone's wires crossed."
+    },
+    {
+     "clip": "bulletin2-screens-4",
+     "text": "Detectives are certain: the trouble started on somebody's screen."
+    },
+    {
+     "clip": "bulletin2-screens-5",
+     "text": "It's official, folks: this whole mess was about screens, and somebody needs to log off."
+    }
+   ],
+   "out": [
+    {
+     "clip": "bulletin2-out-1",
+     "text": "Reports say folks at the manor have been going in circles all evening."
+    },
+    {
+     "clip": "bulletin2-out-2",
+     "text": "Sources say somebody took a wrong turn somewhere tonight."
+    },
+    {
+     "clip": "bulletin2-out-3",
+     "text": "Police say this story hit a bump in the road before it got here."
+    },
+    {
+     "clip": "bulletin2-out-4",
+     "text": "Detectives are certain: it all started while somebody was out running errands."
+    },
+    {
+     "clip": "bulletin2-out-5",
+     "text": "It's official, folks: this whole mess started out in public, and somebody's got some explaining to do."
+    }
+   ],
+   "slights": [
+    {
+     "clip": "bulletin2-personal-1",
+     "text": "Reports say somebody at the manor has been feeling a little self-conscious this evening."
+    },
+    {
+     "clip": "bulletin2-personal-2",
+     "text": "Sources say somebody's been wishing they could disappear all night."
+    },
+    {
+     "clip": "bulletin2-personal-3",
+     "text": "Police say somebody tonight was made to look a fool."
+    },
+    {
+     "clip": "bulletin2-personal-4",
+     "text": "Detectives are certain: somebody was left red-faced, and they haven't gotten over it."
+    },
+    {
+     "clip": "bulletin2-personal-5",
+     "text": "It's official, folks: this whole mess was about embarrassment, and somebody will never live it down."
+    }
+   ]
+  },
+  "signoff": {
+   "clip": "bulletin2-signoff",
+   "text": "That's the latest from W-O-O-F. Later this evening, Sir Irwin himself will deliver a special pup-lic address. Don't touch that dial!"
+  }
+ },
+ "closing": {
+  "about": "Act 7, the reveal, video that bookends bulletin 1. Generic lines Jon records; the game cuts in the Murderer, Motive and Ghost cards between them as B-roll. Order: Murderer, Motive, Victim.",
+  "parts": [
+   {
+    "clip": "woof-close-studio-open",
+    "who": "Ava Waves",
+    "text": "Good evening. This is W-O-O-F News, and we interrupt this party with breaking news. We go live now to Sirwin Manor. Mic?"
+   },
+   {
+    "clip": "woof-close-field-murderer",
+    "who": "Mic Cameron",
+    "text": "Thanks, Ava. I'm standing outside Sirwin Manor, where authorities are asking everyone to be on the lookout for this character...",
+    "card": "murderer"
+   },
+   {
+    "clip": "woof-close-field-motive",
+    "who": "Mic Cameron",
+    "text": "Police say it all started over...",
+    "card": "motive"
+   },
+   {
+    "clip": "woof-close-field-victim",
+    "who": "Mic Cameron",
+    "text": "...and it ended in the murder of...",
+    "card": "ghost"
+   },
+   {
+    "clip": "woof-close-field-out",
+    "who": "Mic Cameron",
+    "text": "Please be careful out there. The suspect may still be holding cake. Back to you in the studio."
+   },
+   {
+    "clip": "woof-close-studio-close",
+    "who": "Ava Waves",
+    "text": "Well, there you have it, folks. A real cat-astrophe, but this case is finally closed. Most importantly, a very happy birthday to Sir Irwin, the goodest boy in the county. And thank you to everyone who helped crack this paw-ful crime. Good night, and stay paw-sitive."
+   }
+  ]
+ }
+}

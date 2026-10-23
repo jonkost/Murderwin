@@ -12,9 +12,10 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
   echoLines, bulletinLines, struckMotives, strikeCount, dialBand, irwinTier, irwinLines, dogFilter, castNames, parseFrame, frameList,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES,
 } from '../lib/screen.js'
 import { rehearsalCase, buildCase, screenSalt } from '../lib/case.js'
+import { NEWS } from '../lib/news.js'
 
 // Everything here is a throwaway: synthetic bracketed fragments made in the
 // test and discarded with the process, and the dealer's own rehearsal case
@@ -216,7 +217,7 @@ test('the seed names a screen and a sound only from the catalogues', () => {
     if (b.sound) assert.ok(SOUND_IDS.includes(b.sound), `${act}/${b.key} sound`)
   }
   assert.equal(beatSpec(2, 'news').screen, 'news')
-  assert.equal(beatSpec(3, 'bulletin').screen, 'bulletin')
+  assert.equal(beatSpec(3, 'bulletin').action, 'arm:bulletin', 'bulletin 2 is armed, then plays itself')
   assert.equal(beatSpec(5, 'irwin').screen, 'irwin')
   assert.equal(beatSpec(6, 'door').screen, 'door')
   assert.equal(beatSpec(6, 'eliminate').screen, 'board')
@@ -279,17 +280,18 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(screen().kind, 'black', 'dark through the prompt')
   assert.equal((await currentSound(db, nightId)).id, 'power')
 
-  // Act 2: the news on the screen, with the frame filled; the echo and the fragment never as keys
+  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off
   await next() // news
   const news = screen()
   assert.equal(news.kind, 'news')
-  assert.equal(news.lines.length, 2, 'the echo, then the news flash')
-  assert.equal(news.lines[1], NEWS_FLASH_PLACEHOLDER, 'the news flash is a marked stand-in that names no family')
-  assert.ok(!news.lines[0].includes('███'))
-  assert.ok(news.lines[0].includes('(Rehearsal'), 'a rehearsal night shows the bracketed stand-in')
+  const c2 = db.store.get(`cases/${nightId}`)
+  assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS.bulletin1.families[c2.solving.newsOut[0]].text, NEWS.bulletin1.signoff.text])
+  assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
   assert.deepEqual(news.captions.lines, news.lines)
-  assert.equal((await currentSound(db, nightId)).id, 'chime-news')
+  const newsSound = await currentSound(db, nightId)
+  assert.equal(newsSound.id, 'chime-news')
+  assert.deepEqual(newsSound.clips, ['newsflash-opening', NEWS.bulletin1.families[c2.solving.newsOut[0]].clip, 'newsflash-signoff'])
   await next() // cat: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
   assert.deepEqual(screen().captions.lines, news.lines)
@@ -310,16 +312,30 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   await next() // puzzle
   await next() // checkin
 
-  // Act 3: the bulletin as captions, with the strike lines (one at dial 0), never the active motive
+  // Act 3: bulletin 2. Next arms it (the Host tab hears only Armed); it plays itself 3 to 5
+  // minutes later on the tick: the real family's line at the dial's level, as captions
   await next() // down
-  await next() // bulletin
+  const armed = await host('next') // arm
+  assert.equal(armed.armed, true)
+  assert.deepEqual(Object.keys(armed).filter(k => !['ok', 'act', 'beat', 'armed'].includes(k)), [], 'the arm says nothing else')
+  assert.notEqual(screen().kind, 'bulletin', 'nothing plays at the arm')
+  const sched = db.store.get(`nights/${nightId}/private/bulletin`)
+  const wait = ms(sched.dueAt) - now
+  assert.ok(wait >= 3 * 60_000 && wait <= 5 * 60_000, 'three to five minutes')
+  await host('tick')
+  assert.notEqual(screen().kind, 'bulletin', 'not early')
+  now = ms(sched.dueAt)
+  await host('tick')
   const bulletin = screen()
   assert.equal(bulletin.kind, 'bulletin')
   const c = db.store.get(`cases/${nightId}`)
-  assert.equal(bulletin.struck.length, strikeCount(c.dial))
-  for (const s of bulletin.struck) assert.notEqual(s.n, c.motive)
-  assert.equal(bulletin.lines.length, 1 + bulletin.struck.length)
+  const level = Math.min(5, Math.max(1, 3 + Math.sign(c.dial) * Math.round(Math.abs(c.dial) / 4)))
+  assert.deepEqual(bulletin.lines, [NEWS.bulletin2.opening.text, NEWS.bulletin2.families[c.solving.family][level - 1].text, NEWS.bulletin2.signoff.text], 'the real family, at the dial')
   assert.equal((await currentSound(db, nightId)).id, 'sounder-bulletin')
+  assert.equal((await currentSound(db, nightId)).clips.length, 3)
+  for (const uid of Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)) assert.ok(db.store.get(`sessions/${uid}`).cards.some(x => x.key === 'bulletin'), 'every phone hears about it')
+  await host('tick')
+  assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
   await next() // groups
   assert.deepEqual(screen().captions.lines, bulletin.lines, 'captions stay up through dinner')
 
@@ -357,7 +373,7 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {
-    assert.ok(l.split(' ').length <= 12)
+    if (!Object.values(IRWIN_OPTION_LINES).includes(l)) assert.ok(l.split(' ').length <= 12, 'his own lines stay short; the countdown line is kept whole')
     for (const n of names) assert.ok(!new RegExp(`\\b${n.split(' ').pop()}\\b`).test(l))
   }
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin')

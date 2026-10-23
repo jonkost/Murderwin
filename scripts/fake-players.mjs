@@ -42,7 +42,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
@@ -115,7 +115,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   const countCards = async (kind, act = null) => { let n = 0; for (const uid of uids) n += cardsOf(await sessionOf(uid), kind).filter(c => act === null || c.act === act).length; return n }
   const actName = act => deal.NIGHT.acts[String(act)]?.name ?? `Act ${act}`
   const next = () => run.hostCommand(db, { nightId, command: 'next' })
-  const host = (command, arg) => run.hostCommand(db, { nightId, command, arg })
+  const host = (command, arg, now) => run.hostCommand(db, { nightId, command, arg, ...(now ? { now } : {}) })
   const actLine = (act, parts) => { summary.acts.push({ act, parts }); say(`Act ${act}, ${actName(act)}: ${deal.beatsOf(act).length} beats, ${parts.join(', ')}`) }
 
   // every phone answers the open Parlour Game with a random pick per question, then the dry run closes it
@@ -255,10 +255,15 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}`)
     actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${outcomes.full + outcomes.partial + outcomes.deflect} real hints (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs) and ${outcomes.greet} greetings`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
-    // ---- Act 3: dinner, the bulletin, the groups
-    await next(); await next()
+    // ---- Act 3: dinner, bulletin 2 (armed, then it plays itself on the tick), the groups
+    await next() // phones down
+    const armed = await next() // arm the bulletin: the host hears only Armed
+    const due = deal.ms((await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.dueAt)
+    await host('tick', undefined, due) // three to five minutes later it plays
+    const played = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.played === true
+    if (!armed.armed || !played) summary.checks.push('B2')
     const r3 = await next()
-    actLine(3, [`${await countCards('notice', 3)} notices`, `${r3.groups} groups (${r3.trios} of three)`])
+    actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`, `${r3.groups} groups (${r3.trios} of three)`])
 
     // ---- Act 4: five stations, the study finishing each group, a Parlour Game popping up between finishes
     await heartbeat() // the station is alive: the study's clue is earned in the room, not dealt with the card
@@ -364,7 +369,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const c = (await db.doc(`cases/${nightId}`).get()).data()
     const screenDoc = (await db.doc(`nights/${nightId}/public/screen`).get()).data()
     const named = (screenDoc?.choices ?? []).map(x => x.n)
-    const left = families.remainingMotives(families.roomClues(c, { irwin: named }))
+    const bulletinBand = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.level ?? null
+    const left = families.remainingMotives(families.roomClues(c, { irwin: named, bulletinBand }))
     const band = Number(screenDoc?.mood) || 3
     const ok = named.length === families.irwinCount(band) && left.includes(Number(c?.motive)) && (band !== 3 || left.length === 1)
     return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length }

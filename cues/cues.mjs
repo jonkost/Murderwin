@@ -85,13 +85,26 @@ async function setHall(colour) {
 // keep trying until the bulb agrees
 setInterval(() => { if (wantHall && !FAKE && hue) setHall(wantHall) }, 5000)
 
-function playSound(id) {
-  const file = soundCandidates(MEDIA_DIR, id).find(f => existsSync(f))
-  if (!file) { log(`[sound] no file for ${id}`); return }
-  if (FAKE) { log(`[sound] would play ${file}`); return }
-  const p = spawn('afplay', [file], { stdio: 'ignore' })
-  p.on('error', e => log(`[sound] ${id} failed: ${e.message}`))
-  log(`[sound] ${id}`)
+// One id, then its clips one after the other (a W-O-O-F News bulletin). A
+// newer sound cuts a running sequence short, so two never talk over each other.
+let sequence = 0
+function playSound(id, clips = []) {
+  const mine = ++sequence
+  const files = [id, ...clips].map(x => ({ id: x, file: soundCandidates(MEDIA_DIR, x).find(f => existsSync(f)) }))
+  const missing = files.filter(f => !f.file).length
+  if (missing) log(`[sound] ${missing} of ${files.length} files missing; skipped (the screen shows the words)`)
+  const queue = files.filter(f => f.file)
+  const nextOne = () => {
+    if (mine !== sequence) return
+    const f = queue.shift()
+    if (!f) return
+    if (FAKE) { log(`[sound] would play ${f.file}`); nextOne(); return }
+    const p = spawn('afplay', [f.file], { stdio: 'ignore' })
+    p.on('error', e => { log(`[sound] ${f.id} failed: ${e.message}`); nextOne() })
+    p.on('exit', nextOne)
+    log(`[sound] ${f.id}`)
+  }
+  nextOne()
 }
 
 // ---- watching the night ------------------------------------------------------
@@ -117,7 +130,7 @@ function apply() {
   state = next
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
-    if (a.type === 'sound') playSound(a.id)
+    if (a.type === 'sound') playSound(a.id, a.clips ?? [])
     if (a.type === 'refused') log(`[sound] refused ${a.count} id outside the catalogue`)
   }
 }

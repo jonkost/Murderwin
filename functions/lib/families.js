@@ -163,22 +163,34 @@ export function irwinOptions(c, { band = 3, seed = '' } = {}) {
 // every structured clue up to the end of Act 5. The words of a cat's kernel
 // are sealed and are never read here; only what each clue rules out.
 
-export function remainingMotives({ newsOut = [], hintFamilies = [], struck = [], crossed = [], irwin = null } = {}) {
+// Bulletin 2 (Act 3) names the real family at the dial's level; the solver
+// counts it as read from level 3 up (BULLETIN_READ_FROM), and as no help below.
+export const BULLETIN_READ_FROM = 3
+
+export function remainingMotives({ newsOut = [], hintFamilies = [], hintMotives = [], struck = [], crossed = [], family = null, irwin = null } = {}) {
   const out = new Set([...newsOut, ...hintFamilies])
-  const gone = new Set([...struck, ...crossed].map(Number))
+  const gone = new Set([...struck, ...crossed, ...hintMotives].map(Number))
   let left = ALL_MOTIVES.filter(n => !out.has(familyOf(n)) && !gone.has(n))
+  if (family) left = left.filter(n => familyOf(n) === family)
   if (Array.isArray(irwin) && irwin.length) left = left.filter(n => irwin.map(Number).includes(n))
   return left
 }
 
-// Every structured clue a case dealt, for the solver.
-export function roomClues(c, { irwin = null } = {}) {
+// Every structured clue a case dealt, for the solver. `ruled` is what each
+// real cat line actually ruled out (cats.js), when the night recorded it: a
+// low-affection cat may rule out one motive of a family, or nothing. Without
+// it, every guest's hint family counts as ruled out whole. `bulletinBand` is
+// the dial's band when bulletin 2 played.
+export function roomClues(c, { irwin = null, bulletinBand = null } = {}) {
   const s = c?.solving ?? {}
+  const ruled = s.ruled ? Object.values(s.ruled) : null
   return {
     newsOut: s.newsOut ?? [],
-    hintFamilies: [...new Set(Object.values(s.hints ?? {}))],
+    hintFamilies: ruled ? [...new Set(ruled.flatMap(r => r.families ?? []))] : [...new Set(Object.values(s.hints ?? {}))],
+    hintMotives: ruled ? [...new Set(ruled.flatMap(r => r.motives ?? []))] : [],
     struck: s.struck ?? [],
     crossed: Object.values(s.memory ?? {}),
+    family: bulletinBand != null && bulletinBand >= BULLETIN_READ_FROM ? s.family ?? null : null,
     irwin,
   }
 }

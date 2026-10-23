@@ -30,7 +30,7 @@
     ] },
     "3": { "name": "Supper Is Served", "plain": "Dinner", "beats": [
       { "key": "down", "name": "Phones down", "what": "Dinner in the orangery. Phones down and charging. The radio plays.", "action": "notice:down" },
-      { "key": "bulletin", "name": "The bulletin", "what": "The news bulletin plays through the house. The table argues about it. Nothing on the phones.", "action": "notice:bulletin", "screen": "bulletin", "sound": "sounder-bulletin" },
+      { "key": "bulletin", "name": "Arm the bulletin", "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the Orangerie HomePod with captions on the iPad. Your phone says only Armed. The phones get the bulletin notice when it plays.", "action": "arm:bulletin" },
       { "key": "groups", "name": "Groups for Act 4", "what": "Phones come back up with who you are working with next and where to start.", "action": "groups" }
     ] },
     "4": { "name": "Behind Closed Doors", "plain": "Rotation", "beats": [

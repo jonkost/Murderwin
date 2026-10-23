@@ -45,7 +45,8 @@ function describe(command, r) {
     case 'hall': return `The hall light is ${r.hall}.`
     case 'tv-trace': return r.tvTrace ? 'The living room screen shows the trace once the door has been open ten seconds.' : 'The trace is off the living room screen.'
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
-    case 'next': case 'beat': case 'back': return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
+    case 'next': case 'beat': case 'back': if (r.armed) return 'Armed.'
+      return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
     case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
     case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
     case 'power': return 'The power is back. Every phone is showing its card.'

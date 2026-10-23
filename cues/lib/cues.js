@@ -19,6 +19,55 @@ export function hallColour({ cues, relay } = {}) {
 export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power']
 export function knownSound(id) { return SOUND_IDS.includes(id) }
 
+// The recorded W-O-O-F News lines (media/README.md): a copy of
+// functions/lib/news.js CLIP_IDS, checked by a test on this side. A sound may
+// carry a list of them, played one after the other once the sound is done.
+// A clip with no file is skipped (the words are on the screen as captions),
+// so these never stop the relay starting.
+export const CLIP_IDS = [
+  'newsflash-opening',
+  'newsflash-food',
+  'newsflash-bathroom',
+  'newsflash-screens',
+  'newsflash-out-and-about',
+  'newsflash-personal-slights',
+  'newsflash-signoff',
+  'bulletin2-opening',
+  'bulletin2-food-1',
+  'bulletin2-food-2',
+  'bulletin2-food-3',
+  'bulletin2-food-4',
+  'bulletin2-food-5',
+  'bulletin2-bathroom-1',
+  'bulletin2-bathroom-2',
+  'bulletin2-bathroom-3',
+  'bulletin2-bathroom-4',
+  'bulletin2-bathroom-5',
+  'bulletin2-screens-1',
+  'bulletin2-screens-2',
+  'bulletin2-screens-3',
+  'bulletin2-screens-4',
+  'bulletin2-screens-5',
+  'bulletin2-out-1',
+  'bulletin2-out-2',
+  'bulletin2-out-3',
+  'bulletin2-out-4',
+  'bulletin2-out-5',
+  'bulletin2-personal-1',
+  'bulletin2-personal-2',
+  'bulletin2-personal-3',
+  'bulletin2-personal-4',
+  'bulletin2-personal-5',
+  'bulletin2-signoff',
+  'woof-close-studio-open',
+  'woof-close-field-murderer',
+  'woof-close-field-motive',
+  'woof-close-field-victim',
+  'woof-close-field-out',
+  'woof-close-studio-close',
+]
+export function knownClip(id) { return CLIP_IDS.includes(id) }
+
 // Which ids have no file under `dir` (by any accepted extension). The relay
 // refuses to start while this is not empty, so a missing file is found at
 // the start of the evening, not at the beat.
@@ -41,7 +90,10 @@ export function plan(prev, next, now = Date.now()) {
   const key = soundId ? `${soundId}@${soundAt}` : null
   const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
   // an unknown id is refused once (counted, never named in the log); a known one plays
-  if (key && key !== prev.sound && fresh) actions.push(knownSound(soundId) ? { type: 'sound', id: soundId } : { type: 'refused', count: 1 })
+  if (key && key !== prev.sound && fresh) {
+    const clips = (next.sounds?.current?.clips ?? []).filter(knownClip)
+    actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...(clips.length ? { clips } : {}) } : { type: 'refused', count: 1 })
+  }
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
 }
 

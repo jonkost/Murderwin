@@ -63,6 +63,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   if (run) await onSolving(db, nightId, act, beat, now) // the Act 2 rooms and the Act 4 memory match close out on time
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
+  if (spec.action === 'arm:bulletin') return { ok: true, act, beat, ...(await screen.armBulletin(db, nightId, { now })) } // plays itself 3 to 5 minutes later
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
   // the door and the ballot both lean on the trace: make sure it is there if the drawing is done
   if (spec.action === 'notice:door' || spec.action === 'window:ballot') await ensureTrace(db, nightId, now)

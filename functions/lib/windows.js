@@ -14,7 +14,8 @@
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, openWindow, ms, PARLOUR, NIGHT, tickLights } from './deal.js'
+import { settleWindow, openWindow, ms, PARLOUR, NIGHT, tickLights, runAction } from './deal.js'
+import { tickBulletin } from './screen.js'
 import { tickStudy } from './station.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
@@ -216,5 +217,8 @@ export async function tick(db, nightId, now = Date.now(), { finished = null } = 
   const study = await tickStudy(db, nightId, now, { finished })
   const lights = night.act === 2 ? await tickLights(db, nightId, now) : { moved: 0 }
   const parlour = await tickParlour(db, nightId, now)
-  return { ok: true, settled, windowSettled, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, lights: { moved: lights.moved ?? 0 }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
+  // an armed W-O-O-F News bulletin 2 plays once it is due, and every phone hears about it
+  const bulletin = await tickBulletin(db, nightId, now)
+  if (bulletin.played) await runAction(db, nightId, night.act ?? 3, 'bulletin', 'notice:bulletin', { now })
+  return { ok: true, settled, windowSettled, bulletin: bulletin.played, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, lights: { moved: lights.moved ?? 0 }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
 }

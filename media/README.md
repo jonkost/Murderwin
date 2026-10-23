@@ -25,6 +25,20 @@ the first one found wins.
 | `blackout` | End of Act 1, every phone goes dark. |
 | `power` | The power returns and Act 2 begins. |
 
+## The W-O-O-F News recordings
+
+Every line in the W-O-O-F News Recording Script is its own file, named as the
+script says (the list is in `seed/woof-news.json`). The relay plays a
+bulletin's files one after the other, straight after its sound. These never
+stop the relay starting: a line with no file yet is skipped, and the words
+are on the screen as captions anyway.
+
+| Files | When they play |
+|---|---|
+| `newsflash-opening`, then one of `newsflash-food`, `newsflash-bathroom`, `newsflash-screens`, `newsflash-out-and-about`, `newsflash-personal-slights`, then `newsflash-signoff` | Act 2, W-O-O-F News bulletin 1, after `chime-news`. |
+| `bulletin2-opening`, then one of the 25 `bulletin2-<family>-<level>` lines, then `bulletin2-signoff` | Act 3, bulletin 2, after `sounder-bulletin`, 3 to 5 minutes after you arm it. |
+| `woof-close-studio-open`, `woof-close-field-murderer`, `woof-close-field-motive`, `woof-close-field-victim`, `woof-close-field-out`, `woof-close-studio-close` | Act 7, the closing bulletin. |
+
 ## The pad rule
 
 Start every file with **one second of silence**. The AirPlay chain takes a

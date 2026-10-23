@@ -41,14 +41,13 @@ function playCase(seed, { players = 9, band = 3 } = {}) {
   const c = rehearsalCase({ nightId: `g-${seed}`, roster, rng })
   const dial = (band - 3) * 4
   c.dial = dial
-  c.solving.struck = struckMotives(c, { seed: screenSeed(c, `g-${seed}`) }).map(x => x.n)
   const groups = makeGroups(roster.map(g => g.key), { apart: [c.murderer, c.ghost], pickInt: rng })
   groups.forEach((members, i) => {
     const groupId = `g${i + 1}`
     c.solving.memory[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt })
   })
   const irwin = irwinOptions(c, { band, seed: c.screenSalt })
-  return { c, roster, groups, irwin, left: remainingMotives(roomClues(c, { irwin })) }
+  return { c, roster, groups, irwin, left: remainingMotives(roomClues(c, { irwin, bulletinBand: band })) }
 }
 
 // ---- G32 ------------------------------------------------------------------

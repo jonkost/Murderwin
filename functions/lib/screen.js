@@ -4,7 +4,7 @@
 //
 //   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood }
 //     kind: idle | black | news | bulletin | irwin | board | door | trace
-//   nights/{id}/public/sounds  { current: { id, at } }
+//   nights/{id}/public/sounds  { current: { id, at, clips? } }   clips: recorded W-O-O-F News lines, played after the id (news.js)
 //
 // Any phone may read both, so NOTHING here carries a role, the dial, the
 // motive number, who died, or anything that joins a fragment to a motive.
@@ -12,8 +12,8 @@
 // band, never written), motive (to keep it OUT of the strike list and IN Sir
 // Irwin's Act 5 options, which are the clue itself; never written as a key), screenSalt (the secret the strikes and the frame pick are
 // seeded on, never written), solving (Sir Irwin's motive clue, families.js)
-// and rehearsal. The one case write is solving.struck: which motives the
-// bulletin struck, kept for the memory match and Sir Irwin. checkScreen refuses a doc with a
+// and rehearsal. The W-O-O-F News bulletins read solving.newsOut and
+// solving.family (news.js) and write nothing to the case. checkScreen refuses a doc with a
 // forbidden key before it is written, and the tests walk a whole night to
 // prove it.
 //
@@ -26,6 +26,7 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MOTIVES, CHARACTERS, NightError, readArea } from './night.js'
 import { irwinOptions, irwinCount } from './families.js'
+import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS } from './news.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -183,7 +184,7 @@ export function bulletinLines(c, frames, { seed = '', motives = MOTIVES, strikeL
 // closer, put through the dog filter: twelve words at most, and no name of
 // anyone at the party or in the cast.
 
-export function dogFilter(text, names = []) {
+export function dogFilter(text, names = [], { maxWords = MAX_IRWIN_WORDS } = {}) {
   let t = String(text ?? '').replace(/\s+/g, ' ').trim()
   const parts = new Set()
   for (const n of names) {
@@ -197,7 +198,7 @@ export function dogFilter(text, names = []) {
     t = t.replace(re, '$1someone')
   }
   const words = t.split(' ').filter(Boolean)
-  if (words.length > MAX_IRWIN_WORDS) t = `${words.slice(0, MAX_IRWIN_WORDS).join(' ').replace(/[,;:]$/, '')}.`
+  if (words.length > maxWords) t = `${words.slice(0, maxWords).join(' ').replace(/[,;:]$/, '')}.`
   return t
 }
 
@@ -213,9 +214,11 @@ export function irwinLines(c, { opener, closer, names = [], optionLine = null } 
   const tier = Math.min(list.length - 1, irwinTier(c?.dial))
   const middle = list.length ? list[Math.max(0, tier)] : REHEARSAL_IRWIN
   const lines = [opener || DEFAULT_IRWIN.opener, middle]
-  if (optionLine) lines.push(optionLine)
   lines.push(closer || DEFAULT_IRWIN.closer)
-  return lines.map(l => dogFilter(l, names)).filter(Boolean)
+  const said = lines.map(l => dogFilter(l, names)).filter(Boolean)
+  // the countdown line is open copy (handoff §5): kept whole, only names filtered
+  if (optionLine) said.splice(said.length - 1, 0, dogFilter(optionLine, names, { maxWords: Infinity }))
+  return said
 }
 
 // Sir Irwin's motive clue: the motives he names, in number order, with their
@@ -275,10 +278,12 @@ export async function writeScreen(db, nightId, doc) {
   return { ok: true, kind: doc.kind }
 }
 
-// The sound writer. One id at a time; the relay plays whichever arrives.
-export async function play(db, nightId, id, { now = Date.now() } = {}) {
+// The sound writer. One id at a time; the relay plays whichever arrives,
+// then the recorded clips after it, in order (a W-O-O-F News bulletin).
+export async function play(db, nightId, id, { now = Date.now(), clips = null } = {}) {
   if (!SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
-  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now) } }, { merge: true })
+  const list = (clips ?? []).filter(x => CLIP_IDS.includes(x))
+  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(list.length ? { clips: list } : {}) } })
   return { ok: true, sound: id }
 }
 
@@ -328,21 +333,20 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   const night = nightSnap.exists ? nightSnap.data() : {}
   const base = { now, act, beat, captions: carriedCaptions(prev, act) }
   let doc
+  let clips = null
   if (kind === 'news' || kind === 'bulletin' || kind === 'irwin') {
     const c = await caseOf(db, nightId)
     const rehearsal = c?.rehearsal !== false
     const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      // the echo, then the news flash's voiceover: a family or two ruled out for everyone (families.js)
-      const lines = [...echoLines(c, await linesOf(db, nightId, 'echo_frames'), { seed }), NEWS_FLASH_PLACEHOLDER]
-      doc = screenDoc('news', { ...base, title: 'News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
+      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js)
+      const b = bulletin1(c)
+      clips = b.clips
+      doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines: b.placeholder ? [...b.lines.slice(0, 1), NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines, rehearsal, captions: { kind, lines: b.lines, at: new Date(now) } })
     } else if (kind === 'bulletin') {
-      const ui = labelled(await linesOf(db, nightId, 'ui_copy'))
-      const strikeLine = ui['STRIKE LINE']?.includes('[RHYME]') ? ui['STRIKE LINE'] : STRIKE_LINE
-      const { lines, struck } = bulletinLines(c, await linesOf(db, nightId, 'echo_frames'), { seed, strikeLine })
-      // what the bulletin struck is kept with the case, for the memory match and Sir Irwin (families.js)
-      if (c?.solving) await db.doc(`cases/${nightId}`).update({ 'solving.struck': struck.map(x => x.n) })
-      doc = screenDoc('bulletin', { ...base, title: 'The bulletin', lines, struck, rehearsal, captions: { kind, lines, at: new Date(now) } })
+      const b = bulletin2(c, dialBand(c?.dial))
+      clips = b.clips
+      doc = screenDoc('bulletin', { ...base, title: 'W-O-O-F News', lines: b.lines, rehearsal, captions: { kind, lines: b.lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)
       const clue = irwinMotiveClue(c, { seed, ui: labelled(await linesOf(db, nightId, 'ui_copy')) })
@@ -363,9 +367,43 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   let sound = null
   if (run && spec?.sound && SOUND_IDS.includes(spec.sound)) {
     const cur = await currentSound(db, nightId)
-    if (!(spec.soundOnce && cur?.id === spec.sound)) { await play(db, nightId, spec.sound, { now }); sound = spec.sound }
+    if (!(spec.soundOnce && cur?.id === spec.sound)) { await play(db, nightId, spec.sound, { now, clips }); sound = spec.sound }
   }
   return { ...r, sound }
+}
+
+// ---------------------------------------------------------------------------
+// Bulletin 2 (Act 3): Jon arms it near the end of supper; it plays on its
+// own 3 to 5 minutes later (the minute tick), on the HomePod with captions
+// on the iPad. The arm writes only a private schedule; the Host tab hears
+// "Armed", never the line. nights/{id}/private/bulletin { armedAt, dueAt, played }
+export function bulletinPath(nightId) { return `nights/${nightId}/private/bulletin` }
+
+export async function armBulletin(db, nightId, { now = Date.now() } = {}) {
+  const ref = db.doc(bulletinPath(nightId))
+  const prev = (await ref.get()).data()
+  if (prev?.armedAt) return { ok: true, armed: true, already: true }
+  const c = await caseOf(db, nightId)
+  await ref.set({ armedAt: new Date(now), dueAt: new Date(now + bulletin2Delay(screenSeed(c, nightId))), played: false })
+  return { ok: true, armed: true }
+}
+
+// The tick: an armed bulletin that is due plays once, whatever beat the night is on.
+export async function tickBulletin(db, nightId, now = Date.now()) {
+  const ref = db.doc(bulletinPath(nightId))
+  const due = await db.runTransaction(async tx => {
+    const s = (await tx.get(ref)).data()
+    if (!s?.armedAt || s.played || now < msOf(s.dueAt)) return false
+    tx.update(ref, { played: true, playedAt: new Date(now) })
+    return true
+  })
+  if (!due) return { played: false }
+  const nightSnap = await db.doc(`nights/${nightId}`).get()
+  const night = nightSnap.exists ? nightSnap.data() : {}
+  const r = await onBeat(db, nightId, { act: night.act ?? 3, beat: night.beat ?? null, spec: { screen: 'bulletin', sound: 'sounder-bulletin' }, now })
+  // the level it played at stays with the private schedule, for the solver checks and the end credits
+  await ref.update({ level: dialBand((await caseOf(db, nightId))?.dial) })
+  return { played: true, sound: r.sound }
 }
 
 // The near-black "One moment" card the pause puts up.
