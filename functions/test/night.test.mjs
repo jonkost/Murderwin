@@ -108,11 +108,12 @@ test('join: unknown name, closed doors, and a full house are refused in words', 
   await assert.rejects(join(db2, { uid: 'u13', nightId: n2.nightId, name: 'Guest 13' }), e => e.code === 'full')
 })
 
-test('rollAffection: Irwin maxed, values 1–5, always one friendly cat', () => {
+test('G14 rollAffection: Irwin maxed, Salem starts at 3 for everyone, the others 1–5, always one friendly cat', () => {
   for (const profession of Object.keys(AFFECTION_MODS)) {
     for (let i = 0; i < 200; i++) {
       const a = rollAffection(profession)
       assert.equal(a.irwin, 5)
+      assert.equal(a.salem, 3, 'Salem starts at 3')
       assert.ok(CATS.every(c => a[c] >= 1 && a[c] <= 5), profession)
       assert.ok(CATS.some(c => a[c] >= 4), `${profession} must have a friendly cat`)
     }

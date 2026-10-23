@@ -227,7 +227,7 @@ function Cats({ session, content, ui, act }) {
               <button className="gauge-row" aria-expanded={on} onClick={() => setOpen(on ? null : cat.key)}>
                 <CatFace cat={cat.key} name={cat.name} size="l" />
                 <span className="gauge-body">
-                  <span className="gauge-name">{cat.name}</span>
+                  <span className="gauge-name">{cat.name}{cat.key === 'salem' && session.salemFriend && <span className="friend-badge" aria-label="True Friend of the Groundskeeper"> ★★★</span>}</span>
                   <Slider level={level} words={words} locked={cat.key === 'irwin'} house={houseLevel} />
                 </span>
               </button>

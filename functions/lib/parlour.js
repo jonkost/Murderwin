@@ -33,7 +33,9 @@ export const QUESTIONS = 3
 export const AFFECTION_MIN = 1
 export const AFFECTION_MAX = 5
 // The defaults when seed/night.json has no parlour block (Jon may change them there).
-export const DEFAULT_CONFIG = Object.freeze({ counts: { 2: 5, 4: 5, 6: 2 }, minGapMin: 4, edgeMin: 2, actMinutes: { 2: 30, 4: 60, 6: 30 } })
+// Acts in `atStart` play their games back to back at the start, startGapSec
+// apart, instead of at random times (Act 6, before the drawing; 22 Oct).
+export const DEFAULT_CONFIG = Object.freeze({ counts: { 2: 5, 4: 5, 6: 2 }, minGapMin: 4, edgeMin: 2, actMinutes: { 2: 30, 4: 60, 6: 30 }, atStart: [6], startGapSec: 90 })
 
 // ---------------------------------------------------------------------------
 // The seed. One string per case; everything below draws from it in order.
@@ -77,7 +79,18 @@ export function configOf(raw) {
     minGapMin: num(c.minGapMin, DEFAULT_CONFIG.minGapMin),
     edgeMin: num(c.edgeMin, DEFAULT_CONFIG.edgeMin),
     actMinutes,
+    atStart: (Array.isArray(c.atStart) ? c.atStart : DEFAULT_CONFIG.atStart).map(Number).filter(a => PARLOUR_ACTS.includes(a)),
+    startGapSec: num(c.startGapSec, DEFAULT_CONFIG.startGapSec),
   }
+}
+
+// An act that plays its games at the start: 0, then one gap apart.
+export function startTimes(count, cfg) {
+  return Array.from({ length: Math.max(0, count) }, (_, i) => i * cfg.startGapSec * 1000)
+}
+export function gapMsFor(act, config) {
+  const cfg = configOf(config)
+  return cfg.atStart.includes(Number(act)) ? cfg.startGapSec * 1000 : cfg.minGapMin * 60_000
 }
 
 // ---------------------------------------------------------------------------
@@ -141,7 +154,8 @@ export function planParlour({ seed, bankIds, config, leans = null }) {
   const acts = {}
   let next = 0
   PARLOUR_ACTS.forEach(act => {
-    const times = rollTimes(unit, { minutes: cfg.actMinutes[act], count: cfg.counts[act], gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
+    const rolled = rollTimes(unit, { minutes: cfg.actMinutes[act], count: cfg.counts[act], gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
+    const times = cfg.atStart.includes(act) ? startTimes(cfg.counts[act], cfg) : rolled
     acts[act] = times.map((atMs, slot) => {
       const setId = setIds[next++] ?? null
       const listeners = Array.from({ length: QUESTIONS }, (_, q) => rollListener(unit, pick, { leans, seed, setId, q }))
@@ -156,6 +170,7 @@ export function planParlour({ seed, bankIds, config, leans = null }) {
 // seed, so a re-read agrees.
 export function carriedTimes({ seed, act, count, config }) {
   const cfg = configOf(config)
+  if (cfg.atStart.includes(Number(act))) return startTimes(count, cfg)
   return rollTimes(stream(seed, `carry\u0000${act}\u0000${count}`).unit, { minutes: cfg.actMinutes[act], count, gapMin: cfg.minGapMin, edgeMin: cfg.edgeMin })
 }
 
@@ -195,13 +210,18 @@ export function stopOf(v) {
   return Math.max(AFFECTION_MIN, Math.min(AFFECTION_MAX, Math.round(clampAffection(v))))
 }
 
+// Salem's ceiling through the Parlour Games: 4, unless the guest petted the
+// real Salem (the host's "Salem petted" button, deal.salemPetted).
+export const SALEM_PARLOUR_MAX = 4
+
 // The patch for one guest: only the cats that changed. Irwin never moves.
-export function applyMoves(affection, moves) {
+export function applyMoves(affection, moves, { salemFriend = false } = {}) {
   const patch = {}
   for (const [cat, d] of Object.entries(moves ?? {})) {
     if (!LISTENERS.includes(cat) || !d) continue
     const was = clampAffection(affection?.[cat] ?? 3)
-    const next = clampAffection(was + d)
+    const top = cat === 'salem' && !salemFriend ? Math.max(was, SALEM_PARLOUR_MAX) : AFFECTION_MAX
+    const next = Math.min(top, clampAffection(was + d))
     if (next !== was) patch[cat] = next
   }
   return patch

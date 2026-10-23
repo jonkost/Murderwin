@@ -191,14 +191,17 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
 // Affection to each cat, 1–5, rolled once at character creation and never
 // changed: base 3, plus the profession modifier, plus a little luck. Irwin is
 // always 5. Floor guarantee: at least one cat other than Irwin is friendly (4+).
+// Salem starts at 3 for everyone (handoff 22 Oct §6): the Parlour Games
+// take him no higher than 4, and only petting the real Salem unlocks 5.
 export function rollAffection(profession) {
   const mods = AFFECTION_MODS[profession] ?? {}
   const out = { irwin: 5 }
   for (const cat of CATS) {
-    out[cat] = Math.max(1, Math.min(5, 3 + (mods[cat] ?? 0) + randomInt(3) - 1))
+    out[cat] = cat === 'salem' ? 3 : Math.max(1, Math.min(5, 3 + (mods[cat] ?? 0) + randomInt(3) - 1))
   }
-  if (!CATS.some(c => out[c] >= 4)) {
-    const best = [...CATS].sort((a, b) => out[b] - out[a])[0]
+  const rolled = CATS.filter(c => c !== 'salem')
+  if (!rolled.some(c => out[c] >= 4)) {
+    const best = [...rolled].sort((a, b) => out[b] - out[a])[0]
     out[best] = 4
   }
   return out
@@ -317,7 +320,7 @@ async function joinOnly(db, { uid, nightId, name }) {
 }
 
 // What follows a guest from a dead phone to a new one.
-export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights']
+export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights', 'salemFriend']
 
 // A borrowed phone (host button). The previous owner's cards, windows and
 // everything else they were dealt are moved off the session into the

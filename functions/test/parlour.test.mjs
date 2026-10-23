@@ -35,10 +35,12 @@ test('G25 each case uses 12 different sets from the bank, planned five, five and
   for (const [id, n] of Object.entries(counts)) assert.ok(Math.abs(n - expected) < expected * 0.15, `${id} picked ${n} times, expected about ${Math.round(expected)}`)
 })
 
-test('G25b Parlour Game times follow the spacing rules, and the same seed gives the same sets at the same times', () => {
+test('G25b Parlour Game times follow the spacing rules (never back to back in Acts 2 and 4; Act 6\'s two at the start), and the same seed gives the same sets at the same times', () => {
   const gap = CFG.minGapMin * 60_000, edge = CFG.edgeMin * 60_000
+  assert.deepEqual(NIGHT.parlour.counts, { 2: 5, 4: 5, 6: 2 }, 'G25: five, five and two')
   for (const p of plans(500)) {
-    for (const act of PARLOUR_ACTS) {
+    assert.deepEqual(p.acts[6].map(s => s.atMs), [0, NIGHT.parlour.startGapSec * 1000], 'Act 6: both at the start, one short gap apart')
+    for (const act of PARLOUR_ACTS.filter(a => a !== 6)) {
       const times = p.acts[act].map(s => s.atMs)
       const length = CFG.actMinutes[act] * 60_000
       times.forEach((t, i) => {
@@ -84,6 +86,24 @@ test('G27 Irwin is never the listening cat, and his affection never moves', () =
   }
   assert.deepEqual(catMoves({ listeners: [{ cat: 'irwin', size: 1, lean: 'a' }], picks: ['a'] }), {})
   assert.deepEqual(applyMoves({ irwin: 5 }, { irwin: -1 }), {})
+})
+
+test('G14 and G17 for Salem: the Parlour Games never take him above 4; only a guest who petted him goes higher', () => {
+  assert.deepEqual(applyMoves({ salem: 4 }, { salem: 1 }), {}, 'capped at 4')
+  assert.deepEqual(applyMoves({ salem: 3.5 }, { salem: 1 }), { salem: 4 })
+  assert.deepEqual(applyMoves({ salem: 4 }, { salem: 1 }, { salemFriend: true }), { salem: 5 })
+  assert.deepEqual(applyMoves({ salem: 5 }, { salem: -0.5 }, { salemFriend: true }), { salem: 4.5 })
+  assert.deepEqual(applyMoves({ salem: 5 }, { salem: 0.5 }), {}, 'a petted 5 is never pulled down by the cap')
+  assert.deepEqual(applyMoves({ boo: 4 }, { boo: 1 }), { boo: 5 }, 'the cap is Salem\'s alone')
+  const { pick } = stream('salem-walk')
+  for (let night = 0; night < 200; night++) {
+    const p = planParlour({ seed: `salem-${night}`, bankIds: IDS, config: NIGHT.parlour })
+    let aff = { salem: 3 }
+    for (const s of slotsOf(p)) {
+      aff = { ...aff, ...applyMoves(aff, catMoves({ listeners: s.listeners, picks: [0, 1, 2].map(() => (pick(2) ? 'a' : 'b')) })) }
+      assert.ok(aff.salem <= 4, `night ${night}: Salem at ${aff.salem}`)
+    }
+  }
 })
 
 test('G28 every cat\'s affection stays between 1 and 5 all night, in half steps', () => {

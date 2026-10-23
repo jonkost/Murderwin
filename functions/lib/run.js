@@ -54,7 +54,11 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
   if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
-  if (run) await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
+  if (run) {
+    const sched = await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
+    // Act 6 plays its games at the start (22 Oct): the first opens now, not at the next minute's tick
+    if (sched?.count && !sched.already && windows.playsAtStart(act)) await windows.tickParlour(db, nightId, now)
+  }
   await screen.onBeat(db, nightId, { act, beat, spec, phase, now, run }) // the room screens and the beat's sound (screen.js)
   if (run) await onSolving(db, nightId, act, beat, now) // the Act 2 rooms and the Act 4 memory match close out on time
   if (!run || !spec?.action) return { ok: true, act, beat }
@@ -224,6 +228,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'award':
       // an achievement from the workshop list onto a guest's phone (guestKey:n), through Act 5
       return finale.award(db, nightId, { arg, now })
+    case 'salem-petted':
+      // the real Salem chose a guest: their Salem goes to 5 (never the hosts)
+      return deal.salemPetted(db, nightId, { arg, now })
     case 'dry-run':
       return discard.markDryRun(db, { nightId })
     case 'settle-now':

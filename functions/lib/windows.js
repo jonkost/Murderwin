@@ -18,7 +18,7 @@ import { settleWindow, openWindow, ms, PARLOUR, NIGHT, tickLights } from './deal
 import { tickStudy } from './station.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
-import { PARLOUR_ACTS, carriedTimes } from './parlour.js'
+import { PARLOUR_ACTS, carriedTimes, gapMsFor } from './parlour.js'
 import { isHushed } from './ledger.js'
 
 // A phone that taps inside the grace after closesAt is still heard; after
@@ -91,6 +91,11 @@ export async function startParlour(db, nightId, act, { now = Date.now() } = {}) 
   return { ok: true, count: slots.length, carried: carried.length }
 }
 
+// Act 6 plays its games back to back at the start, before the drawing (seed/night.json parlour.atStart).
+export function playsAtStart(act) {
+  return (NIGHT.parlour?.atStart ?? [6]).map(Number).includes(Number(act))
+}
+
 // Which game, if any, is due now. Pure, for the tick and the tests.
 export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {}) {
   if (!sched) return null
@@ -115,7 +120,7 @@ export async function tickParlour(db, nightId, now) {
     const snap = await tx.get(ref)
     const sched = snap.exists ? snap.data() : null
     if (!sched || sched.act !== Number(night.act)) return null
-    const i = dueSlot(sched, { now })
+    const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour) })
     if (i === null) return null
     tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
     return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i } }

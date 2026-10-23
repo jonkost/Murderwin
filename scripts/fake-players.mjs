@@ -295,10 +295,13 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
     actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the memory match`])
 
-    // ---- Act 6: the drawing, the Parlour Games once it is done, the door, the deduction round
+    // ---- Act 6: the two Parlour Games at the start, the drawing, the door, the deduction round
+    await next() // the games: the first is on every phone at once
+    const first6 = await answerWindow()
+    const rest6 = await allParlours()
+    const p6 = { games: (first6 ? 1 : 0) + rest6.games, answered: first6 + rest6.answered }
     await next() // the drawing starts
     const drawing = await playDrawing()
-    const p6 = await allParlours() // none pops up over the drawing
     await next() // the door
     await next() // the deduction round
     const n6 = await nightDoc()

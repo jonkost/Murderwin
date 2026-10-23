@@ -5,7 +5,7 @@ import { createNight, join, CHARACTERS, NightError } from '../lib/night.js'
 import { hostCommand, studyFinished, advanceRelay, nextOf } from '../lib/run.js'
 import { stationCommand, studyClueCard, rotationPath, studyPath, STUDY_PLACEHOLDER } from '../lib/station.js'
 import {
-  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results,
+  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results, NIGHT,
 } from '../lib/deal.js'
 import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, fillEpilogue, DEFAULT_EPILOGUE, go } from '../lib/finale.js'
 import { relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS } from '../lib/relay.js'
@@ -325,9 +325,11 @@ test('a start that fails leaves Next on the drawing beat, so trying again tries 
   const t = { now: 11_000_000 }
   await hostCommand(db, { nightId, command: 'act', arg: 5, now: t.now })
   await hostCommand(db, { nightId, command: 'next', now: t.now }) // irwin
-  assert.equal(night(db, nightId).beat, 'irwin')
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // Act 6: the two Parlour Games
+  assert.equal(night(db, nightId).beat, 'games')
+  t.now += NIGHT.windows.questions.ms + 1
   await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /at least two/)
-  assert.equal(night(db, nightId).beat, 'irwin', 'the beat did not move')
+  assert.equal(night(db, nightId).beat, 'games', 'the beat did not move')
   assert.equal(db.store.get(relayPaths(nightId).pub), undefined)
 })
 

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
 import { hostCommand, studyFinished, advanceRelay, player } from '../lib/run.js'
-import { beatsOf, beatSpec, traceLevel, ms } from '../lib/deal.js'
+import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
@@ -353,7 +353,7 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(irwin.kind, 'irwin')
   assert.equal(irwin.lines.length, 4)
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
-  assert.ok([1, 2, 3].includes(irwin.choices.length), 'one, two or three motives named')
+  assert.ok([1, 2, 3, 4, 5].includes(irwin.choices.length), 'one to five motive cards')
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {
@@ -363,7 +363,9 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin')
 
   // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, the board
-  await next() // Act 6 opens on the drawing
+  await next() // Act 6 opens on its two Parlour Games
+  now += NIGHT.windows.questions.ms + 1
+  await next() // the drawing
   const { pub, priv } = relayPaths(nightId)
   for (let g = 1; g <= 3; g++) {
     let p = db.store.get(pub)

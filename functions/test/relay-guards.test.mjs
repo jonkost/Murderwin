@@ -8,7 +8,7 @@ import {
   start, advance, vote, reset, relayPaths, presentKeys,
   TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, MAX_TURNS, DRAW_BUDGET_MS, PRESENT_MS, TIMING,
 } from '../lib/relay.js'
-import { ms } from '../lib/deal.js'
+import { ms, NIGHT } from '../lib/deal.js'
 
 // The Act 6 door cannot misfire: a second Start keeps the drawing, Clear
 // re-opens the door for a second run, the grids fit the time budget, and a
@@ -90,7 +90,9 @@ test('start twice keeps the drawing: turnIndex and seed stand; force restarts it
 test('reset re-opens the door: after a full run, Clear, then a second full run reveals a new trace and the hall goes green again', async () => {
   const { db, nightId, uids } = await party(3)
   const t = { now: 2_000_000 }
-  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now }) // Act 6 opens on the drawing
+  await hostCommand(db, { nightId, command: 'act', arg: 6, now: t.now }) // Act 6 opens on two Parlour Games
+  t.now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // then the drawing
   assert.equal(night(db, nightId).beat, 'drawing')
   const cues = `nights/${nightId}/public/cues`, trace = `nights/${nightId}/public/trace`
   assert.equal(db.store.get(cues).hall, 'red')

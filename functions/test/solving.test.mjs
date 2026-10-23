@@ -410,6 +410,24 @@ test('G39 each player gets exactly one real Act 2 hint; the other three cats onl
   for (const cat of LIGHTS_CATS) assert.ok(counts[cat] > 9000 / 4 * 0.85 && counts[cat] < 9000 / 4 * 1.15, `${cat}: ${counts[cat]}`)
 })
 
+// ---- Salem petted ----------------------------------------------------------
+
+test('Salem petted: a guest\'s Salem goes to 5 with a card saying so, once; never for the two hosts', async () => {
+  const { db, nightId, uids } = await lightsParty(4)
+  await assert.rejects(hostCommand(db, { nightId, command: 'salem-petted', arg: 'jon' }), /hosts/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'salem-petted', arg: 'susan' }), /hosts/)
+  await assert.rejects(hostCommand(db, { nightId, command: 'salem-petted', arg: 'nobody' }), /at the party/)
+  assert.equal((await hostCommand(db, { nightId, command: 'salem-petted', arg: 'jessa' })).ok, true)
+  const s = db.store.get(`sessions/${uids.jessa}`)
+  assert.equal(s.affection.salem, 5)
+  assert.equal(s.salemFriend, true)
+  assert.equal(s.cards.filter(c => c.id === 'salem-friend').length, 1)
+  assert.match(s.cards.find(c => c.id === 'salem-friend').text, /True Friend of the Groundskeeper/)
+  assert.equal((await hostCommand(db, { nightId, command: 'salem-petted', arg: 'jessa' })).already, true)
+  assert.equal(db.store.get(`sessions/${uids.jessa}`).cards.filter(c => c.id === 'salem-friend').length, 1, 'once')
+  assert.equal(db.store.get(`sessions/${uids.jacob}`).affection.salem, 3, 'nobody else moves')
+})
+
 test('family mates are the rest of the family', () => {
   assert.deepEqual(familyMates(1).sort((a, b) => a - b), [6, 12])
   assert.deepEqual(familyMates(19).sort((a, b) => a - b), [3, 10, 11, 13])

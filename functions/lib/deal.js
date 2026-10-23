@@ -873,13 +873,42 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
   const uid = deck.uids?.[key]
   if (uid) {
     const sref = db.doc(`sessions/${uid}`)
-    const patch = applyMoves((await sref.get()).data()?.affection ?? {}, moves)
+    const s = (await sref.get()).data() ?? {}
+    const patch = applyMoves(s.affection ?? {}, moves, { salemFriend: !!s.salemFriend })
     if (Object.keys(patch).length) await sref.update(Object.fromEntries(Object.entries(patch).map(([cat, v]) => [`affection.${cat}`, v])))
   }
   // a hidden role's points also move the dial, through the case's map, in one transaction (windows.js);
   // every push is kept, by act and role, for the tug-of-war graph in Act 7; sealed until then
   const total = picks.reduce((sum, k, i) => sum + (w.values[i]?.[k] ?? 0), 0)
   await pushDial(db, nightId, { c, role, total, act })
+}
+
+// "Salem petted" (the host's phone): the real Salem chose this guest. Their
+// Salem goes to 5 and stays there, and a card says so. Never for the two
+// hosts (handoff 22 Oct §6 and §9). Open copy; the workshop's ui_copy line
+// SALEM FRIEND wins.
+export const SALEM_FRIEND = {
+  title: 'True Friend of the Groundskeeper',
+  text: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn.",
+  button: 'Keep it',
+}
+export async function salemPetted(db, nightId, { arg, now = Date.now() } = {}) {
+  const key = String(arg ?? '').trim()
+  const deck = (await db.doc(`nights/${nightId}/private/deck`).get()).data() ?? {}
+  const uid = deck.uids?.[key]
+  if (!uid) throw new NightError('no-guest', 'Pick a guest who is at the party.')
+  const ref = db.doc(`sessions/${uid}`)
+  const s = (await ref.get()).data()
+  if (!s) throw new NightError('no-guest', 'Pick a guest who is at the party.')
+  if (s.host) throw new NightError('invalid', 'Not for the two hosts.')
+  if (s.salemFriend) return { ok: true, already: true }
+  const ui = labelled(await readArea(db, 'ui_copy'))
+  const cards = s.cards ?? []
+  await ref.update({
+    'affection.salem': 5, salemFriend: true,
+    cards: [...cards, { id: 'salem-friend', act: null, beat: null, kind: 'notice', key: 'salem-friend', title: SALEM_FRIEND.title, text: ui['SALEM FRIEND'] ?? SALEM_FRIEND.text, button: SALEM_FRIEND.button, at: new Date(now) }],
+  })
+  return { ok: true }
 }
 
 function validPicks(set, picks) {

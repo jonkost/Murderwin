@@ -170,8 +170,12 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   // Act 5, Act 6
   await next(); await next()
   assert.equal(night(db, nightId).act, 5)
-  await next() // Act 6 opens on the drawing
+  await next() // Act 6 opens on its two Parlour Games, the first at once
   assert.equal(night(db, nightId).act, 6)
+  assert.equal(night(db, nightId).beat, 'games')
+  assert.equal(night(db, nightId).window.kind, 'questions')
+  now += NIGHT.windows.questions.ms + 1
+  await next() // the drawing
   assert.equal(db.store.get(`nights/${nightId}/public/relay`).state, 'walk')
   await assert.rejects(next, /still running/) // the phones stay on the drawing until it is done or cleared
   await hostCommand(db, { nightId, command: 'relay-reset', now })
@@ -302,22 +306,32 @@ test('a Parlour Game opens once at its time: a second tick opens nothing twice a
   for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
   const priv = db.store.get(`nights/${nightId}/private/windows`)
   assert.notEqual(priv[lit.id].setId, priv[w1.id].setId, 'light-up picks a set not used tonight')
-  // Act 6 opens on the drawing. The four Act 2 games that never got their turn come along
-  // (the twelve are one budget for the night), first in line, then Act 6's own two
+  // Act 6 opens on its Parlour Games, back to back, before the drawing (22 Oct). The four
+  // Act 2 games that never got their turn come along (the twelve are one budget for the
+  // night), first in line, then Act 6's own two; the first opens the moment the act does
   now += NIGHT.windows.questions.ms + 1
   await hostCommand(db, { nightId, command: 'act', arg: 6, now })
+  assert.equal(night(db, nightId).beat, 'games')
   assert.equal(sched().act, 6)
   assert.equal(sched().count, 4 + 2)
   assert.deepEqual(sched().slots.map(s => `${s.act}-${s.slot}`), ['2-1', '2-2', '2-3', '2-4', '6-0', '6-1'])
-  for (let i = 1; i < 6; i++) assert.ok(ms(sched()[`due${i}`]) >= ms(sched()[`due${i - 1}`]), 'in time order')
-  // a game that falls due waits until the drawing is over
-  now = ms(sched().due0)
-  await hostCommand(db, { nightId, command: 'tick', now })
-  assert.equal(night(db, nightId).window.id, lit.id, 'nothing pops up over the drawing')
-  await hostCommand(db, { nightId, command: 'relay-reset', now })
-  await hostCommand(db, { nightId, command: 'tick', now })
+  for (let i = 1; i < 6; i++) assert.equal(ms(sched()[`due${i}`]) - ms(sched()[`due${i - 1}`]), NIGHT.parlour.startGapSec * 1000, 'back to back')
   const carried = night(db, nightId).window
-  assert.equal(carried.id, 'questions-6-p2-1', 'game 1 of Act 2, played in Act 6')
+  assert.equal(carried.id, 'questions-6-p2-1', 'game 1 of Act 2, played first in Act 6, at once')
+  // the next follows one short gap later, not the four minutes of Acts 2 and 4
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(night(db, nightId).window.id, carried.id, 'not before its gap')
+  now = ms(sched().due1)
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(night(db, nightId).window.id, 'questions-6-p2-2')
+  // the host moves on to the drawing; a game that falls due waits until the drawing is over
+  now += NIGHT.windows.questions.ms + 1
+  await hostCommand(db, { nightId, command: 'next', now })
+  assert.equal(night(db, nightId).beat, 'drawing')
+  now = ms(sched().due2) + 1
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(night(db, nightId).window.id, 'questions-6-p2-2', 'nothing pops up over the drawing')
   const c = db.store.get(`cases/${nightId}`)
   const priv6 = db.store.get(`nights/${nightId}/private/windows`)[carried.id]
   assert.equal(priv6.planAct, 2); assert.equal(priv6.slot, 1)
