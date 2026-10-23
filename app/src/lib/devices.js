@@ -89,8 +89,8 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'ipad', name: 'The captions iPad', machine: 'The iPad Pro, on a stand', kiosk: 'ipad',
-        what: 'Keeps the words of the news and the bulletin up through dinner, for anyone who missed the TV. It also shows the drawing.',
-        note: 'Still to decide on the Timeline (Act 3, Phones down): the captions screen at dinner, or the spare phone only.',
+        what: 'Keeps the words of W-O-O-F News bulletins 1 and 2 up through supper. After dinner this iPad becomes the memory match, then the bedroom screen.',
+        note: 'Decided 22 Oct 2026: the iPad Pro shows the captions in the orangery through supper.',
         start: ['Open the address in Safari, full screen.', 'Tap anywhere once to wake it.'],
         alive: 'The crest and a waiting line. The dot in the bottom left corner is green.',
       },
@@ -102,7 +102,7 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'memory', name: 'The memory match iPad', machine: 'The iPad Pro, moved here after dinner', kiosk: 'memory',
-        note: 'The house has two iPads. The iPad Pro comes here after dinner (and does the captions at dinner too, if you choose that), and the older family iPad is the spare phone.',
+        note: 'The house has two iPads. The iPad Pro comes here after dinner (after doing the captions at supper), and the older family iPad is the spare phone.',
         what: 'Turn two cards at a time and find the six pairs of traces. Clearing it crosses one motive off.',
         start: ['Open the address in Safari, full screen.', 'Tap anywhere once to wake it.'],
       },

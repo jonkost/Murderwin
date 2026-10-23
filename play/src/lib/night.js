@@ -81,6 +81,22 @@ export function isDark(night) {
   return effectivePhase(night) === 'blackout'
 }
 
+// A rehearsal night gets a big red REHEARSAL band across the top of every
+// phone and room screen. Every night rehearses unless the workshop's "This
+// is the party night" box made it the party (nights.forceRehearsal false,
+// the same test the dealer uses), and a fake-players dry run is never the
+// party either. The party night never shows the band, even if its secrets
+// fell back to rehearsal text (the Host tab says so instead). The band
+// hides with everything else through the blackout and the role prompt.
+export function isRehearsalNight(night) {
+  if (!night) return false
+  return night.forceRehearsal !== false || night.dryRun === true
+}
+export function showRehearsalBand(night) {
+  const phase = effectivePhase(night)
+  return isRehearsalNight(night) && phase !== 'blackout' && phase !== 'prompt'
+}
+
 // The Welcome tour shows the first time a phone has a character on this
 // night, whatever the act (a late arrival at Act 3 still gets it), but never
 // over the blackout or the role prompt, paused or not.
@@ -178,6 +194,21 @@ export function clueCards(session) {
 // This phone's role card, whenever it was dealt. Null until the power returns.
 export function roleCard(session) {
   return cardsOf(session).find(c => c.kind === 'role') ?? null
+}
+
+// A True Friend of the Groundskeeper (the host's "Salem petted"): the
+// honour's words, shown again at the top of Salem's row on the Cats tab.
+// The card the server sent carries the workshop's SALEM FRIEND line when Jon
+// wrote one; these are the server's own words (functions/lib/deal.js) for a
+// phone that lost the card.
+export const SALEM_FRIEND = {
+  title: 'True Friend of the Groundskeeper',
+  text: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn.",
+}
+export function salemFriendNote(session) {
+  if (!session?.salemFriend) return null
+  const card = cardsOf(session).find(c => c?.id === 'salem-friend')
+  return { title: card?.title || SALEM_FRIEND.title, text: card?.text || SALEM_FRIEND.text }
 }
 
 // Is this window open on this phone right now, and still unanswered? During a

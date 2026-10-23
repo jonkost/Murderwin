@@ -1,6 +1,6 @@
 # Sirwin Manor — How the Case Gets Solved
 
-Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees).
+Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees), and 23 October (what is built, open decisions, what to watch in the practice game).
 Canon wins any other disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 This doc says **how** clues reach players across the night.
@@ -8,6 +8,8 @@ This doc says **how** clues reach players across the night.
 **What is open and what is sealed** (changed 22 Oct). The W-O-O-F News lines, the cat hint lines and Irwin's lines are **open banks**: every line in them is written, Jon may see them, and they may live in the repo. Only the game's pick is secret: which family is real, which line plays, which motive a cat rules out. The pick is made at the deal and never shown to Jon.
 
 The banks live in three Claude Docs (linked from the handoff): the W-O-O-F News Recording Script, Cat Hint Lines, and The Relay Drawing · How to Play.
+
+The game plays the repo copies: `seed/woof-news.json`, `seed/cat-lines.json`, and the lines in `functions/lib/deal.js`, `screen.js` and `hosts.js`. The repo copy is what plays. If you change a line in a Claude Doc, ask Claude Code to copy it in before the freeze on 7 November.
 
 ---
 
@@ -59,7 +61,9 @@ The news team: Ava Waves (studio anchor), Mic Cameron (field reporter), Haley St
 
 **Bulletin 1 · Act 2, lights out · video.** Ava on camera for the opening and sign-off; the family line plays over B-roll. Always clarity level 3. Crosses off exactly one wrong family. Five family clips plus the opening and sign-off. Sign-off: "Don't touch that dial! Stay tuned for more updates."
 
-**Bulletin 2 · Act 3, near the end of supper · audio.** Plays on the Orangerie HomePod, captions on the iPad. 25 lines: 5 families × 5 dial levels. Every level points at the real family; level 1 is very obscure, level 5 is plain. Jon arms it from his host phone; it plays at a random moment 3 to 5 minutes later. The arm screen says only "Armed", never the line. Sign-off teases Irwin's "pup-lic address". (This replaces the older Bulletin 2 design that ruled out single motives.)
+Bulletin 1 and the closing bulletin are built today as sound with captions. Whether they play as video on the living room TV is Jon's open decision newsVideo.
+
+**Bulletin 2 · Act 3, near the end of supper · audio.** Plays on the Orangerie HomePod, captions on the iPad. Voice not decided yet. 25 lines: 5 families × 5 dial levels. Every level points at the real family; level 1 is very obscure, level 5 is plain. Jon arms it from his host phone; it plays at a random moment 3 to 5 minutes later. The arm screen says only "Armed", never the line. Sign-off teases Irwin's "pup-lic address". (This replaces the older Bulletin 2 design that ruled out single motives.)
 
 **Bulletin 3 · Act 7, the reveal · video.** See "Act 7" below.
 
@@ -129,17 +133,23 @@ Every hint line is in the Cat Hint Lines doc. Every cat only ever rules out wron
 
 **Salem's unlock screen:** a badge with stars on Salem in the Cats tab. On tap: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn."
 
+Built so far: a True Friend sees this text when they open Salem on the Cats tab, and at 5 his hint line goes straight. His secret testimony line does not go straight at 5 yet (G17 in `docs/test-plan.md`; it goes away if secretLines retires the secret lines).
+
 ---
 
 ## Act 4, Behind Closed Doors
 
 Groups walk to the cats' rooms again, scan in, and the cat talks to the group. The house is open; only the Study is enclosed. Free time is fine (bathroom, drinks, mingling).
 
-Phone direction screens:
+Phone direction screens (built 23 Oct):
 1. Your group: "You're teamed up with Iris DeVine and Jasper Steeps. From now on, only share with your group." (names are the group's characters)
-2. Your turn: "Zimothy will see your group in the Library. Go together."
+2. Your turn, at the cat station: "Zimothy will see your group in the Library. Go together." (the cat and the room change)
 3. The Study: "Granolia's expecting your group in the Study, upstairs."
-4. Free time: "Nothing for your group right now. Grab a drink, stretch your legs."
+4. Free time: "Nothing for your group right now. Grab a drink, stretch your legs." Plus one of the tips below, picked at random.
+
+- **Free time is the old Check-in station.** Every group has a station every round, so a group is never without one. The Check-in card became the Free time card.
+- **Not built yet: the Act 4 scan-in.** Today the cat's words reach the group's phones with the cat card, without a scan.
+- **The cat station never sends a group to Granolia.** Her room, the Study, holds the light puzzle. Settled by default; Jon may change it.
 
 Random free-time tips:
 - "Have you crossed off everything you know?"
@@ -186,6 +196,7 @@ Irwin shows a countdown of motive cards. The dial sets how many:
 - Filler comes from the real family first, then from families already ruled out.
 - This replaces the 3/2/1 rule.
 - Motive card art: "The last of the pie" shows **pizza**, not apple pie.
+- Built (23 Oct): Irwin's Act 5 screen shows only his opener, the countdown line, the motive cards and his closer. The old secret middle line is gone from the screen. The generator still writes it until Jon answers secretLines.
 
 ---
 
@@ -199,6 +210,8 @@ Irwin's lines, by level (replace the 5 Oct draft in READ-FIRST):
 4. "I fetched it! Here it is! I don't know what it's called, but I fetched it!"
 5. "I fetched it, and I even know its name! Can we play again? Please?"
 
+Settled by default, as built: the deduction round comes after the bedroom door opens. Jon may change it.
+
 **Trace linking is closed** (22 Oct). Players link traces to characters from the portraits, which show each trace. One gap: the Medium's portrait needs a candle (her trace is lilac candle wax). That's an art task for Jon.
 
 ---
@@ -206,6 +219,8 @@ Irwin's lines, by level (replace the 5 Oct draft in READ-FIRST):
 ## Act 7: the closing bulletin
 
 Video that bookends the Act 2 bulletin. Order stays Murderer, Motive, Victim (F17). Jon records generic lines; the game cuts in the three cards as B-roll, so he never needs the answer. Full script in `docs/handoff-2026-10-22.md` §7b. Then the end credits (§8).
+
+Built (23 Oct), as sound with captions (video waits on newsVideo): each name card appears only after its lead-in line has played, and pressing the next name cuts off the recording that is playing. The end-credit awards show only in the credits.
 
 ---
 
@@ -238,9 +253,17 @@ Flavor only: intro text in each character's voice, no change to play. Lines in `
 - **F20** Only one player is at a cat's QR code at a time in Act 2.
 - **F21** Every player is told where to go next. Nobody is ever left without a next step.
 
+All of these are now in `docs/test-plan.md` too, with where each one stands.
+
+---
+
+## To check in the weekend practice
+
+- **Does Irwin's countdown matter?** In a simulation where every clue was pooled and read perfectly, the room could name the motive almost every time, even at dial 1. So Irwin's countdown added little. Real players will not read every clue perfectly. Watch whether they can name the motive before dessert. Ask Jon about it only after the practice game.
+
 ---
 
 ## Not designed yet — don't invent these
 
-- Whether the bags stay in Act 4.
-- Dining Hall vs Library naming in the locations bank (the Library is the real dining room).
+- Whether the bags stay in Act 4 (Jon's open decision bagsAct4).
+- Dining Hall vs Library naming (Jon's open decision diningName). The cats' room list still says "the dining hall", but in the house that room is the Library (Zimothy's room). The rooms in play come from the workshop list "Blanks: rooms, times, counts", Rooms tab. If Jon picks the Library, he or Susan changes that line in the workshop, and Claude Code changes the seed defaults to match. The secret clues use a [ROOM] blank, so nothing sealed needs remaking.

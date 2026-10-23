@@ -600,7 +600,11 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .memory-card { aspect-ratio: 1; border-radius: 1.4vh; border: 2px solid var(--brand-brass); background: var(--brand-claret); display: grid; place-items: center; padding: 0; cursor: pointer; }
 .memory-card.up { background: var(--brand-parchment); cursor: default; }
 .memory-card img { width: 86%; height: 86%; object-fit: contain; }
-.memory-back { font-size: 6vh; color: var(--brand-brass); }
+/* a face-down card is one of Zimothy's manila file folders: light folder, dark outline, on the claret card */
+.memory-back { width: 80%; height: 80%; display: block; }
+.memory-back .folder-rear { fill: #c99a4e; stroke: #2b1a0c; stroke-width: 3; stroke-linejoin: round; }
+.memory-back .folder-front { fill: #f0d595; stroke: #2b1a0c; stroke-width: 3; stroke-linejoin: round; }
+.memory-back .folder-label { stroke: #8a6a3a; stroke-width: 4; stroke-linecap: round; }
 
 /* A host's line (functions/lib/hosts.js): flavor, in the cat's voice. */
 .host-line { display: flex; gap: 0.6rem; align-items: flex-start; font-style: italic; margin: 0.5rem 0 1rem; }
@@ -642,4 +646,63 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .option-name { font-size: 2.2vw; font-weight: 700; }
 .kiosk-option.out .option-name, .option-name.crossed { text-decoration: line-through; opacity: 0.45; }
 .door-slide { padding-bottom: 0; }
+/* slide 3: the practice smiley's B1 square, dark like a turn, its label beside the words */
+.slide-with-cell { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 90vw; }
+.slide-with-cell .slide-text { text-align: left; margin: 0; }
+.slide-cell { display: flex; align-items: flex-start; gap: 1.2vw; flex: none; }
+.cell-art.slide { width: 34vh; height: 34vh; display: block; }
+.slide-cell-label { font-size: 6vh; font-weight: 700; color: #fff; margin: 0; line-height: 1; }
+/* Sir Irwin's door slide, above "The door is open" */
+.kiosk.done .door-slide { display: flex; align-items: center; gap: 2.5vw; max-width: 84vw; margin: 0 0 2vw; text-align: left; }
+.kiosk.done .door-slide .irwin-mood { height: 22vh; margin: 0; }
+.kiosk.done .door-slide .irwin-face { width: 12vw; height: 12vw; margin: 0; flex: none; }
+.kiosk.done .door-slide .slide-text { font-size: 3vw; margin: 0; }
+.kiosk.done.with-slide .kiosk-big { font-size: 7vw; }
+/* the Murderer's and the Ghost's cards carry their character's portrait */
+.reveal-portrait { max-height: 12vh; max-width: 100%; object-fit: contain; margin: 0 auto 1vw; display: block; }
+/* all three cards up, with Mic's sign-off and the studio's close under them: a little smaller, so the words still fit on the TV */
+.reveal-row.count-3 .reveal-card { min-height: 0; padding: 1.4vw; }
+.reveal-row.count-3 .reveal-portrait { max-height: 8vh; }
+.reveal-row.count-3 .reveal-name { font-size: 5vw; }
+.reveal-row.count-3 .reveal-name.motive { font-size: 4vw; }
+.reveal-row.count-3 .reveal-sub { font-size: 2.2vw; }
+/* The W-O-O-F News lines, Sir Irwin's Act 5 card (up to five motives) and the iPad's
+   captions must fit a 16:9 TV and the iPad, REHEARSAL band included: their text
+   sizes by the screen's height as well as its width. */
+.kiosk.card-screen .kiosk-lines, .kiosk.captions .kiosk-lines { gap: min(1.6vw, 2vh); }
+.kiosk.card-screen .kiosk-lines .kiosk-line { font-size: min(3.8vw, 5.2vh); }
+.kiosk.irwin .kiosk-lines .kiosk-line { font-size: min(4.6vw, 4.2vh); }
+.kiosk.irwin .irwin-mood { height: 18vh; }
+.kiosk.irwin .irwin-face { width: min(16vw, 18vh); height: min(16vw, 18vh); }
+.kiosk.irwin .irwin-choices { font-size: min(3.4vw, 4vh); gap: min(1vw, 1.2vh); margin-top: min(2vw, 1.6vh); }
+.kiosk.captions .kiosk-line { font-size: min(4.2vw, 5vh); }
+/* the memory match's twelve cards fit the iPad's height, under the band too */
+.memory-board { width: min(92vw, calc(88vh - var(--band-h))); }
+
+/* A stage direction in a cat's line (*snort*): italics, no stars */
+em.stage { font-style: italic; color: var(--dim); }
+
+/* A True Friend of the Groundskeeper: the honour, at the top of Salem's row */
+.gauge-more .friend-note { padding-top: 0.6rem; font-size: 1rem; color: var(--ink); }
+.gauge-more .friend-note strong { color: var(--good); }
+
+/* A rehearsal night: a wide red band fixed across the top of every phone and
+   room screen (RehearsalBand in Moments.jsx). The page moves down by its
+   height, so it never covers anything. Never on the party night. */
+:root { --band-h: 0px; }
+:root.rehearsal-on { --band-h: max(2.6rem, 7vh); }
+.rehearsal-band {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 95; height: var(--band-h);
+  display: flex; align-items: center; justify-content: center;
+  background: #d0101e; color: #fff; font-weight: 800; letter-spacing: 0.35em; text-indent: 0.35em;
+  font-size: calc(var(--band-h) * 0.52); line-height: 1; pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); border-bottom: 3px solid #fff;
+}
+:root.rehearsal-on body { padding-top: var(--band-h); }
+/* the full-screen pages only: the compact board inside the ballot screen keeps its own height */
+:root.rehearsal-on :is(.moment, .join, .rest, .kiosk:not(.compact)) { min-height: calc(100vh - var(--band-h)); min-height: calc(100dvh - var(--band-h)); }
+:root.rehearsal-on .overlay { top: var(--band-h); }
+:root.rehearsal-on :is(.offline, .paused-strip) { top: var(--band-h); }
+:root.rehearsal-on .overlay .paused-strip { top: 0; } /* the overlay already starts under the band */
+:root.rehearsal-on .kiosk-bell { top: calc(var(--band-h) + 1.2vw); }
 .kiosk.black-box .cell-art.big { background: none; border: none; box-shadow: none; padding: 0; border-radius: 0; }

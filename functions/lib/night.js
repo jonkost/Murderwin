@@ -367,17 +367,18 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 // host is dealing with a dog in the garden. The fields that move:
 //   nights/{id}.window.opensAt, .window.closesAt
 //   nights/{id}.reveal.at (older nights only; since 18 Oct the reveal lives in public/finale, below)
-//   nights/{id}/public/relay: turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
+//   nights/{id}/public/relay: introEndsAt (Sir Irwin's slides), turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
 //   nights/{id}/public/study: slotEndsAt (the twelve-minute slot with no station;
 //     a live station keeps its own fifteen-minute clock and freezes it itself
 //     by watching this night's phase, station/lib/follow.js)
-//   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it)
+//   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
+//     victimAt, and cardAt.<stage> (when the TV may show a name card)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
 export const PAUSE_SHIFTED = {
   night: ['window.opensAt', 'window.closesAt', 'reveal.at'],
-  'public/relay': ['turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
+  'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
-  'public/finale': ['at', 'holdAt', 'victimAt'],
+  'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
 }
 
@@ -418,7 +419,7 @@ export async function resumeNight(db, { nightId, now = Date.now() } = {}) {
     if (!snap.exists) continue
     const data = snap.data()
     const patch = {}
-    for (const f of PAUSE_SHIFTED[sub]) if (data[f]) { patch[f] = new Date(msOf(data[f]) + shift); moved++ }
+    for (const f of PAUSE_SHIFTED[sub]) { const v = pathGet(data, f); if (v) { patch[f] = new Date(msOf(v) + shift); moved++ } }
     if (Object.keys(patch).length) batch.update(subRef, patch)
   }
   await batch.commit()

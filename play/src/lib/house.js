@@ -2,7 +2,8 @@ import { ms } from './night.js'
 
 // What the Host tab's house panel shows: is the study station alive, are the
 // room screens and the cue relay alive, which group is due in the study and
-// how long it has, and whether the panel may show per-guest dots at all.
+// how long it has, how many guests have seen all four cats in Act 2, and
+// whether the panel may show per-guest dots at all.
 // Pure (no Firebase, no React) so play/test can run it under node --test.
 //
 // Nothing here can name a role. While a Parlour Game is open the panel shows
@@ -19,8 +20,20 @@ export const MACHINES = [
   { key: 'kiosk-ipad', label: 'The iPad' },
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },
+  { key: 'kiosk-memory', label: 'Memory match iPad' }, // the iPad Pro as ?kiosk=memory in Act 4
   { key: 'cues', label: 'Hall light and sounds' },
 ]
+
+// Act 2's cat visits: night.lightsProgress = { done, total }, written by the
+// server whenever the line moves (guests who have seen all four cats, and
+// guests in the line). A count only, never which cat or which hint.
+export function catVisits(night) {
+  const p = night?.lightsProgress
+  if (night?.act !== 2 || !p) return null
+  const of = Math.max(0, Math.floor(Number(p.total) || 0))
+  if (!of) return null
+  return { done: Math.min(of, Math.max(0, Math.floor(Number(p.done) || 0))), of }
+}
 
 function clock(msLeft) {
   const s = Math.max(0, Math.ceil(msLeft / 1000))
@@ -72,6 +85,7 @@ export function houseView({ night, study, rotation, presence = {}, now = Date.no
     study: group ? { groupId, names: studyNames(group), paid, running, state: study?.state ?? 'idle', clockLeft } : null,
     groups,
     canReassign: !!groupId && !paid && groups.some(g => !g.paid && !g.due),
+    catVisits: catVisits(night),
     hall: night?.act >= 1 ? 'on' : 'off',
   }
 }

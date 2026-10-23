@@ -4,7 +4,10 @@ import motivesFile from '../../../seed/motives.json' with { type: 'json' }
 import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
 import parlourFile from '../../../seed/parlour-games.json' with { type: 'json' }
 import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT } from './timelineTasks.js'
+import {
+  TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT,
+  AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT,
+} from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
 // them and keys the cats' moods off the job. The workshop writes the persona
@@ -58,6 +61,24 @@ const NOTICE_WHAT = {
   news: 'Act 2, eyes up at the big screen', checkin: 'Act 2, read your clues before dinner', down: 'Act 3, phones down at dinner', bulletin: 'Act 3, the bulletin was heard',
   roam: 'Act 5, cake in hand', irwin: 'Act 5, Sir Irwin is about to speak', door: 'Act 6, the door is open', eyes: 'Act 7, eyes on the screen for the reveal',
 }
+// The lines the game also reads (23 Oct 2026), so Jon, Susan or Jenna can
+// reword them. The handoff's words already play for each, so these are
+// marked `extra`: never counted in the list's goal or on the Timeline.
+const EXTRA_UI_LABELS = (() => {
+  const lights = { WAIT: 'Act 2, stay in the living room until you are called', GO: 'Act 2, go to your first cat, with [CAT], [ROOM] and [THEM]', NEXT: 'Act 2, time is up, go to the next cat, with [CAT] and [ROOM]', WITH: 'Act 2, the cat is talking to you, with [CAT]', DONE: 'Act 2, you have seen all four cats', SUPPER: 'Act 2, the chime for supper' }
+  const greet = { SALEM: 'Salem', ZIMOTHY: 'Zimothy', BOO: 'Boo', GRANOLIA: 'Granolia' }
+  const host = { GRANOLIA: 'Granolia’s hello on the phones’ study card in Act 4', ZIMOTHY: 'Zimothy’s hello on the phones’ memory match card in Act 4', SALEM: 'Salem opening the final picks in Act 7' }
+  const count = ['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE']
+  return [
+    ...Object.entries(lights).map(([k, what]) => ({ value: `LIGHTS ${k}`, label: `LIGHTS ${k}: ${what}`, extra: true })),
+    ...Object.entries(greet).map(([k, name]) => ({ value: `GREET ${k}`, label: `GREET ${k}: ${name}’s hello in Act 2 when ${name} has no hint for you`, extra: true })),
+    { value: 'SALEM FRIEND', label: 'SALEM FRIEND: the card when the real Salem has been petted', extra: true },
+    ...Object.entries(host).map(([k, what]) => ({ value: `HOST ${k}`, label: `HOST ${k}: ${what}`, extra: true })),
+    ...[1, 2, 3, 4, 5, 6].map(i => ({ value: `HOST BOO ${i}`, label: `HOST BOO ${i}: one of Boo’s six lines before a Parlour Game`, extra: true })),
+    ...[1, 2, 3, 4, 5].map(i => ({ value: `HOST IRWIN TRACE ${i}`, label: `HOST IRWIN TRACE ${i}: what Sir Irwin says over the trace at level ${i}`, extra: true })),
+    ...count.map((w, i) => ({ value: `IRWIN ${w}`, label: `IRWIN ${w}: what Sir Irwin says over ${5 - i === 1 ? 'one motive card' : `${w.toLowerCase()} motive cards`}`, extra: true })),
+  ]
+})()
 export const UI_LABELS = [
   { value: 'DOORS', label: 'DOORS: the doors are not open yet' }, { value: 'JOIN', label: 'JOIN: who are you, tap your name' }, { value: 'JOIN BUTTON', label: 'JOIN BUTTON: the button that lets you in' },
   { value: 'JOIN AGAIN', label: 'JOIN AGAIN: coming back on a new phone' }, { value: 'LOBBY', label: 'LOBBY: in, waiting for Act 1' }, { value: 'BAG', label: 'BAG: which bag to collect' },
@@ -71,10 +92,14 @@ export const UI_LABELS = [
   { value: 'STOPS', label: 'STOPS: the five words of the Cats tab slider, low to high, with commas' },
   { value: 'NUMBERS', label: 'NUMBERS: the safe’s three numbers inside a testimony, with [A], [B] and [C]' },
   { value: 'NOTICE SCRAP', label: 'NOTICE SCRAP: the scrap of paper a cat leaves when it will not talk, with [A], [B] and [C]' },
-  { value: 'FILLER', label: 'FILLER: a phone with nothing to do while others are choosing' },
-  { value: 'RELAY RULES', label: 'RELAY RULES: the rules of the drawing, on the living room screen' },
+  { value: 'FILLER', label: 'FILLER: a short line added to a short role card, so all three cards are the same length' },
+  { value: 'RELAY RULES', label: 'RELAY RULES: three short rules on every phone before the first drawer walks up. Sir Irwin’s slides explain the game on the TV' },
   ...NOTICE_KEYS.map(k => ({ value: `NOTICE ${k.toUpperCase()}`, label: `NOTICE ${k.toUpperCase()}: ${NOTICE_WHAT[k]}` })),
+  ...EXTRA_UI_LABELS,
 ]
+
+// The labels that count toward the list's goal and the Timeline.
+export const COUNTED_UI_LABELS = UI_LABELS.filter(l => !l.extra)
 
 // Granolia's lines on the study screen, by moment. The screen has a plain
 // default for each until one is written here.
@@ -88,11 +113,12 @@ export const STUDY_LABELS = [
 ]
 
 // The Act 4 station cards, one line each. CAT may carry [CAT] for the cat's
-// name; BAGS may carry [PROPERTY] and [COUNT] (two or three).
+// name and [ROOM] for its room; BAGS may carry [PROPERTY] and [COUNT] (two or
+// three). CHECKIN is the Free time slot (23 Oct 2026).
 export const STATION_LABELS = [
-  { value: 'STUDY', label: 'STUDY: go up to the study' }, { value: 'CAT', label: 'CAT: find the cat, with [CAT] for its name' },
-  { value: 'BAGS', label: 'BAGS: the bags, with [PROPERTY] and [COUNT]' }, { value: 'PUZZLE', label: 'PUZZLE: the small shape puzzle on the phones' },
-  { value: 'CHECKIN', label: 'CHECKIN: sit down together and compare' },
+  { value: 'STUDY', label: 'STUDY: Granolia is expecting your group in the Study, upstairs' }, { value: 'CAT', label: 'CAT: a cat will see your group, with [CAT] for its name and [ROOM] for its room' },
+  { value: 'BAGS', label: 'BAGS: the bags, with [PROPERTY] and [COUNT]' }, { value: 'PUZZLE', label: 'PUZZLE: the memory match on the iPad, in the Library' },
+  { value: 'CHECKIN', label: 'CHECKIN: Free time, nothing for your group right now (one tip is added after it)' },
 ]
 
 // The fourteen traces, one line each: what the bedroom screen says was left
@@ -173,7 +199,7 @@ export const AREAS = {
       { key: 'title', label: 'Heading, in capitals', placeholder: 'e.g. YOUR PHONE', kind: 'text' },
       { key: 'body', label: 'What it says, one to three sentences', placeholder: 'e.g. It is your notebook, your map, and your memory tonight. Keep it on you.', kind: 'textarea', main: true },
     ] },
-  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused, every notice', why: 'The fixed words that no character is speaking: the door, the lobby, no signal, paused, the notices between beats, the safe’s numbers. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: UI_LABELS.length,
+  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused, every notice', why: 'The fixed words that no character is speaking: the door, the lobby, no signal, paused, the notices between beats, the safe’s numbers. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: COUNTED_UI_LABELS.length,
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which screen', placeholder: 'Pick one', kind: 'select', options: UI_LABELS },
@@ -186,7 +212,7 @@ export const AREAS = {
         { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }] },
       { key: 'text', label: 'The words', placeholder: 'e.g. Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight.', kind: 'textarea', main: true },
     ] },
-  station_text: { label: 'The five stations', moment: 'Act 4, the card a group gets at each station', why: 'One line per station: the study, a cat, the bags, the small puzzle, the check-in. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length,
+  station_text: { label: 'The five stations', moment: 'Act 4, the card a group gets at each station', why: 'One line per station: the study, a cat, the bags, the memory match, free time. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length,
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which station', placeholder: 'Pick one', kind: 'select', options: STATION_LABELS },
@@ -198,7 +224,7 @@ export const AREAS = {
       { key: 'title', label: 'The title', placeholder: 'e.g. Clean Plate Club', kind: 'text' },
       { key: 'text', label: 'One line, read out on the screen', placeholder: 'e.g. Nothing left on the plate, not even the garnish.', kind: 'textarea', main: true },
     ] },
-  scenarios: { label: 'Parlour Games', moment: 'Acts 2, 4 and 6, four times each, popping up on every phone at once', why: 'Silly sets of three questions with two answers each. Every guest answers the same set at the same moment. Each night deals twelve of these at random, so seventeen means five spare. The points only matter for the Murderer and the Ghost: they move how clear the clues come out. How the cats feel about a Detective is decided by the cats, not the points.', group: 'Words on the phones', tabs: null, guide: null, goal: 17, editor: 'questions' },
+  scenarios: { label: 'Parlour Games', moment: 'Twelve a night: five in Act 2 and five in Act 4 at random times, then two back to back as Act 6 opens, on every phone at once', why: 'Silly sets of three questions with two answers each. Every guest answers the same set at the same moment. Each night deals twelve of these at random, so seventeen means five spare. The points only matter for the Murderer and the Ghost: they move how clear the clues come out. How the cats feel about a Detective is decided by the cats, not the points.', group: 'Words on the phones', tabs: null, guide: null, goal: 17, editor: 'questions' },
   motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
     codec: labelCodec,
     fields: [
@@ -230,13 +256,14 @@ export const AREAS = {
   // — Blanks and frames —
   pools: { label: 'Blanks: rooms, times, counts', moment: 'Acts 2 and 4, dropped into a cat’s testimony', why: 'Cat lines have blanks like [ROOM]. These short phrases fill them. Lowercase, no full stop.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10,
     fields: [line('A short phrase', 'e.g. the scullery')] },
-  echo_frames: { label: 'News frames', moment: 'Acts 2 and 4, the news bulletin on a room screen', why: 'A radio or newspaper wrapper with one gap. The gap is filled with a secret fragment on the night.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8,
+  // retired 22 Oct 2026: W-O-O-F News replaced the news frames; lines already written are kept
+  echo_frames: { label: 'News frames (retired)', moment: 'Retired 22 Oct 2026: W-O-O-F News replaced the news frames', why: 'The old news wrapper. W-O-O-F News plays instead, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8, hidden: true, retired: true,
     codec: echoCodec,
     fields: [
       { key: 'before', label: 'Before the gap (start with ...)', placeholder: 'e.g. ...the morning post brings word of', kind: 'textarea', main: true },
       { key: 'after', label: 'After the gap (end with ...)', placeholder: 'e.g. , which the household calls exaggerated and the post calls Tuesday...', kind: 'textarea' },
     ] },
-  templates: { label: 'Stationery designs', moment: 'Acts 2 and 4, the paper a solved puzzle pays out', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
+  templates: { label: 'Stationery designs', moment: 'Act 2, the paper the safe pays out', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
   epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
@@ -266,8 +293,9 @@ export const AREAS = {
     ] },
   guests: { label: 'Guest list (retired)', moment: 'Retired: guests type their name on their own phone', why: 'The old guest list. Nobody is cast ahead of the night: a guest types their name at the door and is dealt a character.', group: 'Everything else', tabs: null, guide: 'guest', goal: 0, hidden: true, retired: true,
     fields: [line('A name', 'e.g. Jessa')] },
-  art_assets: { label: 'Pictures', moment: 'Screens, portraits and the big TV', why: 'A checklist of pictures still to make.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true },
-  av_assets: { label: 'Sounds', moment: 'The speakers: chimes, crackle, thunder', why: 'A checklist of sounds still to make.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true },
+  // retired 23 Oct 2026: the old 29 Aug checklists; the real art and sound jobs are Timeline cards
+  art_assets: { label: 'Pictures (retired)', moment: 'Retired 23 Oct 2026: the art and sound jobs are cards on the Timeline', why: 'The old checklist of pictures. A file uploaded here never reaches the phones, so the Timeline cards say where each picture goes. Kept, not used.', group: 'Everything else', tabs: null, guide: 'art_asset', checklist: true, upload: 'image', hidden: true, retired: true },
+  av_assets: { label: 'Sounds (retired)', moment: 'Retired 23 Oct 2026: the art and sound jobs are cards on the Timeline', why: 'The old checklist of sounds. A file uploaded here never reaches the brain, so the Timeline cards say where each sound goes. Kept, not used.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true, retired: true },
 }
 
 // How many a tab needs: the list's per-tab goal, unless one tab says otherwise
@@ -614,6 +642,19 @@ export const ADDITIONS = [
     id: '2026-10-22-handoff-built',
     tasks: HANDOFF_BUILT_TASKS,
     retireTasks: RETIRED_FOR_BUILT,
+  },
+  {
+    // 23 Oct: the audit. A card for every job it found with no card, the
+    // open questions as decisions, the stale cards marked done with the
+    // reason, the secrets and their read moved before the freeze with dates,
+    // the decisions with no moment filed, and the settled ones answered.
+    id: '2026-10-23-audit',
+    tasks: AUDIT_TASKS,
+    decisions: AUDIT_DECISIONS,
+    retireTasks: RETIRED_FOR_AUDIT,
+    fileTasks: FILED_FOR_AUDIT,
+    fileDecisions: FILED_DECISIONS_FOR_AUDIT,
+    answerDecisions: ANSWERED_FOR_AUDIT,
   },
 ]
 

@@ -4,6 +4,27 @@
 
 **25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — what she tells you is true except for exactly one detail (a room, a time, a count, a place, a crowd…), which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
 
+**22 Oct 2026 (handoff §6 and §6b; wins over everything below).** Every cat's hint comes from the open Cat Hint Lines bank (`seed/cat-lines.json`), picked by the player's affection level. A cat only ever rules out WRONG families or motives. Never the truth.
+
+| Cat | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Salem | Backwards | Backwards | Backwards | Coin flip | Straight |
+| Zimothy | One motive, curt | One motive, civil | Two motives | Whole family | Family + bonus motive |
+| Boo | A look | "Ew. Do I know you?" | One motive, five words | A family, chatty | Family + bonus motive |
+| Granolia | Long ramble, nothing | Half a motive name | One motive | Two, forgets the third | Whole family |
+
+- **Salem:** everyone starts at 3, whatever their profession. The Parlour Games take him no higher than 4. Level 5 comes only from petting the real Salem: Jon's Host tab button, for anyone but Jon and Susan, kids included. When he is backwards he points AT a wrong answer, so he never rules out the truth. Nobody can solve the case from Salem alone.
+- **Boo** speaks from level 3 (one motive, five words) and is chatty at 4.
+- **Zimothy** gives at least one motive at every level.
+- **Granolia's** hint depends on affection like the others'.
+- **Profession** still seeds the starting affection for Zimothy, Boo and Granolia, never Salem.
+- **Rooms:** Granolia in the Study (upstairs), Salem in the Orangerie, Zimothy in the Library (the dining room), Boo in the Entryway.
+- **Hosts:** Granolia the study light puzzle, Zimothy the memory match, Boo the Parlour Games, Salem the final picks. Sir Irwin hosts the Relay Drawing and the trace reveal.
+- **New "Trusting" lines** (handoff §6):
+  - Salem: "Most days, he's got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time."
+  - Boo: "The more she likes you, the more she'll say. Bore her and you get a look. Win her over and she might be useful."
+  - Zimothy and Granolia keep their current lines.
+
 ---
 
 ## 0. THE FOUNDING RULE — nobody addresses it
@@ -62,7 +83,7 @@ None of them is "random." Every cat is *legible* once you understand them — wh
 
 **[DECIDED] He has no interpersonal relationships.** The load-bearing detail. Salem isn't lying to deceive anybody — he has no agenda because he doesn't care enough about people to have one. He is simply, magnificently, **confidently wrong**.
 
-**Affinities:** close to the **Farmer** and anyone who does manual labor — possibly the Sergeant Major (to be reviewed).
+**Affinities:** close to the **Farmer** and anyone who does manual labor — possibly the Sergeant Major (to be reviewed). *(22 Oct: flavour only. Salem's starting affection is 3 for everyone; see the note at the top.)*
 
 ---
 
@@ -72,7 +93,7 @@ None of them is "random." Every cat is *legible* once you understand them — wh
 
 **Distortion:** withheld — accurate but rationed. Openly transactional.
 
-**[DECIDED] Biased by class:** profession buys access, not niceness. The Banker and Solicitor-adjacent roles get the good information; the groundskeeper's mate gets stonewalled. Some players simply cannot reach Zimothy this game and must ask a person who can — that's the face-to-face corroboration doing real work.
+**[DECIDED] Biased by class:** profession buys access, not niceness. The Banker and Solicitor-adjacent roles get the good information; the groundskeeper's mate gets stonewalled. Some players simply cannot reach Zimothy this game and must ask a person who can — that's the face-to-face corroboration doing real work. *(22 Oct: his ladder gives at least one motive at every level, so nobody is shut out; low affection only gets less.)*
 
 His gate feels *professional*, in contrast to Boo's (below).
 
@@ -84,7 +105,7 @@ His gate feels *professional*, in contrast to Boo's (below).
 
 **Structurally important: Boo is not staff.** She was taken in *socially*, not employed — a peer of the hosts. That's why her gate reads as personal rather than professional: Salem and Zimothy withhold on the job; Boo withholds because she's decided about you.
 
-**[REVISED] Not a snob — an alley cat who became a society lady.** She needs **affection 4+ before she'll speak at all**, because she's been burned, not because she's snobbish. Guardedness dressed up as glamour.
+**[REVISED] Not a snob — an alley cat who became a society lady.** She needs **affection 4+ before she'll speak at all**, because she's been burned, not because she's snobbish. *(22 Oct: she now speaks from level 3, one motive in five words, and is chatty at 4; see the note at the top.)* Guardedness dressed up as glamour.
 
 **Voice and behavior:**
 - Means well but had a rough upbringing; cautious with information.
@@ -109,7 +130,7 @@ She snorts. She breathes heavily. She's fat. She licks everything. She is weird 
 - **Open question:** should the "Grossnola" nickname be canon?
 
 **Behavior and mechanics:**
-- Honest but forgetful. She doesn't mean to lie — she just misremembers, so exactly one detail in what she tells you is wrong (a room, a time, a count…) and she is cheerfully confident about all of it. Not gatekeeping; **you can't buy her affection**.
+- Honest but forgetful. She doesn't mean to lie — she just misremembers, so exactly one detail in what she tells you is wrong (a room, a time, a count…) and she is cheerfully confident about all of it. Not gatekeeping; **you can't buy her affection**. *(22 Oct: her hint line now depends on affection like every cat's; see the note at the top.)*
 - She hands you the whole story with one wrong piece — the cross-check engine the core loop runs on. You find the bad piece by checking her against someone reliable.
 - She *wants to learn*, so she's close to the knowledgeable roles: **Librarian, Scientist, Professors**, and the **Baker** (she'd love the Baker off the bat).
 - Lives alone in the study — the best-equipped room — so visiting her is a deliberate trip.
@@ -135,14 +156,12 @@ Once all four descriptors existed, a shape appeared that nobody designed:
 ## 8. HOW CATS DELIVER INFORMATION
 
 - **[DECIDED] No cat speaks aloud.** All cat dialogue is text on screens. Audio is generic, pre-recorded atmosphere only (chimes, crackle, thunder) — never spoken information.
-- **Display:** a cat portrait on a room screen with three lines of dialogue (four randomized items — the cat plus three items of dialogue/clues).
-- **[DECIDED] Everyone standing there sees the same three lines.** Genuinely public information — the whole room can debate it.
-- **Same words, different trust:** two people hear identical lines and reach opposite conclusions based on their individual affection levels. No per-player content, no videos on individual phones. This forces conversation, and the disagreement is the value — never normalize affection for public moments.
-- **Profession seeds starting affection.** Each cat has a different relationship to profession: Zimothy respects status, Salem cares about labor (not people), Boo responds to glamour, Granolia loves learners.
+- **Changed 22 Oct.** In Act 2 each guest meets all four cats alone, one at a time, on their own phone. One of the four, picked at the deal, gives a real hint; the other three only greet. In Act 4 a cat talks to a whole group at once, on the group's average affection, and the cat station never sends a group to Granolia (her Study holds the light puzzle; settled by default, Jon may change it). What a cat says is on phones, never on a room screen.
+- **Profession seeds starting affection.** Each cat has a different relationship to profession: Zimothy respects status, Boo responds to glamour, Granolia loves learners. Salem cares about labor (not people), but since 22 Oct his start is 3 for everyone.
 
 ## 9. CATS IN THE CORE LOOP
 
-- Act 2, beat 2 is the **cat encounter**: dispersed, four cats, four rooms. Everyone is met by a cat, gets a quick in-fiction explanation of affection, then receives information.
+- ~~Act 2, beat 2 is the **cat encounter**: dispersed, four cats, four rooms. Everyone is met by a cat, gets a quick in-fiction explanation of affection, then receives information.~~ Replaced 22 Oct, see §8.
 - **[DECIDED] Cats deliver the inputs the puzzle requires**, not just clues. Worked example: Salem gives three sets of three numbers and says *"I'd use these three first."* He is the least trustworthy cat in the house. Do you believe him?
 
 ---

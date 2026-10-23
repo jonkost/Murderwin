@@ -4,15 +4,16 @@
 //
 //   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood }
 //     kind: idle | black | news | bulletin | irwin | board | door | trace
-//   nights/{id}/public/sounds  { current: { id, at, clips? } }   clips: recorded W-O-O-F News lines, played after the id (news.js)
+//   nights/{id}/public/sounds  { current: { id, at, clips? } }   clips: recorded W-O-O-F News lines, played after the id (news.js),
+//     as codes on a night with a station key saved (news.clipCode), never as names
 //
 // Any phone may read both, so NOTHING here carries a role, the dial, the
 // motive number, who died, or anything that joins a fragment to a motive.
-// The only case fields read are echo.fragment, irwin.lines, dial (to pick a
-// band, never written), motive (to keep it OUT of the strike list and IN Sir
-// Irwin's Act 5 options, which are the clue itself; never written as a key), screenSalt (the secret the strikes and the frame pick are
-// seeded on, never written), solving (Sir Irwin's motive clue, families.js)
-// and rehearsal. The W-O-O-F News bulletins read solving.newsOut and
+// The only case fields read are echo.fragment, dial (to pick a band, never
+// written), motive (to keep it IN Sir Irwin's Act 5 options, which are the
+// clue itself; never written as a key), screenSalt (the secret the frame pick
+// and Irwin's options are seeded on, never written), solving (Sir Irwin's
+// motive clue, families.js) and rehearsal. The W-O-O-F News bulletins read solving.newsOut and
 // solving.family (news.js) and write nothing to the case. checkScreen refuses a doc with a
 // forbidden key before it is written, and the tests walk a whole night to
 // prove it.
@@ -26,7 +27,7 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MOTIVES, CHARACTERS, NightError, readArea } from './night.js'
 import { irwinOptions, irwinCount } from './families.js'
-import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS } from './news.js'
+import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS, clipCode } from './news.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -52,13 +53,10 @@ export const MAX_IRWIN_WORDS = 12
 export const DEFAULT_FRAME = { before: '...and the late edition carries one further line:', after: '. The household declined to comment...' }
 export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something to say.', closer: 'That is everything. I am a good boy.' }
 export const REHEARSAL_FRAGMENT = '(Rehearsal. The news fragment for this motive fills the gap here.)'
-export const REHEARSAL_IRWIN = '(Rehearsal. Irwin line.)'
-export const STRIKE_LINE = 'The constable has ruled out number [N], "[RHYME]".'
-// The Act 2 news flash's voiceover rules out a wrong family or two of motives
-// for everyone (docs/solving-the-case.md). Its wording is sealed and NOT
-// WRITTEN YET (Jenna's job); until it is, the screen carries this marked
-// stand-in, which names no family.
-export const NEWS_FLASH_PLACEHOLDER = '(Not written yet. Here the news flash rules out one family of motives for everyone.)'
+// Bulletin 1's lines are the open W-O-O-F News bank (seed/woof-news.json).
+// This stand-in shows only for a case with no family to cross off, such as a
+// rehearsal.
+export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
 // Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
 // shows. Open copy, from docs/handoff-2026-10-22.md §5; the workshop's
 // ui_copy IRWIN FIVE to IRWIN ONE lines win.
@@ -83,8 +81,8 @@ function msOf(t) {
   return Number(t) || 0
 }
 
-// A number in [0, 1) that is the same for the same parts: the bulletin's
-// strikes must not change when the host presses the beat twice.
+// A number in [0, 1) that is the same for the same parts: the echo's frame
+// must not change when the host presses the beat twice.
 function unit(...parts) {
   const h = createHash('sha256').update(parts.map(String).join('\u0000')).digest()
   return h.readUInt32BE(0) / 0x100000000
@@ -119,17 +117,6 @@ export function dialBand(dial) {
   const rungs = Math.sign(d) * Math.round(Math.abs(d) / DIAL_STEP)
   return Math.max(1, Math.min(5, 3 + rungs))
 }
-// How many motives the bulletin strikes: none when the Murderer has the
-// upper hand, one at neutral, two when the Ghost has it.
-export function strikeCount(dial) {
-  const band = dialBand(dial)
-  return band <= 2 ? 0 : band === 3 ? 1 : 2
-}
-// Which of Sir Irwin's three lines: least telling at the low bands, most at the high.
-export function irwinTier(dial) {
-  const band = dialBand(dial)
-  return band <= 2 ? 0 : band === 3 ? 1 : 2
-}
 
 // ---------------------------------------------------------------------------
 // The echo: one safe frame with a ███ gap, filled with the case's fragment.
@@ -159,30 +146,12 @@ export function echoLines(c, frames, { seed = '' } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Act 3: the bulletin. The echo again, plus up to two motives the constable
-// has ruled out, never the active one, seeded on the case's secret. Every
-// motive is ranked by the seed and its own number alone (never by its place
-// in a list the active motive was taken out of), so the ranking says
-// nothing about which motive is missing.
-
-export function struckMotives(c, { seed = '', motives = MOTIVES } = {}) {
-  const count = strikeCount(c?.dial)
-  if (!count) return []
-  const others = motives.filter(m => m.n !== Number(c?.motive))
-  const order = others.map(m => ({ m, r: unit(seed, 'strike', m.n) })).sort((a, b) => a.r - b.r).map(x => x.m)
-  return order.slice(0, count).map(m => ({ n: m.n, rhyme: m.rhyme }))
-}
-
-export function bulletinLines(c, frames, { seed = '', motives = MOTIVES, strikeLine = STRIKE_LINE } = {}) {
-  const struck = struckMotives(c, { seed, motives })
-  const lines = [...echoLines(c, frames, { seed }), ...struck.map(s => strikeLine.replace('[N]', String(s.n)).replace('[RHYME]', s.rhyme))]
-  return { lines, struck }
-}
-
-// ---------------------------------------------------------------------------
-// Act 5: Sir Irwin on the living room screen. Opener + one sealed line +
-// closer, put through the dog filter: twelve words at most, and no name of
-// anyone at the party or in the cast.
+// Act 5: Sir Irwin on the living room screen (docs/handoff-2026-10-22.md §5):
+// his opener, the countdown line, the motive cards and his closer. Nothing
+// sealed: the case's old Irwin lines are never read here (the generator
+// still writes them until Jon settles secretLines). Opener and closer go
+// through the dog filter: twelve words at most, and no name of anyone at the
+// party or in the cast.
 
 export function dogFilter(text, names = [], { maxWords = MAX_IRWIN_WORDS } = {}) {
   let t = String(text ?? '').replace(/\s+/g, ' ').trim()
@@ -209,13 +178,8 @@ export function castNames(roster = {}) {
   return names
 }
 
-export function irwinLines(c, { opener, closer, names = [], optionLine = null } = {}) {
-  const list = Array.isArray(c?.irwin?.lines) ? c.irwin.lines.filter(l => typeof l === 'string' && l.trim()) : []
-  const tier = Math.min(list.length - 1, irwinTier(c?.dial))
-  const middle = list.length ? list[Math.max(0, tier)] : REHEARSAL_IRWIN
-  const lines = [opener || DEFAULT_IRWIN.opener, middle]
-  lines.push(closer || DEFAULT_IRWIN.closer)
-  const said = lines.map(l => dogFilter(l, names)).filter(Boolean)
+export function irwinLines({ opener, closer, names = [], optionLine = null } = {}) {
+  const said = [opener || DEFAULT_IRWIN.opener, closer || DEFAULT_IRWIN.closer].map(l => dogFilter(l, names)).filter(Boolean)
   // the countdown line is open copy (handoff §5): kept whole, only names filtered
   if (optionLine) said.splice(said.length - 1, 0, dogFilter(optionLine, names, { maxWords: Infinity }))
   return said
@@ -278,13 +242,27 @@ export async function writeScreen(db, nightId, doc) {
   return { ok: true, kind: doc.kind }
 }
 
+// The key the recordings are coded with: the study station key the host
+// saves (station.setStationKey, meta/game.station_key; the cue relay has the
+// same in cues/.env STATION_KEY). None saved (a rehearsal): null, and the
+// clip ids go out as they are.
+export async function recordingKey(db) {
+  const snap = await db.doc('meta/game').get()
+  const key = String(snap.exists ? snap.data().station_key ?? '' : '').trim()
+  return key.length >= 4 ? key : null
+}
+
 // The sound writer. One id at a time; the relay plays whichever arrives,
-// then the recorded clips after it, in order (a W-O-O-F News bulletin).
+// then the recorded clips after it, in order (a W-O-O-F News bulletin). With
+// a key saved the clips go out as codes (news.clipCode), so the public doc
+// never names a family or a level.
 export async function play(db, nightId, id, { now = Date.now(), clips = null } = {}) {
   const list = (clips ?? []).filter(x => CLIP_IDS.includes(x))
   // id null: recorded lines only (the closing bulletin between the reveal's cards)
   if (id === null ? !list.length : !SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
-  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(list.length ? { clips: list } : {}) } })
+  const key = list.length ? await recordingKey(db) : null
+  const sent = key ? list.map(x => clipCode(key, x)) : list
+  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(sent.length ? { clips: sent } : {}) } })
   return { ok: true, sound: id }
 }
 
@@ -351,7 +329,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     } else {
       const voice = await irwinVoice(db)
       const clue = irwinMotiveClue(c, { seed, ui: labelled(await linesOf(db, nightId, 'ui_copy')) })
-      const lines = irwinLines(c, { ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
+      const lines = irwinLines({ ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
       const said = [...lines.slice(0, -1), ...clue.choices.map(x => `${x.n}. ${x.rhyme}`), ...lines.slice(-1)]
       doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices: clue.choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
       if (run) await db.doc(`nights/${nightId}/private/dialClues`).set({ irwin: clue.mood }, { merge: true }) // for the end credits
@@ -484,11 +462,12 @@ export async function tvTrace(db, nightId, on, { now = Date.now() } = {}) {
 }
 
 // The relay rules on the TV and the phones: three lines, from the workshop's
-// RELAY RULES line (split on | or on sentences) or these.
+// RELAY RULES line (split on | or on sentences) or these. The drawer's phone
+// never shows the square, and the room guesses on the main screen (handoff §7).
 export const DEFAULT_RELAY_RULES = [
-  'One of you draws what your phone shows, without looking at the paper.',
-  'Everyone else shouts directions. Ten seconds, then the next person walks up.',
-  'When the grid is full, vote on your phone for the picture it makes.',
+  'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
+  'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
+  'When the grid is full, agree on the picture and tap it on the main screen.',
 ]
 export function relayRules(uiText) {
   const t = String(uiText ?? '').trim()

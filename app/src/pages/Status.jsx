@@ -1,49 +1,61 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation } from '../lib/store'
+import { subscribeArea, subscribeLatestValidation, subscribeTasks, subscribeDecisions, whoAmI } from '../lib/store'
 import { AREAS, TAB_KINDS, goalForTab } from '../lib/content'
 import { isComplete } from '../lib/scenarios'
+import { OWNERS, leftByOwner, leftLine, nextCards, byLabel, momentName, momentIndex } from '../lib/timeline'
+import { Decision } from '../components/DecisionsPanel'
 
-// Where we are. The honest state of the whole project in one place: what is
-// built and works, what each list still needs (live counts), and what to do
-// next, in order. Nothing here is sealed; the secrets show as a count only.
+// Where we are (rebuilt 23 Oct 2026): the live hub of the project. Decisions
+// live on the Canon page; jobs live on the Timeline, one card each, with an
+// owner, a moment and sometimes a "by" date. This page counts the open cards
+// by owner, shows Jon's next three, lists every open decision, and links to
+// the documents. Then what is built, what is still to write, and what waits
+// for after the party. Nothing here is sealed; the secrets show as a count.
+
+// The Claude Docs and pages everyone works from (links, no content).
+const LINKS = [
+  ['The Canon', 'every settled decision', 'https://claude.ai/artifact/CU4JQVHtzuyLBiqt2WuWVk'],
+  ['Start Here', 'the map for any Claude chat, and the latest status', 'https://claude.ai/artifact/P7eHcmr7R5PDLxGufmCK2A'],
+  ['The 22 Oct handoff', 'the newest decisions, applied', 'https://claude.ai/artifact/ToauNmr1RgPGUfw8WcHGBS'],
+  ['The W-O-O-F News script', 'every line to record', 'https://claude.ai/artifact/GJAR2uwXZ356opX6xNvMNN'],
+  ['The Cat Hint Lines', 'what each cat says, by how much it likes you', 'https://claude.ai/artifact/Mb39Qkpd4s7jtz59Kdw2vV'],
+  ['The Relay Drawing', 'how the Act 6 drawing plays', 'https://claude.ai/artifact/HjTxtHxUckbN9qR1xRchgt'],
+  ['The rules deck', 'the slides for Act 1', 'https://claude.ai/artifact/QGuBNcSDWkyfFqRg35V7yz'],
+  ['The intro script', 'the welcome and the rules, to read or record', 'https://claude.ai/artifact/DQiHjrdudoaKrLkCKjCLRx'],
+]
 
 const BUILT = [
+  ['Live', 'Deployed on 23 October. Each later build needs one more deploy; the last one is on the Timeline, before the freeze.'],
   ['The invitation page', 'Live at jonkost.com/Murderwin. The Enter the Manor button opens the game.'],
   ['Guests join by phone', 'Scan the square code, type a name, get a character and a bag number. Works on a real phone.'],
   ['The phone at rest', 'Character with portrait, bag number, the Reticule: motives to cross off, the cats, the rules.'],
-  ['The Host tab', 'On your phone and Susan’s: doors, the seven acts, Blackout, Power returns, Pause, who is here.'],
+  ['The Host tab', 'On your phone and Susan’s: doors, the seven acts, Blackout, Power returns, Pause, who is here, Salem petted and Fetch Champion, how many guests have seen all four cats, and a dot for every room screen.'],
   ['The moments', 'Blackout goes dark on every phone; Power returns holds a prompt fifteen seconds; Pause says Irwin needs the garden.'],
   ['The look', 'Blue and red, the seal, the wallpaper, New York and SF, on the invitation, the phones and here.'],
-  ['The art', 'Fourteen portraits and fourteen traces, in the repo, named for the game.'],
-  ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons. Sir Irwin keeps count.'],
-  ['The Parlour Games', 'Three silly questions in a row, two choices each, points on each choice, the eight totals, and a phone preview. Written here, dealt to every phone in Acts 2, 4 and 6.'],
-  ['The whole night on the phone', 'One button, Next, runs every beat of every act. Role cards at the blackout, the cat and the safe, the groups, five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
-  ['The case, built blind', 'At the blackout the server picks who did it, who died and why, and deals the cat testimony with the blanks filled. Rehearsals use bracketed stand-ins; the party night box on the Game night page uses the secrets.'],
+  ['The art', 'Fourteen portraits and fourteen traces, the five household faces and Sir Irwin’s five moods, in the repo, named for the game.'],
+  ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons.'],
+  ['The Timeline and this page', 'Every job is a card on the Timeline, filed under its moment, with its owner and, for some, a date. This page counts them by owner.'],
+  ['The Parlour Games', 'Twelve a night, on their own at random times: five in Act 2, five in Act 4, two as Act 6 opens. Boo hosts each one. Three silly questions, two choices each, the same set on every phone.'],
+  ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, the safe, the groups and their five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
+  ['How the case gets solved', 'Bulletin 1 crosses off a wrong family for everyone; one of the four cats gives each guest a hint from the Cat Hint Lines; bulletin 2 at supper; Sir Irwin’s countdown of motive cards at dessert; the memory match; the study pays the Ghost’s trace; the bedroom door shows the Murderer’s.'],
+  ['W-O-O-F News', 'Bulletin 1 in Act 2, bulletin 2 armed from your phone at supper and played on the Orangerie HomePod, and the closing bulletin at the reveal, each name card shown after its lead-in line. Your recordings play as sound with the words on screen.'],
+  ['Act 4 on the phones', '“You’re teamed up with” for each group, Granolia’s study card, a cat card naming the cat and its room (never Granolia), and Free time with one tip.'],
   ['The study light game', 'The station on the M1 Air, the Nanoleaf walls, the Stream Deck, Granolia’s screen. Finishing the study rotates the house.'],
-  ['The relay drawing and the room screens', 'The living room TV, the bedroom door and the trace at the dial’s level. Hall light red to green through the cue relay.'],
-  ['The screens for every beat', 'The news flash, the Act 3 bulletin, Sir Irwin at cake, the board of strikes and the door on the TV; the iPad keeps the words up through dinner; a sound for every cue, with stand-in tones until you record yours.'],
-  ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night.'],
-  ['Jenna’s page', 'Her own page for the secrets and the packing list, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited.'],
-  ['Rehearsing without the party', 'A pretend Firebase on your Mac, eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook.'],
+  ['The Relay Drawing', 'Sir Irwin’s rules slides on the TV, a practice smiley, three rounds, a player called by portrait and character name, the room’s guess on the living room computer, then Irwin’s Pawsome! slide on the TV and the trace on the bedroom iPad. Hall light red to green through the cue relay.'],
+  ['The screens for every beat', 'W-O-O-F News, Sir Irwin’s countdown at cake, the board of strikes and the door on the TV; the iPad keeps the words up through supper; a sound for every cue, with stand-in tones until you record yours.'],
+  ['The hosts’ lines', 'Boo opens each Parlour Game, Granolia the study, Zimothy the memory match, Salem the final picks, and Sir Irwin speaks over the trace.'],
+  ['The end credits', 'The closing bulletin, the dial’s journey, the awards from the final sliders, the joke counters, the room’s split, the thanks and Sydney, then Sir Irwin’s last card.'],
+  ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night, and a big red REHEARSAL band on every screen on a rehearsal night.'],
+  ['Jenna’s page', 'Her own page for the secrets, the packing list and the cats’ leans, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited or marked.'],
+  ['Rehearsing without the party', 'Eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook. A pretend Firebase on your Mac too, once Java is installed (a card on the Timeline).'],
   ['Spill the Beans and the Hush', 'Your two safeguard buttons on the Host tab, under "If something goes wrong". Spill works through Act 5 and the Manor decides silently; the Hush stops a found-out player’s answers from counting.'],
-]
-
-const NEXT = [
-  ['The secrets themselves', 'The generator that writes them needs your Anthropic key once. Then Jenna reads every set.', 'Jon, then Jenna'],
-  ['The bags and the stationery', 'A blind script packs the numbered bags; the bags station reads it. Seven paper stand-ins for the documents. The Freeze button for 7 November.', 'Claude, then Jon packs'],
-  ['The nine sounds', 'Record one short sound per cue (media/README.md lists them, one second of silence first). Stand-in tones play until then.', 'Jon'],
-  ['Windows on a server clock', 'Every Parlour Game settles on time even if nobody presses anything.', 'Claude'],
-  ['The finale on the TV', 'The reveal staged so nothing is readable early, the stats reel, the dial graph, and achievements you award by tapping.', 'Claude'],
-  ['The hardware evening', 'The Nanoleaf wall, the Stream Deck and the Hue bulb plugged in, one run of the study and one grid of the drawing.', 'Jon'],
-  ['The household photos', 'Faces, full, intro cards, in-play. Folders are ready.', 'Jon'],
 ]
 
 // Decided for after the party. Listed so they are not mistaken for gaps.
 const AFTER = [
-  ['The full hidden-event system', 'Nested scenarios three beats deep. The Parlour Games are the event system for this party.'],
-  ['The ten-thousand-run solvability proof', 'The validator assuming worst-case suppression across Acts 2, 4 and 6.'],
-  ['More puzzle slot-pools', 'Beyond the safe and the shape game.'],
+  ['The ten-thousand-run solvability proof', 'The validator assuming the worst dial.'],
+  ['More puzzle slot-pools', 'Beyond the safe and the memory match.'],
   ['A recap button and idle art', 'Nice to have. Not for the first birthday.'],
 ]
 
@@ -63,24 +75,104 @@ function suggestion(area, spec, items) {
   return { done: false, text: `${n} of ${goal}. ${goal - n} to go.`, to: `${area === 'templates' ? '/stationery' : `/edit/${area}`}?focus=3` }
 }
 
+const firstSentence = (text) => {
+  const t = String(text ?? '').trim()
+  const m = /^(.+?[.!?])(\s|$)/.exec(t)
+  return m ? m[1] : t
+}
+
 export default function Status() {
   const [data, setData] = useState({})
   const [validation, setValidation] = useState(null)
+  const [tasks, setTasks] = useState(null)
+  const [decisions, setDecisions] = useState(null)
+  const [saveErr, setSaveErr] = useState(false)
+  const [me, setMe] = useState(null)
   useEffect(() => {
     const unsubs = Object.keys(AREAS).map(area => subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
     unsubs.push(subscribeLatestValidation(setValidation, () => {}))
+    unsubs.push(subscribeTasks(setTasks, () => {}))
+    unsubs.push(subscribeDecisions(setDecisions, () => {}))
     return () => unsubs.forEach(u => u())
   }, [])
+  useEffect(() => { whoAmI().then(setMe) }, [])
+  const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
 
   const rows = Object.entries(AREAS).filter(([, spec]) => !spec.checklist && !spec.retired).map(([area, spec]) => ({ area, spec, s: suggestion(area, spec, data[area] ?? []) }))
   const todo = rows.filter(r => r.s && !r.s.done)
   const done = rows.filter(r => r.s?.done)
 
+  const counts = tasks ? leftByOwner(tasks) : null
+  const next = tasks ? nextCards(tasks) : []
+  const open = (decisions ?? []).filter(d => d.answer == null)
+    .sort((a, b) => momentIndex(a.moment) - momentIndex(b.moment) || String(a.key).localeCompare(String(b.key)))
+
   return (
     <main className="dash">
       <section className="panel">
         <h2>Where we are</h2>
-        <p className="why">The whole project on one page. Counts are live. The secrets show as a count only.</p>
+        <p className="why">
+          The live state of the project. Decisions live on the Canon. Every job is one card on the <Link to="/timeline">Timeline</Link>,
+          with who does it and when. Counts here are live; the secrets show as a count only.
+        </p>
+        {saveErr && <div className="banner error" role="alert">SAVE FAILED. That answer was not recorded. Pick and confirm again.</div>}
+      </section>
+
+      <section className="panel">
+        <h2>What is left, by who</h2>
+        <p className="why">{counts ? leftLine(counts) : 'Counting…'} Tap a name to see just their cards.</p>
+        {counts && (
+          <ul className="hub-owners">
+            {OWNERS.map(o => (
+              <li key={o}><Link to={`/timeline?who=${encodeURIComponent(o)}`}><span>{o}</span><b>{counts[o]}</b></Link></li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="panel">
+        <h2>Jon’s next three</h2>
+        <p className="why">Jon’s open cards (and the ones for Jon and Susan), soonest first: the ones with a date, then the rest in the order of the night.</p>
+        {tasks === null ? <p className="hint">Counting…</p>
+          : next.length === 0 ? <p className="hint">Nothing on the board for Jon.</p>
+            : (
+              <ol className="hub-next">
+                {next.map(t => (
+                  <li key={t.id}>
+                    <b>{t.title || 'A task with no name yet'}</b>
+                    {byLabel(t) && <> <span className="tl-by">{byLabel(t)}</span></>}
+                    {t.who && t.who !== 'Jon' && <> <span className="tl-who">{t.who}</span></>}
+                    <br /><span className="list-moment">{t.moment ? momentName(t.moment) ?? 'Not filed yet' : 'Not filed yet'}</span>
+                    {t.detail && <><br /><span className="hint">{firstSentence(t.detail)}</span></>}
+                  </li>
+                ))}
+              </ol>
+            )}
+        <p className="night-line"><Link className="ghost dl" to="/timeline?who=Jon">All of Jon’s cards on the Timeline</Link></p>
+      </section>
+
+      <section className="panel">
+        <h2>Decisions waiting on Jon</h2>
+        <p className="why">{decisions === null ? 'Counting…' : open.length === 0 ? 'None. Every question on the board has an answer.' : `${open.length} open. Only Jon answers these. Each one sits on the Timeline at the moment it changes.`}</p>
+        <ul className="hub-decisions">
+          {open.map(d => (
+            <li key={d.key}>
+              <span className="list-moment">{d.moment ? momentName(d.moment) ?? 'Not filed yet' : 'Not filed yet'}</span>
+              <Decision d={d} canAnswer={canAnswer} onError={() => setSaveErr(true)} onSaved={() => setSaveErr(false)} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="panel">
+        <h2>Where everything lives</h2>
+        <ul className="hub-links">
+          {LINKS.map(([t, d, href]) => <li key={href}><a href={href} target="_blank" rel="noreferrer"><b>{t}</b></a> <span className="hint">{d}</span></li>)}
+          <li><Link to="/timeline"><b>The Timeline</b></Link> <span className="hint">every job, in the order of the night</span></li>
+          <li><Link to="/night"><b>Game night</b></Link> <span className="hint">start a night, the hosts, the freeze</span></li>
+          <li><Link to="/devices"><b>Every device</b></Link> <span className="hint">room by room, with its address</span></li>
+          <li><Link to="/jenna"><b>For Jenna</b></Link> <span className="hint">what Jenna reads, and her page</span></li>
+        </ul>
       </section>
 
       <section className="panel">
@@ -101,16 +193,8 @@ export default function Status() {
         </ul>
         {done.length > 0 && <p className="hint">At goal: {done.map(r => r.spec.label).join(', ')}.</p>}
         <p className="night-line">
-          <b>The secrets:</b> {validation === null ? 'not made yet. They come after the case generator.' : `${validation.complete} of ${validation.codes} sets, ${validation.pass ? 'checked' : 'needing a re-run'}.`}
+          <b>The secrets:</b> {validation === null ? 'not made yet. Make the secrets is a card on the Timeline, before the freeze.' : `${validation.complete} of ${validation.codes} sets, ${validation.pass ? 'checked' : 'needing a re-run'}.`}
         </p>
-      </section>
-
-      <section className="panel">
-        <h2>What comes next, in order</h2>
-        <p className="why">Every task, filed under the moment of the night it serves, is on the <Link to="/timeline">Timeline</Link>.</p>
-        <ol className="night-steps">
-          {NEXT.map(([t, d, who]) => <li key={t}><b>{t}</b> <span className="hint">({who})</span><br />{d}</li>)}
-        </ol>
       </section>
 
       <section className="panel">

@@ -11,8 +11,10 @@
 //
 // sealed/relay_pictures = { pictures: [{ id, round: 1|2|3, name, decoys: [3 names], cells: { A1: [stroke] } }] }
 // Strokes are relay-gen.js's: line, arc, circle, dot, in cell-local 0..1.
-// The smiley, the house and the diamond pattern are the style samples and
-// may never be a real picture.
+// The smiley, the house and the diamond pattern are the style samples, and a
+// star was Jon's example of the art: none may ever be a real picture. Nor may
+// anything on the never-list (a trace, or an object on a motive card), by its
+// name or any of its three wrong names.
 //
 // SEAL RULE: nothing here prints or logs. Checks return counts and reasons
 // that name no picture.
@@ -24,8 +26,31 @@ export const BANK_DOC = 'sealed/relay_pictures'
 export const ROUND_SIZES = { 1: 3, 2: 4, 3: 5 }
 // the most drawn squares a round may have, so the night's turns fit the drawing's time
 export const ROUND_CAPS = { 1: 9, 2: 11, 3: 13 }
-export const DISQUALIFIED = ['smiley', 'smile', 'house', 'diamond']
+// The style samples, the star Jon wrote as the example of the art, and the
+// teapot the generator's brief once gave as its example name: pictures Jon
+// could guess (Rule 1). The brief now gives no example picture at all.
+export const DISQUALIFIED = ['smiley', 'smile', 'house', 'diamond', 'star', 'teapot']
+// Things that are clues elsewhere in the game, so a picture of one would read
+// as a clue in Act 6: the drawn traces, and the objects on the motive cards
+// (docs/handoff-2026-10-22.md §3). The generator's brief names them too.
+export const TRACE_WORDS = ['ink', 'boot', 'flour', 'coin', 'petal', 'flower', 'seed', 'vial', 'bottle', 'candle', 'wax', 'coffee', 'cup', 'mug', 'picture', 'frame', 'glasses', 'spectacles', 'iodine', 'elbow patch', 'sand']
+export const MOTIVE_WORDS = ['pie', 'pizza', 'snack', 'car', 'game controller', 'ring', 'tissue', 'toilet', 'toilet roll', 'cheese', 'shirt', 'speaker', 'phone', 'plate', 'charger', 'plug', 'cord', 'crown', 'book', 'door', 'shopping cart', 'envelope', 'cake']
+export const NEVER_WORDS = [...TRACE_WORDS, ...MOTIVE_WORDS]
 const KINDS = ['line', 'arc', 'circle', 'dot']
+
+// Does a name say one of these words? A whole word, or its plural, anywhere in
+// the name; a word of four letters or more also inside a longer word
+// ("sunglasses", "doorknob", "starfish"); a three-letter word also at the end
+// of one ("teacup", "racecar"). Strict on purpose: a picture that matches is
+// dropped and counted, and the generator makes another.
+export function namesAny(name, list) {
+  const n = String(name ?? '').toLowerCase()
+  return list.some(w => {
+    const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (w.length >= 4) return n.includes(w)
+    return new RegExp(`${esc}(s|es)?\\b`).test(n)
+  })
+}
 
 const arc = (from, to, bulge) => ({ kind: 'arc', from, to, bulge })
 // The practice round: the whole face fills the 3 × 3 grid, square by square
@@ -57,7 +82,9 @@ export function checkPicture(p, round) {
   if (typeof p?.name !== 'string' || !p.name.trim()) bad.push('name')
   const names = [p?.name, ...(Array.isArray(p?.decoys) ? p.decoys : [])].map(x => String(x ?? '').trim().toLowerCase())
   if (!Array.isArray(p?.decoys) || p.decoys.length !== 3 || new Set(names).size !== 4 || names.some(n => !n)) bad.push('decoys')
-  if (DISQUALIFIED.some(w => names[0]?.includes(w))) bad.push('disqualified')
+  // the answer and all three wrong names: a clue word anywhere among the four could read as a clue
+  if (names.some(n => namesAny(n, DISQUALIFIED))) bad.push('disqualified')
+  if (names.some(n => namesAny(n, NEVER_WORDS))) bad.push('never')
   const labels = new Set(Array.from({ length: size * size }, (_, i) => cellLabel(Math.floor(i / size), i % size)))
   const cells = p?.cells && typeof p.cells === 'object' ? p.cells : {}
   const drawn = Object.entries(cells).filter(([, s]) => Array.isArray(s) && s.length)

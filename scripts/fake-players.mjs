@@ -56,6 +56,8 @@ const station = await import('../functions/lib/station.js')
 const relay = await import('../functions/lib/relay.js')
 const windows = await import('../functions/lib/windows.js')
 const families = await import('../functions/lib/families.js')
+const news = await import('../functions/lib/news.js')
+const screen = await import('../functions/lib/screen.js')
 
 export const PHONES = 8
 const choice = list => list[randomInt(list.length)]
@@ -206,9 +208,12 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     const docs = [['night', await nightDoc()]]
     for (const ref of await db.collection(`nights/${nightId}/public`).listDocuments()) docs.push([`public/${ref.id}`, (await ref.get()).data()])
+    // with a station key saved, a W-O-O-F News recording never goes on a public doc by its name (it names a family and a level)
+    const coded = !!(await screen.recordingKey(db))
     for (const [name, data] of docs) {
       const text = JSON.stringify(data ?? {})
       for (const token of NEVER_PUBLIC) { checks++; if (text.includes(token)) failed.push(`${stage}:${name}:${token.replace(/"/g, '')}`) }
+      if (coded) { checks++; if (news.CLIP_IDS.some(id => text.includes(`"${id}"`))) failed.push(`${stage}:${name}:recording`) }
       if (stage === 'before-reveal') for (const token of NEVER_BEFORE_REVEAL) { checks++; if (text.includes(token)) failed.push(`${stage}:${name}:${token.replace(/"/g, '')}`) }
     }
     summary.seal.checks += checks
@@ -262,6 +267,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await host('tick', undefined, due) // three to five minutes later it plays
     const played = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.played === true
     if (!armed.armed || !played) summary.checks.push('B2')
+    await sealCheck('bulletin') // the recordings it just sent are on the public sounds doc
     const r3 = await next()
     actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`, `${r3.groups} groups (${r3.trios} of three)`])
 
@@ -395,7 +401,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
         continue
       }
       if (p.state === 'turn') turns++
-      clock += p.state === 'intro' ? relay.SLIDE_MS * relay.IRWIN_SLIDES.length : p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : p.state === 'lockout' ? relay.LOCKOUT_MS : relay.TURN_MS
+      clock += p.state === 'intro' ? relay.INTRO_MS : p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : p.state === 'lockout' ? relay.LOCKOUT_MS : relay.TURN_MS
       await run.advanceRelay(db, { nightId, now: clock })
     }
     throw new Error('the drawing never finished')

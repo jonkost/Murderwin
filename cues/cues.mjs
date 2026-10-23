@@ -13,6 +13,12 @@
 // It refuses to start while any id in the catalogue (lib/cues.js SOUND_IDS)
 // has no file under media/; scripts/make-placeholder-sounds.mjs makes a
 // stand-in tone for each until the real recordings are in.
+//
+// The W-O-O-F News recordings arrive as codes on a night with a station key
+// saved: STATION_KEY in cues/.env (the same key the host saves for the study
+// station) lets the relay map each code back to its file. The window prints
+// counts only, never a sound id, a recording's name or a file name: it sits
+// in view all night.
 
 import { readFileSync, existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -21,7 +27,8 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { plan, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, missingSoundFiles } from './lib/cues.js'
+import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, missingSoundFiles, recordingFiles, clipReader } from './lib/cues.js'
+import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue } from './lib/hue.js'
@@ -39,14 +46,16 @@ const env = { ...loadEnv(), ...process.env }
 const MEDIA_DIR = resolve(here, env.MEDIA_DIR || '../media')
 
 // Every sound in the catalogue needs a file before the night starts. The
-// missing ids are printed (ids only, never what they are for) and the relay
-// quits; in fake mode it carries on and says what it would have played.
+// count is printed (never which ones) and the relay quits; in fake mode it
+// carries on. The recordings are counted too, and may be missing: a missing
+// one is skipped and the screen shows the words.
 const missing = missingSoundFiles(MEDIA_DIR, existsSync)
 if (missing.length && !LIST) {
-  console.log(`${missing.length} of ${SOUND_IDS.length} sounds have no file in ${MEDIA_DIR}: ${missing.join(' ')}`)
+  console.log(`${missing.length} of ${SOUND_IDS.length} sounds have no file in ${MEDIA_DIR}`)
   console.log('run `node scripts/make-placeholder-sounds.mjs` for stand-in tones, or drop the recordings in (media/README.md)')
   if (!FAKE) process.exit(2)
 }
+const readClip = clipReader(env.STATION_KEY)
 
 // Same public web config as the phones (play/src/firebase.js).
 const firebaseConfig = {
@@ -85,27 +94,10 @@ async function setHall(colour) {
 // keep trying until the bulb agrees
 setInterval(() => { if (wantHall && !FAKE && hue) setHall(wantHall) }, 5000)
 
-// One id, then its clips one after the other (a W-O-O-F News bulletin). A
-// newer sound cuts a running sequence short, so two never talk over each other.
-let sequence = 0
-function playSound(id, clips = []) {
-  const mine = ++sequence
-  const files = [...(id ? [id] : []), ...clips].map(x => ({ id: x, file: soundCandidates(MEDIA_DIR, x).find(f => existsSync(f)) }))
-  const missing = files.filter(f => !f.file).length
-  if (missing) log(`[sound] ${missing} of ${files.length} files missing; skipped (the screen shows the words)`)
-  const queue = files.filter(f => f.file)
-  const nextOne = () => {
-    if (mine !== sequence) return
-    const f = queue.shift()
-    if (!f) return
-    if (FAKE) { log(`[sound] would play ${f.file}`); nextOne(); return }
-    const p = spawn('afplay', [f.file], { stdio: 'ignore' })
-    p.on('error', e => { log(`[sound] ${f.id} failed: ${e.message}`); nextOne() })
-    p.on('exit', nextOne)
-    log(`[sound] ${f.id}`)
-  }
-  nextOne()
-}
+// One id, then its recordings one after the other (a W-O-O-F News bulletin).
+// A newer cue stops the file that is playing before it starts, so two never
+// talk over each other (lib/player.js). One count-only line per cue.
+const player = createPlayer({ mediaDir: MEDIA_DIR, exists: existsSync, spawn, log, fake: FAKE })
 
 // ---- watching the night ------------------------------------------------------
 const app = initializeApp(firebaseConfig)
@@ -126,11 +118,11 @@ let state = { hall: null, sound: null }
 let stops = []
 
 function apply() {
-  const { actions, state: next } = plan(state, docs, Date.now())
+  const { actions, state: next } = plan(state, docs, Date.now(), { readClip })
   state = next
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
-    if (a.type === 'sound') playSound(a.id, a.clips ?? [])
+    if (a.type === 'sound') player.play(a.id, a.clips ?? [], { unknown: a.unknown ?? 0 })
     if (a.type === 'refused') log(`[sound] refused ${a.count} id outside the catalogue`)
   }
 }
@@ -176,3 +168,4 @@ if (FAKE && process.stdin.isTTY) {
   log('fake mode: r hall red · g hall green · s the next sound in the catalogue')
 }
 log('cue relay up', FAKE ? '(fake)' : '', `media: ${MEDIA_DIR}`)
+log(`recordings: ${recordingFiles(MEDIA_DIR, existsSync)} of ${CLIP_IDS.length} have a file; ${String(env.STATION_KEY ?? '').trim().length >= 4 ? 'STATION_KEY set, coded recordings will play' : 'no STATION_KEY in cues/.env, so only a night with no station key saved plays them'}`)

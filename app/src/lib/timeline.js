@@ -53,7 +53,9 @@ export const NEEDS = {
   'act1.ready': [{ list: 'role_cards' }, ui('NOTICE READY', 'HOLD', 'HIDE')],
   'act2.parlour': [{ list: 'scenarios' }],
   'act2.orient': [ui('POWER', 'ORIENT', 'YOUR ROLE', 'SHOW ROLE', 'HIDE ROLE', 'NOTICE ORIENT')],
-  'act2.news': [{ list: 'echo_frames' }, { secret: 'fragments', name: 'The secret words in the news' }, ui('NOTICE NEWS')],
+  // The news is W-O-O-F News since 22 Oct, an open bank: the old news frames
+  // and their secret fragments are shown nowhere, so neither is a need here.
+  'act2.news': [ui('NOTICE NEWS')],
   'act2.cat': [
     { list: 'openers' }, { list: 'closers' }, { list: 'refusals' }, { list: 'pools' },
     { secret: 'kernels', name: 'The secret middle of every cat’s testimony' },
@@ -62,7 +64,7 @@ export const NEEDS = {
   'act2.puzzle': [{ list: 'templates' }, { secret: 'documents', name: 'The secret words on the documents' }],
   'act2.checkin': [ui('NOTICE CHECKIN')],
   'act3.down': [ui('NOTICE DOWN')],
-  'act3.bulletin': [ui('NOTICE BULLETIN'), { list: 'echo_frames', also: true }],
+  'act3.bulletin': [ui('NOTICE BULLETIN')],
   'act4.parlour': [{ list: 'scenarios', also: true }],
   'act4.study': [{ list: 'study_lines' }, station('STUDY')],
   'act4.cat': [station('CAT'), { list: 'openers', also: true }, { list: 'closers', also: true }, { list: 'refusals', also: true }],
@@ -70,8 +72,10 @@ export const NEEDS = {
   'act4.puzzle': [station('PUZZLE')],
   'act4.checkin': [station('CHECKIN')],
   'act5.roam': [ui('NOTICE ROAM')],
-  'act5.irwin': [ui('NOTICE IRWIN'), { secret: 'irwin', name: 'What Sir Irwin says' }],
-  'act6.parlour': [{ list: 'scenarios', also: true }],
+  // Sir Irwin's countdown is open copy (23 Oct): no secret line at dessert.
+  'act5.irwin': [ui('NOTICE IRWIN')],
+  // Act 6 plays its two games as it opens (night.json parlour.atStart).
+  'act6.games': [{ list: 'scenarios', also: true }],
   'act6.drawing': [ui('RELAY RULES')],
   'act6.door': [ui('NOTICE DOOR')],
   'act7.reveal': [ui('NOTICE EYES')],
@@ -81,7 +85,7 @@ export const NEEDS = {
 // Before and after the acts. Each is one section with one row.
 const BEFORE = [
   { key: 'freeze', clock: 'By Saturday 7 November', title: 'Before the freeze', what: 'Everything that has to work before the workshop locks. After the freeze, anything not working is cut, not fixed.' },
-  { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The secrets made, read by Jenna, and the bags packed. A dry run with nobody in the room.' },
+  { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The bags packed, the fake-player dry run, and a last check. The secrets were made and read before the freeze.' },
   { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.', link: { to: '/devices', label: 'Every device, room by room, with its address' } },
   { key: 'allnight', clock: 'From 4:00pm, all night', title: 'On every phone, all night', what: 'What a guest can read from the moment they join: the Rules tab, the Motives tab, the Cats tab, and the small lines a phone shows when the signal drops or the night is paused.' },
 ]
@@ -99,12 +103,15 @@ function parlourRow(act) {
 }
 
 // The whole night as sections, each with rows. Act 4's rows are its five
-// stations: every group visits each one, so the station is the moment.
+// stations: every group visits each one, so the station is the moment. An
+// act that plays its Parlour Games as it opens (parlour.atStart, Act 6) has
+// its own beat for them, so it gets no row for games at random times.
 export function nightTimeline(file = night) {
   const sections = BEFORE.map(b => ({ key: b.key, clock: b.clock, title: b.title, rows: [{ key: b.key, name: b.title, what: b.what, link: b.link }] }))
+  const atStart = new Set((file.parlour?.atStart ?? []).map(String))
   for (const [n, act] of Object.entries(file.acts)) {
     const rows = []
-    if (file.parlour?.counts?.[n]) rows.push(parlourRow(n))
+    if (file.parlour?.counts?.[n] && !atStart.has(String(n))) rows.push(parlourRow(n))
     if (n === '4') {
       rows.push(...(file.stations ?? []).map(s => ({ key: `act4.${s.key}`, name: s.name, what: s.what })))
     } else {
@@ -156,7 +163,6 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 //   status_lines    play/src/lib/content.js DEFAULT_STATUS
 //   openers, closers, refusals   deal.js DEFAULT_VOICE, one line per cat
 //   pools           case.js DEFAULT_POOLS
-//   echo_frames     screen.js DEFAULT_FRAME
 //   role_cards      deal.js ROLE_CARDS
 //   epilogue_frames finale.js DEFAULT_EPILOGUE
 //   bios            play/src/lib/content.js bioFor, the seed's own bios
@@ -166,7 +172,7 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 // each motive means, cat chatter, achievements, the act scripts.
 export const STANDIN_LISTS = new Set([
   'ui_copy', 'station_text', 'study_lines', 'rules_text', 'status_lines',
-  'openers', 'closers', 'refusals', 'pools', 'echo_frames',
+  'openers', 'closers', 'refusals', 'pools',
   'role_cards', 'epilogue_frames', 'bios', 'npc_cards', 'templates',
 ])
 // The phone's own rules show only while the list is empty: once Jon writes
@@ -197,9 +203,103 @@ export function taskStandin(task, tasks = []) {
   if (first == null) return true
   return tasks.some(t => t.order === first && !t.deleted && t.status === 'done')
 }
-// Someone else's card: Claude's or Jenna's alone. "Jon and Claude" is Jon's.
+// Someone else's card: Claude's (Claude Code's or Claude chat's) or Jenna's
+// alone. "Jon and Claude" is Jon's.
 export function taskNotYou(task) {
-  return /^(Claude|Jenna)$/.test(String(task.who ?? '').trim())
+  return /^(Claude( Code| chat)?|Jenna)$/.test(String(task.who ?? '').trim())
+}
+
+// ---- who, and by when (23 Oct 2026) ----------------------------------------
+
+// Everyone a card can belong to, in the order the Who row shows them.
+export const OWNERS = ['Jon', 'Susan', 'Jon and Susan', 'Jenna', 'Claude Code', 'Claude chat']
+// A card's owner, in those words. A card with no name is Jon's (he added
+// it); the old "Claude" cards are Claude Code's; "Jon and Claude" is Jon's.
+export function ownerOf(task) {
+  const who = String(task?.who ?? '').replace(/\s+/g, ' ').trim()
+  if (!who) return 'Jon'
+  const known = OWNERS.find(o => o.toLowerCase() === who.toLowerCase())
+  if (known) return known
+  if (/^claude$/i.test(who)) return 'Claude Code'
+  if (/^jon and /i.test(who)) return 'Jon'
+  return who
+}
+
+// A card's "by" date, as YYYY-MM-DD, or null.
+export function taskBy(task) {
+  const by = String(task?.by ?? '').trim()
+  return /^\d{4}-\d{2}-\d{2}$/.test(by) ? by : null
+}
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// "by Sat 31 Oct", or '' when the card has no date.
+export function byLabel(task) {
+  const by = taskBy(task)
+  if (!by) return ''
+  const [y, m, d] = by.split('-').map(Number)
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+  return `by ${DAYS[day]} ${d} ${MONTHS[m - 1]}`
+}
+
+const isOpenCard = (t) => !t.deleted && t.status !== 'done'
+
+// Open cards per owner: { Jon: n, Susan: n, ... }, every owner listed.
+export function leftByOwner(tasks = []) {
+  const out = Object.fromEntries(OWNERS.map(o => [o, 0]))
+  for (const t of tasks.filter(isOpenCard)) {
+    const o = ownerOf(t)
+    out[o] = (out[o] ?? 0) + 1
+  }
+  return out
+}
+
+// "N for you, N for you and Susan, ..." in plain words, skipping the zeros.
+export function leftLine(counts) {
+  const name = { Jon: 'you', 'Jon and Susan': 'you and Susan together' }
+  const parts = OWNERS.filter(o => counts[o]).map(o => `${counts[o]} for ${name[o] ?? o}`)
+  if (!parts.length) return 'Nothing is left on the board.'
+  return `What is left: ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]}.`
+}
+
+// Where a moment falls in the night, for sorting (unknown moments last).
+export function momentIndex(key) {
+  const i = MOMENT_KEYS.indexOf(key)
+  return i < 0 ? MOMENT_KEYS.length : i
+}
+
+// Open cards for one owner (or several), soonest first: dated cards by date,
+// then the rest in night order, with the cards that can only happen later,
+// and the ones a stand-in already covers, after the rest.
+export function nextCards(tasks = [], owners = ['Jon', 'Jon and Susan'], n = 3) {
+  const want = new Set(owners)
+  return tasks
+    .filter(t => isOpenCard(t) && want.has(ownerOf(t)))
+    .map(t => ({ t, by: taskBy(t), later: taskWhen(t) === 'later', standin: taskStandin(t, tasks) }))
+    .sort((a, b) => {
+      if (a.by && b.by) return a.by.localeCompare(b.by) || momentIndex(a.t.moment) - momentIndex(b.t.moment)
+      if (a.by || b.by) return a.by ? -1 : 1
+      if (a.later !== b.later) return a.later ? 1 : -1
+      if (a.standin !== b.standin) return a.standin ? 1 : -1
+      return momentIndex(a.t.moment) - momentIndex(b.t.moment) || (a.t.order ?? 0) - (b.t.order ?? 0)
+    })
+    .slice(0, n)
+    .map(x => x.t)
+}
+
+// Open cards and open decisions with no place on the night: no moment, or a
+// moment that is no longer a row. The Timeline lists them at the top, each
+// with a picker to file it.
+export function unfiled({ tasks = [], decisions = [] } = {}) {
+  const lost = (m) => !m || !MOMENT_KEYS.includes(m)
+  return {
+    tasks: tasks.filter(t => isOpenCard(t) && lost(t.moment)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    decisions: decisions.filter(d => d.answer == null && lost(d.moment)).sort((a, b) => String(a.key).localeCompare(String(b.key))),
+  }
+}
+
+// Every moment a thing can be filed under, with its name, in night order.
+export function momentOptions() {
+  return MOMENT_KEYS.map(key => ({ key, name: momentName(key) }))
 }
 
 // ---- status, from live data ------------------------------------------------
@@ -285,7 +385,9 @@ export function timelineItems({ areas = {}, validation = null, tasks = [], decis
         out.push({ kind: 'need', section: s.key, row: r.key, need, when: need.secret ? 'later' : 'now', standin: needStandin(need, status), notYou: Boolean(need.secret), status })
       }
       for (const d of byMoment(decisions, r.key)) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, when: 'now', standin: false, notYou: false, status: { done: d.answer != null } })
-      for (const t of byMoment(tasks, r.key).filter(t => !t.deleted).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
+      // Dated cards first, soonest first, then the rest in their own order.
+      const byDate = (a, b) => (taskBy(a) ?? '9999').localeCompare(taskBy(b) ?? '9999') || (a.order ?? 0) - (b.order ?? 0)
+      for (const t of byMoment(tasks, r.key).filter(t => !t.deleted).sort(byDate)) {
         out.push({ kind: 'task', section: s.key, row: r.key, task: t, when: taskWhen(t), standin: taskStandin(t, tasks), notYou: taskNotYou(t), status: { done: !isOpenTask(t) } })
       }
     }

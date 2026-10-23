@@ -22,9 +22,11 @@ export const SECTIONS = [
   { key: 'kernels.zimothy', label: 'Zimothy Clawford, Esq. says', hint: 'True but rationed: accurate and minimal.', kind: 'lines' },
   { key: 'kernels.salem', label: 'Salem Crookshank says', hint: 'Confidently wrong. The anchor is the one object word that also appears in a truthful line.', kind: 'salem' },
   { key: 'documents', label: 'The documents', hint: 'Forty to sixty words each. The emphasis is one word from the text, printed large.', kind: 'documents' },
-  { key: 'fragments', label: 'The news fragments', hint: 'Up to fifteen words: what fills the gap in the news frame.', kind: 'lines' },
-  { key: 'studyClue', label: 'The study clue', hint: 'Twenty to sixty words. A second angle on the documents, not a copy.', kind: 'lines' },
-  { key: 'irwin', label: "Sir Irwin's lines for Act 5", hint: 'Twelve words at most, plainly true, never a guest\'s name.', kind: 'lines' },
+  // The last three are no longer shown on the night (23 Oct 2026); they come
+  // off this page once Jon answers the cats' secret lines question.
+  { key: 'fragments', label: 'The news fragments', hint: 'Not shown on the night any more: W-O-O-F News replaced the news frames. Skip these.', kind: 'lines' },
+  { key: 'studyClue', label: 'The study clue', hint: 'Not shown on the night any more: the study now shows the Ghost’s trace. Skip this.', kind: 'lines' },
+  { key: 'irwin', label: "Sir Irwin's lines for Act 5", hint: 'Not shown on the night any more: Sir Irwin’s countdown at dessert uses open words. Skip these.', kind: 'lines' },
 ]
 
 const SUBFIELDS = { salem: ['text', 'anchor'], documents: ['text', 'emphasis', 'annotation'] }

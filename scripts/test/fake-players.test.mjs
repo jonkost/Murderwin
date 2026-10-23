@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { fakeNight, codesIn, PHONES } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, STATION_TEXT, DEFAULT_SCRAP, DEFAULT_NUMBERS_LINE, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, STATION_TEXT, FREE_TIME_TIPS, DEFAULT_SCRAP, DEFAULT_NUMBERS_LINE, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
 
@@ -14,7 +14,7 @@ const CARD_TEXT = [
   'Rehearsal', 'Synthetic',
   ...Object.values(NOTICES).map(n => n.text),
   ...Object.values(ROLE_CARDS),
-  ...Object.values(STATION_TEXT).map(s => s.text),
+  ...Object.values(STATION_TEXT).map(s => s.text), ...FREE_TIME_TIPS,
   STUDY_PLACEHOLDER, DEFAULT_SCRAP.text.slice(0, 30), DEFAULT_NUMBERS_LINE.slice(0, 20),
   HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
   'From the memory match', 'Cross it off',
@@ -113,7 +113,8 @@ function syntheticSealed(word) {
 
 test('--real-secrets draws a sealed set as a dry run, prints no more than before, and discards the case', async () => {
   const db = new FakeFirestore()
-  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  // a station key saved, as on the party night: the seal walk then also checks no recording goes public by name
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', station_key: 'study-2026' })
   db.store.set('sealed/manifest', { codes: { AAAAA: 5, BBBBB: 11 } })
   db.store.set('sealed/AAAAA', syntheticSealed('alpha'))
   db.store.set('sealed/BBBBB', syntheticSealed('beta'))
@@ -127,6 +128,7 @@ test('--real-secrets draws a sealed set as a dry run, prints no more than before
   assert.equal(keysUnder(db, 'cases/').length, 0, 'the dry run case is discarded')
   assert.equal(keysUnder(db, 'nights/').length, 0)
   assert.ok(db.store.has('sealed/AAAAA'), 'the sealed store is untouched')
+  assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
 })
 
 test('a failure mid-night still discards the night and exits FAIL', async () => {

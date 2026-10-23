@@ -4,6 +4,7 @@ import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
 import { TraceView } from './Kiosk'
 import { STATIONERY, templateSlug, stationeryUrl } from '../lib/stationery'
+import Spoken from './Spoken'
 
 // Everything a phone is dealt during an act, one component per kind of card.
 // Every card that needs an answer has a required tap before it goes away
@@ -39,7 +40,7 @@ export function HostLine({ host }) {
   return (
     <p className={`host-line host-${host.cat}`}>
       <CatFace cat={host.cat} name={HOST_NAMES[host.cat]} size="s" />
-      <span>{host.line}</span>
+      <span><Spoken text={host.line} /></span>
     </p>
   )
 }
@@ -57,7 +58,7 @@ function Notice({ card, onDone }) {
   return (
     <section className="dealt notice">
       <h3>{card.title}</h3>
-      <p>{card.text}</p>
+      <p><Spoken text={card.text} /></p>
       <button className="big" onClick={onDone}>{card.button || 'Done'}</button>
     </section>
   )
@@ -99,6 +100,7 @@ export function LightsStep({ lights, uid, nightId, notes, note = null }) {
 
 // A cat speaks: opener, the middle, closer, as three short paragraphs.
 // A brush-off is one line in italics. Nothing on the card says which.
+// Stage directions (*snort*) read in italics, without the stars.
 export function Testimony({ card, compact = false }) {
   const deflected = card.outcome === 'deflect'
   return (
@@ -112,9 +114,9 @@ export function Testimony({ card, compact = false }) {
         <Rehearsal card={card} />
       </header>
       <div className={deflected ? 'said deflect' : 'said'}>
-        {(card.lines ?? []).map((l, i) => <p key={i}>{l}</p>)}
+        {(card.lines ?? []).map((l, i) => <p key={i}><Spoken text={l} /></p>)}
       </div>
-      {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}>{card.hint.text}</p>}
+      {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}><Spoken text={card.hint.text} /></p>}
     </section>
   )
 }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   notesFor, notesPatch, mergeNotes, seen, wantsWelcome, buzzOnce, resetBuzzGuard, mayCheck, needsHandoverReset,
   clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, effectivePhase, isDark, presenceKey,
-  lightsStep, meetParam, LIGHTS_STEPS,
+  lightsStep, meetParam, LIGHTS_STEPS, isRehearsalNight, showRehearsalBand, salemFriendNote, SALEM_FRIEND,
 } from '../src/lib/night.js'
 import { isStale, secondsSinceHeard, watchWake, STALE_MS } from '../src/lib/clock.js'
 
@@ -177,4 +177,47 @@ test('a handed-over phone stops heartbeating as the previous owner', () => {
   assert.equal(presenceKey(active, 'M'), null, 'a session from another night reports nobody')
   assert.equal(presenceKey(null, 'N'), null)
   assert.equal(presenceKey(active, null), null)
+})
+
+test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, never in the dark', async () => {
+  // nights rehearse unless the workshop's party box was ticked (forceRehearsal false)
+  assert.equal(isRehearsalNight({ forceRehearsal: true, rehearsal: false, phase: 'lobby' }), true, 'at the doors, before any case is dealt')
+  assert.equal(isRehearsalNight({ forceRehearsal: true, rehearsal: true }), true)
+  assert.equal(isRehearsalNight({ rehearsal: false }), true, 'no flag at all: a rehearsal, as the dealer reads it')
+  assert.equal(isRehearsalNight({ forceRehearsal: false, rehearsal: false }), false, 'the party night')
+  assert.equal(isRehearsalNight({ forceRehearsal: false, rehearsal: true, caseWarning: 'rehearsal-fallback' }), false, 'the party night on fallback text: still no band')
+  assert.equal(isRehearsalNight({ forceRehearsal: false, dryRun: true }), true, 'a fake-players dry run is not the party')
+  assert.equal(isRehearsalNight(null), false)
+  // the band goes dark with the room
+  const night = { forceRehearsal: true, phase: 'act' }
+  assert.equal(showRehearsalBand(night), true)
+  assert.equal(showRehearsalBand({ ...night, phase: 'blackout' }), false)
+  assert.equal(showRehearsalBand({ ...night, phase: 'prompt' }), false)
+  assert.equal(showRehearsalBand({ ...night, phase: 'paused', pausedFrom: 'blackout' }), false)
+  assert.equal(showRehearsalBand({ ...night, phase: 'paused', pausedFrom: 'act' }), true)
+  assert.equal(showRehearsalBand({ ...night, phase: 'lobby' }), true)
+  assert.equal(showRehearsalBand({ forceRehearsal: false, phase: 'act' }), false)
+  // every phone screen after the doors carries it, except the blackout and the prompt
+  const { readFileSync } = await import('node:fs')
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.ok(app.includes('<RehearsalBand on={showRehearsalBand(n)} />'))
+  assert.equal((app.match(/return <>\{band\}/g) ?? []).length, 6, 'join, superseded, welcome, a window, the pause and the phone at rest')
+  assert.ok(app.includes('if (isDark(n)) return <Blackout />'), 'the blackout has no band')
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.ok(/\.rehearsal-band \{[^}]*position: fixed; top: 0;/.test(css), 'the band is fixed across the top')
+  assert.ok(css.includes(':root.rehearsal-on body { padding-top: var(--band-h); }'), 'the page moves down so nothing is covered')
+})
+
+test('CL-24 a True Friend sees the honour again at the top of Salem\'s row', async () => {
+  assert.equal(salemFriendNote({ salemFriend: false, cards: [] }), null)
+  assert.equal(salemFriendNote(null), null)
+  const card = { id: 'salem-friend', kind: 'notice', title: 'True Friend of the Groundskeeper', text: '[the workshop SALEM FRIEND line]' }
+  assert.deepEqual(salemFriendNote({ salemFriend: true, cards: [card] }), { title: card.title, text: card.text }, 'the words the server sent')
+  assert.deepEqual(salemFriendNote({ salemFriend: true, cards: [] }), SALEM_FRIEND, 'the card is gone: the default words')
+  assert.ok(SALEM_FRIEND.text.startsWith("Well, I'll be. Salem has chosen you."))
+  const { readFileSync } = await import('node:fs')
+  const server = readFileSync(new URL('../../functions/lib/deal.js', import.meta.url), 'utf8')
+  assert.ok(server.includes(SALEM_FRIEND.text), 'the same default words as the server')
+  const rest = readFileSync(new URL('../src/screens/Rest.jsx', import.meta.url), 'utf8')
+  assert.ok(rest.includes("{cat.key === 'salem' && friend && <p className=\"friend-note\">"), 'shown at the top of Salem\'s open row')
 })

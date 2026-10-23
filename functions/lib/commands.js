@@ -27,7 +27,7 @@ export const HOST_COMMANDS = [
   { name: 'light-up', arg: '', what: 'A Parlour Game on every phone, any time in Acts 2, 4 and 6.' },
   { name: 'settle', arg: '', what: 'Pick for the phones that did not, once the window has run out.' },
   { name: 'groups', arg: '', what: 'Make the Act 4 groups and the study order.' },
-  { name: 'station-key', arg: '<key>', what: 'Set the key the study station presents.' },
+  { name: 'station-key', arg: '<key>', what: 'Set the key the study station presents. The news recordings are coded with it too, so put the same key in cues/.env as STATION_KEY.' },
   { name: 'study-tick', arg: '', what: 'With no station: end a study slot that has run its twelve minutes (the Host tab does this on its own).' },
   { name: 'study-finish', arg: '[groupId]', what: 'Move the house on without waiting for the study. The group is paid.' },
   { name: 'study-reassign', arg: '<groupId>', what: 'Say which group is actually in the study, before it pays out.' },

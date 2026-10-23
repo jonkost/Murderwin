@@ -50,6 +50,21 @@ export function PausedStrip({ ui }) {
   return <div className="paused-strip" role="status">{ui['PAUSED BY HOST']}</div>
 }
 
+// A rehearsal night (lib/night.js isRehearsalNight): a big red band fixed
+// across the top of every phone and room screen, never on the party night,
+// never while the room is dark. The page moves down by the band's height
+// (html.rehearsal-on in styles.css), so the band never covers anything.
+export function RehearsalBand({ on }) {
+  useEffect(() => {
+    if (!on || typeof document === 'undefined') return
+    const root = document.documentElement
+    root.classList.add('rehearsal-on')
+    return () => root.classList.remove('rehearsal-on')
+  }, [on])
+  if (!on) return null
+  return <div className="rehearsal-band" role="note">REHEARSAL</div>
+}
+
 const HOLD_MS = 15_000
 
 // The power returns: every phone lights at once with its prompt, on a

@@ -445,3 +445,19 @@ test('the deck deals only the bag numbers the packer packed; fourteen when there
   assert.equal(bags.length, 10)
   assert.deepEqual([...bags].sort((x, y) => x - y), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 })
+
+test('a pause moves Sir Irwin\'s slides and the closing bulletin\'s waiting name cards on by its length', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa']]) await join(db, { uid, nightId, name })
+  const t0 = 3_000_000
+  db.store.set(`nights/${nightId}/public/relay`, { state: 'intro', introEndsAt: new Date(t0 + 100_000) })
+  db.store.set(`nights/${nightId}/public/finale`, { at: new Date(t0), stage: 'murderer', cardAt: { murderer: new Date(t0 + 15_000) } })
+  await runCommand(db, { nightId, command: 'pause', now: t0 + 1_000 })
+  await runCommand(db, { nightId, command: 'resume', now: t0 + 61_000 })
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/relay`).introEndsAt), t0 + 160_000)
+  const f = db.store.get(`nights/${nightId}/public/finale`)
+  assert.equal(msOf(f.cardAt.murderer), t0 + 75_000)
+  assert.equal(f.cardAt.motive, undefined, 'a card not pressed yet stays unset')
+  assert.ok(PAUSE_SHIFTED['public/relay'].includes('introEndsAt') && PAUSE_SHIFTED['public/finale'].includes('cardAt.victim'))
+})

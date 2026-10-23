@@ -28,30 +28,44 @@
 import { randomInt } from 'node:crypto'
 import { generateSet, cellLabel } from './relay-gen.js'
 import { NightError, characterById } from './night.js'
-import { relayGrids, BANK_DOC } from './relay-bank.js'
+import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
 
 export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
 export const WALK_MS = 12_000      // the next drawer walks to the paper
 export const PULL_MS = 20_000      // pull the paper down to the next grid
 export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
 export const LOCKOUT_MS = 10_000   // after a wrong pick
-export const SLIDE_MS = 9_000      // each of Sir Irwin's rules slides, before the first walk
+// Each of Sir Irwin's rules slides stays up long enough to read aloud: five
+// seconds, and 0.4 of a second a word (the 42-word slide gets about 22 s, all
+// seven about 1.8 minutes). Nothing is recorded, so the room reads them.
+// Tune both in the weekend rehearsal.
+export const SLIDE_BASE_MS = 5_000
+export const SLIDE_WORD_MS = 400
+// Words the way the workshop and windows.wordCount count them (kept here so
+// this file needs nothing from windows.js, which imports it).
+const words = text => String(text ?? '').trim().split(/\s+/).filter(Boolean).length
+export function slideMs(text) { return SLIDE_BASE_MS + SLIDE_WORD_MS * words(text) }
 // Sir Irwin's rules slides (the Relay Drawing How to Play doc): on the main
 // display after the Act 6 Parlour Games, then slide 8 when the door opens.
-export const IRWIN_SLIDES = [
+// Slide 3 points at "this arc in B1": it carries the practice smiley's B1
+// square (public, relay-bank.js PRACTICE) for the TV to draw beside the text.
+const SLIDE_TEXT = [
   { title: 'Welcome', text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
   { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
-  { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.' },
+  { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.', cell: { label: 'B1', strokes: PRACTICE.cells.B1 } },
   { title: 'The shouting', text: "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },
   { title: 'Guessing', text: "Think you know the picture? Pick it from the list. Wrong guesses get crossed off. That's okay. Boo crosses me off all the time. It's how she says hello." },
   { title: 'The rounds', text: 'Practice first, then three grids, each bigger than the last. Small, medium, BIG.' },
   { title: 'The clue', text: "Name all three and the door opens. Then I'll sniff out whatever's in there and bring it straight to you. Helping is my favorite! Ready? Paws on the paper. Let's go!" },
 ]
+// slides = [{ title, text, ms, cell? }]: the TV shows slide i from the sum of the earlier ms.
+export const IRWIN_SLIDES = SLIDE_TEXT.map(s => ({ ...s, ms: slideMs(s.text) }))
+export const INTRO_MS = IRWIN_SLIDES.reduce((sum, s) => sum + s.ms, 0)
 export const IRWIN_DOOR_SLIDE = { title: 'The door', text: "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
-export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, slideMs: SLIDE_MS }
+export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, introMs: INTRO_MS }
 
 // The time budget: the drawing itself (every turn plus the walk before it)
-// fits twelve minutes (docs/relay-drawing-game.md §5). The generator caps
+// fits eighteen minutes (docs/relay-drawing-game.md §5). The generator caps
 // the drawn cells per grid so the turns never add up to more than this.
 export const DRAW_BUDGET_MS = 18 * 60_000
 export const MAX_TURNS = Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))
@@ -128,7 +142,7 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
     drawerKey: null, drawerName: null, drawerCharacterId: null,
     nextKey: order[0], nextName: nextChar.characterName, nextCharacterId: nextChar.characterId,
     cell: null,
-    slides: IRWIN_SLIDES, introEndsAt: at(now, SLIDE_MS * IRWIN_SLIDES.length),
+    slides: IRWIN_SLIDES, introEndsAt: at(now, INTRO_MS),
     turnEndsAt: null, walkEndsAt: null, voteEndsAt: null, lockoutEndsAt: null,
     options: null, crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
     doorOpen: false, startedAt: at(now, 0), finishedAt: null, stats: null,

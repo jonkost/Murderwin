@@ -72,7 +72,7 @@ test('start twice keeps the drawing: turnIndex and seed stand; force restarts it
   assert.equal(first.already, undefined)
   const { pub, priv } = relayPaths(nightId)
   assert.deepEqual(db.store.get(pub).timing, TIMING)
-  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['lockoutMs', 'pullMs', 'slideMs', 'turnMs', 'voteMs', 'walkMs'])
+  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['introMs', 'lockoutMs', 'pullMs', 'turnMs', 'voteMs', 'walkMs'])
   assert.equal(db.store.get(pub).state, 'intro', 'Sir Irwin\'s slides first')
   t.now = ms(db.store.get(pub).introEndsAt); await advance(db, { nightId, now: t.now })
   t.now += PULL_MS; await advance(db, { nightId, now: t.now })

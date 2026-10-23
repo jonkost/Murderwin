@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { subscribeTasks, updateTask, addTask } from '../lib/store'
-import { momentName } from '../lib/timeline'
+import { momentName, momentOptions, byLabel, taskBy } from '../lib/timeline'
 
 const COLS = [
   { key: 'todo', label: 'To do' },
@@ -73,6 +73,7 @@ function Card({ task, onError, onSaved }) {
   const moveTo = (statusKey) => {
     updateTask(task.id, { status: statusKey }, task).then(onSaved).catch(onError)
   }
+  const patch = (p) => updateTask(task.id, p, task).then(onSaved).catch(onError)
 
   const idx = COLS.findIndex(c => c.key === task.status)
   const prev = COLS[idx - 1]
@@ -83,12 +84,25 @@ function Card({ task, onError, onSaved }) {
       <input value={title} placeholder="task…"
         onChange={e => setTitle(e.target.value)} />
       {moment && <span className="list-moment">{moment}</span>}
+      {byLabel(task) && <span className="tl-by">{byLabel(task)}</span>}
       <button className="card-toggle" onClick={() => setOpen(o => !o)}>
         {open ? 'hide detail' : 'detail'}
       </button>
       {open && (
-        <textarea rows={3} value={detail} placeholder="detail…"
-          onChange={e => setDetail(e.target.value)} />
+        <>
+          <textarea rows={3} value={detail} placeholder="detail…"
+            onChange={e => setDetail(e.target.value)} />
+          {/* A card with a moment shows on the Timeline under it (23 Oct 2026). */}
+          <label className="tl-when">File it under
+            <select value={task.moment ?? ''} onChange={e => patch({ moment: e.target.value || null })}>
+              <option value="">Not filed yet</option>
+              {momentOptions().map(o => <option key={o.key} value={o.key}>{o.name}</option>)}
+            </select>
+          </label>
+          <label className="tl-when">Done by (optional)
+            <input type="date" value={taskBy(task) ?? ''} onChange={e => patch({ by: e.target.value || null })} />
+          </label>
+        </>
       )}
       <div className="card-foot">
         {prev && <button onClick={() => moveTo(prev.key)}>‹ {prev.label}</button>}

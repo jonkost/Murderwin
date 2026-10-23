@@ -476,6 +476,22 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .tl-row-empty .tl-add { margin-top: 0; }
 .tl-empty-name { color: var(--muted); }
 .tl-section > h2 { scroll-margin-top: 1rem; }
+.tl-by { color: var(--ink); border: 1px solid var(--good); border-radius: 999px; padding: 0 0.6em; font-size: 0.8rem; }
+.tl-by.late { color: var(--bad); border-color: var(--bad); font-weight: 600; }
+.tl-when input[type="date"] { min-height: 44px; max-width: 100%; padding: 0 0.6rem; border-radius: var(--r-control); border: 1px solid var(--line); background: var(--field); color: var(--ink); }
+.tl-who-row { margin-top: -0.3rem; }
+.tl-unfiled .tl-when { margin-top: 0.3rem; }
+
+/* ---------- Where we are ---------- */
+.hub-owners { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; }
+.hub-owners a { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0.4rem 0.8rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); text-decoration: none; }
+.hub-owners b { font-size: 1.2rem; }
+.hub-next { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.6rem; }
+.hub-next li { max-width: 70ch; }
+.hub-decisions { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
+.hub-decisions .decision { margin: 0; }
+.hub-links { margin: 0; padding-left: 1.2rem; columns: 2 16rem; column-gap: 2rem; }
+.hub-links li { break-inside: avoid; margin: 0 0 0.45rem; }
 
 /* ---------- The devices ---------- */
 .dev-address { margin: 0.3rem 0 0.6rem; }

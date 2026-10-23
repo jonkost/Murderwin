@@ -2,8 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules,
-  DEFAULT_RELAY_RULES, BELL_MS, DOOR_HOLD_MS,
+  livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, slideTime, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules,
+  DEFAULT_RELAY_RULES, BELL_MS, DOOR_HOLD_MS, SLIDE_FALLBACK_MS,
 } from '../src/lib/screen.js'
 import { STALE_MS } from '../src/lib/clock.js'
 
@@ -74,6 +74,59 @@ test('the door: open for the hold on the server clock, then the trace only when 
   assert.equal(doorStage({ screen: null, cues: null, trace, now: NOW }), 'open')
 })
 
+test('D1-1 a finished drawing shows Sir Irwin\'s door slide above the open door, never over the trace', () => {
+  const doorSlide = { title: 'The door', text: '(sample door slide)' }
+  const relay = { state: 'done', doorOpen: true, doorSlide }
+  // the TV takes the door view for a finished drawing; the slide is drawn there
+  assert.equal(livingView({ night: NIGHT, relay, screen: { kind: 'idle' } }), 'door')
+  assert.equal(livingView({ night: NIGHT, relay, screen: { kind: 'door' } }), 'door')
+  const screen = { kind: 'door', at: stamp(NOW), holdMs: DOOR_HOLD_MS }
+  const stage = doorStage({ screen, cues: { tvTrace: true }, trace: { level: 3 }, now: NOW + 2000 })
+  assert.equal(stage, 'open')
+  assert.deepEqual(doorSlideOf({ relay, stage }), doorSlide, 'the slide shows during the hold')
+  assert.equal(doorSlideOf({ relay, stage: 'trace' }), null, 'the trace takes the whole screen')
+  assert.equal(doorSlideOf({ relay: { state: 'done' }, stage: 'open' }), null, 'no slide on the doc: the door alone')
+  assert.equal(doorSlideOf({ relay: { state: 'idle', doorSlide }, stage: 'open' }), null, 'a drawing that was cut: no slide')
+  assert.equal(doorSlideOf({}), null)
+  // the old unreachable branch is gone: the door screen draws the slide itself
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(!kiosk.includes("relay.state === 'done') return"), 'no dead done branch in Living')
+  assert.ok(kiosk.includes('doorSlideOf({ relay, stage })'), 'DoorScreen draws the slide')
+  assert.ok(kiosk.includes('relay={relay} serverNow={serverNow}'), 'Living hands the relay doc to the door screen')
+})
+
+test('BK-13 Sir Irwin\'s slides: each up for its own time, slide 3 with the practice smiley\'s B1 square', () => {
+  // the server's rule: five seconds plus 0.4 seconds a word
+  assert.equal(slideTime('one two three'), 6_200)
+  assert.equal(slideTime(''), 5_000)
+  const cell = { label: 'B1', strokes: [{ kind: 'arc', from: [0, 0.5], to: [1, 0.5], bulge: -0.3 }] }
+  const slides = [{ title: 'a', text: 'x', ms: 6_000 }, { title: 'b', text: 'y', ms: 7_000 }, { title: 'c', text: 'z', ms: 8_000, cell }]
+  const start = NOW
+  const relay = { state: 'intro', slides, introEndsAt: stamp(start + 21_000), timing: { slideMs: 9_000 } }
+  const at = (t) => slideAt(relay, start + t).index
+  assert.equal(at(0), 0)
+  assert.equal(at(5_999), 0)
+  assert.equal(at(6_000), 1, 'slide 2 starts when slide 1 has had its six seconds')
+  assert.equal(at(12_999), 1)
+  assert.equal(at(13_000), 2)
+  assert.equal(at(60_000), 2, 'the last slide stays until the server moves on')
+  assert.equal(at(-5_000), 0, 'a screen whose clock runs early still shows slide 1')
+  assert.deepEqual(slideAt(relay, start + 14_000).slide.cell, cell, 'slide 3 carries the square')
+  assert.equal(slideAt(relay, start).count, 3)
+  // an older doc with no per-slide time: every slide gets timing.slideMs
+  const old = { state: 'intro', slides: slides.map(({ ms, cell, ...s }) => s), introEndsAt: stamp(start + 27_000), timing: { slideMs: 9_000 } }
+  assert.equal(slideAt(old, start + 8_999).index, 0)
+  assert.equal(slideAt(old, start + 9_000).index, 1)
+  assert.equal(slideAt(old, start + 18_000).index, 2)
+  assert.equal(slideAt({ slides: [{ title: 'a', text: 'x' }], introEndsAt: stamp(start + SLIDE_FALLBACK_MS) }, start).index, 0)
+  assert.deepEqual(slideAt({ state: 'intro', slides: [] }, start), { index: -1, slide: null, count: 0 })
+  // the TV draws the square the way a turn does, dark, with its label
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('slideAt(relay, serverNow())'), 'the slides run on slideAt')
+  assert.ok(kiosk.includes('<Cell strokes={s.cell.strokes} className="cell-art slide" dark />'), 'the square is drawn dark')
+  assert.ok(kiosk.includes('{s.cell.label}'), 'with its label')
+})
+
 test('the board: nine rows, a strike each, defaulted ones indistinguishable, sorted by name', () => {
   const names = ['Ana', 'Ben', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy']
   const roster = Object.fromEntries(names.map((n, i) => [n.toLowerCase(), { name: n, characterId: i % 2 ? 'rye' : 'arms' }]))
@@ -130,6 +183,13 @@ test('the dot: green live, amber after twenty seconds from cache, red offline, w
 })
 
 test('the relay rules: three lines from the workshop or the defaults, on the first walk of grid one only', () => {
+  // X-2: the defaults say what the night does now: walk first, describe from the TV, guess on the main screen
+  assert.deepEqual(DEFAULT_RELAY_RULES, [
+    'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
+    'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
+    'When the grid is full, agree on the picture and tap it on the main screen.',
+  ])
+  assert.ok(!DEFAULT_RELAY_RULES.join(' ').includes('your phone'), 'nothing is drawn or voted on a phone')
   assert.deepEqual(relayRules(''), DEFAULT_RELAY_RULES)
   assert.deepEqual(relayRules('A. | B. | C. | D.'), ['A.', 'B.', 'C.'])
   assert.deepEqual(relayRules('One sentence. Two sentences. Three.'), ['One sentence.', 'Two sentences.', 'Three.'])
@@ -144,11 +204,36 @@ test('the relay rules: three lines from the workshop or the defaults, on the fir
 
 test('the previews cover every screen the plan names, and the kiosk has the three corners', () => {
   const preview = readFileSync(new URL('../src/Preview.jsx', import.meta.url), 'utf8')
-  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done']) assert.ok(preview.includes(`'${k}'`), k)
+  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'kiosk-rehearsal', 'host-house-act2']) assert.ok(preview.includes(`'${k}'`), k)
+  for (const k of ['cats-friend', 'rehearsal']) assert.ok(preview.includes(`case '${k}'`), k)
+  // D1-18, BK-7: the samples come from the open banks and say what the night says now
+  assert.ok(preview.includes("from '../../seed/woof-news.json'") && preview.includes("from '../../seed/cat-lines.json'"), 'the previews import the open banks')
+  assert.ok(!preview.includes('constable'), 'no struck-motives bulletin')
+  assert.ok(!preview.includes('Not written yet'), 'no unwritten hint stand-in')
+  assert.ok(!preview.includes('Irwin line two'), 'Sir Irwin has no secret middle line')
+  assert.ok(preview.includes("Trusting Salem: Most days, he's got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time."), 'the new Trusting Salem line')
+  assert.ok(!preview.includes('liking you does not make him right'), 'the old Trusting Salem line is gone')
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  // D1-18: the bulletin's struck list is gone from the card
+  assert.ok(!kiosk.includes('struck.map') && !kiosk.includes('The constable has ruled out'), 'ScreenCard draws no struck list')
+  // BK-15: the memory match's face-down cards are file folders, not a star
+  assert.ok(kiosk.includes('<FolderBack />') && !kiosk.includes('✦'), 'the card backs are file folders')
+  // CL-8: the rehearsal band on every room screen, hidden while the room is dark
+  assert.ok(kiosk.includes('<RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />'), 'the kiosk shows the band on a rehearsal night')
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
+  // the real W-O-O-F News lines, Sir Irwin's five motives and the memory match's twelve cards fit a
+  // 16:9 TV and the iPad, REHEARSAL band included: their sizes are capped by the screen's height
+  const fit = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  for (const rule of [
+    '.kiosk.card-screen .kiosk-lines .kiosk-line { font-size: min(3.8vw, 5.2vh); }',
+    '.kiosk.irwin .kiosk-lines .kiosk-line { font-size: min(4.6vw, 4.2vh); }',
+    '.kiosk.irwin .irwin-choices { font-size: min(3.4vw, 4vh);',
+    '.kiosk.captions .kiosk-line { font-size: min(4.2vw, 5vh); }',
+    '.memory-board { width: min(92vw, calc(88vh - var(--band-h))); }',
+    '.reveal-row.count-3 .reveal-portrait { max-height: 8vh; }',
+  ]) assert.ok(fit.includes(rule), rule)
   // the iPad heartbeats under its own key, never as the living room TV
   assert.ok(kiosk.includes('`kiosk-${which}`'), 'the heartbeat key is the kiosk name itself')
   assert.ok(!kiosk.includes("which === 'ipad' ? 'living'"), 'the iPad never borrows the TV key')

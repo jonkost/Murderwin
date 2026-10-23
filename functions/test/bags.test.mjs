@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand } from '../lib/run.js'
-import { NIGHT } from '../lib/deal.js'
+import { NIGHT, FREE_TIME_TIPS } from '../lib/deal.js'
 import { firstProperty, propertyForClue, bagsClue, bagsText, readPacking } from '../lib/bags.js'
 
 // SEAL. The packing here is synthetic: bracketed property names, bag
@@ -125,5 +125,6 @@ test('through the night: the bags station card carries a packed property that po
     assert.ok(!/\d/.test(card.text))
   }
   const checkin = Object.values(phones).map(uid => (db.store.get(`sessions/${uid}`).cards ?? []).find(x => x.kind === 'station' && x.station === 'checkin')).filter(Boolean)
-  assert.ok(checkin.length > 0 && checkin.every(x => x.text === 'Sit and compare.'), 'a written station line replaces the default')
+  // Free time (the check-in slot): the written line replaces the main sentence, and the group's tip still follows it
+  assert.ok(checkin.length > 0 && checkin.every(x => x.title === 'Free time' && FREE_TIME_TIPS.some(t => x.text === `Sit and compare. ${t}`)), 'a written station line replaces the default')
 })

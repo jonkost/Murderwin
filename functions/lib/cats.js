@@ -40,6 +40,13 @@ function seeded(list, seed, ...tag) {
   return list.map(x => ({ x, r: unit(seed, ...tag, x) })).sort((a, b) => a.r - b.r).map(o => o.x)
 }
 const level = l => Math.min(5, Math.max(1, Math.round(Number(l) || 3)))
+// Put a value in a slot. A value that already ends in '.', '?' or '!' (some
+// of Granolia's half-names do) takes the place of the full stop after the
+// slot, so a line never reads "Not cheese.." or "reply some?.".
+export function fillSlot(tpl, slot, value) {
+  const v = String(value ?? '')
+  return /[.?!]$/.test(v) ? tpl.replace(`${slot}.`, v).replace(slot, v) : tpl.replace(slot, v)
+}
 
 // What this line names, before the words: the family and the motives.
 //   family   the wrong family the line is about
@@ -102,7 +109,7 @@ export function hintLine(c, { cat, level: raw, act = 2, family, seed = '', exclu
   // granolia
   const tpl = CAT_LINES.granolia.levels[String(l)]
   if (l === 1) return { text: tpl, families: [], motives: [] }
-  if (l === 2) { const n = t.pool[0]; return { text: tpl.replace('[HALF]', CAT_LINES.granolia.half[String(n)] ?? name(n)), families: [], motives: [n] } }
+  if (l === 2) { const n = t.pool[0]; return { text: fillSlot(tpl, '[HALF]', CAT_LINES.granolia.half[String(n)] ?? name(n)), families: [], motives: [n] } }
   if (l === 3) { const n = t.pool[0]; return { text: tpl.replace('[MOTIVE]', name(n)), families: [], motives: [n] } }
   if (l === 4) { const [a, b] = t.pool; return { text: tpl.replace('[MOTIVE]', name(a)).replace('[MOTIVE2]', name(b ?? a)), families: [], motives: [a, b].filter(x => x !== undefined) } }
   const whole = motivesOf(family).filter(n => n !== real)

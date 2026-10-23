@@ -1,8 +1,10 @@
 # Traces
 
-One picture per trace — the residue a character leaves behind, shown in the
-Act 6 reveal ladder. All fourteen are in (8 Oct 2026). Nothing shows them yet;
-the reveal screen is a later build step and will read from this folder.
+One picture per trace, the residue a character leaves behind. All fourteen
+are in (8 Oct 2026). Zimothy's memory match on the iPad in Act 4 shows them
+plain. The study clue on the phones in Act 4, the bedroom in Act 6 and the
+ballot screen in Act 7 show them on the five-step ladder: hazy black and
+white, colour, two side by side, the picture, the picture with its name.
 
 | File | Trace | Character |
 |---|---|---|

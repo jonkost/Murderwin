@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { generateSet, checkGrid, sameGrid, rotateGrid, cellDifference } from '../lib/relay-gen.js'
-import { start, advance, vote, guess, reset, turnOrder, relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } from '../lib/relay.js'
-import { PRACTICE, BANK_DOC, checkPicture } from '../lib/relay-bank.js'
+import { start, advance, vote, guess, reset, turnOrder, relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, IRWIN_SLIDES, INTRO_MS, SLIDE_BASE_MS, SLIDE_WORD_MS, slideMs } from '../lib/relay.js'
+import { PRACTICE, BANK_DOC, checkPicture, namesAny, NEVER_WORDS, TRACE_WORDS, MOTIVE_WORDS, DISQUALIFIED } from '../lib/relay-bank.js'
+import { ms } from '../lib/deal.js'
 
 // ---- the generator ------------------------------------------------------
 
@@ -86,8 +87,10 @@ test('start → walk → turn → … → guess: a practice smiley first, one ce
   let p = db.store.get(pub)
   assert.equal(p.state, 'intro', 'Sir Irwin\'s rules slides come first')
   assert.equal(p.slides.length, 7)
+  assert.equal(ms(p.introEndsAt), now + INTRO_MS, 'the slides end when every slide has had its time')
   assert.equal((await advance(db, { nightId, now: now + 1000 })).moved, false)
-  now += 7 * 9_000
+  assert.equal((await advance(db, { nightId, now: now + INTRO_MS - 1 })).moved, false, 'not a moment early')
+  now += INTRO_MS
   assert.equal((await advance(db, { nightId, now })).state, 'walk')
   p = db.store.get(pub)
   assert.equal(p.grid, 1); assert.equal(p.gridCount, 4); assert.equal(p.round, 'Practice'); assert.equal(p.gridSize, 3)
@@ -189,7 +192,45 @@ test('the party night draws its three rounds from the sealed bank, never a bad p
   await assert.rejects(vote(db, { nightId, uid: 'u-jon', pick: 0 }), /main computer/)
 })
 
+test('the picture bank refuses the samples, a star, every trace and every motive-card object, in the name or any of the three wrong names', () => {
+  const square = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`${'ABCDE'[i]}1`, [{ kind: 'line', from: [0, 0], to: [1, 1] }]]))
+  const pic = (name, decoys = ['A kite', 'A tree', 'A fish']) => ({ name, decoys, cells: square(3) })
+  assert.deepEqual(checkPicture(pic('A kite', ['A tree', 'A fish', 'A cloud']), 1), [], 'a plain picture passes')
+  for (const w of ['star', 'smiley', 'house', 'diamond']) assert.ok(checkPicture(pic(`A ${w}`), 1).includes('disqualified'), w)
+  assert.ok(checkPicture(pic('A kite', ['A tree', 'A starfish', 'A cloud']), 1).includes('disqualified'), 'a sample among the wrong names counts too')
+  for (const w of NEVER_WORDS) {
+    assert.ok(checkPicture(pic(`A ${w}`), 1).includes('never'), `${w} as the name`)
+    assert.ok(checkPicture(pic('A kite', ['A tree', `Two ${w}s`, 'A cloud']), 1).includes('never'), `${w} as a wrong name, plural`)
+  }
+  // the words the audit named (handoff §3 and the drawn traces) are all on it
+  for (const w of ['boot', 'spectacles', 'candle', 'cup', 'picture', 'vial', 'sand', 'iodine', 'elbow patch']) assert.ok(TRACE_WORDS.includes(w), w)
+  for (const w of ['pizza', 'toilet roll', 'phone', 'charger', 'door', 'shopping cart', 'crown', 'car']) assert.ok(MOTIVE_WORDS.includes(w), w)
+  assert.ok(DISQUALIFIED.includes('star'))
+  // inside a longer word: four letters and up anywhere, three letters at the end
+  for (const n of ['Sunglasses', 'A doorknob', 'A teacup', 'A racecar', 'A bookcase']) assert.ok(namesAny(n, NEVER_WORDS), n)
+  for (const n of ['A kite', 'A cloud', 'A cartwheel', 'An apple', 'A tree']) assert.equal(namesAny(n, NEVER_WORDS), false, n)
+  // reasons name no picture
+  for (const r of checkPicture(pic('A boot'), 1)) assert.ok(!/boot/i.test(r))
+})
+
 test('start needs at least two people', async () => {
   const { db, nightId } = await party(1)
   await assert.rejects(start(db, { nightId }), e => e.code === 'invalid')
+})
+
+test('Sir Irwin\'s slides: each stays up five seconds plus 0.4 a word, in the order of the How to Play doc; slide 3 carries the practice smiley\'s B1 square', () => {
+  assert.deepEqual(IRWIN_SLIDES.map(s => s.title), ['Welcome', 'The idea', 'A turn', 'The shouting', 'Guessing', 'The rounds', 'The clue'])
+  for (const s of IRWIN_SLIDES) {
+    const words = s.text.trim().split(/\s+/).length
+    assert.equal(s.ms, SLIDE_BASE_MS + SLIDE_WORD_MS * words, s.title)
+    assert.equal(s.ms, slideMs(s.text))
+  }
+  assert.equal(INTRO_MS, IRWIN_SLIDES.reduce((a, s) => a + s.ms, 0))
+  const idea = IRWIN_SLIDES.find(s => s.title === 'The idea')
+  assert.ok(idea.ms >= 21_000 && idea.ms <= 23_000, 'the longest slide gets about 22 seconds')
+  assert.ok(INTRO_MS >= 100_000 && INTRO_MS <= 115_000, 'all seven take about 1.8 minutes')
+  // slide 3 ("like this arc in B1") draws the public practice square; no other slide carries a square
+  assert.deepEqual(IRWIN_SLIDES[2].cell, { label: 'B1', strokes: PRACTICE.cells.B1 })
+  assert.ok(IRWIN_SLIDES[2].text.includes('B1'))
+  assert.equal(IRWIN_SLIDES.filter(s => s.cell).length, 1)
 })

@@ -81,6 +81,52 @@ export function releasedNames(finale) {
   return HOST_STAGES.slice(1, upto + 1)
 }
 
+// The closing W-O-O-F News bulletin around each name (handoff §7b). The
+// host's press plays that name's lead-in, and its card cuts in only once
+// the lead-in's hold has passed: finale.cardAt[stage], on the server's
+// clock. Until then the screen keeps the cards already named and shows the
+// lead-in's words (the parts up to the one that carries the card). After
+// it, the new card, with any words that come after the card underneath
+// (the Victim's sign-off and the studio's close). A doc with no cardAt
+// shows the card at once, with all its words. A hold stops this clock too.
+//   cards: the cards on screen, in canon order
+//   fresh: the card that just cut in (null while its lead-in plays)
+//   captions: [{ who, text }] under the cards
+export function revealView(finale, now) {
+  const released = releasedNames(finale)
+  const stage = released[released.length - 1] ?? null
+  if (!stage) return { cards: [], fresh: null, waiting: false, captions: [] }
+  const parts = Array.isArray(finale?.news?.[stage]) ? finale.news[stage] : []
+  const cardAt = ms(finale?.cardAt?.[stage])
+  const t = finale?.holdAt ? ms(finale.holdAt) : now
+  const cut = parts.findIndex(p => p?.card)
+  if (cardAt && t < cardAt) {
+    return { cards: released.slice(0, -1), fresh: null, waiting: true, captions: cut >= 0 ? parts.slice(0, cut + 1) : parts }
+  }
+  return { cards: released, fresh: stage, waiting: false, captions: !cardAt ? parts : cut >= 0 ? parts.slice(cut + 1) : [] }
+}
+
+// The character behind a named card, for its portrait: the id when the doc
+// carries one, else by character name from the night's characters, else by
+// the guest's name when exactly one guest on the roster has it.
+export function revealCharacterId(named, { characters = [], roster = {} } = {}) {
+  if (!named) return null
+  if (named.characterId) return named.characterId
+  const byName = named.characterName ? characters.find(c => c?.name === named.characterName) : null
+  if (byName?.id) return byName.id
+  const guests = Object.values(roster ?? {}).filter(r => r?.name && r.name === named.name)
+  return guests.length === 1 ? guests[0].characterId ?? null : null
+}
+
+// The end credits' awards list: the achievements the host gave during the
+// night, then the end-credit awards (credits.awards). The early reel shows
+// only the first part.
+export function creditsAwards(finale) {
+  const given = Array.isArray(finale?.achievements) ? finale.achievements : []
+  const awards = Array.isArray(finale?.credits?.awards) ? finale.credits.awards : []
+  return [...given, ...awards]
+}
+
 // The workshop's achievements list ("Title: one line"), numbered as the host's tap sends them.
 export function achievementsOf(content) {
   const raw = content?.achievements

@@ -1,5 +1,10 @@
 # Task: load the bag item list into the Workshop
 
+> **Done (18 Oct 2026).** The 108 items are in `seed/bag-items.json` (as `{ _about, items }`)
+> and went into the workshop by migration `2026-10-18-bag-items`. The blind packer is built
+> (`npm --prefix scripts run pack-bags`, ten bags of six), and Jenna's page shows the packing
+> list. Nothing here is left to do; the rules below are kept for reference.
+
 Written 29 Sep 2026 for Claude Code, working in `~/Documents/GitHub/Murderwin`.
 Read `CLAUDE.md` and `chats/docs/sirwin-manor-bag-system.md` first. They win any disagreement with this file.
 

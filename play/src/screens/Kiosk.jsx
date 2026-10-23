@@ -5,8 +5,11 @@ import { portraitUrls } from '../lib/content'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText } from '../lib/screen'
+import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
+import { isRehearsalNight } from '../lib/night'
+import { RehearsalBand } from './Moments'
+import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory. A kiosk is
 // a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -27,7 +30,8 @@ import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hus
 // sound is called for, and a dot that says whether the house can still be
 // heard. None of them ever covers the content, and none of them shows while
 // the room is dark: a kiosk that reloads during the blackout stays
-// near-black.
+// near-black. On a rehearsal night a red REHEARSAL band runs across the top
+// of every room screen (never on the party night, never in the dark).
 
 export default function Kiosk({ which }) {
   const { uid } = useAuthUid()
@@ -63,6 +67,7 @@ export default function Kiosk({ which }) {
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
+      <RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />
       {body}
       <Bell sounds={sounds.data} serverNow={serverNow} />
       <StaleDot view={night} online={online} />
@@ -129,12 +134,13 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   const lastReveal = useRef(null)
   const view = livingView({ night, relay, screen, finale, captionsOnly })
 
-  // a soft note at each reveal
-  const stage = finale && night?.act === 7 ? finaleStage(finale, serverNow()) : null
+  // a soft note at each reveal, as the card cuts in after its lead-in; never again once the
+  // closing story, the journey or the credits are up (a screen reloaded then stays quiet)
+  const fresh = finale && night?.act === 7 && NAME_STAGES.includes(finaleStage(finale, serverNow())) ? revealView(finale, serverNow()).fresh : null
   useEffect(() => {
-    if (!stage) return
-    if (['murderer', 'motive', 'victim'].includes(stage) && lastReveal.current !== stage) { chime('right'); lastReveal.current = stage }
-  }, [stage])
+    if (!fresh) return
+    if (lastReveal.current !== fresh) { chime('right'); lastReveal.current = fresh }
+  }, [fresh])
 
   // the clock: nudge the server when a deadline passes, or when every vote is in
   useEffect(() => {
@@ -169,7 +175,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'dark') return <Dark />
   if (view === 'paused') return <OneMoment />
   // Act 7: the finale runs on this screen against the server's clock
-  if (view === 'finale') return <Finale night={night} finale={finale} serverNow={serverNow} />
+  if (view === 'finale') return <Finale night={night} finale={finale} content={content} serverNow={serverNow} />
   // Act 7: while the phones decide, the clock is on the big screen, with the
   // trace when there is one (the drawing may have been cut, or never run)
   // and the board of strikes from the deduction round beneath
@@ -186,24 +192,31 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   }
   if (view === 'captions') return <Captions captions={captionsOf(screen)} rehearsal={screen?.rehearsal} />
   if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
-  if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
+  if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'card') return <ScreenCard screen={screen} />
   if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
     const act = ACTS[night.act]
     return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} />
   }
 
-  // Sir Irwin's rules slides, one at a time on the server's clock
+  // Sir Irwin's rules slides, one at a time on the server's clock, each up
+  // for its own time. A slide with a square (slide 3: the practice smiley's
+  // B1) draws it the way a turn does, dark, with its label beside the words.
   if (relay.state === 'intro') {
-    const slides = relay.slides ?? []
-    const each = relay.timing?.slideMs ?? 9000
-    const left = Math.max(0, ms(relay.introEndsAt) - serverNow())
-    const i = Math.min(slides.length - 1, Math.max(0, slides.length - 1 - Math.floor(left / each)))
-    const s = slides[i]
+    const { index, slide: s, count } = slideAt(relay, serverNow())
     return (
-      <div className="kiosk relay-slide">
+      <div className={`kiosk relay-slide${s?.cell ? ' with-cell' : ''}`}>
         <IrwinFace mood={5} />
-        {s && <><p className="kiosk-crest">{s.title} · {i + 1} of {slides.length}</p><p className="kiosk-line slide-text">{s.text}</p></>}
+        {s && <p className="kiosk-crest">{s.title} · {index + 1} of {count}</p>}
+        {s && (s.cell
+          ? <div className="slide-with-cell">
+              <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>
+              <div className="slide-cell">
+                <Cell strokes={s.cell.strokes} className="cell-art slide" dark />
+                <p className="slide-cell-label">{s.cell.label}</p>
+              </div>
+            </div>
+          : <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>)}
       </div>
     )
   }
@@ -232,21 +245,17 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (relay.state === 'vote' || relay.state === 'lockout') {
     return <Guess relay={relay} nightId={nightId} serverNow={serverNow} />
   }
-  if (relay.state === 'done') return (
-    <>
-      {relay.doorSlide && <div className="kiosk relay-slide door-slide"><IrwinFace mood={5} /><p className="kiosk-line slide-text">{relay.doorSlide.text}</p></div>}
-      <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
-    </>
-  )
+  // a finished drawing is the door (livingView), with Sir Irwin's door slide on it
   return null
 }
 
 // A character's portrait, from play/public/portraits.
-function Portrait({ characterId }) {
+function Portrait({ characterId, className = 'called-portrait' }) {
   const [i, setI] = useState(0)
+  useEffect(() => setI(0), [characterId])
   const urls = characterId ? portraitUrls(characterId) : []
   if (!urls[i]) return null
-  return <img className="called-portrait" src={urls[i]} alt="" onError={() => setI(i + 1)} />
+  return <img className={className} src={urls[i]} alt="" onError={() => setI(i + 1)} />
 }
 
 // The guess: four named pictures (or drawn ones, on a stand-in round), tapped on the main computer.
@@ -279,12 +288,9 @@ function Guess({ relay, nightId, serverNow }) {
 // ---- the screens the beats name ------------------------------------------
 
 // News (Act 2), the bulletin (Act 3) and Sir Irwin (Act 5): a title and a
-// few lines, nothing else. The bulletin's struck motives are listed with a
-// line through them.
+// few lines, nothing else.
 export function ScreenCard({ screen }) {
-  const lines = screen?.lines ?? []
-  const struck = Array.isArray(screen?.struck) ? screen.struck : []
-  const text = struck.length ? lines.slice(0, Math.max(0, lines.length - struck.length)) : lines
+  const text = screen?.lines ?? []
   return (
     <div className={`kiosk card-screen ${screen?.kind ?? ''}`}>
       <p className="kiosk-crest">{screen?.title ?? ''}</p>
@@ -292,19 +298,13 @@ export function ScreenCard({ screen }) {
       {screen?.kind === 'irwin' && Array.isArray(screen.choices) && screen.choices.length > 0
         // the motives he names sit under "It was one of these…", before his sign-off
         ? <div className="kiosk-lines">
-            {text.slice(0, -1).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+            {text.slice(0, -1).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
             <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><span className="n">{c.n}</span> {c.rhyme}</li>)}</ul>
-            {text.slice(-1).map((l, i) => <p key={`end-${i}`} className="kiosk-line">{l}</p>)}
+            {text.slice(-1).map((l, i) => <p key={`end-${i}`} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>
         : <div className="kiosk-lines">
-            {text.map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+            {text.map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>}
-      {struck.length > 0 && (
-        <div className="strikes">
-          <p className="kiosk-next">The constable has ruled out</p>
-          <ul>{struck.map(s => <li key={s.n}><s>{s.n}. {s.rhyme}</s></li>)}</ul>
-        </div>
-      )}
       {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
@@ -360,11 +360,23 @@ export function MemoryMatch({ board, night, nightId }) {
       <div className="memory-board">
         {cards.map((t, i) => (
           <button key={`${boardId}-${i}`} className={shown.has(i) ? 'memory-card up' : 'memory-card'} onClick={() => flip(i)} aria-label={shown.has(i) ? 'a trace' : 'a card, face down'} disabled={board.cleared}>
-            {shown.has(i) ? <img src={`${base}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <span className="memory-back" aria-hidden="true">✦</span>}
+            {shown.has(i) ? <img src={`${base}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <FolderBack />}
           </button>
         ))}
       </div>
     </div>
+  )
+}
+
+// A face-down card: one of Zimothy's manila file folders (handoff §6b), a
+// light folder with its tab on a dark card, drawn thick so it reads in dim light.
+function FolderBack() {
+  return (
+    <svg className="memory-back" viewBox="0 0 100 100" aria-hidden="true">
+      <path className="folder-rear" d="M14 30 V22 a4 4 0 0 1 4 -4 H38 a4 4 0 0 1 3.2 1.6 L46 26 H82 a4 4 0 0 1 4 4 V76 H14 Z" />
+      <path className="folder-front" d="M9 38 a3 3 0 0 1 3 -3 H88 a3 3 0 0 1 3 3.4 L87.4 78.6 a4 4 0 0 1 -4 3.4 H16.6 a4 4 0 0 1 -4 -3.4 Z" />
+      <path className="folder-label" d="M34 50 H66" />
+    </svg>
   )
 }
 
@@ -375,7 +387,7 @@ export function Captions({ captions, rehearsal = false }) {
     <div className={`kiosk captions ${captions.kind ?? ''}`}>
       {captions.title && <p className="kiosk-crest">{captions.title}</p>}
       <div className="kiosk-lines">
-        {(captions.lines ?? []).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+        {(captions.lines ?? []).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
       </div>
       {rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
@@ -384,7 +396,9 @@ export function Captions({ captions, rehearsal = false }) {
 
 // After the third drawing is named: the door is open, held for ten seconds
 // on the server's clock, then the trace if the host has put it on the TV.
-export function DoorScreen({ screen, cues, trace, serverNow }) {
+// While the drawing is done, Sir Irwin's door slide ("Pawsome!") sits above
+// "The door is open" (relay.doorSlide), until the trace takes the screen.
+export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
   const stage = doorStage({ screen, cues, trace, now: serverNow() })
   if (stage === 'trace') return (
     <div className="kiosk door trace-on-tv">
@@ -392,8 +406,15 @@ export function DoorScreen({ screen, cues, trace, serverNow }) {
       <TraceView trace={trace} compact />
     </div>
   )
+  const slide = doorSlideOf({ relay, stage })
   return (
-    <div className="kiosk done">
+    <div className={`kiosk done${slide ? ' with-slide' : ''}`}>
+      {slide && (
+        <div className="door-slide">
+          <IrwinFace mood={5} />
+          <p className="kiosk-line slide-text"><Spoken text={slide.text} /></p>
+        </div>
+      )}
       <p className="kiosk-crest">All three drawings named</p>
       <p className="kiosk-big">The door is open.</p>
       <p className="kiosk-line">{screen?.lines?.[0] ?? 'The light outside the bedroom is green. Go and see.'}</p>
@@ -519,7 +540,7 @@ export function TraceView({ trace, compact = false }) {
     <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
       {level === 3 ? <div className="trace-pair">{images.map(frame)}</div> : images.slice(0, 1).map(frame)}
       {level === 5 && trace.label && <p className="trace-label">{trace.label}</p>}
-      {trace.irwinLine && <p className="trace-irwin">{trace.irwinLine}</p>}
+      {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
       {level < 5 && <p className="kiosk-next">{level === 3 ? 'Something was left behind. One of these two.' : 'Something was left behind.'}</p>}
       {trace.placeholder && <p className="kiosk-next">Rehearsal</p>}
     </div>
@@ -531,14 +552,17 @@ export function TraceView({ trace, compact = false }) {
 // finale doc the server wrote at the reveal beat. Nothing is a timer. The
 // stats, the achievements and the graph play on the clock; each name shows
 // only once the host has pressed for it (finale.names fills one at a time,
-// Murderer, Motive, Victim); the closing story follows the Victim. A hold
-// freezes the clock where it stood. See lib/finale.js.
+// Murderer, Motive, Victim), and its card cuts in only after the closing
+// bulletin's lead-in for it has played (finale.cardAt); the closing story
+// follows the Victim. A hold freezes the clock where it stood. See
+// lib/finale.js.
 export { finaleStage }
 
+const NAME_STAGES = ['murderer', 'motive', 'victim']
 const NAME_CREST = { murderer: 'The murderer', motive: 'The motive', victim: 'The one who died', done: 'Unmasked' }
 const NAME_WHAT = { murderer: 'Murderer', motive: 'Motive', victim: 'Victim' }
 
-export function Finale({ night, finale, serverNow }) {
+export function Finale({ night, finale, content = null, serverNow }) {
   const now = serverNow()
   const stage = finaleStage(finale, now)
   const held = !!finale.holdAt
@@ -579,22 +603,29 @@ export function Finale({ night, finale, serverNow }) {
     </div>
   )
   const names = finale.names ?? {}
-  const shown = releasedNames(finale)
-  const current = stage === 'done' ? 'victim' : stage
+  // the lead-in plays first, under the cards already named; the new card cuts in when it is over
+  const rv = revealView(finale, now)
+  const who = { characters: content?.characters ?? [], roster: night?.roster ?? {} }
   return (
     <div className={`kiosk finale reveal ${stage}`}>
-      <p className="kiosk-crest">{NAME_CREST[stage]}</p>
-      <div className={`reveal-row count-${shown.length}`}>
-        {shown.map(k => (
-          <div key={k} className={`reveal-card ${k}${k === current && stage !== 'done' ? ' now' : ''}`}>
-            <p className="reveal-what">{NAME_WHAT[k]}</p>
-            {k === 'motive'
-              ? <><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
-              : <><p className="reveal-name">{names[k]?.name ?? '…'}</p><p className="reveal-sub">{names[k]?.characterName ?? ''}{k === 'victim' ? ' · was the one who died' : ''}</p></>}
-          </div>
-        ))}
-      </div>
-      {stage !== 'done' && (finale.news?.[current] ?? []).map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
+      <p className="kiosk-crest">{rv.waiting ? 'W-O-O-F News' : NAME_CREST[stage]}</p>
+      {rv.cards.length > 0 && (
+        <div className={`reveal-row count-${rv.cards.length}`}>
+          {rv.cards.map(k => (
+            <div key={k} className={`reveal-card ${k}${k === rv.fresh && stage !== 'done' ? ' now' : ''}`}>
+              <p className="reveal-what">{NAME_WHAT[k]}</p>
+              {k === 'motive'
+                ? <><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
+                : <>
+                    <Portrait characterId={revealCharacterId(names[k], who)} className="reveal-portrait" />
+                    <p className="reveal-name">{names[k]?.name ?? '…'}</p>
+                    <p className="reveal-sub">{names[k]?.characterName ?? ''}{k === 'victim' ? ' · was the one who died' : ''}</p>
+                  </>}
+            </div>
+          ))}
+        </div>
+      )}
+      {stage !== 'done' && rv.captions.map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
       {held && <p className="kiosk-next">Held</p>}
@@ -650,7 +681,8 @@ function AwardsReel({ finale, now }) {
   )
 }
 
-// The end credits: the awards, the joke counters, the room's split on every
+// The end credits: the achievements the host gave, then the end-credit
+// awards (credits.awards), the joke counters, the room's split on every
 // Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
 function Credits({ finale, now }) {
   const c = finale.credits ?? {}
@@ -662,7 +694,7 @@ function Credits({ finale, now }) {
       <div className="credits-roll" style={{ animationDuration: `${span}ms`, animationDelay: `-${since}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }}>
         <p className="kiosk-crest">Awards</p>
         <ul className="awards-reel">
-          {(finale.achievements ?? []).map((a, i) => (
+          {creditsAwards(finale).map((a, i) => (
             <li key={i}><span className="award-title">{a.title}</span><span className="award-name">{a.name}</span>{a.line && <span className="award-line">{a.line}</span>}</li>
           ))}
         </ul>
@@ -781,7 +813,7 @@ export function Study({ study, rotation, serverNow, lines = null }) {
       )}
       <div className="granolia">
         <div className="granolia-face" aria-hidden="true" />
-        <p className="kiosk-line granolia-says">{line}</p>
+        <p className="kiosk-line granolia-says"><Spoken text={line} /></p>
       </div>
       {s.state === 'entering' && (
         <p className="kiosk-big entry">{s.entry?.colour ?? '…'} and {s.entry?.number ?? '…'}</p>

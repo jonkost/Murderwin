@@ -4,7 +4,8 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
 import { Eliminations } from './Windows'
-import { nowCards, roleCard, stopOf, lightsStep } from '../lib/night'
+import { nowCards, roleCard, stopOf, lightsStep, salemFriendNote } from '../lib/night'
+import Spoken from './Spoken'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -126,7 +127,7 @@ function You({ character, session, content, ui, onTour }) {
       {idle && (
         <div className="passing" aria-label={`${idle.cat.name}, passing by`}>
           <CatFace cat={idle.cat.key} name={idle.cat.name} />
-          <p><span className="idle-cat">{idle.cat.name}, passing by</span><br />{idle.text}</p>
+          <p><span className="idle-cat">{idle.cat.name}, passing by</span><br /><Spoken text={idle.text} /></p>
         </div>
       )}
     </div>
@@ -204,6 +205,8 @@ function Motives({ uid, content, notes }) {
 // five stops and a marker that cannot be dragged. Never a number. Tap a row
 // to read what that level means for you, who the cat is, and the house's
 // own line about where you stand. Sir Irwin is locked on the top stop.
+// A True Friend of the Groundskeeper (the host's "Salem petted") sees the
+// honour's words again at the top of Salem's row.
 // In Act 4 a second, smaller marker shows where the whole group stands with
 // each cat ("the house"), since a cat talks to the group together then.
 function Cats({ session, content, ui, act }) {
@@ -214,6 +217,7 @@ function Cats({ session, content, ui, act }) {
   const lines = useMemo(() =>
     Object.fromEntries(CATS.map(c => [c.key, statusLine(content, c.key, stopOf(session.affection?.[c.key] ?? 3))])),
     [content, session.affection])
+  const friend = salemFriendNote(session)
   return (
     <div>
       <p className="gloss">Where you stand with each of the household. Tap one to learn more.</p>
@@ -233,6 +237,7 @@ function Cats({ session, content, ui, act }) {
               </button>
               {on && (
                 <div className="gauge-more">
+                  {cat.key === 'salem' && friend && <p className="friend-note"><strong>{friend.title}.</strong> <Spoken text={friend.text} /></p>}
                   <p className="meaning"><strong>{words[level - 1]}.</strong> {cat.key === 'irwin' ? 'Locked. Sir Irwin tells everyone everything, and he never lies.' : STOP_MEANINGS[level - 1]}</p>
                   <About text={cat.text} />
                   <p className="standing">{lines[cat.key]}</p>

@@ -4,6 +4,9 @@ The big puzzle of Act 4. Written 13 October 2026 from everything already decided
 with the gaps filled in. Everything here is structure. No answers, no clue text. Safe for you
 to read.
 
+**Updated 23 October 2026:** the study pays the Ghost's trace at the dial's level (§5), the end
+credits have two study awards (§9), and Granolia's intro on the phone needs new words (§11).
+
 **Where the settled parts come from:** the Canon page (Puzzles, Hardware, The seven acts),
 `CLAUDE.md` (Hardware), the act skeletons (`chats/docs/sirwin-manor-act-skeletons.md` §5), the
 first puzzle worksheet from 3 September (house rules for all puzzles), the cat info
@@ -16,10 +19,14 @@ those, it says so under "Decisions this doc makes".
 
 A group walks into the study. One wall of white hexagons plays a pattern. They touch it back.
 Do that three times and the colour lights on the other wall answer with a colour and a number.
-They press that pair on the little button box. Three rounds, three pairs, and the study hands
-every phone in the group a clue. Fifteen minutes, then out, whatever happened. Granolia helps.
+They press that pair on the little button box. Three rounds, three pairs, and the study sends
+every phone in the group the trace the victim left behind. Fifteen minutes, then out, whatever
+happened. Granolia hosts and helps.
 
 The study is the timekeeper for the whole act: when one group is done, everyone rotates.
+
+Granolia's only Act 4 job is the study. The cat station never sends a group to her, because her
+room, the Study, holds the light puzzle. That is settled by default; you may change it.
 
 ---
 
@@ -40,6 +47,9 @@ No Raspberry Pi anywhere. The room light stays low; the walls are the light.
 ---
 
 ## 3. How it plays, beat by beat
+
+**Called up.** When it is a group's turn, every phone in the group says *Granolia's expecting
+your group in the Study, upstairs.* with Granolia's intro under it, in her voice.
 
 **At rest.** The hexagons breathe at a dim glow. The Lines drift slowly through colours. The
 screen shows the study and Granolia, half hidden. Nothing says "waiting". This is a real state,
@@ -70,14 +80,14 @@ its own.
   dear. Count the bars again."* The Lines keep showing the answer. Try again.
 
 **7. Three rounds, three jewels.** When the third pair locks in, the study pays out: the screen
-says *Something has been sent to your phones*, every phone in the group receives the clue, the
-walls do a short celebration, and the rotation fires for the whole house. The study goes back
-to rest for the next group.
+says *Something has been sent to your phones*, every phone in the group receives the trace
+(§5), the walls do a short celebration, and the rotation fires for the whole house. The study
+goes back to rest for the next group.
 
 **The clock.** Fifteen minutes from the first touch, hard, on the server's clock. At twelve
 minutes Granolia mentions the time. At fifteen the walls stop testing, the screen shows every
-pair the group had not yet earned, the clue is sent anyway, and the rotation fires. *"Thank you
-for trying your best. Off you go."* Nobody leaves the study without the clue.
+pair the group had not yet earned, the trace is sent anyway, and the rotation fires. *"Thank
+you for trying your best. Off you go."* Nobody leaves the study without the trace.
 
 ---
 
@@ -133,12 +143,26 @@ large. The blank key stays blank. Decided 25 September; unchanged here.
 
 ## 5. What the group wins
 
-One clue, the same clue for every group, reached by a different route each time. Which clue it
-is comes from the seed's slot pool and is sealed. The study station never knows what it is
-sending; it only tells the server "this group finished" and the server deals the clue to each
-phone in the group. The phones show it in the clue list, marked as found in the study.
+**Changed 21 and 22 October.** The trace the victim left behind (the Ghost's own trace), as
+clearly as the clarity dial allows at the moment the group finishes or the fifteen minutes run
+out:
 
-Groups share information only inside the group during Act 4, and the clue arrives on each
+| Level | What the group gets |
+|---|---|
+| 1 | The picture in black and white, hazy. |
+| 2 | The picture in colour, less hazy. |
+| 3 | Two look-alikes side by side. One is real; the other is never the Murderer's. |
+| 4 | The picture, clear. |
+| 5 | The picture and its name. |
+
+It is the same five-level ladder as the bedroom door in Act 6 (`docs/relay-drawing-game.md`).
+Every phone in the group gets the same card, *From the study: Something was left behind.* A
+later group may get a clearer or a hazier one, because the dial moves during Act 4. The
+station never knows what was sent: it only tells the server "this group finished", and the
+server works out the card. The phones show it in the clue list. If the night has no case yet,
+the card carries a bracketed stand-in line instead.
+
+Groups share information only inside the group during Act 4, and the trace arrives on each
 member's phone, so a trio that splits up afterwards still all have it.
 
 ---
@@ -146,12 +170,14 @@ member's phone, so a trio that splits up afterwards still all have it.
 ## 6. Rule 1 check
 
 - You can walk into the study on the night and play it. The patterns and the code are made up
-  on the spot by the station, differently for every group, and they mean nothing. The clue
-  behind them is sealed, dealt by the server, and never passes through the station.
+  on the spot by the station, differently for every group, and they mean nothing. The trace
+  behind them comes from the night's sealed case (who the Ghost is), is worked out by the
+  server, and never passes through the station.
 - You can build and test the whole room in October. Patterns, colours, counts, the button box,
   Granolia's lines, the clock: all safe content. Testing uses a throwaway night.
 - Nothing in the study is ever written down for the next group. Every start is a reset.
-- Granolia's hint lines are safe content you write in the workshop. They never mention the clue.
+- Granolia's hint lines are safe content you write in the workshop. They never mention the
+  trace.
 
 ---
 
@@ -169,31 +195,33 @@ member's phone, so a trio that splits up afterwards still all have it.
       reservations from the Canon's open items). If a controller moves address mid-party, the
       wall goes silent.
 - [ ] Walk through one full round yourself before guests arrive. Touch, Lines, button box,
-      phone. If the phone gets a clue, the chain works.
+      phone. If the phone gets the card *From the study*, the chain works.
 - [ ] Screen angled so a group at the wall can see Granolia without turning around.
 
 ---
 
 ## 8. If something breaks
 
-Delay, never destroy. The clue is dealt whatever happens.
+Delay, never destroy. The trace is sent whatever happens.
 
 | What fails | What the group sees instead |
 |---|---|
 | The hexagons stop answering touch | The pattern plays on the screen over a drawing of the wall, with the panels numbered. The group taps the numbers on the button box in order. Same game, same keys. |
 | The Lines go dark | The colour and the count appear on the screen instead. |
-| The whole station is down | The study is cut. The rotation runs on a twelve-minute timer and the server deals the study clue to each group as their study slot ends. Granolia's lines show on their phones. |
+| The whole station is down | The study is cut. The rotation runs on a twelve-minute timer and the server sends each group the trace with their study card. Granolia's lines show on their phones. |
 | The server cannot be reached | The station keeps running the game locally and sends "finished" when it reconnects. The group's phones catch up on their own. |
 
-The Nanoleaf layer is on the list of things that are safe to cut after the freeze. The clue
+The Nanoleaf layer is on the list of things that are safe to cut after the freeze. The trace
 is not.
 
 ---
 
-## 9. What it leaves for the stats reel
+## 9. What it leaves for the end credits
 
-- Fastest light puzzle (the group's time from first touch to third jewel).
-- Nothing about hints, and no "slowest".
+- **Bright Sparks:** the group that cracked the study lights fastest.
+- **Left in the Dark:** every group the fifteen minutes beat, or, if every group cracked it, the
+  slowest one (*"Granolia still believes in you."*).
+- Decided 22 Oct (handoff §8). Still nothing about hints.
 
 ---
 
@@ -217,7 +245,7 @@ Each of these fills a gap. Say the word and any of them changes.
    each other on LED bars in a dim room. Check them on the real Lines and swap any two that
    look alike.
 7. **The pay-out goes to each phone in the group**, not to the study screen. The screen never
-   shows clue text.
+   shows the trace.
 
 ## 11. Still open
 
@@ -226,6 +254,13 @@ Each of these fills a gap. Say the word and any of them changes.
 - How many hexagons and how many Line bars are on the walls. The station reads the layout from
   the controllers, so it only matters for whether six counted bars fit with gaps between them.
   If not, the bars light side by side from one end.
+- **Granolia's intro on the phone needs new words (yours to approve).** Today it says, from the
+  handoff, *"The lights on the wall flash a pattern. Copy it on the buttons, then press
+  submit."* But the game is played by touching the panels; the buttons only take the colour and
+  the number at the end. A group that follows it would press buttons while the wall waits for
+  touches. Proposed: *"Oh! You're here! The wall flashes a pattern. Touch the same lights in the
+  same order. Do that three times, then press the colour and the number on the buttons, and
+  press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah."*
 
 ---
 
@@ -238,8 +273,8 @@ Built blind, tested against fakes. Not yet run on the real walls.
   both, and the runner `station.mjs`. Twelve tests.
 - **The server side**, `functions/lib/station.js`: *Make the groups* (pairs and
   trios, the study order), the station key, the station's state and "finished"
-  calls, and the pay-out hook that marks each phone in the group as dealt. The
-  clue itself waits for the case generator. Six tests.
+  calls, and the pay-out hook that marks each phone in the group as dealt. It
+  pays the Ghost's trace at the dial's level (`station.studyReveal`, 22 Oct).
 - **The study screen**: `/play/?kiosk=study` on the M1 Air. Granolia, the three
   jewels, the clock, her hints, the numbered wall for the map hint and the
   fallback.
@@ -258,18 +293,20 @@ Built blind, tested against fakes. Not yet run on the real walls.
    keyboard (the key map prints when it starts).
 
 **Added 17 October 2026.**
-- **The clue is dealt for real.** When the station says a group is done (or the cap falls),
-  the server deals one clue card to every phone in the group: the study's clue from the case
-  when the generator has written it, a bracketed rehearsal line until then. The station card
-  on the phone no longer carries the clue text; nothing is on a phone before it is earned.
+- **The pay-out is dealt for real.** When the station says a group is done (or the cap falls),
+  the server deals one card to every phone in the group. Nothing is on a phone before it is
+  earned. **Done 22 Oct:** the card is the Ghost's trace at the dial's level
+  (`station.js studyReveal`), not a written clue.
 - **The study is the clock.** The same "done" moves the whole house to the next station,
   exactly as pressing *Next* would, as long as the night is in Act 4 on a station beat. A
   Parlour Game on the phones keeps running through the rotation (21 Oct).
 - **Rehearsing without the walls.** If no station has reported in for two minutes, a rotation
-  deals the study's clue with the station card, so a phones-only rehearsal still pays out.
+  deals the study's trace card with the station card, so a phones-only rehearsal still pays
+  out.
 - **Make the groups** on the Host tab now goes through the dealer, so the Murderer and the
   Ghost are kept apart there too.
-- **Fastest light puzzle** reaches the Act 7 stats reel from the groups' finish times.
+- **Fastest light puzzle** reaches Act 7 from the groups' finish times (since 22 Oct the end
+  credits' Bright Sparks and Left in the Dark, §9).
 
 **Added 17 October 2026, second pass (the Act 4 clock cannot misfire).**
 - **The study is the clock at every slot.** The two Parlour Games in Act 4 sit between
@@ -278,16 +315,17 @@ Built blind, tested against fakes. Not yet run on the real walls.
   up with its three questions AND the whole house moves to its next station, in the same
   moment. People answer as they walk. You never need Next between study finishes. Next still
   works as the backup if the station is ever stuck.
-  **Changed 21 Oct:** the Parlour Games no longer have beats of their own; four pop up at
-  random times during Act 4 (`docs/parlour-games.md`), so the `autoAfterStudy` flag is gone.
+  **Changed 21 Oct:** the Parlour Games no longer have beats of their own; five pop up at
+  random times during Act 4 (twelve a night: five in Act 2, five in Act 4, two at the start of
+  Act 6; `docs/parlour-games.md`), so the `autoAfterStudy` flag is gone.
   A study finish during a Parlour Game still moves the house on, and the game keeps running.
 - **The server decides who is due in the study.** The station only ever says "the group I
   was told about is done". Which group that was, and who comes next, is the rotation's. The
   station re-arms for whichever group the server's study document names, never from its own
   memory, so a second group is never greeted as the first and paid as the first.
 - **No station? Twelve minutes a group.** If the study station has not reported in for two
-  minutes when a rotation happens, the study runs on a twelve-minute timer instead: the clue
-  rides with the station card, and when the twelve minutes are up the house moves on, paid
+  minutes when a rotation happens, the study runs on a twelve-minute timer instead: the trace
+  card rides with the station card, and when the twelve minutes are up the house moves on, paid
   as "absent". Your Host tab keeps that clock (it asks the server once a minute through
   Act 4), and the Host tab also has *Finish this group now* for when you would rather not
   wait.
@@ -317,11 +355,12 @@ Decisions made while building, on top of §10:
   tab and the same key into the station's settings file. Simpler than a second
   sign-in, and it can be changed from your phone.
 - **Who is in the study comes from the groups.** *Make the groups* writes the
-  order; the station pays out to the group the order says is due. The Host tab
-  does not yet reassign a group; if the wrong group walks in, the scheduled one
-  is paid.
-- **Hints the screen shows are defaults** written in the kiosk page. A "study
-  lines" list in the workshop can replace them later.
+  order; the station pays out to the group the order says is due. If the wrong
+  group walks in, *This group is in the study* on the Host tab reassigns it
+  before pay-out.
+- **Granolia's study-screen lines** are the workshop list *Granolia in the
+  study*; a line left blank uses the plain default. Her intro on the phone is
+  the host line in `functions/lib/hosts.js` (see §11 for its wording).
 
 ---
 
@@ -371,8 +410,12 @@ current, finished{} }`. The station signs in anonymously and presents `meta/game
 'finished', payload: { groupId, outcome, seconds, pairs } })` → `dealStudy` writes
 `sessions/{uid}.dealt.study = { at, outcome, groupId }` for each member, records the group in
 `rotation.finished`, advances `rotation.current`, and points `public/study.groupId` at the next
-group. Idempotent by `groupId`. When the case generator lands, `dealStudy` is where the clue is
-assembled from sealed content into each session, server-side only.
+group. Idempotent by `groupId`. **Done 22 Oct:** `dealStudy` calls `studyReveal(db, { c, roster })`
+once per group (the Ghost's trace at `c.dial` on the `traces.js` ladder; at level 3 the partner
+excludes the Murderer's trace), records the level in `nights/{id}/private/dialClues.study` for
+the end credits, and deals `studyClueCard(c, act, beat, reveal)` (`'Something was left behind.'`
+plus `trace`; `STUDY_PLACEHOLDER` when there is no reveal) to each member with `dealOnce`.
+`cases.studyClue` is never read. The no-station path deals the same card from `deal.rotate`.
 
 **Clock.** The cap is `startedAt + 15 min` on server time. The station keeps server skew the
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock
@@ -384,10 +427,13 @@ moves on by the length of the pause (`runner.paused`), the next state write carr
 start to the kiosk, and the group gets its whole fifteen minutes. The no-station slot
 (`public/study.slotEndsAt`) is moved by the server's `resume` instead (`PAUSE_SHIFTED`).
 
-**Which group.** The rotation engine (not yet built) publishes who is due in the study. The
-station greets that group and pays out to it. It does not try to detect who is physically
-present. If a different group starts, the Host tab can reassign before pay-out; otherwise the
-scheduled group is paid.
+**Which group.** The rotation (`deal.rotate`, `station.makeRotation` for the first group)
+publishes who is due in the study. The station greets that group and pays out to it. It does
+not try to detect who is physically present. If a different group starts, the Host tab can
+reassign before pay-out; otherwise the scheduled group is paid. The group's phones get the
+study station card with `host: { cat: 'granolia', line: hostLine('granolia', ui) }` (deal.js):
+a workshop ui_copy line `HOST GRANOLIA`, if one is ever written, wins over the default in
+`hosts.js`.
 
 **Fallbacks.** Elements unreachable for 5 s → the kiosk page shows the numbered wall and the
 station accepts number keys as the answer. Lines unreachable → colour and count rendered on the

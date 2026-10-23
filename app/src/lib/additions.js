@@ -10,8 +10,18 @@
 //                                         question is not already there
 //   tasks:           [task]               add task cards
 //   decisions:       [decision]           add decisions not already there
-//   retireTasks:     [{ order, detail }]  move those task cards to done, once
+//   retireTasks:     [{ order, title?, detail }]
+//                                         move those task cards to done, once
 //   answerDecisions: { key: answer }      answer a decision nobody has answered
+//   fileTasks:       [{ order, title?, moment?, from?, by?, note? }]
+//                                         on those open cards: file under
+//                                         `moment` (only a card with no moment,
+//                                         or one still under `from`), give a
+//                                         `by` date (only a card with none),
+//                                         and add `note` to the end of the detail
+//   fileDecisions:   { key: moment }      file a decision that has no moment
+// With a `title`, a card must also have that title (any case), so a card
+// someone added by hand that happens to share a number is never touched.
 // Nothing here ever deletes, reorders or rewrites a line.
 
 import { normalizeBeats, titleOf } from './scenarios.js'
@@ -57,7 +67,19 @@ export function freshScenarios(existing, sets, newId = defaultNewId) {
   return out
 }
 
-// snapshot: { applied: [id], areas: { area: rawDocOrNull }, decisions: { key: dataOrNull }, tasks: [{ id, order, status, detail }] }
+const normTitle = (t) => String(t ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
+// The seeded card an entry means: its number, and its title when one is given.
+export function taskMatches(task, entry) {
+  if (task.order !== entry.order) return false
+  return entry.title == null || normTitle(task.title) === normTitle(entry.title)
+}
+
+// The task orders an entry looks up (the store fetches those cards first).
+export function taskOrdersOf(add) {
+  return [...new Set([...(add.retireTasks ?? []), ...(add.fileTasks ?? [])].map(r => r.order))]
+}
+
+// snapshot: { applied: [id], areas: { area: rawDocOrNull }, decisions: { key: dataOrNull }, tasks: [{ id, order, title, status, detail, moment, by }] }
 export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.now() } = {}) {
   const applied = snapshot.applied ?? []
   const plan = { id: add.id, skip: false, areaDocs: {}, tasks: [], decisions: {}, taskPatches: [], decisionPatches: {}, applied }
@@ -79,15 +101,34 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
   for (const d of add.decisions ?? []) {
     if (snapshot.decisions?.[d.key] == null) plan.decisions[d.key] = { ...d, answeredAt: null }
   }
+  // One patch per card and per decision, however many entries touch it.
+  const patchOf = (id) => plan.taskPatches.find(p => p.id === id)
+  const patchTask = (id, patch) => { const p = patchOf(id); if (p) Object.assign(p.patch, patch); else plan.taskPatches.push({ id, patch }) }
+  const current = (t) => ({ ...t, ...(patchOf(t.id)?.patch ?? {}) })
   for (const r of add.retireTasks ?? []) {
     for (const t of snapshot.tasks ?? []) {
-      if (t.order !== r.order || t.status === 'done') continue
-      plan.taskPatches.push({ id: t.id, patch: { status: 'done', detail: [t.detail, r.detail].filter(Boolean).join(' ') } })
+      if (!taskMatches(t, r) || current(t).status === 'done') continue
+      patchTask(t.id, { status: 'done', detail: [current(t).detail, r.detail].filter(Boolean).join(' ') })
+    }
+  }
+  for (const f of add.fileTasks ?? []) {
+    for (const t of snapshot.tasks ?? []) {
+      const c = current(t)
+      if (!taskMatches(t, f) || c.deleted || c.status === 'done') continue
+      const patch = {}
+      if (f.moment && (!c.moment || (f.from != null && c.moment === f.from))) patch.moment = f.moment
+      if (f.by && !c.by) patch.by = f.by
+      if (f.note) patch.detail = [c.detail, f.note].filter(Boolean).join(' ')
+      if (Object.keys(patch).length) patchTask(t.id, patch)
     }
   }
   for (const [key, answer] of Object.entries(add.answerDecisions ?? {})) {
     const d = snapshot.decisions?.[key]
-    if (d && d.answer == null) plan.decisionPatches[key] = { answer, answeredAt: now, answeredBy: 'the canon' }
+    if (d && d.answer == null) plan.decisionPatches[key] = { ...plan.decisionPatches[key], answer, answeredAt: now, answeredBy: 'the canon' }
+  }
+  for (const [key, moment] of Object.entries(add.fileDecisions ?? {})) {
+    const d = snapshot.decisions?.[key]
+    if (d && !d.moment) plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment }
   }
   plan.applied = [...applied, add.id]
   return plan

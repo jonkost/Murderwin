@@ -1,8 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { AREAS, ADDITIONS, UI_LABELS, NOTICE_KEYS, STUDY_LABELS, STATION_LABELS, TRACE_LABELS, BAG_ITEM_SEED, fieldsFor, codecFor, lintItem, goalOf } from '../src/lib/content.js'
+import { readFileSync } from 'node:fs'
+import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, NOTICE_KEYS, STUDY_LABELS, STATION_LABELS, TRACE_LABELS, BAG_ITEM_SEED, fieldsFor, codecFor, lintItem, goalOf } from '../src/lib/content.js'
 import { ALL_CARDS, cardFor } from '../src/lib/cards.js'
-import { planAddition, applyPlan, freshLines } from '../src/lib/additions.js'
+import { planAddition, applyPlan, freshLines, taskMatches, taskOrdersOf } from '../src/lib/additions.js'
 
 // Safe content only: the lists, their cards, their codecs and the additive
 // migrations, on an in-memory copy of the database.
@@ -37,9 +38,11 @@ test('the phone\'s own lines list offers every label the phone and the dealer re
   for (const want of ['NUMBERS', 'NOTICE SCRAP', 'STOPS', 'FILLER', 'RELAY RULES', 'ORIENT', 'NOT FOR YOU', 'PAUSED BY HOST', 'YOUR ROLE']) assert.ok(values.includes(want), want)
   for (const k of NOTICE_KEYS) assert.ok(values.includes(`NOTICE ${k.toUpperCase()}`), k)
   assert.equal(new Set(values).size, values.length, 'no label twice')
-  assert.equal(goalOf(AREAS.ui_copy), values.length)
+  assert.equal(goalOf(AREAS.ui_copy), COUNTED_UI_LABELS.length, 'the goal counts only the lines with no words of their own yet')
+  assert.equal(UI_LABELS.length - COUNTED_UI_LABELS.length, 30, 'thirty extra lines the game reads')
   assert.equal(STUDY_LABELS.length, 12)
   assert.equal(STATION_LABELS.map(o => o.value).join(','), 'STUDY,CAT,BAGS,PUZZLE,CHECKIN')
+  assert.ok(STATION_LABELS.find(o => o.value === 'PUZZLE').label.includes('memory match'), 'the puzzle station is the memory match')
   assert.equal(TRACE_LABELS.length, 14)
   assert.ok(TRACE_LABELS.every(o => /^TRACE [A-Z ]+$/.test(o.value)), 'trace labels have no hyphen, so the label codec keeps them')
   assert.ok(TRACE_LABELS.some(o => o.value === 'TRACE BOOT PRINT'))
@@ -133,4 +136,94 @@ test('the Parlour Games bank lands once: seventeen sets of three questions with 
   const after = applyPlan(plan, state)
   assert.equal(planAddition(add, after).skip, true, 'once only')
   assert.equal(freshScenarios(items, sets).length, 0, 'nothing doubled even if asked again')
+})
+
+test('the thirty extra labels are the ones the game reads, can be picked, and pass the lint', () => {
+  const read = (f) => readFileSync(new URL(`../../functions/lib/${f}`, import.meta.url), 'utf8')
+  const deal = read('deal.js'), hosts = read('hosts.js'), screen = read('screen.js')
+  const extra = UI_LABELS.filter(l => l.extra).map(l => l.value)
+  const want = [
+    ...['WAIT', 'GO', 'NEXT', 'WITH', 'DONE', 'SUPPER'].map(k => `LIGHTS ${k}`),
+    ...['SALEM', 'ZIMOTHY', 'BOO', 'GRANOLIA'].map(k => `GREET ${k}`),
+    'SALEM FRIEND', 'HOST GRANOLIA', 'HOST ZIMOTHY', 'HOST SALEM',
+    ...[1, 2, 3, 4, 5, 6].map(i => `HOST BOO ${i}`), ...[1, 2, 3, 4, 5].map(i => `HOST IRWIN TRACE ${i}`),
+    ...['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE'].map(w => `IRWIN ${w}`),
+  ]
+  assert.deepEqual([...extra].sort(), [...want].sort())
+  // where the game reads them
+  assert.ok(deal.includes('`LIGHTS ${variant.toUpperCase()}`') && deal.includes('`GREET ${cat.toUpperCase()}`') && deal.includes("ui['SALEM FRIEND']"))
+  for (const k of ['wait', 'go', 'next', 'with', 'done', 'supper']) assert.match(deal, new RegExp(`^  ${k}: \\{ title:`, 'm'), `LIGHTS ${k.toUpperCase()} has a default`)
+  assert.ok(hosts.includes('`HOST ${key.toUpperCase()}`') && hosts.includes('`HOST BOO ${i + 1}`') && hosts.includes('`HOST IRWIN TRACE ${l}`'))
+  for (const w of ['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE']) assert.ok(screen.includes(`'IRWIN ${w}'`), `IRWIN ${w}`)
+  // every one is offered in the Which screen box and passes the lint
+  const options = AREAS.ui_copy.fields.find(f => f.key === 'label').options.map(o => o.value)
+  for (const v of extra) {
+    assert.ok(options.includes(v), v)
+    assert.equal(lintItem('ui_copy', codecFor('ui_copy').join({ label: v, text: 'A line.' })), null, v)
+  }
+})
+
+test('the retired lists stay out of sight and out of the counts', () => {
+  for (const area of ['echo_frames', 'art_assets', 'av_assets', 'trace_lines']) {
+    assert.ok(AREAS[area].hidden && AREAS[area].retired, `${area} is retired`)
+    assert.match(AREAS[area].moment, /^Retired/, `${area} says so`)
+  }
+  assert.ok(!AREAS.scenarios.moment.includes('four times'), 'the Parlour Games are five, five and two')
+  assert.match(AREAS.scenarios.moment, /Twelve a night/)
+})
+
+// The two new board operations (23 Oct 2026), and the title check on a
+// retired card, on a pretend board.
+test('fileTasks: files an open card with no moment or still under from, dates it once, adds the note once', () => {
+  const add = { id: 'x', fileTasks: [
+    { order: 1, from: 'week', moment: 'freeze', by: '2026-10-31', note: 'More.' },
+    { order: 2, moment: 'act1.meet' },
+    { order: 3, from: 'week', moment: 'freeze', by: '2026-10-31' },
+    { order: 4, moment: 'freeze' },
+    { order: 5, title: 'Seeded title', note: 'Then deploy.' },
+  ] }
+  const state = { applied: [], areas: {}, decisions: {}, tasks: [
+    { id: 'a', order: 1, status: 'todo', moment: 'week', detail: 'Old.' },
+    { id: 'b', order: 2, status: 'todo' },
+    { id: 'c', order: 3, status: 'todo', moment: 'act2.cat', by: '2026-11-01' },
+    { id: 'd', order: 4, status: 'done' },
+    { id: 'e', order: 5, status: 'todo', title: 'seeded  TITLE', detail: 'Draw it.' },
+    { id: 'f', order: 5, status: 'todo', title: 'Jon’s own card', detail: 'Mine.' },
+  ] }
+  const plan = planAddition(add, state, { now: 1 })
+  const after = applyPlan(plan, state)
+  const t = (id) => after.tasks.find(x => x.id === id)
+  assert.deepEqual([t('a').moment, t('a').by, t('a').detail], ['freeze', '2026-10-31', 'Old. More.'])
+  assert.equal(t('b').moment, 'act1.meet', 'a card with no moment is filed')
+  assert.deepEqual([t('c').moment, t('c').by], ['act2.cat', '2026-11-01'], 'a card Jon moved, or dated, keeps his choice')
+  assert.equal(t('d').moment, undefined, 'a done card is left alone')
+  assert.equal(t('e').detail, 'Draw it. Then deploy.', 'the title matches whatever its spacing and case')
+  assert.equal(t('f').detail, 'Mine.', 'a card added by hand with the same number is never touched')
+  assert.equal(planAddition(add, after).skip, true, 'once only')
+})
+
+test('retireTasks with a title retires only the seeded card; one patch per card even when two entries touch it', () => {
+  const add = { id: 'y', retireTasks: [{ order: 7, title: 'Open the screens', detail: 'Replaced.' }], fileTasks: [{ order: 7, title: 'Open the screens', note: 'Ignored once done.' }] }
+  const state = { applied: [], areas: {}, decisions: {}, tasks: [
+    { id: 's', order: 7, status: 'todo', title: 'Open the screens', detail: 'Old.' },
+    { id: 'h', order: 7, status: 'todo', title: 'Buy candles', detail: '' },
+  ] }
+  const plan = planAddition(add, state, { now: 1 })
+  assert.deepEqual(plan.taskPatches.map(p => p.id), ['s'])
+  assert.deepEqual(plan.taskPatches[0].patch, { status: 'done', detail: 'Old. Replaced.' }, 'a retired card is not filed or noted as well')
+  assert.ok(taskMatches({ order: 7, title: 'OPEN the screens ' }, { order: 7, title: 'Open the screens' }))
+  assert.ok(!taskMatches({ order: 8, title: 'Open the screens' }, { order: 7, title: 'Open the screens' }))
+  assert.ok(taskMatches({ order: 7, title: 'Anything' }, { order: 7 }), 'with no title, the number alone (the older migrations)')
+  assert.deepEqual(taskOrdersOf({ retireTasks: [{ order: 1 }, { order: 2 }], fileTasks: [{ order: 2 }, { order: 3 }] }), [1, 2, 3])
+})
+
+test('fileDecisions files a decision with no moment and never moves one that has one; answering and filing the same decision merge', () => {
+  const add = { id: 'z', fileDecisions: { a: 'freeze', b: 'freeze', gone: 'freeze' }, answerDecisions: { a: 'Yes' } }
+  const state = { applied: [], areas: {}, tasks: [], decisions: { a: { key: 'a', answer: null }, b: { key: 'b', answer: null, moment: 'act2.cat' } } }
+  const plan = planAddition(add, state, { now: 3 })
+  assert.deepEqual(Object.keys(plan.decisionPatches).sort(), ['a'])
+  assert.deepEqual(plan.decisionPatches.a, { answer: 'Yes', answeredAt: 3, answeredBy: 'the canon', moment: 'freeze' })
+  const after = applyPlan(plan, state)
+  assert.equal(after.decisions.b.moment, 'act2.cat')
+  assert.equal(after.decisions.gone, undefined, 'a decision that is not there is not made up')
 })

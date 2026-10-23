@@ -1,6 +1,7 @@
 import { ACTS } from '../lib/content'
 import { clueCards } from '../lib/night'
 import { Testimony, Document, Clue, CatFace } from './Cards'
+import Spoken from './Spoken'
 
 // Everything this phone has been told, newest first, grouped by act. The
 // cats' words, the documents, the study's clue, the bag property. Nothing
@@ -46,7 +47,7 @@ function ClueCard({ card }) {
     default: return (
       <section className="dealt clue">
         {card.cat && <CatFace cat={card.cat} name={card.catName} />}
-        <p>{card.text}</p>
+        <p><Spoken text={card.text} /></p>
       </section>
     )
   }

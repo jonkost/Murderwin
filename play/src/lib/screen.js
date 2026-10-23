@@ -115,12 +115,42 @@ export function heardText(seconds) {
   return `heard ${Math.round(seconds / 60)} min ago`
 }
 
+// Sir Irwin's door slide ("Pawsome!"), drawn above "The door is open" while
+// the drawing is done, and never over the trace once the host puts it on the TV.
+export function doorSlideOf({ relay, stage } = {}) {
+  if (relay?.state !== 'done' || stage !== 'open') return null
+  return relay.doorSlide?.text ? relay.doorSlide : null
+}
+
+// Sir Irwin's rules slides on the TV. Each slide carries its own time on
+// screen (ms: five seconds plus 0.4 seconds a word, worked out by the
+// server), and the run ends at introEndsAt, so slide i shows from the
+// sum of the slides before it. A doc with no per-slide time uses
+// timing.slideMs for every slide.
+export const SLIDE_FALLBACK_MS = 9_000
+export function slideTime(text) {
+  const words = String(text ?? '').trim().split(/\s+/).filter(Boolean).length
+  return 5_000 + 400 * words
+}
+export function slideAt(relay, now) {
+  const slides = Array.isArray(relay?.slides) ? relay.slides : []
+  if (!slides.length) return { index: -1, slide: null, count: 0 }
+  const each = Number(relay?.timing?.slideMs) > 0 ? Number(relay.timing.slideMs) : SLIDE_FALLBACK_MS
+  const lengths = slides.map(s => (Number(s?.ms) > 0 ? Number(s.ms) : each))
+  const ends = ms(relay.introEndsAt)
+  const t = ends ? Math.max(0, now - (ends - lengths.reduce((a, b) => a + b, 0))) : 0 // no end yet: the first slide
+  let index = 0
+  let from = 0
+  while (index < slides.length - 1 && t >= from + lengths[index]) { from += lengths[index]; index++ }
+  return { index, slide: slides[index], count: slides.length }
+}
+
 // Three rules lines for the drawing, from the workshop's RELAY RULES line
 // (split on | or on sentences) or the defaults. The same rule as the server.
 export const DEFAULT_RELAY_RULES = [
-  'One of you draws what your phone shows, without looking at the paper.',
-  'Everyone else shouts directions. Ten seconds, then the next person walks up.',
-  'When the grid is full, vote on your phone for the picture it makes.',
+  'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
+  'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
+  'When the grid is full, agree on the picture and tap it on the main screen.',
 ]
 export function relayRules(uiText) {
   const t = String(uiText ?? '').trim()

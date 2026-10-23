@@ -9,6 +9,13 @@
 // screen, every phone and anyone reading the public doc has no name to
 // find. results() in deal.js refuses to run before the Victim is named.
 //
+// Each press also starts that stage's share of the closing W-O-O-F News
+// bulletin: news.<stage> = [{ who, text, card }] (captions, at once) and
+// cardAt.<stage> = the moment the TV may show the name card, once the
+// recorded parts before it have had their holdMs (seed/woof-news.json).
+// The early reel's achievements are only the ones the host gave during the
+// night; the end credits' awards are in credits.awards, shown once, after.
+//
 // SEAL RULE: nothing here returns content. Counts, stages and ok flags.
 
 import { randomInt } from 'node:crypto'
@@ -16,7 +23,7 @@ import { MOTIVES, NightError, readArea, characterById, nameKey } from './night.j
 import { rotationPath } from './station.js'
 import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
 import { stopOf } from './parlour.js'
-import { closingParts } from './news.js'
+import { closingStage } from './news.js'
 import { play } from './screen.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
@@ -32,7 +39,8 @@ export const STAGES = ['stats', 'murderer', 'motive', 'victim']
 export const FINALE_SCHEDULE = { stats: 0, awards: 34_000, graph: 50_000, names: 80_000 }
 export const STAT_EVERY_MS = 4_000      // one stat line fades in every four seconds
 export const AWARD_EVERY_MS = 3_000     // one achievement every three seconds
-export const EPILOGUE_AFTER_MS = 12_000 // the closing story, this long after the Victim is named
+export const EPILOGUE_AFTER_MS = 12_000 // the closing story, this long after victimAt
+export const STORY_GAP_MS = 2_000      // a breath between the studio's sign-off and the closing story
 export const AWARDS_CLOSE_AFTER_ACT = 5 // the last act in which an achievement may be given
 
 // The lines the reel always carries, in this order. The cats' favourites
@@ -301,14 +309,13 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const up = (sign.ghost ?? 1) > 0 ? 'ghost' : 'murderer'
   const sides = { up, down: up === 'ghost' ? 'murderer' : 'ghost' }
 
-  // the achievements the host gave during the night, in the order given, then the end credits' awards
+  // the early reel: only the achievements the host gave during the night, in the order given.
+  // The end credits' awards show once, in the credits after the reveal (credits.awards).
   const given = Object.values(awardsSnap.exists ? (awardsSnap.data().awards ?? {}) : {}).sort((a, b) => ms(a.at) - ms(b.at))
   const night = (await db.doc(`nights/${nightId}`).get()).data() ?? {}
-  const credits = creditAwards({ people, rot, memoryTimes: memSnap.exists ? memSnap.data() : {}, night, game: gameSnap.exists ? gameSnap.data() : {} })
-  const shown = [
-    ...given.map(a => ({ name: a.name, title: a.title, line: a.line })),
-    ...credits,
-  ]
+  const awards = creditAwards({ people, rot, memoryTimes: memSnap.exists ? memSnap.data() : {}, night, game: gameSnap.exists ? gameSnap.data() : {} })
+    .map(a => ({ title: a.title, name: a.name, line: a.line }))
+  const shown = given.map(a => ({ name: a.name, title: a.title, line: a.line }))
   const achievements = shown.map((a, i) => ({ ...a, showAt: FINALE_SCHEDULE.awards + Math.min(i * AWARD_EVERY_MS, FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards - 2_000) }))
   const schedule = { ...FINALE_SCHEDULE }
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
@@ -317,8 +324,8 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
     graph: { points, running, sides, hush, high, low, clues: clueLevels },
-    credits: { counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
-    news: {},
+    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
+    news: {}, cardAt: {},
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,
     ...(spotlight.length ? { spotlight } : {}),
@@ -376,18 +383,23 @@ export async function stage(db, nightId, { now = Date.now() } = {}) {
   const patch = { stage: next }
   if (next === 'motive') patch['names.motive'] = { n: r.motive?.n ?? null, rhyme: r.motive?.rhyme ?? '' }
   else patch[`names.${next}`] = { name: r[next]?.name ?? '', characterName: r[next]?.characterName ?? '' }
+  // the closing W-O-O-F News bulletin (news.js): this stage's recorded parts play and their
+  // words go up as captions at once; the card itself waits on the server clock (cardAt) until
+  // the parts before it have been said. Murderer: the studio, then Mic's first line; Motive:
+  // his second; Victim: his third, then his sign-off and the studio's close under the cards.
+  const { parts, leadMs } = closingStage(next)
   if (next === 'victim') {
-    patch.victimAt = new Date(now)
+    // the closing story (EPILOGUE_AFTER_MS after victimAt) and everything after it wait
+    // until the Victim's parts have been said, so Ava's sign-off is never talked over
+    const saidMs = parts.reduce((sum, p) => sum + p.holdMs, 0)
+    patch.victimNamedAt = new Date(now)
+    patch.victimAt = new Date(now + Math.max(0, saidMs + STORY_GAP_MS - EPILOGUE_AFTER_MS))
     patch.epilogue = fillEpilogue(r.frame, r)
   }
-  // the closing W-O-O-F News bulletin (news.js): the recorded parts before this card play, and
-  // their words go up with it. Murderer: the studio, then Mic's first line; Motive: his second;
-  // Victim: his third, his sign-off and the studio's close.
-  const parts = closingParts()
-  const before = { murderer: parts.slice(0, 2), motive: parts.slice(2, 3), victim: parts.slice(3) }[next] ?? []
-  patch[`news.${next}`] = before.map(p => ({ who: p.who, text: p.text, card: p.card }))
+  patch[`news.${next}`] = parts.map(p => ({ who: p.who, text: p.text, card: p.card }))
+  patch[`cardAt.${next}`] = new Date(now + leadMs)
   await pubRef.update(patch)
-  if (before.length) await play(db, nightId, null, { now, clips: before.map(p => p.clip) })
+  if (parts.length) await play(db, nightId, null, { now, clips: parts.map(p => p.clip) })
   return { ok: true, stage: next }
 }
 
@@ -427,7 +439,9 @@ export async function go(db, nightId, { now = Date.now() } = {}) {
   const achievements = (f.achievements ?? []).map(a => ({ ...a, showAt: shift(a.showAt) }))
   const patch = { holdAt: null, held: (f.held ?? 0) + held, schedule, stats, achievements }
   // a hold after the Victim was named: the wait before the closing story carries on where it stood
-  if (f.victimAt && ms(f.holdAt) >= ms(f.victimAt)) patch.victimAt = new Date(ms(f.victimAt) + held)
+  if (f.victimAt && ms(f.holdAt) >= ms(f.victimNamedAt ?? f.victimAt)) patch.victimAt = new Date(ms(f.victimAt) + held)
+  // a name card still waiting on its lead-in when the hold came waits the same time again after it
+  for (const [s, t] of Object.entries(f.cardAt ?? {})) if (ms(t) > ms(f.holdAt)) patch[`cardAt.${s}`] = new Date(ms(t) + held)
   await ref.update(patch)
   return { ok: true, heldMs: held }
 }

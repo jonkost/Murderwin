@@ -10,12 +10,12 @@ import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '.
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
-  echoLines, bulletinLines, struckMotives, strikeCount, dialBand, irwinTier, irwinLines, dogFilter, castNames, parseFrame, frameList,
-  checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, onBeat, onPhase, tvTrace, relayRules, labelled,
+  echoLines, dialBand, irwinLines, dogFilter, castNames, parseFrame, frameList,
+  checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
   screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES,
 } from '../lib/screen.js'
 import { rehearsalCase, buildCase, screenSalt } from '../lib/case.js'
-import { NEWS } from '../lib/news.js'
+import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
 
 // Everything here is a throwaway: synthetic bracketed fragments made in the
 // test and discarded with the process, and the dealer's own rehearsal case
@@ -74,19 +74,13 @@ test('with no frames the default frame is used; with no fragment the bracketed s
 })
 
 // ---------------------------------------------------------------------------
-// The bulletin and Sir Irwin, by the dial's band
+// The dial's band, the salt the screens seed on, and Sir Irwin
 
-test('the band follows the trace ladder exactly, and the strike count is 0, 1 or 2 by band', () => {
+test('the band follows the trace ladder exactly', () => {
   for (let d = -20; d <= 20; d++) assert.equal(dialBand(d), traceLevel(d), `dial ${d}`)
-  assert.equal(strikeCount(0), 1)
-  assert.equal(strikeCount(-8), 0)
-  assert.equal(strikeCount(-4), 0)
-  assert.equal(strikeCount(8), 2)
-  assert.equal(strikeCount(4), 2)
-  assert.equal(irwinTier(-8), 0); assert.equal(irwinTier(0), 1); assert.equal(irwinTier(8), 2)
 })
 
-test('the strikes are seeded on the case\'s secret salt, never the public night id, and the ranking does not move when the active motive changes', () => {
+test('the screens seed on the case\'s secret salt, never the public night id', () => {
   // every case carries a salt from its own rng, 32 hex characters, different case to case
   const a = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
   const b = rehearsalCase({ nightId: 'n1', roster: [{ key: 'g1' }, { key: 'g2' }, { key: 'g3' }] })
@@ -96,55 +90,9 @@ test('the strikes are seeded on the case\'s secret salt, never the public night 
   assert.equal(screenSeed(a, 'n1'), a.screenSalt, 'the screens seed on the salt')
   assert.equal(screenSeed({}, 'n1'), 'n1', 'a case from before the salt falls back to the night id')
   assert.ok(FORBIDDEN_SCREEN_KEYS.includes('screenSalt'), 'a public doc may never carry it')
-  // two cases that share a night id and a motive but not a salt strike different motives
-  const c1 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: a.screenSalt }
-  const c2 = { ...fixtureCase({ dial: 8, motive: 7 }), screenSalt: b.screenSalt }
-  const s1 = struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s2 = struckMotives(c2, { seed: screenSeed(c2, 'n1') })
-  assert.notDeepEqual(s1, s2)
-  assert.deepEqual(struckMotives(c1, { seed: screenSeed(c1, 'n1') }), s1, 'and the same ones on the host\'s second press')
-  // the public replay: from the night id alone, no candidate motive reproduces the strikes more often than chance
-  let pinned = 0
-  const trials = 300
-  for (let t = 0; t < trials; t++) {
-    const c = { ...fixtureCase({ dial: 8, motive: 1 + (t % MOTIVES.length) }), screenSalt: screenSalt(randomInt) }
-    const shown = struckMotives(c, { seed: screenSeed(c, `night-${t}`) }).map(s => s.n).join(',')
-    const fits = MOTIVES.filter(m => struckMotives({ dial: 8, motive: m.n }, { seed: `night-${t}` }).map(s => s.n).join(',') === shown)
-    if (fits.length === 1 && fits[0].n === c.motive) pinned++
-  }
-  assert.ok(pinned <= 3, `the night id replay pinned the motive ${pinned} times in ${trials}`)
-  // with one secret ranking, taking the active motive out never reorders the rest: no index rides along
-  const seed = a.screenSalt
-  const full = struckMotives({ dial: 8, motive: 0 }, { seed }).map(s => s.n)
-  for (const m of MOTIVES) {
-    const without = struckMotives({ dial: 8, motive: m.n }, { seed }).map(s => s.n)
-    const expect = [...full, ...struckMotives({ dial: 8, motive: 0 }, { seed, motives: MOTIVES.filter(x => !full.includes(x.n)) }).map(s => s.n)].filter(n => n !== m.n).slice(0, 2)
-    assert.deepEqual(without, expect, `motive ${m.n} out: the next in the one ranking steps up`)
-  }
 })
 
-test('the bulletin strikes 1 motive at dial 0, 0 at strong negative, 2 at strong positive, never the active one, and the same ones on a re-run', () => {
-  for (const [dial, count] of [[0, 1], [-9, 0], [9, 2]]) {
-    for (let trial = 0; trial < 30; trial++) {
-      const c = fixtureCase({ dial, motive: MOTIVES[trial % MOTIVES.length].n })
-      const struck = struckMotives(c, { seed: `night-${trial}` })
-      assert.equal(struck.length, count, `dial ${dial}`)
-      for (const s of struck) {
-        assert.notEqual(s.n, c.motive, 'the active motive is never struck')
-        assert.equal(MOTIVES.find(m => m.n === s.n)?.rhyme, s.rhyme)
-      }
-      assert.deepEqual(struckMotives(c, { seed: `night-${trial}` }), struck, 'seeded on the night')
-    }
-  }
-  const c = fixtureCase({ dial: 9, motive: 3 })
-  const { lines, struck } = bulletinLines(c, FRAMES, { seed: 's' })
-  assert.equal(lines.length, 3)
-  assert.equal(struck.length, 2)
-  assert.ok(lines[1].includes(`number ${struck[0].n}`))
-  assert.ok(lines[2].includes(struck[1].rhyme))
-  assert.ok(!lines.join(' ').includes('███'))
-})
-
-test('Irwin: opener, one sealed line by band, closer; at most twelve words; no roster or character name; rehearsal stand-ins', () => {
+test('Irwin: his opener, the countdown line, his closer, and nothing sealed; at most twelve words; no roster or character name', () => {
   const roster = { jon: { name: 'Jon', characterId: 'x' }, jessa: { name: 'Jessa', characterId: 'y' } }
   const names = castNames(roster)
   assert.ok(names.includes('Jon') && names.includes('Jessa'))
@@ -155,22 +103,17 @@ test('Irwin: opener, one sealed line by band, closer; at most twelve words; no r
   for (const n of names) for (const part of n.split(' ')) if (part.length >= 3) assert.ok(!new RegExp(`\\b${part}\\b`, 'i').test(filtered), `${part} is gone`)
   assert.ok(filtered.endsWith('.'))
   assert.equal(dogFilter('A short line.', names), 'A short line.')
-  // the index follows the band
-  const c = fixtureCase({ dial: 0 })
-  const mid = irwinLines(c, { names })
-  assert.equal(mid.length, 3)
-  assert.equal(mid[0], DEFAULT_IRWIN.opener)
-  assert.equal(mid[2], DEFAULT_IRWIN.closer)
-  assert.equal(sha(mid[1]), sha(c.irwin.lines[1]))
-  const low = fixtureCase({ dial: -8 }); assert.equal(sha(irwinLines(low, {})[1]), sha(low.irwin.lines[0]))
-  const high = fixtureCase({ dial: 8 }); assert.equal(sha(irwinLines(high, {})[1]), sha(high.irwin.lines[2]))
-  // every line stays within form whatever the case holds
-  const wordy = fixtureCase(); wordy.irwin.lines[1] = `${'word '.repeat(30)}Jon.`
-  for (const l of irwinLines(wordy, { names })) { assert.ok(l.split(' ').length <= 12); assert.ok(!/\bJon\b/.test(l)) }
-  // workshop opener and closer win; no lines at all gets the stand-in
-  const v = irwinLines(c, { opener: 'Hello.', closer: 'Bye.', names })
-  assert.equal(v[0], 'Hello.'); assert.equal(v[2], 'Bye.')
-  assert.ok(irwinLines({ rehearsal: true }, {})[1].startsWith('(Rehearsal'))
+  // the defaults, then the countdown line kept whole before the closer
+  assert.deepEqual(irwinLines({ names }), [DEFAULT_IRWIN.opener, DEFAULT_IRWIN.closer])
+  const count = irwinLines({ names, optionLine: IRWIN_OPTION_LINES[5] })
+  assert.deepEqual(count, [DEFAULT_IRWIN.opener, IRWIN_OPTION_LINES[5], DEFAULT_IRWIN.closer])
+  // the workshop opener and closer win, and stay within form
+  assert.deepEqual(irwinLines({ opener: 'Hello.', closer: 'Bye.', names }), ['Hello.', 'Bye.'])
+  for (const l of irwinLines({ opener: `${'word '.repeat(30)}Jon.`, closer: 'Bye Jessa.', names })) { assert.ok(l.split(' ').length <= 12); assert.ok(!/\b(Jon|Jessa)\b/.test(l)) }
+  // the case is not an input any more: the old sealed lines can never reach the screen
+  assert.equal(irwinLines.length, 0, 'irwinLines takes only the voice, the names and the countdown line')
+  const src = readFileSync(new URL('../lib/screen.js', import.meta.url), 'utf8')
+  assert.ok(!/irwin\?*\.lines/.test(src), 'screen.js never reads the case\'s irwin lines')
 })
 
 // ---------------------------------------------------------------------------
@@ -202,6 +145,27 @@ test('play writes one sound at a time and refuses an id outside the catalogue', 
   await assert.rejects(play(db, 'n', ''), /No such sound/)
   assert.equal(SOUND_IDS.length, 9)
   assert.equal(new Set(SOUND_IDS).size, 9)
+})
+
+test('the recordings go out as codes once a station key is saved: no public doc names a family or a level; none saved, the names go as they are', async () => {
+  const db = new FakeFirestore()
+  const clips = ['bulletin2-opening', 'bulletin2-food-3', 'bulletin2-signoff']
+  await play(db, 'n', 'sounder-bulletin', { now: 5, clips })
+  assert.deepEqual((await currentSound(db, 'n')).clips, clips, 'a rehearsal with no key: the names, as before')
+  db.store.set('meta/game', { station_key: ' study-2026 ' })
+  await play(db, 'n', 'sounder-bulletin', { now: 6, clips })
+  const sent = (await currentSound(db, 'n')).clips
+  assert.deepEqual(sent, clips.map(c => clipCode('study-2026', c)), 'the key is trimmed the way the station check trims it')
+  for (const code of sent) assert.match(code, /^[0-9a-f]{16}$/)
+  const text = JSON.stringify(db.store.get(soundsPath('n')))
+  for (const id of CLIP_IDS) assert.ok(!text.includes(id), 'no clip id on the public doc')
+  for (const f of ['food', 'bathroom', 'screens', 'out', 'personal']) assert.ok(!text.includes(f), 'no family on the public doc')
+  // the codes depend on the key, so a phone with only the public doc cannot work them back
+  assert.notDeepEqual(clips.map(c => clipCode('another-key', c)), sent)
+  assert.equal(new Set(CLIP_IDS.map(c => clipCode('study-2026', c))).size, CLIP_IDS.length, 'every recording its own code')
+  // a sound with no clips is not coded: the generic sound ids say nothing
+  await play(db, 'n', 'chime-news', { now: 7 })
+  assert.deepEqual(await currentSound(db, 'n'), { id: 'chime-news', at: new Date(7) })
 })
 
 test('relayRules: three lines from the workshop line or the defaults; labelled reads LABEL: text', () => {
@@ -363,12 +327,15 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(nightDoc().act, 5)
   assert.ok(sounds.has('sting-solved'))
 
-  // Act 5: Sir Irwin, the workshop opener, his line, how sure he is of the motive, the closer; no names
+  // Act 5: Sir Irwin, the workshop opener, how sure he is of the motive, the closer; no sealed line, no names
   await next() // irwin
   const irwin = screen()
   assert.equal(irwin.kind, 'irwin')
-  assert.equal(irwin.lines.length, 4)
+  assert.equal(irwin.lines.length, 3, 'opener, countdown line, closer: nothing in between')
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
+  assert.ok(Object.values(IRWIN_OPTION_LINES).includes(irwin.lines[1]), 'the countdown line straight after the opener')
+  const caseLines = db.store.get(`cases/${nightId}`)?.irwin?.lines ?? []
+  for (const l of caseLines) assert.ok(!irwin.lines.includes(l) && !irwin.captions.lines.includes(l), 'the case\'s old Irwin lines never reach the screen')
   assert.ok([1, 2, 3, 4, 5].includes(irwin.choices.length), 'one to five motive cards')
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)

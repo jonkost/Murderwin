@@ -7,7 +7,7 @@
   "sports": "Mitt Kickwell"
  },
  "bulletin1": {
-  "about": "Act 2, lights out, video on the living room screen. Always clarity level 3: the opening, one family line (a wrong family, crossed off for everyone), the sign-off.",
+  "about": "Act 2, lights out, on the living room screen: sound with captions as built today (video is still Jon's open question). Always clarity level 3: the opening, one family line (a wrong family, crossed off for everyone), the sign-off.",
   "opening": {
    "clip": "newsflash-opening",
    "text": "Good evening, ladies and gentlemen, and all the dogs at sea! This is W-O-O-F News. We interrupt this program for a special bulletin from Sirwin Manor. At Sir Irwin's birthday party tonight, someone has been... Murderwined!"
@@ -163,38 +163,44 @@
   }
  },
  "closing": {
-  "about": "Act 7, the reveal, video that bookends bulletin 1. Generic lines Jon records; the game cuts in the Murderer, Motive and Ghost cards between them as B-roll. Order: Murderer, Motive, Victim.",
+  "about": "Act 7, the reveal: the closing bulletin that bookends bulletin 1, sound with captions as built today (video is still Jon's open question). Generic lines Jon records; the game cuts in the Murderer, Motive and Ghost cards between them. Order: Murderer, Motive, Victim. Each part's holdMs is how long its recording runs, in milliseconds: the TV shows a name card once the parts before it have had their time (finale.js). Jon times them once his recordings exist.",
   "parts": [
    {
     "clip": "woof-close-studio-open",
+    "holdMs": 9000,
     "who": "Ava Waves",
     "text": "Good evening. This is W-O-O-F News, and we interrupt this party with breaking news. We go live now to Sirwin Manor. Mic?"
    },
    {
     "clip": "woof-close-field-murderer",
+    "holdMs": 6000,
     "who": "Mic Cameron",
     "text": "Thanks, Ava. I'm standing outside Sirwin Manor, where authorities are asking everyone to be on the lookout for this character...",
     "card": "murderer"
    },
    {
     "clip": "woof-close-field-motive",
+    "holdMs": 3000,
     "who": "Mic Cameron",
     "text": "Police say it all started over...",
     "card": "motive"
    },
    {
     "clip": "woof-close-field-victim",
+    "holdMs": 3000,
     "who": "Mic Cameron",
     "text": "...and it ended in the murder of...",
     "card": "ghost"
    },
    {
     "clip": "woof-close-field-out",
+    "holdMs": 6000,
     "who": "Mic Cameron",
     "text": "Please be careful out there. The suspect may still be holding cake. Back to you in the studio."
    },
    {
     "clip": "woof-close-studio-close",
+    "holdMs": 14000,
     "who": "Ava Waves",
     "text": "Well, there you have it, folks. A real cat-astrophe, but this case is finally closed. Most importantly, a very happy birthday to Sir Irwin, the goodest boy in the county. And thank you to everyone who helped crack this paw-ful crime. Good night, and stay paw-sitive."
    }

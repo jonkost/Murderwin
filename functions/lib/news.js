@@ -15,9 +15,15 @@
 // Every recording is a clip id, the file name Jon saves it under in media/ on
 // the brain. A clip with no file is skipped by the relay; the words are on
 // the screen as captions either way.
+//
+// A clip id names its family and level (bulletin2-food-3), so on a night
+// with a station key saved it never goes on a public doc as it is: the sounds
+// doc carries clipCode(key, id) instead, a code no phone can work back
+// without the key. The cue relay holds the same key (cues/.env STATION_KEY),
+// works out the code of every clip it knows and maps it back to its file.
 
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
+import { createHash, createHmac } from 'node:crypto'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -33,6 +39,12 @@ export const CLIP_IDS = [
   NEWS.bulletin2.opening.clip, ...Object.values(NEWS.bulletin2.families).flat().map(f => f.clip), NEWS.bulletin2.signoff.clip,
   ...NEWS.closing.parts.map(p => p.clip),
 ]
+
+// A recording's code: the first 16 hex characters of HMAC-SHA256(key, clip id).
+// The cue relay computes the same (cues/lib/cues.js clipCode); a test checks they agree.
+export function clipCode(key, clipId) {
+  return createHmac('sha256', String(key)).update(String(clipId)).digest('hex').slice(0, 16)
+}
 
 // Bulletin 1: the family the case's news crosses off (families.solvingPlan newsOut).
 export function bulletin1(c) {
@@ -60,7 +72,29 @@ export function bulletin2Delay(seed) {
   return BULLETIN2_MIN_MS + Math.floor((h.readUInt32BE(0) / 0x100000000) * (BULLETIN2_MAX_MS - BULLETIN2_MIN_MS + 1))
 }
 
-// The closing bulletin: each recorded part, and which card follows it.
+// The closing bulletin: each recorded part, which card follows it, and how
+// long it runs (holdMs, Jon's timing; this default for a part with none).
+export const CLOSING_HOLD_MS = 3_000
 export function closingParts() {
-  return NEWS.closing.parts.map(p => ({ clip: p.clip, who: p.who, text: p.text, card: p.card ?? null }))
+  return NEWS.closing.parts.map(p => ({ clip: p.clip, who: p.who, text: p.text, card: p.card ?? null, holdMs: Number(p.holdMs) >= 0 ? Number(p.holdMs) : CLOSING_HOLD_MS }))
+}
+
+// One reveal press's share of the closing bulletin: the parts from the last
+// card up to this stage's card (the Victim's takes the rest, the sign-off and
+// the studio's close), and the lead-in: how long the parts before its card
+// run, so the TV can hold the card until they have been said.
+// Murderer: the studio, then Mic's first line; Motive: his second; Victim:
+// his third, then his sign-off and the studio's close under the cards.
+export const CLOSING_CARDS = { murderer: 'murderer', motive: 'motive', victim: 'ghost' }
+export function closingStage(stage) {
+  const parts = closingParts()
+  const order = Object.keys(CLOSING_CARDS)
+  const cardIndex = s => parts.findIndex(p => p.card === CLOSING_CARDS[s])
+  const i = order.indexOf(stage)
+  if (i < 0 || cardIndex(stage) < 0) return { parts: [], leadMs: 0 }
+  const from = i === 0 ? 0 : cardIndex(order[i - 1]) + 1
+  const to = i === order.length - 1 ? parts.length : cardIndex(stage) + 1
+  const mine = parts.slice(from, to)
+  const leadMs = parts.slice(from, cardIndex(stage) + 1).reduce((sum, p) => sum + p.holdMs, 0)
+  return { parts: mine, leadMs }
 }

@@ -1,16 +1,16 @@
 # Sirwin Manor — Parlour Games for Claude Code
 
-Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees). Put this file at `docs/parlour-games.md` in the repo.
+Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees) and 23 October (what is done, what was left out). Put this file at `docs/parlour-games.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
-"Parlour Games" is the new name (13 Oct) for the push and pull questions. The workshop and the code still say "push and pull". Rename them as part of this work.
+"Parlour Games" is the name (13 Oct) for what were the push and pull questions. Renamed everywhere.
 
 ---
 
 ## What happens on the night
 
 - **Twelve Parlour Games a night: five in Act 2, five in Act 4, two at the start of Act 6** (decided 22 Oct; replaces "four per act"). The twelve are one budget for the whole night. A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
-- **In Acts 2 and 4 they pop up at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the case seed.
+- **In Acts 2 and 4 they pop up at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the Parlour plan's seed, stored with the case.
 - **In Act 6 both sets come at the start**, before the Relay Drawing. None pops up during the drawing.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
   - If a phone is on another screen (a cat greeting, a puzzle), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
@@ -28,7 +28,7 @@ The bank holds **17 sets**. When the case is dealt, the game picks **12 differen
 
 - No set is used twice in one night.
 - The three questions inside a set always appear **in the order written**. Some sets build on themselves.
-- The pick and the times use the case seed, so `npm run replay -- <seed>` gives the same sets at the same times.
+- The pick and the times come from a seed stored with the night's Parlour plan, so the same seed gives the same sets at the same times. Replaying a whole night by its seed is not built yet; it is a card on the board ("Replay a night by its seed").
 - Jon edits the bank in the workshop. It is safe content (he wrote it), so it may live in the repo.
 
 ### The 17 sets
@@ -161,13 +161,13 @@ In Act 4, cat information uses the group's average affection, as Canon says.
 
 Already specified in `docs/play-side.md`: a short, slow slide on the Cats tab, no sound, no number. Every phone animates the same way whether or not anything moved. Irwin's marker stays on the top stop.
 
-Update the "Open" note in `docs/play-side.md`: it is now closed by the section above.
-
 ---
 
 ## Awards at the reveal
 
 Replaced 22 Oct: the awards are now part of the Act 7 end credits. Full list in `docs/handoff-2026-10-22.md` §8.
+
+Left out on purpose (22 Oct): the Partner in Crime and Ghost Whisperer awards. Whether to cut them or build them is Jon's open decision partnerAwards. Building them means scoring answers without giving anything away about the dial.
 
 - Biggest Rebel, Crowd Pleaser, Kindred Spirits and Sworn Rivals are **dropped**. No award compares one player with another.
 - Each cat's Favorite and Least Favorite come from the **final sliders** (final affection). Awards **never** use the cats' hidden leans.
@@ -177,6 +177,8 @@ Replaced 22 Oct: the awards are now part of the Act 7 end credits. Full list in 
 ---
 
 ## New checks for `docs/test-plan.md`
+
+All of these are now in `docs/test-plan.md` too (23 Oct), with where each one stands.
 
 - **G25** Each case uses 12 different sets from the bank: five in Act 2, five in Act 4, two in Act 6. Every set is picked about equally often across 1,000 cases.
 - **G25b** Parlour Game times follow the spacing rules above (never back to back in Acts 2 and 4; both Act 6 sets before the Relay Drawing), and the same seed gives the same times.
@@ -193,15 +195,14 @@ Replaced 22 Oct: the awards are now part of the Act 7 end credits. Full list in 
 
 ## Other places that still say "three" or "four"
 
-These must change to match (Jon or a chat session will handle the decks, since they live outside the repo):
-- The rules deck: "Three times tonight" and the phone mockup "Parlour Game · 1 of 3". Should say twelve: five, five, then two.
-- The intro and rules voiceover script.
-- The Canon page (updated 22 Oct).
-- `docs/play-side.md`, wherever it says one Parlour Game per act.
+These two live outside the repo, on claude.ai. They must change to match:
+- The rules deck: "Three times tonight" becomes "Twelve times tonight". It should also name Boo as the Parlour Games host and mention W-O-O-F News. The phone mockup "Parlour Game · 1 of 3" stays as it is: like the real phone, it counts the three questions in a set, not the games in a night.
+- The intro and rules voiceover script: say the count as "twelve: five, five, then two", with the same host and W-O-O-F News lines.
+
+(`docs/play-side.md` and the Canon: done 22 Oct.)
 
 ---
 
 ## Not designed yet — don't invent these
 
-- The lean table (Jenna's job, see above).
 - Final award wording beyond what the handoff lists.

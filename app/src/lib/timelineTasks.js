@@ -137,8 +137,140 @@ export const RETIRED_FOR_BUILT = [
   { order: 213, detail: 'Built 22 Oct 2026: Boo, Salem, Granolia, Zimothy and Sir Irwin each open their game.' },
 ]
 
+// The audit of 22 to 23 Oct 2026: every job it found that had no card, each
+// under its moment with its owner (Jon, Susan, Jon and Susan, Jenna, Claude
+// Code or Claude chat) and, where the audit gave one, a `by` date. Numbered
+// from 300, clear of any card added by hand. Applied by '2026-10-23-audit'.
+// Jobs that wait on an open decision say so in their detail.
+export const AUDIT_TASKS = [
+  // Before the freeze
+  { order: 300, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'The last deploy before the freeze', detail: 'After every picture, sound and build is in. In Terminal, in the Murderwin folder: git pull (so any picture you added on the GitHub website comes down), then npm run deploy. Or ask Claude Code to do both. If it asks to turn on Cloud Scheduler, say yes. Anything added after this is not in the party.' },
+  { order: 304, moment: 'freeze', status: 'todo', who: 'Jon and Susan', by: '2026-10-30', title: 'Finish the lists the secrets read', detail: 'Things in the bags, the Parlour Games, and the cats’ greetings, sign-offs, brush-offs and blanks. The secrets, the leans and the packing list are made from these on Saturday 31 October.' },
+  { order: 305, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'Remake any set Jenna marked needs more', detail: 'Only if Jenna said needs more. Ask Claude Code to remake just those sets: it works by code and prints counts only. Then Jenna reads them once more.' },
+  { order: 329, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Install Java once, for the rules test', detail: 'In Terminal: brew install --cask temurin (it may ask for your Mac password). Then ask Claude Code to run the rules test, which proves your account cannot read the secrets. It reports PASS or FAIL only.' },
+  { order: 330, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The .env files for the study and the brain', detail: 'On the M1 Air: copy station/.env.example to station/.env. On the brain: copy cues/.env.example to cues/.env. Put the same key word after STATION_KEY= in both: the word you save on the Host tab under The study. The Nanoleaf tokens and the Hue key go on their own lines; ask Claude Code which line each goes on. These files are never committed.' },
+  { order: 331, moment: 'freeze', status: 'todo', who: 'Jon and Susan', title: 'The shopping', detail: 'If the bags station stays (the decision under Act 4, The bags): every item on Things in the bags (one of each, two of each Taste item; leftovers become party favours) and ten bags with the numbers 1 to 10 on them. Buy the whole list, so the shopping never shows which items are in play. Always: a telescoping pointer for the study wall, a small iPad stand for the Library, the paper roll and the markers, and prizes if you want any.' },
+  { order: 332, moment: 'freeze', status: 'todo', who: 'Jon and Susan', by: '2026-11-05', title: 'The full tech run', detail: 'A rehearsal night with every machine on at once: the brain and speakers, the living room TV, the iPad, the study station and walls, the hall bulb, and two phones. Press Next from Act 1 to Act 7 and check every sound plays and every screen changes on its own. Do it twice, the second time by Thursday 5 November, so anything broken can still be fixed.' },
+  { order: 334, moment: 'freeze', status: 'todo', who: 'Jon and Susan', title: 'Supper menu and timing', detail: 'Supper must be nearly done when you arm bulletin 2 (it plays 3 to 5 minutes later), and dessert is the cake with one candle.' },
+  { order: 336, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The sounds at party volume, with the animals home', detail: 'On the hardware evening: play the blackout and sting sounds at party volume with the cats and Sir Irwin in the house.' },
+  { order: 338, moment: 'freeze', status: 'todo', who: 'Claude chat', title: 'Full play-through review with Claude chat', detail: 'Build order step 12. Open a Claude chat, give it the Canon and the newest handoff, and walk the whole night act by act. Anything it finds goes on this board.' },
+  { order: 339, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The canary person walks the game', detail: 'Build order step 13. One person who is not coming to the party plays a rehearsal night on a phone, start to finish, before the guests do, and says where they got stuck.' },
+  { order: 341, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Refresh what Claude chat knows', detail: 'In the Claude project, replace the Project Knowledge with current copies: the Canon, CLAUDE.md, and from the repo’s docs folder the 22 Oct handoff, solving-the-case, parlour-games, relay-drawing-game and test-plan. Do not upload murderwin-handoff.zip, its CLAUDE.md or the old START-HERE: they are out of date.' },
+  { order: 313, moment: 'freeze', status: 'todo', who: 'Claude chat', title: 'READ-FIRST and the cat lore', detail: 'From the 22 Oct handoff: READ-FIRST gets the night plan, Sir Irwin’s trace lines, the bulletins, the cat ladders, the hosts and the closing bulletin; cat-lore-final.md gets Salem’s and Boo’s new Trusting lines. Open a Claude chat in the project that holds them and paste the handoff link. (Claude Code updates the rules deck and the intro script itself.)' },
+  { order: 314, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'The Health page and the check commands', detail: 'Not built yet. As docs/test-plan.md has it: npm run checks (1,000 stand-in cases), a Health page in the workshop (one line per group, a tick or a cross and a count, and "All clear. The game is ready." when all is green), and a Run the checks button on Jenna’s page. The real checks run on the server and show only on her page.' },
+  { order: 315, moment: 'freeze', status: 'todo', who: 'Jenna', by: '2026-11-05', title: 'Jenna runs the real checks', detail: 'Once the secrets are made and the Health page is built: she presses Run the checks on her page. It shows PASS or FIX NEEDED with a check number there. She tells Jon only PASS or FIX NEEDED.' },
+  { order: 317, moment: 'freeze', status: 'todo', who: 'Jenna', title: 'Jenna reads the lists cold', detail: 'The rules, the fourteen characters, the Parlour Games and the cat lines, in the order the For Jenna page gives. Under each list she marks Reads clearly or Needs another look. Before the freeze: the lists lock then.' },
+  { order: 318, moment: 'freeze', status: 'todo', who: 'Jenna', by: '2026-11-05', title: 'Jenna looks over the cats’ leans (optional)', detail: 'After Make the cats’ leans: her page, tab The cats’ leans. She may change any lean.' },
+  { order: 324, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'Replay a night by its seed', detail: 'Not built yet. A Replay box on the Game night page, for rehearsals only: start a night with a seed word and it deals the same characters, roles, motive, cat hints, Parlour Game times and drawing order every time, so a run that went wrong can be played again. Greyed out when This is the party night is ticked.' },
+  { order: 325, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'Home rows for the secrets, the leans, the packing list and the pictures', detail: 'Not built yet. Count-only rows on Home beside the motive sets: the packing list made or not, the cats’ leans N of M questions, the drawing pictures N of 9. A server call returns the numbers and never any content.' },
+  { order: 326, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'Take the unused secret parts out', detail: 'Waits on the cats’ secret lines decision (Act 2, Go to a cat). The echo fragments, the old study clue and Sir Irwin’s three secret lines are no longer shown on the night: take them out of the generator and off Jenna’s page.' },
+
+  // The week before
+  { order: 321, moment: 'week', status: 'todo', who: 'Jon', title: 'Jessa’s and Jake’s names for Sir Irwin’s awards', detail: 'Game night page, Sir Irwin’s two awards: type the name each of them will type on their phone.' },
+  { order: 333, moment: 'week', status: 'todo', who: 'Susan', title: 'Who is coming, and their phones', detail: 'The final headcount (ten bags means ten guests at most). For each guest: a phone that scans a square code and opens a web page, and the house wifi password. Anyone without a phone, the 11-year-old included, gets the spare iPad, charged and on the join screen.' },
+  { order: 335, moment: 'week', status: 'todo', who: 'Susan', title: 'Where the animals are', detail: 'Which rooms the cats and Sir Irwin may be in, where Salem can be petted, and a quiet room for any animal that has had enough.' },
+
+  // Setting up the house
+  { order: 301, moment: 'setup', status: 'todo', who: 'Jon', title: 'Open the TV, the study screen and the iPad', detail: 'Living room TV: ?kiosk=living. Study M1 Air: ?kiosk=study. The iPad Pro on its stand in the orangery: ?kiosk=ipad, for the captions at supper. The older iPad on the plain game address, as the spare phone. Tap each screen once to wake it.' },
+  { order: 322, moment: 'setup', status: 'todo', who: 'Jon', title: 'The Orangerie HomePod in the brain’s speakers', detail: 'Bulletin 2 plays on the Orangerie HomePod. Make sure it is in the AirPlay group the brain plays to. Then, on the brain, in the Murderwin folder, type afplay media/sounder-bulletin.wav (or .m4a) and hear it in the orangery. Try it on the hardware evening too.' },
+
+  // On every phone, all night
+  { order: 319, moment: 'allnight', status: 'todo', when: 'later', who: 'Jon', title: 'Salem petted, when it happens', detail: 'If a guest pets the real Salem, press Salem petted on the Host tab and pick them. Never you or Susan.' },
+  { order: 320, moment: 'allnight', status: 'todo', when: 'later', who: 'Jon', title: 'Fetch Champion, when it happens', detail: 'The first guest the real Sir Irwin brings a toy to: press Fetch Champion on the Host tab and pick them.' },
+
+  // Act 1
+  { order: 311, moment: 'act1.meet', status: 'todo', who: 'Jon', title: 'Paste the new Trusting lines', detail: 'Workshop, Meet the household. On Salem’s card, replace what follows "Trusting Salem:" (or add it at the end if it is not there) with: Most days, he’s got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time. On Boo’s card, do the same after "Trusting Boo:" with: The more she likes you, the more she’ll say. Bore her and you get a look. Win her over and she might be useful. Before the freeze: the lists lock then.' },
+
+  // Act 2
+  { order: 306, moment: 'act2.puzzle', status: 'todo', who: 'Jon', standin: true, title: 'The seven stationery pictures', detail: 'Only if the safe’s document stays (the cats’ secret lines decision, Act 2, Go to a cat). Your seven designs replace the stand-in files in play/public/stationery, same names: receipt, telegram, household-notice, citation-form, personal-letter, playbill, mourning-card. Give the pictures to Claude Code, which puts them in and deploys. The upload on the Stationery page is a reference copy only and never reaches the phones.' },
+  { order: 327, moment: 'act2.news', status: 'todo', who: 'Claude Code', title: 'Play the W-O-O-F News videos on the TV', detail: 'Only if you choose video (the W-O-O-F News decision above). Bulletin 1 and the closing bulletin as video on the living room TV, with the three cards cut into the closing one. Bulletin 2 stays sound on the Orangerie HomePod.' },
+  { order: 340, moment: 'act2.cat', status: 'todo', who: 'Jon', by: '2026-10-25', title: 'Time one round of cat visits', detail: 'At this weekend’s practice game, time one guest’s four cat visits. Tell Claude Code the minutes: Act 2’s length and the visit timings are set from them.' },
+
+  // Act 3
+  { order: 307, moment: 'act3.down', status: 'todo', who: 'Jon', title: 'Music for dinner', detail: 'Atmosphere only. The W-O-O-F News recordings are the only sounds that carry clues, and their words are always on a screen too.' },
+  { order: 302, moment: 'act3.groups', status: 'todo', when: 'later', who: 'Jon', title: 'Move the iPad to the Library', detail: 'After supper, carry the iPad Pro to its small stand in the Library, with Zimothy. Open ?kiosk=memory and tap once to wake it.' },
+  { order: 337, moment: 'act3.bulletin', status: 'todo', who: 'Jon', title: 'Update your Apple Reminder about bulletin 2', detail: 'It still has the old design. Change it to: Bulletin 2: record 25 audio lines (5 families x 5 dial levels) from the W-O-O-F News Recording Script. Arm it from my phone near the end of supper; it plays on the Orangerie HomePod 3 to 5 minutes later. Or delete it and use the card Record the 25 lines of bulletin 2.' },
+
+  // Act 5
+  { order: 303, moment: 'act5.roam', status: 'todo', when: 'later', who: 'Jon', title: 'Carry the iPad into the bedroom', detail: 'Right after dessert, open ?kiosk=bedroom on the iPad Pro, tap once, and close the bedroom door. It shows nothing until the third drawing is named.' },
+  { order: 308, moment: 'act5.irwin', status: 'todo', who: 'Claude Code', title: 'Show the motive card pictures', detail: 'Not built yet. In Sir Irwin’s countdown and at the reveal, show each motive’s picture from play/public/motives/1.png to 19.png (the motive’s number), and the rhyme when a picture is missing.' },
+  { order: 309, moment: 'act5.irwin', status: 'todo', who: 'Jon', title: 'Draw the nineteen motive cards', detail: 'One picture per motive, saved as play/public/motives/<number>.png, 1 to 19. "The last of the pie" shows pizza, not apple pie. Until a picture is in, the card shows the rhyme. Then ask Claude Code to deploy, so the pictures reach the screens.' },
+
+  // Act 6
+  { order: 328, moment: 'act6.drawing', status: 'todo', who: 'Claude Code', title: 'A Drawing pictures tab for Jenna', detail: 'Only if you say yes to Jenna seeing the pictures (the decision above). A tab on her page that shows each picture with its name and its wrong answers, and a redo mark; the next relay-pictures run replaces only the marked ones.' },
+]
+
+// The seeded card a number means, by its title, so a card added by hand that
+// shares the number is never touched.
+const SEEDED_BEFORE_AUDIT = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS]
+const seededTitle = (order) => SEEDED_BEFORE_AUDIT.find(t => t.order === order)?.title
+const withTitle = (r) => ({ ...r, title: r.title ?? seededTitle(r.order) })
+
+// The stale cards the audit names, marked done once with the reason.
+export const RETIRED_FOR_AUDIT = [
+  { order: 27, title: 'Jenna’s Steward view', detail: 'Built: Jenna’s page, with the secrets, the packing list and the cats’ leans.' },
+  { order: 100, detail: 'Done 23 Oct 2026: deployed. The last deploy before the freeze is its own card.' },
+  { order: 123, detail: 'Replaced 23 Oct 2026: at setup, open the TV, the study and the iPad in the orangery. The iPad Pro then moves (cards under Act 3 and Act 5).' },
+  { order: 133, detail: 'Done 23 Oct 2026: the five faces and Sir Irwin’s five moods are in. Nothing on the night shows intro cards or in-play pictures. If you want them shown, ask Claude Code first.' },
+  { order: 144, detail: 'Replaced 23 Oct 2026: the same job, now saying where the files go (see the new card).' },
+  { order: 151, detail: 'Replaced 23 Oct 2026: the W-O-O-F News recordings do carry clues, so the card is reworded (see the new card).' },
+  { order: 204, detail: 'Replaced 23 Oct 2026: the same job, now saying where the pictures go (see the new card).' },
+  { order: 206, detail: 'Replaced 22 Oct 2026: the pictures are made blind by the script (Make the drawing pictures). Jenna’s page cannot show them yet; see the decision under Act 6, The drawing.' },
+].map(withTitle)
+
+// Cards the audit moves or dates. The secrets, the leans, the drawing
+// pictures and the packing list are made by Saturday 31 October and read by
+// Jenna by Thursday 5 November, all before the freeze, so a set that needs
+// more can still be remade (CLAUDE.md: the generator is never cut).
+export const FILED_FOR_AUDIT = [
+  { order: 110, from: 'week', moment: 'freeze', by: '2026-10-31', note: 'Made once on 20 Oct 2026 (19 sets passed). Run it again after you answer the cats’ secret lines question (Act 2, Go to a cat), and whenever the bag items change. Sets Jenna has edited or marked are kept.' },
+  { order: 111, from: 'week', moment: 'freeze', by: '2026-10-31', note: 'Nothing waits on this one: it can be run now.' },
+  { order: 112, from: 'week', moment: 'freeze', by: '2026-10-31', note: 'Made once on 20 Oct 2026 (ten bags). Only if the bags station stays (the decision under Act 4, The bags). If you change the bag items, tell Claude Code: the packing and the secrets are remade together.' },
+  { order: 113, from: 'week', moment: 'freeze', by: '2026-11-05' },
+  { order: 214, from: 'week', moment: 'freeze', by: '2026-10-31', note: 'Nothing waits on this one: it can be run now.' },
+  { order: 205, note: 'Then ask Claude Code to deploy, so the picture reaches the phones.' },
+  { order: 215, note: 'Then ask Claude Code to deploy, so the photo reaches the screens.' },
+  // The W-O-O-F News cards plan video; the game plays sound today
+  { order: 200, note: 'Video or sound waits on the W-O-O-F News decision (Act 2, News flash). Today the game plays your recording as sound, with the words on the TV.' },
+  { order: 201, note: 'Only matters if you choose video (the W-O-O-F News decision, Act 2, News flash). Today the TV shows the words only.' },
+  { order: 203, note: 'Video or sound waits on the W-O-O-F News decision (Act 2, News flash). Today the game plays your recording as sound, with the three cards on the TV.' },
+].map(withTitle)
+
+// Decisions the audit adds, each filed under the moment it changes. Only
+// Jon answers the open ones. The two with an answer were settled by default
+// (23 Oct 2026); Jon may change either.
+export const AUDIT_DECISIONS = [
+  { key: 'secretLines', moment: 'act2.cat', question: 'Do the cats’ secret lines and the Act 2 safe’s document stay as extra clues, or are they retired so the cats say only their open hint lines? (Making the secrets waits on this.)', options: ['Keep them as extra clues', 'Retire them'], answer: null },
+  { key: 'diningName', moment: 'act2.cat', question: 'Call the real dining room "the Library" everywhere, or keep "the dining hall" in the cats’ room list?', options: ['The Library, everywhere', 'Keep "the dining hall"'], answer: null },
+  { key: 'newsVideo', moment: 'act2.news', question: 'W-O-O-F News bulletin 1 and the closing bulletin: video on the living room TV, or your recordings as sound with the words on screen (as built today)?', options: ['Sound, with the words on screen', 'Video on the TV'], answer: null },
+  { key: 'rulesDeckScreen', moment: 'act1.arrive', question: 'In Act 1, which screen shows the rules deck and the join code?', options: ['The living room TV, back to the game before the blackout', 'Another screen (the iPad Pro, or a phone on the TV)'], answer: null },
+  { key: 'stewardPictures', moment: 'act6.drawing', question: 'Should Jenna see and swap the Relay Drawing pictures on her page?', options: ['Yes, give her a Drawing pictures tab', 'No, the blind script is enough'], answer: null },
+  { key: 'partnerAwards', moment: 'act7.result', question: 'The Partner in Crime and Ghost Whisperer awards: cut them, or have Claude Code build them (once it has checked they give nothing away about the dial)?', options: ['Cut them', 'Build them'], answer: null },
+  { key: 'tidyFolders', moment: 'freeze', question: 'Tidy the repo folder: remove the merged solving-the-case side copy, and move the 25 Sep handoff bundle out of the repo? Nothing is deleted.', options: ['Yes, tidy them', 'Leave them'], answer: null },
+  { key: 'ballotMajority', moment: 'act7.result', question: 'Act 7: the rules say "majority decides", but as built each phone just scores itself. Should the TV also show the room’s majority pick as the official answer?', options: ['No, each phone scores itself (as built)', 'Yes, show the room’s majority too'], answer: null },
+  { key: 'bulletin2Voice', moment: 'act3.bulletin', question: 'Who reads the 25 lines of bulletin 2?', options: ['Ava Waves (you, in the studio voice)', 'Mic Cameron', 'Someone else'], answer: null },
+  { key: 'bulletin2Known', moment: 'act3.bulletin', question: 'You record all 25 lines of bulletin 2, so on the night you will know which family the line points at, even an obscure one. Accept that, or have someone else record them?', options: ['Accept it', 'Someone else records them'], answer: null },
+  { key: 'dialMapping', moment: 'allnight', question: 'The rules say each night decides blind how the Murderer’s and the Ghost’s answers move the dial. As built, it is fixed: the Ghost pushes toward clear, the Murderer toward foggy. Keep it fixed, or have Claude Code build the blind mapping?', options: ['Keep it fixed (as built)', 'Build the blind mapping'], answer: null },
+  { key: 'act4Granolia', moment: 'act4.cat', question: 'The Act 4 cat station: may it send a group to Granolia, or does it skip her, since her room, the Study, holds the light puzzle?', options: ['Skip Granolia in Act 4 (she is in the Study)', 'Granolia may be the cat too'], answer: 'Skip Granolia in Act 4 (she is in the Study)', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
+  { key: 'solveOrder', moment: 'act6.eliminate', question: 'The deduction round: after the bedroom door opens, or before the drawing?', options: ['After the door, as built', 'Before the drawing'], answer: 'After the door, as built', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
+]
+
+// Older decisions with no moment, filed where they belong.
+export const FILED_DECISIONS_FOR_AUDIT = { tutorial8: 'act1.arrive', grossnola: 'act1.meet', swapMotive: 'freeze', scoring: 'act7.result' }
+
+// Decisions the handoff and the build already settled (the audit checked
+// each). Answered only if nobody has answered them.
+export const ANSWERED_FOR_AUDIT = {
+  ipadDinner: 'Captions in the orangery',
+  scoring: 'As built 22 Oct 2026: each phone shows how many of the three it got, and the awards come in the end credits.',
+  eventDeck: 'Closed 22 Oct 2026: no hidden events in any act. The Parlour Games are the only events.',
+  clueChannels: 'Settled 21 to 22 Oct 2026: by traces. The portraits show each trace, the study shows the Ghost’s, the bedroom door shows the Murderer’s.',
+  acts35: 'Settled 22 Oct 2026: supper has W-O-O-F News bulletin 2 and table talk; dessert has Sir Irwin’s countdown.',
+  salemSgtMajor: 'Not needed 22 Oct 2026: everyone starts Salem at 3.',
+}
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

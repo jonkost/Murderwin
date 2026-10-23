@@ -5,7 +5,11 @@
 // Inputs are the public docs any phone may read:
 //   cues   nights/{id}/public/cues    { hall: 'red'|'green', changedAt }
 //   relay  nights/{id}/public/relay   { doorOpen: boolean, ... }
-//   sounds nights/{id}/public/sounds  { current: { id, at } }
+//   sounds nights/{id}/public/sounds  { current: { id, at, clips? } }
+//     clips: the recordings, as codes on a night with a station key saved
+//     (functions/lib/news.js clipCode), as names in a rehearsal without one.
+
+import { createHmac } from 'node:crypto'
 
 export function hallColour({ cues, relay } = {}) {
   if (cues?.hall === 'green' || relay?.doorOpen) return 'green'
@@ -68,6 +72,23 @@ export const CLIP_IDS = [
 ]
 export function knownClip(id) { return CLIP_IDS.includes(id) }
 
+// A recording's code: the first 16 hex characters of HMAC-SHA256(key, clip
+// id), the same as functions/lib/news.js clipCode (a test checks they agree).
+// The key is the study station key (cues/.env STATION_KEY), the one the host
+// saves for the station.
+export function clipCode(key, clipId) {
+  return createHmac('sha256', String(key)).update(String(clipId)).digest('hex').slice(0, 16)
+}
+
+// What a clip on the sounds doc is: a code this relay can map back to one of
+// its recordings (with the key), or a plain name (a night with no key saved),
+// or nothing it knows (null). Returns the reader the planner uses.
+export function clipReader(key = '') {
+  const k = String(key ?? '').trim()
+  const byCode = new Map(k.length >= 4 ? CLIP_IDS.map(id => [clipCode(k, id), id]) : [])
+  return x => byCode.get(x) ?? (knownClip(x) ? x : null)
+}
+
 // Which ids have no file under `dir` (by any accepted extension). The relay
 // refuses to start while this is not empty, so a missing file is found at
 // the start of the evening, not at the beat.
@@ -81,22 +102,47 @@ export const SOUND_STALE_MS = 30_000
 
 // What changed since last time. `prev` is the last planned state, not the
 // last docs, so a reload that replays the same docs produces nothing.
-export function plan(prev, next, now = Date.now()) {
+// `readClip` turns a clip on the doc into one of CLIP_IDS (clipReader); a
+// clip it cannot read is counted (`unknown`), never named.
+export function plan(prev, next, now = Date.now(), { readClip = clipReader() } = {}) {
   const actions = []
   const hall = hallColour(next)
   if (hall && hall !== prev.hall) actions.push({ type: 'hall', colour: hall })
   const soundId = next.sounds?.current?.id ?? null
   const soundAt = stamp(next.sounds?.current?.at)
-  const clipsOnly = !soundId && (next.sounds?.current?.clips ?? []).some(knownClip)
+  const sent = next.sounds?.current?.clips ?? []
+  const clips = sent.map(readClip).filter(Boolean)
+  const unknown = sent.length - clips.length
+  const clipsOnly = !soundId && sent.length > 0
   const key = soundId || clipsOnly ? `${soundId ?? 'clips'}@${soundAt}` : null
   const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
   // an unknown id is refused once (counted, never named in the log); a known one plays
   if (key && key !== prev.sound && fresh) {
-    const clips = (next.sounds?.current?.clips ?? []).filter(knownClip)
-    if (clipsOnly) actions.push({ type: 'sound', id: null, clips })
-    else actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...(clips.length ? { clips } : {}) } : { type: 'refused', count: 1 })
+    const extra = { ...(clips.length ? { clips } : {}), ...(unknown ? { unknown } : {}) }
+    if (clipsOnly) actions.push({ type: 'sound', id: null, clips, ...(unknown ? { unknown } : {}) })
+    else actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...extra } : { type: 'refused', count: 1 })
   }
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
+}
+
+// The one line the relay's window prints for a cue: counts only, never a
+// sound id, a clip id, a code or a file name (the window sits in view all
+// night). `sound` is 'ok', 'missing' or null (recordings alone).
+export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0 } = {}) {
+  const parts = []
+  if (sound) parts.push(sound === 'ok' ? 'sound playing' : 'sound file missing; skipped')
+  if (recordings || unknown) {
+    let b = `bulletin: ${recordings + unknown} recording${recordings + unknown === 1 ? '' : 's'}`
+    if (missing) b += `, ${missing} missing (the screen shows the words)`
+    if (unknown) b += `, ${unknown} not recognised (is STATION_KEY in cues/.env the station key?)`
+    parts.push(b)
+  }
+  return `[sound] ${parts.join('; ') || 'nothing to play'}`
+}
+
+// How many recordings have a file in `dir`: counts for the start-up line.
+export function recordingFiles(dir, exists, ids = CLIP_IDS) {
+  return ids.filter(id => soundCandidates(dir, id).some(f => exists(f))).length
 }
 
 function stamp(t) {

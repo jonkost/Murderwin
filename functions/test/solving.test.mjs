@@ -7,10 +7,10 @@ import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, memoryBoard, memoryPath, MEMORY_PAIRS, revealTrace } from '../lib/deal.js'
 import { studyReveal, studyClueCard, makeGroups } from '../lib/station.js'
 import { rehearsalCase } from '../lib/case.js'
-import { struckMotives, screenSeed, irwinMotiveClue } from '../lib/screen.js'
+import { irwinMotiveClue, irwinLines, DEFAULT_IRWIN } from '../lib/screen.js'
 import { FAMILIES, ALL_MOTIVES, familyOf, familyMates, solvingPlan, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues } from '../lib/families.js'
 import { traceOf } from '../lib/traces.js'
-import { hintLine as catHintLine, HINT_CATS, motiveName } from '../lib/cats.js'
+import { hintLine as catHintLine, HINT_CATS, motiveName, CAT_LINES, fillSlot } from '../lib/cats.js'
 
 // How the case gets solved (docs/solving-the-case.md): checks G32 to G38,
 // F20 and F21. Every case here is a throwaway rehearsal case, made and
@@ -125,6 +125,8 @@ test('G34 Irwin\'s countdown: five cards at dial 1 down to one at 5; the real mo
   assert.match(clue.optionLine, /one of these three/)
   assert.equal(clue.mood, 3)
   for (const ch of clue.choices) assert.deepEqual(Object.keys(ch).sort(), ['n', 'rhyme'])
+  // and his screen is the opener, that line and the closer: the countdown replaces the old sealed line (handoff §5)
+  assert.deepEqual(irwinLines({ optionLine: clue.optionLine }), [DEFAULT_IRWIN.opener, clue.optionLine, DEFAULT_IRWIN.closer])
 })
 
 // ---- G35 and G36: the study pays the Ghost's trace -----------------------
@@ -387,6 +389,21 @@ test('the Act 2 hint is the hint cat\'s line from the bank, and the case records
 
 // ---- G41 ------------------------------------------------------------------
 
+// A full stop doubled after a word ("Not cheese.."), four dots, or a full
+// stop after a question or an exclamation mark ("reply some?.").
+const DOUBLED = /[A-Za-z]\.\.(?!\.)|\.\.\.\.|[?!]\./
+
+test('Granolia\'s half-remembered names read cleanly in her level 2 line: never a doubled mark', () => {
+  const tpl = CAT_LINES.granolia.levels['2']
+  for (const [n, half] of Object.entries(CAT_LINES.granolia.half)) {
+    const text = fillSlot(tpl, '[HALF]', half)
+    assert.ok(!DOUBLED.test(text) && !text.includes('[HALF]'), `motive ${n}: length ${text.length}`)
+    assert.ok(text.includes(half), `motive ${n}: the half-name is whole`)
+  }
+  assert.equal(fillSlot('It wasn\'t [HALF]. You know.', '[HALF]', 'the pie'), 'It wasn\'t the pie. You know.', 'a plain name keeps its full stop')
+  assert.equal(fillSlot('It wasn\'t [HALF]. You know.', '[HALF]', 'the pie?'), 'It wasn\'t the pie? You know.')
+})
+
 test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, only rules out wrong answers and fills every blank', () => {
   for (const m of MOTIVES) {
     const real = familyOf(m.n)
@@ -397,6 +414,7 @@ test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, onl
         const where = `motive ${m.n} ${cat} level ${level} act ${act} on ${family}`
         assert.ok(line.text, `${where}: a line`)
         assert.ok(!/\[[A-Z0-9]+\]/.test(line.text) && !line.text.includes('undefined'), `${where}: blanks filled`)
+        assert.ok(!DOUBLED.test(line.text), `${where}: no doubled marks`)
         assert.ok(!line.families.includes(real), `${where}: never the real family`)
         assert.ok(!line.motives.includes(m.n), `${where}: never the real motive`)
         if (act === 2) for (const n of line.motives) if (familyOf(n) !== family) assert.equal(familyOf(n), real, `${where}: a bonus is a real-family mate`)

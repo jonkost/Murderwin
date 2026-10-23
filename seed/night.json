@@ -9,10 +9,10 @@
   },
   "stations": [
     { "key": "study", "name": "The study", "what": "The light puzzle. Fifteen minutes, then out." },
-    { "key": "cat", "name": "A cat", "what": "A cat talks to the whole group." },
+    { "key": "cat", "name": "A cat", "what": "Salem, Zimothy or Boo talks to the whole group in the cat's own room. Never Granolia: her Study holds the light puzzle." },
     { "key": "bags", "name": "The bags", "what": "Something in two or three bags. Ask to open them." },
     { "key": "puzzle", "name": "The memory match", "what": "On the iPad: turn two cards at a time and find the six pairs of traces. Clearing it crosses one motive off." },
-    { "key": "checkin", "name": "Check-in", "what": "Tidy your clues. Cross off motives." }
+    { "key": "checkin", "name": "Free time", "what": "Nothing for the group right now: a drink, a stretch, and one tip on the phone." }
   ],
   "acts": {
     "1": { "name": "The Invitation", "plain": "Welcome", "beats": [
@@ -24,7 +24,7 @@
     "2": { "name": "Lights Out", "plain": "First investigation", "beats": [
       { "key": "orient", "name": "Orientation", "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.", "action": "notice:orient" },
       { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news", "screen": "news", "sound": "chime-news" },
-      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests off in waves, one guest at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest scans the code in the room and the cat greets them with one private hint. Everyone else waits in the living room.", "action": "deal:encounter" },
+      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests in waves, one at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest visits all four and scans the code in each room. Only one of the four gives that guest a real hint. Everyone else waits in the living room.", "action": "deal:encounter" },
       { "key": "puzzle", "name": "The first puzzle", "what": "A small puzzle on each phone. It needs what the cat just said. Solving it pays out a document.", "action": "deal:puzzle" },
       { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
     ] },
@@ -46,7 +46,7 @@
     ] },
     "6": { "name": "The Final Hour", "plain": "The Big Solve", "beats": [
       { "key": "games", "name": "Two Parlour Games", "what": "Boo hosts the last two Parlour Games on every phone, one after the other. Press Next for the drawing once both are done." },
-      { "key": "drawing", "name": "The drawing", "what": "The relay drawing. The TV shows a square; one person draws blind; the room shouts. Phones buzz the drawer and take the votes.", "action": "relay:start" },
+      { "key": "drawing", "name": "The drawing", "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; the TV shows one square; the room describes it and taps its guess on the living room screen.", "action": "relay:start" },
       { "key": "door", "name": "The door opens", "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.", "action": "notice:door", "screen": "door", "sound": "sting-door", "soundOnce": true },
       { "key": "eliminate", "name": "The deduction round", "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.", "action": "window:eliminate", "screen": "board" }
     ] },

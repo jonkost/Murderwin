@@ -1,9 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { CLIP_IDS, plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles } from '../lib/cues.js'
+import { CLIP_IDS, plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles, clipCode, clipReader, playLine, recordingFiles } from '../lib/cues.js'
+import { createPlayer } from '../lib/player.js'
 import { SOUND_IDS as SERVER_SOUND_IDS } from '../../functions/lib/screen.js'
-import { CLIP_IDS as SERVER_CLIP_IDS } from '../../functions/lib/news.js'
+import { CLIP_IDS as SERVER_CLIP_IDS, clipCode as serverClipCode } from '../../functions/lib/news.js'
 import { readFileSync } from 'node:fs'
 import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
 
@@ -159,11 +160,117 @@ test('hue: the request body for red and green, and the request shape to the brid
 test('plan: a bulletin\'s recorded clips ride with its sound, in order; an unknown clip is dropped', () => {
   assert.deepEqual(CLIP_IDS, SERVER_CLIP_IDS, 'cues/lib/cues.js and functions/lib/news.js agree')
   const r = plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 1000, clips: ['newsflash-opening', 'nope', 'newsflash-signoff'] } } }, 1000)
-  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news', clips: ['newsflash-opening', 'newsflash-signoff'] }])
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news', clips: ['newsflash-opening', 'newsflash-signoff'], unknown: 1 }], 'the unknown one is counted, never named')
 })
 
 test('plan: a cue of recorded lines alone (the closing bulletin) plays them, once', () => {
   const r = plan({ hall: null, sound: null }, { sounds: { current: { id: null, at: 5000, clips: ['woof-close-field-motive'] } } }, 5000)
   assert.deepEqual(r.actions, [{ type: 'sound', id: null, clips: ['woof-close-field-motive'] }])
   assert.deepEqual(plan(r.state, { sounds: { current: { id: null, at: 5000, clips: ['woof-close-field-motive'] } } }, 5000).actions, [])
+})
+
+// ---- the recordings as codes, and the window that prints counts only ----------
+
+const KEY = 'study-2026'
+
+test('a recording\'s code is the same on the server and here, and the relay maps it back to its file with the key', () => {
+  for (const id of CLIP_IDS) {
+    assert.equal(clipCode(KEY, id), serverClipCode(KEY, id), 'functions/lib/news.js and cues/lib/cues.js agree')
+    assert.match(clipCode(KEY, id), /^[0-9a-f]{16}$/)
+  }
+  const read = clipReader(` ${KEY} `)
+  for (const id of CLIP_IDS) assert.equal(read(clipCode(KEY, id)), id)
+  assert.equal(read('bulletin2-food-3'), 'bulletin2-food-3', 'a night with no key saved still sends names, and they play')
+  assert.equal(read(clipCode('another-key', 'bulletin2-food-3')), null, 'a code from another key is not one of ours')
+  assert.equal(read('nope'), null)
+  const keyless = clipReader('')
+  assert.equal(keyless(clipCode(KEY, 'bulletin2-food-3')), null, 'with no key here, a code cannot be read')
+  // the planner plays the files the codes stand for, in order, and counts what it could not read
+  const sent = ['bulletin2-opening', 'bulletin2-food-3', 'bulletin2-signoff'].map(id => clipCode(KEY, id))
+  const r = plan({ hall: null, sound: null }, { sounds: { current: { id: 'sounder-bulletin', at: 1000, clips: sent } } }, 1000, { readClip: read })
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'sounder-bulletin', clips: ['bulletin2-opening', 'bulletin2-food-3', 'bulletin2-signoff'] }])
+  const lost = plan({ hall: null, sound: null }, { sounds: { current: { id: null, at: 2000, clips: sent } } }, 2000, { readClip: keyless })
+  assert.deepEqual(lost.actions, [{ type: 'sound', id: null, clips: [], unknown: 3 }], 'no key: counted, so the window can say so')
+})
+
+test('the window\'s line for a cue is counts only: never a sound id, a recording, a code or a file name', () => {
+  assert.equal(playLine({ recordings: 3, missing: 1 }), '[sound] bulletin: 3 recordings, 1 missing (the screen shows the words)')
+  assert.equal(playLine({ sound: 'ok' }), '[sound] sound playing')
+  assert.equal(playLine({ sound: 'missing', recordings: 1 }), '[sound] sound file missing; skipped; bulletin: 1 recording')
+  assert.match(playLine({ unknown: 2 }), /2 recordings, 2 not recognised/)
+  const lines = [playLine({ sound: 'ok', recordings: 40, missing: 12, unknown: 1 })]
+  for (const l of lines) {
+    for (const id of [...SOUND_IDS, ...CLIP_IDS]) assert.ok(!l.includes(id), 'no id')
+    for (const f of ['food', 'bathroom', 'screens', 'personal', '.m4a', '/m/', 'media/']) assert.ok(!l.includes(f), 'no family, no sound file')
+  }
+  assert.equal(recordingFiles('/m', f => f === '/m/bulletin2-opening.m4a'), 1)
+  // the relay's own source prints nothing but counts about sounds
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(!/\[sound\] \$\{/.test(src) && !src.includes('missing.join'), 'cues.mjs never prints an id or a file')
+  assert.ok(src.includes('clipReader(env.STATION_KEY)'), 'the key comes from cues/.env')
+})
+
+// A stand-in for child_process.spawn: each "afplay" is an emitter the test ends or kills.
+function fakeSpawn() {
+  const procs = []
+  const spawn = (cmd, args) => {
+    const p = new EventEmitter()
+    p.cmd = cmd; p.file = args[0]; p.killed = false
+    p.kill = () => { p.killed = true; queueMicrotask(() => p.emit('exit', null, 'SIGTERM')) }
+    procs.push(p)
+    return p
+  }
+  return { spawn, procs }
+}
+const tick = () => new Promise(r => setImmediate(r))
+
+test('the player: a cue\'s files one after the other; a newer cue stops the recording that is playing before it starts', async () => {
+  const { spawn, procs } = fakeSpawn()
+  const lines = []
+  const have = new Set(['/m/woof-close-studio-open.m4a', '/m/woof-close-field-murderer.m4a', '/m/woof-close-field-motive.m4a', '/m/chime-news.m4a'])
+  const player = createPlayer({ mediaDir: '/m', exists: f => have.has(f), spawn, log: l => lines.push(l) })
+  player.play(null, ['woof-close-studio-open', 'woof-close-field-murderer'])
+  assert.equal(procs.length, 1, 'one file at a time')
+  assert.equal(procs[0].file, '/m/woof-close-studio-open.m4a')
+  assert.ok(player.playing())
+  // Ava is still talking when the host presses the next name
+  player.play(null, ['woof-close-field-motive'])
+  assert.equal(procs[0].killed, true, 'the recording that was playing is stopped')
+  assert.equal(procs.length, 2)
+  assert.equal(procs[1].file, '/m/woof-close-field-motive.m4a', 'and the new one starts at once')
+  await tick()
+  assert.equal(procs.length, 2, 'the old cue\'s queue never carries on to Mic\'s first line')
+  procs[1].emit('exit', 0)
+  await tick()
+  assert.equal(player.playing(), false)
+  // a sound then its recordings, in order; a missing recording is skipped and counted
+  player.play('chime-news', ['woof-close-studio-open', 'newsflash-opening'])
+  assert.equal(procs.at(-1).file, '/m/chime-news.m4a')
+  procs.at(-1).emit('exit', 0); await tick()
+  assert.equal(procs.at(-1).file, '/m/woof-close-studio-open.m4a')
+  procs.at(-1).emit('exit', 0); await tick()
+  assert.equal(procs.length, 4, 'the missing one is not played')
+  // a file that will not play moves on, once, even if the process then exits too
+  player.play(null, ['woof-close-field-murderer', 'woof-close-field-motive'])
+  const bad = procs.at(-1)
+  bad.emit('error', new Error('afplay not found /m/woof-close-field-murderer.m4a'))
+  bad.emit('exit', 1)
+  await tick()
+  assert.equal(procs.length, 6, 'the next file, once')
+  // every line the window got: counts only
+  assert.ok(lines.length >= 4)
+  for (const l of lines) {
+    for (const id of [...SOUND_IDS, ...CLIP_IDS]) assert.ok(!l.includes(id), `no id in "${l.length} chars"`)
+    assert.ok(!l.includes('/m') && !l.includes('afplay'), 'no file name, no error text')
+  }
+  assert.ok(lines.includes('[sound] sound playing; bulletin: 2 recordings, 1 missing (the screen shows the words)'))
+})
+
+test('the player in fake mode plays nothing and says so in one count-only line', () => {
+  const { spawn, procs } = fakeSpawn()
+  const lines = []
+  const player = createPlayer({ mediaDir: '/m', exists: () => true, spawn, log: l => lines.push(l), fake: true })
+  player.play('sting-door', ['woof-close-field-out'])
+  assert.equal(procs.length, 0)
+  assert.deepEqual(lines, ['[sound] sound playing; bulletin: 1 recording (fake: nothing plays)'])
 })

@@ -73,8 +73,11 @@ export async function updateTask(tid, patch) { tasks = tasks.map(t => (t.id === 
 export async function addTask(task) { const t = { ...task, id: id() }; tasks = [...tasks, t]; taskListeners.forEach(fn => fn(tasks)); return t.id }
 
 let decisions = Object.entries(board.decisions).map(([key, d]) => ({ ...d, key }))
-export function subscribeDecisions(onData) { queueMicrotask(() => onData(decisions)); return () => {} }
-export async function answerDecision(key, answer) { decisions = decisions.map(d => (d.key === key ? { ...d, answer } : d)) }
+const decisionListeners = []
+const notifyDecisions = () => decisionListeners.forEach(fn => fn(decisions))
+export function subscribeDecisions(onData) { decisionListeners.push(onData); queueMicrotask(() => onData(decisions)); return () => { const i = decisionListeners.indexOf(onData); if (i >= 0) decisionListeners.splice(i, 1) } }
+export async function answerDecision(key, answer) { decisions = decisions.map(d => (d.key === key ? { ...d, answer, answeredBy: 'Preview' } : d)); notifyDecisions() }
+export async function fileDecision(key, moment) { decisions = decisions.map(d => (d.key === key ? { ...d, moment } : d)); notifyDecisions() }
 
 export function subscribeLatestValidation(onData) { queueMicrotask(() => onData(null)); return () => {} }
 

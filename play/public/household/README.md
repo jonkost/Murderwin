@@ -1,31 +1,42 @@
 # The household
 
-Two sets of pictures for the four cats and Sir Irwin.
+Pictures of the four cats and Sir Irwin, plus one photo for the end credits.
+The game finds a picture by its exact file name, spaces and capitals
+included. Brought up to date 23 October 2026.
 
-**faces/** — head and shoulders, square. Shown small on the phone next to
-each one's affection line on the Cats tab, and anywhere a cat is speaking to
-you in a line of text.
+## What the game reads
 
-**full/** — the full portraits, same style as the character drawings. Shown
-large on the room kiosks when a cat is talking.
-
-**intro/** — the Act 1 introduction cards, one per member of the household,
-as you design them. Shown on the phones and the big screen when everyone
-meets the household. Tall (phone shape) or wide (TV shape), say which.
-
-**play/** — the pictures used while the game is on: a cat meeting you in a
-room, giving you information, or brushing you off. More than one per cat is
-fine; name them with the cat first and the mood after, for example
-`salem-talking.png`, `salem-refusing.png`, `boo-pleased.png`.
-
-Same five names in each folder (plus a mood after a dash in play/):
+**faces/** — head and shoulders, square. Shown small on the phone's Cats tab
+and anywhere a cat speaks to you in a line of text.
 
 | File | Who |
 |---|---|
-| irwin.png | Sir Irwin, the dog |
-| granolia.png | Granolia Lickspittle |
-| boo.png | Miss Boo LaRue |
-| zimothy.png | Zimothy Clawford, Esq. |
-| salem.png | Salem Crookshank |
+| `Irwin Face.png` | Sir Irwin, the dog |
+| `Granola Face.png` | Granolia Lickspittle |
+| `Boo Face.png` | Miss Boo LaRue |
+| `Zimmy Face.png` | Zimothy Clawford, Esq. |
+| `Salem Face.png` | Salem Crookshank |
 
-Any names are fine; drop them in and tell Claude Code, renaming is quick.
+**full/** — the full portraits. Only Sir Irwin's five are used today:
+
+| File | Where it shows |
+|---|---|
+| `Irwin 1.png` to `Irwin 5.png` | His five moods on the living room TV, in his Act 5 countdown (by how clear the night has become, the same five steps as the trace). `Irwin 5.png` also shows on his rules slides and door slide in Act 6, and on his last card after the end credits. |
+
+The other pictures in full/ (Boo 1 to 5, Granola 1 to 4, Salem 1 to 6,
+Salem Boo, Zimmy 1 to 5) are not shown anywhere yet. The study screen draws
+a plain circle for Granolia. Where the cats' full pictures should show is
+your call: tell Claude Code and it wires them in.
+
+**sydney.jpg** — Sydney's photo for the end credits, saved straight in this
+folder as `play/public/household/sydney.jpg`. Without it the card shows his
+name only.
+
+## Not used yet
+
+**intro/** and **play/** are empty and no screen reads them. Tell Claude Code
+before you draw for them.
+
+Keep the names exactly as above: a face with a different name shows as a
+broken picture. A missing Irwin mood falls back to a plain round face. Run
+`npm run deploy:site` after adding pictures to put them online.

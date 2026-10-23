@@ -44,6 +44,22 @@ guest, and "Start a new night" for rehearsals. Nothing on the night needs the
 workshop or a Google sign-in. The buttons are labelled by what they do; none
 of them can show who the Murderer, the Ghost or the victim is.
 
+Since 22 October:
+- *Next* on *Arm the bulletin* (Act 3) arms W-O-O-F News bulletin 2, and
+  your phone says only Armed.
+- *Salem petted*: tap the guest the real Salem let pet him.
+- *Fetch Champion*: tap the first guest the real Sir Irwin brings a toy to.
+  It shows in the end credits.
+- On the workshop's Game night page, *Sir Irwin's Favorite* and *Sir Irwin's
+  Least Favorite* name the two guests for his end-credit awards (Jessa and
+  Jake unless you change them).
+- Each cat hosts its game with a line in its own voice: Boo the Parlour
+  Games, Granolia the study, Zimothy the memory match, Salem the ballot,
+  Sir Irwin the drawing and the trace.
+- The house panel has a dot for every room screen, the memory match iPad
+  included, and in Act 2 a line "Cat visits: N of M guests have seen all
+  four".
+
 **A dead phone.** The guest taps their name on any other phone. The character,
 bag and cat standings move with them. The old phone says the character has
 moved to another phone. If it was a host's phone, the Host tab moves too.
@@ -73,8 +89,9 @@ with.
 written down in one place (`seed/night.json`, structure only). On the Host
 tab, *Run the night* shows the beat you are on, what it is for, and one big
 button: *Next*. Pressing it does whatever that beat needs on every phone at
-once: a notice, a cat to go and find, a puzzle, a window of questions, the
-Act 4 groups, a rotation, the drawing, the ballot, the reveal. The button
+once: a notice, the four cats to visit, the safe, the Act 4 groups, a
+rotation, the drawing, the ballot, the reveal. The Parlour Games are not
+beats: they pop up on their own at times rolled for the night. The button
 never shows you content, only "sent to 9 phones". *Back one* steps back
 without dealing anything. The act numbers and Blackout / Power returns are
 still there for jumping about in a rehearsal.
@@ -84,27 +101,39 @@ still there for jumping about in a rehearsal.
   out loud, settle in. Then Blackout.
 - *Power returns.* Every phone shows its role card, held fifteen seconds, the
   same shape on every phone. Then "Where things are".
-- *Act 2.* Eyes up for the news. Then "Go to the scullery, Salem is waiting":
-  tap "I'm here" and the cat speaks, in three short paragraphs or one
-  brush-off, gated by how that cat feels about you. Then the safe: three
-  numbers the cat let slip, in order; three misses and it gives way. The
-  pay-out is a document printed on a piece of stationery. Then every phone
-  lights up with three silly questions from a cat. Then check-in.
-- *Act 3.* Phones down. The bulletin. Then "You are with Jacob and Mari."
-- *Act 4.* Five stations, one card each: the study (its clue lands on every
-  phone in the group), a cat who talks to the whole group, the bags
-  ("something minty is in two or three bags"), a small shape puzzle on the
-  phone, and check-in. Two more rounds of questions in between.
-- *Act 5.* Cake, then the chime and "go to the living room".
-- *Act 6.* The last questions, the drawing (already built), "the door is
-  open", then the deduction round: every phone picks one thing it is not, a
-  person or a motive, and the room's picks are listed on every Now tab.
-- *Act 7.* The ballot: who, why, who died; two minutes on the server's
-  clock; a phone that does not pick gets a random pick. "Eyes on the
-  screen" for the reveal. Then each phone's own result: three ticks or
-  crosses and what it said.
+- *Act 2.* Eyes up for W-O-O-F News on the TV. Then the phone sends you to
+  all four cats in turn (Granolia in the Study, Salem in the Orangerie,
+  Zimothy in the Library, Boo in the Entryway); scan the code in the room.
+  One cat, picked for you, gives a real hint and the safe's three numbers;
+  the others say hello. The safe gives way after three misses and pays out a
+  document. Five Parlour Games pop up, hosted by Boo. Then check-in and the
+  chime for supper.
+- *Act 3.* Phones down. Near the end of supper you arm bulletin 2; it plays
+  3 to 5 minutes later and every phone gets a notice. Then the groups, for
+  example "You're teamed up with Dorothy Rye and Jasper Steeps. From now on,
+  only share with your group."
+- *Act 4.* Five stations, one card each, and five Parlour Games in between:
+  - the study and its trace: "Granolia's expecting your group in the Study,
+    upstairs." Its clue lands on every phone in the group;
+  - a cat for the group: "<Cat> will see your group in <room>. Go
+    together." Never Granolia, because her room, the Study, holds the light
+    puzzle;
+  - the bags ("something minty is in two or three bags");
+  - Zimothy's memory match on the iPad in the Library;
+  - free time: "Nothing for your group right now. Grab a drink, stretch your
+    legs." with one of five tips.
+- *Act 5.* Cake, then the chime and Sir Irwin's countdown on the TV.
+- *Act 6.* Two Parlour Games, then the Relay Drawing (your phone buzzes when
+  you are called to the paper), the door, then the deduction round: every
+  phone picks one thing it is not, a person or a motive, and the room's picks
+  are listed on every Now tab.
+- *Act 7.* Salem opens the ballot: who, why, who died; two minutes on the
+  server's clock; a phone that does not pick gets a random pick. "Eyes on the
+  screen" for the reveal with the closing bulletin. Then each phone's own
+  result: three ticks or crosses and what it said. Then the end credits on
+  the TV.
 
-**Windows.** Questions, the deduction round and the ballot are windows: every
+**Windows.** The Parlour Games, the deduction round and the ballot are windows: every
 phone at once, a bar counting down against the server's clock, and they never
 close early. When the time is up the phone goes back to rest and the server
 picks for anyone who did not, so a no-show is never a pattern. The Next
@@ -112,10 +141,11 @@ button waits for the window to run out.
 
 **Rehearsing.** Start a night, join from a few phones (or a few browser tabs
 in private windows), and press Next. The first time roles are needed the
-server deals a throwaway case for that night only: rehearsal nights say
-"rehearsal" in the act line. Every screen can also be looked at without a
-night at `?preview=<name>`, and `?preview=tour` walks all thirty-nine of them
-with arrows at the top.
+server deals a throwaway case for that night only. On a rehearsal night a
+big red REHEARSAL band runs across every phone and every room screen. Every
+screen can also be looked at without a night at `?preview=<name>`, and
+`?preview=tour` walks through them all with arrows at the top. The preview
+samples use the real W-O-O-F News and Cat Hint Lines.
 
 ## What you do
 
@@ -141,15 +171,33 @@ is the page to have open on the day.
 named after the character (the README in that folder lists the names), then
 `npm run deploy:site`. A character without a picture shows initials.
 
-## What is not built yet (17 October 2026)
+## What is not built yet (23 October 2026)
 
-- Jenna's page: the Steward reads and edits the secrets; your account is
-  refused by code.
-- The secrets themselves: the generator needs your Anthropic key once, then
-  Jenna reads every set. Until then every night deals bracketed stand-ins.
-- The bag packing (a blind script) and the seven stationery pictures; the
-  stand-ins work until then.
-- The workshop's Freeze button for 7 November.
+- The secrets (the cats' secret lines and the documents): making them waits
+  on your answer to *secretLines*. Then the generator needs your Anthropic
+  key once, and Jenna reads every set. Until a set is made, a night deals
+  bracketed stand-ins where a secret would go. Once you answer, Claude Code
+  removes whatever the generator and Jenna's page no longer need (the echo
+  fragments, the study clue, Irwin's old lines).
+- The Relay Drawing pictures: `npm --prefix scripts run relay-pictures`
+  (it prints counts only), or Jenna. Until then the party uses stand-in
+  pictures.
+- Art: the seven stationery designs, the motive card pictures (the slot for
+  them is not built yet either), the W-O-O-F News graphics, a candle in the
+  Medium's portrait, and a photo of Sydney saved as
+  `play/public/household/sydney.jpg`.
+- The recordings in `media/README.md`. Video on the TV is built only if you
+  answer *newsVideo* with video.
+- Replaying a night from its seed, and Home's count-only rows for whether
+  the secrets, the leans, the packing list and the drawing pictures exist.
+  Both are cards on the board.
+- Waiting on your decisions: the Partner in Crime and Ghost Whisperer awards
+  (*partnerAwards*: cut or build), and a Drawing pictures tab on Jenna's page
+  (*stewardPictures*).
+
+Built since 17 October: Jenna's Steward page (17 October), the Freeze button
+(18 October), the blind bag packing (18 October), and the Cat Hint Lines,
+W-O-O-F News and Sir Irwin's countdown lines (22 October).
 
 **The safeguards (17 October).** The Host tab has Spill the Beans and the
 Hush under "If something goes wrong". Spill the Beans works through Act 5
@@ -167,9 +215,10 @@ the relay drawing and the room screens for Acts 6 and 7
 (`docs/relay-drawing-game.md`), the cue relay (`docs/cues-relay.md`), the
 emulator, the eight fake players and the day-of runbook (`docs/on-the-night.md`),
 and (18 October) the screens for every beat that says look at the screen:
-the news flash, the Act 3 bulletin, Sir Irwin at cake, the board of strikes
-and the door on the TV, the iPad as a captions screen, and a sound for every
-cue (`docs/room-screens.md`).
+the news, the Act 3 bulletin, Sir Irwin at cake, the board of strikes and
+the door on the TV, the iPad as a captions screen, and a sound for every
+cue (`docs/room-screens.md`; the news and the bulletin became W-O-O-F News
+on 22 October).
 
 ## Cats tab: where you stand (built 16 Oct 2026)
 
@@ -204,10 +253,12 @@ line about where you stand. Nothing else shows until tapped.
 | 4 | Fond |
 | 5 | Devoted |
 
-**Movement.** Affection moves only through the Parlour Games (the push and
-pull questions, renamed by Jon on 13 Oct) in Acts 2, 4 and 6 (decided 12 Oct). When a window closes and a guest's affection
-has changed, the marker slides to its new stop the next time the Cats tab is
-shown. A short, slow slide; no sound, no "+1", nothing that reads as a score.
+**Movement.** Affection moves through the Parlour Games (the push and pull
+questions, renamed by Jon on 13 Oct) in Acts 2, 4 and 6 (decided 12 Oct),
+and in one other way: when you tap Salem petted for a guest on the Host tab,
+their Salem goes to the top stop (22 October). Nothing else moves it. When a
+window closes and a guest's affection has changed, the marker slides to its
+new stop the next time the Cats tab is shown. A short, slow slide; no sound, no "+1", nothing that reads as a score.
 
 **Settled 21 Oct (`docs/parlour-games.md`).** Each question has one cat
 secretly listening (never Irwin). A Detective's answer warms it by half a stop
@@ -252,16 +303,19 @@ The rules deck (slide "How the cats feel about you") already shows this design.
   typed in a list after that can change a phone mid-night. The host's Resend
   button and every join still work; they simply find nothing new to copy.
 - **The room screens read the workshop too.** Granolia's lines on the study
-  screen, the five station cards, the news frames and the closing story are
-  copied to the phones' content with everything else, and the Check page
-  (`?check=1`) lists them.
+  screen, the five station cards and the closing story are copied to the
+  phones' content with everything else, and the Check page (`?check=1`)
+  lists them. Granolia's lines read cleanly: no doubled full stops, and
+  *heavy breathing* shows in italics.
 
 ## How the case gets solved (built 22 October 2026)
 
 What `docs/solving-the-case.md` describes (decided with Jon on 21 October) is
-now in the game. None of it shows you an answer, and none of the clue
-wording is written: every line a cat, the news flash or Sir Irwin would say
-about the motive is a marked stand-in until Jenna writes it.
+now in the game. None of it shows you an answer. The clue wording is an
+open bank you may read: the W-O-O-F News lines (`seed/woof-news.json`), the
+Cat Hint Lines (`seed/cat-lines.json`) and Sir Irwin's countdown lines are
+written and in the game (22 October). Only which line plays is the case's
+secret.
 
 - **Five motive families.** Food, Bathroom, Screens, Out and about, and
   Personal slights, matched to the nineteen motive numbers in
@@ -286,8 +340,8 @@ about the motive is a marked stand-in until Jenna writes it.
   each guest when the case is dealt. It rules out a wrong family of motives.
   The other three only say hello in character (the four greeting lines from
   the handoff). W-O-O-F News bulletin 1 crosses off exactly one family for
-  everyone. The hint wording is still a stand-in in brackets until the Cat
-  Hint Lines are brought in. Never the real family.
+  everyone. The hint is that cat's line from the Cat Hint Lines at the
+  guest's affection with it. Never the real family.
 - **Act 4, the study pays the Ghost's trace**, shown at whatever level the
   clarity dial is at when the group finishes, on the same ladder as the
   bedroom door in Act 6. It names the thing, never the person.
@@ -300,7 +354,8 @@ about the motive is a marked stand-in until Jenna writes it.
   retired: hidden from the dashboard, with anything already written kept.
 - **Act 4, the small puzzle is now the memory match**, on an iPad pointed at
   `/play/?kiosk=memory`: twelve cards, six pairs of traces of people at the
-  party, no names, shuffled fresh for each group. Clearing the board crosses
+  party, no names, with file-folder backs, shuffled fresh for each group.
+  Zimothy hosts it with a line of his own. Clearing the board crosses
   one motive off that group's list (a card on each phone with a *Cross it
   off* button). Never the real motive. A group that runs out of time is
   given its cross-off anyway.
@@ -308,23 +363,28 @@ about the motive is a marked stand-in until Jenna writes it.
   screen: five motive cards at dial 1, four at 2, three at 3, two at 4, one
   at 5, with his five lines from the handoff. The real one is always among
   them. The others come from its family first, then from families already
-  ruled out. His picture is
-  one of his five moods (`play/public/household/full/Irwin 1.png` to
-  `Irwin 5.png`), the same five steps as the trace.
+  ruled out. His picture is one of his five moods
+  (`play/public/household/full/Irwin 1.png` to `Irwin 5.png`), the same five
+  steps as the trace. The screen shows only his opener, the countdown line,
+  the motive cards and his closer; the old secret middle line is gone
+  (23 October).
 - **No hidden events in any act.** The Murderer and the Ghost only answer the
   Parlour Games, like everyone else.
 - **Salem** (22 October) starts at the middle for everyone, and the Parlour
   Games never take him past the second-highest stop. When the real Salem
   lets a guest pet him, tap their name under *Salem petted* on the Host tab:
   their Salem goes to the top, their phone gets the True Friend of the
-  Groundskeeper card, and three stars sit by Salem on their Cats tab. Not
-  for you or Susan.
+  Groundskeeper card, and three stars sit by Salem on their Cats tab. When
+  they open Salem there, they see his honour text. Not for you or Susan.
 - **Act 6 opens on its two Parlour Games** (22 October), one after the
-  other, then you press Next for the drawing.
+  other, then you press Next for the drawing. The deduction round comes
+  after the door opens (settled by default; you may change it).
+- **The Act 4 cat station never sends a group to Granolia**, because her
+  room, the Study, holds the light puzzle (settled by default; you may
+  change it).
 
 Still open: which wrong family each guest's hint names is shared round the
-room in turn (a stand-in rule), and the hint wording is a stand-in until the
-Cat Hint Lines are in.
+room in turn (a stand-in rule).
 
 ## For Claude Code (technical)
 
@@ -350,7 +410,7 @@ First functions deploy enables Cloud Build / Artifact Registry on the project
 and takes a few minutes. Dev servers: `npm --prefix play run dev` on 5174
 (`.claude/launch.json` → `play`); the workshop stays on 5173.
 
-Preview without a night: `http://localhost:5174/play/?preview=join|rest|lobby|prompt|prompt-late|you|offline|paused|paused-window|cats-act4|blackout|doors`.
+Preview without a night: `http://localhost:5174/play/?preview=<name>` (the full list is under Previews below).
 
 Firestore (all authed-read unless stated; Functions write):
 - `public_state/active` `{ nightId }` — which night is live.
@@ -414,8 +474,10 @@ generator lands it writes `cases/{nightId}` and per-player payloads into
 `seed/night.json` holds the acts, their beats and the windows; `functions/`
 copies it in `npm run seed` and `play/src/lib/night.js` imports it. Each beat
 has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
-`deal:puzzle`, `window:questions|eliminate|ballot`, `groups`, `rotate`,
-`relay:start`, `reveal`, `results`.
+`deal:puzzle`, `arm:bulletin`, `window:eliminate|ballot`, `groups`, `rotate`,
+`relay:start`, `reveal`, `results`. The Parlour Games have no beat (see
+Windows below); no beat uses `window:questions` any more, though `light-up`
+still opens one.
 
 - `functions/lib/run.js` composes the host commands: `next`, `back`,
   `beat <key>`, `act <n>` (jumping to 2 deals roles), `power` (deals roles,
@@ -494,10 +556,11 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
     over the wrong families the news did not take), `hintFamilyFor` (late
     joiner), `memoryPick`, `irwinOptions`/`irwinCount`, and the solver
     `remainingMotives`/`roomClues`. `cases/{id}.solving = { family, newsOut,
-    hints, memory: { groupId: n }, struck: [n] }`; `rerollCase` makes a fresh
-    plan for the new motive. `struck` is written by `screen.onBeat` at the
-    bulletin. Hint and memory pay-outs go in the ledger (`BLOCKING_KINDS`), so
-    Spill the Beans is off once either is out.
+    hints, hintCats, memory: { groupId: n }, struck: [] }`; `rerollCase`
+    makes a fresh plan for the new motive. `struck` starts empty and nothing
+    adds to it any more (the struck-motives bulletin is gone). Hint and
+    memory pay-outs go in the ledger (`BLOCKING_KINDS`), so Spill the Beans
+    is off once either is out.
   - Act 2 rooms (`deal.js`, Lights Out section): `dealEncounter` makes the line
     in `nights/{id}/private/lights` (`planWaves`: guests spread over the four
     cats of `night.json solving.catRooms`) and sends the first wave;
@@ -507,10 +570,12 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
     `withMinutes`, and adds late joiners; `flushLights` (run.enterBeat, last
     Act 2 beat or any later act) greets everyone left. Each phone's step is
     `sessions/{uid}.lights = { step: wait|go|with|done, cat, catName, room,
-    title, text }` (ui_copy `LIGHTS WAIT|GO|WITH|DONE` override the text) and
-    is a `CARRIED_FIELD`. The greeting is the testimony card plus `hint: {
-    text, placeholder }` (`HINT_PLACEHOLDER` until written; it names no
-    family) and the scrap on a brush-off.
+    title, text }` (ui_copy `LIGHTS WAIT|GO|NEXT|WITH|DONE|SUPPER` override
+    the text) and is a `CARRIED_FIELD`. The greeting is the testimony card
+    plus `hint: { text, placeholder }`: the cat's line from `cats.js`
+    (`seed/cat-lines.json`) at the guest's affection, or `HINT_PLACEHOLDER`
+    only when the case has no family for the guest (it names no family), and
+    the scrap on a brush-off.
   - Study: `station.studyReveal` works out the Ghost's trace once per group
     (`traces.workReveal` with the Murderer's trace excluded, `shownReveal`),
     and `studyClueCard(c, act, beat, reveal)` carries it as `card.trace`. The
@@ -532,21 +597,33 @@ has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
     pays every unpaid group from Act 5.
   - Sir Irwin: `screen.irwinMotiveClue` adds `choices: [{ n, rhyme }]` and
     `mood` (the dial band) to the Act 5 screen doc, plus the line from
-    `IRWIN_OPTION_LINES` (ui_copy `IRWIN THREE|TWO|ONE` override). The news
-    screen adds `NEWS_FLASH_PLACEHOLDER` after the echo. `FORBIDDEN_SCREEN_KEYS`
-    now also refuses `solving`, `family`, `families`, `newsOut`, `hints`.
+    `IRWIN_OPTION_LINES` (ui_copy `IRWIN FIVE` to `IRWIN ONE` override),
+    between the workshop's Irwin opener and closer; the case's
+    `irwin.lines` are no longer shown (23 Oct). The news screen shows
+    `NEWS_FLASH_PLACEHOLDER` only when the case has no family to cross off;
+    there is no echo. `FORBIDDEN_SCREEN_KEYS` now also refuses `solving`,
+    `family`, `families`, `newsOut`, `hints`.
   - Checks: `functions/test/solving.test.mjs` (G32 to G38, F20, F21, 1,000
     seeded throwaway cases where it says so); `functions/test/lights-walk.mjs`
     walks the rooms for other tests; `scripts/fake-players.mjs` prints the
     Act 2 rooms line (F20, F21) and the motive funnel (G32) as PASS or FAIL.
-  - Not built on purpose (not designed): any hint, news flash or Irwin
-    wording; where real hint text will live in `sealed/*`.
+  - The open wording banks: `functions/lib/cats.js` (the Cat Hint Lines,
+    `seed/cat-lines.json`), `functions/lib/news.js` (W-O-O-F News,
+    `seed/woof-news.json`; `docs/room-screens.md` has the bulletins) and
+    `functions/lib/hosts.js` (the hosts' lines, `HOST_LINES`, with
+    `booLine` and `irwinTraceLine`). Irwin's countdown lines are
+    `IRWIN_OPTION_LINES` in `screen.js`.
 - Seal check in `functions/test/run.test.mjs`: after a whole night, no
   session carries a role field, no window on a phone carries values, and the
   night doc and public content carry no roles and no dial.
-- Previews: `?preview=` doors | join | welcome | lobby | act1 | prompt |
-  orient | news | wait | go | testimony | deflect | back | puzzle | document | questions |
-  checkin | dinner | groups | study | cat | bags | puzzle4 | memory-clue | checkin4 | roam |
-  irwin | door | eliminate | ballot | reveal | result | clues | host |
-  relay-* | kiosk-memory | kiosk-memory-clear | kiosk-irwin | tour. A second dev server config, `play-5175`, exists for when
-  another session already holds 5174.
+- Previews (`play/src/Preview.jsx`; `TOUR` lists the tour in order):
+  `?preview=` doors | join | welcome | lobby | act1 | blackout | prompt |
+  prompt-late | orient | news | wait | go | testimony | deflect | back |
+  puzzle | document | questions | checkin | dinner | groups | study | cat |
+  bags | puzzle4 | memory-clue | checkin4 | award | roam | irwin |
+  relay-walk | relay-draw | relay-turn | relay-vote | relay-lockout |
+  relay-done | door | eliminate | ballot | reveal | result | clues | cats |
+  cats-act4 | cats-friend | rehearsal | you | offline | host | paused |
+  paused-window | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in
+  `docs/room-screens.md`). A second dev server config, `play-5175`, exists
+  for when another session already holds 5174.

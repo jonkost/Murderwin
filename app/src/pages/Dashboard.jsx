@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeHistory } from '../lib/store'
+import { subscribeArea, subscribeLatestValidation, subscribeHistory, subscribeTasks } from '../lib/store'
 import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab } from '../lib/content'
+import { leftByOwner, leftLine } from '../lib/timeline'
 import { isComplete } from '../lib/scenarios'
 import { useReviews } from '../components/ReviewRow'
 import TaskBoard from '../components/TaskBoard'
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const [data, setData] = useState({})
   const [validation, setValidation] = useState(null)
   const [history, setHistory] = useState([])
+  const [tasks, setTasks] = useState(null)
   const reviews = useReviews()
 
   useEffect(() => {
@@ -76,6 +78,7 @@ export default function Dashboard() {
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
     unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeHistory(setHistory, () => {}))
+    unsubs.push(subscribeTasks(setTasks, () => {}))
     return () => unsubs.forEach(u => u())
   }, [])
 
@@ -104,6 +107,13 @@ export default function Dashboard() {
   const first = picks[0]
   return (
     <main className="dash">
+      {/* The one line that says what is left, by owner (23 Oct 2026). The
+          same counts as the Timeline's Who row and Where we are. */}
+      <p className="night-line">
+        <b>{tasks === null ? 'Counting what is left…' : leftLine(leftByOwner(tasks))}</b>{' '}
+        See the <Link to="/timeline">Timeline</Link> and <Link to="/status">Where we are</Link>.
+      </p>
+
       <section className="panel progress">
         <h2>Where the writing stands</h2>
         <p className="why">
@@ -154,9 +164,9 @@ export default function Dashboard() {
 
       <section className="panel">
         <h2>The secrets</h2>
-        <p className="why">What the cats really reveal, the documents, the news fragments. Claude writes these and you never see them. This row only says whether they exist.</p>
+        <p className="why">What the cats really reveal and the documents. Claude writes these and you never see them. This row only says whether they exist.</p>
         <div className="prow static">
-          <span className="plabel">🔒 Secret cat lines, documents, echoes</span>
+          <span className="plabel">🔒 Secret cat lines and documents</span>
           <span className="pcount">
             {validation === null
               ? 'not made yet'
@@ -178,7 +188,7 @@ export default function Dashboard() {
         <div className="list-grid">
           {rows(spec => spec.hidden && !spec.retired).map(({ key, ...r }) => <Row key={key} {...r} />)}
         </div>
-        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history) are kept with everything in them, but not shown.</p>
+        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history, news frames, the old picture and sound checklists) are kept with everything in them, but not shown.</p>
         <TaskBoard />
         <DecisionsPanel />
       </details>

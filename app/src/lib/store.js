@@ -10,7 +10,7 @@ const impl = import.meta.env.DEV && PREVIEW ? await import('./preview') : real
 
 export const {
   ensureSeeded, subscribeArea, saveArea, whoAmI, subscribeHistory,
-  subscribeTasks, updateTask, addTask, subscribeDecisions, answerDecision,
+  subscribeTasks, updateTask, addTask, subscribeDecisions, answerDecision, fileDecision,
   subscribeLatestValidation, uploadFile, uploadReference, applyAdditions,
   subscribeGame, saveGame, subscribeReviews, saveReview, countLinesBy,
 } = impl

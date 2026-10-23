@@ -160,7 +160,7 @@ const CARDS = {
   ui_copy: {
     what: 'The phone’s own words, when no character is speaking.',
     where: 'Whenever the phone itself has to speak: scanning in at the door, no signal, paused, the ballot in Act 7. Often read by someone stressed and alone.',
-    howTo: 'Pick which screen, then the line. Fifteen screens, each with a plain default already; yours replaces it. Twenty words at most, never blaming the guest. “Nothing is lost” is the house style.',
+    howTo: 'Pick which screen, then the line. Every screen has a plain default already; yours replaces it. Twenty words at most, never blaming the guest. “Nothing is lost” is the house style.',
     example: [
       { field: 'Which screen', text: 'OFFLINE' },
       { field: 'The line', text: 'The Manor cannot hear your phone. Stay where you are: it will reconnect on its own. Nothing is lost.' },
@@ -181,7 +181,7 @@ const CARDS = {
   },
   scenarios: {
     what: 'Silly sets of three questions, two answers each. Every guest answers the same set at the same moment, on identical screens.',
-    where: 'Acts 2, 4 and 6, four times each, at moments nobody knows: every phone in the house lights up at once. A cat is secretly listening to each question, and warms or cools to a Detective by their answer. For the Murderer and the Ghost, the points move how clear the clues come out, and nobody can tell which two phones those are.',
+    where: 'Twelve a night: five in Act 2 and five in Act 4 at moments nobody knows, then two back to back as Act 6 opens. Every phone in the house lights up at once. A cat is secretly listening to each question, and warms or cools to a Detective by their answer. For the Murderer and the Ghost, the points move how clear the clues come out, and nobody can tell which two phones those are.',
     howTo: 'Question 1, its two choices, and points for each. Then question 2 and question 3 the same way. Whatever a guest picks, the next question is the same. Anyone must be able to answer, aged 11 to 70, and no Santa. The eight totals add themselves up underneath.',
     example: [
       { field: 'Question 1', text: 'Do you care which way your toilet paper sits?' },
@@ -252,8 +252,8 @@ const CARDS = {
     doneLine: 'The blanks are stocked. The cats can be vague in ten different ways.',
   },
   echo_frames: {
-    what: 'A news bulletin with one gap. The secret part drops into the gap on the night.',
-    where: 'Acts 2 and 4: a chime, then this line on a room screen with the secret fragment in the gap. Everyone in the room reads it.',
+    what: 'Retired 22 Oct 2026: a news bulletin with one gap, from before W-O-O-F News. Nothing on the night shows these any more; what is written is kept.',
+    where: 'Nowhere now. W-O-O-F News plays in Act 2 and at supper instead.',
     howTo: 'The words before the gap, starting with three dots, then the words after the gap, ending with three dots. The gap is drawn for you between the two boxes.',
     example: [
       { field: 'Before the gap', text: '...the morning post brings word of' },
@@ -264,7 +264,7 @@ const CARDS = {
   },
   templates: {
     what: 'The seven blank documents (a receipt, a telegram, a page from a catalogue) that secret text is printed onto live.',
-    where: 'Acts 2 and 4: when a guest solves a puzzle, the payout is one of these documents on their phone, with the secret words on it.',
+    where: 'Act 2: when a guest opens the safe, the payout is one of these documents on their phone, with the secret words on it.',
     howTo: 'Tick a design when it is drawn, keep notes, and attach a reference picture. Design the paper, never the message.',
     example: [{ field: 'Design', text: 'TELEGRAM: office banner across the head, delivery stamps upper corner, gummed message strip at center.' }],
     emptyState: 'Seven designs to make.',
@@ -303,7 +303,7 @@ const CARDS = {
   station_text: {
     what: 'The card a group gets at each of the five Act 4 stations: where to go and what to do there.',
     where: 'Act 4, on every phone in the group, each time the house rotates. The study is the clock; the other four follow it.',
-    howTo: 'Pick the station, then one or two plain sentences. CAT may say [CAT] where the cat’s name goes. BAGS may say [PROPERTY] and [COUNT]; the game fills in the word and whether it is two or three bags.',
+    howTo: 'Pick the station, then one or two plain sentences. CAT may say [CAT] where the cat’s name goes and [ROOM] for its room. CHECKIN is Free time: one tip is added after your line. BAGS may say [PROPERTY] and [COUNT]; the game fills in the word and whether it is two or three bags.',
     example: [
       { field: 'Which station', text: 'BAGS' },
       { field: 'The line', text: 'Something [PROPERTY] is in [COUNT] of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.' },
@@ -354,7 +354,7 @@ const CARDS = {
     doneLine: 'The host’s pockets are full of useful paper. The host is still allowed to play.',
   },
   art_assets: {
-    what: 'Every picture the night needs, with a done tick.',
+    what: 'Retired 23 Oct 2026: the old checklist of pictures. The real picture jobs are cards on the Timeline, each saying where the file goes.',
     where: 'Screens, portraits, the big TV and the invitation.',
     howTo: 'Name the picture, upload it when it exists, tick it when it is ready.',
     example: [],
@@ -362,7 +362,7 @@ const CARDS = {
     doneLine: 'Every picture is in. The manor looks like itself.',
   },
   av_assets: {
-    what: 'Every sound the night needs, with a done tick. Atmosphere only, never a voice.',
+    what: 'Retired 23 Oct 2026: the old checklist of sounds. The real sound jobs are cards on the Timeline, each saying where the file goes.',
     where: 'The speakers: chimes, crackle, thunder, the blackout sting.',
     howTo: 'Name the sound, upload it when it exists, tick it when it is ready.',
     example: [],

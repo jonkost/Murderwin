@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { houseView, studyNames, QUIET_MS, MACHINES } from '../src/lib/house.js'
+import { readFileSync } from 'node:fs'
+import { houseView, studyNames, catVisits, QUIET_MS, MACHINES } from '../src/lib/house.js'
 
 // The Host tab's house panel, as a pure view over the public docs. Fixtures
 // are throwaway shapes, never content.
@@ -28,7 +29,7 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(v.station.alive, true)
   assert.equal(v.station.quietFor, '0:45')
   const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
-  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, cues: true })
+  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, cues: true })
   assert.equal(v.machines.length, MACHINES.length)
   const quiet = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g2', updatedAt: stamp(NOW - QUIET_MS - 1000) }, rotation: ROTATION, now: NOW })
   assert.equal(quiet.station.alive, false)
@@ -90,4 +91,32 @@ test('the iPad has its own row: an awake iPad never shows the living room TV as 
   assert.equal(by['kiosk-living'], false)
   assert.ok(MACHINES.some(m => m.key === 'kiosk-ipad' && m.label), 'the iPad is a row of its own')
   assert.equal(new Set(MACHINES.map(m => m.key)).size, MACHINES.length, 'every machine key is unique')
+})
+
+test('X-4 the memory match iPad has its own dot: the key its heartbeat carries', () => {
+  // in Act 4 the iPad Pro runs as ?kiosk=memory and heartbeats as kiosk-memory (Kiosk.jsx),
+  // so "The iPad" may go quiet while the memory match is alive, and the host can tell which
+  assert.ok(MACHINES.some(m => m.key === 'kiosk-memory' && m.label === 'Memory match iPad'))
+  const presence = { 'kiosk-memory': NOW - 20_000, 'kiosk-ipad': NOW - 5 * 60_000 }
+  const by = Object.fromEntries(houseView({ night: NIGHT, presence, now: NOW }).machines.map(m => [m.key, m.alive]))
+  assert.equal(by['kiosk-memory'], true)
+  assert.equal(by['kiosk-ipad'], false)
+  assert.equal(houseView({ night: NIGHT, presence: { 'kiosk-memory': NOW - QUIET_MS - 1 }, now: NOW }).machines.find(m => m.key === 'kiosk-memory').alive, false)
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('`kiosk-${which}`'), 'the memory kiosk heartbeats as kiosk-memory')
+})
+
+test('X-6 Act 2 cat visits: a count of guests who have seen all four, nothing else', () => {
+  const act2 = { ...NIGHT, act: 2, beat: 'cat', lightsProgress: { done: 3, total: 9 } }
+  assert.deepEqual(catVisits(act2), { done: 3, of: 9 })
+  assert.deepEqual(houseView({ night: act2, now: NOW }).catVisits, { done: 3, of: 9 })
+  assert.equal(catVisits({ ...act2, act: 4 }), null, 'Act 2 only')
+  assert.equal(catVisits({ ...act2, lightsProgress: null }), null, 'nothing written yet')
+  assert.equal(catVisits({ ...act2, lightsProgress: { done: 0, total: 0 } }), null, 'nobody in the line')
+  assert.deepEqual(catVisits({ ...act2, lightsProgress: { done: 12, total: 9 } }), { done: 9, of: 9 }, 'never more than everyone')
+  assert.deepEqual(catVisits({ ...act2, lightsProgress: { total: 9 } }), { done: 0, of: 9 })
+  assert.equal(catVisits(null), null)
+  // the Host tab says it in one line, a count only
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes('Cat visits: {house.catVisits.done} of {house.catVisits.of} guests have seen all four.'))
 })

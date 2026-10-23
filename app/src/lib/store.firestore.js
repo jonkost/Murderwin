@@ -6,7 +6,7 @@ import {
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage, auth } from '../firebase'
 import { seedDocs, seedTasks, ADDITIONS } from './content'
-import { planAddition } from './additions'
+import { planAddition, taskOrdersOf } from './additions'
 
 // One-time seed import, guarded by meta/seeded inside a transaction so two
 // concurrent boots cannot double-seed. Never auto-seeds again. A fresh seed
@@ -177,9 +177,18 @@ export function subscribeDecisions(onData, onError) {
     onError)
 }
 
+// Who answered is kept, so a "settled by default" note stops showing once
+// Jon picks for himself.
 export async function answerDecision(key, answer, before) {
-  await updateDoc(doc(db, 'decisions', key), { answer, answeredAt: serverTimestamp() })
+  const by = await whoAmI()
+  await updateDoc(doc(db, 'decisions', key), { answer, answeredAt: serverTimestamp(), answeredBy: by.name })
   await logHistory('decisions', key, before, { ...before, answer })
+}
+
+// File a decision under a moment of the night (the Timeline's Not filed yet).
+export async function fileDecision(key, moment, before) {
+  await updateDoc(doc(db, 'decisions', key), { moment })
+  await logHistory('decisions', key, before, { ...before, moment })
 }
 
 // ---- Sealed coverage (aggregates only — the seal stays sealed) ----
@@ -211,13 +220,17 @@ export function uploadReference(itemId, file) {
 export async function applyAdditions(additions) {
   const migRef = doc(db, 'meta', 'migrations')
   for (const add of additions) {
-    // task cards to retire are found outside the transaction (the web SDK
-    // cannot query inside one); the plan patches them by id, once
+    // task cards to retire or file are found outside the transaction (the
+    // web SDK cannot query inside one); the plan patches them by id, once.
+    // A query takes at most 30 numbers, so the numbers go in batches.
     let taskRows = []
-    if (add.retireTasks?.length) {
+    const orders = taskOrdersOf(add)
+    if (orders.length) {
       const { getDocs, where } = await import('firebase/firestore')
-      const snap = await getDocs(query(collection(db, 'tasks'), where('order', 'in', add.retireTasks.map(r => r.order).slice(0, 30))))
-      taskRows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      for (let i = 0; i < orders.length; i += 30) {
+        const snap = await getDocs(query(collection(db, 'tasks'), where('order', 'in', orders.slice(i, i + 30))))
+        taskRows.push(...snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      }
     }
     await runTransaction(db, async tx => {
       const migSnap = await tx.get(migRef)
@@ -225,7 +238,7 @@ export async function applyAdditions(additions) {
       if (applied.includes(add.id)) return
       const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.appendItems ?? {}), ...Object.keys(add.appendScenarios ?? {})])]
       const areaSnaps = await Promise.all(areaNames.map(a => tx.get(doc(db, 'safe_content', a))))
-      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {})])]
+      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {}), ...Object.keys(add.fileDecisions ?? {})])]
       const decSnaps = await Promise.all(decisionKeys.map(k => tx.get(doc(db, 'decisions', k))))
       const snapshot = {
         applied,

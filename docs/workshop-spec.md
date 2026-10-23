@@ -44,18 +44,17 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   comes back if the tab dies. Lists with tabs remember the tab, and each tab
   shows its own count ("Boo 3 of 8").
 - **Parlour Games** replaced the filler messages (the old list is
-  kept under Everything else, retired). One set is three silly questions in a
-  row, two choices each, points on each choice. A question that needs it can
-  take a third or fourth choice ("Add another choice"). Whatever a guest
-  picks, the next question is the same. The ways through add themselves up on
-  the screen (all eight listed; with more choices, the count and the range),
-  and "See it the way a guest will" shows the phone: one question at a time,
-  a button per choice, no numbers. Acts 2, 4 and 6 deal these to every phone
-  at once. Decided by Jon on 12 October: a Detective's points move how the
-  cats feel about them; the Murderer's and the Ghost's points move how clear
-  the clues come out. Which sets the two hidden roles get, and how their
-  points map to that, is decided blind on the night, so the numbers Jon
-  writes never tell him which way the night moved.
+  kept under Everything else, retired). One set is three silly questions in
+  a row, exactly two choices each, points on each choice. Whatever a guest
+  picks, the next question is the same. The ways through add themselves up
+  on the screen (all eight listed), and "See it the way a guest will" shows
+  the phone: one question at a time, a button per choice, no numbers. Every
+  phone gets the same set at the same moment, twelve a night: five in Act 2,
+  five in Act 4, two at the start of Act 6. A Detective's answer moves a
+  secretly listening cat; the Murderer's and Ghost's points move the clarity
+  dial instead. (Updated 23 October: the first version
+  allowed a third or fourth choice and a different set per role. Both are
+  gone.)
 - **Bars that fill.** Every list card has a bar that only fills and reads
   *Full* with the seal when it is done. Nothing is dealt, nothing nags,
   nothing turns red except a failed save. (A rank ladder and Sir Irwin lines
@@ -150,9 +149,9 @@ Sounds. Each one has a name and a done tick.
 - "Replace file" swaps in a new version. The old one is kept, never thrown away.
 - Uploading needs a connection. Names and ticks still save offline.
 
-**Filler messages** (under Player screens) — what an ordinary player's phone shows
-while the Murderer and the Ghost secretly pick an event. Each message ends with
-"Button: …" so it takes as long as a real choice. Nothing in them is about the case.
+**Old filler messages** (retired 22 Oct, kept, not used). There are no hidden
+events, so no phone ever waits on one. The phone's own FILLER line pads the three
+role cards to the same length.
 
 ## Promises the workshop makes (learned the hard way)
 
@@ -187,9 +186,33 @@ while the Murderer and the Ghost secretly pick an event. Each message ends with
 - The task board: cards the night has since answered are marked done, and
   decisions the canon settled are answered, once.
 
+## 22 October 2026: the Timeline
+
+- The Timeline is the night in order, from the freeze to the morning after.
+  Under every moment: the lists it needs with live counts, the secrets it
+  needs (whether they exist, never their words), open decisions, and tasks
+  with a tick box. Three views: Do now, Happens later, Everything. A task
+  added here also lands on the task board.
+- The side rail now reads Home, Timeline, Where we are, Game night, For Jenna.
+
+## 23 October 2026: how the project is run
+
+- **Jobs live on the Timeline**: one card per job, with an owner (Jon, Susan,
+  Jon and Susan, Jenna, Claude Code, Claude chat), a moment, and an optional
+  "by" date. Open questions are decision cards on the board too.
+- **Where we are** is the live status: what is left by owner, Jon's next
+  three jobs, open decisions, links.
+- **Decisions** live on the Canon page (a Claude Doc). "Start Here" (a Claude
+  Doc) is the map for any Claude chat: where everything lives, the routine,
+  and a dated status snapshot that Claude Code refreshes at the end of each
+  session. Each working session also gets an entry in `docs/sessions.md`,
+  newest first.
+
 ## What's left to build here
 
 - The history screen (promise 2).
+- The Health page: every automated check as a tick or a cross
+  (`docs/test-plan.md`). Not built yet.
 
 ---
 
@@ -203,8 +226,9 @@ Data model (Firestore):
     lines (8×cat; the Firestore key predates the name), smalltalk (8×cat),
     trailoffs (8, Granolia only), status_lines (3×cat)
   - World & cast: npc_cards (5), bios (14), lore (4)
-  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12),
-    filler (20; innocent-screen beats for event windows, lint wants `Button:`)
+  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12;
+    retired, hidden), filler (20; retired, hidden: there are no event windows, and the
+    role cards are padded by the phone's own FILLER line)
   - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7),
     trace_lines (14; `TRACE BOOT PRINT: line`, hyphens become spaces so the label codec keeps them)
   - Added 18 Oct 2026: study_lines (12; `MOMENT: line`), station_text (5; `STATION: line`),
@@ -225,12 +249,12 @@ Data model (Firestore):
   additive migrations (`ADDITIONS` in `app/src/lib/content.js`) guarded by
   `meta/migrations` — additions only, existing data never rewritten.
 - `safe_content/scenarios` — the Parlour Games. Items carry
-  `beats: [{q, n, a, av, b, bv, c?, cv?, d?, dv?}] × 3` (`n` = 2 to 4 choices
-  shown; arrays of maps, never nested arrays) and
+  `beats: [{q, n, a, av, b, bv, c?, cv?, d?, dv?}] × 3` (`n` = 2; an older set
+  with 3 or 4 is dealt with its first two; arrays of maps, never nested arrays) and
   `text` mirroring the first question so the trail and the undo toast can name
   the set. `app/src/lib/scenarios.js` (pure, tested) normalises, totals the
-  eight paths and lints. The play side should read this area, deal one set per
-  phone per window, and never show a number.
+  eight paths and lints. The night's plan deals one set to every phone at once
+  and never shows a number.
 - `meta/reviews` — `{ [area]: {state: 'clear'|'again'|'', note, by: {name}, at} }`,
   Jenna's two words per list. Written with merge, logged to history as area
   `reviews`.

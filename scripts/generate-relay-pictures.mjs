@@ -19,7 +19,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { adminDb, redactedError, printFatal, say } from './lib.mjs'
-import { BANK_DOC, ROUND_SIZES, ROUND_CAPS, checkPicture } from '../functions/lib/relay-bank.js'
+import { BANK_DOC, ROUND_SIZES, ROUND_CAPS, checkPicture, TRACE_WORDS, MOTIVE_WORDS } from '../functions/lib/relay-bank.js'
 
 const MODEL = process.env.MODEL ?? 'claude-opus-5'
 export const PER_ROUND = 3 // pictures kept per round; the night picks one at random
@@ -58,11 +58,12 @@ Strokes in neighbouring squares should meet at the shared edge so the picture jo
 Round ${round}: ${round === 1 ? 'a simple object' : round === 2 ? 'a slightly harder object' : 'a pattern: not complicated, but more sophisticated'}.
 Draw between ${size} and ${ROUND_CAPS[round]} squares; leave the rest empty.
 No single square may give the picture away.
-Never a smiley face, a house, or a diamond pattern. Never boots, spectacles,
-bottles, candles, cups, flowers, seeds, coins, coffee, ink, flour, sand,
-iodine, petals, glasses or elbow patches: those are clues elsewhere in the game.
-Give each picture a short name ("A teapot") and three different wrong names
-that are fair guesses for the same drawing.`
+Never a smiley face, a house, a diamond pattern, a star or a teapot.
+Never any of these, as the picture or as one of its wrong names, because they
+are clues elsewhere in the game: ${TRACE_WORDS.join(', ')};
+${MOTIVE_WORDS.join(', ')}.
+Give each picture a short name (an article and one or two words) and three
+different wrong names that are fair guesses for the same drawing.`
 }
 
 async function generatePictures(client, round, count) {
@@ -93,9 +94,12 @@ export async function runRelayPictures(db, { generate, dry = false, now = () => 
   const pictures = [...(doc.pictures ?? [])]
   let added = 0, dropped = 0, short = 0
   for (const round of [1, 2, 3]) {
-    const good = pictures.filter(p => Number(p?.round) === round && !checkPicture(p, round).length).length
+    const mine = pictures.filter(p => Number(p?.round) === round)
+    const good = mine.filter(p => !checkPicture(p, round).length).length
     const want = Math.max(0, PER_ROUND - good)
-    log(`round ${round}: ${good} good pictures, ${want} to make`)
+    // a picture already there that fails today's checks (the never-list grew) is kept, never
+    // used on the night (relay-bank.relayGrids skips it), and topped up like a missing one
+    log(`round ${round}: ${good} good pictures${mine.length > good ? `, ${mine.length - good} that fail the checks (kept, never used)` : ''}, ${want} to make`)
     if (!want || dry) { short += dry ? want : 0; continue }
     let reply = null
     for (let attempt = 1; attempt <= 3 && !reply; attempt++) {

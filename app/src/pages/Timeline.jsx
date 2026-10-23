@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeTasks, subscribeDecisions, updateTask, addTask, whoAmI } from '../lib/store'
-import { TIMELINE, TIMELINE_LISTS, WHEN, needStatus, timelineItems, bucketProgress, taskWhen } from '../lib/timeline'
+import { Link, useSearchParams } from 'react-router-dom'
+import { subscribeArea, subscribeLatestValidation, subscribeTasks, subscribeDecisions, updateTask, addTask, fileDecision, whoAmI } from '../lib/store'
+import { TIMELINE, TIMELINE_LISTS, WHEN, OWNERS, needStatus, timelineItems, bucketProgress, taskWhen, ownerOf, byLabel, taskBy, unfiled, momentOptions, leftByOwner } from '../lib/timeline'
 import { useTaskDraft } from '../components/TaskBoard'
 import { Decision } from '../components/DecisionsPanel'
 
@@ -16,6 +16,12 @@ import { Decision } from '../components/DecisionsPanel'
 // covers with a stand-in says so, and the pointer at the top skips it, as
 // it skips Claude's and Jenna's cards. Every row and its add button stay in
 // every view; only "Show only what is left" hides rows.
+//
+// Who (23 Oct 2026): a row of buttons, one per owner, each with a count of
+// that owner's open cards; picking one shows only those cards (and, for Jon,
+// the decisions only he answers). A card may carry a "by" date, shown on the
+// card. Anything with no place on the night is listed first, under Not filed
+// yet, with a picker to file it.
 
 const VIEWS = [
   { key: 'now', label: WHEN.now },
@@ -24,6 +30,10 @@ const VIEWS = [
 ]
 const PREF_LEFT = 'workshop.timeline.onlyLeft'
 const PREF_VIEW = 'workshop.timeline.view'
+const PREF_WHO = 'workshop.timeline.who'
+// Today on this computer's own calendar (not UTC), so a card due today is
+// not shown late in the evening.
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 function readPref(key, fallback) { try { return localStorage.getItem(key) ?? fallback } catch { return fallback } }
 function writePref(key, v) { try { localStorage.setItem(key, v) } catch { /* private window: fine */ } }
 
@@ -53,6 +63,7 @@ function TaskLine({ task, onError, onSaved, onEnter, focus, standin, showWhen })
   const when = taskWhen(task)
   const toggle = () => updateTask(task.id, { status: done ? 'todo' : 'done' }, task).then(onSaved).catch(onError)
   const setWhen = (v) => updateTask(task.id, { when: v }, task).then(onSaved).catch(onError)
+  const setBy = (v) => updateTask(task.id, { by: v || null }, task).then(onSaved).catch(onError)
   return (
     <li className={done ? 'tl-item tl-task done' : 'tl-item tl-task'}>
       <input type="checkbox" className="tl-check" checked={done} onChange={toggle} aria-label={`Done: ${title || 'new task'}`} />
@@ -62,6 +73,7 @@ function TaskLine({ task, onError, onSaved, onEnter, focus, standin, showWhen })
             onChange={e => setTitle(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onEnter() } }} />
           {task.who && <span className="tl-who">{task.who}</span>}
+          {byLabel(task) && <span className={!done && taskBy(task) < today() ? 'tl-by late' : 'tl-by'}>{byLabel(task)}</span>}
           {showWhen && <span className="tl-who">{WHEN[when]}</span>}
           <button className="card-toggle" onClick={() => setOpen(o => !o)}>{open ? 'close' : detail ? 'edit detail' : 'add detail'}</button>
           <button className="card-toggle" title="Remove (kept in the history)" aria-label={`Remove: ${title || 'new task'}`}
@@ -78,12 +90,69 @@ function TaskLine({ task, onError, onSaved, onEnter, focus, standin, showWhen })
                   <option value="later">{WHEN.later}</option>
                 </select>
               </label>
+              <label className="tl-when">Done by (optional)
+                <input type="date" value={taskBy(task) ?? ''} onChange={e => setBy(e.target.value)} />
+              </label>
               <span className="hint tl-detail">Do now means before the freeze. Happens later means the week before, the day, or after.</span>
             </>
           )
           : detail && <span className="hint tl-detail">{detail}</span>}
       </span>
     </li>
+  )
+}
+
+// A decision already answered: the answer, the "settled by default" note
+// until Jon picks for himself, and (for Jon) a way to change it.
+function AnsweredDecision({ d, canAnswer, onError, onSaved }) {
+  const [open, setOpen] = useState(false)
+  const note = d.note && d.answeredBy === 'settled by default' ? `. ${d.note}` : ''
+  return (
+    <li className="tl-item done">
+      <span className="tl-mark" aria-hidden="true">✓</span>
+      <span className="tl-body">
+        {d.question} <span className="hint">· Decided: {d.answer}{note}</span>
+        {canAnswer && <button className="card-toggle" onClick={() => setOpen(o => !o)}>{open ? 'keep it' : 'change'}</button>}
+        {open && <Decision d={d} canAnswer={canAnswer} onError={onError} onSaved={() => { setOpen(false); onSaved() }} />}
+      </span>
+    </li>
+  )
+}
+
+// Open cards and decisions with no place on the night, each with a picker.
+function NotFiled({ lost, onError, onSaved }) {
+  const options = momentOptions()
+  const picker = (label, onPick) => (
+    <label className="tl-when">File it under
+      <select value="" aria-label={`File ${label} under`} onChange={e => e.target.value && onPick(e.target.value)}>
+        <option value="">Pick a moment…</option>
+        {options.map(o => <option key={o.key} value={o.key}>{o.name}</option>)}
+      </select>
+    </label>
+  )
+  return (
+    <section className="panel tl-section tl-unfiled" aria-labelledby="tl-unfiled">
+      <h2 id="tl-unfiled">Not filed yet</h2>
+      <p className="why">These have no place on the night yet, so nothing below shows them. Pick where each one belongs.</p>
+      <ul className="tl-list">
+        {lost.decisions.map(d => (
+          <li key={`d-${d.key}`} className="tl-item tl-decision">
+            <span className="tl-mark" aria-hidden="true">?</span>
+            <span className="tl-body">{d.question}{picker(d.question, m => fileDecision(d.key, m, d).then(onSaved).catch(onError))}</span>
+          </li>
+        ))}
+        {lost.tasks.map(t => (
+          <li key={t.id} className="tl-item">
+            <span className="tl-mark" aria-hidden="true">○</span>
+            <span className="tl-body">
+              <b>{t.title || 'A task with no name yet'}</b>{t.who && <span className="tl-who"> {t.who}</span>}
+              {t.detail && <span className="hint tl-detail">{t.detail}</span>}
+              {picker(t.title || 'this task', m => updateTask(t.id, { moment: m }, t).then(onSaved).catch(onError))}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -111,6 +180,11 @@ export default function Timeline() {
   const [me, setMe] = useState(null)
   const [onlyLeft, setOnlyLeft] = useState(() => readPref(PREF_LEFT, '0') === '1')
   const [view, setView] = useState(() => { const v = readPref(PREF_VIEW, 'now'); return VIEWS.some(x => x.key === v) ? v : 'now' })
+  const [params] = useSearchParams()
+  const [who, setWho] = useState(() => { const w = params.get('who') ?? readPref(PREF_WHO, 'all'); return OWNERS.includes(w) ? w : 'all' })
+  // A link with ?who= (from Where we are) picks that owner, even when the page is already open.
+  const whoParam = params.get('who')
+  useEffect(() => { if (OWNERS.includes(whoParam)) setWho(whoParam) }, [whoParam])
   const [focusId, setFocusId] = useState(null)
   const onError = () => setSaveErr(true)
   const onSaved = () => setSaveErr(false)
@@ -130,20 +204,45 @@ export default function Timeline() {
   const data = { areas, validation, tasks: tasks ?? [], decisions }
   const items = useMemo(() => timelineItems(data), [areas, validation, tasks, decisions]) // eslint-disable-line react-hooks/exhaustive-deps
   const inView = (it) => view === 'all' || it.when === view
-  const viewItems = items.filter(inView)
+  // One owner's open cards (and, for Jon, the open decisions), or everything.
+  const forWho = (it) => who === 'all'
+    || (it.kind === 'task' && !it.status.done && ownerOf(it.task) === who)
+    || (who === 'Jon' && it.kind === 'decision' && !it.status.done)
+  const viewItems = items.filter(inView).filter(forWho)
   const progress = bucketProgress(viewItems)
   // On Everything, point at the first thing before the freeze that needs you.
-  const first = view === 'all' ? bucketProgress(items.filter(i => i.when === 'now')).first ?? progress.first : progress.first
+  const first = who !== 'all' && who !== 'Jon' ? null
+    : view === 'all' ? bucketProgress(items.filter(i => i.when === 'now').filter(forWho)).first ?? progress.first : progress.first
+  // The Who row counts every open card on the board, filed or not and in
+  // any view, so its numbers match Home and Where we are. The line under it
+  // counts the view in hand.
+  const openCount = (tasks ?? []).filter(t => !t.deleted && t.status !== 'done').length
+  const whoCounts = leftByOwner(tasks ?? [])
+  // Not filed yet: everything for Everyone; one owner's own cards (and, for
+  // Jon, the decisions) when one owner is picked.
+  const lostAll = unfiled(data)
+  const lost = who === 'all' ? lostAll : { tasks: lostAll.tasks.filter(t => ownerOf(t) === who), decisions: who === 'Jon' ? lostAll.decisions : [] }
 
   const toggleLeft = () => setOnlyLeft(v => { writePref(PREF_LEFT, v ? '0' : '1'); return !v })
   const pickView = (v) => { setView(v); writePref(PREF_VIEW, v) }
+  const pickWho = (w) => { setWho(w); writePref(PREF_WHO, w) }
+  const filtering = onlyLeft || who !== 'all'
+  const whoSummary = () => {
+    const cards = viewItems.filter(i => i.kind === 'task').length
+    const asks = viewItems.filter(i => i.kind === 'decision').length
+    const name = who === 'Jon' ? 'you' : who === 'Jon and Susan' ? 'you and Susan together' : who
+    const head = `${cards === 0 ? 'No' : cards} open ${cards === 1 ? 'card' : 'cards'} for ${name} in this part of the list.`
+    return asks ? `${head} And ${asks} ${asks === 1 ? 'decision' : 'decisions'} only you can answer.` : head
+  }
 
   // A task added in Do now or Happens later is filed under that view, so it
-  // stays in sight; on Everything it takes its row's own.
+  // stays in sight; on Everything it takes its row's own. With one owner
+  // picked, it is theirs.
   const addHere = (moment) => {
     const maxOrder = Math.max(0, ...(tasks ?? []).map(t => t.order ?? 0))
     const task = { title: '', detail: '', status: 'todo', moment, order: maxOrder + 1 }
     if (view !== 'all') task.when = view
+    if (who !== 'all') task.who = who
     addTask(task)
       .then(id => { setFocusId(id); onSaved() })
       .catch(onError)
@@ -170,7 +269,7 @@ export default function Timeline() {
     if (it.kind === 'decision') {
       const d = it.decision
       return d.answer != null
-        ? <li key={`d-${d.key}`} className="tl-item done"><span className="tl-mark" aria-hidden="true">✓</span><span className="tl-body">{d.question} <span className="hint">· Decided: {d.answer}</span></span></li>
+        ? <AnsweredDecision key={`d-${d.key}`} d={d} canAnswer={canAnswer} onError={onError} onSaved={onSaved} />
         : <li key={`d-${d.key}`} className="tl-item tl-decision"><span className="tl-mark" aria-hidden="true">?</span><span className="tl-body"><Decision d={d} canAnswer={canAnswer} onError={onError} onSaved={onSaved} /></span></li>
     }
     return <TaskLine key={it.task.id} task={it.task} onError={onError} onSaved={onSaved} onEnter={() => addHere(rowKey)} focus={it.task.id === focusId} standin={it.standin} showWhen={view === 'all'} />
@@ -182,11 +281,11 @@ export default function Timeline() {
     const headItems = shownOf(sectionItems.filter(i => i.row === null))
     const rows = s.rows.map(r => {
       const shown = shownOf(sectionItems.filter(i => i.row === r.key))
-      const also = onlyLeft || view === 'later' ? [] : r.needs.filter(n => n.also)
+      const also = filtering || view === 'later' ? [] : r.needs.filter(n => n.also)
       return { r, shown, also }
-    }).filter(({ shown, also }) => !onlyLeft || shown.length || also.length)
+    }).filter(({ shown, also }) => !filtering || shown.length || also.length)
     return { s, sectionItems, headItems, rows }
-  }).filter(({ headItems, rows }) => !loaded || !onlyLeft || headItems.length || rows.length)
+  }).filter(({ headItems, rows }) => !loaded || !filtering || headItems.length || rows.length)
 
   return (
     <main className="dash">
@@ -203,15 +302,25 @@ export default function Timeline() {
             <button key={v.key} className={view === v.key ? 'tab active' : 'tab'} aria-pressed={view === v.key} onClick={() => pickView(v.key)}>{v.label}</button>
           ))}
         </div>
-        <p className="why">{loaded ? viewSummary(view, progress) : 'Counting…'}</p>
-        <span className="bar big"><span style={{ width: `${progress.total ? Math.round((progress.ready / progress.total) * 100) : 0}%` }} /></span>
+        <div className="tl-views tl-who-row" role="group" aria-label="Whose cards">
+          <button className={who === 'all' ? 'tab active' : 'tab'} aria-pressed={who === 'all'} onClick={() => pickWho('all')}>
+            Everyone{loaded && <span className="tab-count">{openCount}</span>}
+          </button>
+          {OWNERS.map(o => (
+            <button key={o} className={who === o ? 'tab active' : 'tab'} aria-pressed={who === o} onClick={() => pickWho(o)}>
+              {o}{loaded && <span className="tab-count">{whoCounts[o]}</span>}
+            </button>
+          ))}
+        </div>
+        <p className="why">{!loaded ? 'Counting…' : who === 'all' ? viewSummary(view, progress) : whoSummary()}</p>
+        {who === 'all' && <span className="bar big"><span style={{ width: `${progress.total ? Math.round((progress.ready / progress.total) * 100) : 0}%` }} /></span>}
         {loaded && first && (
           <p className="night-line">
-            <b>Next thing that needs you:</b> {firstPlace(first)}. {firstLabel(first)}.{' '}
+            <b>Next thing that needs you:</b> {firstPlace(first)}. {firstLabel(first)}{/[.!?]$/.test(firstLabel(first)) ? '' : '.'}{' '}
             <button className="ghost" onClick={() => goTo(first)}>Take me there</button>
           </p>
         )}
-        {loaded && !first && view !== 'later' && (
+        {loaded && !first && view !== 'later' && (who === 'all' || who === 'Jon') && (
           <p className="night-line"><b>Nothing here needs you.</b>{
             progress.standin && progress.others ? ' What is left already works with a stand-in, or is Claude’s or Jenna’s.'
               : progress.standin ? ' What is left already works with a stand-in.'
@@ -221,6 +330,10 @@ export default function Timeline() {
           <button className="ghost" aria-pressed={onlyLeft} onClick={toggleLeft}>{onlyLeft ? 'Show what is done too' : 'Show only what is left'}</button>
         </p>
       </section>
+
+      {loaded && (lost.tasks.length > 0 || lost.decisions.length > 0) && (
+        <NotFiled lost={lost} onError={onError} onSaved={onSaved} />
+      )}
 
       {loaded && sections.length === 0 && (
         <section className="panel"><p className="why">Nothing left in this part of the list.</p></section>

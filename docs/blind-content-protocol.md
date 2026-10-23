@@ -1,22 +1,49 @@
 # The secret content — how it gets made without you seeing it
 
-The game's secrets are: what each cat actually reveals about each motive, the
-documents that get overlaid on the stationery, the news fragments in the echoes,
-(later) the event copy for Acts 2, 4 and 6, and which numbered bag holds which
-items. Claude writes all of it. It goes
-straight into the game's database. It never lands in a file on your Mac, never in
-this folder, never on your screen, never in a chat.
+The game's secrets are: what each cat reveals about each motive, the documents
+on the stationery, three more parts of each motive set that the night no longer
+shows (the news fragments, the study clues and Sir Irwin's old Act 5 lines),
+which answer each cat leans toward in the Parlour Games, the Relay Drawing picture bank (up to three per round;
+the night uses one per round), which numbered bag holds which items, and each
+night's case (who did it, who died, the motive, and what each clue crosses
+off). There are no hidden events in any act (22 Oct), so there is no event copy.
+
+Claude or the game makes all of it, blind. It goes straight into the game's
+database. It never lands in a file on your Mac, never in this folder, never on
+your screen, never in a chat.
 
 This is what lets you host, build and still play.
+
+## Every secret and what makes it
+
+| The secret | What makes it | Who may see it |
+|---|---|---|
+| The motive sets: the cats' secret lines, the documents, the news fragments, the study clues, Irwin's lines, and the list of which code is which motive | `npm --prefix scripts run generate` | Jenna (the secrets tab) |
+| The cats' leans in the Parlour Games | `npm --prefix scripts run leans` (fills only the blanks) | Jenna (the cats' leans tab), who may change any lean |
+| The Relay Drawing pictures | `npm --prefix scripts run relay-pictures` | Nobody. Whether Jenna may is an open decision for you (stewardPictures). |
+| Which numbered bag holds which items | `npm --prefix scripts run pack-bags` | Jenna (the packing list tab), who packs to it |
+| Each night's case | The game itself, at the blackout at the end of Act 1 | Nobody |
+
+You run each command. Each prints counts and PASS or FAIL only.
+
+Three parts of each motive set are no longer shown on the night: the news
+fragments and the study clues (since 22 Oct: the W-O-O-F News bulletins and the
+study's trace took their place) and Sir Irwin's three lines (since 23 Oct: his
+Act 5 screen is his open lines and the motive cards). The generator still
+writes them. Whether the cats' secret lines and the Act 2 safe's document stay
+as extra clues, or are retired so the cats say only their open hint lines, is
+an open decision for you (secretLines). It blocks making the secrets.
 
 ## What you do
 
 1. Finish the safe content in the workshop first: openers, closers, deflection
-   lines, the six pools, the echo frames. The secrets are written to fit those.
+   lines, the six pools. The secrets are written to fit those.
 2. When that's ready, Claude Code gives you one command to run in the terminal.
    It takes a few minutes and needs an internet connection.
 3. It prints numbers only: how many sets were made, and PASS or FAIL. Nothing else.
-   The workshop home then shows "19 of 19 motive sets complete — checked ✓".
+   The workshop home then shows "19 of 19 motive sets, checked ✓". (Count-only
+   rows on Home for the leans, the packing list and the drawing pictures are not
+   built yet: a card on the board.)
 4. If it says FAIL, run it again. Every run writes fresh sets with different
    details, except the ones Jenna has already edited: those are kept exactly as
    they are (see "Who writes and who edits"). Running it again the week of the
@@ -31,12 +58,33 @@ For each of the 19 motives:
   it holds a blank like [ROOM], filled from your pools.
 - **3 documents** — the biggest tell for that motive: a receipt, a telegram, a
   notice… 40 to 60 words, one word printed large, one handwritten annotation.
-- **3 news fragments** — the juicy phrase that fills the ███ in an echo frame.
-- **3 study clues**: the written clue the study pays out to a whole group at
-  once, 20 to 60 words, a second angle on the same facts as the documents.
-- **3 lines for Sir Irwin**: what he says on the living room screen in Act 5.
-  Through the dog filter: twelve words at most, plainly true, and never a
-  guest's name.
+  The first one is what the Act 2 safe pays out.
+- **3 news fragments** — the juicy phrase that filled the ███ in an echo frame.
+  Not shown since 22 Oct.
+- **3 study clues**: a written clue for the study. Not shown since 22 Oct: the
+  study pays the victim's trace instead.
+- **3 lines for Sir Irwin**: once his secret middle line in Act 5. Not shown
+  since 23 Oct.
+
+Beside the cats' secret lines, every cat now also says an open hint line from
+the Cat Hint Lines bank, picked by affection. Those are not secret: only which
+one plays, and which wrong family or motive it names, belongs to the night's
+case.
+
+## The other secrets, in words
+
+- **The cats' leans.** For every Parlour Game question you wrote, which of the
+  two answers each of the four listening cats would pick. The command fills
+  only the blanks, so a lean Jenna set is never replaced.
+- **The Relay Drawing pictures.** Simple thick-line pictures for the three real
+  rounds, each with three wrong names for the guess. Up to three per round; the
+  night picks one per round at random. A picture is refused if its name or any
+  wrong name is a style sample, a star, a trace object or a motive-card object.
+  The command never touches a picture already there. Rehearsals never use them.
+- **The bag packing.** See "The bags" below.
+- **Each night's case.** Made by the game at the blackout, from who came: who
+  did it, who died, the motive, which family each clue crosses off, and the
+  night's Parlour Games. No command makes it, and no page shows it.
 
 The rules Claude writes to:
 - Never addressed to anyone. No "you", no names, no professions. Witnesses saw
@@ -53,16 +101,19 @@ Decided 28 September. You and Susan draft; Claude drafts the secrets; Jenna, the
 Steward, edits everything.
 
 - **You and Susan draft the safe lines only**: openers, closers, deflection
-  lines, pools, echo frames, innocent beats. You both play, and anything you
-  draft you would recognise on the night.
+  lines, pools, the Parlour Games bank, the bag items. You both play, and
+  anything you draft you would recognise on the night.
 - **Claude drafts all the secrets**, through the generator described above.
 - **Jenna edits all of it**, from wherever they are, on their own page in the
   workshop (For Jenna, then **Open your page**; built 17 October, see
-  `docs/steward-view.md`). The server opens it for their account only: yours
-  is refused by code, with no rule change. They never share their screen with
-  you, and they tell you only "done" or "needs more". Making the secrets again
-  never wipes Jenna's edits: an edited set is kept as it is, and the only two
-  ways to replace one copy it to a safe place first.
+  `docs/steward-view.md`). It has three tabs: the secrets, the packing list
+  and the cats' leans. It does not show the drawing pictures
+  (stewardPictures) or any night's case. The server opens it for their account
+  only: yours is refused by code, with no rule change. They never share their
+  screen with you, and they tell you only "done" or "needs more". Making the
+  secrets again never wipes Jenna's edits: an edited set is kept as it is, and
+  the only two ways to replace one copy it to a safe place first. The leans
+  command fills only blanks, so it never wipes Jenna's leans either.
 
 ## The bags
 
@@ -78,7 +129,8 @@ After every run the secrets are checked automatically: every set complete, no
 rhyme words, right lengths, blanks in the right shape, Granolia's blanks matching
 the truthful lines so there's always one to swap, Salem's twist catchable, nothing
 that says "you". You only ever see the counts. If something fails, the fix is
-always "run it again".
+always "run it again". The leans, the drawing pictures and the packing follow
+the same counts-only rules.
 
 ## Rehearsals, the party night and dry runs (decided 17 October 2026)
 
@@ -116,13 +168,30 @@ before the party.
 
 ## The canary
 
-One motive's set — chosen at random, never named — can be sent to your canary to
-read for quality: is it funny, does it hold together. One set out of 19 tells them
-nothing about the party. The canary is chosen; this waits on the secrets existing.
+Jenna is the canary: they read every set on their Steward page and report only
+"done" or "needs more". No export is needed, and nobody else reads the secrets
+for quality.
 
 ---
 
 ## For Claude Code (technical appendix)
+
+Every sealed path, its writer and its readers (no client reads any of them;
+`firestore.rules` denies `sealed/*` and `cases/*`):
+
+| Path | Written by | Read by |
+|---|---|---|
+| `sealed/manifest`, `sealed/{code}` | `scripts/generate-sealed.mjs` (`npm --prefix scripts run generate`); the Steward's `write` | `deal.buildCaseForNight`, `steward.js`, `validate-sealed.mjs` |
+| `sealed/_archive/items/*` | `generate-sealed.mjs` before replacing an edited set | nobody at runtime |
+| `sealed/parlour_leans` | `scripts/generate-leans.mjs` (`run leans`, blanks only); the Steward's `lean` | `deal.js` at the case deal (`parlourPlan`), `steward.js opLeans` |
+| `sealed/relay_pictures` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures`) | `relay.start` on a party night only (`cases/{id}.rehearsal === false`) |
+| `sealed/bags` | `scripts/pack-bags.mjs` (`run pack-bags`) | `bags.js` (the bags station), `night.packedBagCount` (the number of bags only, at `createNight`), `generate-sealed.mjs` (property words only), `steward.js opBags` |
+| `cases/{nightId}` | `deal.buildCaseForNight` at the Act 1 blackout; then kept up to date by `deal.js` (late joiners, what each clue crossed off), `windows.js` (the dial), `ledger.js` (dealt clues, exposure) and `safeguards.js` (Spill the Beans) | Functions only: `deal.js`, `screen.js`, `station.js`, `windows.js`, `safeguards.js`, `ledger.js`; `relay.js` and `discard.js` read its `rehearsal` flag only |
+| `validation_reports` | `validate-sealed.mjs` | the workshop Home (counts only) |
+
+There are no hidden events (closed 22 Oct), so there is no `sealed/events/*`.
+CLAUDE.md lists the dial mapping as sealed; today every case's `dialMap` is
+the same fixed `DIAL_SIGN` (`case.js`, see Runtime), so no script makes it.
 
 Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal):
 1. Reads SAFE inputs only: `seed/motives.json`, `seed/characters.json` (names,
@@ -132,7 +201,9 @@ Generation — `scripts/generate-sealed.mjs` (Node, run by Jon from the terminal
    sit between the openers and closers; stdout prints their counts only.
 2. Calls the Anthropic API per motive for 15 kernels (3 variants × 5 cats), 3
    document texts, 3 echo fragments, 3 study clues and 3 Irwin lines (the
-   sealed shape is documented at the top of `scripts/lib.mjs`). Prompt rules:
+   sealed shape is documented at the top of `scripts/lib.mjs`). The fragments,
+   study clues and Irwin lines are shown nowhere on the night (see Runtime);
+   taking them out waits on Jon's secretLines decision. Prompt rules:
    impersonal; no word from the motive's rhyme; Salem variants warp a true fact
    from sibling kernels and return an `anchor` noun; Granolia variants carry
    EXACTLY the same [POOL] token multiset as a truthful sibling kernel (decided
@@ -164,10 +235,28 @@ counts and PASS or FAIL only, and refuses to replace a packing that is already
 there (or one the Steward edited) unless run with `--repack`. The bags station
 reads it on the night: the property on the card is in two or three bags, one of
 them the murderer's or the victim's, and the card never carries a bag number.
-The generator reads only the property words, as words to keep out of the text. Event copy for Acts 2, 4 and 6 is sealed too (CLAUDE.md, 25 Sep): same pipeline,
-same counts-only rules, into `sealed/events/*`. Not built yet.
+The generator reads only the property words, as words to keep out of the text.
 
-Validation — `scripts/validate-sealed.mjs`, counts-only, per code:
+Lean table: `sealed/parlour_leans` (`{ sets: { setId: { q: { cat: 'a'|'b' } } },
+generatedAt }`, or `editedAt, editedBy: 'steward'` after the Steward's last tap), written by `npm --prefix scripts run leans`
+(`generate-leans.mjs`, `--dry` counts the blanks). It sends the workshop's
+Parlour Games questions under opaque, shuffled references, fills blanks only,
+never a lean Jenna set, and prints counts only. The dealer copies it into the
+case's `parlourPlan` at the deal; a blank lean is a coin flip on the night.
+
+Drawing pictures: `sealed/relay_pictures`, written by
+`npm --prefix scripts run relay-pictures` (`generate-relay-pictures.mjs`,
+`--dry` counts what is missing). It tops each round up to `PER_ROUND` = 3
+pictures that pass `relay-bank.checkPicture` (which also refuses the
+never-list: the style samples, a star, a teapot, the trace objects and the motive-card
+objects, in the name or any decoy), never touches existing ones, prints counts
+and PASS/FAIL only, and `relay.start` reads it on the party night only. Shape
+and checks: `docs/relay-drawing-game.md`, For Claude Code.
+
+Validation — `scripts/validate-sealed.mjs`, counts-only, per code (the
+fragments, the study clues and Irwin's lines still count toward `complete`,
+and `checkSealed` still fails a set with no fragments, although none of them
+is shown; all wait on secretLines):
 - coverage (15 kernels, 3 docs, 3 fragments)
 - banned words vs. own rhyme (gates the pass); overlap with OTHER rhymes counted
   as `bannedGlobal`, advisory only — common words recur across 19 rhymes
@@ -216,12 +305,23 @@ Runtime (built 17 Oct 2026):
   deflect deals a second notice card, "a scrap of paper", carrying the numbers
   (ui_copy `NOTICE SCRAP:`). `card.placeholder` is `cases.rehearsal`
   everywhere; the bracketed text appears only when the case is a rehearsal.
-- Documents: `cases.documents[0]` is the safe's pay-out; the study pays
-  `cases.studyClue.text` (station.js `studyClueCard`); the echo frame gets
-  `cases.echo.fragment`; Act 5 gets `cases.irwin.lines`.
+  Beside the kernel, the hint cat's Act 2 card and the Act 4 cat card carry an
+  open hint line (`cats.hintLine` from `seed/cat-lines.json`), which only ever
+  names wrong families or motives. Whether the kernel stays is secretLines.
+- Documents: `cases.documents[0]` is the Act 2 safe's pay-out
+  (`deal.documentCard`). The study pays the Ghost's trace at the dial's level
+  (`station.js studyReveal`), not `cases.studyClue`. The echo fragment is no
+  longer shown: both W-O-O-F News bulletins come from the open bank
+  (`news.js`, `seed/woof-news.json`). Act 5 no longer reads
+  `cases.irwin.lines` (23 Oct): Sir Irwin's screen is his open opener and
+  closer, the countdown line and the motive cards (`screen.irwinLines`,
+  `screen.irwinMotiveClue`). `buildCase` still fills `studyClue`, `echo` and
+  `irwin` until secretLines is settled.
 - The dry-run rule: a dry run with real sealed content is its own night,
   created with `createNight(db, { forceRehearsal: false, dryRun: true })`,
   joined only by the eight fake players (`scripts/fake-players.mjs`), watched
   from the Host tab and the TV, and discarded afterwards. Jon's and Susan's
-  phones never join it. Canary export: a Function picks a code at random and
-  shares that set by link; the link never shows the manifest (not built).
+  phones never join it.
+- The canary is Jenna, reading every set through `steward.js` (23 Oct; the
+  Steward role doc, `chats/docs/sirwin-manor-the-steward.md` §C).
+  No canary export exists or is planned.

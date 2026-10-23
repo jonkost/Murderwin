@@ -221,10 +221,11 @@ export default function Host({ night, content, serverNow }) {
   )
 }
 
-// The house at a glance: the study station, the room screens and the cue
-// relay (alive when heard from within two minutes), the group due in the
-// study and its clock, a picker for the group that actually walked in, and
-// the hall light by hand. Everything here is a count, a name or a dot.
+// The house at a glance: the study station, the room screens (the memory
+// match iPad among them) and the cue relay (alive when heard from within two
+// minutes), Act 2's cat visits as a count, the group due in the study and
+// its clock, a picker for the group that actually walked in, and the hall
+// light by hand. Everything here is a count, a name or a dot.
 // While a window is open the per-guest dots are hidden (see houseView).
 export function HousePanel({ house, cues, night, busy, run }) {
   const [picking, setPicking] = useState(false)
@@ -249,6 +250,8 @@ export function HousePanel({ house, cues, night, busy, run }) {
         ))}
       </ul>
       {night.caseWarning && <p className="gloss">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
+      {/* Act 2: a count of who has finished the cats, so the host knows when to press Next. Never which cat or hint. */}
+      {house.catVisits && <p className="gloss cat-visits">Cat visits: {house.catVisits.done} of {house.catVisits.of} guests have seen all four.</p>}
       {act4 && (
         <div className="house-study">
           {st ? (

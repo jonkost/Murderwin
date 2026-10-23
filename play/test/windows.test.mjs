@@ -45,7 +45,7 @@ test('F19 a Parlour Game shows over the screen beneath, which stays mounted in t
   // one place renders the screen beneath, with or without a game on top: same parent, same slot,
   // so React keeps its state (the tab, a half-typed safe code, the scroll)
   assert.equal((app.match(/<Rest /g) ?? []).length, 1, 'Rest is rendered from one place only')
-  assert.match(app, /return <>\{banner\}<div className=\{over \? 'beneath covered' : 'beneath'\} inert=\{over \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
+  assert.match(app, /return <>\{band\}\{banner\}<div className=\{over \? 'beneath covered' : 'beneath'\} inert=\{over \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
   // the slider shows the nearest stop of an affection kept in half steps
   assert.equal(stopOf(2.5), 3); assert.equal(stopOf(4.5), 5); assert.equal(stopOf(1), 1); assert.equal(stopOf(undefined), 3); assert.equal(stopOf(9), 5)
 })

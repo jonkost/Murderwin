@@ -11,6 +11,7 @@ import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, f
 import { characterById } from '../lib/night.js'
 import { readFileSync } from 'node:fs'
 import { relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS } from '../lib/relay.js'
+import { NEWS, closingParts, closingStage } from '../lib/news.js'
 
 // A throwaway night. The rehearsal case the dealer makes is never printed.
 async function party(n = 6) {
@@ -484,7 +485,7 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   const f = db.store.get(finalePath(nightId))
   assert.deepEqual(Object.keys(f.schedule), ['stats', 'awards', 'graph', 'names'])
   assert.ok(f.schedule.stats < f.schedule.graph && f.schedule.graph < f.schedule.names, 'the reel, the graph, then the names')
-  assert.ok(f.schedule.awards < f.schedule.graph, 'the cats\' favourites always give the awards a moment')
+  assert.ok(f.schedule.awards <= f.schedule.graph, 'the achievements (if any) come before the graph')
   const labels = f.stats.map(s => s.label)
   for (const l of CANON_LABELS) assert.ok(labels.includes(l), `the reel carries "${l}"`)
   assert.equal(labels.length, CANON_LABELS.length, 'no Hush line without an exposure')
@@ -495,7 +496,10 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   assert.equal(f.stats.find(s => s.label === 'Pictures that took more than one guess').value, 'Grid 2')
   assert.match(f.stats.find(s => s.label === 'Fastest light puzzle').value, /6 min 12 s$/)
   assert.equal(f.stats.find(s => s.label === 'Fastest safe').value, 'Nobody opened one')
-  assert.ok(f.achievements.some(a => /^(Granolia|Boo|Zimothy|Salem)'s (Least )?Favorite$/.test(a.title)), 'the cats\' awards, from the final sliders')
+  assert.ok(f.credits.awards.some(a => /^(Granolia|Boo|Zimothy|Salem)'s (Least )?Favorite$/.test(a.title)), 'the cats\' awards, from the final sliders, in the end credits')
+  assert.ok(f.credits.awards.every(a => Object.keys(a).sort().join() === 'line,name,title'), 'each award is a title, a name and a line')
+  assert.deepEqual(f.achievements, [], 'the early reel carries only what the host gave; the end credits\' awards show once, after the reveal')
+  assert.equal(f.schedule.awards, f.schedule.graph, 'nothing given: the reel goes straight to the graph')
   assert.ok(f.credits.thanks.includes('Jenna') && f.credits.memory.line.includes('Sydney') && f.credits.last.line === 'Can we play again?')
   assert.equal(f.credits.counters.length, 4)
   assert.deepEqual(f.news, {}, 'no closing bulletin before the first name')
@@ -571,15 +575,20 @@ test('Carry on after a hold during the Victim stage keeps the wait before the cl
   for (let i = 0; i < 3; i++) { t.now += 1000; await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now }) }
   const named = db.store.get(finalePath(nightId))
   assert.equal(named.stage, 'victim')
+  const namedAt = ms(named.victimNamedAt)
+  assert.equal(namedAt, t.now)
+  // the closing story waits until the Victim's recorded parts have been said (Ava's sign-off is never talked over)
+  const { closingStage } = await import('../lib/news.js')
+  const said = closingStage('victim').parts.reduce((n, p) => n + p.holdMs, 0)
   const victimAt = ms(named.victimAt)
-  assert.equal(victimAt, t.now)
+  assert.equal(victimAt + EPILOGUE_AFTER_MS, namedAt + said + 2_000, 'the story starts two seconds after the last part')
   // held three seconds after the Victim's name, carried on thirty seconds later
-  await hostCommand(db, { nightId, command: 'finale-hold', now: victimAt + 3_000 })
-  const r = await hostCommand(db, { nightId, command: 'finale-go', now: victimAt + 33_000 })
+  await hostCommand(db, { nightId, command: 'finale-hold', now: namedAt + 3_000 })
+  const r = await hostCommand(db, { nightId, command: 'finale-go', now: namedAt + 33_000 })
   assert.equal(r.heldMs, 30_000)
   const after = db.store.get(finalePath(nightId))
   assert.equal(ms(after.victimAt), victimAt + 30_000, 'victimAt moved by the length of the hold')
-  assert.ok(victimAt + 33_000 - ms(after.victimAt) < EPILOGUE_AFTER_MS, 'the screen still waits for the closing story')
+  assert.ok(namedAt + 33_000 - ms(after.victimAt) < EPILOGUE_AFTER_MS, 'the screen still waits for the closing story')
   assert.equal(after.held, 30_000)
   // a hold taken before the Victim was named leaves victimAt alone (the pause path already shifts it)
   const { db: db2, nightId: id2, t: t2 } = await revealed(4)
@@ -747,7 +756,8 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
   // the reel carries the segment, after the stats and before the graph
   await reveal(db, nightId, { now: t.now })
   const f = db.store.get(finalePath(nightId))
-  assert.deepEqual(f.achievements[0], { name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards }, 'the host\'s come first')
+  assert.deepEqual(f.achievements, [{ name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards }], 'the host\'s, and only the host\'s')
+  assert.ok(!f.credits.awards.some(a => a.title === "Crookshank's Confidant"), 'and never again in the credits')
   assert.ok(f.schedule.awards < f.schedule.graph, 'the segment has length when there is something to show')
   assert.ok(f.stats.every(s => s.showAt < f.schedule.awards))
 })
@@ -807,4 +817,51 @@ test('the closing W-O-O-F News bulletin: each name press plays its recorded part
   await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
   assert.deepEqual(clipsNow(), ['woof-close-field-victim', 'woof-close-field-out', 'woof-close-studio-close'])
   assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, null, 'recorded lines only, no sting')
+})
+
+test('the closing bulletin\'s cards wait for their lead-ins: cardAt is the press plus the hold of the parts before the card', async () => {
+  const { db, nightId, t } = await revealed(5)
+  await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // the reveal
+  const f = () => db.store.get(finalePath(nightId))
+  assert.deepEqual(f().cardAt, {}, 'no card is due before the first press')
+  const hold = clip => NEWS.closing.parts.find(p => p.clip === clip).holdMs
+  for (const p of NEWS.closing.parts) assert.ok(Number.isInteger(p.holdMs) && p.holdMs > 0, `${p.clip} has a hold`)
+  // the Murderer: Ava's opening and Mic's first line, then the card
+  t.now += 90_000
+  const pressM = t.now
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.equal(ms(f().cardAt.murderer), pressM + hold('woof-close-studio-open') + hold('woof-close-field-murderer'))
+  assert.equal(f().names.murderer.name.length > 0, true, 'the name is on the doc; the TV holds the card until cardAt')
+  // the Motive: Mic's second line, then the card
+  t.now += 20_000
+  const pressMo = t.now
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.equal(ms(f().cardAt.motive), pressMo + hold('woof-close-field-motive'))
+  assert.equal(ms(f().cardAt.murderer), pressM + hold('woof-close-studio-open') + hold('woof-close-field-murderer'), 'an earlier card keeps its time')
+  // the Victim: "...and it ended in the murder of...", then the card; the sign-off and the close come after it, as captions
+  t.now += 20_000
+  const pressV = t.now
+  await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+  assert.equal(ms(f().cardAt.victim), pressV + hold('woof-close-field-victim'))
+  assert.deepEqual(f().news.victim.map(p => p.card), ['ghost', null, null], 'the Ghost card, then the two parts after it')
+  // a hold while a card is still waiting moves that card on by the length of the hold
+  const pending = ms(f().cardAt.victim)
+  await hostCommand(db, { nightId, command: 'finale-hold', now: pressV + 1_000 })
+  await hostCommand(db, { nightId, command: 'finale-go', now: pressV + 11_000 })
+  assert.equal(ms(f().cardAt.victim), pending + 10_000)
+  assert.equal(ms(f().cardAt.motive), pressMo + hold('woof-close-field-motive'), 'a card already shown stays where it was')
+})
+
+test('closingStage: each stage\'s parts and lead-in, from the open bank', () => {
+  const parts = closingParts()
+  assert.deepEqual(closingStage('murderer').parts.map(p => p.clip), ['woof-close-studio-open', 'woof-close-field-murderer'])
+  assert.deepEqual(closingStage('motive').parts.map(p => p.clip), ['woof-close-field-motive'])
+  assert.deepEqual(closingStage('victim').parts.map(p => p.clip), ['woof-close-field-victim', 'woof-close-field-out', 'woof-close-studio-close'])
+  assert.equal(closingStage('murderer').leadMs, 15_000)
+  assert.equal(closingStage('motive').leadMs, 3_000)
+  assert.equal(closingStage('victim').leadMs, 3_000)
+  assert.deepEqual(closingStage('stats'), { parts: [], leadMs: 0 })
+  assert.equal(parts.flatMap(p => p.clip).length, NEWS.closing.parts.length)
 })

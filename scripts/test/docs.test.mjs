@@ -80,17 +80,18 @@ test('play-side.md: the "not built yet" list names nothing the code already does
   assert.ok(!section.includes('—'), 'no em dash in the refreshed section')
 })
 
-test('Status.jsx: the NEXT list names nothing built, and deferred work sits under "after the party"', () => {
+test('Status.jsx: Where we are reads what is left from the board itself, lists nothing built as left, and keeps after-the-party apart', () => {
   const src = read('app/src/pages/Status.jsx')
   const block = (name) => {
     const m = new RegExp(`const ${name} = \\[([\\s\\S]*?)\\n\\]`).exec(src)
     assert.ok(m, `${name} is declared`)
     return m[1]
   }
-  const next = block('NEXT')
-  for (const phrase of BUILT) assert.ok(!next.toLowerCase().includes(phrase.toLowerCase()), `NEXT must not list "${phrase}"`)
-  const after = block('AFTER')
-  assert.ok(after.includes('nested') || after.includes('scenarios'), 'the full event system is deferred')
+  // since 23 Oct the jobs come live from the Timeline cards, never a hand-kept list
+  assert.ok(!/const NEXT = \[/.test(src), 'no hand-kept list of next jobs')
+  assert.ok(src.includes('subscribeTasks') && src.includes('subscribeDecisions'), 'the page reads the board')
+  assert.ok(src.includes('leftByOwner') && src.includes('nextCards'), 'what is left, by owner, and the next jobs')
+  for (const link of ['CU4JQVHtzuyLBiqt2WuWVk', 'P7eHcmr7R5PDLxGufmCK2A']) assert.ok(src.includes(link), 'it links the Canon and Start Here')
   assert.ok(src.includes('After the party'), 'the page has an after-the-party section')
-  for (const name of ['BUILT', 'NEXT', 'AFTER']) assert.ok(!block(name).includes('—'), `no em dash in ${name}`)
+  for (const name of ['BUILT', 'AFTER']) assert.ok(!block(name).includes('—'), `no em dash in ${name}`)
 })

@@ -7,11 +7,12 @@ import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, ms } from '../lib/deal.js'
 import { parlourPath } from '../lib/windows.js'
 import {
-  planParlour, configOf, rollTimes, stream, catMoves, applyMoves, clampAffection, stopOf, parlourAwards, SALEM_PARLOUR_MAX,
+  planParlour, configOf, rollTimes, stream, catMoves, applyMoves, clampAffection, stopOf, SALEM_PARLOUR_MAX,
   fittingAnswer, LISTENERS, PARLOUR_ACTS, SIZES, AFFECTION_MIN, AFFECTION_MAX,
 } from '../lib/parlour.js'
 
-// The Parlour Games checks from docs/parlour-games.md (G25 to G31). Every
+// The Parlour Games checks from docs/parlour-games.md (G25 to G30; G31, the
+// end credits' awards, is in finale.test.mjs). Every
 // case here is a throwaway: seeds are made up in the loop, the bank ids are
 // stand-ins, no lean table is real, and nothing is printed.
 
@@ -165,27 +166,6 @@ test('G30 each cat leans toward its fitting answer about 75% of the time (65 to 
   // a question Jenna has not filled in yet still has a fitting answer, the same one every time
   assert.equal(fittingAnswer({}, 's', 'x', 0, 'boo'), fittingAnswer(null, 's', 'x', 0, 'boo'))
   assert.equal(fittingAnswer({ x: { 0: { boo: 'b' } } }, 's', 'x', 0, 'boo'), 'b')
-})
-
-test('G31 the awards compare guests with each other from their own answers only: never the cats\' leans, never a missed window', () => {
-  const answers = {
-    ann: { w1: { picks: ['a', 'a', 'a'] }, w2: { picks: ['a', 'b', 'a'] } },
-    bob: { w1: { picks: ['a', 'a', 'a'] }, w2: { picks: ['a', 'b', 'a'] } },
-    cat: { w1: { picks: ['a', 'a', 'b'] }, w2: { picks: ['a', 'b', 'b'] } },
-    dan: { w1: { picks: ['b', 'b', 'b'] }, w2: { picks: ['b', 'a', 'b'] } },
-    eve: { w1: { picks: ['b', 'b', 'b'], defaulted: true }, w2: { picks: ['a', 'a', 'a'], defaulted: true } },
-  }
-  const a = parlourAwards(answers)
-  assert.deepEqual(a.rebel, ['dan'], 'sided with the smaller group most often')
-  assert.deepEqual(a.crowd, ['ann', 'bob', 'cat'], 'a tie shows everyone tied')
-  assert.deepEqual(a.kindred, [['ann', 'bob']])
-  assert.deepEqual(a.rivals, [['ann', 'dan'], ['bob', 'dan']])
-  assert.ok(![...a.rebel, ...a.crowd, ...a.kindred.flat(), ...a.rivals.flat()].includes('eve'), 'answers picked for a missed window do not count')
-  // the function takes the answers and nothing else: there is no lean to pass it
-  assert.equal(parlourAwards.length, 1)
-  assert.deepEqual(parlourAwards({}), { rebel: [], crowd: [], kindred: [], rivals: [] })
-  const same = { ann: { w1: { picks: ['a', 'a', 'a'] } }, bob: { w1: { picks: ['a', 'a', 'a'] } }, cat: { w1: { picks: ['a', 'a', 'a'] } } }
-  assert.deepEqual(parlourAwards(same), { rebel: [], crowd: [], kindred: [], rivals: [] }, 'an award everybody would win is not given')
 })
 
 test('a Detective\'s answer warms the listening cat when it matches the lean and cools it when it does not, by the plan\'s size', async () => {

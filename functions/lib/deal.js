@@ -77,13 +77,26 @@ export const NOTICES = {
   eyes: { title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the living room screen.', button: 'Watching' },
 }
 
+// The Act 4 direction screens (docs/handoff-2026-10-22.md §6c). The station
+// keys stay as they are (the workshop files its lines by them): `checkin` is
+// the Free time slot, and its card carries one of FREE_TIME_TIPS under the line.
 export const STATION_TEXT = {
-  study: { title: 'The study', text: 'Go up to the study. Touch any panel to begin. Granolia is in there somewhere; she helps. Fifteen minutes, then out, whatever happened.' },
+  study: { title: 'The study', text: "Granolia's expecting your group in the Study, upstairs." },
   cat: { title: 'A cat', text: 'Find the cat named on your phone. It will talk to the group together.' },
   bags: { title: 'The bags', text: 'Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.' },
   puzzle: { title: 'The memory match', text: 'Go to the iPad. Turn two cards at a time and find the six pairs together. Clear the board and one motive comes off your list.' },
-  checkin: { title: 'Check-in', text: 'Sit down together. Read your clues out to each other. Cross off motives.' },
+  checkin: { title: 'Free time', text: 'Nothing for your group right now. Grab a drink, stretch your legs.' },
 }
+export const FREE_TIME_TIPS = [
+  'Have you crossed off everything you know?',
+  'Compare what the cats told you. Do they agree?',
+  'Remember, Salem usually has it backwards.',
+  'Look at the portraits. Every character carries a trace.',
+  'Only tell your group. The walls have ears. And whiskers.',
+]
+// The group card's two lines (handoff §6c screen 1), with the others named by character.
+export const GROUP_TEXT = 'From now on, only share with your group.'
+export const ALONE_TEXT = 'From now on, keep what you learn to yourself.'
 
 // Built-in Parlour Game sets, used only when the workshop bank is empty.
 // Silly, light, about nothing. Points are kept on the server; no phone sees them.
@@ -527,10 +540,19 @@ async function moveLights(db, nightId, fn) {
   })
 }
 
+// The Host tab's Act 2 line ("Cat visits: N of M guests have seen all four"):
+// on the public night doc as lightsProgress { done, total }. Counts only,
+// never which cat, which guest or which hint.
+export function lightsProgressOf(state) {
+  const all = Object.values(state?.guests ?? {})
+  return { done: all.filter(g => g?.step === 'done').length, total: all.length }
+}
+
 // After a move: every phone whose step changed is told, and every guest due
-// a greeting gets it (once: the card ids are fixed).
+// a greeting gets it (once: the card ids are fixed), and the host's count moves.
 async function followLights(db, nightId, r, { now = Date.now() } = {}) {
   if (r.none || (!r.changed.length && !r.greet.length)) return { greeted: 0 }
+  await db.doc(`nights/${nightId}`).update({ lightsProgress: lightsProgressOf(r.state) })
   const { list } = await guests(db, nightId)
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const ui = labelled(await readArea(db, 'ui_copy'))
@@ -1089,11 +1111,12 @@ export async function dealGroups(db, nightId, act, beat, { force = false } = {})
       if (!g) continue
       // where the whole group stands with each cat: the Cats tab's second marker in Act 4 (never a number on screen)
       await db.doc(`sessions/${g.uid}`).update({ group: grp.id, groupAffection })
+      // the others by their characters (the list under it pairs each real name with its character)
       const others = members.filter(x => x.key !== m.key)
       const card = {
         id: `${act}-${beat}-group`, act, beat, kind: 'group', group: grp.id, members,
-        title: others.length ? `You are with ${others.map(x => x.name).join(' and ')}` : 'You are on your own this act',
-        text: 'Stay together. What you learn, you learn as a group; share it inside the group and nowhere else. Your phones will say where to go first.',
+        title: others.length ? `You're teamed up with ${others.map(x => x.characterName || x.name).join(' and ')}` : 'You are on your own this act',
+        text: others.length ? GROUP_TEXT : ALONE_TEXT,
       }
       if (await dealCard(db, g.uid, card)) dealt++
     }
@@ -1113,10 +1136,22 @@ async function groupAffectionOf(db, uids) {
   return out
 }
 
+// The Act 4 cat station's cats: never Irwin, and never Granolia, whose room
+// (the Study) holds the light puzzle and another group (settled by default,
+// 23 Oct 2026; Jon may change it). She talks to every group in the Study.
+export const ACT4_CATS = HINT_CATS.filter(cat => cat !== 'granolia')
+
+// The Free time tip for a group: one of the five, the same every time for the
+// group, seeded on the case's secret salt (never the public night id).
+export function freeTimeTip(c, gid, nightId = '') {
+  return FREE_TIME_TIPS[Math.floor(seededUnit(c?.screenSalt ?? nightId, gid, 'free-time-tip') * FREE_TIME_TIPS.length)]
+}
+
 // `over` is the workshop's station_text list ("STUDY: ...", "CAT: ..." with
-// [CAT], "BAGS: ..." with [PROPERTY] and [COUNT], "PUZZLE: ...", "CHECKIN: ...");
-// a line that is written replaces the default sentence, the title stays.
-async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, nightId = '', pick = pickInt, over = {}, roster = {} }) {
+// [CAT] and [ROOM], "BAGS: ..." with [PROPERTY] and [COUNT], "PUZZLE: ...",
+// "CHECKIN: ..." for Free time); a line that is written replaces the default
+// sentence, the title stays.
+export async function stationCard(db, { c, station, act, beat, gid, members, levels, voice, nightId = '', pick = pickInt, over = {}, roster = {} }) {
   const base = STATION_TEXT[station.key]
   const id = `${act}-${beat}-${station.key}`
   const written = over[station.key.toUpperCase()]
@@ -1124,10 +1159,14 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
   // the host's intro (hosts.js): Granolia hosts the study, Zimothy the memory match
   if (station.key === 'study') card.host = { cat: 'granolia', line: hostLine('granolia', over.ui ?? {}) }
   if (station.key === 'puzzle') card.host = { cat: 'zimothy', line: hostLine('zimothy', over.ui ?? {}) }
+  if (station.key === 'checkin') {
+    // Free time: the line, then the group's tip after it in the same text (the same card on every member's phone)
+    return { ...card, text: `${card.text} ${freeTimeTip(c, gid, nightId)}` }
+  }
   if (station.key === 'cat') {
-    // one of the four cats in their rooms (never Irwin), on the group's average affection,
+    // one of the three cats in their own rooms (ACT4_CATS), on the group's average affection,
     // with a finer clue from the Cat Hint Lines (cats.js): never the real family or motive
-    const cat = choice(HINT_CATS, pick)
+    const cat = choice(ACT4_CATS, pick)
     const avg = Math.round(members.reduce((s, m) => s + (levels[m]?.[cat] ?? 3), 0) / Math.max(1, members.length))
     const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: CAT_ROOMS[cat], voice, nightId, guestKey: gid })
     const seed = `${c?.screenSalt ?? nightId}\u0000${gid}`
@@ -1135,7 +1174,7 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
     const crossed = Object.values(c?.solving?.memory ?? {})
     const { hint, ruled } = hintLine(c, family, { cat, level: avg, act: 4, seed, exclude: crossed })
     if (ruled && c?.solving && nightId) await db.doc(`cases/${nightId}`).update({ [`solving.ruled.group-${gid}`]: ruled })
-    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]) : `${CAT_NAMES[cat]} will see your group in ${CAT_ROOMS[cat]}. Go together.`
+    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]).replace(/\[ROOM\]/g, CAT_ROOMS[cat]) : `${CAT_NAMES[cat]} will see your group in ${CAT_ROOMS[cat]}. Go together.`
     return { ...card, cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], text: catText, testimony: { ...t, hint } }
   }
   if (station.key === 'bags') {
@@ -1360,7 +1399,7 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
   // the look-alike is never the Ghost's own trace: the study shows that one (G36)
   const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial })
-  const base = { level, placeholder: !!c.rehearsal, at: new Date(now), irwinLine: irwinTraceLine(level) } // Irwin hosts the reveal (hosts.js)
+  const base = { level, placeholder: !!c.rehearsal, at: new Date(now), irwinLine: irwinTraceLine(level, labelled(await readArea(db, 'ui_copy'))) } // Irwin hosts the reveal (hosts.js); the workshop's HOST IRWIN TRACE lines win
   const full = {
     ...base, trace: murdererChar.trace,
     label: level === 5 ? murdererChar.traceLabel : null,
