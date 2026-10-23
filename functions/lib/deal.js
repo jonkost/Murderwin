@@ -32,6 +32,7 @@ import { pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
 import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlour.js'
 import { LEANS_DOC } from './steward.js'
 import { hintFamilyFor, hintCatFor, memoryPick } from './families.js'
+import { hintLine as catHintLine, groupFamily, HINT_CATS } from './cats.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
@@ -441,13 +442,15 @@ export const GREETING_ONLY = {
   granolia: 'Oh! Hi! Hi. Hello. I had something to tell you, and now it\'s gone. Want to sit with me anyway?',
 }
 
-// The private hint on a cat's greeting: rules out one wrong family of
-// motives (families.js). The lines are an open bank (the Cat Hint Lines
-// doc); which one plays is the case's. Until the bank is in, the card
-// carries this marked stand-in, which names no family.
-export const HINT_PLACEHOLDER = '(Not written yet. Here the cat privately rules out one family of motives.)'
-export function hintLine(c, family) {
-  return { text: HINT_PLACEHOLDER, placeholder: true, ...(family ? {} : { none: true }) }
+// The private hint on a cat's greeting: the cat's line from the Cat Hint
+// Lines bank (cats.js) at the guest's affection, about the wrong family the
+// case gave them. A case with no family for the guest (or a cat with no
+// line) carries this marked stand-in, which names nothing.
+export const HINT_PLACEHOLDER = '(Here the cat would rule something out.)'
+export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [] } = {}) {
+  const line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude }) : null
+  if (!line?.text) return { hint: { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
+  return { hint: { text: line.text, placeholder: false }, ruled: { families: line.families, motives: line.motives } }
 }
 
 // Every guest's route: all four cats, staggered round the room so the first
@@ -575,7 +578,10 @@ async function greetGuest(db, nightId, { c, g, cat, act, beat, voice, ui = {} })
     if (family) { await db.doc(`cases/${nightId}`).update({ [`solving.hints.${g.key}`]: family }); c.solving.hints = { ...(c.solving.hints ?? {}), [g.key]: family } }
   }
   const t = await testimonyCard(db, { c, cat, level, act, beat, id: `${act}-${beat}-testimony`, room: CAT_ROOMS[cat], codes, voice, nightId, guestKey: g.key })
-  const dealt = await dealCard(db, g.uid, { ...t, hint: hintLine(c, family) })
+  const { hint, ruled } = hintLine(c, family, { cat, level, act: 2, seed: `${c?.screenSalt ?? nightId}\u0000${g.key}` })
+  const dealt = await dealCard(db, g.uid, { ...t, hint })
+  // what the line rules out, for the solver checks (families.roomClues); case only, never a phone
+  if (dealt && ruled && c?.solving) await db.doc(`cases/${nightId}`).update({ [`solving.ruled.${g.key}`]: ruled })
   // a brush-off still leaves the numbers behind, so the safe is always solvable
   if (t.outcome === 'deflect' && codes) await dealCard(db, g.uid, scrapCard(act, beat, codes, voice.scrap))
   if (dealt && family) await noteDealt(db, nightId, { kind: 'hint', act, beat, key: g.key }) // the ledger: a hint is out (safeguards)
@@ -1111,11 +1117,18 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
   const written = over[station.key.toUpperCase()]
   const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: written || base.text }
   if (station.key === 'cat') {
-    const cat = choice(CAT_KEYS, pick)
+    // one of the four cats in their rooms (never Irwin), on the group's average affection,
+    // with a finer clue from the Cat Hint Lines (cats.js): never the real family or motive
+    const cat = choice(HINT_CATS, pick)
     const avg = Math.round(members.reduce((s, m) => s + (levels[m]?.[cat] ?? 3), 0) / Math.max(1, members.length))
-    const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: null, voice, nightId, guestKey: gid })
-    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]) : `Find ${CAT_NAMES[cat]}. The cat talks to all of you at once.`
-    return { ...card, cat, catName: CAT_NAMES[cat], text: catText, testimony: t }
+    const t = await testimonyCard(db, { c, cat, level: avg, act, beat, id: `${id}-testimony`, room: CAT_ROOMS[cat], voice, nightId, guestKey: gid })
+    const seed = `${c?.screenSalt ?? nightId}\u0000${gid}`
+    const family = c?.solving ? groupFamily(c, { members, seed }) : null
+    const crossed = Object.values(c?.solving?.memory ?? {})
+    const { hint, ruled } = hintLine(c, family, { cat, level: avg, act: 4, seed, exclude: crossed })
+    if (ruled && c?.solving && nightId) await db.doc(`cases/${nightId}`).update({ [`solving.ruled.group-${gid}`]: ruled })
+    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]) : `${CAT_NAMES[cat]} will see your group in ${CAT_ROOMS[cat]}. Go together.`
+    return { ...card, cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], text: catText, testimony: { ...t, hint } }
   }
   if (station.key === 'bags') {
     // from the packing (sealed/bags) on the night: a property in two or three

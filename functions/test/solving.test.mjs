@@ -10,6 +10,7 @@ import { rehearsalCase } from '../lib/case.js'
 import { struckMotives, screenSeed, irwinMotiveClue } from '../lib/screen.js'
 import { FAMILIES, ALL_MOTIVES, familyOf, familyMates, solvingPlan, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues } from '../lib/families.js'
 import { traceOf } from '../lib/traces.js'
+import { hintLine as catHintLine, HINT_CATS, motiveName } from '../lib/cats.js'
 
 // How the case gets solved (docs/solving-the-case.md): checks G32 to G38,
 // F20 and F21. Every case here is a throwaway rehearsal case, made and
@@ -365,7 +366,7 @@ test('F21 every player is always told where to go next: through the waves, a no-
   assert.ok(Object.keys(uids).length === 9)
 })
 
-test('the Act 2 hint rides on the greeting as a marked stand-in that names no family, and the case knows each guest\'s family', async () => {
+test('the Act 2 hint is the hint cat\'s line from the bank, and the case records what it rules out, never the real answer', async () => {
   const { db, nightId } = await lightsParty(6)
   await walkLights(db, nightId)
   const c = db.store.get(`cases/${nightId}`)
@@ -373,13 +374,47 @@ test('the Act 2 hint rides on the greeting as a marked stand-in that names no fa
   for (const [key, uid] of Object.entries(deck)) {
     const t = db.store.get(`sessions/${uid}`).cards.find(x => x.kind === 'testimony' && x.outcome !== 'greet')
     assert.equal(t.cat, c.solving.hintCats[key], 'the real hint comes from the guest\'s hint cat')
-    assert.equal(t.hint.placeholder, true)
-    const text = JSON.stringify(t.hint)
-    for (const f of FAMILIES) assert.ok(!text.toLowerCase().includes(`"${f.key}"`) && !text.includes(f.name), 'no family name on a phone')
+    assert.equal(t.hint.placeholder, false)
+    assert.ok(t.hint.text && !/\[[A-Z0-9]+\]/.test(t.hint.text), 'every blank filled')
     assert.ok(c.solving.hints[key], 'the case knows the family')
     assert.notEqual(c.solving.hints[key], c.solving.family)
+    const ruled = c.solving.ruled[key]
+    assert.ok(ruled, 'what the line ruled out is kept with the case')
+    assert.ok(!ruled.families.includes(c.solving.family) && !ruled.motives.includes(c.motive), 'never the real answer')
   }
   assert.ok(c.dealtClues.some(e => e.kind === 'hint'), 'the ledger notes the hints (Spill the Beans is off once one is out)')
+})
+
+// ---- G41 ------------------------------------------------------------------
+
+test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, only rules out wrong answers and fills every blank', () => {
+  for (const m of MOTIVES) {
+    const real = familyOf(m.n)
+    const c = { motive: m.n, solving: { family: real, newsOut: [], hints: {}, memory: {} } }
+    for (const family of FAMILIES.map(f => f.key).filter(k => k !== real)) {
+      for (const cat of HINT_CATS) for (const level of [1, 2, 3, 4, 5]) for (const act of [2, 4]) {
+        const line = catHintLine(c, { cat, level, act, family, seed: `s${m.n}${family}${level}` })
+        const where = `motive ${m.n} ${cat} level ${level} act ${act} on ${family}`
+        assert.ok(line.text, `${where}: a line`)
+        assert.ok(!/\[[A-Z0-9]+\]/.test(line.text) && !line.text.includes('undefined'), `${where}: blanks filled`)
+        assert.ok(!line.families.includes(real), `${where}: never the real family`)
+        assert.ok(!line.motives.includes(m.n), `${where}: never the real motive`)
+        if (act === 2) for (const n of line.motives) if (familyOf(n) !== family) assert.equal(familyOf(n), real, `${where}: a bonus is a real-family mate`)
+        if (cat !== 'salem') assert.ok(!line.text.includes(motiveName(m.n)), `${where}: the real motive is never said`)
+      }
+    }
+    // the real family gets no line at all
+    assert.equal(catHintLine(c, { cat: 'boo', level: 5, act: 2, family: real }).text, null)
+  }
+  // the ladders, as the handoff draws them
+  const c = { motive: 1, solving: { family: 'food' } }
+  const at = (cat, level, act = 2) => catHintLine(c, { cat, level, act, family: 'screens', seed: 'x' })
+  assert.deepEqual([1, 2, 3, 4, 5].map(l => at('boo', l).motives.length + at('boo', l).families.length * 10), [0, 0, 1, 10, 11], 'Boo: a look, dismissed, one motive, a family, a family plus a bonus')
+  assert.deepEqual([1, 2, 3, 4, 5].map(l => at('zimothy', l).motives.length + at('zimothy', l).families.length * 10), [1, 1, 2, 10, 11], 'Zimothy: one, one, two, the family, the family plus a bonus')
+  assert.deepEqual([1, 2, 3, 4, 5].map(l => at('granolia', l).motives.length + at('granolia', l).families.length * 10), [0, 1, 1, 2, 10], 'Granolia: nothing, half a name, one, two, the family')
+  for (const l of [1, 2, 3]) assert.equal(at('salem', l).straight, false, 'Salem is backwards at 1 to 3')
+  assert.equal(at('salem', 5).straight, true, 'and straight at 5')
+  assert.deepEqual(at('salem', 4).families, [], 'a coin flip at 4 rules out nothing anybody can trust')
 })
 
 // ---- G39 ------------------------------------------------------------------

@@ -1,0 +1,190 @@
+{
+ "_about": "The Cat Hint Lines, the open line bank (docs/handoff-2026-10-22.md §6, and the Claude Doc 'Cat Hint Lines'). Every line is written and Jon may see them all; only which one plays, and which wrong family or motive it names, is the case's. [MOTIVE], [MOTIVES], [FAMILY] and [BONUS] are filled in by the game, always with wrong answers. Irwin has no lines here.",
+ "motiveNames": {
+  "1": "the pie",
+  "2": "the lane",
+  "3": "the deleted progress",
+  "4": "the anniversary",
+  "5": "the sneeze",
+  "6": "the missing snacks",
+  "7": "the empty roll",
+  "8": "the dairy air",
+  "9": "the stained top",
+  "10": "the loud gadget",
+  "11": "left on read",
+  "12": "the chewing",
+  "13": "the charger",
+  "14": "the seat left up",
+  "15": "the grammar",
+  "16": "the spoiler",
+  "17": "the door",
+  "18": "the shopping cart",
+  "19": "reply all"
+ },
+ "salem": {
+  "about": "1 to 3 always the 'was' line (backwards: it points AT a wrong answer), 4 a coin flip, 5 always the 'wasn't' line (straight). Act 2 by family; Act 4 by motive, on the group's average.",
+  "act2": {
+   "bathroom": {
+    "was": "Hmph. Nobody at the big house ever asks the groundskeeper. Way I see it, and I see things from a funny angle, this whole cat-astrophe started in the bathroom. Now get off my lawn.",
+    "wasnt": "Huh. Somebody listened to the help for once. Way I see it, and I see things from a funny angle, it weren't the bathroom. Now scat."
+   },
+   "food": {
+    "was": "Hmph. Fancy folk never ask the groundskeeper. Way I see it, and I see things from a funny angle, somebody's belly started all this. Now get off my lawn.",
+    "wasnt": "Well, look at that, a guest with manners. Way I see it, and I see things from a funny angle, it weren't about food. Now scat."
+   },
+   "screens": {
+    "was": "Hmph. Nobody up at the big house asks the help, but I'll tell you anyway. Way I see it, and I see things from a funny angle, this whole mess came out of one of them glowing gadgets. Now get off my lawn.",
+    "wasnt": "Huh. A guest who stops to talk to the groundskeeper. Way I see it, and I see things from a funny angle, it weren't them gadgets. Now scat."
+   },
+   "out": {
+    "was": "Hmph. Fancy cats never set a paw outside, but I'm out there every dawn. Way I see it, and I see things from a funny angle, this whole cat-astrophe started out in public. Now get off my lawn.",
+    "wasnt": "Well, I'll be. Somebody remembered the groundskeeper. Way I see it, and I see things from a funny angle, it weren't out in public. Now scat."
+   },
+   "slights": {
+    "was": "Hmph. The big house thinks I don't notice who's red in the face. Way I see it, and I see things from a funny angle, somebody got embarrassed, and that's your answer. Now get off my lawn.",
+    "wasnt": "Huh. You're alright, for a houseguest. Way I see it, and I see things from a funny angle, nobody got embarrassed over this one. Now scat."
+   }
+  },
+  "act4": {
+   "1": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody took the last slice of pie, and that's what started all this. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody's fussed about the last slice of pie. Now scat."
+   },
+   "6": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody's snacks went missing, and they never got over it. Now shoo.",
+    "wasnt": "Well, I'll be. Tilt your head like me, and you'll see it: nobody's snacks went missing. Now scat."
+   },
+   "12": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody chews with their mouth open, and somebody else finally snapped. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody minded anybody's chewing. Now scat."
+   },
+   "7": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody left the roll empty, and that's your culprit. Now shoo.",
+    "wasnt": "Well, look at that. Tilt your head like me, and you'll see it: the roll's got nothing to do with it. Now scat."
+   },
+   "14": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody left the seat up, and somebody else fell in. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: the seat's got nothing to do with it. Now scat."
+   },
+   "8": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody let one rip, and it cleared the room. Now shoo.",
+    "wasnt": "Well, I'll be. Tilt your head like me, and you'll see it: nobody's air was the problem. Now scat."
+   },
+   "5": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody sneezed all over somebody, and that was that. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody's sneeze started this. Now scat."
+   },
+   "3": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody lost all their progress, hours of it, gone. Now shoo.",
+    "wasnt": "Well, look at that. Tilt your head like me, and you'll see it: nobody's progress got deleted. Now scat."
+   },
+   "10": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody's gadget was blaring on speaker, and I heard it from my shed. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody's gadget was too loud. Now scat."
+   },
+   "11": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody got left on read, and they stewed on it. Now shoo.",
+    "wasnt": "Well, I'll be. Tilt your head like me, and you'll see it: nobody got left on read. Now scat."
+   },
+   "13": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody swiped a charger, and that's what did it. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: every charger's right where it belongs. Now scat."
+   },
+   "19": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody hit reply all, and the whole estate saw it. Now shoo.",
+    "wasnt": "Well, look at that. Tilt your head like me, and you'll see it: nobody hit reply all. Now scat."
+   },
+   "2": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody wouldn't stay in their lane. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: everybody stayed in their lane. Now scat."
+   },
+   "17": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody let a door slam right in somebody's face. Now shoo.",
+    "wasnt": "Well, I'll be. Tilt your head like me, and you'll see it: the door's got nothing to do with it. Now scat."
+   },
+   "18": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody left their cart in the middle of the lot. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: every cart made it home. Now scat."
+   },
+   "4": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody forgot an anniversary, and they're still in the doghouse. Now shoo.",
+    "wasnt": "Well, look at that. Tilt your head like me, and you'll see it: nobody forgot any anniversary. Now scat."
+   },
+   "9": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody ruined somebody's good top. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody's top got stained. Now scat."
+   },
+   "15": {
+    "was": "Bah. Tilt your head like me, and you'll see it: somebody corrected somebody's grammar one too many times. Now shoo.",
+    "wasnt": "Well, I'll be. Tilt your head like me, and you'll see it: nobody's fussing about grammar. Now scat."
+   },
+   "16": {
+    "was": "Hmph. Tilt your head like me, and you'll see it: somebody spoiled the ending, and somebody else lost it. Now get off my lawn.",
+    "wasnt": "Huh. Tilt your head like me, and you'll see it: nobody spoiled nothing. Now scat."
+   }
+  }
+ },
+ "zimothy": {
+  "about": "Never lies. 1 and 2 one motive, 3 two motives from the family, 4 the whole family, 5 the whole family plus one bonus wrong motive from another family. All acts; Act 4 on the group's average.",
+  "levels": {
+   "1": "[MOTIVE]? Not it. I'll bill you.",
+   "2": "Off the record: it wasn't [MOTIVE]. Pay on your way out.",
+   "3": "Strike [MOTIVES] from the record. My invoice is in the mail.",
+   "4": "Strike [MOTIVES]. The whole lot. Consider your retainer well spent.",
+   "5": "For my favorite client: strike [MOTIVES], and [BONUS], on the house. Don't tell the other clients. I can't have a good reputation."
+  }
+ },
+ "boo": {
+  "about": "1 a look, 2 dismissed, 3 one motive in five words, 4 a family, 5 a family plus a bonus motive. All acts; Act 4 on the group's average.",
+  "levels": {
+   "1": "Boo checks her reflection in your glass, then knocks it off the table.",
+   "2": "Ew. Do I know you?",
+   "3": "Boo adjusts her pearls and yawns. \"[MOTIVE]? So not it. Bye.\""
+  },
+  "family4": {
+   "food": "Ugh, fine, since you're cute. Food? Please. I'm on a juice cleanse. Now move, you're blocking my light.",
+   "bathroom": "Ugh, fine, since you're cute. The bathroom? Please. I don't even go in there. Now move, you're blocking my light.",
+   "screens": "Ugh, fine, since you're cute. Screens? Please. Nobody here is that interesting online. I checked. Now move, you're blocking my light.",
+   "out": "Ugh, fine, since you're cute. Out in public? Please. If it happened out there, I'd have been there. I'm everywhere. Now move, you're blocking my light.",
+   "slights": "Ugh, fine, since you're cute. Embarrassing? Please. I know embarrassing, and this isn't it. Now move, you're blocking my light."
+  },
+  "family5": {
+   "food": "Okay, you're actually fun, so listen. Food? Please, I'm on a juice cleanse. And [BONUS]? Total nonsense. You didn't hear it from me. Now go, before people see us talking.",
+   "bathroom": "Okay, you're actually fun, so listen. The bathroom? Please, I don't even go in there. And [BONUS]? Total nonsense. You didn't hear it from me. Now go, before people see us talking.",
+   "screens": "Okay, you're actually fun, so listen. Screens? Please, nobody here is that interesting online. I checked. And [BONUS]? Total nonsense. You didn't hear it from me. Now go, before people see us talking.",
+   "out": "Okay, you're actually fun, so listen. Out in public? Please, if it happened out there, I'd have been there. I'm everywhere. And [BONUS]? Total nonsense. You didn't hear it from me. Now go, before people see us talking.",
+   "slights": "Okay, you're actually fun, so listen. Embarrassing? Please, I know embarrassing, and this isn't it. And [BONUS]? Total nonsense. You didn't hear it from me. Now go, before people see us talking."
+  }
+ },
+ "granolia": {
+  "about": "Never lies; the less she likes you, the more she forgets. 1 nothing, 2 half a motive name, 3 one motive, 4 two motives then loses the third, 5 the whole family. All acts; Act 4 on the group's average.",
+  "levels": {
+   "1": "Oh! Oh, hi! Hi. Sorry. Hi. Nobody ever comes in here. Well, Zimothy did once, but he was lost. *heavy breathing* Okay, so, I know something. I definitely know something. I read it in a book. Or I licked it in a book? Those feel the same sometimes. *snort* Anyway, it was about... it was... Do you like my study? I've licked most of it. Wait, why are you here again? Anyway, I hope this was helpful!",
+   "2": "Hi! You came! *heavy breathing* Okay, okay, I remember this one. It wasn't [HALF]. You know the one. Can I sit on you?",
+   "3": "You're my favorite. Don't tell the other cats. They don't talk to me anyway. *snort* It wasn't [MOTIVE]! I wrote it down. Then I ate the paper. But I'm sure!",
+   "4": "You smell amazing. Is that weird? That's weird. *heavy breathing* Okay! Not [MOTIVE]. Not [MOTIVE2]. And not... ooh, it was right there. It's gone. Want to see a hairball?",
+   "5": "I love you. Sorry, too much? I love you. *snort* I remember EVERYTHING today! Not [MOTIVES]! *heavy breathing* Wow. I need a lie-down. On you, ideally."
+  },
+  "half": {
+   "1": "the last of the... the last of the...",
+   "6": "the missing... the missing whatsits",
+   "12": "the... the chompy thing",
+   "7": "the empty... empty something",
+   "14": "the seat... the seat did a thing",
+   "8": "the dairy... dairy something. Not cheese.",
+   "5": "the ah... ah... ah-something",
+   "3": "the deleted... deleted whatsit",
+   "10": "the loud... loud thingamajig",
+   "11": "left on... left on something. The shelf?",
+   "13": "the char... char-something. Not charcoal.",
+   "19": "the reply... reply some?",
+   "2": "the stay-in-your... something",
+   "17": "the door! Or a drawer. One of those.",
+   "18": "the shopping... shopping thingy",
+   "4": "the anni... anni-something",
+   "9": "the stained... stained something. Not my fur.",
+   "15": "the gram... Grandma? No.",
+   "16": "the spoil... spoiled milk? No."
+  }
+ }
+}

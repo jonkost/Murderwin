@@ -7,7 +7,7 @@
     "node": "22"
   },
   "scripts": {
-    "seed": "mkdir -p seed && cp ../seed/characters.json ../seed/motives.json ../seed/night.json ../seed/families.json ../seed/woof-news.json seed/",
+    "seed": "mkdir -p seed && cp ../seed/characters.json ../seed/motives.json ../seed/night.json ../seed/families.json ../seed/woof-news.json ../seed/cat-lines.json seed/",
     "serve": "npm run seed && cd .. && npm run emulate",
     "test": "npm run seed && node --test test/*.test.mjs"
   },

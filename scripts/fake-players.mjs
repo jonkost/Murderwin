@@ -42,7 +42,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
