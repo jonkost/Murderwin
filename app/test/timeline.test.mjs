@@ -91,7 +91,7 @@ test('the handoff cards are new, and the cards it settles were already on the bo
   for (const r of RETIRED_FOR_HANDOFF) assert.ok(before.includes(r.order), `retired order ${r.order} was a card`)
   assert.equal(add.answerDecisions.newsFamilies, TIMELINE_DECISIONS.find(d => d.key === 'newsFamilies').options[0])
   const built = ADDITIONS.find(a => a.id === '2026-10-22-handoff-built')
-  const earlier = [...before, ...HANDOFF_TASKS.map(t => t.order)]
+  const earlier = [...tasksFile.tasks, ...ADDITIONS.filter(a => a.id !== '2026-10-22-handoff-built').flatMap(a => a.tasks ?? [])].map(t => t.order)
   for (const t of HANDOFF_BUILT_TASKS) assert.ok(!earlier.includes(t.order), `order ${t.order} is new`)
   for (const r of RETIRED_FOR_BUILT) assert.ok(HANDOFF_TASKS.some(t => t.order === r.order), `retired order ${r.order} was a handoff card`)
   assert.ok(built.tasks === HANDOFF_BUILT_TASKS)
