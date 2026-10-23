@@ -7,6 +7,7 @@ import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, char
 import {
   TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT,
   AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT,
+  SECRET_LINES_ANSWER, SECRET_LINES_DECISIONS, SECRET_LINES_TASKS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -52,9 +53,10 @@ export const TAB_KINDS = {
 
 // Every label a phone or the dealer reads from the phone's own lines. The
 // notices are the cards between beats (NOTICE MEET is the Act 1 "meet the
-// household" card); NUMBERS and NOTICE SCRAP carry the safe's three numbers
-// with [A] [B] [C] where they go; STOPS is the five words of the Cats tab
-// slider, low to high, with commas.
+// household" card); STOPS is the five words of the Cats tab slider, low to
+// high, with commas. NUMBERS and NOTICE SCRAP carried the Act 2 safe's three
+// numbers until the safe was taken out (23 Oct 2026): kept as labels so lines
+// already written still show, never counted, and nothing reads them.
 export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']
 const NOTICE_WHAT = {
   meet: 'Act 1, meet the household', introduce: 'Act 1, say who you are out loud', ready: 'Act 1, settle in before the dark', orient: 'Act 2, where things are on the phone',
@@ -90,16 +92,17 @@ export const UI_LABELS = [
   { value: 'RETICULE', label: 'RETICULE: the tabs at the bottom' }, { value: 'START NIGHT', label: 'START NIGHT: the hosts start the night' }, { value: 'HOST', label: 'HOST: the hosts’ own tab' },
   { value: 'NOT FOR YOU', label: 'NOT FOR YOU: a hosts-only page opened by a guest' },
   { value: 'STOPS', label: 'STOPS: the five words of the Cats tab slider, low to high, with commas' },
-  { value: 'NUMBERS', label: 'NUMBERS: the safe’s three numbers inside a testimony, with [A], [B] and [C]' },
-  { value: 'NOTICE SCRAP', label: 'NOTICE SCRAP: the scrap of paper a cat leaves when it will not talk, with [A], [B] and [C]' },
+  { value: 'NUMBERS', label: 'NUMBERS (retired 23 Oct 2026: the safe is gone, nothing reads this)', retired: true },
+  { value: 'NOTICE SCRAP', label: 'NOTICE SCRAP (retired 23 Oct 2026: the safe is gone, nothing reads this)', retired: true },
   { value: 'FILLER', label: 'FILLER: a short line added to a short role card, so all three cards are the same length' },
   { value: 'RELAY RULES', label: 'RELAY RULES: three short rules on every phone before the first drawer walks up. Sir Irwin’s slides explain the game on the TV' },
   ...NOTICE_KEYS.map(k => ({ value: `NOTICE ${k.toUpperCase()}`, label: `NOTICE ${k.toUpperCase()}: ${NOTICE_WHAT[k]}` })),
   ...EXTRA_UI_LABELS,
 ]
 
-// The labels that count toward the list's goal and the Timeline.
-export const COUNTED_UI_LABELS = UI_LABELS.filter(l => !l.extra)
+// The labels that count toward the list's goal and the Timeline: not the
+// extra ones, and not the two retired with the safe.
+export const COUNTED_UI_LABELS = UI_LABELS.filter(l => !l.extra && !l.retired)
 
 // Granolia's lines on the study screen, by moment. The screen has a plain
 // default for each until one is written here.
@@ -167,11 +170,13 @@ export const AREAS = {
       { key: 'who', label: 'Who', placeholder: 'Pick one', kind: 'select', options: HOUSEHOLD.map(h => ({ value: h.key, label: `${CATS.find(c => c.key === h.key).name}, ${h.title}` })) },
       { key: 'about', label: 'About them, two or three sentences, ending with where they keep themselves', placeholder: 'e.g. Arrived for a party some years back and has seen no reason to declare it over. Found wherever the light is best.', kind: 'textarea', main: true },
     ] },
-  openers: { label: 'What a cat says first', moment: 'Acts 2 and 4, the moment a cat starts talking to you', why: 'The greeting at the top of a cat’s testimony. Claude writes the secret middle; you write the hello.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 8,
+  // 23 Oct 2026: the cats say only their hint lines, so only Sir Irwin's first greeting and sign-off are read (his Act 5 screen); the other tabs are kept, not used
+  openers: { label: 'What a cat says first', moment: 'Act 5, Sir Irwin’s hello on the living room screen', why: 'Only the first line on Sir Irwin’s tab is read: it opens his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their greetings here are kept, not used.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 0, goalByTab: { irwin: 1 },
     fields: [line('The greeting', 'How this cat says hello, before it says anything useful')] },
-  closers: { label: 'What a cat says last', moment: 'Acts 2 and 4, the moment a cat finishes', why: 'The sign-off at the bottom of a cat’s testimony, after the secret middle has landed.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 8,
+  closers: { label: 'What a cat says last', moment: 'Act 5, Sir Irwin’s goodbye on the living room screen', why: 'Only the first line on Sir Irwin’s tab is read: it closes his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their sign-offs here are kept, not used.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 0, goalByTab: { irwin: 1 },
     fields: [line('The sign-off', 'One short sentence in this cat’s voice, adding nothing')] },
-  refusals: { label: 'What a cat says to brush you off', moment: 'Acts 2 and 4, when a cat will not talk to you', why: 'What a cat says when it declines to talk to this guest. Funny, in character, and it gives nothing away.', group: 'The household', tabs: 'cats4', guide: 'refusal', goalPerTab: 8,
+  // retired 23 Oct 2026 (Jon, secretLines): the cats say only their hint lines and never brush a guest off; lines already written are kept
+  refusals: { label: 'Brush-offs (retired)', moment: 'Retired 23 Oct 2026: the cats say only their hint lines', why: 'What a cat said when it would not talk. The cats now always give their hint line, so nothing reads these. Kept, not used.', group: 'The household', tabs: 'cats4', guide: null, goalPerTab: 8, hidden: true, retired: true,
     fields: [line('The brush-off', 'How this cat says no, in a sentence or two')] },
   smalltalk: { label: 'Cat chatter, passing by', moment: 'All night: a passing line on each phone, and on the room screens', why: 'A line a cat mutters as it passes a phone at rest, and on the room screens beside the real lines. Never about the case.', group: 'The household', tabs: 'cats', guide: 'smalltalk', goalPerTab: 8,
     fields: [line('The line', 'Something this cat would mutter about the house')] },
@@ -189,7 +194,7 @@ export const AREAS = {
       { key: 'label', label: 'Which moment', placeholder: 'Pick one', kind: 'select', options: STUDY_LABELS },
       { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Fifteen minutes.', kind: 'textarea', main: true },
     ] },
-  trailoffs: { label: 'Granolia losing her thread (retired)', moment: 'Retired: Granolia misremembers one detail instead', why: 'The old way. Granolia now gets one detail wrong instead of trailing off, so nothing reads these.', group: 'The household', tabs: null, guide: 'trailoff', goal: 8, hidden: true, retired: true,
+  trailoffs: { label: 'Granolia losing her thread (retired)', moment: 'Retired: Granolia, like every cat, says only her hint line', why: 'The old way Granolia lost her thread. Since 23 Oct 2026 she says only her hint line, so nothing reads these. Kept, not used.', group: 'The household', tabs: null, guide: null, goal: 8, hidden: true, retired: true,
     fields: [line('The aside', 'e.g. … that’s how I remember it, anyway. *snrk.* Mostly.')] },
 
   // — Words on the phones —
@@ -199,7 +204,7 @@ export const AREAS = {
       { key: 'title', label: 'Heading, in capitals', placeholder: 'e.g. YOUR PHONE', kind: 'text' },
       { key: 'body', label: 'What it says, one to three sentences', placeholder: 'e.g. It is your notebook, your map, and your memory tonight. Keep it on you.', kind: 'textarea', main: true },
     ] },
-  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused, every notice', why: 'The fixed words that no character is speaking: the door, the lobby, no signal, paused, the notices between beats, the safe’s numbers. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: COUNTED_UI_LABELS.length,
+  ui_copy: { label: 'The phone’s own little lines', moment: 'All night: the door, the lobby, no signal, paused, every notice', why: 'The fixed words that no character is speaking: the door, the lobby, no signal, paused, the notices between beats. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: 'ui_copy', goal: COUNTED_UI_LABELS.length,
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which screen', placeholder: 'Pick one', kind: 'select', options: UI_LABELS },
@@ -254,7 +259,8 @@ export const AREAS = {
     ] },
 
   // — Blanks and frames —
-  pools: { label: 'Blanks: rooms, times, counts', moment: 'Acts 2 and 4, dropped into a cat’s testimony', why: 'Cat lines have blanks like [ROOM]. These short phrases fill them. Lowercase, no full stop.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10,
+  // retired 23 Oct 2026 (Jon, secretLines): only the secret lines had blanks; lines already written are kept
+  pools: { label: 'Blanks (retired)', moment: 'Retired 23 Oct 2026: only the cats’ secret lines had blanks', why: 'Short phrases that filled blanks like [ROOM] in the secret lines. Those are retired, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: 'pools', goalPerTab: 10, hidden: true, retired: true,
     fields: [line('A short phrase', 'e.g. the scullery')] },
   // retired 22 Oct 2026: W-O-O-F News replaced the news frames; lines already written are kept
   echo_frames: { label: 'News frames (retired)', moment: 'Retired 22 Oct 2026: W-O-O-F News replaced the news frames', why: 'The old news wrapper. W-O-O-F News plays instead, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: null, guide: 'echo_frame', goal: 8, hidden: true, retired: true,
@@ -263,7 +269,8 @@ export const AREAS = {
       { key: 'before', label: 'Before the gap (start with ...)', placeholder: 'e.g. ...the morning post brings word of', kind: 'textarea', main: true },
       { key: 'after', label: 'After the gap (end with ...)', placeholder: 'e.g. , which the household calls exaggerated and the post calls Tuesday...', kind: 'textarea' },
     ] },
-  templates: { label: 'Stationery designs', moment: 'Act 2, the paper the safe pays out', why: 'The seven blank documents (receipt, telegram…) that get secret text printed on them live.', group: 'Blanks and frames', tabs: null, guide: 'template', goal: 7 },
+  // retired 23 Oct 2026 (Jon): the Act 2 safe is taken out, so no document is ever shown; lines already written are kept
+  templates: { label: 'Stationery designs (retired)', moment: 'Retired 23 Oct 2026: the Act 2 safe is taken out', why: 'The seven blank documents the safe paid out. The safe is gone, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: null, guide: null, goal: 7, hidden: true, retired: true },
   epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
@@ -328,9 +335,9 @@ export const AREA_GROUPS = ['The characters', 'The household', 'Words on the pho
 // One sentence under each group heading on the home page.
 export const GROUP_WHY = {
   'The characters': 'Who the guests become. The game deals these at random on the night.',
-  'The household': 'The four cats and Sir Irwin. You write their manners; Claude writes their secrets.',
+  'The household': 'The four cats and Sir Irwin. You write their manners; the game picks which hint line each guest hears.',
   'Words on the phones': 'Everything a phone says that no character is speaking, and the questions every phone asks.',
-  'Blanks and frames': 'Fill-in-the-blank pieces. On the night the game drops its secret words into these.',
+  'Blanks and frames': 'Fill-in-the-blank pieces. On the night the game fills in the names.',
   'The bags': 'The one physical part of the night.',
 }
 
@@ -405,7 +412,6 @@ export function lintItem(area, text) {
     case 'ui_copy':
     case 'role_cards':
       if (!CAPS_PREFIX.test(text)) return 'Pick which screen or card this is in the first box.'
-      if (/^(NUMBERS|NOTICE SCRAP):/.test(text) && !(text.includes('[A]') && text.includes('[B]') && text.includes('[C]'))) return 'Keep [A], [B] and [C] in the line: the safe’s numbers go there.'
       if (/^STOPS:/.test(text) && text.replace(/^STOPS:\s*/, '').split(',').filter(w => w.trim()).length !== 5) return 'Five words, low to high, with commas between them.'
       return null
     case 'study_lines':
@@ -655,6 +661,18 @@ export const ADDITIONS = [
     fileTasks: FILED_FOR_AUDIT,
     fileDecisions: FILED_DECISIONS_FOR_AUDIT,
     answerDecisions: ANSWERED_FOR_AUDIT,
+  },
+  {
+    // 23 Oct, later: Jon retires the cats' secret lines and takes the Act 2
+    // safe out. His answer and the safe's decision recorded, the secret-set
+    // cards marked done with the reason, two replaced by cards that no
+    // longer mention the secrets, and the deploy before the practice game.
+    id: '2026-10-23-secret-lines',
+    tasks: SECRET_LINES_TASKS,
+    decisions: SECRET_LINES_DECISIONS,
+    retireTasks: RETIRED_FOR_SECRET_LINES,
+    fileTasks: FILED_FOR_SECRET_LINES,
+    answerDecisions: SECRET_LINES_ANSWER,
   },
 ]
 

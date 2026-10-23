@@ -13,7 +13,7 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 - **In Acts 2 and 4 they pop up at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the Parlour plan's seed, stored with the case.
 - **In Act 6 both sets come at the start**, before the Relay Drawing. None pops up during the drawing.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
-  - If a phone is on another screen (a cat greeting, a puzzle), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
+  - If a phone is on another screen (a cat greeting, a notice; the Act 2 safe puzzle was taken out on 23 October), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
 - **Every phone lights up at the same moment** with one set: three questions in a row, two answers each. Tap one.
 - **Boo hosts the Parlour Games** (flavor only). Each game opens with one of her six lines, picked at random (`docs/handoff-2026-10-22.md` §6b). She judges whatever you pick and never hints which answer she likes.
 - **No numbers, no scores, no "+1"** anywhere on any phone. Ever.
@@ -144,7 +144,7 @@ For **each question**, the deal picks one cat who is secretly listening: **Salem
 In Act 4, cat information uses the group's average affection, as Canon says.
 
 **The lean table.** Each question needs one "leaning answer" for each of the four cats. **Jon must never see this table**, because it would give him an edge. It must not go in the repo, and Jon's workshop account must not be able to read it. Treat it like sealed content.
-*Built 22 Oct:* `npm --prefix scripts run leans` fills every blank lean blind through the Claude API, straight into `sealed/parlour_leans`, printing counts only (Jon's call, 22 Oct: generated, since Jenna may not have time). It never overwrites a lean already there. Jenna can still change any lean on her Steward page, tab "The cats' leans".
+*Built 22 Oct:* `npm --prefix scripts run leans` fills every blank lean blind through the Claude API, straight into `sealed/parlour_leans`, printing counts only (Jon's call, 22 Oct: generated, since Jenna may not have time). It never overwrites a lean already there. Jenna can still change any lean on their Steward page, tab "The cats' leans".
 
 ---
 

@@ -36,7 +36,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   const tabs = session.host ? [...TABS, { key: 'host', label: 'Host' }] : TABS
   const shown = tabs.some(t => t.key === tab) ? tab : 'you'
   const now = nowCards(session, notes, night.act)
-  const waiting = now.filter(c => c.kind !== 'testimony' && c.kind !== 'document' && c.kind !== 'clue').length
+  const waiting = now.filter(c => c.kind !== 'testimony' && c.kind !== 'clue').length
 
   // When something new lands for this act (a card, or a new step in the Act 2
   // rooms), the phone goes to Now on its own.
@@ -62,7 +62,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       </header>
 
       <section className="sheet" aria-live="polite">
-        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} meetNote={meetNote} />}
+        {shown === 'now' && <Now uid={uid} night={night} content={content} notes={notes} cards={now} lights={lights} meetNote={meetNote} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
@@ -85,14 +85,14 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // What to do at this moment: the cards dealt for this act, newest first,
 // each one gone once it has been answered. When there is nothing to do the
 // screen says so plainly; that is a real state, not an error.
-function Now({ uid, night, session, content, notes, cards, lights = null, meetNote = null }) {
+function Now({ uid, night, content, notes, cards, lights = null, meetNote = null }) {
   return (
     <div className="now">
       {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
       {cards.length === 0 && !lights && (
         <p className="moment-text quiet-line">{night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'}</p>
       )}
-      {cards.map(c => <Card key={c.id} card={c} uid={uid} nightId={night.nightId} notes={notes} session={session} />)}
+      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} />)}
       {night.act === 6 && <Eliminations night={night} content={content} />}
     </div>
   )

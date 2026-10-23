@@ -15,9 +15,9 @@
 //    toward: its fitting answer three times in four, the other one otherwise
 //
 // The fitting answer comes from the lean table (sealed/parlour_leans), which
-// Jenna fills in from the Steward page. Jon never sees it, so it is sealed
-// like a kernel: it is copied into cases/{nightId} at the deal and read from
-// there. A question with no lean yet gets a fitting answer from the seed.
+// Jenna fills in from the Steward page. Jon never sees it, so it is sealed:
+// it is copied into cases/{nightId} at the deal and read from there. A
+// question with no lean yet gets a fitting answer from the seed.
 //
 // SEAL RULE. The plan and the leans live only in cases/{nightId}. Nothing
 // here prints, logs or returns them to a caller other than the dealer.

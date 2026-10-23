@@ -31,7 +31,8 @@ Line format is the one the Workshop already checks in `app/src/lib/content.js`:
 
 Some items carry a second property, joined with `; `. Example: `Tin of Altoids — smell: minty; sound: rattles`.
 The Workshop lint only checks the first property, so this passes. Anything that reads these lines later
-(the packer, the generator) must split on `; ` and read every property.
+(the packer; until 23 Oct 2026 also the secrets generator, now deleted) must split on `; ` and read every
+property.
 
 ## Step 2: add the items to the Workshop, additively
 
@@ -56,8 +57,9 @@ Write these rules into task card 26 and into `chats/docs/sirwin-manor-bag-system
 - **Each bag has at least 2 clueable properties.**
 - **Prefer not** to put two items with the same property in one bag.
 - **Taste backups:** the second copy of a Taste item goes in the same bag as the first, so a clue survives being eaten.
-- **Stacked clues:** list every pair of properties whose holders overlap in exactly one bag. The generator must never
-  give the same player both halves of such a pair. Report only the count of such pairs to Jon.
+- **Stacked clues:** list every pair of properties whose holders overlap in exactly one bag. Whatever deals the bag
+  clues (since 23 Oct 2026 there is no secrets generator; the bags station, `functions/lib/bags.js`, deals them)
+  must never give the same player both halves of such a pair. Report only the count of such pairs to Jon.
 - **Output:** the packing goes to `sealed/bags` only. Jenna's view shows it as a checklist: bag number, then its items.
 
 Also record in the bag system doc:

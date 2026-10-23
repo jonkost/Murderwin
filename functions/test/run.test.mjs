@@ -5,7 +5,7 @@ import { walkLights } from './lights-walk.mjs'
 import { createNight, join, MOTIVES } from '../lib/night.js'
 import { hostCommand, nextOf, prevOf, firstBeat, player } from '../lib/run.js'
 import {
-  NIGHT, STATIONS, affectionOutcome, fillPools, assembleTestimony, stationFor, beatsOf, ms, openWindow,
+  NIGHT, STATIONS, stationFor, beatsOf, ms, openWindow, runAction,
 } from '../lib/deal.js'
 
 // A throwaway night with four phones. Nothing here is a real case; the
@@ -13,10 +13,6 @@ import {
 async function party() {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
-  db.store.set('safe_content/pools', { items: [
-    { id: 'p1', text: 'the scullery', pool: 'room', order: 0 }, { id: 'p2', text: 'the parlour', pool: 'room', order: 1 },
-    { id: 'p3', text: 'a quarter past six', pool: 'time', order: 0 }, { id: 'p4', text: 'nearly seven', pool: 'time', order: 1 },
-  ] })
   const { nightId } = await createNight(db)
   const phones = { jon: 'uid-jon', jessa: 'uid-jessa', jacob: 'uid-jacob', marie: 'uid-marie' }
   for (const [name, uid] of Object.entries(phones)) await join(db, { uid, nightId, name: name[0].toUpperCase() + name.slice(1) })
@@ -33,6 +29,8 @@ test('the beat list walks every act in order and stops where the host has their 
   assert.deepEqual(nextOf(2, 'checkin'), { act: 3, beat: 'down' })
   assert.equal(nextOf(7, 'result'), null)
   assert.deepEqual(prevOf(3, 'down'), { act: 2, beat: 'checkin' })
+  assert.deepEqual(beatsOf(2).map(b => b.key), ['orient', 'news', 'cat', 'checkin'], 'Act 2 has no safe')
+  assert.ok(!Object.values(NIGHT.acts).some(a => a.beats.some(b => b.action === 'deal:puzzle')), 'no beat deals a puzzle')
   assert.equal(prevOf(2, 'orient'), null, 'nothing before the power returning')
   for (const act of Object.keys(NIGHT.acts)) assert.ok(beatsOf(act).length > 0, `act ${act} has beats`)
 })
@@ -72,7 +70,7 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
   await hostCommand(db, { nightId, command: 'power', now })
   for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
 
-  // Act 2: news, cat, puzzle, a Parlour Game when it is due, check-in
+  // Act 2: news, cat, a Parlour Game when it is due, check-in
   await next() // news
   await next() // cat: the first wave goes, one guest to each cat; everyone else waits in the living room
   const sent = uids.filter(uid => session(db, uid).lights?.step === 'go')
@@ -91,17 +89,15 @@ test('the whole night, one Next at a time: every phone gets the same shape of th
     for (const g of greets) assert.ok(!g.hint && g.lines.length === 1, 'a greeting carries no hint')
     const t = all.filter(x => x.outcome !== 'greet')
     assert.equal(t.length, 1, 'one real hint')
-    assert.ok(['full', 'partial', 'deflect'].includes(t[0].outcome))
-    assert.ok(t[0].lines.length >= 1)
-    assert.ok(!t[0].lines.join(' ').includes('[ROOM]'), 'blanks are filled')
-    assert.ok(t[0].hint?.text, 'the greeting carries the private hint (a marked stand-in until it is written)')
+    assert.equal(t[0].outcome, undefined, 'no pass, no partial, no brush-off')
+    assert.deepEqual(t[0].lines, [], 'the cat says only its hint line')
+    assert.ok(t[0].hint?.text, 'the card carries the private hint (a marked stand-in until it is written)')
     assert.notEqual(t[0].cat, 'irwin', 'Sir Irwin keeps no room in Act 2')
     if (t[0].cat === 'granolia') assert.equal(t[0].room, 'the Study')
     assert.equal(session(db, uid).lights.step, 'done')
   }
-  assert.ok(db.store.get(`nights/${nightId}/private/puzzles`).safe.jon.length === 3, 'the safe answer is kept by guest key')
-  await next() // puzzle
-  for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 1)
+  assert.equal(db.store.get(`nights/${nightId}/private/puzzles`), undefined, 'no safe numbers anywhere')
+  for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 0, 'no safe on any phone')
   // the first Parlour Game pops up on its own when it is due: the once-a-minute tick
   const sched = db.store.get(`nights/${nightId}/private/parlour`)
   assert.equal(sched.act, 2); assert.equal(sched.count, 5)
@@ -338,61 +334,11 @@ test('a Parlour Game opens once at its time: a second tick opens nothing twice a
   assert.equal(priv6.setId, c.parlourPlan.acts[2][1].setId, 'the set the plan named for it')
 })
 
-test('the safe: wrong twice, then it gives way; right pays a document once', async () => {
-  const { db, nightId, phones } = await party()
+test('the safe is gone: no beat deals it, the old action is refused, and no phone may call solve', async () => {
+  const { db, nightId } = await party()
   await hostCommand(db, { nightId, command: 'act', arg: 2 })
-  await hostCommand(db, { nightId, command: 'beat', arg: 'cat' })
-  await hostCommand(db, { nightId, command: 'beat', arg: 'puzzle' })
-  const uid = phones.jessa
-  const puzzle = cards(db, uid, 'puzzle')[0]
-  const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
-  assert.deepEqual(Object.keys(safe).sort(), ['jacob', 'jessa', 'jon', 'marie'], 'the safe is kept by guest, never by phone')
-  const answer = safe.jessa
-  const right = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
-  assert.equal(right.right, true)
-  assert.equal(cards(db, uid, 'document').length, 1)
-  const again = await player.solve(db, { nightId, uid, cardId: puzzle.id, entry: answer })
-  assert.equal(again.already, true)
-  assert.equal(cards(db, uid, 'document').length, 1)
-
-  // Marie's battery dies: her right numbers open the safe on her new phone first try
-  await join(db, { uid: 'uid-marie-2', nightId, name: 'Marie' })
-  const p3 = cards(db, 'uid-marie-2', 'puzzle')[0]
-  assert.ok(p3, 'the puzzle card came along')
-  const moved = await player.solve(db, { nightId, uid: 'uid-marie-2', cardId: p3.id, entry: safe.marie })
-  assert.equal(moved.right, true)
-  assert.equal(moved.tries, 1)
-  assert.equal(cards(db, 'uid-marie-2', 'document')[0].gaveWay, undefined)
-
-  const uid2 = phones.jacob
-  const p2 = cards(db, uid2, 'puzzle')[0]
-  assert.equal((await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })).right, false)
-  assert.equal((await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })).right, false)
-  const gave = await player.solve(db, { nightId, uid: uid2, cardId: p2.id, entry: [1, 2, 3] })
-  assert.equal(gave.gaveWay, true)
-  assert.equal(cards(db, uid2, 'document')[0].gaveWay, true)
-})
-
-test('affection gates a testimony: Irwin never fails, Boo needs four, the others roll', () => {
-  for (let i = 0; i < 20; i++) assert.equal(affectionOutcome('irwin', 1), 'full')
-  assert.equal(affectionOutcome('boo', 3), 'deflect')
-  assert.equal(affectionOutcome('boo', 4), 'full')
-  assert.equal(affectionOutcome('salem', 5, () => 4), 'partial')   // roll 5, level 5
-  assert.equal(affectionOutcome('salem', 5, () => 0), 'full')      // roll 1
-  assert.equal(affectionOutcome('zimothy', 1, () => 2), 'deflect') // roll 3
-})
-
-test('pools fill every blank; Granolia gets exactly one blank wrong; a partial answer is one sentence', () => {
-  const pools = { room: ['the scullery', 'the parlour'], time: ['six', 'seven'] }
-  const k = 'Seen in [ROOM] at [TIME], and again in [ROOM].'
-  const straight = fillPools(k, pools, { pick: () => 0 })
-  assert.equal(straight, 'Seen in the scullery at six, and again in the scullery.')
-  const garbled = fillPools(k, pools, { garble: true, pick: () => 0 })
-  assert.equal(garbled, 'Seen in the parlour at six, and again in the scullery.')
-  const t = assembleTestimony({ cat: 'salem', outcome: 'partial', opener: 'Hm.', closer: 'There.', refusal: 'No.', kernel: 'One thing. Two things.' })
-  assert.deepEqual(t.lines, ['Hm.', 'One thing.', 'There.'])
-  const d = assembleTestimony({ cat: 'salem', outcome: 'deflect', opener: 'Hm.', closer: 'There.', refusal: 'No.', kernel: 'One thing.' })
-  assert.deepEqual(d.lines, ['No.'])
+  await assert.rejects(runAction(db, nightId, 2, 'cat', 'deal:puzzle'), e => e.code === 'invalid')
+  assert.equal(player.solve, undefined)
 })
 
 test('the study is the clock: a group at study position p is in the study at rotation p', () => {

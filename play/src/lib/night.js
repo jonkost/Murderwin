@@ -85,9 +85,8 @@ export function isDark(night) {
 // phone and room screen. Every night rehearses unless the workshop's "This
 // is the party night" box made it the party (nights.forceRehearsal false,
 // the same test the dealer uses), and a fake-players dry run is never the
-// party either. The party night never shows the band, even if its secrets
-// fell back to rehearsal text (the Host tab says so instead). The band
-// hides with everything else through the blackout and the role prompt.
+// party either. The band hides with everything else through the blackout
+// and the role prompt.
 export function isRehearsalNight(night) {
   if (!night) return false
   return night.forceRehearsal !== false || night.dryRun === true
@@ -149,15 +148,21 @@ export function needsHandoverReset(session, lastSeen) {
   return g > (Number(lastSeen) || 0)
 }
 
+// The kinds of card a phone shows. A card of any other kind is never shown:
+// a session from an older build may still hold the Act 2 safe, its paper or
+// the scrap of paper with its numbers (taken out 23 Oct 2026).
+export const KINDS = new Set(['notice', 'testimony', 'group', 'station', 'clue', 'result', 'award', 'role'])
+function shown(c) { return !!c && KINDS.has(c.kind) && !(c.kind === 'notice' && c.key === 'scrap') }
+
 // Everything dealt to this phone, newest last.
-export function cardsOf(session) { return Array.isArray(session?.cards) ? session.cards : [] }
+export function cardsOf(session) { return Array.isArray(session?.cards) ? session.cards.filter(shown) : [] }
 
 // The cards that belong on the Now tab: this act's, not yet put away.
 // Notices and instructions go away once tapped; clues stay in Clues. The role
 // card is kept all night too (re-readable from the You tab, behind a tap),
 // but it is never listed among the clues.
-export const TRANSIENT = new Set(['notice', 'group', 'station', 'puzzle', 'result', 'award'])
-export const KEEPS = new Set(['testimony', 'document', 'clue', 'result', 'role'])
+export const TRANSIENT = new Set(['notice', 'group', 'station', 'result', 'award'])
+export const KEEPS = new Set(['testimony', 'clue', 'result', 'role'])
 
 export function nowCards(session, notes, act) {
   const seen = notes?.seen ?? {}

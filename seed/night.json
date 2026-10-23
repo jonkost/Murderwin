@@ -24,8 +24,7 @@
     "2": { "name": "Lights Out", "plain": "First investigation", "beats": [
       { "key": "orient", "name": "Orientation", "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.", "action": "notice:orient" },
       { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news", "screen": "news", "sound": "chime-news" },
-      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests in waves, one at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest visits all four and scans the code in each room. Only one of the four gives that guest a real hint. Everyone else waits in the living room.", "action": "deal:encounter" },
-      { "key": "puzzle", "name": "The first puzzle", "what": "A small puzzle on each phone. It needs what the cat just said. Solving it pays out a document.", "action": "deal:puzzle" },
+      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests in waves, one at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest visits all four and scans the code in each room. Only one of the four gives that guest a real hint, one line on the phone; the other three only say hello. Everyone else waits in the living room.", "action": "deal:encounter" },
       { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
     ] },
     "3": { "name": "Supper Is Served", "plain": "Dinner", "beats": [

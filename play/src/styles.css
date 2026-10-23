@@ -4,7 +4,7 @@
   /* The house palette (Jon, 8 Oct 2026). Names are ours; the hex are his. */
   --brand-blue:   #001925;  /* Manor blue — the ground */
   --brand-red:    #bf1925;  /* Wax red — buttons, the seal, the wallpaper */
-  --brand-claret: #592F32;  /* Claret — pressed buttons, document ink, warm cards */
+  --brand-claret: #592F32;  /* Claret — pressed buttons, warm cards */
   --brand-soot:   #332526;  /* Soot — deepest warm shadow */
   --brand-ash:    #332C2D;  /* Ash — neutral dark, borders, dividers */
   --brand-brass:  #A6A253;  /* Brass — highlights, rules, Irwin's hints, "in" */
@@ -271,21 +271,7 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .speaker .where { color: var(--dim); font-size: 0.9rem; }
 .speaker .chip-tag { margin-left: auto; }
 .said { display: grid; gap: 0.55rem; font-size: 1.1rem; }
-.said.deflect { font-style: italic; color: var(--dim); }
 .testimony.compact .said { font-size: 1rem; }
-
-/* the safe */
-.safe { display: grid; gap: 0.8rem; justify-items: center; }
-.dials { display: flex; gap: 0.6rem; }
-.dial { width: 4rem; height: 3.6rem; text-align: center; font: inherit; font-size: 1.6rem; font-variant-numeric: tabular-nums; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 0.6rem; }
-.dial:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
-
-/* a document on stationery */
-.document .paper { background: var(--brand-parchment); color: #2a1f1a; border-radius: 0.4rem; padding: 1.1rem 1.2rem; display: grid; gap: 0.6rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transform: rotate(-0.6deg); }
-.paper-kind { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b5a4e; }
-.paper-big { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 2rem; font-weight: 700; letter-spacing: 0.04em; line-height: 1; color: var(--brand-claret); }
-.paper-text { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 1.05rem; line-height: 1.4; }
-.paper-note { font-style: italic; color: #3b2d6b; font-size: 1rem; transform: rotate(1.2deg); justify-self: end; }
 
 /* groups and stations */
 .members { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 1.1rem; }
@@ -491,33 +477,6 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .reveal-name.motive { font-size: 5vw; color: var(--good); }
 .reveal-sub { font-size: 2.6vw; color: var(--dim); margin: 1vw 0 0; }
 
-/* a document on one of the seven stationery designs (G, 18 Oct 2026): the
-   blank design is the background, the text sits inside its margins and wraps
-   at phone width; a design the phone does not know keeps the plain block */
-.document .paper.paper-on { background-color: var(--brand-parchment); background-repeat: no-repeat; background-size: 100% 100%; background-position: center; min-height: 24rem; padding: 3.6rem 2rem 3rem; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
-.document .paper.paper-on .paper-kind { color: #6b5a4e; }
-.paper-on .paper-text { font-size: 1.02rem; }
-.paper-on .paper-big { font-size: clamp(1.3rem, 7vw, 2rem); overflow-wrap: normal; hyphens: auto; }
-.ink-mono .paper-text, .ink-mono .paper-kind { font-family: ui-monospace, 'Courier New', Menlo, monospace; }
-.ink-mono .paper-big { font-family: ui-monospace, 'Courier New', Menlo, monospace; letter-spacing: 0.08em; }
-.ink-poster .paper-big { font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.02em; }
-.ink-poster .paper-text { font-family: ui-serif, 'New York', Georgia, serif; }
-.ink-hand .paper-text { font-family: 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', 'Segoe Script', cursive; font-size: 1.15rem; line-height: 1.5; }
-.ink-hand .paper-big { font-family: 'Snell Roundhand', 'Bradley Hand', 'Brush Script MT', 'Segoe Script', cursive; }
-.ink-serif .paper-big { font-family: ui-serif, 'New York', Georgia, serif; font-variant: small-caps; }
-.paper-telegram { padding-top: 4.4rem; }
-.paper-telegram .paper-text { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.95rem; }
-.paper-receipt { padding-top: 3.8rem; }
-.paper-household-notice { padding: 3.2rem 2.6rem 3.6rem; }
-.paper-citation-form { padding: 3.4rem 2.4rem 4rem; }
-.paper-personal-letter { padding: 2.6rem 1.6rem 2.6rem 4.2rem; }
-.paper-playbill { padding: 5.8rem 2.6rem 5.6rem; text-align: center; }
-.paper-playbill .paper-note { justify-self: center; }
-.paper-mourning-card { padding: 3.6rem 2.6rem 6.6rem; min-height: 27rem; text-align: center; color: #1a1614; }
-.paper-mourning-card .paper-big { color: #1a1614; }
-.paper-mourning-card .paper-note { justify-self: center; }
-.preview-paper { position: fixed; right: 0.6rem; top: 0.6rem; z-index: 50; opacity: 0.85; background: var(--card); }
-
 /* ---- the room screens (D, 18 Oct 2026): the beats' screens, the board, the three corners ---- */
 .kiosk.dark { background: #050505; color: #050505; }
 .kiosk.dark.paused { color: #3a3a3a; }
@@ -582,7 +541,10 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .dealt.lights { text-align: center; justify-items: center; border-color: var(--good); }
 .dealt.lights h3 { font-size: 1.5rem; }
 .dealt.lights.lights-go { box-shadow: 0 0 0 2px var(--good); }
-.hint-line { margin: 0.2rem 0 0; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 1.05rem; }
+/* the hint cat's line: the whole of what it says; under a greeting, set apart by a rule */
+.hint-line { margin: 0; font-size: 1.1rem; }
+.said + .hint-line { margin-top: 0.2rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.testimony.compact .hint-line { font-size: 1rem; }
 .hint-line.placeholder { color: var(--dim); font-style: italic; }
 /* the study's trace on a phone: the room screen's picture, phone-sized */
 .dealt .trace .trace-frame { width: min(72vw, 22rem); height: min(72vw, 22rem); }

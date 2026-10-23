@@ -168,90 +168,74 @@
   ],
   "guides": {
     "opener": {
-      "what": "The first sentence of every cat testimony — pure personality, zero facts. At game time the game glues OPENER + secret MIDDLE + CLOSER into one speech, so any opener you write can land in front of any secret in the house. Players meet these mainly in the Act 2 solo cat encounter (four cats, four rooms) and again in Act 4 when delayed testimony resurfaces in pairs.",
+      "what": "Sir Irwin's hello when he speaks to the whole room at cake in Act 5, on the living room TV: the first line of his countdown of motive cards. Only the first line on his tab is read. Since 23 Oct 2026 the four cats say only their lines from the Cat Hint Lines, so nothing on their tabs reaches the night.",
       "syntax": [
-        "One or two short sentences, 15 words maximum — it sits above the secret middle, not instead of it.",
-        "First person, speaking to a single visitor. 'You' is welcome here — only secret middles ban it.",
-        "Zero information: no rooms, times, names, objects, numbers, or events. If a noun could be mistaken for evidence, cut it.",
-        "End where the fact would begin — a lead-in, a command ('Sit.'), or a hard stop. A question is fine only if it's rhetorical.",
-        "Plain prose only: no square-bracket blanks like [ROOM] ever — those live inside secret middles, never in voice layers.",
-        "Never remark that a talking animal is unusual, and never write animal sounds — no 'meow', no purring described. Granolia's *snrk* is the one licensed tic.",
-        "Write in the tab's voice so hard that the line could not sit in any other cat's tab."
+        "One or two short sentences, 15 words at most. It sits above his motive cards, not instead of them.",
+        "Spoken to the whole room at once, not to one guest.",
+        "Zero information: no rooms, times, names, objects, numbers or events. The cards that follow carry everything.",
+        "End where the cards begin: a lead-in, or a hard stop.",
+        "Plain prose only: no square-bracket blanks like [ROOM].",
+        "Never remark that a talking animal is unusual, and never write animal sounds: no 'woof', no barking described.",
+        "Write in Sir Irwin's voice: earnest, incapable of lying, overjoyed to be listened to."
       ],
-      "test": "Read the line, then imagine any secret following it — does it still fit perfectly?",
+      "test": "Read the line, then imagine any motive cards following it. Does it still fit?",
       "good": [
         {
           "text": "I did a very good job of noticing something. Are you ready?",
-          "why": "Pure Irwin: proud of the noticing, none of the noticed. Ends by handing the stage to whatever the secret middle says."
+          "why": "Pure Irwin: proud of the noticing, none of the noticed. Ends by handing the stage to his cards."
         },
         {
-          "text": "Consider this a professional courtesy. The first consultation is complimentary.",
-          "why": "Zimothy frames what follows as a billable service while containing none of it — transactional voice, empty of facts."
-        },
-        {
-          "text": "I don't deal in theories. I deal in conclusions.",
-          "why": "Salem's confident wrongness in miniature; it works equally well in front of anything he is about to get backwards."
+          "text": "Everyone sit down. This is the most important thing I have ever said.",
+          "why": "Earnest and proud, with nothing in it: the cards that follow do the telling."
         }
       ],
       "bad": [
         {
-          "text": "I heard raised voices in the parlour around teatime.",
-          "why": "Breaks the zero-information rule: a place and a time are secret middle territory, and they would collide with the pool values injected right beside them."
+          "text": "I saw someone in the parlour around teatime.",
+          "why": "Breaks the zero-information rule: a place and a time are evidence, and his cards are the only clue he gives."
         },
         {
-          "text": "Odd, isn't it — a cat holding forth? And yet here I am.",
-          "why": "Breaks the founding rule: nobody in the fiction, least of all a cat, ever remarks on the talking."
+          "text": "Odd, isn't it, a dog making a speech? And yet here I am.",
+          "why": "Breaks the founding rule: nobody in the fiction ever remarks on the talking."
         }
       ],
       "perTab": {
-        "irwin": "The dog. Earnest, incapable of lying, overjoyed to be consulted. His openers wag: eager, guileless, a little too proud of having noticed something.",
-        "boo": "Guarded glamour, not snobbery — an alley cat who became a society lady. If she is speaking at all you have earned it, and she still makes it cost: clipped lines, two to six words is her natural length.",
-        "granolia": "The snorting study nerd, honest and entirely without malice. Delighted anyone came to the study at all — chatty, confiding, already apologizing for her memory.",
-        "zimothy": "The old family solicitor: transactional, itemized, everything on the clock. His openers present what follows as a service being provided — brevity is free, the rest is billed.",
-        "salem": "The long-time groundskeeper who mutters AT you, not with you. Serenely confident; treats being consulted as overdue recognition of the only competent investigator in the house."
+        "irwin": "The dog. Earnest, incapable of lying, overjoyed to be listened to. His hello wags: eager, guileless, a little too proud of what he is about to show."
       }
     },
     "closer": {
-      "what": "The last sentence of a testimony — the sign-off after the information lands. The game picks any closer to follow any secret middle, so the line must react to 'what I just said' without knowing what it was. Players see it at the bottom of every Act 2 cat encounter and on any testimony that resurfaces in Act 4.",
+      "what": "Sir Irwin's goodbye at cake in Act 5, on the living room TV: the last line, after his countdown of motive cards. Only the first line on his tab is read. Since 23 Oct 2026 the four cats say only their lines from the Cat Hint Lines, so nothing on their tabs reaches the night.",
       "syntax": [
-        "16 words maximum — one or two sentences, or a chain of clipped fragments. Shorter lands harder.",
-        "Refer to what was said only by pronoun — 'that', 'it', 'what I know'. Never characterize it ('about the silver' is out).",
-        "Add nothing: no new place, time, name, number, or object after the secret middle has landed.",
-        "Keep the cat's relationship to truth intact: Salem never doubts himself, Irwin never hedges, Zimothy never hands over a freebie, Granolia never turns sharp.",
-        "Close the exchange — dismissal, deflection, running gag, or mic drop. The player should feel it is time to walk elsewhere.",
-        "Plain prose, no square-bracket blanks like [ROOM]; no remarks about talking; no written animal sounds (no 'meow', no purring) — Granolia's *snrk* excepted."
+        "16 words at most: one or two sentences. Shorter lands harder.",
+        "Refer to what he showed only by pronoun: 'that', 'it', 'what I know'. Never say what it was.",
+        "Add nothing: no new place, time, name, number or object after the cards.",
+        "Sir Irwin never hedges, takes it back or winks.",
+        "Close the speech: proud, affectionate, done. The room should feel it is time to talk.",
+        "Plain prose, no square-bracket blanks like [ROOM]; no remarks about talking; no written animal sounds."
       ],
-      "test": "Would this land just as well after ANY secret — without hinting which one it was?",
+      "test": "Would this land just as well after any set of motive cards, without hinting which?",
       "good": [
         {
-          "text": "Be clever with that. Bored again.",
-          "why": "Boo: pronoun-only reference and an instant dismissal — she ends the audience first and takes the warmth with her."
+          "text": "There. Now we all carry it. Mostly you.",
+          "why": "Refers to the cards only as 'it', stays earnest, and closes like a dog delivering a very important stick."
         },
         {
-          "text": "There. Now we both carry it. Mostly you.",
-          "why": "Irwin refers to the secret only as 'it', stays earnest, and closes the visit like a dog delivering a very important stick."
-        },
-        {
-          "text": "Argue if you must. The hedges agree with me.",
-          "why": "Salem's certainty escalates as he exits, citing the grounds as his witness — no doubt, no content."
+          "text": "That is everything. I feel much lighter.",
+          "why": "Pronoun only, relieved and proud, adding nothing."
         }
       ],
       "bad": [
         {
-          "text": "So now you know the business with the missing candlesticks.",
-          "why": "Breaks the pronoun-only rule: it characterizes the content — and invents a specific that will contradict whatever secret middle it lands after."
+          "text": "So now you know it was about the missing candlesticks.",
+          "why": "Breaks the pronoun-only rule: it names what the cards were about."
         },
         {
-          "text": "Although — hm. I may have that backwards.",
-          "why": "On the Salem tab this breaks the nature-intact rule: Salem never doubts himself. Players must discover his inversion; he can never confess it."
+          "text": "Although, hm. I may have that wrong.",
+          "why": "Sir Irwin never hedges. He can never take it back."
         }
       ],
       "perTab": {
-        "irwin": "Signs off like a dog relieved of a burden — proud, affectionate, may offer himself for petting. He can never hedge, retract, or wink.",
-        "boo": "She exits first, always. Short dismissals that end the audience and revoke the intimacy she just allowed. Six words is her sweet spot; ten is her ceiling.",
-        "granolia": "Warm, leaky sign-offs: swears a secrecy she plainly won't keep, cheerfully doubts her own memory. Her self-doubt is charming, never alarming — and never an admission she was wrong.",
-        "zimothy": "Closes like an invoice: files it, bills it, ends the gameointment. He may imply more exists at a price — never what the more is.",
-        "salem": "The mic drop. Certainty escalates as he exits — he dares you to verify, wonders nothing, concedes less."
+        "irwin": "Signs off like a dog relieved of a burden: proud, affectionate, may offer himself for petting. He can never hedge, take it back or wink."
       }
     },
     "echo_frame": {
@@ -649,7 +633,7 @@
       "what": "A PRIVATE line on one player's own device describing where they currently stand with one cat — the personal access layer shown as relationship, never as numbers. Standing is seeded by profession at the Act 1 role assignment and moves with affection through the night; players check it before the dispersed acts (2 and 4) to decide which cat to visit and when to route through a friend instead. It is also the trust dial for public moments: a room screen shows everyone the same three lines, and your private standing tells you how much yours are worth. Written in the manor narrator's voice, in the player's journal — never on a shared screen.",
       "syntax": [
         "Begin every line with exactly one tier tag in CAPS plus a colon and a space: 'LOCKED: ', 'WARMING: ', or 'IN: '. The game files the line by its tag — an untagged line cannot show.",
-        "Tiers map to the two-layer model's access levels: LOCKED = nothing (refusals ahead), WARMING = the short version, IN = the good version. The tag alone carries the tier; the body describes only the relationship.",
+        "Tiers say how warm the cat is toward this guest: LOCKED = cold, WARMING = warming up, IN = fond. The tag alone carries the tier; the body describes only the relationship.",
         "Manor-narrator voice, never cat dialogue: no quotation marks, never first person as the cat. Address the player as 'you'.",
         "One sentence, two at most; 20 words maximum after the tag.",
         "No numbers, points, scores, or the word 'affection' in the body — standing is described, never measured.",
@@ -802,7 +786,7 @@
       ]
     },
     "rules": {
-      "what": "The rulebook, one section per item — the only place the night's mechanics are ever explained. It lives on every player's phone from the moment they join, reachable all night via HELP, and Jon performs the highlights aloud during the Act 1 welcome before the blackout. It must carry a first-time guest from the QR scan to the final ballot: the premise, how to win (name Murderer + Motive + Victim), the 7 acts, talking to cats, documents and echoes, the motive menu, events, and Spill-the-Beans. It is the same text every game — nothing in it may depend on what is true tonight.",
+      "what": "The rulebook, one section per item — the only place the night's mechanics are ever explained. It lives on every player's phone from the moment they join, reachable all night via HELP, and Jon performs the highlights aloud during the Act 1 welcome before the blackout. It must carry a first-time guest from the QR scan to the final ballot: the premise, how to win (name Murderer + Motive + Victim), the 7 acts, talking to cats, the news, the motive menu, the Parlour Games, and Spill-the-Beans. It is the same text every game — nothing in it may depend on what is true tonight.",
       "syntax": [
         "Format every item exactly as SECTION TITLE — body: title in CAPS (4 words max, no punctuation inside it), then a spaced em dash, then the body.",
         "Body is 1–3 sentences, 40 words max — one phone screen, zero scrolling.",
@@ -810,7 +794,7 @@
         "Plain words first, Victorian garnish second. Write the instruction in playground English, then add at most ONE flourish — and the section must still work with the flourish deleted.",
         "Speak to 'you'. Say 'your phone', 'the household', 'the Manor' — never app, screen state, NPC, system, or any developer word.",
         "Use numerals for anything a player must count or remember: 3 things to name, 7 acts, 19 motives, the Act 5 Spill-the-Beans deadline.",
-        "Describe cats in social terms ('some are more honest than others'), never in mechanics ('affection 4+', 'inverts 60%') — the figuring-out is the game.",
+        "Describe cats in social terms ('some are more honest than others'), never in mechanics ('affection 4+', 'backwards below 4') — the figuring-out is the game.",
         "Nothing tonight-specific: no character names, no word from any motive rhyme, nothing that changes between games. Rules explain how the night works, never what is true in it."
       ],
       "test": "Read it aloud once — would an 11-year-old AND a 70-year-old both follow it with zero follow-up questions?",
@@ -830,7 +814,7 @@
       ],
       "bad": [
         {
-          "text": "THE CATS, DOCUMENTS, AND ECHOES — Cats speak on room screens, papers turn up bearing tells, and the wireless interrupts with news; note all of it in your journal as you go.",
+          "text": "THE CATS, THE NEWS, AND THE BAGS — Cats hint on your phone, W-O-O-F News interrupts on the big screen, and your bag holds six ordinary things; note all of it as you go.",
           "why": "Breaks the one-idea rule — the run-on title is the giveaway. This is three sections wearing one coat; split it so each survives a single read."
         },
         {
@@ -948,7 +932,7 @@
         "Write for the voice, not the eye: 60–120 words, short sentences, dashes and ellipses where a breath goes. This gets performed late, over party noise, possibly with punch.",
         "Open on a settling phrase — 'And so...', 'And thus...', 'So concluded...' — the audible signal that the story is closing; finish with a line that releases the room.",
         "The room already knows all three answers when this reads. It is a curtain call, not a twist — retell and savor; never build to a surprise.",
-        "Case-agnostic outside the slots: no rooms, times, or professions, and no claiming which cat or which document cracked it — every one of those varies by seed. Safe canon (Sirwin Manor, Sir Irwin's birthday, the cats' reputations) is fair game.",
+        "Case-agnostic outside the slots: no rooms, times, or professions, and no claiming which cat or which clue cracked it — every one of those varies by seed. Safe canon (Sirwin Manor, Sir Irwin's birthday, the cats' reputations) is fair game.",
         "Address the whole room ('dear guests') or nobody in particular — never a single player, and never the culprit as 'you'."
       ],
       "test": "Drop in two pun names and any rhyme off the motive menu and read it aloud — does it scan as the story of tonight, breaths included?",
@@ -1015,7 +999,7 @@
       ],
       "perTab": {
         "act1": "Everyone together, lights up and then very much out. The welcome, then the blackout: every phone buzzes at once and roles land in the dark — Murderer and Ghost hidden, and nobody (including them) learns the motive. The motive menu opens as a cross-off list from here on.",
-        "act2": "Dispersed, solo — the motive act. Beat two is the cat encounter: four cats, four rooms, everyone met by one and handed what the puzzle needs. One event card fires this act.",
+        "act2": "Dispersed, solo — the motive act. Every guest visits all four cats, one at a time; one of them gives that guest a real hint, the other three only say hello.",
         "act3": "Everyone back together — the first regroup. The room trades what the cats said and argues over the cross-off list.",
         "act4": "Dispersed in pairs — the victim act. Two event cards fire, and everything delayed earlier resurfaces here: delay, never destroy.",
         "act5": "Everyone together — the second regroup, and the last act in which a Spill-the-Beans reset can be called.",
@@ -1031,7 +1015,7 @@
         "Body shape follows use: anything grabbed mid-party (CUE SHEET, CONTINGENCY SHEET, ROOM MAP) is numbered short lines, one action per line, action first; anything performed or mailed (WELCOME SPEECH, INVITATION) is written out word for word.",
         "TECH CHECKLIST must end on the seal rule in this exact order: fire every cue in DUMMY MODE and verify kiosks against idle/chrome screens only → only after every check passes, generate the real case → touch nothing after generation.",
         "REHEARSAL PLAN runs only in dummy mode or before the case is generated; no step may put sealed-derived text where Jon can see it, and the doc itself must state that if real content ever shows during rehearsal, regeneration is mandatory.",
-        "Per-guest and per-game blanks are CAPS-in-brackets slots — [GUEST NAME], [CHARACTER], [ROOM NAME] — filled at print time. (Never reuse the six game blanks ([ROOM], [TIME] and friends) as slot names; [ROOM] belongs to the injection grammar.) No doc may mention a specific motive, quote rhyme words, or contain a step that changes with the case.",
+        "Per-guest and per-game blanks are CAPS-in-brackets slots — [GUEST NAME], [CHARACTER], [ROOM NAME] — filled at print time. No doc may mention a specific motive, quote rhyme words, or contain a step that changes with the case.",
         "Guest-facing docs (INVITATION, GUEST NOTE, ASSIGNMENT NOTE) use plain words — ages 11 and 70, one pass — and never remark that the cats talk."
       ],
       "test": "Could Jon study this doc a hundred times and still play fair — and grab it at minute 90, nine guests staring, and know what to do inside ten seconds?",

@@ -72,7 +72,7 @@ export default function Check() {
         {total} lines reached the phones{when ? ` at ${when.toLocaleString()}` : ''} for the night "{night.data?.label ?? nightId}".{' '}
         {bad === 0 ? <strong className="ok">Every one of them shows word for word.</strong> : <strong className="bad">{bad} do not match. They are marked below.</strong>}
       </p>
-      <p className="gloss">This is the copy the phones hold. If you have written more since, press "Resend rules &amp; bios" on a host phone, or start the next act, and reload this page. Lines the dealer reads at the moment of dealing (cat openers, closers, brush-offs, blanks, Parlour Games, role cards) are not copied ahead and are not listed here; the server reads them straight from the workshop.</p>
+      <p className="gloss">This is the copy the phones hold. If you have written more since, press "Resend rules &amp; bios" on a host phone, or start the next act, and reload this page. Lines the dealer reads at the moment of dealing (Sir Irwin’s openers and closers, Parlour Games, role cards) are not copied ahead and are not listed here; the server reads them straight from the workshop.</p>
       {report.map(a => (
         <section key={a.area}>
           <h2>{a.title} <span className="gloss">{a.rows.length === 0 ? 'nothing written yet' : `${a.rows.filter(r => r.ok).length} of ${a.rows.length}`}</span></h2>

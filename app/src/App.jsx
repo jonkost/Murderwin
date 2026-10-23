@@ -6,7 +6,6 @@ import { ensureSeeded } from './lib/store'
 import { PREVIEW } from './lib/previewFlag'
 import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
-import Stationery from './pages/Stationery'
 import Assets from './pages/Assets'
 import Night from './pages/Night'
 import Timeline from './pages/Timeline'
@@ -97,7 +96,6 @@ function Shell({ user }) {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/edit/:area" element={<Editor />} />
-        <Route path="/stationery" element={<Stationery />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/night" element={<Night />} />
         <Route path="/timeline" element={<Timeline />} />

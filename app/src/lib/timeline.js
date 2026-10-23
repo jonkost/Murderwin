@@ -6,8 +6,6 @@
 // A need is one of:
 //   { list, tab?, labels? }  a workshop list (or one tab of it, or some of
 //                            its labelled lines), counted live
-//   { secret, name }         a sealed part. Its status comes from the
-//                            validation report, counts only; never its words
 //   { list, also: true }     a list used again here, shown but not counted
 // Tasks and decisions find their place by their `moment` field, a row key
 // below (lib/timelineTasks.js).
@@ -54,26 +52,26 @@ export const NEEDS = {
   'act2.parlour': [{ list: 'scenarios' }],
   'act2.orient': [ui('POWER', 'ORIENT', 'YOUR ROLE', 'SHOW ROLE', 'HIDE ROLE', 'NOTICE ORIENT')],
   // The news is W-O-O-F News since 22 Oct, an open bank: the old news frames
-  // and their secret fragments are shown nowhere, so neither is a need here.
+  // are shown nowhere, so they are not a need here.
   'act2.news': [ui('NOTICE NEWS')],
-  'act2.cat': [
-    { list: 'openers' }, { list: 'closers' }, { list: 'refusals' }, { list: 'pools' },
-    { secret: 'kernels', name: 'The secret middle of every cat’s testimony' },
-    ui('NUMBERS', 'NOTICE SCRAP'),
-  ],
-  'act2.puzzle': [{ list: 'templates' }, { secret: 'documents', name: 'The secret words on the documents' }],
+  // A cat says only its line from the Cat Hint Lines (seed/cat-lines.json,
+  // an open bank written in a Claude Doc, not a workshop list), so this beat
+  // needs nothing written here (23 Oct 2026).
+  'act2.cat': [],
   'act2.checkin': [ui('NOTICE CHECKIN')],
   'act3.down': [ui('NOTICE DOWN')],
   'act3.bulletin': [ui('NOTICE BULLETIN')],
   'act4.parlour': [{ list: 'scenarios', also: true }],
   'act4.study': [{ list: 'study_lines' }, station('STUDY')],
-  'act4.cat': [station('CAT'), { list: 'openers', also: true }, { list: 'closers', also: true }, { list: 'refusals', also: true }],
+  'act4.cat': [station('CAT')],
   'act4.bags': [station('BAGS'), { list: 'bag_items' }],
   'act4.puzzle': [station('PUZZLE')],
   'act4.checkin': [station('CHECKIN')],
   'act5.roam': [ui('NOTICE ROAM')],
-  // Sir Irwin's countdown is open copy (23 Oct): no secret line at dessert.
-  'act5.irwin': [ui('NOTICE IRWIN')],
+  // Sir Irwin's countdown is open copy (23 Oct). His hello and goodbye are
+  // the first line on his tab of each list, the only lines those two lists
+  // still give the night.
+  'act5.irwin': [ui('NOTICE IRWIN'), { list: 'openers', tab: 'irwin' }, { list: 'closers', tab: 'irwin' }],
   // Act 6 plays its two games as it opens (night.json parlour.atStart).
   'act6.games': [{ list: 'scenarios', also: true }],
   'act6.drawing': [ui('RELAY RULES')],
@@ -85,7 +83,7 @@ export const NEEDS = {
 // Before and after the acts. Each is one section with one row.
 const BEFORE = [
   { key: 'freeze', clock: 'By Saturday 7 November', title: 'Before the freeze', what: 'Everything that has to work before the workshop locks. After the freeze, anything not working is cut, not fixed.' },
-  { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The bags packed, the fake-player dry run, and a last check. The secrets were made and read before the freeze.' },
+  { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The bags packed, the fake-player dry run, and a last check.' },
   { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.', link: { to: '/devices', label: 'Every device, room by room, with its address' } },
   { key: 'allnight', clock: 'From 4:00pm, all night', title: 'On every phone, all night', what: 'What a guest can read from the moment they join: the Rules tab, the Motives tab, the Cats tab, and the small lines a phone shows when the signal drops or the night is paused.' },
 ]
@@ -155,31 +153,29 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 // Lists the night already covers with its own plain words until Jon writes
 // his: every slot it reads has a default in code. Where each default lives:
 //   ui_copy         play/src/lib/content.js DEFAULT_UI, functions/lib/deal.js
-//                   NOTICES, DEFAULT_NUMBERS_LINE, DEFAULT_SCRAP, the relay
-//                   rules in play/src/lib/screen.js, the filler in windows.js
+//                   NOTICES, the relay rules in play/src/lib/screen.js, the
+//                   filler in windows.js
 //   station_text    deal.js STATION_TEXT
 //   study_lines     play/src/lib/content.js DEFAULT_STUDY_LINES
 //   rules_text      play/src/lib/content.js DEFAULT_RULES
 //   status_lines    play/src/lib/content.js DEFAULT_STATUS
-//   openers, closers, refusals   deal.js DEFAULT_VOICE, one line per cat
-//   pools           case.js DEFAULT_POOLS
+//   openers, closers   functions/lib/screen.js DEFAULT_IRWIN, his hello and goodbye
 //   role_cards      deal.js ROLE_CARDS
 //   epilogue_frames finale.js DEFAULT_EPILOGUE
 //   bios            play/src/lib/content.js bioFor, the seed's own bios
 //   npc_cards       play/src/lib/content.js CATS blurbs
-//   templates       play/public/stationery, the seven paper stand-ins
 // Not here, because the night simply leaves them out until written: what
 // each motive means, cat chatter, achievements, the act scripts.
 export const STANDIN_LISTS = new Set([
   'ui_copy', 'station_text', 'study_lines', 'rules_text', 'status_lines',
-  'openers', 'closers', 'refusals', 'pools',
-  'role_cards', 'epilogue_frames', 'bios', 'npc_cards', 'templates',
+  'openers', 'closers',
+  'role_cards', 'epilogue_frames', 'bios', 'npc_cards',
 ])
 // The phone's own rules show only while the list is empty: once Jon writes
 // one rule, his replace all eight (play/src/lib/content.js rules()).
 const STANDIN_ONLY_WHILE_EMPTY = new Set(['rules_text'])
 function needStandin(need, status) {
-  if (need.secret || !STANDIN_LISTS.has(need.list)) return false
+  if (!STANDIN_LISTS.has(need.list)) return false
   return !(STANDIN_ONLY_WHILE_EMPTY.has(need.list) && status.count > 0)
 }
 
@@ -309,7 +305,6 @@ const liveOf = (items) => (items ?? []).filter(i => !i.deleted)
 // Where a need's link opens: the list itself, its tab, or its thinnest tab.
 function linkFor(need, live) {
   const spec = AREAS[need.list]
-  if (need.list === 'templates') return '/stationery'
   if (need.tab) return `/edit/${need.list}?tab=${need.tab}`
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
@@ -344,18 +339,7 @@ export function listStatus(need, items) {
   return { label, count: Math.min(count, goal), goal, done, text, to: linkFor(need, live) }
 }
 
-// A secret's status, from the latest validation report. Counts only.
-export function secretStatus(need, validation) {
-  if (!validation) return { label: need.name, done: false, text: 'Not made yet. Claude makes it blind, Jenna checks it.' }
-  const done = Boolean(validation.pass) && validation.complete >= validation.codes
-  return {
-    label: need.name, done,
-    text: done ? 'Made and checked' : `${validation.complete} of ${validation.codes} motive sets made${validation.pass ? '' : ', needs a re-run'}`,
-  }
-}
-
-export function needStatus(need, { areas = {}, validation = null } = {}) {
-  if (need.secret) return { ...secretStatus(need, validation), secret: true }
+export function needStatus(need, { areas = {} } = {}) {
   return listStatus(need, areas[need.list])
 }
 
@@ -364,25 +348,23 @@ const isOpenTask = (t) => !t.deleted && t.status !== 'done'
 // Everything on the night, flattened in order: one entry per need (not the
 // "also" ones), task and decision, each with its done state. A list need
 // counts once, at its first place; Home and this page count the same way.
-export function timelineItems({ areas = {}, validation = null, tasks = [], decisions = [] } = {}) {
+export function timelineItems({ areas = {}, tasks = [], decisions = [] } = {}) {
   const out = []
   const seen = new Set()
   const byMoment = (arr, key) => arr.filter(x => x.moment === key)
   for (const s of TIMELINE) {
     for (const need of s.needs) {
-      const status = needStatus(need, { areas, validation })
+      const status = needStatus(need, { areas })
       out.push({ kind: 'need', section: s.key, row: null, need, when: 'now', standin: needStandin(need, status), notYou: false, status })
     }
     for (const r of s.rows) {
       for (const need of r.needs) {
         if (need.also) continue
-        const id = need.secret ? `secret:${need.secret}` : `${need.list}:${need.tab ?? ''}:${(need.labels ?? []).join(',')}`
+        const id = `${need.list}:${need.tab ?? ''}:${(need.labels ?? []).join(',')}`
         if (seen.has(id)) continue
         seen.add(id)
-        const status = needStatus(need, { areas, validation })
-        // The secrets are made the week before (Make the secrets), blind, by
-        // Claude: never Jon's, never before the freeze.
-        out.push({ kind: 'need', section: s.key, row: r.key, need, when: need.secret ? 'later' : 'now', standin: needStandin(need, status), notYou: Boolean(need.secret), status })
+        const status = needStatus(need, { areas })
+        out.push({ kind: 'need', section: s.key, row: r.key, need, when: 'now', standin: needStandin(need, status), notYou: false, status })
       }
       for (const d of byMoment(decisions, r.key)) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, when: 'now', standin: false, notYou: false, status: { done: d.answer != null } })
       // Dated cards first, soonest first, then the rest in their own order.

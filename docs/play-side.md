@@ -72,7 +72,7 @@ is lost. The phone keeps showing what it last saw and catches up on its own.
 Every screen a guest will see between the door and the reveal now exists on
 the phone, with stand-in text wherever the real words are not written yet.
 Stand-in text is always in brackets and marked "Rehearsal text", so nothing
-on a phone can be mistaken for content. Jenna's secrets and your workshop
+on a phone can be mistaken for content. The real lines and your workshop
 lines drop in later without changing a single screen.
 
 **Getting started.** The first time a phone has a character it walks the
@@ -80,8 +80,8 @@ guest through four pages: who they are, their bag number, the household, and
 the Reticule. "Show me around again" on the You tab brings it back.
 
 **The Reticule** is now six tabs: *Now* (what to do at this moment), *You*,
-*Clues* (everything a cat said, every paper, every clue a room paid out,
-newest first), *Motives*, *Cats* and *Rules*. When something new lands, the
+*Clues* (everything a cat said, every clue a room paid out, newest
+first), *Motives*, *Cats* and *Rules*. When something new lands, the
 phone opens Now by itself and a red dot sits on the tab until it is dealt
 with.
 
@@ -89,8 +89,8 @@ with.
 written down in one place (`seed/night.json`, structure only). On the Host
 tab, *Run the night* shows the beat you are on, what it is for, and one big
 button: *Next*. Pressing it does whatever that beat needs on every phone at
-once: a notice, the four cats to visit, the safe, the Act 4 groups, a
-rotation, the drawing, the ballot, the reveal. The Parlour Games are not
+once: a notice, the four cats to visit, the Act 4 groups, a rotation, the
+drawing, the ballot, the reveal. The Parlour Games are not
 beats: they pop up on their own at times rolled for the night. The button
 never shows you content, only "sent to 9 phones". *Back one* steps back
 without dealing anything. The act numbers and Blackout / Power returns are
@@ -104,10 +104,10 @@ still there for jumping about in a rehearsal.
 - *Act 2.* Eyes up for W-O-O-F News on the TV. Then the phone sends you to
   all four cats in turn (Granolia in the Study, Salem in the Orangerie,
   Zimothy in the Library, Boo in the Entryway); scan the code in the room.
-  One cat, picked for you, gives a real hint and the safe's three numbers;
-  the others say hello. The safe gives way after three misses and pays out a
-  document. Five Parlour Games pop up, hosted by Boo. Then check-in and the
-  chime for supper.
+  One cat, picked for you, gives a real hint: one line from the Cat Hint
+  Lines, nothing else. The others say hello. (There is no safe since
+  23 October.) Five Parlour Games pop up, hosted by Boo. Then check-in and
+  the chime for supper.
 - *Act 3.* Phones down. Near the end of supper you arm bulletin 2; it plays
   3 to 5 minutes later and every phone gets a notice. Then the groups, for
   example "You're teamed up with Dorothy Rye and Jasper Steeps. From now on,
@@ -173,23 +173,21 @@ named after the character (the README in that folder lists the names), then
 
 ## What is not built yet (23 October 2026)
 
-- The secrets (the cats' secret lines and the documents): making them waits
-  on your answer to *secretLines*. Then the generator needs your Anthropic
-  key once, and Jenna reads every set. Until a set is made, a night deals
-  bracketed stand-ins where a secret would go. Once you answer, Claude Code
-  removes whatever the generator and Jenna's page no longer need (the echo
-  fragments, the study clue, Irwin's old lines).
+- The secrets: since 23 October there are no secret cat lines or documents
+  to make (you retired them). What is still made blind is the cats' leans
+  (`npm --prefix scripts run leans`), the packing list and the drawing
+  pictures, each a card on the board.
 - The Relay Drawing pictures: `npm --prefix scripts run relay-pictures`
   (it prints counts only), or Jenna. Until then the party uses stand-in
   pictures.
-- Art: the seven stationery designs, the motive card pictures (the slot for
+- Art: the motive card pictures (the slot for
   them is not built yet either), the W-O-O-F News graphics, a candle in the
   Medium's portrait, and a photo of Sydney saved as
   `play/public/household/sydney.jpg`.
 - The recordings in `media/README.md`. Video on the TV is built only if you
   answer *newsVideo* with video.
 - Replaying a night from its seed, and Home's count-only rows for whether
-  the secrets, the leans, the packing list and the drawing pictures exist.
+  the leans, the packing list and the drawing pictures exist.
   Both are cards on the board.
 - Waiting on your decisions: the Partner in Crime and Ghost Whisperer awards
   (*partnerAwards*: cut or build), and a Drawing pictures tab on Jenna's page
@@ -201,15 +199,16 @@ W-O-O-F News and Sir Irwin's countdown lines (22 October).
 
 **The safeguards (17 October).** The Host tab has Spill the Beans and the
 Hush under "If something goes wrong". Spill the Beans works through Act 5
-and only while nothing that pins the story (a document, the study's clue,
-the news) has reached anyone; the Manor decides silently and the phone says
+and only while nothing that pins the story (the news, a cat's hint, the
+study's clue, the memory match) has reached anyone; the Manor decides silently and the phone says
 the same thing either way. The Hush is for a role given away out loud: that
 player's Parlour Game answers stop counting, nothing on any phone changes,
 and the reveal says one line about it. `docs/on-the-night.md` has the
 what-to-do rows.
 
 Built since the first slice: the whole night on the phone (above), the case
-bridge and cat testimony with the safe, the Parlour Game windows, dinner to
+bridge and the cats' cards (with the Act 2 safe, taken out on 23 October),
+the Parlour Game windows, dinner to
 the reveal, the study light game and its station (`docs/study-light-game.md`),
 the relay drawing and the room screens for Acts 6 and 7
 (`docs/relay-drawing-game.md`), the cue relay (`docs/cues-relay.md`), the
@@ -291,13 +290,9 @@ The rules deck (slide "How the cats feel about you") already shows this design.
   the murderer's or the victim's bag. It never says a bag number. Before the
   bags are packed, or in a rehearsal, it draws a property from the bag items
   list at random and wears the Rehearsal chip, as before.
-- **The document looks like paper.** A solved safe pays out its document on
-  one of the seven stationery designs, with a font to match (typewriter for a
-  telegram, handwriting for a letter). The designs are blank stand-ins in
-  `play/public/stationery/`, one file per design, so your art drops in later
-  file for file. A design the phone does not know prints on the plain block.
-  See them on a phone at `/play/?preview=document` and tap the name in the
-  corner to cycle; `?template=playbill` starts on one.
+- **The document looks like paper.** Taken out on 23 October 2026 with the
+  Act 2 safe: no phone shows a document now, and the seven stand-in designs
+  (`play/public/stationery/`) and `?preview=document` are deleted.
 - **The freeze.** On the workshop's Game night page, Freeze the workshop the
   week of the party. The phones keep the words exactly as they are; nothing
   typed in a list after that can change a phone mid-night. The host's Resend
@@ -464,17 +459,17 @@ Hosts come from `meta/game` (`host_jonathan`, `host_susan`, written by the
 workshop's Game night form; defaults Jon / Susan) and are copied onto the night
 as `hosts`. Roster keys are `nameKey(name)`: `[a-z0-9_]`, safe in dotted paths.
 
-Seal: nothing in `play/`, `functions/` or the rules touches `sealed/*` or
-`cases/*`; those two rules blocks are byte-identical to before. When the case
-generator lands it writes `cases/{nightId}` and per-player payloads into
-`sessions/{uid}`; the phone keeps reading only its own session.
+Seal: nothing in `play/` or the rules lets a phone read `sealed/*` or
+`cases/*`; only the Cloud Functions read them, with the Admin SDK. The case
+deal writes `cases/{nightId}` and per-player cards into `sessions/{uid}`; the
+phone keeps reading only its own session.
 
 ### The night, beat by beat (13 Oct)
 
 `seed/night.json` holds the acts, their beats and the windows; `functions/`
 copies it in `npm run seed` and `play/src/lib/night.js` imports it. Each beat
 has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
-`deal:puzzle`, `arm:bulletin`, `window:eliminate|ballot`, `groups`, `rotate`,
+`arm:bulletin`, `window:eliminate|ballot`, `groups`, `rotate`,
 `relay:start`, `reveal`, `results`. The Parlour Games have no beat (see
 Windows below); no beat uses `window:questions` any more, though `light-up`
 still opens one.
@@ -484,16 +479,19 @@ still opens one.
   enters the first beat of Act 2), `light-up` (a questions window any time in
   Acts 2, 4, 6), `settle` (random picks for the rest, only after `closesAt`),
   `relay-*`. Everything else falls through to `night.js`. Player callables:
-  `answer`, `solve`, `ballot`, `eliminate` (plus the relay pair).
+  `answer`, `ballot`, `eliminate` (plus the relay pair). `solve`, the Act 2
+  safe, was removed on 23 Oct; the next `npm run deploy` asks to delete it.
 - `functions/lib/deal.js` is the dealer. Cards go into `sessions/{uid}.cards[]`
   once each, by id, so a repeated Next never doubles a card. Kinds: `role`,
-  `notice`, `go`, `testimony` (`lines[]`, `outcome` full|partial|deflect),
-  `puzzle` (the safe; its answers sit in `nights/{id}/private/puzzles`),
-  `document`, `group`, `station` (with `testimony`, `property` or `sequence`),
-  `clue`, `result`. Testimony = opener + kernel + closer; the kernel comes
-  from `cases/{nightId}.kernels` once the generator writes it, else a bracketed
-  rehearsal line; `fillPools` fills `[ROOM]` etc. from the workshop pools and
-  swaps exactly one for Granolia.
+  `notice`, `go`, `testimony`, `group`, `station` (with `testimony`,
+  `property` or `sequence`), `clue`, `result`. Since 23 Oct a cat's card is
+  `deal.catHintCard`: `{ kind: 'testimony', cat, catName, room, lines: [],
+  hint }`, the hint from `cats.js` `hintLine` at the rung the cat's
+  affection sets (the Act 2 hint cat for one guest, the Act 4 cat station
+  for a group, at the group's average). A greeting from one of the other
+  three Act 2 cats is the same kind with `outcome: 'greet'`, one line and no
+  hint. Gone: the `puzzle` and `document` kinds, the affection roll and
+  brush-offs, opener + kernel + closer, `fillPools`, Salem's flip.
 - Windows: `nights/{id}.window = { id, kind, opensAt, closesAt, settled }`
   (Dates on the server clock). The Parlour Games (`docs/parlour-games.md`,
   21 Oct; counts 22 Oct): twelve a night, planned five, five and two in
@@ -542,11 +540,17 @@ still opens one.
   by `deal.buildCaseForNight`; its full shape is CASE_SHAPE in
   `functions/lib/case.js`. Every night rehearses unless
   `nights/{id}.forceRehearsal` is false (the workshop's "This is the party
-  night" checkbox), in which case one sealed motive set is drawn and checked;
-  a failure falls back to rehearsal with `nights/{id}.caseWarning`. The
-  rehearsal case has the same keys with bracketed stand-ins, and
-  `card.placeholder` follows `cases.rehearsal`. A case with roles is never
-  replaced. Nothing in `cases/*` is ever returned. Details:
+  night" checkbox), in which case the party case is dealt (`buildCase`;
+  otherwise `rehearsalCase`). Since 23 Oct both go through one `dealCase`,
+  the motive drawn with crypto randomness, and nothing sealed goes in: only a
+  party case copies the cats' leans into `parlourPlan`. Keys: `rehearsal`,
+  `createdAt`, `roles`, `murderer`, `ghost`, `motive`, `victimCharacterId`,
+  `dialSign`, `dialMap`, `dial`, `dialLog`, `parlourPlan`, `screenSalt`,
+  `exposure`, `solving`, `dealtClues` (and `spills` after Spill the Beans),
+  the same for both. `nights/{id}.caseWarning` is only ever `trace-partner`.
+  `card.placeholder` marks a stand-in: the study clue on a rehearsal, the
+  bags clue with no packing, a hint with no family. A case with roles is
+  never replaced. Nothing in `cases/*` is ever returned. Details:
   `docs/blind-content-protocol.md`, Runtime.
 - How the case gets solved (22 Oct 2026, `docs/solving-the-case.md`):
   - `functions/lib/families.js` (pure): `FAMILIES` from `seed/families.json`
@@ -571,11 +575,11 @@ still opens one.
     Act 2 beat or any later act) greets everyone left. Each phone's step is
     `sessions/{uid}.lights = { step: wait|go|with|done, cat, catName, room,
     title, text }` (ui_copy `LIGHTS WAIT|GO|NEXT|WITH|DONE|SUPPER` override
-    the text) and is a `CARRIED_FIELD`. The greeting is the testimony card
-    plus `hint: { text, placeholder }`: the cat's line from `cats.js`
+    the text) and is a `CARRIED_FIELD`. The hint cat deals `catHintCard`
+    with `hint: { text, placeholder }`: the cat's line from `cats.js`
     (`seed/cat-lines.json`) at the guest's affection, or `HINT_PLACEHOLDER`
-    only when the case has no family for the guest (it names no family), and
-    the scrap on a brush-off.
+    only when the case has no family for the guest (it names no family). The
+    other three deal a greeting card with no hint.
   - Study: `station.studyReveal` works out the Ghost's trace once per group
     (`traces.workReveal` with the Murderer's trace excluded, `shownReveal`),
     and `studyClueCard(c, act, beat, reveal)` carries it as `card.trace`. The
@@ -586,7 +590,7 @@ still opens one.
     `{ level, images }` at 3, else `{ level, trace, label }` with the label
     only at 5; no context line anywhere (`TRACE_CONTEXT`/`traceContext` are
     kept but unused).
-    `cases.studyClue` is no longer dealt (the generator still writes it).
+    Since 23 Oct the case carries no `studyClue` (no per-motive text at all).
   - Memory match (`deal.js`): `rotate` writes `nights/{id}/public/memory`
     `{ groupId, boardId, cards[12], cleared }` for the group at the puzzle
     station (`memoryBoard`), and pays the group whose turn just passed
@@ -598,8 +602,9 @@ still opens one.
   - Sir Irwin: `screen.irwinMotiveClue` adds `choices: [{ n, rhyme }]` and
     `mood` (the dial band) to the Act 5 screen doc, plus the line from
     `IRWIN_OPTION_LINES` (ui_copy `IRWIN FIVE` to `IRWIN ONE` override),
-    between the workshop's Irwin opener and closer; the case's
-    `irwin.lines` are no longer shown (23 Oct). The news screen shows
+    between the workshop's Irwin opener and closer (`irwinVoice` in
+    `screen.js`: the first line on Irwin's tab of each list, else
+    `DEFAULT_IRWIN`); since 23 Oct the case has no Irwin lines. The news screen shows
     `NEWS_FLASH_PLACEHOLDER` only when the case has no family to cross off;
     there is no echo. `FORBIDDEN_SCREEN_KEYS` now also refuses `solving`,
     `family`, `families`, `newsOut`, `hints`.
@@ -618,8 +623,8 @@ still opens one.
   night doc and public content carry no roles and no dial.
 - Previews (`play/src/Preview.jsx`; `TOUR` lists the tour in order):
   `?preview=` doors | join | welcome | lobby | act1 | blackout | prompt |
-  prompt-late | orient | news | wait | go | testimony | deflect | back |
-  puzzle | document | questions | checkin | dinner | groups | study | cat |
+  prompt-late | orient | news | wait | go | testimony | greet | back |
+  questions | checkin | dinner | groups | study | cat |
   bags | puzzle4 | memory-clue | checkin4 | award | roam | irwin |
   relay-walk | relay-draw | relay-turn | relay-vote | relay-lockout |
   relay-done | door | eliminate | ballot | reveal | result | clues | cats |

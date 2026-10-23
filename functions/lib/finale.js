@@ -46,7 +46,6 @@ export const AWARDS_CLOSE_AFTER_ACT = 5 // the last act in which an achievement 
 // The lines the reel always carries, in this order. The cats' favourites
 // moved to the awards (22 Oct), where a tie shows everyone tied.
 export const CANON_LABELS = [
-  'Fastest safe',
   'Fastest light puzzle',
   'Time on the drawing',
   'Pictures that took more than one guess',
@@ -248,38 +247,24 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const stats = []
   const put = (label, value) => stats.push({ label, value: String(value), showAt: stats.length * STAT_EVERY_MS })
 
-  // 1. the fastest safe: the time from the puzzle landing to the right numbers, gave-way opens excluded
-  const safes = []
-  for (const { guest, s } of people) {
-    for (const [cardId, at] of Object.entries(s.solvedAt ?? {})) {
-      if (s.gaveWay?.[cardId]) continue
-      const card = (s.cards ?? []).find(x => x.id === cardId && x.kind === 'puzzle')
-      if (!card?.at) continue
-      const seconds = (ms(at) - ms(card.at)) / 1000
-      if (seconds >= 0) safes.push({ name: guest.name, seconds })
-    }
-  }
-  const safe = best(safes, x => x.seconds, pick, { low: true })
-  put(CANON_LABELS[0], safe ? `${safe.name}, ${minutesAndSeconds(safe.seconds)}` : 'Nobody opened one')
-
-  // 2. the fastest light puzzle (a solved study), by group
+  // 1. the fastest light puzzle (a solved study), by group
   const names = (gid) => (rot?.groups ?? []).find(g => g.id === gid)?.members.map(m => m.name).join(' and ') ?? gid
   const finished = Object.entries(rot?.finished ?? {})
   const solved = finished.filter(([, f]) => f.outcome === 'solved' && f.seconds > 0).map(([gid, f]) => ({ gid, seconds: f.seconds }))
   const light = best(solved, x => x.seconds, pick, { low: true })
-  put(CANON_LABELS[1], light ? `${names(light.gid)}, ${minutesAndSeconds(light.seconds)}` : 'Not played')
+  put(CANON_LABELS[0], light ? `${names(light.gid)}, ${minutesAndSeconds(light.seconds)}` : 'Not played')
 
-  // 3. and 4. the drawing
-  put(CANON_LABELS[2], relay?.stats?.totalSeconds ? minutesAndSeconds(relay.stats.totalSeconds) : 'Not played')
+  // 2. and 3. the drawing
+  put(CANON_LABELS[1], relay?.stats?.totalSeconds ? minutesAndSeconds(relay.stats.totalSeconds) : 'Not played')
   const hard = Array.isArray(relay?.stats?.misses) ? relay.stats.misses.map((m, i) => (m > 0 ? `Grid ${i + 1}` : null)).filter(Boolean) : []
-  put(CANON_LABELS[3], hard.length ? hard.join(', ') : 'None')
+  put(CANON_LABELS[2], hard.length ? hard.join(', ') : 'None')
 
-  // 5. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
+  // 4. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
   // their phone was dealt (the eliminate and ballot windows are not Parlour Games)
   const answered = s => Object.values(s.answers ?? {}).filter(a => a && !a.defaulted).length
   const gamesDealt = s => Object.values(s.windows ?? {}).filter(w => w?.kind === 'questions').length || 1
   const quick = best(people, ({ s }) => (answered(s) > 0 ? answered(s) : null), pick)
-  put(CANON_LABELS[4], quick ? `${quick.guest.name}, ${answered(quick.s)} of ${gamesDealt(quick.s)}` : 'Nobody')
+  put(CANON_LABELS[3], quick ? `${quick.guest.name}, ${answered(quick.s)} of ${gamesDealt(quick.s)}` : 'Nobody')
 
   // the exposure safeguard: a silent tap all night, one line now, never which role (ledger.isHushed is the one reader)
   const hush = HUSH_ROLES.some(role => isHushed(c, role))

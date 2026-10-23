@@ -79,12 +79,9 @@ export function subscribeDecisions(onData) { decisionListeners.push(onData); que
 export async function answerDecision(key, answer) { decisions = decisions.map(d => (d.key === key ? { ...d, answer, answeredBy: 'Preview' } : d)); notifyDecisions() }
 export async function fileDecision(key, moment) { decisions = decisions.map(d => (d.key === key ? { ...d, moment } : d)); notifyDecisions() }
 
-export function subscribeLatestValidation(onData) { queueMicrotask(() => onData(null)); return () => {} }
-
 export async function uploadFile(folder, itemId, file) {
   return { path: `${folder}/${itemId}/${file.name}`, url: URL.createObjectURL(file), name: file.name, type: file.type, size: file.size }
 }
-export function uploadReference(itemId, file) { return uploadFile('stationery', itemId, file) }
 export async function applyAdditions() {}
 
 let game = {}

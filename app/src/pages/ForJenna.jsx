@@ -10,7 +10,7 @@ const FIRST = [
   { to: '/edit/rules_text', label: 'The rules', why: 'Read them cold, as a guest would at a noisy party. Fix anything that reads wrong.' },
   { to: '/edit/bios', label: 'The fourteen characters', why: 'Each one should be playable by an eleven-year-old and a seventy-year-old after one read.' },
   { to: '/edit/scenarios', label: 'Parlour Games', why: 'Silly, never heavy, nothing about the case. If one would make somebody at the table feel bad, say so.' },
-  { to: '/edit/openers?tab=boo', label: 'What a cat says first', why: 'Each cat has one voice. If a line slips out of it, fix it in place. Then the other cat lists.' },
+  { to: '/edit/smalltalk?tab=boo', label: 'Cat chatter, passing by', why: 'Each cat has one voice. If a line slips out of it, fix it in place. Then the other cat lists.' },
 ]
 
 export default function ForJenna() {
@@ -42,7 +42,7 @@ export default function ForJenna() {
           {FIRST.map(f => (
             <li key={f.to}><Link className="ghost open" to={f.to}>Open {f.label}</Link><br /><span className="hint">{f.why}</span></li>
           ))}
-          <li><b>Later, when the secrets exist</b>, you will be told. Then: <Link className="ghost open" to="/steward">Open your page</Link> and read every set for sense, tone and typos, change a line in place if it needs it, and mark each one done or needs more. That page opens for your account only; Jon's is refused.</li>
+          <li><b>Then: the cats' leans.</b> <Link className="ghost open" to="/steward">Open your page</Link>. For every Parlour Games question, tap the answer each cat would pick. That page opens for your account only; Jon's is refused.</li>
           <li><b>Later still: the bags.</b> The game decides what goes in each numbered bag; the same page shows the packing list, and you pack to it.</li>
         </ol>
       </section>
@@ -56,10 +56,9 @@ export default function ForJenna() {
             <ul className="map">
               {Object.entries(AREAS).filter(([, spec]) => spec.group === group && !spec.hidden).map(([area, spec]) => {
                 const card = cardFor(area, null)
-                const to = area === 'templates' ? '/stationery' : `/edit/${area}`
                 return (
                   <li key={area}>
-                    <Link to={to}><b>{spec.label}</b></Link>
+                    <Link to={`/edit/${area}`}><b>{spec.label}</b></Link>
                     <span className="list-moment"> {spec.moment}</span>
                     <br /><span className="hint">{card?.what}</span>
                   </li>

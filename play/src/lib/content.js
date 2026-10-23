@@ -16,7 +16,7 @@ export const ACTS = {
 
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. Only one year old, so he knows less than he thinks. If Irwin and anyone disagree, Irwin is right.' },
-  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true except for one detail, and she is cheerfully confident about all of it.' },
+  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true, though she may forget part of it, and she is cheerfully confident about all of it.' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Not staff. Guarded, not snobbish. She only speaks to people she has decided about, and then only five words.' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate and rationed. Openly transactional. Where money is involved, he shades it.' },
   { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper', blurb: 'Been here longer than anyone, which is why nobody questions him when he is wrong. Confidently backwards more often than not.' },
@@ -191,13 +191,14 @@ export function npcCards(content) {
 }
 
 // The five stop words of the Cats tab, from the workshop's STOPS line or the default.
-// What each stop means for you, low to high. Plain words, no numbers.
+// What each stop means for you, low to high: how much of its hint a cat
+// gives you (the higher the stop, the more it says). Plain words, no numbers.
 export const STOP_MEANINGS = [
-  'A brush-off, most times. This cat has not warmed to you yet.',
-  'Short answers, when there are any. Half a story at best.',
-  'Could go either way. The next Parlour Game may tip it.',
-  'Most of what this cat knows, most of the time.',
-  'Everything this cat knows, every time you ask.',
+  'Little or nothing. This cat has not warmed to you yet.',
+  'A little, at best. This cat is still deciding about you.',
+  'Some of what this cat knows. The next Parlour Game may tip it.',
+  'Most of what this cat knows.',
+  'Everything this cat knows.',
 ]
 
 export function stopWords(ui) {

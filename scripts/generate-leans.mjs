@@ -1,7 +1,7 @@
 // Fills in the Parlour Games lean table (docs/parlour-games.md) straight into
 // Firestore: for every question in the workshop's Parlour Games list, which of
 // the two answers each cat would pick. Jon runs this; Jon never sees it.
-// SEAL RULES (the same as generate-sealed.mjs):
+// SEAL RULES (the same as generate-relay-pictures.mjs and pack-bags.mjs):
 // - stdout gets COUNTS AND PASS/FAIL ONLY. Never a lean, never a question,
 //   not in logs, not in errors, not in files.
 // - The questions go to the model under opaque references (Q1, Q2, …) in a

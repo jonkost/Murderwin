@@ -57,7 +57,8 @@ export const TIMELINE_TASKS = [
   sound(141, 'act2.news', 'chime-news', 'the news flash comes up on the living room screen'),
   { order: 142, moment: 'act2.news', status: 'todo', standin: true, who: 'Claude', title: 'The news voiceover, written blind', detail: 'Rules out one or two motive families for everyone. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
   { order: 143, moment: 'act2.cat', status: 'todo', standin: true, who: 'Claude', title: 'Each cat’s private hint, written blind', detail: 'The one hint a cat greets a guest with, ruling out another motive family. Stand-in words today; the generator writes the real ones and Jenna checks them.' },
-  { order: 144, moment: 'act2.puzzle', status: 'todo', standin: true, who: 'Jon', title: 'The seven stationery pictures', detail: 'The blank papers the documents are printed on. Upload them on the Stationery page. Stand-ins work until then.' },
+  // moment was Act 2's safe beat, gone 23 Oct 2026 with the safe; the card is retired with it
+  { order: 144, moment: 'act2.cat', status: 'todo', standin: true, who: 'Jon', title: 'The seven stationery pictures', detail: 'The blank papers the documents are printed on. Upload them on the Stationery page. Stand-ins work until then.' },
 
   // Act 3
   { order: 150, moment: 'act3.down', status: 'todo', when: 'later', who: 'Jon and Susan', title: 'Dinner on the table in the orangery', detail: 'Phones down and charging while everyone eats.' },
@@ -182,7 +183,8 @@ export const AUDIT_TASKS = [
   { order: 311, moment: 'act1.meet', status: 'todo', who: 'Jon', title: 'Paste the new Trusting lines', detail: 'Workshop, Meet the household. On Salem’s card, replace what follows "Trusting Salem:" (or add it at the end if it is not there) with: Most days, he’s got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time. On Boo’s card, do the same after "Trusting Boo:" with: The more she likes you, the more she’ll say. Bore her and you get a look. Win her over and she might be useful. Before the freeze: the lists lock then.' },
 
   // Act 2
-  { order: 306, moment: 'act2.puzzle', status: 'todo', who: 'Jon', standin: true, title: 'The seven stationery pictures', detail: 'Only if the safe’s document stays (the cats’ secret lines decision, Act 2, Go to a cat). Your seven designs replace the stand-in files in play/public/stationery, same names: receipt, telegram, household-notice, citation-form, personal-letter, playbill, mourning-card. Give the pictures to Claude Code, which puts them in and deploys. The upload on the Stationery page is a reference copy only and never reaches the phones.' },
+  // moment was Act 2's safe beat, gone 23 Oct 2026 with the safe; the card is retired with it
+  { order: 306, moment: 'act2.cat', status: 'todo', who: 'Jon', standin: true, title: 'The seven stationery pictures', detail: 'Only if the safe’s document stays (the cats’ secret lines decision, Act 2, Go to a cat). Your seven designs replace the stand-in files in play/public/stationery, same names: receipt, telegram, household-notice, citation-form, personal-letter, playbill, mourning-card. Give the pictures to Claude Code, which puts them in and deploys. The upload on the Stationery page is a reference copy only and never reaches the phones.' },
   { order: 327, moment: 'act2.news', status: 'todo', who: 'Claude Code', title: 'Play the W-O-O-F News videos on the TV', detail: 'Only if you choose video (the W-O-O-F News decision above). Bulletin 1 and the closing bulletin as video on the living room TV, with the three cards cut into the closing one. Bulletin 2 stays sound on the Orangerie HomePod.' },
   { order: 340, moment: 'act2.cat', status: 'todo', who: 'Jon', by: '2026-10-25', title: 'Time one round of cat visits', detail: 'At this weekend’s practice game, time one guest’s four cat visits. Tell Claude Code the minutes: Act 2’s length and the visit timings are set from them.' },
 
@@ -269,8 +271,36 @@ export const ANSWERED_FOR_AUDIT = {
   salemSgtMajor: 'Not needed 22 Oct 2026: everyone starts Salem at 3.',
 }
 
+// 23 Oct 2026, Jon: the cats' secret lines and the safe's document are
+// retired (secretLines), and the Act 2 safe is taken out with them. The
+// cats say only their open hint lines, so there are no secret sets to make,
+// read or remake. Applied by '2026-10-23-secret-lines'.
+export const SECRET_LINES_ANSWER = { secretLines: 'Retire them' }
+export const SECRET_LINES_DECISIONS = [
+  { key: 'act2Safe', moment: 'act2.cat', question: 'With the safe’s document retired, what happens to the Act 2 safe?', options: ['Take it out', 'Keep it, paying out a keepsake with no clue'], answer: 'Take it out', answeredBy: 'Jon', note: 'Jon, 23 Oct 2026: Act 2 is the four cat visits. The cats give no numbers, and there is no safe, document or stationery.' },
+]
+export const SECRET_LINES_TASKS = [
+  { order: 342, moment: 'freeze', status: 'todo', who: 'Jon and Susan', by: '2026-10-30', title: 'Finish the lists the leans and the packing read', detail: 'Things in the bags and the Parlour Games. The cats’ leans and the packing list are made from these on Saturday 31 October.' },
+  { order: 343, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'Home rows for the leans, the packing list and the pictures', detail: 'Not built yet. Count-only rows on Home: the packing list made or not, the cats’ leans N of M questions, the drawing pictures N of 9. A server call returns the numbers and never any content.' },
+  { order: 344, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-10-24', title: 'Deploy before the practice game', detail: 'In Terminal, in the Murderwin folder: npm run deploy. It asks whether to delete the function solve (the old Act 2 safe): type y. Then start a new rehearsal night on the Game night page.' },
+]
+const RETIRED_REASON = 'Retired 23 Oct 2026: the cats’ secret lines and the safe’s document are retired (your answer), so there are no secret sets.'
+export const RETIRED_FOR_SECRET_LINES = [
+  { order: 110, title: 'Make the secrets', detail: RETIRED_REASON },
+  { order: 113, title: 'Jenna reads every secret and says done', detail: `${RETIRED_REASON} Jenna still looks over the cats’ leans and packs the bags.` },
+  { order: 304, title: 'Finish the lists the secrets read', detail: 'Replaced 23 Oct 2026: the cats’ greetings, sign-offs, brush-offs and blanks fed only the secret sets, which are retired. See Finish the lists the leans and the packing read.' },
+  { order: 305, title: 'Remake any set Jenna marked needs more', detail: RETIRED_REASON },
+  { order: 306, title: 'The seven stationery pictures', detail: 'Retired 23 Oct 2026: the Act 2 safe is taken out, so nothing shows a document.' },
+  { order: 325, title: 'Home rows for the secrets, the leans, the packing list and the pictures', detail: 'Replaced 23 Oct 2026: the secret sets are retired. See Home rows for the leans, the packing list and the pictures.' },
+  { order: 326, title: 'Take the unused secret parts out', detail: 'Done 23 Oct 2026: the whole secret set is out of the game, the generator and Jenna’s page.' },
+]
+export const FILED_FOR_SECRET_LINES = [
+  { order: 112, title: 'Make the packing list', note: '(23 Oct 2026: the secret sets are retired, so only the packing is made from the bag items.)' },
+  { order: 315, title: 'Jenna runs the real checks', note: '(23 Oct 2026: the secret sets are retired, so this waits only on the Health page.)' },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

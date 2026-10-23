@@ -124,7 +124,8 @@ out looking brilliant.
 | Twelve minutes | Mentions the time, kindly. |
 | Fifteen minutes | Stops the game, gives everything, sends everyone on. |
 
-In the study Granolia is always right. Her misremembering is about the night, not her own room.
+In the study Granolia is always right. (Her old habit of getting one detail of the night wrong was
+retired on 23 October 2026 with the cats' secret lines; her hint lines only ramble or forget.)
 A hint that was wrong would be cruel, and a player who catches her being wrong here would
 rightly stop trusting her hints.
 
@@ -238,8 +239,8 @@ Each of these fills a gap. Say the word and any of them changes.
    struggle and steps in. No cost: affection moves only through the Parlour Games
    (decided 12 October), so her help cannot cost affection. That closes the act skeleton's open
    question.
-4. **Granolia is always right in the study.** Her one-wrong-detail trait applies to her
-   testimony about the night, not to puzzle hints.
+4. **Granolia is always right in the study.** Her old one-wrong-detail trait applied only to her
+   secret lines about the night, never to puzzle hints, and went with them on 23 October 2026.
 5. **The study's finish fires the house rotation.** Solve or cap, the rotation chime goes.
 6. **The six colours** are red, yellow, green, blue, pink, white, chosen to look different from
    each other on LED bars in a dim room. Check them on the real Lines and swap any two that
@@ -415,7 +416,8 @@ once per group (the Ghost's trace at `c.dial` on the `traces.js` ladder; at leve
 excludes the Murderer's trace), records the level in `nights/{id}/private/dialClues.study` for
 the end credits, and deals `studyClueCard(c, act, beat, reveal)` (`'Something was left behind.'`
 plus `trace`; `STUDY_PLACEHOLDER` when there is no reveal) to each member with `dealOnce`.
-`cases.studyClue` is never read. The no-station path deals the same card from `deal.rotate`.
+The case has had no `studyClue` since 23 October 2026 (the per-motive secret sets are retired).
+The no-station path deals the same card from `deal.rotate`.
 
 **Clock.** The cap is `startedAt + 15 min` on server time. The station keeps server skew the
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock

@@ -120,8 +120,6 @@ input, select, textarea { color-scheme: dark; }
 .panel.more summary::after { content: ' ▸'; color: var(--muted); }
 .panel.more[open] summary::after { content: ' ▾'; }
 .panel.more .list-grid, .panel.more .board, .panel.more .decision { margin-top: 1rem; }
-.prow { display: grid; grid-template-columns: 1fr auto; gap: 0.8rem; align-items: center; padding: 0.4rem 0; color: var(--ink); text-decoration: none; }
-.pcount { font-size: 0.9rem; color: var(--muted); }
 .trail { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
 .trail li { border-bottom: 1px solid var(--line); padding-bottom: 0.6rem; }
 
@@ -196,17 +194,14 @@ input, select, textarea { color-scheme: dark; }
 .dopts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .confirm { margin-top: 0.5rem; }
 
-/* ---------- stationery and assets ---------- */
+/* ---------- assets ---------- */
 .sitem { padding: 0.8rem; margin-bottom: 0.8rem; list-style: none; border-radius: var(--r-group); }
 .sitem.done { opacity: 0.75; }
 .sitem.done .stitle { text-decoration: line-through; }
 .sitem-head { display: flex; gap: 0.5rem; align-items: center; }
 .sitem-head .check { width: 1.5rem; height: 1.5rem; accent-color: var(--good); }
 .stitle { font-weight: 600; border: 0; background: none; min-height: 0; }
-.sitem textarea { width: 100%; margin-top: 0.4rem; }
 .upload.busy { opacity: 0.5; }
-.thumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
-.thumbs img { height: 64px; border: 1px solid var(--line); display: block; border-radius: var(--r-control); }
 .upload { font-size: 0.9rem; cursor: pointer; }
 .editor-head .count { font-size: 0.85rem; font-weight: normal; color: var(--muted); margin-left: 0.4rem; }
 .upload-new { display: inline-block; cursor: pointer; font-size: 1rem; padding: 0.7rem 1.2rem; min-height: 2.8rem; }
@@ -369,7 +364,6 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .gp-sub { color: var(--muted); font-size: 0.85rem; }
 .gp-grey { color: var(--muted); font-style: italic; }
 .gp-pass { border-top: 1px solid var(--line); padding-top: 0.5rem; margin-top: 0.3rem; font-size: 0.9rem; }
-.gp-gap { background: var(--brand-claret); color: var(--ink); border-radius: 4px; padding: 0 0.3em; font-style: italic; }
 .gp .chip { font-size: 0.7rem; margin-left: 0.3rem; }
 .review-line { margin: 0 0 1rem; color: var(--muted); }
 .review-line b { color: var(--good); font-weight: 600; }
@@ -416,28 +410,12 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .rail-frozen { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); padding: 0.2rem 0.8rem 0.6rem; }
 
 /* ---- Jenna's page (the Steward's desk), 17 Oct 2026 ---- */
-.steward .codes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
-.steward .code { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; border: 1px solid var(--line); background: var(--field); border-radius: var(--r-control); padding: 0.5rem 0.8rem; min-height: 44px; min-width: 7.5rem; text-align: left; }
-.steward .code.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.steward .code-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; letter-spacing: 0.08em; }
-.steward .code-marks { font-size: 0.8rem; opacity: 0.85; min-height: 1em; }
-.steward .code.review-done .code-marks { color: var(--good); }
-.steward .code.on .code-marks { color: inherit; }
-.steward .rhyme { font-size: 1.05rem; margin: 0.3rem 0 0.6rem; }
-.steward .set-section { margin: 1.2rem 0 0; padding-top: 0.8rem; border-top: 1px solid var(--line); }
-.steward .set-section h3 { margin: 0 0 0.2rem; }
 .steward .lean-set { margin: 1rem 0 0; padding-top: 0.6rem; border-top: 1px solid var(--line); }
 .steward .lean-q h3 { margin: 0.8rem 0 0.3rem; font-size: 1.05rem; }
 .steward .lean-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.25rem 0; }
 .steward .lean-cat { min-width: 6.5rem; font-weight: 600; }
 .steward .lean-pick { border: 1px solid var(--line); background: var(--field); border-radius: var(--r-control); padding: 0.45rem 0.8rem; min-height: 44px; text-align: left; }
 .steward .lean-pick.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.steward .set-section .field { margin: 0.5rem 0; }
-.steward .set-section textarea { width: 100%; font: inherit; line-height: 1.45; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); resize: vertical; }
-.steward .original { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
-.steward .ghost.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.steward .review-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.steward .banner.frozen ul { margin: 0.4rem 0 0 1.2rem; font-weight: 400; }
 .steward .bag { margin: 0.8rem 0; }
 .steward .bag h3 { margin: 0 0 0.2rem; }
 .steward .bag ol { margin: 0 0 0 1.4rem; }

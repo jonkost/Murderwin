@@ -1,8 +1,9 @@
 # The Workshop — what it is and how it behaves
 
 Jon's private writing desk for the game. Everything on it is safe for you to see.
-(The secret content — what the cats really reveal, the documents, who did it — is
-never shown here. See `blind-content-protocol.md` for how that works.)
+(The secret content is never shown here: who did it, which way each cat leans
+in the Parlour Games, what is in each bag, the drawing pictures. See
+`blind-content-protocol.md` for how that works.)
 
 It's a website: https://murderwin-at-sirwin-manor.web.app/workshop/ — sign in with
 Google. It works on your phone, the iPad or the Mac. It works offline; it catches
@@ -60,8 +61,8 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   nothing turns red except a failed save. (A rank ladder and Sir Irwin lines
   were tried and removed; see 13 October below.)
 - **Jenna's two words.** Under the card on every list: *Reads clearly* or
-  *Needs another look*, plus one line of note. A list she has cleared carries
-  a small "✓ read" on Home. The For Jenna page now opens the lists she should
+  *Needs another look*, plus one line of note. A list they have cleared carries
+  a small "✓ read" on Home. The For Jenna page now opens the lists they should
   read first, and ends with a map of what every list is for.
 - **Paste a lot at once.** Under the card on every list: "Have a lot written
   already? Paste it here and it fills itself in." Paste from Notes, a chat
@@ -74,7 +75,9 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   (or room screen) drawn from your boxes as you type, or from the example
   when the boxes are empty. It shows where the words land and what sits
   around them: a cat's greeting above the secret middle, a rule on the Rules
-  tab, a blank inside a cat's sentence, a bulletin on the wireless.
+  tab, a blank inside a cat's sentence, a bulletin on the wireless. (Since
+  23 October a cat's sketch shows its hint line alone, Sir Irwin's shows his
+  hello and goodbye around his countdown, and the blanks sketch is gone.)
 - **Examples say so.** The card's example is badged "Example only. Not yours,
   not saved." Example text in an empty box starts with "e.g." and appears
   only in the new-line boxes; a saved line's empty box says "Not written
@@ -97,7 +100,8 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
   lines list exactly the fifteen screens the phone has. Sir Irwin needs one
   standing line, not three; he is always in, so his tab offers only In.
   Granolia's trail-offs are retired, kept, not shown: she misremembers one
-  detail instead. A second, independent check then found more: the fourteen
+  detail instead. (Since 23 October she, like every cat, says only her hint
+  line.) A second, independent check then found more: the fourteen
   names and jobs are fixed in the game (it deals them and the cats judge the
   job), so a character is now a pick of who plus the persona; the act names
   are fixed too (Behind Closed Doors, The Final Hour), so each act is one
@@ -123,21 +127,22 @@ Jenna could not tell what a list wanted, and neither could Jon. Now:
 - *Decisions waiting on you* — a question with two or three answers. Pick one,
   confirm, and it disappears.
 
-**Lists** — one per kind of content (Boo's closers, the room pool, echo frames…).
+**Lists** — one per kind of content (the bios, the cats' chatter, the Parlour Games…).
 - The whole list is visible. Nothing is dealt to you at random.
 - A fresh, empty line always sits at the bottom, and the cursor is already in it
   when the page opens. Type, press Enter, and the line is saved and a new empty
   one appears. Shift+Enter puts a line break inside a line.
 - Click any line to edit it in place. The ▲▼ arrows reorder. ✕ removes a line,
   with an undo button.
-- Lists with tabs (one per cat, or one per pool) remember which tab you're on.
+- Lists with tabs (one per cat, for example) remember which tab you're on.
 - The *field guide* at the top of each list says what these lines are for, the
   format rules, and good and bad examples. Tap "Full field guide" to open it.
 - While you type, a small ⚠ note under a line tells you if it breaks a format rule.
 - "saved ✓" in the corner means saved. "saving…" means give it a second.
 
-**Stationery tracker** — the seven document designs, each with a done tick, a notes
-box and a place to attach reference images.
+**Stationery tracker** (deleted 23 October 2026, with the Act 2 safe). It held
+the seven document designs; nothing shows a document now. Reference pictures
+added there are still in Storage, under `stationery/`.
 
 **Assets** — every picture and sound the night needs, on two tabs: Pictures and
 Sounds. Each one has a name and a done tick.
@@ -174,9 +179,10 @@ role cards to the same length.
   [PROPERTY] and [COUNT], CAT may say [CAT]), and **What was left behind** (one
   line per trace for the bedroom screen, never a name).
 - **The phone's own little lines** now offers every label the phones and the
-  dealer read: every notice between beats, the safe's numbers (NUMBERS and
-  NOTICE SCRAP, keep [A], [B] and [C]), the five slider words (STOPS), and the
-  lines for the room screens.
+  dealer read: every notice between beats, the five slider words (STOPS), and
+  the lines for the room screens. (It also offered the safe's numbers,
+  NUMBERS and NOTICE SCRAP. Both labels are retired since 23 October, with
+  the safe: kept so lines already written still show, never counted.)
 - **Things in the bags** holds Jon's 108 items. A line with two things noticed
   gets a note: the clue on the night uses the first.
 - **The freeze**, on the Game night page. The week of the party Jon presses
@@ -189,10 +195,10 @@ role cards to the same length.
 ## 22 October 2026: the Timeline
 
 - The Timeline is the night in order, from the freeze to the morning after.
-  Under every moment: the lists it needs with live counts, the secrets it
-  needs (whether they exist, never their words), open decisions, and tasks
-  with a tick box. Three views: Do now, Happens later, Everything. A task
-  added here also lands on the task board.
+  Under every moment: the lists it needs with live counts, open decisions,
+  and tasks with a tick box. (Until 23 October it also said whether the
+  secrets existed; there are no secret sets now.) Three views: Do now,
+  Happens later, Everything. A task added here also lands on the task board.
 - The side rail now reads Home, Timeline, Where we are, Game night, For Jenna.
 
 ## 23 October 2026: how the project is run
@@ -208,11 +214,33 @@ role cards to the same length.
   session. Each working session also gets an entry in `docs/sessions.md`,
   newest first.
 
+## 23 October 2026, later: the secret lines retired
+
+Jon retired the cats' secret lines and took the Act 2 safe out. In the
+workshop:
+- **The Stationery page is deleted**, and so are the seven stand-in pictures
+  the phones used.
+- **Home's "The secrets" row is gone** (the count of motive sets, checked),
+  and so is the secrets line on Where we are.
+- **Three more lists are retired**, kept with everything in them, not shown
+  and not read: the blanks (rooms, times, counts), the stationery designs,
+  and the brush-offs. Granolia's trail-offs stay retired, reworded: she, like
+  every cat, says only her hint line.
+- **What a cat says first, and last:** only the first line on Sir Irwin's tab
+  is read now, for his Act 5 screen (his hello and goodbye around the
+  countdown). The other cats' tabs are kept, not used, so each list needs
+  just one line.
+- **The Timeline:** Act 2's cat visits need nothing written here (the Cat
+  Hint Lines are a Claude Doc); Sir Irwin's moment in Act 5 needs his hello
+  and goodbye.
+
 ## What's left to build here
 
 - The history screen (promise 2).
 - The Health page: every automated check as a tick or a cross
   (`docs/test-plan.md`). Not built yet.
+- Count-only rows on Home for the leans, the packing list and the drawing
+  pictures. A card on the Timeline.
 
 ---
 
@@ -222,18 +250,27 @@ Data model (Firestore):
 
 - `safe_content/{area}` — doc per area: `{ items: [{id, text, cat?, pool?, act?, done?, deleted, order}] }`
   Areas, grouped as on the dashboard (goals in parentheses; × means per tab):
-  - Cat voices: openers (8×cat), closers (8×cat), refusals = the cat deflection
-    lines (8×cat; the Firestore key predates the name), smalltalk (8×cat),
-    trailoffs (8, Granolia only), status_lines (3×cat)
-  - World & cast: npc_cards (5), bios (14), lore (4)
-  - Player screens: rules_text (10), ui_copy (24), role_cards (6), event_cards (12;
+  - Cat voices: openers and closers (since 23 Oct only the first line on the
+    irwin tab is read, `goalPerTab: 0, goalByTab: { irwin: 1 }`; read by
+    `irwinVoice` in `functions/lib/screen.js`, default `DEFAULT_IRWIN`),
+    refusals = the cat deflection lines (8×cat; the Firestore key predates the
+    name; retired 23 Oct, hidden, not read), smalltalk (8×cat), trailoffs (8,
+    Granolia only; retired), status_lines (3×cat)
+  - World & cast: npc_cards (5), bios (14), lore (4; retired, hidden)
+  - Player screens: rules_text (10), ui_copy (`COUNTED_UI_LABELS.length`, 36 on
+    23 Oct), role_cards (3), event_cards (12;
     retired, hidden), filler (20; retired, hidden: there are no event windows, and the
     role cards are padded by the phone's own FILLER line)
-  - Frames & pools: pools (10×pool), echo_frames (8), epilogue_frames (2), templates (7),
-    trace_lines (14; `TRACE BOOT PRINT: line`, hyphens become spaces so the label codec keeps them)
+  - Frames & pools: pools (10×pool; retired 23 Oct, hidden, not read), echo_frames (8;
+    retired 22 Oct, hidden: W-O-O-F News took the news's place),
+    epilogue_frames (2), templates (7; retired 23 Oct with the Act 2 safe, hidden, not read),
+    trace_lines (14; retired, hidden: the trace shows its name only; the format was
+    `TRACE BOOT PRINT: line`, hyphens become spaces so the label codec keeps them)
   - Added 18 Oct 2026: study_lines (12; `MOMENT: line`), station_text (5; `STATION: line`),
     bag_items (108, from `seed/bag-items.json` by migration `2026-10-18-bag-items`, appended once,
-    never doubling a line Jon edited). ui_copy's options are `UI_LABELS` in content.js.
+    never doubling a line Jon edited). ui_copy's options are `UI_LABELS` in content.js;
+    NUMBERS and NOTICE SCRAP carry `retired: true` (23 Oct) and are left out of
+    `COUNTED_UI_LABELS`.
   - Migrations (`ADDITIONS`) are planned by `lib/additions.js` (pure, tested) and may also
     `retireTasks` (by order number, once) and `answerDecisions` (only an unanswered one).
   - The freeze: `meta/game.frozenAt` (a timestamp or null). `lib/frozen.js` reads it;
@@ -277,8 +314,10 @@ Data model (Firestore):
 - `tasks/{autoId}` — `{title, detail, status, order, ts}`.
 - `decisions/{key}` — `{question, options, answer, answeredAt}`.
 - `sealed/*`, `cases/*` — Cloud Functions only. Client reads DENIED by rules.
-- `validation_reports/{autoId}` — counts-only aggregates, client-readable; the
-  dashboard's "Sealed coverage" panel renders the latest one.
+- `validation_reports/{autoId}` — retired 23 Oct 2026: nothing writes or reads it
+  (the secrets generator and its checker are deleted, and Home's secrets row is
+  gone). Its read rule in `firestore.rules` is left in place, because changing
+  the rules needs Jon's approval; it is harmless (the reports held counts only).
 
 Behaviour: autosave 400 ms debounce through a Firestore transaction that merges
 pending changes onto the current remote items (never a whole-array overwrite) and

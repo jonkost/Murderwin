@@ -8,12 +8,12 @@
 //     as codes on a night with a station key saved (news.clipCode), never as names
 //
 // Any phone may read both, so NOTHING here carries a role, the dial, the
-// motive number, who died, or anything that joins a fragment to a motive.
-// The only case fields read are echo.fragment, dial (to pick a band, never
-// written), motive (to keep it IN Sir Irwin's Act 5 options, which are the
-// clue itself; never written as a key), screenSalt (the secret the frame pick
-// and Irwin's options are seeded on, never written), solving (Sir Irwin's
-// motive clue, families.js) and rehearsal. The W-O-O-F News bulletins read solving.newsOut and
+// motive number, who died, or anything that ties a clue to a motive.
+// The only case fields read are dial (to pick a band, never written),
+// motive (to keep it IN Sir Irwin's Act 5 options, which are the clue
+// itself; never written as a key), screenSalt (the secret Irwin's options
+// and the bulletin's timing are seeded on, never written), solving (Sir
+// Irwin's motive clue, families.js) and rehearsal. The W-O-O-F News bulletins read solving.newsOut and
 // solving.family (news.js) and write nothing to the case. checkScreen refuses a doc with a
 // forbidden key before it is written, and the tests walk a whole night to
 // prove it.
@@ -22,7 +22,6 @@
 // flags, kinds and counts.
 
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MOTIVES, CHARACTERS, NightError, readArea } from './night.js'
@@ -41,8 +40,7 @@ export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'stin
 // Keys a public screen doc may never carry, at any depth.
 export const FORBIDDEN_SCREEN_KEYS = [
   'roles', 'role', 'dial', 'dialSign', 'dialMap', 'dialLog', 'motive', 'murderer', 'ghost', 'victim', 'victimCharacterId',
-  'fragment', 'echo', 'kernels', 'documents', 'hiddenSets', 'studyClue', 'salemTruthIndex', 'granoliaSlot', 'variant',
-  'pools', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level', 'screenSalt',
+  'hiddenSets', 'exposure', 'dealtClues', 'defaulted', 'tier', 'band', 'level', 'screenSalt',
   'solving', 'family', 'families', 'newsOut', 'hints',
 ]
 
@@ -50,9 +48,7 @@ export const DOOR_HOLD_MS = 10_000
 export const MAX_IRWIN_WORDS = 12
 
 // Safe defaults, used only when the workshop list is empty.
-export const DEFAULT_FRAME = { before: '...and the late edition carries one further line:', after: '. The household declined to comment...' }
 export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something to say.', closer: 'That is everything. I am a good boy.' }
-export const REHEARSAL_FRAGMENT = '(Rehearsal. The news fragment for this motive fills the gap here.)'
 // Bulletin 1's lines are the open W-O-O-F News bank (seed/woof-news.json).
 // This stand-in shows only for a case with no family to cross off, such as a
 // rehearsal.
@@ -79,13 +75,6 @@ function msOf(t) {
   if (typeof t.toMillis === 'function') return t.toMillis()
   if (t instanceof Date) return t.getTime()
   return Number(t) || 0
-}
-
-// A number in [0, 1) that is the same for the same parts: the echo's frame
-// must not change when the host presses the beat twice.
-function unit(...parts) {
-  const h = createHash('sha256').update(parts.map(String).join('\u0000')).digest()
-  return h.readUInt32BE(0) / 0x100000000
 }
 
 // What the screens seed their picks on: the case's secret salt. The night
@@ -119,39 +108,11 @@ export function dialBand(dial) {
 }
 
 // ---------------------------------------------------------------------------
-// The echo: one safe frame with a ███ gap, filled with the case's fragment.
-
-export function parseFrame(item) {
-  if (!item) return null
-  if (typeof item === 'object' && (item.before || item.after) && !item.text) return { before: String(item.before ?? '').trim(), after: String(item.after ?? '').trim() }
-  const text = String(typeof item === 'string' ? item : item.text ?? '')
-  if (!text.includes('███')) return null
-  const [before, ...rest] = text.split('███')
-  return { before: before.trim(), after: rest.join('███').trim() }
-}
-
-export function frameList(items) {
-  return (items ?? []).map(parseFrame).filter(Boolean)
-}
-
-// Pick one frame (seeded on the night so a re-run shows the same one) and
-// fill its gap. Returns lines, never the fragment on its own.
-export function echoLines(c, frames, { seed = '' } = {}) {
-  const list = frameList(frames)
-  const frame = list.length ? list[Math.floor(unit(seed, 'frame') * list.length)] : DEFAULT_FRAME
-  const fragment = typeof c?.echo?.fragment === 'string' && c.echo.fragment.trim() ? c.echo.fragment.trim() : REHEARSAL_FRAGMENT
-  const joinBefore = frame.before && !/[\s(]$/.test(frame.before) ? `${frame.before} ` : frame.before
-  const joinAfter = frame.after && !/^[\s.,;:!?)]/.test(frame.after) ? ` ${frame.after}` : frame.after
-  return [`${joinBefore}${fragment}${joinAfter}`.replace(/\s+/g, ' ').trim()]
-}
-
-// ---------------------------------------------------------------------------
 // Act 5: Sir Irwin on the living room screen (docs/handoff-2026-10-22.md §5):
 // his opener, the countdown line, the motive cards and his closer. Nothing
-// sealed: the case's old Irwin lines are never read here (the generator
-// still writes them until Jon settles secretLines). Opener and closer go
-// through the dog filter: twelve words at most, and no name of anyone at the
-// party or in the cast.
+// sealed. His opener and closer are the workshop's Irwin lines in the
+// openers and closers lists, and go through the dog filter: twelve words at
+// most, and no name of anyone at the party or in the cast.
 
 export function dogFilter(text, names = [], { maxWords = MAX_IRWIN_WORDS } = {}) {
   let t = String(text ?? '').replace(/\s+/g, ' ').trim()

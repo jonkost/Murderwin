@@ -14,7 +14,6 @@ import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, MemoryMatch } from './screens/Kiosk'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
-import { TEMPLATE_NAMES, templateSlug } from './lib/stationery'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
@@ -36,10 +35,11 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // band: kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
 // host-house-window, host-house-act2.
 // Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
-// then one per thing a phone is dealt: act1, orient, news, wait, go, testimony,
-// deflect, back, puzzle, document, questions, checkin, dinner, groups, study, cat,
-// bags, puzzle4, memory-clue, checkin4, roam, irwin, door, eliminate, ballot, reveal,
-// result, clues, cats-friend, and the relay screens relay-walk … relay-done.
+// then one per thing a phone is dealt: act1, orient, news, wait, go, testimony
+// (the hint cat), greet (one of the other three), back, questions, checkin,
+// dinner, groups, study, cat, bags, puzzle4, memory-clue, checkin4, roam, irwin,
+// door, eliminate, ballot, reveal, result, clues, cats-friend, and the relay
+// screens relay-walk … relay-done.
 // ?preview=tour walks all of them with a button.
 
 // a fixed moment, like a real server timestamp — not Date.now() on every read
@@ -66,25 +66,19 @@ const CONTENT = {
 }
 
 // ---- sample cards, as the dealer would shape them ----
-const K = (text) => `(Rehearsal. ${text})`
 // one Cat Hint Line each, from the open bank, filled the way the game fills them
 const HINTS = {
   salem: catLines.salem.act2.food.wasnt,
-  boo: catLines.boo.levels['2'],
   zimothy: catLines.zimothy.levels['2'].replace('[MOTIVE]', catLines.motiveNames['10']),
 }
 const CARDS = {
   meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
   orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
   news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'Something is on the big screen. Watch it. Your phone will tell you where to go when it is over.', button: 'I watched it' },
-  testimony: { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crookshank', room: 'the Orangerie', outcome: 'full', placeholder: true,
-    lines: ['Finally. Someone with the sense to consult the only competent investigator here.', K('Here Salem Crookshank says something true about what happened in the parlour at a quarter past six, in two or three sentences, with one detail only this cat would notice. The numbers that matter are 41, 17, 88.'), 'You are welcome.'],
-    hint: { text: HINTS.salem } },
-  deflect: { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', outcome: 'deflect', placeholder: false, lines: ['No.'],
-    hint: { text: HINTS.boo } },
-  puzzle: { id: '2-puzzle-safe', act: 2, beat: 'puzzle', kind: 'puzzle', puzzle: 'safe', slots: 3, title: 'The safe', text: 'Three numbers open it. A cat gave them to you, in among everything else. Enter them in the order they were said.' },
-  document: { id: '2-puzzle-safe-payout', act: 2, beat: 'puzzle', kind: 'document', template: 'Telegram', bigWord: 'REHEARSAL', placeholder: true,
-    text: K('The document for this motive goes here: forty to sixty words of a receipt, a telegram or a notice, with one word printed large and one handwritten note in the margin.'), annotation: '(a handwritten note)' },
+  // the hint cat: its name, its room and the hint line, nothing else
+  testimony: { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crookshank', room: 'the Orangerie', lines: [], hint: { text: HINTS.salem } },
+  // one of the other three: a greeting in the server's words (functions/lib/deal.js GREETING_ONLY), no hint
+  greet: { id: '2-cat-greet-boo', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', lines: ["Darling. Love the outfit. Don't ask me anything, I'm off duty."] },
   checkin: { id: '2-checkin-checkin', act: 2, beat: 'checkin', kind: 'notice', key: 'checkin', title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to dinner.', button: 'Done' },
   dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Dinner', text: 'Phones down and charging. The radio is on. Listen for the crackle.', button: 'Phone is down' },
   // the Act 4 cards in the server's words (functions/lib/deal.js): the group named by character,
@@ -93,7 +87,7 @@ const CARDS = {
     members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }] },
   study: { id: '4-station1-study', act: 4, beat: 'station1', kind: 'station', station: 'study', title: 'The study', text: "Granolia's expecting your group in the Study, upstairs.", host: { cat: 'granolia', line: "Oh! You're here! The lights on the wall flash a pattern. Copy it on the buttons, then press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah." } },
   cat: { id: '4-station2-cat', act: 4, beat: 'station2', kind: 'station', station: 'cat', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', title: 'A cat', text: 'Zimothy Clawford, Esq. will see your group in the Library. Go together.',
-    testimony: { id: '4-station2-cat-testimony', act: 4, beat: 'station2', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', outcome: 'partial', placeholder: true, lines: ['(His opening line.)', K('Here Zimothy Clawford, Esq. says something true about what happened in the library at nearly seven, shaded by money.'), '(His closing line.)'], hint: { text: HINTS.zimothy } } },
+    testimony: { id: '4-station2-cat-testimony', act: 4, beat: 'station2', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', lines: [], hint: { text: HINTS.zimothy } } },
   bags: { id: '4-station3-bags', act: 4, beat: 'station3', kind: 'station', station: 'bags', property: 'minty', title: 'The bags', text: 'Something minty is in two or three of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.' },
   puzzle4: { id: '4-station4-puzzle', act: 4, beat: 'station4', kind: 'station', station: 'puzzle', title: 'The memory match', text: 'Go to the iPad. Turn two cards at a time and find the six pairs together. Clear the board and one motive comes off your list.' },
   memory: { id: '4-memory-g1', act: 4, beat: 'station4', kind: 'clue', title: 'From the memory match', text: `Not this one: number 9, “${motivesSeed.motives[8]?.rhyme}”. Cross it off.`, cross: 9 },
@@ -172,11 +166,10 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
   stage,
   schedule: { stats: 0, awards: 34000, graph: 50000, names: 80000 },
   stats: [
-    { label: 'Fastest safe', value: 'Jessa, 1 min 40 s', showAt: 0 },
-    { label: 'Fastest light puzzle', value: 'Jon and Jessa, 6 min 12 s', showAt: 4000 },
-    { label: 'Time on the drawing', value: '17 min', showAt: 8000 },
-    { label: 'Pictures that took more than one guess', value: 'Grid 2', showAt: 12000 },
-    { label: 'Quickest on the Parlour Games', value: 'Jessa, 4 of 4', showAt: 16000 },
+    { label: 'Fastest light puzzle', value: 'Jon and Jessa, 6 min 12 s', showAt: 0 },
+    { label: 'Time on the drawing', value: '17 min', showAt: 4000 },
+    { label: 'Pictures that took more than one guess', value: 'Grid 2', showAt: 8000 },
+    { label: 'Quickest on the Parlour Games', value: 'Jessa, 4 of 4', showAt: 12000 },
   ],
   // the early reel: only the achievements the host gave during the night
   achievements: [
@@ -307,11 +300,9 @@ const DEALT = {
   wait: { act: 2, beat: 'cat', cards: [], lights: LIGHTS('wait') },
   go: { act: 2, beat: 'cat', cards: [], lights: LIGHTS('go') },
   testimony: { act: 2, beat: 'cat', cards: [CARDS.testimony], lights: LIGHTS('with') },
-  deflect: { act: 2, beat: 'cat', cards: [CARDS.deflect], lights: LIGHTS('with', 'boo') },
-  back: { act: 2, beat: 'cat', cards: [CARDS.testimony], lights: LIGHTS('done') },
-  puzzle: { act: 2, beat: 'puzzle', cards: [CARDS.testimony, CARDS.puzzle] },
-  document: { act: 2, beat: 'puzzle', cards: [CARDS.testimony, CARDS.puzzle, CARDS.document], seen: { '2-puzzle-safe': true } },
-  checkin: { act: 2, beat: 'checkin', cards: [CARDS.testimony, CARDS.document, CARDS.checkin] },
+  greet: { act: 2, beat: 'cat', cards: [CARDS.greet], lights: LIGHTS('with', 'boo') },
+  back: { act: 2, beat: 'cat', cards: [CARDS.greet, CARDS.testimony], lights: LIGHTS('done') },
+  checkin: { act: 2, beat: 'checkin', cards: [CARDS.greet, CARDS.testimony, CARDS.checkin] },
   dinner: { act: 3, beat: 'down', cards: [CARDS.dinner] },
   award: { act: 3, beat: 'down', cards: [CARDS.award] },
   groups: { act: 3, beat: 'groups', cards: [CARDS.group] },
@@ -326,17 +317,15 @@ const DEALT = {
   door: { act: 6, beat: 'door', cards: [CARDS.door] },
   reveal: { act: 7, beat: 'reveal', cards: [CARDS.eyes] },
   result: { act: 7, beat: 'result', cards: [CARDS.result] },
-  clues: { act: 4, beat: 'station5', cards: [CARDS.testimony, CARDS.document, CARDS.clue, CARDS.bags, { ...CARDS.cat.testimony }], tab: 'clues', seen: { '4-station3-bags': true } },
+  clues: { act: 4, beat: 'station5', cards: [CARDS.greet, CARDS.testimony, CARDS.clue, CARDS.bags, { ...CARDS.cat.testimony }], tab: 'clues', seen: { '4-station3-bags': true } },
 }
 
-export const TOUR = ['doors', 'join', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'wait', 'go', 'testimony', 'deflect', 'back', 'puzzle', 'document', 'questions', 'checkin', 'dinner', 'groups', 'study', 'cat', 'bags', 'puzzle4', 'memory-clue', 'checkin4', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'wait', 'go', 'testimony', 'greet', 'back', 'questions', 'checkin', 'dinner', 'groups', 'study', 'cat', 'bags', 'puzzle4', 'memory-clue', 'checkin4', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
   const [act, setAct] = useState(NIGHT.act)
   const [step, setStep] = useState(0)
-  // ?preview=document cycles the seven stationery designs (or ?template=playbill)
-  const [paper, setPaper] = useState(() => (previewTemplate() ? TEMPLATE_NAMES.findIndex(n => templateSlug(n) === templateSlug(previewTemplate())) : 0))
   const night = { ...NIGHT, act }
   const serverNow = () => Date.now()
   const which = screen === 'tour' ? TOUR[step] : screen
@@ -375,15 +364,9 @@ export default function Preview({ screen }) {
     case 'lobby': body = <Rest uid="preview" night={{ ...night, act: 0, phase: 'lobby' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     default:
       if (dealt) {
-        // an unknown ?template= shows the plain block; the button then cycles the seven
-        const template = paper >= 0 ? TEMPLATE_NAMES[paper] : previewTemplate()
-        const dealtCards = which === 'document' ? dealt.cards.map(c => (c.kind === 'document' ? { ...c, template } : c)) : dealt.cards
         body = (
-          <>
-            <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
-              session={{ ...SESSION, cards: dealtCards, lights: dealt.lights, solved: which === 'document' ? { '2-puzzle-safe': true } : {} }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
-            {which === 'document' && <button className="preview-paper chip" onClick={() => setPaper(p => (p + 1) % TEMPLATE_NAMES.length)} title="Next stationery design (preview only)">{template} ▸</button>}
-          </>
+          <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
+            session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
         )
       } else {
         body = (
@@ -405,11 +388,6 @@ export default function Preview({ screen }) {
       </div>
     </>
   )
-}
-
-// /play/?preview=document&template=playbill starts on that design.
-function previewTemplate() {
-  try { return new URLSearchParams(window.location.search).get('template') } catch { return null }
 }
 
 // /play/?preview=rest&character=leech shows that character's card instead.

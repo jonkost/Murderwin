@@ -1,5 +1,6 @@
 // Puts the starting safe content into the LOCAL EMULATOR so a rehearsal
-// against it has cat openers, closers, pools, echo frames and stationery.
+// against it has the cat openers and closers (Sir Irwin's Act 5 screen speaks
+// through them) and the workshop has its starting lists.
 // Runs only against an emulator: it signs its writes "owner", which only the
 // emulator honours, so it cannot reach the party database by accident.
 //
@@ -22,7 +23,9 @@ const OWNER = 'owner'
 let n = 0
 const newId = () => `seed-${Date.now().toString(36)}-${++n}`
 
-// The same shapes app/src/lib/content.js seedDocs() writes on first boot.
+// The lists app/src/lib/content.js seedDocs() writes on first boot, in the
+// same shapes. Not the blanks (pools) or the stationery (templates): nothing
+// has read them since 23 Oct 2026.
 export function seedAreaDocs(seed) {
   const docs = {}
   for (const area of ['openers', 'closers']) {
@@ -32,15 +35,7 @@ export function seedAreaDocs(seed) {
     }
     docs[area] = { items }
   }
-  {
-    const items = []
-    for (const pool of Object.keys(seed.pools ?? {})) {
-      seed.pools[pool].forEach((text, i) => items.push({ id: newId(), pool, text, deleted: false, order: i }))
-    }
-    docs.pools = { items }
-  }
   docs.echo_frames = { items: (seed.echo_frames ?? []).map((text, i) => ({ id: newId(), text, deleted: false, order: i })) }
-  docs.templates = { items: (seed.templates ?? []).map((tpl, i) => ({ id: tpl.id, text: `${tpl.name} — ${tpl.brief}`, deleted: false, order: i })) }
   docs.scenarios = { items: [] }
   return docs
 }

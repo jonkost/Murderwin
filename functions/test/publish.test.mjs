@@ -13,7 +13,7 @@ function seeded() {
   db.store.set('safe_content/station_text', { items: [{ id: 'b', text: 'BAGS: (a bags line with [PROPERTY] in [COUNT])', deleted: false, order: 0 }] })
   db.store.set('safe_content/echo_frames', { items: [{ id: 'c', text: '...(before) ███ (after)...', deleted: false, order: 0 }, { id: 'c2', text: 'gone', deleted: true, order: 1 }] })
   db.store.set('safe_content/epilogue_frames', { items: [{ id: 'd', text: '(And so it was [MURDERER], for [MOTIVE_RHYME]; [VICTIM] is missed.)', deleted: false, order: 0 }] })
-  db.store.set('safe_content/ui_copy', { items: [{ id: 'e', text: 'NUMBERS: (the numbers were [A], [B] and [C])', deleted: false, order: 0 }] })
+  db.store.set('safe_content/ui_copy', { items: [{ id: 'e', text: 'GREET BOO: (a greeting from Boo)', deleted: false, order: 0 }] })
   return db
 }
 
@@ -27,7 +27,7 @@ test('publishContent copies the four room-screen lists along with the phone list
   }
   assert.equal(content.study_lines[0].text, 'SLOW: (a study line)')
   assert.equal(content.echo_frames.length, 1, 'a deleted line is not published')
-  assert.equal(content.ui_copy[0].text, 'NUMBERS: (the numbers were [A], [B] and [C])')
+  assert.equal(content.ui_copy[0].text, 'GREET BOO: (a greeting from Boo)')
   const r = await publishContent(db, nightId)
   assert.equal(r.areas, PLAYER_AREAS.length)
   assert.equal(r.lines, 5)

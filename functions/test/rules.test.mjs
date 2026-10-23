@@ -47,7 +47,7 @@ async function setup() {
     await setDoc(doc(db, `presence/${OTHER}`), { nightId: NIGHT, guestKey: 'b', at: new Date() })
     await setDoc(doc(db, 'sealed/x'), { structural: true })
     await setDoc(doc(db, `cases/${NIGHT}`), { structural: true })
-    await setDoc(doc(db, 'safe_content/pools'), { items: [] })
+    await setDoc(doc(db, 'safe_content/ui_copy'), { items: [] })
   })
   return env
 }
@@ -76,8 +76,8 @@ test('a signed-in phone reads public night state and its own session, never seal
     await assertFails(setDoc(doc(me, `nights/${NIGHT}`), { act: 7 }))
     await assertFails(setDoc(doc(me, 'public_state/active'), { nightId: 'mine' }))
     await assertFails(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'a', at: new Date(), extra: 1 }))
-    await assertFails(getDoc(doc(me, 'safe_content/pools')))
-    await assertFails(setDoc(doc(me, 'safe_content/pools'), { items: [] }))
+    await assertFails(getDoc(doc(me, 'safe_content/ui_copy')))
+    await assertFails(setDoc(doc(me, 'safe_content/ui_copy'), { items: [] }))
 
     const nobody = env.unauthenticatedContext().firestore()
     await assertFails(getDoc(doc(nobody, 'public_state/active')))
@@ -98,9 +98,9 @@ test('a host phone reads presence; the admin reads and writes safe content but n
 
     assert.ok(ADMIN_UID, 'the admin UID is readable from firestore.rules')
     const admin = env.authenticatedContext(ADMIN_UID).firestore()
-    await assertSucceeds(getDoc(doc(admin, 'safe_content/pools')))
-    await assertSucceeds(setDoc(doc(admin, 'safe_content/pools'), { items: [{ id: 'p1', text: 'the parlour', pool: 'room', order: 0 }] }))
-    await assertFails(deleteDoc(doc(admin, 'safe_content/pools')))
+    await assertSucceeds(getDoc(doc(admin, 'safe_content/ui_copy')))
+    await assertSucceeds(setDoc(doc(admin, 'safe_content/ui_copy'), { items: [{ id: 'u1', text: 'GREET BOO: (a greeting)', order: 0 }] }))
+    await assertFails(deleteDoc(doc(admin, 'safe_content/ui_copy')))
     await assertSucceeds(getDoc(doc(admin, `presence/${OTHER}`)))
     await assertFails(getDoc(doc(admin, 'sealed/x')))
     await assertFails(getDoc(doc(admin, 'sealed/parlour_leans')), 'L05: Jon\'s account cannot read the cats\' leans')

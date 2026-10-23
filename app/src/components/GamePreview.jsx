@@ -1,4 +1,4 @@
-import { CATS, POOL_NAMES, ACT_NAMES, CHARACTERS } from '../lib/content'
+import { CATS, ACT_NAMES, CHARACTERS } from '../lib/content'
 import { HOUSEHOLD } from '../lib/codecs'
 
 // How a line looks in the game. A small phone (or room screen) drawn from
@@ -55,30 +55,25 @@ function render(area, tab, v) {
           <p>{v.about || <G>about them</G>}</p>
         </Frame>
       )
+    // Since 23 Oct 2026 only Sir Irwin's tab is read: his hello and goodbye
+    // around his Act 5 countdown. A cat's card is its hint line alone.
     case 'openers':
-      return (
-        <Frame title={`${catName(tab)} talks to you, Act 2`}>
-          <p className="gp-sub">{catName(tab)}</p>
-          <p><b>{v.text || <G>your greeting</G>}</b></p>
-          <p><G>…the secret middle, written by Claude, lands here: who was seen where, and when…</G></p>
-          <p><G>…then a sign-off from the other list.</G></p>
-        </Frame>
-      )
     case 'closers':
+      if (tab !== 'irwin') {
+        return (
+          <Frame title={`${catName(tab)} talks to you`}>
+            <p className="gp-sub">{catName(tab)}</p>
+            <p><G>One line from the Cat Hint Lines, picked by how much {catName(tab)} likes you.</G></p>
+            <p><G>That is the whole card. Lines written here for {catName(tab)} are kept, never shown.</G></p>
+          </Frame>
+        )
+      }
       return (
-        <Frame title={`${catName(tab)} talks to you, Act 2`}>
-          <p className="gp-sub">{catName(tab)}</p>
-          <p><G>A greeting from the other list…</G></p>
-          <p><G>…the secret middle, written by Claude, lands here…</G></p>
-          <p><b>{v.text || <G>your sign-off</G>}</b></p>
-        </Frame>
-      )
-    case 'refusals':
-      return (
-        <Frame title={`${catName(tab)} will not talk to you yet`}>
-          <p className="gp-sub">{catName(tab)}</p>
-          <p><b>{v.text || <G>the brush-off</G>}</b></p>
-          <p><G>That is the whole screen.</G></p>
+        <Frame kind="room" title="Sir Irwin at cake, Act 5, on the living room TV">
+          <p className="gp-sub">SIR IRWIN</p>
+          {area === 'openers' ? <p><b>{v.text || <G>his hello</G>}</b></p> : <p><G>His hello from the other list…</G></p>}
+          <p><G>…then his countdown of motive cards…</G></p>
+          {area === 'closers' ? <p><b>{v.text || <G>his goodbye</G>}</b></p> : <p><G>…then his goodbye from the other list.</G></p>}
         </Frame>
       )
     case 'smalltalk':
@@ -122,31 +117,6 @@ function render(area, tab, v) {
         <Frame title="The blackout, Act 1">
           <p className="gp-sub">{v.label || 'YOUR CARD'}</p>
           <p><b>{v.text || <G>the card</G>}</b></p>
-        </Frame>
-      )
-    case 'pools': {
-      const phrase = v.text || <G>{POOL_NAMES[tab] ?? 'the blank'}</G>
-      const sentence = {
-        room: <>…a figure was heard in <b>{phrase}</b> at teatime…</>,
-        time: <>…was seen in the hall at <b>{phrase}</b>…</>,
-        duration: <>…it went on for <b>{phrase}</b>, witnessed by the staff…</>,
-        count: <>…and this happened <b>{phrase}</b>, by my count…</>,
-        place: <>…the same tale was heard at <b>{phrase}</b> in town…</>,
-        crowd: <>…witnessed by <b>{phrase}</b>, who said nothing…</>,
-      }[tab]
-      return (
-        <Frame title="Inside a cat’s testimony, Acts 2 and 4">
-          <p><G>I’ll be brief. Brevity is free.</G></p>
-          <p>{sentence}</p>
-          <p><G>That concludes the free portion.</G></p>
-        </Frame>
-      )
-    }
-    case 'echo_frames':
-      return (
-        <Frame kind="room" title="A room screen, after the chime">
-          <p className="gp-sub">THE WIRELESS</p>
-          <p>{v.before || <G>...before the gap</G>} <span className="gp-gap">the secret part</span> {v.after || <G>after the gap...</G>}</p>
         </Frame>
       )
     case 'epilogue_frames':

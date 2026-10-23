@@ -44,11 +44,13 @@ each with tests. I merged them and checked them before anything went live.
    the Night page to make it real. The cat's three numbers for the safe
    ride inside the real testimony; a brush-off still leaves a scrap of paper.
 
-   *23 October: built and live.* The party night uses the real secrets once
-   they are made ("The secrets, in this order", in `docs/on-the-night.md`).
-   Making them waits on the open question *secretLines*: do the cats' secret
-   lines and the Act 2 safe's document stay as extra clues, or are they
-   retired? Until you answer, the generator still writes them.
+   *23 October: built and live, then changed the same day.* You retired the
+   cats' secret lines (*secretLines*) and took the Act 2 safe out
+   (*act2Safe*). Now the case pulls nothing from a sealed set: the deal picks
+   the murderer, the ghost and the motive itself, and the cats say only their
+   open hint lines. No safe, no numbers, no scrap of paper, no document. A
+   party night reads only the cats' leans, the packing and the drawing
+   pictures ("The secrets, in this order", in `docs/on-the-night.md`).
 
 2. **Phone safety nets (B).** A phone that rehearsed starts clean on the real
    night. The role card can be read again all night. The power-returns card
@@ -95,8 +97,9 @@ each with tests. I merged them and checked them before anything went live.
 
    *23 October: built and live,* the Freeze button included (press it on
    7 November). Whether the bags stay an Act 4 station is the open question
-   *bagsAct4*. The seven real stationery pictures are your job only if the
-   safe's document stays (*secretLines*); the stand-ins work until then.
+   *bagsAct4*. Later on 23 October the Act 2 safe was taken out, so the seven
+   paper stand-ins and the workshop's Stationery page were deleted: nothing
+   shows a document now.
 
 **Wave two, built on wave one.**
 
@@ -107,7 +110,9 @@ each with tests. I merged them and checked them before anything went live.
    *23 October: built and live.* (Replaced 21 Oct: every phone gets the same
    set.) Twelve Parlour Games a night at their own times
    (`docs/parlour-games.md`). Which way each cat leans is a sealed table,
-   made blind by the leans script. The dial mapping is still sealed per night.
+   made blind by the leans script. The dial mapping is fixed as built (the
+   Ghost toward clear, the Murderer toward foggy); a blind per-night mapping
+   is the open question *dialMapping*.
 
 7. **Room screens and the echo (D).** A screen for every beat that says
    "look at the screen": the news flash with the sealed fragment in your
@@ -123,15 +128,17 @@ each with tests. I merged them and checked them before anything went live.
    only counts. Still open: *newsVideo* (bulletin 1 and the closing bulletin as video on
    the TV, or as sound with captions as built). Not built: video playback
    (only if you choose video) and the motive card pictures slot. The old
-   sealed news fragment, study clue and Irwin lines are no longer shown;
-   taking them out of the generator and Jenna's page waits on *secretLines*.
+   sealed news fragment, study clue and Irwin lines are gone: since later on
+   23 October nothing makes them (you retired the secret lines).
 
 8. **Jenna's page (H).** The Steward reads and edits the secrets; your
-   account is refused by code; regenerating never wipes her edits.
+   account is refused by code; regenerating never wipes their edits.
 
-   *23 October: built and live.* She also edits the cats' leans and sees the
-   packing list. Not on her page: the Relay Drawing pictures. Whether she
-   should see and swap them is the open question *stewardPictures*.
+   *23 October: built and live.* They also edit the cats' leans and see the
+   packing list. Later on 23 October the secrets tab was removed with the
+   secret lines: the page now has two tabs, the packing list and the cats'
+   leans. Not on their page: the Relay Drawing pictures. Whether they should
+   see and swap them is the open question *stewardPictures*.
 
 9. **The finale (I).** The reveal is staged so nothing is readable early,
    the stats reel and the dial graph appear only after the ballot, and you
@@ -143,7 +150,10 @@ each with tests. I merged them and checked them before anything went live.
    dial's journey, the end credits (awards from final sliders, Fetch
    Champion, joke counters, the room's split, thanks, Sydney) and Sir Irwin's
    last card. New 23 Oct: the early reel shows only the achievements you
-   gave; the end-credit awards show only in the credits. Not built: the
+   gave; the end-credit awards show only in the credits. Later on 23 October
+   "Fastest safe" left the stats reel with the safe; it now shows Fastest
+   light puzzle, Time on the drawing, Pictures that took more than one guess,
+   and Quickest on the Parlour Games. Not built: the
    Partner in Crime and Ghost Whisperer awards (the open question
    *partnerAwards*).
 
@@ -171,6 +181,12 @@ each with tests. I merged them and checked them before anything went live.
   Check-in), Granolia's lines reading
   cleanly, a True Friend's Salem text, file-folder backs on the memory match,
   the preview samples, and the room screens' REHEARSAL band.
+- **Later on 23 October** (built; live after your next deploy): you retired
+  the cats' secret lines and took the Act 2 safe out. The cats say only their
+  hint lines; Act 2 is the news, the four cat visits and check-in; Jenna's
+  page has two tabs; the secrets generator and its checker are deleted. The
+  next deploy asks whether to delete the function solve (the old safe): type
+  y.
 
 ## What needs your hands
 
@@ -184,15 +200,15 @@ hardware evening and the sounds are cards on the Timeline.
 
 ## The open questions, by name
 
-Only you answer these. Each is a decision card on the Timeline.
+Only you answer these. Each is a decision card on the Timeline. Fifteen
+are open on 23 October. Answered that day: *secretLines* (retire them: the
+cats say only their open hint lines) and *act2Safe* (take the Act 2 safe
+out).
 
-- *secretLines:* the cats' secret lines and the Act 2 safe's document stay
-  as extra clues, or are retired so the cats say only their open hint lines?
-  This one blocks making the secrets.
 - *newsVideo:* bulletin 1 and the closing bulletin as video on the living
   room TV, or as sound with captions (as built)?
 - *stewardPictures:* should Jenna see and swap the Relay Drawing pictures on
-  her page?
+  their page?
 - *partnerAwards:* cut the Partner in Crime and Ghost Whisperer awards, or
   build them?
 - *diningName:* call the real dining room "the Library" everywhere, or keep
@@ -251,6 +267,7 @@ The three questions this page asked on 19 October:
 - Spill the Beans works until the first clue has been shown to the room.
 - The deck hands out only the bag numbers the packer packed.
 - Jenna's page shows each set's riddle at the top, as the rules allow.
+  (Gone 23 October, with the secrets tab.)
 
 Two more, taken on 23 October (say if you want them changed):
 
@@ -263,6 +280,6 @@ Two more, taken on 23 October (say if you want them changed):
 Closed 22 October: there are no hidden events for the Murderer or the Ghost
 in any act; the Parlour Games are the only events. Still not built: the
 validator assuming the worst dial (the ten-thousand-run solvability proof),
-puzzle slot-pools beyond the safe and the memory match, a recap button, idle
-art. They are listed on the workshop's "Where we are" page as after the
+more puzzles beyond the study light game and the memory match, a recap
+button, idle art. They are listed on the workshop's "Where we are" page as after the
 party.

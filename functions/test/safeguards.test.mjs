@@ -2,50 +2,22 @@ import { test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { FakeFirestore } from './fake-firestore.mjs'
+import { walkLights } from './lights-walk.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, player, studyFinished } from '../lib/run.js'
 import { finaleDoc, ROLE_CARD_ID, ROLE_CARDS } from '../lib/deal.js'
-import { rerollCase, rehearsalCase, buildCase, CASE_KEYS, CAT_KEYS } from '../lib/case.js'
+import { rerollCase, rehearsalCase, buildCase, CASE_KEYS } from '../lib/case.js'
 import { MOTIVES } from '../lib/night.js'
 import { spill, hush, spillAllowed, noteDealt, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from '../lib/safeguards.js'
 import { studyPath } from '../lib/station.js'
 import { wordCount, PARITY_TOLERANCE } from '../lib/windows.js'
 
-// THE SEAL IN THIS FILE. Every "sealed" string below is a throwaway made
-// here, in brackets, from a word the test picks; it is never a real kernel,
-// never written to disk, and discarded with the fake database. Console
-// output is captured for the whole file and checked: no synthetic text may
-// ever reach it, and no command result may carry it. Content is compared by
-// hash only.
+// THE SEAL IN THIS FILE. Every case below is dealt in a fake Firestore and
+// discarded with it. Console output is captured for the whole file and
+// checked: a spill prints nothing, and no command result carries a motive,
+// a role or the cats' leans. The story is compared by hash only.
 
 const sha = s => createHash('sha256').update(String(s)).digest('hex').slice(0, 12)
-
-function syntheticSealed(word) {
-  const v = n => `(Synthetic ${word} ${n})`
-  const truth = n => `(Synthetic ${word} ${n}: a lantern was left in [ROOM] at [TIME].)`
-  const long = n => `(Synthetic ${word} document ${n}. ${Array.from({ length: 44 }, (_, i) => `w${i}`).join(' ')}.)`
-  return {
-    kernels: {
-      irwin: [truth('irwin one'), truth('irwin two'), truth('irwin three')],
-      boo: [truth('boo one'), truth('boo two'), truth('boo three')],
-      granolia: [truth('granolia one'), truth('granolia two'), truth('granolia three')],
-      zimothy: [truth('zimothy one'), truth('zimothy two'), truth('zimothy three')],
-      salem: [1, 2, 3].map(n => ({ text: `(Synthetic ${word} salem ${n}: the lantern was never in [ROOM].)`, anchor: 'lantern' })),
-    },
-    documents: [1, 2, 3].map(n => ({ text: long(n), emphasis: 'LANTERN', annotation: `(Synthetic ${word} note ${n})` })),
-    fragments: [v('fragment one'), v('fragment two'), v('fragment three')],
-    studyClue: [v('study one'), v('study two'), v('study three')],
-    irwin: [v('dog one'), v('dog two'), v('dog three')],
-    generatedAt: new Date(0),
-  }
-}
-function sealedStrings(doc) {
-  const out = []
-  for (const cat of CAT_KEYS) for (const k of doc.kernels[cat]) out.push(typeof k === 'string' ? k : k.text)
-  for (const d of doc.documents) out.push(d.text, d.annotation)
-  out.push(...doc.fragments, ...doc.studyClue, ...doc.irwin)
-  return out
-}
 
 // ---- console capture for the whole file ----------------------------------
 const captured = []
@@ -54,33 +26,28 @@ beforeEach(() => {
   for (const k of ['log', 'info', 'warn', 'error', 'debug']) { real[k] = console[k]; console[k] = (...a) => captured.push(a.map(String).join(' ')) }
 })
 afterEach(() => { for (const k of Object.keys(real)) console[k] = real[k] })
-const allSealed = []
 function assertNothingLeaked(extra = '') {
   const text = captured.join('\n') + '\n' + extra
-  for (const s of allSealed) assert.ok(!text.includes(s), `output carried a sealed string of length ${s.length} (hash ${sha(s)})`)
-  assert.ok(!/Synthetic/.test(text), 'output carried synthetic content')
+  assert.ok(!/synthetic|"motive"|"roles"|"leans"/i.test(text), 'output carried a motive, a role or a lean')
 }
 
 // ---- a throwaway night ---------------------------------------------------
-const THREE = { AAAAA: 3, BBBBB: 7, CCCCC: 11 }
-async function party({ partyNight = false, sealed = {}, manifest = null, guests = ['Jon', 'Susan', 'Jessa', 'Jacob', 'Stanley'] } = {}) {
+async function party({ partyNight = false, guests = ['Jon', 'Susan', 'Jessa', 'Jacob', 'Stanley'] } = {}) {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', ...(partyNight ? { party_night: true } : {}) })
-  db.store.set('safe_content/pools', { items: [
-    { id: 'p1', text: 'the scullery', pool: 'room', order: 0 }, { id: 'p2', text: 'the parlour', pool: 'room', order: 1 },
-    { id: 'p3', text: 'a quarter past six', pool: 'time', order: 0 }, { id: 'p4', text: 'nearly seven', pool: 'time', order: 1 },
-  ] })
-  db.store.set('safe_content/templates', { items: [{ id: 't1', text: 'Telegram — office banner', order: 0 }, { id: 't2', text: 'Receipt — shop letterhead', order: 1 }] })
-  if (manifest) db.store.set('sealed/manifest', { codes: manifest })
-  for (const [code, doc] of Object.entries(sealed)) { db.store.set(`sealed/${code}`, doc); allSealed.push(...sealedStrings(doc)) }
+  db.store.set('sealed/parlour_leans', { sets: { 'synthetic-set': { 0: { boo: 'a' } } } })
   const { nightId } = await createNight(db, { forceRehearsal: !partyNight })
   const uids = {}
   for (const name of guests) { const uid = `u-${name.toLowerCase()}`; await join(db, { uid, nightId, name }); uids[name.toLowerCase()] = uid }
   return { db, nightId, uids }
 }
-async function realParty() {
-  const sealed = { AAAAA: syntheticSealed('alpha'), BBBBB: syntheticSealed('bravo'), CCCCC: syntheticSealed('charlie') }
-  return party({ partyNight: true, sealed, manifest: THREE })
+const realParty = () => party({ partyNight: true })
+// Every doc path the fake database is asked for from here on.
+function watchReads(db) {
+  const paths = []
+  const get = db._get.bind(db)
+  db._get = path => { paths.push(path); return get(path) }
+  return paths
 }
 const night = (db, id) => db.store.get(`nights/${id}`)
 const caseOf = (db, id) => db.store.get(`cases/${id}`)
@@ -99,50 +66,47 @@ function people(db, nightId) {
     characterId: r.characterId, bag: r.bag, affection: session(db, deck.uids[key])?.affection ?? null,
   }]))
 }
-const kernelHash = c => sha(JSON.stringify(c.kernels))
+const storyHash = c => sha(JSON.stringify([c.motive, c.solving]))
 const roleCardOf = (db, uid) => (session(db, uid).cards ?? []).find(x => x.id === ROLE_CARD_ID)
 const keyOf = (db, nightId, uid) => Object.entries(db.store.get(`nights/${nightId}/private/deck`).uids).find(([, u]) => u === uid)?.[0]
 const uidOf = (db, nightId, key) => db.store.get(`nights/${nightId}/private/deck`).uids[key]
 
 // ---- the pure helper -------------------------------------------------------
 
-test('rerollCase keeps the Murderer, the characters, the pools, the template and the hidden sets; changes the motive and the Ghost; restarts the dial', () => {
+test('rerollCase keeps the Murderer, the characters and the Parlour Games; changes the motive and the Ghost; restarts the dial', () => {
   const roster = [{ key: 'a', characterId: 'white' }, { key: 'b', characterId: 'arms' }, { key: 'c', characterId: 'rye' }, { key: 'd', characterId: 'glass' }]
-  const templates = [{ text: 'Telegram — office banner' }, { text: 'Receipt — shop letterhead' }]
-  const pools = { room: ['the scullery', 'the parlour'], time: ['six', 'seven'] }
-  const sealedA = syntheticSealed('pure-a'), sealedB = syntheticSealed('pure-b')
-  allSealed.push(...sealedStrings(sealedA), ...sealedStrings(sealedB))
   for (let seed = 1; seed <= 40; seed++) {
     let n = seed
     const rng = max => (n = (n * 1103515245 + 12345) & 0x7fffffff) % max
-    const prev = { ...buildCase({ nightId: 'n1', roster, sealedDoc: sealedA, motiveN: 5, templates, pools, rng, now: 1000 }), dial: 9, dialLog: [{ act: 2, role: 'ghost', delta: 9 }], exposure: { ghost: { act: 2 } } }
-    const fresh = buildCase({ nightId: 'n1', roster, sealedDoc: sealedB, motiveN: 12, templates, pools, rng, now: 2000 })
-    const next = rerollCase({ prev, fresh, roster, poolLists: pools, rng })
+    const prev = { ...buildCase({ roster, rng, now: 1000 }), dial: 9, dialLog: [{ act: 2, role: 'ghost', delta: 9 }], exposure: { ghost: { act: 2 } } }
+    const fresh = { ...buildCase({ roster, rng, now: 2000 }), motive: prev.motive === 12 ? 13 : 12 }
+    const next = rerollCase({ prev, fresh, roster, rng })
     assert.deepEqual(Object.keys(next).sort(), [...CASE_KEYS, 'spills'].sort())
+    assert.equal(next.rehearsal, false)
     assert.equal(next.murderer, prev.murderer)
     assert.notEqual(next.ghost, prev.ghost)
     assert.notEqual(next.ghost, next.murderer)
     assert.deepEqual(Object.keys(next.roles).sort(), Object.keys(prev.roles).sort())
     assert.deepEqual(Object.values(next.roles).sort(), ['detective', 'detective', 'ghost', 'murderer'])
     assert.equal(next.roles[next.murderer], 'murderer'); assert.equal(next.roles[next.ghost], 'ghost')
-    assert.equal(next.motive, 12)
+    assert.equal(next.motive, fresh.motive)
+    assert.notEqual(next.motive, prev.motive)
     assert.equal(next.victimCharacterId, roster.find(g => g.key === next.ghost).characterId)
-    assert.deepEqual(next.pools, prev.pools)
-    assert.ok(next.documents.every(d => d.template === prev.documents[0].template), 'the paper stays the same')
     assert.deepEqual(next.parlourPlan, prev.parlourPlan, 'the night\'s Parlour Games carry on as planned')
+    assert.equal(next.screenSalt, prev.screenSalt)
     assert.equal(next.createdAt, prev.createdAt)
     assert.equal(next.dial, 0); assert.deepEqual(next.dialLog, []); assert.deepEqual(next.exposure, {})
     assert.equal(next.spills, 1)
-    assert.equal(kernelHash(next), kernelHash(fresh), 'the new story is the fresh set')
-    assert.notEqual(kernelHash(next), kernelHash(prev))
-    if (next.granoliaSlot) assert.notEqual(next.granoliaSlot.value, next.pools[next.granoliaSlot.key], 'Granolia is still wrong about one blank')
+    assert.ok(next.solving.family, 'the new motive has its own solving plan')
+    assert.notEqual(storyHash(next), storyHash(prev))
   }
   // a rehearsal reroll that happened to draw the same motive is pushed to another one
-  const r1 = rehearsalCase({ nightId: 'n1', roster, templates, pools, rng: () => 0 })
-  const r2 = rehearsalCase({ nightId: 'n1', roster, templates, pools, rng: () => 0 })
+  const r1 = rehearsalCase({ roster, rng: () => 0 })
+  const r2 = rehearsalCase({ roster, rng: () => 0 })
   assert.equal(r1.motive, r2.motive)
-  const rr = rerollCase({ prev: r1, fresh: r2, roster, poolLists: pools, rng: () => 0 })
+  const rr = rerollCase({ prev: r1, fresh: r2, roster, rng: () => 0 })
   assert.notEqual(rr.motive, r1.motive)
+  assert.equal(rr.rehearsal, true)
   assert.ok(MOTIVES.some(m => m.n === rr.motive))
   assertNothingLeaked()
 })
@@ -157,13 +121,14 @@ test('spillAllowed: only Acts 2 to 5, never in a blackout, never with a window o
   assert.equal(spillAllowed({ act: 2, phase: 'act', window: { settled: false } }, c), false)
   assert.equal(spillAllowed({ act: 2, phase: 'act', window: { settled: true } }, c), true)
   assert.equal(spillAllowed({ act: 2, phase: 'act' }, { roles: null }), false)
+  assert.deepEqual(BLOCKING_KINDS, ['study', 'echo', 'hint', 'memory'])
   for (const kind of BLOCKING_KINDS) assert.equal(spillAllowed({ act: 2, phase: 'act' }, { ...c, dealtClues: [{ kind }] }), false, kind)
   assert.equal(spillBlocked({ dealtClues: [{ kind: 'testimony' }] }), false, 'a cat visit alone does not pin the story')
 })
 
 // ---- Spill the Beans, on a real case -------------------------------------
 
-test('spill before any document: the motive and the Ghost change, the Murderer stays, characters and affection are kept, role cards are replaced in place', async () => {
+test('spill before any clue: the motive and the Ghost change, the Murderer stays, characters and affection are kept, role cards are replaced in place', async () => {
   const { db, nightId } = await realParty()
   const now = 1_700_000_000_000
   await toPower(db, nightId, now)
@@ -173,21 +138,21 @@ test('spill before any document: the motive and the Ghost change, the Murderer s
   const cardsBefore = Object.fromEntries(Object.keys(before.roles).map(k => [k, roleCardOf(db, uidOf(db, nightId, k))]))
   assert.ok(Object.values(cardsBefore).every(Boolean), 'every phone holds its role card')
 
+  const reads = watchReads(db)
   const r = await hostCommand(db, { nightId, command: 'spill', now })
   assert.deepEqual(r, { ok: true, did: true })
   const after = caseOf(db, nightId)
   assert.equal(after.rehearsal, false)
   assert.notEqual(after.motive, before.motive)
-  assert.ok(Object.values(THREE).includes(after.motive), 'the new motive comes from another sealed set')
+  assert.ok(MOTIVES.some(m => m.n === after.motive), 'a different motive, drawn from the nineteen')
   assert.notEqual(after.ghost, before.ghost)
   assert.equal(after.murderer, before.murderer)
   assert.deepEqual(Object.keys(after.roles).sort(), Object.keys(before.roles).sort())
   assert.deepEqual(Object.values(after.roles).sort(), ['detective', 'detective', 'detective', 'ghost', 'murderer'])
   assert.equal(after.victimCharacterId, night(db, nightId).roster[after.ghost].characterId)
   assert.deepEqual(people(db, nightId), peopleBefore, 'characters, bags and affection are untouched')
-  assert.notEqual(kernelHash(after), kernelHash(before))
-  assert.deepEqual(after.pools, before.pools)
-  assert.equal(after.documents[0].template, before.documents[0].template)
+  assert.notEqual(storyHash(after), storyHash(before))
+  assert.deepEqual(after.parlourPlan, before.parlourPlan, 'the cats\' leans and the Parlour Games carry on')
   assert.equal(after.dial, 0); assert.deepEqual(after.dialLog, []); assert.deepEqual(after.exposure, {})
   assert.equal(after.spills, 1)
   assert.equal(night(db, nightId).rehearsal, false)
@@ -202,13 +167,15 @@ test('spill before any document: the motive and the Ghost change, the Murderer s
   assert.equal(roleCardOf(db, uidOf(db, nightId, after.ghost)).text, ROLE_CARDS.GHOST)
   assert.equal(roleCardOf(db, uidOf(db, nightId, after.murderer)), cardsBefore[after.murderer] ? roleCardOf(db, uidOf(db, nightId, after.murderer)) : null)
   assert.deepEqual(roleCardOf(db, uidOf(db, nightId, after.murderer)), cardsBefore[after.murderer], 'the Murderer\'s card is not touched')
-  // a second spill rolls again, from yet another set or the first one
+  // a second spill rolls again, to yet another motive
   const r2 = await hostCommand(db, { nightId, command: 'spill', now })
   assert.equal(r2.did, true)
   const third = caseOf(db, nightId)
   assert.notEqual(third.motive, after.motive)
   assert.equal(third.murderer, before.murderer)
   assert.equal(third.spills, 2)
+  assert.ok(reads.length > 0, 'the spill was watched')
+  assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), [], 'a spill reads nothing under sealed/: no manifest, no motive set, no leans')
   assertNothingLeaked(JSON.stringify([r, r2]))
 })
 
@@ -258,18 +225,16 @@ test('spill on a rehearsal case: a fresh rehearsal story with another motive and
   assertNothingLeaked(JSON.stringify(r))
 })
 
-test('spill after a document is dealt: did:false, nothing changes, no reason given', async () => {
+test('spill after a cat\'s hint is dealt: did:false, nothing changes, no reason given', async () => {
   const { db, nightId, uids } = await realParty()
   const now = 1_700_000_000_000
   await toPower(db, nightId, now)
-  await hostCommand(db, { nightId, command: 'beat', arg: 'puzzle', now })
-  // three wrong tries: the safe gives way and the document lands (the ledger notes it)
-  const uid = uids.jessa
-  const card = session(db, uid).cards.find(x => x.kind === 'puzzle')
-  for (let i = 0; i < 3; i++) await player.solve(db, { nightId, uid, cardId: card.id, entry: [0, 0, 0] })
-  assert.ok(session(db, uid).cards.some(x => x.kind === 'document'))
+  // straight to the cats (no news on the screen): every guest meets their hint cat, and the ledger notes each hint
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now })
+  await walkLights(db, nightId, { now })
   const c = caseOf(db, nightId)
-  assert.deepEqual(c.dealtClues.map(e => [e.kind, e.key]), [['document', keyOf(db, nightId, uid)]])
+  assert.deepEqual(c.dealtClues.map(e => e.kind), Object.keys(uids).map(() => 'hint'))
+  assert.deepEqual(c.dealtClues.map(e => e.key).sort(), Object.values(uids).map(u => keyOf(db, nightId, u)).sort())
   assert.ok(c.dealtClues.every(e => Object.keys(e).every(f => ['kind', 'act', 'beat', 'key', 'at'].includes(f))), 'the ledger holds no content field')
 
   const snapshot = JSON.stringify([caseOf(db, nightId), ...Object.values(uids).map(u => session(db, u))])
@@ -280,8 +245,8 @@ test('spill after a document is dealt: did:false, nothing changes, no reason giv
   assertNothingLeaked(JSON.stringify(r))
 })
 
-test('spill is off once the echo is on the screen, once the study has paid out, after Act 5, and before the case exists', async () => {
-  // the echo: the News flash beat notes it
+test('spill is off once the news is on the screen, once the study has paid out, after Act 5, and before the case exists', async () => {
+  // the news: the News flash beat notes it (ledger kind 'echo')
   {
     const { db, nightId } = await realParty()
     const now = 1_700_000_000_000
@@ -422,9 +387,9 @@ test('the finale carries the spotlight line only when a hush exists; a spill wip
 
 test('noteDealt: quiet with no case, keeps only the ledger fields, never a word of content', async () => {
   const db = new FakeFirestore()
-  assert.deepEqual(await noteDealt(db, 'n0', { kind: 'document' }), { noted: false })
+  assert.deepEqual(await noteDealt(db, 'n0', { kind: 'hint' }), { noted: false })
   db.store.set('cases/n0', { roles: {}, dealtClues: [] })
-  assert.deepEqual(await noteDealt(db, 'n0', { kind: 'document', act: 2, beat: 'puzzle', key: 'jon', text: '(Synthetic leak)', title: 'x' }, { now: 5 }), { noted: true, count: 1 })
+  assert.deepEqual(await noteDealt(db, 'n0', { kind: 'hint', act: 2, beat: 'cat', key: 'jon', text: '(Synthetic leak)', title: 'x' }, { now: 5 }), { noted: true, count: 1 })
   assert.deepEqual(await noteDealt(db, 'n0', { act: 2 }), { noted: false }, 'no kind, no entry')
   const [e] = db.store.get('cases/n0').dealtClues
   assert.deepEqual(Object.keys(e).sort(), ['act', 'at', 'beat', 'key', 'kind'])

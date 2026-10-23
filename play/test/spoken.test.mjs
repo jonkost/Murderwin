@@ -41,7 +41,7 @@ test('no cat line in the open bank shows a star once it is on screen', () => {
 test('every place a cat line or hint is shown renders it through Spoken', () => {
   const src = (f) => readFileSync(new URL(`../src/screens/${f}`, import.meta.url), 'utf8')
   const cards = src('Cards.jsx')
-  assert.ok(cards.includes('<p key={i}><Spoken text={l} /></p>'), 'a testimony line')
+  assert.ok(cards.includes('<p key={i}><Spoken text={l} /></p>'), 'a greeting line')
   assert.ok(cards.includes('<Spoken text={card.hint.text} />'), 'a hint')
   assert.ok(cards.includes('<Spoken text={host.line} />'), 'a host line')
   assert.ok(cards.includes('<Spoken text={card.text} />'), 'a notice (Salem\'s honour arrives as one)')

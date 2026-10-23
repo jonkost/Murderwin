@@ -3,26 +3,14 @@
 // finished example in the shape of the boxes. Safe content throughout.
 // No em dashes anywhere in here: Jon and Jenna read every word.
 
+// Since 23 Oct 2026 only Sir Irwin's tab of the greetings and sign-offs is
+// read (his Act 5 countdown); the four cats say only their hint lines.
 const CAT_EXAMPLES = {
   openers: {
-    irwin: 'Oh! You came to talk to ME. Okay. Okay okay okay. Here is what I know.',
-    boo: 'Closer. I won’t say it loudly.',
-    granolia: 'Oh, a question. I have the book for this. *snrk.* Somewhere.',
-    zimothy: 'I’ll be brief. Brevity is free.',
-    salem: 'Hmph. You want to know what happened. I’ll tell you what happened.',
+    irwin: 'Oh! Everyone is here. Okay. Okay okay okay. I have something to tell you.',
   },
   closers: {
     irwin: 'That is everything. I feel much lighter.',
-    boo: 'That’s all you get.',
-    granolia: 'Or was it the other way round. *snrk.* No. No, I had it right.',
-    zimothy: 'That concludes the free portion.',
-    salem: 'Mark it down. I’m not saying it twice.',
-  },
-  refusals: {
-    boo: '(She waits, visibly, for you to become more interesting.)',
-    granolia: 'Not now, dear, I am in the middle of a chapter. *snrk.* Come back when I have found my place.',
-    zimothy: 'You are not a client. Clients have paperwork. You have a face.',
-    salem: 'Go and do something useful. Then we’ll talk.',
   },
   smalltalk: {
     irwin: 'Somebody dropped a biscuit in 1898. I am still looking.',
@@ -40,18 +28,18 @@ const CAT_EXAMPLES = {
   },
 }
 
-const CAT_NOTES = {
-  openers: {
-    irwin: 'Irwin is the dog: delighted, honest, cannot help telling you. Any greeting he gives should sound like a tail wagging.',
-    boo: 'Boo is guarded, not snobbish. Short lines. She decides about you while she talks.',
-    granolia: 'Granolia is the study nerd: bookish, forgetful, snorts (*snrk.*). She wants to help and mislays the details.',
-    zimothy: 'Zimothy counts everything, including his words. Dry, precise, money in every sentence.',
-    salem: 'Salem is the gruff groundskeeper. Mutters, certain he is right, suspicious of anyone who has not worked today.',
-  },
+const CAT_VOICES = {
+  irwin: 'Irwin is the dog: delighted, honest, cannot help telling you. Anything he says should sound like a tail wagging.',
+  boo: 'Boo is guarded, not snobbish. Short lines. She decides about you while she talks.',
+  granolia: 'Granolia is the study nerd: bookish, forgetful, snorts (*snrk.*). She wants to help and mislays the details.',
+  zimothy: 'Zimothy counts everything, including his words. Dry, precise, money in every sentence.',
+  salem: 'Salem is the gruff groundskeeper. Mutters, certain he is right, suspicious of anyone who has not worked today.',
 }
-CAT_NOTES.closers = CAT_NOTES.openers
-CAT_NOTES.refusals = CAT_NOTES.openers
-CAT_NOTES.smalltalk = CAT_NOTES.openers
+const CAT_NOTES = {
+  openers: { irwin: CAT_VOICES.irwin },
+  closers: { irwin: CAT_VOICES.irwin },
+  smalltalk: CAT_VOICES,
+}
 CAT_NOTES.status_lines = {
   irwin: 'His affection is always full, so only an In line can ever show. One adoring line is all he needs.',
   boo: 'LOCKED is old burns behind society polish. WARMING is her noticing you. IN is the polish dropping.',
@@ -60,17 +48,9 @@ CAT_NOTES.status_lines = {
   salem: 'He rates your work, not your charm. LOCKED means he has not seen you lift anything yet.',
 }
 
-const POOL_EXAMPLES = {
-  room: 'the scullery', time: 'just past breakfast', duration: 'all afternoon', count: 'three times', place: 'the milliner’s', crowd: 'the whole household',
-}
-const POOL_NOTES = {
-  room: 'Finish this: “a figure was heard in ___ at teatime”. A room in the house or on the grounds, small letters, starting with “the”, no full stop.',
-  time: 'Finish this: “was seen in the hall at ___”. A time of day in words, small letters, never a date or a weekday.',
-  duration: 'Finish this: “it went on for ___”. A span of time in words. Suspiciously precise and madly long both play.',
-  count: 'Answer this: “how many times?” Just the tally, in words: “three times”, “a dozen”, “more often than was decent”.',
-  place: 'Finish this: “the same tale was heard at ___ in town”. A shop or spot in town, never a room of the house. Start with “the” so it stays lowercase; a name inside keeps its capitals (“the shop by St Mary’s”).',
-  crowd: 'It has to read both ways: “witnessed by ___” and “___ looked on”. People in general, never a guest, a cat or a name.',
-}
+// The four cats' tabs of the greetings and sign-offs, read by nothing since
+// 23 Oct 2026.
+const NOT_READ = 'Not read on the night since 23 Oct 2026: this cat says only its line from the Cat Hint Lines. Lines here are kept.'
 
 const CARDS = {
   bios: {
@@ -96,28 +76,28 @@ const CARDS = {
     doneLine: 'The household is introduced. Nobody will walk into a room unwarned.',
   },
   openers: {
-    what: 'The first thing a cat says when a guest comes to talk to it. Pure personality, no facts.',
-    where: 'The top line of every cat visit: Act 2, alone, and Act 4, in pairs. Sir Irwin speaks once more at cake in Act 5, on the living room TV.',
-    howTo: 'One or two short sentences in this cat’s voice, as if a guest just sat down. It must work in front of any secret, so it cannot mention anything that happened.',
+    what: 'Sir Irwin’s hello when he speaks at cake. Pure personality, no facts. Only the first line on his tab is read.',
+    where: 'Act 5, on the living room TV: the first line of Sir Irwin’s countdown of motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
+    howTo: 'One or two short sentences in Sir Irwin’s voice, to the whole room at once. It comes before his motive cards, so it cannot mention anything that happened.',
     example: [{ field: 'The greeting', text: CAT_EXAMPLES.openers.irwin }],
-    emptyState: 'Nothing yet. Say hello the way this cat would, in a sentence or two.',
-    doneLine: 'Every cat knows how to start. Eight ways each.',
+    emptyState: 'Nothing yet. Say hello the way Sir Irwin would, in a sentence or two.',
+    doneLine: 'Sir Irwin knows how to start.',
   },
   closers: {
-    what: 'The last thing a cat says after it has told what it knows.',
-    where: 'The bottom line of every cat visit in Acts 2 and 4, right after the secret middle lands, and after Sir Irwin’s speech at cake in Act 5.',
+    what: 'Sir Irwin’s goodbye after his countdown at cake. Only the first line on his tab is read.',
+    where: 'Act 5, on the living room TV: the last line, after Sir Irwin has shown his motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
     howTo: 'One short sentence that reacts to “what I just said” without knowing what it was. Say “that” or “it”, never what it was about.',
     example: [{ field: 'The sign-off', text: CAT_EXAMPLES.closers.irwin }],
-    emptyState: 'Nothing yet. Finish the speech the way this cat would: short, in character, adding nothing.',
-    doneLine: 'Every cat knows how to leave a room. Mostly before you do.',
+    emptyState: 'Nothing yet. Finish the speech the way Sir Irwin would: short, adding nothing.',
+    doneLine: 'Sir Irwin knows how to finish.',
   },
   refusals: {
-    what: 'What a cat says when it will not talk to this guest yet.',
-    where: 'Acts 2 and 4, when a guest tries a cat that does not like them enough. Their whole screen is this one line, so it has to be worth reading.',
-    howTo: 'One or two sentences, funny, in character, giving nothing away. A stage direction in brackets can be the whole line.',
-    example: [{ field: 'The brush-off', text: CAT_EXAMPLES.refusals.boo }],
-    emptyState: 'Nothing yet. How does this cat say no? Make it sting a little and reveal nothing.',
-    doneLine: 'Every cat can say no beautifully. The guests will survive it.',
+    what: 'Retired 23 Oct 2026: what a cat said when it would not talk to a guest. The cats now always give their hint line, so nothing reads these; what is written is kept.',
+    where: 'Nowhere now. A cat always answers with its line from the Cat Hint Lines.',
+    howTo: 'Leave this list alone.',
+    example: [],
+    emptyState: 'Retired.',
+    doneLine: 'Retired.',
   },
   smalltalk: {
     what: 'A line a cat mutters on a room screen, beside the real lines. Never about the case.',
@@ -139,12 +119,12 @@ const CARDS = {
     doneLine: 'Every guest will know where they stand. The cats, as ever, decline to explain.',
   },
   trailoffs: {
-    what: 'A small aside where Granolia loses her thread mid-speech.',
-    where: 'Acts 2 and 4, dropped between two sentences of Granolia’s testimony.',
-    howTo: 'Up to 15 words, starting with a dash or dots, with her snort (*snrk.*) once. Rarely needed now.',
-    example: [{ field: 'The aside', text: '… that’s how I remember it, anyway. *snrk.* Mostly.' }],
-    emptyState: 'Rarely needed. Granolia misremembers now instead of trailing off.',
-    doneLine: 'Granolia has lost her thread eight ways. She is pleased with all of them.',
+    what: 'Retired: a small aside where Granolia lost her thread mid-speech. Nothing on the night reads these; what is written is kept.',
+    where: 'Nowhere now. Granolia, like every cat, says only her line from the Cat Hint Lines.',
+    howTo: 'Leave this list alone.',
+    example: [],
+    emptyState: 'Retired.',
+    doneLine: 'Retired.',
   },
   rules_text: {
     what: 'The rulebook, one section at a time. The only place the night is ever explained.',
@@ -244,12 +224,12 @@ const CARDS = {
     doneLine: 'The family history is bound and shelved. Nobody disputes it, which is how you know it is true.',
   },
   pools: {
-    what: 'Short phrases that fill the blanks in a cat’s secret middle: a room, a time, how long, how often, a place in town, who was watching.',
-    where: 'Acts 2 and 4, inside a cat’s testimony on a guest’s phone: “a figure was heard in [ROOM] at [TIME]”. The game picks which phrase lands where.',
-    howTo: 'A few words, lowercase, no full stop. It drops straight into the middle of a sentence, so read it aloud with “in”, “at” or “for” in front.',
-    example: [{ field: 'A short phrase', text: POOL_EXAMPLES.room }],
-    emptyState: 'Nothing yet. Ten short phrases, lowercase, that could fill this blank in any story.',
-    doneLine: 'The blanks are stocked. The cats can be vague in ten different ways.',
+    what: 'Retired 23 Oct 2026: short phrases that filled the blanks, like [ROOM], in the cats’ secret lines. Those lines are retired, so nothing reads these; what is written is kept.',
+    where: 'Nowhere now.',
+    howTo: 'Leave this list alone.',
+    example: [],
+    emptyState: 'Retired.',
+    doneLine: 'Retired.',
   },
   echo_frames: {
     what: 'Retired 22 Oct 2026: a news bulletin with one gap, from before W-O-O-F News. Nothing on the night shows these any more; what is written is kept.',
@@ -263,12 +243,12 @@ const CARDS = {
     doneLine: 'This station has eight bulletins ready and no idea what any of them say.',
   },
   templates: {
-    what: 'The seven blank documents (a receipt, a telegram, a page from a catalogue) that secret text is printed onto live.',
-    where: 'Act 2: when a guest opens the safe, the payout is one of these documents on their phone, with the secret words on it.',
-    howTo: 'Tick a design when it is drawn, keep notes, and attach a reference picture. Design the paper, never the message.',
-    example: [{ field: 'Design', text: 'TELEGRAM: office banner across the head, delivery stamps upper corner, gummed message strip at center.' }],
-    emptyState: 'Seven designs to make.',
-    doneLine: 'Seven papers, blank as a butler’s face, ready to be printed upon.',
+    what: 'Retired 23 Oct 2026: the seven blank documents the Act 2 safe paid out. The safe is taken out, so nothing reads these; what is written is kept.',
+    where: 'Nowhere now.',
+    howTo: 'Leave this list alone.',
+    example: [],
+    emptyState: 'Retired.',
+    doneLine: 'Retired.',
   },
   achievements: {
     what: 'Pre-written achievements: a title and one line each, given to a guest with a tap during the night.',
@@ -371,19 +351,17 @@ const CARDS = {
   },
 }
 
-// The card for a list, specialised to the tab you are on (one cat, one blank).
+// The card for a list, specialised to the tab you are on (one cat).
 export function cardFor(area, tab) {
   const base = CARDS[area]
   if (!base) return null
+  if ((area === 'openers' || area === 'closers') && tab && tab !== 'irwin') return { ...base, example: [], note: NOT_READ }
   if (tab && CAT_EXAMPLES[area]?.[tab] !== undefined) {
     const ex = CAT_EXAMPLES[area][tab]
     const example = Array.isArray(ex)
       ? [{ field: 'Standing', text: ex[0] }, { field: 'The line', text: ex[1] }]
       : [{ field: base.example[0]?.field ?? 'The line', text: ex }]
     return { ...base, example, note: CAT_NOTES[area]?.[tab] ?? null }
-  }
-  if (area === 'pools' && tab && POOL_EXAMPLES[tab]) {
-    return { ...base, example: [{ field: 'A short phrase', text: POOL_EXAMPLES[tab] }], note: POOL_NOTES[tab] ?? null }
   }
   return { ...base, note: null }
 }

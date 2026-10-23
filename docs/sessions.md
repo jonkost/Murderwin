@@ -9,6 +9,53 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 23 Oct 2026, afternoon · Claude Code
+
+**What changed**
+- Jon answered secretLines: retire them. Then he chose to take the Act 2 safe
+  out, since it had nothing left to pay out (decision act2Safe).
+- Built (live after the next deploy):
+  - The cats say only their open hint lines. The Act 2 hint cat's card and
+    the Act 4 cat station's card are the hint line alone; the other three
+    Act 2 cats still say hello. No affection roll, no brush-off, no Salem
+    flip, no Granolia wrong blank.
+  - Act 2 is orient, news, the four cat visits, check-in. No safe, numbers,
+    scrap of paper, document or stationery. The `solve` function is gone:
+    the next deploy asks to delete it, and Jon types y.
+  - No per-motive secret sets: the deal draws the motive itself, and nothing
+    reads sealed/{code} or sealed/manifest. scripts/generate-sealed.mjs and
+    validate-sealed.mjs are deleted. The 19 sets made on 20 Oct stay in
+    Firestore, unused. Spill the Beans reads nothing sealed (a test proves it).
+  - Jenna's page has two tabs, the packing list and the leans. The workshop's
+    Stationery page and Home's secrets row are gone. The blanks, the
+    stationery designs and the brush-offs are retired lists; openers and
+    closers matter only for Sir Irwin's Act 5 screen.
+  - The finale's "Fastest safe" stat is gone. fake-night --real-secrets is a
+    party-night dry run on the real leans, packing and drawing pictures.
+- The board: secretLines answered, act2Safe recorded, seven secret-set cards
+  closed, three new cards (the leans and packing lists, the Home count rows,
+  the deploy before the practice game).
+- The Canon, Start Here, the Steward Handbook, the intro script, CLAUDE.md
+  and the docs say the same. The rules deck's affection slide is reworded in
+  the local copy only (publishing the deck is still blocked).
+- A doc for Claude chat with everything left, one task at a time:
+  "Murderwin — What's Left, for Claude chat"
+  (https://claude.ai/artifact/SweWtP11QJcx1R12BhYFdT).
+
+**What is left**
+- Everything is on the board: 51 jobs for Jon, 10 for Jon and Susan, 2 for
+  Susan, 4 for Jenna, 7 for Claude Code, 2 for Claude chat, and 15 open
+  decisions. Next: deploy, then the weekend practice game.
+- Left on purpose: the firestore.rules read rule for validation_reports is
+  unused now (removing it needs Jon's OK; it is harmless). Reference pictures
+  from the old Stationery page are still in Storage under stationery/.
+  createNight still reads sealed/bags on every night, for the bag count only.
+- An untracked "docs/build-plan 2.md" (a Finder copy) is not from this work
+  and was not committed.
+
+**Decisions taken**
+- Jon: secretLines retired; act2Safe, take the safe out.
+
 ## 23 Oct 2026 · Claude Code
 
 **What changed**

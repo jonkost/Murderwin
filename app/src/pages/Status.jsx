@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeTasks, subscribeDecisions, whoAmI } from '../lib/store'
+import { subscribeArea, subscribeTasks, subscribeDecisions, whoAmI } from '../lib/store'
 import { AREAS, TAB_KINDS, goalForTab } from '../lib/content'
 import { isComplete } from '../lib/scenarios'
 import { OWNERS, leftByOwner, leftLine, nextCards, byLabel, momentName, momentIndex } from '../lib/timeline'
@@ -11,7 +11,7 @@ import { Decision } from '../components/DecisionsPanel'
 // owner, a moment and sometimes a "by" date. This page counts the open cards
 // by owner, shows Jon's next three, lists every open decision, and links to
 // the documents. Then what is built, what is still to write, and what waits
-// for after the party. Nothing here is sealed; the secrets show as a count.
+// for after the party. Nothing here is sealed.
 
 // The Claude Docs and pages everyone works from (links, no content).
 const LINKS = [
@@ -37,7 +37,7 @@ const BUILT = [
   ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons.'],
   ['The Timeline and this page', 'Every job is a card on the Timeline, filed under its moment, with its owner and, for some, a date. This page counts them by owner.'],
   ['The Parlour Games', 'Twelve a night, on their own at random times: five in Act 2, five in Act 4, two as Act 6 opens. Boo hosts each one. Three silly questions, two choices each, the same set on every phone.'],
-  ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, the safe, the groups and their five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
+  ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, the groups and their five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
   ['How the case gets solved', 'Bulletin 1 crosses off a wrong family for everyone; one of the four cats gives each guest a hint from the Cat Hint Lines; bulletin 2 at supper; Sir Irwin’s countdown of motive cards at dessert; the memory match; the study pays the Ghost’s trace; the bedroom door shows the Murderer’s.'],
   ['W-O-O-F News', 'Bulletin 1 in Act 2, bulletin 2 armed from your phone at supper and played on the Orangerie HomePod, and the closing bulletin at the reveal, each name card shown after its lead-in line. Your recordings play as sound with the words on screen.'],
   ['Act 4 on the phones', '“You’re teamed up with” for each group, Granolia’s study card, a cat card naming the cat and its room (never Granolia), and Free time with one tip.'],
@@ -47,7 +47,7 @@ const BUILT = [
   ['The hosts’ lines', 'Boo opens each Parlour Game, Granolia the study, Zimothy the memory match, Salem the final picks, and Sir Irwin speaks over the trace.'],
   ['The end credits', 'The closing bulletin, the dial’s journey, the awards from the final sliders, the joke counters, the room’s split, the thanks and Sydney, then Sir Irwin’s last card.'],
   ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night, and a big red REHEARSAL band on every screen on a rehearsal night.'],
-  ['Jenna’s page', 'Her own page for the secrets, the packing list and the cats’ leans, opening for her account only; yours is refused by the server. Making the secrets again keeps every set she edited or marked.'],
+  ['Jenna’s page', 'Her own page for the packing list and the cats’ leans, opening for her account only; yours is refused by the server.'],
   ['Rehearsing without the party', 'Eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook. A pretend Firebase on your Mac too, once Java is installed (a card on the Timeline).'],
   ['Spill the Beans and the Hush', 'Your two safeguard buttons on the Host tab, under "If something goes wrong". Spill works through Act 5 and the Manor decides silently; the Hush stops a found-out player’s answers from counting.'],
 ]
@@ -55,7 +55,7 @@ const BUILT = [
 // Decided for after the party. Listed so they are not mistaken for gaps.
 const AFTER = [
   ['The ten-thousand-run solvability proof', 'The validator assuming the worst dial.'],
-  ['More puzzle slot-pools', 'Beyond the safe and the memory match.'],
+  ['More puzzles', 'Beyond the study light game and the memory match.'],
   ['A recap button and idle art', 'Nice to have. Not for the first birthday.'],
 ]
 
@@ -72,7 +72,7 @@ function suggestion(area, spec, items) {
   const goal = spec.goal ?? 0
   const n = spec.editor === 'questions' ? live.filter(i => isComplete(i.beats)).length : live.length
   if (n >= goal) return { done: true }
-  return { done: false, text: `${n} of ${goal}. ${goal - n} to go.`, to: `${area === 'templates' ? '/stationery' : `/edit/${area}`}?focus=3` }
+  return { done: false, text: `${n} of ${goal}. ${goal - n} to go.`, to: `/edit/${area}?focus=3` }
 }
 
 const firstSentence = (text) => {
@@ -83,14 +83,12 @@ const firstSentence = (text) => {
 
 export default function Status() {
   const [data, setData] = useState({})
-  const [validation, setValidation] = useState(null)
   const [tasks, setTasks] = useState(null)
   const [decisions, setDecisions] = useState(null)
   const [saveErr, setSaveErr] = useState(false)
   const [me, setMe] = useState(null)
   useEffect(() => {
     const unsubs = Object.keys(AREAS).map(area => subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
-    unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeTasks(setTasks, () => {}))
     unsubs.push(subscribeDecisions(setDecisions, () => {}))
     return () => unsubs.forEach(u => u())
@@ -113,7 +111,7 @@ export default function Status() {
         <h2>Where we are</h2>
         <p className="why">
           The live state of the project. Decisions live on the Canon. Every job is one card on the <Link to="/timeline">Timeline</Link>,
-          with who does it and when. Counts here are live; the secrets show as a count only.
+          with who does it and when. Counts here are live.
         </p>
         {saveErr && <div className="banner error" role="alert">SAVE FAILED. That answer was not recorded. Pick and confirm again.</div>}
       </section>
@@ -192,9 +190,6 @@ export default function Status() {
           ))}
         </ul>
         {done.length > 0 && <p className="hint">At goal: {done.map(r => r.spec.label).join(', ')}.</p>}
-        <p className="night-line">
-          <b>The secrets:</b> {validation === null ? 'not made yet. Make the secrets is a card on the Timeline, before the freeze.' : `${validation.complete} of ${validation.codes} sets, ${validation.pass ? 'checked' : 'needing a re-run'}.`}
-        </p>
       </section>
 
       <section className="panel">

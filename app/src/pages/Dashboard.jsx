@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeHistory, subscribeTasks } from '../lib/store'
+import { subscribeArea, subscribeHistory, subscribeTasks } from '../lib/store'
 import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab } from '../lib/content'
 import { leftByOwner, leftLine } from '../lib/timeline'
 import { isComplete } from '../lib/scenarios'
@@ -30,15 +30,6 @@ function Row({ label, count, goal, to, suffix, why, moment, review, reviewBy }) 
 
 const SAFE_AREAS = new Set(Object.keys(AREAS))
 
-const ISSUE_LABELS = {
-  banned: 'rhyme words leaked',
-  lengthFails: 'wrong length',
-  placeholderFails: 'blanks in the wrong shape',
-  granoliaFails: 'Granolia’s blanks don’t match',
-  salemFails: 'Salem’s twist can’t be caught',
-  impersonalFails: 'says “you”',
-}
-
 function countOf(area, spec, live) {
   if (spec.editor === 'questions') return live.filter(i => isComplete(i.beats)).length
   return live.length
@@ -47,7 +38,6 @@ function countOf(area, spec, live) {
 // Where a list opens: its thinnest tab, when it has tabs.
 function linkFor(area, spec, live) {
   if (spec.checklist) return `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}`
-  if (area === 'templates') return '/stationery'
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
     const thin = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
@@ -68,7 +58,6 @@ function areaRow(area, spec, items, reviews) {
 
 export default function Dashboard() {
   const [data, setData] = useState({})
-  const [validation, setValidation] = useState(null)
   const [history, setHistory] = useState([])
   const [tasks, setTasks] = useState(null)
   const reviews = useReviews()
@@ -76,7 +65,6 @@ export default function Dashboard() {
   useEffect(() => {
     const unsubs = Object.keys(AREAS).map(area =>
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
-    unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeHistory(setHistory, () => {}))
     unsubs.push(subscribeTasks(setTasks, () => {}))
     return () => unsubs.forEach(u => u())
@@ -162,33 +150,12 @@ export default function Dashboard() {
         <Trail history={history} />
       </section>
 
-      <section className="panel">
-        <h2>The secrets</h2>
-        <p className="why">What the cats really reveal and the documents. Claude writes these and you never see them. This row only says whether they exist.</p>
-        <div className="prow static">
-          <span className="plabel">🔒 Secret cat lines and documents</span>
-          <span className="pcount">
-            {validation === null
-              ? 'not made yet'
-              : `${validation.complete} of ${validation.codes} motive sets, ${validation.pass ? 'checked ✓' : 'needs a re-run'}`}
-          </span>
-        </div>
-        {validation !== null && !validation.pass && (
-          <p className="hint">
-            What went wrong (counts only): {Object.entries(ISSUE_LABELS)
-              .filter(([k]) => validation[k] > 0)
-              .map(([k, label]) => `${label} ×${validation[k]}`)
-              .join(' · ') || 'some sets are incomplete'}. Ask Claude Code to run the generator again.
-          </p>
-        )}
-      </section>
-
       <details className="panel more">
         <summary>Everything else, rarely needed</summary>
         <div className="list-grid">
           {rows(spec => spec.hidden && !spec.retired).map(({ key, ...r }) => <Row key={key} {...r} />)}
         </div>
-        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history, news frames, the old picture and sound checklists) are kept with everything in them, but not shown.</p>
+        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history, news frames, the blanks, the brush-offs, the stationery designs, the old picture and sound checklists) are kept with everything in them, but not shown.</p>
         <TaskBoard />
         <DecisionsPanel />
       </details>

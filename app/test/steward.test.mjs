@@ -3,13 +3,11 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  SECTIONS, fieldsOf, setField, shapeWords, routeState, packingRows, syntheticSet, JON_UID, NOT_FOR_YOU, SAVE_FAILED,
-} from '../src/lib/steward.js'
+import { routeState, packingRows, JON_UID, NOT_FOR_YOU } from '../src/lib/steward.js'
 
 // Jenna's page, tested through its pure helpers (the page itself is JSX and
-// renders in the browser; a preview check covers it). Every "secret" here
-// is the synthetic preview set: bracketed, tied to nothing, in memory only.
+// renders in the browser; a preview check covers it). The bags here are
+// made up in the test, tied to nothing, in memory only.
 
 const here = dirname(fileURLToPath(import.meta.url))
 const src = p => readFileSync(join(here, '..', 'src', p), 'utf8')
@@ -23,42 +21,6 @@ test('the route: Jon\'s UID is turned away before any call; everyone else waits 
   assert.equal(routeState({ uid: 'someone', whoami: false }), 'not-for-you')
   assert.equal(routeState({ uid: 'someone', whoami: true }), 'open')
   assert.equal(NOT_FOR_YOU, 'Not for you.')
-  assert.ok(SAVE_FAILED.startsWith('SAVE FAILED'))
-})
-
-test('a synthetic set flattens to every editable box in reading order, and an edit lands in a new copy', () => {
-  const set = syntheticSet('PREV1')
-  const fields = fieldsOf(set)
-  // 4 cats x 3 lines + salem 3 x 2 + documents 3 x 3 + fragments 3 + study 3 + irwin 3
-  assert.equal(fields.length, 12 + 6 + 9 + 3 + 3 + 3)
-  assert.deepEqual([...new Set(fields.map(f => f.section))], SECTIONS.map(s => s.key), 'sections come in the order Jenna reads them')
-  assert.equal(fields[0].path, 'kernels.irwin.0')
-  assert.ok(fields.some(f => f.path === 'kernels.salem.2.anchor' && f.value === 'lantern'))
-  assert.ok(fields.some(f => f.path === 'documents.1.emphasis' && f.value === 'LANTERN'))
-  assert.ok(fields.every(f => typeof f.value === 'string' && f.rows >= 1 && f.label))
-  const next = setField(set, 'kernels.boo.1', '(Preview edited)')
-  assert.equal(next.kernels.boo[1], '(Preview edited)')
-  assert.equal(set.kernels.boo[1], fields.find(f => f.path === 'kernels.boo.1').value, 'the old copy is untouched')
-  assert.equal(setField(set, 'kernels.salem.0.text', 'x').kernels.salem[0].text, 'x')
-  assert.equal(setField(set, 'kernels.salem.0.text', 'x').kernels.salem[0].anchor, 'lantern')
-  assert.equal(setField(set, 'nope.0', 'x'), set, 'an unknown path changes nothing')
-  assert.equal(setField(set, 'kernels.boo.9', 'x'), set, 'an index past the end changes nothing')
-  for (const s of SECTIONS) assert.ok(!s.label.includes('—') && !s.hint.includes('—'), 'no em dash on screen')
-})
-
-test('shape failures read as plain words, and the preview set is obviously synthetic', () => {
-  const words = shapeWords(['kernels:boo:token', 'kernels:salem:empty', 'kernels:zimothy', 'documents:field', 'documents', 'fragments', 'studyClue', 'irwin', 'granolia', 'other'])
-  assert.equal(words.length, 10)
-  assert.ok(words[0].startsWith('Miss Boo LaRue: a blank'))
-  assert.ok(words[1].startsWith('Salem Crookshank: a line is empty'))
-  assert.ok(words[2].startsWith('Zimothy Clawford, Esq.: the lines are missing'))
-  assert.ok(words[8].startsWith("Granolia's blanks"))
-  for (const w of words) assert.ok(!w.includes('—'))
-  assert.deepEqual(shapeWords(), [])
-  const set = syntheticSet('ZZZ')
-  const all = JSON.stringify(set)
-  assert.ok(all.includes('Preview ZZZ') && !/[A-Z]{5}[^"]*(poison|debt|will)/.test(all), 'bracketed preview text only')
-  assert.equal(set.kernels.salem.length, 3)
 })
 
 test('the packing list: one row per bag, the item name before the dash, taste doubles marked', () => {
@@ -87,4 +49,17 @@ test('the page and its API never touch browser storage or the Firestore client, 
   assert.ok(app.includes('path="/steward"'), 'the route exists')
   assert.ok(!/NavLink to="\/steward"/.test(app), 'the rail has no link to it')
   assert.ok(src('pages/ForJenna.jsx').includes('to="/steward"'), 'Jenna reaches it from her brief')
+})
+
+test('two tabs only: the packing list and the cats\' leans; the old secret sets are gone from the page and the pretend API', () => {
+  const page = src('pages/Steward.jsx')
+  const api = src('lib/stewardApi.js')
+  assert.ok(page.includes('The packing list') && page.includes("The cats' leans"))
+  assert.ok(!/setTab\('sets'\)|SetEditor|The secrets|nineteen sets/i.test(page), 'no secrets tab')
+  for (const op of ['list', 'read', 'write', 'mark']) {
+    assert.ok(!page.includes(`op: '${op}'`), `the page never calls ${op}`)
+    assert.ok(!api.includes(`case '${op}'`), `the pretend API has no ${op}`)
+  }
+  for (const op of ['whoami', 'bags', 'leans', 'lean']) assert.ok(api.includes(`case '${op}'`), `the pretend API answers ${op}`)
+  assert.ok(!/kernel|document|fragment|studyClue/i.test(page + api + src('lib/steward.js')), 'nothing about the retired secret sets')
 })

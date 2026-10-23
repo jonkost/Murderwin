@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { callSolve, callMeet, callLeave } from '../firebase'
+import { useEffect, useState } from 'react'
+import { callMeet, callLeave } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
 import { TraceView } from './Kiosk'
-import { STATIONERY, templateSlug, stationeryUrl } from '../lib/stationery'
 import Spoken from './Spoken'
 
 // Everything a phone is dealt during an act, one component per kind of card.
@@ -11,14 +10,12 @@ import Spoken from './Spoken'
 // (client rule: every innocent beat needs an interaction), and every card is
 // the same shape whatever role the phone belongs to.
 
-export function Card({ card, uid, nightId, notes, session }) {
+export function Card({ card, uid, notes }) {
   const seen = !!notes?.seen?.[card.id]
   const put = () => writeNotes(uid, { seen: { [card.id]: true } }).catch(() => {})
   switch (card.kind) {
     case 'notice': return <Notice card={card} onDone={put} />
     case 'testimony': return <Testimony card={card} />
-    case 'puzzle': return <Safe card={card} nightId={nightId} session={session} onDone={put} />
-    case 'document': return <Document card={card} />
     case 'group': return <Group card={card} onDone={put} />
     case 'station': return <Station card={card} uid={uid} notes={notes} onDone={put} />
     case 'clue': return <Clue card={card} uid={uid} notes={notes} />
@@ -98,11 +95,12 @@ export function LightsStep({ lights, uid, nightId, notes, note = null }) {
   )
 }
 
-// A cat speaks: opener, the middle, closer, as three short paragraphs.
-// A brush-off is one line in italics. Nothing on the card says which.
-// Stage directions (*snort*) read in italics, without the stars.
+// A cat speaks. A cat with a hint for this guest (Act 2) or this group
+// (Act 4) says only its hint line, from the open Cat Hint Lines bank; the
+// other three cats in Act 2 say one greeting line each, with no hint. Stage
+// directions (*snort*) read in italics, without the stars.
 export function Testimony({ card, compact = false }) {
-  const deflected = card.outcome === 'deflect'
+  const lines = card.lines ?? []
   return (
     <section className={`dealt testimony${compact ? ' compact' : ''}`}>
       <header className="speaker">
@@ -113,92 +111,12 @@ export function Testimony({ card, compact = false }) {
         </div>
         <Rehearsal card={card} />
       </header>
-      <div className={deflected ? 'said deflect' : 'said'}>
-        {(card.lines ?? []).map((l, i) => <p key={i}><Spoken text={l} /></p>)}
-      </div>
-      {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}><Spoken text={card.hint.text} /></p>}
-    </section>
-  )
-}
-
-// The safe: three numbers in the order the cat said them.
-function Safe({ card, nightId, session, onDone }) {
-  const slots = card.slots ?? 3
-  const [digits, setDigits] = useState(() => Array(slots).fill(''))
-  const [busy, setBusy] = useState(false)
-  const [note, setNote] = useState(null)
-  const refs = useRef([])
-  const solved = !!session?.solved?.[card.id]
-  const tries = session?.tries?.[card.id] ?? 0
-
-  useEffect(() => { if (!solved) refs.current[0]?.focus() }, [solved])
-
-  const set = (i, v) => {
-    const clean = v.replace(/\D/g, '').slice(0, 2)
-    const next = [...digits]; next[i] = clean; setDigits(next)
-    if (clean.length === 2 && i + 1 < slots) refs.current[i + 1]?.focus()
-  }
-  const submit = async (e) => {
-    e.preventDefault()
-    if (digits.some(d => !d)) return
-    setBusy(true); setNote(null)
-    try {
-      const r = await callSolve({ nightId, cardId: card.id, entry: digits.map(Number) })
-      const d = r.data ?? {}
-      if (d.gaveWay) setNote('The safe gave way. Something fell out.')
-      else if (d.right) setNote('It opens.')
-      else { setNote(`Not that. ${3 - (d.tries ?? 1)} more ${3 - (d.tries ?? 1) === 1 ? 'try' : 'tries'} before it gives way.`); setDigits(Array(slots).fill('')); refs.current[0]?.focus() }
-    } catch (err) {
-      setNote(err?.message || 'The safe did not answer. Try again.')
-    } finally { setBusy(false) }
-  }
-
-  if (solved) return (
-    <section className="dealt puzzle">
-      <h3>{card.title}</h3>
-      <p>{note || 'Open. What was inside is in your Clues.'}</p>
-      <button className="big" onClick={onDone}>Put it away</button>
-    </section>
-  )
-  return (
-    <section className="dealt puzzle">
-      <h3>{card.title}</h3>
-      <p>{card.text}</p>
-      <form className="safe" onSubmit={submit}>
-        <div className="dials">
-          {digits.map((d, i) => (
-            <input key={i} ref={el => { refs.current[i] = el }} className="dial" inputMode="numeric" pattern="[0-9]*" maxLength={2}
-              value={d} onChange={e => set(i, e.target.value)} aria-label={`Number ${i + 1}`} disabled={busy} />
-          ))}
+      {lines.length > 0 && (
+        <div className="said">
+          {lines.map((l, i) => <p key={i}><Spoken text={l} /></p>)}
         </div>
-        <button className="big" type="submit" disabled={busy || digits.some(d => !d)}>{busy ? 'Turning…' : 'Try it'}</button>
-      </form>
-      {note && <p className="trouble" role="status">{note}</p>}
-      {tries > 0 && !note && <p className="gloss">{tries} wrong so far.</p>}
-    </section>
-  )
-}
-
-// A document, printed live onto one of the seven stationery designs: the
-// blank design is the paper's background (play/public/stationery/<slug>.svg,
-// a stand-in until Jon's art replaces the file) and the case's text, big
-// word and note are laid over it in that design's ink. A design the phone
-// does not know prints on the plain block.
-export function Document({ card }) {
-  const slug = templateSlug(card.template)
-  const design = slug ? STATIONERY[slug] : null
-  const base = import.meta.env?.BASE_URL ?? '/'
-  const cls = design ? `paper paper-on paper-${slug} ink-${design.ink}` : 'paper'
-  const style = design ? { backgroundImage: `url(${stationeryUrl(slug, base)})` } : undefined
-  return (
-    <section className="dealt document">
-      <div className={cls} style={style}>
-        <p className="paper-kind">{card.template}{card.gaveWay ? ' · fell out of the safe' : ''}</p>
-        <p className="paper-big">{card.bigWord}</p>
-        <p className="paper-text">{card.text}</p>
-        {card.annotation && <p className="paper-note">{card.annotation}</p>}
-      </div>
-      <Rehearsal card={card} />
+      )}
+      {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}><Spoken text={card.hint.text} /></p>}
     </section>
   )
 }
@@ -217,8 +135,8 @@ function Group({ card, onDone }) {
 }
 
 // Act 4 stations. The study, the bags, the memory match (on the iPad) and the
-// check-in are instructions; the cat station carries a testimony for the
-// whole group.
+// check-in are instructions; the cat station carries the cat's hint line for
+// the whole group.
 function Station({ card, uid, notes, onDone }) {
   const metKey = `${card.id}-met`
   const met = !!notes?.seen?.[metKey]

@@ -23,8 +23,6 @@ async function party(n, now = 1_000_000) {
   for (const name of NAMES.slice(0, n)) { const uid = `u-${name.toLowerCase()}`; await join(db, { uid, nightId, name }); uids[name.toLowerCase()] = uid }
   return { db, nightId, uids, now }
 }
-// the dealer's voice pools with nothing written in the workshop (deal.js voicePools)
-const VOICE = { openers: () => [], closers: () => [], refusals: () => [], pools: {}, numbersLine: '', scrap: {} }
 const cardsOf = (db, uid, kind) => (db.store.get(`sessions/${uid}`).cards ?? []).filter(c => c.kind === kind)
 
 test('the group card names the others by character: "You\'re teamed up with ...", then "From now on, only share with your group."', async () => {
@@ -62,13 +60,13 @@ test('the study card and Free time say the handoff\'s lines; Free time carries o
   assert.ok(Array.from({ length: 30 }, (_, g) => freeTimeTip(c, `g${g}`) !== freeTimeTip(c2, `g${g}`)).some(Boolean), 'another salt, other tips')
   // the cards themselves
   const db = new FakeFirestore()
-  const study = await stationCard(db, { c, station: { key: 'study' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, voice: null, nightId: 'n1' })
+  const study = await stationCard(db, { c, station: { key: 'study' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, nightId: 'n1' })
   assert.equal(study.text, "Granolia's expecting your group in the Study, upstairs.")
   assert.equal(study.host.cat, 'granolia', 'her own line still goes under it')
-  const free = await stationCard(db, { c, station: { key: 'checkin' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, voice: null, nightId: 'n1' })
+  const free = await stationCard(db, { c, station: { key: 'checkin' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, nightId: 'n1' })
   assert.equal(free.title, 'Free time')
   assert.equal(free.text, `Nothing for your group right now. Grab a drink, stretch your legs. ${freeTimeTip(c, 'g1', 'n1')}`)
-  const written = await stationCard(db, { c, station: { key: 'checkin' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, voice: null, nightId: 'n1', over: { CHECKIN: 'Sit and compare.' } })
+  const written = await stationCard(db, { c, station: { key: 'checkin' }, act: 4, beat: 'station1', gid: 'g1', members: ['a', 'b'], levels: {}, nightId: 'n1', over: { CHECKIN: 'Sit and compare.' } })
   assert.equal(written.text, `Sit and compare. ${freeTimeTip(c, 'g1', 'n1')}`, 'the workshop line replaces the main sentence; the tip still follows')
 })
 
@@ -101,9 +99,17 @@ test('the Act 4 cat station never sends a group to Granolia or the Study: only S
   const c = rehearsalCase({ nightId: 'n2', roster: [{ key: 'a' }, { key: 'b' }] })
   const db = new FakeFirestore()
   for (let i = 0; i < 6; i++) {
-    const card = await stationCard(db, { c, station: { key: 'cat' }, act: 4, beat: 'station2', gid: 'g1', members: ['a', 'b'], levels: {}, voice: VOICE, nightId: '', pick: () => i % 3 })
+    const card = await stationCard(db, { c, station: { key: 'cat' }, act: 4, beat: 'station2', gid: 'g1', members: ['a', 'b'], levels: {}, nightId: '', pick: () => i % 3 })
     assert.ok(ACT4_CATS.includes(card.cat))
     assert.ok(!card.text.includes('Study'))
+    // the cat's card is its name, its room and the open hint line, nothing else
+    assert.deepEqual(Object.keys(card.testimony).sort(), ['act', 'beat', 'cat', 'catName', 'hint', 'id', 'kind', 'lines', 'placeholder', 'room'])
+    assert.equal(card.testimony.kind, 'testimony')
+    assert.deepEqual(card.testimony.lines, [])
+    assert.equal(card.testimony.cat, card.cat)
+    assert.equal(card.testimony.room, CAT_ROOMS[card.cat])
+    assert.ok(card.testimony.hint.text)
+    assert.equal(card.testimony.placeholder, !!card.testimony.hint.placeholder)
   }
 })
 

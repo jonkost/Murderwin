@@ -1,6 +1,5 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createHash, randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
@@ -9,69 +8,16 @@ import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
-  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_FRAME, DEFAULT_IRWIN, REHEARSAL_FRAGMENT, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
-  echoLines, dialBand, irwinLines, dogFilter, castNames, parseFrame, frameList,
+  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
+  dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
   screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES,
 } from '../lib/screen.js'
-import { rehearsalCase, buildCase, screenSalt } from '../lib/case.js'
+import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
 
-// Everything here is a throwaway: synthetic bracketed fragments made in the
-// test and discarded with the process, and the dealer's own rehearsal case
-// in a fake Firestore. Nothing is printed. Where a test needs to know the
-// gap was filled it compares hashes and lengths, never the text.
-
-const sha = s => createHash('sha256').update(String(s)).digest('hex')
-const synthetic = word => `(Synthetic ${word} ${randomInt(1e6)})`
-
-// A case with only the fields the screens read, bracketed, made fresh each time.
-function fixtureCase({ dial = 0, motive = 7, rehearsal = false } = {}) {
-  return {
-    rehearsal, dial, motive,
-    echo: { fragment: synthetic('fragment') },
-    irwin: { lines: [synthetic('dog quiet'), synthetic('dog plainer'), synthetic('dog plainest')] },
-    roles: { a: 'murderer' }, murderer: 'a', ghost: 'b', kernels: { irwin: [synthetic('kernel')] },
-  }
-}
-
-const FRAMES = [
-  { text: '...residents further report ███. Authorities have declined to comment...' },
-  { text: '...staff describe ███, though none would be quoted directly...' },
-]
-
-// ---------------------------------------------------------------------------
-// The echo
-
-test('echoLines fills the gap of one frame: the frame text is there, the gap is gone, the fragment is inside (by hash and length only)', () => {
-  const c = fixtureCase()
-  const lines = echoLines(c, FRAMES, { seed: 'n1' })
-  assert.equal(lines.length, 1)
-  const line = lines[0]
-  assert.ok(!line.includes('███'))
-  const frames = frameList(FRAMES)
-  const used = frames.find(f => line.startsWith(f.before.replace(/\s+$/, '')) && line.endsWith(f.after))
-  assert.ok(used, 'one of the frames was used, whole')
-  const expected = `${used.before} ${c.echo.fragment}${used.after}`.replace(/\s+/g, ' ').trim()
-  assert.equal(sha(line), sha(expected))
-  assert.equal(line.length, used.before.length + 1 + c.echo.fragment.length + used.after.length)
-  // the same night picks the same frame every time
-  assert.equal(sha(echoLines(c, FRAMES, { seed: 'n1' })[0]), sha(line))
-})
-
-test('with no frames the default frame is used; with no fragment the bracketed stand-in fills it', () => {
-  const c = fixtureCase()
-  const [line] = echoLines(c, [], { seed: 'x' })
-  assert.ok(line.startsWith(DEFAULT_FRAME.before))
-  assert.ok(line.endsWith(DEFAULT_FRAME.after.trim()))
-  assert.equal(line.length, DEFAULT_FRAME.before.length + 1 + c.echo.fragment.length + DEFAULT_FRAME.after.length)
-  const [stand] = echoLines({ rehearsal: true }, FRAMES, { seed: 'x' })
-  assert.ok(stand.includes(REHEARSAL_FRAGMENT))
-  // a frame given as before/after (the workshop's codec) parses too, and a line with no gap is skipped
-  assert.deepEqual(parseFrame({ before: 'a', after: 'b' }), { before: 'a', after: 'b' })
-  assert.equal(parseFrame({ text: 'no gap here' }), null)
-  assert.equal(frameList([{ text: 'no gap' }, { text: 'x ███ y' }]).length, 1)
-})
+// Everything here is a throwaway: the dealer's own rehearsal case in a fake
+// Firestore, and bracketed stand-ins made in the test. Nothing is printed.
 
 // ---------------------------------------------------------------------------
 // The dial's band, the salt the screens seed on, and Sir Irwin
@@ -110,7 +56,7 @@ test('Irwin: his opener, the countdown line, his closer, and nothing sealed; at 
   // the workshop opener and closer win, and stay within form
   assert.deepEqual(irwinLines({ opener: 'Hello.', closer: 'Bye.', names }), ['Hello.', 'Bye.'])
   for (const l of irwinLines({ opener: `${'word '.repeat(30)}Jon.`, closer: 'Bye Jessa.', names })) { assert.ok(l.split(' ').length <= 12); assert.ok(!/\b(Jon|Jessa)\b/.test(l)) }
-  // the case is not an input any more: the old sealed lines can never reach the screen
+  // the case is not an input: nothing sealed can reach his screen
   assert.equal(irwinLines.length, 0, 'irwinLines takes only the voice, the names and the countdown line')
   const src = readFileSync(new URL('../lib/screen.js', import.meta.url), 'utf8')
   assert.ok(!/irwin\?*\.lines/.test(src), 'screen.js never reads the case\'s irwin lines')
@@ -193,12 +139,11 @@ test('the seed names a screen and a sound only from the catalogues', () => {
 // sound in the catalogue is written once, and no screen doc ever carries a
 // forbidden field. The fake-players' public-doc tokens are checked too.
 
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"fragment"', '"screenSalt"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"parlourPlan"', '"leans"', '"listeners"', '"solving"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"screenSalt"']
 
 async function party() {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
-  db.store.set('safe_content/echo_frames', { items: FRAMES.map((f, i) => ({ id: `f${i}`, text: f.text, order: i })) })
   db.store.set('safe_content/openers', { items: [{ id: 'o1', cat: 'irwin', text: 'Oh! You are all here.', order: 0 }] })
   const { nightId } = await createNight(db)
   const phones = { jon: 'uid-jon', jessa: 'uid-jessa', jacob: 'uid-jacob', marie: 'uid-marie' }
@@ -273,7 +218,6 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(screen().kind, 'idle', 'the TV is back on the beat, not on One moment')
   assert.equal(screen().parked, null)
   assert.ok(!JSON.stringify(screen()).includes(db.store.get(`cases/${nightId}`).screenSalt), 'the salt never reaches the screen')
-  await next() // puzzle
   await next() // checkin
 
   // Act 3: bulletin 2. Next arms it (the Host tab hears only Armed); it plays itself 3 to 5
@@ -334,8 +278,7 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(irwin.lines.length, 3, 'opener, countdown line, closer: nothing in between')
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
   assert.ok(Object.values(IRWIN_OPTION_LINES).includes(irwin.lines[1]), 'the countdown line straight after the opener')
-  const caseLines = db.store.get(`cases/${nightId}`)?.irwin?.lines ?? []
-  for (const l of caseLines) assert.ok(!irwin.lines.includes(l) && !irwin.captions.lines.includes(l), 'the case\'s old Irwin lines never reach the screen')
+  assert.equal('irwin' in db.store.get(`cases/${nightId}`), false, 'the case carries no Irwin lines at all')
   assert.ok([1, 2, 3, 4, 5].includes(irwin.choices.length), 'one to five motive cards')
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)

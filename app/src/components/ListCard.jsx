@@ -12,8 +12,7 @@ export default function ListCard({ area, tab, compact = false, onUseExample }) {
   const card = cardFor(area, tab)
   const [open, setOpen] = useState(!compact)
   if (!spec || !card) return null
-  const guideKey = spec.tabs === 'pools' ? tab : spec.guide
-  const guide = guideKey ? GUIDES[guideKey] : null
+  const guide = spec.guide ? GUIDES[spec.guide] : null
   const fields = fieldsFor(area)
   // A dropdown's example shows its plain words, not the stored code.
   const shown = (e, i) => {

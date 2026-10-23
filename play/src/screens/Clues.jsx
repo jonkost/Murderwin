@@ -1,17 +1,17 @@
 import { ACTS } from '../lib/content'
 import { clueCards } from '../lib/night'
-import { Testimony, Document, Clue, CatFace } from './Cards'
+import { Testimony, Clue, CatFace } from './Cards'
 import Spoken from './Spoken'
 
 // Everything this phone has been told, newest first, grouped by act. The
-// cats' words, the documents, the study's clue, the bag property. Nothing
+// cats' words, the study's clue, the memory match, the bag property. Nothing
 // here can be sent anywhere; it is read out loud or not at all.
 
 export default function Clues({ session }) {
   const cards = clueCards(session)
   if (!cards.length) return (
     <div>
-      <p className="gloss">Nothing yet. Everything a cat tells you, every paper you find and every clue a room pays out collects here.</p>
+      <p className="gloss">Nothing yet. Everything a cat tells you and every clue a room pays out collects here.</p>
     </div>
   )
   const byAct = new Map()
@@ -35,7 +35,6 @@ export default function Clues({ session }) {
 function ClueCard({ card }) {
   switch (card.kind) {
     case 'testimony': return <Testimony card={card} compact />
-    case 'document': return <Document card={card} />
     case 'clue': return <Clue card={card} />
     case 'station': return (
       <section className="dealt clue">

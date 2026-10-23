@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
-import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, secretStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT } from '../src/lib/timelineTasks.js'
+import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions } from '../src/lib/timeline.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -42,7 +42,6 @@ test('every need names a real list, tab or label', () => {
   const labelSets = { ui_copy: UI_LABELS, station_text: STATION_LABELS }
   for (const key of Object.keys(NEEDS)) assert.ok(MOMENT_KEYS.includes(key), `NEEDS.${key} is a row`)
   for (const need of allNeeds()) {
-    if (need.secret) { assert.ok(need.name, `secret ${need.secret} has a name`); continue }
     const spec = AREAS[need.list]
     assert.ok(spec, `${need.list} is a list`)
     assert.ok(!spec.retired, `${need.list} is not retired`)
@@ -143,9 +142,6 @@ test('status: lists count live lines, labels need words, secrets give counts onl
   const roles = { list: 'role_cards' }
   assert.equal(listStatus(roles, [1, 2, 3].map(i => ({ text: `card ${i}`, deleted: false }))).done, true)
   assert.equal(listStatus({ list: 'act_scripts', tab: 'act2' }, [{ act: 'act2', text: 'Go.', deleted: false }]).done, true)
-  assert.equal(secretStatus({ name: 'x' }, null).done, false)
-  assert.equal(secretStatus({ name: 'x' }, { complete: 19, codes: 19, pass: true }).done, true)
-  assert.equal(secretStatus({ name: 'x' }, { complete: 19, codes: 19, pass: false }).done, false)
 })
 
 test('progress: one entry per need, task and decision, in night order', () => {
@@ -163,7 +159,7 @@ test('progress: one entry per need, task and decision, in night order', () => {
   assert.equal(p.ready, 1)
   assert.equal(p.now.total + p.later.total, p.total, 'every item is either now or later')
   assert.equal(p.later.ready, 1, 'the done card under After the party is later')
-  const keys = new Set(items.filter(i => i.kind === 'need').map(i => `${i.need.list ?? i.need.secret}:${i.need.tab ?? ''}:${(i.need.labels ?? []).join()}`))
+  const keys = new Set(items.filter(i => i.kind === 'need').map(i => `${i.need.list}:${i.need.tab ?? ''}:${(i.need.labels ?? []).join()}`))
   assert.equal(keys.size, items.filter(i => i.kind === 'need').length, 'each need counted once')
 })
 
@@ -209,7 +205,6 @@ test('stand-ins: every sound card, the blind-written stand-in cards and the pape
   for (const l of STANDIN_LISTS) assert.ok(AREAS[l], l)
   for (const l of ['motive_notes', 'smalltalk', 'achievements', 'act_scripts', 'scenarios', 'bag_items']) assert.ok(!STANDIN_LISTS.has(l), `${l} has no stand-in`)
   const items = timelineItems({})
-  assert.ok(items.filter(i => i.kind === 'need' && i.need.secret).every(i => !i.standin), 'a secret is never a stand-in')
   assert.ok(items.filter(i => i.kind === 'decision').every(i => i.when === 'now' && !i.standin))
 })
 
@@ -217,28 +212,20 @@ test('the stand-ins the page claims are really in the code', () => {
   const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
   const play = read('../../play/src/lib/content.js')
   const deal = read('../../functions/lib/deal.js')
+  const screen = read('../../functions/lib/screen.js')
   const where = {
     ui_copy: [play, 'export const DEFAULT_UI'], station_text: [deal, 'export const STATION_TEXT'], study_lines: [play, 'export const DEFAULT_STUDY_LINES'],
     rules_text: [play, 'export const DEFAULT_RULES'], status_lines: [play, 'export const DEFAULT_STATUS'],
-    openers: [deal, 'DEFAULT_VOICE.opener'], closers: [deal, 'DEFAULT_VOICE.closer'], refusals: [deal, 'DEFAULT_VOICE.refusal'],
-    pools: [read('../../functions/lib/case.js'), 'export const DEFAULT_POOLS'],
+    openers: [screen, 'DEFAULT_IRWIN.opener'], closers: [screen, 'DEFAULT_IRWIN.closer'],
     role_cards: [deal, 'ROLE_CARDS.MURDERER'], epilogue_frames: [read('../../functions/lib/finale.js'), 'export const DEFAULT_EPILOGUE'],
     bios: [play, 'return character.bio'], npc_cards: [play, '${cat.name}, ${cat.tag}. ${cat.blurb}'],
   }
-  const paper = readdirSync(new URL('../../play/public/stationery/', import.meta.url)).filter(f => f.endsWith('.svg'))
-  assert.equal(paper.length, 7, 'templates: seven paper stand-ins')
-  where.templates = [paper.join(), paper[0]]
   assert.deepEqual(Object.keys(where).sort(), [...STANDIN_LISTS].sort(), 'every stand-in list has a place to check')
   for (const [list, [src, needle]] of Object.entries(where)) assert.ok(src.includes(needle), `${list}: ${needle}`)
   for (const key of ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']) assert.match(deal, new RegExp(`^  ${key}: \\{ title:`, 'm'), `NOTICE ${key.toUpperCase()} has a default`)
 })
 
-test('the secrets and Claude’s or Jenna’s cards never count as needing Jon', () => {
-  const items = timelineItems({})
-  for (const i of items.filter(x => x.kind === 'need' && x.need.secret)) {
-    assert.equal(i.when, 'later', `${i.need.secret} is made the week before`)
-    assert.equal(i.notYou, true)
-  }
+test('Claude’s or Jenna’s cards never count as needing Jon', () => {
   assert.equal(taskNotYou({ who: 'Claude' }), true)
   assert.equal(taskNotYou({ who: 'Claude Code' }), true)
   assert.equal(taskNotYou({ who: 'Claude chat' }), true)
@@ -289,8 +276,8 @@ const audit = () => ADDITIONS.find(a => a.id === '2026-10-23-audit')
 
 test('the audit migration: its cards are new and numbered from 300, the cards it settles were on the board by number and title', () => {
   const add = audit()
-  assert.ok(add, 'the migration is there, last')
-  assert.equal(ADDITIONS.at(-1), add)
+  assert.ok(add, 'the migration is there')
+  assert.ok(ADDITIONS.indexOf(add) < ADDITIONS.findIndex(a => a.id === '2026-10-23-secret-lines'), 'before the secret lines one')
   assert.ok(add.tasks === AUDIT_TASKS && add.decisions === AUDIT_DECISIONS)
   const earlier = before(add.id)
   for (const t of AUDIT_TASKS) {
@@ -332,7 +319,7 @@ test('the audit on a pretend board: stale cards done with the reason, the secret
   let n = 0
   const newId = () => `id${++n}`
   let state = { applied: [], areas: {}, decisions: Object.fromEntries(tasksFile.decisions.map(d => [d.key, { ...d }])), tasks: tasksFile.tasks.map(t => ({ ...t, id: newId() })) }
-  for (const add of ADDITIONS.filter(a => a.id !== '2026-10-23-audit')) state = applyPlan(planAddition(add, state, { newId, now: 1 }), state)
+  for (const add of ADDITIONS.slice(0, ADDITIONS.findIndex(a => a.id === '2026-10-23-audit'))) state = applyPlan(planAddition(add, state, { newId, now: 1 }), state)
   // Jon has added a card by hand that shares a number with one the audit settles
   state = { ...state, tasks: [...state.tasks, { id: 'jon', order: 206, status: 'todo', title: 'Buy markers', moment: 'act6.drawing' }] }
   // and answered one of the decisions himself
@@ -361,6 +348,46 @@ test('the audit on a pretend board: stale cards done with the reason, the secret
   const lost = unfiled({ tasks: after.tasks.filter(t => t.id !== 'jon'), decisions: Object.entries(after.decisions).map(([key, d]) => ({ ...d, key })) })
   assert.deepEqual(lost.decisions.map(d => d.key), [], 'every open decision has a place on the night')
   assert.ok(!lost.tasks.some(t => t.order === 27), 'the Steward view card is done, not lost')
+  const again = applyPlan(planAddition(add, after, { newId, now: 3 }), after)
+  assert.deepEqual(again.tasks, after.tasks, 'never twice')
+})
+
+test('the secret lines migration: Jon’s answer recorded, the secret-set cards done with the reason, three new cards, once only', () => {
+  let n = 0
+  const newId = () => `id${++n}`
+  let state = { applied: [], areas: {}, decisions: Object.fromEntries(tasksFile.decisions.map(d => [d.key, { ...d }])), tasks: tasksFile.tasks.map(t => ({ ...t, id: newId() })) }
+  const at = ADDITIONS.findIndex(a => a.id === '2026-10-23-secret-lines')
+  assert.ok(at > ADDITIONS.findIndex(a => a.id === '2026-10-23-audit'), 'after the audit')
+  for (const add of ADDITIONS.slice(0, at)) state = applyPlan(planAddition(add, state, { newId, now: 1 }), state)
+  const before = state
+  const add = ADDITIONS[at]
+  const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  const card = (order, title) => after.tasks.find(t => t.order === order && t.title === title)
+  for (const r of RETIRED_FOR_SECRET_LINES) {
+    assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done'), `card ${r.order} was open on the board`)
+    const t = card(r.order, r.title)
+    assert.equal(t.status, 'done', `card ${r.order} retired`)
+    assert.ok(t.detail.endsWith(r.detail), `card ${r.order} says why`)
+  }
+  for (const f of FILED_FOR_SECRET_LINES) assert.ok(card(f.order, f.title).detail.endsWith(f.note), `card ${f.order} gets its note`)
+  const orders = new Set(ALL_TIMELINE_TASKS.filter(t => !SECRET_LINES_TASKS.includes(t)).map(t => t.order))
+  for (const t of SECRET_LINES_TASKS) {
+    assert.ok(!orders.has(t.order), `card ${t.order} is new`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    assert.ok(OWNERS.includes(t.who), t.who)
+    assert.equal(card(t.order, t.title).status, 'todo')
+    if (t.by) assert.match(t.by, /^2026-1[01]-\d{2}$/)
+    assert.ok(!/secret/i.test(`${t.title} ${t.detail}`), `card ${t.order} never sends anyone to the secrets`)
+  }
+  assert.equal(after.decisions.secretLines.answer, 'Retire them')
+  assert.equal(after.decisions.act2Safe.answer, 'Take it out')
+  assert.ok(SECRET_LINES_DECISIONS[0].options.includes('Take it out'))
+  assert.ok(MOMENT_KEYS.includes(after.decisions.act2Safe.moment))
+  const left = after.tasks.filter(t => !t.deleted && t.status !== 'done')
+  assert.ok(!left.some(t => /secret/i.test(t.title)), 'no open card is about the secret sets')
+  const answered = { ...before, decisions: { ...before.decisions, secretLines: { ...before.decisions.secretLines, answer: 'Keep them as extra clues' } } }
+  const kept = applyPlan(planAddition(add, answered, { newId, now: 2 }), answered)
+  assert.equal(kept.decisions.secretLines.answer, 'Keep them as extra clues', 'an answer already on the board is never changed')
   const again = applyPlan(planAddition(add, after, { newId, now: 3 }), after)
   assert.deepEqual(again.tasks, after.tasks, 'never twice')
 })

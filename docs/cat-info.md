@@ -25,6 +25,8 @@
   - Boo: "The more she likes you, the more she'll say. Bore her and you get a look. Win her over and she might be useful."
   - Zimothy and Granolia keep their current lines.
 
+**23 Oct 2026 (Jon; wins over everything below).** The cats' secret lines are retired (decision secretLines). A cat's hint line is now all it says, at the rung of its ladder above. Gone: the secret middle between a greeting and a sign-off, the affection roll and its brush-off lines, Granolia's one wrong detail, and Salem's secret line that flipped on its own. The Act 2 safe is taken out too, so no cat hands over numbers for a puzzle. Where the sections below describe those, they are design history.
+
 ---
 
 ## 0. THE FOUNDING RULE — nobody addresses it
@@ -69,7 +71,7 @@ Deliberately four different *shapes* of unreliability, not four dials of the sam
 | **Salem** | **Inverted** — confidently backwards | Is this one of the wrong ones? |
 | **Zimothy** | **Withheld** — accurate but rationed | What is he not telling me? |
 | **Boo** | **Gated** — excellent, if she'll speak | How do I get in? |
-| **Granolia** | **Garbled** — true but one detail is wrong | Which detail? Check it against Irwin. |
+| **Granolia** | **Garbled** — true but one detail is wrong *(retired 23 Oct: she now forgets instead; at 4 she names two and forgets the third)* | Which detail? Check it against Irwin. |
 
 None of them is "random." Every cat is *legible* once you understand them — which is the whole pleasure. The middling cat you haven't figured out yet is more dangerous than the liar you have.
 
@@ -131,7 +133,7 @@ She snorts. She breathes heavily. She's fat. She licks everything. She is weird 
 
 **Behavior and mechanics:**
 - Honest but forgetful. She doesn't mean to lie — she just misremembers, so exactly one detail in what she tells you is wrong (a room, a time, a count…) and she is cheerfully confident about all of it. Not gatekeeping; **you can't buy her affection**. *(22 Oct: her hint line now depends on affection like every cat's; see the note at the top.)*
-- She hands you the whole story with one wrong piece — the cross-check engine the core loop runs on. You find the bad piece by checking her against someone reliable.
+- She hands you the whole story with one wrong piece — the cross-check engine the core loop runs on. You find the bad piece by checking her against someone reliable. *(23 Oct: retired with the secret lines. Her hint lines never get a detail wrong; she rambles, halves a name or forgets one, by affection.)*
 - She *wants to learn*, so she's close to the knowledgeable roles: **Librarian, Scientist, Professors**, and the **Baker** (she'd love the Baker off the bat).
 - Lives alone in the study — the best-equipped room — so visiting her is a deliberate trip.
 - Earlier "circus runaway / Barnum" concept was scrapped in favor of the nerd.
@@ -162,7 +164,7 @@ Once all four descriptors existed, a shape appeared that nobody designed:
 ## 9. CATS IN THE CORE LOOP
 
 - ~~Act 2, beat 2 is the **cat encounter**: dispersed, four cats, four rooms. Everyone is met by a cat, gets a quick in-fiction explanation of affection, then receives information.~~ Replaced 22 Oct, see §8.
-- **[DECIDED] Cats deliver the inputs the puzzle requires**, not just clues. Worked example: Salem gives three sets of three numbers and says *"I'd use these three first."* He is the least trustworthy cat in the house. Do you believe him?
+- ~~**[DECIDED] Cats deliver the inputs the puzzle requires**, not just clues. Worked example: Salem gives three sets of three numbers and says *"I'd use these three first."* He is the least trustworthy cat in the house. Do you believe him?~~ Retired 23 Oct: the Act 2 safe is taken out, so no cat gives numbers for a puzzle.
 
 ---
 

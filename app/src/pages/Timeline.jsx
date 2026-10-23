@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { subscribeArea, subscribeLatestValidation, subscribeTasks, subscribeDecisions, updateTask, addTask, fileDecision, whoAmI } from '../lib/store'
+import { subscribeArea, subscribeTasks, subscribeDecisions, updateTask, addTask, fileDecision, whoAmI } from '../lib/store'
 import { TIMELINE, TIMELINE_LISTS, WHEN, OWNERS, needStatus, timelineItems, bucketProgress, taskWhen, ownerOf, byLabel, taskBy, unfiled, momentOptions, leftByOwner } from '../lib/timeline'
 import { useTaskDraft } from '../components/TaskBoard'
 import { Decision } from '../components/DecisionsPanel'
 
 // The night, in order. One straight line from the freeze to the morning
-// after: under every moment, the lists it needs (live counts), the secrets
-// it needs (whether they exist, never their words), the decisions still open
-// and the tasks, each with a tick box. A task added here is filed under that
-// moment on the task board too.
+// after: under every moment, the lists it needs (live counts), the decisions
+// still open and the tasks, each with a tick box. A task added here is filed
+// under that moment on the task board too.
 //
 // Three views (22 Oct 2026): Do now (before the freeze), Happens later (the
 // week before, the day, after) and Everything. Something the night already
@@ -45,7 +44,7 @@ function NeedLine({ need, status, standin }) {
       <span className="tl-mark" aria-hidden="true">{status.done ? '✓' : '○'}</span>
       <span className="tl-body">
         {need.also && <span className="hint">Used again: </span>}
-        {status.to ? <Link to={status.to}>{status.label}</Link> : <span>{need.secret ? '🔒 ' : ''}{status.label}</span>}
+        <Link to={status.to}>{status.label}</Link>
         <span className="hint"> · {status.text}</span>
         {standin && !status.done && !need.also && <span className="tl-standin">{STANDIN}</span>}
       </span>
@@ -172,7 +171,6 @@ function viewSummary(view, p) {
 
 export default function Timeline() {
   const [areas, setAreas] = useState({})
-  const [validation, setValidation] = useState(null)
   const [tasks, setTasks] = useState(null)
   const [decisions, setDecisions] = useState([])
   const [loadErr, setLoadErr] = useState(false)
@@ -192,7 +190,6 @@ export default function Timeline() {
   useEffect(() => {
     const fail = () => setLoadErr(true)
     const unsubs = TIMELINE_LISTS.map(area => subscribeArea(area, items => setAreas(a => ({ ...a, [area]: items })), fail))
-    unsubs.push(subscribeLatestValidation(setValidation, () => {}))
     unsubs.push(subscribeTasks(ts => { setTasks(ts); setLoadErr(false) }, fail))
     unsubs.push(subscribeDecisions(setDecisions, fail))
     return () => unsubs.forEach(u => u())
@@ -201,8 +198,8 @@ export default function Timeline() {
   const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
 
   const loaded = tasks !== null && TIMELINE_LISTS.every(a => a in areas)
-  const data = { areas, validation, tasks: tasks ?? [], decisions }
-  const items = useMemo(() => timelineItems(data), [areas, validation, tasks, decisions]) // eslint-disable-line react-hooks/exhaustive-deps
+  const data = { areas, tasks: tasks ?? [], decisions }
+  const items = useMemo(() => timelineItems(data), [areas, tasks, decisions]) // eslint-disable-line react-hooks/exhaustive-deps
   const inView = (it) => view === 'all' || it.when === view
   // One owner's open cards (and, for Jon, the open decisions), or everything.
   const forWho = (it) => who === 'all'
@@ -265,7 +262,7 @@ export default function Timeline() {
   }
 
   const renderItem = (it, rowKey) => {
-    if (it.kind === 'need') return <NeedLine key={`n-${it.need.list ?? it.need.secret}-${it.need.tab ?? ''}-${(it.need.labels ?? []).join()}`} need={it.need} status={it.status} standin={it.standin} />
+    if (it.kind === 'need') return <NeedLine key={`n-${it.need.list}-${it.need.tab ?? ''}-${(it.need.labels ?? []).join()}`} need={it.need} status={it.status} standin={it.standin} />
     if (it.kind === 'decision') {
       const d = it.decision
       return d.answer != null
@@ -293,7 +290,7 @@ export default function Timeline() {
         <h2>The night, in order</h2>
         <p className="why">
           Everything the party needs, in the order the night plays it, from the freeze to the morning after.
-          Lists count themselves as you write. Tick a task when it is done. The secrets only say whether they exist.
+          Lists count themselves as you write. Tick a task when it is done.
         </p>
         {saveErr && <div className="banner error" role="alert">SAVE FAILED. Your latest change to a task is not saved. It will retry on your next edit.</div>}
         {loadErr && <div className="banner error" role="alert">Part of the night did not load. Check your signal.</div>}

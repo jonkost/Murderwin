@@ -6,7 +6,9 @@ alive, and what to do when something dies. Everything on this page is safe
 for you to read: nothing here says who did what, and nothing you can press
 shows you.
 
-Written 17 October 2026, updated 23 October for the 22 October handoff.
+Written 17 October 2026, updated 23 October for the 22 October handoff and
+again on 23 October for your two decisions that day: the cats' secret lines
+are retired (they say only their hint lines) and the Act 2 safe is taken out.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -14,36 +16,46 @@ them.
 
 ## Before the night
 
-- *The secrets, in this order.* First finish the lists they read: the bag
-  items, the Parlour Games, and the cats' openers, closers, brush-offs and
-  pools. The scripts need your Anthropic key and the service-account file in
-  `scripts/.env` (copy `scripts/.env.example`). Each command prints counts
-  and a PASS or FAIL line and nothing else; read only that line. Run them
-  soon (this week if you can), not the week of the freeze: Jenna needs time
-  to read and to pack.
+- *The secrets, in this order.* Three things are made blind: the cats'
+  leans, the packing list and the drawing pictures. (Since 23 October there
+  are no secret cat lines or documents to make.) First finish the lists they
+  read: the bag items and the Parlour Games. The scripts need your Anthropic
+  key and the service-account file in `scripts/.env` (copy
+  `scripts/.env.example`). Each command prints counts and a PASS or FAIL
+  line and nothing else; read only that line. Run them by Saturday
+  31 October (the dates are on the Timeline), not the week of the freeze:
+  Jenna needs time to look and to pack.
   1. If the bags station stays (the open question *bagsAct4*):
-     `npm --prefix scripts run pack-bags` (the packing list, for Jenna). If
-     it says the bags are already packed, leave it.
-  2. Once you have answered the open question *secretLines* (the cats' secret
-     lines and the Act 2 safe's document): `npm --prefix scripts run generate`,
-     then `npm --prefix scripts run validate`.
-  3. `npm --prefix scripts run leans` (which way each cat leans in the
+     `npm --prefix scripts run pack-bags` (the packing list, for Jenna). A
+     packing was made on 20 October. If you and Susan changed or added bag
+     items since then, run `npm --prefix scripts run pack-bags -- --repack`
+     once, before Jenna packs, so the packing uses the finished list.
+     Otherwise, if it says the bags are already packed, leave it.
+  2. `npm --prefix scripts run leans` (which way each cat leans in the
      Parlour Games). Run it again after adding a Parlour Game; it fills only
      the new ones.
-  4. `npm --prefix scripts run relay-pictures` (the drawing pictures, made
+  3. `npm --prefix scripts run relay-pictures` (the drawing pictures, made
      blind; you never see them). Until it has run, the drawing uses stand-in
      pictures.
-  5. With no night running:
+  4. Run this with no night running. First close the TV and the room
+     screens, and keep your phone and Susan's off the game page until it
+     says PASS or FAIL: the screens and phones follow the newest night, and
+     this one shows the real drawing pictures. Then:
      `GOOGLE_APPLICATION_CREDENTIALS=scripts/service-account.json npm run fake-night -- --real-secrets --live --i-know-this-is-the-party-database`.
-     Eight fake phones play on the real secrets and throw the night away.
-     Your phone and Susan's never join it. While any night is live it
-     refuses and says so.
-  6. Tell Jenna: she reads the sets and the leans, packs the bags, and says
-     "done" or "needs more".
+     Eight fake phones play a party night on the real leans, packing and
+     drawing pictures, and throw the night away. It says "Case: party", and
+     near the end a "Party secrets used" line of counts. The script joins
+     only its eight fake players; nothing stops a real phone that is open on
+     the game page from following along, so keep yours closed. While any
+     night is live it refuses and says so.
+  5. Tell Jenna: they look over the leans (if they want), pack the bags, and
+     say "done" or "needs more".
 - *Put the game live.* `npm run deploy`. This is the one line to run whenever
   Claude says a build is done. It builds the workshop and the phone client,
   refuses to go on if either came out empty, and then publishes the site, the
-  rules and the server. Nothing goes live until you run it.
+  rules and the server. Nothing goes live until you run it. The first deploy
+  after 23 October asks whether to delete the function solve (it ran the old
+  Act 2 safe): type y.
 - *The Game night page* (in the workshop). Type both hosts' names, so you and
   Susan get the Professors. Type the names Jessa and Jake will type, for Sir
   Irwin's two seats. Print the four cat-room codes from the same page.
@@ -65,8 +77,8 @@ them.
 - *Sydney's photo.* Save it as `play/public/household/sydney.jpg`, then
   `npm run deploy`. Without it his end-credits card shows his name only.
 - *A dry run with nobody in the room.* `npm run fake-night`. Eight fake phones
-  play the whole night on stand-in text and throw it away. One line per act, a
-  tally, PASS. Nothing in what it prints is a clue.
+  play a whole rehearsal night and throw it away. It says "Case: rehearsal",
+  then one line per act, a tally, PASS. Nothing in what it prints is a clue.
 - *A rehearsal on phones.* Open the game on your phone, tap "Host? Start the
   night", type your name, and press **Next** through the evening with Susan's
   phone and a spare joined. Every night you start is a rehearsal unless the
@@ -179,10 +191,10 @@ game; it serves the bulb and the speakers.
   done, and is sent to the next cat. Everyone else waits in the living room.
   Nothing to press: a guest who has not scanned in after four minutes, or is
   still with a cat after five, is moved on. Your Host tab counts it: "Cat
-  visits: N of M guests have seen all four". **Next** for the first puzzle
-  can go while visits are running. Press **Next** for Check-in only when
-  everyone has seen all four cats: it sends anyone still waiting to supper
-  (they still get their real hint).
+  visits: N of M guests have seen all four". There is no safe or first
+  puzzle any more (taken out 23 October). Press **Next** for Check-in only
+  when everyone has seen all four cats: it sends anyone still waiting to
+  supper (they still get their real hint).
 - Act 3: phones down, supper in the orangery. Near the end of supper, press
   **Next** when it says "Next: Arm the bulletin". Your phone says only
   "Armed." W-O-O-F News bulletin 2 plays on its own 3 to 6 minutes later
@@ -291,7 +303,7 @@ a red REHEARSAL band; on the party night it is gone.
 | The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, **Pause, Irwin needs the garden**. |
 | The wrong group walks into the study | Before they finish, tap **This group is in the study** on the Host tab and pick the group that is actually in there; the study pays them. If you miss it, the group that was due is paid. Carry on. |
 | Somebody gives a hidden role away out loud | **Hush the Murderer** or **Hush the Ghost**, whichever role was given away. Nothing on any phone changes. From then on that player's Parlour Game answers stop moving the clarity dial (their cats still warm and cool as usual, so nothing looks different), and the reveal says one line about it. You never learn who it was from the button. |
-| The story itself needs to change (a guess that landed too early, a secret blurted) | **Spill the Beans**. The Manor decides on its own whether the story can still change, and says nothing either way; the phone's message is the same whether it worked or not. It can only change before any clue has reached anyone (the news, a cat's hint, a document, the study's clue or the memory match), so in practice only at the very start of Act 2, before the news. If it did, the Murderer stays, everyone keeps their character, and the rest is re-drawn. |
+| The story itself needs to change (a guess that landed too early, a secret blurted) | **Spill the Beans**. The Manor decides on its own whether the story can still change, and says nothing either way; the phone's message is the same whether it worked or not. It can only change before any clue has reached anyone (the news, a cat's hint, the study's clue or the memory match), so in practice only at the very start of Act 2, before the news. If it did, the Murderer stays, everyone keeps their character, and the rest is re-drawn. |
 | The night itself | Before the blackout, **Start a new night** deals new characters and every phone types its name again. After the blackout, pause and think; a new night is a new case. |
 
 ## After the freeze, 7 November
@@ -303,9 +315,9 @@ Anything not working is cut, not fixed.
   jobs (the TV shows the trace, the bulletin's words show on the TV only, and
   a group that missed the memory match gets its cross-off at dessert), and
   any W-O-O-F News recording (the words show on the screens).
-- Never cut: the secrets generator, the reveal order (Murderer, then Motive,
-  then Victim), the sealed testimony (the open question *secretLines* may
-  change this one).
+- Never cut: the case deal, the reveal order (Murderer, then Motive, then
+  Victim) and the clue path: both W-O-O-F News bulletins, the cat hints, Sir
+  Irwin's countdown, the study trace and the trace reveal.
 - The workshop lock: on Saturday 7 November, open the workshop's Game night
   page and press "Freeze the workshop". Every list goes read-only and the
   phones keep the words as they are. Unfreeze only if something really must
@@ -318,7 +330,7 @@ the real game. It needs Java on this Mac, which is not installed yet; if it
 says so, ask Claude Code.
 
 - `npm run emulate` in one terminal. It stays running.
-- `npm run emulate:seed` in another, once, to give it the starting cat lines and pools.
+- `npm run emulate:seed` in another, once, to give it the starting cat lines and lists.
 - `npm run fake-night -- --emulator` plays a whole night on it.
 - `npm run test:rules` proves the security rules on it: a phone can read its
   own session and never anyone else's, never the secrets, never the case.
@@ -326,7 +338,8 @@ says so, ask Claude Code.
   runs it before saying done; you can too.
 
 A night started on the real game with the party box unticked is a rehearsal
-too: stand-in text, and the red REHEARSAL band on every screen. Replaying a
+too: a throwaway case, stand-ins for the bags clue and the drawing pictures,
+and the red REHEARSAL band on every screen. Replaying a
 night by its seed is not built yet (a card on the board).
 
 ---
@@ -391,16 +404,20 @@ command from `HOST_COMMANDS`.
 
 *The safeguards* (`functions/lib/safeguards.js`, host commands `spill` and
 `hush <murderer|ghost>`). The ledger `cases/{nightId}.dealtClues` records a
-kind, act, beat and guest key or group id (never a word of content) whenever a
-document lands (`deal.solve`), the study pays out (`station.dealStudy`, and
-`deal.rotate` with no station), the News flash beat runs (the echo), a cat's
-Act 2 hint is dealt, or the memory match pays (`BLOCKING_KINDS` in
-`ledger.js`). `spillAllowed(night, case)` is the whole rule: Acts 2 to 5, not
-in a blackout, no open window, no blocking kind in the ledger. A legal spill
-builds a fresh case from another sealed code (a different motive) or a fresh
-rehearsal, then `case.rerollCase` keeps the Murderer, the pools, the template
-and the hidden sets, picks a new Ghost, restarts the dial and the exposure
-record, and the role cards are replaced in place under the same card id.
+kind, act, beat and guest key or group id (never a word of content) whenever
+the study pays out (`station.dealStudy`, and `deal.rotate` with no station),
+the News flash beat runs (kind `echo`, the news on the screen), a cat's Act 2
+hint is dealt, or the memory match pays (`BLOCKING_KINDS` in `ledger.js`:
+study, echo, hint, memory; the `document` kind went with the safe on
+23 Oct). `spillAllowed(night, case)` is the whole rule: Acts 2 to 5, not in a
+blackout, no open window, no blocking kind in the ledger. A legal spill deals
+a fresh case the same way as the one it replaces (`buildCase` or
+`rehearsalCase`, by the case's own flag, with a different motive; nothing
+sealed is read), then `case.rerollCase` keeps the Murderer, every guest's
+character and the night's Parlour Games (`parlourPlan`, `screenSalt`), takes
+the new motive and its own solving plan, picks a new Ghost, restarts the dial
+and the exposure record, and the role cards are replaced in place under the
+same card id.
 The Hush writes `cases/{nightId}.exposure[role] = { hushedAt, act }`;
 `deal.applyPoints` skips the dial for a hushed role and `finaleDoc` adds
 `spotlight[]` only when the record exists.
@@ -409,7 +426,18 @@ The Hush writes `cases/{nightId}.exposure[role] = { hushedAt, act }`;
 with the key, `npm run fake-night -- --live --i-know-this-is-the-party-database --real-secrets`.
 It refuses while any night is live, creates its own night with
 `createNight(db, { forceRehearsal: false, dryRun: true })`, is joined only by
-the eight fake phones, and discards the night and its case afterwards. Jon's
-and Susan's phones never join it. Without `--real-secrets` the same run uses
-stand-ins; without `--live` it uses the emulator (`--emulator`) or an
+the eight fake phones, and discards the night and its case afterwards.
+`createNight` points `public_state/active` at it and nothing in `night.join`
+refuses a dry-run night, so every kiosk and any open phone follows it, and at
+the guess `nights/{id}/public/relay` carries the option names, the real
+picture among them: the screens and Jon's and Susan's phones stay closed
+until it prints PASS or FAIL. Since 23 Oct the flag keeps its name but
+means a party-night dry run: the case is a party case (`Case: party`), which
+reads the leans (`sealed/parlour_leans`, into `parlourPlan`), the packing
+(`sealed/bags`, for the bags clue) and the picture bank
+(`sealed/relay_pictures`), and the run prints `Party secrets used` with
+counts only (lean sets, packed bags cards, rounds from the bank of 3).
+Without `--real-secrets` the case is a rehearsal (`Case: rehearsal`) and reads
+none of them; `createNight` reads `sealed/bags` on every night, for the bag
+count only. Without `--live` it uses the emulator (`--emulator`) or an
 in-memory stand-in for Firestore (the default, no services at all).

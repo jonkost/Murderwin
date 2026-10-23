@@ -2,12 +2,15 @@
 // act controls. Pure logic over a Firestore `db`, shared by the Cloud
 // Functions (index.js) and the terminal host script (scripts/host.mjs).
 //
-// SEAL RULE: nothing in this file reads sealed/* or cases/*, with one
-// narrow exception: a guest who joins after the power has returned is handed
-// to deal.dealRoleTo (loaded at call time, never at import), which adds them
-// to the case as a detective and deals their role card. Nothing from the
-// case comes back here. Everything else is safe content: the guest list, the
-// fourteen characters, the published player copy, who holds which bag number.
+// SEAL RULE: nothing in this file reads sealed/* or cases/*, with two
+// narrow exceptions. createNight reads sealed/bags on every night, rehearsals
+// included, for the highest bag number only (packedBagCount), so every
+// guest's bag number is a real one; no item ever leaves that function. And a
+// guest who joins after the power has returned is handed to deal.dealRoleTo
+// (loaded at call time, never at import), which adds them to the case as a
+// detective and deals their role card. Nothing from the case comes back
+// here. Everything else is safe content: the guest list, the fourteen
+// characters, the published player copy, who holds which bag number.
 
 import { randomInt, randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
@@ -142,7 +145,7 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
   const hosts = await readHosts(db)
   // Nights rehearse by default. Only the workshop's "This is the party night"
   // checkbox (meta/game.party_night) or an explicit caller (the fake players'
-  // dry run) makes a night use the sealed content.
+  // dry run) makes a night the party, which reads the sealed lists.
   if (typeof forceRehearsal !== 'boolean') {
     const gameSnap = await db.doc('meta/game').get()
     forceRehearsal = !(gameSnap.exists && gameSnap.data().party_night === true)
@@ -164,9 +167,9 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
     beat: 'arrive',    // which beat of the act (seed/night.json); the host steps through them
     window: null,      // { id, kind, opensAt, closesAt, settled } when every phone is choosing
     rehearsal: false,  // true once a throwaway case is dealt
-    forceRehearsal,    // true: the case is always a throwaway, whatever is sealed (the default)
-    dryRun,            // true: a fake-players run with real sealed content; discarded afterwards
-    caseWarning: null, // 'rehearsal-fallback', 'no-sealed-content' and/or 'trace-partner', shown on the Host tab
+    forceRehearsal,    // true: a rehearsal case; the cats' leans, the bags clue's packing and the drawing pictures are not read (the default)
+    dryRun,            // true: a fake-players run on the party's sealed lists; discarded afterwards
+    caseWarning: null, // 'trace-partner' when a trace at the party has no look-alike, shown on the Host tab
     phase: 'lobby',
     phaseAt: FieldValue.serverTimestamp(),
     actStartedAt: null,
@@ -320,7 +323,7 @@ async function joinOnly(db, { uid, nightId, name }) {
 }
 
 // What follows a guest from a dead phone to a new one.
-export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights', 'salemFriend']
+export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights', 'salemFriend']
 
 // A borrowed phone (host button). The previous owner's cards, windows and
 // everything else they were dealt are moved off the session into the

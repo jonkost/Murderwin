@@ -5,29 +5,31 @@
 // dealer fills, exactly as a real phone's would be. The script drives the
 // host's Next through every beat of every act (seed/night.json), and at each
 // beat does what the room would do: dismisses notices, goes to its cat when
-// the phone sends it (one guest at a cat at a time), reads the cat's
-// numbers and opens the safe, answers every Parlour Game, finishes the study
-// for each group, clears the memory match, guesses in the drawing, strikes one
-// thing out, casts a ballot. It checks the Act 2 rooms (F20, F21) and that
-// the motive funnel leaves the real motive standing (G32, counts only). At the end it checks the seal (no phone can read a role, no public
-// document carries the case), prints one line per act and a tally, and
-// discards the night: the case, the night, every session. Nothing it prints
-// is ever a card. Counts, keys and act names only.
+// the phone sends it (one guest at a cat at a time), answers every Parlour
+// Game, finishes the study for each group, clears the memory match, guesses
+// in the drawing, strikes one thing out, casts a ballot. It checks the Act 2
+// rooms (F20, F21) and that the motive funnel leaves the real motive standing
+// (G32, counts only). At the end it checks the seal (no phone can read a role,
+// no public document carries the case), prints one line per act, a tally and
+// how much of the party's secrets the night used, and discards the night: the
+// case, the night, every session. Nothing it prints is ever a card. Counts,
+// keys and act names only.
 //
 //   npm run fake-night                       in-process, against an in-memory stand-in Firestore
 //   npm run fake-night -- --emulator         against the local emulators (npm run emulate first)
-//   npm run fake-night -- --real-secrets     the night draws a SEALED motive set (a dry run);
-//                                            needs sealed content where the script is pointed
+//   npm run fake-night -- --real-secrets     a party night (a dry run): it reads the party's sealed
+//                                            leans, packing and drawing pictures where the script
+//                                            is pointed, as the real night does
 //   --live --i-know-this-is-the-party-database
 //                                            the party project (GOOGLE_APPLICATION_CREDENTIALS);
 //                                            refuses while a night is live; discards its own
 //
 // Exit 0 is PASS. Anything else is FAIL, and the night is discarded either way.
 //
-// SEAL RULE: this file never prints, logs or keeps a card. The numbers for
-// the safe are read from the phone's own testimony and used at once. With
-// --real-secrets the testimony on the fake phones is sealed content; it is
-// discarded with the night and never leaves the process.
+// SEAL RULE: this file never prints, logs or keeps a card. With
+// --real-secrets the cats' leans, the bags clue and the drawing's pictures on
+// the fake night are sealed content; they are discarded with the night and
+// never leave the process. What it prints about them is counts.
 
 import { existsSync, mkdirSync, copyFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -62,26 +64,6 @@ const screen = await import('../functions/lib/screen.js')
 export const PHONES = 8
 const choice = list => list[randomInt(list.length)]
 
-// The safe's numbers ride in a safe sentence with [A], [B] and [C] slots
-// (ui_copy NUMBERS, or the dealer's default). Turn that template into a
-// pattern and pull the three numbers out of a line. Null when they are not there.
-export function codesIn(text, template) {
-  if (typeof text !== 'string' || !template) return null
-  const pattern = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\[(A|B|C)\\\]/g, '(\\d+)')
-  const m = new RegExp(pattern).exec(text)
-  return m && m.length >= 4 ? [m[1], m[2], m[3]].map(Number) : null
-}
-
-async function numbersTemplates(db) {
-  const ui = await night.readArea(db, 'ui_copy')
-  const find = (label, fallback) => {
-    const it = ui.find(i => i.text.trim().startsWith(`${label}:`))
-    const t = it ? it.text.trim().slice(label.length + 1).trim() : ''
-    return t.includes('[A]') ? t : fallback
-  }
-  return { line: find('NUMBERS', deal.DEFAULT_NUMBERS_LINE), scrap: find('NOTICE SCRAP', deal.DEFAULT_SCRAP.text) }
-}
-
 // What a failure is called on the way out. NightError messages are fixed
 // safe copy; anything else is a runtime error, never a card.
 function describeError(e) {
@@ -90,26 +72,24 @@ function describeError(e) {
 }
 
 const CASE_WARNINGS = {
-  'rehearsal-fallback': 'the sealed content could not be used, so stand-ins were dealt',
-  'no-sealed-content': 'the party night found no sealed content in this project, so stand-ins were dealt',
   'trace-partner': 'one trace at the party has no look-alike among the guests',
 }
 
 // Words a phone-readable document must never carry. Checked as JSON keys
 // (with the quotes) so "motives", the public list, does not trip "motive".
-const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"kernels"', '"documents"', '"parlourPlan"', '"leans"', '"listeners"', '"studyClue"', '"echo"', '"salemTruthIndex"', '"granoliaSlot"', '"variant"', '"solving"', '"hints"', '"newsOut"', '"family"']
+const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"parlourPlan"', '"leans"', '"listeners"', '"solving"', '"hints"', '"newsOut"', '"family"']
 const NEVER_BEFORE_REVEAL = ['"murderer"', '"ghost"', '"victim"']
 
 export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players' } = {}) {
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
-  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, discard: null, ok: false, error: null }
+  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, secrets: null, discard: null, ok: false, error: null }
 
   const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label }
   const { nightId } = await night.createNight(db, nightOpts)
   summary.nightId = nightId
-  say(`Fake players: ${phones} phones, ${realSecrets ? 'sealed case, dry run' : 'stand-in case'}, night ${nightId}`)
+  say(`Fake players: ${phones} phones, ${realSecrets ? 'party case, dry run' : 'rehearsal case'}, night ${nightId}`)
 
   const nightDoc = async () => (await db.doc(`nights/${nightId}`).get()).data()
   const sessionOf = async uid => (await db.doc(`sessions/${uid}`).get()).data() ?? {}
@@ -229,36 +209,28 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await host('power')
     actLine(1, [`${uids.length} phones joined`, `${notices1} notices dealt`, 'blackout', 'power returned'])
 
-    // ---- Act 2: roles, the cat, the safe, the first Parlour Game
+    // ---- Act 2: roles, the cats, the act's Parlour Games
     const n2 = await nightDoc()
     summary.rehearsal = n2.rehearsal === true
-    say(`Case: ${summary.rehearsal ? 'stand-ins' : 'sealed'}${n2.caseWarning ? `; warning: ${String(n2.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join('; ')}` : ''}`)
+    say(`Case: ${summary.rehearsal ? 'rehearsal' : 'party'}${n2.caseWarning ? `; warning: ${String(n2.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join('; ')}` : ''}`)
     const roleCards = await countCards('role')
     await next() // news
     await next() // cat: the first wave goes
     const rooms = await walkRooms()
     if (!rooms.ok) summary.checks.push(...(rooms.twoAtACat ? ['F20'] : []), ...(rooms.untold ? ['F21'] : []))
-    const outcomes = { full: 0, partial: 0, deflect: 0, greet: 0 }
-    for (const uid of uids) for (const t of cardsOf(await sessionOf(uid), 'testimony')) outcomes[t.outcome] = (outcomes[t.outcome] ?? 0) + 1
-    await next() // the safe
-    const templates = await numbersTemplates(db)
-    let opened = 0, gaveWay = 0
+    // the hint cat's card is the cat, its room and the open hint line, nothing
+    // else (no lines of testimony); the other three cats only greet
+    let hints = 0, greetings = 0
     for (const uid of uids) {
-      const s = await sessionOf(uid)
-      const puzzle = cardsOf(s, 'puzzle')[0]
-      if (!puzzle) continue
-      let codes = null
-      for (const t of cardsOf(s, 'testimony')) for (const line of t.lines ?? []) codes ??= codesIn(line, templates.line)
-      for (const c of cardsOf(s, 'notice').filter(c => c.key === 'scrap')) codes ??= codesIn(c.text, templates.scrap)
-      let r = codes ? await run.player.solve(db, { nightId, uid, cardId: puzzle.id, entry: codes }) : null
-      for (let tries = 0; !(r?.right || r?.gaveWay) && tries < 3; tries++) r = await run.player.solve(db, { nightId, uid, cardId: puzzle.id, entry: [0, 0, 0] })
-      if (r?.right) opened++; else if (r?.gaveWay) gaveWay++
+      for (const t of cardsOf(await sessionOf(uid), 'testimony')) {
+        if (!t.hint) greetings++
+        else if (t.hint.text && !(t.lines ?? []).length) hints++
+      }
     }
-    const documents = await countCards('document')
     const p2 = await allParlours() // the act's Parlour Games, each at its own time
     await next() // check-in
     say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}`)
-    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${outcomes.full + outcomes.partial + outcomes.deflect} real hints (${outcomes.full} full, ${outcomes.partial} partial, ${outcomes.deflect} brush-offs) and ${outcomes.greet} greetings`, `safe opened on ${opened} phones (${gaveWay} gave way)`, `${documents} documents`, `${p2.games} Parlour Games, ${p2.answered} answers`])
+    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${hints} real hints and ${greetings} greetings`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
     // ---- Act 3: dinner, bulletin 2 (armed, then it plays itself on the tick), the groups
     await next() // phones down
@@ -340,6 +312,9 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     actLine(7, [`${ballots} ballots`, `${results} results`])
     summary.tally = { of: r7.of, murderer: r7.murderer, motive: r7.motive, victim: r7.victim }
     say(`Tally: of ${r7.of} ballots, murderer right on ${r7.murderer}, motive on ${r7.motive}, victim on ${r7.victim}`)
+    summary.secrets = await secretsUsed()
+    const { leanSets, bags, packed, fromBank } = summary.secrets
+    say(`Party secrets used: the cats' leans for ${leanSets} ${leanSets === 1 ? 'set' : 'sets'}, the packing on ${packed} of ${bags} bags cards, the picture bank for ${fromBank} of 3 drawing rounds`)
 
     await sealCheck('end')
     if (summary.seal.failed.length) say(`Seal: FAIL, ${summary.seal.failed.length} of ${summary.seal.checks} checks: ${summary.seal.failed.join(' ')}`)
@@ -365,6 +340,21 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
   say(summary.ok ? 'PASS' : 'FAIL')
   return summary
+
+  // How much of the party's three secrets the night used: the lean table
+  // (sets with a lean, in the case's Parlour plan), the packing (bags cards
+  // that are not stand-ins) and the drawing's picture bank (rounds it filled).
+  // A rehearsal uses none of them. Counts only: never a lean, a property or
+  // a picture.
+  async function secretsUsed() {
+    const c = (await db.doc(`cases/${nightId}`).get()).data()
+    let bags = 0, packed = 0
+    for (const uid of uids) {
+      for (const card of cardsOf(await sessionOf(uid), 'station').filter(x => x.station === 'bags')) { bags++; if (card.placeholder === false) packed++ }
+    }
+    const fromBank = (await db.doc(relay.relayPaths(nightId).priv).get()).data()?.fromBank ?? 0
+    return { leanSets: Object.keys(c?.parlourPlan?.leans ?? {}).length, bags, packed, fromBank }
+  }
 
   // G32 on this night: every structured clue the room shared by the end of
   // Act 5 (the news flash, every guest's hint, the bulletin, the memory

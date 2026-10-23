@@ -160,8 +160,8 @@ export function irwinOptions(c, { band = 3, seed = '' } = {}) {
 
 // ---------------------------------------------------------------------------
 // The solver (G32): what the whole room can still believe once it has shared
-// every structured clue up to the end of Act 5. The words of a cat's kernel
-// are sealed and are never read here; only what each clue rules out.
+// every structured clue up to the end of Act 5. The words of a cat's line
+// are never read here; only what each clue rules out.
 
 // Bulletin 2 (Act 3) names the real family at the dial's level; the solver
 // counts it as read from level 3 up (BULLETIN_READ_FROM), and as no help below.

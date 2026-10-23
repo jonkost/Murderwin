@@ -132,9 +132,10 @@ Sir Irwin (Act 5): `screen.irwinMotiveClue` gives `choices: [{ n, rhyme }]`
 band, which picks `household/full/Irwin 1.png` to `Irwin 5.png`), plus the
 countdown line from `IRWIN_OPTION_LINES` (ui_copy `IRWIN FIVE` to
 `IRWIN ONE` override). The screen's lines are the workshop's Irwin opener,
-that line and the closer, through `dogFilter` for names. The case's
-`irwin.lines` are no longer shown (23 October); the generator still writes
-them until *secretLines* is answered.
+that line and the closer (`irwinVoice`: the first Irwin line in `openers`
+and `closers`, else `DEFAULT_IRWIN`), through `dogFilter` for names. The
+case has had no `irwin.lines` since 23 October: *secretLines* was answered
+"Retire them", and the per-motive secret sets went with them.
 
 The finale (`functions/lib/finale.js`): `stage` names the next card and
 plays that card's closing parts with `play(db, nightId, null, { clips })`;

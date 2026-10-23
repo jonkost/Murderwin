@@ -43,7 +43,7 @@ test('F19 a Parlour Game shows over the screen beneath, which stays mounted in t
   const { readFileSync } = await import('node:fs')
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   // one place renders the screen beneath, with or without a game on top: same parent, same slot,
-  // so React keeps its state (the tab, a half-typed safe code, the scroll)
+  // so React keeps its state (the tab, a half-typed answer, the scroll)
   assert.equal((app.match(/<Rest /g) ?? []).length, 1, 'Rest is rendered from one place only')
   assert.match(app, /return <>\{band\}\{banner\}<div className=\{over \? 'beneath covered' : 'beneath'\} inert=\{over \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
   // the slider shows the nearest stop of an affection kept in half steps

@@ -2,11 +2,12 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { fakeNight, codesIn, PHONES } from '../fake-players.mjs'
+import { fakeNight, PHONES } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, STATION_TEXT, FREE_TIME_TIPS, DEFAULT_SCRAP, DEFAULT_NUMBERS_LINE, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, STATION_TEXT, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
+import { ROUND_SIZES } from '../../functions/lib/relay-bank.js'
 
 // The fake players print counts, keys and act names and nothing a phone was
 // dealt. These are the strings a leak would carry; none may reach the output.
@@ -15,8 +16,7 @@ const CARD_TEXT = [
   ...Object.values(NOTICES).map(n => n.text),
   ...Object.values(ROLE_CARDS),
   ...Object.values(STATION_TEXT).map(s => s.text), ...FREE_TIME_TIPS,
-  STUDY_PLACEHOLDER, DEFAULT_SCRAP.text.slice(0, 30), DEFAULT_NUMBERS_LINE.slice(0, 20),
-  HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
+  STUDY_PLACEHOLDER, HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
   'From the memory match', 'Cross it off',
 ]
 
@@ -34,22 +34,49 @@ async function captured(fn) {
 
 const keysUnder = (db, prefix) => [...db.store.keys()].filter(k => k.startsWith(prefix))
 
-test('codesIn pulls the three numbers out of the numbers sentence and nothing else', () => {
-  assert.deepEqual(codesIn('If it matters, the numbers were 12, 34 and 56.', DEFAULT_NUMBERS_LINE), [12, 34, 56])
-  assert.deepEqual(codesIn('Before. If it matters, the numbers were 7, 8 and 9. After.', DEFAULT_NUMBERS_LINE), [7, 8, 9])
-  assert.equal(codesIn('Nothing about numbers here.', DEFAULT_NUMBERS_LINE), null)
-  assert.equal(codesIn('Numbers 1, 2 and 3.', 'Numbers [A], [B] and [C] (said twice).'), null, 'the whole template must match')
-  assert.deepEqual(codesIn('On it, in a careful paw: 10, 20 and 30.', 'On it, in a careful paw: [A], [B] and [C].'), [10, 20, 30])
-})
+// Every doc path the night reads, from the stand-in Firestore itself.
+function readsOf(db) {
+  const paths = new Set()
+  const get = db._get.bind(db)
+  db._get = path => { paths.add(path); return get(path) }
+  return paths
+}
+
+// Throwaway stand-ins for the party's three secrets (the cats' leans, the
+// packing, the drawing's picture bank), bracketed, in the shapes the night
+// reads. Made here and thrown away with the test. Never printed.
+const SECRETS = ['sealed/parlour_leans', 'sealed/bags', 'sealed/relay_pictures']
+function syntheticSecrets() {
+  const picture = round => ({
+    id: `syn-${round}`, round, name: `(Synthetic sketch ${round})`,
+    decoys: [1, 2, 3].map(i => `(Synthetic other ${round}.${i})`),
+    cells: Object.fromEntries(Array.from({ length: ROUND_SIZES[round] }, (_, k) => [`${'ABCDE'[k]}1`, [{ kind: 'line', from: [0, 0], to: [1, 1] }]])),
+  })
+  return {
+    'sealed/parlour_leans': { sets: {
+      'rehearsal-1': { 0: { granolia: 'a', boo: 'b', zimothy: 'a', salem: 'b' } },
+      'rehearsal-2': { 1: { granolia: 'b', boo: 'a', zimothy: 'b', salem: 'a' } },
+    } },
+    'sealed/bags': { properties: { '(Synthetic minty)': [1, 2], '(Synthetic rough)': [3, 4, 5] }, packedAt: new Date(0) },
+    'sealed/relay_pictures': { pictures: [1, 2, 3].map(picture) },
+  }
+}
 
 test('eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true }) // the box is ticked, and still ignored without --real-secrets
+  for (const [path, data] of Object.entries(syntheticSecrets())) db.store.set(path, data) // there, and a rehearsal never reads them
+  const reads = readsOf(db)
   const { result: summary, lines } = await captured(log => fakeNight({ db, log }))
   const out = lines.join('\n')
   assertClean(out)
   assert.equal(summary.ok, true, out)
   assert.equal(summary.rehearsal, true, 'stand-ins unless --real-secrets')
+  assert.ok(lines.includes('Case: rehearsal'))
+  // a rehearsal reads no lean, no picture and no motive set; the packing only
+  // for its count of bags when the night is made (night.js packedBagCount), never for a clue
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'a rehearsal reads nothing else sealed')
+  assert.ok(lines.includes('Party secrets used: the cats\' leans for 0 sets, the packing on 0 of 8 bags cards, the picture bank for 0 of 3 drawing rounds'))
   assert.equal(summary.error, null)
   for (const act of [1, 2, 3, 4, 5, 6, 7]) assert.ok(lines.some(l => l.startsWith(`Act ${act}, `)), `one line for act ${act}`)
   assert.equal(lines.filter(l => /^Act \d, /.test(l)).length, 7, 'exactly one line per act')
@@ -64,9 +91,9 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   const line = n => lines.find(l => l.startsWith(`Act ${n}, `))
   assert.match(line(2), /8 role cards/)
   assert.match(line(2), /32 cat visits/)
-  assert.match(line(2), /8 real hints .* and 24 greetings/)
-  assert.match(line(2), /safe opened on 8 phones \(0 gave way\)/)
-  assert.match(line(2), /8 documents/)
+  // the hint cat's card carries the open hint line and nothing else; the other three only greet
+  assert.match(line(2), /8 real hints and 24 greetings/)
+  assert.doesNotMatch(line(2), /safe|documents/, 'the Act 2 safe is gone')
   assert.match(line(3), /4 groups/)
   // twelve Parlour Games a night, planned five, five and two in Acts 2, 4 and 6, every phone answering
   assert.match(line(2), /5 Parlour Games, 40 answers/)
@@ -89,45 +116,26 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   assert.ok(db.store.has('meta/game'), 'the workshop settings stay')
 })
 
-// A synthetic sealed motive set in the generator's shape, bracketed, made
-// here and thrown away with the test. Never printed.
-function syntheticSealed(word) {
-  const v = n => `(Synthetic ${word} ${n})`
-  const truth = n => `(Synthetic ${word} ${n}: a lantern was left in [ROOM] at [TIME].)`
-  const long = n => `(Synthetic ${word} document ${n}. ${Array.from({ length: 44 }, (_, i) => `w${i}`).join(' ')}.)`
-  return {
-    kernels: {
-      irwin: [truth('irwin one'), truth('irwin two'), truth('irwin three')],
-      boo: [truth('boo one'), truth('boo two'), truth('boo three')],
-      granolia: [truth('granolia one'), truth('granolia two'), truth('granolia three')],
-      zimothy: [`(Synthetic ${word} zimothy one: the lantern, at [TIME].)`, truth('zimothy two'), truth('zimothy three')],
-      salem: [1, 2, 3].map(n => ({ text: `(Synthetic ${word} salem ${n}: the lantern was never in [ROOM].)`, anchor: 'lantern' })),
-    },
-    documents: [1, 2, 3].map(n => ({ text: long(n), emphasis: 'LANTERN', annotation: `(Synthetic ${word} note ${n})` })),
-    fragments: [v('fragment one'), v('fragment two'), v('fragment three')],
-    studyClue: [v('study one'), v('study two'), v('study three')],
-    irwin: [v('dog one'), v('dog two'), v('dog three')],
-    generatedAt: new Date(0),
-  }
-}
-
-test('--real-secrets draws a sealed set as a dry run, prints no more than before, and discards the case', async () => {
+test('--real-secrets is a party night as a dry run: it reads the leans, the packing and the pictures, nothing else sealed, prints no more than before, and discards the case', async () => {
   const db = new FakeFirestore()
   // a station key saved, as on the party night: the seal walk then also checks no recording goes public by name
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', station_key: 'study-2026' })
-  db.store.set('sealed/manifest', { codes: { AAAAA: 5, BBBBB: 11 } })
-  db.store.set('sealed/AAAAA', syntheticSealed('alpha'))
-  db.store.set('sealed/BBBBB', syntheticSealed('beta'))
+  const secrets = syntheticSecrets()
+  for (const [path, data] of Object.entries(secrets)) db.store.set(path, data)
+  const reads = readsOf(db)
   const { result: summary, lines } = await captured(log => fakeNight({ db, log, realSecrets: true }))
   const out = lines.join('\n')
   assertClean(out)
   assert.equal(summary.ok, true, out)
-  assert.equal(summary.rehearsal, false, 'the sealed set was used')
-  assert.ok(lines.some(l => l === 'Case: sealed'), 'no fallback warning')
-  assert.match(lines.find(l => l.startsWith('Act 2, ')), /safe opened on 8 phones \(0 gave way\)/, 'the numbers ride in the real testimony too')
+  assert.equal(summary.rehearsal, false, 'a party case')
+  assert.ok(lines.includes('Case: party'), 'no warning about missing sealed content')
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')).sort(), [...SECRETS].sort(), 'the three secrets, and never sealed/manifest or a motive set')
+  assert.deepEqual(summary.secrets, { leanSets: 2, bags: 8, packed: 8, fromBank: 3 })
+  assert.ok(lines.includes('Party secrets used: the cats\' leans for 2 sets, the packing on 8 of 8 bags cards, the picture bank for 3 of 3 drawing rounds'))
+  assert.match(lines.find(l => l.startsWith('Act 2, ')), /8 real hints and 24 greetings/)
   assert.equal(keysUnder(db, 'cases/').length, 0, 'the dry run case is discarded')
   assert.equal(keysUnder(db, 'nights/').length, 0)
-  assert.ok(db.store.has('sealed/AAAAA'), 'the sealed store is untouched')
+  for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is untouched')
   assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
 })
 

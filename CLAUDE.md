@@ -3,7 +3,7 @@
 Rules for working in this repo. These are load-bearing. Read fully before any task.
 Updated 23 October 2026. Party: Sunday 15 November 2026. Freeze: Saturday 7 November 2026.
 
-> **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). It still wins where an older doc disagrees. Left out on purpose, each now an open decision: the Partner in Crime and Ghost Whisperer awards (partnerAwards), and a tab for the drawing pictures on Jenna's page (stewardPictures). What is left is on the workshop's Timeline. Open decisions (16 on 23 Oct), each a card on the board and Jon's call only: secretLines, newsVideo, stewardPictures, partnerAwards, diningName, rulesDeckScreen, tidyFolders, bagsAct4, handOn, tutorial8, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known, dialMapping. Every session follows HOW WE WORK below.
+> **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). It still wins where an older doc disagrees. Left out on purpose, each now an open decision: the Partner in Crime and Ghost Whisperer awards (partnerAwards), and a tab for the drawing pictures on Jenna's page (stewardPictures). Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Open decisions (15 on 23 Oct), each a card on the board and Jon's call only: newsVideo, stewardPictures, partnerAwards, diningName, rulesDeckScreen, tidyFolders, bagsAct4, handOn, tutorial8, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known, dialMapping. Every session follows HOW WE WORK below.
 
 ## RULE 1 — THE HOST PLAYS
 
@@ -18,25 +18,31 @@ Content is divided into two classes:
 **SAFE (Jon may see, edit, commit):**
 - The 19 motive rhymes (player-facing from Act 1 — public by design)
 - Character bios, NPC personalities, rules text, UI copy
-- Voice layers: cat openers, cat closers, cat deflection lines
-- Variable pools: rooms, times, durations, counts, places, witnesses
+- Voice layers: cat openers and closers (since 23 Oct only the first line on
+  Sir Irwin's tab of each is read, for his Act 5 screen). The cat deflection
+  lines (brush-offs) are retired 23 Oct: kept, nothing reads them
+- Variable pools (the blanks): rooms, times, durations, counts, places,
+  witnesses. Retired 23 Oct: only the secret lines had blanks; kept, nothing
+  reads them
 - Echo frames (news wrappers with a ███ slot). Retired 22 Oct: nothing reads
   them; W-O-O-F News took the news's place
 - The Parlour Games bank: questions, choices and their points
 - Open line banks (22 Oct): the W-O-O-F News bulletin lines, the Cat Hint Lines,
   Irwin's countdown and trace-reveal lines, host lines, phone directions. Every
   line is written and Jon may see them; only the game's per-night pick is sealed
-- Blank stationery templates (7 designs)
+- Blank stationery templates (7 designs). Retired 23 Oct with the Act 2 safe:
+  the Stationery page and the stand-in pictures are deleted; the list is
+  kept, nothing reads it
 - All code, schemas, validators, and this file
 
 **SEALED (Jon must NEVER see):**
-- Kernels: the informational middle of every cat testimony (per motive, per cat,
-  3 variants). Whether they stay is open decision secretLines
-- Document texts: what the Act 2 safe pays out, overlaid on stationery (per
-  motive). Also open decision secretLines
-- Echo fragments: what fills the ███ (per motive); the old study clues; Sir
-  Irwin's per-motive Act 5 lines. Still generated, shown nowhere (22-23 Oct)
-- The manifest: any mapping between opaque codes and motives
+- Retired 23 Oct 2026 (Jon: secretLines retired, the Act 2 safe taken out):
+  the per-motive secret sets. That was the kernels (the middle of every cat
+  testimony), the Act 2 documents, the echo fragments, the old study clues,
+  Sir Irwin's per-motive Act 5 lines, and the manifest mapping opaque codes
+  to motives (`sealed/{code}`, `sealed/manifest`). Nothing makes or reads
+  them now. The 19 sets made on 20 Oct stay in Firestore, unused and still
+  sealed: never read or print them
 - Any per-game generated case (murderer, victim, active motive, clue placement)
 - The Parlour Games lean table: which answer each cat leans toward, per
   question (generated blind by `scripts/generate-leans.mjs`, Jon 22 Oct;
@@ -62,35 +68,42 @@ The Steward is Jenna (they/them), a REMOTE NON-PLAYER who never visits the
 house. Their job is editing content. They may see and edit EVERYTHING, sealed
 content included, because Jon cannot.
 
-Content workflow (28 Sep): Jon and Susan (Jon's wife, a player) draft; Claude
-drafts the secrets; Jenna edits.
+Content workflow (28 Sep; updated 23 Oct): Jon and Susan (Jon's wife, a
+player) draft; the blind scripts make the secrets; Jenna checks.
 - Jon and Susan draft SAFE content only. Both play, and anything they draft they
   would recognise on the night — decline and cite Rule 1 if either asks to
   draft or see sealed content.
-- Claude drafts all sealed content, through the generator.
-- Jenna edits both, and reports to Jon only "done" or "needs more", never content.
+- All sealed content is made blind, by the scripts in Enforcement 3 (the cats'
+  leans, the drawing pictures, the bag packing) and by the case deal. Since
+  23 Oct there are no secret cat lines or documents to draft (secretLines
+  retired).
+- Jenna reads the workshop lists cold, may change any lean, packs the bags,
+  runs the real checks once the Health page exists, and reports to Jon only
+  "done" or "needs more", never content.
 - Bags: Jon and Susan supply the item pool as safe content (workshop area
   `bag_items`). A blind packing script (`scripts/pack-bags.mjs`, built 18 Oct
   2026) assigns items to numbered bags under the bag rules and writes
-  `sealed/bags`, printing counts only; the bags station and the generator read it.
+  `sealed/bags`, printing counts only. The bags station reads it on the party
+  night; every night reads only its bag count (`createNight`), never an item.
   Only Jenna's Steward view shows the packing list, and Jenna packs to it.
   Claude Code never prints the packing. Jenna also reads rules and bios cold,
-  and reviews sealed content as the canary (build step 13). Brief: never
+  and looks over the cats' leans (build step 13). Brief: never
   volunteer anything, never confirm a guess. Full role: the Steward Handbook
   (WHERE THINGS LIVE) and `chats/docs/sirwin-manor-the-steward.md`.
 
-Jenna's page, built 17 to 19 Oct 2026, the leans tab 22 Oct
-(`functions/lib/steward.js`, the workshop's Steward page, `docs/steward-view.md`).
-Three tabs: the secrets, the packing list (read only), the cats' leans. These
-rules still hold:
-- It reads and edits `sealed/*` by verified Google email only. It never loads
-  for Jon's account. Changing the security rules needs Jon's explicit approval.
+Jenna's page, built 17 to 19 Oct 2026, the leans tab 22 Oct, the secrets tab
+removed 23 Oct (`functions/lib/steward.js`, the workshop's Steward page,
+`docs/steward-view.md`). Two tabs: the packing list (read only) and the cats'
+leans (ops `whoami`, `bags`, `leans`, `lean`). These rules still hold:
+- It reads `sealed/bags` and reads and edits `sealed/parlour_leans`, by
+  verified Google email only. It never loads for Jon's account. Changing the
+  security rules needs Jon's explicit approval.
 - Regenerating sealed content must never silently overwrite Jenna's edits.
 - Claude Code still never prints, logs or files sealed content. The Steward
-  view is built and debugged blind, exactly like the generator.
+  view is built and debugged blind, exactly like the blind scripts.
 - Not on Jenna's page: the Relay Drawing pictures (left out 22 Oct; open decision
   stewardPictures). Until then nobody reads them; they pass only the
-  generator's own checks.
+  picture script's own checks.
 
 ### Enforcement — infrastructure, not discipline
 1. Sealed content lives ONLY in Firestore: `sealed/*`, `cases/*`, and each
@@ -100,10 +113,14 @@ rules still hold:
    guard everything else.
 2. Only Cloud Functions (Admin SDK) read it: to assemble player-facing payloads
    at game time, and for the Steward's view (see above).
-3. Sealed content is made only by the blind scripts: `scripts/generate-sealed.mjs`,
-   `generate-leans.mjs` and `generate-relay-pictures.mjs` (they call the
-   Anthropic API) and `pack-bags.mjs`. Each writes straight to Firestore. Its
-   stdout prints COUNTS AND PASS/FAIL ONLY. It never prints, logs, or files content.
+3. Sealed content is made only by the blind scripts: `scripts/generate-leans.mjs`
+   and `generate-relay-pictures.mjs` (they call the Anthropic API) and
+   `pack-bags.mjs`. Each writes straight to Firestore. Its stdout prints
+   COUNTS AND PASS/FAIL ONLY. It never prints, logs, or files content. The
+   case itself is dealt at the Act 1 blackout by `functions/lib/case.js`
+   (through `deal.buildCaseForNight`, whose log line carries only the night id
+   and the rehearsal flag). (`generate-sealed.mjs` and `validate-sealed.mjs`,
+   which made and checked the per-motive sets, were deleted 23 Oct.)
 4. When you (Claude Code) work on sealed content: never echo it to the terminal,
    never write it to a local file, never paste it in explanations, never include
    it in commit messages or PR descriptions. Debug with opaque IDs, lengths, and
@@ -111,16 +128,17 @@ rules still hold:
    wrote this rule.
 5. Validation is automated and reports aggregates only (see docs/blind-content-protocol.md).
 6. `motive-clue-worksheet-DRAFTED.md` from earlier design work is BURNED. If a
-   copy exists anywhere, do not open, quote, or reuse it. All kernels are
-   regenerated fresh, with different surface details, so stale memories won't match.
+   copy exists anywhere, do not open, quote, or reuse it. Since 23 Oct no
+   kernels are made at all (secretLines retired), so none of it can return.
 7. Test fixtures and the eight fake test players use a throwaway generated case
    that is discarded after the run. Never persist one. Never print one.
 
 ### The burned exception
 Motive #8 ("the dairy air") was authored with Jon and is spoiled for him.
 DECISION PENDING (card tutorial8 on the board): promote its example clue set
-to the rulebook tutorial. Its real in-game kernels still get regenerated blind
-either way.
+to the rulebook tutorial. Since 23 Oct no motive has in-game kernels
+(secretLines retired): motive 8 is dealt like the others, with the same open
+hint lines.
 
 ## HOW WE WORK (23 Oct 2026)
 
@@ -215,7 +233,8 @@ and tell Jon.
   1 The Invitation (together, 4:00pm; role rules stated in the preamble;
     blackout at the end)
   2 Lights Out (solo, ~5:30pm; the tutorial; everything for your ears only;
-    every guest visits all four cats, one gives a real hint)
+    every guest visits all four cats, one gives a real hint; beats orient,
+    news, cat, checkin; no safe since 23 Oct, decision act2Safe)
   3 Supper Is Served (orangery)
   4 Behind Closed Doors (pairs/trios; info shared only inside your group; the
     study is the timekeeper with a 15-minute cap). The cat station sends a
@@ -235,22 +254,24 @@ and tell Jon.
 - 19 motives, universal (any motive can attach to any character pair), final as of
   27 Aug. Visible to all players from Act 1 as a cross-off menu. `seed/motives.json`.
   Jon may still swap one — his call, never yours (card swapMotive).
-- Clue anatomy per motive (sealed): the Act 2 document (the safe's payout), the
-  cat testimonies (OPENER (safe) + KERNEL (sealed, variables injected) + CLOSER
-  (safe)), and Sir Irwin's middle line. Since 23 Oct his Act 5 screen no longer
-  shows that line. Whether the kernels and the document stay is open decision
-  secretLines; until then the generator still writes them. The news is no
-  longer an echo: since 22 Oct it is W-O-O-F News, an open bank
-  (`seed/woof-news.json`). Echo fragments and the old study clue are still
-  generated, but nothing shows them.
+- Clue anatomy (23 Oct 2026, Jon: secretLines retired, the Act 2 safe taken
+  out): there are no per-motive sealed clues any more. The cats say only
+  their open hint lines (`seed/cat-lines.json`, `functions/lib/cats.js`
+  `hintLine`), at the rung of each cat's ladder that its affection sets. The
+  news is W-O-O-F News, an open bank (`seed/woof-news.json`). Sir Irwin's Act 5
+  screen is his opener, the countdown line, the motive cards and his closer.
+  What stays sealed is the case, the night's pick from each bank, the cats'
+  leans, the bag packing and the drawing pictures. Gone:
+  OPENER + KERNEL + CLOSER testimony, the Act 2 safe and its document, the
+  echo fragments, the old study clue, Irwin's per-motive middle line.
 - The five NPCs, never suspects. Every cat only ever rules out wrong answers;
   Act 4 uses the group's average affection.
   Sir Irwin, the dog — always true. Act 5: a countdown of motive cards, five at
     dial 1 down to one at dial 5, the real one always among them. Act 6: the
     trace reveal lines.
   Granolia Lickspittle — a long ramble with nothing (1), half a motive name (2),
-    one motive (3), two and forgets the third (4), a whole family (5). In her
-    secret lines she misremembers exactly one pool variable. Lives in the Study
+    one motive (3), two and forgets the third (4), a whole family (5). (Her one
+    wrong pool blank went with the secret lines, 23 Oct.) Lives in the Study
     and hosts the light puzzle.
   Miss Boo LaRue — a look (1), "Ew. Do I know you?" (2), one motive in five
     words (3), a family, chatty (4), a family plus a bonus motive (5).
@@ -262,7 +283,8 @@ and tell Jon.
     petting the real Salem (Jon's host button; anyone but Jon and Susan)
     unlocks 5, shown as True Friend of the Groundskeeper on the Cats tab. When
     backwards he points AT a wrong answer, so he never rules out the truth.
-    His secret line still flips on its own, apart from this ladder (secretLines).
+    (His separate 60 percent secret-line flip went with the secret lines,
+    23 Oct: the ladder is all there is.)
   Trust ladder, stated at the top of the night: if Irwin and anyone disagree,
   Irwin is right. No cat ever speaks aloud: all dialogue is text. Audio is
   atmosphere, plus the W-O-O-F News recordings, whose words always show on a
@@ -270,8 +292,10 @@ and tell Jon.
   bulletin is open decision newsVideo).
 - Affection to each cat is rolled at character creation (Salem always starts
   at 3, Irwin always maxed).
-  Pass comfortably = full answer, narrowly = partial, fail = in-character
-  deflection, no penalty. Cat distortion applied on top.
+  Since 23 Oct there is no pass or fail roll and no brush-off: a cat's
+  affection sets the rung of its ladder (above), and the cat gives that
+  rung's hint line. The three cats who are not a guest's Act 2 hint cat give
+  one greeting line.
   DECIDED 12 Oct 2026 (Jon): affection moves during the night through the
   Parlour Games (Salem capped at 4). The one exception (22 Oct): the host's
   Salem petted button sets that guest's Salem to 5.
@@ -308,14 +332,14 @@ and tell Jon.
   credits in Act 7.
 - Safeguards: Spill the Beans (the outward reset): the button works through
   Act 5, never after, but the engine only changes the story while no clue has
-  reached anyone (no news, cat hint, document, study clue or memory match). In
+  reached anyone (no news, cat hint, study clue or memory match). In
   practice that is the start of Act 2, before the news flash. It says nothing
   either way. Making it work later in the night is new work: ask Jon first. The
   exposure safeguard is a silent tap with no call-out until Act 7, if ever.
 - Picked per night: which of the four cats gives each guest the real Act 2 hint, which
   wrong family bulletin 1 crosses off, and the Parlour Game times. The Relay
-  Drawing calls its players at random. One puzzle kind is built for the Act 2
-  document (the safe).
+  Drawing calls its players at random. (The Act 2 safe, the one puzzle kind
+  built for it, was taken out on 23 Oct: decision act2Safe.)
 
 ## CLIENT RULES (hard rules for every player surface)
 
@@ -389,14 +413,16 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
 1. Repo + this file: done.
 2. Clue format locked, JSON: done.
 3. One character onto a phone via QR: done.
-4. Seed-based case generator: done (`functions/lib/case.js` deals at the
-   blackout; `scripts/generate-sealed.mjs` not yet run for the party).
+4. Seed-based case generator: done, as the case deal (`functions/lib/case.js`
+   at the blackout; the motive drawn with crypto randomness; replay by seed is
+   a card on the board). Since 23 Oct no secrets generator feeds it.
 5. Eight fake test players: done (`npm run fake-night`, PASS 23 Oct).
 6. Split dev and live: replaced 17 Oct. Rehearsals are nights with the party
    box unticked, or the emulator; no second project.
-7. First full dry run: not done. The secrets first (they wait on
-   secretLines), then `npm run fake-night -- --real-secrets`, then the full
-   tech run: every machine on at once, Act 1 to Act 7, twice.
+7. First full dry run: not done. The leans, the packing and the drawing
+   pictures first (their blind scripts), then
+   `npm run fake-night -- --real-secrets` (a party-night dry run on them),
+   then the full tech run: every machine on at once, Act 1 to Act 7, twice.
 8. Host Mac as server: changed. The game is on Firebase; the brain plays the
    sounds and the hall light (`cues/`). Built; setup is on the board.
 9. Media bank: not done. Stand-in tones until the recordings exist.
@@ -405,7 +431,8 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
 11. Nanoleaf layer: built (`station/`), not yet run on the real walls.
 12. Full play-through review: not done. The weekend practice game (24-25 Oct,
     phones only) is the first walk-through.
-13. Canary: Jenna reads every secret set on the Steward page. Not done (the secrets first).
+13. Canary (changed 23 Oct): someone who is not coming plays a rehearsal
+    night cold, and Jenna checks the leans on the Steward page. Not done.
 14. Freeze: Saturday 7 November (the Freeze button on the Game night page).
 
 ## WORKING STYLE
@@ -421,6 +448,7 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
   Hue bulb (the TV announces the door), the iPad (another screen takes its
   jobs, since any browser runs them; failing that, the TV shows the trace and a
   group that missed the memory match gets its cross-off at dessert). Never cut:
-  the generator, the reveal order, the sealed kernels (this last one changes
-  only if secretLines retires them).
+  the case deal (`functions/lib/case.js`), the reveal order (Murderer, Motive,
+  Victim) and the clue path (both bulletins, the cat hints, Irwin's
+  countdown, the study trace and the trace reveal).
   When in doubt, choose the simpler build.

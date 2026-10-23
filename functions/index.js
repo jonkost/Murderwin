@@ -83,12 +83,6 @@ export const answer = onCall({ cors: true }, wrap(async req => {
   return run.player.answer(db, { uid, nightId, windowId, picks })
 }))
 
-export const solve = onCall({ cors: true }, wrap(async req => {
-  const uid = requireUid(req)
-  const { nightId, cardId, entry } = req.data ?? {}
-  return run.player.solve(db, { uid, nightId, cardId, entry })
-}))
-
 export const ballot = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, murderer, motive, victim } = req.data ?? {}
@@ -184,11 +178,11 @@ export const tick = onSchedule({ schedule: 'every 1 minutes', region: 'us-centra
   }
 })
 
-// The Steward's door to the secrets (lib/steward.js). Jenna reads and edits
-// sealed/* here, and only here: the gate is the SHA-256 of a verified Google
-// email, never a UID, so Jon's admin account is refused with the rest. The
-// result carries sealed text to that one screen; the log carries the op and
-// the code only.
+// The Steward's door (lib/steward.js). Jenna reads the packing list and
+// reads and edits the cats' leans here, and only here: the gate is the
+// SHA-256 of a verified Google email, never a UID, so Jon's admin account is
+// refused with the rest. The result carries sealed content to that one
+// screen; the log carries the op only.
 export const steward = onCall({ cors: true }, wrap(async req => {
   requireUid(req)
   return stewardRequest(db, req)

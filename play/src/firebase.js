@@ -31,10 +31,9 @@ export const callRelayVote = httpsCallable(functions, 'relayVote')
 export const callRelayGuess = httpsCallable(functions, 'relayGuess')
 // The study station's calls (station/station.mjs uses the same name).
 export const callStation = httpsCallable(functions, 'stationCommand')
-// What a phone sends back during the night: a question set's picks, the safe's
-// numbers, the Act 7 ballot, the Act 6 elimination. None of them returns content.
+// What a phone sends back during the night: a question set's picks, the Act 7
+// ballot, the Act 6 elimination. None of them returns content.
 export const callAnswer = httpsCallable(functions, 'answer')
-export const callSolve = httpsCallable(functions, 'solve')
 export const callBallot = httpsCallable(functions, 'ballot')
 export const callEliminate = httpsCallable(functions, 'eliminate')
 // Act 2: the code in a cat's room (?meet=<cat>), and "I have heard it".

@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   notesFor, notesPatch, mergeNotes, seen, wantsWelcome, buzzOnce, resetBuzzGuard, mayCheck, needsHandoverReset,
-  clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, effectivePhase, isDark, presenceKey,
+  clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, KINDS, TRANSIENT, effectivePhase, isDark, presenceKey,
   lightsStep, meetParam, LIGHTS_STEPS, isRehearsalNight, showRehearsalBand, salemFriendNote, SALEM_FRIEND,
 } from '../src/lib/night.js'
 import { isStale, secondsSinceHeard, watchWake, STALE_MS } from '../src/lib/clock.js'
@@ -71,6 +71,29 @@ test('the role card is kept all night, readable from You, never listed among the
   assert.equal(roleCard({ cards: [testimony] }), null)
   assert.deepEqual(clueCards(session).map(c => c.kind), ['testimony'])
   assert.deepEqual(nowCards(session, { seen: {} }, 2).map(c => c.kind), ['testimony'])
+})
+
+test('the hint cat says its hint line alone; a card of a kind the phone no longer shows never appears', async () => {
+  const hint = { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crookshank', room: 'the Orangerie', lines: [], hint: { text: '(a hint line)' } }
+  const greet = { id: '2-cat-greet-boo', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', lines: ['(a greeting)'] }
+  // what an older build dealt in Act 2: the safe, the paper it paid out, the scrap of paper with its numbers
+  const safe = { id: '2-puzzle-safe', act: 2, beat: 'puzzle', kind: 'puzzle', title: '(the safe)', text: '(three numbers)' }
+  const paper = { id: '2-puzzle-safe-payout', act: 2, beat: 'puzzle', kind: 'document', text: '(a paper)' }
+  const scrap = { id: '2-cat-scrap', act: 2, beat: 'cat', kind: 'notice', key: 'scrap', title: '(a scrap)', text: '(the numbers)', button: 'Keep it' }
+  const checkin = { id: '2-checkin-checkin', act: 2, beat: 'checkin', kind: 'notice', key: 'checkin', title: '(check-in)', text: '(words)', button: 'Done' }
+  const session = { cards: [greet, hint, scrap, safe, paper, checkin, null] }
+  assert.deepEqual(nowCards(session, { seen: {} }, 2).map(c => c.id), ['2-checkin-checkin', '2-cat-testimony', '2-cat-greet-boo'])
+  assert.deepEqual(clueCards(session).map(c => c.id), ['2-cat-testimony', '2-cat-greet-boo'])
+  assert.equal(roleCard(session), null)
+  for (const kind of ['puzzle', 'document']) assert.ok(!KINDS.has(kind) && !KEEPS.has(kind) && !TRANSIENT.has(kind), kind)
+  // the phone has no safe, no paper and no brush-off left to draw
+  const { readFileSync } = await import('node:fs')
+  const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
+  const cards = src('screens/Cards.jsx')
+  assert.ok(!/callSolve|function Safe|function Document|deflect|stationery/.test(cards), 'Cards.jsx draws no safe, paper or brush-off')
+  assert.ok(cards.includes('{lines.length > 0 && ('), 'a card with no lines draws the hint alone')
+  assert.ok(!src('firebase.js').includes("'solve'"), 'the phone never calls the safe')
+  assert.ok(!/Document|'document'/.test(src('screens/Clues.jsx')), 'Clues keeps no paper')
 })
 
 test('Act 2 rooms: the next step shows only in Act 2, and a room code names one of the four cats', () => {
@@ -185,7 +208,6 @@ test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, nev
   assert.equal(isRehearsalNight({ forceRehearsal: true, rehearsal: true }), true)
   assert.equal(isRehearsalNight({ rehearsal: false }), true, 'no flag at all: a rehearsal, as the dealer reads it')
   assert.equal(isRehearsalNight({ forceRehearsal: false, rehearsal: false }), false, 'the party night')
-  assert.equal(isRehearsalNight({ forceRehearsal: false, rehearsal: true, caseWarning: 'rehearsal-fallback' }), false, 'the party night on fallback text: still no band')
   assert.equal(isRehearsalNight({ forceRehearsal: false, dryRun: true }), true, 'a fake-players dry run is not the party')
   assert.equal(isRehearsalNight(null), false)
   // the band goes dark with the room

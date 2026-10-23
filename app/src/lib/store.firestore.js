@@ -191,14 +191,7 @@ export async function fileDecision(key, moment, before) {
   await logHistory('decisions', key, before, { ...before, moment })
 }
 
-// ---- Sealed coverage (aggregates only — the seal stays sealed) ----
-export function subscribeLatestValidation(onData, onError) {
-  return onSnapshot(query(collection(db, 'validation_reports'), orderBy('ts', 'desc'), limit(1)),
-    snap => onData(snap.empty ? null : snap.docs[0].data()),
-    onError)
-}
-
-// ---- File uploads (stationery references, the Assets page) ----
+// ---- File uploads (the Assets page) ----
 // Every upload gets a fresh path, so replacing a file never overwrites the
 // old one — it stays in storage and in workshop_history.
 export async function uploadFile(folder, itemId, file) {
@@ -207,10 +200,6 @@ export async function uploadFile(folder, itemId, file) {
   const snap = await uploadBytes(storageRef(storage, path), file, { contentType: file.type })
   const url = await getDownloadURL(snap.ref)
   return { path, url, name: file.name, type: file.type, size: file.size }
-}
-
-export function uploadReference(itemId, file) {
-  return uploadFile('stationery', itemId, file)
 }
 
 // Additive-only migrations, guarded by meta/migrations. Each entry runs once

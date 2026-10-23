@@ -43,9 +43,9 @@ async function walkTo(db, nightId, act, beat, t) {
   assert.equal(night(db, nightId).beat, beat, `reached act ${act} ${beat}`)
 }
 
-// Act 2 up to the puzzle, then the clock to the first Parlour Game: it pops up on its own.
+// Act 2 up to the cats, then the clock to the first Parlour Game: it pops up on its own.
 async function firstParlour(db, nightId, t) {
-  await walkTo(db, nightId, 2, 'puzzle', t)
+  await walkTo(db, nightId, 2, 'cat', t)
   t.now = ms(db.store.get(`nights/${nightId}/private/parlour`).due0)
   await hostCommand(db, { nightId, command: 'tick', now: t.now })
   assert.equal(night(db, nightId).window?.id, 'questions-2-p0')
@@ -225,7 +225,7 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
       assert.ok(!('images' in pub))
     }
     const text = JSON.stringify([doc, pub])
-    for (const forbidden of ['murderer', 'ghost', 'motive', 'roles', 'kernel', 'document', c.murderer, c.ghost]) {
+    for (const forbidden of ['murderer', 'ghost', 'motive', 'roles', 'solving', 'parlourPlan', c.murderer, c.ghost]) {
       assert.ok(!text.includes(forbidden), `trace doc must not carry ${forbidden}`)
     }
     assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
@@ -495,7 +495,7 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   assert.equal(f.stats.find(s => s.label === 'Time on the drawing').value, '17 min')
   assert.equal(f.stats.find(s => s.label === 'Pictures that took more than one guess').value, 'Grid 2')
   assert.match(f.stats.find(s => s.label === 'Fastest light puzzle').value, /6 min 12 s$/)
-  assert.equal(f.stats.find(s => s.label === 'Fastest safe').value, 'Nobody opened one')
+  assert.ok(!labels.includes('Fastest safe'), 'the safe is gone, and its line with it')
   assert.ok(f.credits.awards.some(a => /^(Granolia|Boo|Zimothy|Salem)'s (Least )?Favorite$/.test(a.title)), 'the cats\' awards, from the final sliders, in the end credits')
   assert.ok(f.credits.awards.every(a => Object.keys(a).sort().join() === 'line,name,title'), 'each award is a title, a name and a line')
   assert.deepEqual(f.achievements, [], 'the early reel carries only what the host gave; the end credits\' awards show once, after the reveal')
@@ -516,7 +516,7 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   assert.equal(f.stage, 'stats')
   assert.deepEqual(f.names, {})
   const text = JSON.stringify(f)
-  for (const forbidden of ['roles', 'kernel', 'document', 'dialSign', '"dial"', c.murderer, c.ghost]) assert.ok(!text.includes(forbidden), `finale must not carry ${forbidden}`)
+  for (const forbidden of ['roles', 'solving', 'parlourPlan', 'dialSign', '"dial"', c.murderer, c.ghost]) assert.ok(!text.includes(forbidden), `finale must not carry ${forbidden}`)
   // the answer lives only where no client reads
   const r = db.store.get(revealPath(nightId))
   assert.ok(r.murderer.name && r.motive.rhyme && r.victim.name)
@@ -597,29 +597,6 @@ test('Carry on after a hold during the Victim stage keeps the wait before the cl
   const v2 = ms(db2.store.get(finalePath(id2)).victimAt)
   await hostCommand(db2, { nightId: id2, command: 'finale-go', now: t2.now + 40_000 })
   assert.equal(ms(db2.store.get(finalePath(id2)).victimAt), v2, 'a hold that began before the name does not move it')
-})
-
-test('the fastest safe is the quickest right open, counted from the puzzle landing; a safe that gave way does not count', async () => {
-  const { db, nightId, uids, names } = await party(3)
-  const t = { now: 7_600_000 }
-  await walkTo(db, nightId, 2, 'puzzle', t)
-  const { solve } = await import('../lib/deal.js')
-  const puzzles = db.store.get(`nights/${nightId}/private/puzzles`)
-  const [first, second, third] = names.map(n => uids[n.toLowerCase()])
-  const cardOf = uid => cards(db, uid, 'puzzle')[0]
-  const landedAgo = (uid, msAgo) => db.store.set(`sessions/${uid}`, { ...db.store.get(`sessions/${uid}`), cards: cards(db, uid).map(c => (c.kind === 'puzzle' ? { ...c, at: new Date(t.now - msAgo) } : c)) })
-  // the first phone opens it right in two minutes, the second in one, the third forces it open in three tries
-  landedAgo(first, 120_000); landedAgo(second, 60_000); landedAgo(third, 10_000)
-  await solve(db, { nightId, uid: first, cardId: cardOf(first).id, entry: puzzles.safe[names[0].toLowerCase()] })
-  await solve(db, { nightId, uid: second, cardId: cardOf(second).id, entry: puzzles.safe[names[1].toLowerCase()] })
-  for (let i = 0; i < 3; i++) await solve(db, { nightId, uid: third, cardId: cardOf(third).id, entry: [0, 0, 0] })
-  assert.ok(db.store.get(`sessions/${first}`).solvedAt[cardOf(first).id])
-  assert.equal(db.store.get(`sessions/${third}`).gaveWay[cardOf(third).id], true)
-  await reveal(db, nightId, { now: t.now })
-  const f = db.store.get(finalePath(nightId))
-  const line = f.stats.find(s => s.label === 'Fastest safe').value
-  assert.ok(line.startsWith(`${names[1]}, `), line)
-  assert.ok(!line.includes(names[2]), 'the forced safe is not the fastest')
 })
 
 test('the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {

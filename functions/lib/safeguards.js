@@ -3,13 +3,13 @@
 //  Spill the Beans: the outward reset. Allowed through the end of Act 5,
 //  never after. The engine decides legality silently, with a conservative
 //  rule: the story may change only while nothing that pins the motive has
-//  reached a phone (no document, no study clue, no echo on the screen: the
-//  ledger in ledger.js) and no window is open. When it is off the answer is
-//  { did: false } with no reason, and the Host tab says the same thing either
-//  way. When it is on: the Murderer stays, every guest keeps their character
-//  and their affection, a new sealed set is drawn (a different motive), a new
-//  Ghost is picked, the case is rewritten, the role cards are replaced in
-//  place (same card id) and the dial starts again.
+//  reached anyone (no news on the screen, no cat hint, no study clue, no
+//  memory match: the ledger in ledger.js) and no window is open. When it is
+//  off the answer is { did: false } with no reason, and the Host tab says
+//  the same thing either way. When it is on: the Murderer stays, every guest
+//  keeps their character and their affection, a different motive is drawn,
+//  a new Ghost is picked, the case is rewritten, the role cards are replaced
+//  in place (same card id) and the dial starts again.
 //
 //  The Hush: the exposure safeguard. A silent tap when a hidden role has been
 //  found out in the room. From then on that role's Parlour Game answers move
@@ -17,25 +17,18 @@
 //  changes; the finale says one line about it (ledger.spotlightLines).
 //
 // SEAL RULE: nothing here returns content. Results are ok flags and counts.
-// Clue content is read from sealed/* and cases/* with the Admin SDK and
-// written only to cases/{nightId}; role card text is safe copy.
+// The case is read from cases/* with the Admin SDK and written only to
+// cases/{nightId}; role card text is safe copy. Nothing here reads sealed/*.
 
 import { randomInt } from 'node:crypto'
-import { NightError, readArea } from './night.js'
-import { buildCase, rehearsalCase, rerollCase, checkSealed, nextMotive, POOL_KEYS } from './case.js'
+import { NightError } from './night.js'
+import { buildCase, rehearsalCase, rerollCase, nextMotive } from './case.js'
 import * as deal from './deal.js'
 import { noteExposure, spillBlocked, HUSH_ROLES } from './ledger.js'
 
 export { noteDealt, noteExposure, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from './ledger.js'
 
 export const SPILL_LAST_ACT = 5
-export const SPILL_TRIES = 5
-
-function shuffled(list, pick) {
-  const a = [...list]
-  for (let i = a.length - 1; i > 0; i--) { const j = pick(i + 1); [a[i], a[j]] = [a[j], a[i]] }
-  return a
-}
 
 // Everyone at the party with a phone: { key, name, characterId, uid }.
 async function guestsOf(db, nightId) {
@@ -57,23 +50,11 @@ export function spillAllowed(night, c, { now = Date.now() } = {}) {
   return true
 }
 
-// A fresh case from another sealed set, with a different motive. Null when
-// no usable set remains (the night keeps the story it has).
-async function freshCase(db, { c, common, pick }) {
-  if (c.rehearsal) {
-    const fresh = rehearsalCase(common)
-    return { ...fresh, motive: nextMotive(c.motive, pick) }
-  }
-  const manifestSnap = await db.doc('sealed/manifest').get()
-  const codes = manifestSnap.exists ? manifestSnap.data().codes ?? {} : {}
-  const others = Object.keys(codes).filter(code => Number(codes[code]) !== Number(c.motive))
-  for (const code of shuffled(others, pick).slice(0, SPILL_TRIES)) {
-    const snap = await db.doc(`sealed/${code}`).get()
-    const sealedDoc = snap.exists ? snap.data() : null
-    if (!sealedDoc || !checkSealed(sealedDoc).ok) continue
-    try { return buildCase({ ...common, sealedDoc, motiveN: codes[code] }) } catch (e) { if (e?.code !== 'sealed-shape') throw e }
-  }
-  return null
+// A fresh case, dealt the same way as the one it replaces (the party case
+// or a rehearsal, by the case's own flag), with a different motive.
+function freshCase(c, common, pick) {
+  const fresh = c.rehearsal ? rehearsalCase(common) : buildCase(common)
+  return { ...fresh, motive: nextMotive(c.motive, pick) }
 }
 
 // The role card on each phone is replaced in place, same id, so the You tab
@@ -107,13 +88,8 @@ export async function spill(db, { nightId, now = Date.now(), pick = randomInt } 
   const { night, list } = await guestsOf(db, nightId)
   const c = await deal.readCase(db, nightId)
   if (!spillAllowed(night, c, { now })) return { ok: true, did: false }
-  const [templates, poolItems] = await Promise.all([readArea(db, 'templates'), readArea(db, 'pools')])
-  const poolLists = {}
-  for (const k of POOL_KEYS) poolLists[k.toLowerCase()] = poolItems.filter(i => i.pool === k.toLowerCase()).map(i => i.text)
-  const common = { nightId, roster: list, templates, pools: poolLists, rng: pick, now }
-  const fresh = await freshCase(db, { c, common, pick })
-  if (!fresh) return { ok: true, did: false }
-  const next = rerollCase({ prev: c, fresh, roster: list, poolLists, rng: pick })
+  const fresh = freshCase(c, { roster: list, rng: pick, now }, pick)
+  const next = rerollCase({ prev: c, fresh, roster: list, rng: pick })
   await db.doc(`cases/${nightId}`).set(next)
   await replaceRoleCards(db, nightId, list, next)
   return { ok: true, did: true }

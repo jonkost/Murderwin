@@ -8,7 +8,7 @@
 // group id: never a word of what was dealt. Nothing here prints or returns
 // content.
 
-export const BLOCKING_KINDS = ['document', 'study', 'echo', 'hint', 'memory']
+export const BLOCKING_KINDS = ['study', 'echo', 'hint', 'memory']
 export const LEDGER_FIELDS = ['kind', 'act', 'beat', 'key', 'groupId']
 export const HUSH_ROLES = ['murderer', 'ghost']
 
@@ -29,9 +29,10 @@ export async function noteDealt(db, nightId, entry = {}, { now = Date.now() } = 
   })
 }
 
-// Has anything the story depends on reached a phone? The conservative rule:
-// a document, the study's clue, the echo on the screen, a cat's Act 2 hint
-// (it rules out a family) or the memory match's cross-off all pin the motive.
+// Has anything the story depends on reached anyone? The conservative rule:
+// the study's clue, the news on the screen (kind 'echo', the name it has
+// always had), a cat's hint (it rules out a family) or the memory match's
+// cross-off all pin the motive.
 export function spillBlocked(c) {
   const list = Array.isArray(c?.dealtClues) ? c.dealtClues : []
   return list.some(e => BLOCKING_KINDS.includes(e?.kind))

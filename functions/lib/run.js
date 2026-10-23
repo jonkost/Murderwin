@@ -321,7 +321,6 @@ export async function studyFinished(db, { nightId, payload = {}, now = Date.now(
 // What a player phone may call, besides join.
 export const player = {
   answer: (db, args) => deal.answer(db, args),
-  solve: (db, args) => deal.solve(db, args),
   ballot: (db, args) => deal.castBallot(db, args),
   eliminate: (db, args) => deal.eliminate(db, args),
   relayVote: (db, args) => relay.vote(db, args),

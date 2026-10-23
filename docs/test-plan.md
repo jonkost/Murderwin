@@ -1,6 +1,6 @@
 # Sirwin Manor — Test Plan for Claude Code
 
-Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`) and 23 October (where every check stands). Put this file at `docs/test-plan.md` in the repo.
+Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`) and 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out). Put this file at `docs/test-plan.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 **Every check is listed here** (23 Oct), including the ones first written in `docs/parlour-games.md` (G25 to G31, F19, L05) and `docs/solving-the-case.md` (G32 to G41, F20, F21). Those two docs keep the longer wording. Where each check stands today is in the table at the end, "Where every check stands".
@@ -24,7 +24,7 @@ Your job, Claude Code:
 > A check reports **what** broke and **which seed** broke it. It never reports **what the clue says**.
 
 - Good: `FAIL · G07 Solvable · seed tulip-4471 · solver found 2 possible murderers`
-- Bad: anything that prints a kernel, a document text, an echo fragment, a motive-to-clue link, or a generated case's answer.
+- Bad: anything that prints a cat's lean, a bag's contents, a drawing picture, a per-night pick, a motive-to-clue link, or a generated case's answer.
 
 Every check gets a short ID (G01, F01, L01…) and a plain-English name.
 
@@ -36,7 +36,7 @@ Cases do not carry a seed yet, so today a failure cannot name one. See G22 and r
 
 Rehearsals use stand-ins, never the real sealed content.
 
-- **Stand-ins** (built): on a rehearsal night every secret text is a bracketed "(Rehearsal. ...)" line that says what kind of thing goes there, never what it says. Jon can see that a clue arrived at the right place and time without learning anything.
+- **Stand-ins** (built; changed 23 Oct): a rehearsal night deals its own throwaway case, so the cats' hint lines, the news and Sir Irwin's countdown are the real open lines pointing at an answer that is thrown away with the night. What is sealed for the party is never read: no cat leans in the Parlour Games, a stand-in bags clue, stand-in drawing pictures, and the study clue marked as a rehearsal. Jon can see that a clue arrived at the right place and time without learning anything about the party.
 - **Motive 8 practice case**: not built. It waits on Jon's pending rulebook-tutorial decision in CLAUDE.md (tutorial8, on the board).
 - **The REHEARSAL band** (built 23 Oct): a big red REHEARSAL band across the top of every phone and every room screen on a rehearsal night. A night is a rehearsal unless "This is the party night" is ticked on the workshop's Game night page. There is no separate practice copy of the game: a rehearsal runs on the emulator or on the live game with that box unticked, so the band is how Jon tells at a glance that a night is not the party.
 
@@ -49,10 +49,10 @@ Today: `npm test` runs every check that exists, and `npm run fake-night` plays o
 | Command | Who runs it | What it does | Built? |
 |---|---|---|---|
 | `npm test` | Claude Code | Runs every automated check that exists today. | Yes |
-| `npm run fake-night` | Claude Code | The rehearse command: one whole night, all seven acts, eight fake phones, in memory (or on the emulator with `-- --emulator`). Checks F20, F21, G32 and the seal, and prints pass or fail with counts only. Still to add: the two host seats (F02, G05) and the other F checks. | Yes |
+| `npm run fake-night` | Claude Code | The rehearse command: one whole night, all seven acts, eight fake phones, in memory (or on the emulator with `-- --emulator`). Checks F20, F21, G32 and the seal, and prints pass or fail with counts only. With `-- --real-secrets` it is a party-night dry run on the real leans, packing and drawing pictures (23 Oct), and prints a "Party secrets used" line of counts. Still to add: the two host seats (F02, G05) and the other F checks. | Yes |
 | `npm run test:rules` | Claude Code | The security rules check (L04), on the emulator. Plain `npm test` skips it. | Yes |
 | `npm run checks` | Jon | Deals 1,000 random stand-in cases and runs every G check on each. Also runs the rules check, so L04 never silently skips. Prints one score. Fine to run overnight. | Not built |
-| `npm run checks:real` | **Jenna only** | Runs the G checks on the real sealed content. Shows only `PASS` or `FIX NEEDED · check ID`. Jenna is remote and works only in the browser, so this will be a "Run the checks" button on her Steward page: the checks run on the server and the result shows on her page, never in a terminal. | Not built |
+| `npm run checks:real` | **Jenna only** | Runs the G checks on the real sealed content. Shows only `PASS` or `FIX NEEDED · check ID`. Jenna is remote and works only in the browser, so this will be a "Run the checks" button on their Steward page: the checks run on the server and the result shows on their page, never in a terminal. | Not built |
 | Replay by seed | Claude Code | Deals one exact case again from its seed, so a broken night can be played again. Shows counts only. | Not built. It is a card on the board ("Replay a night by its seed"). |
 
 There is no separate `npm run rehearse`: `npm run fake-night` is the rehearse command.
@@ -61,13 +61,13 @@ There is no separate `npm run rehearse`: `npm run fake-night` is the rehearse co
 
 ## Group G · The case generator (every dealt case)
 
-On party night the dealer checks each secret set's shape and skips a broken one. If none is usable it deals a rehearsal case and the Host tab warns you. The G checks run before the party, not at the deal.
+Since 23 October there are no secret sets: the deal draws the motive itself and, on a party night, reads only the cats' leans, so there is nothing to skip and no fallback to a rehearsal. The Host tab's only case warning is a trace with no look-alike among the guests. The G checks run before the party, not at the deal.
 
 **Roles and cast**
 - **G01** Exactly one Murderer and one Ghost. They are different players. Everyone else is a Detective.
 - **G02** Each player gets a different character. Jon and Susan always play the two Professors; every other guest draws at random from the other twelve.
 - **G03** Characters not in play have no trace and no clues anywhere in the case.
-- **G04** The motive is one of the 19. Motive 8 is dealt like the others: its in-game clues are regenerated blind (CLAUDE.md, the burned exception).
+- **G04** The motive is one of the 19. Motive 8 is dealt like the others, with the same open hint lines (CLAUDE.md, the burned exception).
 
 **Fairness** (measured across all 1,000 cases)
 - **G05** Every seat, including both host seats, lands Murderer and Ghost about equally often. No seat is favored.
@@ -87,8 +87,8 @@ On party night the dealer checks each secret set's shape and skips a broken one.
 **Cats and the dog**
 - **G14** Affection is rolled 1 to 5 for Zimothy, Boo and Granolia. Irwin is always at the top and never moves. Salem starts at 3 for everyone, and never goes above 4 unless Jon pressed "Salem petted" for that player.
 - **G15** Irwin never says anything false. Zimothy never says anything false.
-- **G16** Granolia's testimony is true except exactly one blank (a room, a time, a count...), wrong the same way for every guest. Her hint lines only leave things out; they never rule out the real answer.
-- **G17** Salem follows his ladder: backwards at 1 to 3, a coin flip at 4, straight at 5. When backwards he points at a wrong answer, so he never rules out the real one. No case is solvable from Salem's lines alone. At 5, both Salem's testimony and his hint line are straight.
+- **G16** Granolia's hint lines only leave things out; they never rule out the real answer. (Reworded 23 Oct: her one wrong blank went with her secret lines.)
+- **G17** Salem follows his ladder: backwards at 1 to 3, a coin flip at 4, straight at 5. When backwards he points at a wrong answer, so he never rules out the real one. No case is solvable from Salem's lines alone. At 5 his hint line is straight. (Reworded 23 Oct: he has no testimony any more.)
 - **G18** Boo follows her ladder: a look at 1, "Ew. Do I know you?" at 2, one motive in five words at 3, a family at 4, a family plus a bonus motive at 5.
 - **G18b** Every cat line, at every level, only rules out wrong answers (also G41).
 - **G19** If Irwin and any cat disagree, Irwin is the one telling the truth.
@@ -167,9 +167,9 @@ Fake players tap random choices, read at random speeds, and sometimes walk away 
 
 These protect Jon's ability to play. Run them with every other check.
 
-- **L01** No sealed content anywhere in the repo or its git history: kernels, document texts, echo fragments, the code-to-motive manifest, generated cases, the dial mapping, the Parlour lean table, the Relay Drawing picture bank, bag contents. (The W-O-O-F News, cat hint and Irwin line banks are open and may be in the repo; the per-night pick never is.) The test checks every tracked file, and every file name in git history, for the guarded patterns (anything named `sealed*`, `*.sealed.json`, a `cases/` JSON, `service-account*`). It also checks that no tracked JSON looks like a sealed doc (a kernels key holding text, or a code-to-motive map). It prints only counts and PASS or FAIL, never a match. Plain words like "bags" or "manifest" are not markers: normal files such as `scripts/pack-bags.mjs` use them.
+- **L01** No sealed content anywhere in the repo or its git history: generated cases, the dial mapping, the Parlour lean table, the Relay Drawing picture bank, bag contents, and the retired per-motive sets still in Firestore (kernels, document texts, echo fragments, the code-to-motive manifest). (The W-O-O-F News, cat hint and Irwin line banks are open and may be in the repo; the per-night pick never is.) The test checks every tracked file, and every file name in git history, for the guarded patterns (anything named `sealed*`, `*.sealed.json`, a `cases/` JSON, `service-account*`). It also checks that no tracked JSON looks like a sealed doc (a kernels key holding text, or a code-to-motive map). It prints only counts and PASS or FAIL, never a match. Plain words like "bags" or "manifest" are not markers: normal files such as `scripts/pack-bags.mjs` use them.
 - **L02** No test output, log file, or browser console line contains sealed text.
-- **L03** A rehearsal night never reads the secrets: on a rehearsal the dealer skips the motive sets and the leans, and the Relay Drawing skips the picture bank (checked by a test).
+- **L03** A rehearsal night never reads the secrets: on a rehearsal the dealer skips the leans, the bags station skips the packing, and the Relay Drawing skips the picture bank (checked by a test). Every night, rehearsals included, reads the packing's bag count when it is made, never an item.
 - **L04** Jon's workshop account cannot open sealed content. Only Jenna's can.
 - **L05** The lean table is not in the repo, and Jon's account cannot read it.
 
@@ -202,9 +202,10 @@ Before the freeze on Saturday 7 November (all Claude Code):
 2. The missing tests, each named with its ID. First F11, F09, G05 (with both host seats), G03, G19 and L01. Then the rest marked "Not yet" in the table.
 3. Rename the tests that exist but carry no ID, so the Health page can count them.
 4. Extend G38 to every act. G40 for all 25 bulletin 2 lines (every family, every level). G18 for Boo's words at each level. F18 for the dial's journey in the end credits.
-5. Salem's testimony straight at 5 (G17), unless secretLines retires the secret lines.
-6. The two host seats in the fake-players run (F02, G05).
-7. Jenna's "Run the checks" button (`checks:real`), once the secrets are made.
+5. The two host seats in the fake-players run (F02, G05).
+6. Jenna's "Run the checks" button (`checks:real`), once the Health page exists.
+
+Dropped on 23 October: the old item "Salem's testimony straight at 5 (G17)". Jon retired the secret lines, so Salem has no testimony.
 
 Any check not done by 7 November is marked "after the party" in the table, not left silent.
 
@@ -236,9 +237,9 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G12 | Level 3 second option is in play | Has a test, no ID | `functions/test/finale.test.mjs` |
 | G13 | Levels 1 to 5 each give a picture | Has a test, no ID | `functions/test/finale.test.mjs` |
 | G14 | Affection rolls; Irwin maxed; Salem starts at 3 | Has a test | `functions/test/night.test.mjs`, `functions/test/parlour.test.mjs` |
-| G15 | Irwin and Zimothy never say anything false | Partly, no ID | `functions/test/case.test.mjs` |
-| G16 | Granolia: exactly one wrong blank | Has a test, no ID | `functions/test/run.test.mjs`, `functions/test/case.test.mjs` |
-| G17 | Salem's ladder | Partly | His hint line follows it (the G41 test in `functions/test/solving.test.mjs`), and he stays at 4 or below unless petted (`functions/test/parlour.test.mjs`). His testimony is not straight at 5 yet. |
+| G15 | Irwin and Zimothy never say anything false | Partly | Zimothy's lines: the G41 test. Irwin's countdown: the G34 test. The older test of their secret lines went with them on 23 Oct. |
+| G16 | Granolia's lines only leave things out | Has a test | The G41 test: what she rules out at each level. (Reworded 23 Oct: the wrong-blank tests went with her secret lines.) |
+| G17 | Salem's ladder | Partly | The G41 test in `functions/test/solving.test.mjs` (backwards at 1 to 3, nothing to trust at 4, straight at 5), and he stays at 4 or below unless petted (`functions/test/parlour.test.mjs`). Not checked: that no case is solvable from Salem's lines alone. |
 | G18 | Boo's ladder | Partly, no ID | Inside the G41 test: what she rules out at each level. Her words at each level are not checked. |
 | G18b | Every cat line only rules out wrong answers | Has a test | The G41 test |
 | G19 | Irwin wins any disagreement | Not yet | |

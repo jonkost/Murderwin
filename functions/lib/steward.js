@@ -1,38 +1,27 @@
-// The Steward's door to the secrets. Jenna (they/them) is the one person who
-// may read and edit sealed/* because they never play (CLAUDE.md, The
-// Steward exception). This is the real gate: a Cloud Function, checked by
-// the SHA-256 of a verified Google email. firestore.rules keeps denying
-// every client read of sealed/*, so nothing here needs a rules change, and
-// Jon's admin UID is refused like anyone else's.
+// The Steward's door to the sealed lists. Jenna (they/them) is the one
+// person who may read sealed/* and edit the cats' leans, because they never
+// play (CLAUDE.md, The Steward exception). This is the real gate: a Cloud
+// Function, checked by the SHA-256 of a verified Google email.
+// firestore.rules keeps denying every client read of sealed/*, so nothing
+// here needs a rules change, and Jon's admin UID is refused like anyone
+// else's.
 //
-// SEAL RULE. Sealed text passes through here on its way to the Steward's
-// screen and back. It is never logged: the log line carries the op and the
-// code only. Errors carry reason codes, never text. Nothing here reads
-// cases/*.
+// SEAL RULE. Sealed content passes through here on its way to the Steward's
+// screen and back. It is never logged: the log line carries the op only.
+// Errors carry reason codes, never text. Nothing here reads cases/*.
 //
 // Ops (all through one callable, `steward`, functions/index.js):
 //   whoami            { ok: true }            proves the gate opens for this account
-//   list              { codes: [{ code, edited, version, review, complete }], bags, generated }
-//   read   { code }   one sealed set, its edit marks and the motive it serves
-//   write  { code, field, value }   one field: editedAt, editedBy, version+1,
-//                     the generated copy kept under `original` the first time
-//   mark   { code, review }         'done' | 'more' | '' (Jenna's two words per set)
 //   bags              sealed/bags as a packing list by bag number, items named
-//                     from the workshop's bag lines
+//                     from the workshop's bag lines (read only)
 //   leans             the Parlour Games lean table (sealed/parlour_leans): every
 //                     set in the workshop bank, its questions and answers, and
 //                     which answer each cat leans toward (docs/parlour-games.md)
 //   lean   { setId, q, cat, value }   one cat's leaning answer for one question:
 //                     'a', 'b', or '' to clear it
-//
-// The sealed doc after an edit:
-//   { ...the five content fields (edited), original: { the five as generated },
-//     generatedAt, editedAt, editedBy: 'steward', version: n, review?, reviewedAt? }
-// The generator (scripts/generate-sealed.mjs) skips any doc with editedAt.
 
 import { createHash } from 'node:crypto'
-import { NightError, readArea, MOTIVES } from './night.js'
-import { checkSealed, CAT_KEYS } from './case.js'
+import { NightError, readArea } from './night.js'
 import { LISTENERS, ANSWERS, QUESTIONS } from './parlour.js'
 
 // The Steward's hash: the SHA-256 of their verified Google email, lower
@@ -40,7 +29,7 @@ import { LISTENERS, ANSWERS, QUESTIONS } from './parlour.js'
 // test keeps them equal). STEWARD_EMAIL_HASH in the functions env overrides
 // it for a stand-in Steward, but ONLY on the emulator (FUNCTIONS_EMULATOR is
 // 'true' there and nowhere else): a deployed function always uses the hash
-// in the rules, so no .env line can open the sealed sets to another account.
+// in the rules, so no .env line can open the sealed lists to another account.
 export const RULES_STEWARD_HASH = '2ea18fbeb53147b23ca3afa1e1291934aeea1b6e5c6c2c7b40b6301386ffe2b8'
 export function onEmulator(env = process.env) {
   return String(env.FUNCTIONS_EMULATOR ?? '').trim().toLowerCase() === 'true'
@@ -65,36 +54,8 @@ export function isSteward(token, { hash = stewardHash() } = {}) {
   return emailHash(token.email) === hash
 }
 
-export const CONTENT_FIELDS = ['kernels', 'documents', 'fragments', 'studyClue', 'irwin']
-export const OPS = ['whoami', 'list', 'read', 'write', 'mark', 'bags', 'leans', 'lean']
+export const OPS = ['whoami', 'bags', 'leans', 'lean']
 export const LEANS_DOC = 'sealed/parlour_leans' // the same doc deal.js reads at the case deal
-export const REVIEWS = ['done', 'more', '']
-export const VALUE_MAX = 2000
-
-// Which fields may be edited, as dotted paths into the sealed doc. Variants
-// are fixed at three: an index past the end is refused, nothing is appended.
-const FIELD_RE = [
-  /^kernels\.(irwin|boo|granolia|zimothy)\.(\d+)$/,
-  /^kernels\.salem\.(\d+)\.(text|anchor)$/,
-  /^documents\.(\d+)\.(text|emphasis|annotation)$/,
-  /^(fragments|studyClue|irwin)\.(\d+)$/,
-]
-export function fieldAllowed(field) {
-  return typeof field === 'string' && FIELD_RE.some(re => re.test(field))
-}
-
-const CODE_RE = /^[A-Z0-9]{3,12}$/
-function codeOf(data) {
-  const code = data?.code
-  if (typeof code !== 'string' || !CODE_RE.test(code) || code === 'manifest' || code === 'bags') throw new NightError('invalid', 'Which set?')
-  return code
-}
-
-function contentOf(doc) {
-  const out = {}
-  for (const f of CONTENT_FIELDS) out[f] = structuredClone(doc?.[f] ?? null)
-  return out
-}
 
 function millis(v) {
   if (!v) return null
@@ -104,119 +65,7 @@ function millis(v) {
   return null
 }
 
-// Walk a dotted path inside a cloned top-level field and set the leaf.
-// Returns the new top-level value; throws 'invalid' when the path runs off
-// the existing shape (a missing cat, an index past the three variants).
-function setLeaf(doc, field, value) {
-  const parts = field.split('.')
-  const top = parts[0]
-  const next = structuredClone(doc[top])
-  let cur = next
-  for (let i = 1; i < parts.length - 1; i++) {
-    const p = parts[i]
-    if (cur === null || typeof cur !== 'object' || !(p in cur)) throw new NightError('invalid', 'That part of the set does not exist.')
-    cur = cur[p]
-  }
-  const leaf = parts[parts.length - 1]
-  if (cur === null || typeof cur !== 'object') throw new NightError('invalid', 'That part of the set does not exist.')
-  if (Array.isArray(cur)) {
-    const i = Number(leaf)
-    if (!Number.isInteger(i) || i < 0 || i >= cur.length) throw new NightError('invalid', 'That part of the set does not exist.')
-    cur[i] = value
-  } else {
-    if (!(leaf in cur)) throw new NightError('invalid', 'That part of the set does not exist.')
-    cur[leaf] = value
-  }
-  return { top, next }
-}
-
-async function readManifest(db) {
-  const snap = await db.doc('sealed/manifest').get()
-  return snap.exists ? snap.data() : null
-}
-
 // ---- the ops ------------------------------------------------------------
-
-async function opList(db) {
-  const manifest = await readManifest(db)
-  const codes = Object.keys(manifest?.codes ?? {}).sort()
-  const rows = []
-  for (const code of codes) {
-    const snap = await db.doc(`sealed/${code}`).get()
-    if (!snap.exists) { rows.push({ code, missing: true, edited: false, version: 0, review: '', complete: false }); continue }
-    const d = snap.data()
-    rows.push({
-      code,
-      edited: Boolean(d.editedAt),
-      editedAt: millis(d.editedAt),
-      version: Number(d.version ?? 0),
-      review: REVIEWS.includes(d.review) ? d.review : '',
-      complete: checkSealed(d).ok,
-    })
-  }
-  const bagsSnap = await db.doc('sealed/bags').get()
-  return {
-    ok: true,
-    generated: codes.length > 0,
-    generatedAt: millis(manifest?.generatedAt),
-    codes: rows,
-    bags: bagsSnap.exists && Boolean(bagsSnap.data()?.bags),
-  }
-}
-
-async function opRead(db, data) {
-  const code = codeOf(data)
-  const snap = await db.doc(`sealed/${code}`).get()
-  if (!snap.exists) throw new NightError('no-doc', 'No such set.')
-  const d = snap.data()
-  const manifest = await readManifest(db)
-  const n = manifest?.codes?.[code] ?? null
-  const motive = MOTIVES.find(m => m.n === n) ?? null
-  return {
-    ok: true,
-    code,
-    motive: motive ? { n: motive.n, rhyme: motive.rhyme } : null,
-    content: contentOf(d),
-    original: d.original ? structuredClone(d.original) : null,
-    editedAt: millis(d.editedAt),
-    editedBy: d.editedBy ?? null,
-    version: Number(d.version ?? 0),
-    review: REVIEWS.includes(d.review) ? d.review : '',
-    generatedAt: millis(d.generatedAt),
-    shape: checkSealed(d),
-  }
-}
-
-async function opWrite(db, data, { now }) {
-  const code = codeOf(data)
-  const { field, value } = data ?? {}
-  if (!fieldAllowed(field)) throw new NightError('invalid', 'That field cannot be edited.')
-  if (typeof value !== 'string' || !value.trim() || value.length > VALUE_MAX) throw new NightError('invalid', `Write something, up to ${VALUE_MAX} characters.`)
-  const ref = db.doc(`sealed/${code}`)
-  const result = await db.runTransaction(async tx => {
-    const snap = await tx.get(ref)
-    if (!snap.exists) throw new NightError('no-doc', 'No such set.')
-    const d = snap.data()
-    const { top, next } = setLeaf(d, field, value)
-    const version = Number(d.version ?? 0) + 1
-    const patch = { [top]: next, editedAt: now, editedBy: 'steward', version }
-    if (!d.original) patch.original = contentOf(d)
-    tx.update(ref, patch)
-    return { version, shape: checkSealed({ ...d, [top]: next }) }
-  })
-  return { ok: true, code, field, version: result.version, shape: result.shape }
-}
-
-async function opMark(db, data, { now }) {
-  const code = codeOf(data)
-  const review = data?.review ?? ''
-  if (!REVIEWS.includes(review)) throw new NightError('invalid', 'Done, needs more, or neither.')
-  const ref = db.doc(`sealed/${code}`)
-  const snap = await ref.get()
-  if (!snap.exists) throw new NightError('no-doc', 'No such set.')
-  await ref.update({ review, reviewedAt: now })
-  return { ok: true, code, review }
-}
 
 // The packing list, by bag number, with each item's workshop line so Jenna
 // can pack from it. A taste item listed under `doubles` is packed twice.
@@ -283,18 +132,13 @@ async function opLean(db, data, { now }) {
   return { ok: true, setId, q, cat }
 }
 
-// One entry point for the callable and the tests. `log` gets the op and the
-// code only.
+// One entry point for the callable and the tests. `log` gets the op only.
 export async function stewardOp(db, data, { now = new Date(), log = (...a) => console.log(...a) } = {}) {
   const op = data?.op
   if (!OPS.includes(op)) throw new NightError('invalid', 'Which op?')
-  log('steward', op, typeof data?.code === 'string' && CODE_RE.test(data.code) ? data.code : '-')
+  log('steward', op)
   switch (op) {
     case 'whoami': return { ok: true }
-    case 'list': return opList(db)
-    case 'read': return opRead(db, data)
-    case 'write': return opWrite(db, data, { now })
-    case 'mark': return opMark(db, data, { now })
     case 'bags': return opBags(db)
     case 'leans': return opLeans(db)
     case 'lean': return opLean(db, data, { now })
@@ -311,4 +155,3 @@ export async function stewardRequest(db, req, { hash = stewardHash(), now, log }
   return stewardOp(db, req.data ?? {}, { now, log })
 }
 
-export { CAT_KEYS }

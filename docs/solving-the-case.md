@@ -1,6 +1,6 @@
 # Sirwin Manor — How the Case Gets Solved
 
-Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees), and 23 October (what is built, open decisions, what to watch in the practice game).
+Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees), and 23 October (what is built, open decisions, what to watch in the practice game; then Jon retired the cats' secret lines and took the Act 2 safe out).
 Canon wins any other disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 This doc says **how** clues reach players across the night.
@@ -41,7 +41,7 @@ Act 3 now has a clue (22 Oct). This replaces "no new motive clues in Act 3".
 
 ### Motive families
 
-Five families. Players never see the family names. They are only the structure the generator uses.
+Five families. Players never see the family names. They are only the structure the case deal uses (`functions/lib/families.js`).
 
 - **Food:** the pie, the missing snacks, the chewing.
 - **Bathroom:** the empty roll, the seat left up, the dairy air, the sneeze.
@@ -120,7 +120,7 @@ Greeting-only lines (the three cats that don't give this player a hint):
 
 ## The cats' hint ladders
 
-Every hint line is in the Cat Hint Lines doc. Every cat only ever rules out wrong families or motives. In Act 4 the ladder uses the group's average affection.
+Every hint line is in the Cat Hint Lines doc. Every cat only ever rules out wrong families or motives. In Act 4 the ladder uses the group's average affection. Since 23 October (Jon retired the cats' secret lines) the hint line is all a cat says: no secret line beside it, no brush-off, no wrong detail from Granolia.
 
 | Cat | 1 | 2 | 3 | 4 | 5 |
 | --- | --- | --- | --- | --- | --- |
@@ -133,7 +133,7 @@ Every hint line is in the Cat Hint Lines doc. Every cat only ever rules out wron
 
 **Salem's unlock screen:** a badge with stars on Salem in the Cats tab. On tap: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn."
 
-Built so far: a True Friend sees this text when they open Salem on the Cats tab, and at 5 his hint line goes straight. His secret testimony line does not go straight at 5 yet (G17 in `docs/test-plan.md`; it goes away if secretLines retires the secret lines).
+Built: a True Friend sees this text when they open Salem on the Cats tab, and at 5 his hint line goes straight. His hint line is all he says: his secret line, which flipped on its own, was retired on 23 October with the other secret lines (G17 in `docs/test-plan.md`).
 
 ---
 
@@ -196,7 +196,7 @@ Irwin shows a countdown of motive cards. The dial sets how many:
 - Filler comes from the real family first, then from families already ruled out.
 - This replaces the 3/2/1 rule.
 - Motive card art: "The last of the pie" shows **pizza**, not apple pie.
-- Built (23 Oct): Irwin's Act 5 screen shows only his opener, the countdown line, the motive cards and his closer. The old secret middle line is gone from the screen. The generator still writes it until Jon answers secretLines.
+- Built (23 Oct): Irwin's Act 5 screen shows only his opener, the countdown line, the motive cards and his closer. His opener and closer are the first Irwin line in the workshop lists "What a cat says first" and "What a cat says last". The old secret middle line is gone for good: Jon retired the secret lines on 23 October, and nothing makes them any more.
 
 ---
 
@@ -266,4 +266,4 @@ All of these are now in `docs/test-plan.md` too, with where each one stands.
 ## Not designed yet — don't invent these
 
 - Whether the bags stay in Act 4 (Jon's open decision bagsAct4).
-- Dining Hall vs Library naming (Jon's open decision diningName). The cats' room list still says "the dining hall", but in the house that room is the Library (Zimothy's room). The rooms in play come from the workshop list "Blanks: rooms, times, counts", Rooms tab. If Jon picks the Library, he or Susan changes that line in the workshop, and Claude Code changes the seed defaults to match. The secret clues use a [ROOM] blank, so nothing sealed needs remaking.
+- Dining Hall vs Library naming (Jon's open decision diningName). In the house that room is the Library (Zimothy's room), and the phones already call it "the Library" (the cat rooms in `seed/night.json`). "The dining hall" is left only in the workshop list "Blanks (retired)", Rooms tab, and its seed defaults. Since 23 October nothing reads that list: only the cats' secret lines had blanks, and they are retired. Nothing sealed needs remaking either way.

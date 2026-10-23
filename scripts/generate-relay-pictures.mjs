@@ -3,7 +3,7 @@
 // (3 × 3, 4 × 4, 5 × 5), each with three wrong names for the guess. Jon runs
 // this; Jon never sees a picture. The drawing reads the bank on the party
 // night only (functions/lib/relay-bank.js).
-// SEAL RULES (the same as generate-sealed.mjs and generate-leans.mjs):
+// SEAL RULES (the same as generate-leans.mjs and pack-bags.mjs):
 // - stdout gets COUNTS AND PASS/FAIL ONLY. Never a name, never a stroke,
 //   not in logs, not in errors, not in files.
 // - A picture that fails the checks (relay-bank.checkPicture) is dropped and
