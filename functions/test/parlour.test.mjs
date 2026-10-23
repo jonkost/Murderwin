@@ -7,7 +7,7 @@ import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, ms } from '../lib/deal.js'
 import { parlourPath } from '../lib/windows.js'
 import {
-  planParlour, configOf, rollTimes, stream, catMoves, applyMoves, clampAffection, stopOf, parlourAwards,
+  planParlour, configOf, rollTimes, stream, catMoves, applyMoves, clampAffection, stopOf, parlourAwards, SALEM_PARLOUR_MAX,
   fittingAnswer, LISTENERS, PARLOUR_ACTS, SIZES, AFFECTION_MIN, AFFECTION_MAX,
 } from '../lib/parlour.js'
 
@@ -215,7 +215,8 @@ test('a Detective\'s answer warms the listening cat when it matches the lean and
   assert.deepEqual(db.store.get(`sessions/${deck[no]}`).affection, want(before.no, -1))
   for (const l of plan.listeners) {
     const total = plan.listeners.filter(x => x.cat === l.cat).reduce((n, x) => n + x.size, 0)
-    assert.equal(db.store.get(`sessions/${deck[yes]}`).affection[l.cat], clampAffection(before.yes[l.cat] + total))
+    const top = l.cat === 'salem' ? Math.max(before.yes.salem, SALEM_PARLOUR_MAX) : AFFECTION_MAX // Salem stops at 4
+    assert.equal(db.store.get(`sessions/${deck[yes]}`).affection[l.cat], Math.min(top, clampAffection(before.yes[l.cat] + total)))
   }
   assert.equal(db.store.get(`sessions/${deck[yes]}`).affection.irwin, before.yes.irwin, 'Irwin never moves')
 })
