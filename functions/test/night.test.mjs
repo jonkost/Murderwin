@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
+import { walkLights } from './lights-walk.mjs'
 import {
   createNight, join, hostCommand, canHost, rollAffection, nameKey,
   CHARACTERS, AFFECTION_MODS, CATS,
@@ -222,10 +223,13 @@ test('a dead phone: the same name on a new phone brings the cards along', async 
   await join(db, { uid: 'old', nightId, name: 'Stanley' })
   await runCommand(db, { nightId, command: 'act', arg: 2 })
   await runCommand(db, { nightId, command: 'beat', arg: 'cat' })
+  await walkLights(db, nightId)
   const before = cardsOf(db, 'old')
-  assert.ok(before.length >= 3, 'role, go, testimony')
+  assert.ok(before.length >= 3, 'role, orientation, testimony')
+  const steps = sessionOf(db, 'old').lights
   await join(db, { uid: 'new', nightId, name: 'Stanley' })
   assert.deepEqual(cardsOf(db, 'new').map(c => c.id), before.map(c => c.id))
+  assert.deepEqual(sessionOf(db, 'new').lights, steps, 'the Act 2 next step moves with the guest')
   assert.equal(sessionOf(db, 'old').status, 'superseded')
   assert.ok(CARRIED_FIELDS.includes('cards') && CARRIED_FIELDS.includes('windows'))
 })

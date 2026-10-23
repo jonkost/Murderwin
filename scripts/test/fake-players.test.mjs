@@ -4,7 +4,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { fakeNight, codesIn, PHONES } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, STATION_TEXT, DEFAULT_SCRAP, DEFAULT_NUMBERS_LINE } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, STATION_TEXT, DEFAULT_SCRAP, DEFAULT_NUMBERS_LINE, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
+import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
 
 // The fake players print counts, keys and act names and nothing a phone was
@@ -15,6 +16,8 @@ const CARD_TEXT = [
   ...Object.values(ROLE_CARDS),
   ...Object.values(STATION_TEXT).map(s => s.text),
   STUDY_PLACEHOLDER, DEFAULT_SCRAP.text.slice(0, 30), DEFAULT_NUMBERS_LINE.slice(0, 20),
+  HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
+  'From the memory match', 'Cross it off',
 ]
 
 function assertClean(text) {
@@ -66,7 +69,13 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   assert.match(line(3), /4 groups/)
   // twelve Parlour Games a night, planned five, five and two in Acts 2, 4 and 6, every phone answering
   assert.match(line(2), /5 Parlour Games, 40 answers/)
-  assert.match(line(4), /5 rotations, 4 groups through the study, 40 station cards, 8 clues, 5 Parlour Games, 40 answers/)
+  // eight study clues, and the memory match's cross-off on the phones of every group that cleared it
+  assert.match(line(4), /5 rotations, 4 groups through the study, \d+ memory matches cleared, 40 station cards, (1[2-6]) clues, 5 Parlour Games, 40 answers/)
+  assert.match(line(5), /4 motives crossed off by the memory match/, 'every group crossed one off by the end of Act 4')
+  // the Act 2 rooms (F20, F21) and the motive funnel (G32), as pass or fail and counts
+  assert.ok(lines.some(l => /^Act 2 rooms: 8 visits in \d+ waves; one guest at a cat at a time \(F20\) PASS; every phone told where to go \(F21\) PASS$/.test(l)))
+  assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [123]$/.test(l)))
+  assert.deepEqual(summary.checks, [])
   assert.match(line(6), /2 Parlour Games, 16 answers/)
   assert.match(line(6), /drawing done in \d+ turns and \d+ votes/)
   assert.match(line(6), /8 strikes/)

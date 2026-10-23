@@ -144,13 +144,18 @@ Act 7's two minutes of deliberation, so nobody has to remember it.
 dial and nothing else. The ladder, the collision buckets and the engine rules are in the traces
 doc and the act skeletons; this doc does not change them.
 
+**The ladder changed on 22 October 2026 (Jon).** It is now:
+
 | Level | What you get |
 |---|---|
-| 1 | Heavy haze. Something is there. |
-| 2 | Two real traces overlaid, both from people at the party. A coin flip. |
-| 3 | One clear image, no label. Is that pale smear flour, chalk dust or face powder? |
-| 4 | Image plus its name. |
-| 5 | Name plus a line of context. |
+| 1 | The picture in black and white, hazy. |
+| 2 | The picture in colour, less hazy. |
+| 3 | Two similar options side by side, both traces of people at the party. One is the real one. |
+| 4 | Just the picture, clear, no name. |
+| 5 | The picture and the name of the trace. |
+
+The same ladder pays the Ghost's trace in the Act 4 study (`docs/solving-the-case.md`). The
+second option at level 3 is never the Ghost's trace here, and never the Murderer's in the study.
 
 ---
 
@@ -280,8 +285,8 @@ Each of these fills a gap. Say the word and any of them changes.
 
 ## 11. Still open
 
-- Whether the victim's own trace may appear as the level-2 decoy. Carried from the traces doc;
-  it is a trace question, not a drawing one.
+- ~~Whether the victim's own trace may appear as the level-2 decoy.~~ Settled 21 Oct: never
+  (the decoy is now at level 3, `docs/solving-the-case.md`).
 - The cell size and the paper width. Measure the roll.
 
 ---
@@ -310,8 +315,9 @@ Host tab → *Next* at "The drawing" (or *Start the drawing*). Everything else r
 **Added 17 October 2026.**
 - **The door opens for real.** The moment the third drawing is named, the server writes the
   trace behind the door at the level the dial reached (the ladder in §4) and turns the hall
-  cue green. The bedroom screen shows it: heavy haze at level 1, two traces overlaid at 2, a
-  clear picture at 3, the name at 4, the name and a line at 5. The look-alike at level 2 is
+  cue green. The bedroom screen shows it at its level (the ladder in §4, changed 22 Oct:
+  black and white and hazy, colour and less hazy, two options, the picture, the picture and
+  its name). The look-alike at level 3 is
   always a trace of someone at the party, never the victim's own, and never a Professor's
   unless nobody else fits (that settles the traces doc's open question).
 - **The hall light** is now the cue relay's job: `docs/cues-relay.md`. Red from Act 1, green
@@ -403,11 +409,11 @@ reveal state.
 is `done` it calls `deal.revealTrace` (so a reveal that failed once is retried by the next
 nudge; Next into "The door opens" and into the ballot ask again too), which reads the case,
 picks the level with `traceLevel(dial)` (one rung per `TRACE_STEP` = 4 points, symmetric
-rounding), picks a level-2 partner with `pickPartner` from `TRACE_BUCKETS` (in-play, not the
+rounding), picks a level-3 partner (the ladder and buckets now live in `functions/lib/traces.js`) with `pickPartner` from `TRACE_BUCKETS` (in-play, not the
 victim's, Professors last), and writes, in one batch, the whole of it to
-`nights/{id}/private/trace` `{ level, trace, label, context, partner, placeholder, at }`, the
-part the room may see to `nights/{id}/public/trace` (level 1: `{ level }` only; level 2:
-`{ level, images: [two ids, shuffled] }`; level 3 up: `{ level, trace, label, context }`; any
+`nights/{id}/private/trace` `{ level, trace, label, partner, placeholder, at }`, the
+part the room may see to `nights/{id}/public/trace` (level 3: `{ level, images: [two ids,
+shuffled] }`; every other level: `{ level, trace, label }`, label only at 5; since 22 Oct; any
 signed-in phone can read `public/*`, so the dial's work never leaks through one read), plus
 `public/cues { hall: 'green' }`. Idempotent: a second call is a no-op. *Clear the drawing*
 deletes both trace docs and puts the hall back to red. The host's Next refuses to leave "The

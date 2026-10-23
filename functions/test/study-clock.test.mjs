@@ -20,6 +20,8 @@ async function party(n = 10) {
 }
 const night = (db, id) => db.store.get(`nights/${id}`)
 const cards = (db, uid, kind) => (db.store.get(`sessions/${uid}`).cards ?? []).filter(c => !kind || c.kind === kind)
+  // the study's own pay-out (the memory match pays a clue card too)
+  .filter(c => kind !== 'clue' || c.id.endsWith('study-clue'))
 const heartbeat = (db, nightId, now) => db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), updatedAt: new Date(now) })
 const members = (db, nightId, gid) => db.store.get(rotationPath(nightId)).groups.find(g => g.id === gid).members.map(m => m.key)
 // guest key → uid, as the dealer keeps it (a name with an accent gets a plain key)

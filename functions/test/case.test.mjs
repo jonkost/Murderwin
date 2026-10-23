@@ -11,6 +11,7 @@ import {
   buildCase, rehearsalCase, checkSealed, CASE_KEYS, CAT_KEYS, DIAL_SIGN, poolTokens, seededUnit, SALEM_WARP_SHARE,
 } from '../lib/case.js'
 import { studyClueCard } from '../lib/station.js'
+import { walkLights } from './lights-walk.mjs'
 
 // THE SEAL IN THIS FILE. Every "sealed" string below is a throwaway made
 // here, in brackets, from a word the test picks; it is never a real kernel,
@@ -400,7 +401,9 @@ test('the safe numbers reach the phone for every outcome, and open the safe firs
 
   // through the dealer: every phone, whatever its cat said
   const next = () => hostCommand(db, { nightId, command: 'next', now })
-  await next(); await next(); await next()
+  await next(); await next() // news, the cats
+  await walkLights(db, nightId, { now }) // every guest meets their cat, wave by wave
+  await next() // the safe
   const safe = db.store.get(`nights/${nightId}/private/puzzles`).safe
   let deflected = 0
   for (const [key, uid] of Object.entries(uids)) {

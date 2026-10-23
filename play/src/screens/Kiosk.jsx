@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
-import { callRelayAdvance } from '../firebase'
+import { callRelayAdvance, callMemoryCleared } from '../firebase'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, releasedNames, elapsed, hushLines } from '../lib/finale'
 
-// The room screens: /play/?kiosk=living | bedroom | study | ipad. A kiosk is
+// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory. A kiosk is
 // a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
 // server whenever a deadline has passed. (The study kiosk lives with the
 // station: ?kiosk=study.) The iPad (?kiosk=ipad) is the living room screen
 // with the words only: it keeps the news and the bulletin up through dinner.
+// The memory match (?kiosk=memory, an iPad at the small puzzle station in
+// Act 4) shows the board for the group at that station.
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
@@ -36,7 +38,8 @@ export default function Kiosk({ which }) {
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
   const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
   const content = useDoc(nightId && (which === 'study' || living) ? `nights/${nightId}/public/content` : null)
-  const trace = useDoc(nightId && which !== 'study' ? `nights/${nightId}/public/trace` : null)
+  const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
+  const memory = useDoc(nightId && which === 'memory' ? `nights/${nightId}/public/memory` : null)
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
@@ -55,6 +58,7 @@ export default function Kiosk({ which }) {
   else if (roomDark(n)) body = <Dark />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
+  else if (which === 'memory') body = <MemoryMatch board={memory.data} night={n} nightId={nightId} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
@@ -256,10 +260,17 @@ export function ScreenCard({ screen }) {
   return (
     <div className={`kiosk card-screen ${screen?.kind ?? ''}`}>
       <p className="kiosk-crest">{screen?.title ?? ''}</p>
-      {screen?.kind === 'irwin' && <div className="irwin-face" aria-hidden="true" />}
-      <div className="kiosk-lines">
-        {text.map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
-      </div>
+      {screen?.kind === 'irwin' && <IrwinFace mood={screen.mood} />}
+      {screen?.kind === 'irwin' && Array.isArray(screen.choices) && screen.choices.length > 0
+        // the motives he names sit under "It was one of these…", before his sign-off
+        ? <div className="kiosk-lines">
+            {text.slice(0, -1).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+            <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><span className="n">{c.n}</span> {c.rhyme}</li>)}</ul>
+            {text.slice(-1).map((l, i) => <p key={`end-${i}`} className="kiosk-line">{l}</p>)}
+          </div>
+        : <div className="kiosk-lines">
+            {text.map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+          </div>}
       {struck.length > 0 && (
         <div className="strikes">
           <p className="kiosk-next">The constable has ruled out</p>
@@ -267,6 +278,64 @@ export function ScreenCard({ screen }) {
         </div>
       )}
       {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
+    </div>
+  )
+}
+
+// Sir Irwin in one of his five moods (play/public/household/full/Irwin 1 to 5),
+// by the dial's band, the same five steps as the trace reveal. With no mood
+// (an older screen doc) or no picture, the plain round face.
+export function IrwinFace({ mood }) {
+  const [broken, setBroken] = useState(false)
+  const m = Math.max(1, Math.min(5, Number(mood) || 0))
+  if (!mood || broken) return <div className="irwin-face" aria-hidden="true" />
+  const src = `${import.meta.env.BASE_URL}household/full/${encodeURIComponent(`Irwin ${m}.png`)}`
+  return <img className="irwin-mood" src={src} alt="" aria-hidden="true" onError={() => setBroken(true)} />
+}
+
+// ---- Act 4: the memory match (?kiosk=memory) ------------------------------
+// Twelve cards face down: the traces of six people at the party, in pairs,
+// no names. The group turns two at a time; a pair stays up, a miss turns
+// back over. When the board is clear the iPad tells the server which pairs
+// it found, and the server crosses one motive off the group's list on their
+// phones. A fresh board, shuffled by the server, for every group.
+export function MemoryMatch({ board, night, nightId }) {
+  const [up, setUp] = useState([])
+  const [found, setFound] = useState([])
+  const [sent, setSent] = useState(null)
+  const boardId = board?.boardId ?? null
+  useEffect(() => { setUp([]); setFound([]); setSent(null) }, [boardId])
+  const cards = board?.cards ?? []
+  const done = cards.length > 0 && found.length * 2 === cards.length
+  useEffect(() => {
+    if (!done || sent || !boardId || board?.cleared || nightId === 'preview') return
+    setSent('sending')
+    callMemoryCleared({ nightId, boardId, pairs: found }).then(() => setSent('sent')).catch(() => setSent(null))
+  }, [done, sent, boardId, board?.cleared, nightId, found])
+  useEffect(() => {
+    if (up.length !== 2) return
+    const [a, b] = up
+    if (cards[a] === cards[b]) { setFound(f => [...f, [a, b]]); setUp([]); chime('right'); return }
+    const id = setTimeout(() => setUp([]), 1100)
+    return () => clearTimeout(id)
+  }, [up, cards])
+  if (!night || night.act !== 4 || !boardId) return <Idle title="The memory match" line="The next group will be along." />
+  const shown = new Set([...up, ...found.flat()])
+  const flip = (i) => { if (up.length < 2 && !shown.has(i)) setUp(u => [...u, i]) }
+  const base = import.meta.env.BASE_URL
+  return (
+    <div className="kiosk memory">
+      <p className="kiosk-crest">The memory match</p>
+      {board.cleared || done
+        ? <p className="kiosk-big">Clear. Look at your phones.</p>
+        : <p className="kiosk-line">Turn two cards at a time. Find the six pairs together.</p>}
+      <div className="memory-board">
+        {cards.map((t, i) => (
+          <button key={`${boardId}-${i}`} className={shown.has(i) ? 'memory-card up' : 'memory-card'} onClick={() => flip(i)} aria-label={shown.has(i) ? 'a trace' : 'a card, face down'} disabled={board.cleared}>
+            {shown.has(i) ? <img src={`${base}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <span className="memory-back" aria-hidden="true">✦</span>}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -402,27 +471,27 @@ export function Bedroom({ relay, trace }) {
 }
 
 // ---- the trace, at one of five levels -------------------------------------
-// 1 heavy haze · 2 two traces overlaid · 3 clear, no name · 4 named · 5 named with a line
-// The doc carries only what the level allows (any phone can read it): at
-// level 1 no picture at all, at level 2 two pictures in no particular order.
+// 1 black and white, hazy · 2 colour, less hazy · 3 two similar options ·
+// 4 just the picture · 5 the picture and its name          (Jon, 22 Oct 2026)
+// The doc carries only what the level allows (any phone can read it): one
+// picture, or at level 3 two pictures in no particular order, and the name
+// only at level 5.
 export function TraceView({ trace, compact = false }) {
   const level = Math.max(1, Math.min(5, Number(trace?.level) || 3))
   const base = import.meta.env.BASE_URL
   const src = (id) => `${base}traces/${id}.png`
-  const images = level === 2 ? (trace.images ?? []) : level >= 3 && trace.trace ? [trace.trace] : []
+  const images = level === 3 ? (trace.images ?? []) : trace.trace ? [trace.trace] : []
+  const frame = (id) => (
+    <div key={id} className="trace-frame">
+      <img className="trace-img" src={src(id)} alt={level === 5 && trace.label ? trace.label : 'something left behind'} onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
+      {level <= 2 && <div className="trace-haze" aria-hidden="true" />}
+    </div>
+  )
   return (
     <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
-      <div className="trace-frame">
-        {level === 1 && <div className="trace-blob" aria-label="something left behind" />}
-        {images.map((id, i) => (
-          <img key={id} className={`trace-img ${i === 0 ? 'main' : 'partner'}`} src={src(id)} alt={level >= 4 ? trace.label : 'something left behind'} onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
-        ))}
-        {level === 1 && <div className="trace-haze" aria-hidden="true" />}
-      </div>
-      {level >= 4 && trace.label && <p className="trace-label">{trace.label}</p>}
-      {level === 5 && trace.context && <p className="trace-context">{trace.context}</p>}
-      {level <= 2 && <p className="kiosk-next">{level === 1 ? 'Something was left behind.' : 'Something was left behind. One of two things.'}</p>}
-      {level === 3 && <p className="kiosk-next">Something was left behind.</p>}
+      {level === 3 ? <div className="trace-pair">{images.map(frame)}</div> : images.slice(0, 1).map(frame)}
+      {level === 5 && trace.label && <p className="trace-label">{trace.label}</p>}
+      {level < 5 && <p className="kiosk-next">{level === 3 ? 'Something was left behind. One of these two.' : 'Something was left behind.'}</p>}
       {trace.placeholder && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )

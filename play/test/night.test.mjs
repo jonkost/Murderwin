@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   notesFor, notesPatch, mergeNotes, seen, wantsWelcome, buzzOnce, resetBuzzGuard, mayCheck, needsHandoverReset,
   clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, effectivePhase, isDark, presenceKey,
+  lightsStep, meetParam, LIGHTS_STEPS,
 } from '../src/lib/night.js'
 import { isStale, secondsSinceHeard, watchWake, STALE_MS } from '../src/lib/clock.js'
 
@@ -70,6 +71,21 @@ test('the role card is kept all night, readable from You, never listed among the
   assert.equal(roleCard({ cards: [testimony] }), null)
   assert.deepEqual(clueCards(session).map(c => c.kind), ['testimony'])
   assert.deepEqual(nowCards(session, { seen: {} }, 2).map(c => c.kind), ['testimony'])
+})
+
+test('Act 2 rooms: the next step shows only in Act 2, and a room code names one of the four cats', () => {
+  const session = { lights: { step: 'go', cat: 'granolia', catName: 'Granolia Lickspittle', room: 'the Study', title: 'Go to the Study', text: '(words)' } }
+  assert.equal(lightsStep(session, 2)?.step, 'go')
+  assert.equal(lightsStep(session, 3), null, 'gone at supper')
+  assert.equal(lightsStep({ lights: { step: 'nonsense' } }, 2), null)
+  assert.equal(lightsStep({}, 2), null)
+  assert.deepEqual(LIGHTS_STEPS, ['wait', 'go', 'with', 'done'])
+  assert.equal(meetParam('?meet=salem'), 'salem')
+  assert.equal(meetParam('?meet=irwin'), null, 'Sir Irwin keeps no room in Act 2')
+  assert.equal(meetParam('?kiosk=living'), null)
+  // a testimony is on Now as soon as it is dealt: the greeting comes only when the guest is with the cat
+  const t = { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', lines: ['(a line)'] }
+  assert.deepEqual(nowCards({ cards: [t] }, { seen: {} }, 2).map(c => c.id), ['2-cat-testimony'])
 })
 
 test('a paused night freezes the clock: an open window stays open past its old deadline', () => {

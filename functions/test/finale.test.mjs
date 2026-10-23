@@ -77,19 +77,22 @@ test('the study station card carries no clue text; the clue is dealt once when t
     const clue = cards(db, uid, 'clue')
     assert.equal(clue.length, 1)
     assert.equal(clue[0].id, '4-station1-study-clue')
-    assert.equal(clue[0].text, STUDY_PLACEHOLDER)
-    assert.equal(clue[0].placeholder, true)
+    assert.ok(clue[0].trace && clue[0].trace.level >= 1 && clue[0].trace.level <= 5, 'the study pays the Ghost\'s trace at a level')
+    assert.equal(clue[0].placeholder, true, 'a rehearsal case is marked')
   }
   const again = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first } })
   assert.equal(again.repeated, true)
   for (const m of group.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1, 'dealt once')
 })
 
-test('studyClueCard uses the case text when the generator has written one', () => {
-  const real = studyClueCard({ studyClue: { text: 'x'.repeat(40) } }, 4, 'station2')
+test('studyClueCard carries the reveal it is given; with none it is the marked stand-in', () => {
+  const real = studyClueCard({ rehearsal: false }, 4, 'station2', { level: 3, trace: 'ink', label: null, context: null })
   assert.equal(real.placeholder, false)
   assert.equal(real.id, '4-station2-study-clue')
-  assert.equal(studyClueCard(null, 4, 'station2').placeholder, true)
+  assert.equal(real.trace.trace, 'ink')
+  const none = studyClueCard(null, 4, 'station2')
+  assert.equal(none.placeholder, true)
+  assert.equal(none.text, STUDY_PLACEHOLDER)
 })
 
 test('rotate does not clobber a running study game, and the rehearsal shortcut fires only when no station is alive', async () => {
@@ -162,7 +165,7 @@ test('TRACE_BUCKETS: every current trace in at least two buckets, the Professors
   for (const tr of traces) {
     const n = Object.values(TRACE_BUCKETS).filter(b => b.includes(tr)).length
     assert.ok(n >= 2, `${tr} sits in ${n} bucket(s)`)
-    assert.ok(TRACE_CONTEXT[tr], `${tr} has a level-5 line`)
+    assert.ok(TRACE_CONTEXT[tr], `${tr} has a context line (kept for the workshop, not shown)`)
   }
   for (const b of Object.values(TRACE_BUCKETS)) {
     for (const tr of b) assert.ok(traces.includes(tr), `${tr} is a current trace`)
@@ -195,10 +198,10 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
     assert.equal(doc.trace, murdererTrace.trace)
     assert.equal(r.level, doc.level)
     const expected = traceLevel(dial)
-    assert.ok(doc.level === expected || (expected === 2 && doc.level === 3), `level ${doc.level} for dial ${dial}`)
-    assert.equal(doc.label, doc.level >= 4 ? murdererTrace.traceLabel : null)
-    assert.equal(doc.context, doc.level === 5 ? TRACE_CONTEXT[murdererTrace.trace] : null)
-    if (doc.level === 2) {
+    assert.ok(doc.level === expected || (expected === 3 && doc.level === 4), `level ${doc.level} for dial ${dial}`)
+    assert.equal(doc.label, doc.level === 5 ? murdererTrace.traceLabel : null, 'the name only at level 5')
+    assert.ok(!('context' in doc), 'no line of context on any level (Jon, 22 Oct)')
+    if (doc.level === 3) {
       assert.ok(doc.partner && doc.partner !== doc.trace)
       const victimTrace = CHARACTERS.find(ch => ch.id === night(db, nightId).roster[c.ghost].characterId).trace
       assert.notEqual(doc.partner, victimTrace)
@@ -210,14 +213,13 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
     const pub = db.store.get(`nights/${nightId}/public/trace`)
     assert.equal(pub.level, doc.level)
     assert.ok(!('partner' in pub), 'the public doc never says which picture is the real one')
-    if (doc.level >= 3) {
-      assert.equal(pub.trace, doc.trace)
-      assert.equal(pub.label, doc.label)
-      assert.equal(pub.context, doc.context)
+    if (doc.level === 3) {
+      assert.ok(!('trace' in pub), 'at level 3 the public doc never says which of the two is the real one')
+      assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
     } else {
-      assert.ok(!('trace' in pub), `no trace id below level 3 (level ${doc.level})`)
-      if (doc.level === 2) assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
-      else assert.ok(!('images' in pub))
+      assert.equal(pub.trace, doc.trace, `one picture at level ${doc.level}`)
+      assert.equal(pub.label, doc.label)
+      assert.ok(!('images' in pub))
     }
     const text = JSON.stringify([doc, pub])
     for (const forbidden of ['murderer', 'ghost', 'motive', 'roles', 'kernel', 'document', c.murderer, c.ghost]) {

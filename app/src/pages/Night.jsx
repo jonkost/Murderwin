@@ -10,6 +10,37 @@ import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
 
 import { PLAY_URL } from '../lib/config'
 
+// The four cat rooms for Act 2, Lights Out (docs/solving-the-case.md): one
+// printed code per room. A guest the phone has sent there scans it and the
+// cat greets them. Keep in step with seed/night.json solving.catRooms.
+const CAT_ROOM_CODES = [
+  { cat: 'granolia', name: 'Granolia', room: 'the Study' },
+  { cat: 'salem', name: 'Salem', room: 'the Orangerie' },
+  { cat: 'zimothy', name: 'Zimothy', room: 'the Library' },
+  { cat: 'boo', name: 'Boo', room: 'the Entryway' },
+]
+function meetUrl(base, cat) {
+  return `${base}${String(base).includes('?') ? '&' : '?'}meet=${cat}`
+}
+
+function RoomCode({ cat, name, room }) {
+  const [qr, setQr] = useState(null)
+  const url = meetUrl(PLAY_URL, cat)
+  useEffect(() => {
+    QRCode.toDataURL(url, { width: 1200, margin: 2, color: { dark: '#1a1614', light: '#f1e8d6' } })
+      .then(setQr).catch(() => setQr(null))
+  }, [url])
+  return (
+    <div className="night-join">
+      {qr && <img className="qr" src={qr} alt={`Square code for ${name} in ${room}`} />}
+      <div>
+        <p className="night-line"><b>{name}</b>, in {room}</p>
+        {qr && <p className="night-line"><a className="primary dl" href={qr} download={`murderwin-room-${cat}.png`}>Save the picture</a></p>}
+      </div>
+    </div>
+  )
+}
+
 const HOSTS = [
   { key: 'host_jonathan', label: 'Who plays Prof. Jonathan Kostington', placeholder: 'Jon' },
   { key: 'host_susan', label: 'Who plays Prof. Susan Kostington', placeholder: 'Susan' },
@@ -112,6 +143,12 @@ export default function Night() {
             <p className="night-line">It opens <a href={PLAY_URL} target="_blank" rel="noreferrer">{PLAY_URL}</a></p>
           </div>
         </div>
+      </section>
+
+      <section className="panel">
+        <h2>The four cat rooms (Act 2)</h2>
+        <p className="why">Print each code and put it up in its room before the party. In Act 2 the phones send guests to the rooms one at a time; a guest scans the code in the room and the cat talks to them on their phone. Nothing goes up in the living room.</p>
+        {CAT_ROOM_CODES.map(r => <RoomCode key={r.cat} {...r} />)}
       </section>
 
       <section className="panel">

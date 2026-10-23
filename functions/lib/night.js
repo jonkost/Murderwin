@@ -317,7 +317,7 @@ async function joinOnly(db, { uid, nightId, name }) {
 }
 
 // What follows a guest from a dead phone to a new one.
-export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt']
+export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'solved', 'tries', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights']
 
 // A borrowed phone (host button). The previous owner's cards, windows and
 // everything else they were dealt are moved off the session into the

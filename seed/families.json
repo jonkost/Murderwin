@@ -1,0 +1,10 @@
+{
+  "_about": "The five motive families (docs/solving-the-case.md, decided with Jon 21 Oct 2026). Structure only: players never see a family name. The generator uses them to narrow the motive across the night. Every motive number in seed/motives.json sits in exactly one family.",
+  "families": [
+    { "key": "food", "name": "Food", "motives": [1, 6, 12] },
+    { "key": "bathroom", "name": "Bathroom", "motives": [5, 7, 8, 14] },
+    { "key": "screens", "name": "Screens", "motives": [3, 10, 11, 13, 19] },
+    { "key": "out", "name": "Out and about", "motives": [2, 17, 18] },
+    { "key": "slights", "name": "Personal slights", "motives": [4, 9, 15, 16] }
+  ]
+}

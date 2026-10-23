@@ -1,6 +1,7 @@
 {
   "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the living room TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026.",
   "parlour": { "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.", "counts": { "2": 5, "4": 5, "6": 2 }, "minGapMin": 4, "edgeMin": 2, "actMinutes": { "2": 30, "4": 60, "6": 30 } },
+  "solving": { "_about": "How the case gets solved (docs/solving-the-case.md, 21 Oct 2026). newsFamilies: how many wrong motive families the Act 2 news flash rules out for everyone. NOT SETTLED: the doc says one or two; 1 is a stand-in until Jon decides. The other wrong families are shared out one per guest, round the room in turn (also a stand-in rule). Act 2 rooms: one guest at a cat at a time; a guest sent to a cat who has not scanned in goMinutes, or is still with the cat after withMinutes, gets the greeting on the phone anyway and the next guest is sent. Jon may change any of these.", "newsFamilies": 1, "goMinutes": 4, "withMinutes": 5, "catRooms": { "granolia": "the Study", "salem": "the Orangerie", "zimothy": "the Library", "boo": "the Entryway" } },
   "windows": {
     "questions": { "ms": 60000, "title": "Parlour Game" },
     "eliminate": { "ms": 90000, "title": "The deduction round" },
@@ -10,7 +11,7 @@
     { "key": "study", "name": "The study", "what": "The light puzzle. Fifteen minutes, then out." },
     { "key": "cat", "name": "A cat", "what": "A cat talks to the whole group." },
     { "key": "bags", "name": "The bags", "what": "Something in two or three bags. Ask to open them." },
-    { "key": "puzzle", "name": "A small puzzle", "what": "A puzzle on your phones, together." },
+    { "key": "puzzle", "name": "The memory match", "what": "On the iPad: turn two cards at a time and find the six pairs of traces. Clearing it crosses one motive off." },
     { "key": "checkin", "name": "Check-in", "what": "Tidy your clues. Cross off motives." }
   ],
   "acts": {
@@ -23,7 +24,7 @@
     "2": { "name": "Lights Out", "plain": "First investigation", "beats": [
       { "key": "orient", "name": "Orientation", "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.", "action": "notice:orient" },
       { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news", "screen": "news", "sound": "chime-news" },
-      { "key": "cat", "name": "Go to a cat", "what": "Every phone sends its guest to a room. A cat is waiting there with something to say.", "action": "deal:encounter" },
+      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests off in waves, one guest at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest scans the code in the room and the cat greets them with one private hint. Everyone else waits in the living room.", "action": "deal:encounter" },
       { "key": "puzzle", "name": "The first puzzle", "what": "A small puzzle on each phone. It needs what the cat just said. Solving it pays out a document.", "action": "deal:puzzle" },
       { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
     ] },

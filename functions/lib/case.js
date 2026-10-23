@@ -57,6 +57,11 @@
 //                               nothing public can replay them from the night id
 //   exposure: {}                the exposure safeguard's record: { murderer?: { hushedAt, act },
 //                               ghost?: { hushedAt, act } } (ledger.js noteExposure; the Hush)
+//   solving: { family, newsOut, hints, memory, struck }   how the motive narrows
+//                               (families.js, docs/solving-the-case.md): the real
+//                               family, the families the Act 2 news flash rules out,
+//                               the one each guest's cat rules out, what the Act 4
+//                               memory match crossed off per group, what the bulletin struck
 //   dealtClues: []              the ledger of what went to whom (safeguards): entries
 //                               { kind: 'document' | 'study' | 'echo', act, beat, key?, groupId?, at },
 //                               never a word of content (ledger.js noteDealt)
@@ -70,6 +75,7 @@ import { randomInt, createHash } from 'node:crypto'
 import { MOTIVES } from './night.js'
 import { STUDY_PLACEHOLDER } from './station.js'
 import { newSeed, planParlour } from './parlour.js'
+import { solvingPlan } from './families.js'
 
 export const CAT_KEYS = ['irwin', 'granolia', 'boo', 'zimothy', 'salem']
 export const TRUTH_CATS = ['irwin', 'boo', 'zimothy']
@@ -254,6 +260,7 @@ export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [],
   const studyClue = { text: studyList.length ? choice(studyList, rng) : docs[1].text }
   const fragments = sealedDoc.fragments.filter(str)
   const irwinLines = Array.isArray(sealedDoc.irwin) && sealedDoc.irwin.length ? [...sealedDoc.irwin] : fragments.slice(0, 3)
+  const solving = solvingPlan({ motive: Number(motiveN), keys: base.list.map(g => g.key), rng })
   return {
     rehearsal: false, createdAt: base.createdAt,
     roles: base.roles, murderer: base.murderer, ghost: base.ghost,
@@ -263,7 +270,7 @@ export function buildCase({ nightId, roster, sealedDoc, motiveN, templates = [],
     documents: docs, studyClue, echo: { fragment: choice(fragments, rng) }, irwin: { lines: irwinLines },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[variant.granolia], base.pools, pools, rng),
-    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
+    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt, solving, exposure: {}, dealtClues: [],
   }
 }
 
@@ -288,10 +295,11 @@ export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng
   kernels.salem = ['(Rehearsal. Here Salem Crookshank gets what happened in [ROOM] at [TIME] confidently wrong, with one true object in it.)']
   const docText = n => `(Rehearsal document ${n}. The document for this motive goes here: forty to sixty words of a receipt, a telegram or a notice, with one word printed large and one handwritten note in the margin.)`
   const documents = [1, 2].map(n => ({ template: base.template, bigWord: 'REHEARSAL', text: docText(n), annotation: '(a handwritten note)' }))
+  const motive = MOTIVES[rng(MOTIVES.length)].n
   return {
     rehearsal: true, createdAt: base.createdAt,
     roles: base.roles, murderer: base.murderer, ghost: base.ghost,
-    motive: MOTIVES[rng(MOTIVES.length)].n, victimCharacterId: base.victimCharacterId,
+    motive, victimCharacterId: base.victimCharacterId,
     dialSign: { ...DIAL_SIGN }, dialMap: { ...DIAL_SIGN }, dial: 0, dialLog: [],
     kernels, variant, salemAnchors: ['(rehearsal)'], salemTruthIndex: 0,
     documents, studyClue: { text: STUDY_PLACEHOLDER },
@@ -299,7 +307,8 @@ export function rehearsalCase({ nightId, roster, templates = [], pools = {}, rng
     irwin: { lines: ['(Rehearsal. Irwin line one.)', '(Rehearsal. Irwin line two.)', '(Rehearsal. Irwin line three.)'] },
     pools: base.pools,
     granoliaSlot: granoliaSlot(kernels.granolia[0], base.pools, pools, rng),
-    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt, exposure: {}, dealtClues: [],
+    parlourPlan: base.parlourPlan, screenSalt: base.screenSalt,
+    solving: solvingPlan({ motive, keys: base.list.map(g => g.key), rng }), exposure: {}, dealtClues: [],
   }
 }
 
@@ -312,6 +321,7 @@ export const CASE_KEYS = Object.keys(rehearsalCase({ nightId: 'shape', roster: [
 // sealed set (buildCase) or a fresh rehearsal (rehearsalCase). The result
 // keeps the Murderer, every guest's character, the night's fixed pools, the
 // stationery template and the night's Parlour Games; it takes the new motive and
+// its own solving plan (families.js) and
 // everything that hangs off it; it picks a new Ghost (never the Murderer,
 // never the old Ghost when a third guest exists) and starts the dial again.
 // Pure: no database, nothing printed.
@@ -346,6 +356,8 @@ export function rerollCase({ prev, fresh, roster = [], poolLists = {}, rng = ran
     granoliaSlot: granoliaSlot(granoliaKernel, pools, poolLists, rng),
     parlourPlan: prev?.parlourPlan ?? fresh.parlourPlan,
     screenSalt: prev?.screenSalt ?? fresh.screenSalt,
+    // the new motive's own plan (the family changes with it), for every guest the night knows
+    solving: solvingPlan({ motive, keys, rng }),
     exposure: {},
     dealtClues: Array.isArray(prev?.dealtClues) ? prev.dealtClues : [],
     spills: (prev?.spills ?? 0) + 1,

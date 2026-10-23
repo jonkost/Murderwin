@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { callSolve } from '../firebase'
+import { callSolve, callMeet, callLeave } from '../firebase'
 import { writeNotes } from '../lib/hooks'
-import { faceUrl } from '../lib/night'
+import { faceUrl, buzzOnce } from '../lib/night'
+import { TraceView } from './Kiosk'
 import { STATIONERY, templateSlug, stationeryUrl } from '../lib/stationery'
 
 // Everything a phone is dealt during an act, one component per kind of card.
@@ -14,13 +15,12 @@ export function Card({ card, uid, nightId, notes, session }) {
   const put = () => writeNotes(uid, { seen: { [card.id]: true } }).catch(() => {})
   switch (card.kind) {
     case 'notice': return <Notice card={card} onDone={put} />
-    case 'go': return <Go card={card} onDone={put} />
     case 'testimony': return <Testimony card={card} />
     case 'puzzle': return <Safe card={card} nightId={nightId} session={session} onDone={put} />
     case 'document': return <Document card={card} />
     case 'group': return <Group card={card} onDone={put} />
     case 'station': return <Station card={card} uid={uid} notes={notes} onDone={put} />
-    case 'clue': return <Clue card={card} />
+    case 'clue': return <Clue card={card} uid={uid} notes={notes} />
     case 'result': return <Result card={card} onDone={put} seen={seen} />
     case 'award': return <Award card={card} onDone={put} />
     default: return null
@@ -50,13 +50,36 @@ function Notice({ card, onDone }) {
   )
 }
 
-function Go({ card, onDone }) {
+// Act 2, Lights Out: where this guest goes next (sessions/{uid}.lights,
+// written by the server). Wait in the living room; go to a cat's room and
+// scan its code; read what the cat says and tap; back to the living room.
+// The phone buzzes once when it sends its guest off. A guest whose phone
+// cannot scan taps "I am with …" in the room instead.
+export function LightsStep({ lights, uid, nightId, notes, note = null }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+  const buzzKey = lights?.step === 'go' ? `lights-go-${lights.cat}` : null
+  useEffect(() => {
+    if (!buzzKey || !uid || uid === 'preview') return
+    const vibrate = typeof navigator !== 'undefined' && navigator.vibrate ? p => navigator.vibrate(p) : null
+    if (buzzOnce(buzzKey, notes, vibrate)) writeNotes(uid, { buzzed: { [buzzKey]: true } }).catch(() => {})
+  }, [buzzKey, uid, notes])
+  if (!lights) return null
+  const call = async (fn, args) => {
+    if (nightId === 'preview') return
+    setBusy(true); setMsg(null)
+    try { await fn({ nightId, ...args }) } catch (e) { setMsg(e?.message || 'The house did not answer. Try again.') } finally { setBusy(false) }
+  }
+  const short = (lights.catName ?? 'the cat').split(' ')[0]
   return (
-    <section className="dealt go">
-      <CatFace cat={card.cat} name={card.catName} size="l" />
-      <h3>Go to {card.room}</h3>
-      <p>{card.catName} is waiting for you there. Find the cat, then tap.</p>
-      <button className="big" onClick={onDone}>I’m here</button>
+    <section className={`dealt lights lights-${lights.step}`}>
+      <p className="eyebrow">Your next step</p>
+      {lights.cat && lights.step !== 'done' && lights.step !== 'wait' && <CatFace cat={lights.cat} name={lights.catName} size="l" />}
+      <h3>{lights.title}</h3>
+      <p>{lights.text}</p>
+      {lights.step === 'with' && <button className="big" disabled={busy} onClick={() => call(callLeave, {})}>I have heard it</button>}
+      {lights.step === 'go' && <button className="quiet" disabled={busy} onClick={() => call(callMeet, { cat: lights.cat })}>Cannot scan? I am with {short}</button>}
+      {(msg || note) && <p className="trouble" role="status">{msg || note}</p>}
     </section>
   )
 }
@@ -78,6 +101,7 @@ export function Testimony({ card, compact = false }) {
       <div className={deflected ? 'said deflect' : 'said'}>
         {(card.lines ?? []).map((l, i) => <p key={i}>{l}</p>)}
       </div>
+      {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}>{card.hint.text}</p>}
     </section>
   )
 }
@@ -177,9 +201,9 @@ function Group({ card, onDone }) {
   )
 }
 
-// Act 4 stations. The study, the bags and the check-in are instructions; the
-// cat station carries a testimony for the whole group; the small puzzle is
-// a game on the phone.
+// Act 4 stations. The study, the bags, the memory match (on the iPad) and the
+// check-in are instructions; the cat station carries a testimony for the
+// whole group.
 function Station({ card, uid, notes, onDone }) {
   const metKey = `${card.id}-met`
   const met = !!notes?.seen?.[metKey]
@@ -193,56 +217,23 @@ function Station({ card, uid, notes, onDone }) {
       {card.station === 'cat' && (met
         ? <Testimony card={card.testimony} compact />
         : <button className="big" onClick={meet}>We’re with the cat</button>)}
-      {card.station === 'puzzle' && <Sequence symbols={card.sequence} />}
       {(card.station !== 'cat' || met) && <button className="big" onClick={onDone}>Done here</button>}
     </section>
   )
 }
 
-const GLYPH = { circle: '●', square: '■', triangle: '▲', star: '★', moon: '☾', cross: '✚' }
-const ALL = Object.keys(GLYPH)
-
-// Watch four shapes, then tap them back in the same order. Wrong → watch again.
-function Sequence({ symbols = [] }) {
-  const [phase, setPhase] = useState('ready') // ready | show | tap | done
-  const [shown, setShown] = useState(-1)
-  const [taps, setTaps] = useState([])
-  useEffect(() => {
-    if (phase !== 'show') return
-    let i = -1
-    const id = setInterval(() => {
-      i += 1
-      if (i >= symbols.length) { clearInterval(id); setShown(-1); setPhase('tap'); return }
-      setShown(i)
-    }, 900)
-    return () => clearInterval(id)
-  }, [phase, symbols.length])
-  const tap = (s) => {
-    const next = [...taps, s]
-    if (symbols[next.length - 1] !== s) { setTaps([]); setPhase('ready'); return }
-    setTaps(next)
-    if (next.length === symbols.length) setPhase('done')
-  }
-  if (phase === 'done') return <p className="sequence-done">That’s it.</p>
-  return (
-    <div className="sequence">
-      {phase === 'ready' && <button className="chip" onClick={() => { setTaps([]); setPhase('show') }}>{taps.length || shown >= 0 ? 'Watch again' : 'Show me'}</button>}
-      {phase === 'show' && <p className="glyph big-glyph" aria-live="polite">{shown >= 0 ? GLYPH[symbols[shown]] : ' '}</p>}
-      {phase === 'tap' && (
-        <div className="glyphs">
-          {ALL.map(s => <button key={s} className="glyph" onClick={() => tap(s)} aria-label={s}>{GLYPH[s]}</button>)}
-        </div>
-      )}
-      {phase === 'tap' && <p className="gloss">{taps.length} of {symbols.length}</p>}
-    </div>
-  )
-}
-
-export function Clue({ card }) {
+// A clue a room paid out: the study's trace (the same five-level picture as
+// the bedroom door, never a name) or the memory match's crossed-off motive,
+// with a button that crosses it off the Motives tab.
+export function Clue({ card, uid = null, notes = null }) {
+  const n = Number(card.cross) || null
+  const crossed = n && !!notes?.crossed?.[n]
+  const cross = () => { if (uid && uid !== 'preview') writeNotes(uid, { crossed: { [n]: true } }).catch(() => {}) }
   return (
     <section className="dealt clue">
       <h3>{card.title}</h3>
-      <p>{card.text || '(Nothing came through. Ask the host.)'}</p>
+      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p>{card.text || '(Nothing came through. Ask the host.)'}</p>}
+      {n && uid && (crossed ? <p className="gloss">Crossed off.</p> : <button className="chip" onClick={cross}>Cross it off</button>)}
       <Rehearsal card={card} />
     </section>
   )
