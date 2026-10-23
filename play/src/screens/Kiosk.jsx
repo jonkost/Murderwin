@@ -491,6 +491,7 @@ export function TraceView({ trace, compact = false }) {
     <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
       {level === 3 ? <div className="trace-pair">{images.map(frame)}</div> : images.slice(0, 1).map(frame)}
       {level === 5 && trace.label && <p className="trace-label">{trace.label}</p>}
+      {trace.irwinLine && <p className="trace-irwin">{trace.irwinLine}</p>}
       {level < 5 && <p className="kiosk-next">{level === 3 ? 'Something was left behind. One of these two.' : 'Something was left behind.'}</p>}
       {trace.placeholder && <p className="kiosk-next">Rehearsal</p>}
     </div>

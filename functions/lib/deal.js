@@ -33,6 +33,7 @@ import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlou
 import { LEANS_DOC } from './steward.js'
 import { hintFamilyFor, hintCatFor, memoryPick } from './families.js'
 import { hintLine as catHintLine, groupFamily, HINT_CATS } from './cats.js'
+import { hostLine, booLine, irwinTraceLine } from './hosts.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
@@ -839,6 +840,10 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
   if (beat && (night.window?.id === id || (privSnap.exists && privSnap.data()[id]))) return { ok: true, id, phones: list.length, already: true }
   if (night.window && !night.window.settled) await settleWindow(db, nightId, { now, force: true })
   const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat }
+  // the host's line on every phone alike (hosts.js): Boo for the Parlour Games, Salem for the final picks
+  const hostUi = (kind === 'questions' || kind === 'ballot') ? labelled(await readArea(db, 'ui_copy')) : {}
+  if (kind === 'questions') window.host = { cat: 'boo', line: booLine(id, hostUi) }
+  if (kind === 'ballot') window.host = { cat: 'salem', line: hostLine('salem', hostUi) }
   let priv = {}
   if (kind === 'questions') {
     // one set for the whole room: the plan's for this slot, or for the host's own button
@@ -1116,6 +1121,9 @@ async function stationCard(db, { c, station, act, beat, gid, members, levels, vo
   const id = `${act}-${beat}-${station.key}`
   const written = over[station.key.toUpperCase()]
   const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: written || base.text }
+  // the host's intro (hosts.js): Granolia hosts the study, Zimothy the memory match
+  if (station.key === 'study') card.host = { cat: 'granolia', line: hostLine('granolia', over.ui ?? {}) }
+  if (station.key === 'puzzle') card.host = { cat: 'zimothy', line: hostLine('zimothy', over.ui ?? {}) }
   if (station.key === 'cat') {
     // one of the four cats in their rooms (never Irwin), on the group's average affection,
     // with a finer clue from the Cat Hint Lines (cats.js): never the real family or motive
@@ -1348,7 +1356,7 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
   // the look-alike is never the Ghost's own trace: the study shows that one (G36)
   const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial })
-  const base = { level, placeholder: !!c.rehearsal, at: new Date(now) }
+  const base = { level, placeholder: !!c.rehearsal, at: new Date(now), irwinLine: irwinTraceLine(level) } // Irwin hosts the reveal (hosts.js)
   const full = {
     ...base, trace: murdererChar.trace,
     label: level === 5 ? murdererChar.traceLabel : null,

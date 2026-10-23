@@ -5,6 +5,7 @@ import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
 import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
 import { Seal } from './Moments'
+import { HostLine } from './Cards'
 
 // The moments when every phone lights up at once. Each one is a full
 // screen, the same on every phone, measured against the server's clock.
@@ -74,6 +75,7 @@ export function Questions({ w, nightId, serverNow, onDone }) {
         <Seal />
         <p className="crest">{w.title || 'Parlour Game'} · {i + 1} of {set.beats.length}</p>
       </header>
+      {i === 0 && <HostLine host={w.host} />}
       <h1 className="ask">{beat.q}</h1>
       <div className="choices">
         {beat.choices.map(c => (
@@ -132,6 +134,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone 
   return (
     <div className="moment window ballot papered">
       <p className="crest">{cur.title} · {step + 1} of 3</p>
+      {step === 0 && <HostLine host={w.host} />}
       <ul className="pick-list">
         {cur.key === 'motive'
           ? list.map(m => (

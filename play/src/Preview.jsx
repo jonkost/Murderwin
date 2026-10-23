@@ -97,7 +97,9 @@ const SET = [
   { q: 'A pigeon with a tiny hat', choices: [{ k: 'a', text: 'Trust it' }, { k: 'b', text: 'Do not' }] },
 ]
 function windowDoc(kind, ms) {
-  return { id: `${kind}-preview`, kind, title: '', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + ms), settled: false,
+  const host = kind === 'questions' ? { cat: 'boo', line: 'Choose carefully, darling. Everyone\'s watching. Mostly me.' }
+    : kind === 'ballot' ? { cat: 'salem', line: 'Forty years I\'ve kept these grounds, and I\'ve never seen so many people trampling on them. Name the Murderer, the motive and the victim.' } : null
+  return { id: `${kind}-preview`, kind, title: '', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + ms), settled: false, ...(host ? { host } : {}),
     mine: kind === 'questions' ? { kind, beats: SET } : { kind } }
 }
 

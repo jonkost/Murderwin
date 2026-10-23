@@ -31,6 +31,19 @@ export function Rehearsal({ card }) {
   return card?.placeholder ? <span className="chip-tag">Rehearsal text</span> : null
 }
 
+// A host's line (functions/lib/hosts.js): the cat's face and their words.
+// Flavor only, the same on every phone.
+const HOST_NAMES = { boo: 'Miss Boo LaRue', salem: 'Salem Crookshank', granolia: 'Granolia Lickspittle', zimothy: 'Zimothy Clawford, Esq.', irwin: 'Sir Irwin' }
+export function HostLine({ host }) {
+  if (!host?.line) return null
+  return (
+    <p className={`host-line host-${host.cat}`}>
+      <CatFace cat={host.cat} name={HOST_NAMES[host.cat]} size="s" />
+      <span>{host.line}</span>
+    </p>
+  )
+}
+
 export function CatFace({ cat, name, size = 'm' }) {
   const url = faceUrl(cat)
   return (
@@ -212,6 +225,7 @@ function Station({ card, uid, notes, onDone }) {
     <section className={`dealt station station-${card.station}`}>
       <p className="eyebrow">Station · {card.title}</p>
       {card.station === 'cat' && <CatFace cat={card.cat} name={card.catName} size="l" />}
+      <HostLine host={card.host} />
       {card.station === 'bags' && card.property && <p className="property">Something <strong>{card.property}</strong></p>}
       <p>{card.text}</p>
       {card.station === 'cat' && (met

@@ -601,3 +601,8 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .memory-card.up { background: var(--brand-parchment); cursor: default; }
 .memory-card img { width: 86%; height: 86%; object-fit: contain; }
 .memory-back { font-size: 6vh; color: var(--brand-brass); }
+
+/* A host's line (functions/lib/hosts.js): flavor, in the cat's voice. */
+.host-line { display: flex; gap: 0.6rem; align-items: flex-start; font-style: italic; margin: 0.5rem 0 1rem; }
+.host-line .face { flex: none; width: 2.4rem; height: 2.4rem; }
+.trace-irwin { font-size: 1.4em; margin-top: 1rem; }
