@@ -98,14 +98,13 @@ export const DEVICE_ROOMS = [
   },
   {
     key: 'puzzle', room: 'The small puzzle station',
-    why: 'Act 4: a group plays here while another group is in the study. Where it sits is still to pick (on the Timeline).',
+    why: 'Act 4: a group plays here while another group is in the study. It sits on a small stand in the Library, with Zimothy (22 October).',
     devices: [
       {
         key: 'memory', name: 'The memory match iPad', machine: 'The iPad Pro, moved here after dinner', kiosk: 'memory',
-        note: 'The house has two iPads. The iPad Pro comes here after dinner (and does the captions at dinner too, if you choose that), and the older family iPad is the spare phone. Where this station sits is still to pick.',
+        note: 'The house has two iPads. The iPad Pro comes here after dinner (and does the captions at dinner too, if you choose that), and the older family iPad is the spare phone.',
         what: 'Turn two cards at a time and find the six pairs of traces. Clearing it crosses one motive off.',
         start: ['Open the address in Safari, full screen.', 'Tap anywhere once to wake it.'],
-        pending: 'Not working yet: the memory match comes with the 21 October build. Until that is brought in, this address shows the living room screen.',
       },
     ],
   },

@@ -58,7 +58,7 @@ test('every list the night reads is on the timeline, and every label is filed ex
   }
   const acts = counted().filter(n => n.list === 'act_scripts').map(n => n.tab)
   assert.deepEqual(acts, TAB_KINDS.acts.list, 'one act script per act')
-  assert.ok(TIMELINE_LISTS.includes('ui_copy') && TIMELINE_LISTS.includes('trace_lines'))
+  assert.ok(TIMELINE_LISTS.includes('ui_copy') && TIMELINE_LISTS.includes('study_lines'))
 })
 
 test('every new task and decision is filed under a real moment, with no em dash', () => {
@@ -200,7 +200,7 @@ test('the stand-ins the page claims are really in the code', () => {
     rules_text: [play, 'export const DEFAULT_RULES'], status_lines: [play, 'export const DEFAULT_STATUS'],
     openers: [deal, 'DEFAULT_VOICE.opener'], closers: [deal, 'DEFAULT_VOICE.closer'], refusals: [deal, 'DEFAULT_VOICE.refusal'],
     pools: [read('../../functions/lib/case.js'), 'export const DEFAULT_POOLS'], echo_frames: [read('../../functions/lib/screen.js'), 'export const DEFAULT_FRAME'],
-    trace_lines: [deal, 'TRACE_CONTEXT['], role_cards: [deal, 'ROLE_CARDS.MURDERER'], epilogue_frames: [read('../../functions/lib/finale.js'), 'export const DEFAULT_EPILOGUE'],
+    role_cards: [deal, 'ROLE_CARDS.MURDERER'], epilogue_frames: [read('../../functions/lib/finale.js'), 'export const DEFAULT_EPILOGUE'],
     bios: [play, 'return character.bio'], npc_cards: [play, '${cat.name}, ${cat.tag}. ${cat.blurb}'],
   }
   const paper = readdirSync(new URL('../../play/public/stationery/', import.meta.url)).filter(f => f.endsWith('.svg'))

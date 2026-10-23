@@ -64,7 +64,7 @@ export const NEEDS = {
   'act3.down': [ui('NOTICE DOWN')],
   'act3.bulletin': [ui('NOTICE BULLETIN'), { list: 'echo_frames', also: true }],
   'act4.parlour': [{ list: 'scenarios', also: true }],
-  'act4.study': [{ list: 'study_lines' }, station('STUDY'), { list: 'trace_lines', also: true }],
+  'act4.study': [{ list: 'study_lines' }, station('STUDY')],
   'act4.cat': [station('CAT'), { list: 'openers', also: true }, { list: 'closers', also: true }, { list: 'refusals', also: true }],
   'act4.bags': [station('BAGS'), { list: 'bag_items' }],
   'act4.puzzle': [station('PUZZLE')],
@@ -73,7 +73,7 @@ export const NEEDS = {
   'act5.irwin': [ui('NOTICE IRWIN'), { secret: 'irwin', name: 'What Sir Irwin says' }],
   'act6.parlour': [{ list: 'scenarios', also: true }],
   'act6.drawing': [ui('RELAY RULES')],
-  'act6.door': [{ list: 'trace_lines' }, ui('NOTICE DOOR')],
+  'act6.door': [ui('NOTICE DOOR')],
   'act7.reveal': [ui('NOTICE EYES')],
   'act7.result': [{ list: 'epilogue_frames' }, { list: 'achievements', also: true }],
 }
@@ -157,7 +157,6 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 //   openers, closers, refusals   deal.js DEFAULT_VOICE, one line per cat
 //   pools           case.js DEFAULT_POOLS
 //   echo_frames     screen.js DEFAULT_FRAME
-//   trace_lines     deal.js TRACE_CONTEXT
 //   role_cards      deal.js ROLE_CARDS
 //   epilogue_frames finale.js DEFAULT_EPILOGUE
 //   bios            play/src/lib/content.js bioFor, the seed's own bios
@@ -168,7 +167,7 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 export const STANDIN_LISTS = new Set([
   'ui_copy', 'station_text', 'study_lines', 'rules_text', 'status_lines',
   'openers', 'closers', 'refusals', 'pools', 'echo_frames',
-  'trace_lines', 'role_cards', 'epilogue_frames', 'bios', 'npc_cards', 'templates',
+  'role_cards', 'epilogue_frames', 'bios', 'npc_cards', 'templates',
 ])
 // The phone's own rules show only while the list is empty: once Jon writes
 // one rule, his replace all eight (play/src/lib/content.js rules()).
