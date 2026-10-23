@@ -78,7 +78,7 @@ test('eight fake phones walk the whole night on stand-ins, pass the seal, and th
   assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [1-5]$/.test(l)))
   assert.deepEqual(summary.checks, [])
   assert.match(line(6), /2 Parlour Games, 16 answers/)
-  assert.match(line(6), /drawing done in \d+ turns and \d+ votes/)
+  assert.match(line(6), /drawing done in \d+ turns and \d+ guesses on the main computer/)
   assert.match(line(6), /8 strikes/)
   assert.match(line(7), /8 ballots, 8 results/)
   // and then it is all gone

@@ -2,34 +2,58 @@
 // docs/relay-drawing-game.md is the design; this file is the clock.
 //
 // Public doc  nights/{id}/public/relay   — what every phone and kiosk sees:
-//   the current cell only, who draws, who is next, the deadlines, the four
-//   options at vote time, how many votes are in. Never the whole drawing.
-// Private doc nights/{id}/private/relay  — the three grids, the answers,
-//   the turn order, the votes. No client reads it.
+//   the current cell only, who draws (their character, never a real name),
+//   the deadlines, the four options at guess time. Never the whole drawing.
+// Private doc nights/{id}/private/relay  — the four grids, the answers,
+//   the turn order. No client reads it.
+//
+// Updated 22 Oct (docs/handoff-2026-10-22.md §7): a practice smiley, then
+// three rounds (3 × 3, 4 × 4, 5 × 5) from the sealed picture bank on the
+// party night (relay-bank.js), stand-in grids otherwise. Each turn the game
+// calls a random player (repeats allowed); they walk to the paper before the
+// square is shown. The room guesses on the main computer (the living room
+// kiosk, `guess`); a wrong pick is crossed off until it is right. The third
+// picture named opens the door.
 //
 // Timing: every deadline is a server timestamp written here; the phones and
 // the living room kiosk render against it and call `advance` when it has
 // passed. `advance` is idempotent: it moves the state exactly once per
 // deadline and refuses early calls. Cloud Functions do not run timers.
 //
-// SEAL RULE: nothing in this file touches sealed/* or cases/*. The drawing
-// is pure play; the trace behind the door is dealt elsewhere.
+// SEAL RULE: the only sealed read is the picture bank, on the party night,
+// at the start (relay-bank.js); its pictures reach the public doc one square
+// at a time, and its names only as the four options at guess time. Nothing
+// here prints or logs. The trace behind the door is dealt elsewhere.
 
 import { randomInt } from 'node:crypto'
 import { generateSet, cellLabel } from './relay-gen.js'
-import { NightError } from './night.js'
+import { NightError, characterById } from './night.js'
+import { relayGrids, BANK_DOC } from './relay-bank.js'
 
 export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
 export const WALK_MS = 12_000      // the next drawer walks to the paper
 export const PULL_MS = 20_000      // pull the paper down to the next grid
 export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
 export const LOCKOUT_MS = 10_000   // after a wrong pick
-export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS }
+export const SLIDE_MS = 9_000      // each of Sir Irwin's rules slides, before the first walk
+// Sir Irwin's rules slides (the Relay Drawing How to Play doc): on the main
+// display after the Act 6 Parlour Games, then slide 8 when the door opens.
+export const IRWIN_SLIDES = [
+  { title: 'Welcome', text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
+  { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
+  { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.' },
+  { title: 'The shouting', text: "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },
+  { title: 'Guessing', text: "Think you know the picture? Pick it from the list. Wrong guesses get crossed off. That's okay. Boo crosses me off all the time. It's how she says hello." },
+  { title: 'The rounds', text: 'Practice first, then three grids, each bigger than the last. Small, medium, BIG.' },
+  { title: 'The clue', text: "Name all three and the door opens. Then I'll sniff out whatever's in there and bring it straight to you. Helping is my favorite! Ready? Paws on the paper. Let's go!" },
+]
+export const IRWIN_DOOR_SLIDE = { title: 'The door', text: "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
+export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, slideMs: SLIDE_MS }
 
 // The time budget: the drawing itself (every turn plus the walk before it)
 // fits twelve minutes (docs/relay-drawing-game.md §5). The generator caps
 // the drawn cells per grid so the turns never add up to more than this.
-export const DRAW_BUDGET_MS = 12 * 60_000
+export const DRAW_BUDGET_MS = 18 * 60_000
 export const MAX_TURNS = Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))
 
 // A phone heard from this recently counts as present: a vote closes when
@@ -48,24 +72,19 @@ export function relayPaths(nightId) {
   return { pub: `nights/${nightId}/public/relay`, priv: `nights/${nightId}/private/relay` }
 }
 
-// Who draws, in what order: every guest at least once before anyone repeats,
-// shuffled within each pass, and never the same person twice running.
+// Who draws: a random player every turn, anyone, even three times in a row (handoff §7).
 export function turnOrder(keys, turns, pickInt = randomInt) {
-  const shuffle = (list) => {
-    const a = [...list]
-    for (let i = a.length - 1; i > 0; i--) { const j = pickInt(i + 1); [a[i], a[j]] = [a[j], a[i]] }
-    return a
-  }
-  const out = []
-  while (out.length < turns) {
-    let pass = shuffle(keys)
-    if (out.length && keys.length > 1 && pass[0] === out[out.length - 1]) pass = [...pass.slice(1), pass[0]]
-    out.push(...pass)
-  }
-  return out.slice(0, turns)
+  return Array.from({ length: turns }, () => keys[pickInt(keys.length)])
 }
 
-export const RUNNING = ['walk', 'turn', 'vote', 'lockout']
+// The drawer as the main display shows them: their character's portrait and name, never a real name.
+function characterOf(roster, key) {
+  const ch = characterById(roster?.[key]?.characterId)
+  return { characterId: ch?.id ?? null, characterName: ch?.name ?? 'Someone' }
+}
+const ROUND_NAMES = ['Practice', 'Round 1', 'Round 2', 'Round 3']
+
+export const RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
 
 // Is a drawing under way (or finished and still on the screens)?
 export async function state(db, nightId) {
@@ -86,7 +105,11 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
   const roster = nightSnap.data().roster ?? {}
   const keys = Object.keys(roster)
   if (keys.length < 2) throw new NightError('invalid', 'The drawing needs at least two people.')
-  const set = generateSet(seed)
+  // the sealed bank, on the party night only; a rehearsal never reads it
+  const caseSnap = await db.doc(`cases/${nightId}`).get()
+  const party = caseSnap.exists && caseSnap.data().rehearsal === false
+  const bank = party ? (await db.doc(BANK_DOC).get()).data() ?? null : null
+  const set = relayGrids({ bank, standIn: generateSet(seed), seed })
   const turns = set.grids.reduce((n, g) => n + g.order.length, 0)
   if (turns > MAX_TURNS) throw new NightError('invalid', 'The drawing would run over its time.')
   const present = await presentKeys(db, nightId, keys, now)
@@ -94,17 +117,19 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
   const { pub, priv } = relayPaths(nightId)
   const batch = db.batch()
   batch.set(db.doc(priv), {
-    seed, grids: set.grids, order, votes: {}, crossed: [], misses: [0, 0, 0],
+    seed, grids: set.grids, order, votes: {}, crossed: [], misses: set.grids.map(() => 0), fromBank: set.fromBank,
   })
   const first = set.grids[0]
+  const nextChar = characterOf(roster, order[0])
   batch.set(db.doc(pub), {
-    state: 'walk',               // the first drawer walks to the paper and pulls it down
-    grid: 1, gridSize: first.size, gridTurns: first.order.length, gridDone: [],
+    state: 'intro',              // Sir Irwin's rules slides, then the first drawer walks to the paper
+    grid: 1, gridCount: set.grids.length, round: ROUND_NAMES[0], gridSize: first.size, gridTurns: first.order.length, gridDone: [],
     turnIndex: 0, turnsTotal: turns,
-    drawerKey: null, drawerName: null,
-    nextKey: order[0], nextName: roster[order[0]].name,
+    drawerKey: null, drawerName: null, drawerCharacterId: null,
+    nextKey: order[0], nextName: nextChar.characterName, nextCharacterId: nextChar.characterId,
     cell: null,
-    turnEndsAt: null, walkEndsAt: at(now, PULL_MS), voteEndsAt: null, lockoutEndsAt: null,
+    slides: IRWIN_SLIDES, introEndsAt: at(now, SLIDE_MS * IRWIN_SLIDES.length),
+    turnEndsAt: null, walkEndsAt: null, voteEndsAt: null, lockoutEndsAt: null,
     options: null, crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
     doorOpen: false, startedAt: at(now, 0), finishedAt: null, stats: null,
     timing: { ...TIMING }, // the phones draw their bars from these, never from their own constants
@@ -141,35 +166,65 @@ export async function presentKeys(db, nightId, keys, now = Date.now()) {
   return seen.size ? keys.filter(k => seen.has(k)) : [...keys]
 }
 
-// One phone's pick, during a vote. Recorded privately; the public doc only
-// counts. A second pick from the same phone replaces the first.
-export async function vote(db, { nightId, uid, pick }) {
-  if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
+// The phones no longer vote (handoff §7): the room guesses on the main
+// computer. A phone that still asks is told so, kindly.
+export async function vote() {
+  throw new NightError('invalid', 'Guess on the main computer, all together.')
+}
+
+// The room's guess, tapped on the main computer (the living room kiosk). Right:
+// the next grid, or the door opens after the last. Wrong: crossed off, a short
+// lockout, then guess again from what is left. One guess per tap.
+export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
   const { pub, priv } = relayPaths(nightId)
-  const sessionSnap = await db.doc(`sessions/${uid}`).get()
-  const s = sessionSnap.exists ? sessionSnap.data() : null
-  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+  const nightSnap = await db.doc(`nights/${nightId}`).get()
+  const roster = nightSnap.exists ? (nightSnap.data().roster ?? {}) : {}
   const idx = Number(pick)
   return db.runTransaction(async tx => {
     const [pubSnap, privSnap] = await Promise.all([tx.get(db.doc(pub)), tx.get(db.doc(priv))])
     const p = pubSnap.exists ? pubSnap.data() : null
-    if (!p || p.state !== 'vote') throw new NightError('closed', 'Nothing to pick right now.')
-    if (!(idx >= 0 && idx < 4) || (p.crossed ?? []).includes(idx)) throw new NightError('invalid', 'Pick one of the pictures still standing.')
-    const votes = { ...(privSnap.data()?.votes ?? {}), [s.guestKey]: idx }
-    tx.update(db.doc(priv), { votes })
-    tx.update(db.doc(pub), { votesIn: Object.keys(votes).length })
-    return { ok: true }
+    const d = privSnap.exists ? privSnap.data() : null
+    if (!p || !d?.grids || p.state !== 'vote') throw new NightError('closed', 'Nothing to guess right now.')
+    if (!(idx >= 0 && idx < 4) || (p.crossed ?? []).includes(idx)) throw new NightError('invalid', 'Pick one still standing.')
+    const g = d.grids[p.grid - 1]
+    const misses = [...(d.misses ?? d.grids.map(() => 0))]
+    if (idx === g.answer) {
+      if (p.grid >= d.grids.length) {
+        const totalSeconds = Math.round((now - ms(p.startedAt)) / 1000)
+        tx.update(db.doc(pub), {
+          state: 'done', doorOpen: true, lastResult: 'right', options: null, doorSlide: IRWIN_DOOR_SLIDE,
+          finishedAt: at(now, 0), stats: { totalSeconds, misses: misses.slice(1) }, // the practice round is not counted
+        })
+        tx.set(db.doc(`nights/${nightId}/public/sounds`), { current: { id: 'sting-door', at: at(now, 0) } }, { merge: true }) // the door sting (screen.js SOUND_IDS)
+        return { ok: true, right: true, state: 'done' }
+      }
+      const nextGrid = d.grids[p.grid]
+      const nextKey = d.order[p.turnIndex + 1]
+      const ch = characterOf(roster, nextKey)
+      tx.update(db.doc(priv), { crossed: [] })
+      tx.update(db.doc(pub), {
+        state: 'walk', lastResult: 'right', options: null, crossed: [],
+        grid: p.grid + 1, round: ROUND_NAMES[p.grid] ?? `Round ${p.grid}`, gridSize: nextGrid.size, gridTurns: nextGrid.order.length, gridDone: [],
+        turnIndex: p.turnIndex + 1, nextKey, nextName: ch.characterName, nextCharacterId: ch.characterId,
+        walkEndsAt: at(now, PULL_MS),
+      })
+      return { ok: true, right: true, state: 'walk' }
+    }
+    const crossed = [...(p.crossed ?? []), idx]
+    misses[p.grid - 1] += 1
+    tx.update(db.doc(priv), { crossed, misses })
+    tx.update(db.doc(pub), { state: 'lockout', lastResult: 'wrong', crossed, lockoutEndsAt: at(now, LOCKOUT_MS) })
+    return { ok: true, right: false, state: 'lockout' }
   })
 }
 
 // Move the clock. Called by the living room kiosk (and any phone) whenever a
-// deadline has passed or every vote is in. Safe to call too often.
-export async function advance(db, { nightId, now = Date.now(), pickInt = randomInt } = {}) {
+// deadline has passed. Safe to call too often. A guess waits for the room.
+export async function advance(db, { nightId, now = Date.now() } = {}) {
   const { pub, priv } = relayPaths(nightId)
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   const roster = nightSnap.exists ? (nightSnap.data().roster ?? {}) : {}
   if (nightSnap.exists && nightSnap.data().phase === 'paused') return { moved: false, state: 'paused' } // the host's pause holds every deadline (resume shifts them)
-  const present = await presentKeys(db, nightId, Object.keys(roster), now)
   return db.runTransaction(async tx => {
     const [pubSnap, privSnap] = await Promise.all([tx.get(db.doc(pub)), tx.get(db.doc(priv))])
     if (!pubSnap.exists || !privSnap.exists) return { moved: false, state: 'idle' }
@@ -177,104 +232,60 @@ export async function advance(db, { nightId, now = Date.now(), pickInt = randomI
     const d = privSnap.data()
     if (!d.grids) return { moved: false, state: p.state }
     const g = d.grids[p.grid - 1]
-    const nameOf = (key) => roster[key]?.name ?? key
 
-    // ---- a turn ends → the next drawer walks, or the grid goes to a vote
+    // ---- Sir Irwin's slides end → the first drawer walks to the paper and pulls it down
+    if (p.state === 'intro') {
+      if (now < ms(p.introEndsAt)) return { moved: false, state: p.state }
+      tx.update(db.doc(pub), { state: 'walk', introEndsAt: null, walkEndsAt: at(now, PULL_MS) })
+      return { moved: true, state: 'walk' }
+    }
+
+    // ---- a turn ends → the next drawer is called, or the grid goes to the guess
     if (p.state === 'turn') {
       if (now < ms(p.turnEndsAt)) return { moved: false, state: p.state }
       const gridDone = [...(p.gridDone ?? []), p.cell.label]
       if (gridDone.length >= g.order.length) {
-        tx.update(db.doc(priv), { votes: {}, crossed: [] })
+        tx.update(db.doc(priv), { crossed: [] })
         tx.update(db.doc(pub), {
-          state: 'vote', gridDone, cell: null, drawerKey: null, drawerName: null, nextKey: null, nextName: null,
-          turnEndsAt: null, voteEndsAt: at(now, VOTE_MS), options: g.options.map(cells => ({ size: g.size, cells })),
-          crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
+          state: 'vote', gridDone, cell: null, drawerKey: null, drawerName: null, drawerCharacterId: null, nextKey: null, nextName: null, nextCharacterId: null,
+          turnEndsAt: null, voteEndsAt: null,
+          options: g.options.map(o => (o.name ? { name: o.name } : { size: o.size ?? g.size, cells: o.cells })),
+          crossed: [], lastResult: null,
         })
         return { moved: true, state: 'vote' }
       }
       const nextIdx = p.turnIndex + 1
       const nextKey = d.order[nextIdx]
+      const ch = characterOf(roster, nextKey)
       tx.update(db.doc(pub), {
         state: 'walk', gridDone, turnIndex: nextIdx, cell: null,
-        drawerKey: null, drawerName: null, nextKey, nextName: nameOf(nextKey),
+        drawerKey: null, drawerName: null, drawerCharacterId: null, nextKey, nextName: ch.characterName, nextCharacterId: ch.characterId,
         turnEndsAt: null, walkEndsAt: at(now, WALK_MS),
       })
       return { moved: true, state: 'walk' }
     }
 
-    // ---- the walk ends → show the next cell to the room
+    // ---- the walk ends (the drawer is at the paper) → only now the square is shown
     if (p.state === 'walk') {
       if (now < ms(p.walkEndsAt)) return { moved: false, state: p.state }
       const drawn = p.gridDone ?? []
       const label = g.order.find(l => !drawn.includes(l))
       const key = d.order[p.turnIndex]
-      const after = d.order[p.turnIndex + 1] ?? null
-      const last = drawn.length + 1 >= g.order.length
+      const ch = characterOf(roster, key)
       tx.update(db.doc(pub), {
         state: 'turn',
-        drawerKey: key, drawerName: nameOf(key),
-        nextKey: last ? null : after,
-        nextName: last ? null : nameOf(after),
+        drawerKey: key, drawerName: ch.characterName, drawerCharacterId: ch.characterId,
+        nextKey: null, nextName: null, nextCharacterId: null,
         cell: { label, strokes: g.cells[label] },
         turnEndsAt: at(now, TURN_MS), walkEndsAt: null,
       })
       return { moved: true, state: 'turn' }
     }
 
-    // ---- the vote closes → right or wrong
-    if (p.state === 'vote') {
-      // every phone heard from lately has picked: close now; the rest get a random pick below
-      const votes0 = d.votes ?? {}
-      const allIn = present.every(k => k in votes0)
-      if (!allIn && now < ms(p.voteEndsAt)) return { moved: false, state: p.state }
-      const standing = [0, 1, 2, 3].filter(i => !(p.crossed ?? []).includes(i))
-      const votes = { ...(d.votes ?? {}) }
-      // an absent phone's pick is random: a no-show is never a pattern
-      for (const key of Object.keys(roster)) if (!(key in votes)) votes[key] = standing[pickInt(standing.length)]
-      const tally = {}
-      for (const v of Object.values(votes)) if (standing.includes(v)) tally[v] = (tally[v] ?? 0) + 1
-      const top = Math.max(0, ...Object.values(tally))
-      const leaders = standing.filter(i => (tally[i] ?? 0) === top)
-      const picked = leaders[pickInt(leaders.length)]
-      if (picked === g.answer) {
-        const misses = [...(d.misses ?? [0, 0, 0])]
-        if (p.grid >= d.grids.length) {
-          const totalSeconds = Math.round((now - ms(p.startedAt)) / 1000)
-          tx.update(db.doc(priv), { votes: {} })
-          tx.update(db.doc(pub), {
-            state: 'done', doorOpen: true, lastResult: 'right', options: null, votesIn: 0,
-            finishedAt: at(now, 0), stats: { totalSeconds, misses },
-          })
-          tx.set(db.doc(`nights/${nightId}/public/sounds`), { current: { id: 'sting-door', at: at(now, 0) } }, { merge: true }) // the door sting (screen.js SOUND_IDS)
-          return { moved: true, state: 'done' }
-        }
-        const nextGrid = d.grids[p.grid]
-        const nextKey = d.order[p.turnIndex + 1]
-        tx.update(db.doc(priv), { votes: {}, crossed: [] })
-        tx.update(db.doc(pub), {
-          state: 'walk', lastResult: 'right', options: null, crossed: [], votesIn: 0,
-          grid: p.grid + 1, gridSize: nextGrid.size, gridTurns: nextGrid.order.length, gridDone: [],
-          turnIndex: p.turnIndex + 1, nextKey, nextName: nameOf(nextKey),
-          voteEndsAt: null, walkEndsAt: at(now, PULL_MS),
-        })
-        return { moved: true, state: 'walk' }
-      }
-      // wrong: cross it out, a moment of nothing, then pick again
-      const crossed = [...(p.crossed ?? []), picked]
-      const misses = [...(d.misses ?? [0, 0, 0])]
-      misses[p.grid - 1] += 1
-      tx.update(db.doc(priv), { votes: {}, crossed, misses })
-      tx.update(db.doc(pub), {
-        state: 'lockout', lastResult: 'wrong', crossed, votesIn: 0,
-        voteEndsAt: null, lockoutEndsAt: at(now, LOCKOUT_MS),
-      })
-      return { moved: true, state: 'lockout' }
-    }
-
-    // ---- the lockout ends → vote again over what is left
+    // ---- the lockout ends → guess again over what is left
     if (p.state === 'lockout') {
       if (now < ms(p.lockoutEndsAt)) return { moved: false, state: p.state }
-      tx.update(db.doc(pub), { state: 'vote', lockoutEndsAt: null, voteEndsAt: at(now, VOTE_MS), votesIn: 0, votesNeeded: present.length, lastResult: null })
+      tx.update(db.doc(pub), { state: 'vote', lockoutEndsAt: null, lastResult: null })
       return { moved: true, state: 'vote' }
     }
     return { moved: false, state: p.state }

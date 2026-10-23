@@ -11,7 +11,7 @@ import { effectivePhase } from './night.js'
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
 export const DOOR_HOLD_MS = 10_000
-export const RELAY_RUNNING = ['walk', 'turn', 'vote', 'lockout']
+export const RELAY_RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
 export const CAPTION_KINDS = ['news', 'bulletin', 'irwin']
 
 export function ms(t) {

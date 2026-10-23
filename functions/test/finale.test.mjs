@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, CHARACTERS, NightError } from '../lib/night.js'
-import { hostCommand, studyFinished, advanceRelay, nextOf } from '../lib/run.js'
+import { hostCommand, studyFinished, advanceRelay, guessRelay, nextOf } from '../lib/run.js'
 import { stationCommand, studyClueCard, rotationPath, studyPath, STUDY_PLACEHOLDER } from '../lib/station.js'
 import {
   traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results, NIGHT,
@@ -235,6 +235,11 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
 
 // Play the Act 6 drawing through to its last vote, everyone picking right,
 // and leave `t.now` at the moment that vote can be closed.
+// The room names the last picture: the door opens.
+async function lastGuess(db, nightId, now) {
+  const { pub, priv } = relayPaths(nightId)
+  return guessRelay(db, { nightId, pick: db.store.get(priv).grids[db.store.get(pub).grid - 1].answer, now })
+}
 async function playToLastVote(db, nightId, uids, names, t) {
   const { pub, priv } = relayPaths(nightId)
   const { vote } = await import('../lib/relay.js')
@@ -242,10 +247,8 @@ async function playToLastVote(db, nightId, uids, names, t) {
   while (guard++ < 400) {
     const p = db.store.get(pub)
     if (p.state === 'vote') {
-      const answer = db.store.get(priv).grids[p.grid - 1].answer
-      for (const name of names) await vote(db, { nightId, uid: uids[name.toLowerCase()], pick: answer })
-      if (p.grid === 3) return
-      await advanceRelay(db, { nightId, now: t.now + 1 })
+      if (p.grid === p.gridCount) return
+      await guessRelay(db, { nightId, pick: db.store.get(priv).grids[p.grid - 1].answer, now: t.now + 1 })
       continue
     }
     t.now += p.state === 'walk' ? Math.max(WALK_MS, PULL_MS) : TURN_MS
@@ -263,7 +266,7 @@ test('the trace reveal heals itself: a failed write is retried by the next nudge
   const realBatch = db.batch.bind(db)
   let failures = 1
   db.batch = () => { const b = realBatch(); if (failures-- > 0) b.commit = async () => { throw new Error('UNAVAILABLE') }; return b }
-  const r = await advanceRelay(db, { nightId, now: t.now + 1 })
+  const r = await lastGuess(db, nightId, t.now + 1)
   assert.equal(r.state, 'done')
   assert.equal(r.trace, 'failed')
   assert.equal(db.store.get(`nights/${nightId}/public/trace`), undefined)
@@ -287,7 +290,7 @@ test('Clear the drawing takes the trace and the green light with it; the next ru
   const t = { now: 9_000_000 }
   await walkTo(db, nightId, 6, 'drawing', t)
   await playToLastVote(db, nightId, uids, names, t)
-  await advanceRelay(db, { nightId, now: t.now + 1 })
+  await lastGuess(db, nightId, t.now + 1)
   assert.ok(db.store.get(`nights/${nightId}/public/trace`))
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
   await hostCommand(db, { nightId, command: 'relay-reset', now: t.now + 2 })
@@ -298,7 +301,7 @@ test('Clear the drawing takes the trace and the green light with it; the next ru
   // run it again: a fresh trace, a fresh green
   await hostCommand(db, { nightId, command: 'relay-start', now: t.now + 4 })
   await playToLastVote(db, nightId, uids, names, t)
-  await advanceRelay(db, { nightId, now: t.now + 1 })
+  await lastGuess(db, nightId, t.now + 1)
   assert.ok(db.store.get(`nights/${nightId}/public/trace`))
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
 })
@@ -309,7 +312,7 @@ test('a running drawing is never wiped or walked away from: Next and the beat li
   await walkTo(db, nightId, 6, 'drawing', t)
   const { pub, priv } = relayPaths(nightId)
   const seed = db.store.get(priv).seed
-  assert.equal(db.store.get(pub).state, 'walk')
+  assert.ok(['intro', 'walk'].includes(db.store.get(pub).state))
   await assert.rejects(hostCommand(db, { nightId, command: 'next', now: t.now }), /still running/)
   await assert.rejects(hostCommand(db, { nightId, command: 'beat', arg: 'door', now: t.now }), /still running/)
   assert.equal((await hostCommand(db, { nightId, command: 'relay-start', now: t.now })).already, true)
@@ -420,7 +423,7 @@ test('the hall light is red from Act 1 and green when the drawing is done', asyn
   assert.equal(await ensureHallRed(db, nightId, t.now), false, 'already set')
   await walkTo(db, nightId, 6, 'drawing', t)
   const { pub, priv } = relayPaths(nightId)
-  assert.equal(db.store.get(pub).state, 'walk')
+  assert.ok(['intro', 'walk'].includes(db.store.get(pub).state))
   // play the whole drawing with everyone picking right
   let guard = 0
   while (db.store.get(pub).state !== 'done' && guard++ < 400) {
@@ -428,11 +431,7 @@ test('the hall light is red from Act 1 and green when the drawing is done', asyn
     if (p.state === 'vote') {
       const answer = db.store.get(priv).grids[p.grid - 1].answer
       for (const name of names) await hostCommand(db, { nightId, command: 'relay-advance', now: t.now }) // harmless early calls
-      for (const name of names) {
-        const { vote } = await import('../lib/relay.js')
-        await vote(db, { nightId, uid: uids[name.toLowerCase()], pick: answer })
-      }
-      await advanceRelay(db, { nightId, now: t.now + 1 })
+      await guessRelay(db, { nightId, pick: answer, now: t.now + 1 })
       continue
     }
     t.now += p.state === 'walk' ? Math.max(WALK_MS, PULL_MS) : TURN_MS

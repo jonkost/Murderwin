@@ -26,13 +26,15 @@ export function Stroke({ stroke, ox = 0, oy = 0, width = 6, color = 'currentColo
   return <path transform={t} d={arcPath(stroke.from, stroke.to, stroke.bulge)} {...common} />
 }
 
-// One cell, as the TV shows it: a white square, the line inside, nothing else.
-export function Cell({ strokes = [], className = 'cell-art' }) {
+// One cell. On a phone: a white square, the line inside, nothing else. On
+// the main display (`dark`, 22 Oct): black, one white-outlined box, thick
+// white line art.
+export function Cell({ strokes = [], className = 'cell-art', dark = false }) {
   return (
-    <svg className={className} viewBox={`0 0 ${S} ${S}`} role="img" aria-label="the line to draw">
-      <rect x="0" y="0" width={S} height={S} fill="#fff" />
-      <g color="#111">
-        {strokes.map((s, i) => <Stroke key={i} stroke={s} />)}
+    <svg className={className} viewBox={`-4 -4 ${S + 8} ${S + 8}`} role="img" aria-label="the line to draw">
+      <rect x="0" y="0" width={S} height={S} fill={dark ? '#000' : '#fff'} stroke={dark ? '#fff' : 'none'} strokeWidth={dark ? 2 : 0} />
+      <g color={dark ? '#fff' : '#111'}>
+        {strokes.map((s, i) => <Stroke key={i} stroke={s} width={dark ? 8 : 6} />)}
       </g>
     </svg>
   )

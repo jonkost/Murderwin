@@ -108,11 +108,13 @@ const RELAY = generateSet(2026)
 function relayDoc(state) {
   const g = RELAY.grids[0]
   const base = { state, grid: 1, gridSize: 3, gridTurns: 9, gridDone: ['A1', 'C2'], turnIndex: 2, turnsTotal: 35,
-    drawerKey: 'jessa', drawerName: 'Jessa', nextKey: 'jon', nextName: 'Jon', votesIn: 2, votesNeeded: 4, crossed: [], lastResult: null,
+    round: 'Round 1', drawerKey: 'jessa', drawerName: 'Iris DeVine', drawerCharacterId: 'devine', nextKey: 'jon', nextName: 'Prof. Jonathan Kostington', nextCharacterId: 'prof-jonathan', crossed: [], lastResult: null,
+    timing: { slideMs: 9000 }, slides: [{ title: 'Welcome', text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" }],
     startedAt: stamp(PHASE_AT), doorOpen: state === 'done' }
   if (state === 'turn') return { ...base, cell: { label: g.order[2], strokes: g.cells[g.order[2]] }, turnEndsAt: stamp(Date.now() + 8000) }
   if (state === 'walk') return { ...base, walkEndsAt: stamp(Date.now() + 9000) }
-  if (state === 'vote') return { ...base, options: g.options.map(cells => ({ size: 3, cells })), voteEndsAt: stamp(Date.now() + 40000) }
+  if (state === 'vote') return { ...base, options: [{ name: 'A smiley face' }, { name: 'A sun' }, { name: 'A clock' }, { name: 'A cookie' }] }
+  if (state === 'intro') return { ...base, introEndsAt: stamp(Date.now() + 8000) }
   if (state === 'lockout') return { ...base, options: g.options.map(cells => ({ size: 3, cells })), crossed: [1], lastResult: 'wrong', lockoutEndsAt: stamp(Date.now() + 9000) }
   return base
 }
@@ -194,7 +196,10 @@ const KIOSK = {
   'kiosk-ipad': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'Supper Is Served', act: 3, beat: 'groups', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
   'kiosk-living-done': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now() - 12000), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-hold': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now()), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  'kiosk-living-rules': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={{ ...relayDoc('walk'), gridDone: [], turnIndex: 0, walkEndsAt: stamp(Date.now() + 19000) }} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-rules': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('intro')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-relay-called': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('walk')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-relay-square': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-relay-guess': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={{ ...relayDoc('vote'), crossed: [2] }} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-bedroom-closed': () => <Bedroom relay={null} trace={null} />,
   'kiosk-bedroom-1': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(1)} />,
   'kiosk-bedroom-2': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(2)} />,

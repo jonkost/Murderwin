@@ -280,6 +280,17 @@ export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
   return r
 }
 
+// The room's guess on the main computer, plus the same moment as above: a
+// right guess on the last picture opens the door and lands the trace.
+export async function guessRelay(db, { nightId, pick, now = Date.now() } = {}) {
+  const r = await relay.guess(db, { nightId, pick, now })
+  if (r?.state === 'done') {
+    const t = await ensureTrace(db, nightId, now)
+    if (t?.trace) r.trace = t.trace
+  }
+  return r
+}
+
 // The study station says a group is done: the clue is dealt (station.js),
 // and in Act 4 the whole house rotates, exactly as the host's Next would, so
 // the study is the clock at every slot and the host never needs Next between
@@ -314,6 +325,7 @@ export const player = {
   ballot: (db, args) => deal.castBallot(db, args),
   eliminate: (db, args) => deal.eliminate(db, args),
   relayVote: (db, args) => relay.vote(db, args),
+  relayGuess: (db, args) => guessRelay(db, args),
   relayAdvance: (db, args) => advanceRelay(db, args),
   // Act 2: a guest scans the code in a cat's room, then taps when they have heard it
   meetCat: (db, args) => deal.meetCat(db, args),

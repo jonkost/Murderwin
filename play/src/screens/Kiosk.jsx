@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
-import { callRelayAdvance, callMemoryCleared } from '../firebase'
+import { callRelayAdvance, callRelayGuess, callMemoryCleared } from '../firebase'
+import { portraitUrls } from '../lib/content'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
@@ -140,11 +141,10 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     if (!relay) return
     const deadline = relay.state === 'turn' ? ms(relay.turnEndsAt)
       : relay.state === 'walk' ? ms(relay.walkEndsAt)
-      : relay.state === 'vote' ? ms(relay.voteEndsAt)
+      : relay.state === 'intro' ? ms(relay.introEndsAt)
       : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0
-    const allIn = relay.state === 'vote' && relay.votesIn >= relay.votesNeeded
     const now = serverNow()
-    if ((deadline && now >= deadline) || allIn) {
+    if (deadline && now >= deadline) {
       if (now - nudged.current > 800) {
         nudged.current = now
         callRelayAdvance({ nightId }).catch(() => {})
@@ -193,59 +193,87 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} />
   }
 
-  const done = relay.gridDone?.length ?? 0
-  const total = relay.gridTurns ?? 0
-  const head = <p className="kiosk-crest">Grid {relay.grid} of 3 · {relay.gridSize} by {relay.gridSize} · {done} of {total} drawn</p>
-
-  if (relay.state === 'walk') {
-    const first = done === 0
-    const rules = showRules(relay) ? relayRules(uiLines(content)['RELAY RULES']) : null
+  // Sir Irwin's rules slides, one at a time on the server's clock
+  if (relay.state === 'intro') {
+    const slides = relay.slides ?? []
+    const each = relay.timing?.slideMs ?? 9000
+    const left = Math.max(0, ms(relay.introEndsAt) - serverNow())
+    const i = Math.min(slides.length - 1, Math.max(0, slides.length - 1 - Math.floor(left / each)))
+    const s = slides[i]
     return (
-      <div className="kiosk walk">
-        {head}
-        {rules && <ol className="kiosk-rules" aria-label="the rules of the drawing">{rules.map((l, i) => <li key={i}>{l}</li>)}</ol>}
-        <p className="kiosk-big">{relay.nextName}</p>
-        <p className="kiosk-line">{first ? 'to the paper. Pull it down to the next grid.' : 'to the paper.'}</p>
-        <Countdown endsAt={relay.walkEndsAt} serverNow={serverNow} />
+      <div className="kiosk relay-slide">
+        <IrwinFace mood={5} />
+        {s && <><p className="kiosk-crest">{s.title} · {i + 1} of {slides.length}</p><p className="kiosk-line slide-text">{s.text}</p></>}
       </div>
     )
   }
+
+  // the drawer is called: only their character's portrait and name, no other words (handoff §7)
+  if (relay.state === 'walk') {
+    return (
+      <div className="kiosk walk called">
+        <Portrait characterId={relay.nextCharacterId} />
+        <p className="kiosk-big">{relay.nextName}</p>
+      </div>
+    )
+  }
+  // the square: a black screen, one white-outlined box, white line art, its label. Never the whole picture.
   if (relay.state === 'turn') {
     return (
-      <div className="kiosk turn">
-        {head}
+      <div className="kiosk turn black-box">
         <div className="kiosk-cell">
-          <Cell strokes={relay.cell?.strokes} className="cell-art big" />
+          <Cell strokes={relay.cell?.strokes} className="cell-art big" dark />
           <p className="kiosk-label">{relay.cell?.label}</p>
         </div>
-        <p className="kiosk-line"><strong>{relay.drawerName}</strong> is drawing. Tell them how.</p>
-        {relay.nextName && <p className="kiosk-next">Next: {relay.nextName}</p>}
-        <Countdown endsAt={relay.turnEndsAt} serverNow={serverNow} />
       </div>
     )
   }
+  // the room guesses here, on the main computer: a tap is the room's pick; a wrong one is crossed off
   if (relay.state === 'vote' || relay.state === 'lockout') {
-    const locked = relay.state === 'lockout'
-    const crossed = relay.crossed ?? []
-    return (
-      <div className="kiosk vote">
-        {head}
-        <p className="kiosk-line">{locked ? 'Not that one.' : 'Go and look at the paper, then pick on your phone.'}</p>
-        <div className="kiosk-options">
-          {(relay.options ?? []).map((o, i) => (
-            <div key={i} className={`kiosk-option${crossed.includes(i) ? ' out' : ''}`}>
-              <span className="letter">{'ABCD'[i]}</span>
-              <Figure size={o.size} cells={o.cells} crossed={crossed.includes(i)} />
-            </div>
-          ))}
-        </div>
-        {!locked && <p className="kiosk-next">{relay.votesIn} of {relay.votesNeeded} have picked.</p>}
-        <Countdown endsAt={locked ? relay.lockoutEndsAt : relay.voteEndsAt} serverNow={serverNow} />
-      </div>
-    )
+    return <Guess relay={relay} nightId={nightId} serverNow={serverNow} />
   }
-  if (relay.state === 'done') return <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
+  if (relay.state === 'done') return (
+    <>
+      {relay.doorSlide && <div className="kiosk relay-slide door-slide"><IrwinFace mood={5} /><p className="kiosk-line slide-text">{relay.doorSlide.text}</p></div>}
+      <DoorScreen screen={screen} cues={cues} trace={trace} serverNow={serverNow} />
+    </>
+  )
   return null
+}
+
+// A character's portrait, from play/public/portraits.
+function Portrait({ characterId }) {
+  const [i, setI] = useState(0)
+  const urls = characterId ? portraitUrls(characterId) : []
+  if (!urls[i]) return null
+  return <img className="called-portrait" src={urls[i]} alt="" onError={() => setI(i + 1)} />
+}
+
+// The guess: four named pictures (or drawn ones, on a stand-in round), tapped on the main computer.
+function Guess({ relay, nightId, serverNow }) {
+  const [busy, setBusy] = useState(false)
+  const locked = relay.state === 'lockout'
+  const crossed = relay.crossed ?? []
+  const pick = async (i) => {
+    if (busy || locked || crossed.includes(i) || nightId === 'preview') return
+    setBusy(true)
+    try { await callRelayGuess({ nightId, pick: i }) } catch {} finally { setBusy(false) }
+  }
+  return (
+    <div className="kiosk vote">
+      <p className="kiosk-crest">{relay.round ?? `Grid ${relay.grid}`} · {relay.gridSize} by {relay.gridSize}</p>
+      <p className="kiosk-line">{locked ? 'Not that one.' : 'What is the picture? Agree, then tap it.'}</p>
+      <div className="kiosk-options">
+        {(relay.options ?? []).map((o, i) => (
+          <button key={i} className={`kiosk-option${crossed.includes(i) ? ' out' : ''}`} disabled={busy || locked || crossed.includes(i)} onClick={() => pick(i)}>
+            <span className="letter">{'ABCD'[i]}</span>
+            {o.name ? <span className="option-name">{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={crossed.includes(i)} />}
+          </button>
+        ))}
+      </div>
+      {locked && <Countdown endsAt={relay.lockoutEndsAt} serverNow={serverNow} />}
+    </div>
+  )
 }
 
 // ---- the screens the beats name ------------------------------------------

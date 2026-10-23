@@ -48,8 +48,8 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'living', name: 'The TV', machine: 'Living room MacBook Pro on the TV', kiosk: 'living',
-        what: 'The news in Act 2, Sir Irwin in Act 5, the drawing and the board in Act 6, the ballot clock and the reveal in Act 7.',
-        start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can make sounds. Then leave it alone.'],
+        what: 'The news in Act 2, Sir Irwin in Act 5, the drawing and the board in Act 6, the ballot clock and the reveal in Act 7. In the drawing the room guesses here: agree on the picture, then tap it on this screen.',
+        start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can make sounds. Then leave it within reach: the room taps its guesses here in Act 6.'],
         alive: 'The crest and a waiting line. The dot in the bottom left corner is green.',
       },
     ],
@@ -59,9 +59,9 @@ export const DEVICE_ROOMS = [
     why: 'Behind the closed door until the third drawing is named in Act 6.',
     devices: [
       {
-        key: 'bedroom', name: 'The bedroom screen', machine: 'Bedroom MacBook Pro', kiosk: 'bedroom',
-        what: 'The door, then what was left behind.',
-        start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it. Close the bedroom door.'],
+        key: 'bedroom', name: 'The bedroom screen', machine: 'The roaming iPad Pro, put in the bedroom right after dessert', kiosk: 'bedroom',
+        what: 'Nothing until the third drawing is named, then what was left behind, at the same moment Sir Irwin\'s last slide comes up on the TV.',
+        start: ['Right after dessert, carry the iPad in and open the address in Safari, full screen.', 'Tap anywhere once to wake it. Close the bedroom door.'],
         alive: 'The crest and a waiting line. The dot in the bottom left corner is green.',
       },
     ],

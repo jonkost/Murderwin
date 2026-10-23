@@ -152,11 +152,21 @@ export const relayAdvance = onCall({ cors: true }, wrap(async req => {
   return run.player.relayAdvance(db, { nightId })
 }))
 
-// One phone's pick during a vote.
+// The phones no longer vote (22 Oct): kept so an old phone gets a kind answer.
 export const relayVote = onCall({ cors: true }, wrap(async req => {
+  requireUid(req)
+  return run.player.relayVote(db, {})
+}))
+
+// The room's guess, tapped on the main computer (the living room kiosk). Any
+// screen or phone at the party may send it, the same as the clock.
+export const relayGuess = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, pick } = req.data ?? {}
-  return run.player.relayVote(db, { nightId, uid, pick })
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  const allowed = await mayTouchNight(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) })
+  if (!allowed) throw new HttpsError('permission-denied', 'This screen is not at the party.')
+  return run.player.relayGuess(db, { nightId, pick })
 }))
 
 // The clock. Once a minute, for the live night: a window that has run out

@@ -4,7 +4,7 @@ import { createHash, randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
-import { hostCommand, studyFinished, advanceRelay, player } from '../lib/run.js'
+import { hostCommand, studyFinished, advanceRelay, guessRelay, player } from '../lib/run.js'
 import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
@@ -383,7 +383,7 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   now += NIGHT.windows.questions.ms + 1
   await next() // the drawing
   const { pub, priv } = relayPaths(nightId)
-  for (let g = 1; g <= 3; g++) {
+  for (let g = 1; g <= 4; g++) {
     let p = db.store.get(pub)
     while (p.state !== 'vote') {
       now += Math.max(WALK_MS, PULL_MS, TURN_MS) + 1
@@ -391,9 +391,8 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
       p = db.store.get(pub)
     }
     const answer = db.store.get(priv).grids[g - 1].answer
-    for (const uid of uids) await vote(db, { nightId, uid, pick: answer })
-    now += VOTE_MS + 1
-    await step(() => advanceRelay(db, { nightId, now }))
+    now += 1000
+    await step(() => guessRelay(db, { nightId, pick: answer, now }))
   }
   assert.equal(db.store.get(pub).state, 'done')
   assert.equal((await currentSound(db, nightId)).id, 'sting-door')

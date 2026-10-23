@@ -5,7 +5,7 @@ import { createNight, join } from '../lib/night.js'
 import { hostCommand, advanceRelay } from '../lib/run.js'
 import { generateSet, CELL_CAPS, MAX_CELLS } from '../lib/relay-gen.js'
 import {
-  start, advance, vote, reset, relayPaths, presentKeys,
+  start, advance, vote, guess, reset, relayPaths, presentKeys,
   TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, MAX_TURNS, DRAW_BUDGET_MS, PRESENT_MS, TIMING,
 } from '../lib/relay.js'
 import { ms, NIGHT } from '../lib/deal.js'
@@ -41,12 +41,12 @@ async function runGridToVote(db, nightId, t, beforeEach = () => {}) {
 // Everyone votes right on every grid: the drawing is done.
 async function solveAll(db, nightId, uids, t, nudge = (args) => advance(db, args)) {
   const { priv, pub } = relayPaths(nightId)
-  for (let grid = 1; grid <= 3; grid++) {
+  for (let grid = 1; grid <= db.store.get(priv).grids.length; grid++) {
     await runGridToVote(db, nightId, t)
     const answer = db.store.get(priv).grids[grid - 1].answer
-    for (const uid of Object.values(uids)) await vote(db, { nightId, uid, pick: answer })
     t.now += 1000
-    await nudge({ nightId, now: t.now, pickInt: () => 0 })
+    await guess(db, { nightId, pick: answer, now: t.now })
+    await nudge({ nightId, now: t.now })
   }
   assert.equal(db.store.get(pub).state, 'done')
 }
@@ -72,7 +72,9 @@ test('start twice keeps the drawing: turnIndex and seed stand; force restarts it
   assert.equal(first.already, undefined)
   const { pub, priv } = relayPaths(nightId)
   assert.deepEqual(db.store.get(pub).timing, TIMING)
-  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['lockoutMs', 'pullMs', 'turnMs', 'voteMs', 'walkMs'])
+  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['lockoutMs', 'pullMs', 'slideMs', 'turnMs', 'voteMs', 'walkMs'])
+  assert.equal(db.store.get(pub).state, 'intro', 'Sir Irwin\'s slides first')
+  t.now = ms(db.store.get(pub).introEndsAt); await advance(db, { nightId, now: t.now })
   t.now += PULL_MS; await advance(db, { nightId, now: t.now })
   t.now += TURN_MS; await advance(db, { nightId, now: t.now })
   t.now += WALK_MS; await advance(db, { nightId, now: t.now })
@@ -117,41 +119,6 @@ test('reset re-opens the door: after a full run, Clear, then a second full run r
   assert.ok(db.store.get(trace), 'a new trace')
   assert.ok(ms(db.store.get(trace).at) > firstAt)
   assert.equal(db.store.get(cues).hall, 'green')
-})
-
-test('a vote closes when every phone heard from lately has picked: two of nine absent never hold the room', async () => {
-  const { db, nightId, uids, names, keys } = await party(9)
-  const t = { now: 3_000_000 }
-  // seven phones have been heard from in the last two minutes; two have been quiet for an hour
-  const quiet = new Set(keys.slice(-2))
-  for (const k of keys) present(db, nightId, `p-${k}`, k, quiet.has(k) ? t.now - 60 * 60_000 : t.now - 30_000)
-  assert.deepEqual((await presentKeys(db, nightId, keys, t.now)).sort(), keys.filter(k => !quiet.has(k)).sort())
-  await start(db, { nightId, now: t.now, seed: 21 })
-  const { pub, priv } = relayPaths(nightId)
-  assert.equal(db.store.get(pub).votesNeeded, 7)
-  // the seven keep their minute-by-minute heartbeat going through the grid; the two stay silent
-  const beat = (now) => { for (const k of keys) if (!quiet.has(k)) present(db, nightId, `p-${k}`, k, now - 30_000) }
-  await runGridToVote(db, nightId, t, beat)
-  assert.equal(db.store.get(pub).votesNeeded, 7)
-  const answer = db.store.get(priv).grids[0].answer
-  const uidOf = (k) => db.store.get(`nights/${nightId}/private/deck`).uids[k]
-  const here = keys.filter(k => !quiet.has(k))
-  for (const k of here.slice(0, 6)) await vote(db, { nightId, uid: uidOf(k), pick: answer })
-  assert.equal((await advance(db, { nightId, now: t.now + 1000 })).moved, false, 'six of seven: the window stays open')
-  await vote(db, { nightId, uid: uidOf(here[6]), pick: answer })
-  assert.equal(db.store.get(pub).votesIn, 7)
-  const r = await advance(db, { nightId, now: t.now + 2000, pickInt: () => 0 })
-  assert.equal(r.moved, true, 'the seventh pick closes the vote well inside the window')
-  assert.equal(db.store.get(pub).grid, 2)
-  // with nobody heard from at all, every phone counts and the window runs its course
-  for (const k of keys) present(db, nightId, `p-${k}`, k, t.now - 2 * 60 * 60_000)
-  await runGridToVote(db, nightId, t)
-  assert.equal(db.store.get(pub).votesNeeded, 9)
-  assert.equal((await advance(db, { nightId, now: t.now + 1000 })).moved, false)
-  t.now += VOTE_MS
-  assert.equal((await advance(db, { nightId, now: t.now, pickInt: () => 0 })).moved, true, 'the window runs out and the room moves on')
-  assert.equal(PRESENT_MS, 120_000)
-  assert.equal(names.length, 9)
 })
 
 test('reset on an idle night is harmless and leaves the hall red', async () => {

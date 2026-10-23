@@ -28,6 +28,7 @@ export const callHost = httpsCallable(functions, 'hostCommand')
 // The relay drawing (Act 6): nudge the clock, cast a pick.
 export const callRelayAdvance = httpsCallable(functions, 'relayAdvance')
 export const callRelayVote = httpsCallable(functions, 'relayVote')
+export const callRelayGuess = httpsCallable(functions, 'relayGuess')
 // The study station's calls (station/station.mjs uses the same name).
 export const callStation = httpsCallable(functions, 'stationCommand')
 // What a phone sends back during the night: a question set's picks, the safe's

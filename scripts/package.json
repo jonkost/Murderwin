@@ -5,6 +5,7 @@
   "scripts": {
     "generate": "node generate-sealed.mjs",
     "leans": "node generate-leans.mjs",
+    "relay-pictures": "node generate-relay-pictures.mjs",
     "validate": "node validate-sealed.mjs",
     "pack-bags": "node pack-bags.mjs",
     "test": "node --test test/*.test.mjs"

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { callRelayVote, callRelayAdvance } from '../firebase'
+import { callRelayAdvance } from '../firebase'
 import { useTick, writeNotes } from '../lib/hooks'
 import { Cell, Figure } from '../lib/draw'
 import { Seal } from './Moments'
 
 // The relay drawing on a phone (Act 6). Every phone follows the same public
 // doc. The drawer's phone says "draw"; everyone else's shows the cell the TV
-// is showing, so nobody has to squint. At vote time every phone lights up
-// with four pictures. All timing is read from server deadlines.
+// is showing, so nobody has to squint. The room guesses together on the main
+// computer (22 Oct): the phones only show what is still standing. All timing
+// is read from server deadlines.
 
 // A server timestamp, a Date, or a plain millisecond number (the study station sends numbers).
 export function ms(t) {
@@ -34,15 +35,13 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
   useTick(250)
   const me = session.guestKey
   const { TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } = timingOf(relay)
-  const [pick, setPick] = useState(null)
-  const [busy, setBusy] = useState(false)
   const nudged = useRef(0)
 
   // A phone may nudge the clock too, so a kiosk that fell over never stalls the room.
   useEffect(() => {
     const deadline = relay.state === 'turn' ? ms(relay.turnEndsAt)
       : relay.state === 'walk' ? ms(relay.walkEndsAt)
-      : relay.state === 'vote' ? ms(relay.voteEndsAt)
+      : relay.state === 'intro' ? ms(relay.introEndsAt)
       : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0
     const now = serverNow()
     if (night.nightId === 'preview') return
@@ -52,18 +51,21 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     }
   })
 
-  // buzz when it is my turn, and when the vote opens
+  // buzz when I am called to the paper, and when it is my turn
   useEffect(() => {
-    if ((relay.state === 'turn' && relay.drawerKey === me) || relay.state === 'vote') {
+    if ((relay.state === 'walk' && relay.nextKey === me) || (relay.state === 'turn' && relay.drawerKey === me)) {
       try { navigator.vibrate?.([200, 100, 200]) } catch {}
     }
-    if (relay.state !== 'vote') setPick(null)
-  }, [relay.state, relay.drawerKey, relay.voteEndsAt, me])
+  }, [relay.state, relay.drawerKey, relay.nextKey, relay.turnIndex, me])
 
-  const cast = async (idx) => {
-    setBusy(true)
-    setPick(idx)
-    try { await callRelayVote({ nightId: night.nightId, pick: idx }) } catch { setPick(null) } finally { setBusy(false) }
+  if (relay.state === 'intro') {
+    return (
+      <div className="moment relay papered">
+        <Seal />
+        <p className="crest">The Relay Drawing</p>
+        <p className="moment-text">Eyes on the main screen. Sir Irwin is explaining.</p>
+      </div>
+    )
   }
 
   if (relay.state === 'walk') {
@@ -72,7 +74,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     return (
       <div className="moment relay papered">
         <Seal />
-        <p className="crest">Grid {relay.grid} · {relay.gridSize} by {relay.gridSize}</p>
+        <p className="crest">{relay.round ?? `Grid ${relay.grid}`} · {relay.gridSize} by {relay.gridSize}</p>
         {first && (relay.grid ?? 1) === 1 && rules && <ol className="relay-rules">{rules.map((l, i) => <li key={i}>{l}</li>)}</ol>}
         {mine ? (
           <>
@@ -91,7 +93,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     const mine = relay.drawerKey === me
     return (
       <div className="moment relay papered">
-        <p className="crest">{relay.cell?.label} · grid {relay.grid}</p>
+        <p className="crest">{relay.cell?.label} · {relay.round ?? `grid ${relay.grid}`}</p>
         {mine ? (
           <>
             <p className="moment-text">Draw. The room will tell you how.</p>
@@ -114,22 +116,20 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     const crossed = relay.crossed ?? []
     return (
       <div className="moment relay vote papered">
-        <p className="crest">Grid {relay.grid} is drawn</p>
-        <p className="moment-text">{locked ? 'Not that one.' : 'Go and look at the paper. Which is it?'}</p>
+        <p className="crest">{relay.round ?? `Grid ${relay.grid}`} is drawn</p>
+        <p className="moment-text">{locked ? 'Not that one.' : 'Go and look at the paper, then guess together on the main computer.'}</p>
         <div className="options">
           {(relay.options ?? []).map((o, i) => {
             const out = crossed.includes(i)
             return (
-              <button key={i} className={`option${pick === i ? ' on' : ''}${out ? ' out' : ''}`}
-                disabled={busy || locked || out} onClick={() => cast(i)} aria-pressed={pick === i}>
+              <div key={i} className={`option${out ? ' out' : ''}`}>
                 <span className="letter">{'ABCD'[i]}</span>
-                <Figure size={o.size} cells={o.cells} crossed={out} />
-              </button>
+                {o.name ? <span className={out ? 'option-name crossed' : 'option-name'}>{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={out} />}
+              </div>
             )
           })}
         </div>
-        {!locked && <p className="gloss">{relay.votesIn} of {relay.votesNeeded} have picked. Most votes wins.</p>}
-        <Bar endsAt={locked ? relay.lockoutEndsAt : relay.voteEndsAt} total={locked ? LOCKOUT_MS : VOTE_MS} serverNow={serverNow} />
+        {locked && <Bar endsAt={relay.lockoutEndsAt} total={LOCKOUT_MS} serverNow={serverNow} />}
       </div>
     )
   }

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { generateSet, checkGrid, sameGrid, rotateGrid, cellDifference } from '../lib/relay-gen.js'
-import { start, advance, vote, reset, turnOrder, relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } from '../lib/relay.js'
+import { start, advance, vote, guess, reset, turnOrder, relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } from '../lib/relay.js'
+import { PRACTICE, BANK_DOC, checkPicture } from '../lib/relay-bank.js'
 
 // ---- the generator ------------------------------------------------------
 
@@ -45,14 +46,16 @@ test('generateSet is deterministic for a seed and different across seeds', () =>
 
 // ---- the turn order -----------------------------------------------------
 
-test('turnOrder: everyone draws before anyone repeats, nobody twice running', () => {
+test('turnOrder: a random player every turn, anyone, repeats allowed', () => {
   const keys = ['a', 'b', 'c', 'd', 'e']
+  let repeats = 0
   for (let t = 0; t < 50; t++) {
     const order = turnOrder(keys, 33)
     assert.equal(order.length, 33)
-    assert.deepEqual([...new Set(order.slice(0, 5))].sort(), keys)
-    for (let i = 1; i < order.length; i++) assert.notEqual(order[i], order[i - 1])
+    assert.ok(order.every(k => keys.includes(k)))
+    for (let i = 1; i < order.length; i++) if (order[i] === order[i - 1]) repeats++
   }
+  assert.ok(repeats > 0, 'the same person may be called twice running')
 })
 
 // ---- the state machine ----------------------------------------------------
@@ -73,44 +76,48 @@ async function party(n = 4) {
 
 const fixedPick = (n) => 0 // deterministic "random" for tie-breaks and absent picks
 
-test('start → walk → turn → … → vote: the public doc only ever carries one cell', async () => {
+test('start → walk → turn → … → guess: a practice smiley first, one cell at a time, and the drawer only ever as their character', async () => {
   const { db, nightId } = await party(4)
   let now = 1_000_000
   await start(db, { nightId, now, seed: 7 })
   const { pub, priv } = relayPaths(nightId)
+  const roster = db.store.get(`nights/${nightId}`).roster
+  const realNames = Object.values(roster).map(r => r.name)
   let p = db.store.get(pub)
-  assert.equal(p.state, 'walk')
-  assert.equal(p.grid, 1)
-  assert.equal(p.cell, null)
-  assert.ok(p.nextName)
-  assert.equal(p.turnsTotal, db.store.get(priv).order.length)
-  // too early: nothing moves
+  assert.equal(p.state, 'intro', 'Sir Irwin\'s rules slides come first')
+  assert.equal(p.slides.length, 7)
+  assert.equal((await advance(db, { nightId, now: now + 1000 })).moved, false)
+  now += 7 * 9_000
+  assert.equal((await advance(db, { nightId, now })).state, 'walk')
+  p = db.store.get(pub)
+  assert.equal(p.grid, 1); assert.equal(p.gridCount, 4); assert.equal(p.round, 'Practice'); assert.equal(p.gridSize, 3)
+  assert.equal(p.cell, null, 'the drawer walks to the paper before the square is shown')
+  assert.ok(p.nextCharacterId && p.nextName && !realNames.includes(p.nextName), 'the character, never a real name')
+  const d = db.store.get(priv)
+  assert.equal(d.grids.length, 4)
+  assert.deepEqual(d.grids[0].cells, PRACTICE.cells, 'the practice smiley')
+  assert.equal(d.grids[0].options[d.grids[0].answer].name, 'A smiley face')
+  assert.deepEqual(d.grids.slice(1).map(g => g.size), [3, 4, 5])
+  assert.equal(d.fromBank, 0, 'a rehearsal never reads the bank: stand-in grids')
   assert.equal((await advance(db, { nightId, now: now + 1000 })).moved, false)
   now += PULL_MS
   assert.equal((await advance(db, { nightId, now })).state, 'turn')
   p = db.store.get(pub)
   assert.equal(p.cell.label.length, 2)
   assert.ok(Array.isArray(p.cell.strokes) && p.cell.strokes.length >= 1)
-  assert.ok(p.drawerName)
+  assert.ok(p.drawerCharacterId && !realNames.includes(p.drawerName))
   assert.ok(!('grids' in p), 'the grids never reach the public doc')
-  // the same deadline, called twice: one move
   now += TURN_MS
   assert.equal((await advance(db, { nightId, now })).moved, true)
   assert.equal((await advance(db, { nightId, now })).moved, false)
-  p = db.store.get(pub)
-  assert.equal(p.state, 'walk')
-  assert.equal(p.gridDone.length, 1)
-  // run grid 1 to its vote
-  for (let i = 0; i < 8; i++) {
-    now += WALK_MS; await advance(db, { nightId, now })
-    now += TURN_MS; await advance(db, { nightId, now })
-  }
+  for (let i = 0; i < 8; i++) { now += WALK_MS; await advance(db, { nightId, now }); now += TURN_MS; await advance(db, { nightId, now }) }
   p = db.store.get(pub)
   assert.equal(p.state, 'vote')
   assert.equal(p.gridDone.length, 9)
-  assert.equal(p.options.length, 4)
-  assert.equal(p.votesIn, 0)
-  assert.equal(p.votesNeeded, 4)
+  assert.deepEqual(p.options.map(o => o.name).sort(), ['A clock', 'A cookie', 'A smiley face', 'A sun'])
+  assert.equal(p.voteEndsAt, null, 'the guess waits for the room')
+  now += 10 * 60_000
+  assert.equal((await advance(db, { nightId, now })).moved, false, 'no clock closes the guess')
 })
 
 async function runGridToVote(db, nightId, nowRef) {
@@ -124,96 +131,62 @@ async function runGridToVote(db, nightId, nowRef) {
   assert.equal(db.store.get(pub).state, 'vote')
 }
 
-test('vote: the right pick moves to the next grid; everyone in closes the window early', async () => {
-  const { db, nightId, uids, names } = await party(3)
-  const t = { now: 5_000_000 }
-  await start(db, { nightId, now: t.now, seed: 11 })
-  const { pub, priv } = relayPaths(nightId)
-  await runGridToVote(db, nightId, t)
-  const answer = db.store.get(priv).grids[0].answer
-  for (const name of names) await vote(db, { nightId, uid: uids[name], pick: answer })
-  assert.equal(db.store.get(pub).votesIn, 3)
-  // window not yet over, but everyone is in
-  const r = await advance(db, { nightId, now: t.now + 1000, pickInt: fixedPick })
-  assert.equal(r.state, 'walk')
-  const p = db.store.get(pub)
-  assert.equal(p.grid, 2)
-  assert.equal(p.gridSize, 4)
-  assert.equal(p.lastResult, 'right')
-  assert.equal(p.options, null)
-  assert.deepEqual(db.store.get(priv).misses, [0, 0, 0])
-})
-
-test('vote: a wrong pick crosses it out, locks out ten seconds, and asks again until right', async () => {
-  const { db, nightId, uids, names } = await party(3)
+test('guess: a wrong pick is crossed off with a short lockout, until the room gets it right; then the next round', async () => {
+  const { db, nightId } = await party(3)
   const t = { now: 9_000_000 }
   await start(db, { nightId, now: t.now, seed: 13 })
   const { pub, priv } = relayPaths(nightId)
   await runGridToVote(db, nightId, t)
   const answer = db.store.get(priv).grids[0].answer
   const wrong = [0, 1, 2, 3].filter(i => i !== answer)
-  // first wrong pick
-  for (const name of names) await vote(db, { nightId, uid: uids[name], pick: wrong[0] })
-  assert.equal((await advance(db, { nightId, now: t.now })).state, 'lockout')
+  assert.equal((await guess(db, { nightId, pick: wrong[0], now: t.now })).right, false)
   let p = db.store.get(pub)
-  assert.deepEqual(p.crossed, [wrong[0]])
-  assert.equal(p.lastResult, 'wrong')
-  await assert.rejects(vote(db, { nightId, uid: uids[names[0]], pick: answer }), e => e.code === 'closed')
+  assert.equal(p.state, 'lockout'); assert.deepEqual(p.crossed, [wrong[0]]); assert.equal(p.lastResult, 'wrong')
+  await assert.rejects(guess(db, { nightId, pick: answer, now: t.now }), e => e.code === 'closed', 'not during the lockout')
   t.now += LOCKOUT_MS
   assert.equal((await advance(db, { nightId, now: t.now })).state, 'vote')
-  await assert.rejects(vote(db, { nightId, uid: uids[names[0]], pick: wrong[0] }), e => e.code === 'invalid', 'a crossed option cannot be picked')
-  // second and third wrong picks
-  for (const name of names) await vote(db, { nightId, uid: uids[name], pick: wrong[1] })
-  await advance(db, { nightId, now: t.now })
-  t.now += LOCKOUT_MS; await advance(db, { nightId, now: t.now })
-  for (const name of names) await vote(db, { nightId, uid: uids[name], pick: wrong[2] })
-  await advance(db, { nightId, now: t.now })
-  t.now += LOCKOUT_MS; await advance(db, { nightId, now: t.now })
+  await assert.rejects(guess(db, { nightId, pick: wrong[0], now: t.now }), e => e.code === 'invalid', 'a crossed option cannot be picked')
+  assert.equal((await guess(db, { nightId, pick: answer, now: t.now })).right, true)
   p = db.store.get(pub)
-  assert.equal(p.state, 'vote')
-  assert.deepEqual([...p.crossed].sort(), [...wrong].sort(), 'three crossed, one standing')
-  // nobody votes: the window closes and the only standing option wins
-  t.now += VOTE_MS
-  assert.equal((await advance(db, { nightId, now: t.now, pickInt: fixedPick })).state, 'walk')
-  assert.equal(db.store.get(pub).grid, 2)
-  assert.deepEqual(db.store.get(priv).misses, [3, 0, 0])
+  assert.equal(p.state, 'walk'); assert.equal(p.grid, 2); assert.equal(p.round, 'Round 1'); assert.equal(p.lastResult, 'right'); assert.equal(p.options, null)
+  assert.deepEqual(db.store.get(priv).misses, [1, 0, 0, 0])
 })
 
-test('absent phones get a random pick; a tie goes to one of the tied; the door opens after grid 3', async () => {
-  const { db, nightId, uids, names } = await party(4)
+test('naming all four (the practice and three rounds) opens the door; the practice is not in the stats', async () => {
+  const { db, nightId } = await party(4)
   const t = { now: 20_000_000 }
   await start(db, { nightId, now: t.now, seed: 17 })
   const { pub, priv } = relayPaths(nightId)
-  for (let grid = 1; grid <= 3; grid++) {
+  for (let grid = 1; grid <= 4; grid++) {
     await runGridToVote(db, nightId, t)
-    const answer = db.store.get(priv).grids[grid - 1].answer
-    // two vote right, two stay silent → absent picks come from pickInt over the standing list
-    await vote(db, { nightId, uid: uids[names[0]], pick: answer })
-    await vote(db, { nightId, uid: uids[names[1]], pick: answer })
-    t.now += VOTE_MS
-    // absent picks land on index `answer` of the standing list → may tie or not; force the tie-break to the answer
-    const pickInt = (n) => Math.min(answer, n - 1)
-    await advance(db, { nightId, now: t.now, pickInt })
-    const p = db.store.get(pub)
-    if (grid < 3) assert.equal(p.grid, grid + 1, `grid ${grid} solved`)
+    const g = db.store.get(priv).grids[grid - 1]
+    if (grid === 3) { await guess(db, { nightId, pick: [0, 1, 2, 3].find(i => i !== g.answer), now: t.now }); t.now += LOCKOUT_MS; await advance(db, { nightId, now: t.now }) }
+    await guess(db, { nightId, pick: g.answer, now: t.now })
   }
   const p = db.store.get(pub)
-  assert.equal(p.state, 'done')
-  assert.equal(p.doorOpen, true)
+  assert.equal(p.state, 'done'); assert.equal(p.doorOpen, true)
   assert.ok(p.stats.totalSeconds > 0)
-  assert.deepEqual(p.stats.misses, [0, 0, 0])
+  assert.deepEqual(p.stats.misses, [0, 1, 0], 'one miss in round 2; the practice never counts')
+  assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, 'sting-door')
   assert.equal((await advance(db, { nightId, now: t.now + 60_000 })).moved, false, 'done stays done')
 })
 
-test('vote: only a phone at this party may pick; reset clears everything', async () => {
-  const { db, nightId } = await party(2)
-  const t = { now: 30_000_000 }
-  await start(db, { nightId, now: t.now, seed: 19 })
-  await runGridToVote(db, nightId, t)
-  await assert.rejects(vote(db, { nightId, uid: 'u-stranger', pick: 0 }), e => e.code === 'no-guest')
-  await reset(db, { nightId })
-  assert.equal(db.store.get(relayPaths(nightId).pub).state, 'idle')
-  assert.equal((await advance(db, { nightId, now: t.now + 1 })).moved, false)
+test('the party night draws its three rounds from the sealed bank, never a bad picture; a phone cannot vote', async () => {
+  const { db, nightId } = await party(3)
+  db.store.set(`cases/${nightId}`, { rehearsal: false })
+  const square = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`${'ABCDE'[i]}1`, [{ kind: 'line', from: [0, 0], to: [1, 1] }]]))
+  db.store.set(BANK_DOC, { pictures: [
+    { id: 'p1', round: 1, name: 'Thing one', decoys: ['Other a', 'Other b', 'Other c'], cells: square(3) },
+    { id: 'p2', round: 2, name: 'Thing two', decoys: ['Other a', 'Other b', 'Other c'], cells: square(4) },
+    { id: 'bad', round: 3, name: 'A house', decoys: ['Other a', 'Other b', 'Other c'], cells: square(5) },
+  ] })
+  await start(db, { nightId, now: 1_000, seed: 3 })
+  const d = db.store.get(relayPaths(nightId).priv)
+  assert.equal(d.fromBank, 2, 'rounds 1 and 2 from the bank; round 3 had only a disqualified picture')
+  assert.equal(d.grids[1].named, true); assert.equal(d.grids[3].named, false)
+  assert.ok(checkPicture({ name: 'A smiley', decoys: ['a', 'b', 'c'], cells: square(3) }, 1).includes('disqualified'))
+  assert.ok(checkPicture({ name: 'x', decoys: ['a', 'b', 'c'], cells: { Z9: [{ kind: 'dot', at: [0.5, 0.5] }] } }, 1).length)
+  await assert.rejects(vote(db, { nightId, uid: 'u-jon', pick: 0 }), /main computer/)
 })
 
 test('start needs at least two people', async () => {

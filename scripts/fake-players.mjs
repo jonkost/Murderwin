@@ -7,7 +7,7 @@
 // beat does what the room would do: dismisses notices, goes to its cat when
 // the phone sends it (one guest at a cat at a time), reads the cat's
 // numbers and opens the safe, answers every Parlour Game, finishes the study
-// for each group, clears the memory match, votes in the drawing, strikes one
+// for each group, clears the memory match, guesses in the drawing, strikes one
 // thing out, casts a ballot. It checks the Act 2 rooms (F20, F21) and that
 // the motive funnel leaves the real motive standing (G32, counts only). At the end it checks the seal (no phone can read a role, no public
 // document carries the case), prints one line per act and a tally, and
@@ -318,7 +318,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     await host('settle-now')
     await sealCheck('before-reveal')
-    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} votes (${drawing.misses} misses)`, `${struck} strikes`])
+    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} guesses on the main computer (${drawing.misses} misses)`, `${struck} strikes`])
 
     // ---- Act 7: the ballot, the reveal, every phone's result
     await next() // ballot
@@ -376,10 +376,10 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length }
   }
 
-  // The Act 6 drawing on its own clock: every phone picks a picture at random
-  // (the phones hold nothing, so nobody knows the answer), the relay crosses
-  // the wrong ones out, and the walk and turn timers are jumped rather than
-  // waited for. Returns counts only.
+  // The Act 6 drawing on its own clock: the room taps a guess at random on
+  // the main computer (nobody here knows the answer), the relay crosses the
+  // wrong ones out, and the slides, walk and turn timers are jumped rather
+  // than waited for. Returns counts only.
   async function playDrawing() {
     const { pub } = relay.relayPaths(nightId)
     let clock = Date.now()
@@ -390,13 +390,12 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       if (p.state === 'done') return { turns, votes, misses: (p.stats?.misses ?? []).reduce((a, b) => a + b, 0), seconds: p.stats?.totalSeconds ?? 0 }
       if (p.state === 'vote') {
         const standing = [0, 1, 2, 3].filter(i => !(p.crossed ?? []).includes(i))
-        for (const uid of uids) await run.player.relayVote(db, { nightId, uid, pick: standing[randomInt(standing.length)] })
+        await run.player.relayGuess(db, { nightId, pick: standing[randomInt(standing.length)], now: clock + 1 })
         votes++
-        await run.advanceRelay(db, { nightId, now: clock + 1 })
         continue
       }
       if (p.state === 'turn') turns++
-      clock += p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : p.state === 'lockout' ? relay.LOCKOUT_MS : relay.TURN_MS
+      clock += p.state === 'intro' ? relay.SLIDE_MS * relay.IRWIN_SLIDES.length : p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : p.state === 'lockout' ? relay.LOCKOUT_MS : relay.TURN_MS
       await run.advanceRelay(db, { nightId, now: clock })
     }
     throw new Error('the drawing never finished')
