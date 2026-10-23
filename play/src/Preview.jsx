@@ -221,14 +221,14 @@ const KIOSK = {
 // Act 2's next step, as the server writes it (functions/lib/deal.js lightsCard).
 const ROOMS = { salem: ['Salem Crookshank', 'the Orangerie'], boo: ['Miss Boo LaRue', 'the Entryway'] }
 const LIGHTS_WORDS = {
-  wait: ['Stay in the living room', 'Your phone will send you to a room when a cat is free. It will not be long.'],
-  go: ['Go to [ROOM]', '[CAT] is waiting for you there. Go alone, and scan the square code in the room.'],
+  wait: ['Stay in the living room', "Make yourself at home in the living room. You'll be called soon."],
+  go: ['Go to [ROOM]', "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting. Find the QR code in the room and scan it to say hello."],
   with: ['[CAT] is talking to you', 'Read what the cat says. It is for you alone. Tap when you have heard it.'],
-  done: ['Back to the living room', 'Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.'],
+  done: ['Back to the living room', 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.'],
 }
 function LIGHTS(step, cat = 'salem') {
   const [catName, room] = ROOMS[cat]
-  const fill = t => t.replace('[CAT]', catName).replace('[ROOM]', room)
+  const fill = t => t.replace(/\[CAT\]/g, catName).replace(/\[ROOM\]/g, room).replace(/\[THEM\]/g, cat === 'boo' ? 'her' : 'him')
   return { step, cat, catName, room, title: fill(LIGHTS_WORDS[step][0]), text: fill(LIGHTS_WORDS[step][1]) }
 }
 

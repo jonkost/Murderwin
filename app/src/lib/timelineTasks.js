@@ -94,8 +94,35 @@ export const STANDIN_SOUND_TASKS = [
   { order: 105, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Make the stand-in sounds on the brain', detail: 'Once, on the M3 Air, in Terminal, in the Murderwin folder: node scripts/make-placeholder-sounds.mjs. It makes a stand-in tone for every sound you have not recorded yet. The brain will not start until all nine sounds have a file.' },
 ]
 
+// From docs/handoff-2026-10-22.md (22 Oct 2026): the jobs it hands out,
+// each under its moment, and the cards it settles. Applied by the ADDITIONS
+// entry '2026-10-22-handoff'.
+export const HANDOFF_TASKS = [
+  { order: 200, moment: 'act2.news', status: 'todo', who: 'Jon', title: 'Record W-O-O-F News bulletin 1', detail: 'Video. Ava on camera for the opening and the sign-off, and the five family clips over B-roll. Every line is in the W-O-O-F News Recording Script.' },
+  { order: 201, moment: 'act2.news', status: 'todo', who: 'Jon', title: 'The W-O-O-F News graphics', detail: 'The logo, the lower thirds and the studio look, for all three bulletins.' },
+  { order: 202, moment: 'act3.bulletin', status: 'todo', who: 'Jon', title: 'Record the 25 lines of bulletin 2', detail: 'Audio only: five families, five dial levels each. The lines are in the W-O-O-F News Recording Script. It plays on the Orangerie HomePod near the end of supper.' },
+  { order: 203, moment: 'act7.reveal', status: 'todo', who: 'Jon', title: 'Record the closing bulletin', detail: 'Ava in the studio, Mic outside the manor on the green screen. Generic lines only: the game cuts in the three cards, so you never need the answer.' },
+  { order: 204, moment: 'act5.irwin', status: 'todo', who: 'Jon', title: 'Draw the motive cards', detail: 'One card per motive for Sir Irwin\'s countdown. "The last of the pie" shows pizza, not apple pie.' },
+  { order: 205, moment: 'act1.meet', status: 'todo', who: 'Jon', title: 'A candle in the Medium\'s portrait', detail: 'Her trace is lilac candle wax, and players match traces to people from the portraits.' },
+  { order: 206, moment: 'act6.drawing', status: 'todo', who: 'Jenna', title: 'The Relay Drawing pictures', detail: 'A sealed bank of simple thick-line pictures. You must never see it. Not the smiley, house or diamond samples.' },
+  { order: 207, moment: 'act2.cat', status: 'todo', who: 'Claude', title: 'The Cat Hint Lines into the game', detail: 'The open bank of hint lines, by cat and affection level, in place of the stand-in. The game picks which line plays.' },
+  { order: 208, moment: 'act3.bulletin', status: 'todo', who: 'Claude', title: 'Bulletin 2 and its Arm button', detail: 'Arm it from your phone near the end of supper; it plays 3 to 5 minutes later. Your phone says only Armed.' },
+  { order: 209, moment: 'allnight', status: 'todo', who: 'Claude', title: 'Fetch Champion on the Host tab', detail: 'Pick the first player the real Irwin brings a toy to. The game also needs to know which seats are Jessa and Jake.' },
+  { order: 210, moment: 'act6.drawing', status: 'todo', who: 'Claude', title: 'The Relay Drawing changes', detail: 'Practice first, a random player called to the paper, guessing on your work MacBook Pro, and the bedroom iPad showing the trace.' },
+  { order: 211, moment: 'act7.result', status: 'todo', who: 'Claude', title: 'The end credits', detail: 'The dial\'s journey, the awards from final sliders, the fun achievements, the joke counters, then Sydney and Irwin.' },
+  { order: 212, moment: 'act7.reveal', status: 'todo', who: 'Claude', title: 'The closing bulletin with the cards cut in', detail: 'Murderer, Motive, Victim, as B-roll in your recording.' },
+  { order: 213, moment: 'allnight', status: 'todo', who: 'Claude', title: 'The hosts\' intro lines', detail: 'Irwin, Granolia, Zimothy, Boo and Salem each open the game they host, in their own voice.' },
+]
+export const RETIRED_FOR_HANDOFF = [
+  { order: 101, detail: 'Done 22 Oct 2026: brought in and committed.' },
+  { order: 142, detail: 'Replaced 22 Oct 2026: the news is W-O-O-F News bulletin 1, an open bank you record. It always crosses off exactly one family.' },
+  { order: 143, detail: 'Replaced 22 Oct 2026: the hints are the Cat Hint Lines, an open bank. Only one of the four cats gives each guest a real hint.' },
+  { order: 161, detail: 'Decided 22 Oct 2026: on a small stand in the Library, with Zimothy.' },
+  { order: 182, detail: 'Closed 22 Oct 2026: players match traces from the portraits, which show each trace.' },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

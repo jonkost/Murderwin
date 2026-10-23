@@ -4,7 +4,7 @@ import motivesFile from '../../../seed/motives.json' with { type: 'json' }
 import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
 import parlourFile from '../../../seed/parlour-games.json' with { type: 'json' }
 import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS } from './timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
 // them and keys the cats' moods off the job. The workshop writes the persona
@@ -600,6 +600,14 @@ export const ADDITIONS = [
     // the stand-in tones get their own card before the freeze.
     id: '2026-10-22-standin-sounds',
     tasks: STANDIN_SOUND_TASKS,
+  },
+  {
+    // 22 Oct: docs/handoff-2026-10-22.md. Its jobs on the Timeline, the cards
+    // it settles marked done, and the news decision answered.
+    id: '2026-10-22-handoff',
+    tasks: HANDOFF_TASKS,
+    retireTasks: RETIRED_FOR_HANDOFF,
+    answerDecisions: { newsFamilies: 'One' },
   },
 ]
 

@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, secretStatus, taskWhen, taskStandin, taskNotYou } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -81,6 +81,15 @@ test('task orders never collide with any earlier card', () => {
   assert.equal(new Set(all).size, all.length, 'unique among themselves, the stand-in sounds card too')
   for (const o of mine) assert.ok(!earlier.includes(o), `order ${o} is new`)
   for (const r of RETIRED_FOR_TIMELINE) assert.ok(earlier.includes(r.order), `retired order ${r.order} was a card`)
+})
+
+test('the handoff cards are new, and the cards it settles were already on the board', () => {
+  const add = ADDITIONS.find(a => a.id === '2026-10-22-handoff')
+  assert.ok(add, 'the migration is there')
+  const before = [...tasksFile.tasks, ...ADDITIONS.filter(a => a.id !== '2026-10-22-handoff').flatMap(a => a.tasks ?? [])].map(t => t.order)
+  for (const t of HANDOFF_TASKS) assert.ok(!before.includes(t.order), `order ${t.order} is new`)
+  for (const r of RETIRED_FOR_HANDOFF) assert.ok(before.includes(r.order), `retired order ${r.order} was a card`)
+  assert.equal(add.answerDecisions.newsFamilies, TIMELINE_DECISIONS.find(d => d.key === 'newsFamilies').options[0])
 })
 
 test('there is one sound task per sound cue, under the beat that plays it', () => {

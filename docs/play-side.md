@@ -267,10 +267,12 @@ about the motive is a marked stand-in until Jenna writes it.
   Personal slights, matched to the nineteen motive numbers in
   `seed/families.json`. Players never see a family name; the game uses them
   to narrow the motive across the night.
-- **Act 2, Lights Out, runs the rooms.** After the news, every phone says
-  where to go next, at the top of Now: *Stay in the living room*, then *Go to
-  the Study, Granolia is waiting*, then the cat's greeting, then *Back to the
-  living room*. Granolia is in the Study, Salem in the Orangerie, Zimothy in
+- **Act 2, Lights Out, runs the rooms** (updated 22 October). After the
+  news, every phone sends its guest to **all four cats**, one at a time, at
+  the top of Now: *Stay in the living room*, then *Granolia is waiting for
+  you in the Study*, then the cat's greeting, then *Time's up. Boo is
+  expecting you in the Entryway*, and so on, then *Back to the living room*.
+  At the chime: *Supper is served in the Orangerie*. Granolia is in the Study, Salem in the Orangerie, Zimothy in
   the Library and Boo in the Entryway. Only one guest is at a cat at a time:
   the phones send guests off in waves and buzz when it is their turn. In the
   room, the guest scans the square code on the wall (or taps *I am with
@@ -280,9 +282,12 @@ about the motive is a marked stand-in until Jenna writes it.
   greeting and sends them to supper.
 - **The four room codes** are on the workshop's Game night page, under *The
   four cat rooms (Act 2)*. Print them and put each one up in its room.
-- **Each greeting carries one private hint** that rules out a wrong family of
-  motives. The news flash rules out one or two more for everyone. Both are
-  stand-ins in brackets today. Never the real family.
+- **Only one of the four cats gives a real hint**, picked at random for
+  each guest when the case is dealt. It rules out a wrong family of motives.
+  The other three only say hello in character (the four greeting lines from
+  the handoff). W-O-O-F News bulletin 1 crosses off exactly one family for
+  everyone. The hint wording is still a stand-in in brackets until the Cat
+  Hint Lines are brought in. Never the real family.
 - **Act 4, the study pays the Ghost's trace**, shown at whatever level the
   clarity dial is at when the group finishes, on the same ladder as the
   bedroom door in Act 6. It names the thing, never the person.
@@ -299,18 +304,27 @@ about the motive is a marked stand-in until Jenna writes it.
   one motive off that group's list (a card on each phone with a *Cross it
   off* button). Never the real motive. A group that runs out of time is
   given its cross-off anyway.
-- **Act 5, Sir Irwin names the motive**, on the living room screen, as sure as
-  the dial lets him: one of three, one of two, or just the one. The real one
-  is always among them, and the others are from its family. His picture is
+- **Act 5, Sir Irwin's countdown** (updated 22 October), on the living room
+  screen: five motive cards at dial 1, four at 2, three at 3, two at 4, one
+  at 5, with his five lines from the handoff. The real one is always among
+  them. The others come from its family first, then from families already
+  ruled out. His picture is
   one of his five moods (`play/public/household/full/Irwin 1.png` to
   `Irwin 5.png`), the same five steps as the trace.
-- **No hidden events in Act 2.** The Murderer and the Ghost only answer the
-  Parlour Games there, like everyone else.
+- **No hidden events in any act.** The Murderer and the Ghost only answer the
+  Parlour Games, like everyone else.
+- **Salem** (22 October) starts at the middle for everyone, and the Parlour
+  Games never take him past the second-highest stop. When the real Salem
+  lets a guest pet him, tap their name under *Salem petted* on the Host tab:
+  their Salem goes to the top, their phone gets the True Friend of the
+  Groundskeeper card, and three stars sit by Salem on their Cats tab. Not
+  for you or Susan.
+- **Act 6 opens on its two Parlour Games** (22 October), one after the
+  other, then you press Next for the drawing.
 
-Still open, from the doc's *not designed yet* list: how many families the
-news flash removes (set to one for now in `seed/night.json`, `solving.newsFamilies`),
-how the private hints are shared out (for now, round the room in turn), all
-the wording, and where the memory match iPad sits.
+Still open: which wrong family each guest's hint names is shared round the
+room in turn (a stand-in rule), and the hint wording is a stand-in until the
+Cat Hint Lines are in.
 
 ## For Claude Code (technical)
 
