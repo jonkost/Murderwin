@@ -1,7 +1,9 @@
 # CLAUDE.md — A Murderwin at Sirwin Manor
 
 Rules for working in this repo. These are load-bearing. Read fully before any task.
-Updated 25 September 2026. Party: Sunday 15 November 2026. Freeze: Saturday 7 November 2026.
+Updated 22 October 2026. Party: Sunday 15 November 2026. Freeze: Saturday 7 November 2026.
+
+> **NEW (22 Oct 2026): read `docs/handoff-2026-10-22.md` before any task.** It holds every decision since 21 Oct and wins where older docs disagree. Apply it, report in plain English, then commit.
 
 ## RULE 1 — THE HOST PLAYS
 
@@ -20,6 +22,9 @@ Content is divided into two classes:
 - Variable pools: rooms, times, durations, counts, places, witnesses
 - Echo frames (news wrappers with a ███ slot)
 - The Parlour Games bank: questions, choices and their points
+- Open line banks (22 Oct): the W-O-O-F News bulletin lines, the Cat Hint Lines,
+  Irwin's countdown and trace-reveal lines, host intros, phone directions. Every
+  line is written and Jon may see them; only the game's per-night pick is sealed
 - Blank stationery templates (7 designs)
 - All code, schemas, validators, and this file
 
@@ -33,12 +38,16 @@ Content is divided into two classes:
   question (generated blind by `scripts/generate-leans.mjs`, Jon 22 Oct;
   Jenna may change any lean on her Steward page; Jon's account must never
   read it)
-- Event copy for Acts 4 and 6 (generated blind, same rules as kernels),
-  including how the two hidden roles' points map to the clarity dial (every
-  phone gets the same Parlour Game set since 21 Oct). The dial has no slider on any phone
+- How the two hidden roles' Parlour Game points map to the clarity dial
+  (decided blind per night; every phone gets the same set since 21 Oct). There
+  are no hidden events in any act (closed 22 Oct). The dial has no slider on any phone
   (Jon, 16 Oct 2026): it is revealed in the Act 7 graph. The hidden roles'
   answers move their cat sliders like everyone else's, so no phone is a tell.
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
+- The Relay Drawing picture bank (simple thick-line art; Jenna or another
+  sealed route; never in the repo or Jon's terminal)
+- Every per-night pick from an open bank: which family is real, which bulletin
+  line plays, which cat gives each player's real Act 2 hint and what it rules out
 
 ### The Steward exception (decided by Jon, 28 Sep 2026)
 The Steward is Jenna (they/them), a REMOTE NON-PLAYER who never visits the
@@ -161,11 +170,14 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   Sir Irwin, the dog — always true; hint ladder is the safety valve.
   Granolia Lickspittle — true with exactly one wrong pool-variable; lives in the
     study and gives its hints in character.
-  Miss Boo LaRue — true, needs affection 4+, five words then done.
+  Miss Boo LaRue — true; a ladder from a look (1) to a family plus a bonus
+    motive (5); five words at 3.
   Zimothy Clawford, Esq., "the old family solicitor" (never shortened) — true but
     money-shaded.
-  Salem Crookshank, the groundskeeper — inverts ~60%, always confident, always
-    warps a true fact.
+  Salem Crookshank, the groundskeeper — backwards at 1–3, coin flip at 4,
+    straight at 5; everyone starts at 3, Parlour Games cap him at 4, and only
+    petting the real Salem (Jon's host button) unlocks 5. When backwards he
+    points AT a wrong answer, so he never rules out the truth.
   Trust ladder, stated at the top of the night: if Irwin and anyone disagree,
   Irwin is right. No cat ever speaks aloud — all dialogue is text; audio is
   generic pre-recorded atmosphere only.
@@ -176,7 +188,8 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   Parlour Games (below). Nothing else moves it.
 - Parlour Games (decided 12 Oct 2026, Jon's whiteboard; called "push and pull
   questions" in docs before 13 Oct; updated 21 Oct, `docs/parlour-games.md`):
-  twelve a night in Acts 2, 4 and 6 (planned five, five and two; one budget
+  twelve a night: five in Act 2 and five in Act 4 at random times, two at the
+  start of Act 6 before the Relay Drawing (one budget
   for the night: a game an act runs out of time for carries into the next
   act, and one Act 6 cannot fit is skipped; Jon 22 Oct), at random times rolled from
   the seed. Every phone lights up at once with one set: three silly questions
@@ -190,14 +203,19 @@ if a doc ever turns out to hold drafted clues, stop reading and tell Jon.
   so Jon's numbers never tell him which way the night moved. Their cat
   sliders still move for real, by coin flip, with a Detective's odds and
   sizes. No phone ever shows a number.
-- Event System: the Murderer and the Ghost each pick hidden events — none in
-  Act 2 (decided 21 Oct), 2 in Act 4, 1 merged pick in Act 6. Events are nested scenarios three beats deep.
-  Events are free; the cost is social. Events change information VOLUME and
-  TIMING, never content — "delay, never destroy." The clarity dial stacks across
+- No hidden events in any act (closed 22 Oct 2026, never re-raise). The
+  Murderer's and Ghost's only "events" are the Parlour Games: same questions as
+  everyone, and their answers move the clarity dial. The dial changes
+  information CLARITY, never content — "delay, never destroy." It stacks across
   the whole night and never resets; strong-vs-strong lands neutral and neither
-  player learns they cancelled out. The validator must assume worst-case
-  suppression across Acts 4 and 6 and still prove every player can reach two
-  of three before Act 1.
+  player learns they cancelled out. The validator must assume the worst dial
+  and still prove every player can reach two of three.
+- The clue path (22 Oct, `docs/solving-the-case.md`): W-O-O-F News bulletin 1
+  (Act 2) crosses off one family; one cat per player gives a real Act 2 hint;
+  bulletin 2 (Act 3) hints at the real family; Act 4 cats and memory match;
+  Irwin's countdown (Act 5, five cards at dial 1 down to one at dial 5);
+  Study trace (Ghost) and trace reveal (Murderer); closing bulletin and
+  credits in Act 7.
 - Safeguards: Spill the Beans (the outward reset) is allowed through the end of
   Act 5, never after; the engine decides legality silently — only if another
   pairing is still consistent with every clue already dealt — and owes no

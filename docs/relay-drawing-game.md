@@ -1,8 +1,33 @@
 # The relay drawing game (Act 6, the Big Solve)
 
 The group puzzle that ends the investigation. Written 13 October 2026 from everything already
-decided about it, with the gaps filled in. Everything here is structure: there is no picture
-bank to spoil because there is no picture bank. Safe for you to read.
+decided about it, with the gaps filled in. Everything here is structure. Safe for you to read.
+
+## Changed 22 October 2026 (wins over everything below)
+
+From `docs/handoff-2026-10-22.md` §6c and §7, and the Claude Doc "The Relay Drawing · How to
+Play" (full rules, art samples and Irwin's slides). Where the sections below disagree, this wins.
+
+- **Practice first** (a 3 × 3 smiley), then three rounds: 3 × 3, 4 × 4, 5 × 5. Columns A, B, C;
+  rows 1, 2, 3; A1 top-left.
+- **Irwin hosts.** Two Parlour Games come first, at the start of Act 6. No merged event: there
+  are no hidden events in any act.
+- **The game calls a random player** (repeats allowed). They go to the paper in the Library
+  **before** the square is shown.
+- **The main display** shows only the chosen player's character portrait and character name
+  between turns: no real names, no other words. During a turn: a black screen, one
+  white-outlined box, white line art and the square's label. Never the whole picture.
+- **The room shouts descriptions.** Words only.
+- **Guessing is multiple choice on Jon's work MacBook Pro**, not a vote on every phone. Wrong
+  picks are crossed off until it's right.
+- **Naming all three** turns the Hue light by the bedroom green and shows Irwin's slide 8
+  ("Pawsome!...").
+- **The bedroom:** Jon puts the roaming iPad there right after dessert. It shows nothing until
+  the third picture is named, then shows the trace reveal at the same moment as slide 8.
+- **The pictures are a sealed bank** of simple thick-line art, replacing random composition
+  (§6). Jon must never see it. The smiley, house and diamond pattern samples are disqualified.
+  It is built as sealed content (not in the repo, never shown in Jon's terminal), through Jenna
+  or another sealed route.
 
 **Where the settled parts come from:** the Canon page (The seven acts, Puzzles, Hardware, the
 open questions), the act skeletons (`chats/docs/sirwin-manor-act-skeletons.md` §7, the relay

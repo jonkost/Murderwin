@@ -1,6 +1,6 @@
 # Sirwin Manor — Parlour Games for Claude Code
 
-Written 21 October 2026, updated the same day (four sets per act). Put this file at `docs/parlour-games.md` in the repo.
+Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees). Put this file at `docs/parlour-games.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 "Parlour Games" is the new name (13 Oct) for the push and pull questions. The workshop and the code still say "push and pull". Rename them as part of this work.
@@ -9,12 +9,13 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 
 ## What happens on the night
 
-- **Twelve Parlour Games a night:** four each in Acts 2, 4 and 6 (decided 21 Oct; this replaces "three a night").
-  *Changed 22 Oct (Jon):* the twelve are one budget for the whole night: planned five in Act 2, five in Act 4 and two in Act 6 (it opens on the drawing, and none pops up during it). A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
-- **They pop up at random times** during the act, so nobody knows when the next one is coming. The times are rolled from the case seed.
+- **Twelve Parlour Games a night: five in Act 2, five in Act 4, two at the start of Act 6** (decided 22 Oct; replaces "four per act"). The twelve are one budget for the whole night. A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
+- **In Acts 2 and 4 they pop up at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the case seed.
+- **In Act 6 both sets come at the start**, before the Relay Drawing. None pops up during the drawing.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
   - If a phone is on another screen (a cat greeting, a puzzle), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
 - **Every phone lights up at the same moment** with one set: three questions in a row, two answers each. Tap one.
+- **Boo hosts the Parlour Games** (flavor only). Each game opens with one of her six lines, picked at random (`docs/handoff-2026-10-22.md` §6b). She judges whatever you pick and never hints which answer she likes.
 - **No numbers, no scores, no "+1"** anywhere on any phone. Ever.
 - **No "waiting for other players" screen.** The window never closes early.
 - **If someone doesn't answer,** a random answer is picked for them when the window closes. No penalty.
@@ -23,7 +24,7 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 
 ## The bank
 
-The bank holds **17 sets**. When the case is dealt, the game picks **12 different sets at random**, four per act, in a random order. **5 sets go unused** each night. Nobody knows which ones are coming, Jon included.
+The bank holds **17 sets**. When the case is dealt, the game picks **12 different sets at random** (five for Act 2, five for Act 4, two for Act 6), in a random order. **5 sets go unused** each night. Nobody knows which ones are coming, Jon included.
 
 - No set is used twice in one night.
 - The three questions inside a set always appear **in the order written**. Some sets build on themselves.
@@ -137,6 +138,7 @@ For **each question**, the deal picks one cat who is secretly listening: **Salem
 2. **The cat cares a little or a lot.** Rolled per question: **a little = half a stop, a lot = a full stop.**
 3. **Your answer matches the lean:** that cat warms to you by that amount. **It doesn't:** it cools by that amount.
 4. **Affection stays between 1 and 5.** Store it with half steps; the slider shows the nearest stop.
+   **Salem is different** (22 Oct): everyone starts at 3 with him, and Parlour Games can never take him above 4. Only petting the real Salem unlocks 5 (Jon presses "Salem petted" on his host phone; never Jon or Susan).
 5. Everything above is rolled when the case is dealt, from the seed.
 
 In Act 4, cat information uses the group's average affection, as Canon says.
@@ -148,7 +150,8 @@ In Act 4, cat information uses the group's average affection, as Canon says.
 
 ## The Murderer and the Ghost
 
-- **Their answers move the clarity dial**, not the cats. Use the blind per-night mapping already in Canon. Don't redesign it here.
+- **The Parlour Games are their only "events"** (closed 22 Oct). There are no hidden events for the Murderer or the Ghost in any act. They answer the same questions as everyone else, at the same moment.
+- **Their answers move the clarity dial**, not the cats. Use the blind per-night mapping already in Canon. Don't redesign it here. The mapping stays sealed.
 - **Their cat sliders still move, and the moves are real** (decided 21 Oct). For each question, a cat is picked and the size is rolled exactly as for a Detective. Then a coin flip decides warm or cool, in place of their answer.
 - The result must look just like a Detective's: same odds, same sizes, same animation. A slider that never moves would be a tell, and a slider that doesn't match how the cats treat them would be a worse one.
 
@@ -162,40 +165,38 @@ Update the "Open" note in `docs/play-side.md`: it is now closed by the section a
 
 ---
 
-## Awards at the reveal (draft)
+## Awards at the reveal
 
-During Act 7, while the final picks are being counted, show a few fun awards based on everyone's Parlour Game answers.
+Replaced 22 Oct: the awards are now part of the Act 7 end credits. Full list in `docs/handoff-2026-10-22.md` §8.
 
-- Awards compare players **with each other only**. They **never** use the cats' leans, so nobody looks like "the cats' favorite" while their slider says otherwise.
-- **Draft titles** (Jon may rewrite them in his own voice):
-  - **Biggest Rebel:** sided with the smaller group most often.
-  - **Crowd Pleaser:** sided with the bigger group most often.
-  - **Kindred Spirits:** the two players whose answers matched most.
-  - **Sworn Rivals:** the two players whose answers matched least.
+- Biggest Rebel, Crowd Pleaser, Kindred Spirits and Sworn Rivals are **dropped**. No award compares one player with another.
+- Each cat's Favorite and Least Favorite come from the **final sliders** (final affection). Awards **never** use the cats' hidden leans.
+- The one real Parlour Game stat: the room's split on each question.
 - Ties: show everyone tied. Random answers given for a missed window don't count.
 
 ---
 
 ## New checks for `docs/test-plan.md`
 
-- **G25** Each case uses 12 different sets from the bank, four per act in Acts 2, 4 and 6. Every set is picked about equally often across 1,000 cases.
-- **G25b** Parlour Game times follow the spacing rules above, and the same seed gives the same times.
+- **G25** Each case uses 12 different sets from the bank: five in Act 2, five in Act 4, two in Act 6. Every set is picked about equally often across 1,000 cases.
+- **G25b** Parlour Game times follow the spacing rules above (never back to back in Acts 2 and 4; both Act 6 sets before the Relay Drawing), and the same seed gives the same times.
 - **F19** A Parlour Game that pops up over another screen returns the phone to exactly where it was.
 - **G26** Every question has exactly two answers.
 - **G27** Irwin is never the listening cat. His affection never moves.
 - **G28** Every cat's affection stays between 1 and 5 all night.
 - **G29** Murderer and Ghost affection moves with the same odds and sizes as a Detective's (compare across 1,000 cases).
 - **G30** Each cat leans toward its fitting answer about 75% of the time (allow 65 to 85%).
-- **G31** Awards never use the cats' leans.
+- **G31** Awards use final affection, never the cats' hidden leans.
 - **L05** The lean table is not in the repo, and Jon's account cannot read it.
 
 ---
 
-## Other places that still say "three"
+## Other places that still say "three" or "four"
 
 These must change to match (Jon or a chat session will handle the decks, since they live outside the repo):
-- The rules deck: "Three times tonight" and the phone mockup "Parlour Game · 1 of 3".
+- The rules deck: "Three times tonight" and the phone mockup "Parlour Game · 1 of 3". Should say twelve: five, five, then two.
 - The intro and rules voiceover script.
+- The Canon page (updated 22 Oct).
 - `docs/play-side.md`, wherever it says one Parlour Game per act.
 
 ---
@@ -203,4 +204,4 @@ These must change to match (Jon or a chat session will handle the decks, since t
 ## Not designed yet — don't invent these
 
 - The lean table (Jenna's job, see above).
-- Final award titles and wording.
+- Final award wording beyond what the handoff lists.
