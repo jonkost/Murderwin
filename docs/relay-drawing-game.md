@@ -29,6 +29,13 @@ Play" (full rules, art samples and Irwin's slides). Where the sections below dis
   It is built as sealed content (not in the repo, never shown in Jon's terminal), through Jenna
   or another sealed route.
 
+**Built 22 October** (`functions/lib/relay.js`, `functions/lib/relay-bank.js`): the drawing
+opens on Irwin's seven slides, then the practice smiley, then three rounds. On the party night
+each round comes from the sealed bank at `sealed/relay_pictures`, which
+`npm --prefix scripts run relay-pictures` fills blind (counts only); a rehearsal, or a round the
+bank has no good picture for, uses the random stand-in grids. The living room screen shows the
+called player's portrait and character name, then the square, then four named choices to tap.
+
 **Where the settled parts come from:** the Canon page (The seven acts, Puzzles, Hardware, the
 open questions), the act skeletons (`chats/docs/sirwin-manor-act-skeletons.md` §7, the relay
 drawing and the trace ladder), the traces doc (`chats/docs/sirwin-manor-traces.md`, the ladder

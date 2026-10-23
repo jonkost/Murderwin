@@ -121,8 +121,24 @@ export const RETIRED_FOR_HANDOFF = [
   { order: 182, detail: 'Closed 22 Oct 2026: players match traces from the portraits, which show each trace.' },
 ]
 
+// Built the same evening (22 Oct 2026): the Claude cards above are done, and
+// two new jobs for Jon. Applied by '2026-10-22-handoff-built'.
+export const HANDOFF_BUILT_TASKS = [
+  { order: 214, moment: 'week', status: 'todo', who: 'Jon', title: 'Make the drawing pictures', detail: 'In Terminal: npm --prefix scripts run relay-pictures. It prints counts only. The three real pictures for the Relay Drawing are drawn blind, and you never see them. Until then the party uses stand-in pictures.' },
+  { order: 215, moment: 'act7.result', status: 'todo', who: 'Jon', title: 'A photo of Sydney for the end credits', detail: 'Save it as play/public/household/sydney.jpg. Without it the card shows his name only.' },
+]
+export const RETIRED_FOR_BUILT = [
+  { order: 207, detail: 'Built 22 Oct 2026: every cat says its line from the bank, never the real answer.' },
+  { order: 208, detail: 'Built 22 Oct 2026: Next on Arm the bulletin arms it; it plays 3 to 5 minutes later.' },
+  { order: 209, detail: 'Built 22 Oct 2026: on the Host tab. Sir Irwin\'s two seats are on the Game night page.' },
+  { order: 210, detail: 'Built 22 Oct 2026: practice, three rounds, the called player, the guess on the main computer, the bedroom iPad.' },
+  { order: 211, detail: 'Built 22 Oct 2026: the dial\'s journey, the awards, the counters, the thanks and Sydney.' },
+  { order: 212, detail: 'Built 22 Oct 2026: each name press plays its part of your recording.' },
+  { order: 213, detail: 'Built 22 Oct 2026: Boo, Salem, Granolia, Zimothy and Sir Irwin each open their game.' },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.
