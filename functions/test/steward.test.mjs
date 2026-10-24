@@ -98,21 +98,20 @@ test('the ops are whoami, bags, leans and lean; the old secrets ops are refused 
   assert.deepEqual(captured, ['steward whoami', 'steward bags', 'steward leans'])
 })
 
-test('bags: the packing by bag number, items named from the workshop lines, doubles marked; nothing when unpacked', async () => {
+test('bags: the packing by bag number, each item by name and looks-like note, a pair written out; nothing when unpacked', async () => {
   const db = new FakeFirestore()
   const none = await stewardRequest(db, asSteward({ op: 'bags' }), quiet)
   assert.deepEqual(none, { ok: true, packed: false, bags: [] })
   db.store.set('safe_content/bag_items', { items: [
-    { id: 'i1', text: keep('(Synthetic item one) — smell: synthetic-a'), order: 0 },
-    { id: 'i2', text: keep('(Synthetic item two) — taste: synthetic-b'), order: 1 },
-    { id: 'i3', text: keep('(Synthetic item three) — touch: synthetic-c'), order: 2 },
+    { id: 'i1', text: keep('(Synthetic item one) — smell: synthetic-a · extra · stock 2 · looks like: (synthetic look)'), order: 0 },
+    { id: 'i2', text: keep('(Synthetic item two) — taste: synthetic-b · food, two singles · stock 4 · looks like: (synthetic wrapper)'), order: 1 },
+    { id: 'i3', text: keep('(Synthetic item three) — no clue words · touch · stock 1'), order: 2 },
     { id: 'gone', text: 'deleted', order: 3, deleted: true },
   ] })
   db.store.set('sealed/bags', {
     bags: { 2: ['i3', 'gone'], 1: ['i1', 'i2'] },
     doubles: { 1: ['i2'] },
     properties: { 'synthetic-a': [1, 2], 'synthetic-b': [1, 3] },
-    stackedPairs: [['synthetic-a', 'synthetic-b']],
     counts: { bags: 2, items: 4 },
     packedAt: new Date(9000), packedBy: 'packer', poolHash: 'abc',
   })
@@ -120,10 +119,13 @@ test('bags: the packing by bag number, items named from the workshop lines, doub
   assert.equal(r.packed, true)
   assert.equal(r.packedAt, 9000)
   assert.equal(r.packedBy, 'packer')
-  assert.equal(r.stackedPairs, 1)
   assert.deepEqual(r.bags.map(b => b.n), [1, 2], 'sorted by bag number')
-  assert.deepEqual(r.bags[0].items, [{ id: 'i1', text: '(Synthetic item one) — smell: synthetic-a', twice: false }, { id: 'i2', text: '(Synthetic item two) — taste: synthetic-b', twice: true }])
-  assert.equal(r.bags[1].items[1].text, '(a line that is no longer in the workshop)')
+  assert.deepEqual(r.bags[0].items.map(i => [i.name, i.looks, i.words, i.twice]), [
+    ['(Synthetic item one)', '(synthetic look)', 'smell: synthetic-a', false],
+    ['2 (Synthetic item two)', '(synthetic wrapper)', 'taste: synthetic-b', true],
+  ])
+  assert.equal(r.bags[1].items[0].words, '', 'no clue words reads as none')
+  assert.equal(r.bags[1].items[1].name, '(a line that is no longer in the workshop)')
   assert.deepEqual(Object.keys(r.properties), ['synthetic-a', 'synthetic-b'])
 })
 

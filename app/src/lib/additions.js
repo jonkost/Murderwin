@@ -5,6 +5,10 @@
 //
 // An entry may carry:
 //   areaDocs:        { area: doc }        create the list doc if it is missing
+//   retireItems:     { area: [text] }     mark deleted (never erase) the live
+//                                         lines whose opening words (before the
+//                                         dash) match one of these; runs before
+//                                         appendItems
 //   appendItems:     { area: [text] }     add lines not already there
 //   appendScenarios: { area: [beats] }    add Parlour Game sets whose first
 //                                         question is not already there
@@ -22,7 +26,8 @@
 //   fileDecisions:   { key: moment }      file a decision that has no moment
 // With a `title`, a card must also have that title (any case), so a card
 // someone added by hand that happens to share a number is never touched.
-// Nothing here ever deletes, reorders or rewrites a line.
+// Nothing here ever erases, reorders or rewrites a line; retireItems only sets
+// the soft-delete flag the workshop's own Remove sets.
 
 import { normalizeBeats, titleOf } from './scenarios.js'
 
@@ -34,6 +39,11 @@ function asItems(raw) {
 
 export function defaultNewId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+// A line's opening words, before the dash, as the matching rules read them.
+export function headOf(line) {
+  return String(line ?? '').split('—')[0].replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
 // Lines to append to a list: those whose opening words (before the dash)
@@ -87,8 +97,19 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
   for (const [area, doc] of Object.entries(add.areaDocs ?? {})) {
     if (snapshot.areas?.[area] == null) plan.areaDocs[area] = doc
   }
+  for (const [area, lines] of Object.entries(add.retireItems ?? {})) {
+    const existing = asItems(plan.areaDocs[area]?.items ?? snapshot.areas?.[area]?.items)
+    const heads = new Set(lines.map(headOf).filter(Boolean))
+    let retired = 0
+    const items = existing.map(it => {
+      if (it.deleted || !heads.has(headOf(it.text))) return it
+      retired++
+      return { ...it, deleted: true, retiredBy: add.id }
+    })
+    if (retired) plan.areaDocs[area] = { items }
+  }
   for (const [area, lines] of Object.entries(add.appendItems ?? {})) {
-    const existing = asItems(snapshot.areas?.[area]?.items)
+    const existing = asItems(plan.areaDocs[area]?.items ?? snapshot.areas?.[area]?.items)
     const fresh = freshLines(existing, lines, newId)
     if (fresh.length) plan.areaDocs[area] = { items: [...existing, ...fresh] }
   }

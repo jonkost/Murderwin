@@ -34,15 +34,20 @@ test('dash codec', () => {
   assert.equal(dashCodec.join({ title: '', body: 'B' }), 'B')
 })
 
-test('bag codec', () => {
+test('bag codec: the final items, and a September line kept as it was', () => {
   roundTrips(bagCodec, [
+    'Yellow ball — touch: pointy; touch: bumpy · touch · stock 1 · looks like: small spikes · tag: fun',
+    "Hershey's Kisses — smell: chocolatey; taste: chocolatey · food, two singles · stock 50 · looks like: silver foil · tag: no-no",
+    'Orange ball — no clue words · touch · stock 1 · looks like: smooth with dents · tag: fun',
+    'Click pens — sound: clicky · extra · stock 8 · looks like: one of each ink color',
     'Mint tea bag — smell: minty',
-    'Dog-training clicker — sound: clicks',
     'Just an item',
   ])
-  assert.deepEqual(bagCodec.split('Mint tea bag — Smell: minty'), { item: 'Mint tea bag', sense: 'smell', property: 'minty' })
-  assert.deepEqual(bagCodec.split('Thing — smell'), { item: 'Thing', sense: 'smell', property: '' })
-  assert.equal(bagCodec.join({ item: 'Thing', sense: '', property: '' }), 'Thing')
+  assert.deepEqual(bagCodec.split('Yellow ball — touch: pointy; touch: bumpy · touch · stock 1 · looks like: small spikes · tag: fun'),
+    { item: 'Yellow ball', words: 'touch: pointy; touch: bumpy', kind: 'touch', stock: '1', looks: 'small spikes', tag: 'fun' })
+  assert.deepEqual(bagCodec.split('Mint tea bag — smell: minty'), { item: 'Mint tea bag', words: 'smell: minty', kind: '', stock: '', looks: '', tag: '' })
+  assert.equal(bagCodec.join({ item: 'Thing', words: '', kind: '', stock: '', looks: '', tag: '' }), 'Thing')
+  assert.equal(bagCodec.join({ item: 'Thing', words: '', kind: 'extra', stock: '2', looks: '', tag: '' }), 'Thing — no clue words · extra · stock 2')
 })
 
 test('npc codec: one of the five, plus about', () => {
@@ -107,7 +112,7 @@ test('isolation: changing one box leaves the others exactly as they were', () =>
   const cases = [
     [labelCodec, 'OFFLINE: The Manor cannot hear your phone.'],
     [dashCodec, 'YOUR PHONE — It is your notebook.'],
-    [bagCodec, 'Mint tea bag — smell: minty'],
+    [bagCodec, 'Yellow ball — touch: pointy; touch: bumpy · touch · stock 1 · looks like: small spikes · tag: fun'],
     [npcCodec, 'MISS BOO LARUE — family friend and socialite. Arrived for a party. Found in the light.'],
     [echoCodec, '...word of ███, which the household denies...'],
     [fillerCodec, 'Pick a smell. Button: Done'],
@@ -117,7 +122,9 @@ test('isolation: changing one box leaves the others exactly as they were', () =>
     const base = codec.split(line)
     for (const f of Object.keys(base)) {
       // a label box only ever holds capitals and spaces; every other box takes anything
-      const probes = f === 'label' || f === 'profession' ? ['A B', 'HOLD', 'X'] : f === 'who' ? ['boo', 'salem'] : ['a b', 'end.', 'x, y', 'Over']
+      const probes = f === 'label' || f === 'profession' ? ['A B', 'HOLD', 'X'] : f === 'who' ? ['boo', 'salem']
+        : codec === bagCodec && f === 'kind' ? ['food, one pack', 'extra'] : codec === bagCodec && f === 'tag' ? ['spooky', 'no-no'] : codec === bagCodec && f === 'stock' ? ['3', '12']
+          : ['a b', 'end.', 'x, y', 'Over']
       for (const v of probes) {
         const next = codec.split(codec.join({ ...base, [f]: v }))
         for (const g of Object.keys(base)) if (g !== f) assert.equal(next[g], base[g], `${f}=${JSON.stringify(v)} moved ${g} in ${line}`)

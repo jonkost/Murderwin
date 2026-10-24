@@ -26,10 +26,10 @@ function realApi() {
 
 function previewApi() {
   const bags = {
-    ok: true, packed: true, packedAt: Date.now(), packedBy: 'packer', stackedPairs: 2, counts: { bags: 2, items: 4 }, properties: {},
+    ok: true, packed: true, packedAt: Date.now(), packedBy: 'packer', counts: { bags: 2, items: 4 }, properties: {},
     bags: [
-      { n: 1, items: [{ id: 'a', text: '(Preview item one) — smell: preview', twice: false }, { id: 'b', text: '(Preview item two) — taste: preview', twice: true }] },
-      { n: 2, items: [{ id: 'c', text: '(Preview item three) — touch: preview', twice: false }] },
+      { n: 1, items: [{ id: 'a', name: '(Preview item one)', looks: '(what it looks like)', words: 'smell: preview', twice: false }, { id: 'b', name: '2 (Preview candy)', looks: '(a wrapper)', words: 'taste: preview', twice: true }] },
+      { n: 2, items: [{ id: 'c', name: '(Preview item three)', looks: '(round)', words: '', twice: false }] },
     ],
   }
   const blank = () => ({ granolia: '', boo: '', zimothy: '', salem: '' })

@@ -3,6 +3,8 @@
 Rules for working in this repo. These are load-bearing. Read fully before any task.
 Updated 23 October 2026. Party: Sunday 15 November 2026. Freeze: Saturday 7 November 2026.
 
+> **NEW (23 Oct 2026, 5:10 PM): read `docs/handoff-2026-10-23.md` in full before any task.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, the open banks still to copy into the game, and the ordered build list. It wins over this file, the Canon and every older doc wherever they disagree. Apply it, write "Applied <date>" at its top, report in plain English, then commit. `docs/sensory-bags.md` (rewritten 6:40 PM the same day) is the owner of everything about the bags: the decision, the shopping guide, the clue rules, the Act 2 and Act 4 templates, Sir Irwin's prompts, the packing and the checks. Read it with the handoff.
+
 > **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). It still wins where an older doc disagrees. Left out on purpose, each now an open decision: the Partner in Crime and Ghost Whisperer awards (partnerAwards), and a tab for the drawing pictures on Jenna's page (stewardPictures). Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Open decisions (15 on 23 Oct), each a card on the board and Jon's call only: newsVideo, stewardPictures, partnerAwards, diningName, rulesDeckScreen, tidyFolders, bagsAct4, handOn, tutorial8, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known, dialMapping. Every session follows HOW WE WORK below.
 
 ## RULE 1 — THE HOST PLAYS

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node station.mjs",
     "fake": "node station.mjs --fake",
+    "teach-touch": "node teach-touch.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {

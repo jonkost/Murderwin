@@ -6,7 +6,7 @@
 //
 //   npm start          the real walls and deck (station/.env)
 //   npm run fake       no hardware: the terminal stands in
-//     keys  q w e r t y u i o  → touch panels 1–9
+//     keys  q w e r t y u i o p → touch panels 1–10
 //           R Y G B P W        → colour keys     1–6 → number keys
 //           -  → undo           Enter → submit    x → reset the station
 
@@ -57,6 +57,13 @@ const firebaseConfig = {
 if (env.MURDERWIN_EMULATOR === '1') firebaseConfig.projectId = env.MURDERWIN_PROJECT_ID || 'demo-murderwin'
 
 // ---- devices -------------------------------------------------------------
+// Which hexagon each tap names, taught once on the real wall (npm run teach-touch).
+function loadTouchMap() {
+  const p = join(here, 'touch-map.json')
+  if (!existsSync(p)) return {}
+  try { return JSON.parse(readFileSync(p, 'utf8')).touches ?? {} } catch (e) { log('touch-map.json unreadable:', e.message); return {} }
+}
+
 async function openWalls() {
   if (FAKE) {
     return {
@@ -64,7 +71,7 @@ async function openWalls() {
       lines: new FakeWall({ name: 'lines', panelIds: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], log }),
     }
   }
-  const elements = new Nanoleaf({ host: env.NANOLEAF_ELEMENTS_HOST, token: env.NANOLEAF_ELEMENTS_TOKEN, name: 'elements', log })
+  const elements = new Nanoleaf({ host: env.NANOLEAF_ELEMENTS_HOST, token: env.NANOLEAF_ELEMENTS_TOKEN, name: 'elements', log, touchMap: loadTouchMap() })
   const lines = new Nanoleaf({ host: env.NANOLEAF_LINES_HOST, token: env.NANOLEAF_LINES_TOKEN, name: 'lines', log })
   return { elements, lines }
 }
@@ -88,9 +95,10 @@ const { elements, lines } = await openWalls()
 let elementsOk = true, linesOk = true
 try { await elements.loadLayout(); await elements.on(true) } catch (e) { elementsOk = false; log('elements: cannot reach the wall;', e.message) }
 try { await lines.loadLayout(); await lines.on(true) } catch (e) { linesOk = false; log('lines: cannot reach the wall;', e.message) }
-log(`elements: ${elements.panels.length} panels${elementsOk ? '' : ' (DOWN, fallback: numbers on the button box)'}; lines: ${lines.panels.length} bars${linesOk ? '' : ' (DOWN, fallback: on screen)'}`)
+log(`elements: ${elements.panels.length} panels (${elements.pieces?.length ?? elements.panels.length} lights, taps taught for ${elements.taughtPanels ?? elements.panels.length})${elementsOk ? '' : ' (DOWN, fallback: numbers on the button box)'}; lines: ${lines.panels.length} bars (${lines.pieces?.length ?? lines.panels.length} pieces)${linesOk ? '' : ' (DOWN, fallback: on screen)'}`)
 
-const deck = FAKE ? new FakeDeck({ log }) : (await openDeck({ log })) ?? new FakeDeck({ log })
+const realDeck = FAKE ? null : await openDeck({ log })
+const deck = realDeck ?? new FakeDeck({ log })
 
 // With the Elements down, the button box's number keys stand in for the
 // first six panels, so the game stays the same game.
@@ -118,23 +126,26 @@ const follower = createFollower({
 })
 follower.start()
 
-// ---- the terminal stands in for the hardware in fake mode ----------------
-if (FAKE && process.stdin.isTTY) {
+// ---- the terminal stands in for the hardware in fake mode, and for the
+// button box whenever no Stream Deck is plugged in (a test round on the walls
+// from any Mac). The panel keys touch the game's panels in the kiosk map's
+// order, so a wall whose taps do not come through can still be played.
+if ((FAKE || !realDeck) && process.stdin.isTTY) {
   process.stdin.setRawMode(true)
   process.stdin.resume()
   process.stdin.setEncoding('utf8')
-  const panelKeys = 'qwertyuio'
+  const panelKeys = 'qwertyuiop'
   const colourKeys = { R: 'red', Y: 'yellow', G: 'green', B: 'blue', P: 'pink', W: 'white' }
   process.stdin.on('data', (ch) => {
     if (ch === '\u0003') process.exit(0)
-    if (panelKeys.includes(ch)) elements.touch(panelKeys.indexOf(ch) + 1)
+    if (panelKeys.includes(ch)) { const id = panelIds[panelKeys.indexOf(ch)]; if (id != null) runner.touch(id, 0) }
     else if (colourKeys[ch]) deck.press(colourKeys[ch])
     else if (/^[1-6]$/.test(ch)) deck.press(ch)
     else if (ch === '-') deck.press('undo')
     else if (ch === '\r' || ch === '\n') deck.press('submit')
     else if (ch === 'x') runner.reset()
   })
-  log('fake mode: q–o touch panels 1–9 · R Y G B P W colours · 1–6 numbers · - undo · Enter submit · x reset')
+  log(`${FAKE ? 'fake mode' : 'no Stream Deck, the keyboard stands in'}: q–p touch panels 1–${Math.min(panelKeys.length, panelIds.length)} · R Y G B P W colours · 1–6 numbers · - undo · Enter submit · x reset`)
 }
 runner.drain()
 log('study station up', FAKE ? '(fake walls)' : '')

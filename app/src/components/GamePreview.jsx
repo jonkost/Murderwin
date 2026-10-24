@@ -125,13 +125,15 @@ function render(area, tab, v) {
           <p>{(v.text || '').replace(/\[MURDERER\]/g, '(the murderer’s name)').replace(/\[VICTIM\]/g, '(the victim’s name)').replace(/\[MOTIVE_RHYME\]/g, '(the motive rhyme)') || <G>the closing story</G>}</p>
         </Frame>
       )
-    case 'bag_items':
+    case 'bag_items': {
+      const word = (/:\s*([^;·]+)/.exec(v.words || '')?.[1] || '').trim()
       return (
-        <Frame title="A clue, later in the night">
-          <p>Something in one of the bags <b>{v.sense === 'smell' ? 'smells' : v.sense === 'sound' ? 'sounds' : v.sense === 'touch' ? 'feels' : v.sense === 'taste' ? 'tastes' : v.sense === 'sight' ? 'looks' : <G>smells</G>} {v.property || <G>minty</G>}</b>.</p>
-          <p><G>The item itself ({v.item || 'the item'}) is never named. Two or three bags will fit; that is the point.</G></p>
+        <Frame title="A cat's bag clue, later in the night">
+          <p>Something in the Murderer’s bag is <b>{word || <G>tickly</G>}</b>.</p>
+          <p><G>The item itself ({v.item || 'the item'}) is never named. Two or three bags will fit; that is the point. Jenna sees: {v.looks || 'what it looks like'}.</G></p>
         </Frame>
       )
+    }
     case 'study_lines':
       return (
         <Frame kind="room" title="The study screen, Act 4">

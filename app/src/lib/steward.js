@@ -21,12 +21,17 @@ export function routeState({ uid, whoami } = {}) {
   return whoami ? 'open' : 'not-for-you'
 }
 
-// The packing list as Jenna reads it: one line per bag, items in order,
-// a taste item marked "pack two".
+// The packing list as Jenna reads it: one line per bag, each item by its
+// name (a pair already written out, "2 Hershey's Kisses") and what it looks
+// like, its clue words underneath.
 export function packingRows(bags) {
   const rows = Array.isArray(bags?.bags) ? bags.bags : []
   return rows.map(b => ({
     n: b.n,
-    items: (b.items ?? []).map(it => ({ id: it.id, line: it.text, twice: Boolean(it.twice), name: String(it.text ?? '').split('—')[0].trim() })),
+    items: (b.items ?? []).map(it => ({
+      id: it.id, twice: Boolean(it.twice),
+      name: it.name ?? String(it.text ?? '').split('—')[0].trim(),
+      looks: it.looks ?? '', words: it.words ?? '',
+    })),
   }))
 }

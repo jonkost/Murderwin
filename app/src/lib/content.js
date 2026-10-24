@@ -2,8 +2,9 @@ import seed from '../../../seed/safe-content.json' with { type: 'json' }
 import charactersFile from '../../../seed/characters.json' with { type: 'json' }
 import motivesFile from '../../../seed/motives.json' with { type: 'json' }
 import bagItemsFile from '../../../seed/bag-items.json' with { type: 'json' }
+import septemberBagItemsFile from '../../../seed/bag-items-september.json' with { type: 'json' }
 import parlourFile from '../../../seed/parlour-games.json' with { type: 'json' }
-import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, SENSES, HOUSEHOLD } from './codecs.js'
+import { labelCodec, dashCodec, bagCodec, npcCodec, echoCodec, fillerCodec, characterCodec, plainCodec, HOUSEHOLD, BAG_KINDS, BAG_TAGS } from './codecs.js'
 import {
   TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT,
   AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT,
@@ -283,12 +284,15 @@ export const AREAS = {
     ] },
 
   // — The bags —
-  bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'Every item you might put in a bag, with the one sense it stands out to. The game decides the packing without you.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 108,
+  bag_items: { label: 'Things in the bags', moment: 'All night, the numbered bags guests carry', why: 'The things you bought for the bags (24 Oct 2026), each with its clue words, how many you have, what it looks like and its tag. The game decides the packing without you; only Jenna sees it.', group: 'The bags', tabs: null, guide: 'bag_item', goal: 24,
     codec: bagCodec,
     fields: [
-      { key: 'item', label: 'The item', placeholder: 'e.g. Mint tea bag', kind: 'text', main: true },
-      { key: 'sense', label: 'Which sense notices it', placeholder: 'Pick one', kind: 'select', options: SENSES },
-      { key: 'property', label: 'What that sense notices, one word or two', placeholder: 'e.g. minty', kind: 'text' },
+      { key: 'item', label: 'The item', placeholder: 'e.g. Spider rings', kind: 'text', main: true },
+      { key: 'words', label: 'Its clue words, sense: word, joined with ;', placeholder: 'e.g. touch: tickly (or: no clue words)', kind: 'text' },
+      { key: 'kind', label: 'What it is in a bag', placeholder: 'Pick one', kind: 'select', options: BAG_KINDS },
+      { key: 'stock', label: 'How many you have', placeholder: 'e.g. 20', kind: 'text' },
+      { key: 'looks', label: 'Looks like (for Jenna)', placeholder: 'e.g. orange, purple, green, black', kind: 'text' },
+      { key: 'tag', label: 'Tag, for Sir Irwin’s prompts', placeholder: 'No tag', kind: 'select', options: BAG_TAGS },
     ] },
 
   // — Everything else —
@@ -431,9 +435,18 @@ export function lintItem(area, text) {
     case 'rules_text':
       return /—/.test(text) ? null : 'Give the section a heading in the first box.'
     case 'bag_items': {
-      if (!/—\s*(sight|sound|smell|touch|taste)\s*:\s*\S/i.test(text)) return 'Pick the sense and say what it notices, like smell: minty.'
-      const m = /—\s*[a-z]+\s*:\s*([^;]+);/i.exec(text)
-      if (m) return `Two things noticed on one line. The clue on the night uses the first one (${m[1].trim()}); the packer counts both.`
+      const v = bagCodec.split(text)
+      if (!v.kind) return 'Say what it is in a bag: food (two singles or one pack), touch, or extra.'
+      if (!/^no clue words?$/i.test(v.words.trim())) {
+        for (const part of v.words.split(';').map(x => x.trim()).filter(Boolean)) {
+          const m = /^(sight|sound|smell|touch|taste)\s*:\s*(.+)$/i.exec(part)
+          if (!m) return `Write each clue word as sense: word, like touch: tickly (“${part}” is not).`
+          const word = m[2].trim().toLowerCase()
+          if (BAG_NEVER_WORDS.includes(word)) return `“${word}” is never a clue word (section 15.2 of the handoff): it fits nearly every bag.`
+          if (!BAG_CLUE_WORDS.includes(word)) return `“${word}” is not one of the fourteen clue words. Ask Claude Code to add it before the packer runs.`
+        }
+      }
+      if (!/^\d+$/.test(String(v.stock).trim())) return 'Say how many you have, as a number.'
       return null
     }
     case 'filler': {
@@ -446,6 +459,9 @@ export function lintItem(area, text) {
       return null
   }
 }
+
+export const BAG_CLUE_WORDS = bagItemsFile.words.map(w => w.word)
+export const BAG_NEVER_WORDS = bagItemsFile.never.words
 
 let counter = 0
 function newId() {
@@ -588,7 +604,7 @@ export const ADDITIONS = [
     // 18 Oct: Jon's 108 bag items (docs/bag-items-for-claude-code.md) go into
     // the bag items list, skipping any item already written there.
     id: '2026-10-18-bag-items',
-    appendItems: { bag_items: bagItemsFile.items },
+    appendItems: { bag_items: septemberBagItemsFile.items },
   },
   {
     // 18 Oct: the lists the game reads that the workshop could not edit, and
@@ -676,6 +692,6 @@ export const ADDITIONS = [
   },
 ]
 
-// The bag item pool as the seed holds it, for the packer's tests and the
-// Steward's packing list.
+// The bag items as the seed holds them (Jon's final list, 24 Oct 2026), for
+// the packer's tests and the Steward's packing list, and the clue words.
 export const BAG_ITEM_SEED = bagItemsFile.items

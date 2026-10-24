@@ -46,25 +46,38 @@ export const dashCodec = {
   },
 }
 
-// "Item — sense: property" -> {item, sense, property}
+// "Item — sense: word; sense: word · kind · stock N · looks like: note · tag: tag"
+// -> {item, words, kind, stock, looks, tag}. The final bag items (Jon bought
+// them 23 Oct 2026, docs/handoff-2026-10-23.md §15). `words` keeps the
+// "sense: word" pairs as written ("no clue words" for an item with none). A
+// September line ("Item — sense: property", no kind) splits to item and
+// words only, and joins back as it was.
 export const SENSES = ['sight', 'sound', 'smell', 'touch', 'taste']
+export const BAG_KINDS = ['food, two singles', 'food, one pack', 'touch', 'extra']
+export const BAG_TAGS = ['spooky', 'fun', 'no-no']
 export const bagCodec = {
   split(text) {
     const t = text ?? ''
     const i = t.indexOf('—')
-    if (i < 0) return { item: t, sense: '', property: '' }
-    const item = t.slice(0, i).trim()
-    const rest = t.slice(i + 1).trim()
-    const c = rest.indexOf(':')
-    if (c < 0) return { item, sense: rest, property: '' }
-    return { item, sense: rest.slice(0, c).trim().toLowerCase(), property: rest.slice(c + 1).trim() }
+    const empty = { item: t, words: '', kind: '', stock: '', looks: '', tag: '' }
+    if (i < 0) return empty
+    const [words, ...tail] = t.slice(i + 1).split('·').map(s => s.trim())
+    const out = { ...empty, item: t.slice(0, i).trim(), words }
+    for (const seg of tail) {
+      const low = seg.toLowerCase()
+      if (BAG_KINDS.includes(low)) out.kind = low
+      else if (/^stock\s/.test(low)) out.stock = seg.slice(5).trim()
+      else if (low.startsWith('looks like:')) out.looks = seg.slice(seg.indexOf(':') + 1).trim()
+      else if (low.startsWith('tag:')) out.tag = seg.slice(seg.indexOf(':') + 1).trim().toLowerCase()
+    }
+    return out
   },
-  join({ item, sense, property }) {
+  join({ item, words, kind, stock, looks, tag }) {
     const a = (item ?? '').trim()
-    const s = (sense ?? '').trim()
-    const p = (property ?? '').trim()
-    if (!s && !p) return a
-    return `${a} — ${s}: ${p}`
+    const w = (words ?? '').trim()
+    const parts = [kind, stock && `stock ${String(stock).trim()}`, looks && `looks like: ${String(looks).trim()}`, tag && `tag: ${tag}`].map(x => (x ?? '').trim()).filter(Boolean)
+    if (!w && !parts.length) return a
+    return [`${a} — ${w || 'no clue words'}`, ...parts].join(' · ')
   },
 }
 

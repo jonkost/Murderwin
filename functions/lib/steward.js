@@ -12,8 +12,9 @@
 //
 // Ops (all through one callable, `steward`, functions/index.js):
 //   whoami            { ok: true }            proves the gate opens for this account
-//   bags              sealed/bags as a packing list by bag number, items named
-//                     from the workshop's bag lines (read only)
+//   bags              sealed/bags as a packing list by bag number, each item's
+//                     name and "looks like" note from the workshop's bag lines,
+//                     a pair written out ("2 Hershey's Kisses") (read only)
 //   leans             the Parlour Games lean table (sealed/parlour_leans): every
 //                     set in the workshop bank, its questions and answers, and
 //                     which answer each cat leans toward (docs/parlour-games.md)
@@ -67,8 +68,22 @@ function millis(v) {
 
 // ---- the ops ------------------------------------------------------------
 
-// The packing list, by bag number, with each item's workshop line so Jenna
-// can pack from it. A taste item listed under `doubles` is packed twice.
+// One bag line, read for the packing list: the item's name, what it looks
+// like, and its clue words, from "Item — sense: word · kind · stock N ·
+// looks like: note · tag: tag" (docs/handoff-2026-10-23.md §15). A line in
+// an older shape gives its name and the rest whole.
+export function readBagLine(text) {
+  const t = String(text ?? '')
+  const dash = t.indexOf('—')
+  if (dash < 0) return { name: t.trim(), looks: '', words: '' }
+  const [words, ...tail] = t.slice(dash + 1).split('·').map(x => x.trim())
+  const looks = tail.find(x => x.toLowerCase().startsWith('looks like:'))
+  return { name: t.slice(0, dash).trim(), looks: looks ? looks.slice(looks.indexOf(':') + 1).trim() : '', words: /^no clue words?$/i.test(words) ? '' : words }
+}
+
+// The packing list, by bag number, as Jenna packs it: each item's name and
+// what it looks like, a pair written out ("2 Hershey's Kisses": the food
+// listed under `doubles` goes in as two singles).
 async function opBags(db) {
   const snap = await db.doc('sealed/bags').get()
   if (!snap.exists || !snap.data()?.bags) return { ok: true, packed: false, bags: [] }
@@ -78,7 +93,14 @@ async function opBags(db) {
   const bags = Object.keys(d.bags).map(Number).filter(Number.isFinite).sort((a, b) => a - b).map(n => {
     const ids = Array.isArray(d.bags[String(n)]) ? d.bags[String(n)] : []
     const twice = new Set(Array.isArray(d.doubles?.[String(n)]) ? d.doubles[String(n)] : [])
-    return { n, items: ids.map(id => ({ id, text: text[id] ?? '(a line that is no longer in the workshop)', twice: twice.has(id) })) }
+    return {
+      n,
+      items: ids.map(id => {
+        const line = text[id]
+        const read = line ? readBagLine(line) : { name: '(a line that is no longer in the workshop)', looks: '', words: '' }
+        return { id, text: line ?? read.name, name: twice.has(id) ? `2 ${read.name}` : read.name, looks: read.looks, words: read.words, twice: twice.has(id) }
+      }),
+    }
   })
   return {
     ok: true,
@@ -86,7 +108,6 @@ async function opBags(db) {
     packedAt: millis(d.packedAt),
     packedBy: d.packedBy ?? null,
     counts: d.counts ?? null,
-    stackedPairs: Array.isArray(d.stackedPairs) ? d.stackedPairs.length : 0,
     properties: d.properties ?? {},
     bags,
   }

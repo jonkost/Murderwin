@@ -152,13 +152,9 @@ export function parsePaste(area, raw, { fields, codec, options = {} } = {}) {
       continue
     }
     if (area === 'bag_items') {
-      const parts = first.split(/\s*(?:·|—|–|\||,|\t)\s*/).map(p => p.trim()).filter(Boolean)
-      let [item, sense, property] = parts
-      if (sense && sense.includes(':') && !property) [sense, property] = sense.split(':').map(x => x.trim())
-      values.item = item ?? ''
-      values.sense = matchOption(sense ?? '', fields.find(f => f.key === 'sense')?.options)
-      values.property = property ?? ''
-      if (!values.item) { out.skipped.push(first); continue }
+      // the final format (codecs.bagCodec): a line as written, one item per line
+      const values = codec.split(first)
+      if (!values.item?.trim()) { out.skipped.push(first); continue }
       push(values)
       continue
     }

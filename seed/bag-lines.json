@@ -1,0 +1,95 @@
+{
+  "_about": "The bag clue lines and Sir Irwin's sharing prompts (docs/handoff-2026-10-23.md sections 9.1 to 9.3 and 15.4; docs/sensory-bags.md section 5). Open content: Jon may read and rewrite any line. Only the game's fill on the night is sealed: which clue word goes in each blank. Read by functions/lib/bagclues.js. In a line, ___ is the clue word the game fills from the packing (a word that sits in two or three of the bags in play, never one). [sense] is the sense as a noun (smell, sound, touch, taste, sight); [sense:verb] as a verb (smell, hear, touch, taste, see); [sense:organ] as the part that notices (nose, ear, fingers, tongue, eye). Each cat has five lines, one per rung of its ladder (affection 1 to 5). Rungs 1 and 2 give no clue word, so every visit reads about the same length.",
+  "senses": {
+    "smell": { "noun": "smell", "verb": "smell", "organ": "nose" },
+    "sound": { "noun": "sound", "verb": "hear", "organ": "ear" },
+    "touch": { "noun": "touch", "verb": "touch", "organ": "fingers" },
+    "taste": { "noun": "taste", "verb": "taste", "organ": "tongue" },
+    "sight": { "noun": "sight", "verb": "see", "organ": "eye" }
+  },
+  "act2": {
+    "_about": "Act 2, at each cat's room, about the Murderer. The rung is the cat's affection for the guest at the scan. Salem is filled with a WRONG word at rungs 1 to 3, a coin flip at 4, the right one at 5; his wording never changes, so nobody can tell. Boo speaks only at 4 or above in Act 2.",
+    "granolia": [
+      "Oh! The bag. I saw a bag. Someone's bag. It was... a bag. I'm sorry, I licked a book and now it's all gone.",
+      "The Murderer's bag! I sniffed it. Or heard it. Or... one of those. There was definitely a something.",
+      "There's something in the Murderer's bag that you'd only notice if you [sense:verb] it. I noticed. Then I forgot.",
+      "Something in the Murderer's bag was ___. Or near enough. Or I'm thinking of a different bag. No. I'm fairly sure. Mostly.",
+      "I remember this one! Something in the Murderer's bag is ___. Write that down before I lose it again."
+    ],
+    "zimothy": [
+      "I have a note on the Murderer's bag. It is not free.",
+      "The Murderer's bag contains something of interest to the [sense:organ]. That is all my fee covers.",
+      "For the record: an item in the Murderer's bag is best examined by [sense]. Further particulars cost extra.",
+      "My file says the Murderer's bag holds something one might call ___. I will not swear to the wording.",
+      "My file is clear. The Murderer's bag holds something ___. Filed, witnessed, and billed."
+    ],
+    "boo": [
+      "Boo looks you up and down. She says nothing about any bag.",
+      "Ew. Do I know you? No. Then I don't know anything about anybody's bag.",
+      "I'm off duty, darling. Ask me again when we're friends.",
+      "Murderer's bag. Something ___. Darling.",
+      "The Murderer's bag holds something ___. I'd know. I knocked it off a table."
+    ],
+    "salem": [
+      "Off my lawn. Fine. The Murderer's bag? Something ___ in it. Now git.",
+      "Saw the Murderer's bag go by. Something ___. Don't ask me twice.",
+      "Forty years on these grounds. The Murderer's bag had something ___ in it. I'd swear to it.",
+      "The Murderer's bag. Something ___. Or the other thing. One of the two.",
+      "You're all right, you are. The Murderer's bag holds something ___. Straight up, no lawn jokes."
+    ]
+  },
+  "act4": {
+    "_about": "Act 4, with each game room's reward, about the Ghost (the one who cried out; no line ever says a name). The rung is the group's average affection with that cat. Granolia's lead-in comes first at every rung. Salem gives a word at every rung: wrong at 1 to 3, a coin flip at 4, right at 5. Boo speaks to every group in Act 4.",
+    "leadIn": { "granolia": "Oh! Also! Before I forget, and I will:" },
+    "granolia": [
+      "Someone shouted for help. I was reading. Was it a book? No. A person. I think.",
+      "When the shout came, there was a... a [sense] thing. Near them. I forget the rest.",
+      "The one who shouted had something you'd have to [sense:verb] to know about. I noticed. Then the lights went out.",
+      "The one who shouted had something ___ with them. Or near them. Or I'm mixing up chapters.",
+      "The one who shouted had something ___ with them. I'm sure. I wrote it in the margin."
+    ],
+    "zimothy": [
+      "A cry for help was heard. My notes on it are not free.",
+      "The party who cried out carried something for the [sense:organ]. My fee covers no more.",
+      "For the record: whoever cried out had something best examined by [sense].",
+      "My file says the deceased had something one might call ___ about them. No warranty.",
+      "My file is clear. The victim carried something ___. Filed, witnessed, billed."
+    ],
+    "salem": [
+      "Heard the yelp from the lawn. Whoever it was had something ___ on 'em. Forty years, never wrong.",
+      "That yelp. Something ___ went with it. I'd stake the hedges on it.",
+      "Whoever hollered had something ___ about 'em. Mark it down.",
+      "The yelp? Something ___ went with it. Or didn't. Fifty-fifty, like my knees.",
+      "Straight up, no lawn jokes: whoever yelped had something ___ on 'em."
+    ],
+    "boo": [
+      "Ugh. Fine. Whoever screamed had something... [sense]-ish about them. Don't make me say more.",
+      "Ew. Do I know you? No. But the one who screamed had something for the [sense:organ]. There.",
+      "The scream. Something ___-ish. Five words, darling. I'm done.",
+      "The one who screamed? Something ___ about them. Dreadful, really.",
+      "Darling, whoever screamed carried something ___. I'd know. I was judging them at the time."
+    ]
+  },
+  "prompts": {
+    "_about": "Sir Irwin's sharing prompts on the Parlour TV during the Act 2 cat visits and in Act 4 (sections 9.3 and 15.4). One at a time, a new one every everyMinutes, random order, no repeat until all of them have shown. A prompt never contains a clue word (check L08); prompts 13 to 16 name a tag or a shape (spooky, round, a chew, a no-no). The guest chooses what to share; nothing from the Parlour is recorded.",
+    "everyMinutes": 3,
+    "lines": [
+      "Show someone something from your bag that makes a sound. I'll be listening. I'm always listening.",
+      "Let a friend smell something from your bag. Nothing says friendship like sniffing.",
+      "Pass around something from your bag that's nice to touch. Nicer than me? Impossible. Try anyway.",
+      "Show someone the best-looking thing in your bag. Ooh. Look at it.",
+      "Got a snack in there? Show it. Don't eat it. Don't give it to me. Okay, give it to me.",
+      "Let someone feel something from your bag with their eyes closed. Don't tell them what it is.",
+      "Find someone who hasn't seen inside your bag yet. Say hi. Share one thing. Sniffing optional.",
+      "Show someone something you could smell from across the room. I could smell it from the garden.",
+      "Make a sound with something from your bag. Then do it again. I liked it.",
+      "Show someone the smallest thing in your bag. I'm not allowed to have small things.",
+      "Share something from your bag that's good to taste. Then explain to me why dogs can't have it.",
+      "Share whatever you like. I trust you. I trust everyone. It's a problem.",
+      "Anything round in your bag? Roll it to a friend. Not to me. I will chase it. I can't help it.",
+      "Show someone the thing in your bag I'd most like to chew. Then keep it away from me. Far away.",
+      "Got something a dog shouldn't eat? Show it from a safe distance. I'm faster than I look.",
+      "Got something spooky in your bag? Show a friend. I'll be over here, being very brave."
+    ]
+  }
+}

@@ -225,7 +225,7 @@ export async function applyAdditions(additions) {
       const migSnap = await tx.get(migRef)
       const applied = migSnap.exists() ? migSnap.data().applied ?? [] : []
       if (applied.includes(add.id)) return
-      const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.appendItems ?? {}), ...Object.keys(add.appendScenarios ?? {})])]
+      const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.retireItems ?? {}), ...Object.keys(add.appendItems ?? {}), ...Object.keys(add.appendScenarios ?? {})])]
       const areaSnaps = await Promise.all(areaNames.map(a => tx.get(doc(db, 'safe_content', a))))
       const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {}), ...Object.keys(add.fileDecisions ?? {})])]
       const decSnaps = await Promise.all(decisionKeys.map(k => tx.get(doc(db, 'decisions', k))))

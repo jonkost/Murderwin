@@ -23,13 +23,15 @@ test('the route: Jon\'s UID is turned away before any call; everyone else waits 
   assert.equal(NOT_FOR_YOU, 'Not for you.')
 })
 
-test('the packing list: one row per bag, the item name before the dash, taste doubles marked', () => {
+test('the packing list: one row per bag, each item by name and looks-like note, a pair already written out', () => {
   const rows = packingRows({ bags: [
-    { n: 2, items: [{ id: 'c', text: 'Glass marble — touch: cold', twice: false }] },
-    { n: 1, items: [{ id: 'a', text: 'Tin of mints — smell: minty', twice: false }, { id: 'b', text: 'Lemon drop — taste: sour', twice: true }] },
+    { n: 2, items: [{ id: 'c', name: 'Red ball', looks: 'big spikes', words: 'touch: pointy', twice: false }] },
+    { n: 1, items: [{ id: 'a', name: 'Spider rings', looks: 'orange, purple', words: 'touch: tickly', twice: false }, { id: 'b', name: "2 Hershey's Kisses", looks: 'silver foil', words: '', twice: true }] },
+    { n: 3, items: [{ id: 'd', text: 'Tin of mints — smell: minty', twice: false }] },
   ] })
-  assert.deepEqual(rows.map(r => r.n), [2, 1], 'the server already sorts; the page keeps its order')
-  assert.deepEqual(rows[1].items.map(i => [i.name, i.twice]), [['Tin of mints', false], ['Lemon drop', true]])
+  assert.deepEqual(rows.map(r => r.n), [2, 1, 3], 'the server already sorts; the page keeps its order')
+  assert.deepEqual(rows[1].items.map(i => [i.name, i.looks, i.twice]), [['Spider rings', 'orange, purple', false], ["2 Hershey's Kisses", 'silver foil', true]])
+  assert.equal(rows[2].items[0].name, 'Tin of mints', 'an older reply: the name before the dash')
   assert.deepEqual(packingRows(null), [])
   assert.deepEqual(packingRows({ packed: false }), [])
 })

@@ -62,11 +62,11 @@ test('rules: heading then body, with a dash, a colon, or on two lines', () => {
   ])
 })
 
-test('bag items: item, sense, what it notices, in any common shape', () => {
-  const fields = [{ key: 'item' }, { key: 'sense', kind: 'select', options: ['sight', 'sound', 'smell', 'touch', 'taste'] }, { key: 'property' }]
-  const raw = `Mint tea bag — smell: minty\nDog clicker, sound, clicks\nSandpaper · Touch · rough`
+test('bag items: a line in the final format goes in as written', () => {
+  const fields = [{ key: 'item' }, { key: 'words' }, { key: 'kind', kind: 'select', options: ['food, two singles', 'food, one pack', 'touch', 'extra'] }, { key: 'stock' }, { key: 'looks' }, { key: 'tag', kind: 'select', options: ['', 'spooky', 'fun', 'no-no'] }]
+  const raw = `Red ball — touch: pointy · touch · stock 1 · looks like: big spikes · tag: fun\nCinnamon sticks — smell: cinnamon · extra · stock 4 · looks like: loose sticks`
   const { items } = parsePaste('bag_items', raw, { fields, codec: bagCodec })
-  assert.deepEqual(items.map(i => i.text), ['Mint tea bag — smell: minty', 'Dog clicker — sound: clicks', 'Sandpaper — touch: rough'])
+  assert.deepEqual(items.map(i => i.text), ['Red ball — touch: pointy · touch · stock 1 · looks like: big spikes · tag: fun', 'Cinnamon sticks — smell: cinnamon · extra · stock 4 · looks like: loose sticks'])
 })
 
 test('household cards and news frames', () => {

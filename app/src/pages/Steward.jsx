@@ -61,13 +61,18 @@ function Packing({ api }) {
   return (
     <section className="panel">
       <h2>The packing list</h2>
-      <p className="why">Ten bags, six things each. Pack exactly what is listed; the order inside a bag does not matter. A thing marked <b>pack two</b> goes in twice. Nobody who is playing may see this page or the packed bags open.</p>
-      <p className="hint">Packed {bags.packedAt ? new Date(bags.packedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}{bags.packedBy ? ` by the ${bags.packedBy}` : ''}. {bags.stackedPairs} stacked pairs.</p>
+      <p className="why">Ten bags, four or five things each: one food, at least one thing to touch, and extras. Pack exactly what is listed; the order inside a bag does not matter. A line that starts with <b>2</b> means two single candies of that kind. Where a line says what it looks like, any one that matches will do (the six balls are each their own). Nobody who is playing may see this page or the packed bags open.</p>
+      <p className="hint">Packed {bags.packedAt ? new Date(bags.packedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}{bags.packedBy ? ` by the ${bags.packedBy}` : ''}.</p>
       {rows.map(b => (
         <div key={b.n} className="bag">
           <h3>Bag {b.n}</h3>
           <ol>
-            {b.items.map(it => <li key={it.id}>{it.name}{it.twice ? <b> (pack two)</b> : ''}<span className="hint"> {it.line.includes('—') ? it.line.slice(it.line.indexOf('—') + 1).trim() : ''}</span></li>)}
+            {b.items.map(it => (
+              <li key={it.id}>
+                <b>{it.name}</b>{it.looks ? <span> · {it.looks}</span> : null}
+                {it.words ? <span className="hint"> ({it.words})</span> : null}
+              </li>
+            ))}
           </ol>
         </div>
       ))}
