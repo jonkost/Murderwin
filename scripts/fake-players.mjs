@@ -44,7 +44,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json', 'bag-lines.json', 'game-names.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
@@ -60,6 +60,7 @@ const windows = await import('../functions/lib/windows.js')
 const families = await import('../functions/lib/families.js')
 const news = await import('../functions/lib/news.js')
 const screen = await import('../functions/lib/screen.js')
+const act4 = await import('../functions/lib/act4.js')
 
 export const PHONES = 8
 const choice = list => list[randomInt(list.length)]
@@ -135,8 +136,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
   const heartbeat = () => station.stationCommand(db, { nightId, station: 'study', command: 'state', payload: { state: 'idle' } })
 
-  // Act 2, Lights Out: each phone goes to its cat when it is sent, scans the
-  // room's code, reads, taps done. At every step: never two guests at a cat
+  // Act 2, Lights Out: each phone goes to its cat when it is called, scans the
+  // room's code, reads, taps Done. At every step: never two guests at a cat
   // (F20), and every phone has a next step (F21). Counts only.
   async function walkRooms() {
     const deckUids = (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.uids ?? {}
@@ -165,15 +166,61 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     return { meetings, waves, ok: twoAtACat === 0 && untold === 0, twoAtACat, untold }
   }
 
-  // Act 4: the group at the memory match turns every card and finds the six pairs (the board is public)
+  // Act 4, the Library: the group turns every card on each of the three boards (the boards are public)
   async function clearMemory() {
-    const board = (await db.doc(deal.memoryPath(nightId)).get()).data()
-    if (!board?.boardId || board.cleared) return 0
-    const open = new Map()
-    const pairs = []
-    board.cards.forEach((t, i) => { const o = open.get(t) ?? []; if (o.length) pairs.push([o.pop(), i]); else o.push(i); open.set(t, o) })
-    const r = await run.player.memoryCleared(db, { nightId, boardId: board.boardId, pairs })
+    for (let step = 0; step < 3; step++) {
+      const board = (await db.doc(act4.memoryPath(nightId)).get()).data()
+      if (!board?.boardId || board.cleared) return 0
+      const cards = board.boards?.[String(board.step)] ?? []
+      const open = new Map()
+      const pairs = []
+      cards.forEach((t, i) => { const o = open.get(t) ?? []; if (o.length) pairs.push([o.pop(), i]); else o.push(i); open.set(t, o) })
+      const r = await run.player.memoryStep(db, { nightId, boardId: board.boardId, step: board.step, pairs })
+      if (r.cleared) return 1
+    }
+    return 0
+  }
+  // A group arrives in its room: the code on the wall, from one member's phone.
+  async function arrive(gid, room) {
+    const rot = (await db.doc(station.rotationPath(nightId)).get()).data()
+    const key = rot.groups.find(g => g.id === gid)?.members?.[0]?.key
+    const deckUids = (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.uids ?? {}
+    if (!key || !deckUids[key]) return null
+    await run.player.meetCat(db, { nightId, uid: deckUids[key], cat: act4.ROOMS[room].cat })
+    return deckUids[key]
+  }
+  // Act 4, the Orangerie: Salem's three rounds, each thirty seconds clean (the clock jumped, not waited for)
+  async function playSalem(gid) {
+    const uid = await arrive(gid, 'orangerie')
+    if (!uid) return 0
+    for (let r = 0; r < act4.SALEM_ROUNDS; r++) {
+      await run.player.salemReady(db, { nightId, uid })
+      const doc = (await db.doc(act4.salemPath(nightId)).get()).data()
+      if (doc?.state !== 'playing') return 0
+      await run.player.salemPassed(db, { nightId, uid, attempt: doc.attempt, now: deal.ms(doc.cleanAt) })
+    }
+    return (await db.doc(act4.salemPath(nightId)).get()).data()?.state === 'cleared' ? 1 : 0
+  }
+  // Act 4, the Entryway: Boo's three poses, then her verdict pays the group
+  async function playBoo(gid) {
+    if (!(await arrive(gid, 'entryway'))) return 0
+    const doc = (await db.doc(act4.booPath(nightId)).get()).data()
+    if (doc?.state !== 'show') return 0
+    const r = await run.player.booDone(db, { nightId, now: deal.ms(doc.endsAt) })
     return r.paid ? 1 : 0
+  }
+  // Act 4's Parlour Games wait on the phones: every phone plays what is waiting
+  async function playWaiting() {
+    let played = 0
+    for (const uid of uids) {
+      const s = await sessionOf(uid)
+      for (const [id, w] of Object.entries(s.windows ?? {})) {
+        if (!w.waiting || s.answers?.[id]) continue
+        await run.player.answer(db, { nightId, uid, windowId: id, picks: w.beats.map(b => choice(b.choices).k) })
+        played++
+      }
+    }
+    return played
   }
 
   // the seal, as a phone or a room screen would see it: counts of checks and short codes for failures
@@ -215,24 +262,27 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Case: ${summary.rehearsal ? 'rehearsal' : 'party'}${n2.caseWarning ? `; warning: ${String(n2.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join('; ')}` : ''}`)
     const roleCards = await countCards('role')
     await next() // news
+    await next() // the bag peek
     await next() // cat: the first wave goes
+    const p2 = await allParlours() // the act's Parlour Games, each at its own time
     const rooms = await walkRooms()
     if (!rooms.ok) summary.checks.push(...(rooms.twoAtACat ? ['F20'] : []), ...(rooms.untold ? ['F21'] : []))
-    // the hint cat's card is the cat, its room and the open hint line, nothing
-    // else (no lines of testimony); the other three cats only greet
-    let hints = 0, greetings = 0
+    // every cat gives a motive hint and a bag clue (23 Oct 2026); nothing else is said
+    let hints = 0, bagClues = 0
     for (const uid of uids) {
       for (const t of cardsOf(await sessionOf(uid), 'testimony')) {
-        if (!t.hint) greetings++
-        else if (t.hint.text && !(t.lines ?? []).length) hints++
+        if (t.hint?.text && !(t.lines ?? []).length) hints++
+        if (t.bag?.text) bagClues++
       }
     }
-    const p2 = await allParlours() // the act's Parlour Games, each at its own time
-    await next() // check-in
-    say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}`)
-    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${hints} real hints and ${greetings} greetings`, `${p2.games} Parlour Games, ${p2.answered} answers`])
+    if (hints !== bagClues || hints !== 4 * uids.length) summary.checks.push('G44')
+    // everyone has seen all four cats: the supper chime came on its own (F24)
+    const supper = (await nightDoc()).beat === 'supper'
+    if (!supper) summary.checks.push('F24')
+    say(`Act 2 rooms: ${rooms.meetings} visits in ${rooms.waves} waves; one guest at a cat at a time (F20) ${rooms.twoAtACat ? 'FAIL' : 'PASS'}; every phone told where to go (F21) ${rooms.untold ? 'FAIL' : 'PASS'}; supper on its own (F24) ${supper ? 'PASS' : 'FAIL'}`)
+    actLine(2, [`${roleCards} role cards`, `${rooms.meetings} cat visits`, `${hints} motive hints and ${bagClues} bag clues`, `${p2.games} Parlour Games, ${p2.answered} answers`])
 
-    // ---- Act 3: dinner, bulletin 2 (armed, then it plays itself on the tick), the groups
+    // ---- Act 3: supper, bulletin 2 (armed, then it plays itself on the tick)
     await next() // phones down
     const armed = await next() // arm the bulletin: the host hears only Armed
     const due = deal.ms((await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.dueAt)
@@ -240,43 +290,49 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const played = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.played === true
     if (!armed.armed || !played) summary.checks.push('B2')
     await sealCheck('bulletin') // the recordings it just sent are on the public sounds doc
-    const r3 = await next()
-    actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`, `${r3.groups} groups (${r3.trios} of three)`])
+    actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`])
 
-    // ---- Act 4: five stations, the study finishing each group, a Parlour Game popping up between finishes
-    await heartbeat() // the station is alive: the study's clue is earned in the room, not dealt with the card
-    await next() // station1
-    let rotations = 0, throughStudy = 0, answered4 = 0, games4 = 0, memoryClears = 0, guard = 0
-    while (guard++ < 40) {
+    // ---- Act 4: Start Act 4, the group cards and Locked in, then four game rooms on the clock
+    await host('start-act4')
+    await next() // the group cards
+    for (const uid of uids) await run.player.lockIn(db, { nightId, uid })
+    if ((await nightDoc()).beat !== 'round1') throw new Error('Locked in did not start the rounds')
+    const rot4 = (await db.doc(station.rotationPath(nightId)).get()).data()
+    await heartbeat() // the station is alive: the study's trace is earned in the room
+    let rounds = 0, throughStudy = 0, memoryClears = 0, salemClears = 0, booShows = 0, games4 = 0, played4 = 0, guard = 0
+    while (guard++ < 10 && (await nightDoc()).act === 4) {
       const n = await nightDoc()
-      if (n.act !== 4) break
-      rotations = Math.max(rotations, (n.rotation ?? -1) + 1)
-      if (deal.beatSpec(4, n.beat)?.action !== 'rotate') { await next(); continue }
-      const a4 = await nextParlour() // one pops up while the groups are at their stations
-      if (a4 !== null) { games4++; answered4 += a4 }
-      if (randomInt(4)) memoryClears += await clearMemory() // most groups clear the board; the rest are paid at the next rotation
-      await heartbeat()
-      const due = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
-      const rot = (await db.doc(station.rotationPath(nightId)).get()).data() ?? {}
-      if (due && !rot.finished?.[due]) {
-        const r = await run.studyFinished(db, { nightId, payload: { groupId: due, outcome: 'solved', seconds: 200 + randomInt(600), pairs: 3 } })
+      const round = Number(/^round(\d+)$/.exec(n.beat)?.[1] ?? 0)
+      if (!round) { await next(); continue }
+      rounds++
+      if (await nextParlour() !== null) games4++ // one waits on the phones
+      played4 += await playWaiting() // played when the guests are free
+      const inRoom = room => act4.groupIn(rot4, room, round)
+      if (inRoom('library') && randomInt(4)) memoryClears += await clearMemory() // most groups clear the boards; the rest are paid at the chime
+      if (inRoom('orangerie') && randomInt(4)) salemClears += await playSalem(inRoom('orangerie'))
+      if (inRoom('entryway')) booShows += await playBoo(inRoom('entryway'))
+      const studyDue = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
+      if (studyDue && randomInt(4)) {
+        await heartbeat()
+        await run.studyFinished(db, { nightId, payload: { groupId: studyDue, outcome: 'solved', seconds: 200 + randomInt(400), pairs: 3 } })
         throughStudy++
-        if (r.rotated) continue
       }
-      await next()
+      await next() // the chime: every room not finished is paid; the groups move on
     }
     if ((await nightDoc()).act !== 5) throw new Error('Act 4 did not end')
-    const stationCards = await countCards('station')
-    const clues = await countCards('clue')
-    actLine(4, [`${rotations} rotations`, `${throughStudy} groups through the study`, `${memoryClears} memory matches cleared`, `${stationCards} station cards`, `${clues} clues`, `${games4} Parlour Games, ${answered4} answers`])
+    // G47 and G52: every group visited every room once, and every room paid every group
+    const paid = (await db.doc(act4.act4PrivatePath(nightId)).get()).data()?.paid ?? {}
+    if (Object.keys(paid).length !== rot4.groups.length * act4.ROOM_KEYS.length) summary.checks.push('G52')
+    const roomCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.room)).length
+    actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${booShows} catwalks`, `${games4} waiting Parlour Games, ${played4} played`])
 
     // ---- Act 5: cake, the chime, Sir Irwin
-    // Act 4's last rotation brought the house to the cake: any group the memory match never paid was paid then
+    // Act 4's last chime brought the house to the cake: any room never paid was paid then
     await next() // Sir Irwin on the screen
     const funnel = await motiveFunnel()
     if (!funnel.ok) summary.checks.push('G32')
     say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
-    actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the memory match`])
+    actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library and Boo`])
 
     // ---- Act 6: the two Parlour Games at the start, the drawing, the door, the deduction round
     await next() // the games: the first is on every phone at once
@@ -314,7 +370,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Tally: of ${r7.of} ballots, murderer right on ${r7.murderer}, motive on ${r7.motive}, victim on ${r7.victim}`)
     summary.secrets = await secretsUsed()
     const { leanSets, bags, packed, fromBank } = summary.secrets
-    say(`Party secrets used: the cats' leans for ${leanSets} ${leanSets === 1 ? 'set' : 'sets'}, the packing on ${packed} of ${bags} bags cards, the picture bank for ${fromBank} of 3 drawing rounds`)
+    say(`Party secrets used: the cats' leans for ${leanSets} ${leanSets === 1 ? 'set' : 'sets'}, the packing on ${packed} of ${bags} bag clues, the picture bank for ${fromBank} of 3 drawing rounds`)
 
     await sealCheck('end')
     if (summary.seal.failed.length) say(`Seal: FAIL, ${summary.seal.failed.length} of ${summary.seal.checks} checks: ${summary.seal.failed.join(' ')}`)
@@ -342,7 +398,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   return summary
 
   // How much of the party's three secrets the night used: the lean table
-  // (sets with a lean, in the case's Parlour plan), the packing (bags cards
+  // (sets with a lean, in the case's Parlour plan), the packing (bag clues
   // that are not stand-ins) and the drawing's picture bank (rounds it filled).
   // A rehearsal uses none of them. Counts only: never a lean, a property or
   // a picture.
@@ -350,7 +406,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const c = (await db.doc(`cases/${nightId}`).get()).data()
     let bags = 0, packed = 0
     for (const uid of uids) {
-      for (const card of cardsOf(await sessionOf(uid), 'station').filter(x => x.station === 'bags')) { bags++; if (card.placeholder === false) packed++ }
+      const s = await sessionOf(uid)
+      for (const card of [...cardsOf(s, 'testimony'), ...cardsOf(s, 'clue')].filter(x => x.bag)) { bags++; if (!card.bag.placeholder) packed++ }
     }
     const fromBank = (await db.doc(relay.relayPaths(nightId).priv).get()).data()?.fromBank ?? 0
     return { leanSets: Object.keys(c?.parlourPlan?.leans ?? {}).length, bags, packed, fromBank }
@@ -364,12 +421,13 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   async function motiveFunnel() {
     const c = (await db.doc(`cases/${nightId}`).get()).data()
     const screenDoc = (await db.doc(`nights/${nightId}/public/screen`).get()).data()
-    const named = (screenDoc?.choices ?? []).map(x => x.n)
+    const band = Number(screenDoc?.mood) || 3
+    // a rehearsal shows a stand-in for Sir Irwin's cards: the same options, worked out from the case here
+    const named = c?.rehearsal ? families.irwinOptions(c, { band, seed: screen.screenSeed(c, nightId) }) : (screenDoc?.choices ?? []).map(x => x.n)
     const bulletinBand = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.level ?? null
     const left = families.remainingMotives(families.roomClues(c, { irwin: named, bulletinBand }))
-    const band = Number(screenDoc?.mood) || 3
     const ok = named.length === families.irwinCount(band) && left.includes(Number(c?.motive)) && (band !== 3 || left.length === 1)
-    return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length }
+    return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length + Object.keys(c?.solving?.boo ?? {}).length }
   }
 
   // The Act 6 drawing on its own clock: the room taps a guess at random on

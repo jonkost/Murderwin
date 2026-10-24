@@ -40,7 +40,7 @@ cats would pick to a silly question. The cats live in a Victorian manor:
   things and good manners.
 - zimothy: Zimothy Clawford, Esq., the old family solicitor, the fussy one.
   Particular, proper, thinks about cost and rules.
-- salem: Salem Crookshank, the groundskeeper, grumpy and outdoorsy. Practical,
+- salem: Salem Crooknog, the groundskeeper, grumpy and outdoorsy. Practical,
   muddy, contrary, likes the weather and dislikes fuss.
 
 For each question reference you are given, return the answer each cat would

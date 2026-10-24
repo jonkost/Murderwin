@@ -11,6 +11,7 @@
     "emulate": "npm --prefix functions run seed && firebase emulators:start --only auth,firestore,functions,hosting,storage --project demo-murderwin",
     "emulate:seed": "node scripts/seed-emulator.mjs",
     "fake-night": "node scripts/fake-players.mjs",
+    "checks": "node scripts/checks.mjs",
     "build:site": "npm --prefix app run build:site && npm --prefix play run build:site",
     "check-build": "node scripts/check-build.mjs",
     "deploy": "npm run build:site && npm run check-build && firebase deploy --only hosting,firestore:rules,storage,functions",

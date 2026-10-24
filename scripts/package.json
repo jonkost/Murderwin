@@ -6,6 +6,7 @@
     "leans": "node generate-leans.mjs",
     "relay-pictures": "node generate-relay-pictures.mjs",
     "pack-bags": "node pack-bags.mjs",
+    "checks": "node checks.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
