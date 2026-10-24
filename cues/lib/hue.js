@@ -9,6 +9,13 @@
 // Finding the hall light's id:
 //   curl -k -H "hue-application-key: <key>" https://<bridge>/clip/v2/resource/light
 // → data[].id with data[].metadata.name   (or: npm start -- --lights)
+// Scenes (the four Jon makes in the Hue app, cues/scenes.json):
+//   GET /clip/v2/resource/scene → data[].id, metadata.name, group { rid, rtype }
+//   PUT /clip/v2/resource/scene/<id>  { "recall": { "action": "active" } }
+// A Hue scene belongs to one room or zone, so a name may stand for several
+// scenes (the same name made in each room): recallScene recalls them all.
+// The hall bulb is in a room of its own and in no scene (Jon, in the Hue app),
+// so a scene never touches its red or green.
 
 import { request as httpsRequest } from 'node:https'
 
@@ -51,6 +58,14 @@ export function bridgeFetch(url, { method = 'GET', headers = {}, body, timeoutMs
   })
 }
 
+// Scene names match forgivingly: case, and spaces at the ends or doubled.
+export function sameSceneName(a, b) {
+  const norm = x => String(x ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
+  return norm(a) !== '' && norm(a) === norm(b)
+}
+
+export const SCENE_RECALL = { recall: { action: 'active' } }
+
 export class Hue {
   constructor({ host, key, fetchImpl = bridgeFetch, log = () => {} } = {}) {
     if (!host || !key) throw new Error('hue: bridge host and application key are required')
@@ -78,5 +93,28 @@ export class Hue {
 
   async setLight(id, colour, opts) {
     return this.request(`/clip/v2/resource/light/${id}`, { method: 'PUT', body: lightBody(colour, opts) })
+  }
+
+  async scenes() {
+    const r = await this.request('/clip/v2/resource/scene')
+    return (r?.data ?? []).map(s => ({ id: s.id, name: s.metadata?.name ?? '', group: s.group?.rid ?? null }))
+  }
+
+  // Room and zone names by id, for the --scenes list.
+  async places() {
+    const out = new Map()
+    for (const kind of ['room', 'zone']) {
+      const r = await this.request(`/clip/v2/resource/${kind}`)
+      for (const g of r?.data ?? []) out.set(g.id, g.metadata?.name ?? '')
+    }
+    return out
+  }
+
+  // Recall every scene with this name. Returns how many there were (0: none
+  // by that name on the bridge).
+  async recallScene(name) {
+    const hits = (await this.scenes()).filter(s => sameSceneName(s.name, name))
+    for (const s of hits) await this.request(`/clip/v2/resource/scene/${s.id}`, { method: 'PUT', body: SCENE_RECALL })
+    return hits.length
   }
 }

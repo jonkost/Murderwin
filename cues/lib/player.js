@@ -8,7 +8,10 @@
 // sound id, a clip id or a file name.
 //
 // `spawn` is node's child_process.spawn (a stand-in in the tests); `exists`
-// is fs.existsSync; `fake` logs and plays nothing.
+// is fs.existsSync; `fake` logs and plays nothing. `onDone`, per cue, is
+// called once when the cue's last file has finished (or at once when there
+// is nothing to play), and never for a cue a newer one cut off: the relay
+// brings the music back up then.
 
 import { soundCandidates, playLine } from './cues.js'
 
@@ -22,19 +25,19 @@ export function createPlayer({ mediaDir, exists, spawn, log = () => {}, fake = f
     if (p) { try { p.kill() } catch { /* already gone */ } }
   }
 
-  function play(id, clips = [], { unknown = 0 } = {}) {
+  function play(id, clips = [], { unknown = 0, onTv = 0, onDone = null } = {}) {
     const mine = ++sequence
     stop()
     const find = x => soundCandidates(mediaDir, x).find(f => exists(f)) ?? null
     const sound = id ? find(id) : null
     const recordings = clips.map(find)
     const missing = recordings.filter(f => !f).length
-    log(`${playLine({ sound: id ? (sound ? 'ok' : 'missing') : null, recordings: clips.length, missing, unknown })}${fake ? ' (fake: nothing plays)' : ''}`)
+    log(`${playLine({ sound: id ? (sound ? 'ok' : 'missing') : null, recordings: clips.length, missing, unknown, onTv })}${fake ? ' (fake: nothing plays)' : ''}`)
     const queue = [sound, ...recordings].filter(Boolean)
     const nextOne = () => {
       if (mine !== sequence) return // a newer cue has taken over
       const file = queue.shift()
-      if (!file) { current = null; return }
+      if (!file) { current = null; if (onDone) onDone(); return }
       if (fake) { nextOne(); return }
       const p = spawn('afplay', [file], { stdio: 'ignore' })
       current = p

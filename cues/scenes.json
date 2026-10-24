@@ -1,0 +1,46 @@
+{
+  "_about": [
+    "The brain's music and Hue scenes for each moment of the night (handoff 23 Oct, section 2d). Safe to change: nothing here is a secret. docs/cues-relay.md explains it.",
+    "music: a playlist below by its short name (arrival, investigation, supper), or \"off\" to stop the music, or null to leave it as it is.",
+    "hue: the name of a scene you made in the Hue app, or null to leave the lights as they are.",
+    "An act's music and hue hold for every beat of that act unless the beat says otherwise. A phase (the blackout, the power returning) wins over the act and the beat.",
+    "The brain only acts when the answer changes, so pressing Next inside an act changes nothing unless this file says so.",
+    "volume: Music's own volume, 0 to 100, for that playlist. whisper: Music's volume while a cue sound or recording plays. videoHoldSeconds: how long Music stays at a whisper after a chime whose bulletin the Parlour TV plays as video.",
+    "drawing: the music while the Relay Drawing runs, until the door opens. offForTheNight: after that sound, the music stays off for the rest of that act.",
+    "strings: the Orangerie string lights in Salem's game (red, green) and the rest of the night (decor). hue 0 to 360, sat and brightness 0 to 100."
+  ],
+  "playlists": {
+    "arrival": { "name": "Murderwin · Arrival", "volume": 70 },
+    "investigation": { "name": "Murderwin · Investigation", "volume": 40 },
+    "supper": { "name": "Murderwin · Supper", "volume": 55 }
+  },
+  "whisper": 10,
+  "videoHoldSeconds": 90,
+  "phases": {
+    "blackout": { "music": "off", "hue": "Murderwin Blackout" },
+    "prompt": { "music": "investigation", "hue": "Murderwin Lights Out" }
+  },
+  "acts": {
+    "1": { "music": "arrival", "hue": "Murderwin Arrival" },
+    "2": { "music": "investigation", "hue": "Murderwin Lights Out", "beats": { "supper": { "music": "supper" } } },
+    "3": { "music": "supper", "hue": "Murderwin Lights Out" },
+    "4": { "music": "investigation", "hue": "Murderwin Lights Out", "beats": { "warn": { "music": "supper" } } },
+    "5": { "music": "arrival", "hue": "Murderwin Arrival" },
+    "6": { "music": "investigation", "hue": "Murderwin Lights Out" },
+    "7": {
+      "music": "investigation",
+      "hue": "Murderwin Lights Out",
+      "beats": {
+        "reveal": { "music": "off", "hue": "Murderwin Reveal" },
+        "result": { "music": "off", "hue": "Murderwin Reveal" }
+      }
+    }
+  },
+  "drawing": { "acts": [6], "music": "off" },
+  "offForTheNight": { "sound": "sting-reveal", "acts": [7] },
+  "strings": {
+    "red": { "hue": 0, "sat": 100, "brightness": 100 },
+    "green": { "hue": 120, "sat": 100, "brightness": 100 },
+    "decor": { "hue": 32, "sat": 70, "brightness": 35 }
+  }
+}

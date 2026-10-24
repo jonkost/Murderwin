@@ -5,9 +5,13 @@
 // Inputs are the public docs any phone may read:
 //   cues   nights/{id}/public/cues    { hall: 'red'|'green', changedAt }
 //   relay  nights/{id}/public/relay   { doorOpen: boolean, ... }
-//   sounds nights/{id}/public/sounds  { current: { id, at, clips? } }
+//   sounds nights/{id}/public/sounds  { current: { id, at, clips?, video? } }
 //     clips: the recordings, as codes on a night with a station key saved
 //     (functions/lib/news.js clipCode), as names in a rehearsal without one.
+//     video: true when the Parlour TV plays that bulletin's recordings as
+//     video with its own sound: the relay plays the id but never the clips.
+//
+// The music and the Hue scenes are planned separately (lib/scenes.js).
 
 import { createHmac } from 'node:crypto'
 
@@ -104,6 +108,9 @@ export const SOUND_STALE_MS = 30_000
 // last docs, so a reload that replays the same docs produces nothing.
 // `readClip` turns a clip on the doc into one of CLIP_IDS (clipReader); a
 // clip it cannot read is counted (`unknown`), never named.
+// A cue the TV plays as video (`video: true`): the id plays, the clips do
+// not ({ type: 'sound', id, video: true, onTv: n }); recordings alone become
+// { type: 'video', count: n }, which plays nothing here and does not duck.
 export function plan(prev, next, now = Date.now(), { readClip = clipReader() } = {}) {
   const actions = []
   const hall = hallColour(next)
@@ -114,23 +121,28 @@ export function plan(prev, next, now = Date.now(), { readClip = clipReader() } =
   const clips = sent.map(readClip).filter(Boolean)
   const unknown = sent.length - clips.length
   const clipsOnly = !soundId && sent.length > 0
+  const video = next.sounds?.current?.video === true
   const key = soundId || clipsOnly ? `${soundId ?? 'clips'}@${soundAt}` : null
   const fresh = !soundAt || now - soundAt < SOUND_STALE_MS
   // an unknown id is refused once (counted, never named in the log); a known one plays
   if (key && key !== prev.sound && fresh) {
     const extra = { ...(clips.length ? { clips } : {}), ...(unknown ? { unknown } : {}) }
-    if (clipsOnly) actions.push({ type: 'sound', id: null, clips, ...(unknown ? { unknown } : {}) })
-    else actions.push(knownSound(soundId) ? { type: 'sound', id: soundId, ...extra } : { type: 'refused', count: 1 })
+    if (clipsOnly) actions.push(video ? { type: 'video', count: sent.length } : { type: 'sound', id: null, clips, ...(unknown ? { unknown } : {}) })
+    else if (!knownSound(soundId)) actions.push({ type: 'refused', count: 1 })
+    else if (video) actions.push({ type: 'sound', id: soundId, video: true, ...(sent.length ? { onTv: sent.length } : {}) })
+    else actions.push({ type: 'sound', id: soundId, ...extra })
   }
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }
 }
 
 // The one line the relay's window prints for a cue: counts only, never a
 // sound id, a clip id, a code or a file name (the window sits in view all
-// night). `sound` is 'ok', 'missing' or null (recordings alone).
-export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0 } = {}) {
+// night). `sound` is 'ok', 'missing' or null (recordings alone). `onTv`
+// counts the recordings the Parlour TV plays as video instead.
+export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0, onTv = 0 } = {}) {
   const parts = []
   if (sound) parts.push(sound === 'ok' ? 'sound playing' : 'sound file missing; skipped')
+  if (onTv) parts.push(`bulletin on the TV as video: ${onTv} recording${onTv === 1 ? '' : 's'} not played here`)
   if (recordings || unknown) {
     let b = `bulletin: ${recordings + unknown} recording${recordings + unknown === 1 ? '' : 's'}`
     if (missing) b += `, ${missing} missing (the screen shows the words)`
@@ -145,7 +157,8 @@ export function recordingFiles(dir, exists, ids = CLIP_IDS) {
   return ids.filter(id => soundCandidates(dir, id).some(f => exists(f))).length
 }
 
-function stamp(t) {
+// A Firestore Timestamp, a Date or a number, as milliseconds (0 when absent).
+export function stamp(t) {
   if (!t) return 0
   if (typeof t.toMillis === 'function') return t.toMillis()
   if (t instanceof Date) return t.getTime()
