@@ -166,60 +166,75 @@ test('a roster whose traces have no partner sets caseWarning trace-partner, and 
 
 async function wholeNight({ partyNight }) {
   const { db, nightId, uids } = await party({ partyNight })
+  // a throwaway packing in brackets: every bag has two words, each word in two or three bags
+  db.store.set('sealed/bags', { words: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [String(i + 1), { [`(synthetic-${i % 4})`]: ['touch'], [`(synthetic-${4 + (i % 3)})`]: ['smell'] }])) })
   const now = 5_000_000
   const next = () => hostCommand(db, { nightId, command: 'next', now })
   await toPower(db, nightId, now)
   const c = db.store.get(`cases/${nightId}`)
   await next() // news
+  await next() // peek
   await next() // cat
-  await walkLights(db, nightId, { now })
-  await next() // checkin
-  await next(); await next(); await next() // act 3: down, bulletin, groups
-  await next() // act 4 station1 (no station alive: the study group gets its clue with the card)
-  await next() // station2
-  return { db, nightId, uids, c }
+  await walkLights(db, nightId, { now }) // everyone sees all four cats: supper on its own
+  await next() // act 3: down
+  await next() // the bulletin armed
+  await hostCommand(db, { nightId, command: 'start-act4', now })
+  await next() // the group cards
+  await next() // round 1
+  await next() // round 2: every room of round 1 paid at the chime
+  return { db, nightId, uids, c: db.store.get(`cases/${nightId}`) }
 }
 
-test('a whole party night: each hint cat\'s card is the cat, its room and the one open hint line; no safe, no numbers, no document', async () => {
+test('a whole party night: every cat\'s card is the cat, its room, its open hint line and its bag clue; no safe, no numbers, no document', async () => {
   const { db, nightId, uids, c } = await wholeNight({ partyNight: true })
   assert.equal(c.rehearsal, false)
   let clues = 0
   for (const uid of Object.values(uids)) {
-    const [t] = cards(db, uid, 'testimony').filter(x => x.outcome !== 'greet')
-    assert.deepEqual(Object.keys(t).sort(), ['act', 'at', 'beat', 'cat', 'catName', 'hint', 'id', 'kind', 'lines', 'placeholder', 'room'])
-    assert.equal(t.kind, 'testimony')
-    assert.deepEqual(t.lines, [], 'no opener, no middle, no closer')
-    assert.equal(t.catName, CAT_NAMES[t.cat]); assert.equal(t.room, CAT_ROOMS[t.cat])
-    assert.ok(t.hint.text && t.hint.placeholder === false, 'the open hint line')
-    assert.equal(t.placeholder, false)
-    assert.ok(!/\[[A-Z]+\]/.test(t.hint.text), 'no blank left in it')
+    const all = cards(db, uid, 'testimony')
+    assert.equal(all.length, 4, 'all four cats give real information (23 Oct)')
+    for (const t of all) {
+      assert.deepEqual(Object.keys(t).sort(), ['act', 'at', 'bag', 'beat', 'cat', 'catName', 'hint', 'id', 'kind', 'lines', 'placeholder', 'room', 'saved'])
+      assert.equal(t.kind, 'testimony')
+      assert.deepEqual(t.lines, [], 'no opener, no middle, no closer')
+      assert.equal(t.catName, CAT_NAMES[t.cat]); assert.equal(t.room, CAT_ROOMS[t.cat])
+      assert.ok(t.hint.text && t.hint.placeholder === false, 'the open hint line')
+      assert.ok(t.bag.text && t.bag.placeholder === false, 'the bag clue, filled from the packing')
+      assert.ok(!/___|\[sense|\[[A-Z]+\]/.test(t.hint.text + t.bag.text), 'no blank left in either')
+      assert.equal(t.placeholder, false)
+      assert.equal(t.saved, 'Saved to your Clues.')
+    }
     assert.equal(cards(db, uid, 'puzzle').length, 0, 'no safe')
     assert.equal(cards(db, uid, 'document').length, 0, 'no document')
     assert.ok(!cards(db, uid, 'notice').some(n => n.key === 'scrap'), 'no scrap of paper')
-    for (const s of cards(db, uid, 'station')) {
-      if (!s.testimony) continue
-      assert.deepEqual(s.testimony.lines, [])
-      assert.ok(s.testimony.hint?.text)
-      assert.equal(s.testimony.placeholder, !!s.testimony.hint.placeholder)
+    for (const k of cards(db, uid, 'clue')) {
+      clues++
+      assert.equal(k.placeholder, false); assert.ok(k.text.length > 10)
+      if (k.room) assert.ok(k.bag?.text && !/___|\[sense/.test(k.bag.text), 'each room pays a filled bag hint about the Ghost')
+      if (k.room === 'library' || k.room === 'entryway') assert.ok(MOTIVES.some(m => m.n === k.cross), 'Zimothy and Boo cross off a motive')
     }
-    for (const k of cards(db, uid, 'clue')) { clues++; assert.equal(k.placeholder, false); assert.ok(k.text.length > 10) }
     assert.equal(db.store.get(`sessions/${uid}`).solved, undefined)
   }
   assert.equal(db.store.get(`nights/${nightId}/private/puzzles`), undefined, 'no safe numbers kept anywhere')
-  assert.ok(clues >= 2, 'the first study group was paid its clue')
+  assert.ok(clues >= 2, 'round 1\'s rooms were paid')
+  // what the bag clues named is kept in the case for the checks, never on a public doc
+  assert.equal(Object.keys(c.bagClues.act2).length, Object.keys(uids).length)
   assertNothingLeaked()
 })
 
-test('the same walk on a rehearsal night: the hint is the same open line, the study clue is marked placeholder', async () => {
+test('the same walk on a rehearsal night: every hint and bag clue is a bracketed stand-in, the study clue is marked placeholder', async () => {
   const { db, uids, c } = await wholeNight({ partyNight: false })
   assert.equal(c.rehearsal, true)
   for (const uid of Object.values(uids)) {
-    const [t] = cards(db, uid, 'testimony').filter(x => x.outcome !== 'greet')
-    assert.deepEqual(t.lines, [])
-    assert.equal(t.placeholder, !!t.hint.placeholder, 'placeholder only when the hint is the stand-in')
+    for (const t of cards(db, uid, 'testimony')) {
+      assert.deepEqual(t.lines, [])
+      assert.match(t.hint.text, /^\[\w+'s motive hint appears here\]$/)
+      assert.match(t.bag.text, /^\[\w+'s bag clue about the Murderer appears here\]$/)
+      assert.equal(t.placeholder, true)
+    }
     for (const k of cards(db, uid, 'clue')) assert.equal(k.placeholder, true)
   }
-  assert.equal(studyClueCard(c, 4, 'station1').placeholder, true)
+  assert.equal(c.bagClues, undefined, 'a rehearsal reads no packing and records no fill')
+  assert.equal(studyClueCard(c, 4, 'round1').placeholder, true)
   // a case with no family for the guest carries the marked stand-in, and its card says so
   const { hint } = hintLine(null, null, { cat: 'boo' })
   assert.equal(hint.text, HINT_PLACEHOLDER)

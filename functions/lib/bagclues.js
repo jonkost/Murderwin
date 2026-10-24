@@ -151,14 +151,22 @@ export function bagLine(plan, { cat, act = 2, rung = 3, seed = '' } = {}) {
       if (!plan?.sense) continue
       return out(fillLine(tpl, { sense: plan.sense }), { sense: plan.sense })
     }
-    // a word: Salem's may be the wrong one; everyone else names only the true one
-    const straight = cat === 'salem' ? salemStraight(r, seed) : true
+    // a word: Salem's may be the wrong one; everyone else names only the true one.
+    // Salem's rung decides which, even on a lower line: at 5 he never names a wrong word.
+    const straight = cat === 'salem' ? salemStraight(rung, seed) : true
     const word = straight ? plan?.truth : plan?.wrong
     if (!word) continue
     return out(fillLine(tpl, { word }), { word, right: straight })
   }
-  // Salem's ladder is all words: with nothing to fill, his first line without the blank's clause
-  return out(BAG_LINES[act === 4 ? 'act4' : 'act2'][cat][0].replace(/\s*[^.!?]*___[^.!?]*[.!?]/, '').trim() || 'Nothing to report.')
+  // nothing to fill (no packing for that bag, or a cat whose ladder is all words): its first line
+  // without the sentence that would have named something, so it still reads in character
+  return out(unfilled(templateOf(cat, act, 1)))
+}
+
+// A line with every sentence that holds a blank taken out.
+export function unfilled(template) {
+  const kept = String(template ?? '').match(/[^.!?]+[.!?]+/g)?.filter(x => !/___|\[sense/.test(x)).join('').trim()
+  return kept || 'Nothing to report.'
 }
 
 // The rehearsal stand-in: a rehearsal never reads the packing, so the slot

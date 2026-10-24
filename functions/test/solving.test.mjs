@@ -4,11 +4,12 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
-import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, memoryBoard, memoryPath, MEMORY_PAIRS, revealTrace } from '../lib/deal.js'
+import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, revealTrace } from '../lib/deal.js'
+import { memoryBoards, memoryPath, MEMORY_ROUNDS, ALL_TRACES } from '../lib/act4.js'
 import { studyReveal, studyClueCard, makeGroups } from '../lib/station.js'
 import { rehearsalCase } from '../lib/case.js'
 import { irwinMotiveClue, irwinLines, DEFAULT_IRWIN } from '../lib/screen.js'
-import { FAMILIES, ALL_MOTIVES, familyOf, familyMates, solvingPlan, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues } from '../lib/families.js'
+import { FAMILIES, ALL_MOTIVES, familyOf, familyMates, solvingPlan, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues, hintsOf, familyForCat } from '../lib/families.js'
 import { traceOf } from '../lib/traces.js'
 import { hintLine as catHintLine, HINT_CATS, motiveName, CAT_LINES, fillSlot } from '../lib/cats.js'
 
@@ -46,6 +47,7 @@ function playCase(seed, { players = 9, band = 3 } = {}) {
   groups.forEach((members, i) => {
     const groupId = `g${i + 1}`
     c.solving.memory[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt })
+    c.solving.boo[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt, tag: 'boo' })
   })
   const irwin = irwinOptions(c, { band, seed: c.screenSalt })
   return { c, roster, groups, irwin, left: remainingMotives(roomClues(c, { irwin, bulletinBand: band })) }
@@ -84,12 +86,41 @@ test('G33 Act 2 hints only ever rule out wrong families; the real family is neve
     assert.equal(s.newsOut.length, 1, `seed ${seed}: bulletin 1 crosses off exactly one family`)
     assert.ok(!s.newsOut.includes(s.family), `seed ${seed}: the news never rules out the real family`)
     for (const k of roster.map(g => g.key)) {
-      assert.ok(s.hints[k], `seed ${seed}: every guest gets a hint`)
-      assert.notEqual(s.hints[k], s.family, `seed ${seed}: a hint never rules out the real family`)
-      assert.ok(!s.newsOut.includes(s.hints[k]), `seed ${seed}: a hint is a family the news did not take`)
+      const mine = hintsOf(s, k)
+      assert.equal(mine.length, 2, `seed ${seed}: every guest is given two wrong families for their four cats`)
+      assert.ok(!mine.includes(s.family), `seed ${seed}: a hint never rules out the real family`)
+      assert.ok(!mine.some(f => s.newsOut.includes(f)), `seed ${seed}: a hint is a family the news did not take`)
+      // G45: with the news, at least two families stand for any one guest (the real one and one more)
+      const left = FAMILIES.map(f => f.key).filter(f => !s.newsOut.includes(f) && !mine.includes(f))
+      assert.equal(left.length, 2, `seed ${seed}: G45`)
+      assert.ok(left.includes(s.family))
     }
     // with enough guests, every wrong family reaches the room one way or another
-    if (roster.length >= 3) assert.equal(new Set([...s.newsOut, ...Object.values(s.hints)]).size, FAMILIES.length - 1, `seed ${seed}`)
+    if (roster.length >= 2) assert.equal(new Set([...s.newsOut, ...Object.keys(s.hints).flatMap(k => hintsOf(s, k))]).size, FAMILIES.length - 1, `seed ${seed}`)
+  }
+})
+
+test('G45 no single guest\'s four Act 2 cats, with bulletin 1, name the real family, at any rungs (1,000 cases)', () => {
+  for (let seed = 1; seed <= 1000; seed++) {
+    const rng = seeded(seed)
+    const roster = rosterOf(2 + (seed % 11), rng)
+    const c = rehearsalCase({ nightId: `g45-${seed}`, roster, rng })
+    const s = c.solving
+    for (const g of roster) {
+      const families = hintsOf(s, g.key)
+      const out = new Set(s.newsOut)
+      const motivesOut = new Set()
+      for (const cat of HINT_CATS) {
+        const family = familyForCat(families, { cat, seed: `${c.screenSalt}\u0000${g.key}` })
+        const line = catHintLine(c, { cat, level: 1 + rng(5), act: 2, family, seed: `${c.screenSalt}\u0000${g.key}\u0000${cat}`, bonusFamilies: [...families, ...s.newsOut] })
+        for (const f of line.families) out.add(f)
+        for (const n of line.motives) motivesOut.add(n)
+        for (const n of line.motives) assert.ok([...families, ...s.newsOut].includes(familyOf(n)), `seed ${seed}: a single motive only from the guest's two families or the news's`)
+      }
+      assert.ok(!out.has(s.family) && !motivesOut.has(c.motive), `seed ${seed}: never the real answer`)
+      const standing = FAMILIES.map(f => f.key).filter(f => !out.has(f))
+      assert.ok(standing.length >= 2, `seed ${seed}: at least two families stand for one guest after Act 2`)
+    }
   }
 })
 
@@ -197,70 +228,90 @@ test('G36 level 3, two similar options: the study never offers the Murderer\'s t
 
 // ---- G37: the memory match -------------------------------------------------
 
-test('G37 the memory match: only in-play traces, six pairs, never the real motive crossed off', () => {
+test('G50 the memory match: three rounds of 7, 10 and 14 pairs, always all fourteen traces as art; never the real motive crossed off', () => {
+  assert.deepEqual(MEMORY_ROUNDS, [7, 10, 14])
+  assert.equal(ALL_TRACES.length, 14)
   for (let seed = 1; seed <= 300; seed++) {
     const rng = seeded(seed)
-    const list = rosterOf(2 + (seed % 11), rng)
-    const roster = Object.fromEntries(list.map(g => [g.key, g]))
-    const inPlay = new Set(list.map(g => traceOf(g.characterId).trace))
-    const board = memoryBoard(roster, rng)
-    assert.equal(board.length, MEMORY_PAIRS * 2, `seed ${seed}: twelve cards`)
-    const counts = {}
-    for (const t of board) { assert.ok(inPlay.has(t), `seed ${seed}: only traces at the party`); counts[t] = (counts[t] ?? 0) + 1 }
-    for (const n of Object.values(counts)) assert.equal(n % 2, 0, `seed ${seed}: every card has its pair`)
-    if (inPlay.size >= 6) assert.equal(Object.keys(counts).length, 6, `seed ${seed}: six different traces when six are at the party`)
-    assert.ok(!board.some(t => /[A-Z]/.test(t)), 'trace ids only, never a name')
+    const boards = memoryBoards(rng)
+    assert.deepEqual(boards.map(b => b.length), [14, 20, 28], `seed ${seed}: 7, 10 and 14 pairs`)
+    for (const board of boards) {
+      const counts = {}
+      for (const t of board) { assert.ok(ALL_TRACES.includes(t), `seed ${seed}: trace art only`); counts[t] = (counts[t] ?? 0) + 1 }
+      for (const n of Object.values(counts)) assert.equal(n, 2, `seed ${seed}: every card has exactly one pair`)
+    }
+    assert.equal(new Set(boards[2]).size, 14, `seed ${seed}: the last board holds every trace`)
+    assert.ok(!boards.flat().some(t => /[A-Z]/.test(t)), 'trace ids only, never a name')
   }
+  // G51: Zimothy's and Boo's cross-offs never take the real motive, never the same one twice
   for (let seed = 1; seed <= 1000; seed++) {
     const { c, groups } = playCase(seed, { players: 4 + (seed % 9) })
     const s = c.solving
-    assert.ok(!Object.values(s.memory).includes(c.motive), `seed ${seed}: never the real motive`)
+    const picks = [...Object.values(s.memory), ...Object.values(s.boo)]
+    assert.ok(!picks.includes(c.motive), `seed ${seed}: never the real motive`)
+    assert.equal(new Set(picks).size, picks.length, `seed ${seed}: never the same motive twice`)
     // one they might still have: replayed group by group, whenever the group still had a wrong one to lose
     const memory = {}
+    const boo = {}
     groups.forEach((members, i) => {
       const groupId = `g${i + 1}`
-      const out = new Set([...s.newsOut, ...members.map(k => s.hints[k])])
-      const gone = new Set([...s.struck, ...Object.values(memory)])
+      const out = new Set([...s.newsOut, ...members.flatMap(k => hintsOf(s, k))])
+      const gone = new Set([...s.struck, ...Object.values(memory), ...Object.values(boo)])
       const could = ALL_MOTIVES.filter(n => n !== c.motive && !out.has(familyOf(n)) && !gone.has(n))
-      const n = memoryPick({ ...c, solving: { ...s, memory } }, { groupId, members, seed: c.screenSalt })
+      const n = memoryPick({ ...c, solving: { ...s, memory, boo } }, { groupId, members, seed: c.screenSalt })
       assert.equal(n, s.memory[groupId], `seed ${seed}: the same pick every time`)
       if (could.length) assert.ok(could.includes(n), `seed ${seed} group ${i + 1}: a motive the group might still have`)
       memory[groupId] = n
+      boo[groupId] = s.boo[groupId]
     })
   }
 })
 
-test('the memory match through the dealer: the board is set for the group at the station, a wrong clear is refused, a right one pays the group once', async () => {
+// The Act 4 rooms through the dealer: Start Act 4, the group cards, round by round.
+async function act4Party(n = 8, now = 3_000_000) {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
   const { nightId } = await createNight(db)
-  for (const name of NAMES.slice(0, 8)) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  for (const name of NAMES.slice(0, n)) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  await hostCommand(db, { nightId, command: 'act', arg: 3, now })
+  await hostCommand(db, { nightId, command: 'start-act4', now })
+  await hostCommand(db, { nightId, command: 'next', now }) // the group cards
+  await hostCommand(db, { nightId, command: 'next', now }) // round 1
+  return { db, nightId }
+}
+
+test('the memory match through the dealer: three boards for the group in the Library, a wrong board is refused, the third pays the group once', async () => {
   const now = 3_000_000
-  await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'groups', now })
-  await hostCommand(db, { nightId, command: 'act', arg: 4, now })
+  const { db, nightId } = await act4Party(8, now)
   let board = db.store.get(memoryPath(nightId))
   for (let r = 0; !board?.boardId && r < 5; r++) { await hostCommand(db, { nightId, command: 'next', now }); board = db.store.get(memoryPath(nightId)) }
-  assert.ok(board.boardId, 'a group is at the memory match')
-  assert.equal(board.cards.length, 12)
-  assert.ok(!JSON.stringify(board).match(/"(name|members|motive|cross)"/), 'the board carries traces only')
-  const wrong = [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]]
-  if (!wrong.every(([a, b]) => board.cards[a] === board.cards[b])) await assert.rejects(player.memoryCleared(db, { nightId, boardId: board.boardId, pairs: wrong }), /do not match/)
-  const pairs = []
-  const open = new Map()
-  board.cards.forEach((t, i) => { if (open.has(t) && open.get(t).length) pairs.push([open.get(t).pop(), i]); else open.set(t, [...(open.get(t) ?? []), i]) })
-  const r = await player.memoryCleared(db, { nightId, boardId: board.boardId, pairs })
-  assert.ok(r.paid >= 2, 'every member of the group got the cross-off')
-  const again = await player.memoryCleared(db, { nightId, boardId: board.boardId, pairs })
+  assert.ok(board.boardId, 'a group is in the Library')
+  assert.equal(board.step, 0)
+  assert.ok(!JSON.stringify(board).match(/"(name|members|motive|cross)"/), 'the boards carry traces only')
+  const pairsOf = cards => {
+    const pairs = []
+    const open = new Map()
+    cards.forEach((t, i) => { if (open.has(t) && open.get(t).length) pairs.push([open.get(t).pop(), i]); else open.set(t, [...(open.get(t) ?? []), i]) })
+    return pairs
+  }
+  const wrong = Array.from({ length: 7 }, (_, i) => [2 * i, 2 * i + 1])
+  if (!wrong.every(([a, b]) => board.boards['0'][a] === board.boards['0'][b])) await assert.rejects(player.memoryStep(db, { nightId, boardId: board.boardId, step: 0, pairs: wrong }), /do not match/)
+  await assert.rejects(player.memoryStep(db, { nightId, boardId: board.boardId, step: 1, pairs: pairsOf(board.boards['1']) }), /not the board/)
+  for (const step of [0, 1]) assert.equal((await player.memoryStep(db, { nightId, boardId: board.boardId, step, pairs: pairsOf(board.boards[String(step)]) })).step, step + 1)
+  const r = await player.memoryStep(db, { nightId, boardId: board.boardId, step: 2, pairs: pairsOf(board.boards['2']) })
+  assert.equal(r.cleared, true)
+  assert.ok(r.paid >= 2, 'every member of the group got the reward')
+  const again = await player.memoryStep(db, { nightId, boardId: board.boardId, step: 2, pairs: pairsOf(board.boards['2']) })
   assert.equal(again.already, true)
   const c = db.store.get(`cases/${nightId}`)
   assert.notEqual(c.solving.memory[board.groupId], c.motive, 'never the real motive')
-  // Act 5: every group still unpaid is paid
+  // Act 5: every group has had the Library and the Entryway pay, one motive each, never the real one
   await hostCommand(db, { nightId, command: 'act', arg: 5, now })
   const groups = db.store.get(`nights/${nightId}/public/rotation`).groups
-  const after = db.store.get(`cases/${nightId}`).solving.memory
-  assert.equal(Object.keys(after).length, groups.length, 'every group crossed one off by Act 5')
-  assert.ok(!Object.values(after).includes(c.motive))
+  const after = db.store.get(`cases/${nightId}`).solving
+  assert.equal(Object.keys(after.memory).length, groups.length, 'every group crossed one off in the Library by Act 5')
+  assert.equal(Object.keys(after.boo).length, groups.length, 'and one with Boo')
+  assert.ok(![...Object.values(after.memory), ...Object.values(after.boo)].includes(c.motive))
 })
 
 // ---- G38 ------------------------------------------------------------------
@@ -293,9 +344,9 @@ test('G38 no hidden events for the Murderer or the Ghost in Act 2: no beat opens
 
 // ---- F20 and F21: the Act 2 rooms ------------------------------------------
 
-async function lightsParty(n, now = 1_000_000) {
+async function lightsParty(n, now = 1_000_000, { party = false } = {}) {
   const db = new FakeFirestore()
-  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', ...(party ? { party_night: true } : {}) })
   const { nightId } = await createNight(db)
   const uids = {}
   for (const name of NAMES.slice(0, n)) { const uid = `u-${name.toLowerCase()}`; await join(db, { uid, nightId, name }); uids[name.toLowerCase()] = uid }
@@ -342,7 +393,7 @@ test('F21 every player is always told where to go next: through the waves, a no-
   const all = () => Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)
   const told = () => { for (const uid of all()) { const l = db.store.get(`sessions/${uid}`).lights; assert.ok(l?.step && l.title && l.text, 'a next step on every phone') } }
   told()
-  // a guest sent to a cat who never turns up: the tick moves them on, greets them on the phone, and sends the next
+  // a guest called to a cat who never turns up: the tick moves them on, gives them the cat's lines on the phone, and calls the next
   const state = db.store.get(lightsPath(nightId))
   const deck = db.store.get(`nights/${nightId}/private/deck`).uids
   const [noShow] = Object.entries(state.guests).find(([, g]) => g.step === 'go')
@@ -362,27 +413,30 @@ test('F21 every player is always told where to go next: through the waves, a no-
   for (const uid of all()) {
     assert.equal(stepOf(db, uid), 'done', 'everyone goes to supper')
     assert.match(db.store.get(`sessions/${uid}`).lights.title, /Supper/)
-    assert.equal(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony' && c.outcome !== 'greet').length, 1, 'everyone holds their real hint')
+    assert.equal(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony').length, 4, 'everyone holds all four cats\' lines: the ones they missed as a note')
   }
   told()
   assert.ok(Object.keys(uids).length === 9)
 })
 
-test('the Act 2 hint is the hint cat\'s line from the bank, and the case records what it rules out, never the real answer', async () => {
-  const { db, nightId } = await lightsParty(6)
+test('every Act 2 cat gives its line from the bank, and the case records what each rules out, never the real answer', async () => {
+  const { db, nightId } = await lightsParty(6, 1_000_000, { party: true })
   await walkLights(db, nightId)
   const c = db.store.get(`cases/${nightId}`)
+  assert.equal(c.rehearsal, false)
   const deck = db.store.get(`nights/${nightId}/private/deck`).uids
   for (const [key, uid] of Object.entries(deck)) {
-    const t = db.store.get(`sessions/${uid}`).cards.find(x => x.kind === 'testimony' && x.outcome !== 'greet')
-    assert.equal(t.cat, c.solving.hintCats[key], 'the real hint comes from the guest\'s hint cat')
-    assert.equal(t.hint.placeholder, false)
-    assert.ok(t.hint.text && !/\[[A-Z0-9]+\]/.test(t.hint.text), 'every blank filled')
-    assert.ok(c.solving.hints[key], 'the case knows the family')
-    assert.notEqual(c.solving.hints[key], c.solving.family)
-    const ruled = c.solving.ruled[key]
-    assert.ok(ruled, 'what the line ruled out is kept with the case')
-    assert.ok(!ruled.families.includes(c.solving.family) && !ruled.motives.includes(c.motive), 'never the real answer')
+    const said = db.store.get(`sessions/${uid}`).cards.filter(x => x.kind === 'testimony')
+    assert.equal(said.length, 4)
+    for (const t of said) {
+      assert.equal(t.hint.placeholder, false)
+      assert.ok(t.hint.text && !/\[[A-Z0-9]+\]/.test(t.hint.text), 'every blank filled')
+      const ruled = c.solving.ruled[`${key}-${t.cat}`]
+      assert.ok(ruled, 'what the line ruled out is kept with the case')
+      assert.ok(!ruled.families.includes(c.solving.family) && !ruled.motives.includes(c.motive), 'never the real answer')
+      assert.ok(ruled.families.every(f => hintsOf(c.solving, key).includes(f)), 'a whole family only from the guest\'s two')
+    }
+    assert.equal(hintsOf(c.solving, key).length, 2)
   }
   assert.ok(c.dealtClues.some(e => e.kind === 'hint'), 'the ledger notes the hints (Spill the Beans is off once one is out)')
 })
@@ -417,7 +471,14 @@ test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, onl
         assert.ok(!DOUBLED.test(line.text), `${where}: no doubled marks`)
         assert.ok(!line.families.includes(real), `${where}: never the real family`)
         assert.ok(!line.motives.includes(m.n), `${where}: never the real motive`)
-        if (act === 2) for (const n of line.motives) if (familyOf(n) !== family) assert.equal(familyOf(n), real, `${where}: a bonus is a real-family mate`)
+        if (act === 2) for (const n of line.motives) if (familyOf(n) !== family) assert.equal(familyOf(n), real, `${where}: with no families given, a bonus is a real-family mate`)
+        if (act === 2) {
+          // as the dealer calls it: the bonus only from the guest's other family or the news's (G45)
+          const others = FAMILIES.map(f => f.key).filter(k => k !== real && k !== family)
+          const given = catHintLine(c, { cat, level, act, family, seed: `s${m.n}${family}${level}`, bonusFamilies: [family, ...others.slice(0, 2)] })
+          for (const n of given.motives) assert.ok([family, ...others.slice(0, 2)].includes(familyOf(n)), `${where}: a bonus inside the given families`)
+          assert.ok(!/undefined/.test(given.text), `${where}: blanks filled`)
+        }
         if (cat !== 'salem') assert.ok(!line.text.includes(motiveName(m.n)), `${where}: the real motive is never said`)
       }
     }
@@ -437,29 +498,21 @@ test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, onl
 
 // ---- G39 ------------------------------------------------------------------
 
-test('G39 each player gets exactly one real Act 2 hint; the other three cats only greet (2 to 12 players)', async () => {
+test('G44 in Act 2 every cat visit gives one motive hint and one bag clue, at the rung of that cat\'s affection at the scan (2 to 12 players)', async () => {
   for (let n = 2; n <= 12; n++) {
     const { db, nightId } = await lightsParty(n)
     await walkLights(db, nightId)
-    const c = db.store.get(`cases/${nightId}`)
     const deck = db.store.get(`nights/${nightId}/private/deck`).uids
-    for (const [key, uid] of Object.entries(deck)) {
+    for (const uid of Object.values(deck)) {
       const said = db.store.get(`sessions/${uid}`).cards.filter(x => x.kind === 'testimony')
-      const real = said.filter(x => x.outcome !== 'greet')
-      assert.equal(real.length, 1, `${n} players: one real hint`)
-      assert.ok(real[0].hint, `${n} players: the real one carries the hint`)
-      assert.equal(said.filter(x => x.outcome === 'greet' && !x.hint).length, 3, `${n} players: three greetings, no hint`)
-      assert.ok(LIGHTS_CATS.includes(c.solving.hintCats[key]))
+      assert.deepEqual(said.map(x => x.cat).sort(), [...LIGHTS_CATS].sort(), `${n} players: one card from each cat`)
+      for (const x of said) {
+        assert.ok(x.hint?.text, `${n} players: a motive hint on every card`)
+        assert.ok(x.bag?.text, `${n} players: a bag clue on every card`)
+        assert.equal(x.outcome, undefined, 'no greeting-only cat any more')
+      }
     }
   }
-  // across many deals, every cat is somebody's hint cat about equally often
-  const counts = Object.fromEntries(LIGHTS_CATS.map(cat => [cat, 0]))
-  for (let seed = 1; seed <= 1000; seed++) {
-    const rng = seeded(seed)
-    const roster = rosterOf(9, rng)
-    for (const cat of Object.values(rehearsalCase({ nightId: `h-${seed}`, roster, rng }).solving.hintCats)) counts[cat]++
-  }
-  for (const cat of LIGHTS_CATS) assert.ok(counts[cat] > 9000 / 4 * 0.85 && counts[cat] < 9000 / 4 * 1.15, `${cat}: ${counts[cat]}`)
 })
 
 // ---- Salem petted ----------------------------------------------------------

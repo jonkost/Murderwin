@@ -20,10 +20,14 @@
 //                     which answer each cat leans toward (docs/parlour-games.md)
 //   lean   { setId, q, cat, value }   one cat's leaning answer for one question:
 //                     'a', 'b', or '' to clear it
+//   checks            the content checks on the real packing, leans and drawing
+//                     pictures (checks.js): each check's ID, its plain name, PASS
+//                     or FIX NEEDED and a count. Never a word of what it read.
 
 import { createHash } from 'node:crypto'
 import { NightError, readArea } from './night.js'
 import { LISTENERS, ANSWERS, QUESTIONS } from './parlour.js'
+import { BANK_DOC } from './relay-bank.js'
 
 // The Steward's hash: the SHA-256 of their verified Google email, lower
 // case. The same value as isAdmin() in firestore.rules (the admin-drift
@@ -55,7 +59,7 @@ export function isSteward(token, { hash = stewardHash() } = {}) {
   return emailHash(token.email) === hash
 }
 
-export const OPS = ['whoami', 'bags', 'leans', 'lean']
+export const OPS = ['whoami', 'bags', 'leans', 'lean', 'checks']
 export const LEANS_DOC = 'sealed/parlour_leans' // the same doc deal.js reads at the case deal
 
 function millis(v) {
@@ -153,6 +157,24 @@ async function opLean(db, data, { now }) {
   return { ok: true, setId, q, cat }
 }
 
+// Jenna's "Run the checks" (docs/test-plan.md): the checks that need the real
+// sealed content, run here on the server. Only IDs, names, pass or fail and
+// counts leave this function.
+async function opChecks(db, { rng = n => Math.floor(Math.random() * n) } = {}) {
+  // loaded here, not at the top: checks.js reaches act4.js, which reaches deal.js, which imports this file
+  const { packingChecks, leanChecks, pictureChecks, CHECK_NAMES } = await import('./checks.js')
+  const [bags, leans, pictures, items] = await Promise.all([
+    db.doc('sealed/bags').get(), db.doc(LEANS_DOC).get(), db.doc(BANK_DOC).get(), readArea(db, 'scenarios'),
+  ])
+  const sets = items.filter(i => Array.isArray(i.beats) && i.beats.length === QUESTIONS).map(i => ({ id: String(i.id) }))
+  const results = [
+    ...packingChecks(bags.exists ? bags.data() : null, { rng }),
+    ...leanChecks(leans.exists ? (leans.data().sets ?? {}) : {}, sets),
+    ...pictureChecks(pictures.exists ? pictures.data() : null),
+  ].map(r => ({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, pass: !!r.pass, ...(Number.isFinite(r.count) ? { count: r.count, of: r.of } : {}) }))
+  return { ok: true, allPass: results.every(r => r.pass), results }
+}
+
 // One entry point for the callable and the tests. `log` gets the op only.
 export async function stewardOp(db, data, { now = new Date(), log = (...a) => console.log(...a) } = {}) {
   const op = data?.op
@@ -163,6 +185,7 @@ export async function stewardOp(db, data, { now = new Date(), log = (...a) => co
     case 'bags': return opBags(db)
     case 'leans': return opLeans(db)
     case 'lean': return opLean(db, data, { now })
+    case 'checks': return opChecks(db)
     default: throw new NightError('invalid', 'Which op?')
   }
 }

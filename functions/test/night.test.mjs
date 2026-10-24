@@ -409,7 +409,7 @@ test('while paused with no window open, nothing moves the night on until the hos
   assert.equal(night().phase, 'act')
   assert.equal(night().pausedAt, null)
   await runCommand(db, { nightId, command: 'next', now: t0 + 62_000 })
-  assert.equal(night().beat, 'cat')
+  assert.equal(night().beat, 'peek')
 })
 
 test('the Act 4 groups write where the house stands with each cat; nothing before that', async () => {
@@ -419,7 +419,9 @@ test('the Act 4 groups write where the house stands with each cat; nothing befor
   await runCommand(db, { nightId, command: 'act', arg: 2 })
   assert.equal(sessionOf(db, 'u-jessa').groupAffection, undefined, 'absent before the groups are made')
   await runCommand(db, { nightId, command: 'act', arg: 3 })
-  await runCommand(db, { nightId, command: 'beat', arg: 'groups' })
+  await runCommand(db, { nightId, command: 'start-act4' })
+  assert.equal(sessionOf(db, 'u-jessa').groupAffection, undefined, 'not during the two-minute warning either')
+  await runCommand(db, { nightId, command: 'next' }) // the group cards
   for (const uid of ['u-jon', 'u-jessa', 'u-jacob', 'u-mari']) {
     const s = sessionOf(db, uid)
     assert.ok(s.groupAffection, 'the group average is on every member')

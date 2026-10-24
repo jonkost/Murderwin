@@ -84,18 +84,18 @@ test('the gate: Jon\'s admin UID, an unverified email and a stranger are refused
   if (saved.emu === undefined) delete process.env.FUNCTIONS_EMULATOR; else process.env.FUNCTIONS_EMULATOR = saved.emu
 })
 
-test('the ops are whoami, bags, leans and lean; the old secrets ops are refused and nothing reads a sealed motive set', async () => {
-  assert.deepEqual(OPS, ['whoami', 'bags', 'leans', 'lean'])
+test('the ops are whoami, bags, leans, lean and checks; the old secrets ops are refused and nothing reads a sealed motive set', async () => {
+  assert.deepEqual(OPS, ['whoami', 'bags', 'leans', 'lean', 'checks'])
   const db = new FakeFirestore()
   db.store.set('sealed/manifest', { codes: { TST01: 1 } })
   db.store.set('sealed/TST01', { review: '' })
   const reads = watchReads(db)
   for (const op of ['list', 'read', 'write', 'mark', 'nope']) await refused(stewardRequest(db, asSteward({ op, code: 'TST01', field: 'x', value: 'y', review: 'done' }), quiet), 'invalid')
-  for (const op of ['whoami', 'bags', 'leans']) await stewardRequest(db, asSteward({ op }), quiet)
+  for (const op of ['whoami', 'bags', 'leans', 'checks']) await stewardRequest(db, asSteward({ op }), quiet)
   assert.ok(!reads.some(p => p === 'sealed/manifest' || p === 'sealed/TST01'), 'never sealed/manifest, never a sealed motive set')
   assert.deepEqual(db.store.get('sealed/TST01'), { review: '' }, 'nothing written')
   // the log carries the op only
-  assert.deepEqual(captured, ['steward whoami', 'steward bags', 'steward leans'])
+  assert.deepEqual(captured, ['steward whoami', 'steward bags', 'steward leans', 'steward checks'])
 })
 
 test('bags: the packing by bag number, each item by name and looks-like note, a pair written out; nothing when unpacked', async () => {
@@ -127,6 +127,32 @@ test('bags: the packing by bag number, each item by name and looks-like note, a 
   assert.equal(r.bags[1].items[0].words, '', 'no clue words reads as none')
   assert.equal(r.bags[1].items[1].name, '(a line that is no longer in the workshop)')
   assert.deepEqual(Object.keys(r.properties), ['synthetic-a', 'synthetic-b'])
+})
+
+test('checks: IDs, names, pass or fix needed and counts on the real docs; never a word of what it read', async () => {
+  const db = new FakeFirestore()
+  const empty = await stewardRequest(db, asSteward({ op: 'checks' }), quiet)
+  assert.equal(empty.allPass, false)
+  assert.deepEqual(empty.results.map(r => r.id), ['PK1', 'G43', 'PK2', 'LN1', 'RP1'])
+  assert.ok(empty.results.every(r => r.pass === false && typeof r.name === 'string'))
+  // ten bags of four, three words each, every word in three bags: a sound packing
+  const word = k => keep(`synthetic-w${k % 10}`)
+  const bags = {}, words = {}
+  for (let n = 1; n <= 10; n++) {
+    bags[n] = [1, 2, 3, 4].map(i => keep(`syn-${n}-${i}`))
+    words[n] = Object.fromEntries([n, n + 1, n + 2].map(k => [word(k), ['smell']]))
+  }
+  db.store.set('sealed/bags', { bags, doubles: { 1: [bags[1][0]] }, words })
+  db.store.set('safe_content/scenarios', { items: [{ id: 's1', text: 'set', beats: [0, 1, 2].map(q => ({ q: keep(`(Synthetic q${q})`), a: 'x', b: 'y' })) }] })
+  db.store.set('sealed/parlour_leans', { sets: { s1: Object.fromEntries([0, 1, 2].map(q => [q, { granolia: 'a', boo: 'b', zimothy: 'a', salem: 'b' }])) } })
+  const r = await stewardRequest(db, asSteward({ op: 'checks' }), quiet)
+  const by = Object.fromEntries(r.results.map(x => [x.id, x]))
+  assert.equal(by.PK1.pass, true)
+  assert.equal(by.G43.pass, true)
+  assert.deepEqual([by.LN1.pass, by.LN1.count, by.LN1.of], [true, 12, 12])
+  assert.equal(by.RP1.pass, false, 'no picture bank yet')
+  const sent = JSON.stringify(r)
+  for (const x of synthetic) assert.ok(!sent.includes(x), 'nothing it read comes back')
 })
 
 test('stewardOp: the default log goes through console with the op only', async () => {

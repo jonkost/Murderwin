@@ -219,7 +219,7 @@ test('start needs at least two people', async () => {
 })
 
 test('Sir Irwin\'s slides: each stays up five seconds plus 0.4 a word, in the order of the How to Play doc; slide 3 carries the practice smiley\'s B1 square', () => {
-  assert.deepEqual(IRWIN_SLIDES.map(s => s.title), ['Welcome', 'The idea', 'A turn', 'The shouting', 'Guessing', 'The rounds', 'The clue'])
+  assert.deepEqual(IRWIN_SLIDES.map(s => s.title), ['Sir Irwin Needs a Hand', 'The idea', 'A turn', 'The shouting', 'Guessing', 'The rounds', 'The clue'])
   for (const s of IRWIN_SLIDES) {
     const words = s.text.trim().split(/\s+/).length
     assert.equal(s.ms, SLIDE_BASE_MS + SLIDE_WORD_MS * words, s.title)

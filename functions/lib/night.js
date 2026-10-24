@@ -24,6 +24,8 @@ const CHARACTERS_FILE = JSON.parse(readFileSync(joinPath(seedDir, 'characters.js
 export const CHARACTERS = CHARACTERS_FILE.characters
 export const AFFECTION_MODS = CHARACTERS_FILE.affection
 export const MOTIVES = JSON.parse(readFileSync(joinPath(seedDir, 'motives.json'), 'utf8')).motives
+// The five game names (handoff 23 Oct §16, Jon 24 Oct 2026): display text only, keyed by the game's id.
+export const GAME_NAMES = Object.fromEntries(JSON.parse(readFileSync(joinPath(seedDir, 'game-names.json'), 'utf8')).games.map(g => [g.id, g]))
 
 export const CATS = ['granolia', 'boo', 'zimothy', 'salem'] // Irwin is always 5
 export const PLANNING_BAGS = 10 // 8 players → 10 bags (bag doc, 29 Sep)
@@ -323,7 +325,7 @@ async function joinOnly(db, { uid, nightId, name }) {
 }
 
 // What follows a guest from a dead phone to a new one.
-export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights', 'salemFriend']
+export const CARRIED_FIELDS = ['cards', 'windows', 'answers', 'ballot', 'result', 'group', 'groupAffection', 'dealt', 'lights', 'act4', 'salemFriend']
 
 // A borrowed phone (host button). The previous owner's cards, windows and
 // everything else they were dealt are moved off the session into the
@@ -371,7 +373,8 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 //   nights/{id}.window.opensAt, .window.closesAt
 //   nights/{id}.reveal.at (older nights only; since 18 Oct the reveal lives in public/finale, below)
 //   nights/{id}/public/relay: introEndsAt (Sir Irwin's slides), turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
-//   nights/{id}/public/study: slotEndsAt (the twelve-minute slot with no station;
+//   nights/{id}/public/act4: warnEndsAt, lockEndsAt, roundStartsAt, roundEndsAt (Act 4's ten-minute rounds)
+//   nights/{id}/public/study: slotEndsAt (the round's end, the study's slot;
 //     a live station keeps its own fifteen-minute clock and freezes it itself
 //     by watching this night's phase, station/lib/follow.js)
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
@@ -383,6 +386,7 @@ export const PAUSE_SHIFTED = {
   'public/study': ['slotEndsAt'],
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
+  'public/act4': ['warnEndsAt', 'lockEndsAt', 'roundStartsAt', 'roundEndsAt'], // Act 4's clock (act4.js)
 }
 
 function msOf(t) {

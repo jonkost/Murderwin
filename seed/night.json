@@ -1,58 +1,290 @@
 {
-  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the living room TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026.",
-  "parlour": { "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. Act 6 (atStart) plays its games back to back as the act opens, startGapSec apart, before the drawing (22 Oct). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.", "counts": { "2": 5, "4": 5, "6": 2 }, "minGapMin": 4, "edgeMin": 2, "actMinutes": { "2": 30, "4": 60, "6": 30 }, "atStart": [6], "startGapSec": 90 },
-  "solving": { "_about": "How the case gets solved (docs/solving-the-case.md, 21 Oct 2026). W-O-O-F News bulletin 1 rules out exactly one wrong motive family for everyone (settled 22 Oct 2026). The other wrong families are shared out one per guest, round the room in turn: each guest visits all four cats and one of them, picked at the deal, gives the real hint (docs/handoff-2026-10-22.md §6b). Act 2 rooms: one guest at a cat at a time; a guest sent to a cat who has not scanned in goMinutes, or is still with the cat after withMinutes, gets the greeting on the phone anyway and the next guest is sent. Jon may change any of these.", "goMinutes": 4, "withMinutes": 5, "catRooms": { "granolia": "the Study", "salem": "the Orangerie", "zimothy": "the Library", "boo": "the Entryway" } },
-  "windows": {
-    "questions": { "ms": 60000, "title": "Parlour Game" },
-    "eliminate": { "ms": 90000, "title": "The deduction round" },
-    "ballot": { "ms": 120000, "title": "Two minutes to decide" }
+  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4).",
+  "parlour": {
+    "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. Act 6 (atStart) plays its games back to back as the act opens, startGapSec apart, before the drawing (22 Oct). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.",
+    "counts": {
+      "2": 5,
+      "4": 5,
+      "6": 2
+    },
+    "minGapMin": 4,
+    "edgeMin": 2,
+    "actMinutes": {
+      "2": 30,
+      "4": 60,
+      "6": 30
+    },
+    "atStart": [
+      6
+    ],
+    "startGapSec": 90
   },
-  "stations": [
-    { "key": "study", "name": "The study", "what": "The light puzzle. Fifteen minutes, then out." },
-    { "key": "cat", "name": "A cat", "what": "Salem, Zimothy or Boo talks to the whole group in the cat's own room. Never Granolia: her Study holds the light puzzle." },
-    { "key": "bags", "name": "The bags", "what": "Something in two or three bags. Ask to open them." },
-    { "key": "puzzle", "name": "The memory match", "what": "On the iPad: turn two cards at a time and find the six pairs of traces. Clearing it crosses one motive off." },
-    { "key": "checkin", "name": "Free time", "what": "Nothing for the group right now: a drink, a stretch, and one tip on the phone." }
-  ],
+  "solving": {
+    "_about": "How the case gets solved (docs/solving-the-case.md; docs/handoff-2026-10-23.md §3, 23 Oct 2026). W-O-O-F News bulletin 1 rules out exactly one wrong motive family for everyone. Each guest is given two of the other wrong families; every guest visits all four cats and EVERY cat gives a motive hint about one of those two and a bag clue about the Murderer, at the rung its affection sets at the scan. One guest at a cat at a time; a guest called to a cat who has not scanned in goMinutes, or is still with the cat after withMinutes, gets the cat's lines on the phone anyway and the next guest is called. 'Not yet, call me later' puts a guest back in the queue and they are not called again for laterMinutes. Jon may change any of these.",
+    "goMinutes": 4,
+    "withMinutes": 5,
+    "catRooms": {
+      "granolia": "the Study",
+      "salem": "the Orangerie",
+      "zimothy": "the Library",
+      "boo": "the Entryway"
+    },
+    "laterMinutes": 2
+  },
+  "windows": {
+    "questions": {
+      "ms": 60000,
+      "title": "Parlour Game"
+    },
+    "eliminate": {
+      "ms": 90000,
+      "title": "The deduction round"
+    },
+    "ballot": {
+      "ms": 120000,
+      "title": "Two minutes to decide"
+    }
+  },
   "acts": {
-    "1": { "name": "The Invitation", "plain": "Welcome", "beats": [
-      { "key": "arrive", "name": "Arrivals", "what": "Doors open. Guests type their name, get a character and a bag, and look around their phone." },
-      { "key": "meet", "name": "Meet the household", "what": "Point everyone at the Cats tab: who the five are and how each one stands with them.", "action": "notice:meet" },
-      { "key": "introduce", "name": "Introductions", "what": "Everyone says their name and profession out loud. Phones ask for it.", "action": "notice:introduce" },
-      { "key": "ready", "name": "Ready for the dark", "what": "Last beat before the blackout. Press Blackout when the room is settled, then Power returns.", "action": "notice:ready" }
-    ] },
-    "2": { "name": "Lights Out", "plain": "First investigation", "beats": [
-      { "key": "orient", "name": "Orientation", "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.", "action": "notice:orient" },
-      { "key": "news", "name": "News flash", "what": "The big screen shows the first news. Phones say: eyes up.", "action": "notice:news", "screen": "news", "sound": "chime-news" },
-      { "key": "cat", "name": "Go to a cat", "what": "The phones send guests in waves, one at a cat at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest visits all four and scans the code in each room. Only one of the four gives that guest a real hint, one line on the phone; the other three only say hello. Everyone else waits in the living room.", "action": "deal:encounter" },
-      { "key": "checkin", "name": "Check-in", "what": "Everyone reads their clues and crosses off motives. Then dinner.", "action": "notice:checkin" }
-    ] },
-    "3": { "name": "Supper Is Served", "plain": "Dinner", "beats": [
-      { "key": "down", "name": "Phones down", "what": "Dinner in the orangery. Phones down and charging. The radio plays.", "action": "notice:down" },
-      { "key": "bulletin", "name": "Arm the bulletin", "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the Orangerie HomePod with captions on the iPad. Your phone says only Armed. The phones get the bulletin notice when it plays.", "action": "arm:bulletin" },
-      { "key": "groups", "name": "Groups for Act 4", "what": "Phones come back up with who you are working with next and where to start.", "action": "groups" }
-    ] },
-    "4": { "name": "Behind Closed Doors", "plain": "Rotation", "beats": [
-      { "key": "station1", "name": "First station", "what": "Groups go to their first station. The study is the clock.", "action": "rotate" },
-      { "key": "station2", "name": "Second station", "what": "Rotate. Every group moves on one.", "action": "rotate" },
-      { "key": "station3", "name": "Third station", "what": "Rotate.", "action": "rotate" },
-      { "key": "station4", "name": "Fourth station", "what": "Rotate.", "action": "rotate" },
-      { "key": "station5", "name": "Fifth station", "what": "Rotate. The last station for every group.", "action": "rotate" }
-    ] },
-    "5": { "name": "One Candle", "plain": "Dessert", "beats": [
-      { "key": "roam", "name": "Cake", "what": "Cake in hand, wander anywhere. The bags may be talked about now.", "action": "notice:roam" },
-      { "key": "irwin", "name": "Sir Irwin speaks", "what": "The chime, then Sir Irwin on the living room screen and only that screen. Phones say: go to the living room.", "action": "notice:irwin", "screen": "irwin", "sound": "chime-irwin" }
-    ] },
-    "6": { "name": "The Final Hour", "plain": "The Big Solve", "beats": [
-      { "key": "games", "name": "Two Parlour Games", "what": "Boo hosts the last two Parlour Games on every phone, one after the other. Press Next for the drawing once both are done." },
-      { "key": "drawing", "name": "The drawing", "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; the TV shows one square; the room describes it and taps its guess on the living room screen.", "action": "relay:start" },
-      { "key": "door", "name": "The door opens", "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.", "action": "notice:door", "screen": "door", "sound": "sting-door", "soundOnce": true },
-      { "key": "eliminate", "name": "The deduction round", "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.", "action": "window:eliminate", "screen": "board" }
-    ] },
-    "7": { "name": "Unmasked", "plain": "The Reveal", "beats": [
-      { "key": "ballot", "name": "The ballot", "what": "Two minutes. Every phone picks the murderer, the motive and the victim. A phone that does not pick gets a random pick.", "action": "window:ballot", "screen": "board" },
-      { "key": "reveal", "name": "The reveal", "what": "Murderer, then motive, then victim, on the living room screen. Phones say: eyes on the screen.", "action": "reveal", "sound": "sting-reveal" },
-      { "key": "result", "name": "Your result", "what": "Every phone shows its own three answers against the truth.", "action": "results", "sound": "sting-result" }
-    ] }
+    "1": {
+      "name": "The Invitation",
+      "plain": "Welcome",
+      "beats": [
+        {
+          "key": "arrive",
+          "name": "Arrivals",
+          "what": "Doors open. Guests type their name, get a character and a bag, and look around their phone."
+        },
+        {
+          "key": "meet",
+          "name": "Meet the household",
+          "what": "Point everyone at the Cats tab: who the five are and how each one stands with them.",
+          "action": "notice:meet"
+        },
+        {
+          "key": "introduce",
+          "name": "Introductions",
+          "what": "Everyone says their name and profession out loud. Phones ask for it.",
+          "action": "notice:introduce"
+        },
+        {
+          "key": "ready",
+          "name": "Ready for the dark",
+          "what": "Last beat before the blackout. Press Blackout when the room is settled, then Power returns.",
+          "action": "notice:ready"
+        }
+      ]
+    },
+    "2": {
+      "name": "Lights Out",
+      "plain": "First investigation",
+      "beats": [
+        {
+          "key": "orient",
+          "name": "Orientation",
+          "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.",
+          "action": "notice:orient"
+        },
+        {
+          "key": "news",
+          "name": "News flash",
+          "what": "W-O-O-F News bulletin 1 on the Parlour TV (the video, or its words with the recording). It crosses off one family of motives for everyone. Phones say: eyes up.",
+          "action": "notice:news",
+          "screen": "news",
+          "sound": "chime-news"
+        },
+        {
+          "key": "peek",
+          "name": "Bag peek",
+          "what": "Every phone: take a quiet look inside your own bag, here in the Parlour, and show nobody yet.",
+          "action": "notice:peek"
+        },
+        {
+          "key": "cat",
+          "name": "The cat visits",
+          "what": "The phones call guests to the cats one at a time: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. Each guest visits all four and scans the code in each room; every cat gives a motive hint and a bag clue about the Murderer. Not yet, call me later puts a guest back in the queue. Everyone else waits in the Parlour, where Sir Irwin's prompts run on the TV.",
+          "action": "deal:encounter",
+          "screen": "prompts"
+        },
+        {
+          "key": "supper",
+          "name": "Supper",
+          "what": "The chime to supper: on its own once everyone has seen all four cats, or press Supper's ready. A guest with cats still unvisited gets their lines on the phone as a note.",
+          "sound": "chime-phone"
+        }
+      ]
+    },
+    "3": {
+      "name": "Supper Is Served",
+      "plain": "Dinner",
+      "beats": [
+        {
+          "key": "down",
+          "name": "Phones down",
+          "what": "Supper in the Orangerie. Phones down and charging. The bags come to the table; the whole table may share.",
+          "action": "notice:down"
+        },
+        {
+          "key": "bulletin",
+          "name": "Arm the bulletin",
+          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the HomePods with its words on the Orangerie iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When everyone has settled after supper, press Start Act 4.",
+          "action": "arm:bulletin"
+        }
+      ]
+    },
+    "4": {
+      "name": "Behind Closed Doors",
+      "plain": "Four rooms",
+      "beats": [
+        {
+          "key": "warn",
+          "name": "Two-minute warning",
+          "what": "Start Act 4: every phone gets a two-minute warning. The groups are made now; nobody sees them yet.",
+          "action": "act4:warn"
+        },
+        {
+          "key": "groups",
+          "name": "Find your group",
+          "what": "The chime and the title card on the Parlour TV. Every phone shows its group as portraits; everyone taps Locked in. Comes on its own two minutes after the warning.",
+          "action": "act4:groups",
+          "screen": "title",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "round1",
+          "name": "First round",
+          "what": "The chime sends every group to its first room (or the Parlour). Comes on its own once everyone is locked in, or two minutes after the group cards. Ten minutes, then the next round on its own.",
+          "action": "act4:round",
+          "screen": "prompts",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "round2",
+          "name": "Second round",
+          "what": "The chime: every group moves on one room. Any room not finished is paid anyway.",
+          "action": "act4:round",
+          "screen": "prompts",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "round3",
+          "name": "Third round",
+          "what": "The chime: every group moves on one room.",
+          "action": "act4:round",
+          "screen": "prompts",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "round4",
+          "name": "Fourth round",
+          "what": "The chime: every group moves on one room. With four groups or fewer, this is the last.",
+          "action": "act4:round",
+          "screen": "prompts",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "round5",
+          "name": "Fifth round",
+          "what": "Only with five groups: the last room for every group. Then everyone back to the Parlour.",
+          "action": "act4:round",
+          "screen": "prompts",
+          "sound": "chime-phone"
+        }
+      ]
+    },
+    "5": {
+      "name": "One Candle",
+      "plain": "Dessert",
+      "beats": [
+        {
+          "key": "roam",
+          "name": "Cake",
+          "what": "Cake in hand, wander anywhere. The bags may be talked about now. Act 4's rooms close: any reward not yet paid is paid now.",
+          "action": "notice:roam"
+        },
+        {
+          "key": "irwin",
+          "name": "Sir Irwin speaks",
+          "what": "The chime, then Sir Irwin on the Parlour screen and only that screen. Phones say: go to the Parlour.",
+          "action": "notice:irwin",
+          "screen": "irwin",
+          "sound": "chime-irwin"
+        }
+      ]
+    },
+    "6": {
+      "name": "The Final Hour",
+      "plain": "The Big Solve",
+      "beats": [
+        {
+          "key": "games",
+          "name": "Two Parlour Games",
+          "what": "Boo hosts the last two Parlour Games on every phone, one after the other. Press Next for the drawing once both are done.",
+          "sound": "chime-phone"
+        },
+        {
+          "key": "drawing",
+          "name": "The drawing",
+          "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; the TV shows one square; the room describes it and taps its guess on the Parlour screen.",
+          "action": "relay:start"
+        },
+        {
+          "key": "door",
+          "name": "The door opens",
+          "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.",
+          "action": "notice:door",
+          "screen": "door",
+          "sound": "sting-door",
+          "soundOnce": true
+        },
+        {
+          "key": "eliminate",
+          "name": "The deduction round",
+          "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.",
+          "action": "window:eliminate",
+          "screen": "board"
+        }
+      ]
+    },
+    "7": {
+      "name": "Unmasked",
+      "plain": "The Reveal",
+      "beats": [
+        {
+          "key": "ballot",
+          "name": "The ballot",
+          "what": "Two minutes. Every phone picks the murderer, the motive and the victim. A phone that does not pick gets a random pick.",
+          "action": "window:ballot",
+          "screen": "board"
+        },
+        {
+          "key": "reveal",
+          "name": "The reveal",
+          "what": "Murderer, then motive, then victim, on the Parlour screen. Phones say: eyes on the screen.",
+          "action": "reveal",
+          "sound": "sting-reveal"
+        },
+        {
+          "key": "result",
+          "name": "Your result",
+          "what": "Every phone shows its own three answers against the truth.",
+          "action": "results",
+          "sound": "sting-result"
+        }
+      ]
+    }
+  },
+  "act4": {
+    "_about": "Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, 23 Oct 2026; functions/lib/act4.js). Start Act 4 gives every phone a two-minute warning (warnMinutes); then the group cards with Locked in, and the rounds start when everyone is locked in or lockMinutes have passed. Every group visits the four game rooms, roundMinutes each, on the server's clock; at most maxGroups groups (pairs and trios). Jon may change any of these.",
+    "roundMinutes": 10,
+    "warnMinutes": 2,
+    "lockMinutes": 2,
+    "maxGroups": 5,
+    "rooms": {
+      "study": "The Study: Granolia's light puzzle. Reward: the Ghost's trace and a bag hint.",
+      "library": "The Library: Zimothy's memory match, three rounds. Reward: one wrong motive crossed off and a bag hint.",
+      "orangerie": "The Orangerie: Salem's Motion Game. Reward: a bag hint, maybe backwards.",
+      "entryway": "The Entryway: Boo's catwalk. Reward: one wrong motive crossed off and a bag hint."
+    }
   }
 }

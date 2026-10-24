@@ -53,41 +53,6 @@ async function firstParlour(db, nightId, t) {
 
 // ---- the study pay-out --------------------------------------------------
 
-test('the study station card carries no clue text; the clue is dealt once when the station says finished', async () => {
-  const { db, nightId, uids } = await party(6)
-  const t = { now: 1_000_000 }
-  await walkTo(db, nightId, 3, 'groups', t)
-  // the station is alive before the first rotation, so the shortcut does not fire
-  db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), updatedAt: new Date(t.now) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now })
-  assert.equal(night(db, nightId).beat, 'station1')
-  const rot = db.store.get(rotationPath(nightId))
-  const first = rot.studyOrder[0]
-  const group = rot.groups.find(g => g.id === first)
-  for (const m of group.members) {
-    const uid = uids[m.key]
-    const sc = cards(db, uid, 'station').find(c => c.station === 'study')
-    assert.ok(sc, 'the study group holds a study station card')
-    assert.ok(!('payout' in sc), 'no clue text rides on the station card')
-    assert.equal(sc.payoutId, `${sc.id}-clue`)
-    assert.equal(cards(db, uid, 'clue').length, 0, 'nothing paid out yet while the station is alive')
-  }
-  assert.equal(db.store.get(studyPath(nightId)).groupId, first, 'the station is pointed at the due group')
-  const r = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first, outcome: 'solved', seconds: 400, pairs: 3 } })
-  assert.equal(r.dealt, group.members.length)
-  for (const m of group.members) {
-    const uid = uids[m.key]
-    const clue = cards(db, uid, 'clue')
-    assert.equal(clue.length, 1)
-    assert.equal(clue[0].id, '4-station1-study-clue')
-    assert.ok(clue[0].trace && clue[0].trace.level >= 1 && clue[0].trace.level <= 5, 'the study pays the Ghost\'s trace at a level')
-    assert.equal(clue[0].placeholder, true, 'a rehearsal case is marked')
-  }
-  const again = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first } })
-  assert.equal(again.repeated, true)
-  for (const m of group.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1, 'dealt once')
-})
-
 test('studyClueCard carries the reveal it is given; with none it is the marked stand-in', () => {
   const real = studyClueCard({ rehearsal: false }, 4, 'station2', { level: 3, trace: 'ink', label: null, context: null })
   assert.equal(real.placeholder, false)
@@ -96,48 +61,6 @@ test('studyClueCard carries the reveal it is given; with none it is the marked s
   const none = studyClueCard(null, 4, 'station2')
   assert.equal(none.placeholder, true)
   assert.equal(none.text, STUDY_PLACEHOLDER)
-})
-
-test('rotate does not clobber a running study game, and the rehearsal shortcut fires only when no station is alive', async () => {
-  const { db, nightId, uids } = await party(4)
-  const t = { now: 2_000_000 }
-  await walkTo(db, nightId, 4, 'station1', t)
-  const rot = db.store.get(rotationPath(nightId))
-  // no station alive at station1 → the study group got its clue with the card
-  const g1 = rot.groups.find(g => g.id === rot.studyOrder[0])
-  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1, 'rehearsal shortcut')
-  // a game is running in the study: the next rotation leaves groupId alone
-  db.store.set(studyPath(nightId), { state: 'playing', groupId: 'running', updatedAt: new Date(t.now) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station2
-  assert.equal(night(db, nightId).beat, 'station2')
-  assert.equal(db.store.get(studyPath(nightId)).groupId, 'running')
-  // idle again: the next rotation points at the group due at that rotation
-  db.store.set(studyPath(nightId), { state: 'done', groupId: 'running', updatedAt: new Date(t.now) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station3
-  assert.equal(night(db, nightId).beat, 'station3')
-  assert.equal(db.store.get(studyPath(nightId)).groupId, rot.studyOrder[2] ?? null)
-  assert.equal(db.store.get(studyPath(nightId)).state, 'idle')
-})
-
-test('studyFinished rotates the house in Act 4, and only there; a Parlour Game on the phones keeps running through the rotation', async () => {
-  const { db, nightId } = await party(6)
-  const t = { now: 3_000_000 }
-  await walkTo(db, nightId, 4, 'station1', t)
-  const rot = db.store.get(rotationPath(nightId))
-  const r = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0], outcome: 'solved', seconds: 300, pairs: 3 }, now: t.now })
-  assert.equal(r.rotated, true)
-  assert.equal(night(db, nightId).beat, 'station2')
-  // a Parlour Game pops up; the next finish still moves the house on, and the game keeps running
-  await hostCommand(db, { nightId, command: 'light-up', now: t.now })
-  const w = night(db, nightId).window
-  const r2 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[1], outcome: 'capped' }, now: t.now + 1000 })
-  assert.equal(r2.rotated, true, 'next beat exists in Act 4')
-  assert.equal(night(db, nightId).beat, 'station3')
-  assert.equal(night(db, nightId).window.id, w.id)
-  assert.equal(night(db, nightId).window.settled, false, 'the game was not closed early')
-  // a repeat is harmless
-  const r4 = await studyFinished(db, { nightId, payload: { groupId: rot.studyOrder[0] }, now: t.now })
-  assert.equal(r4.repeated, true)
 })
 
 test('the Host tab groups button keeps the murderer and the ghost apart', async () => {
@@ -187,12 +110,12 @@ test('pickPartner: in play only, never the excluded trace, Professors only as a 
   assert.equal(pickPartner('coffee', ['elbow-patch']), 'elbow-patch', 'a Professor when nobody else fits')
 })
 
-test('revealTrace writes the contract shape, turns the hall green, and never a name or a role', async () => {
-  for (const dial of [0, 9, -9, -4, 4]) {
+test('revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
+  for (const [dial, rehearsal] of [[0, false], [9, false], [-9, false], [-4, false], [4, false], [0, true], [9, true]]) {
     const { db, nightId } = await party(8)
     const t = { now: 5_000_000 }
     await walkTo(db, nightId, 2, 'orient', t)
-    await db.doc(`cases/${nightId}`).update({ dial })
+    await db.doc(`cases/${nightId}`).update({ dial, rehearsal })
     const c = db.store.get(`cases/${nightId}`)
     const r = await revealTrace(db, nightId, { now: t.now })
     // the whole of it lives where no phone reads
@@ -211,12 +134,15 @@ test('revealTrace writes the contract shape, turns the hall green, and never a n
       const inPlay = Object.values(night(db, nightId).roster).map(x => CHARACTERS.find(ch => ch.id === x.characterId).trace)
       assert.ok(inPlay.includes(doc.partner))
     } else assert.equal(doc.partner, null)
-    assert.equal(doc.placeholder, true)
+    assert.equal(doc.placeholder, rehearsal)
     // what the room screens read carries only what the level allows: the dial's work is not undone by one read
     const pub = db.store.get(`nights/${nightId}/public/trace`)
     assert.equal(pub.level, doc.level)
     assert.ok(!('partner' in pub), 'the public doc never says which picture is the real one')
-    if (doc.level === 3) {
+    if (rehearsal) {
+      assert.equal(pub.standIn, `[the Murderer's trace, level ${doc.level}]`)
+      assert.ok(!('trace' in pub) && !('images' in pub), 'a rehearsal never shows the picture (Jon, 23 Oct)')
+    } else if (doc.level === 3) {
       assert.ok(!('trace' in pub), 'at level 3 the public doc never says which of the two is the real one')
       assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
     } else {
@@ -339,60 +265,6 @@ test('a start that fails leaves Next on the drawing beat, so trying again tries 
   assert.equal(db.store.get(relayPaths(nightId).pub), undefined)
 })
 
-test('the group due in the study is paid when the house moves on without the station saying so', async () => {
-  const { db, nightId, uids } = await party(6)
-  const t = { now: 12_000_000 }
-  await walkTo(db, nightId, 3, 'groups', t)
-  const alive = (extra = {}) => db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), state: 'idle', updatedAt: new Date(t.now), ...extra })
-  alive()
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station1
-  const rot = db.store.get(rotationPath(nightId))
-  const [g1, g2, g3] = rot.studyOrder.map(id => rot.groups.find(g => g.id === id))
-  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 0, 'nothing yet: the station is alive')
-  // the station dies (no touch ever came); the host presses Next anyway
-  alive()
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station2
-  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1, 'g1 leaves the study with the clue')
-  assert.equal(db.store.get(rotationPath(nightId)).finished[g1.id].outcome, 'absent')
-  assert.equal(db.store.get(studyPath(nightId)).groupId, g2.id)
-  // a late word from the station about g1 deals nothing twice
-  const late = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: g1.id, outcome: 'solved' } })
-  assert.equal(late.repeated, true)
-  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
-  // g2 is mid-game with the station alive when the house rotates: left to the station, not paid yet
-  alive({ state: 'playing' })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station3
-  assert.equal(night(db, nightId).beat, 'station3')
-  for (const m of g2.members) assert.equal(cards(db, uids[m.key], 'clue').length, 0, 'the station still has g2')
-  assert.equal(db.store.get(rotationPath(nightId)).finished[g2.id], undefined)
-  assert.equal(db.store.get(studyPath(nightId)).groupId, g2.id, 'the running game is left alone')
-  // and when the station is not alive the mid-game group is paid at the next rotation
-  db.store.set(studyPath(nightId), { ...db.store.get(studyPath(nightId)), updatedAt: new Date(t.now - 10 * 60_000) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station4
-  for (const m of g2.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
-  assert.ok(g3)
-})
-
-test('a finish from a rotation the host already moved past does not move the house again', async () => {
-  const { db, nightId, uids } = await party(6)
-  const t = { now: 13_000_000 }
-  await walkTo(db, nightId, 3, 'groups', t)
-  db.store.set(studyPath(nightId), { ...(db.store.get(studyPath(nightId)) ?? {}), state: 'idle', updatedAt: new Date(t.now) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station1, rotation 0
-  const rot = db.store.get(rotationPath(nightId))
-  const g1 = rot.groups.find(g => g.id === rot.studyOrder[0])
-  // g1 overruns in the study; the host keeps the other groups moving
-  db.store.set(studyPath(nightId), { ...db.store.get(studyPath(nightId)), state: 'playing', groupId: g1.id, updatedAt: new Date(t.now) })
-  await hostCommand(db, { nightId, command: 'next', now: t.now }) // station2, rotation 1
-  assert.equal(night(db, nightId).rotation, 1)
-  // two minutes later g1 finishes: the clue lands, the house stays where it is
-  const r = await studyFinished(db, { nightId, payload: { groupId: g1.id, outcome: 'solved', seconds: 700, pairs: 3 }, now: t.now + 120_000 })
-  assert.equal(r.rotated, false)
-  assert.equal(r.reason, 'already-rotated')
-  assert.equal(night(db, nightId).beat, 'station2')
-  for (const m of g1.members) assert.equal(cards(db, uids[m.key], 'clue').length, 1)
-})
-
 test('both hidden roles answering at the same moment push the dial twice, and a late answer during settle counts once', async () => {
   const { db, nightId, uids, names } = await party(4)
   const t = { now: 14_000_000 }
@@ -468,8 +340,9 @@ async function revealed(n = 5) {
   await hostCommand(db, { nightId, command: 'settle', now: t.now })
   await hostCommand(db, { nightId, command: 'groups', now: t.now })
   const rot = db.store.get(rotationPath(nightId))
-  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: rot.studyOrder[0], outcome: 'solved', seconds: 372, pairs: 3 } })
-  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: rot.studyOrder[1], outcome: 'capped', seconds: 900, pairs: 1 } })
+  const due = rot.studyOrder.filter(Boolean)
+  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: due[0], outcome: 'solved', seconds: 372, pairs: 3 } })
+  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: due[1], outcome: 'capped', seconds: 900, pairs: 1 } })
   db.store.set(`nights/${nightId}/public/relay`, { state: 'done', doorOpen: true, stats: { totalSeconds: 1020, misses: [0, 2, 0] } })
   await reveal(db, nightId, { now: t.now })
   return { db, nightId, uids, names, t, c: db.store.get(`cases/${nightId}`) }
@@ -707,7 +580,7 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
   const t = { now: 7_800_000 }
   db.store.set('safe_content/achievements', { items: [
     { id: 'a1', text: 'Clean Plate Club: left nothing on the plate, not even the garnish.', order: 0 },
-    { id: 'a2', text: "Crookshank's Confidant: first to pet Salem.", order: 1 },
+    { id: 'a2', text: "Crooknog's Confidant: first to pet Salem.", order: 1 },
   ] })
   await walkTo(db, nightId, 3, 'down', t)
   const key = names[1].toLowerCase(), uid = uids[key]
@@ -716,7 +589,7 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
   assert.equal(r.awards, 1)
   const card = cards(db, uid, 'award')
   assert.equal(card.length, 1)
-  assert.equal(card[0].title, "Crookshank's Confidant")
+  assert.equal(card[0].title, "Crooknog's Confidant")
   assert.equal(card[0].text, 'first to pet Salem.')
   assert.ok(card[0].button)
   assert.equal(cards(db, uids[names[0].toLowerCase()], 'award').length, 0, 'nobody else got it')
@@ -733,14 +606,14 @@ test('achievements: given by a tap through Act 5, on the phone at once and in th
   // the reel carries the segment, after the stats and before the graph
   await reveal(db, nightId, { now: t.now })
   const f = db.store.get(finalePath(nightId))
-  assert.deepEqual(f.achievements, [{ name: names[1], title: "Crookshank's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards }], 'the host\'s, and only the host\'s')
-  assert.ok(!f.credits.awards.some(a => a.title === "Crookshank's Confidant"), 'and never again in the credits')
+  assert.deepEqual(f.achievements, [{ name: names[1], title: "Crooknog's Confidant", line: 'first to pet Salem.', showAt: f.schedule.awards }], 'the host\'s, and only the host\'s')
+  assert.ok(!f.credits.awards.some(a => a.title === "Crooknog's Confidant"), 'and never again in the credits')
   assert.ok(f.schedule.awards < f.schedule.graph, 'the segment has length when there is something to show')
   assert.ok(f.stats.every(s => s.showAt < f.schedule.awards))
 })
 
-test('nextOf still ends Act 4 at the fifth station', () => {
-  assert.deepEqual(nextOf(4, 'station5'), { act: 5, beat: 'roam' })
+test('nextOf still ends Act 4 at the fifth round', () => {
+  assert.deepEqual(nextOf(4, 'round5'), { act: 5, beat: 'roam' })
 })
 
 test('G31 the end credits\' awards: final sliders never leans, ties shown tied, missed windows never count, Irwin\'s seats, the groups, the fun ones', () => {

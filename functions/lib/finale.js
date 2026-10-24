@@ -24,7 +24,7 @@ import { rotationPath } from './station.js'
 import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
 import { stopOf } from './parlour.js'
 import { closingStage } from './news.js'
-import { play } from './screen.js'
+import { play, bulletinVideo } from './screen.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -86,7 +86,7 @@ export const COUNTERS = [
   { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.' },
   { key: 'forgot', label: 'Things Granolia forgot tonight', note: "She's forgotten the count." },
 ]
-export const THANKS = ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crookshank', 'Sir Irwin', 'Jon', 'Susan', 'Jenna']
+export const THANKS = ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna']
 export const IN_MEMORY = { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' }
 export const LAST_CARD = { cat: 'irwin', line: 'Can we play again?' }
 
@@ -383,8 +383,12 @@ export async function stage(db, nightId, { now = Date.now() } = {}) {
   }
   patch[`news.${next}`] = parts.map(p => ({ who: p.who, text: p.text, card: p.card }))
   patch[`cardAt.${next}`] = new Date(now + leadMs)
+  // as video on the Parlour TV (Jon, 23 Oct 2026): the kiosk plays this stage's parts as video (it
+  // works out the files from the open bank, so no recording is named here) and the brain stays quiet
+  const video = parts.length ? await bulletinVideo(db) : false
+  if (video) patch[`video.${next}`] = true
   await pubRef.update(patch)
-  if (parts.length) await play(db, nightId, null, { now, clips: parts.map(p => p.clip) })
+  if (parts.length) await play(db, nightId, null, { now, clips: parts.map(p => p.clip), video })
   return { ok: true, stage: next }
 }
 

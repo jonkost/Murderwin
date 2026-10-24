@@ -4,7 +4,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, ROLE_CARDS, REHEARSAL_SETS, ms, roleCardsFor, ROLE_CARD_ID } from '../lib/deal.js'
-import { studyPath, rotationPath, ABSENT_SLOT_MS } from '../lib/station.js'
+import { studyPath, rotationPath } from '../lib/station.js'
 import {
   tick, activeNightId, pushDial, wordCount, dueSlot, parlourPath,
   parityCheck, fillerLine, GRACE_MS, PARITY_TOLERANCE, DEFAULT_FILLER, HIDDEN_ROLES,
@@ -97,7 +97,7 @@ test('tick settles a window left open past its close, with defaults for every ph
   assert.equal(uids.filter(uid => session(db, uid).answers[w.id].defaulted).length, 4)
   const again = await tick(db, nightId, now + 60_000)
   assert.equal(again.windowSettled, false); assert.equal(again.settled, 0)
-  assert.equal(again.study.ticked, false)
+  assert.equal(again.lights.moved, 0)
   // the host's command is the same path
   const viaHost = await hostCommand(db, { nightId, command: 'tick', now: now + 120_000 })
   assert.equal(viaHost.settled, 0)
@@ -121,27 +121,22 @@ test('tick leaves a paused night alone, and a night that does not exist', async 
   assert.equal((await tick(db, 'no-such-night', now)).skipped, 'no-night')
 })
 
-test('tick ends a study slot that has run out, through the station clock, and the house moves on', async () => {
+test('tick in Act 4 runs the clock: the warning gives way to the groups, the groups to the first round, a round to the next at ten minutes', async () => {
   const { db, nightId } = await party(8)
   let now = 3_000_000
-  await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'groups', now })
-  await hostCommand(db, { nightId, command: 'act', arg: 4, now }) // no station heartbeat: the slot is twelve minutes
-  const study = db.store.get(studyPath(nightId))
-  assert.equal(study.state, 'absent')
-  assert.ok(ms(study.slotEndsAt) > now)
-  // the host command (and the schedule) wire the finish to the rotation; a bare tick only pays
-  const tickHost = now => hostCommand(db, { nightId, command: 'tick', now })
-  let r = await tickHost(now + 60_000)
-  assert.equal(r.study.ticked, false); assert.equal(r.study.reason, 'slot-open')
-  now = ms(study.slotEndsAt) + 1
-  r = await tickHost(now)
-  assert.equal(r.study.ticked, true, 'the slot ran out and the group was paid')
-  assert.equal(night(db, nightId).rotation, 1, 'and the house rotated')
-  assert.equal(Object.keys(db.store.get(rotationPath(nightId)).finished).length, 1)
-  const second = await tickHost(now + 1000)
-  assert.equal(second.study.ticked, false, 'the next slot is a fresh twelve minutes')
-  assert.ok(ABSENT_SLOT_MS > 0)
+  const tickHost = t => hostCommand(db, { nightId, command: 'tick', now: t })
+  await hostCommand(db, { nightId, command: 'act', arg: 3, now })
+  await hostCommand(db, { nightId, command: 'start-act4', now })
+  assert.equal(night(db, nightId).beat, 'warn')
+  assert.equal((await tickHost(now + 60_000)).clock, null, 'not before the two minutes')
+  assert.equal((await tickHost(now + 2 * 60_000)).clock, 'groups')
+  assert.equal((await tickHost(now + 4 * 60_000)).clock, 'round1', 'nobody locked in: two minutes on, the rounds start anyway')
+  const round = db.store.get(`nights/${nightId}/public/act4`)
+  assert.equal(round.round, 1)
+  assert.equal(ms(round.roundEndsAt) - ms(round.roundStartsAt), 10 * 60_000)
+  assert.equal((await tickHost(ms(round.roundEndsAt) - 1000)).clock, null)
+  assert.equal((await tickHost(ms(round.roundEndsAt))).clock, 'round2')
+  assert.equal(night(db, nightId).beat, 'round2')
 })
 
 // ---------------------------------------------------------------------------

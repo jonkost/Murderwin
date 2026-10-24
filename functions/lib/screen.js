@@ -2,8 +2,12 @@
 // shows at the beats that say "look at the screen", and which sound file
 // the cue relay plays. One public doc each:
 //
-//   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood }
-//     kind: idle | black | news | bulletin | irwin | board | door | trace
+//   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood, prompts, video }
+//     kind: idle | black | news | bulletin | irwin | board | door | trace | prompts | title
+//     prompts: Sir Irwin's sharing prompts (bagclues.js), one at a time on the TV:
+//       { lines[], order[], startedAt, everyMs }, open lines, so the order says nothing
+//     video: true when the Parlour TV plays the bulletin as video (meta/game.bulletinVideo); the TV
+//       finds each part's file in the open bank by its words, so no recording is named here
 //   nights/{id}/public/sounds  { current: { id, at, clips? } }   clips: recorded W-O-O-F News lines, played after the id (news.js),
 //     as codes on a night with a station key saved (news.clipCode), never as names
 //
@@ -27,15 +31,16 @@ import { fileURLToPath } from 'node:url'
 import { MOTIVES, CHARACTERS, NightError, readArea } from './night.js'
 import { irwinOptions, irwinCount } from './families.js'
 import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS, clipCode } from './news.js'
+import { PROMPTS, PROMPT_EVERY_MS, promptOrder } from './bagclues.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
 
-export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace']
+export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title']
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
 // relay (cues/lib/cues.js) carries the same list and refuses an id outside it.
-export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power']
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power', 'chime-phone']
 
 // Keys a public screen doc may never carry, at any depth.
 export const FORBIDDEN_SCREEN_KEYS = [
@@ -53,6 +58,12 @@ export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something t
 // This stand-in shows only for a case with no family to cross off, such as a
 // rehearsal.
 export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
+// On a rehearsal night every sealed slot is a bracketed stand-in (Jon, 23 Oct 2026).
+export const NEWS_STAND_IN = "[W-O-O-F News crosses off one family of motives here]"
+export const BULLETIN2_STAND_IN = level => `[W-O-O-F News hints at the real family here, plainness ${level} of 5]`
+export const IRWIN_STAND_IN = count => `[Sir Irwin's ${count} motive card${count === 1 ? '' : 's'} appear here]`
+// The Act 4 title card on the Parlour TV (§9.5).
+export const ACT4_TITLE = { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' }
 // Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
 // shows. Open copy, from docs/handoff-2026-10-22.md §5; the workshop's
 // ui_copy IRWIN FIVE to IRWIN ONE lines win.
@@ -182,13 +193,31 @@ export function checkScreen(doc, path = '') {
   return { ok: bad.length === 0, bad }
 }
 
-export function screenDoc(kind, { title = '', lines = [], now = Date.now(), holdMs = 0, rehearsal = false, act = null, beat = null, captions = null, struck = null, parked = null, choices = null, mood = null } = {}) {
+export function screenDoc(kind, { title = '', lines = [], now = Date.now(), holdMs = 0, rehearsal = false, act = null, beat = null, captions = null, struck = null, parked = null, choices = null, mood = null, prompts = null, video = null } = {}) {
   const doc = { kind, title, lines, at: new Date(now), holdMs, rehearsal: !!rehearsal, act, beat, captions }
   if (struck) doc.struck = struck
   if (parked) doc.parked = parked
   if (choices) doc.choices = choices
   if (mood) doc.mood = mood
+  if (prompts) doc.prompts = prompts
+  if (video) doc.video = video
   return doc
+}
+
+// Does the Parlour TV play bulletin 1 and the closing bulletin as video?
+// Decided 23 Oct 2026 (Jon): yes. The Game night page's box turns it off,
+// and then the brain plays the recordings with the words on the screen, as before.
+export async function bulletinVideo(db) {
+  const snap = await db.doc('meta/game').get()
+  return !(snap.exists && snap.data().bulletinVideo === false)
+}
+
+// Sir Irwin's prompts on the TV: a running order from the case's salt, kept
+// going across beats (a new round in Act 4 does not start them again), so
+// none repeats until all have shown.
+export function promptsFor(prev, { seed = '', now = Date.now() } = {}) {
+  if (prev?.kind === 'prompts' && prev.prompts?.startedAt) return prev.prompts
+  return { lines: PROMPTS, order: promptOrder(seed), startedAt: new Date(now), everyMs: PROMPT_EVERY_MS }
 }
 
 export async function readScreen(db, nightId) {
@@ -217,13 +246,15 @@ export async function recordingKey(db) {
 // then the recorded clips after it, in order (a W-O-O-F News bulletin). With
 // a key saved the clips go out as codes (news.clipCode), so the public doc
 // never names a family or a level.
-export async function play(db, nightId, id, { now = Date.now(), clips = null } = {}) {
+// `video`: the Parlour TV plays these recordings as video with its own sound,
+// so the brain plays the id and skips the clips (cues/, handoff §2b.7).
+export async function play(db, nightId, id, { now = Date.now(), clips = null, video = false } = {}) {
   const list = (clips ?? []).filter(x => CLIP_IDS.includes(x))
   // id null: recorded lines only (the closing bulletin between the reveal's cards)
   if (id === null ? !list.length : !SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
   const key = list.length ? await recordingKey(db) : null
   const sent = key ? list.map(x => clipCode(key, x)) : list
-  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(sent.length ? { clips: sent } : {}) } })
+  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(sent.length ? { clips: sent } : {}), ...(video && sent.length ? { video: true } : {}) } })
   return { ok: true, sound: id }
 }
 
@@ -274,27 +305,44 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   const base = { now, act, beat, captions: carriedCaptions(prev, act) }
   let doc
   let clips = null
+  let video = false
   if (kind === 'news' || kind === 'bulletin' || kind === 'irwin') {
     const c = await caseOf(db, nightId)
     const rehearsal = c?.rehearsal !== false
     const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js)
+      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js); on a
+      // rehearsal the family's line is a bracketed stand-in. As video on the Parlour TV (23 Oct).
       const b = bulletin1(c)
-      clips = b.clips
-      doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines: b.placeholder ? [...b.lines.slice(0, 1), NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines, rehearsal, captions: { kind, lines: b.lines, at: new Date(now) } })
+      // a rehearsal plays the opening and the sign-off only: the family's recording is a sealed slot too
+      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
+      video = await bulletinVideo(db)
+      const lines = rehearsal && !b.placeholder ? [b.lines[0], NEWS_STAND_IN, ...b.lines.slice(2)] : b.placeholder ? [...b.lines.slice(0, 1), NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines
+      // `video: true` only: the TV works out each part's file from the open bank by its words, so no
+      // recording's name ever goes on a public doc (a clip id names a family; news.js)
+      doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) }, video: video ? true : null })
     } else if (kind === 'bulletin') {
       const b = bulletin2(c, dialBand(c?.dial))
-      clips = b.clips
-      doc = screenDoc('bulletin', { ...base, title: 'W-O-O-F News', lines: b.lines, rehearsal, captions: { kind, lines: b.lines, at: new Date(now) } })
+      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
+      const lines = rehearsal && !b.placeholder ? [b.lines[0], BULLETIN2_STAND_IN(b.level), ...b.lines.slice(2)] : b.lines
+      doc = screenDoc('bulletin', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)
       const clue = irwinMotiveClue(c, { seed, ui: labelled(await linesOf(db, nightId, 'ui_copy')) })
       const lines = irwinLines({ ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
-      const said = [...lines.slice(0, -1), ...clue.choices.map(x => `${x.n}. ${x.rhyme}`), ...lines.slice(-1)]
-      doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices: clue.choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
+      // on a rehearsal the cards are one bracketed stand-in that says how many would show
+      const choices = rehearsal && clue.choices.length ? [{ n: 0, rhyme: IRWIN_STAND_IN(clue.choices.length) }] : clue.choices
+      const said = [...lines.slice(0, -1), ...choices.map(x => (x.n ? `${x.n}. ${x.rhyme}` : x.rhyme)), ...lines.slice(-1)]
+      doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
       if (run) await db.doc(`nights/${nightId}/private/dialClues`).set({ irwin: clue.mood }, { merge: true }) // for the end credits
     }
+  } else if (kind === 'prompts') {
+    // Sir Irwin's sharing prompts (Act 2's cat visits, Act 4's rounds): one at a time, the TV turns them
+    const c = await caseOf(db, nightId)
+    doc = screenDoc('prompts', { ...base, title: 'Sir Irwin has ideas', lines: [], rehearsal: !!night.rehearsal, prompts: promptsFor(prev, { seed: screenSeed(c, nightId), now }) })
+  } else if (kind === 'title') {
+    // the Act 4 title card: silent, jazz from the HomePods
+    doc = screenDoc('title', { ...base, title: ACT4_TITLE.title, lines: [ACT4_TITLE.line], rehearsal: !!night.rehearsal })
   } else if (kind === 'door') {
     doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })
   } else if (kind === 'board') {
@@ -308,7 +356,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   let sound = null
   if (run && spec?.sound && SOUND_IDS.includes(spec.sound)) {
     const cur = await currentSound(db, nightId)
-    if (!(spec.soundOnce && cur?.id === spec.sound)) { await play(db, nightId, spec.sound, { now, clips }); sound = spec.sound }
+    if (!(spec.soundOnce && cur?.id === spec.sound)) { await play(db, nightId, spec.sound, { now, clips, video }); sound = spec.sound }
   }
   return { ...r, sound }
 }

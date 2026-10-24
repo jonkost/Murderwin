@@ -9,7 +9,7 @@ import { finaleDoc, ROLE_CARD_ID, ROLE_CARDS } from '../lib/deal.js'
 import { rerollCase, rehearsalCase, buildCase, CASE_KEYS } from '../lib/case.js'
 import { MOTIVES } from '../lib/night.js'
 import { spill, hush, spillAllowed, noteDealt, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from '../lib/safeguards.js'
-import { studyPath } from '../lib/station.js'
+import { rotationPath, studyPath } from '../lib/station.js'
 import { wordCount, PARITY_TOLERANCE } from '../lib/windows.js'
 
 // THE SEAL IN THIS FILE. Every case below is dealt in a fake Firestore and
@@ -121,7 +121,7 @@ test('spillAllowed: only Acts 2 to 5, never in a blackout, never with a window o
   assert.equal(spillAllowed({ act: 2, phase: 'act', window: { settled: false } }, c), false)
   assert.equal(spillAllowed({ act: 2, phase: 'act', window: { settled: true } }, c), true)
   assert.equal(spillAllowed({ act: 2, phase: 'act' }, { roles: null }), false)
-  assert.deepEqual(BLOCKING_KINDS, ['study', 'echo', 'hint', 'memory'])
+  assert.deepEqual(BLOCKING_KINDS, ['study', 'echo', 'hint', 'memory', 'room'])
   for (const kind of BLOCKING_KINDS) assert.equal(spillAllowed({ act: 2, phase: 'act' }, { ...c, dealtClues: [{ kind }] }), false, kind)
   assert.equal(spillBlocked({ dealtClues: [{ kind: 'testimony' }] }), false, 'a cat visit alone does not pin the story')
 })
@@ -229,12 +229,13 @@ test('spill after a cat\'s hint is dealt: did:false, nothing changes, no reason 
   const { db, nightId, uids } = await realParty()
   const now = 1_700_000_000_000
   await toPower(db, nightId, now)
-  // straight to the cats (no news on the screen): every guest meets their hint cat, and the ledger notes each hint
+  // straight to the cats (no news on the screen): every guest meets all four cats, every one gives a hint,
+  // and the ledger notes each one
   await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now })
   await walkLights(db, nightId, { now })
   const c = caseOf(db, nightId)
-  assert.deepEqual(c.dealtClues.map(e => e.kind), Object.keys(uids).map(() => 'hint'))
-  assert.deepEqual(c.dealtClues.map(e => e.key).sort(), Object.values(uids).map(u => keyOf(db, nightId, u)).sort())
+  assert.ok(c.dealtClues.length > 0 && c.dealtClues.every(e => e.kind === 'hint'))
+  assert.deepEqual([...new Set(c.dealtClues.map(e => e.key))].sort(), Object.values(uids).map(u => keyOf(db, nightId, u)).sort(), 'every guest heard a cat')
   assert.ok(c.dealtClues.every(e => Object.keys(e).every(f => ['kind', 'act', 'beat', 'key', 'at'].includes(f))), 'the ledger holds no content field')
 
   const snapshot = JSON.stringify([caseOf(db, nightId), ...Object.values(uids).map(u => session(db, u))])
@@ -263,27 +264,33 @@ test('spill is off once the news is on the screen, once the study has paid out, 
     const now = 1_700_000_000_000
     await toPower(db, nightId, now)
     await hostCommand(db, { nightId, command: 'act', arg: 3, now })
-    await hostCommand(db, { nightId, command: 'beat', arg: 'groups', now })
+    await hostCommand(db, { nightId, command: 'start-act4', now })
+    await hostCommand(db, { nightId, command: 'next', now }) // the group cards
     await db.doc(studyPath(nightId)).set({ state: 'idle', updatedAt: new Date(now) }, { merge: true }) // the station's heartbeat
-    await hostCommand(db, { nightId, command: 'act', arg: 4, now })
-    assert.equal(caseOf(db, nightId).dealtClues.length, 0, 'station cards do not pin the story')
-    assert.equal((await hostCommand(db, { nightId, command: 'spill', now })).did, true, 'still on at the first station')
+    await hostCommand(db, { nightId, command: 'next', now }) // round 1
+    // with three groups one room is empty each round: point the study at a group, as the host's reassign would
+    if (!db.store.get(studyPath(nightId)).groupId) await db.doc(studyPath(nightId)).set({ groupId: db.store.get(rotationPath(nightId)).order[0] }, { merge: true })
+    assert.equal(caseOf(db, nightId).dealtClues.length, 0, 'the room directions do not pin the story')
+    assert.equal((await hostCommand(db, { nightId, command: 'spill', now })).did, true, 'still on in the first round')
     const groupId = db.store.get(studyPath(nightId)).groupId
     const fin = await studyFinished(db, { nightId, payload: { groupId, outcome: 'solved', seconds: 200, pairs: 3 }, now })
     assert.ok(fin.dealt > 0)
     assert.deepEqual(caseOf(db, nightId).dealtClues.map(e => [e.kind, e.groupId])[0], ['study', groupId])
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false })
   }
-  // the study clue, with no station: it lands with the station card at the first rotation
+  // the study clue, with no station: the round's cap pays it
   {
     const { db, nightId } = await party()
     const now = 1_700_000_000_000
     await toPower(db, nightId, now)
     await hostCommand(db, { nightId, command: 'act', arg: 3, now })
-    await hostCommand(db, { nightId, command: 'beat', arg: 'groups', now })
-    await hostCommand(db, { nightId, command: 'act', arg: 4, now })
+    await hostCommand(db, { nightId, command: 'start-act4', now })
+    await hostCommand(db, { nightId, command: 'next', now }) // the group cards
+    await hostCommand(db, { nightId, command: 'next', now }) // round 1
+    while (!db.store.get(studyPath(nightId)).groupId) await hostCommand(db, { nightId, command: 'next', now })
     const groupId = db.store.get(studyPath(nightId)).groupId
-    assert.deepEqual(caseOf(db, nightId).dealtClues.map(e => [e.kind, e.groupId, e.beat]), [['study', groupId, 'station1']])
+    await hostCommand(db, { nightId, command: 'next', now }) // the chime: every room not finished is paid
+    assert.ok(caseOf(db, nightId).dealtClues.some(e => e.kind === 'study' && e.groupId === groupId))
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false })
   }
   // Act 6 and beyond

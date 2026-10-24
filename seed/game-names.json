@@ -1,0 +1,10 @@
+{
+  "_about": "The five game names (docs/handoff-2026-10-23.md section 16, Jon 24 Oct 2026). Display text only: the name is the game's title wherever a player meets it, with the hook under it. Ids, routes, kiosk names and cue ids keep their old names. The Act 6 deduction round has no name. Open content.",
+  "games": [
+    { "id": "study", "act": 4, "room": "the Study", "host": "granolia", "was": "the light puzzle", "name": "Granolia's Lightbulb Moment", "hook": "She knows how to turn on the lights. It's on the tip of her tongue." },
+    { "id": "library", "act": 4, "room": "the Library", "host": "zimothy", "was": "the memory match", "name": "In Duplicate", "hook": "Sir Irwin scattered his files. Match every copy. He bills by the pair." },
+    { "id": "orangerie", "act": 4, "room": "the Orangerie", "host": "salem", "was": "Salem's Motion Game", "name": "Get Off My Lawn!", "hook": "Red means go. Green means freeze. Yes, backwards." },
+    { "id": "entryway", "act": 4, "room": "the Entryway", "host": "boo", "was": "Boo's catwalk", "name": "Boo's Catwalk", "hook": "When the music stops, strike a pose. She's always judging." },
+    { "id": "drawing", "act": 6, "room": "the Parlour", "host": "irwin", "was": "the Relay Drawing", "name": "Sir Irwin Needs a Hand", "hook": "Three drawings open the door. He only has paws.", "story": "Sir Irwin wants into the bedroom. He's a dog, so a closed door is torture. The door only opens after three drawings, and he only has paws." }
+  ]
+}

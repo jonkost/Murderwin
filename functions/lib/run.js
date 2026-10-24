@@ -16,11 +16,16 @@ import * as windows from './windows.js'
 import * as screen from './screen.js'
 import * as finale from './finale.js'
 import * as safeguards from './safeguards.js'
+import * as act4 from './act4.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
 // The host commands a pause holds back (everything that moves the night or lights the phones).
-export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout'])
+export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'supper', 'start-act4'])
+// The four Hue scenes Jon makes in the Hue app (handoff 23 Oct §2c); the
+// brain recalls one by name when the host asks (public/cues.scene).
+export const SCENES = ['Murderwin Arrival', 'Murderwin Blackout', 'Murderwin Lights Out', 'Murderwin Reveal']
+export const MUSIC_COMMANDS = ['play', 'pause', 'next']
 
 export function firstBeat(act) { return deal.beatsOf(act)[0]?.key ?? null }
 
@@ -64,20 +69,62 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
   if (spec.action === 'arm:bulletin') return { ok: true, act, beat, ...(await screen.armBulletin(db, nightId, { now })) } // plays itself 3 to 5 minutes later
+  // Act 4 (act4.js): the warning, the group cards, then a round per beat on the clock
+  if (spec.action === 'act4:warn') return { ok: true, act, beat, ...(await act4.warn(db, nightId, act, beat, { now })) }
+  if (spec.action === 'act4:groups') return { ok: true, act, beat, ...(await act4.dealGroupCards(db, nightId, act, beat, { now })) }
+  if (spec.action === 'act4:round') return { ok: true, act, beat, ...(await act4.startRound(db, nightId, roundOf(beat), { now })) }
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
   // the door and the ballot both lean on the trace: make sure it is there if the drawing is done
   if (spec.action === 'notice:door' || spec.action === 'window:ballot') await ensureTrace(db, nightId, now)
   return { ok: true, act, beat, ...r }
 }
 
-// How the case gets solved (docs/solving-the-case.md): the last beat of Act 2
-// (or any jump past it) hands every guest still in a cat's line their greeting
-// and sends everyone to supper; Act 5 pays any group whose turn at the memory
-// match passed without a pay-out. Both are idempotent.
+// Act 4's round beats: round1 … round5.
+export function roundOf(beat) { const m = /^round(\d+)$/.exec(String(beat ?? '')); return m ? Number(m[1]) : 0 }
+
+// How the case gets solved (docs/solving-the-case.md): the last beat of Act 2,
+// supper (or any jump past it), leaves every guest's unvisited cats as a note
+// and sends everyone to supper; Act 5 pays every Act 4 room any group was not
+// paid for, and gives every waiting Parlour Game nobody played a random
+// answer. All idempotent.
 async function onSolving(db, nightId, act, beat, now) {
   const last2 = deal.beatsOf(2).at(-1)?.key
   if (act > 2 || (act === 2 && beat === last2)) await deal.flushLights(db, nightId, { now })
-  if (act >= 5) await deal.flushMemory(db, nightId, { now })
+  if (act >= 5) {
+    await act4.flush(db, nightId, { now })
+    await deal.settleWaiting(db, nightId, { now })
+  }
+}
+
+// The clock for Acts 2 and 4 (the minute tick, and the Host tab's own while
+// those acts run): the supper chime once every guest has seen all four cats
+// (F24), and Act 4's warning, lock-in and rounds, and Boo's show ending.
+export async function clockTick(db, nightId, now = Date.now(), { allSeen = false } = {}) {
+  const n = (await db.doc(`nights/${nightId}`).get()).data()
+  if (!n || n.phase !== 'act') return { moved: null }
+  if (n.act === 2 && n.beat === 'cat' && allSeen) {
+    await enterBeat(db, nightId, 2, 'supper', { now })
+    return { moved: 'supper' }
+  }
+  if (n.act === 4) {
+    await act4.booDone(db, { nightId, now })
+    const due = await act4.due(db, nightId, now)
+    if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
+    if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
+  }
+  return { moved: null }
+}
+
+// Act 4's Next: a round beyond the night's last (four groups or fewer have
+// four rounds) goes on to Act 5 instead.
+async function skipEmptyRound(db, nightId, to) {
+  if (to?.act !== 4 || !roundOf(to.beat)) return to
+  const rot = await act4.readRotation(db, nightId)
+  if (rot?.rounds && roundOf(to.beat) > rot.rounds) {
+    await act4.finishRounds(db, nightId)
+    return { act: 5, beat: firstBeat(5) }
+  }
+  return to
 }
 
 // Once the drawing is done, the trace must be behind the door and the hall
@@ -118,7 +165,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
       await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
-      const to = nextOf(n.act, n.beat)
+      const to = await skipEmptyRound(db, nightId, nextOf(n.act, n.beat))
       if (!to) throw new NightError('invalid', n.act === 1 ? 'That is the end of Act 1. Press Blackout.' : 'That is the end of the night.')
       if (deal.beatSpec(to.act, to.beat)?.action === 'results') await finale.requireNamed(db, nightId) // the screen names all three first
       // Act 1 begins: copy the latest workshop lines (rules, bios, cat cards) to the phones first
@@ -174,10 +221,41 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       return r
     }
     case 'light-up':
-      // Every phone lights up with three questions, any time in Acts 2, 4 and 6.
+      // Every phone lights up with three questions, any time in Acts 2, 4 and 6. In Act 4 the
+      // game waits on each phone until the guest is free (handoff 23 Oct §3).
       if (![2, 4, 6].includes(n.act)) throw new NightError('invalid', 'The phones light up in Acts 2, 4 and 6.')
+      if (n.act === 4) return deal.dealWaitingGame(db, nightId, { now, act: 4 })
       await settleIfDue(db, nightId, now)
       return deal.openWindow(db, nightId, 'questions', { now, act: n.act }) // no beat: a fresh window every press
+    case 'supper': {
+      // Supper's ready (Act 2): the cat queue closes, every phone goes to supper, the cats a guest
+      // never reached leave their lines as a note (F24)
+      if (n.act !== 2) throw new NightError('invalid', "Supper's ready is for Act 2.")
+      if (n.beat === 'supper') return { ok: true, already: true }
+      await settleIfDue(db, nightId, now)
+      return enterBeat(db, nightId, 2, 'supper', { now })
+    }
+    case 'start-act4': {
+      // Start Act 4 (end of supper): the two-minute warning, then the groups and the rounds on the clock
+      if (n.act === 4) return { ok: true, already: true }
+      if (n.act !== 3) throw new NightError('invalid', 'Start Act 4 comes at the end of supper, in Act 3.')
+      await settleIfDue(db, nightId, now)
+      await night.publishContent(db, nightId)
+      return enterBeat(db, nightId, 4, firstBeat(4), { now })
+    }
+    case 'scene': {
+      // the house: one of the four Hue scenes, by hand (the brain recalls it; cues/)
+      const name = SCENES.find(x => x.toLowerCase() === String(arg ?? '').trim().toLowerCase())
+      if (!name) throw new NightError('invalid', 'Pick one of the four scenes.')
+      await db.doc(`nights/${nightId}/public/cues`).set({ scene: { name, at: new Date(now) } }, { merge: true })
+      return { ok: true, scene: name }
+    }
+    case 'music': {
+      // the brain's music by hand: play, pause, or the next playlist (cues/)
+      if (!MUSIC_COMMANDS.includes(arg)) throw new NightError('invalid', 'Play, pause or next.')
+      await db.doc(`nights/${nightId}/public/cues`).set({ music: { command: arg, at: new Date(now) } }, { merge: true })
+      return { ok: true, music: arg }
+    }
     case 'settle':
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':
@@ -188,9 +266,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
     case 'relay-advance':
       return advanceRelay(db, { nightId, now })
     case 'groups':
-      // the standalone Host button: the same dealer path as the Act 3 beat, so the hidden roles stay apart;
-      // once the house has started rotating the groups are set, and remaking them would scramble Act 4
-      return deal.dealGroups(db, nightId, n.act || 3, 'groups', { force: arg === 'force' })
+      // the Act 4 groups (act4.makeRooms), so the hidden roles stay apart; once made they are kept,
+      // since remaking them would scramble the rooms, unless the host says force
+      return act4.makeRooms(db, nightId, { force: arg === 'force' })
     case 'station-key':
       return station.setStationKey(db, arg)
     case 'study-tick':
@@ -212,10 +290,15 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       await db.doc(`nights/${nightId}/public/cues`).set({ hall: arg, changedAt: new Date(now), byHand: true }, { merge: true })
       return { ok: true, hall: arg }
     }
-    case 'tick':
-      // the once-a-minute clock (the schedule in index.js, the Host tab on load): settles a window past
-      // its close and its grace, ends a study slot that has run out; a paused night is left alone
-      return windows.tick(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
+    case 'tick': {
+      // the once-a-minute clock (the schedule in index.js, the Host tab while Acts 2 and 4 run):
+      // settles a window past its close and its grace, moves the Act 2 line on, pops up a Parlour
+      // Game that is due, then the supper chime and Act 4's rounds (clockTick); a paused night is left alone
+      const r = await windows.tick(db, nightId, now)
+      if (r.skipped) return r
+      const clock = await clockTick(db, nightId, now, { allSeen: !!r.lights?.allSeen })
+      return { ...r, clock: clock.moved }
+    }
     case 'note-exposure':
       // the older name for the Hush: the same record, through the same path (safeguards.js, ledger.js)
       return safeguards.hush(db, { nightId, role: arg, now })
@@ -291,31 +374,34 @@ export async function guessRelay(db, { nightId, pick, now = Date.now() } = {}) {
   return r
 }
 
-// The study station says a group is done: the clue is dealt (station.js),
-// and in Act 4 the whole house rotates, exactly as the host's Next would, so
-// the study is the clock at every slot and the host never needs Next between
-// finishes. A Parlour Game that is up on the phones keeps running through the
-// rotation: the new station cards wait underneath it.
+// The study station says a group is done (solved, or its own cap): the trace
+// is dealt (station.js) and Granolia's bag hint with it (act4.payRoom). The
+// rounds are on the clock now (23 Oct 2026), so a finish never moves the house.
 export async function studyFinished(db, { nightId, payload = {}, now = Date.now() } = {}) {
   const r = await station.stationCommand(db, { nightId, station: 'study', command: 'finished', payload })
   if (r.repeated) return r
   if (payload.outcome === 'solved') await screen.play(db, nightId, 'sting-solved', { now }) // the house hears the study solved
-  const snap = await db.doc(`nights/${nightId}`).get()
-  const n = snap.exists ? snap.data() : null
-  if (!n || n.act !== 4 || n.phase !== 'act') return { ...r, rotated: false, reason: 'not-act-4' }
-  const spec = deal.beatSpec(4, n.beat)
-  const to = nextOf(4, n.beat)
-  if (spec?.action !== 'rotate' || !to || to.act !== 4) return { ...r, rotated: false, reason: 'not-a-rotate-beat' }
-  // a finish from an earlier rotation (the host already moved the house on) must not move it again;
-  // a finish the host redirected to another group counts for the slot that was due
-  const rot = (await db.doc(`nights/${nightId}/public/rotation`).get()).data()
-  if (!r.reassigned && (rot?.studyOrder ?? []).indexOf(r.groupId ?? payload.groupId) !== (n.rotation ?? -1)) return { ...r, rotated: false, reason: 'already-rotated' }
-  if (n.window && !n.window.settled && n.window.kind !== 'questions') {
-    if (now < deal.ms(n.window.closesAt)) return { ...r, rotated: false, reason: 'window-open' }
-    await deal.settleWindow(db, nightId, { now })
-  }
-  const moved = await enterBeat(db, nightId, to.act, to.beat, { now })
-  return { ...r, rotated: true, beat: moved.beat }
+  const gid = r.groupId ?? payload.groupId
+  if (gid) await act4.payRoom(db, nightId, gid, 'study', { outcome: payload.outcome === 'solved' ? 'done' : 'capped', now })
+  return { ...r, rotated: false }
+}
+
+// A code on a room's wall (?meet=<cat>): in Act 2 the guest is with that cat;
+// in Act 4 the group has arrived in that room, and Salem's and Boo's games
+// start for it.
+async function meetCat(db, args) {
+  const n = (await db.doc(`nights/${args.nightId}`).get()).data()
+  if (n?.act !== 4) return deal.meetCat(db, args)
+  const r = await act4.scanRoom(db, args)
+  if (r.room === 'orangerie') await act4.salemArrive(db, args.nightId, r.groupId, { now: args.now ?? Date.now() })
+  if (r.room === 'entryway') await act4.booArrive(db, args.nightId, r.groupId, { now: args.now ?? Date.now() })
+  return { ok: true, room: r.room }
+}
+
+// After a guest's step in the Act 2 line: the supper chime once everyone has seen all four (F24).
+async function afterLights(db, nightId, r, now = Date.now()) {
+  if (r?.allSeen) await clockTick(db, nightId, now, { allSeen: true })
+  return r
 }
 
 // What a player phone may call, besides join.
@@ -326,9 +412,16 @@ export const player = {
   relayVote: (db, args) => relay.vote(db, args),
   relayGuess: (db, args) => guessRelay(db, args),
   relayAdvance: (db, args) => advanceRelay(db, args),
-  // Act 2: a guest scans the code in a cat's room, then taps when they have heard it
-  meetCat: (db, args) => deal.meetCat(db, args),
-  leaveCat: (db, args) => deal.leaveCat(db, args),
-  // Act 4: the iPad says the memory match is clear
-  memoryCleared: (db, args) => deal.memoryCleared(db, args),
+  // Act 2: a guest scans the code in a cat's room, taps Done when they have read it, or asks to be called later;
+  // in Act 4 the same codes mark a group's arrival in a room
+  meetCat: async (db, args) => (await meetCat(db, args).then(r => afterLights(db, args.nightId, r, args.now))),
+  leaveCat: async (db, args) => afterLights(db, args.nightId, await deal.leaveCat(db, args), args.now),
+  notYet: (db, args) => deal.notYet(db, args),
+  // Act 4: Locked in; the iPad's boards; Salem's game; Boo's show over
+  lockIn: async (db, args) => { const r = await act4.lockIn(db, args); await clockTick(db, args.nightId, args.now ?? Date.now()); return r },
+  memoryStep: (db, args) => act4.memoryStep(db, args),
+  salemReady: (db, args) => act4.salemReady(db, args),
+  salemSlip: (db, args) => act4.salemSlip(db, args),
+  salemPassed: (db, args) => act4.salemPassed(db, args),
+  booDone: (db, args) => act4.booDone(db, args),
 }

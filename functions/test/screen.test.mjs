@@ -11,7 +11,7 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, NEWS_STAND_IN, BULLETIN2_STAND_IN,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
@@ -89,8 +89,8 @@ test('play writes one sound at a time and refuses an id outside the catalogue', 
   assert.equal((await currentSound(db, 'n')).id, 'power')
   await assert.rejects(play(db, 'n', '7F3A'), /No such sound/)
   await assert.rejects(play(db, 'n', ''), /No such sound/)
-  assert.equal(SOUND_IDS.length, 9)
-  assert.equal(new Set(SOUND_IDS).size, 9)
+  assert.equal(SOUND_IDS.length, 10, 'ten cue sounds: chime-phone is the tenth (23 Oct 2026)')
+  assert.equal(new Set(SOUND_IDS).size, 10)
 })
 
 test('the recordings go out as codes once a station key is saved: no public doc names a family or a level; none saved, the names go as they are', async () => {
@@ -189,36 +189,45 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(screen().kind, 'black', 'dark through the prompt')
   assert.equal((await currentSound(db, nightId)).id, 'power')
 
-  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off
+  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off;
+  // on a rehearsal night the family's line is a bracketed stand-in and its recording is not played
   await next() // news
   const news = screen()
   assert.equal(news.kind, 'news')
   const c2 = db.store.get(`cases/${nightId}`)
-  assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS.bulletin1.families[c2.solving.newsOut[0]].text, NEWS.bulletin1.signoff.text])
+  assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS_STAND_IN, NEWS.bulletin1.signoff.text])
   assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
+  assert.equal(news.video, true, 'video on the Parlour TV: a flag only, the TV finds the files by the words')
+  assert.ok(!CLIP_IDS.some(id => JSON.stringify(news).includes(`"${id}"`)), 'no recording is named on the screen')
   assert.deepEqual(news.captions.lines, news.lines)
   const newsSound = await currentSound(db, nightId)
   assert.equal(newsSound.id, 'chime-news')
-  assert.deepEqual(newsSound.clips, ['newsflash-opening', NEWS.bulletin1.families[c2.solving.newsOut[0]].clip, 'newsflash-signoff'])
-  await next() // cat: the TV goes idle, the captions ride along for the iPad
+  assert.deepEqual(newsSound.clips, ['newsflash-opening', 'newsflash-signoff'])
+  assert.equal(newsSound.video, true, 'the bulletin is video on the Parlour TV: the brain plays the chime only')
+  await next() // peek: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
+  await next() // cat: Sir Irwin's prompts on the Parlour TV
+  assert.equal(screen().kind, 'prompts')
+  assert.equal(screen().prompts.lines.length, 16)
   assert.deepEqual(screen().captions.lines, news.lines)
   // a pause parks the screen under a near-black "One moment"; a second press (a double tap, a second
   // host phone) changes nothing; the resume brings the parked screen back
   await host('pause')
   assert.equal(screen().kind, 'black')
   assert.equal(screen().title, 'One moment')
-  assert.equal(screen().parked.kind, 'idle')
+  assert.equal(screen().parked.kind, 'prompts')
   assert.equal((await host('pause')).already, true)
-  assert.equal(screen().parked.kind, 'idle', 'the second press did not park the card over itself')
+  assert.equal(screen().parked.kind, 'prompts', 'the second press did not park the card over itself')
   assert.equal(await onPhase(db, nightId, 'pause', { now }).then(r => r.already), true, 'and the screen hook alone refuses too')
   now += 30_000
   await host('resume')
-  assert.equal(screen().kind, 'idle', 'the TV is back on the beat, not on One moment')
+  assert.equal(screen().kind, 'prompts', 'the TV is back on the beat, not on One moment')
   assert.equal(screen().parked, null)
   assert.ok(!JSON.stringify(screen()).includes(db.store.get(`cases/${nightId}`).screenSalt), 'the salt never reaches the screen')
-  await next() // checkin
+  await host('supper') // Supper's ready: the chime
+  assert.equal(nightDoc().beat, 'supper')
+  assert.equal((await currentSound(db, nightId)).id, 'chime-phone')
 
   // Act 3: bulletin 2. Next arms it (the Host tab hears only Armed); it plays itself 3 to 5
   // minutes later on the tick: the real family's line at the dial's level, as captions
@@ -238,34 +247,30 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(bulletin.kind, 'bulletin')
   const c = db.store.get(`cases/${nightId}`)
   const level = Math.min(5, Math.max(1, 3 + Math.sign(c.dial) * Math.round(Math.abs(c.dial) / 4)))
-  assert.deepEqual(bulletin.lines, [NEWS.bulletin2.opening.text, NEWS.bulletin2.families[c.solving.family][level - 1].text, NEWS.bulletin2.signoff.text], 'the real family, at the dial')
+  assert.deepEqual(bulletin.lines, [NEWS.bulletin2.opening.text, BULLETIN2_STAND_IN(level), NEWS.bulletin2.signoff.text], 'a rehearsal: the real family\'s slot, at the dial, as a stand-in')
   assert.equal((await currentSound(db, nightId)).id, 'sounder-bulletin')
-  assert.equal((await currentSound(db, nightId)).clips.length, 3)
+  assert.equal((await currentSound(db, nightId)).clips.length, 2, 'the opening and the sign-off; never the family\'s recording on a rehearsal')
   for (const uid of Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)) assert.ok(db.store.get(`sessions/${uid}`).cards.some(x => x.key === 'bulletin'), 'every phone hears about it')
   await host('tick')
   assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
-  await next() // groups
-  assert.deepEqual(screen().captions.lines, bulletin.lines, 'captions stay up through dinner')
+  assert.deepEqual(screen().captions.lines, bulletin.lines, 'captions stay up through supper')
 
-  // Act 4: the captions drop; the study solving rings the sting
-  const heartbeat = () => stationCommand(db, { nightId, station: 'study', command: 'state', payload: { state: 'idle' } })
-  await heartbeat()
-  await next() // station1
-  assert.equal(screen().kind, 'idle')
+  // Act 4: Start Act 4 (the warning), the title card with the chime, then the rounds with the prompts;
+  // the captions drop; the study solving rings the sting
+  await host('start-act4')
+  assert.equal(nightDoc().beat, 'warn')
   assert.equal(screen().captions, null)
+  await next() // the group cards
+  assert.equal(screen().kind, 'title')
+  assert.equal(screen().title, 'Act 4 · Behind Closed Doors')
+  assert.equal((await currentSound(db, nightId)).id, 'chime-phone')
+  await next() // round 1
+  assert.equal(screen().kind, 'prompts')
   let guard = 0
-  while (guard++ < 40) {
-    const n = nightDoc()
-    if (n.act !== 4) break
-    if (n.window && !n.window.settled) { now = ms(n.window.closesAt) + 1000; await host('settle'); if (beatSpec(4, n.beat)?.action !== 'rotate') await next(); continue }
-    if (beatSpec(4, n.beat)?.action !== 'rotate') { await next(); continue }
-    await heartbeat()
+  while (nightDoc().act === 4 && guard++ < 10) {
     const due = db.store.get(studyPath(nightId))?.groupId ?? null
     const rot = db.store.get(rotationPath(nightId)) ?? {}
-    if (due && !rot.finished?.[due]) {
-      const r = await step(() => studyFinished(db, { nightId, payload: { groupId: due, outcome: 'solved', seconds: 300, pairs: 3 }, now }))
-      if (r.rotated) continue
-    }
+    if (due && !rot.finished?.[due]) await step(() => studyFinished(db, { nightId, payload: { groupId: due, outcome: 'solved', seconds: 300, pairs: 3 }, now }))
     await next()
   }
   assert.equal(nightDoc().act, 5)
@@ -279,7 +284,8 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
   assert.ok(Object.values(IRWIN_OPTION_LINES).includes(irwin.lines[1]), 'the countdown line straight after the opener')
   assert.equal('irwin' in db.store.get(`cases/${nightId}`), false, 'the case carries no Irwin lines at all')
-  assert.ok([1, 2, 3, 4, 5].includes(irwin.choices.length), 'one to five motive cards')
+  assert.equal(irwin.choices.length, 1, 'a rehearsal: one stand-in for the cards')
+  assert.match(irwin.choices[0].rhyme, /^\[Sir Irwin's [1-5] motive cards? appear here\]$/)
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {

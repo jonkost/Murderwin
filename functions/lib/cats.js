@@ -5,11 +5,13 @@
 // rules out WRONG answers: the real family and the real motive are never
 // named, and Salem's backwards line points AT a wrong answer.
 //
-//   Act 2  a guest's one real hint: the wrong family the case gave them
-//          (solving.hints), at their own affection.
-//   Act 4  a group at a cat: finer clues, on the group's average affection.
-//          Motives come from inside the real family first (where the group
-//          must still be looking), a family is one the group may still have.
+//   Act 2  every cat a guest visits (23 Oct 2026): a line about one of the
+//          guest's two wrong families (solving.hints), at the guest's own
+//          affection with that cat. A single motive or a bonus motive comes
+//          only from the guest's two families or the one the news took
+//          (`bonusFamilies`), so no guest can rule out a third (G45).
+//   Act 4  (no longer dealt since 23 Oct: Act 4's motive narrowing is Zimothy's
+//          and Boo's cross-offs) finer clues on a group's average affection.
 //
 // hintLine() returns { text, families, motives }: `families` and `motives`
 // are what a guest who reads the line rightly may cross off (Salem at 4, a
@@ -52,10 +54,17 @@ export function fillSlot(tpl, slot, value) {
 //   family   the wrong family the line is about
 //   pool     wrong motives to name one or two of, best first
 //   bonus    wrong motives outside the family, best first
-function targets(c, { act, family, seed, exclude = [] }) {
+function targets(c, { act, family, seed, exclude = [], bonusFamilies = null }) {
   const real = Number(c?.motive)
   const realFamily = familyOf(real)
   const out = new Set(exclude.map(Number))
+  if (act !== 4 && Array.isArray(bonusFamilies)) {
+    // only inside the families the guest may hear about: never a third wrong one, never the real one
+    const inFam = seededOrder(motivesOf(family).filter(n => n !== real), seed, 'fam')
+    const allowed = bonusFamilies.filter(f => f && f !== family && f !== realFamily)
+    const bonus = seededOrder(FAMILIES.flatMap(f => f.motives).filter(n => n !== real && allowed.includes(familyOf(n)) && !out.has(n)), seed, 'bonus')
+    return { family, pool: inFam, bonus }
+  }
   if (act === 4) {
     // finer clues: inside the real family first, then the family the line names
     const mates = seededOrder(motivesOf(realFamily).filter(n => n !== real && !out.has(n)), seed, 'mates')
@@ -72,11 +81,11 @@ function seededOrder(list, seed, tag) { return seeded(list, seed, tag) }
 // One cat's line. `family` is a wrong family (Act 2: the guest's hint
 // family; Act 4: one the group may still have). `seed` makes the choices
 // (which motives, Salem's coin) the same every time for the same guest.
-export function hintLine(c, { cat, level: raw, act = 2, family, seed = '', exclude = [] } = {}) {
+export function hintLine(c, { cat, level: raw, act = 2, family, seed = '', exclude = [], bonusFamilies = null } = {}) {
   const l = level(raw)
   const real = Number(c?.motive)
   if (!HINT_CATS.includes(cat) || !family || family === familyOf(real)) return { text: null, families: [], motives: [] }
-  const t = targets(c, { act, family, seed, exclude })
+  const t = targets(c, { act, family, seed, exclude, bonusFamilies })
   const name = n => motiveName(n)
   if (cat === 'salem') {
     const straight = l === 5 || (l === 4 && unit(seed, 'salem-coin') < 0.5)
@@ -104,7 +113,8 @@ export function hintLine(c, { cat, level: raw, act = 2, family, seed = '', exclu
     if (l === 3) { const n = t.pool[0]; return { text: CAT_LINES.boo.levels['3'].replace('[MOTIVE]', cap(name(n))), families: [], motives: [n] } }
     if (l === 4) return { text: CAT_LINES.boo.family4[family], families: [family], motives: [] }
     const b = t.bonus.find(n => familyOf(n) !== family)
-    return { text: CAT_LINES.boo.family5[family].replace('[BONUS]', name(b)), families: [family], motives: b === undefined ? [] : [b] }
+    if (b === undefined) return { text: CAT_LINES.boo.family4[family], families: [family], motives: [] }
+    return { text: CAT_LINES.boo.family5[family].replace('[BONUS]', name(b)), families: [family], motives: [b] }
   }
   // granolia
   const tpl = CAT_LINES.granolia.levels[String(l)]
@@ -121,7 +131,7 @@ export function hintLine(c, { cat, level: raw, act = 2, family, seed = '', exclu
 export function groupFamily(c, { members = [], seed = '' } = {}) {
   const s = c?.solving ?? {}
   const realFamily = familyOf(Number(c?.motive))
-  const out = new Set([...(s.newsOut ?? []), ...members.map(k => s.hints?.[k]).filter(Boolean)])
+  const out = new Set([...(s.newsOut ?? []), ...members.flatMap(k => (Array.isArray(s.hints?.[k]) ? s.hints[k] : [s.hints?.[k]]).filter(Boolean))])
   const wrong = FAMILIES.map(f => f.key).filter(k => k !== realFamily)
   const fresh = wrong.filter(k => !out.has(k))
   return seeded(fresh.length ? fresh : wrong, seed, 'group-family')[0]

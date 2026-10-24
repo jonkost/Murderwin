@@ -97,8 +97,9 @@ export const eliminate = onCall({ cors: true }, wrap(async req => {
 }))
 
 // Act 2, Lights Out: the guest scans the code in a cat's room (the play URL
-// with ?meet=<cat>), and taps when they have heard the cat. Only the guest
-// the line sent may meet that cat (lib/deal.js meetCat).
+// with ?meet=<cat>), taps Done when they have read the cat, or Not yet, call
+// me later. Only the guest the line called may meet that cat (lib/deal.js).
+// In Act 4 the same codes mark a group's arrival in a game room (lib/act4.js).
 export const meetCat = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, cat } = req.data ?? {}
@@ -111,16 +112,59 @@ export const leaveCat = onCall({ cors: true }, wrap(async req => {
   return run.player.leaveCat(db, { uid, nightId })
 }))
 
-// Act 4: the memory match on the iPad (?kiosk=memory) is clear. A room
-// screen (its presence heartbeat), a phone at the party or a host may say so;
-// the server checks the pairs against the board before it pays the group.
-export const memoryCleared = onCall({ cors: true }, wrap(async req => {
+export const notYet = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
-  const { nightId, boardId, pairs } = req.data ?? {}
+  const { nightId } = req.data ?? {}
+  return run.player.notYet(db, { uid, nightId })
+}))
+
+// Act 4: Locked in, on the group card.
+export const lockIn = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId } = req.data ?? {}
+  return run.player.lockIn(db, { uid, nightId })
+}))
+
+// A room screen (its presence heartbeat), a phone at the party or a host.
+async function atTheParty(req, nightId) {
+  const uid = requireUid(req)
   if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
   const allowed = await mayTouchNight(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) })
   if (!allowed) throw new HttpsError('permission-denied', 'This screen is not at the party.')
-  return run.player.memoryCleared(db, { nightId, boardId, pairs })
+  return uid
+}
+
+// Act 4, the Library: one of the memory match's three boards is clear on the
+// iPad (?kiosk=memory). The server checks the pairs against the board; the
+// third pays the group (lib/act4.js memoryStep).
+export const memoryStep = onCall({ cors: true }, wrap(async req => {
+  const { nightId, boardId, step, pairs } = req.data ?? {}
+  await atTheParty(req, nightId)
+  return run.player.memoryStep(db, { nightId, boardId, step, pairs })
+}))
+
+// Act 4, the Orangerie: Salem's Motion Game, from the group's phones.
+export const salemReady = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId } = req.data ?? {}
+  return run.player.salemReady(db, { uid, nightId })
+}))
+export const salemSlip = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, attempt, colour } = req.data ?? {}
+  return run.player.salemSlip(db, { uid, nightId, attempt, colour })
+}))
+export const salemPassed = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, attempt } = req.data ?? {}
+  return run.player.salemPassed(db, { uid, nightId, attempt })
+}))
+
+// Act 4, the Entryway: Boo's show is over (the wall, ?kiosk=boo, or a phone).
+export const booDone = onCall({ cors: true }, wrap(async req => {
+  const { nightId } = req.data ?? {}
+  await atTheParty(req, nightId)
+  return run.player.booDone(db, { nightId })
 }))
 
 // The study station on the M1 Air. Signed in anonymously like a phone, it
@@ -130,7 +174,7 @@ export const stationCommand = onCall({ cors: true }, wrap(async req => {
   const { nightId, key, station: which, command, payload } = req.data ?? {}
   const allowed = await station.stationAllowed(db, { key, isAdmin: ADMIN_UIDS.includes(uid) })
   if (!allowed) throw new HttpsError('permission-denied', 'That is not the station key.')
-  // "finished" also deals the clue and rotates the house (run.js); the rest is state.
+  // "finished" also deals the trace and Granolia's bag hint (run.js); the rest is state.
   if (command === 'finished') return run.studyFinished(db, { nightId, payload })
   return station.stationCommand(db, { nightId, station: which, command, payload })
 }))
@@ -174,8 +218,9 @@ export const relayGuess = onCall({ cors: true }, wrap(async req => {
 }))
 
 // The clock. Once a minute, for the live night: a window that has run out
-// is settled (defaults for the phones that did not answer) and a study slot
-// that has run out ends, with no host pressing anything. The same path as
+// is settled (defaults for the phones that did not answer), the Act 2 line
+// moves on, the supper chime and Act 4's rounds come on time, with no host
+// pressing anything. The same path as
 // the host command `tick` (lib/windows.js). Logs counts only.
 export const tick = onSchedule({ schedule: 'every 1 minutes', region: 'us-central1' }, async () => {
   const nightId = await windows.activeNightId(db)

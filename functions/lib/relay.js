@@ -27,7 +27,7 @@
 
 import { randomInt } from 'node:crypto'
 import { generateSet, cellLabel } from './relay-gen.js'
-import { NightError, characterById } from './night.js'
+import { NightError, characterById, GAME_NAMES } from './night.js'
 import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
 
 export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
@@ -50,7 +50,7 @@ export function slideMs(text) { return SLIDE_BASE_MS + SLIDE_WORD_MS * words(tex
 // Slide 3 points at "this arc in B1": it carries the practice smiley's B1
 // square (public, relay-bank.js PRACTICE) for the TV to draw beside the text.
 const SLIDE_TEXT = [
-  { title: 'Welcome', text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
+  { title: GAME_NAMES.drawing?.name ?? 'Welcome', hook: GAME_NAMES.drawing?.hook ?? null, text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
   { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
   { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.', cell: { label: 'B1', strokes: PRACTICE.cells.B1 } },
   { title: 'The shouting', text: "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },

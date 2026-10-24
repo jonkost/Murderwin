@@ -8,7 +8,7 @@
 // group id: never a word of what was dealt. Nothing here prints or returns
 // content.
 
-export const BLOCKING_KINDS = ['study', 'echo', 'hint', 'memory']
+export const BLOCKING_KINDS = ['study', 'echo', 'hint', 'memory', 'room']
 export const LEDGER_FIELDS = ['kind', 'act', 'beat', 'key', 'groupId']
 export const HUSH_ROLES = ['murderer', 'ghost']
 

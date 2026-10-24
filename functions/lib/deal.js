@@ -24,14 +24,15 @@ import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
-import { makeRotation, rotationPath, studyPath, studyClueCard, studyReveal, stationAlive, finishStudy, ABSENT_SLOT_MS } from './station.js'
-import { buildCase, rehearsalCase, seededUnit } from './case.js'
-import { bagsClue, bagsText } from './bags.js'
+import { traceStandIn } from './station.js'
+import { buildCase, rehearsalCase } from './case.js'
+import { readPacking } from './bags.js'
+import { bagPlan, bagLine, bagStandIn, CAT_SHORT } from './bagclues.js'
 import { pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
 import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlour.js'
 import { LEANS_DOC } from './steward.js'
-import { hintFamilyFor, hintCatFor, memoryPick } from './families.js'
-import { hintLine as catHintLine, groupFamily, HINT_CATS } from './cats.js'
+import { hintsOf, hintFamiliesFor, familyForCat, memoryPick } from './families.js'
+import { hintLine as catHintLine, HINT_CATS } from './cats.js'
 import { hostLine, booLine, irwinTraceLine } from './hosts.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
@@ -39,14 +40,13 @@ import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
-export const STATIONS = NIGHT.stations
 export const WINDOWS = NIGHT.windows
 export const PARLOUR = configOf(NIGHT.parlour)
 
 export const CAT_KEYS = ['irwin', 'granolia', 'boo', 'zimothy', 'salem']
 export const CAT_NAMES = {
   irwin: 'Sir Irwin', granolia: 'Granolia Lickspittle', boo: 'Miss Boo LaRue',
-  zimothy: 'Zimothy Clawford, Esq.', salem: 'Salem Crookshank',
+  zimothy: 'Zimothy Clawford, Esq.', salem: 'Salem Crooknog',
 }
 
 // ---------------------------------------------------------------------------
@@ -63,26 +63,20 @@ export const NOTICES = {
   introduce: { title: 'Say who you are', text: 'Out loud, to the room: your name and your profession. Nothing else. Then tap.', button: 'I have said it' },
   ready: { title: 'Settle in', text: 'The evening is about to turn. Keep your phone on you.', button: 'Ready' },
   orient: { title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
-  news: { title: 'Eyes up', text: 'Something is on the big screen. Watch it. Your phone will tell you where to go when it is over.', button: 'I watched it' },
-  checkin: { title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to dinner.', button: 'Done' },
-  down: { title: 'Dinner', text: 'Phones down and charging. The radio is on. Listen for the crackle.', button: 'Phone is down' },
+  news: { title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
+  // after the news (handoff 23 Oct §9.4): a quiet look in your own bag, shown to nobody
+  peek: { title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
+  checkin: { title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to supper.', button: 'Done' },
+  down: { title: 'Supper', text: 'Phones down and charging. Bring your bag to the table: everyone may share now. Listen for the news.', button: 'Phone is down' },
   bulletin: { title: 'The bulletin', text: 'Did you hear it? Talk it over at the table. Cross off what you can.', button: 'Heard it' },
   roam: { title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired' },
-  irwin: { title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the living room screen and nowhere else. Go.', button: 'On my way' },
-  door: { title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the living room.', button: 'I have seen it' },
-  eyes: { title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the living room screen.', button: 'Watching' },
+  irwin: { title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
+  door: { title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
+  eyes: { title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
 }
 
-// The Act 4 direction screens (docs/handoff-2026-10-22.md §6c). The station
-// keys stay as they are (the workshop files its lines by them): `checkin` is
-// the Free time slot, and its card carries one of FREE_TIME_TIPS under the line.
-export const STATION_TEXT = {
-  study: { title: 'The study', text: "Granolia's expecting your group in the Study, upstairs." },
-  cat: { title: 'A cat', text: 'Find the cat named on your phone. It will talk to the group together.' },
-  bags: { title: 'The bags', text: 'Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.' },
-  puzzle: { title: 'The memory match', text: 'Go to the iPad. Turn two cards at a time and find the six pairs together. Clear the board and one motive comes off your list.' },
-  checkin: { title: 'Free time', text: 'Nothing for your group right now. Grab a drink, stretch your legs.' },
-}
+// The Parlour tips (§9.5, as built and kept): a group waiting in the Parlour
+// in Act 4 gets one under its direction (act4.parlourTip).
 export const FREE_TIME_TIPS = [
   'Have you crossed off everything you know?',
   'Compare what the cats told you. Do they agree?',
@@ -90,9 +84,6 @@ export const FREE_TIME_TIPS = [
   'Look at the portraits. Every character carries a trace.',
   'Only tell your group. The walls have ears. And whiskers.',
 ]
-// The group card's two lines (handoff §6c screen 1), with the others named by character.
-export const GROUP_TEXT = 'From now on, only share with your group.'
-export const ALONE_TEXT = 'From now on, keep what you learn to yourself.'
 
 // Built-in Parlour Game sets, used only when the workshop bank is empty.
 // Silly, light, about nothing. Points are kept on the server; no phone sees them.
@@ -136,7 +127,7 @@ export function beatsOf(act) { return NIGHT.acts[String(act)]?.beats ?? [] }
 export function beatSpec(act, key) { return beatsOf(act).find(b => b.key === key) ?? null }
 
 // "LABEL: text" lines from a workshop list.
-function labelled(items) {
+export function labelled(items) {
   const out = {}
   for (const it of items) {
     const m = /^([A-Z][A-Z0-9 '&/]*):\s*(.+)$/s.exec(it.text.trim())
@@ -146,7 +137,7 @@ function labelled(items) {
 }
 
 // Everyone at the party: roster key → { name, characterId, uid }.
-async function guests(db, nightId) {
+export async function guests(db, nightId) {
   const [nightSnap, deckSnap] = await Promise.all([db.doc(`nights/${nightId}`).get(), db.doc(`nights/${nightId}/private/deck`).get()])
   if (!nightSnap.exists) throw new NightError('no-night', 'No such night.')
   const night = nightSnap.data()
@@ -157,7 +148,7 @@ async function guests(db, nightId) {
 
 // Add one card to a phone, once. Cards carry an id; dealing the same id twice
 // is a no-op, so "Next" pressed twice never doubles a card.
-async function dealCard(db, uid, card) {
+export async function dealCard(db, uid, card) {
   const ref = db.doc(`sessions/${uid}`)
   const snap = await ref.get()
   if (!snap.exists) return false
@@ -222,82 +213,86 @@ export const ensureCase = buildCaseForNight
 export function roleOf(c, key) { return c?.roles?.[key] ?? 'detective' }
 
 // ---------------------------------------------------------------------------
-// Act 2, Lights Out: the phones run the room rotation (docs/solving-the-case.md,
-// decided 21 Oct 2026, updated 22 Oct). Four cats wait in four rooms
-// (seed/night.json solving.catRooms: Granolia in the Study, Salem in the
-// Orangerie, Zimothy in the Library, Boo in the Entryway; never Irwin, never
-// the living room). Every guest visits all four cats, one at a time, in a
-// route the deal staggers so up to four guests are out at once. Only one of
-// the four, picked at the deal (cases/{id}.solving.hintCats), gives the real
-// hint; the other three only greet in character. Only one guest is at a cat
-// at a time, so nobody overhears a private hint: everyone else waits in the
-// living room. A guest scans the code in the room (the play URL with
-// ?meet=<cat>), the cat greets them on their phone, they tap done, and they
-// join the next cat's line.
+// Act 2, Lights Out (docs/handoff-2026-10-23.md §3, Jon's final plan, 23 Oct
+// 2026). Four cats wait in four rooms (seed/night.json solving.catRooms:
+// Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo
+// in the Entryway; never Irwin, never the Parlour). Every guest visits all
+// four, one guest at a cat at a time, and EVERY cat gives that guest two
+// things, both at the rung its affection for the guest sets at the moment of
+// the scan: a motive hint (cats.js, about one of the guest's two wrong
+// families) and a bag clue about the Murderer (bagclues.js). Both land on the
+// phone's Clues tab. Everyone else waits in the Parlour, where Sir Irwin's
+// sharing prompts run on the TV.
+//
+// The line is a queue, not a schedule. "Not yet, call me later" (every phone
+// has the same button) puts a guest back in the queue with no penalty, and a
+// cat with nobody ready in its own line calls whoever has waited longest and
+// still has to see it (F23), so no cat sits idle while someone is ready.
 //
 // Every guest always has a next step on the phone (sessions/{uid}.lights):
-//   wait  stay in the living room; the phone will send you
-//   go    go to <room>; <cat> is waiting; scan the code there
-//   with  the cat is talking to you; tap when you have heard it
-//   done  all four cats seen; back to the living room (at the chime: supper)
-// A guest who never turns up (goMinutes) or never taps done (withMinutes) is
-// moved on by the tick, and gets the greeting on the phone anyway: delay,
-// never destroy. The end of the act hands every guest who has not yet met
-// their hint cat that greeting the same way (flushLights).
+//   wait  stay in the Parlour; the phone will call you ('later' after Not yet)
+//   go    your turn: <cat> is waiting in <room> (On my way / Not yet)
+//   with  the cat is talking to you; tap Done when you have read it
+//   done  all four cats seen; the chime calls everyone to supper
+// A guest who never turns up (goMinutes) or never taps Done (withMinutes) is
+// moved on by the tick and gets that cat's lines on the phone anyway: delay,
+// never destroy. Supper (the supper beat, run.js) comes when every guest is
+// done, or when Jon presses Supper's ready; then each cat a guest has not
+// seen leaves its lines as a note on the phone (flushLights).
 //
 // The line itself is server-only: nights/{id}/private/lights
 //   { act, beat, cats: { cat: { queue: [guestKey], at: guestKey | null, since } },
-//     guests: { guestKey: { route: [cat] x4, leg, cat, met: [cat], step, since, supper? } } }
+//     guests: { guestKey: { route: [cat] x4, cat, met: [cat], step, since, movedOn?, later?, laterUntil?, supper? } } }
 // Every move goes through one transaction, so two guests are never at a cat at once (F20).
 
 export const CAT_ROOMS = NIGHT.solving?.catRooms ?? { granolia: 'the Study', salem: 'the Orangerie', zimothy: 'the Library', boo: 'the Entryway' }
 export const LIGHTS_CATS = Object.keys(CAT_ROOMS)
 export const GO_MS = (Number(NIGHT.solving?.goMinutes) || 4) * 60_000
 export const WITH_MS = (Number(NIGHT.solving?.withMinutes) || 5) * 60_000
+// After "Not yet, call me later", the guest is not called again for this long.
+export const LATER_MS = (Number(NIGHT.solving?.laterMinutes) || 2) * 60_000
 export const LIGHTS_STEPS = ['wait', 'go', 'with', 'done']
 export function lightsPath(nightId) { return `nights/${nightId}/private/lights` }
 const CAT_THEM = { granolia: 'her', boo: 'her', salem: 'him', zimothy: 'him' }
 
-// What each step says on the phone. Open copy (docs/handoff-2026-10-22.md
-// §6b); the workshop's ui_copy lines LIGHTS WAIT, LIGHTS GO, LIGHTS NEXT,
-// LIGHTS WITH, LIGHTS DONE and LIGHTS SUPPER win ([CAT], [ROOM] and [THEM]
-// filled in). NEXT is GO for every cat after the first.
+// What each step says on the phone. Open copy (docs/handoff-2026-10-23.md
+// §9.4); the workshop's ui_copy lines LIGHTS WAIT, LIGHTS LATER, LIGHTS GO,
+// LIGHTS NEXT, LIGHTS WITH, LIGHTS DONE and LIGHTS SUPPER win ([CAT], [ROOM]
+// and [THEM] filled in). NEXT is GO after the tick moved the guest on.
 export const LIGHTS_TEXT = {
-  wait: { title: 'Stay in the living room', text: "Make yourself at home in the living room. You'll be called soon." },
-  go: { title: 'Go to [ROOM]', text: "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting. Find the QR code in the room and scan it to say hello." },
-  next: { title: 'Go to [ROOM]', text: "Time's up. [CAT] is expecting you in [ROOM]. Find the QR code in the room and scan it to say hello." },
-  with: { title: '[CAT] is talking to you', text: 'Read what the cat says. It is for you alone. Tap when you have heard it.' },
-  done: { title: 'Back to the living room', text: 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.' },
+  wait: { title: 'In the Parlour', text: "Make yourself at home in the Parlour. You'll be called soon. Sir Irwin has ideas on the TV." },
+  later: { title: 'Back in the queue', text: "No problem. You're back in the queue. We'll call you again." },
+  go: { title: 'Your turn', text: "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting." },
+  next: { title: 'Your turn', text: "Time's up. [CAT] is expecting you in [ROOM]." },
+  with: { title: '[CAT] is talking to you', text: 'Read what the cat says. It is for you alone. Tap Done when you have read it.' },
+  done: { title: 'Back to the Parlour', text: 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.' },
   supper: { title: 'Supper is served', text: "That's the chime! Supper is served in the Orangerie." },
 }
+// After "On my way" (the phone's own step, no server call), and the cards' footer.
+export const ARRIVE_TEXT = 'Find the code in the room and scan it to say hello.'
+export const SAVED_TEXT = 'Saved to your Clues.'
+// The note at supper for a guest with cats still unvisited (Jon called supper early).
+export const SUPPER_NOTE = { title: "Supper's ready!", text: "Supper's ready! The cats you haven't met left you a note:", button: 'Read them' }
 
-// What the three cats that do not give this guest a hint say instead. Open
-// copy (handoff §6b); the workshop's ui_copy lines GREET <CAT> win.
-export const GREETING_ONLY = {
-  salem: "Off my lawn. Oh, it's you. Fine. Nothing to report, and I'd report it backwards anyway.",
-  zimothy: "Ah, a visitor. My consultation fee is one compliment. I've nothing for you today, but I've billed you all the same.",
-  boo: "Darling. Love the outfit. Don't ask me anything, I'm off duty.",
-  granolia: 'Oh! Hi! Hi. Hello. I had something to tell you, and now it\'s gone. Want to sit with me anyway?',
-}
-
-// The private hint on a cat's greeting: the cat's line from the Cat Hint
-// Lines bank (cats.js) at the guest's affection, about the wrong family the
-// case gave them. A case with no family for the guest (or a cat with no
-// line) carries this marked stand-in, which names nothing.
+// The motive hint and the bag clue on a cat's card. A case with no family for
+// the guest (or a cat with no line) carries this marked stand-in, which names
+// nothing. On a rehearsal night every sealed slot shows a bracketed stand-in
+// saying what would show there (Jon, 23 Oct 2026), never a filled line.
 export const HINT_PLACEHOLDER = '(Here the cat would rule something out.)'
-export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [] } = {}) {
-  const line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude }) : null
+export function hintStandIn(cat) { return `[${CAT_SHORT[cat] ?? 'The cat'}'s motive hint appears here]` }
+export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [], bonusFamilies = null } = {}) {
+  const line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude, bonusFamilies }) : null
   if (!line?.text) return { hint: { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
+  if (c?.rehearsal) return { hint: { text: hintStandIn(cat), placeholder: true }, ruled: { families: line.families, motives: line.motives } }
   return { hint: { text: line.text, placeholder: false }, ruled: { families: line.families, motives: line.motives } }
 }
 
-// A cat's card: the cat's name and room and its one open hint line, nothing
-// else. Kind 'testimony', so the phone's cat card and the Clues tab read it
-// as they always have. Marked placeholder only when the hint itself is the
-// stand-in. The Act 2 hint cat deals it to one guest, the Act 4 cat station
-// to a group.
-export function catHintCard({ id, act, beat, cat, hint }) {
-  return { id, act, beat, kind: 'testimony', cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], lines: [], hint, placeholder: !!hint?.placeholder }
+// A cat's card: the cat's name and room, its motive hint, its bag clue, and
+// the footer. Kind 'testimony', so the phone's cat card and the Clues tab read
+// it as they always have. `note` marks a card left at supper for a cat the
+// guest never reached.
+export function catHintCard({ id, act, beat, cat, hint, bag = null, note = false }) {
+  return { id, act, beat, kind: 'testimony', cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], lines: [], hint, ...(bag ? { bag } : {}), ...(note ? { note: true } : {}), saved: SAVED_TEXT, placeholder: !!hint?.placeholder }
 }
 
 // Every guest's route: all four cats, staggered round the room so the first
@@ -316,47 +311,74 @@ export function planWaves(keys, pick = pickInt) {
 }
 
 // The step a phone shows, with its words filled in.
-export function lightsCard(step, cat, ui = {}, { leg = 0, supper = false } = {}) {
-  const variant = step === 'done' && supper ? 'supper' : step === 'go' && leg > 0 ? 'next' : step
+export function lightsCard(step, cat, ui = {}, { movedOn = false, supper = false, later = false } = {}) {
+  const variant = step === 'done' && supper ? 'supper' : step === 'go' && movedOn ? 'next' : step === 'wait' && later ? 'later' : step
   const base = LIGHTS_TEXT[variant] ?? LIGHTS_TEXT.wait
   const label = `LIGHTS ${variant.toUpperCase()}`
   const fill = t => String(t).replace(/\[CAT\]/g, CAT_NAMES[cat] ?? 'A cat').replace(/\[ROOM\]/g, CAT_ROOMS[cat] ?? 'the room').replace(/\[THEM\]/g, CAT_THEM[cat] ?? 'them')
-  return { step, cat: cat ?? null, catName: CAT_NAMES[cat] ?? null, room: CAT_ROOMS[cat] ?? null, title: fill(base.title), text: fill(ui[label] ?? base.text) }
+  return { step, variant, cat: cat ?? null, catName: CAT_NAMES[cat] ?? null, room: CAT_ROOMS[cat] ?? null, title: fill(base.title), text: fill(ui[label] ?? base.text), ...(step === 'go' ? { arrive: ui['LIGHTS ARRIVE'] ?? ARRIVE_TEXT } : {}) }
 }
 
-// The next guest in a cat's line, if the cat is free. Mutates the state.
+// Is a guest waiting and ready to be called (not asked for later)?
+function readyToCall(me, now) {
+  return !!me && me.step === 'wait' && !(ms(me.laterUntil) > now)
+}
+
+// The next guest for a cat, if the cat is free: the first ready guest in its
+// own line, else whoever has waited longest anywhere and still has this cat
+// to see (F23: no cat idle while someone is ready). Mutates the state.
 function sendNext(state, cat, now) {
   const line = state.cats[cat]
   if (!line || line.at) return null
-  const k = line.queue.shift()
+  let k = line.queue.find(x => readyToCall(state.guests[x], now))
+  if (!k) {
+    const waiting = Object.entries(state.guests)
+      .filter(([, g]) => readyToCall(g, now) && g.cat !== cat && !(g.met ?? []).includes(cat))
+      .sort((a, b) => ms(a[1].since) - ms(b[1].since))
+    k = waiting[0]?.[0] ?? null
+    if (k) { const was = state.guests[k].cat; if (state.cats[was]) state.cats[was].queue = state.cats[was].queue.filter(x => x !== k) }
+  }
   if (!k) return null
+  line.queue = line.queue.filter(x => x !== k)
   line.at = k
   line.since = now
-  state.guests[k] = { ...state.guests[k], cat, step: 'go', since: now }
+  state.guests[k] = { ...state.guests[k], cat, step: 'go', since: now, later: false, laterUntil: null }
   return k
 }
 
-// A guest has finished with their cat (heard it, or was moved on): the cat
-// is free, and the guest joins the next cat on their route, or is done.
-// Mutates the state; returns the guests whose step changed.
-function finishLeg(state, k, now) {
+// Every free cat calls its next guest. Returns the guests called.
+function sendAll(state, now) {
+  const out = []
+  for (const cat of LIGHTS_CATS) { const k = sendNext(state, cat, now); if (k) out.push(k) }
+  return out
+}
+
+// The cats a guest still has to see, in their route's order.
+function catsLeft(me) {
+  const met = new Set(me.met ?? [])
+  const route = [...(me.route ?? []), ...LIGHTS_CATS]
+  return [...new Set(route)].filter(c => LIGHTS_CATS.includes(c) && !met.has(c))
+}
+
+// A guest has finished with their cat (read it, or was moved on): the cat is
+// free, and the guest joins the next cat's line, or is done. Mutates the
+// state; returns the guests whose step changed.
+function finishLeg(state, k, now, { movedOn = false } = {}) {
   const me = state.guests[k]
   const was = me.cat
   me.met = [...new Set([...(me.met ?? []), was])]
   if (state.cats[was]?.at === k) state.cats[was].at = null
-  const route = me.route ?? [was]
   me.since = now
-  if ((me.leg ?? 0) + 1 < route.length) {
-    me.leg = (me.leg ?? 0) + 1
-    me.cat = route[me.leg]
+  me.movedOn = movedOn
+  const left = catsLeft(me)
+  if (left.length) {
+    me.cat = left[0]
     me.step = 'wait'
     state.cats[me.cat].queue.push(k)
   } else {
     me.step = 'done'
   }
-  const changed = [k]
-  for (const cat of new Set([was, me.cat])) { const next = sendNext(state, cat, now); if (next) changed.push(next) }
-  return changed
+  return [k, ...sendAll(state, now)]
 }
 
 // One move on the line, in a transaction. `fn(state)` mutates and returns
@@ -380,61 +402,82 @@ export function lightsProgressOf(state) {
   const all = Object.values(state?.guests ?? {})
   return { done: all.filter(g => g?.step === 'done').length, total: all.length }
 }
+// Has every guest seen all four cats? (The supper chime waits for this, F24.)
+export function allSeen(state) {
+  const p = lightsProgressOf(state)
+  return p.total > 0 && p.done === p.total
+}
 
-// After a move: every phone whose step changed is told, and every guest due
-// a greeting gets it (once: the card ids are fixed), and the host's count moves.
+// What the cats' bag clues read on the night: the packing, only on the party
+// (a rehearsal never reads it), and the bags the guests at the party hold.
+async function bagContext(db, c, roster) {
+  const packing = c && !c.rehearsal ? await readPacking(db) : null
+  const inPlay = [...new Set(Object.values(roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
+  return { packing, inPlay }
+}
+
+// After a move: every phone whose step changed is told, every guest due a
+// cat's lines gets them (once: the card ids are fixed), and the host's count
+// moves. Returns whether every guest has now seen all four (run.js calls supper).
 async function followLights(db, nightId, r, { now = Date.now() } = {}) {
-  if (r.none || (!r.changed.length && !r.greet.length)) return { greeted: 0 }
+  if (r.none || (!r.changed.length && !r.greet.length)) return { greeted: 0, allSeen: false }
   await db.doc(`nights/${nightId}`).update({ lightsProgress: lightsProgressOf(r.state) })
-  const { list } = await guests(db, nightId)
+  const { night, list } = await guests(db, nightId)
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const ui = labelled(await readArea(db, 'ui_copy'))
   const c = r.greet.length ? await readCase(db, nightId) : null
+  const bags = r.greet.length ? await bagContext(db, c, night.roster) : null
   let greeted = 0
-  for (const { key, cat } of r.greet) {
+  for (const { key, cat, note } of r.greet) {
     const g = byKey[key]
-    if (g && await greetGuest(db, nightId, { c, g, cat, act: r.state.act, beat: r.state.beat, ui })) greeted++
+    if (g && await greetGuest(db, nightId, { c, g, cat, act: r.state.act, beat: r.state.beat, bags, roster: night.roster ?? {}, note })) greeted++
   }
   for (const k of new Set([...r.changed, ...r.greet.map(x => x.key)])) {
     const g = byKey[k]
     const st = r.state.guests[k]
     if (!g || !st) continue
-    await db.doc(`sessions/${g.uid}`).update({ lights: { ...lightsCard(st.step, st.cat, ui, { leg: st.leg ?? 0, supper: !!st.supper }), at: new Date(now) } })
+    await db.doc(`sessions/${g.uid}`).update({ lights: { ...lightsCard(st.step, st.cat, ui, { movedOn: !!st.movedOn, supper: !!st.supper, later: !!st.later }), at: new Date(now) } })
   }
-  return { greeted }
+  return { greeted, allSeen: allSeen(r.state) }
 }
 
-// A cat's greeting for one guest. From the guest's hint cat: the cat's card
-// with the private hint, at the guest's affection. From the other three: one
-// greeting line in character, no hint.
-async function greetGuest(db, nightId, { c, g, cat, act, beat, ui = {} }) {
-  if (!cat) return false
+// One cat's lines for one guest, at the guest's affection with that cat right
+// now: the motive hint (one of the guest's two wrong families, cats.js) and
+// the bag clue about the Murderer (bagclues.js). Written onto the guest's
+// phone as one card; what the lines named goes into the case for the checks.
+async function greetGuest(db, nightId, { c, g, cat, act, beat, bags = null, roster = {}, note = false }) {
+  if (!cat || !LIGHTS_CATS.includes(cat)) return false
   const sessionSnap = await db.doc(`sessions/${g.uid}`).get()
   if (!sessionSnap.exists) return false
-  let hintCat = c?.solving?.hintCats?.[g.key] ?? null
-  if (!hintCat && c?.solving) {
-    // a guest the case does not know yet (a late joiner): fixed by the case, written into it
-    hintCat = hintCatFor(c.solving, g.key)
-    await db.doc(`cases/${nightId}`).update({ [`solving.hintCats.${g.key}`]: hintCat })
-    c.solving.hintCats = { ...(c.solving.hintCats ?? {}), [g.key]: hintCat }
-  }
-  if (cat !== hintCat) {
-    const line = ui[`GREET ${cat.toUpperCase()}`] ?? GREETING_ONLY[cat]
-    return dealCard(db, g.uid, { id: `${act}-${beat}-greet-${cat}`, act, beat, kind: 'testimony', cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], outcome: 'greet', lines: [line] })
-  }
   const level = stopOf(sessionSnap.data()?.affection?.[cat] ?? 3)
-  let family = c?.solving?.hints?.[g.key] ?? null
-  if (!family && c?.solving) {
-    // a guest the case does not know yet (a late joiner): the least-held wrong family, written into the case
-    family = hintFamilyFor(c.solving, g.key)
-    if (family) { await db.doc(`cases/${nightId}`).update({ [`solving.hints.${g.key}`]: family }); c.solving.hints = { ...(c.solving.hints ?? {}), [g.key]: family } }
+  const salt = c?.screenSalt ?? nightId
+  let families = c?.solving ? hintsOf(c.solving, g.key) : []
+  if (!families.length && c?.solving) {
+    // a guest the case does not know yet (a late joiner): the pair the fewest hold, written into the case
+    families = hintFamiliesFor(c.solving, g.key)
+    if (families.length) { await db.doc(`cases/${nightId}`).update({ [`solving.hints.${g.key}`]: families }); c.solving.hints = { ...(c.solving.hints ?? {}), [g.key]: families } }
   }
-  const { hint, ruled } = hintLine(c, family, { cat, level, act: 2, seed: `${c?.screenSalt ?? nightId}\u0000${g.key}` })
-  const dealt = await dealCard(db, g.uid, catHintCard({ id: `${act}-${beat}-testimony`, act, beat, cat, hint }))
+  const family = familyForCat(families, { cat, seed: `${salt}\u0000${g.key}` })
+  const { hint, ruled } = hintLine(c, family, { cat, level, act: 2, seed: `${salt}\u0000${g.key}\u0000${cat}`, bonusFamilies: [...families, ...(c?.solving?.newsOut ?? [])] })
+  // the bag clue: from the packing on the party night, a stand-in on a rehearsal
+  let bag
+  let fill = null
+  if (!c || c.rehearsal) bag = { text: bagStandIn(cat, 2), placeholder: true }
+  else {
+    const plan = bagPlan(bags?.packing, { bag: roster?.[c.murderer]?.bag, inPlay: bags?.inPlay ?? [], seed: `${salt}\u0000bag\u0000${g.key}` })
+    fill = bagLine(plan, { cat, act: 2, rung: level, seed: `${salt}\u0000bag\u0000${g.key}\u0000${cat}` })
+    bag = { text: fill.text, placeholder: false }
+  }
+  const dealt = await dealCard(db, g.uid, catHintCard({ id: `${act}-${beat}-cat-${cat}`, act, beat, cat, hint, bag, note }))
+  if (!dealt) return false
+  const patch = {}
   // what the line rules out, for the solver checks (families.roomClues); case only, never a phone
-  if (dealt && ruled && c?.solving) await db.doc(`cases/${nightId}`).update({ [`solving.ruled.${g.key}`]: ruled })
-  if (dealt && family) await noteDealt(db, nightId, { kind: 'hint', act, beat, key: g.key }) // the ledger: a hint is out (safeguards)
-  return dealt
+  if (ruled && c?.solving) patch[`solving.ruled.${g.key}-${cat}`] = ruled
+  // what the bag clue named, for the bag checks (G39, G41, G44, G46, G49); case only
+  if (fill) patch[`bagClues.act2.${g.key}.${cat}`] = { rung: level, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null }
+  if (Object.keys(patch).length) await db.doc(`cases/${nightId}`).update(patch)
+  if (family) await noteDealt(db, nightId, { kind: 'hint', act, beat, key: g.key }) // the ledger: a hint is out (safeguards)
+  return true
 }
 
 // The beat: the line is made and the first wave sent. Run twice, it changes nothing.
@@ -447,16 +490,16 @@ export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), 
   const state = {
     act, beat, startedAt: new Date(now),
     cats: Object.fromEntries(LIGHTS_CATS.map(cat => [cat, { queue: queues[cat], at: null, since: null }])),
-    guests: Object.fromEntries(list.map(g => [g.key, { route: routes[g.key], leg: 0, cat: routes[g.key][0], met: [], step: 'wait', since: now }])),
+    guests: Object.fromEntries(list.map(g => [g.key, { route: routes[g.key], cat: routes[g.key][0], met: [], step: 'wait', since: now }])),
   }
-  for (const cat of LIGHTS_CATS) sendNext(state, cat, now)
+  sendAll(state, now)
   await ref.set(state)
   await followLights(db, nightId, { state, changed: list.map(g => g.key), greet: [] }, { now })
   return { ok: true, dealt: list.length, sent: LIGHTS_CATS.filter(cat => state.cats[cat].at).length }
 }
 
 // A guest scans the code in a cat's room (or taps "I'm here" when the phone
-// cannot scan). Only the guest the line sent may meet that cat; anyone else
+// cannot scan). Only the guest the line called may meet that cat; anyone else
 // is told kindly where they should be, and nothing changes.
 export async function meetCat(db, { nightId, uid, cat, now = Date.now() }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
@@ -477,15 +520,15 @@ export async function meetCat(db, { nightId, uid, cat, now = Date.now() }) {
   })
   if (r.none) throw new NightError('closed', 'The cats are not receiving anyone just now.')
   if (r.refused === 'wrong') throw new NightError('invalid', `Not this room. ${CAT_NAMES[r.mine]} is waiting for you in ${CAT_ROOMS[r.mine]}.`)
-  if (r.refused === 'wait') throw new NightError('invalid', 'Not yet. Wait in the living room; your phone will send you.')
-  if (r.refused) throw new NightError('invalid', 'Wait in the living room; your phone will send you.')
+  if (r.refused === 'wait') throw new NightError('invalid', 'Not yet. Wait in the Parlour; your phone will call you.')
+  if (r.refused) throw new NightError('invalid', 'Wait in the Parlour; your phone will call you.')
   if (r.already) return { ok: true, already: true }
-  await followLights(db, nightId, r, { now })
-  return { ok: true }
+  const f = await followLights(db, nightId, r, { now })
+  return { ok: true, allSeen: f.allSeen }
 }
 
-// "I have heard it": the cat is free for the next guest, and this guest
-// joins the next cat's line (or is done after the fourth).
+// "Done": the cat is free for the next guest, and this guest joins the next
+// cat's line (or is done after the fourth).
 export async function leaveCat(db, { nightId, uid, now = Date.now() }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
   const s = (await db.doc(`sessions/${uid}`).get()).data()
@@ -497,16 +540,47 @@ export async function leaveCat(db, { nightId, uid, now = Date.now() }) {
     return { changed: finishLeg(state, key, now) }
   })
   if (r.none || r.already) return { ok: true, already: true }
+  const f = await followLights(db, nightId, r, { now })
+  return { ok: true, allSeen: f.allSeen }
+}
+
+// "Not yet, call me later" (F22): the same button on every phone, no penalty.
+// The cat is free for someone else; the guest goes back in the queue, the next
+// cat on their list first and this one at the end of it, and is not called
+// again for LATER_MS. A tap when the phone is not calling them changes nothing.
+export async function notYet(db, { nightId, uid, now = Date.now() }) {
+  if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
+  const s = (await db.doc(`sessions/${uid}`).get()).data()
+  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+  const key = s.guestKey
+  const r = await moveLights(db, nightId, state => {
+    const me = state.guests[key]
+    if (!me || me.step !== 'go') return { already: true }
+    const cat = me.cat
+    if (state.cats[cat]?.at === key) state.cats[cat].at = null
+    const left = catsLeft(me)
+    const order = [...left.filter(c => c !== cat), cat]
+    me.route = [...(me.met ?? []), ...order]
+    me.cat = order[0]
+    me.step = 'wait'
+    me.later = true
+    me.laterUntil = new Date(now + LATER_MS)
+    me.movedOn = false
+    me.since = now
+    state.cats[me.cat].queue.push(key)
+    return { changed: [key, ...sendAll(state, now)] }
+  })
+  if (r.none || r.already) return { ok: true, already: true }
   await followLights(db, nightId, r, { now })
   return { ok: true }
 }
 
-// The clock (windows.tick, once a minute): a guest who never turned up, or
-// never tapped done, is greeted anyway and moved on to their next cat; a
-// guest who joined after the line was made gets a route starting at the
-// shortest line; every free cat sends its next.
+// The clock (the tick, once a minute, and the Host tab while Act 2 runs): a
+// guest who never turned up, or never tapped Done, gets that cat's lines and
+// is moved on; a guest who joined after the line was made gets a route
+// starting at the shortest line; every free cat calls its next.
 export async function tickLights(db, nightId, now = Date.now()) {
-  if (!(await db.doc(lightsPath(nightId)).get()).exists) return { ok: true, moved: 0 }
+  if (!(await db.doc(lightsPath(nightId)).get()).exists) return { ok: true, moved: 0, allSeen: false }
   const { list } = await guests(db, nightId)
   const keys = list.map(g => g.key)
   const r = await moveLights(db, nightId, state => {
@@ -518,7 +592,7 @@ export async function tickLights(db, nightId, now = Date.now()) {
       const first = [...LIGHTS_CATS].sort((a, b) => load(a) - load(b))[0]
       const i = LIGHTS_CATS.indexOf(first)
       const route = LIGHTS_CATS.map((_, j) => LIGHTS_CATS[(i + j) % LIGHTS_CATS.length])
-      state.guests[k] = { route, leg: 0, cat: first, met: [], step: 'wait', since: now }
+      state.guests[k] = { route, cat: first, met: [], step: 'wait', since: now }
       state.cats[first].queue.push(k)
       changed.push(k)
     }
@@ -528,31 +602,30 @@ export async function tickLights(db, nightId, now = Date.now()) {
       const me = k ? state.guests[k] : null
       if (me && ((me.step === 'go' && now - ms(line.since) >= GO_MS) || (me.step === 'with' && now - ms(line.since) >= WITH_MS))) {
         if (me.step === 'go') greet.push({ key: k, cat })
-        changed.push(...finishLeg(state, k, now))
+        changed.push(...finishLeg(state, k, now, { movedOn: true }))
       }
-      const next = sendNext(state, cat, now)
-      if (next) changed.push(next)
     }
+    changed.push(...sendAll(state, now))
     return { changed, greet }
   })
-  if (r.none) return { ok: true, moved: 0 }
-  await followLights(db, nightId, r, { now })
-  return { ok: true, moved: new Set(r.changed).size }
+  if (r.none) return { ok: true, moved: 0, allSeen: false }
+  const f = await followLights(db, nightId, r, { now })
+  return { ok: true, moved: new Set(r.changed).size, allSeen: f.allSeen || allSeen(r.state) }
 }
 
-// The end of the act: every guest who has not yet met their hint cat gets
-// that greeting on the phone, and everyone goes to supper. Safe to call again.
+// Supper (F24): every guest who has a cat still unvisited gets that cat's
+// lines on the phone, under one note ("Supper's ready! The cats you haven't
+// met left you a note:"), and every phone says supper is served. Safe to
+// call again: cards deal once.
 export async function flushLights(db, nightId, { now = Date.now() } = {}) {
-  const c = await readCase(db, nightId)
   const r = await moveLights(db, nightId, state => {
     const changed = []
     const greet = []
     for (const [k, me] of Object.entries(state.guests)) {
       if (me.supper) continue
-      const hintCat = c?.solving ? hintCatFor(c.solving, k) : me.cat
       const met = new Set([...(me.met ?? []), ...(me.step === 'with' ? [me.cat] : [])])
-      if (!met.has(hintCat)) greet.push({ key: k, cat: hintCat })
-      me.met = [...met]
+      for (const cat of LIGHTS_CATS) if (!met.has(cat)) greet.push({ key: k, cat, note: true })
+      me.met = [...LIGHTS_CATS]
       me.step = 'done'
       me.supper = true
       me.since = now
@@ -561,9 +634,18 @@ export async function flushLights(db, nightId, { now = Date.now() } = {}) {
     for (const cat of LIGHTS_CATS) { state.cats[cat].at = null; state.cats[cat].queue = [] }
     return { changed, greet }
   })
-  if (r.none) return { ok: true, flushed: 0 }
+  if (r.none) return { ok: true, flushed: 0, notes: 0 }
+  // the note first, then the cats' cards under it
+  const noted = [...new Set(r.greet.map(x => x.key))]
+  if (noted.length) {
+    const { list } = await guests(db, nightId)
+    const ui = labelled(await readArea(db, 'ui_copy'))
+    for (const g of list.filter(x => noted.includes(x.key))) {
+      await dealCard(db, g.uid, { id: `${r.state.act}-supper-note`, act: r.state.act, beat: 'supper', kind: 'notice', key: 'supper-note', title: SUPPER_NOTE.title, text: ui['SUPPER NOTE'] ?? SUPPER_NOTE.text, button: SUPPER_NOTE.button })
+    }
+  }
   await followLights(db, nightId, r, { now })
-  return { ok: true, flushed: r.changed.length }
+  return { ok: true, flushed: r.changed.length, notes: r.greet.length }
 }
 
 // ---------------------------------------------------------------------------
@@ -728,6 +810,14 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
     const night = nightSnap.data()
     const w = night?.window
     if (s.answers?.[windowId] && !s.answers[windowId].defaulted) return { already: true }
+    // an Act 4 game waiting on the phone: played when the guest is free, until Act 4's end settles it
+    const mine = s.windows?.[windowId]
+    if (mine?.waiting) {
+      if (s.answers?.[windowId]) return { late: true }
+      if (!validPicks(mine, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
+      tx.update(sessionRef, { [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
+      return { key: s.guestKey, act: 4 }
+    }
     // a tap after the close and its grace, or after the settle picked for this phone, is a late one:
     // it changes nothing and is thanked like any other, so the phone shows no pattern (windows.js)
     if (!w || w.id !== windowId || w.kind !== 'questions') {
@@ -830,302 +920,59 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
 }
 
 // ---------------------------------------------------------------------------
-// Act 4: groups and the five stations.
+// Act 4's Parlour Games wait on the phone (handoff 23 Oct 2026 §3). Each guest
+// still gets five, but they never pop up together: at each planned time a
+// game is dealt to every phone as waiting, and the phone shows "A Parlour Game
+// is waiting" whenever the guest is not in a game room. The guest plays it
+// when free; the answer moves the cats and, for the hidden roles, the dial
+// exactly as a window's would (applyPoints). Any left unplayed when Act 4
+// ends get a random answer, no penalty (settleWaiting). The rooms themselves
+// live in act4.js.
 
-// The groups themselves come from station.js (makeRotation): pairs, one trio
-// when the count is odd, and the study order. The case says who must be kept
-// apart (the Ghost and the Murderer); nobody is told, nobody can tell.
-// The rotation doc (nights/{id}/public/rotation) is the one source of truth:
-//   groups[i] = { id, members[{key,name}] }, studyOrder[] = group ids.
-// A group at study position p is in the study at rotation p, and at station
-// (r - p) mod 5 at rotation r, so the study is the clock for everyone.
-
-async function readRotation(db, nightId) {
-  const snap = await db.doc(rotationPath(nightId)).get()
-  return snap.exists ? snap.data() : null
-}
-
-export function stationFor(rotation, groupId, r) {
-  const p = Math.max(0, (rotation?.studyOrder ?? []).indexOf(groupId))
-  return STATIONS[((r - p) % STATIONS.length + STATIONS.length) % STATIONS.length]
-}
-
-export async function dealGroups(db, nightId, act, beat, { force = false } = {}) {
-  const c = await ensureCase(db, nightId)
-  // Once the house has started rotating the groups are set: remaking them
-  // would scramble who is where, point the study at a fresh first group and
-  // throw away the pay-out ledger. A re-run of the beat (Back, then Next)
-  // or a mis-tap on the Host button leaves everything as it is; only the
-  // host's explicit "force" makes new ones.
-  const standing = await readRotation(db, nightId)
-  const { night: n0 } = await guests(db, nightId)
-  if (standing && (n0.rotation ?? -1) >= 0 && !force) {
-    return { ok: true, already: true, reason: 'Groups are set', groups: standing.groups?.length ?? 0, trios: (standing.groups ?? []).filter(g => g.members.length === 3).length }
-  }
-  const apart = [c.murderer, c.ghost].filter(Boolean)
-  const made = await makeRotation(db, { nightId, apart })
-  const rotation = await readRotation(db, nightId)
+export async function dealWaitingGame(db, nightId, { now = Date.now(), act = 4, beat = null } = {}) {
+  const id = beat ? `questions-${act}-${beat}` : `questions-${act}-${now}`
+  const privRef = db.doc(`nights/${nightId}/private/windows`)
+  const privSnap = await privRef.get()
+  if (beat && privSnap.exists && privSnap.data()[id]) return { ok: true, id, already: true }
   const { list } = await guests(db, nightId)
-  await db.doc(`nights/${nightId}`).update({ rotation: -1 })
-  const byKey = Object.fromEntries(list.map(g => [g.key, g]))
-  let dealt = 0
-  for (const grp of rotation?.groups ?? []) {
-    const members = grp.members.map(m => ({ key: m.key, name: m.name, characterName: characterById(byKey[m.key]?.characterId)?.name ?? '' }))
-    const groupAffection = await groupAffectionOf(db, grp.members.map(m => byKey[m.key]?.uid).filter(Boolean))
-    for (const m of grp.members) {
-      const g = byKey[m.key]
-      if (!g) continue
-      // where the whole group stands with each cat: the Cats tab's second marker in Act 4 (never a number on screen)
-      await db.doc(`sessions/${g.uid}`).update({ group: grp.id, groupAffection })
-      // the others by their characters (the list under it pairs each real name with its character)
-      const others = members.filter(x => x.key !== m.key)
-      const card = {
-        id: `${act}-${beat}-group`, act, beat, kind: 'group', group: grp.id, members,
-        title: others.length ? `You're teamed up with ${others.map(x => x.characterName || x.name).join(' and ')}` : 'You are on your own this act',
-        text: others.length ? GROUP_TEXT : ALONE_TEXT,
-      }
-      if (await dealCard(db, g.uid, card)) dealt++
-    }
-  }
-  return { ok: true, groups: made.groups, trios: made.trios, dealt }
-}
-
-// The rounded average of a group's affection to each cat, 1 to 5.
-async function groupAffectionOf(db, uids) {
-  const levels = []
-  for (const uid of uids) levels.push((await db.doc(`sessions/${uid}`).get()).data()?.affection ?? {})
-  const out = {}
-  for (const cat of CAT_KEYS) {
-    const vals = levels.map(l => l[cat]).filter(v => typeof v === 'number')
-    out[cat] = vals.length ? Math.max(1, Math.min(5, Math.round(vals.reduce((a, b) => a + b, 0) / vals.length))) : 3
-  }
-  return out
-}
-
-// The Act 4 cat station's cats: never Irwin, and never Granolia, whose room
-// (the Study) holds the light puzzle and another group (settled by default,
-// 23 Oct 2026; Jon may change it). She talks to every group in the Study.
-export const ACT4_CATS = HINT_CATS.filter(cat => cat !== 'granolia')
-
-// The Free time tip for a group: one of the five, the same every time for the
-// group, seeded on the case's secret salt (never the public night id).
-export function freeTimeTip(c, gid, nightId = '') {
-  return FREE_TIME_TIPS[Math.floor(seededUnit(c?.screenSalt ?? nightId, gid, 'free-time-tip') * FREE_TIME_TIPS.length)]
-}
-
-// `over` is the workshop's station_text list ("STUDY: ...", "CAT: ..." with
-// [CAT] and [ROOM], "BAGS: ..." with [PROPERTY] and [COUNT], "PUZZLE: ...",
-// "CHECKIN: ..." for Free time); a line that is written replaces the default
-// sentence, the title stays.
-export async function stationCard(db, { c, station, act, beat, gid, members, levels, nightId = '', pick = pickInt, over = {}, roster = {} }) {
-  const base = STATION_TEXT[station.key]
-  const id = `${act}-${beat}-${station.key}`
-  const written = over[station.key.toUpperCase()]
-  const card = { id, act, beat, kind: 'station', station: station.key, title: base.title, text: written || base.text }
-  // the host's intro (hosts.js): Granolia hosts the study, Zimothy the memory match
-  if (station.key === 'study') card.host = { cat: 'granolia', line: hostLine('granolia', over.ui ?? {}) }
-  if (station.key === 'puzzle') card.host = { cat: 'zimothy', line: hostLine('zimothy', over.ui ?? {}) }
-  if (station.key === 'checkin') {
-    // Free time: the line, then the group's tip after it in the same text (the same card on every member's phone)
-    return { ...card, text: `${card.text} ${freeTimeTip(c, gid, nightId)}` }
-  }
-  if (station.key === 'cat') {
-    // one of the three cats in their own rooms (ACT4_CATS), on the group's average affection,
-    // with a finer clue from the Cat Hint Lines (cats.js): never the real family or motive
-    const cat = choice(ACT4_CATS, pick)
-    const avg = Math.round(members.reduce((s, m) => s + (levels[m]?.[cat] ?? 3), 0) / Math.max(1, members.length))
-    const seed = `${c?.screenSalt ?? nightId}\u0000${gid}`
-    const family = c?.solving ? groupFamily(c, { members, seed }) : null
-    const crossed = Object.values(c?.solving?.memory ?? {})
-    const { hint, ruled } = hintLine(c, family, { cat, level: avg, act: 4, seed, exclude: crossed })
-    if (ruled && c?.solving && nightId) await db.doc(`cases/${nightId}`).update({ [`solving.ruled.group-${gid}`]: ruled })
-    const catText = written ? written.replace(/\[CAT\]/g, CAT_NAMES[cat]).replace(/\[ROOM\]/g, CAT_ROOMS[cat]) : `${CAT_NAMES[cat]} will see your group in ${CAT_ROOMS[cat]}. Go together.`
-    return { ...card, cat, catName: CAT_NAMES[cat], room: CAT_ROOMS[cat], text: catText, testimony: catHintCard({ id: `${id}-testimony`, act, beat, cat, hint }) }
-  }
-  if (station.key === 'bags') {
-    // from the packing (sealed/bags) on the night: a property in two or three
-    // bags, one of them the murderer's or the victim's; a random bag item's
-    // property in a rehearsal (bags.js). Never a bag number.
-    const clue = await bagsClue(db, { c, roster, pick })
-    return { ...card, property: clue.property, count: clue.count, placeholder: clue.placeholder, text: bagsText(clue.property, clue.count, written) }
-  }
-  if (station.key === 'study') {
-    // the clue itself is dealt by the station's "finished" call (station.js dealStudy), never carried here
-    return { ...card, payoutId: `${id}-clue` }
-  }
-  if (station.key === 'puzzle') {
-    // the memory match: the board is on the iPad (public/memory), never on the phones
-    return { ...card, title: 'The memory match' }
-  }
-  return card
-}
-
-// ---------------------------------------------------------------------------
-// Act 4: the memory match (docs/solving-the-case.md, decided 21 Oct 2026).
-// The small puzzle station, on the iPad (?kiosk=memory): twelve cards face
-// down, six pairs of traces, only traces of characters at the party, no
-// names, shuffled fresh for each group. The group turns two at a time; when
-// the board is clear the iPad says so (memoryCleared) and the server crosses
-// one wrong motive off that group's list: a card on each member's phone
-// (families.memoryPick: never the real motive, one they might still have).
-// A group whose turn passes without clearing it is paid all the same at the
-// next rotation, and any group still unpaid at Act 5 (flushMemory): delay,
-// never destroy.
-//
-// nights/{id}/public/memory  { groupId, boardId, cards: [trace x12], cleared, at }
-//   Public: any phone may read it. It carries traces only, never a name, a
-//   role or which motive was crossed off. The pay-out lives in
-//   cases/{id}.solving.memory and on the group's own phones.
-
-export const MEMORY_PAIRS = 6
-export function memoryPath(nightId) { return `nights/${nightId}/public/memory` }
-
-// Twelve cards from the traces at the party: six different ones when there
-// are six at the party, else the ones there are, round again.
-export function memoryBoard(roster, pick = pickInt) {
-  const inPlay = shuffled([...new Set(Object.values(roster ?? {}).map(r => traceOf(r?.characterId)?.trace).filter(Boolean))], pick)
-  if (!inPlay.length) return []
-  const faces = Array.from({ length: MEMORY_PAIRS }, (_, i) => inPlay[i % inPlay.length])
-  return shuffled([...faces, ...faces], pick)
-}
-
-// The rotation's puzzle station for a group at rotation r.
-function atPuzzle(rot, gid, r) { return r >= 0 && stationFor(rot, gid, r)?.key === 'puzzle' }
-
-// A fresh board for the group now at the puzzle station.
-async function setMemoryBoard(db, nightId, { rot, r, roster, now = Date.now(), pick = pickInt }) {
-  const grp = (rot?.groups ?? []).find(g => atPuzzle(rot, g.id, r))
-  if (!grp) { await db.doc(memoryPath(nightId)).set({ groupId: null, boardId: null, cards: [], cleared: false, at: new Date(now) }); return null }
-  const boardId = `${grp.id}-${r}`
-  const snap = await db.doc(memoryPath(nightId)).get()
-  if (snap.exists && snap.data().boardId === boardId) return boardId
-  await db.doc(memoryPath(nightId)).set({ groupId: grp.id, boardId, cards: memoryBoard(roster, pick), cleared: false, at: new Date(now) })
-  return boardId
-}
-
-// One group's pay-out, once: the motive is picked and written into the case
-// in one transaction (so two groups never get the same one by racing), then
-// the card lands on every member's phone.
-export async function payMemory(db, nightId, groupId, { outcome = 'cleared', now = Date.now() } = {}) {
-  const rot = await readRotation(db, nightId)
-  const grp = (rot?.groups ?? []).find(g => g.id === groupId)
-  if (!grp) throw new NightError('invalid', 'No such group.')
-  const members = grp.members.map(m => m.key)
-  const ref = db.doc(`cases/${nightId}`)
-  const got = await db.runTransaction(async tx => {
-    const snap = await tx.get(ref)
-    const c = snap.exists ? snap.data() : null
-    if (!c?.solving) return null
-    const had = c.solving.memory?.[groupId]
-    if (had) return { n: Number(had), already: true }
-    const n = memoryPick(c, { groupId, members, seed: c.screenSalt ?? nightId })
-    tx.update(ref, { [`solving.memory.${groupId}`]: n })
-    return { n, already: false }
-  })
-  if (!got) return { ok: true, paid: 0 }
-  const m = MOTIVES.find(x => x.n === got.n)
-  const night = (await db.doc(`nights/${nightId}`).get()).data() ?? {}
-  const { list } = await guests(db, nightId)
-  const byKey = Object.fromEntries(list.map(g => [g.key, g]))
-  const card = {
-    id: `4-memory-${groupId}`, act: 4, beat: night.act === 4 ? night.beat : 'memory', kind: 'clue', title: 'From the memory match',
-    text: `Not this one: number ${got.n}, “${m?.rhyme ?? ''}”. Cross it off.`, cross: got.n,
-  }
-  let dealt = 0
-  for (const k of members) if (byKey[k] && await dealCard(db, byKey[k].uid, card)) dealt++
-  if (!got.already) await noteDealt(db, nightId, { kind: 'memory', act: 4, beat: card.beat, groupId }) // the ledger (safeguards)
-  return { ok: true, paid: dealt, outcome, already: got.already }
-}
-
-// The iPad: the board is clear. `pairs` are the six pairs of card positions
-// it matched; each pair must show the same trace and every card must be in one.
-export async function memoryCleared(db, { nightId, boardId, pairs, now = Date.now() }) {
-  const ref = db.doc(memoryPath(nightId))
-  const snap = await ref.get()
-  const board = snap.exists ? snap.data() : null
-  if (!board?.boardId || board.boardId !== boardId) throw new NightError('closed', 'That board is not the one on the table.')
-  if (board.cleared) return { ok: true, already: true }
-  const cards = board.cards ?? []
-  const flat = (Array.isArray(pairs) ? pairs : []).flat().map(Number)
-  const whole = Array.isArray(pairs) && pairs.length === cards.length / 2 && new Set(flat).size === cards.length && flat.every(i => i >= 0 && i < cards.length)
-  if (!whole || !pairs.every(([a, b]) => cards[a] === cards[b])) throw new NightError('invalid', 'Those pairs do not match.')
-  await ref.update({ cleared: true, clearedAt: new Date(now) })
-  // how long the group took, for the end credits' Sharpest Memory (finale.js)
-  const seconds = Math.max(0, Math.round((now - ms(board.at)) / 1000))
-  await db.doc(`nights/${nightId}/private/memoryTimes`).set({ [board.groupId]: seconds }, { merge: true })
-  const r = await payMemory(db, nightId, board.groupId, { outcome: 'cleared', now })
-  return { ok: true, paid: r.paid }
-}
-
-// Act 5 (and any jump past Act 4): every group still unpaid is paid now.
-export async function flushMemory(db, nightId, { now = Date.now() } = {}) {
-  const rot = await readRotation(db, nightId)
-  if (!rot?.groups?.length) return { ok: true, paid: 0 }
+  const bank = await questionBank(db)
   const c = await readCase(db, nightId)
-  if (!c?.solving) return { ok: true, paid: 0 }
-  let paid = 0
-  for (const g of rot.groups) if (!c.solving.memory?.[g.id]) { await payMemory(db, nightId, g.id, { outcome: 'absent', now }); paid++ }
-  return { ok: true, paid }
+  const planned = plannedSlot(c, act, beat)
+  const used = new Set(Object.values(privSnap.exists ? privSnap.data() : {}).map(v => v?.setId).filter(Boolean))
+  const fresh = bank.filter(b => !used.has(b.id))
+  const set = bank.find(b => b.id === planned?.setId) ?? choice(fresh.length ? fresh : bank)
+  const at = planned ? slotOf(act, beat) : null
+  await privRef.set({ [id]: { setId: set.id, values: valuesOf(set.beats), slot: at?.slot ?? null, planAct: at?.act ?? null, waiting: true } }, { merge: true })
+  const host = { cat: 'boo', line: booLine(id, labelled(await readArea(db, 'ui_copy'))) }
+  for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind: 'questions', beats: stripValues(set.beats), opensAt: new Date(now), waiting: true, title: WINDOWS.questions.title, host } })
+  return { ok: true, id, phones: list.length, waiting: true }
 }
 
-export async function rotate(db, nightId, act, beat, { now = Date.now() } = {}) {
-  let rot = await readRotation(db, nightId)
-  if (!rot) { await dealGroups(db, nightId, act, 'groups'); rot = await readRotation(db, nightId) }
-  const { night, list } = await guests(db, nightId)
-  const c = await ensureCase(db, nightId)
-  const r = (night.rotation ?? -1) + 1
-  if (r >= STATIONS.length) return { ok: true, rotation: night.rotation, done: true }
-  const over = labelled(await readArea(db, 'station_text'))
-  const byKey = Object.fromEntries(list.map(g => [g.key, g]))
-  const levels = {}
-  for (const g of list) levels[g.key] = (await db.doc(`sessions/${g.uid}`).get()).data()?.affection ?? {}
-  // With no station running (a rehearsal on phones alone) the study's clue
-  // lands with the card; with the station alive it is earned in the room.
-  const alive = await stationAlive(db, nightId, now)
-  const studySnap = await db.doc(studyPath(nightId)).get()
-  const study = studySnap.data() ?? {}
-  const running = ['playing', 'reproducing', 'entering'].includes(study.state)
-  // Delay, never destroy: every group whose turn in the study has passed
-  // leaves with the clue whatever happened there (the station died, nobody
-  // touched a panel), unless the station is alive and still running their game.
-  let paid = 0
-  for (let p = 0; p < r; p++) {
-    const gid = rot.studyOrder?.[p]
-    if (!gid || rot.finished?.[gid]) continue
-    if (alive && running && study.groupId === gid) continue
-    await finishStudy(db, { nightId, groupId: gid, outcome: 'absent' })
-    paid++
-  }
-  if (paid) rot = await readRotation(db, nightId)
-  // the memory match: the group whose turn there has just passed is paid if the board beat them
-  for (const grp of rot.groups ?? []) if (atPuzzle(rot, grp.id, r - 1)) await payMemory(db, nightId, grp.id, { outcome: 'absent', now })
-  await setMemoryBoard(db, nightId, { rot, r, roster: night.roster ?? {}, now })
-  let dealt = 0
-  const cluesOut = [] // groups whose study clue landed here (the safeguards' ledger, below)
-  for (const grp of rot.groups ?? []) {
-    const station = stationFor(rot, grp.id, r)
-    const members = grp.members.map(m => m.key)
-    const card = await stationCard(db, { c, station, act, beat, gid: grp.id, members, levels, nightId, over, roster: night.roster ?? {} })
-    // no station: the study's pay-out lands with the card, worked out once for the group
-    const reveal = station.key === 'study' && !alive ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
-    if (reveal?.level) await db.doc(`nights/${nightId}/private/dialClues`).set({ study: { [grp.id]: reveal.level } }, { merge: true }) // for the end credits
-    for (const k of members) {
-      const g = byKey[k]
-      if (!g) continue
-      if (await dealCard(db, g.uid, card)) dealt++
-      if (station.key === 'study' && !alive && await dealCard(db, g.uid, studyClueCard(c, act, beat, reveal))) cluesOut.push(grp.id)
+// Act 4 is over: every waiting game a phone never played gets a random
+// answer, so a no-show is never a pattern. Safe to call again.
+export async function settleWaiting(db, nightId, { now = Date.now() } = {}) {
+  const { list } = await guests(db, nightId)
+  const c = await readCase(db, nightId)
+  let settled = 0
+  for (const g of list) {
+    const ref = db.doc(`sessions/${g.uid}`)
+    const s = (await ref.get()).data()
+    for (const [id, w] of Object.entries(s?.windows ?? {})) {
+      if (!w?.waiting || s.answers?.[id]) continue
+      const picks = await db.runTransaction(async tx => {
+        const cur = (await tx.get(ref)).data()
+        const set = cur?.windows?.[id]
+        if (!set || cur.answers?.[id]) return null
+        const p = randomPicks(set)
+        tx.update(ref, { [`answers.${id}`]: { picks: p, at: new Date(now), defaulted: true } })
+        return p
+      })
+      if (!picks) continue
+      await applyPoints(db, nightId, g.key, id, picks, c, 4)
+      settled++
     }
   }
-  for (const gid of [...new Set(cluesOut)]) await noteDealt(db, nightId, { kind: 'study', act, beat, groupId: gid })
-  // the study is the clock: tell the station which group is due, unless a game is running
-  const due = rot.studyOrder?.[r] ?? null
-  if (!running) {
-    const state = alive ? (study.state === 'done' ? 'idle' : (study.state ?? 'idle')) : 'absent'
-    // with no station the slot is a fixed twelve minutes (station.tickStudy ends it); a host's reassign is spent
-    await db.doc(studyPath(nightId)).set({ groupId: due, state, reassignedFrom: null, slotEndsAt: alive ? null : new Date(now + ABSENT_SLOT_MS) }, { merge: true })
-  }
-  await db.doc(`nights/${nightId}`).update({ rotation: r })
-  return { ok: true, rotation: r, dealt }
+  return { ok: true, settled }
 }
 
 // ---------------------------------------------------------------------------
@@ -1170,8 +1017,9 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
     partner: level === 3 ? partner : null,
   }
   // Any phone can read public/*, so the public doc carries only what the
-  // level allows the room to see (traces.shownReveal).
-  const shown = { ...base, ...shownReveal({ level, trace: full.trace, label: full.label, partner }) }
+  // level allows the room to see (traces.shownReveal). On a rehearsal night
+  // the slot is a bracketed stand-in at that level, never the picture (Jon, 23 Oct 2026).
+  const shown = c.rehearsal ? { ...base, standIn: traceStandIn('Murderer', level) } : { ...base, ...shownReveal({ level, trace: full.trace, label: full.label, partner }) }
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}/private/trace`), full)
   batch.set(ref, shown)
@@ -1235,10 +1083,6 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
       throw new NightError('invalid', `Unknown deal: ${arg}`)
     case 'window':
       return openWindow(db, nightId, arg, { now, act, beat })
-    case 'groups':
-      return dealGroups(db, nightId, act, beat)
-    case 'rotate':
-      return rotate(db, nightId, act, beat, { now })
     case 'relay':
       return { ok: true, relay: arg } // started by night.js, which owns the relay module
     case 'reveal': {

@@ -14,9 +14,8 @@
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, openWindow, ms, PARLOUR, NIGHT, tickLights, runAction } from './deal.js'
+import { settleWindow, openWindow, dealWaitingGame, ms, PARLOUR, NIGHT, tickLights, runAction } from './deal.js'
 import { tickBulletin } from './screen.js'
-import { tickStudy } from './station.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
 import { PARLOUR_ACTS, carriedTimes, gapMsFor } from './parlour.js'
@@ -127,8 +126,10 @@ export async function tickParlour(db, nightId, now) {
     return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i } }
   })
   if (slot === null) return { opened: false }
-  const r = await openWindow(db, nightId, 'questions', { now, act: Number(night.act), beat: slotBeat(night.act, slot.entry) })
-  return { opened: true, slot: slot.i, phones: r.phones ?? 0 }
+  // Act 4: the game waits on each phone until the guest is free (handoff 23 Oct §3); Acts 2 and 6: every phone at once
+  const open = Number(night.act) === 4 ? dealWaitingGame : (d, id, o) => openWindow(d, id, 'questions', o)
+  const r = await open(db, nightId, { now, act: Number(night.act), beat: slotBeat(night.act, slot.entry) })
+  return { opened: true, slot: slot.i, phones: r.phones ?? 0, waiting: Number(night.act) === 4 }
 }
 
 // ---------------------------------------------------------------------------
@@ -191,17 +192,18 @@ export async function fillerLine(db) {
 // ---------------------------------------------------------------------------
 // The tick. Once a minute, for the live night: a window past its close and
 // its grace is settled (defaults for every phone that did not answer), a
-// study slot that has run out ends (station.tickStudy), a guest in the Act 2
-// rooms who never turned up or never tapped done is moved on (deal.tickLights),
-// and a Parlour Game that is due pops up on every phone. A paused night is
-// left alone. Safe to call as often as you like: each thing happens once.
+// guest in the Act 2 rooms who never turned up or never tapped Done is moved
+// on (deal.tickLights), and a Parlour Game that is due pops up on every phone
+// (in Act 4, waits on every phone). Act 4's rounds and the supper chime are
+// run.js's (clockTick), after this. A paused night is left alone. Safe to
+// call as often as you like: each thing happens once.
 
 export async function activeNightId(db) {
   const snap = await db.doc('public_state/active').get()
   return snap.exists ? snap.data().nightId ?? null : null
 }
 
-export async function tick(db, nightId, now = Date.now(), { finished = null } = {}) {
+export async function tick(db, nightId, now = Date.now()) {
   const snap = await db.doc(`nights/${nightId}`).get()
   if (!snap.exists) return { ok: true, skipped: 'no-night', settled: 0 }
   const night = snap.data()
@@ -214,11 +216,10 @@ export async function tick(db, nightId, now = Date.now(), { finished = null } = 
     settled = r.settled ?? 0
     windowSettled = true
   }
-  const study = await tickStudy(db, nightId, now, { finished })
-  const lights = night.act === 2 ? await tickLights(db, nightId, now) : { moved: 0 }
+  const lights = night.act === 2 ? await tickLights(db, nightId, now) : { moved: 0, allSeen: false }
   const parlour = await tickParlour(db, nightId, now)
   // an armed W-O-O-F News bulletin 2 plays once it is due, and every phone hears about it
   const bulletin = await tickBulletin(db, nightId, now)
   if (bulletin.played) await runAction(db, nightId, night.act ?? 3, 'bulletin', 'notice:bulletin', { now })
-  return { ok: true, settled, windowSettled, bulletin: bulletin.played, study: { ticked: Boolean(study?.ticked), reason: study?.reason ?? null }, lights: { moved: lights.moved ?? 0 }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null } }
+  return { ok: true, settled, windowSettled, bulletin: bulletin.played, lights: { moved: lights.moved ?? 0, allSeen: !!lights.allSeen }, parlour: { opened: parlour.opened, slot: parlour.slot ?? null, waiting: !!parlour.waiting } }
 }
