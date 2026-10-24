@@ -58,9 +58,15 @@ on the Canon.
 - Found on the way and fixed: the Host tab's study clock still counted
   fifteen minutes, and Boo's wall had no dot on the Host tab.
 
+- Later the same day: deployed (the Study test session's deploy of e91b9db;
+  a repeat of mine also deleted the unused `memoryCleared` function). The
+  workshop applied the 23 and 24 Oct board updates once. Jon packed the bags
+  on the final items: 10 bags, 43 items, every rule passed, all 10 bags with
+  3 or more clue words (counts only).
+
 **What is left**
-- Jon: deploy, open the workshop once (it loads the final bag list), then
-  `npm --prefix scripts run pack-bags -- --repack`. Then the recordings.
+- Jon: the practice game; Jenna runs the checks on their page; the cats'
+  leans and the drawing pictures by 31 Oct. Then the recordings.
 - Claude chat: mark the project copy of the handoff Applied; two rules deck
   slides. Claude Code: the pose photo (nice to have), replay by seed, the
   Home count rows, the motive card pictures.
