@@ -141,6 +141,15 @@ export default function Night() {
       </section>
 
       <section className="panel">
+        <h2>The bulletin videos</h2>
+        <p className="why">Bulletin 1 and the closing bulletin play as video on the Parlour TV once your videos are in. Until this box is ticked, the brain plays your recordings and the TV shows the words, so a night never goes silent. Tick it after Claude Code has put the videos in and deployed.</p>
+        <label className="field check">
+          <input type="checkbox" checked={draft.bulletinVideo === true} onChange={e => change('bulletinVideo', e.target.checked)} />
+          <span>The bulletins are videos</span>
+        </label>
+      </section>
+
+      <section className="panel">
         <h2>The freeze</h2>
         <p className="why">The week of the party, freeze the workshop. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
         {frozen.frozen

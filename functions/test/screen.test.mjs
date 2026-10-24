@@ -198,13 +198,13 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS_STAND_IN, NEWS.bulletin1.signoff.text])
   assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
-  assert.equal(news.video, true, 'video on the Parlour TV: a flag only, the TV finds the files by the words')
+  assert.ok(!news.video, 'until the video box is ticked the bulletin is the recordings with the words on screen')
   assert.ok(!CLIP_IDS.some(id => JSON.stringify(news).includes(`"${id}"`)), 'no recording is named on the screen')
   assert.deepEqual(news.captions.lines, news.lines)
   const newsSound = await currentSound(db, nightId)
   assert.equal(newsSound.id, 'chime-news')
   assert.deepEqual(newsSound.clips, ['newsflash-opening', 'newsflash-signoff'])
-  assert.equal(newsSound.video, true, 'the bulletin is video on the Parlour TV: the brain plays the chime only')
+  assert.ok(!newsSound.video, 'the brain plays the recordings')
   await next() // peek: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
   await next() // cat: Sir Irwin's prompts on the Parlour TV
@@ -408,4 +408,14 @@ test('a pause before any screen, then a resume, leaves the beat\'s screen up and
 test('the cue relay carries the same catalogue', () => {
   const src = readFileSync(new URL('../../cues/lib/cues.js', import.meta.url), 'utf8')
   for (const id of SOUND_IDS) assert.ok(src.includes(`'${id}'`), `cues.js lists ${id}`)
+})
+
+test('bulletin video: off until the Game night box is ticked, then a flag only', async () => {
+  const { bulletinVideo } = await import('../lib/screen.js')
+  const db = new FakeFirestore()
+  assert.equal(await bulletinVideo(db), false, 'no meta/game: the recordings play')
+  db.store.set('meta/game', { host_jonathan: 'Jon' })
+  assert.equal(await bulletinVideo(db), false, 'not ticked: the recordings play')
+  db.store.set('meta/game', { bulletinVideo: true })
+  assert.equal(await bulletinVideo(db), true, 'ticked: the Parlour TV plays the videos')
 })

@@ -261,7 +261,7 @@ export function HousePanel({ house, cues, night, busy, run }) {
           {st ? (
             <p className="gloss">
               In the study: <strong>{st.names}</strong>{st.paid ? ' (paid)' : st.clockLeft ? ` · ${st.clockLeft} left` : st.running ? '' : ' · waiting for the first touch'}
-              {!s.alive && st.state === 'absent' ? ' · no station: twelve minutes, then the house moves on' : ''}
+              {!s.alive && st.state === 'absent' ? ' · no station: the round’s chime pays the group anyway' : ''}
             </p>
           ) : <p className="gloss">Nobody is due in the study.</p>}
           {!s.alive && <p className="gloss">Station quiet{s.quietFor ? ` since ${s.quietFor} ago` : ''}. The slots run on this phone's clock.</p>}

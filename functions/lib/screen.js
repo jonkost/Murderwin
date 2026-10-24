@@ -205,11 +205,14 @@ export function screenDoc(kind, { title = '', lines = [], now = Date.now(), hold
 }
 
 // Does the Parlour TV play bulletin 1 and the closing bulletin as video?
-// Decided 23 Oct 2026 (Jon): yes. The Game night page's box turns it off,
-// and then the brain plays the recordings with the words on the screen, as before.
+// Decided 23 Oct 2026 (Jon): yes, once the videos exist. Until Jon ticks the
+// box on the Game night page (meta/game.bulletinVideo, after the files are in
+// play/public/video and deployed), the brain plays the recordings with the
+// words on the screen, as before: the handoff's fallback, so a night before
+// the videos are made never goes silent.
 export async function bulletinVideo(db) {
   const snap = await db.doc('meta/game').get()
-  return !(snap.exists && snap.data().bulletinVideo === false)
+  return snap.exists && snap.data().bulletinVideo === true
 }
 
 // Sir Irwin's prompts on the TV: a running order from the case's salt, kept

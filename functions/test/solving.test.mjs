@@ -458,7 +458,7 @@ test('Granolia\'s half-remembered names read cleanly in her level 2 line: never 
   assert.equal(fillSlot('It wasn\'t [HALF]. You know.', '[HALF]', 'the pie?'), 'It wasn\'t the pie? You know.')
 })
 
-test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, only rules out wrong answers and fills every blank', () => {
+test('G18b every cat line, at every level, in Acts 2 and 4, for every motive, only rules out wrong answers and fills every blank', () => {
   for (const m of MOTIVES) {
     const real = familyOf(m.n)
     const c = { motive: m.n, solving: { family: real, newsOut: [], hints: {}, memory: {} } }
@@ -495,8 +495,6 @@ test('G41 every cat line, at every level, in Acts 2 and 4, for every motive, onl
   assert.equal(at('salem', 5).straight, true, 'and straight at 5')
   assert.deepEqual(at('salem', 4).families, [], 'a coin flip at 4 rules out nothing anybody can trust')
 })
-
-// ---- G39 ------------------------------------------------------------------
 
 test('G44 in Act 2 every cat visit gives one motive hint and one bag clue, at the rung of that cat\'s affection at the scan (2 to 12 players)', async () => {
   for (let n = 2; n <= 12; n++) {

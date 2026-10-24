@@ -53,7 +53,7 @@ test('the page and its API never touch browser storage or the Firestore client, 
   assert.ok(src('pages/ForJenna.jsx').includes('to="/steward"'), 'Jenna reaches it from her brief')
 })
 
-test('two tabs only: the packing list and the cats\' leans; the old secret sets are gone from the page and the pretend API', () => {
+test('three tabs: the packing list, the cats\' leans and the checks; the old secret sets are gone from the page and the pretend API', () => {
   const page = src('pages/Steward.jsx')
   const api = src('lib/stewardApi.js')
   assert.ok(page.includes('The packing list') && page.includes("The cats' leans"))
