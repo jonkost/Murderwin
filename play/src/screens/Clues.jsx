@@ -4,7 +4,7 @@ import { Testimony, Clue, CatFace } from './Cards'
 import Spoken from './Spoken'
 
 // Everything this phone has been told, newest first, grouped by act. The
-// cats' words, the study's clue, the memory match, the bag property. Nothing
+// cats' hints and bag clues, the study's trace, the rooms' rewards. Nothing
 // here can be sent anywhere; it is read out loud or not at all.
 
 export default function Clues({ session }) {
@@ -36,12 +36,6 @@ function ClueCard({ card }) {
   switch (card.kind) {
     case 'testimony': return <Testimony card={card} compact />
     case 'clue': return <Clue card={card} />
-    case 'station': return (
-      <section className="dealt clue">
-        <h3>From the bags</h3>
-        <p>Something <strong>{card.property}</strong>, in two or three bags.</p>
-      </section>
-    )
     case 'result': return null
     default: return (
       <section className="dealt clue">

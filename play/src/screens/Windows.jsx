@@ -83,7 +83,8 @@ export function Questions({ w, nightId, serverNow, onDone }) {
         ))}
       </div>
       {error && <p className="trouble" role="alert">{error}</p>}
-      <Clock w={w} serverNow={serverNow} />
+      {/* an Act 4 game waiting on the phone has no clock: it is played when the guest is free */}
+      {!w.waiting && <Clock w={w} serverNow={serverNow} />}
     </div>
   )
 }

@@ -10,11 +10,15 @@ import motivesSeed from '../../seed/motives.json'
 import charactersSeed from '../../seed/characters.json'
 import woofNews from '../../seed/woof-news.json'
 import catLines from '../../seed/cat-lines.json'
+import bagLines from '../../seed/bag-lines.json'
+import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
-import { Living, Bedroom, Study, MemoryMatch } from './screens/Kiosk'
+import { Living, Bedroom, Study } from './screens/Kiosk'
+import { MemoryRounds, MemoryStandalone, BooWall } from './screens/Rooms'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
+import Allow from './screens/Allow'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
 // data and no night. Nothing here is dealt by the game, nothing is sealed.
@@ -30,16 +34,18 @@ import { generateSet } from '../../functions/lib/relay-gen.js'
 // kiosk-study-fallback (full-bleed, as on the MacBooks), and the screens the
 // beats name: kiosk-news, kiosk-bulletin, kiosk-irwin, kiosk-black,
 // kiosk-board, kiosk-ipad, kiosk-living-done, kiosk-living-hold (Sir Irwin's
-// door slide), kiosk-living-rules (slide 3 and its square), and the memory
-// match on the iPad: kiosk-memory, kiosk-memory-clear. A rehearsal night's
-// band: kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
+// door slide), kiosk-living-rules (slide 3 and its square), Sir Irwin's
+// prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
+// the older iPad (kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
+// Boo's wall (kiosk-boo, kiosk-boo-pose). A rehearsal night's band:
+// kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
 // host-house-window, host-house-act2.
-// Screens: doors, join, welcome, lobby, rest, host, prompt, paused, blackout,
-// then one per thing a phone is dealt: act1, orient, news, wait, go, testimony
-// (the hint cat), greet (one of the other three), back, questions, checkin,
-// dinner, groups, study, cat, bags, puzzle4, memory-clue, checkin4, roam, irwin,
-// door, eliminate, ballot, reveal, result, clues, cats-friend, and the relay
-// screens relay-walk … relay-done.
+// Screens: doors, join, allow, welcome, lobby, rest, host, prompt, paused, blackout,
+// then one per thing a phone is dealt: act1, orient, news, peek, wait, go,
+// go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
+// supper, dinner, warn, groups, room-study, room-salem, room-parlour, room-paid,
+// roam, irwin, door, eliminate, ballot, reveal, result, clues, cats-friend, and
+// the relay screens relay-walk … relay-done.
 // ?preview=tour walks all of them with a button.
 
 // a fixed moment, like a real server timestamp — not Date.now() on every read
@@ -61,43 +67,41 @@ const CONTENT = {
   characters: charactersSeed.characters.map(({ id, name, profession, gender, bio }) => ({ id, name, profession, gender, bio })),
   smalltalk: [{ cat: 'salem', text: 'Mind the hydrangeas. Somebody has already not minded them.' }],
   motive_notes: [{ text: 'MOTIVE 1: (A sample note. Someone ate the last slice and left the empty tin.)' }],
-  npc_cards: [{ text: "SALEM CROOKSHANK — the long-time groundskeeper. (A sample card.) He has kept the grounds for forty years and has the attitude to prove it. Trusting Salem: Most days, he's got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time." }],
+  npc_cards: [{ text: "SALEM CROOKNOG — the long-time groundskeeper. (A sample card.) He has kept the grounds for forty years and has the attitude to prove it. Trusting Salem: Most days, he's got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time." }],
   act_scripts: [{ act: 'act2', text: 'OBJECTIVE: Your phone will tell you where to go. Everything you learn now is for your ears only.' }],
 }
 
 // ---- sample cards, as the dealer would shape them ----
-// one Cat Hint Line each, from the open bank, filled the way the game fills them
+// one Cat Hint Line and one bag line each, from the open banks, filled the way the game fills them
 const HINTS = {
   salem: catLines.salem.act2.food.wasnt,
   zimothy: catLines.zimothy.levels['2'].replace('[MOTIVE]', catLines.motiveNames['10']),
 }
+const BAGS = {
+  salem: bagLines.act2.salem[2].replace('___', '(a clue word)'),
+  zimothy: bagLines.act2.zimothy[2].replace('[sense]', 'touch'),
+  ghost: bagLines.act4.salem[4].replace('___', '(a clue word)'),
+}
 const CARDS = {
   meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
   orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
-  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'Something is on the big screen. Watch it. Your phone will tell you where to go when it is over.', button: 'I watched it' },
-  // the hint cat: its name, its room and the hint line, nothing else
-  testimony: { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crookshank', room: 'the Orangerie', lines: [], hint: { text: HINTS.salem } },
-  // one of the other three: a greeting in the server's words (functions/lib/deal.js GREETING_ONLY), no hint
-  greet: { id: '2-cat-greet-boo', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', lines: ["Darling. Love the outfit. Don't ask me anything, I'm off duty."] },
-  checkin: { id: '2-checkin-checkin', act: 2, beat: 'checkin', kind: 'notice', key: 'checkin', title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to dinner.', button: 'Done' },
-  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Dinner', text: 'Phones down and charging. The radio is on. Listen for the crackle.', button: 'Phone is down' },
-  // the Act 4 cards in the server's words (functions/lib/deal.js): the group named by character,
-  // Granolia in the Study, and a cat station that is never Granolia (her room holds the light puzzle)
-  group: { id: '3-groups-group', act: 3, beat: 'groups', kind: 'group', group: 'g1', title: "You're teamed up with Roger Arms and Ignatius Fume", text: 'From now on, only share with your group.',
-    members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume' }] },
-  study: { id: '4-station1-study', act: 4, beat: 'station1', kind: 'station', station: 'study', title: 'The study', text: "Granolia's expecting your group in the Study, upstairs.", host: { cat: 'granolia', line: "Oh! You're here! The lights on the wall flash a pattern. Copy it on the buttons, then press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah." } },
-  cat: { id: '4-station2-cat', act: 4, beat: 'station2', kind: 'station', station: 'cat', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', title: 'A cat', text: 'Zimothy Clawford, Esq. will see your group in the Library. Go together.',
-    testimony: { id: '4-station2-cat-testimony', act: 4, beat: 'station2', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', lines: [], hint: { text: HINTS.zimothy } } },
-  bags: { id: '4-station3-bags', act: 4, beat: 'station3', kind: 'station', station: 'bags', property: 'minty', title: 'The bags', text: 'Something minty is in two or three of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.' },
-  puzzle4: { id: '4-station4-puzzle', act: 4, beat: 'station4', kind: 'station', station: 'puzzle', title: 'The memory match', text: 'Go to the iPad. Turn two cards at a time and find the six pairs together. Clear the board and one motive comes off your list.' },
-  memory: { id: '4-memory-g1', act: 4, beat: 'station4', kind: 'clue', title: 'From the memory match', text: `Not this one: number 9, “${motivesSeed.motives[8]?.rhyme}”. Cross it off.`, cross: 9 },
-  checkin4: { id: '4-station5-checkin', act: 4, beat: 'station5', kind: 'station', station: 'checkin', title: 'Free time', text: 'Nothing for your group right now. Grab a drink, stretch your legs. Compare what the cats told you. Do they agree?' },
-  clue: { id: '4-station1-study-clue', act: 4, beat: 'station1', kind: 'clue', title: 'From the study', placeholder: true, text: 'Something was left behind.', trace: { level: 4, trace: 'flour', label: null } },
+  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
+  peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
+  // every cat: its name, its room, its motive hint, its bag clue and the footer (23 Oct 2026)
+  testimony: { id: '2-cat-cat-salem', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crooknog', room: 'the Orangerie', lines: [], hint: { text: HINTS.salem }, bag: { text: BAGS.salem }, saved: 'Saved to your Clues.' },
+  testimony2: { id: '2-cat-cat-zimothy', act: 2, beat: 'cat', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', lines: [], hint: { text: HINTS.zimothy }, bag: { text: BAGS.zimothy }, saved: 'Saved to your Clues.' },
+  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Supper', text: 'Phones down and charging. Bring your bag to the table: everyone may share now. Listen for the news.', button: 'Phone is down' },
+  warn: { id: '4-warn-warn', act: 4, beat: 'warn', kind: 'notice', key: 'act4-warn', title: 'Two minutes!', text: "Two minutes! Supper's done. Keep your phone close. Behind Closed Doors is about to begin.", button: 'Got it' },
+  // the Act 4 group card in the server's words (functions/lib/act4.js): portraits, character names, Locked in
+  group: { id: '4-groups-group', act: 4, beat: 'groups', kind: 'group', group: 'g1', lockIn: true, title: "You're teamed up with Roger Arms and Ignatius Fume", text: 'From now on, only share with your group.',
+    members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye', characterId: 'rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms', characterId: 'arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume', characterId: 'fume' }] },
+  library: { id: '4-room-library-g1', act: 4, beat: 'round2', kind: 'clue', room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: 'From the Library', text: `Order. Restored. Strike number 9, “${motivesSeed.motives[8]?.rhyme}” from your list; it was not that. Invoice to follow.`, cross: 9, bag: { text: BAGS.ghost } },
+  clue: { id: '4-round1-study-clue', act: 4, beat: 'round1', kind: 'clue', title: 'From the Study', placeholder: true, text: 'Something was left behind.', trace: { level: 4, trace: 'flour', label: null } },
   roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired' },
-  irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the living room screen and nowhere else. Go.', button: 'On my way' },
-  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the living room.', button: 'I have seen it' },
-  eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the living room screen.', button: 'Watching' },
-  award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crookshank's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
+  irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
+  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
+  eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
+  award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crooknog's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
   result: { id: '7-result-result', act: 7, beat: 'result', kind: 'result', murderer: true, motive: false, victim: true, defaulted: false, picks: { murderer: 'Jacob', motive: 'A sneeze set free, for all to see', victim: 'Mari' } },
   role: { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text: 'The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Name all three before the night is out.' },
 }
@@ -119,7 +123,7 @@ const RELAY = generateSet(2026)
 // Sir Irwin's first three slides as the server sends them, each with its own
 // time; slide 3 carries the practice smiley's B1 square (public).
 const SLIDES = [
-  { title: 'Welcome', text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
+  { title: GAME_NAMES.drawing.name, hook: GAME_NAMES.drawing.hook, text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
   { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
   { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.', cell: { label: 'B1', strokes: [{ kind: 'arc', from: [0, 0.5], to: [1, 0.5], bulge: -0.3 }] } },
 ].map(s => ({ ...s, ms: slideTime(s.text) }))
@@ -173,7 +177,7 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
   ],
   // the early reel: only the achievements the host gave during the night
   achievements: [
-    { name: 'Jessa', title: "Crookshank's Confidant", line: 'First to pet Salem.', showAt: 34000 },
+    { name: 'Jessa', title: "Crooknog's Confidant", line: 'First to pet Salem.', showAt: 34000 },
     { name: 'Jon', title: 'Clean Plate Club', line: 'Nothing left, not even the garnish.', showAt: 37000 },
   ],
   credits: {
@@ -184,7 +188,7 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
-    thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crookshank', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
+    thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
     memory: { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' },
     last: { cat: 'irwin', line: 'Can we play again?' },
   },
@@ -211,7 +215,8 @@ const BULLETIN = SCREEN('bulletin', { title: 'W-O-O-F News', act: 3, beat: 'bull
 const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', mood: 3, lines: ['Oh! Everyone is here. I have something to say.', 'Ooh! It\'s one of these three! My tail is wagging, so I\'m pretty sure!', 'That is everything. I am a good boy.'],
   choices: [3, 12, 17].map(n => ({ n, rhyme: motivesSeed.motives[n - 1]?.rhyme })) })
 // the memory match board as the server shapes it: twelve trace ids, no names
-const MEMORY = (cleared = false) => ({ groupId: 'g1', boardId: 'g1-3', cleared, cards: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'coffee', 'ink', 'seeds', 'coins', 'flour', 'petals'] })
+const MEMORY = (cleared = false) => ({ groupId: 'g1', boardId: 'g1-3', step: cleared ? 2 : 0, cleared, boards: { 0: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'glasses', 'coffee', 'ink', 'seeds', 'glasses', 'coins', 'flour', 'petals'], 1: [], 2: [] } })
+const BOO = (offset) => ({ groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT - offset), poses: [{ strutAt: stamp(PHASE_AT - offset + 9000), poseAt: stamp(PHASE_AT - offset + 18000), holdUntil: stamp(PHASE_AT - offset + 23000), judgeUntil: stamp(PHASE_AT - offset + 29000), line: 'Bold. Wrong, but bold.' }], endsAt: stamp(PHASE_AT - offset + 29000) })
 // nine guests with a strike each, two of them picked by the server for a silent phone: the board must not tell
 const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2 }, ana: { name: 'Ana', characterId: 'devine', bag: 4 }, kit: { name: 'Kit', characterId: 'barnes', bag: 5 }, ren: { name: 'Ren', characterId: 'steeps', bag: 7 }, oli: { name: 'Oli', characterId: 'vayne', bag: 9 } }
 const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
@@ -240,8 +245,13 @@ const KIOSK = {
   'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} />,
-  'kiosk-memory': (night) => <MemoryMatch board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" />,
-  'kiosk-memory-clear': (night) => <MemoryMatch board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
+  'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" />,
+  'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
+  'kiosk-memory-standalone': () => <MemoryStandalone />,
+  'kiosk-prompts': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'cat' }} relay={null} trace={null} finale={null} screen={SCREEN('prompts', { title: 'Sir Irwin has ideas', prompts: { lines: bagLines.prompts.lines, order: bagLines.prompts.lines.map((_, i) => i), startedAt: stamp(PHASE_AT), everyMs: 180000 } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-title': (night, serverNow) => <Living night={{ ...night, act: 4, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('title', { title: 'Act 4 · Behind Closed Doors', lines: ['Look at your phone and find your group.'], rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-boo': (night, serverNow) => <BooWall boo={BOO(12000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   // the Host tab's house panel: station and screens alive, a group in the study, the hall light
   'host-house': (night) => {
     const n = { ...night, act: 4, beat: 'station2' }
@@ -279,48 +289,64 @@ const KIOSK = {
 }
 
 // Act 2's next step, as the server writes it (functions/lib/deal.js lightsCard).
-const ROOMS = { salem: ['Salem Crookshank', 'the Orangerie'], boo: ['Miss Boo LaRue', 'the Entryway'] }
+const ROOMS = { salem: ['Salem Crooknog', 'the Orangerie'], boo: ['Miss Boo LaRue', 'the Entryway'] }
 const LIGHTS_WORDS = {
-  wait: ['Stay in the living room', "Make yourself at home in the living room. You'll be called soon."],
-  go: ['Go to [ROOM]', "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting. Find the QR code in the room and scan it to say hello."],
-  with: ['[CAT] is talking to you', 'Read what the cat says. It is for you alone. Tap when you have heard it.'],
-  done: ['Back to the living room', 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.'],
+  wait: ['In the Parlour', "Make yourself at home in the Parlour. You'll be called soon. Sir Irwin has ideas on the TV."],
+  later: ['Back in the queue', "No problem. You're back in the queue. We'll call you again."],
+  go: ['Your turn', "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting."],
+  with: ['[CAT] is talking to you', 'Read what the cat says. It is for you alone. Tap Done when you have read it.'],
+  done: ['Back to the Parlour', 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.'],
+  supper: ['Supper is served', "That's the chime! Supper is served in the Orangerie."],
 }
-function LIGHTS(step, cat = 'salem') {
+function LIGHTS(variant, cat = 'salem') {
   const [catName, room] = ROOMS[cat]
   const fill = t => t.replace(/\[CAT\]/g, catName).replace(/\[ROOM\]/g, room).replace(/\[THEM\]/g, cat === 'boo' ? 'her' : 'him')
-  return { step, cat, catName, room, title: fill(LIGHTS_WORDS[step][0]), text: fill(LIGHTS_WORDS[step][1]) }
+  const step = variant === 'later' ? 'wait' : variant === 'supper' ? 'done' : variant
+  return { step, variant, cat, catName, room, title: fill(LIGHTS_WORDS[variant][0]), text: fill(LIGHTS_WORDS[variant][1]), arrive: 'Find the code in the room and scan it to say hello.' }
 }
+// Act 4's step, as the server writes it (functions/lib/act4.js directGroups).
+const ACT4 = {
+  study: { room: 'study', cat: 'granolia', catName: 'Granolia Lickspittle', title: GAME_NAMES.study.name, hook: GAME_NAMES.study.hook, text: "Granolia's expecting your group in the Study, upstairs.", arrive: 'Find the code on the wall and scan it to begin.', round: 1, rounds: 4 },
+  salem: { room: 'orangerie', cat: 'salem', catName: 'Salem Crooknog', title: GAME_NAMES.orangerie.name, hook: GAME_NAMES.orangerie.hook, text: 'Salem will see your group in the Orangerie. Bring your phones.', arrive: 'Find the code on the wall and scan it to begin.', round: 2, rounds: 4, chime: "That's the chime. Say goodbye and look at your phone.", here: true },
+  parlour: { room: 'parlour', cat: null, title: 'In the Parlour', text: 'Nothing for your group right now. Make yourselves at home in the Parlour. Sir Irwin has ideas. Compare what the cats told you. Do they agree?', round: 3, rounds: 5 },
+  paid: { room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: GAME_NAMES.library.name, hook: GAME_NAMES.library.hook, text: 'Zimothy will see your group in the Library. Go together.', round: 2, rounds: 4, here: true, paid: true, paidText: 'Back to the Parlour until the chime.' },
+}
+const WAITING = { 'questions-4-p0': { kind: 'questions', waiting: true, title: 'Parlour Game', opensAt: stamp(PHASE_AT), beats: [
+  { q: 'Ice in orange juice?', choices: [{ k: 'a', text: 'Always' }, { k: 'b', text: 'Never' }] },
+  { q: 'Pick a sock', choices: [{ k: 'a', text: 'Left' }, { k: 'b', text: 'Right' }] },
+  { q: 'A pigeon with a tiny hat', choices: [{ k: 'a', text: 'Trust it' }, { k: 'b', text: 'Do not' }] },
+] } }
 
 // Each dealt-card screen: the act it belongs to and the cards on the phone.
 const DEALT = {
   act1: { act: 1, beat: 'meet', cards: [CARDS.meet] },
   orient: { act: 2, beat: 'orient', cards: [CARDS.role, CARDS.orient] },
   news: { act: 2, beat: 'news', cards: [CARDS.news] },
+  peek: { act: 2, beat: 'peek', cards: [CARDS.peek] },
   wait: { act: 2, beat: 'cat', cards: [], lights: LIGHTS('wait') },
   go: { act: 2, beat: 'cat', cards: [], lights: LIGHTS('go') },
+  'go-onmyway': { act: 2, beat: 'cat', cards: [], lights: LIGHTS('go'), seen: { 'onmyway-salem': true } },
+  later: { act: 2, beat: 'cat', cards: [], lights: LIGHTS('later') },
   testimony: { act: 2, beat: 'cat', cards: [CARDS.testimony], lights: LIGHTS('with') },
-  greet: { act: 2, beat: 'cat', cards: [CARDS.greet], lights: LIGHTS('with', 'boo') },
-  back: { act: 2, beat: 'cat', cards: [CARDS.greet, CARDS.testimony], lights: LIGHTS('done') },
-  checkin: { act: 2, beat: 'checkin', cards: [CARDS.greet, CARDS.testimony, CARDS.checkin] },
+  back: { act: 2, beat: 'cat', cards: [CARDS.testimony2, CARDS.testimony], lights: LIGHTS('done') },
+  supper: { act: 2, beat: 'supper', cards: [CARDS.testimony2, CARDS.testimony], lights: LIGHTS('supper') },
   dinner: { act: 3, beat: 'down', cards: [CARDS.dinner] },
   award: { act: 3, beat: 'down', cards: [CARDS.award] },
-  groups: { act: 3, beat: 'groups', cards: [CARDS.group] },
-  study: { act: 4, beat: 'station1', cards: [CARDS.study, CARDS.clue] },
-  cat: { act: 4, beat: 'station2', cards: [CARDS.cat] },
-  bags: { act: 4, beat: 'station3', cards: [CARDS.bags] },
-  puzzle4: { act: 4, beat: 'station4', cards: [CARDS.puzzle4] },
-  'memory-clue': { act: 4, beat: 'station4', cards: [CARDS.puzzle4, CARDS.memory], seen: { '4-station4-puzzle': true } },
-  checkin4: { act: 4, beat: 'station5', cards: [CARDS.checkin4] },
+  warn: { act: 4, beat: 'warn', cards: [CARDS.warn] },
+  groups: { act: 4, beat: 'groups', cards: [CARDS.group] },
+  'room-study': { act: 4, beat: 'round1', cards: [], act4: ACT4.study },
+  'room-salem': { act: 4, beat: 'round2', cards: [], act4: ACT4.salem },
+  'room-parlour': { act: 4, beat: 'round3', cards: [], act4: ACT4.parlour, windows: WAITING },
+  'room-paid': { act: 4, beat: 'round2', cards: [CARDS.library], act4: ACT4.paid, windows: WAITING },
   roam: { act: 5, beat: 'roam', cards: [CARDS.roam] },
   irwin: { act: 5, beat: 'irwin', cards: [CARDS.irwin] },
   door: { act: 6, beat: 'door', cards: [CARDS.door] },
   reveal: { act: 7, beat: 'reveal', cards: [CARDS.eyes] },
   result: { act: 7, beat: 'result', cards: [CARDS.result] },
-  clues: { act: 4, beat: 'station5', cards: [CARDS.greet, CARDS.testimony, CARDS.clue, CARDS.bags, { ...CARDS.cat.testimony }], tab: 'clues', seen: { '4-station3-bags': true } },
+  clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'wait', 'go', 'testimony', 'greet', 'back', 'questions', 'checkin', 'dinner', 'groups', 'study', 'cat', 'bags', 'puzzle4', 'memory-clue', 'checkin4', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -346,6 +372,7 @@ export default function Preview({ screen }) {
     case 'relay-lockout': body = <Relay uid="preview" night={night} session={SESSION} relay={relayDoc('lockout')} serverNow={serverNow} />; break
     case 'relay-done': body = <RelayDone uid="preview" relay={relayDoc('done')} seenKey="x" />; break
     case 'join': body = <Join night={night} ui={ui} />; break
+    case 'allow': body = <Allow uid="preview" onDone={() => {}} />; break
     case 'superseded': body = <Join night={night} ui={ui} notice={ui.SUPERSEDED} />; break
     case 'paused': body = <Moment text={ui.PAUSED} crest />; break
     case 'blackout': body = <Blackout />; break
@@ -366,7 +393,7 @@ export default function Preview({ screen }) {
       if (dealt) {
         body = (
           <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
-            session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
+            session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights, act4: dealt.act4, windows: dealt.windows, group: 'g1' }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
         )
       } else {
         body = (

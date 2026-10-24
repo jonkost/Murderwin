@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
-import { callRelayAdvance, callRelayGuess, callMemoryCleared } from '../firebase'
+import { callRelayAdvance, callRelayGuess } from '../firebase'
+import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName } from './Rooms'
+import { newsClips, closingClips } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
@@ -11,15 +13,17 @@ import { isRehearsalNight } from '../lib/night'
 import { RehearsalBand } from './Moments'
 import Spoken from './Spoken'
 
-// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory. A kiosk is
+// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo. A kiosk is
 // a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
 // server whenever a deadline has passed. (The study kiosk lives with the
 // station: ?kiosk=study.) The iPad (?kiosk=ipad) is the living room screen
 // with the words only: it keeps the news and the bulletin up through dinner.
-// The memory match (?kiosk=memory, an iPad at the small puzzle station in
-// Act 4) shows the board for the group at that station.
+// The memory match (?kiosk=memory, the older iPad in the Library in Act 4)
+// shows the boards for the group in the Library this round; with &play=1 it is
+// the same game on its own, for fun. Boo's wall (?kiosk=boo, Susan's MacBook
+// Pro at the projector in Act 4) is her catwalk (screens/Rooms.jsx).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
@@ -44,7 +48,9 @@ export default function Kiosk({ which }) {
   const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
   const content = useDoc(nightId && (which === 'study' || living) ? `nights/${nightId}/public/content` : null)
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
-  const memory = useDoc(nightId && which === 'memory' ? `nights/${nightId}/public/memory` : null)
+  const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
+  const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
+  const boo = useDoc(nightId && which === 'boo' ? `nights/${nightId}/public/boo` : null)
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
@@ -59,11 +65,13 @@ export default function Kiosk({ which }) {
   // server wrote; nothing in the corners shows while the room is dark
   const dark = !!n && (roomDark(n) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
   let body
-  if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." />
+  if (standalone) body = <MemoryStandalone />
+  else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." />
   else if (roomDark(n)) body = <Dark />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
-  else if (which === 'memory') body = <MemoryMatch board={memory.data} night={n} nightId={nightId} />
+  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} />
+  else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
@@ -193,6 +201,10 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'captions') return <Captions captions={captionsOf(screen)} rehearsal={screen?.rehearsal} />
   if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
+  if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
+  if (view === 'title') return <TitleCard screen={screen} />
+  // bulletin 1 as video on the Parlour TV (23 Oct 2026); the words show if there is no video
+  if (view === 'card' && screen?.kind === 'news' && screen.video) return <BulletinVideo clips={newsClips(screen.lines ?? [])} lines={screen.lines ?? []} startedAt={ms(screen.at)} serverNow={serverNow} />
   if (view === 'card') return <ScreenCard screen={screen} />
   if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
     const act = ACTS[night.act]
@@ -208,6 +220,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
       <div className={`kiosk relay-slide${s?.cell ? ' with-cell' : ''}`}>
         <IrwinFace mood={5} />
         {s && <p className="kiosk-crest">{s.title} · {index + 1} of {count}</p>}
+        {s?.hook && <p className="game-hook">{s.hook}</p>}
         {s && (s.cell
           ? <div className="slide-with-cell">
               <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>
@@ -321,64 +334,8 @@ export function IrwinFace({ mood }) {
   return <img className="irwin-mood" src={src} alt="" aria-hidden="true" onError={() => setBroken(true)} />
 }
 
-// ---- Act 4: the memory match (?kiosk=memory) ------------------------------
-// Twelve cards face down: the traces of six people at the party, in pairs,
-// no names. The group turns two at a time; a pair stays up, a miss turns
-// back over. When the board is clear the iPad tells the server which pairs
-// it found, and the server crosses one motive off the group's list on their
-// phones. A fresh board, shuffled by the server, for every group.
-export function MemoryMatch({ board, night, nightId }) {
-  const [up, setUp] = useState([])
-  const [found, setFound] = useState([])
-  const [sent, setSent] = useState(null)
-  const boardId = board?.boardId ?? null
-  useEffect(() => { setUp([]); setFound([]); setSent(null) }, [boardId])
-  const cards = board?.cards ?? []
-  const done = cards.length > 0 && found.length * 2 === cards.length
-  useEffect(() => {
-    if (!done || sent || !boardId || board?.cleared || nightId === 'preview') return
-    setSent('sending')
-    callMemoryCleared({ nightId, boardId, pairs: found }).then(() => setSent('sent')).catch(() => setSent(null))
-  }, [done, sent, boardId, board?.cleared, nightId, found])
-  useEffect(() => {
-    if (up.length !== 2) return
-    const [a, b] = up
-    if (cards[a] === cards[b]) { setFound(f => [...f, [a, b]]); setUp([]); chime('right'); return }
-    const id = setTimeout(() => setUp([]), 1100)
-    return () => clearTimeout(id)
-  }, [up, cards])
-  if (!night || night.act !== 4 || !boardId) return <Idle title="The memory match" line="The next group will be along." />
-  const shown = new Set([...up, ...found.flat()])
-  const flip = (i) => { if (up.length < 2 && !shown.has(i)) setUp(u => [...u, i]) }
-  const base = import.meta.env.BASE_URL
-  return (
-    <div className="kiosk memory">
-      <p className="kiosk-crest">The memory match</p>
-      {board.cleared || done
-        ? <p className="kiosk-big">Clear. Look at your phones.</p>
-        : <p className="kiosk-line">Turn two cards at a time. Find the six pairs together.</p>}
-      <div className="memory-board">
-        {cards.map((t, i) => (
-          <button key={`${boardId}-${i}`} className={shown.has(i) ? 'memory-card up' : 'memory-card'} onClick={() => flip(i)} aria-label={shown.has(i) ? 'a trace' : 'a card, face down'} disabled={board.cleared}>
-            {shown.has(i) ? <img src={`${base}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <FolderBack />}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// A face-down card: one of Zimothy's manila file folders (handoff §6b), a
-// light folder with its tab on a dark card, drawn thick so it reads in dim light.
-function FolderBack() {
-  return (
-    <svg className="memory-back" viewBox="0 0 100 100" aria-hidden="true">
-      <path className="folder-rear" d="M14 30 V22 a4 4 0 0 1 4 -4 H38 a4 4 0 0 1 3.2 1.6 L46 26 H82 a4 4 0 0 1 4 4 V76 H14 Z" />
-      <path className="folder-front" d="M9 38 a3 3 0 0 1 3 -3 H88 a3 3 0 0 1 3 3.4 L87.4 78.6 a4 4 0 0 1 -4 3.4 H16.6 a4 4 0 0 1 -4 -3.4 Z" />
-      <path className="folder-label" d="M34 50 H66" />
-    </svg>
-  )
-}
+// ---- Act 4: the memory match and Boo's wall live in Rooms.jsx ------------
+export { MemoryRounds as MemoryMatch } from './Rooms'
 
 // The iPad's view: the words of the last news, bulletin or Irwin, kept up.
 export function Captions({ captions, rehearsal = false }) {
@@ -508,7 +465,7 @@ export function Bedroom({ relay, trace }) {
     <div className="kiosk bedroom closed">
       <p className="kiosk-crest">The bedroom</p>
       <p className="kiosk-big">The door is closed.</p>
-      <p className="kiosk-line">Name the three drawings in the living room.</p>
+      <p className="kiosk-line">Name the three drawings in the Parlour.</p>
     </div>
   )
   return (
@@ -527,6 +484,13 @@ export function Bedroom({ relay, trace }) {
 // only at level 5.
 export function TraceView({ trace, compact = false }) {
   const level = Math.max(1, Math.min(5, Number(trace?.level) || 3))
+  // a rehearsal night: the slot says what would show, never the picture (Jon, 23 Oct 2026)
+  if (trace?.standIn) return (
+    <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
+      <p className="kiosk-big trace-standin">{trace.standIn}</p>
+      {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
+    </div>
+  )
   const base = import.meta.env.BASE_URL
   const src = (id) => `${base}traces/${id}.png`
   const images = level === 3 ? (trace.images ?? []) : trace.trace ? [trace.trace] : []
@@ -605,6 +569,9 @@ export function Finale({ night, finale, content = null, serverNow }) {
   const names = finale.names ?? {}
   // the lead-in plays first, under the cards already named; the new card cuts in when it is over
   const rv = revealView(finale, now)
+  // the closing bulletin as video (23 Oct 2026): this stage's parts play during the lead-in
+  const clips = NAME_STAGES.includes(stage) && finale.video?.[stage] ? closingClips(stage) : null
+  if (rv.waiting && clips?.length) return <BulletinVideo clips={clips} lines={rv.captions.map(p => `${p.who}: ${p.text}`)} startedAt={ms(finale.cardAt?.[stage]) - 1} serverNow={null} />
   const who = { characters: content?.characters ?? [], roster: night?.roster ?? {} }
   return (
     <div className={`kiosk finale reveal ${stage}`}>
@@ -777,7 +744,7 @@ export function TugOfWar({ graph }) {
 // through this screen. Granolia's lines: the workshop's study lines list,
 // with a plain default for each moment.
 
-const CAP_MS = 15 * 60_000
+const CAP_MS = 10 * 60_000 // the study's cap is the ten-minute round (handoff 23 Oct 2026)
 
 // Granolia's lines come from the workshop's study lines list (published with
 // the night's content) over the phone's defaults; see lib/content.js.
@@ -804,7 +771,7 @@ export function Study({ study, rotation, serverNow, lines = null }) {
 
   return (
     <div className={`kiosk study ${s.state ?? 'idle'}`}>
-      <p className="kiosk-crest">The study{names ? ` · ${names}` : ''}</p>
+      <GameName id="study" extra={names} />
       <div className="jewels" aria-label="pairs found">
         {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
       </div>

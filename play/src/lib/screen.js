@@ -1,4 +1,4 @@
-// Pure rules for the room screens (the living room TV, the iPad, the
+// Pure rules for the room screens (the Parlour TV, the iPad, the
 // bedroom and the study): which view to show, the board rows, the door's
 // hold, the bell and the corner dot. No React, no Firebase, so play/test can
 // run them under node --test. Everything here reads public docs any phone
@@ -39,6 +39,9 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   if (screen?.kind === 'board') return 'board'
   if (relay?.state === 'done' || screen?.kind === 'door') return 'door'
   if (CAPTION_KINDS.includes(screen?.kind)) return 'card'
+  // Sir Irwin's sharing prompts (Act 2's cat visits, Act 4's rounds) and the Act 4 title card
+  if (screen?.kind === 'prompts') return 'prompts'
+  if (screen?.kind === 'title') return 'title'
   return 'idle'
 }
 

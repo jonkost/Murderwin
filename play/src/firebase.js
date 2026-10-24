@@ -36,10 +36,18 @@ export const callStation = httpsCallable(functions, 'stationCommand')
 export const callAnswer = httpsCallable(functions, 'answer')
 export const callBallot = httpsCallable(functions, 'ballot')
 export const callEliminate = httpsCallable(functions, 'eliminate')
-// Act 2: the code in a cat's room (?meet=<cat>), and "I have heard it".
+// Act 2: the code in a cat's room (?meet=<cat>), Done, and Not yet, call me later.
+// In Act 4 the same code marks the group's arrival in a game room.
 export const callMeet = httpsCallable(functions, 'meetCat')
 export const callLeave = httpsCallable(functions, 'leaveCat')
-// Act 4: the iPad's memory match is clear (?kiosk=memory).
-export const callMemoryCleared = httpsCallable(functions, 'memoryCleared')
+export const callNotYet = httpsCallable(functions, 'notYet')
+// Act 4: Locked in; the iPad's memory match boards (?kiosk=memory); Salem's
+// Motion Game; Boo's show over (?kiosk=boo or a phone).
+export const callLockIn = httpsCallable(functions, 'lockIn')
+export const callMemoryStep = httpsCallable(functions, 'memoryStep')
+export const callSalemReady = httpsCallable(functions, 'salemReady')
+export const callSalemSlip = httpsCallable(functions, 'salemSlip')
+export const callSalemPassed = httpsCallable(functions, 'salemPassed')
+export const callBooDone = httpsCallable(functions, 'booDone')
 
 export { signInAnonymously, onAuthStateChanged }

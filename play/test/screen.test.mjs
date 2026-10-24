@@ -216,8 +216,9 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   // D1-18: the bulletin's struck list is gone from the card
   assert.ok(!kiosk.includes('struck.map') && !kiosk.includes('The constable has ruled out'), 'ScreenCard draws no struck list')
-  // BK-15: the memory match's face-down cards are file folders, not a star
-  assert.ok(kiosk.includes('<FolderBack />') && !kiosk.includes('✦'), 'the card backs are file folders')
+  // BK-15: the memory match's face-down cards are file folders, not a star (the match lives in Rooms.jsx since 23 Oct)
+  const rooms = readFileSync(new URL('../src/screens/Rooms.jsx', import.meta.url), 'utf8')
+  assert.ok(rooms.includes('<FolderBack />') && !rooms.includes('✦') && !kiosk.includes('✦'), 'the card backs are file folders')
   // CL-8: the rehearsal band on every room screen, hidden while the room is dark
   assert.ok(kiosk.includes('<RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />'), 'the kiosk shows the band on a rehearsal night')
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)

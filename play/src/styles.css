@@ -668,3 +668,75 @@ em.stage { font-style: italic; color: var(--dim); }
 :root.rehearsal-on .overlay .paused-strip { top: 0; } /* the overlay already starts under the band */
 :root.rehearsal-on .kiosk-bell { top: calc(var(--band-h) + 1.2vw); }
 .kiosk.black-box .cell-art.big { background: none; border: none; box-shadow: none; padding: 0; border-radius: 0; }
+
+/* ---- 23 Oct 2026 (docs/handoff-2026-10-23.md): Act 2's four cats, Act 4's rooms, the permissions ---- */
+
+/* Act 2: the cat's card carries its motive hint and its bag clue; On my way / Not yet */
+.pair { display: grid; gap: 0.6rem; width: 100%; }
+.bag-line { margin: 0; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 1.1rem; }
+.testimony.compact .bag-line { font-size: 1rem; }
+.bag-line.placeholder { color: var(--dim); font-style: italic; }
+.gloss.saved { margin: 0.4rem 0 0; font-size: 0.9rem; }
+
+/* Act 4: the group card by portrait, Locked in, the room's step, a waiting Parlour Game */
+.members.portraits { display: grid; gap: 0.6rem; padding: 0; list-style: none; }
+.members.portraits li { display: flex; align-items: center; gap: 0.8rem; }
+.portrait-s { width: 3.6rem; height: 3.6rem; object-fit: contain; border-radius: 50%; background: var(--card); border: 1px solid var(--line); }
+.locked-in { display: flex; align-items: center; gap: 0.8rem; margin: 0; color: var(--good); }
+.dealt.act4 { text-align: center; justify-items: center; border-color: var(--good); }
+.dealt.act4 h3 { font-size: 1.5rem; }
+.waiting-game { display: grid; gap: 0.5rem; width: 100%; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+button.link { background: none; border: 0; color: var(--dim); text-decoration: underline; padding: 0.4rem 0; font-size: 0.95rem; }
+
+/* Salem's Motion Game: the whole card tints the colour, so the game works with no lights */
+.salem { display: grid; gap: 0.6rem; }
+.salem-play { display: grid; gap: 0.6rem; width: 100%; padding: 1.4rem 0.8rem; border-radius: 12px; background: var(--card); transition: background 120ms; }
+.salem-play.red { background: #b0141c; color: #fff; }
+.salem-play.green { background: #0d7a3a; color: #fff; }
+.salem-colour { margin: 0; font-size: 2.4rem; font-weight: 700; letter-spacing: 0.04em; }
+.salem-play .slip { margin: 0; font-weight: 600; }
+
+/* Boo's poses on the phones */
+.boo-pose { display: grid; gap: 0.4rem; padding: 1rem; border-radius: 12px; background: var(--brand-claret); }
+.boo-strike { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: 0.06em; }
+.boo-hold { margin: 0; font-size: 1.4rem; color: var(--good); }
+.boo-judge { font-size: 1.2rem; font-style: italic; }
+
+/* the permissions screen */
+.allow-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.7rem; text-align: left; max-width: 26rem; }
+.allow-list li { display: flex; gap: 0.7rem; align-items: baseline; font-size: 1.1rem; }
+.allow-list .mark { width: 1.4rem; text-align: center; color: var(--dim); }
+.allow-list .allow-ok .mark { color: var(--good); }
+.allow-list .allow-denied .mark { color: var(--accent); }
+
+/* the Parlour TV: Sir Irwin's prompts, the Act 4 title card, a bulletin as video */
+.kiosk.prompts { background: var(--brand-peat); gap: 2vh; }
+.prompts-irwin { max-height: 34vh; object-fit: contain; }
+.kiosk.prompts .prompt-line { font-size: min(5.2vw, 7vh); max-width: 80vw; text-align: center; }
+.kiosk.title-card { background: var(--brand-blue); gap: 3vh; }
+.kiosk.title-card .kiosk-big { font-size: min(7vw, 10vh); }
+.kiosk.video-screen { background: #000; padding: 0; gap: 0; }
+.bulletin-video { width: 100vw; max-height: calc(88vh - var(--band-h)); background: #000; }
+.video-caption { margin: 0; padding: 1vh 4vw; font-size: min(2.6vw, 3.6vh); text-align: center; }
+.trace-standin { color: var(--dim); font-style: italic; }
+
+/* the memory match's three boards (7, 10 and 14 pairs): 7 by 2, 5 by 4, 7 by 4, sized to fit the iPad's height */
+.memory-board.cards-14 { grid-template-columns: repeat(7, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 3.5)); }
+.memory-board.cards-20 { grid-template-columns: repeat(5, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.25)); }
+.memory-board.cards-28 { grid-template-columns: repeat(7, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.75)); }
+
+/* Boo's wall: the runway along the bottom edge of the triangle wall */
+.kiosk.boo-wall { background: #000; justify-content: flex-end; gap: 2vh; }
+.boo-strut { height: 34vh; object-fit: contain; animation: boo-strut 6s linear infinite alternate; }
+.boo-strut.still { animation: none; }
+@keyframes boo-strut { from { transform: translateX(-30vw); } to { transform: translateX(30vw); } }
+.kiosk.boo-wall .boo-strike { font-size: min(9vw, 14vh); }
+.kiosk.boo-wall .boo-hold { font-size: min(5vw, 8vh); }
+.boo-judging { height: 30vh; object-fit: contain; }
+@media (prefers-reduced-motion: reduce) { .boo-strut { animation: none; } }
+
+/* The game names (handoff §16): the hook under a game's name, on the phone and on each room's screen. */
+.game-hook { font-style: italic; color: var(--dim); margin: -0.2rem 0 0.8rem; }
+.kiosk .game-name { margin: 0 0 1vw; }
+.kiosk .game-name .kiosk-crest { margin-bottom: 0.3vw; }
+.kiosk .game-hook { font-size: 1.8vw; margin: 0 0 1vw; }

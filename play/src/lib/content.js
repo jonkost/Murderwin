@@ -8,7 +8,7 @@ export const ACTS = {
   1: { name: 'The Invitation', plain: 'Welcome' },
   2: { name: 'Lights Out', plain: 'First investigation' },
   3: { name: 'Supper Is Served', plain: 'Dinner' },
-  4: { name: 'Behind Closed Doors', plain: 'Rotation' },
+  4: { name: 'Behind Closed Doors', plain: 'Four rooms' },
   5: { name: 'One Candle', plain: 'Dessert' },
   6: { name: 'The Final Hour', plain: 'The Big Solve' },
   7: { name: 'Unmasked', plain: 'The Reveal' },
@@ -17,9 +17,9 @@ export const ACTS = {
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. Only one year old, so he knows less than he thinks. If Irwin and anyone disagree, Irwin is right.' },
   { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true, though she may forget part of it, and she is cheerfully confident about all of it.' },
-  { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Not staff. Guarded, not snobbish. She only speaks to people she has decided about, and then only five words.' },
+  { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Not staff. Guarded, not snobbish. In Act 2 she only speaks to people she has decided about; in Act 4 she talks to every group.' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate and rationed. Openly transactional. Where money is involved, he shades it.' },
-  { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper', blurb: 'Been here longer than anyone, which is why nobody questions him when he is wrong. Confidently backwards more often than not.' },
+  { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper', blurb: 'Been here longer than anyone, which is why nobody questions him when he is wrong. Confidently backwards more often than not.' },
 ]
 
 export const DEFAULT_UI = {

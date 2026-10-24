@@ -6,7 +6,6 @@ import nightSeed from '../../../seed/night.json' with { type: 'json' }
 // (no Firebase, no React) so play/test can run it under node --test.
 
 export const NIGHT = nightSeed
-export const STATIONS = NIGHT.stations
 export const WINDOWS = NIGHT.windows
 
 export function beatsOf(act) { return NIGHT.acts[String(act)]?.beats ?? [] }
@@ -183,6 +182,68 @@ export function lightsStep(session, act) {
   return l
 }
 
+// Act 4, Behind Closed Doors: this phone's step in the four game rooms (the
+// server's sessions/{uid}.act4: room, title, text, arrive, here, paid, over).
+// Null outside Act 4.
+export const ROOMS = {
+  study: { cat: 'granolia', name: 'the Study' },
+  library: { cat: 'zimothy', name: 'the Library' },
+  orangerie: { cat: 'salem', name: 'the Orangerie' },
+  entryway: { cat: 'boo', name: 'the Entryway' },
+}
+export function act4Step(session, act) {
+  const a = session?.act4
+  if (act !== 4 || !a || !a.room) return null
+  return a
+}
+// Is this guest free to play a waiting Parlour Game? In the Parlour, or their
+// room already paid, or the rounds over (handoff 23 Oct 2026: never in a game room).
+export function freeForGames(step) {
+  return !step || step.room === 'parlour' || !!step.paid || !!step.over
+}
+// The Act 4 Parlour Games waiting on this phone and not yet played, oldest first.
+export function waitingGames(session) {
+  return Object.entries(session?.windows ?? {})
+    .filter(([id, w]) => w?.waiting && w.kind === 'questions' && !session?.answers?.[id])
+    .sort((a, b) => ms(a[1].opensAt) - ms(b[1].opensAt))
+    .map(([id, w]) => ({ id, kind: 'questions', title: w.title || 'Parlour Game', host: w.host ?? null, mine: w, waiting: true }))
+}
+
+// Salem's Motion Game (public/salem): the colour at a moment, the same rule
+// as the server's and the brain's (functions/lib/act4.js salemColourAt).
+export function salemColourAt(doc, now) {
+  if (doc?.state !== 'playing') return null
+  let colour = null
+  for (const f of doc.flips ?? []) { if (ms(f.at) <= now) colour = f.colour; else break }
+  return colour
+}
+// When the colour last changed, so a phone gives the guest a moment to react.
+export function salemFlipAt(doc, now) {
+  let at = 0
+  for (const f of doc?.flips ?? []) { if (ms(f.at) <= now) at = ms(f.at); else break }
+  return at
+}
+export const SALEM_GRACE_MS = { 1: 700, 2: 600, 3: 500 }
+// A shake is movement above this, in m/s² with gravity taken out; red wants
+// one at least every SALEM_STILL_MS, green wants none.
+export const SALEM_SHAKE = 3.5
+export const SALEM_STILL_MS = 1600
+
+// Boo's catwalk (public/boo): which part of the show is on at a moment.
+//   intro · strut (pose n coming) · pose (STRIKE A POSE, hold n) · judge (the line) · done
+export function booMoment(doc, now) {
+  if (!doc || doc.state === 'idle' || !doc.startsAt) return { part: 'idle' }
+  if (doc.state === 'done' || now >= ms(doc.endsAt)) return { part: 'done' }
+  const poses = doc.poses ?? []
+  for (let i = 0; i < poses.length; i++) {
+    const p = poses[i]
+    if (now < ms(p.poseAt)) return { part: i === 0 && now < ms(p.strutAt) ? 'intro' : 'strut', pose: i + 1 }
+    if (now < ms(p.holdUntil)) return { part: 'pose', pose: i + 1, hold: Math.ceil((ms(p.holdUntil) - now) / 1000) }
+    if (now < ms(p.judgeUntil)) return { part: 'judge', pose: i + 1, line: p.line }
+  }
+  return { part: 'done' }
+}
+
 // The cat a room's square code names (/play/?meet=granolia). Null when there is none.
 export const MEET_CATS = ['granolia', 'salem', 'zimothy', 'boo']
 export function meetParam(search) {
@@ -193,7 +254,7 @@ export function meetParam(search) {
 }
 
 export function clueCards(session) {
-  return cardsOf(session).filter(c => c.kind !== 'role' && (KEEPS.has(c.kind) || (c.kind === 'station' && c.station === 'bags'))).reverse()
+  return cardsOf(session).filter(c => c.kind !== 'role' && KEEPS.has(c.kind)).reverse()
 }
 
 // This phone's role card, whenever it was dealt. Null until the power returns.

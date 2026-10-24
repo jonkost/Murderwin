@@ -4,8 +4,10 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
 import { Eliminations } from './Windows'
-import { nowCards, roleCard, stopOf, lightsStep, salemFriendNote } from '../lib/night'
+import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote } from '../lib/night'
+import Act4 from './Act4'
 import Spoken from './Spoken'
+import Allow from './Allow'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -41,7 +43,8 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   // When something new lands for this act (a card, or a new step in the Act 2
   // rooms), the phone goes to Now on its own.
   const lights = lightsStep(session, night.act)
-  const newest = [now[0]?.id, lights && `${lights.step}-${lights.cat}`, meetNote].filter(Boolean).join('|') || null
+  const rooms = act4Step(session, night.act)
+  const newest = [now[0]?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
   useEffect(() => { if (newest) setTab('now') }, [newest])
 
   return (
@@ -62,7 +65,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       </header>
 
       <section className="sheet" aria-live="polite">
-        {shown === 'now' && <Now uid={uid} night={night} content={content} notes={notes} cards={now} lights={lights} meetNote={meetNote} />}
+        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
@@ -85,14 +88,16 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // What to do at this moment: the cards dealt for this act, newest first,
 // each one gone once it has been answered. When there is nothing to do the
 // screen says so plainly; that is a real state, not an error.
-function Now({ uid, night, content, notes, cards, lights = null, meetNote = null }) {
+function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow }) {
   return (
     <div className="now">
       {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
-      {cards.length === 0 && !lights && (
+      {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
+      {rooms && meetNote && <p className="trouble" role="status">{meetNote}</p>}
+      {cards.length === 0 && !lights && !rooms && (
         <p className="moment-text quiet-line">{night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'}</p>
       )}
-      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} />)}
+      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} />)}
       {night.act === 6 && <Eliminations night={night} content={content} />}
     </div>
   )
@@ -124,6 +129,7 @@ function You({ character, session, content, ui, onTour }) {
       )}
       <p className="gloss">{ui.RETICULE}</p>
       {onTour && <button className="quiet" onClick={onTour}>Show me around again</button>}
+      <AllowAgain />
       {idle && (
         <div className="passing" aria-label={`${idle.cat.name}, passing by`}>
           <CatFace cat={idle.cat.key} name={idle.cat.name} />
@@ -132,6 +138,14 @@ function You({ character, session, content, ui, onTour }) {
       )}
     </div>
   )
+}
+
+// The quiet Allow again link (§9.10): an iPhone may forget motion or sound
+// after a reload or a rejoin; one tap asks again.
+function AllowAgain() {
+  const [open, setOpen] = useState(false)
+  if (open) return <div className="overlay" role="dialog" aria-modal="true" aria-label="Allow again"><Allow again onDone={() => setOpen(false)} /></div>
+  return <button className="link" onClick={() => setOpen(true)}>Allow again (motion, sound, screen awake)</button>
 }
 
 // The character card: name on a band at the top, the job on a band at the

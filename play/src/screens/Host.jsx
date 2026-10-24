@@ -35,17 +35,21 @@ function describe(command, r) {
     case 'act': return `Act ${r.act} is on.`
     case 'relay-start': return r.already ? 'A drawing is already on the paper. It is kept. Clear it first if you want a fresh one.' : `The drawing has started: ${r.turns} turns.`
     case 'relay-reset': return 'The drawing is cleared. The door is shut again and the hall light is red.'
-    case 'groups': return r.already ? 'The groups are set; the house has started rotating. They stay as they are.' : `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}. The study knows who is first.`
-    case 'study-finish': return r.repeated ? 'That group was already paid.' : r.rotated ? 'The group is paid and the house has moved on.' : 'The group is paid. The house moves on at the next station.'
+    case 'groups': return r.already ? 'The groups are set. They stay as they are.' : `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}, ${r.rounds} rounds.`
+    case 'study-finish': return r.repeated ? 'That group was already paid.' : 'The group in the study is paid. The rounds go on with the clock.'
+    case 'supper': return r.already ? 'Supper is already called.' : 'Supper is called. Every phone says so, and the cats a guest missed left a note.'
+    case 'start-act4': return r.already ? 'Act 4 has already started.' : 'Act 4: every phone has the two-minute warning. The groups and the rounds come on their own.'
+    case 'scene': return `The brain is setting ${r.scene}.`
+    case 'music': return r.music === 'next' ? 'The brain is changing the playlist.' : `The brain is told: ${r.music}.`
     case 'study-reassign': return r.already ? 'That group was already the one due.' : 'Noted. The study pays that group when it finishes.'
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
-    case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.study?.ticked ? 'The study slot ran out: the house has moved on.' : 'Every clock is where it should be.'
+    case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.clock ? 'The clock moved the night on.' : 'Every clock is where it should be.'
     case 'hall': return `The hall light is ${r.hall}.`
-    case 'tv-trace': return r.tvTrace ? 'The living room screen shows the trace once the door has been open ten seconds.' : 'The trace is off the living room screen.'
+    case 'tv-trace': return r.tvTrace ? 'The Parlour screen shows the trace once the door has been open ten seconds.' : 'The trace is off the Parlour screen.'
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     case 'next': case 'beat': case 'back': if (r.armed) return 'Armed.'
       return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
-    case 'light-up': return `Parlour Game on ${r.phones} phones. Sixty seconds.`
+    case 'light-up': return r.waiting ? `A Parlour Game is waiting on ${r.phones} phones. Each guest plays it when free.` : `Parlour Game on ${r.phones} phones. Sixty seconds.`
     case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
     case 'power': return 'The power is back. Every phone is showing its card.'
     case 'handover': return 'That phone is wiped. The next person to pick it up types their own name; the previous owner taps theirs on any other phone.'
@@ -84,14 +88,15 @@ export default function Host({ night, content, serverNow }) {
   const cues = useDoc(live ? `nights/${night.nightId}/public/cues` : null)
   const relay = useDoc(live ? `nights/${night.nightId}/public/relay` : null)
   const finale = useDoc(live && night.act === 7 ? `nights/${night.nightId}/public/finale` : null)
+  const act4 = useDoc(live && night.act === 4 ? `nights/${night.nightId}/public/act4` : null)
   const awards = useDoc(live && night.act <= 5 ? `nights/${night.nightId}/public/achievements` : null)
-  // With no station the study slots are twelve minutes: this tab is their clock,
-  // on load and once a minute through Act 4. The server acts once per group.
+  // Acts 2 and 4 run on the clock (the cat queue and the supper chime; Act 4's
+  // warning, lock-in and ten-minute rounds). The server ticks once a minute on
+  // its own; this tab nudges it every twenty seconds so a chime is never late.
   useEffect(() => {
-    if (!live || night.act !== 4) return
-    const tick = () => callHost({ nightId: night.nightId, command: 'study-tick' }).catch(() => {})
-    tick()
-    const id = setInterval(tick, 60_000)
+    if (!live || ![2, 4].includes(night.act)) return
+    const tick = () => callHost({ nightId: night.nightId, command: 'tick' }).catch(() => {})
+    const id = setInterval(tick, 20_000)
     return () => clearInterval(id)
   }, [live, night.nightId, night.act])
 
@@ -136,7 +141,7 @@ export default function Host({ night, content, serverNow }) {
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
 
-      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} />
+      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} act4={act4.data} />
       <RevealPanel night={night} finale={finale.data} busy={busy} run={run} serverNow={serverNow} />
 
       <h3>The acts</h3>
@@ -157,21 +162,22 @@ export default function Host({ night, content, serverNow }) {
       </div>
 
       <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+      <ScenesPanel busy={busy} run={run} />
       <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
       <SalemPanel night={night} busy={busy} run={run} />
       <FetchPanel night={night} busy={busy} run={run} />
 
       <Safeguards night={night} busy={busy} run={run} />
 
-      <h3>The study (Act 4)</h3>
-      <p className="gloss">Makes the pairs and trios and the order they visit the study. Press once, after dinner.</p>
+      <h3>The groups (Act 4)</h3>
+      <p className="gloss">Start Act 4 makes the pairs and trios and their walk round the four rooms. Press this only if you need the groups before then; made groups are kept.</p>
       <div className="host-row">
-        <button className="big wide" disabled={!!busy} onClick={() => run('groups')}>Make the groups</button>
+        <button className="chip wide" disabled={!!busy} onClick={() => run('groups')}>Make the groups</button>
       </div>
       <StationKey busy={busy} run={run} />
 
       <h3>The Big Solve (Act 6)</h3>
-      <p className="gloss">Starts the relay drawing on every phone and the living room screen. It tells you nothing. A drawing already on the paper is kept unless you say restart.</p>
+      <p className="gloss">Starts the relay drawing on every phone and the Parlour screen. It tells you nothing. A drawing already on the paper is kept unless you say restart.</p>
       <div className="host-row">
         <button className="big wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('relay-reset')}>Clear the drawing</button>
@@ -285,7 +291,38 @@ export function HousePanel({ house, cues, night, busy, run }) {
 // Running the night: one button. The beats come from seed/night.json; the
 // server does whatever the next beat needs (deal, light up, group, reveal)
 // and says only how many phones it reached. Nothing here can show content.
-function RunPanel({ night, busy, run, serverNow, finale = null }) {
+// The house (handoff 23 Oct §2c, §9.11): the four Hue scenes as buttons, in
+// case the brain misses one, and the brain's music by hand. Never a tell: the
+// buttons say which scene, never why.
+const SCENE_BUTTONS = [['Murderwin Arrival', 'Arrival'], ['Murderwin Blackout', 'Blackout'], ['Murderwin Lights Out', 'Lights Out'], ['Murderwin Reveal', 'Reveal']]
+function ScenesPanel({ busy, run }) {
+  return (
+    <section className="scenes">
+      <h3>The house: scenes</h3>
+      <div className="host-row">
+        {SCENE_BUTTONS.map(([name, label]) => <button key={name} className="chip" disabled={!!busy} onClick={() => run('scene', name)}>{label}</button>)}
+      </div>
+      <p className="gloss">Music on the brain:</p>
+      <div className="host-row">
+        <button className="chip" disabled={!!busy} onClick={() => run('music', 'play')}>Play</button>
+        <button className="chip" disabled={!!busy} onClick={() => run('music', 'pause')}>Pause</button>
+        <button className="chip" disabled={!!busy} onClick={() => run('music', 'next')}>Next playlist</button>
+      </div>
+    </section>
+  )
+}
+
+// Act 4's clock in plain words: the warning, how many are locked in, the round and its time left.
+function act4Line(act4, night, now) {
+  if (!act4?.phase) return null
+  const left = t => { const s = Math.max(0, Math.ceil((Number(t?.toMillis?.() ?? t) - now) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
+  if (act4.phase === 'warn') return `Two-minute warning: the group cards in ${left(act4.warnEndsAt)}.`
+  if (act4.phase === 'groups') return `${Object.keys(act4.locked ?? {}).length} of ${Object.keys(night.roster ?? {}).length} locked in. The rounds start when everyone is, or in ${left(act4.lockEndsAt)}.`
+  if (act4.phase === 'rounds') return `Round ${act4.round} of ${act4.rounds}: the chime in ${left(act4.roundEndsAt)}. Next moves everyone on now.`
+  return 'The rounds are over. Everyone is back in the Parlour. Next goes on to Act 5.'
+}
+
+function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
   useTick(1000)
   const beats = beatsOf(night.act)
   const idx = beats.findIndex(b => b.key === night.beat)
@@ -314,6 +351,17 @@ function RunPanel({ night, busy, run, serverNow, finale = null }) {
         </>
       ) : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
       {naming && <p className="host-msg" role="status">The screen is revealing. Name all three below, then press Next.</p>}
+      {night.act === 4 && act4 && <p className="host-msg" role="status">{act4Line(act4, night, serverNow ? serverNow() : Date.now())}</p>}
+      {night.act === 2 && night.beat !== 'supper' && (
+        <div className="host-row">
+          <button className="chip wide" disabled={!!busy} onClick={() => run('supper')} title="Supper comes on its own once everyone has seen all four cats">Supper's ready</button>
+        </div>
+      )}
+      {night.act === 3 && (
+        <div className="host-row">
+          <button className="big wide" disabled={!!busy || (open && left > 0)} onClick={() => run('start-act4')}>Start Act 4</button>
+        </div>
+      )}
       {open && (
         <p className="host-msg" role="status">
           {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}

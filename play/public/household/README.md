@@ -15,7 +15,7 @@ and anywhere a cat speaks to you in a line of text.
 | `Granola Face.png` | Granolia Lickspittle |
 | `Boo Face.png` | Miss Boo LaRue |
 | `Zimmy Face.png` | Zimothy Clawford, Esq. |
-| `Salem Face.png` | Salem Crookshank |
+| `Salem Face.png` | Salem Crooknog |
 
 **full/** — the full portraits. Only Sir Irwin's five are used today:
 

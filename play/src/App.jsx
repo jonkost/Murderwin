@@ -7,6 +7,8 @@ import { clockFor, effectivePhase, isDark, meetParam, needsHandoverReset, notesF
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
+import Allow from './screens/Allow'
+import { keepAwake } from './lib/permissions'
 import { Questions, Ballot, Eliminate } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip, RehearsalBand } from './screens/Moments'
 import { StartNight } from './screens/Host'
@@ -37,6 +39,9 @@ export default function App() {
   // Notes are kept per night: a phone that rehearsed starts the party clean.
   useEffect(() => { setNotesNight(nightId) }, [nightId])
   const notes = useMemo(() => notesFor(notesDoc.data, nightId), [notesDoc.data, nightId])
+  // a phone that allowed the permissions keeps its screen awake after a reload too
+  const allowed = !!notes.seen.allow
+  useEffect(() => { if (allowed) keepAwake().catch(() => {}) }, [allowed])
 
   // A borrowed phone: the host's handover bumps the session's generation and
   // this browser forgets the previous owner before anyone else sees it.
@@ -88,6 +93,12 @@ export default function App() {
   const promptKey = `prompt-${n.act}`
   if (effectivePhase(n) === 'prompt' && !notes.seen[promptKey]) {
     return <Prompt uid={uid} night={n} ui={ui} serverNow={clockFor(n, serverNow)} promptKey={promptKey} card={roleCard(s)} notes={notes} />
+  }
+
+  // The permissions screen (§9.10): once per night, before the tour, never
+  // over the dark. A phone that allowed already keeps its screen awake.
+  if (notesDoc.loaded && !notes.seen.allow && wantsWelcome(n, { byNight: {} }, nightId)) {
+    return <>{band}<Allow uid={uid} /></>
   }
 
   // Getting started: the first time this phone has a character on this

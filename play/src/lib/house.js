@@ -16,7 +16,7 @@ export const ABSENT_SLOT_MS = 12 * 60_000   // with no station, a group's turn i
 
 // The machines, by the guest key their heartbeat carries.
 export const MACHINES = [
-  { key: 'kiosk-living', label: 'Living room screen' },
+  { key: 'kiosk-living', label: 'Parlour screen' },
   { key: 'kiosk-ipad', label: 'The iPad' },
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },

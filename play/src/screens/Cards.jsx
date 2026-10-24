@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { callMeet, callLeave } from '../firebase'
+import { callMeet, callLeave, callNotYet, callLockIn } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
+import { portraitUrls } from '../lib/content'
+import { chime } from '../lib/permissions'
 import { TraceView } from './Kiosk'
 import Spoken from './Spoken'
 
@@ -10,13 +12,13 @@ import Spoken from './Spoken'
 // (client rule: every innocent beat needs an interaction), and every card is
 // the same shape whatever role the phone belongs to.
 
-export function Card({ card, uid, notes }) {
+export function Card({ card, uid, notes, nightId = null }) {
   const seen = !!notes?.seen?.[card.id]
   const put = () => writeNotes(uid, { seen: { [card.id]: true } }).catch(() => {})
   switch (card.kind) {
     case 'notice': return <Notice card={card} onDone={put} />
     case 'testimony': return <Testimony card={card} />
-    case 'group': return <Group card={card} onDone={put} />
+    case 'group': return <Group card={card} uid={uid} nightId={nightId} notes={notes} onDone={put} />
     case 'station': return <Station card={card} uid={uid} notes={notes} onDone={put} />
     case 'clue': return <Clue card={card} uid={uid} notes={notes} />
     case 'result': return <Result card={card} onDone={put} seen={seen} />
@@ -31,7 +33,7 @@ export function Rehearsal({ card }) {
 
 // A host's line (functions/lib/hosts.js): the cat's face and their words.
 // Flavor only, the same on every phone.
-const HOST_NAMES = { boo: 'Miss Boo LaRue', salem: 'Salem Crookshank', granolia: 'Granolia Lickspittle', zimothy: 'Zimothy Clawford, Esq.', irwin: 'Sir Irwin' }
+const HOST_NAMES = { boo: 'Miss Boo LaRue', salem: 'Salem Crooknog', granolia: 'Granolia Lickspittle', zimothy: 'Zimothy Clawford, Esq.', irwin: 'Sir Irwin' }
 export function HostLine({ host }) {
   if (!host?.line) return null
   return (
@@ -62,42 +64,52 @@ function Notice({ card, onDone }) {
 }
 
 // Act 2, Lights Out: where this guest goes next (sessions/{uid}.lights,
-// written by the server). Wait in the living room; go to a cat's room and
-// scan its code; read what the cat says and tap; back to the living room.
-// The phone buzzes once when it sends its guest off. A guest whose phone
-// cannot scan taps "I am with …" in the room instead.
+// written by the server; the words are the handoff's, §9.4). Wait in the
+// Parlour; your turn: On my way, or Not yet, call me later (every phone has
+// the same button, no penalty); in the room, scan the code; read the cat and
+// tap Done. The phone buzzes once when it calls its guest. A guest whose
+// phone cannot scan taps "I am with …" in the room instead.
 export function LightsStep({ lights, uid, nightId, notes, note = null }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
-  const buzzKey = lights?.step === 'go' ? `lights-go-${lights.cat}` : null
+  const buzzKey = lights?.step === 'go' ? `lights-go-${lights.cat}-${lights.at?.seconds ?? ''}` : null
   useEffect(() => {
     if (!buzzKey || !uid || uid === 'preview') return
     const vibrate = typeof navigator !== 'undefined' && navigator.vibrate ? p => navigator.vibrate(p) : null
-    if (buzzOnce(buzzKey, notes, vibrate)) writeNotes(uid, { buzzed: { [buzzKey]: true } }).catch(() => {})
+    if (buzzOnce(buzzKey, notes, vibrate)) { chime(); writeNotes(uid, { buzzed: { [buzzKey]: true } }).catch(() => {}) }
   }, [buzzKey, uid, notes])
   if (!lights) return null
+  const onWayKey = `onmyway-${lights.cat}`
+  const onWay = lights.step === 'go' && !!notes?.seen?.[onWayKey]
   const call = async (fn, args) => {
     if (nightId === 'preview') return
     setBusy(true); setMsg(null)
     try { await fn({ nightId, ...args }) } catch (e) { setMsg(e?.message || 'The house did not answer. Try again.') } finally { setBusy(false) }
   }
+  const goNow = () => { if (uid && uid !== 'preview') writeNotes(uid, { seen: { [onWayKey]: true } }).catch(() => {}) }
   const short = (lights.catName ?? 'the cat').split(' ')[0]
   return (
     <section className={`dealt lights lights-${lights.step}`}>
       <p className="eyebrow">Your next step</p>
       {lights.cat && lights.step !== 'done' && lights.step !== 'wait' && <CatFace cat={lights.cat} name={lights.catName} size="l" />}
       <h3>{lights.title}</h3>
-      <p>{lights.text}</p>
-      {lights.step === 'with' && <button className="big" disabled={busy} onClick={() => call(callLeave, {})}>I have heard it</button>}
-      {lights.step === 'go' && <button className="quiet" disabled={busy} onClick={() => call(callMeet, { cat: lights.cat })}>Cannot scan? I am with {short}</button>}
+      <p>{onWay ? lights.arrive : lights.text}</p>
+      {lights.step === 'go' && !onWay && (
+        <div className="pair">
+          <button className="big" onClick={goNow}>On my way</button>
+          <button className="quiet" disabled={busy} onClick={() => call(callNotYet, {})}>Not yet, call me later</button>
+        </div>
+      )}
+      {lights.step === 'go' && onWay && <button className="quiet" disabled={busy} onClick={() => call(callMeet, { cat: lights.cat })}>Cannot scan? I am with {short}</button>}
+      {lights.step === 'with' && <button className="big" disabled={busy} onClick={() => call(callLeave, {})}>Done</button>}
       {(msg || note) && <p className="trouble" role="status">{msg || note}</p>}
     </section>
   )
 }
 
-// A cat speaks. A cat with a hint for this guest (Act 2) or this group
-// (Act 4) says only its hint line, from the open Cat Hint Lines bank; the
-// other three cats in Act 2 say one greeting line each, with no hint. Stage
+// A cat speaks: its motive hint, then its bag clue, both at the rung its
+// affection sets (Act 2, handoff 23 Oct §3), then "Saved to your Clues."
+// A card left at supper for a cat the guest never reached says so. Stage
 // directions (*snort*) read in italics, without the stars.
 export function Testimony({ card, compact = false }) {
   const lines = card.lines ?? []
@@ -107,7 +119,7 @@ export function Testimony({ card, compact = false }) {
         <CatFace cat={card.cat} name={card.catName} />
         <div>
           <h3>{card.catName}</h3>
-          {card.room && <p className="where">in {card.room}</p>}
+          {card.room && <p className="where">{card.note ? `left you a note from ${card.room}` : `in ${card.room}`}</p>}
         </div>
         <Rehearsal card={card} />
       </header>
@@ -117,19 +129,44 @@ export function Testimony({ card, compact = false }) {
         </div>
       )}
       {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}><Spoken text={card.hint.text} /></p>}
+      {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
+      {!compact && card.saved && <p className="gloss saved">{card.saved}</p>}
     </section>
   )
 }
 
-function Group({ card, onDone }) {
+// Act 4's group card (§9.5): the group as portraits and character names,
+// then Locked in. While the group waits the card stays, with Sir Irwin
+// wagging: never a "waiting for the others" screen.
+function Group({ card, uid, nightId, notes, onDone }) {
+  const lockedKey = `${card.id}-locked`
+  const locked = !!notes?.seen?.[lockedKey]
+  const [busy, setBusy] = useState(false)
+  const lockIn = async () => {
+    setBusy(true)
+    if (uid && uid !== 'preview') {
+      writeNotes(uid, { seen: { [lockedKey]: true } }).catch(() => {})
+      try { await callLockIn({ nightId }) } catch { /* the clock starts the rounds anyway */ }
+    }
+    setBusy(false)
+  }
   return (
     <section className="dealt group">
       <h3>{card.title}</h3>
-      <ul className="members">
-        {(card.members ?? []).map(m => <li key={m.key}><strong>{m.name}</strong>{m.characterName ? <span className="dim"> · {m.characterName}</span> : null}</li>)}
+      <ul className="members portraits">
+        {(card.members ?? []).map(m => (
+          <li key={m.key}>
+            {m.characterId && <img className="portrait-s" src={portraitUrls(m.characterId)[0]} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />}
+            <span><strong>{m.characterName || m.name}</strong>{m.characterName ? <span className="dim"> · {m.name}</span> : null}</span>
+          </li>
+        ))}
       </ul>
       <p>{card.text}</p>
-      <button className="big" onClick={onDone}>Got it</button>
+      {card.lockIn
+        ? (locked
+          ? <p className="locked-in"><CatFace cat="irwin" name="Sir Irwin" /> <span>Locked in. Sir Irwin is wagging. The chime sends your group to its first room.</span></p>
+          : <button className="big" disabled={busy} onClick={lockIn}>Locked in</button>)
+        : <button className="big" onClick={onDone}>Got it</button>}
     </section>
   )
 }
@@ -156,17 +193,22 @@ function Station({ card, uid, notes, onDone }) {
   )
 }
 
-// A clue a room paid out: the study's trace (the same five-level picture as
-// the bedroom door, never a name) or the memory match's crossed-off motive,
-// with a button that crosses it off the Motives tab.
+// A clue a room paid out (Act 4): the study's trace (the same five-level
+// picture as the bedroom door, never a name), a cat's reward line with a
+// crossed-off motive, and the cat's bag hint about the Ghost; with a button
+// that crosses the motive off the Motives tab.
 export function Clue({ card, uid = null, notes = null }) {
   const n = Number(card.cross) || null
   const crossed = n && !!notes?.crossed?.[n]
   const cross = () => { if (uid && uid !== 'preview') writeNotes(uid, { crossed: { [n]: true } }).catch(() => {}) }
   return (
     <section className="dealt clue">
-      <h3>{card.title}</h3>
-      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p>{card.text || '(Nothing came through. Ask the host.)'}</p>}
+      <header className="speaker">
+        {card.cat && <CatFace cat={card.cat} name={card.catName} />}
+        <h3>{card.title}</h3>
+      </header>
+      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || '(Nothing came through. Ask the host.)'} /></p>}
+      {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
       {n && uid && (crossed ? <p className="gloss">Crossed off.</p> : <button className="chip" onClick={cross}>Cross it off</button>)}
       <Rehearsal card={card} />
     </section>

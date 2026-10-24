@@ -74,7 +74,7 @@ test('the role card is kept all night, readable from You, never listed among the
 })
 
 test('the hint cat says its hint line alone; a card of a kind the phone no longer shows never appears', async () => {
-  const hint = { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crookshank', room: 'the Orangerie', lines: [], hint: { text: '(a hint line)' } }
+  const hint = { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crooknog', room: 'the Orangerie', lines: [], hint: { text: '(a hint line)' } }
   const greet = { id: '2-cat-greet-boo', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', lines: ['(a greeting)'] }
   // what an older build dealt in Act 2: the safe, the paper it paid out, the scrap of paper with its numbers
   const safe = { id: '2-puzzle-safe', act: 2, beat: 'puzzle', kind: 'puzzle', title: '(the safe)', text: '(three numbers)' }
@@ -223,7 +223,7 @@ test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, nev
   const { readFileSync } = await import('node:fs')
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   assert.ok(app.includes('<RehearsalBand on={showRehearsalBand(n)} />'))
-  assert.equal((app.match(/return <>\{band\}/g) ?? []).length, 6, 'join, superseded, welcome, a window, the pause and the phone at rest')
+  assert.equal((app.match(/return <>\{band\}/g) ?? []).length, 7, 'join, superseded, the permissions, welcome, a window, the pause and the phone at rest')
   assert.ok(app.includes('if (isDark(n)) return <Blackout />'), 'the blackout has no band')
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   assert.ok(/\.rehearsal-band \{[^}]*position: fixed; top: 0;/.test(css), 'the band is fixed across the top')
