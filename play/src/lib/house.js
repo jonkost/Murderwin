@@ -11,8 +11,8 @@ import { ms } from './night.js'
 // learns nothing from who answered when.
 
 export const QUIET_MS = 2 * 60_000          // a machine not heard from for two minutes is quiet
-export const STUDY_CAP_MS = 15 * 60_000     // the study's own clock, from the first touch
-export const ABSENT_SLOT_MS = 12 * 60_000   // with no station, a group's turn in the study
+export const STUDY_CAP_MS = 10 * 60_000     // the study's own clock, from the first touch: the Act 4 round (24 Oct 2026)
+export const ABSENT_SLOT_MS = 10 * 60_000   // with no station, a group's turn in the study: the round
 
 // The machines, by the guest key their heartbeat carries.
 export const MACHINES = [
@@ -20,7 +20,8 @@ export const MACHINES = [
   { key: 'kiosk-ipad', label: 'The iPad' },
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },
-  { key: 'kiosk-memory', label: 'Memory match iPad' }, // the iPad Pro as ?kiosk=memory in Act 4
+  { key: 'kiosk-memory', label: 'Memory match iPad' }, // the older iPad as ?kiosk=memory, all night
+  { key: 'kiosk-boo', label: 'Boo’s wall' },             // Susan's MacBook Pro as ?kiosk=boo in Act 4
   { key: 'cues', label: 'Hall light and sounds' },
 ]
 

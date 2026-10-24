@@ -208,10 +208,10 @@ export async function reassignStudy(db, { nightId, groupId }) {
   return { ok: true, groupId, from: from ?? null }
 }
 
-// The clock for a study with no station. On a rotate beat with the station
-// quiet, deal.rotate writes { state: 'absent', slotEndsAt }. Once that moment
-// has passed and the group has not been paid, the house moves on exactly as
-// a station's "finished" would (run.studyFinished deals and rotates). Called
+// The clock for a study with no station. act4.setRooms writes the round's
+// slotEndsAt for the group due; with the station quiet, once that moment has
+// passed and the group has not been paid, this pays it exactly as a station's
+// "finished" would (run.studyFinished; the round's chime also pays it). Called
 // by the Host tab on load and once a minute in Act 4, and by any scheduled
 // tick; safe to call as often as you like, it acts once per group.
 export async function tickStudy(db, nightId, now = Date.now(), { finished = null } = {}) {

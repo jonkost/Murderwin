@@ -29,7 +29,7 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(v.station.alive, true)
   assert.equal(v.station.quietFor, '0:45')
   const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
-  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, cues: true })
+  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, 'kiosk-boo': false, cues: true })
   assert.equal(v.machines.length, MACHINES.length)
   const quiet = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g2', updatedAt: stamp(NOW - QUIET_MS - 1000) }, rotation: ROTATION, now: NOW })
   assert.equal(quiet.station.alive, false)
@@ -37,11 +37,11 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(houseView({ night: NIGHT, now: NOW }).station.quietFor, null, 'never heard from: no "since"')
 })
 
-test('the group due, its clock from the station\'s startedAt, and the twelve-minute slot when there is no station', () => {
+test('the group due, its clock from the station\'s startedAt, and the round\'s slot when there is no station (ten minutes since 24 Oct)', () => {
   const running = houseView({ night: NIGHT, study: { state: 'reproducing', groupId: 'g2', startedAt: NOW - 4 * 60_000, updatedAt: stamp(NOW) }, rotation: ROTATION, now: NOW })
   assert.equal(running.study.names, 'Jacob, Ignatius Fume')
   assert.equal(running.study.running, true)
-  assert.equal(running.study.clockLeft, '11:00')
+  assert.equal(running.study.clockLeft, '6:00')
   assert.equal(running.study.paid, false)
   const absent = houseView({ night: NIGHT, study: { state: 'absent', groupId: 'g1', slotEndsAt: stamp(NOW + 90_000) }, rotation: ROTATION, now: NOW })
   assert.equal(absent.study.clockLeft, '1:30')
