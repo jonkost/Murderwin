@@ -1,6 +1,6 @@
 # The sound files
 
-This folder, on the brain, holds the nine cue sounds and the W-O-O-F News
+This folder, on the brain, holds the ten cue sounds and the W-O-O-F News
 recordings. The cue relay (`cues/`) on the brain plays them through the
 Mac's sound output (the AirPlay speaker group). It knows file names and
 nothing else: no file here says what it is for beyond its name.
@@ -8,24 +8,25 @@ nothing else: no file here says what it is for beyond its name.
 The files themselves are not kept in the repo (they are big, and they are
 yours). Only this page is.
 
-## The nine cue sounds
+## The ten cue sounds
 
 Name each file after its id. Any of `.m4a`, `.mp3`, `.wav` or `.aiff` works;
 the first one found wins.
 
 | File | When it plays |
 |---|---|
-| `chime-news` | Act 2, W-O-O-F News bulletin 1 comes up on the living room TV. |
+| `chime-news` | Act 2, W-O-O-F News bulletin 1 comes up on the Parlour TV. |
 | `sounder-bulletin` | Act 3, bulletin 2, during supper, 3 to 5 minutes after you arm it. |
-| `chime-irwin` | Act 5, Sir Irwin is about to speak on the living room TV. |
+| `chime-irwin` | Act 5, Sir Irwin is about to speak on the Parlour TV. |
 | `sting-solved` | Act 4, a group has solved the study. |
 | `sting-door` | Act 6, the third picture is named and the bedroom door opens. |
-| `sting-reveal` | Act 7, the reveal begins on the living room TV. |
+| `sting-reveal` | Act 7, the reveal begins on the Parlour TV. |
 | `sting-result` | Act 7, every phone shows its own result. |
 | `blackout` | End of Act 1, every phone goes dark. |
 | `power` | The power returns and Act 2 begins. |
+| `chime-phone` | Every "look at your phone" moment: the supper chime, the start of Act 4, each Act 4 round change, the call to the Parlour before Act 5, and the start of Act 6. One short chime. |
 
-The brain will not start while any of these nine has no file. It says how
+The brain will not start while any of these ten has no file. It says how
 many are missing.
 
 ## The W-O-O-F News recordings
@@ -64,11 +65,16 @@ rest of the bulletin plays. The words are on the TV and the iPad as captions
 anyway, so nothing is lost. Missing recordings never stop the brain from
 starting.
 
-**Sound only, as built.** The game plays sound files only. The TV shows the
-words, and in Act 7 the Murderer, Motive and Victim cards. A video file in
-this folder would never play. Whether bulletin 1 and the closing bulletin
-become video on the living room TV is an open decision for you on the board
-(*newsVideo*). Answer it before you film anything.
+**Bulletin 1 and the closing bulletin as video (decided 23 October).** The
+Parlour TV plays these two as video, with the TV's own sound; everyone is in
+the Parlour for both. When it does, the brain still rings `chime-news` but
+does not play those recordings, so you never hear a line twice, and the
+music stays at a whisper for a minute and a half while the video plays
+(`videoHoldSeconds` in `cues/scenes.json`: tell Claude Code how long your
+video runs). Keep the sound recordings in this folder as well: they are the
+fallback if the video cannot play. The video files are the Parlour TV's,
+not the brain's, so they do not go in this folder. Bulletin 2 is always
+sound, through the HomePods.
 
 **What the brain prints.** Counts only, for example "sound playing;
 bulletin: 3 recordings, 1 missing". At the start it says how many of the 40
@@ -83,7 +89,7 @@ key word. That word is the one you typed on your phone's Host tab under *The
 study* (the same word as in `station/.env` on the study Mac). Put it in
 `cues/.env` on the brain as `STATION_KEY=yourword`. Without it the brain
 cannot match the codes to your files, so it skips the recordings and its
-window says how many it did not recognise; the nine cue sounds and the
+window says how many it did not recognise; the ten cue sounds and the
 captions still work. If you change the study's word, change it here too and
 restart the brain.
 
@@ -91,9 +97,18 @@ restart the brain.
 
 Start every file with **one second of silence**. The AirPlay chain takes a
 moment to wake up, and without the pad the start of the sound is lost. Keep
-the nine cue sounds short, two to five seconds. The W-O-O-F News lines can be
-as long as the script needs: the brain plays a bulletin's lines in order,
-each one starting when the one before it ends.
+the ten cue sounds short, two to five seconds (`chime-phone` shorter still,
+about a second). The W-O-O-F News lines can be as long as the script needs:
+the brain plays a bulletin's lines in order, each one starting when the one
+before it ends.
+
+## The music is not in this folder
+
+The background music is three playlists in the Music app on the brain:
+`Murderwin · Arrival`, `Murderwin · Investigation` and `Murderwin · Supper`.
+The brain picks the right one as the night moves and dips it under every
+sound in this folder. How to make them and when each plays:
+`docs/cues-relay.md`.
 
 ## Bulletin 2 and the Orangerie HomePod
 
@@ -105,7 +120,7 @@ brain, in the Murderwin folder, type `afplay media/sounder-bulletin.wav` (or
 ## Until the recordings exist
 
 `node scripts/make-placeholder-sounds.mjs` writes a stand-in tone for each of
-the nine cue sounds that has no file yet, each with the pad, each a different
+the ten cue sounds that has no file yet, each with the pad, each a different
 little figure so you can tell them apart. Run it once before the first
 rehearsal. Replace a stand-in by dropping your recording in with the same
 name and deleting the `.wav`. The W-O-O-F News lines need no stand-ins: until
@@ -117,13 +132,16 @@ Check one from the brain's terminal: `afplay media/chime-news.wav`.
 
 ## For Claude Code (technical)
 
-Two catalogues. `SOUND_IDS` (the nine) in `functions/lib/screen.js` and
+Two catalogues. `SOUND_IDS` (the ten) in `functions/lib/screen.js` and
 `CLIP_IDS` (the 40 recordings, built from `seed/woof-news.json`) in
 `functions/lib/news.js`, both mirrored in `cues/lib/cues.js`; a test on each
 side checks they match. The server writes `nights/{id}/public/sounds.current
-= { id | null, at, clips? }` through `screen.play`: `id` is one of
+= { id | null, at, clips?, video? }` through `screen.play`: `id` is one of
 `SOUND_IDS`, or null for recordings only (the closing bulletin's parts, from
-`finale.stage`); `clips` lists the recordings. Since 23 October, on a night
+`finale.stage`); `clips` lists the recordings; `video: true` means the
+Parlour TV plays them as video, so the relay plays the id and never the
+clips (a clips-only cue with `video` plays nothing and does not duck the
+music), logging the count only. Since 23 October, on a night
 with a station key saved (`meta/game.station_key`), no public doc carries a
 clip id: each clip goes out as a code derived from the clip id and that key,
 and the relay derives the same code for each file in `MEDIA_DIR` from
@@ -136,7 +154,7 @@ refuses an unknown id with a count-only log line, and counts unmatched clips
 (`unknown`). `cues/lib/player.js` plays one cue at a time, skips missing
 files with a count, and a newer cue kills the `afplay` that is running; its
 one log line per cue is `playLine`, counts only. `missingSoundFiles` checks
-the nine only; the closing parts' timing is `holdMs` per part
+the ten only; the closing parts' timing is `holdMs` per part
 (`news.closingStage`, `finale.cardAt`). Writers: a beat's `sound` in
 `seed/night.json` (`soundOnce` for the door, which the drawing has usually
 rung already) through `screen.onBeat`, which adds bulletin 1's clips

@@ -41,6 +41,18 @@ test('every id has its own figure, and the figures differ', () => {
   assert.ok(wavBytes(samplesFor('power')).length > 44 + RATE * 2)
 })
 
+test('chime-phone, the tenth sound, has its own short stand-in: under a second after the pad', () => {
+  assert.equal(SOUND_IDS.length, 10)
+  assert.ok(SOUND_IDS.includes('chime-phone'))
+  const figure = FIGURES['chime-phone']
+  assert.ok(figure, 'a figure of its own')
+  const seconds = figure.reduce((s, [, d]) => s + d, 0)
+  assert.ok(seconds > 0.2 && seconds < 1, 'short: a chime, not a tune')
+  for (const [id, f] of Object.entries(FIGURES)) if (id !== 'chime-phone') assert.notDeepEqual(f, figure, `not the same as ${id}`)
+  const samples = samplesFor('chime-phone')
+  assert.equal(samples.length, Math.round(RATE * (PAD_SECONDS + seconds + 0.2)))
+})
+
 test('the script prints counts and PASS only', () => {
   const dir = mkdtempSync(join(tmpdir(), 'murderwin-sounds-'))
   try {

@@ -6,7 +6,7 @@ import { createPlayer } from '../lib/player.js'
 import { SOUND_IDS as SERVER_SOUND_IDS } from '../../functions/lib/screen.js'
 import { CLIP_IDS as SERVER_CLIP_IDS, clipCode as serverClipCode } from '../../functions/lib/news.js'
 import { readFileSync } from 'node:fs'
-import { lightBody, XY, Hue, bridgeFetch } from '../lib/hue.js'
+import { lightBody, XY, Hue, bridgeFetch, sameSceneName, SCENE_RECALL } from '../lib/hue.js'
 
 test('hall: red when the night says red, green when it says green or the door is open', () => {
   assert.equal(hallColour({}), null)
@@ -273,4 +273,104 @@ test('the player in fake mode plays nothing and says so in one count-only line',
   player.play('sting-door', ['woof-close-field-out'])
   assert.equal(procs.length, 0)
   assert.deepEqual(lines, ['[sound] sound playing; bulletin: 1 recording (fake: nothing plays)'])
+})
+
+// ---- 24 Oct: chime-phone, video, the done callback, Hue scenes, the night doc ----
+
+test('chime-phone is the tenth sound, on both sides', () => {
+  assert.equal(SOUND_IDS.length, 10)
+  assert.equal(SOUND_IDS.at(-1), 'chime-phone')
+  assert.ok(knownSound('chime-phone'))
+  assert.deepEqual(plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-phone', at: 1000 } } }, 1000).actions, [{ type: 'sound', id: 'chime-phone' }])
+})
+
+test('video: the TV plays the bulletin, so the relay plays the chime and never the recordings; recordings alone play nothing', () => {
+  const clips = ['newsflash-opening', 'newsflash-signoff']
+  const r = plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 1000, clips, video: true } } }, 1000)
+  assert.deepEqual(r.actions, [{ type: 'sound', id: 'chime-news', video: true, onTv: 2 }])
+  assert.deepEqual(plan(r.state, { sounds: { current: { id: 'chime-news', at: 1000, clips, video: true } } }, 1000).actions, [], 'once')
+  const bare = plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 2000, video: true } } }, 2000)
+  assert.deepEqual(bare.actions, [{ type: 'sound', id: 'chime-news', video: true }], 'no clips sent: the chime, still marked as video')
+  const closing = plan({ hall: null, sound: null }, { sounds: { current: { id: null, at: 3000, clips: ['woof-close-field-motive'], video: true } } }, 3000)
+  assert.deepEqual(closing.actions, [{ type: 'video', count: 1 }])
+  assert.deepEqual(plan(closing.state, { sounds: { current: { id: null, at: 3000, clips: ['woof-close-field-motive'], video: true } } }, 3000).actions, [], 'once')
+  const refused = plan({ hall: null, sound: null }, { sounds: { current: { id: '7F3A', at: 4000, video: true } } }, 4000)
+  assert.deepEqual(refused.actions, [{ type: 'refused', count: 1 }], 'an unknown id is refused, video or not')
+  assert.deepEqual(plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-news', at: 1, clips, video: true } } }, 1 + SOUND_STALE_MS).actions, [], 'stale: nothing')
+  // the window's line: counts only
+  const line = playLine({ sound: 'ok', onTv: 2 })
+  assert.equal(line, '[sound] sound playing; bulletin on the TV as video: 2 recordings not played here')
+  assert.equal(playLine({ onTv: 1 }), '[sound] bulletin on the TV as video: 1 recording not played here')
+  for (const id of [...SOUND_IDS, ...CLIP_IDS]) assert.ok(!line.includes(id))
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes("a.type === 'video'") && src.includes('playLine({ onTv: a.count })'), 'a video cue logs a count and plays nothing')
+})
+
+test('the player tells the relay when a cue is done (so the music comes back), never for a cue a newer one cut off', async () => {
+  const { spawn, procs } = fakeSpawn()
+  const done = []
+  const player = createPlayer({ mediaDir: '/m', exists: () => true, spawn })
+  player.play('chime-news', ['newsflash-opening'], { onDone: () => done.push('first') })
+  player.play('chime-phone', [], { onDone: () => done.push('second') })
+  procs[0].emit('exit', 0)
+  await tick()
+  assert.deepEqual(done, [], 'the cut-off cue never reports done')
+  procs[1].emit('exit', 0)
+  await tick()
+  assert.deepEqual(done, ['second'])
+  const none = createPlayer({ mediaDir: '/m', exists: () => false, spawn })
+  none.play('chime-phone', [], { onDone: () => done.push('nothing to play') })
+  assert.deepEqual(done, ['second', 'nothing to play'], 'nothing to play: done at once')
+  const lines = []
+  const fake = createPlayer({ mediaDir: '/m', exists: () => true, spawn, fake: true, log: l => lines.push(l) })
+  fake.play('chime-news', [], { onTv: 3, onDone: () => done.push('fake') })
+  assert.equal(done.at(-1), 'fake')
+  assert.deepEqual(lines, ['[sound] sound playing; bulletin on the TV as video: 3 recordings not played here (fake: nothing plays)'])
+})
+
+test('hue scenes: listed with their rooms, recalled by name (every scene with that name), forgiving case and spaces', async () => {
+  const calls = []
+  const data = {
+    '/clip/v2/resource/scene': [
+      { id: 's1', metadata: { name: 'Murderwin Arrival' }, group: { rid: 'z1', rtype: 'zone' } },
+      { id: 's2', metadata: { name: 'murderwin  arrival ' }, group: { rid: 'r2', rtype: 'room' } },
+      { id: 's3', metadata: { name: 'Murderwin Blackout' }, group: { rid: 'z1', rtype: 'zone' } },
+    ],
+    '/clip/v2/resource/room': [{ id: 'r2', metadata: { name: 'Orangerie' } }],
+    '/clip/v2/resource/zone': [{ id: 'z1', metadata: { name: 'The house but the hall' } }],
+  }
+  const fetchImpl = async (url, opts) => {
+    calls.push({ url, opts })
+    const path = new URL(url).pathname
+    return { ok: true, status: 200, text: async () => JSON.stringify({ data: data[path] ?? [] }) }
+  }
+  const hue = new Hue({ host: '10.0.0.4', key: 'k', fetchImpl })
+  assert.deepEqual((await hue.scenes()).map(s => s.name), ['Murderwin Arrival', 'murderwin  arrival ', 'Murderwin Blackout'])
+  const places = await hue.places()
+  assert.equal(places.get('r2'), 'Orangerie')
+  assert.equal(places.get('z1'), 'The house but the hall')
+  calls.length = 0
+  assert.equal(await hue.recallScene('Murderwin Arrival'), 2)
+  const puts = calls.filter(c => c.opts.method === 'PUT')
+  assert.deepEqual(puts.map(c => c.url), ['https://10.0.0.4/clip/v2/resource/scene/s1', 'https://10.0.0.4/clip/v2/resource/scene/s2'])
+  for (const p of puts) assert.deepEqual(JSON.parse(p.opts.body), { recall: { action: 'active' } })
+  assert.deepEqual(SCENE_RECALL, { recall: { action: 'active' } })
+  assert.equal(await hue.recallScene('Murderwin Reveal'), 0, 'none by that name: nothing recalled, and the caller says so')
+  assert.equal(sameSceneName('Murderwin Lights Out', ' murderwin lights  out'), true)
+  assert.equal(sameSceneName('', ''), false)
+  assert.equal(sameSceneName('Murderwin Arrival', 'Murderwin Arrivals'), false)
+})
+
+test('the relay watches the night doc as well as the public docs, and has the scene lister and the hardware checks', () => {
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('doc(db, `nights/${id}`)'), 'the night doc: act, beat, phase')
+  for (const name of ['cues', 'relay', 'sounds', 'salem']) assert.ok(src.includes(`'${name}'`), name)
+  for (const flag of ['--scenes', '--scene', '--check-music', '--check-strings', '--offline', '--demo']) assert.ok(src.includes(`'${flag}'`), flag)
+  assert.ok(src.includes('planScenes(sceneState, docs, now, sheet)'))
+  // every cue brings the music back when it ends, even one that played nothing after cutting off a ducked one
+  assert.ok(src.includes('if (ducksFor(a)) cueStarts()') && src.includes('onDone: () => cueEnds(a, startedAt)'))
+  // the hall bulb keeps its own logic: scenes never set it
+  assert.ok(!/recallScene\([^)]*HALL/.test(src))
+  // offline mode never signs in
+  assert.ok(src.indexOf('if (!OFFLINE) {') < src.indexOf('initializeApp(firebaseConfig)'))
 })
