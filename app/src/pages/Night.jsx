@@ -100,6 +100,12 @@ export default function Night() {
       </section>
 
       <section className="panel">
+        <h2>Test the study</h2>
+        <p className="why">From your phone, standing at the Nanoleaf walls: flash them, teach which hexagon each tap names, and play a practice round. A test never touches a real night.</p>
+        <p className="night-line"><Link className="primary dl" to="/study-test">Study test</Link></p>
+      </section>
+
+      <section className="panel">
         <h2>The two hosts <span className={`save-dot ${status}`}>{status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span></h2>
         <p className="why">Type the name each of you will type on your phone. That name gets the Professor and the Host tab. Everyone else types any name and is dealt a character.</p>
         {HOSTS.map(h => (

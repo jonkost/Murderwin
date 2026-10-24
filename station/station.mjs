@@ -3,6 +3,8 @@
 // (lib/study.js through lib/runner.js), and tells the server where the group
 // is up to. It never handles a clue: when a group finishes it says "group G
 // is done" and the server deals the clue to their phones. docs/study-light-game.md.
+// The workshop's Study test page drives it from a phone too (lib/testmode.js):
+// a flash, teaching the taps, and a practice round that never reaches a night.
 //
 //   npm start          the real walls and deck (station/.env)
 //   npm run fake       no hardware: the terminal stands in
@@ -19,6 +21,8 @@ import { getFirestore, doc, onSnapshot } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { createRunner } from './lib/runner.js'
 import { createFollower } from './lib/follow.js'
+import { createTestMode, HEARTBEAT_MS } from './lib/testmode.js'
+import { writeTouchMap } from './lib/teach.js'
 import { Nanoleaf } from './lib/nanoleaf.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
@@ -57,7 +61,8 @@ const firebaseConfig = {
 if (env.MURDERWIN_EMULATOR === '1') firebaseConfig.projectId = env.MURDERWIN_PROJECT_ID || 'demo-murderwin'
 
 // ---- devices -------------------------------------------------------------
-// Which hexagon each tap names, taught once on the real wall (npm run teach-touch).
+// Which hexagon each tap names, taught once on the real wall (the workshop's
+// Study test page, or npm run teach-touch).
 function loadTouchMap() {
   const p = join(here, 'touch-map.json')
   if (!existsSync(p)) return {}
@@ -82,6 +87,7 @@ const auth = getAuth(app)
 const db = getFirestore(app)
 const fns = getFunctions(app, 'us-central1')
 const callStation = httpsCallable(fns, 'stationCommand')
+const callStudyTest = httpsCallable(fns, 'studyTest')
 // Dev split: MURDERWIN_EMULATOR=1 points this at the local emulators (npm run emulate at the repo root), never the party database.
 if (env.MURDERWIN_EMULATOR === '1') {
   const host = env.MURDERWIN_EMULATOR_HOST || '127.0.0.1'
@@ -107,24 +113,40 @@ const layout = elementsOk
   ? elements.panels.map(p => ({ id: p.id, x: p.x, y: p.y }))
   : panelIds.map((id, i) => ({ id, x: i * 100, y: 0 }))
 
-const runner = createRunner({ elements, lines, deck, elementsOk, linesOk, panelIds, layout, callStation, stationKey: STATION_KEY, log })
+const watchDoc = (path, onData) => onSnapshot(doc(db, ...path.split('/')), (snap) => onData(snap.data() ?? null), (e) => log(`${path}: ${e.message}`))
+
+// The study test (the workshop's Study test page). Taps and keys pass
+// through it: to the live runner as before, unless a test is running.
+const testMode = createTestMode({
+  elements, lines, deck, elementsOk, linesOk, panelIds, layout,
+  deckKind: realDeck ? 'stream-deck' : 'keyboard',
+  live: () => runner,
+  send: (status) => callStudyTest({ command: 'status', key: STATION_KEY, status }),
+  watch: watchDoc,
+  saveTouchMap: (touches) => writeTouchMap(join(here, 'touch-map.json'), touches),
+  log,
+})
+
+const runner = createRunner({
+  elements: testMode.shield(elements), lines: testMode.shield(lines), deck: testMode.shield(deck),
+  elementsOk, linesOk, panelIds, layout, callStation, stationKey: STATION_KEY, log,
+})
 
 // ---- inputs ----------------------------------------------------------------
-elements.listenTouch((panelId, gesture) => runner.touch(panelId, gesture))
-deck.onKey((name) => runner.key(name))
+elements.listenTouch((panelId, gesture, tapId) => testMode.touch(panelId, gesture, tapId))
+deck.onKey((name) => testMode.key(name))
 
 // ---- the clock, and which night and group are live --------------------------
-setInterval(() => runner.tick(), 1000)
+setInterval(() => { runner.tick(); testMode.tick() }, 1000)
 setInterval(() => runner.sendState(), 30_000)   // a heartbeat, so the kiosk knows the station is alive
+setInterval(() => testMode.heartbeat(), HEARTBEAT_MS) // and the workshop's Study test page
 
 await signInAnonymously(auth)
 // Which night is live, and which group is due in it (the server's rotation
 // owns that; this station only reads it). Settings ride on the same doc.
-const follower = createFollower({
-  runner, log,
-  watch: (path, onData) => onSnapshot(doc(db, ...path.split('/')), (snap) => onData(snap.data() ?? null), (e) => log(`${path}: ${e.message}`)),
-})
+const follower = createFollower({ runner, log, watch: watchDoc })
 follower.start()
+testMode.start()
 
 // ---- the terminal stands in for the hardware in fake mode, and for the
 // button box whenever no Stream Deck is plugged in (a test round on the walls
@@ -138,7 +160,7 @@ if ((FAKE || !realDeck) && process.stdin.isTTY) {
   const colourKeys = { R: 'red', Y: 'yellow', G: 'green', B: 'blue', P: 'pink', W: 'white' }
   process.stdin.on('data', (ch) => {
     if (ch === '\u0003') process.exit(0)
-    if (panelKeys.includes(ch)) { const id = panelIds[panelKeys.indexOf(ch)]; if (id != null) runner.touch(id, 0) }
+    if (panelKeys.includes(ch)) { const id = panelIds[panelKeys.indexOf(ch)]; if (id != null) testMode.touch(id, 0) }
     else if (colourKeys[ch]) deck.press(colourKeys[ch])
     else if (/^[1-6]$/.test(ch)) deck.press(ch)
     else if (ch === '-') deck.press('undo')

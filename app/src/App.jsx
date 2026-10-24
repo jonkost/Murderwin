@@ -13,6 +13,7 @@ import Devices from './pages/Devices'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
 import Steward from './pages/Steward'
+import StudyTest from './pages/StudyTest'
 import { useFrozen } from './components/Frozen'
 import { FROZEN_CHIP } from './lib/frozen'
 
@@ -91,6 +92,7 @@ function Shell({ user }) {
         <NavLink to="/status" className="rail-link">Where we are</NavLink>
         <NavLink to="/night" className="rail-link">Game night</NavLink>
         <NavLink to="/jenna" className="rail-link">For Jenna</NavLink>
+        <NavLink to="/study-test" className="rail-link">Study test</NavLink>
         <button className="rail-link quiet" onClick={signOutUser}>Sign out</button>
       </nav>
       <Routes>
@@ -103,6 +105,8 @@ function Shell({ user }) {
         <Route path="/devices" element={<Devices />} />
         <Route path="/jenna" element={<ForJenna />} />
         <Route path="/status" element={<Status />} />
+        {/* Jon at the study walls with his phone: flash, teach the taps, a practice round. Also linked from Devices and Game night. */}
+        <Route path="/study-test" element={<StudyTest />} />
         {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}
         <Route path="/steward" element={<Steward user={user} />} />
       </Routes>

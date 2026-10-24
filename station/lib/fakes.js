@@ -8,19 +8,23 @@ export class FakeWall {
     this.panels = panelIds.map((id, i) => ({ id, x: i * 100, y: 0 }))
     this.log = log
     this.frames = []
+    this.flashes = 0
+    this.touchMap = new Map()
     this.touchListener = null
   }
   async loadLayout() { return this.panels }
   async on() {}
   async brightness() {}
+  async identify() { this.flashes += 1; this.log(`[${this.name}] flash`) }
+  setTouchMap(touches = {}) { this.touchMap = new Map(Object.entries(touches).map(([k, v]) => [Number(k), Number(v)])) }
   async frame(frame) {
     this.frames.push(frame)
     const lit = this.panels.filter(p => (frame[p.id] ?? [0, 0, 0]).some(v => v > 60)).map(p => this.panels.indexOf(p) + 1)
     this.log(`[${this.name}] ${lit.length ? 'lit ' + lit.join(' ') : 'dark'}`)
   }
   listenTouch(fn) { this.touchListener = fn; return () => { this.touchListener = null } }
-  // tests and the terminal poke this
-  touch(index) { this.touchListener?.(this.panels[index - 1]?.id, 0) }
+  // tests and the terminal poke this; a fake wall taps by the panel's own id
+  touch(index) { const id = this.panels[index - 1]?.id; this.touchListener?.(id, 0, id) }
 }
 
 export class FakeDeck {

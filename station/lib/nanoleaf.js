@@ -21,9 +21,15 @@ export class Nanoleaf {
     this.panelOf = new Map() // piece id → the id of the panel it belongs to
     this.lastError = null
     this.strayTouches = new Set()
-    // touch id → panel id, taught on the real wall (teach-touch.mjs): the
+    // touch id → panel id, taught on the real wall (lib/teach.js): the
     // Elements name a tapped hexagon by an id their layout never lists
-    this.touchMap = new Map(Object.entries(touchMap).map(([k, v]) => [Number(k), Number(v)]))
+    this.touchMap = new Map()
+    this.setTouchMap(touchMap)
+  }
+
+  // A newly taught map takes over at once, with no restart (the study test).
+  setTouchMap(touches = {}) {
+    this.touchMap = new Map(Object.entries(touches ?? {}).map(([k, v]) => [Number(k), Number(v)]))
   }
 
   // The panel a piece belongs to (a touch may name any piece of it, or the
@@ -60,6 +66,8 @@ export class Nanoleaf {
   }
 
   async on(value = true) { return this.call('/state', { method: 'PUT', body: { on: { value } } }) }
+  // The controller flashes every panel once, then goes back to what it showed (the study test's Flash the walls).
+  async identify() { return this.call('/identify', { method: 'PUT' }) }
   async brightness(value, duration = 0) { return this.call('/state', { method: 'PUT', body: { brightness: { value, duration } } }) }
 
   // Light each panel its own colour at once: a static frame.
@@ -83,7 +91,9 @@ export class Nanoleaf {
 
   // Touch events: the server-sent events stream, id 4 = touch.
   // Each event: { gesture: 0 single tap | 1 double tap | 2 swipe up …, panelId }.
-  // Calls onTouch(panelId, gesture). Reconnects on its own. Returns a stop().
+  // Calls onTouch(panelId, gesture, tapId): the panel the tap names, and the
+  // id the wall itself sent (what lib/teach.js learns). Reconnects on its
+  // own. Returns a stop().
   listenTouch(onTouch) {
     let stopped = false
     let controller = null
@@ -112,9 +122,9 @@ export class Nanoleaf {
                   // a tap on a piece the layout never named: said once per piece, for the hardware evening
                   if ((ev.gesture === 0 || ev.gesture === 1) && !this.panels.some(p => p.id === id) && !this.strayTouches.has(ev.panelId)) {
                     this.strayTouches.add(ev.panelId)
-                    this.log(`${this.name}: a tap on piece ${ev.panelId}, which is in no panel of the layout (npm run teach-touch)`)
+                    this.log(`${this.name}: a tap on piece ${ev.panelId}, which is in no panel of the layout (teach the taps: the workshop's Study test page, or npm run teach-touch)`)
                   }
-                  onTouch(id, ev.gesture)
+                  onTouch(id, ev.gesture, ev.panelId)
                 }
               } catch { /* a partial line; wait for more */ }
             }

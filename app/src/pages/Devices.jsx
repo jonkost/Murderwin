@@ -44,6 +44,12 @@ function Device({ d }) {
         {d.start.map((s, i) => <li key={i}>{s}</li>)}
       </ol>
       {d.alive && <p className="hint"><b>Working when:</b> {d.alive}</p>}
+      {d.key === 'study' && (
+        <p className="night-line">
+          <Link className="primary dl" to="/study-test">Study test</Link>
+          <span className="hint"> Flash the walls, teach the taps and play a practice round from your phone.</span>
+        </p>
+      )}
     </div>
   )
 }

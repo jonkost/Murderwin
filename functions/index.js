@@ -19,6 +19,7 @@ import * as station from './lib/station.js'
 import * as windows from './lib/windows.js'
 import { mayTouchNight } from './lib/access.js'
 import { stewardRequest } from './lib/steward.js'
+import { studyTestRequest } from './lib/studytest.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -132,6 +133,15 @@ export const stationCommand = onCall({ cors: true }, wrap(async req => {
   // "finished" also deals the clue and rotates the house (run.js); the rest is state.
   if (command === 'finished') return run.studyFinished(db, { nightId, payload })
   return station.stationCommand(db, { nightId, station: which, command, payload })
+}))
+
+// The Study test (the workshop's Study test page and the study station's
+// test mode, lib/studytest.js): the station reports with its key word; the
+// workshop's commands are the admin's only.
+export const studyTest = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { command, name, key, status } = req.data ?? {}
+  return studyTestRequest(db, { command, name, key, status, isAdmin: ADMIN_UIDS.includes(uid) })
 }))
 
 // The relay drawing's clock. A phone at the party, a host or a room screen

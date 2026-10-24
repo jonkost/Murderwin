@@ -7,7 +7,8 @@
 // `watch(path, onData)` is handed in (Firestore's onSnapshot in station.mjs,
 // a fake in the tests) and returns an unsubscribe function.
 
-function ms(t) {
+// A Firestore Timestamp, a Date or a number, as milliseconds (0 when missing).
+export function ms(t) {
   if (!t) return 0
   if (typeof t.toMillis === 'function') return t.toMillis()
   if (t instanceof Date) return t.getTime()

@@ -2,12 +2,16 @@
 // on the two walls, the button box and the server, one after another. The
 // devices, the server call and the clock are handed in, so the tests drive
 // the real runner with fakes and no hardware (station.mjs hands in the real
-// ones). It never handles a clue.
+// ones). It never handles a clue. The study test (lib/testmode.js) makes a
+// practice runner the same way and never gives it a night, so it never calls
+// the server; onScreen hands it each screen the machine shows.
 
 import { createStudy, settingsFrom } from './study.js'
 import { COLOUR_RGB, countSegments } from './nanoleaf.js'
 
-const DIM = [40, 40, 40], LIT = [255, 255, 255], OFF = [0, 0, 0]
+// the walls at rest, between groups (the study test rests them the same way)
+export const ELEMENTS_REST = [40, 40, 40], LINES_REST = [20, 10, 30]
+const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0]
 function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
 const defaultSleep = (ms) => new Promise(r => setTimeout(r, ms))
 
@@ -16,6 +20,7 @@ export const REST_MS = 20_000 // the walls rest after a group finishes, then the
 export function createRunner({
   elements, lines, deck, elementsOk = true, linesOk = true, panelIds, layout,
   callStation, stationKey = '', log = () => {}, sleep = defaultSleep, restMs = REST_MS, now = Date.now,
+  onScreen = () => {},
 } = {}) {
   let nightId = null
   let groupId = null              // the group the server says is due; the server owns this
@@ -83,20 +88,20 @@ export function createRunner({
         drain()
         return
       }
-      case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, [20, 10, 30]), 10))
+      case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 10))
       case 'lines.show': {
         const ids = countSegments(lines.panels.map(p => p.id), e.number)
         const frame = allPanels(lines, OFF)
         for (const id of ids) frame[id] = COLOUR_RGB[e.colour]
         return safe(lines, linesOk, () => lines.frame(frame, 3))
       }
-      case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, [20, 10, 30]), 8) })
+      case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, LINES_REST), 8) })
       case 'deck.on': return deck.paint(true)
       case 'deck.off': return deck.paint(false)
       case 'deck.shiver': return deck.shiver()
       case 'wait': return sleep(e.ms)
       case 'granolia': granolia = e.hint ? { ...e, at: serverNow() } : null; return
-      case 'screen': return sendState()
+      case 'screen': { const { type, ...shown } = e; onScreen(shown); return sendState() }
       case 'server.finished': {
         log(`group ${e.groupId ?? '?'} finished: ${e.outcome}, ${e.pairs} pairs, ${e.seconds}s`)
         const payload = { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs }
@@ -105,6 +110,10 @@ export function createRunner({
           // from the public/study snapshot (the server's rotation owns it)
           try { await call('finished', payload) } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
         }
+        // the finished screen now, while the walls rest (the study test's
+        // practice round shows how it went); its own screen effect only comes
+        // after the rest. The live runner hands in no onScreen.
+        onScreen({ ...machine.snapshot })
         // the walls rest, then the station is re-armed for whichever group the latest snapshot says
         await sleep(restMs)
         granolia = null
