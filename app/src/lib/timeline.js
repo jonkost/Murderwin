@@ -24,14 +24,13 @@ import { isComplete } from './scenarios.js'
 import { ALL_TIMELINE_TASKS } from './timelineTasks.js'
 
 const ui = (...labels) => ({ list: 'ui_copy', labels })
-const station = (label) => ({ list: 'station_text', labels: [label] })
 
 // Clock times are pencilled from the act skeletons. Only 4:00pm and the
 // blackout at sunset (about 5:32pm) are fixed.
 const ACT_CLOCK = {
   1: { clock: '4:00pm', length: 'about an hour and a half' },
   2: { clock: 'about 5:30pm', length: 'about half an hour, after the blackout' },
-  3: { clock: 'about 6:00pm', length: 'dinner' },
+  3: { clock: 'about 6:00pm', length: 'supper' },
   4: { clock: 'after dinner', length: 'about an hour' },
   5: { clock: 'about 7:15pm', length: 'a quarter of an hour' },
   6: { clock: 'about 7:30pm', length: 'about half an hour' },
@@ -45,7 +44,8 @@ export const NEEDS = {
     { list: 'rules_text' }, { list: 'motive_notes' }, { list: 'status_lines' }, { list: 'smalltalk' }, { list: 'achievements' },
     ui('JOIN AGAIN', 'OFFLINE', 'PAUSED', 'PAUSED BY HOST', 'SUPERSEDED', 'RETICULE', 'STOPS', 'FILLER'),
   ],
-  'act1.arrive': [{ list: 'bios' }, ui('DOORS', 'JOIN', 'JOIN BUTTON', 'LOBBY', 'BAG')],
+  // the numbered bags are handed out at sign-in; the things in them are Jon's list (packed blind)
+  'act1.arrive': [{ list: 'bios' }, { list: 'bag_items' }, ui('DOORS', 'JOIN', 'JOIN BUTTON', 'LOBBY', 'BAG')],
   'act1.meet': [{ list: 'npc_cards' }, ui('NOTICE MEET')],
   'act1.introduce': [ui('NOTICE INTRODUCE')],
   'act1.ready': [{ list: 'role_cards' }, ui('NOTICE READY', 'HOLD', 'HIDE')],
@@ -54,19 +54,16 @@ export const NEEDS = {
   // The news is W-O-O-F News since 22 Oct, an open bank: the old news frames
   // are shown nowhere, so they are not a need here.
   'act2.news': [ui('NOTICE NEWS')],
-  // A cat says only its line from the Cat Hint Lines (seed/cat-lines.json,
-  // an open bank written in a Claude Doc, not a workshop list), so this beat
-  // needs nothing written here (23 Oct 2026).
+  'act2.peek': [ui('NOTICE PEEK')],
+  // Every cat says its line from the Cat Hint Lines and its bag clue from
+  // the bag lines (seed/cat-lines.json, seed/bag-lines.json: open banks in
+  // Claude Docs and the repo, not workshop lists), so this beat needs nothing
+  // written here (23 Oct 2026).
   'act2.cat': [],
-  'act2.checkin': [ui('NOTICE CHECKIN')],
   'act3.down': [ui('NOTICE DOWN')],
   'act3.bulletin': [ui('NOTICE BULLETIN')],
   'act4.parlour': [{ list: 'scenarios', also: true }],
-  'act4.study': [{ list: 'study_lines' }, station('STUDY')],
-  'act4.cat': [station('CAT')],
-  'act4.bags': [station('BAGS'), { list: 'bag_items' }],
-  'act4.puzzle': [station('PUZZLE')],
-  'act4.checkin': [station('CHECKIN')],
+  'act4.study': [{ list: 'study_lines' }],
   'act5.roam': [ui('NOTICE ROAM')],
   // Sir Irwin's countdown is open copy (23 Oct). His hello and goodbye are
   // the first line on his tab of each list, the only lines those two lists
@@ -82,8 +79,8 @@ export const NEEDS = {
 
 // Before and after the acts. Each is one section with one row.
 const BEFORE = [
-  { key: 'freeze', clock: 'By Saturday 7 November', title: 'Before the freeze', what: 'Everything that has to work before the workshop locks. After the freeze, anything not working is cut, not fixed.' },
-  { key: 'week', clock: 'Sunday 8 to Saturday 14 November', title: 'The week before', what: 'The bags packed, the fake-player dry run, and a last check.' },
+  { key: 'freeze', clock: 'Now to Wednesday 11 November', title: 'Before the second tech run', what: 'Everything that has to work before the second full tech run. The last new feature lands on Wednesday 11 November; after that, checks and fixes only. There is no freeze date (23 Oct 2026): press Freeze the workshop when the lists are final.' },
+  { key: 'week', clock: 'Saturday 31 October to Saturday 14 November', title: 'The weeks before', what: 'The blind scripts on Saturday 31 October (the packing, the leans, the drawing pictures), Jenna packs the bags, the fake-player dry run, and from Thursday 12 November checks and fixes only.' },
   { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.', link: { to: '/devices', label: 'Every device, room by room, with its address' } },
   { key: 'allnight', clock: 'From 4:00pm, all night', title: 'On every phone, all night', what: 'What a guest can read from the moment they join: the Rules tab, the Motives tab, the Cats tab, and the small lines a phone shows when the signal drops or the night is paused.' },
 ]
@@ -96,14 +93,30 @@ function parlourRow(act) {
   return {
     key: `act${act}.parlour`,
     name: `Parlour Games, ${n === 1 ? 'one' : n} through this act`,
-    what: 'They pop up on their own at random times: every phone at once, the same three silly questions, sixty seconds. A game the act runs out of time for moves to the next act.',
+    what: String(act) === '4'
+      ? 'They wait on each phone at random times, and a guest plays one when free, never in a game room. Any left unplayed at the end of the act get a random answer.'
+      : 'They pop up on their own at random times: every phone at once, the same three silly questions, sixty seconds. A game the act runs out of time for moves to the next act.',
   }
 }
 
-// The whole night as sections, each with rows. Act 4's rows are its five
-// stations: every group visits each one, so the station is the moment. An
-// act that plays its Parlour Games as it opens (parlour.atStart, Act 6) has
-// its own beat for them, so it gets no row for games at random times.
+// Act 4 (23 Oct 2026): the two beats that start it, then the four game rooms
+// and the Parlour, since every group visits each room once and the room is
+// the moment. The round beats are the clock, not places. The keys `puzzle`
+// (the Library's memory match) and `checkin` (the Parlour) are the old
+// stations' keys, kept so the cards filed there stay put.
+export const ACT4_ROOMS = [
+  { key: 'study', name: 'The Study: Granolia’s Lightbulb Moment', room: 'study' },
+  { key: 'puzzle', name: 'The Library: In Duplicate', room: 'library' },
+  { key: 'orangerie', name: 'The Orangerie: Get Off My Lawn!', room: 'orangerie' },
+  { key: 'entryway', name: 'The Entryway: Boo’s Catwalk', room: 'entryway' },
+  { key: 'checkin', name: 'In the Parlour', what: 'A group with no room this round waits here: Sir Irwin’s prompts on the TV, a Parlour Game when one is waiting on the phone.' },
+]
+const ACT4_START = ['warn', 'groups']
+
+// The whole night as sections, each with rows. Act 4's rows are its first
+// two beats and its rooms. An act that plays its Parlour Games as it opens
+// (parlour.atStart, Act 6) has its own beat for them, so it gets no row for
+// games at random times.
 export function nightTimeline(file = night) {
   const sections = BEFORE.map(b => ({ key: b.key, clock: b.clock, title: b.title, rows: [{ key: b.key, name: b.title, what: b.what, link: b.link }] }))
   const atStart = new Set((file.parlour?.atStart ?? []).map(String))
@@ -111,7 +124,8 @@ export function nightTimeline(file = night) {
     const rows = []
     if (file.parlour?.counts?.[n] && !atStart.has(String(n))) rows.push(parlourRow(n))
     if (n === '4') {
-      rows.push(...(file.stations ?? []).map(s => ({ key: `act4.${s.key}`, name: s.name, what: s.what })))
+      rows.push(...act.beats.filter(b => ACT4_START.includes(b.key)).map(b => ({ key: `act4.${b.key}`, name: b.name, what: b.what })))
+      rows.push(...ACT4_ROOMS.map(r => ({ key: `act4.${r.key}`, name: r.name, what: r.what ?? file.act4?.rooms?.[r.room] ?? '' })))
     } else {
       rows.push(...act.beats.map(b => ({ key: `act${n}.${b.key}`, name: b.name, what: b.what })))
     }
@@ -155,7 +169,6 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 //   ui_copy         play/src/lib/content.js DEFAULT_UI, functions/lib/deal.js
 //                   NOTICES, the relay rules in play/src/lib/screen.js, the
 //                   filler in windows.js
-//   station_text    deal.js STATION_TEXT
 //   study_lines     play/src/lib/content.js DEFAULT_STUDY_LINES
 //   rules_text      play/src/lib/content.js DEFAULT_RULES
 //   status_lines    play/src/lib/content.js DEFAULT_STATUS
@@ -167,7 +180,7 @@ export const WHEN = { now: 'Do now', later: 'Happens later' }
 // Not here, because the night simply leaves them out until written: what
 // each motive means, cat chatter, achievements, the act scripts.
 export const STANDIN_LISTS = new Set([
-  'ui_copy', 'station_text', 'study_lines', 'rules_text', 'status_lines',
+  'ui_copy', 'study_lines', 'rules_text', 'status_lines',
   'openers', 'closers',
   'role_cards', 'epilogue_frames', 'bios', 'npc_cards',
 ])

@@ -14,12 +14,13 @@ import { planAddition, applyPlan } from '../src/lib/additions.js'
 const allNeeds = () => TIMELINE.flatMap(s => [...s.needs, ...s.rows.flatMap(r => r.needs)])
 const counted = () => allNeeds().filter(n => !n.also)
 
-test('every beat of every act, and every Act 4 station, has a row, in night order', () => {
+test('every beat of every act, and every Act 4 room, has a row, in night order', () => {
   for (const [n, act] of Object.entries(night.acts)) {
     if (n === '4') continue
     for (const b of act.beats) assert.ok(MOMENT_KEYS.includes(`act${n}.${b.key}`), `act${n}.${b.key}`)
   }
-  for (const s of night.stations) assert.ok(MOMENT_KEYS.includes(`act4.${s.key}`), `act4.${s.key}`)
+  for (const k of ['warn', 'groups', 'study', 'puzzle', 'orangerie', 'entryway', 'checkin']) assert.ok(MOMENT_KEYS.includes(`act4.${k}`), `act4.${k}`)
+  assert.ok(!MOMENT_KEYS.some(k => /^act4\.round/.test(k)), 'the rounds are the clock, not places')
   assert.equal(new Set(MOMENT_KEYS).size, MOMENT_KEYS.length, 'row keys are unique')
   assert.equal(MOMENT_KEYS[0], 'freeze')
   assert.equal(MOMENT_KEYS.at(-1), 'after')
@@ -56,7 +57,7 @@ test('every list the night reads is on the timeline, and every label is filed ex
     if (spec.retired || spec.hidden || spec.checklist) continue
     assert.ok(lists.has(area), `${area} has a place on the night`)
   }
-  for (const [list, labels] of [['ui_copy', COUNTED_UI_LABELS], ['station_text', STATION_LABELS]]) {
+  for (const [list, labels] of [['ui_copy', COUNTED_UI_LABELS]]) {
     const filed = counted().filter(n => n.list === list).flatMap(n => n.labels ?? [])
     assert.deepEqual([...filed].sort(), labels.map(l => l.value).sort(), `${list}: each label once`)
   }
@@ -107,9 +108,9 @@ test('the handoff cards are new, and the cards it settles were already on the bo
 test('there is one sound task per sound cue, under the beat that plays it', () => {
   const src = readFileSync(new URL('../../functions/lib/screen.js', import.meta.url), 'utf8')
   const ids = JSON.parse(src.match(/export const SOUND_IDS = (\[[^\]]*\])/)[1].replace(/'/g, '"'))
-  const sounds = TIMELINE_TASKS.filter(t => t.title.startsWith('Sound: ')).map(t => t.title.slice(7))
+  const sounds = ALL_TIMELINE_TASKS.filter(t => t.title.startsWith('Sound: ')).map(t => t.title.slice(7))
   assert.deepEqual([...sounds].sort(), [...ids].sort())
-  for (const t of TIMELINE_TASKS.filter(x => x.title.startsWith('Sound: '))) {
+  for (const t of ALL_TIMELINE_TASKS.filter(x => x.title.startsWith('Sound: '))) {
     const [act, beat] = t.moment.split('.')
     const spec = night.acts[act.slice(3)]?.beats.find(b => b.key === beat)
     if (spec?.sound) assert.equal(spec.sound, t.title.slice(7), `${t.moment} plays ${spec.sound}`)
@@ -163,12 +164,14 @@ test('progress: one entry per need, task and decision, in night order', () => {
   assert.equal(keys.size, items.filter(i => i.kind === 'need').length, 'each need counted once')
 })
 
-test('the timeline follows night.json: a renamed beat or station shows up by itself', () => {
+test('the timeline follows night.json: a renamed beat or room shows up by itself', () => {
   const file = structuredClone(night)
-  file.stations[0].name = 'Renamed'
+  file.act4.rooms.study = 'Renamed room'
+  file.acts['4'].beats[0].name = 'Renamed warning'
   file.acts['2'].beats.push({ key: 'extra', name: 'Extra', what: 'x' })
   const t = nightTimeline(file)
-  assert.equal(t.find(s => s.key === 'act4').rows.find(r => r.key === 'act4.study').name, 'Renamed')
+  assert.equal(t.find(s => s.key === 'act4').rows.find(r => r.key === 'act4.study').what, 'Renamed room')
+  assert.equal(t.find(s => s.key === 'act4').rows.find(r => r.key === 'act4.warn').name, 'Renamed warning')
   assert.ok(t.find(s => s.key === 'act2').rows.some(r => r.key === 'act2.extra'))
 })
 
@@ -214,7 +217,7 @@ test('the stand-ins the page claims are really in the code', () => {
   const deal = read('../../functions/lib/deal.js')
   const screen = read('../../functions/lib/screen.js')
   const where = {
-    ui_copy: [play, 'export const DEFAULT_UI'], station_text: [deal, 'export const STATION_TEXT'], study_lines: [play, 'export const DEFAULT_STUDY_LINES'],
+    ui_copy: [play, 'export const DEFAULT_UI'], study_lines: [play, 'export const DEFAULT_STUDY_LINES'],
     rules_text: [play, 'export const DEFAULT_RULES'], status_lines: [play, 'export const DEFAULT_STATUS'],
     openers: [screen, 'DEFAULT_IRWIN.opener'], closers: [screen, 'DEFAULT_IRWIN.closer'],
     role_cards: [deal, 'ROLE_CARDS.MURDERER'], epilogue_frames: [read('../../functions/lib/finale.js'), 'export const DEFAULT_EPILOGUE'],
@@ -222,7 +225,7 @@ test('the stand-ins the page claims are really in the code', () => {
   }
   assert.deepEqual(Object.keys(where).sort(), [...STANDIN_LISTS].sort(), 'every stand-in list has a place to check')
   for (const [list, [src, needle]] of Object.entries(where)) assert.ok(src.includes(needle), `${list}: ${needle}`)
-  for (const key of ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']) assert.match(deal, new RegExp(`^  ${key}: \\{ title:`, 'm'), `NOTICE ${key.toUpperCase()} has a default`)
+  for (const key of ['meet', 'introduce', 'ready', 'orient', 'news', 'peek', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']) assert.match(deal, new RegExp(`^  ${key}: \\{ title:`, 'm'), `NOTICE ${key.toUpperCase()} has a default`)
 })
 
 test('Claude’s or Jenna’s cards never count as needing Jon', () => {
@@ -436,4 +439,27 @@ test('not filed yet: open cards and decisions with no moment, or a moment that i
   assert.deepEqual(lost.decisions.map(d => d.key), ['x'])
   assert.deepEqual(momentOptions().map(o => o.key), MOMENT_KEYS)
   assert.ok(momentOptions().every(o => o.name))
+})
+
+test('the 24 Oct migration: built cards done, replaced cards retired with the reason, defaults answered, stray decisions refiled', () => {
+  const add = ADDITIONS.find(a => a.id === '2026-10-24-handoff-1023')
+  assert.ok(add, 'the addition exists')
+  const old = [104, 300, 302, 303, 314, 327, 331].map(order => ({ id: `t${order}`, order, status: 'todo', title: ALL_TIMELINE_TASKS.find(t => t.order === order)?.title ?? '', detail: 'old' }))
+  const state = {
+    applied: [], areas: {}, tasks: old,
+    decisions: {
+      newsVideo: { key: 'newsVideo', answer: null }, bagsAct4: { key: 'bagsAct4', answer: null, moment: 'act4.bags' },
+      act4Granolia: { key: 'act4Granolia', answer: 'Skip Granolia in Act 4 (she is in the Study)', moment: 'act4.cat' },
+      dialMapping: { key: 'dialMapping', answer: 'Build the blind mapping' },
+    },
+  }
+  const plan = planAddition(add, state, { newId: () => 'x', now: 1 })
+  const patched = Object.fromEntries(plan.taskPatches.map(p => [p.id, p.patch]))
+  for (const t of old) assert.equal(patched[t.id]?.status, 'done', `card ${t.order} retired`)
+  assert.equal(plan.decisionPatches.newsVideo.answer, 'Video on the TV')
+  assert.ok(!plan.decisionPatches.dialMapping, 'an answer Jon gave is never overwritten')
+  assert.equal(plan.decisionPatches.bagsAct4.moment, 'act2.cat')
+  assert.equal(plan.decisionPatches.act4Granolia.moment, 'act4.groups')
+  assert.ok(plan.tasks.some(t => t.title === 'Put the game names in the game' && t.status === 'done' && t.who === 'Claude Code'))
+  assert.ok(plan.tasks.some(t => t.title === 'Sound: chime-phone' && t.moment === 'act2.supper'))
 })

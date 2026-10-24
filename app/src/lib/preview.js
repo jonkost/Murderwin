@@ -91,6 +91,16 @@ export async function saveGame(patch) { game = { ...game, ...patch }; gameListen
 
 let reviews = { rules_text: { state: 'again', note: 'The second rule reads like a legal notice.', by: { name: 'Jenna' }, at: Date.now() } }
 const reviewListeners = []
+const checks = {
+  at: new Date(Date.now() - 3_600_000), cases: 1000, ok: true,
+  groups: [
+    { key: 'case', name: 'Case generator', passed: 10040, total: 10040, failed: [] },
+    { key: 'dry', name: 'Dry run', passed: 1, total: 1, failed: [] },
+    { key: 'leak', name: 'Leak checks', passed: 4, total: 4, failed: [] },
+  ],
+}
+export function subscribeChecks(onData) { queueMicrotask(() => onData(checks)); return () => {} }
+
 export function subscribeReviews(onData) { reviewListeners.push(onData); queueMicrotask(() => onData(reviews)); return () => {} }
 export async function saveReview(area, patch) { reviews = { ...reviews, [area]: { ...(reviews[area] ?? {}), ...patch, by: { name: 'Preview' }, at: Date.now() } }; reviewListeners.forEach(fn => fn(reviews)) }
 export async function countLinesBy(uid, areas) { return 94 + history.filter(h => h.before === null && areas.includes(h.area)).length }

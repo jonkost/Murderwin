@@ -190,7 +190,7 @@ export const AUDIT_TASKS = [
 
   // Act 3
   { order: 307, moment: 'act3.down', status: 'todo', who: 'Jon', title: 'Music for dinner', detail: 'Atmosphere only. The W-O-O-F News recordings are the only sounds that carry clues, and their words are always on a screen too.' },
-  { order: 302, moment: 'act3.groups', status: 'todo', when: 'later', who: 'Jon', title: 'Move the iPad to the Library', detail: 'After supper, carry the iPad Pro to its small stand in the Library, with Zimothy. Open ?kiosk=memory and tap once to wake it.' },
+  { order: 302, moment: 'act4.groups', status: 'todo', when: 'later', who: 'Jon', title: 'Move the iPad to the Library', detail: 'After supper, carry the iPad Pro to its small stand in the Library, with Zimothy. Open ?kiosk=memory and tap once to wake it.' },
   { order: 337, moment: 'act3.bulletin', status: 'todo', who: 'Jon', title: 'Update your Apple Reminder about bulletin 2', detail: 'It still has the old design. Change it to: Bulletin 2: record 25 audio lines (5 families x 5 dial levels) from the W-O-O-F News Recording Script. Arm it from my phone near the end of supper; it plays on the Orangerie HomePod 3 to 5 minutes later. Or delete it and use the card Record the 25 lines of bulletin 2.' },
 
   // Act 5
@@ -253,7 +253,7 @@ export const AUDIT_DECISIONS = [
   { key: 'bulletin2Voice', moment: 'act3.bulletin', question: 'Who reads the 25 lines of bulletin 2?', options: ['Ava Waves (you, in the studio voice)', 'Mic Cameron', 'Someone else'], answer: null },
   { key: 'bulletin2Known', moment: 'act3.bulletin', question: 'You record all 25 lines of bulletin 2, so on the night you will know which family the line points at, even an obscure one. Accept that, or have someone else record them?', options: ['Accept it', 'Someone else records them'], answer: null },
   { key: 'dialMapping', moment: 'allnight', question: 'The rules say each night decides blind how the Murderer’s and the Ghost’s answers move the dial. As built, it is fixed: the Ghost pushes toward clear, the Murderer toward foggy. Keep it fixed, or have Claude Code build the blind mapping?', options: ['Keep it fixed (as built)', 'Build the blind mapping'], answer: null },
-  { key: 'act4Granolia', moment: 'act4.cat', question: 'The Act 4 cat station: may it send a group to Granolia, or does it skip her, since her room, the Study, holds the light puzzle?', options: ['Skip Granolia in Act 4 (she is in the Study)', 'Granolia may be the cat too'], answer: 'Skip Granolia in Act 4 (she is in the Study)', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
+  { key: 'act4Granolia', moment: 'act4.groups', question: 'The Act 4 cat station: may it send a group to Granolia, or does it skip her, since her room, the Study, holds the light puzzle?', options: ['Skip Granolia in Act 4 (she is in the Study)', 'Granolia may be the cat too'], answer: 'Skip Granolia in Act 4 (she is in the Study)', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
   { key: 'solveOrder', moment: 'act6.eliminate', question: 'The deduction round: after the bedroom door opens, or before the drawing?', options: ['After the door, as built', 'Before the drawing'], answer: 'After the door, as built', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
 ]
 
@@ -299,15 +299,99 @@ export const FILED_FOR_SECRET_LINES = [
   { order: 315, title: 'Jenna runs the real checks', note: '(23 Oct 2026: the secret sets are retired, so this waits only on the Health page.)' },
 ]
 
+// docs/handoff-2026-10-23.md, applied 24 Oct 2026 (sections 10, 15 and 16):
+// what Claude Code built from it, marked done; the jobs it hands to Jon,
+// Susan, Jenna and Claude chat, each under its moment; the cards it replaces
+// marked done with the reason; and the decisions it settles with their
+// defaults. Numbered from 400. Applied by '2026-10-24-handoff-1023'.
+const BUILT_1024 = 'Built 24 Oct 2026.'
+export const HANDOFF_1023_TASKS = [
+  // Built by Claude Code (section 10, items 2 to 13, and sections 15 and 16)
+  { order: 400, moment: 'act2.cat', status: 'done', who: 'Claude Code', title: 'The bag clue engine', detail: `${BUILT_1024} Each cat's bag clue: in Act 2 about the Murderer's bag, in Act 4 about the Ghost's, from the packing, at the rung the cat's affection sets. Salem is backwards at 1 to 3. A rehearsal shows a stand-in in square brackets.` },
+  { order: 401, moment: 'act2.cat', status: 'done', who: 'Claude Code', title: 'Act 2: four cats each, Not yet, and Supper’s ready', detail: `${BUILT_1024} Every guest visits all four cats; each gives a motive hint and a bag clue. Not yet puts a guest back in the queue; no cat sits idle. Supper comes on its own when everyone has seen all four, or when you press Supper’s ready.` },
+  { order: 402, moment: 'act4.groups', status: 'done', who: 'Claude Code', title: 'Act 4: the warning, the groups, Locked in and the four rooms', detail: `${BUILT_1024} Start Act 4 on the Host tab: a two-minute warning, the title card, groups of two or three with portraits, Locked in, then ten-minute rounds on the clock. Each group visits every room once; a group with no room waits in the Parlour, where Parlour Games wait on the phone.` },
+  { order: 403, moment: 'act4.puzzle', status: 'done', who: 'Claude Code', title: 'In Duplicate: the memory match in three rounds', detail: `${BUILT_1024} Seven, ten and fourteen pairs, all fourteen traces as art, Zimothy’s lines. The same game on its own for fun: ?kiosk=memory&play=1.` },
+  { order: 404, moment: 'act4.orangerie', status: 'done', who: 'Claude Code', title: 'Get Off My Lawn! on the phones', detail: `${BUILT_1024} Red means shake, green means freeze; a slip restarts the round; thirty seconds clean passes it; three rounds. The phones tint their screens, so it works with no lights at all.` },
+  { order: 405, moment: 'act4.entryway', status: 'done', who: 'Claude Code', title: 'Boo’s Catwalk on the wall', detail: `${BUILT_1024} ?kiosk=boo on Susan’s MacBook Pro, projected: Boo struts, the music stops, three poses, and she judges each one.` },
+  { order: 406, moment: 'setup', status: 'done', who: 'Claude Code', title: 'The brain: the tenth sound, music, Hue scenes and the string lights', detail: `${BUILT_1024} chime-phone is the tenth sound. The brain plays the three playlists by act and ducks them under the news, recalls the four Hue scenes, and mirrors Salem’s colours to the string lights. Each is switched on by a line in cues/.env (its own card).` },
+  { order: 407, moment: 'act2.news', status: 'done', who: 'Claude Code', title: 'W-O-O-F News as video on the Parlour TV', detail: `${BUILT_1024} Bulletin 1 and the closing bulletin play as video once the files are in (Put the bulletin videos in). Until then the TV shows the words, as before.` },
+  { order: 408, moment: 'act1.arrive', status: 'done', who: 'Claude Code', title: 'The permissions screen at sign-in', detail: `${BUILT_1024} One tap allows motion and sound and keeps the screen awake. Allow again is on the You tab.` },
+  { order: 409, moment: 'freeze', status: 'done', who: 'Claude Code', title: 'npm run checks, the Health page and Jenna’s checks', detail: `${BUILT_1024} npm run checks deals 1,000 stand-in cases and plays a fake night; the Health page (Where we are links to it) shows the last run. Jenna’s page has Run the checks for the real packing, leans and pictures.` },
+  { order: 410, moment: 'act1.arrive', status: 'done', who: 'Claude Code', title: 'The final bag items in the game', detail: `${BUILT_1024} Your 24 items are the Things in the bags list; the 108 September items are retired (kept, not shown). Fourteen clue words, four or five things a bag, and Sir Irwin’s sixteen prompts.` },
+  { order: 411, moment: 'act4.groups', status: 'done', who: 'Claude Code', by: '2026-10-30', title: 'Put the game names in the game', detail: `${BUILT_1024} Granolia’s Lightbulb Moment, In Duplicate, Get Off My Lawn!, Boo’s Catwalk and Sir Irwin Needs a Hand, each with its line under it, on the phones and on each room’s screen.` },
+  { order: 412, moment: 'freeze', status: 'done', who: 'Claude Code', title: 'The docs: the Parlour, Crooknog, the device table, no freeze date', detail: `${BUILT_1024} The night’s runbook, the room screens, the test plan, the bags, the Devices page and CLAUDE.md say what was decided on 23 and 24 October.` },
+  { order: 413, moment: 'allnight', status: 'done', who: 'Claude Code', title: 'Scenes and music on the Host tab', detail: `${BUILT_1024} Under The house: the four light scenes, and play, pause and next for the music.` },
+
+  // The tenth sound
+  sound(420, 'act2.supper', 'chime-phone', 'supper is ready, Act 4 starts, each Act 4 round changes, and the Act 6 Parlour Games open (every phone chimes too)'),
+
+  // Jon and Susan
+  { order: 421, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Three playlists on the brain', detail: 'In Apple Music on the M3 Air: playlists named Arrival, Investigation and Supper. Curating only. Then add the line MUSIC=on to cues/.env. The brain plays each at its act and ducks it under the news.' },
+  { order: 422, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Four Hue scenes', detail: 'In the Hue app: scenes named Arrival, Blackout, Lights Out and Reveal. Five minutes. Then add the line HUE_SCENES=on to cues/.env. Nothing waits on a light.' },
+  { order: 423, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Try the string lights from the brain', detail: 'On the hardware evening: give the Holiday String Lights a fixed address on the router, then ask Claude Code for the two lines (NANOLEAF_STRINGS_HOST and NANOLEAF_STRINGS_TOKEN) for cues/.env. If they will not answer, stop there: Get Off My Lawn! runs on the phones alone.' },
+  { order: 424, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The projector for Boo’s wall', detail: 'Borrow the work projector and a short HDMI cable. On the hardware evening: Susan’s MacBook Pro on the upstairs landing, ?kiosk=boo, aimed at the triangle wall above the Parlour opening.' },
+  { order: 425, moment: 'freeze', status: 'todo', who: 'Jon and Susan', title: 'The last shopping', detail: 'Ten black velvet drawstring bags, 9 by 12 inches, numbered 1 to 10 (if you do not have them yet). A telescoping pointer for the study wall. A small stand for the older iPad in the Library. The paper roll and markers. Prizes if you want any.' },
+  { order: 426, moment: 'act2.news', status: 'todo', who: 'Jon', title: 'Put the bulletin videos in', detail: 'When bulletin 1 and the closing bulletin are cut: one .mp4 per part, named as its clip in seed/woof-news.json, into play/public/video. Give them to Claude Code, which puts them in and deploys. Until then the TV shows the words.' },
+  { order: 427, moment: 'act2.news', status: 'todo', who: 'Jon', title: 'Tell Claude Code how long the videos are', detail: 'Once both bulletins are cut. The brain holds the music down while a video plays; today it guesses 90 seconds.' },
+  { order: 428, moment: 'week', status: 'todo', who: 'Jon', title: 'Tell Jenna they pack the bags at the house', detail: 'Jenna comes to the party and does not play. Before the guests arrive they pack the ten bags from their page, then keep them closed. Nobody who plays watches.' },
+  { order: 429, moment: 'act5.roam', status: 'todo', when: 'later', who: 'Jon', title: 'Move Susan’s MacBook Pro to the bedroom', detail: 'After Act 4, carry it from the landing into the bedroom, open ?kiosk=bedroom, tap once and close the door. It shows nothing until the third drawing is named.' },
+  { order: 430, moment: 'setup', status: 'todo', who: 'Jon', title: 'The older iPad in the Library', detail: 'On its small stand, with Zimothy: ?kiosk=memory, tap once to wake it. It stays there all night and waits for each group.' },
+  { order: 431, moment: 'freeze', status: 'todo', who: 'Jon and Susan', by: '2026-11-11', title: 'The second full tech run', detail: 'Every machine on at once, Act 1 to Act 7, Monday 9 to Wednesday 11 November. The last new feature lands Wednesday 11 November; after that, checks and fixes only.' },
+  { order: 432, moment: 'act4.orangerie', status: 'todo', who: 'Jon and Susan', title: 'Try Get Off My Lawn! on two phones', detail: 'On a rehearsal night in Act 4: two phones scan the Orangerie code. Red: shake. Green: freeze. Tell Claude Code if the shake feels too touchy or too dull.' },
+  { order: 433, moment: 'act4.entryway', status: 'todo', who: 'Jon', title: 'Runway music for Boo’s Catwalk (optional)', detail: 'Today the wall plays a simple beat. For a real song, save it as play/public/boo/catwalk.mp3 and ask Claude Code to deploy.' },
+  { order: 434, moment: 'week', status: 'todo', who: 'Jon', by: '2026-11-14', title: 'Press Freeze the workshop when the lists are final', detail: 'On the Game night page, Thursday 12 to Saturday 14 November, your call: there is no fixed freeze date. Every list goes read-only.' },
+  { order: 435, moment: 'week', status: 'todo', who: 'Jon', by: '2026-11-14', title: 'The last deploy', detail: 'In the checks-and-fixes days, Thursday 12 to Saturday 14 November, after every picture, sound and video is in. In Terminal, in the Murderwin folder: git pull, then npm run deploy. Or ask Claude Code to do both.' },
+
+  // Claude chat
+  { order: 440, moment: 'freeze', status: 'todo', who: 'Claude chat', title: 'Mark the project copy of the 23 Oct handoff Applied', detail: 'In the claude.ai project, at the top of claude/handoff-2026-10-23.md: Applied 24 Oct 2026 by Claude Code. The repo copy already says it.' },
+  { order: 441, moment: 'freeze', status: 'todo', who: 'Claude chat', title: 'Two slides in the rules deck', detail: 'The Reticule slide still shows four tabs and an old screenshot; the Act 7 slide does not mention the dial’s journey or the end credits. Where they name the Act 4 games and the drawing, use the game names.' },
+
+  // Nice to have
+  { order: 450, moment: 'act7.result', status: 'todo', who: 'Claude Code', title: 'The pose photo for the end credits (nice to have)', detail: 'Section 10 item 14: only when everything else is done. The iPad Pro in the Entryway takes one photo of each group’s last pose for the credits.' },
+]
+
+const RETIRED_1024 = 'Replaced 24 Oct 2026 (the 23 Oct handoff):'
+export const RETIRED_FOR_1023 = [
+  { order: 104, title: 'Press Freeze', detail: `${RETIRED_1024} there is no freeze date. See Press Freeze the workshop when the lists are final.` },
+  { order: 300, title: 'The last deploy before the freeze', detail: `${RETIRED_1024} there is no freeze date. See The last deploy.` },
+  { order: 302, title: 'Move the iPad to the Library', detail: `${RETIRED_1024} the older iPad does the memory match all night. See The older iPad in the Library.` },
+  { order: 303, title: 'Carry the iPad into the bedroom', detail: `${RETIRED_1024} Susan’s MacBook Pro goes to the bedroom. See Move Susan’s MacBook Pro to the bedroom.` },
+  { order: 314, title: 'The Health page and the check commands', detail: 'Built 24 Oct 2026: npm run checks, the Health page, and Run the checks on Jenna’s page.' },
+  { order: 327, title: 'Play the W-O-O-F News videos on the TV', detail: 'Built 24 Oct 2026: the TV plays them once the files are in. See Put the bulletin videos in.' },
+  { order: 331, title: 'The shopping', detail: `${RETIRED_1024} the bag items are bought. What is left is on The last shopping.` },
+]
+export const FILED_FOR_1023 = [
+  { order: 112, title: 'Make the packing list', note: '(24 Oct 2026: your final 24 items are in. After the deploy, open the workshop once so it loads them, then in Terminal: npm --prefix scripts run pack-bags -- --repack. It prints counts only.)' },
+  { order: 114, title: 'The bags packed to Jenna’s list', note: '(24 Oct 2026: four or five things in each bag, and Jenna packs them at the house.)' },
+  { order: 124, title: 'The four cat-room codes up', note: '(24 Oct 2026: the same four codes serve Act 2 and Act 4. The living room is the Parlour.)' },
+  { order: 301, title: 'Open the TV, the study screen and the iPad', note: '(24 Oct 2026, the device table: the older iPad is the memory match in the Library, ?kiosk=memory; Susan’s MacBook Pro shows Boo’s wall, ?kiosk=boo; the old iPhone 11 is the spare phone.)' },
+  { order: 315, title: 'Jenna runs the real checks', note: '(24 Oct 2026: built. Jenna’s page, tab The checks.)' },
+  { order: 332, title: 'The full tech run', note: '(24 Oct 2026: the first run is the hardware evening, Monday 2 to Friday 6 November; the second has its own card.)' },
+]
+// Section 12's "close the card" defaults, and the two answered on 23 Oct.
+export const ANSWERED_FOR_1023 = {
+  newsVideo: 'Video on the TV',
+  bagsAct4: 'They stay: the Act 2 and Act 4 bag clues, and sharing in the Parlour (Jon, 23 Oct 2026)',
+  tutorial8: 'Keep it buried',
+  stewardPictures: 'No, the blind script is enough',
+  partnerAwards: 'Cut them',
+  dialMapping: 'Keep it fixed (as built)',
+}
+// Decisions filed under moments the night no longer has.
+export const REFILED_FOR_1023 = {
+  bagsAct4: { from: 'act4.bags', to: 'act2.cat' },
+  act4Granolia: { from: 'act4.cat', to: 'act4.groups' },
+}
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.
 export const TIMELINE_DECISIONS = [
   { key: 'newsFamilies', moment: 'act2.news', question: 'How many motive families does the Act 2 news rule out for everyone?', options: ['One', 'Two'], answer: null },
   { key: 'ipadDinner', moment: 'act3.down', question: 'The iPad through dinner: the captions screen in the orangery, or the spare phone only?', options: ['Captions in the orangery', 'Spare phone only'], answer: null },
-  { key: 'bagsAct4', moment: 'act4.bags', question: 'Do the bags stay as an Act 4 station?', options: ['Keep the bags station', 'Cut it'], answer: null },
+  { key: 'bagsAct4', moment: 'act2.cat', question: 'Do the bags stay as an Act 4 station?', options: ['Keep the bags station', 'Cut it'], answer: null },
   { key: 'handOn', moment: 'allnight', question: 'Hand this phone on: one tap on the Host tab, or ask twice?', options: ['One tap', 'Ask twice'], answer: null },
 ]
 

@@ -39,12 +39,12 @@ test('the phone\'s own lines list offers every label the phone and the dealer re
   for (const k of NOTICE_KEYS) assert.ok(values.includes(`NOTICE ${k.toUpperCase()}`), k)
   assert.equal(new Set(values).size, values.length, 'no label twice')
   assert.equal(goalOf(AREAS.ui_copy), COUNTED_UI_LABELS.length, 'the goal counts only the lines with no words of their own yet')
-  assert.equal(UI_LABELS.filter(l => l.extra).length, 30, 'thirty extra lines the game reads')
-  assert.deepEqual(UI_LABELS.filter(l => l.retired).map(l => l.value), ['NUMBERS', 'NOTICE SCRAP'], 'the safe’s two lines, retired with it, still show what was written')
-  assert.equal(UI_LABELS.length - COUNTED_UI_LABELS.length, 32, 'neither the extra nor the retired lines count')
+  assert.equal(UI_LABELS.filter(l => l.extra).length, 54, 'fifty-four extra lines the game reads (Act 2 and Act 4 added 23 Oct 2026)')
+  assert.deepEqual(UI_LABELS.filter(l => l.retired).map(l => l.value), ['NUMBERS', 'NOTICE SCRAP', 'NOTICE CHECKIN', 'GREET SALEM', 'GREET ZIMOTHY', 'GREET BOO', 'GREET GRANOLIA'], 'the safe’s lines, the check-in and the greetings, retired, still show what was written')
+  assert.equal(UI_LABELS.length - COUNTED_UI_LABELS.length, 61, 'neither the extra nor the retired lines count')
   assert.equal(STUDY_LABELS.length, 12)
   assert.equal(STATION_LABELS.map(o => o.value).join(','), 'STUDY,CAT,BAGS,PUZZLE,CHECKIN')
-  assert.ok(STATION_LABELS.find(o => o.value === 'PUZZLE').label.includes('memory match'), 'the puzzle station is the memory match')
+  assert.ok(AREAS.station_text.retired && AREAS.station_text.hidden, 'the five stations are retired: Act 4 is four rooms')
   assert.equal(TRACE_LABELS.length, 14)
   assert.ok(TRACE_LABELS.every(o => /^TRACE [A-Z ]+$/.test(o.value)), 'trace labels have no hyphen, so the label codec keeps them')
   assert.ok(TRACE_LABELS.some(o => o.value === 'TRACE BOOT PRINT'))
@@ -56,18 +56,19 @@ test('the phone\'s own lines list offers every label the phone and the dealer re
   assert.equal(lintItem('trace_lines', 'TRACE INK: a splash of ink beside the desk'), null)
 })
 
-test('the bag items seed: 108 lines, every one passes the list\'s rules, two-property lines get a note not a stop', () => {
-  assert.equal(BAG_ITEM_SEED.length, 108)
-  assert.equal(new Set(BAG_ITEM_SEED.map(l => l.toLowerCase())).size, 108)
-  let twice = 0
+test('the bag items seed: Jon\'s final 24 lines, every one passes the list\'s rules and round-trips; a September line gets a note, not a stop', () => {
+  assert.equal(BAG_ITEM_SEED.length, 24)
+  assert.equal(new Set(BAG_ITEM_SEED.map(l => l.toLowerCase())).size, 24)
   for (const line of BAG_ITEM_SEED) {
-    const warn = lintItem('bag_items', line)
-    if (line.includes(';')) { twice++; assert.ok(warn && warn.startsWith('Two things'), line) } else assert.equal(warn, null, line)
+    assert.equal(lintItem('bag_items', line), null, line)
     const codec = codecFor('bag_items')
     assert.equal(codec.join(codec.split(line)), line, 'round trip')
   }
-  assert.equal(twice, 4)
-  assert.equal(goalOf(AREAS.bag_items), 108)
+  assert.equal(BAG_ITEM_SEED.filter(l => / ball — /.test(l)).length, 6, 'each ball is its own line')
+  assert.equal(goalOf(AREAS.bag_items), 24)
+  assert.ok(lintItem('bag_items', 'Tin of Altoids — smell: minty; sound: rattles'), 'a September line has no kind')
+  assert.match(lintItem('bag_items', 'Thing — smell: crinkly · extra · stock 2'), /never a clue word/)
+  assert.match(lintItem('bag_items', 'Thing — smell: zesty · extra · stock 2'), /not one of the fourteen/)
 })
 
 // A pretend database: nothing seeded, then every addition applied, twice.
@@ -83,18 +84,23 @@ test('the additive migrations are idempotent on a pretend database, and the bag 
   const newId = () => `id${++n}`
   const once = applyAll(emptyState(), { newId })
   assert.deepEqual(once.applied, ADDITIONS.map(a => a.id))
-  assert.equal(once.areas.bag_items.items.length, 108)
+  // the 108 September items arrive on 18 Oct and retire on 24 Oct (soft-deleted, never erased); the final 24 are live
+  assert.equal(once.areas.bag_items.items.length, 108 + 24)
+  assert.equal(once.areas.bag_items.items.filter(it => !it.deleted).length, 24)
+  assert.equal(once.areas.bag_items.items.filter(it => it.deleted && it.retiredBy === '2026-10-24-handoff-1023').length, 108)
   assert.ok(once.areas.study_lines && once.areas.station_text && once.areas.trace_lines, 'the three new lists exist')
-  assert.ok(once.areas.bag_items.items.every(it => it.deleted === false && typeof it.order === 'number'))
+  assert.ok(once.areas.bag_items.items.every(it => typeof it.deleted === 'boolean' && typeof it.order === 'number'))
   const twice = applyAll(once, { newId })
   assert.deepEqual(twice, once, 'a second pass changes nothing')
   // a line Jon already wrote (or edited) is never doubled, and nothing is removed
   const written = { ...emptyState(), areas: { bag_items: { items: [{ id: 'jon1', text: 'Tin of Altoids — smell: minty (Jon’s wording)', deleted: false, order: 0 }, { id: 'jon2', text: 'Something of Susan’s — touch: soft', deleted: false, order: 1 }] } } }
   const after = applyAll(written, { newId })
   const items = after.areas.bag_items.items
-  assert.equal(items.length, 2 + 107)
+  assert.equal(items.length, 2 + 107 + 24)
   assert.equal(items[0].text, 'Tin of Altoids — smell: minty (Jon’s wording)')
   assert.equal(items.filter(it => it.text.toLowerCase().startsWith('tin of altoids')).length, 1)
+  assert.equal(items[0].deleted, true, 'a September line, even in Jon’s wording, is retired with the rest')
+  assert.equal(items[1].deleted, false, 'a line that was never on the September list stays')
   assert.ok(items.every((it, i) => i === 0 || it.order > items[i - 1].order), 'orders keep climbing')
 })
 
@@ -139,21 +145,26 @@ test('the Parlour Games bank lands once: seventeen sets of three questions with 
   assert.equal(freshScenarios(items, sets).length, 0, 'nothing doubled even if asked again')
 })
 
-test('the thirty extra labels are the ones the game reads, can be picked, and pass the lint', () => {
+test('the extra labels are the ones the game reads, can be picked, and pass the lint', () => {
   const read = (f) => readFileSync(new URL(`../../functions/lib/${f}`, import.meta.url), 'utf8')
   const deal = read('deal.js'), hosts = read('hosts.js'), screen = read('screen.js')
   const extra = UI_LABELS.filter(l => l.extra).map(l => l.value)
   const want = [
-    ...['WAIT', 'GO', 'NEXT', 'WITH', 'DONE', 'SUPPER'].map(k => `LIGHTS ${k}`),
-    ...['SALEM', 'ZIMOTHY', 'BOO', 'GRANOLIA'].map(k => `GREET ${k}`),
+    ...['WAIT', 'LATER', 'GO', 'NEXT', 'ARRIVE', 'WITH', 'DONE', 'SUPPER'].map(k => `LIGHTS ${k}`), 'SUPPER NOTE',
+    ...['WARN', 'GROUP', 'STUDY', 'LIBRARY', 'ORANGERIE', 'ENTRYWAY', 'PARLOUR', 'ARRIVE', 'CHIME', 'PAID', 'OVER'].map(k => `ACT4 ${k}`),
+    ...['STUDY', 'LIBRARY', 'ORANGERIE', 'ENTRYWAY'].flatMap(k => [`REWARD ${k} DONE`, `REWARD ${k} CAPPED`]),
+    ...[1, 2, 3, 4, 5, 6].map(i => `BOO JUDGE ${i}`),
     'SALEM FRIEND', 'HOST GRANOLIA', 'HOST ZIMOTHY', 'HOST SALEM',
     ...[1, 2, 3, 4, 5, 6].map(i => `HOST BOO ${i}`), ...[1, 2, 3, 4, 5].map(i => `HOST IRWIN TRACE ${i}`),
     ...['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE'].map(w => `IRWIN ${w}`),
   ]
   assert.deepEqual([...extra].sort(), [...want].sort())
   // where the game reads them
-  assert.ok(deal.includes('`LIGHTS ${variant.toUpperCase()}`') && deal.includes('`GREET ${cat.toUpperCase()}`') && deal.includes("ui['SALEM FRIEND']"))
-  for (const k of ['wait', 'go', 'next', 'with', 'done', 'supper']) assert.match(deal, new RegExp(`^  ${k}: \\{ title:`, 'm'), `LIGHTS ${k.toUpperCase()} has a default`)
+  const act4 = read('act4.js')
+  assert.ok(deal.includes('`LIGHTS ${variant.toUpperCase()}`') && deal.includes("ui['LIGHTS ARRIVE']") && deal.includes("ui['SUPPER NOTE']") && deal.includes("ui['SALEM FRIEND']"))
+  for (const k of ['wait', 'later', 'go', 'next', 'with', 'done', 'supper']) assert.match(deal, new RegExp(`^  ${k}: \\{ title:`, 'm'), `LIGHTS ${k.toUpperCase()} has a default`)
+  for (const k of ['ACT4 WARN', 'ACT4 GROUP', 'ACT4 ARRIVE', 'ACT4 CHIME', 'ACT4 PAID', 'ACT4 OVER', 'BOO JUDGE']) assert.ok(act4.includes(k), k)
+  assert.ok(act4.includes('`ACT4 ${room.toUpperCase()}`') && act4.includes('`REWARD ${room.toUpperCase()} ${outcome'), 'the room directions and rewards')
   assert.ok(hosts.includes('`HOST ${key.toUpperCase()}`') && hosts.includes('`HOST BOO ${i + 1}`') && hosts.includes('`HOST IRWIN TRACE ${l}`'))
   for (const w of ['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE']) assert.ok(screen.includes(`'IRWIN ${w}'`), `IRWIN ${w}`)
   // every one is offered in the Which screen box and passes the lint

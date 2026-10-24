@@ -12,6 +12,7 @@ import Timeline from './pages/Timeline'
 import Devices from './pages/Devices'
 import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
+import Health from './pages/Health'
 import Steward from './pages/Steward'
 import StudyTest from './pages/StudyTest'
 import { useFrozen } from './components/Frozen'
@@ -105,6 +106,8 @@ function Shell({ user }) {
         <Route path="/devices" element={<Devices />} />
         <Route path="/jenna" element={<ForJenna />} />
         <Route path="/status" element={<Status />} />
+        {/* The last run of npm run checks. Reached from Where we are; the rail is full on a phone. */}
+        <Route path="/health" element={<Health />} />
         {/* Jon at the study walls with his phone: flash, teach the taps, a practice round. Also linked from Devices and Game night. */}
         <Route path="/study-test" element={<StudyTest />} />
         {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}

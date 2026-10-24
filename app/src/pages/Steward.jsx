@@ -3,7 +3,7 @@ import { useFrozen } from '../components/Frozen'
 import { stewardApi } from '../lib/stewardApi'
 import { routeState, packingRows, NOT_FOR_YOU } from '../lib/steward'
 
-// Jenna's page: the packing list and the cats' leans.
+// Jenna's page: the packing list, the cats' leans and the real checks.
 // The server decides who gets in (the `steward` callable checks a verified
 // email hash); this page only asks. Jon's account is turned away here
 // before any call is made and refused by the server if it ever asks.
@@ -36,16 +36,18 @@ function StewardDesk({ api }) {
     <main className="dash steward">
       <section className="panel">
         <h2>The Steward's desk</h2>
-        <p>Only your account opens this page. Jon's is refused by the server, so nothing here can reach him. Two things live here: the packing list for the bags, and which answer each cat leans toward in the Parlour Games. Tell Jon only <b>done</b> or <b>needs more</b>, never what you read.</p>
+        <p>Only your account opens this page. Jon's is refused by the server, so nothing here can reach him. Three things live here: the packing list for the bags, which answer each cat leans toward in the Parlour Games, and the checks on both. Tell Jon only <b>done</b> or <b>needs more</b>, never what you read.</p>
         {frozen.frozen && <p className="hint">The workshop is frozen for the party. The lists are read-only; the cats' leans still save here.</p>}
         <div className="tabs">
           <button className={`tab ${tab === 'bags' ? 'active' : ''}`} onClick={() => setTab('bags')}>The packing list</button>
           <button className={`tab ${tab === 'leans' ? 'active' : ''}`} onClick={() => setTab('leans')}>The cats' leans</button>
+          <button className={`tab ${tab === 'checks' ? 'active' : ''}`} onClick={() => setTab('checks')}>The checks</button>
         </div>
       </section>
 
       {tab === 'bags' && <Packing api={api} />}
       {tab === 'leans' && <Leans api={api} />}
+      {tab === 'checks' && <Checks api={api} />}
     </main>
   )
 }
@@ -76,6 +78,37 @@ function Packing({ api }) {
           </ol>
         </div>
       ))}
+    </section>
+  )
+}
+
+// The real checks (docs/test-plan.md): the server runs them on the packing,
+// the leans and the drawing's pictures and sends back each check's ID, its
+// plain name, PASS or FIX NEEDED and a count. Jon's Health page has the rest.
+function Checks({ api }) {
+  const [result, setResult] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const run = () => {
+    setBusy(true); setError(null)
+    api.call({ op: 'checks' }).then(setResult).catch(e => setError(e?.message ?? 'The checks did not run.')).finally(() => setBusy(false))
+  }
+  return (
+    <section className="panel">
+      <h2>The checks</h2>
+      <p className="why">These run on the real packing, the cats' leans and the drawing's pictures, which only you may see. Run them after the bags are packed and after any change to the leans. Tell Jon <b>done</b> when every line says PASS, or <b>needs more</b> and the check's ID.</p>
+      <button className="primary" onClick={run} disabled={busy}>{busy ? 'Running…' : 'Run the checks'}</button>
+      {error && <div className="banner error" role="alert">{error}</div>}
+      {result && (
+        <>
+          <p className={result.allPass ? 'health-clear' : 'health-line bad'}>{result.allPass ? 'All clear.' : 'Something needs fixing.'}</p>
+          <ul className="audit">
+            {result.results.map(r => (
+              <li key={r.id}><b>{r.pass ? 'PASS' : 'FIX NEEDED'}</b> · {r.id} · {r.name}{r.of ? <span className="hint"> ({r.count} of {r.of})</span> : null}</li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   )
 }

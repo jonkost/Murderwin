@@ -24,6 +24,9 @@
 //                                         `by` date (only a card with none),
 //                                         and add `note` to the end of the detail
 //   fileDecisions:   { key: moment }      file a decision that has no moment
+//   refileDecisions: { key: { from, to } } move a decision still filed under
+//                                         `from` (a moment the night no longer
+//                                         has) to `to`
 // With a `title`, a card must also have that title (any case), so a card
 // someone added by hand that happens to share a number is never touched.
 // Nothing here ever erases, reorders or rewrites a line; retireItems only sets
@@ -150,6 +153,10 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
   for (const [key, moment] of Object.entries(add.fileDecisions ?? {})) {
     const d = snapshot.decisions?.[key]
     if (d && !d.moment) plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment }
+  }
+  for (const [key, { from, to }] of Object.entries(add.refileDecisions ?? {})) {
+    const d = snapshot.decisions?.[key]
+    if (d && d.moment === from) plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment: to }
   }
   plan.applied = [...applied, add.id]
   return plan

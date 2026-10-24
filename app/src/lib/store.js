@@ -12,5 +12,5 @@ export const {
   ensureSeeded, subscribeArea, saveArea, whoAmI, subscribeHistory,
   subscribeTasks, updateTask, addTask, subscribeDecisions, answerDecision, fileDecision,
   uploadFile, applyAdditions,
-  subscribeGame, saveGame, subscribeReviews, saveReview, countLinesBy,
+  subscribeGame, saveGame, subscribeReviews, saveReview, countLinesBy, subscribeChecks,
 } = impl

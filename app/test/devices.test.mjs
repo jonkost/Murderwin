@@ -11,7 +11,7 @@ const kioskSrc = read('../../play/src/screens/Kiosk.jsx')
 const handled = (k) => k === 'living' || new RegExp(`which === '${k}'`).test(kioskSrc)
 
 test('every room screen the client answers has a device, and every kiosk address is answered or says why not', () => {
-  for (const k of ['living', 'bedroom', 'study', 'ipad']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
+  for (const k of ['living', 'bedroom', 'study', 'ipad', 'memory', 'boo']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
   for (const d of DEVICES.filter(x => x.kiosk)) {
     if (handled(d.kiosk)) assert.ok(!d.pending, `${d.key}: the client answers ?kiosk=${d.kiosk} now, so drop the pending note`)
     else assert.ok(d.pending, `${d.key}: ?kiosk=${d.kiosk} is not answered yet, so the page must say why`)
@@ -23,6 +23,7 @@ test('addresses are built from the game address, and a device with none says how
   assert.equal(deviceUrl(base, { kiosk: 'living' }), 'https://example.test/play/?kiosk=living')
   assert.equal(deviceUrl('https://example.test/play/?x=1', { kiosk: 'study' }), 'https://example.test/play/?x=1&kiosk=study')
   assert.equal(deviceUrl(base, { plain: true }), base)
+  assert.equal(deviceUrl(base, { kiosk: 'memory', query: 'play=1' }), 'https://example.test/play/?kiosk=memory&play=1')
   assert.equal(deviceUrl(base, { key: 'router' }), null)
   assert.equal(deviceUrl('', { kiosk: 'living' }), null)
   for (const d of DEVICES) assert.ok(d.start?.length, `${d.key} says how it starts`)

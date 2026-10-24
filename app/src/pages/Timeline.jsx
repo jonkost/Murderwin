@@ -158,8 +158,8 @@ function NotFiled({ lost, onError, onSaved }) {
 // One line at the top for the view in hand: how much is ready, and how
 // much of what is left already works with a stand-in.
 function viewSummary(view, p) {
-  const head = view === 'now' ? `Before the freeze: ${p.ready} of ${p.total} ready.`
-    : view === 'later' ? `The week before, the day and after: ${p.ready} of ${p.total} done. Most of these belong to the week before and the day itself.`
+  const head = view === 'now' ? `Before the second tech run: ${p.ready} of ${p.total} ready.`
+    : view === 'later' ? `The weeks before, the day and after: ${p.ready} of ${p.total} done. Most of these belong to the last days and the day itself.`
     : `The whole night: ${p.ready} of ${p.total} ready.`
   if (!p.left || view === 'later') return head
   const parts = [`${p.needsYou} need you`]

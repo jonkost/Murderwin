@@ -45,6 +45,13 @@ function previewApi() {
         case 'bags': return bags
         case 'leans': return { ok: true, ...leans, filled: leans.sets.reduce((n, x) => n + x.questions.reduce((m, q) => m + Object.values(q.leans).filter(Boolean).length, 0), 0) }
         case 'lean': leans.sets.find(x => x.id === data.setId).questions[data.q].leans[data.cat] = data.value; return { ok: true }
+        case 'checks': return { ok: true, allPass: false, results: [
+          { id: 'PK1', name: 'Ten bags of four or five, one food, the pairs written out', pass: true },
+          { id: 'G43', name: 'Every bag has at least two clue words', pass: true, count: 10, of: 10 },
+          { id: 'PK2', name: 'With two bags sitting out, nearly every bag keeps two clue words', pass: true, count: 1580, of: 1600 },
+          { id: 'LN1', name: 'Every Parlour Game question has a lean for every cat', pass: false, count: 0, of: 24 },
+          { id: 'RP1', name: 'The drawing has a good picture for each of its three rounds', pass: true, count: 3, of: 3 },
+        ] }
         default: throw new Error('Which op?')
       }
     },

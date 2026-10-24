@@ -26,7 +26,7 @@ const LINKS = [
 ]
 
 const BUILT = [
-  ['Live', 'Deployed on 23 October. Each later build needs one more deploy; the last one is on the Timeline, before the freeze.'],
+  ['Live', 'Deployed on 23 October. Each later build needs one more deploy; the last one is on the Timeline, in the days before the party.'],
   ['The invitation page', 'Live at jonkost.com/Murderwin. The Enter the Manor button opens the game.'],
   ['Guests join by phone', 'Scan the square code, type a name, get a character and a bag number. Works on a real phone.'],
   ['The phone at rest', 'Character with portrait, bag number, the Reticule: motives to cross off, the cats, the rules.'],
@@ -37,17 +37,19 @@ const BUILT = [
   ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. One box per thing. Speak buttons.'],
   ['The Timeline and this page', 'Every job is a card on the Timeline, filed under its moment, with its owner and, for some, a date. This page counts them by owner.'],
   ['The Parlour Games', 'Twelve a night, on their own at random times: five in Act 2, five in Act 4, two as Act 6 opens. Boo hosts each one. Three silly questions, two choices each, the same set on every phone.'],
-  ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, the groups and their five stations, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
-  ['How the case gets solved', 'Bulletin 1 crosses off a wrong family for everyone; one of the four cats gives each guest a hint from the Cat Hint Lines; bulletin 2 at supper; Sir Irwin’s countdown of motive cards at dessert; the memory match; the study pays the Ghost’s trace; the bedroom door shows the Murderer’s.'],
+  ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, Supper’s ready, Start Act 4 and its four rooms, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
+  ['How the case gets solved', 'Bulletin 1 crosses off a wrong family for everyone; in Act 2 all four cats give each guest a motive hint and a clue about the Murderer’s bag; bulletin 2 at supper; in Act 4 each room pays a reward and a clue about the Ghost’s bag; Sir Irwin’s countdown of motive cards at dessert; the study pays the Ghost’s trace; the bedroom door shows the Murderer’s.'],
   ['W-O-O-F News', 'Bulletin 1 in Act 2, bulletin 2 armed from your phone at supper and played on the Orangerie HomePod, and the closing bulletin at the reveal, each name card shown after its lead-in line. Your recordings play as sound with the words on screen.'],
-  ['Act 4 on the phones', '“You’re teamed up with” for each group, Granolia’s study card, a cat card naming the cat and its room (never Granolia), and Free time with one tip.'],
-  ['The study light game', 'The station on the M1 Air, the Nanoleaf walls, the Stream Deck, Granolia’s screen. Finishing the study rotates the house.'],
-  ['The Relay Drawing', 'Sir Irwin’s rules slides on the TV, a practice smiley, three rounds, a player called by portrait and character name, the room’s guess on the living room computer, then Irwin’s Pawsome! slide on the TV and the trace on the bedroom iPad. Hall light red to green through the cue relay.'],
+  ['Act 4 on the phones', 'A two-minute warning, the groups with portraits and Locked in, then ten-minute rounds: each group visits all four rooms, Granolia’s Lightbulb Moment, In Duplicate, Get Off My Lawn! and Boo’s Catwalk, and waits in the Parlour between them, where Parlour Games wait on the phone.'],
+  ['The study light game', 'Granolia’s Lightbulb Moment: the station on the M1 Air, the Nanoleaf walls, the Stream Deck, Granolia’s screen. Ten minutes a group.'],
+  ['The Relay Drawing', 'Sir Irwin Needs a Hand: his rules slides on the TV, a practice smiley, three rounds, a player called by portrait and character name, the room’s guess on the Parlour screen, then Irwin’s Pawsome! slide on the TV and the trace on the bedroom screen. Hall light red to green through the cue relay.'],
   ['The screens for every beat', 'W-O-O-F News, Sir Irwin’s countdown at cake, the board of strikes and the door on the TV; the iPad keeps the words up through supper; a sound for every cue, with stand-in tones until you record yours.'],
   ['The hosts’ lines', 'Boo opens each Parlour Game, Granolia the study, Zimothy the memory match, Salem the final picks, and Sir Irwin speaks over the trace.'],
   ['The end credits', 'The closing bulletin, the dial’s journey, the awards from the final sliders, the joke counters, the room’s split, the thanks and Sydney, then Sir Irwin’s last card.'],
   ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night, and a big red REHEARSAL band on every screen on a rehearsal night.'],
-  ['Jenna’s page', 'Her own page for the packing list and the cats’ leans, opening for her account only; yours is refused by the server.'],
+  ['Jenna’s page', 'Their own page for the packing list, the cats’ leans and the real checks, opening for their account only; yours is refused by the server.'],
+  ['The bags', 'Your 24 items, fourteen clue words, a packer that never shows you the packing, and the cats’ bag clues: a compass, not a pointer. Sir Irwin’s sixteen prompts on the Parlour TV.'],
+  ['The checks', 'npm run checks deals 1,000 stand-in cases and plays a fake night. The Health page shows the last run: one line per group.'],
   ['Rehearsing without the party', 'Eight fake players that play a whole night and throw it away, one test command for everything, deploys that refuse an empty site, and the day-of runbook. A pretend Firebase on your Mac too, once Java is installed (a card on the Timeline).'],
   ['Spill the Beans and the Hush', 'Your two safeguard buttons on the Host tab, under "If something goes wrong". Spill works through Act 5 and the Manor decides silently; the Hush stops a found-out player’s answers from counting.'],
 ]
@@ -169,6 +171,7 @@ export default function Status() {
           <li><Link to="/timeline"><b>The Timeline</b></Link> <span className="hint">every job, in the order of the night</span></li>
           <li><Link to="/night"><b>Game night</b></Link> <span className="hint">start a night, the hosts, the freeze</span></li>
           <li><Link to="/devices"><b>Every device</b></Link> <span className="hint">room by room, with its address</span></li>
+          <li><Link to="/health"><b>Health</b></Link> <span className="hint">the last run of the checks: one line per group</span></li>
           <li><Link to="/jenna"><b>For Jenna</b></Link> <span className="hint">what Jenna reads, and her page</span></li>
         </ul>
       </section>

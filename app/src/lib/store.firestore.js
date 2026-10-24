@@ -227,7 +227,7 @@ export async function applyAdditions(additions) {
       if (applied.includes(add.id)) return
       const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.retireItems ?? {}), ...Object.keys(add.appendItems ?? {}), ...Object.keys(add.appendScenarios ?? {})])]
       const areaSnaps = await Promise.all(areaNames.map(a => tx.get(doc(db, 'safe_content', a))))
-      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {}), ...Object.keys(add.fileDecisions ?? {})])]
+      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {}), ...Object.keys(add.fileDecisions ?? {}), ...Object.keys(add.refileDecisions ?? {})])]
       const decSnaps = await Promise.all(decisionKeys.map(k => tx.get(doc(db, 'decisions', k))))
       const snapshot = {
         applied,
@@ -259,6 +259,11 @@ export async function saveGame(patch, before) {
 // ---- Jenna's two words per list: Reads clearly / Needs another look ----
 // Kept in meta/reviews, one map per list, so a list's own doc is never
 // touched by anything but its lines.
+// The last run of npm run checks (scripts/checks.mjs): counts only, for the Health page.
+export function subscribeChecks(onData, onError) {
+  return onSnapshot(doc(db, 'validation_reports', 'checks'), snap => onData(snap.exists() ? snap.data() : null), onError)
+}
+
 export function subscribeReviews(onData, onError) {
   return onSnapshot(doc(db, 'meta', 'reviews'), snap => onData(snap.exists() ? snap.data() : {}), onError)
 }

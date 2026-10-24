@@ -9,6 +9,7 @@ import {
   TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT,
   AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT,
   SECRET_LINES_ANSWER, SECRET_LINES_DECISIONS, SECRET_LINES_TASKS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES,
+  HANDOFF_1023_TASKS, RETIRED_FOR_1023, FILED_FOR_1023, ANSWERED_FOR_1023, REFILED_FOR_1023,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -31,7 +32,7 @@ export const bioCodec = {
 
 export const CATS = [
   { key: 'irwin', name: 'Sir Irwin', tag: 'the dog' },
-  { key: 'salem', name: 'Salem Crookshank', tag: 'the long-time groundskeeper' },
+  { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite' },
   { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would' },
@@ -58,28 +59,48 @@ export const TAB_KINDS = {
 // high, with commas. NUMBERS and NOTICE SCRAP carried the Act 2 safe's three
 // numbers until the safe was taken out (23 Oct 2026): kept as labels so lines
 // already written still show, never counted, and nothing reads them.
-export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'checkin', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']
+export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'peek', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']
+// Retired 23 Oct 2026: Act 2 ends in the supper chime, with no check-in card.
+export const RETIRED_NOTICE_KEYS = ['checkin']
 const NOTICE_WHAT = {
   meet: 'Act 1, meet the household', introduce: 'Act 1, say who you are out loud', ready: 'Act 1, settle in before the dark', orient: 'Act 2, where things are on the phone',
-  news: 'Act 2, eyes up at the big screen', checkin: 'Act 2, read your clues before dinner', down: 'Act 3, phones down at dinner', bulletin: 'Act 3, the bulletin was heard',
+  news: 'Act 2, eyes up at the big screen in the Parlour', peek: 'Act 2, a quiet look inside your own bag', down: 'Act 3, phones down at supper, bags to the table', bulletin: 'Act 3, the bulletin was heard',
   roam: 'Act 5, cake in hand', irwin: 'Act 5, Sir Irwin is about to speak', door: 'Act 6, the door is open', eyes: 'Act 7, eyes on the screen for the reveal',
+  checkin: 'retired 23 Oct 2026: Act 2 ends in the supper chime, nothing reads this',
 }
 // The lines the game also reads (23 Oct 2026), so Jon, Susan or Jenna can
 // reword them. The handoff's words already play for each, so these are
 // marked `extra`: never counted in the list's goal or on the Timeline.
 const EXTRA_UI_LABELS = (() => {
-  const lights = { WAIT: 'Act 2, stay in the living room until you are called', GO: 'Act 2, go to your first cat, with [CAT], [ROOM] and [THEM]', NEXT: 'Act 2, time is up, go to the next cat, with [CAT] and [ROOM]', WITH: 'Act 2, the cat is talking to you, with [CAT]', DONE: 'Act 2, you have seen all four cats', SUPPER: 'Act 2, the chime for supper' }
-  const greet = { SALEM: 'Salem', ZIMOTHY: 'Zimothy', BOO: 'Boo', GRANOLIA: 'Granolia' }
-  const host = { GRANOLIA: 'Granolia’s hello on the phones’ study card in Act 4', ZIMOTHY: 'Zimothy’s hello on the phones’ memory match card in Act 4', SALEM: 'Salem opening the final picks in Act 7' }
+  const lights = {
+    WAIT: 'Act 2, wait in the Parlour until you are called', LATER: 'Act 2, after Not yet, call me later', GO: 'Act 2, your turn, with [CAT], [ROOM] and [THEM]',
+    NEXT: 'Act 2, time is up, the next cat, with [CAT] and [ROOM]', ARRIVE: 'Act 2, after On my way: scan the code in the room', WITH: 'Act 2, the cat is talking to you, with [CAT]',
+    DONE: 'Act 2, you have seen all four cats', SUPPER: 'Act 2, the chime for supper',
+  }
+  const act4 = {
+    WARN: 'Act 4, the two-minute warning', GROUP: 'Act 4, under the group card', STUDY: 'Act 4, your group goes to the Study', LIBRARY: 'Act 4, your group goes to the Library',
+    ORANGERIE: 'Act 4, your group goes to the Orangerie', ENTRYWAY: 'Act 4, your group goes to the Entryway', PARLOUR: 'Act 4, nothing for your group this round (a tip follows)',
+    ARRIVE: 'Act 4, scan the code on the wall', CHIME: 'Act 4, the round has changed', PAID: 'Act 4, the room is done, back to the Parlour', OVER: 'Act 4, the rounds are over',
+  }
+  const rooms = { STUDY: 'the Study', LIBRARY: 'the Library (with [RHYME] for the motive crossed off)', ORANGERIE: 'the Orangerie', ENTRYWAY: 'the Entryway (with [RHYME] for the motive crossed off)' }
+  const host = { GRANOLIA: 'Granolia’s hello on the phones when a group arrives in the Study', ZIMOTHY: 'Zimothy’s hello on the phones when a group arrives in the Library', SALEM: 'Salem opening the final picks in Act 7' }
   const count = ['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE']
   return [
     ...Object.entries(lights).map(([k, what]) => ({ value: `LIGHTS ${k}`, label: `LIGHTS ${k}: ${what}`, extra: true })),
-    ...Object.entries(greet).map(([k, name]) => ({ value: `GREET ${k}`, label: `GREET ${k}: ${name}’s hello in Act 2 when ${name} has no hint for you`, extra: true })),
+    { value: 'SUPPER NOTE', label: 'SUPPER NOTE: supper called early, the cats you missed left a note', extra: true },
     { value: 'SALEM FRIEND', label: 'SALEM FRIEND: the card when the real Salem has been petted', extra: true },
+    ...Object.entries(act4).map(([k, what]) => ({ value: `ACT4 ${k}`, label: `ACT4 ${k}: ${what}`, extra: true })),
+    ...Object.entries(rooms).flatMap(([k, where]) => [
+      { value: `REWARD ${k} DONE`, label: `REWARD ${k} DONE: the cat’s line when a group finishes ${where}`, extra: true },
+      { value: `REWARD ${k} CAPPED`, label: `REWARD ${k} CAPPED: the cat’s line when the chime comes first in ${where}`, extra: true },
+    ]),
+    ...[1, 2, 3, 4, 5, 6].map(i => ({ value: `BOO JUDGE ${i}`, label: `BOO JUDGE ${i}: one of Boo’s six verdicts on a pose`, extra: true })),
     ...Object.entries(host).map(([k, what]) => ({ value: `HOST ${k}`, label: `HOST ${k}: ${what}`, extra: true })),
     ...[1, 2, 3, 4, 5, 6].map(i => ({ value: `HOST BOO ${i}`, label: `HOST BOO ${i}: one of Boo’s six lines before a Parlour Game`, extra: true })),
     ...[1, 2, 3, 4, 5].map(i => ({ value: `HOST IRWIN TRACE ${i}`, label: `HOST IRWIN TRACE ${i}: what Sir Irwin says over the trace at level ${i}`, extra: true })),
     ...count.map((w, i) => ({ value: `IRWIN ${w}`, label: `IRWIN ${w}: what Sir Irwin says over ${5 - i === 1 ? 'one motive card' : `${w.toLowerCase()} motive cards`}`, extra: true })),
+    // retired 23 Oct 2026: every cat now gives a hint and a bag clue, so no cat only greets; kept so lines already written still show
+    ...['SALEM', 'ZIMOTHY', 'BOO', 'GRANOLIA'].map(k => ({ value: `GREET ${k}`, label: `GREET ${k} (retired 23 Oct 2026: every cat gives a hint now, nothing reads this)`, retired: true })),
   ]
 })()
 export const UI_LABELS = [
@@ -98,6 +119,7 @@ export const UI_LABELS = [
   { value: 'FILLER', label: 'FILLER: a short line added to a short role card, so all three cards are the same length' },
   { value: 'RELAY RULES', label: 'RELAY RULES: three short rules on every phone before the first drawer walks up. Sir Irwin’s slides explain the game on the TV' },
   ...NOTICE_KEYS.map(k => ({ value: `NOTICE ${k.toUpperCase()}`, label: `NOTICE ${k.toUpperCase()}: ${NOTICE_WHAT[k]}` })),
+  ...RETIRED_NOTICE_KEYS.map(k => ({ value: `NOTICE ${k.toUpperCase()}`, label: `NOTICE ${k.toUpperCase()} (${NOTICE_WHAT[k]})`, retired: true })),
   ...EXTRA_UI_LABELS,
 ]
 
@@ -112,13 +134,13 @@ export const STUDY_LABELS = [
   { value: 'REPRODUCING', label: 'REPRODUCING: now the group touches it back' }, { value: 'ENTERING', label: 'ENTERING: press the colour and number on the button box' },
   { value: 'SLOW', label: 'SLOW: after a few misses, the pattern again, slower' }, { value: 'MAP', label: 'MAP: the panels numbered on screen' },
   { value: 'HALF COLOUR', label: 'HALF COLOUR: the number was right, the colour was not' }, { value: 'HALF NUMBER', label: 'HALF NUMBER: the colour was right, the number was not' },
-  { value: 'NEITHER', label: 'NEITHER: both halves wrong' }, { value: 'TIME', label: 'TIME: three minutes left' },
-  { value: 'SOLVED', label: 'SOLVED: the three jewels are lit' }, { value: 'CAPPED', label: 'CAPPED: fifteen minutes are up' },
+  { value: 'NEITHER', label: 'NEITHER: both halves wrong' }, { value: 'TIME', label: 'TIME: two minutes left' },
+  { value: 'SOLVED', label: 'SOLVED: the three jewels are lit' }, { value: 'CAPPED', label: 'CAPPED: the ten minutes are up' },
 ]
 
-// The Act 4 station cards, one line each. CAT may carry [CAT] for the cat's
-// name and [ROOM] for its room; BAGS may carry [PROPERTY] and [COUNT] (two or
-// three). CHECKIN is the Free time slot (23 Oct 2026).
+// The Act 4 station cards, one line each (retired 23 Oct 2026: Act 4 is four
+// game rooms now, and their words are the ACT4 labels on the phone's own
+// lines). Kept so lines already written still show; nothing reads them.
 export const STATION_LABELS = [
   { value: 'STUDY', label: 'STUDY: Granolia is expecting your group in the Study, upstairs' }, { value: 'CAT', label: 'CAT: a cat will see your group, with [CAT] for its name and [ROOM] for its room' },
   { value: 'BAGS', label: 'BAGS: the bags, with [PROPERTY] and [COUNT]' }, { value: 'PUZZLE', label: 'PUZZLE: the memory match on the iPad, in the Library' },
@@ -218,7 +240,7 @@ export const AREAS = {
         { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }] },
       { key: 'text', label: 'The words', placeholder: 'e.g. Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight.', kind: 'textarea', main: true },
     ] },
-  station_text: { label: 'The five stations', moment: 'Act 4, the card a group gets at each station', why: 'One line per station: the study, a cat, the bags, the memory match, free time. The phone has a plain default for each until you write yours.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length,
+  station_text: { label: 'The five stations (retired)', moment: 'Retired 23 Oct 2026: Act 4 is four game rooms now', why: 'The old Act 4 station cards. The rooms’ words are the ACT4 lines in the phone’s own little lines now, so nothing reads these. Kept, not used.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length, hidden: true, retired: true,
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which station', placeholder: 'Pick one', kind: 'select', options: STATION_LABELS },
@@ -346,7 +368,7 @@ export const GROUP_WHY = {
 }
 
 const ART_ASSET_SEED = [
-  'Portrait — Sir Irwin', 'Portrait — Salem Crookshank', 'Portrait — Zimothy Clawford',
+  'Portrait — Sir Irwin', 'Portrait — Salem Crooknog', 'Portrait — Zimothy Clawford',
   'Portrait — Miss Boo LaRue', 'Portrait — Granolia Lickspittle',
   'Sirwin Manor crest / wax seal (splash + mourning card)',
   'Kiosk chrome — cat encounter state', 'Kiosk chrome — echo broadcast state', 'Kiosk chrome — idle state',
@@ -689,6 +711,21 @@ export const ADDITIONS = [
     retireTasks: RETIRED_FOR_SECRET_LINES,
     fileTasks: FILED_FOR_SECRET_LINES,
     answerDecisions: SECRET_LINES_ANSWER,
+  },
+  {
+    // 24 Oct: docs/handoff-2026-10-23.md applied. Jon's final 24 bag items
+    // in, the 108 September items retired (soft-deleted, never erased); what
+    // Claude Code built marked done; the new jobs under their moments; the
+    // cards it replaces done with the reason; section 12's defaults answered;
+    // and the two decisions filed under moments the night no longer has moved.
+    id: '2026-10-24-handoff-1023',
+    retireItems: { bag_items: septemberBagItemsFile.items },
+    appendItems: { bag_items: bagItemsFile.items },
+    tasks: HANDOFF_1023_TASKS,
+    retireTasks: RETIRED_FOR_1023,
+    fileTasks: FILED_FOR_1023,
+    answerDecisions: ANSWERED_FOR_1023,
+    refileDecisions: REFILED_FOR_1023,
   },
 ]
 
