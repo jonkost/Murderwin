@@ -20,7 +20,7 @@ export function hallColour({ cues, relay } = {}) {
 // The sound catalogue: one file per id in media/ (media/README.md). This is
 // a copy of functions/lib/screen.js SOUND_IDS; a test on each side checks
 // the two agree. An id outside it is refused, counted, never played.
-export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power']
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power', 'chime-phone']
 export function knownSound(id) { return SOUND_IDS.includes(id) }
 
 // The recorded W-O-O-F News lines (media/README.md): a copy of

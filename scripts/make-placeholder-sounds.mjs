@@ -37,6 +37,7 @@ export const FIGURES = {
   'sting-result': [[784, 0.15], [1046, 0.15], [1318, 0.15], [1568, 0.45]],
   blackout: [[220, 0.8], [165, 1.0]],
   power: [[165, 0.3], [220, 0.3], [330, 0.3], [440, 0.6]],
+  'chime-phone': [[1568, 0.08], [1175, 0.08], [1568, 0.08], [1175, 0.3]], // a quick ring: look at your phone
 }
 
 // Mono 16-bit PCM samples for one figure, padded with silence in front.

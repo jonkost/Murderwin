@@ -19,13 +19,13 @@ blind"), the game design doc's "blind relay" section, and
   is open" anyway, so the game never depends on it.
 - **Sounds.** When the night asks for a sound, the relay plays the file with
   that name from the `media` folder, through whatever the Mac's sound is
-  pointed at (the AirPlay group). There are nine, listed in `media/README.md`
+  pointed at (the AirPlay group). There are ten, listed in `media/README.md`
   with the moment each one plays: `chime-news`, `sounder-bulletin`,
   `chime-irwin`, `sting-solved`, `sting-door`, `sting-reveal`, `sting-result`,
-  `blackout` and `power`. A file is named after its id and nothing else:
+  `blackout`, `power` and `chime-phone` (every "look at your phone" moment). A file is named after its id and nothing else:
   `chime-news.m4a`. Every file starts with one second of silence (the pad
   rule) so the speakers have woken up before the sound begins. The relay
-  refuses to start while any of the nine has no file, and says how many; until
+  refuses to start while any of the ten has no file, and says how many; until
   you have recorded them, `node scripts/make-placeholder-sounds.mjs` writes a
   stand-in tone for each. An id it does not know is refused and counted,
   never played.
@@ -76,7 +76,7 @@ controllers, so it is where the relay expects it on the night.
 - [ ] `npm start` in `cues/` is running in a terminal window you can see.
 - [ ] Start the night from the Host tab: the log says `[hall] red` and the bulb
       agrees. If it says `failed … retrying`, check the bridge address.
-- [ ] All nine sound files are in `media/` (the relay will not start without
+- [ ] All ten sound files are in `media/` (the relay will not start without
       them) and the Mac's output is the right speaker group. Play one with
       `afplay media/chime-news.m4a` (or `.wav` for a stand-in) to check.
 - [ ] The Orangerie HomePod is in that speaker group (bulletin 2 plays there
@@ -96,7 +96,7 @@ shows the trace. Nothing waits on the relay. The living room screen rings its
 own small chime and shows the bell for every cue, so a dead relay costs the
 room the big speakers, not the moment. `npm run fake` runs it without any
 hardware and prints what it would have done; press `r`, `g` or `s` to try it
-(`s` steps through the nine sounds in turn).
+(`s` steps through the ten sounds in turn).
 
 ---
 
@@ -125,7 +125,7 @@ order. Since 23 October the clips arrive as codes keyed on the station key
 plays the matches, skipping the rest with a count. `lib/player.js` keeps the
 running `afplay` and kills it when a newer cue arrives. The log names no id,
 clip or file: one `playLine` per cue, counts only (a test reads `cues.mjs`
-to check). `missingSoundFiles(dir, exists)` checks the nine cue sounds
+to check). `missingSoundFiles(dir, exists)` checks the ten cue sounds
 before the sign-in and exits 2 on any missing one, printing the count only
 (fake mode warns and carries on); missing clips never stop it.
 `scripts/make-placeholder-sounds.mjs` writes a 22 kHz mono WAV per id, one
