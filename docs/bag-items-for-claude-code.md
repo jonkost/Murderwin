@@ -1,5 +1,12 @@
 # Task: load the bag item list into the Workshop
 
+> **Superseded (24 Oct 2026).** Jon's final 24 items replaced this list: see section 15 of
+> `docs/handoff-2026-10-23.md` and `docs/sensory-bags.md`. The game reads `seed/bag-items.json`
+> (the final items, four or five a bag, fourteen clue words); the 108 items below are now
+> `seed/bag-items-september.json`, retired in the workshop (kept, marked deleted, never used).
+> The rules below (six a bag, one per sense, taste backups, stacked clues) no longer apply.
+> Kept as history only.
+
 > **Done (18 Oct 2026).** The 108 items are in `seed/bag-items.json` (as `{ _about, items }`)
 > and went into the workshop by migration `2026-10-18-bag-items`. The blind packer is built
 > (`npm --prefix scripts run pack-bags`, ten bags of six), and Jenna's page shows the packing

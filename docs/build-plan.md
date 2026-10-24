@@ -6,6 +6,14 @@
 23 October) is in the commit log and in `docs/sessions.md`. **What is left
 is on the workshop's Timeline page.**
 
+**24 October:** the 23 October handoff changed several things this page
+describes, so read these lines as history: the living room is the Parlour;
+Act 4 is four game rooms in ten-minute rounds (the study no longer moves
+the house on, and the stations and the bags station are gone); every cat
+gives a bag clue; the bedroom screen is Susan's MacBook Pro and the older
+iPad is the memory match; and there is no freeze date (the second full tech
+run by Wednesday 11 November, checks and fixes only after it).
+
 Written 17 to 19 October from a full map of the game against the Canon (six
 readers, three planners, three judges, one plan). A status line for each
 piece was added on 23 October. Anything marked "new 23 Oct" is built but
@@ -93,7 +101,7 @@ each with tests. I merged them and checked them before anything went live.
 5. **Bags, stationery and workshop gaps (G).** A blind packer decides which
    items go in which bag; the bags station reads it. Seven paper stand-ins
    for the documents. The workshop reaches every list the game reads, and a
-   Freeze button locks it on 7 November.
+   Freeze button locks it on 7 November (no fixed date since 24 Oct).
 
    *23 October: built and live,* the Freeze button included (press it on
    7 November). Whether the bags stay an Act 4 station is the open question
@@ -255,7 +263,8 @@ The three questions this page asked on 19 October:
   **Changed 21 Oct:** the study rotates the house; the Parlour Games come at
   their own times.
 - The murderer clue at the bags station is a property from the murderer's
-  real bag (if the bags station stays: *bagsAct4*).
+  real bag (if the bags station stays: *bagsAct4*). **Superseded 24 Oct:**
+  the bags stay, the station is gone, and every cat gives a bag clue.
 - Rehearsals use the emulator, or the live game with the party box unticked,
   rather than a second Firebase project.
 - Every Detective draws their own Parlour Game set, so no two phones are

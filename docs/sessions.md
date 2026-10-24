@@ -9,6 +9,70 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 24 Oct 2026 · Claude Code
+
+**What changed**
+- Applied `docs/handoff-2026-10-23.md` in full, sections 1 to 16 (the final
+  bag items, section 15, and the game names, section 16, included). Built
+  (live after the next deploy):
+  - The bags: Jon's 24 final items are the Things in the bags list; the 108
+    September items are retired (soft-deleted, kept). Fourteen clue words,
+    four or five things a bag, one food, a touch item, pairs written out on
+    Jenna's list. The packer packs to the new rules; on the seed list every
+    bag reaches 3 clue words. Sir Irwin's prompts are sixteen.
+  - The bag clue engine: each cat's bag clue (Act 2 about the Murderer's bag,
+    Act 4 about the Ghost's), at the cat's rung, Salem backwards at 1 to 3;
+    a word that sits in two or three bags in play. Rehearsals show stand-ins
+    in square brackets.
+  - Act 2: all four cats give every guest a motive hint and a bag clue; each
+    guest has two wrong families to rule out, so two always stand. Not yet,
+    the queue, the peek screen, Supper's ready and the automatic supper.
+  - Act 4: Start Act 4, the two-minute warning, the title card, groups with
+    Locked in, ten-minute rounds on the clock, four game rooms with their
+    rewards and the Parlour between them, Parlour Games waiting on the phone.
+    In Duplicate in three rounds (and on its own, ?kiosk=memory&play=1), Get
+    Off My Lawn! on the phones, Boo's Catwalk on ?kiosk=boo.
+  - The game names on the phones, each room's screen and the drawing's first
+    slide, with their hooks (`seed/game-names.json`).
+  - Bulletin 1 and the closing bulletin play as video on the Parlour TV once
+    the files are in play/public/video and Jon ticks The bulletins are videos
+    on the Game night page; until then the recordings play with the words.
+  - The permissions screen at sign-in, and Allow again.
+  - The brain (merged from its own branch): chime-phone, the tenth sound;
+    the three playlists by act with ducking; the four Hue scenes; the string
+    lights mirroring Salem's colours. Scenes and music buttons on the Host tab.
+  - `npm run checks` (1,000 stand-in cases, a fake night, the leak checks,
+    counts only), the workshop's Health page, and Run the checks on Jenna's
+    page (the real packing, leans and pictures; IDs and pass or fail only).
+  - The Devices page follows the 23 Oct device table. The study's cap is ten
+    minutes.
+- The board: thirteen built cards marked done, the chime-phone sound card,
+  sixteen new jobs (Jon, Jon and Susan, Claude chat), seven replaced cards
+  retired, six notes, six decisions answered with the handoff's defaults,
+  two decisions refiled.
+- CLAUDE.md and the docs (on-the-night, room-screens, solving-the-case,
+  parlour-games, test-plan, sensory-bags, steward-view, study-light-game and
+  others) say the same, checked claim by claim against the code by a
+  workflow (27 corrections). "Applied 24 Oct 2026" at the top of the handoff.
+  The Canon's build paragraph and Start Here's snapshot are dated 24 Oct.
+- Found on the way and fixed: the Host tab's study clock still counted
+  fifteen minutes, and Boo's wall had no dot on the Host tab.
+
+**What is left**
+- Jon: deploy, open the workshop once (it loads the final bag list), then
+  `npm --prefix scripts run pack-bags -- --repack`. Then the recordings.
+- Claude chat: mark the project copy of the handoff Applied; two rules deck
+  slides. Claude Code: the pose photo (nice to have), replay by seed, the
+  Home count rows, the motive card pictures.
+- Not tried on real hardware: the string lights, the projector, the Hue
+  scenes, the music, Salem's shake on real phones.
+- "docs/Sensory Bag Items.docx" (Jon's) is untracked and was not committed.
+
+**Decisions taken**
+- With the handoff's defaults (Jon may change any): newsVideo video, bagsAct4
+  the bags stay, tutorial8 kept buried, stewardPictures no, partnerAwards cut,
+  dialMapping fixed as built.
+
 ## 23 Oct 2026, afternoon · Claude Code
 
 **What changed**

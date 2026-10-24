@@ -1,4 +1,4 @@
-# The study light game (Act 4)
+# Granolia's Lightbulb Moment: the study light game (Act 4)
 
 The big puzzle of Act 4. Written 13 October 2026 from everything already decided about it,
 with the gaps filled in. Everything here is structure. No answers, no clue text. Safe for you
@@ -6,6 +6,14 @@ to read.
 
 **Updated 23 October 2026:** the study pays the Ghost's trace at the dial's level (§5), the end
 credits have two study awards (§9), and Granolia's intro on the phone needs new words (§11).
+
+**Updated 24 October 2026** (the 23 October handoff, built that day): the game has a name,
+**Granolia's Lightbulb Moment**, with its line *"She knows how to turn on the lights. It's on the
+tip of her tongue."* on the phones and the study screen. The cap is **ten minutes** (was fifteen),
+the same as every Act 4 room. The study is no longer the clock for the house: Act 4 is four game
+rooms in ten-minute rounds on the server's clock, every group visits the Study once, and the
+study pays the Ghost's trace plus a bag hint about the Ghost's bag. Where the dated build notes in
+§12 say otherwise, this paragraph wins.
 
 **Where the settled parts come from:** the Canon page (Puzzles, Hardware, The seven acts),
 `CLAUDE.md` (Hardware), the act skeletons (`chats/docs/sirwin-manor-act-skeletons.md` §5), the
@@ -20,13 +28,14 @@ those, it says so under "Decisions this doc makes".
 A group walks into the study. One wall of white hexagons plays a pattern. They touch it back.
 Do that three times and the colour lights on the other wall answer with a colour and a number.
 They press that pair on the little button box. Three rounds, three pairs, and the study sends
-every phone in the group the trace the victim left behind. Fifteen minutes, then out, whatever
+every phone in the group the trace the victim left behind. Ten minutes, then out, whatever
 happened. Granolia hosts and helps.
 
-The study is the timekeeper for the whole act: when one group is done, everyone rotates.
+The Study is one of Act 4's four game rooms. Every group visits it once, in its own ten-minute
+round; the round's chime, not the study, moves the house on.
 
-Granolia's only Act 4 job is the study. The cat station never sends a group to her, because her
-room, the Study, holds the light puzzle. That is settled by default; you may change it.
+Granolia's only Act 4 job is the study. With the trace she gives the group a bag hint about the
+Ghost's bag, at the group's average affection with her.
 
 ---
 
@@ -48,8 +57,10 @@ No Raspberry Pi anywhere. The room light stays low; the walls are the light.
 
 ## 3. How it plays, beat by beat
 
-**Called up.** When it is a group's turn, every phone in the group says *Granolia's expecting
-your group in the Study, upstairs.* with Granolia's intro under it, in her voice.
+**Called up.** When it is a group's round in the Study, every phone in the group shows the game's
+name, *Granolia's Lightbulb Moment*, and says *Granolia's expecting your group in the Study,
+upstairs.* The group scans the Study's code on the wall, and Granolia's intro shows under it, in
+her voice.
 
 **At rest.** The hexagons breathe at a dim glow. The Lines drift slowly through colours. The
 screen shows the study and Granolia, half hidden. Nothing says "waiting". This is a real state,
@@ -81,13 +92,14 @@ its own.
 
 **7. Three rounds, three jewels.** When the third pair locks in, the study pays out: the screen
 says *Something has been sent to your phones*, every phone in the group receives the trace
-(§5), the walls do a short celebration, and the rotation fires for the whole house. The study
-goes back to rest for the next group.
+(§5), the walls do a short celebration, and the group goes back to the Parlour until the chime.
+The study goes back to rest for the next group.
 
-**The clock.** Fifteen minutes from the first touch, hard, on the server's clock. At twelve
-minutes Granolia mentions the time. At fifteen the walls stop testing, the screen shows every
-pair the group had not yet earned, the trace is sent anyway, and the rotation fires. *"Thank
-you for trying your best. Off you go."* Nobody leaves the study without the trace.
+**The clock.** Ten minutes from the first touch, hard, on the server's clock. At eight minutes
+Granolia mentions the time. At ten the walls stop testing, the screen shows every pair the
+group had not yet earned, and the trace is sent anyway. *"Thank you for trying your best. Off
+you go."* The round's chime (ten minutes from the start of the round) also pays a group that is
+still in there. Nobody leaves the study without the trace.
 
 ---
 
@@ -99,8 +111,8 @@ you for trying your best. Off you go."* Nobody leaves the study without the trac
 | 2 | 4, then 5, then 6 | Medium. About 0.6 s. |
 | 3 | 5, then 6, then 7 | Quick. About 0.45 s. |
 
-- A clean run is about four minutes. Each mistake costs about half a minute. The cap allows
-  roughly twenty mistakes, which is generous on purpose.
+- A clean run is about four minutes. Each mistake costs about half a minute. The ten-minute cap
+  allows roughly a dozen mistakes, less the walk upstairs.
 - Six colours: red, yellow, green, blue, pink, white. Six numbers: one to six. Thirty-six
   possible pairs per round, so the full code is one in 46,656. Guessing is not a strategy.
 - Every pattern is random. The same panel can repeat inside a pattern only if there is at least
@@ -121,8 +133,8 @@ out looking brilliant.
 | Fourth miss on the same pattern | The screen shows a drawing of the wall with the panels numbered in the order they lit. She reads it out in words. |
 | Wrong pair entered | Says which half was right. |
 | A second wrong pair | Names the colour in words and shows the count as a number on screen. |
-| Twelve minutes | Mentions the time, kindly. |
-| Fifteen minutes | Stops the game, gives everything, sends everyone on. |
+| Eight minutes | Mentions the time, kindly. |
+| Ten minutes | Stops the game, gives everything, sends everyone on. |
 
 In the study Granolia is always right. (Her old habit of getting one detail of the night wrong was
 retired on 23 October 2026 with the cats' secret lines; her hint lines only ramble or forget.)
@@ -145,8 +157,8 @@ large. The blank key stays blank. Decided 25 September; unchanged here.
 ## 5. What the group wins
 
 **Changed 21 and 22 October.** The trace the victim left behind (the Ghost's own trace), as
-clearly as the clarity dial allows at the moment the group finishes or the fifteen minutes run
-out:
+clearly as the clarity dial allows at the moment the group finishes or the ten minutes run
+out, plus Granolia's bag hint about the Ghost's bag (since 24 October):
 
 | Level | What the group gets |
 |---|---|
@@ -209,18 +221,18 @@ Delay, never destroy. The trace is sent whatever happens.
 |---|---|
 | The hexagons stop answering touch | The pattern plays on the screen over a drawing of the wall, with the panels numbered. The group taps the numbers on the button box in order. Same game, same keys. |
 | The Lines go dark | The colour and the count appear on the screen instead. |
-| The whole station is down | The study is cut. The rotation runs on a twelve-minute timer and the server sends each group the trace with their study card. Granolia's lines show on their phones. |
+| The whole station is down | The study is cut. The group's round runs on the ten-minute clock like every room, and at the chime the server sends the group the trace and the bag hint. Granolia's lines show on their phones. |
 | The server cannot be reached | The station keeps running the game locally and sends "finished" when it reconnects. The group's phones catch up on their own. |
 
-The Nanoleaf layer is on the list of things that are safe to cut after the freeze. The trace
-is not.
+The Nanoleaf layer is on the list of things that are safe to cut in the last days (there is no
+freeze date). The trace is not.
 
 ---
 
 ## 9. What it leaves for the end credits
 
 - **Bright Sparks:** the group that cracked the study lights fastest.
-- **Left in the Dark:** every group the fifteen minutes beat, or, if every group cracked it, the
+- **Left in the Dark:** every group the ten minutes beat, or, if every group cracked it, the
   slowest one (*"Granolia still believes in you."*).
 - Decided 22 Oct (handoff §8). Still nothing about hints.
 
@@ -241,7 +253,8 @@ Each of these fills a gap. Say the word and any of them changes.
    question.
 4. **Granolia is always right in the study.** Her old one-wrong-detail trait applied only to her
    secret lines about the night, never to puzzle hints, and went with them on 23 October 2026.
-5. **The study's finish fires the house rotation.** Solve or cap, the rotation chime goes.
+5. **The study pays its group, and only its group.** Solve or cap, the group is paid. (Until
+   24 October the study's finish moved the whole house on; the round's chime does that now.)
 6. **The six colours** are red, yellow, green, blue, pink, white, chosen to look different from
    each other on LED bars in a dim room. Check them on the real Lines and swap any two that
    look alike.
@@ -289,7 +302,8 @@ Built blind, tested against fakes. Not yet run on the real walls.
    `npm install`, then `npm start`. Quit the Elgato app first.
 3. Open `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=study` in a
    browser on the M1 Air, full screen.
-4. After dinner, Host tab → *Make the groups*. The study greets the first group.
+4. After supper, Host tab → *Start Act 4*. When the rounds begin, the study greets the group due
+   there.
 5. No walls yet? `npm run fake` in `station/` plays the whole game from the
    keyboard (the key map prints when it starts).
 
@@ -298,7 +312,7 @@ Built blind, tested against fakes. Not yet run on the real walls.
   the server deals one card to every phone in the group. Nothing is on a phone before it is
   earned. **Done 22 Oct:** the card is the Ghost's trace at the dial's level
   (`station.js studyReveal`), not a written clue.
-- **The study is the clock.** The same "done" moves the whole house to the next station,
+- **The study is the clock.** (Superseded 24 Oct: the rounds are the clock now.) The same "done" moves the whole house to the next station,
   exactly as pressing *Next* would, as long as the night is in Act 4 on a station beat. A
   Parlour Game on the phones keeps running through the rotation (21 Oct).
 - **Rehearsing without the walls.** If no station has reported in for two minutes, a rotation
@@ -310,7 +324,7 @@ Built blind, tested against fakes. Not yet run on the real walls.
   credits' Bright Sparks and Left in the Dark, §9).
 
 **Added 17 October 2026, second pass (the Act 4 clock cannot misfire).**
-- **The study is the clock at every slot.** The two Parlour Games in Act 4 sit between
+- **The study is the clock at every slot.** (Superseded 24 Oct, as above.) The two Parlour Games in Act 4 sit between
   stations. Before this, a group finishing the study right before a Parlour Game lit the
   phones and then waited for you to press Next. Now one finish does both: every phone lights
   up with its three questions AND the whole house moves to its next station, in the same
@@ -324,7 +338,7 @@ Built blind, tested against fakes. Not yet run on the real walls.
   was told about is done". Which group that was, and who comes next, is the rotation's. The
   station re-arms for whichever group the server's study document names, never from its own
   memory, so a second group is never greeted as the first and paid as the first.
-- **No station? Twelve minutes a group.** If the study station has not reported in for two
+- **No station? Twelve minutes a group.** (Superseded 24 Oct: the round's ten-minute chime pays the group; *study-tick* is kept with a ten-minute slot.) If the study station has not reported in for two
   minutes when a rotation happens, the study runs on a twelve-minute timer instead: the trace
   card rides with the station card, and when the twelve minutes are up the house moves on, paid
   as "absent". Your Host tab keeps that clock (it asks the server once a minute through
@@ -346,7 +360,7 @@ Built blind, tested against fakes. Not yet run on the real walls.
   who happens to be the Ghost or the Murderer learns nothing from it.
 - **The hardware check.** `node scripts/hardware-check.mjs` prints PASS or FAIL for the
   Nanoleaf walls, the Hue bridge and the Stream Deck, and nothing else. Run it one evening
-  before the freeze with everything plugged in. `--fake` runs it with no hardware.
+  before the second full tech run with everything plugged in. `--fake` runs it with no hardware.
 
 (The deferred question about firing the Parlour Games on a study finish is moot since 21 Oct:
 they pop up on their own times.)
@@ -407,6 +421,12 @@ current, finished{} }`. The station signs in anonymously and presents `meta/game
 (set by `hostCommand('station-key')`); it never holds a service-account key and never reads
 `sealed/*` or `cases/*`.
 
+**Since 24 Oct** `run.studyFinished` calls `stationCommand('finished')` (which records the group
+and deals the trace card) and then `act4.payRoom(db, nightId, gid, 'study')` for the bag hint
+and the paid mark; it no longer rotates the house. `act4.setRooms` is now the writer of
+`public/study.groupId` each round; `deal.rotate` and `station.makeRotation` are gone. The
+paragraphs below describe the 17 Oct design where they mention rotation.
+
 **Pay-out (as built).** Callable `stationCommand({ nightId, key, station: 'study', command:
 'finished', payload: { groupId, outcome, seconds, pairs } })` → `dealStudy` writes
 `sessions/{uid}.dealt.study = { at, outcome, groupId }` for each member, records the group in
@@ -419,14 +439,17 @@ plus `trace`; `STUDY_PLACEHOLDER` when there is no reveal) to each member with `
 The case has had no `studyClue` since 23 October 2026 (the per-motive secret sets are retired).
 The no-station path deals the same card from `deal.rotate`.
 
-**Clock.** The cap is `startedAt + 15 min` on server time. The station keeps server skew the
+**Clock.** The cap is `startedAt + 10 min` on server time (`capMs`, 24 Oct; `warnMs` 8 min).
+Separately, `act4.setRooms` writes `public/study { groupId, slotEndsAt }` at the start of each
+round (the round's end), and the round's chime pays the group with `act4.payRoom` if the
+station has not. The station keeps server skew the
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock
 from `startedAt`, never from its own timer.
 
 **Pause.** The station also watches `nights/{id}` (station/lib/follow.js). While `phase` is
 `paused` its clock stands still and the wall ignores touches; on resume the game's `startedAt`
 moves on by the length of the pause (`runner.paused`), the next state write carries the moved
-start to the kiosk, and the group gets its whole fifteen minutes. The no-station slot
+start to the kiosk, and the group gets its whole ten minutes. The no-station slot
 (`public/study.slotEndsAt`) is moved by the server's `resume` instead (`PAUSE_SHIFTED`).
 
 **Which group.** The rotation (`deal.rotate`, `station.makeRotation` for the first group)
@@ -439,13 +462,11 @@ a workshop ui_copy line `HOST GRANOLIA`, if one is ever written, wins over the d
 
 **Fallbacks.** Elements unreachable for 5 s → the kiosk page shows the numbered wall and the
 station accepts number keys as the answer. Lines unreachable → colour and count rendered on the
-kiosk page. Station offline → `deal.rotate` sees `stationAlive` false and writes
-`public/study { state: 'absent', slotEndsAt: now + ABSENT_SLOT_MS (12 min), groupId }`;
+kiosk page. Station offline → nothing extra is written: `act4.setRooms` has already set `public/study { groupId, reassignedFrom: null, slotEndsAt }` (the round's end), and the round's chime pays the group through `act4.payRoom`;
 `station.tickStudy(db, nightId, now)` (host command `study-tick`, called by the Host tab on load
 and once a minute in Act 4; any scheduled tick may call it too) ends a slot that has passed by
 calling `run.studyFinished` with `outcome: 'absent'`, once per group (`rotation.finished` is the
-guard). A station that died mid-act never wrote a slot, so the beat's `beatAt` plus twelve
-minutes stands in. A live heartbeat (`updatedAt` within `STATION_QUIET_MS`) stops the tick.
+guard). A station that died mid-act never wrote a slot, so the beat's `beatAt` plus ten minutes (`ABSENT_SLOT_MS`) stands in. A live heartbeat (`updatedAt` within `STATION_QUIET_MS`) stops the tick.
 
 **Who owns `public/study.groupId` (17 Oct, second pass).** `deal.rotate` (and `makeRotation`
 for the first group) are the only writers. `stationCommand('state')` drops `groupId`,

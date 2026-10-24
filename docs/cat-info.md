@@ -2,7 +2,7 @@
 
 **Status:** consolidated 26 Aug 2026 from the Murderwin Mystery Party session. This is the register document — every line of cat dialogue gets written against it.
 
-**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank**; Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — what she tells you is true except for exactly one detail (a room, a time, a count, a place, a crowd…), which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
+**25 Sep 2026:** the Canon page (link in CLAUDE.md) wins where the two disagree. Folded in below: Salem's surname is **Crookshank** (Crooknog since 24 Oct); Boo is terse (five words, then done); Zimothy shades money answers; the trust ladder is stated at the top of the night (if Irwin and anyone disagree, Irwin is right); a failed affection roll gets an in-character deflection line, no penalty. **26 Sep 2026, decided:** Granolia *misremembers* — what she tells you is true except for exactly one detail (a room, a time, a count, a place, a crowd…), which is wrong. She never omits, never trails off at the gap, never corrects herself. Section 2 and 6 wording below is updated to match.
 
 **22 Oct 2026 (handoff §6 and §6b; wins over everything below).** Every cat's hint comes from the open Cat Hint Lines bank (`seed/cat-lines.json`), picked by the player's affection level. A cat only ever rules out WRONG families or motives. Never the truth.
 
@@ -26,6 +26,8 @@
   - Zimothy and Granolia keep their current lines.
 
 **23 Oct 2026 (Jon; wins over everything below).** The cats' secret lines are retired (decision secretLines). A cat's hint line is now all it says, at the rung of its ladder above. Gone: the secret middle between a greeting and a sign-off, the affection roll and its brush-off lines, Granolia's one wrong detail, and Salem's secret line that flipped on its own. The Act 2 safe is taken out too, so no cat hands over numbers for a puzzle. Where the sections below describe those, they are design history.
+
+**24 Oct 2026 (the 23 Oct handoff; wins over everything below).** Salem's surname is **Crooknog** (it replaces Crookshank everywhere). Every cat now gives each guest a motive hint **and a bag clue** in Act 2 (about the Murderer's bag), and each Act 4 room's cat gives a bag hint about the Ghost's bag at the group's average affection (`docs/sensory-bags.md` has their templates). **Boo speaks to every group in Act 4**, at any affection: her one exception. Each cat hosts an Act 4 game: Granolia's Lightbulb Moment (the Study), In Duplicate (Zimothy, the Library), Get Off My Lawn! (Salem, the Orangerie), Boo's Catwalk (the Entryway). The living room is the Parlour, Sir Irwin's room; no cat lives there.
 
 ---
 
@@ -77,7 +79,7 @@ None of them is "random." Every cat is *legible* once you understand them — wh
 
 ---
 
-## 3. SALEM CROOKSHANK — the long-time groundskeeper
+## 3. SALEM CROOKNOG — the long-time groundskeeper
 
 **[DECIDED] Canon phrasing: "the long-time groundskeeper."** Not decorative — the tenure is what licenses his confidence. He's been here longer than anyone, which is exactly why nobody questions him when he's wrong, and why he doesn't bother questioning himself.
 
@@ -171,7 +173,7 @@ Once all four descriptors existed, a shape appeared that nobody designed:
 ## THE CAST
 
 - **Sir Irwin** — the dog
-- **Salem Crookshank** — the long-time groundskeeper
+- **Salem Crooknog** — the long-time groundskeeper
 - **Zimothy Clawford, Esq.** — the old family solicitor
 - **Miss Boo LaRue** — family friend and socialite
 - **Granolia Lickspittle** — the charity case

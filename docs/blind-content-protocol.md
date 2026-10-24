@@ -167,9 +167,9 @@ Every sealed path, its writer and its readers (no client reads any of them;
 
 | Path | Written by | Read by |
 |---|---|---|
-| `sealed/parlour_leans` | `scripts/generate-leans.mjs` (`run leans`, blanks only); the Steward's `lean` | `deal.buildCaseForNight` on a party night only (copied into `parlourPlan.leans`), `steward.js opLeans` |
-| `sealed/relay_pictures` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures`) | `relay.start` on a party night only (`cases/{id}.rehearsal === false`) |
-| `sealed/bags` | `scripts/pack-bags.mjs` (`run pack-bags`) | `bags.bagsClue` on a party night only (the bags station), `night.packedBagCount` at `createNight` on every night (the highest bag number only, never an item), `steward.js opBags` |
+| `sealed/parlour_leans` | `scripts/generate-leans.mjs` (`run leans`, blanks only); the Steward's `lean` | `deal.buildCaseForNight` on a party night only (copied into `parlourPlan.leans`), `steward.js opLeans`, `steward.js opChecks` (LN1, a count) |
+| `sealed/relay_pictures` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures`) | `relay.start` on a party night only (`cases/{id}.rehearsal === false`), `steward.js opChecks` (RP1, a count) |
+| `sealed/bags` | `scripts/pack-bags.mjs` (`run pack-bags`) | `bags.readPacking` for the bag clues (`bagclues.js`) on a party night only: `deal.greetGuest` (Act 2, the Murderer's bag) and `act4.payRoom` (Act 4, the Ghost's bag); `night.packedBagCount` at `createNight` on every night (the highest bag number only, never an item); `steward.js opBags` and `opChecks` (PK1, G43, PK2, counts) |
 | `cases/{nightId}` | `deal.buildCaseForNight` at the Act 1 blackout; then kept up to date by `deal.js` (late joiners, what each clue crossed off), `windows.js` (the dial), `ledger.js` (dealt clues, exposure) and `safeguards.js` (Spill the Beans) | Functions only: `deal.js`, `screen.js`, `station.js`, `windows.js`, `safeguards.js`, `ledger.js`; `relay.js` and `discard.js` read its `rehearsal` flag only |
 | `nights/{id}/private/*` | the Functions (the Act 2 rooms, the bulletin, the drawing, the dial clues) | Functions only |
 
@@ -183,9 +183,11 @@ and read by nothing:
   keeps only the shared helpers (`adminDb`, `areaItems`, `say`, `memoryDb`,
   `sha12`, `redactedError`, `printFatal`). Steward ops `list`, `read`,
   `write` and `mark` are gone.
-- `validation_reports`: nothing writes or reads it. Its `firestore.rules`
-  read rule (admin only) is left in place, because changing the rules needs
-  Jon's approval; it is harmless.
+- `validation_reports`: back in use since 24 Oct, and not sealed:
+  `scripts/checks.mjs` (`npm run checks`) writes `validation_reports/checks`
+  with the Admin SDK (counts, check IDs, plain names and stand-in case
+  numbers only), and the workshop's Health page reads it under the existing
+  admin-only read rule. No rules change was needed.
 - `nights/{id}/private/puzzles` (the safe's answers), the `solve` callable
   (the next `npm run deploy` asks to delete it; Jon types y), the Act 2
   beat `puzzle` (`deal:puzzle`), card kinds `puzzle` and `document` (the Act 4 station keyed
@@ -197,8 +199,9 @@ and read by nothing:
   `document`.
 
 There are no hidden events (closed 22 Oct), so there is no `sealed/events/*`.
-CLAUDE.md lists the dial mapping as sealed; today every case's `dialMap` is
-the same fixed `DIAL_SIGN` (`case.js`), so no script makes it.
+Every case's `dialMap` is the same fixed `DIAL_SIGN` (`case.js`), so no
+script makes it; decision *dialMapping* closed 24 Oct with the handoff's
+default, keep it fixed.
 
 Lean table: `sealed/parlour_leans` (`{ sets: { setId: { q: { cat: 'a'|'b' } } },
 generatedAt }`, or `editedAt, editedBy: 'steward'` after the Steward's last
@@ -219,14 +222,20 @@ and PASS/FAIL only, and `relay.start` reads it on the party night only. Shape
 and checks: `docs/relay-drawing-game.md`, For Claude Code.
 
 Bag contents: `sealed/bags`, written by the blind packer
-(`npm --prefix scripts run pack-bags`, built 18 Oct 2026). It reads the bag
-items from the workshop, packs ten bags of six under the bag rules, prints
-counts and PASS or FAIL only, and refuses to replace a packing that is already
-there (or one the Steward edited) unless run with `--repack`. The bags station
-reads it on a party night: the property on the card is in two or three bags,
-one of them the murderer's or the victim's, and the card never carries a bag
-number. A rehearsal's bags card draws a property from the workshop's bag
-items and is marked placeholder.
+(`npm --prefix scripts run pack-bags`, built 18 Oct 2026, rewritten 24 Oct
+for Jon's final items). It reads the bag items from the workshop (the final
+line format, `docs/sensory-bags.md` §8), packs ten bags of four or five (one
+food, a touch item, extras; aims for three clue words a bag, falls back to
+two), prints counts and PASS or FAIL only (bags packed, every rule passed,
+bags reaching three clue words; never an item), and refuses to replace a
+packing that is already there (or one the Steward edited) unless run with
+`--repack`. Shape: `{ bags: { n: [itemId] }, doubles: { n: [itemId] }, words:
+{ n: { word: [sense] } }, properties, counts, aimed, rules, packedAt,
+packedBy, poolHash }`. The clue engine (`bagclues.js`) reads it on a party
+night: every clue word it names sits in two or three in-play bags, one guest
+gets one true word, and no clue carries an item, a bag number or a person. A
+rehearsal never reads it: every bag clue is a bracketed stand-in
+(`bagStandIn`).
 
 Runtime (built 17 Oct 2026, changed 23 Oct 2026):
 - `functions/lib/case.js` holds CASE_SHAPE, the contract for `cases/{nightId}`.
@@ -260,16 +269,17 @@ Runtime (built 17 Oct 2026, changed 23 Oct 2026):
 - Spill the Beans (`safeguards.js`) deals the fresh case the same way, by the
   case's own `rehearsal` flag, with a different motive, and reads nothing
   sealed. The ledger's blocking kinds are `study`, `echo` (the news on the
-  screen), `hint` and `memory` (`ledger.BLOCKING_KINDS`).
+  screen), `hint`, `memory` and `room` (any Act 4 room's reward, 24 Oct;
+  `ledger.BLOCKING_KINDS`).
 - The dry-run rule: a dry run on the party's secrets is its own night, created
   with `createNight(db, { forceRehearsal: false, dryRun: true })` by
   `npm run fake-night -- --real-secrets` (with `--live
   --i-know-this-is-the-party-database` on the party project), joined only by
   the eight fake players, and discarded afterwards. It prints `Case: party`
   (or `Case: rehearsal`) and a `Party secrets used` counts line: lean sets in
-  the plan, packed bags cards, drawing rounds from the bank. `createNight`
+  the plan, bag clues filled from the packing, drawing rounds from the bank. `createNight`
   points `public_state/active` at the new night, so the kiosks follow it; the
-  living room TV would show the real drawing options. The script never joins
+  Parlour TV would show the real drawing options. The script never joins
   Jon's or Susan's phones, but nothing in `night.join` refuses a dry-run
   night and an open phone follows the same pointer, so both stay off the game
   page until it prints PASS or FAIL.

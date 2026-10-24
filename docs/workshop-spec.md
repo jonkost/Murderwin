@@ -234,11 +234,31 @@ workshop:
   Hint Lines are a Claude Doc); Sir Irwin's moment in Act 5 needs his hello
   and goodbye.
 
+## 24 October 2026: the 23 October handoff
+
+- **Things in the bags** holds Jon's final 24 items, one line each: the
+  item, its clue words (only the fourteen words; the never-words are
+  refused), its kind (food as two singles, food as one pack, touch, or
+  extra), how many there are, what it looks like, and its prompt tag. The 108
+  September items are retired: kept, marked deleted, not shown.
+- **The Health page** (`#/health`, linked from Where we are): the last run of
+  `npm run checks`, one line per group (Case generator, Dry run, Leak
+  checks), a tick or a cross and a count, the failed check's ID, name and
+  stand-in case under a cross, the time of the run, and "All clear. The game
+  is ready." when all is green. No Run again button: the checks run on the
+  Mac.
+- **Jenna's page** has a third tab, The checks, with Run the checks
+  (`docs/steward-view.md`).
+- **The Devices page** follows the 23 October device table, room by room:
+  the Parlour, the Study, the Orangerie, the Library, the Entryway (Boo's
+  wall), the bedroom, and the spares, with the standalone memory match link.
+- **The Timeline** names the Act 4 rows by their games (The Study:
+  Granolia's Lightbulb Moment, and so on), and its first sections are
+  Before the second tech run and The weeks before (there is no freeze date).
+
 ## What's left to build here
 
 - The history screen (promise 2).
-- The Health page: every automated check as a tick or a cross
-  (`docs/test-plan.md`). Not built yet.
 - Count-only rows on Home for the leans, the packing list and the drawing
   pictures. A card on the Timeline.
 

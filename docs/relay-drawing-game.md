@@ -1,4 +1,4 @@
-# The Relay Drawing (Act 6, the Big Solve)
+# Sir Irwin Needs a Hand: the Relay Drawing (Act 6, the Big Solve)
 
 The group puzzle that ends the investigation. First written 13 October 2026. **Rewritten on
 23 October 2026 to match what is built**, from `docs/handoff-2026-10-22.md` §6c and §7 and the
@@ -12,11 +12,18 @@ handoff and the How to Play doc above, the act skeletons (`chats/docs/sirwin-man
 buckets), the paper-roll chat from 10 September (the practice player and its checks), and the
 client rules in `CLAUDE.md`. Where this doc goes past those, it says so under "Decisions".
 
+**Updated 24 October 2026** (the 23 October handoff): the game is called **Sir Irwin Needs a
+Hand**, with the line *"Three drawings open the door. He only has paws."* on Irwin's first slide.
+The story behind the name: Sir Irwin wants into the bedroom; he's a dog, so a closed door is
+torture; the door only opens after three drawings, and he only has paws. The living room is
+**the Parlour** everywhere. The bedroom screen is now Susan's work MacBook Pro, moved in after
+Act 4 (the iPad Pro no longer goes there). There is no freeze date.
+
 ---
 
 ## 1. What it is, in one breath
 
-Everyone is in the living room, looking at the TV. Sir Irwin explains the game on the TV. Then
+Everyone is in the Parlour, looking at the TV. Sir Irwin explains the game on the TV. Then
 the game calls one player, by their character. That person walks to the paper in the Library,
 where they cannot see the TV. Only then does the TV show one square of a picture. The room
 shouts how to draw it. Ten seconds. The next player is called. After a practice drawing and
@@ -30,7 +37,7 @@ Seven people yelling contradictory directions at one person with a marker is the
 
 ## 2. Where it sits in Act 6
 
-Act 6 is in the living room, about 7:30pm, and runs straight into Act 7. The Host tab's beats,
+Act 6 is in the Parlour, about 7:30pm, and runs straight into Act 7. The Host tab's beats,
 in order:
 
 1. **Two Parlour Games.** Every phone lights up with the night's last two sets, back to back,
@@ -38,7 +45,7 @@ in order:
 2. **The drawing.** This doc. Sir Irwin hosts it.
 3. **The door opens.** The light by the bedroom turns from red to green. The bedroom screen
    shows the trace at the level the clarity dial reached.
-4. **The deduction round**, back in the living room: each player publicly commits to one
+4. **The deduction round**, back in the Parlour: each player publicly commits to one
    elimination. Settled by default: it comes after the door opens, as built. You may change it.
 5. Act 7.
 
@@ -52,14 +59,14 @@ spoiling the fun part.
 
 | Thing | Where | Job |
 |---|---|---|
-| The TV | Living room. The main computer drives it: your work MacBook Pro, on `/play/?kiosk=living`. | Irwin's slides. The called player's portrait and character name. One square at a time. Then the four names to guess from: the room clicks its guess here. Irwin's door slide at the end. |
+| The TV | The Parlour. The main computer drives it: your work MacBook Pro, on `/play/?kiosk=living`. | Irwin's slides. The called player's portrait and character name. One square at a time. Then the four names to guess from: the room clicks its guess here. Irwin's door slide at the end. |
 | The paper roll | Library wall, in the blind spot: you cannot see the TV from the marker | Four grids, drawn blank on the day. |
 | The marker | In the tray | One colour. Hand it to the next person. |
 | Every phone | In every hand | Buzzes the person called to the paper and tells them to walk there. Everyone else's phone shows the same square as the TV. When a grid is done it says: go and look at the paper, then guess together on the main computer. Phones never vote. |
 | The hall light | The Hue bulb by the bedroom | Red from the start of the night. Green when the third real picture is named. |
-| The bedroom screen | The roaming iPad, carried to the bedroom right after dessert, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the living room.* until the third real picture is named. Then the trace. |
+| The bedroom screen | Susan's work MacBook Pro, carried to the bedroom after Act 4, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named. Then the trace. |
 
-The Library is in earshot of the living room. The room can hear the drawer swear; the drawer
+The Library is in earshot of the Parlour. The room can hear the drawer swear; the drawer
 can hear the room disagree with itself.
 
 ---
@@ -121,10 +128,10 @@ the top-left square.
 
 **The door.** Name the third real picture and the hall light goes green. The TV shows Irwin's
 door slide (*"Pawsome! The light by the door went from dark gray to... lighter gray!..."*)
-above *The door is open*, and the door sting plays. At the same moment the bedroom iPad shows
+above *The door is open*, and the door sting plays. At the same moment the bedroom screen shows
 the trace, with Sir Irwin's line for that level. Every phone says *The door is open. The light
 outside the bedroom has turned green. Go and see.* Everyone goes to the bedroom. The trace
-stays up there until Act 7. It comes back on the living room TV during Act 7's two minutes of
+stays up there until Act 7. It comes back on the Parlour TV during Act 7's two minutes of
 picks, so nobody has to remember it.
 
 **What the bedroom shows** is the murderer's trace at one of five levels, set by the clarity
@@ -249,9 +256,9 @@ Extra rules for the stand-ins:
       when the power returns.
 - [ ] The main computer (your work MacBook Pro) on `/play/?kiosk=living`, on the TV, sleep off.
       Tap it once anywhere so it is allowed to play sounds.
-- [ ] Right after dessert, carry the roaming iPad to the bedroom and change its page to
-      `/play/?kiosk=bedroom`. Bedroom door closed. (At supper the iPad is on `/play/?kiosk=ipad`
-      for the captions. Left on that page, it would show the drawing and never the trace.)
+- [ ] After Act 4, carry Susan's MacBook Pro from the landing (where it showed Boo's wall) to the
+      bedroom and change its page to `/play/?kiosk=bedroom`. Bedroom door closed. (Left on
+      `?kiosk=boo` it would never show the trace.)
 - [ ] Run the practice grid with Susan before guests arrive, from the Host tab button to the
       guess on the main computer.
 
@@ -261,14 +268,14 @@ Extra rules for the stand-ins:
 
 | What fails | What happens instead |
 |---|---|
-| The living room computer dies | Open `/play/?kiosk=living` on a spare screen (the older family iPad or any laptop; your call which) and set it on the TV stand. The room guesses on it. The roaming iPad stays in the bedroom. The phones keep the clock going meanwhile. |
+| The Parlour computer dies | Open `/play/?kiosk=living` on a spare screen (the iPad Pro, a spare from Act 4, or any laptop; your call which) and set it on the TV stand. The room guesses on it. The bedroom screen stays in the bedroom. The phones keep the clock going meanwhile. |
 | The hall light does not turn green | The TV says the door is open anyway. The game never depends on the bulb. |
-| The bedroom iPad dies | Host tab → *Show the trace on the TV*. The living room TV shows the trace ten seconds after the door opens. Nobody goes to the bedroom. |
+| The bedroom screen dies | Host tab → *Show the trace on the TV*. The Parlour TV shows the trace ten seconds after the door opens. Nobody goes to the bedroom. |
 | Nobody can agree on the guess | The guess has no clock. A wrong pick is only crossed off. |
 | The person called cannot walk | Whoever is nearest takes the turn. The app never checks. |
 | The server is unreachable mid-turn | Phones show what they last saw and catch up silently. The turn clock is the server's; it resumes where the server says. |
 
-Safe to cut after the freeze: the Hue bulb, the bedroom screen (use the TV). Never cut: the
+Safe to cut in the last days (no freeze date): the Hue bulb, the bedroom screen (use the TV). Never cut: the
 reveal order, and the rule that the trace shows at the dial's level.
 
 ---
@@ -286,10 +293,10 @@ The 13 October doc filled these gaps. Their state on 23 October:
    since 22 Oct the player walks to the paper **before** the square is shown.
 5. **Empty squares are skipped.** Stands.
 6. **The bedroom screen shows the trace as soon as the light goes green** and keeps it up. It
-   comes back on the living room TV in Act 7. Stands.
+   comes back on the Parlour TV in Act 7. Stands.
 7. **The deduction round goes after the door opens.** Settled by default: built that way. The
    trace is the last new fact of the night, so eliminating before it would be eliminating with
-   one eye shut. Back in the living room, each phone asks *Name one thing it is not*: a person
+   one eye shut. Back in the Parlour, each phone asks *Name one thing it is not*: a person
    or a motive. The strikes appear on the TV under each player's character as they commit. Nothing is
    scored, nothing is hidden. You may change the order.
 8. ~~Everyone walks to the paper before each vote.~~ **Replaced 22 Oct:** everyone still walks
@@ -319,7 +326,7 @@ Built and tested against the fake Firestore. Not yet played in the house.
   called, the drawer's prompt, everyone else's view of the square, "go and look, then guess on
   the main computer", the crossed-off names, and "the door is open".
 - **The room screens**: `/play/?kiosk=living` on the main computer (it is also the clock and
-  the place the room guesses), `/play/?kiosk=bedroom` on the roaming iPad from dessert (closed
+  the place the room guesses), `/play/?kiosk=bedroom` on Susan's MacBook Pro from the end of Act 4 (closed
   until the door opens).
 - **The Host tab**: *Start the drawing*, *Clear the drawing* and *Show the trace on the TV*
   under *The Big Solve*.
@@ -329,8 +336,8 @@ Built and tested against the fake Firestore. Not yet played in the house.
   `kiosk-living-hold` and `kiosk-living-done` (the door), `kiosk-bedroom-closed`,
   `kiosk-bedroom-1` … `kiosk-bedroom-5`.
 
-**To run it, once deployed** (`npm run deploy`, which you run): open the living room page on
-the main computer, full screen, on the TV. After dessert, put the roaming iPad in the bedroom on
+**To run it, once deployed** (`npm run deploy`, which you run): open the Parlour page on
+the main computer, full screen, on the TV. After Act 4, put Susan's MacBook Pro in the bedroom on
 the bedroom page. In Act 6, Host tab → *Next* at "The drawing" (or *Start the drawing*).
 Everything else runs itself; the room only clicks its guesses.
 
@@ -342,7 +349,7 @@ Everything else runs itself; the room only clicks its guesses.
   open question).
 - **The hall light** is the cue relay's job: `docs/cues-relay.md`. Red from Act 1, green at the
   door. The TV announces the door anyway.
-- **Act 7 on the living room screen.** During the two-minute picks the trace is back on the TV
+- **Act 7 on the Parlour screen.** During the two-minute picks the trace is back on the TV
   with the clock. Then the TV runs the finale on the server's clock: the closing W-O-O-F News
   bulletin with Murderer, Motive, Victim one at a time, then the end credits (time on the
   drawing and the pictures that took more than one guess are among the lines).
@@ -451,14 +458,14 @@ placeholder, at }`, the part the room may see to `nights/{id}/public/trace` (lev
 `{ level, images: [two ids, shuffled] }`; every other level `{ level, trace, label }`, label
 only at 5; both docs carry `irwinLine` from `hosts.irwinTraceLine(level)`), plus
 `public/cues { hall: 'green' }`. Idempotent. The host's Next refuses to leave "The drawing" while it runs. The
-bedroom kiosk (`?kiosk=bedroom`, on the roaming iPad) renders `TraceView` from the public doc
+bedroom kiosk (`?kiosk=bedroom`, on Susan's MacBook Pro since 24 Oct) renders `TraceView` from the public doc
 with CSS haze by level over `play/public/traces/<trace>.png`. Host command `tv-trace` sets
 `public/cues.tvTrace`; with it on, the living kiosk shows the trace once the door has been open
 `DOOR_HOLD_MS` (10 s) (`screen.doorStage`). A kiosk on `?kiosk=ipad` follows `livingView` with
 `captionsOnly`, which shows the relay while it runs and never the trace: the iPad must be moved
 to `?kiosk=bedroom`.
 
-**Audio.** The turn chimes (start, end, right, wrong) play from the living room kiosk's own
+**Audio.** The turn chimes (start, end, right, wrong) play from the Parlour kiosk's own
 speaker, not through AirPlay, because a ten-second cadence cannot absorb two seconds of
 spin-up. The door sting goes through `public/sounds` (`sting-door`), named by event ID as usual.
 

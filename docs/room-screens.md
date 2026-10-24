@@ -1,8 +1,10 @@
 # The room screens
 
-What the living room TV, the iPad, the bedroom screen and the study screen
-show at every beat of the night, and the sound that goes with it. Written
-18 October 2026, brought up to date 23 October 2026. Everything on this page
+What the Parlour TV, the iPads, Boo's wall, the bedroom screen and the
+study screen show at every beat of the night, and the sound that goes with
+it. Written 18 October 2026, brought up to date 24 October 2026 for the
+23 October handoff (the Parlour, the four Act 4 games and their names, the
+device table, the bulletins as video). Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -10,38 +12,59 @@ live, or which way the hidden pair have pulled.
 
 | Address | Screen | What it does |
 |---|---|---|
-| `?kiosk=living` | The living room TV (your work MacBook Pro) | Everything below. In the drawing the room taps its guesses here. |
-| `?kiosk=ipad` | The iPad Pro on a stand in the orangery, Acts 2 and 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper. |
-| `?kiosk=memory` | The same iPad Pro, on a small stand in the Library with Zimothy, Act 4 | The memory match: six pairs of traces, with file-folder backs; clearing it crosses one motive off that group's list. |
-| `?kiosk=bedroom` | The same iPad Pro, carried into the bedroom right after dessert | Closed until the third picture is named, then the trace and Sir Irwin's line for it. |
-| `?kiosk=study` | The study screen on the M1 Air | Granolia and the light puzzle. |
+| `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below. In the drawing the room taps its guesses here. |
+| `?kiosk=ipad` | Your iPad Pro on a stand in the Orangerie, Acts 2 and 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper. A spare screen from Act 4. |
+| `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia. |
+| `?kiosk=memory` | The older iPad, on a small stand in the Library with Zimothy, all night | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. |
+| `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
+| `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, Act 4 | Boo's Catwalk on the triangle wall above the Parlour opening. |
+| `?kiosk=bedroom` | Susan's work MacBook Pro again, carried into the bedroom after Act 4 | Closed until the third picture is named, then the trace and Sir Irwin's line for it. |
 
-One iPad Pro does three jobs in turn: the captions at supper, the memory
-match in Act 4, then the bedroom. The older family iPad is the spare phone.
+The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
+has no room screen: it runs on the group's own phones, and the Orangerie
+string lights follow if they answer the brain. The old iPhone 11 is the
+spare phone. The workshop's Devices page lists every screen with its
+address and a square code.
 
 Every screen is dark from the blackout until the first beat of Act 2, and
 near-black with "One moment" while the night is paused. On a rehearsal
 night a big red REHEARSAL band runs across every phone and every room
-screen.
+screen, and every slot that would show a secret shows a stand-in in square
+brackets.
 
 ## What the TV shows, beat by beat
 
-- *Act 1.* The act name.
-- *Act 2, W-O-O-F News bulletin 1.* The opening, the one line that crosses
-  off a wrong family, and the sign-off. The brain plays `chime-news`, then
-  the recordings. The phones say eyes up. The TV goes back to its crest at
-  the next beat; the iPad keeps the words up.
+- *Act 1.* The act name. The rules deck and the join code show in a second
+  browser tab on the same MacBook; switch back to the game before the
+  blackout.
+- *Act 2, W-O-O-F News bulletin 1.* The opening, the one part that crosses
+  off a wrong family, and the sign-off. Once you tick The bulletins are videos on the Game night page, they play as video with the TV's own sound (decided 23 October) and the brain plays only `chime-news`. Until then the brain plays `chime-news` and the recordings, and the TV shows the words. Each part is a file in `play/public/video`; a part
+  with no file yet is skipped, and its words stay on the screen with a
+  caption line under every video. The phones say eyes up. The iPad keeps the
+  words up.
+- *Act 2, the cat visits.* Sir Irwin's prompts: his picture and one idea for
+  what to share, a new one every three minutes, in a fresh order each
+  night, never the same one twice running. Sixteen prompts, all in
+  `seed/bag-lines.json`; none ever names a clue word. They run while guests
+  wait in the Parlour for their turn with a cat.
 - *Act 3, bulletin 2.* Press Next on *Arm the bulletin* near the end of
   supper; your phone says only Armed. 3 to 5 minutes later it plays on the
   speakers (the Orangerie HomePod), the orangery iPad shows the words, and
   every phone gets a notice. It points at the real family, plainer the
   higher the dial.
+- *Act 4, Behind Closed Doors.* After the two-minute warning, the title
+  card: "Act 4 · Behind Closed Doors" and "Look at your phone and find your
+  group." It is silent; the brain changes the music. Then, through every
+  ten-minute round, Sir Irwin's prompts again, for whoever is waiting in the
+  Parlour.
 - *Act 5, Sir Irwin's countdown.* Irwin in one of his five moods, his
   opener, the line that says how sure he is, five to one motive cards (five
   at dial 1, one at dial 5, the real one always among them), and his closer.
   Nothing else: the old secret middle line is gone (23 October).
-- *Act 6, the drawing.* Irwin's seven rules slides, each up long enough to
-  read (about 5 seconds plus 0.4 seconds a word); slide 3 shows the practice
+- *Act 6, Sir Irwin Needs a Hand (the Relay Drawing).* Irwin's seven rules
+  slides, each up long enough to read (about 5 seconds plus 0.4 seconds a
+  word); the first carries the game's name and its line ("Three drawings
+  open the door. He only has paws."), and slide 3 shows the practice
   smiley's B1 square. Each turn, only the called player's portrait and
   character name while they walk to the paper in the Library, then a black
   screen with one white square and its label. After each picture, four names
@@ -49,8 +72,8 @@ screen.
   ten seconds before guessing again. Practice smiley, then 3 by 3, 4 by 4,
   5 by 5.
 - *Act 6, the door.* Irwin's "Pawsome!" slide above "The door is open". The
-  hall light goes green and the bedroom iPad shows the trace. If the bedroom
-  iPad has died, press **Show the trace on the TV** on the Host tab: after
+  hall light goes green and the bedroom screen shows the trace. If the
+  bedroom screen has died, press **Show the trace on the TV** on the Host tab: after
   ten seconds the TV shows the trace, the same as the bedroom would.
 - *Act 6, the deduction round* (after the door opens: settled by default,
   you may change it), *and the Act 7 ballot.* The board: every character at
@@ -59,10 +82,30 @@ screen.
   ballot the TV adds the two-minute clock and the trace, if there is one.
 - *Act 7.* The stats and the achievements you gave during the night, while
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
-  part of the closing bulletin, then shows its card (Murderer, Motive,
-  Victim) once that part has played. Then the closing story, the dial's
+  part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
   here), and Irwin's "Can we play again?"
+
+## The Act 4 room screens
+
+Each shows the game's name, with its line under it, at the top (Jon,
+24 October), and waits for the next group between visits. Boo's wall shows the name only between groups and during her intro.
+
+- *The study, Granolia's Lightbulb Moment.* Granolia, the three jewels for
+  the pairs found, the round and pattern, the ten-minute clock, and what
+  Granolia says. `docs/study-light-game.md` has it all.
+- *The Library, In Duplicate.* "Sir Irwin scattered his files. Match every
+  copy. He bills by the pair." Zimothy's line for the round, then the board:
+  turn two folders at a time. Three rounds: 7, 10 and 14 pairs. After the
+  third, "Order. Restored." and the reward goes to the group's phones.
+- *The Entryway, Boo's Catwalk.* "When the music stops, strike a pose.
+  She's always judging." Boo struts across the wall to runway music (a
+  simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the
+  music stops: STRIKE A POSE, then HOLD IT with a five-second count, then
+  Boo's verdict. Three poses, then "That's the show, darling." and the
+  reward on the phones.
+- *The Orangerie, Get Off My Lawn!* No screen: the group's phones tint their
+  whole screen red (shake) or green (freeze), with Salem's lines.
 
 ## The three corners of every screen
 
@@ -83,12 +126,18 @@ screen.
 
 ## The sounds
 
-Nine cue sounds, one file each in `media/`, plus the W-O-O-F News
-recordings. `media/README.md` lists them all, how to name them, and the
-one-second-of-silence rule. The brain plays them through the speakers. A
-recording with no file yet is skipped; the words are on the screen anyway.
-Until you have recorded the nine, `node scripts/make-placeholder-sounds.mjs`
-makes a different little tone for each.
+Ten cue sounds, one file each in `media/`, plus bulletin 2's recordings.
+The tenth, `chime-phone`, rings when supper is ready, when Act 4's groups
+come up and at every Act 4 round, and as the Act 6 Parlour Games open.
+`media/README.md` lists them all, how to name them, and the
+one-second-of-silence rule. The brain plays them through the speakers, with
+the music dipped under them. A recording with no file yet is skipped; the
+words are on the screen anyway. Until you have recorded the ten,
+`node scripts/make-placeholder-sounds.mjs` makes a different little tone for
+each. Bulletin 1 and the closing bulletin are video on the TV, with the TV's
+own sound, once the videos are in and you tick The bulletins are videos on
+the Game night page. Until then the brain plays the recordings and the TV
+shows the words.
 
 ---
 
@@ -96,8 +145,15 @@ makes a different little tone for each.
 
 `functions/lib/screen.js` writes two public docs any phone may read:
 
-- `nights/{id}/public/screen` `{ kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, choices?, mood?, parked? }`,
-  kind one of `idle | black | news | bulletin | irwin | board | door | trace`.
+- `nights/{id}/public/screen` `{ kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, choices?, mood?, parked?, prompts?, video? }`,
+  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title`.
+  `prompts` is `{ lines, order, startedAt, everyMs }` (`screen.promptsFor`,
+  the order from `bagclues.promptOrder` on the case's screen seed, carried on
+  from the previous prompts doc); the TV picks the line with
+  `promptShown` (`play/src/lib/rooms.js`). `video: true` on a news doc (and
+  on the finale's stage) means the TV plays the parts as video
+  (`screen.bulletinVideo`, `meta/game.bulletinVideo === true`, the Game night page's box; off by default so a night before the videos exist keeps the recordings); the doc
+  never names a clip, the TV finds each part in the open bank by its words.
   `struck` is never written any more (the struck-motives bulletin is gone).
   `run.enterBeat` calls `screen.onBeat` after the beat moves (the
   beat's `screen` and `sound` fields in `seed/night.json`); the blackout,
@@ -106,9 +162,10 @@ makes a different little tone for each.
   `checkScreen` refuses any doc carrying a key in `FORBIDDEN_SCREEN_KEYS`
   at any depth before it is written, and the night-walk test asserts the
   same plus the fake players' public-doc tokens at every step.
-- `nights/{id}/public/sounds` `{ current: { id | null, at, clips? } }` via
-  `screen.play`: `id` from `SOUND_IDS`, or null with clips only (the closing
-  bulletin). Since 23 October the clips go out as codes keyed on the station
+- `nights/{id}/public/sounds` `{ current: { id | null, at, clips?, video? } }` via
+  `screen.play`: `id` from `SOUND_IDS` (ten since 24 Oct, `chime-phone` the
+  tenth), or null with clips only (the closing bulletin). `video: true`
+  tells the relay to ring the id and skip the clips. Since 23 October the clips go out as codes keyed on the station
   key, never as clip ids, on any night with a key saved (`media/README.md`,
   technical). `sting-solved` is
   written by `run.studyFinished` on a solved outcome; `sting-door` by
@@ -151,7 +208,13 @@ still exported but no screen uses them. `play/src/screens/Kiosk.jsx` renders the
 (`ScreenCard`, `IrwinFace`, `Captions`, `Board`, `DoorScreen`, `Bedroom`,
 `TraceView`, `MemoryMatch`, `Finale` with `CalcBar`, `StatsReel`,
 `AwardsReel`, `Credits`, `TugOfWar`, the drawing's `Portrait` and `Guess`,
-`Study`, `Dark`, `OneMoment`, `Wake`, `Bell`, `StaleDot`). The living kiosk
+`Study`, `Dark`, `OneMoment`, `Wake`, `Bell`, `StaleDot`), and
+`play/src/screens/Rooms.jsx` the 23 Oct screens (`Prompts`, `TitleCard`,
+`BulletinVideo`, `MemoryRounds`, `MemoryStandalone`, `BooWall`, and
+`GameName`, which reads `seed/game-names.json` through `GAME_NAMES` in
+`play/src/lib/rooms.js`). The boo kiosk reads `public/boo` (the show's
+schedule from `act4.booShow`) and calls `booDone`; the memory kiosk reads
+`public/memory` and calls `memoryStep` per cleared board. The living kiosk
 and the iPad subscribe to `public/content` for the character names on the
 board; the study kiosk for Granolia's lines. Previews (`play/src/Preview.jsx`
 `KIOSK`): `?preview=kiosk-news | kiosk-rehearsal | kiosk-bulletin |
@@ -160,7 +223,9 @@ kiosk-living-hold | kiosk-living-rules | kiosk-living-turn |
 kiosk-living-vote | kiosk-relay-called | kiosk-relay-square |
 kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to
 kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
-kiosk-study-fallback | kiosk-memory | kiosk-memory-clear | kiosk-finale |
+kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
+kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-prompts |
+kiosk-title | kiosk-finale |
 kiosk-finale-awards | kiosk-finale-graph | kiosk-finale-reveal |
 kiosk-finale-leadin | kiosk-finale-victim | kiosk-finale-done |
 kiosk-finale-journey | kiosk-finale-credits | kiosk-finale-last |

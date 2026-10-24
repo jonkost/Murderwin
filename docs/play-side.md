@@ -18,7 +18,8 @@ collect.
 
 **The phone at rest.** Their character: name, profession, a one-line bio, the
 bag number, and now and then a line from a cat wandering past. Under it, the
-Reticule — four tabs:
+Reticule (since then also *Now* and *Clues*, where every cat's hint and bag
+clue is saved) — four tabs:
 - *You* — the character card.
 - *Motives* — all nineteen rhymes, visible from Act 1. Tap to cross one off.
   That is the guest's own note; it proves nothing and nobody else sees it.
@@ -171,36 +172,37 @@ is the page to have open on the day.
 named after the character (the README in that folder lists the names), then
 `npm run deploy:site`. A character without a picture shows initials.
 
-## What is not built yet (23 October 2026)
+## What is not built yet (24 October 2026)
 
-- The secrets: since 23 October there are no secret cat lines or documents
-  to make (you retired them). What is still made blind is the cats' leans
-  (`npm --prefix scripts run leans`), the packing list and the drawing
-  pictures, each a card on the board.
-- The Relay Drawing pictures: `npm --prefix scripts run relay-pictures`
-  (it prints counts only), or Jenna. Until then the party uses stand-in
-  pictures.
+- The blind scripts: the cats' leans (`npm --prefix scripts run leans`), the
+  packing list (run once now that your final bag items are in:
+  `npm --prefix scripts run pack-bags -- --repack`) and the drawing pictures
+  (`npm --prefix scripts run relay-pictures`, or the party uses stand-in
+  pictures). Each prints counts only and is a card on the board.
 - Art: the motive card pictures (the slot for
   them is not built yet either), the W-O-O-F News graphics, a candle in the
   Medium's portrait, and a photo of Sydney saved as
   `play/public/household/sydney.jpg`.
-- The recordings in `media/README.md`. Video on the TV is built only if you
-  answer *newsVideo* with video.
+- The recordings in `media/README.md`, and the bulletin 1 and closing
+  bulletin videos in `play/public/video` (the TV plays them once they are there and the box The bulletins are videos on the Game night page is ticked; until then the brain plays the recordings and the TV shows the words).
 - Replaying a night from its seed, and Home's count-only rows for whether
   the leans, the packing list and the drawing pictures exist.
   Both are cards on the board.
-- Waiting on your decisions: the Partner in Crime and Ghost Whisperer awards
-  (*partnerAwards*: cut or build), and a Drawing pictures tab on Jenna's page
-  (*stewardPictures*).
+- The pose photo for the end credits (a nice-to-have card).
+
+Closed on 24 October with the handoff's defaults: no Partner in Crime or
+Ghost Whisperer awards (*partnerAwards*: cut), and no Drawing pictures tab
+on Jenna's page (*stewardPictures*: no).
 
 Built since 17 October: Jenna's Steward page (17 October), the Freeze button
-(18 October), the blind bag packing (18 October), and the Cat Hint Lines,
-W-O-O-F News and Sir Irwin's countdown lines (22 October).
+(18 October), the blind bag packing (18 October), the Cat Hint Lines,
+W-O-O-F News and Sir Irwin's countdown lines (22 October), and (24 October)
+everything in "Built 24 October" below.
 
 **The safeguards (17 October).** The Host tab has Spill the Beans and the
 Hush under "If something goes wrong". Spill the Beans works through Act 5
-and only while nothing that pins the story (the news, a cat's hint, the
-study's clue, the memory match) has reached anyone; the Manor decides silently and the phone says
+and only while nothing that pins the story (the news, a cat's hint or bag
+clue, any Act 4 room's reward) has reached anyone; the Manor decides silently and the phone says
 the same thing either way. The Hush is for a role given away out loud: that
 player's Parlour Game answers stop counting, nothing on any phone changes,
 and the reveal says one line about it. `docs/on-the-night.md` has the
@@ -218,6 +220,49 @@ the news, the Act 3 bulletin, Sir Irwin at cake, the board of strikes and
 the door on the TV, the iPad as a captions screen, and a sound for every
 cue (`docs/room-screens.md`; the news and the bulletin became W-O-O-F News
 on 22 October).
+
+## Built 24 October 2026 (the 23 October handoff)
+
+Where this section and an older one below disagree, this one wins.
+
+- **The permissions screen.** After a guest types their name, one screen
+  asks to allow motion (one game asks you to shake your phone), sound, and
+  keeping the screen awake. One tap on Allow does all three; a phone that
+  says no still plays the whole game. The You tab keeps an Allow again link.
+- **The Parlour.** The living room is the Parlour everywhere: on the phones,
+  the TV and the Host tab.
+- **Act 2: all four cats talk.** After the news, every phone asks for a quiet
+  look in your own bag. Then the phones call guests to the four cats one at
+  a time. Every cat gives a motive hint and a bag clue about the Murderer, at
+  the rung its affection sets when the guest scans in; both go to the Clues
+  tab. Not yet, call me later puts a guest back in the queue for two minutes;
+  no cat sits idle while someone is waiting. Others wait in the Parlour with
+  Sir Irwin's prompts on the TV. The supper chime comes when everyone has
+  seen all four, or when you press Supper's ready; a guest with cats still
+  unvisited gets their lines as a note.
+- **Act 4: four game rooms.** Start Act 4 (on the Host tab in Act 3), a
+  two-minute warning, the groups as portraits with Locked in, then
+  ten-minute rounds on the server's clock. Each group visits Granolia's
+  Lightbulb Moment (the Study), In Duplicate (the memory match in the
+  Library, three boards, all fourteen traces), Get Off My Lawn! (Salem's
+  red light, green light on the phones in the Orangerie) and Boo's Catwalk
+  (on the Entryway wall), and waits in the Parlour between. Each room pays a
+  reward and a bag hint about the Ghost. Parlour Games wait on the phone in
+  Act 4. The old stations, the cat station and the bags station are gone.
+- **The game names**, each with its line under it, on the phones and on each
+  room's screen, and Sir Irwin Needs a Hand on the drawing's first slide.
+- **The bags.** Your 24 final items in the workshop, fourteen clue words,
+  the packer, the bag clues, and Jenna's packing list ("2 Kisses").
+- **W-O-O-F News as video** on the Parlour TV for bulletin 1 and the closing
+  bulletin, with the words shown for any part with no video.
+- **The Host tab:** Supper's ready, Start Act 4, the four light scenes and
+  the music's play, pause and next playlist.
+- **Rehearsal stand-ins** in square brackets wherever a secret would show.
+- **The checks:** `npm run checks`, the Health page, and Jenna's Run the
+  checks.
+
+The older sections below are kept as they were written, with a note where
+they are out of date.
 
 ## Cats tab: where you stand (built 16 Oct 2026)
 
@@ -285,7 +330,8 @@ The rules deck (slide "How the cats feel about you") already shows this design.
 
 ## The bags, the paper and the freeze (built 18 October 2026)
 
-- **The bags clue is true.** The bags station card says "something minty is in
+- **The bags clue is true.** (Out of date: the bags station went on 23 and
+  24 October; every cat now gives a bag clue, see "Built 24 October".) The bags station card says "something minty is in
   two of the bags" from the real packing, and the property it picks sits in
   the murderer's or the victim's bag. It never says a bag number. Before the
   bags are packed, or in a rehearsal, it draws a property from the bag items
@@ -298,7 +344,7 @@ The rules deck (slide "How the cats feel about you") already shows this design.
   typed in a list after that can change a phone mid-night. The host's Resend
   button and every join still work; they simply find nothing new to copy.
 - **The room screens read the workshop too.** Granolia's lines on the study
-  screen, the five station cards and the closing story are copied to the
+  screen, the station cards (gone since 24 October) and the closing story are copied to the
   phones' content with everything else, and the Check page (`?check=1`)
   lists them. Granolia's lines read cleanly: no doubled full stops, and
   *heavy breathing* shows in italics.
@@ -316,11 +362,12 @@ secret.
   Personal slights, matched to the nineteen motive numbers in
   `seed/families.json`. Players never see a family name; the game uses them
   to narrow the motive across the night.
-- **Act 2, Lights Out, runs the rooms** (updated 22 October). After the
+- **Act 2, Lights Out, runs the rooms** (updated 22 October; the Parlour,
+  the bag peek, the queue and Not yet came on 24 October). After the
   news, every phone sends its guest to **all four cats**, one at a time, at
-  the top of Now: *Stay in the living room*, then *Granolia is waiting for
+  the top of Now: *In the Parlour* (it said the living room until 24 October), then *Granolia is waiting for
   you in the Study*, then the cat's greeting, then *Time's up. Boo is
-  expecting you in the Entryway*, and so on, then *Back to the living room*.
+  expecting you in the Entryway*, and so on, then *Back to the Parlour*.
   At the chime: *Supper is served in the Orangerie*. Granolia is in the Study, Salem in the Orangerie, Zimothy in
   the Library and Boo in the Entryway. Only one guest is at a cat at a time:
   the phones send guests off in waves and buzz when it is their turn. In the
@@ -331,10 +378,11 @@ secret.
   greeting and sends them to supper.
 - **The four room codes** are on the workshop's Game night page, under *The
   four cat rooms (Act 2)*. Print them and put each one up in its room.
-- **Only one of the four cats gives a real hint**, picked at random for
-  each guest when the case is dealt. It rules out a wrong family of motives.
-  The other three only say hello in character (the four greeting lines from
-  the handoff). W-O-O-F News bulletin 1 crosses off exactly one family for
+- **Every cat gives a real hint** (since 24 October; until then only one of
+  the four did, and the other three said hello). Each guest has two wrong
+  families of their own; the cats' hints name only those, or a motive in
+  the family the news crossed off, so at least two families stand for every
+  guest after Act 2. W-O-O-F News bulletin 1 crosses off exactly one family for
   everyone. The hint is that cat's line from the Cat Hint Lines at the
   guest's affection with it. Never the real family.
 - **Act 4, the study pays the Ghost's trace**, shown at whatever level the
@@ -347,14 +395,17 @@ secret.
   never the Ghost's. The one-line description that used to come with level 5
   is no longer shown, so the workshop's *What was left behind* list is
   retired: hidden from the dashboard, with anything already written kept.
-- **Act 4, the small puzzle is now the memory match**, on an iPad pointed at
+- **Act 4, the small puzzle is now the memory match** (since 24 October:
+  In Duplicate, three boards of 7, 10 and 14 pairs, all fourteen traces, on
+  the older iPad in the Library; the next lines describe the 22 October
+  version), on an iPad pointed at
   `/play/?kiosk=memory`: twelve cards, six pairs of traces of people at the
   party, no names, with file-folder backs, shuffled fresh for each group.
   Zimothy hosts it with a line of his own. Clearing the board crosses
   one motive off that group's list (a card on each phone with a *Cross it
   off* button). Never the real motive. A group that runs out of time is
   given its cross-off anyway.
-- **Act 5, Sir Irwin's countdown** (updated 22 October), on the living room
+- **Act 5, Sir Irwin's countdown** (updated 22 October), on the Parlour
   screen: five motive cards at dial 1, four at 2, three at 3, two at 4, one
   at 5, with his five lines from the handoff. The real one is always among
   them. The others come from its family first, then from families already

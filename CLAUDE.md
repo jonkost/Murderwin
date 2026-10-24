@@ -1,11 +1,12 @@
 # CLAUDE.md — A Murderwin at Sirwin Manor
 
 Rules for working in this repo. These are load-bearing. Read fully before any task.
-Updated 23 October 2026. Party: Sunday 15 November 2026. Freeze: Saturday 7 November 2026.
+Updated 24 October 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
+feature lands Wednesday 11 November, after the second full tech run; then checks and fixes only.
 
-> **NEW (23 Oct 2026, 5:10 PM): read `docs/handoff-2026-10-23.md` in full before any task.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, the open banks still to copy into the game, and the ordered build list. It wins over this file, the Canon and every older doc wherever they disagree. Apply it, write "Applied <date>" at its top, report in plain English, then commit. `docs/sensory-bags.md` (rewritten 6:40 PM the same day) is the owner of everything about the bags: the decision, the shopping guide, the clue rules, the Act 2 and Act 4 templates, Sir Irwin's prompts, the packing and the checks. Read it with the handoff.
+> **23 Oct 2026 handoff (`docs/handoff-2026-10-23.md`, with section 15, the final bag items, and section 16, the game names, both added 24 Oct): applied and built on 24 Oct.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, and the build list. It wins over this file and every older doc wherever they disagree. `docs/sensory-bags.md` is the owner of everything about the bags. Left to do from it: the nice-to-have pose photo, and the Claude chat cards (the project copy marked Applied, two rules deck slides). Open decisions (9 on 24 Oct), each a card on the board and Jon's call only, each with its default built: diningName, rulesDeckScreen, tidyFolders, handOn, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known. Answered with the handoff's defaults on 24 Oct (Jon may change any): newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut), dialMapping (fixed, as built).
 
-> **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). It still wins where an older doc disagrees. Left out on purpose, each now an open decision: the Partner in Crime and Ghost Whisperer awards (partnerAwards), and a tab for the drawing pictures on Jenna's page (stewardPictures). Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Open decisions (15 on 23 Oct), each a card on the board and Jon's call only: newsVideo, stewardPictures, partnerAwards, diningName, rulesDeckScreen, tidyFolders, bagsAct4, handOn, tutorial8, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known, dialMapping. Every session follows HOW WE WORK below.
+> **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). The 23 Oct handoff wins where they disagree. Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Every session follows HOW WE WORK below.
 
 ## RULE 1 — THE HOST PLAYS
 
@@ -50,25 +51,29 @@ Content is divided into two classes:
   question (generated blind by `scripts/generate-leans.mjs`, Jon 22 Oct;
   Jenna may change any lean on their Steward page; Jon's account must never
   read it)
-- How the two hidden roles' Parlour Game points map to the clarity dial
-  (decided blind per night; every phone gets the same set since 21 Oct). There
-  are no hidden events in any act (closed 22 Oct). The dial has no slider on any phone
-  (Jon, 16 Oct 2026): it is revealed in the Act 7 graph. The hidden roles'
-  answers move their cat sliders like everyone else's, so no phone is a tell.
+- Not sealed, and fixed as built (dialMapping, the handoff's default, 24 Oct):
+  how the two hidden roles' Parlour Game points move the clarity dial, the
+  Ghost toward clear and the Murderer toward foggy. Every phone gets the same
+  set since 21 Oct. There are no hidden events in any act (closed 22 Oct). The
+  dial has no slider on any phone (Jon, 16 Oct 2026): it is revealed in the
+  Act 7 graph. The hidden roles' answers move their cat sliders like everyone
+  else's, so no phone is a tell.
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
 - The Relay Drawing picture bank (`sealed/relay_pictures`, simple thick-line
   art, made blind by `scripts/generate-relay-pictures.mjs`; never in the repo
   or Jon's terminal)
 - Every per-night pick from an open bank: which family is real, which bulletin
-  line plays, which cat gives each player's real Act 2 hint and what it rules out
+  line plays, which two wrong families each guest's cats rule out, and which
+  clue word each bag clue names
 - Each night's private records (`nights/{id}/private/*`), for example the
   drawing's pictures and answers, the reveal, the trace, the bulletin's level,
   the dial clues
 
 ### The Steward exception (decided by Jon, 28 Sep 2026)
-The Steward is Jenna (they/them), a REMOTE NON-PLAYER who never visits the
-house. Their job is editing content. They may see and edit EVERYTHING, sealed
-content included, because Jon cannot.
+The Steward is Jenna (they/them), a NON-PLAYER. Since 23 Oct Jenna comes to
+the party (Jon) and packs the bags at the house before the guests arrive, but
+never plays. Their job is checking content. They may see and edit EVERYTHING,
+sealed content included, because Jon cannot.
 
 Content workflow (28 Sep; updated 23 Oct): Jon and Susan (Jon's wife, a
 player) draft; the blind scripts make the secrets; Jenna checks.
@@ -80,13 +85,15 @@ player) draft; the blind scripts make the secrets; Jenna checks.
   23 Oct there are no secret cat lines or documents to draft (secretLines
   retired).
 - Jenna reads the workshop lists cold, may change any lean, packs the bags,
-  runs the real checks once the Health page exists, and reports to Jon only
-  "done" or "needs more", never content.
+  runs the real checks (Run the checks on their page, built 24 Oct), and
+  reports to Jon only "done" or "needs more", never content.
 - Bags: Jon and Susan supply the item pool as safe content (workshop area
   `bag_items`). A blind packing script (`scripts/pack-bags.mjs`, built 18 Oct
   2026) assigns items to numbered bags under the bag rules and writes
-  `sealed/bags`, printing counts only. The bags station reads it on the party
-  night; every night reads only its bag count (`createNight`), never an item.
+  `sealed/bags`, printing counts only. On the party night the cats' bag
+  clues read it (`bags.js` `readPacking`, called from `deal.js` and `act4.js`, which pass it to the pure `bagclues.js`);
+  a rehearsal never does, and shows a stand-in in square brackets. Every night
+  reads only its bag count (`createNight`), never an item.
   Only Jenna's Steward view shows the packing list, and Jenna packs to it.
   Claude Code never prints the packing. Jenna also reads rules and bios cold,
   and looks over the cats' leans (build step 13). Brief: never
@@ -94,18 +101,20 @@ player) draft; the blind scripts make the secrets; Jenna checks.
   (WHERE THINGS LIVE) and `chats/docs/sirwin-manor-the-steward.md`.
 
 Jenna's page, built 17 to 19 Oct 2026, the leans tab 22 Oct, the secrets tab
-removed 23 Oct (`functions/lib/steward.js`, the workshop's Steward page,
-`docs/steward-view.md`). Two tabs: the packing list (read only) and the cats'
-leans (ops `whoami`, `bags`, `leans`, `lean`). These rules still hold:
+removed 23 Oct, the checks tab 24 Oct (`functions/lib/steward.js`, the
+workshop's Steward page, `docs/steward-view.md`). Three tabs: the packing list
+(read only), the cats' leans, and the checks (ops `whoami`, `bags`, `leans`,
+`lean`, `checks`; the checks send back only IDs, names, pass or fail and
+counts). These rules still hold:
 - It reads `sealed/bags` and reads and edits `sealed/parlour_leans`, by
   verified Google email only. It never loads for Jon's account. Changing the
   security rules needs Jon's explicit approval.
 - Regenerating sealed content must never silently overwrite Jenna's edits.
 - Claude Code still never prints, logs or files sealed content. The Steward
   view is built and debugged blind, exactly like the blind scripts.
-- Not on Jenna's page: the Relay Drawing pictures (left out 22 Oct; open decision
-  stewardPictures). Until then nobody reads them; they pass only the
-  picture script's own checks.
+- Not on Jenna's page: the Relay Drawing pictures (stewardPictures closed
+  24 Oct: no). Nobody reads them; they pass the picture script's own checks
+  and RP1 in Jenna's checks.
 
 ### Enforcement — infrastructure, not discipline
 1. Sealed content lives ONLY in Firestore: `sealed/*`, `cases/*`, and each
@@ -123,6 +132,9 @@ leans (ops `whoami`, `bags`, `leans`, `lean`). These rules still hold:
    (through `deal.buildCaseForNight`, whose log line carries only the night id
    and the rehearsal flag). (`generate-sealed.mjs` and `validate-sealed.mjs`,
    which made and checked the per-motive sets, were deleted 23 Oct.)
+   `npm run checks` (`scripts/checks.mjs`, 24 Oct) makes nothing sealed: it
+   deals stand-in cases and a stand-in packing of the seed list in memory and
+   prints counts only.
 4. When you (Claude Code) work on sealed content: never echo it to the terminal,
    never write it to a local file, never paste it in explanations, never include
    it in commit messages or PR descriptions. Debug with opaque IDs, lengths, and
@@ -137,10 +149,9 @@ leans (ops `whoami`, `bags`, `leans`, `lean`). These rules still hold:
 
 ### The burned exception
 Motive #8 ("the dairy air") was authored with Jon and is spoiled for him.
-DECISION PENDING (card tutorial8 on the board): promote its example clue set
-to the rulebook tutorial. Since 23 Oct no motive has in-game kernels
-(secretLines retired): motive 8 is dealt like the others, with the same open
-hint lines.
+Card tutorial8 closed 24 Oct (the handoff's default): its clue set stays
+buried, since the secret sets are retired and there is nothing to promote.
+Motive 8 is dealt like the others, with the same open hint lines.
 
 ## HOW WE WORK (23 Oct 2026)
 
@@ -185,6 +196,7 @@ End of every Claude Code session, in this order:
 | Start Here: the map, the routine, the status snapshot | Claude Doc, https://claude.ai/artifact/P7eHcmr7R5PDLxGufmCK2A |
 | Every job and open decision | Workshop Timeline, https://murderwin-at-sirwin-manor.web.app/workshop/#/timeline |
 | Live status | Workshop "Where we are", https://murderwin-at-sirwin-manor.web.app/workshop/#/status |
+| The last run of `npm run checks` | Workshop Health page, https://murderwin-at-sirwin-manor.web.app/workshop/#/health |
 | Claude chat handoffs | `docs/handoff-YYYY-MM-DD.md`, plus the dated Claude Doc |
 | Session log | `docs/sessions.md` |
 | W-O-O-F News lines | Claude Doc https://claude.ai/artifact/GJAR2uwXZ356opX6xNvMNN; `seed/woof-news.json` |
@@ -201,6 +213,12 @@ The two big games, built 17 Oct 2026 (the drawing reworked 22 Oct to the
 handoff; not yet tried on the real wall and bulb):
 - Act 4 study light game: `docs/study-light-game.md`
 - Act 6 relay drawing game: `docs/relay-drawing-game.md`
+
+The game names (Jon, 24 Oct; `seed/game-names.json`, display text only; ids,
+routes, kiosk names and cue ids keep the old names): Granolia's Lightbulb
+Moment (the study light puzzle), In Duplicate (the memory match), Get Off My
+Lawn! (Salem's Motion Game), Boo's Catwalk, Sir Irwin Needs a Hand (the Relay
+Drawing). The Act 6 deduction round has no name.
 
 Decided with Jon on 21 Oct 2026 (Canon updated to match):
 - Parlour Games (12 a night, the bank, how the cats lean): `docs/parlour-games.md`
@@ -224,8 +242,9 @@ and tell Jon.
 
 - Victorian manor murder mystery for Sir Irwin's first birthday. About 9 players
   aged 11 to 70, fully digital and multimedia, no physical props, no real locks —
-  except the bags: six ordinary objects per numbered bag, the one deliberate
-  physical exception (`chats/docs/sirwin-manor-bag-system.md`).
+  except the bags: four or five ordinary objects per numbered bag (Jon's final
+  24 items, 24 Oct, `seed/bag-items.json`), the one deliberate physical
+  exception (`docs/sensory-bags.md`).
   14 playable characters with professions, genders and traces, assigned at random
   at runtime and never changed all night.
 - Stack: React + Vite, Firebase Hosting, Firestore, Cloud Functions, anonymous
@@ -234,16 +253,21 @@ and tell Jon.
 - 7 acts, 2 to 2.5 hours (names since 13 Oct, `seed/night.json`):
   1 The Invitation (together, 4:00pm; role rules stated in the preamble;
     blackout at the end)
-  2 Lights Out (solo, ~5:30pm; the tutorial; everything for your ears only;
-    every guest visits all four cats, one gives a real hint; beats orient,
-    news, cat, checkin; no safe since 23 Oct, decision act2Safe)
-  3 Supper Is Served (orangery)
-  4 Behind Closed Doors (pairs/trios; info shared only inside your group; the
-    study is the timekeeper with a 15-minute cap). The cat station sends a
-    group to Boo, Salem or Zimothy, never Granolia: her room, the Study, holds
-    the light puzzle (settled by default 23 Oct; Jon may change it)
+  2 Lights Out (solo, ~5:30pm, about 30 minutes; everything for your ears
+    only; every guest visits all four cats in a queue, with Not yet; each cat
+    gives a motive hint and a bag clue about the Murderer's bag; beats orient,
+    news, peek, cat, supper: supper comes when everyone has seen all four, or
+    Jon presses Supper's ready; no safe since 23 Oct)
+  3 Supper Is Served (the Orangerie)
+  4 Behind Closed Doors (about an hour; pairs and trios, at most five groups;
+    info shared only inside your group). Jon presses Start Act 4: a two-minute
+    warning, the title card, the groups and Locked in, then ten-minute rounds
+    on the server clock. Each group visits all four game rooms once (the
+    Study, the Library, the Orangerie, the Entryway) and waits in the Parlour
+    between them; each room pays a reward and a bag clue about the Ghost's
+    bag. Parlour Games wait on the phone in Act 4.
   5 One Candle (dessert, roaming; Sir Irwin speaks)
-  6 The Final Hour (living room; two Parlour Games, the Relay Drawing, the door
+  6 The Final Hour (the Parlour; two Parlour Games, the Relay Drawing, the door
     opens, then a deduction round where each player publicly commits to one
     elimination; built with the deduction round after the door)
   7 Unmasked (~8:00pm; 2 minutes to enter picks; majority decides; metrics plus a
@@ -280,7 +304,7 @@ and tell Jon.
   Zimothy Clawford, Esq., "the old family solicitor" (never shortened) — true
     but money-shaded: one motive curt (1), one motive civil (2), two motives
     (3), a whole family (4), a family plus a bonus motive (5).
-  Salem Crookshank, the groundskeeper — backwards at 1–3, coin flip at 4,
+  Salem Crooknog, the groundskeeper — backwards at 1–3, coin flip at 4,
     straight at 5; everyone starts at 3, Parlour Games cap him at 4, and only
     petting the real Salem (Jon's host button; anyone but Jon and Susan)
     unlocks 5, shown as True Friend of the Groundskeeper on the Cats tab. When
@@ -290,14 +314,14 @@ and tell Jon.
   Trust ladder, stated at the top of the night: if Irwin and anyone disagree,
   Irwin is right. No cat ever speaks aloud: all dialogue is text. Audio is
   atmosphere, plus the W-O-O-F News recordings, whose words always show on a
-  screen too (sound with captions today; video for bulletin 1 and the closing
-  bulletin is open decision newsVideo).
+  screen too (bulletin 1 and the closing bulletin are video on the Parlour TV
+  once the files are in and the box The bulletins are videos on the Game night page is ticked, newsVideo answered 23 Oct; until then the brain plays the recordings; bulletin 2 is sound).
 - Affection to each cat is rolled at character creation (Salem always starts
   at 3, Irwin always maxed).
   Since 23 Oct there is no pass or fail roll and no brush-off: a cat's
-  affection sets the rung of its ladder (above), and the cat gives that
-  rung's hint line. The three cats who are not a guest's Act 2 hint cat give
-  one greeting line.
+  affection at the scan sets the rung of its ladder (above), and the cat
+  gives that rung's hint line and bag clue. Bag clues are a compass, not a
+  pointer: a word that sits in two or three bags in play.
   DECIDED 12 Oct 2026 (Jon): affection moves during the night through the
   Parlour Games (Salem capped at 4). The one exception (22 Oct): the host's
   Salem petted button sets that guest's Salem to 5.
@@ -313,9 +337,8 @@ and tell Jon.
   the workshop (`safe_content/scenarios`). For every Detective a secretly
   listening cat (never Irwin) warms or cools by its hidden lean (sealed, see
   above). For the Murderer and the Ghost the
-  same set moves the clarity dial instead, and how their points map to the
-  dial is decided blind per night (sealed),
-  so Jon's numbers never tell him which way the night moved. Their cat
+  same set moves the clarity dial instead, the Ghost toward clear and the
+  Murderer toward foggy (fixed as built, dialMapping, 24 Oct). Their cat
   sliders still move for real, by coin flip, with a Detective's odds and
   sizes. No phone ever shows a number.
 - No hidden events in any act (closed 22 Oct 2026, never re-raise). The
@@ -326,9 +349,12 @@ and tell Jon.
   player learns they cancelled out. The validator must assume the worst dial
   and still prove every player can reach two of three (not built yet: today
   only the motive is proven, at dial 3, check G32).
-- The clue path (22 Oct, `docs/solving-the-case.md`): W-O-O-F News bulletin 1
-  (Act 2) crosses off one family; one cat per player gives a real Act 2 hint;
-  bulletin 2 (Act 3) hints at the real family; Act 4 cats and memory match;
+- The clue path (22 Oct, updated 24 Oct, `docs/solving-the-case.md`): W-O-O-F
+  News bulletin 1 (Act 2) crosses off one family; all four cats give each guest
+  a hint (two wrong families a guest, so at least two always stand) and a bag
+  clue about the Murderer; bulletin 2 (Act 3) hints at the real family; the
+  Act 4 rooms (a motive crossed off by In Duplicate and by Boo, and a bag clue
+  about the Ghost from each cat);
   Irwin's countdown (Act 5, five cards at dial 1 down to one at dial 5);
   Study trace (Ghost) and trace reveal (Murderer); closing bulletin and
   credits in Act 7.
@@ -338,10 +364,10 @@ and tell Jon.
   practice that is the start of Act 2, before the news flash. It says nothing
   either way. Making it work later in the night is new work: ask Jon first. The
   exposure safeguard is a silent tap with no call-out until Act 7, if ever.
-- Picked per night: which of the four cats gives each guest the real Act 2 hint, which
-  wrong family bulletin 1 crosses off, and the Parlour Game times. The Relay
-  Drawing calls its players at random. (The Act 2 safe, the one puzzle kind
-  built for it, was taken out on 23 Oct: decision act2Safe.)
+- Picked per night: which wrong family bulletin 1 crosses off, the two wrong
+  families each guest's cats rule out, each bag clue's word, the Act 4 groups
+  and room order, and the Parlour Game times. The Relay Drawing calls its
+  players at random. (The Act 2 safe was taken out on 23 Oct: act2Safe.)
 
 ## CLIENT RULES (hard rules for every player surface)
 
@@ -366,32 +392,38 @@ and tell Jon.
   fallback: every recording's words also show on a screen.
 - An 11-year-old and a 70-year-old must be able to use every surface, in dim light.
 
-## HARDWARE (decided 25 Sep — no Raspberry Pi anywhere; updated 22 Oct)
+## HARDWARE (decided 25 Sep — no Raspberry Pi anywhere; device table 23 Oct)
 
 The game runs on Firebase Hosting. No machine in the house serves it. Device
 setup, step by step: the workshop's Devices page.
-- M3 15" MacBook Air — "the brain". Ethernet, sleep off. Runs the cue relay
-  (`cues/`): turns the Hue bulb outside the bedroom red or green and plays
-  files from `media/` through its own sound output (the AirPlay group, which
-  must include the Orangerie HomePod). Also a stand-in for the host phone
+- Jon's M3 15" MacBook Air — "the brain". Ethernet, sleep off. Runs the cue
+  relay (`cues/`): the ten sounds and the three playlists through its own
+  sound output (the AirPlay group of four HomePods, the Orangerie's included),
+  the Hue bulb outside the bedroom and the four Hue scenes, and the Holiday
+  String Lights for Get Off My Lawn!. Also a stand-in for the host phone
   (`functions/host.mjs`).
-- Living room MacBook Pro on the TV (`?kiosk=living`): news, Irwin, the
-  drawing and the room's guesses, the ballot, the reveal.
-- The second MacBook Pro: no job since 22 Oct (it was the bedroom screen);
-  keep it charged as a stand-in for the living room screen.
+- Jon's work MacBook Pro on the Parlour TV (`?kiosk=living`): the rules deck,
+  the blackout, bulletin 1, Sir Irwin's prompts, the Act 4 title card, Irwin,
+  the drawing and the room's guesses, the board, the ballot, the reveal.
+- Susan's work MacBook Pro: Boo's wall through the borrowed projector on the
+  upstairs landing in Act 4 (`?kiosk=boo`), then the bedroom screen from
+  Act 5 (`?kiosk=bedroom`).
 - M1 MacBook Air — the study station (`?kiosk=study`, `station/`): Stream Deck
   over USB, Nanoleaf over wifi (Open API, plain HTTP, port 16021), the study's
   on-screen information.
-- iPad Pro M2 — supper captions in the orangery (`?kiosk=ipad`), the memory
-  match in the Library in Act 4 (`?kiosk=memory`), the bedroom screen from
-  dessert (`?kiosk=bedroom`). Older family iPad — the spare phone.
+- Jon's iPad Pro M2 — supper captions in the Orangerie (`?kiosk=ipad`), a
+  spare screen in Act 4. The older family iPad — the memory match in the
+  Library all night (`?kiosk=memory`; `&play=1` is the standalone game).
+  Susan's 8th-gen iPad — decor, handed over if a guest needs a device. The
+  old iPhone 11 — the spare phone.
 - The study puzzle: Simon says on the white Nanoleaf Elements — three escalating
   patterns per round, reproduced by touching the panels (touch gestures stay ON
   for this wall; a telescoping pointer covers reach). Clearing a round lights a
   colour and a count, entered on the 15-key Stream Deck: columns 1–2 are six
   colours, columns 3–4 are numbers 1–6, column 5 is blank / undo / submit.
   Nothing auto-submits. Three rounds → three colour-number pairs → the code.
-  Granolia hints. 15-minute cap, then the group rotates regardless.
+  Granolia hints. Ten-minute cap (the Act 4 round), then the group moves on
+  regardless.
 
 ## THE WORKSHOP (what we build first)
 
@@ -410,7 +442,7 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
   opens a fresh line; click any line to edit in place.
 - Auth: Firebase Auth sign-in, UID allowlisted in security rules as admin.
 
-## BUILD ORDER (from Start Here; status 23 Oct 2026)
+## BUILD ORDER (from Start Here; status 24 Oct 2026)
 
 1. Repo + this file: done.
 2. Clue format locked, JSON: done.
@@ -421,21 +453,26 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
 5. Eight fake test players: done (`npm run fake-night`, PASS 23 Oct).
 6. Split dev and live: replaced 17 Oct. Rehearsals are nights with the party
    box unticked, or the emulator; no second project.
-7. First full dry run: not done. The leans, the packing and the drawing
-   pictures first (their blind scripts), then
-   `npm run fake-night -- --real-secrets` (a party-night dry run on them),
-   then the full tech run: every machine on at once, Act 1 to Act 7, twice.
+7. First full dry run: not done. The leans, the packing (`pack-bags --
+   --repack` on the final items) and the drawing pictures first (their blind
+   scripts), then `npm run fake-night -- --real-secrets` (a party-night dry
+   run on them), then the full tech run: every machine on at once, Act 1 to
+   Act 7, twice, the second by Wednesday 11 November. `npm run checks` (24
+   Oct) deals 1,000 stand-in cases and plays a fake night; the Health page
+   shows the last run.
 8. Host Mac as server: changed. The game is on Firebase; the brain plays the
    sounds and the hall light (`cues/`). Built; setup is on the board.
 9. Media bank: not done. Stand-in tones until the recordings exist.
 10. Screens as kiosks: built (`?kiosk=living`, `bedroom`, `study`, `ipad`,
-    `memory`); setup is on the board.
+    `memory`, `boo`); setup is on the board and the Devices page.
 11. Nanoleaf layer: built (`station/`), not yet run on the real walls.
 12. Full play-through review: not done. The weekend practice game (24-25 Oct,
     phones only) is the first walk-through.
 13. Canary (changed 23 Oct): someone who is not coming plays a rehearsal
     night cold, and Jenna checks the leans on the Steward page. Not done.
-14. Freeze: Saturday 7 November (the Freeze button on the Game night page).
+14. Freeze: no fixed date (23 Oct). Jon presses Freeze the workshop on the
+    Game night page when the lists are final, Thursday 12 to Saturday 14
+    November.
 
 ## WORKING STYLE
 
@@ -445,12 +482,14 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
   He works in short bursts and is often tired: never hand him a wall of text or
   a batch of decisions. A question that waits on him becomes a decision card on
   the board.
-- The party date is fixed. After the freeze on 7 Nov, anything not working is cut,
-  not fixed. Safe to cut: the Nanoleaf layer (the study runs on its screen), the
-  Hue bulb (the TV announces the door), the iPad (another screen takes its
-  jobs, since any browser runs them; failing that, the TV shows the trace and a
-  group that missed the memory match gets its cross-off at dessert). Never cut:
-  the case deal (`functions/lib/case.js`), the reveal order (Murderer, Motive,
-  Victim) and the clue path (both bulletins, the cat hints, Irwin's
-  countdown, the study trace and the trace reveal).
+- The party date is fixed. After the second full tech run (by Wednesday 11
+  Nov), anything not working is cut, not fixed. Safe to cut: the Nanoleaf
+  layer (the study runs on its screen), the Hue bulb and scenes (the TV
+  announces the door), the string lights (Get Off My Lawn! runs on the
+  phones), the projector (Boo's wall runs on any screen), an iPad (another
+  screen takes its jobs, since any browser runs them), the videos (the words
+  show instead). Never cut: the case deal (`functions/lib/case.js`), the
+  reveal order (Murderer, Motive, Victim) and the clue path (both bulletins,
+  the cat hints and bag clues, Irwin's countdown, the study trace and the
+  trace reveal).
   When in doubt, choose the simpler build.

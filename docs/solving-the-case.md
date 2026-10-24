@@ -1,6 +1,6 @@
 # Sirwin Manor — How the Case Gets Solved
 
-Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees), and 23 October (what is built, open decisions, what to watch in the practice game; then Jon retired the cats' secret lines and took the Act 2 safe out).
+Written 21 October 2026, updated 22 October from `docs/handoff-2026-10-22.md` (which wins where this doc disagrees), 23 October (what is built, open decisions, what to watch in the practice game; then Jon retired the cats' secret lines and took the Act 2 safe out) and 24 October from `docs/handoff-2026-10-23.md` (all four cats in Act 2, the bag clues, Act 4's four rooms, the game names; built that day).
 Canon wins any other disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 This doc says **how** clues reach players across the night.
@@ -9,7 +9,7 @@ This doc says **how** clues reach players across the night.
 
 The banks live in three Claude Docs (linked from the handoff): the W-O-O-F News Recording Script, Cat Hint Lines, and The Relay Drawing · How to Play.
 
-The game plays the repo copies: `seed/woof-news.json`, `seed/cat-lines.json`, and the lines in `functions/lib/deal.js`, `screen.js` and `hosts.js`. The repo copy is what plays. If you change a line in a Claude Doc, ask Claude Code to copy it in before the freeze on 7 November.
+The game plays the repo copies: `seed/woof-news.json`, `seed/cat-lines.json`, `seed/bag-lines.json` (the bag clue templates and Sir Irwin's prompts), and the lines in `functions/lib/deal.js`, `act4.js`, `screen.js` and `hosts.js`. The repo copy is what plays. If you change a line in a Claude Doc, ask Claude Code to copy it in before the second full tech run (by Wednesday 11 November; there is no freeze date).
 
 ---
 
@@ -20,8 +20,10 @@ Players must name three things at the end. Each has its own track through the ni
 | Answer | Narrowed by | Closed by |
 |---|---|---|
 | **Motive** | Acts 2 to 4, a little more each act | Irwin's countdown at dessert (Act 5) |
-| **Victim** (the Ghost) | — | The Study light puzzle (Act 4) |
-| **Murderer** | — | The trace reveal (Act 6) |
+| **Victim** (the Ghost) | Act 4 bag hints about the Ghost's bag | The Study light puzzle (Act 4) |
+| **Murderer** | Act 2 bag clues about the Murderer's bag, and what the bags hold | The trace reveal (Act 6) |
+
+**The bag rule** (stated in the rules deck in Act 1): a bag clue in Act 2 is about the Murderer; a bag clue in Act 4 is about the Ghost. Only bags and traces ever point at a person.
 
 ---
 
@@ -30,9 +32,9 @@ Players must name three things at the end. Each has its own track through the ni
 | Act | Motive clue | Other clues |
 | --- | --- | --- |
 | 1 · The Invitation | None | Characters and rules |
-| 2 · Lights Out | W-O-O-F News bulletin 1 crosses off **exactly one** family. One cat per player privately rules out another. | Role reveal |
-| 3 · Supper | W-O-O-F News bulletin 2 hints at the real family, plainness set by the dial | Table shares |
-| 4 · Behind Closed Doors | Cats give finer clues (group average affection). Memory match crosses off one wrong motive. | Study light puzzle shows the Ghost's trace |
+| 2 · Lights Out | W-O-O-F News bulletin 1 crosses off **exactly one** family. All four cats give each player a private motive hint. | Role reveal, the bag peek, and from every cat a bag clue about the Murderer |
+| 3 · Supper | W-O-O-F News bulletin 2 hints at the real family, plainness set by the dial | Table shares; the bags come to the table |
+| 4 · Behind Closed Doors | The Library (In Duplicate) and the Entryway (Boo's Catwalk) each cross off one wrong motive for the group. | The Study (Granolia's Lightbulb Moment) shows the Ghost's trace; every room's cat gives a bag hint about the Ghost |
 | 5 · Dessert | Irwin's countdown settles the motive | |
 | 6 · The Final Hour | None | 2 Parlour Games, Relay Drawing, then the trace reveal (the Murderer) |
 | 7 · Unmasked | | Picks, closing bulletin reveal, end credits |
@@ -50,7 +52,7 @@ Five families. Players never see the family names. They are only the structure t
 - **Personal slights:** the anniversary, the stained top, the grammar, the spoiler.
 
 Rules:
-- A clue that rules out a family or a motive **never** rules out the real one. Every cat, every bulletin, every station only ever rules out wrong answers.
+- A clue that rules out a family or a motive **never** rules out the real one. Every cat, every bulletin, every room only ever rules out wrong answers.
 - Which family is real is decided when the case is dealt, like everything else.
 
 ---
@@ -61,7 +63,7 @@ The news team: Ava Waves (studio anchor), Mic Cameron (field reporter), Haley St
 
 **Bulletin 1 · Act 2, lights out · video.** Ava on camera for the opening and sign-off; the family line plays over B-roll. Always clarity level 3. Crosses off exactly one wrong family. Five family clips plus the opening and sign-off. Sign-off: "Don't touch that dial! Stay tuned for more updates."
 
-Bulletin 1 and the closing bulletin are built today as sound with captions. Whether they play as video on the living room TV is Jon's open decision newsVideo.
+Bulletin 1 and the closing bulletin play as video on the Parlour TV once Jon ticks The bulletins are videos on the Game night page (Jon, 23 Oct; built 24 Oct); until then the brain plays the recordings and the TV shows the words. Each part is its own file; a part with no video file is skipped, and the words stay on the screen.
 
 **Bulletin 2 · Act 3, near the end of supper · audio.** Plays on the Orangerie HomePod, captions on the iPad. Voice not decided yet. 25 lines: 5 families × 5 dial levels. Every level points at the real family; level 1 is very obscure, level 5 is plain. Jon arms it from his host phone; it plays at a random moment 3 to 5 minutes later. The arm screen says only "Armed", never the line. Sign-off teases Irwin's "pup-lic address". (This replaces the older Bulletin 2 design that ruled out single motives.)
 
@@ -71,38 +73,40 @@ Bulletin 1 and the closing bulletin are built today as sound with captions. Whet
 
 ## Act 2, Lights Out
 
-How it plays, start to finish:
+How it plays, start to finish (Jon's final plan, 23 Oct; built 24 Oct):
 
 1. **Lights out.** The room goes dark and the chime sounds.
 2. **Every phone shows its role** on the same-looking screen. Everyone taps to continue.
 3. **W-O-O-F News bulletin 1** crosses off exactly one wrong family for everyone.
-4. **Every player visits all four cats**, one at a time, rotated by the phone (up to four players at four cats at once).
-5. **Only one of the four gives a real hint**, picked at random per player at the deal. The other three only greet in character. The bulletin leaves three wrong families; four real hints could hand a player the family before supper.
-6. **Parlour Games pop up** at random times (five planned in Act 2; see `docs/parlour-games.md`).
-7. **The chime calls everyone to supper** in the Orangerie.
+4. **The bag peek.** Every phone: take a quiet look inside your own bag, here in the Parlour, and show nobody yet.
+5. **Every player visits all four cats**, one guest at a cat at a time, called by the phone.
+6. **Every cat gives real information**: one motive hint and one bag clue about the Murderer, both at the rung of that cat's ladder set by its affection for the guest at the moment of the scan. Both are saved on the phone's Clues tab.
+7. **Each guest has two wrong families** of their own, picked at the deal from the three the bulletin left. A whole-family line names one of those two; a single-motive line names a motive inside one of them, or inside the family bulletin 1 already crossed off. So after Act 2 at least two families always stand for any one guest (G45): nobody can name the real family alone before supper.
+8. **Parlour Games pop up** at random times (five planned in Act 2; see `docs/parlour-games.md`).
+9. **The chime calls everyone to supper** in the Orangerie: on its own once everyone has seen all four cats, or when Jon presses Supper's ready. A guest with cats still unvisited gets those cats' lines on the phone as a note.
 
 Players may tell nobody anything in Act 2.
 
 **No hidden events for the Murderer or the Ghost in any act** (closed 22 Oct). Their only "events" are the Parlour Games: the same questions as everyone, and their answers move the clarity dial.
 
-### The phone runs the room rotation
+### The phone runs the queue
 
-- Each cat's room has a QR code. The player scans it, and the cat greets them on their phone.
+- Each cat's room has a printed code. The player scans it, and the cat speaks on their phone, in silent text.
 - **Only one player at a cat at a time,** so nobody overhears a private hint.
+- Visits are a queue, not a schedule. **"Not yet, call me later"** is on every phone when it is called: it puts the guest back in the queue for two minutes, no penalty, and looks the same for everyone. No cat sits idle while someone is waiting for it.
+- A guest who has not scanned in after four minutes, or is still with a cat after five, gets the cat's lines on the phone and the next guest is called.
 - The phone always names the next cat and room, or sends the player to supper.
 
-Phone direction screens:
-1. Wait: "Make yourself at home in the living room. You'll be called soon."
-2. Your turn: "Granolia is waiting for you in the Study. Go alone, and don't keep her waiting."
-3. Arriving: "Find the QR code in the room and scan it to say hello."
-4. Moving on: "Time's up. Boo is expecting you in the Entryway." (always names the next cat and room)
-5. Supper: "That's the chime! Supper is served in the Orangerie."
+Phone direction screens (built, `functions/lib/deal.js`):
+1. In the Parlour: "Make yourself at home in the Parlour. You'll be called soon. Sir Irwin has ideas on the TV."
+2. Your turn: "Granolia is waiting for you in the Study. Go alone, and don't keep her waiting." With On my way and Not yet.
+3. Arriving: "Find the code in the room and scan it to say hello."
+4. With the cat: "Read what the cat says. It is for you alone. Tap Done when you have read it."
+5. Back in the queue: "No problem. You're back in the queue. We'll call you again."
+6. All four seen: "You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie."
+7. Supper: "That's the chime! Supper is served in the Orangerie."
 
-Greeting-only lines (the three cats that don't give this player a hint):
-- Salem: "Off my lawn. Oh, it's you. Fine. Nothing to report, and I'd report it backwards anyway."
-- Zimothy: "Ah, a visitor. My consultation fee is one compliment. I've nothing for you today, but I've billed you all the same."
-- Boo: "Darling. Love the outfit. Don't ask me anything, I'm off duty."
-- Granolia: "Oh! Hi! Hi. Hello. I had something to tell you, and now it's gone. Want to sit with me anyway?"
+The greeting-only lines (the three cats that did not give a hint) are gone: every cat now gives a hint (24 Oct).
 
 ### Cat rooms
 
@@ -113,10 +117,17 @@ Greeting-only lines (the three cats that don't give this player a hint):
 | Zimothy | The Library (the real dining room) |
 | Boo | The Entryway |
 
-- No cat goes in the living room. Everyone waits there, so a hint could be overheard.
+- No cat goes in the Parlour. Everyone waits there, with Sir Irwin's prompts on the TV, so a hint could be overheard.
 - Supper is in the Orangerie. Jon sets the table before guests arrive, so Salem can stay there in Act 2.
 
----
+### The bag clues
+
+Full rules, templates and checks in `docs/sensory-bags.md`; the templates are in `seed/bag-lines.json`.
+
+- A bag clue is **a compass, not a pointer**. It names a sense or a clue word (one of the fourteen), never an item, a bag number or a person (G40), and the word is in two or three of the bags in play, never one (G41).
+- Each guest has **one true word** for the bag, so one guest alone never pins one bag (G46).
+- Every cat's bag clue follows its ladder. Salem names a wrong word at 1 to 3 (still a word in two or three bags), a coin flip at 4, the right one at 5 (G49). At low rungs a cat gives only a sense, or nothing.
+- In Act 4 each cat has its own set of lines (`act4` in `seed/bag-lines.json`) about **the Ghost's** bag, at the group's average affection.
 
 ## The cats' hint ladders
 
@@ -139,19 +150,35 @@ Built: a True Friend sees this text when they open Salem on the Cats tab, and at
 
 ## Act 4, Behind Closed Doors
 
-Groups walk to the cats' rooms again, scan in, and the cat talks to the group. The house is open; only the Study is enclosed. Free time is fine (bathroom, drinks, mingling).
+Four game rooms, pairs and trios, about an hour (Jon's plan, 23 Oct; built 24 Oct; `functions/lib/act4.js`).
 
-Phone direction screens (built 23 Oct):
-1. Your group: "You're teamed up with Iris DeVine and Jasper Steeps. From now on, only share with your group." (names are the group's characters)
-2. Your turn, at the cat station: "Zimothy will see your group in the Library. Go together." (the cat and the room change)
-3. The Study: "Granolia's expecting your group in the Study, upstairs."
-4. Free time: "Nothing for your group right now. Grab a drink, stretch your legs." Plus one of the tips below, picked at random.
+**How it starts.** Jon presses Start Act 4 when everyone has settled after supper. Every phone gets a two-minute warning. Then `chime-phone`, the title card on the Parlour TV, and every phone shows its group as character portraits with a Locked in button. The rounds start when everyone is locked in, or two minutes later.
 
-- **Free time is the old Check-in station.** Every group has a station every round, so a group is never without one. The Check-in card became the Free time card.
-- **Not built yet: the Act 4 scan-in.** Today the cat's words reach the group's phones with the cat card, without a scan.
-- **The cat station never sends a group to Granolia.** Her room, the Study, holds the light puzzle. Settled by default; Jon may change it.
+**The groups.** Three to five groups (at most five), pairs and trios. The Murderer and the Ghost are never in the same group. Information is shared only inside your group.
 
-Random free-time tips:
+**The rounds.** Ten minutes each, on the server's clock, for every room. Every group visits each of the four rooms once (G47); a room never holds two groups. With five groups there are five rounds and one group waits in the Parlour each round. The group scans the room's code to begin (the same four codes as Act 2). A group that finishes early is paid at once and goes back to the Parlour; at the chime, a group that has not finished is paid anyway (G52).
+
+| Room | Host | The game (its name since 24 Oct) | The reward |
+|---|---|---|---|
+| The Study (upstairs) | Granolia | Granolia's Lightbulb Moment: the light puzzle | **The Ghost's trace**, at the dial's level, plus a bag hint |
+| The Library | Zimothy | In Duplicate: the memory match, three rounds, on the older iPad | **One wrong motive crossed off**, plus a bag hint |
+| The Orangerie | Salem | Get Off My Lawn!: backwards red light, green light on the phones | A bag hint, which may be backwards |
+| The Entryway | Boo | Boo's Catwalk: strike a pose when the music stops, on the wall | **One wrong motive crossed off**, plus a bag hint |
+| The Parlour | Sir Irwin | No game: Sir Irwin's prompts on the TV, Parlour Games waiting on the phone | Nothing recorded |
+
+- **Every cat reward uses the group's average affection with that cat** at the moment it is paid. The bag hints are about **the Ghost's** bag. The trace level comes from the dial, not from affection. The cross-offs happen whatever the affection.
+- **Boo speaks to every group in Act 4**, at any affection (her one exception, G48).
+- **The cross-offs** (Zimothy's and Boo's) never take the real motive, and never the same motive twice for one group, or one already crossed off for another group (G51). The game picks one the group might still have: inside the real family first, then any family the group has not ruled out.
+- **Parlour Games wait on the phone in Act 4** and are played when the guest is free, never in a game room (`docs/parlour-games.md`).
+- The old stations, the cat station, the bags station and the Free time card are gone (23 Oct). A group with no room this round reads "Nothing for your group right now. Make yourselves at home in the Parlour. Sir Irwin has ideas." with one of the tips below, the same tip for the whole group.
+
+Phone direction screens (built, `act4.DIRECTIONS`; each room's game name is the card's title, with its line under it):
+- The Study: "Granolia's expecting your group in the Study, upstairs."
+- The Library: "Zimothy will see your group in the Library. Go together."
+- The Orangerie: "Salem will see your group in the Orangerie. Bring your phones."
+- The Entryway: "Boo is expecting your group in the Entryway. Mind the catwalk."
+
+Parlour tips:
 - "Have you crossed off everything you know?"
 - "Compare what the cats told you. Do they agree?"
 - "Remember, Salem usually has it backwards."
@@ -160,23 +187,20 @@ Random free-time tips:
 
 ### The Study: the Ghost's trace
 
-The light puzzle's reward is **the Ghost's trace**, shown at whatever level the clarity dial is at the moment the group finishes (or when the 15-minute cap runs out).
+The light puzzle's reward is **the Ghost's trace**, shown at whatever level the clarity dial is at the moment the group finishes (or when the ten-minute cap runs out).
 
 - It uses the **same five-level trace reveal** as Act 6. No new art.
 - It names the trace, never the person.
 - The dial can move during Act 4, so two groups may see different levels. That's fine.
 - **Default:** at level 3, the second option in the Study is never the Murderer's trace. In Act 6, the second option is never the Ghost's trace. Otherwise one reveal would spoil the other.
 
-### Trace memory match
+### In Duplicate (the trace memory match)
 
-This fills the wait while other groups are in the Study.
-
-- **On the iPad, on a small stand in the Library with Zimothy.** Card backs look like file folders.
-- **6 pairs, 12 cards.** Only traces of characters in play, shuffled fresh for each group.
+- **On the older iPad, on a small stand in the Library with Zimothy**, all night. Card backs look like file folders.
+- **Three rounds: 7, 10 and 14 pairs**, always all fourteen traces as art (G50), the one exception to "characters not in play are set aside", so players get familiar with every trace. Shuffled fresh for each group.
 - **No names on the cards,** only the traces.
-- **Reward:** clearing the board crosses one wrong motive off that group's list. The game picks which one. It never crosses off the real motive, and it should pick one the group might still have.
-
----
+- **Reward:** clearing the third board crosses one wrong motive off that group's list (G51 above). At the cap the group is paid anyway.
+- **A standalone version** (`?kiosk=memory&play=1`) plays the same three rounds with no case and no clues, any time.
 
 ## Act 5: Irwin's countdown
 
@@ -220,7 +244,7 @@ Settled by default, as built: the deduction round comes after the bedroom door o
 
 Video that bookends the Act 2 bulletin. Order stays Murderer, Motive, Victim (F17). Jon records generic lines; the game cuts in the three cards as B-roll, so he never needs the answer. Full script in `docs/handoff-2026-10-22.md` §7b. Then the end credits (§8).
 
-Built (23 Oct), as sound with captions (video waits on newsVideo): each name card appears only after its lead-in line has played, and pressing the next name cuts off the recording that is playing. The end-credit awards show only in the credits.
+Built (23 Oct; as video on the Parlour TV since 24 Oct, once The bulletins are videos is ticked on the Game night page; until then the brain plays the recordings and the TV shows the words): each name card appears only after its lead-in part has played, and pressing the next name cuts off whatever is playing. A part with no video file is skipped. The end-credit awards show only in the credits.
 
 ---
 
@@ -230,11 +254,11 @@ Flavor only: intro text in each character's voice, no change to play. Lines in `
 
 | Host | Activity |
 | --- | --- |
-| Irwin | Relay Drawing and trace reveal |
-| Granolia | Study light puzzle |
-| Zimothy | Memory match |
-| Boo | Parlour Games |
-| Salem | Act 7 final picks |
+| Irwin | Sir Irwin Needs a Hand (the Relay Drawing), the trace reveal, the Parlour prompts |
+| Granolia | Granolia's Lightbulb Moment (the Study light puzzle) |
+| Zimothy | In Duplicate (the memory match) |
+| Salem | Get Off My Lawn! (Act 4) and the Act 7 final picks |
+| Boo | The Parlour Games and Boo's Catwalk (Act 4) |
 
 ---
 
@@ -245,15 +269,27 @@ Flavor only: intro text in each character's voice, no change to play. Lines in `
 - **G34** Irwin's countdown: five cards at dial 1, four at 2, three at 3, two at 4, one at 5. The real motive is always included. Filler comes from the real family first, then from families already ruled out.
 - **G35** The Study clue shows the Ghost's trace and never names a person.
 - **G36** Level 3 second options follow the default above (Study never shows the Murderer's trace; Act 6 never shows the Ghost's).
-- **G37** Memory match uses only in-play traces, 6 pairs, and never crosses off the real motive.
+- **G37** Replaced by G50 (24 Oct).
 - **G38** No hidden events for the Murderer or the Ghost in any act.
-- **G39** Each player gets exactly one real Act 2 cat hint; the other three cats only greet.
-- **G40** Every bulletin 2 line at every dial level points at the real family.
-- **G41** Every cat line, at every affection level, only rules out wrong answers.
-- **F20** Only one player is at a cat's QR code at a time in Act 2.
+- **G39** Every Act 2 bag clue fits the Murderer's bag; every Act 4 bag hint fits the Ghost's bag.
+- **G40** No bag clue names an item, a bag number or a person.
+- **G41** Every clue word a clue uses sits in two or three in-play bags, never one.
+- **G44** Every Act 2 cat visit gives one motive hint and one bag clue, at the rung set at the scan.
+- **G45** At least two families remain for every guest after Act 2.
+- **G46** No single guest's Act 2 bag clues narrow the Murderer to one bag.
+- **G47** Every group visits each of the four rooms exactly once; a room never holds two groups.
+- **G48** Boo speaks to every group in Act 4.
+- **G49** Salem's bag clue is wrong at 1 to 3 and right at 5.
+- **G50** The memory match uses all fourteen traces, 7, 10 and 14 pairs, and never crosses off the real motive.
+- **G51** Zimothy's and Boo's cross-offs never take the real motive, never the same one twice for a group.
+- **G52** Every Act 4 reward is paid by the ten-minute cap.
+- **G53** Every bulletin 2 line at every dial level points at the real family (was G40 until 24 Oct).
+- **G18b** Every cat line, at every affection level, only rules out wrong answers (was G41 until 24 Oct).
+- **F20** Only one player is at a cat's code at a time in Act 2.
 - **F21** Every player is told where to go next. Nobody is ever left without a next step.
+- **F22 to F24** Not yet, the queue never stalls, the supper chime (see `docs/test-plan.md`).
 
-All of these are now in `docs/test-plan.md` too, with where each one stands.
+All of these are in `docs/test-plan.md` too, with where each one stands. The old G39 (one real Act 2 hint each) is retired: every cat gives a hint now.
 
 ---
 
@@ -265,5 +301,4 @@ All of these are now in `docs/test-plan.md` too, with where each one stands.
 
 ## Not designed yet — don't invent these
 
-- Whether the bags stay in Act 4 (Jon's open decision bagsAct4).
 - Dining Hall vs Library naming (Jon's open decision diningName). In the house that room is the Library (Zimothy's room), and the phones already call it "the Library" (the cat rooms in `seed/night.json`). "The dining hall" is left only in the workshop list "Blanks (retired)", Rooms tab, and its seed defaults. Since 23 October nothing reads that list: only the cats' secret lines had blanks, and they are retired. Nothing sealed needs remaking either way.

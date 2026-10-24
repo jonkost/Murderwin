@@ -1,6 +1,6 @@
 # Sirwin Manor — Parlour Games for Claude Code
 
-Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees) and 23 October (what is done, what was left out). Put this file at `docs/parlour-games.md` in the repo.
+Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees), 23 October (what is done, what was left out) and 24 October (Act 4's games wait on the phone, from `docs/handoff-2026-10-23.md` §3). Put this file at `docs/parlour-games.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 "Parlour Games" is the name (13 Oct) for what were the push and pull questions. Renamed everywhere.
@@ -10,15 +10,16 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 ## What happens on the night
 
 - **Twelve Parlour Games a night: five in Act 2, five in Act 4, two at the start of Act 6** (decided 22 Oct; replaces "four per act"). The twelve are one budget for the whole night. A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
-- **In Acts 2 and 4 they pop up at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the Parlour plan's seed, stored with the case.
+- **In Acts 2 and 4 they come at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the Parlour plan's seed, stored with the case.
+- **Act 4 is different (24 Oct): its games wait on the phone.** Groups are in game rooms, so a game never pops up over a room. When one is due, every phone gets it at the same moment, but it waits: whenever the guest is not in a game room (in the Parlour, after their room has paid, or once the rounds are over) the phone says "A Parlour Game is waiting. Play it when you have a moment." with a Play button. It has no sixty-second clock. Each guest still gets five. Any a guest never played get a random answer when Act 4 ends, no penalty. The Murderer's and the Ghost's answers move the dial exactly as before. **Parlour Game now** on the Host tab, in Act 4, puts one more waiting game on every phone.
 - **In Act 6 both sets come at the start**, before the Relay Drawing. None pops up during the drawing.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
   - If a phone is on another screen (a cat greeting, a notice; the Act 2 safe puzzle was taken out on 23 October), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
-- **Every phone lights up at the same moment** with one set: three questions in a row, two answers each. Tap one.
+- **Every phone lights up at the same moment** with one set (in Act 4, it arrives at the same moment and waits): three questions in a row, two answers each. Tap one.
 - **Boo hosts the Parlour Games** (flavor only). Each game opens with one of her six lines, picked at random (`docs/handoff-2026-10-22.md` §6b). She judges whatever you pick and never hints which answer she likes.
 - **No numbers, no scores, no "+1"** anywhere on any phone. Ever.
 - **No "waiting for other players" screen.** The window never closes early.
-- **If someone doesn't answer,** a random answer is picked for them when the window closes. No penalty.
+- **If someone doesn't answer,** a random answer is picked for them when the window closes (in Act 4, when the act ends). No penalty.
 
 ---
 
@@ -181,7 +182,7 @@ Left out on purpose (22 Oct): the Partner in Crime and Ghost Whisperer awards. W
 All of these are now in `docs/test-plan.md` too (23 Oct), with where each one stands.
 
 - **G25** Each case uses 12 different sets from the bank: five in Act 2, five in Act 4, two in Act 6. Every set is picked about equally often across 1,000 cases.
-- **G25b** Parlour Game times follow the spacing rules above (never back to back in Acts 2 and 4; both Act 6 sets before the Relay Drawing), and the same seed gives the same times.
+- **G25b** Parlour Game times follow the spacing rules above (never back to back in Acts 2 and 4; both Act 6 sets before the Relay Drawing), and the same seed gives the same times. Act 4 exception: its games wait on the phone (F08 has the same exception).
 - **F19** A Parlour Game that pops up over another screen returns the phone to exactly where it was.
 - **G26** Every question has exactly two answers.
 - **G27** Irwin is never the listening cat. His affection never moves.
