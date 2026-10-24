@@ -195,7 +195,7 @@ test('with the Elements down the wall is left alone and the screen gets the patt
   assert.equal(runner.machine.snapshot.pattern, 1, 'the number keys reproduce it')
 })
 
-// ---- a pause: the fifteen-minute clock stands still with the rest of the house
+// ---- a pause: the ten-minute clock stands still with the rest of the house
 
 // A station on a clock the test turns by hand; the server answers with the same clock, so skew is zero.
 function stationOnClock() {
@@ -214,7 +214,7 @@ function stationOnClock() {
   return { runner, clock, sent }
 }
 
-test('the host pauses the night: the cap waits out the pause and the group gets its whole fifteen minutes', { timeout: 5000 }, async () => {
+test('the host pauses the night: the cap waits out the pause and the group gets its whole ten minutes', { timeout: 5000 }, async () => {
   const { runner, clock, sent } = stationOnClock()
   await flush(runner)
   const cap = runner.machine.settings.capMs
@@ -223,8 +223,8 @@ test('the host pauses the night: the cap waits out the pause and the group gets 
   assert.equal(runner.machine.state, 'reproducing')
   const startedAt = runner.machine.snapshot.startedAt
   assert.equal(startedAt, clock.t)
-  // eleven minutes in, the host pauses for six
-  clock.t += 11 * 60_000
+  // seven minutes in, the host pauses for six
+  clock.t += 7 * 60_000
   runner.tick(); await flush(runner)
   assert.equal(runner.machine.state, 'reproducing')
   runner.paused(true, clock.t)
@@ -235,9 +235,9 @@ test('the host pauses the night: the cap waits out the pause and the group gets 
   assert.equal(runner.machine.snapshot.pattern, patternBefore)
   clock.t += 6 * 60_000
   runner.tick(); await flush(runner)
-  assert.equal(runner.machine.state, 'reproducing', 'seventeen minutes on the wall clock, but only eleven of them count')
+  assert.equal(runner.machine.state, 'reproducing', 'thirteen minutes on the wall clock, but only seven of them count')
   assert.equal(runner.machine.snapshot.outcome, null, 'not capped during the pause')
-  // the host resumes: the clock picks up at eleven minutes
+  // the host resumes: the clock picks up at seven minutes
   runner.paused(false, clock.t)
   await flush(runner)
   assert.equal(runner.isPaused, false)

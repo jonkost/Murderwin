@@ -11,8 +11,8 @@ export const COLOURS = ['red', 'yellow', 'green', 'blue', 'pink', 'white']
 export const NUMBERS = [1, 2, 3, 4, 5, 6]
 
 export const DEFAULT_SETTINGS = {
-  capMs: 15 * 60_000,          // fifteen minutes from the first touch, hard
-  warnMs: 12 * 60_000,         // Granolia mentions the time
+  capMs: 10 * 60_000,          // ten minutes from the first touch, hard: the round (handoff 23 Oct 2026)
+  warnMs: 8 * 60_000,          // Granolia mentions the time
   rounds: [
     { lengths: [3, 4, 5], onMs: 800, gapMs: 300 },
     { lengths: [4, 5, 6], onMs: 600, gapMs: 250 },

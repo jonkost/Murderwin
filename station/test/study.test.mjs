@@ -162,26 +162,26 @@ test('entering: undo clears the last half; a wrong pair shivers and says which h
   assert.equal(m.snapshot.round, 1)
 })
 
-test('the cap: a warning at twelve minutes, then at fifteen the rest of the code is shown and the clue still goes', () => {
+test('the cap: a warning at eight minutes, then at ten (the round) the rest of the code is shown and the clue still goes', () => {
   const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
   const t0 = 1_000_000
   m.touch(101, t0); m.drain()
   reproduce(m, t0 + 1000)
-  m.tick(t0 + 11 * 60_000)
+  m.tick(t0 + 7 * 60_000)
   assert.equal(m.snapshot.warned, false)
-  m.tick(t0 + 12 * 60_000)
+  m.tick(t0 + 8 * 60_000)
   assert.equal(m.snapshot.warned, true)
   assert.ok(m.drain().some(e => e.type === 'granolia' && e.hint === 'time'))
-  m.tick(t0 + 14 * 60_000 + 59_000)
+  m.tick(t0 + 9 * 60_000 + 59_000)
   assert.notEqual(m.state, 'done')
-  m.tick(t0 + 15 * 60_000)
+  m.tick(t0 + 10 * 60_000)
   assert.equal(m.state, 'done')
   const fx = m.drain()
   const finished = fx.find(e => e.type === 'server.finished')
   assert.equal(finished.outcome, 'capped')
   assert.equal(finished.pairs, 0)
   assert.equal(m.snapshot.revealed.length, 3, 'every pair the group had not earned is shown')
-  m.tick(t0 + 16 * 60_000)
+  m.tick(t0 + 11 * 60_000)
   assert.equal(m.drain().filter(e => e.type === 'server.finished').length, 0, 'finished fires once')
   // touches after done do nothing; reset returns to idle with the walls at rest
   m.touch(101, t0 + 16 * 60_000)
