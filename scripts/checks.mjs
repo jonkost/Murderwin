@@ -23,7 +23,7 @@ import { say } from './lib.mjs'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
 ensureSeed()
-const { caseChecks, boardChecks, CHECK_NAMES } = await import('../functions/lib/checks.js')
+const { caseChecks, boardChecks, fairnessChecks, sealedShape, CHECK_NAMES } = await import('../functions/lib/checks.js')
 const { rehearsalCase } = await import('../functions/lib/case.js')
 const { CHARACTERS } = await import('../functions/lib/night.js')
 
@@ -63,6 +63,13 @@ export function runCaseGroup({ count = 1000 } = {}) {
       else if (failed.length < 20) failed.push({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, seed: `case ${n}` })
     }
   }
+  // G05 and G06: every seat, both host seats included, and every motive, in fair shares across the deals
+  for (const r of fairnessChecks({ count, rng: seededRng(count * 7919 + 1) })) {
+    tally[r.id] ??= { passed: 0, total: 0 }
+    tally[r.id].total++
+    if (r.pass) tally[r.id].passed++
+    else failed.push({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, seed: `all ${count} deals` })
+  }
   const passed = Object.values(tally).reduce((a, t) => a + t.passed, 0)
   const total = Object.values(tally).reduce((a, t) => a + t.total, 0)
   return { passed, total, failed, ids: Object.keys(tally).sort() }
@@ -78,7 +85,8 @@ export async function runDryGroup() {
 }
 
 // The leak group: L08 (the prompts), L01 (no sealed file in the repo or its
-// history) and L06 (no tracked JSON shaped like a bag packing).
+// history, and no tracked JSON shaped like sealed content) and L06 (no
+// tracked JSON shaped like a bag packing).
 export function runLeakGroup() {
   const failed = []
   let passed = 0, total = 0
@@ -98,6 +106,9 @@ export function runLeakGroup() {
     } catch { return false }
   }
   check(!files.some(packingShaped), 'L06', 'the files')
+  // L01: no tracked JSON shaped like sealed content (a dealt case, kernels, a code-to-motive map, a lean table)
+  const jsonOf = name => { try { return JSON.parse(readFileSync(join(root, name), 'utf8')) } catch { return null } }
+  check(!files.filter(name => name.endsWith('.json')).some(name => sealedShape(jsonOf(name))), 'L01', 'the JSON')
   return { passed, total, failed }
 }
 
