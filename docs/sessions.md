@@ -60,7 +60,12 @@ on the Canon.
 - The board: migration '2026-10-25-item4' marks cards 196, 308, 324, 343,
   450 and 479 done, adds Jon's 480 (Open the case, the morning after), 481
   (Boo's camera: the iPad Pro to the Entryway) and 482 (Try Boo's camera on
-  the Game test tab), and files the questions dialSpill and senseClue.
+  the Game test tab), and files the questions dialSpill and senseClue. For
+  the lighting and audio session the same day (its cues/ work is on its own
+  branch): cards 423 and 462 done (the string lights run from the brain
+  through three Apple Shortcuts and Home scenes, 1 to 2 seconds behind; no
+  Nanoleaf pairing), and the question stringsLead (Salem's intro says to
+  watch the lights; default: the phones lead, nothing built yet).
 - Docs: on-the-night (the new screens, the device move, playing a rehearsal
   again, After the party), room-screens, the test plan, CLAUDE.md (two new
   readers of the sealed docs, the archive, replay, the iPad Pro's Act 4
@@ -84,7 +89,8 @@ gate (party day, a reveal named on it, OPEN typed), Clear keeping a copy
 and leaving the nineteen retired sets alone, the guests' photos leaving the
 public docs once archived, replays needing the same people joining in the
 same order for the same characters, Salem's colours and Boo's poses keeping
-their own timing. Two questions filed for Jon: dialSpill and senseClue.
+their own timing. Three questions filed for Jon: dialSpill, senseClue and
+stringsLead.
 
 ## 24 Oct 2026, evening · Claude Code (the hardware, the Game test tab)
 

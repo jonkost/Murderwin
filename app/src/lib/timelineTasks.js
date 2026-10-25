@@ -627,9 +627,12 @@ export const ITEM4_TASKS = [
   { order: 482, moment: 'act4.entryway', status: 'todo', who: 'Jon', title: 'Try Boo’s camera on the Game test tab (nice to have)', detail: 'Game test tab, Boo’s Catwalk: open Boo’s camera, the practice show, on the iPad Pro, stand it facing you and tap Turn on the camera, then Start the show. At the last pose it takes a photo and keeps it on its own screen; nothing is sent. Note anything wrong in the box.', tech: '?kiosk=pose&practice=1' },
 ]
 // Two questions the test plan's checks turned up (card 479), each with what
-// is built as the default.
+// is built as the default, and stringsLead (below).
 export const ITEM4_DECISIONS = [
   { key: 'dialSpill', moment: 'act2.news', question: 'After Spill the Beans, does the clarity dial start again in the middle, or keep where it was?', options: ['Start again in the middle (as built)', 'Keep where it was'], answer: null, note: 'Default: start again, as built (a spill also clears the Hush). The Canon says the dial never resets, so the checks found the two disagree. A spill only works at the very start of Act 2, before any clue, so the dial has barely moved by then either way.' },
+  // and one from the house's hardware the same day (the lighting and audio session): the string
+  // lights run through Apple Home and trail the phones by a second or two
+  { key: 'stringsLead', moment: 'act4.orangerie', question: 'The string lights lag 1 to 2 seconds behind the phones (Apple Home). Salem’s intro says “Watch the lights, not your phones”. Change it so the phones lead?', options: ['The phones lead: change Salem’s line', 'Keep the line'], answer: null, note: 'Default: the phones lead. In Get Off My Lawn! the colour flips every 1.5 to 6.5 seconds, so anyone following the lights would be blamed for slips; the phones change colour on time. Nothing is built yet: if you keep the default, Claude chat rewrites Salem’s intro and ready lines (handoff of 23 Oct, section 9.6) and Claude Code copies them in.' },
   { key: 'senseClue', moment: 'act2.cat', question: 'In a small party (four to six guests), about once in a thousand deals a cat’s vaguest bag clue (a sense only) points at the Murderer’s bag alone. Leave it, or have Claude Code rule it out?', options: ['Leave it: it never happens at nine guests', 'Rule it out'], answer: null, note: 'Default: leave it, as built. In 2,000 deals each at eight, nine and ten guests it never happened. It is check G09 in the test plan.' },
 ]
 export const RETIRED_FOR_ITEM4 = [
@@ -638,6 +641,8 @@ export const RETIRED_FOR_ITEM4 = [
   { order: 196, title: 'The morning after: open the case to you', detail: `${BUILT_1025} on the Game night page, under After the party. Your card for the morning after is Open the case, the morning after.` },
   { order: 324, title: 'Replay a night by its seed', detail: `${BUILT_1025} every rehearsal is dealt from a seed word. The Game night page lists the last five, and Play it again deals one again. Never the party.` },
   { order: 450, title: 'The pose photo for the end credits (nice to have)', detail: `${BUILT_1025} Boo’s camera on the iPad Pro. Each group’s last pose shows in the end credits. Your cards: Try Boo’s camera on the Game test tab, and Boo’s camera: the iPad Pro to the Entryway.` },
+  { order: 423, title: 'Try the string lights from the brain', detail: 'Done 25 Oct: the brain runs three Apple Shortcuts (Red Murderwin Strings, Green Murderwin Strings v2, Decor Murderwin Strings), each running one Home scene. Red, green and decor all changed the real lights, each in 1 to 2 seconds. STRINGS_SHORTCUTS=on in cues/.env. Pairing is not the way: holding the button resets their Wi-Fi.' },
+  { order: 462, title: 'Add the Holiday String Lights back in the Nanoleaf app', detail: 'Done 25 Oct: the lights are back on the Wi-Fi and the brain runs them through Apple Home (see Try the string lights from the brain), so the Nanoleaf pairing is not needed.' },
   { order: 479, title: 'The checks the test plan still has as Not yet', detail: `${BUILT_1025} every check marked Not yet has a test, the tests carry their IDs, and the new case checks run in npm run checks (20,042 of 20,042). Two wait on your answer as questions on the board (the dial after Spill the Beans, and a sense-only bag clue in a small party); the half second over the Wi-Fi is measured at the tech run.` },
 ]
 

@@ -743,7 +743,7 @@ test('the news cast on the live board’s shape: Claude chat’s answers stand, 
   for (const key of ['grossnola', 'swapMotive']) assert.deepEqual([d[key].answeredBy, d[key].answeredAt], ['Jon', 0], `${key}: Jon’s answer stands`)
 })
 
-test('the item 4 migration: the newest; the six built cards close, two questions filed, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
+test('the item 4 migration: the newest; the six built cards and the two string-lights cards close, three questions filed, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
   const { before, add, newId } = boardThrough('2026-10-25-item4')
   assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
   assert.ok(add.tasks === ITEM4_TASKS && add.retireTasks === RETIRED_FOR_ITEM4 && add.decisions === ITEM4_DECISIONS)
@@ -762,10 +762,10 @@ test('the item 4 migration: the newest; the six built cards close, two questions
     assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
     for (const k of ['title', 'detail']) assert.ok(!String(t[k]).includes('—'), `${t.title}.${k}`)
   }
-  assert.deepEqual(RETIRED_FOR_ITEM4.map(r => r.order).sort((a, b) => a - b), [196, 308, 324, 343, 450, 479])
+  assert.deepEqual(RETIRED_FOR_ITEM4.map(r => r.order).sort((a, b) => a - b), [196, 308, 324, 343, 423, 450, 462, 479])
   for (const r of RETIRED_FOR_ITEM4) {
     assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
-    assert.match(r.detail, /^Built 25 Oct 2026:/)
+    assert.match(r.detail, /^(Built 25 Oct 2026|Done 25 Oct):/)
     assert.ok(!r.detail.includes('—'), `card ${r.order}`)
   }
   const after = applyPlan(planAddition(add, before, { newId, now: 3 }), before)
