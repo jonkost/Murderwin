@@ -324,6 +324,34 @@ test('dealt role cards come through the parity check; the workshop FILLER line i
   assert.ok(dealt.some(t => t.includes('(Keep your own counsel.)')), 'the padding is the workshop line')
 })
 
+test('F06 every role card needs the same tap: every phone, whatever its role, gets one card of the same shape at the same moment, and a late joiner the same', async () => {
+  const { db, nightId, uids } = await party(7)
+  await hostCommand(db, { nightId, command: 'act', arg: 1, now: 8_000_000 })
+  await hostCommand(db, { nightId, command: 'blackout', now: 8_000_000 })
+  await hostCommand(db, { nightId, command: 'power', now: 8_000_000 })
+  const c = caseOf(db, nightId)
+  const byRole = {}
+  for (const uid of uids) {
+    const roleCards = session(db, uid).cards.filter(x => x.kind === 'role')
+    assert.equal(roleCards.length, 1, 'F06 one role card on every phone')
+    const r = c.roles[keyOf(db, uid)]
+    byRole[r] ??= []
+    byRole[r].push(roleCards[0])
+  }
+  assert.deepEqual(Object.keys(byRole).sort(), ['detective', 'ghost', 'murderer'])
+  const shape = card => JSON.stringify([Object.keys(card).filter(k => k !== 'at').sort(), card.id, card.act, card.beat, card.kind, card.button ?? null])
+  const shapes = Object.values(byRole).flat().map(shape)
+  assert.ok(shapes.every(x => x === shapes[0]), 'F06 the same card shape, id, beat and button for every role')
+  assert.ok(Object.values(byRole).flat().every(card => !('role' in card)), 'the card never says which role in a field')
+  // the moment: every phone gets its card from the same power beat, and the same prompt holds them all
+  assert.equal(night(db, nightId).phase, 'prompt')
+  // a guest who arrives after the power gets the same shape of card, as a Detective
+  await join(db, { uid: 'late', nightId, name: 'Late Guest' })
+  const late = session(db, 'late').cards.filter(x => x.kind === 'role')
+  assert.equal(late.length, 1)
+  assert.equal(shape(late[0]), shapes[0], 'F06 a late arrival taps the same')
+})
+
 test('the server counts words the way the workshop does', () => {
   for (const s of ['', '  ', 'one', 'one two', ' one  two\nthree ', 'it’s a cat, is it?', '(Bracketed) words, five of them.']) {
     assert.equal(wordCount(s), workshopWordCount(s), JSON.stringify(s))
