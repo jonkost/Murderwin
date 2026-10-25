@@ -29,6 +29,7 @@ import { randomInt } from 'node:crypto'
 import { generateSet, cellLabel } from './relay-gen.js'
 import { NightError, characterById, GAME_NAMES } from './night.js'
 import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
+import { nightSeed, pickFor } from './seed.js'
 
 export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
 export const WALK_MS = 12_000      // the next drawer walks to the paper
@@ -110,14 +111,17 @@ export async function state(db, nightId) {
 // is already running (or done, with the trace behind the door) is never
 // wiped by a second press: it answers { already: true } unless the host said
 // "restart" (force), which the Host tab asks about first. The beat never forces.
-export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 ** 31), force = false } = {}) {
+export async function start(db, { nightId, now = Date.now(), seed = null, force = false } = {}) {
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   if (!nightSnap.exists) throw new NightError('no-night', 'No such night.')
   const current = await state(db, nightId)
   if ((RUNNING.includes(current) || current === 'done') && !force) return { ok: true, already: true, state: current }
   if (force && current !== 'idle') await reset(db, { nightId, now })
   const roster = nightSnap.data().roster ?? {}
-  const keys = Object.keys(roster)
+  // a seeded rehearsal draws the same pictures in the same order again (seed.js)
+  const word = await nightSeed(db, nightId)
+  if (seed == null) seed = pickFor(word, 'relay')(2 ** 31)
+  const keys = word ? Object.keys(roster).sort() : Object.keys(roster)
   if (keys.length < 2) throw new NightError('invalid', 'The drawing needs at least two people.')
   // the sealed bank, on the party night only; a rehearsal never reads it
   const caseSnap = await db.doc(`cases/${nightId}`).get()
@@ -127,7 +131,7 @@ export async function start(db, { nightId, now = Date.now(), seed = randomInt(2 
   const turns = set.grids.reduce((n, g) => n + g.order.length, 0)
   if (turns > MAX_TURNS) throw new NightError('invalid', 'The drawing would run over its time.')
   const present = await presentKeys(db, nightId, keys, now)
-  const order = turnOrder(keys, turns)
+  const order = turnOrder(keys, turns, pickFor(word, 'relay-order'))
   const { pub, priv } = relayPaths(nightId)
   const batch = db.batch()
   batch.set(db.doc(priv), {

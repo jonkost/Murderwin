@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { runCaseGroup, runLeakGroup, GROUPS } from '../checks.mjs'
+import { runCaseGroup, runLeakGroup, GROUPS, standInCase, caseSeed } from '../checks.mjs'
 import { seededRng } from '../pack-bags.mjs'
 
 const { caseChecks, packingChecks } = await import('../../functions/lib/checks.js')
@@ -11,6 +11,20 @@ test('npm run checks: the case group passes on stand-in cases and names every ch
   assert.equal(r.passed, r.total)
   assert.deepEqual(r.failed, [])
   for (const id of ['G32', 'G33', 'G34', 'G39', 'G41', 'G45', 'G46', 'G47', 'G49', 'G50', 'G51', 'L08']) assert.ok(r.ids.includes(id), id)
+})
+
+test('G22 npm run checks names each case by a seed word, and that word deals the same case again', () => {
+  assert.equal(caseSeed(28), 'check-28')
+  const packings = [{ bags: {}, words: {} }, { bags: {}, words: {} }]
+  const one = standInCase('check-28', packings)
+  const two = standInCase('check-28', packings)
+  const { createdAt: a, ...first } = one.c
+  const { createdAt: b, ...again } = two.c
+  assert.ok(JSON.stringify(first) === JSON.stringify(again), 'the same word dealt a different case')
+  assert.ok(JSON.stringify(one.roster) === JSON.stringify(two.roster), 'the same word dealt a different roster')
+  const r = runCaseGroup({ seeds: ['check-28'] })
+  assert.equal(r.passed, r.total)
+  assert.ok(r.ids.includes('G50'), 'a replayed case runs the board checks too')
 })
 
 test('npm run checks: the leak group passes on this repo', () => {

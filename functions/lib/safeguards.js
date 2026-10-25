@@ -20,11 +20,11 @@
 // The case is read from cases/* with the Admin SDK and written only to
 // cases/{nightId}; role card text is safe copy. Nothing here reads sealed/*.
 
-import { randomInt } from 'node:crypto'
 import { NightError } from './night.js'
 import { buildCase, rehearsalCase, rerollCase, nextMotive } from './case.js'
 import * as deal from './deal.js'
 import { noteExposure, spillBlocked, HUSH_ROLES } from './ledger.js'
+import { nightSeed, pickFor } from './seed.js'
 
 export { noteDealt, noteExposure, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from './ledger.js'
 
@@ -84,10 +84,12 @@ async function replaceRoleCards(db, nightId, list, c) {
   return changed
 }
 
-export async function spill(db, { nightId, now = Date.now(), pick = randomInt } = {}) {
+export async function spill(db, { nightId, now = Date.now(), pick = null } = {}) {
   const { night, list } = await guestsOf(db, nightId)
   const c = await deal.readCase(db, nightId)
   if (!spillAllowed(night, c, { now })) return { ok: true, did: false }
+  // a seeded rehearsal re-rolls the same way again (seed.js)
+  if (!pick) pick = pickFor(await nightSeed(db, nightId), 'spill', c?.spills ?? 0)
   const fresh = freshCase(c, { roster: list, rng: pick, now }, pick)
   const next = rerollCase({ prev: c, fresh, roster: list, rng: pick })
   await db.doc(`cases/${nightId}`).set(next)

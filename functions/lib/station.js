@@ -15,6 +15,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { NightError } from './night.js'
 import { noteDealt } from './ledger.js' // the safeguards' ledger (never content)
 import { traceOf, workReveal, shownReveal } from './traces.js'
+import { pickFor } from './seed.js'
 
 export function rotationPath(nightId) { return `nights/${nightId}/public/rotation` }
 export function studyPath(nightId) { return `nights/${nightId}/public/study` }
@@ -121,7 +122,7 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
   const night = nightSnap.exists ? nightSnap.data() : {}
   const c = caseSnap.exists ? caseSnap.data() : null
   // the dial as it stands right now, once for the whole group
-  const reveal = c ? await studyReveal(db, { c, roster: night.roster ?? {} }) : null
+  const reveal = c ? await studyReveal(db, { c, roster: night.roster ?? {}, pick: pickFor(deckSnap.data()?.seed, 'study', groupId) }) : null
   // the level it landed at, kept privately for the end credits' dial journey (finale.js)
   if (reveal?.level) await db.doc(`nights/${nightId}/private/dialClues`).set({ study: { [groupId]: reveal.level } }, { merge: true })
   let dealt = 0

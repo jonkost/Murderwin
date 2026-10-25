@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
+import { cleanSeed, newSeedWord, pickFor, replayRecord, REPLAY_DOC } from './seed.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const seedDir = joinPath(here, '..', 'seed') // copied from ../seed by `npm run seed`
@@ -46,10 +47,10 @@ export class NightError extends Error {
   constructor(code, message) { super(message); this.code = code }
 }
 
-function shuffled(list) {
+function shuffled(list, pick = randomInt) {
   const a = [...list]
   for (let i = a.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1)
+    const j = pick(i + 1)
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
@@ -143,15 +144,20 @@ export async function packedBagCount(db) {
   return Math.max(...nums)
 }
 
-export async function createNight(db, { label, forceRehearsal, dryRun = false, gameTest = false } = {}) {
+export async function createNight(db, { label, forceRehearsal, dryRun = false, gameTest = false, seed = null } = {}) {
   const hosts = await readHosts(db)
+  const gameSnap = await db.doc('meta/game').get()
+  const game = gameSnap.exists ? gameSnap.data() : {}
   // Nights rehearse by default. Only the workshop's "This is the party night"
   // checkbox (meta/game.party_night) or an explicit caller (the fake players'
   // dry run) makes a night the party, which reads the sealed lists.
-  if (typeof forceRehearsal !== 'boolean') {
-    const gameSnap = await db.doc('meta/game').get()
-    forceRehearsal = !(gameSnap.exists && gameSnap.data().party_night === true)
-  }
+  if (typeof forceRehearsal !== 'boolean') forceRehearsal = game.party_night !== true
+  // Replay by seed (seed.js, card 324): a rehearsal is dealt from a word, the
+  // caller's, else the one typed in the Game night page's Replay box (used
+  // once, and never by a Game test night), else a fresh one. The party never
+  // has one.
+  const typed = cleanSeed(seed ?? (gameTest ? '' : game.replay_seed))
+  const word = forceRehearsal ? (typed || newSeedWord()) : null
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
   const pool = CHARACTERS.filter(c => !c.host).map(c => c.id)
@@ -186,10 +192,17 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false, g
   // guest. Characters are drawn from it in join order, so nobody can predict
   // who gets whom.
   batch.set(db.doc(`nights/${nightId}/private/deck`), {
-    order: shuffled(pool),
-    bags: shuffled(Array.from({ length: bagCount }, (_, i) => i + 1)),
+    order: shuffled(pool, pickFor(word, 'deck')),
+    bags: shuffled(Array.from({ length: bagCount }, (_, i) => i + 1), pickFor(word, 'bags')),
     uids: {},
+    ...(word ? { seed: word } : {}),
   })
+  if (word) {
+    // the word on the Game night page, so this rehearsal can be played again
+    const prev = (await db.doc(REPLAY_DOC).get()).data() ?? null
+    batch.set(db.doc(REPLAY_DOC), replayRecord(prev, { seed: word, nightId, label: label || `Night of ${date.toDateString()}`, replayed: !!typed, gameTest: gameTest === true, at: date }))
+    if (typed && seed == null && !gameTest && game.replay_seed) batch.update(db.doc('meta/game'), { replay_seed: FieldValue.delete() })
+  }
   batch.set(db.doc('public_state/active'), { nightId, since: FieldValue.serverTimestamp() })
   await batch.commit()
   const published = await publishContent(db, nightId)
@@ -201,11 +214,11 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false, g
 // always 5. Floor guarantee: at least one cat other than Irwin is friendly (4+).
 // Salem starts at 3 for everyone (handoff 22 Oct §6): the Parlour Games
 // take him no higher than 4, and only petting the real Salem unlocks 5.
-export function rollAffection(profession) {
+export function rollAffection(profession, pick = randomInt) {
   const mods = AFFECTION_MODS[profession] ?? {}
   const out = { irwin: 5 }
   for (const cat of CATS) {
-    out[cat] = cat === 'salem' ? 3 : Math.max(1, Math.min(5, 3 + (mods[cat] ?? 0) + randomInt(3) - 1))
+    out[cat] = cat === 'salem' ? 3 : Math.max(1, Math.min(5, 3 + (mods[cat] ?? 0) + pick(3) - 1))
   }
   const rolled = CATS.filter(c => c !== 'salem')
   if (!rolled.some(c => out[c] >= 4)) {
@@ -293,6 +306,9 @@ async function joinOnly(db, { uid, nightId, name }) {
       for (const f of CARRIED_FIELDS) if (old?.[f] !== undefined) carried[f] = old[f]
     } else {
       const taken = new Set(Object.values(roster).map(r => r.characterId))
+      // in join order from the deck; on a seeded rehearsal the deck itself
+      // is seeded (seed.js), so the same guests joining in the same order
+      // draw the same characters and bags again
       if (hostFor) characterId = CHARACTERS.find(c => c.host === hostFor)?.id
       else characterId = (deck.order ?? []).find(id => !taken.has(id))
       if (!characterId || taken.has(characterId)) throw new NightError('full', 'Every character is spoken for tonight. Find the host.')
@@ -301,7 +317,7 @@ async function joinOnly(db, { uid, nightId, name }) {
     }
     const character = characterById(characterId)
     if (!character) throw new NightError('invalid', 'That character does not exist.')
-    if (!affection) affection = rollAffection(character.profession)
+    if (!affection) affection = rollAffection(character.profession, pickFor(deck.seed, 'affection', key))
     const displayName = entry?.name ?? clean
 
     // then writes
