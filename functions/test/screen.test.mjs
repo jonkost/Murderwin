@@ -22,7 +22,7 @@ import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
 // ---------------------------------------------------------------------------
 // The dial's band, the salt the screens seed on, and Sir Irwin
 
-test('the band follows the trace ladder exactly', () => {
+test('G24 the band follows the trace ladder exactly', () => {
   for (let d = -20; d <= 20; d++) assert.equal(dialBand(d), traceLevel(d), `dial ${d}`)
 })
 
@@ -151,7 +151,7 @@ async function party() {
   return { db, nightId, phones }
 }
 
-test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
+test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   const sounds = new Set()

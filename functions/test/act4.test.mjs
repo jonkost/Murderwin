@@ -45,7 +45,7 @@ async function intoRounds(db, nightId, now) {
   return readRotation(db, nightId)
 }
 
-test('Start Act 4: the two-minute warning on every phone, then the group card by portrait and character with Locked in', async () => {
+test('G20 Start Act 4: the two-minute warning on every phone, then the group card by portrait and character with Locked in', async () => {
   const { db, nightId, uids, now } = await party(6)
   await host(db, nightId, 'act', now, 2)
   await assert.rejects(host(db, nightId, 'start-act4', now), /end of supper/)
@@ -180,7 +180,7 @@ test('G48 Boo speaks to every group in Act 4 at any affection, and every room\'s
   }
 })
 
-test('a rehearsal: the rooms pay bracketed stand-ins for the cross-off and the bag hint, never a motive', async () => {
+test('F28 a rehearsal: the rooms pay bracketed stand-ins for the cross-off and the bag hint, never a motive', async () => {
   const { db, nightId, now } = await party(6)
   const rot = await intoRounds(db, nightId, now)
   for (let r = 1; r <= rot.rounds; r++) await host(db, nightId, 'next', now)
@@ -269,7 +269,7 @@ test('Boo\'s catwalk: the show is laid out with timestamps at the scan, three po
   assert.ok(cardsOf(db, uid, 'clue').some(x => x.room === 'entryway'))
 })
 
-test('Act 4 Parlour Games wait on the phone: never on the night doc, played when free, and the rest answered at random when Act 4 ends', async () => {
+test('G25b and F08 Act 4 Parlour Games wait on the phone: never on the night doc, played when free, and the rest answered at random when Act 4 ends', async () => {
   const { db, nightId, uids, now } = await party(6)
   await intoRounds(db, nightId, now)
   const sched = db.store.get(`nights/${nightId}/private/parlour`)
@@ -300,7 +300,7 @@ test('Act 4 Parlour Games wait on the phone: never on the night doc, played when
   assert.equal(Object.values(uids).filter(u => session(db, u).answers[id].defaulted).length, Object.keys(uids).length - 1)
 })
 
-test('the memory board and the rooms\' public docs carry no name, no role, no motive', async () => {
+test('L07 the memory board and the rooms\' public docs carry no name, no role, no motive', async () => {
   const { db, nightId, now } = await party(8)
   const rot = await intoRounds(db, nightId, now)
   for (let r = 1; r <= rot.rounds; r++) {

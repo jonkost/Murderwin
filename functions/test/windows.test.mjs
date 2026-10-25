@@ -73,7 +73,7 @@ function writeBank(db, sizes) {
 // ---------------------------------------------------------------------------
 // The tick
 
-test('tick settles a window left open past its close, with defaults for every phone that did not answer, once across two ticks', async () => {
+test('F10 tick settles a window left open past its close, with defaults for every phone that did not answer, once across two ticks', async () => {
   const { db, nightId, uids } = await party(6)
   let now = 1_000_000
   const w = await litUp(db, nightId, now)
@@ -166,7 +166,7 @@ test('twenty interleaved pushes from the two hidden roles all land: the dial is 
   assert.equal(caseOf(db, nightId).dial, expected)
 })
 
-test('both hidden roles answering the same window at once both move the dial, in opposite directions for equal totals', async () => {
+test('F13 both hidden roles answering the same window at once both move the dial, in opposite directions for equal totals', async () => {
   const { db, nightId } = await party(6)
   const now = 5_000_000
   const w = await litUp(db, nightId, now)
@@ -186,7 +186,7 @@ test('both hidden roles answering the same window at once both move the dial, in
   assert.equal(c.dialMap.ghost, 1); assert.equal(c.dialMap.murderer, -1)
 })
 
-test('a late answer is thanked, changes nothing, and the default stands', async () => {
+test('F10 a late answer is thanked, changes nothing, and the default stands', async () => {
   const { db, nightId, uids } = await party(4)
   const now = 6_000_000
   const w = await litUp(db, nightId, now)
@@ -225,7 +225,7 @@ test('a late answer is thanked, changes nothing, and the default stands', async 
 // ---------------------------------------------------------------------------
 // Which set each phone gets
 
-test('across thirty nights every phone holds the same set at the same moment, the set is the case\'s for that slot, and no value, lean or listening cat reaches a phone or a public doc', async () => {
+test('F05 and F08 across thirty nights every phone holds the same set at the same moment, the set is the case\'s for that slot, and no value, lean or listening cat reaches a phone or a public doc', async () => {
   const seen = new Set()
   for (let run = 0; run < 30; run++) {
     const { db, nightId, uids } = await party(6)
@@ -290,7 +290,7 @@ test('the built-in rehearsal sets have three questions with exactly two answers 
 // ---------------------------------------------------------------------------
 // Role-card parity
 
-test('the default role cards pass the parity check; one long card is padded with the filler until the three read alike', () => {
+test('F04 the default role cards pass the parity check; one long card is padded with the filler until the three read alike', () => {
   const r = parityCheck(ROLE_CARDS)
   assert.equal(r.ok, true); assert.equal(r.padded, 0)
   assert.deepEqual(r.cards, ROLE_CARDS)
@@ -306,7 +306,7 @@ test('the default role cards pass the parity check; one long card is padded with
   assert.ok(wordCount(DEFAULT_FILLER) >= 4)
 })
 
-test('dealt role cards come through the parity check; the workshop FILLER line is the padding', async () => {
+test('F04 dealt role cards come through the parity check; the workshop FILLER line is the padding', async () => {
   const { db, nightId, uids } = await party(4)
   db.store.set('safe_content/role_cards', { items: [{ id: 'g', order: 0, text: `GHOST: ${ROLE_CARDS.GHOST} ${'(More words on this card, many more, to run it long.) '.repeat(4)}` }] })
   db.store.set('safe_content/ui_copy', { items: [{ id: 'f', order: 0, text: 'FILLER: (Keep your own counsel.)' }] })

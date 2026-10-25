@@ -70,7 +70,7 @@ function syntheticSecrets() {
   }
 }
 
-test('eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
+test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true }) // the box is ticked, and still ignored without --real-secrets
   for (const [path, data] of Object.entries(syntheticSecrets())) db.store.set(path, data) // there, and a rehearsal never reads them

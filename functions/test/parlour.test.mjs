@@ -191,7 +191,7 @@ test('G30 each cat leans toward its fitting answer about 75% of the time (65 to 
   assert.equal(fittingAnswer({ x: { 0: { boo: 'b' } } }, 's', 'x', 0, 'boo'), 'b')
 })
 
-test('a Detective\'s answer warms the listening cat when it matches the lean and cools it when it does not, by the plan\'s size', async () => {
+test('F13 a Detective\'s answer warms the listening cat when it matches the lean and cools it when it does not, by the plan\'s size', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon' })
   const { nightId } = await createNight(db)

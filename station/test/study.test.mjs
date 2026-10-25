@@ -162,7 +162,7 @@ test('entering: undo clears the last half; a wrong pair shivers and says which h
   assert.equal(m.snapshot.round, 1)
 })
 
-test('the cap: a warning at eight minutes, then at ten (the round) the rest of the code is shown and the clue still goes', () => {
+test('F16 the cap: a warning at eight minutes, then at ten (the round) the rest of the code is shown and the clue still goes', () => {
   const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
   const t0 = 1_000_000
   m.touch(101, t0); m.drain()

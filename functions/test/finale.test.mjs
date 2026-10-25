@@ -77,7 +77,7 @@ test('the Host tab groups button keeps the murderer and the ghost apart', async 
 
 // ---- the trace ----------------------------------------------------------
 
-test('traceLevel: neutral at zero, one rung per four points, clamped to 1..5', () => {
+test('G13 and G24 traceLevel: neutral at zero, one rung per four points, clamped to 1..5', () => {
   assert.equal(traceLevel(0), 3)
   assert.equal(traceLevel(2), 4)
   assert.equal(traceLevel(-2), 2)
@@ -86,7 +86,7 @@ test('traceLevel: neutral at zero, one rung per four points, clamped to 1..5', (
   assert.equal(traceLevel(undefined), 3)
 })
 
-test('TRACE_BUCKETS: every current trace in at least two buckets, the Professors never share one, every trace has a context line', () => {
+test('G12 TRACE_BUCKETS: every current trace in at least two buckets, the Professors never share one, every trace has a context line', () => {
   const traces = CHARACTERS.map(c => c.trace)
   for (const tr of traces) {
     const n = Object.values(TRACE_BUCKETS).filter(b => b.includes(tr)).length
@@ -99,7 +99,7 @@ test('TRACE_BUCKETS: every current trace in at least two buckets, the Professors
   }
 })
 
-test('pickPartner: in play only, never the excluded trace, Professors only as a last resort', () => {
+test('G11 and G12 pickPartner: in play only, never the excluded trace, Professors only as a last resort', () => {
   const inPlay = ['ink', 'elbow-patch', 'coffee', 'white-sand']
   for (let i = 0; i < 50; i++) {
     const p = pickPartner('iodine', inPlay)
@@ -110,7 +110,7 @@ test('pickPartner: in play only, never the excluded trace, Professors only as a 
   assert.equal(pickPartner('coffee', ['elbow-patch']), 'elbow-patch', 'a Professor when nobody else fits')
 })
 
-test('revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
+test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
   for (const [dial, rehearsal] of [[0, false], [9, false], [-9, false], [-4, false], [4, false], [0, true], [9, true]]) {
     const { db, nightId } = await party(8)
     const t = { now: 5_000_000 }
@@ -351,7 +351,7 @@ async function revealed(n = 5) {
 // everything a client can read: the night doc, its public docs, and every session (less that phone's own ballot and result, which are its own picks)
 const publicDocs = (db, nightId) => [...db.store.keys()].filter(k => k === `nights/${nightId}` || k.startsWith(`nights/${nightId}/public/`) || k.startsWith('sessions/')).map(k => { const { ballot, result, ...rest } = db.store.get(k); return [k, rest] })
 
-test('the finale: the canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
+test('F18 the finale: the canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
   const { db, nightId, c } = await revealed(5)
   assert.ok(Array.isArray(c.dialLog) && c.dialLog.length === 2, 'two hidden roles pushed once each')
   assert.ok(c.dialLog.every(e => e.act === 2 && ['murderer', 'ghost'].includes(e.role) && typeof e.delta === 'number'))
@@ -513,7 +513,7 @@ test('Carry on after a hold during the Victim stage keeps the wait before the cl
   assert.equal(ms(db2.store.get(finalePath(id2)).victimAt), v2, 'a hold that began before the name does not move it')
 })
 
-test('the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {
+test('F17 the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {
   const { db, nightId, t, c } = await revealed(5)
   const r = db.store.get(revealPath(nightId))
   const keyTokens = ['"murderer":', '"motive":', '"victim":']
@@ -569,7 +569,7 @@ test('the reveal is staged: no name leaves private/ until the host presses, one 
   assert.equal(db.store.get(finalePath(nightId)), undefined)
 })
 
-test('Next from the reveal waits for all three names; results then land', async () => {
+test('F17 Next from the reveal waits for all three names; results then land', async () => {
   const { db, nightId, uids, names, t } = await revealed(4)
   await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
   t.now = ms(night(db, nightId).window.closesAt) + 1
