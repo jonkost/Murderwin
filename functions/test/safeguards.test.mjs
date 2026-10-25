@@ -73,7 +73,7 @@ const uidOf = (db, nightId, key) => db.store.get(`nights/${nightId}/private/deck
 
 // ---- the pure helper -------------------------------------------------------
 
-test('rerollCase keeps the Murderer, the characters and the Parlour Games; changes the motive and the Ghost; restarts the dial', () => {
+test('G23 rerollCase keeps the Murderer, the characters and the Parlour Games; changes the motive and the Ghost; restarts the dial', () => {
   const roster = [{ key: 'a', characterId: 'white' }, { key: 'b', characterId: 'arms' }, { key: 'c', characterId: 'rye' }, { key: 'd', characterId: 'glass' }]
   for (let seed = 1; seed <= 40; seed++) {
     let n = seed
@@ -111,7 +111,7 @@ test('rerollCase keeps the Murderer, the characters and the Parlour Games; chang
   assertNothingLeaked()
 })
 
-test('spillAllowed: only Acts 2 to 5, never in a blackout, never with a window open, never once a clue that pins the motive is out', () => {
+test('G23 spillAllowed: only Acts 2 to 5, never in a blackout, never with a window open, never once a clue that pins the motive is out', () => {
   const c = { roles: { a: 'murderer', b: 'ghost' }, dealtClues: [] }
   assert.equal(spillAllowed({ act: 2, phase: 'act' }, c), true)
   assert.equal(spillAllowed({ act: 5, phase: 'act' }, c), true)
@@ -128,7 +128,7 @@ test('spillAllowed: only Acts 2 to 5, never in a blackout, never with a window o
 
 // ---- Spill the Beans, on a real case -------------------------------------
 
-test('spill before any clue: the motive and the Ghost change, the Murderer stays, characters and affection are kept, role cards are replaced in place', async () => {
+test('G23 spill before any clue: the motive and the Ghost change, the Murderer stays, characters and affection are kept, role cards are replaced in place', async () => {
   const { db, nightId } = await realParty()
   const now = 1_700_000_000_000
   await toPower(db, nightId, now)
@@ -178,6 +178,36 @@ test('spill before any clue: the motive and the Ghost change, the Murderer stays
   assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), [], 'a spill reads nothing under sealed/: no manifest, no motive set, no leans')
   assertNothingLeaked(JSON.stringify([r, r2]))
 })
+
+test('G23 the story a spill deals passes G01 to G21 again: one Murderer and one Ghost, nothing from outside the party, the motive one of the nineteen, nothing pointing at the Murderer, Salem alone no help, Irwin right, the groups apart (party and rehearsal, 3 to 9 guests)', async () => {
+  const { caseChecks, SPILL_IDS } = await import('../lib/checks.js')
+  const NAMES = ['Jon', 'Susan', 'Jessa', 'Jacob', 'Stanley', 'Jeanette', 'Matthew', 'Marie', 'Rene']
+  let pick = 7
+  const rng = n => (pick = (pick * 1103515245 + 12345) & 0x7fffffff) % n
+  for (const partyNight of [true, false]) {
+    for (let n = 3; n <= NAMES.length; n++) {
+      const { db, nightId } = await party({ partyNight, guests: NAMES.slice(0, n) })
+      const now = 1_700_000_000_000
+      await toPower(db, nightId, now)
+      const before = caseOf(db, nightId)
+      assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: true })
+      const after = caseOf(db, nightId)
+      const roster = Object.entries(night(db, nightId).roster).map(([key, r]) => ({ key, characterId: r.characterId, bag: r.bag }))
+      const results = caseChecks(after, { roster, rng, reroll: false }).filter(r => SPILL_IDS.includes(r.id))
+      assert.equal(results.length, SPILL_IDS.length)
+      for (const r of results) assert.ok(r.pass, `G23 ${r.id} after a spill, ${n} guests, ${partyNight ? 'party' : 'rehearsal'}`)
+      assert.equal(after.murderer, before.murderer, 'G23 the Murderer stays')
+      assert.notEqual(after.motive, before.motive, 'G23 a new motive')
+      assert.notEqual(after.ghost, before.ghost, 'G23 a new Ghost')
+    }
+  }
+  assertNothingLeaked()
+})
+
+// The Canon says the clarity dial stacks across the whole night and never resets; Spill the Beans
+// restarts it today (case.js rerollCase sets the dial to 0, and the G23 tests above expect it).
+// Not changed: which one is right is Jon's call.
+test.todo('G24 the dial never resets during the night, not even after Spill the Beans (today a spill restarts it; the Canon says it never resets; needs Jon\'s call)')
 
 test('spill deals the role cards through the parity check: uneven workshop cards stay padded and only the two phones whose role moved are touched', async () => {
   const { db, nightId } = await realParty()
