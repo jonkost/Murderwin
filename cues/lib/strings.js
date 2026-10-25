@@ -21,7 +21,7 @@
 // The other road (Jon, 25 Oct 2026): through Apple Home, with no Nanoleaf
 // pairing. On the real strings, holding the button to pair reset their Wi-Fi,
 // so the brain runs one Apple Shortcut per colour instead (STRING_SHORTCUTS,
-// each a single Home action on the Holiday Lights), with STRINGS_SHORTCUTS=on
+// each runs one Home scene Jon made for the Holiday Lights), with STRINGS_SHORTCUTS=on
 // in cues/.env. Apple Home answers in about a second, so in Salem's game the
 // phones carry the colour and the strings follow.
 
@@ -87,7 +87,7 @@ export class StringLights {
 }
 
 // The three Apple Shortcuts on the brain, one per colour.
-export const STRING_SHORTCUTS = { red: 'Murderwin Strings Red', green: 'Murderwin Strings Green', decor: 'Murderwin Strings Decor' }
+export const STRING_SHORTCUTS = { red: 'Red Murderwin Strings', green: 'Green Murderwin Strings', decor: 'Decor Murderwin Strings' }
 
 // The mirror's colours when the strings go through Shortcuts.
 export function shortcutColours(names = STRING_SHORTCUTS) {
@@ -96,9 +96,12 @@ export function shortcutColours(names = STRING_SHORTCUTS) {
 
 // Run one shortcut by name with macOS's own `shortcuts` tool; rejects when it
 // is missing or fails, so the mirror says once that the strings did not answer.
+// `shortcuts run` reads its input from stdin until it closes, so stdin is
+// closed at once (left open, it waits until the timeout kills it).
 export function runShortcut(name, { timeoutMs = 8000, execFileImpl = execFile } = {}) {
   return new Promise((resolve, reject) => {
-    execFileImpl('shortcuts', ['run', name], { timeout: timeoutMs }, err => (err ? reject(new Error(`shortcut ${name}: ${err.code ?? err.message}`)) : resolve()))
+    const child = execFileImpl('shortcuts', ['run', name], { timeout: timeoutMs }, err => (err ? reject(new Error(`shortcut ${name}: ${err.code ?? err.signal ?? err.message}`)) : resolve()))
+    child?.stdin?.end?.()
   })
 }
 

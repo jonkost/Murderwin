@@ -129,9 +129,11 @@ and Home apps are yours.)
   matters to the brain, which finds the bulb by its id (step 4); what
   matters is that the bulb stays out of the zone the four scenes use
   (step 8).
-- The string lights are parked. Holding their button on 24 October reset
-  their Wi-Fi, so they are off the network until you add them back in the
-  Nanoleaf app (step 12).
+- The string lights run through Apple Home (25 October), not by pairing:
+  three Home scenes and three Shortcuts on the brain (step 13). Red and the
+  warm decor colour work, each in 1 to 2 seconds; the green Shortcut is being
+  rebuilt. At 1 to 2 seconds behind, the strings are decoration in Salem's
+  game: the phones change colour on time and carry it.
 - The four HomePods are not one AirPlay group yet. Make the group on the
   brain and pick it as the sound output.
 - The brain is on Wi-Fi for now: its network cable adapter showed no link.
@@ -204,28 +206,24 @@ and Home apps are yours.)
 
 **The Orangerie string lights**
 
-12. **Put the strings on the home Wi-Fi** with the Nanoleaf app, then give
-    them a fixed address on the router (the router's list of devices shows
-    it).
-13. **Pair them.** Hold the button on the strings' controller for 5 to 7
-    seconds until the lights flash, then within thirty seconds run:
-    ```bash
-    curl -X POST http://<strings address>:16021/api/v1/new
-    ```
-    Copy the `auth_token` from the answer. Put the address and the token in
-    `cues/.env` as `NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`,
-    spelled exactly so, STRINGS with an S: the brain reads only these two
-    names, and lines named any other way (`NANOLEAF_STRING_HOST`, say) are
-    ignored, so the strings stay decoration.
-    **Careful with the button.** Holding the strings' button resets their
-    Wi-Fi: on 24 October it took them off the network, and they have to be
-    added again in the Nanoleaf app (step 12) before anything else. So this
-    pairing step is not proven for these lights: ask Claude Code before you
-    try it again, and if they drop off the Wi-Fi, add them back in the app
-    first.
+12. **Put the strings on the home Wi-Fi and in Apple Home.** Add them in the
+    Home app (Matter). That puts them on the home Wi-Fi.
+13. **Three Home scenes and three Shortcuts** (the way we use, 25 October).
+    In the Home app, make three scenes with only the Holiday Lights in them:
+    red at full brightness, green at full brightness, and a soft warm glow.
+    In Shortcuts, make three shortcuts that each run one scene, named
+    exactly *Red Murderwin Strings*, *Green Murderwin Strings* and *Decor
+    Murderwin Strings*. They sync to the brain through iCloud. In
+    `cues/.env`, `STRINGS_SHORTCUTS=on`. Apple Home takes 1 to 2 seconds, so
+    in Salem's game the phones lead and the strings follow.
+    **Not this way:** pairing straight to the strings. Holding their button
+    resets their Wi-Fi (24 October), and they never opened pairing. The code
+    for it stays (`NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`, which
+    win over the Shortcuts if both are set).
 14. **Check them.** `npm start -- --check-strings` turns them red, green,
-    then the warm colour. If they never answer, stop there: leave the two
-    lines empty, the strings are decoration, and the phones carry the colour.
+    then the warm colour. If one never changes, open its Shortcut and check it
+    runs the right scene. If none answer, leave `STRINGS_SHORTCUTS` empty:
+    the strings are decoration, and the phones carry the colour.
 
 **All of it at once**
 
