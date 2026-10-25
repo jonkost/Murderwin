@@ -2,13 +2,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { fakeNight, PHONES } from '../fake-players.mjs'
+import { fakeNight, PHONES, SEAT_DEALS } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
 import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
 import { DIRECTIONS, REWARD_LINES } from '../../functions/lib/act4.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
 import { ROUND_SIZES } from '../../functions/lib/relay-bank.js'
+import { CHARACTERS } from '../../functions/lib/night.js'
 
 // The fake players print counts, keys and act names and nothing a phone was
 // dealt. These are the strings a leak would carry; none may reach the output.
@@ -143,6 +144,28 @@ test('--real-secrets is a party night as a dry run: it reads the leans, the pack
   assert.equal(keysUnder(db, 'nights/').length, 0)
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is untouched')
   assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
+})
+
+test('F02 and G05 the two host seats play the Professors and are played by bots like every other seat; every seat lands Murderer and Ghost about equally often', async () => {
+  const db = new FakeFirestore()
+  // the hosts' names come from the Game night form, spelled however Jon types them
+  db.store.set('meta/game', { host_jonathan: 'Jonathan K', host_susan: 'Sue' })
+  // the roster as the night last held it, before the discard (keys and character ids only)
+  let roster = null
+  const get = db._get.bind(db)
+  db._get = path => { const snap = get(path); if (/^nights\/[^/]+$/.test(path) && snap.exists && snap.data()?.roster) roster = snap.data().roster; return snap }
+  const { result: summary, lines } = await captured(log => fakeNight({ db, log }))
+  assertClean(lines.join('\n'))
+  assert.equal(summary.ok, true)
+  assert.deepEqual(summary.checks, [])
+  const profs = CHARACTERS.filter(ch => ch.host).map(ch => ch.id)
+  assert.equal(roster?.jonathan_k?.characterId, profs[0], 'F02 the first host seat plays the first Professor')
+  assert.equal(roster?.sue?.characterId, profs[1], 'F02 the second host seat plays the second Professor')
+  assert.equal(Object.keys(roster).length, PHONES, 'F02 the hosts are two of the eight phones, not extra ones')
+  assert.ok(lines.includes('Host seats: 2 phones play the Professors, dealt and answered like everyone else (F02) PASS'))
+  // G05: the case deal itself, on 2,000 stand-in rosters with both host seats in them
+  assert.deepEqual(summary.fairness, { pass: true, seats: 12, of: 12, deals: SEAT_DEALS })
+  assert.ok(lines.includes('Seat fairness (G05): PASS, 12 of 12 seats fair over 2,000 dealt cases, both host seats included'))
 })
 
 test('a failure mid-night still discards the night and exits FAIL', async () => {
