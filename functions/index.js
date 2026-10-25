@@ -21,6 +21,7 @@ import { mayTouchNight } from './lib/access.js'
 import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
+import { sealedCounts as countSealed } from './lib/counts.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -244,6 +245,15 @@ export const tick = onSchedule({ schedule: 'every 1 minutes', region: 'us-centra
     console.error('tick failed', e?.code ?? e?.name ?? 'error')
   }
 })
+
+// The Home rows (lib/counts.js): how far the packing list, the cats' leans
+// and the drawing pictures have got, as numbers only, never a word of them.
+// The admin's only.
+export const sealedCounts = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only Jon can do that.')
+  return countSealed(db)
+}))
 
 // The Steward's door (lib/steward.js). Jenna reads the packing list and
 // reads and edits the cats' leans here, and only here: the gate is the
