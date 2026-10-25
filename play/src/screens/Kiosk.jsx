@@ -4,6 +4,7 @@ import { callRelayAdvance, callRelayGuess } from '../firebase'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName } from './Rooms'
 import { newsClips, closingClips } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
+import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
@@ -312,7 +313,7 @@ export function ScreenCard({ screen }) {
         // the motives he names sit under "It was one of these…", before his sign-off
         ? <div className="kiosk-lines">
             {text.slice(0, -1).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
-            <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><span className="n">{c.n}</span> {c.rhyme}</li>)}</ul>
+            <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><MotivePicture n={c.n} className="irwin-card" /><span><span className="n">{c.n}</span> {c.rhyme}</span></li>)}</ul>
             {text.slice(-1).map((l, i) => <p key={`end-${i}`} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>
         : <div className="kiosk-lines">
@@ -321,6 +322,16 @@ export function ScreenCard({ screen }) {
       {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
+}
+
+// A motive card's picture (play/public/motives/<n>.png, card 308). A missing
+// picture shows nothing: the rhyme beside it is the card until it is drawn.
+export function MotivePicture({ n, className = 'motive-card' }) {
+  const [broken, setBroken] = useState(false)
+  useEffect(() => setBroken(false), [n])
+  const src = motivePictureUrl(n, import.meta.env.BASE_URL)
+  if (!src || broken) return null
+  return <img className={className} src={src} alt="" aria-hidden="true" onError={() => setBroken(true)} />
 }
 
 // Sir Irwin in one of his five moods (play/public/household/full/Irwin 1 to 5),
@@ -582,7 +593,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
             <div key={k} className={`reveal-card ${k}${k === rv.fresh && stage !== 'done' ? ' now' : ''}`}>
               <p className="reveal-what">{NAME_WHAT[k]}</p>
               {k === 'motive'
-                ? <><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
+                ? <><MotivePicture n={names.motive?.n} className="reveal-motive" /><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
                 : <>
                     <Portrait characterId={revealCharacterId(names[k], who)} className="reveal-portrait" />
                     <p className="reveal-name">{names[k]?.name ?? '…'}</p>
