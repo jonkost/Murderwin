@@ -22,6 +22,7 @@ import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
 import { sealedCounts as countSealed } from './lib/counts.js'
+import { morningOp } from './lib/morning.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -253,6 +254,16 @@ export const sealedCounts = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only Jon can do that.')
   return countSealed(db)
+}))
+
+// The morning after (lib/morning.js): once the party night's reveal has
+// played, on or after the party day, the case that ran opens to Jon and is
+// archived; then he keeps or clears the secrets. Jon's account only. Before
+// that it answers no, with a plain reason, and nothing else.
+export const morningAfter = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only Jon can do that.')
+  return morningOp(db, req.data ?? {})
 }))
 
 // The Steward's door (lib/steward.js). Jenna reads the packing list and

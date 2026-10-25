@@ -227,6 +227,12 @@ export default function Night() {
       </section>
 
       <section className="panel">
+        <h2>After the party</h2>
+        <p className="why">The morning after, open the case that ran: who did it, to whom, why, and everything the game kept from you. It stays shut until the party night’s reveal has played, on the party day or later.</p>
+        <p className="night-line"><Link className="ghost dl" to="/morning">The morning after</Link></p>
+      </section>
+
+      <section className="panel">
         <h2>On the night</h2>
         <ol className="night-steps">
           <li>On your phone, open the game and tap <b>Host? Start the night</b>. Type your name.</li>

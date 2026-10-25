@@ -466,6 +466,10 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .hub-owners a { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0.4rem 0.8rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); text-decoration: none; }
 .hub-owners b { font-size: 1.2rem; }
 .hub-next { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.6rem; }
+/* The morning after (card 196) */
+.morning-answer, .morning-people, .morning-bags { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.morning-answer li { font-size: 1.15rem; }
+.morning-answer .list-moment { display: block; }
 /* Game night: the last rehearsals' seed words (card 324) */
 .replay-recent { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .replay-recent li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
