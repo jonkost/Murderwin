@@ -70,6 +70,10 @@ function syntheticSecrets() {
   }
 }
 
+// "Case: party" or "Case: rehearsal", with at most the one warning a random deal can bring
+// (a trace with no look-alike among the guests, more likely since the hosts play the Professors)
+const caseLine = (l, kind) => l === `Case: ${kind}` || l === `Case: ${kind}; warning: one trace at the party has no look-alike among the guests`
+
 test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true }) // the box is ticked, and still ignored without --real-secrets
@@ -80,7 +84,8 @@ test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass
   assertClean(out)
   assert.equal(summary.ok, true, out)
   assert.equal(summary.rehearsal, true, 'stand-ins unless --real-secrets')
-  assert.ok(lines.includes('Case: rehearsal'))
+  // the deal is random: a trace with no look-alike at the party is the only warning a night may carry
+  assert.ok(lines.some(l => caseLine(l, 'rehearsal')), 'Case: rehearsal')
   // a rehearsal reads no lean, no picture and no motive set; the packing only
   // for its count of bags when the night is made (night.js packedBagCount), never for a clue
   assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'a rehearsal reads nothing else sealed')
@@ -135,7 +140,7 @@ test('--real-secrets is a party night as a dry run: it reads the leans, the pack
   assertClean(out)
   assert.equal(summary.ok, true, out)
   assert.equal(summary.rehearsal, false, 'a party case')
-  assert.ok(lines.includes('Case: party'), 'no warning about missing sealed content')
+  assert.ok(lines.some(l => caseLine(l, 'party')), 'no warning about missing sealed content')
   assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')).sort(), [...SECRETS].sort(), 'the three secrets, and never sealed/manifest or a motive set')
   assert.deepEqual(summary.secrets, { leanSets: 2, bags: 64, packed: 64, fromBank: 3 })
   assert.ok(lines.includes('Party secrets used: the cats\' leans for 2 sets, the packing on 64 of 64 bag clues, the picture bank for 3 of 3 drawing rounds'))
@@ -234,4 +239,17 @@ test('the command line: exit 0, one line per act, a tally, nothing a phone was d
   const refused = spawnSync(process.execPath, [script, '--live'], { encoding: 'utf8', env: { ...process.env, GOOGLE_APPLICATION_CREDENTIALS: '' } })
   assert.equal(refused.status, 2)
   assert.match(refused.stdout, /Refusing/)
+})
+
+test('G22 a fake rehearsal is dealt from a seed word and prints it; the party dry run never takes one', async () => {
+  const lines = []
+  const s = await fakeNight({ db: new FakeFirestore(), log: l => lines.push(l), seed: 'heron-2024' })
+  assert.equal(s.ok, true)
+  assert.equal(s.seed, 'heron-2024')
+  assert.match(lines[0], /, seed heron-2024$/)
+  const fresh = await fakeNight({ db: new FakeFirestore(), log: () => {} })
+  assert.match(fresh.seed, /^[a-z]+-\d{4}$/, 'a rehearsal with no word gets a fresh one')
+  const cli = spawnSync(process.execPath, [fileURLToPath(new URL('../fake-players.mjs', import.meta.url)), '--seed', 'heron-2024', '--real-secrets'], { encoding: 'utf8' })
+  assert.equal(cli.status, 2)
+  assert.match(cli.stdout, /never dealt from a word/)
 })

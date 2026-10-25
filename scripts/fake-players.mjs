@@ -23,6 +23,9 @@
 //
 //   npm run fake-night                       in-process, against an in-memory stand-in Firestore
 //   npm run fake-night -- --emulator         against the local emulators (npm run emulate first)
+//   npm run fake-night -- --seed tulip-4471  a rehearsal dealt from that seed word (functions/lib/seed.js):
+//                                            the same deal as any night from that word; the fake
+//                                            phones' own taps still differ. Every rehearsal prints its word
 //   npm run fake-night -- --real-secrets     a party night (a dry run): it reads the party's sealed
 //                                            leans, packing and drawing pictures where the script
 //                                            is pointed, as the real night does
@@ -92,16 +95,19 @@ const CASE_WARNINGS = {
 const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"parlourPlan"', '"leans"', '"listeners"', '"solving"', '"hints"', '"newsOut"', '"family"']
 const NEVER_BEFORE_REVEAL = ['"murderer"', '"ghost"', '"victim"']
 
-export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players' } = {}) {
+export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players', seed = null } = {}) {
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
   const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, secrets: null, fairness: null, discard: null, ok: false, error: null }
 
-  const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label }
+  // a party-night dry run is never dealt from a word; a rehearsal always is (the caller's, or a fresh one)
+  const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label, ...(seed ? { seed } : {}) }
   const { nightId } = await night.createNight(db, nightOpts)
   summary.nightId = nightId
-  say(`Fake players: ${phones} phones, ${realSecrets ? 'party case, dry run' : 'rehearsal case'}, night ${nightId}`)
+  const word = realSecrets ? null : (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.seed ?? null
+  summary.seed = word
+  say(`Fake players: ${phones} phones, ${realSecrets ? 'party case, dry run' : 'rehearsal case'}, night ${nightId}${word ? `, seed ${word}` : ''}`)
 
   const nightDoc = async () => (await db.doc(`nights/${nightId}`).get()).data()
   const sessionOf = async uid => (await db.doc(`sessions/${uid}`).get()).data() ?? {}
@@ -504,6 +510,12 @@ async function main() {
   const args = process.argv.slice(2)
   const has = f => args.includes(f)
   const realSecrets = has('--real-secrets')
+  const at = args.indexOf('--seed')
+  const seed = at >= 0 ? String(args[at + 1] ?? '') : null
+  if (seed !== null && realSecrets) {
+    console.log('Refusing: --seed is for a rehearsal. The party night is never dealt from a word.')
+    return 2
+  }
   let db
   if (has('--live')) {
     if (!has('--i-know-this-is-the-party-database')) {
@@ -525,7 +537,7 @@ async function main() {
     const { FakeFirestore } = await import('../functions/test/fake-firestore.mjs')
     db = new FakeFirestore()
   }
-  const summary = await fakeNight({ db, realSecrets })
+  const summary = await fakeNight({ db, realSecrets, seed })
   return summary.ok ? 0 : 1
 }
 
