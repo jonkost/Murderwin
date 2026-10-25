@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4 } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -743,11 +743,17 @@ test('the news cast on the live board’s shape: Claude chat’s answers stand, 
   for (const key of ['grossnola', 'swapMotive']) assert.deepEqual([d[key].answeredBy, d[key].answeredAt], ['Jon', 0], `${key}: Jon’s answer stands`)
 })
 
-test('the item 4 migration: the newest; the five built cards close, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
+test('the item 4 migration: the newest; the six built cards close, two questions filed, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
   const { before, add, newId } = boardThrough('2026-10-25-item4')
   assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
-  assert.ok(add.tasks === ITEM4_TASKS && add.retireTasks === RETIRED_FOR_ITEM4)
-  assert.equal(add.decisions, undefined, 'no new question')
+  assert.ok(add.tasks === ITEM4_TASKS && add.retireTasks === RETIRED_FOR_ITEM4 && add.decisions === ITEM4_DECISIONS)
+  for (const d of ITEM4_DECISIONS) {
+    assert.equal(before.decisions[d.key], undefined, `${d.key} is a new question`)
+    assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
+    assert.equal(d.options.length, 2)
+    assert.match(d.note, /^Default: /)
+    for (const k of ['question', 'note']) assert.ok(!d[k].includes('—'), `${d.key}.${k}`)
+  }
   const earlier = new Set(before.tasks.map(t => t.order))
   for (const t of ITEM4_TASKS) {
     assert.ok(t.order >= 480 && t.order < 500, `${t.title}: numbered from 480`)
@@ -756,7 +762,7 @@ test('the item 4 migration: the newest; the five built cards close, open on the 
     assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
     for (const k of ['title', 'detail']) assert.ok(!String(t[k]).includes('—'), `${t.title}.${k}`)
   }
-  assert.deepEqual(RETIRED_FOR_ITEM4.map(r => r.order).sort((a, b) => a - b), [196, 308, 324, 343, 450])
+  assert.deepEqual(RETIRED_FOR_ITEM4.map(r => r.order).sort((a, b) => a - b), [196, 308, 324, 343, 450, 479])
   for (const r of RETIRED_FOR_ITEM4) {
     assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
     assert.match(r.detail, /^Built 25 Oct 2026:/)

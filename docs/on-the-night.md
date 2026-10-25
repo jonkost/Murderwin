@@ -491,6 +491,9 @@ once: the box empties when the night starts. The box is greyed out while
 "This is the party night" is ticked: the party is never dealt from a word.
 `npm run checks` names a failing stand-in case by its word too (check-28,
 say), and `npm run checks -- --seed check-28` deals that one case again.
+`npm run fake-night` prints its rehearsal's word on its first line, and
+`npm run fake-night -- --seed tulip-4471` deals that night again (the fake
+phones' own taps still differ).
 
 ## After the party (the morning after)
 

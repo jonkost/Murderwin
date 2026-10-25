@@ -30,7 +30,7 @@ Your job, Claude Code:
 
 Every check gets a short ID (G01, F01, L01…) and a plain-English name.
 
-Cases do not carry a seed yet, so today a failure cannot name one. See G22 and replay by seed below.
+Every rehearsal and every stand-in case is dealt from a seed word (25 Oct, `functions/lib/seed.js`), so a failure names its word, and the word deals the same case again. See G22 and replay by seed below.
 
 ---
 
@@ -53,9 +53,9 @@ Today: `npm test` runs every check that exists, `npm run fake-night` plays one w
 | `npm test` | Claude Code | Runs every automated check that exists today. | Yes |
 | `npm run fake-night` | Claude Code | The rehearse command: one whole night, all seven acts, eight fake phones, in memory (or on the emulator with `-- --emulator`). The first two phones join under the hosts' names from the Game night form, so they play the two Professors and the bots play them like everyone else (25 Oct). Checks F20, F21, F24, G32, F02 (the host seats dealt and answered like every other phone), G05 (2,000 cases dealt on stand-in rosters: every seat, both host seats included, lands Murderer and Ghost about equally often) and the seal, and prints pass or fail with counts only. With `-- --real-secrets` it is a party-night dry run on the real leans, packing and drawing pictures (23 Oct), and prints a "Party secrets used" line of counts. | Yes |
 | `npm run test:rules` | Claude Code | The security rules check (L04), on the emulator. Plain `npm test` skips it. | Yes |
-| `npm run checks` | Jon (or Claude Code) | `scripts/checks.mjs`. Three groups. **Case generator**: deals 1,000 stand-in cases (4 to 12 guests, bags packed in memory from the seed's item list) and runs every case check on each (twenty on every case: G01, G03, G04, G09, G17, G19, G20, G21, G23, G32, G33, G34, G39, G41, G45, G46, G47, G49, G51, G53; the memory-match and prompt checks, G50 and L08, on every 50th; and G05 and G06 once, across all the deals). **Dry run**: one whole fake night in memory. **Leak checks**: L01 (the files, the history, and no tracked JSON shaped like sealed content), L06 and L08. Prints one line per group, counts only, and saves the same counts to `validation_reports/checks` for the Health page. `-- --cases 200` for a quick look, `-- --local` to save nothing. It does not run the rules check (L04 needs the emulator): that is still `npm run test:rules`. About ten seconds for the 1,000. | Yes (24 Oct; more checks 25 Oct) |
+| `npm run checks` | Jon (or Claude Code) | `scripts/checks.mjs`. Three groups. **Case generator**: deals 1,000 stand-in cases (4 to 12 guests, bags packed in memory from the seed's item list) and runs every case check on each (twenty on every case: G01, G03, G04, G09, G17, G19, G20, G21, G23, G32, G33, G34, G39, G41, G45, G46, G47, G49, G51, G53; the memory-match and prompt checks, G50 and L08, on every 50th; and G05 and G06 once, across all the deals). **Dry run**: one whole fake night in memory. **Leak checks**: L01 (the files, the history, and no tracked JSON shaped like sealed content), L06 and L08. Prints one line per group, counts only, and saves the same counts to `validation_reports/checks` for the Health page. `-- --cases 200` for a quick look, `-- --local` to save nothing. Each stand-in case is dealt from a seed word (check-1 to check-1000), a failure names it, and `-- --seed check-28` deals that one case again and runs its checks (counts only, saves nothing). It does not run the rules check (L04 needs the emulator): that is still `npm run test:rules`. About ten seconds for the 1,000. | Yes (24 Oct; more checks 25 Oct) |
 | Jenna's "Run the checks" | **Jenna only** | The checks on the real sealed content, on the server: PK1, G43 and PK2 on the packing, LN1 on the leans, RP1 on the drawing pictures. Their Steward page, tab The checks, shows each check's ID, its plain name, PASS or FIX NEEDED and a count (every check but PK1), never content. (Was planned as `npm run checks:real`; Jenna works only in the browser, so it is a button.) | Yes (24 Oct) |
-| Replay by seed | Claude Code | Deals one exact case again from its seed, so a broken night can be played again. Shows counts only. | Not built. It is a card on the board ("Replay a night by its seed"). |
+| Replay by seed | Jon (the Game night page) and Claude Code | Every rehearsal is dealt from a seed word. On the Game night page, "Play a rehearsal again" lists the last five words, and Play it again (or a word typed in the box) makes the next night started from a phone deal that rehearsal again: the same roles, motive, cat hints, Parlour Games, Act 4 groups and drawing, and the same characters for the same people joining in the same order. Used once; never the party. For a stand-in case: `npm run checks -- --seed check-28`; for a whole fake night: `npm run fake-night -- --seed tulip-4471` (it prints each rehearsal's word). | Yes (25 Oct) |
 
 There is no separate `npm run rehearse`: `npm run fake-night` is the rehearse command.
 
@@ -218,7 +218,7 @@ Run on the server from Jenna's page ("Run the checks"), never in a terminal. Eac
 
 ## The results page Jon reads
 
-**Built 24 October:** the workshop's **Health** page (`#/health`, linked from Where we are). As specified, with two differences: the Case generator count is checks, not cases (twenty on each of 1,000 cases, two on every 50th, and the two fairness checks, so `20,042 of 20,042 passed`), and under a red cross the page shows the stand-in case's number (or "fake night") where the spec says seed.
+**Built 24 October:** the workshop's **Health** page (`#/health`, linked from Where we are). As specified, with two differences: the Case generator count is checks, not cases (twenty on each of 1,000 cases, two on every 50th, and the two fairness checks, so `20,042 of 20,042 passed`), and under a red cross the page shows the stand-in case's seed word (check-28, say, or "fake night"), which `npm run checks -- --seed` deals again.
 
 - `npm run checks` writes one counts-only results record: the group, how many passed, the total, the IDs and seeds of any that failed, and the time. The page reads that record.
 - Big text. One line per group: Case generator, Dry run, Leak checks.
@@ -233,15 +233,14 @@ If everything is green, show one sentence: **"All clear. The game is ready."**
 
 ## What is left (25 October)
 
-Built: the tests marked "Has a test" in the table below, the stand-ins, `npm run fake-night` (with the two host seats since 25 October), the REHEARSAL band, `npm run checks` with its counts-only record, the Health page, and Jenna's "Run the checks" button. On 25 October (card 479) the checks that were Not yet were written, every test that checked something without an ID was renamed to start with it, and the new case-level checks went into `npm run checks`.
+Built: the tests marked "Has a test" in the table below, the stand-ins, `npm run fake-night` (with the two host seats since 25 October), the REHEARSAL band, `npm run checks` with its counts-only record, the Health page, and Jenna's "Run the checks" button. Also on 25 October: replay by seed and G22 (card 324). On 25 October (card 479) the checks that were Not yet were written, every test that checked something without an ID was renamed to start with it, and the new case-level checks went into `npm run checks`.
 
 Before the second full tech run (by Wednesday 11 November; all Claude Code):
-1. Replay by seed: one stored seed per case drives every pick, the same seed deals the same case, counts only, and a G22 test. It is a card on the board ("Replay a night by its seed"). Until then a failure in `npm run checks` names the stand-in case's number, not a seed.
-2. The worst-dial proof, G07, G08 and G42, from Claude chat's patch (below).
+1. The worst-dial proof, G07, G08 and G42, from Claude chat's patch (below).
 
-Waiting on Jon (each written as a `test.todo` with the reason, so it shows in the test count and is never silent):
-- **G09, bag clues that name only a sense.** In a party of four to six guests, about 1 deal in 1,000, a cat's low-rung bag clue names only a sense (the Murderer's bag holds no clue word among the bags in play), and that sense is one only the Murderer's bag holds among the bags in play: on its own it points at one bag. Not seen in 2,000 deals each at eight, nine or ten guests, the party's size. The rest of G09 passes.
-- **G24, the dial after Spill the Beans.** The Canon says the dial never resets; today a Spill the Beans restarts it at zero (and the G23 tests expect that). Which one is right is Jon's call.
+Waiting on Jon (each written as a `test.todo` with the reason, so it shows in the test count and is never silent; each is a question on the board with the built behaviour as its default):
+- **G09, bag clues that name only a sense.** In a party of four to six guests, about 1 deal in 1,000, a cat's low-rung bag clue names only a sense (the Murderer's bag holds no clue word among the bags in play), and that sense is one only the Murderer's bag holds among the bags in play: on its own it points at one bag. Not seen in 2,000 deals each at eight, nine or ten guests, the party's size. The rest of G09 passes. The question is *senseClue* (default: leave it).
+- **G24, the dial after Spill the Beans.** The Canon says the dial never resets; today a Spill the Beans restarts it at zero (and the G23 tests expect that). Which one is right is Jon's call: the question is *dialSpill* (default: start again, as built).
 
 Checked at the tech run, not in a test: F26's half second over the real Wi-Fi. The tests prove the schedule, the redraw rate and the clock rule (a phone stays within half a second while its round trip to the server is under 0.8 seconds); the house's own Wi-Fi is the tech run's to measure.
 
@@ -285,7 +284,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G19 | Irwin wins any disagreement | Has a test | `functions/test/case-checks.test.mjs` (Irwin's cards always hold the truth; only Salem ever says something false); also in `npm run checks` |
 | G20 | Everyone in exactly one group | Has a test | `functions/test/station.test.mjs`, `functions/test/act4.test.mjs`, `functions/test/case-checks.test.mjs`; also in `npm run checks` |
 | G21 | Murderer and Ghost never in one group | Has a test | `functions/test/station.test.mjs`, `functions/test/case-checks.test.mjs`; also in `npm run checks` |
-| G22 | Same seed, same case | Not yet | No case seed is stored yet. Replay by seed is a card on the board. |
+| G22 | Same seed, same case | Has a test | `functions/test/seed.test.mjs` (the case from one word twice; a whole rehearsal replayed: characters, bags, affection, case, Act 2 line, Act 4 groups, drawing), `scripts/test/checks.test.mjs` (a stand-in case dealt again from its word) |
 | G23 | Spill the Beans | Has a test | `functions/test/safeguards.test.mjs` (the G23 tests; the new story checked against G01 to G21 through the real spill, party and rehearsal), `functions/test/case-checks.test.mjs`; also in `npm run checks` |
 | G24 | Dial starts at 3, stays 1 to 5, never resets | Partly | `functions/test/finale.test.mjs` ("G13 and G24 traceLevel"), `functions/test/screen.test.mjs` ("G24 the band follows the trace ladder"). A `test.todo` for Jon: today a Spill the Beans restarts the dial (`functions/test/safeguards.test.mjs` expects it), but the Canon says the dial never resets |
 | G25 | 12 sets: five, five, two | Has a test | `functions/test/parlour.test.mjs` |
