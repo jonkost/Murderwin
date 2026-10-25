@@ -615,8 +615,27 @@ export const SUPERSEDED_FOR_NEWS_CAST = {
   clueChannels: 'Replaced 21 to 23 Oct 2026: only the bags and the traces point at a person; Act 2 bag clues are about the Murderer, Act 4 bag hints about the Ghost, the study shows the Ghost’s trace and the bedroom screen the Murderer’s.',
 }
 
+// 25 Oct 2026: the 24 Oct evening handoff's item 4 built by Claude Code (the
+// Home rows, the motive card pictures, the morning after, replay by seed, the
+// pose photo, the test plan's Not yet checks). The build cards marked done;
+// Jon's two new jobs on the night (Boo's camera, the morning after) and one
+// before it (try Boo's camera), numbered from 480. Applied by '2026-10-25-item4'.
+const BUILT_1025 = 'Built 25 Oct 2026:'
+export const ITEM4_TASKS = [
+  { order: 480, moment: 'after', status: 'todo', when: 'later', who: 'Jon', title: 'Open the case, the morning after', detail: 'On the Game night page, under After the party: The morning after. It opens only once the party night’s reveal has played to the end, on the party day or later. Type OPEN, read what really happened, then choose Keep the secrets or Clear the secrets (the archive keeps a copy either way). Then untick This is the party night.' },
+  { order: 481, moment: 'act4.warn', status: 'todo', when: 'later', who: 'Jon', title: 'Boo’s camera: the iPad Pro to the Entryway (nice to have)', detail: 'After supper, before you press Start Act 4, carry the iPad Pro from the Orangerie to the end of the catwalk, facing where the group poses. Open Boo’s camera (the Devices page has the address and a square code), full screen, and tap Turn on the camera. It takes one photo of each group’s last pose for the end credits. Skip it and the catwalk runs the same.', tech: '?kiosk=pose' },
+  { order: 482, moment: 'act4.entryway', status: 'todo', who: 'Jon', title: 'Try Boo’s camera on the Game test tab (nice to have)', detail: 'Game test tab, Boo’s Catwalk: open Boo’s camera, the practice show, on the iPad Pro, stand it facing you and tap Turn on the camera, then Start the show. At the last pose it takes a photo and keeps it on its own screen; nothing is sent. Note anything wrong in the box.', tech: '?kiosk=pose&practice=1' },
+]
+export const RETIRED_FOR_ITEM4 = [
+  { order: 343, title: 'Home rows for the leans, the packing list and the pictures', detail: `${BUILT_1025} Home shows the packing list (made or not), the cats’ leans (questions with every lean, of all of them) and the drawing pictures (good ones, of nine). Numbers only.` },
+  { order: 308, title: 'Show the motive card pictures', detail: `${BUILT_1025} each picture shows beside its motive in Sir Irwin’s countdown and on the motive’s card at the reveal; the rhyme alone until it is in. Drawing them is the card Draw the nineteen motive cards.` },
+  { order: 196, title: 'The morning after: open the case to you', detail: `${BUILT_1025} on the Game night page, under After the party. Your card for the morning after is Open the case, the morning after.` },
+  { order: 324, title: 'Replay a night by its seed', detail: `${BUILT_1025} every rehearsal is dealt from a seed word. The Game night page lists the last five, and Play it again deals one again. Never the party.` },
+  { order: 450, title: 'The pose photo for the end credits (nice to have)', detail: `${BUILT_1025} Boo’s camera on the iPad Pro. Each group’s last pose shows in the end credits. Your cards: Try Boo’s camera on the Game test tab, and Boo’s camera: the iPad Pro to the Entryway.` },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS, ...ITEM4_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.
