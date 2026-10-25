@@ -4,7 +4,7 @@ Rules for working in this repo. These are load-bearing. Read fully before any ta
 Updated 24 October 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
 feature lands Wednesday 11 November, after the second full tech run; then checks and fixes only.
 
-> **24 Oct 2026, evening handoff (`docs/handoff-2026-10-24.md`, from Claude chat).** Jon cast the news team: Jon plays Mic Cameron (the field reporter), Susan plays Ava Waves (the studio anchor). The practice run is Sunday 25 October: a rehearsal night, the whole night, Acts 1 to 7, every screen on, Jon and Susan playing with the spare iPhone 11 as a third player (run sheet: Claude Doc https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK). Answered by Jon that evening: bulletin2Voice (Susan reads bulletin 2, as Ava Waves), bulletin2Known (accepted: Susan, who records it, knows which family each line points at) and worstDial (build the worst-dial proof now, before the second tech run; Claude chat is building it and sends it as a patch, `docs/patches/2026-10-24-worst-dial.patch`, with how to apply it: Claude Code does not start it). This handoff wins over older docs where they disagree.
+> **24 Oct 2026, evening handoff (`docs/handoff-2026-10-24.md`, from Claude chat).** Jon cast the news team: Jon plays Mic Cameron (the field reporter), Susan plays Ava Waves (the studio anchor). The practice run is Sunday 25 October: a rehearsal night, the whole night, Acts 1 to 7, every screen on, Jon and Susan playing with the spare iPhone 11 as a third player (run sheet: Claude Doc https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK). Answered by Jon that evening: bulletin2Voice (Susan reads bulletin 2, as Ava Waves), bulletin2Known (accepted: Susan, who records it, knows which family each line points at) and worstDial (build the worst-dial proof now, before the second tech run; Claude chat is building it and sends it as a patch, `docs/patches/2026-10-24-worst-dial.patch`, with how to apply it: Claude Code does not start it). This handoff wins over older docs where they disagree. Its item 4 was built on 25 Oct (Claude Code): the Home rows, the motive card pictures, the morning after, replay by seed, the pose photo, and the test plan's Not yet checks.
 
 > **Decisions (24 Oct, evening).** Open, each a card on the board and Jon's call only, each with its default built: ballotMajority, diningName, handOn, rulesDeckScreen, granoliaIntro (new 24 Oct, on the board after the next deploy: Granolia's hello in the Study; default the new words, which Claude Code puts in, card 473), and tidyFolders (housekeeping in the repo folder, now a Claude Code card: ask Jon once, when you get there). Answered: newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut) and dialMapping (fixed, as built), with the 23 Oct handoff's defaults on 24 Oct (Jon may change any); bulletin2Voice, bulletin2Known and worstDial (Jon, 24 Oct evening, above); grossnola (keep it offstage, 31 Aug) and swapMotive (keep all 19, 8 Oct), answered long ago and only now off the open list.
 
@@ -123,11 +123,16 @@ counts). These rules still hold:
 ### Enforcement — infrastructure, not discipline
 1. Sealed content lives ONLY in Firestore: `sealed/*`, `cases/*`, and each
    night's `nights/{id}/private/*`. The security rules deny every client read
-   of all three. It is NEVER committed to this repo — not as JSON, not in seeds,
+   of all three. `archive/*` (the morning after's copy of the party night,
+   made only after the party) has no client rule either. It is NEVER committed to this repo — not as JSON, not in seeds,
    not in fixtures, not in test snapshots. `.gitignore` guards known paths; you
    guard everything else.
 2. Only Cloud Functions (Admin SDK) read it: to assemble player-facing payloads
-   at game time, and for the Steward's view (see above).
+   at game time, for the Steward's view (see above), for the Home rows'
+   counts (numbers only, `functions/lib/counts.js`, built 25 Oct), and after
+   the party for the morning after (`functions/lib/morning.js`, built 25 Oct:
+   Jon's account only, never before the party day, only once the party
+   night's reveal has played to the end, and only when he types OPEN).
 3. Sealed content is made only by the blind scripts: `scripts/generate-leans.mjs`
    and `generate-relay-pictures.mjs` (they call the Anthropic API) and
    `pack-bags.mjs`. Each writes straight to Firestore. Its stdout prints
@@ -451,8 +456,10 @@ setup, step by step: the workshop's Devices page.
   teach-touch` in `station/`) and saved on the Mac that runs the station
   (`station/touch-map.json`, not in the repo), so they must be taught on the
   M1 Air. `docs/study-light-game.md` §13.
-- Jon's iPad Pro M2 — supper captions in the Orangerie (`?kiosk=ipad`), a
-  spare screen in Act 4. The older family iPad — the memory match in the
+- Jon's iPad Pro M2 — supper captions in the Orangerie (`?kiosk=ipad`); in
+  Act 4 Boo's camera in the Entryway (`?kiosk=pose`, built 25 Oct, nice to
+  have: one photo of each group's last pose for the end credits) or a spare
+  screen. The older family iPad — the memory match in the
   Library all night (`?kiosk=memory`; `&play=1` is the standalone game).
   Susan's 8th-gen iPad — decor, handed over if a guest needs a device. The
   old iPhone 11 — the spare phone.
@@ -493,8 +500,11 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
 2. Clue format locked, JSON: done.
 3. One character onto a phone via QR: done.
 4. Seed-based case generator: done, as the case deal (`functions/lib/case.js`
-   at the blackout; the motive drawn with crypto randomness; replay by seed is
-   a card on the board). Since 23 Oct no secrets generator feeds it.
+   at the blackout; on the party night the motive is drawn with crypto
+   randomness). Replay by seed built 25 Oct (`functions/lib/seed.js`): every
+   rehearsal is dealt from a seed word, and the Game night page's Replay box
+   deals one again; the party night is never seeded. Since 23 Oct no secrets
+   generator feeds it.
 5. Eight fake test players: done (`npm run fake-night`, PASS 23 Oct).
 6. Split dev and live: replaced 17 Oct. Rehearsals are nights with the party
    box unticked, or the emulator; no second project.
@@ -542,7 +552,7 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
   announces the door), the string lights (Get Off My Lawn! runs on the
   phones), the projector (Boo's wall runs on any screen), an iPad (another
   screen takes its jobs, since any browser runs them), the videos (the words
-  show instead). Never cut: the case deal (`functions/lib/case.js`), the
+  show instead), Boo's camera (the credits have no photos). Never cut: the case deal (`functions/lib/case.js`), the
   reveal order (Murderer, Motive, Victim) and the clue path (both bulletins,
   the cat hints and bag clues, Irwin's countdown, the study trace and the
   trace reveal).

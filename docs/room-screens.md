@@ -4,7 +4,8 @@ What the Parlour TV, the iPads, Boo's wall, the bedroom screen and the
 study screen show at every beat of the night, and the sound that goes with
 it. Written 18 October 2026, brought up to date 24 October 2026 for the
 23 October handoff (the Parlour, the four Act 4 games and their names, the
-device table, the bulletins as video). Everything on this page
+device table, the bulletins as video), and on 25 October for Boo's camera
+and the motive card pictures. Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -13,12 +14,14 @@ live, or which way the hidden pair have pulled.
 | Address | Screen | What it does |
 |---|---|---|
 | `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below. In the drawing the room taps its guesses here. |
-| `?kiosk=ipad` | Your iPad Pro on a stand in the Orangerie, Acts 2 and 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper. A spare screen from Act 4. |
+| `?kiosk=ipad` | Your iPad Pro on a stand in the Orangerie, Acts 2 and 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper. In Act 4 it becomes Boo's camera (below) or a spare screen. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia. |
 | `?kiosk=memory` | The older iPad, on a small stand in the Library with Zimothy, all night | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, Act 4 | Boo's Catwalk on the triangle wall above the Parlour opening. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
+| `?kiosk=pose` | Your iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
+| `?kiosk=pose&practice=1` | The iPad Pro, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
 | `?kiosk=bedroom` | Susan's work MacBook Pro again, carried into the bedroom after Act 4 | Closed until the third picture is named, then the trace and Sir Irwin's line for it. |
 
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
@@ -61,6 +64,8 @@ brackets.
 - *Act 5, Sir Irwin's countdown.* Irwin in one of his five moods, his
   opener, the line that says how sure he is, five to one motive cards (five
   at dial 1, one at dial 5, the real one always among them), and his closer.
+  Each card shows its picture (`play/public/motives/<number>.png`) beside
+  the rhyme once it is drawn; until then the rhyme alone.
   Nothing else: the old secret middle line is gone (23 October).
 - *Act 6, Sir Irwin Needs a Hand (the Relay Drawing).* Irwin's seven rules
   slides, each up long enough to read (about 5 seconds plus 0.4 seconds a
@@ -83,9 +88,10 @@ brackets.
   ballot the TV adds the two-minute clock and the trace, if there is one.
 - *Act 7.* The stats and the achievements you gave during the night, while
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
-  part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played. Then the closing story, the dial's
+  part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
-  here), and Irwin's "Can we play again?"
+  here, and Boo's Catwalk: each group's last pose from Boo's camera, when
+  it took one), and Irwin's "Can we play again?"
 
 ## The Act 4 room screens
 
@@ -104,7 +110,8 @@ Each shows the game's name, with its line under it, at the top (Jon,
   simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the
   music stops: STRIKE A POSE, then HOLD IT with a five-second count, then
   Boo's verdict. Three poses, then "That's the show, darling." and the
-  reward on the phones.
+  reward on the phones. Boo's camera on the iPad Pro, if it is up, follows
+  the same show and takes its photo at the third pose.
 - *The Orangerie, Get Off My Lawn!* No screen: the group's phones tint their
   whole screen red (shake) or green (freeze), with Salem's lines.
 
@@ -225,7 +232,7 @@ kiosk-living-vote | kiosk-relay-called | kiosk-relay-square |
 kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to
 kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
 kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
-kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-prompts |
+kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-pose | kiosk-prompts |
 kiosk-title | kiosk-finale |
 kiosk-finale-awards | kiosk-finale-graph | kiosk-finale-reveal |
 kiosk-finale-leadin | kiosk-finale-victim | kiosk-finale-done |
