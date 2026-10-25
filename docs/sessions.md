@@ -47,7 +47,9 @@ on the Canon.
   added to Genuinely open; a Closed on 24 October paragraph.
 
 **What is left**
-- The deploy and the push (Jon said yes in Claude chat; asked again here).
+- Done late on 24 Oct, on Jon's yes here: deployed 3d151c1 from a clean
+  copy (all 540 tests passed; 22 functions, gameTest new) and pushed main to
+  GitHub. Jon opens the workshop once to load the board migrations.
 - The study on the M1 Air with the Stream Deck, and teaching the taps there.
 - Handoff item 4 (as soon as possible): the Home rows, the motive card
   slot, the morning-after reveal, replay by seed, the pose photo, the test
