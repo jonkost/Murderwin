@@ -43,7 +43,7 @@ export default function Morning() {
         {status?.opened && <p className="why">Opened{status.openedAt ? ` ${new Date(status.openedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : ''}{status.label ? `: ${status.label}` : ''}. Everything below is the party night as it ended, from the archive.</p>}
         {status?.ready && !status.opened && (
           <>
-            <p className="why">The party is over. Open the case that ran: who did it, to whom, why, and everything the game kept from you all night. It is copied into an archive first; nothing is moved.</p>
+            <p className="why">The party is over. Open the case that ran: who did it, to whom, why, and everything the game kept from you all night. It is copied into an archive first; nothing is moved, except Boo’s Catwalk photos, which leave the game site for the archive.</p>
             <label className="field">
               <span>Type OPEN to open the case</span>
               <input type="text" value={word} onChange={e => setWord(e.target.value)} autoComplete="off" />

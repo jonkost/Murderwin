@@ -9,6 +9,83 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 25 Oct 2026 · Claude Code (the 24 Oct evening handoff, item 4)
+
+**What changed** (branch `claude/nice-burnell-fe6dfb`; not deployed, not pushed)
+- The Home rows (card 343): "The secrets, made blind" on Home counts the
+  packing list (made or not, and its bags), the cats' leans (questions with
+  a lean for every cat, of all) and the drawing pictures (good ones, of
+  nine). A new admin-only callable, `sealedCounts`
+  (`functions/lib/counts.js`), returns numbers and one yes or no only.
+- The motive card pictures (card 308): `play/public/motives/1.png` to
+  `19.png` show beside each motive in Sir Irwin's countdown and on the
+  motive's card at the reveal; the rhyme alone until a picture is in.
+- Replay a night by its seed (card 324, G22): every rehearsal is dealt from
+  a seed word (`functions/lib/seed.js`): the deck, the affection rolls, the
+  case, the Act 2 line, the Act 4 groups and memory boards, the drawing, the
+  trace look-alikes, the silent phones' answers and a spill. The Game night
+  page has "Play a rehearsal again" (the last five words, Play it again, a
+  box used once, greyed out on the party night). The party night and every
+  dry run are never seeded. `npm run checks` names each stand-in case by a
+  word (`-- --seed check-28` deals one again); `npm run fake-night` prints
+  its word and takes `-- --seed`.
+- The morning after (card 196): a new admin-only callable, `morningAfter`
+  (`functions/lib/morning.js`), and a Morning after page linked from the
+  Game night page. It opens only on the party day or later, only for a
+  party night whose reveal was named on the party day, and only when Jon
+  types OPEN. It archives the night (`archive/{nightId}`; the open mark is
+  `archive/_morning`; no client rule reaches either), shows the case in
+  plain sections and Boo's Catwalk photos, takes the photos off the public
+  docs, then Keep or Clear the secrets (Clear copies each as it stands
+  first). An independent review found four gaps in the first version (a
+  night started with the box ticked before the party could open on the
+  day; the mark sat in client-writable meta/; Clear could lose a newer
+  version; a dry run could take the typed replay word): all fixed and tested.
+- The pose photo (card 450, nice to have): Boo's camera on the iPad Pro
+  (`?kiosk=pose`), a mirror of the group with Boo's words, one photo a
+  moment into each group's last pose; `posePhoto` takes it only from the
+  pose camera's own presence row (or the admin), only for the group Boo is
+  judging, and the end credits show each group's photo. A practice camera
+  on the Game test tab (`?kiosk=pose&practice=1`, nothing sent). The
+  Devices page lists it.
+- The test plan's Not yet checks (card 479, by a subagent, merged): every
+  Not yet check has a test, the tests carry their IDs, F02 and G05 (the
+  host seats in the fake night, seat fairness), and twelve more checks in
+  `npm run checks` (20,042 of 20,042 on 1,000 cases). Two left as to-dos,
+  each a question on the board: dialSpill (G24) and senseClue (G09). F26's
+  half second over the real Wi-Fi is the tech run's to measure.
+- Fixed on the way: Act 4's last Next now passes the command's time to
+  `finishRounds`; two fake-night tests wanted a bare Case line that a random
+  deal can follow with the trace warning (one failure in a dozen runs).
+- The board: migration '2026-10-25-item4' marks cards 196, 308, 324, 343,
+  450 and 479 done, adds Jon's 480 (Open the case, the morning after), 481
+  (Boo's camera: the iPad Pro to the Entryway) and 482 (Try Boo's camera on
+  the Game test tab), and files the questions dialSpill and senseClue.
+- Docs: on-the-night (the new screens, the device move, playing a rehearsal
+  again, After the party), room-screens, the test plan, CLAUDE.md (two new
+  readers of the sealed docs, the archive, replay, the iPad Pro's Act 4
+  job, the two new questions), `play/public/motives/README.md`.
+- `npm test`: every suite passes (626 tests: 622 pass, 2 skipped for the
+  rules emulator, 2 to-do). `npm run checks`: all clear.
+
+**What is left**
+- Deploy and push, on Jon's yes (not during the practice run). Then Jon
+  opens the workshop once to load the board migration.
+- The worst-dial proof (card 478) when Claude chat's patch arrives.
+- Start Here's status snapshot and the Canon's open-decision list (the two
+  new questions): Claude Docs, left to the session that started this one.
+- Known and not changed: `atTheParty` (and so the memory match, Boo's done,
+  the drawing's clock and guess) trusts any signed-in client's own presence
+  row; the pose camera's gate narrows it but the same row can be written by
+  hand. Fine for a house party; a host-registered kiosk would close it.
+
+**Decisions taken:** none by Jon. Built as defaults: the morning after's
+gate (party day, a reveal named on it, OPEN typed), Clear keeping a copy
+and leaving the nineteen retired sets alone, the guests' photos leaving the
+public docs once archived, replays needing the same people joining in the
+same order for the same characters, Salem's colours and Boo's poses keeping
+their own timing. Two questions filed for Jon: dialSpill and senseClue.
+
 ## 24 Oct 2026, evening · Claude Code (the hardware, the Game test tab)
 
 **What changed**

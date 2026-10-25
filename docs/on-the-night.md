@@ -506,7 +506,10 @@ night page has "The morning after" under After the party.
   A rehearsal, a dry run or a Game test night never opens it.
 - Type OPEN and tap "Open the case". The night is copied into an archive
   first: the case, everyone's phone, the night's own records, Boo's
-  Catwalk photos, and the three secrets that ran. Nothing is moved.
+  Catwalk photos, and the three secrets that ran. Nothing is moved, except
+  the guests' photos: they leave the game site (where anyone with the game
+  open could read them) and stay in the archive, shown on the page to
+  save.
 - The page then shows what really happened: the Murderer, the motive and
   the victim, everyone's character and role and bag, which families each
   guest's cats ruled out and which family the first bulletin crossed off,

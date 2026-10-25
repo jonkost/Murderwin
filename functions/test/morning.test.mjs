@@ -170,6 +170,7 @@ test('clear keeps the secret as it stood at the clear, even if it changed after 
   await morningOp(db, { op: 'open', confirm: 'OPEN' }, { now: AFTER, log: () => {} })
   const { view } = await morningOp(db, { op: 'read' }, { now: AFTER, log: () => {} })
   assert.deepEqual(view.poses, [{ names: ['Jessa', 'Jacob'], image: 'data:image/jpeg;base64,AAAA' }])
+  assert.equal(db.store.get(`nights/${nightId}/public/pose-g1`), undefined, 'the guests\' photos leave the public docs once archived')
   db.store.set('sealed/parlour_leans', { sets: { [SYNTH[3]]: { 0: { boo: 'b' } } }, editedAt: 2 })
   await morningOp(db, { op: 'secrets', choice: 'clear' }, { now: AFTER, log: () => {} })
   assert.equal(db.store.get(`archive/${nightId}/parts/cleared-sealed-parlour_leans`).editedAt, 2, 'the newer version kept')

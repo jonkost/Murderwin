@@ -9,7 +9,9 @@
 //            private records, every guest's phone, Boo's Catwalk photos,
 //            and the three secrets that ran: the packing, the cats' leans,
 //            the drawing pictures), then marks it open (archive/_morning, a
-//            doc no client may write). Nothing is moved or deleted.
+//            doc no client may write). Nothing is moved or deleted, but for
+//            the guests' photos: once archived they leave the night's public
+//            docs, which anyone signed in to the game could read.
 //   read     the archive as plain sections for the workshop's Morning after
 //            page: who did it, to whom, why, everyone's role, what the cats
 //            ruled out, the dial, the bags, the drawing.
@@ -121,6 +123,8 @@ export async function openCase(db, { confirm, now = Date.now(), log = (...a) => 
   for (const [part, data] of Object.entries(parts)) batch.set(db.doc(partPath(nightId, part)), data)
   batch.set(db.doc(archivePath(nightId)), { nightId, label: party.night.label ?? '', openedAt: new Date(now), parts: Object.keys(parts).sort() })
   batch.set(db.doc(MORNING_DOC), { nightId, label: party.night.label ?? '', openedAt: new Date(now), secrets: null })
+  // the guests' photos, now in the archive, off the public docs
+  for (const part of Object.keys(parts).filter(p => /^public-pose-g\d{1,2}$/.test(p))) batch.delete(db.doc(`nights/${nightId}/public/${part.slice('public-'.length)}`))
   await batch.commit()
   log('morningAfter open', JSON.stringify({ parts: Object.keys(parts).length }))
   return { ok: true, parts: Object.keys(parts).length }

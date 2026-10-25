@@ -99,9 +99,9 @@ const reviewListeners = []
 const checks = {
   at: new Date(Date.now() - 3_600_000), cases: 1000, ok: true,
   groups: [
-    { key: 'case', name: 'Case generator', passed: 10040, total: 10040, failed: [] },
+    { key: 'case', name: 'Case generator', passed: 20042, total: 20042, failed: [] },
     { key: 'dry', name: 'Dry run', passed: 1, total: 1, failed: [] },
-    { key: 'leak', name: 'Leak checks', passed: 4, total: 4, failed: [] },
+    { key: 'leak', name: 'Leak checks', passed: 5, total: 5, failed: [] },
   ],
 }
 export function subscribeChecks(onData) { queueMicrotask(() => onData(checks)); return () => {} }
