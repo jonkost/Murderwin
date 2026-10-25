@@ -48,7 +48,7 @@ import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, ducksFor, unduckDelayMs } from './lib/scenes.js'
 import { createMusic } from './lib/music.js'
-import { StringLights, ShortcutLights, shortcutColours, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS } from './lib/strings.js'
+import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -131,7 +131,9 @@ if (!FAKE && env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN) {
   stringLights = new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() })
 } else if (stringsByShortcuts) {
   stringLights = new ShortcutLights()
-  stringColours = shortcutColours()
+  // a Shortcut renamed on the Mac is named here, never in the code
+  const named = c => String(env[`STRINGS_SHORTCUT_${c.toUpperCase()}`] ?? '').trim() || STRING_SHORTCUTS[c]
+  stringColours = shortcutColours({ red: named('red'), green: named('green'), decor: named('decor') })
 }
 
 if (LIST) {
