@@ -327,3 +327,73 @@ test('Act 2: the night doc counts the guests who have seen all four cats, and no
   const state = db.store.get(lightsPath(nightId))
   assert.equal(night().lightsProgress.done, Object.values(state.guests).filter(g => g.step === 'done').length)
 })
+
+// ---- F12 and F26 --------------------------------------------------------------
+
+test('F12 puzzles appear on the chime, not on arrival: every room\'s game is set for its group when the round starts, and the ten minutes run from the chime', async () => {
+  const { db, nightId, uids, now } = await party(8)
+  // before the chime nobody can start a room: the group cards are out, the rounds are not
+  await host(db, nightId, 'act', now, 3)
+  await host(db, nightId, 'start-act4', now)
+  await host(db, nightId, 'next', now) // the group cards
+  await assert.rejects(player.meetCat(db, { nightId, uid: uids.jessa, cat: 'zimothy', now }), /Not yet/, 'F12 a scan before the chime is turned away')
+  // the chime: round 1
+  const chime = now + 60_000
+  await host(db, nightId, 'next', chime)
+  const rot = await readRotation(db, nightId)
+  const rooms = () => ({
+    library: db.store.get(memoryPath(nightId)), orangerie: db.store.get(salemPath(nightId)),
+    entryway: db.store.get(booPath(nightId)), study: db.store.get(`nights/${nightId}/public/study`),
+  })
+  const atChime = rooms()
+  for (const room of ROOM_KEYS) {
+    const due = rot.order.find(gid => roomFor(rot, gid, 1) === room) ?? null
+    assert.equal(atChime[room].groupId, due, `F12 the ${room} is set for its round-1 group at the chime`)
+  }
+  assert.ok(atChime.library.boardId && Object.keys(atChime.library.boards).length === 3, 'F12 the memory match is laid out at the chime')
+  for (const room of ['library', 'orangerie', 'entryway']) assert.equal(ms(atChime[room].at), chime, `F12 the ${room} was set at the chime`)
+  const pub = db.store.get(act4Path(nightId))
+  assert.equal(ms(pub.roundStartsAt), chime)
+  assert.equal(ms(pub.roundEndsAt), chime + ROUND_MS, 'F12 ten minutes from the chime, for every room')
+  assert.equal(ms(atChime.study.slotEndsAt), chime + ROUND_MS, 'the study\'s ten minutes too')
+  // a group that arrives late does not get a fresh puzzle or a longer clock
+  const libraryGroup = rot.groups.find(g => g.id === atChime.library.groupId)
+  const late = chime + 4 * 60_000
+  await player.meetCat(db, { nightId, uid: uidOf(db, nightId, libraryGroup.members[0].key), cat: 'zimothy', now: late })
+  assert.equal(db.store.get(memoryPath(nightId)).boardId, atChime.library.boardId, 'F12 arriving does not deal the board again')
+  assert.deepEqual(db.store.get(memoryPath(nightId)).boards, atChime.library.boards)
+  assert.equal(ms(db.store.get(act4Path(nightId)).roundEndsAt), chime + ROUND_MS, 'F12 arriving does not move the clock')
+  // the next chime moves every room on to its round-2 group
+  const chime2 = chime + ROUND_MS
+  await host(db, nightId, 'next', chime2)
+  const atChime2 = rooms()
+  for (const room of ROOM_KEYS) assert.equal(atChime2[room].groupId, rot.order.find(gid => roomFor(rot, gid, 2) === room) ?? null, `F12 the ${room} is set for its round-2 group at the second chime`)
+})
+
+test('F26 Salem\'s colours: the whole round\'s schedule is written once, three seconds before the first change, on the server\'s clock; every phone reads the same', async () => {
+  const { db, nightId, now } = await party(8)
+  const rot = await intoRounds(db, nightId, now)
+  let r = 1
+  while (!db.store.get(salemPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const doc = () => db.store.get(salemPath(nightId))
+  const g = rot.groups.find(x => x.id === doc().groupId)
+  const [a, b] = g.members.map(m => uidOf(db, nightId, m.key))
+  await player.meetCat(db, { nightId, uid: a, cat: 'salem', now })
+  const readyAt = now + 5_000
+  await player.salemReady(db, { nightId, uid: a, now: readyAt })
+  const d = doc()
+  assert.equal(ms(d.startsAt), readyAt + SALEM_LEAD_MS, 'F26 three seconds of lead before the first colour')
+  assert.equal(SALEM_LEAD_MS, 3_000)
+  assert.ok(d.flips.length >= 4, 'the whole round\'s colours at once')
+  assert.equal(ms(d.flips[0].at), ms(d.startsAt), 'the first colour at the start')
+  for (let i = 1; i < d.flips.length; i++) assert.ok(ms(d.flips[i].at) > ms(d.flips[i - 1].at), 'every change at its own later time')
+  assert.ok(ms(d.flips.at(-1).at) >= ms(d.cleanAt) - 7_000, 'the colours run to the clean mark')
+  // a second Ready from another phone changes nothing: one schedule for the whole group
+  await player.salemReady(db, { nightId, uid: b, now: readyAt + 500 })
+  assert.deepEqual(doc().flips, d.flips, 'F26 the schedule is written once')
+  // any phone, any moment: the colour is a function of the schedule and the server time alone
+  for (const f of d.flips) {
+    assert.equal(salemColourAt(doc(), ms(f.at)), f.colour)
+    assert.equal(salemColourAt(structuredClone(doc()), ms(f.at) + 499), salemColourAt(doc(), ms(f.at) + 499), 'two phones agree')
+  }
+})
