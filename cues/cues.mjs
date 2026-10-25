@@ -48,7 +48,7 @@ import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, ducksFor, unduckDelayMs } from './lib/scenes.js'
 import { createMusic } from './lib/music.js'
-import { StringLights, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS } from './lib/strings.js'
+import { StringLights, ShortcutLights, shortcutColours, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -122,11 +122,17 @@ if (!FAKE) {
   }
 }
 
+// The string lights: paired straight to their Nanoleaf controller, or through
+// Apple Home with three Shortcuts on this Mac (STRINGS_SHORTCUTS=on, lib/strings.js).
 let stringLights = null
+let stringColours = sheet?.strings ?? DEFAULT_STRING_COLOURS
+const stringsByShortcuts = !FAKE && String(env.STRINGS_SHORTCUTS ?? '').trim().toLowerCase() === 'on'
 if (!FAKE && env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN) {
   stringLights = new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() })
+} else if (stringsByShortcuts) {
+  stringLights = new ShortcutLights()
+  stringColours = shortcutColours()
 }
-const stringColours = sheet?.strings ?? DEFAULT_STRING_COLOURS
 
 if (LIST) {
   if (!hue) { console.log('fill HUE_BRIDGE_HOST and HUE_APP_KEY in cues/.env first'); process.exit(2) }
@@ -169,7 +175,7 @@ if (CHECK_MUSIC) {
   process.exit(0)
 }
 if (CHECK_STRINGS) {
-  if (!stringLights) { console.log('fill NANOLEAF_STRINGS_HOST and NANOLEAF_STRINGS_TOKEN in cues/.env first'); process.exit(2) }
+  if (!stringLights) { console.log('fill NANOLEAF_STRINGS_HOST and NANOLEAF_STRINGS_TOKEN in cues/.env, or set STRINGS_SHORTCUTS=on and make the three Shortcuts, first'); process.exit(2) }
   for (const c of ['red', 'green', 'decor']) {
     try { await stringLights.show(stringColours[c]); log(`[strings] ${c}`) } catch (e) { log(`[strings] ${c}: no answer (${e.message}); the phones carry the colour`); process.exit(1) }
     await sleep(2000)
@@ -359,4 +365,4 @@ if (FAKE && process.stdin.isTTY) {
 }
 log('cue relay up', FAKE ? '(fake)' : '', OFFLINE ? '(offline: no Firebase)' : '', `media: ${MEDIA_DIR}`)
 log(`recordings: ${recordingFiles(MEDIA_DIR, existsSync)} of ${CLIP_IDS.length} have a file; ${String(env.STATION_KEY ?? '').trim().length >= 4 ? 'STATION_KEY set, coded recordings will play' : 'no STATION_KEY in cues/.env, so only a night with no station key saved plays them'}`)
-log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · string lights: ${FAKE ? 'fake' : stringLights ? 'on' : 'not set up'}`)
+log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · string lights: ${FAKE ? 'fake' : stringLights ? (stringsByShortcuts && !env.NANOLEAF_STRINGS_TOKEN ? 'on, through Apple Home' : 'on') : 'not set up'}`)

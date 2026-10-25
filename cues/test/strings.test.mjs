@@ -121,3 +121,43 @@ test('the relay watches Salem\'s public doc and checks the colour ten times a se
   assert.ok(src.includes('setInterval(mirrorStrings, 100)'))
   assert.ok(src.includes('NANOLEAF_STRINGS_HOST') && src.includes('NANOLEAF_STRINGS_TOKEN'))
 })
+
+// ---- through Apple Home: one Shortcut per colour (STRINGS_SHORTCUTS=on) ----
+
+test('through Apple Home: each colour runs its own Shortcut, by its exact name', async () => {
+  const { ShortcutLights, shortcutColours, STRING_SHORTCUTS } = await import('../lib/strings.js')
+  assert.deepEqual(Object.keys(STRING_SHORTCUTS).sort(), ['decor', 'green', 'red'])
+  const colours = shortcutColours()
+  assert.deepEqual(colours.red, { shortcut: 'Murderwin Strings Red' })
+  const ran = []
+  const lights = new ShortcutLights({ run: async (name) => { ran.push(name) } })
+  await lights.show(colours.green)
+  await lights.show(colours.decor)
+  assert.deepEqual(ran, ['Murderwin Strings Green', 'Murderwin Strings Decor'])
+  await assert.rejects(lights.show({ hue: 0 }), /no shortcut/)
+})
+
+test('runShortcut asks macOS to run the named Shortcut, and a failure rejects', async () => {
+  const { runShortcut } = await import('../lib/strings.js')
+  const calls = []
+  const ok = (cmd, args, opts, cb) => { calls.push([cmd, args, opts.timeout]); cb(null) }
+  await runShortcut('Murderwin Strings Red', { timeoutMs: 5000, execFileImpl: ok })
+  assert.deepEqual(calls, [['shortcuts', ['run', 'Murderwin Strings Red'], 5000]])
+  const missing = (cmd, args, opts, cb) => cb(Object.assign(new Error('not found'), { code: 1 }))
+  await assert.rejects(runShortcut('Nope', { execFileImpl: missing }), /shortcut Nope/)
+})
+
+test('the mirror drives Shortcuts like the paired strings: only changes, one line when they stop answering', async () => {
+  const { ShortcutLights, shortcutColours } = await import('../lib/strings.js')
+  const ran = []
+  let fail = false
+  const lights = new ShortcutLights({ run: async (name) => { if (fail) throw new Error('no home'); ran.push(name) } })
+  const logs = []
+  const mirror = createStringsMirror({ lights, colours: shortcutColours(), log: l => logs.push(l) })
+  mirror.update('red'); await new Promise(r => setTimeout(r, 5))
+  mirror.update('red'); await new Promise(r => setTimeout(r, 5))
+  assert.deepEqual(ran, ['Murderwin Strings Red'], 'the same colour is not sent twice')
+  fail = true
+  mirror.update('green'); await new Promise(r => setTimeout(r, 5))
+  assert.equal(logs.filter(l => l.includes('did not answer')).length, 1)
+})

@@ -17,7 +17,15 @@
 // and put the address and token in cues/.env (NANOLEAF_STRINGS_HOST,
 // NANOLEAF_STRINGS_TOKEN). Untested on the real strings until the hardware
 // evening.
+//
+// The other road (Jon, 25 Oct 2026): through Apple Home, with no Nanoleaf
+// pairing. On the real strings, holding the button to pair reset their Wi-Fi,
+// so the brain runs one Apple Shortcut per colour instead (STRING_SHORTCUTS,
+// each a single Home action on the Holiday Lights), with STRINGS_SHORTCUTS=on
+// in cues/.env. Apple Home answers in about a second, so in Salem's game the
+// phones carry the colour and the strings follow.
 
+import { execFile } from 'node:child_process'
 import { stamp } from './cues.js'
 
 export const STRING_COLOURS = ['red', 'green']
@@ -75,6 +83,34 @@ export class StringLights {
       body: JSON.stringify(stringsBody(setting)), signal: AbortSignal.timeout(this.timeoutMs),
     })
     if (!res.ok && res.status !== 204) throw new Error(`string lights: ${res.status}`)
+  }
+}
+
+// The three Apple Shortcuts on the brain, one per colour.
+export const STRING_SHORTCUTS = { red: 'Murderwin Strings Red', green: 'Murderwin Strings Green', decor: 'Murderwin Strings Decor' }
+
+// The mirror's colours when the strings go through Shortcuts.
+export function shortcutColours(names = STRING_SHORTCUTS) {
+  return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { shortcut: name }]))
+}
+
+// Run one shortcut by name with macOS's own `shortcuts` tool; rejects when it
+// is missing or fails, so the mirror says once that the strings did not answer.
+export function runShortcut(name, { timeoutMs = 8000, execFileImpl = execFile } = {}) {
+  return new Promise((resolve, reject) => {
+    execFileImpl('shortcuts', ['run', name], { timeout: timeoutMs }, err => (err ? reject(new Error(`shortcut ${name}: ${err.code ?? err.message}`)) : resolve()))
+  })
+}
+
+export class ShortcutLights {
+  constructor({ run = runShortcut, timeoutMs = 8000 } = {}) {
+    this.run = run
+    this.timeoutMs = timeoutMs
+  }
+
+  async show(setting) {
+    if (!setting?.shortcut) throw new Error('string lights: no shortcut for that colour')
+    await this.run(setting.shortcut, { timeoutMs: this.timeoutMs })
   }
 }
 
