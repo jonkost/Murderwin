@@ -21,7 +21,7 @@ This is what lets you host, build and still play.
 | The secret | What makes it | Who may see it |
 |---|---|---|
 | The cats' leans in the Parlour Games | `npm --prefix scripts run leans` (fills only the blanks) | Jenna (the cats' leans tab), who may change any lean |
-| The Relay Drawing pictures | `npm --prefix scripts run relay-pictures` | Nobody. Whether Jenna may is an open decision for you (stewardPictures). |
+| The Relay Drawing pictures | `npm --prefix scripts run relay-pictures` | Nobody. Jenna may not either (stewardPictures, answered no on 24 Oct with the handoff's default). |
 | Which numbered bag holds which items | `npm --prefix scripts run pack-bags` | Jenna (the packing list tab), who packs to it |
 | Each night's case | The game itself, at the blackout at the end of Act 1 | Nobody |
 

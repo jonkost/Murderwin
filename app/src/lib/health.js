@@ -6,7 +6,7 @@
 
 export const GROUP_ORDER = ['Case generator', 'Dry run', 'Leak checks']
 export const ALL_CLEAR = 'All clear. The game is ready.'
-export const RUN_AGAIN = 'To run again, ask Claude Code to run npm run checks.'
+export const RUN_AGAIN = 'To run them again, ask Claude Code to run the checks.'
 
 const number = n => Number(n ?? 0).toLocaleString('en-GB')
 

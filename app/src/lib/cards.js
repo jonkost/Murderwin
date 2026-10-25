@@ -77,7 +77,7 @@ const CARDS = {
   },
   openers: {
     what: 'Sir Irwin’s hello when he speaks at cake. Pure personality, no facts. Only the first line on his tab is read.',
-    where: 'Act 5, on the living room TV: the first line of Sir Irwin’s countdown of motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
+    where: 'Act 5, on the Parlour TV: the first line of Sir Irwin’s countdown of motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
     howTo: 'One or two short sentences in Sir Irwin’s voice, to the whole room at once. It comes before his motive cards, so it cannot mention anything that happened.',
     example: [{ field: 'The greeting', text: CAT_EXAMPLES.openers.irwin }],
     emptyState: 'Nothing yet. Say hello the way Sir Irwin would, in a sentence or two.',
@@ -85,7 +85,7 @@ const CARDS = {
   },
   closers: {
     what: 'Sir Irwin’s goodbye after his countdown at cake. Only the first line on his tab is read.',
-    where: 'Act 5, on the living room TV: the last line, after Sir Irwin has shown his motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
+    where: 'Act 5, on the Parlour TV: the last line, after Sir Irwin has shown his motive cards. Since 23 Oct 2026 the four cats say only their hint lines, so nothing on their tabs is read.',
     howTo: 'One short sentence that reacts to “what I just said” without knowing what it was. Say “that” or “it”, never what it was about.',
     example: [{ field: 'The sign-off', text: CAT_EXAMPLES.closers.irwin }],
     emptyState: 'Nothing yet. Finish the speech the way Sir Irwin would: short, adding nothing.',
@@ -154,14 +154,14 @@ const CARDS = {
     howTo: 'Two short sentences at most: where to be (everyone together, scattered alone, in pairs), then what to do. Plain words an eleven-year-old gets in one pass.',
     example: [
       { field: 'Which line', text: 'OBJECTIVE' },
-      { field: 'The words', text: 'Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight: ask again.' },
+      { field: 'The words', text: 'Stay with your group. Your phone sends you to each room in turn, and the chime moves you on.' },
     ],
     emptyState: 'Nothing for this act yet. Where should everyone be, and what should they do?',
     doneLine: 'Seven acts, seven sentences, and the curtain knows exactly when to rise.',
   },
   scenarios: {
-    what: 'Silly sets of three questions, two answers each. Every guest answers the same set at the same moment, on identical screens.',
-    where: 'Twelve a night: five in Act 2 and five in Act 4 at moments nobody knows, then two back to back as Act 6 opens. Every phone in the house lights up at once. A cat is secretly listening to each question, and warms or cools to a Detective by their answer. For the Murderer and the Ghost, the points move how clear the clues come out, and nobody can tell which two phones those are.',
+    what: 'Silly sets of three questions, two answers each. Every guest gets the same set, on identical screens.',
+    where: 'Twelve a night. Five in Act 2 at moments nobody knows, when every phone in the house lights up at once. Five in Act 4, which wait on each phone as A Parlour Game is waiting, played whenever the guest is not in a game room. Then two back to back as Act 6 opens, on every phone at once. A cat is secretly listening to each question, and warms or cools to a Detective by their answer. For the Murderer and the Ghost, the points move how clear the clues come out, and nobody can tell which two phones those are.',
     howTo: 'Question 1, its two choices, and points for each. Then question 2 and question 3 the same way. Whatever a guest picks, the next question is the same. Anyone must be able to answer, aged 11 to 70, and no Santa. The eight totals add themselves up underneath.',
     example: [
       { field: 'Question 1', text: 'Do you care which way your toilet paper sits?' },
@@ -252,7 +252,7 @@ const CARDS = {
   },
   achievements: {
     what: 'Pre-written achievements: a title and one line each, given to a guest with a tap during the night.',
-    where: 'Acts 1 to 5, from the Host tab: tap a guest, then an achievement. It lands on their phone at once and plays on the living room screen at the end, after the stats and before the graph. Nothing can be given after Act 5.',
+    where: 'Acts 1 to 5, from the Host tab: tap a guest, then an achievement. It lands on their phone at once and plays on the Parlour TV at the end, after the stats and before the graph. Nothing can be given after Act 5.',
     howTo: 'A title in the first box, one line in the second. Funny, kind, and about things you can see from across a room: the first to pet Salem, the cleanest plate, the loudest laugh. Twenty or so, written before the night, so nothing is typed on the night.',
     example: [
       { field: 'The title', text: 'Clean Plate Club' },
@@ -263,7 +263,7 @@ const CARDS = {
   },
   epilogue_frames: {
     what: 'The closing story, read aloud, with blanks for the names.',
-    where: 'Act 7, on the living room screen, after the Murderer, the Motive and the Victim have been revealed in that order.',
+    where: 'Act 7, on the Parlour TV, after the Murderer, the Motive and the Victim have been revealed in that order.',
     howTo: 'A paragraph with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go. Written to be read on a big screen across a room: short lines.',
     example: [{ field: 'The paragraph', text: 'And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. The household nodded as one, and [VICTIM] was remembered fondly, by most.' }],
     emptyState: 'Nothing yet. Two endings to write, with the names left blank.',
@@ -275,7 +275,7 @@ const CARDS = {
     howTo: 'Pick the moment, then one or two sentences in her voice: bookish, kind, a little forgetful, the snort (*snrk.*) now and then. Twenty words at most, read from across a room.',
     example: [
       { field: 'Which moment', text: 'SLOW' },
-      { field: 'What Granolia says', text: 'Again, slower. I have all day. Well. Fifteen minutes.' },
+      { field: 'What Granolia says', text: 'Again, slower. I have all day. Well. Ten minutes.' },
     ],
     emptyState: 'Nothing yet. Twelve moments, each with a plain default already. Start with IDLE: what she says before anyone touches the wall.',
     doneLine: 'Granolia has something to say at every moment. Most of it is helpful.',

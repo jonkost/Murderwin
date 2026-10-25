@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { PLAY_URL } from '../lib/config'
-import { DEVICE_ROOMS, deviceUrl } from '../lib/devices'
+import { DEVICE_ROOMS, SWITCH_ON, WHEN_ONE_DIES, deviceUrl } from '../lib/devices'
+import TechFold from '../components/TechFold'
 
 // The devices, room by room: every screen and machine the night needs, not
 // counting anyone's own phone. Each one with an address has Open, Copy and
 // a square code (an iPad can scan it), plus how to start it and how to tell
-// it is alive. Nothing here changes anything; it only points.
+// it is alive. The order to switch things on and what to do when one dies
+// are here too, in plain words (24 Oct 2026), so nothing points at a file
+// Jon cannot open. Nothing here changes anything; it only points.
 
 function Address({ url, name }) {
   const [qr, setQr] = useState(null)
@@ -44,10 +47,11 @@ function Device({ d }) {
         {d.start.map((s, i) => <li key={i}>{s}</li>)}
       </ol>
       {d.alive && <p className="hint"><b>Working when:</b> {d.alive}</p>}
+      <TechFold tech={d.tech} />
       {d.key === 'study' && (
         <p className="night-line">
-          <Link className="primary dl" to="/study-test">Study test</Link>
-          <span className="hint"> Flash the walls, teach the taps and play a practice round from your phone.</span>
+          <Link className="primary dl" to="/game-test">Game test</Link>
+          <span className="hint"> Save the key word, flash the walls, teach the taps and play a practice round from your phone.</span>
         </p>
       )}
     </div>
@@ -63,7 +67,14 @@ export default function Devices() {
           Every screen and machine the night needs, not counting anyone’s own phone. Open each address on its own device,
           full screen. On an iPad, tap Square code here and scan it with the iPad’s camera.
         </p>
-        <p className="hint">The order to switch things on, and what to do when one dies, are in docs/on-the-night.md. The setting-up tasks are on the <Link to="/timeline">Timeline</Link>.</p>
+        <p className="hint">The setting-up jobs are on the <Link to="/timeline">Timeline</Link>. To try a game on its device before the night, use <Link to="/game-test">Game test</Link>.</p>
+      </section>
+      <section className="panel">
+        <h2>The order to switch things on</h2>
+        <p className="why">On the day, in this order.</p>
+        <ol className="night-steps">
+          {SWITCH_ON.map((s, i) => <li key={i}>{s}</li>)}
+        </ol>
       </section>
       {DEVICE_ROOMS.map(r => (
         <section className="panel tl-section" key={r.key} aria-labelledby={`dev-${r.key}`}>
@@ -72,6 +83,13 @@ export default function Devices() {
           {r.devices.map(d => <Device key={d.key} d={d} />)}
         </section>
       ))}
+      <section className="panel">
+        <h2>When something dies</h2>
+        <p className="why">Every room pays its reward at the chime anyway, so the night always goes on.</p>
+        <ul className="audit">
+          {WHEN_ONE_DIES.map(([what, fix]) => <li key={what}><b>{what}.</b> {fix}</li>)}
+        </ul>
+      </section>
     </main>
   )
 }

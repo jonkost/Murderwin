@@ -18,6 +18,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=memory` | The older iPad, on a small stand in the Library with Zimothy, all night | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, Act 4 | Boo's Catwalk on the triangle wall above the Parlour opening. |
+| `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
 | `?kiosk=bedroom` | Susan's work MacBook Pro again, carried into the bedroom after Act 4 | Closed until the third picture is named, then the trace and Sir Irwin's line for it. |
 
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),

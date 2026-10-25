@@ -15,6 +15,11 @@ rooms in ten-minute rounds on the server's clock, every group visits the Study o
 study pays the Ghost's trace plus a bag hint about the Ghost's bag. Where the dated build notes in
 §12 say otherwise, this paragraph wins.
 
+**Updated 24 October 2026, evening:** both walls were tried for real that day, and the study can
+be tried from your phone on the workshop's Game test tab: flash the walls, teach the taps, and a
+practice round with an answer pad (§13). The walls' real counts are in §11. Granolia's hello on
+the phone is now a decision card, *granoliaIntro* (§11).
+
 **Where the settled parts come from:** the Canon page (Puzzles, Hardware, The seven acts),
 `CLAUDE.md` (Hardware), the act skeletons (`chats/docs/sirwin-manor-act-skeletons.md` §5), the
 first puzzle worksheet from 3 September (house rules for all puzzles), the cat info
@@ -207,8 +212,14 @@ member's phone, so a trio that splits up afterwards still all have it.
 - [ ] Both Nanoleaf controllers and the Hue Bridge on fixed addresses on the router (the DHCP
       reservations from the Canon's open items). If a controller moves address mid-party, the
       wall goes silent.
+- [ ] The study key word is saved (the Game test tab shows it) and the station on the M1 Air
+      says it is connected.
+- [ ] The taps are taught on the M1 Air (Game test tab, Teach the taps, §13). Taught once, they
+      stay taught on that Mac; teach them again only if a hexagon has moved.
 - [ ] Walk through one full round yourself before guests arrive. Touch, Lines, button box,
-      phone. If the phone gets the card *From the study*, the chain works.
+      phone. If the phone gets the card *From the study*, the chain works. (Play a practice
+      round on the Game test tab tries the walls and the buttons without any night; the card
+      only comes in a real round.)
 - [ ] Screen angled so a group at the wall can see Granolia without turning around.
 
 ---
@@ -265,10 +276,12 @@ Each of these fills a gap. Say the word and any of them changes.
 
 - Pattern lengths and pace, tuned on the real wall with Jessa and your dad (not a decision,
   a test).
-- How many hexagons and how many Line bars are on the walls. The station reads the layout from
-  the controllers, so it only matters for whether six counted bars fit with gaps between them.
-  If not, the bars light side by side from one end.
-- **Granolia's intro on the phone needs new words (yours to approve).** Today it says, from the
+- How many hexagons and how many Line bars are on the walls: **answered 24 October** by the real
+  walls, ten hexagons and twelve bars. Six counted bars with a dark bar between each need eleven,
+  so even a six always shows with gaps.
+- **Granolia's intro on the phone needs new words (yours to approve).** Since 24 October this is
+  the decision card *granoliaIntro* on the Timeline. Its default is the new words below, which
+  Claude Code puts in unless you pick Keep the old words. Today it says, from the
   handoff, *"The lights on the wall flash a pattern. Copy it on the buttons, then press
   submit."* But the game is played by touching the panels; the buttons only take the colour and
   the number at the end. A group that follows it would press buttons while the wall waits for
@@ -280,7 +293,7 @@ Each of these fills a gap. Say the word and any of them changes.
 
 ## 12. What is built (13 October 2026)
 
-Built blind, tested against fakes. Not yet run on the real walls.
+Built blind, tested against fakes. (First run on the real walls on 24 October: §13.)
 
 - **The station**, `station/`: the whole game as a state machine (`lib/study.js`),
   the Nanoleaf driver, the button-box driver with its own key labels, fakes for
@@ -379,6 +392,59 @@ Decisions made while building, on top of §10:
 
 ---
 
+## 13. Trying it before the night: the study test (24 October 2026)
+
+The first section of the workshop's Game test tab is the study test (the old Study test address
+opens it). You stand at the walls with your phone; nothing needs a terminal, and a test never
+touches a real night: no group finishes, no clue is dealt, and the house does not move on.
+
+**The key word.** The study station shows a key word to the game to be let in, and the brain
+uses the same word to find the W-O-O-F News recordings. The word is saved once, in the box on
+the Game test tab (at the top of the tab while none is saved), and the same word sits in the
+settings file on the Mac that runs the station and on the brain. Until it is saved, the game turns
+the station away and the tab says the station is not connected. Not sure what the word is? Ask
+Claude Code to save it for you: it copies it across without showing it. It is kept from night to
+night.
+
+**The buttons.** With the station running on the Mac by the walls (ask Claude Code to start it),
+the tab says it is connected, and:
+- *Flash the walls.* Both walls blink once, and the tab says which answered.
+- *Teach the taps.* The white wall does not say which hexagon was touched in any way the game can
+  read on its own, so it has to be taught once. Each hexagon lights in turn; touch it, and the
+  station remembers that touch as that hexagon. The lit one stays lit until it is touched. A
+  touch on a hexagon already taught is a slip: the tab says so and waits for the lit one. Teach
+  them again only if a hexagon moves.
+- *Play a practice round.* The real game on the real walls, with no group and no night: copy the
+  pattern on the white wall, then put in the colour and the number on the answer pad on your
+  phone, which does what the button box does (a colour, a number, Undo, Submit). The tab follows
+  the round, the pairs and the misses. A round nobody touches for ten minutes ends on its own.
+- *Stop* ends any of them. The tab also shows the last tap, and what each wall is doing.
+
+In Act 4, while a group is due at the study or playing there, the teach and the practice do
+nothing, so a test can never get in a group's way.
+
+**The taps are kept on the Mac that runs the station.** Whatever is taught is saved on that Mac
+only. For the night that is the M1 Air by the walls, so the taps must be taught while the M1 Air
+runs the station (or Claude Code copies the saved taps across). Taught on another Mac, they stay
+on that Mac.
+
+**The hexagons and the bars, grouped.** The walls do not list their panels the way you see them.
+The white wall lists each hexagon as its six corner lights, sixty in all, and the colour wall lists
+each bar as its two halves, plus the little connectors between bars. The station gathers them
+back into the ten hexagons and the twelve bars the game plays with, so a lit hexagon lights all of
+it, a bar lights end to end, and the connectors stay dark.
+
+**What was tried on the real walls, 24 October.**
+- Both walls paired, and their layouts read: ten hexagons, twelve bars.
+- The game's lights show on both walls, whole hexagons and whole bars; the flash works on both.
+- The taps: touches came through, and two of the ten hexagons were taught, but on another Mac,
+  not the M1 Air, and nothing was kept. Teaching all ten waits until the station is set up on the M1
+  Air (a Timeline card for Claude Code, then yours).
+- Not tried yet: the Stream Deck (it goes on the M1 Air by the walls), and a whole round with a
+  group. Both are Timeline cards, before the first full tech run.
+
+---
+
 ## For Claude Code (technical)
 
 **Where it lives.** A new top-level `station/` package: a Node process that runs on the M1 Air
@@ -401,6 +467,42 @@ memory only. Nothing about a round is written anywhere except counts and timesta
   addresses on the router.
 - Latency to watch: the event stream is fine for taps; if it lags past about 150 ms on the real
   wall, switch to the UDP touch stream the API offers.
+
+**The real walls (24 Oct 2026; `station/lib/nanoleaf.js`, `station/test/layout.test.mjs` on the
+real layouts in `station/test/fixtures`).** The layout lists pieces, not panels. The Elements list
+each hexagon as six corner lights (shapeType 15; 60 corners, 10 hexagons); the Lines list each bar
+as two halves (shapeType 18; 24 halves, 12 bars) plus connectors (16), the controller cap (19) and
+the power connector (20); the controller itself (12) is skipped. `groupLayout(layout)` returns
+`{ panels, pieces }`: one panel per hexagon (`hexagonsFromCorners` searches the corner reach and
+the y direction that gather the most sixes), one per bar (`barsFromHalves`, closest same-angle
+pairs first, so two bars end to end in a line are never crossed), every other kind its own panel,
+the Lines joints in no panel. A panel's id is the smallest piece id, its position the middle of its
+pieces, sorted top to bottom then left to right. `frame()` writes every piece (`pieces`), each
+taking its panel's colour, joints dark. `unitOf(id)` maps a touched piece to its panel through
+`panelOf`, then through the taught `touchMap`. The Elements report a tap by an id their layout
+never lists, so `lib/teach.js createTeacher` lights each panel in turn and maps the next tap's own
+id (`listenTouch` hands it as `tapId`, never through an older map) to that panel. The map is
+`station/touch-map.json` (`touchMapFile`, `writeTouchMap`) next to `station.mjs`, which loads it at
+start and `setTouchMap` takes a newly taught one with no restart; it lives on whichever Mac runs the
+station (not in the repo), so it must be taught on the M1 Air or copied there.
+`npm run teach-touch` in `station/` does the same from the terminal, with the station stopped.
+A tap on a piece no panel holds is logged once per piece. Tried on 24 Oct: pairing, the layout
+read, frames and `identify` on both walls; two of ten hexagons taught on another Mac, nothing kept.
+Not yet: the full teach on the M1 Air, the Stream Deck, a whole round.
+
+**The study test (`station/lib/testmode.js`, the `studyTest` callable in
+`functions/lib/studytest.js`, the workshop's `app/src/pages/StudyTest.jsx` inside the Game test
+tab).** The page queues commands in `public_state/study_test` (flash, teach, practice, stop, key);
+the station follows the queue (a command older than two minutes is skipped) and reports through
+`studyTest('status')`, which the function saves as `public_state/study_test_status` (words and
+counts; never a round's code or pattern, except the Lines' colour and count when the Lines are
+down, so a practice can still be finished). A practice round is its own `createRunner` with no
+night: no state write, no finish, no clue, no rotation. While a teach or a practice runs, the live
+runner's writes to the walls and the deck are held back (`hold`), and neither starts while a group
+is due or playing (`GROUP_DUE`, `GROUP_PLAYING`). A practice nobody touches for ten minutes ends.
+The key word box is `app/src/components/KeyWord.jsx`: `meta/game.station_key`, the same field as
+the Host tab's Save key, checked against `STATION_KEY` in `station/.env` by
+`functions/lib/station.js stationAllowed`. Never print the word.
 
 **Pattern rules.** Length and pace from a settings doc (`nights/{nightId}/stations/study/settings`
 or workshop `meta`), defaults as in §4. No immediate repeats. Three patterns per round are

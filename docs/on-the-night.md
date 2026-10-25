@@ -11,6 +11,9 @@ your two decisions that day (the cats' secret lines retired, the Act 2 safe
 taken out), and again on 24 October for the 23 October handoff: the living
 room is the Parlour, all four cats talk to every guest in Act 2, Act 4 is
 four game rooms, the bags are in, the game names, and the device table.
+Updated again on the evening of 24 October: the workshop's Game test tab
+(see "Trying the games" below) and the news team's cast (Susan plays Ava
+Waves, you play Mic Cameron).
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -64,11 +67,15 @@ them.
 - *The Game night page* (in the workshop). Type both hosts' names, so you and
   Susan get the Professors. Type the names Jessa and Jake will type, for Sir
   Irwin's two seats. Print the four cat-room codes from the same page.
-- *The key word.* Pick one word of four letters or more. On a rehearsal
-  night, type it on your Host tab under The study and tap **Save key**. It is
-  kept from night to night. Put the same word in `station/.env` on the study
-  Mac and in `cues/.env` on the brain, each as `STATION_KEY=yourword`. The
-  brain needs it to find the W-O-O-F News recordings.
+- *The key word.* Pick one word of four letters or more and save it once:
+  at the top of the workshop's Game test tab (it works with no night
+  running), or on a rehearsal night on your Host tab under The study with
+  **Save key**. It is kept from night to night. The same word goes in
+  `station/.env` on the study Mac and in `cues/.env` on the brain, each as
+  `STATION_KEY=yourword`; Claude Code can put it there, or save the word
+  the Macs already have, without showing it. Until it is saved the study
+  station is turned away, and the brain needs it to find the W-O-O-F News
+  recordings.
 - *The ten sounds.* The brain will not start while any of the ten cue
   sounds has no file in `media/` (the tenth, `chime-phone`, rings when supper
   is ready, when Act 4 starts and at every Act 4 round, and as the Act 6
@@ -84,6 +91,16 @@ them.
   with its own sound and the brain does not play those recordings, so you
   never hear them twice. Until the box is ticked, the brain plays your
   recordings and the TV shows the words, as before.
+  Who reads what (decided 24 October): Susan plays Ava Waves, the studio
+  anchor. She reads bulletin 1's opening and sign-off on camera, all of
+  bulletin 2, and the closing bulletin's studio opening and close. You play
+  Mic Cameron, the field reporter: the closing bulletin's four parts outside
+  the manor. Every line is in the W-O-O-F News Recording Script. Susan knows
+  which family each bulletin 2 line points at, and you accepted that
+  (*bulletin2Known*).
+- *Try every game.* The workshop's Game test tab has every game of Acts 4
+  and 6 and the Parlour Games, each to try on the device it runs on, with a
+  box for telling Claude Code what to fix. "Trying the games" below says how.
 - *Music and lights on the brain.* Three playlists in Apple Music on the brain, named Murderwin · Arrival, Murderwin · Investigation and Murderwin · Supper (a hyphen in place of the dot works too), and four scenes in the Hue app
   (Murderwin Arrival, Murderwin Blackout, Murderwin Lights Out, Murderwin
   Reveal). Turn them on with `MUSIC=on` and `HUE_SCENES=on` in `cues/.env`.
@@ -104,8 +121,10 @@ them.
   `node scripts/hardware-check.mjs` prints PASS or FAIL. Then one run of the
   study and one grid of the drawing, the HomePods at party volume (the
   Orangerie one too, `media/README.md` says how), the Hue scenes, the
-  Orangerie string lights from the brain (if they will not answer, stop
-  there: the phones carry Salem's colours on their own), and the projector
+  Orangerie string lights from the brain (once they are back on the Wi-Fi:
+  holding their button on 24 October reset it, so add them again in the
+  Nanoleaf app first; if they will not answer, stop there: the phones carry
+  Salem's colours on their own), and the projector
   on the landing with Susan's MacBook Pro on `?kiosk=boo`. The checklists
   are in `docs/study-light-game.md`, `docs/relay-drawing-game.md` and
   `docs/cues-relay.md`.
@@ -164,9 +183,9 @@ game; it serves the lights and the speakers.
    "Who is here", a green dot sits beside every phone the house has heard
    from in the last two minutes. That dot is how you know a phone is alive
    all night.
-4. *The study.* Your key word is kept from the rehearsal (if you ever type a
-   new one under The study, change `station/.env` and `cues/.env` to match
-   and restart both). On the M1 Air, `cd station && npm start`. Alive when
+4. *The study.* Your key word is kept from the rehearsal (if you ever save a
+   new one, on the Game test tab or under The study, change `station/.env`
+   and `cues/.env` to match and restart both). On the M1 Air, `cd station && npm start`. Alive when
    the terminal prints `study station up` with the panel counts. `DOWN`
    beside either wall means the game runs on the screen instead; the clue
    still lands.
@@ -440,6 +459,116 @@ line), stand-in drawing pictures, and the red REHEARSAL band on every
 screen. Replaying a night by its seed is not built yet (a card on the
 board).
 
+## Trying the games (the Game test tab)
+
+The workshop's Game test tab (Game test in the rail; the old Study test
+address opens its first section) holds every game of Acts 4 and 6 and the
+Parlour Games, in the order of the night, to try before the night on the
+device each one runs on. Use it on the practice run too.
+
+Every game has the same parts: what it is and where it plays, the steps, a
+"Try it" list (a button that opens each screen in a new tab, and a square
+code to open it on another device), an "It works" button, and a box for what
+to fix. Beside each game's name a chip says Not tried yet, Works (with the
+day) or Needs a fix. The sample screens show made-up data, and the two
+practices (Salem's and Boo's) have no night at all: nothing is paid and no
+clue is dealt.
+
+- *First, the study key word.* While no word is saved, a box at the top of
+  the tab says so. Save the same word the study Mac and the brain already
+  have. Not sure what it is? Ask Claude Code to save it for you; it copies
+  it across without showing it.
+- *Granolia's Lightbulb Moment* (the Study). Ask Claude Code to start the
+  study station on the Mac by the walls; the section says whether it is
+  connected. Then stand at the walls with your phone:
+  - "Flash the walls": both walls blink once, so you know the station can
+    reach them.
+  - "Teach the taps": each white hexagon lights in turn; touch it, and the
+    station learns which hexagon that touch names (the walls do not say on
+    their own). The taps are kept on the Mac that runs the study, so for the
+    night teach them on the M1 Air by the walls. Do it again if a hexagon
+    moves.
+  - "Play a practice round": the real game on the real walls, with no group
+    and no clue. Copy the pattern on the white wall, then put in the colour
+    and the number on the answer pad on your phone (it does what the Stream
+    Deck does: a colour, a number, Undo, Submit).
+  - "Stop" ends any of them. In Act 4, while a group is due at the study or
+    playing there, the teach and the practice do nothing.
+  - The samples: Granolia's screen, Granolia's screen with the walls down,
+    and what a phone shows in the Study.
+- *In Duplicate* (the Library). The real game on its own on the older iPad:
+  three boards, Play again deals fresh ones, nothing is paid. Samples of a
+  board, a cleared board and the reward on a phone.
+- *Get Off My Lawn!* (the Orangerie). Tap "Open the practice". Every phone
+  that plays scans the square code beside "The practice, for every phone
+  that plays", types a first name and allows motion. Anyone taps Ready. Red
+  means shake, green means freeze; thirty seconds with no slip passes a
+  round; three rounds. Each phone shows a shake meter, so you can feel how
+  hard a shake has to be, and the tab lists who joined and every slip. Tap
+  "Stop" when you are done. Up to twelve phones.
+- *Boo's Catwalk* (the Entryway). Open "Boo's wall, the practice show" on
+  the projector computer or any screen, full screen, and tap it once so it
+  can play sound. Open the practice show on one or more phones. Tap "Start
+  the show": three seconds later Boo struts, the music stops, you strike a
+  pose and hold it, Boo judges, three times. Nothing is paid.
+- *The Parlour Games.* Every set in the workshop's bank, numbered, each with
+  "See it on a phone": Boo's line and the three questions, exactly as a
+  phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4
+  or 6, "Parlour Game now" sends one to every phone in it (in Act 4 it waits
+  on each phone).
+- *Sir Irwin Needs a Hand* (Act 6). Samples of every screen: Sir Irwin's
+  rules and the practice square, a name called, the square, the guess, his
+  door slide, each phone's turn, and the bedroom screen shut and open. For
+  the whole game, use a test night: paper and markers in the Library, the
+  Parlour TV page open on a screen people can reach, then "Start a test
+  night", join on your phone with your host name, "Go to Act 6", answer the
+  two Parlour Games, and press **Start the drawing** on your Host tab. With
+  one phone you are called every turn. The third picture opens the door.
+- *The deduction round* (Act 6). Samples of a phone striking one thing out
+  and of the board on the Parlour TV. On a test night, after the door opens,
+  **Next** on your Host tab starts the round.
+
+*The test night.* Some games need a night to run. The strip near the top
+of the tab says which night is live, with four buttons: "Start a test
+night", "Go to Act 4", "Go to Act 6" and "Parlour Game now". Its rules:
+
+- A test night is always a rehearsal: nothing sealed is read, the red
+  REHEARSAL band shows, and it is never the party.
+- The buttons move only a night this tab started. A rehearsal started from
+  a phone (the practice run, a tech run) may have guests on it, so the
+  buttons leave it alone, and the start button turns into "Start a test
+  night instead", which asks first: that rehearsal would end for everyone
+  on it.
+- Join a test night with your host name (the one on the Game night page),
+  so your phone gets the Host tab.
+- Act 4 plays in groups, so "Go to Act 4" needs at least two phones in the
+  test night.
+- The first time a test night reaches Act 2 or later, every phone shows a
+  role card first, for this test night only. After fifteen seconds tap Hide
+  this and carry on.
+- "Parlour Game now" works in Acts 2, 4 and 6.
+
+*On the party night the party box turns testing off.* While "This is the
+party night" is ticked on the Game night page, or the live night is the
+party or a dry run, the test night buttons and the links to the Parlour TV
+and bedroom pages are off, and the tab says why. To test in the days before,
+untick the box, then tick it again before you start the party night; on
+15 November the tab reminds you. The samples and the practices never touch
+a night, but there is nothing to try on the day.
+
+*Telling Claude Code what to fix.* Under each game: "What happened, and
+what should change?", which screen it was on (the one you last opened there
+is already picked), and "Send to Claude Code". "Speak" lets you say it
+instead of typing. The note becomes a card on the Timeline for Claude Code,
+filed under that game's moment of the night, and the chip says Needs a fix.
+A note you have not sent yet waits in the box, even if you close the
+section. When Claude Code has fixed every note for a game, the chip goes
+back to Not tried yet and says to try it again. Every Claude Code session
+starts by reading these notes. At the bottom of the tab, "Your notes to
+Claude Code" counts them, and "Copy all open notes" copies them to paste
+into a Claude Code chat. Jenna gets no note box (they know the secrets, and
+you read every card): one "Needs more" button files a card in fixed words.
+
 ---
 
 ## For Claude Code (technical)
@@ -548,3 +677,43 @@ Without `--real-secrets` the case is a rehearsal (`Case: rehearsal`) and reads
 none of them; `createNight` reads `sealed/bags` on every night, for the bag
 count only. Without `--live` it uses the emulator (`--emulator`) or an
 in-memory stand-in for Firestore (the default, no services at all).
+
+*The Game test tab* (24 Oct). `app/src/pages/GameTest.jsx` at
+`#/game-test`; `#/study-test` redirects to `#/game-test#study`, and a hash
+of any section key opens that section. The pure part is
+`app/src/lib/gameTest.js` (`SECTIONS` in the order of the night: study,
+memory, salem, boo, parlour, drawing, deduction; `nightStrip`, `chipOf`,
+`feedbackTask`, `stewardTask`); the reads and the chip writes are
+`app/src/lib/gameTestApi.js` (chips in `meta/game_test`, each write also in
+`workshop_history`). A note is a `tasks` card with `source: 'game-test'`,
+`test: <section key>`, `who: 'Claude Code'`, the section's moment, `tech`
+(shown in the Timeline's For Claude Code fold, `TechFold.jsx`) and an
+order from 10000 up; a card Jenna files carries `steward: true` and fixed
+words only. A section's chip goes back to Not tried yet once every one of
+its cards is done, so mark a fixed note done by its number and title. Every
+Claude Code session starts with `npm --prefix scripts run board`
+(`scripts/board.mjs`, read only, the `tasks` collection and nothing else):
+it prints the open Claude Code cards, the Game test notes first, and for a
+Jenna card only its title and section. The study section is
+`app/src/pages/StudyTest.jsx` with the `studyTest` callable
+(`docs/study-light-game.md`); the key word box is
+`app/src/components/KeyWord.jsx` (`meta/game.station_key`, the field the
+Host tab's Save key writes). The `gameTest` callable
+(`functions/lib/gametest.js`) writes the two practices to
+`public_state/game_test_salem` and `public_state/game_test_boo` with the
+Admin SDK, on the real game's own rules and timing (`act4.salemFlips`,
+`act4.booShow`, Boo's verdicts from `ui_copy`), and never reads or writes
+`nights/*`, `cases/*` or `sealed/*` for them. The practice pages are
+`play/src/screens/Practice.jsx`: `?practice=salem`, `?practice=boo` and
+`?kiosk=boo&practice=1`; they take the server's time from the callable's
+`clock` and never write `presence/{uid}`. `?preview=questions&set=<base64url>`
+shows one workshop set (`setParam`: the three questions and their first two
+choices, never a point or a lean). The test night: `night-start` calls
+`createNight` with `forceRehearsal: true, gameTest: true` and the label
+Game test; every `night-*` command is refused while `meta/game.party_night`
+is true or the live night has `forceRehearsal: false` or `dryRun: true`,
+moves only a night with `gameTest: true` (through `run.hostCommand`: `act`,
+`beat`, `light-up`), refuses `night-start` over a phone's rehearsal unless
+`replace` is sent (the page asks first), and refuses Act 4 with fewer than
+two in the roster. The admin commands check the caller's uid against
+`ADMIN_UIDS` in `functions/index.js`.

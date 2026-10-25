@@ -85,9 +85,11 @@ export const bagCodec = {
 // The five of the household have fixed names and titles, so the card is one
 // pick (who) and one box (about); the name and title are filled in from the
 // pick. A line whose name is not one of the five lands whole in About.
+// Salem is Crooknog, never Crookshank (Canon): a line saved under the old
+// heading still opens as Salem's card, and saving it writes the new one.
 export const HOUSEHOLD = [
   { key: 'irwin', name: 'SIR IRWIN', title: 'the dog' },
-  { key: 'salem', name: 'SALEM CROOKSHANK', title: 'the long-time groundskeeper' },
+  { key: 'salem', name: 'SALEM CROOKNOG', title: 'the long-time groundskeeper' },
   { key: 'zimothy', name: 'ZIMOTHY CLAWFORD, ESQ.', title: 'the old family solicitor' },
   { key: 'boo', name: 'MISS BOO LARUE', title: 'family friend and socialite' },
   { key: 'granolia', name: 'GRANOLIA LICKSPITTLE', title: 'taken in by the family when no one else would' },

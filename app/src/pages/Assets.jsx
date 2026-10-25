@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAreaEditor } from '../lib/useAreaEditor'
 import { uploadFile } from '../lib/store'
 import { AREAS, GUIDES } from '../lib/content'
 import ListCard from '../components/ListCard'
+
+// The Assets page, retired 23 Oct 2026 and hidden 24 Oct 2026: a file
+// uploaded here never reaches the game, and the real picture, sound and
+// video jobs are cards on the Timeline. Nothing links here any more; the
+// two old checklists are kept, whole, behind a closed fold.
 
 // One tab per checklist area that takes uploads.
 const TABS = [
@@ -28,19 +33,31 @@ function uploadErrorText(e) {
 
 export default function Assets() {
   const [params, setParams] = useSearchParams()
+  const [open, setOpen] = useState(false)
   const tab = TABS.find(t => t.id === params.get('tab')) ?? TABS[0]
   return (
     <main className="dash sheet">
-      <nav className="tabs">
-        {TABS.map(t => (
-          <button key={t.id} className={t.id === tab.id ? 'tab active' : 'tab'}
-            onClick={() => setParams({ tab: t.id })}>
-            {AREAS[t.area].label}
-          </button>
-        ))}
-      </nav>
-      {/* keyed: a fresh editor per area, so nothing pending crosses tabs */}
-      <AssetList key={tab.area} area={tab.area} noun={tab.noun} accept={tab.accept} />
+      <section className="panel">
+        <h2>Pictures and sounds</h2>
+        <p className="why">Nothing to do here. A file uploaded on this page never reaches the game. Every picture, sound and video the night needs is a card on the <Link to="/timeline">Timeline</Link> that says what it is: give the file to Claude Code, which puts it in.</p>
+      </section>
+      <details className="panel more" onToggle={e => setOpen(e.currentTarget.open)}>
+        <summary>The old checklists (kept, not used)</summary>
+        {open && (
+          <>
+            <nav className="tabs">
+              {TABS.map(t => (
+                <button key={t.id} className={t.id === tab.id ? 'tab active' : 'tab'}
+                  onClick={() => setParams({ tab: t.id })}>
+                  {AREAS[t.area].label}
+                </button>
+              ))}
+            </nav>
+            {/* keyed: a fresh editor per area, so nothing pending crosses tabs */}
+            <AssetList key={tab.area} area={tab.area} noun={tab.noun} accept={tab.accept} />
+          </>
+        )}
+      </details>
     </main>
   )
 }

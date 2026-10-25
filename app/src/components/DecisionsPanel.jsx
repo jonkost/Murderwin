@@ -1,11 +1,19 @@
-import { useEffect, useState } from 'react'
-import { subscribeDecisions, answerDecision, whoAmI } from '../lib/store'
+import { useState } from 'react'
+import { answerDecision } from '../lib/store'
 
+// The panel that listed the open questions a second time in Home's fold
+// came off on 24 Oct 2026; Home, Where we are and the Timeline each show
+// them with this one component.
+
+// One open question, its answers as buttons, and Confirm. Its note (the
+// default, or why Claude Code asks it) shows under the question, and a
+// question Claude Code will ask about when it gets there says so.
 export function Decision({ d, onError, onSaved, canAnswer }) {
   const [picked, setPicked] = useState(null)
   return (
     <div className="decision">
-      <p className="dq">{d.question}</p>
+      <p className="dq">{d.question}{d.who && <> <span className="tl-who">{d.who} will ask you</span></>}</p>
+      {d.note && d.answer == null && <p className="hint">{d.note}</p>}
       <div className="dopts">
         {(d.options ?? []).map(opt => (
           <button key={opt}
@@ -22,41 +30,5 @@ export function Decision({ d, onError, onSaved, canAnswer }) {
         </button>
       )}
     </div>
-  )
-}
-
-export default function DecisionsPanel() {
-  const [decisions, setDecisions] = useState([])
-  const [loadErr, setLoadErr] = useState(false)
-  const [saveErr, setSaveErr] = useState(false)
-  const [me, setMe] = useState(null)
-
-  useEffect(() => subscribeDecisions(ds => { setDecisions(ds); setLoadErr(false) },
-    () => setLoadErr(true)), [])
-  useEffect(() => { whoAmI().then(setMe) }, [])
-  const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
-
-  const open = decisions.filter(d => d.answer == null)
-  if (!open.length && !loadErr && !saveErr) return null
-
-  return (
-    <section className="panel">
-      <h2>Decisions waiting on Jon</h2>
-      <p className="why">Only Jon answers these. Jenna, skip this box.</p>
-      {saveErr && (
-        <div className="banner error" role="alert">
-          SAVE FAILED. That answer was not recorded. Pick and confirm again.
-        </div>
-      )}
-      {loadErr && (
-        <div className="banner error" role="alert">
-          Decisions did not load. Check your signal.
-        </div>
-      )}
-      {open.sort((a, b) => a.key.localeCompare(b.key)).map(d => (
-        <Decision key={d.key} d={d} canAnswer={canAnswer} onError={() => setSaveErr(true)}
-          onSaved={() => setSaveErr(false)} />
-      ))}
-    </section>
   )
 }

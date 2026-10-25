@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs'
 import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
-import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES } from '../src/lib/timelineTasks.js'
+import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -74,7 +74,7 @@ test('every new task and decision is filed under a real moment, with no em dash'
     assert.ok(momentName(t.moment), t.moment)
     for (const k of ['title', 'detail', 'who']) assert.ok(!String(t[k] ?? '').includes('—'), `${t.title}.${k}`)
   }
-  for (const d of [...TIMELINE_DECISIONS, ...AUDIT_DECISIONS]) {
+  for (const d of [...TIMELINE_DECISIONS, ...AUDIT_DECISIONS, ...CLEANUP_DECISIONS]) {
     assert.ok(MOMENT_KEYS.includes(d.moment), d.key)
     assert.ok(d.options.length >= 2, d.key)
     for (const k of ['question', 'note']) assert.ok(!String(d[k] ?? '').includes('—'), `${d.key}.${k}`)
@@ -462,4 +462,283 @@ test('the 24 Oct migration: built cards done, replaced cards retired with the re
   assert.equal(plan.decisionPatches.act4Granolia.moment, 'act4.groups')
   assert.ok(plan.tasks.some(t => t.title === 'Put the game names in the game' && t.status === 'done' && t.who === 'Claude Code'))
   assert.ok(plan.tasks.some(t => t.title === 'Sound: chime-phone' && t.moment === 'act2.supper'))
+})
+
+// ---- the board made plain, 24 Oct 2026 --------------------------------------
+
+// The pretend board as the live one stands: the seed, then every migration.
+function boardThrough(id) {
+  let n = 0
+  const newId = () => `id${++n}`
+  let state = { applied: [], areas: {}, decisions: Object.fromEntries(tasksFile.decisions.map(d => [d.key, { ...d }])), tasks: tasksFile.tasks.map(t => ({ ...t, id: newId() })) }
+  const at = ADDITIONS.findIndex(a => a.id === id)
+  for (const add of ADDITIONS.slice(0, at)) state = applyPlan(planAddition(add, state, { newId, now: 1 }), state)
+  return { before: state, add: ADDITIONS[at], newId }
+}
+const decisionList = (state) => Object.entries(state.decisions).map(([key, d]) => ({ ...d, key }))
+
+test('the cleanup migration: its new cards are new and plain, and every card it closes or rewrites is on the board by number and title', () => {
+  const { before, add } = boardThrough('2026-10-24-cleanup')
+  assert.equal(add.id, '2026-10-24-cleanup')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-24-news-cast', 'followed only by the news cast, the same evening')
+  assert.ok(add.tasks === CLEANUP_TASKS && add.decisions === CLEANUP_DECISIONS && add.retireTasks === RETIRED_FOR_CLEANUP && add.rewriteTasks === REWRITTEN_FOR_CLEANUP && add.refileDecisions === REFILED_FOR_CLEANUP)
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of CLEANUP_TASKS) {
+    assert.ok(t.order >= 460 && t.order < 500, `${t.title}: numbered from 460`)
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who) || t.who === 'Jon and Claude Code', `${t.title}: ${t.who}`)
+    if (t.by) assert.match(t.by, /^2026-1[01]-\d{2}$/)
+    assert.ok(!/terminal|npm |\.env|living room|orangery|the freeze/i.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+    assert.ok(!String(t.tech ?? '').includes('—'))
+  }
+  for (const r of [...RETIRED_FOR_CLEANUP, ...REWRITTEN_FOR_CLEANUP]) {
+    assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
+  }
+  for (const r of REWRITTEN_FOR_CLEANUP) {
+    if (r.set.moment) assert.ok(MOMENT_KEYS.includes(r.set.moment), r.set.moment)
+    if (r.set.who) assert.ok(OWNERS.includes(r.set.who), r.set.who)
+    for (const k of ['title', 'detail', 'tech']) assert.ok(!String(r.set[k] ?? '').includes('—'), `card ${r.order}.${k}`)
+  }
+  assert.equal(new Set(REWRITTEN_FOR_CLEANUP.map(r => r.order)).size, REWRITTEN_FOR_CLEANUP.length, 'one rewrite per card')
+  for (const [key, r] of Object.entries(REFILED_FOR_CLEANUP)) {
+    assert.equal(before.decisions[key]?.moment, r.from, `${key} is filed under ${r.from}`)
+    assert.ok(r.to === RETIRED_MOMENT || MOMENT_KEYS.includes(r.to), r.to)
+  }
+  for (const d of CLEANUP_DECISIONS) assert.ok(!before.decisions[d.key], `${d.key} is a new question`)
+})
+
+test('the cleanup on a pretend board: the done cards closed, the old words gone from every open card of Jon’s, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-24-cleanup')
+  // Jon has added a card by hand that shares a number with one the cleanup rewrites
+  const state = { ...before, tasks: [...before.tasks, { id: 'jon', order: 301, status: 'todo', title: 'Buy a TV stand', detail: 'For the living room.' }] }
+  const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  const card = (order) => after.tasks.find(t => t.order === order && t.id !== 'jon')
+  for (const r of RETIRED_FOR_CLEANUP) {
+    assert.equal(card(r.order).status, 'done', `card ${r.order} closed`)
+    assert.ok(card(r.order).detail.endsWith(r.detail), `card ${r.order} says why`)
+  }
+  for (const r of REWRITTEN_FOR_CLEANUP) {
+    const t = card(r.order)
+    for (const [k, v] of Object.entries(r.set)) assert.deepEqual(t[k], v, `card ${r.order}.${k}`)
+    assert.ok(t.previous?.[add.id], `card ${r.order} keeps the words it had`)
+  }
+  assert.equal(after.tasks.find(t => t.id === 'jon').detail, 'For the living room.', 'Jon’s own card is never rewritten')
+  const open = after.tasks.filter(t => !t.deleted && t.status !== 'done' && t.id !== 'jon')
+  const jons = open.filter(t => ['Jon', 'Jon and Susan', 'Susan', 'Jenna'].includes(ownerOf(t)))
+  for (const t of jons) {
+    assert.ok(!/terminal|npm |\.env|kiosk=|living room|orangery|crookshank|the freeze|nine sounds|deploy|seed\/|play\/public/i.test(`${t.title} ${t.detail ?? ''}`), `card ${t.order} (${t.title}) is in plain words`)
+  }
+  assert.ok(!open.some(t => /^(Deploy before the practice game|Make the packing list|Make the stand-in sounds on the brain|Finish the lists the leans and the packing read)$/.test(t.title)), 'what is done is not shown as open')
+  // the sound cards now count their simple tone, since the stand-ins are made
+  for (const t of open.filter(x => x.title.startsWith('Sound: '))) assert.equal(taskStandin(t, after.tasks), true, t.title)
+  // Jon's next three are real jobs: his own, nothing Claude Code would just run, the key word first
+  const next = nextCards(after.tasks)
+  assert.equal(next.length, 3)
+  assert.ok(next.every(t => !['Deploy before the practice game', 'Finish the lists the leans and the packing read'].includes(t.title)))
+  assert.ok(next.every(t => ['Jon', 'Jon and Susan'].includes(ownerOf(t)) && !/^Ask Claude Code/.test(t.title)), next.map(t => t.title).join(' | '))
+  assert.ok(next.some(t => t.title === 'Save the study key word'), 'the key word the study station waits on is among them')
+  assert.equal(ownerOf(card(111)), 'Claude Code')
+  assert.equal(ownerOf(card(214)), 'Claude Code')
+  // the study station: Claude Code's half and Jon's half are two cards, each with one owner
+  assert.equal(card(474).who, 'Claude Code')
+  assert.equal(card(464).who, 'Jon')
+  assert.ok(!after.tasks.some(t => /claude code/i.test(t.who ?? '') && t.who !== 'Claude Code' && t.status !== 'done'), 'no shared owner hides a job from Claude Code')
+  // teaching the taps waits on the M1 Air; the night's start buttons are a double-click, not a chat
+  assert.equal(card(460).moment, 'freeze')
+  assert.ok(card(460).by <= '2026-11-06' && card(474).by < card(460).by)
+  for (const order of [121, 122]) assert.match(card(order).detail, /double-click Start the (brain|study) on its desktop/i)
+  assert.ok(card(475).by <= '2026-11-06', 'the desktop buttons come before the first full tech run')
+  // the decisions
+  const ds = decisionList(after)
+  assert.ok(isRetiredDecision(after.decisions.act4Granolia), 'act4Granolia is retired')
+  assert.ok(!timelineItems({ decisions: ds }).some(i => i.kind === 'decision' && i.decision.key === 'act4Granolia'), 'and the night never shows it')
+  assert.equal(after.decisions.tidyFolders.who, 'Claude Code')
+  assert.equal(after.decisions.tidyFolders.answer, null, 'still Jon’s to answer, when Claude Code asks')
+  assert.ok(openDecisions(ds).some(d => d.key === 'tidyFolders') && !decisionsForJon(ds).some(d => d.key === 'tidyFolders'))
+  assert.equal(after.decisions.ipadDinner.answer, 'Captions in the Orangerie', 'the answer follows its renamed option')
+  assert.ok(after.decisions.rulesDeckScreen.options[0].startsWith('The Parlour TV'))
+  assert.equal(after.decisions.granoliaIntro.moment, 'act4.study')
+  assert.ok(decisionsForJon(ds).some(d => d.key === 'granoliaIntro'))
+  assert.ok(decisionsForJon(ds).some(d => d.key === 'worstDial'), 'the worst-dial check is a question on the board, not only a line on Where we are')
+  assert.ok(!/repo|solving-the-case|handoff bundle/i.test(after.decisions.tidyFolders.question), 'tidyFolders in plain words')
+  for (const d of ds) assert.ok(!/living room|orangery/i.test(`${d.question} ${(d.options ?? []).join(' ')}`) || d.answer != null && isRetiredDecision(d), `${d.key} is in today’s words`)
+  const again = applyPlan(planAddition(add, after, { newId, now: 3 }), after)
+  assert.deepEqual(again.tasks, after.tasks, 'never twice')
+})
+
+test('decisions: a retired one is never shown or lost, one with an owner is not Jon’s, and the pointer skips it', () => {
+  const decisions = [
+    { key: 'a', moment: 'act2.cat', answer: null },
+    { key: 'b', moment: RETIRED_MOMENT, retired: true, answer: null },
+    { key: 'c', moment: 'freeze', answer: null, who: 'Claude Code' },
+    { key: 'd', moment: 'act1.arrive', answer: 'Yes' },
+  ]
+  assert.deepEqual(openDecisions(decisions).map(d => d.key), ['c', 'a'], 'open ones, in the order of the night')
+  assert.deepEqual(decisionsForJon(decisions).map(d => d.key), ['a'])
+  assert.deepEqual(unfiled({ decisions }).decisions, [], 'a retired decision is not waiting to be placed')
+  const items = timelineItems({ decisions }).filter(i => i.kind === 'decision')
+  assert.deepEqual(items.map(i => i.decision.key), ['c', 'd', 'a'], 'in night order, and never the retired one')
+  assert.equal(items.find(i => i.decision.key === 'c').notYou, true)
+  assert.equal(bucketProgress(items).first.decision.key, 'a', 'the next thing for Jon is never Claude Code’s question')
+  assert.equal(firstSentence('One thing. Then another.'), 'One thing.')
+  assert.equal(firstSentence('No full stop'), 'No full stop')
+})
+
+// ---- the news team cast, 24 Oct 2026, evening --------------------------------
+
+// The six questions Jon answered on 31 August, as the live board has them:
+// one of their old options each, which later decisions replaced.
+const AUGUST_ANSWERS = { acts35: 'Design session with Claude', affectionEconomy: 'Static — profession-seeded only', salemSgtMajor: 'Include', eventDeck: 'Shared menu + merge table', scoring: 'All-three-or-nothing + gag superlatives', clueChannels: 'Cat sightings layer' }
+
+test('the news-cast migration: the newest, its four cards new and plain, every card it touches open on the board by number and title', () => {
+  const { before, add } = boardThrough('2026-10-24-news-cast')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(add.tasks === NEWS_CAST_TASKS && add.retireTasks === RETIRED_FOR_NEWS_CAST && add.fileTasks === FILED_FOR_NEWS_CAST && add.rewriteTasks === REWRITTEN_FOR_NEWS_CAST && add.answerDecisions === ANSWERED_FOR_NEWS_CAST && add.fileDecisions === FILED_DECISIONS_FOR_NEWS_CAST && add.refileDecisions === REFILED_FOR_NEWS_CAST && add.supersedeDecisions === SUPERSEDED_FOR_NEWS_CAST)
+  assert.equal(add.decisions, undefined, 'no second worst-dial question, and no new question at all')
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of NEWS_CAST_TASKS) {
+    assert.ok(t.order >= 476 && t.order < 500, `${t.title}: numbered from 476`)
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    for (const k of ['title', 'detail']) assert.ok(!String(t[k]).includes('—'), `${t.title}.${k}`)
+  }
+  for (const r of [...RETIRED_FOR_NEWS_CAST, ...FILED_FOR_NEWS_CAST, ...REWRITTEN_FOR_NEWS_CAST]) {
+    assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
+  }
+  for (const r of FILED_FOR_NEWS_CAST) assert.ok(!before.tasks.find(t => t.order === r.order && t.title === r.title).by, `card ${r.order} has no date yet`)
+  const sounds = before.tasks.filter(t => t.title.startsWith('Sound: ') && !t.deleted)
+  assert.equal(sounds.length, 10, 'the ten cue sounds')
+  for (const t of sounds) assert.equal(FILED_FOR_NEWS_CAST.find(r => r.order === t.order)?.by, '2026-10-30', t.title)
+  for (const r of REWRITTEN_FOR_NEWS_CAST) {
+    if (r.set.who) assert.ok(OWNERS.includes(r.set.who), r.set.who)
+    assert.ok(!r.set.detail.includes('—'), `card ${r.order}`)
+  }
+  for (const [key, r] of Object.entries(REFILED_FOR_NEWS_CAST)) {
+    assert.equal(before.decisions[key]?.moment, r.from, `${key} is filed under ${r.from}`)
+    assert.equal(before.decisions[key]?.answer, null, `${key} has no answer yet on a board seeded from the repo`)
+    for (const k of ['question', 'note']) assert.ok(!String(r.set[k] ?? '').includes('—'), `${key}.${k}`)
+  }
+  // Jon's three answers that evening and the board's two older ones, each one of its question's options
+  assert.deepEqual(Object.keys(ANSWERED_FOR_NEWS_CAST).sort(), ['bulletin2Known', 'bulletin2Voice', 'grossnola', 'swapMotive', 'worstDial'])
+  for (const [key, answer] of Object.entries(ANSWERED_FOR_NEWS_CAST)) {
+    const options = REFILED_FOR_NEWS_CAST[key]?.set.options ?? before.decisions[key].options
+    assert.ok(options.includes(answer), `${key}: ${answer}`)
+    if (REFILED_FOR_NEWS_CAST[key]) assert.match(REFILED_FOR_NEWS_CAST[key].set.note, /^Answered 24 Oct 2026/, `${key} says it is answered`)
+  }
+  for (const key of Object.keys(FILED_DECISIONS_FOR_NEWS_CAST)) assert.ok(before.decisions[key]?.moment, `${key} is already filed here, so filing it changes nothing`)
+  for (const [key, line] of Object.entries(SUPERSEDED_FOR_NEWS_CAST)) {
+    assert.ok(before.decisions[key], `${key} is on the board`)
+    assert.match(line, /^Replaced \d/, key)
+    assert.ok(!line.includes('—') && !/\n/.test(line), `${key}: one plain line`)
+  }
+  assert.deepEqual(Object.keys(SUPERSEDED_FOR_NEWS_CAST).sort(), Object.keys(AUGUST_ANSWERS).sort())
+})
+
+test('the news cast on a pretend board: the new cast and owners, the dates, the three answers, the 31 August answers replaced, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-24-news-cast')
+  const decisions = { ...before.decisions }
+  for (const [key, answer] of Object.entries(AUGUST_ANSWERS)) decisions[key] = { ...decisions[key], answer, answeredBy: 'Jon', answeredAt: 0 }
+  // Jon has dated one sound card himself
+  const tasks = before.tasks.map(t => (t.title === 'Sound: blackout' ? { ...t, by: '2026-10-27' } : t))
+  const state = { ...before, decisions, tasks }
+  const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  const card = (order) => after.tasks.find(t => t.order === order && !t.deleted)
+  // the recording cards: owners, dates and the cast
+  assert.deepEqual([card(200).who, card(200).by], ['Susan', '2026-11-08'])
+  assert.match(card(200).detail, /Susan reads the opening and the sign-off on camera as Ava Waves/)
+  assert.deepEqual([card(203).who, card(203).by], ['Jon and Susan', '2026-11-08'])
+  assert.match(card(203).detail, /Susan, as Ava Waves, opens and closes it in the studio; you, as Mic Cameron, do the four field parts/)
+  assert.deepEqual([card(202).who, card(202).by], ['Susan', '2026-11-06'])
+  assert.match(card(202).detail, /opening and the sign-off/)
+  assert.equal(card(201).by, '2026-11-08', 'the news graphics')
+  for (const order of [200, 202, 203]) assert.ok(card(order).previous?.[add.id], `card ${order} keeps the words it had`)
+  for (const t of after.tasks.filter(x => x.title.startsWith('Sound: ') && !x.deleted)) assert.equal(t.by, t.title === 'Sound: blackout' ? '2026-10-27' : '2026-10-30', t.title)
+  // the two new cards and the one they replace
+  const practice = after.tasks.find(t => t.title === 'The practice run, Sun 25 Oct')
+  assert.deepEqual([practice.who, practice.moment, practice.by, taskWhen(practice)], ['Jon and Susan', 'setup', '2026-10-25', 'now'])
+  assert.match(practice.detail, /https:\/\/claude\.ai\/artifact\/3Ekk4JUd8VpN31NJWx56AK/)
+  assert.match(practice.detail, /Note anything that feels wrong on the Game test tab or tell Claude Code/)
+  assert.equal(byLabel(practice), 'by Sun 25 Oct')
+  assert.equal(nextCards(after.tasks)[0], practice, 'tomorrow’s practice run is Jon’s next thing')
+  const refresh = after.tasks.find(t => t.title === 'Refresh the claude.ai project’s copies')
+  assert.equal(ownerOf(refresh), 'Claude chat')
+  assert.match(refresh.detail, /7 November/)
+  assert.match(refresh.detail, /23 Oct handoff/)
+  assert.equal(card(440).status, 'done', 'the old Claude chat card is part of the new one')
+  // the bulletin 2 questions: the new cast, answered by Jon on 24 Oct
+  const ds = decisionList(after)
+  const voice = after.decisions.bulletin2Voice
+  assert.deepEqual([voice.options, voice.answer], [['Ava Waves (Susan)', 'Mic Cameron (Jon)', 'Someone else'], 'Ava Waves (Susan)'])
+  assert.match(voice.note, /^Answered 24 Oct 2026: Ava Waves, so Susan/)
+  const known = after.decisions.bulletin2Known
+  assert.deepEqual([known.question, known.answer, known.options[0]], ['Whoever records bulletin 2 knows which family each line points at. Accept?', 'Accept it', 'Accept it'])
+  assert.match(known.note, /^Answered 24 Oct 2026: accepted/)
+  // the worst-dial question: the one the cleanup added, naming its checks, answered
+  const worst = after.decisions.worstDial
+  assert.match(worst.question, /before the second tech run, or after the party/)
+  assert.match(worst.note, /G07 and G08/)
+  assert.equal(worst.answer, 'Before the second tech run')
+  for (const key of ['bulletin2Voice', 'bulletin2Known', 'worstDial', 'grossnola', 'swapMotive']) assert.ok(!decisionsForJon(ds).some(d => d.key === key), `${key} is answered, not waiting on Jon`)
+  assert.deepEqual([after.decisions.grossnola.answer, after.decisions.swapMotive.answer], ['Keep it offstage', 'Keep all 19'])
+  assert.deepEqual(decisionsForJon(ds).map(d => d.key).sort(), ['ballotMajority', 'diningName', 'granoliaIntro', 'handOn', 'rulesDeckScreen'], 'the open questions CLAUDE.md lists (tidyFolders is Claude Code’s to ask)')
+  assert.ok(openDecisions(ds).some(d => d.key === 'tidyFolders'))
+  // the worst-dial patch and the test plan's checks: Claude Code's, before the second tech run
+  const patch = after.tasks.find(t => t.order === 478)
+  assert.deepEqual([patch.who, patch.moment, patch.by], ['Claude Code', 'freeze', '2026-11-11'])
+  assert.match(patch.tech, /docs\/patches\/2026-10-24-worst-dial\.patch/)
+  assert.match(patch.tech, /G07, G08 and G42/)
+  const checks = after.tasks.find(t => t.order === 479)
+  assert.deepEqual([checks.who, checks.by], ['Claude Code', '2026-11-11'])
+  assert.match(checks.tech, /docs\/test-plan\.md/)
+  // as soon as possible, not after the party
+  assert.deepEqual([card(196).who, taskWhen(card(196))], ['Claude Code', 'now'])
+  assert.ok(!/^Built after the party/.test(card(196).detail), card(196).detail)
+  assert.ok(!/only when everything else is done/.test(card(450).detail), card(450).detail)
+  assert.match(card(202).detail, /Susan reads them all as Ava Waves/)
+  assert.ok(!/unless you pick|question above/.test(card(202).detail), 'bulletin 2’s voice is answered')
+  assert.equal(ds.filter(d => /foggiest|worst dial|worst-dial|G07/i.test(`${d.question} ${d.note ?? ''}`)).length, 1, 'one worst-dial question, not two')
+  // the six 31 August answers: replaced by what is true now, the old one kept
+  for (const [key, old] of Object.entries(AUGUST_ANSWERS)) {
+    const d = after.decisions[key]
+    assert.deepEqual([d.answer, d.answeredBy], [SUPERSEDED_FOR_NEWS_CAST[key], 'later decisions'], key)
+    assert.equal(d.previous[add.id].answer, old, `${key} keeps its 31 August answer`)
+    assert.ok(!ds.some(x => x.answer === old), `${key}: no page shows the old answer`)
+  }
+  const scoring = timelineItems({ decisions: ds }).find(i => i.kind === 'decision' && i.decision.key === 'scoring')
+  assert.match(scoring.decision.answer, /^Replaced 22 Oct 2026: everyone wins the same way/, 'the one the Timeline shows, under Act 7')
+  // nowhere on the board is Jon Ava Waves, or Mic Cameron uncast
+  const open = [...after.tasks.filter(t => !t.deleted && t.status !== 'done').map(t => `${t.title} ${t.detail ?? ''}`), ...ds.filter(d => !isRetiredDecision(d)).map(d => `${d.question} ${(d.options ?? []).join(' ')} ${d.answer ?? ''} ${d.note ?? ''}`)]
+  for (const text of open) {
+    assert.ok(!/studio voice|you record all 25|\bAva on camera|\bAva in the studio/i.test(text), text)
+    if (/\bAva\b/.test(text)) assert.match(text, /Susan/, text)
+    if (/\bMic\b/.test(text)) assert.match(text, /Jon|you, as Mic Cameron/, text)
+  }
+  // Jon's and Susan's new words are plain
+  for (const t of [practice, card(200), card(202), card(203)]) {
+    assert.ok(!/terminal|npm |\.env|kiosk=|living room|orangery|the freeze|deploy|seed\/|play\/public/i.test(`${t.title} ${t.detail}`), `${t.title} is in plain words`)
+  }
+  const again = applyPlan(planAddition(add, after, { newId, now: 3 }), after)
+  assert.deepEqual([again.tasks, again.decisions], [after.tasks, after.decisions], 'never twice')
+})
+
+test('the news cast on the live board’s shape: Claude chat’s answers stand, and an old option moves to its new words', () => {
+  const { before, add, newId } = boardThrough('2026-10-24-news-cast')
+  const decisions = { ...before.decisions }
+  // Claude chat answered both bulletin 2 questions on the board, one with an
+  // old option and one in its own words, and made worstDial itself, answered
+  decisions.bulletin2Voice = { ...decisions.bulletin2Voice, answer: 'Ava Waves (you, in the studio voice)', answeredBy: 'Claude chat', answeredAt: 5 }
+  decisions.bulletin2Known = { ...decisions.bulletin2Known, answer: 'Accepted, since Susan records the lines', answeredBy: 'Claude chat', answeredAt: 5 }
+  decisions.worstDial = { key: 'worstDial', question: 'Build the worst-dial proof now?', options: ['After the party', 'Before the second tech run'], answer: 'Before the second tech run', answeredBy: 'Claude chat', answeredAt: 5 }
+  decisions.grossnola = { ...decisions.grossnola, answer: 'Keep it offstage', answeredBy: 'Jon', answeredAt: 0 }
+  decisions.swapMotive = { ...decisions.swapMotive, answer: 'Keep all 19', answeredBy: 'Jon', answeredAt: 0 }
+  const state = { ...before, decisions }
+  const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  const d = after.decisions
+  assert.deepEqual([d.bulletin2Voice.answer, d.bulletin2Voice.answeredBy], ['Ava Waves (Susan)', 'Claude chat'], 'Jon’s pick follows its renamed option')
+  assert.deepEqual([d.bulletin2Known.answer, d.bulletin2Known.answeredBy], ['Accepted, since Susan records the lines', 'Claude chat'], 'an answer in its own words is never changed')
+  assert.deepEqual([d.worstDial.answer, d.worstDial.answeredBy, d.worstDial.answeredAt], ['Before the second tech run', 'Claude chat', 5], 'never answered twice')
+  assert.equal(d.worstDial.moment, 'freeze', 'a worstDial made with no moment is filed under the freeze rows')
+  assert.equal(d.worstDial.question, 'Build the worst-dial proof now?', 'and not reworded: it was not where the refile looks')
+  for (const key of ['grossnola', 'swapMotive']) assert.deepEqual([d[key].answeredBy, d[key].answeredAt], ['Jon', 0], `${key}: Jon’s answer stands`)
 })

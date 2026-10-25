@@ -7,7 +7,8 @@ file when a sound is called for, runs Apple Music, switches the Hue lights
 to the right scene, and mirrors Salem's game on the Orangerie string lights.
 It never knows what any of it means. Written 17 October 2026, brought up to
 date 24 October 2026 (music, Hue scenes, the string lights, the tenth sound,
-video).
+video), and that evening with what was tried on the real hardware (the hall
+bulb, the string lights' setting names and their button).
 
 **Where it comes from:** `CLAUDE.md` (Hardware, and the client rule "sound
 files are named after the event ID so the relay performs no logic and stays
@@ -117,7 +118,24 @@ lights: on".
 
 ## Setting it up (once, on the hardware evening)
 
-Do these on the brain, in a Terminal window, in the Murderwin folder.
+Do these on the brain, in a Terminal window, in the Murderwin folder. (Or
+ask Claude Code to do the typing; the clicks in the Hue, Nanoleaf, Music
+and Home apps are yours.)
+
+**Where it stands, 24 October 2026.**
+- The Hue bridge is paired with the brain (step 1), and the hall bulb went
+  red and green from the brain. The hall bulb shows as *Master bedroom* in
+  the Hue app and as *Jonny's light* in Apple's Home app. Neither name
+  matters to the brain, which finds the bulb by its id (step 4); what
+  matters is that the bulb stays out of the zone the four scenes use
+  (step 8).
+- The string lights are parked. Holding their button on 24 October reset
+  their Wi-Fi, so they are off the network until you add them back in the
+  Nanoleaf app (step 12).
+- The four HomePods are not one AirPlay group yet. Make the group on the
+  brain and pick it as the sound output.
+- The brain is on Wi-Fi for now: its network cable adapter showed no link.
+  Wi-Fi works; a cable is only steadier.
 
 **The hall light and the sounds**
 
@@ -136,7 +154,8 @@ Do these on the brain, in a Terminal window, in the Murderwin folder.
 3. **Install.** In `cues/`: `npm install`.
 4. **Find the hall light.** `npm start -- --lights` prints every light the
    bridge knows with its id. Put the hall bulb's id in `.env` as
-   `HUE_HALL_LIGHT_ID`.
+   `HUE_HALL_LIGHT_ID`. (In the Hue app the bulb shows as Master bedroom,
+   and in the Home app as Jonny's light: the same bulb.)
 
 **The music**
 
@@ -194,7 +213,16 @@ Do these on the brain, in a Terminal window, in the Murderwin folder.
     curl -X POST http://<strings address>:16021/api/v1/new
     ```
     Copy the `auth_token` from the answer. Put the address and the token in
-    `cues/.env` as `NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`.
+    `cues/.env` as `NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`,
+    spelled exactly so, STRINGS with an S: the brain reads only these two
+    names, and lines named any other way (`NANOLEAF_STRING_HOST`, say) are
+    ignored, so the strings stay decoration.
+    **Careful with the button.** Holding the strings' button resets their
+    Wi-Fi: on 24 October it took them off the network, and they have to be
+    added again in the Nanoleaf app (step 12) before anything else. So this
+    pairing step is not proven for these lights: ask Claude Code before you
+    try it again, and if they drop off the Wi-Fi, add them back in the app
+    first.
 14. **Check them.** `npm start -- --check-strings` turns them red, green,
     then the warm colour. If they never answer, stop there: leave the two
     lines empty, the strings are decoration, and the phones carry the colour.
@@ -226,14 +254,15 @@ them on the night.
 | `STATION_KEY` | The study's key word, the same as on the Host tab, so the news recordings play. |
 | `MUSIC` | `on`, or `off` to leave the music to you and the Music app. |
 | `HUE_SCENES` | `on`, or `off` to leave the scenes to the Hue app on your phone. |
-| `NANOLEAF_STRINGS_HOST` | The Orangerie string lights' address. Empty: the strings are decoration. |
+| `NANOLEAF_STRINGS_HOST` | The Orangerie string lights' address. Empty: the strings are decoration. Spelled with STRINGS: no other spelling is read. |
 | `NANOLEAF_STRINGS_TOKEN` | The token from step 13. |
 
 After changing any of them, stop the relay (Control-C) and start it again.
 
 ## On the day
 
-- [ ] The Mac is on mains power, sleep off, ethernet in.
+- [ ] The Mac is on mains power, sleep off, ethernet in (if the cable will
+      not link, as on 24 October, Wi-Fi works too).
 - [ ] `npm start` in `cues/` is running in a terminal window you can see.
       Its first lines say "music: on · Hue scenes: on · string lights: on"
       (or "not set up" for the strings if they are decoration).

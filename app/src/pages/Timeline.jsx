@@ -1,42 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { subscribeArea, subscribeTasks, subscribeDecisions, updateTask, addTask, fileDecision, whoAmI } from '../lib/store'
-import { TIMELINE, TIMELINE_LISTS, WHEN, OWNERS, needStatus, timelineItems, bucketProgress, taskWhen, ownerOf, byLabel, taskBy, unfiled, momentOptions, leftByOwner } from '../lib/timeline'
+import { TIMELINE, TIMELINE_LISTS, WHEN, OWNERS, STANDIN_NOTE, needStatus, timelineItems, taskWhen, ownerOf, byLabel, taskBy, unfiled, momentOptions, nextCards, momentName } from '../lib/timeline'
 import { useTaskDraft } from '../components/TaskBoard'
 import { Decision } from '../components/DecisionsPanel'
+import TechFold from '../components/TechFold'
 
-// The night, in order. One straight line from the freeze to the morning
-// after: under every moment, the lists it needs (live counts), the decisions
-// still open and the tasks, each with a tick box. A task added here is filed
-// under that moment on the task board too.
+// The night, in order. One straight line from now to the morning after:
+// under every moment, the decisions still open and the tasks, each with a
+// tick box, and (when everything shows) the lists it needs, with live
+// counts. A task added here is filed under that moment.
 //
-// Three views (22 Oct 2026): Do now (before the freeze), Happens later (the
-// week before, the day, after) and Everything. Something the night already
-// covers with a stand-in says so, and the pointer at the top skips it, as
-// it skips Claude's and Jenna's cards. Every row and its add button stay in
-// every view; only "Show only what is left" hides rows.
+// Two ways to look (24 Oct 2026, Jon: "set up for a guy who is designing a
+// silly game for his friends and family and not a coder"). The page always
+// opens on Jon, what is left: his open cards, the ones for him and Susan,
+// and the questions only he answers. One switch, Show everything, shows the
+// whole board, done or not, every owner and every list. Nothing is
+// remembered between visits, so the page never opens filtered and empty. A
+// link from Where we are (?who=) may open one other owner's open cards.
 //
-// Who (23 Oct 2026): a row of buttons, one per owner, each with a count of
-// that owner's open cards; picking one shows only those cards (and, for Jon,
-// the decisions only he answers). A card may carry a "by" date, shown on the
-// card. Anything with no place on the night is listed first, under Not filed
-// yet, with a picker to file it.
+// A card may carry `tech`: the exact line Claude Code runs. It sits in a
+// closed For Claude Code fold under the card, so Jon reads only the plain
+// instruction.
 
-const VIEWS = [
-  { key: 'now', label: WHEN.now },
-  { key: 'later', label: WHEN.later },
-  { key: 'all', label: 'Everything' },
-]
-const PREF_LEFT = 'workshop.timeline.onlyLeft'
-const PREF_VIEW = 'workshop.timeline.view'
-const PREF_WHO = 'workshop.timeline.who'
+const JON = ['Jon', 'Jon and Susan']
 // Today on this computer's own calendar (not UTC), so a card due today is
 // not shown late in the evening.
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
-function readPref(key, fallback) { try { return localStorage.getItem(key) ?? fallback } catch { return fallback } }
-function writePref(key, v) { try { localStorage.setItem(key, v) } catch { /* private window: fine */ } }
 
-const STANDIN = 'a stand-in works until then'
+const WORKS_FOR_NOW = 'works for now without it'
 
 function NeedLine({ need, status, standin }) {
   return (
@@ -46,7 +38,7 @@ function NeedLine({ need, status, standin }) {
         {need.also && <span className="hint">Used again: </span>}
         <Link to={status.to}>{status.label}</Link>
         <span className="hint"> · {status.text}</span>
-        {standin && !status.done && !need.also && <span className="tl-standin">{STANDIN}</span>}
+        {standin && !status.done && !need.also && <span className="tl-standin">{STANDIN_NOTE}</span>}
       </span>
     </li>
   )
@@ -78,7 +70,7 @@ function TaskLine({ task, onError, onSaved, onEnter, focus, standin, showWhen })
           <button className="card-toggle" title="Remove (kept in the history)" aria-label={`Remove: ${title || 'new task'}`}
             onClick={() => updateTask(task.id, { deleted: true }, task).then(onSaved).catch(onError)}>✕</button>
         </span>
-        {standin && !done && <span className="tl-standin">{STANDIN}</span>}
+        {standin && !done && <span className="tl-standin">{WORKS_FOR_NOW}</span>}
         {open
           ? (
             <>
@@ -92,10 +84,11 @@ function TaskLine({ task, onError, onSaved, onEnter, focus, standin, showWhen })
               <label className="tl-when">Done by (optional)
                 <input type="date" value={taskBy(task) ?? ''} onChange={e => setBy(e.target.value)} />
               </label>
-              <span className="hint tl-detail">Do now means before the freeze. Happens later means the week before, the day, or after.</span>
+              <span className="hint tl-detail">Do now means before the second tech run, Wednesday 11 November. Happens later means the last days, the day itself, or after.</span>
             </>
           )
           : detail && <span className="hint tl-detail">{detail}</span>}
+        <TechFold tech={task.tech} />
       </span>
     </li>
   )
@@ -118,21 +111,21 @@ function AnsweredDecision({ d, canAnswer, onError, onSaved }) {
   )
 }
 
-// Open cards and decisions with no place on the night, each with a picker.
-function NotFiled({ lost, onError, onSaved }) {
+// Open cards and questions with no place on the night, each with a picker.
+function NotPlaced({ lost, onError, onSaved }) {
   const options = momentOptions()
   const picker = (label, onPick) => (
-    <label className="tl-when">File it under
-      <select value="" aria-label={`File ${label} under`} onChange={e => e.target.value && onPick(e.target.value)}>
-        <option value="">Pick a moment…</option>
+    <label className="tl-when">Where it goes
+      <select value="" aria-label={`Where ${label} goes`} onChange={e => e.target.value && onPick(e.target.value)}>
+        <option value="">Pick a part of the night…</option>
         {options.map(o => <option key={o.key} value={o.key}>{o.name}</option>)}
       </select>
     </label>
   )
   return (
     <section className="panel tl-section tl-unfiled" aria-labelledby="tl-unfiled">
-      <h2 id="tl-unfiled">Not filed yet</h2>
-      <p className="why">These have no place on the night yet, so nothing below shows them. Pick where each one belongs.</p>
+      <h2 id="tl-unfiled">Not on the night yet</h2>
+      <p className="why">These have no place on the night yet, so nothing below shows them. Pick where each one goes.</p>
       <ul className="tl-list">
         {lost.decisions.map(d => (
           <li key={`d-${d.key}`} className="tl-item tl-decision">
@@ -155,20 +148,6 @@ function NotFiled({ lost, onError, onSaved }) {
   )
 }
 
-// One line at the top for the view in hand: how much is ready, and how
-// much of what is left already works with a stand-in.
-function viewSummary(view, p) {
-  const head = view === 'now' ? `Before the second tech run: ${p.ready} of ${p.total} ready.`
-    : view === 'later' ? `The weeks before, the day and after: ${p.ready} of ${p.total} done. Most of these belong to the last days and the day itself.`
-    : `The whole night: ${p.ready} of ${p.total} ready.`
-  if (!p.left || view === 'later') return head
-  const parts = [`${p.needsYou} need you`]
-  if (p.standin) parts.push(`${p.standin} already work with a stand-in`)
-  if (p.others) parts.push(`${p.others} are Claude’s or Jenna’s`)
-  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
-  return `${head} Of the ${p.left} left, ${list}.`
-}
-
 export default function Timeline() {
   const [areas, setAreas] = useState({})
   const [tasks, setTasks] = useState(null)
@@ -176,13 +155,11 @@ export default function Timeline() {
   const [loadErr, setLoadErr] = useState(false)
   const [saveErr, setSaveErr] = useState(false)
   const [me, setMe] = useState(null)
-  const [onlyLeft, setOnlyLeft] = useState(() => readPref(PREF_LEFT, '0') === '1')
-  const [view, setView] = useState(() => { const v = readPref(PREF_VIEW, 'now'); return VIEWS.some(x => x.key === v) ? v : 'now' })
-  const [params] = useSearchParams()
-  const [who, setWho] = useState(() => { const w = params.get('who') ?? readPref(PREF_WHO, 'all'); return OWNERS.includes(w) ? w : 'all' })
-  // A link with ?who= (from Where we are) picks that owner, even when the page is already open.
+  const [everything, setEverything] = useState(false)
+  const [params, setParams] = useSearchParams()
+  // A link from Where we are may name one other owner; Jon's own name is the default view.
   const whoParam = params.get('who')
-  useEffect(() => { if (OWNERS.includes(whoParam)) setWho(whoParam) }, [whoParam])
+  const other = OWNERS.includes(whoParam) && !JON.includes(whoParam) ? whoParam : null
   const [focusId, setFocusId] = useState(null)
   const onError = () => setSaveErr(true)
   const onSaved = () => setSaveErr(false)
@@ -200,66 +177,48 @@ export default function Timeline() {
   const loaded = tasks !== null && TIMELINE_LISTS.every(a => a in areas)
   const data = { areas, tasks: tasks ?? [], decisions }
   const items = useMemo(() => timelineItems(data), [areas, tasks, decisions]) // eslint-disable-line react-hooks/exhaustive-deps
-  const inView = (it) => view === 'all' || it.when === view
-  // One owner's open cards (and, for Jon, the open decisions), or everything.
-  const forWho = (it) => who === 'all'
-    || (it.kind === 'task' && !it.status.done && ownerOf(it.task) === who)
-    || (who === 'Jon' && it.kind === 'decision' && !it.status.done)
-  const viewItems = items.filter(inView).filter(forWho)
-  const progress = bucketProgress(viewItems)
-  // On Everything, point at the first thing before the freeze that needs you.
-  const first = who !== 'all' && who !== 'Jon' ? null
-    : view === 'all' ? bucketProgress(items.filter(i => i.when === 'now').filter(forWho)).first ?? progress.first : progress.first
-  // The Who row counts every open card on the board, filed or not and in
-  // any view, so its numbers match Home and Where we are. The line under it
-  // counts the view in hand.
-  const openCount = (tasks ?? []).filter(t => !t.deleted && t.status !== 'done').length
-  const whoCounts = leftByOwner(tasks ?? [])
-  // Not filed yet: everything for Everyone; one owner's own cards (and, for
-  // Jon, the decisions) when one owner is picked.
-  const lostAll = unfiled(data)
-  const lost = who === 'all' ? lostAll : { tasks: lostAll.tasks.filter(t => ownerOf(t) === who), decisions: who === 'Jon' ? lostAll.decisions : [] }
 
-  const toggleLeft = () => setOnlyLeft(v => { writePref(PREF_LEFT, v ? '0' : '1'); return !v })
-  const pickView = (v) => { setView(v); writePref(PREF_VIEW, v) }
-  const pickWho = (w) => { setWho(w); writePref(PREF_WHO, w) }
-  const filtering = onlyLeft || who !== 'all'
-  const whoSummary = () => {
-    const cards = viewItems.filter(i => i.kind === 'task').length
-    const asks = viewItems.filter(i => i.kind === 'decision').length
-    const name = who === 'Jon' ? 'you' : who === 'Jon and Susan' ? 'you and Susan together' : who
-    const head = `${cards === 0 ? 'No' : cards} open ${cards === 1 ? 'card' : 'cards'} for ${name} in this part of the list.`
-    return asks ? `${head} And ${asks} ${asks === 1 ? 'decision' : 'decisions'} only you can answer.` : head
+  // Whose open cards and questions this view shows, or everything.
+  const showAll = everything && !other
+  const owners = new Set(other ? [other] : JON)
+  const theirs = (it) => !it.status.done && (
+    (it.kind === 'task' && owners.has(ownerOf(it.task)))
+    || (it.kind === 'decision' && owners.has(ownerOf(it.decision))))
+  const viewItems = showAll ? items : items.filter(theirs)
+
+  // The next thing for Jon: the same card Home and Where we are put first.
+  const next = !showAll && !other ? nextCards(tasks ?? [])[0] ?? null : null
+  const cards = viewItems.filter(i => i.kind === 'task').length
+  const asks = viewItems.filter(i => i.kind === 'decision').length
+  const summary = () => {
+    if (showAll) return 'Everything on the board, done or not, with every list the night reads. Tick a card when it is done.'
+    const name = other ?? 'you'
+    const head = `${cards === 0 ? 'No' : cards} open ${cards === 1 ? 'card' : 'cards'} for ${name}`
+    const qs = `${asks} ${asks === 1 ? 'question' : 'questions'}`
+    if (!asks) return `${head}.`
+    return other ? `${head}, and ${qs} ${other} will ask you about.` : `${head}, and ${qs} only you can answer.`
   }
 
-  // A task added in Do now or Happens later is filed under that view, so it
-  // stays in sight; on Everything it takes its row's own. With one owner
-  // picked, it is theirs.
+  // Not on the night yet: everything when everything shows; otherwise only
+  // the cards (and questions) of whoever this view is for.
+  const lostAll = unfiled(data)
+  const lost = showAll ? lostAll : {
+    tasks: lostAll.tasks.filter(t => owners.has(ownerOf(t))),
+    decisions: lostAll.decisions.filter(d => owners.has(ownerOf(d))),
+  }
+
+  // A task added here is filed under its moment, and in someone's view it is theirs.
   const addHere = (moment) => {
-    const maxOrder = Math.max(0, ...(tasks ?? []).map(t => t.order ?? 0))
+    const maxOrder = Math.max(0, ...(tasks ?? []).filter(t => (t.order ?? 0) < 10000).map(t => t.order ?? 0))
     const task = { title: '', detail: '', status: 'todo', moment, order: maxOrder + 1 }
-    if (view !== 'all') task.when = view
-    if (who !== 'all') task.who = who
+    if (other) task.who = other
+    else if (!showAll) task.who = 'Jon'
     addTask(task)
       .then(id => { setFocusId(id); onSaved() })
       .catch(onError)
   }
 
-  // A row's own place, or, for a line that belongs to the whole act (its
-  // act script), the act's heading.
-  const goTo = (it) => document.getElementById(it.row ? `moment-${it.row}` : `tl-${it.section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-  const firstLabel = (it) => {
-    if (!it) return ''
-    if (it.kind === 'need') return it.status.label
-    if (it.kind === 'task') return it.task.title || 'a task with no name yet'
-    return it.decision.question
-  }
-  const firstPlace = (it) => {
-    const s = TIMELINE.find(x => x.key === it.section)
-    const r = s?.rows.find(x => x.key === it.row)
-    return r && r.name !== s.title ? `${s.title}, ${r.name}` : s?.title
-  }
+  const goTo = (moment) => document.getElementById(`moment-${moment}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const renderItem = (it, rowKey) => {
     if (it.kind === 'need') return <NeedLine key={`n-${it.need.list}-${it.need.tab ?? ''}-${(it.need.labels ?? []).join()}`} need={it.need} status={it.status} standin={it.standin} />
@@ -269,113 +228,67 @@ export default function Timeline() {
         ? <AnsweredDecision key={`d-${d.key}`} d={d} canAnswer={canAnswer} onError={onError} onSaved={onSaved} />
         : <li key={`d-${d.key}`} className="tl-item tl-decision"><span className="tl-mark" aria-hidden="true">?</span><span className="tl-body"><Decision d={d} canAnswer={canAnswer} onError={onError} onSaved={onSaved} /></span></li>
     }
-    return <TaskLine key={it.task.id} task={it.task} onError={onError} onSaved={onSaved} onEnter={() => addHere(rowKey)} focus={it.task.id === focusId} standin={it.standin} showWhen={view === 'all'} />
+    return <TaskLine key={it.task.id} task={it.task} onError={onError} onSaved={onSaved} onEnter={() => addHere(rowKey)} focus={it.task.id === focusId} standin={it.standin} showWhen={showAll} />
   }
 
+  // Everything shows every row, with its add button. A view for one person
+  // shows only the rows that hold something of theirs.
   const sections = TIMELINE.map(s => {
     const sectionItems = viewItems.filter(i => i.section === s.key)
-    const shownOf = (arr) => (onlyLeft ? arr.filter(i => !i.status.done) : arr)
-    const headItems = shownOf(sectionItems.filter(i => i.row === null))
-    const rows = s.rows.map(r => {
-      const shown = shownOf(sectionItems.filter(i => i.row === r.key))
-      const also = filtering || view === 'later' ? [] : r.needs.filter(n => n.also)
-      return { r, shown, also }
-    }).filter(({ shown, also }) => !filtering || shown.length || also.length)
-    return { s, sectionItems, headItems, rows }
-  }).filter(({ headItems, rows }) => !loaded || !filtering || headItems.length || rows.length)
+    const headItems = sectionItems.filter(i => i.row === null)
+    const rows = s.rows.map(r => ({
+      r, shown: sectionItems.filter(i => i.row === r.key), also: showAll ? r.needs.filter(n => n.also) : [],
+    })).filter(({ shown, also }) => showAll || shown.length || also.length)
+    return { s, headItems, rows }
+  }).filter(({ headItems, rows }) => showAll || headItems.length || rows.length)
 
   return (
     <main className="dash">
       <section className="panel progress">
-        <h2>The night, in order</h2>
-        <p className="why">
-          Everything the party needs, in the order the night plays it, from the freeze to the morning after.
-          Lists count themselves as you write. Tick a task when it is done.
-        </p>
+        <h2>{showAll ? 'The night, in order' : other ? `${other}, what is left` : 'Jon, what is left'}</h2>
+        <p className="why">{!loaded ? 'Counting…' : summary()}</p>
         {saveErr && <div className="banner error" role="alert">SAVE FAILED. Your latest change to a task is not saved. It will retry on your next edit.</div>}
         {loadErr && <div className="banner error" role="alert">Part of the night did not load. Check your signal.</div>}
-        <div className="tl-views" role="group" aria-label="Which part of the list">
-          {VIEWS.map(v => (
-            <button key={v.key} className={view === v.key ? 'tab active' : 'tab'} aria-pressed={view === v.key} onClick={() => pickView(v.key)}>{v.label}</button>
-          ))}
-        </div>
-        <div className="tl-views tl-who-row" role="group" aria-label="Whose cards">
-          <button className={who === 'all' ? 'tab active' : 'tab'} aria-pressed={who === 'all'} onClick={() => pickWho('all')}>
-            Everyone{loaded && <span className="tab-count">{openCount}</span>}
-          </button>
-          {OWNERS.map(o => (
-            <button key={o} className={who === o ? 'tab active' : 'tab'} aria-pressed={who === o} onClick={() => pickWho(o)}>
-              {o}{loaded && <span className="tab-count">{whoCounts[o]}</span>}
-            </button>
-          ))}
-        </div>
-        <p className="why">{!loaded ? 'Counting…' : who === 'all' ? viewSummary(view, progress) : whoSummary()}</p>
-        {who === 'all' && <span className="bar big"><span style={{ width: `${progress.total ? Math.round((progress.ready / progress.total) * 100) : 0}%` }} /></span>}
-        {loaded && first && (
+        {loaded && next && (
           <p className="night-line">
-            <b>Next thing that needs you:</b> {firstPlace(first)}. {firstLabel(first)}{/[.!?]$/.test(firstLabel(first)) ? '' : '.'}{' '}
-            <button className="ghost" onClick={() => goTo(first)}>Take me there</button>
+            <b>Next:</b> {next.title || 'A task with no name yet'}{byLabel(next) ? ` (${byLabel(next)})` : ''}.{' '}
+            {next.moment && momentName(next.moment) && <button className="ghost" onClick={() => goTo(next.moment)}>Take me there</button>}
           </p>
         )}
-        {loaded && !first && view !== 'later' && (who === 'all' || who === 'Jon') && (
-          <p className="night-line"><b>Nothing here needs you.</b>{
-            progress.standin && progress.others ? ' What is left already works with a stand-in, or is Claude’s or Jenna’s.'
-              : progress.standin ? ' What is left already works with a stand-in.'
-                : progress.others ? ' What is left is Claude’s or Jenna’s.' : ''}</p>
-        )}
+        {loaded && !showAll && cards === 0 && asks === 0 && <p className="night-line"><b>{other ? `Nothing is open for ${other}.` : 'Nothing here needs you right now.'}</b></p>}
         <p className="night-line">
-          <button className="ghost" aria-pressed={onlyLeft} onClick={toggleLeft}>{onlyLeft ? 'Show what is done too' : 'Show only what is left'}</button>
+          {other
+            ? <button className="ghost" onClick={() => setParams({})}>Back to your cards</button>
+            : <button className="ghost" aria-pressed={everything} onClick={() => setEverything(v => !v)}>{everything ? 'Show only what is left for you' : 'Show everything'}</button>}
         </p>
       </section>
 
       {loaded && (lost.tasks.length > 0 || lost.decisions.length > 0) && (
-        <NotFiled lost={lost} onError={onError} onSaved={onSaved} />
+        <NotPlaced lost={lost} onError={onError} onSaved={onSaved} />
       )}
 
-      {loaded && sections.length === 0 && (
-        <section className="panel"><p className="why">Nothing left in this part of the list.</p></section>
-      )}
-
-      {sections.map(({ s, sectionItems, headItems, rows }) => {
-        const left = sectionItems.filter(i => !i.status.done).length
-        return (
-          <section className="panel tl-section" key={s.key} aria-labelledby={`tl-${s.key}`}>
-            <p className="tl-clock">{s.clock}{s.length ? ` · ${s.length}` : ''}</p>
-            <h2 id={`tl-${s.key}`}>{s.title}{s.plain && <span className="tl-plain"> · {s.plain}</span>}</h2>
-            {loaded && sectionItems.length > 0 && <p className="hint">{left === 0 ? 'All ready.' : `${sectionItems.length - left} of ${sectionItems.length} ready.`}</p>}
-            {headItems.length > 0 && <ul className="tl-list">{headItems.map(it => renderItem(it, s.rows[0]?.key))}</ul>}
-            {rows.map(({ r, shown, also }) => {
-              const lone = s.rows.length === 1 && r.name === s.title
-              // Nothing of this view here: the name (or, for a section of one
-              // row, where its things are instead) and the add button.
-              if (!shown.length && !also.length && view !== 'all') {
-                const elsewhere = sectionItems.length < items.filter(i => i.section === s.key).length
-                const empty = !lone ? r.name
-                  : elsewhere ? (view === 'now' ? 'Nothing to do here before the freeze. Its things are under Happens later.' : 'Nothing here for later. Its things are under Do now.')
-                  : 'Nothing here yet.'
-                return (
-                  <div className="tl-row tl-row-empty" id={`moment-${r.key}`} key={r.key}>
-                    <span className="tl-empty-name">{empty}</span>
-                    <button className="ghost tl-add" onClick={() => addHere(r.key)}>+ Add a task here</button>
-                  </div>
-                )
-              }
-              return (
-                <div className="tl-row" id={`moment-${r.key}`} key={r.key}>
-                  {!lone && <h3>{r.name}</h3>}
-                  <p className="why">{r.what}</p>
-                  {r.link && <p className="night-line"><Link className="ghost dl tl-link" to={r.link.to}>{r.link.label}</Link></p>}
-                  <ul className="tl-list">
-                    {shown.map(it => renderItem(it, r.key))}
-                    {also.map((need, i) => <NeedLine key={`a-${i}`} need={need} status={needStatus(need, data)} />)}
-                  </ul>
-                  <button className="ghost tl-add" onClick={() => addHere(r.key)}>+ Add a task here</button>
-                </div>
-              )
-            })}
-          </section>
-        )
-      })}
+      {sections.map(({ s, headItems, rows }) => (
+        <section className="panel tl-section" key={s.key} aria-labelledby={`tl-${s.key}`}>
+          <p className="tl-clock">{s.clock}{s.length ? ` · ${s.length}` : ''}</p>
+          <h2 id={`tl-${s.key}`}>{s.title}{s.plain && <span className="tl-plain"> · {s.plain}</span>}</h2>
+          {headItems.length > 0 && <ul className="tl-list">{headItems.map(it => renderItem(it, s.rows[0]?.key))}</ul>}
+          {rows.map(({ r, shown, also }) => {
+            const lone = s.rows.length === 1 && r.name === s.title
+            return (
+              <div className="tl-row" id={`moment-${r.key}`} key={r.key}>
+                {!lone && <h3>{r.name}</h3>}
+                <p className="why">{r.what}</p>
+                {r.link && <p className="night-line"><Link className="ghost dl tl-link" to={r.link.to}>{r.link.label}</Link></p>}
+                <ul className="tl-list">
+                  {shown.map(it => renderItem(it, r.key))}
+                  {also.map((need, i) => <NeedLine key={`a-${i}`} need={need} status={needStatus(need, data)} />)}
+                </ul>
+                <button className="ghost tl-add" onClick={() => addHere(r.key)}>+ Add a task here</button>
+              </div>
+            )
+          })}
+        </section>
+      ))}
     </main>
   )
 }

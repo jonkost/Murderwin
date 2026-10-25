@@ -10,9 +10,10 @@ import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
 
 import { PLAY_URL } from '../lib/config'
 
-// The four cat rooms for Act 2, Lights Out (docs/solving-the-case.md): one
-// printed code per room. A guest the phone has sent there scans it and the
-// cat greets them. Keep in step with seed/night.json solving.catRooms.
+// The four cat rooms (docs/solving-the-case.md): one printed code per room,
+// the same code for Act 2's cat visits and Act 4's game rooms. A guest the
+// phone has sent there scans it and the cat greets them. Keep in step with
+// seed/night.json solving.catRooms.
 const CAT_ROOM_CODES = [
   { cat: 'granolia', name: 'Granolia', room: 'the Study' },
   { cat: 'salem', name: 'Salem', room: 'the Orangerie' },
@@ -100,9 +101,9 @@ export default function Night() {
       </section>
 
       <section className="panel">
-        <h2>Test the study</h2>
-        <p className="why">From your phone, standing at the Nanoleaf walls: flash them, teach which hexagon each tap names, and play a practice round. A test never touches a real night.</p>
-        <p className="night-line"><Link className="primary dl" to="/study-test">Study test</Link></p>
+        <h2>Try the games</h2>
+        <p className="why">Every game in Acts 4 and 6, and the Parlour Games, to try before the night on the device it runs on. A test never touches the party night.</p>
+        <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
       </section>
 
       <section className="panel">
@@ -132,7 +133,7 @@ export default function Night() {
 
       <section className="panel">
         <h2>Rehearsal or the real thing</h2>
-        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats’ leans, the bag packing and the drawing pictures stay sealed, and the night uses stand-ins for them. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
+        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats’ leans, the bag packing and the drawing pictures stay sealed, and where a secret would show, a rehearsal shows a note in square brackets instead. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
         <label className="field check">
           <input type="checkbox" checked={draft.party_night === true} onChange={e => change('party_night', e.target.checked)} />
           <span>This is the party night</span>
@@ -142,7 +143,7 @@ export default function Night() {
 
       <section className="panel">
         <h2>The bulletin videos</h2>
-        <p className="why">Bulletin 1 and the closing bulletin play as video on the Parlour TV once your videos are in. Until this box is ticked, the brain plays your recordings and the TV shows the words, so a night never goes silent. Tick it after Claude Code has put the videos in and deployed.</p>
+        <p className="why">Bulletin 1 and the closing bulletin are video on the Parlour TV (decided 23 October). Until this box is ticked, the brain plays your recordings and the TV shows the words, so a night never goes silent. Tick it after Claude Code has put the videos in and put them live.</p>
         <label className="field check">
           <input type="checkbox" checked={draft.bulletinVideo === true} onChange={e => change('bulletinVideo', e.target.checked)} />
           <span>The bulletins are videos</span>
@@ -150,8 +151,8 @@ export default function Night() {
       </section>
 
       <section className="panel">
-        <h2>The freeze</h2>
-        <p className="why">The week of the party, freeze the workshop. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
+        <h2>Freeze the workshop</h2>
+        <p className="why">There is no fixed date: press it when the lists are final, Thursday 12 to Saturday 14 November, after the second tech run. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
         {frozen.frozen
           ? <p className="night-line"><b>Frozen for the party</b> since {frozen.since.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.</p>
           : <p className="night-line">Not frozen. The lists can be edited and the phones pick up new words.</p>}
@@ -177,8 +178,8 @@ export default function Night() {
       </section>
 
       <section className="panel">
-        <h2>The four cat rooms (Act 2)</h2>
-        <p className="why">Print each code and put it up in its room before the party. In Act 2 the phones send guests to the rooms one at a time; a guest scans the code in the room and the cat talks to them on their phone. Nothing goes up in the living room.</p>
+        <h2>The four room codes (Acts 2 and 4)</h2>
+        <p className="why">Print each code and put it up in its room before the party. In Act 2 the phones send guests to the rooms one at a time; a guest scans the code in the room and the cat talks to them on their phone. In Act 4 each group scans the same code to start that room’s game. None goes up in the Parlour.</p>
         {CAT_ROOM_CODES.map(r => <RoomCode key={r.cat} {...r} />)}
       </section>
 

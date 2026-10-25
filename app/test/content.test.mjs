@@ -1,9 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, NOTICE_KEYS, STUDY_LABELS, STATION_LABELS, TRACE_LABELS, BAG_ITEM_SEED, fieldsFor, codecFor, lintItem, goalOf } from '../src/lib/content.js'
+import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, NOTICE_KEYS, STUDY_LABELS, STATION_LABELS, TRACE_LABELS, BAG_ITEM_SEED, CASE_WORDS, TAB_KINDS, fieldsFor, codecFor, lintItem, goalOf, tabsOf } from '../src/lib/content.js'
 import { ALL_CARDS, cardFor } from '../src/lib/cards.js'
-import { planAddition, applyPlan, freshLines, taskMatches, taskOrdersOf } from '../src/lib/additions.js'
+import { HOUSEHOLD, npcCodec } from '../src/lib/codecs.js'
+import { planAddition, applyPlan, freshLines, taskMatches, taskOrdersOf, decisionKeysOf } from '../src/lib/additions.js'
 
 // Safe content only: the lists, their cards, their codecs and the additive
 // migrations, on an in-memory copy of the database.
@@ -238,4 +239,135 @@ test('fileDecisions files a decision with no moment and never moves one that has
   const after = applyPlan(plan, state)
   assert.equal(after.decisions.b.moment, 'act2.cat')
   assert.equal(after.decisions.gone, undefined, 'a decision that is not there is not made up')
+})
+
+// The rewrite operations (24 Oct 2026): a card's words replaced rather than
+// grown, the old words kept on the card; a decision reworded in place.
+test('rewriteTasks: replaces the named fields on the seeded open card only, keeps the old words, once', () => {
+  const add = { id: 'w', rewriteTasks: [
+    { order: 1, title: 'Old title', set: { title: 'New title', detail: 'One clean instruction.', tech: 'npm run x', who: 'Claude Code' } },
+    { order: 2, set: { detail: 'Never applied: the card is done.' } },
+    { order: 3, set: { moment: 'freeze', by: '2026-11-06' } },
+    { order: 4, set: { nonsense: 'ignored' } },
+  ] }
+  const state = { applied: [], areas: {}, decisions: {}, tasks: [
+    { id: 'a', order: 1, status: 'todo', title: 'old  TITLE', detail: 'Old. (24 Oct 2026: a correction.)', who: 'Jon' },
+    { id: 'h', order: 1, status: 'todo', title: 'Jon’s own card', detail: 'Mine.' },
+    { id: 'b', order: 2, status: 'done', detail: 'Finished.' },
+    { id: 'c', order: 3, status: 'todo', title: 'Dated', moment: 'week' },
+    { id: 'd', order: 4, status: 'todo', title: 'Untouched', detail: 'Stays.' },
+    { id: 'e', order: 3, status: 'todo', title: 'Removed', deleted: true },
+  ] }
+  const plan = planAddition(add, state, { now: 1 })
+  const after = applyPlan(plan, state)
+  const t = (id) => after.tasks.find(x => x.id === id)
+  assert.deepEqual([t('a').title, t('a').detail, t('a').tech, t('a').who], ['New title', 'One clean instruction.', 'npm run x', 'Claude Code'])
+  assert.deepEqual(t('a').previous, { w: { title: 'old  TITLE', detail: 'Old. (24 Oct 2026: a correction.)', tech: null, who: 'Jon' } }, 'the words it replaced are kept on the card')
+  assert.equal(t('h').detail, 'Mine.', 'a card added by hand with the same number is never touched')
+  assert.equal(t('b').detail, 'Finished.', 'a done card is left alone')
+  assert.deepEqual([t('c').moment, t('c').by, t('c').previous.w], ['freeze', '2026-11-06', { moment: 'week', by: null }])
+  assert.equal(t('d').previous, undefined, 'a rewrite with nothing it may change does nothing')
+  assert.equal(t('e').moment, undefined, 'a removed card is left alone')
+  assert.ok(plan.taskPatches.every(p => !Object.values(p.patch).includes(undefined)), 'nothing undefined reaches the database')
+  assert.deepEqual(taskOrdersOf(add), [1, 2, 3, 4], 'the store fetches the cards a rewrite names')
+  assert.equal(planAddition(add, after).skip, true, 'once only')
+  // a card retired by the same entry is not rewritten as well
+  const both = planAddition({ id: 'v', retireTasks: [{ order: 1, title: 'Old title', detail: 'Done.' }], rewriteTasks: [{ order: 1, title: 'Old title', set: { detail: 'New.' } }] }, state, { now: 1 })
+  assert.deepEqual(both.taskPatches.find(p => p.id === 'a').patch, { status: 'done', detail: 'Old. (24 Oct 2026: a correction.) Done.' })
+})
+
+test('refileDecisions with set: rewords a decision still where it was left, and an answer keeps its place among renamed options', () => {
+  const add = { id: 'r', refileDecisions: {
+    dinner: { from: 'act3.down', to: 'act3.down', set: { question: 'In the Orangerie?', options: ['Captions in the Orangerie', 'Spare phone only'] } },
+    jons: { from: 'act3.down', to: 'act3.down', set: { options: ['Captions in the Orangerie', 'Spare phone only'] } },
+    gone: { from: 'act4.groups', to: 'retired', set: { retired: true, note: 'Retired.' } },
+    tidy: { from: 'freeze', to: 'freeze', set: { who: 'Claude Code', answer: 'never set this way' } },
+    moved: { from: 'freeze', to: 'act1.arrive', set: { note: 'Not applied: Jon moved it.' } },
+  } }
+  const state = { applied: [], areas: {}, tasks: [], decisions: {
+    dinner: { key: 'dinner', moment: 'act3.down', options: ['Captions in the orangery', 'Spare phone only'], answer: 'Captions in the orangery' },
+    jons: { key: 'jons', moment: 'act3.down', options: ['Captions in the orangery', 'Spare phone only'], answer: 'Something Jon typed' },
+    gone: { key: 'gone', moment: 'act4.groups', answer: 'Skip' },
+    tidy: { key: 'tidy', moment: 'freeze', answer: null },
+    moved: { key: 'moved', moment: 'act2.cat', answer: null },
+  } }
+  const after = applyPlan(planAddition(add, state, { now: 1 }), state)
+  assert.deepEqual([after.decisions.dinner.question, after.decisions.dinner.answer], ['In the Orangerie?', 'Captions in the Orangerie'])
+  assert.equal(after.decisions.jons.answer, 'Something Jon typed', 'an answer that was not one of the options is never changed')
+  assert.deepEqual([after.decisions.gone.moment, after.decisions.gone.retired, after.decisions.gone.answer], ['retired', true, 'Skip'])
+  assert.deepEqual([after.decisions.tidy.who, after.decisions.tidy.answer], ['Claude Code', null], 'a rewrite never answers a question')
+  assert.equal(after.decisions.moved.note, undefined, 'a decision Jon moved is left where he put it')
+})
+
+test('Salem is Crooknog everywhere, and an old Crookshank line still opens as his card', () => {
+  assert.equal(HOUSEHOLD.find(h => h.key === 'salem').name, 'SALEM CROOKNOG')
+  assert.ok(CASE_WORDS.includes('crooknog') && !CASE_WORDS.includes('crookshank'))
+  const old = npcCodec.split('SALEM CROOKSHANK — the long-time groundskeeper. Forty years on these grounds.')
+  assert.deepEqual(old, { who: 'salem', about: 'Forty years on these grounds.' })
+  assert.equal(npcCodec.join(old), 'SALEM CROOKNOG — the long-time groundskeeper. Forty years on these grounds.', 'saving it writes the new name')
+})
+
+test('no list, card or example tells the old story: the living room, the orangery, fifteen minutes, Crookshank', () => {
+  const words = /living room|orangery|fifteen minutes|crookshank|kept quiet earlier/i
+  for (const [area, spec] of Object.entries(AREAS)) {
+    if (spec.retired) continue
+    const card = ALL_CARDS[area]
+    const text = [spec.moment, spec.why, ...(spec.fields ?? []).map(f => f.placeholder), card.what, card.where, card.howTo, ...(card.example ?? []).map(e => e.text)].join(' ')
+    assert.ok(!words.test(text), `${area}: ${text.match(words)?.[0]}`)
+  }
+  assert.match(AREAS.scenarios.moment, /wait on each phone/, 'Act 4’s Parlour Games wait on the phone')
+})
+
+test('the greeting lists show only Sir Irwin’s tab, the one the night reads; other lists show every tab', () => {
+  assert.deepEqual(tabsOf(AREAS.openers), ['irwin'])
+  assert.deepEqual(tabsOf(AREAS.closers), ['irwin'])
+  assert.deepEqual(tabsOf(AREAS.smalltalk), TAB_KINDS.cats.list)
+  assert.equal(tabsOf(AREAS.bios), null)
+  assert.equal(goalOf(AREAS.openers), 1)
+})
+
+// 24 Oct 2026, evening: six questions still showed their 31 August answers,
+// which later decisions replaced. The answer becomes what is true now, and
+// the old answer stays on the decision.
+test('supersedeDecisions: the answer becomes what is true now, the old answer kept, once', () => {
+  const add = { id: 's', supersedeDecisions: {
+    old: 'Replaced 22 Oct 2026: what is true now.',
+    open: 'Replaced 22 Oct 2026: true now as well.',
+    same: 'Already the line.',
+    gone: 'Never made up.',
+    blank: '',
+  } }
+  const state = { applied: [], areas: {}, tasks: [], decisions: {
+    old: { key: 'old', options: ['A', 'B'], answer: 'A', answeredBy: 'Jon', answeredAt: 5, previous: { earlier: { answer: null } } },
+    open: { key: 'open', options: ['A', 'B'], answer: null },
+    same: { key: 'same', answer: 'Already the line.', answeredBy: 'later decisions', answeredAt: 7 },
+    blank: { key: 'blank', answer: 'Kept.' },
+  } }
+  const plan = planAddition(add, state, { now: 9 })
+  const after = applyPlan(plan, state)
+  const d = after.decisions
+  assert.deepEqual([d.old.answer, d.old.answeredBy, d.old.answeredAt], ['Replaced 22 Oct 2026: what is true now.', 'later decisions', 9])
+  assert.deepEqual(d.old.previous, { earlier: { answer: null }, s: { answer: 'A', answeredBy: 'Jon', answeredAt: 5 } }, 'the 31 August answer is kept, beside any earlier one')
+  assert.deepEqual(d.old.options, ['A', 'B'], 'the options are left as they were')
+  assert.deepEqual([d.open.answer, d.open.previous.s], ['Replaced 22 Oct 2026: true now as well.', { answer: null, answeredBy: null, answeredAt: null }])
+  assert.equal(d.same.answeredAt, 7, 'a decision that already says it is left alone')
+  assert.equal(d.gone, undefined, 'a decision that is not there is not made up')
+  assert.equal(d.blank.answer, 'Kept.', 'an empty line never wipes an answer')
+  assert.ok(Object.values(plan.decisionPatches).every(p => !Object.values(p).includes(undefined)), 'nothing undefined reaches the database')
+  assert.deepEqual(decisionKeysOf(add), ['old', 'open', 'same', 'gone', 'blank'], 'the store fetches the decisions it names')
+  assert.equal(planAddition(add, after).skip, true, 'once only')
+})
+
+test('decisionKeysOf: every decision an entry adds, answers, files, refiles or supersedes, once each', () => {
+  const add = {
+    decisions: [{ key: 'a' }],
+    answerDecisions: { b: 'x', a: 'y' },
+    fileDecisions: { c: 'freeze' },
+    refileDecisions: { d: { from: 'x', to: 'y' } },
+    supersedeDecisions: { e: 'z', b: 'w' },
+  }
+  assert.deepEqual(decisionKeysOf(add), ['a', 'b', 'c', 'd', 'e'])
+  assert.deepEqual(decisionKeysOf({}), [])
+  const src = readFileSync(new URL('../src/lib/store.firestore.js', import.meta.url), 'utf8')
+  assert.match(src, /const decisionKeys = decisionKeysOf\(add\)/, 'the store reads the keys from the one list')
 })

@@ -9,6 +9,8 @@
 // One with neither has no address: its `start` steps say how it comes up.
 // `query` adds to the address (the standalone memory match). `pending` says
 // why an address does not work yet; `note` is anything still undecided.
+// `start` is plain words for Jon (24 Oct 2026: no Terminal); `tech` is the
+// exact line Claude Code runs, shown in a closed For Claude Code fold.
 
 export const DEVICE_ROOMS = [
   {
@@ -28,23 +30,24 @@ export const DEVICE_ROOMS = [
         key: 'brain', name: 'The brain', machine: 'Jon’s M3 MacBook Air',
         what: 'Plays every sound and the three playlists through the speakers, ducks the music under the news, recalls the Hue scenes, turns the hall light red and green, and mirrors Salem’s colours to the string lights. It is also the spare host if your phone dies.',
         start: [
-          'Ethernet in, sleep off.',
-          'Once, unless you have recorded all ten sounds: in Terminal, in the Murderwin folder, node scripts/make-placeholder-sounds.mjs. The brain will not start while any sound has no file.',
-          'In a Terminal window you can see, in the Murderwin folder: cd cues && npm start',
+          'Network cable in, sleep off.',
+          'Double-click Start the brain on its desktop. A window opens and stays open all night.',
         ],
-        alive: 'The terminal prints a line and waits. When the night begins it prints [hall] red and the bulb goes red. If it lists missing sounds and stops, run the stand-in step above.',
+        alive: 'Its window prints a line and waits. When the night begins the bulb outside the bedroom goes red. If it lists missing sounds and stops, tell Claude Code.',
+        tech: 'The desktop button Start the brain (card 475) runs, in the Murderwin folder, in a Terminal window Jon can see: cd cues && npm start. Until it exists, Claude Code runs that line. It stops and lists any of the ten sounds with no file in media/; node scripts/make-placeholder-sounds.mjs makes a stand-in tone for each.',
       },
       {
         key: 'speakers', name: 'The speakers', machine: 'Four HomePods in one AirPlay group',
-        what: 'Every sound cue and the music, played by the brain: the Entryway, the Study, the Orangerie (bulletin 2 plays there at supper) and the fourth in the Parlour.',
-        start: ['Switched on, and the AirPlay group picked as the brain’s sound output.'],
-        alive: 'Open a second Terminal window on the brain, in the Murderwin folder, and type afplay media/chime-news.wav (use .m4a or .mp3 instead if that is what you recorded). The chime comes out of the speakers.',
+        what: 'Every sound cue, bulletin 2 at supper and the music, played by the brain through all four: the Entryway, the Study, the Orangerie and the fourth in the Parlour.',
+        start: ['Switched on, and the AirPlay group of all four picked as the brain’s sound output.'],
+        alive: 'Ask Claude Code to play a test chime: it comes out of all four.',
+        tech: 'On the brain, in the Murderwin folder: afplay media/chime-news.wav (or .m4a or .mp3, whichever is there).',
       },
     ],
   },
   {
     key: 'living', room: 'The Parlour',
-    why: 'The living room, where Sir Irwin lives and everyone gathers.',
+    why: 'Where Sir Irwin lives and everyone gathers.',
     devices: [
       {
         key: 'living', name: 'The Parlour screen', machine: 'Jon’s work MacBook Pro on the TV', kiosk: 'living',
@@ -62,17 +65,18 @@ export const DEVICE_ROOMS = [
         key: 'study', name: 'The study screen and station', machine: 'M1 MacBook Air, with the Stream Deck on USB', kiosk: 'study',
         what: 'The light puzzle on the Nanoleaf walls, the button box, and Granolia’s screen. Ten minutes a group.',
         start: [
-          'On your phone’s Host tab, under The study, type a key word of four letters or more and tap Save key.',
-          'Put the same word in station/.env on this Mac. Quit the Elgato app.',
-          'In Terminal: cd station && npm start',
+          'Save the study key word at the top of the Game test tab, once: it is kept from night to night.',
+          'Quit the Elgato app on this Mac.',
+          'Double-click Start the study on its desktop. A window opens and stays open all night.',
           'Open the address in a browser, full screen, and tap once to wake it.',
         ],
-        alive: 'The terminal prints study station up with the panel counts. DOWN beside a wall means the puzzle runs on the screen instead; the clue still lands.',
+        alive: 'The station’s window says the study station is up, with the number of panels on each wall. DOWN beside a wall means the puzzle runs on the screen instead; the clue still lands.',
+        tech: 'STATION_KEY in station/.env must match the saved key word. The desktop button Start the study (card 475) runs, in the Murderwin folder: cd station && npm start. Until it exists, Claude Code runs that line.',
       },
     ],
   },
   {
-    key: 'orangery', room: 'The Orangerie',
+    key: 'orangerie', room: 'The Orangerie',
     why: 'Salem’s room, the screened back patio: supper in Act 3, Get Off My Lawn! in Act 4 (on the guests’ own phones).',
     devices: [
       {
@@ -143,6 +147,34 @@ export const DEVICE_ROOMS = [
 ]
 
 export const DEVICES = DEVICE_ROOMS.flatMap(r => r.devices.map(d => ({ ...d, room: r.room })))
+
+// The order to switch things on, on the day, in plain words (from
+// docs/on-the-night.md, Start order).
+export const SWITCH_ON = [
+  'The router, the Hue bridge and bulb, both Nanoleaf controllers and the string lights. Give them five minutes.',
+  'The brain: network cable in, sleep off, then double-click Start the brain on its desktop. When the night begins, the bulb outside the bedroom turns red.',
+  'The party box, then your phone. On the Game night page, tick This is the party night. Then open the game on your phone, tap Host? Start the night and type your name. No red REHEARSAL band means the box worked.',
+  'The study: on the M1 Air, quit the Elgato app and double-click Start the study on its desktop.',
+  'The screens: the Parlour TV, the study screen, the captions iPad in the Orangerie, the older iPad in the Library, and Susan’s MacBook Pro by the projector on the landing. Open each address below, full screen, and tap once to wake it. The bedroom screen comes after Act 4.',
+  'The rooms: the four room codes on the walls (none in the Parlour), the paper roll and markers in the Library, the Orangerie table set. Jenna packs the bags where nobody who plays can see.',
+  'The guests: they scan the square code at the door, type their name and tap Allow. Watch the green dots fill in on your Host tab.',
+]
+
+// What to do when something dies, in plain words (docs/on-the-night.md,
+// When something dies). Every room pays its reward at the chime anyway.
+export const WHEN_ONE_DIES = [
+  ['A guest’s phone', 'They tap their name on any other phone (the old iPhone 11 is for this). Their character, bag, clues and cats follow.'],
+  ['Your phone', 'Tap your name on Susan’s phone or the old iPhone 11. The Host tab moves with you.'],
+  ['The Parlour TV', 'Open the Parlour screen on the iPad Pro or on the brain, and put it by the TV.'],
+  ['The bedroom screen', 'Nobody goes to the bedroom. Press Show the trace on the TV, under The Big Solve on the Host tab.'],
+  ['The memory match iPad, Boo’s wall or the study station', 'Carry on. The group is paid at the chime anyway.'],
+  ['Get Off My Lawn!', 'Nothing to do. A phone that cannot feel a shake never slips, and the phones turn red and green whatever the lights do.'],
+  ['The hall bulb', 'The TV says the door is open, and the phones say the light is green, regardless.'],
+  ['The brain', 'Nothing waits on it. Double-click Start the brain on its desktop again. Meanwhile the TV rings its own small chime and the words still show.'],
+  ['A recording or a video', 'The words are on the screens anyway.'],
+  ['The wifi', 'Phones keep what they had and catch up on their own. If it is out for long, press Pause, Irwin needs the garden.'],
+  ['A room code will not scan', 'The phone has a Cannot scan? button for that room.'],
+]
 
 // The address a device opens, from the game's own address.
 export function deviceUrl(base, device) {

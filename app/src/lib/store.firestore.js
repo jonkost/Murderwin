@@ -6,7 +6,7 @@ import {
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage, auth } from '../firebase'
 import { seedDocs, seedTasks, ADDITIONS } from './content'
-import { planAddition, taskOrdersOf } from './additions'
+import { planAddition, taskOrdersOf, decisionKeysOf } from './additions'
 
 // One-time seed import, guarded by meta/seeded inside a transaction so two
 // concurrent boots cannot double-seed. Never auto-seeds again. A fresh seed
@@ -227,7 +227,7 @@ export async function applyAdditions(additions) {
       if (applied.includes(add.id)) return
       const areaNames = [...new Set([...Object.keys(add.areaDocs ?? {}), ...Object.keys(add.retireItems ?? {}), ...Object.keys(add.appendItems ?? {}), ...Object.keys(add.appendScenarios ?? {})])]
       const areaSnaps = await Promise.all(areaNames.map(a => tx.get(doc(db, 'safe_content', a))))
-      const decisionKeys = [...new Set([...(add.decisions ?? []).map(d => d.key), ...Object.keys(add.answerDecisions ?? {}), ...Object.keys(add.fileDecisions ?? {}), ...Object.keys(add.refileDecisions ?? {})])]
+      const decisionKeys = decisionKeysOf(add)
       const decSnaps = await Promise.all(decisionKeys.map(k => tx.get(doc(db, 'decisions', k))))
       const snapshot = {
         applied,

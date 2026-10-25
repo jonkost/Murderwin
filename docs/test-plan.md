@@ -1,6 +1,6 @@
 # Sirwin Manor — Test Plan for Claude Code
 
-Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) and 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built). Put this file at `docs/test-plan.md` in the repo.
+Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) and 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built; that evening Jon answered worstDial: build the worst-dial proof now). Put this file at `docs/test-plan.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 **Every check is listed here** (24 Oct), including the ones first written in `docs/parlour-games.md` (G25 to G31, F19, L05), `docs/solving-the-case.md` (G32 to G38, F20, F21) and the 23 October handoff (G39 to G52, F22 to F28, L06 to L08). Those docs keep the longer wording. Where each check stands today is in the table at the end, "Where every check stands".
@@ -237,9 +237,9 @@ Built: the tests marked "Has a test" in the table below, the stand-ins, `npm run
 
 Before the second full tech run (by Wednesday 11 November; all Claude Code):
 1. Replay by seed: one stored seed per case drives every pick, the same seed deals the same case, counts only, and a G22 test. It is a card on the board ("Replay a night by its seed"). Until then a failure in `npm run checks` names the stand-in case's number, not a seed.
-2. The missing tests, each named with its ID. First F11, F09, G05 (with both host seats), G03, G19, F22, F23 and F25. Then the rest marked "Not yet" in the table.
+2. The missing tests, each named with its ID. First F11, F09, G05 (with both host seats), G03, G19, F22, F23 and F25. Then the rest marked "Not yet" in the table. Items 2 to 6 are one card on the board ("The checks the test plan still has as Not yet").
 3. Rename the tests that exist but carry no ID, so the Health page can count them.
-4. Extend G38 to every act. G53 for all 25 bulletin 2 lines (every family, every level). G18 for Boo's words at each level. F18 for the dial's journey in the end credits. G42, the bag solver at dial 1.
+4. Extend G38 to every act. G53 for all 25 bulletin 2 lines (every family, every level). G18 for Boo's words at each level. F18 for the dial's journey in the end credits. (G42, the bag solver at dial 1, comes with the worst-dial patch below.)
 5. The two host seats in the fake-players run (F02, G05).
 6. More checks into `npm run checks` as they are written, so the Health page counts them.
 
@@ -247,7 +247,7 @@ Dropped on 23 October: the old item "Salem's testimony straight at 5 (G17)". Jon
 
 There is no freeze date (23 Oct). Any check not done before the second full tech run is marked "after the party" in the table, not left silent.
 
-G07 and G08 together are the worst-dial proof (everyone can still get two of three at dial 1). Whether it is built before the second full tech run or after the party is Jon's call: ask him once, as one question.
+G07 and G08 together are the worst-dial proof (everyone can still get two of three at dial 1). **Answered by Jon on 24 October (worstDial): build it now, before the second full tech run** ("All needs to be built as soon as possible"), with G42, the bag solver at dial 1. Claude chat is building it and sends it as a patch, `docs/patches/2026-10-24-worst-dial.patch`, with how to apply it. Claude Code applies the patch when it arrives and does not start the proof itself. It is a card on the board ("Put in the worst-dial proof when Claude chat sends it").
 
 ---
 
@@ -267,8 +267,8 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G04 | The motive is one of the 19 | Not yet | |
 | G05 | Seat fairness, both host seats included | Not yet | Needs the host seats in the fake-players run |
 | G06 | Motive and character fairness | Not yet | |
-| G07 | Solvable at dial 3 | Partly | Only the motive is proven (G32). The Murderer and the Victim are not. |
-| G08 | Still solvable at dial 1 | Not yet | Before the second full tech run or after the party is Jon's call |
+| G07 | Solvable at dial 3 | Partly | Only the motive is proven (G32). The Murderer and the Victim are not; they come with the worst-dial patch (worstDial, 24 Oct). |
+| G08 | Still solvable at dial 1 | Not yet | Before the second full tech run (worstDial, Jon 24 Oct); coming as Claude chat's patch with G07 and G42 |
 | G09 | No single clue before Act 6 gives away the Murderer | Not yet | |
 | G10 | Clues name a trace, never a person | Has a test, no ID | `functions/test/finale.test.mjs` |
 | G11 | Every trace in a clue is in play | Has a test, no ID | `functions/test/finale.test.mjs` |
@@ -304,7 +304,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G39 | Every bag clue fits the bag it is about | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
 | G40 | No bag clue names an item, a bag number or a person | Has a test | `functions/test/bagclues.test.mjs` |
 | G41 | Every clue word sits in two or three in-play bags | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
-| G42 | The bag solver at dial 1 | Not yet | |
+| G42 | The bag solver at dial 1 | Not yet | Coming with the worst-dial patch (worstDial, 24 Oct) |
 | G43 | Every bag has two clue words | Has a test | `functions/test/bagclues.test.mjs`; on the real packing, Jenna's checks |
 | G44 | Every Act 2 cat visit gives a hint and a bag clue | Has a test | `functions/test/solving.test.mjs`; the fake night |
 | G45 | Two families stand for every guest after Act 2 | Has a test | `functions/test/solving.test.mjs`; also in `npm run checks` |

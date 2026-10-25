@@ -4,7 +4,11 @@ Rules for working in this repo. These are load-bearing. Read fully before any ta
 Updated 24 October 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
 feature lands Wednesday 11 November, after the second full tech run; then checks and fixes only.
 
-> **23 Oct 2026 handoff (`docs/handoff-2026-10-23.md`, with section 15, the final bag items, and section 16, the game names, both added 24 Oct): applied and built on 24 Oct.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, and the build list. It wins over this file and every older doc wherever they disagree. `docs/sensory-bags.md` is the owner of everything about the bags. Left to do from it: the nice-to-have pose photo, and the Claude chat cards (the project copy marked Applied, two rules deck slides). Open decisions (9 on 24 Oct), each a card on the board and Jon's call only, each with its default built: diningName, rulesDeckScreen, tidyFolders, handOn, swapMotive, grossnola, ballotMajority, bulletin2Voice, bulletin2Known. Answered with the handoff's defaults on 24 Oct (Jon may change any): newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut), dialMapping (fixed, as built).
+> **24 Oct 2026, evening handoff (`docs/handoff-2026-10-24.md`, from Claude chat).** Jon cast the news team: Jon plays Mic Cameron (the field reporter), Susan plays Ava Waves (the studio anchor). The practice run is Sunday 25 October: a rehearsal night, the whole night, Acts 1 to 7, every screen on, Jon and Susan playing with the spare iPhone 11 as a third player (run sheet: Claude Doc https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK). Answered by Jon that evening: bulletin2Voice (Susan reads bulletin 2, as Ava Waves), bulletin2Known (accepted: Susan, who records it, knows which family each line points at) and worstDial (build the worst-dial proof now, before the second tech run; Claude chat is building it and sends it as a patch, `docs/patches/2026-10-24-worst-dial.patch`, with how to apply it: Claude Code does not start it). This handoff wins over older docs where they disagree.
+
+> **Decisions (24 Oct, evening).** Open, each a card on the board and Jon's call only, each with its default built: ballotMajority, diningName, handOn, rulesDeckScreen, granoliaIntro (new 24 Oct, on the board after the next deploy: Granolia's hello in the Study; default the new words, which Claude Code puts in, card 473), and tidyFolders (housekeeping in the repo folder, now a Claude Code card: ask Jon once, when you get there). Answered: newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut) and dialMapping (fixed, as built), with the 23 Oct handoff's defaults on 24 Oct (Jon may change any); bulletin2Voice, bulletin2Known and worstDial (Jon, 24 Oct evening, above); grossnola (keep it offstage, 31 Aug) and swapMotive (keep all 19, 8 Oct), answered long ago and only now off the open list.
+
+> **23 Oct 2026 handoff (`docs/handoff-2026-10-23.md`, with section 15, the final bag items, and section 16, the game names, both added 24 Oct): applied and built on 24 Oct.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, and the build list. It wins over this file and every older doc wherever they disagree (the 24 Oct evening handoff above wins over it). `docs/sensory-bags.md` is the owner of everything about the bags. Left to do from it: the nice-to-have pose photo, and the Claude chat cards (the project copy marked Applied, two rules deck slides). Its decisions are in the Decisions line above.
 
 > **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). The 23 Oct handoff wins where they disagree. Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Every session follows HOW WE WORK below.
 
@@ -153,10 +157,19 @@ Card tutorial8 closed 24 Oct (the handoff's default): its clue set stays
 buried, since the secret sets are retired and there is nothing to promote.
 Motive 8 is dealt like the others, with the same open hint lines.
 
-## HOW WE WORK (23 Oct 2026)
+## HOW WE WORK (23 Oct 2026; the start of a session added 24 Oct)
 
 Rules for every Claude Code session. Jon should never have to remember where a
 job or a decision lives.
+
+Start of every Claude Code session: run `npm --prefix scripts run board`. It is
+read only (the Timeline's cards and nothing else) and prints the open Claude
+Code cards, Jon's Game test notes first. Work the Game test notes: they are
+Jon's notes from trying each game on the workshop's Game test tab. When one is
+fixed, mark its card done by its number and title (in the session's ADDITIONS
+migration), so the game's chip on the tab goes back to Not tried yet and Jon
+tries it again. A card Jenna filed prints only its title and section; never
+ask Jenna in writing what they saw.
 
 - **Decisions live on the Canon page.** Only Jon decides. When one changes,
   update the Canon in the same session.
@@ -195,11 +208,12 @@ End of every Claude Code session, in this order:
 | Canon: every settled decision | Claude Doc, https://claude.ai/artifact/CU4JQVHtzuyLBiqt2WuWVk |
 | Start Here: the map, the routine, the status snapshot | Claude Doc, https://claude.ai/artifact/P7eHcmr7R5PDLxGufmCK2A |
 | Every job and open decision | Workshop Timeline, https://murderwin-at-sirwin-manor.web.app/workshop/#/timeline |
-| Live status | Workshop "Where we are", https://murderwin-at-sirwin-manor.web.app/workshop/#/status |
+| Live status | Workshop "Where we are", https://murderwin-at-sirwin-manor.web.app/workshop/#/status, and the Where we are Claude Doc, https://claude.ai/artifact/8LkaQjCZd6juQq58jcW3RZ |
+| Trying each game before the night, and Jon's notes on them | Workshop Game test tab, https://murderwin-at-sirwin-manor.web.app/workshop/#/game-test (the notes are Timeline cards for Claude Code; `npm --prefix scripts run board` prints them) |
 | The last run of `npm run checks` | Workshop Health page, https://murderwin-at-sirwin-manor.web.app/workshop/#/health |
 | Claude chat handoffs | `docs/handoff-YYYY-MM-DD.md`, plus the dated Claude Doc |
 | Session log | `docs/sessions.md` |
-| W-O-O-F News lines | Claude Doc https://claude.ai/artifact/GJAR2uwXZ356opX6xNvMNN; `seed/woof-news.json` |
+| W-O-O-F News lines (the Recording Script; Susan reads Ava Waves, Jon reads Mic Cameron) | Claude Doc https://claude.ai/artifact/GJAR2uwXZ356opX6xNvMNN; `seed/woof-news.json` |
 | Cat Hint Lines | Claude Doc https://claude.ai/artifact/Mb39Qkpd4s7jtz59Kdw2vV; `seed/cat-lines.json` |
 | The Relay Drawing, Irwin's slides | Claude Doc https://claude.ai/artifact/HjTxtHxUckbN9qR1xRchgt; `docs/relay-drawing-game.md` |
 | The rules deck | Claude Doc (slides), https://claude.ai/artifact/QGuBNcSDWkyfFqRg35V7yz |
@@ -279,7 +293,7 @@ and tell Jon.
   Every win condition is the same: name Murderer + Motive + Victim.
 - 19 motives, universal (any motive can attach to any character pair), final as of
   27 Aug. Visible to all players from Act 1 as a cross-off menu. `seed/motives.json`.
-  Jon may still swap one — his call, never yours (card swapMotive).
+  swapMotive answered 8 Oct: keep all 19. Any later swap is Jon's call, never yours.
 - Clue anatomy (23 Oct 2026, Jon: secretLines retired, the Act 2 safe taken
   out): there are no per-motive sealed clues any more. The cats say only
   their open hint lines (`seed/cat-lines.json`, `functions/lib/cats.js`
@@ -316,6 +330,12 @@ and tell Jon.
   atmosphere, plus the W-O-O-F News recordings, whose words always show on a
   screen too (bulletin 1 and the closing bulletin are video on the Parlour TV
   once the files are in and the box The bulletins are videos on the Game night page is ticked, newsVideo answered 23 Oct; until then the brain plays the recordings; bulletin 2 is sound).
+  The news team (Jon, 24 Oct): Susan plays Ava Waves, the studio anchor (bulletin 1's
+  opening and sign-off on camera, all 25 lines of bulletin 2 and their opening and
+  sign-off, the closing bulletin's studio open and close); Jon plays Mic Cameron, the
+  field reporter (the closing bulletin's four parts outside). Susan knows which family
+  each bulletin 2 line points at; Jon accepted that (bulletin2Known). Haley Stratton
+  (weather) and Mitt Kickwell (sports) are for fun.
 - Affection to each cat is rolled at character creation (Salem always starts
   at 3, Irwin always maxed).
   Since 23 Oct there is no pass or fail roll and no brush-off: a cat's
@@ -348,7 +368,10 @@ and tell Jon.
   the whole night and never resets; strong-vs-strong lands neutral and neither
   player learns they cancelled out. The validator must assume the worst dial
   and still prove every player can reach two of three (not built yet: today
-  only the motive is proven, at dial 3, check G32).
+  only the motive is proven, at dial 3, check G32). worstDial, Jon 24 Oct:
+  build it now, before the second tech run (G07, G08 and G42, the bag solver
+  at dial 1). Claude chat is building it and sends it as a patch
+  (`docs/patches/2026-10-24-worst-dial.patch`); do not start it yourself.
 - The clue path (22 Oct, updated 24 Oct, `docs/solving-the-case.md`): W-O-O-F
   News bulletin 1 (Act 2) crosses off one family; all four cats give each guest
   a hint (two wrong families a guest, so at least two always stand) and a bag
@@ -396,12 +419,22 @@ and tell Jon.
 
 The game runs on Firebase Hosting. No machine in the house serves it. Device
 setup, step by step: the workshop's Devices page.
-- Jon's M3 15" MacBook Air — "the brain". Ethernet, sleep off. Runs the cue
-  relay (`cues/`): the ten sounds and the three playlists through its own
-  sound output (the AirPlay group of four HomePods, the Orangerie's included),
-  the Hue bulb outside the bedroom and the four Hue scenes, and the Holiday
-  String Lights for Get Off My Lawn!. Also a stand-in for the host phone
+- Jon's M3 15" MacBook Air — "the brain". Ethernet, sleep off (on 24 Oct its
+  cable adapter showed no link, so it is on Wi-Fi for now; a card on the
+  board). Runs the cue relay (`cues/`): the ten sounds and the three playlists
+  through its own sound output (the AirPlay group of four HomePods, the
+  Orangerie's included; the group is not made yet, 24 Oct), the Hue bulb
+  outside the bedroom and the four Hue scenes, and the Holiday String Lights
+  for Get Off My Lawn!. Also a stand-in for the host phone
   (`functions/host.mjs`).
+- Tried on 24 Oct: the Hue bridge is paired with the brain, and the hall bulb
+  went red and green from it. The hall bulb is "Master bedroom" in the Hue app
+  and "Jonny's light" in Apple's Home app; the brain finds it by its id
+  (`HUE_HALL_LIGHT_ID`), never by name. The string lights are parked: holding
+  their button reset their Wi-Fi, so they wait to be added back in the
+  Nanoleaf app, then paired (`NANOLEAF_STRINGS_HOST` and
+  `NANOLEAF_STRINGS_TOKEN` in `cues/.env`, STRINGS with an S; the brain reads
+  no other spelling). `docs/cues-relay.md` has the steps.
 - Jon's work MacBook Pro on the Parlour TV (`?kiosk=living`): the rules deck,
   the blackout, bulletin 1, Sir Irwin's prompts, the Act 4 title card, Irwin,
   the drawing and the room's guesses, the board, the ballot, the reveal.
@@ -410,7 +443,14 @@ setup, step by step: the workshop's Devices page.
   Act 5 (`?kiosk=bedroom`).
 - M1 MacBook Air — the study station (`?kiosk=study`, `station/`): Stream Deck
   over USB, Nanoleaf over wifi (Open API, plain HTTP, port 16021), the study's
-  on-screen information.
+  on-screen information. Both walls were paired and tried on 24 Oct, from
+  another Mac (the station is not set up on the M1 Air yet, a Claude Code
+  card): ten hexagons and twelve bars, which the station gathers from the
+  pieces the controllers list (`station/lib/nanoleaf.js` `groupLayout`). The taps are
+  taught once per Mac (the Game test tab's Teach the taps, or `npm run
+  teach-touch` in `station/`) and saved on the Mac that runs the station
+  (`station/touch-map.json`, not in the repo), so they must be taught on the
+  M1 Air. `docs/study-light-game.md` §13.
 - Jon's iPad Pro M2 — supper captions in the Orangerie (`?kiosk=ipad`), a
   spare screen in Act 4. The older family iPad — the memory match in the
   Library all night (`?kiosk=memory`; `&play=1` is the standalone game).
@@ -434,6 +474,11 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
 - A dashboard home: progress per content area and "what's next." The Timeline
   page is the task board (every job filed by moment); "Where we are" is the
   live status (HOW WE WORK).
+- The Game test tab (24 Oct, `#/game-test`; `#/study-test` opens its study
+  section): every game of Acts 4 and 6 and the Parlour Games, to try before
+  the night on its own device, each with a note box that files a Timeline card
+  for Claude Code. Its test nights are always rehearsals, and the party box
+  turns them off. `docs/on-the-night.md` ("Trying the games") covers it.
 - Autosave per keystroke-debounce to Firestore. Every write also appends to a
   `workshop_history` audit collection. NOTHING is ever hard-deleted — deletes
   are soft flags. He lost work once to a client-side toy; never again.
@@ -461,13 +506,22 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
    Oct) deals 1,000 stand-in cases and plays a fake night; the Health page
    shows the last run.
 8. Host Mac as server: changed. The game is on Firebase; the brain plays the
-   sounds and the hall light (`cues/`). Built; setup is on the board.
+   sounds and the hall light (`cues/`). Built; setup is on the board. On
+   24 Oct the Hue bridge was paired and the hall bulb went red and green from
+   the brain.
 9. Media bank: not done. Stand-in tones until the recordings exist.
 10. Screens as kiosks: built (`?kiosk=living`, `bedroom`, `study`, `ipad`,
     `memory`, `boo`); setup is on the board and the Devices page.
-11. Nanoleaf layer: built (`station/`), not yet run on the real walls.
-12. Full play-through review: not done. The weekend practice game (24-25 Oct,
-    phones only) is the first walk-through.
+11. Nanoleaf layer: built (`station/`). On the real walls on 24 Oct the
+    walls' lights work: both paired, the layouts read, the game's frames and
+    the flash on both, the hexagons and bars grouped (`groupLayout`). Still to
+    try, on the M1 Air: teaching all ten taps, the Stream Deck, and a whole
+    round. Jon tries it from the Game test tab.
+12. Full play-through review: not done. The first walk-through is the
+    practice run, Sunday 25 Oct: a rehearsal night, the whole night, every
+    screen on, Jon and Susan with the spare iPhone 11 (run sheet: Claude Doc
+    https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK). Before the night, each
+    game can be tried on its own on the workshop's Game test tab.
 13. Canary (changed 23 Oct): someone who is not coming plays a rehearsal
     night cold, and Jenna checks the leans on the Steward page. Not done.
 14. Freeze: no fixed date (23 Oct). Jon presses Freeze the workshop on the

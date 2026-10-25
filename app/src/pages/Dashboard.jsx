@@ -1,19 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeArea, subscribeHistory, subscribeTasks } from '../lib/store'
-import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab } from '../lib/content'
-import { leftByOwner, leftLine } from '../lib/timeline'
+import { subscribeArea, subscribeHistory, subscribeTasks, subscribeDecisions, whoAmI } from '../lib/store'
+import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab, tabsOf } from '../lib/content'
+import { STANDIN_LISTS, STANDIN_NOTE, LEFT_OUT_LISTS, LEFT_OUT_NOTE, nextCards, decisionsForJon, byLabel, momentName, firstSentence } from '../lib/timeline'
 import { isComplete } from '../lib/scenarios'
 import { useReviews } from '../components/ReviewRow'
-import TaskBoard from '../components/TaskBoard'
-import DecisionsPanel from '../components/DecisionsPanel'
+import { Decision } from '../components/DecisionsPanel'
 
-// Home. Plain words, one sentence per section, a bar per list. Nothing here
-// blocks anything: bars fill, that is all they do.
+// Home (24 Oct 2026): the front page, and it never asks Jon to write. Jon
+// writes nothing more (23 Oct): Claude chat writes what is left and Claude
+// Code copies it in. So Home shows his next three jobs, the questions only
+// he answers, and the way into Game test. Every job lives on the Timeline,
+// the one board; there is no second board here and no totals. The lists are
+// still here, folded away, for reading or a small fix.
 
-function Row({ label, count, goal, to, suffix, why, moment, review, reviewBy }) {
+function Row({ label, count, goal, to, why, moment, note, review, reviewBy }) {
   const done = goal > 0 && count >= goal
-  const pct = goal > 0 ? Math.min(100, Math.round((count / goal) * 100)) : 0
   return (
     <Link to={to} className={done ? 'list-card done' : 'list-card'}>
       <span className="list-name">{label}
@@ -22,44 +24,48 @@ function Row({ label, count, goal, to, suffix, why, moment, review, reviewBy }) 
       </span>
       {moment && <span className="list-moment">{moment}</span>}
       <span className="list-why">{why}</span>
-      <span className="list-count">{done ? <><img className="seal-small" src="/workshop/seal.png" alt="" /> Full</> : `${count} of ${goal}${suffix ?? ''}`}</span>
-      <span className="bar"><span style={{ width: `${pct}%` }} /></span>
+      <span className="list-count">{done ? <><img className="seal-small" src="/workshop/seal.png" alt="" /> Full</> : goal > 0 ? `${count} of ${goal}` : `${count}`}{note ? ` · ${note}` : ''}</span>
     </Link>
   )
 }
 
 const SAFE_AREAS = new Set(Object.keys(AREAS))
 
-function countOf(area, spec, live) {
+function countOf(spec, live) {
   if (spec.editor === 'questions') return live.filter(i => isComplete(i.beats)).length
   return live.length
 }
 
 // Where a list opens: its thinnest tab, when it has tabs.
 function linkFor(area, spec, live) {
-  if (spec.checklist) return `/assets?tab=${spec.upload === 'image' ? 'pictures' : 'sounds'}`
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
-    const thin = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
+    const thin = tabsOf(spec).map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
     return `/edit/${area}?tab=${thin.t}`
   }
   return `/edit/${area}`
 }
 
+// A list the night leaves out while it is empty shows its count and who
+// writes it, never a goal: nothing on Home is Jon's to fill.
 function areaRow(area, spec, items, reviews) {
   const live = items.filter(i => !i.deleted)
-  const review = reviews?.[area]?.state
-  const reviewBy = reviews?.[area]?.by?.name
-  if (spec.checklist) {
-    return { key: area, label: spec.label, why: spec.why, moment: spec.moment, count: live.filter(i => i.done).length, goal: live.length, suffix: ' done', to: linkFor(area, spec, live), review, reviewBy }
+  const leftOut = LEFT_OUT_LISTS.includes(area)
+  return {
+    key: area, label: spec.label, why: spec.why, moment: spec.moment,
+    count: countOf(spec, live), goal: leftOut ? 0 : goalOf(spec), to: linkFor(area, spec, live),
+    note: STANDIN_LISTS.has(area) ? STANDIN_NOTE : leftOut ? LEFT_OUT_NOTE : null,
+    review: reviews?.[area]?.state, reviewBy: reviews?.[area]?.by?.name,
   }
-  return { key: area, label: spec.label, why: spec.why, moment: spec.moment, count: countOf(area, spec, live), goal: goalOf(spec), to: linkFor(area, spec, live), review, reviewBy }
 }
 
 export default function Dashboard() {
   const [data, setData] = useState({})
   const [history, setHistory] = useState([])
   const [tasks, setTasks] = useState(null)
+  const [decisions, setDecisions] = useState(null)
+  const [saveErr, setSaveErr] = useState(false)
+  const [me, setMe] = useState(null)
   const reviews = useReviews()
 
   useEffect(() => {
@@ -67,97 +73,80 @@ export default function Dashboard() {
       subscribeArea(area, items => setData(d => ({ ...d, [area]: items })), () => {}))
     unsubs.push(subscribeHistory(setHistory, () => {}))
     unsubs.push(subscribeTasks(setTasks, () => {}))
+    unsubs.push(subscribeDecisions(setDecisions, () => {}))
     return () => unsubs.forEach(u => u())
   }, [])
+  useEffect(() => { whoAmI().then(setMe) }, [])
+  const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
 
+  const next = tasks ? nextCards(tasks) : []
+  const asks = decisions ? decisionsForJon(decisions) : []
   const rows = (filter) => Object.entries(AREAS)
     .filter(([, spec]) => filter(spec))
     .map(([area, spec]) => areaRow(area, spec, data[area] ?? [], reviews))
 
-  // The house: every list that counts, as one number over one goal.
-  const counted = Object.entries(AREAS).filter(([, spec]) => !spec.hidden && !spec.checklist)
-  const house = counted.reduce((acc, [area, spec]) => {
-    const live = (data[area] ?? []).filter(i => !i.deleted)
-    const goal = goalOf(spec)
-    const n = countOf(area, spec, live)
-    return { lines: acc.lines + Math.min(n, goal), goal: acc.goal + goal, full: acc.full && n >= goal, loaded: acc.loaded && area in data }
-  }, { lines: 0, goal: 0, full: true, loaded: true })
-  const allFull = house.loaded && house.full
-
-  // The three lists furthest from their goal, as big cards. Deterministic:
-  // nothing is dealt at random, Jon always picks.
-  const picks = counted
-    .map(([area, spec]) => areaRow(area, spec, data[area] ?? [], reviews))
-    .filter(r => r.goal > 0 && r.count < r.goal)
-    .sort((a, b) => (a.count / a.goal) - (b.count / b.goal))
-    .slice(0, 3)
-
-  const first = picks[0]
   return (
     <main className="dash">
-      {/* The one line that says what is left, by owner (23 Oct 2026). The
-          same counts as the Timeline's Who row and Where we are. */}
-      <p className="night-line">
-        <b>{tasks === null ? 'Counting what is left…' : leftLine(leftByOwner(tasks))}</b>{' '}
-        See the <Link to="/timeline">Timeline</Link> and <Link to="/status">Where we are</Link>.
-      </p>
-
-      <section className="panel progress">
-        <h2>Where the writing stands</h2>
-        <p className="why">
-          {house.loaded ? `${house.lines} of ${house.goal} lines are written across all the lists.` : 'Counting the lines…'}
-          {house.loaded && (allFull
-            ? ' Every list is full. Nothing left to write.'
-            : first ? ` The list that needs you most is ${first.label}: ${first.count} of ${first.goal} written.` : '')}
-        </p>
-        <span className="bar big"><span style={{ width: `${house.goal ? Math.min(100, Math.round((house.lines / house.goal) * 100)) : 0}%` }} /></span>
-        {first && !allFull && (
-          <p className="night-line"><Link className="primary dl" to={`${first.to}${first.to.includes('?') ? '&' : '?'}focus=3`}>Write in {first.label}</Link></p>
-        )}
+      <section className="panel">
+        <h2>Your next three</h2>
+        <p className="why">Your open cards, soonest first: the ones with a date, then the rest in the order of the night.</p>
+        {tasks === null ? <p className="hint">Counting…</p>
+          : next.length === 0 ? <p className="hint">Nothing on the board for you.</p>
+            : (
+              <ol className="hub-next">
+                {next.map(t => (
+                  <li key={t.id}>
+                    <b>{t.title || 'A task with no name yet'}</b>
+                    {byLabel(t) && <> <span className="tl-by">{byLabel(t)}</span></>}
+                    {t.who && t.who !== 'Jon' && <> <span className="tl-who">{t.who}</span></>}
+                    {t.moment && momentName(t.moment) && <><br /><span className="list-moment">{momentName(t.moment)}</span></>}
+                    {t.detail && <><br /><span className="hint">{firstSentence(t.detail)}</span></>}
+                  </li>
+                ))}
+              </ol>
+            )}
+        <p className="night-line"><Link className="ghost dl" to="/timeline">All your cards on the Timeline</Link></p>
       </section>
 
-      {!allFull && (
-        <section className="panel pick">
-          <h2>What to write next</h2>
-          <p className="why">The three lists furthest from done. Pick one, write three lines, stop. Every box has a Speak button if you would rather say it.</p>
-          <div className="pick-cards">
-            {picks.map(r => (
-              <Link key={r.key} to={`${r.to}${r.to.includes('?') ? '&' : '?'}focus=3`} className="pick-card">
-                <span className="pick-label">{r.label}</span>
-                <span className="list-moment">{r.moment}</span>
-                <span className="pick-why">{r.why}</span>
-                <span className="pick-count">{r.count} of {r.goal} written. Needs {r.goal - r.count} more.</span>
-                <span className="bar"><span style={{ width: `${Math.min(100, Math.round((r.count / r.goal) * 100))}%` }} /></span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {AREA_GROUPS.map(group => (
-        <section className="panel" key={group}>
-          <h2>{group}</h2>
-          <p className="why">{GROUP_WHY[group]}</p>
-          <div className="list-grid">
-            {rows(spec => spec.group === group && !spec.hidden).map(({ key, ...r }) => <Row key={key} {...r} />)}
-          </div>
-        </section>
-      ))}
+      <section className="panel">
+        <h2>Questions only you can answer</h2>
+        {saveErr && <div className="banner error" role="alert">SAVE FAILED. That answer was not recorded. Pick and confirm again.</div>}
+        <p className="why">{decisions === null ? 'Counting…' : asks.length === 0 ? 'None. Every question on the board has an answer.' : 'Pick an answer and confirm it. Until you do, the game runs on the default.'}</p>
+        <ul className="hub-decisions">
+          {asks.map(d => (
+            <li key={d.key}>
+              {d.moment && momentName(d.moment) && <span className="list-moment">{momentName(d.moment)}</span>}
+              <Decision d={d} canAnswer={canAnswer} onError={() => setSaveErr(true)} onSaved={() => setSaveErr(false)} />
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="panel">
-        <h2>Who has been writing</h2>
-        <p className="why">Every change is kept with a name on it. Counts only, never the words.</p>
-        <Trail history={history} />
+        <h2>Try the games</h2>
+        <p className="why">Every game in Acts 4 and 6, and the Parlour Games, ready to try before the night. Tell Claude Code what to fix from there: your note goes on the Timeline.</p>
+        <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
       </section>
 
       <details className="panel more">
-        <summary>Everything else, rarely needed</summary>
+        <summary>The lists (nothing left for you to write)</summary>
+        <p className="why">You write nothing more (23 October): Claude chat writes what is left, and Claude Code copies it in. Open a list to read it or fix a word. Where it says {STANDIN_NOTE}, or {LEFT_OUT_NOTE}, the night runs fine with the list as it is.</p>
+        {AREA_GROUPS.map(group => (
+          <div className="map-group" key={group}>
+            <h3>{group}</h3>
+            <p className="hint">{GROUP_WHY[group]}</p>
+            <div className="list-grid">
+              {rows(spec => spec.group === group && !spec.hidden).map(({ key, ...r }) => <Row key={key} {...r} />)}
+            </div>
+          </div>
+        ))}
+        <h3>Your own notes</h3>
         <div className="list-grid">
           {rows(spec => spec.hidden && !spec.retired).map(({ key, ...r }) => <Row key={key} {...r} />)}
         </div>
-        <p className="hint">Retired lists (old filler messages, event notes, trail-offs, house history, news frames, the blanks, the brush-offs, the stationery designs, the old picture and sound checklists) are kept with everything in them, but not shown.</p>
-        <TaskBoard />
-        <DecisionsPanel />
+        <h3>Who has been writing</h3>
+        <p className="hint">Every change is kept with a name on it. Counts only, never the words. Retired lists keep everything in them, out of sight.</p>
+        <Trail history={history} />
       </details>
     </main>
   )

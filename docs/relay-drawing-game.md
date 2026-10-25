@@ -223,9 +223,9 @@ Extra rules for the stand-ins:
 - The three real pictures are made blind and never previewed: not in the repo, never in your
   terminal, not on any page you can open. You see each square when everyone else does.
   Rehearsals never use them.
-- Whether Jenna may see and swap the pictures on their page is an open decision for you
-  (stewardPictures). Today their page does not show them, so nobody looks at them before the
-  party.
+- Whether Jenna may see and swap the pictures on their page was the decision stewardPictures:
+  answered 24 October with the handoff's default, no. Their page does not show them, so nobody
+  looks at them before the party.
 - The paper carries only blank grids and a birthday doodle. Blank grids carry no information,
   so Jessa can draw them with you.
 - The trace, the look-alike and the level are sealed and worked out by the server. The drawing
@@ -307,9 +307,11 @@ The 13 October doc filled these gaps. Their state on 23 October:
 
 - ~~Whether the victim's own trace may appear as the level-2 decoy.~~ Settled 21 Oct: never
   (the look-alike is now at level 3, `docs/solving-the-case.md`).
-- Whether Jenna sees and swaps the drawing pictures (stewardPictures, your decision).
+- ~~Whether Jenna sees and swaps the drawing pictures.~~ Settled 24 Oct: no (stewardPictures,
+  the handoff's default).
 - The square size and the paper width. Measure the roll.
-- Whether Act 6 still fits its time (§5). Check in the weekend rehearsal.
+- Whether Act 6 still fits its time (§5). Check in the practice run (Sunday 25 October), or on
+  a test night from the workshop's Game test tab, which can jump straight to Act 6.
 
 ---
 
@@ -415,7 +417,7 @@ style samples, a star, a teapot), `never` (the name or any decoy says a word in 
 pictures, never touches a picture already there (one that fails today's check is kept but never
 used, and its round is topped up), drops and counts any new one that fails the check, prints
 counts and PASS/FAIL only through `say()`, redacts errors, and exits 1 while a round is short.
-No Steward op reads the bank (open decision stewardPictures).
+No Steward op reads the bank (stewardPictures answered no, 24 Oct).
 
 **Driving the clock.** Cloud Functions do not run timers. The callable `relayAdvance({ nightId })`
 → `run.advanceRelay` → `relay.advance` moves `intro → walk` at `introEndsAt` (the first walk

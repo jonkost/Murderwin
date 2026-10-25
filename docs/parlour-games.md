@@ -168,7 +168,7 @@ Already specified in `docs/play-side.md`: a short, slow slide on the Cats tab, n
 
 Replaced 22 Oct: the awards are now part of the Act 7 end credits. Full list in `docs/handoff-2026-10-22.md` §8.
 
-Left out on purpose (22 Oct): the Partner in Crime and Ghost Whisperer awards. Whether to cut them or build them is Jon's open decision partnerAwards. Building them means scoring answers without giving anything away about the dial.
+Left out on purpose (22 Oct): the Partner in Crime and Ghost Whisperer awards. Whether to cut them or build them was the decision partnerAwards: answered 24 Oct with the handoff's default, cut (Jon may change it). Building them would mean scoring answers without giving anything away about the dial.
 
 - Biggest Rebel, Crowd Pleaser, Kindred Spirits and Sworn Rivals are **dropped**. No award compares one player with another.
 - Each cat's Favorite and Least Favorite come from the **final sliders** (final affection). Awards **never** use the cats' hidden leans.

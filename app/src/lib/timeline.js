@@ -1,7 +1,8 @@
-// The night, in order (22 Oct 2026). One straight line from the freeze to
-// the morning after: every act and beat of seed/night.json, in the order the
-// house plays them, with what each one needs written, made or done. Pure: no
-// Firebase, no React. Tested by test/timeline.test.mjs.
+// The night, in order (22 Oct 2026). One straight line from now, before the
+// second tech run, to the morning after: every act and beat of
+// seed/night.json, in the order the house plays them, with what each one
+// needs written, made or done. Pure: no Firebase, no React. Tested by
+// test/timeline.test.mjs.
 //
 // A need is one of:
 //   { list, tab?, labels? }  a workshop list (or one tab of it, or some of
@@ -12,13 +13,15 @@
 //
 // Every item also says when it can be done (22 Oct 2026, Jon: "what I can
 // do now, separately from what only happens later"): `now`, before the
-// freeze, or `later`, the week before, on the day or after. Whether the
-// night already covers it with a stand-in. And whether it is someone else's
-// to do (Claude's or Jenna's), so the page can point at the next thing that
-// truly needs Jon.
+// second tech run, or `later`, the last days, on the day or after. Whether
+// the night already covers it with its own words. And whether it is someone
+// else's to do (Claude's or Jenna's), so the page can point at the next
+// thing that truly needs Jon. A decision may be someone else's too: one
+// with a `who` (24 Oct 2026, tidyFolders: Claude Code asks Jon when it gets
+// there), and one refiled under RETIRED_MOMENT is kept and shown nowhere.
 
 import night from '../../../seed/night.json' with { type: 'json' }
-import { AREAS, TAB_KINDS, ACT_NAMES, goalOf, goalForTab } from './content.js'
+import { AREAS, TAB_KINDS, ACT_NAMES, goalOf, goalForTab, tabsOf } from './content.js'
 import { labelCodec } from './codecs.js'
 import { isComplete } from './scenarios.js'
 import { ALL_TIMELINE_TASKS } from './timelineTasks.js'
@@ -80,7 +83,7 @@ export const NEEDS = {
 // Before and after the acts. Each is one section with one row.
 const BEFORE = [
   { key: 'freeze', clock: 'Now to Wednesday 11 November', title: 'Before the second tech run', what: 'Everything that has to work before the second full tech run. The last new feature lands on Wednesday 11 November; after that, checks and fixes only. There is no freeze date (23 Oct 2026): press Freeze the workshop when the lists are final.' },
-  { key: 'week', clock: 'Saturday 31 October to Saturday 14 November', title: 'The weeks before', what: 'The blind scripts on Saturday 31 October (the packing, the leans, the drawing pictures), Jenna packs the bags, the fake-player dry run, and from Thursday 12 November checks and fixes only.' },
+  { key: 'week', clock: 'Saturday 31 October to Saturday 14 November', title: 'The weeks before', what: 'The cats’ leans and the drawing pictures, made without anyone seeing them by Saturday 31 October (the bags were packed on 24 October), Jenna’s checks, the dry runs, and from Thursday 12 November checks and fixes only.' },
   { key: 'setup', clock: 'Sunday 15 November, before 4:00pm', title: 'Setting up the house', what: 'The machines on in order, the screens open, the rooms ready.', link: { to: '/devices', label: 'Every device, room by room, with its address' } },
   { key: 'allnight', clock: 'From 4:00pm, all night', title: 'On every phone, all night', what: 'What a guest can read from the moment they join: the Rules tab, the Motives tab, the Cats tab, and the small lines a phone shows when the signal drops or the night is paused.' },
 ]
@@ -160,9 +163,18 @@ export function momentName(key) {
 // The list names the timeline reads, to subscribe to each once.
 export const TIMELINE_LISTS = [...new Set(TIMELINE.flatMap(s => [...s.needs, ...s.rows.flatMap(r => r.needs)]).filter(n => n.list).map(n => n.list))]
 
+// Where a decision nothing needs any more is filed (24 Oct 2026, act4Granolia):
+// never a row, so the night never shows it, and never "not placed" either.
+export const RETIRED_MOMENT = 'retired'
+export const isRetiredDecision = (d) => d?.retired === true || d?.moment === RETIRED_MOMENT
+
 // ---- when, and stand-ins ---------------------------------------------------
 
 export const WHEN = { now: 'Do now', later: 'Happens later' }
+
+// What a list the game already has words for says beside its count: Jon
+// writes nothing more (23 Oct 2026), so its goal is never a job.
+export const STANDIN_NOTE = 'optional: the game already has words'
 
 // Lists the night already covers with its own plain words until Jon writes
 // his: every slot it reads has a default in code. Where each default lives:
@@ -184,6 +196,11 @@ export const STANDIN_LISTS = new Set([
   'openers', 'closers',
   'role_cards', 'epilogue_frames', 'bios', 'npc_cards',
 ])
+// The lists the night simply leaves out while they are empty (above): Jon
+// writes nothing more, so their goal is never shown as his to fill.
+export const LEFT_OUT_LISTS = ['achievements', 'motive_notes', 'smalltalk', 'act_scripts']
+export const LEFT_OUT_NOTE = 'optional: left out until Claude chat writes it'
+
 // The phone's own rules show only while the list is empty: once Jon writes
 // one rule, his replace all eight (play/src/lib/content.js rules()).
 const STANDIN_ONLY_WHILE_EMPTY = new Set(['rules_text'])
@@ -252,6 +269,13 @@ export function byLabel(task) {
 
 const isOpenCard = (t) => !t.deleted && t.status !== 'done'
 
+// A card's first sentence, for the short lists on Home and Where we are.
+export function firstSentence(text) {
+  const t = String(text ?? '').trim()
+  const m = /^(.+?[.!?])(\s|$)/.exec(t)
+  return m ? m[1] : t
+}
+
 // Open cards per owner: { Jon: n, Susan: n, ... }, every owner listed.
 export function leftByOwner(tasks = []) {
   const out = Object.fromEntries(OWNERS.map(o => [o, 0]))
@@ -302,8 +326,18 @@ export function unfiled({ tasks = [], decisions = [] } = {}) {
   const lost = (m) => !m || !MOMENT_KEYS.includes(m)
   return {
     tasks: tasks.filter(t => isOpenCard(t) && lost(t.moment)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    decisions: decisions.filter(d => d.answer == null && lost(d.moment)).sort((a, b) => String(a.key).localeCompare(String(b.key))),
+    decisions: decisions.filter(d => d.answer == null && !isRetiredDecision(d) && lost(d.moment)).sort((a, b) => String(a.key).localeCompare(String(b.key))),
   }
+}
+
+// The decisions still open, soonest in the night first: every one, and the
+// ones that wait on Jon himself (not one Claude Code will ask him about).
+export function openDecisions(decisions = []) {
+  return decisions.filter(d => d.answer == null && !isRetiredDecision(d))
+    .sort((a, b) => momentIndex(a.moment) - momentIndex(b.moment) || String(a.key).localeCompare(String(b.key)))
+}
+export function decisionsForJon(decisions = []) {
+  return openDecisions(decisions).filter(d => !taskNotYou(d))
 }
 
 // Every moment a thing can be filed under, with its name, in night order.
@@ -321,7 +355,7 @@ function linkFor(need, live) {
   if (need.tab) return `/edit/${need.list}?tab=${need.tab}`
   if (spec.tabs) {
     const def = TAB_KINDS[spec.tabs]
-    const thin = def.list.map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
+    const thin = tabsOf(spec).map(t => ({ t, n: live.filter(i => i[def.field] === t).length - goalForTab(spec, t) })).sort((a, b) => a.n - b.n)[0]
     return `/edit/${need.list}?tab=${thin.t}`
   }
   return `/edit/${need.list}`
@@ -379,7 +413,7 @@ export function timelineItems({ areas = {}, tasks = [], decisions = [] } = {}) {
         const status = needStatus(need, { areas })
         out.push({ kind: 'need', section: s.key, row: r.key, need, when: 'now', standin: needStandin(need, status), notYou: false, status })
       }
-      for (const d of byMoment(decisions, r.key)) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, when: 'now', standin: false, notYou: false, status: { done: d.answer != null } })
+      for (const d of byMoment(decisions, r.key).filter(d => !isRetiredDecision(d))) out.push({ kind: 'decision', section: s.key, row: r.key, decision: d, when: 'now', standin: false, notYou: taskNotYou(d), status: { done: d.answer != null } })
       // Dated cards first, soonest first, then the rest in their own order.
       const byDate = (a, b) => (taskBy(a) ?? '9999').localeCompare(taskBy(b) ?? '9999') || (a.order ?? 0) - (b.order ?? 0)
       for (const t of byMoment(tasks, r.key).filter(t => !t.deleted).sort(byDate)) {

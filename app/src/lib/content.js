@@ -10,6 +10,8 @@ import {
   AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT,
   SECRET_LINES_ANSWER, SECRET_LINES_DECISIONS, SECRET_LINES_TASKS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES,
   HANDOFF_1023_TASKS, RETIRED_FOR_1023, FILED_FOR_1023, ANSWERED_FOR_1023, REFILED_FOR_1023,
+  CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP,
+  NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -194,9 +196,9 @@ export const AREAS = {
       { key: 'about', label: 'About them, two or three sentences, ending with where they keep themselves', placeholder: 'e.g. Arrived for a party some years back and has seen no reason to declare it over. Found wherever the light is best.', kind: 'textarea', main: true },
     ] },
   // 23 Oct 2026: the cats say only their hint lines, so only Sir Irwin's first greeting and sign-off are read (his Act 5 screen); the other tabs are kept, not used
-  openers: { label: 'What a cat says first', moment: 'Act 5, Sir Irwin’s hello on the living room screen', why: 'Only the first line on Sir Irwin’s tab is read: it opens his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their greetings here are kept, not used.', group: 'The household', tabs: 'cats', guide: 'opener', goalPerTab: 0, goalByTab: { irwin: 1 },
+  openers: { label: 'What a cat says first', moment: 'Act 5, Sir Irwin’s hello on the Parlour TV', why: 'Only the first line on Sir Irwin’s tab is read: it opens his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their greetings here are kept, not used.', group: 'The household', tabs: 'cats', shownTabs: ['irwin'], guide: 'opener', goalPerTab: 0, goalByTab: { irwin: 1 },
     fields: [line('The greeting', 'How this cat says hello, before it says anything useful')] },
-  closers: { label: 'What a cat says last', moment: 'Act 5, Sir Irwin’s goodbye on the living room screen', why: 'Only the first line on Sir Irwin’s tab is read: it closes his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their sign-offs here are kept, not used.', group: 'The household', tabs: 'cats', guide: 'closer', goalPerTab: 0, goalByTab: { irwin: 1 },
+  closers: { label: 'What a cat says last', moment: 'Act 5, Sir Irwin’s goodbye on the Parlour TV', why: 'Only the first line on Sir Irwin’s tab is read: it closes his countdown in Act 5. Since 23 Oct the other cats say only their hint lines, so their sign-offs here are kept, not used.', group: 'The household', tabs: 'cats', shownTabs: ['irwin'], guide: 'closer', goalPerTab: 0, goalByTab: { irwin: 1 },
     fields: [line('The sign-off', 'One short sentence in this cat’s voice, adding nothing')] },
   // retired 23 Oct 2026 (Jon, secretLines): the cats say only their hint lines and never brush a guest off; lines already written are kept
   refusals: { label: 'Brush-offs (retired)', moment: 'Retired 23 Oct 2026: the cats say only their hint lines', why: 'What a cat said when it would not talk. The cats now always give their hint line, so nothing reads these. Kept, not used.', group: 'The household', tabs: 'cats4', guide: null, goalPerTab: 8, hidden: true, retired: true,
@@ -215,7 +217,7 @@ export const AREAS = {
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which moment', placeholder: 'Pick one', kind: 'select', options: STUDY_LABELS },
-      { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Fifteen minutes.', kind: 'textarea', main: true },
+      { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Ten minutes.', kind: 'textarea', main: true },
     ] },
   trailoffs: { label: 'Granolia losing her thread (retired)', moment: 'Retired: Granolia, like every cat, says only her hint line', why: 'The old way Granolia lost her thread. Since 23 Oct 2026 she says only her hint line, so nothing reads these. Kept, not used.', group: 'The household', tabs: null, guide: null, goal: 8, hidden: true, retired: true,
     fields: [line('The aside', 'e.g. … that’s how I remember it, anyway. *snrk.* Mostly.')] },
@@ -238,7 +240,7 @@ export const AREAS = {
     fields: [
       { key: 'label', label: 'Which line', placeholder: 'Pick one', kind: 'select', options: [
         { value: 'OBJECTIVE', label: 'Objective: where to be, what to do' }] },
-      { key: 'text', label: 'The words', placeholder: 'e.g. Find your partner and choose a room together. Anything the household kept quiet earlier comes back tonight.', kind: 'textarea', main: true },
+      { key: 'text', label: 'The words', placeholder: 'e.g. Stay with your group. Your phone sends you to each room in turn, and the chime moves you on.', kind: 'textarea', main: true },
     ] },
   station_text: { label: 'The five stations (retired)', moment: 'Retired 23 Oct 2026: Act 4 is four game rooms now', why: 'The old Act 4 station cards. The rooms’ words are the ACT4 lines in the phone’s own little lines now, so nothing reads these. Kept, not used.', group: 'Words on the phones', tabs: null, guide: null, goal: STATION_LABELS.length, hidden: true, retired: true,
     codec: labelCodec,
@@ -246,13 +248,13 @@ export const AREAS = {
       { key: 'label', label: 'Which station', placeholder: 'Pick one', kind: 'select', options: STATION_LABELS },
       { key: 'text', label: 'The line', placeholder: 'e.g. Your phone names a property. Two or three bags in the house have it. Ask people to open theirs.', kind: 'textarea', main: true },
     ] },
-  achievements: { label: 'Achievements', moment: 'Acts 1 to 5, given from the Host tab with a tap; on the phone at once and on the living room screen at the end', why: 'Pre-written achievements, a title and one line each. On the night you tap a guest, then one of these. Nothing is typed on the night.', group: 'Words on the phones', tabs: null, guide: null, goal: 20,
+  achievements: { label: 'Achievements', moment: 'Acts 1 to 5, given from the Host tab with a tap; on the phone at once and on the Parlour TV at the end', why: 'Pre-written achievements, a title and one line each. On the night you tap a guest, then one of these. Nothing is typed on the night.', group: 'Words on the phones', tabs: null, guide: null, goal: 20,
     codec: achievementCodec,
     fields: [
       { key: 'title', label: 'The title', placeholder: 'e.g. Clean Plate Club', kind: 'text' },
       { key: 'text', label: 'One line, read out on the screen', placeholder: 'e.g. Nothing left on the plate, not even the garnish.', kind: 'textarea', main: true },
     ] },
-  scenarios: { label: 'Parlour Games', moment: 'Twelve a night: five in Act 2 and five in Act 4 at random times, then two back to back as Act 6 opens, on every phone at once', why: 'Silly sets of three questions with two answers each. Every guest answers the same set at the same moment. Each night deals twelve of these at random, so seventeen means five spare. The points only matter for the Murderer and the Ghost: they move how clear the clues come out. How the cats feel about a Detective is decided by the cats, not the points.', group: 'Words on the phones', tabs: null, guide: null, goal: 17, editor: 'questions' },
+  scenarios: { label: 'Parlour Games', moment: 'Twelve a night: five in Act 2 on every phone at once, five in Act 4 that wait on each phone, then two back to back as Act 6 opens', why: 'Silly sets of three questions with two answers each. In Acts 2 and 6 every guest answers the same set at the same moment; in Act 4 each guest plays theirs when free. Each night deals twelve of these at random, so seventeen means five spare. The points only matter for the Murderer and the Ghost: they move how clear the clues come out. How the cats feel about a Detective is decided by the cats, not the points.', group: 'Words on the phones', tabs: null, guide: null, goal: 17, editor: 'questions' },
   motive_notes: { label: 'What each motive means', moment: 'All night, the small i beside a rhyme on the Motives tab', why: 'A plain explanation of the rhyme for anyone who does not get the joke. Everyone reads these from Act 1, so never a hint about tonight.', group: 'Words on the phones', tabs: null, guide: null, goal: 19,
     codec: labelCodec,
     fields: [
@@ -294,7 +296,7 @@ export const AREAS = {
     ] },
   // retired 23 Oct 2026 (Jon): the Act 2 safe is taken out, so no document is ever shown; lines already written are kept
   templates: { label: 'Stationery designs (retired)', moment: 'Retired 23 Oct 2026: the Act 2 safe is taken out', why: 'The seven blank documents the safe paid out. The safe is gone, so nothing reads these. Kept, not used.', group: 'Blanks and frames', tabs: null, guide: null, goal: 7, hidden: true, retired: true },
-  epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the living room screen after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
+  epilogue_frames: { label: 'The closing story', moment: 'Act 7, on the Parlour TV after the three reveals', why: 'The closing paragraph at the reveal, with blanks for the names. The screen picks one.', group: 'Blanks and frames', tabs: null, guide: 'epilogue_frame', goal: 2,
     fields: [line('The paragraph, with [MURDERER], [VICTIM] and [MOTIVE_RHYME] where the names go', 'e.g. And so it was [MURDERER]. Not for money, not for love, for this: [MOTIVE_RHYME]. And [VICTIM] never saw it coming.')] },
 
   // retired 22 Oct 2026 (Jon): the trace's top level is the picture and its name, nothing more; lines already written are kept
@@ -331,6 +333,14 @@ export const AREAS = {
   av_assets: { label: 'Sounds (retired)', moment: 'Retired 23 Oct 2026: the art and sound jobs are cards on the Timeline', why: 'The old checklist of sounds. A file uploaded here never reaches the brain, so the Timeline cards say where each sound goes. Kept, not used.', group: 'Everything else', tabs: null, guide: 'av_asset', checklist: true, upload: 'audio', hidden: true, retired: true },
 }
 
+// The tabs a list shows: all of its kind, unless the list names the ones
+// still read (24 Oct 2026: only Sir Irwin's greeting and sign-off are read,
+// so the four cats' tabs are kept, not shown).
+export function tabsOf(spec) {
+  if (!spec?.tabs) return null
+  return spec.shownTabs ?? TAB_KINDS[spec.tabs].list
+}
+
 // How many a tab needs: the list's per-tab goal, unless one tab says otherwise
 // (Sir Irwin is always in, so he needs one standing line, not three).
 export function goalForTab(spec, t) {
@@ -361,7 +371,7 @@ export const AREA_GROUPS = ['The characters', 'The household', 'Words on the pho
 // One sentence under each group heading on the home page.
 export const GROUP_WHY = {
   'The characters': 'Who the guests become. The game deals these at random on the night.',
-  'The household': 'The four cats and Sir Irwin. You write their manners; the game picks which hint line each guest hears.',
+  'The household': 'The four cats and Sir Irwin, and how each one talks. The game picks which hint line each guest hears.',
   'Words on the phones': 'Everything a phone says that no character is speaking, and the questions every phone asks.',
   'Blanks and frames': 'Fill-in-the-blank pieces. On the night the game fills in the names.',
   'The bags': 'The one physical part of the night.',
@@ -392,7 +402,7 @@ export const GUIDES = seed.guides
 // questions are written blind, so a pie or a toilet seat in a question gives
 // nothing away; a cat's name or the word murderer would.
 export const CASE_WORDS = [
-  'irwin', 'boo', 'larue', 'salem', 'crookshank', 'zimothy', 'clawford', 'granolia', 'lickspittle', 'sirwin',
+  'irwin', 'boo', 'larue', 'salem', 'crooknog', 'zimothy', 'clawford', 'granolia', 'lickspittle', 'sirwin',
   'murderer', 'murder', 'ghost', 'victim', 'motive', 'motives', 'detective', 'clue', 'clues', 'suspect', 'alibi',
 ]
 
@@ -537,7 +547,8 @@ export function seedTasks() {
 }
 
 // Additive migrations for databases seeded before these areas/cards existed.
-// Applied once each (guarded by meta/migrations); only ever ADDS, never rewrites.
+// Applied once each (guarded by meta/migrations); they add, mark done and
+// file, and a rewrite keeps the words it replaces (lib/additions.js).
 export const ADDITIONS = [
   {
     id: '2026-08-29-content-inventory',
@@ -669,7 +680,7 @@ export const ADDITIONS = [
   },
   {
     // 22 Oct: the brain needs a file for every sound before it starts, so
-    // the stand-in tones get their own card before the freeze.
+    // the stand-in tones get their own card (then called before the freeze).
     id: '2026-10-22-standin-sounds',
     tasks: STANDIN_SOUND_TASKS,
   },
@@ -726,6 +737,44 @@ export const ADDITIONS = [
     fileTasks: FILED_FOR_1023,
     answerDecisions: ANSWERED_FOR_1023,
     refileDecisions: REFILED_FOR_1023,
+  },
+  {
+    // 24 Oct, later: the board made plain for a guy designing a silly game
+    // for his friends and family, not a coder (the day of the Game test
+    // tab). The cards that are done marked done; the ones that told Jon to
+    // type in Terminal reworded as asks of Claude Code, the line kept for it;
+    // the old words gone; the dated corrections rewritten as one instruction
+    // each (the old words kept on the card); today's hardware jobs and the
+    // missing night jobs added; act4Granolia retired, tidyFolders handed to
+    // Claude Code to ask about, and Granolia's study words asked.
+    id: '2026-10-24-cleanup',
+    tasks: CLEANUP_TASKS,
+    decisions: CLEANUP_DECISIONS,
+    retireTasks: RETIRED_FOR_CLEANUP,
+    rewriteTasks: REWRITTEN_FOR_CLEANUP,
+    refileDecisions: REFILED_FOR_CLEANUP,
+  },
+  {
+    // 24 Oct, evening: docs/handoff-2026-10-24.md (a Claude chat). Jon cast
+    // the news team: he plays Mic Cameron, Susan plays Ava Waves. The three
+    // recording cards get the new cast and owners, and the recording cards
+    // the dates Where we are plans; the two bulletin 2 questions name the
+    // cast; bulletin2Voice, bulletin2Known and worstDial answered where the
+    // board has no answer yet (Claude chat answered them on the live board);
+    // the six questions whose 31 August answers later decisions replaced say
+    // what is true now (the old answers kept); the morning-after reveal and
+    // the pose photo for now, not after the party; and four new cards:
+    // tomorrow's practice run, Claude chat's refresh of the claude.ai
+    // project's copies, the worst-dial patch, and the test plan's checks.
+    id: '2026-10-24-news-cast',
+    tasks: NEWS_CAST_TASKS,
+    retireTasks: RETIRED_FOR_NEWS_CAST,
+    fileTasks: FILED_FOR_NEWS_CAST,
+    rewriteTasks: REWRITTEN_FOR_NEWS_CAST,
+    answerDecisions: ANSWERED_FOR_NEWS_CAST,
+    fileDecisions: FILED_DECISIONS_FOR_NEWS_CAST,
+    refileDecisions: REFILED_FOR_NEWS_CAST,
+    supersedeDecisions: SUPERSEDED_FOR_NEWS_CAST,
   },
 ]
 

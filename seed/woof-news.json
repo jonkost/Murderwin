@@ -7,7 +7,7 @@
   "sports": "Mitt Kickwell"
  },
  "bulletin1": {
-  "about": "Act 2, lights out, on the living room screen: sound with captions as built today (video is still Jon's open question). Always clarity level 3: the opening, one family line (a wrong family, crossed off for everyone), the sign-off.",
+  "about": "Act 2, lights out, on the Parlour TV: video once the files are in and the box The bulletins are videos is ticked on the Game night page; until then the brain plays the recordings and the TV shows the words. Susan reads the opening and sign-off as Ava Waves. Always clarity level 3: the opening, one family line (a wrong family, crossed off for everyone), the sign-off.",
   "opening": {
    "clip": "newsflash-opening",
    "text": "Good evening, ladies and gentlemen, and all the dogs at sea! This is W-O-O-F News. We interrupt this program for a special bulletin from Sirwin Manor. At Sir Irwin's birthday party tonight, someone has been... Murderwined!"
@@ -40,7 +40,7 @@
   }
  },
  "bulletin2": {
-  "about": "Act 3, near the end of supper, audio on the Orangerie HomePod with captions on the iPad. Jon arms it; it plays 3 to 5 minutes later. The opening, the real family's line at the clarity dial's level (1 very obscure, 5 plain), the sign-off.",
+  "about": "Act 3, near the end of supper, audio on the HomePods (one AirPlay group from the brain, the Orangerie's included) with captions on the iPad. Susan reads it as Ava Waves. Jon arms it; it plays 3 to 5 minutes later. The opening, the real family's line at the clarity dial's level (1 very obscure, 5 plain), the sign-off.",
   "opening": {
    "clip": "bulletin2-opening",
    "text": "This is W-O-O-F, the Voice of Sirwin Manor! Ladies and gentlemen, pardon the interruption. Finish that bite, but listen closely. Our reporters on the scene have fresh information about tonight's Murderwined."
@@ -163,7 +163,7 @@
   }
  },
  "closing": {
-  "about": "Act 7, the reveal: the closing bulletin that bookends bulletin 1, sound with captions as built today (video is still Jon's open question). Generic lines Jon records; the game cuts in the Murderer, Motive and Ghost cards between them. Order: Murderer, Motive, Victim. Each part's holdMs is how long its recording runs, in milliseconds: the TV shows a name card once the parts before it have had their time (finale.js). Jon times them once his recordings exist.",
+  "about": "Act 7, the reveal: the closing bulletin that bookends bulletin 1, video on the Parlour TV once the files are in and the box is ticked, otherwise the recordings with the words on screen. Susan as Ava Waves opens and closes in the studio; Jon as Mic Cameron reads the four field parts. The lines are generic; the game cuts in the Murderer, Motive and Ghost cards between them. Order: Murderer, Motive, Victim. Each part's holdMs is how long its recording runs, in milliseconds: the TV shows a name card once the parts before it have had their time (finale.js). Claude Code sets them once the recordings exist.",
   "parts": [
    {
     "clip": "woof-close-studio-open",

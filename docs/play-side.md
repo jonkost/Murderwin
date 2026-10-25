@@ -148,6 +148,13 @@ screen can also be looked at without a night at `?preview=<name>`, and
 `?preview=tour` walks through them all with arrows at the top. The preview
 samples use the real W-O-O-F News and Cat Hint Lines.
 
+**Trying one game at a time (24 Oct 2026).** The workshop's Game test tab
+lists every game of Acts 4 and 6 and the Parlour Games with its samples, two
+practices that need no night (Get Off My Lawn! and Boo's Catwalk), and a
+test night it can jump straight to Act 4 or Act 6. A note from it goes to
+Claude Code as a Timeline card. `docs/on-the-night.md`, "Trying the games",
+has the steps.
+
 ## What you do
 
 1. Workshop → Game night: type the name each of you will use on your phone,
@@ -681,5 +688,13 @@ still opens one.
   relay-done | door | eliminate | ballot | reveal | result | clues | cats |
   cats-act4 | cats-friend | rehearsal | you | offline | host | paused |
   paused-window | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in
-  `docs/room-screens.md`). A second dev server config, `play-5175`, exists
+  `docs/room-screens.md`). `?preview=questions&set=<base64url>` shows one of
+  the workshop's own Parlour Game sets (the Game test tab's See it on a phone;
+  words only, never a point or a lean).
+- The Game test tab's practices (24 Oct, `play/src/screens/Practice.jsx`, no
+  night): `?practice=salem` (Get Off My Lawn! on any phone that joins, with a
+  shake meter), `?practice=boo` (Boo's Catwalk on the phones) and
+  `?kiosk=boo&practice=1` (the wall). They follow `public_state/game_test_salem`
+  and `game_test_boo`, which only the `gameTest` callable writes, and never
+  write `presence/{uid}`. `docs/on-the-night.md` has the tab. A second dev server config, `play-5175`, exists
   for when another session already holds 5174.

@@ -383,8 +383,240 @@ export const REFILED_FOR_1023 = {
   act4Granolia: { from: 'act4.cat', to: 'act4.groups' },
 }
 
+// 24 Oct 2026, later: the board made plain for a non-coder (the Game test
+// tab's day). The cards that are done marked done; the cards that told Jon
+// to type in Terminal reworded as "Ask Claude Code to ...", with the exact
+// line kept for Claude Code in `tech` (shown in a closed fold on the
+// Timeline); the old words (the living room, the orangery, the freeze,
+// Crookshank, nine sounds, the bulletin videos as undecided) replaced; the
+// cards that had grown dated corrections rewritten as one instruction each;
+// today's hardware jobs and the missing night jobs added, numbered from 460;
+// and the decisions tidied. Applied by '2026-10-24-cleanup'. The words a
+// rewrite replaces stay on the card (lib/additions.js).
+export const CLEANUP_TASKS = [
+  // Done today, with no card until now
+  { order: 470, moment: 'freeze', status: 'done', who: 'Jon', title: 'Pair the Hue bridge with the brain', detail: 'Done 24 Oct 2026: the brain is paired with the Hue bridge.' },
+  { order: 471, moment: 'freeze', status: 'done', who: 'Jon', title: 'Try the hall light from the brain', detail: 'Done 24 Oct 2026: the hall bulb outside the bedroom went red and green from the brain.' },
+
+  // Before the second tech run
+  { order: 462, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Add the Holiday String Lights back in the Nanoleaf app', detail: 'Holding their button on 24 Oct reset their wifi. In the Nanoleaf app on your phone, add them again and put them back on the house wifi. Then they can have a fixed address and be tried from the brain.' },
+  { order: 463, moment: 'freeze', status: 'todo', who: 'Jon', title: 'The brain’s network cable', detail: 'The brain should be wired to the router, but on 24 Oct its cable adapter showed no link, so it is on wifi. Try another cable, or another socket on the router. If it still will not link, tell Claude Code: wifi works, it is only less steady.' },
+  { order: 474, moment: 'freeze', status: 'todo', who: 'Claude Code', by: '2026-11-02', title: 'Set up the study station on the M1 Air', detail: 'On the night the study runs on the M1 Air, by the walls. Bring it up to date and set the study station up there, with the Stream Deck, so Jon can press every button and teach the taps on it.', tech: 'On the M1 Air: the current main (origin/main is behind; pushing is Jon’s call, or copy the repo across), npm install in station/ with the optional @elgato-stream-deck/node, station/.env from station/.env.example with STATION_KEY set to the saved key word, quit the Elgato app, then cd station && npm start.' },
+  { order: 464, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'The Stream Deck on the M1 Air', detail: 'Once Claude Code has set up the study on the M1 Air: plug the Stream Deck into it by the walls and press every button once. Then teach the taps (the card Teach the taps on the white wall).' },
+  { order: 465, moment: 'freeze', status: 'todo', who: 'Jon', title: 'Fixed addresses on the router', detail: 'In the router’s app, give a fixed address to the brain, the Hue bridge, both Nanoleaf controllers (the study walls) and the Holiday String Lights, so none of them moves on the night. Ask Claude Code if you want a hand.' },
+  { order: 466, moment: 'freeze', status: 'todo', who: 'Claude Code', by: '2026-10-31', title: 'The party-night dry run on the real secrets', detail: 'After the cats’ leans and the drawing pictures are made: eight fake phones play a party night on the real secrets and throw it away. It prints counts and PASS or FAIL only. Jon closes the TV and the room screens and keeps his phone off the game while it runs.', tech: 'GOOGLE_APPLICATION_CREDENTIALS=scripts/service-account.json npm run fake-night -- --real-secrets --live --i-know-this-is-the-party-database (it refuses while any night is live).' },
+  { order: 475, moment: 'freeze', status: 'todo', who: 'Claude Code', by: '2026-11-02', title: 'A Start button on the brain’s and the study’s desktops', detail: 'On the night nobody can wait on a chat to bring a machine up. Put a Start the brain button on the M3 Air’s desktop and a Start the study button on the M1 Air’s: a double-click opens a window that runs it and stays open all night. Jon tries each once, on the first full tech run.', tech: 'A .command file on each desktop that cds into the repo (an absolute path, not the file’s own folder) and runs npm start in cues/ (the brain) or station/ (the study), in a visible Terminal window; chmod +x. Then the Devices page and cards 121 and 122 are true.' },
+  { order: 472, moment: 'freeze', status: 'todo', who: 'Claude Code', title: 'Run the checks once, so the Health page has a result', detail: 'The Health page has never had a result. Run the checks once; they print counts only.', tech: 'npm run checks (it saves the counts for the Health page unless --local).' },
+
+  // The study's two: teaching the taps waits on the M1 Air; the key word can be saved now
+  { order: 460, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'Teach the taps on the white wall', detail: 'After Claude Code has set up the study on the M1 Air (the card Set up the study station on the M1 Air): stand at the white wall with your phone, open the Game test tab, and under Granolia’s Lightbulb Moment tap Teach the taps. Touch each hexagon when it asks. The taps are kept on the Mac that runs the study, so they must be taught while the M1 Air runs it. Two of ten were taught on 24 Oct, on another Mac, and nothing was kept.', tech: 'station/lib/teach.js writes station/touch-map.json on whichever Mac runs the station; copy it across if taught on another.' },
+  { order: 461, moment: 'setup', status: 'todo', when: 'now', who: 'Jon', by: '2026-10-26', title: 'Save the study key word', detail: 'At the top of the Game test tab, type the key word the study station and the brain already use, and tap Save. Not sure what it is? Ask Claude Code to save it for you: it copies it across without showing it. Until it is saved, the game turns the study station away, and the brain skips the bulletin 2 recordings. It is kept from night to night.', tech: 'meta/game.station_key must equal STATION_KEY in station/.env and cues/.env (functions/lib/station.js stationAllowed). To save it for Jon: copy STATION_KEY from station/.env into meta/game.station_key with the Admin SDK, without printing it.' },
+
+  // On every phone, all night
+  { order: 469, moment: 'allnight', status: 'todo', who: 'Claude chat', title: 'Achievements: write twenty', detail: 'The Achievements list is empty, so the Host tab has none to give and the end credits skip them. Write twenty, a title and one line each, in a Claude chat handoff. Claude Code copies them into the workshop.' },
+
+  // Act 4
+  { order: 473, moment: 'act4.study', status: 'todo', who: 'Claude Code', title: 'Put Granolia’s new study words in (the default)', detail: 'Unless you pick Keep the old words on the question above: Granolia’s hello when a group reaches the Study changes to the new words, which say to touch the wall first and use the buttons at the end.', tech: 'functions/lib/hosts.js HOST_LINES.granolia; the words are in docs/study-light-game.md section 11.' },
+  { order: 467, moment: 'act4.orangerie', status: 'todo', when: 'later', who: 'Jon and Susan', title: 'Clear the Orangerie table after supper', detail: 'After supper, before you press Start Act 4: clear the table, so a group has room to stand and shake their phones for Get Off My Lawn!' },
+  { order: 468, moment: 'act4.entryway', status: 'todo', when: 'later', who: 'Jon', title: 'Fan lights off for Boo’s Catwalk', detail: 'All through Act 4, keep the Parlour fan’s lights off so Boo’s wall shows on the triangle wall. On the hardware evening, aim the projector so its beam misses the fan.' },
+]
+
+// The cards that are done in fact, marked done once with the reason.
+export const RETIRED_FOR_CLEANUP = [
+  { order: 105, title: 'Make the stand-in sounds on the brain', detail: 'Done 24 Oct 2026: a simple tone is on the brain for all ten sounds, chime-phone included.' },
+  { order: 112, title: 'Make the packing list', detail: 'Done 24 Oct 2026: packed on your final 24 items. Ten bags, every rule passed, every bag with three clue words.' },
+  { order: 307, title: 'Music for dinner', detail: 'Replaced 24 Oct 2026: the Supper playlist on the brain. See Three playlists on the brain.' },
+  { order: 328, title: 'A Drawing pictures tab for Jenna', detail: 'Not needed: you answered no, the blind script is enough.' },
+  { order: 341, title: 'Refresh what Claude chat knows', detail: 'Done 23 Oct 2026 by Claude chat (the 23 Oct handoff, section 14).' },
+  { order: 342, title: 'Finish the lists the leans and the packing read', detail: 'Done 24 Oct 2026: your 24 bag items and the seventeen Parlour Games are in.' },
+  { order: 344, title: 'Deploy before the practice game', detail: 'Done 24 Oct 2026: deployed.' },
+]
+
+// The ten sound cards: the Parlour TV, a simple tone already playing (the
+// stand-ins were made on 24 Oct), and the file handed to Claude Code.
+const soundRewrite = (order, id, when, length = 'Two to five seconds') => ({
+  order, title: `Sound: ${id}`,
+  set: {
+    detail: `Plays when ${when}. ${length}, with one second of silence first. Name the file ${id} and give it to Claude Code, which puts it on the brain in place of the simple tone that plays there now.`,
+    tech: `media/${id}.m4a (or .mp3, .wav or .aiff) on the brain, and delete the stand-in media/${id}.wav. media/README.md lists all ten.`,
+  },
+})
+
+// Cards whose words change, not grow: one clean instruction each.
+export const REWRITTEN_FOR_CLEANUP = [
+  soundRewrite(134, 'blackout', 'every phone goes dark at the end of Act 1'),
+  soundRewrite(140, 'power', 'the power returns and Act 2 begins'),
+  soundRewrite(141, 'chime-news', 'the news flash comes up on the Parlour TV'),
+  soundRewrite(152, 'sounder-bulletin', 'W-O-O-F News bulletin 2 starts, near the end of supper'),
+  soundRewrite(160, 'sting-solved', 'a group solves the study'),
+  soundRewrite(171, 'chime-irwin', 'Sir Irwin is about to speak on the Parlour TV'),
+  soundRewrite(181, 'sting-door', 'the third drawing is named and the bedroom door opens'),
+  soundRewrite(190, 'sting-reveal', 'the reveal begins on the Parlour TV'),
+  soundRewrite(191, 'sting-result', 'every phone shows its own result'),
+  soundRewrite(420, 'chime-phone', 'supper is ready, Act 4 starts, each Act 4 round changes, and the Act 6 Parlour Games open (every phone chimes too)', 'About one second'),
+
+  // Before the second tech run
+  { order: 103, title: 'The hardware evening', set: { title: 'The hardware check, on the hardware evening', by: '2026-11-06', detail: 'With the study walls, the Stream Deck and the hall bulb plugged in, ask Claude Code to run the hardware check: it says pass or fail for each. Already done on 24 Oct: the Hue bridge is paired, the hall bulb went red and green from the brain, and both study walls show the game’s lights. Then one round of the study and one grid of the drawing.', tech: 'node scripts/hardware-check.mjs' } },
+  { order: 111, title: 'Make the cats’ leans', set: { who: 'Claude Code', title: 'Make the cats’ leans', detail: 'Claude Code runs it: it works out which way each cat leans in the Parlour Games without anyone seeing it, and says only how many it made. Before Saturday 31 October, ahead of the party-night dry run. Then Jenna may look them over on their page.', tech: 'npm --prefix scripts run leans (counts and PASS or FAIL only; needs scripts/.env). It must never overwrite a lean Jenna changed.' } },
+  { order: 214, title: 'Make the drawing pictures', set: { who: 'Claude Code', title: 'Make the drawing pictures', detail: 'Claude Code runs it: it draws the three real pictures for Sir Irwin Needs a Hand without anyone seeing them, and says only how many it made. Until then a rehearsal uses made-up pictures. Before Saturday 31 October, ahead of the party-night dry run.', tech: 'npm --prefix scripts run relay-pictures (counts and PASS or FAIL only).' } },
+  { order: 313, title: 'READ-FIRST and the cat lore', set: { title: 'The cat lore: Salem’s and Boo’s new Trusting lines', detail: 'READ-FIRST was rewritten on 23 Oct. What may be left: cat-lore-final.md gets the same new Trusting lines for Salem and Boo as the game has. Open a Claude chat in the project and check.' } },
+  { order: 315, title: 'Jenna runs the real checks', set: { detail: 'On their page, tab The checks: once the cats’ leans and the drawing pictures are made, Jenna presses Run the checks. Each check shows pass or fail, with its number. Jenna tells Jon only done or needs more.' } },
+  { order: 317, title: 'Jenna reads the lists cold', set: { detail: 'The rules, the fourteen characters, the Parlour Games and the cat lines, in the order the For Jenna page gives. Under each list Jenna marks Reads clearly or Needs another look. Before the second tech run, Wednesday 11 November.' } },
+  { order: 322, title: 'The Orangerie HomePod in the brain’s speakers', set: { title: 'All four HomePods in one AirPlay group on the brain', moment: 'freeze', detail: 'Every sound, the music and bulletin 2 play from the brain through one AirPlay group of all four HomePods: the Entryway, the Study, the Orangerie, and the fourth where you put it (the Parlour is the obvious place). On the brain, make the group and pick it as the sound output. Then ask Claude Code to play a test chime, and listen for it in every room.', tech: 'afplay media/chime-news.wav on the brain.' } },
+  { order: 329, title: 'Install Java once, for the rules test', set: { who: 'Claude Code', title: 'Install Java and run the rules test', detail: 'The rules test proves Jon’s account cannot read the secrets. It reports pass or fail only. Installing Java may ask Jon to type his Mac password once.', tech: 'brew install --cask temurin, then npm run test:rules.' } },
+  { order: 330, title: 'The .env files for the study and the brain', set: { who: 'Claude Code', title: 'The settings files for the study and the brain', detail: 'The brain’s file has the key word, the Hue key and the Nanoleaf tokens (24 Oct). Two things are left: the string lights’ two lines are not named the way the brain reads them, and the study’s file goes onto the M1 Air when the station moves there.', tech: 'cues/.env: rename NANOLEAF_STRING_HOST and NANOLEAF_STRING_TOKEN to NANOLEAF_STRINGS_HOST and NANOLEAF_STRINGS_TOKEN (cues/cues.mjs reads those). station/.env on the M1 Air from station/.env.example, STATION_KEY set to the saved key word. Never commit either file, never print a value.' } },
+  { order: 332, title: 'The full tech run', set: { title: 'The first full tech run (the hardware evening)', by: '2026-11-06', detail: 'A rehearsal night with every machine on at once, Monday 2 to Friday 6 November: the brain and the four HomePods, the Parlour TV, the captions iPad, the older iPad, Boo’s wall on the projector, the study station and walls, the hall bulb, and two phones. Press Next from Act 1 to Act 7 and check every sound plays and every screen changes on its own. The second run has its own card.' } },
+  { order: 421, title: 'Three playlists on the brain', set: { detail: 'In Apple Music on the M3 Air, three playlists named exactly Murderwin · Arrival (Acts 1 and 5), Murderwin · Investigation (Acts 2, 4 and 6) and Murderwin · Supper (Act 3). A hyphen in place of the dot works too. Curating only. Then ask Claude Code to switch the music on. The brain plays each at its act and ducks it under the news.', tech: 'MUSIC=on in cues/.env; npm start -- --check-music once, for the Music permission.' } },
+  { order: 422, title: 'Four Hue scenes', set: { detail: 'In the Hue app, four scenes named exactly Murderwin Arrival (Acts 1, 5 and 7), Murderwin Blackout (every Hue light off), Murderwin Lights Out (dim amber, Acts 2, 3, 4 and 6) and Murderwin Reveal (from the Act 7 reveal). Leave the hall bulb outside the bedroom out of all four, so it keeps its red and green: give it a Hue room of its own first. Then ask Claude Code to switch the scenes on. Nothing waits on a light.', tech: 'HUE_SCENES=on in cues/.env; the names are in cues/scenes.json.' } },
+  { order: 423, title: 'Try the string lights from the brain', set: { detail: 'On the hardware evening, once the string lights are back in the Nanoleaf app and have a fixed address: ask Claude Code to connect them to the brain and try them. If they will not answer, stop there: Get Off My Lawn! runs on the phones alone.', tech: 'NANOLEAF_STRINGS_HOST and NANOLEAF_STRINGS_TOKEN in cues/.env; npm start -- --check-strings.' } },
+  { order: 424, title: 'The projector for Boo’s wall', set: { detail: 'Borrow the work projector and a short HDMI cable. On the hardware evening: Susan’s MacBook Pro on the upstairs landing, showing Boo’s wall (the Devices page has its address), aimed at the triangle wall above the Parlour opening, with the beam clear of the fan.', tech: '?kiosk=boo' } },
+
+  // The weeks before
+  { order: 115, title: 'A dry run with eight fake players', set: { title: 'Ask Claude Code for a dry run with eight fake players', detail: 'Eight fake phones play a whole rehearsal night and throw it away. It says one line per act and PASS or FAIL. Nothing it prints is a clue.', tech: 'npm run fake-night' } },
+  { order: 435, title: 'The last deploy', set: { title: 'Ask Claude Code to put the last changes live', detail: 'In the checks-and-fixes days, Thursday 12 to Saturday 14 November, after every picture, sound and video is in. Anything added after it is not in the party.', tech: 'git pull (for any picture added on the GitHub website), then npm run deploy.' } },
+
+  // Setting up the house
+  { order: 114, title: 'The bags packed to Jenna’s list', set: { moment: 'setup', detail: 'At the house, before the guests arrive: Jenna packs four or five things into each numbered bag, exactly as their page says, and keeps the bags closed. Nobody who plays watches.' } },
+  { order: 120, title: 'Router, Hue bulb and both Nanoleaf controllers on', set: { title: 'Router, Hue bridge and bulb, both Nanoleaf controllers and the string lights on', detail: 'First of all. Give them five minutes.' } },
+  { order: 121, title: 'Start the brain', set: { detail: 'On the M3 Air: network cable in, sleep off. Double-click Start the brain on its desktop; a window opens and stays open all night. It will not start while any of the ten sounds is missing, and says which.', tech: 'The desktop button (card 475) runs cd cues && npm start in a Terminal window Jon can see. Until it exists, Claude Code runs that line.' } },
+  { order: 122, title: 'Start the study', set: { detail: 'On the M1 Air: quit the Elgato app, then double-click Start the study on its desktop; a window opens and stays open all night. The study key word must already be saved on the Game test tab; it is kept from night to night.', tech: 'The desktop button (card 475) runs cd station && npm start (STATION_KEY in station/.env must match the saved key word). Until it exists, Claude Code runs that line.' } },
+  { order: 124, title: 'The four cat-room codes up', set: { detail: 'One square code in each cat’s room: Granolia in the Study, Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway. None in the Parlour. The same four codes serve Act 2 and Act 4. Print them from the Game night page.' } },
+  { order: 125, title: 'Set the orangery table', set: { title: 'Set the Orangerie table' } },
+  { order: 126, title: 'Charge everything', set: { detail: 'Every phone, iPad and laptop, the old iPhone 11 spare included. Spare phone chargers in the Orangerie for supper.' } },
+  { order: 301, title: 'Open the TV, the study screen and the iPad', set: { title: 'Open the Parlour TV, the study screen and the captions iPad', detail: 'The Parlour screen on your work MacBook Pro on the TV. The study screen on the M1 Air. The captions screen on your iPad Pro, on its stand in the Orangerie, for supper. Tap each one once to wake it. The Devices page has every address, with a square code for each. The older iPad and Susan’s MacBook Pro have their own cards.', tech: '?kiosk=living, ?kiosk=study, ?kiosk=ipad' } },
+  { order: 430, title: 'The older iPad in the Library', set: { detail: 'On its small stand, with Zimothy: open the memory match (the Devices page has its address) and tap once to wake it. It stays there all night and waits for each group.', tech: '?kiosk=memory' } },
+
+  // Act 1
+  { order: 311, title: 'Paste the new Trusting lines', set: { who: 'Claude Code', title: 'Put the new Trusting lines on Salem’s and Boo’s cards', detail: 'Meet the household. Salem’s card gets the new Trusting Salem line: “Most days, he’s got it backwards, so flip whatever he tells you. Win him over and he might set it straight. Only a true friend gets it right every time.” Save it once so its heading reads Salem Crooknog: under the old heading, Crookshank, the phones skip the card. On Boo’s card, check that Trusting Boo reads: “The more she likes you, the more she’ll say. Bore her and you get a look. Win her over and she might be useful.”' } },
+
+  // Act 2 and Act 3: the bulletins, decided
+  { order: 200, title: 'Record W-O-O-F News bulletin 1', set: { detail: 'Video, on the Parlour TV (decided 23 Oct). Ava on camera for the opening and the sign-off, and the five family clips over B-roll. Every line is in the W-O-O-F News Recording Script. Keep a sound recording of each part too: the brain plays those if the video cannot.' } },
+  { order: 201, title: 'The W-O-O-F News graphics', set: { detail: 'The logo, the lower thirds and the studio look, for the two bulletin videos.' } },
+  { order: 426, title: 'Put the bulletin videos in', set: { detail: 'When bulletin 1 and the closing bulletin are cut: give Claude Code one video file per part, named as the W-O-O-F News Recording Script names each part. It puts them in and puts them live. Then tick The bulletins are videos on the Game night page. Until then the brain plays your recordings and the TV shows the words.', tech: 'play/public/video/<clip>.mp4, the clip names in seed/woof-news.json.' } },
+  { order: 150, title: 'Dinner on the table in the orangery', set: { title: 'Supper on the table in the Orangerie' } },
+  { order: 202, title: 'Record the 25 lines of bulletin 2', set: { detail: 'Audio only: five families, five dial levels each, plus the opening and the sign-off. The lines are in the W-O-O-F News Recording Script. Near the end of supper it plays on all four HomePods, with its words on the Orangerie iPad. Who reads them is the question above.' } },
+  { order: 337, title: 'Update your Apple Reminder about bulletin 2', set: { detail: 'It still has the old design. Change it to: Bulletin 2: record 25 audio lines (5 families x 5 dial levels) from the W-O-O-F News Recording Script. Arm it from my phone near the end of supper; it plays on all four HomePods 3 to 5 minutes later. Or delete it and use the card Record the 25 lines of bulletin 2.' } },
+
+  // Act 4
+  { order: 432, title: 'Try Get Off My Lawn! on two phones', set: { detail: 'On the Game test tab: open the Get Off My Lawn! practice and join from two phones. Red: shake. Green: freeze. Then tell Claude Code, from the same tab, whether the shake feels too touchy or too dull.' } },
+  { order: 433, title: 'Runway music for Boo’s Catwalk (optional)', set: { detail: 'Today the wall plays a simple beat. For a real song, give it to Claude Code, which puts it in and puts it live.', tech: 'play/public/boo/catwalk.mp3, then deploy.' } },
+
+  // Act 5
+  { order: 309, title: 'Draw the nineteen motive cards', set: { detail: 'One picture per motive, numbered 1 to 19 by the motive’s number. "The last of the pie" shows pizza, not apple pie. Give them to Claude Code, which puts them in. Until a picture is in, the card shows the rhyme.', tech: 'play/public/motives/<number>.png, 1 to 19, then deploy; card 308 shows them.' } },
+  { order: 429, title: 'Move Susan’s MacBook Pro to the bedroom', set: { detail: 'After Act 4, carry it from the landing into the bedroom, open the bedroom screen (the Devices page has its address), tap once and close the door. It shows nothing until the third drawing is named.', tech: '?kiosk=bedroom' } },
+
+  // Act 7
+  { order: 203, title: 'Record the closing bulletin', set: { detail: 'Video, on the Parlour TV (decided 23 Oct). Ava in the studio, Mic outside the manor on the green screen. Generic lines only: the game cuts in the three name cards, so you never need the answer. Keep a sound recording of each part too, as the fallback.' } },
+  { order: 205, title: 'A candle in the Medium\'s portrait', set: { detail: 'Her trace is lilac candle wax, and players match traces to people from the portraits. Then give the new picture to Claude Code, which puts it in the game.', tech: 'play/public/portraits/mourningstone.png, then deploy.' } },
+  { order: 215, title: 'A photo of Sydney for the end credits', set: { detail: 'Give the photo to Claude Code, which puts it in the end credits. Without it his card shows his name only.', tech: 'play/public/household/sydney.jpg, then deploy.' } },
+]
+
+// The question the study light game raised (docs/study-light-game.md
+// section 11). Jon's to answer; the default is the new words (card 473).
+export const CLEANUP_DECISIONS = [
+  { key: 'worstDial', moment: 'freeze', question: 'The check that every guest can still find two of the three answers when the dial is at its foggiest: build it before the second tech run, or after the party?', options: ['After the party', 'Before the second tech run'], answer: null, note: 'Default: after the party. A check that the motive can always be found already runs.' },
+  { key: 'granoliaIntro', moment: 'act4.study', question: 'Granolia’s hello when a group reaches the Study says “Copy it on the buttons”, but the puzzle is played by touching the wall. Change it to the new words?', options: ['The new words: touch the wall, then the buttons', 'Keep the old words'], answer: null, note: 'Default: the new words, which Claude Code puts in unless you pick Keep the old words. They read: “Oh! You’re here! The wall flashes a pattern. Touch the same lights in the same order. Do that three times, then press the colour and the number on the buttons, and press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah.”' },
+]
+
+// Decisions moved or reworded. act4Granolia is retired (Act 4 has no cat
+// station), tidyFolders is repo housekeeping that Claude Code asks Jon
+// about when it gets there, and three decisions lose the old room names.
+// A decision is matched by the moment it is still filed under.
+export const REFILED_FOR_CLEANUP = {
+  act4Granolia: { from: 'act4.groups', to: 'retired', set: { retired: true, note: 'Retired 24 Oct 2026: Act 4 is four game rooms, so there is no cat station to send a group anywhere.' } },
+  tidyFolders: { from: 'freeze', to: 'freeze', set: { who: 'Claude Code', question: 'Tidy two old folders inside the Murderwin folder? Nothing is deleted.', note: 'Housekeeping in the Murderwin folder, nothing the night needs. Claude Code asks you once, when it gets there. Default: yes, tidy them; nothing is deleted.' } },
+  rulesDeckScreen: { from: 'act1.arrive', to: 'act1.arrive', set: { options: ['The Parlour TV, back to the game before the blackout', 'Another screen (the iPad Pro, or a phone on the TV)'] } },
+  newsVideo: { from: 'act2.news', to: 'act2.news', set: { question: 'W-O-O-F News bulletin 1 and the closing bulletin: video on the Parlour TV, or your recordings as sound with the words on screen?' } },
+  ipadDinner: { from: 'act3.down', to: 'act3.down', set: { question: 'The iPad through supper: the captions screen in the Orangerie, or the spare phone only?', options: ['Captions in the Orangerie', 'Spare phone only'] } },
+}
+
+// 24 Oct 2026, evening: docs/handoff-2026-10-24.md, from a Claude chat. Jon
+// cast the news team (Jon plays Mic Cameron, Susan plays Ava Waves), set up
+// the practice run on Sunday 25 October, and answered bulletin2Voice (Susan
+// reads bulletin 2, as Ava Waves), bulletin2Known (accepted) and worstDial
+// (build the proof now, before the second tech run; Claude chat builds it
+// and sends a patch). The recording cards get their new owners and the dates
+// Where we are plans (the sounds by 30 October, bulletin 2 by 6 November,
+// the videos and the graphics by 8 November); the two bulletin 2 questions
+// name the cast; the three answers go on the board where it has none yet
+// (the live board has Claude chat's already); six questions answered on
+// 31 August, which later decisions replaced, say what is true now (the old
+// answer is kept on each); the morning-after reveal and the pose photo are
+// for now, not after the party (Jon: as soon as possible); and four new
+// cards, numbered from 476. Applied by '2026-10-24-news-cast'.
+export const NEWS_CAST_TASKS = [
+  { order: 476, moment: 'setup', status: 'todo', when: 'now', who: 'Jon and Susan', by: '2026-10-25', title: 'The practice run, Sun 25 Oct', detail: 'A rehearsal night, the whole night, Acts 1 to 7, with every screen on: the Parlour TV, the study on the M1 Air with the walls and the Stream Deck, the older iPad, the iPad Pro, Susan’s MacBook Pro and the brain. You and Susan play, with the spare iPhone 11 as a third player. Follow the run sheet: https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK. Note anything that feels wrong on the Game test tab or tell Claude Code.' },
+  { order: 477, moment: 'freeze', status: 'todo', who: 'Claude chat', title: 'Refresh the claude.ai project’s copies', detail: 'Two copies in the claude.ai project are out of date. Its CLAUDE.md still says the freeze is 7 November: replace it with the repo’s CLAUDE.md, which has no freeze date (the last new feature lands Wednesday 11 November). Its copy of the 23 Oct handoff still says it is not yet applied: replace it with the repo’s copy, marked Applied 24 Oct 2026. Open a Claude chat in the project to do both.' },
+  { order: 478, moment: 'freeze', status: 'todo', who: 'Claude Code', by: '2026-11-11', title: 'Put in the worst-dial proof when Claude chat sends it', detail: 'You answered build it now (24 Oct): the check that every guest can still find two of the three answers when the dial is at its foggiest. Claude chat is building it and sends it with how to put it in. Claude Code puts it in and runs every test, before the second tech run. Claude Code does not start it on its own.', tech: 'docs/patches/2026-10-24-worst-dial.patch (not there yet on 24 Oct), applied as its own notes say. Checks G07, G08 and G42 (the bag solver at dial 1) in docs/test-plan.md; mark their rows when it is in.' },
+  { order: 479, moment: 'freeze', status: 'todo', who: 'Claude Code', by: '2026-11-11', title: 'The checks the test plan still has as Not yet', detail: 'You asked on 24 Oct for everything left to be built as soon as possible. The test plan lists every check the game should pass; the ones with no test yet get one, each printing pass or fail only, before the second tech run.', tech: 'docs/test-plan.md, What is left (24 October), items 2 to 6: first F11, F09, G05 (both host seats), G03, G19, F22, F23 and F25, then the rest marked Not yet in the table (G07, G08 and G42 come with the worst-dial patch, card 478; G22 with replay by seed, card 324). Rename the tests with no ID, and add each to npm run checks.' },
+]
+
+// The Claude chat card the new one takes in.
+export const RETIRED_FOR_NEWS_CAST = [
+  { order: 440, title: 'Mark the project copy of the 23 Oct handoff Applied', detail: 'Replaced 24 Oct 2026: part of Refresh the claude.ai project’s copies.' },
+]
+
+// The dates Where we are plans, given only to a card that has none (a date
+// Jon set himself stands).
+const SOUND_CARDS = [[134, 'blackout'], [140, 'power'], [141, 'chime-news'], [152, 'sounder-bulletin'], [160, 'sting-solved'], [171, 'chime-irwin'], [181, 'sting-door'], [190, 'sting-reveal'], [191, 'sting-result'], [420, 'chime-phone']]
+export const FILED_FOR_NEWS_CAST = [
+  ...SOUND_CARDS.map(([order, id]) => ({ order, title: `Sound: ${id}`, by: '2026-10-30' })),
+  { order: 200, title: 'Record W-O-O-F News bulletin 1', by: '2026-11-08' },
+  { order: 201, title: 'The W-O-O-F News graphics', by: '2026-11-08' },
+  { order: 202, title: 'Record the 25 lines of bulletin 2', by: '2026-11-06' },
+  { order: 203, title: 'Record the closing bulletin', by: '2026-11-08' },
+]
+
+// The three recording cards, with the new cast (bulletin2Voice answered:
+// Susan reads bulletin 2, as Ava Waves). And the two Claude Code cards Jon
+// wants built as soon as possible, not after the party.
+export const REWRITTEN_FOR_NEWS_CAST = [
+  { order: 200, title: 'Record W-O-O-F News bulletin 1', set: { who: 'Susan', detail: 'Video, on the Parlour TV. Susan reads the opening and the sign-off on camera as Ava Waves, and the five family clips go over B-roll. Every line is in the W-O-O-F News Recording Script. Keep a sound recording of each part too: the brain plays those if the video cannot.' } },
+  { order: 202, title: 'Record the 25 lines of bulletin 2', set: { who: 'Susan', detail: 'Audio only: five families, five dial levels each, plus the opening and the sign-off. Susan reads them all as Ava Waves (you decided on 24 Oct). The lines are in the W-O-O-F News Recording Script. Near the end of supper it plays on all four HomePods, with its words on the Orangerie iPad.' } },
+  { order: 203, title: 'Record the closing bulletin', set: { who: 'Jon and Susan', detail: 'Video, on the Parlour TV. Susan, as Ava Waves, opens and closes it in the studio; you, as Mic Cameron, do the four field parts outside the manor on the green screen. Generic lines only: the game cuts in the three name cards, so neither of you needs the answer. Keep a sound recording of each part too, as the fallback.' } },
+  { order: 196, title: 'The morning after: open the case to you', set: { who: 'Claude Code', when: 'now', detail: 'Not built yet. Built now, used after the party (you asked on 24 Oct for it as soon as possible): once a post-party switch is flipped, the case that ran opens to you, it is archived, and you decide whether to keep or clear the secrets.' } },
+  { order: 450, title: 'The pose photo for the end credits (nice to have)', set: { detail: 'Not built yet. You asked on 24 Oct for it as soon as possible, with the rest. The iPad Pro in the Entryway takes one photo of each group’s last pose for the credits.' } },
+]
+
+// The answers Jon gave on 24 Oct, evening, for a board that has none yet,
+// and the two the live board has had since 31 Aug and 8 Oct (the Canon
+// copied them that evening). The live board has every one already, and an
+// answer is never overwritten.
+export const ANSWERED_FOR_NEWS_CAST = {
+  bulletin2Voice: 'Ava Waves (Susan)',
+  bulletin2Known: 'Accept it',
+  worstDial: 'Before the second tech run',
+  grossnola: 'Keep it offstage',
+  swapMotive: 'Keep all 19',
+}
+
+// worstDial on the live board was made by Claude chat: filed under the
+// freeze rows if it came with no moment (never moved if it has one).
+export const FILED_DECISIONS_FOR_NEWS_CAST = { worstDial: 'freeze' }
+
+// The two bulletin 2 questions with the new cast, and the worst-dial question
+// (the cleanup's) naming its checks, each saying what Jon answered. An
+// answer that was one of the old options moves to the new one in its place.
+export const REFILED_FOR_NEWS_CAST = {
+  bulletin2Voice: { from: 'act3.bulletin', to: 'act3.bulletin', set: { question: 'Who reads the 25 lines of bulletin 2?', options: ['Ava Waves (Susan)', 'Mic Cameron (Jon)', 'Someone else'], note: 'Answered 24 Oct 2026: Ava Waves, so Susan reads them. The card Record the 25 lines of bulletin 2 is hers.' } },
+  bulletin2Known: { from: 'act3.bulletin', to: 'act3.bulletin', set: { question: 'Whoever records bulletin 2 knows which family each line points at. Accept?', options: ['Accept it', 'Someone who does not play records them'], note: 'Answered 24 Oct 2026: accepted, since Susan records the lines. Every line is open for anyone to read anyway; only which one plays on the night is secret.' } },
+  worstDial: { from: 'freeze', to: 'freeze', set: { note: 'Answered 24 Oct 2026: build it now (“All needs to be built as soon as possible”). These are checks G07 and G08 in the test plan, with G42, the bag solver at dial 1. Claude chat is building it and sends it to Claude Code to put in (card 478). A check that the motive can always be found (G32) already runs.' } },
+}
+
+// Six questions answered on 31 August that later decisions replaced. Each
+// answer becomes one plain line saying what is true now (CLAUDE.md and the
+// Canon); the 31 August answer is kept on the decision.
+export const SUPERSEDED_FOR_NEWS_CAST = {
+  acts35: 'Replaced 22 and 23 Oct 2026: at supper (Act 3) the bags come to the table, everyone shares, and W-O-O-F News bulletin 2 plays; at dessert (Act 5) there is the cake, then Sir Irwin’s countdown of motive cards.',
+  affectionEconomy: 'Replaced 12 and 22 Oct 2026: affection moves only through the Parlour Games, and the Salem petted button puts one guest’s Salem at 5.',
+  salemSgtMajor: 'Replaced 22 Oct 2026: everyone starts at 3 with Salem, whatever their job, so no job counts with him.',
+  eventDeck: 'Replaced 22 Oct 2026: there are no hidden events in any act; the Parlour Games are the only events, and the Murderer’s and the Ghost’s answers move the clarity dial.',
+  scoring: 'Replaced 22 Oct 2026: everyone wins the same way, by naming the Murderer, the Motive and the Victim; each phone shows how many of the three it got, and the awards come in the end credits.',
+  clueChannels: 'Replaced 21 to 23 Oct 2026: only the bags and the traces point at a person; Act 2 bag clues are about the Murderer, Act 4 bag hints about the Ghost, the study shows the Ghost’s trace and the bedroom screen the Murderer’s.',
+}
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

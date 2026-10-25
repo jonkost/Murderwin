@@ -9,6 +9,64 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 24 Oct 2026, evening · Claude Code (the hardware, the Game test tab)
+
+**What changed**
+- The house hardware, on the brain (on Wi-Fi: its Ethernet adapter shows no
+  link). The Hue bridge is paired; the hall bulb is "Master bedroom" in Hue
+  ("Jonny's light" in Home) and went red and green through the relay's own
+  code. Both study walls are paired and take the game's light writes. The
+  Elements report each hexagon as six corner lights and the Lines each bar as
+  two halves: `station/lib/nanoleaf.js` `groupLayout` gathers them into 10
+  hexagons and 12 bars (fixtures of both real layouts in `station/test`).
+  Taps arrive under ids the layout never lists, so they are taught once per
+  Mac (`npm run teach-touch`, or Teach the taps on the Game test tab) into
+  `station/touch-map.json`. The string lights are parked: holding their button
+  resets their Wi-Fi, and their API is not paired. The HomePods are not
+  grouped yet. The chime-phone stand-in tone is made, so all ten exist.
+- The Study test tab (4134f53, deployed with e91b9db), then the Game test tab:
+  every Act 4 and Act 6 game and the Parlour Games in night order, each with
+  Try it links by device, steps, It works, and a note box that files a
+  Timeline card for Claude Code. New: the `gameTest` callable
+  (`functions/lib/gametest.js`): a Get Off My Lawn! practice
+  (`?practice=salem`), a Boo's Catwalk practice (`?kiosk=boo&practice=1` and
+  `?practice=boo`), and test nights that are always rehearsals, refused while
+  the party box is ticked or a party night or dry run is live; the Parlour
+  Games sets on a phone (`?preview=questions&set=...`); `scripts/board.mjs`
+  (`npm --prefix scripts run board`) so a session can read its cards.
+- The workshop, for a non-coder: Home shows the next three and the open
+  questions, the second to-do board is gone, Terminal commands moved under For
+  Claude Code, old words fixed (the Parlour, Orangerie, Crooknog, ten
+  minutes, no freeze), done cards closed, missing hardware cards added, For
+  Jenna rewritten, the Assets page hidden.
+- Applied `docs/handoff-2026-10-24.md` (Claude chat, below): the cast on the
+  board and in the docs, the recording dates, the six stale August answers
+  marked replaced, the practice run card.
+- New Claude Doc: Where we are, 24 October
+  (https://claude.ai/artifact/8LkaQjCZd6juQq58jcW3RZ). The Canon: granoliaIntro
+  added to Genuinely open; a Closed on 24 October paragraph.
+
+**What is left**
+- The deploy and the push (Jon said yes in Claude chat; asked again here).
+- The study on the M1 Air with the Stream Deck, and teaching the taps there.
+- Handoff item 4 (as soon as possible): the Home rows, the motive card
+  slot, the morning-after reveal, replay by seed, the pose photo, the test
+  plan's Not yet checks. The worst-dial proof arrives from Claude chat as a
+  patch (card 478).
+
+**Decisions taken:** none by Claude Code. Jon's answers tonight are in the
+Claude chat entry below.
+
+## 24 Oct 2026, evening · Claude chat (the news team, the practice run)
+
+**What changed:** Jon cast the news team (Susan plays Ava Waves, Jon plays Mic
+Cameron), set up the practice run on Sunday 25 October (the whole night, every
+screen on), and said yes to deploying and pushing tonight. He answered
+bulletin2Voice (Susan reads bulletin 2 as Ava Waves), bulletin2Known
+(accepted) and worstDial (build the proof now, before the second tech run).
+The Canon, Where we are and the W-O-O-F News script were updated in the chat.
+Handoff: `docs/handoff-2026-10-24.md`, applied the same evening.
+
 ## 24 Oct 2026 · Claude Code
 
 **What changed**

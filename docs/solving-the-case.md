@@ -61,11 +61,13 @@ Rules:
 
 The news team: Ava Waves (studio anchor), Mic Cameron (field reporter), Haley Stratton (weather), Mitt Kickwell (sports). Ava and Mic front all three bulletins; weather and sports are for fun. Every line is in the W-O-O-F News Recording Script.
 
-**Bulletin 1 · Act 2, lights out · video.** Ava on camera for the opening and sign-off; the family line plays over B-roll. Always clarity level 3. Crosses off exactly one wrong family. Five family clips plus the opening and sign-off. Sign-off: "Don't touch that dial! Stay tuned for more updates."
+The cast (Jon, 24 Oct): **Susan plays Ava Waves** and **Jon plays Mic Cameron**. Susan reads bulletin 1's opening and sign-off on camera, all of bulletin 2, and the closing bulletin's studio opening and close; Jon reads the closing bulletin's four field parts outside.
+
+**Bulletin 1 · Act 2, lights out · video.** Ava (Susan) on camera for the opening and sign-off; the family line plays over B-roll. Always clarity level 3. Crosses off exactly one wrong family. Five family clips plus the opening and sign-off. Sign-off: "Don't touch that dial! Stay tuned for more updates."
 
 Bulletin 1 and the closing bulletin play as video on the Parlour TV once Jon ticks The bulletins are videos on the Game night page (Jon, 23 Oct; built 24 Oct); until then the brain plays the recordings and the TV shows the words. Each part is its own file; a part with no video file is skipped, and the words stay on the screen.
 
-**Bulletin 2 · Act 3, near the end of supper · audio.** Plays on the Orangerie HomePod, captions on the iPad. Voice not decided yet. 25 lines: 5 families × 5 dial levels. Every level points at the real family; level 1 is very obscure, level 5 is plain. Jon arms it from his host phone; it plays at a random moment 3 to 5 minutes later. The arm screen says only "Armed", never the line. Sign-off teases Irwin's "pup-lic address". (This replaces the older Bulletin 2 design that ruled out single motives.)
+**Bulletin 2 · Act 3, near the end of supper · audio.** Plays on the HomePods (the Orangerie's included), captions on the iPad. Read by Susan as Ava Waves (bulletin2Voice, Jon 24 Oct). She knows which family each line points at, and Jon accepted that (bulletin2Known, 24 Oct). 25 lines: 5 families × 5 dial levels. Every level points at the real family; level 1 is very obscure, level 5 is plain. Jon arms it from his host phone; it plays at a random moment 3 to 5 minutes later. The arm screen says only "Armed", never the line. Sign-off teases Irwin's "pup-lic address". (This replaces the older Bulletin 2 design that ruled out single motives.)
 
 **Bulletin 3 · Act 7, the reveal · video.** See "Act 7" below.
 
@@ -242,7 +244,7 @@ Settled by default, as built: the deduction round comes after the bedroom door o
 
 ## Act 7: the closing bulletin
 
-Video that bookends the Act 2 bulletin. Order stays Murderer, Motive, Victim (F17). Jon records generic lines; the game cuts in the three cards as B-roll, so he never needs the answer. Full script in `docs/handoff-2026-10-22.md` §7b. Then the end credits (§8).
+Video that bookends the Act 2 bulletin. Order stays Murderer, Motive, Victim (F17). Susan (Ava, in the studio) and Jon (Mic, the four field parts outside) record generic lines; the game cuts in the three cards as B-roll, so neither needs the answer. Full script in `docs/handoff-2026-10-22.md` §7b. Then the end credits (§8).
 
 Built (23 Oct; as video on the Parlour TV since 24 Oct, once The bulletins are videos is ticked on the Game night page; until then the brain plays the recordings and the TV shows the words): each name card appears only after its lead-in part has played, and pressing the next name cuts off whatever is playing. A part with no video file is skipped. The end-credit awards show only in the credits.
 

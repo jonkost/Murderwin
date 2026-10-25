@@ -31,6 +31,15 @@ many are missing.
 
 ## The W-O-O-F News recordings
 
+**Who reads them (decided 24 October).** Susan plays Ava Waves, the studio
+anchor: bulletin 1's opening and sign-off (on camera), all of bulletin 2
+(its opening, the 25 family lines and its sign-off), and the closing
+bulletin's `woof-close-studio-open` and `woof-close-studio-close`. Jon plays
+Mic Cameron, the field reporter: the closing bulletin's four
+`woof-close-field-` parts, outside the manor. Bulletin 1's five family
+clips play over B-roll. The W-O-O-F News Recording Script has the same cast
+in its Cast line at the top.
+
 **How to name them.** One file per line in the W-O-O-F News Recording
 Script. Name each file exactly as the script names its line: small letters,
 hyphens, no spaces, then the ending. For example `newsflash-opening.m4a`.

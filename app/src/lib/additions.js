@@ -23,14 +23,39 @@
 //                                         or one still under `from`), give a
 //                                         `by` date (only a card with none),
 //                                         and add `note` to the end of the detail
+//   rewriteTasks:    [{ order, title?, set }]
+//                                         on those open cards: replace the
+//                                         fields in `set` (title, detail, who,
+//                                         moment, by, when, tech), once, when a
+//                                         card's words must change rather than
+//                                         grow. The words replaced are kept on
+//                                         the card, under `previous`, by entry
 //   fileDecisions:   { key: moment }      file a decision that has no moment
-//   refileDecisions: { key: { from, to } } move a decision still filed under
+//   refileDecisions: { key: { from, to, set? } }
+//                                         move a decision still filed under
 //                                         `from` (a moment the night no longer
-//                                         has) to `to`
+//                                         has, or the same one) to `to`, and
+//                                         replace the fields in `set`
+//                                         (question, options, note, who,
+//                                         retired). New options keep their
+//                                         places: an answer that was one of the
+//                                         old options becomes the new option in
+//                                         the same place, so Jon's pick stands
+//   supersedeDecisions: { key: answer }  on a decision whose answer later
+//                                         decisions replaced (24 Oct 2026: six
+//                                         still showed their 31 August
+//                                         answers): the answer becomes this
+//                                         plain line saying what is true now,
+//                                         answered by 'later decisions'. The
+//                                         answer it replaces is kept on the
+//                                         decision, under `previous`, by entry
 // With a `title`, a card must also have that title (any case), so a card
 // someone added by hand that happens to share a number is never touched.
-// Nothing here ever erases, reorders or rewrites a line; retireItems only sets
-// the soft-delete flag the workshop's own Remove sets.
+// Nothing here ever erases or reorders a line; retireItems only sets the
+// soft-delete flag the workshop's own Remove sets, and rewriteTasks and
+// supersedeDecisions keep the words they replace. The store reads only the
+// cards taskOrdersOf names and the decisions decisionKeysOf names, so every
+// operation here works on those.
 
 import { normalizeBeats, titleOf } from './scenarios.js'
 
@@ -89,8 +114,24 @@ export function taskMatches(task, entry) {
 
 // The task orders an entry looks up (the store fetches those cards first).
 export function taskOrdersOf(add) {
-  return [...new Set([...(add.retireTasks ?? []), ...(add.fileTasks ?? [])].map(r => r.order))]
+  return [...new Set([...(add.retireTasks ?? []), ...(add.fileTasks ?? []), ...(add.rewriteTasks ?? [])].map(r => r.order))]
 }
+
+// The decision keys an entry reads (the store fetches those decisions first).
+export function decisionKeysOf(add) {
+  return [...new Set([
+    ...(add.decisions ?? []).map(d => d.key),
+    ...Object.keys(add.answerDecisions ?? {}),
+    ...Object.keys(add.fileDecisions ?? {}),
+    ...Object.keys(add.refileDecisions ?? {}),
+    ...Object.keys(add.supersedeDecisions ?? {}),
+  ])]
+}
+
+// The fields a rewrite may replace on a card, and on a decision.
+export const REWRITE_TASK_FIELDS = ['title', 'detail', 'who', 'moment', 'by', 'when', 'tech']
+export const REWRITE_DECISION_FIELDS = ['question', 'options', 'note', 'who', 'retired']
+const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj?.[k] !== undefined).map(k => [k, obj[k]]))
 
 // snapshot: { applied: [id], areas: { area: rawDocOrNull }, decisions: { key: dataOrNull }, tasks: [{ id, order, title, status, detail, moment, by }] }
 export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.now() } = {}) {
@@ -146,6 +187,16 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
       if (Object.keys(patch).length) patchTask(t.id, patch)
     }
   }
+  for (const r of add.rewriteTasks ?? []) {
+    const set = pick(r.set, REWRITE_TASK_FIELDS)
+    if (!Object.keys(set).length) continue
+    for (const t of snapshot.tasks ?? []) {
+      const c = current(t)
+      if (!taskMatches(t, r) || c.deleted || c.status === 'done') continue
+      const was = Object.fromEntries(Object.keys(set).map(k => [k, c[k] ?? null]))
+      patchTask(t.id, { ...set, previous: { ...(c.previous ?? {}), [add.id]: was } })
+    }
+  }
   for (const [key, answer] of Object.entries(add.answerDecisions ?? {})) {
     const d = snapshot.decisions?.[key]
     if (d && d.answer == null) plan.decisionPatches[key] = { ...plan.decisionPatches[key], answer, answeredAt: now, answeredBy: 'the canon' }
@@ -154,9 +205,26 @@ export function planAddition(add, snapshot, { newId = defaultNewId, now = Date.n
     const d = snapshot.decisions?.[key]
     if (d && !d.moment) plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment }
   }
-  for (const [key, { from, to }] of Object.entries(add.refileDecisions ?? {})) {
+  for (const [key, { from, to, set }] of Object.entries(add.refileDecisions ?? {})) {
     const d = snapshot.decisions?.[key]
-    if (d && d.moment === from) plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment: to }
+    if (!d || d.moment !== from) continue
+    const fields = pick(set, REWRITE_DECISION_FIELDS)
+    const answer = { ...d, ...plan.decisionPatches[key] }.answer
+    const at = Array.isArray(fields.options) && answer != null ? (d.options ?? []).indexOf(answer) : -1
+    if (at >= 0 && fields.options[at] != null) fields.answer = fields.options[at]
+    plan.decisionPatches[key] = { ...plan.decisionPatches[key], moment: to, ...fields }
+  }
+  for (const [key, answer] of Object.entries(add.supersedeDecisions ?? {})) {
+    const d = snapshot.decisions?.[key]
+    if (!d || !answer) continue
+    const c = { ...d, ...plan.decisionPatches[key] }
+    if (c.answer === answer) continue
+    const was = { answer: c.answer ?? null, answeredBy: c.answeredBy ?? null, answeredAt: c.answeredAt ?? null }
+    plan.decisionPatches[key] = {
+      ...plan.decisionPatches[key],
+      answer, answeredAt: now, answeredBy: 'later decisions',
+      previous: { ...(c.previous ?? {}), [add.id]: was },
+    }
   }
   plan.applied = [...applied, add.id]
   return plan

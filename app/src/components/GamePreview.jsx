@@ -69,7 +69,7 @@ function render(area, tab, v) {
         )
       }
       return (
-        <Frame kind="room" title="Sir Irwin at cake, Act 5, on the living room TV">
+        <Frame kind="room" title="Sir Irwin at cake, Act 5, on the Parlour TV">
           <p className="gp-sub">SIR IRWIN</p>
           {area === 'openers' ? <p><b>{v.text || <G>his hello</G>}</b></p> : <p><G>His hello from the other list…</G></p>}
           <p><G>…then his countdown of motive cards…</G></p>

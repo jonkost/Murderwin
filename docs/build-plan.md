@@ -213,6 +213,16 @@ are open on 23 October. Answered that day: *secretLines* (retire them: the
 cats say only their open hint lines) and *act2Safe* (take the Act 2 safe
 out).
 
+**24 October, evening:** this list is history. Open now: *ballotMajority*,
+*diningName*, *handOn*, *rulesDeckScreen*, *granoliaIntro* (new) and
+*tidyFolders* (Claude Code asks you about it once). Answered on 24 October:
+*newsVideo*, *stewardPictures*, *partnerAwards*, *bagsAct4*, *tutorial8* and
+*dialMapping* (the handoff's defaults), and by you that evening
+*bulletin2Voice* (Susan reads it, as Ava Waves), *bulletin2Known* (accepted)
+and *worstDial* (build it now). *swapMotive* (keep all 19, 8 October) and
+*grossnola* (keep it offstage, 31 August) were answered long before. The
+Timeline is the live list.
+
 - *newsVideo:* bulletin 1 and the closing bulletin as video on the living
   room TV, or as sound with captions (as built)?
 - *stewardPictures:* should Jenna see and swap the Relay Drawing pictures on
@@ -288,7 +298,8 @@ Two more, taken on 23 October (say if you want them changed):
 
 Closed 22 October: there are no hidden events for the Murderer or the Ghost
 in any act; the Parlour Games are the only events. Still not built: the
-validator assuming the worst dial (the ten-thousand-run solvability proof),
-more puzzles beyond the study light game and the memory match, a recap
-button, idle art. They are listed on the workshop's "Where we are" page as after the
-party.
+validator assuming the worst dial (the ten-thousand-run solvability proof;
+since 24 October Claude chat is building it, before the second tech run, as
+you decided in *worstDial*), more puzzles beyond the study light game and
+the memory match, a recap button, idle art. The last three are listed on the
+workshop's "Where we are" page as after the party.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAreaEditor, autoGrow } from '../lib/useAreaEditor'
-import { AREAS, TAB_KINDS, lintItem, fieldsFor, codecFor, mainFieldKey, goalForTab } from '../lib/content'
+import { AREAS, TAB_KINDS, lintItem, fieldsFor, codecFor, mainFieldKey, goalForTab, tabsOf } from '../lib/content'
 import { hasContent } from '../lib/codecs'
 import { cardFor } from '../lib/cards'
 import ListCard from '../components/ListCard'
@@ -39,7 +39,7 @@ function AreaEditor({ area }) {
   const inputRefs = useRef([])      // one per field, in order
 
   const tabDef = spec.tabs ? TAB_KINDS[spec.tabs] : null
-  const tabs = tabDef?.list ?? null
+  const tabs = tabsOf(spec)
   const remembered = tabs ? readMemory(`workshop.tab.${area}`) : null
   const tab = tabs ? (tabs.includes(params.get('tab')) ? params.get('tab') : tabs.includes(remembered) ? remembered : tabs[0]) : null
   useEffect(() => { if (tab) writeMemory(`workshop.tab.${area}`, tab) }, [area, tab])

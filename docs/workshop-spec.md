@@ -256,6 +256,45 @@ workshop:
   Granolia's Lightbulb Moment, and so on), and its first sections are
   Before the second tech run and The weeks before (there is no freeze date).
 
+## 24 October 2026, evening: the Game test tab, and the board made plain
+
+- **The Game test tab** (`#/game-test`, Game test in the rail, in place of
+  Study test; the old `#/study-test` opens its study section; also linked
+  from the Devices and Game night pages). Every game of Acts 4 and 6 and the
+  Parlour Games, in the order of the night: Granolia's Lightbulb Moment (the
+  study test: flash the walls, teach the taps, a practice round with an
+  answer pad), In Duplicate, Get Off My Lawn! (a practice any phones join),
+  Boo's Catwalk (a practice show on the wall and the phones), the Parlour
+  Games (every set in the bank as a phone shows it), Sir Irwin Needs a Hand
+  and the deduction round (samples, and the whole game on a test night). A
+  test night strip starts and moves a rehearsal of the tab's own; the party
+  box turns it off. Each game has It works, a chip (Not tried yet, Works,
+  Needs a fix) and a note box (typed or spoken) that files a Timeline card
+  for Claude Code; "Copy all open notes" at the bottom. Jenna gets one Needs
+  more button and no note box. How to use it: `docs/on-the-night.md`,
+  "Trying the games".
+- **The study key word box** (on the Game test tab, at the top while none is
+  saved): the same word the Host tab's Save key writes, saved with no night
+  running.
+- **For Claude Code folds.** A Timeline card that needs a command keeps it
+  out of Jon's way, in a closed fold under the plain instruction (the card's
+  `tech`). The Devices page has the same folds, plus the order to switch
+  things on and what to do when something dies.
+- **The board made plain** (the migration `2026-10-24-cleanup`): cards that
+  told Jon to type in Terminal are now asks of Claude Code; the old words
+  (the living room, the orangery, the freeze, Crookshank, nine sounds) are
+  gone; cards that had grown dated corrections are one instruction each (a
+  rewrite keeps the words it replaces); today's hardware jobs and the
+  missing night jobs are added (cards 460 to 475). A decision Claude Code
+  will ask about says so (tidyFolders). New decisions: granoliaIntro, and
+  worstDial (answered on the live board by Claude chat the same evening;
+  the migration adds it only if missing).
+- **Home** lost its old To do, Doing, Done board and its second list of
+  decisions: the Timeline is the one board, and Home, Where we are and the
+  Timeline show the decisions with the same panel.
+- **What a cat says first, and last** shows only Sir Irwin's tab (the only
+  one read).
+
 ## What's left to build here
 
 - The history screen (promise 2).
