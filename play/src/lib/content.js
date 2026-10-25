@@ -1,4 +1,4 @@
-import portraitFitData from './portrait-fit.json'
+import portraitFitData from './portrait-fit.json' with { type: 'json' }
 
 // Fixed copy and the helpers that prefer Jon's workshop lines when they exist.
 // Everything here is safe content. Defaults keep every screen readable before
