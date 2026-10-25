@@ -94,10 +94,12 @@ function RoomGame({ room, nightId, uid, serverNow, groupId }) {
 // every phone and the string lights flip together; the phone tints its whole
 // screen the colour too, so the game works with no lights at all. A slip on
 // any phone restarts the round for everyone; thirty seconds clean passes it.
+// The Game test tab's practice (?practice=salem, screens/Practice.jsx) plays
+// the same rounds through SalemRounds, on its own record.
 
 // Movement, in m/s² with gravity taken out, from the phone's motion sensor.
 // `ok` is false until a reading arrives (a phone with no sensor never slips).
-function useMotion() {
+export function useMotion() {
   const [state] = useState(() => ({ ok: false, mag: 0, lastShakeAt: 0, g: null }))
   useEffect(() => {
     if (typeof window === 'undefined' || !('DeviceMotionEvent' in window)) return
@@ -123,12 +125,26 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
   const view = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/salem` : null)
   const doc = view.data
   const motion = useMotion()
+  const mine = doc && doc.groupId === groupId
+  if (!mine) return <p className="gloss">Salem is finishing with the last lot. Stand by the string lights.</p>
+  return (
+    <SalemRounds doc={doc} serverNow={serverNow} motion={motion}
+      ready={() => callSalemReady({ nightId })}
+      slip={(attempt, colour) => callSalemSlip({ nightId, attempt, colour })}
+      passed={attempt => callSalemPassed({ nightId, attempt })} />
+  )
+}
+
+// The rounds themselves, on one record in the night's shape ({ state: intro |
+// idle | playing | passed | cleared, round, attempt, flips, startsAt, cleanAt,
+// lastSlip }). `ready()`, `slip(attempt, colour)` and `passed(attempt)` send
+// to the server and return a promise; a refused slip or pass is sent again.
+export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines = SALEM_LINES }) {
   const sent = useRef({})
   const [slipShown, setSlipShown] = useState(null)
   useTick(100)
   const now = serverNow()
-  const mine = doc && doc.groupId === groupId
-  const playing = mine && doc.state === 'playing'
+  const playing = doc.state === 'playing'
   const started = playing && now >= ms(doc.startsAt)
   const colour = started ? salemColourAt(doc, now) : null
 
@@ -149,12 +165,12 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
     const offset = local - now // this phone's clock against the server's
     const flipAt = salemFlipAt(doc, now) + offset
     const grace = SALEM_GRACE_MS[doc.round] ?? 600
-    let slip = null
-    if (colour === 'green' && local - flipAt > grace && motion.mag > SALEM_SHAKE) slip = 'green'
-    if (colour === 'red' && local - Math.max(flipAt + grace, motion.lastShakeAt) > SALEM_STILL_MS) slip = 'red'
-    if (slip) {
+    let s = null
+    if (colour === 'green' && local - flipAt > grace && motion.mag > SALEM_SHAKE) s = 'green'
+    if (colour === 'red' && local - Math.max(flipAt + grace, motion.lastShakeAt) > SALEM_STILL_MS) s = 'red'
+    if (s) {
       sent.current[key] = true
-      callSalemSlip({ nightId, attempt: doc.attempt, colour: slip }).catch(() => { sent.current[key] = false })
+      Promise.resolve(slip(doc.attempt, s)).catch(() => { sent.current[key] = false })
     }
   })
   // thirty seconds clean: any phone may say so
@@ -163,33 +179,32 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
     const key = `passed-${doc.attempt}`
     if (sent.current[key]) return
     sent.current[key] = true
-    callSalemPassed({ nightId, attempt: doc.attempt }).catch(() => { sent.current[key] = false })
+    Promise.resolve(passed(doc.attempt)).catch(() => { sent.current[key] = false })
   })
 
-  if (!mine) return <p className="gloss">Salem is finishing with the last lot. Stand by the string lights.</p>
-  const ready = () => callSalemReady({ nightId }).catch(() => {})
+  const onReady = () => Promise.resolve(ready()).catch(() => {})
   if (doc.state === 'intro' || doc.state === 'idle') return (
     <div className="salem">
-      <p><Spoken text={SALEM_LINES.intro} /></p>
-      <p><Spoken text={SALEM_LINES.ready} /></p>
-      {!motion.ok && <p className="gloss">{SALEM_LINES.noSensor}</p>}
-      <button className="big" onClick={ready}>Ready</button>
+      <p><Spoken text={lines.intro} /></p>
+      <p><Spoken text={lines.ready} /></p>
+      {!motion.ok && <p className="gloss">{lines.noSensor}</p>}
+      <button className="big" onClick={onReady}>Ready</button>
     </div>
   )
   if (doc.state === 'passed') return (
     <div className="salem">
-      <p><Spoken text={SALEM_LINES.passed} /></p>
-      <button className="big" onClick={ready}>Ready</button>
+      <p><Spoken text={lines.passed} /></p>
+      <button className="big" onClick={onReady}>Ready</button>
     </div>
   )
-  if (doc.state === 'cleared') return <p><Spoken text={SALEM_LINES.cleared} /></p>
+  if (doc.state === 'cleared') return <p><Spoken text={lines.cleared} /></p>
   return (
     <div className={`salem-play ${colour ?? 'wait'}`} role="status" aria-live="assertive">
-      <p className="eyebrow">{SALEM_LINES.rounds[doc.round]}</p>
-      {slipShown && <p className="slip">{slipShown === 'green' ? SALEM_LINES.slipGreen : SALEM_LINES.slipRed}</p>}
+      <p className="eyebrow">{lines.rounds[doc.round]}</p>
+      {slipShown && <p className="slip">{slipShown === 'green' ? lines.slipGreen : lines.slipRed}</p>}
       <p className="salem-colour">{!started ? `Get ready… ${Math.max(1, Math.ceil((ms(doc.startsAt) - now) / 1000))}` : colour === 'red' ? 'RED: SHAKE!' : 'GREEN: FREEZE!'}</p>
       {started && <p className="gloss">{Math.max(0, Math.ceil((ms(doc.cleanAt) - now) / 1000))} seconds clean to go</p>}
-      {!motion.ok && <p className="gloss">{SALEM_LINES.noSensor}</p>}
+      {!motion.ok && <p className="gloss">{lines.noSensor}</p>}
     </div>
   )
 }
@@ -198,21 +213,29 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
 // Boo's catwalk (§9.7): the show is on the wall (?kiosk=boo); the phones
 // flash STRIKE A POSE with the five-second HOLD IT and Boo's verdict, all
 // from the server's schedule (public/boo). When the show is over, the first
-// phone to notice tells the server, and Boo pays.
+// phone to notice tells the server, and Boo pays. The practice
+// (?practice=boo) shows the same moments through BooMoments, and pays nobody.
 function BooPoses({ nightId, serverNow, groupId }) {
   const view = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/boo` : null)
   const doc = view.data
   const told = useRef(false)
-  useTick(250)
-  const now = serverNow()
   const mine = doc && doc.groupId === groupId
-  const m = mine ? booMoment(doc, now) : { part: 'idle' }
-  useEffect(() => {
-    if (!mine || doc.state !== 'show' || m.part !== 'done' || told.current) return
+  if (!mine) return <p className="gloss">Boo is finishing with the last lot. Watch the wall.</p>
+  const over = () => {
+    if (doc.state !== 'show' || told.current) return
     told.current = true
     callBooDone({ nightId }).catch(() => { told.current = false })
-  })
-  if (!mine) return <p className="gloss">Boo is finishing with the last lot. Watch the wall.</p>
+  }
+  return <BooMoments boo={doc} serverNow={serverNow} onOver={over} />
+}
+
+// The show's moments on a phone, from one record in the night's shape (see
+// lib/night.js booMoment). `onOver()` is called while the show is over.
+export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's the show. Boo has something for you." }) {
+  useTick(250)
+  const now = serverNow()
+  const m = booMoment(boo, now)
+  useEffect(() => { if (m.part === 'done') onOver?.() })
   if (m.part === 'idle' || m.part === 'intro') return <p><Spoken text={BOO_LINES.intro} /></p>
   if (m.part === 'strut') return <p className="gloss">Watch the wall. Pose {m.pose} of 3 is coming.</p>
   if (m.part === 'pose') return (
@@ -222,5 +245,5 @@ function BooPoses({ nightId, serverNow, groupId }) {
     </div>
   )
   if (m.part === 'judge') return <p className="boo-judge"><Spoken text={m.line} /></p>
-  return <p className="gloss">That's the show. Boo has something for you.</p>
+  return <p className="gloss">{doneText}</p>
 }

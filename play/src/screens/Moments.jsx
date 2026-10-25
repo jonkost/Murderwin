@@ -54,7 +54,8 @@ export function PausedStrip({ ui }) {
 // across the top of every phone and room screen, never on the party night,
 // never while the room is dark. The page moves down by the band's height
 // (html.rehearsal-on in styles.css), so the band never covers anything.
-export function RehearsalBand({ on }) {
+// The Game test tab's practice pages wear the same band, saying PRACTICE.
+export function RehearsalBand({ on, label = 'REHEARSAL' }) {
   useEffect(() => {
     if (!on || typeof document === 'undefined') return
     const root = document.documentElement
@@ -62,7 +63,7 @@ export function RehearsalBand({ on }) {
     return () => root.classList.remove('rehearsal-on')
   }, [on])
   if (!on) return null
-  return <div className="rehearsal-band" role="note">REHEARSAL</div>
+  return <div className="rehearsal-band" role="note">{label}</div>
 }
 
 const HOLD_MS = 15_000

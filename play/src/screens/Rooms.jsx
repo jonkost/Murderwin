@@ -12,6 +12,7 @@ import Spoken from './Spoken'
 //   ?kiosk=memory   Zimothy's memory match in three rounds, all fourteen traces
 //   ?kiosk=memory&play=1   the same game on its own, no case, no clues
 //   ?kiosk=boo      Boo's catwalk on the triangle wall, from Susan's MacBook Pro
+//   ?kiosk=boo&practice=1   the Game test tab's practice show (screens/Practice.jsx)
 // Everything here reads public docs and open lines only.
 
 const BASE = import.meta.env.BASE_URL
@@ -242,23 +243,32 @@ const BOO_FRAMES = ['Boo 1.png', 'Boo 2.png', 'Boo 3.png', 'Boo 4.png']
 export const BOO_INTRO = "Darling. Welcome to my runway. Watch the wall. When the music stops, strike a pose and HOLD it. I'll be judging. I'm always judging."
 
 export function BooWall({ boo, night, nightId, serverNow }) {
+  const told = useRef(false)
+  const over = () => {
+    if (boo?.state !== 'show' || told.current || nightId === 'preview') return
+    told.current = true
+    callBooDone({ nightId }).catch(() => { told.current = false })
+  }
+  useEffect(() => { told.current = false }, [boo?.groupId, boo?.startsAt])
+  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} />
+}
+
+// The wall itself, from one record in the night's shape (lib/night.js
+// booMoment): the night's (above) or the Game test tab's practice
+// (?kiosk=boo&practice=1, screens/Practice.jsx), which pays nobody. Not
+// `live`: the quiet wall with `idleLine`. `onOver()` is called while the show is over.
+export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.' }) {
   useTick(250)
   const now = serverNow()
   const m = booMoment(boo, now)
-  const told = useRef(false)
   useRunwayMusic(m.part === 'strut' || m.part === 'intro')
-  useEffect(() => {
-    if (boo?.state !== 'show' || m.part !== 'done' || told.current || nightId === 'preview') return
-    told.current = true
-    callBooDone({ nightId }).catch(() => { told.current = false })
-  })
-  useEffect(() => { told.current = false }, [boo?.groupId, boo?.startsAt])
+  useEffect(() => { if (m.part === 'done') onOver?.() })
   const frame = BOO_FRAMES[Math.floor(now / 450) % BOO_FRAMES.length]
-  if (!night || night.act !== 4 || !boo?.groupId || m.part === 'idle') return (
+  if (!live || m.part === 'idle') return (
     <div className="kiosk boo-wall idle">
       <GameName id="entryway" />
       <img className="boo-strut still" src={`${BASE}household/full/${encodeURIComponent('Boo 1.png')}`} alt="" />
-      <p className="kiosk-line">The next group will be along.</p>
+      <p className="kiosk-line">{idleLine}</p>
     </div>
   )
   return (

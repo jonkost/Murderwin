@@ -20,6 +20,7 @@ import * as windows from './lib/windows.js'
 import { mayTouchNight } from './lib/access.js'
 import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
+import { gameTestRequest } from './lib/gametest.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -186,6 +187,17 @@ export const studyTest = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { command, name, key, status } = req.data ?? {}
   return studyTestRequest(db, { command, name, key, status, isAdmin: ADMIN_UIDS.includes(uid) })
+}))
+
+// The Game test (the workshop's Game test tab, lib/gametest.js): the
+// practices of Get Off My Lawn! and Boo's Catwalk, on their own docs and
+// never a night's, and a test night that is always a rehearsal. Opening,
+// stopping and the test night are the admin's only; any signed-in phone may
+// join the Salem practice and play it.
+export const gameTest = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { command, name, attempt, colour, act, beat, replace } = req.data ?? {}
+  return gameTestRequest(db, { command, uid, isAdmin: ADMIN_UIDS.includes(uid), name, attempt, colour, act, beat, replace: replace === true })
 }))
 
 // The relay drawing's clock. A phone at the party, a host or a room screen

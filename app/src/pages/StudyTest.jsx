@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { subscribeGame, saveGame } from '../lib/store'
 import { studyTestApi } from '../lib/studyTestApi'
 import {
   COLOURS, NUMBERS, connection, agoWords, tapAgo, wallLines, tapLine, teachLine,
   practiceLine, roundLine, pairsLine, entryLine, shownLine, modeLine, sentLine,
-  keyWordProblem, callError, NOT_KEPT,
+  callError, NOT_KEPT,
 } from '../lib/studyTest'
 
 // Study test: try the Act 4 light game from a phone while standing at the
-// real Nanoleaf walls, with no terminal. The four buttons and the answer pad
-// go to the study station through the `studyTest` callable; the station
-// answers on public_state/study_test_status, which this page reads.
+// real Nanoleaf walls, with no terminal. It is the first section of the Game
+// test tab (pages/GameTest.jsx, 24 Oct 2026), which also holds the study key
+// word box (components/KeyWord.jsx); /study-test opens that section. The four
+// buttons and the answer pad go to the study station through the `studyTest`
+// callable; the station answers on public_state/study_test_status, which
+// this part reads.
 //
 // A test never touches a real night: the station's practice round has no
 // group, sends no state and deals no clue (station/lib/teach.js and the
@@ -62,12 +64,12 @@ export default function StudyTest() {
   const practiceLive = mode === 'practice' && Boolean(practice)
 
   return (
-    <main className="dash study-test">
+    <div className="study-test">
       {error && <div className="banner error" role="alert">{error}</div>}
       {readError && <div className="banner error" role="alert">Cannot read the study station's status. Check your signal, then reload this page.</div>}
 
-      <section className="panel">
-        <h2>Study test</h2>
+      <div className="gt-block">
+        <h3>The study station</h3>
         <p className="why">Try the study light game from this phone while you stand at the walls. A test never touches a real night: no group finishes, no clue is dealt and the house does not move on.</p>
         {status === undefined
           ? <p className="st-state">…</p>
@@ -75,14 +77,18 @@ export default function StudyTest() {
             ? <p className="st-state good" role="status">The study station is connected.</p>
             : <>
               <p className="st-state bad" role="status">The study station is not connected.</p>
-              <p className="night-line">On the study Mac, in the station folder, run <b>npm start</b>.</p>
+              <p className="night-line">Ask Claude Code to start the study station on the Mac by the walls.</p>
               {link.ago !== null && <p className="hint">Last heard from it {agoWords(link.ago)}.</p>}
-              <p className="hint">Already running? Open station/.env on the study Mac, copy the word after STATION_KEY=, and save that same word at the bottom of this page. The station tries again within 20 seconds.</p>
+              <p className="hint">Already running? Check the study key word is saved on this page, and that Claude Code put the same word on the study Mac. The station tries again within 20 seconds.</p>
             </>}
-      </section>
+        <details className="gt-claude">
+          <summary>For Claude Code</summary>
+          <p className="hint">Start it with cd station &amp;&amp; npm start on the M1 Air by the walls (the brain until the M1 is set up). STATION_KEY= in station/.env must match the key word saved here. The taught taps are saved on whichever Mac runs the station.</p>
+        </details>
+      </div>
 
-      <section className="panel">
-        <h2>Try it</h2>
+      <div className="gt-block">
+        <h3>Try it at the walls</h3>
         <p className="st-big" aria-live="polite">{link.connected ? modeLine(status) : 'Waiting for the station.'}</p>
         <div className="st-actions">
           <button className="primary" disabled={off || busyMode} onClick={() => send('flash')}>Flash the walls</button>
@@ -98,26 +104,24 @@ export default function StudyTest() {
 
         {mode === 'teach' && status?.teach && <p className="st-big">{teachLine(status.teach)}</p>}
 
-        <h3 className="st-sub">The last tap</h3>
+        <h4 className="st-sub">The last tap</h4>
         <p className="st-tap" aria-live="polite">
           {tapLine(status?.lastTap)}
           {status?.lastTap && ago !== null && <span className="hint"> ({agoWords(ago)})</span>}
         </p>
-      </section>
+      </div>
 
       {practice && <Practice practice={practice} live={mode === 'practice'} said={practiceLive ? said : null} send={send} />}
 
-      <section className="panel">
-        <h2>The walls</h2>
+      <div className="gt-block">
+        <h3>The walls</h3>
         {status
           ? <ul className="st-list">{wallLines(status).map((l, i) => <li key={i}>{l}</li>)}</ul>
           : <p className="why">Nothing yet. The walls show here once the station is running.</p>}
         {status && !link.connected && <p className="hint">This is what the station said last time it was running.</p>}
         <p className="hint">How to start every machine in the house is on <Link to="/devices">the devices page</Link>.</p>
-      </section>
-
-      <KeyWord />
-    </main>
+      </div>
+    </div>
   )
 }
 
@@ -129,8 +133,8 @@ function Practice({ practice, live, said, send }) {
   const stale = !live && !done // stopped, or the station went quiet mid-round
   const entry = practice.entry ?? {}
   return (
-    <section className="panel">
-      <h2>The practice round</h2>
+    <div className="gt-block">
+      <h3>The practice round</h3>
       <p className="st-big" aria-live="polite">{stale ? 'This practice round is not running.' : practiceLine(practice)}</p>
       {roundLine(practice) && <p className="night-line">{roundLine(practice)}</p>}
       <p className="night-line">{pairsLine(practice)}</p>
@@ -161,56 +165,6 @@ function Practice({ practice, live, said, send }) {
         </div>
       )}
       {(done || stale) && <p className="hint">Tap Play a practice round to go again.</p>}
-    </section>
-  )
-}
-
-// The study key word: the station shows it to the server to be let in. The
-// same doc and field the Host tab's Save key writes (meta/game.station_key),
-// saved straight from the workshop so it works with no night started.
-function KeyWord() {
-  const [game, setGame] = useState(null)
-  const [readFailed, setReadFailed] = useState(false)
-  const [word, setWord] = useState('')
-  const [state, setState] = useState('idle') // idle | saving | saved | error (a save that failed)
-  const [showWord, setShowWord] = useState(false)
-  const latest = useRef({})
-  useEffect(() => subscribeGame(g => { setGame(g); latest.current = g; setReadFailed(false) }, () => setReadFailed(true)), [])
-  const problem = keyWordProblem(word)
-  const save = (e) => {
-    e.preventDefault()
-    if (problem) return
-    setState('saving')
-    saveGame({ station_key: word.trim() }, latest.current)
-      .then(() => { setState('saved'); setWord('') })
-      .catch(() => setState('error'))
-  }
-  const saved = String(game?.station_key ?? '').trim()
-  const has = Boolean(saved)
-  return (
-    <section className="panel">
-      <h2>The study key word</h2>
-      {readFailed && <div className="banner error" role="alert">Cannot read whether a key word is saved. Check your signal, then reload this page.</div>}
-      {state === 'error' && <div className="banner error" role="alert">SAVE FAILED. Check your signal and try again.</div>}
-      <p className="why">The study station shows this word to the game to be let in. The same word must be in station/.env on the study Mac, on the line STATION_KEY=. After you change the file, start the station again.</p>
-      <p className="night-line">{game === null ? (readFailed ? 'Not known: the page could not read it.' : '…') : has ? <b>A study key word is saved.</b> : <b>No study key word is saved yet. The station cannot connect until one is.</b>}</p>
-      {has && (
-        <p className="night-line">
-          {showWord && <>The saved word is <b className="st-word">{saved}</b>. </>}
-          <button type="button" className="ghost" onClick={() => setShowWord(v => !v)}>{showWord ? 'Hide the word' : 'Show the saved word'}</button>
-        </p>
-      )}
-      <form onSubmit={save}>
-        <label className="field">
-          <span>{has ? 'A new key word (replaces the saved one)' : 'The key word, four letters or more'}</span>
-          <input type="text" value={word} onChange={e => { setWord(e.target.value); if (state !== 'saving') setState('idle') }}
-            placeholder="study-2026" autoComplete="off" autoCapitalize="none" spellCheck={false} />
-        </label>
-        <p className="night-line">
-          <button className="primary" type="submit" disabled={Boolean(problem) || state === 'saving'}>{state === 'saving' ? 'Saving…' : 'Save the key word'}</button>
-        </p>
-      </form>
-      {state === 'saved' && <p className="hint" role="status">Saved. Now put the same word in station/.env on the study Mac.</p>}
-    </section>
+    </div>
   )
 }

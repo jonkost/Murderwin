@@ -19,6 +19,7 @@ import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 import Allow from './screens/Allow'
+import { setFromAddress } from './lib/gametest'
 
 // Design preview only: /play/?preview=<screen> renders a screen with sample
 // data and no night. Nothing here is dealt by the game, nothing is sealed.
@@ -45,7 +46,8 @@ import Allow from './screens/Allow'
 // go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
 // supper, dinner, warn, groups, room-study, room-salem, room-parlour, room-paid,
 // roam, irwin, door, eliminate, ballot, reveal, result, clues, cats-friend, and
-// the relay screens relay-walk … relay-done.
+// the relay screens relay-walk … relay-done. questions&set=<base64url> shows one
+// of the workshop's own Parlour Game sets instead of the sample.
 // ?preview=tour walks all of them with a button.
 
 // a fixed moment, like a real server timestamp — not Date.now() on every read
@@ -111,6 +113,22 @@ const SET = [
   { q: 'Pick a sock', choices: [{ k: 'a', text: 'Left' }, { k: 'b', text: 'Right' }] },
   { q: 'A pigeon with a tiny hat', choices: [{ k: 'a', text: 'Trust it' }, { k: 'b', text: 'Do not' }] },
 ]
+// ?preview=questions&set=<base64url>: one of the workshop's own sets (the Game
+// test tab's "See it on a phone"), shown as a phone shows a Parlour Game.
+// Words only, never a lean (the workshop has none). Done starts it again;
+// nothing is sent. A set that cannot be read shows the sample, and says so.
+function QuestionsPreview() {
+  const [from] = useState(() => setFromAddress(undefined, SET))
+  const [at, setAt] = useState(() => Date.now())
+  const w = { ...windowDoc('questions', 60000), opensAt: stamp(at), closesAt: stamp(at + 60000), mine: { kind: 'questions', beats: from.beats } }
+  return (
+    <>
+      {from.note && <p className="preview-note" role="note">{from.note}</p>}
+      <Questions key={at} w={w} nightId="preview" serverNow={() => Date.now()} onDone={() => setAt(Date.now())} />
+    </>
+  )
+}
+
 function windowDoc(kind, ms) {
   const host = kind === 'questions' ? { cat: 'boo', line: 'Choose carefully, darling. Everyone\'s watching. Mostly me.' }
     : kind === 'ballot' ? { cat: 'salem', line: 'Forty years I\'ve kept these grounds, and I\'ve never seen so many people trampling on them. Name the Murderer, the motive and the victim.' } : null
@@ -362,7 +380,7 @@ export default function Preview({ screen }) {
   switch (which) {
     case 'doors': body = <Moment text={ui.DOORS} crest />; break
     case 'welcome': body = <Welcome uid="preview" session={SESSION} content={CONTENT} ui={ui} onDone={() => {}} />; break
-    case 'questions': body = <Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={serverNow} />; break
+    case 'questions': body = <QuestionsPreview />; break
     case 'ballot': body = <Ballot w={windowDoc('ballot', 120000)} night={{ ...night, act: 7 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'eliminate': body = <Eliminate w={windowDoc('eliminate', 90000)} night={{ ...night, act: 6 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'relay-walk': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('walk')} serverNow={serverNow} />; break

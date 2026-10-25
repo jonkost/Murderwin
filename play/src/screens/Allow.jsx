@@ -5,8 +5,9 @@ import { Seal } from './Moments'
 
 // "To play tonight, allow these:" (§9.10). One Allow button, then a check
 // beside each line, then on into the game. Shown once per night at sign-in;
-// the You tab's Allow again link brings it back (onDone closes it).
-export default function Allow({ uid, onDone = null, again = false }) {
+// the You tab's Allow again link brings it back (onDone closes it). The Game
+// test tab's Salem practice shows it too, going on to the practice instead.
+export default function Allow({ uid, onDone = null, again = false, onward = 'On to the party' }) {
   const [got, setGot] = useState(null)
   const [busy, setBusy] = useState(false)
   const allow = async () => {
@@ -36,7 +37,7 @@ export default function Allow({ uid, onDone = null, again = false }) {
       {got && (
         <>
           {Object.values(got).some(v => v === 'denied') && <p className="gloss">Something said no. That is all right: the game works anyway. Ask the host if a shake game will not feel your phone.</p>}
-          <button className="big" onClick={done}>On to the party</button>
+          <button className="big" onClick={done}>{onward}</button>
         </>
       )}
     </div>

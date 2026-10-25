@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Link, NavLink } from 'react-router-dom'
+import { Routes, Route, Link, NavLink, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, signIn, signOutUser } from './firebase'
 import { ensureSeeded } from './lib/store'
@@ -14,7 +14,7 @@ import ForJenna from './pages/ForJenna'
 import Status from './pages/Status'
 import Health from './pages/Health'
 import Steward from './pages/Steward'
-import StudyTest from './pages/StudyTest'
+import GameTest from './pages/GameTest'
 import { useFrozen } from './components/Frozen'
 import { FROZEN_CHIP } from './lib/frozen'
 
@@ -93,7 +93,7 @@ function Shell({ user }) {
         <NavLink to="/status" className="rail-link">Where we are</NavLink>
         <NavLink to="/night" className="rail-link">Game night</NavLink>
         <NavLink to="/jenna" className="rail-link">For Jenna</NavLink>
-        <NavLink to="/study-test" className="rail-link">Study test</NavLink>
+        <NavLink to="/game-test" className="rail-link">Game test</NavLink>
         <button className="rail-link quiet" onClick={signOutUser}>Sign out</button>
       </nav>
       <Routes>
@@ -108,8 +108,10 @@ function Shell({ user }) {
         <Route path="/status" element={<Status />} />
         {/* The last run of npm run checks. Reached from Where we are; the rail is full on a phone. */}
         <Route path="/health" element={<Health />} />
-        {/* Jon at the study walls with his phone: flash, teach the taps, a practice round. Also linked from Devices and Game night. */}
-        <Route path="/study-test" element={<StudyTest />} />
+        {/* Every game of Acts 4 and 6 and the Parlour Games, to try before the night, with a note to Claude Code for each. Also linked from Devices and Game night. */}
+        <Route path="/game-test" element={<GameTest />} />
+        {/* The old Study test address opens the study section of Game test (flash, teach the taps, a practice round). */}
+        <Route path="/study-test" element={<Navigate to="/game-test#study" replace />} />
         {/* Jenna's page. Not in the rail: she reaches it from For Jenna. Jon's account sees "Not for you." and the server refuses it anyway. */}
         <Route path="/steward" element={<Steward user={user} />} />
       </Routes>

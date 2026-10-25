@@ -6,6 +6,8 @@ import ErrorBoundary from './ErrorBoundary'
 import Kiosk from './screens/Kiosk'
 import PhoneFrame from './PhoneFrame'
 import Check from './screens/Check'
+import { SalemPractice, BooPractice, BooWallPractice } from './screens/Practice'
+import { practiceParam } from './lib/gametest'
 import './styles.css'
 
 const preview = previewScreen()
@@ -15,11 +17,16 @@ const kiosk = new URLSearchParams(window.location.search).get('kiosk')
 const phone = new URLSearchParams(window.location.search).get('phone')
 // Does the phone say what the workshop says? /play/?check=1
 const check = new URLSearchParams(window.location.search).get('check')
+// The workshop's Game test tab: /play/?practice=salem | boo on any phone, and
+// /play/?kiosk=boo&practice=1 on the wall. No night; nothing is paid.
+const practice = practiceParam()
+const PRACTICE = { salem: SalemPractice, boo: BooPractice, 'boo-wall': BooWallPractice }
+const Practising = practice ? PRACTICE[practice] : null
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      {check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
+      {check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : Practising ? <Practising /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
     </ErrorBoundary>
   </React.StrictMode>,
 )

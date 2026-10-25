@@ -159,11 +159,13 @@ export function keyWordProblem(word) {
   return String(word ?? '').trim().length < 4 ? 'A key word needs at least four characters.' : null
 }
 
-// A failed call, in words Jon can act on.
+// A failed call, in words Jon can act on. The Game test tab's calls use it
+// too. A refusal (permission-denied, failed-precondition) carries the
+// server's own plain words, so it is shown as it is.
 export function callError(e) {
   const code = String(e?.code ?? '').replace(/^functions\//, '')
   if (code === 'unavailable' || code === 'deadline-exceeded') return 'That did not get through. Check your signal, then try again.'
-  if (code === 'not-found' || code === 'internal') return 'That did not get through. If it keeps failing, the studyTest function is not deployed yet: tell Claude Code.'
+  if (code === 'not-found' || code === 'internal') return 'That did not get through. If it keeps failing, tell Claude Code: this test may not be on the live site yet.'
   if (code === 'unauthenticated') return 'You are signed out. Reload and sign in again.'
   return e?.message || 'That did not go through. Try again.'
 }

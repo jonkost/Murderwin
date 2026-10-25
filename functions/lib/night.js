@@ -143,7 +143,7 @@ export async function packedBagCount(db) {
   return Math.max(...nums)
 }
 
-export async function createNight(db, { label, forceRehearsal, dryRun = false } = {}) {
+export async function createNight(db, { label, forceRehearsal, dryRun = false, gameTest = false } = {}) {
   const hosts = await readHosts(db)
   // Nights rehearse by default. Only the workshop's "This is the party night"
   // checkbox (meta/game.party_night) or an explicit caller (the fake players'
@@ -171,6 +171,9 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false } 
     rehearsal: false,  // true once a throwaway case is dealt
     forceRehearsal,    // true: a rehearsal case; the cats' leans, the bags clue's packing and the drawing pictures are not read (the default)
     dryRun,            // true: a fake-players run on the party's sealed lists; discarded afterwards
+    // true only on a night the workshop's Game test tab started (lib/gametest.js):
+    // the only kind its buttons may move. Left off every other night.
+    ...(gameTest === true && forceRehearsal === true ? { gameTest: true } : {}),
     caseWarning: null, // 'trace-partner' when a trace at the party has no look-alike, shown on the Host tab
     phase: 'lobby',
     phaseAt: FieldValue.serverTimestamp(),

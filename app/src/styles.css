@@ -509,3 +509,47 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .st-key.submit { background: var(--good); color: #10100a; border-color: var(--good); }
 .study-test .ghost { min-height: 44px; }
 .st-word { overflow-wrap: anywhere; }
+
+/* ---------- Game test (24 Oct 2026): every game to try, phone in hand, dim room ---------- */
+.gt-lead { color: var(--ink); font-size: 1.1rem; margin-bottom: 0; }
+.gt-block { border-top: 1px solid var(--line); padding-top: 0.9rem; margin-top: 0.9rem; }
+.gt-block > h3 { margin-bottom: 0.3rem; }
+.panel.gt-key.first { border-color: var(--good); }
+.gt-key input, .gt-feedback textarea, .gt-feedback select { width: 100%; font-size: 1.05rem; background: var(--field); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-control); padding: 0.55rem 0.8rem; min-height: 48px; }
+.gt-feedback textarea { min-height: 6.5rem; resize: vertical; }
+.gt-claude { margin-top: 0.6rem; }
+.gt-claude summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; min-height: 44px; display: flex; align-items: center; }
+.gt-claude p { margin: 0.1rem 0 0; }
+.gt-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0.5rem 0; }
+.gt-actions button { min-height: 56px; font-size: 1.05rem; border-radius: var(--r-group); }
+.gt-tries { list-style: none; margin: 0.4rem 0; padding: 0; display: grid; gap: 0.9rem; }
+.gt-try { display: grid; gap: 0.35rem; }
+.gt-try-label { font-weight: 600; }
+.gt-try-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.gt-try-actions .primary { display: inline-flex; align-items: center; min-height: 48px; }
+.gt-try-actions .ghost { min-height: 48px; }
+.panel.gt-game { padding: 0; }
+.gt-game > details > summary { list-style: none; cursor: pointer; display: grid; gap: 0.25rem; padding: 1.1rem 1.3rem; min-height: 44px; border-radius: var(--r-panel); }
+.gt-game > details > summary::-webkit-details-marker { display: none; }
+.gt-game > details > summary:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.gt-game { scroll-margin-top: 1rem; }
+.gt-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.7rem; }
+.gt-name { font-family: var(--display); font-weight: 600; font-size: 1.35rem; }
+.gt-name::after { content: ' ▸'; color: var(--muted); }
+.gt-game > details[open] .gt-name::after { content: ' ▾'; }
+.gt-what { color: var(--muted); }
+.gt-body { padding: 0 1.3rem 1.3rem; }
+.gt-chip { border: 1px solid var(--line); border-radius: 999px; padding: 0.1em 0.7em; font-family: var(--body); font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+.gt-chip.works { color: var(--good); border-color: var(--good); }
+.gt-chip.fix { color: #fff; background: var(--bad); border-color: var(--bad); font-weight: 600; }
+.gt-steps { margin: 0.2rem 0 0.4rem; }
+.gt-steps li { font-size: 1.05rem; }
+.gt-sub { margin: 1.1rem 0 0.3rem; font-size: 1.1rem; }
+.gt-works { margin: 1.1rem 0 0.4rem; }
+.gt-works .primary { min-height: 56px; min-width: 12rem; font-size: 1.05rem; }
+.gt-feedback .banner { position: static; }
+.gt-feedback .mic { min-height: 56px; }
+.gt-sent { margin: 0.8rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+.gt-sent li.done { color: var(--muted); }
+.gt-night .st-state { margin-bottom: 0.2rem; }
+.gt-actions button:disabled, .gt-try-actions button:disabled { opacity: 0.45; cursor: default; }

@@ -85,16 +85,18 @@ test('a sent button waits for the station; the key word and failed calls say wha
   assert.equal(keyWordProblem('study-2026'), null)
   assert.match(callError({ code: 'functions/unavailable' }), /signal/)
   assert.equal(callError({ code: 'functions/permission-denied', message: 'Only the workshop can do that.' }), 'Only the workshop can do that.')
-  assert.match(callError({ code: 'functions/internal', message: 'internal' }), /not deployed/)
+  assert.match(callError({ code: 'functions/internal', message: 'internal' }), /Claude Code: this test may not be on the live site yet/)
   assert.ok(callError(null))
 })
 
-test('a rail tab, a route, links from Devices and Game night, and one road each way', () => {
+test('the old address, links from Devices and Game night, and one road each way', () => {
   const app = src('App.jsx')
-  assert.ok(/<NavLink to="\/study-test" className="rail-link">Study test<\/NavLink>/.test(app), 'Jon asked for a tab')
-  assert.ok(app.includes('path="/study-test"'))
-  assert.ok(src('pages/Devices.jsx').includes('to="/study-test"'))
-  assert.ok(src('pages/Night.jsx').includes('to="/study-test"'))
+  // the study test is the first section of the Game test tab (24 Oct); its old address opens that section
+  assert.ok(app.includes('<Route path="/study-test" element={<Navigate to="/game-test#study" replace />} />'))
+  assert.ok(src('pages/GameTest.jsx').includes("import StudyTest from './StudyTest'"))
+  for (const page of ['pages/Devices.jsx', 'pages/Night.jsx']) {
+    assert.ok(/to="\/(game|study)-test"/.test(src(page)), `${page} links to the study test, through Game test`)
+  }
 
   // on a phone the rail is one row: a column for every link and the Sign out button
   const links = (app.match(/className="rail-link( quiet)?"/g) ?? []).length

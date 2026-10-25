@@ -56,6 +56,7 @@ export function Questions({ w, nightId, serverNow, onDone }) {
   const choose = async (k) => {
     const next = [...picks, k]
     if (next.length < set.beats.length) { setPicks(next); setI(i + 1); return }
+    if (nightId === 'preview') { setSent(true); return } // a preview sends nothing
     setBusy(true); setError(null)
     try {
       const r = await callAnswer({ nightId, windowId: w.id, picks: next })

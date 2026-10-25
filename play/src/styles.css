@@ -662,7 +662,7 @@ em.stage { font-style: italic; color: var(--dim); }
 }
 :root.rehearsal-on body { padding-top: var(--band-h); }
 /* the full-screen pages only: the compact board inside the ballot screen keeps its own height */
-:root.rehearsal-on :is(.moment, .join, .rest, .kiosk:not(.compact)) { min-height: calc(100vh - var(--band-h)); min-height: calc(100dvh - var(--band-h)); }
+:root.rehearsal-on :is(.moment, .join, .rest, .practice, .kiosk:not(.compact)) { min-height: calc(100vh - var(--band-h)); min-height: calc(100dvh - var(--band-h)); }
 :root.rehearsal-on .overlay { top: var(--band-h); }
 :root.rehearsal-on :is(.offline, .paused-strip) { top: var(--band-h); }
 :root.rehearsal-on .overlay .paused-strip { top: 0; } /* the overlay already starts under the band */
@@ -695,6 +695,20 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .salem-play.green { background: #0d7a3a; color: #fff; }
 .salem-colour { margin: 0; font-size: 2.4rem; font-weight: 700; letter-spacing: 0.04em; }
 .salem-play .slip { margin: 0; font-weight: 600; }
+
+/* The Game test tab's practice pages (?practice=salem, ?practice=boo): one card, the night's game in it */
+.practice { min-height: 100vh; min-height: 100dvh; padding: 1.2rem 1rem 3rem; max-width: 34rem; margin: 0 auto; display: grid; align-content: start; gap: 1rem; background: var(--bg); }
+.practice .dealt { width: 100%; }
+.shake-meter { display: grid; gap: 0.4rem; width: 100%; margin-top: 0.6rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.shake-meter .gloss { margin: 0; }
+.meter { position: relative; height: 1.6rem; border-radius: 0.8rem; background: var(--brand-charcoal); border: 1px solid var(--line); overflow: hidden; }
+.meter-fill { position: absolute; inset: 0 auto 0 0; background: var(--dim); transition: width 90ms linear; }
+.meter-fill.over { background: var(--accent); }
+.meter-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1px; background: var(--brand-parchment); }
+.slip-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; width: 100%; text-align: left; }
+.slip-log li { padding: 0.45rem 0.7rem; border-radius: 0.5rem; background: var(--brand-claret); }
+/* ?preview=questions&set=…: which set this is, or why it is the sample */
+.preview-note { position: sticky; top: 0; z-index: 9; margin: 0; padding: 0.5rem 1rem; background: #333; color: var(--ink); font-size: 0.9rem; text-align: center; }
 
 /* Boo's poses on the phones */
 .boo-pose { display: grid; gap: 0.4rem; padding: 1rem; border-radius: 12px; background: var(--brand-claret); }
