@@ -396,6 +396,47 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   assert.equal(night(db, nightId).reveal, undefined)
 })
 
+test('F18 the end credits show the dial\'s journey as it happened: where it stood at the end of each act, its high and its low, and the level each dial clue landed at', async () => {
+  const { db, nightId } = await party(6)
+  const t = { now: 7_000_000 }
+  await walkTo(db, nightId, 2, 'orient', t)
+  // the night's pushes, through the dial's own transaction, as the Parlour Games would make them
+  const { pushDial } = await import('../lib/windows.js')
+  const pushes = [[2, 'ghost', 3], [2, 'murderer', 5], [2, 'ghost', 1], [4, 'murderer', 2], [4, 'ghost', 6], [4, 'ghost', 2], [6, 'murderer', 4], [6, 'ghost', 1]]
+  for (const [act, role, total] of pushes) await pushDial(db, nightId, { role, total, act, now: t.now })
+  const c = db.store.get(`cases/${nightId}`)
+  const deltas = c.dialLog.map(e => e.delta)
+  assert.equal(deltas.length, pushes.length, 'every push is in the log')
+  // the levels the dial clues landed at, where the night keeps them
+  db.store.set(`nights/${nightId}/private/bulletin`, { played: true, level: 2 })
+  db.store.set(`nights/${nightId}/private/dialClues`, { irwin: 3, study: { g1: 4, g2: 5 } })
+  db.store.set(`nights/${nightId}/public/trace`, { level: 1 })
+  const f = await finaleDoc(db, nightId, c, t.now)
+  // where it stood at the end of each act: the running sum of that act's pushes and every act before
+  const sumTo = act => c.dialLog.filter(e => e.act <= act).reduce((s, e) => s + e.delta, 0)
+  assert.deepEqual(f.graph.running, [2, 4, 6].map(act => ({ act, value: sumTo(act) })), 'F18 the dial at the end of each act')
+  assert.equal(f.graph.running.at(-1).value, c.dial, 'F18 and the last stop is where the dial really ended')
+  // its high and its low along the way, from the start at zero
+  let walk = 0, high = 0, low = 0
+  for (const d of deltas) { walk += d; high = Math.max(high, walk); low = Math.min(low, walk) }
+  assert.equal(f.graph.high, high, 'F18 the high')
+  assert.equal(f.graph.low, low, 'F18 the low')
+  assert.ok(f.graph.high > 0 && f.graph.low < 0, 'this night went both ways')
+  // the four dial clues at the levels they landed at (the study's two groups averaged)
+  assert.deepEqual(f.graph.clues, [
+    { label: 'The supper bulletin', level: 2 },
+    { label: "Sir Irwin's countdown", level: 3 },
+    { label: 'The study trace', level: 5 },
+    { label: 'The trace reveal', level: 1 },
+  ], 'F18 every dial clue at its level')
+  // a clue that never landed (no study played) is left out, not shown as nothing
+  db.store.set(`nights/${nightId}/private/dialClues`, { irwin: 3 })
+  assert.deepEqual((await finaleDoc(db, nightId, c, t.now)).graph.clues.map(x => x.label), ['The supper bulletin', "Sir Irwin's countdown", 'The trace reveal'])
+  // nothing of it is public before the reveal beat writes the finale
+  assert.equal(db.store.get(finalePath(nightId)), undefined, 'F18 no finale doc before the reveal')
+  assert.ok(!JSON.stringify(f.graph).includes(c.murderer) && !JSON.stringify(f.graph).includes(c.ghost), 'the graph names nobody')
+})
+
 test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hush on the graph and a spotlight line, never which role', async () => {
   const { db, nightId } = await party(4)
   const t = { now: 7_500_000 }
