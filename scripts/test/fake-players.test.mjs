@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { fakeNight, PHONES, SEAT_DEALS } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT, NIGHT } from '../../functions/lib/deal.js'
 import { DIRECTIONS, REWARD_LINES } from '../../functions/lib/act4.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
@@ -166,6 +166,44 @@ test('F02 and G05 the two host seats play the Professors and are played by bots 
   // G05: the case deal itself, on 2,000 stand-in rosters with both host seats in them
   assert.deepEqual(summary.fairness, { pass: true, seats: 12, of: 12, deals: SEAT_DEALS })
   assert.ok(lines.includes('Seat fairness (G05): PASS, 12 of 12 seats fair over 2,000 dealt cases, both host seats included'))
+})
+
+test('G38 no hidden events for the Murderer or the Ghost in any act: no beat opens one, and over a whole night every phone gets the same windows and the same cards, kind by kind and act by act', async () => {
+  // the night as written: no beat in any act opens an event, and the only windows are the three everyone gets
+  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'eliminate', 'questions'], 'G38 three kinds of window, all for everyone')
+  for (const [act, spec] of Object.entries(NIGHT.acts)) {
+    for (const b of spec.beats) {
+      assert.ok(!/event|hidden/i.test(`${b.action ?? ''} ${b.key}`), `G38 act ${act} beat ${b.key} opens no event`)
+      if (String(b.action ?? '').startsWith('window:')) assert.ok(['window:questions', 'window:eliminate', 'window:ballot'].includes(b.action), `G38 act ${act} beat ${b.key} opens a window for everyone`)
+    }
+  }
+  // a whole night: every phone as it ended (read before the discard), compared shape by shape
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const last = {}
+  let roles = null
+  const get = db._get.bind(db)
+  db._get = path => {
+    const snap = get(path)
+    if (snap.exists && /^sessions\/[^/]+$/.test(path)) last[path] = snap.data()
+    if (snap.exists && /^cases\/[^/]+$/.test(path) && snap.data()?.roles) roles = snap.data().roles
+    return snap
+  }
+  const { result: summary } = await captured(log => fakeNight({ db, log }))
+  assert.equal(summary.ok, true)
+  const phones = Object.values(last).filter(s => s.guestKey)
+  assert.equal(phones.length, PHONES)
+  assert.deepEqual([...new Set(Object.values(roles))].sort(), ['detective', 'ghost', 'murderer'], 'the night dealt all three roles')
+  // the windows: the same ids, the same kinds, on every phone
+  const windows = s => JSON.stringify(Object.entries(s.windows ?? {}).map(([id, w]) => [id, w.kind]).sort())
+  assert.ok(phones.every(s => windows(s) === windows(phones[0])), 'G38 every phone holds the same windows')
+  assert.ok(Object.values(phones[0].windows).every(w => ['questions', 'eliminate', 'ballot'].includes(w.kind)))
+  // the cards: the same number of each kind in each act, on every phone, whatever its role
+  const shape = s => JSON.stringify((s.cards ?? []).map(c => `${c.act}:${c.kind}`).sort())
+  assert.ok(phones.every(s => shape(s) === shape(phones[0])), 'G38 every phone holds the same kinds of card in every act')
+  // and every answer on every phone, so nobody sat out a game the others played
+  const answered = s => Object.keys(s.answers ?? {}).sort().join()
+  assert.ok(phones.every(s => answered(s) === answered(phones[0])), 'G38 every phone answered the same Parlour Games')
 })
 
 test('a failure mid-night still discards the night and exits FAIL', async () => {
