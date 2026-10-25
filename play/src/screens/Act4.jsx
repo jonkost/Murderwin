@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { callMeet, callSalemReady, callSalemSlip, callSalemPassed, callBooDone } from '../firebase'
 import { useDoc, useTick } from '../lib/hooks'
-import { ROOMS, freeForGames, waitingGames, salemColourAt, salemFlipAt, booMoment, ms, SALEM_GRACE_MS, SALEM_SHAKE, SALEM_STILL_MS } from '../lib/night'
+import { ROOMS, freeForGames, waitingGames, salemColourAt, salemFlipAt, salemSlip, booMoment, ms, SALEM_GRACE_MS, SALEM_SHAKE } from '../lib/night'
 import { CatFace, HostLine } from './Cards'
 import { Questions } from './Windows'
 import Spoken from './Spoken'
@@ -165,9 +165,7 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
     const offset = local - now // this phone's clock against the server's
     const flipAt = salemFlipAt(doc, now) + offset
     const grace = SALEM_GRACE_MS[doc.round] ?? 600
-    let s = null
-    if (colour === 'green' && local - flipAt > grace && motion.mag > SALEM_SHAKE) s = 'green'
-    if (colour === 'red' && local - Math.max(flipAt + grace, motion.lastShakeAt) > SALEM_STILL_MS) s = 'red'
+    const s = salemSlip({ colour, motion, local, flipAt, grace })
     if (s) {
       sent.current[key] = true
       Promise.resolve(slip(doc.attempt, s)).catch(() => { sent.current[key] = false })

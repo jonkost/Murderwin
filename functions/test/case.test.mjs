@@ -123,7 +123,7 @@ test('the power beat on a party night deals a party case and reads only the lean
   assertNothingLeaked()
 })
 
-test('with forceRehearsal (the default) the night gets a rehearsal case and reads nothing sealed', async () => {
+test('L03 with forceRehearsal (the default) the night gets a rehearsal case and reads nothing sealed', async () => {
   const { db, nightId } = await party()
   assert.equal(night(db, nightId).forceRehearsal, true)
   const reads = watchReads(db)
@@ -137,7 +137,7 @@ test('with forceRehearsal (the default) the night gets a rehearsal case and read
   assertNothingLeaked()
 })
 
-test('the case log is counts only: the night id and the rehearsal flag, never a motive, a role or a lean', async () => {
+test('L02 the case log is counts only: the night id and the rehearsal flag, never a motive, a role or a lean', async () => {
   const lines = []
   for (const partyNight of [true, false]) {
     const { db, nightId } = await party({ partyNight })
@@ -221,7 +221,7 @@ test('a whole party night: every cat\'s card is the cat, its room, its open hint
   assertNothingLeaked()
 })
 
-test('the same walk on a rehearsal night: every hint and bag clue is a bracketed stand-in, the study clue is marked placeholder', async () => {
+test('F28 the same walk on a rehearsal night: every hint and bag clue is a bracketed stand-in, the study clue is marked placeholder', async () => {
   const { db, uids, c } = await wholeNight({ partyNight: false })
   assert.equal(c.rehearsal, true)
   for (const uid of Object.values(uids)) {
@@ -258,6 +258,6 @@ test('createNight: nights rehearse by default; the party checkbox or an explicit
   assert.equal(night(db, e.nightId).forceRehearsal, true)
 })
 
-test('the seal, after everything: nothing from the lean table ever reached the console', () => {
+test('L02 the seal, after everything: nothing from the lean table ever reached the console', () => {
   assertNothingLeaked()
 })

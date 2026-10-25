@@ -49,7 +49,7 @@ async function refused(p, code) {
   })
 }
 
-test('the gate: Jon\'s admin UID, an unverified email and a stranger are refused; the Steward\'s hash opens it', async () => {
+test('L04 the gate: Jon\'s admin UID, an unverified email and a stranger are refused; the Steward\'s hash opens it', async () => {
   const db = new FakeFirestore()
   await refused(stewardRequest(db, { auth: { uid: JON_UID, token: { email: 'jon@example.test', email_verified: true } }, data: { op: 'whoami' } }, quiet), 'permission-denied')
   await refused(stewardRequest(db, { auth: { uid: 'x', token: { email: STEWARD_EMAIL, email_verified: false } }, data: { op: 'whoami' } }, quiet), 'permission-denied')

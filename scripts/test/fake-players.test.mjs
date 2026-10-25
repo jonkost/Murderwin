@@ -2,13 +2,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { fakeNight, PHONES } from '../fake-players.mjs'
+import { fakeNight, PHONES, SEAT_DEALS } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT, NIGHT } from '../../functions/lib/deal.js'
 import { DIRECTIONS, REWARD_LINES } from '../../functions/lib/act4.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
 import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
 import { ROUND_SIZES } from '../../functions/lib/relay-bank.js'
+import { CHARACTERS } from '../../functions/lib/night.js'
 
 // The fake players print counts, keys and act names and nothing a phone was
 // dealt. These are the strings a leak would carry; none may reach the output.
@@ -69,7 +70,7 @@ function syntheticSecrets() {
   }
 }
 
-test('eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
+test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true }) // the box is ticked, and still ignored without --real-secrets
   for (const [path, data] of Object.entries(syntheticSecrets())) db.store.set(path, data) // there, and a rehearsal never reads them
@@ -143,6 +144,66 @@ test('--real-secrets is a party night as a dry run: it reads the leans, the pack
   assert.equal(keysUnder(db, 'nights/').length, 0)
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is untouched')
   assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
+})
+
+test('F02 and G05 the two host seats play the Professors and are played by bots like every other seat; every seat lands Murderer and Ghost about equally often', async () => {
+  const db = new FakeFirestore()
+  // the hosts' names come from the Game night form, spelled however Jon types them
+  db.store.set('meta/game', { host_jonathan: 'Jonathan K', host_susan: 'Sue' })
+  // the roster as the night last held it, before the discard (keys and character ids only)
+  let roster = null
+  const get = db._get.bind(db)
+  db._get = path => { const snap = get(path); if (/^nights\/[^/]+$/.test(path) && snap.exists && snap.data()?.roster) roster = snap.data().roster; return snap }
+  const { result: summary, lines } = await captured(log => fakeNight({ db, log }))
+  assertClean(lines.join('\n'))
+  assert.equal(summary.ok, true)
+  assert.deepEqual(summary.checks, [])
+  const profs = CHARACTERS.filter(ch => ch.host).map(ch => ch.id)
+  assert.equal(roster?.jonathan_k?.characterId, profs[0], 'F02 the first host seat plays the first Professor')
+  assert.equal(roster?.sue?.characterId, profs[1], 'F02 the second host seat plays the second Professor')
+  assert.equal(Object.keys(roster).length, PHONES, 'F02 the hosts are two of the eight phones, not extra ones')
+  assert.ok(lines.includes('Host seats: 2 phones play the Professors, dealt and answered like everyone else (F02) PASS'))
+  // G05: the case deal itself, on 2,000 stand-in rosters with both host seats in them
+  assert.deepEqual(summary.fairness, { pass: true, seats: 12, of: 12, deals: SEAT_DEALS })
+  assert.ok(lines.includes('Seat fairness (G05): PASS, 12 of 12 seats fair over 2,000 dealt cases, both host seats included'))
+})
+
+test('G38 no hidden events for the Murderer or the Ghost in any act: no beat opens one, and over a whole night every phone gets the same windows and the same cards, kind by kind and act by act', async () => {
+  // the night as written: no beat in any act opens an event, and the only windows are the three everyone gets
+  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'eliminate', 'questions'], 'G38 three kinds of window, all for everyone')
+  for (const [act, spec] of Object.entries(NIGHT.acts)) {
+    for (const b of spec.beats) {
+      assert.ok(!/event|hidden/i.test(`${b.action ?? ''} ${b.key}`), `G38 act ${act} beat ${b.key} opens no event`)
+      if (String(b.action ?? '').startsWith('window:')) assert.ok(['window:questions', 'window:eliminate', 'window:ballot'].includes(b.action), `G38 act ${act} beat ${b.key} opens a window for everyone`)
+    }
+  }
+  // a whole night: every phone as it ended (read before the discard), compared shape by shape
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const last = {}
+  let roles = null
+  const get = db._get.bind(db)
+  db._get = path => {
+    const snap = get(path)
+    if (snap.exists && /^sessions\/[^/]+$/.test(path)) last[path] = snap.data()
+    if (snap.exists && /^cases\/[^/]+$/.test(path) && snap.data()?.roles) roles = snap.data().roles
+    return snap
+  }
+  const { result: summary } = await captured(log => fakeNight({ db, log }))
+  assert.equal(summary.ok, true)
+  const phones = Object.values(last).filter(s => s.guestKey)
+  assert.equal(phones.length, PHONES)
+  assert.deepEqual([...new Set(Object.values(roles))].sort(), ['detective', 'ghost', 'murderer'], 'the night dealt all three roles')
+  // the windows: the same ids, the same kinds, on every phone
+  const windows = s => JSON.stringify(Object.entries(s.windows ?? {}).map(([id, w]) => [id, w.kind]).sort())
+  assert.ok(phones.every(s => windows(s) === windows(phones[0])), 'G38 every phone holds the same windows')
+  assert.ok(Object.values(phones[0].windows).every(w => ['questions', 'eliminate', 'ballot'].includes(w.kind)))
+  // the cards: the same number of each kind in each act, on every phone, whatever its role
+  const shape = s => JSON.stringify((s.cards ?? []).map(c => `${c.act}:${c.kind}`).sort())
+  assert.ok(phones.every(s => shape(s) === shape(phones[0])), 'G38 every phone holds the same kinds of card in every act')
+  // and every answer on every phone, so nobody sat out a game the others played
+  const answered = s => Object.keys(s.answers ?? {}).sort().join()
+  assert.ok(phones.every(s => answered(s) === answered(phones[0])), 'G38 every phone answered the same Parlour Games')
 })
 
 test('a failure mid-night still discards the night and exits FAIL', async () => {

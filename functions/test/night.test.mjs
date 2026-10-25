@@ -43,7 +43,7 @@ test('createNight deals a private deck, publishes content, and goes live', async
   assert.equal(content.bios.length, 0, 'deleted lines are not published')
 })
 
-test('join: hosts get the Professors, everyone else draws from the deck, bags are unique', async () => {
+test('G02 join: hosts get the Professors, everyone else draws from the deck, bags are unique', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   const deck = db.store.get(`nights/${nightId}/private/deck`)
@@ -67,7 +67,7 @@ test('join: hosts get the Professors, everyone else draws from the deck, bags ar
   assert.ok(CATS.every(c => s.affection[c] >= 1 && s.affection[c] <= 5))
 })
 
-test('join: same phone again resumes; same phone as somebody else is refused', async () => {
+test('F03 join: same phone again resumes; same phone as somebody else is refused', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   const first = await join(db, { uid: 'u1', nightId, name: 'Jessa' })
@@ -77,7 +77,7 @@ test('join: same phone again resumes; same phone as somebody else is refused', a
   await assert.rejects(join(db, { uid: 'u1', nightId, name: 'Jacob' }), e => e.code === 'already-joined')
 })
 
-test('join: the same guest on a new phone takes the character with them', async () => {
+test('F03 join: the same guest on a new phone takes the character with them', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   const first = await join(db, { uid: 'old-phone', nightId, name: 'Stanley' })
@@ -217,7 +217,7 @@ test('a late joiner after the power returns gets one role card as a detective; a
   assert.equal(Object.values(c.roles).filter(r => r === 'ghost').length, 1)
 })
 
-test('a dead phone: the same name on a new phone brings the cards along', async () => {
+test('F03 a dead phone: the same name on a new phone brings the cards along', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   await join(db, { uid: 'u-jon', nightId, name: 'Jon' })
@@ -412,7 +412,7 @@ test('while paused with no window open, nothing moves the night on until the hos
   assert.equal(night().beat, 'peek')
 })
 
-test('the Act 4 groups write where the house stands with each cat; nothing before that', async () => {
+test('F15 the Act 4 groups write where the house stands with each cat; nothing before that', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob'], ['u-mari', 'Mari']]) await join(db, { uid, nightId, name })

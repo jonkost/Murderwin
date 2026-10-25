@@ -38,7 +38,7 @@ test('the beat list walks every act in order and stops where the host has their 
   for (const act of Object.keys(NIGHT.acts)) assert.ok(beatsOf(act).length > 0, `act ${act} has beats`)
 })
 
-test('the whole night, one Next at a time: every phone gets the same shape of thing at every beat', async () => {
+test('F01 and G01 the whole night, one Next at a time: every phone gets the same shape of thing at every beat', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   let now = 1_000_000

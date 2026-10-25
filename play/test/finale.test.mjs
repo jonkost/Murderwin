@@ -154,3 +154,30 @@ test('D1-26 the end-credit awards show only in the credits; the early reel keeps
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes('creditsAwards(finale).map('), 'the credits roll reads both lists')
 })
+
+test('F18 the dial\'s journey is shown only after the reveal: after the Victim\'s name and the closing story, never before', async () => {
+  const { JOURNEY_AFTER_MS, CREDITS_AFTER_MS } = await import('../src/lib/finale.js')
+  const graph = { points: [{ act: 2, role: 'ghost', delta: 2 }], running: [{ act: 2, value: 2 }, { act: 4, value: 2 }, { act: 6, value: 2 }], high: 2, low: 0, clues: [{ label: 'The supper bulletin', level: 4 }] }
+  // before any name, on the clock: the stats, the awards, the graph slot (which shows W-O-O-F News coming), never the journey
+  for (let t = 0; t <= 200_000; t += 5_000) assert.notEqual(finaleStage(doc({ graph }), at + t), 'journey', 'F18 not before the names')
+  // through the first two names: never the journey
+  for (const stage of ['murderer', 'motive']) assert.notEqual(finaleStage(doc({ graph, stage }), at + 500_000), 'journey')
+  // the Victim named: the closing story first, then the journey, then the credits
+  const victimAt = at + 300_000
+  const v = doc({ graph, stage: 'victim', epilogue: '(the closing story)', victimAt: new Date(victimAt) })
+  assert.equal(finaleStage(v, victimAt + EPILOGUE_AFTER_MS - 1), 'victim')
+  assert.equal(finaleStage(v, victimAt + EPILOGUE_AFTER_MS), 'done')
+  assert.equal(finaleStage(v, victimAt + JOURNEY_AFTER_MS - 1), 'done')
+  assert.equal(finaleStage(v, victimAt + JOURNEY_AFTER_MS), 'journey', 'F18 the journey after the reveal')
+  assert.equal(finaleStage(v, victimAt + CREDITS_AFTER_MS), 'credits')
+  assert.notEqual(finaleStage({ ...v, epilogue: null }, victimAt + JOURNEY_AFTER_MS), 'journey', 'no closing story yet, no journey')
+  // the screen draws the tug of war and the clue levels on the journey only, as dots, never a number
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  const finale = kiosk.slice(kiosk.indexOf('export function Finale('), kiosk.indexOf('// The calculating bar'))
+  assert.equal((finale.match(/<TugOfWar /g) ?? []).length, 1, 'one tug of war')
+  const journey = finale.slice(finale.indexOf("if (stage === 'journey') return ("), finale.indexOf("if (stage === 'credits')"))
+  assert.ok(journey.includes('<TugOfWar graph={finale.graph} />'), 'F18 the tug of war is on the journey')
+  assert.match(journey, /finale\.graph\.clues\.map\(c => <li key=\{c\.label\}><span>\{c\.label\}<\/span><span className="clue-level">\{'●'\.repeat\(c\.level\)\}\{'○'\.repeat\(5 - c\.level\)\}<\/span><\/li>\)/, 'F18 each dial clue at the level it landed, as five dots')
+  const graphSlot = finale.slice(finale.indexOf("if (stage === 'graph') return ("), finale.indexOf("if (stage === 'journey') return ("))
+  assert.ok(!graphSlot.includes('TugOfWar') && !graphSlot.includes('clues'), 'F18 the graph slot before the names shows none of it')
+})

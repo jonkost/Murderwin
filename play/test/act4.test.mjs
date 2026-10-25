@@ -96,3 +96,66 @@ test('the bulletin videos: the TV finds each part by its words in the open bank;
   assert.deepEqual(all, news.closing.parts.map(p => p.clip), 'the three names play every closing part once, in order')
   assert.deepEqual(closingClips('nobody'), [])
 })
+
+// ---- F25 and F26: Salem's Motion Game on the phone ----------------------------
+
+test('F25 a phone with no motion sensor never causes a slip in Salem\'s game: no reading, no slip, on any colour at any moment', async () => {
+  const { salemSlip, SALEM_GRACE_MS, SALEM_SHAKE, SALEM_STILL_MS } = await import('../src/lib/night.js')
+  const flipAt = 10_000
+  const noSensor = { ok: false, mag: 0, lastShakeAt: 0 }
+  for (const colour of ['red', 'green', null]) {
+    for (let local = flipAt; local <= flipAt + 60_000; local += 250) {
+      for (const round of [1, 2, 3]) assert.equal(salemSlip({ colour, motion: noSensor, local, flipAt, grace: SALEM_GRACE_MS[round] }), null, 'F25 no sensor, no slip')
+    }
+  }
+  // a sensor that never answered (permission refused) looks the same: ok stays false, so never a slip
+  assert.equal(salemSlip({ colour: 'red', motion: { ok: false, mag: 99, lastShakeAt: 0 }, local: flipAt + 30_000, flipAt, grace: 500 }), null)
+  assert.equal(salemSlip({ colour: 'red', motion: undefined, local: flipAt + 30_000, flipAt, grace: 500 }), null)
+  // a phone that can feel: the rules still bite
+  assert.equal(salemSlip({ colour: 'green', motion: { ok: true, mag: SALEM_SHAKE + 1, lastShakeAt: flipAt + 900 }, local: flipAt + 900, flipAt, grace: 700 }), 'green', 'a shake on green after the grace slips')
+  assert.equal(salemSlip({ colour: 'green', motion: { ok: true, mag: SALEM_SHAKE + 1, lastShakeAt: flipAt + 300 }, local: flipAt + 300, flipAt, grace: 700 }), null, 'inside the grace it does not')
+  assert.equal(salemSlip({ colour: 'red', motion: { ok: true, mag: 0, lastShakeAt: 0 }, local: flipAt + 700 + SALEM_STILL_MS + 1, flipAt, grace: 700 }), 'red', 'too still on red slips')
+  assert.equal(salemSlip({ colour: 'red', motion: { ok: true, mag: 0, lastShakeAt: flipAt + 2_000 }, local: flipAt + 2_500, flipAt, grace: 700 }), null, 'a recent shake on red is fine')
+  // the screen: ok is false until the first reading, and the rules never run without it
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../src/screens/Act4.jsx', import.meta.url), 'utf8')
+  assert.match(src, /useState\(\(\) => \(\{ ok: false, mag: 0, lastShakeAt: 0, g: null \}\)\)/, 'no reading yet: ok is false')
+  assert.match(src, /if \(typeof window === 'undefined' \|\| !\('DeviceMotionEvent' in window\)\) return/, 'no sensor at all: never listens, ok stays false')
+  assert.match(src, /\} else return\n\s*state\.ok = true/, 'ok turns true only on a real reading')
+  assert.match(src, /if \(!started \|\| !colour \|\| !motion\.ok\) return/, 'the rules never run without a reading')
+  assert.match(src, /const s = salemSlip\(\{ colour, motion, local, flipAt, grace \}\)/)
+  assert.match(src, /\{!motion\.ok && <p className="gloss">\{lines\.noSensor\}<\/p>\}/, 'and the phone says so: watch the lights and cheer')
+})
+
+test('F26 every colour change in Salem\'s game reaches every phone in the group within half a second of its time', async () => {
+  const { salemColourAt } = await import('../src/lib/night.js')
+  const { skewFrom } = await import('../src/lib/clock.js')
+  const { readFileSync } = await import('node:fs')
+  // every phone reads the same schedule on the server's clock: the same colour at the same server moment
+  const flips = [{ at: 20_000, colour: 'red' }, { at: 24_000, colour: 'green' }, { at: 26_500, colour: 'red' }, { at: 29_000, colour: 'green' }]
+  const doc = { state: 'playing', flips }
+  flips.forEach((f, i) => {
+    assert.equal(salemColourAt(doc, f.at - 1), flips[i - 1]?.colour ?? null, 'the old colour up to the change')
+    assert.equal(salemColourAt(doc, f.at), f.colour, 'the new colour exactly at its time')
+  })
+  // each phone re-reads its colour ten times a second
+  const src = readFileSync(new URL('../src/screens/Act4.jsx', import.meta.url), 'utf8')
+  const rounds = src.slice(src.indexOf('export function SalemRounds'), src.indexOf('// Boo\'s catwalk'))
+  const tick = Number(/useTick\((\d+)\)/.exec(rounds)?.[1])
+  assert.ok(tick > 0 && tick <= 100, 'F26 the phone redraws at least ten times a second')
+  assert.match(rounds, /const colour = started \? salemColourAt\(doc, now\) : null/, 'the colour is the server-clock schedule, read each redraw')
+  // a phone's server clock is out by at most half its heartbeat's round trip (the midpoint rule);
+  // phones with any clock error and a round trip up to 0.8 s show each change within half a second
+  let worst = 0
+  for (const trueOffset of [-90_000, -1_234, 0, 777, 45_000]) {
+    for (const rtt of [20, 150, 400, 800]) {
+      for (const where of [0, 0.25, 0.5, 0.75, 1]) {
+        const sentAt = 1_000_000
+        const err = Math.abs(skewFrom(sentAt, sentAt + rtt, sentAt + rtt * where + trueOffset) - trueOffset)
+        assert.ok(err <= rtt / 2 + 1e-9, 'the skew is out by at most half the round trip')
+        worst = Math.max(worst, err + tick)
+      }
+    }
+  }
+  assert.ok(worst <= 500, `F26 the latest a phone shows a change is ${Math.round(worst)} ms after its time`)
+})
