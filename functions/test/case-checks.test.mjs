@@ -235,6 +235,23 @@ test('G17 Salem\'s ladder for every guest, and no case is solvable from Salem\'s
   assert.equal(salemAloneOk(told, roster.map(g => g.key)), false, 'G17 a Salem line about the real family fails')
 })
 
+// ---- G15 ---------------------------------------------------------------------
+
+test('G15 Sir Irwin and Zimothy never say anything false: Irwin\'s cards hold the real motive at every band, and every Zimothy line any guest could hear, at every level, rules out only wrong answers (500 deals)', () => {
+  for (let seed = 1; seed <= 500; seed++) {
+    const { roster, c } = standIn(seed)
+    const real = Number(c.motive)
+    for (let band = 1; band <= 5; band++) assert.ok(irwinOptions(c, { band, seed: c.screenSalt }).includes(real), `G15 seed ${seed}: Irwin at band ${band}`)
+    for (const g of roster) {
+      const fams = c.solving.hints[g.key] ?? []
+      for (const family of fams) for (let level = 1; level <= 5; level++) for (const act of [2, 4]) {
+        const line = catHintLine(c, { cat: 'zimothy', level, act, family, seed: `${c.screenSalt}\u0000${g.key}\u0000zimothy`, bonusFamilies: [...fams, ...c.solving.newsOut] })
+        assert.ok(line.text && !line.families.includes(familyOf(real)) && !line.motives.includes(real), `G15 seed ${seed}: Zimothy level ${level} act ${act}`)
+      }
+    }
+  }
+})
+
 // ---- G19 ---------------------------------------------------------------------
 
 test('G19 if Sir Irwin and a cat disagree, Irwin is the one telling the truth (500 deals, every cat, every level, every band)', () => {
