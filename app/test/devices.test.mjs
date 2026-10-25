@@ -11,7 +11,7 @@ const kioskSrc = read('../../play/src/screens/Kiosk.jsx')
 const handled = (k) => k === 'living' || new RegExp(`which === '${k}'`).test(kioskSrc)
 
 test('every room screen the client answers has a device, and every kiosk address is answered or says why not', () => {
-  for (const k of ['living', 'bedroom', 'study', 'ipad', 'memory', 'boo']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
+  for (const k of ['living', 'bedroom', 'study', 'ipad', 'memory', 'boo', 'pose']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
   for (const d of DEVICES.filter(x => x.kiosk)) {
     if (handled(d.kiosk)) assert.ok(!d.pending, `${d.key}: the client answers ?kiosk=${d.kiosk} now, so drop the pending note`)
     else assert.ok(d.pending, `${d.key}: ?kiosk=${d.kiosk} is not answered yet, so the page must say why`)

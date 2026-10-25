@@ -8,6 +8,7 @@ import { SALEM_SHAKE, SALEM_STILL_MS } from '../lib/night'
 import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, booPractice, clockSample, keepSample, practiceError } from '../lib/gametest'
 import { SalemRounds, SALEM_LINES, BooMoments, useMotion } from './Act4'
 import { BooRunway } from './Rooms'
+import { PoseCamera } from './Pose'
 import { Wake, StaleDot } from './Kiosk'
 import { CatFace } from './Cards'
 import { Moment, Seal, RehearsalBand } from './Moments'
@@ -250,6 +251,22 @@ export function BooPractice() {
             : <BooMoments key={p.runId ?? 'practice'} boo={p.show} serverNow={serverNow} doneText={SAY.booDone} />}
         </Shell>
       )}
+    </>
+  )
+}
+
+// Boo's camera (?kiosk=pose&practice=1): the practice show, and the photo kept
+// on the iPad's own screen. Nothing is sent.
+export function PoseCameraPractice() {
+  const { error, view, serverNow, p } = useBooPractice()
+  const online = useOnline()
+  return (
+    <>
+      <RehearsalBand on label="PRACTICE" />
+      {error
+        ? <div className="kiosk pose-cam"><p className="kiosk-line">{ui.OFFLINE}</p></div>
+        : <PoseCamera boo={p.show} nightId="practice" serverNow={serverNow} practice />}
+      <StaleDot view={view} online={online} />
     </>
   )
 }

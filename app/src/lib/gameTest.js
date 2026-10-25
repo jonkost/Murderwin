@@ -29,6 +29,7 @@ export const DEVICES = {
   phone: 'On your phone',
   tv: 'On the Parlour TV computer',
   ipad: 'On the older iPad',
+  ipadpro: 'On the iPad Pro',
   projector: 'On the projector computer or any screen',
   study: 'On the study computer',
   bedroom: 'On the bedroom screen',
@@ -102,12 +103,12 @@ export const SECTIONS = [
   {
     key: 'boo', name: NAME.entryway, where: 'Act 4 · the Entryway', moment: 'act4.entryway',
     what: 'Boo struts on the wall above the Parlour. When the music stops, the group strikes a pose and holds it, then Boo judges. Three poses.',
-    devices: ['projector', 'phone'],
+    devices: ['projector', 'phone', 'ipadpro'],
     steps: [
       'Open Boo’s wall for the practice show on the projector computer, or any screen, full screen. Tap it once so it can play sound.',
-      'Open the practice show on one or more phones.',
+      'Open the practice show on one or more phones. For the end credits’ photo, also open Boo’s camera on the iPad Pro, stand it facing you, and tap Turn on the camera.',
       'Tap Start the show.',
-      'When the music stops, strike a pose and hold it until Boo judges. Three poses, then That’s the show.',
+      'When the music stops, strike a pose and hold it until Boo judges. Three poses, then That’s the show. At the last pose the camera takes the photo and keeps it on its own screen.',
       'Tap Start the show to go again. Nothing is paid.',
     ],
     tries: [
@@ -115,6 +116,7 @@ export const SECTIONS = [
       { key: 'phones', label: 'The practice show on a phone', device: 'phone', params: { practice: 'boo' } },
       preview('kiosk-boo', 'Boo’s wall, one pose, a sample', 'projector'),
       preview('kiosk-boo-pose', 'Boo’s wall at the pose, a sample', 'projector'),
+      { key: 'camera', label: 'Boo’s camera, the practice show', device: 'ipadpro', params: { kiosk: 'pose', practice: '1' } },
     ],
   },
   {

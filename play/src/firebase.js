@@ -49,6 +49,8 @@ export const callSalemReady = httpsCallable(functions, 'salemReady')
 export const callSalemSlip = httpsCallable(functions, 'salemSlip')
 export const callSalemPassed = httpsCallable(functions, 'salemPassed')
 export const callBooDone = httpsCallable(functions, 'booDone')
+// the Entryway iPad's photo of a group's last pose, for the end credits (?kiosk=pose)
+export const callPosePhoto = httpsCallable(functions, 'posePhoto')
 // The workshop's Game test tab: a practice of Get Off My Lawn! or Boo's
 // Catwalk on its own record (public_state/game_test_*), never a night's.
 // { command: 'salem-join' | 'salem-ready' | 'salem-slip' | 'salem-passed', ... }

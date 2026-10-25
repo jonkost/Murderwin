@@ -753,6 +753,23 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk.boo-wall .boo-hold { font-size: min(5vw, 8vh); }
 .boo-judging { height: 30vh; object-fit: contain; }
 @media (prefers-reduced-motion: reduce) { .boo-strut { animation: none; } }
+/* Boo's camera (?kiosk=pose, card 450): the group sees itself, mirrored; one photo at the last pose */
+.kiosk.pose-cam { background: #000; position: relative; overflow: hidden; }
+.pose-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.pose-video.off { visibility: hidden; }
+.pose-ask { position: relative; display: grid; gap: 3vh; justify-items: center; max-width: 80vw; }
+.pose-ask button { font-size: min(3.4vw, 4.4vh); padding: 1.6vh 4vw; min-height: 44px; border-radius: 1vw; }
+.pose-caption { position: absolute; left: 0; right: 0; bottom: 4vh; display: grid; gap: 1vh; justify-items: center; text-shadow: 0 2px 12px #000; }
+.kiosk.pose-cam .boo-strike { font-size: min(9vw, 13vh); }
+.kiosk.pose-cam .boo-hold { font-size: min(5vw, 7vh); }
+.pose-shot { position: absolute; right: 3vw; top: 3vh; width: min(34vw, 46vh); background: var(--card); border: 2px solid var(--good); border-radius: 1.2vw; padding: 1vw; display: grid; gap: 0.8vh; }
+.pose-shot img { width: 100%; border-radius: 0.8vw; }
+.pose-shot p { margin: 0; font-size: min(2.2vw, 3vh); }
+/* the end credits: each group's last pose */
+.pose-credits { display: flex; flex-wrap: wrap; gap: 2vw; justify-content: center; margin: 0 0 4vh; }
+.pose-credit { margin: 0; width: min(40vw, 46vh); display: grid; gap: 0.8vh; }
+.pose-credit img { width: 100%; border-radius: 1vw; border: 2px solid var(--line); }
+.pose-credit figcaption { font-size: min(2.6vw, 3.4vh); color: var(--dim); text-align: center; }
 
 /* The game names (handoff §16): the hook under a game's name, on the phone and on each room's screen. */
 .game-hook { font-style: italic; color: var(--dim); margin: -0.2rem 0 0.8rem; }

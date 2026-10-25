@@ -81,7 +81,7 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'ipad', name: 'The captions iPad', machine: 'Jon’s iPad Pro, on a stand', kiosk: 'ipad',
-        what: 'Keeps the words of W-O-O-F News bulletins 1 and 2 up through supper. In Act 4 it is a spare screen.',
+        what: 'Keeps the words of W-O-O-F News bulletins 1 and 2 up through supper. In Act 4 it moves to the Entryway as Boo’s camera (see the Entryway), or stays a spare screen.',
         start: ['Open the address in Safari, full screen.', 'Tap anywhere once to wake it.'],
         alive: 'The crest and a waiting line. The dot in the bottom left corner is green.',
       },
@@ -108,6 +108,12 @@ export const DEVICE_ROOMS = [
         what: 'Idle until Act 4. Boo struts, the music stops, the group strikes a pose, and she judges it. After Act 4 this MacBook moves to the bedroom.',
         start: ['Plug it into the projector with the short HDMI cable and aim at the triangle wall.', 'Open the address in a browser, full screen, and tap once to wake it, so the music can play.'],
         alive: 'Boo on the wall and a waiting line.',
+      },
+      {
+        key: 'pose', name: 'Boo’s camera (nice to have)', machine: 'Jon’s iPad Pro, on its stand at the end of the catwalk, facing the group, Act 4 only', kiosk: 'pose',
+        what: 'Shows the group to itself like a mirror and takes one photo of each group’s last pose for the end credits. Without it the catwalk runs the same and the credits have no photos.',
+        start: ['After supper, carry the iPad Pro from the Orangerie and stand it facing the catwalk.', 'Open the address in Safari, full screen, and tap Turn on the camera. Allow the camera when the iPad asks.'],
+        alive: 'The room on the screen, like a mirror, and a waiting line.',
       },
     ],
   },

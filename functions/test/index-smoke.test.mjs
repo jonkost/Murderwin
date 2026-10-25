@@ -10,7 +10,7 @@ test('functions/index.js loads under the current firebase-functions and exports 
   process.env.GCLOUD_PROJECT ??= 'demo-murderwin'
   process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:1' // never reached; getFirestore() is lazy
   const mod = await import('../index.js')
-  for (const name of ['join', 'hostCommand', 'answer', 'ballot', 'eliminate', 'meetCat', 'leaveCat', 'notYet', 'lockIn', 'memoryStep', 'salemReady', 'salemSlip', 'salemPassed', 'booDone', 'stationCommand', 'relayAdvance', 'relayVote', 'relayGuess', 'steward', 'studyTest', 'gameTest', 'sealedCounts', 'morningAfter']) {
+  for (const name of ['join', 'hostCommand', 'answer', 'ballot', 'eliminate', 'meetCat', 'leaveCat', 'notYet', 'lockIn', 'memoryStep', 'salemReady', 'salemSlip', 'salemPassed', 'booDone', 'stationCommand', 'relayAdvance', 'relayVote', 'relayGuess', 'steward', 'studyTest', 'gameTest', 'sealedCounts', 'morningAfter', 'posePhoto']) {
     assert.equal(typeof mod[name], 'function', `${name} is exported as a callable`)
   }
   assert.equal(mod.solve, undefined, 'the safe is gone, and its callable with it')

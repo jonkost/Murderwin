@@ -25,6 +25,7 @@ import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: 
 import { stopOf } from './parlour.js'
 import { closingStage } from './news.js'
 import { play, bulletinVideo } from './screen.js'
+import { posesFor } from './pose.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -306,10 +307,12 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 
   const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
+  // Boo's Catwalk: each group's last pose, when the Entryway's camera took one (pose.js)
+  const poses = await posesFor(db, nightId, rot)
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
     graph: { points, running, sides, hush, high, low, clues: clueLevels },
-    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
+    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), poses, thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
     news: {}, cardAt: {},
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,

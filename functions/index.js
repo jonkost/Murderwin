@@ -23,6 +23,7 @@ import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
 import { sealedCounts as countSealed } from './lib/counts.js'
 import { morningOp } from './lib/morning.js'
+import { savePose } from './lib/pose.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -161,6 +162,14 @@ export const salemPassed = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, attempt } = req.data ?? {}
   return run.player.salemPassed(db, { uid, nightId, attempt })
+}))
+
+// Act 4, the Entryway: the iPad Pro facing the catwalk (?kiosk=pose) sends
+// its photo of the group's last pose, for the end credits (lib/pose.js).
+export const posePhoto = onCall({ cors: true }, wrap(async req => {
+  const { nightId, groupId, image } = req.data ?? {}
+  await atTheParty(req, nightId)
+  return savePose(db, { nightId, groupId, image })
 }))
 
 // Act 4, the Entryway: Boo's show is over (the wall, ?kiosk=boo, or a phone).
