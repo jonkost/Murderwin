@@ -152,6 +152,14 @@ test('the party night is never seeded, whatever is in the box', async () => {
   assert.equal(db.store.get(`nights/${dry.nightId}/private/deck`).seed, undefined)
 })
 
+test('a dry run never takes the typed word either', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', replay_seed: 'tulip-4471' })
+  const { nightId } = await createNight(db, { forceRehearsal: true, dryRun: true })
+  assert.notEqual(db.store.get(`nights/${nightId}/private/deck`).seed, 'tulip-4471')
+  assert.equal(db.store.get('meta/game').replay_seed, 'tulip-4471', 'still waiting for the next night from a phone')
+})
+
 test('a Game test night never takes the typed word', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', replay_seed: 'tulip-4471' })

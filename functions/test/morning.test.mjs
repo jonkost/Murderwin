@@ -1,5 +1,6 @@
 import { test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, NightError } from '../lib/night.js'
 import { hostCommand } from '../lib/run.js'
@@ -30,7 +31,7 @@ const GUESTS = ['Jon', 'Susan', 'Jessa', 'Jacob', 'Marie']
 
 // A night played to its end: made with the box ticked (or not), the case dealt at the
 // power, and the reveal's last name out (or not). The secrets are bracketed stand-ins.
-async function playedNight({ db = new FakeFirestore(), party = true, revealed = true, dryRun = false, gameTest = false } = {}) {
+async function playedNight({ db = new FakeFirestore(), party = true, revealed = true, revealedAt = AFTER - 60_000, dryRun = false, gameTest = false } = {}) {
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', ...(party ? { party_night: true } : {}) })
   db.store.set('safe_content/bag_items', { items: [{ id: 'i1', text: `${SYNTH[0]} — touch: soft · keepsake` }, { id: 'i2', text: `${SYNTH[1]} — touch: hard · keepsake` }] })
   db.store.set('sealed/bags', { bags: { 1: ['i1', 'i2'], 2: ['i2'] }, doubles: { 2: ['i2'] }, words: {}, properties: {} })
@@ -42,7 +43,8 @@ async function playedNight({ db = new FakeFirestore(), party = true, revealed = 
   await hostCommand(db, { nightId, command: 'blackout' })
   await hostCommand(db, { nightId, command: 'power', now: 2_000_000 })
   db.store.set(`nights/${nightId}/private/relay`, { grids: [{ number: 0, named: true, options: [{ name: 'practice' }], answer: 0 }, { number: 1, named: true, options: [{ name: 'x' }, { name: SYNTH[2] }], answer: 1 }, { number: 2, named: false, options: [] }] })
-  db.store.set(`nights/${nightId}/public/finale`, { stage: revealed ? 'victim' : 'motive' })
+  db.store.set(`nights/${nightId}/public/finale`, revealed ? { stage: 'victim', victimNamedAt: new Date(revealedAt), victimAt: new Date(revealedAt + 20_000) } : { stage: 'motive' })
+  db.store.set(`nights/${nightId}/public/pose-g1`, { groupId: 'g1', names: ['Jessa', 'Jacob'], image: 'data:image/jpeg;base64,AAAA' })
   return { db, nightId }
 }
 
@@ -138,4 +140,38 @@ test('keep leaves the secrets sealed; clear removes them only once the archive h
   }
   assert.equal(db.store.get(MORNING_DOC).secrets, 'cleared')
   assert.equal((await morningStatus(db, { now: AFTER })).secrets, 'cleared')
+})
+
+test('a night started with the party box ticked before the party never opens, however far it got; the real one does', async () => {
+  const { db } = await playedNight({ revealedAt: PARTY_DAY - 3 * 86_400_000 })
+  const st = await morningStatus(db, { now: AFTER })
+  assert.equal(st.ready, false, 'a tech run with the box ticked is not the party')
+  await refused(morningOp(db, { op: 'open', confirm: 'OPEN' }, { now: AFTER, log: () => {} }), 'closed')
+  const real = await playedNight({ db })
+  assert.equal((await morningStatus(db, { now: AFTER })).ready, true)
+  await morningOp(db, { op: 'open', confirm: 'OPEN' }, { now: AFTER, log: () => {} })
+  assert.equal(db.store.get(MORNING_DOC).nightId, real.nightId, 'the night revealed on the party day')
+})
+
+test('the open mark cannot be forged: one in meta/ means nothing, and one with no archive behind it opens nothing', async () => {
+  assert.ok(MORNING_DOC.startsWith('archive/'), 'the mark lives where no client rule reaches')
+  const rules = readFileSync(new URL('../../firestore.rules', import.meta.url), 'utf8')
+  assert.ok(!/match \/archive/.test(rules), 'no rule opens archive/* to a client')
+  const { db } = await playedNight()
+  db.store.set('meta/morning_after', { nightId: 'x', openedAt: new Date(BEFORE) })
+  db.store.set(MORNING_DOC, { nightId: 'nothing-archived', openedAt: new Date(AFTER) })
+  await refused(morningOp(db, { op: 'read' }, { now: AFTER, log: () => {} }), 'closed')
+  await refused(morningOp(db, { op: 'secrets', choice: 'clear' }, { now: AFTER, log: () => {} }), 'closed')
+  for (const p of SECRET_DOCS) assert.ok(db.store.get(p), 'nothing cleared')
+})
+
+test('clear keeps the secret as it stood at the clear, even if it changed after the open; the photos are in the archive and on the page', async () => {
+  const { db, nightId } = await playedNight()
+  await morningOp(db, { op: 'open', confirm: 'OPEN' }, { now: AFTER, log: () => {} })
+  const { view } = await morningOp(db, { op: 'read' }, { now: AFTER, log: () => {} })
+  assert.deepEqual(view.poses, [{ names: ['Jessa', 'Jacob'], image: 'data:image/jpeg;base64,AAAA' }])
+  db.store.set('sealed/parlour_leans', { sets: { [SYNTH[3]]: { 0: { boo: 'b' } } }, editedAt: 2 })
+  await morningOp(db, { op: 'secrets', choice: 'clear' }, { now: AFTER, log: () => {} })
+  assert.equal(db.store.get(`archive/${nightId}/parts/cleared-sealed-parlour_leans`).editedAt, 2, 'the newer version kept')
+  assert.ok(db.store.get(archivePath(nightId)).parts.includes('cleared-sealed-parlour_leans'), 'and listed in the archive')
 })

@@ -36,6 +36,7 @@ const PRETEND_VIEW = {
   news: ['(Family two)'], dial: { level: 4, total: 5, pushes: { ghost: 6, murderer: 4 } },
   bags: { murderer: 3, ghost: 7, list: [{ n: 1, items: ['(a thing)', '(another thing)'] }, { n: 3, items: ['(a third thing)'] }] },
   drawing: [{ round: 1, picture: '(a picture)' }, { round: 2, picture: 'a made-up picture (the bank had none)' }],
+  poses: [{ names: ['(Guest A)', '(Guest C)'], image: '/workshop/seal.png' }],
   leans: 17, spills: 0,
 }
 async function pretendCall(data) {

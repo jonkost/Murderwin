@@ -23,7 +23,7 @@ import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
 import { sealedCounts as countSealed } from './lib/counts.js'
 import { morningOp } from './lib/morning.js'
-import { savePose } from './lib/pose.js'
+import { savePose, fromPoseCamera } from './lib/pose.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -167,8 +167,10 @@ export const salemPassed = onCall({ cors: true }, wrap(async req => {
 // Act 4, the Entryway: the iPad Pro facing the catwalk (?kiosk=pose) sends
 // its photo of the group's last pose, for the end credits (lib/pose.js).
 export const posePhoto = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
   const { nightId, groupId, image } = req.data ?? {}
-  await atTheParty(req, nightId)
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  if (!(await fromPoseCamera(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) }))) throw new HttpsError('permission-denied', 'Only Boo’s camera sends the photos.')
   return savePose(db, { nightId, groupId, image })
 }))
 

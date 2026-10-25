@@ -33,6 +33,16 @@ function namesOf(rot, gid) {
   return (g?.members ?? []).map(m => m.name).filter(Boolean)
 }
 
+// Who may send one: the pose camera itself (a presence row for this night
+// with the guest key kiosk-pose, which Boo's camera page keeps), or the
+// admin. Not a guest's phone, and not another room screen.
+export async function fromPoseCamera(db, { uid, nightId, isAdmin = false } = {}) {
+  if (isAdmin) return true
+  if (!uid || !nightId) return false
+  const p = (await db.doc(`presence/${uid}`).get()).data()
+  return !!p && p.nightId === nightId && p.guestKey === 'kiosk-pose'
+}
+
 export async function savePose(db, { nightId, groupId, image, now = Date.now() } = {}) {
   if (!nightId || typeof groupId !== 'string' || !/^g\d{1,2}$/.test(groupId)) throw new NightError('invalid', 'Which group?')
   if (!validPhoto(image)) throw new NightError('invalid', 'That photo did not come through. The next pose will try again.')

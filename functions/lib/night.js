@@ -154,9 +154,9 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false, g
   if (typeof forceRehearsal !== 'boolean') forceRehearsal = game.party_night !== true
   // Replay by seed (seed.js, card 324): a rehearsal is dealt from a word, the
   // caller's, else the one typed in the Game night page's Replay box (used
-  // once, and never by a Game test night), else a fresh one. The party never
-  // has one.
-  const typed = cleanSeed(seed ?? (gameTest ? '' : game.replay_seed))
+  // once, and never by a Game test night or a dry run), else a fresh one.
+  // The party never has one.
+  const typed = cleanSeed(seed ?? (gameTest || dryRun ? '' : game.replay_seed))
   const word = forceRehearsal ? (typed || newSeedWord()) : null
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
@@ -201,7 +201,7 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false, g
     // the word on the Game night page, so this rehearsal can be played again
     const prev = (await db.doc(REPLAY_DOC).get()).data() ?? null
     batch.set(db.doc(REPLAY_DOC), replayRecord(prev, { seed: word, nightId, label: label || `Night of ${date.toDateString()}`, replayed: !!typed, gameTest: gameTest === true, at: date }))
-    if (typed && seed == null && !gameTest && game.replay_seed) batch.update(db.doc('meta/game'), { replay_seed: FieldValue.delete() })
+    if (typed && seed == null && !gameTest && !dryRun && game.replay_seed) batch.update(db.doc('meta/game'), { replay_seed: FieldValue.delete() })
   }
   batch.set(db.doc('public_state/active'), { nightId, since: FieldValue.serverTimestamp() })
   await batch.commit()

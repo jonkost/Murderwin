@@ -502,13 +502,13 @@ night page has "The morning after" under After the party.
   screen). Before that the page says "Not yet" and why, and nothing else.
   A rehearsal, a dry run or a Game test night never opens it.
 - Type OPEN and tap "Open the case". The night is copied into an archive
-  first: the case, everyone's phone, the night's own records, and the
-  three secrets that ran. Nothing is moved.
+  first: the case, everyone's phone, the night's own records, Boo's
+  Catwalk photos, and the three secrets that ran. Nothing is moved.
 - The page then shows what really happened: the Murderer, the motive and
   the victim, everyone's character and role and bag, which families each
   guest's cats ruled out and which family the first bulletin crossed off,
-  where the clarity dial ended, every bag's contents, and the drawing's
-  pictures.
+  where the clarity dial ended, every bag's contents, the drawing's
+  pictures, and each group's photo from Boo's camera, to save.
 - Last, your call on the secrets: "Keep the secrets" leaves the packing
   list, the cats' leans and the drawing pictures sealed as they are; "Clear
   the secrets" takes them out of the sealed lists. Either way the archive
@@ -671,8 +671,14 @@ numbers only from `sealed/bags`, `sealed/parlour_leans` against the bank,
 `forceRehearsal: false`, not `dryRun`, not `gameTest`, has
 `public/finale.stage === 'victim'`; the archive is `archive/{nightId}` and
 `archive/{nightId}/parts/*`, which no client rule opens; the mark is
-`meta/morning_after`) and `posePhoto` (`functions/lib/pose.js`, at the
-party: a JPEG data URL of at most `POSE_MAX_CHARS`, kept at
+`archive/_morning`, out of every client's reach, and `read` and `secrets`
+check it against the archive and the day again; the reveal must have been
+named on the party day or later (`victimNamedAt`), so a night started with
+the box ticked before the party never opens; Clear copies each secret as it
+stands, as a `cleared-*` part, before removing it) and `posePhoto` (`functions/lib/pose.js`, at the
+party, from the pose camera's own presence row (`fromPoseCamera`, the
+guest key `kiosk-pose`) or the admin: a JPEG data URL of at most
+`POSE_MAX_CHARS`, kept at
 `nights/{id}/public/pose-<group>` only while `public/boo` is that group's
 show; `finaleDoc` lists the groups with a photo in `credits.poses`, and the
 TV reads each photo from its own doc). Replay by seed is

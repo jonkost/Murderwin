@@ -114,6 +114,15 @@ function CaseView({ view }) {
         {view.drawing.length === 0 ? <p className="hint">The drawing did not run.</p>
           : <ul className="morning-bags">{view.drawing.map(d => <li key={d.round}><b>Round {d.round}</b>: {d.picture}</li>)}</ul>}
       </section>
+      {(view.poses ?? []).length > 0 && (
+        <section className="panel">
+          <h2>Boo’s Catwalk</h2>
+          <p className="why">Each group’s last pose. Long-press or right-click a photo to save it.</p>
+          <div className="morning-poses">
+            {view.poses.map((p, i) => <figure key={i}><img src={p.image} alt={`The last pose of ${p.names.join(', ')}`} /><figcaption>{p.names.join(', ')}</figcaption></figure>)}
+          </div>
+        </section>
+      )}
     </>
   )
 }
