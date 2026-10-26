@@ -258,7 +258,7 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
-  // the real W-O-O-F News lines, Sir Irwin's five motives and the memory match's twelve cards fit a
+  // the real W-O-O-F News lines, Sir Irwin's five motives and the memory match's boards (measured in the room left, 26 Oct 2026) fit a
   // 16:9 TV and the iPad, REHEARSAL band included: their sizes are capped by the screen's height
   const fit = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   for (const rule of [
@@ -266,7 +266,8 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
     '.kiosk.irwin .kiosk-lines .kiosk-line { font-size: min(4.6vw, 4.2vh); }',
     '.kiosk.irwin .irwin-choices { font-size: min(3.4vw, 4vh);',
     '.kiosk.captions .kiosk-line { font-size: min(4.2vw, 5vh); }',
-    '.memory-board { width: min(92vw, calc(88vh - var(--band-h))); }',
+    '.kiosk.memory { height: calc(100vh - var(--band-h)); height: calc(100dvh - var(--band-h)); min-height: 0; }',
+    '.memory-fit { flex: 1 1 0; min-height: 0; width: 100%; container-type: size;',
     '.reveal-row.count-3 .reveal-portrait { max-height: 8vh; }',
   ]) assert.ok(fit.includes(rule), rule)
   // the iPad heartbeats under its own key, never as the living room TV

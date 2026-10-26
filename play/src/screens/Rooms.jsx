@@ -273,13 +273,16 @@ function Board({ cards, boardKey, onClear, disabled = false }) {
   }, [up, cards])
   const shown = new Set([...up, ...found.flat()])
   const flip = i => { if (!disabled && up.length < 2 && !shown.has(i)) setUp(u => [...u, i]) }
+  // the fit box takes the height left under Zimothy's words, and the board is as big as fits in it
   return (
-    <div className={`memory-board cards-${cards.length}`}>
-      {cards.map((t, i) => (
-        <button key={`${boardKey}-${i}`} className={shown.has(i) ? 'memory-card up' : 'memory-card'} onClick={() => flip(i)} aria-label={shown.has(i) ? 'a trace' : 'a card, face down'} disabled={disabled}>
-          {shown.has(i) ? <img src={`${BASE}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <FolderBack />}
-        </button>
-      ))}
+    <div className="memory-fit">
+      <div className={`memory-board cards-${cards.length}`}>
+        {cards.map((t, i) => (
+          <button key={`${boardKey}-${i}`} className={shown.has(i) ? 'memory-card up' : 'memory-card'} onClick={() => flip(i)} aria-label={shown.has(i) ? 'a trace' : 'a card, face down'} disabled={disabled}>
+            {shown.has(i) ? <img src={`${BASE}traces/${t}.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} /> : <FolderBack />}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

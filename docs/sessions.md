@@ -11,7 +11,7 @@ on the Canon.
 
 ## 26 Oct 2026, evening · Claude Code (Jon's Game test notes)
 
-**What changed** (on `main`; not deployed, not pushed)
+**What changed** (on `main`; deployed and pushed on Jon's yes)
 - Asked first to start the study station on the M1 Air by the walls: not done. This session runs
   on the brain, and the M1 Air is not set up or reachable from here (card 474, Set up the study
   station on the M1 Air, is still open).
@@ -26,10 +26,19 @@ on the Canon.
   picture beside one panel holding the group, the jewels, the round and her line. Its card between
   groups wears the same look.
 - The board: migration `2026-10-26-game-test-notes` marks notes 10000, 10001 and 10003 done.
+- Deployed on Jon's yes (hosting, both rule sets, 25 functions) and pushed. Checking the live
+  site turned up that the memory match's board was sized by a guess at the room under Zimothy's
+  words: rounds 2 and 3 ran about 130px off the bottom of an 11-inch iPad (1194 by 834), and on a
+  short laptop screen the cards shrank to 62px. Now the screen is one screen high, the board fills
+  the room actually left (a CSS size container, `.memory-fit`), and Zimothy's words are capped by
+  the screen's height. Measured, all three rounds fit with and without the rehearsal band at
+  1194 by 834, 1366 by 1024, 834 by 1194 and 1280 by 720 (cards 169, 211, 177 and 136px in round 1).
+  A 7-pair board dealt before the change still fits (7 by 2). The preview deals 6 pairs. The
+  site deployed again (hosting only) and pushed.
 
 **What is left**
 - Boo's Catwalk (note 10002) stays open: Jon sends the shape he wants for the wall and the catwalk.
-- Jon tries the three fixed games again on the Game test tab after the next deploy.
+- Jon tries the three fixed games again on the Game test tab (deployed).
 
 **Decisions taken**
 - Jon: In Duplicate's first round is 6 pairs on a 4 by 3 grid.

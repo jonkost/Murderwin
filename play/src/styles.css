@@ -696,8 +696,6 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk.irwin .irwin-face { width: min(16vw, 18vh); height: min(16vw, 18vh); }
 .kiosk.irwin .irwin-choices { font-size: min(3.4vw, 4vh); gap: min(1vw, 1.2vh); margin-top: min(2vw, 1.6vh); }
 .kiosk.captions .kiosk-line { font-size: min(4.2vw, 5vh); }
-/* the memory match's twelve cards fit the iPad's height, under the band too */
-.memory-board { width: min(92vw, calc(88vh - var(--band-h))); }
 
 /* A stage direction in a cat's line (*snort*): italics, no stars */
 em.stage { font-style: italic; color: var(--dim); }
@@ -792,10 +790,19 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .video-caption { margin: 0; padding: 1vh 4vw; font-size: min(2.6vw, 3.6vh); text-align: center; }
 .trace-standin { color: var(--dim); font-style: italic; }
 
-/* the memory match's three boards (6, 10 and 14 pairs): 4 by 3, 5 by 4, 7 by 4, sized to fit the iPad's height */
-.memory-board.cards-12 { grid-template-columns: repeat(4, 1fr); width: min(92vw, calc((60vh - var(--band-h)) * 1.333)); }
-.memory-board.cards-20 { grid-template-columns: repeat(5, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.25)); }
-.memory-board.cards-28 { grid-template-columns: repeat(7, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.75)); }
+/* the memory match's three boards (6, 10 and 14 pairs: 4 by 3, 5 by 4, 7 by 4) fit any screen, the band included
+   (26 Oct 2026): the screen is exactly one screen high, the fit box takes what Zimothy's words leave, and the
+   board is as wide as its rows of square cards allow in that box, measured rather than guessed */
+.kiosk.memory { height: calc(100vh - var(--band-h)); height: calc(100dvh - var(--band-h)); min-height: 0; }
+/* Zimothy's words capped by the screen's height too, so a short screen leaves the cards their room */
+.kiosk.memory .kiosk-line { font-size: min(3.2vw, 3.6vh); max-width: 90vw; margin: 0; }
+.kiosk.memory .kiosk-next { font-size: min(2.6vw, 2.6vh); margin: 0; }
+.memory-fit { flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; place-items: center; }
+.memory-board { --cols: 4; --rows: 3; --g: 1.6vh; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--g); margin: 0; width: min(92vw, 100cqw, calc((100cqh - (var(--rows) - 1) * var(--g)) / var(--rows) * var(--cols) + (var(--cols) - 1) * var(--g))); }
+.memory-board.cards-20 { --cols: 5; --rows: 4; }
+.memory-board.cards-28 { --cols: 7; --rows: 4; }
+/* a 7-pair board dealt before the first round became 6 pairs (26 Oct 2026) still fits, 7 by 2 */
+.memory-board.cards-14 { --cols: 7; --rows: 2; }
 
 /* Boo's wall: the runway along the bottom edge of the triangle wall */
 .kiosk.boo-wall { background: #000; justify-content: flex-end; gap: 2vh; }
