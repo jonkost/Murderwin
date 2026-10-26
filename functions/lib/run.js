@@ -29,9 +29,10 @@ export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'p
 // own sleep.
 export const BLACKOUT_POWER_MS = 5_000
 const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
-// The four Hue scenes Jon makes in the Hue app (handoff 23 Oct §2c); the
-// brain recalls one by name when the host asks (public/cues.scene).
-export const SCENES = ['Murderwin Arrival', 'Murderwin Blackout', 'Murderwin Lights Out', 'Murderwin Reveal']
+// The six Hue scenes Jon makes in the Hue app (his cue list, 25 Oct 2026;
+// cues/scenes.json names the same six); the brain recalls one by name when
+// the host asks (public/cues.scene).
+export const SCENES = ['Murderwin Default', 'Murderwin Dimmed', 'Murderwin Blackout', 'Murderwin Drawing', 'Murderwin Candles', 'Murderwin Study Dim']
 export const MUSIC_COMMANDS = ['play', 'pause', 'next']
 
 export function firstBeat(act) { return deal.beatsOf(act)[0]?.key ?? null }
@@ -301,9 +302,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return enterBeat(db, nightId, 4, firstBeat(4), { now })
     }
     case 'scene': {
-      // the house: one of the four Hue scenes, by hand (the brain recalls it; cues/)
+      // the house: one of the six Hue scenes, by hand (the brain recalls it; cues/)
       const name = SCENES.find(x => x.toLowerCase() === String(arg ?? '').trim().toLowerCase())
-      if (!name) throw new NightError('invalid', 'Pick one of the four scenes.')
+      if (!name) throw new NightError('invalid', 'Pick one of the six scenes.')
       await db.doc(`nights/${nightId}/public/cues`).set({ scene: { name, at: new Date(now) } }, { merge: true })
       return { ok: true, scene: name }
     }

@@ -1,6 +1,6 @@
 import { booMoment, ms } from './night.js'
 
-// The pose camera (card 450, ?kiosk=pose): the iPad Pro in the Entryway
+// The pose camera (card 450, ?kiosk=pose): Jenna's iPad Pro in the Entryway
 // faces the catwalk and takes one photo of each group's last pose, for the
 // end credits (functions/lib/pose.js keeps it). Pure, so play/test can run it.
 

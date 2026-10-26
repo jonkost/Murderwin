@@ -27,7 +27,7 @@ export const HOST_COMMANDS = [
   { name: 'light-up', arg: '', what: 'A Parlour Game on every phone, any time in Acts 2, 4 and 6 (in Act 4 it waits on each phone until the guest is free).' },
   { name: 'supper', arg: '', what: "Supper's ready (Act 2): close the cat queue and send everyone to supper; the cats a guest has not seen leave a note." },
   { name: 'start-act4', arg: '', what: 'Start Act 4 (end of supper): the two-minute warning, then the groups and the ten-minute rounds on their own.' },
-  { name: 'scene', arg: '<name>', what: 'Recall one of the four Hue scenes by hand (Murderwin Arrival, Blackout, Lights Out, Reveal). The brain does it.' },
+  { name: 'scene', arg: '<name>', what: 'Recall one of the six Hue scenes by hand (Murderwin Default, Dimmed, Blackout, Drawing, Candles, Study Dim). The brain does it.' },
   { name: 'music', arg: '<play|pause|next>', what: "The brain's music by hand: play, pause, or the next playlist." },
   { name: 'settle', arg: '', what: 'Pick for the phones that did not, once the window has run out.' },
   { name: 'groups', arg: '[force]', what: 'Make the Act 4 groups and their walk round the four rooms (Start Act 4 does this). Made groups are kept unless you say force.' },

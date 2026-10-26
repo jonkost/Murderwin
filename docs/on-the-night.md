@@ -15,31 +15,29 @@ Updated again on the evening of 24 October: the workshop's Game test tab
 (see "Trying the games" below) and the news team's cast (Susan plays Ava
 Waves, you play Mic Cameron). Updated 25 October: the Home rows that count
 the secrets, the motive card pictures, Boo's camera for the end credits,
-replaying a rehearsal by its seed word, and the morning after. Updated on
-the evening of 25 October for your cue list (`docs/cue-list.md`): the
-blackout ends on its own after five seconds, the "Sorry for the
-interruption" button and the role card's fifteen seconds, the hall bulb
-green for the welcome and red from the power's return, and nine sounds,
-two of them required; and, the same evening, three Host tab buttons from
-the cue list (**Sound test**, **Cake!** and **At the paper**), the drawing's
-guess tapped on your own phone, and fifteen seconds a turn in the drawing.
-Later that evening, the night's shape from the cue list: the house rules
-beat with the join code on the Parlour TV through Act 1, the dinner wrap-up
-and the two motive prompts, the dessert chime and the Happy Birthday Irwin
+replaying a rehearsal by its seed word, and the morning after. Updated 25 and
+26 October for your cue list (`docs/cue-list.md`), the whole build: the
+blackout ends on its own after five seconds, then the "Sorry for the
+interruption" button and the role card's fifteen seconds; the hall bulb
+green for the welcome, off in the blackout and red from the power's return;
+nine sounds, two of them required; three Host tab buttons (**Sound test**,
+**Cake!** and **At the paper**), the drawing's guess tapped on your own
+phone and fifteen seconds a turn; the night's shape (the house rules beat
+with the join code on the Parlour TV through Act 1, the dinner wrap-up and
+the two motive prompts, the dessert chime and the Happy Birthday Irwin
 card, the break line as Act 6 opens, the ballot as a card on the Now tab,
-the thank-you lock through the credits, and The End. Later still, the
-screens: a looping graphic on every idle screen once your files are in,
-each room's cat code on its screen during the Act 2 cat visits, the Act 4
-rules cards with the cats' pictures, the Happy Birthday Irwin card with Sir
-Irwin's picture, a rejoin code under the ballot clock, and the brain's
-browser as the Orangerie's screen (`?kiosk=orangerie`); and a Notes tab on
-every phone, a box for each guest's own scribbles. Updated 26 October for
-the devices in your cue list's key: Susan's MacBook Pro feeds the projector
-all night and never moves (the brain switches the projector's plug), your
-iPad Pro roams through four stations (the Library in Act 2, the Orangerie
-for supper, the memory match in Act 4, the bedroom from Act 6), Jenna's iPad
-Pro is Boo's camera, and the older family iPad is out unless you say it
-stays (the question *olderIpad*).
+the thank-you lock through the credits, and The End); the screens (a
+looping graphic on every idle screen once your files are in, each room's
+cat code on its screen during the Act 2 cat visits, the Act 4 rules cards
+with the cats' pictures, the Happy Birthday Irwin card with Sir Irwin's
+picture, a rejoin code under the ballot clock, and the brain's browser as
+the Orangerie's screen, `?kiosk=orangerie`); a Notes tab on every phone, a
+box for each guest's own scribbles; and the devices in your cue list's key
+(Susan's MacBook Pro feeds the projector all night and never moves, the
+brain switches the projector's plug, your iPad Pro roams through four
+stations, Jenna's iPad Pro is Boo's camera, and the older family iPad is
+out unless you say it stays, the question *olderIpad*). The Host tab's six
+scene buttons are the cue list's six scenes.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -146,11 +144,15 @@ them.
 - *Try every game.* The workshop's Game test tab has every game of Acts 4
   and 6 and the Parlour Games, each to try on the device it runs on, with a
   box for telling Claude Code what to fix. "Trying the games" below says how.
-- *Music and lights on the brain.* Three playlists in Apple Music on the brain, named Murderwin · Arrival, Murderwin · Investigation and Murderwin · Supper (a hyphen in place of the dot works too), and four scenes in the Hue app
-  (Murderwin Arrival, Murderwin Blackout, Murderwin Lights Out, Murderwin
-  Reveal). Turn them on with `MUSIC=on` and `HUE_SCENES=on` in `cues/.env`.
-  The brain changes them as the night moves; `docs/cues-relay.md` has the
-  table and the set-up steps. Nothing waits on music or a light.
+- *Music and lights on the brain.* Three playlists in Apple Music on the
+  brain, named Murderwin · Jazz, Murderwin · Intense and Murderwin · Credits
+  (a hyphen in place of the dot works too), the song Happy Birthday for Dogs
+  in its Music library for **Cake!**, and six scenes in the Hue app
+  (Murderwin Default, Murderwin Dimmed, Murderwin Blackout, Murderwin
+  Drawing, Murderwin Candles, Murderwin Study Dim). Turn them on with
+  `MUSIC=on` and `HUE_SCENES=on` in `cues/.env`. The brain changes them as
+  the night moves; `docs/cues-relay.md` has the table and the set-up steps.
+  Nothing waits on music or a light.
 - *Sydney's photo.* Save it as `play/public/household/sydney.jpg`, then
   `npm run deploy`. Without it his end-credits card shows his name only.
 - *A dry run with nobody in the room.* `npm run fake-night`. Eight fake phones
@@ -235,14 +237,16 @@ game; it serves the lights and the speakers.
    brain, Projector Murderwin On and Projector Murderwin Off (each runs a
    Home scene for the plug), so it must be on and in Home before the night.
 2. *The brain.* `cd cues && npm start`. Alive when the terminal prints a
-   line saying what is on (music, Hue scenes, string lights) and sits there
-   waiting. When the night begins it prints `[hall] green` and the bulb
+   line saying what is on (music, Hue scenes, the projector, string lights)
+   and sits there waiting. Above that line it counts the sound files: a line
+   saying how many optional sounds have no file is fine (those moments are
+   silent). It stops only if the chime or the blackout sound has no file:
+   then run the stand-in step under "The nine sounds" above and start it
+   again. When the night begins it prints `[hall] green` and the bulb
    outside the bedroom turns green for the welcome; it goes off for the
    blackout, red when the power returns, and green again when the drawing
    is done. If it prints `failed` and `retrying`, the bridge address in
-   `cues/.env` is wrong; the night runs on without the lights. If it says
-   the chime or the blackout sound has no file and stops, run the stand-in
-   step under "The nine sounds" above and start it again.
+   `cues/.env` is wrong; the night runs on without the lights.
 3. *The party box, then your phone.* On the workshop's Game night page, tick
    "This is the party night" (untick it after the party). Then open the game
    on your phone, tap "Host? Start the night", type your name. If a rehearsal
@@ -542,10 +546,10 @@ game; it serves the lights and the speakers.
 - **Pause, Irwin needs the garden** stops every clock in the house. **Resume**
   carries on from where it stopped; nobody loses time.
 - The house: scenes. The brain changes the music and the Hue scenes on its
-  own as the night moves. If you want one by hand: **Arrival**, **Blackout**,
-  **Lights Out** or **Reveal** recalls that scene, and the music has
-  **Play**, **Pause** and **Next playlist**. Your choice holds until the
-  night's next change. The buttons never say why.
+  own as the night moves. If you want one by hand: **Default**, **Dimmed**,
+  **Blackout**, **Drawing**, **Candles** or **Study Dim** recalls that
+  scene, and the music has **Play**, **Pause** and **Next playlist**. Your
+  choice holds until the night's next change. The buttons never say why.
 - The hall light: **Red** and **Green**, under The house, if the bulb ever
   needs setting by hand.
 - **Sound test**, under The house beside the hall light: the chime on every

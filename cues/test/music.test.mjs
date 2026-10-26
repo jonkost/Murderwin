@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createMusic, SCRIPTS, playlistNames, musicProblem, runOsascript, FADE_STEPS } from '../lib/music.js'
 
-const ARRIVAL = { name: 'Murderwin · Arrival', volume: 70 }
-const INVESTIGATION = { name: 'Murderwin · Investigation', volume: 40 }
+const JAZZ = { name: 'Murderwin · Jazz', volume: 70 }
+const INTENSE = { name: 'Murderwin · Intense', volume: 40 }
 
 // A stand-in for osascript: records each call, answers from `replies` (by
 // script), and can be held so the test sees the order of the calls.
@@ -24,9 +24,9 @@ test('play: the playlist by name and its spellings, at its volume, on shuffle an
   const { run, calls } = fakeRun({ play: 'playing' })
   const lines = []
   const m = createMusic({ run, log: l => lines.push(l), whisper: 10 })
-  await m.play(ARRIVAL)
-  assert.deepEqual(calls, [{ which: 'play', args: ['70', ...playlistNames('Murderwin · Arrival')] }])
-  assert.deepEqual(lines, ['[music] Murderwin · Arrival at 70'], 'the line carries the volume since 25 Oct 2026: one playlist plays at two levels (jazz 55 and 30, intense 35 and 60)')
+  await m.play(JAZZ)
+  assert.deepEqual(calls, [{ which: 'play', args: ['70', ...playlistNames('Murderwin · Jazz')] }])
+  assert.deepEqual(lines, ['[music] Murderwin · Jazz at 70'], 'the line carries the volume since 25 Oct 2026: one playlist plays at two levels (jazz 55 and 30, intense 35 and 60)')
   const script = SCRIPTS.play.join('\n')
   assert.ok(script.includes('set shuffle enabled to true') && script.includes('set song repeat to all'), 'shuffle and repeat')
   assert.ok(script.includes('return "already"') && script.includes('return "resumed"'), 'a playlist already on is left alone; a paused one carries on')
@@ -40,10 +40,10 @@ test('a missing playlist, or no permission yet, is one plain line; the relay car
   const { run, calls } = fakeRun(new Proxy({}, { get: (_, k) => replies[k] }))
   let clock = 0
   const m = createMusic({ run, log: l => lines.push(l), now: () => clock })
-  await m.play(INVESTIGATION)
-  assert.match(lines.at(-1), /no playlist called "Murderwin · Investigation" in Music/)
+  await m.play(INTENSE)
+  assert.match(lines.at(-1), /no playlist called "Murderwin · Intense" in Music/)
   replies = { play: denied, pause: denied }
-  await m.play(ARRIVAL)
+  await m.play(JAZZ)
   await m.pause()
   assert.equal(lines.filter(l => l.includes('Automation')).length, 1, 'the same problem once a minute, not on every command')
   clock += 61_000
@@ -66,7 +66,7 @@ test('duck and unduck: down to the whisper under a cue, back to the playing play
   assert.equal(m.ducked(), true)
   await m.unduck()
   assert.equal(calls.length, 1, 'no playlist put on yet: nothing to come back to')
-  await m.play(INVESTIGATION)
+  await m.play(INTENSE)
   await m.duck()
   await m.unduck()
   assert.deepEqual(calls.slice(-2), [{ which: 'fade', args: ['12', String(FADE_STEPS.down)] }, { which: 'fade', args: ['40', String(FADE_STEPS.up)] }])
@@ -75,8 +75,8 @@ test('duck and unduck: down to the whisper under a cue, back to the playing play
 test('a playlist that starts while a cue is playing starts at the whisper, and comes up when the cue ends', async () => {
   const { run, calls } = fakeRun({ play: 'playing', fade: 'faded' })
   const m = createMusic({ run, whisper: 10 })
-  m.duck()                     // the power sound begins…
-  await m.play(INVESTIGATION)  // …as the power returns and Investigation starts
+  m.duck()                     // the door's sting begins…
+  await m.play(INTENSE)        // …as the door opens and Intense starts
   await m.unduck()             // the sound ends
   assert.deepEqual(calls.map(c => c.which), ['fade', 'play', 'fade'])
   assert.equal(calls[1].args[0], '10', 'started at the whisper')
@@ -95,7 +95,7 @@ test('commands run one at a time, in order, even when osascript is slow', async 
     return which === 'play' ? 'playing' : 'paused'
   }
   const m = createMusic({ run })
-  m.play(ARRIVAL)
+  m.play(JAZZ)
   const done = m.pause()
   await new Promise(r => setImmediate(r))
   assert.deepEqual(order, ['start play'], 'the pause waits for the play')
@@ -108,14 +108,14 @@ test('fake mode never runs osascript and says what it would do', async () => {
   const { run, calls } = fakeRun()
   const lines = []
   const m = createMusic({ run, fake: true, log: l => lines.push(l) })
-  await m.play(ARRIVAL); await m.duck(); await m.unduck(); await m.pause()
+  await m.play(JAZZ); await m.duck(); await m.unduck(); await m.pause()
   assert.equal(calls.length, 0)
-  assert.deepEqual(lines, ['[music] would play Murderwin · Arrival at 70', '[music] would stop'])
+  assert.deepEqual(lines, ['[music] would play Murderwin · Jazz at 70', '[music] would stop'])
 })
 
 test('the playlist is found under easier spellings of its middle dot', () => {
-  assert.deepEqual(playlistNames('Murderwin · Arrival'), ['Murderwin · Arrival', 'Murderwin - Arrival', 'Murderwin – Arrival', 'Murderwin: Arrival', 'Murderwin Arrival'])
-  assert.deepEqual(playlistNames(' Supper '), ['Supper'])
+  assert.deepEqual(playlistNames('Murderwin · Jazz'), ['Murderwin · Jazz', 'Murderwin - Jazz', 'Murderwin – Jazz', 'Murderwin: Jazz', 'Murderwin Jazz'])
+  assert.deepEqual(playlistNames(' Credits '), ['Credits'])
 })
 
 test('osascript\'s errors in plain words', () => {

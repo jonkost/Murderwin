@@ -29,7 +29,7 @@ no file ("4 optional sounds have no file: silent at those moments").
 
 | File | When it plays | |
 |---|---|---|
-| `chime-phone` | Every "look at your phone" moment, and the house chime: the sound test in the rules, supper is ready, the start of Act 4 and every Act 4 round, dessert, the call to the Parlour before Sir Irwin, the start of Act 6. One short chime. | required |
+| `chime-phone` | Every "look at your phone" moment, and the house chime: the **Sound test** during the rules (Act 1), supper is ready, the start of Act 4 and every Act 4 round, the dessert chime (Act 5), the call to the Parlour before Sir Irwin, the start of Act 6. One short chime. | required |
 | `blackout` | End of Act 1, every phone and every light goes dark. Big thunder, a crash, a scream: it has to hit hard. | required |
 | `chime-news` | Act 2, W-O-O-F News bulletin 1 comes up on the Parlour TV. | plays `chime-phone` if missing |
 | `sounder-bulletin` | Act 3, bulletin 2, during supper, 3 to 5 minutes after you arm it. | plays `chime-phone` if missing |
@@ -90,13 +90,16 @@ starting.
 **Bulletin 1 and the closing bulletin as video (decided 23 October).** The
 Parlour TV plays these two as video, with the TV's own sound; everyone is in
 the Parlour for both. When it does, the brain still rings `chime-news` but
-does not play those recordings, so you never hear a line twice, and the
-music stays at a whisper for a minute and a half while the video plays
-(`videoHoldSeconds` in `cues/scenes.json`: tell Claude Code how long your
-video runs). Keep the sound recordings in this folder as well: they are the
+does not play those recordings, so you never hear a line twice; the music
+is already stopped for the news beat and cut at the newscast (the table in
+`docs/cues-relay.md`), so nothing plays under a video. Keep the sound
+recordings in this folder as well: they are the
 fallback if the video cannot play. The video files are the Parlour TV's,
 not the brain's, so they do not go in this folder. Bulletin 2 is always
 sound, through the HomePods.
+
+The five looping graphics the idle screens play are not in this folder
+either: they go in `play/public/loops/` (its README lists the file names).
 
 **What the brain prints.** Counts only, for example "sound playing;
 bulletin: 3 recordings, 1 missing". At the start it says how many of the 40

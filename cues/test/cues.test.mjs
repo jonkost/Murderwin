@@ -425,8 +425,8 @@ test('hue scenes: listed with their rooms, recalled by name (every scene with th
   const calls = []
   const data = {
     '/clip/v2/resource/scene': [
-      { id: 's1', metadata: { name: 'Murderwin Arrival' }, group: { rid: 'z1', rtype: 'zone' } },
-      { id: 's2', metadata: { name: 'murderwin  arrival ' }, group: { rid: 'r2', rtype: 'room' } },
+      { id: 's1', metadata: { name: 'Murderwin Default' }, group: { rid: 'z1', rtype: 'zone' } },
+      { id: 's2', metadata: { name: 'murderwin  default ' }, group: { rid: 'r2', rtype: 'room' } },
       { id: 's3', metadata: { name: 'Murderwin Blackout' }, group: { rid: 'z1', rtype: 'zone' } },
     ],
     '/clip/v2/resource/room': [{ id: 'r2', metadata: { name: 'Orangerie' } }],
@@ -438,20 +438,20 @@ test('hue scenes: listed with their rooms, recalled by name (every scene with th
     return { ok: true, status: 200, text: async () => JSON.stringify({ data: data[path] ?? [] }) }
   }
   const hue = new Hue({ host: '10.0.0.4', key: 'k', fetchImpl })
-  assert.deepEqual((await hue.scenes()).map(s => s.name), ['Murderwin Arrival', 'murderwin  arrival ', 'Murderwin Blackout'])
+  assert.deepEqual((await hue.scenes()).map(s => s.name), ['Murderwin Default', 'murderwin  default ', 'Murderwin Blackout'])
   const places = await hue.places()
   assert.equal(places.get('r2'), 'Orangerie')
   assert.equal(places.get('z1'), 'The house but the hall')
   calls.length = 0
-  assert.equal(await hue.recallScene('Murderwin Arrival'), 2)
+  assert.equal(await hue.recallScene('Murderwin Default'), 2)
   const puts = calls.filter(c => c.opts.method === 'PUT')
   assert.deepEqual(puts.map(c => c.url), ['https://10.0.0.4/clip/v2/resource/scene/s1', 'https://10.0.0.4/clip/v2/resource/scene/s2'])
   for (const p of puts) assert.deepEqual(JSON.parse(p.opts.body), { recall: { action: 'active' } })
   assert.deepEqual(SCENE_RECALL, { recall: { action: 'active' } })
-  assert.equal(await hue.recallScene('Murderwin Reveal'), 0, 'none by that name: nothing recalled, and the caller says so')
-  assert.equal(sameSceneName('Murderwin Lights Out', ' murderwin lights  out'), true)
+  assert.equal(await hue.recallScene('Murderwin Candles'), 0, 'none by that name: nothing recalled, and the caller says so')
+  assert.equal(sameSceneName('Murderwin Study Dim', ' murderwin study  dim'), true)
   assert.equal(sameSceneName('', ''), false)
-  assert.equal(sameSceneName('Murderwin Arrival', 'Murderwin Arrivals'), false)
+  assert.equal(sameSceneName('Murderwin Default', 'Murderwin Defaults'), false)
 })
 
 test('the relay watches the night doc as well as the public docs (the study too), and has the scene lister and the hardware checks', () => {

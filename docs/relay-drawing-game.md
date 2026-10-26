@@ -391,8 +391,8 @@ the budget 26 minutes (`DRAW_BUDGET_MS`, `MAX_TURNS` 44); the host's guess on th
   cue green. The look-alike at level 3 is always a trace of someone at the party, never the
   victim's own, and never a Professor's unless nobody else fits (that settles the traces doc's
   open question).
-- **The hall light** is the cue relay's job: `docs/cues-relay.md`. Red from Act 1, green at the
-  door. The TV announces the door anyway.
+- **The hall light** is the cue relay's job: `docs/cues-relay.md`. Green for the welcome, off in the
+  blackout, red from the power's return, green at the door. The TV announces the door anyway.
 - **Act 7 on the Parlour screen.** During the two-minute picks the trace is back on the TV
   with the clock. Then the TV runs the finale on the server's clock: the closing W-O-O-F News
   bulletin with Murderer, Motive, Victim one at a time, then the end credits (time on the

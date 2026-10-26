@@ -148,8 +148,9 @@ and the projector; the hall light and the sounds carry on.
   for the sound-test moment in the rules.
 - **Cake!** (Host tab, Act 5): the song, the candles, the birthday card on
   the TV; the jazz comes back when the song ends.
-- **A scene by hand.** The Host tab can ask for any scene by name; the brain
-  switches to it at once.
+- **A scene by hand.** Under The house on the Host tab, six buttons, one per
+  scene: Default, Dimmed, Blackout, Drawing, Candles and Study Dim. The brain
+  switches to it at once, and your choice holds until the table's next change.
 - **Music by hand:** play, pause, next playlist (the five settings in turn:
   jazz 55, jazz 30, intense 35, intense 60, credits 35).
 - The Host tab can still set the hall light red or green by hand, under
@@ -366,6 +367,10 @@ After changing any of them, stop the relay (Control-C) and start it again.
       Its first lines say what the sound folder holds and "music: on · Hue
       scenes: on · projector: on, through Apple Home · string lights: on,
       through Apple Home" (or "not set up" for whatever is decoration).
+- [ ] A browser on this Mac, full screen, at the play address with
+      `?kiosk=orangerie`, facing the Orangerie table (Salem's code in Act 2,
+      the Get Off My Lawn! card in Act 4; it shows the bell but rings
+      nothing, the real sounds are this Mac's).
 - [ ] Start the night from the Host tab: the log says `[hall] green`,
       `[lights] Murderwin Default`, `[projector] on` and `[music] Murderwin ·
       Jazz at 55`, and the house agrees. If it says `failed … retrying`,
@@ -602,10 +607,15 @@ bulb off), `s`, `c` (Cake!), `n`.
 
 **Docs it reads** (writers in the functions):
 - `nights/{id}` `{ act, beat, phase, pausedFrom }`: `night.js`, `run.enterBeat`.
-- `nights/{id}/public/cues` `{ hall: 'red'|'green', changedAt, scene?, music?, cake? }`:
-  the hall from `deal.ensureHall` (green at Act 1), the power sequence (red)
-  and `deal.revealTrace` (green); `scene`, `music` and `cake` from the Host
-  tab's buttons.
+- `nights/{id}/public/cues` `{ hall: 'red'|'green', changedAt, scene?: { name, at }, music?: { command, at }, cake?: { at } }`:
+  the hall from `deal.ensureHall` (green at Act 1's first beat, written only
+  while nothing has set it), `deal.setHall` (red at the power's return, from
+  the Blackout command's own return and from the act jump that deals the
+  roles), `deal.revealTrace` (green) and `relay.reset` (red); the brain alone
+  turns the bulb off, from the blackout phase. `scene`, `music` and `cake`
+  are the Host tab's buttons (`run.js` 'scene', 'music' and 'cake'): a fresh
+  `cake.at` plays the song, recalls Murderwin Candles, and when the song ends
+  puts the moment's playlist and scene back.
 - `nights/{id}/public/relay` `{ state, doorOpen }`: the drawing.
 - `nights/{id}/public/sounds` `{ current: { id | null, at, clips?, video? } }`:
   written by `screen.play` (functions/lib/screen.js): a beat's `sound` from

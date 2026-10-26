@@ -309,10 +309,11 @@ export function HousePanel({ house, cues, night, busy, run }) {
 // Running the night: one button. The beats come from seed/night.json; the
 // server does whatever the next beat needs (deal, light up, group, reveal)
 // and says only how many phones it reached. Nothing here can show content.
-// The house (handoff 23 Oct §2c, §9.11): the four Hue scenes as buttons, in
-// case the brain misses one, and the brain's music by hand. Never a tell: the
-// buttons say which scene, never why.
-const SCENE_BUTTONS = [['Murderwin Arrival', 'Arrival'], ['Murderwin Blackout', 'Blackout'], ['Murderwin Lights Out', 'Lights Out'], ['Murderwin Reveal', 'Reveal']]
+// The house (handoff 23 Oct §2c, §9.11; the six scenes of Jon's cue list,
+// 25 Oct 2026, the same six as cues/scenes.json): the Hue scenes as buttons,
+// in case the brain misses one, and the brain's music by hand. Never a tell:
+// the buttons say which scene, never why.
+const SCENE_BUTTONS = [['Murderwin Default', 'Default'], ['Murderwin Dimmed', 'Dimmed'], ['Murderwin Blackout', 'Blackout'], ['Murderwin Drawing', 'Drawing'], ['Murderwin Candles', 'Candles'], ['Murderwin Study Dim', 'Study Dim']]
 function ScenesPanel({ busy, run }) {
   return (
     <section className="scenes">

@@ -3,8 +3,8 @@ import { callPosePhoto } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { poseShotKey, poseCaption, QUALITIES, fits } from '../lib/pose'
 
-// The pose camera (card 450): /play/?kiosk=pose on the iPad Pro in the
-// Entryway in Act 4, facing the catwalk. It shows the group to itself, like
+// The pose camera (card 450): /play/?kiosk=pose on Jenna's iPad Pro in the
+// Entryway in Act 4 (Jon's key, 26 Oct 2026), facing the catwalk. It shows the group to itself, like
 // a mirror, follows Boo's show (public/boo, the same doc as her wall) and
 // takes one photo at the group's last pose, for the end credits. The camera
 // waits for a tap: the iPad asks for it once. Without it, Boo's Catwalk runs
