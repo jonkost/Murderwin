@@ -556,6 +556,11 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .irwin-mood { height: 30vh; width: auto; margin: 0 0 1.5vw; object-fit: contain; }
 .irwin-choices { list-style: none; margin: 2vw 0 0; padding: 0; display: grid; gap: 1vw; font-size: 3.4vw; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; }
 .irwin-choices .n { color: var(--good); margin-right: 1vw; font-variant-numeric: tabular-nums; }
+/* a motive card's picture, when it is drawn (card 308): beside the rhyme in Irwin's countdown, above it at the reveal */
+.irwin-choices li { display: flex; align-items: center; gap: 1.5vw; }
+.irwin-card { height: min(12vh, 9vw); width: auto; object-fit: contain; border-radius: 0.6vw; background: var(--card); }
+.reveal-motive { max-height: 22vh; max-width: 100%; object-fit: contain; align-self: center; margin: 0 0 1vw; border-radius: 1vw; }
+.reveal-row.count-3 .reveal-motive { max-height: 12vh; }
 /* Act 4: the memory match on the iPad (?kiosk=memory) */
 .kiosk.memory { gap: 1.5vh; }
 .memory-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6vh; width: min(92vw, 120vh); margin-top: 1vh; }
@@ -748,6 +753,23 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk.boo-wall .boo-hold { font-size: min(5vw, 8vh); }
 .boo-judging { height: 30vh; object-fit: contain; }
 @media (prefers-reduced-motion: reduce) { .boo-strut { animation: none; } }
+/* Boo's camera (?kiosk=pose, card 450): the group sees itself, mirrored; one photo at the last pose */
+.kiosk.pose-cam { background: #000; position: relative; overflow: hidden; }
+.pose-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.pose-video.off { visibility: hidden; }
+.pose-ask { position: relative; display: grid; gap: 3vh; justify-items: center; max-width: 80vw; }
+.pose-ask button { font-size: min(3.4vw, 4.4vh); padding: 1.6vh 4vw; min-height: 44px; border-radius: 1vw; }
+.pose-caption { position: absolute; left: 0; right: 0; bottom: 4vh; display: grid; gap: 1vh; justify-items: center; text-shadow: 0 2px 12px #000; }
+.kiosk.pose-cam .boo-strike { font-size: min(9vw, 13vh); }
+.kiosk.pose-cam .boo-hold { font-size: min(5vw, 7vh); }
+.pose-shot { position: absolute; right: 3vw; top: 3vh; width: min(34vw, 46vh); background: var(--card); border: 2px solid var(--good); border-radius: 1.2vw; padding: 1vw; display: grid; gap: 0.8vh; }
+.pose-shot img { width: 100%; border-radius: 0.8vw; }
+.pose-shot p { margin: 0; font-size: min(2.2vw, 3vh); }
+/* the end credits: each group's last pose */
+.pose-credits { display: flex; flex-wrap: wrap; gap: 2vw; justify-content: center; margin: 0 0 4vh; }
+.pose-credit { margin: 0; width: min(40vw, 46vh); display: grid; gap: 0.8vh; }
+.pose-credit img { width: 100%; border-radius: 1vw; border: 2px solid var(--line); }
+.pose-credit figcaption { font-size: min(2.6vw, 3.4vh); color: var(--dim); text-align: center; }
 
 /* The game names (handoff §16): the hook under a game's name, on the phone and on each room's screen. */
 .game-hook { font-style: italic; color: var(--dim); margin: -0.2rem 0 0.8rem; }

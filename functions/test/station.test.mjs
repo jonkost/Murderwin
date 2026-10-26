@@ -16,7 +16,7 @@ async function party(n) {
   return { db, nightId, names }
 }
 
-test('makeGroups: pairs and trios, at most five groups, spread evenly, and the hidden roles are kept apart', () => {
+test('G20 and G21 makeGroups: pairs and trios, at most five groups, spread evenly, and the hidden roles are kept apart', () => {
   const keys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
   for (let t = 0; t < 100; t++) {
     const groups = makeGroups(keys, { apart: ['a', 'b'] })

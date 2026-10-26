@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTick, writeNotes } from '../lib/hooks'
-import { buzzOnce } from '../lib/night'
+import { buzzOnce, promptHold } from '../lib/night'
 
 // The in-between screens. Every one of them is a real state, never an
 // error view, and they look the same on every phone in the room.
@@ -66,8 +66,6 @@ export function RehearsalBand({ on, label = 'REHEARSAL' }) {
   return <div className="rehearsal-band" role="note">{label}</div>
 }
 
-const HOLD_MS = 15_000
-
 // The power returns: every phone lights at once with its prompt, on a
 // near-black ground like the blackout it follows, and buzzes once. The
 // prompt holds for fifteen seconds measured against the SERVER clock, then a
@@ -78,9 +76,7 @@ const HOLD_MS = 15_000
 // card's place, so no phone in the room looks different from the rest.
 export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes }) {
   useTick(500)
-  const phaseAt = night.phaseAt?.toMillis?.() ?? 0
-  const remaining = phaseAt ? phaseAt + HOLD_MS - serverNow() : HOLD_MS
-  const canHide = remaining <= 0
+  const { canHide } = promptHold(night, serverNow)
   const buzzKey = card?.id ?? promptKey
   useEffect(() => {
     if (!uid || uid === 'preview') return

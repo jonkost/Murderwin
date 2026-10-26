@@ -77,7 +77,7 @@ test('the Host tab groups button keeps the murderer and the ghost apart', async 
 
 // ---- the trace ----------------------------------------------------------
 
-test('traceLevel: neutral at zero, one rung per four points, clamped to 1..5', () => {
+test('G13 and G24 traceLevel: neutral at zero, one rung per four points, clamped to 1..5', () => {
   assert.equal(traceLevel(0), 3)
   assert.equal(traceLevel(2), 4)
   assert.equal(traceLevel(-2), 2)
@@ -86,7 +86,7 @@ test('traceLevel: neutral at zero, one rung per four points, clamped to 1..5', (
   assert.equal(traceLevel(undefined), 3)
 })
 
-test('TRACE_BUCKETS: every current trace in at least two buckets, the Professors never share one, every trace has a context line', () => {
+test('G12 TRACE_BUCKETS: every current trace in at least two buckets, the Professors never share one, every trace has a context line', () => {
   const traces = CHARACTERS.map(c => c.trace)
   for (const tr of traces) {
     const n = Object.values(TRACE_BUCKETS).filter(b => b.includes(tr)).length
@@ -99,7 +99,7 @@ test('TRACE_BUCKETS: every current trace in at least two buckets, the Professors
   }
 })
 
-test('pickPartner: in play only, never the excluded trace, Professors only as a last resort', () => {
+test('G11 and G12 pickPartner: in play only, never the excluded trace, Professors only as a last resort', () => {
   const inPlay = ['ink', 'elbow-patch', 'coffee', 'white-sand']
   for (let i = 0; i < 50; i++) {
     const p = pickPartner('iodine', inPlay)
@@ -110,7 +110,7 @@ test('pickPartner: in play only, never the excluded trace, Professors only as a 
   assert.equal(pickPartner('coffee', ['elbow-patch']), 'elbow-patch', 'a Professor when nobody else fits')
 })
 
-test('revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
+test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
   for (const [dial, rehearsal] of [[0, false], [9, false], [-9, false], [-4, false], [4, false], [0, true], [9, true]]) {
     const { db, nightId } = await party(8)
     const t = { now: 5_000_000 }
@@ -351,7 +351,7 @@ async function revealed(n = 5) {
 // everything a client can read: the night doc, its public docs, and every session (less that phone's own ballot and result, which are its own picks)
 const publicDocs = (db, nightId) => [...db.store.keys()].filter(k => k === `nights/${nightId}` || k.startsWith(`nights/${nightId}/public/`) || k.startsWith('sessions/')).map(k => { const { ballot, result, ...rest } = db.store.get(k); return [k, rest] })
 
-test('the finale: the canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
+test('F18 the finale: the canon lines as strings, no slowest, the graph from the dial log with its sides from the case, nothing sealed', async () => {
   const { db, nightId, c } = await revealed(5)
   assert.ok(Array.isArray(c.dialLog) && c.dialLog.length === 2, 'two hidden roles pushed once each')
   assert.ok(c.dialLog.every(e => e.act === 2 && ['murderer', 'ghost'].includes(e.role) && typeof e.delta === 'number'))
@@ -394,6 +394,47 @@ test('the finale: the canon lines as strings, no slowest, the graph from the dia
   const r = db.store.get(revealPath(nightId))
   assert.ok(r.murderer.name && r.motive.rhyme && r.victim.name)
   assert.equal(night(db, nightId).reveal, undefined)
+})
+
+test('F18 the end credits show the dial\'s journey as it happened: where it stood at the end of each act, its high and its low, and the level each dial clue landed at', async () => {
+  const { db, nightId } = await party(6)
+  const t = { now: 7_000_000 }
+  await walkTo(db, nightId, 2, 'orient', t)
+  // the night's pushes, through the dial's own transaction, as the Parlour Games would make them
+  const { pushDial } = await import('../lib/windows.js')
+  const pushes = [[2, 'ghost', 3], [2, 'murderer', 5], [2, 'ghost', 1], [4, 'murderer', 2], [4, 'ghost', 6], [4, 'ghost', 2], [6, 'murderer', 4], [6, 'ghost', 1]]
+  for (const [act, role, total] of pushes) await pushDial(db, nightId, { role, total, act, now: t.now })
+  const c = db.store.get(`cases/${nightId}`)
+  const deltas = c.dialLog.map(e => e.delta)
+  assert.equal(deltas.length, pushes.length, 'every push is in the log')
+  // the levels the dial clues landed at, where the night keeps them
+  db.store.set(`nights/${nightId}/private/bulletin`, { played: true, level: 2 })
+  db.store.set(`nights/${nightId}/private/dialClues`, { irwin: 3, study: { g1: 4, g2: 5 } })
+  db.store.set(`nights/${nightId}/public/trace`, { level: 1 })
+  const f = await finaleDoc(db, nightId, c, t.now)
+  // where it stood at the end of each act: the running sum of that act's pushes and every act before
+  const sumTo = act => c.dialLog.filter(e => e.act <= act).reduce((s, e) => s + e.delta, 0)
+  assert.deepEqual(f.graph.running, [2, 4, 6].map(act => ({ act, value: sumTo(act) })), 'F18 the dial at the end of each act')
+  assert.equal(f.graph.running.at(-1).value, c.dial, 'F18 and the last stop is where the dial really ended')
+  // its high and its low along the way, from the start at zero
+  let walk = 0, high = 0, low = 0
+  for (const d of deltas) { walk += d; high = Math.max(high, walk); low = Math.min(low, walk) }
+  assert.equal(f.graph.high, high, 'F18 the high')
+  assert.equal(f.graph.low, low, 'F18 the low')
+  assert.ok(f.graph.high > 0 && f.graph.low < 0, 'this night went both ways')
+  // the four dial clues at the levels they landed at (the study's two groups averaged)
+  assert.deepEqual(f.graph.clues, [
+    { label: 'The supper bulletin', level: 2 },
+    { label: "Sir Irwin's countdown", level: 3 },
+    { label: 'The study trace', level: 5 },
+    { label: 'The trace reveal', level: 1 },
+  ], 'F18 every dial clue at its level')
+  // a clue that never landed (no study played) is left out, not shown as nothing
+  db.store.set(`nights/${nightId}/private/dialClues`, { irwin: 3 })
+  assert.deepEqual((await finaleDoc(db, nightId, c, t.now)).graph.clues.map(x => x.label), ['The supper bulletin', "Sir Irwin's countdown", 'The trace reveal'])
+  // nothing of it is public before the reveal beat writes the finale
+  assert.equal(db.store.get(finalePath(nightId)), undefined, 'F18 no finale doc before the reveal')
+  assert.ok(!JSON.stringify(f.graph).includes(c.murderer) && !JSON.stringify(f.graph).includes(c.ghost), 'the graph names nobody')
 })
 
 test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hush on the graph and a spotlight line, never which role', async () => {
@@ -472,7 +513,7 @@ test('Carry on after a hold during the Victim stage keeps the wait before the cl
   assert.equal(ms(db2.store.get(finalePath(id2)).victimAt), v2, 'a hold that began before the name does not move it')
 })
 
-test('the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {
+test('F17 the reveal is staged: no name leaves private/ until the host presses, one per press in canon order, results refuse early, back forgets it', async () => {
   const { db, nightId, t, c } = await revealed(5)
   const r = db.store.get(revealPath(nightId))
   const keyTokens = ['"murderer":', '"motive":', '"victim":']
@@ -528,7 +569,7 @@ test('the reveal is staged: no name leaves private/ until the host presses, one 
   assert.equal(db.store.get(finalePath(nightId)), undefined)
 })
 
-test('Next from the reveal waits for all three names; results then land', async () => {
+test('F17 Next from the reveal waits for all three names; results then land', async () => {
   const { db, nightId, uids, names, t } = await revealed(4)
   await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
   t.now = ms(night(db, nightId).window.closesAt) + 1

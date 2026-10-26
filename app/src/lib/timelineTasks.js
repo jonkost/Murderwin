@@ -615,8 +615,39 @@ export const SUPERSEDED_FOR_NEWS_CAST = {
   clueChannels: 'Replaced 21 to 23 Oct 2026: only the bags and the traces point at a person; Act 2 bag clues are about the Murderer, Act 4 bag hints about the Ghost, the study shows the Ghost’s trace and the bedroom screen the Murderer’s.',
 }
 
+// 25 Oct 2026: the 24 Oct evening handoff's item 4 built by Claude Code (the
+// Home rows, the motive card pictures, the morning after, replay by seed, the
+// pose photo, the test plan's Not yet checks). The build cards marked done;
+// Jon's two new jobs on the night (Boo's camera, the morning after) and one
+// before it (try Boo's camera), numbered from 480. Applied by '2026-10-25-item4'.
+const BUILT_1025 = 'Built 25 Oct 2026:'
+export const ITEM4_TASKS = [
+  { order: 480, moment: 'after', status: 'todo', when: 'later', who: 'Jon', title: 'Open the case, the morning after', detail: 'On the Game night page, under After the party: The morning after. It opens only once the party night’s reveal has played to the end, on the party day or later. Type OPEN, read what really happened, then choose Keep the secrets or Clear the secrets (the archive keeps a copy either way). Then untick This is the party night.' },
+  { order: 481, moment: 'act4.warn', status: 'todo', when: 'later', who: 'Jon', title: 'Boo’s camera: the iPad Pro to the Entryway (nice to have)', detail: 'After supper, before you press Start Act 4, carry the iPad Pro from the Orangerie to the end of the catwalk, facing where the group poses. Open Boo’s camera (the Devices page has the address and a square code), full screen, and tap Turn on the camera. It takes one photo of each group’s last pose for the end credits. Skip it and the catwalk runs the same.', tech: '?kiosk=pose' },
+  { order: 482, moment: 'act4.entryway', status: 'todo', who: 'Jon', title: 'Try Boo’s camera on the Game test tab (nice to have)', detail: 'Game test tab, Boo’s Catwalk: open Boo’s camera, the practice show, on the iPad Pro, stand it facing you and tap Turn on the camera, then Start the show. At the last pose it takes a photo and keeps it on its own screen; nothing is sent. Note anything wrong in the box.', tech: '?kiosk=pose&practice=1' },
+]
+// Two questions the test plan's checks turned up (card 479), each with what
+// is built as the default, and stringsLead (below).
+export const ITEM4_DECISIONS = [
+  { key: 'dialSpill', moment: 'act2.news', question: 'After Spill the Beans, does the clarity dial start again in the middle, or keep where it was?', options: ['Start again in the middle (as built)', 'Keep where it was'], answer: null, note: 'Default: start again, as built (a spill also clears the Hush). The Canon says the dial never resets, so the checks found the two disagree. A spill only works at the very start of Act 2, before any clue, so the dial has barely moved by then either way.' },
+  // and one from the house's hardware the same day (the lighting and audio session): the string
+  // lights run through Apple Home and trail the phones by a second or two
+  { key: 'stringsLead', moment: 'act4.orangerie', question: 'The string lights lag 1 to 2 seconds behind the phones (Apple Home). Salem’s intro says “Watch the lights, not your phones”. Change it so the phones lead?', options: ['The phones lead: change Salem’s line', 'Keep the line'], answer: null, note: 'Default: the phones lead. In Get Off My Lawn! the colour flips every 1.5 to 6.5 seconds, so anyone following the lights would be blamed for slips; the phones change colour on time. Nothing is built yet: if you keep the default, Claude chat rewrites Salem’s intro and ready lines (handoff of 23 Oct, section 9.6) and Claude Code copies them in.' },
+  { key: 'senseClue', moment: 'act2.cat', question: 'In a small party (four to six guests), about once in a thousand deals a cat’s vaguest bag clue (a sense only) points at the Murderer’s bag alone. Leave it, or have Claude Code rule it out?', options: ['Leave it: it never happens at nine guests', 'Rule it out'], answer: null, note: 'Default: leave it, as built. In 2,000 deals each at eight, nine and ten guests it never happened. It is check G09 in the test plan.' },
+]
+export const RETIRED_FOR_ITEM4 = [
+  { order: 343, title: 'Home rows for the leans, the packing list and the pictures', detail: `${BUILT_1025} Home shows the packing list (made or not), the cats’ leans (questions with every lean, of all of them) and the drawing pictures (good ones, of nine). Numbers only.` },
+  { order: 308, title: 'Show the motive card pictures', detail: `${BUILT_1025} each picture shows beside its motive in Sir Irwin’s countdown and on the motive’s card at the reveal; the rhyme alone until it is in. Drawing them is the card Draw the nineteen motive cards.` },
+  { order: 196, title: 'The morning after: open the case to you', detail: `${BUILT_1025} on the Game night page, under After the party. Your card for the morning after is Open the case, the morning after.` },
+  { order: 324, title: 'Replay a night by its seed', detail: `${BUILT_1025} every rehearsal is dealt from a seed word. The Game night page lists the last five, and Play it again deals one again. Never the party.` },
+  { order: 450, title: 'The pose photo for the end credits (nice to have)', detail: `${BUILT_1025} Boo’s camera on the iPad Pro. Each group’s last pose shows in the end credits. Your cards: Try Boo’s camera on the Game test tab, and Boo’s camera: the iPad Pro to the Entryway.` },
+  { order: 423, title: 'Try the string lights from the brain', detail: 'Done 25 Oct: the brain runs three Apple Shortcuts (Red Murderwin Strings, Green Murderwin Strings v2, Decor Murderwin Strings), each running one Home scene. Red, green and decor all changed the real lights, each in 1 to 2 seconds. STRINGS_SHORTCUTS=on in cues/.env. Pairing is not the way: holding the button resets their Wi-Fi.' },
+  { order: 462, title: 'Add the Holiday String Lights back in the Nanoleaf app', detail: 'Done 25 Oct: the lights are back on the Wi-Fi and the brain runs them through Apple Home (see Try the string lights from the brain), so the Nanoleaf pairing is not needed.' },
+  { order: 479, title: 'The checks the test plan still has as Not yet', detail: `${BUILT_1025} every check marked Not yet has a test, the tests carry their IDs, and the new case checks run in npm run checks (20,042 of 20,042). Two wait on your answer as questions on the board (the dial after Spill the Beans, and a sense-only bag clue in a small party); the half second over the Wi-Fi is measured at the tech run.` },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
-export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS]
+export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS, ...ITEM4_TASKS]
 
 // Decisions still open, each filed under the moment it changes. Only Jon
 // answers them.

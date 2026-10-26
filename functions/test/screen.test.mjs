@@ -22,7 +22,7 @@ import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
 // ---------------------------------------------------------------------------
 // The dial's band, the salt the screens seed on, and Sir Irwin
 
-test('the band follows the trace ladder exactly', () => {
+test('G24 the band follows the trace ladder exactly', () => {
   for (let d = -20; d <= 20; d++) assert.equal(dialBand(d), traceLevel(d), `dial ${d}`)
 })
 
@@ -151,7 +151,7 @@ async function party() {
   return { db, nightId, phones }
 }
 
-test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
+test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   const sounds = new Set()
@@ -349,6 +349,75 @@ test('the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, 
   for (const k of ['2/news:news', '3/bulletin:bulletin', '5/irwin:irwin', '6/door:door', '6/eliminate:board']) assert.ok(seen.includes(k), k)
   // and the night doc itself never grew a screen field
   assert.equal(nightDoc().screen, undefined)
+})
+
+test('G53 on a party night bulletin 2 plays the real family\'s own line at the dial\'s level, for every family and every level, and its recording with it', async () => {
+  for (const m of MOTIVES) {
+    const db = new FakeFirestore()
+    db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true })
+    const { nightId } = await createNight(db)
+    for (const name of ['Jon', 'Jessa', 'Jacob', 'Marie']) await join(db, { uid: `u-${name}`, nightId, name })
+    await hostCommand(db, { nightId, command: 'act', arg: 2, now: 1_000_000 }) // the case is dealt
+    // this throwaway case's motive set by hand, so every family is walked; its plan made for that motive
+    const { solvingPlan } = await import('../lib/families.js')
+    const keys = Object.keys(db.store.get(`nights/${nightId}`).roster)
+    db.store.set(`cases/${nightId}`, { ...db.store.get(`cases/${nightId}`), motive: m.n, solving: solvingPlan({ motive: m.n, keys }) })
+    for (const dial of [-8, -4, 0, 4, 8]) {
+      db.store.set(`cases/${nightId}`, { ...db.store.get(`cases/${nightId}`), dial })
+      const c = db.store.get(`cases/${nightId}`)
+      assert.equal(c.rehearsal, false)
+      await onBeat(db, nightId, { act: 3, beat: 'bulletin', spec: { screen: 'bulletin', sound: 'sounder-bulletin' }, now: 2_000_000 + dial })
+      const line = NEWS.bulletin2.families[c.solving.family][dialBand(dial) - 1]
+      const doc = db.store.get(`nights/${nightId}/public/screen`)
+      assert.ok(doc.kind === 'bulletin' && doc.lines[1] === line.text, `G53 motive ${m.n} dial ${dial}: the real family's line at its level`)
+      assert.ok((await currentSound(db, nightId)).clips.includes(line.clip), `G53 motive ${m.n} dial ${dial}: its recording`)
+    }
+  }
+})
+
+test('F27 chime-phone plays at every "look at your phone" moment: supper, the Act 4 groups, every round and the call back to the Parlour, and the Act 6 Parlour Games', async () => {
+  // the night as written: every one of those beats carries chime-phone
+  const wants = ['2/supper', '4/groups', ...beatsOf(4).filter(b => /^round\d+$/.test(b.key)).map(b => `4/${b.key}`), '6/games']
+  for (const k of wants) {
+    const [act, key] = k.split('/')
+    assert.equal(beatSpec(Number(act), key)?.sound, 'chime-phone', `F27 ${k} chimes the phones`)
+  }
+  // and on a night, every one of those moments plays it afresh (a new stamp each time)
+  const { db, nightId } = await party()
+  let now = 2_000_000
+  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now })
+  const nightDoc = () => db.store.get(`nights/${nightId}`)
+  const chimed = []
+  const expectChime = async (label, fn) => {
+    const was = ms((await currentSound(db, nightId))?.at)
+    now += 1_000
+    await fn()
+    const s = await currentSound(db, nightId)
+    assert.equal(s?.id, 'chime-phone', `F27 ${label} plays chime-phone`)
+    assert.notEqual(ms(s.at), was, `F27 ${label} plays it afresh`)
+    chimed.push(label)
+  }
+  await host('next'); await host('next'); await host('next'); await host('next')
+  await host('blackout'); await host('power')
+  await host('next'); await host('next'); await host('next') // news, peek, cat
+  await expectChime('supper', () => host('supper'))
+  await host('next') // down
+  await host('next') // arm the bulletin
+  now = ms(db.store.get(`nights/${nightId}/private/bulletin`).dueAt)
+  await host('tick')
+  await host('start-act4')
+  await expectChime('the Act 4 groups', () => host('next'))
+  let guard = 0
+  while (nightDoc().act === 4 && guard++ < 10) {
+    const before = nightDoc().beat
+    const label = before === 'groups' ? 'round 1' : /^round(\d+)$/.test(before) ? `after ${before}` : before
+    await expectChime(label, () => host('next')) // each round's chime, and after the last the call back to the Parlour
+  }
+  assert.equal(nightDoc().act, 5)
+  await host('next') // Sir Irwin
+  await expectChime('the Act 6 Parlour Games', () => host('next'))
+  assert.equal(nightDoc().beat, 'games')
+  assert.ok(chimed.length >= 7, `F27 ${chimed.length} chimes: supper, the groups, every round, back to the Parlour, Act 6`)
 })
 
 test('onBeat with Back writes the screen but plays nothing; onPhase on an unknown command is a no-op', async () => {

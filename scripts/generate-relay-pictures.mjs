@@ -19,10 +19,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { adminDb, redactedError, printFatal, say } from './lib.mjs'
-import { BANK_DOC, ROUND_SIZES, ROUND_CAPS, checkPicture, TRACE_WORDS, MOTIVE_WORDS } from '../functions/lib/relay-bank.js'
+import { BANK_DOC, ROUND_SIZES, ROUND_CAPS, PER_ROUND, checkPicture, TRACE_WORDS, MOTIVE_WORDS } from '../functions/lib/relay-bank.js'
 
 const MODEL = process.env.MODEL ?? 'claude-opus-5'
-export const PER_ROUND = 3 // pictures kept per round; the night picks one at random
+export { PER_ROUND } // pictures kept per round (relay-bank.js); the night picks one at random
 
 const Point = z.array(z.number()).length(2)
 const Stroke = z.object({

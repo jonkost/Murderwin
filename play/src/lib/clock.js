@@ -24,6 +24,14 @@ export function secondsSinceHeard({ heardAt } = {}, now = Date.now()) {
   return Math.max(0, Math.round((now - heardAt) / 1000))
 }
 
+// The phone's clock against the server's, from one heartbeat (F26). The
+// server stamped `serverAt` somewhere between `sentAt` and `heardAt` on this
+// phone's clock, so the midpoint is the best guess, never more than half the
+// round trip out. The phone's server time is Date.now() plus this.
+export function skewFrom(sentAt, heardAt, serverAt) {
+  return serverAt - (sentAt + heardAt) / 2
+}
+
 // A phone waking from sleep, coming back to the tab, or regaining the
 // network should re-measure its clock skew at once rather than wait for the
 // next minute's heartbeat. `win` and `doc` are EventTarget-like; returns a

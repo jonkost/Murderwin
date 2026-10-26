@@ -466,6 +466,21 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .hub-owners a { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0.4rem 0.8rem; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--field); color: var(--ink); text-decoration: none; }
 .hub-owners b { font-size: 1.2rem; }
 .hub-next { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.6rem; }
+/* The morning after (card 196) */
+.morning-answer, .morning-people, .morning-bags { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.morning-answer li { font-size: 1.15rem; }
+.morning-answer .list-moment { display: block; }
+.morning-poses { display: flex; flex-wrap: wrap; gap: 1rem; }
+.morning-poses figure { margin: 0; width: min(100%, 18rem); display: grid; gap: 0.3rem; }
+.morning-poses img { width: 100%; border-radius: var(--r-control); border: 1px solid var(--line); }
+.morning-poses figcaption { color: var(--muted); font-size: 0.9rem; }
+/* Game night: the last rehearsals' seed words (card 324) */
+.replay-recent { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.replay-recent li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+/* Home: the three things made blind, counts only (card 343) */
+.secret-rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.5rem; }
+.secret-rows li { display: grid; gap: 0.25rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--r-group); background: var(--field); }
+.secret-rows li.done .list-count { color: var(--good); }
 .hub-next li { max-width: 70ch; }
 .hub-decisions { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; }
 .hub-decisions .decision { margin: 0; }

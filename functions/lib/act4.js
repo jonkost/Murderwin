@@ -43,6 +43,7 @@ import { NightError, MOTIVES, CHARACTERS, characterById, readArea, GAME_NAMES } 
 import { NIGHT, guests, dealCard, labelled, readCase, ensureCase, ms, CAT_NAMES, FREE_TIME_TIPS } from './deal.js'
 import { makeGroups, rotationPath, studyPath, finishStudy } from './station.js'
 import { readPacking } from './bags.js'
+import { nightSeed, pickFor } from './seed.js'
 import { bagPlan, bagLine, bagStandIn, CAT_SHORT } from './bagclues.js'
 import { memoryPick } from './families.js'
 import { noteDealt } from './ledger.js'
@@ -143,13 +144,16 @@ export async function readRotation(db, nightId) {
 
 // The groups, once: pairs and trios, at most five groups, the Murderer and the
 // Ghost never together (station.makeGroups), and the walk round the rooms.
-export async function makeRooms(db, nightId, { force = false, pick = randomInt } = {}) {
+export async function makeRooms(db, nightId, { force = false, pick = null } = {}) {
   const have = await readRotation(db, nightId)
   if (have?.order?.length && !force) return { ok: true, already: true, groups: have.order.length }
   const c = await ensureCase(db, nightId)
   const snap = await db.doc(`nights/${nightId}`).get()
   const roster = snap.data()?.roster ?? {}
-  const keys = Object.keys(roster)
+  // a seeded rehearsal makes the same groups again, in name order (seed.js)
+  const seed = await nightSeed(db, nightId)
+  if (!pick) pick = pickFor(seed, 'rooms')
+  const keys = seed ? Object.keys(roster).sort() : Object.keys(roster)
   const apart = [c?.murderer, c?.ghost].filter(Boolean)
   const groups = makeGroups(keys, { apart, pickInt: pick, maxGroups: MAX_GROUPS }).map((members, i) => ({
     id: `g${i + 1}`,
@@ -298,8 +302,9 @@ export async function startRound(db, nightId, round, { now = Date.now() } = {}) 
 }
 
 // Each game room ready for the group due there this round.
-async function setRooms(db, nightId, rot, round, { now = Date.now(), endsAt = null, pick = randomInt } = {}) {
+async function setRooms(db, nightId, rot, round, { now = Date.now(), endsAt = null, pick = null } = {}) {
   const due = room => (round >= 1 && round <= rot.rounds ? groupIn(rot, room, round) : null)
+  if (!pick) pick = pickFor(await nightSeed(db, nightId), 'memory', round)
   // the study: the station follows public/study.groupId (station/lib/follow.js)
   await db.doc(studyPath(nightId)).set({ groupId: due('study'), reassignedFrom: null, slotEndsAt: endsAt }, { merge: true })
   await db.doc(memoryPath(nightId)).set(memoryDoc(due('library'), round, { now, pick }))

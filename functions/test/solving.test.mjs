@@ -1,10 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
-import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, revealTrace } from '../lib/deal.js'
+import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, LATER_MS, ms, revealTrace } from '../lib/deal.js'
 import { memoryBoards, memoryPath, MEMORY_ROUNDS, ALL_TRACES } from '../lib/act4.js'
 import { studyReveal, studyClueCard, makeGroups } from '../lib/station.js'
 import { rehearsalCase } from '../lib/case.js'
@@ -419,6 +420,82 @@ test('F21 every player is always told where to go next: through the waves, a no-
   assert.ok(Object.keys(uids).length === 9)
 })
 
+// ---- F22 and F23: Not yet, and the queue never stalls ---------------------------
+
+test('F22 "Not yet, call me later" is the same on every phone and moves the guest back in the queue with no penalty', async () => {
+  const now = 3_000_000
+  const { db, nightId, uids } = await lightsParty(8, now)
+  const deck = db.store.get(`nights/${nightId}/private/deck`).uids
+  const state = () => db.store.get(lightsPath(nightId))
+  // every phone the line calls shows the same step, the same words but the cat and the room, whatever the role
+  const called = Object.entries(state().guests).filter(([, g]) => g.step === 'go')
+  assert.ok(called.length >= 2)
+  const shapes = called.map(([k]) => { const l = db.store.get(`sessions/${deck[k]}`).lights; return JSON.stringify(Object.keys(l).sort()) + l.variant })
+  assert.ok(shapes.every(x => x === shapes[0]), 'F22 the same step on every called phone')
+  const cards = readFileSync(new URL('../../play/src/screens/Cards.jsx', import.meta.url), 'utf8')
+  const step = cards.slice(cards.indexOf('export function LightsStep'), cards.indexOf('// A cat speaks'))
+  assert.match(step, /\{lights\.step === 'go' && !onWay && \(\s*<div className="pair">\s*<button className="big" onClick=\{goNow\}>On my way<\/button>\s*<button className="quiet" disabled=\{busy\} onClick=\{\(\) => call\(callNotYet, \{\}\)\}>Not yet, call me later<\/button>/, 'F22 the one button, on every phone the line calls')
+  assert.ok(!/murderer|ghost|detective|\.role\b/i.test(step), 'F22 the phone never asks which role it is')
+  // Not yet: back to the Parlour, the cat free for someone else, the skipped cat last on the route
+  const [key, was] = called[0]
+  const uid = deck[key]
+  const before = structuredClone(db.store.get(`sessions/${uid}`))
+  await player.notYet(db, { nightId, uid, now })
+  const me = state().guests[key]
+  assert.equal(me.step, 'wait')
+  assert.equal(db.store.get(`sessions/${uid}`).lights.variant, 'later', 'F22 the phone says: back in the queue')
+  assert.notEqual(state().cats[was.cat].at, key, 'the cat is free for someone else')
+  assert.equal(me.route.at(-1), was.cat, 'the skipped cat comes last')
+  assert.deepEqual(me.met ?? [], [], 'nothing counted as seen')
+  // no penalty: the same affection, no card lost, nothing else on the phone touched
+  const after = db.store.get(`sessions/${uid}`)
+  assert.deepEqual(after.affection, before.affection, 'F22 no penalty to any cat')
+  assert.deepEqual(after.cards, before.cards, 'F22 nothing taken away')
+  // not called again for two minutes; a second tap changes nothing
+  assert.equal((await player.notYet(db, { nightId, uid, now })).already, true)
+  await hostCommand(db, { nightId, command: 'tick', now: now + LATER_MS - 1 })
+  assert.notEqual(state().guests[key].step, 'go', 'not called again for two minutes')
+  // and the guest still sees all four cats in the end
+  await walkLights(db, nightId, { now: now + LATER_MS })
+  for (let t = 1; t <= 10 && state().guests[key].step !== 'done'; t++) {
+    await hostCommand(db, { nightId, command: 'tick', now: now + LATER_MS + t * 60_000 })
+    await walkLights(db, nightId, { now: now + LATER_MS + t * 60_000 })
+  }
+  assert.equal(state().guests[key].step, 'done', 'F22 every cat seen in the end')
+  assert.deepEqual(db.store.get(`sessions/${uid}`).cards.filter(c => c.kind === 'testimony').map(c => c.cat).sort(), [...LIGHTS_CATS].sort())
+  assert.ok(Object.keys(uids).length === 8)
+})
+
+test('F23 the Act 2 queue never stalls: after every move and every tick, no cat sits free while a guest who still needs it is waiting and ready (2 to 12 guests, with Not yet)', async () => {
+  const ready = (g, at) => g.step === 'wait' && !(ms(g.laterUntil) > at)
+  const stalled = (s, at) => LIGHTS_CATS.filter(cat => !s.cats[cat].at && Object.values(s.guests).some(g => ready(g, at) && !(g.met ?? []).includes(cat))).length
+  for (let n = 2; n <= 12; n++) {
+    let now = 5_000_000
+    const rng = seeded(n * 97)
+    const { db, nightId } = await lightsParty(n, now)
+    const deck = db.store.get(`nights/${nightId}/private/deck`).uids
+    const state = () => db.store.get(lightsPath(nightId))
+    assert.equal(stalled(state(), now), 0, `F23 ${n} guests: the first wave fills every cat it can`)
+    for (let guard = 0; guard < 400; guard++) {
+      const s = state()
+      if (Object.values(s.guests).every(g => g.step === 'done')) break
+      const due = Object.entries(s.guests).filter(([, g]) => g.step === 'go')
+      if (!due.length) {
+        now += 30_000
+        await hostCommand(db, { nightId, command: 'tick', now })
+        assert.equal(stalled(state(), now), 0, `F23 ${n} guests: after a tick`)
+        continue
+      }
+      const [k] = due[rng(due.length)]
+      if (rng(4) === 0) await player.notYet(db, { nightId, uid: deck[k], now })
+      else { await player.meetCat(db, { nightId, uid: deck[k], cat: s.guests[k].cat, now }); await player.leaveCat(db, { nightId, uid: deck[k], now }) }
+      assert.equal(stalled(state(), now), 0, `F23 ${n} guests: after a move`)
+      now += 1_000
+    }
+    assert.ok(Object.values(state().guests).every(g => g.step === 'done'), `F23 ${n} guests: everyone saw all four`)
+  }
+})
+
 test('every Act 2 cat gives its line from the bank, and the case records what each rules out, never the real answer', async () => {
   const { db, nightId } = await lightsParty(6, 1_000_000, { party: true })
   await walkLights(db, nightId)
@@ -494,6 +571,45 @@ test('G18b every cat line, at every level, in Acts 2 and 4, for every motive, on
   for (const l of [1, 2, 3]) assert.equal(at('salem', l).straight, false, 'Salem is backwards at 1 to 3')
   assert.equal(at('salem', 5).straight, true, 'and straight at 5')
   assert.deepEqual(at('salem', 4).families, [], 'a coin flip at 4 rules out nothing anybody can trust')
+})
+
+test('G18 Boo\'s ladder in her own words: a look at 1, "Ew. Do I know you?" at 2, one motive in five words at 3, a family at 4, a family and a bonus motive at 5', () => {
+  const names = Object.values(CAT_LINES.motiveNames).map(n => n.toLowerCase())
+  const namesNone = text => !names.some(n => text.toLowerCase().includes(n))
+  const cap = t => t[0].toUpperCase() + t.slice(1)
+  const words = t => t.split(/\s+/).filter(Boolean).length
+  for (const m of MOTIVES) {
+    const real = familyOf(m.n)
+    const c = { motive: m.n, solving: { family: real } }
+    for (const family of FAMILIES.map(f => f.key).filter(k => k !== real)) {
+      const at = level => catHintLine(c, { cat: 'boo', level, act: 2, family, seed: `g18-${m.n}-${family}` })
+      const where = `G18 motive ${m.n} on ${family}`
+      // 1: a look, nothing said, nothing named
+      assert.equal(at(1).text, CAT_LINES.boo.levels['1'], `${where}: level 1 is her look`)
+      assert.ok(namesNone(at(1).text) && !/"/.test(at(1).text), `${where}: a look names nothing`)
+      // 2: Ew. Do I know you?
+      assert.equal(at(2).text, 'Ew. Do I know you?', `${where}: level 2`)
+      assert.equal(CAT_LINES.boo.levels['2'], 'Ew. Do I know you?')
+      // 3: one motive, in five words: the motive and "So not it. Bye."
+      const l3 = at(3)
+      assert.equal(l3.motives.length, 1, `${where}: level 3 names one motive`)
+      assert.equal(familyOf(l3.motives[0]), family, `${where}: from the family the line is about`)
+      const name = cap(motiveName(l3.motives[0]))
+      assert.equal(l3.text, CAT_LINES.boo.levels['3'].replace('[MOTIVE]', name), `${where}: her level 3 line`)
+      const said = /"([^"]+)"/.exec(l3.text)?.[1] ?? ''
+      assert.ok(said.startsWith(`${name}?`) && words(said.slice(name.length + 1)) === 4, `${where}: the motive, then four words`)
+      // 4: a family, in her chatty line for it
+      assert.equal(at(4).text, CAT_LINES.boo.family4[family], `${where}: level 4 is the family's chatty line`)
+      assert.deepEqual(at(4).families, [family])
+      assert.ok(words(at(4).text) > 10, `${where}: chatty`)
+      // 5: the family and one bonus motive from outside it
+      const l5 = at(5)
+      assert.deepEqual(l5.families, [family], `${where}: level 5 the family`)
+      assert.equal(l5.motives.length, 1, `${where}: and one bonus motive`)
+      assert.notEqual(familyOf(l5.motives[0]), family)
+      assert.equal(l5.text, CAT_LINES.boo.family5[family].replace('[BONUS]', motiveName(l5.motives[0])), `${where}: her level 5 line`)
+    }
+  }
 })
 
 test('G44 in Act 2 every cat visit gives one motive hint and one bag clue, at the rung of that cat\'s affection at the scan (2 to 12 players)', async () => {

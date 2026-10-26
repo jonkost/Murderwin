@@ -7,9 +7,15 @@
 // beat does what the room would do: dismisses notices, goes to its cat when
 // the phone sends it (one guest at a cat at a time), answers every Parlour
 // Game, finishes the study for each group, clears the memory match, guesses
-// in the drawing, strikes one thing out, casts a ballot. It checks the Act 2
-// rooms (F20, F21) and that the motive funnel leaves the real motive standing
-// (G32, counts only). At the end it checks the seal (no phone can read a role,
+// in the drawing, strikes one thing out, casts a ballot. The first two phones
+// are the hosts (the names on the Game night form), so they play the two
+// Professors, and bots play them like every other seat (F02). It checks the
+// Act 2 rooms (F20, F21) and that the motive funnel leaves the real motive
+// standing (G32, counts only), that the host seats were dealt and answered
+// like everyone else (F02), and, over 2,000 cases dealt by the case deal
+// itself on stand-in rosters, that every seat, both host seats included,
+// lands the Murderer and the Ghost about equally often (G05). At the end it
+// checks the seal (no phone can read a role,
 // no public document carries the case), prints one line per act, a tally and
 // how much of the party's secrets the night used, and discards the night: the
 // case, the night, every session. Nothing it prints is ever a card. Counts,
@@ -17,6 +23,9 @@
 //
 //   npm run fake-night                       in-process, against an in-memory stand-in Firestore
 //   npm run fake-night -- --emulator         against the local emulators (npm run emulate first)
+//   npm run fake-night -- --seed tulip-4471  a rehearsal dealt from that seed word (functions/lib/seed.js):
+//                                            the same deal as any night from that word; the fake
+//                                            phones' own taps still differ. Every rehearsal prints its word
 //   npm run fake-night -- --real-secrets     a party night (a dry run): it reads the party's sealed
 //                                            leans, packing and drawing pictures where the script
 //                                            is pointed, as the real night does
@@ -35,6 +44,7 @@ import { existsSync, mkdirSync, copyFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomInt } from 'node:crypto'
+import { seededRng } from './pack-bags.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -61,8 +71,12 @@ const families = await import('../functions/lib/families.js')
 const news = await import('../functions/lib/news.js')
 const screen = await import('../functions/lib/screen.js')
 const act4 = await import('../functions/lib/act4.js')
+const checks = await import('../functions/lib/checks.js')
 
 export const PHONES = 8
+// How many cases the seat-fairness check (G05) deals, and its fixed seed (the party's date).
+export const SEAT_DEALS = 2000
+const SEAT_SEED = 15112026
 const choice = list => list[randomInt(list.length)]
 
 // What a failure is called on the way out. NightError messages are fixed
@@ -81,16 +95,19 @@ const CASE_WARNINGS = {
 const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"parlourPlan"', '"leans"', '"listeners"', '"solving"', '"hints"', '"newsOut"', '"family"']
 const NEVER_BEFORE_REVEAL = ['"murderer"', '"ghost"', '"victim"']
 
-export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players' } = {}) {
+export async function fakeNight({ db, log = console.log, realSecrets = false, phones = PHONES, label = 'Fake players', seed = null } = {}) {
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
-  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, secrets: null, discard: null, ok: false, error: null }
+  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, secrets: null, fairness: null, discard: null, ok: false, error: null }
 
-  const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label }
+  // a party-night dry run is never dealt from a word; a rehearsal always is (the caller's, or a fresh one)
+  const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label, ...(seed ? { seed } : {}) }
   const { nightId } = await night.createNight(db, nightOpts)
   summary.nightId = nightId
-  say(`Fake players: ${phones} phones, ${realSecrets ? 'party case, dry run' : 'rehearsal case'}, night ${nightId}`)
+  const word = realSecrets ? null : (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.seed ?? null
+  summary.seed = word
+  say(`Fake players: ${phones} phones, ${realSecrets ? 'party case, dry run' : 'rehearsal case'}, night ${nightId}${word ? `, seed ${word}` : ''}`)
 
   const nightDoc = async () => (await db.doc(`nights/${nightId}`).get()).data()
   const sessionOf = async uid => (await db.doc(`sessions/${uid}`).get()).data() ?? {}
@@ -249,7 +266,10 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
 
   try {
     // ---- Act 1: arrivals, three notices, the blackout
-    for (let i = 0; i < uids.length; i++) await night.join(db, { uid: uids[i], nightId, name: `Phone ${i + 1}` })
+    // the first two phones are the hosts (F02): their names play the Professors, bots play them like everyone else
+    const hosts = await night.readHosts(db)
+    const hostNames = [hosts.jonathan?.name, hosts.susan?.name].filter(Boolean)
+    for (let i = 0; i < uids.length; i++) await night.join(db, { uid: uids[i], nightId, name: hostNames[i] ?? `Phone ${i + 1}` })
     for (const b of deal.beatsOf(1)) { await next(); if ((await nightDoc()).beat !== b.key) throw new Error(`expected beat ${b.key}`) }
     const notices1 = await countCards('notice')
     await host('blackout')
@@ -372,6 +392,16 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const { leanSets, bags, packed, fromBank } = summary.secrets
     say(`Party secrets used: the cats' leans for ${leanSets} ${leanSets === 1 ? 'set' : 'sets'}, the packing on ${packed} of ${bags} bag clues, the picture bank for ${fromBank} of 3 drawing rounds`)
 
+    // F02: the host seats played the Professors and were dealt and answered exactly like every other phone
+    const seats = await hostSeats()
+    if (!seats.ok) summary.checks.push('F02')
+    say(`Host seats: ${seats.hosts} ${seats.hosts === 1 ? 'phone plays a Professor' : 'phones play the Professors'}, dealt and answered like everyone else (F02) ${seats.ok ? 'PASS' : 'FAIL'}`)
+    // G05: every seat, both host seats included, lands the Murderer and the Ghost about equally often
+    const [g05] = checks.fairnessChecks({ count: SEAT_DEALS, rng: seededRng(SEAT_SEED) })
+    summary.fairness = { pass: g05.pass, seats: g05.count, of: g05.of, deals: SEAT_DEALS }
+    if (!g05.pass) summary.checks.push('G05')
+    say(`Seat fairness (G05): ${g05.pass ? 'PASS' : 'FAIL'}, ${g05.count} of ${g05.of} seats fair over ${SEAT_DEALS.toLocaleString('en-GB')} dealt cases, both host seats included`)
+
     await sealCheck('end')
     if (summary.seal.failed.length) say(`Seal: FAIL, ${summary.seal.failed.length} of ${summary.seal.checks} checks: ${summary.seal.failed.join(' ')}`)
     else say(`Seal: PASS, ${summary.seal.checks} checks`)
@@ -396,6 +426,24 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
   say(summary.ok ? 'PASS' : 'FAIL')
   return summary
+
+  // The host seats (F02): each host phone holds its Professor and the host
+  // flag, and every phone, hosts included, ends the night with the same
+  // counts: one role card, four cats' cards, the same Parlour Games dealt and
+  // answered, a ballot and a result. Counts only.
+  async function hostSeats() {
+    const sessions = await Promise.all(uids.map(sessionOf))
+    const profs = night.CHARACTERS.filter(ch => ch.host).map(ch => ch.id)
+    const count = Math.min(2, uids.length)
+    let ok = true
+    for (let i = 0; i < count; i++) if (!sessions[i].host || sessions[i].characterId !== profs[i]) ok = false
+    const shape = s => JSON.stringify([
+      cardsOf(s, 'role').length, cardsOf(s, 'testimony').length, cardsOf(s, 'result').length,
+      Object.values(s.windows ?? {}).filter(w => w?.kind === 'questions').length, Object.keys(s.answers ?? {}).length, s.ballot ? 1 : 0,
+    ])
+    if (new Set(sessions.map(shape)).size !== 1) ok = false
+    return { ok, hosts: count }
+  }
 
   // How much of the party's three secrets the night used: the lean table
   // (sets with a lean, in the case's Parlour plan), the packing (bag clues
@@ -462,6 +510,12 @@ async function main() {
   const args = process.argv.slice(2)
   const has = f => args.includes(f)
   const realSecrets = has('--real-secrets')
+  const at = args.indexOf('--seed')
+  const seed = at >= 0 ? String(args[at + 1] ?? '') : null
+  if (seed !== null && realSecrets) {
+    console.log('Refusing: --seed is for a rehearsal. The party night is never dealt from a word.')
+    return 2
+  }
   let db
   if (has('--live')) {
     if (!has('--i-know-this-is-the-party-database')) {
@@ -483,7 +537,7 @@ async function main() {
     const { FakeFirestore } = await import('../functions/test/fake-firestore.mjs')
     db = new FakeFirestore()
   }
-  const summary = await fakeNight({ db, realSecrets })
+  const summary = await fakeNight({ db, realSecrets, seed })
   return summary.ok ? 0 : 1
 }
 

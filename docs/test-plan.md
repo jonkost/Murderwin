@@ -1,6 +1,6 @@
 # Sirwin Manor — Test Plan for Claude Code
 
-Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) and 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built; that evening Jon answered worstDial: build the worst-dial proof now). Put this file at `docs/test-plan.md` in the repo.
+Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built; that evening Jon answered worstDial: build the worst-dial proof now) and 25 October (card 479: the checks that were Not yet, written; every test that had no ID renamed; the host seats in the fake night). Put this file at `docs/test-plan.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 **Every check is listed here** (24 Oct), including the ones first written in `docs/parlour-games.md` (G25 to G31, F19, L05), `docs/solving-the-case.md` (G32 to G38, F20, F21) and the 23 October handoff (G39 to G52, F22 to F28, L06 to L08). Those docs keep the longer wording. Where each check stands today is in the table at the end, "Where every check stands".
@@ -30,7 +30,7 @@ Your job, Claude Code:
 
 Every check gets a short ID (G01, F01, L01…) and a plain-English name.
 
-Cases do not carry a seed yet, so today a failure cannot name one. See G22 and replay by seed below.
+Every rehearsal and every stand-in case is dealt from a seed word (25 Oct, `functions/lib/seed.js`), so a failure names its word, and the word deals the same case again. See G22 and replay by seed below.
 
 ---
 
@@ -51,11 +51,11 @@ Today: `npm test` runs every check that exists, `npm run fake-night` plays one w
 | Command | Who runs it | What it does | Built? |
 |---|---|---|---|
 | `npm test` | Claude Code | Runs every automated check that exists today. | Yes |
-| `npm run fake-night` | Claude Code | The rehearse command: one whole night, all seven acts, eight fake phones, in memory (or on the emulator with `-- --emulator`). Checks F20, F21, G32 and the seal, and prints pass or fail with counts only. With `-- --real-secrets` it is a party-night dry run on the real leans, packing and drawing pictures (23 Oct), and prints a "Party secrets used" line of counts. Still to add: the two host seats (F02, G05) and the other F checks. | Yes |
+| `npm run fake-night` | Claude Code | The rehearse command: one whole night, all seven acts, eight fake phones, in memory (or on the emulator with `-- --emulator`). The first two phones join under the hosts' names from the Game night form, so they play the two Professors and the bots play them like everyone else (25 Oct). Checks F20, F21, F24, G32, F02 (the host seats dealt and answered like every other phone), G05 (2,000 cases dealt on stand-in rosters: every seat, both host seats included, lands Murderer and Ghost about equally often) and the seal, and prints pass or fail with counts only. With `-- --real-secrets` it is a party-night dry run on the real leans, packing and drawing pictures (23 Oct), and prints a "Party secrets used" line of counts. | Yes |
 | `npm run test:rules` | Claude Code | The security rules check (L04), on the emulator. Plain `npm test` skips it. | Yes |
-| `npm run checks` | Jon (or Claude Code) | `scripts/checks.mjs`. Three groups. **Case generator**: deals 1,000 stand-in cases (4 to 12 guests, bags packed in memory from the seed's item list) and runs every case check on each (ten on every case: G32, G33, G34, G39, G41, G45, G46, G47, G49, G51; the memory-match and prompt checks, G50 and L08, on every 50th). **Dry run**: one whole fake night in memory. **Leak checks**: L01 (the files and the history), L06 and L08. Prints one line per group, counts only, and saves the same counts to `validation_reports/checks` for the Health page. `-- --cases 200` for a quick look, `-- --local` to save nothing. It does not run the rules check (L04 needs the emulator): that is still `npm run test:rules`. About two seconds a hundred cases. | Yes (24 Oct) |
+| `npm run checks` | Jon (or Claude Code) | `scripts/checks.mjs`. Three groups. **Case generator**: deals 1,000 stand-in cases (4 to 12 guests, bags packed in memory from the seed's item list) and runs every case check on each (twenty on every case: G01, G03, G04, G09, G17, G19, G20, G21, G23, G32, G33, G34, G39, G41, G45, G46, G47, G49, G51, G53; the memory-match and prompt checks, G50 and L08, on every 50th; and G05 and G06 once, across all the deals). **Dry run**: one whole fake night in memory. **Leak checks**: L01 (the files, the history, and no tracked JSON shaped like sealed content), L06 and L08. Prints one line per group, counts only, and saves the same counts to `validation_reports/checks` for the Health page. `-- --cases 200` for a quick look, `-- --local` to save nothing. Each stand-in case is dealt from a seed word (check-1 to check-1000), a failure names it, and `-- --seed check-28` deals that one case again and runs its checks (counts only, saves nothing). It does not run the rules check (L04 needs the emulator): that is still `npm run test:rules`. About ten seconds for the 1,000. | Yes (24 Oct; more checks 25 Oct) |
 | Jenna's "Run the checks" | **Jenna only** | The checks on the real sealed content, on the server: PK1, G43 and PK2 on the packing, LN1 on the leans, RP1 on the drawing pictures. Their Steward page, tab The checks, shows each check's ID, its plain name, PASS or FIX NEEDED and a count (every check but PK1), never content. (Was planned as `npm run checks:real`; Jenna works only in the browser, so it is a button.) | Yes (24 Oct) |
-| Replay by seed | Claude Code | Deals one exact case again from its seed, so a broken night can be played again. Shows counts only. | Not built. It is a card on the board ("Replay a night by its seed"). |
+| Replay by seed | Jon (the Game night page) and Claude Code | Every rehearsal is dealt from a seed word. On the Game night page, "Play a rehearsal again" lists the last five words, and Play it again (or a word typed in the box) makes the next night started from a phone deal that rehearsal again: the same roles, motive, cat hints, Parlour Games, Act 4 groups and drawing, and the same characters for the same people joining in the same order. Used once; never the party. For a stand-in case: `npm run checks -- --seed check-28`; for a whole fake night: `npm run fake-night -- --seed tulip-4471` (it prints each rehearsal's word). | Yes (25 Oct) |
 
 There is no separate `npm run rehearse`: `npm run fake-night` is the rehearse command.
 
@@ -218,7 +218,7 @@ Run on the server from Jenna's page ("Run the checks"), never in a terminal. Eac
 
 ## The results page Jon reads
 
-**Built 24 October:** the workshop's **Health** page (`#/health`, linked from Where we are). As specified, with two differences: the Case generator count is checks, not cases (ten on each of 1,000 cases plus two on every 50th, so `10,040 of 10,040 passed`), and under a red cross the page shows the stand-in case's number (or "fake night") where the spec says seed.
+**Built 24 October:** the workshop's **Health** page (`#/health`, linked from Where we are). As specified, with two differences: the Case generator count is checks, not cases (twenty on each of 1,000 cases, two on every 50th, and the two fairness checks, so `20,042 of 20,042 passed`), and under a red cross the page shows the stand-in case's seed word (check-28, say, or "fake night"), which `npm run checks -- --seed` deals again.
 
 - `npm run checks` writes one counts-only results record: the group, how many passed, the total, the IDs and seeds of any that failed, and the time. The page reads that record.
 - Big text. One line per group: Case generator, Dry run, Leak checks.
@@ -231,17 +231,18 @@ If everything is green, show one sentence: **"All clear. The game is ready."**
 
 ---
 
-## What is left (24 October)
+## What is left (25 October)
 
-Built: the tests marked "Has a test" in the table below, the stand-ins, `npm run fake-night`, the REHEARSAL band, `npm run checks` with its counts-only record, the Health page, and Jenna's "Run the checks" button.
+Built: the tests marked "Has a test" in the table below, the stand-ins, `npm run fake-night` (with the two host seats since 25 October), the REHEARSAL band, `npm run checks` with its counts-only record, the Health page, and Jenna's "Run the checks" button. Also on 25 October: replay by seed and G22 (card 324). On 25 October (card 479) the checks that were Not yet were written, every test that checked something without an ID was renamed to start with it, and the new case-level checks went into `npm run checks`.
 
 Before the second full tech run (by Wednesday 11 November; all Claude Code):
-1. Replay by seed: one stored seed per case drives every pick, the same seed deals the same case, counts only, and a G22 test. It is a card on the board ("Replay a night by its seed"). Until then a failure in `npm run checks` names the stand-in case's number, not a seed.
-2. The missing tests, each named with its ID. First F11, F09, G05 (with both host seats), G03, G19, F22, F23 and F25. Then the rest marked "Not yet" in the table. Items 2 to 6 are one card on the board ("The checks the test plan still has as Not yet").
-3. Rename the tests that exist but carry no ID, so the Health page can count them.
-4. Extend G38 to every act. G53 for all 25 bulletin 2 lines (every family, every level). G18 for Boo's words at each level. F18 for the dial's journey in the end credits. (G42, the bag solver at dial 1, comes with the worst-dial patch below.)
-5. The two host seats in the fake-players run (F02, G05).
-6. More checks into `npm run checks` as they are written, so the Health page counts them.
+1. The worst-dial proof, G07, G08 and G42, from Claude chat's patch (below).
+
+Waiting on Jon (each written as a `test.todo` with the reason, so it shows in the test count and is never silent; each is a question on the board with the built behaviour as its default):
+- **G09, bag clues that name only a sense.** In a party of four to six guests, about 1 deal in 1,000, a cat's low-rung bag clue names only a sense (the Murderer's bag holds no clue word among the bags in play), and that sense is one only the Murderer's bag holds among the bags in play: on its own it points at one bag. Not seen in 2,000 deals each at eight, nine or ten guests, the party's size. The rest of G09 passes. The question is *senseClue* (default: leave it).
+- **G24, the dial after Spill the Beans.** The Canon says the dial never resets; today a Spill the Beans restarts it at zero (and the G23 tests expect that). Which one is right is Jon's call: the question is *dialSpill* (default: start again, as built).
+
+Checked at the tech run, not in a test: F26's half second over the real Wi-Fi. The tests prove the schedule, the redraw rate and the clock rule (a phone stays within half a second while its round trip to the server is under 0.8 seconds); the house's own Wi-Fi is the tech run's to measure.
 
 Dropped on 23 October: the old item "Salem's testimony straight at 5 (G17)". Jon retired the secret lines, so Salem has no testimony.
 
@@ -251,7 +252,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 
 ---
 
-## Where every check stands (checked 24 October 2026)
+## Where every check stands (checked 25 October 2026)
 
 - **Has a test**: an automated test checks it, and the test's name starts with the ID.
 - **Has a test, no ID**: a test checks it, but its name does not carry the ID yet. Rename it so the Health page can count it.
@@ -261,33 +262,33 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 
 | ID | Check | Status | Where, or what is missing |
 |---|---|---|---|
-| G01 | One Murderer, one Ghost | Has a test, no ID | `functions/test/run.test.mjs` |
-| G02 | Different characters; hosts are the Professors | Has a test, no ID | `functions/test/night.test.mjs` ("hosts get the Professors") |
-| G03 | Characters not in play leave no clue | Not yet | |
-| G04 | The motive is one of the 19 | Not yet | |
-| G05 | Seat fairness, both host seats included | Not yet | Needs the host seats in the fake-players run |
-| G06 | Motive and character fairness | Not yet | |
+| G01 | One Murderer, one Ghost | Has a test | `functions/test/run.test.mjs` ("F01 and G01 the whole night"), `functions/test/case-checks.test.mjs`; also in `npm run checks` |
+| G02 | Different characters; hosts are the Professors | Has a test | `functions/test/night.test.mjs` ("G02 join: hosts get the Professors"); the fake night's host seats (F02) |
+| G03 | Characters not in play leave no clue | Has a test | `functions/test/case-checks.test.mjs` (every role, hint, the victim and both trace reveals belong to guests in play); also in `npm run checks` |
+| G04 | The motive is one of the 19 | Has a test | `functions/test/case-checks.test.mjs` (motive 8 dealt like the others, with the same open lines); also in `npm run checks` |
+| G05 | Seat fairness, both host seats included | Has a test | `functions/test/case-checks.test.mjs` (3,000 deals), `scripts/test/fake-players.test.mjs` (the fake night deals 2,000 and prints "Seat fairness (G05)"); also in `npm run checks` |
+| G06 | Motive and character fairness | Has a test | `functions/test/case-checks.test.mjs`: the nineteen motives across the deals, and the fourteen characters through the night's own deck (the hosts always the Professors, the other twelve drawn evenly). The motives also in `npm run checks` |
 | G07 | Solvable at dial 3 | Partly | Only the motive is proven (G32). The Murderer and the Victim are not; they come with the worst-dial patch (worstDial, 24 Oct). |
 | G08 | Still solvable at dial 1 | Not yet | Before the second full tech run (worstDial, Jon 24 Oct); coming as Claude chat's patch with G07 and G42 |
-| G09 | No single clue before Act 6 gives away the Murderer | Not yet | |
-| G10 | Clues name a trace, never a person | Has a test, no ID | `functions/test/finale.test.mjs` |
-| G11 | Every trace in a clue is in play | Has a test, no ID | `functions/test/finale.test.mjs` |
-| G12 | Level 3 second option is in play | Has a test, no ID | `functions/test/finale.test.mjs` |
-| G13 | Levels 1 to 5 each give a picture | Has a test, no ID | `functions/test/finale.test.mjs` |
+| G09 | No single clue before Act 6 gives away the Murderer | Partly | `functions/test/case-checks.test.mjs` (the study never shows the Murderer's trace, Irwin names motives only, every bag clue word fits two bags or more); also in `npm run checks`. A `test.todo` for Jon: a bag clue that names only a sense can point at one bag in a party of four to six (see What is left) |
+| G10 | Clues name a trace, never a person | Has a test | `functions/test/finale.test.mjs` ("G10, G11, G12 and G13 revealTrace") |
+| G11 | Every trace in a clue is in play | Has a test | `functions/test/finale.test.mjs` ("G11 and G12 pickPartner", and the revealTrace test) |
+| G12 | Level 3 second option is in play | Has a test | `functions/test/finale.test.mjs` ("G12 TRACE_BUCKETS", "G11 and G12 pickPartner", the revealTrace test) |
+| G13 | Levels 1 to 5 each give a picture | Has a test | `functions/test/finale.test.mjs` ("G13 and G24 traceLevel", the revealTrace test) |
 | G14 | Affection rolls; Irwin maxed; Salem starts at 3 | Has a test | `functions/test/night.test.mjs`, `functions/test/parlour.test.mjs` |
-| G15 | Irwin and Zimothy never say anything false | Partly | Zimothy's lines: the G18b test. Irwin's countdown: the G34 test. The older test of their secret lines went with them on 23 Oct. |
+| G15 | Irwin and Zimothy never say anything false | Has a test | `functions/test/case-checks.test.mjs` ("G15": Irwin's cards at every band, Zimothy's lines at every level); also the G18b test and the G34 test |
 | G16 | Granolia's lines only leave things out | Has a test | The G18b test: what she rules out at each level. (Reworded 23 Oct: the wrong-blank tests went with her secret lines.) |
-| G17 | Salem's ladder | Partly | The G18b test in `functions/test/solving.test.mjs` (backwards at 1 to 3, nothing to trust at 4, straight at 5), and he stays at 4 or below unless petted (`functions/test/parlour.test.mjs`). His bag clues: G49. Not checked: that no case is solvable from Salem's lines alone. |
-| G18 | Boo's ladder | Partly, no ID | Inside the G18b test: what she rules out at each level. Her words at each level are not checked. |
+| G17 | Salem's ladder | Has a test | The G18b test in `functions/test/solving.test.mjs` (backwards at 1 to 3, nothing to trust at 4, straight at 5); he stays at 4 or below unless petted (`functions/test/parlour.test.mjs`); no case is solvable from Salem's lines alone (`functions/test/case-checks.test.mjs`, and in `npm run checks`). His bag clues: G49 |
+| G18 | Boo's ladder | Has a test | `functions/test/solving.test.mjs` ("G18 Boo's ladder in her own words", and what she rules out in the G18b test) |
 | G18b | Every cat line only rules out wrong answers | Has a test | `functions/test/solving.test.mjs` ("G18b every cat line, at every level, in Acts 2 and 4") |
-| G19 | Irwin wins any disagreement | Not yet | |
-| G20 | Everyone in exactly one group | Has a test, no ID | `functions/test/station.test.mjs`, `functions/test/act4.test.mjs` |
-| G21 | Murderer and Ghost never in one group | Has a test, no ID | `functions/test/station.test.mjs` |
-| G22 | Same seed, same case | Not yet | No case seed is stored yet. Replay by seed is a card on the board. |
-| G23 | Spill the Beans | Partly, no ID | `functions/test/safeguards.test.mjs`. "The new case passes G01 to G21" is not checked. |
-| G24 | Dial starts at 3, stays 1 to 5, never resets | Partly, no ID | `functions/test/finale.test.mjs`. Today a Spill the Beans restarts the dial (`functions/test/safeguards.test.mjs` expects it), but the Canon says the dial never resets. |
+| G19 | Irwin wins any disagreement | Has a test | `functions/test/case-checks.test.mjs` (Irwin's cards always hold the truth; only Salem ever says something false); also in `npm run checks` |
+| G20 | Everyone in exactly one group | Has a test | `functions/test/station.test.mjs`, `functions/test/act4.test.mjs`, `functions/test/case-checks.test.mjs`; also in `npm run checks` |
+| G21 | Murderer and Ghost never in one group | Has a test | `functions/test/station.test.mjs`, `functions/test/case-checks.test.mjs`; also in `npm run checks` |
+| G22 | Same seed, same case | Has a test | `functions/test/seed.test.mjs` (the case from one word twice; a whole rehearsal replayed: characters, bags, affection, case, Act 2 line, Act 4 groups, drawing), `scripts/test/checks.test.mjs` (a stand-in case dealt again from its word) |
+| G23 | Spill the Beans | Has a test | `functions/test/safeguards.test.mjs` (the G23 tests; the new story checked against G01 to G21 through the real spill, party and rehearsal), `functions/test/case-checks.test.mjs`; also in `npm run checks` |
+| G24 | Dial starts at 3, stays 1 to 5, never resets | Partly | `functions/test/finale.test.mjs` ("G13 and G24 traceLevel"), `functions/test/screen.test.mjs` ("G24 the band follows the trace ladder"). A `test.todo` for Jon: today a Spill the Beans restarts the dial (`functions/test/safeguards.test.mjs` expects it), but the Canon says the dial never resets |
 | G25 | 12 sets: five, five, two | Has a test | `functions/test/parlour.test.mjs` |
-| G25b | Parlour Game times and spacing (Act 4: waiting on the phone) | Has a test | `functions/test/parlour.test.mjs`; the Act 4 exception in `functions/test/act4.test.mjs` ("Act 4 Parlour Games wait on the phone"), no ID |
+| G25b | Parlour Game times and spacing (Act 4: waiting on the phone) | Has a test | `functions/test/parlour.test.mjs`; the Act 4 exception in `functions/test/act4.test.mjs` ("G25b and F08 Act 4 Parlour Games wait on the phone") |
 | G26 | Exactly two answers | Has a test | `functions/test/parlour.test.mjs` |
 | G27 | Irwin never listens | Has a test | `functions/test/parlour.test.mjs` |
 | G28 | Affection stays 1 to 5 | Has a test | `functions/test/parlour.test.mjs` |
@@ -300,7 +301,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G35 | The Study shows the Ghost's trace, never a name | Has a test | `functions/test/solving.test.mjs` |
 | G36 | Level 3 second options | Has a test | `functions/test/solving.test.mjs` |
 | G37 | Memory match (6 pairs) | Replaced | By G50 (24 Oct) |
-| G38 | No hidden events in any act | Partly | The test walks Act 2 only. Extend it to every act. |
+| G38 | No hidden events in any act | Has a test | `functions/test/solving.test.mjs` (Act 2), `scripts/test/fake-players.test.mjs` ("G38": every act, a whole night, every phone the same windows and cards) |
 | G39 | Every bag clue fits the bag it is about | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
 | G40 | No bag clue names an item, a bag number or a person | Has a test | `functions/test/bagclues.test.mjs` |
 | G41 | Every clue word sits in two or three in-play bags | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
@@ -315,42 +316,42 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G50 | The memory match: 7, 10, 14 pairs, all fourteen traces | Has a test | `functions/test/solving.test.mjs`; also in `npm run checks` |
 | G51 | Zimothy's and Boo's cross-offs | Has a test | Inside the G50 and G52 tests (`functions/test/solving.test.mjs`, `functions/test/act4.test.mjs`); also in `npm run checks` |
 | G52 | Every Act 4 reward paid by the cap | Has a test | `functions/test/act4.test.mjs`; the fake night |
-| G53 | Every bulletin 2 line points at the real family (was G40) | Not yet | `functions/test/screen.test.mjs` checks only the rehearsal stand-in at the dial's level. No line is checked against the real family. |
-| F01 | All seven acts run | Has a test, no ID | `functions/test/run.test.mjs`, `scripts/test/fake-players.test.mjs` |
-| F02 | Host seats played by bots, no different | Not yet | The fake players have no host seat |
-| F03 | A dropped phone rejoins | Has a test, no ID | `functions/test/night.test.mjs` |
-| F04 | Every role screen has the same layout | Has a test, no ID | `functions/test/windows.test.mjs` |
-| F05 | Parlour Game screens read alike | Has a test, no ID | `functions/test/windows.test.mjs` |
-| F06 | Every role card needs the same tap | Not yet | The old F06 (innocent event screens) is retired: no act has hidden events. |
-| F07 | Sliders behave the same after a Parlour Game | Partly | G29 covers the odds and sizes |
-| F08 | Every phone gets each window at once (Act 4: waiting on the phone) | Has a test, no ID | `functions/test/windows.test.mjs`; the Act 4 exception in `functions/test/act4.test.mjs` |
-| F09 | No waiting-for-players screen | Not yet | |
-| F10 | A window never closes early | Has a test, no ID | `functions/test/windows.test.mjs` |
-| F11 | Blackout messages hold 15 seconds | Not yet | Built (15 seconds, then a hide button) but untested |
-| F12 | Puzzles appear on the chime | Not yet | |
-| F13 | Parlour Games are the only events | Has a test, no ID | `functions/test/parlour.test.mjs`, `functions/test/windows.test.mjs` |
-| F14 | The Cats tab never shows a number | Not yet | |
-| F15 | Act 4 shows your affection and the group's | Has a test, no ID | `functions/test/night.test.mjs` |
-| F16 | Ten minutes a room, then the reward anyway | Has a test, no ID | `station/test/study.test.mjs` (the study), `functions/test/act4.test.mjs` (the G52 test) |
-| F17 | Two minutes for picks; Murderer, Motive, Victim | Has a test, no ID | `functions/test/finale.test.mjs` |
-| F18 | The dial graph and the dial's journey | Partly, no ID | `functions/test/finale.test.mjs` checks the graph from the dial log. The dial's journey in the end credits is not checked. |
+| G53 | Every bulletin 2 line points at the real family (was G40) | Has a test | `functions/test/case-checks.test.mjs` (all 25 lines, every family and every level), `functions/test/screen.test.mjs` (on a party night, with its recording); also in `npm run checks` |
+| F01 | All seven acts run | Has a test | `functions/test/run.test.mjs` ("F01 and G01"), `scripts/test/fake-players.test.mjs` ("F01, F24 and L03") |
+| F02 | Host seats played by bots, no different | Has a test | `scripts/test/fake-players.test.mjs` ("F02 and G05"); the fake night prints "Host seats ... (F02)" |
+| F03 | A dropped phone rejoins | Has a test | `functions/test/night.test.mjs` (the F03 tests) |
+| F04 | Every role screen has the same layout | Has a test | `functions/test/windows.test.mjs` (the F04 tests) |
+| F05 | Parlour Game screens read alike | Has a test | `functions/test/windows.test.mjs` ("F05 and F08 across thirty nights") |
+| F06 | Every role card needs the same tap | Has a test | `functions/test/windows.test.mjs` (the same card for every role, and a late joiner), `play/test/phone.test.mjs` (one prompt, one hold, one button). The old F06 (innocent event screens) is retired: no act has hidden events. |
+| F07 | Sliders behave the same after a Parlour Game | Has a test | `functions/test/parlour.test.mjs` ("F07": the same cats can move, and a marker stays still as often for every role); G29 covers the odds and sizes |
+| F08 | Every phone gets each window at once (Act 4: waiting on the phone) | Has a test | `functions/test/windows.test.mjs` ("F05 and F08"); the Act 4 exception in `functions/test/act4.test.mjs` ("G25b and F08") |
+| F09 | No waiting-for-players screen | Has a test | `play/test/phone.test.mjs` (no such words anywhere a phone or a room screen reads; every finished screen has its own way on) |
+| F10 | A window never closes early | Has a test | `functions/test/windows.test.mjs` (the F10 tests) |
+| F11 | Blackout messages hold 15 seconds | Has a test | `play/test/phone.test.mjs` (fifteen seconds on the server's clock, then the hide button; a pause never runs it out) |
+| F12 | Puzzles appear on the chime | Has a test | `functions/test/act4.test.mjs` (every Act 4 room's game is set for its group at the round's chime, the ten minutes run from the chime, a late arrival gets no fresh puzzle, a scan before the chime is turned away) |
+| F13 | Parlour Games are the only events | Has a test | `functions/test/parlour.test.mjs`, `functions/test/windows.test.mjs` (the F13 tests) |
+| F14 | The Cats tab never shows a number | Has a test | `play/test/phone.test.mjs` (the five stop words, no number rendered, a picture of a slider, not a control) |
+| F15 | Act 4 shows your affection and the group's | Has a test | `functions/test/night.test.mjs` ("F15") |
+| F16 | Ten minutes a room, then the reward anyway | Has a test | `station/test/study.test.mjs` ("F16 the cap"), `functions/test/act4.test.mjs` (the G52 test) |
+| F17 | Two minutes for picks; Murderer, Motive, Victim | Has a test | `functions/test/finale.test.mjs` (the F17 tests) |
+| F18 | The dial graph and the dial's journey | Has a test | `functions/test/finale.test.mjs` ("F18 the finale": the graph; "F18 the end credits": where the dial stood after each act, its high and low, each dial clue's level), `play/test/finale.test.mjs` (the journey shows only after the reveal) |
 | F19 | A Parlour Game returns the phone to where it was | Has a test | `play/test/windows.test.mjs` |
 | F20 | One player at a cat at a time | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
 | F21 | Everyone always has a next step | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
-| F22 | Not yet, the same on every phone, no penalty | Not yet | Built (`deal.notYet`, two minutes back in the queue) but untested |
-| F23 | No cat sits idle while someone waits | Not yet | Built (`deal.sendNext` calls the longest-waiting guest) but untested by ID |
-| F24 | The supper chime waits for everyone, or Supper's ready | Has a test, no ID | `scripts/test/fake-players.test.mjs` (the fake night's Act 2 line) |
-| F25 | No motion sensor, no slip | Not yet | Built (the phone never reports a slip without a reading) but untested |
-| F26 | Salem's colours reach every phone within half a second | Not yet | The colours are timestamps on the server's clock; the half second is not measured |
-| F27 | `chime-phone` at every look-at-your-phone moment | Partly, no ID | `functions/test/screen.test.mjs` checks it at supper and in Act 4 |
-| F28 | Bracketed stand-ins on a rehearsal night | Has a test, no ID | `functions/test/case.test.mjs` (the rehearsal walk), `functions/test/act4.test.mjs` (the rehearsal rooms) |
-| L01 | No sealed content in the repo or its history | Partly | `npm run checks` (the leak group: no sealed file name in the tracked files or the history), `scripts/test/checks.test.mjs`. Not yet: the scan of tracked JSON for a sealed shape beyond the packing (L06). |
-| L02 | No sealed text in any output | Has a test, no ID | `functions/test/case.test.mjs`; the fake-players run prints "Seal: PASS" |
-| L03 | A rehearsal never reads the secrets | Partly, no ID | `functions/test/case.test.mjs` |
-| L04 | Only Jenna's account opens sealed content | Has a test, no ID | `functions/test/rules.test.mjs` (skipped unless `npm run test:rules` runs the emulator), `functions/test/steward.test.mjs` |
+| F22 | Not yet, the same on every phone, no penalty | Has a test | `functions/test/solving.test.mjs` ("F22") |
+| F23 | No cat sits idle while someone waits | Has a test | `functions/test/solving.test.mjs` ("F23": after every move and every tick, 2 to 12 guests, with Not yet) |
+| F24 | The supper chime waits for everyone, or Supper's ready | Has a test | `scripts/test/fake-players.test.mjs` ("F01, F24 and L03": the fake night's Act 2 line) |
+| F25 | No motion sensor, no slip | Has a test | `play/test/act4.test.mjs` ("F25") |
+| F26 | Salem's colours reach every phone within half a second | Partly | `functions/test/act4.test.mjs` (one schedule, written three seconds ahead, on the server's clock), `play/test/act4.test.mjs` (ten redraws a second; the clock rule keeps a change within half a second while a phone's round trip is under 0.8 seconds). The real Wi-Fi delay is measured at the tech run |
+| F27 | `chime-phone` at every look-at-your-phone moment | Has a test | `functions/test/screen.test.mjs` ("F27 chime-phone": supper, the groups, every round, back to the Parlour, Act 6's games; and "F27 and L07 the night walk") |
+| F28 | Bracketed stand-ins on a rehearsal night | Has a test | `functions/test/case.test.mjs` ("F28 the same walk on a rehearsal night"), `functions/test/act4.test.mjs` ("F28 a rehearsal") |
+| L01 | No sealed content in the repo or its history | Has a test | `npm run checks` (the leak group: no sealed file name in the tracked files or the history, and no tracked JSON shaped like sealed content: a dealt case, kernels, a code-to-motive map, a lean table), `scripts/test/checks.test.mjs` ("L01") |
+| L02 | No sealed text in any output | Has a test | `functions/test/case.test.mjs` (the L02 tests); the fake-players run prints "Seal: PASS" |
+| L03 | A rehearsal never reads the secrets | Has a test | `functions/test/case.test.mjs` ("L03"), `scripts/test/fake-players.test.mjs` ("F01, F24 and L03": a whole rehearsal night reads nothing sealed but the bag count) |
+| L04 | Only Jenna's account opens sealed content | Has a test | `functions/test/rules.test.mjs` (the L04 tests, skipped unless `npm run test:rules` runs the emulator), `functions/test/steward.test.mjs` ("L04 the gate") |
 | L05 | The lean table is not in the repo or readable by Jon | Has a test | `functions/test/parlour.test.mjs`, `functions/test/rules.test.mjs` |
 | L06 | The packing is not in the repo or readable by Jon | Partly | `npm run checks` (no tracked JSON shaped like a packing); `functions/test/rules.test.mjs` covers `sealed/*` for Jon's account |
-| L07 | The Parlour TV never shows anything sealed or about one player | Partly, no ID | `functions/test/act4.test.mjs` (the rooms' public docs) and the night-walk seal checks; not by ID |
+| L07 | The Parlour TV never shows anything sealed or about one player | Has a test | `functions/test/act4.test.mjs` ("L07": the rooms' public docs), `functions/test/screen.test.mjs` ("F27 and L07 the night walk"); the fake night's seal check |
 | L08 | Sir Irwin's prompts never contain a clue word | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
 | PK1, PK2, LN1, RP1 | Jenna's checks on the real content | Has a test | `functions/test/steward.test.mjs` (the checks op); `functions/lib/checks.js` |
 | (old) | Innocent event screens need a tap (the old F06) | Retired | No act has hidden events (closed 22 Oct) |

@@ -21,6 +21,9 @@ import { mayTouchNight } from './lib/access.js'
 import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
+import { sealedCounts as countSealed } from './lib/counts.js'
+import { morningOp } from './lib/morning.js'
+import { savePose, fromPoseCamera } from './lib/pose.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -161,6 +164,16 @@ export const salemPassed = onCall({ cors: true }, wrap(async req => {
   return run.player.salemPassed(db, { uid, nightId, attempt })
 }))
 
+// Act 4, the Entryway: the iPad Pro facing the catwalk (?kiosk=pose) sends
+// its photo of the group's last pose, for the end credits (lib/pose.js).
+export const posePhoto = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, groupId, image } = req.data ?? {}
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  if (!(await fromPoseCamera(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) }))) throw new HttpsError('permission-denied', 'Only Boo’s camera sends the photos.')
+  return savePose(db, { nightId, groupId, image })
+}))
+
 // Act 4, the Entryway: Boo's show is over (the wall, ?kiosk=boo, or a phone).
 export const booDone = onCall({ cors: true }, wrap(async req => {
   const { nightId } = req.data ?? {}
@@ -244,6 +257,25 @@ export const tick = onSchedule({ schedule: 'every 1 minutes', region: 'us-centra
     console.error('tick failed', e?.code ?? e?.name ?? 'error')
   }
 })
+
+// The Home rows (lib/counts.js): how far the packing list, the cats' leans
+// and the drawing pictures have got, as numbers only, never a word of them.
+// The admin's only.
+export const sealedCounts = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only Jon can do that.')
+  return countSealed(db)
+}))
+
+// The morning after (lib/morning.js): once the party night's reveal has
+// played, on or after the party day, the case that ran opens to Jon and is
+// archived; then he keeps or clears the secrets. Jon's account only. Before
+// that it answers no, with a plain reason, and nothing else.
+export const morningAfter = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  if (!ADMIN_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only Jon can do that.')
+  return morningOp(db, req.data ?? {})
+}))
 
 // The Steward's door (lib/steward.js). Jenna reads the packing list and
 // reads and edits the cats' leans here, and only here: the gate is the

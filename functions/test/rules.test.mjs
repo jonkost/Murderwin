@@ -52,7 +52,7 @@ async function setup() {
   return env
 }
 
-test('a signed-in phone reads public night state and its own session, never sealed, cases, private or another phone', { skip }, async () => {
+test('L04 a signed-in phone reads public night state and its own session, never sealed, cases, private or another phone', { skip }, async () => {
   const env = await setup()
   const { assertFails, assertSucceeds } = await import('@firebase/rules-unit-testing')
   const { doc, getDoc, setDoc } = await import('firebase/firestore')
@@ -87,7 +87,7 @@ test('a signed-in phone reads public night state and its own session, never seal
   }
 })
 
-test('a host phone reads presence; the admin reads and writes safe content but never sealed or cases', { skip }, async () => {
+test('L04 a host phone reads presence; the admin reads and writes safe content but never sealed or cases', { skip }, async () => {
   const env = await setup()
   const { assertFails, assertSucceeds } = await import('@firebase/rules-unit-testing')
   const { doc, getDoc, setDoc, deleteDoc } = await import('firebase/firestore')

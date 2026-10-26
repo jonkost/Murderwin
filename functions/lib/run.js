@@ -117,11 +117,11 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
 
 // Act 4's Next: a round beyond the night's last (four groups or fewer have
 // four rounds) goes on to Act 5 instead.
-async function skipEmptyRound(db, nightId, to) {
+async function skipEmptyRound(db, nightId, to, now = Date.now()) {
   if (to?.act !== 4 || !roundOf(to.beat)) return to
   const rot = await act4.readRotation(db, nightId)
   if (rot?.rounds && roundOf(to.beat) > rot.rounds) {
-    await act4.finishRounds(db, nightId)
+    await act4.finishRounds(db, nightId, { now })
     return { act: 5, beat: firstBeat(5) }
   }
   return to
@@ -165,7 +165,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
       await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
-      const to = await skipEmptyRound(db, nightId, nextOf(n.act, n.beat))
+      const to = await skipEmptyRound(db, nightId, nextOf(n.act, n.beat), now)
       if (!to) throw new NightError('invalid', n.act === 1 ? 'That is the end of Act 1. Press Blackout.' : 'That is the end of the night.')
       if (deal.beatSpec(to.act, to.beat)?.action === 'results') await finale.requireNamed(db, nightId) // the screen names all three first
       // Act 1 begins: copy the latest workshop lines (rules, bios, cat cards) to the phones first

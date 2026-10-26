@@ -12,6 +12,7 @@ import {
   HANDOFF_1023_TASKS, RETIRED_FOR_1023, FILED_FOR_1023, ANSWERED_FOR_1023, REFILED_FOR_1023,
   CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP,
   NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST,
+  ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -775,6 +776,18 @@ export const ADDITIONS = [
     fileDecisions: FILED_DECISIONS_FOR_NEWS_CAST,
     refileDecisions: REFILED_FOR_NEWS_CAST,
     supersedeDecisions: SUPERSEDED_FOR_NEWS_CAST,
+  },
+  {
+    // 25 Oct: the 24 Oct evening handoff's item 4, built. The Home rows, the
+    // motive card pictures, the morning after, replay by seed and the pose
+    // photo marked done; Jon's cards for Boo's camera (trying it, and
+    // carrying the iPad Pro to the Entryway on the night) and for opening
+    // the case the morning after; the test plan's checks done, and the two
+    // questions they turned up (dialSpill, senseClue), defaults as built.
+    id: '2026-10-25-item4',
+    tasks: ITEM4_TASKS,
+    decisions: ITEM4_DECISIONS,
+    retireTasks: RETIRED_FOR_ITEM4,
   },
 ]
 

@@ -6,6 +6,8 @@ import { STANDIN_LISTS, STANDIN_NOTE, LEFT_OUT_LISTS, LEFT_OUT_NOTE, nextCards, 
 import { isComplete } from '../lib/scenarios'
 import { useReviews } from '../components/ReviewRow'
 import { Decision } from '../components/DecisionsPanel'
+import { secretRows, SECRET_ROWS_WHY } from '../lib/secretRows'
+import { fetchSealedCounts } from '../lib/countsApi'
 
 // Home (24 Oct 2026): the front page, and it never asks Jon to write. Jon
 // writes nothing more (23 Oct): Claude chat writes what is left and Claude
@@ -77,6 +79,9 @@ export default function Dashboard() {
     return () => unsubs.forEach(u => u())
   }, [])
   useEffect(() => { whoAmI().then(setMe) }, [])
+  // the three things made blind, counts only (card 343); null while asking, 'error' if the call failed
+  const [counts, setCounts] = useState(null)
+  useEffect(() => { fetchSealedCounts().then(setCounts).catch(() => setCounts('error')) }, [])
   const canAnswer = me?.name === 'Jon' || me?.name === 'Preview'
 
   const next = tasks ? nextCards(tasks) : []
@@ -120,6 +125,24 @@ export default function Dashboard() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="panel">
+        <h2>The secrets, made blind</h2>
+        <p className="why">{SECRET_ROWS_WHY}</p>
+        {counts === null ? <p className="hint">Counting…</p>
+          : counts === 'error' ? <p className="hint">The count did not come back. Try again later.</p>
+            : (
+              <ul className="secret-rows">
+                {secretRows(counts).map(r => (
+                  <li key={r.key} className={r.done ? 'done' : ''}>
+                    <span className="list-name">{r.label}</span>
+                    <span className="list-why">{r.why}</span>
+                    <span className="list-count">{r.done ? '✓ ' : ''}{r.value}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
       </section>
 
       <section className="panel">

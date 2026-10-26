@@ -20,11 +20,11 @@
 // The case is read from cases/* with the Admin SDK and written only to
 // cases/{nightId}; role card text is safe copy. Nothing here reads sealed/*.
 
-import { randomInt } from 'node:crypto'
 import { NightError } from './night.js'
 import { buildCase, rehearsalCase, rerollCase, nextMotive } from './case.js'
 import * as deal from './deal.js'
 import { noteExposure, spillBlocked, HUSH_ROLES } from './ledger.js'
+import { nightSeed, pickFor } from './seed.js'
 
 export { noteDealt, noteExposure, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from './ledger.js'
 
@@ -84,12 +84,16 @@ async function replaceRoleCards(db, nightId, list, c) {
   return changed
 }
 
-export async function spill(db, { nightId, now = Date.now(), pick = randomInt } = {}) {
+export async function spill(db, { nightId, now = Date.now(), pick = null } = {}) {
   const { night, list } = await guestsOf(db, nightId)
   const c = await deal.readCase(db, nightId)
   if (!spillAllowed(night, c, { now })) return { ok: true, did: false }
-  const fresh = freshCase(c, { roster: list, rng: pick, now }, pick)
-  const next = rerollCase({ prev: c, fresh, roster: list, rng: pick })
+  // a seeded rehearsal re-rolls the same way again, its guests in name order (seed.js)
+  const seed = await nightSeed(db, nightId)
+  if (!pick) pick = pickFor(seed, 'spill', c?.spills ?? 0)
+  const roster = seed ? [...list].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)) : list
+  const fresh = freshCase(c, { roster, rng: pick, now }, pick)
+  const next = rerollCase({ prev: c, fresh, roster, rng: pick })
   await db.doc(`cases/${nightId}`).set(next)
   await replaceRoleCards(db, nightId, list, next)
   return { ok: true, did: true }

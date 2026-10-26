@@ -13,7 +13,9 @@ room is the Parlour, all four cats talk to every guest in Act 2, Act 4 is
 four game rooms, the bags are in, the game names, and the device table.
 Updated again on the evening of 24 October: the workshop's Game test tab
 (see "Trying the games" below) and the news team's cast (Susan plays Ava
-Waves, you play Mic Cameron).
+Waves, you play Mic Cameron). Updated 25 October: the Home rows that count
+the secrets, the motive card pictures, Boo's camera for the end credits,
+replaying a rehearsal by its seed word, and the morning after.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -58,6 +60,17 @@ them.
      checks" on their page, and say "done" or "needs more". Jenna comes to
      the party (they do not play) and packs the ten bags at the house before
      the guests arrive, from their page.
+- *How far the secrets have got.* The workshop's Home page has three rows
+  under "The secrets, made blind": the packing list (made or not, and how
+  many bags), the cats' leans (questions with a lean for every cat, of all
+  of them) and the drawing pictures (good ones, of nine). Numbers only:
+  nothing in them is ever shown to you.
+- *The motive card pictures.* Nineteen drawings, one per motive, saved as
+  `play/public/motives/1.png` to `19.png` by the motive's number ("The last
+  of the pie" shows pizza). They show beside each motive in Sir Irwin's
+  countdown and on the motive's card at the reveal. A motive with no
+  picture shows its rhyme alone, so the game works with none, some or all
+  of them. `npm run deploy` after adding them.
 - *Put the game live.* `npm run deploy`. This is the one line to run whenever
   Claude says a build is done. It builds the workshop and the phone client,
   refuses to go on if either came out empty, and then publishes the site, the
@@ -151,7 +164,7 @@ them.
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the rules deck in Act 1, the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal. In the drawing the room taps its guess on this screen, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
 | Susan's work MacBook Pro | Idle until Act 4. Act 4: beside the projector on the upstairs landing, showing Boo's Catwalk on the triangle wall (`?kiosk=boo`). After Act 4: the bedroom screen (`?kiosk=bedroom`), door closed. | A browser, full screen. Tap it once after each move. |
-| Your iPad Pro | Acts 2 and 3: the words of bulletins 1 and 2, on a stand in the Orangerie (`?kiosk=ipad`). From Act 4: a spare screen. | Safari, full screen. Tap it once. |
+| Your iPad Pro | Acts 2 and 3: the words of bulletins 1 and 2, on a stand in the Orangerie (`?kiosk=ipad`). Act 4: Boo's camera in the Entryway, facing the catwalk (`?kiosk=pose`, nice to have), or a spare screen. | Safari, full screen. Tap it once. For Boo's camera, tap Turn on the camera and allow it. |
 | The older iPad | In Duplicate (the memory match), on its small stand in the Library, all night (`?kiosk=memory`). | Safari, full screen. Tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
 | The old iPhone 11 | The spare phone. | Charged, on the plain game address, left on the join screen. |
@@ -277,7 +290,10 @@ game; it serves the lights and the speakers.
   settled after supper, press **Start Act 4** (it shows on your Host tab in
   Act 3).
 - Act 4, Behind Closed Doors: four game rooms, pairs and trios, about an
-  hour. **Start Act 4** gives every phone a two-minute warning and makes the
+  hour. Before you press it, if you are using Boo's camera: carry the iPad
+  Pro from the Orangerie to the Entryway, stand it facing the catwalk, open
+  `?kiosk=pose` in Safari, full screen, and tap Turn on the camera.
+  **Start Act 4** gives every phone a two-minute warning and makes the
   groups (nobody sees them yet). Two minutes later, on its own: the chime,
   the title card on the Parlour TV, and every phone shows its group as
   portraits with a Locked in button. The rounds start when everyone is
@@ -297,7 +313,10 @@ game; it serves the lights and the speakers.
   - The Entryway: Boo's Catwalk, on the triangle wall from
     Susan's MacBook Pro and the projector: Boo struts, the music stops, the
     group strikes a pose and holds it, Boo judges, three times. Pays one
-    wrong motive crossed off and a bag hint.
+    wrong motive crossed off and a bag hint. If Boo's camera is up, the iPad
+    Pro facing the catwalk shows the group to itself and takes one photo a
+    moment into each group's last pose, for the end credits. Nothing to
+    press.
   The group scans the room's code to begin. A group that finishes early is
   paid at once and goes back to the Parlour; at the chime, any room not
   finished is paid anyway. The bag hints are about the Ghost's bag. With
@@ -312,7 +331,8 @@ game; it serves the lights and the speakers.
   open `?kiosk=bedroom`, tap it once, and close the door. It shows "The door
   is closed" until the third picture is named.
 - Act 5: cake, and everyone wanders. Then **Next** for Sir Irwin: the chime,
-  and his countdown on the TV. The phones send everyone to the Parlour.
+  and his countdown on the TV, each motive with its card's picture once it
+  is drawn. The phones send everyone to the Parlour.
   Before you press **Next** for Act 6, check the bedroom screen is in and
   the door is closed.
 - Act 6 opens with two Parlour Games, back to back. Wait until the second has
@@ -344,7 +364,8 @@ game; it serves the lights and the speakers.
   lead-in part has played, and the next press cuts off anything still
   playing. After the
   Victim, on their own: the closing story, the dial's journey, the end
-  credits and Sir Irwin's last card, about two minutes. **Hold the screen**
+  credits (with each group's last pose from Boo's camera, if it was up) and
+  Sir Irwin's last card, about two minutes. **Hold the screen**
   stops it where it is (a toast, a photograph); **Carry on** resumes, and
   nothing on the screen is skipped. **Next** for everyone's result only works
   once all three are named.
@@ -376,10 +397,10 @@ game; it serves the lights and the speakers.
 | 1 | Its crest and the act name. The rules deck and the join code in a second browser tab. | The iPad Pro in the Orangerie: its crest. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro keeps bulletin 1's words up. |
 | 3 | Bulletin 2's words, when it plays. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods. |
-| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The older iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. The group's phones in the Orangerie: Get Off My Lawn!. Each room's screen shows the game's name with its line under it. |
-| 5 | Sir Irwin: his opener, the countdown line, the motive cards, his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
+| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The older iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. The iPad Pro in the Entryway, if it is up: Boo's camera, the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!. Each room's screen shows the game's name with its line under it. |
+| 5 | Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the guess (tapped here). Then the "Pawsome!" slide, "The door is open", and the deduction board. | In the bedroom: the trace, from the moment the third picture is named. |
-| 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked), the closing story, the dial's journey, the end credits and Sir Irwin's last card. | In the bedroom: the trace. |
+| 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. | In the bedroom: the trace. |
 
 The study screen waits on its idle line outside Act 4. Every screen is dark
 from the blackout until the first beat of Act 2, and near-black with "One
@@ -399,6 +420,7 @@ on the party night both are gone.
 | The bedroom screen | Nobody goes to the bedroom. Press **Show the trace on the TV** under The Big Solve: ten seconds after the door opens, the TV shows the trace, and again at the ballot. |
 | The memory match iPad | Carry on. A group that did not clear it is paid its cross-off at the chime anyway. |
 | Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. |
+| Boo's camera (the iPad Pro in the Entryway) | Carry on. The catwalk runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; the phones tint red and green whatever the lights do. |
 | A room code will not scan | Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
@@ -456,8 +478,49 @@ A night started on the real game with the party box unticked is a rehearsal
 too: a throwaway case, a stand-in in square brackets wherever a secret would
 show (the cats' hints, the bag clues, the cross-offs, the trace, the news
 line), stand-in drawing pictures, and the red REHEARSAL band on every
-screen. Replaying a night by its seed is not built yet (a card on the
-board).
+screen.
+
+*Playing a rehearsal again.* Every rehearsal is dealt from a seed word,
+like tulip-4471. The Game night page's "Play a rehearsal again" lists the
+last five rehearsals with their words. Tap "Play it again" beside one (or
+type a word in the box), then start a night from your phone as usual: it
+deals that rehearsal again, the same roles, motive, cat hints, Parlour Game
+times and sets, Act 4 groups and drawing, and the same characters and bag
+numbers for the same people joining in the same order. The word is used
+once: the box empties when the night starts. The box is greyed out while
+"This is the party night" is ticked: the party is never dealt from a word.
+`npm run checks` names a failing stand-in case by its word too (check-28,
+say), and `npm run checks -- --seed check-28` deals that one case again.
+`npm run fake-night` prints its rehearsal's word on its first line, and
+`npm run fake-night -- --seed tulip-4471` deals that night again (the fake
+phones' own taps still differ).
+
+## After the party (the morning after)
+
+The case stays sealed until the party is over. Then the workshop's Game
+night page has "The morning after" under After the party.
+
+- It opens only on the party day or later, and only once the party night's
+  reveal has played to the end (the third name, the Victim, is on the
+  screen). Before that the page says "Not yet" and why, and nothing else.
+  A rehearsal, a dry run or a Game test night never opens it.
+- Type OPEN and tap "Open the case". The night is copied into an archive
+  first: the case, everyone's phone, the night's own records, Boo's
+  Catwalk photos, and the three secrets that ran. Nothing is moved, except
+  the guests' photos: they leave the game site (where anyone with the game
+  open could read them) and stay in the archive, shown on the page to
+  save.
+- The page then shows what really happened: the Murderer, the motive and
+  the victim, everyone's character and role and bag, which families each
+  guest's cats ruled out and which family the first bulletin crossed off,
+  where the clarity dial ended, every bag's contents, the drawing's
+  pictures, and each group's photo from Boo's camera, to save.
+- Last, your call on the secrets: "Keep the secrets" leaves the packing
+  list, the cats' leans and the drawing pictures sealed as they are; "Clear
+  the secrets" takes them out of the sealed lists. Either way the archive
+  keeps a copy. The nineteen old secret sets from 20 October never ran and
+  are left alone.
+- Untick "This is the party night" afterwards, as before.
 
 ## Trying the games (the Game test tab)
 
@@ -510,7 +573,10 @@ clue is dealt.
   the projector computer or any screen, full screen, and tap it once so it
   can play sound. Open the practice show on one or more phones. Tap "Start
   the show": three seconds later Boo struts, the music stops, you strike a
-  pose and hold it, Boo judges, three times. Nothing is paid.
+  pose and hold it, Boo judges, three times. Nothing is paid. To try Boo's
+  camera too, open "Boo's camera, the practice show" on the iPad Pro, stand
+  it facing you and tap Turn on the camera: at the last pose it takes the
+  photo and keeps it on its own screen, never sent anywhere.
 - *The Parlour Games.* Every set in the workshop's bank, numbered, each with
   "See it on a phone": Boo's line and the three questions, exactly as a
   phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4
@@ -585,7 +651,7 @@ from `seed/night.json` ("Arm the bulletin") and workshop buttons ("Freeze the
 workshop") are in quotes, never bold. No em dashes anywhere in this file.
 
 *The kiosks* (`play/src/screens/Kiosk.jsx`, `play/src/screens/Rooms.jsx`):
-`?kiosk=living | ipad | memory | boo | bedroom | study`, plus
+`?kiosk=living | ipad | memory | boo | pose | bedroom | study`, plus
 `?kiosk=memory&play=1` (the standalone memory match, no night). The device
 table is `app/src/lib/devices.js`: the iPad Pro is `ipad`, the older iPad is
 `memory` all night, Susan's MacBook Pro is `boo` in Act 4 and `bedroom`
@@ -599,6 +665,42 @@ relay as codes derived from the clip id and the station key (`STATION_KEY`
 in `cues/.env`, `media/README.md`), and the relay logs counts only; a sounds
 doc with `video: true` rings the chime and skips the clips. Whether the TV
 plays the two bulletins as video is `meta/game.bulletinVideo` (only `true` means video: the box The bulletins are videos on the workshop's Game night page, `app/src/pages/Night.jsx`; unset or unticked, the brain plays the recordings and the TV shows the words).
+
+*Added 25 Oct* (handoff 24 Oct evening, item 4). Three callables, each
+checking `ADMIN_UIDS` or the party gate in `functions/index.js`:
+`sealedCounts` (`functions/lib/counts.js`, the admin's: the Home rows,
+numbers only from `sealed/bags`, `sealed/parlour_leans` against the bank,
+`sealed/relay_pictures` by `checkPicture`, at most `PER_ROUND` a round),
+`morningAfter` (`functions/lib/morning.js`, the admin's: ops `status`,
+`open` with `confirm: 'OPEN'`, `read`, `secrets` with `keep` or `clear`;
+`open` refuses before `PARTY_DAY` and unless a night with
+`forceRehearsal: false`, not `dryRun`, not `gameTest`, has
+`public/finale.stage === 'victim'`; the archive is `archive/{nightId}` and
+`archive/{nightId}/parts/*`, which no client rule opens; the mark is
+`archive/_morning`, out of every client's reach, and `read` and `secrets`
+check it against the archive and the day again; the reveal must have been
+named on the party day or later (`victimNamedAt`), so a night started with
+the box ticked before the party never opens; Clear copies each secret as it
+stands, as a `cleared-*` part, before removing it) and `posePhoto` (`functions/lib/pose.js`, at the
+party, from the pose camera's own presence row (`fromPoseCamera`, the
+guest key `kiosk-pose`) or the admin: a JPEG data URL of at most
+`POSE_MAX_CHARS`, kept at
+`nights/{id}/public/pose-<group>` only while `public/boo` is that group's
+show; `finaleDoc` lists the groups with a photo in `credits.poses`, and the
+TV reads each photo from its own doc). Replay by seed is
+`functions/lib/seed.js`: a rehearsal's word in
+`nights/{id}/private/deck.seed` (the caller's `seed`, else
+`meta/game.replay_seed`, used once and never by a Game test night, else
+`newSeedWord`), `meta/replay` keeps the last five for the Game night page,
+and `pickFor(seed, purpose...)` gives each random choice its own stream
+(`deck`, `bags`, `affection`, `case`, `waves`, `rooms`, `memory`, `relay`,
+`relay-order`, `trace`, `study`, `finale`, `spill`, `default`). A party night
+and a dry run have no seed and keep crypto randomness. Salem's colours and
+Boo's poses keep their own timing. The pose camera is
+`play/src/screens/Pose.jsx` (`?kiosk=pose`, and `?kiosk=pose&practice=1`
+on the practice show, which sends nothing); the motive pictures are
+`MotivePicture` in `play/src/screens/Kiosk.jsx` over
+`play/src/lib/motives.js`.
 
 *Emulators.* `firebase.json` runs auth 9099, firestore 8080, functions 5001,
 hosting 5000, storage 9199, UI 4000, project `demo-murderwin`. A phone against

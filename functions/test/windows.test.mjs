@@ -73,7 +73,7 @@ function writeBank(db, sizes) {
 // ---------------------------------------------------------------------------
 // The tick
 
-test('tick settles a window left open past its close, with defaults for every phone that did not answer, once across two ticks', async () => {
+test('F10 tick settles a window left open past its close, with defaults for every phone that did not answer, once across two ticks', async () => {
   const { db, nightId, uids } = await party(6)
   let now = 1_000_000
   const w = await litUp(db, nightId, now)
@@ -166,7 +166,7 @@ test('twenty interleaved pushes from the two hidden roles all land: the dial is 
   assert.equal(caseOf(db, nightId).dial, expected)
 })
 
-test('both hidden roles answering the same window at once both move the dial, in opposite directions for equal totals', async () => {
+test('F13 both hidden roles answering the same window at once both move the dial, in opposite directions for equal totals', async () => {
   const { db, nightId } = await party(6)
   const now = 5_000_000
   const w = await litUp(db, nightId, now)
@@ -186,7 +186,7 @@ test('both hidden roles answering the same window at once both move the dial, in
   assert.equal(c.dialMap.ghost, 1); assert.equal(c.dialMap.murderer, -1)
 })
 
-test('a late answer is thanked, changes nothing, and the default stands', async () => {
+test('F10 a late answer is thanked, changes nothing, and the default stands', async () => {
   const { db, nightId, uids } = await party(4)
   const now = 6_000_000
   const w = await litUp(db, nightId, now)
@@ -225,7 +225,7 @@ test('a late answer is thanked, changes nothing, and the default stands', async 
 // ---------------------------------------------------------------------------
 // Which set each phone gets
 
-test('across thirty nights every phone holds the same set at the same moment, the set is the case\'s for that slot, and no value, lean or listening cat reaches a phone or a public doc', async () => {
+test('F05 and F08 across thirty nights every phone holds the same set at the same moment, the set is the case\'s for that slot, and no value, lean or listening cat reaches a phone or a public doc', async () => {
   const seen = new Set()
   for (let run = 0; run < 30; run++) {
     const { db, nightId, uids } = await party(6)
@@ -290,7 +290,7 @@ test('the built-in rehearsal sets have three questions with exactly two answers 
 // ---------------------------------------------------------------------------
 // Role-card parity
 
-test('the default role cards pass the parity check; one long card is padded with the filler until the three read alike', () => {
+test('F04 the default role cards pass the parity check; one long card is padded with the filler until the three read alike', () => {
   const r = parityCheck(ROLE_CARDS)
   assert.equal(r.ok, true); assert.equal(r.padded, 0)
   assert.deepEqual(r.cards, ROLE_CARDS)
@@ -306,7 +306,7 @@ test('the default role cards pass the parity check; one long card is padded with
   assert.ok(wordCount(DEFAULT_FILLER) >= 4)
 })
 
-test('dealt role cards come through the parity check; the workshop FILLER line is the padding', async () => {
+test('F04 dealt role cards come through the parity check; the workshop FILLER line is the padding', async () => {
   const { db, nightId, uids } = await party(4)
   db.store.set('safe_content/role_cards', { items: [{ id: 'g', order: 0, text: `GHOST: ${ROLE_CARDS.GHOST} ${'(More words on this card, many more, to run it long.) '.repeat(4)}` }] })
   db.store.set('safe_content/ui_copy', { items: [{ id: 'f', order: 0, text: 'FILLER: (Keep your own counsel.)' }] })
@@ -322,6 +322,34 @@ test('dealt role cards come through the parity check; the workshop FILLER line i
   const dc = dealt.map(wordCount)
   assert.ok((Math.max(...dc) - Math.min(...dc)) / Math.max(...dc) <= PARITY_TOLERANCE, 'what reached the phones is within tolerance')
   assert.ok(dealt.some(t => t.includes('(Keep your own counsel.)')), 'the padding is the workshop line')
+})
+
+test('F06 every role card needs the same tap: every phone, whatever its role, gets one card of the same shape at the same moment, and a late joiner the same', async () => {
+  const { db, nightId, uids } = await party(7)
+  await hostCommand(db, { nightId, command: 'act', arg: 1, now: 8_000_000 })
+  await hostCommand(db, { nightId, command: 'blackout', now: 8_000_000 })
+  await hostCommand(db, { nightId, command: 'power', now: 8_000_000 })
+  const c = caseOf(db, nightId)
+  const byRole = {}
+  for (const uid of uids) {
+    const roleCards = session(db, uid).cards.filter(x => x.kind === 'role')
+    assert.equal(roleCards.length, 1, 'F06 one role card on every phone')
+    const r = c.roles[keyOf(db, uid)]
+    byRole[r] ??= []
+    byRole[r].push(roleCards[0])
+  }
+  assert.deepEqual(Object.keys(byRole).sort(), ['detective', 'ghost', 'murderer'])
+  const shape = card => JSON.stringify([Object.keys(card).filter(k => k !== 'at').sort(), card.id, card.act, card.beat, card.kind, card.button ?? null])
+  const shapes = Object.values(byRole).flat().map(shape)
+  assert.ok(shapes.every(x => x === shapes[0]), 'F06 the same card shape, id, beat and button for every role')
+  assert.ok(Object.values(byRole).flat().every(card => !('role' in card)), 'the card never says which role in a field')
+  // the moment: every phone gets its card from the same power beat, and the same prompt holds them all
+  assert.equal(night(db, nightId).phase, 'prompt')
+  // a guest who arrives after the power gets the same shape of card, as a Detective
+  await join(db, { uid: 'late', nightId, name: 'Late Guest' })
+  const late = session(db, 'late').cards.filter(x => x.kind === 'role')
+  assert.equal(late.length, 1)
+  assert.equal(shape(late[0]), shapes[0], 'F06 a late arrival taps the same')
 })
 
 test('the server counts words the way the workshop does', () => {

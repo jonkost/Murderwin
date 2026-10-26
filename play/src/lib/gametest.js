@@ -22,7 +22,7 @@ export function practiceParam(search) {
     const v = p.get('practice')
     if (!v) return null
     const kiosk = p.get('kiosk')
-    if (kiosk) return kiosk === 'boo' ? 'boo-wall' : null
+    if (kiosk) return kiosk === 'boo' ? 'boo-wall' : kiosk === 'pose' ? 'pose-wall' : null
     return v === 'salem' || v === 'boo' ? v : null
   } catch { return null }
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { doc, collection, query, where, onSnapshot, setDoc, getDocFromServer, serverTimestamp, terminate, clearIndexedDbPersistence } from 'firebase/firestore'
 import { auth, db, signInAnonymously, onAuthStateChanged } from '../firebase'
 import { notesPatch } from './night'
-import { isStale, secondsSinceHeard, watchWake } from './clock'
+import { isStale, secondsSinceHeard, watchWake, skewFrom } from './clock'
 
 export { isStale, secondsSinceHeard, STALE_MS } from './clock'
 
@@ -68,7 +68,7 @@ export function useServerClock(uid, nightId, guestKey) {
         await setDoc(ref, { nightId: nightId ?? null, guestKey: guestKey ?? null, at: serverTimestamp() })
         const snap = await getDocFromServer(ref)
         const at = snap.data()?.at?.toMillis?.()
-        if (at && !stopped) skew.current = at - (t0 + Date.now()) / 2
+        if (at && !stopped) skew.current = skewFrom(t0, Date.now(), at)
       } catch {
         // offline: keep the last skew; the heartbeat retries on the next tick
       }

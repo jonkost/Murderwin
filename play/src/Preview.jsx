@@ -15,6 +15,7 @@ import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study } from './screens/Kiosk'
 import { MemoryRounds, MemoryStandalone, BooWall } from './screens/Rooms'
+import { PoseCamera } from './screens/Pose'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
@@ -206,6 +207,8 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
+    // Boo's Catwalk photos: on the night each is read from its own doc; here, a stand-in picture
+    poses: [{ groupId: 'g1', names: ['Jessa', 'Mari'], image: `${import.meta.env.BASE_URL}portraits/rye.png` }, { groupId: 'g2', names: ['Jon', 'Susan', 'Jacob'], image: `${import.meta.env.BASE_URL}portraits/leech.png` }],
     thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
     memory: { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' },
     last: { cat: 'irwin', line: 'Can we play again?' },
@@ -270,6 +273,8 @@ const KIOSK = {
   'kiosk-title': (night, serverNow) => <Living night={{ ...night, act: 4, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('title', { title: 'Act 4 · Behind Closed Doors', lines: ['Look at your phone and find your group.'], rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-boo': (night, serverNow) => <BooWall boo={BOO(12000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap
+  'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO(19000)} nightId="preview" serverNow={serverNow} />,
   // the Host tab's house panel: station and screens alive, a group in the study, the hall light
   'host-house': (night) => {
     const n = { ...night, act: 4, beat: 'station2' }

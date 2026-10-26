@@ -229,6 +229,18 @@ export const SALEM_GRACE_MS = { 1: 700, 2: 600, 3: 500 }
 export const SALEM_SHAKE = 3.5
 export const SALEM_STILL_MS = 1600
 
+// Salem's rules on one phone at one moment (F25): 'green' when the phone
+// shook on green after the colour's grace, 'red' when it stayed still on red
+// too long, else null. `local` is this phone's time, `flipAt` the last change
+// on this phone's clock. A phone with no reading from a motion sensor
+// (motion.ok false: none, or not allowed) never slips.
+export function salemSlip({ colour, motion, local, flipAt, grace }) {
+  if (!colour || !motion?.ok) return null
+  if (colour === 'green' && local - flipAt > grace && motion.mag > SALEM_SHAKE) return 'green'
+  if (colour === 'red' && local - Math.max(flipAt + grace, motion.lastShakeAt) > SALEM_STILL_MS) return 'red'
+  return null
+}
+
 // Boo's catwalk (public/boo): which part of the show is on at a moment.
 //   intro · strut (pose n coming) · pose (STRIKE A POSE, hold n) · judge (the line) · done
 export function booMoment(doc, now) {
@@ -275,6 +287,18 @@ export function salemFriendNote(session) {
   if (!session?.salemFriend) return null
   const card = cardsOf(session).find(c => c?.id === 'salem-friend')
   return { title: card?.title || SALEM_FRIEND.title, text: card?.text || SALEM_FRIEND.text }
+}
+
+// The role prompt when the power returns (F11): held for fifteen seconds on
+// the server's clock from the moment the power came back (nights.phaseAt),
+// then a hide button. Until that moment has reached the phone (the server's
+// stamp still on its way) it holds. `serverNow` is the clock the phone reads,
+// frozen during a pause (clockFor).
+export const PROMPT_HOLD_MS = 15_000
+export function promptHold(night, serverNow) {
+  const phaseAt = night?.phaseAt?.toMillis?.() ?? 0
+  const remaining = phaseAt ? phaseAt + PROMPT_HOLD_MS - serverNow() : PROMPT_HOLD_MS
+  return { remaining, canHide: remaining <= 0 }
 }
 
 // Is this window open on this phone right now, and still unanswered? During a

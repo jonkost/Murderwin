@@ -151,6 +151,29 @@ test('G29 the Murderer\'s and the Ghost\'s affection moves with the same odds an
   assert.ok(Math.abs(share(hid, 'half', ['half', 'full']) - 0.5) < 0.02, 'a little and a lot are equally likely')
 })
 
+test('F07 after a Parlour Game every player\'s sliders behave the same way: the same cats can move, and a marker stays still as often for the Murderer and the Ghost as for a Detective (1,000 nights)', () => {
+  const tally = () => ({ still: 0, moved: 0 })
+  const det = tally(), hid = tally()
+  const { pick } = stream('f07')
+  for (const [i, p] of plans(1000).entries()) {
+    for (const [j, s] of slotsOf(p).entries()) {
+      const listening = [...new Set(s.listeners.map(l => l.cat))]
+      const picks = s.listeners.map(() => (pick(2) ? 'a' : 'b')) // a Detective who answers as they please
+      const start = Object.fromEntries(LISTENERS.map(cat => [cat, 1 + pick(9) / 2])) // anywhere on the slider, in half steps
+      for (const [t, hidden] of [[det, false], [hid, true]]) {
+        const moves = catMoves({ listeners: s.listeners, picks, hidden, seed: p.seed, windowId: `w${i}-${j}`, key: 'k' })
+        assert.ok(Object.keys(moves).every(cat => listening.includes(cat)), 'F07 only a listening cat can move, for every role')
+        const patch = applyMoves(start, moves)
+        for (const cat of LISTENERS) if (!listening.includes(cat)) assert.ok(!(cat in patch), 'F07 a cat that was not listening stays put, for every role')
+        for (const cat of listening) t[cat in patch ? 'moved' : 'still']++
+      }
+    }
+  }
+  const share = t => t.still / (t.still + t.moved)
+  assert.ok(share(det) > 0 && share(hid) > 0, 'a marker does sometimes stay still (a cat heard twice, or at the end of its slider)')
+  assert.ok(Math.abs(share(det) - share(hid)) < 0.02, `F07 a still marker: Detectives ${(share(det) * 100).toFixed(1)}%, the hidden roles ${(share(hid) * 100).toFixed(1)}%`)
+})
+
 test('G30 each cat leans toward its fitting answer about 75% of the time (65 to 85%)', () => {
   const leans = Object.fromEntries(IDS.map(id => [id, { 0: { granolia: 'a', boo: 'a', zimothy: 'a', salem: 'a' }, 1: { granolia: 'b', boo: 'b', zimothy: 'b', salem: 'b' }, 2: { granolia: 'a', boo: 'b', zimothy: 'a', salem: 'b' } }]))
   const byCat = Object.fromEntries(LISTENERS.map(c => [c, { fits: 0, all: 0 }]))
@@ -168,7 +191,7 @@ test('G30 each cat leans toward its fitting answer about 75% of the time (65 to 
   assert.equal(fittingAnswer({ x: { 0: { boo: 'b' } } }, 's', 'x', 0, 'boo'), 'b')
 })
 
-test('a Detective\'s answer warms the listening cat when it matches the lean and cools it when it does not, by the plan\'s size', async () => {
+test('F13 a Detective\'s answer warms the listening cat when it matches the lean and cools it when it does not, by the plan\'s size', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon' })
   const { nightId } = await createNight(db)

@@ -24,6 +24,9 @@ import { cellLabel } from './relay-gen.js'
 
 export const BANK_DOC = 'sealed/relay_pictures'
 export const ROUND_SIZES = { 1: 3, 2: 4, 3: 5 }
+// pictures the blind script keeps per round (scripts/generate-relay-pictures.mjs);
+// the night picks one of them at random, so a full bank is nine
+export const PER_ROUND = 3
 // the most drawn squares a round may have, so the night's turns fit the drawing's time
 export const ROUND_CAPS = { 1: 9, 2: 11, 3: 13 }
 // The style samples, the star Jon wrote as the example of the art, and the

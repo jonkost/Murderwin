@@ -88,15 +88,20 @@ let game = {}
 const gameListeners = []
 export function subscribeGame(onData) { gameListeners.push(onData); queueMicrotask(() => onData(game)); return () => { const i = gameListeners.indexOf(onData); if (i >= 0) gameListeners.splice(i, 1) } }
 export async function saveGame(patch) { game = { ...game, ...patch }; gameListeners.forEach(fn => fn(game)) }
+const replay = { recent: [
+  { seed: 'tulip-4471', nightId: '20261025-a1b2', label: 'Night of Sun Oct 25 2026', replayed: false, at: new Date(Date.now() - 7_200_000) },
+  { seed: 'acorn-1302', nightId: '20261024-c3d4', label: 'Night of Sat Oct 24 2026', replayed: false, gameTest: true, at: new Date(Date.now() - 90_000_000) },
+] }
+export function subscribeReplay(onData) { queueMicrotask(() => onData(replay)); return () => {} }
 
 let reviews = { rules_text: { state: 'again', note: 'The second rule reads like a legal notice.', by: { name: 'Jenna' }, at: Date.now() } }
 const reviewListeners = []
 const checks = {
   at: new Date(Date.now() - 3_600_000), cases: 1000, ok: true,
   groups: [
-    { key: 'case', name: 'Case generator', passed: 10040, total: 10040, failed: [] },
+    { key: 'case', name: 'Case generator', passed: 20042, total: 20042, failed: [] },
     { key: 'dry', name: 'Dry run', passed: 1, total: 1, failed: [] },
-    { key: 'leak', name: 'Leak checks', passed: 4, total: 4, failed: [] },
+    { key: 'leak', name: 'Leak checks', passed: 5, total: 5, failed: [] },
   ],
 }
 export function subscribeChecks(onData) { queueMicrotask(() => onData(checks)); return () => {} }

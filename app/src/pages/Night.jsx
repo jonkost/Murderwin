@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { subscribeGame, saveGame, whoAmI } from '../lib/store'
+import { subscribeGame, saveGame, whoAmI, subscribeReplay } from '../lib/store'
+import { replayView, cleanSeed } from '../lib/replay'
 import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
 
 // Game night: the two hosts' names, the square code for the Act 1 slide,
@@ -50,6 +51,46 @@ const IRWIN_SEATS = [
   { key: 'irwin_favourite', label: "Sir Irwin's Favorite", placeholder: 'Jessa' },
   { key: 'irwin_least', label: "Sir Irwin's Least Favorite", placeholder: 'Jake' },
 ]
+
+// Replay a rehearsal by its seed word (card 324, functions/lib/seed.js).
+// Every rehearsal is dealt from a word; typing one here makes the next night
+// started from a phone deal that rehearsal again. Used once. Never on the
+// party night. It has its own box, not the page's draft, so it empties
+// when the server uses the word.
+function Replay({ game, onSave }) {
+  const [replay, setReplay] = useState(null)
+  const [word, setWord] = useState(game.replay_seed ?? '')
+  useEffect(() => subscribeReplay(setReplay, () => setReplay(null)), [])
+  useEffect(() => { setWord(game.replay_seed ?? '') }, [game.replay_seed])
+  const v = replayView({ replay, game })
+  const save = (text) => onSave({ replay_seed: cleanSeed(text) })
+  return (
+    <section className="panel">
+      <h2>Play a rehearsal again</h2>
+      <p className="why">Every rehearsal is dealt from a seed word. Type one here and the next night you start from a phone deals that rehearsal again: the same roles, motive, cat hints, Parlour Game times, Act 4 groups and drawing, and the same characters for the same people joining in the same order. For when a run went wrong and you want to see it again.</p>
+      <label className="field">
+        <span>Seed word for the next rehearsal</span>
+        <input type="text" maxLength={40} placeholder="tulip-4471" value={v.party ? '' : word} disabled={v.party}
+          onChange={e => setWord(e.target.value)} onBlur={() => save(word)} onKeyDown={e => { if (e.key === 'Enter') save(word) }} />
+      </label>
+      <p className="hint">{v.status}{v.waiting && !v.party ? ' Used once: the box empties when that night starts.' : ''}</p>
+      {!v.party && v.waiting && <p className="night-line"><button className="ghost" onClick={() => { setWord(''); save('') }}>Clear the word</button></p>}
+      {v.recent.length > 0 && (
+        <>
+          <p className="why">The last rehearsals, newest first.</p>
+          <ul className="replay-recent">
+            {v.recent.map(r => (
+              <li key={`${r.seed}-${r.at}`}>
+                <b>{r.seed}</b>{r.at ? ` · ${new Date(r.at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : ''}{r.label ? ` · ${r.label}` : ''}{r.note ? ` (${r.note})` : ''}
+                {!v.party && <> <button className="ghost" onClick={() => { setWord(r.seed); save(r.seed) }}>Play it again</button></>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  )
+}
 
 export default function Night() {
   const [game, setGame] = useState(null)
@@ -141,6 +182,8 @@ export default function Night() {
         <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
       </section>
 
+      <Replay game={game} onSave={patch => { setStatus('saving'); saveGame(patch, latest.current).then(() => setStatus('saved')).catch(() => setStatus('error')) }} />
+
       <section className="panel">
         <h2>The bulletin videos</h2>
         <p className="why">Bulletin 1 and the closing bulletin are video on the Parlour TV (decided 23 October). Until this box is ticked, the brain plays your recordings and the TV shows the words, so a night never goes silent. Tick it after Claude Code has put the videos in and put them live.</p>
@@ -181,6 +224,12 @@ export default function Night() {
         <h2>The four room codes (Acts 2 and 4)</h2>
         <p className="why">Print each code and put it up in its room before the party. In Act 2 the phones send guests to the rooms one at a time; a guest scans the code in the room and the cat talks to them on their phone. In Act 4 each group scans the same code to start that room’s game. None goes up in the Parlour.</p>
         {CAT_ROOM_CODES.map(r => <RoomCode key={r.cat} {...r} />)}
+      </section>
+
+      <section className="panel">
+        <h2>After the party</h2>
+        <p className="why">The morning after, open the case that ran: who did it, to whom, why, and everything the game kept from you. It stays shut until the party night’s reveal has played, on the party day or later.</p>
+        <p className="night-line"><Link className="ghost dl" to="/morning">The morning after</Link></p>
       </section>
 
       <section className="panel">

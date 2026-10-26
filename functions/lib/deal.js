@@ -37,6 +37,7 @@ import { hostLine, booLine, irwinTraceLine } from './hosts.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
+import { nightSeed, pickFor } from './seed.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -183,10 +184,14 @@ export async function readCase(db, nightId) {
 // Counts only, and quiet under node:test unless a test passes its own `log`.
 const defaultLog = line => { if (!process.env.NODE_TEST_CONTEXT) console.log(line) }
 
-export async function buildCaseForNight(db, nightId, { pick = pickInt, now = Date.now(), log = defaultLog } = {}) {
+export async function buildCaseForNight(db, nightId, { pick = null, now = Date.now(), log = defaultLog } = {}) {
   const existing = await readCase(db, nightId)
   if (existing?.roles) return existing
-  const { night, list } = await guests(db, nightId)
+  const { night, list: joined } = await guests(db, nightId)
+  // a rehearsal's seed deals the same case again (seed.js); the party has none
+  const seed = await nightSeed(db, nightId)
+  if (!pick) pick = pickFor(seed, 'case')
+  const list = seed ? byKey(joined) : joined
   const bank = await questionBank(db)
   const forceRehearsal = night.forceRehearsal !== false
   // the cats' leans are sealed (Jenna's lean table): read only for the party, never for a rehearsal
@@ -481,12 +486,13 @@ async function greetGuest(db, nightId, { c, g, cat, act, beat, bags = null, rost
 }
 
 // The beat: the line is made and the first wave sent. Run twice, it changes nothing.
-export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), pick = pickInt } = {}) {
+export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), pick = null } = {}) {
   await ensureCase(db, nightId)
   const ref = db.doc(lightsPath(nightId))
   if ((await ref.get()).exists) return { ok: true, already: true }
   const { list } = await guests(db, nightId)
-  const { routes, queues } = planWaves(list.map(g => g.key), pick)
+  const seed = await nightSeed(db, nightId)
+  const { routes, queues } = planWaves((seed ? byKey(list) : list).map(g => g.key), pick ?? pickFor(seed, 'waves'))
   const state = {
     act, beat, startedAt: new Date(now),
     cats: Object.fromEntries(LIGHTS_CATS.map(cat => [cat, { queue: queues[cat], at: null, since: null }])),
@@ -796,7 +802,10 @@ function validPicks(set, picks) {
   if (!Array.isArray(picks) || picks.length !== 3) return false
   return set.beats.every((b, i) => b.choices.some(ch => ch.k === picks[i]))
 }
-function randomPicks(set) { return set.beats.map(b => choice(b.choices).k) }
+function randomPicks(set, pick = pickInt) { return set.beats.map(b => choice(b.choices, pick).k) }
+// A seeded rehearsal (seed.js) takes its guests in name order, so the same
+// word deals the same night whatever order they joined in.
+function byKey(list) { return [...list].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)) }
 
 export async function answer(db, { nightId, uid, windowId, picks, now = Date.now() }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
@@ -883,11 +892,14 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
     throw new NightError('window-open', `The phones are still choosing. ${Math.ceil((ms(w.closesAt) - now) / 1000)} seconds left.`)
   }
   const c = await readCase(db, nightId)
+  // a seeded rehearsal picks the same answer for the same silent phone (seed.js)
+  const seed = await nightSeed(db, nightId)
   let settled = 0
   for (const g of list) {
     const ref = db.doc(`sessions/${g.uid}`)
     const s = (await ref.get()).data()
     if (!s) continue
+    const pick = pickFor(seed, 'default', w.id, g.key)
     if (w.kind === 'questions') {
       // the random pick is written only if the phone has not answered by then (a late tap in the
       // grace period races this loop); the points land once either way
@@ -895,7 +907,7 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
         const cur = (await tx.get(ref)).data()
         const set = cur?.windows?.[w.id]
         if (!set || cur.answers?.[w.id]) return null
-        const p = randomPicks(set)
+        const p = randomPicks(set, pick)
         tx.update(ref, { [`answers.${w.id}`]: { picks: p, at: new Date(), defaulted: true } })
         return p
       })
@@ -905,12 +917,12 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
     } else if (w.kind === 'ballot') {
       if (s.ballot && !s.ballot.defaulted) continue
       const keys = Object.keys(night.roster ?? {})
-      await ref.update({ ballot: { murderer: choice(keys), motive: choice(MOTIVES).n, victim: choice(keys), at: new Date(), defaulted: true } })
+      await ref.update({ ballot: { murderer: choice(keys, pick), motive: choice(MOTIVES, pick).n, victim: choice(keys, pick), at: new Date(), defaulted: true } })
       settled++
     } else if (w.kind === 'eliminate') {
       if (night.eliminations?.[g.key]) continue
       const keys = Object.keys(night.roster ?? {})
-      const target = pickInt(2) ? { kind: 'person', key: choice(keys) } : { kind: 'motive', n: choice(MOTIVES).n }
+      const target = pick(2) ? { kind: 'person', key: choice(keys, pick) } : { kind: 'motive', n: choice(MOTIVES, pick).n }
       await nightRef.update({ [`eliminations.${g.key}`]: { ...target, name: g.name, defaulted: true, at: new Date() } })
       settled++
     }
@@ -953,6 +965,7 @@ export async function dealWaitingGame(db, nightId, { now = Date.now(), act = 4, 
 export async function settleWaiting(db, nightId, { now = Date.now() } = {}) {
   const { list } = await guests(db, nightId)
   const c = await readCase(db, nightId)
+  const seed = await nightSeed(db, nightId)
   let settled = 0
   for (const g of list) {
     const ref = db.doc(`sessions/${g.uid}`)
@@ -963,7 +976,7 @@ export async function settleWaiting(db, nightId, { now = Date.now() } = {}) {
         const cur = (await tx.get(ref)).data()
         const set = cur?.windows?.[id]
         if (!set || cur.answers?.[id]) return null
-        const p = randomPicks(set)
+        const p = randomPicks(set, pickFor(seed, 'default', id, g.key))
         tx.update(ref, { [`answers.${id}`]: { picks: p, at: new Date(now), defaulted: true } })
         return p
       })
@@ -980,8 +993,9 @@ export async function settleWaiting(db, nightId, { now = Date.now() } = {}) {
 
 export async function reveal(db, nightId, { now = Date.now() } = {}) {
   const c = await ensureCase(db, nightId)
-  return finale.reveal(db, nightId, c, { now })
+  return finale.reveal(db, nightId, c, { now, pick: await nightPickOf(db, nightId, 'finale') })
 }
+async function nightPickOf(db, nightId, ...purpose) { return pickFor(await nightSeed(db, nightId), ...purpose) }
 
 // The finale on the living room screen lives in finale.js (18 Oct 2026):
 // the answer goes to private/reveal, the reel to public/finale, and a name
@@ -1009,7 +1023,7 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   const inPlay = Object.values(roster).map(r => traceOf(r.characterId)?.trace).filter(Boolean)
   const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
   // the look-alike is never the Ghost's own trace: the study shows that one (G36)
-  const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial })
+  const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial, pick: await nightPickOf(db, nightId, 'trace') })
   const base = { level, placeholder: !!c.rehearsal, at: new Date(now), irwinLine: irwinTraceLine(level, labelled(await readArea(db, 'ui_copy'))) } // Irwin hosts the reveal (hosts.js); the workshop's HOST IRWIN TRACE lines win
   const full = {
     ...base, trace: murdererChar.trace,

@@ -7,10 +7,12 @@
 //   npm run checks                   1,000 cases, then save the record
 //   npm run checks -- --cases 200    fewer cases (a quick look)
 //   npm run checks -- --local        print only, save nothing
+//   npm run checks -- --seed check-28   deal one stand-in case again from its
+//                                    seed word and run its checks (counts only, saves nothing)
 //
 // SEAL RULE: everything here is a stand-in made in memory: rehearsal cases,
 // a packing of the seed's item list made with a fixed seed, a fake night. A
-// failure names the check and the case's number, never a word of a clue.
+// failure names the check and the case's seed word, never a word of a clue.
 
 import { readFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
@@ -19,11 +21,12 @@ import { fileURLToPath } from 'node:url'
 import { ensureSeed, fakeNight } from './fake-players.mjs'
 import { packBags, poolFromItems, seedItems, sealedDoc, seededRng, CLUE_WORDS } from './pack-bags.mjs'
 import { say } from './lib.mjs'
+import { seededPick, cleanSeed } from '../functions/lib/seed.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
 ensureSeed()
-const { caseChecks, boardChecks, CHECK_NAMES } = await import('../functions/lib/checks.js')
+const { caseChecks, boardChecks, fairnessChecks, sealedShape, CHECK_NAMES } = await import('../functions/lib/checks.js')
 const { rehearsalCase } = await import('../functions/lib/case.js')
 const { CHARACTERS } = await import('../functions/lib/night.js')
 
@@ -45,23 +48,42 @@ function rosterOf(n, rng) {
   return [...profs, ...rest].slice(0, n).map((c, i) => ({ key: NAMES[i].toLowerCase(), name: NAMES[i], characterId: c.id, bag: bags[i % 10] }))
 }
 
-// The case generator group: every case check on `count` stand-in cases.
-export function runCaseGroup({ count = 1000 } = {}) {
+// Each stand-in case is dealt from a seed word (functions/lib/seed.js, the
+// same picks a rehearsal uses), so a failure can be dealt again on its own:
+// npm run checks -- --seed check-28.
+export const caseSeed = n => `check-${n}`
+export function standInCase(seed, packings) {
+  const roster = rosterOf(4 + seededPick(seed, 'size')(9), seededPick(seed, 'roster'))
+  const rng = seededPick(seed, 'case')
+  const c = rehearsalCase({ roster, rng })
+  return { c, roster, rng, packing: packings[seededPick(seed, 'packing')(packings.length)] }
+}
+
+// The case generator group: every case check on `count` stand-in cases, or
+// on the cases dealt from `seeds` alone.
+export function runCaseGroup({ count = 1000, seeds = null } = {}) {
   const pool = poolFromItems(seedItems())
   const packings = Array.from({ length: 20 }, (_, i) => { const r = packBags(pool, { rng: seededRng(9000 + i) }); return sealedDoc(r, pool) })
   const tally = {}
   const failed = []
-  for (let n = 1; n <= count; n++) {
-    const rng = seededRng(n * 7919)
-    const roster = rosterOf(4 + (n % 9), rng)
-    const c = rehearsalCase({ roster, rng })
-    const results = [...caseChecks(c, { roster, packing: packings[n % packings.length], rng }), ...(n % 50 === 0 ? boardChecks({ rng, clueWords: CLUE_WORDS }) : [])]
+  const list = seeds ?? Array.from({ length: count }, (_, i) => caseSeed(i + 1))
+  list.forEach((seed, i) => {
+    const { c, roster, rng, packing } = standInCase(seed, packings)
+    const results = [...caseChecks(c, { roster, packing, rng }), ...(seeds || (i + 1) % 50 === 0 ? boardChecks({ rng, clueWords: CLUE_WORDS }) : [])]
     for (const r of results) {
       tally[r.id] ??= { passed: 0, total: 0 }
       tally[r.id].total++
       if (r.pass) tally[r.id].passed++
-      else if (failed.length < 20) failed.push({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, seed: `case ${n}` })
+      else if (failed.length < 20) failed.push({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, seed })
     }
+  })
+  // G05 and G06: every seat, both host seats included, and every motive, in fair shares
+  // across the deals (not for one case dealt again from its word)
+  if (!seeds) for (const r of fairnessChecks({ count, rng: seededRng(count * 7919 + 1) })) {
+    tally[r.id] ??= { passed: 0, total: 0 }
+    tally[r.id].total++
+    if (r.pass) tally[r.id].passed++
+    else failed.push({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, seed: `all ${count} deals` })
   }
   const passed = Object.values(tally).reduce((a, t) => a + t.passed, 0)
   const total = Object.values(tally).reduce((a, t) => a + t.total, 0)
@@ -78,7 +100,8 @@ export async function runDryGroup() {
 }
 
 // The leak group: L08 (the prompts), L01 (no sealed file in the repo or its
-// history) and L06 (no tracked JSON shaped like a bag packing).
+// history, and no tracked JSON shaped like sealed content) and L06 (no
+// tracked JSON shaped like a bag packing).
 export function runLeakGroup() {
   const failed = []
   let passed = 0, total = 0
@@ -98,6 +121,9 @@ export function runLeakGroup() {
     } catch { return false }
   }
   check(!files.some(packingShaped), 'L06', 'the files')
+  // L01: no tracked JSON shaped like sealed content (a dealt case, kernels, a code-to-motive map, a lean table)
+  const jsonOf = name => { try { return JSON.parse(readFileSync(join(root, name), 'utf8')) } catch { return null } }
+  check(!files.filter(name => name.endsWith('.json')).some(name => sealedShape(jsonOf(name))), 'L01', 'the JSON')
   return { passed, total, failed }
 }
 
@@ -113,6 +139,16 @@ function argOf(flag) {
 }
 
 async function main() {
+  // one case dealt again from its word: its checks only, nothing saved
+  const replay = cleanSeed(argOf('--seed'))
+  if (replay) {
+    say(`Checks: one stand-in case, dealt again from ${replay}`)
+    const one = runCaseGroup({ seeds: [replay] })
+    say(`Case generator · ${one.passed} of ${one.total} passed (${one.ids.join(' ')})`)
+    for (const f of one.failed) say(`FAIL · ${f.id} · ${f.seed}`)
+    say(one.passed === one.total ? 'All clear for that case.' : 'FAIL')
+    return one.passed === one.total ? 0 : 1
+  }
   const count = Number(argOf('--cases')) || 1000
   say(`Checks: ${count} stand-in cases, one fake night, the leak checks`)
   const groups = []

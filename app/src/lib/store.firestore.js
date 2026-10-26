@@ -251,6 +251,13 @@ export function subscribeGame(onData, onError) {
   return onSnapshot(doc(db, 'meta', 'game'), snap => onData(snap.exists() ? snap.data() : {}), onError)
 }
 
+// Replay by seed (card 324): the last rehearsals' seed words, written by the
+// server when a rehearsal is made (functions/lib/seed.js). A rehearsal's
+// word deals a throwaway case; nothing here is sealed.
+export function subscribeReplay(onData, onError) {
+  return onSnapshot(doc(db, 'meta', 'replay'), snap => onData(snap.exists() ? snap.data() : null), onError)
+}
+
 export async function saveGame(patch, before) {
   await setDoc(doc(db, 'meta', 'game'), patch, { merge: true })
   await logHistory('game', 'settings', before, { ...before, ...patch })

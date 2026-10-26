@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess } from '../firebase'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName } from './Rooms'
+import { PoseCamera, PoseShot } from './Pose'
 import { newsClips, closingClips } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
+import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
@@ -23,7 +25,10 @@ import Spoken from './Spoken'
 // The memory match (?kiosk=memory, the older iPad in the Library in Act 4)
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's wall (?kiosk=boo, Susan's MacBook
-// Pro at the projector in Act 4) is her catwalk (screens/Rooms.jsx).
+// Pro at the projector in Act 4) is her catwalk (screens/Rooms.jsx). Boo's
+// camera (?kiosk=pose, the iPad Pro facing the catwalk in Act 4) follows the
+// same show and photographs each group's last pose for the end credits
+// (screens/Pose.jsx).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
@@ -50,7 +55,7 @@ export default function Kiosk({ which }) {
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
   const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
-  const boo = useDoc(nightId && which === 'boo' ? `nights/${nightId}/public/boo` : null)
+  const boo = useDoc(nightId && (which === 'boo' || which === 'pose') ? `nights/${nightId}/public/boo` : null)
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
@@ -72,6 +77,7 @@ export default function Kiosk({ which }) {
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} />
   else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
+  else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
@@ -312,7 +318,7 @@ export function ScreenCard({ screen }) {
         // the motives he names sit under "It was one of these…", before his sign-off
         ? <div className="kiosk-lines">
             {text.slice(0, -1).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
-            <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><span className="n">{c.n}</span> {c.rhyme}</li>)}</ul>
+            <ul className="irwin-choices">{screen.choices.map(c => <li key={c.n}><MotivePicture n={c.n} className="irwin-card" /><span><span className="n">{c.n}</span> {c.rhyme}</span></li>)}</ul>
             {text.slice(-1).map((l, i) => <p key={`end-${i}`} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>
         : <div className="kiosk-lines">
@@ -321,6 +327,16 @@ export function ScreenCard({ screen }) {
       {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
+}
+
+// A motive card's picture (play/public/motives/<n>.png, card 308). A missing
+// picture shows nothing: the rhyme beside it is the card until it is drawn.
+export function MotivePicture({ n, className = 'motive-card' }) {
+  const [broken, setBroken] = useState(false)
+  useEffect(() => setBroken(false), [n])
+  const src = motivePictureUrl(n, import.meta.env.BASE_URL)
+  if (!src || broken) return null
+  return <img className={className} src={src} alt="" aria-hidden="true" onError={() => setBroken(true)} />
 }
 
 // Sir Irwin in one of his five moods (play/public/household/full/Irwin 1 to 5),
@@ -559,7 +575,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
       {hushLines(finale).map(t => <p key={t} className="kiosk-next">{t}</p>)}
     </div>
   )
-  if (stage === 'credits') return <Credits finale={finale} now={now} />
+  if (stage === 'credits') return <Credits finale={finale} now={now} nightId={night?.nightId} />
   if (stage === 'last') return (
     <div className="kiosk finale last">
       <img className="last-irwin" src={`${import.meta.env.BASE_URL}household/full/Irwin 5.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
@@ -582,7 +598,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
             <div key={k} className={`reveal-card ${k}${k === rv.fresh && stage !== 'done' ? ' now' : ''}`}>
               <p className="reveal-what">{NAME_WHAT[k]}</p>
               {k === 'motive'
-                ? <><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
+                ? <><MotivePicture n={names.motive?.n} className="reveal-motive" /><p className="reveal-name motive">{names.motive?.n ? `${names.motive.n}.` : ''}</p><p className="reveal-sub">{names.motive?.rhyme ?? ''}</p></>
                 : <>
                     <Portrait characterId={revealCharacterId(names[k], who)} className="reveal-portrait" />
                     <p className="reveal-name">{names[k]?.name ?? '…'}</p>
@@ -651,7 +667,7 @@ function AwardsReel({ finale, now }) {
 // The end credits: the achievements the host gave, then the end-credit
 // awards (credits.awards), the joke counters, the room's split on every
 // Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
-function Credits({ finale, now }) {
+function Credits({ finale, now, nightId = null }) {
   const c = finale.credits ?? {}
   const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - CREDITS_AFTER_MS)
   const span = LAST_AFTER_MS - CREDITS_AFTER_MS
@@ -673,6 +689,12 @@ function Credits({ finale, now }) {
         <ul className="splits">
           {(c.splits ?? []).map((q, i) => <li key={i}><span className="split-q">{q.q}</span><span>{q.a.text} {q.a.count} · {q.b.text} {q.b.count}</span></li>)}
         </ul>
+        {(c.poses ?? []).length > 0 && nightId && (
+          <>
+            <p className="kiosk-crest">Boo’s Catwalk</p>
+            <div className="pose-credits">{c.poses.map(p => <CreditPose key={p.groupId} nightId={nightId} pose={p} />)}</div>
+          </>
+        )}
         <p className="kiosk-crest">Thank you</p>
         <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
         {c.memory && (
@@ -684,6 +706,12 @@ function Credits({ finale, now }) {
       </div>
     </div>
   )
+}
+
+// One group's photo in the credits, from its own doc (nights/{id}/public/pose-<group>).
+function CreditPose({ nightId, pose }) {
+  const doc = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/pose-${pose.groupId}` : null)
+  return <PoseShot src={doc.data?.image ?? pose.image ?? null} names={pose.names} />
 }
 
 function Epilogue({ text }) {
