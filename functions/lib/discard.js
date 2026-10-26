@@ -59,8 +59,11 @@ export async function discardNight(db, { nightId } = {}) {
   const deckSnap = await db.doc(`nights/${nightId}/private/deck`).get()
   for (const uid of Object.values(deckSnap.exists ? (deckSnap.data().uids ?? {}) : {})) if (uid) uids.add(uid)
 
-  // their notes for this night: a per-night branch is dropped, a note doc
-  // stamped with this night is deleted, anything else is left alone
+  // their notes for this night: a per-night branch is dropped (byNight, the
+  // shape the phone has written since 17 Oct: seen, crossed, buzzed,
+  // continued and the Notes box's text; until 26 Oct this looked under the
+  // wrong key, `nights`, and left every branch in place), a note doc stamped
+  // with this night is deleted, anything else is left alone
   const noteRefs = []
   for (const uid of uids) {
     const ref = db.doc(`notes/${uid}`)
@@ -68,8 +71,8 @@ export async function discardNight(db, { nightId } = {}) {
     if (!snap.exists) continue
     const n = snap.data()
     if (n.nightId === nightId) { noteRefs.push(ref); continue }
-    if (n.nights && typeof n.nights === 'object' && nightId in n.nights) {
-      await ref.update({ [`nights.${nightId}`]: FieldValue.delete() })
+    if (n.byNight && typeof n.byNight === 'object' && nightId in n.byNight) {
+      await ref.update({ [`byNight.${nightId}`]: FieldValue.delete() })
       counts.notes++
     }
   }

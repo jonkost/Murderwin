@@ -63,7 +63,7 @@ export const NOTICES = {
   meet: { title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
   introduce: { title: 'Say who you are', text: 'Out loud, to the room: your name and your profession. Nothing else. Then tap.', button: 'I have said it' },
   ready: { title: 'Settle in', text: 'The evening is about to turn. Keep your phone on you.', button: 'Ready' },
-  orient: { title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
+  orient: { title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Notes is a box for your own scribbles; nobody else reads them. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
   news: { title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
   // after the news (handoff 23 Oct §9.4): a quiet look in your own bag, shown to nobody
   peek: { title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },

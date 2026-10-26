@@ -29,8 +29,91 @@ test('notes are scoped to the night: a rehearsal phone starts the party clean', 
   // the old flat shape is ignored entirely
   const flat = { seen: { welcome: true }, crossed: { 1: true } }
   assert.equal(seen(flat, 'B', 'welcome'), false)
-  assert.deepEqual(notesFor(flat, 'B'), { seen: {}, crossed: {}, buzzed: {}, continued: {} }) // continued: the tap after the blackout (25 Oct 2026)
+  assert.deepEqual(notesFor(flat, 'B'), { seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '' }) // continued: the tap after the blackout; text: the Notes tab (25 Oct 2026)
   assert.equal(notesPatch(null, { seen: {} }), null, 'no night, no write')
+})
+
+// F30, the Notes tab (25 Oct 2026, the cue list's "Notes area"): free text
+// per phone per night, written as a string under the night, so a write of it
+// replaces the words and leaves seen, crossed and buzzed exactly as they
+// were; written after a short pause and when the box loses focus; read by
+// nobody else; and (26 Oct) a refused write never empties the box.
+test('F30 the Notes tab: one box per phone per night, a text write touches nothing else, the quiet line says Saved once the doc holds the words, and a refused write keeps the words in the box', async () => {
+  const { EMPTY_NOTES, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } = await import('../src/lib/night.js')
+  assert.equal(EMPTY_NOTES.text, '', 'EMPTY_NOTES carries the empty text')
+  assert.equal(notesFor({}, 'N').text, '', 'no doc, no words')
+  let doc = mergeNotes({}, notesPatch('N', { seen: { welcome: true, 'prompt-2': true }, crossed: { 4: true, 9: true }, buzzed: { 'prompt-2': true } }))
+  assert.equal(notesFor(doc, 'N').text, '', 'nothing typed yet')
+  doc = mergeNotes(doc, notesPatch('N', { text: '(a first line of scribbles)' }))
+  assert.equal(notesFor(doc, 'N').text, '(a first line of scribbles)')
+  assert.deepEqual(notesFor(doc, 'N').seen, { welcome: true, 'prompt-2': true }, 'seen is untouched by a text write')
+  assert.deepEqual(notesFor(doc, 'N').crossed, { 4: true, 9: true }, 'crossed is untouched')
+  assert.deepEqual(notesFor(doc, 'N').buzzed, { 'prompt-2': true }, 'buzzed is untouched')
+  doc = mergeNotes(doc, notesPatch('N', { text: '(a second version, shorter)' }))
+  assert.equal(notesFor(doc, 'N').text, '(a second version, shorter)', 'a string replaces, never merges')
+  doc = mergeNotes(doc, notesPatch('N', { text: '' }))
+  assert.equal(notesFor(doc, 'N').text, '', 'clearing the box is a write of nothing')
+  assert.deepEqual(notesFor(doc, 'N').crossed, { 4: true, 9: true }, 'and still touches nothing else')
+  // the other way round: a cross-off or a seen flag never touches the words
+  doc = mergeNotes(doc, notesPatch('N', { text: '(kept)' }))
+  doc = mergeNotes(doc, notesPatch('N', { crossed: { 12: true }, seen: { '3-down-down': true } }))
+  assert.equal(notesFor(doc, 'N').text, '(kept)')
+  assert.equal(notesFor(doc, 'M').text, '', 'another night has its own box')
+  assert.equal(notesFor({ byNight: { N: { text: 7 } } }, 'N').text, '', 'anything but a string reads as empty')
+  // the quiet line under the box: Saved, or nothing (the contract's quiet line; no Saving word on every pause, 26 Oct)
+  assert.equal(notesLine('', ''), '', 'an empty box with nothing stored says nothing')
+  assert.equal(notesLine('(abc)', '(ab)'), '', 'typed ahead of the doc: nothing yet')
+  assert.equal(notesLine('(abc)', '(abc)'), 'Saved', 'the doc holds the words')
+  assert.equal(notesLine('', '(abc)'), '', 'cleared, not yet written: nothing')
+  assert.match(notesLine('(abc)', '(ab)', { failed: true }), /^Not saved yet\./, 'a refused write says so and keeps the words')
+  assert.ok(NOTES_SAVE_MS >= 500 && NOTES_SAVE_MS <= 1500, 'the pause before a write is short, about 800 ms')
+  // what the box shows when the doc changes under it (26 Oct 2026)
+  assert.deepEqual(notesReconcile({ stored: '(saved)', typed: '', dirty: false }), { text: '(saved)', dirty: false }, 'a reload or a late load paints the saved words')
+  assert.deepEqual(notesReconcile({ stored: '(abc)', typed: '(abc)', dirty: true }), { text: '(abc)', dirty: false }, 'our own write echoes back: clean')
+  assert.deepEqual(notesReconcile({ stored: '(ab)', typed: '(abcd)', dirty: true }), { text: '(abcd)', dirty: true }, 'newer typing is never overwritten by an older doc')
+  assert.deepEqual(notesReconcile({ stored: '(ab)', typed: '(abc)', dirty: false, failed: true }), { text: '(abc)', dirty: true }, 'a refused write: the rollback to the old words never empties the box')
+  assert.deepEqual(notesReconcile({ stored: '', typed: '', dirty: false }), { text: '', dirty: false }, 'nothing anywhere')
+  // the refused write, in the order Firestore can deliver it: the latency-compensated echo, then the rollback, then the rejection (or the rejection first)
+  const refused = (rollbackFirst) => {
+    let stored = '(ab)', typed = '(abc)', dirty = true, failed = false, pending = false, sent = '(abc)'
+    const doc = (next) => { stored = next; const r = notesReconcile({ stored, typed, dirty, failed }); typed = r.text; dirty = r.dirty }
+    const reject = () => { failed = true; dirty = true; typed = notesAfterRefusal({ typed, sent, pending }) }
+    doc('(abc)')                                  // the echo: the two agree
+    assert.equal(dirty, false, 'clean after the echo')
+    if (rollbackFirst) { doc('(ab)'); reject() } else { reject(); doc('(ab)') }
+    return { typed, dirty, failed, line: notesLine(typed, stored, { failed }) }
+  }
+  for (const first of [true, false]) {
+    const r = refused(first)
+    assert.equal(r.typed, '(abc)', `the words come back whether the rollback lands ${first ? 'before' : 'after'} the rejection`)
+    assert.equal(r.dirty, true, 'and the box counts as unsaved, so a tap away writes again')
+    assert.match(r.line, /^Not saved yet\./, 'and the line says so')
+  }
+  assert.equal(notesAfterRefusal({ typed: '(abcde)', sent: '(abc)', pending: true }), '(abcde)', 'a newer keystroke waiting its pause wins over the sent words')
+  assert.equal(notesAfterRefusal({ typed: '(ab)', sent: '(abc)', pending: false }), '(abc)', 'no newer keystroke: the sent words come back')
+  // the screens: the seventh tab after Clues, the box writes text through writeNotes after the pause and on blur, the tour explains it
+  const { readFileSync } = await import('node:fs')
+  const read = f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
+  const rest = read('screens/Rest.jsx')
+  assert.match(rest, /\{ key: 'clues', label: 'Clues' \},\s*\{ key: 'notes', label: 'Notes' \}/, 'Notes comes after Clues')
+  assert.match(rest, /\{shown === 'notes' && <Notes uid=\{uid\} notes=\{notes\} \/>\}/)
+  const notesPane = rest.slice(rest.indexOf('function Notes('), rest.indexOf('function Cats('))
+  assert.match(notesPane, /writeNotes\(uid, \{ text: value \}\)/, 'the box writes text and nothing else')
+  assert.match(notesPane, /setTimeout\(\(\) => save\(v\), NOTES_SAVE_MS\)/, 'after the pause')
+  assert.match(notesPane, /onBlur=\{flush\}/, 'and when the box loses focus')
+  assert.match(notesPane, /const flush = \(\) => \{ if \(timer\.current \|\| refused\.current \|\| typed\.current !== held\.current\) save/, 'tapping away also retries a refused write and writes words the doc does not hold')
+  assert.match(notesPane, /<textarea className="notes-box" value=\{text\}/, 'local state: typing never waits on Firestore')
+  assert.match(notesPane, /notesLine\(text, stored, \{ failed \}\)/, 'the quiet line is the pure rule')
+  assert.match(notesPane, /notesReconcile\(\{ stored, typed: typed\.current, dirty: dirty\.current, failed: refused\.current \}\)/, 'the doc change goes through the pure rule')
+  assert.match(notesPane, /notesAfterRefusal\(\{ typed: typed\.current, sent: sent\.current, pending: !!timer\.current \}\)/, 'and so does the refusal')
+  assert.ok(!/role="status"/.test(notesPane), 'no second live region: the sheet already is one')
+  assert.ok(!/<button/.test(notesPane), 'nothing to tap: the box saves itself')
+  assert.match(read('screens/Welcome.jsx'), /<dt>Notes<\/dt><dd>[^<]+<\/dd>/, 'the tour explains the Notes tab')
+  assert.ok(read('Preview.jsx').includes("case 'notes':"), 'the preview keeps a page for it')
+  const css = read('styles.css')
+  assert.match(css, /^\.tab \{[^}]*font-size: clamp\(0\.6[0-9]?rem, 3\.[0-9]vw, 0\.95rem\)/m, 'seven labels shrink with the phone width, never under about 12 px (the root font is 19px), in the one .tab rule')
+  assert.equal(css.match(/^\.tab \{/gm).length, 1, 'one .tab rule, one source for the size')
+  assert.match(css, /^\.tabs\.eight \.tab \{ font-size: clamp\(0\.5[0-9]?rem, 3\.[0-9]vw, 0\.9rem\)/m, 'the hosts\' eight labels too')
 })
 
 test('the Welcome tour shows for a late arrival at any act, never over the blackout or the prompt', () => {

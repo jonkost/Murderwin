@@ -18,8 +18,8 @@ collect.
 
 **The phone at rest.** Their character: name, profession, a one-line bio, the
 bag number, and now and then a line from a cat wandering past. Under it, the
-Reticule (since then also *Now* and *Clues*, where every cat's hint and bag
-clue is saved) — four tabs:
+Reticule, which began as four tabs (it is seven now, with *Now*, *Clues* and
+*Notes*; see The Reticule below):
 - *You* — the character card.
 - *Motives* — all nineteen rhymes, visible from Act 1. Tap to cross one off.
   That is the guest's own note; it proves nothing and nobody else sees it.
@@ -84,11 +84,16 @@ lines drop in later without changing a single screen.
 guest through four pages: who they are, their bag number, the household, and
 the Reticule. "Show me around again" on the You tab brings it back.
 
-**The Reticule** is now six tabs: *Now* (what to do at this moment), *You*,
+**The Reticule** is now seven tabs: *Now* (what to do at this moment), *You*,
 *Clues* (everything a cat said, every clue a room paid out, newest
-first), *Motives*, *Cats* and *Rules*. When something new lands, the
+first), *Notes*, *Motives*, *Cats* and *Rules*. When something new lands, the
 phone opens Now by itself and a red dot sits on the tab until it is dealt
-with.
+with. *Notes* (25 October 2026, your cue list's "Notes area") is one box of
+free text: a guest's own scribbles, saved to that phone's own record as they
+type (after a short pause, and the moment they tap away) and never read by
+anyone else, you included; a quiet "Saved" sits under the box, and the words
+are still there to read at The End. The seven labels shrink to fit a narrow
+phone.
 
 **One button runs the night.** The night is a list of beats, act by act,
 written down in one place (`seed/night.json`, structure only). On the Host
@@ -494,7 +499,7 @@ Firestore (all authed-read unless stated; Functions write):
   Role cards and everything dealt go here later.
 - `presence/{uid}` — owner write `{ nightId, guestKey, at }`; admin read. Doubles
   as the server-clock probe: the phone reads back the stamped `at` and keeps the skew.
-- `notes/{uid}`, owner read/write, kept per night since 17 Oct: `{ byNight: { [nightId]: { seen{}, crossed{}, buzzed{} } } }`. A phone that rehearsed starts the real night with nothing hidden and nothing crossed off. Anything written flat at the top level (the old shape) is ignored.
+- `notes/{uid}`, owner read/write, kept per night since 17 Oct: `{ byNight: { [nightId]: { seen{}, crossed{}, buzzed{}, continued{}, text } } }`. `continued` (25 Oct) is the server's time of the tap after the blackout, by prompt key. `text` is the Notes tab, a string, so a write replaces the words and merges nothing; the maps beside it merge as before. A phone that rehearsed starts the real night with nothing hidden and nothing crossed off. Anything written flat at the top level (the old shape) is ignored.
 
 Callables (region us-central1): `join({ nightId, name })` for any signed-in
 phone; `hostCommand({ nightId, command, arg })` when `canHost` says yes: the

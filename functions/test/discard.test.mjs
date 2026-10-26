@@ -19,7 +19,8 @@ async function rehearsed() {
   await hostCommand(db, { nightId, command: 'light-up' })
   for (const uid of uids) {
     db.store.set(`presence/${uid}`, { nightId, guestKey: uid.slice(4), at: new Date() })
-    db.store.set(`notes/${uid}`, { crossed: { 3: true }, nights: { [nightId]: { seen: { welcome: true } }, 'other-night': { seen: {} } } })
+    // the real shape (byNight, 17 Oct), with the Notes box's text in the branch (25 Oct)
+    db.store.set(`notes/${uid}`, { crossed: { 3: true }, byNight: { [nightId]: { seen: { welcome: true }, crossed: { 5: true }, text: '[a guest\'s scribbles]' }, 'other-night': { seen: {}, text: '[kept]' } } })
   }
   db.store.set('presence/kiosk-1', { nightId, guestKey: 'kiosk-living', at: new Date() })
   db.store.set('presence/elsewhere', { nightId: 'another', guestKey: 'x', at: new Date() })
@@ -50,8 +51,9 @@ test('discard-night removes the case, the night and its subcollections, sessions
     assert.ok(!db.store.has(`presence/${uid}`))
     const n = db.store.get(`notes/${uid}`)
     assert.ok(n, 'the note doc stays')
-    assert.equal(n.nights[nightId], undefined, 'this night\'s branch is gone')
-    assert.ok(n.nights['other-night'], 'another night\'s branch stays')
+    assert.equal(n.byNight[nightId], undefined, 'this night\'s branch is gone, the Notes text and the crossings-off with it')
+    assert.ok(n.byNight['other-night'], 'another night\'s branch stays')
+    assert.equal(n.byNight['other-night'].text, '[kept]', 'and its Notes text with it')
     assert.deepEqual(n.crossed, { 3: true }, 'un-scoped scribbles are left alone')
   }
   assert.ok(db.store.has('sessions/stranger'), 'another night\'s session stays')

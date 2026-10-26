@@ -61,6 +61,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
             <dt>Now</dt><dd>What to do at this moment.</dd>
             <dt>You</dt><dd>Your character and your bag.</dd>
             <dt>Clues</dt><dd>Everything you have been told.</dd>
+            <dt>Notes</dt><dd>Your own scribbles. Nobody else can read them.</dd>
             <dt>Motives</dt><dd>Nineteen reasons. Cross them off.</dd>
             <dt>Cats</dt><dd>The household, and how each one feels about you.</dd>
             <dt>Rules</dt><dd>The rules, any time.</dd>

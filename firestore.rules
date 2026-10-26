@@ -89,7 +89,8 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // A player's own scribbles: crossed-off motives, prompts already hidden.
+    // A player's own scribbles: crossed-off motives, prompts already hidden,
+    // and the Notes box's free text (25 Oct 2026).
     // Nothing in here is dealt by the game, so the phone may write it.
     match /notes/{uid} {
       allow read, create, update: if signedIn() && request.auth.uid == uid;

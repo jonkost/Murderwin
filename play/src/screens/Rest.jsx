@@ -4,7 +4,7 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
 import { Ballot, BallotSent, Eliminations } from './Windows'
-import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote } from '../lib/night'
+import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
 import Act4 from './Act4'
 import Spoken from './Spoken'
 import Allow from './Allow'
@@ -17,6 +17,7 @@ const TABS = [
   { key: 'now', label: 'Now' },
   { key: 'you', label: 'You' },
   { key: 'clues', label: 'Clues' },
+  { key: 'notes', label: 'Notes' },   // 25 Oct 2026, the cue list's "Notes area": your own box of words
   { key: 'motives', label: 'Motives' },
   { key: 'cats', label: 'Cats' },
   { key: 'rules', label: 'Rules' },
@@ -74,13 +75,14 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
         {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} ballot={ballot} over={over} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
+        {shown === 'notes' && <Notes uid={uid} notes={notes} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
         {shown === 'cats' && <Cats session={session} content={content} ui={ui} act={night.act} />}
         {shown === 'rules' && <Rules content={content} />}
         {shown === 'host' && <Host night={night} content={content} serverNow={serverNow} />}
       </section>
 
-      <nav className="tabs" aria-label="Your Reticule">
+      <nav className={session.host ? 'tabs eight' : 'tabs'} aria-label="Your Reticule">
         {tabs.map(t => (
           <button key={t.key} className={t.key === shown ? 'tab on' : 'tab'} onClick={() => setTab(t.key)}>
             {t.label}{t.key === 'now' && waiting > 0 && shown !== 'now' ? <span className="badge" aria-label={`${waiting} waiting`} /> : null}
@@ -224,6 +226,77 @@ function Motives({ uid, content, notes }) {
           </li>
         ))}
       </ol>
+    </div>
+  )
+}
+
+// Your own notes (25 Oct 2026, the cue list's "Notes area"): one box of free
+// text, kept per phone per night in notes/{uid}.byNight[nightId].text and
+// never read by anyone else (the security rules let only this phone read its
+// own notes). Typing lands in local state at once; the write follows after a
+// short pause (NOTES_SAVE_MS) and the moment the box loses focus, or the tab
+// is left, so a slow connection never slows the keyboard. The quiet line
+// under the box says Saved once the notes doc echoes the words back. A write
+// the server refuses (26 Oct 2026) leaves the words in the box: Firestore
+// rolls the local doc back to the old text, notesReconcile keeps the box as
+// it is, and notesAfterRefusal puts the sent words back if the rollback got
+// there first; tapping away or typing again tries once more. Still there to
+// read, and to add to, at The End.
+function Notes({ uid, notes }) {
+  const stored = notes?.text ?? ''
+  const [text, setText] = useState(stored)
+  const [failed, setFailed] = useState(false)
+  const typed = useRef(stored)      // what the box holds, for the timers
+  const dirty = useRef(false)       // typed since the doc last held the same words
+  const refused = useRef(false)     // the last write was refused (mirrors `failed` for the timers)
+  const sent = useRef(stored)       // the words last handed to writeNotes
+  const held = useRef(stored)       // the doc's words, for the unmount write
+  const timer = useRef(null)
+  const show = (v) => { typed.current = v; setText(v) }
+  // A reload paints the saved words; our own write echoes back and is
+  // adopted only when nothing newer has been typed since; a rollback after a
+  // refused write never empties the box.
+  useEffect(() => {
+    held.current = stored
+    const r = notesReconcile({ stored, typed: typed.current, dirty: dirty.current, failed: refused.current })
+    dirty.current = r.dirty
+    if (r.text !== typed.current) show(r.text)
+  }, [stored])
+  const save = (value) => {
+    clearTimeout(timer.current)
+    timer.current = null
+    sent.current = value
+    writeNotes(uid, { text: value })
+      .then(() => { refused.current = false; setFailed(false) })
+      .catch(() => {
+        refused.current = true
+        dirty.current = true
+        setFailed(true)
+        const back = notesAfterRefusal({ typed: typed.current, sent: sent.current, pending: !!timer.current })
+        if (back !== typed.current) show(back)
+      })
+  }
+  const onChange = (e) => {
+    const v = e.target.value
+    dirty.current = true
+    show(v)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => save(v), NOTES_SAVE_MS)
+  }
+  // tapping away writes at once: a pause still running, a refused write, or
+  // words the doc does not hold yet; so does leaving the tab
+  const flush = () => { if (timer.current || refused.current || typed.current !== held.current) save(typed.current) }
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current)
+    if (timer.current || refused.current || typed.current !== held.current) writeNotes(uid, { text: typed.current }).catch(() => {})
+  }, [uid])
+  const line = notesLine(text, stored, { failed })
+  return (
+    <div className="notes">
+      <p className="gloss">Your own notes for tonight. Nobody else can read them.</p>
+      <textarea className="notes-box" value={text} onChange={onChange} onBlur={flush} rows={10} aria-label="Your notes"
+        placeholder="Who said what, and what you make of it." autoCapitalize="sentences" />
+      <p className="gloss saved notes-line">{line}</p>
     </div>
   )
 }

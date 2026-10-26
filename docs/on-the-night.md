@@ -32,7 +32,8 @@ screens: a looping graphic on every idle screen once your files are in,
 each room's cat code on its screen during the Act 2 cat visits, the Act 4
 rules cards with the cats' pictures, the Happy Birthday Irwin card with Sir
 Irwin's picture, a rejoin code under the ballot clock, and the brain's
-browser as the Orangerie's screen (`?kiosk=orangerie`).
+browser as the Orangerie's screen (`?kiosk=orangerie`); and a Notes tab on
+every phone, a box for each guest's own scribbles.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -206,10 +207,11 @@ them.
 | The older iPad | In Duplicate (the memory match), on its small stand in the Library, all night (`?kiosk=memory`). | Safari, full screen. Tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
 | The old iPhone 11 | The spare phone. | Charged, on the plain game address, left on the join screen. |
+| Every guest's phone | The game, all night: seven tabs at the bottom (Now, You, Clues, Notes, Motives, Cats, Rules). Notes is a box for their own scribbles, saved to that phone alone as they type and never read by anyone else, you included; it is still there to read at The End. | They scan the join code at the door and tap their name. |
 | Your phone and Susan's | The Host tab. | Type your names at the door. The tab appears on its own. |
 
-The workshop's Devices page has the same table, room by room, with each
-address to open and a square code for it.
+The workshop's Devices page has the same table of machines, room by room,
+with each address to open and a square code for it.
 
 The game itself lives on the internet at https://murderwin-at-sirwin-manor.web.app/play/.
 Every phone and every screen only needs the wifi. The brain does not serve the
@@ -467,7 +469,7 @@ game; it serves the lights and the speakers.
   opened. (It is one tap with no question; a guard on it is not built yet.)
 - Act 7: **Next** opens the ballot, two minutes on the server's clock. Salem
   hosts it on every phone as a card on the Now tab, so a guest can still open
-  their Clues and Motives while they decide (your cue list, cue 19); after
+  their Clues, Notes and Motives while they decide (your cue list, cue 19); after
   Lock it in a small "Your three are in" card holds its place. The TV shows
   the clock, the trace and the board. The two minutes always run, even when
   every pick is in. **Next** again
@@ -553,8 +555,8 @@ on the party night both are gone.
 
 | What died | What to do |
 |---|---|
-| A guest's phone | They tap their name on any other phone (the old iPhone 11 is for this). Their character, bag, cards and cat standings follow. The old phone says the character has moved. |
-| A borrowed phone that must change hands | **Hand this phone on** wipes it. The next person types their own name; the previous owner taps theirs on another phone and gets everything back. (One tap or ask twice is the open question *handOn*.) |
+| A guest's phone | They tap their name on any other phone (the old iPhone 11 is for this). Their character, bag, cards and cat standings follow. Their Notes box and their crossed-off motives stay on the old phone, so if they can, read the notes across before the swap. The old phone says the character has moved. |
+| A borrowed phone that must change hands | **Hand this phone on** wipes it. The next person types their own name; the previous owner taps theirs on another phone and gets their character, bag, cards and cat standings back. Their Notes box and their crossed-off motives stay with the wiped phone and are gone, so if they can, read the notes across before the swap. (One tap or ask twice is the open question *handOn*.) |
 | Your phone | Tap your name on Susan's phone or the old iPhone 11; the Host tab moves with you. The brain is the spare host: `node functions/host.mjs status` says where the night is, `node functions/host.mjs next` presses Next. It needs the key file described at the top of `functions/host.mjs`. |
 | The Parlour screen | Open `?kiosk=living` on the iPad Pro (it is a spare from Act 4), or on the brain, and put it by the TV. The drawing's guesses are on your phone anyway; the spare screen shows the squares. |
 | Your phone, during the drawing | Susan's phone has the same **At the paper** and the same four names. Failing both, the TV's own names take a tap (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
@@ -1084,4 +1086,10 @@ gives `continue`, `card` or `done` (`PROMPT_HOLD_MS` 15000 from that tap, on
 first beat in the act phase, while not done; a phone mid-card keeps its
 seconds after Next), and `Prompt` in `Moments.jsx` takes a `stage`. The
 button's words are `DEFAULT_UI.CONTINUE`; `HIDE` and `HOLD` are no longer
-shown.
+shown. `notes/{uid}.byNight[nightId].text` is the Notes box, written whole by
+`writeNotes` after `NOTES_SAVE_MS` (800 ms) and when the box loses focus;
+`notesLine` in `play/src/lib/night.js` gives the Saved line, `notesReconcile`
+decides what the box shows when the doc changes under it (a refused write's
+rollback never empties it) and `notesAfterRefusal` puts the sent words back.
+Nothing on the server reads the text; the morning-after discard drops the
+night's `byNight` branch with it.

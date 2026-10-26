@@ -30,18 +30,70 @@ export function faceUrl(catKey) {
 // The player's own notes, scoped to the night. A phone that rehearsed keeps
 // its old scribbles under the old night's id and starts clean on the next,
 // so the Welcome tour and the role prompt show again (17 Oct 2026). The doc
-// is { byNight: { [nightId]: { seen, crossed, buzzed, continued } } };
+// is { byNight: { [nightId]: { seen, crossed, buzzed, continued, text } } };
 // anything written flat at the top level (the old shape) is ignored.
 // `continued` (25 Oct 2026): the server's time at which this phone tapped
 // "Sorry for the interruption, continue here" after the blackout, by prompt
 // key, so the role card's fifteen seconds run from that tap.
+// `text` (25 Oct 2026, the cue list's "Notes area"): the Notes tab, one box
+// of free text. A string, so a write of it replaces the words and touches
+// nothing else under the night; the maps beside it merge as before.
 
-export const EMPTY_NOTES = Object.freeze({ seen: {}, crossed: {}, buzzed: {}, continued: {} })
+export const EMPTY_NOTES = Object.freeze({ seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '' })
 
 export function notesFor(notes, nightId) {
   const mine = nightId ? notes?.byNight?.[nightId] : null
-  if (!mine || typeof mine !== 'object') return { seen: {}, crossed: {}, buzzed: {}, continued: {} }
-  return { seen: mine.seen ?? {}, crossed: mine.crossed ?? {}, buzzed: mine.buzzed ?? {}, continued: mine.continued ?? {} }
+  if (!mine || typeof mine !== 'object') return { seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '' }
+  return {
+    seen: mine.seen ?? {}, crossed: mine.crossed ?? {}, buzzed: mine.buzzed ?? {}, continued: mine.continued ?? {},
+    text: typeof mine.text === 'string' ? mine.text : '',
+  }
+}
+
+// The Notes tab (25 Oct 2026). Typing lands in the box at once; the write
+// follows after this pause, and at once when the box loses focus, so a slow
+// connection never slows the keyboard.
+export const NOTES_SAVE_MS = 800
+
+// The quiet line under the box. `typed` is what the box holds, `stored` what
+// this phone's notes doc holds (the write echoes back through it, from the
+// local cache first, so a phone with no signal still reads Saved once the
+// words are kept on it). It says Saved once the doc holds the words, and
+// nothing while they are on their way or while both are empty (the contract
+// asked for a quiet line, 26 Oct 2026: no Saving word on every pause).
+// `failed` is a write the server refused; the words stay in the box and the
+// next keystroke or tap away tries again.
+export function notesLine(typed, stored, { failed = false } = {}) {
+  if (failed) return 'Not saved yet. Your words stay here; typing again, or tapping away, tries again.'
+  if ((typed ?? '') === (stored ?? '')) return typed ? 'Saved' : ''
+  return ''
+}
+
+// What the box shows when the notes doc changes under it (26 Oct 2026, from
+// the review of the Notes tab). `stored` is the doc's text, `typed` the box's,
+// `dirty` whether anything was typed since the doc last held the same words,
+// `failed` whether the last write was refused. The doc changes for three
+// reasons: a reload or a late load paints the saved words (adopt them); our
+// own write echoes back (the two agree: clean); or the server refused a write
+// and Firestore rolled the local doc back to the old words while the box
+// still holds the new ones (keep the box: the words must never vanish under
+// a guest's thumbs). Returns the text the box should hold and the new dirty
+// flag.
+export function notesReconcile({ stored, typed, dirty = false, failed = false }) {
+  const s = stored ?? ''
+  const t = typed ?? ''
+  if (s === t) return { text: t, dirty: false }
+  if (dirty || failed) return { text: t, dirty: true }
+  return { text: s, dirty: false }
+}
+
+// After a refused write (26 Oct 2026): the words that were sent come back
+// into the box unless a newer keystroke is already waiting its pause (then
+// the newer words win, and their own write follows). `pending` is whether
+// that pause is running. Returns the text the box should hold.
+export function notesAfterRefusal({ typed, sent, pending = false }) {
+  if (pending) return typed ?? ''
+  return sent ?? typed ?? ''
 }
 
 // What one write sends: only this night's branch, merged in.

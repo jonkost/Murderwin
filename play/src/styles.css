@@ -112,7 +112,15 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
   display: flex; background: var(--card); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.tab { flex: 1; min-height: 3.4rem; background: none; border: none; color: var(--dim); font-size: 1rem; }
+/* Seven tabs (eight on a host's phone) fit a narrow phone (25 Oct 2026, the
+   Notes tab; measured 26 Oct): the labels shrink with the screen's width and
+   never wrap; the buttons stay 3.4rem tall and a seventh of the width to tap.
+   The root font is 19px, so the floors are about 12px and 10.5px, and they
+   only bite under 320px wide: a 390px phone shows the seven labels at about
+   14px and the hosts' eight at about 12.5px; the iPhone 11 (414px) at 15px
+   and 13px. "Motives", the widest label, is about 3.6 times the font size. */
+.tab { flex: 1; min-height: 3.4rem; background: none; border: none; color: var(--dim); font-size: clamp(0.62rem, 3.7vw, 0.95rem); padding: 0; white-space: nowrap; min-width: 0; overflow: hidden; letter-spacing: -0.01em; }
+.tabs.eight .tab { font-size: clamp(0.56rem, 3.2vw, 0.9rem); }
 .tab.on { color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
 
 .you { text-align: center; }
@@ -371,7 +379,13 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .beat-list li.on { color: var(--good); }
 .beat-list li.done { color: var(--dim); }
 .beat { background: none; border: none; padding: 0.2rem 0; color: inherit; font-size: 1rem; text-align: left; }
-.tab { font-size: 0.95rem; padding: 0 0.2rem; }
+/* ---- the Notes tab (25 Oct 2026): one box, your own words ---- */
+.notes { display: grid; gap: 0.3rem; }
+.notes .gloss { margin: 0 0 0.3rem; }
+.notes-box { width: 100%; min-height: 14rem; padding: 0.8rem 0.9rem; font: inherit; line-height: 1.45; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; resize: vertical; }
+.notes-box::placeholder { color: var(--dim); opacity: 0.8; }
+.notes-box:focus { outline: 2px solid var(--good); outline-offset: 1px; }
+.notes-line { min-height: 1.3rem; }
 
 /* preview tour */
 .preview-tour { position: fixed; top: 0.4rem; left: 50%; transform: translateX(-50%); z-index: 9; display: flex; gap: 0.5rem; align-items: center; background: #333; border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.2rem 0.5rem; font-size: 0.8rem; color: var(--dim); }

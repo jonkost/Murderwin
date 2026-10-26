@@ -99,7 +99,7 @@ const BAGS = {
 }
 const CARDS = {
   meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
-  orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
+  orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Notes is a box for your own scribbles; nobody else reads them. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
   news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
   peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
   // every cat: its name, its room, its motive hint, its bag clue and the footer (23 Oct 2026)
@@ -418,7 +418,7 @@ const DEALT = {
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -428,7 +428,7 @@ export default function Preview({ screen }) {
   const serverNow = () => Date.now()
   const which = screen === 'tour' ? TOUR[step] : screen
   const dealt = DEALT[which]
-  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'cats' || which === 'cats-act4' || which === 'cats-friend' ? 'cats' : 'you') } catch {}
+  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'notes' ? 'notes' : which === 'cats' || which === 'cats-act4' || which === 'cats-friend' ? 'cats' : 'you') } catch {}
   let body
   if (KIOSK[which]) return KIOSK[which](night, serverNow)
   switch (which) {
@@ -467,6 +467,8 @@ export default function Preview({ screen }) {
     case 'cats-act4': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2' }} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 }, groupAffection: { granolia: 2, boo: 3, zimothy: 4, salem: 4 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'host': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + 60000), settled: false } }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     case 'cats': body = <Rest uid="preview" night={night} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
+    // the Notes tab (25 Oct 2026): the box with some words already in it
+    case 'notes': body = <Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={{ seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '[Your own notes land here: who said what, and what you make of it.]' }} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     // a True Friend of the Groundskeeper: tap Salem to read the honour again at the top of his row
     case 'cats-friend': body = <Rest uid="preview" night={night} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 5 }, salemFriend: true }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     // a rehearsal night: the red band across the top of the phone

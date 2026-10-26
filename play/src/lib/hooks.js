@@ -103,8 +103,8 @@ export function useOnline() {
   return online
 }
 
-// The player's own scribbles (crossed-off motives, prompts already hidden),
-// kept per night: notes/{uid}.byNight[nightId]. App tells this module which
+// The player's own scribbles (crossed-off motives, prompts already hidden,
+// and the Notes box's free text), kept per night: notes/{uid}.byNight[nightId]. App tells this module which
 // night is live; every write lands under that night and nowhere else, so a
 // phone that rehearsed starts the real night with nothing hidden.
 let notesNight = null
