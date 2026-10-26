@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
+import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
 import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
@@ -84,14 +84,8 @@ function describe(command, r) {
   }
 }
 
-export function useQr(text) {
-  const [qr, setQr] = useState(null)
-  useEffect(() => {
-    QRCode.toDataURL(text, { width: 360, margin: 1, color: { dark: '#0f0d0c', light: '#f1e8d6' } })
-      .then(setQr).catch(() => setQr(null))
-  }, [text])
-  return qr
-}
+// The square code is drawn by lib/qr.js since 25 Oct 2026, shared with the room screens; the name stays exported from here.
+export { useQr }
 
 export default function Host({ night, content, serverNow }) {
   const [busy, setBusy] = useState(null)

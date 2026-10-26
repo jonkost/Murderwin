@@ -58,7 +58,7 @@ export const SECTIONS = [
       'Ask Claude Code to start the study station on the Mac by the walls.',
       'Stand at the walls with your phone. Tap Flash the walls, then Teach the taps and touch each hexagon as it lights. The taps are kept on the Mac that runs the study: for the night, teach them on the M1 Air by the walls, once Claude Code has set it up.',
       'Tap Play a practice round. Copy the pattern on the wall, then enter the colour and the number on the answer pad.',
-      'Open Granolia’s screen on the study computer to see what a group sees.',
+      'Open Granolia’s screen on the study computer. During your practice round it shows the game; between groups in Act 4 it shows her rules card, and outside Act 4 the Study’s loop or its crest.',
     ],
     tries: [
       preview('kiosk-study', 'Granolia’s screen, a sample', 'study'),

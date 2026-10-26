@@ -3,6 +3,7 @@ import { callMeet, callLeave, callNotYet, callLockIn } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
 import { portraitUrls } from '../lib/content'
+import { catPictureUrl } from '../lib/rooms'
 import { chime } from '../lib/permissions'
 import { TraceView } from './Kiosk'
 import Spoken from './Spoken'
@@ -55,13 +56,30 @@ export function CatFace({ cat, name, size = 'm' }) {
   )
 }
 
+// A notice may carry a picture (`card.image`, functions/lib/deal.js
+// NOTICE_IMAGES): `birthday` is the Happy Birthday Irwin card over the cake
+// notice (cue 12, 25 Oct 2026).
 function Notice({ card, onDone }) {
   return (
-    <section className="dealt notice">
+    <section className={`dealt notice${card.image ? ` with-image image-${card.image}` : ''}`}>
+      {card.image === 'birthday' && <Birthday seed={card.id} />}
       <h3>{card.title}</h3>
       <p><Spoken text={card.text} /></p>
       <button className="big" onClick={onDone}>{card.button || 'Done'}</button>
     </section>
+  )
+}
+
+// Happy Birthday, Sir Irwin: one of his full pictures (varied by the card, the
+// same on every phone) and the greeting. No picture in yet: the greeting alone.
+export function Birthday({ seed }) {
+  const [broken, setBroken] = useState(false)
+  const src = catPictureUrl('irwin', seed, import.meta.env.BASE_URL)
+  return (
+    <div className="birthday-card">
+      {src && !broken && <img className="birthday-irwin" src={src} alt="Sir Irwin" onError={() => setBroken(true)} />}
+      <p className="birthday-title">Happy Birthday, Sir Irwin!</p>
+    </div>
   )
 }
 

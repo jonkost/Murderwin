@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess } from '../firebase'
-import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName } from './Rooms'
+import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
-import { newsClips, closingClips } from '../lib/rooms'
+import { newsClips, closingClips, loopFor, roomCode, rulesLine } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
@@ -15,20 +15,31 @@ import { isRehearsalNight } from '../lib/night'
 import { RehearsalBand } from './Moments'
 import Spoken from './Spoken'
 
-// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo. A kiosk is
-// a browser on a MacBook pointed at the host, signed in anonymously like a
+// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | pose | orangerie.
+// A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
 // server whenever a deadline has passed. (The study kiosk lives with the
 // station: ?kiosk=study.) The iPad (?kiosk=ipad) is the living room screen
 // with the words only: it keeps the news and the bulletin up through dinner.
-// The memory match (?kiosk=memory, the older iPad in the Library in Act 4)
+// The memory match (?kiosk=memory, the iPad in the Library in Act 4)
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's wall (?kiosk=boo, Susan's MacBook
-// Pro at the projector in Act 4) is her catwalk (screens/Rooms.jsx). Boo's
-// camera (?kiosk=pose, the iPad Pro facing the catwalk in Act 4) follows the
+// Pro at the projector) is her catwalk (screens/Rooms.jsx). Boo's
+// camera (?kiosk=pose, the iPad facing the catwalk in Act 4) follows the
 // same show and photographs each group's last pose for the end credits
-// (screens/Pose.jsx).
+// (screens/Pose.jsx). The Orangerie's screen (?kiosk=orangerie, the brain's
+// browser) shows Salem's code in Act 2 and the Get Off My Lawn! rules card in
+// Act 4 (screens/Rooms.jsx Orangerie).
+//
+// Since 25 Oct 2026 (Jon's cue list, docs/cue-list.md): every idle screen
+// plays its looping graphic when the file is in (Rooms.jsx Idle and Loop);
+// during Act 2's cat visits each room's screen shows its cat's code (Rooms.jsx
+// RoomCode, chosen here by lib/rooms.js roomCode); in Act 4 each room's
+// screen shows its game's rules card between groups (Rooms.jsx RulesCard);
+// the Parlour TV shows the join code through Act 1 and at the dinner wrap-up
+// (screen kind `join`) and a rejoin code under the ballot clock; and at The
+// End every screen goes black (lib/screen.js roomDark).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
@@ -51,11 +62,12 @@ export default function Kiosk({ which }) {
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
   const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
-  const content = useDoc(nightId && (which === 'study' || living) ? `nights/${nightId}/public/content` : null)
+  const content = useDoc(nightId && (which === 'study' || which === 'memory' || living) ? `nights/${nightId}/public/content` : null) // the memory kiosk too (26 Oct 2026): Zimothy's card follows the workshop's host line
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
   const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
   const boo = useDoc(nightId && (which === 'boo' || which === 'pose') ? `nights/${nightId}/public/boo` : null)
+  const salem = useDoc(nightId && which === 'orangerie' ? `nights/${nightId}/public/salem` : null) // the Orangerie's rules card varies its picture by the group due
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
@@ -66,24 +78,28 @@ export default function Kiosk({ which }) {
 
   const n = night.data
   const r = relay.data
-  // dark: the blackout and the prompt (paused or not), or a black screen the
-  // server wrote; nothing in the corners shows while the room is dark
-  const dark = !!n && (roomDark(n) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  // dark: the blackout and the prompt (paused or not), The End (the night is over),
+  // or a black screen the server wrote; nothing in the corners shows while the room is dark
+  const dark = !!n && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  // Act 2's cat visits: this room's cat code, whatever else the room would show
+  const code = roomCode(which, n)
   let body
   if (standalone) body = <MemoryStandalone />
-  else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." />
-  else if (roomDark(n)) body = <Dark />
+  else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} />
+  else if (roomDark(n, living ? screen.data : null)) body = <Dark />
+  else if (code) body = <RoomCode cat={code} />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
-  else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} />
-  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} />
+  else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
+  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} />
   else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
   else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
+  else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
       <RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />
       {body}
-      <Bell sounds={sounds.data} serverNow={serverNow} />
+      <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />
       <StaleDot view={night} online={online} />
       <Wake hidden={dark} />
     </>
@@ -104,14 +120,8 @@ export function OneMoment() {
   )
 }
 
-function Idle({ title, line }) {
-  return (
-    <div className="kiosk idle">
-      <p className="kiosk-crest">{title}</p>
-      <p className="kiosk-line">{line}</p>
-    </div>
-  )
-}
+// Idle (the crest, or the room's loop) lives in Rooms.jsx since 25 Oct 2026, with the loop slot.
+export { Idle }
 
 // The browser lets a page make a sound only after a tap. The first tap on a
 // kiosk makes (or resumes) the one AudioContext every chime uses.
@@ -199,7 +209,11 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
       <div className="kiosk ballot-screen">
         <p className="kiosk-crest">Two minutes to decide</p>
         {trace ? <TraceView trace={trace} compact /> : <p className="kiosk-big">Decide.</p>}
-        <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
+        <div className="ballot-clock">
+          <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
+          {/* the rejoin code under the clock (cue 19, 25 Oct 2026): a phone that slept finds its way back */}
+          {!captionsOnly && <RejoinCode />}
+        </div>
         <Board night={night} content={content} compact />
       </div>
     )
@@ -209,15 +223,17 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
   if (view === 'title') return <TitleCard screen={screen} />
-  // the Happy Birthday Irwin card from the Cake! button (cue 13, 25 Oct 2026): a plain card for now; the
-  // card with Sir Irwin's full picture, varied, is the screens step's (DESIGN §6)
-  if (view === 'birthday') return <ScreenCard screen={screen} />
+  // the join code (cues 3 and 10, 25 Oct 2026): Act 1 and the dinner wrap-up
+  if (view === 'join') return <JoinScreen screen={screen} />
+  // the Happy Birthday Irwin card from the Cake! button (cue 13, 25 Oct 2026): Sir Irwin's full picture, varied
+  if (view === 'birthday') return <BirthdayScreen screen={screen} />
   // bulletin 1 as video on the Parlour TV (23 Oct 2026); the words show if there is no video
   if (view === 'card' && screen?.kind === 'news' && screen.video) return <BulletinVideo clips={newsClips(screen.lines ?? [])} lines={screen.lines ?? []} startedAt={ms(screen.at)} serverNow={serverNow} />
   if (view === 'card') return <ScreenCard screen={screen} />
   if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
     const act = ACTS[night.act]
-    return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} />
+    // the loop (cue 1 and every "back to the loop" cue): the Parlour's on the TV, the Library's on the iPad
+    return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} loop={captionsOnly ? 'memory' : 'living'} />
   }
 
   // Sir Irwin's rules slides, one at a time on the server's clock, each up
@@ -361,7 +377,7 @@ export { MemoryRounds as MemoryMatch } from './Rooms'
 
 // The iPad's view: the words of the last news, bulletin or Irwin, kept up.
 export function Captions({ captions, rehearsal = false }) {
-  if (!captions) return <Idle title="Sirwin Manor" line="Nothing to read yet." />
+  if (!captions) return <Idle title="Sirwin Manor" line="Nothing to read yet." loop="memory" />
   return (
     <div className={`kiosk captions ${captions.kind ?? ''}`}>
       {captions.title && <p className="kiosk-crest">{captions.title}</p>}
@@ -448,15 +464,18 @@ export function Wake({ hidden = false }) {
 }
 
 // A bell for three seconds whenever the night calls for a sound, and this
-// screen's own small chime, so a cue never silently vanishes.
-export function Bell({ sounds, serverNow }) {
+// screen's own small chime, so a cue never silently vanishes. `silent`
+// (26 Oct 2026): the brain's own browser (?kiosk=orangerie) shows the bell
+// but never chimes, since the brain's sound output is the HomePods, where the
+// real sound is already playing; a chime there would sound every cue twice.
+export function Bell({ sounds, serverNow, silent = false }) {
   const lastAt = useRef(0)
   const at = ms(sounds?.current?.at)
   useEffect(() => {
     if (!at || at === lastAt.current) return
     const first = lastAt.current === 0
     lastAt.current = at
-    if (!first && soundFresh(sounds, serverNow())) chime('start')
+    if (!first && !silent && soundFresh(sounds, serverNow())) chime('start')
   }, [at])
   const shown = bellShown(sounds, serverNow())
   return <div className={`kiosk-bell${shown ? ' ring' : ''}`} aria-hidden={!shown} aria-label="a sound is playing">&#9835;</div>
@@ -480,14 +499,18 @@ function Countdown({ endsAt, serverNow }) {
 }
 
 // The bedroom: the door is closed until the drawing is named. Then the
-// screen shows what was left behind, as clearly as the dial allowed.
+// screen shows what was left behind, as clearly as the dial allowed. While
+// closed, the bedroom's loop plays behind the closed-door line (25 Oct 2026).
 export function Bedroom({ relay, trace }) {
   const open = !!relay?.doorOpen || !!trace
   if (!open) return (
     <div className="kiosk bedroom closed">
-      <p className="kiosk-crest">The bedroom</p>
-      <p className="kiosk-big">The door is closed.</p>
-      <p className="kiosk-line">Name the three drawings in the Parlour.</p>
+      <Loop which="bedroom" className="behind" />
+      <div className="over-loop">
+        <p className="kiosk-crest">The bedroom</p>
+        <p className="kiosk-big">The door is closed.</p>
+        <p className="kiosk-line">Name the three drawings in the Parlour.</p>
+      </div>
     </div>
   )
   return (
@@ -783,12 +806,29 @@ const CAP_MS = 10 * 60_000 // the study's cap is the ten-minute round (handoff 2
 // Granolia's lines come from the workshop's study lines list (published with
 // the night's content) over the phone's defaults; see lib/content.js.
 
-export function Study({ study, rotation, serverNow, lines = null }) {
+// `night` (25 Oct 2026): outside Act 4 a quiet study shows its loop; in Act 4,
+// between groups, the rules card (Granolia's line, her picture varied by the
+// group due, the room's code). A round under way shows the game whatever the act.
+// `content` (26 Oct 2026): the published content, so the card's host line is
+// the workshop's when Jon wrote one (rulesLine), as on the phones.
+const STUDY_RUNNING = ['playing', 'reproducing', 'entering']
+export function Study({ study, rotation, serverNow, lines = null, night = null, content = null }) {
   const L = lines ?? studyLines(null)
   const SAY = { idle: L.IDLE, playing: L.PLAYING, reproducing: L.REPRODUCING, entering: L.ENTERING, slow: L.SLOW, map: L.MAP, halfColour: L['HALF COLOUR'], halfNumber: L['HALF NUMBER'], neither: L.NEITHER, time: L.TIME, solved: L.SOLVED, capped: L.CAPPED }
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
   const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null
+  // the station has gone quiet (no write for ninety seconds): said on the rules card and on the game alike
+  const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
+  if (night && night.act !== 4 && !STUDY_RUNNING.includes(s.state)) return <Idle title="Sirwin Manor" line="The Study" loop="study" />
+  if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
+    <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat}>
+      <p className="kiosk-line">{names ? `Expecting ${names}.` : 'The next group will be along.'}</p>
+      {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
+      <p className="kiosk-line">{SAY.idle}</p>
+      {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
+    </RulesCard>
+  )
   const started = ms(s.startedAt)
   const left = started && s.state !== 'done' && s.state !== 'idle' ? Math.max(0, CAP_MS - (serverNow() - started)) : null
   const mm = left != null ? Math.floor(left / 60_000) : null
@@ -801,7 +841,6 @@ export function Study({ study, rotation, serverNow, lines = null }) {
   if (s.state === 'entering' && s.granolia?.hint === 'words' && s.lines) line = `It is ${s.lines.colour}, and the number is ${['one', 'two', 'three', 'four', 'five', 'six'][s.lines.number - 1]}. Press those.`
   if (s.warned && s.state !== 'done' && !s.hint && s.state !== 'entering') line = SAY.time
   if (s.state === 'done') line = s.outcome === 'capped' ? SAY.capped : SAY.solved
-  const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
 
   return (
     <div className={`kiosk study ${s.state ?? 'idle'}`}>

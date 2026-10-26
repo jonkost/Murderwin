@@ -6,7 +6,7 @@
 // that is still in play.
 
 import { isStale, secondsSinceHeard } from './clock.js'
-import { effectivePhase } from './night.js'
+import { effectivePhase, isOver } from './night.js'
 
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
@@ -25,7 +25,8 @@ export function ms(t) {
 // (dark through the blackout and the prompt, "One moment" while paused),
 // then the finale, the ballot clock, a drawing under way, the board, the
 // open door, a card (news, bulletin, Irwin), the prompts, the title card, the
-// birthday card (the Cake! button, 25 Oct 2026) and finally the idle crest.
+// join code (Act 1 and the dinner wrap-up, 25 Oct 2026), the birthday card
+// (the Cake! button, 25 Oct 2026) and finally the idle crest.
 // A pause taken during the blackout or the prompt keeps the room dark: the
 // phase the night was paused from decides, the same as on the phones.
 export function livingView({ night, relay, screen, finale, captionsOnly = false } = {}) {
@@ -43,16 +44,24 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   // Sir Irwin's sharing prompts (Act 2's cat visits, Act 4's rounds) and the Act 4 title card
   if (screen?.kind === 'prompts') return 'prompts'
   if (screen?.kind === 'title') return 'title'
+  // the join code (cues 3 and 10): a big square of the play address, never on the iPad's words
+  if (screen?.kind === 'join') return 'join'
   // the Happy Birthday Irwin card, from the Cake! button in Act 5 (cue 13); the TV draws it with his picture
   if (screen?.kind === 'birthday') return 'birthday'
   return 'idle'
 }
 
-// The bedroom and the study go dark with everyone else, and stay dark when
-// the host pauses in the middle of the blackout or the prompt.
-export function roomDark(night) {
+// The bedroom, the study and every other room screen go dark with everyone
+// else, and stay dark when the host pauses in the middle of the blackout or
+// the prompt. The End (cue 23, 25 Oct 2026): every screen goes black and stays
+// black once the night is over (nights/{id}.over, or Act 7's end beat), and a
+// screen that reads public/screen is dark on a black doc with no title (the
+// titled one is the pause card).
+export function roomDark(night, screen = null) {
   const phase = effectivePhase(night)
-  return phase === 'blackout' || phase === 'prompt'
+  if (phase === 'blackout' || phase === 'prompt') return true
+  if (isOver(night)) return true
+  return screen?.kind === 'black' && !screen.title
 }
 
 // The captions the iPad shows: the card itself while it is up, else the

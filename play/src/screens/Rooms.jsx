@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { callMemoryStep, callBooDone } from '../firebase'
 import { useTick } from '../lib/hooks'
+import { useQr } from '../lib/qr'
+import { PLAY_URL } from '../lib/config'
 import { ms, booMoment } from '../lib/night'
-import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, GAME_NAMES } from '../lib/rooms'
+import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
 // The room screens added on 23 Oct 2026 (docs/handoff-2026-10-23.md):
@@ -13,9 +15,174 @@ import Spoken from './Spoken'
 //   ?kiosk=memory&play=1   the same game on its own, no case, no clues
 //   ?kiosk=boo      Boo's catwalk on the triangle wall, from Susan's MacBook Pro
 //   ?kiosk=boo&practice=1   the Game test tab's practice show (screens/Practice.jsx)
+// And on 25 Oct 2026, for Jon's cue list (docs/cue-list.md, DESIGN section 6):
+//   Idle and Loop   every idle screen's looping graphic, the crest until the file is in
+//   RoomCode        each room's cat code during Act 2's cat visits (cue 7)
+//   RulesCard       the Act 4 rules card between groups: the game's name and hook,
+//                   the host's line, the cat's picture (varied) and the room's code
+//   JoinScreen      the join code on the Parlour TV (Act 1, the dinner wrap-up)
+//   RejoinCode      the small code under the ballot clock (cue 19)
+//   BirthdayScreen  the Happy Birthday Irwin card from the Cake! button (cue 13)
+//   ?kiosk=orangerie   the brain's browser in the Orangerie: Salem's code in Act 2,
+//                   the Get Off My Lawn! rules card in Act 4, its loop otherwise
 // Everything here reads public docs and open lines only.
 
 const BASE = import.meta.env.BASE_URL
+
+// ---- the loop slot, on every idle screen -------------------------------------
+
+// Jon's looping graphic for a screen (play/public/loops/<name>.mp4, silent),
+// shown once the browser has its first frame; until then, and when there is
+// no file or it will not play, the children (the crest and a line). Nothing
+// is fetched to find out: the video element says so itself.
+export function Loop({ which, children = null, className = '' }) {
+  const src = loopUrl(which, BASE)
+  const [ready, setReady] = useState(false)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => { setReady(false); setFailed(false) }, [src])
+  // the first frame is in: show it, and ask it to play once more in case the browser
+  // declined autoplay while the element was still transparent (26 Oct 2026, the screens' review)
+  const loaded = (e) => { setReady(true); const p = e.currentTarget.play?.(); if (p?.catch) p.catch(() => {}) }
+  if (!src || failed) return children
+  return (
+    <>
+      <video className={`kiosk-loop${ready ? ' on' : ''}${className ? ` ${className}` : ''}`} src={src} autoPlay muted loop playsInline
+        onLoadedData={loaded} onError={() => setFailed(true)} />
+      {!ready && children}
+    </>
+  )
+}
+
+// The idle view of every kiosk: the loop when its file is in, else the crest.
+export function Idle({ title, line, loop = null }) {
+  return (
+    <div className="kiosk idle">
+      <Loop which={loop}>
+        <p className="kiosk-crest">{title}</p>
+        <p className="kiosk-line">{line}</p>
+      </Loop>
+    </div>
+  )
+}
+
+// A picture from play/public that may not be there: nothing shows until it is.
+function Picture({ src, className = '', alt = '' }) {
+  const [broken, setBroken] = useState(false)
+  useEffect(() => setBroken(false), [src])
+  if (!src || broken) return null
+  return <img className={className} src={src} alt={alt} aria-hidden={alt ? undefined : 'true'} onError={() => setBroken(true)} />
+}
+
+// ---- the square codes ----------------------------------------------------------
+
+// Act 2's cat visits: the room's cat code, big, so a guest the phone has
+// called scans it on the wall (cue 7). The same address as the printed code.
+export function RoomCode({ cat }) {
+  const qr = useQr(meetUrl(cat, PLAY_URL), 720)
+  return (
+    <div className={`kiosk room-code code-${cat}`}>
+      {qr ? <img className="code-qr big" src={qr} alt={`the code for ${CAT_NAMES[cat] ?? cat}`} /> : <p className="kiosk-crest">Sirwin Manor</p>}
+      <p className="kiosk-line code-words">{codeWords(cat)}</p>
+    </div>
+  )
+}
+
+// A small code with a caption: the room's code on an Act 4 rules card, the
+// rejoin code under the ballot clock.
+export function SmallCode({ text, words }) {
+  const qr = useQr(text, 360)
+  if (!qr) return null
+  return (
+    <figure className="small-code">
+      <img src={qr} alt="" />
+      <figcaption>{words}</figcaption>
+    </figure>
+  )
+}
+export function RejoinCode() {
+  return <SmallCode text={PLAY_URL} words="Need to rejoin? Scan here." />
+}
+
+// The join code on the Parlour TV (screen kind `join`, cues 3 and 10): the
+// square of the play address, big, with the server's words beside it, and the
+// Parlour's loop (or the crest) on the other side.
+export function JoinScreen({ screen, loop = 'living' }) {
+  const qr = useQr(PLAY_URL, 720)
+  return (
+    <div className="kiosk join-screen">
+      <div className="join-side">
+        <Loop which={loop} className="inset">
+          <p className="kiosk-crest">Sirwin Manor</p>
+        </Loop>
+      </div>
+      <div className="join-code">
+        {qr && <img className="code-qr" src={qr} alt="the code to join" />}
+        <p className="join-title">{screen?.title ?? 'Scan to join'}</p>
+        {(screen?.lines ?? []).map((l, i) => <p key={i} className="kiosk-line join-line">{l}</p>)}
+        {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
+      </div>
+    </div>
+  )
+}
+
+// ---- the Act 4 rules cards -----------------------------------------------------
+
+// A room's rules card, between groups: the game's name and hook, its host's
+// line, the cat's picture (varied by `pick`: the group due or the round, so it
+// changes through the night) and the room's code to scan on arrival. `frame`
+// names one picture instead (Boo's walking frames during her intro).
+export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null }) {
+  const game = GAME_NAMES[id]
+  const cat = game?.host ?? null
+  const src = frame ? `${BASE}household/full/${encodeURIComponent(frame)}` : catPictureUrl(cat, pick, BASE)
+  return (
+    <div className={`kiosk rules-card rules-${id}${className ? ` ${className}` : ''}`}>
+      <GameName id={id} />
+      <div className="rules-body">
+        <Picture src={src} className="rules-cat" />
+        <div className="rules-words">
+          <p className="kiosk-line rules-line"><Spoken text={line} /></p>
+          {code && cat && <SmallCode text={meetUrl(cat, PLAY_URL)} words="Scan the code to begin." />}
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ---- the Happy Birthday Irwin card on the Parlour TV (cue 13) -----------------
+
+// Written by the Cake! button (functions/lib/screen.js birthday): Sir Irwin's
+// full picture, varied by the moment it was pressed, and the server's words.
+export function BirthdayScreen({ screen }) {
+  const src = catPictureUrl('irwin', ms(screen?.at) || 'cake', BASE)
+  return (
+    <div className="kiosk birthday">
+      <Picture src={src} className="birthday-irwin" />
+      <p className="birthday-title">{screen?.title ?? 'Happy Birthday, Sir Irwin!'}</p>
+      {(screen?.lines ?? []).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
+      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
+    </div>
+  )
+}
+
+// ---- the Orangerie: the brain's browser (?kiosk=orangerie) --------------------
+
+// Get Off My Lawn! runs on the group's phones, so this screen only ever
+// explains: in Act 4 the rules card with Salem's line and the room's code,
+// varied by the group due (public/salem.groupId); outside Act 4 its loop. Act 2's
+// code is Kiosk.jsx's, before this component.
+export function Orangerie({ night, salem = null }) {
+  if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Orangerie" loop="orangerie" />
+  // a group is at play while public/salem (functions/lib/act4.js) says intro, playing or passed;
+  // idle and cleared are between groups, when the code to scan is back (26 Oct 2026)
+  const busy = ['intro', 'playing', 'passed'].includes(salem?.state)
+  return (
+    <RulesCard id="orangerie" line={RULES_LINES.orangerie} pick={salem?.groupId ?? night.beat} code={!busy}>
+      <p className="kiosk-line">{busy ? 'Eyes on your phones.' : 'The next group will be along.'}</p>
+    </RulesCard>
+  )
+}
 
 // ---- the Parlour TV ---------------------------------------------------------
 
@@ -133,15 +300,17 @@ export function GameName({ id, extra = null }) {
 // Library this round; each cleared board goes to the server, which checks it
 // and moves to the next; the third pays the group (a motive crossed off and
 // Zimothy's bag hint, on their phones).
-export function MemoryRounds({ board, night, nightId }) {
+// `content` (26 Oct 2026): the night's published content, so a host line Jon changed in the workshop reaches the card.
+export function MemoryRounds({ board, night, nightId, content = null }) {
   const [msg, setMsg] = useState(null)
   const boardId = board?.boardId ?? null
   const step = board?.step ?? 0
-  if (!night || night.act !== 4 || !boardId) return (
-    <div className="kiosk memory">
-      <GameName id="library" />
+  // outside Act 4 the Library's loop; in Act 4, between groups, the rules card with Zimothy's line and the room's code
+  if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Library" loop="memory" />
+  if (!boardId) return (
+    <RulesCard id="library" line={rulesLine('library', content)} pick={night.beat}>
       <p className="kiosk-line">The next group will be along.</p>
-    </div>
+    </RulesCard>
   )
   const cards = board.boards?.[String(step)] ?? []
   const send = async pairs => {
@@ -240,7 +409,7 @@ function stopBeat(ref) {
 }
 
 const BOO_FRAMES = ['Boo 1.png', 'Boo 2.png', 'Boo 3.png', 'Boo 4.png']
-export const BOO_INTRO = "Darling. Welcome to my runway. Watch the wall. When the music stops, strike a pose and HOLD it. I'll be judging. I'm always judging."
+export const BOO_INTRO = RULES_LINES.entryway // Boo's line on her wall and on her Act 4 rules card
 
 export function BooWall({ boo, night, nightId, serverNow }) {
   const told = useRef(false)
@@ -250,32 +419,36 @@ export function BooWall({ boo, night, nightId, serverNow }) {
     callBooDone({ nightId }).catch(() => { told.current = false })
   }
   useEffect(() => { told.current = false }, [boo?.groupId, boo?.startsAt])
-  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} />
+  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} night={night} />
 }
 
 // The wall itself, from one record in the night's shape (lib/night.js
 // booMoment): the night's (above) or the Game test tab's practice
 // (?kiosk=boo&practice=1, screens/Practice.jsx), which pays nobody. Not
-// `live`: the quiet wall with `idleLine`. `onOver()` is called while the show is over.
-export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.' }) {
+// `live`: outside Act 4 the wall's loop; in Act 4 (and in practice) the rules
+// card, with `idleLine` under it and the room's code only on a real night.
+// Her intro is the rules card too, with her walking frames for the picture.
+// `onOver()` is called while the show is over.
+export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.', night = null }) {
   useTick(250)
   const now = serverNow()
   const m = booMoment(boo, now)
   useRunwayMusic(m.part === 'strut' || m.part === 'intro')
   useEffect(() => { if (m.part === 'done') onOver?.() })
   const frame = BOO_FRAMES[Math.floor(now / 450) % BOO_FRAMES.length]
-  if (!live || m.part === 'idle') return (
-    <div className="kiosk boo-wall idle">
-      <GameName id="entryway" />
-      <img className="boo-strut still" src={`${BASE}household/full/${encodeURIComponent('Boo 1.png')}`} alt="" />
-      <p className="kiosk-line">{idleLine}</p>
-    </div>
-  )
+  if (!live || m.part === 'idle') {
+    if (night && night.act !== 4) return <Idle title="Sirwin Manor" line="The Entryway" loop="boo" />
+    return (
+      <RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night?.beat ?? 'practice'} code={!!night} className="boo-wall idle">
+        <p className="kiosk-line">{idleLine}</p>
+      </RulesCard>
+    )
+  }
+  // her intro: the group has scanned in, so the card carries no code to scan (26 Oct 2026)
+  if (m.part === 'intro') return <RulesCard id="entryway" line={BOO_INTRO} frame={frame} code={false} className="boo-wall intro" />
   return (
     <div className={`kiosk boo-wall ${m.part}`}>
-      {m.part === 'intro' && <GameName id="entryway" />}
-      {(m.part === 'intro' || m.part === 'strut') && <img className="boo-strut" src={`${BASE}household/full/${encodeURIComponent(frame)}`} alt="" />}
-      {m.part === 'intro' && <p className="kiosk-line"><Spoken text={BOO_INTRO} /></p>}
+      {m.part === 'strut' && <img className="boo-strut" src={`${BASE}household/full/${encodeURIComponent(frame)}`} alt="" />}
       {m.part === 'pose' && <>
         <p className="boo-strike">STRIKE A POSE</p>
         <p className="boo-hold">HOLD IT · {m.hold}</p>

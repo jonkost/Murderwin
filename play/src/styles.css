@@ -796,3 +796,47 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk .game-name { margin: 0 0 1vw; }
 .kiosk .game-name .kiosk-crest { margin-bottom: 0.3vw; }
 .kiosk .game-hook { font-size: 1.8vw; margin: 0 0 1vw; }
+
+/* ---- the cue list's screens (25 Oct 2026): the loops, the codes, the rules cards, the join and birthday cards ---- */
+/* the loop slot: Jon's silent looping graphic fills the screen once its first frame is in; contain keeps his own framing */
+.kiosk.idle, .kiosk.bedroom.closed, .join-side { position: relative; overflow: hidden; }
+.kiosk.idle { margin: 0; font-style: normal; color: var(--ink); } /* the phone's .idle rule (the Rest tab's small talk) also matches this box: undo its margin and italics */
+/* transparent until its first frame, never display none: Safari autoplays only a video it counts as on screen (26 Oct 2026) */
+.kiosk-loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--brand-peat); opacity: 0; pointer-events: none; }
+.kiosk-loop.on { opacity: 1; }
+.kiosk-loop.behind.on { opacity: 0.55; }
+.kiosk.bedroom.closed .over-loop { position: relative; z-index: 1; display: grid; justify-items: center; }
+/* a room's cat code, big, during Act 2's cat visits */
+.kiosk.room-code { background: var(--brand-parchment); color: var(--brand-charcoal); gap: 2vh; }
+.code-qr { width: min(70vw, calc(66vh - var(--band-h))); height: auto; border-radius: 1.5vw; box-shadow: 0 10px 50px rgba(0,0,0,0.35); }
+.kiosk.room-code .code-words { font-size: min(3.4vw, 5vh); max-width: 86vw; }
+/* a small code with a caption: on a rules card, under the ballot clock */
+.small-code { margin: 0; display: grid; justify-items: center; gap: 0.6vh; }
+.small-code img { width: min(16vw, 22vh); height: auto; border-radius: 0.8vw; }
+.small-code figcaption { font-size: min(1.8vw, 2.6vh); color: var(--dim); }
+.ballot-clock { display: flex; align-items: center; justify-content: center; gap: 4vw; }
+.ballot-clock .small-code img { width: min(10vw, 14vh); }
+/* the join code on the Parlour TV: the loop or the crest on the left, the square and the words on the right */
+.kiosk.join-screen { flex-direction: row; gap: 4vw; padding: 2vw 4vw; background: var(--brand-peat); }
+.join-side { flex: 1 1 0; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.5vw; background: rgba(0,0,0,0.25); }
+.join-side .kiosk-loop.inset { border-radius: 1.5vw; }
+.join-code { flex: 0 0 auto; display: grid; justify-items: center; gap: 1.5vh; }
+.join-code .code-qr { width: min(42vw, calc(58vh - var(--band-h))); }
+.join-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4.6vw, 7vh); margin: 0; line-height: 1.1; }
+.join-code .join-line { font-size: min(2.2vw, 3.4vh); max-width: 44vw; margin: 0; color: var(--dim); }
+/* the Act 4 rules card: the game's name, the cat and the host's line side by side, the room's code, a waiting line */
+.kiosk.rules-card { background: var(--brand-peat); gap: 2vh; justify-content: center; }
+.kiosk.rules-card.boo-wall { background: #000; }
+.rules-body { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 92vw; }
+.rules-cat { height: min(48vh, 40vw); max-width: 38vw; object-fit: contain; }
+.rules-words { display: grid; gap: 2vh; justify-items: center; max-width: 50vw; }
+.rules-line { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(2.6vw, 3.8vh); line-height: 1.35; max-width: none; margin: 0; text-align: left; }
+.kiosk.rules-card .game-hook { font-size: min(2.2vw, 3vh); }
+/* the Happy Birthday Irwin card on the Parlour TV (the Cake! button) */
+.kiosk.birthday { background: var(--brand-claret); gap: 2vh; }
+.kiosk.birthday .birthday-irwin { height: min(52vh, 60vw); object-fit: contain; }
+.kiosk.birthday .birthday-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(7vw, 10vh); margin: 0; line-height: 1.1; }
+/* the same card on a phone, above the cake notice */
+.dealt.notice .birthday-card { display: grid; justify-items: center; gap: 0.4rem; }
+.dealt.notice .birthday-irwin { max-height: 11rem; max-width: 100%; object-fit: contain; }
+.dealt.notice .birthday-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 1.5rem; margin: 0; color: var(--good); }

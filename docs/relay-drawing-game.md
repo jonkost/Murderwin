@@ -71,7 +71,7 @@ spoiling the fun part.
 | Every phone | In every hand | Buzzes the person called to the paper and tells them to walk there. Everyone else's phone shows the same square as the TV. When a grid is done it says: go and look at the paper, then tell the host your guess. Phones never vote. |
 | The host's phone (yours, and Susan's) | In your hand | The same as every phone, plus the controls (25 October): *At the paper* while someone walks, and the four names as buttons while the room guesses. They are on the drawing screen itself: while the drawing runs the Host tab is away, like every tab. |
 | The hall light | The Hue bulb by the bedroom | Green for the welcome, out in the blackout, red from the power's return (25 October). Green when the third real picture is named. |
-| The bedroom screen | Susan's work MacBook Pro, carried to the bedroom after Act 4, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named. Then the trace. |
+| The bedroom screen | Susan's work MacBook Pro, carried to the bedroom after Act 4, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named (with the bedroom's loop playing behind the words, if you made one). Then the trace. |
 
 The Library is in earshot of the Parlour. The room can hear the drawer swear; the drawer
 can hear the room disagree with itself.

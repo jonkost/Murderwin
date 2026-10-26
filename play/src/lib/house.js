@@ -20,8 +20,10 @@ export const MACHINES = [
   { key: 'kiosk-ipad', label: 'The iPad' },
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },
-  { key: 'kiosk-memory', label: 'Memory match iPad' }, // the older iPad as ?kiosk=memory, all night
-  { key: 'kiosk-boo', label: 'Boo’s wall' },             // Susan's MacBook Pro as ?kiosk=boo in Act 4
+  { key: 'kiosk-memory', label: 'Memory match iPad' }, // ?kiosk=memory, the Library in Act 4
+  { key: 'kiosk-boo', label: 'Boo’s wall' },             // Susan's MacBook Pro on the projector as ?kiosk=boo
+  { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
+  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, the iPad facing the catwalk in Act 4 (its row was missing until 25 Oct 2026)
   { key: 'cues', label: 'Hall light and sounds' },
 ]
 

@@ -27,7 +27,12 @@ Later that evening, the night's shape from the cue list: the house rules
 beat with the join code on the Parlour TV through Act 1, the dinner wrap-up
 and the two motive prompts, the dessert chime and the Happy Birthday Irwin
 card, the break line as Act 6 opens, the ballot as a card on the Now tab,
-the thank-you lock through the credits, and The End.
+the thank-you lock through the credits, and The End. Later still, the
+screens: a looping graphic on every idle screen once your files are in,
+each room's cat code on its screen during the Act 2 cat visits, the Act 4
+rules cards with the cats' pictures, the Happy Birthday Irwin card with Sir
+Irwin's picture, a rejoin code under the ballot clock, and the brain's
+browser as the Orangerie's screen (`?kiosk=orangerie`).
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -168,10 +173,21 @@ them.
   Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway) from
   the same page: the same four codes serve Act 2 and Act 4. The Parlour TV
   shows the join code itself through Act 1 and again at the dinner wrap-up
-  (*rulesDeckScreen*, answered by your cue list: the Parlour TV); the intro
+  (*rulesDeckScreen*, answered by your cue list: the Parlour TV), and a small
+  one under the ballot clock; the intro
   video and the rules slides play from a second browser tab or a player at
   "The house rules", and you switch back to the game tab after them. The join
-  code is also printed at the door, the fallback.
+  code is also printed at the door, the fallback. The room screens show their
+  own cat's code during the Act 2 cat visits and on the Act 4 rules cards
+  (the study screen, the iPad in the Library, the projector, the brain's
+  browser in the Orangerie); the printed codes are the fallback for a screen
+  that has died or a projector still warming up.
+- *The loops.* Five silent looping videos, one per idle screen, dropped into
+  `play/public/loops/` by their exact names (`play/public/loops/README.md`
+  has the list: Sir Irwin in the Parlour, Granolia, Zimothy in the Library,
+  Salem in the bedroom, Sir Irwin's portrait and Boo walking for the
+  projector), then `npm run deploy:site`. Until a file is in, that screen
+  shows its crest and a line; nothing waits on them.
 - *Freeze the workshop* when the lists are final, Thursday 12 to Saturday
   14 November. There is no fixed freeze date (see "The last days" below).
 - Charge everything, the old iPhone 11 spare included. Spare phone chargers
@@ -181,7 +197,7 @@ them.
 
 | Machine | Its job | How it starts |
 |---|---|---|
-| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. |
+| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card in Act 4, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (the intro video and the rules deck from a second browser tab), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
@@ -227,12 +243,18 @@ game; it serves the lights and the speakers.
    beside either wall means the game runs on the screen instead; the clue
    still lands.
 5. *The screens.* Open the Parlour screen (`?kiosk=living`), the study, the
-   iPad Pro (`?kiosk=ipad`, on its stand in the Orangerie), the older iPad
-   (`?kiosk=memory`, on its stand in the Library) and Susan's MacBook Pro by
-   the projector on the landing (`?kiosk=boo`), full screen. Each one shows
+   iPad Pro (`?kiosk=ipad`: in the Library with Zimothy for Act 2, as your
+   cue list has it, then on its stand in the Orangerie for supper), the older
+   iPad if it stays (`?kiosk=memory`, on its stand in the Library; the
+   question *olderIpad*), Susan's MacBook Pro by
+   the projector on the landing (`?kiosk=boo`) and the brain's own browser
+   (`?kiosk=orangerie`, facing the Orangerie table), full screen. Each one shows
    a small "tap once to wake" note in the bottom right corner, so the
-   browser lets it make a sound; tap anywhere once and leave it. Each shows
-   its crest or its game's name and a waiting line. They follow the night
+   browser lets it make a sound; tap anywhere once and leave it (the brain's
+   browser shows the bell but rings nothing: the brain's own sound already
+   comes out of the HomePods, so a tap there is harmless). Each shows
+   its loop, once your files are in `play/public/loops`, or its crest and a
+   line until then. They follow the night
    on their own. Two are touched on purpose: the memory match in Act 4, and
    the Parlour screen, the fallback for the drawing's guesses in Act 6 (you
    tap them on your own phone). The
@@ -318,7 +340,13 @@ game; it serves the lights and the speakers.
   the cat visits. The phones call guests to the four cats one at a time:
   Granolia in the Study, Salem in the Orangerie, Zimothy in the Library,
   Boo in the Entryway. Every guest visits all four. The phone says "Your
-  turn"; the guest taps On my way, goes alone, scans the code on the wall,
+  turn"; the guest taps On my way, goes alone, scans the code in the room
+  (every room screen shows its cat's code through the visits: the study
+  screen, the iPad in the Library, the projector in the Entryway, the
+  brain's browser in the Orangerie; the printed codes are the fallback;
+  `?kiosk=ipad` and `?kiosk=memory` both show Zimothy's code, since both
+  expect the Library, so an iPad Pro left in the Orangerie for Act 2 is
+  opened at `?kiosk=orangerie` instead),
   and reads the cat: a motive hint and a clue about the Murderer's bag, both
   saved to their Clues tab. Done sends them back to the Parlour, where Sir
   Irwin's prompts run on the TV (a new one every three minutes, ideas for
@@ -373,7 +401,14 @@ game; it serves the lights and the speakers.
     Pro facing the catwalk shows the group to itself and takes one photo a
     moment into each group's last pose, for the end credits. Nothing to
     press.
-  The group scans the room's code to begin. A group that finishes early is
+  The group scans the room's code to begin. Between groups each room's
+  screen shows its game's rules card: the name and its line, the host cat's
+  words (the Study's and the Library's follow a host line you change in the
+  workshop, the same as the phones; the study's card also carries Granolia's
+  "Touch any panel to begin"), a full picture of the cat (a different one as the groups change)
+  and the room's code, so a group arriving knows what to do before anyone
+  explains; the Orangerie's screen (the brain's browser) shows its card all
+  through Act 4, since its game is on the phones. A group that finishes early is
   paid at once and goes back to the Parlour; at the chime, any room not
   finished is paid anyway. The bag hints are about the Ghost's bag. With
   five groups there are five rounds, and each round one group waits in the
@@ -387,11 +422,12 @@ game; it serves the lights and the speakers.
   open `?kiosk=bedroom`, tap it once, and close the door. It shows "The door
   is closed" until the third picture is named.
 - Act 5: the dessert chime plays on every HomePod, and every phone shows the
-  Happy Birthday Irwin card over the cake notice; everyone wanders. When the
+  Happy Birthday Irwin card over the cake notice (one of Sir Irwin's pictures
+  and the greeting); everyone wanders. Every screen is on its loop. When the
   cake is served, press **Cake!**
   (above Next, Act 5 only): Happy Birthday for Dogs plays on every HomePod,
   the lights dim for the candles, and the TV shows the Happy Birthday Irwin
-  card (unless Sir Irwin's countdown is already on the TV, which stays); the
+  card with his full picture (unless Sir Irwin's countdown is already on the TV, which stays); the
   jazz comes back on its own when the song ends. Then **Next** for
   Sir Irwin: the chime,
   and his countdown on the TV, each motive with its card's picture once it
@@ -492,15 +528,17 @@ game; it serves the lights and the speakers.
 
 | Act | The Parlour TV | The other screens |
 |---|---|---|
-| 1 | The join code, big, with "Scan to join", through the whole act. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | The iPad Pro in the Orangerie: its crest. |
-| 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro keeps bulletin 1's words up. |
-| 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. |
-| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The older iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. The iPad Pro in the Entryway, if it is up: Boo's camera, the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!. Each room's screen shows the game's name with its line under it. |
-| 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
+| 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
+| 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad in the Library (`?kiosk=ipad` or `?kiosk=memory`, both show his code), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
+| 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
+| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. Boo's camera, if it is up: the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
+| 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen, once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and the deduction board. | In the bedroom: the trace, from the moment the third picture is named. |
-| 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. At "The End" every screen goes black and the projector is off. |
+| 7 | The ballot clock with the trace, a small rejoin code under the clock, and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. At "The End" every screen goes black and the projector is off. |
 
-The study screen waits on its idle line outside Act 4. Every screen is dark
+Outside Act 4 the study screen is on its loop (its crest until the file is
+in) unless a round is under way; in Act 4, between groups, it shows
+Granolia's rules card with her "Touch any panel to begin" under it. Every screen is dark
 from the blackout, through the five seconds and the role cards, until your
 first **Next** in Act 2 (built so on purpose, so every eye is on its own
 phone while the roles are read; cue 5 says the loop comes back at once, and
@@ -522,10 +560,12 @@ on the party night both are gone.
 | Your phone, during the drawing | Susan's phone has the same **At the paper** and the same four names. Failing both, the TV's own names take a tap (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
 | The bedroom screen | Nobody goes to the bedroom. Press **Show the trace on the TV** under The Big Solve: ten seconds after the door opens, the TV shows the trace, and again at the ballot. |
 | The memory match iPad | Carry on. A group that did not clear it is paid its cross-off at the chime anyway. |
-| Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. |
+| Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. In Act 2 the Entryway's printed code does Boo's screen's job. |
+| The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card back. |
+| A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
 | Boo's camera (the iPad Pro in the Entryway) | Carry on. The catwalk runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; the phones tint red and green whatever the lights do. |
-| A room code will not scan | Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
+| A room code will not scan | Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
 | The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
 | The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue, and it puts the right music and scene back. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers, the music and the recorded voices (only bulletin 2's once the bulletins are videos); the words still show on the TV and the iPad. Once the box is ticked, the bulletin videos play from the TV itself. |
@@ -756,7 +796,7 @@ from `seed/night.json` ("Arm the bulletin") and workshop buttons ("Freeze the
 workshop") are in quotes, never bold. No em dashes anywhere in this file.
 
 *The kiosks* (`play/src/screens/Kiosk.jsx`, `play/src/screens/Rooms.jsx`):
-`?kiosk=living | ipad | memory | boo | pose | bedroom | study`, plus
+`?kiosk=living | ipad | memory | boo | pose | bedroom | study | orangerie`, plus
 `?kiosk=memory&play=1` (the standalone memory match, no night). The device
 table is `app/src/lib/devices.js`: the iPad Pro is `ipad`, the older iPad is
 `memory` all night, Susan's MacBook Pro is `boo` in Act 4 and `bedroom`
@@ -770,6 +810,44 @@ relay as codes derived from the clip id and the station key (`STATION_KEY`
 in `cues/.env`, `media/README.md`), and the relay logs counts only; a sounds
 doc with `video: true` rings the chime and skips the clips. Whether the TV
 plays the two bulletins as video is `meta/game.bulletinVideo` (only `true` means video: the box The bulletins are videos on the workshop's Game night page, `app/src/pages/Night.jsx`; unset or unticked, the brain plays the recordings and the TV shows the words).
+
+*Added 25 Oct, the evening, the screens* (the cue list, step 6 of
+`docs/handoff-2026-10-25.md`; `docs/room-screens.md` has the detail). The loop
+slot: `Rooms.jsx` `Loop` and `Idle({ title, line, loop })`, the file from
+`play/src/lib/rooms.js` `loopUrl(which)` (`LOOP_OF`: `ipad` plays `memory`,
+`pose` none), shown from `onLoadedData`, the crest until then and on
+`onError`, never a fetch. The room codes: `roomCode(which, night)` picks the
+cat (`ROOM_CODE_CATS`) only while `act === 2 && beat === 'cat'` and the night
+is not paused; Kiosk.jsx
+shows `RoomCode` before any room branch; the address is `meetUrl(cat,
+PLAY_URL)`, the same as the Game night page prints. The Act 4 rules cards:
+`RulesCard` with `GAME_NAMES`, `rulesLine(id, content)` (the workshop's
+`HOST GRANOLIA` or `HOST ZIMOTHY` line from the published content first, as
+the phones have it, else `RULES_LINES`, copied from `functions/lib/hosts.js`
+for the Study and the Library, tested equal; Salem's and Boo's intros from the
+phones) and `catPictureUrl(cat, key)` over
+`CAT_PICTURES` (Jon's file names, encoded, varied by `variant(key, n)`). The
+study's card keeps Granolia's IDLE line and the station's "gone quiet"
+warning. `Bell` takes `silent`, true for the orangerie kiosk (the brain's
+browser), so no cue sounds twice through the HomePods. The loop `<video>` is
+transparent (`opacity: 0`), never `display: none`, until its first frame, and
+`play()` is called then, so Safari autoplays it. The loop files are
+gitignored (`play/public/loops/*`, the README kept): they deploy from Jon's
+Mac like the sounds. The
+join code: `livingView` returns `join` for kind `join` and `JoinScreen` draws
+`PLAY_URL` with `useQr` (`play/src/lib/qr.js`, shared with Host.jsx);
+`RejoinCode` sits under the ballot clock on the TV only. The birthday card:
+`BirthdayScreen` on the TV (kind `birthday`, Irwin's picture varied by
+`screen.at`), `Cards.jsx` `Birthday` on the phone from `card.image`. The End:
+`roomDark(night, screen)` is true once `isOver(night)` or on a black doc with
+no title, so every kiosk goes dark through the one rule. The new kiosk
+`?kiosk=orangerie` (`Rooms.jsx` `Orangerie`, reads `public/salem` for the
+group due) comes before the Living fallback; `play/src/lib/house.js` MACHINES
+gains `kiosk-orangerie` and `kiosk-pose`. Tests: `play/test/rooms.test.mjs`,
+`play/test/screen.test.mjs` (the join view, The End, the preview list),
+`play/test/house.test.mjs`. Previews: `?preview=kiosk-join | kiosk-rejoin |
+kiosk-code-* | kiosk-rules-* | kiosk-boo-intro | kiosk-birthday | kiosk-loop-* |
+kiosk-end`.
 
 *Added 25 Oct, the evening, the night's shape* (the cue list, step 5 of
 `docs/handoff-2026-10-25.md`). New beats in `seed/night.json`: Act 1 `rules`

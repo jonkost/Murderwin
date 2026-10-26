@@ -38,11 +38,36 @@ test('the living room: the phase wins, then the finale, the ballot, a drawing, t
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'idle', captions: { kind: 'news', lines: ['x'] } }, captionsOnly: true }), 'captions')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'idle', captions: null }, captionsOnly: true }), 'idle')
   assert.equal(livingView({ night: NIGHT, relay: { state: 'turn' }, screen: { kind: 'idle', captions: { lines: ['x'] } }, captionsOnly: true }), 'relay', 'the iPad shows the drawing too')
+  // the join code (cues 3 and 10, 25 Oct 2026): its own view on the TV; the iPad keeps its words or its crest
+  assert.equal(livingView({ night: { ...NIGHT, act: 1, beat: 'arrive' }, screen: { kind: 'join', title: 'Scan to join' } }), 'join')
+  assert.equal(livingView({ night: { ...NIGHT, act: 3, beat: 'wrap' }, screen: { kind: 'join', captions: { kind: 'bulletin', lines: ['x'] } } }), 'join')
+  assert.equal(livingView({ night: { ...NIGHT, act: 3, beat: 'wrap' }, screen: { kind: 'join', captions: { kind: 'bulletin', lines: ['x'] } }, captionsOnly: true }), 'captions', 'the iPad keeps bulletin 2 up through the wrap-up')
+  assert.equal(livingView({ night: { ...NIGHT, act: 1 }, screen: { kind: 'join' }, captionsOnly: true }), 'idle')
+  assert.equal(livingView({ night: { ...NIGHT, act: 1, phase: 'paused' }, screen: { kind: 'join' } }), 'paused', 'the pause still wins')
   // the bedroom and the study go dark with everyone else
   assert.equal(roomDark({ phase: 'blackout' }), true)
   assert.equal(roomDark({ phase: 'prompt' }), true)
   assert.equal(roomDark({ phase: 'act' }), false)
   assert.equal(roomDark(null), false)
+})
+
+test('The End (cue 23, 25 Oct 2026): every room screen goes black once the night is over, and stays black', () => {
+  // nights/{id}.over, written by the end beat, darkens the kiosks that never read public/screen
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act', over: true }), true)
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }), true, 'the end beat alone is enough')
+  assert.equal(roomDark({ act: 7, beat: 'result', phase: 'act' }), false, 'the result beat is not the end')
+  assert.equal(roomDark({ act: 5, beat: 'roam', phase: 'act', over: true }), true, 'a night marked over is over whatever beat it says')
+  // the TV and the iPad read the screen doc: a black doc with no title is dark, the titled one is the pause card
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }, { kind: 'black', title: '' }), true)
+  assert.equal(roomDark({ act: 6, beat: 'door', phase: 'act' }, { kind: 'black', title: '' }), true)
+  assert.equal(roomDark({ act: 6, beat: 'door', phase: 'paused' }, { kind: 'black', title: 'One moment' }), false, 'the pause card is not the dark')
+  assert.equal(roomDark({ act: 6, beat: 'door', phase: 'act' }, { kind: 'door' }), false)
+  // the living view agrees: the end beat's black doc is dark there too
+  assert.equal(livingView({ night: { act: 7, beat: 'end', phase: 'act', over: true }, screen: { kind: 'black', title: '' } }), 'dark')
+  // every kiosk goes through roomDark with the screen doc the TV reads, and the dispatch darkens before any room branch
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null)) body = <Dark />"), 'the dark branch comes first')
+  assert.ok(kiosk.indexOf('body = <Dark />') < kiosk.indexOf("else if (code) body = <RoomCode"), 'dark before the room code')
 })
 
 test('a pause during the blackout or the prompt keeps every room screen dark', () => {
@@ -209,7 +234,11 @@ test('the relay rules: three lines from the workshop or the defaults, on the fir
 
 test('the previews cover every screen the plan names, and the kiosk has the three corners', () => {
   const preview = readFileSync(new URL('../src/Preview.jsx', import.meta.url), 'utf8')
-  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'kiosk-rehearsal', 'host-house-act2']) assert.ok(preview.includes(`'${k}'`), k)
+  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'kiosk-rehearsal', 'host-house-act2',
+    // the cue list's screens (25 Oct 2026): the join and rejoin codes, the four room codes, the four rules cards and Boo's intro, the birthday card, every loop slot, The End
+    'kiosk-join', 'kiosk-rejoin', 'kiosk-code-study', 'kiosk-code-library', 'kiosk-code-entryway', 'kiosk-code-orangerie',
+    'kiosk-rules-study', 'kiosk-rules-library', 'kiosk-rules-entryway', 'kiosk-boo-intro', 'kiosk-rules-orangerie', 'kiosk-birthday',
+    'kiosk-loop-living', 'kiosk-loop-ipad', 'kiosk-loop-study', 'kiosk-loop-memory', 'kiosk-loop-boo', 'kiosk-loop-bedroom', 'kiosk-loop-orangerie', 'kiosk-end']) assert.ok(preview.includes(`'${k}'`), k)
   for (const k of ['cats-friend', 'rehearsal']) assert.ok(preview.includes(`case '${k}'`), k)
   // D1-18, BK-7: the samples come from the open banks and say what the night says now
   assert.ok(preview.includes("from '../../seed/woof-news.json'") && preview.includes("from '../../seed/cat-lines.json'"), 'the previews import the open banks')

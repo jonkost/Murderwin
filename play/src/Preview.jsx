@@ -13,8 +13,8 @@ import catLines from '../../seed/cat-lines.json'
 import bagLines from '../../seed/bag-lines.json'
 import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
-import { Living, Bedroom, Study } from './screens/Kiosk'
-import { MemoryRounds, MemoryStandalone, BooWall } from './screens/Rooms'
+import { Living, Bedroom, Study, Dark as KioskDark } from './screens/Kiosk'
+import { MemoryRounds, MemoryStandalone, BooWall, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import { PoseCamera } from './screens/Pose'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
@@ -41,7 +41,15 @@ import { setFromAddress } from './lib/gametest'
 // the older iPad (kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
 // Boo's wall (kiosk-boo, kiosk-boo-pose). A rehearsal night's band:
 // kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
-// host-house-window, host-house-act2.
+// host-house-window, host-house-act2. The cue list's screens (25 Oct 2026):
+// the join code (kiosk-join, kiosk-rejoin), the room codes of Act 2
+// (kiosk-code-study, kiosk-code-library, kiosk-code-entryway,
+// kiosk-code-orangerie), the Act 4 rules cards (kiosk-rules-study,
+// kiosk-rules-library, kiosk-rules-entryway, kiosk-boo-intro,
+// kiosk-rules-orangerie), the birthday card (kiosk-birthday), the loop slot
+// on each idle screen (kiosk-loop-living, kiosk-loop-ipad, kiosk-loop-study,
+// kiosk-loop-memory, kiosk-loop-boo, kiosk-loop-bedroom, kiosk-loop-orangerie;
+// the crest until the file is in play/public/loops) and The End (kiosk-end).
 // Screens: doors, join, allow, welcome, lobby, rest, host, prompt, paused, blackout,
 // then one per thing a phone is dealt: act1, orient, news, peek, wait, go,
 // go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
@@ -232,6 +240,12 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
 })
 // the public screen doc, as the server shapes it (functions/lib/screen.js): kind, title, lines, never a secret
 const SCREEN = (kind, extra = {}) => ({ kind, title: '', lines: [], at: stamp(PHASE_AT), holdMs: 0, rehearsal: true, act: 2, beat: 'news', captions: null, ...extra })
+// the join and birthday cards' words, as functions/lib/screen.js writes them (JOIN_CARDS, BIRTHDAY_CARD); open words
+const JOIN_CARDS = {
+  join: { title: 'Scan to join', lines: ['Point your phone\'s camera at the square, then type your name.'] },
+  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone before Act 4.'] },
+}
+const BIRTHDAY_CARD = { title: 'Happy Birthday, Sir Irwin!', lines: ['One candle. One very good boy.'] }
 // W-O-O-F News from the open bank: bulletin 1 (the opening, one family line, the sign-off) and
 // bulletin 2 (the opening, one family's line at level 3, the sign-off). Any family; no case behind it.
 const NEWS_LINES = [woofNews.bulletin1.opening.text, woofNews.bulletin1.families.out.text, woofNews.bulletin1.signoff.text]
@@ -270,7 +284,7 @@ const KIOSK = {
   'kiosk-bedroom-5': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(5)} />,
   'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
-  'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} />,
+  'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" />,
   'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
   'kiosk-memory-standalone': () => <MemoryStandalone />,
@@ -299,7 +313,7 @@ const KIOSK = {
     const house = houseView({ night: n, study: null, rotation: null, presence: { 'kiosk-living': Date.now(), 'kiosk-ipad': Date.now(), cues: Date.now() }, now: Date.now() })
     return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /></div>
   },
-  'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} />,
+  'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-awards': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(38000)} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-graph': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(55000)} serverNow={serverNow} nightId="preview" />,
@@ -314,6 +328,34 @@ const KIOSK = {
   'kiosk-finale-victim': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(120000, 'victim', { sinceVictim: 6000 })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-turn': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-vote': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('vote')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
+  // ---- the cue list's screens (25 Oct 2026) ----
+  // the join code on the Parlour TV: Act 1 (scan to join) and the dinner wrap-up (rejoin), the server's words
+  'kiosk-join': (night, serverNow) => <Living night={{ ...night, act: 1, beat: 'arrive' }} relay={null} trace={null} finale={null} screen={SCREEN('join', { ...JOIN_CARDS.join, act: 1, beat: 'arrive', rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-rejoin': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'wrap' }} relay={null} trace={null} finale={null} screen={SCREEN('join', { ...JOIN_CARDS.rejoin, act: 3, beat: 'wrap', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  // Act 2's cat visits: each room's cat code (the study Mac, the iPad Pro in the Library, the projector, the brain's browser)
+  'kiosk-code-study': () => <RoomCode cat="granolia" />,
+  'kiosk-code-library': () => <RoomCode cat="zimothy" />,
+  'kiosk-code-entryway': () => <RoomCode cat="boo" />,
+  'kiosk-code-orangerie': () => <RoomCode cat="salem" />,
+  // the Act 4 rules cards, between groups: the game's name and hook, the host's line, the cat (varied), the room's code
+  'kiosk-rules-study': (night, serverNow) => <Study study={{ state: 'idle', groupId: 'g2', updatedAt: stamp(Date.now()) }} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
+  'kiosk-rules-library': (night) => <MemoryRounds board={{ groupId: null, boardId: null, step: 0, boards: {}, cleared: false }} night={{ ...night, act: 4, beat: 'round3' }} nightId="preview" />,
+  'kiosk-rules-entryway': (night, serverNow) => <BooWall boo={{ groupId: 'g1', state: 'idle', poses: [] }} night={{ ...night, act: 4, beat: 'round1' }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-boo-intro': (night, serverNow) => <BooWall boo={BOO(2000)} night={{ ...night, act: 4, beat: 'round1' }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-rules-orangerie': (night) => <Orangerie night={{ ...night, act: 4, beat: 'round4' }} salem={{ groupId: 'g1', state: 'idle' }} />,
+  // the Happy Birthday Irwin card from the Cake! button, in the server's words
+  'kiosk-birthday': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'roam' }} relay={null} trace={null} finale={null} screen={SCREEN('birthday', { ...BIRTHDAY_CARD, act: 5, beat: 'roam', rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  // the loop slot on every idle screen: the crest until Jon's file is in play/public/loops
+  'kiosk-loop-living': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'roam' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'One Candle', act: 5, beat: 'roam' })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-loop-ipad': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'roam' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'One Candle', act: 5, beat: 'roam' })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
+  'kiosk-loop-study': (night, serverNow) => <Study study={{ state: 'idle' }} rotation={null} serverNow={serverNow} night={{ ...night, act: 5, beat: 'roam' }} />,
+  'kiosk-loop-memory': (night) => <MemoryRounds board={null} night={{ ...night, act: 5, beat: 'roam' }} nightId="preview" />,
+  'kiosk-loop-boo': (night, serverNow) => <BooWall boo={null} night={{ ...night, act: 5, beat: 'roam' }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-loop-bedroom': () => <Bedroom relay={null} trace={null} />,
+  'kiosk-loop-orangerie': (night) => <Orangerie night={{ ...night, act: 5, beat: 'roam' }} salem={null} />,
+  'kiosk-quiet': () => <Idle title="Sirwin Manor" line="The house is quiet." loop="living" />,
+  // The End (cue 23): every screen black
+  'kiosk-end': () => <KioskDark />,
 }
 
 // Act 2's next step, as the server writes it (functions/lib/deal.js lightsCard).

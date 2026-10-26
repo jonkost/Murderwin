@@ -45,3 +45,7 @@ art/
 # the sound files themselves (one per cue, media/README.md): Jon's recordings and the stand-in tones stay local
 media/*
 !media/README.md
+
+# the looping graphics the idle screens play (play/public/loops/README.md): Jon's files stay local and deploy from his Mac, like the sounds
+play/public/loops/*
+!play/public/loops/README.md

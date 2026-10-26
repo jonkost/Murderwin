@@ -67,8 +67,10 @@ name, *Granolia's Lightbulb Moment*, and says *Granolia's expecting your group i
 upstairs.* The group scans the Study's code on the wall, and Granolia's intro shows under it, in
 her voice.
 
-**At rest.** The hexagons breathe at a dim glow. The Lines drift slowly through colours. The
-screen shows the study and Granolia, half hidden. Nothing says "waiting". This is a real state,
+**At rest.** The hexagons breathe at a dim glow. The Lines drift slowly through colours. In Act 4
+the screen shows the rules card: the game's name, Granolia's words, one of her pictures, the
+Study's code, who is expected and *Touch any panel to begin*; outside Act 4 it plays the study
+loop (its crest until the file is in). Nothing says "waiting". This is a real state,
 and it is what every group sees when they walk in.
 
 **1. Begin.** The screen says: *Touch any panel to begin.* The first touch starts the clock.
@@ -303,7 +305,10 @@ Built blind, tested against fakes. (First run on the real walls on 24 October: Â
   pays the Ghost's trace at the dial's level (`station.studyReveal`, 22 Oct).
 - **The study screen**: `/play/?kiosk=study` on the M1 Air. Granolia, the three
   jewels, the clock, her hints, the numbered wall for the map hint and the
-  fallback.
+  fallback. At rest in Act 4 the rules card (the game's name, Granolia's words,
+  her picture, the Study's code, who is expected and her *Touch any panel to
+  begin*); outside Act 4 the study loop, its crest until the file is in
+  (25 October, the cue list).
 - **The Host tab**: *Make the groups*, and the station key box.
 
 **To run it, once deployed** (`npm run deploy`, which you run):
