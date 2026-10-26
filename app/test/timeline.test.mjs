@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026 } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -819,7 +819,7 @@ const PLAIN = /terminal|npm |\.env|kiosk=|living room|orangery|crookshank|the fr
 
 test('the cue-list board (26 Oct 2026): the newest; the seven built steps as done cards, Jon’s cards new and plain in a fresh block, the five questions open with their defaults, rulesDeckScreen answered by its first option, every card it closes or rewords open on the board by number and title', () => {
   const { before, add } = boardThrough('2026-10-26-cue-list')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(ADDITIONS.includes(add), 'on the board')
   assert.ok(add.tasks === CUE_LIST_TASKS && add.decisions === CUE_LIST_DECISIONS && add.retireTasks === RETIRED_FOR_CUE_LIST && add.rewriteTasks === REWRITTEN_FOR_CUE_LIST && add.answerDecisions === ANSWERED_FOR_CUE_LIST)
   assert.equal(add.fileTasks, undefined)
   const earlier = new Set(before.tasks.map(t => t.order))
@@ -950,4 +950,14 @@ test('the cue-list board on a pretend board: the stale cards closed with the rea
   const again = applyPlan(planAddition(add, after, { newId, now: 8 }), after)
   assert.deepEqual([again.tasks, again.decisions], [after.tasks, after.decisions], 'never twice')
   assert.equal(again.tasks.find(t => t.order === 421 && t.id !== 'jon').previous, card(421).previous, 'not rewritten twice')
+})
+
+// ---- Jon's Game test notes, 26 Oct 2026 (evening) ---------------------------
+
+test('the Game test notes of 26 Oct: the newest; three notes marked done by number, Boo’s Catwalk left open', () => {
+  const add = ADDITIONS.find(a => a.id === '2026-10-26-game-test-notes')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(add.retireTasks, RETIRED_FOR_GAME_TEST_1026)
+  assert.deepEqual(RETIRED_FOR_GAME_TEST_1026.map(r => r.order), [10000, 10001, 10003])
+  for (const r of RETIRED_FOR_GAME_TEST_1026) assert.match(r.detail, /^Fixed 26 Oct 2026: .+ Try it again\.$/)
 })

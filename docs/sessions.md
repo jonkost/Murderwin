@@ -9,6 +9,31 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 26 Oct 2026, evening · Claude Code (Jon's Game test notes)
+
+**What changed** (on `main`; not deployed, not pushed)
+- Asked first to start the study station on the M1 Air by the walls: not done. This session runs
+  on the brain, and the M1 Air is not set up or reachable from here (card 474, Set up the study
+  station on the M1 Air, is still open).
+- In Duplicate (note 10000): the first round is 6 pairs on a 4 by 3 grid, then 10 and 14
+  (`MEMORY_ROUNDS` in `functions/lib/act4.js` and `play/src/lib/rooms.js`, the board sized to fit
+  the iPad; G50 and the docs follow). Canon updated.
+- Sir Irwin Needs a Hand (note 10001): each square's line is clipped at the box's edge
+  (`play/src/lib/draw.jsx` `Cell`), the drawing's screens are black (the slides, the call, the
+  guess), and Sir Irwin's slides read from the left.
+- Granolia's Lightbulb Moment (note 10003): the study screen in the house look: manor blue under
+  the red wallpaper, the serif title and hook, the clock in brass at the top right, Granolia's own
+  picture beside one panel holding the group, the jewels, the round and her line. Its card between
+  groups wears the same look.
+- The board: migration `2026-10-26-game-test-notes` marks notes 10000, 10001 and 10003 done.
+
+**What is left**
+- Boo's Catwalk (note 10002) stays open: Jon sends the shape he wants for the wall and the catwalk.
+- Jon tries the three fixed games again on the Game test tab after the next deploy.
+
+**Decisions taken**
+- Jon: In Duplicate's first round is 6 pairs on a 4 by 3 grid.
+
 ## 25 to 26 Oct 2026 · Claude Code (the cue list built: handoff 25 Oct, section 5)
 
 **What changed** (on `main`, commits 8b4563a to 0276a1e, then the board's migration merged on top; not deployed,

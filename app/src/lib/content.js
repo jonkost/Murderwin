@@ -15,6 +15,7 @@ import {
   ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS,
   RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS,
   CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST,
+  RETIRED_FOR_GAME_TEST_1026,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -827,6 +828,13 @@ export const ADDITIONS = [
     retireTasks: RETIRED_FOR_CUE_LIST,
     rewriteTasks: REWRITTEN_FOR_CUE_LIST,
     answerDecisions: ANSWERED_FOR_CUE_LIST,
+  },
+  {
+    // 26 Oct, evening: Jon's Game test notes. In Duplicate's first round,
+    // the drawing's squares and screens, and the study screen fixed; Boo's
+    // Catwalk waits on the shape Jon sends.
+    id: '2026-10-26-game-test-notes',
+    retireTasks: RETIRED_FOR_GAME_TEST_1026,
   },
 ]
 

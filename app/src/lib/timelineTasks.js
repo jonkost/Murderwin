@@ -824,3 +824,13 @@ export const RETIRED_FOR_TIMELINE = [
   { order: 25, detail: 'Done: the bag items list is full.' },
   { order: 29, detail: 'Filed under the night (22 Oct 2026): Before the freeze, Put the game live.' },
 ]
+
+// Jon's Game test notes of 26 Oct 2026, three of four fixed the same evening
+// (marked done, so each game's chip goes back to Not tried yet). Boo's
+// Catwalk (10002) stays open: Jon sends the shape he wants for the wall.
+// Applied by '2026-10-26-game-test-notes'.
+export const RETIRED_FOR_GAME_TEST_1026 = [
+  { order: 10000, detail: 'Fixed 26 Oct 2026: the first round is 6 pairs on a 4 by 3 grid (then 10 and 14). Try it again.' },
+  { order: 10001, detail: 'Fixed 26 Oct 2026: each square’s line is cut at the box’s edge, the drawing’s screens are black, and Sir Irwin’s slides read from the left. Try it again.' },
+  { order: 10003, detail: 'Fixed 26 Oct 2026: the study screen is in the house look (manor blue under the red wallpaper, a serif title, the clock in brass, Granolia’s own picture beside one panel of words), and so is its card between groups. Try it again.' },
+]
