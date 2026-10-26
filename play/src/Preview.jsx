@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
-import { Questions, Ballot, Eliminate } from './screens/Windows'
+import { Questions, Ballot, Eliminate, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip, RehearsalBand } from './screens/Moments'
 import { uiLines } from './lib/content'
 import { slideTime } from './lib/screen'
@@ -46,7 +46,9 @@ import { setFromAddress } from './lib/gametest'
 // then one per thing a phone is dealt: act1, orient, news, peek, wait, go,
 // go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
 // supper, dinner, warn, groups, room-study, room-salem, room-parlour, room-paid,
-// roam, irwin, door, eliminate, ballot, reveal, result, clues, cats-friend, and
+// roam, irwin, door, eliminate, ballot (a card on Now since 25 Oct 2026),
+// ballot-sent, ballot-screen (the old full-screen shape), eyes and result-lock
+// (Act 7's locks), result and reveal (Now at The End), clues, cats-friend, and
 // the relay screens relay-walk … relay-done (relay-walk-host and relay-vote-host:
 // the host's phone, with At the paper and the four names as buttons).
 // questions&set=<base64url> shows one
@@ -102,7 +104,8 @@ const CARDS = {
     members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye', characterId: 'rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms', characterId: 'arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume', characterId: 'fume' }] },
   library: { id: '4-room-library-g1', act: 4, beat: 'round2', kind: 'clue', room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: 'From the Library', text: `Order. Restored. Strike number 9, “${motivesSeed.motives[8]?.rhyme}” from your list; it was not that. Invoice to follow.`, cross: 9, bag: { text: BAGS.ghost } },
   clue: { id: '4-round1-study-clue', act: 4, beat: 'round1', kind: 'clue', title: 'From the Study', placeholder: true, text: 'Something was left behind.', trace: { level: 4, trace: 'flour', label: null } },
-  roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired' },
+  // the cake notice carries the Happy Birthday Irwin picture (cue 12, 25 Oct 2026; the phone draws it from `image`)
+  roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired', image: 'birthday' },
   irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
   door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
   eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
@@ -366,12 +369,14 @@ const DEALT = {
   roam: { act: 5, beat: 'roam', cards: [CARDS.roam] },
   irwin: { act: 5, beat: 'irwin', cards: [CARDS.irwin] },
   door: { act: 6, beat: 'door', cards: [CARDS.door] },
-  reveal: { act: 7, beat: 'reveal', cards: [CARDS.eyes] },
-  result: { act: 7, beat: 'result', cards: [CARDS.result] },
+  // the reveal and the result lock the phone (eyes, result-lock, below); these two are what Now holds
+  // once The End opens the phone up again (25 Oct 2026): the result stays, the eyes notice waits its tap
+  reveal: { act: 7, beat: 'end', cards: [CARDS.eyes], over: true },
+  result: { act: 7, beat: 'end', cards: [CARDS.result], over: true },
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -388,7 +393,13 @@ export default function Preview({ screen }) {
     case 'doors': body = <Moment text={ui.DOORS} crest />; break
     case 'welcome': body = <Welcome uid="preview" session={SESSION} content={CONTENT} ui={ui} onDone={() => {}} />; break
     case 'questions': body = <QuestionsPreview />; break
-    case 'ballot': body = <Ballot w={windowDoc('ballot', 120000)} night={{ ...night, act: 7 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
+    // the ballot as a card on Now (25 Oct 2026, cue 19), then the small card once this phone has sent its three
+    case 'ballot': body = <Rest uid="preview" night={{ ...night, act: 7, beat: 'ballot' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} ballot={{ w: windowDoc('ballot', 120000), sent: false, onDone: () => {}, clock: serverNow }} />; break
+    case 'ballot-sent': body = <Rest uid="preview" night={{ ...night, act: 7, beat: 'ballot' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} ballot={{ w: windowDoc('ballot', 120000), sent: true, onDone: () => {}, clock: serverNow }} />; break
+    case 'ballot-screen': body = <Ballot w={windowDoc('ballot', 120000)} night={{ ...night, act: 7 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
+    // Act 7's locks (cues 20 to 22): eyes on the screen through the reveal; the result with a thank-you through the credits
+    case 'eyes': body = <EyesLock />; break
+    case 'result-lock': body = <ResultLock card={CARDS.result} />; break
     case 'eliminate': body = <Eliminate w={windowDoc('eliminate', 90000)} night={{ ...night, act: 6 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'relay-walk': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('walk')} serverNow={serverNow} />; break
     // the host's phone (25 Oct 2026): At the paper under the walk's bar, the four names as buttons at the guess; nightId 'preview' keeps them inert
@@ -422,8 +433,8 @@ export default function Preview({ screen }) {
     default:
       if (dealt) {
         body = (
-          <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
-            session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights, act4: dealt.act4, windows: dealt.windows, group: 'g1' }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} />
+          <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, over: dealt.over || undefined, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
+            session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights, act4: dealt.act4, windows: dealt.windows, group: 'g1' }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} over={!!dealt.over} />
         )
       } else {
         body = (

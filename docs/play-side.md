@@ -115,8 +115,10 @@ still there for jumping about in a rehearsal.
   Lines, nothing else. The others say hello. (There is no safe since
   23 October.) Five Parlour Games pop up, hosted by Boo. Then check-in and
   the chime for supper.
-- *Act 3.* Phones down. Near the end of supper you arm bulletin 2; it plays
-  3 to 5 minutes later and every phone gets a notice. Then the groups, for
+- *Act 3.* Phones down: leave it in the Parlour, charging. Near the end of
+  supper you arm bulletin 2; it plays 3 to 5 minutes later and every phone
+  gets a notice. Then the dinner wrap-up: every phone asks for the motives to
+  be crossed off so far (the cue list, 25 Oct 2026). Then the groups, for
   example "You're teamed up with Dorothy Rye and Jasper Steeps. From now on,
   only share with your group."
 - *Act 4.* Five stations, one card each, and five Parlour Games in between:
@@ -129,16 +131,26 @@ still there for jumping about in a rehearsal.
   - Zimothy's memory match on the iPad in the Library;
   - free time: "Nothing for your group right now. Grab a drink, stretch your
     legs." with one of five tips.
-- *Act 5.* Cake, then the chime and Sir Irwin's countdown on the TV.
-- *Act 6.* Two Parlour Games, then the Relay Drawing (your phone buzzes when
+- *Act 5.* The dessert chime and the cake notice (with the Happy Birthday
+  Irwin picture), then the chime and Sir Irwin's countdown on the TV, then a
+  prompt to update the motives from what he said (25 Oct 2026).
+- *Act 6.* A break note (two games, then the final event in the Parlour), two
+  Parlour Games, then the Relay Drawing (every phone says to be in the
+  Parlour while Sir Irwin explains it; your phone buzzes when
   you are called to the paper), the door, then the deduction round: every
   phone picks one thing it is not, a person or a motive, and the room's picks
   are listed on every Now tab.
-- *Act 7.* Salem opens the ballot: who, why, who died; two minutes on the
-  server's clock; a phone that does not pick gets a random pick. "Eyes on the
-  screen" for the reveal with the closing bulletin. Then each phone's own
-  result: three ticks or crosses and what it said. Then the end credits on
-  the TV.
+- *Act 7* (the cue list, 25 Oct 2026). Salem opens the ballot: who, why, who
+  died, as a card on the Now tab with every tab reachable, so a guest can read
+  their clues while they decide; two minutes on the server's clock, never
+  closing early; a phone that does not pick gets a random pick. After Lock it
+  in a small "Your three are in" card holds the place. Then two locks on every
+  guest's phone: "Eyes on the screen." with no tabs for the reveal with the
+  closing bulletin, then its own result (three ticks or crosses and what it
+  said) with "Thank you for playing." under it while the credits roll; the two
+  host phones keep their tabs through both. Then The End (`nights/{id}.over`):
+  the tabs are back, the result stays on Now, and everything is readable for
+  good.
 
 **Windows.** The Parlour Games, the deduction round and the ballot are windows: every
 phone at once, a bar counting down against the server's clock, and they never
@@ -534,7 +546,8 @@ phone keeps reading only its own session.
 copies it in `npm run seed` and `play/src/lib/night.js` imports it. Each beat
 has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
 `arm:bulletin`, `window:eliminate|ballot`, `groups`, `rotate`,
-`relay:start`, `reveal`, `results`. The Parlour Games have no beat (see
+`relay:start`, `reveal`, `results`, `end` (The End, 25 Oct 2026:
+`nights/{id}.over`, once). The Parlour Games have no beat (see
 Windows below); no beat uses `window:questions` any more, though `light-up`
 still opens one.
 
@@ -692,7 +705,8 @@ still opens one.
   questions | checkin | dinner | groups | study | cat |
   bags | puzzle4 | memory-clue | checkin4 | award | roam | irwin |
   relay-walk | relay-draw | relay-turn | relay-vote | relay-lockout |
-  relay-done | door | eliminate | ballot | reveal | result | clues | cats |
+  relay-done | door | eliminate | ballot | ballot-sent | eyes | result-lock |
+  result | reveal | clues | cats |
   cats-act4 | cats-friend | rehearsal | you | offline | host | paused |
   paused-window | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in
   `docs/room-screens.md`). `?preview=questions&set=<base64url>` shows one of

@@ -185,7 +185,7 @@ Fake players tap random choices, read at random speeds, and sometimes walk away 
 - **F24** The supper chime waits until everyone has seen all four cats, unless Jon presses Supper's ready; the missed cats' lines are delivered on the phone.
 - **F25** A phone with no motion sensor never causes a slip in Salem's game.
 - **F26** Every colour change in Salem's game reaches every phone in the group within half a second of the scheduled time.
-- **F27** `chime-phone` plays at every "look at your phone" moment: supper, the Act 4 groups and every round, and the Act 6 Parlour Games.
+- **F27** `chime-phone` plays at every "look at your phone" moment: supper, the Act 4 groups and every round, dessert (since 25 Oct, the cue list's cue 12), and the Act 6 Parlour Games.
 - **F28** On a rehearsal night every sealed slot shows a bracketed stand-in naming what will render there, and never the real thing.
 - **F29** The drawing's clock (Jon's cue list, 25 Oct): fifteen seconds a turn; the walk to the paper is a limit of twenty seconds that the host's At the paper ends early (the square shows at once, and the fifteen seconds run from the press), refused in every other state and while the night is paused; and the practice and the three rounds at their caps fit the twenty-six-minute budget (`MAX_TURNS` at least 42).
 
@@ -336,7 +336,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | F16 | Ten minutes a room, then the reward anyway | Has a test | `station/test/study.test.mjs` ("F16 the cap"), `functions/test/act4.test.mjs` (the G52 test) |
 | F17 | Two minutes for picks; Murderer, Motive, Victim | Has a test | `functions/test/finale.test.mjs` (the F17 tests) |
 | F18 | The dial graph and the dial's journey | Has a test | `functions/test/finale.test.mjs` ("F18 the finale": the graph; "F18 the end credits": where the dial stood after each act, its high and low, each dial clue's level), `play/test/finale.test.mjs` (the journey shows only after the reveal) |
-| F19 | A Parlour Game returns the phone to where it was | Has a test | `play/test/windows.test.mjs` |
+| F19 | A Parlour Game returns the phone to where it was | Has a test | `play/test/windows.test.mjs` (also `placement`: a Parlour Game is an overlay, the deduction round the screen, the ballot a card on Now since 25 Oct) |
 | F20 | One player at a cat at a time | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
 | F21 | Everyone always has a next step | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
 | F22 | Not yet, the same on every phone, no penalty | Has a test | `functions/test/solving.test.mjs` ("F22") |
@@ -344,7 +344,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | F24 | The supper chime waits for everyone, or Supper's ready | Has a test | `scripts/test/fake-players.test.mjs` ("F01, F24 and L03": the fake night's Act 2 line) |
 | F25 | No motion sensor, no slip | Has a test | `play/test/act4.test.mjs` ("F25") |
 | F26 | Salem's colours reach every phone within half a second | Partly | `functions/test/act4.test.mjs` (one schedule, written three seconds ahead, on the server's clock), `play/test/act4.test.mjs` (ten redraws a second; the clock rule keeps a change within half a second while a phone's round trip is under 0.8 seconds). The real Wi-Fi delay is measured at the tech run |
-| F27 | `chime-phone` at every look-at-your-phone moment | Has a test | `functions/test/screen.test.mjs` ("F27 chime-phone": supper, the groups, every round, back to the Parlour, Act 6's games; and "F27 and L07 the night walk") |
+| F27 | `chime-phone` at every look-at-your-phone moment | Has a test | `functions/test/screen.test.mjs` ("F27 chime-phone": supper, the groups, every round, back to the Parlour, dessert, Act 6's games; and "F27 and L07 the night walk") |
 | F28 | Bracketed stand-ins on a rehearsal night | Has a test | `functions/test/case.test.mjs` ("F28 the same walk on a rehearsal night"), `functions/test/act4.test.mjs` ("F28 a rehearsal") |
 | F29 | The drawing's clock: 15 s turns, the walk a limit At the paper ends, the 26-minute budget | Has a test | `functions/test/relay-guards.test.mjs` ("F29 the time budget": the numbers, 400 stand-in sets within the budget), `functions/test/relay.test.mjs` ("F29 At the paper": ends the walk now, refused in every other state and while paused, a pause shifts the walk), `play/test/relayhost.test.mjs` ("F29 the host's drawing controls": At the paper only while someone walks, the four names at the guess and through the lockout, the reply words, and the screens use the rules) |
 | L01 | No sealed content in the repo or its history | Has a test | `npm run checks` (the leak group: no sealed file name in the tracked files or the history, and no tracked JSON shaped like sealed content: a dealt case, kernels, a code-to-motive map, a lean table), `scripts/test/checks.test.mjs` ("L01") |

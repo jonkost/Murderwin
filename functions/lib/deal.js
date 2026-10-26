@@ -68,13 +68,24 @@ export const NOTICES = {
   // after the news (handoff 23 Oct §9.4): a quiet look in your own bag, shown to nobody
   peek: { title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
   checkin: { title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to supper.', button: 'Done' },
-  down: { title: 'Supper', text: 'Phones down and charging. Bring your bag to the table: everyone may share now. Listen for the news.', button: 'Phone is down' },
+  // supper (cue 8, 25 Oct 2026): the phone stays in the Parlour, charging
+  down: { title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone here in the Parlour, charging, and bring your bag to the table. The whole table may share.', button: 'Phone is down' },
   bulletin: { title: 'The bulletin', text: 'Did you hear it? Talk it over at the table. Cross off what you can.', button: 'Heard it' },
+  // the dinner wrap-up (cue 10, 25 Oct 2026): the first of the two motive prompts
+  motives: { title: 'Your motives', text: 'Supper is done. Open the Motives tab and cross off every motive the night has ruled out so far.', button: 'Will do' },
   roam: { title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired' },
   irwin: { title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
+  // after Sir Irwin (cue 14, 25 Oct 2026): the second motive prompt
+  update: { title: 'Your motives', text: 'You heard Sir Irwin. Open the Motives tab and update your crossings-off.', button: 'Will do' },
+  // Act 6 opens (cue 15, 25 Oct 2026): the break line before the two games
+  break: { title: 'The Final Hour', text: 'Two Parlour Games are on their way, one after the other. After them, the final event in the Parlour. A good moment for a stretch.', button: 'Noted' },
   door: { title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
   eyes: { title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
 }
+
+// A picture above a notice's words on the phone, by key (play/src/screens/Cards.jsx
+// draws it): the Happy Birthday Irwin graphic on the cake notice (cue 12, 25 Oct 2026).
+export const NOTICE_IMAGES = { roam: 'birthday' }
 
 // The Parlour tips (§9.5, as built and kept): a group waiting in the Parlour
 // in Act 4 gets one under its direction (act4.parlourTip).
@@ -161,7 +172,9 @@ export async function dealCard(db, uid, card) {
 
 export function noticeCard(key, act, beat, overrides = {}) {
   const n = { ...(NOTICES[key] ?? { title: key, text: '', button: 'Done' }), ...overrides }
-  return { id: `${act}-${beat}-${key}`, act, beat, kind: 'notice', key, title: n.title, text: n.text, button: n.button }
+  const card = { id: `${act}-${beat}-${key}`, act, beat, kind: 'notice', key, title: n.title, text: n.text, button: n.button }
+  if (NOTICE_IMAGES[key]) card.image = NOTICE_IMAGES[key]
+  return card
 }
 
 // ---------------------------------------------------------------------------
@@ -1089,6 +1102,20 @@ export async function results(db, nightId, act, beat) {
   return { ok: true, ...tally }
 }
 
+// The End (cue 23, 25 Oct 2026): the night is over, for good. nights/{id}.over
+// tells every phone to open up with everything readable (the result stays on
+// Now) and every room screen and the brain to go dark. Written once; a second
+// visit to the beat changes nothing. The host's Back or an act jump takes the
+// flag off again (run.enterBeat), so a rehearsal can walk the end twice.
+export async function end(db, nightId, { now = Date.now() } = {}) {
+  const ref = db.doc(`nights/${nightId}`)
+  const snap = await ref.get()
+  if (!snap.exists) throw new NightError('no-night', 'No such night.')
+  if (snap.data().over === true) return { ok: true, over: true, already: true }
+  await ref.update({ over: true, overAt: new Date(now) })
+  return { ok: true, over: true }
+}
+
 // ---------------------------------------------------------------------------
 // One beat's action, run when the host moves onto it.
 
@@ -1120,6 +1147,8 @@ export async function runAction(db, nightId, act, beat, action, { now = Date.now
     }
     case 'results':
       return results(db, nightId, act, beat)
+    case 'end':
+      return end(db, nightId, { now })
     default:
       throw new NightError('invalid', `Unknown action: ${action}`)
   }

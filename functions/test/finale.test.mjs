@@ -256,6 +256,7 @@ test('a start that fails leaves Next on the drawing beat, so trying again tries 
   const t = { now: 11_000_000 }
   await hostCommand(db, { nightId, command: 'act', arg: 5, now: t.now })
   await hostCommand(db, { nightId, command: 'next', now: t.now }) // irwin
+  await hostCommand(db, { nightId, command: 'next', now: t.now }) // update your motives (25 Oct 2026)
   await hostCommand(db, { nightId, command: 'next', now: t.now }) // Act 6: the two Parlour Games
   assert.equal(night(db, nightId).beat, 'games')
   t.now += NIGHT.windows.questions.ms + 1

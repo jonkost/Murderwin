@@ -4,8 +4,10 @@ What the Parlour TV, the iPads, Boo's wall, the bedroom screen and the
 study screen show at every beat of the night, and the sound that goes with
 it. Written 18 October 2026, brought up to date 24 October 2026 for the
 23 October handoff (the Parlour, the four Act 4 games and their names, the
-device table, the bulletins as video), and on 25 October for Boo's camera
-and the motive card pictures. Everything on this page
+device table, the bulletins as video), on 25 October for Boo's camera
+and the motive card pictures, and on the evening of 25 October for Jon's
+cue list: the join code on the Parlour TV through Act 1 and at the dinner
+wrap-up, the dessert chime, and The End. Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -32,16 +34,20 @@ address and a square code.
 
 Every screen is dark from the blackout, through the five seconds and the
 role cards, until the host's first Next in Act 2, and near-black with "One
-moment" while the night is paused. On a rehearsal
+moment" while the night is paused. At "The End" (the host's last Next, after
+everyone's result) every screen goes black and stays black. On a rehearsal
 night a big red REHEARSAL band runs across every phone and every room
 screen, and every slot that would show a secret shows a stand-in in square
 brackets.
 
 ## What the TV shows, beat by beat
 
-- *Act 1.* The act name. The rules deck and the join code show in a second
-  browser tab on the same MacBook; switch back to the game before the
-  blackout.
+- *Act 1.* The join code, big, with "Scan to join" (kind `join`), from the
+  first beat to the blackout (*rulesDeckScreen*, answered by the cue list:
+  the Parlour TV). At "The house rules" the intro video and the rules slides
+  play from a second browser tab or a player on the same MacBook; switch back
+  to the game tab for the next beat. The brain stops the music and dims the
+  lights for them, and the **Sound test** chime is the host's.
 - *Act 2, W-O-O-F News bulletin 1.* The opening, the one part that crosses
   off a wrong family, and the sign-off. Once you tick The bulletins are videos on the Game night page, they play as video with the TV's own sound (decided 23 October) and the brain plays only `chime-news`. Until then the brain plays `chime-news` and the recordings, and the TV shows the words. Each part is a file in `play/public/video`; a part
   with no file yet is skipped, and its words stay on the screen with a
@@ -57,6 +63,11 @@ brackets.
   speakers (the Orangerie HomePod), the orangery iPad shows the words, and
   every phone gets a notice. It points at the real family, plainer the
   higher the dial.
+- *Act 3, the dinner wrap-up.* The join code again, with "Need to rejoin?
+  Scan here." (kind `join`), for anyone whose phone went to sleep over
+  supper; the iPad keeps bulletin 2's words up. Every phone asks for the
+  motives to be crossed off from what has been learned so far. Everyone is
+  back on their phone before Start Act 4.
 - *Act 4, Behind Closed Doors.* After the two-minute warning, the title
   card: "Act 4 · Behind Closed Doors" and "Look at your phone and find your
   group." It is silent; the brain changes the music. Then, through every
@@ -68,9 +79,13 @@ brackets.
   Each card shows its picture (`play/public/motives/<number>.png`) beside
   the rhyme once it is drawn; until then the rhyme alone.
   Nothing else: the old secret middle line is gone (23 October). Before him,
-  while the cake is served, **Cake!** on the Host tab puts the Happy Birthday
+  the dessert chime plays on every HomePod and every phone shows the Happy
+  Birthday Irwin card over its cake notice (25 October); while the cake is
+  served, **Cake!** on the Host tab puts the Happy Birthday
   Irwin card on the TV (kind `birthday`) until his beat; pressed once his
   countdown is up, it plays the song and leaves his cards on the screen.
+  After him, at "Update your motives", the TV goes back to its idle screen
+  and every phone asks for the crossings-off to be brought up to date.
 - *Act 6, Sir Irwin Needs a Hand (the Relay Drawing).* Irwin's seven rules
   slides, each up long enough to read (about 5 seconds plus 0.4 seconds a
   word); the first carries the game's name and its line ("Three drawings
@@ -97,7 +112,14 @@ brackets.
   part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
   here, and Boo's Catwalk: each group's last pose from Boo's camera, when
-  it took one), and Irwin's "Can we play again?"
+  it took one), and Irwin's "Can we play again?" Through the reveal every
+  guest's phone is locked on "Eyes on the screen."; through the credits it
+  shows its own result with "Thank you for playing."; the two host phones
+  keep their tabs.
+- *The End.* The host's last Next, after everyone's result (25 October, cue
+  23): the TV goes black (kind `black`), every other screen goes black with
+  it and the projector is off, and every phone opens up for good with
+  everything readable, the result kept on its Now tab.
 
 ## The Act 4 room screens
 
@@ -165,8 +187,11 @@ shows the words.
 `functions/lib/screen.js` writes two public docs any phone may read:
 
 - `nights/{id}/public/screen` `{ kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, choices?, mood?, parked?, prompts?, video? }`,
-  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday`
-  (`birthday` is written only by the Cake! host command, `screen.birthday`, never by a beat).
+  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday | join`
+  (`birthday` is written only by the Cake! host command, `screen.birthday`, never by a beat;
+  `join` is written by every Act 1 beat and by Act 3's `wrap`, with the words from `screen.JOIN_CARDS`
+  beside a square the TV draws itself from the play address, so the doc carries no address; `black` is
+  also the `end` beat's screen, and `nights/{id}.over` is true from The End until a Back or an act jump).
   `prompts` is `{ lines, order, startedAt, everyMs }` (`screen.promptsFor`,
   the order from `bagclues.promptOrder` on the case's screen seed, carried on
   from the previous prompts doc); the TV picks the line with

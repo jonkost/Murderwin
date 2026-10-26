@@ -25,11 +25,19 @@ const cards = (db, uid, kind) => (session(db, uid).cards ?? []).filter(c => !kin
 
 test('the beat list walks every act in order and stops where the host has their own button', () => {
   assert.equal(firstBeat(1), 'arrive')
-  assert.deepEqual(nextOf(1, 'arrive'), { act: 1, beat: 'meet' })
+  // the cue list (25 Oct 2026): the house rules after the arrivals, the dinner wrap-up after the bulletin,
+  // the motives update after Sir Irwin, and The End after the result
+  assert.deepEqual(beatsOf(1).map(b => b.key), ['arrive', 'rules', 'meet', 'introduce', 'ready'])
+  assert.deepEqual(nextOf(1, 'arrive'), { act: 1, beat: 'rules' })
   assert.equal(nextOf(1, 'ready'), null, 'Act 1 ends in the blackout, not in Next')
   assert.deepEqual(nextOf(2, 'supper'), { act: 3, beat: 'down' })
-  assert.deepEqual(nextOf(3, 'bulletin'), { act: 4, beat: 'warn' })
-  assert.equal(nextOf(7, 'result'), null)
+  assert.deepEqual(beatsOf(3).map(b => b.key), ['down', 'bulletin', 'wrap'])
+  assert.deepEqual(nextOf(3, 'wrap'), { act: 4, beat: 'warn' })
+  assert.deepEqual(beatsOf(5).map(b => b.key), ['roam', 'irwin', 'update'])
+  assert.deepEqual(beatsOf(7).map(b => b.key), ['ballot', 'reveal', 'result', 'end'])
+  assert.deepEqual(nextOf(7, 'result'), { act: 7, beat: 'end' })
+  assert.equal(nextOf(7, 'end'), null, 'The End is the last beat of the night')
+  assert.equal(NIGHT.acts['7'].beats.at(-1).action, 'end')
   assert.deepEqual(prevOf(3, 'down'), { act: 2, beat: 'supper' })
   assert.deepEqual(beatsOf(2).map(b => b.key), ['orient', 'news', 'peek', 'cat', 'supper'], 'Act 2 has no safe; the bag peek after the news; supper ends it')
   assert.deepEqual(beatsOf(4).map(b => b.key), ['warn', 'groups', 'round1', 'round2', 'round3', 'round4', 'round5'])
@@ -44,10 +52,13 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   let now = 1_000_000
   const next = async () => hostCommand(db, { nightId, command: 'next', now })
 
-  // Act 0 → Act 1 and through its beats
+  // Act 0 → Act 1 and through its beats (the house rules deal nothing: the video and the slides are the TV's)
   await next()
   assert.equal(night(db, nightId).act, 1)
   assert.equal(night(db, nightId).beat, 'arrive')
+  await next() // the house rules
+  assert.equal(night(db, nightId).beat, 'rules')
+  for (const uid of uids) assert.deepEqual(cards(db, uid, 'notice'), [], 'the rules beat deals no card')
   await next(); await next(); await next()
   for (const uid of uids) assert.deepEqual(cards(db, uid, 'notice').map(c => c.key), ['meet', 'introduce', 'ready'])
   await assert.rejects(next, /Blackout/)
@@ -143,8 +154,19 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   // the hidden roles' points reach the dial; their phones look like everyone else's
   assert.equal(typeof db.store.get(`cases/${nightId}`).dial, 'number')
 
-  // Act 3: supper, the bulletin armed; then Start Act 4
+  // Act 3: supper (the phone stays in the Parlour, charging), the bulletin armed, the dinner wrap-up
+  // (the first motives prompt, 25 Oct 2026); then Start Act 4
+  for (const uid of uids) assert.match(cards(db, uid, 'notice').at(-1).text, /Leave your phone here in the Parlour, charging/)
   await next() // arm the bulletin
+  await next() // the dinner wrap-up
+  assert.equal(night(db, nightId).beat, 'wrap')
+  for (const uid of uids) {
+    const c = cards(db, uid, 'notice').at(-1)
+    assert.equal(c.key, 'motives')
+    assert.equal(c.title, 'Your motives')
+    assert.match(c.text, /Motives tab/)
+    assert.equal(c.image, undefined, 'no picture on the motives prompt')
+  }
   await hostCommand(db, { nightId, command: 'start-act4', now })
   assert.equal(night(db, nightId).beat, 'warn')
   for (const uid of uids) assert.equal(cards(db, uid, 'notice').at(-1).key, 'act4-warn', 'the two-minute warning')
@@ -184,12 +206,23 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     assert.ok(cards(db, uid, 'clue').some(x => x.id.endsWith('study-clue')), 'the study paid out its trace slot')
   }
 
-  // Act 5, Act 6
+  // Act 5: the cake notice carries the birthday picture (cue 12, 25 Oct 2026); Sir Irwin; the motives update
+  assert.equal(night(db, nightId).beat, 'roam')
+  for (const uid of uids) {
+    const c = cards(db, uid, 'notice').at(-1)
+    assert.equal(c.key, 'roam')
+    assert.equal(c.image, 'birthday', 'the Happy Birthday Irwin graphic above the cake notice')
+  }
   await next() // Sir Irwin
   assert.equal(night(db, nightId).act, 5)
-  await next() // Act 6 opens on its two Parlour Games, the first at once
+  await next() // update your motives (the second motives prompt)
+  assert.equal(night(db, nightId).beat, 'update')
+  for (const uid of uids) assert.equal(cards(db, uid, 'notice').at(-1).key, 'update')
+  // Act 6 opens on the break note and its two Parlour Games, the first at once (the break notice, cue 15)
+  await next()
   assert.equal(night(db, nightId).act, 6)
   assert.equal(night(db, nightId).beat, 'games')
+  for (const uid of uids) assert.equal(cards(db, uid, 'notice').at(-1).key, 'break')
   assert.equal(night(db, nightId).window.kind, 'questions')
   now += NIGHT.windows.questions.ms + 1
   await next() // the drawing
@@ -226,7 +259,25 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   assert.deepEqual([res.murderer, res.motive, res.victim], [true, true, true])
   assert.equal(night(db, nightId).tally.of, 4)
   assert.ok(cards(db, uids[1], 'result').length === 1)
+  assert.equal(night(db, nightId).over, undefined, 'the night is not over until The End')
+  // The End (cue 23, 25 Oct 2026): nights.over, once; then nothing is left to press
+  const theEnd = await next()
+  assert.equal(night(db, nightId).beat, 'end')
+  assert.equal(theEnd.over, true)
+  assert.equal(night(db, nightId).over, true)
+  const overAt = night(db, nightId).overAt
+  assert.ok(overAt, 'stamped')
+  assert.deepEqual(await hostCommand(db, { nightId, command: 'beat', arg: 'end', now }), { ok: true, act: 7, beat: 'end', over: true, already: true }, 'a second visit changes nothing')
+  assert.deepEqual(night(db, nightId).overAt, overAt)
+  for (const uid of uids) assert.ok(cards(db, uid, 'result').length === 1, 'The End deals nothing: the result card stays')
   await assert.rejects(next, /end of the night/)
+  // Back from The End opens the night up again (a rehearsal walks the end twice); Next closes it once more
+  await hostCommand(db, { nightId, command: 'back', now })
+  assert.equal(night(db, nightId).beat, 'result')
+  assert.equal(night(db, nightId).over, undefined, 'Back from The End takes the flag off')
+  assert.equal(night(db, nightId).overAt, undefined)
+  await next()
+  assert.equal(night(db, nightId).over, true)
 
   // The seal, checked after the whole walk: nothing a phone can read names a role.
   for (const uid of uids) {
@@ -244,7 +295,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     const { db, nightId, phones } = await party()
     const uids = Object.values(phones)
     const now = 3_000_000
-    for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
+    for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
     await baseCommand(db, { nightId, command: 'blackout', now })
     assert.equal(night(db, nightId).phase, 'blackout')
     await assert.rejects(hostCommand(db, { nightId, command: 'next', now }), /Power/, 'Next refuses in the dark')
@@ -260,7 +311,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
   {
     const { db, nightId, phones } = await party()
     const now = 4_000_000
-    for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
+    for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
     assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green', 'green for the welcome through Act 1')
     let slept = null
     const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async waitMs => {
@@ -283,7 +334,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
   {
     const { db, nightId } = await party()
     const now = 5_000_000
-    for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
+    for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
     const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => hostCommand(db, { nightId, command: 'pause', now: now + 1000 }) })
     assert.deepEqual(r, { ok: true, powerReturned: false })
     const n = night(db, nightId)
@@ -301,7 +352,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
   {
     const { db, nightId, phones } = await party()
     const now = 6_000_000
-    for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
+    for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
     let byHand = null
     const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {
       byHand = await hostCommand(db, { nightId, command: 'power', now: now + 1000 })
@@ -320,7 +371,7 @@ test('the blackout is Act 1 only: refused in the lobby and in every later act, a
   const now = 7_000_000
   await assert.rejects(hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }), /ends Act 1/, 'not before Act 1')
   assert.equal(night(db, nightId).act, 0)
-  for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
+  for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
   // a second press during the dark: answered already, and the first press still returns the power once
   let second = null
   const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {

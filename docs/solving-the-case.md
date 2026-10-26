@@ -154,7 +154,7 @@ Built: a True Friend sees this text when they open Salem on the Cats tab, and at
 
 Four game rooms, pairs and trios, about an hour (Jon's plan, 23 Oct; built 24 Oct; `functions/lib/act4.js`).
 
-**How it starts.** Jon presses Start Act 4 when everyone has settled after supper. Every phone gets a two-minute warning. Then `chime-phone`, the title card on the Parlour TV, and every phone shows its group as character portraits with a Locked in button. The rounds start when everyone is locked in, or two minutes later.
+**How it starts.** When supper is over Jon presses Next for the dinner wrap-up (every phone asks for the motives to be crossed off so far; the Parlour TV shows the join code for anyone who needs to rejoin; the cue list's cue 10, 25 Oct 2026), and once everyone is back on their phone, Start Act 4. Every phone gets a two-minute warning. Then `chime-phone`, the title card on the Parlour TV, and every phone shows its group as character portraits with a Locked in button. The rounds start when everyone is locked in, or two minutes later.
 
 **The groups.** Three to five groups (at most five), pairs and trios. The Murderer and the Ghost are never in the same group. Information is shared only inside your group.
 

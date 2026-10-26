@@ -1,5 +1,5 @@
 {
-  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4).",
+  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4). Updated 25 Oct 2026 to Jon's cue list (docs/cue-list.md, docs/handoff-2026-10-25.md): Act 1 gains the house rules and shows the join code on the Parlour TV throughout (screen join); Act 3 ends with the dinner wrap-up (the motives prompt, the join code again); Act 5's cake beat chimes the phones and ends with the motives update; Act 6's games beat carries the break notice; Act 7 ends with The End (action end: nights/{id}.over, the screens black).",
   "parlour": {
     "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. Act 6 (atStart) plays its games back to back as the act opens, startGapSec apart, before the drawing (22 Oct). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.",
     "counts": {
@@ -53,25 +53,35 @@
         {
           "key": "arrive",
           "name": "Arrivals",
-          "what": "Doors open. Guests type their name, get a character and a bag, and look around their phone."
+          "what": "Doors open. Guests type their name, get a character and a bag, and look around their phone. The Parlour TV shows the join code through Act 1.",
+          "screen": "join"
+        },
+        {
+          "key": "rules",
+          "name": "The house rules",
+          "what": "The intro video and the rules slides on the Parlour TV, from the second tab or a player; switch back to the game tab for the next beat. The music stops and the lights dim for the rules; the sound-test chime is the Sound test button.",
+          "screen": "join"
         },
         {
           "key": "meet",
           "name": "Meet the household",
           "what": "Point everyone at the Cats tab: who the five are and how each one stands with them.",
-          "action": "notice:meet"
+          "action": "notice:meet",
+          "screen": "join"
         },
         {
           "key": "introduce",
           "name": "Introductions",
           "what": "Everyone says their name and profession out loud. Phones ask for it.",
-          "action": "notice:introduce"
+          "action": "notice:introduce",
+          "screen": "join"
         },
         {
           "key": "ready",
           "name": "Ready for the dark",
-          "what": "Last beat before the blackout. Press Blackout when the room is settled, then Power returns.",
-          "action": "notice:ready"
+          "what": "Last beat before the blackout. Press Blackout when the room is settled; the power comes back on its own five seconds later.",
+          "action": "notice:ready",
+          "screen": "join"
         }
       ]
     },
@@ -121,14 +131,21 @@
         {
           "key": "down",
           "name": "Phones down",
-          "what": "Supper in the Orangerie. Phones down and charging. The bags come to the table; the whole table may share.",
+          "what": "Supper in the Orangerie. Every phone says: leave it here in the Parlour, charging, and bring your bag to the table; the whole table may share.",
           "action": "notice:down"
         },
         {
           "key": "bulletin",
           "name": "Arm the bulletin",
-          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the HomePods with its words on the Orangerie iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When everyone has settled after supper, press Start Act 4.",
+          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the HomePods with its words on the Orangerie iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When supper is over, press Next for the dinner wrap-up.",
           "action": "arm:bulletin"
+        },
+        {
+          "key": "wrap",
+          "name": "Dinner wrap-up",
+          "what": "Supper is over. Every phone asks for the motives to be crossed off from what has been learned; the Parlour TV shows the code for anyone who needs to rejoin. Everyone must be back on their phone before Start Act 4.",
+          "action": "notice:motives",
+          "screen": "join"
         }
       ]
     },
@@ -199,8 +216,9 @@
         {
           "key": "roam",
           "name": "Cake",
-          "what": "Cake in hand, wander anywhere. The bags may be talked about now. Act 4's rooms close: any reward not yet paid is paid now.",
-          "action": "notice:roam"
+          "what": "The dessert chime. Every phone shows the Happy Birthday Irwin card: cake in hand, wander anywhere, and the bags may be talked about now. Act 4's rooms close: any reward not yet paid is paid now. Press Cake! when the cake is served.",
+          "action": "notice:roam",
+          "sound": "chime-phone"
         },
         {
           "key": "irwin",
@@ -209,6 +227,12 @@
           "action": "notice:irwin",
           "screen": "irwin",
           "sound": "chime-irwin"
+        },
+        {
+          "key": "update",
+          "name": "Update your motives",
+          "what": "Sir Irwin has spoken. Every phone asks for the motives to be updated from his announcement; the Parlour TV goes back to its loop.",
+          "action": "notice:update"
         }
       ]
     },
@@ -219,13 +243,14 @@
         {
           "key": "games",
           "name": "Two Parlour Games",
-          "what": "Boo hosts the last two Parlour Games on every phone, one after the other. Press Next for the drawing once both are done.",
+          "what": "Every phone gets the break note (two games, then the final event, a good moment for a stretch), and Boo hosts the last two Parlour Games, one after the other. Press Next for the drawing once both are done.",
+          "action": "notice:break",
           "sound": "chime-phone"
         },
         {
           "key": "drawing",
           "name": "The drawing",
-          "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; press At the paper when they are there and the TV shows one square. The room describes it and tells you its guess; you tap it on your phone (the TV's names still take a tap).",
+          "what": "The relay drawing. While Sir Irwin explains it on the TV every phone says: be in the Parlour for the final event. Then a practice and three rounds. The game calls a player to the paper in the Library; press At the paper when they are there and the TV shows one square. The room describes it and tells you its guess; you tap it on your phone (the TV's names still take a tap).",
           "action": "relay:start"
         },
         {
@@ -260,16 +285,23 @@
         {
           "key": "reveal",
           "name": "The reveal",
-          "what": "Murderer, then motive, then victim, on the Parlour screen. Phones say: eyes on the screen.",
+          "what": "Murderer, then motive, then victim, on the Parlour screen. Every guest's phone locks on: eyes on the screen (yours keeps its tabs).",
           "action": "reveal",
           "sound": "sting-reveal"
         },
         {
           "key": "result",
           "name": "Your result",
-          "what": "Every phone shows its own three answers against the truth.",
+          "what": "Every guest's phone shows its own three answers against the truth, locked, with a thank-you for playing, while the credits roll; yours shows the result on Now. Then Next for The End.",
           "action": "results",
           "sound": "sting-result"
+        },
+        {
+          "key": "end",
+          "name": "The End",
+          "what": "Every screen goes black and the projector is off. Every phone opens with everything readable, for good: the result, the clues, the notes.",
+          "action": "end",
+          "screen": "black"
         }
       ]
     }

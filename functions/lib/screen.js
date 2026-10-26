@@ -3,7 +3,7 @@
 // the cue relay plays. One public doc each:
 //
 //   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood, prompts, video }
-//     kind: idle | black | news | bulletin | irwin | board | door | trace | prompts | title
+//     kind: idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday | join
 //     prompts: Sir Irwin's sharing prompts (bagclues.js), one at a time on the TV:
 //       { lines[], order[], startedAt, everyMs }, open lines, so the order says nothing
 //     video: true when the Parlour TV plays the bulletin as video (meta/game.bulletinVideo); the TV
@@ -37,7 +37,16 @@ const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
 
 // `birthday` is the Happy Birthday Irwin card the Cake! button puts on the Parlour TV (cue 13, 25 Oct 2026).
-export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title', 'birthday']
+// `join` is the join code on the Parlour TV: Act 1's beats and the dinner wrap-up name it (cues 3 and 10);
+// the TV draws the square itself from the play address, so the doc carries words only.
+export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title', 'birthday', 'join']
+
+// The words beside the join code (screen kind `join`, 25 Oct 2026): "Scan to join"
+// through Act 1, and at the dinner wrap-up the code for anyone who needs to rejoin.
+export const JOIN_CARDS = {
+  join: { title: 'Scan to join', lines: ['Point your phone\'s camera at the square, then type your name.'] },
+  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone before Act 4.'] },
+}
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
 // relay (cues/lib/cues.js) carries the same list and refuses an id outside it.
@@ -351,6 +360,11 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })
   } else if (kind === 'board') {
     doc = screenDoc('board', { ...base, title: 'The deduction round', lines: ['Each of you has struck one thing out. Here is the board.'], rehearsal: !!night.rehearsal })
+  } else if (kind === 'join') {
+    // the join code (cues 3 and 10, 25 Oct 2026): Act 1's beats say scan to join; the dinner wrap-up says rejoin.
+    // The captions ride along at the wrap-up, so the Orangerie iPad keeps bulletin 2's words up.
+    const card = act === 1 ? JOIN_CARDS.join : JOIN_CARDS.rejoin
+    doc = screenDoc('join', { ...base, title: card.title, lines: card.lines, rehearsal: !!night.rehearsal })
   } else if (kind === 'black') {
     doc = screenDoc('black', { ...base, title: '', lines: [], captions: null })
   } else {

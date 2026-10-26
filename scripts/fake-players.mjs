@@ -311,6 +311,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const played = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.played === true
     if (!armed.armed || !played) summary.checks.push('B2')
     await sealCheck('bulletin') // the recordings it just sent are on the public sounds doc
+    await next() // the dinner wrap-up (25 Oct 2026): the motives prompt, the join code on the TV
     actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`])
 
     // ---- Act 4: Start Act 4, the group cards and Locked in, then four game rooms on the clock
@@ -347,12 +348,13 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const roomCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.room)).length
     actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${booShows} catwalks`, `${games4} waiting Parlour Games, ${played4} played`])
 
-    // ---- Act 5: cake, the chime, Sir Irwin
+    // ---- Act 5: cake (the dessert chime), Sir Irwin, the motives update
     // Act 4's last chime brought the house to the cake: any room never paid was paid then
     await next() // Sir Irwin on the screen
     const funnel = await motiveFunnel()
     if (!funnel.ok) summary.checks.push('G32')
     say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
+    await next() // update your motives (25 Oct 2026)
     actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library and Boo`])
 
     // ---- Act 6: the two Parlour Games at the start, the drawing, the door, the deduction round
@@ -386,7 +388,9 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     for (let i = 0; i < 3; i++) await host('reveal-stage') // the Murderer, the Motive, the Victim, one press each
     const r7 = await next() // results
     const results = await countCards('result')
-    actLine(7, [`${ballots} ballots`, `${results} results`])
+    const theEnd = await next() // The End (25 Oct 2026): the screens black, the night over for good
+    if (!theEnd.over || (await nightDoc()).over !== true) summary.checks.push('END')
+    actLine(7, [`${ballots} ballots`, `${results} results`, theEnd.over ? 'the end' : 'THE END DID NOT COME'])
     summary.tally = { of: r7.of, murderer: r7.murderer, motive: r7.motive, victim: r7.victim }
     say(`Tally: of ${r7.of} ballots, murderer right on ${r7.murderer}, motive on ${r7.motive}, victim on ${r7.victim}`)
     summary.secrets = await secretsUsed()

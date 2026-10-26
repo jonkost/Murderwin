@@ -12,7 +12,9 @@ import Spoken from './Spoken'
 // (client rule: every innocent beat needs an interaction), and every card is
 // the same shape whatever role the phone belongs to.
 
-export function Card({ card, uid, notes, nightId = null }) {
+// `over` (The End, 25 Oct 2026): the result card stays on Now for good, with
+// nothing left to tap on it.
+export function Card({ card, uid, notes, nightId = null, over = false }) {
   const seen = !!notes?.seen?.[card.id]
   const put = () => writeNotes(uid, { seen: { [card.id]: true } }).catch(() => {})
   switch (card.kind) {
@@ -21,7 +23,7 @@ export function Card({ card, uid, notes, nightId = null }) {
     case 'group': return <Group card={card} uid={uid} nightId={nightId} notes={notes} onDone={put} />
     case 'station': return <Station card={card} uid={uid} notes={notes} onDone={put} />
     case 'clue': return <Clue card={card} uid={uid} notes={notes} />
-    case 'result': return <Result card={card} onDone={put} seen={seen} />
+    case 'result': return <Result card={card} onDone={put} seen={seen || over} />
     case 'award': return <Award card={card} onDone={put} />
     default: return null
   }
@@ -228,7 +230,10 @@ function Award({ card, onDone }) {
   )
 }
 
-function Result({ card, onDone, seen }) {
+// Act 7: this phone's three answers against the truth. On the result beat it
+// fills the screen with no button (Windows.jsx ResultLock); on Now, Keep this
+// puts it away until The End, when it stays (lib/night.js nowCards).
+export function Result({ card, onDone, seen }) {
   const rows = [['murderer', 'The murderer'], ['motive', 'The motive'], ['victim', 'The victim']]
   const right = rows.filter(([k]) => card[k]).length
   return (

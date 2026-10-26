@@ -5,7 +5,7 @@ import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
 import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
 import { Seal } from './Moments'
-import { HostLine } from './Cards'
+import { HostLine, Result } from './Cards'
 
 // The moments when every phone lights up at once. Each one is a full
 // screen, the same on every phone, measured against the server's clock.
@@ -90,10 +90,23 @@ export function Questions({ w, nightId, serverNow, onDone }) {
   )
 }
 
-// Act 7: the murderer, the motive, the victim. Two minutes.
-export function Ballot({ w, night, session, content, nightId, serverNow, onDone }) {
-  const [step, setStep] = useState(0)
-  const [pick, setPick] = useState({ murderer: null, motive: null, victim: null })
+// Act 7: the murderer, the motive, the victim. Two minutes. Since 25 Oct 2026
+// (Jon's cue list, cue 19) it is a card on the Now tab (`card`), so every tab
+// stays reachable while a guest decides: the same three steps and the same
+// clock, inside the Now grid instead of filling the screen. The full-screen
+// shape is kept for the preview and as a fallback.
+// The picks so far, before anything is sent. As a card (`onDraft` given) they
+// are App's, so a guest who looks at Clues or Motives while deciding comes
+// back to the same step with the same picks; the full-screen shape keeps
+// them itself.
+const EMPTY_DRAFT = { step: 0, pick: { murderer: null, motive: null, victim: null } }
+
+export function Ballot({ w, night, session, content, nightId, serverNow, onDone, card = false, draft = null, onDraft = null }) {
+  const [local, setLocal] = useState(EMPTY_DRAFT)
+  const { step, pick } = onDraft ? (draft ?? EMPTY_DRAFT) : local
+  const put = (next) => (onDraft ? onDraft(next) : setLocal(next))
+  const goTo = (s) => put({ step: s, pick })
+  const choose = (key, value) => put({ step: step + 1, pick: { ...pick, [key]: value } })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const people = useMemo(() => Object.entries(night.roster ?? {})
@@ -115,9 +128,10 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone 
     } catch (e) { setError(e?.message || 'The Manor did not hear that. Try again.'); setBusy(false) }
   }
 
+  const Box = card ? 'section' : 'div'
   if (step === 3) return (
-    <div className="moment window papered">
-      <Seal />
+    <Box className={card ? 'dealt ballot-card' : 'moment window papered'} aria-label={card ? w.title || 'The ballot' : undefined}>
+      {!card && <Seal />}
       <p className="crest">Your three</p>
       <ul className="summary">
         <li><span className="dim">Murderer</span> {people.find(p => p.key === pick.murderer)?.name}</li>
@@ -125,29 +139,68 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone 
         <li><span className="dim">Victim</span> {people.find(p => p.key === pick.victim)?.name}</li>
       </ul>
       <div className="host-row">
-        <button className="chip" disabled={busy} onClick={() => setStep(0)}>Change</button>
+        <button className="chip" disabled={busy} onClick={() => goTo(0)}>Change</button>
         <button className="big" disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Lock it in'}</button>
       </div>
       {error && <p className="trouble" role="alert">{error}</p>}
       <Clock w={w} serverNow={serverNow} />
-    </div>
+    </Box>
   )
 
   return (
-    <div className="moment window ballot papered">
+    <Box className={card ? 'dealt ballot-card' : 'moment window ballot papered'} aria-label={card ? w.title || 'The ballot' : undefined}>
+      {card && <h3>{w.title || 'The ballot'}</h3>}
       <p className="crest">{cur.title} · {step + 1} of 3</p>
       {step === 0 && <HostLine host={w.host} />}
       <ul className="pick-list">
         {cur.key === 'motive'
           ? list.map(m => (
-            <li key={m.n}><button className={pick.motive === m.n ? 'pick on' : 'pick'} onClick={() => { setPick({ ...pick, motive: m.n }); setStep(step + 1) }}>
+            <li key={m.n}><button className={pick.motive === m.n ? 'pick on' : 'pick'} onClick={() => choose('motive', m.n)}>
               <span className="n">{m.n}</span><span>{m.rhyme}</span></button></li>))
           : people.filter(p => p.key !== session.guestKey || cur.key === 'victim').map(p => (
-            <li key={p.key}><button className={pick[cur.key] === p.key ? 'pick on' : 'pick'} onClick={() => { setPick({ ...pick, [cur.key]: p.key }); setStep(step + 1) }}>
+            <li key={p.key}><button className={pick[cur.key] === p.key ? 'pick on' : 'pick'} onClick={() => choose(cur.key, p.key)}>
               <span>{p.name}</span><span className="dim">{p.character}</span></button></li>))}
       </ul>
-      {step > 0 && <button className="quiet" onClick={() => setStep(step - 1)}>Back</button>}
+      {step > 0 && <button className="quiet" onClick={() => goTo(step - 1)}>Back</button>}
       <Clock w={w} serverNow={serverNow} />
+    </Box>
+  )
+}
+
+// After Lock it in: a small card in the ballot's place until this phone's
+// ballot comes back from the server and the window closes for it. Nothing to
+// tap; it goes on its own.
+export function BallotSent() {
+  return (
+    <section className="dealt notice ballot-sent" aria-label="Your three are in">
+      <h3>Your three are in</h3>
+      <p>The Manor has them. Eyes on the Parlour screen for the reveal.</p>
+    </section>
+  )
+}
+
+// Act 7's locks (Jon's cue list, cues 20 to 22, 25 Oct 2026; lib/night.js
+// phoneLock). The reveal holds every phone on "Eyes on the screen." with no
+// tabs; the result beat shows this phone's result card with "Thank you for
+// playing." under it, no tabs, while the credits roll on the TV. Nothing to
+// tap on either: the host's Next moves the night on, and at The End the tabs
+// come back with the result kept on Now. The same shape on every phone.
+export function EyesLock() {
+  return (
+    <div className="moment lock papered">
+      <Seal />
+      <p className="crest">Sirwin Manor</p>
+      <p className="moment-text">Eyes on the screen.</p>
+    </div>
+  )
+}
+
+export function ResultLock({ card }) {
+  return (
+    <div className="moment lock papered">
+      <p className="crest">Sirwin Manor</p>
+      {card && <Result card={card} seen />}
+      <p className="moment-text">Thank you for playing.</p>
     </div>
   )
 }

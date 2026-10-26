@@ -3,7 +3,7 @@ import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
-import { Eliminations } from './Windows'
+import { Ballot, BallotSent, Eliminations } from './Windows'
 import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote } from '../lib/night'
 import Act4 from './Act4'
 import Spoken from './Spoken'
@@ -26,7 +26,13 @@ const TABS = [
 // This is what a phone shows whenever nothing else is happening — the idle
 // screen is a real state, indistinguishable from a phone that just finished
 // something.
-export default function Rest({ uid, night, session, content, notes, ui, onTour, serverNow, meetNote = null }) {
+// `ballot` (25 Oct 2026, cue 19): the open Act 7 ballot window, as a card on
+// Now with every tab reachable: { w, sent, onDone, clock, draft, onDraft }. The
+// clock is the server's, frozen in a pause (App's clockFor), and the draft
+// (the picks so far) lives in App, so a look at Clues or Motives never loses
+// them. `over` (cue 23): The End, when the result stays on Now and everything
+// is readable, for good.
+export default function Rest({ uid, night, session, content, notes, ui, onTour, serverNow, meetNote = null, ballot = null, over = false }) {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('reticule-tab') || 'you' } catch { return 'you' }
   })
@@ -37,14 +43,14 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   const act = ACTS[night.act]
   const tabs = session.host ? [...TABS, { key: 'host', label: 'Host' }] : TABS
   const shown = tabs.some(t => t.key === tab) ? tab : 'you'
-  const now = nowCards(session, notes, night.act)
-  const waiting = now.filter(c => c.kind !== 'testimony' && c.kind !== 'clue').length
+  const now = nowCards(session, notes, night.act, { over })
+  const waiting = now.filter(c => c.kind !== 'testimony' && c.kind !== 'clue').length + (ballot && !ballot.sent ? 1 : 0)
 
-  // When something new lands for this act (a card, or a new step in the Act 2
-  // rooms), the phone goes to Now on its own.
+  // When something new lands for this act (a card, a new step in the Act 2
+  // rooms, the ballot), the phone goes to Now on its own.
   const lights = lightsStep(session, night.act)
   const rooms = act4Step(session, night.act)
-  const newest = [now[0]?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
+  const newest = [now[0]?.id, ballot?.w?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
   useEffect(() => { if (newest) setTab('now') }, [newest])
 
   return (
@@ -65,7 +71,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       </header>
 
       <section className="sheet" aria-live="polite">
-        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} />}
+        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} ballot={ballot} over={over} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
@@ -87,17 +93,24 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
 // What to do at this moment: the cards dealt for this act, newest first,
 // each one gone once it has been answered. When there is nothing to do the
-// screen says so plainly; that is a real state, not an error.
-function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow }) {
+// screen says so plainly; that is a real state, not an error. The Act 7
+// ballot sits at the top as a card (cue 19), then a small "Your three are in"
+// until the server has this phone's picks. At The End the result stays.
+function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow, ballot = null, over = false }) {
+  const quiet = over ? 'That is the end of the night. Everything you were told is still here to read.'
+    : night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'
   return (
     <div className="now">
+      {ballot && (ballot.sent
+        ? <BallotSent />
+        : <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />)}
       {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
       {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
       {rooms && meetNote && <p className="trouble" role="status">{meetNote}</p>}
-      {cards.length === 0 && !lights && !rooms && (
-        <p className="moment-text quiet-line">{night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'}</p>
+      {cards.length === 0 && !lights && !rooms && !ballot && (
+        <p className="moment-text quiet-line">{quiet}</p>
       )}
-      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} />)}
+      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />)}
       {night.act === 6 && <Eliminations night={night} content={content} />}
     </div>
   )

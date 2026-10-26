@@ -23,6 +23,11 @@ green for the welcome and red from the power's return, and nine sounds,
 two of them required; and, the same evening, three Host tab buttons from
 the cue list (**Sound test**, **Cake!** and **At the paper**), the drawing's
 guess tapped on your own phone, and fifteen seconds a turn in the drawing.
+Later that evening, the night's shape from the cue list: the house rules
+beat with the join code on the Parlour TV through Act 1, the dinner wrap-up
+and the two motive prompts, the dessert chime and the Happy Birthday Irwin
+card, the break line as Act 6 opens, the ballot as a card on the Now tab,
+the thank-you lock through the credits, and The End.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -161,10 +166,12 @@ them.
 - *The square code.* Save it from the Game night page. Your Host tab shows it
   too, under The doors. Print the four room codes (Granolia in the Study,
   Salem in the Orangerie, Zimothy in the Library, Boo in the Entryway) from
-  the same page: the same four codes serve Act 2 and Act 4. Until you answer
-  *rulesDeckScreen*, the default is built: the rules deck and the join code
-  show on the Parlour TV in a second browser tab, and you switch back to the
-  game tab before the blackout. The join code is also printed at the door.
+  the same page: the same four codes serve Act 2 and Act 4. The Parlour TV
+  shows the join code itself through Act 1 and again at the dinner wrap-up
+  (*rulesDeckScreen*, answered by your cue list: the Parlour TV); the intro
+  video and the rules slides play from a second browser tab or a player at
+  "The house rules", and you switch back to the game tab after them. The join
+  code is also printed at the door, the fallback.
 - *Freeze the workshop* when the lists are final, Thursday 12 to Saturday
   14 November. There is no fixed freeze date (see "The last days" below).
 - Charge everything, the old iPhone 11 spare included. Spare phone chargers
@@ -176,7 +183,7 @@ them.
 |---|---|---|
 | The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
-| Your work MacBook Pro on the TV | The Parlour screen, all night: the rules deck in Act 1, the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
+| Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (the intro video and the rules deck from a second browser tab), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
 | Susan's work MacBook Pro | Idle until Act 4. Act 4: beside the projector on the upstairs landing, showing Boo's Catwalk on the triangle wall (`?kiosk=boo`). After Act 4: the bedroom screen (`?kiosk=bedroom`), door closed. | A browser, full screen. Tap it once after each move. |
 | Your iPad Pro | Acts 2 and 3: the words of bulletins 1 and 2, on a stand in the Orangerie (`?kiosk=ipad`). Act 4: Boo's camera in the Entryway, facing the catwalk (`?kiosk=pose`, nice to have), or a spare screen. | Safari, full screen. Tap it once. For Boo's camera, tap Turn on the camera and allow it. |
@@ -254,10 +261,13 @@ game; it serves the lights and the speakers.
 - **Next** is the one button. It does whatever the next beat needs on every
   phone at once and tells you only how many phones it reached. The beat you
   are on and what it is for are written above the button.
-- Act 1: arrivals, meet the household, introductions, then ready for the
-  dark. The rules deck and the join code show on the Parlour TV in a second
-  browser tab (the default for *rulesDeckScreen*, still yours to change);
-  switch back to the game tab before the blackout. When the rules reach the
+- Act 1: arrivals, the house rules, meet the household, introductions, then
+  ready for the dark. The Parlour TV shows the join code, big, through the
+  whole of Act 1 (*rulesDeckScreen* is answered by your cue list: the Parlour
+  TV). "The house rules" is the beat for the intro video and the rules
+  slides: play them from a second browser tab or a player on the same
+  MacBook, and switch back to the game tab for the next beat; the brain stops
+  the music and dims the lights for them. When the rules reach the
   sound test, press **Sound test** (under The house, beside the hall light):
   the chime plays on every HomePod, so the room hears the speakers work. Act 1
   ends with
@@ -323,13 +333,17 @@ game; it serves the lights and the speakers.
   it sooner, press **Supper's ready**. A guest with cats still unvisited
   gets those cats' lines on the phone as a note ("The cats you haven't met
   left you a note").
-- Act 3: phones down, supper in the Orangerie. The bags come to the table,
-  and the whole table may share what is in them. Near the end of supper,
+- Act 3: phones down, supper in the Orangerie. Every phone says to leave it
+  here in the Parlour, charging, and to bring the bag to the table; the whole
+  table may share what is in them. Near the end of supper,
   press **Next** when it says "Next: Arm the bulletin". Your phone says only
   "Armed." W-O-O-F News bulletin 2 plays on its own 3 to 5 minutes later
   through the HomePods (the Orangerie one too), with the words on the iPad.
-  Every phone gets a notice when it plays, yours too. When everyone has
-  settled after supper, press **Start Act 4** (it shows on your Host tab in
+  Every phone gets a notice when it plays, yours too. When supper is over,
+  **Next** for "Dinner wrap-up": every phone asks for the motives to be
+  crossed off from what has been learned so far, and the Parlour TV shows the
+  join code again for anyone who needs to rejoin. Everyone must be back on
+  their phone; then press **Start Act 4** (it shows on your Host tab in
   Act 3).
 - Act 4, Behind Closed Doors: four game rooms, pairs and trios, about an
   hour. Before you press it, if you are using Boo's camera: carry the iPad
@@ -372,20 +386,27 @@ game; it serves the lights and the speakers.
   After Act 4, carry Susan's MacBook Pro from the landing into the bedroom,
   open `?kiosk=bedroom`, tap it once, and close the door. It shows "The door
   is closed" until the third picture is named.
-- Act 5: cake, and everyone wanders. When the cake is served, press **Cake!**
+- Act 5: the dessert chime plays on every HomePod, and every phone shows the
+  Happy Birthday Irwin card over the cake notice; everyone wanders. When the
+  cake is served, press **Cake!**
   (above Next, Act 5 only): Happy Birthday for Dogs plays on every HomePod,
   the lights dim for the candles, and the TV shows the Happy Birthday Irwin
   card (unless Sir Irwin's countdown is already on the TV, which stays); the
   jazz comes back on its own when the song ends. Then **Next** for
   Sir Irwin: the chime,
   and his countdown on the TV, each motive with its card's picture once it
-  is drawn. The phones send everyone to the Parlour.
+  is drawn. The phones send everyone to the Parlour. Then **Next** for
+  "Update your motives": every phone asks for the motives to be updated from
+  what Sir Irwin said, and the TV goes back to its loop.
   Before you press **Next** for Act 6, check the bedroom screen is in and
   the door is closed.
-- Act 6 opens with two Parlour Games, back to back. Wait until the second has
+- Act 6 opens with a note on every phone (two Parlour Games on their way,
+  then the final event in the Parlour, a good moment for a stretch) and the
+  two Parlour Games, back to back. Wait until the second has
   ended on your own phone, then **Next** starts Sir Irwin Needs a Hand (the
   Relay Drawing; or **Start the drawing**). Sir Irwin explains it on the TV,
-  each slide up long enough to read (about two minutes in all), then a
+  each slide up long enough to read (about two minutes in all), while every
+  phone says to be in the Parlour for the final event; then a
   practice smiley and three rounds.
   The game calls a random player by their character's picture and name; they
   walk to the paper in the Library before the square shows. The walk allows
@@ -408,9 +429,15 @@ game; it serves the lights and the speakers.
   only comes out when a drawing is finished, so after a clear press
   **Start the drawing** and finish it. Never press it after the door has
   opened. (It is one tap with no question; a guard on it is not built yet.)
-- Act 7: **Next** opens the ballot, two minutes; Salem hosts it on every
-  phone, and the TV shows the clock, the trace and the board. **Next** again
-  starts the TV: the stats, the achievements you gave, then the graph. Nobody
+- Act 7: **Next** opens the ballot, two minutes on the server's clock. Salem
+  hosts it on every phone as a card on the Now tab, so a guest can still open
+  their Clues and Motives while they decide (your cue list, cue 19); after
+  Lock it in a small "Your three are in" card holds its place. The TV shows
+  the clock, the trace and the board. The two minutes always run, even when
+  every pick is in. **Next** again
+  starts the TV: the stats, the achievements you gave, then the graph, and
+  every guest's phone locks on "Eyes on the screen." with no tabs (yours and
+  Susan's keep their tabs: the Host tab runs the reveal). Nobody
   is named until you press. When the Host tab says the screen is ready, press
   **Name the Murderer**, then **Name the Motive**, then **Name the Victim**,
   each when the room is ready for it. Each press plays its part of the
@@ -422,7 +449,16 @@ game; it serves the lights and the speakers.
   Sir Irwin's last card, about two minutes. **Hold the screen**
   stops it where it is (a toast, a photograph); **Carry on** resumes, and
   nothing on the screen is skipped. **Next** for everyone's result only works
-  once all three are named.
+  once all three are named: every guest's phone shows its own three answers
+  against the truth with "Thank you for playing." under them and no tabs,
+  while the credits roll (your phone and Susan's show the result on Now, tabs
+  and all). Then **Next** once more for "The End": every screen goes black,
+  the projector is off, and every phone opens up for good with everything
+  readable: the result on Now, the clues, the notes. The Host tab says the
+  night is over. **Back one** from "The End" opens the night up again, for a
+  rehearsal that wants to see the result twice. A pause during the ballot
+  keeps the card on every phone, greyed out, until you resume, like any other
+  window.
 
 ## Any time, from your Host tab
 
@@ -456,13 +492,13 @@ game; it serves the lights and the speakers.
 
 | Act | The Parlour TV | The other screens |
 |---|---|---|
-| 1 | Its crest and the act name. The rules deck and the join code in a second browser tab. | The iPad Pro in the Orangerie: its crest. |
+| 1 | The join code, big, with "Scan to join", through the whole act. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | The iPad Pro in the Orangerie: its crest. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro keeps bulletin 1's words up. |
-| 3 | Bulletin 2's words, when it plays. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods. |
+| 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. |
 | 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The older iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. The iPad Pro in the Entryway, if it is up: Boo's camera, the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!. Each room's screen shows the game's name with its line under it. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and the deduction board. | In the bedroom: the trace, from the moment the third picture is named. |
-| 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. | In the bedroom: the trace. |
+| 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. At "The End" every screen goes black and the projector is off. |
 
 The study screen waits on its idle line outside Act 4. Every screen is dark
 from the blackout, through the five seconds and the role cards, until your
@@ -734,6 +770,31 @@ relay as codes derived from the clip id and the station key (`STATION_KEY`
 in `cues/.env`, `media/README.md`), and the relay logs counts only; a sounds
 doc with `video: true` rings the chime and skips the clips. Whether the TV
 plays the two bulletins as video is `meta/game.bulletinVideo` (only `true` means video: the box The bulletins are videos on the workshop's Game night page, `app/src/pages/Night.jsx`; unset or unticked, the brain plays the recordings and the TV shows the words).
+
+*Added 25 Oct, the evening, the night's shape* (the cue list, step 5 of
+`docs/handoff-2026-10-25.md`). New beats in `seed/night.json`: Act 1 `rules`
+(no action, screen `join`; every Act 1 beat names screen `join`), Act 3 `wrap`
+(`notice:motives`, screen `join`), Act 5 `update` (`notice:update`) and Act 7
+`end` (action `end`, screen `black`); `roam` carries `chime-phone` and `games`
+carries `notice:break`. `deal.NOTICES` gains `motives`, `update` and `break`
+and rewrites `down`; `deal.NOTICE_IMAGES` puts `image: 'birthday'` on the
+cake notice (the phone draws it). `deal.end` writes `nights/{id}.over: true`
+and `overAt`, once; `run.enterBeat` deletes both on any beat that is not the
+end, so Back or an act jump reopens the night. `screen.SCREEN_KINDS` gains
+`join` (`screen.JOIN_CARDS`: the words beside the code; the TV draws the
+square from the play address). `run.nextOf(7, 'result')` is `end`;
+`nextOf(7, 'end')` is null; `finale.requireNamed` still keys on the `results`
+action. On the phone (`play/src/lib/night.js`): `placement(w)` is `overlay`
+(a Parlour Game), `screen` (the deduction round) or `card` (the ballot, drawn
+by `Rest` in the Now grid with `Ballot card`, then `BallotSent`);
+`phoneLock(night)` is `eyes` | `result` | `over` | null by the Act 7 beat's
+action or `nights.over`, and `lockFor(night, session)` lifts the first two for
+a host phone; `nowCards(..., { over })` keeps the result card at The End;
+`App.jsx` shows the Relay from state `intro` on. Tests: `functions/test/run.test.mjs`
+(the beat list, the walk with The End and Back from it), `screen.test.mjs`
+(the join screens, F27 with dessert), `play/test/windows.test.mjs` (placement,
+the ballot card, the locks), `scripts/fake-players.mjs` (the wrap, the update,
+The End).
 
 *Added 25 Oct* (handoff 24 Oct evening, item 4). Three callables, each
 checking `ADMIN_UIDS` or the party gate in `functions/index.js`:

@@ -54,7 +54,7 @@ const caseOf = (db, id) => db.store.get(`cases/${id}`)
 const session = (db, uid) => db.store.get(`sessions/${uid}`)
 async function toPower(db, nightId, now) {
   const next = () => hostCommand(db, { nightId, command: 'next', now })
-  await next(); await next(); await next(); await next()
+  for (let i = 0; i < 5; i++) await next() // Act 1's five beats (the house rules since 25 Oct 2026)
   await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
 }
 // What a spill must leave alone, snapshotted for a before/after compare.
@@ -339,7 +339,7 @@ test('spill is off once the news is on the screen, once the study has paid out, 
     await hostCommand(db, { nightId, command: 'next', now }) // Act 1 begins
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false })
     assert.equal(caseOf(db, nightId), undefined, 'no case was made by asking')
-    for (let i = 0; i < 3; i++) await hostCommand(db, { nightId, command: 'next', now })
+    for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now }) // to Ready for the dark (five Act 1 beats since 25 Oct 2026)
     // a spill asked during the five seconds of dark (the Blackout's own wait) is refused; the power then returns on its own
     await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {
       assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false }, 'not in the dark')

@@ -166,13 +166,21 @@ export function cardsOf(session) { return Array.isArray(session?.cards) ? sessio
 export const TRANSIENT = new Set(['notice', 'group', 'station', 'result', 'award'])
 export const KEEPS = new Set(['testimony', 'clue', 'result', 'role'])
 
-export function nowCards(session, notes, act) {
+// At The End (`over`, the cue list's cue 23, 25 Oct 2026) the result card stays
+// on Now however many times it was put away: the phone is open for good, and
+// the result is what it opens on.
+export function nowCards(session, notes, act, { over = false } = {}) {
   const seen = notes?.seen ?? {}
   return cardsOf(session)
     .filter(c => c.act === act)
     .filter(c => c.kind !== 'role')
-    .filter(c => !(TRANSIENT.has(c.kind) && seen[c.id]))
+    .filter(c => !(TRANSIENT.has(c.kind) && seen[c.id] && !(over && c.kind === 'result')))
     .reverse()
+}
+
+// This phone's result card (Act 7), whenever it was dealt. Null until the results.
+export function resultCard(session) {
+  return cardsOf(session).find(c => c.kind === 'result') ?? null
 }
 
 // Act 2, Lights Out: this phone's next step in the cat rooms (the server's
@@ -342,12 +350,55 @@ export function openWindow(night, session, serverNow) {
   return { ...w, mine }
 }
 
-// A Parlour Game shows on top of whatever the phone was on; the screen
-// underneath stays mounted, so when the game is done the guest is back
-// exactly where they were: the same tab, the same half-typed answer, the
-// same scroll (docs/parlour-games.md, F19). The other windows (the
-// deduction round, the ballot) are beats of their own and take the screen.
-export function overlays(w) { return w?.kind === 'questions' }
+// Where a window shows on the phone (F19; the ballot moved on 25 Oct 2026, cue 19):
+//   'overlay': a Parlour Game, on top of whatever the phone was on. The screen
+//              underneath stays mounted, so when the game is done the guest is
+//              back exactly where they were: the same tab, the same half-typed
+//              answer, the same scroll (docs/parlour-games.md).
+//   'screen':  the deduction round, a beat of its own that takes the screen.
+//   'card':    the ballot, a card on the Now tab with every tab reachable, so a
+//              guest can read their clues while they decide. Two minutes on the
+//              server's clock, never closing early, the same as before.
+export function placement(w) {
+  if (!w) return null
+  if (w.kind === 'questions') return 'overlay'
+  if (w.kind === 'ballot') return 'card'
+  return 'screen'
+}
+export function overlays(w) { return placement(w) === 'overlay' }
+
+// Act 7 on the phone (Jon's cue list, cues 20 to 23, 25 Oct 2026):
+//   'eyes':   the reveal beat. A full-screen lock, the crest and "Eyes on the
+//             screen.", no tabs. (The 'eyes' notice still lands as a card, for later.)
+//   'result': the result beat. This phone's result card full screen with
+//             "Thank you for playing." under it, no tabs, while the credits roll.
+//   'over':   The End: the end beat, or nights.over. The tabs are back, the
+//             result stays on Now, everything is readable, for good.
+//   null:     any other moment.
+// Keyed on the beat's action, like the server's own checks, so a renamed beat
+// changes nothing; a night marked over is over whatever beat it says.
+export function phoneLock(night) {
+  if (!night) return null
+  if (night.over === true) return 'over'
+  if (Number(night.act) !== 7) return null
+  const action = beatSpec(7, night.beat)?.action
+  if (action === 'end') return 'over'
+  if (action === 'reveal') return 'eyes'
+  if (action === 'results') return 'result'
+  return null
+}
+export function isOver(night) { return phoneLock(night) === 'over' }
+
+// The lock this phone shows. The two host phones (session.host: Jon and Susan)
+// keep their tabs through the reveal and the result, since the Host tab is
+// what names the three and presses Next for the result and The End; their
+// Now holds the eyes notice and the result card like everyone else's. The End
+// is the same on every phone.
+export function lockFor(night, session) {
+  const lock = phoneLock(night)
+  if ((lock === 'eyes' || lock === 'result') && session?.host) return null
+  return lock
+}
 
 // Affection is kept in half steps on the server; the slider and every word
 // about it show the nearest of the five stops. Irwin is always the top one.

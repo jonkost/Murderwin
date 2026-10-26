@@ -63,13 +63,16 @@ export const TAB_KINDS = {
 // high, with commas. NUMBERS and NOTICE SCRAP carried the Act 2 safe's three
 // numbers until the safe was taken out (23 Oct 2026): kept as labels so lines
 // already written still show, never counted, and nothing reads them.
-export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'peek', 'down', 'bulletin', 'roam', 'irwin', 'door', 'eyes']
+// Three added 25 Oct 2026 for Jon's cue list: the two motive prompts (after
+// supper and after Sir Irwin) and the break line as Act 6 opens.
+export const NOTICE_KEYS = ['meet', 'introduce', 'ready', 'orient', 'news', 'peek', 'down', 'bulletin', 'motives', 'roam', 'irwin', 'update', 'break', 'door', 'eyes']
 // Retired 23 Oct 2026: Act 2 ends in the supper chime, with no check-in card.
 export const RETIRED_NOTICE_KEYS = ['checkin']
 const NOTICE_WHAT = {
   meet: 'Act 1, meet the household', introduce: 'Act 1, say who you are out loud', ready: 'Act 1, settle in before the dark', orient: 'Act 2, where things are on the phone',
-  news: 'Act 2, eyes up at the big screen in the Parlour', peek: 'Act 2, a quiet look inside your own bag', down: 'Act 3, phones down at supper, bags to the table', bulletin: 'Act 3, the bulletin was heard',
-  roam: 'Act 5, cake in hand', irwin: 'Act 5, Sir Irwin is about to speak', door: 'Act 6, the door is open', eyes: 'Act 7, eyes on the screen for the reveal',
+  news: 'Act 2, eyes up at the big screen in the Parlour', peek: 'Act 2, a quiet look inside your own bag', down: 'Act 3, leave the phone in the Parlour charging, bags to the table', bulletin: 'Act 3, the bulletin was heard',
+  motives: 'Act 3, the dinner wrap-up: cross off the motives ruled out so far', roam: 'Act 5, cake in hand', irwin: 'Act 5, Sir Irwin is about to speak', update: 'Act 5, after Sir Irwin: update your crossings-off',
+  break: 'Act 6 opens: two Parlour Games, then the final event, a good moment for a stretch', door: 'Act 6, the door is open', eyes: 'Act 7, eyes on the screen for the reveal',
   checkin: 'retired 23 Oct 2026: Act 2 ends in the supper chime, nothing reads this',
 }
 // The lines the game also reads (23 Oct 2026), so Jon, Susan or Jenna can

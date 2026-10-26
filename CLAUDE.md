@@ -271,13 +271,16 @@ and tell Jon.
 - Data format for clues, cases and seeds: JSON. Decided 25 Sep. Never YAML.
 - 7 acts, 2 to 2.5 hours (names since 13 Oct, `seed/night.json`):
   1 The Invitation (together, 4:00pm; role rules stated in the preamble;
-    blackout at the end)
+    the house rules beat for the intro video and the rules deck, the join
+    code on the Parlour TV throughout, 25 Oct; blackout at the end)
   2 Lights Out (solo, ~5:30pm, about 30 minutes; everything for your ears
     only; every guest visits all four cats in a queue, with Not yet; each cat
     gives a motive hint and a bag clue about the Murderer's bag; beats orient,
     news, peek, cat, supper: supper comes when everyone has seen all four, or
     Jon presses Supper's ready; no safe since 23 Oct)
-  3 Supper Is Served (the Orangerie)
+  3 Supper Is Served (the Orangerie; ends with the dinner wrap-up, 25 Oct:
+    every phone asks for the motives to be crossed off, the TV shows the join
+    code, everyone back on their phone before Act 4)
   4 Behind Closed Doors (about an hour; pairs and trios, at most five groups;
     info shared only inside your group). Jon presses Start Act 4: a two-minute
     warning, the title card, the groups and Locked in, then ten-minute rounds
@@ -285,12 +288,15 @@ and tell Jon.
     Study, the Library, the Orangerie, the Entryway) and waits in the Parlour
     between them; each room pays a reward and a bag clue about the Ghost's
     bag. Parlour Games wait on the phone in Act 4.
-  5 One Candle (dessert, roaming; Sir Irwin speaks)
+  5 One Candle (dessert, roaming; Sir Irwin speaks; then every phone asks for
+    the motives to be updated from what he said, 25 Oct)
   6 The Final Hour (the Parlour; two Parlour Games, the Relay Drawing, the door
     opens, then a deduction round where each player publicly commits to one
     elimination; built with the deduction round after the door)
-  7 Unmasked (~8:00pm; 2 minutes to enter picks; majority decides; metrics plus a
-    visual graph of the clarity dial)
+  7 Unmasked (~8:00pm; 2 minutes to enter picks, the ballot a card on the Now
+    tab; majority decides; metrics plus a visual graph of the clarity dial;
+    then The End, 25 Oct: every screen black, every phone open for good with
+    the result on Now)
   Reveal order: Murderer → Motive → Victim.
 - Three roles, symmetric, each holds one third: Detective, Murderer, Ghost.
   The Murderer knows they did it, not the motive. The Ghost knows they are dead,

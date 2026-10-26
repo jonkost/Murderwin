@@ -64,12 +64,13 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     }
   }, [relay.state, relay.drawerKey, relay.nextKey, relay.turnIndex, me])
 
+  // Sir Irwin's slides on the TV (cue 16, 25 Oct 2026): every phone says to be in the Parlour
   if (relay.state === 'intro') {
     return (
       <div className="moment relay papered">
         <Seal />
         <p className="crest">The Relay Drawing</p>
-        <p className="moment-text">Eyes on the main screen. Sir Irwin is explaining.</p>
+        <p className="moment-text">Be in the Parlour for the final event. Eyes on the main screen.</p>
       </div>
     )
   }

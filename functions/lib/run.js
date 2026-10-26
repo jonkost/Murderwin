@@ -37,7 +37,8 @@ export const MUSIC_COMMANDS = ['play', 'pause', 'next']
 export function firstBeat(act) { return deal.beatsOf(act)[0]?.key ?? null }
 
 // Where "Next" goes from (act, beat): the next beat, or the first beat of the
-// next act. Act 1 ends in the blackout, which is the host's own button.
+// next act. Act 1 ends in the blackout, which is the host's own button, and
+// Act 7 ends at its last beat, The End (25 Oct 2026, the cue list).
 export function nextOf(act, beatKey) {
   const beats = deal.beatsOf(act)
   const i = beats.findIndex(b => b.key === beatKey)
@@ -64,7 +65,10 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
     // the beat never forces, so a drawing already running (or done) is kept, never wiped
     started = await relay.start(db, { nightId, now })
   }
-  await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
+  // The End (the 'end' action, deal.end) sets nights/{id}.over; any other beat takes it off again, so a Back
+  // from The End or an act jump in a rehearsal opens the night back up (25 Oct 2026, the cue list)
+  const leavingEnd = spec?.action === 'end' ? {} : { over: FieldValue.delete(), overAt: FieldValue.delete() }
+  await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null, ...leavingEnd })
   // the hall bulb: green for the welcome from Act 1's first beat, red from the power's return (powerReturns
   // writes it); here only when nothing has set it yet (cue list 25 Oct 2026)
   if (act >= 1) await deal.ensureHall(db, nightId, act === 1 ? 'green' : 'red', now)

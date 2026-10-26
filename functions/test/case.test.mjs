@@ -47,7 +47,7 @@ const night = (db, id) => db.store.get(`nights/${id}`)
 const cards = (db, uid, kind) => (db.store.get(`sessions/${uid}`).cards ?? []).filter(c => !kind || c.kind === kind)
 async function toPower(db, nightId, now) {
   const next = () => hostCommand(db, { nightId, command: 'next', now })
-  await next(); await next(); await next(); await next()
+  for (let i = 0; i < 5; i++) await next() // Act 1's five beats (the house rules since 25 Oct 2026)
   await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
 }
 // Every doc path the database is asked for from here on (reads only).

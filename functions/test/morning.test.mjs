@@ -39,7 +39,7 @@ async function playedNight({ db = new FakeFirestore(), party = true, revealed = 
   db.store.set('sealed/relay_pictures', { pictures: [{ round: 1, name: SYNTH[2] }] })
   const { nightId } = await createNight(db, dryRun || gameTest ? { forceRehearsal: !party, dryRun, gameTest } : {})
   for (const name of GUESTS) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
-  for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now: 2_000_000 })
+  for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now: 2_000_000 }) // Act 1's five beats
   await hostCommand(db, { nightId, command: 'blackout', now: 2_000_000, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
   db.store.set(`nights/${nightId}/private/relay`, { grids: [{ number: 0, named: true, options: [{ name: 'practice' }], answer: 0 }, { number: 1, named: true, options: [{ name: 'x' }, { name: SYNTH[2] }], answer: 1 }, { number: 2, named: false, options: [] }] })
   db.store.set(`nights/${nightId}/public/finale`, revealed ? { stage: 'victim', victimNamedAt: new Date(revealedAt), victimAt: new Date(revealedAt + 20_000) } : { stage: 'motive' })

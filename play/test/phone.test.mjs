@@ -129,8 +129,9 @@ test('F09 no "waiting for other players" screen ever appears: no such words anyw
   // the Parlour Game's last screen is Thanks with its own Done, never a wait for the room
   assert.ok(THANKS.button && !WAITING.test(Object.values(THANKS).join(' ')))
   // and once a phone has answered, it goes straight back to where it was (App.jsx): no screen in between
+  // (the ballot is a card on Now since 25 Oct 2026, so it never becomes the screen: placement 'card')
   const app = read('play/src/App.jsx')
-  assert.match(app, /if \(w && sent !== w\.id\) \{/)
+  assert.match(app, /if \(w && sent !== w\.id && where !== 'card'\) \{/)
   assert.ok(!/Waiting|waiting/.test(app.replace(/\/\/.*$/gm, '')), 'App.jsx has no waiting state of its own')
   // the check bites
   assert.ok(WAITING.test('Waiting for the other players...') && WAITING.test('Waiting on everyone to finish') && WAITING.test('Not everyone has answered yet'))

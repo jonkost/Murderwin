@@ -66,6 +66,8 @@ export const NEEDS = {
   'act2.cat': [],
   'act3.down': [ui('NOTICE DOWN')],
   'act3.bulletin': [ui('NOTICE BULLETIN')],
+  // the dinner wrap-up (25 Oct 2026, the cue list): the first motives prompt
+  'act3.wrap': [ui('NOTICE MOTIVES')],
   'act4.parlour': [{ list: 'scenarios', also: true }],
   'act4.study': [{ list: 'study_lines' }],
   'act5.roam': [ui('NOTICE ROAM')],
@@ -73,8 +75,10 @@ export const NEEDS = {
   // the first line on his tab of each list, the only lines those two lists
   // still give the night.
   'act5.irwin': [ui('NOTICE IRWIN'), { list: 'openers', tab: 'irwin' }, { list: 'closers', tab: 'irwin' }],
-  // Act 6 plays its two games as it opens (night.json parlour.atStart).
-  'act6.games': [{ list: 'scenarios', also: true }],
+  // after Sir Irwin (25 Oct 2026): the second motives prompt
+  'act5.update': [ui('NOTICE UPDATE')],
+  // Act 6 plays its two games as it opens (night.json parlour.atStart), after the break line (25 Oct 2026).
+  'act6.games': [{ list: 'scenarios', also: true }, ui('NOTICE BREAK')],
   'act6.drawing': [ui('RELAY RULES')],
   'act6.door': [ui('NOTICE DOOR')],
   'act7.reveal': [ui('NOTICE EYES')],

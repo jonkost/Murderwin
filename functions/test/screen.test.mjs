@@ -11,7 +11,7 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, NEWS_STAND_IN, BULLETIN2_STAND_IN,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, NEWS_STAND_IN, BULLETIN2_STAND_IN, JOIN_CARDS,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
@@ -83,6 +83,12 @@ test('checkScreen refuses a forbidden key at any depth and an unknown kind; writ
   assert.equal((await readScreen(db, 'n')).kind, 'news')
   assert.ok(SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('black'))
   assert.ok(SCREEN_KINDS.includes('birthday'), 'the Happy Birthday Irwin card is a kind of its own (Cake!, 25 Oct 2026)')
+  assert.ok(SCREEN_KINDS.includes('join'), 'the join code on the Parlour TV is a kind of its own (cues 3 and 10, 25 Oct 2026)')
+  // the join screen carries words only: the TV draws the square from the play address itself
+  for (const card of Object.values(JOIN_CARDS)) assert.ok(checkScreen(screenDoc('join', card)).ok)
+  for (const b of beatsOf(1)) assert.equal(b.screen, 'join', `Act 1 ${b.key} keeps the code on the TV`)
+  assert.equal(beatSpec(3, 'wrap').screen, 'join', 'the dinner wrap-up shows the code for anyone who needs to rejoin')
+  assert.equal(beatSpec(7, 'end').screen, 'black', 'The End is black')
 })
 
 test('Cake! (cue 13) stamps public/cues.cake for the brain and puts the birthday card on the Parlour TV until the next beat; Sound test plays the chime', async () => {
@@ -230,16 +236,23 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   const host = (command, arg) => step(() => hostCommand(db, { nightId, command, arg, now, sleep: noSleep }))
   const next = () => host('next')
 
-  // Act 1: idle screens named after the act, then the blackout goes black with its sound, and five seconds
-  // later (at once here) the power is back on its own: the TV stays dark through the prompt, with no sound
-  // of its own (25 Oct 2026, the cue list)
+  // Act 1: the join code on the Parlour TV through every beat (cue 3, 25 Oct 2026: rulesDeckScreen answered),
+  // then the blackout goes black with its sound, and five seconds later (at once here) the power is back on
+  // its own: the TV stays dark through the prompt, with no sound of its own (25 Oct 2026, the cue list)
   await next()
-  assert.equal(screen().kind, 'idle')
-  assert.equal(screen().title, 'The Invitation')
+  assert.equal(screen().kind, 'join')
+  assert.equal(screen().title, JOIN_CARDS.join.title)
+  assert.deepEqual(screen().lines, JOIN_CARDS.join.lines)
+  assert.ok(checkScreen(screen()).ok)
+  await next() // the house rules: the video and the slides are the TV's own tab; the code stays
+  assert.equal(nightDoc().beat, 'rules')
+  assert.equal(screen().kind, 'join')
   // the Sound test during the rules (cue 2, 25 Oct 2026): the chime, and the screen stays where it is
   assert.deepEqual(await host('sound-test'), { ok: true, sound: 'chime-phone' })
-  assert.equal(screen().kind, 'idle')
+  assert.equal(screen().kind, 'join')
   await next(); await next(); await next()
+  assert.equal(nightDoc().beat, 'ready')
+  assert.equal(screen().kind, 'join', 'the code stays up to the blackout')
   await host('blackout')
   assert.equal(sounds.has('blackout'), true)
   assert.equal(nightDoc().phase, 'prompt', 'the power came back on its own')
@@ -312,6 +325,13 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   await host('tick')
   assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
   assert.deepEqual(screen().captions.lines, bulletin.lines, 'captions stay up through supper')
+  // the dinner wrap-up (cue 10, 25 Oct 2026): the join code again for anyone who needs to rejoin, the
+  // captions still riding along for the Orangerie iPad
+  await next()
+  assert.equal(nightDoc().beat, 'wrap')
+  assert.equal(screen().kind, 'join')
+  assert.equal(screen().title, JOIN_CARDS.rejoin.title)
+  assert.deepEqual(screen().captions.lines, bulletin.lines, 'bulletin 2\'s words stay on the iPad')
 
   // Act 4: Start Act 4 (the warning), the title card with the chime, then the rounds with the prompts;
   // the captions drop; the study solving rings the sting
@@ -333,6 +353,10 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   }
   assert.equal(nightDoc().act, 5)
   assert.ok(sounds.has('sting-solved'))
+  // Act 5 opens on the dessert chime (cue 12, 25 Oct 2026) and the TV's idle loop
+  assert.equal(nightDoc().beat, 'roam')
+  assert.equal((await currentSound(db, nightId)).id, 'chime-phone')
+  assert.equal(screen().kind, 'idle')
 
   // Act 5: the cake is served (cue 13, 25 Oct 2026): the birthday card on the TV, the stamp for the brain
   await host('cake')
@@ -356,6 +380,11 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
     for (const n of names) assert.ok(!new RegExp(`\\b${n.split(' ').pop()}\\b`).test(l))
   }
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin')
+  // the motives update (cue 14, 25 Oct 2026): the TV goes back to its loop, nothing plays
+  await next()
+  assert.equal(nightDoc().beat, 'update')
+  assert.equal(screen().kind, 'idle')
+  assert.equal((await currentSound(db, nightId)).id, 'chime-irwin', 'no sound of its own')
 
   // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, the board
   await next() // Act 6 opens on its two Parlour Games
@@ -404,6 +433,14 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   for (let i = 0; i < 3; i++) { now += 1000; await host('reveal-stage') }
   await next() // result
   assert.equal((await currentSound(db, nightId)).id, 'sting-result')
+  // The End (cue 23, 25 Oct 2026): the TV goes black (the finale is over), no sound, and the night is over
+  const resultAt = (await currentSound(db, nightId)).at
+  await next()
+  assert.equal(nightDoc().beat, 'end')
+  assert.equal(nightDoc().over, true)
+  assert.equal(screen().kind, 'black')
+  assert.equal(screen().title, '', 'black, not the pause card')
+  assert.deepEqual((await currentSound(db, nightId)).at, resultAt, 'The End plays nothing')
 
   // every sound in the catalogue was written at least once, and none outside it
   for (const id of SOUND_IDS) assert.ok(sounds.has(id), `sound ${id} was played`)
@@ -438,9 +475,9 @@ test('G53 on a party night bulletin 2 plays the real family\'s own line at the d
   }
 })
 
-test('F27 chime-phone plays at every "look at your phone" moment: supper, the Act 4 groups, every round and the call back to the Parlour, and the Act 6 Parlour Games', async () => {
-  // the night as written: every one of those beats carries chime-phone
-  const wants = ['2/supper', '4/groups', ...beatsOf(4).filter(b => /^round\d+$/.test(b.key)).map(b => `4/${b.key}`), '6/games']
+test('F27 chime-phone plays at every "look at your phone" moment: supper, the Act 4 groups, every round and the call back to the Parlour, dessert, and the Act 6 Parlour Games', async () => {
+  // the night as written: every one of those beats carries chime-phone (dessert since 25 Oct 2026, cue 12)
+  const wants = ['2/supper', '4/groups', ...beatsOf(4).filter(b => /^round\d+$/.test(b.key)).map(b => `4/${b.key}`), '5/roam', '6/games']
   for (const k of wants) {
     const [act, key] = k.split('/')
     assert.equal(beatSpec(Number(act), key)?.sound, 'chime-phone', `F27 ${k} chimes the phones`)
@@ -460,7 +497,7 @@ test('F27 chime-phone plays at every "look at your phone" moment: supper, the Ac
     assert.notEqual(ms(s.at), was, `F27 ${label} plays it afresh`)
     chimed.push(label)
   }
-  await host('next'); await host('next'); await host('next'); await host('next')
+  for (let i = 0; i < 5; i++) await host('next') // Act 1's five beats
   await host('blackout') // the power returns on its own
   await host('next'); await host('next'); await host('next') // news, peek, cat
   await expectChime('supper', () => host('supper'))
@@ -468,19 +505,23 @@ test('F27 chime-phone plays at every "look at your phone" moment: supper, the Ac
   await host('next') // arm the bulletin
   now = ms(db.store.get(`nights/${nightId}/private/bulletin`).dueAt)
   await host('tick')
+  await host('next') // the dinner wrap-up
   await host('start-act4')
   await expectChime('the Act 4 groups', () => host('next'))
   let guard = 0
   while (nightDoc().act === 4 && guard++ < 10) {
     const before = nightDoc().beat
     const label = before === 'groups' ? 'round 1' : /^round(\d+)$/.test(before) ? `after ${before}` : before
-    await expectChime(label, () => host('next')) // each round's chime, and after the last the call back to the Parlour
+    await expectChime(label, () => host('next')) // each round's chime, and after the last the call back to the Parlour and the dessert chime (5/roam)
   }
   assert.equal(nightDoc().act, 5)
+  assert.equal(nightDoc().beat, 'roam')
+  assert.equal((await currentSound(db, nightId)).id, 'chime-phone', 'F27 dessert chimes the phones (cue 12)')
   await host('next') // Sir Irwin
+  await host('next') // update your motives
   await expectChime('the Act 6 Parlour Games', () => host('next'))
   assert.equal(nightDoc().beat, 'games')
-  assert.ok(chimed.length >= 7, `F27 ${chimed.length} chimes: supper, the groups, every round, back to the Parlour, Act 6`)
+  assert.ok(chimed.length >= 7, `F27 ${chimed.length} chimes: supper, the groups, every round, back to the Parlour and dessert, Act 6`)
 })
 
 test('onBeat with Back writes the screen but plays nothing; onPhase on an unknown command is a no-op', async () => {

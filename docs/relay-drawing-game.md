@@ -87,8 +87,9 @@ Big Solve*). It tells you nothing.
 server's clock. Each slide stays up long enough to read: about 5 seconds, plus 0.4 seconds a
 word. The longest slide (42 words) stays up about 22 seconds. All seven take about two
 minutes. Slide 3 ("A turn") shows the practice smiley's B1 square beside its words. Nothing is
-recorded: anyone may read the slides aloud. Every phone says *Eyes on the main screen. Sir
-Irwin is explaining.*
+recorded: anyone may read the slides aloud. Every guest's phone says *Be in the Parlour for the
+final event. Eyes on the main screen.* (the cue list's cue 16, 25 Oct 2026); the two host phones
+keep their tabs through the slides, since Pause lives on the Host tab.
 
 **A turn.**
 1. **The call.** The game picks a random player: anyone, even the same person twice in a row.

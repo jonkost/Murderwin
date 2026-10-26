@@ -325,6 +325,16 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .pick.on { border-color: var(--good); box-shadow: inset 0 0 0 1px var(--good); }
 .summary { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; font-size: 1.15rem; text-align: left; width: min(92vw, 24rem); }
 .summary .dim { display: block; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
+/* The ballot as a card on Now (25 Oct 2026, cue 19): the same three steps and the
+   same clock, inside the grid, the tabs still reachable underneath. */
+.ballot-card { text-align: center; justify-items: center; }
+.ballot-card .pick-list, .ballot-card .summary, .ballot-card .clock, .ballot-card .clock .bar { width: 100%; }
+.ballot-card .clock { margin-top: 0.2rem; padding-top: 0.4rem; }
+.ballot-card .host-row { justify-content: center; margin: 0; }
+.ballot-card .host-line { justify-self: stretch; }
+/* Act 7's locks (cues 20 to 22): a full screen with no tabs, the result card in the middle */
+.moment.lock { justify-content: center; }
+.moment.lock .dealt { width: min(92vw, 26rem); text-align: left; }
 .role-card { font-size: 1.3rem; max-width: 22rem; }
 
 /* ---- getting started ---- */
