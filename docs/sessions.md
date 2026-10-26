@@ -35,6 +35,8 @@ on the Canon.
   1194 by 834, 1366 by 1024, 834 by 1194 and 1280 by 720 (cards 169, 211, 177 and 136px in round 1).
   A 7-pair board dealt before the change still fits (7 by 2). The preview deals 6 pairs. The
   site deployed again (hosting only) and pushed.
+- Then, from Jon: the square's coordinate (C3, B1) sits centred above the square, on a turn and
+  on Sir Irwin's slide 3 (`Kiosk.jsx`, `.kiosk-cell`, `.slide-cell`). Committed; not deployed.
 
 **What is left**
 - Boo's Catwalk (note 10002) stays open: Jon sends the shape he wants for the wall and the catwalk.

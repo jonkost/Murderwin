@@ -250,8 +250,8 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
           ? <div className="slide-with-cell">
               <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>
               <div className="slide-cell">
-                <Cell strokes={s.cell.strokes} className="cell-art slide" dark />
                 <p className="slide-cell-label">{s.cell.label}</p>
+                <Cell strokes={s.cell.strokes} className="cell-art slide" dark />
               </div>
             </div>
           : <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>)}
@@ -268,13 +268,13 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
       </div>
     )
   }
-  // the square: a black screen, one white-outlined box, white line art, its label. Never the whole picture.
+  // the square: a black screen, one white-outlined box, white line art, its label centred above it (Jon, 26 Oct 2026). Never the whole picture.
   if (relay.state === 'turn') {
     return (
       <div className="kiosk turn black-box">
         <div className="kiosk-cell">
-          <Cell strokes={relay.cell?.strokes} className="cell-art big" dark />
           <p className="kiosk-label">{relay.cell?.label}</p>
+          <Cell strokes={relay.cell?.strokes} className="cell-art big" dark />
         </div>
       </div>
     )

@@ -241,9 +241,10 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk-line { font-size: 3.2vw; margin: 1vw 0 0; max-width: 80vw; }
 .kiosk-next { font-size: 2.6vw; color: var(--dim); margin: 1vw 0 0; }
 .kiosk-count { font-size: 6vw; margin: 1.5vw 0 0; color: var(--good); font-variant-numeric: tabular-nums; }
-.kiosk-cell { position: relative; }
 .kiosk .cell-art.big { width: 52vh; height: 52vh; border-radius: 1vh; box-shadow: 0 10px 60px rgba(0,0,0,0.6); }
-.kiosk-label { position: absolute; top: -1vh; right: -1vh; transform: translate(100%, 0); font-size: 8vh; font-weight: 700; color: var(--good); margin: 0; }
+/* the square's coordinate sits centred above it (Jon, 26 Oct 2026) */
+.kiosk-cell { display: flex; flex-direction: column; align-items: center; gap: 1.5vh; }
+.kiosk-label { font-size: 8vh; font-weight: 700; line-height: 1; color: var(--good); margin: 0; }
 .kiosk-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2vw; width: 92vw; margin: 1.5vw 0; }
 .kiosk-option { position: relative; background: var(--card); padding: 1vw; border-radius: 1vw; }
 .kiosk-option .figure-art { width: 100%; height: auto; border-radius: 0.6vw; display: block; }
@@ -669,7 +670,7 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 /* slide 3: the practice smiley's B1 square, dark like a turn, its label beside the words */
 .slide-with-cell { display: flex; align-items: center; justify-content: flex-start; gap: 4vw; max-width: 90vw; }
 .slide-with-cell .slide-text { text-align: left; margin: 0; }
-.slide-cell { display: flex; align-items: flex-start; gap: 1.2vw; flex: none; }
+.slide-cell { display: flex; flex-direction: column; align-items: center; gap: 1.2vh; flex: none; }
 .cell-art.slide { width: 34vh; height: 34vh; display: block; }
 .slide-cell-label { font-size: 6vh; font-weight: 700; color: #fff; margin: 0; line-height: 1; }
 /* Sir Irwin's door slide, above "The door is open" */
