@@ -1,43 +1,68 @@
 {
   "_about": [
-    "The brain's music and Hue scenes for each moment of the night (handoff 23 Oct, section 2d). Safe to change: nothing here is a secret. docs/cues-relay.md explains it.",
-    "music: a playlist below by its short name (arrival, investigation, supper), or \"off\" to stop the music, or null to leave it as it is.",
+    "The brain's music, Hue scenes and projector for each moment of the night: Jon's cue list of 25 Oct 2026 (docs/cue-list.md), moment by moment. Safe to change: nothing here is a secret. docs/cues-relay.md explains it.",
+    "music: a playlist below by its short name (jazz, jazzLow, intense35, intense60, credits), or \"off\" to stop the music, or null to leave it as it is. Two short names may share one playlist in Music at two volumes.",
     "hue: the name of a scene you made in the Hue app, or null to leave the lights as they are.",
-    "An act's music and hue hold for every beat of that act unless the beat says otherwise. A phase (the blackout, the power returning) wins over the act and the beat.",
+    "projector: \"on\" or \"off\" for the projector's plug (the IKEA switch in Apple Home, through the two Projector Murderwin Shortcuts), or null to leave it.",
+    "An act's settings hold for every beat of that act unless the beat says otherwise. A phase (the blackout, the power returning) wins over the act and the beat.",
     "The brain only acts when the answer changes, so pressing Next inside an act changes nothing unless this file says so.",
-    "volume: Music's own volume, 0 to 100, for that playlist. whisper: Music's volume while a cue sound or recording plays. videoHoldSeconds: how long Music stays at a whisper after a chime whose bulletin the Parlour TV plays as video.",
-    "drawing: the music while the Relay Drawing runs, until the door opens. offForTheNight: after that sound, the music stays off for the rest of that act.",
+    "volume: Music's own volume, 0 to 100, for that playlist. whisper: Music's volume while a cue sound or recording plays. videoHoldSeconds: how long Music stays at a whisper after a chime whose bulletin the Parlour TV plays as video (0: the sheet stops the music for the news beat itself).",
+    "drawing: while the Relay Drawing runs in those acts (before the door opens), its music and scene win over the beat; unlocked: the moment the door opens, before the next beat.",
+    "cut: on that act and beat, the music is cut the moment the newscast begins (trigger clips: the closing bulletin's first recorded part, the first Name press) and stays off for that beat.",
+    "study: in those acts, the playing scene while the study's public state is one of states (a group at the wall), the idle scene when it leaves them.",
+    "cake: the Cake! button. That one song from the Music library at that volume, with that scene; the sheet's music and scene come back when the song ends, or after seconds if Music cannot be read.",
     "strings: the Orangerie string lights in Salem's game (red, green) and the rest of the night (decor). hue 0 to 360, sat and brightness 0 to 100."
   ],
   "playlists": {
-    "arrival": { "name": "Murderwin · Arrival", "volume": 70 },
-    "investigation": { "name": "Murderwin · Investigation", "volume": 40 },
-    "supper": { "name": "Murderwin · Supper", "volume": 55 }
+    "jazz": { "name": "Murderwin · Jazz", "volume": 55 },
+    "jazzLow": { "name": "Murderwin · Jazz", "volume": 30 },
+    "intense35": { "name": "Murderwin · Intense", "volume": 35 },
+    "intense60": { "name": "Murderwin · Intense", "volume": 60 },
+    "credits": { "name": "Murderwin · Credits", "volume": 35 }
   },
   "whisper": 10,
-  "videoHoldSeconds": 90,
+  "videoHoldSeconds": 0,
   "phases": {
-    "blackout": { "music": "off", "hue": "Murderwin Blackout" },
-    "prompt": { "music": "investigation", "hue": "Murderwin Lights Out" }
+    "blackout": { "music": "off", "hue": "Murderwin Blackout", "projector": "off" },
+    "prompt": { "music": "jazz", "hue": "Murderwin Default", "projector": "on" }
   },
   "acts": {
-    "1": { "music": "arrival", "hue": "Murderwin Arrival" },
-    "2": { "music": "investigation", "hue": "Murderwin Lights Out", "beats": { "supper": { "music": "supper" } } },
-    "3": { "music": "supper", "hue": "Murderwin Lights Out" },
-    "4": { "music": "investigation", "hue": "Murderwin Lights Out", "beats": { "warn": { "music": "supper" } } },
-    "5": { "music": "arrival", "hue": "Murderwin Arrival" },
-    "6": { "music": "investigation", "hue": "Murderwin Lights Out" },
-    "7": {
-      "music": "investigation",
-      "hue": "Murderwin Lights Out",
+    "1": {
+      "music": "jazz", "hue": "Murderwin Default", "projector": "on",
+      "beats": { "rules": { "music": "off", "hue": "Murderwin Dimmed" } }
+    },
+    "2": {
+      "music": "jazz", "hue": "Murderwin Default", "projector": "on",
+      "beats": { "news": { "music": "off", "hue": "Murderwin Dimmed" } }
+    },
+    "3": { "music": "jazz", "hue": "Murderwin Default", "projector": "on" },
+    "4": { "music": "jazz", "hue": "Murderwin Default", "projector": "on" },
+    "5": { "music": "jazz", "hue": "Murderwin Default", "projector": "on" },
+    "6": {
+      "music": "jazz", "hue": "Murderwin Default", "projector": "on",
       "beats": {
-        "reveal": { "music": "off", "hue": "Murderwin Reveal" },
-        "result": { "music": "off", "hue": "Murderwin Reveal" }
+        "drawing": { "music": "jazzLow", "hue": "Murderwin Dimmed", "projector": "off" },
+        "door": { "music": "intense60", "hue": "Murderwin Drawing", "projector": "off" },
+        "eliminate": { "music": "intense60", "hue": "Murderwin Drawing", "projector": "off" }
+      }
+    },
+    "7": {
+      "music": "intense60", "hue": "Murderwin Default", "projector": "on",
+      "beats": {
+        "reveal": { "hue": "Murderwin Dimmed" },
+        "result": { "music": "credits" },
+        "end": { "music": "off", "hue": null, "projector": "off" }
       }
     }
   },
-  "drawing": { "acts": [6], "music": "off" },
-  "offForTheNight": { "sound": "sting-reveal", "acts": [7] },
+  "drawing": {
+    "acts": [6],
+    "music": "intense35", "hue": "Murderwin Drawing",
+    "unlocked": { "music": "intense60", "hue": "Murderwin Drawing" }
+  },
+  "cut": { "acts": [7], "beats": ["reveal"], "trigger": "clips" },
+  "study": { "acts": [4], "playing": "Murderwin Study Dim", "idle": "Murderwin Default", "states": ["playing", "reproducing", "entering"] },
+  "cake": { "song": "Happy Birthday for Dogs", "volume": 60, "hue": "Murderwin Candles", "seconds": 75 },
   "strings": {
     "red": { "hue": 0, "sat": 100, "brightness": 100 },
     "green": { "hue": 120, "sat": 100, "brightness": 100 },

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
-import { CLIP_IDS, plan, hallColour, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, knownSound, missingSoundFiles, clipCode, clipReader, playLine, recordingFiles } from '../lib/cues.js'
+import { CLIP_IDS, plan, hallColour, phaseOf, soundCandidates, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_KEY, PRESENCE_MS, SOUND_STALE_MS, SOUND_IDS, REQUIRED_SOUND_IDS, CHIME_FALLBACK, OPTIONAL_SOUND_IDS, knownSound, missingSoundFiles, soundFileFor, soundFileReport, soundFilesLines, clipCode, clipReader, playLine, recordingFiles } from '../lib/cues.js'
 import { createPlayer } from '../lib/player.js'
 import { SOUND_IDS as SERVER_SOUND_IDS } from '../../functions/lib/screen.js'
 import { CLIP_IDS as SERVER_CLIP_IDS, clipCode as serverClipCode } from '../../functions/lib/news.js'
@@ -14,6 +14,41 @@ test('hall: red when the night says red, green when it says green or the door is
   assert.equal(hallColour({ cues: { hall: 'green' } }), 'green')
   assert.equal(hallColour({ cues: { hall: 'red' }, relay: { doorOpen: true } }), 'green', 'the door opening wins')
   assert.equal(hallColour({ relay: { doorOpen: true } }), 'green', 'no cues doc at all still turns green')
+})
+
+// ---- 25 Oct 2026, the cue list: the bulb's third state ----
+
+test('hall: off in the blackout, whatever the cues doc says, a pause from the blackout included; red again when the power returns', () => {
+  assert.equal(phaseOf(null), null)
+  assert.equal(phaseOf({ phase: 'paused', pausedFrom: 'blackout' }), 'blackout')
+  assert.equal(phaseOf({ phase: 'paused' }), 'act')
+  assert.equal(phaseOf({ act: 2 }), 'act', 'no phase: an act')
+  assert.equal(hallColour({ night: { phase: 'blackout' }, cues: { hall: 'green' } }), 'off')
+  assert.equal(hallColour({ night: { phase: 'blackout' }, cues: { hall: 'red' }, relay: { doorOpen: true } }), 'off', 'the blackout wins over everything')
+  assert.equal(hallColour({ night: { phase: 'paused', pausedFrom: 'blackout' }, cues: { hall: 'red' } }), 'off', 'paused in the dark is still dark')
+  assert.equal(hallColour({ night: { phase: 'prompt' }, cues: { hall: 'red' } }), 'red', 'the power returns: the server wrote red')
+  assert.equal(hallColour({ night: { phase: 'act' }, cues: { hall: 'green' } }), 'green')
+  assert.equal(hallColour({ night: { phase: 'blackout' } }), 'off', 'no cues doc yet: still off')
+  // the planner: green at the welcome, off at the blackout, red at the power's return, each once
+  let s = { hall: null, sound: null }
+  let r = plan(s, { night: { act: 1, phase: 'act' }, cues: { hall: 'green' } })
+  assert.deepEqual(r.actions, [{ type: 'hall', colour: 'green' }])
+  s = r.state
+  r = plan(s, { night: { act: 1, phase: 'blackout' }, cues: { hall: 'green' } })
+  assert.deepEqual(r.actions, [{ type: 'hall', colour: 'off' }])
+  s = r.state
+  assert.deepEqual(plan(s, { night: { act: 1, phase: 'paused', pausedFrom: 'blackout' }, cues: { hall: 'green' } }).actions, [], 'paused: no change')
+  assert.deepEqual(plan(s, { night: { act: 1, phase: 'blackout' }, cues: { hall: 'green' } }).actions, [], 'the same again: nothing')
+  r = plan(s, { night: { act: 2, phase: 'prompt' }, cues: { hall: 'red' } })
+  assert.deepEqual(r.actions, [{ type: 'hall', colour: 'red' }])
+  assert.equal(r.state.hall, 'red')
+  // a relay started in the blackout turns the bulb off at once
+  assert.deepEqual(plan({ hall: null, sound: null }, { night: { phase: 'blackout' }, cues: { hall: 'red' } }).actions, [{ type: 'hall', colour: 'off' }])
+  // the relay sends 'off' to the bulb like a colour, and re-sends it in the retry loop
+  assert.deepEqual(lightBody('off'), { on: { on: false } })
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('if (wantHall && !FAKE && hue) setHall(wantHall)'), 'off is retried like red and green')
+  assert.ok(src.includes('[hall] would turn ${colour}'), 'fake mode: "[hall] would turn off"')
 })
 
 test('plan: red → green once; the same docs again do nothing; a reload does nothing', () => {
@@ -76,16 +111,72 @@ test('the catalogue: every id is accepted, an unknown one is refused with a coun
   assert.ok(src.includes("a.type === 'refused'") && src.includes('refused ${a.count} id'), 'a count-only log line')
 })
 
-test('missing files: the ids with no file under media, by any accepted extension; the relay refuses to start on any', () => {
-  const have = new Set(['/m/chime-news.m4a', '/m/sting-door.wav', '/m/power.mp3'])
+test('missing files: the ids with no file under media, by any accepted extension; the relay refuses to start only when a required one is missing', () => {
+  const have = new Set(['/m/chime-news.m4a', '/m/sting-door.wav', '/m/blackout.mp3'])
   const missing = missingSoundFiles('/m', f => have.has(f))
   assert.equal(missing.length, SOUND_IDS.length - 3)
-  assert.ok(!missing.includes('chime-news') && !missing.includes('sting-door') && !missing.includes('power'))
+  assert.ok(!missing.includes('chime-news') && !missing.includes('sting-door') && !missing.includes('blackout'))
   assert.deepEqual(missingSoundFiles('/m', () => true), [])
   assert.deepEqual(missingSoundFiles('/m', () => false, ['x']), ['x'])
   const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
-  assert.ok(src.includes('missingSoundFiles(MEDIA_DIR, existsSync)') && src.includes('process.exit(2)'), 'quits before watching anything')
-  assert.ok(src.indexOf('missingSoundFiles(MEDIA_DIR') < src.indexOf('initializeApp('), 'the check runs before the sign-in')
+  assert.ok(src.includes('soundFileReport(MEDIA_DIR, existsSync)') && src.includes('if (soundReport.required.length && !TOOL)') && src.includes('process.exit(2)'), 'quits before watching anything, on a required sound only')
+  assert.ok(src.indexOf('soundFileReport(MEDIA_DIR') < src.indexOf('initializeApp('), 'the check runs before the sign-in')
+})
+
+// ---- 25 Oct 2026, cueSounds: nine sounds, two required, one chime for every chime moment, the stings optional ----
+
+test('nine sounds, on both sides: the power sound is gone; chime-phone and blackout are the two required; the three other chimes fall back to chime-phone; the four stings are optional', () => {
+  assert.equal(SOUND_IDS.length, 9)
+  assert.ok(!SOUND_IDS.includes('power'))
+  assert.deepEqual(SOUND_IDS, SERVER_SOUND_IDS, 'cues/lib/cues.js and functions/lib/screen.js agree')
+  assert.deepEqual(REQUIRED_SOUND_IDS, ['chime-phone', 'blackout'])
+  assert.deepEqual(CHIME_FALLBACK, { 'chime-news': 'chime-phone', 'chime-irwin': 'chime-phone', 'sounder-bulletin': 'chime-phone' })
+  assert.deepEqual(OPTIONAL_SOUND_IDS, ['sting-solved', 'sting-door', 'sting-reveal', 'sting-result'])
+  for (const id of [...REQUIRED_SOUND_IDS, ...Object.keys(CHIME_FALLBACK), ...OPTIONAL_SOUND_IDS]) assert.ok(SOUND_IDS.includes(id), id)
+  assert.equal(REQUIRED_SOUND_IDS.length + Object.keys(CHIME_FALLBACK).length + OPTIONAL_SOUND_IDS.length, SOUND_IDS.length, 'every sound is in exactly one group')
+})
+
+test('the one chime serves every chime moment: a chime with no file of its own plays chime-phone\'s file; a sting with none plays nothing', () => {
+  const have = new Set(['/m/chime-phone.m4a', '/m/blackout.wav', '/m/sting-door.m4a'])
+  const exists = f => have.has(f)
+  assert.deepEqual(soundFileFor('/m', 'chime-phone', exists), { file: '/m/chime-phone.m4a', fallback: false })
+  assert.deepEqual(soundFileFor('/m', 'chime-news', exists), { file: '/m/chime-phone.m4a', fallback: true })
+  assert.deepEqual(soundFileFor('/m', 'chime-irwin', exists), { file: '/m/chime-phone.m4a', fallback: true })
+  assert.deepEqual(soundFileFor('/m', 'sounder-bulletin', exists), { file: '/m/chime-phone.m4a', fallback: true })
+  assert.deepEqual(soundFileFor('/m', 'sting-door', exists), { file: '/m/sting-door.m4a', fallback: false })
+  assert.equal(soundFileFor('/m', 'sting-reveal', exists), null, 'an optional sting with no file: silent')
+  assert.equal(soundFileFor('/m', 'chime-news', () => false), null, 'no chime-phone either: nothing')
+  // a chime's own file wins over the fallback
+  assert.deepEqual(soundFileFor('/m', 'chime-news', f => f === '/m/chime-news.mp3' || have.has(f)), { file: '/m/chime-news.mp3', fallback: false })
+  // the report for the start of the evening, counts only
+  const r = soundFileReport('/m', exists)
+  assert.deepEqual(r, { required: [], chimes: ['chime-news', 'sounder-bulletin', 'chime-irwin'], optional: ['sting-solved', 'sting-reveal', 'sting-result'], total: 9 })
+  assert.deepEqual(soundFilesLines(r), [
+    '3 chimes have no file of their own: the one chime plays there',
+    '3 optional sounds have no file: silent at those moments',
+  ])
+  const none = soundFileReport('/m', () => false)
+  assert.deepEqual(none.required, ['blackout', 'chime-phone'], 'in the catalogue\'s order')
+  assert.deepEqual(none.chimes, [], 'with no chime-phone there is nothing to fall back on')
+  assert.equal(none.optional.length, 7)
+  assert.equal(soundFilesLines(none)[0], '2 of the 2 required sounds have no file (media/README.md names the two)')
+  assert.deepEqual(soundFilesLines(soundFileReport('/m', () => true)), ['all 9 sounds have a file'])
+  assert.deepEqual(soundFilesLines(soundFileReport('/m', f => f !== '/m/blackout.m4a' && f !== '/m/blackout.mp3' && f !== '/m/blackout.wav' && f !== '/m/blackout.aiff')), ['1 of the 2 required sounds has no file (media/README.md names the two)'])
+  for (const line of [...soundFilesLines(r), ...soundFilesLines(none)]) for (const id of SOUND_IDS) assert.ok(!line.includes(id), 'counts only, never an id')
+  // the player uses the fallback, and its line says so without naming anything
+  const { spawn, procs } = fakeSpawn()
+  const lines = []
+  const player = createPlayer({ mediaDir: '/m', exists, spawn, log: l => lines.push(l) })
+  player.play('chime-news', [])
+  assert.equal(procs.at(-1).file, '/m/chime-phone.m4a', 'the chime stands in')
+  assert.equal(lines.at(-1), '[sound] sound playing (the one chime stands in)')
+  player.play('sting-reveal', [])
+  assert.equal(procs.length, 1, 'an optional sting with no file: nothing spawned')
+  assert.equal(lines.at(-1), '[sound] sound file missing; skipped')
+  for (const l of lines) for (const id of SOUND_IDS) assert.ok(!l.includes(id))
+  // the start-up prints the counts
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('soundFilesLines(soundReport)'), 'the counts are printed at the start')
 })
 
 test('the heartbeat row is the shape the rules allow, under the guest key cues, once a minute', () => {
@@ -277,11 +368,13 @@ test('the player in fake mode plays nothing and says so in one count-only line',
 
 // ---- 24 Oct: chime-phone, video, the done callback, Hue scenes, the night doc ----
 
-test('chime-phone is the tenth sound, on both sides', () => {
-  assert.equal(SOUND_IDS.length, 10)
+test('chime-phone is the last sound, on both sides (the ninth since 25 Oct 2026)', () => {
+  assert.equal(SOUND_IDS.length, 9)
   assert.equal(SOUND_IDS.at(-1), 'chime-phone')
   assert.ok(knownSound('chime-phone'))
+  assert.ok(!knownSound('power'), 'the power\'s return plays nothing')
   assert.deepEqual(plan({ hall: null, sound: null }, { sounds: { current: { id: 'chime-phone', at: 1000 } } }, 1000).actions, [{ type: 'sound', id: 'chime-phone' }])
+  assert.deepEqual(plan({ hall: null, sound: null }, { sounds: { current: { id: 'power', at: 1000 } } }, 1000).actions, [{ type: 'refused', count: 1 }], 'an old server sending power is refused, counted')
 })
 
 test('video: the TV plays the bulletin, so the relay plays the chime and never the recordings; recordings alone play nothing', () => {
@@ -361,12 +454,16 @@ test('hue scenes: listed with their rooms, recalled by name (every scene with th
   assert.equal(sameSceneName('Murderwin Arrival', 'Murderwin Arrivals'), false)
 })
 
-test('the relay watches the night doc as well as the public docs, and has the scene lister and the hardware checks', () => {
+test('the relay watches the night doc as well as the public docs (the study too), and has the scene lister and the hardware checks', () => {
   const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
   assert.ok(src.includes('doc(db, `nights/${id}`)'), 'the night doc: act, beat, phase')
-  for (const name of ['cues', 'relay', 'sounds', 'salem']) assert.ok(src.includes(`'${name}'`), name)
-  for (const flag of ['--scenes', '--scene', '--check-music', '--check-strings', '--offline', '--demo']) assert.ok(src.includes(`'${flag}'`), flag)
+  for (const name of ['cues', 'relay', 'sounds', 'salem', 'study']) assert.ok(src.includes(`'${name}'`), name)
+  for (const flag of ['--scenes', '--scene', '--check-music', '--check-strings', '--check-projector', '--offline', '--demo']) assert.ok(src.includes(`'${flag}'`), flag)
   assert.ok(src.includes('planScenes(sceneState, docs, now, sheet)'))
+  // the planner's new actions are performed: the projector's plug, and the cake (then the sheet again)
+  assert.ok(src.includes("if (a.type === 'projector') projector.set(a.do)"))
+  assert.ok(src.includes("if (a.type === 'cake') serveCake(a)") && src.includes('sceneState = afterCake(sceneState)'))
+  assert.ok(src.includes('PROJECTOR_SHORTCUTS') && src.includes('projectorShortcutNames(env)'), 'the projector is on with PROJECTOR_SHORTCUTS=on, its Shortcut names from cues/.env')
   // every cue brings the music back when it ends, even one that played nothing after cutting off a ducked one
   assert.ok(src.includes('if (ducksFor(a)) cueStarts()') && src.includes('onDone: () => cueEnds(a, startedAt)'))
   // the hall bulb keeps its own logic: scenes never set it

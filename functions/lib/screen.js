@@ -40,7 +40,7 @@ export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'boar
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
 // relay (cues/lib/cues.js) carries the same list and refuses an id outside it.
-export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power', 'chime-phone']
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'chime-phone']
 
 // Keys a public screen doc may never carry, at any depth.
 export const FORBIDDEN_SCREEN_KEYS = [

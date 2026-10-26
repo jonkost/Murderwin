@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Stand-in sounds: one short tone per id in the catalogue, so the whole
-// AirPlay chain (the cue relay, afplay, the speaker group) can be tested
-// before Jon records anything. Each file starts with one second of silence
+// Stand-in sounds: one short tone per id in the catalogue (nine since 25 Oct
+// 2026: the power sound is gone), so the whole AirPlay chain (the cue relay,
+// afplay, the speaker group) can be tested before Jon records anything. Only
+// chime-phone and blackout are required by the relay; the others are made too,
+// so a rehearsal hears every moment. Each file starts with one second of silence
 // (the pad rule: AirPlay takes a moment to spin up and would eat the start),
 // then a different little figure per id, so you can tell them apart by ear.
 //
@@ -36,7 +38,6 @@ export const FIGURES = {
   'sting-reveal': [[440, 0.2], [440, 0.2], [440, 0.2], [349, 0.9]],
   'sting-result': [[784, 0.15], [1046, 0.15], [1318, 0.15], [1568, 0.45]],
   blackout: [[220, 0.8], [165, 1.0]],
-  power: [[165, 0.3], [220, 0.3], [330, 0.3], [440, 0.6]],
   'chime-phone': [[1568, 0.08], [1175, 0.08], [1568, 0.08], [1175, 0.3]], // a quick ring: look at your phone
 }
 

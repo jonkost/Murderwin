@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { makePlaceholders, samplesFor, wavBytes, FIGURES, RATE, PAD_SECONDS } from '../make-placeholder-sounds.mjs'
-import { SOUND_IDS, missingSoundFiles } from '../../cues/lib/cues.js'
+import { SOUND_IDS, REQUIRED_SOUND_IDS, missingSoundFiles, soundFileReport } from '../../cues/lib/cues.js'
 
 test('one file per id, each a WAV with a second of silence in front, and nothing missing afterwards', () => {
   const dir = mkdtempSync(join(tmpdir(), 'murderwin-sounds-'))
@@ -14,6 +14,7 @@ test('one file per id, each a WAV with a second of silence in front, and nothing
     const r = makePlaceholders({ dir })
     assert.deepEqual(r, { written: SOUND_IDS.length, kept: 0, total: SOUND_IDS.length })
     assert.deepEqual(missingSoundFiles(dir, existsSync), [])
+    assert.deepEqual(soundFileReport(dir, existsSync), { required: [], chimes: [], optional: [], total: SOUND_IDS.length }, 'the relay would start, with nothing to say')
     for (const id of SOUND_IDS) {
       const bytes = readFileSync(join(dir, `${id}.wav`))
       assert.equal(bytes.toString('ascii', 0, 4), 'RIFF')
@@ -38,12 +39,15 @@ test('every id has its own figure, and the figures differ', () => {
   for (const id of SOUND_IDS) assert.ok(FIGURES[id], `${id} has a figure`)
   const seen = new Set(Object.values(FIGURES).map(f => JSON.stringify(f)))
   assert.equal(seen.size, SOUND_IDS.length)
-  assert.ok(wavBytes(samplesFor('power')).length > 44 + RATE * 2)
+  assert.ok(wavBytes(samplesFor('blackout')).length > 44 + RATE * 2)
+  assert.equal(FIGURES.power, undefined, 'no power sound since 25 Oct 2026')
 })
 
-test('chime-phone, the tenth sound, has its own short stand-in: under a second after the pad', () => {
-  assert.equal(SOUND_IDS.length, 10)
+test('chime-phone, the ninth sound and one of the two required, has its own short stand-in: under a second after the pad', () => {
+  assert.equal(SOUND_IDS.length, 9, 'nine sounds since 25 Oct 2026')
   assert.ok(SOUND_IDS.includes('chime-phone'))
+  assert.deepEqual(REQUIRED_SOUND_IDS, ['chime-phone', 'blackout'])
+  for (const id of REQUIRED_SOUND_IDS) assert.ok(FIGURES[id], `${id} has a stand-in`)
   const figure = FIGURES['chime-phone']
   assert.ok(figure, 'a figure of its own')
   const seconds = figure.reduce((s, [, d]) => s + d, 0)

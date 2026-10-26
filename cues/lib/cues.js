@@ -3,6 +3,7 @@
 // "hall is green" and "play sound 7F3A", never what either means.
 //
 // Inputs are the public docs any phone may read:
+//   night  nights/{id}                { phase: 'lobby'|'act'|'blackout'|'prompt'|'paused', pausedFrom }
 //   cues   nights/{id}/public/cues    { hall: 'red'|'green', changedAt }
 //   relay  nights/{id}/public/relay   { doorOpen: boolean, ... }
 //   sounds nights/{id}/public/sounds  { current: { id, at, clips?, video? } }
@@ -11,11 +12,25 @@
 //     video: true when the Parlour TV plays that bulletin's recordings as
 //     video with its own sound: the relay plays the id but never the clips.
 //
-// The music and the Hue scenes are planned separately (lib/scenes.js).
+// The music, the Hue scenes and the projector are planned separately
+// (lib/scenes.js).
 
 import { createHmac } from 'node:crypto'
 
-export function hallColour({ cues, relay } = {}) {
+// Where the night is, as a phase. A paused night counts as the phase it was
+// paused from (a pause in the blackout is still the blackout).
+export function phaseOf(night) {
+  if (!night) return null
+  return night.phase === 'paused' ? (night.pausedFrom || 'act') : (night.phase || 'act')
+}
+
+// The hall bulb's three states (25 Oct 2026, the cue list: green at the
+// welcome, off in the blackout, red from the power's return, green at the
+// unlock). The blackout wins over whatever the cues doc says; the server
+// writes the colour for every other moment, and the door opening turns it
+// green even before the cues doc catches up.
+export function hallColour({ night, cues, relay } = {}) {
+  if (phaseOf(night) === 'blackout') return 'off'
   if (cues?.hall === 'green' || relay?.doorOpen) return 'green'
   if (cues?.hall === 'red') return 'red'
   return null
@@ -23,9 +38,18 @@ export function hallColour({ cues, relay } = {}) {
 
 // The sound catalogue: one file per id in media/ (media/README.md). This is
 // a copy of functions/lib/screen.js SOUND_IDS; a test on each side checks
-// the two agree. An id outside it is refused, counted, never played.
-export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power', 'chime-phone']
+// the two agree. An id outside it is refused, counted, never played. Nine
+// since 25 Oct 2026 (the cue list): the power's return plays nothing.
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'chime-phone']
 export function knownSound(id) { return SOUND_IDS.includes(id) }
+
+// The two the relay refuses to start without (cueSounds, 25 Oct 2026): the
+// one chime and the blackout. Every other id is optional: a chime with no
+// file plays chime-phone's file instead (CHIME_FALLBACK, so one recorded
+// chime serves every chime moment), and a sting with no file is silent.
+export const REQUIRED_SOUND_IDS = ['chime-phone', 'blackout']
+export const CHIME_FALLBACK = { 'chime-news': 'chime-phone', 'chime-irwin': 'chime-phone', 'sounder-bulletin': 'chime-phone' }
+export const OPTIONAL_SOUND_IDS = SOUND_IDS.filter(id => !REQUIRED_SOUND_IDS.includes(id) && !CHIME_FALLBACK[id])
 
 // The recorded W-O-O-F News lines (media/README.md): a copy of
 // functions/lib/news.js CLIP_IDS, checked by a test on this side. A sound may
@@ -93,11 +117,46 @@ export function clipReader(key = '') {
   return x => byCode.get(x) ?? (knownClip(x) ? x : null)
 }
 
-// Which ids have no file under `dir` (by any accepted extension). The relay
-// refuses to start while this is not empty, so a missing file is found at
-// the start of the evening, not at the beat.
+// Which ids have no file under `dir` (by any accepted extension), by the
+// id's own name (the fallback is not counted here).
 export function missingSoundFiles(dir, exists, ids = SOUND_IDS) {
   return ids.filter(id => !soundCandidates(dir, id).some(f => exists(f)))
+}
+
+// The file to play for an id: its own, or, for a chime with none, the one
+// chime's file (CHIME_FALLBACK). { file, fallback: true } when the stand-in
+// is used; null when there is nothing to play.
+export function soundFileFor(dir, id, exists) {
+  const own = soundCandidates(dir, id).find(f => exists(f))
+  if (own) return { file: own, fallback: false }
+  const other = CHIME_FALLBACK[id]
+  const file = other ? soundCandidates(dir, other).find(f => exists(f)) : null
+  return file ? { file, fallback: true } : null
+}
+
+// What the sound folder holds, for the start of the evening (25 Oct 2026):
+// the relay refuses to start only while a REQUIRED id has no file. The
+// counts are printed, never which ids.
+//   required  the required ids with no file (the relay quits on any)
+//   chimes    the chimes that will play chime-phone's file instead of their own
+//   optional  the optional ids with no file: silent at those moments
+export function soundFileReport(dir, exists) {
+  const missing = missingSoundFiles(dir, exists)
+  const required = missing.filter(id => REQUIRED_SOUND_IDS.includes(id))
+  const chimes = missing.filter(id => CHIME_FALLBACK[id] && soundFileFor(dir, id, exists)?.fallback)
+  const optional = missing.filter(id => !REQUIRED_SOUND_IDS.includes(id) && !chimes.includes(id))
+  return { required, chimes, optional, total: SOUND_IDS.length }
+}
+
+// The start-up lines for that report: counts only.
+export function soundFilesLines({ required = [], chimes = [], optional = [], total = SOUND_IDS.length } = {}) {
+  const out = []
+  const s = n => (n === 1 ? '' : 's')
+  if (required.length) out.push(`${required.length} of the ${REQUIRED_SOUND_IDS.length} required sounds ${required.length === 1 ? 'has' : 'have'} no file (media/README.md names the two)`)
+  if (chimes.length) out.push(`${chimes.length} chime${s(chimes.length)} ${chimes.length === 1 ? 'has' : 'have'} no file of ${chimes.length === 1 ? 'its' : 'their'} own: the one chime plays there`)
+  if (optional.length) out.push(`${optional.length} optional sound${s(optional.length)} ${optional.length === 1 ? 'has' : 'have'} no file: silent at ${optional.length === 1 ? 'that moment' : 'those moments'}`)
+  if (!out.length) out.push(`all ${total} sounds have a file`)
+  return out
 }
 
 // A sound older than this is remembered but not played: a relay started (or
@@ -137,11 +196,12 @@ export function plan(prev, next, now = Date.now(), { readClip = clipReader() } =
 
 // The one line the relay's window prints for a cue: counts only, never a
 // sound id, a clip id, a code or a file name (the window sits in view all
-// night). `sound` is 'ok', 'missing' or null (recordings alone). `onTv`
-// counts the recordings the Parlour TV plays as video instead.
+// night). `sound` is 'ok', 'fallback' (a chime with no file of its own: the
+// one chime plays), 'missing' or null (recordings alone). `onTv` counts the
+// recordings the Parlour TV plays as video instead.
 export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0, onTv = 0 } = {}) {
   const parts = []
-  if (sound) parts.push(sound === 'ok' ? 'sound playing' : 'sound file missing; skipped')
+  if (sound) parts.push(sound === 'ok' ? 'sound playing' : sound === 'fallback' ? 'sound playing (the one chime stands in)' : 'sound file missing; skipped')
   if (onTv) parts.push(`bulletin on the TV as video: ${onTv} recording${onTv === 1 ? '' : 's'} not played here`)
   if (recordings || unknown) {
     let b = `bulletin: ${recordings + unknown} recording${recordings + unknown === 1 ? '' : 's'}`
