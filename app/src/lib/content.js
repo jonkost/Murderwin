@@ -14,6 +14,7 @@ import {
   NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST,
   ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS,
   RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS,
+  CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -809,6 +810,23 @@ export const ADDITIONS = [
     decisions: CUE_LIST_3_DECISIONS,
     retireTasks: RETIRED_FOR_CUE_LIST_3,
     rewriteTasks: REWRITTEN_FOR_CUE_LIST_3,
+  },
+  {
+    // 26 Oct: the board for Jon's cue list (docs/cue-list.md; the 25 Oct
+    // handoff's section 5, item 9). Each of the seven built steps a done card
+    // under its moment; Jon's hardware cards (the Patio light, the projector's
+    // plug in Home, the five loops; the playlists and the song and the six
+    // scenes reword cards 421 and 422), his device moves by moment, and two
+    // checks; the five questions from section 3 as decision cards, open, each
+    // with its default built; rulesDeckScreen answered by the cue list (the
+    // Parlour TV); the cards the device key and the cue list made stale closed
+    // or reworded with the dated reason (the old words kept on each).
+    id: '2026-10-26-cue-list',
+    tasks: CUE_LIST_TASKS,
+    decisions: CUE_LIST_DECISIONS,
+    retireTasks: RETIRED_FOR_CUE_LIST,
+    rewriteTasks: REWRITTEN_FOR_CUE_LIST,
+    answerDecisions: ANSWERED_FOR_CUE_LIST,
   },
 ]
 
