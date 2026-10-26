@@ -36,7 +36,8 @@ on the Canon.
   A 7-pair board dealt before the change still fits (7 by 2). The preview deals 6 pairs. The
   site deployed again (hosting only) and pushed.
 - Then, from Jon: the square's coordinate (C3, B1) sits centred above the square, on a turn and
-  on Sir Irwin's slide 3 (`Kiosk.jsx`, `.kiosk-cell`, `.slide-cell`). Committed; not deployed.
+  on Sir Irwin's slide 3 (`Kiosk.jsx`, `.kiosk-cell`, `.slide-cell`). Deployed (hosting) and pushed
+  on Jon's yes.
 
 **What is left**
 - Boo's Catwalk (note 10002) stays open: Jon sends the shape he wants for the wall and the catwalk.
