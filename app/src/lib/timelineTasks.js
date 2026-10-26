@@ -646,6 +646,24 @@ export const RETIRED_FOR_ITEM4 = [
   { order: 479, title: 'The checks the test plan still has as Not yet', detail: `${BUILT_1025} every check marked Not yet has a test, the tests carry their IDs, and the new case checks run in npm run checks (20,042 of 20,042). Two wait on your answer as questions on the board (the dial after Spill the Beans, and a sense-only bag clue in a small party); the half second over the Wi-Fi is measured at the tech run.` },
 ]
 
+// 25 Oct 2026, evening: Jon's cue list, step 3 (the blackout returns the
+// power on its own; the interruption button and the role card's fifteen
+// seconds), built by Claude Code. The power sound is gone (cueSounds, the
+// handoff's default: the music and the lights coming back are the cue), so
+// its sound card closes; the brain's start card says which two sounds it
+// needs; and the one question the build turned up. Applied by
+// '2026-10-25-cue-list-blackout'. The cue list's other cards come with its
+// last step, the board.
+export const RETIRED_FOR_CUE_LIST_3 = [
+  { order: 140, title: 'Sound: power', detail: 'Done 25 Oct 2026: there is no power sound any more (your cue list, cue 5; cueSounds). The music and the lights coming back are the cue, and the blackout sound is the last thing heard. Nothing to record.' },
+]
+export const REWRITTEN_FOR_CUE_LIST_3 = [
+  { order: 121, title: 'Start the brain', set: { detail: 'On the M3 Air: network cable in, sleep off. Double-click Start the brain on its desktop; a window opens and stays open all night. It will not start while the chime (chime-phone) or the blackout sound has no file, and says which; the other seven sounds are optional, silent until their file is in, and the other chimes borrow the chime’s file.' } },
+]
+export const CUE_LIST_3_DECISIONS = [
+  { key: 'promptScreen', moment: 'act2.orient', question: 'While the phones show the interruption button and the role cards, is the Parlour TV dark (as built) or back on its loop at once (cue 5)?', options: ['Dark until your first Next (as built)', 'Back on its loop at once, as cue 5 says'], answer: null, note: 'Default: dark, as built. Every screen stays black through the five seconds and the fifteen seconds of role cards, until your first Next in Act 2, so nothing on a wall draws an eye away from the phone while people read their roles. The lights and the music come back on their own either way (the brain reads the phase). Cue 5 says the loop returns right after the blackout; if you want that, Claude Code changes it in a few lines.' },
+]
+
 // Every card the timeline seeded, for looking a live card up by its order.
 export const ALL_TIMELINE_TASKS = [...TIMELINE_TASKS, ...STANDIN_SOUND_TASKS, ...HANDOFF_TASKS, ...HANDOFF_BUILT_TASKS, ...AUDIT_TASKS, ...SECRET_LINES_TASKS, ...HANDOFF_1023_TASKS, ...CLEANUP_TASKS, ...NEWS_CAST_TASKS, ...ITEM4_TASKS]
 

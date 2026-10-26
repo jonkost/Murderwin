@@ -48,8 +48,7 @@ const cards = (db, uid, kind) => (db.store.get(`sessions/${uid}`).cards ?? []).f
 async function toPower(db, nightId, now) {
   const next = () => hostCommand(db, { nightId, command: 'next', now })
   await next(); await next(); await next(); await next()
-  await hostCommand(db, { nightId, command: 'blackout' })
-  await hostCommand(db, { nightId, command: 'power', now })
+  await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
 }
 // Every doc path the database is asked for from here on (reads only).
 function watchReads(db) {

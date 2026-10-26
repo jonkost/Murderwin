@@ -508,11 +508,14 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       return { ok: true, act }
     }
     case 'blackout':
-      // Every phone goes dark. Nothing on any screen until the power returns.
+      // Every phone goes dark. Nothing on any screen until the power returns, which run.js
+      // does on its own five seconds later (25 Oct 2026, the cue list).
       await ref.update({ phase: 'blackout', phaseAt: stamp, pausedFrom: null })
       return { ok: true }
     case 'power':
-      // Power returns: every phone lights at once with its prompt, held 15 s.
+      // Power returns: Act 2 in the prompt phase. Every phone lights at once with one button
+      // ("Sorry for the interruption, continue here"), then its role card for fifteen seconds
+      // on the server's clock, then the main page on its own (play/src/lib/night.js).
       await ref.update({ act: 2, phase: 'prompt', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null })
       return { ok: true }
     case 'pause':

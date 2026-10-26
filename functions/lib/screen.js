@@ -40,7 +40,7 @@ export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'boar
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
 // relay (cues/lib/cues.js) carries the same list and refuses an id outside it.
-export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'power', 'chime-phone']
+export const SOUND_IDS = ['chime-news', 'sounder-bulletin', 'chime-irwin', 'sting-solved', 'sting-door', 'sting-reveal', 'sting-result', 'blackout', 'chime-phone']
 
 // Keys a public screen doc may never carry, at any depth.
 export const FORBIDDEN_SCREEN_KEYS = [
@@ -403,12 +403,13 @@ export function isPauseCard(doc) {
   return doc?.kind === 'black' && Boolean(doc.title)
 }
 
-// The host's phase buttons: the room screens follow. Blackout and the
-// power each have a sound; a pause parks the screen under a near-black
-// "One moment" and the resume brings it back. A second pause on top of the
-// first changes nothing (the parked screen is kept), and a resume with
-// nothing parked puts up the beat's idle screen rather than leaving "One
-// moment" on the TV.
+// The host's phase buttons: the room screens follow. The blackout has its
+// sound; the power's return has none since 25 Oct 2026 (cueSounds: the music
+// coming back is the cue, and the TV stays dark through the prompt); a pause
+// parks the screen under a near-black "One moment" and the resume brings it
+// back. A second pause on top of the first changes nothing (the parked
+// screen is kept), and a resume with nothing parked puts up the beat's idle
+// screen rather than leaving "One moment" on the TV.
 export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   if (command === 'blackout') {
     await writeScreen(db, nightId, screenDoc('black', { now, title: '' }))
@@ -417,8 +418,7 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
   }
   if (command === 'power') {
     await writeScreen(db, nightId, screenDoc('black', { now, title: '', act: 2 }))
-    await play(db, nightId, 'power', { now })
-    return { ok: true, kind: 'black', sound: 'power' }
+    return { ok: true, kind: 'black', sound: null }
   }
   if (command === 'pause') {
     const prev = await readScreen(db, nightId)

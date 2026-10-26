@@ -30,15 +30,18 @@ export function faceUrl(catKey) {
 // The player's own notes, scoped to the night. A phone that rehearsed keeps
 // its old scribbles under the old night's id and starts clean on the next,
 // so the Welcome tour and the role prompt show again (17 Oct 2026). The doc
-// is { byNight: { [nightId]: { seen, crossed, buzzed } } }; anything written
-// flat at the top level (the old shape) is ignored.
+// is { byNight: { [nightId]: { seen, crossed, buzzed, continued } } };
+// anything written flat at the top level (the old shape) is ignored.
+// `continued` (25 Oct 2026): the server's time at which this phone tapped
+// "Sorry for the interruption, continue here" after the blackout, by prompt
+// key, so the role card's fifteen seconds run from that tap.
 
-export const EMPTY_NOTES = Object.freeze({ seen: {}, crossed: {}, buzzed: {} })
+export const EMPTY_NOTES = Object.freeze({ seen: {}, crossed: {}, buzzed: {}, continued: {} })
 
 export function notesFor(notes, nightId) {
   const mine = nightId ? notes?.byNight?.[nightId] : null
-  if (!mine || typeof mine !== 'object') return { seen: {}, crossed: {}, buzzed: {} }
-  return { seen: mine.seen ?? {}, crossed: mine.crossed ?? {}, buzzed: mine.buzzed ?? {} }
+  if (!mine || typeof mine !== 'object') return { seen: {}, crossed: {}, buzzed: {}, continued: {} }
+  return { seen: mine.seen ?? {}, crossed: mine.crossed ?? {}, buzzed: mine.buzzed ?? {}, continued: mine.continued ?? {} }
 }
 
 // What one write sends: only this night's branch, merged in.
@@ -289,16 +292,38 @@ export function salemFriendNote(session) {
   return { title: card?.title || SALEM_FRIEND.title, text: card?.text || SALEM_FRIEND.text }
 }
 
-// The role prompt when the power returns (F11): held for fifteen seconds on
-// the server's clock from the moment the power came back (nights.phaseAt),
-// then a hide button. Until that moment has reached the phone (the server's
-// stamp still on its way) it holds. `serverNow` is the clock the phone reads,
-// frozen during a pause (clockFor).
+// The power returns (F11; rewritten 25 Oct 2026 to Jon's cue list, cue 5).
+// Three stages on every phone, the same whatever the role:
+//   'continue': a near-black screen with one button, "Sorry for the
+//               interruption, continue here". The tap notes the server's time
+//               under continued[prompt-<act>].
+//   'card':     the role card (or the orientation line on a phone with no
+//               card yet), no button, for fifteen seconds on the server's
+//               clock from that tap.
+//   'done':     the main page, on its own. The role stays on the You tab.
+// `serverNow` is the clock the phone reads, frozen during a pause (clockFor),
+// so a pause never runs the card out.
 export const PROMPT_HOLD_MS = 15_000
-export function promptHold(night, serverNow) {
-  const phaseAt = night?.phaseAt?.toMillis?.() ?? 0
-  const remaining = phaseAt ? phaseAt + PROMPT_HOLD_MS - serverNow() : PROMPT_HOLD_MS
-  return { remaining, canHide: remaining <= 0 }
+export function promptKeyOf(night) { return `prompt-${night?.act ?? 0}` }
+export function promptStage(night, notes, serverNow) {
+  const at = ms(notes?.continued?.[promptKeyOf(night)])
+  if (!at) return 'continue'
+  return serverNow() < at + PROMPT_HOLD_MS ? 'card' : 'done'
+}
+
+// Does the interruption flow show at all? While the server holds the prompt
+// phase (the power just back), and while the night is still on Act 2's first
+// beat after the host's first Next, a phone that has not finished the flow is
+// on it. Once the night moves on, a phone that never tapped goes to the main
+// page (its role is on the You tab); a phone mid-card keeps its fifteen
+// seconds whatever the host presses. Never in the dark (isDark comes first).
+export function showsPrompt(night, notes, serverNow) {
+  const stage = promptStage(night, notes, serverNow)
+  if (stage === 'card') return true
+  if (stage === 'done') return false
+  const phase = effectivePhase(night)
+  if (phase === 'prompt') return true
+  return phase === 'act' && night?.act === 2 && night?.beat === beatsOf(2)[0]?.key
 }
 
 // Is this window open on this phone right now, and still unanswered? During a

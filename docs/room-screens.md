@@ -30,8 +30,9 @@ string lights follow if they answer the brain. The old iPhone 11 is the
 spare phone. The workshop's Devices page lists every screen with its
 address and a square code.
 
-Every screen is dark from the blackout until the first beat of Act 2, and
-near-black with "One moment" while the night is paused. On a rehearsal
+Every screen is dark from the blackout, through the five seconds and the
+role cards, until the host's first Next in Act 2, and near-black with "One
+moment" while the night is paused. On a rehearsal
 night a big red REHEARSAL band runs across every phone and every room
 screen, and every slot that would show a secret shows a stand-in in square
 brackets.
@@ -134,13 +135,17 @@ Each shows the game's name, with its line under it, at the top (Jon,
 
 ## The sounds
 
-Ten cue sounds, one file each in `media/`, plus bulletin 2's recordings.
-The tenth, `chime-phone`, rings when supper is ready, when Act 4's groups
-come up and at every Act 4 round, and as the Act 6 Parlour Games open.
+Nine cue sounds, one file each in `media/`, plus bulletin 2's recordings.
+Only two are required: `chime-phone` (the chime: when supper is ready, when
+Act 4's groups come up and at every Act 4 round, when dessert is ready, and
+as the Act 6 Parlour Games open) and `blackout`. The other chimes (the news,
+Sir Irwin, bulletin 2's sounder) play the chime's file when their own is
+missing, and the four stings are optional, silent while no file is in. There
+is no power sound since 25 October: the music coming back is the cue.
 `media/README.md` lists them all, how to name them, and the
 one-second-of-silence rule. The brain plays them through the speakers, with
 the music dipped under them. A recording with no file yet is skipped; the
-words are on the screen anyway. Until you have recorded the ten,
+words are on the screen anyway. Until you have recorded them,
 `node scripts/make-placeholder-sounds.mjs` makes a different little tone for
 each. Bulletin 1 and the closing bulletin are video on the TV, with the TV's
 own sound, once the videos are in and you tick The bulletins are videos on

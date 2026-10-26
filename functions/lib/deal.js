@@ -1042,13 +1042,26 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   return { ok: true, level }
 }
 
-// The hall light is red from the moment the night begins.
-export async function ensureHallRed(db, nightId, now = Date.now()) {
+// The hall bulb outside the bedroom (public/cues.hall, read by the brain).
+// Jon's cue list (25 Oct 2026): green for the welcome from the first beat of
+// Act 1 (cue 1), off during the blackout (the brain reads the phase), red from
+// the power's return (cue 5) until the drawing is done, when revealTrace turns
+// it green (cue 18). ensureHall writes only when nothing has set the bulb yet
+// (every beat asks); setHall writes whatever the moment says (the power's
+// return, the role-dealing act jump).
+export const HALL_COLOURS = ['red', 'green']
+export async function ensureHall(db, nightId, colour, now = Date.now()) {
+  if (!HALL_COLOURS.includes(colour)) throw new NightError('invalid', 'The hall light is red or green.')
   const ref = db.doc(`nights/${nightId}/public/cues`)
   const snap = await ref.get()
   if (snap.exists && snap.data().hall) return false
-  await ref.set({ hall: 'red', changedAt: new Date(now) }, { merge: true })
+  await ref.set({ hall: colour, changedAt: new Date(now) }, { merge: true })
   return true
+}
+export async function setHall(db, nightId, colour, now = Date.now()) {
+  if (!HALL_COLOURS.includes(colour)) throw new NightError('invalid', 'The hall light is red or green.')
+  await db.doc(`nights/${nightId}/public/cues`).set({ hall: colour, changedAt: new Date(now) }, { merge: true })
+  return { ok: true, hall: colour }
 }
 
 export async function results(db, nightId, act, beat) {

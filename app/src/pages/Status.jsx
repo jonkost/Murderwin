@@ -35,7 +35,7 @@ const BUILT = [
   ['Guests join by phone', 'Scan the square code, type a name, get a character and a bag number, then one Allow for motion, sound and keeping the screen awake.'],
   ['The phone at rest', 'Character with portrait, bag number, the Reticule: motives to cross off, the cats, the clues, the rules.'],
   ['The Host tab', 'On your phone and Susan’s: doors, the seven acts, Blackout, Power returns, Pause, who is here, Salem petted and Fetch Champion, Supper’s ready, Start Act 4, the light scenes and the music, and a dot for every room screen.'],
-  ['The moments', 'Blackout goes dark on every phone; Power returns holds the role card fifteen seconds; Pause says Irwin needs the garden.'],
+  ['The moments', 'Blackout goes dark on every phone and the power comes back on its own five seconds later; one button, then the role card for fifteen seconds; Pause says Irwin needs the garden.'],
   ['The look', 'Blue and red, the seal, the wallpaper, New York and SF, on the invitation, the phones and here.'],
   ['The art', 'Fourteen portraits and fourteen traces, the five household faces and Sir Irwin’s five moods, in the game, named for it.'],
   ['This workshop', 'Every list opens with a card: what it is, which part of the night it feeds, what goes in each box, an example. Speak buttons.'],

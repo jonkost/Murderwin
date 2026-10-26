@@ -13,6 +13,7 @@ import {
   CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP,
   NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST,
   ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS,
+  RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -112,8 +113,10 @@ export const UI_LABELS = [
   { value: 'OFFLINE', label: 'OFFLINE: no signal' }, { value: 'PAUSED', label: 'PAUSED: the night is paused' }, { value: 'PAUSED BY HOST', label: 'PAUSED BY HOST: the strip on a paused phone' },
   { value: 'SUPERSEDED', label: 'SUPERSEDED: this character moved to another phone' },
   { value: 'POWER', label: 'POWER: the power comes back' }, { value: 'ORIENT', label: 'ORIENT: the power is back, for a phone with no card yet' },
+  { value: 'CONTINUE', label: 'CONTINUE: the one button after the blackout (Sorry for the interruption, continue here); the role card follows it for fifteen seconds, then the main page' },
   { value: 'YOUR ROLE', label: 'YOUR ROLE: the heading over the role card' }, { value: 'SHOW ROLE', label: 'SHOW ROLE: the button that shows the role card again' }, { value: 'HIDE ROLE', label: 'HIDE ROLE: the button that puts it away' },
-  { value: 'HIDE', label: 'HIDE: the hide-this button' }, { value: 'HOLD', label: 'HOLD: keep reading, nearly there' },
+  // retired 25 Oct 2026 (the cue list): the role card leaves on its own after fifteen seconds, so there is no hide button and no hold line; kept so a line already written still shows
+  { value: 'HIDE', label: 'HIDE (retired 25 Oct 2026: the role card leaves on its own, nothing reads this)', retired: true }, { value: 'HOLD', label: 'HOLD (retired 25 Oct 2026: the role card leaves on its own, nothing reads this)', retired: true },
   { value: 'RETICULE', label: 'RETICULE: the tabs at the bottom' }, { value: 'START NIGHT', label: 'START NIGHT: the hosts start the night' }, { value: 'HOST', label: 'HOST: the hosts’ own tab' },
   { value: 'NOT FOR YOU', label: 'NOT FOR YOU: a hosts-only page opened by a guest' },
   { value: 'STOPS', label: 'STOPS: the five words of the Cats tab slider, low to high, with commas' },
@@ -127,7 +130,8 @@ export const UI_LABELS = [
 ]
 
 // The labels that count toward the list's goal and the Timeline: not the
-// extra ones, and not the two retired with the safe.
+// extra ones, and not the retired ones (the safe's two, the check-in, the
+// greetings, and the role card's hide button and hold line).
 export const COUNTED_UI_LABELS = UI_LABELS.filter(l => !l.extra && !l.retired)
 
 // Granolia's lines on the study screen, by moment. The screen has a plain
@@ -788,6 +792,20 @@ export const ADDITIONS = [
     tasks: ITEM4_TASKS,
     decisions: ITEM4_DECISIONS,
     retireTasks: RETIRED_FOR_ITEM4,
+  },
+  {
+    // 25 Oct, evening: Jon's cue list (docs/cue-list.md), step 3 of the
+    // 25 Oct handoff, built by Claude Code: the blackout returns the power on
+    // its own after five seconds, then one button and the role card for
+    // fifteen seconds. The power sound's card closes (there is no such sound
+    // any more: cueSounds), the brain's start card names the two sounds it
+    // needs, and the one question the build turned up: the Parlour TV dark or
+    // on its loop while the cards show. The rest of the cue list's cards come
+    // with its last step (the board).
+    id: '2026-10-25-cue-list-blackout',
+    decisions: CUE_LIST_3_DECISIONS,
+    retireTasks: RETIRED_FOR_CUE_LIST_3,
+    rewriteTasks: REWRITTEN_FOR_CUE_LIST_3,
   },
 ]
 

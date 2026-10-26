@@ -272,9 +272,10 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     for (let i = 0; i < uids.length; i++) await night.join(db, { uid: uids[i], nightId, name: hostNames[i] ?? `Phone ${i + 1}` })
     for (const b of deal.beatsOf(1)) { await next(); if ((await nightDoc()).beat !== b.key) throw new Error(`expected beat ${b.key}`) }
     const notices1 = await countCards('notice')
-    await host('blackout')
-    await host('power')
-    actLine(1, [`${uids.length} phones joined`, `${notices1} notices dealt`, 'blackout', 'power returned'])
+    // the blackout returns the power on its own five seconds later (25 Oct 2026); a dry run does not wait
+    const dark = await run.hostCommand(db, { nightId, command: 'blackout', sleep: () => {} })
+    if (!dark.powerReturned) await host('power')
+    actLine(1, [`${uids.length} phones joined`, `${notices1} notices dealt`, 'blackout', dark.powerReturned ? 'power returned on its own' : 'power returned by hand'])
 
     // ---- Act 2: roles, the cats, the act's Parlour Games
     const n2 = await nightDoc()

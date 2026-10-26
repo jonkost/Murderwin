@@ -410,8 +410,11 @@ and tell Jon.
   interaction before it can be dismissed.
 - The idle screen is a real state, not an error view, and is indistinguishable
   from a phone that just finished choosing an event.
-- Blackout messages hold every phone 15 s minimum, then a hide button; screens
-  render near-black.
+- The blackout holds every phone near-black for at most 5 seconds; the power
+  returns on its own. Then one button, Sorry for the interruption, continue
+  here; then the role card for 15 seconds on the server's clock, with no
+  button; then the main page on its own. The role stays readable on the You
+  tab.
 - No service worker, no notification permission, no install prompt.
 - The cue relay performs no logic and stays blind. Sound files are named after
   the cue id. For W-O-O-F News the recordings reach it under codes that do not
@@ -426,7 +429,7 @@ The game runs on Firebase Hosting. No machine in the house serves it. Device
 setup, step by step: the workshop's Devices page.
 - Jon's M3 15" MacBook Air — "the brain". Ethernet, sleep off (on 24 Oct its
   cable adapter showed no link, so it is on Wi-Fi for now; a card on the
-  board). Runs the cue relay (`cues/`): the ten sounds and the three playlists
+  board). Runs the cue relay (`cues/`): the nine sounds and the three playlists
   through its own sound output (the AirPlay group of four HomePods, the
   Orangerie's included; the group is not made yet, 24 Oct), the Hue bulb
   outside the bedroom and the four Hue scenes, and the Holiday String Lights

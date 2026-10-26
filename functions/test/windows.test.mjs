@@ -327,8 +327,8 @@ test('F04 dealt role cards come through the parity check; the workshop FILLER li
 test('F06 every role card needs the same tap: every phone, whatever its role, gets one card of the same shape at the same moment, and a late joiner the same', async () => {
   const { db, nightId, uids } = await party(7)
   await hostCommand(db, { nightId, command: 'act', arg: 1, now: 8_000_000 })
-  await hostCommand(db, { nightId, command: 'blackout', now: 8_000_000 })
-  await hostCommand(db, { nightId, command: 'power', now: 8_000_000 })
+  await hostCommand(db, { nightId, command: 'blackout', now: 8_000_000, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
+  assert.deepEqual(await hostCommand(db, { nightId, command: 'power', now: 8_000_000 }), { ok: true, already: true })
   const c = caseOf(db, nightId)
   const byRole = {}
   for (const uid of uids) {

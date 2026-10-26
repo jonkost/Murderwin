@@ -5,7 +5,7 @@ import { createNight, join, CHARACTERS, NightError } from '../lib/night.js'
 import { hostCommand, studyFinished, advanceRelay, guessRelay, nextOf } from '../lib/run.js'
 import { stationCommand, studyClueCard, rotationPath, studyPath, STUDY_PLACEHOLDER } from '../lib/station.js'
 import {
-  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHallRed, reveal, finaleDoc, ensureCase, ms, results, NIGHT,
+  traceLevel, TRACE_BUCKETS, TRACE_CONTEXT, pickPartner, revealTrace, ensureHall, reveal, finaleDoc, ensureCase, ms, results, NIGHT,
 } from '../lib/deal.js'
 import { CANON_LABELS, HUSH_LABEL, STAGES, finalePath, revealPath, awardsPath, fillEpilogue, DEFAULT_EPILOGUE, go, creditAwards, roomSplits } from '../lib/finale.js'
 import { characterById } from '../lib/night.js'
@@ -32,8 +32,7 @@ async function walkTo(db, nightId, act, beat, t) {
   while (night(db, nightId).act < 1) await next()
   if (act === 1) { while (night(db, nightId).beat !== beat) await next(); return }
   while (night(db, nightId).beat !== 'ready') await next()
-  await hostCommand(db, { nightId, command: 'blackout' })
-  await hostCommand(db, { nightId, command: 'power', now: t.now })
+  await hostCommand(db, { nightId, command: 'blackout', now: t.now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
   let guard = 0
   while (!(night(db, nightId).act === act && night(db, nightId).beat === beat) && guard++ < 60) {
     const n = night(db, nightId)
@@ -224,7 +223,7 @@ test('Clear the drawing takes the trace and the green light with it; the next ru
   assert.equal(db.store.get(`nights/${nightId}/public/trace`), undefined)
   assert.equal(db.store.get(`nights/${nightId}/private/trace`), undefined)
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
-  assert.equal(await ensureHallRed(db, nightId, t.now + 3), false, 'red already')
+  assert.equal(await ensureHall(db, nightId, 'red', t.now + 3), false, 'red already')
   // run it again: a fresh trace, a fresh green
   await hostCommand(db, { nightId, command: 'relay-start', now: t.now + 4 })
   await playToLastVote(db, nightId, uids, names, t)
@@ -287,14 +286,15 @@ test('both hidden roles answering at the same moment push the dial twice, and a 
   assert.equal(c.dial, c.dialLog.reduce((s, e) => s + e.delta, 0))
 })
 
-test('the hall light is red from Act 1 and green when the drawing is done', async () => {
+test('the hall light is green for the welcome from Act 1, red from the power\'s return, and green when the drawing is done (the cue list, 25 Oct 2026)', async () => {
   const { db, nightId, uids, names } = await party(3)
   const t = { now: 6_000_000 }
   assert.equal(db.store.get(`nights/${nightId}/public/cues`), undefined)
   await walkTo(db, nightId, 1, 'meet', t)
-  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
-  assert.equal(await ensureHallRed(db, nightId, t.now), false, 'already set')
-  await walkTo(db, nightId, 6, 'drawing', t)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green', 'green for the welcome (cue 1)')
+  assert.equal(await ensureHall(db, nightId, 'red', t.now), false, 'already set: a beat never overrides the colour')
+  await walkTo(db, nightId, 6, 'drawing', t) // through the blackout: the power's return writes red (run.test.mjs checks the moment)
+  assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red', 'red from the power\'s return (cue 5) until the drawing is done')
   const { pub, priv } = relayPaths(nightId)
   assert.ok(['intro', 'walk'].includes(db.store.get(pub).state))
   // play the whole drawing with everyone picking right

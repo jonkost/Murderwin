@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useTick, writeNotes } from '../lib/hooks'
-import { buzzOnce, promptHold } from '../lib/night'
+import { writeNotes } from '../lib/hooks'
+import { buzzOnce } from '../lib/night'
 
 // The in-between screens. Every one of them is a real state, never an
 // error view, and they look the same on every phone in the room.
@@ -66,33 +66,43 @@ export function RehearsalBand({ on, label = 'REHEARSAL' }) {
   return <div className="rehearsal-band" role="note">{label}</div>
 }
 
-// The power returns: every phone lights at once with its prompt, on a
-// near-black ground like the blackout it follows, and buzzes once. The
-// prompt holds for fifteen seconds measured against the SERVER clock, then a
-// hide button appears. Slower readers take as long as they like. Hiding is
-// remembered per night, so a reload never shows it twice and a rehearsal
-// never hides it on the real night. A phone with no role card yet (a late
-// arrival) shows the same shape of screen with the orientation line in the
-// card's place, so no phone in the room looks different from the rest.
-export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes }) {
-  useTick(500)
-  const { canHide } = promptHold(night, serverNow)
+// The power returns (Jon's cue list, cue 5, 25 Oct 2026): every phone lights
+// at once on a near-black ground like the blackout it follows, buzzes once,
+// and shows one button, "Sorry for the interruption, continue here" (stage
+// 'continue'). The tap notes the SERVER clock's time in this phone's notes
+// for the night, and the role card takes the screen with no button at all
+// (stage 'card'), for fifteen seconds on the server's clock from that tap
+// (lib/night.js promptStage); then App falls through to the main page on its
+// own (App re-checks the clock once a second; nothing here reads it, so this
+// screen keeps no tick of its own). Slower readers find the card again on the
+// You tab. The tap is
+// remembered per night, so a reload never asks twice and a rehearsal never
+// skips it on the real night. A phone with no role card yet (a late arrival)
+// shows the same shape of screen with the orientation line in the card's
+// place, so no phone in the room looks different from the rest.
+export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes, stage }) {
   const buzzKey = card?.id ?? promptKey
   useEffect(() => {
     if (!uid || uid === 'preview') return
     const vibrate = typeof navigator !== 'undefined' && navigator.vibrate ? p => navigator.vibrate(p) : null
     if (buzzOnce(buzzKey, notes, vibrate)) writeNotes(uid, { buzzed: { [buzzKey]: true } }).catch(() => {})
   }, [uid, buzzKey, notes])
-  const hide = () => writeNotes(uid, { seen: { [promptKey]: true } }).catch(() => {})
+  const continueHere = () => writeNotes(uid, { continued: { [promptKey]: serverNow() } }).catch(() => {})
+  if (stage === 'continue') {
+    return (
+      <div className="moment prompt">
+        <Seal />
+        <p className="crest">Sirwin Manor</p>
+        <button className="big" onClick={continueHere}>{ui.CONTINUE}</button>
+      </div>
+    )
+  }
   return (
     <div className="moment prompt">
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text role-card">{card ? card.text : ui.ORIENT}</p>
       <p className="moment-sub">Act {night.act} begins. Eyes on your own phone.</p>
-      {canHide
-        ? <button className="big" onClick={hide}>{ui.HIDE}</button>
-        : <p className="hold" aria-live="polite">{ui.HOLD}</p>}
     </div>
   )
 }

@@ -22,6 +22,12 @@ const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
 // The host commands a pause holds back (everything that moves the night or lights the phones).
 export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'supper', 'start-act4'])
+// The blackout lasts five seconds, then the power comes back on its own (Jon's
+// cue list, cue 4, 25 Oct 2026: blackoutAuto). The wait is on the server,
+// inside the Blackout command, so no phone counts it; the tests pass their
+// own sleep.
+export const BLACKOUT_POWER_MS = 5_000
+const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 // The four Hue scenes Jon makes in the Hue app (handoff 23 Oct §2c); the
 // brain recalls one by name when the host asks (public/cues.scene).
 export const SCENES = ['Murderwin Arrival', 'Murderwin Blackout', 'Murderwin Lights Out', 'Murderwin Reveal']
@@ -58,7 +64,9 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
     started = await relay.start(db, { nightId, now })
   }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null })
-  if (act >= 1) await deal.ensureHallRed(db, nightId, now) // the hall light is red from the start of the night
+  // the hall bulb: green for the welcome from Act 1's first beat, red from the power's return (powerReturns
+  // writes it); here only when nothing has set it yet (cue list 25 Oct 2026)
+  if (act >= 1) await deal.ensureHall(db, nightId, act === 1 ? 'green' : 'red', now)
   if (run) {
     const sched = await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
     // Act 6 plays its games at the start (22 Oct): the first opens now, not at the next minute's tick
@@ -147,7 +155,38 @@ async function settleIfDue(db, nightId, now) {
   if (n?.window && !n.window.settled) await deal.settleWindow(db, nightId, { now })
 }
 
-export async function hostCommand(db, { nightId, command, arg, now = Date.now() } = {}) {
+// The power returns (cue 5): Act 2 in the prompt phase, the latest workshop
+// lines, the case dealt blind once, a role card on every phone, the hall bulb
+// red, Act 2's Parlour Games laid out, the first beat with its notice, and the
+// TV kept dark through the prompt. Run by the Blackout five seconds after the
+// dark, or by Power returns by hand. One runner only: the two could land
+// together (the Blackout's own return and a Power returns typed on the brain
+// in the same second), so the night is moved out of the dark in a
+// transaction, and whoever finds it already out answers { already: true } and
+// changes nothing. So the case is never dealt twice, whatever the timing.
+async function powerReturns(db, nightId, { now = Date.now() } = {}) {
+  const ref = db.doc(`nights/${nightId}`)
+  const claimed = await db.runTransaction(async tx => {
+    const n = (await tx.get(ref)).data()
+    if (n?.phase !== 'blackout') return false
+    // the same write as night.hostCommand 'power' (the role-dealing act jump still uses that one)
+    const stamp = FieldValue.serverTimestamp()
+    tx.update(ref, { act: 2, phase: 'prompt', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null })
+    return true
+  })
+  if (!claimed) return { ok: true, already: true }
+  await night.publishContent(db, nightId)
+  await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
+  await deal.dealRoles(db, nightId)
+  await deal.setHall(db, nightId, 'red', now) // red from here until the drawing is done (cue 5)
+  await windows.startParlour(db, nightId, 2, { now }) // Act 2 begins: its Parlour Games
+  await ref.update({ beat: firstBeat(2), beatAt: FieldValue.serverTimestamp() })
+  await deal.runAction(db, nightId, 2, firstBeat(2), deal.beatSpec(2, firstBeat(2))?.action, { now })
+  await screen.onPhase(db, nightId, 'power', { now }) // the TV stays dark through the prompt; no sound (cueSounds)
+  return { ok: true }
+}
+
+export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep } = {}) {
   if (command === 'create') return night.hostCommand(db, { nightId, command, arg })
   if (!nightId) throw new NightError('invalid', 'Which night?')
   const ref = db.doc(`nights/${nightId}`)
@@ -202,23 +241,36 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
         await night.hostCommand(db, { nightId, command: 'power' })
         await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
         await deal.dealRoles(db, nightId)
+        await deal.setHall(db, nightId, 'red', now) // the hall bulb red from the power's return, as the power sequence does
         return enterBeat(db, nightId, act, firstBeat(act), { now, phase: 'prompt' })
       }
       if (act < 7) await finale.unreveal(db, nightId) // a jump back from the reveal forgets it
       await ref.update({ actStartedAt: FieldValue.serverTimestamp() })
       return enterBeat(db, nightId, act, firstBeat(act), { now })
     }
+    case 'blackout': {
+      // Act 1 ends in the dark (cue 4): every phone and screen goes black with the blackout sound. Five
+      // seconds later, on the server's clock, the power comes back on its own (cue 5, blackoutAuto,
+      // 25 Oct 2026): the same sequence as Power returns, timed five seconds after the press. A night
+      // paused or moved during those seconds is left as it is; Power returns by hand does it when the
+      // host is ready. Act 1 only: since the return moves the night to Act 2 on its own, a press in
+      // any other act is refused (the act buttons move the night), and a second press in the dark
+      // changes nothing.
+      if (n.phase === 'blackout') return { ok: true, already: true }
+      if (n.act !== 1) throw new NightError('invalid', 'The blackout ends Act 1. To move the night, press an act.')
+      await night.hostCommand(db, { nightId, command: 'blackout', arg, now })
+      await screen.onPhase(db, nightId, 'blackout', { now })
+      await sleep(BLACKOUT_POWER_MS)
+      // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
+      const r = await powerReturns(db, nightId, { now: now + BLACKOUT_POWER_MS })
+      return { ok: true, powerReturned: !r.already }
+    }
     case 'power': {
-      // The lights come back: roles land on every phone, held fifteen seconds.
-      await night.publishContent(db, nightId)
-      const r = await night.hostCommand(db, { nightId, command: 'power' })
-      await deal.buildCaseForNight(db, nightId, { now }) // the case for the night, blind, once
-      await deal.dealRoles(db, nightId)
-      await windows.startParlour(db, nightId, 2, { now }) // Act 2 begins: its four Parlour Games
-      await ref.update({ beat: firstBeat(2), beatAt: FieldValue.serverTimestamp() })
-      await deal.runAction(db, nightId, 2, firstBeat(2), deal.beatSpec(2, firstBeat(2))?.action, { now })
-      await screen.onPhase(db, nightId, 'power', { now }) // the TV stays dark through the prompt; the power sound
-      return r
+      // Power returns by hand: what the Blackout does on its own after five seconds. Once the power is
+      // back (the night has left the blackout) a press changes nothing, so one after the automatic
+      // return, or a second press, is harmless.
+      if (n.phase !== 'blackout') return { ok: true, already: true }
+      return powerReturns(db, nightId, { now })
     }
     case 'light-up':
       // Every phone lights up with three questions, any time in Acts 2, 4 and 6. In Act 4 the
@@ -344,7 +396,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now() 
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       const r = await night.hostCommand(db, { nightId, command, arg, now })
       // the room screens follow (screen.js); a second Pause or Resume that changed nothing moves no screen either
-      if (['blackout', 'pause', 'resume'].includes(command) && !r?.already) await screen.onPhase(db, nightId, command, { now })
+      if (['pause', 'resume'].includes(command) && !r?.already) await screen.onPhase(db, nightId, command, { now })
       return r
     }
   }

@@ -33,8 +33,8 @@ export const DEVICE_ROOMS = [
           'Network cable in, sleep off.',
           'Double-click Start the brain on its desktop. A window opens and stays open all night.',
         ],
-        alive: 'Its window prints a line and waits. When the night begins the bulb outside the bedroom goes red. If it lists missing sounds and stops, tell Claude Code.',
-        tech: 'The desktop button Start the brain (card 475) runs, in the Murderwin folder, in a Terminal window Jon can see: cd cues && npm start. Until it exists, Claude Code runs that line. It stops and lists any of the ten sounds with no file in media/; node scripts/make-placeholder-sounds.mjs makes a stand-in tone for each.',
+        alive: 'Its window prints a line and waits. When the night begins the bulb outside the bedroom goes green, off for the blackout, then red. If it says the chime or the blackout sound has no file and stops, tell Claude Code.',
+        tech: 'The desktop button Start the brain (card 475) runs, in the Murderwin folder, in a Terminal window Jon can see: cd cues && npm start. Until it exists, Claude Code runs that line. It stops only if the chime (chime-phone) or the blackout sound has no file in media/; the other seven sounds are optional (nine since 25 Oct 2026, no power sound). node scripts/make-placeholder-sounds.mjs makes a stand-in tone for each.',
       },
       {
         key: 'speakers', name: 'The speakers', machine: 'Four HomePods in one AirPlay group',

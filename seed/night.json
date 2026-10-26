@@ -82,7 +82,7 @@
         {
           "key": "orient",
           "name": "Orientation",
-          "what": "The power is back. Every phone shows its role card, then where things are. Identical on every phone.",
+          "what": "The power is back. Every phone shows one button, then its role card for fifteen seconds, then where things are. Identical on every phone.",
           "action": "notice:orient"
         },
         {

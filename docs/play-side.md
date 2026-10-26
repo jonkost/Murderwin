@@ -29,10 +29,14 @@ clue is saved) — four tabs:
   until yours are written.
 
 **The moments.** When a host presses a button, every phone follows at once:
-- *Blackout* — every screen goes dark. Nothing on any phone.
-- *Power returns* — every phone lights at once with its role card, held for
-  fifteen seconds measured against the server's clock, then a "Hide this"
-  button. Act 2 begins. The case is built at this moment, blind (17 Oct).
+- *Blackout* — every screen goes dark. Nothing on any phone. Five seconds
+  later, on the server's clock, the power comes back on its own (25 Oct).
+- *Power returns* (on its own, or by hand if the night was paused in the
+  dark) — every phone lights at once with one button, "Sorry for the
+  interruption, continue here"; the tap brings up its role card for fifteen
+  seconds measured against the server's clock, with no button; then the
+  main page on its own. Act 2 begins. The case is built at this moment,
+  blind (17 Oct).
 - *Pause* — "Sir Irwin requires the garden."
 - *Acts 1 to 7* — the act name and its objective line appear at the top of
   every phone.
@@ -100,8 +104,10 @@ still there for jumping about in a rehearsal.
 **What the phone shows, act by act.**
 - *Act 1.* Three notices: meet the household, say your name and profession
   out loud, settle in. Then Blackout.
-- *Power returns.* Every phone shows its role card, held fifteen seconds, the
-  same shape on every phone. Then "Where things are".
+- *Power returns.* Every phone shows the "Sorry for the interruption,
+  continue here" button, then its role card for fifteen seconds with no
+  button, the same shape on every phone, then its main page on its own.
+  Then "Where things are".
 - *Act 2.* Eyes up for W-O-O-F News on the TV. Then the phone sends you to
   all four cats in turn (Granolia in the Study, Salem in the Orangerie,
   Zimothy in the Library, Boo in the Entryway); scan the code in the room.
@@ -163,8 +169,8 @@ has the steps.
 3. On your phone, open the game. While no night is live the doors screen
    offers *Host? Start the night*. Tap it, then type your name. Your character
    appears, and the Host tab with it.
-4. Press the act buttons and watch the other phones follow. Press *Blackout*,
-   then *Power returns*, and time the fifteen-second hold.
+4. Press the act buttons and watch the other phones follow. Press *Blackout*
+   and time the five seconds, then the button and the fifteen-second card.
 
 Start a new night from the Host tab as often as you like while testing. Each
 one is fresh, and every phone types its name again.
@@ -680,8 +686,9 @@ still opens one.
   session carries a role field, no window on a phone carries values, and the
   night doc and public content carry no roles and no dial.
 - Previews (`play/src/Preview.jsx`; `TOUR` lists the tour in order):
-  `?preview=` doors | join | welcome | lobby | act1 | blackout | prompt |
-  prompt-late | orient | news | wait | go | testimony | greet | back |
+  `?preview=` doors | join | welcome | lobby | act1 | blackout |
+  prompt-continue | prompt | prompt-late | orient | news | wait | go |
+  testimony | greet | back |
   questions | checkin | dinner | groups | study | cat |
   bags | puzzle4 | memory-clue | checkin4 | award | roam | irwin |
   relay-walk | relay-draw | relay-turn | relay-vote | relay-lockout |

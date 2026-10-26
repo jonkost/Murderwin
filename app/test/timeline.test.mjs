@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -108,9 +108,13 @@ test('the handoff cards are new, and the cards it settles were already on the bo
 test('there is one sound task per sound cue, under the beat that plays it', () => {
   const src = readFileSync(new URL('../../functions/lib/screen.js', import.meta.url), 'utf8')
   const ids = JSON.parse(src.match(/export const SOUND_IDS = (\[[^\]]*\])/)[1].replace(/'/g, '"'))
-  const sounds = ALL_TIMELINE_TASKS.filter(t => t.title.startsWith('Sound: ')).map(t => t.title.slice(7))
+  // a sound card a later migration closed (the power sound, 25 Oct 2026) stays on the board as done and is no cue
+  const closed = new Set(RETIRED_FOR_CUE_LIST_3.map(r => r.order))
+  const soundCards = ALL_TIMELINE_TASKS.filter(t => t.title.startsWith('Sound: ') && !closed.has(t.order))
+  const sounds = soundCards.map(t => t.title.slice(7))
   assert.deepEqual([...sounds].sort(), [...ids].sort())
-  for (const t of ALL_TIMELINE_TASKS.filter(x => x.title.startsWith('Sound: '))) {
+  assert.ok(!ids.includes('power') && ALL_TIMELINE_TASKS.some(t => t.order === 140 && t.title === 'Sound: power'), 'the power card was seeded and is closed, not deleted')
+  for (const t of soundCards) {
     const [act, beat] = t.moment.split('.')
     const spec = night.acts[act.slice(3)]?.beats.find(b => b.key === beat)
     if (spec?.sound) assert.equal(spec.sound, t.title.slice(7), `${t.moment} plays ${spec.sound}`)
@@ -743,9 +747,9 @@ test('the news cast on the live board’s shape: Claude chat’s answers stand, 
   for (const key of ['grossnola', 'swapMotive']) assert.deepEqual([d[key].answeredBy, d[key].answeredAt], ['Jon', 0], `${key}: Jon’s answer stands`)
 })
 
-test('the item 4 migration: the newest; the six built cards and the two string-lights cards close, three questions filed, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
+test('the item 4 migration: followed by the cue list’s blackout step; the six built cards and the two string-lights cards close, three questions filed, open on the board by number and title; Jon\'s three new cards are new and plain', () => {
   const { before, add, newId } = boardThrough('2026-10-25-item4')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-25-cue-list-blackout', 'followed by the cue list’s blackout step, the same evening')
   assert.ok(add.tasks === ITEM4_TASKS && add.retireTasks === RETIRED_FOR_ITEM4 && add.decisions === ITEM4_DECISIONS)
   for (const d of ITEM4_DECISIONS) {
     assert.equal(before.decisions[d.key], undefined, `${d.key} is a new question`)
@@ -773,4 +777,37 @@ test('the item 4 migration: the newest; the six built cards and the two string-l
   assert.ok(after.tasks.some(t => t.title === 'Open the case, the morning after' && t.moment === 'after'))
   const again = applyPlan(planAddition(add, after, { newId, now: 4 }), after)
   assert.equal(again.tasks.length, after.tasks.length, 'once only')
+})
+
+test('the cue list’s blackout step (25 Oct 2026, evening): the newest; the power sound’s card closes, the brain’s start card is reworded with its old words kept, one new question, each open on the board by number and title, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-25-cue-list-blackout')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(add.retireTasks === RETIRED_FOR_CUE_LIST_3 && add.rewriteTasks === REWRITTEN_FOR_CUE_LIST_3 && add.decisions === CUE_LIST_3_DECISIONS)
+  assert.equal(add.tasks, undefined, 'no new cards: the cue list’s cards come with the board step')
+  assert.deepEqual(RETIRED_FOR_CUE_LIST_3.map(r => [r.order, r.title]), [[140, 'Sound: power']])
+  for (const r of [...RETIRED_FOR_CUE_LIST_3, ...REWRITTEN_FOR_CUE_LIST_3]) {
+    assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
+  }
+  for (const r of RETIRED_FOR_CUE_LIST_3) { assert.match(r.detail, /^Done 25 Oct 2026:/); assert.ok(!r.detail.includes('—')) }
+  for (const r of REWRITTEN_FOR_CUE_LIST_3) {
+    assert.ok(!r.set.detail.includes('—') && !r.set.detail.includes('ten sounds'), `card ${r.order}: nine sounds, two required`)
+    assert.match(r.set.detail, /chime-phone/); assert.match(r.set.detail, /blackout sound/)
+  }
+  for (const d of CUE_LIST_3_DECISIONS) {
+    assert.equal(before.decisions[d.key], undefined, `${d.key} is a new question`)
+    assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
+    assert.equal(d.options.length, 2)
+    assert.match(d.note, /^Default: /)
+    for (const k of ['question', 'note']) assert.ok(!d[k].includes('—'), `${d.key}.${k}`)
+  }
+  const after = applyPlan(planAddition(add, before, { newId, now: 5 }), before)
+  const power = after.tasks.find(t => t.order === 140 && t.title === 'Sound: power')
+  assert.equal(power.status, 'done'); assert.ok(power.detail.endsWith(RETIRED_FOR_CUE_LIST_3[0].detail))
+  const brain = after.tasks.find(t => t.order === 121 && t.title === 'Start the brain')
+  assert.equal(brain.detail, REWRITTEN_FOR_CUE_LIST_3[0].set.detail)
+  assert.match(brain.previous['2026-10-25-cue-list-blackout'].detail, /ten sounds/, 'the old words are kept on the card')
+  assert.equal(after.decisions.promptScreen.moment, 'act2.orient'); assert.equal(after.decisions.promptScreen.answer, null)
+  const again = applyPlan(planAddition(add, after, { newId, now: 6 }), after)
+  assert.equal(again.tasks.length, after.tasks.length, 'once only')
+  assert.equal(again.tasks.find(t => t.order === 121).previous, brain.previous, 'not rewritten twice')
 })

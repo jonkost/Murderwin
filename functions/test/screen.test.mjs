@@ -19,6 +19,9 @@ import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
 // Everything here is a throwaway: the dealer's own rehearsal case in a fake
 // Firestore, and bracketed stand-ins made in the test. Nothing is printed.
 
+// The Blackout waits five seconds on the server before the power returns (run.js); the tests do not.
+const noSleep = () => {}
+
 // ---------------------------------------------------------------------------
 // The dial's band, the salt the screens seed on, and Sir Irwin
 
@@ -85,12 +88,13 @@ test('play writes one sound at a time and refuses an id outside the catalogue', 
   const db = new FakeFirestore()
   await play(db, 'n', 'chime-news', { now: 5 })
   assert.deepEqual(await currentSound(db, 'n'), { id: 'chime-news', at: new Date(5) })
-  await play(db, 'n', 'power', { now: 6 })
-  assert.equal((await currentSound(db, 'n')).id, 'power')
+  await play(db, 'n', 'sting-door', { now: 6 })
+  assert.equal((await currentSound(db, 'n')).id, 'sting-door')
   await assert.rejects(play(db, 'n', '7F3A'), /No such sound/)
   await assert.rejects(play(db, 'n', ''), /No such sound/)
-  assert.equal(SOUND_IDS.length, 10, 'ten cue sounds: chime-phone is the tenth (23 Oct 2026)')
-  assert.equal(new Set(SOUND_IDS).size, 10)
+  await assert.rejects(play(db, 'n', 'power'), /No such sound/, 'the power sound is gone (cueSounds, 25 Oct 2026): the music coming back is the cue')
+  assert.equal(SOUND_IDS.length, 9, 'nine cue sounds: chime-phone joined 23 Oct 2026, power left 25 Oct 2026')
+  assert.equal(new Set(SOUND_IDS).size, 9)
 })
 
 test('the recordings go out as codes once a station key is saved: no public doc names a family or a level; none saved, the names go as they are', async () => {
@@ -174,20 +178,22 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
     }
     return r
   }
-  const host = (command, arg) => step(() => hostCommand(db, { nightId, command, arg, now }))
+  const host = (command, arg) => step(() => hostCommand(db, { nightId, command, arg, now, sleep: noSleep }))
   const next = () => host('next')
 
-  // Act 1: idle screens named after the act, then the blackout goes black with its sound
+  // Act 1: idle screens named after the act, then the blackout goes black with its sound, and five seconds
+  // later (at once here) the power is back on its own: the TV stays dark through the prompt, with no sound
+  // of its own (25 Oct 2026, the cue list)
   await next()
   assert.equal(screen().kind, 'idle')
   assert.equal(screen().title, 'The Invitation')
   await next(); await next(); await next()
   await host('blackout')
-  assert.equal(screen().kind, 'black')
   assert.equal(sounds.has('blackout'), true)
-  await host('power')
+  assert.equal(nightDoc().phase, 'prompt', 'the power came back on its own')
   assert.equal(screen().kind, 'black', 'dark through the prompt')
-  assert.equal((await currentSound(db, nightId)).id, 'power')
+  assert.equal((await currentSound(db, nightId)).id, 'blackout', 'the blackout\'s sound stays the last: the power has none')
+  assert.deepEqual(await host('power'), { ok: true, already: true })
 
   // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off;
   // on a rehearsal night the family's line is a bracketed stand-in and its recording is not played
@@ -385,7 +391,7 @@ test('F27 chime-phone plays at every "look at your phone" moment: supper, the Ac
   // and on a night, every one of those moments plays it afresh (a new stamp each time)
   const { db, nightId } = await party()
   let now = 2_000_000
-  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now })
+  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now, sleep: noSleep })
   const nightDoc = () => db.store.get(`nights/${nightId}`)
   const chimed = []
   const expectChime = async (label, fn) => {
@@ -398,7 +404,7 @@ test('F27 chime-phone plays at every "look at your phone" moment: supper, the Ac
     chimed.push(label)
   }
   await host('next'); await host('next'); await host('next'); await host('next')
-  await host('blackout'); await host('power')
+  await host('blackout') // the power returns on its own
   await host('next'); await host('next'); await host('next') // news, peek, cat
   await expectChime('supper', () => host('supper'))
   await host('next') // down
@@ -450,7 +456,7 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
 test('a pause before any screen, then a resume, leaves the beat\'s screen up and not One moment; a pause in the dark stays dark', async () => {
   const { db, nightId } = await party()
   let now = 2_000_000
-  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now })
+  const host = (command, arg, extra = {}) => hostCommand(db, { nightId, command, arg, now, ...extra })
   const screen = () => db.store.get(`nights/${nightId}/public/screen`)
   assert.equal(screen(), undefined, 'no screen doc yet')
   await host('pause')
@@ -462,11 +468,15 @@ test('a pause before any screen, then a resume, leaves the beat\'s screen up and
   assert.equal(screen().kind, 'idle', 'nothing was parked: the beat\'s idle screen, not One moment')
   assert.equal(screen().title, 'Sirwin Manor')
   assert.ok(!isPauseCard(screen()))
-  // into Act 1, blackout, then a pause and a resume in the dark: the TV stays dark throughout
+  // into Act 1, blackout, then a pause taken during the five seconds of dark (the Blackout's own wait,
+  // 25 Oct 2026): the power does not come back on its own, the TV stays dark throughout, and after the
+  // resume the night is still in the dark for Power returns by hand
   await host('next'); await host('next'); await host('next'); await host('next')
-  await host('blackout')
-  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
-  await host('pause')
+  const dark = await host('blackout', undefined, { sleep: async () => {
+    assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
+    await host('pause')
+  } })
+  assert.deepEqual(dark, { ok: true, powerReturned: false })
   assert.equal(screen().title, 'One moment')
   assert.equal(screen().parked.kind, 'black')
   await host('resume')

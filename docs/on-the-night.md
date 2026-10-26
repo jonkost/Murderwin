@@ -15,7 +15,12 @@ Updated again on the evening of 24 October: the workshop's Game test tab
 (see "Trying the games" below) and the news team's cast (Susan plays Ava
 Waves, you play Mic Cameron). Updated 25 October: the Home rows that count
 the secrets, the motive card pictures, Boo's camera for the end credits,
-replaying a rehearsal by its seed word, and the morning after.
+replaying a rehearsal by its seed word, and the morning after. Updated on
+the evening of 25 October for your cue list (`docs/cue-list.md`): the
+blackout ends on its own after five seconds, the "Sorry for the
+interruption" button and the role card's fifteen seconds, the hall bulb
+green for the welcome and red from the power's return, and nine sounds,
+two of them required.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -89,12 +94,19 @@ them.
   the Macs already have, without showing it. Until it is saved the study
   station is turned away, and the brain needs it to find the W-O-O-F News
   recordings.
-- *The ten sounds.* The brain will not start while any of the ten cue
-  sounds has no file in `media/` (the tenth, `chime-phone`, rings when supper
-  is ready, when Act 4 starts and at every Act 4 round, and as the Act 6
-  Parlour Games open). Until you have recorded them, run
-  `node scripts/make-placeholder-sounds.mjs` once on the brain. It makes a
-  stand-in tone for each (`media/README.md` lists what each one is for).
+- *The nine sounds.* Nine cue sounds, one file each in `media/`, and only
+  two of them are required: `chime-phone` (the chime: when supper is ready,
+  when Act 4 starts and at every Act 4 round, when dessert is ready, and as
+  the Act 6 Parlour Games open) and `blackout` (the thunder and the crash
+  when Act 1 ends). The brain will not start while either of those two has
+  no file. The other chimes (the news, Sir Irwin, bulletin 2's sounder) play
+  the chime's file when their own is missing, so one recording serves every
+  chime moment; the four stings (the study solved, the door, the reveal,
+  the result) are optional and silent while no file is in. There is no
+  power sound since 25 October: the music coming back is the cue. Until you
+  have recorded them, run `node scripts/make-placeholder-sounds.mjs` once on
+  the brain. It makes a stand-in tone for each (`media/README.md` lists what
+  each one is for).
 - *The recordings.* Bulletin 2 is sound: each line its own file in `media/`
   on the brain, named as `media/README.md` says, played on the HomePods at
   supper. Bulletin 1 and the closing bulletin are video on the Parlour TV
@@ -159,7 +171,7 @@ them.
 
 | Machine | Its job | How it starts |
 |---|---|---|
-| The brain (your M3 MacBook Air) | The ten sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. |
+| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the rules deck in Act 1, the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal. In the drawing the room taps its guess on this screen, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
@@ -183,11 +195,13 @@ game; it serves the lights and the speakers.
    string lights.* On first. Give them five minutes.
 2. *The brain.* `cd cues && npm start`. Alive when the terminal prints a
    line saying what is on (music, Hue scenes, string lights) and sits there
-   waiting. When the night begins it prints `[hall] red` and the bulb
-   outside the bedroom turns red. If it prints `failed` and `retrying`, the
-   bridge address in `cues/.env` is wrong; the night runs on without the
-   lights. If it lists missing sounds and stops, run the stand-in step under
-   "The ten sounds" above and start it again.
+   waiting. When the night begins it prints `[hall] green` and the bulb
+   outside the bedroom turns green for the welcome; it goes off for the
+   blackout, red when the power returns, and green again when the drawing
+   is done. If it prints `failed` and `retrying`, the bridge address in
+   `cues/.env` is wrong; the night runs on without the lights. If it says
+   the chime or the blackout sound has no file and stops, run the stand-in
+   step under "The nine sounds" above and start it again.
 3. *The party box, then your phone.* On the workshop's Game night page, tick
    "This is the party night" (untick it after the party). Then open the game
    on your phone, tap "Host? Start the night", type your name. If a rehearsal
@@ -240,9 +254,30 @@ game; it serves the lights and the speakers.
   dark. The rules deck and the join code show on the Parlour TV in a second
   browser tab (the default for *rulesDeckScreen*, still yours to change);
   switch back to the game tab before the blackout. Act 1 ends with
-  **Blackout**.
-  When the room is settled, **Power returns · Act 2**. Every phone shows its
-  role card, held fifteen seconds. Yours too.
+  **Blackout**: every phone and screen goes black, the thunder and the crash
+  play, the hall bulb goes out, and five seconds later the power comes back
+  on its own (*blackoutAuto*, the cue list's default). Your phone goes dark
+  too, with nothing to press. Five seconds later it shows the same button as
+  everyone else's; after your own card the Host tab is back, on Act 2's
+  first beat. The button only works in Act 1 (in any other act it is greyed
+  out and the Manor refuses it), and a second press in the dark changes
+  nothing.
+- Act 2 begins when the power returns. Every phone buzzes (where it can) and
+  shows one button, "Sorry for the interruption, continue here". The tap
+  brings up that phone's role card, with no button and no early tap, for
+  fifteen seconds on the server's clock; then the phone goes to its main
+  page on its own. Yours too. Slow readers find the card again on the You
+  tab, behind "Show me my card". The hall bulb is red from this moment until
+  the drawing is done. The Parlour TV and every room screen stay dark until
+  your first **Next** (the question *promptScreen* on the board: cue 5 has
+  the loop come back at once).
+  **Power returns · Act 2** is the hand button for a power that did not come
+  back on its own (the night was paused during the five seconds). In the
+  dark no phone has a Host tab, so it is pressed from the brain:
+  `node functions/host.mjs power`, after `node functions/host.mjs resume` if
+  the night was paused. Pressing it once the power is back does nothing, and
+  if it and the automatic return land in the same second the power comes
+  back once.
 - The Parlour Games pop up on their own: twelve a night, about five in Act 2
   and five in Act 4 at times nobody knows, you included, and two at the very
   start of Act 6, one after the other. Boo opens each one. Every phone at
@@ -403,8 +438,12 @@ game; it serves the lights and the speakers.
 | 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. | In the bedroom: the trace. |
 
 The study screen waits on its idle line outside Act 4. Every screen is dark
-from the blackout until the first beat of Act 2, and near-black with "One
-moment" while the night is paused. The phones say where to look. On a
+from the blackout, through the five seconds and the role cards, until your
+first **Next** in Act 2 (built so on purpose, so every eye is on its own
+phone while the roles are read; cue 5 says the loop comes back at once, and
+the question *promptScreen* on the board lets you choose), and near-black
+with "One moment" while the night is paused. The phones say where to look.
+On a
 rehearsal night every phone and screen has a red REHEARSAL band, and every
 slot that would show a secret shows a stand-in in square brackets instead;
 on the party night both are gone.
@@ -609,9 +648,9 @@ night", "Go to Act 4", "Go to Act 6" and "Parlour Game now". Its rules:
   so your phone gets the Host tab.
 - Act 4 plays in groups, so "Go to Act 4" needs at least two phones in the
   test night.
-- The first time a test night reaches Act 2 or later, every phone shows a
-  role card first, for this test night only. After fifteen seconds tap Hide
-  this and carry on.
+- The first time a test night reaches Act 2 or later, every phone shows the
+  "Sorry for the interruption, continue here" button, then its role card
+  for fifteen seconds, for this test night only, and carries on by itself.
 - "Parlour Game now" works in Acts 2, 4 and 6.
 
 *On the party night the party box turns testing off.* While "This is the
@@ -819,3 +858,33 @@ moves only a night with `gameTest: true` (through `run.hostCommand`: `act`,
 `replace` is sent (the page asks first), and refuses Act 4 with fewer than
 two in the roster. The admin commands check the caller's uid against
 `ADMIN_UIDS` in `functions/index.js`.
+
+*Added 25 Oct, evening* (the cue list, step 3: the blackout and the role
+card). `run.hostCommand` `blackout` is refused outside Act 1 (`invalid`,
+"The blackout ends Act 1") and answers `{ already: true }` while the night
+is already dark; otherwise it writes the phase and the black screen with
+the `blackout` sound, waits `BLACKOUT_POWER_MS` (5000) on the server
+through an injectable `sleep` (the tests pass `() => {}`), then runs
+`powerReturns` timed at `now + 5000` and answers
+`{ powerReturned: true | false }`. `powerReturns` first moves the night out
+of the dark in a transaction (phase `blackout` to `prompt`, act 2, the
+stamps); a runner that finds the night already out answers
+`{ already: true }` and changes nothing, so the Blackout's own return and a
+Power returns by hand landing together deal the case once. The winner then
+runs the sequence: `publishContent`, the case, the role cards,
+`deal.setHall` red, `startParlour(2)`, the orient beat and notice,
+`screen.onPhase('power')`, which writes the black screen and plays nothing.
+`power` by hand answers `{ already: true }` unless the phase is `blackout`,
+else runs `powerReturns`. The hall bulb:
+`deal.ensureHall(colour)` writes only when unset (`enterBeat` asks green for
+Act 1, red after), `deal.setHall` writes regardless (the power's return and
+the role-dealing `act` jump), `revealTrace` green and `relay.reset` red as
+before; the brain turns it off by the phase. `SOUND_IDS` has nine ids (no
+`power`). The phone: `notes/{uid}.byNight[nightId].continued[prompt-<act>]`
+is the server's time at the tap; `promptStage` in `play/src/lib/night.js`
+gives `continue`, `card` or `done` (`PROMPT_HOLD_MS` 15000 from that tap, on
+`clockFor`'s clock), `showsPrompt` is the gate (the prompt phase, or Act 2's
+first beat in the act phase, while not done; a phone mid-card keeps its
+seconds after Next), and `Prompt` in `Moments.jsx` takes a `stage`. The
+button's words are `DEFAULT_UI.CONTINUE`; `HIDE` and `HOLD` are no longer
+shown.

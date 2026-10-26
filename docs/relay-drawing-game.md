@@ -252,8 +252,9 @@ Extra rules for the stand-ins:
 - [ ] Stand at the marker and check you cannot see the TV. Stand at the TV and check you cannot
       see the paper. Check you can hear each other.
 - [ ] Marker in the tray. A spare in the tray.
-- [ ] The hall bulb by the bedroom is red from Act 1. The blackout cue must bring it back red
-      when the power returns.
+- [ ] The hall bulb by the bedroom is green from the first beat of Act 1, goes out for the
+      blackout, and comes back red when the power returns; it stays red until the third picture
+      is named.
 - [ ] The main computer (your work MacBook Pro) on `/play/?kiosk=living`, on the TV, sleep off.
       Tap it once anywhere so it is allowed to play sounds.
 - [ ] After Act 4, carry Susan's MacBook Pro from the landing (where it showed Boo's wall) to the

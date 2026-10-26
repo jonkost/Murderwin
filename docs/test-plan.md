@@ -14,7 +14,7 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 Jon is the host, the builder, **and a player**. He can never see the real answers. That means he can't check the game by reading it. He has to trust it by **running checks that only say pass or fail.**
 
 Your job, Claude Code:
-1. Write every check below as an automated test, named starting with its ID (for example "F11 blackout messages hold every phone for 15 seconds").
+1. Write every check below as an automated test, named starting with its ID (for example "F11 after the blackout: one button, then the role card for 15 seconds").
 2. Make each one runnable with one command.
 3. Show results on one simple page Jon can read at a glance.
 4. **Never show Jon sealed content**, not even in an error message.
@@ -167,7 +167,7 @@ Fake players tap random choices, read at random speeds, and sometimes walk away 
 - **F08** All nine phones get each window at the same moment. Act 4 exception (24 Oct): its Parlour Games wait on each phone and are played when the guest is free; Acts 2 and 6 unchanged. G25b has the same exception.
 - **F09** No "waiting for other players" screen ever appears.
 - **F10** A window never closes early.
-- **F11** Blackout messages stay up for 15 seconds.
+- **F11** After the blackout (at most five seconds, ended by the server): one button, "Sorry for the interruption, continue here"; then the role card for 15 seconds on the server's clock, with no button; then the main page on its own. (Reworded 25 Oct to Jon's cue list; before, the card held 15 seconds and then showed a hide button.)
 - **F12** Puzzles appear on the chime, not on arrival.
 
 **Game rules**
@@ -322,12 +322,12 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | F03 | A dropped phone rejoins | Has a test | `functions/test/night.test.mjs` (the F03 tests) |
 | F04 | Every role screen has the same layout | Has a test | `functions/test/windows.test.mjs` (the F04 tests) |
 | F05 | Parlour Game screens read alike | Has a test | `functions/test/windows.test.mjs` ("F05 and F08 across thirty nights") |
-| F06 | Every role card needs the same tap | Has a test | `functions/test/windows.test.mjs` (the same card for every role, and a late joiner), `play/test/phone.test.mjs` (one prompt, one hold, one button). The old F06 (innocent event screens) is retired: no act has hidden events. |
+| F06 | Every role card needs the same tap | Has a test | `functions/test/windows.test.mjs` (the same card for every role, and a late joiner), `play/test/phone.test.mjs` (one continue button, a card with no button, one show-again button). The old F06 (innocent event screens) is retired: no act has hidden events. |
 | F07 | Sliders behave the same after a Parlour Game | Has a test | `functions/test/parlour.test.mjs` ("F07": the same cats can move, and a marker stays still as often for every role); G29 covers the odds and sizes |
 | F08 | Every phone gets each window at once (Act 4: waiting on the phone) | Has a test | `functions/test/windows.test.mjs` ("F05 and F08"); the Act 4 exception in `functions/test/act4.test.mjs` ("G25b and F08") |
 | F09 | No waiting-for-players screen | Has a test | `play/test/phone.test.mjs` (no such words anywhere a phone or a room screen reads; every finished screen has its own way on) |
 | F10 | A window never closes early | Has a test | `functions/test/windows.test.mjs` (the F10 tests) |
-| F11 | Blackout messages hold 15 seconds | Has a test | `play/test/phone.test.mjs` (fifteen seconds on the server's clock, then the hide button; a pause never runs it out) |
+| F11 | The continue button, then the role card for 15 seconds, then the main page | Has a test | `play/test/phone.test.mjs` (the three stages on the server's clock from the tap; a pause never runs the card out; a phone mid-card keeps its seconds after Next; the gate `showsPrompt` is a little wider than the cue list's wording on purpose: it shows the flow in the prompt phase at any act, so the Game test tab's act jumps, which deal the roles and hold the prompt phase at Acts 3 to 7, show the button and the card too); `functions/test/run.test.mjs` ("F11 the blackout returns the power on its own five seconds later on the server"; Power returns by hand; the two landing together return the power once; the blackout is Act 1 only) |
 | F12 | Puzzles appear on the chime | Has a test | `functions/test/act4.test.mjs` (every Act 4 room's game is set for its group at the round's chime, the ten minutes run from the chime, a late arrival gets no fresh puzzle, a scan before the chime is turned away) |
 | F13 | Parlour Games are the only events | Has a test | `functions/test/parlour.test.mjs`, `functions/test/windows.test.mjs` (the F13 tests) |
 | F14 | The Cats tab never shows a number | Has a test | `play/test/phone.test.mjs` (the five stop words, no number rendered, a picture of a slider, not a control) |

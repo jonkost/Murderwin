@@ -29,7 +29,7 @@ test('notes are scoped to the night: a rehearsal phone starts the party clean', 
   // the old flat shape is ignored entirely
   const flat = { seen: { welcome: true }, crossed: { 1: true } }
   assert.equal(seen(flat, 'B', 'welcome'), false)
-  assert.deepEqual(notesFor(flat, 'B'), { seen: {}, crossed: {}, buzzed: {} })
+  assert.deepEqual(notesFor(flat, 'B'), { seen: {}, crossed: {}, buzzed: {}, continued: {} }) // continued: the tap after the blackout (25 Oct 2026)
   assert.equal(notesPatch(null, { seen: {} }), null, 'no night, no write')
 })
 

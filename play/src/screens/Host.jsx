@@ -24,13 +24,23 @@ const PHASE_WORDS = {
   lobby: 'doors open, nothing started',
   act: 'playing',
   blackout: 'BLACKOUT, every phone is dark',
-  prompt: 'power is back, phones are showing their prompt',
+  prompt: 'power is back, phones are on the interruption button, then their cards',
   paused: 'paused, Sir Irwin requires the garden',
+}
+
+// What the Host tab says the moment a button is pressed, before the Manor
+// answers, for the one command that takes its time on purpose: the Blackout
+// waits five seconds on the server before the power returns (25 Oct 2026).
+const PRESSED_WORDS = {
+  blackout: 'Blackout. The power comes back on its own in five seconds.',
 }
 
 function describe(command, r) {
   switch (command) {
     case 'create': return 'New night started. Type your name again to rejoin it.'
+    case 'blackout': return r.already ? 'Already dark. The power comes back on its own.'
+      : r.powerReturned ? 'The power is back. Every phone says sorry for the interruption, then shows its card for fifteen seconds.'
+      : 'The power did not come back from this press: the night was paused, moved or brought back by hand during the dark. The line above says where the night is; Power returns · Act 2 lights while it is still dark.'
     case 'publish': return `Sent ${r.lines} lines to the phones.`
     case 'act': return `Act ${r.act} is on.`
     case 'relay-start': return r.already ? 'A drawing is already on the paper. It is kept. Clear it first if you want a fresh one.' : `The drawing has started: ${r.turns} turns.`
@@ -51,7 +61,7 @@ function describe(command, r) {
       return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
     case 'light-up': return r.waiting ? `A Parlour Game is waiting on ${r.phones} phones. Each guest plays it when free.` : `Parlour Game on ${r.phones} phones. Sixty seconds.`
     case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
-    case 'power': return 'The power is back. Every phone is showing its card.'
+    case 'power': return r.already ? 'The power is already back.' : 'The power is back. Every phone says sorry for the interruption, then shows its card for fifteen seconds.'
     case 'handover': return 'That phone is wiped. The next person to pick it up types their own name; the previous owner taps theirs on any other phone.'
     case 'pause': return 'Paused. Every clock in the house is standing still.'
     case 'reveal-stage': return r.already ? 'All three are named. Press Next for everyone’s result.' : `The screen is naming the ${r.stage}.`
@@ -109,7 +119,7 @@ export default function Host({ night, content, serverNow }) {
 
   const run = async (command, arg) => {
     setBusy(command)
-    setMsg(null)
+    setMsg(PRESSED_WORDS[command] ?? null)
     try {
       const r = await callHost({ nightId: night.nightId, command, arg })
       setMsg(describe(command, r.data ?? {}))
@@ -154,7 +164,7 @@ export default function Host({ night, content, serverNow }) {
         ))}
       </div>
       <div className="host-row">
-        <button className="big wide" disabled={!!busy || night.phase === 'blackout'} onClick={() => run('blackout')}>Blackout</button>
+        <button className="big wide" disabled={!!busy || night.act !== 1 || night.phase === 'blackout'} onClick={() => run('blackout')} title="Ends Act 1. The power comes back on its own five seconds later">Blackout</button>
         <button className="big wide" disabled={!!busy || night.phase !== 'blackout'} onClick={() => run('power')}>Power returns · Act 2</button>
         {night.phase === 'paused'
           ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
@@ -332,7 +342,7 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
   const w = night.window
   const open = w && !w.settled
   const left = open && serverNow ? secondsLeft(w, serverNow) : 0
-  const nextLabel = night.phase === 'blackout' ? 'Press Power returns'
+  const nextLabel = night.phase === 'blackout' ? 'Dark: the power comes back on its own'
     : night.act === 0 ? 'Begin Act 1'
     : after ? `Next: ${after.name}`
     : night.act === 1 ? 'Then: Blackout'

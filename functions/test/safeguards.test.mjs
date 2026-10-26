@@ -55,8 +55,7 @@ const session = (db, uid) => db.store.get(`sessions/${uid}`)
 async function toPower(db, nightId, now) {
   const next = () => hostCommand(db, { nightId, command: 'next', now })
   await next(); await next(); await next(); await next()
-  await hostCommand(db, { nightId, command: 'blackout' })
-  await hostCommand(db, { nightId, command: 'power', now })
+  await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
 }
 // What a spill must leave alone, snapshotted for a before/after compare.
 function people(db, nightId) {
@@ -341,9 +340,10 @@ test('spill is off once the news is on the screen, once the study has paid out, 
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false })
     assert.equal(caseOf(db, nightId), undefined, 'no case was made by asking')
     for (let i = 0; i < 3; i++) await hostCommand(db, { nightId, command: 'next', now })
-    await hostCommand(db, { nightId, command: 'blackout' })
-    assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false }, 'not in the dark')
-    await hostCommand(db, { nightId, command: 'power', now })
+    // a spill asked during the five seconds of dark (the Blackout's own wait) is refused; the power then returns on its own
+    await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {
+      assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false }, 'not in the dark')
+    } })
     await hostCommand(db, { nightId, command: 'light-up', now })
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now: now + 1000 }), { ok: true, did: false })
   }

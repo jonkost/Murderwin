@@ -51,9 +51,10 @@ export const NEEDS = {
   'act1.arrive': [{ list: 'bios' }, { list: 'bag_items' }, ui('DOORS', 'JOIN', 'JOIN BUTTON', 'LOBBY', 'BAG')],
   'act1.meet': [{ list: 'npc_cards' }, ui('NOTICE MEET')],
   'act1.introduce': [ui('NOTICE INTRODUCE')],
-  'act1.ready': [{ list: 'role_cards' }, ui('NOTICE READY', 'HOLD', 'HIDE')],
+  // HOLD and HIDE were filed here until 25 Oct 2026: the role card leaves on its own now
+  'act1.ready': [{ list: 'role_cards' }, ui('NOTICE READY')],
   'act2.parlour': [{ list: 'scenarios' }],
-  'act2.orient': [ui('POWER', 'ORIENT', 'YOUR ROLE', 'SHOW ROLE', 'HIDE ROLE', 'NOTICE ORIENT')],
+  'act2.orient': [ui('CONTINUE', 'POWER', 'ORIENT', 'YOUR ROLE', 'SHOW ROLE', 'HIDE ROLE', 'NOTICE ORIENT')],
   // The news is W-O-O-F News since 22 Oct, an open bank: the old news frames
   // are shown nowhere, so they are not a need here.
   'act2.news': [ui('NOTICE NEWS')],

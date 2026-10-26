@@ -140,7 +140,7 @@ export const SECTIONS = [
     steps: [
       'Have the paper, the markers and the Parlour TV page ready (below).',
       'Tap Start a test night at the top, and join it on your phone with your host name, so you get the Host tab.',
-      'Tap Go to Act 6. Your phone shows a role card first, for this test night only: after 15 seconds tap Hide this. Act 6 opens with two Parlour Games: answer them, then tap Start the drawing on your phone’s Host tab.',
+      'Tap Go to Act 6. Your phone shows the Sorry for the interruption, continue here button, then a role card for 15 seconds, for this test night only, and carries on by itself. Act 6 opens with two Parlour Games: answer them, then tap Start the drawing on your phone’s Host tab.',
       'When your name is called, go to the paper and draw what the room describes. Tap the room’s guess on the Parlour TV.',
       'The third picture opens the door, and the bedroom screen shows what was left behind. With one phone you are called every turn.',
     ],
@@ -249,7 +249,7 @@ export const LIVE_IS_PARTY = 'The live night is the party night (or a dry run). 
 export const LIVE_IS_REHEARSAL = 'The live night is a rehearsal started from a phone, not a test night. Run it from the Host tab on your phone.'
 export const ACT4_NEEDS_TWO = 'Act 4 needs at least two phones in the test night, because it plays in groups. Join on a second phone, then try again.'
 // Lines the strip shows beside its buttons.
-export const ROLE_CARD_FIRST = 'The first time a test night goes to Act 2 or later, every phone shows a role card first, for this test night only. After 15 seconds tap Hide this, then carry on.'
+export const ROLE_CARD_FIRST = 'The first time a test night goes to Act 2 or later, every phone shows the Sorry for the interruption, continue here button, then its role card for 15 seconds, for this test night only, and carries on by itself.'
 export const PARTY_DAY = '2026-11-15'
 export const TICK_AGAIN = 'Today is the party. Tick the party box on the Game night page again before you start the party night.'
 

@@ -369,7 +369,7 @@ const DEALT = {
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -399,8 +399,10 @@ export default function Preview({ screen }) {
     case 'superseded': body = <Join night={night} ui={ui} notice={ui.SUPERSEDED} />; break
     case 'paused': body = <Moment text={ui.PAUSED} crest />; break
     case 'blackout': body = <Blackout />; break
-    case 'prompt': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" card={CARDS.role} notes={null} />; break
-    case 'prompt-late': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" card={null} notes={null} />; break
+    // after the blackout (25 Oct 2026): the one button, then the role card with no button
+    case 'prompt-continue': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" stage="continue" card={CARDS.role} notes={null} />; break
+    case 'prompt': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" stage="card" card={CARDS.role} notes={null} />; break
+    case 'prompt-late': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" stage="card" card={null} notes={null} />; break
     case 'you': body = <Rest uid="preview" night={night} session={{ ...SESSION, cards: [CARDS.role] }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'offline': body = <><Offline ui={ui} seconds={47} /><Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} /></>; break
     case 'paused-window': body = <><PausedStrip ui={ui} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break

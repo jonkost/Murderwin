@@ -246,8 +246,10 @@ Runtime (built 17 Oct 2026, changed 23 Oct 2026):
   `screenSalt`, `solving`, `exposure`, `dealtClues`, and `spills` after Spill
   the Beans. Nothing sealed goes in, except the leans in `parlourPlan` on a
   party deal.
-- `functions/lib/deal.js buildCaseForNight(db, nightId)` runs at the Act 1
-  blackout (run.js `power`, and the `act 2` jump), once: a case with roles is
+- `functions/lib/deal.js buildCaseForNight(db, nightId)` runs when the power
+  returns after the Act 1 blackout (run.js `powerReturns`: the Blackout five
+  seconds after the dark, or Power returns by hand; and the `act 2` jump),
+  once: a case with roles is
   never replaced. `nights/{id}.forceRehearsal !== false` (the default from
   `createNight`; the workshop's `meta/game.party_night` checkbox sets it
   false) deals the rehearsal case, otherwise the party case; either way

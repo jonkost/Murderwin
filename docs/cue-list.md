@@ -112,3 +112,4 @@ switch it up.
 - Can the app make the phone buzz? (Answered in the 25 October handoff: Android phones buzz; iPhones cannot from a web page, so they chime instead.)
 - Keep it all on theme, with the branding.
 - Unless otherwise cued, every active screen shows a looping graphic. (Jon's line was cut off after "every active screen should have a"; read as the loops the cues describe. Jon corrects it if that is wrong.)
+- Build note (25 Oct, evening, step 3): cue 5's video column says the Parlour returns to the loop right after the blackout. As built, every screen stays dark through the five seconds and the role cards, until the first Next of Act 2, so every eye is on its own phone; the lights and the music come back as cue 5 says. The question promptScreen on the board lets Jon choose the loop instead. The role card has no early-continue tap: its fifteen seconds always run, and the role stays on the You tab.

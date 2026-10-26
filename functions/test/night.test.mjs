@@ -198,8 +198,9 @@ test('a late joiner after the power returns gets one role card as a detective; a
   assert.equal(early.roleDealt, 0)
   assert.equal(cardsOf(db, 'u-mari', 'role').length, 0, 'Act 1: no case yet, nothing dealt')
   assert.equal(db.store.get(`cases/${nightId}`), undefined, 'and no case is made by a join')
-  await runCommand(db, { nightId, command: 'blackout' })
-  await runCommand(db, { nightId, command: 'power' })
+  // the blackout returns the power on its own five seconds later (the test's sleep is instant); roles land then
+  await runCommand(db, { nightId, command: 'blackout', sleep: () => {} })
+  assert.deepEqual(await runCommand(db, { nightId, command: 'power' }), { ok: true, already: true }, 'the hand button is harmless once the power is back')
   for (const uid of ['u-jon', 'u-jessa', 'u-jacob', 'u-mari']) assert.equal(cardsOf(db, uid, 'role').length, 1)
   const late = await join(db, { uid: 'u-stan', nightId, name: 'Stanley' })
   assert.equal(late.roleDealt, 1)

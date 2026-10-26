@@ -3,7 +3,7 @@ import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, effectivePhase, isDark, meetParam, needsHandoverReset, notesFor, openWindow, overlays, presenceKey, roleCard, showRehearsalBand, wantsWelcome } from './lib/night'
+import { clockFor, isDark, meetParam, needsHandoverReset, notesFor, openWindow, overlays, presenceKey, promptKeyOf, promptStage, roleCard, showRehearsalBand, showsPrompt, wantsWelcome } from './lib/night'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -87,12 +87,18 @@ export default function App() {
   if (!s || s.status !== 'active') return <>{band}{banner}<Join night={n} ui={ui} /></>
 
   // The blackout, and a pause taken during it, keep every phone near-black.
-  // A pause taken during the role prompt keeps the prompt up on the frozen
-  // clock, so nothing bright appears in the dark room either way.
+  // Then the power returns (the cue list, 25 Oct 2026): one button, "Sorry
+  // for the interruption, continue here"; then the role card for fifteen
+  // seconds on the server's clock, with no button; then the main page on its
+  // own (lib/night.js showsPrompt and promptStage). A pause taken during it
+  // keeps the screen up on the frozen clock, so nothing bright appears in the
+  // dark room either way. Until this phone's notes have loaded the screen
+  // stays dark rather than flash the button at a phone that already tapped.
   if (isDark(n)) return <Blackout />
-  const promptKey = `prompt-${n.act}`
-  if (effectivePhase(n) === 'prompt' && !notes.seen[promptKey]) {
-    return <Prompt uid={uid} night={n} ui={ui} serverNow={clockFor(n, serverNow)} promptKey={promptKey} card={roleCard(s)} notes={notes} />
+  const clock = clockFor(n, serverNow)
+  if (showsPrompt(n, notes, clock)) {
+    if (!notesDoc.loaded) return <Blackout />
+    return <Prompt uid={uid} night={n} ui={ui} serverNow={clock} promptKey={promptKeyOf(n)} stage={promptStage(n, notes, clock)} card={roleCard(s)} notes={notes} />
   }
 
   // The permissions screen (§9.10): once per night, before the tour, never
@@ -111,7 +117,6 @@ export default function App() {
   // During a pause the clock stands still at the moment of the pause, so an
   // open window stays on screen, disabled, until the host resumes.
   const paused = n.phase === 'paused'
-  const clock = clockFor(n, serverNow)
   const w = openWindow(n, s, clock)
   let screen = null
   if (w && sent !== w.id) {

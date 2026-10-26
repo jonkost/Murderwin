@@ -37,8 +37,7 @@ async function replay(seed, { meta = {}, guests = GUESTS } = {}) {
   for (const name of guests) await join(db, { uid: `u-${name.toLowerCase()}-${Math.random()}`, nightId, name })
   const now = 2_000_000
   for (let i = 0; i < 4; i++) await hostCommand(db, { nightId, command: 'next', now })
-  await hostCommand(db, { nightId, command: 'blackout' })
-  await hostCommand(db, { nightId, command: 'power', now })
+  await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
   await dealEncounter(db, nightId, 2, 'cat', { now })
   await makeRooms(db, nightId)
   await startRelay(db, { nightId, now })
