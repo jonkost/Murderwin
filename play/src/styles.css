@@ -214,6 +214,16 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .option.out { opacity: 0.45; }
 .option .figure-art { width: 100%; height: auto; border-radius: 6px; display: block; }
 .option .letter, .kiosk-option .letter { position: absolute; top: 0.3rem; left: 0.5rem; font-weight: 700; color: var(--brand-claret); background: rgba(255,255,255,0.85); border-radius: 4px; padding: 0 0.35rem; }
+/* a named option on a phone (a party night): the name under its letter, readable at arm's length */
+.option .option-name { display: block; padding: 1.7rem 0.2rem 0.5rem; font-size: 1.05rem; line-height: 1.25; }
+/* the host's own controls for the drawing (25 Oct 2026): At the paper while a drawer walks, the options as buttons while the room guesses */
+.host-relay { width: 100%; }
+.host-relay.inline { display: flex; flex-direction: column; align-items: center; width: min(92vw, 26rem); margin-top: 0.8rem; }
+.host-relay.inline .host-row { width: 100%; }
+.host-relay .host-options button.option { font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 3.2rem; }
+.host-relay .host-options button.option:disabled { cursor: default; }
+.host-relay .host-options button.option:disabled:not(.out) { opacity: 0.7; }
+.host-relay .host-msg { width: 100%; box-sizing: border-box; }
 
 /* ---- the room screens ---- */
 .kiosk { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2vw; background: var(--bg); color: var(--ink); }

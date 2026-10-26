@@ -117,7 +117,8 @@ test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass
   assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [1-5]$/.test(l)))
   assert.deepEqual(summary.checks, [])
   assert.match(line(6), /[2-5] Parlour Games, \d+ answers/, 'the two of Act 6 and any Act 4 could not fit')
-  assert.match(line(6), /drawing done in \d+ turns and \d+ guesses on the main computer/)
+  // the guess goes through the one relay.guess call, the same as the host's phone and the TV (25 Oct 2026): the line no longer names a place
+  assert.match(line(6), /drawing done in \d+ turns and \d+ guesses \(\d+ misses\)/)
   assert.match(line(6), /8 strikes/)
   assert.match(line(7), /8 ballots, 8 results/)
   // and then it is all gone

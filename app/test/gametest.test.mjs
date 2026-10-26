@@ -42,7 +42,7 @@ test('seven sections in the order of the night, each named, filed under a real m
 test('every sample screen named here exists on the phones, and the practices and the real game have their addresses', () => {
   const preview = playSrc('Preview.jsx')
   const names = SECTIONS.flatMap(s => s.tries.map(t => t.params.preview).filter(Boolean))
-  assert.equal(names.length, 26)
+  assert.equal(names.length, 28) // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026
   for (const n of [...names, 'questions']) {
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }
@@ -50,10 +50,11 @@ test('every sample screen named here exists on the phones, and the practices and
   for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=boo&practice=1', '?practice=boo', '?kiosk=living', '?kiosk=bedroom']) {
     assert.ok(queries.includes(q), q)
   }
-  // the drawing's previews, in the order the contract lists them
+  // the drawing's previews, in the order the contract lists them; since 25 Oct 2026 (the cue list) the
+  // host's own phone follows each walk and each guess: At the paper, then the four names as buttons
   const drawing = SECTIONS.find(s => s.key === 'drawing').tries.map(t => t.params.preview).filter(Boolean)
   assert.deepEqual(drawing, ['kiosk-living-rules', 'kiosk-relay-called', 'kiosk-relay-square', 'kiosk-relay-guess', 'kiosk-living-hold', 'kiosk-living-done',
-    'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-done', 'door', 'kiosk-bedroom-closed', 'kiosk-bedroom-1'])
+    'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-done', 'door', 'kiosk-bedroom-closed', 'kiosk-bedroom-1'])
   // only the two room screens a test night needs follow a night; everything else is a sample or a practice
   const night = SECTIONS.flatMap(s => s.tries.filter(t => t.night).map(t => queryOf(t.params)))
   assert.deepEqual(night, ['?kiosk=living', '?kiosk=bedroom'])

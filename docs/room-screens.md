@@ -13,7 +13,7 @@ live, or which way the hidden pair have pulled.
 
 | Address | Screen | What it does |
 |---|---|---|
-| `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below. In the drawing the room taps its guesses here. |
+| `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below. In the drawing the four names show here; the host taps the room's guess on their phone, and a tap here still counts, the fallback. |
 | `?kiosk=ipad` | Your iPad Pro on a stand in the Orangerie, Acts 2 and 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper. In Act 4 it becomes Boo's camera (below) or a spare screen. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia. |
 | `?kiosk=memory` | The older iPad, on a small stand in the Library with Zimothy, all night | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. |
@@ -67,17 +67,22 @@ brackets.
   at dial 1, one at dial 5, the real one always among them), and his closer.
   Each card shows its picture (`play/public/motives/<number>.png`) beside
   the rhyme once it is drawn; until then the rhyme alone.
-  Nothing else: the old secret middle line is gone (23 October).
+  Nothing else: the old secret middle line is gone (23 October). Before him,
+  while the cake is served, **Cake!** on the Host tab puts the Happy Birthday
+  Irwin card on the TV (kind `birthday`) until his beat; pressed once his
+  countdown is up, it plays the song and leaves his cards on the screen.
 - *Act 6, Sir Irwin Needs a Hand (the Relay Drawing).* Irwin's seven rules
   slides, each up long enough to read (about 5 seconds plus 0.4 seconds a
   word); the first carries the game's name and its line ("Three drawings
   open the door. He only has paws."), and slide 3 shows the practice
   smiley's B1 square. Each turn, only the called player's portrait and
   character name while they walk to the paper in the Library, then a black
-  screen with one white square and its label. After each picture, four names
-  to agree on and tap here: a wrong pick is crossed off and the room waits
-  ten seconds before guessing again. Practice smiley, then 3 by 3, 4 by 4,
-  5 by 5.
+  screen with one white square and its label (the walk allows twenty
+  seconds, and the host's **At the paper** ends it sooner). After each
+  picture, four names to agree on; the room tells the host, who taps the
+  guess on their phone (a tap here still counts, the fallback): a wrong pick
+  is crossed off and the room waits ten seconds before guessing again.
+  Practice smiley, then 3 by 3, 4 by 4, 5 by 5.
 - *Act 6, the door.* Irwin's "Pawsome!" slide above "The door is open". The
   hall light goes green and the bedroom screen shows the trace. If the
   bedroom screen has died, press **Show the trace on the TV** on the Host tab: after
@@ -136,9 +141,10 @@ Each shows the game's name, with its line under it, at the top (Jon,
 ## The sounds
 
 Nine cue sounds, one file each in `media/`, plus bulletin 2's recordings.
-Only two are required: `chime-phone` (the chime: when supper is ready, when
-Act 4's groups come up and at every Act 4 round, when dessert is ready, and
-as the Act 6 Parlour Games open) and `blackout`. The other chimes (the news,
+Only two are required: `chime-phone` (the chime: the **Sound test** during
+the rules, when supper is ready, when Act 4's groups come up and at every
+Act 4 round, when dessert is ready, and as the Act 6 Parlour Games open) and
+`blackout`. The other chimes (the news,
 Sir Irwin, bulletin 2's sounder) play the chime's file when their own is
 missing, and the four stings are optional, silent while no file is in. There
 is no power sound since 25 October: the music coming back is the cue.
@@ -159,7 +165,8 @@ shows the words.
 `functions/lib/screen.js` writes two public docs any phone may read:
 
 - `nights/{id}/public/screen` `{ kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, choices?, mood?, parked?, prompts?, video? }`,
-  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title`.
+  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday`
+  (`birthday` is written only by the Cake! host command, `screen.birthday`, never by a beat).
   `prompts` is `{ lines, order, startedAt, everyMs }` (`screen.promptsFor`,
   the order from `bagclues.promptOrder` on the case's screen seed, carried on
   from the previous prompts doc); the TV picks the line with

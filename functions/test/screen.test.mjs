@@ -82,6 +82,55 @@ test('checkScreen refuses a forbidden key at any depth and an unknown kind; writ
   await writeScreen(db, 'n', screenDoc('news', { lines: ['a'] }))
   assert.equal((await readScreen(db, 'n')).kind, 'news')
   assert.ok(SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('black'))
+  assert.ok(SCREEN_KINDS.includes('birthday'), 'the Happy Birthday Irwin card is a kind of its own (Cake!, 25 Oct 2026)')
+})
+
+test('Cake! (cue 13) stamps public/cues.cake for the brain and puts the birthday card on the Parlour TV until the next beat; Sound test plays the chime', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  await join(db, { uid: 'uid-jon', nightId, name: 'Jon' })
+  await join(db, { uid: 'uid-jessa', nightId, name: 'Jessa' })
+  let now = 5_000_000
+  const host = (command, arg) => hostCommand(db, { nightId, command, arg, now, sleep: noSleep })
+  // the first jump deals the roles and holds the prompt (the TV dark); the second lands on Act 5's first beat playing
+  await host('act', 5)
+  await host('act', 5)
+  assert.equal((await readScreen(db, nightId)).kind, 'idle')
+  const soundBefore = await currentSound(db, nightId)
+  const r = await host('cake')
+  assert.deepEqual(r, { ok: true, cake: true, card: true })
+  const cues = db.store.get(`nights/${nightId}/public/cues`)
+  assert.deepEqual(cues.cake, { at: new Date(now) }, 'the stamp the brain plays the song from')
+  assert.equal(cues.hall, 'red', 'the merge left the hall light alone')
+  const card = await readScreen(db, nightId)
+  assert.equal(card.kind, 'birthday')
+  assert.equal(card.title, 'Happy Birthday, Sir Irwin!')
+  assert.ok(card.lines.length >= 1)
+  assert.equal(card.act, 5)
+  assert.ok(checkScreen(card).ok)
+  assert.deepEqual(await currentSound(db, nightId), soundBefore, 'the server plays no sound of its own: the song is the brain\'s, from the stamp')
+  // a second slice: a fresh stamp, so the brain plays it again
+  now += 60_000
+  await host('cake')
+  assert.deepEqual(db.store.get(`nights/${nightId}/public/cues`).cake, { at: new Date(now) })
+  // the next beat takes the card down
+  await host('next')
+  assert.equal((await readScreen(db, nightId)).kind, 'irwin')
+  // a slice during Sir Irwin's countdown: the song and the candles still (a fresh stamp), but his
+  // motive cards are part of the clue path, so his screen stands and the reply says card: false
+  now += 60_000
+  const irwinAt = (await readScreen(db, nightId)).at
+  assert.deepEqual(await host('cake'), { ok: true, cake: true, card: false })
+  assert.deepEqual(db.store.get(`nights/${nightId}/public/cues`).cake, { at: new Date(now) }, 'the brain still plays the song')
+  const kept = await readScreen(db, nightId)
+  assert.equal(kept.kind, 'irwin', 'Sir Irwin keeps the screen')
+  assert.deepEqual(kept.at, irwinAt, 'his screen was not rewritten')
+  // Sound test (cue 2): the chime, nothing else
+  const s = await host('sound-test')
+  assert.deepEqual(s, { ok: true, sound: 'chime-phone' })
+  assert.deepEqual(await currentSound(db, nightId), { id: 'chime-phone', at: new Date(now) })
+  assert.equal((await readScreen(db, nightId)).kind, 'irwin', 'the screen did not move')
 })
 
 test('play writes one sound at a time and refuses an id outside the catalogue', async () => {
@@ -187,6 +236,9 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   await next()
   assert.equal(screen().kind, 'idle')
   assert.equal(screen().title, 'The Invitation')
+  // the Sound test during the rules (cue 2, 25 Oct 2026): the chime, and the screen stays where it is
+  assert.deepEqual(await host('sound-test'), { ok: true, sound: 'chime-phone' })
+  assert.equal(screen().kind, 'idle')
   await next(); await next(); await next()
   await host('blackout')
   assert.equal(sounds.has('blackout'), true)
@@ -281,6 +333,11 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   }
   assert.equal(nightDoc().act, 5)
   assert.ok(sounds.has('sting-solved'))
+
+  // Act 5: the cake is served (cue 13, 25 Oct 2026): the birthday card on the TV, the stamp for the brain
+  await host('cake')
+  assert.equal(screen().kind, 'birthday')
+  assert.ok(db.store.get(`nights/${nightId}/public/cues`).cake?.at, 'the brain plays the song from this stamp')
 
   // Act 5: Sir Irwin, the workshop opener, how sure he is of the motive, the closer; no sealed line, no names
   await next() // irwin

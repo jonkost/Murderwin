@@ -373,7 +373,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     await host('settle-now')
     await sealCheck('before-reveal')
-    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} guesses on the main computer (${drawing.misses} misses)`, `${struck} strikes`])
+    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} guesses (${drawing.misses} misses)`, `${struck} strikes`])
 
     // ---- Act 7: the ballot, the reveal, every phone's result
     await next() // ballot

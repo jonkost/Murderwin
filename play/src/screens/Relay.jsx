@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { callRelayAdvance } from '../firebase'
 import { useTick, writeNotes } from '../lib/hooks'
 import { Cell, Figure } from '../lib/draw'
 import { Seal } from './Moments'
+import { HostRelayPanel } from './Host'
 
 // The relay drawing on a phone (Act 6). Every phone follows the same public
 // doc. The drawer's phone says "draw"; everyone else's shows the cell the TV
-// is showing, so nobody has to squint. The room guesses together on the main
-// computer (22 Oct): the phones only show what is still standing. All timing
-// is read from server deadlines.
+// is showing, so nobody has to squint. The room agrees its guess and tells
+// the host, who taps it on their own phone (25 Oct 2026, Jon's cue list; the
+// Parlour TV's options stay as the fallback): a guest's phone only shows what
+// is still standing, and a host's phone (session.host) carries At the paper
+// while someone walks and the four options to tap while the room guesses
+// (HostRelayPanel). All timing is read from server deadlines.
 
 // A server timestamp, a Date, or a plain millisecond number (the study station sends numbers).
 export function ms(t) {
@@ -23,8 +27,9 @@ function Bar({ endsAt, total, serverNow }) {
 }
 
 // The bar totals come from the server (public/relay.timing, written at start);
-// these stand in only for a doc written before the server sent them.
-const FALLBACK = { turnMs: 10_000, walkMs: 12_000, pullMs: 20_000, voteMs: 45_000, lockoutMs: 10_000 }
+// these stand in only for a doc written before the server sent them (the
+// cue list's numbers, 25 Oct 2026: fifteen seconds a turn, the walk at most twenty).
+const FALLBACK = { turnMs: 15_000, walkMs: 20_000, pullMs: 20_000, voteMs: 45_000, lockoutMs: 10_000 }
 export function timingOf(relay) {
   const t = relay?.timing ?? {}
   const pick = (k) => (typeof t[k] === 'number' && t[k] > 0 ? t[k] : FALLBACK[k])
@@ -34,6 +39,7 @@ export function timingOf(relay) {
 export default function Relay({ uid, night, session, relay, serverNow, rules = null }) {
   useTick(250)
   const me = session.guestKey
+  const host = !!session.host // the two host phones carry the drawing's controls (HostRelayPanel)
   const { TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } = timingOf(relay)
   const nudged = useRef(0)
 
@@ -85,6 +91,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
           <p className="moment-text">{relay.nextName} is walking to the paper.</p>
         )}
         <Bar endsAt={relay.walkEndsAt} total={first ? PULL_MS : WALK_MS} serverNow={serverNow} />
+        {host && <HostRelayPanel relay={relay} nightId={night.nightId} inline />}
       </div>
     )
   }
@@ -97,7 +104,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
         {mine ? (
           <>
             <p className="moment-text">Draw. The room will tell you how.</p>
-            <p className="moment-sub">Ten seconds. Marker down when your phone buzzes.</p>
+            <p className="moment-sub">Fifteen seconds. Marker down when your phone buzzes.</p>
           </>
         ) : (
           <>
@@ -117,18 +124,20 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     return (
       <div className="moment relay vote papered">
         <p className="crest">{relay.round ?? `Grid ${relay.grid}`} is drawn</p>
-        <p className="moment-text">{locked ? 'Not that one.' : 'Go and look at the paper, then guess together on the main computer.'}</p>
-        <div className="options">
-          {(relay.options ?? []).map((o, i) => {
-            const out = crossed.includes(i)
-            return (
-              <div key={i} className={`option${out ? ' out' : ''}`}>
-                <span className="letter">{'ABCD'[i]}</span>
-                {o.name ? <span className={out ? 'option-name crossed' : 'option-name'}>{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={out} />}
-              </div>
-            )
-          })}
-        </div>
+        <p className="moment-text">{locked ? 'Not that one.' : host ? 'Go and look at the paper, then tap the room’s guess.' : 'Go and look at the paper, then tell the host your guess.'}</p>
+        {host ? <HostRelayPanel relay={relay} nightId={night.nightId} inline /> : (
+          <div className="options">
+            {(relay.options ?? []).map((o, i) => {
+              const out = crossed.includes(i)
+              return (
+                <div key={i} className={`option${out ? ' out' : ''}`}>
+                  <span className="letter">{'ABCD'[i]}</span>
+                  {o.name ? <span className={out ? 'option-name crossed' : 'option-name'}>{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={out} />}
+                </div>
+              )
+            })}
+          </div>
+        )}
         {locked && <Bar endsAt={relay.lockoutEndsAt} total={LOCKOUT_MS} serverNow={serverNow} />}
       </div>
     )

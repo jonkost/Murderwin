@@ -47,7 +47,9 @@ import { setFromAddress } from './lib/gametest'
 // go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
 // supper, dinner, warn, groups, room-study, room-salem, room-parlour, room-paid,
 // roam, irwin, door, eliminate, ballot, reveal, result, clues, cats-friend, and
-// the relay screens relay-walk … relay-done. questions&set=<base64url> shows one
+// the relay screens relay-walk … relay-done (relay-walk-host and relay-vote-host:
+// the host's phone, with At the paper and the four names as buttons).
+// questions&set=<base64url> shows one
 // of the workshop's own Parlour Game sets instead of the sample.
 // ?preview=tour walks all of them with a button.
 
@@ -369,7 +371,7 @@ const DEALT = {
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'reveal', 'result', 'clues', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -389,6 +391,9 @@ export default function Preview({ screen }) {
     case 'ballot': body = <Ballot w={windowDoc('ballot', 120000)} night={{ ...night, act: 7 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'eliminate': body = <Eliminate w={windowDoc('eliminate', 90000)} night={{ ...night, act: 6 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'relay-walk': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('walk')} serverNow={serverNow} />; break
+    // the host's phone (25 Oct 2026): At the paper under the walk's bar, the four names as buttons at the guess; nightId 'preview' keeps them inert
+    case 'relay-walk-host': body = <Relay uid="preview" night={night} session={{ ...SESSION, host: 'jonathan' }} relay={relayDoc('walk')} serverNow={serverNow} />; break
+    case 'relay-vote-host': body = <Relay uid="preview" night={night} session={{ ...SESSION, host: 'jonathan' }} relay={{ ...relayDoc('vote'), crossed: [2] }} serverNow={serverNow} />; break
     case 'relay-turn': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('turn')} serverNow={serverNow} />; break
     case 'relay-draw': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jessa' }} relay={relayDoc('turn')} serverNow={serverNow} />; break
     case 'relay-vote': body = <Relay uid="preview" night={night} session={SESSION} relay={relayDoc('vote')} serverNow={serverNow} />; break

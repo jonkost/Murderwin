@@ -11,14 +11,17 @@
 // three rounds (3 × 3, 4 × 4, 5 × 5) from the sealed picture bank on the
 // party night (relay-bank.js), stand-in grids otherwise. Each turn the game
 // calls a random player (repeats allowed); they walk to the paper before the
-// square is shown. The room guesses on the main computer (the living room
-// kiosk, `guess`); a wrong pick is crossed off until it is right. The third
-// picture named opens the door.
+// square is shown. The room agrees its guess and the host taps it on their
+// own phone (25 Oct 2026, Jon's cue list, cue 17; the living room kiosk's
+// own options stay as the fallback), through `guess`; a wrong pick is crossed
+// off until it is right. The third picture named opens the door.
 //
 // Timing: every deadline is a server timestamp written here; the phones and
 // the living room kiosk render against it and call `advance` when it has
 // passed. `advance` is idempotent: it moves the state exactly once per
-// deadline and refuses early calls. Cloud Functions do not run timers.
+// deadline and refuses early calls. Cloud Functions do not run timers. The
+// walk is a limit, not a wait (25 Oct 2026): the host's At the paper button
+// (`atThePaper`) ends it the moment the drawer is there.
 //
 // SEAL RULE: the only sealed read is the picture bank, on the party night,
 // at the start (relay-bank.js); its pictures reach the public doc one square
@@ -31,9 +34,12 @@ import { NightError, characterById, GAME_NAMES } from './night.js'
 import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
 import { nightSeed, pickFor } from './seed.js'
 
-export const TURN_MS = 10_000      // ten seconds a turn, whatever the grid
-export const WALK_MS = 12_000      // the next drawer walks to the paper
-export const PULL_MS = 20_000      // pull the paper down to the next grid
+// Fifteen seconds a turn, whatever the grid (Jon, 25 Oct 2026, the cue list:
+// "really fun, but tricky" at ten). The walk is a limit of twenty seconds, not
+// a wait: the host's At the paper ends it as soon as the drawer is there.
+export const TURN_MS = 15_000      // fifteen seconds a turn, whatever the grid
+export const WALK_MS = 20_000      // at most: the next drawer walks to the paper, At the paper ends it sooner
+export const PULL_MS = 20_000      // at most: pull the paper down to the next grid, At the paper ends it sooner
 export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
 export const LOCKOUT_MS = 10_000   // after a wrong pick
 // Each of Sir Irwin's rules slides stays up long enough to read aloud: five
@@ -65,10 +71,12 @@ export const INTRO_MS = IRWIN_SLIDES.reduce((sum, s) => sum + s.ms, 0)
 export const IRWIN_DOOR_SLIDE = { title: 'The door', text: "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
 export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, introMs: INTRO_MS }
 
-// The time budget: the drawing itself (every turn plus the walk before it)
-// fits eighteen minutes (docs/relay-drawing-game.md §5). The generator caps
-// the drawn cells per grid so the turns never add up to more than this.
-export const DRAW_BUDGET_MS = 18 * 60_000
+// The time budget: the drawing itself (every turn plus the walk before it, at
+// its full limit) fits twenty-six minutes (docs/relay-drawing-game.md §5;
+// 25 Oct 2026, with the fifteen-second turn). The generator caps the drawn
+// cells per grid so the turns never add up to more than this: MAX_TURNS is 44
+// and the caps keep every set at 42 or fewer, the practice included.
+export const DRAW_BUDGET_MS = 26 * 60_000
 export const MAX_TURNS = Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))
 
 // A phone heard from this recently counts as present: a vote closes when
@@ -184,15 +192,33 @@ export async function presentKeys(db, nightId, keys, now = Date.now()) {
   return seen.size ? keys.filter(k => seen.has(k)) : [...keys]
 }
 
-// The phones no longer vote (handoff §7): the room guesses on the main
-// computer. A phone that still asks is told so, kindly.
+// The phones no longer vote (handoff §7): the room agrees, and the host taps
+// the guess. A phone that still asks is told so, kindly.
 export async function vote() {
-  throw new NightError('invalid', 'Guess on the main computer, all together.')
+  throw new NightError('invalid', 'Tell the host your guess, all together.')
 }
 
-// The room's guess, tapped on the main computer (the living room kiosk). Right:
-// the next grid, or the door opens after the last. Wrong: crossed off, a short
-// lockout, then guess again from what is left. One guess per tap.
+// At the paper (the host's button, cue 17, 25 Oct 2026): the drawer is at the
+// paper sooner than the walk allowed, so the walk ends now. One transaction on
+// the public doc: the state must be `walk` (there is no walk to end in any
+// other state, so the button is refused), and walkEndsAt becomes now. The
+// caller (run.js) advances the clock straight after, so the square shows at
+// once. No new deadline field, so a pause shifts nothing new.
+export async function atThePaper(db, { nightId, now = Date.now() } = {}) {
+  const { pub } = relayPaths(nightId)
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(db.doc(pub))
+    const p = snap.exists ? snap.data() : null
+    if (!p || p.state !== 'walk') throw new NightError('invalid', 'Nobody is walking to the paper right now.')
+    tx.update(db.doc(pub), { walkEndsAt: at(now, 0) })
+    return { ok: true, state: 'walk' }
+  })
+}
+
+// The room's guess, tapped by the host on their phone (or on the living room
+// kiosk, the fallback): the same callable either way. Right: the next grid, or
+// the door opens after the last. Wrong: crossed off, a short lockout, then
+// guess again from what is left. One guess per tap.
 export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
   const { pub, priv } = relayPaths(nightId)
   const nightSnap = await db.doc(`nights/${nightId}`).get()

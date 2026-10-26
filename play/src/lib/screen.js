@@ -24,7 +24,8 @@ export function ms(t) {
 // The living room screen, in order of precedence: the host's phase first
 // (dark through the blackout and the prompt, "One moment" while paused),
 // then the finale, the ballot clock, a drawing under way, the board, the
-// open door, a card (news, bulletin, Irwin) and finally the idle crest.
+// open door, a card (news, bulletin, Irwin), the prompts, the title card, the
+// birthday card (the Cake! button, 25 Oct 2026) and finally the idle crest.
 // A pause taken during the blackout or the prompt keeps the room dark: the
 // phase the night was paused from decides, the same as on the phones.
 export function livingView({ night, relay, screen, finale, captionsOnly = false } = {}) {
@@ -42,6 +43,8 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   // Sir Irwin's sharing prompts (Act 2's cat visits, Act 4's rounds) and the Act 4 title card
   if (screen?.kind === 'prompts') return 'prompts'
   if (screen?.kind === 'title') return 'title'
+  // the Happy Birthday Irwin card, from the Cake! button in Act 5 (cue 13); the TV draws it with his picture
+  if (screen?.kind === 'birthday') return 'birthday'
   return 'idle'
 }
 
@@ -150,10 +153,11 @@ export function slideAt(relay, now) {
 
 // Three rules lines for the drawing, from the workshop's RELAY RULES line
 // (split on | or on sentences) or the defaults. The same rule as the server.
+// Fifteen seconds a turn and the host's tap since 25 Oct 2026 (the cue list).
 export const DEFAULT_RELAY_RULES = [
   'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
-  'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
-  'When the grid is full, agree on the picture and tap it on the main screen.',
+  'Everyone else describes the square on the TV. Words only, no pointing. Fifteen seconds a turn.',
+  'When the grid is full, agree on the picture and tell the host your guess.',
 ]
 export function relayRules(uiText) {
   const t = String(uiText ?? '').trim()

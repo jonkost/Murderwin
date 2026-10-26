@@ -209,6 +209,9 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
   if (view === 'title') return <TitleCard screen={screen} />
+  // the Happy Birthday Irwin card from the Cake! button (cue 13, 25 Oct 2026): a plain card for now; the
+  // card with Sir Irwin's full picture, varied, is the screens step's (DESIGN §6)
+  if (view === 'birthday') return <ScreenCard screen={screen} />
   // bulletin 1 as video on the Parlour TV (23 Oct 2026); the words show if there is no video
   if (view === 'card' && screen?.kind === 'news' && screen.video) return <BulletinVideo clips={newsClips(screen.lines ?? [])} lines={screen.lines ?? []} startedAt={ms(screen.at)} serverNow={serverNow} />
   if (view === 'card') return <ScreenCard screen={screen} />
@@ -260,7 +263,8 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
       </div>
     )
   }
-  // the room guesses here, on the main computer: a tap is the room's pick; a wrong one is crossed off
+  // the fallback for the room's guess (the host taps it on their phone, 25 Oct 2026): a tap here is
+  // the room's pick; a wrong one is crossed off
   if (relay.state === 'vote' || relay.state === 'lockout') {
     return <Guess relay={relay} nightId={nightId} serverNow={serverNow} />
   }
@@ -277,7 +281,9 @@ function Portrait({ characterId, className = 'called-portrait' }) {
   return <img className={className} src={urls[i]} alt="" onError={() => setI(i + 1)} />
 }
 
-// The guess: four named pictures (or drawn ones, on a stand-in round), tapped on the main computer.
+// The guess: four named pictures (or drawn ones, on a stand-in round). Since 25 Oct 2026 (the cue
+// list) the host taps the room's guess on their own phone (Host.jsx HostRelayPanel); a tap here still
+// works, as the fallback, through the same callable.
 function Guess({ relay, nightId, serverNow }) {
   const [busy, setBusy] = useState(false)
   const locked = relay.state === 'lockout'
@@ -290,7 +296,7 @@ function Guess({ relay, nightId, serverNow }) {
   return (
     <div className="kiosk vote">
       <p className="kiosk-crest">{relay.round ?? `Grid ${relay.grid}`} · {relay.gridSize} by {relay.gridSize}</p>
-      <p className="kiosk-line">{locked ? 'Not that one.' : 'What is the picture? Agree, then tap it.'}</p>
+      <p className="kiosk-line">{locked ? 'Not that one.' : 'What is the picture? Agree, then tell the host.'}</p>
       <div className="kiosk-options">
         {(relay.options ?? []).map((o, i) => (
           <button key={i} className={`kiosk-option${crossed.includes(i) ? ' out' : ''}`} disabled={busy || locked || crossed.includes(i)} onClick={() => pick(i)}>

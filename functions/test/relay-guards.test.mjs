@@ -51,7 +51,17 @@ async function solveAll(db, nightId, uids, t, nudge = (args) => advance(db, args
   assert.equal(db.store.get(pub).state, 'done')
 }
 
-test('the time budget: every grid stays under its cap and the three together fit twelve minutes of turns', () => {
+test('F29 the time budget: fifteen seconds a turn, the walk a limit of twenty, every grid under its cap and the set within twenty-six minutes', () => {
+  // Jon's cue list, 25 Oct 2026: fifteen seconds a turn (was ten); the walk becomes a limit the host
+  // ends early with At the paper (was a fixed twelve seconds); the budget follows, and MAX_TURNS must
+  // still hold the biggest set the caps allow (9 + 9 + 11 + 13 = 42 with the practice)
+  assert.equal(TURN_MS, 15_000)
+  assert.equal(WALK_MS, 20_000)
+  assert.equal(PULL_MS, 20_000)
+  assert.equal(DRAW_BUDGET_MS, 26 * 60_000)
+  assert.equal(MAX_TURNS, 44)
+  assert.ok(MAX_TURNS >= 42, 'the practice and the three rounds at their caps fit the budget')
+  assert.deepEqual(TIMING, { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, introMs: TIMING.introMs })
   assert.deepEqual(CELL_CAPS, [9, 11, 12])
   assert.equal(MAX_CELLS, 32)
   assert.equal(MAX_TURNS, Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS)))

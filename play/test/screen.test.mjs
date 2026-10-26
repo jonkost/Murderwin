@@ -29,6 +29,10 @@ test('the living room: the phase wins, then the finale, the ballot, a drawing, t
   for (const kind of ['news', 'bulletin', 'irwin']) assert.equal(livingView({ night: NIGHT, screen: { kind } }), 'card')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'idle' } }), 'idle')
   assert.equal(livingView({ night: NIGHT }), 'idle')
+  // the Happy Birthday Irwin card from the Cake! button (cue 13, 25 Oct 2026): its own view on the TV, never on the iPad's words
+  assert.equal(livingView({ night: { ...NIGHT, act: 5, beat: 'roam' }, screen: { kind: 'birthday', title: 'Happy Birthday, Sir Irwin!' } }), 'birthday')
+  assert.equal(livingView({ night: { ...NIGHT, act: 5 }, screen: { kind: 'birthday' }, captionsOnly: true }), 'idle')
+  assert.equal(livingView({ night: { ...NIGHT, act: 5, phase: 'paused' }, screen: { kind: 'birthday' } }), 'paused', 'the pause still wins')
   // the iPad: words only, kept up while the server carries them
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'news', lines: ['x'] }, captionsOnly: true }), 'captions')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'idle', captions: { kind: 'news', lines: ['x'] } }, captionsOnly: true }), 'captions')
@@ -183,13 +187,14 @@ test('the dot: green live, amber after twenty seconds from cache, red offline, w
 })
 
 test('the relay rules: three lines from the workshop or the defaults, on the first walk of grid one only', () => {
-  // X-2: the defaults say what the night does now: walk first, describe from the TV, guess on the main screen
+  // X-2: the defaults say what the night does now: walk first, describe from the TV, tell the host the guess
+  // (fifteen seconds a turn and the host's tap since 25 Oct 2026, Jon's cue list)
   assert.deepEqual(DEFAULT_RELAY_RULES, [
     'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
-    'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
-    'When the grid is full, agree on the picture and tap it on the main screen.',
+    'Everyone else describes the square on the TV. Words only, no pointing. Fifteen seconds a turn.',
+    'When the grid is full, agree on the picture and tell the host your guess.',
   ])
-  assert.ok(!DEFAULT_RELAY_RULES.join(' ').includes('your phone'), 'nothing is drawn or voted on a phone')
+  assert.ok(!DEFAULT_RELAY_RULES.join(' ').includes('your phone'), 'nothing is drawn or voted on a guest\'s phone')
   assert.deepEqual(relayRules(''), DEFAULT_RELAY_RULES)
   assert.deepEqual(relayRules('A. | B. | C. | D.'), ['A.', 'B.', 'C.'])
   assert.deepEqual(relayRules('One sentence. Two sentences. Three.'), ['One sentence.', 'Two sentences.', 'Three.'])

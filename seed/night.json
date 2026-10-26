@@ -225,7 +225,7 @@
         {
           "key": "drawing",
           "name": "The drawing",
-          "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; the TV shows one square; the room describes it and taps its guess on the Parlour screen.",
+          "what": "The relay drawing. Sir Irwin explains it on the TV, then a practice and three rounds. The game calls a player to the paper in the Library; press At the paper when they are there and the TV shows one square. The room describes it and tells you its guess; you tap it on your phone (the TV's names still take a tap).",
           "action": "relay:start"
         },
         {

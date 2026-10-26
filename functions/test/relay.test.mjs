@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { generateSet, checkGrid, sameGrid, rotateGrid, cellDifference } from '../lib/relay-gen.js'
-import { start, advance, vote, guess, reset, turnOrder, relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, IRWIN_SLIDES, INTRO_MS, SLIDE_BASE_MS, SLIDE_WORD_MS, slideMs } from '../lib/relay.js'
+import { start, advance, vote, guess, reset, turnOrder, relayPaths, atThePaper, TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, IRWIN_SLIDES, INTRO_MS, SLIDE_BASE_MS, SLIDE_WORD_MS, slideMs } from '../lib/relay.js'
 import { PRACTICE, BANK_DOC, checkPicture, namesAny, NEVER_WORDS, TRACE_WORDS, MOTIVE_WORDS, DISQUALIFIED } from '../lib/relay-bank.js'
+import { hostCommand } from '../lib/run.js'
 import { ms } from '../lib/deal.js'
 
 // ---- the generator ------------------------------------------------------
@@ -189,7 +190,91 @@ test('the party night draws its three rounds from the sealed bank, never a bad p
   assert.equal(d.grids[1].named, true); assert.equal(d.grids[3].named, false)
   assert.ok(checkPicture({ name: 'A smiley', decoys: ['a', 'b', 'c'], cells: square(3) }, 1).includes('disqualified'))
   assert.ok(checkPicture({ name: 'x', decoys: ['a', 'b', 'c'], cells: { Z9: [{ kind: 'dot', at: [0.5, 0.5] }] } }, 1).length)
-  await assert.rejects(vote(db, { nightId, uid: 'u-jon', pick: 0 }), /main computer/)
+  await assert.rejects(vote(db, { nightId, uid: 'u-jon', pick: 0 }), /host/, 'a phone that still asks is told the host taps the guess (25 Oct 2026)')
+})
+
+test('F29 At the paper ends the walk now and the square shows at once; refused in every other state, and while the night is paused', async () => {
+  // Jon's cue list, cue 17 (25 Oct 2026): the walk is a limit, not a wait. The host's button is the
+  // host command at-the-paper: a transaction on the public doc, then the clock is advanced.
+  const { db, nightId } = await party(4)
+  const { pub, priv } = relayPaths(nightId)
+  let now = 30_000_000
+  const press = () => hostCommand(db, { nightId, command: 'at-the-paper', now })
+  // no drawing at all: refused, and nothing is written
+  await assert.rejects(press(), e => e.code === 'invalid')
+  assert.equal(db.store.get(pub), undefined)
+  await start(db, { nightId, now, seed: 21 })
+  // Sir Irwin's slides: nobody is walking yet
+  await assert.rejects(press(), e => e.code === 'invalid' && /walking/.test(e.message))
+  now += INTRO_MS
+  assert.equal((await advance(db, { nightId, now })).state, 'walk')
+  const walkEndsAt = ms(db.store.get(pub).walkEndsAt)
+  assert.equal(walkEndsAt, now + PULL_MS, 'the first walk of a grid allows the pull-down time')
+  // three seconds into the walk the drawer is there: the walk ends now, the square shows now
+  now += 3_000
+  const r = await press()
+  assert.equal(r.atPaper, true)
+  assert.equal(r.state, 'turn')
+  let p = db.store.get(pub)
+  assert.equal(p.state, 'turn')
+  assert.ok(p.cell?.label && Array.isArray(p.cell.strokes), 'the square is on the public doc')
+  assert.equal(ms(p.turnEndsAt), now + TURN_MS, 'the fifteen seconds run from the press, not from the walk\'s limit')
+  assert.equal(p.walkEndsAt, null)
+  assert.equal((await advance(db, { nightId, now: now + 1000 })).moved, false, 'the clock is not fooled into moving again')
+  // while someone draws: refused, and the turn is untouched
+  await assert.rejects(press(), e => e.code === 'invalid')
+  assert.equal(ms(db.store.get(pub).turnEndsAt), now + TURN_MS)
+  // the next walk, between turns: the limit is twenty seconds, and At the paper ends it too
+  now += TURN_MS
+  assert.equal((await advance(db, { nightId, now })).state, 'walk')
+  assert.equal(ms(db.store.get(pub).walkEndsAt), now + WALK_MS)
+  now += 7_000
+  assert.equal((await press()).state, 'turn')
+  assert.equal(ms(db.store.get(pub).turnEndsAt), now + TURN_MS)
+  // a walk nobody ends runs its limit as before
+  now += TURN_MS
+  await advance(db, { nightId, now })
+  assert.equal(db.store.get(pub).state, 'walk')
+  now += WALK_MS - 1
+  assert.equal((await advance(db, { nightId, now })).moved, false, 'not a moment early')
+  now += 1
+  assert.equal((await advance(db, { nightId, now })).state, 'turn')
+  // paused: the button waits like every other move, and the walk is not shortened
+  now += TURN_MS
+  await advance(db, { nightId, now })
+  assert.equal(db.store.get(pub).state, 'walk')
+  const limit = ms(db.store.get(pub).walkEndsAt)
+  await hostCommand(db, { nightId, command: 'pause', now })
+  await assert.rejects(press(), /paused/)
+  assert.equal(ms(db.store.get(pub).walkEndsAt), limit, 'the pause left the walk as it was')
+  now += 10_000
+  await hostCommand(db, { nightId, command: 'resume', now })
+  assert.equal(ms(db.store.get(pub).walkEndsAt), limit + 10_000, 'the resume shifted the walk by the pause')
+  assert.equal((await press()).state, 'turn')
+  // the guess and the lockout: nobody is walking, so the button is refused in both
+  let guard = 0
+  while (db.store.get(pub).state !== 'vote' && guard++ < 60) {
+    p = db.store.get(pub)
+    now += p.state === 'walk' ? WALK_MS : TURN_MS
+    await advance(db, { nightId, now })
+  }
+  assert.equal(db.store.get(pub).state, 'vote')
+  await assert.rejects(press(), e => e.code === 'invalid')
+  const answer = db.store.get(priv).grids[0].answer
+  await guess(db, { nightId, pick: [0, 1, 2, 3].find(i => i !== answer), now })
+  assert.equal(db.store.get(pub).state, 'lockout')
+  await assert.rejects(press(), e => e.code === 'invalid')
+  // the helper on its own writes only the one field
+  now += LOCKOUT_MS
+  await advance(db, { nightId, now })
+  await guess(db, { nightId, pick: answer, now })
+  assert.equal(db.store.get(pub).state, 'walk', 'a right guess: the next drawer walks to pull the paper down')
+  const before = db.store.get(pub)
+  now += 2_000
+  assert.deepEqual(await atThePaper(db, { nightId, now }), { ok: true, state: 'walk' })
+  const after = db.store.get(pub)
+  assert.equal(ms(after.walkEndsAt), now)
+  assert.deepEqual({ ...after, walkEndsAt: null }, { ...before, walkEndsAt: null }, 'nothing else on the doc changed')
 })
 
 test('the picture bank refuses the samples, a star, every trace and every motive-card object, in the name or any of the three wrong names', () => {

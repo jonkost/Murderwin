@@ -20,7 +20,9 @@ the evening of 25 October for your cue list (`docs/cue-list.md`): the
 blackout ends on its own after five seconds, the "Sorry for the
 interruption" button and the role card's fifteen seconds, the hall bulb
 green for the welcome and red from the power's return, and nine sounds,
-two of them required.
+two of them required; and, the same evening, three Host tab buttons from
+the cue list (**Sound test**, **Cake!** and **At the paper**), the drawing's
+guess tapped on your own phone, and fifteen seconds a turn in the drawing.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -95,9 +97,10 @@ them.
   station is turned away, and the brain needs it to find the W-O-O-F News
   recordings.
 - *The nine sounds.* Nine cue sounds, one file each in `media/`, and only
-  two of them are required: `chime-phone` (the chime: when supper is ready,
-  when Act 4 starts and at every Act 4 round, when dessert is ready, and as
-  the Act 6 Parlour Games open) and `blackout` (the thunder and the crash
+  two of them are required: `chime-phone` (the chime: the **Sound test**
+  during the rules, when supper is ready, when Act 4 starts and at every
+  Act 4 round, when dessert is ready, and as the Act 6 Parlour Games open)
+  and `blackout` (the thunder and the crash
   when Act 1 ends). The brain will not start while either of those two has
   no file. The other chimes (the news, Sir Irwin, bulletin 2's sounder) play
   the chime's file when their own is missing, so one recording serves every
@@ -173,7 +176,7 @@ them.
 |---|---|---|
 | The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the three playlists, the Hue scenes, the hall light and the Orangerie string lights. The spare host. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
-| Your work MacBook Pro on the TV | The Parlour screen, all night: the rules deck in Act 1, the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal. In the drawing the room taps its guess on this screen, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
+| Your work MacBook Pro on the TV | The Parlour screen, all night: the rules deck in Act 1, the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | `cd station && npm start`, and a browser at `?kiosk=study`. Quit the Elgato app first. |
 | Susan's work MacBook Pro | Idle until Act 4. Act 4: beside the projector on the upstairs landing, showing Boo's Catwalk on the triangle wall (`?kiosk=boo`). After Act 4: the bedroom screen (`?kiosk=bedroom`), door closed. | A browser, full screen. Tap it once after each move. |
 | Your iPad Pro | Acts 2 and 3: the words of bulletins 1 and 2, on a stand in the Orangerie (`?kiosk=ipad`). Act 4: Boo's camera in the Entryway, facing the catwalk (`?kiosk=pose`, nice to have), or a spare screen. | Safari, full screen. Tap it once. For Boo's camera, tap Turn on the camera and allow it. |
@@ -224,7 +227,8 @@ game; it serves the lights and the speakers.
    browser lets it make a sound; tap anywhere once and leave it. Each shows
    its crest or its game's name and a waiting line. They follow the night
    on their own. Two are touched on purpose: the memory match in Act 4, and
-   the Parlour screen, where the room taps its drawing guesses in Act 6. The
+   the Parlour screen, the fallback for the drawing's guesses in Act 6 (you
+   tap them on your own phone). The
    bedroom screen comes later: Susan's MacBook Pro goes there after Act 4.
    A small dot in the bottom left corner is green while the screen can hear
    the house, amber if it has gone quiet, red if it is off the wifi. A bell
@@ -253,7 +257,10 @@ game; it serves the lights and the speakers.
 - Act 1: arrivals, meet the household, introductions, then ready for the
   dark. The rules deck and the join code show on the Parlour TV in a second
   browser tab (the default for *rulesDeckScreen*, still yours to change);
-  switch back to the game tab before the blackout. Act 1 ends with
+  switch back to the game tab before the blackout. When the rules reach the
+  sound test, press **Sound test** (under The house, beside the hall light):
+  the chime plays on every HomePod, so the room hears the speakers work. Act 1
+  ends with
   **Blackout**: every phone and screen goes black, the thunder and the crash
   play, the hall bulb goes out, and five seconds later the power comes back
   on its own (*blackoutAuto*, the cue list's default). Your phone goes dark
@@ -365,7 +372,12 @@ game; it serves the lights and the speakers.
   After Act 4, carry Susan's MacBook Pro from the landing into the bedroom,
   open `?kiosk=bedroom`, tap it once, and close the door. It shows "The door
   is closed" until the third picture is named.
-- Act 5: cake, and everyone wanders. Then **Next** for Sir Irwin: the chime,
+- Act 5: cake, and everyone wanders. When the cake is served, press **Cake!**
+  (above Next, Act 5 only): Happy Birthday for Dogs plays on every HomePod,
+  the lights dim for the candles, and the TV shows the Happy Birthday Irwin
+  card (unless Sir Irwin's countdown is already on the TV, which stays); the
+  jazz comes back on its own when the song ends. Then **Next** for
+  Sir Irwin: the chime,
   and his countdown on the TV, each motive with its card's picture once it
   is drawn. The phones send everyone to the Parlour.
   Before you press **Next** for Act 6, check the bedroom screen is in and
@@ -376,9 +388,16 @@ game; it serves the lights and the speakers.
   each slide up long enough to read (about two minutes in all), then a
   practice smiley and three rounds.
   The game calls a random player by their character's picture and name; they
-  walk to the paper in the Library before the square shows, and the room
-  describes it, words only. When a grid is full the room agrees and taps its
-  guess on the Parlour screen; a wrong one is crossed off. While it
+  walk to the paper in the Library before the square shows. The walk allows
+  twenty seconds, a limit, not a wait: the moment they are at the paper,
+  press **At the paper** on your phone and the square shows at once. The
+  room describes it, words only, fifteen seconds a turn. When a grid is full
+  the room agrees and tells you, and you tap the room's guess on your own
+  phone: the four names, A to D (the TV's own names still take a tap, the
+  fallback, with the trackpad); a wrong one is crossed off. While the drawing
+  runs your phone shows it like everyone else's, with At the paper and the
+  four names on it, so you never have to find the Host tab; Susan's phone has
+  them too. While it
   runs, **Next** refuses to leave it. When the third picture is named, the TV
   shows Sir Irwin's "Pawsome!" door slide, the hall light goes green and the
   bedroom screen shows the trace. **Next** tells every phone the door is open,
@@ -424,6 +443,14 @@ game; it serves the lights and the speakers.
   night's next change. The buttons never say why.
 - The hall light: **Red** and **Green**, under The house, if the bulb ever
   needs setting by hand.
+- **Sound test**, under The house beside the hall light: the chime on every
+  HomePod, to hear the speakers work. The rules ask for it in Act 1; it is
+  harmless at any time and moves nothing.
+- **Cake!** shows above Next in Act 5 only. Pressed while Sir Irwin's
+  countdown is on the TV, it plays the song and dims the lights but leaves
+  his motive cards on the screen. **At the paper** and the drawing's four
+  names are on your phone's drawing screen, only while the drawing runs: the
+  Host tab is away then, like every tab, so there is nothing to find.
 
 ## What each screen shows
 
@@ -433,8 +460,8 @@ game; it serves the lights and the speakers.
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro keeps bulletin 1's words up. |
 | 3 | Bulletin 2's words, when it plays. | The iPad Pro in the Orangerie: bulletin 2's words, with the recording on the HomePods. |
 | 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The older iPad in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. The iPad Pro in the Entryway, if it is up: Boo's camera, the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!. Each room's screen shows the game's name with its line under it. |
-| 5 | Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
-| 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the guess (tapped here). Then the "Pawsome!" slide, "The door is open", and the deduction board. | In the bedroom: the trace, from the moment the third picture is named. |
+| 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Susan's MacBook Pro, now in the bedroom: "The door is closed". |
+| 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and the deduction board. | In the bedroom: the trace, from the moment the third picture is named. |
 | 7 | The ballot clock with the trace and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. | In the bedroom: the trace. |
 
 The study screen waits on its idle line outside Act 4. Every screen is dark
@@ -455,7 +482,8 @@ on the party night both are gone.
 | A guest's phone | They tap their name on any other phone (the old iPhone 11 is for this). Their character, bag, cards and cat standings follow. The old phone says the character has moved. |
 | A borrowed phone that must change hands | **Hand this phone on** wipes it. The next person types their own name; the previous owner taps theirs on another phone and gets everything back. (One tap or ask twice is the open question *handOn*.) |
 | Your phone | Tap your name on Susan's phone or the old iPhone 11; the Host tab moves with you. The brain is the spare host: `node functions/host.mjs status` says where the night is, `node functions/host.mjs next` presses Next. It needs the key file described at the top of `functions/host.mjs`. |
-| The Parlour screen | Open `?kiosk=living` on the iPad Pro (it is a spare from Act 4), or on the brain, and put it by the TV. The room taps its drawing guesses there. |
+| The Parlour screen | Open `?kiosk=living` on the iPad Pro (it is a spare from Act 4), or on the brain, and put it by the TV. The drawing's guesses are on your phone anyway; the spare screen shows the squares. |
+| Your phone, during the drawing | Susan's phone has the same **At the paper** and the same four names. Failing both, the TV's own names take a tap (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
 | The bedroom screen | Nobody goes to the bedroom. Press **Show the trace on the TV** under The Big Solve: ten seconds after the door opens, the TV shows the trace, and again at the ballot. |
 | The memory match iPad | Carry on. A group that did not clear it is paid its cross-off at the chime anyway. |
 | Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. |
@@ -628,7 +656,9 @@ clue is dealt.
   Parlour TV page open on a screen people can reach, then "Start a test
   night", join on your phone with your host name, "Go to Act 6", answer the
   two Parlour Games, and press **Start the drawing** on your Host tab. With
-  one phone you are called every turn. The third picture opens the door.
+  one phone you are called every turn; your phone carries **At the paper**
+  on each walk and the four names at each guess. The third picture opens the
+  door.
 - *The deduction round* (Act 6). Samples of a phone striking one thing out
   and of the board on the Parlour TV. On a test night, after the door opens,
   **Next** on your Host tab starts the round.
@@ -766,6 +796,34 @@ record in `cases/{id}.exposure[role] = { hushedAt, act }`, written only by
 `ledger.noteExposure` and read only by `ledger.isHushed`; from then on that
 role's Parlour Game answers still move a cat but move the dial by 0, logged
 `hushed`, and the Act 7 screen says one line about it.
+
+*The cue list's Host tab buttons (25 Oct, evening).* Three host commands in
+`run.js` and `commands.js`: `sound-test` (`screen.play` of `chime-phone`,
+nothing else), `cake` (a fresh stamp on `nights/{id}/public/cues.cake = { at }`,
+which the brain plays Happy Birthday for Dogs from and recalls the candles
+scene, `cues/`; and `screen.birthday`, the screen kind `birthday` on the
+Parlour TV, `livingView` 'birthday', until the next beat's screen. It reads
+the screen first (`screen.readScreen`) and writes no card over Sir Irwin's
+countdown, kind `irwin`, since his motive cards are the clue path: the reply
+then carries `card: false`. `screen.birthday` is the kind's only writer; no
+beat names it) and
+`at-the-paper` (`relay.atThePaper`: one transaction on `public/relay` that
+requires `state === 'walk'` and sets `walkEndsAt` to now, then
+`run.advanceRelay`, so the square is written at once; refused with `invalid`
+in any other state, and held while paused, `PAUSE_HELD`). The drawing's
+clock in `relay.js`: `TURN_MS` 15 s, `WALK_MS` 20 s and `PULL_MS` 20 s (both
+limits), `DRAW_BUDGET_MS` 26 min, `MAX_TURNS` 44 (the caps keep a set at 42
+or fewer). The host's guess goes through the same `relayGuess` callable as the
+TV: `HostRelayPanel` in `play/src/screens/Host.jsx`, rendered by `Relay.jsx`
+on the drawing screen of a session with `host` set (`inline`); its rules
+(which state shows which control, the reply words) are the pure helpers in
+`play/src/lib/relayhost.js`, `hostRelayControl`, `guessReply` and
+`paperReply`. The copy under The Big Solve on the Host tab is unreachable
+today, because every phone leaves its tabs for `Relay.jsx` while the drawing
+runs; it stays for the day the drawing surface changes. A reply on the panel
+fades after a few seconds rather than clearing on a state change, since a
+right guess moves the state in the same call that answers the tap. Previews
+`?preview=relay-walk-host` and `relay-vote-host`. Check F29.
 
 *The drawing's trace.* `run.ensureTrace` reveals the trace only when the
 relay state is `done` (from `advanceRelay`, `guessRelay`, the door beat and

@@ -36,7 +36,8 @@ import { PROMPTS, PROMPT_EVERY_MS, promptOrder } from './bagclues.js'
 const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
 
-export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title']
+// `birthday` is the Happy Birthday Irwin card the Cake! button puts on the Parlour TV (cue 13, 25 Oct 2026).
+export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title', 'birthday']
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
 // relay (cues/lib/cues.js) carries the same list and refuses an id outside it.
@@ -403,6 +404,21 @@ export function isPauseCard(doc) {
   return doc?.kind === 'black' && Boolean(doc.title)
 }
 
+// The birthday card on the Parlour TV (the Cake! button, cue 13, 25 Oct 2026):
+// a screen kind of its own, so the TV can draw it with Sir Irwin's picture
+// (play/src/lib/screen.js livingView 'birthday'). Open words, nothing sealed.
+// The next beat's screen takes it down (Act 5's "Sir Irwin speaks" is next).
+// This is its one writer: no beat names the kind, on purpose, so a card can
+// never land on a beat by accident (run.js 'cake' also keeps it off Sir
+// Irwin's countdown).
+export const BIRTHDAY_CARD = { title: 'Happy Birthday, Sir Irwin!', lines: ['One candle. One very good boy.'] }
+export async function birthday(db, nightId, { now = Date.now() } = {}) {
+  const nightSnap = await db.doc(`nights/${nightId}`).get()
+  const night = nightSnap.exists ? nightSnap.data() : {}
+  const doc = screenDoc('birthday', { now, act: night.act ?? null, beat: night.beat ?? null, title: BIRTHDAY_CARD.title, lines: BIRTHDAY_CARD.lines, rehearsal: !!night.rehearsal })
+  return writeScreen(db, nightId, doc)
+}
+
 // The host's phase buttons: the room screens follow. The blackout has its
 // sound; the power's return has none since 25 Oct 2026 (cueSounds: the music
 // coming back is the cue, and the TV stays dark through the prompt); a pause
@@ -475,11 +491,12 @@ export async function tvTrace(db, nightId, on, { now = Date.now() } = {}) {
 
 // The relay rules on the TV and the phones: three lines, from the workshop's
 // RELAY RULES line (split on | or on sentences) or these. The drawer's phone
-// never shows the square, and the room guesses on the main screen (handoff §7).
+// never shows the square, and the room tells the host its guess (handoff §7;
+// fifteen seconds a turn and the host's tap since 25 Oct 2026, the cue list).
 export const DEFAULT_RELAY_RULES = [
   'Sir Irwin calls a name. That person walks to the paper in the Library before the square shows.',
-  'Everyone else describes the square on the TV. Words only, no pointing. Ten seconds a turn.',
-  'When the grid is full, agree on the picture and tap it on the main screen.',
+  'Everyone else describes the square on the TV. Words only, no pointing. Fifteen seconds a turn.',
+  'When the grid is full, agree on the picture and tell the host your guess.',
 ]
 export function relayRules(uiText) {
   const t = String(uiText ?? '').trim()

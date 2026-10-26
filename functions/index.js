@@ -231,8 +231,9 @@ export const relayVote = onCall({ cors: true }, wrap(async req => {
   return run.player.relayVote(db, {})
 }))
 
-// The room's guess, tapped on the main computer (the living room kiosk). Any
-// screen or phone at the party may send it, the same as the clock.
+// The room's guess, tapped by the host on their phone (25 Oct 2026) or on the
+// main computer (the living room kiosk, the fallback). Any screen or phone at
+// the party may send it, the same as the clock.
 export const relayGuess = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
   const { nightId, pick } = req.data ?? {}

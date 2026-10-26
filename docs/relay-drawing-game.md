@@ -19,6 +19,12 @@ torture; the door only opens after three drawings, and he only has paws. The liv
 **the Parlour** everywhere. The bedroom screen is now Susan's work MacBook Pro, moved in after
 Act 4 (the iPad Pro no longer goes there). There is no freeze date.
 
+**Updated 25 October 2026** (Jon's cue list, `docs/cue-list.md`, cue 17 and the notes): **fifteen
+seconds a turn**, not ten. The walk to the paper is a **limit of twenty seconds, not a wait**: the
+host presses *At the paper* the moment the drawer is there and the square shows at once. The host
+**taps the room's guess on their own phone**; the TV's four names still take a tap, as the
+fallback. The host can pause the drawing with the night's Pause as before.
+
 ---
 
 ## 1. What it is, in one breath
@@ -26,7 +32,7 @@ Act 4 (the iPad Pro no longer goes there). There is no freeze date.
 Everyone is in the Parlour, looking at the TV. Sir Irwin explains the game on the TV. Then
 the game calls one player, by their character. That person walks to the paper in the Library,
 where they cannot see the TV. Only then does the TV show one square of a picture. The room
-shouts how to draw it. Ten seconds. The next player is called. After a practice drawing and
+shouts how to draw it. Fifteen seconds. The next player is called. After a practice drawing and
 three real ones, the room has named all three real pictures. The light by the bedroom turns
 green, and the bedroom screen shows the murderer's trace, as clearly as the Ghost and the
 Murderer fought all night to make it.
@@ -59,11 +65,12 @@ spoiling the fun part.
 
 | Thing | Where | Job |
 |---|---|---|
-| The TV | The Parlour. The main computer drives it: your work MacBook Pro, on `/play/?kiosk=living`. | Irwin's slides. The called player's portrait and character name. One square at a time. Then the four names to guess from: the room clicks its guess here. Irwin's door slide at the end. |
+| The TV | The Parlour. The main computer drives it: your work MacBook Pro, on `/play/?kiosk=living`. | Irwin's slides. The called player's portrait and character name. One square at a time. Then the four names to guess from; the host taps the room's guess on their own phone, and a click here still counts, as the fallback (the trackpad). Irwin's door slide at the end. |
 | The paper roll | Library wall, in the blind spot: you cannot see the TV from the marker | Four grids, drawn blank on the day. |
 | The marker | In the tray | One colour. Hand it to the next person. |
-| Every phone | In every hand | Buzzes the person called to the paper and tells them to walk there. Everyone else's phone shows the same square as the TV. When a grid is done it says: go and look at the paper, then guess together on the main computer. Phones never vote. |
-| The hall light | The Hue bulb by the bedroom | Red from the start of the night. Green when the third real picture is named. |
+| Every phone | In every hand | Buzzes the person called to the paper and tells them to walk there. Everyone else's phone shows the same square as the TV. When a grid is done it says: go and look at the paper, then tell the host your guess. Phones never vote. |
+| The host's phone (yours, and Susan's) | In your hand | The same as every phone, plus the controls (25 October): *At the paper* while someone walks, and the four names as buttons while the room guesses. They are on the drawing screen itself: while the drawing runs the Host tab is away, like every tab. |
+| The hall light | The Hue bulb by the bedroom | Green for the welcome, out in the blackout, red from the power's return (25 October). Green when the third real picture is named. |
 | The bedroom screen | Susan's work MacBook Pro, carried to the bedroom after Act 4, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named. Then the trace. |
 
 The Library is in earshot of the Parlour. The room can hear the drawer swear; the drawer
@@ -86,16 +93,20 @@ Irwin is explaining.*
 **A turn.**
 1. **The call.** The game picks a random player: anyone, even the same person twice in a row.
    The TV shows only that player's character portrait and character name. No real names, no
-   other words. Their phone buzzes: *You're up next. Walk to the paper.* They have twelve
-   seconds to get to the Library (twenty at the start of each grid, to pull the paper down to
-   the next grid).
-2. **The square.** Only now does the TV show the square: a black screen, one white-outlined
+   other words. Their phone buzzes: *You're up next. Walk to the paper.* The walk allows twenty
+   seconds (the same at the start of each grid, where they also pull the paper down to the next
+   grid), but that is a limit, not a wait.
+2. **At the paper.** The moment the drawer is at the paper, the host presses *At the paper* on
+   their phone (25 October). If nobody presses it, the twenty seconds run out and the game goes
+   on by itself.
+3. **The square.** Only now does the TV show the square: a black screen, one white-outlined
    box, white line art, and the square's label, like *B2*. Never the whole picture, never the
    squares around it. The drawer's phone buzzes: *Draw. The room will tell you how.* A bar on
-   every phone shows the ten seconds, read from the server's clock.
-3. **The shouting.** The room describes the square. Words only, no pointing. *"Top left corner
+   every phone shows the fifteen seconds, read from the server's clock.
+4. **The shouting.** The room describes the square. Words only, no pointing. *"Top left corner
    to the middle of the right side. No, curved. Curved the other way."*
-4. **Time.** After ten seconds a chime sounds, the square goes, and the next player is called.
+5. **Time.** After fifteen seconds a chime sounds, the square goes, and the next player is
+   called.
 
 Squares come in a shuffled order, not row by row, so nobody sees the picture building from the
 fragments. Empty squares are skipped and cost no turn.
@@ -105,9 +116,10 @@ whoever is nearest takes their turn and nobody tells the app.
 
 **The guess.** When the last square of a grid is drawn, the TV shows four names, A to D. (A
 stand-in round, see §6, shows four small drawings instead.) Every phone says *Go and look at
-the paper, then guess together on the main computer.* The party walks to the Library to look,
-comes back, argues, and clicks one name on the main computer. There is no clock and no phone
-vote.
+the paper, then tell the host your guess.* The party walks to the Library to look, comes back,
+argues, and tells the host, who taps the name on their own phone (25 October; the host's phone
+says *tap the room's guess* and shows the four names as buttons). A click on the TV's names
+still counts, as the fallback. There is no clock and no phone vote.
 - Right: a chime, and the next player is called to pull the paper down to the next grid.
 - Wrong: *Not that one.* The name is crossed off on the TV and on every phone. Ten seconds of
   nothing, then the room picks again from what is left. The worst case is three wrong picks,
@@ -155,20 +167,22 @@ second option at level 3 is never the Ghost's trace here, and never the Murderer
 | | |
 |---|---|
 | Irwin's slides | About 5 s plus 0.4 s a word each: about 2 minutes for all seven. |
-| Turn | 10 s, fixed, whatever the grid. |
-| Walk to the paper | 12 s (20 s at the start of each grid, to pull the paper down). Tune it in rehearsal. |
-| Turns in total | Practice 9 + round 1 up to 9 + round 2 up to 11 + round 3 up to 13 = up to 42. |
-| Drawing time | Up to about 16 minutes, walks included. |
+| Turn | 15 s, fixed, whatever the grid (Jon, 25 October; was 10 s). |
+| Walk to the paper | Up to 20 s, a limit: the host's *At the paper* ends it the moment the drawer is there (25 October). The same 20 s at the start of each grid, to pull the paper down. |
+| Turns in total | Practice 9 + round 1 up to 9 + round 2 up to 11 + round 3 up to 13 = up to 42. The server's budget allows 44. |
+| Drawing time | About 17 minutes with brisk walks (about 10 s each, ended by *At the paper*); up to about 24.5 minutes if every walk ran its full 20 s. The budget is 26 minutes. |
 | Guessing | No time limit. About 1 to 2 minutes a grid, with the walk to look. |
 | Lockout after a wrong guess | 10 s. |
-| Whole game | About 20 to 26 minutes, slides included. |
+| Whole game | About 23 to 35 minutes, slides included, depending on how quickly the walks are ended. |
 
 Before the practice round was added, Act 6 was about thirty minutes with no slack: the two
 Parlour Games about three, the drawing about eighteen, the bedroom five, the deduction round
-three. With the practice and Irwin's slides it is now about 31 to 37 minutes. **Check in the
-weekend rehearsal that Act 6 still fits.** If it runs long, shorten the walk gap first (one
-number on the server). Do not lower a round's square limit once the pictures are made: any
-picture over the new limit would be refused, and that round would use a stand-in.
+three. With the practice, Irwin's slides and the fifteen-second turns it is now about 34 to 46
+minutes. **Check in the rehearsal that Act 6 still fits.** The slack is the walk: press *At the
+paper* promptly, and a brisk night saves about seven minutes over one that lets every walk run
+out. The fifteen seconds a turn are Jon's (25 October). Do not lower a round's square limit once
+the pictures are made: any picture over the new limit would be refused, and that round would
+use a stand-in.
 
 ---
 
@@ -260,8 +274,9 @@ Extra rules for the stand-ins:
 - [ ] After Act 4, carry Susan's MacBook Pro from the landing (where it showed Boo's wall) to the
       bedroom and change its page to `/play/?kiosk=bedroom`. Bedroom door closed. (Left on
       `?kiosk=boo` it would never show the trace.)
-- [ ] Run the practice grid with Susan before guests arrive, from the Host tab button to the
-      guess on the main computer.
+- [ ] Run the practice grid with Susan before guests arrive, from the Host tab button, through
+      *At the paper* on each walk, to the guess tapped on your phone (and once on the TV, so you
+      know the fallback works).
 
 ---
 
@@ -269,7 +284,8 @@ Extra rules for the stand-ins:
 
 | What fails | What happens instead |
 |---|---|
-| The Parlour computer dies | Open `/play/?kiosk=living` on a spare screen (the iPad Pro, a spare from Act 4, or any laptop; your call which) and set it on the TV stand. The room guesses on it. The bedroom screen stays in the bedroom. The phones keep the clock going meanwhile. |
+| The Parlour computer dies | Open `/play/?kiosk=living` on a spare screen (the iPad Pro, a spare from Act 4, or any laptop; your call which) and set it on the TV stand. The guesses are on your phone anyway; the spare shows the squares. The bedroom screen stays in the bedroom. The phones keep the clock going meanwhile. |
+| The host's phone dies during the drawing | Susan's phone has the same *At the paper* and the same four names. Failing both, the TV's own names take a click (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
 | The hall light does not turn green | The TV says the door is open anyway. The game never depends on the bulb. |
 | The bedroom screen dies | Host tab → *Show the trace on the TV*. The Parlour TV shows the trace ten seconds after the door opens. Nobody goes to the bedroom. |
 | Nobody can agree on the guess | The guess has no clock. A wrong pick is only crossed off. |
@@ -286,12 +302,15 @@ reveal order, and the rule that the trace shows at the dial's level.
 The 13 October doc filled these gaps. Their state on 23 October:
 
 1. ~~The guess is a vote on every phone.~~ **Replaced 22 Oct:** the room guesses together on
-   the main computer. No phone votes, no clock.
+   the main computer. No phone votes, no clock. **Since 25 Oct** the host taps the room's guess
+   on their own phone; the TV's names stay as the fallback.
 2. ~~Options are pictures, not words.~~ **Replaced 22 Oct:** the options are four names. Only a
    stand-in round still shows drawings.
 3. **Squares come in shuffled order** and the TV only ever shows one. Stands.
-4. **A walk gap between turns**, fixed, so there is no "ready?" screen anywhere. Stands, and
-   since 22 Oct the player walks to the paper **before** the square is shown.
+4. **A walk gap between turns**, so there is no "ready?" screen anywhere. Stands, and
+   since 22 Oct the player walks to the paper **before** the square is shown. **Since 25 Oct**
+   the gap is a limit of twenty seconds that the host's *At the paper* ends early; a walk
+   nobody ends still runs out on its own, so there is still no "ready?" screen.
 5. **Empty squares are skipped.** Stands.
 6. **The bedroom screen shows the trace as soon as the light goes green** and keeps it up. It
    comes back on the Parlour TV in Act 7. Stands.
@@ -301,8 +320,8 @@ The 13 October doc filled these gaps. Their state on 23 October:
    or a motive. The strikes appear on the TV under each player's character as they commit. Nothing is
    scored, nothing is hidden. You may change the order.
 8. ~~Everyone walks to the paper before each vote.~~ **Replaced 22 Oct:** everyone still walks
-   to look before the guess, but the guess is clicked on the main computer. The TV never shows
-   the whole drawing.
+   to look before the guess, but the guess is one tap, the host's since 25 Oct (the main
+   computer before, and still as the fallback). The TV never shows the whole drawing.
 
 ## 11. Still open
 
@@ -311,8 +330,9 @@ The 13 October doc filled these gaps. Their state on 23 October:
 - ~~Whether Jenna sees and swaps the drawing pictures.~~ Settled 24 Oct: no (stewardPictures,
   the handoff's default).
 - The square size and the paper width. Measure the roll.
-- Whether Act 6 still fits its time (§5). Check in the practice run (Sunday 25 October), or on
-  a test night from the workshop's Game test tab, which can jump straight to Act 6.
+- Whether Act 6 still fits its time (§5), longer since the fifteen-second turns. Check on a
+  test night from the workshop's Game test tab, which can jump straight to Act 6, and at the
+  full tech run; press *At the paper* briskly and see where the clock lands.
 
 ---
 
@@ -326,15 +346,22 @@ Built and tested against the fake Firestore. Not yet played in the house.
 - **The picture command**: `scripts/generate-relay-pictures.mjs`, run with
   `npm --prefix scripts run relay-pictures`. Counts only.
 - **The phones**: "eyes on the main screen" during the slides, "you're up next" for the person
-  called, the drawer's prompt, everyone else's view of the square, "go and look, then guess on
-  the main computer", the crossed-off names, and "the door is open".
-- **The room screens**: `/play/?kiosk=living` on the main computer (it is also the clock and
-  the place the room guesses), `/play/?kiosk=bedroom` on Susan's MacBook Pro from the end of Act 4 (closed
+  called, the drawer's prompt ("Fifteen seconds. Marker down when your phone buzzes."),
+  everyone else's view of the square, "go and look at the paper, then tell the host your
+  guess", the crossed-off names, and "the door is open".
+- **The host's phone** (25 October): the same screens, plus *At the paper* under the walk's
+  bar and the four names as buttons at the guess (`HostRelayPanel`, on the drawing screen; the
+  Host tab is away while the drawing runs). A tap is the room's guess, through the same call as
+  the TV.
+- **The room screens**: `/play/?kiosk=living` on the main computer (it is also the clock, and
+  the fallback for the guess), `/play/?kiosk=bedroom` on Susan's MacBook Pro from the end of Act 4 (closed
   until the door opens).
 - **The Host tab**: *Start the drawing*, *Clear the drawing* and *Show the trace on the TV*
-  under *The Big Solve*.
+  under *The Big Solve*. While the drawing runs the Host tab is away, like every tab: *At the
+  paper* and the four names are on your drawing screen.
 - **Previews without a night**: phones at `/play/?preview=relay-walk`, `relay-turn`,
-  `relay-draw`, `relay-vote`, `relay-lockout`, `relay-done`; screens at `kiosk-living-rules`
+  `relay-draw`, `relay-vote`, `relay-lockout`, `relay-done`, and the host's phone at
+  `relay-walk-host` and `relay-vote-host`; screens at `kiosk-living-rules`
   (the slides), `kiosk-relay-called`, `kiosk-relay-square`, `kiosk-relay-guess`,
   `kiosk-living-hold` and `kiosk-living-done` (the door), `kiosk-bedroom-closed`,
   `kiosk-bedroom-1` … `kiosk-bedroom-5`.
@@ -342,7 +369,13 @@ Built and tested against the fake Firestore. Not yet played in the house.
 **To run it, once deployed** (`npm run deploy`, which you run): open the Parlour page on
 the main computer, full screen, on the TV. After Act 4, put Susan's MacBook Pro in the bedroom on
 the bedroom page. In Act 6, Host tab → *Next* at "The drawing" (or *Start the drawing*).
-Everything else runs itself; the room only clicks its guesses.
+Everything else runs itself; you press *At the paper* when each drawer is there and tap the
+room's guess when it has one.
+
+**Updated 25 October 2026** (Jon's cue list): fifteen seconds a turn (`TURN_MS`); the walk a
+limit of twenty seconds (`WALK_MS`, `PULL_MS`) that the host command `at-the-paper` ends early;
+the budget 26 minutes (`DRAW_BUDGET_MS`, `MAX_TURNS` 44); the host's guess on their own phone
+(`HostRelayPanel`); the TV's words say "tell the host". Check F29 in `docs/test-plan.md`.
 
 **Added 17 October 2026, still true.**
 - **The door opens for real.** The moment the third real picture is named, the server writes
@@ -400,9 +433,9 @@ grids: the public `PRACTICE` smiley, then for each round one random bank picture
 `checkPicture(p, round)`, else that round's stand-in (`fromBank` counts the rounds the bank
 filled). `gridOf` shuffles the drawn squares and the four names with a seeded hash.
 `turnOrder(keys, turns)` draws a random roster key per turn with `crypto.randomInt`, repeats
-allowed. `start` refuses a set over `MAX_TURNS` = 49 (`DRAW_BUDGET_MS` 18 min / (10 s + 12 s));
-`ROUND_CAPS` {1: 9, 2: 11, 3: 13} and the stand-ins' `CELL_CAPS` [9, 11, 12] keep every set at
-42 turns or fewer with the practice. Stand-in strokes sit on a per-cell anchor lattice as
+allowed. `start` refuses a set over `MAX_TURNS` = 44 (`DRAW_BUDGET_MS` 26 min / (`TURN_MS` 15 s
++ `WALK_MS` 20 s), 25 Oct); `ROUND_CAPS` {1: 9, 2: 11, 3: 13} and the stand-ins' `CELL_CAPS`
+[9, 11, 12] keep every set at 42 turns or fewer with the practice. Stand-in strokes sit on a per-cell anchor lattice as
 `{ kind: line|arc|circle|dot, from, to, bulge }` / `{ at, r }`, rendered to SVG on the clients;
 `relay-gen` keeps the §6 stand-in rules as unit tests across many seeds.
 
@@ -422,22 +455,36 @@ No Steward op reads the bank (stewardPictures answered no, 24 Oct).
 
 **Driving the clock.** Cloud Functions do not run timers. The callable `relayAdvance({ nightId })`
 → `run.advanceRelay` → `relay.advance` moves `intro → walk` at `introEndsAt` (the first walk
-of a grid is `PULL_MS`, 20 s), `walk → turn` at `walkEndsAt` (the square is written only now),
-`turn → walk` (next drawer, `WALK_MS` 12 s) or `turn → vote` when the grid's last square is
-done, and `lockout → vote` at `lockoutEndsAt`. It refuses early calls, moves once per deadline,
-and holds while `nights/{id}.phase === 'paused'`. The living kiosk calls it on schedule; any
-phone may too (`Relay.jsx`, 2.5 s after a deadline, at most every 6 s), so the clock survives
-the kiosk dying. Callers pass `mayTouchNight` (a roster phone, a kiosk with presence that night,
-or an admin). Bars render from the deadlines against the client's server skew, never a local
-countdown.
+of a grid is `PULL_MS`, 20 s), `walk → turn` at `walkEndsAt` (the square is written only now,
+with `turnEndsAt` = now + `TURN_MS` 15 s), `turn → walk` (next drawer, `WALK_MS` 20 s) or
+`turn → vote` when the grid's last square is done, and `lockout → vote` at `lockoutEndsAt`. It
+refuses early calls, moves once per deadline, and holds while `nights/{id}.phase === 'paused'`.
+The living kiosk calls it on schedule; any phone may too (`Relay.jsx`, 2.5 s after a deadline,
+at most every 6 s), so the clock survives the kiosk dying. Callers pass `mayTouchNight` (a
+roster phone, a kiosk with presence that night, or an admin). Bars render from the deadlines
+against the client's server skew, never a local countdown.
+
+**At the paper (25 Oct).** The walk's two timings are limits. The host command `at-the-paper`
+(`run.js`) → `relay.atThePaper`: one transaction on `public/relay` that requires
+`state === 'walk'` and sets `walkEndsAt` to now (`NightError 'invalid'` in any other state:
+"Nobody is walking to the paper right now."), then `run.advanceRelay` at the same `now`, so the
+square is written in the same call and the fifteen seconds run from the press. It is in
+`PAUSE_HELD`, so a paused night refuses it; a resume shifts `walkEndsAt` like every deadline
+(`PAUSE_SHIFTED`, no new field). The button lives in `HostRelayPanel` (`Host.jsx`).
 
 **The guess.** The callable `relayGuess({ nightId, pick })` → `run.guessRelay` → `relay.guess`, same gate, tapped
-on the living kiosk (`Kiosk.jsx Guess`). Only in `vote`; `pick` must be 0 to 3 and not crossed.
+on the host's phone (`Host.jsx HostRelayPanel`, rendered by `Relay.jsx` on the drawing screen
+of a session with `host` set, `inline`; its rules, which state shows which control and the
+reply words, are the pure helpers in `play/src/lib/relayhost.js`. The copy under *The Big
+Solve* on the Host tab is unreachable today, since every phone leaves its tabs for `Relay.jsx`
+while the drawing runs; it stays for the day the drawing surface changes) or on the living kiosk
+(`Kiosk.jsx Guess`, the fallback). Only in `vote`;
+`pick` must be 0 to 3 and not crossed.
 Right → the next grid's `walk` with `PULL_MS`, or on the last grid `done` with `doorOpen: true`,
 `doorSlide`, `stats: { totalSeconds, misses: [r1, r2, r3] }` (the practice is not counted) and
 `public/sounds.current = { id: 'sting-door' }`. Wrong → `crossed` and `misses` updated,
 `lockout` for `LOCKOUT_MS` (10 s), then `vote` again. `vote` has no clock. The `relayVote`
-callable is kept only to refuse old phones ("Guess on the main computer, all together.").
+callable is kept only to refuse old phones ("Tell the host your guess, all together.").
 `presentKeys` still fills `votesNeeded` at start; nothing waits on it.
 
 **Guards (17 Oct, second pass).** `relay.start` returns `{ already: true, state }` when the
@@ -469,7 +516,7 @@ with CSS haze by level over `play/public/traces/<trace>.png`. Host command `tv-t
 to `?kiosk=bedroom`.
 
 **Audio.** The turn chimes (start, end, right, wrong) play from the Parlour kiosk's own
-speaker, not through AirPlay, because a ten-second cadence cannot absorb two seconds of
+speaker, not through AirPlay, because a fifteen-second cadence cannot absorb two seconds of
 spin-up. The door sting goes through `public/sounds` (`sting-door`), named by event ID as usual.
 
 **Stats.** `public/relay.stats: { totalSeconds, misses }` feeds the finale (`finale.js`: "Time
@@ -481,5 +528,7 @@ start → walk → turn → guess with the practice first and the drawer only ev
 wrong picks crossed off until right, all four named opens the door with the practice left out
 of the stats, the party night drawing from the bank and never a bad picture, the never-list in
 the name and every wrong name, Irwin's slide timings and slide 3's square, start twice keeps the
-drawing, Clear re-opens the door. `scripts/test/generate-relay-pictures.test.mjs` covers the
+drawing, Clear re-opens the door, and F29 (the fifteen-second turn, the twenty-second walk limit,
+the 26-minute budget over 400 stand-in sets, and At the paper: it ends the walk now, is refused
+in every other state and while paused, and a pause shifts the walk). `scripts/test/generate-relay-pictures.test.mjs` covers the
 command on a memory db with its stdout checked for content. Throwaway night, nothing persisted.

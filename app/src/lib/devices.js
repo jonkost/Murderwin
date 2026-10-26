@@ -51,8 +51,8 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'living', name: 'The Parlour screen', machine: 'Jon’s work MacBook Pro on the TV', kiosk: 'living',
-        what: 'All night: the rules deck in Act 1 (in a second browser tab: switch back to the game before the blackout), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the board, the ballot and the reveal. The room taps its drawing guesses here.',
-        start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can play sound and video. Then leave it within reach: the room taps its guesses here in Act 6.'],
+        what: 'All night: the rules deck in Act 1 (in a second browser tab: switch back to the game before the blackout), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the board, the ballot and the reveal. In the drawing the host taps the room’s guess on their phone; this screen’s names still take a tap, the fallback.',
+        start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can play sound and video. Then leave the trackpad within reach: the TV’s names are the fallback for the drawing’s guess in Act 6.'],
         alive: 'The crest and a waiting line. The dot in the bottom left corner is green.',
       },
     ],

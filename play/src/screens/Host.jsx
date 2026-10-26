@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { callHost } from '../firebase'
+import { callHost, callRelayGuess } from '../firebase'
 import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft } from '../lib/night'
 import { houseView } from '../lib/house'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME } from '../lib/finale'
+import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
+import { Figure } from '../lib/draw'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -55,6 +57,11 @@ function describe(command, r) {
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
     case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.clock ? 'The clock moved the night on.' : 'Every clock is where it should be.'
     case 'hall': return `The hall light is ${r.hall}.`
+    case 'sound-test': return 'The chime is playing on every HomePod.'
+    case 'cake': return r.card === false
+      ? 'Happy Birthday for Dogs on every HomePod and the candles scene. Sir Irwin’s countdown stays on the TV. The jazz comes back when the song ends.'
+      : 'Happy Birthday for Dogs on every HomePod, the candles scene, the birthday card on the TV. The jazz comes back when the song ends.'
+    case 'at-the-paper': return paperReply(r)
     case 'tv-trace': return r.tvTrace ? 'The Parlour screen shows the trace once the door has been open ten seconds.' : 'The trace is off the Parlour screen.'
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
     case 'next': case 'beat': case 'back': if (r.armed) return 'Armed.'
@@ -187,12 +194,14 @@ export default function Host({ night, content, serverNow }) {
       <StationKey busy={busy} run={run} />
 
       <h3>The Big Solve (Act 6)</h3>
-      <p className="gloss">Starts the relay drawing on every phone and the Parlour screen. It tells you nothing. A drawing already on the paper is kept unless you say restart.</p>
+      <p className="gloss">Starts the relay drawing on every phone and the Parlour screen. It tells you nothing. A drawing already on the paper is kept unless you say restart. While it runs your phone shows the drawing like everyone else's, with At the paper and the room's guess on it.</p>
       <div className="host-row">
         <button className="big wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('relay-reset')}>Clear the drawing</button>
         <button className="chip wide" disabled={!!busy} onClick={() => run('tv-trace', cues.data?.tvTrace ? 'off' : undefined)} title="If the bedroom screen has died, the TV shows the trace after the door opens">{cues.data?.tvTrace ? 'Take the trace off the TV' : 'Show the trace on the TV'}</button>
       </div>
+      {/* unreachable while the drawing runs (App.jsx makes Relay.jsx the whole phone then, and Relay.jsx carries the live copy); kept for the day the drawing surface changes */}
+      <HostRelayPanel relay={relay.data} nightId={night.nightId} />
 
       <h3>The doors</h3>
       <div className="host-row">
@@ -294,6 +303,11 @@ export function HousePanel({ house, cues, night, busy, run }) {
         <button className="chip" disabled={!!busy || hall === 'red'} onClick={() => run('hall', 'red')}>Red</button>
         <button className="chip" disabled={!!busy || hall === 'green'} onClick={() => run('hall', 'green')}>Green</button>
       </div>
+      {/* Sound test (cue 2, 25 Oct 2026): the chime on every HomePod while the rules are read, so the room hears the speakers work */}
+      <div className="host-row">
+        <span className="gloss">Speakers:</span>
+        <button className="chip" disabled={!!busy} onClick={() => run('sound-test')} title="The chime on every HomePod. Nothing else moves">Sound test</button>
+      </div>
     </section>
   )
 }
@@ -372,6 +386,12 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
           <button className="big wide" disabled={!!busy || (open && left > 0)} onClick={() => run('start-act4')}>Start Act 4</button>
         </div>
       )}
+      {night.act === 5 && (
+        // Cake! (cue 13, 25 Oct 2026): when the cake is served. The brain plays the song and dims the lights; the TV shows the card.
+        <div className="host-row">
+          <button className="big wide" disabled={!!busy} onClick={() => run('cake')} title="Happy Birthday for Dogs on every HomePod, the candles, the birthday card on the TV. The jazz comes back when the song ends">Cake!</button>
+        </div>
+      )}
       {open && (
         <p className="host-msg" role="status">
           {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}
@@ -397,6 +417,73 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
           </ol>
         </details>
       )}
+    </section>
+  )
+}
+
+// The drawing on the host's own phone (Jon's cue list, cue 17, 25 Oct 2026).
+// While a drawer walks to the paper: At the paper, which ends the walk the
+// moment they are there, so the square shows at once (the walk's twenty
+// seconds are a limit, not a wait). While the room guesses: the four options,
+// A to D, the room's names or the figures of a stand-in round; a crossed one
+// is dimmed; a tap is the room's guess, through the same callable as the
+// Parlour TV, whose own options stay as the fallback (the trackpad). The
+// rules (which state shows which control, the reply words) are pure helpers
+// in lib/relayhost.js. Every phone leaves its tabs for the drawing's screen
+// while the drawing runs, so the live copy is the one Relay.jsx renders on
+// the host's own drawing screen (`inline`); the copy under The Big Solve on
+// the Host tab cannot be reached while the drawing runs and stays only for
+// the day the drawing surface changes. Nothing here can show a right answer:
+// the server crosses off a wrong one like any other tap.
+const REPLY_MS = 5000
+export function HostRelayPanel({ relay, nightId, inline = false }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null) // { text }: a fresh object per reply, so two alike each get their moment
+  // A reply is a passing word: it goes on its own after a few seconds, whatever the drawing does
+  // meanwhile. It is not cleared on a state change, because a right guess moves the state in the
+  // same server call that answers the tap, and whether the snapshot or the reply lands first is
+  // anyone's guess. This is not game time: the TV and the chime carry the result anyway.
+  useEffect(() => {
+    if (!msg) return undefined
+    const t = setTimeout(() => setMsg(null), REPLY_MS)
+    return () => clearTimeout(t)
+  }, [msg])
+  const control = hostRelayControl(relay)
+  if (!control) return null
+  const live = nightId && nightId !== 'preview'
+  const call = async (fn, said) => {
+    if (!live || busy) return
+    setBusy(true)
+    try { const r = await fn(); setMsg({ text: said(r.data ?? {}) }) }
+    catch (e) { setMsg({ text: `That didn’t work: ${e?.message ?? 'no answer from the Manor'}` }) }
+    finally { setBusy(false) }
+  }
+  const atPaper = () => call(() => callHost({ nightId, command: 'at-the-paper' }), paperReply)
+  const pick = (i) => call(() => callRelayGuess({ nightId, pick: i }), guessReply)
+  const locked = relay.state === 'lockout'
+  const crossed = relay.crossed ?? []
+  return (
+    <section className={inline ? 'host-relay inline' : 'host-relay'}>
+      {!inline && <p className="gloss">{control === 'paper' ? 'Someone is walking to the paper. Press At the paper the moment they are there.' : 'The room is guessing. Agree, then tap its guess here.'}</p>}
+      {control === 'paper' && (
+        <div className="host-row">
+          <button className="big wide" disabled={busy} onClick={atPaper} title="The walk ends now and the square shows at once">At the paper</button>
+        </div>
+      )}
+      {control === 'guess' && (
+        <div className="options host-options">
+          {(relay.options ?? []).map((o, i) => {
+            const out = crossed.includes(i)
+            return (
+              <button key={i} className={`option${out ? ' out' : ''}`} disabled={busy || locked || out} onClick={() => pick(i)} aria-label={`${'ABCD'[i]}${o.name ? `, ${o.name}` : ''}`}>
+                <span className="letter">{'ABCD'[i]}</span>
+                {o.name ? <span className={out ? 'option-name crossed' : 'option-name'}>{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={out} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {msg && <p className="host-msg" role="status">{msg.text}</p>}
     </section>
   )
 }

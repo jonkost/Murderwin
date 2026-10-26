@@ -20,8 +20,9 @@ import * as act4 from './act4.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
-// The host commands a pause holds back (everything that moves the night or lights the phones).
-export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'supper', 'start-act4'])
+// The host commands a pause holds back (everything that moves the night or lights the phones;
+// At the paper moves the drawing's clock, so it waits too).
+export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'supper', 'start-act4', 'at-the-paper'])
 // The blackout lasts five seconds, then the power comes back on its own (Jon's
 // cue list, cue 4, 25 Oct 2026: blackoutAuto). The wait is on the server,
 // inside the Blackout command, so no phone counts it; the tests pass their
@@ -308,6 +309,31 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       await db.doc(`nights/${nightId}/public/cues`).set({ music: { command: arg, at: new Date(now) } }, { merge: true })
       return { ok: true, music: arg }
     }
+    case 'sound-test': {
+      // Sound test (cue 2, 25 Oct 2026): the chime on every HomePod while the rules are read, so the
+      // room hears the speakers work. Nothing else moves.
+      return screen.play(db, nightId, 'chime-phone', { now })
+    }
+    case 'cake': {
+      // Cake! (cue 13, 25 Oct 2026): a fresh stamp on public/cues.cake, which the brain plays Happy
+      // Birthday for Dogs from and recalls the candles scene (cues/); the Parlour TV shows the
+      // birthday card until the next beat's screen. Shown in Act 5. The one screen it never
+      // replaces is Sir Irwin's countdown (kind 'irwin'): his motive cards are part of the clue
+      // path, so a press during "Sir Irwin speaks" plays the song and leaves his screen alone
+      // (card: false in the reply, so the Host tab says so).
+      await db.doc(`nights/${nightId}/public/cues`).set({ cake: { at: new Date(now) } }, { merge: true })
+      const current = await screen.readScreen(db, nightId)
+      const card = current?.kind !== 'irwin'
+      if (card) await screen.birthday(db, nightId, { now })
+      return { ok: true, cake: true, card }
+    }
+    case 'at-the-paper': {
+      // At the paper (cue 17, 25 Oct 2026): the drawer is at the paper, so the walk ends now and the
+      // square shows at once. Refused unless someone is walking (relay.atThePaper), and while paused.
+      await relay.atThePaper(db, { nightId, now })
+      const r = await advanceRelay(db, { nightId, now })
+      return { ok: true, atPaper: true, state: r.state }
+    }
     case 'settle':
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':
@@ -415,8 +441,9 @@ export async function advanceRelay(db, { nightId, now = Date.now() } = {}) {
   return r
 }
 
-// The room's guess on the main computer, plus the same moment as above: a
-// right guess on the last picture opens the door and lands the trace.
+// The room's guess, tapped by the host on their phone (or on the main computer,
+// the fallback), plus the same moment as above: a right guess on the last
+// picture opens the door and lands the trace.
 export async function guessRelay(db, { nightId, pick, now = Date.now() } = {}) {
   const r = await relay.guess(db, { nightId, pick, now })
   if (r?.state === 'done') {
