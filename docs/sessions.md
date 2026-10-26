@@ -55,7 +55,10 @@ not pushed)
   or retired; rulesDeckScreen answered (the Parlour TV).
 
 **What is left**
-- Deploy and push, on Jon's yes; then open the workshop once so the two new migrations load.
+- Done on 26 Oct, on Jon's yes here: pushed `main` (762bdf0) to GitHub and deployed it
+  (hosting, both rule sets, 25 functions, three of them new: morningAfter, sealedCounts and
+  posePhoto; the live play and workshop pages answer). Jon opens the workshop once so the two
+  new migrations load the cards.
 - Nothing was tried on the real hardware: the bulb's off, the projector's plug, the song from
   the Music library, the loops (no files yet), the QR codes from a TV at distance, the brain's
   browser as the Orangerie screen. The practice run and the Game test tab show the phones' new
