@@ -164,3 +164,54 @@ test('the mirror drives Shortcuts like the paired strings: only changes, one lin
   mirror.update('green'); await new Promise(r => setTimeout(r, 5))
   assert.equal(logs.filter(l => l.includes('did not answer')).length, 1)
 })
+
+// ---- 25 Oct 2026, the cue list: the projector's plug through Apple Home ----
+
+test('the projector: two Shortcuts by their exact names, renamed only in cues/.env; set(on|off) runs one each, in order', async () => {
+  const { PROJECTOR_SHORTCUTS, projectorShortcutNames, createProjectorSwitch } = await import('../lib/strings.js')
+  assert.deepEqual(PROJECTOR_SHORTCUTS, { on: 'Projector Murderwin On', off: 'Projector Murderwin Off' })
+  assert.deepEqual(projectorShortcutNames({}), PROJECTOR_SHORTCUTS)
+  assert.deepEqual(projectorShortcutNames({ PROJECTOR_SHORTCUT_ON: ' Beamer On ', PROJECTOR_SHORTCUT_OFF: '' }), { on: 'Beamer On', off: 'Projector Murderwin Off' })
+  const ran = []
+  const logs = []
+  const p = createProjectorSwitch({ enabled: true, run: async (name, { timeoutMs }) => { ran.push([name, timeoutMs]) }, log: l => logs.push(l) })
+  p.set('off'); p.set('on')
+  await p.idle()
+  assert.deepEqual(ran, [['Projector Murderwin Off', 8000], ['Projector Murderwin On', 8000]], 'one Shortcut per change, in order')
+  assert.deepEqual(logs, ['[projector] off', '[projector] on'])
+  await p.set('sideways')
+  assert.equal(ran.length, 2, 'only on and off')
+  // renamed on the Mac: the .env names are used
+  const named = []
+  const q = createProjectorSwitch({ enabled: true, names: projectorShortcutNames({ PROJECTOR_SHORTCUT_ON: 'Beamer On' }), run: async name => { named.push(name) } })
+  await q.set('on')
+  assert.deepEqual(named, ['Beamer On'])
+})
+
+test('the projector: a failing Shortcut is one plain line and never stops the relay; not enabled, or fake, it only says what it would do', async () => {
+  const { createProjectorSwitch } = await import('../lib/strings.js')
+  const logs = []
+  const p = createProjectorSwitch({ enabled: true, run: async () => { throw new Error('shortcut Projector Murderwin On: 1') }, log: l => logs.push(l) })
+  await p.set('on')
+  assert.equal(logs.length, 1)
+  assert.match(logs[0], /^\[projector\] on failed .*switch the plug in the Home app$/)
+  const ran = []
+  const off = createProjectorSwitch({ enabled: false, run: async name => { ran.push(name) }, log: l => logs.push(l) })
+  await off.set('off')
+  assert.deepEqual(ran, [], 'not enabled: nothing runs')
+  assert.equal(logs.at(-1), '[projector] would switch the projector off (PROJECTOR_SHORTCUTS is not on in cues/.env)')
+  const fake = createProjectorSwitch({ enabled: true, fake: true, run: async name => { ran.push(name) }, log: l => logs.push(l) })
+  await fake.set('on')
+  assert.deepEqual(ran, [])
+  assert.equal(logs.at(-1), '[projector] would switch the projector on')
+})
+
+test('the relay switches the projector through the same `shortcuts run` as the string lights, and reads PROJECTOR_SHORTCUTS from cues/.env', () => {
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('onSwitch(env.PROJECTOR_SHORTCUTS)'))
+  assert.ok(src.includes('createProjectorSwitch({ enabled: projectorOn, names: projectorShortcutNames(env)'))
+  const lib = readFileSync(new URL('../lib/strings.js', import.meta.url), 'utf8')
+  assert.ok(lib.includes('run = runShortcut') && lib.includes('await run(names[state], { timeoutMs })'), 'through runShortcut')
+  const example = readFileSync(new URL('../.env.example', import.meta.url), 'utf8')
+  for (const k of ['PROJECTOR_SHORTCUTS', 'PROJECTOR_SHORTCUT_ON', 'PROJECTOR_SHORTCUT_OFF']) assert.ok(example.includes(k), `${k} in cues/.env.example`)
+})

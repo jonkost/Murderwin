@@ -9,7 +9,7 @@
 // Finding the hall light's id:
 //   curl -k -H "hue-application-key: <key>" https://<bridge>/clip/v2/resource/light
 // → data[].id with data[].metadata.name   (or: npm start -- --lights)
-// Scenes (the four Jon makes in the Hue app, cues/scenes.json):
+// Scenes (the six Jon makes in the Hue app, cues/scenes.json):
 //   GET /clip/v2/resource/scene → data[].id, metadata.name, group { rid, rtype }
 //   PUT /clip/v2/resource/scene/<id>  { "recall": { "action": "active" } }
 // A Hue scene belongs to one room or zone, so a name may stand for several
@@ -25,7 +25,11 @@ export const XY = {
   green: { x: 0.17, y: 0.7 },
 }
 
+// The body for one of the hall bulb's three states: red, green, or 'off'
+// (the blackout, 25 Oct 2026: the bulb goes out with every other light).
+export const OFF = 'off'
 export function lightBody(colour, { brightness = 60 } = {}) {
+  if (colour === OFF) return { on: { on: false } }
   const xy = XY[colour]
   if (!xy) throw new Error(`no colour named ${colour}`)
   return { on: { on: true }, dimming: { brightness }, color: { xy } }

@@ -89,6 +89,38 @@ export class StringLights {
 // The three Apple Shortcuts on the brain, one per colour.
 export const STRING_SHORTCUTS = { red: 'Red Murderwin Strings', green: 'Green Murderwin Strings', decor: 'Decor Murderwin Strings' }
 
+// The projector's plug (25 Oct 2026, the cue list): an IKEA smart switch in
+// Apple Home, switched from the brain by two more Shortcuts on this Mac,
+// each running one Home scene Jon made (the plug on; the plug off). Which
+// moments want it on or off is the `projector` layer of cues/scenes.json
+// (lib/scenes.js); this only runs the Shortcut, through the same
+// `shortcuts run` as the string lights. PROJECTOR_SHORTCUTS=on in cues/.env
+// turns it on; the names may be changed there (PROJECTOR_SHORTCUT_ON / _OFF).
+export const PROJECTOR_SHORTCUTS = { on: 'Projector Murderwin On', off: 'Projector Murderwin Off' }
+
+// The Shortcut names from cues/.env, or the defaults.
+export function projectorShortcutNames(env = {}) {
+  const named = k => String(env[`PROJECTOR_SHORTCUT_${k.toUpperCase()}`] ?? '').trim() || PROJECTOR_SHORTCUTS[k]
+  return { on: named('on'), off: named('off') }
+}
+
+// The switch: set('on' | 'off') runs that Shortcut. The planner is
+// edge-triggered, so this is asked once per change; a failure is one plain
+// line (the projector takes a moment to warm up anyway, and its code in
+// Act 2 is printed too). Not enabled (or fake): it says what it would do.
+export function createProjectorSwitch({ enabled = false, names = PROJECTOR_SHORTCUTS, run = runShortcut, log = () => {}, fake = false, timeoutMs = 8000 } = {}) {
+  let chain = Promise.resolve()
+  function set(state) {
+    if (state !== 'on' && state !== 'off') return chain
+    if (fake || !enabled) { log(`[projector] would switch the projector ${state}${fake ? '' : ' (PROJECTOR_SHORTCUTS is not on in cues/.env)'}`); return chain }
+    chain = chain.then(async () => {
+      try { await run(names[state], { timeoutMs }); log(`[projector] ${state}`) } catch (e) { log(`[projector] ${state} failed (${e.message}); switch the plug in the Home app`) }
+    })
+    return chain
+  }
+  return { set, idle: () => chain }
+}
+
 // The mirror's colours when the strings go through Shortcuts.
 export function shortcutColours(names = STRING_SHORTCUTS) {
   return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { shortcut: name }]))

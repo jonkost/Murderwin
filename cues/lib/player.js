@@ -13,7 +13,7 @@
 // is nothing to play), and never for a cue a newer one cut off: the relay
 // brings the music back up then.
 
-import { soundCandidates, playLine } from './cues.js'
+import { soundCandidates, soundFileFor, playLine } from './cues.js'
 
 export function createPlayer({ mediaDir, exists, spawn, log = () => {}, fake = false } = {}) {
   let sequence = 0
@@ -29,10 +29,12 @@ export function createPlayer({ mediaDir, exists, spawn, log = () => {}, fake = f
     const mine = ++sequence
     stop()
     const find = x => soundCandidates(mediaDir, x).find(f => exists(f)) ?? null
-    const sound = id ? find(id) : null
+    // a chime with no file of its own plays the one chime's file (cues.js CHIME_FALLBACK, 25 Oct 2026)
+    const found = id ? soundFileFor(mediaDir, id, exists) : null
+    const sound = found?.file ?? null
     const recordings = clips.map(find)
     const missing = recordings.filter(f => !f).length
-    log(`${playLine({ sound: id ? (sound ? 'ok' : 'missing') : null, recordings: clips.length, missing, unknown, onTv })}${fake ? ' (fake: nothing plays)' : ''}`)
+    log(`${playLine({ sound: id ? (found ? (found.fallback ? 'fallback' : 'ok') : 'missing') : null, recordings: clips.length, missing, unknown, onTv })}${fake ? ' (fake: nothing plays)' : ''}`)
     const queue = [sound, ...recordings].filter(Boolean)
     const nextOne = () => {
       if (mine !== sequence) return // a newer cue has taken over

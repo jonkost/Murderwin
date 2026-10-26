@@ -1,31 +1,36 @@
 // The cue relay. Runs on the game-server Mac (the M3 Air, "the brain") all
 // night. It reads the public night state that any phone may read, and does
-// a handful of dumb things: sets the bulb outside the bedroom red or green,
-// plays a sound file named after whatever event id arrives, runs Apple
-// Music (a playlist per moment, quiet under every cue, off for the drawing
-// and after the reveal), recalls Hue scenes by name, and mirrors Salem's
-// game colour on the Orangerie string lights. It never calls a Cloud
-// Function, never reads anything sealed, and never knows what a cue means.
-// docs/cues-relay.md.
+// a handful of dumb things: sets the bulb outside the bedroom green, off,
+// red or green, plays a sound file named after whatever event id arrives,
+// runs Apple Music (a playlist per moment, quiet under every cue, cut for the
+// newscast, the birthday song for Cake!), recalls Hue scenes by name,
+// switches the projector's plug through Apple Home, and mirrors Salem's game
+// colour on the Orangerie string lights. It never calls a Cloud Function,
+// never reads anything sealed, and never knows what a cue means.
+// docs/cues-relay.md. Brought to Jon's cue list on 25 Oct 2026.
 //
-//   npm start                 the real bridge, speakers, Music and strings (cues/.env)
+//   npm start                 the real bridge, speakers, Music, projector and strings (cues/.env)
 //   npm start -- --lights     list the bridge's lights and their ids, then quit
-//   npm start -- --scenes     list the bridge's scenes and check the four Murderwin ones, then quit
-//   npm start -- --scene "Murderwin Arrival"   recall one scene, then quit
-//   npm start -- --check-music     play each playlist a few seconds, duck, stop, then quit
-//   npm start -- --check-strings   string lights red, green, then decor, then quit
+//   npm start -- --scenes     list the bridge's scenes and check the six Murderwin ones, then quit
+//   npm start -- --scene "Murderwin Default"   recall one scene, then quit
+//   npm start -- --check-music      play each playlist and the cake's song a few seconds, duck, stop, then quit
+//   npm start -- --check-strings    string lights red, green, then decor, then quit
+//   npm start -- --check-projector  the projector's plug off, then on, then quit
 //   npm run fake              no hardware: prints what it would do
-//     keys in fake mode: r → hall red, g → hall green, s → the next sound in the catalogue,
-//     n → the next moment of a pretend night (lib/demo.js)
+//     keys in fake mode: r → hall red, g → hall green, o → hall off, s → the next sound in the catalogue,
+//     c → Cake!, n → the next moment of a pretend night (lib/demo.js)
 //   npm run fake -- --offline   the same with no Firebase at all (keys only)
 //   npm run demo              a pretend night, start to finish, no Firebase, no hardware; then quits
-//   npm start -- --demo       the same pretend night on the real lights, speakers and Music
-//                             (no Firebase): every move the brain makes, in about a minute and a half
+//   npm start -- --demo       the same pretend night on the real lights, speakers, Music and projector
+//                             (no Firebase): every move the brain makes, in about two minutes
 //
-// The music and Hue scenes for each moment are the safe file cues/scenes.json.
+// The music, Hue scenes and projector for each moment are the safe file
+// cues/scenes.json.
 //
-// It refuses to start while any id in the catalogue (lib/cues.js SOUND_IDS)
-// has no file under media/; scripts/make-placeholder-sounds.mjs makes a
+// It refuses to start while a REQUIRED sound (lib/cues.js REQUIRED_SOUND_IDS:
+// the chime and the blackout) has no file under media/. A chime with no file
+// of its own plays the chime's file; a sting with none is silent, and the
+// start-up line says how many; scripts/make-placeholder-sounds.mjs makes a
 // stand-in tone for each until the real recordings are in.
 //
 // The W-O-O-F News recordings arrive as codes on a night with a station key
@@ -41,14 +46,14 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, missingSoundFiles, recordingFiles, clipReader, playLine } from './lib/cues.js'
+import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
-import { planScenes, emptySceneState, sceneProblems, sceneNames, ducksFor, unduckDelayMs } from './lib/scenes.js'
-import { createMusic } from './lib/music.js'
-import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS } from './lib/strings.js'
+import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake } from './lib/scenes.js'
+import { createMusic, followTrack } from './lib/music.js'
+import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -62,7 +67,8 @@ const SCENES = has('--scenes')
 const ONE_SCENE = args.indexOf('--scene') >= 0 ? String(args[args.indexOf('--scene') + 1] ?? '') : null
 const CHECK_MUSIC = has('--check-music')
 const CHECK_STRINGS = has('--check-strings')
-const TOOL = LIST || SCENES || ONE_SCENE !== null || CHECK_MUSIC || CHECK_STRINGS
+const CHECK_PROJECTOR = has('--check-projector')
+const TOOL = LIST || SCENES || ONE_SCENE !== null || CHECK_MUSIC || CHECK_STRINGS || CHECK_PROJECTOR
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a)
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
@@ -73,29 +79,33 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env }
 const MEDIA_DIR = resolve(here, env.MEDIA_DIR || '../media')
 const offSwitch = v => String(v ?? '').trim().toLowerCase() === 'off'
+const onSwitch = v => String(v ?? '').trim().toLowerCase() === 'on'
 
-// Every sound in the catalogue needs a file before the night starts. The
-// count is printed (never which ones) and the relay quits; in fake mode it
-// carries on. The recordings are counted too, and may be missing: a missing
-// one is skipped and the screen shows the words.
-const missing = missingSoundFiles(MEDIA_DIR, existsSync)
-if (missing.length && !TOOL) {
-  console.log(`${missing.length} of ${SOUND_IDS.length} sounds have no file in ${MEDIA_DIR}`)
+// The sound files (25 Oct 2026, cueSounds): the relay quits only when a
+// required sound (the chime, the blackout) has no file; in fake mode it
+// carries on. The counts are printed (never which ones). A chime with no file
+// of its own plays the one chime; a sting with none is silent at its moment.
+// The recordings are counted too, and may be missing: a missing one is
+// skipped and the screen shows the words.
+const soundReport = soundFileReport(MEDIA_DIR, existsSync)
+if (soundReport.required.length && !TOOL) {
+  for (const line of soundFilesLines(soundReport)) console.log(`${line} in ${MEDIA_DIR}`)
   console.log('run `node scripts/make-placeholder-sounds.mjs` for stand-in tones, or drop the recordings in (media/README.md)')
   if (!FAKE) process.exit(2)
 }
 const readClip = clipReader(env.STATION_KEY)
 
-// The cue sheet for music and Hue scenes. A broken file never stops the
-// relay: the hall light and the sounds carry on, music and scenes are off.
+// The cue sheet for music, Hue scenes and the projector. A broken file never
+// stops the relay: the hall light and the sounds carry on, music, scenes and
+// the projector are off.
 function loadSheet() {
   try {
     const cfg = JSON.parse(readFileSync(join(here, 'scenes.json'), 'utf8'))
     const problems = sceneProblems(cfg)
     if (!problems.length) return cfg
-    log(`cues/scenes.json has ${problems.length} problem${problems.length === 1 ? '' : 's'} (first: ${problems[0]}); music and Hue scenes are off until it is fixed`)
+    log(`cues/scenes.json has ${problems.length} problem${problems.length === 1 ? '' : 's'} (first: ${problems[0]}); music, Hue scenes and the projector are off until it is fixed`)
   } catch (e) {
-    log(`cues/scenes.json ${e instanceof SyntaxError ? 'is not valid JSON' : 'could not be read'}; music and Hue scenes are off until it is fixed`)
+    log(`cues/scenes.json ${e instanceof SyntaxError ? 'is not valid JSON' : 'could not be read'}; music, Hue scenes and the projector are off until it is fixed`)
   }
   return null
 }
@@ -126,7 +136,7 @@ if (!FAKE) {
 // Apple Home with three Shortcuts on this Mac (STRINGS_SHORTCUTS=on, lib/strings.js).
 let stringLights = null
 let stringColours = sheet?.strings ?? DEFAULT_STRING_COLOURS
-const stringsByShortcuts = !FAKE && String(env.STRINGS_SHORTCUTS ?? '').trim().toLowerCase() === 'on'
+const stringsByShortcuts = !FAKE && onSwitch(env.STRINGS_SHORTCUTS)
 if (!FAKE && env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN) {
   stringLights = new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() })
 } else if (stringsByShortcuts) {
@@ -135,6 +145,11 @@ if (!FAKE && env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN) {
   const named = c => String(env[`STRINGS_SHORTCUT_${c.toUpperCase()}`] ?? '').trim() || STRING_SHORTCUTS[c]
   stringColours = shortcutColours({ red: named('red'), green: named('green'), decor: named('decor') })
 }
+
+// The projector's plug, through Apple Home with two Shortcuts on this Mac
+// (PROJECTOR_SHORTCUTS=on, lib/strings.js). Off or unset: it only says what it would do.
+const projectorOn = !FAKE && onSwitch(env.PROJECTOR_SHORTCUTS)
+const projector = createProjectorSwitch({ enabled: projectorOn, names: projectorShortcutNames(env), log, fake: FAKE })
 
 if (LIST) {
   if (!hue) { console.log('fill HUE_BRIDGE_HOST and HUE_APP_KEY in cues/.env first'); process.exit(2) }
@@ -163,8 +178,10 @@ if (ONE_SCENE !== null) {
 if (CHECK_MUSIC) {
   if (!sheet) { console.log('cues/scenes.json needs fixing first'); process.exit(2) }
   const m = createMusic({ fake: FAKE, log, whisper: sheet.whisper })
-  for (const p of Object.values(sheet.playlists)) {
-    log(`now ${p.name}, for six seconds`)
+  // each playlist once (two short names may share one), at its first volume
+  for (const name of playlistNamesOf(sheet)) {
+    const p = Object.values(sheet.playlists).find(x => x.name === name)
+    log(`now ${name}, for six seconds`)
     await m.play(p)
     await sleep(6000)
   }
@@ -172,8 +189,13 @@ if (CHECK_MUSIC) {
   await m.duck(); await sleep(3000)
   log('and back up')
   await m.unduck(); await sleep(2000)
+  if (sheet.cake) {
+    log('now the song for the cake, for six seconds')
+    const r = await m.playTrack({ name: sheet.cake.song, volume: sheet.cake.volume })
+    if (r === 'playing') await sleep(6000)
+  }
   await m.pause()
-  log('done: if you heard all three and the dip, the music is ready')
+  log(`done: if you heard all ${playlistNamesOf(sheet).length} playlists, the dip${sheet.cake ? ' and the song' : ''}, the music is ready`)
   process.exit(0)
 }
 if (CHECK_STRINGS) {
@@ -185,7 +207,15 @@ if (CHECK_STRINGS) {
   log('done: if the strings went red, green, then warm, they are ready')
   process.exit(0)
 }
+if (CHECK_PROJECTOR) {
+  if (!projectorOn && !FAKE) { console.log('set PROJECTOR_SHORTCUTS=on in cues/.env and make the two Shortcuts (Projector Murderwin On, Projector Murderwin Off) first'); process.exit(2) }
+  await projector.set('off'); await sleep(5000)
+  await projector.set('on'); await projector.idle()
+  log('done: if the projector\'s plug went off and came back on, it is ready (the projector itself takes a moment to warm up)')
+  process.exit(0)
+}
 
+// The hall bulb: red, green, or off in the blackout (25 Oct 2026).
 let wantHall = null
 async function setHall(colour) {
   wantHall = colour
@@ -193,7 +223,7 @@ async function setHall(colour) {
   if (!env.HUE_HALL_LIGHT_ID) { log('[hall] no HUE_HALL_LIGHT_ID set'); return }
   try { await hue.setLight(env.HUE_HALL_LIGHT_ID, colour); log(`[hall] ${colour}`) } catch (e) { log(`[hall] ${colour} failed (${e.message}); retrying`) }
 }
-// keep trying until the bulb agrees
+// keep trying until the bulb agrees (off is re-sent like any colour)
 setInterval(() => { if (wantHall && !FAKE && hue) setHall(wantHall) }, 5000)
 
 // One id, then its recordings one after the other (a W-O-O-F News bulletin).
@@ -235,6 +265,24 @@ function cueEnds(action, startedAt) {
   unduckTimer = setTimeout(() => { unduckTimer = null; music?.unduck() }, unduckDelayMs(action, startedAt, Date.now(), sheet))
 }
 
+// Cake! (25 Oct 2026, cue 13): the one song from the Music library on every
+// HomePod, then, when it ends (or after the sheet's `seconds` if Music
+// cannot be read), the sheet's music and scene come back. A second press
+// while the song plays starts it again and forgets the first.
+let cakeSeq = 0
+async function serveCake(a) {
+  const mine = ++cakeSeq
+  let started = 'missing'
+  if (music) started = await music.playTrack({ name: a.song, volume: a.volume })
+  else log('[cake] MUSIC=off in cues/.env: play the song in the Music app by hand')
+  if (FAKE) { log('[cake] (fake) the song plays for two seconds here'); await sleep(2000) }
+  else await followTrack({ name: a.song, seconds: a.seconds, started, nowPlaying: () => (music ? music.nowPlaying() : Promise.resolve(null)), log })
+  if (mine !== cakeSeq) return
+  log('[cake] the song is over: back to the sheet')
+  sceneState = afterCake(sceneState)
+  apply()
+}
+
 // The Orangerie string lights mirror Salem's game (lib/strings.js): woken
 // at each flip's own timestamp, and checked ten times a second as well.
 const strings = createStringsMirror({ lights: stringLights, colours: stringColours, log, fake: FAKE })
@@ -266,6 +314,8 @@ function apply() {
   for (const a of scene.actions) {
     if (a.type === 'music' && music) { if (a.do === 'play') music.play(a); else music.pause() }
     if (a.type === 'scene' && scenesOn) recallScene(a.name)
+    if (a.type === 'projector') projector.set(a.do)
+    if (a.type === 'cake') serveCake(a)
   }
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
@@ -293,10 +343,11 @@ function stepDemo() {
   return step
 }
 if (DEMO) {
-  log(`a pretend night, start to finish: no Firebase, ${FAKE ? 'no hardware' : 'the real lights, speakers and Music'}`)
+  log(`a pretend night, start to finish: no Firebase, ${FAKE ? 'no hardware' : 'the real lights, speakers, Music and projector'}`)
   const pace = Number(env.DEMO_STEP_MS) || (FAKE ? 300 : 3000)
   for (let i = 0; i < demo.length; i++) await sleep(stepDemo().wait ?? pace)
   await music?.idle()
+  await projector.idle()
   await sleep(1000)
   log('the pretend night is over')
   process.exit(0)
@@ -319,14 +370,14 @@ if (!OFFLINE) {
   await signInAnonymously(auth)
 }
 
-// The night doc (act, beat, phase) and four public docs, all readable by any phone.
+// The night doc (act, beat, phase) and five public docs, all readable by any phone.
 function watchNight(id) {
   for (const stop of stops) stop()
   stops = []
   docs = {}
   if (!id) return
   stops.push(onSnapshot(doc(db, `nights/${id}`), snap => { docs = { ...docs, night: snap.data() ?? null }; apply() }, e => log(`night: ${e.message}`)))
-  for (const name of ['cues', 'relay', 'sounds', 'salem']) {
+  for (const name of ['cues', 'relay', 'sounds', 'salem', 'study']) {
     stops.push(onSnapshot(doc(db, `nights/${id}/public/${name}`), snap => { docs = { ...docs, [name]: snap.data() ?? null }; apply() }, e => log(`${name}: ${e.message}`)))
   }
 }
@@ -358,13 +409,16 @@ if (FAKE && process.stdin.isTTY) {
   process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding('utf8')
   process.stdin.on('data', ch => {
     if (ch === '\u0003') process.exit(0)
-    if (ch === 'r') { docs = { ...docs, cues: { ...docs.cues, hall: 'red' } }; apply() }
-    if (ch === 'g') { docs = { ...docs, cues: { ...docs.cues, hall: 'green' } }; apply() }
+    if (ch === 'r') { docs = { ...docs, night: { ...docs.night, phase: 'act' }, cues: { ...docs.cues, hall: 'red' } }; apply() }
+    if (ch === 'g') { docs = { ...docs, night: { ...docs.night, phase: 'act' }, cues: { ...docs.cues, hall: 'green' } }; apply() }
+    if (ch === 'o') { docs = { ...docs, night: { ...docs.night, phase: 'blackout' } }; apply() }
     if (ch === 's') { docs = { ...docs, sounds: { current: { id: SOUND_IDS[fakeSound++ % SOUND_IDS.length], at: Date.now() } } }; apply() }
+    if (ch === 'c') { docs = { ...docs, cues: { ...docs.cues, cake: { at: Date.now() } } }; apply() }
     if (ch === 'n') stepDemo()
   })
-  log('fake mode: r hall red · g hall green · s the next sound in the catalogue · n the next moment of a pretend night')
+  log('fake mode: r hall red · g hall green · o hall off (the blackout) · s the next sound in the catalogue · c Cake! · n the next moment of a pretend night')
 }
 log('cue relay up', FAKE ? '(fake)' : '', OFFLINE ? '(offline: no Firebase)' : '', `media: ${MEDIA_DIR}`)
+for (const line of soundFilesLines(soundReport)) log(`sounds: ${line}`)
 log(`recordings: ${recordingFiles(MEDIA_DIR, existsSync)} of ${CLIP_IDS.length} have a file; ${String(env.STATION_KEY ?? '').trim().length >= 4 ? 'STATION_KEY set, coded recordings will play' : 'no STATION_KEY in cues/.env, so only a night with no station key saved plays them'}`)
-log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · string lights: ${FAKE ? 'fake' : stringLights ? (stringsByShortcuts && !env.NANOLEAF_STRINGS_TOKEN ? 'on, through Apple Home' : 'on') : 'not set up'}`)
+log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · projector: ${FAKE ? 'fake' : projectorOn ? 'on, through Apple Home' : 'not set up'} · string lights: ${FAKE ? 'fake' : stringLights ? (stringsByShortcuts && !env.NANOLEAF_STRINGS_TOKEN ? 'on, through Apple Home' : 'on') : 'not set up'}`)
