@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -779,9 +779,9 @@ test('the item 4 migration: followed by the cue list’s blackout step; the six 
   assert.equal(again.tasks.length, after.tasks.length, 'once only')
 })
 
-test('the cue list’s blackout step (25 Oct 2026, evening): the newest; the power sound’s card closes, the brain’s start card is reworded with its old words kept, one new question, each open on the board by number and title, once only', () => {
+test('the cue list’s blackout step (25 Oct 2026, evening): followed by the cue list’s board; the power sound’s card closes, the brain’s start card is reworded with its old words kept, one new question, each open on the board by number and title, once only', () => {
   const { before, add, newId } = boardThrough('2026-10-25-cue-list-blackout')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-26-cue-list', 'followed by the cue list’s board, the next day')
   assert.ok(add.retireTasks === RETIRED_FOR_CUE_LIST_3 && add.rewriteTasks === REWRITTEN_FOR_CUE_LIST_3 && add.decisions === CUE_LIST_3_DECISIONS)
   assert.equal(add.tasks, undefined, 'no new cards: the cue list’s cards come with the board step')
   assert.deepEqual(RETIRED_FOR_CUE_LIST_3.map(r => [r.order, r.title]), [[140, 'Sound: power']])
@@ -810,4 +810,144 @@ test('the cue list’s blackout step (25 Oct 2026, evening): the newest; the pow
   const again = applyPlan(planAddition(add, after, { newId, now: 6 }), after)
   assert.equal(again.tasks.length, after.tasks.length, 'once only')
   assert.equal(again.tasks.find(t => t.order === 121).previous, brain.previous, 'not rewritten twice')
+})
+
+// ---- the cue list's board, 26 Oct 2026 ---------------------------------------
+
+// The plain words a card of Jon's, Susan's or Jenna's must keep to (the cleanup's rule).
+const PLAIN = /terminal|npm |\.env|kiosk=|living room|orangery|crookshank|the freeze|nine sounds|deploy|seed\/|play\/public/i
+
+test('the cue-list board (26 Oct 2026): the newest; the seven built steps as done cards, Jon’s cards new and plain in a fresh block, the five questions open with their defaults, rulesDeckScreen answered by its first option, every card it closes or rewords open on the board by number and title', () => {
+  const { before, add } = boardThrough('2026-10-26-cue-list')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(add.tasks === CUE_LIST_TASKS && add.decisions === CUE_LIST_DECISIONS && add.retireTasks === RETIRED_FOR_CUE_LIST && add.rewriteTasks === REWRITTEN_FOR_CUE_LIST && add.answerDecisions === ANSWERED_FOR_CUE_LIST)
+  assert.equal(add.fileTasks, undefined)
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of CUE_LIST_TASKS) {
+    assert.ok(t.order >= 490 && t.order < 560, `${t.title}: numbered from 490`)
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    if (t.by) assert.match(t.by, /^2026-1[01]-\d{2}$/, `${t.title}: a date before the party`)
+    for (const k of ['title', 'detail', 'tech']) assert.ok(!String(t[k] ?? '').includes('—'), `${t.title}.${k}`)
+    if (t.status === 'done') {
+      assert.equal(t.who, 'Claude Code', `${t.title}: a built step is Claude Code’s`)
+      assert.match(t.detail, /^Built 25 Oct 2026: /, t.title)
+    } else {
+      assert.equal(t.status, 'todo')
+      assert.equal(t.who, 'Jon', `${t.title}: the open cards are Jon’s`)
+      assert.ok(!PLAIN.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+    }
+  }
+  assert.equal(new Set(CUE_LIST_TASKS.map(t => t.order)).size, CUE_LIST_TASKS.length, 'one number each')
+  assert.equal(CUE_LIST_TASKS.filter(t => t.status === 'done').length, 7, 'section 5, items 2 to 8')
+  for (const title of ['The brain follows the cue list', 'The blackout returns the power on its own', 'A Notes tab on every phone', 'The devices follow your key']) assert.ok(CUE_LIST_TASKS.some(t => t.title === title && t.status === 'done'), title)
+  // the device moves, each at the moment it happens
+  assert.equal(CUE_LIST_TASKS.find(t => t.title === 'Carry the iPad Pro to the Orangerie for the captions').moment, 'act3.down')
+  assert.equal(CUE_LIST_TASKS.find(t => t.title === 'The iPad Pro back to the Library before Start Act 4').moment, 'act4.warn')
+  assert.equal(CUE_LIST_TASKS.find(t => t.title === 'Carry the iPad Pro into the bedroom before the drawing').moment, 'act6.games')
+  for (const t of CUE_LIST_TASKS.filter(x => /^Carry the iPad Pro|^The iPad Pro back/.test(x.title))) assert.equal(taskWhen(t), 'later', t.title)
+  // the five questions, open, each with its default built
+  assert.deepEqual(CUE_LIST_DECISIONS.map(d => d.key).sort(), ['bedroomName', 'blackoutAuto', 'cueSounds', 'olderIpad', 'roomMusic'])
+  for (const d of CUE_LIST_DECISIONS) {
+    assert.equal(before.decisions[d.key], undefined, `${d.key} is a new question`)
+    assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
+    assert.equal(d.options.length, 2, d.key)
+    assert.equal(d.answer, null, `${d.key} is Jon’s to answer`)
+    assert.match(d.note, /^Default: /, d.key)
+    assert.ok(!d.who, `${d.key} is asked of Jon on Home`)
+    for (const k of ['question', 'note']) assert.ok(!d[k].includes('—') && !/kiosk=/.test(d[k]), `${d.key}.${k}`)
+  }
+  assert.deepEqual(CUE_LIST_DECISIONS.map(d => [d.key, d.moment]).sort(), [['bedroomName', 'act6.door'], ['blackoutAuto', 'act1.ready'], ['cueSounds', 'freeze'], ['olderIpad', 'setup'], ['roomMusic', 'act4.groups']])
+  // rulesDeckScreen: open on the board, answered with its first option as the cleanup reworded it
+  assert.equal(before.decisions.rulesDeckScreen.answer, null)
+  assert.equal(ANSWERED_FOR_CUE_LIST.rulesDeckScreen, before.decisions.rulesDeckScreen.options[0])
+  assert.deepEqual(Object.keys(ANSWERED_FOR_CUE_LIST), ['rulesDeckScreen'], 'nothing else is answered for Jon')
+  // every card it closes or rewords is open on the board by number and title, one rewrite each
+  for (const r of [...RETIRED_FOR_CUE_LIST, ...REWRITTEN_FOR_CUE_LIST]) {
+    assert.ok(r.title, `card ${r.order} is matched by its title too`)
+    assert.ok(before.tasks.some(t => t.order === r.order && t.title === r.title && t.status !== 'done' && !t.deleted), `card ${r.order} (${r.title}) is open on the board`)
+  }
+  assert.equal(new Set(REWRITTEN_FOR_CUE_LIST.map(r => r.order)).size, REWRITTEN_FOR_CUE_LIST.length, 'one rewrite per card')
+  assert.ok(!RETIRED_FOR_CUE_LIST.some(r => REWRITTEN_FOR_CUE_LIST.some(w => w.order === r.order)), 'never closed and reworded at once')
+  assert.deepEqual(RETIRED_FOR_CUE_LIST.map(r => r.order).sort((a, b) => a - b), [429, 430, 472, 473])
+  for (const r of RETIRED_FOR_CUE_LIST) {
+    assert.match(r.detail, /^(Built 25|Done 25|Replaced 26|Out by default \(the question olderIpad, 26) Oct 2026[^:]*:/, `card ${r.order} says when and why`)
+    assert.ok(!r.detail.includes('—'), `card ${r.order}`)
+  }
+  for (const r of REWRITTEN_FOR_CUE_LIST) {
+    if (r.set.moment) assert.ok(MOMENT_KEYS.includes(r.set.moment), r.set.moment)
+    if (r.set.who) assert.ok(OWNERS.includes(r.set.who), r.set.who)
+    for (const k of ['title', 'detail', 'tech']) assert.ok(!String(r.set[k] ?? '').includes('—'), `card ${r.order}.${k}`)
+  }
+  // the sound cards keep their titles and moments (the cue test pins them), under cueSounds' default
+  const sounds = REWRITTEN_FOR_CUE_LIST.filter(r => r.title.startsWith('Sound: '))
+  assert.deepEqual(sounds.map(r => r.order).sort((a, b) => a - b), [134, 141, 152, 160, 171, 181, 190, 191, 420], 'every sound card but the closed power one')
+  for (const r of sounds) {
+    assert.ok(!('title' in r.set) && !('moment' in r.set), `${r.title} keeps its title and moment`)
+    assert.ok(!/ten sounds/.test(r.set.detail), r.title)
+  }
+  for (const order of [141, 152, 171]) assert.match(sounds.find(r => r.order === order).set.detail, /^Optional\. .*chime-phone/, `card ${order} borrows the chime`)
+  for (const order of [160, 181, 190, 191]) assert.match(sounds.find(r => r.order === order).set.detail, /^Optional\. .*silent/, `card ${order} is an optional sting`)
+  for (const order of [134, 420]) assert.match(sounds.find(r => r.order === order).set.detail, /one of the two sounds the brain needs/i, `card ${order} is required`)
+})
+
+test('the cue-list board on a pretend board: the stale cards closed with the reason, the device and sound cards reworded with their old words kept, Jon’s open cards in plain words, the questions waiting on Jon, rulesDeckScreen answered, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-26-cue-list')
+  // Jon has added a card by hand that shares a number with one the board rewords, and answered one question himself
+  const state = {
+    ...before,
+    tasks: [...before.tasks, { id: 'jon', order: 421, status: 'todo', title: 'Buy jazz records', detail: 'For the Parlour.' }],
+    decisions: { ...before.decisions, olderIpad: { key: 'olderIpad', moment: 'setup', question: 'Older iPad?', options: ['Out', 'Stays'], answer: 'Stays', answeredBy: 'Jon', answeredAt: 0 } },
+  }
+  const after = applyPlan(planAddition(add, state, { newId, now: 7 }), state)
+  const card = (order, title) => after.tasks.find(t => t.order === order && t.id !== 'jon' && (!title || t.title === title))
+  for (const r of RETIRED_FOR_CUE_LIST) {
+    const t = card(r.order, r.title)
+    assert.equal(t.status, 'done', `card ${r.order} closed`)
+    assert.ok(t.detail.endsWith(r.detail), `card ${r.order} says why`)
+  }
+  for (const r of REWRITTEN_FOR_CUE_LIST) {
+    const t = card(r.order)
+    for (const [k, v] of Object.entries(r.set)) assert.deepEqual(t[k], v, `card ${r.order}.${k}`)
+    assert.ok(t.previous?.[add.id], `card ${r.order} keeps the words it had`)
+    assert.equal(t.status, 'todo', `card ${r.order} stays open`)
+  }
+  assert.equal(after.tasks.find(t => t.id === 'jon').detail, 'For the Parlour.', 'Jon’s own card is never rewritten')
+  // the new cards landed, under their moments
+  for (const t of CUE_LIST_TASKS) {
+    const live = card(t.order, t.title)
+    assert.ok(live, t.title)
+    assert.deepEqual([live.moment, live.status, live.who], [t.moment, t.status, t.who], t.title)
+  }
+  // no open card still says what the key or the cue list changed
+  const open = after.tasks.filter(t => !t.deleted && t.status !== 'done' && t.id !== 'jon')
+  for (const t of open) {
+    const text = `${t.title} ${t.detail ?? ''}`
+    assert.ok(!/older iPad (in|does|on)|Susan’s MacBook Pro (to|into) the bedroom|captions iPad|ten sounds|Murderwin · (Arrival|Investigation|Supper)|Murderwin (Arrival|Lights Out|Reveal)\b|guess(es|ing)? on (the|your) (TV|work MacBook)/i.test(text), `card ${t.order} (${t.title}) is up to date`)
+  }
+  const jons = open.filter(t => ['Jon', 'Jon and Susan', 'Susan', 'Jenna'].includes(ownerOf(t)))
+  for (const t of jons) assert.ok(!PLAIN.test(`${t.title} ${t.detail ?? ''}`), `card ${t.order} (${t.title}) is in plain words`)
+  // the sound cards still count their simple tone, and the power card stays closed
+  for (const t of open.filter(x => x.title.startsWith('Sound: '))) assert.equal(taskStandin(t, after.tasks), true, t.title)
+  assert.equal(card(140, 'Sound: power').status, 'done')
+  // the decisions: the four new ones wait on Jon on Home, Jon's own answer stands, rulesDeckScreen is answered by the canon
+  const ds = decisionList(after)
+  for (const d of CUE_LIST_DECISIONS.filter(x => x.key !== 'olderIpad')) {
+    assert.deepEqual([after.decisions[d.key].moment, after.decisions[d.key].answer, after.decisions[d.key].note], [d.moment, null, d.note], d.key)
+    assert.ok(decisionsForJon(ds).some(x => x.key === d.key), `${d.key} waits on Jon`)
+  }
+  assert.deepEqual([after.decisions.olderIpad.answer, after.decisions.olderIpad.question], ['Stays', 'Older iPad?'], 'a question Jon already answered is never replaced')
+  assert.deepEqual([after.decisions.rulesDeckScreen.answer, after.decisions.rulesDeckScreen.answeredBy], ['The Parlour TV, back to the game before the blackout', 'the canon'])
+  assert.ok(!decisionsForJon(ds).some(d => d.key === 'rulesDeckScreen'), 'rulesDeckScreen is answered, not waiting on Jon')
+  assert.deepEqual(decisionsForJon(ds).map(d => d.key).sort(), ['ballotMajority', 'bedroomName', 'blackoutAuto', 'cueSounds', 'dialSpill', 'diningName', 'granoliaIntro', 'handOn', 'promptScreen', 'roomMusic', 'senseClue', 'stringsLead'], 'the open questions: CLAUDE.md’s, the build’s three, promptScreen and the cue list’s four (olderIpad answered here by Jon; tidyFolders is Claude Code’s to ask)')
+  assert.deepEqual(unfiled({ tasks: after.tasks.filter(t => t.id !== 'jon'), decisions: ds }).decisions, [], 'every open question has a place on the night')
+  // Jon's next three are his own real jobs
+  const next = nextCards(after.tasks.filter(t => t.id !== 'jon'))
+  assert.equal(next.length, 3)
+  assert.ok(next.every(t => ['Jon', 'Jon and Susan'].includes(ownerOf(t))), next.map(t => t.title).join(' | '))
+  // once only
+  const again = applyPlan(planAddition(add, after, { newId, now: 8 }), after)
+  assert.deepEqual([again.tasks, again.decisions], [after.tasks, after.decisions], 'never twice')
+  assert.equal(again.tasks.find(t => t.order === 421 && t.id !== 'jon').previous, card(421).previous, 'not rewritten twice')
 })
