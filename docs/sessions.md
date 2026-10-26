@@ -9,9 +9,97 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 25 to 26 Oct 2026 · Claude Code (the cue list built: handoff 25 Oct, section 5)
+
+**What changed** (on `main`, commits 8b4563a to 0276a1e, then the board's migration merged on top; not deployed,
+not pushed)
+- Applied `docs/handoff-2026-10-25.md` in full. Jon's cue walk-through (`docs/cue-list.md`) is
+  canon for sound, light, video and the phones. First the tidy-up: the branch
+  `claude/nice-burnell-fe6dfb` merged (the Home rows, the motive card pictures, replay by seed,
+  the morning after, Boo's camera, the test plan's checks), all 629 tests green, `npm run checks`
+  all clear and saved for the Health page (card 472). Card 473: Granolia's hello in the Study says
+  to touch the wall first and use the buttons at the end.
+- The brain (`cues/`): the hall bulb by phase (green for the welcome, off in the blackout, red from
+  the power's return, green at the unlock); the projector's plug through two Apple Home Shortcuts
+  (Projector Murderwin On and Off, `PROJECTOR_SHORTCUTS=on`); `cues/scenes.json` rewritten to the
+  cue list: three Music playlists (Murderwin · Jazz, Intense, Credits) at five levels, six Hue
+  scenes (Murderwin Default, Dimmed, Blackout, Drawing, Candles, Study Dim), the music cut at the
+  first Name press, the dim study scene while a group plays, Cake! (Happy Birthday for Dogs from
+  the Music library, the Candles scene, the jazz back when the song ends); nine sounds, only
+  chime-phone and blackout required (one chime serves every chime moment; the stings optional).
+  `docs/cues-relay.md` rewritten.
+- The blackout: Blackout returns the power on its own five seconds later, on the server; Power
+  returns stays as the hand button. Every phone then shows one button, "Sorry for the
+  interruption, continue here", then its role card for fifteen seconds on the server's clock,
+  then the main page on its own. The client rule in CLAUDE.md says so.
+- Host tab: **Sound test**, **Cake!**, **At the paper**, and the drawing's guess on the host's own
+  phone (the TV's four names stay as the fallback). Fifteen-second turns; the walk a
+  twenty-second limit; the drawing's budget 26 minutes (44 turns).
+- The night's shape (`seed/night.json`): Act 1 "The house rules" (the brain dims and stops the
+  music); the join code on the Parlour TV through Act 1; Act 3 "Dinner wrap-up" (the motive
+  prompt, the rejoin code); the supper notice (leave the phone in the Parlour, charging); the
+  dessert chime and the Happy Birthday Irwin card; Act 5 "Update your motives"; Act 6's break
+  line and "be in the Parlour for the final event"; the ballot as a card on the Now tab with the
+  tabs reachable; the Act 7 locks (eyes on the screen, then the result with a thank-you); Act 7
+  "The End" (every screen black, every phone open with everything readable, for good).
+- The screens: a loop slot on every idle screen (`play/public/loops/`, five files Jon makes);
+  each room's code on its screen in Act 2 (printing stays the fallback); `?kiosk=orangerie` for
+  the brain's browser; the Act 4 rules cards with the full cat pictures; the birthday card.
+- A Notes tab on every phone (free text, saved per phone per night, never read by anyone else).
+- The devices follow Jon's key: Susan's MacBook Pro on the projector all night; the iPad Pro
+  roaming (the Library in Act 2, the Orangerie captions in Act 3, the memory match in Act 4, the
+  bedroom from Act 6); Jenna's iPad Pro as Boo's camera; the older family iPad out by default.
+- The board: the built jobs recorded as done cards; Jon's cards (the playlists and the song, the
+  six scenes, the Patio light in the Decor strings scene, the projector's plug in Home, the five
+  loops, the iPad Pro's moves, the Act 6 fit check); the stale device and sound cards rewritten
+  or retired; rulesDeckScreen answered (the Parlour TV).
+
+**What is left**
+- Deploy and push, on Jon's yes; then open the workshop once so the two new migrations load.
+- Nothing was tried on the real hardware: the bulb's off, the projector's plug, the song from
+  the Music library, the loops (no files yet), the QR codes from a TV at distance, the brain's
+  browser as the Orangerie screen. The practice run and the Game test tab show the phones' new
+  flow (previews prompt-continue, ballot, eyes, result-lock, notes).
+- Jon's hardware jobs are cards: the playlists and the song, the six Hue scenes (he names the
+  study's other lamp), the Patio light into the Decor strings scene, the projector's plug and its
+  two Shortcuts, the five loops.
+- The worst-dial patch (card 478) has still not arrived from Claude chat.
+- The Canon and Start Here: Claude chat keeps them (the handoff says so); this entry and the
+  board are the record on this side.
+
+**Decisions taken:** none by Jon. Built as defaults, each a card on the board: roomMusic (one
+playlist for the whole house; bulletin 2 on every HomePod), olderIpad (out), cueSounds (one chime,
+the stings optional, no power sound), bedroomName ("the bedroom"), blackoutAuto (yes, five seconds),
+promptScreen (the TV dark through the role cards). Differences from the letter of the handoff, for
+Jon to overrule, are listed at the top of `docs/handoff-2026-10-25.md`.
+
+## 25 Oct 2026, morning · Claude Code (the string lights through Apple Home)
+
+**What changed** (three commits on `main`: b4f9c1c, 325fa87, 2b0afbc; deployed state unchanged,
+the brain runs from the repo)
+- The Orangerie string lights can run from the brain through Apple Home instead of a Nanoleaf
+  pairing: three Home scenes with only the Holiday Lights in them (red, green, a warm decor glow)
+  and three Shortcuts on the brain, Red Murderwin Strings, Green Murderwin Strings and Decor
+  Murderwin Strings. `STRINGS_SHORTCUTS=on` in `cues/.env` turns it on; a renamed Shortcut is
+  named in `cues/.env` (`STRINGS_SHORTCUT_RED`, `_GREEN`, `_DECOR`), never in the code.
+- `shortcuts run` reads stdin until it closes, so the brain closes it at once: a Shortcut never
+  waits on the terminal.
+- `docs/cues-relay.md` steps 12 to 14 and the Where it stands note; tests in
+  `cues/test/strings.test.mjs`.
+
+**What is left**
+- Apple Home answers in 1 to 2 seconds, so in Get Off My Lawn! the phones lead and the strings
+  follow: the question stringsLead (does Salem's intro say to watch the phones?) went on the board
+  that day, from the branch's session.
+- Nothing on the lights: red, green (Jon's rebuilt Green Murderwin Strings v2, named in
+  `cues/.env`) and decor all changed the real Holiday Lights from the brain on 25 Oct.
+
+**Decisions taken:** none. The string-lights cards (423, 462) were marked done from the branch's
+migration the same day.
+
 ## 25 Oct 2026 · Claude Code (the 24 Oct evening handoff, item 4)
 
-**What changed** (branch `claude/nice-burnell-fe6dfb`; not deployed, not pushed)
+**What changed** (branch `claude/nice-burnell-fe6dfb`, merged into `main` on 25 Oct as 8b4563a; not deployed, not pushed)
 - The Home rows (card 343): "The secrets, made blind" on Home counts the
   packing list (made or not, and its bags), the cats' leans (questions with
   a lean for every cat, of all) and the drawing pictures (good ones, of
