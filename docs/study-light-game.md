@@ -5,7 +5,7 @@ with the gaps filled in. Everything here is structure. No answers, no clue text.
 to read.
 
 **Updated 23 October 2026:** the study pays the Ghost's trace at the dial's level (§5), the end
-credits have two study awards (§9), and Granolia's intro on the phone needs new words (§11).
+credits have two study awards (§9), and Granolia's intro on the phone has its new words (§11).
 
 **Updated 24 October 2026** (the 23 October handoff, built that day): the game has a name,
 **Granolia's Lightbulb Moment**, with its line *"She knows how to turn on the lights. It's on the
@@ -279,15 +279,14 @@ Each of these fills a gap. Say the word and any of them changes.
 - How many hexagons and how many Line bars are on the walls: **answered 24 October** by the real
   walls, ten hexagons and twelve bars. Six counted bars with a dark bar between each need eleven,
   so even a six always shows with gaps.
-- **Granolia's intro on the phone needs new words (yours to approve).** Since 24 October this is
-  the decision card *granoliaIntro* on the Timeline. Its default is the new words below, which
-  Claude Code puts in unless you pick Keep the old words. Today it says, from the
-  handoff, *"The lights on the wall flash a pattern. Copy it on the buttons, then press
-  submit."* But the game is played by touching the panels; the buttons only take the colour and
-  the number at the end. A group that follows it would press buttons while the wall waits for
-  touches. Proposed: *"Oh! You're here! The wall flashes a pattern. Touch the same lights in the
-  same order. Do that three times, then press the colour and the number on the buttons, and
-  press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah."*
+- **Granolia's intro on the phone: the new words are in (25 October).** Since 24 October this is
+  the decision card *granoliaIntro* on the Timeline, and its default, the new words, is now what
+  the phone says when a group reaches the Study: *"Oh! You're here! The wall flashes a pattern.
+  Touch the same lights in the same order. Do that three times, then press the colour and the
+  number on the buttons, and press submit. Made a mistake? Press undo. I used to know the whole
+  pattern, but... yeah."* The old words, from the handoff, said *"Copy it on the buttons"*, but the
+  game is played by touching the panels; the buttons only take the colour and the number at the
+  end. Pick Keep the old words on the card if you want them back, and Claude Code puts them back.
 
 ---
 
