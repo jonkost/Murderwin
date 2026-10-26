@@ -28,7 +28,7 @@ export const BOO_POSES = 3
 export const DEVICES = {
   phone: 'On your phone',
   tv: 'On the Parlour TV computer',
-  ipad: 'On the older iPad',
+  ipad: 'On the iPad in the Library', // kept for notes filed before 26 Oct 2026; new ones say ipadpro
   ipadpro: 'On the iPad Pro',
   projector: 'On the projector computer or any screen',
   study: 'On the study computer',
@@ -68,19 +68,19 @@ export const SECTIONS = [
   },
   {
     key: 'memory', name: NAME.library, where: 'Act 4 · the Library', moment: 'act4.puzzle',
-    what: 'Zimothy’s memory match on the older iPad: three boards of 7, 10 and 14 pairs. Clearing it, or the ten minutes running out, crosses a motive off for the group.',
-    devices: ['ipad', 'phone'],
+    what: 'Zimothy’s memory match on the iPad Pro, back in the Library for Act 4 (the older family iPad only if you answer olderIpad that it stays): three boards of 7, 10 and 14 pairs. Clearing it, or the ten minutes running out, crosses a motive off for the group.',
+    devices: ['ipadpro', 'phone'],
     steps: [
-      'On the older iPad, scan the square code for the real game, or open it there.',
+      'On the iPad Pro, scan the square code for the real game, or open it there.',
       'Tap two cards to turn them over. Match every pair.',
       'Play all three boards. Play again deals fresh boards.',
       'Nothing is paid and no clue is dealt. The samples show the reward card.',
     ],
-    note: 'While a night is running, the Host tab counts the real game page as the Library iPad.',
+    note: 'While a night is running, the Host tab counts the real game page as the memory match in the Library.',
     tries: [
-      { label: 'The real game, on its own', device: 'ipad', params: { kiosk: 'memory', play: '1' } },
-      preview('kiosk-memory', 'The first board, a sample', 'ipad'),
-      preview('kiosk-memory-clear', 'A cleared board, a sample', 'ipad'),
+      { label: 'The real game, on its own', device: 'ipadpro', params: { kiosk: 'memory', play: '1' } },
+      preview('kiosk-memory', 'The first board, a sample', 'ipadpro'),
+      preview('kiosk-memory-clear', 'A cleared board, a sample', 'ipadpro'),
       preview('room-paid', 'The reward on a phone, a sample', 'phone'),
     ],
   },
@@ -106,7 +106,7 @@ export const SECTIONS = [
     devices: ['projector', 'phone', 'ipadpro'],
     steps: [
       'Open Boo’s wall for the practice show on the projector computer, or any screen, full screen. Tap it once so it can play sound.',
-      'Open the practice show on one or more phones. For the end credits’ photo, also open Boo’s camera on the iPad Pro, stand it facing you, and tap Turn on the camera.',
+      'Open the practice show on one or more phones. For the end credits’ photo, also open Boo’s camera on Jenna’s iPad Pro (or any iPad with a camera), stand it facing you, and tap Turn on the camera.',
       'Tap Start the show.',
       'When the music stops, strike a pose and hold it until Boo judges. Three poses, then That’s the show. At the last pose the camera takes the photo and keeps it on its own screen.',
       'Tap Start the show to go again. Nothing is paid.',

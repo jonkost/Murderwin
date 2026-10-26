@@ -16,8 +16,13 @@ client rules in `CLAUDE.md`. Where this doc goes past those, it says so under "D
 Hand**, with the line *"Three drawings open the door. He only has paws."* on Irwin's first slide.
 The story behind the name: Sir Irwin wants into the bedroom; he's a dog, so a closed door is
 torture; the door only opens after three drawings, and he only has paws. The living room is
-**the Parlour** everywhere. The bedroom screen is now Susan's work MacBook Pro, moved in after
-Act 4 (the iPad Pro no longer goes there). There is no freeze date.
+**the Parlour** everywhere. The bedroom screen moved to Susan's work MacBook Pro (superseded
+26 October, below: it is the iPad Pro again). There is no freeze date.
+
+**Updated 26 October 2026** (Jon's device key, `docs/cue-list.md`): the bedroom screen is your
+iPad Pro again, carried in from the Library after Act 4 (its last station of the night). Susan's
+MacBook Pro stays on the projector all night and never moves; the brain switches the projector off
+for the drawing and on again for the ballot.
 
 **Updated 25 October 2026** (Jon's cue list, `docs/cue-list.md`, cue 17 and the notes): **fifteen
 seconds a turn**, not ten. The walk to the paper is a **limit of twenty seconds, not a wait**: the
@@ -71,7 +76,8 @@ spoiling the fun part.
 | Every phone | In every hand | Buzzes the person called to the paper and tells them to walk there. Everyone else's phone shows the same square as the TV. When a grid is done it says: go and look at the paper, then tell the host your guess. Phones never vote. |
 | The host's phone (yours, and Susan's) | In your hand | The same as every phone, plus the controls (25 October): *At the paper* while someone walks, and the four names as buttons while the room guesses. They are on the drawing screen itself: while the drawing runs the Host tab is away, like every tab. |
 | The hall light | The Hue bulb by the bedroom | Green for the welcome, out in the blackout, red from the power's return (25 October). Green when the third real picture is named. |
-| The bedroom screen | Susan's work MacBook Pro, carried to the bedroom after Act 4, on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named (with the bedroom's loop playing behind the words, if you made one). Then the trace. |
+| The bedroom screen | Your iPad Pro, carried into the bedroom from the Library after Act 4 (its last station), on `/play/?kiosk=bedroom` | Says only *The door is closed. Name the three drawings in the Parlour.* until the third real picture is named (with the bedroom's loop playing behind the words, if you made one). Then the trace. |
+| The projector | Susan's MacBook Pro on the landing, all night | Off for the drawing: the brain switches its plug off at the drawing's intro and on again for the ballot, so the only light in the Parlour is the TV. |
 
 The Library is in earshot of the Parlour. The room can hear the drawer swear; the drawer
 can hear the room disagree with itself.
@@ -272,9 +278,10 @@ Extra rules for the stand-ins:
       is named.
 - [ ] The main computer (your work MacBook Pro) on `/play/?kiosk=living`, on the TV, sleep off.
       Tap it once anywhere so it is allowed to play sounds.
-- [ ] After Act 4, carry Susan's MacBook Pro from the landing (where it showed Boo's wall) to the
-      bedroom and change its page to `/play/?kiosk=bedroom`. Bedroom door closed. (Left on
-      `?kiosk=boo` it would never show the trace.)
+- [ ] After Act 4, carry your iPad Pro from the Library (where it ran the memory match) into the
+      bedroom and open `/play/?kiosk=bedroom` in Safari, full screen. Bedroom door closed. (Left on
+      `?kiosk=memory` or `?kiosk=ipad` it would never show the trace.) Susan's MacBook Pro stays by
+      the projector; the brain turns the projector off for the drawing.
 - [ ] Run the practice grid with Susan before guests arrive, from the Host tab button, through
       *At the paper* on each walk, to the guess tapped on your phone (and once on the TV, so you
       know the fallback works).
@@ -285,7 +292,7 @@ Extra rules for the stand-ins:
 
 | What fails | What happens instead |
 |---|---|
-| The Parlour computer dies | Open `/play/?kiosk=living` on a spare screen (the iPad Pro, a spare from Act 4, or any laptop; your call which) and set it on the TV stand. The guesses are on your phone anyway; the spare shows the squares. The bedroom screen stays in the bedroom. The phones keep the clock going meanwhile. |
+| The Parlour computer dies | Open `/play/?kiosk=living` on a spare screen (a browser on the brain, or any laptop; the iPad Pro is in the bedroom by then) and set it on the TV stand. The guesses are on your phone anyway; the spare shows the squares. The bedroom screen stays in the bedroom. The phones keep the clock going meanwhile. |
 | The host's phone dies during the drawing | Susan's phone has the same *At the paper* and the same four names. Failing both, the TV's own names take a click (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
 | The hall light does not turn green | The TV says the door is open anyway. The game never depends on the bulb. |
 | The bedroom screen dies | Host tab → *Show the trace on the TV*. The Parlour TV shows the trace ten seconds after the door opens. Nobody goes to the bedroom. |
@@ -355,7 +362,7 @@ Built and tested against the fake Firestore. Not yet played in the house.
   Host tab is away while the drawing runs). A tap is the room's guess, through the same call as
   the TV.
 - **The room screens**: `/play/?kiosk=living` on the main computer (it is also the clock, and
-  the fallback for the guess), `/play/?kiosk=bedroom` on Susan's MacBook Pro from the end of Act 4 (closed
+  the fallback for the guess), `/play/?kiosk=bedroom` on your iPad Pro from the end of Act 4 (closed
   until the door opens).
 - **The Host tab**: *Start the drawing*, *Clear the drawing* and *Show the trace on the TV*
   under *The Big Solve*. While the drawing runs the Host tab is away, like every tab: *At the
@@ -368,7 +375,7 @@ Built and tested against the fake Firestore. Not yet played in the house.
   `kiosk-bedroom-1` … `kiosk-bedroom-5`.
 
 **To run it, once deployed** (`npm run deploy`, which you run): open the Parlour page on
-the main computer, full screen, on the TV. After Act 4, put Susan's MacBook Pro in the bedroom on
+the main computer, full screen, on the TV. After Act 4, put your iPad Pro in the bedroom on
 the bedroom page. In Act 6, Host tab → *Next* at "The drawing" (or *Start the drawing*).
 Everything else runs itself; you press *At the paper* when each drawer is there and tap the
 room's guess when it has one.
@@ -509,7 +516,7 @@ placeholder, at }`, the part the room may see to `nights/{id}/public/trace` (lev
 `{ level, images: [two ids, shuffled] }`; every other level `{ level, trace, label }`, label
 only at 5; both docs carry `irwinLine` from `hosts.irwinTraceLine(level)`), plus
 `public/cues { hall: 'green' }`. Idempotent. The host's Next refuses to leave "The drawing" while it runs. The
-bedroom kiosk (`?kiosk=bedroom`, on Susan's MacBook Pro since 24 Oct) renders `TraceView` from the public doc
+bedroom kiosk (`?kiosk=bedroom`, on the iPad Pro since 26 Oct, Jon's key) renders `TraceView` from the public doc
 with CSS haze by level over `play/public/traces/<trace>.png`. Host command `tv-trace` sets
 `public/cues.tvTrace`; with it on, the living kiosk shows the trace once the door has been open
 `DOOR_HOLD_MS` (10 s) (`screen.doorStage`). A kiosk on `?kiosk=ipad` follows `livingView` with

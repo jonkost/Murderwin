@@ -73,7 +73,9 @@ test('the words Jon sees are plain: no engineer words, no long dashes', () => {
     assert.ok(!w.test(shown), `no ${w}`)
   }
   assert.equal(tryWords('phone'), 'Try it on your phone')
-  assert.equal(tryWords('ipad'), 'Try it on the older iPad')
+  // 26 Oct 2026, Jon's key: the memory match is on the iPad Pro; the older iPad is out (olderIpad)
+  assert.equal(tryWords('ipadpro'), 'Try it on the iPad Pro')
+  assert.ok(!/older iPad/.test(tryWords('ipad')), 'no device sends Jon to the older iPad')
   assert.equal(tryWords('tv'), 'Try it on the Parlour TV computer')
   assert.equal(tryWords('nope'), 'Try it somewhere else')
 })

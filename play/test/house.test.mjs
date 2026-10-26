@@ -97,7 +97,8 @@ test('the iPad has its own row: an awake iPad never shows the living room TV as 
 test('X-4 the memory match iPad has its own dot: the key its heartbeat carries', () => {
   // in Act 4 the iPad Pro runs as ?kiosk=memory and heartbeats as kiosk-memory (Kiosk.jsx),
   // so "The iPad" may go quiet while the memory match is alive, and the host can tell which
-  assert.ok(MACHINES.some(m => m.key === 'kiosk-memory' && m.label === 'Memory match iPad'))
+  // 26 Oct 2026, Jon's key: the memory match is the iPad Pro's third station, so the dot says so
+  assert.ok(MACHINES.some(m => m.key === 'kiosk-memory' && m.label === 'iPad Pro (memory match)'))
   const presence = { 'kiosk-memory': NOW - 20_000, 'kiosk-ipad': NOW - 5 * 60_000 }
   const by = Object.fromEntries(houseView({ night: NIGHT, presence, now: NOW }).machines.map(m => [m.key, m.alive]))
   assert.equal(by['kiosk-memory'], true)

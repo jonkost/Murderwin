@@ -38,7 +38,7 @@ import { setFromAddress } from './lib/gametest'
 // kiosk-board, kiosk-ipad, kiosk-living-done, kiosk-living-hold (Sir Irwin's
 // door slide), kiosk-living-rules (slide 3 and its square), Sir Irwin's
 // prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
-// the older iPad (kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
+// the iPad Pro (since 26 Oct 2026; kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
 // Boo's wall (kiosk-boo, kiosk-boo-pose). A rehearsal night's band:
 // kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
 // host-house-window, host-house-act2. The cue list's screens (25 Oct 2026):

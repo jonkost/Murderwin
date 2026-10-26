@@ -12,7 +12,9 @@ screens themselves: a looping graphic on every idle screen, each room's cat
 code during the Act 2 cat visits, the Act 4 rules cards with the cats' full
 pictures, the Happy Birthday Irwin card with Sir Irwin's picture, the rejoin
 code under the ballot clock, and the Orangerie's screen on the brain's
-browser. Everything on this page
+browser; and on 26 October for the devices in your cue list's key: your iPad
+Pro's four stations, Jenna's iPad Pro as Boo's camera, and Susan's MacBook
+Pro on the projector all night. Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -21,16 +23,16 @@ live, or which way the hidden pair have pulled.
 | Address | Screen | What it does |
 |---|---|---|
 | `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below: the join code through Act 1 and at the dinner wrap-up, the Parlour's loop whenever nothing else is up. In the drawing the four names show here; the host taps the room's guess on their phone, and a tap here still counts, the fallback. |
-| `?kiosk=ipad` | Your iPad Pro: in the Library with Zimothy in Act 2, on a stand in the Orangerie for Act 3 | The words of W-O-O-F News bulletins 1 and 2, kept up through supper; Zimothy's code during the Act 2 cat visits; the Library's loop whenever it has no words to show. In Act 4 it is the memory match (`?kiosk=memory`, below). |
+| `?kiosk=ipad` | Your iPad Pro, its first two stations: in the Library with Zimothy in Act 2, then on its stand in the Orangerie for Act 3 (carried there on the way in to supper) | The words of W-O-O-F News bulletins 1 and 2, kept up through supper; Zimothy's code during the Act 2 cat visits; the Library's loop whenever it has no words to show. In Act 4 it is the memory match (`?kiosk=memory`, below), and from Act 6 the bedroom screen (`?kiosk=bedroom`). |
 | `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code (the game itself runs on the group's phones); its loop otherwise, if you make one. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
-| `?kiosk=memory` | The iPad on a small stand in the Library with Zimothy, Act 4 | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
+| `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
-| `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
+| `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
-| `?kiosk=pose` | Your iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
-| `?kiosk=pose&practice=1` | The iPad Pro, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
-| `?kiosk=bedroom` | The bedroom screen, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
+| `?kiosk=pose` | Jenna's iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
+| `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
+| `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
 
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
 runs on the group's own phones, and the Orangerie string lights follow if
@@ -188,8 +190,8 @@ of them is on its loop.
   simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the
   music stops: STRIKE A POSE, then HOLD IT with a five-second count, then
   Boo's verdict. Three poses, then "That's the show, darling." and the
-  reward on the phones. Boo's camera on the iPad Pro, if it is up, follows
-  the same show and takes its photo at the third pose.
+  reward on the phones. Boo's camera on Jenna's iPad Pro, if it is up,
+  follows the same show and takes its photo at the third pose.
 - *The Orangerie, Get Off My Lawn!* The group's phones tint their whole
   screen red (shake) or green (freeze), with Salem's lines. The brain's
   browser in the room (`?kiosk=orangerie`) shows the rules card and the code

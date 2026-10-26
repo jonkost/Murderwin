@@ -70,7 +70,7 @@ const TRIED = [
 // evening are the first tries; Game test has a way into each game.
 const NOT_TRIED = [
   'A whole night with real people on real phones, and the length of Act 2 and Act 4.',
-  'The Parlour TV, the bedroom screen, the captions iPad and the older iPad on their real machines.',
+  'The Parlour TV, the iPad Pro at its four stations (the Library code, the captions, the memory match, the bedroom), Jenna’s iPad Pro as Boo’s camera and Susan’s MacBook Pro on the projector, on their real machines.',
   'The sound on the HomePods (there is no AirPlay group yet), the music and the Hue scenes.',
   'The study taps, the Stream Deck and the M1 Air; the string lights; Boo’s wall on the projector.',
   'Get Off My Lawn! on real phones, and how touchy the shake feels.',

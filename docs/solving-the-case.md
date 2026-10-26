@@ -163,7 +163,7 @@ Four game rooms, pairs and trios, about an hour (Jon's plan, 23 Oct; built 24 Oc
 | Room | Host | The game (its name since 24 Oct) | The reward |
 |---|---|---|---|
 | The Study (upstairs) | Granolia | Granolia's Lightbulb Moment: the light puzzle | **The Ghost's trace**, at the dial's level, plus a bag hint |
-| The Library | Zimothy | In Duplicate: the memory match, three rounds, on the older iPad | **One wrong motive crossed off**, plus a bag hint |
+| The Library | Zimothy | In Duplicate: the memory match, three rounds, on the iPad Pro | **One wrong motive crossed off**, plus a bag hint |
 | The Orangerie | Salem | Get Off My Lawn!: backwards red light, green light on the phones | A bag hint, which may be backwards |
 | The Entryway | Boo | Boo's Catwalk: strike a pose when the music stops, on the wall | **One wrong motive crossed off**, plus a bag hint |
 | The Parlour | Sir Irwin | No game: Sir Irwin's prompts on the TV, Parlour Games waiting on the phone | Nothing recorded |
@@ -198,7 +198,7 @@ The light puzzle's reward is **the Ghost's trace**, shown at whatever level the 
 
 ### In Duplicate (the trace memory match)
 
-- **On the older iPad, on a small stand in the Library with Zimothy**, all night. Card backs look like file folders.
+- **On the iPad Pro, on a small stand in the Library with Zimothy**, in Act 4 (since 26 October, Jon's device key; the older family iPad all night only if Jon answers *olderIpad* that it stays). Card backs look like file folders.
 - **Three rounds: 7, 10 and 14 pairs**, always all fourteen traces as art (G50), the one exception to "characters not in play are set aside", so players get familiar with every trace. Shuffled fresh for each group.
 - **No names on the cards,** only the traces.
 - **Reward:** clearing the third board crosses one wrong motive off that group's list (G51 above). At the cap the group is paid anyway.

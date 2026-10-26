@@ -17,13 +17,13 @@ export const ABSENT_SLOT_MS = 10 * 60_000   // with no station, a group's turn i
 // The machines, by the guest key their heartbeat carries.
 export const MACHINES = [
   { key: 'kiosk-living', label: 'Parlour screen' },
-  { key: 'kiosk-ipad', label: 'The iPad' },
+  { key: 'kiosk-ipad', label: 'iPad Pro (Library, Orangerie)' }, // ?kiosk=ipad: Zimothy's code in Act 2, the captions at supper; quiet from Act 4 by design (26 Oct 2026, Jon's key)
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },
-  { key: 'kiosk-memory', label: 'Memory match iPad' }, // ?kiosk=memory, the Library in Act 4
+  { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
   { key: 'kiosk-boo', label: 'Boo’s wall' },             // Susan's MacBook Pro on the projector as ?kiosk=boo
   { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
-  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, the iPad facing the catwalk in Act 4 (its row was missing until 25 Oct 2026)
+  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, Jenna's iPad Pro facing the catwalk in Act 4 (its row was missing until 25 Oct 2026)
   { key: 'cues', label: 'Hall light and sounds' },
 ]
 

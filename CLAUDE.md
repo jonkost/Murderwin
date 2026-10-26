@@ -429,32 +429,51 @@ and tell Jon.
   fallback: every recording's words also show on a screen.
 - An 11-year-old and a 70-year-old must be able to use every surface, in dim light.
 
-## HARDWARE (decided 25 Sep — no Raspberry Pi anywhere; device table 23 Oct)
+## HARDWARE (decided 25 Sep — no Raspberry Pi anywhere; device table 23 Oct; Jon's key 25 Oct, built 26 Oct)
 
 The game runs on Firebase Hosting. No machine in the house serves it. Device
-setup, step by step: the workshop's Devices page.
-- Jon's M3 15" MacBook Air — "the brain". Ethernet, sleep off (on 24 Oct its
-  cable adapter showed no link, so it is on Wi-Fi for now; a card on the
-  board). Runs the cue relay (`cues/`): the nine sounds and the three playlists
-  through its own sound output (the AirPlay group of four HomePods, the
-  Orangerie's included; the group is not made yet, 24 Oct), the Hue bulb
-  outside the bedroom and the four Hue scenes, and the Holiday String Lights
-  for Get Off My Lawn!. Also a stand-in for the host phone
-  (`functions/host.mjs`).
+setup, step by step: the workshop's Devices page. The device codes and jobs
+are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
+- Jon's M3 15" MacBook Air — "the brain" (JKMBA). Ethernet, sleep off (on
+  24 Oct its cable adapter showed no link, so it is on Wi-Fi for now; a card
+  on the board). Runs the cue relay (`cues/`): the nine sounds and the
+  playlists (Murderwin · Jazz, Intense and Credits) through its own sound
+  output (the AirPlay group of four HomePods, the Orangerie's included; the
+  group is not made yet, 24 Oct), the Hue bulb outside the bedroom (green for
+  the welcome, off in the blackout, red from the power's return, green at the
+  door) and the Hue scenes, the projector's plug, and the string lights for
+  Get Off My Lawn!. Its own browser is the Orangerie's screen
+  (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules
+  card in Act 4, its loop otherwise; that browser rings nothing. Also a
+  stand-in for the host phone (`functions/host.mjs`).
 - Tried on 24 Oct: the Hue bridge is paired with the brain, and the hall bulb
   went red and green from it. The hall bulb is "Master bedroom" in the Hue app
   and "Jonny's light" in Apple's Home app; the brain finds it by its id
-  (`HUE_HALL_LIGHT_ID`), never by name. The string lights are parked: holding
-  their button reset their Wi-Fi, so they wait to be added back in the
-  Nanoleaf app, then paired (`NANOLEAF_STRINGS_HOST` and
-  `NANOLEAF_STRINGS_TOKEN` in `cues/.env`, STRINGS with an S; the brain reads
-  no other spelling). `docs/cues-relay.md` has the steps.
-- Jon's work MacBook Pro on the Parlour TV (`?kiosk=living`): the rules deck,
-  the blackout, bulletin 1, Sir Irwin's prompts, the Act 4 title card, Irwin,
-  the drawing and the room's guesses, the board, the ballot, the reveal.
-- Susan's work MacBook Pro: Boo's wall through the borrowed projector on the
-  upstairs landing in Act 4 (`?kiosk=boo`), then the bedroom screen from
-  Act 5 (`?kiosk=bedroom`).
+  (`HUE_HALL_LIGHT_ID`), never by name. The string lights run through Apple
+  Home since 25 Oct (holding their button to pair reset their Wi-Fi): three
+  Home scenes, each run by a Shortcut on the brain (Red, Green and Decor
+  Murderwin Strings), `STRINGS_SHORTCUTS=on` in `cues/.env`; pairing by
+  `NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN` still works if they
+  come back. They run 1 to 2 seconds behind the phones (the question
+  stringsLead). The projector's plug
+  runs the same way (Jon's key, 25 Oct): an IKEA smart switch in Apple Home
+  with the projector on it, two Shortcuts (Projector Murderwin On and Off,
+  `PROJECTOR_SHORTCUTS=on`), off for the blackout, the drawing's intro and
+  The End, on at the power's return and the ballot. `docs/cues-relay.md` has
+  the steps.
+- Jon's work MacBook Pro (JKMBP) on the Parlour TV (`?kiosk=living`): the
+  join code through Act 1 (the intro video and the rules deck from a second
+  tab), the blackout, bulletin 1, Sir Irwin's prompts, the Act 4 title card,
+  the birthday card, Irwin, the drawing and the room's guesses (tapped on the
+  host's phone; the TV is the fallback), the board, the ballot, the reveal,
+  black at The End.
+- Susan's work MacBook Pro (SKMBP) feeds the borrowed projector on the
+  upstairs landing all night and never moves (`?kiosk=boo`): its loop on the
+  triangle wall from Act 1, Boo's code in Act 2, Boo's Catwalk in Act 4, its
+  loop again, black at The End. The brain switches the projector's plug off
+  for the blackout and from the drawing's intro to the end of Act 6; on
+  again when the power returns and for the ballot. The MacBook stays on with
+  its lid open, sleep off.
 - M1 MacBook Air — the study station (`?kiosk=study`, `station/`): Stream Deck
   over USB, Nanoleaf over wifi (Open API, plain HTTP, port 16021), the study's
   on-screen information. Both walls were paired and tried on 24 Oct, from
@@ -465,13 +484,18 @@ setup, step by step: the workshop's Devices page.
   teach-touch` in `station/`) and saved on the Mac that runs the station
   (`station/touch-map.json`, not in the repo), so they must be taught on the
   M1 Air. `docs/study-light-game.md` §13.
-- Jon's iPad Pro M2 — supper captions in the Orangerie (`?kiosk=ipad`); in
-  Act 4 Boo's camera in the Entryway (`?kiosk=pose`, built 25 Oct, nice to
-  have: one photo of each group's last pose for the end credits) or a spare
-  screen. The older family iPad — the memory match in the
-  Library all night (`?kiosk=memory`; `&play=1` is the standalone game).
-  Susan's 8th-gen iPad — decor, handed over if a guest needs a device. The
-  old iPhone 11 — the spare phone.
+- Jon's iPad Pro M2 (JKIPP) roams, four stations in turn: the Library with
+  Zimothy's code in Act 2 (`?kiosk=ipad`), the supper captions on its stand in
+  the Orangerie in Act 3 (`?kiosk=ipad`, the same address), In Duplicate on
+  its small stand in the Library in Act 4 (`?kiosk=memory`; `&play=1` is the
+  standalone game), the bedroom screen from Act 6 (`?kiosk=bedroom`). Jenna's
+  iPad Pro (JNIPP) is Boo's camera in the Entryway in Act 4 (`?kiosk=pose`,
+  built 25 Oct, nice to have: one photo of each group's last pose for the end
+  credits). The older family iPad is out unless Jon says it stays (the
+  question olderIpad, default out; if it stays, it keeps the memory match all
+  night and the iPad Pro stays in the Orangerie until the bedroom). Susan's
+  8th-gen iPad — decor, handed over if a guest needs a device. The old
+  iPhone 11 — the spare phone.
 - The study puzzle: Simon says on the white Nanoleaf Elements — three escalating
   patterns per round, reproduced by touching the panels (touch gestures stay ON
   for this wall; a telescoping pointer covers reach). Clearing a round lights a
@@ -530,7 +554,8 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
    the brain.
 9. Media bank: not done. Stand-in tones until the recordings exist.
 10. Screens as kiosks: built (`?kiosk=living`, `bedroom`, `study`, `ipad`,
-    `memory`, `boo`); setup is on the board and the Devices page.
+    `memory`, `boo`, `pose`, `orangerie`); setup is on the board and the
+    Devices page.
 11. Nanoleaf layer: built (`station/`). On the real walls on 24 Oct the
     walls' lights work: both paired, the layouts read, the game's frames and
     the flash on both, the hexagons and bars grouped (`groupLayout`). Still to

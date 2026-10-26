@@ -427,7 +427,8 @@ secret.
   retired: hidden from the dashboard, with anything already written kept.
 - **Act 4, the small puzzle is now the memory match** (since 24 October:
   In Duplicate, three boards of 7, 10 and 14 pairs, all fourteen traces, on
-  the older iPad in the Library; the next lines describe the 22 October
+  the iPad Pro in the Library since 26 October, the older iPad only if
+  *olderIpad* says it stays; the next lines describe the 22 October
   version), on an iPad pointed at
   `/play/?kiosk=memory`: twelve cards, six pairs of traces of people at the
   party, no names, with file-folder backs, shuffled fresh for each group.

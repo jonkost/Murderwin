@@ -494,7 +494,8 @@ export async function flush(db, nightId, { now = Date.now() } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// The Library: Zimothy's memory match on the older iPad (?kiosk=memory, §9.8).
+// The Library: Zimothy's memory match on the iPad Pro (?kiosk=memory, §9.8;
+// the older iPad only if olderIpad says it stays, 26 Oct 2026).
 // Three rounds: 7 pairs, 10 pairs, then all 14. Always all fourteen traces as
 // art (the one exception to "characters not in play are set aside": Jon wants
 // everyone to know every trace), no names, file-folder backs, shuffled fresh
