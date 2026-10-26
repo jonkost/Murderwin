@@ -254,15 +254,31 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 
 /* the study screen */
 .field { flex: 1; min-height: 3rem; padding: 0 0.8rem; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1rem; }
-.kiosk.study { background: var(--brand-peat); }
-.jewels { display: flex; gap: 2vw; margin: 1vw 0 2vw; }
-.jewel { width: 5vw; height: 5vw; border-radius: 50%; border: 0.4vw solid var(--brand-brass); background: transparent; }
-.jewel.lit { background: var(--brand-brass); box-shadow: 0 0 3vw var(--brand-brass); }
-.granolia { display: flex; align-items: center; gap: 3vw; max-width: 84vw; margin: 1vw 0; }
-.granolia-face { width: 14vw; height: 14vw; flex: none; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #c9b89a, #6b5a3e 70%, #3a3020); box-shadow: inset 0 -2vw 3vw rgba(0,0,0,0.4); }
-.granolia-says { text-align: left; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 3.6vw; }
-.kiosk-big.entry { font-size: 7vw; text-transform: capitalize; color: var(--good); }
-.kiosk-count.warn { color: var(--brand-red); }
+/* the study, in the house look (Jon, 26 Oct 2026): manor blue under the red wallpaper, a serif title
+   and a brass clock along the top, Granolia's picture beside one solid panel of words */
+.kiosk.study { --paper-opacity: 0.22; --paper-size: 120vw; background: var(--brand-blue); justify-content: flex-start; gap: 3vh; padding: 4vh 5vw; }
+.kiosk.study.done { --paper-opacity: 0.4; }
+.study-top { width: 100%; display: flex; align-items: flex-start; justify-content: space-between; gap: 3vw; text-align: left; }
+.kiosk.study .game-name { margin: 0; }
+.kiosk.study .game-name .kiosk-crest, .kiosk.rules-study .game-name .kiosk-crest { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4vw, 6.5vh); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--brand-parchment); margin: 0 0 0.6vh; }
+.kiosk.study .game-hook, .kiosk.rules-study .game-hook { font-size: min(1.8vw, 2.8vh); color: var(--brand-brass); margin: 0; }
+.study-clock { margin: 0; flex: none; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(5vw, 8vh); line-height: 1; font-variant-numeric: tabular-nums; color: var(--brand-brass); border: 0.3vh solid var(--brand-brass); border-radius: 1.2vh; padding: 1vh 1.6vw; background: rgba(0, 25, 37, 0.85); }
+.study-clock.warn { color: var(--brand-parchment); background: var(--brand-red); border-color: var(--brand-red); }
+.study-stage { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; gap: 4vw; }
+.study-cat { height: min(52vh, 34vw); max-width: 34vw; object-fit: contain; flex: none; filter: drop-shadow(0 2vh 3vh rgba(0, 0, 0, 0.55)); }
+.study-panel { flex: 1; max-width: 58vw; display: grid; gap: 2.4vh; text-align: left; background: var(--brand-blue); border: 0.25vh solid var(--brand-brass); border-radius: 1.6vh; padding: 3.5vh 3vw; box-shadow: 0 2vh 5vh rgba(0, 0, 0, 0.45); }
+.study-group { margin: 0; font-size: min(1.7vw, 2.6vh); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.study-progress { display: flex; align-items: center; gap: 2vw; }
+.jewels { display: flex; gap: 1.2vw; margin: 0; }
+.jewel { width: min(3.4vw, 5.5vh); height: min(3.4vw, 5.5vh); border-radius: 50%; border: 0.35vh solid var(--brand-brass); background: transparent; }
+.jewel.lit { background: var(--brand-brass); box-shadow: 0 0 2.4vh var(--brand-brass); }
+.study-round { margin: 0; font-size: min(1.9vw, 3vh); color: var(--brand-brass); }
+.granolia-says { margin: 0; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(3.2vw, 5vh); line-height: 1.3; color: var(--brand-parchment); }
+.study-entry { margin: 0; font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4.4vw, 7vh); text-transform: capitalize; color: var(--brand-brass); }
+.kiosk.study:has(.wall-map) .study-stage { flex: none; }
+.kiosk.study:has(.wall-map) .study-cat { height: min(26vh, 22vw); }
+.kiosk.study .wall-map { max-height: 36vh; }
+.study-rest { margin: 0; font-size: min(2vw, 3.2vh); color: var(--brand-parchment); }
 .wall-map { width: 50vw; max-height: 40vh; margin: 1vw 0; }
 
 /* ---- what a phone is dealt (the Now tab, the Clues tab) ---- */
@@ -636,7 +652,10 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .finale.last .kiosk-crest { font-size: 2.6em; text-transform: none; letter-spacing: 0; }
 
 /* The Relay Drawing on the main display (22 Oct): Irwin's slides, the called drawer, the black box, the guess */
-.relay-slide { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; text-align: center; }
+/* the drawing's screens are black, and Sir Irwin's slides read from the left (Jon, 26 Oct) */
+.kiosk.relay-slide, .kiosk.called, .kiosk.vote { background: #000; }
+.relay-slide { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1rem; text-align: left; padding: 4vh 8vw; }
+.relay-slide .irwin-mood, .relay-slide .irwin-face { align-self: flex-start; }
 .relay-slide .slide-text { font-size: 2.4vw; max-width: 60rem; }
 .kiosk.called { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; }
 .called-portrait { max-height: 55vh; max-width: 60vw; border-radius: 0.6rem; }
@@ -648,7 +667,7 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .kiosk-option.out .option-name, .option-name.crossed { text-decoration: line-through; opacity: 0.45; }
 .door-slide { padding-bottom: 0; }
 /* slide 3: the practice smiley's B1 square, dark like a turn, its label beside the words */
-.slide-with-cell { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 90vw; }
+.slide-with-cell { display: flex; align-items: center; justify-content: flex-start; gap: 4vw; max-width: 90vw; }
 .slide-with-cell .slide-text { text-align: left; margin: 0; }
 .slide-cell { display: flex; align-items: flex-start; gap: 1.2vw; flex: none; }
 .cell-art.slide { width: 34vh; height: 34vh; display: block; }
@@ -773,8 +792,8 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .video-caption { margin: 0; padding: 1vh 4vw; font-size: min(2.6vw, 3.6vh); text-align: center; }
 .trace-standin { color: var(--dim); font-style: italic; }
 
-/* the memory match's three boards (7, 10 and 14 pairs): 7 by 2, 5 by 4, 7 by 4, sized to fit the iPad's height */
-.memory-board.cards-14 { grid-template-columns: repeat(7, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 3.5)); }
+/* the memory match's three boards (6, 10 and 14 pairs): 4 by 3, 5 by 4, 7 by 4, sized to fit the iPad's height */
+.memory-board.cards-12 { grid-template-columns: repeat(4, 1fr); width: min(92vw, calc((60vh - var(--band-h)) * 1.333)); }
 .memory-board.cards-20 { grid-template-columns: repeat(5, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.25)); }
 .memory-board.cards-28 { grid-template-columns: repeat(7, 1fr); width: min(92vw, calc((76vh - var(--band-h)) * 1.75)); }
 
@@ -841,6 +860,10 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* the Act 4 rules card: the game's name, the cat and the host's line side by side, the room's code, a waiting line */
 .kiosk.rules-card { background: var(--brand-peat); gap: 2vh; justify-content: center; }
 .kiosk.rules-card.boo-wall { background: #000; }
+/* the study's card between groups wears the study's house look too (26 Oct 2026) */
+.kiosk.rules-card.rules-study { --paper-opacity: 0.22; --paper-size: 120vw; background: var(--brand-blue); gap: 1.6vh; }
+.kiosk.rules-card.rules-study > .kiosk-line { font-size: min(2.2vw, 3.4vh); margin: 0; }
+.kiosk.rules-card.rules-study .rules-cat { height: min(40vh, 34vw); }
 .rules-body { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 92vw; }
 .rules-cat { height: min(48vh, 40vw); max-width: 38vw; object-fit: contain; }
 .rules-words { display: grid; gap: 2vh; justify-items: center; max-width: 50vw; }

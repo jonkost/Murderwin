@@ -148,7 +148,7 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // a group is at play in the Orangerie while public/salem is intro, playing or passed; idle and cleared are between groups (26 Oct 2026)
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"), 'cleared is not busy')
   const kiosk = src('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes('<RulesCard id="study" line={rulesLine(\'study\', content)} pick={s.groupId ?? night.beat}>'), 'the Study, with the workshop\'s line first')
+  assert.ok(kiosk.includes('<RulesCard id="study" line={rulesLine(\'study\', content)} pick={s.groupId ?? night.beat} className="papered">'), 'the Study, with the workshop\'s line first')
   // the study's card keeps Granolia's own start line and the station's silence, so docs/study-light-game.md stays true (26 Oct 2026)
   assert.ok(kiosk.includes('<p className="kiosk-line">{SAY.idle}</p>'), 'Touch any panel to begin, on the card')
   assert.ok(kiosk.indexOf('const stale = s.updatedAt') < kiosk.indexOf('<RulesCard id="study"'), 'the station\'s silence is known before the card')

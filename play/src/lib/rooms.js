@@ -61,9 +61,9 @@ export function videoUrl(clip) {
 // meets the game, with the hook under it. Display text only.
 export const GAME_NAMES = Object.fromEntries(names.games.map(g => [g.id, g]))
 
-// Zimothy's memory match (§9.8): three rounds, 7, 10 and 14 pairs, always all
+// Zimothy's memory match (§9.8): three rounds, 6, 10 and 14 pairs, always all
 // fourteen traces as art (the same as functions/lib/act4.js).
-export const MEMORY_ROUNDS = [7, 10, 14]
+export const MEMORY_ROUNDS = [6, 10, 14]
 export const ALL_TRACES = [...new Set(characters.characters.map(c => c.trace).filter(Boolean))]
 export const ZIMOTHY_LINES = {
   rounds: [

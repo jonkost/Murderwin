@@ -142,7 +142,7 @@ Since 23 October there are no secret sets: the deal draws the motive itself and,
 **Act 4, Behind Closed Doors**
 - **G47** Every group visits each of the four rooms exactly once; a room never holds two groups.
 - **G48** Boo speaks to every group in Act 4 at any affection (the Act 4 exception to G18).
-- **G50** The memory match always uses all fourteen traces as art, in three rounds of 7, 10 and 14 pairs, and never crosses off the real motive.
+- **G50** The memory match always uses all fourteen traces as art, in three rounds of 6, 10 and 14 pairs, and never crosses off the real motive.
 - **G51** Zimothy's and Boo's cross-offs never cross off the real motive, and never the same motive for one group.
 - **G52** Every Act 4 reward is paid by the ten-minute cap even if the group never finishes.
 
@@ -315,7 +315,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G47 | Every group visits every room once | Has a test | `functions/test/act4.test.mjs`; also in `npm run checks` |
 | G48 | Boo speaks to every group in Act 4 | Has a test | `functions/test/act4.test.mjs` |
 | G49 | Salem's bag clue: wrong at 1 to 3, right at 5 | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
-| G50 | The memory match: 7, 10, 14 pairs, all fourteen traces | Has a test | `functions/test/solving.test.mjs`; also in `npm run checks` |
+| G50 | The memory match: 6, 10, 14 pairs, all fourteen traces | Has a test | `functions/test/solving.test.mjs`; also in `npm run checks` |
 | G51 | Zimothy's and Boo's cross-offs | Has a test | Inside the G50 and G52 tests (`functions/test/solving.test.mjs`, `functions/test/act4.test.mjs`); also in `npm run checks` |
 | G52 | Every Act 4 reward paid by the cap | Has a test | `functions/test/act4.test.mjs`; the fake night |
 | G53 | Every bulletin 2 line points at the real family (was G40) | Has a test | `functions/test/case-checks.test.mjs` (all 25 lines, every family and every level), `functions/test/screen.test.mjs` (on a party night, with its recording); also in `npm run checks` |

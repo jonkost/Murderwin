@@ -66,7 +66,7 @@ export function Idle({ title, line, loop = null }) {
 }
 
 // A picture from play/public that may not be there: nothing shows until it is.
-function Picture({ src, className = '', alt = '' }) {
+export function Picture({ src, className = '', alt = '' }) {
   const [broken, setBroken] = useState(false)
   useEffect(() => setBroken(false), [src])
   if (!src || broken) return null

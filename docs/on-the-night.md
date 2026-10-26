@@ -420,7 +420,7 @@ game; it serves the lights and the speakers.
   - The Study: Granolia's Lightbulb Moment (the light puzzle), upstairs.
     Pays the Ghost's trace and a bag hint.
   - The Library: In Duplicate (Zimothy's memory match), on the iPad Pro:
-    three boards of 7, 10 and 14 pairs. Pays one wrong motive crossed off
+    three boards of 6, 10 and 14 pairs. Pays one wrong motive crossed off
     and a bag hint.
   - The Orangerie: Get Off My Lawn! (Salem's Motion Game), on the group's
     own phones. Red means shake, green means freeze; a slip on any phone

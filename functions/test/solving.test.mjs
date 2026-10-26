@@ -229,13 +229,13 @@ test('G36 level 3, two similar options: the study never offers the Murderer\'s t
 
 // ---- G37: the memory match -------------------------------------------------
 
-test('G50 the memory match: three rounds of 7, 10 and 14 pairs, always all fourteen traces as art; never the real motive crossed off', () => {
-  assert.deepEqual(MEMORY_ROUNDS, [7, 10, 14])
+test('G50 the memory match: three rounds of 6, 10 and 14 pairs, always all fourteen traces as art; never the real motive crossed off', () => {
+  assert.deepEqual(MEMORY_ROUNDS, [6, 10, 14])
   assert.equal(ALL_TRACES.length, 14)
   for (let seed = 1; seed <= 300; seed++) {
     const rng = seeded(seed)
     const boards = memoryBoards(rng)
-    assert.deepEqual(boards.map(b => b.length), [14, 20, 28], `seed ${seed}: 7, 10 and 14 pairs`)
+    assert.deepEqual(boards.map(b => b.length), [12, 20, 28], `seed ${seed}: 6, 10 and 14 pairs`)
     for (const board of boards) {
       const counts = {}
       for (const t of board) { assert.ok(ALL_TRACES.includes(t), `seed ${seed}: trace art only`); counts[t] = (counts[t] ?? 0) + 1 }

@@ -26,7 +26,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=ipad` | Your iPad Pro, its first two stations: in the Library with Zimothy in Act 2, then on its stand in the Orangerie for Act 3 (carried there on the way in to supper) | The words of W-O-O-F News bulletins 1 and 2, kept up through supper; Zimothy's code during the Act 2 cat visits; the Library's loop whenever it has no words to show. In Act 4 it is the memory match (`?kiosk=memory`, below), and from Act 6 the bedroom screen (`?kiosk=bedroom`). |
 | `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code (the game itself runs on the group's phones); its loop otherwise, if you make one. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
-| `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 7, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
+| `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
@@ -183,7 +183,7 @@ of them is on its loop.
   Granolia says. `docs/study-light-game.md` has it all.
 - *The Library, In Duplicate.* "Sir Irwin scattered his files. Match every
   copy. He bills by the pair." Zimothy's line for the round, then the board:
-  turn two folders at a time. Three rounds: 7, 10 and 14 pairs. After the
+  turn two folders at a time. Three rounds: 6, 10 and 14 pairs. After the
   third, "Order. Restored." and the reward goes to the group's phones.
 - *The Entryway, Boo's Catwalk.* "When the music stops, strike a pose.
   She's always judging." Boo struts across the wall to runway music (a

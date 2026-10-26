@@ -43,7 +43,7 @@ export const CHECK_NAMES = {
   G46: 'One guest\'s bag clues never pin one bag',
   G47: 'Every group visits every room once; never two groups in a room',
   G49: 'Salem names a wrong word at 1 to 3, the right one at 5',
-  G50: 'The memory match: 7, 10 and 14 pairs, all fourteen traces',
+  G50: 'The memory match: 6, 10 and 14 pairs, all fourteen traces',
   G51: 'Zimothy and Boo never cross off the real motive, never the same one twice',
   G53: 'Every bulletin 2 line, at every level, points at the real family',
   L01: 'No sealed file in the repo or its history',

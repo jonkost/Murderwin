@@ -496,11 +496,11 @@ export async function flush(db, nightId, { now = Date.now() } = {}) {
 // ---------------------------------------------------------------------------
 // The Library: Zimothy's memory match on the iPad Pro (?kiosk=memory, §9.8;
 // the older iPad only if olderIpad says it stays, 26 Oct 2026).
-// Three rounds: 7 pairs, 10 pairs, then all 14. Always all fourteen traces as
+// Three rounds: 6 pairs (4 by 3, Jon 26 Oct), 10 pairs, then all 14. Always all fourteen traces as
 // art (the one exception to "characters not in play are set aside": Jon wants
 // everyone to know every trace), no names, file-folder backs, shuffled fresh
 // for each group. The iPad sends each cleared board; the third pays the room.
-export const MEMORY_ROUNDS = [7, 10, 14]
+export const MEMORY_ROUNDS = [6, 10, 14]
 export const ALL_TRACES = [...new Set(CHARACTERS.map(ch => ch.trace).filter(Boolean))]
 
 export function memoryBoards(pick = randomInt) {

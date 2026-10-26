@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess } from '../firebase'
-import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie } from './Rooms'
+import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
-import { newsClips, closingClips, loopFor, roomCode, rulesLine } from '../lib/rooms'
+import { newsClips, closingClips, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
@@ -822,7 +822,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
   if (night && night.act !== 4 && !STUDY_RUNNING.includes(s.state)) return <Idle title="Sirwin Manor" line="The Study" loop="study" />
   if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
-    <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat}>
+    <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat} className="papered">
       <p className="kiosk-line">{names ? `Expecting ${names}.` : 'The next group will be along.'}</p>
       {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
       <p className="kiosk-line">{SAY.idle}</p>
@@ -842,31 +842,40 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   if (s.warned && s.state !== 'done' && !s.hint && s.state !== 'entering') line = SAY.time
   if (s.state === 'done') line = s.outcome === 'capped' ? SAY.capped : SAY.solved
 
+  // the house look (Jon, 26 Oct 2026: clean, on the branding): manor blue with the red wallpaper,
+  // the title and the clock along the top, Granolia's own picture beside one panel of words
   return (
-    <div className={`kiosk study ${s.state ?? 'idle'}`}>
-      <GameName id="study" extra={names} />
-      <div className="jewels" aria-label="pairs found">
-        {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
+    <div className={`kiosk study papered ${s.state ?? 'idle'}`}>
+      <header className="study-top">
+        <GameName id="study" />
+        {left != null && <p className={`study-clock${s.warned ? ' warn' : ''}`}>{mm}:{String(ss).padStart(2, '0')}</p>}
+      </header>
+      <div className="study-stage">
+        <Picture src={catPictureUrl('granolia', s.groupId ?? 'study')} className="study-cat" />
+        <div className="study-panel">
+          {names && <p className="study-group">{names}</p>}
+          <div className="study-progress">
+            <div className="jewels" aria-label="pairs found">
+              {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
+            </div>
+            {s.state !== 'idle' && s.state !== 'done' && (
+              <p className="study-round">Round {(s.round ?? 0) + 1} of 3 · pattern {(s.pattern ?? 0) + 1} of 3</p>
+            )}
+          </div>
+          <p className="granolia-says"><Spoken text={line} /></p>
+          {s.state === 'entering' && (
+            <p className="study-entry">{s.entry?.colour ?? '…'} and {s.entry?.number ?? '…'}</p>
+          )}
+          {s.state === 'entering' && s.linesOk === false && s.lines && (
+            <p className="study-entry">{s.lines.colour}, {s.lines.number}</p>
+          )}
+          {s.state === 'done' && s.revealed?.length > 0 && (
+            <p className="study-rest">The rest: {s.revealed.map(p => `${p.colour} and ${p.number}`).join(' · ')}</p>
+          )}
+        </div>
       </div>
-      {s.state !== 'idle' && s.state !== 'done' && (
-        <p className="kiosk-next">Round {(s.round ?? 0) + 1} of 3 · pattern {(s.pattern ?? 0) + 1} of 3</p>
-      )}
-      <div className="granolia">
-        <div className="granolia-face" aria-hidden="true" />
-        <p className="kiosk-line granolia-says"><Spoken text={line} /></p>
-      </div>
-      {s.state === 'entering' && (
-        <p className="kiosk-big entry">{s.entry?.colour ?? '…'} and {s.entry?.number ?? '…'}</p>
-      )}
-      {s.state === 'entering' && s.linesOk === false && s.lines && (
-        <p className="kiosk-big">{s.lines.colour}, {s.lines.number}</p>
-      )}
       {s.map && <WallMap layout={s.layout} order={s.map} />}
       {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
-      {s.state === 'done' && s.revealed?.length > 0 && (
-        <p className="kiosk-line">The rest: {s.revealed.map(p => `${p.colour} and ${p.number}`).join(' · ')}</p>
-      )}
-      {left != null && <p className={`kiosk-count${s.warned ? ' warn' : ''}`}>{mm}:{String(ss).padStart(2, '0')}</p>}
       {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
     </div>
   )

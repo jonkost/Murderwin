@@ -67,7 +67,7 @@ test('the Parlour TV turns Sir Irwin\'s prompts on the server\'s clock, in the o
   assert.equal(promptShown(null, 0), '')
 })
 
-test('the standalone memory match: three boards of 7, 10 and 14 pairs, every trace as art, fresh each time', () => {
+test('the standalone memory match: three boards of 6, 10 and 14 pairs, every trace as art, fresh each time', () => {
   assert.equal(ALL_TRACES.length, 14)
   const a = standaloneBoards(1)
   assert.deepEqual(a.map(b => b.length), MEMORY_ROUNDS.map(n => n * 2))

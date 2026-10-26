@@ -426,7 +426,7 @@ secret.
   is no longer shown, so the workshop's *What was left behind* list is
   retired: hidden from the dashboard, with anything already written kept.
 - **Act 4, the small puzzle is now the memory match** (since 24 October:
-  In Duplicate, three boards of 7, 10 and 14 pairs, all fourteen traces, on
+  In Duplicate, three boards of 6, 10 and 14 pairs, all fourteen traces, on
   the iPad Pro in the Library since 26 October, the older iPad only if
   *olderIpad* says it stays; the next lines describe the 22 October
   version), on an iPad pointed at

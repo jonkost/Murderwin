@@ -199,7 +199,7 @@ The light puzzle's reward is **the Ghost's trace**, shown at whatever level the 
 ### In Duplicate (the trace memory match)
 
 - **On the iPad Pro, on a small stand in the Library with Zimothy**, in Act 4 (since 26 October, Jon's device key; the older family iPad all night only if Jon answers *olderIpad* that it stays). Card backs look like file folders.
-- **Three rounds: 7, 10 and 14 pairs**, always all fourteen traces as art (G50), the one exception to "characters not in play are set aside", so players get familiar with every trace. Shuffled fresh for each group.
+- **Three rounds: 6, 10 and 14 pairs** (6 on a 4 by 3 grid, Jon 26 Oct), always all fourteen traces as art (G50), the one exception to "characters not in play are set aside", so players get familiar with every trace. Shuffled fresh for each group.
 - **No names on the cards,** only the traces.
 - **Reward:** clearing the third board crosses one wrong motive off that group's list (G51 above). At the cap the group is paid anyway.
 - **A standalone version** (`?kiosk=memory&play=1`) plays the same three rounds with no case and no clues, any time.
@@ -282,7 +282,7 @@ Flavor only: intro text in each character's voice, no change to play. Lines in `
 - **G47** Every group visits each of the four rooms exactly once; a room never holds two groups.
 - **G48** Boo speaks to every group in Act 4.
 - **G49** Salem's bag clue is wrong at 1 to 3 and right at 5.
-- **G50** The memory match uses all fourteen traces, 7, 10 and 14 pairs, and never crosses off the real motive.
+- **G50** The memory match uses all fourteen traces, 6, 10 and 14 pairs, and never crosses off the real motive.
 - **G51** Zimothy's and Boo's cross-offs never take the real motive, never the same one twice for a group.
 - **G52** Every Act 4 reward is paid by the ten-minute cap.
 - **G53** Every bulletin 2 line at every dial level points at the real family (was G40 until 24 Oct).
