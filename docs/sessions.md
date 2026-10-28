@@ -52,6 +52,10 @@ on the Canon.
   the site at every start (`hosting/station-code/`, built by
   `scripts/station-code.mjs`), so later fixes need no download; it never
   touches the repo's own station/. Needs a hosting deploy to take effect.
+- The practice round took no taps (four misses). Listened again: touching
+  across the wall, the gesture stream read most taps as swipes and
+  reported 4 of 9; the fast road reported all 9, one each. A dropped tap
+  makes the next one a miss. Fix: the new station (the fresh zip).
 - macOS on SKMBA refused the downloaded starter; right-click Open no longer
   works, so the page now says Open Anyway in Privacy & Security.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
