@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS = {
   ],
   replayHintMisses: 2,         // second miss on one pattern: half speed
   mapHintMisses: 4,            // fourth miss: the numbered map on screen
-  restMs: 900,                 // pause between a clear and the next pattern
+  restMs: 600,                 // pause between a clear and the next pattern (tightened 28 Oct)
 }
 
 // The Stream Deck face, five columns of three (Canon, 25 Sep 2026).
@@ -124,6 +124,8 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
     m.state = 'playing'
     // the screen first, so with the wall down it shows the pattern while it "plays"
     show()
+    // a green 3, 2, 1 on the Lines first, so the group can turn to the hexagons (Jon, 28 Oct 2026)
+    emit({ type: 'lines.countdown' })
     emit({ type: 'elements.play', panels: m.current, onMs: slow ? r.onMs * 2 : r.onMs, gapMs: slow ? r.gapMs * 2 : r.gapMs })
   }
 
@@ -224,8 +226,9 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
         play(now)
         return
       }
-      // wrong pair: the keys shiver, Granolia says which half was right
+      // wrong pair: the keys shiver, the Lines flash red once and show the pair again, Granolia says which half was right
       emit({ type: 'deck.shiver' })
+      emit({ type: 'lines.wrong', show: { ...want } })
       m.hint = m.hint === 'half' || m.hint === 'words' ? 'words' : 'half'
       m.entry = { colour: null, number: null }
       emit({ type: 'granolia', hint: m.hint, colourRight, numberRight })

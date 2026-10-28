@@ -56,6 +56,11 @@ on the Canon.
   across the wall, the gesture stream read most taps as swipes and
   reported 4 of 9; the fast road reported all 9, one each. A dropped tap
   makes the next one a miss. Fix: the new station (the fresh zip).
+- Jon played a practice round on the new station: it works, and is tricky.
+  His notes, built: one half of each Lines bar lights for a count (so the
+  count reads), a green 3, 2, 1 on the Lines before every pattern, one red
+  flash on the Lines for a wrong touch or a wrong pair, tighter pauses.
+  Tried in the tests and on the real Lines layout, not yet on the walls.
 - macOS on SKMBA refused the downloaded starter; right-click Open no longer
   works, so the page now says Open Anyway in Privacy & Security.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up

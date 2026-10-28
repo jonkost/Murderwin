@@ -65,6 +65,7 @@ export class Nanoleaf {
     this.panels = panels
     this.pieces = pieces
     this.panelOf = new Map(panels.flatMap(p => p.pieces.map(id => [id, p.id])))
+    this.piecePos = new Map((layout?.positionData ?? []).map(p => [p.panelId, { x: p.x, y: p.y }]))
     return this.panels
   }
 
@@ -84,6 +85,21 @@ export class Nanoleaf {
     const parts = [String(ids.length)]
     for (const id of ids) {
       const [r, g, b] = frame[this.unitOf(id)] ?? [0, 0, 0]
+      parts.push(`${id} 1 ${r} ${g} ${b} 0 ${transition}`)
+    }
+    return this.call('/effects', {
+      method: 'PUT',
+      body: { write: { command: 'display', animType: 'static', animData: parts.join(' '), loop: false, palette: [] } },
+    })
+  }
+
+  // A static frame by piece: { [pieceId]: [r, g, b] }, every other piece dark.
+  // The Lines' counts light one half of a bar (chainHalves below).
+  async framePieces(frame, transition = 1) {
+    const ids = this.pieces.length ? this.pieces : this.panels.map(p => p.id)
+    const parts = [String(ids.length)]
+    for (const id of ids) {
+      const [r, g, b] = frame[id] ?? [0, 0, 0]
       parts.push(`${id} 1 ${r} ${g} ${b} 0 ${transition}`)
     }
     return this.call('/effects', {
@@ -321,6 +337,35 @@ export const COLOUR_RGB = {
 // Which Lines bars to light to show a count: every other bar from one end
 // when there are enough (so the dark gaps make them countable), otherwise
 // side by side from the end.
+// The Lines' bars in order along the zigzag, and the one half of each to
+// light for a count (Jon, 28 Oct 2026: each bar has two halves and only one
+// may light, so the lit halves never touch and the count is easy to read).
+// Bars that meet at a joint have halves close together; the walk starts at
+// the end bar nearest the top of the layout list. The first bar lights its
+// half away from the second; every later bar lights its half nearest the
+// bar before it, so a dark half always sits between two lit ones.
+// bars: [{ id, pieces: [a, b] }]; pos: Map piece id → { x, y }.
+export function chainHalves(bars, pos) {
+  const two = bars.filter(b => b.pieces.length === 2 && b.pieces.every(id => pos.has(id)))
+  if (!two.length) return []
+  const dist = (a, b) => Math.hypot(pos.get(a).x - pos.get(b).x, pos.get(a).y - pos.get(b).y)
+  const gap = (A, B) => Math.min(...A.pieces.flatMap(a => B.pieces.map(b => dist(a, b))))
+  const second = (A) => two.filter(B => B !== A).map(B => gap(A, B)).sort((x, y) => x - y)[1] ?? Infinity
+  const ends = [...two].sort((A, B) => second(B) - second(A)).slice(0, 2)
+  let at = two.find(b => ends.includes(b))
+  const order = [at]
+  while (order.length < two.length) {
+    at = two.filter(b => !order.includes(b)).sort((A, B) => gap(at, A) - gap(at, B))[0]
+    order.push(at)
+  }
+  const near = (bar, other) => [...bar.pieces].sort((a, b) =>
+    Math.min(...other.pieces.map(o => dist(a, o))) - Math.min(...other.pieces.map(o => dist(b, o))))
+  return order.map((bar, i) => ({
+    id: bar.id,
+    half: i === 0 ? (order[1] ? near(bar, order[1])[1] : bar.pieces[0]) : near(bar, order[i - 1])[0],
+  }))
+}
+
 export function countSegments(segmentIds, n) {
   if (segmentIds.length >= 2 * n - 1) return segmentIds.filter((_, i) => i % 2 === 0).slice(0, n)
   return segmentIds.slice(0, n)

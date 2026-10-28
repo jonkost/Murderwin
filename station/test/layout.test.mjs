@@ -134,3 +134,21 @@ test('a fast touch counts at once, once, and the stream\'s late copy is dropped'
   assert.deepEqual(readTouchPacket(pkt), [{ id: 19864, type: 3 }, { id: 28316, type: 0 }])
   assert.deepEqual(readTouchPacket(Buffer.from([0, 3, 1])), [])
 })
+
+test('a Lines count lights one half of each bar, and lit halves never touch', async () => {
+  const { chainHalves } = await import('../lib/nanoleaf.js')
+  const { panels } = groupLayout(LINES)
+  const pos = new Map(LINES.positionData.map(p => [p.panelId, p]))
+  const chain = chainHalves(panels, pos)
+  assert.equal(chain.length, 12)
+  assert.equal(new Set(chain.map(c => c.id)).size, 12, 'every bar once')
+  for (const c of chain) assert.ok(panels.find(p => p.id === c.id).pieces.includes(c.half), 'the half is that bar\'s')
+  const d = (a, b) => Math.hypot(pos.get(a).x - pos.get(b).x, pos.get(a).y - pos.get(b).y)
+  const inBar = Math.max(...panels.map(p => d(p.pieces[0], p.pieces[1])))
+  for (const a of chain) for (const b of chain) if (a !== b) assert.ok(d(a.half, b.half) > inBar * 1.2, 'a dark half between any two lit ones')
+  // along the chain, each next bar is the nearest one left
+  for (let i = 1; i < chain.length; i++) {
+    const c = pos.get(chain[i].half), p = pos.get(chain[i - 1].half)
+    assert.ok(Math.hypot(c.x - p.x, c.y - p.y) < 2 * LINES.sideLength, 'neighbours along the zigzag')
+  }
+})

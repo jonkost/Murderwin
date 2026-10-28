@@ -471,6 +471,13 @@ memory only. Nothing about a round is written anywhere except counts and timesta
   port at once, by the same ids; `TapMerger` in `station/lib/nanoleaf.js` counts one tap per
   touch from it and drops the stream's late copy. With no UDP (a firewall), the stream still
   works, only later.
+- The Lines, after Jon's first play (28 Oct 2026): a count lights one half of each bar, in
+  order along the zigzag (`chainHalves`), so lit halves never touch; every pattern starts with
+  a green 3, 2, 1 on the Lines (`lines.countdown`, 0.5 s a step) so the group can turn to the
+  hexagons; a wrong touch flashes the Lines red once while the hexagons go dark, and a wrong
+  pair flashes them red once and shows the pair again. The pauses were tightened (the rest
+  between patterns 0.6 s, the replay's extra wait gone). The hexagons sense a hand near them
+  (they send hovers), so they read skin or a capacitive (touchscreen) stylus, not a plain stick.
 - Updating the study Mac: `npm run build:site` copies the station's code (never `.env`, never
   `node_modules`) to `hosting/station-code/` (`scripts/station-code.mjs`); *Start the Study*
   fetches it at every start, so a deployed fix arrives by closing and reopening its window. A

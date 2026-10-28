@@ -220,3 +220,19 @@ test('settings from the server override the defaults: a shorter cap and gentler 
   assert.deepEqual(settingsFrom(null), {})
   assert.deepEqual(settingsFrom({ capMs: 12 * 60_000, warnMs: 13 * 60_000 }), { capMs: 12 * 60_000 }, 'a warning past the cap is dropped')
 })
+
+test('every pattern starts with the Lines\' green 3, 2, 1; a wrong pair flashes them red and shows the pair again', () => {
+  const g = createStudy({ panelIds: [1, 2, 3, 4, 5, 6], rand: (() => { let x = 0.1; return () => (x = (x * 9301 + 0.49297) % 1) })() })
+  g.touch(1, 0)
+  const fx = g.drain().map(e => e.type)
+  assert.ok(fx.indexOf('lines.countdown') >= 0 && fx.indexOf('lines.countdown') < fx.indexOf('elements.play'))
+  for (let p = 0; p < 3; p++) {
+    g.played(1)
+    for (const id of g.patterns[0][p]) g.touch(id, 2)
+  }
+  g.drain()
+  const want = g.code[0]
+  g.key(COLOURS.find(c => c !== want.colour), 3); g.key(String(want.number), 3); g.key('submit', 3)
+  const wrong = g.drain().find(e => e.type === 'lines.wrong')
+  assert.deepEqual(wrong.show, want)
+})

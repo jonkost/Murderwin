@@ -7,11 +7,12 @@
 // the server; onScreen hands it each screen the machine shows.
 
 import { createStudy, settingsFrom } from './study.js'
-import { COLOUR_RGB, countSegments } from './nanoleaf.js'
+import { COLOUR_RGB, countSegments, chainHalves } from './nanoleaf.js'
 
 // the walls at rest, between groups (the study test rests them the same way)
 export const ELEMENTS_REST = [40, 40, 40], LINES_REST = [20, 10, 30]
-const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0]
+const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0], GREEN = [0, 255, 0], RED = [255, 0, 0]
+export const COUNTDOWN_MS = 500   // each step of the Lines' green 3, 2, 1
 function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
 const defaultSleep = (ms) => new Promise(r => setTimeout(r, ms))
 
@@ -42,6 +43,18 @@ export function createRunner({
   // for the tests: everything queued so far has been carried out
   const settled = () => queue
 
+  // The Lines light one half of each of the first n bars along the zigzag, so
+  // lit halves never touch (Jon, 28 Oct 2026). A wall that gives no piece
+  // positions (a fake) lights whole bars, spaced, as before.
+  function linesCount(n, rgb, transition = 1) {
+    const chain = lines.piecePos && lines.framePieces ? chainHalves(lines.panels, lines.piecePos) : []
+    if (chain.length >= n) return lines.framePieces(Object.fromEntries(chain.slice(0, n).map(c => [c.half, rgb])), transition)
+    const frame = allPanels(lines, OFF)
+    for (const id of countSegments(lines.panels.map(p => p.id), n)) frame[id] = rgb
+    return lines.frame(frame, transition)
+  }
+  const linesRed = () => safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, RED), 1); await sleep(450) })
+
   async function safe(wall, ok, fn) {
     if (!ok) return
     try { await fn() } catch (e) { log(`${wall.name}: ${e?.message ?? e}`) }
@@ -70,14 +83,19 @@ export function createRunner({
   async function apply(e) {
     switch (e.type) {
       case 'elements.rest': return safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 10))
-      case 'elements.dim': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, OFF), 2); await sleep(500); await elements.frame(allPanels(elements, DIM), 3) })
+      // a wrong touch: the hexagons go dark and the Lines flash red once, together
+      case 'elements.dim': return Promise.all([
+        safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, OFF), 2); await sleep(300); await elements.frame(allPanels(elements, DIM), 3) }),
+        linesRed().then(() => safe(lines, linesOk, () => lines.frame(allPanels(lines, OFF), 1))),
+      ])
       case 'elements.pulse': return safe(elements, elementsOk, async () => { await elements.frame({ ...allPanels(elements, DIM), [e.panel]: LIT }, 1); await sleep(160); await elements.frame(allPanels(elements, DIM), 2) })
       case 'elements.ripple':
-      case 'elements.celebrate': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, LIT), 2); await sleep(e.type === 'elements.celebrate' ? 1200 : 400); await elements.frame(allPanels(elements, DIM), 5) })
-      case 'elements.replay': return sleep(400)
+      case 'elements.celebrate': return safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, LIT), 2); await sleep(e.type === 'elements.celebrate' ? 1200 : 300); await elements.frame(allPanels(elements, DIM), 5) })
+      case 'elements.replay': return
       case 'elements.play': {
-        // with the wall down the pattern plays on the screen instead: same timing, no frames to send
-        await sleep(500)
+        // with the wall down the pattern plays on the screen instead: same timing, no frames to send.
+        // The Lines' countdown is the lead-in; without the Lines, a short pause.
+        if (!linesOk) await sleep(500)
         for (const id of e.panels) {
           await safe(elements, elementsOk, () => elements.frame({ ...allPanels(elements, DIM), [id]: LIT }, 1))
           await sleep(e.onMs)
@@ -89,12 +107,14 @@ export function createRunner({
         return
       }
       case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 10))
-      case 'lines.show': {
-        const ids = countSegments(lines.panels.map(p => p.id), e.number)
-        const frame = allPanels(lines, OFF)
-        for (const id of ids) frame[id] = COLOUR_RGB[e.colour]
-        return safe(lines, linesOk, () => lines.frame(frame, 3))
-      }
+      case 'lines.show': return safe(lines, linesOk, () => linesCount(e.number, COLOUR_RGB[e.colour], 3))
+      // green 3, 2, 1, then dark while the hexagons play
+      case 'lines.countdown': return safe(lines, linesOk, async () => {
+        for (const n of [3, 2, 1]) { await linesCount(n, GREEN, 1); await sleep(COUNTDOWN_MS) }
+        await lines.frame(allPanels(lines, OFF), 1)
+      })
+      // a wrong pair: one red flash, then the pair again
+      case 'lines.wrong': return linesRed().then(() => safe(lines, linesOk, () => linesCount(e.show.number, COLOUR_RGB[e.show.colour], 1)))
       case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, LINES_REST), 8) })
       case 'deck.on': return deck.paint(true)
       case 'deck.off': return deck.paint(false)
