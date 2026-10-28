@@ -41,7 +41,8 @@ on the Canon.
   lives in Cloud Storage at `downloads/study-station.zip`, staff only (a
   signed-out request gets 403), never on Hosting, since it holds
   station/.env and the site and repo are public. A new one after any change
-  to station/: `npm --prefix scripts run upload-station`.
+  to station/: `npm --prefix scripts run upload-station`. Deployed 28 Oct
+  (hosting) on Jon's ask. Not pushed.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 
