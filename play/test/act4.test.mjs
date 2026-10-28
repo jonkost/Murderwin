@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, booMoment, booLead, BOO_AIRPLAY_MS, ROOMS, lightsStep } from '../src/lib/night.js'
-import { promptShown, standaloneBoards, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips } from '../src/lib/rooms.js'
+import { promptShown, standaloneBoards, turnNames, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips } from '../src/lib/rooms.js'
 import news from '../../seed/woof-news.json' with { type: 'json' }
 import { askMotion, unlockSound, keepAwake, PERMISSION_LINES } from '../src/lib/permissions.js'
 
@@ -178,4 +178,11 @@ test('Boo\'s music leads her wall by the AirPlay delay: two seconds on the night
   assert.equal(booMoment(show, t + 14_500 + 2000).part, 'strut', 'two and a half seconds before the flash the music still plays')
   assert.equal(booMoment(show, t + 15_000).part, 'strut', 'two seconds before the flash the wall still struts')
   assert.equal(booMoment(show, t + 15_000 + 2000).part, 'pose', 'and the music stops, to be heard on the flash')
+})
+
+test('the memory match takes turns: the group by its own names, nobody known and no turns', () => {
+  const rotation = { groups: [{ id: 'g1', members: [{ name: 'Ann', characterName: 'Lady A' }, { name: '', characterName: 'Lord B' }, { name: 'Cy' }] }, { id: 'g2', members: [{ name: 'Di' }] }] }
+  assert.deepEqual(turnNames(rotation, 'g1'), ['Ann', 'Lord B', 'Cy'])
+  assert.deepEqual(turnNames(rotation, 'g9'), [])
+  assert.deepEqual(turnNames(null, 'g1'), [])
 })

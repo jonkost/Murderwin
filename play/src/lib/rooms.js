@@ -64,6 +64,14 @@ export const GAME_NAMES = Object.fromEntries(names.games.map(g => [g.id, g]))
 // Zimothy's memory match (§9.8): three rounds, 6, 10 and 14 pairs, always all
 // fourteen traces as art (the same as functions/lib/act4.js).
 export const MEMORY_ROUNDS = [6, 10, 14]
+
+// Who takes turns at the memory match (27 Oct 2026): the group's guests by
+// their own names (a character name only if a guest has none), in the
+// rotation's order. Nobody known, nobody listed, and the board has no turns.
+export function turnNames(rotation, groupId) {
+  const g = (rotation?.groups ?? []).find(x => x.id === groupId)
+  return (g?.members ?? []).map(m => m.name || m.characterName).filter(Boolean)
+}
 export const ALL_TRACES = [...new Set(characters.characters.map(c => c.trace).filter(Boolean))]
 export const ZIMOTHY_LINES = {
   rounds: [

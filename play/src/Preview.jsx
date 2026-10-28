@@ -255,6 +255,8 @@ const BULLETIN = SCREEN('bulletin', { title: 'W-O-O-F News', act: 3, beat: 'bull
 const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', mood: 3, lines: ['Oh! Everyone is here. I have something to say.', 'Ooh! It\'s one of these three! My tail is wagging, so I\'m pretty sure!', 'That is everything. I am a good boy.'],
   choices: [3, 12, 17].map(n => ({ n, rhyme: motivesSeed.motives[n - 1]?.rhyme })) })
 // the memory match board as the server shapes it: twelve trace ids, no names
+// the group at the table, so the board shows whose turn it is (27 Oct 2026)
+const MEMORY_GROUP = { groups: [{ id: 'g1', members: [{ name: 'Margaret' }, { name: 'Tom' }, { name: 'Ellie' }] }] }
 const MEMORY = (cleared = false) => ({ groupId: 'g1', boardId: 'g1-3', step: cleared ? 2 : 0, cleared, boards: { 0: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'coffee', 'ink', 'seeds', 'coins', 'flour', 'petals'], 1: [], 2: [] } })
 const BOO = (offset) => ({ groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT - offset), poses: [{ strutAt: stamp(PHASE_AT - offset + 9000), poseAt: stamp(PHASE_AT - offset + 18000), holdUntil: stamp(PHASE_AT - offset + 23000), judgeUntil: stamp(PHASE_AT - offset + 29000), line: 'Bold. Wrong, but bold.' }], endsAt: stamp(PHASE_AT - offset + 29000) })
 // Boo's whole show, as booShow lays it out (9 s intro; 8 s strut, 5 s hold, 6 s verdict, three times)
@@ -296,7 +298,7 @@ const KIOSK = {
   'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
-  'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" />,
+  'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" rotation={MEMORY_GROUP} />,
   'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
   'kiosk-memory-standalone': () => <MemoryStandalone />,
   'kiosk-prompts': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'cat' }} relay={null} trace={null} finale={null} screen={SCREEN('prompts', { title: 'Sir Irwin has ideas', prompts: { lines: bagLines.prompts.lines, order: bagLines.prompts.lines.map((_, i) => i), startedAt: stamp(PHASE_AT), everyMs: 180000 } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,

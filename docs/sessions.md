@@ -9,6 +9,23 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 28 Oct 2026 · Claude Code (In Duplicate's turns; the Entryway's game)
+
+- In Duplicate takes turns (Jon, 27 Oct): the Library screen names whose
+  turn it is, from the Act 4 group (so a trio is known when it arrives); a
+  pair keeps the turn, a miss passes it on, each board starts with someone
+  else. The whole group is still paid. Tried in the preview with three
+  names. Not tried on the iPad.
+- The 27 Oct session's work (Boo's music on the Parlour HomePod) was
+  committed as it stood.
+- Talked through, not built: the projector cannot reach the landing, so a
+  Stream Deck + XL arcade for Boo on Susan's MacBook Pro (decision card
+  entrywayGame, with the design in its note). Jon also floated, then
+  dropped, renaming Boo to Miss Beaux LaRue: her name stays Miss Boo LaRue.
+- All six test suites, `npm run checks` (all clear) and the build pass.
+- Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
+  Boo's motive cross-off); trying the turns on the iPad (card 510).
+
 ## 27 Oct 2026 · Claude Code (the workshop's slow sign-in; Boo's Catwalk)
 
 - The workshop's sign-in was slow: every boot replayed all 23 board

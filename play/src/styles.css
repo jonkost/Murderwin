@@ -800,6 +800,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* Zimothy's words capped by the screen's height too, so a short screen leaves the cards their room */
 .kiosk.memory .kiosk-line { font-size: min(3.2vw, 3.6vh); max-width: 90vw; margin: 0; }
 .kiosk.memory .kiosk-next { font-size: min(2.6vw, 2.6vh); margin: 0; }
+.kiosk.memory .memory-turn { font-size: min(3.6vw, 4.2vh); font-weight: 700; color: var(--brand-brass); margin: 0; }
 .memory-fit { flex: 1 1 0; min-height: 0; width: 100%; container-type: size; display: grid; place-items: center; }
 .memory-board { --cols: 4; --rows: 3; --g: 1.6vh; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--g); margin: 0; width: min(92vw, 100cqw, calc((100cqh - (var(--rows) - 1) * var(--g)) / var(--rows) * var(--cols) + (var(--cols) - 1) * var(--g))); }
 .memory-board.cards-20 { --cols: 5; --rows: 4; }

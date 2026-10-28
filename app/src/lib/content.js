@@ -16,6 +16,7 @@ import {
   RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS,
   CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST,
   RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS,
+  TURNS_1028_TASKS, TURNS_1028_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -842,6 +843,12 @@ export const ADDITIONS = [
     id: '2026-10-27-boo-catwalk',
     tasks: BOO_1027_TASKS,
     retireTasks: RETIRED_FOR_BOO_1027,
+  },
+  {
+    // 28 Oct: In Duplicate takes turns; the Entryway's game is Jon's call.
+    id: '2026-10-28-turns',
+    tasks: TURNS_1028_TASKS,
+    decisions: TURNS_1028_DECISIONS,
   },
 ]
 

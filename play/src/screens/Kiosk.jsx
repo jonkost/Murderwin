@@ -61,7 +61,7 @@ export default function Kiosk({ which }) {
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
-  const rotation = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/rotation` : null)
+  const rotation = useDoc(nightId && (which === 'study' || which === 'memory') ? `nights/${nightId}/public/rotation` : null)
   const content = useDoc(nightId && (which === 'study' || which === 'memory' || living) ? `nights/${nightId}/public/content` : null) // the memory kiosk too (26 Oct 2026): Zimothy's card follows the workshop's host line
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
@@ -90,7 +90,7 @@ export default function Kiosk({ which }) {
   else if (code) body = <RoomCode cat={code} />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
-  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} />
+  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
   else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
   else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} />

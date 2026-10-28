@@ -4,7 +4,7 @@ import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
 import { ms, booMoment, booLead } from '../lib/night'
-import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
+import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, turnNames, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
 // The room screens added on 23 Oct 2026 (docs/handoff-2026-10-23.md):
@@ -253,11 +253,16 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
 // One board: cards face down (Zimothy's file folders), two at a time; a pair
 // stays up, a miss turns back over after a moment. `onClear(pairs)` once every
 // pair is found.
-function Board({ cards, boardKey, onClear, disabled = false }) {
+// `players` (Jon, 27 Oct 2026): the group's names, in turn. Whoever's turn it
+// is turns two cards; a pair keeps the turn, a miss passes it on. `first` says
+// who starts, so each round starts with someone else. The whole group is paid
+// whoever finds the pairs. No names (the standalone game), no turns.
+function Board({ cards, boardKey, onClear, disabled = false, players = [], first = 0 }) {
   const [up, setUp] = useState([])
   const [found, setFound] = useState([])
+  const [turn, setTurn] = useState(first)
   const sent = useRef(null)
-  useEffect(() => { setUp([]); setFound([]); sent.current = null }, [boardKey])
+  useEffect(() => { setUp([]); setFound([]); setTurn(first); sent.current = null }, [boardKey])
   const done = cards.length > 0 && found.length * 2 === cards.length
   useEffect(() => {
     if (!done || sent.current === boardKey) return
@@ -268,13 +273,16 @@ function Board({ cards, boardKey, onClear, disabled = false }) {
     if (up.length !== 2) return
     const [a, b] = up
     if (cards[a] === cards[b]) { setFound(f => [...f, [a, b]]); setUp([]); return }
-    const id = setTimeout(() => setUp([]), 1100)
+    const id = setTimeout(() => { setUp([]); setTurn(t => t + 1) }, 1100)
     return () => clearTimeout(id)
   }, [up, cards])
+  const who = players.length > 1 && !done ? players[turn % players.length] : null
   const shown = new Set([...up, ...found.flat()])
   const flip = i => { if (!disabled && up.length < 2 && !shown.has(i)) setUp(u => [...u, i]) }
   // the fit box takes the height left under Zimothy's words, and the board is as big as fits in it
   return (
+    <>
+    {who && <p className="memory-turn" aria-live="polite">{who}'s turn</p>}
     <div className="memory-fit">
       <div className={`memory-board cards-${cards.length}`}>
         {cards.map((t, i) => (
@@ -284,6 +292,7 @@ function Board({ cards, boardKey, onClear, disabled = false }) {
         ))}
       </div>
     </div>
+    </>
   )
 }
 
@@ -304,7 +313,8 @@ export function GameName({ id, extra = null }) {
 // and moves to the next; the third pays the group (a motive crossed off and
 // Zimothy's bag hint, on their phones).
 // `content` (26 Oct 2026): the night's published content, so a host line Jon changed in the workshop reaches the card.
-export function MemoryRounds({ board, night, nightId, content = null }) {
+// `rotation`: the Act 4 groups, so the board knows who is at the table and takes turns (27 Oct 2026).
+export function MemoryRounds({ board, night, nightId, content = null, rotation = null }) {
   const [msg, setMsg] = useState(null)
   const boardId = board?.boardId ?? null
   const step = board?.step ?? 0
@@ -316,6 +326,7 @@ export function MemoryRounds({ board, night, nightId, content = null }) {
     </RulesCard>
   )
   const cards = board.boards?.[String(step)] ?? []
+  const players = turnNames(rotation, board.groupId)
   const send = async pairs => {
     if (nightId === 'preview') return
     setMsg(null)
@@ -325,7 +336,7 @@ export function MemoryRounds({ board, night, nightId, content = null }) {
     <div className="kiosk memory">
       <GameName id="library" extra={`round ${Math.min(step + 1, 3)} of 3`} />
       <p className="kiosk-line"><Spoken text={board.cleared ? `${ZIMOTHY_LINES.cleared} Look at your phones.` : ZIMOTHY_LINES.rounds[step]} /></p>
-      {!board.cleared && <Board cards={cards} boardKey={`${boardId}-${step}`} onClear={send} />}
+      {!board.cleared && <Board cards={cards} boardKey={`${boardId}-${step}`} onClear={send} players={players} first={step} />}
       {msg && <p className="kiosk-next">{msg}</p>}
     </div>
   )
