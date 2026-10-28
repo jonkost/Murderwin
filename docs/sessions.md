@@ -43,6 +43,17 @@ on the Canon.
   station/.env and the site and repo are public. A new one after any change
   to station/: `npm --prefix scripts run upload-station`. Deployed 28 Oct
   (hosting) on Jon's ask. Not pushed.
+- Teaching the taps was slow. Measured on the real Elements: the gesture
+  stream reports a tap about 1.1 s after the finger and never reports a
+  press held about a second. The station now also takes the wall's raw
+  touch over UDP (TouchEventsPort), one tap per touch, and drops the
+  stream's late copy. Replayed the recorded touches: one tap each. A fresh
+  zip is saved. Start the Study now fetches the newest station code from
+  the site at every start (`hosting/station-code/`, built by
+  `scripts/station-code.mjs`), so later fixes need no download; it never
+  touches the repo's own station/. Needs a hosting deploy to take effect.
+- macOS on SKMBA refused the downloaded starter; right-click Open no longer
+  works, so the page now says Open Anyway in Privacy & Security.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 
