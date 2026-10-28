@@ -49,3 +49,6 @@ media/*
 # the looping graphics the idle screens play (play/public/loops/README.md): Jon's files stay local and deploy from his Mac, like the sounds
 play/public/loops/*
 !play/public/loops/README.md
+
+# the study station's taught taps, saved on the Mac that runs it
+station/touch-map.json

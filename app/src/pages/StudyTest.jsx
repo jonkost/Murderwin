@@ -77,13 +77,13 @@ export default function StudyTest() {
             ? <p className="st-state good" role="status">The study station is connected.</p>
             : <>
               <p className="st-state bad" role="status">The study station is not connected.</p>
-              <p className="night-line">Ask Claude Code to start the study station on the Mac by the walls.</p>
+              <p className="night-line">On the Mac by the walls, double-click Start the Study in the Study station folder. Not on that Mac yet? Ask Claude Code for the Study station zip.</p>
               {link.ago !== null && <p className="hint">Last heard from it {agoWords(link.ago)}.</p>}
               <p className="hint">Already running? Check the study key word is saved on this page, and that Claude Code put the same word on the study Mac. The station tries again within 20 seconds.</p>
             </>}
         <details className="gt-claude">
           <summary>For Claude Code</summary>
-          <p className="hint">Start it with cd station &amp;&amp; npm start on the M1 Air by the walls (the brain until the M1 is set up). STATION_KEY= in station/.env must match the key word saved here. The taught taps are saved on whichever Mac runs the station.</p>
+          <p className="hint">Start it with the double-click starter station/Start the Study.command (or cd station &amp;&amp; npm start) on the M1 Air by the walls. To move it to a Mac: zip station/ with its node_modules and .env (ditto -c -k --keepParent), AirDrop, unzip, double-click. STATION_KEY= in station/.env must match the key word saved here. The taught taps are saved on whichever Mac runs the station.</p>
         </details>
       </div>
 

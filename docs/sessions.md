@@ -29,6 +29,13 @@ on the Canon.
 - The study station was started on the brain; it reached both walls but the
   key word saved online did not match station/.env. SKMBA is up: the station
   moves there (a zip of station/ with its settings, made for AirDrop).
+- The study station starts with a double-click (Jon: setup was too much
+  work): `station/Start the Study.command` clears the AirDrop mark, finds
+  Node (or opens its download page), keeps the Mac awake and restarts the
+  station if it stops. The zip for SKMBA (Desktop, "Study station.zip")
+  carries the parts and the settings, so nothing installs but Node.
+  Setting the online key word to match the Macs was refused by Claude
+  Code's permission check: it waits on Jon.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 
