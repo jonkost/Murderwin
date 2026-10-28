@@ -23,6 +23,7 @@ on the Canon.
   entrywayGame, with the design in its note). Jon also floated, then
   dropped, renaming Boo to Miss Beaux LaRue: her name stays Miss Boo LaRue.
 - All six test suites, `npm run checks` (all clear) and the build pass.
+  Deployed 28 Oct on Jon's yes (hosting; no function changed). Not pushed.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 
