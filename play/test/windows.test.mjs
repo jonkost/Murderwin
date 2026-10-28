@@ -153,7 +153,7 @@ test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the re
   assert.match(app, /&& !\(r\.state === 'intro' && s\.host\)/, 'the two host phones keep their tabs through the slides: Pause lives there')
   assert.match(app, /else if \(lock !== 'over' && doneKey && !notes\.seen\[doneKey\]\)/, 'a door card never put away does not hide the result at The End')
   const relay = read('screens/Relay.jsx')
-  assert.match(relay, /Be in the Parlour for the final event\. Eyes on the main screen\./)
+  assert.match(relay, /To the Parlour\. Eyes on the TV\./)
   // Now: the result card loses its button at The End, and the quiet line says the night is over
   const cards = read('screens/Cards.jsx')
   assert.match(cards, /case 'result': return <Result card=\{card\} onDone=\{put\} seen=\{seen \|\| over\} \/>/)

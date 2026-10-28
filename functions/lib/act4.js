@@ -79,18 +79,18 @@ export function booPath(nightId) { return `nights/${nightId}/public/boo` }
 
 // Open copy (§9.5); the workshop's ui_copy lines ACT4 <KEY> win.
 export const DIRECTIONS = {
-  study: "Granolia's expecting your group in the Study, upstairs.",
-  library: 'Zimothy will see your group in the Library. Go together.',
-  orangerie: 'Salem will see your group in the Orangerie. Bring your phones.',
-  entryway: 'Boo is expecting your group in the Entryway. Mind the catwalk.',
-  parlour: 'Nothing for your group right now. Make yourselves at home in the Parlour. Sir Irwin has ideas.',
+  study: 'Go to the Study, upstairs.',
+  library: 'Go to the Library.',
+  orangerie: 'Go to the Orangerie.',
+  entryway: 'Go to the Entryway.',
+  parlour: 'Wait in the Parlour this round.',
 }
 export const ACT4_TEXT = {
-  warn: { title: 'Two minutes!', text: "Two minutes! Supper's done. Keep your phone close. Behind Closed Doors is about to begin.", button: 'Got it' },
-  arrive: 'Find the code on the wall and scan it to begin.',
-  chime: "That's the chime. Say goodbye and look at your phone.",
-  paid: 'Back to the Parlour until the chime.',
-  over: { title: 'Back to the Parlour', text: 'Behind Closed Doors is over. Everyone to the Parlour.' },
+  warn: { title: 'Two minutes!', text: 'Behind Closed Doors starts in two minutes. Keep your phone close.', button: 'Got it' },
+  arrive: 'Scan the code on the wall.',
+  chime: 'Time to move.',
+  paid: 'Done. Back to the Parlour.',
+  over: { title: 'Back to the Parlour', text: 'Everyone to the Parlour.' },
   screen: { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' },
   group: 'From now on, only share with your group.',
   alone: 'From now on, keep what you learn to yourself.',

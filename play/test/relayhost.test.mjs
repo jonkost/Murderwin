@@ -41,5 +41,5 @@ test('F29 the screens use the rules: HostRelayPanel asks hostRelayControl, and t
   const relay = sourceOf('Relay.jsx')
   assert.match(relay, /const host = !!session\.host/)
   assert.ok((relay.match(/<HostRelayPanel relay=\{relay\} nightId=\{night\.nightId\} inline \/>/g) ?? []).length >= 2, 'the walk and the guess both carry the host\'s controls')
-  assert.match(relay, /tell the host your guess/, 'a guest\'s phone says to tell the host')
+  assert.match(relay, /tell the host your guess/i, 'a guest\'s phone says to tell the host')
 })

@@ -16,22 +16,24 @@ import Spoken from './Spoken'
 // Every word here is open copy; nothing sealed reaches a phone except the
 // group's own reward card, which the server deals.
 
+// Few words (Jon, 28 Oct 2026: "way too many words"; "don't tell the player
+// when to shake. It's red or it's green"): the rule is said once, before the
+// first round; while a round plays the phone is only the colour.
 export const SALEM_LINES = {
-  intro: "Forty years I've kept these grounds, and now you want to play on 'em. Fine. Watch the lights, not your phones. RED means GO: shake that thing like it owes you money. GREEN means FREEZE. Yes, backwards. I've done everything backwards for forty years and nobody's complained.",
-  ready: "Everybody got a phone? Lights on? Then quit standing on my lawn and get ready.",
-  rounds: { 1: 'Round one. Thirty seconds clean, no slips. Go on.', 2: "Round two. Faster now. Don't blink.", 3: 'Round three. Fast as a sprinkler on a Sunday. Last one.' },
-  slipGreen: 'Somebody moved on GREEN. Everybody back to the start. Told you it was backwards.',
-  slipRed: "Somebody froze on RED. That's not how we do it here. Again.",
-  passed: 'Not bad. For people. Next round.',
-  cleared: "Huh. You lot can follow instructions. Backwards ones, anyway. Here's what I know.",
-  noSensor: "This phone can't feel a shake. Watch the lights and cheer.",
+  intro: 'RED: shake. GREEN: freeze. Yes, backwards.',
+  ready: 'Phones in hand.',
+  slipGreen: 'Someone moved on green. Again.',
+  slipRed: 'Someone froze on red. Again.',
+  passed: 'Not bad. For people.',
+  cleared: "Huh. You lot can follow instructions. Here's what I know.",
+  noSensor: "This phone can't feel a shake. Just watch.",
 }
 export const BOO_LINES = {
-  intro: "Darling. Welcome to my runway. Watch the wall. When the music stops, strike a pose and HOLD it. I'll be judging. I'm always judging.",
+  intro: 'Watch the wall. When the music stops, strike a pose.',
 }
 const ROOM_GAMES = {
-  study: "Granolia's light puzzle is on the wall. Copy the pattern by touching the panels, then enter the colour and the number on the buttons. Ten minutes.",
-  library: "Zimothy's memory match is on the iPad. Turn two cards at a time and match the pairs: three boards, each bigger than the last.",
+  study: 'The game is on the wall.',
+  library: 'The game is on the iPad.',
 }
 
 export default function Act4({ step, session, nightId, uid, serverNow, notes }) {
@@ -60,21 +62,21 @@ export default function Act4({ step, session, nightId, uid, serverNow, notes }) 
       {step.chime && !step.here && !step.paid && <p className="gloss">{step.chime}</p>}
       {room && <CatFace cat={room.cat} name={step.catName} size="l" />}
       <h3>{step.title}</h3>
-      {step.hook && <p className="game-hook">{step.hook}</p>}
+      {step.hook && !step.here && <p className="game-hook">{step.hook}</p>}
       {!step.paid && !step.here && <p><Spoken text={step.text} /></p>}
       {room && !step.here && !step.paid && (
         <>
           <p className="gloss">{step.arrive}</p>
-          <button className="quiet" disabled={busy} onClick={scan}>Cannot scan? We are in {room.name}</button>
+          <button className="quiet" disabled={busy} onClick={scan}>Can't scan? We're here</button>
         </>
       )}
       {room && step.here && !step.paid && step.host && <HostLine host={step.host} />}
       {room && step.here && !step.paid && <RoomGame room={step.room} nightId={nightId} uid={uid} serverNow={serverNow} groupId={session?.group} />}
-      {step.paid && <p className="gloss">{step.paidText || 'Back to the Parlour until the chime.'}</p>}
+      {step.paid && <p className="gloss">{step.paidText || 'Done. Back to the Parlour.'}</p>}
       {msg && <p className="trouble" role="status">{msg}</p>}
       {free && games.length > 0 && (
         <div className="waiting-game">
-          <p>A Parlour Game is waiting. Play it when you have a moment.</p>
+          <p>A Parlour Game is waiting.</p>
           <button className="big" onClick={() => setGame(games[0])}>Play</button>
         </div>
       )}
@@ -126,7 +128,7 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
   const doc = view.data
   const motion = useMotion()
   const mine = doc && doc.groupId === groupId
-  if (!mine) return <p className="gloss">Salem is finishing with the last lot. Stand by the string lights.</p>
+  if (!mine) return <p className="gloss">Salem is finishing with the last lot.</p>
   return (
     <SalemRounds doc={doc} serverNow={serverNow} motion={motion}
       ready={() => callSalemReady({ nightId })}
@@ -183,8 +185,11 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
   const onReady = () => Promise.resolve(ready()).catch(() => {})
   if (doc.state === 'intro' || doc.state === 'idle') return (
     <div className="salem">
-      <p><Spoken text={lines.intro} /></p>
-      <p><Spoken text={lines.ready} /></p>
+      <div className="salem-key" role="img" aria-label={lines.intro}>
+        <span className="salem-key-red">Shake</span>
+        <span className="salem-key-green">Freeze</span>
+      </div>
+      <p className="salem-aside">Yes, backwards.</p>
       {!motion.ok && <p className="gloss">{lines.noSensor}</p>}
       <button className="big" onClick={onReady}>Ready</button>
     </div>
@@ -196,13 +201,13 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
     </div>
   )
   if (doc.state === 'cleared') return <p><Spoken text={lines.cleared} /></p>
+  // the round: the whole screen is the colour and nothing else; before it, a count; after a slip, one line
+  const count = Math.max(1, Math.ceil((ms(doc.startsAt) - now) / 1000))
   return (
-    <div className={`salem-play ${colour ?? 'wait'}`} role="status" aria-live="assertive">
-      <p className="eyebrow">{lines.rounds[doc.round]}</p>
-      {slipShown && <p className="slip">{slipShown === 'green' ? lines.slipGreen : lines.slipRed}</p>}
-      <p className="salem-colour">{!started ? `Get ready… ${Math.max(1, Math.ceil((ms(doc.startsAt) - now) / 1000))}` : colour === 'red' ? 'RED: SHAKE!' : 'GREEN: FREEZE!'}</p>
-      {started && <p className="gloss">{Math.max(0, Math.ceil((ms(doc.cleanAt) - now) / 1000))} seconds clean to go</p>}
-      {!motion.ok && <p className="gloss">{lines.noSensor}</p>}
+    <div className={`salem-play ${colour ?? 'wait'}`} role="status" aria-live="assertive" aria-label={colour ?? 'get ready'}>
+      {!started && <p className="salem-count">{count}</p>}
+      {!started && slipShown && <p className="slip">{slipShown === 'green' ? lines.slipGreen : lines.slipRed}</p>}
+      <p className="salem-round" aria-hidden="true">{[1, 2, 3].map(r => <span key={r} className={r < doc.round ? 'done' : r === doc.round ? 'now' : ''} />)}</p>
     </div>
   )
 }
@@ -218,7 +223,7 @@ function BooPoses({ nightId, serverNow, groupId }) {
   const doc = view.data
   const told = useRef(false)
   const mine = doc && doc.groupId === groupId
-  if (!mine) return <p className="gloss">Boo is finishing with the last lot. Watch the wall.</p>
+  if (!mine) return <p className="gloss">Boo is finishing with the last lot.</p>
   const over = () => {
     if (doc.state !== 'show' || told.current) return
     told.current = true
@@ -229,7 +234,7 @@ function BooPoses({ nightId, serverNow, groupId }) {
 
 // The show's moments on a phone, from one record in the night's shape (see
 // lib/night.js booMoment). `onOver()` is called while the show is over.
-export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's the show. Boo has something for you." }) {
+export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's the show." }) {
   useTick(250)
   const now = serverNow()
   const m = booMoment(boo, now)
@@ -238,19 +243,18 @@ export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's t
   const of = boo?.poses?.length || 3
   if (m.part === 'strut') return (
     <div className="boo-phone">
-      <p className="boo-phone-say">♪ The music is on. Strut! ♪</p>
-      <p className="gloss">Pose {m.pose} of {of}. When the music stops, strike a pose and freeze. Put the phone down and watch the wall.</p>
+      <p className="boo-phone-say">♪ Strut! ♪</p>
+      <p className="gloss">Pose {m.pose} of {of}</p>
     </div>
   )
   if (m.part === 'pose') return (
     <div className="boo-pose" role="status" aria-live="assertive">
-      <p className="boo-strike">STRIKE A POSE!</p>
-      <p className="boo-hold">Freeze! {m.hold}</p>
+      <p className="boo-strike">POSE!</p>
+      <p className="boo-hold">{m.hold}</p>
     </div>
   )
   if (m.part === 'judge') return (
     <div className="boo-phone">
-      <p className="gloss">Boo's verdict on pose {m.pose}:</p>
       <p className="boo-judge"><Spoken text={m.line} /></p>
     </div>
   )

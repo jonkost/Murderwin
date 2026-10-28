@@ -130,10 +130,10 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   assert.equal(rulesLine('orangerie', { ui_copy: [{ text: 'HOST SALEM: the Act 7 line' }] }), RULES_LINES.orangerie, 'Salem\'s HOST line is his Act 7 one, never his Get Off My Lawn! intro')
   assert.equal(rulesLine('entryway', { ui_copy: [{ text: 'HOST BOO 1: judging' }] }), RULES_LINES.entryway, 'Boo\'s six HOST lines are her Parlour Games verdicts')
   assert.equal(rulesLine('nothing'), null)
-  // Salem's is his intro on the phones' Get Off My Lawn!, Boo's is her wall's
+  // the rooms' cards carry Salem's and Boo's full lines; the phones carry the rule alone (Jon, 28 Oct 2026: fewer words), the same rule
   const act4 = src('../src/screens/Act4.jsx')
-  assert.ok(act4.includes(RULES_LINES.orangerie), 'Salem\'s intro is the phone\'s')
-  assert.ok(act4.includes(RULES_LINES.entryway), 'Boo\'s intro is the phone\'s too')
+  assert.ok(act4.includes("intro: 'RED: shake. GREEN: freeze. Yes, backwards.'") && /RED means GO.*GREEN means FREEZE/.test(RULES_LINES.orangerie), 'Salem\'s phone rule agrees with his card')
+  assert.ok(act4.includes("intro: 'Watch the wall. When the music stops, strike a pose.'") && /When the music stops, strike a pose/.test(RULES_LINES.entryway), 'Boo\'s phone rule agrees with her card')
   const rooms = src('../src/screens/Rooms.jsx')
   assert.ok(rooms.includes('export const BOO_INTRO = RULES_LINES.entryway'), 'the wall reads the same line')
   for (const line of Object.values(RULES_LINES)) assert.ok(!line.includes('—'), 'no em dash')

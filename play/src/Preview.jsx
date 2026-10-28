@@ -16,6 +16,7 @@ import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, Dark as KioskDark } from './screens/Kiosk'
 import { MemoryRounds, MemoryStandalone, BooWall, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import { PoseCamera } from './screens/Pose'
+import { SalemRounds, BooMoments } from './screens/Act4'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
@@ -98,25 +99,25 @@ const BAGS = {
   ghost: bagLines.act4.salem[4].replace('___', '(a clue word)'),
 }
 const CARDS = {
-  meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
-  orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Notes is a box for your own scribbles; nobody else reads them. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
-  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
-  peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
+  meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Four cats and the birthday boy live here. See how each stands with you in the Cats tab.', button: 'I have met them' },
+  orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'The tabs at the bottom. Clues collects what you are told. Notes is yours alone. Motives: cross off as you go.', button: 'Got it' },
+  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV. Watch it.', button: 'I watched it' },
+  peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: 'Take a quiet look in your own bag. Show nobody yet.', button: 'I have looked' },
   // every cat: its name, its room, its motive hint, its bag clue and the footer (23 Oct 2026)
   testimony: { id: '2-cat-cat-salem', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crooknog', room: 'the Orangerie', lines: [], hint: { text: HINTS.salem }, bag: { text: BAGS.salem }, saved: 'Saved to your Clues.' },
   testimony2: { id: '2-cat-cat-zimothy', act: 2, beat: 'cat', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', lines: [], hint: { text: HINTS.zimothy }, bag: { text: BAGS.zimothy }, saved: 'Saved to your Clues.' },
-  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Supper', text: 'Phones down and charging. Bring your bag to the table: everyone may share now. Listen for the news.', button: 'Phone is down' },
-  warn: { id: '4-warn-warn', act: 4, beat: 'warn', kind: 'notice', key: 'act4-warn', title: 'Two minutes!', text: "Two minutes! Supper's done. Keep your phone close. Behind Closed Doors is about to begin.", button: 'Got it' },
+  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone charging in the Parlour. Bring your bag: the table may share.', button: 'Phone is down' },
+  warn: { id: '4-warn-warn', act: 4, beat: 'warn', kind: 'notice', key: 'act4-warn', title: 'Two minutes!', text: 'Behind Closed Doors starts in two minutes. Keep your phone close.', button: 'Got it' },
   // the Act 4 group card in the server's words (functions/lib/act4.js): portraits, character names, Locked in
   group: { id: '4-groups-group', act: 4, beat: 'groups', kind: 'group', group: 'g1', lockIn: true, title: "You're teamed up with Roger Arms and Ignatius Fume", text: 'From now on, only share with your group.',
     members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye', characterId: 'rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms', characterId: 'arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume', characterId: 'fume' }] },
   library: { id: '4-room-library-g1', act: 4, beat: 'round2', kind: 'clue', room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: 'From the Library', text: `Order. Restored. Strike number 9, “${motivesSeed.motives[8]?.rhyme}” from your list; it was not that. Invoice to follow.`, cross: 9, bag: { text: BAGS.ghost } },
   clue: { id: '4-round1-study-clue', act: 4, beat: 'round1', kind: 'clue', title: 'From the Study', placeholder: true, text: 'Something was left behind.', trace: { level: 4, trace: 'flour', label: null } },
   // the cake notice carries the Happy Birthday Irwin picture (cue 12, 25 Oct 2026; the phone draws it from `image`)
-  roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired', image: 'birthday' },
-  irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
-  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
-  eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
+  roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Go where you like. Talk about the bags now, out loud, in any detail.', button: 'Cake acquired', image: 'birthday' },
+  irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say, on the Parlour TV. Go to the Parlour.', button: 'On my way' },
+  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
   award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crooknog's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
   result: { id: '7-result-result', act: 7, beat: 'result', kind: 'result', murderer: true, motive: false, victim: true, defaulted: false, picks: { murderer: 'Jacob', motive: 'A sneeze set free, for all to see', victim: 'Mari' } },
   role: { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text: 'The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Name all three before the night is out.' },
@@ -270,6 +271,18 @@ const BOO_SHOW = (() => {
   }
   return { groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT), poses, endsAt: stamp(t) }
 })()
+// Get Off My Lawn! on a phone (28 Oct 2026): a round from the moment the preview
+// opens, a three-second count, then the colour alone, changing every few seconds
+const SALEM_ROUND = (() => {
+  const start = PHASE_AT + 3000
+  const flips = [0, 3500, 6000, 9500, 11000, 14500, 17000, 21000, 23500, 27000].map((t, i) => ({ at: stamp(start + t), colour: i % 2 ? 'green' : 'red' }))
+  return { state: 'playing', round: 2, attempt: 1, startsAt: stamp(start), cleanAt: stamp(start + 30000), flips }
+})()
+const NO_SENSOR = { ok: false, mag: 0, lastShakeAt: 0 }
+const quietly = () => Promise.resolve()
+function PhoneGame({ room, children }) {
+  return <main className="practice papered"><section className={`dealt act4 act4-${room}`}>{children}</section></main>
+}
 // nine guests with a strike each, two of them picked by the server for a silent phone: the board must not tell
 const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2 }, ana: { name: 'Ana', characterId: 'devine', bag: 4 }, kit: { name: 'Kit', characterId: 'barnes', bag: 5 }, ren: { name: 'Ren', characterId: 'steeps', bag: 7 }, oli: { name: 'Oli', characterId: 'vayne', bag: 9 } }
 const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
@@ -308,6 +321,10 @@ const KIOSK = {
   'kiosk-boo-show': (night, serverNow) => <BooWall boo={BOO_SHOW} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-judge': (night, serverNow) => <BooWall boo={BOO(25000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  // the group's phones in the Orangerie and the Entryway (28 Oct 2026): Salem's rule, then a live round; Boo's show as the phones see it
+  'salem-rule': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={{ state: 'intro' }} serverNow={serverNow} motion={{ ...NO_SENSOR, ok: true }} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
+  'salem-round': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={SALEM_ROUND} serverNow={serverNow} motion={NO_SENSOR} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
+  'boo-phone': (night, serverNow) => <PhoneGame room="entryway"><BooMoments boo={BOO_SHOW} serverNow={serverNow} /></PhoneGame>,
   // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap
   'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO(19000)} nightId="preview" serverNow={serverNow} />,
   // the Host tab's house panel: station and screens alive, a group in the study, the hall light
@@ -377,25 +394,25 @@ const KIOSK = {
 // Act 2's next step, as the server writes it (functions/lib/deal.js lightsCard).
 const ROOMS = { salem: ['Salem Crooknog', 'the Orangerie'], boo: ['Miss Boo LaRue', 'the Entryway'] }
 const LIGHTS_WORDS = {
-  wait: ['In the Parlour', "Make yourself at home in the Parlour. You'll be called soon. Sir Irwin has ideas on the TV."],
-  later: ['Back in the queue', "No problem. You're back in the queue. We'll call you again."],
-  go: ['Your turn', "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting."],
-  with: ['[CAT] is talking to you', 'Read what the cat says. It is for you alone. Tap Done when you have read it.'],
-  done: ['Back to the Parlour', 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.'],
-  supper: ['Supper is served', "That's the chime! Supper is served in the Orangerie."],
+  wait: ['In the Parlour', 'Wait in the Parlour. You\'ll be called.'],
+  later: ['Back in the queue', 'We\'ll call you again.'],
+  go: ['Your turn', '[CAT] is waiting in [ROOM]. Go alone.'],
+  with: ['[CAT] is talking to you', 'For you alone. Tap Done when you have read it.'],
+  done: ['Back to the Parlour', 'All four cats seen. Tell nobody what you heard. The chime calls everyone to supper.'],
+  supper: ['Supper is served', 'Supper is served in the Orangerie.'],
 }
 function LIGHTS(variant, cat = 'salem') {
   const [catName, room] = ROOMS[cat]
   const fill = t => t.replace(/\[CAT\]/g, catName).replace(/\[ROOM\]/g, room).replace(/\[THEM\]/g, cat === 'boo' ? 'her' : 'him')
   const step = variant === 'later' ? 'wait' : variant === 'supper' ? 'done' : variant
-  return { step, variant, cat, catName, room, title: fill(LIGHTS_WORDS[variant][0]), text: fill(LIGHTS_WORDS[variant][1]), arrive: 'Find the code in the room and scan it to say hello.' }
+  return { step, variant, cat, catName, room, title: fill(LIGHTS_WORDS[variant][0]), text: fill(LIGHTS_WORDS[variant][1]), arrive: 'Scan the code in the room.' }
 }
 // Act 4's step, as the server writes it (functions/lib/act4.js directGroups).
 const ACT4 = {
-  study: { room: 'study', cat: 'granolia', catName: 'Granolia Lickspittle', title: GAME_NAMES.study.name, hook: GAME_NAMES.study.hook, text: "Granolia's expecting your group in the Study, upstairs.", arrive: 'Find the code on the wall and scan it to begin.', round: 1, rounds: 4 },
-  salem: { room: 'orangerie', cat: 'salem', catName: 'Salem Crooknog', title: GAME_NAMES.orangerie.name, hook: GAME_NAMES.orangerie.hook, text: 'Salem will see your group in the Orangerie. Bring your phones.', arrive: 'Find the code on the wall and scan it to begin.', round: 2, rounds: 4, chime: "That's the chime. Say goodbye and look at your phone.", here: true },
-  parlour: { room: 'parlour', cat: null, title: 'In the Parlour', text: 'Nothing for your group right now. Make yourselves at home in the Parlour. Sir Irwin has ideas. Compare what the cats told you. Do they agree?', round: 3, rounds: 5 },
-  paid: { room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: GAME_NAMES.library.name, hook: GAME_NAMES.library.hook, text: 'Zimothy will see your group in the Library. Go together.', round: 2, rounds: 4, here: true, paid: true, paidText: 'Back to the Parlour until the chime.' },
+  study: { room: 'study', cat: 'granolia', catName: 'Granolia Lickspittle', title: GAME_NAMES.study.name, hook: GAME_NAMES.study.hook, text: 'Go to the Study, upstairs.', arrive: 'Scan the code on the wall.', round: 1, rounds: 4 },
+  salem: { room: 'orangerie', cat: 'salem', catName: 'Salem Crooknog', title: GAME_NAMES.orangerie.name, hook: GAME_NAMES.orangerie.hook, text: 'Go to the Orangerie.', arrive: 'Scan the code on the wall.', round: 2, rounds: 4, chime: 'Time to move.', here: true },
+  parlour: { room: 'parlour', cat: null, title: 'In the Parlour', text: 'Wait in the Parlour this round. Compare what the cats told you. Do they agree?', round: 3, rounds: 5 },
+  paid: { room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: GAME_NAMES.library.name, hook: GAME_NAMES.library.hook, text: 'Go to the Library.', round: 2, rounds: 4, here: true, paid: true, paidText: 'Done. Back to the Parlour.' },
 }
 const WAITING = { 'questions-4-p0': { kind: 'questions', waiting: true, title: 'Parlour Game', opensAt: stamp(PHASE_AT), beats: [
   { q: 'Ice in orange juice?', choices: [{ k: 'a', text: 'Always' }, { k: 'b', text: 'Never' }] },

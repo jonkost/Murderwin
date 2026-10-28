@@ -111,9 +111,9 @@ test('F30 the Notes tab: one box per phone per night, a text write touches nothi
   assert.match(read('screens/Welcome.jsx'), /<dt>Notes<\/dt><dd>[^<]+<\/dd>/, 'the tour explains the Notes tab')
   assert.ok(read('Preview.jsx').includes("case 'notes':"), 'the preview keeps a page for it')
   const css = read('styles.css')
-  assert.match(css, /^\.tab \{[^}]*font-size: clamp\(0\.6[0-9]?rem, 3\.[0-9]vw, 0\.95rem\)/m, 'seven labels shrink with the phone width, never under about 12 px (the root font is 19px), in the one .tab rule')
+  assert.match(css, /^\.tab \{[^}]*font-size: clamp\(0\.6[0-9]?rem, 3\.[0-9]vw, 0\.[0-9]+rem\)/m, 'seven labels shrink with the phone width, never under about 12 px (the root font is 19px), in the one .tab rule')
   assert.equal(css.match(/^\.tab \{/gm).length, 1, 'one .tab rule, one source for the size')
-  assert.match(css, /^\.tabs\.eight \.tab \{ font-size: clamp\(0\.5[0-9]?rem, 3\.[0-9]vw, 0\.9rem\)/m, 'the hosts\' eight labels too')
+  assert.match(css, /^\.tabs\.eight \.tab \{ font-size: clamp\(0\.5[0-9]?rem, 3\.[0-9]vw, 0\.[0-9]+rem\)/m, 'the hosts\' eight labels too')
 })
 
 test('the Welcome tour shows for a late arrival at any act, never over the blackout or the prompt', () => {

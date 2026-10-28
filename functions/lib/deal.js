@@ -60,27 +60,27 @@ export const ROLE_CARDS = {
 }
 
 export const NOTICES = {
-  meet: { title: 'The household', text: 'Five of them live here: four cats and the birthday boy. Open the Cats tab and see how each one stands with you tonight.', button: 'I have met them' },
-  introduce: { title: 'Say who you are', text: 'Out loud, to the room: your name and your profession. Nothing else. Then tap.', button: 'I have said it' },
-  ready: { title: 'Settle in', text: 'The evening is about to turn. Keep your phone on you.', button: 'Ready' },
-  orient: { title: 'Where things are', text: 'Your Reticule is the row of tabs at the bottom. Clues is where everything you are told will collect. Notes is a box for your own scribbles; nobody else reads them. Motives is the list of nineteen; cross off as you go. The cats are in Cats. The rules are in Rules.', button: 'Got it' },
-  news: { title: 'Eyes up', text: 'W-O-O-F News is on the big screen in the Parlour. Watch it. Your phone will tell you what to do when it is over.', button: 'I watched it' },
+  meet: { title: 'The household', text: 'Four cats and the birthday boy live here. See how each stands with you in the Cats tab.', button: 'I have met them' },
+  introduce: { title: 'Say who you are', text: 'Out loud: your name and your profession. Nothing else.', button: 'I have said it' },
+  ready: { title: 'Settle in', text: 'Keep your phone on you.', button: 'Ready' },
+  orient: { title: 'Where things are', text: 'The tabs at the bottom. Clues collects what you are told. Notes is yours alone. Motives: cross off as you go.', button: 'Got it' },
+  news: { title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV. Watch it.', button: 'I watched it' },
   // after the news (handoff 23 Oct §9.4): a quiet look in your own bag, shown to nobody
-  peek: { title: 'Your bag', text: "Before you go anywhere: take a quiet look inside your own bag. Don't show anyone yet. The Manor will call you to your first cat in a moment.", button: 'I have looked' },
-  checkin: { title: 'Check-in', text: 'Read your clues once more. Cross off any motive you are sure of. Then go in to supper.', button: 'Done' },
+  peek: { title: 'Your bag', text: 'Take a quiet look in your own bag. Show nobody yet.', button: 'I have looked' },
+  checkin: { title: 'Check-in', text: 'Read your clues. Cross off what you can. Then in to supper.', button: 'Done' },
   // supper (cue 8, 25 Oct 2026): the phone stays in the Parlour, charging
-  down: { title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone here in the Parlour, charging, and bring your bag to the table. The whole table may share.', button: 'Phone is down' },
-  bulletin: { title: 'The bulletin', text: 'Did you hear it? Talk it over at the table. Cross off what you can.', button: 'Heard it' },
+  down: { title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone charging in the Parlour. Bring your bag: the table may share.', button: 'Phone is down' },
+  bulletin: { title: 'The bulletin', text: 'Talk it over. Cross off what you can.', button: 'Heard it' },
   // the dinner wrap-up (cue 10, 25 Oct 2026): the first of the two motive prompts
-  motives: { title: 'Your motives', text: 'Supper is done. Open the Motives tab and cross off every motive the night has ruled out so far.', button: 'Will do' },
-  roam: { title: 'Cake', text: 'Cake in hand, go where you like. The bags may be talked about now, out loud, in any detail you can manage.', button: 'Cake acquired' },
-  irwin: { title: 'The chime', text: 'Sir Irwin has something to say. He will say it on the Parlour screen and nowhere else. Go to the Parlour.', button: 'On my way' },
+  motives: { title: 'Your motives', text: 'Open the Motives tab. Cross off every motive ruled out so far.', button: 'Will do' },
+  roam: { title: 'Cake', text: 'Go where you like. Talk about the bags now, out loud, in any detail.', button: 'Cake acquired' },
+  irwin: { title: 'The chime', text: 'Sir Irwin has something to say, on the Parlour TV. Go to the Parlour.', button: 'On my way' },
   // after Sir Irwin (cue 14, 25 Oct 2026): the second motive prompt
-  update: { title: 'Your motives', text: 'You heard Sir Irwin. Open the Motives tab and update your crossings-off.', button: 'Will do' },
+  update: { title: 'Your motives', text: 'You heard Sir Irwin. Update your Motives tab.', button: 'Will do' },
   // Act 6 opens (cue 15, 25 Oct 2026): the break line before the two games
-  break: { title: 'The Final Hour', text: 'Two Parlour Games are on their way, one after the other. After them, the final event in the Parlour. A good moment for a stretch.', button: 'Noted' },
-  door: { title: 'The door is open', text: 'The light in the hall is green. The bedroom screen is showing what was left behind. Go and look, then come back to the Parlour.', button: 'I have seen it' },
-  eyes: { title: 'Eyes on the screen', text: 'The truth is about to be read out. Watch the Parlour screen.', button: 'Watching' },
+  break: { title: 'The Final Hour', text: 'Two Parlour Games, then the final event. Stretch your legs.', button: 'Noted' },
+  door: { title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  eyes: { title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
 }
 
 // A picture above a notice's words on the phone, by key (play/src/screens/Cards.jsx
@@ -278,19 +278,19 @@ const CAT_THEM = { granolia: 'her', boo: 'her', salem: 'him', zimothy: 'him' }
 // LIGHTS NEXT, LIGHTS WITH, LIGHTS DONE and LIGHTS SUPPER win ([CAT], [ROOM]
 // and [THEM] filled in). NEXT is GO after the tick moved the guest on.
 export const LIGHTS_TEXT = {
-  wait: { title: 'In the Parlour', text: "Make yourself at home in the Parlour. You'll be called soon. Sir Irwin has ideas on the TV." },
-  later: { title: 'Back in the queue', text: "No problem. You're back in the queue. We'll call you again." },
-  go: { title: 'Your turn', text: "[CAT] is waiting for you in [ROOM]. Go alone, and don't keep [THEM] waiting." },
-  next: { title: 'Your turn', text: "Time's up. [CAT] is expecting you in [ROOM]." },
-  with: { title: '[CAT] is talking to you', text: 'Read what the cat says. It is for you alone. Tap Done when you have read it.' },
-  done: { title: 'Back to the Parlour', text: 'You have seen all four cats. Tell nobody what you heard. The chime will call everyone to supper in the Orangerie.' },
-  supper: { title: 'Supper is served', text: "That's the chime! Supper is served in the Orangerie." },
+  wait: { title: 'In the Parlour', text: 'Wait in the Parlour. You\'ll be called.' },
+  later: { title: 'Back in the queue', text: 'We\'ll call you again.' },
+  go: { title: 'Your turn', text: '[CAT] is waiting in [ROOM]. Go alone.' },
+  next: { title: 'Your turn', text: 'Time\'s up. [CAT] is waiting in [ROOM].' },
+  with: { title: '[CAT] is talking to you', text: 'For you alone. Tap Done when you have read it.' },
+  done: { title: 'Back to the Parlour', text: 'All four cats seen. Tell nobody what you heard. The chime calls everyone to supper.' },
+  supper: { title: 'Supper is served', text: 'Supper is served in the Orangerie.' },
 }
 // After "On my way" (the phone's own step, no server call), and the cards' footer.
-export const ARRIVE_TEXT = 'Find the code in the room and scan it to say hello.'
+export const ARRIVE_TEXT = 'Scan the code in the room.'
 export const SAVED_TEXT = 'Saved to your Clues.'
 // The note at supper for a guest with cats still unvisited (Jon called supper early).
-export const SUPPER_NOTE = { title: "Supper's ready!", text: "Supper's ready! The cats you haven't met left you a note:", button: 'Read them' }
+export const SUPPER_NOTE = { title: "Supper's ready!", text: "The cats you haven't met left you a note:", button: 'Read them' }
 
 // The motive hint and the bag clue on a cat's card. A case with no family for
 // the guest (or a cat with no line) carries this marked stand-in, which names

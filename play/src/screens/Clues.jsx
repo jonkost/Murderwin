@@ -10,8 +10,9 @@ import Spoken from './Spoken'
 export default function Clues({ session }) {
   const cards = clueCards(session)
   if (!cards.length) return (
-    <div>
-      <p className="gloss">Nothing yet. Everything a cat tells you and every clue a room pays out collects here.</p>
+    <div className="quiet-now">
+      <p className="quiet-lead">Nothing yet.</p>
+      <p className="quiet-line">What you are told lands here.</p>
     </div>
   )
   const byAct = new Map()
@@ -21,7 +22,7 @@ export default function Clues({ session }) {
   }
   return (
     <div className="clues">
-      <p className="gloss">Everything you have been told, newest first. Share it with your mouth, or keep it.</p>
+      <p className="gloss">Newest first. Share it out loud, or keep it.</p>
       {[...byAct.entries()].map(([act, list]) => (
         <section key={act} className="clues-act">
           <h3 className="eyebrow">Act {act} · {ACTS[act]?.plain}</h3>

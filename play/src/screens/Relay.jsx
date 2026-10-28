@@ -70,7 +70,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
       <div className="moment relay papered">
         <Seal />
         <p className="crest">The Relay Drawing</p>
-        <p className="moment-text">Be in the Parlour for the final event. Eyes on the main screen.</p>
+        <p className="moment-text">To the Parlour. Eyes on the TV.</p>
       </div>
     )
   }
@@ -86,7 +86,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
         {mine ? (
           <>
             <p className="moment-text">You’re up next. Walk to the paper.</p>
-            {first && <p className="moment-sub">Pull the paper down until the whole grid is showing.</p>}
+            {first && <p className="moment-sub">Pull the paper down so the whole grid shows.</p>}
           </>
         ) : (
           <p className="moment-text">{relay.nextName} is walking to the paper.</p>
@@ -104,13 +104,13 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
         <p className="crest">{relay.cell?.label} · {relay.round ?? `grid ${relay.grid}`}</p>
         {mine ? (
           <>
-            <p className="moment-text">Draw. The room will tell you how.</p>
-            <p className="moment-sub">Fifteen seconds. Marker down when your phone buzzes.</p>
+            <p className="moment-text">Draw!</p>
+            <p className="moment-sub">Marker down at the buzz.</p>
           </>
         ) : (
           <>
             <Cell strokes={relay.cell?.strokes} />
-            <p className="moment-sub">{relay.drawerName} is drawing this. Tell them how.</p>
+            <p className="moment-text">Tell {relay.drawerName} how.</p>
             {relay.nextName && <p className="gloss">Next: {relay.nextName}</p>}
           </>
         )}
@@ -125,7 +125,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     return (
       <div className="moment relay vote papered">
         <p className="crest">{relay.round ?? `Grid ${relay.grid}`} is drawn</p>
-        <p className="moment-text">{locked ? 'Not that one.' : host ? 'Go and look at the paper, then tap the room’s guess.' : 'Go and look at the paper, then tell the host your guess.'}</p>
+        <p className="moment-text">{locked ? 'Not that one.' : host ? 'Look at the paper. Tap the room’s guess.' : 'Look at the paper. Tell the host your guess.'}</p>
         {host ? <HostRelayPanel relay={relay} nightId={night.nightId} inline /> : (
           <div className="options">
             {(relay.options ?? []).map((o, i) => {
@@ -155,7 +155,7 @@ export function RelayDone({ uid, relay, seenKey }) {
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text">The door is open.</p>
-      <p className="moment-sub">The light outside the bedroom has turned green. Go and see.</p>
+      <p className="moment-sub">Go and see.</p>
       <button className="big" onClick={hide}>Hide this</button>
     </div>
   )

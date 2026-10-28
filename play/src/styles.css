@@ -19,6 +19,27 @@
   --dim: #a9b8c0;
   --accent: var(--brand-red);
   --good: var(--brand-brass);
+  /* The phone's look (Jon, 28 Oct 2026: "make text more structured with a
+     hierarchy system"). Six steps of type, used everywhere on the phone:
+       label    small capitals, tracked, brass: what kind of thing this is
+       small    the quiet line under something
+       body     reading
+       lead     the one sentence a screen is about
+       title    a card's name, serif
+       display  a screen's name, serif */
+  --serif: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --t-label: 0.7rem;
+  --t-small: 0.86rem;
+  --t-body: 1rem;
+  --t-lead: 1.2rem;
+  --t-title: 1.45rem;
+  --t-display: 1.85rem;
+  --brass-hi: #d6cf86;   /* brass that reads on the dark: labels, the lit tab */
+  --edge: rgba(241, 232, 214, 0.1);
+  --surface: linear-gradient(180deg, #123342 0%, #0b2431 100%);
+  --surface-flat: #0f2b39;
+  --lift: inset 0 1px 0 rgba(241, 232, 214, 0.06), 0 10px 26px rgba(0, 0, 0, 0.36);
+  --radius: 1.1rem;
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -34,7 +55,7 @@ body {
 }
 button { font: inherit; color: inherit; cursor: pointer; }
 /* Apple's pair: New York for titles and names, SF for reading; Source Serif / system sans elsewhere. */
-h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; }
+h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .act-name, .who, .ask { font-weight: 600; letter-spacing: 0; }
 
 /* in-between screens */
@@ -58,21 +79,26 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .moment {
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1.2rem; padding: 2rem 1.4rem; text-align: center;
+  gap: 1.1rem; padding: 2rem 1.5rem; text-align: center;
+  background: radial-gradient(ellipse 120% 70% at 50% 30%, #082a3b 0%, var(--bg) 70%);
 }
 .moment.dark { background: #000; }
 .seal { width: 6.5rem; height: 6.5rem; display: block; margin: 0 auto 0.2rem; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
 .join .seal { width: 5rem; height: 5rem; }
 .moment.prompt { justify-content: center; }
-.crest { font-weight: 600; letter-spacing: 0.06em; color: var(--dim); margin: 0; font-size: 0.95rem; }
-.moment-text { font-size: 1.25rem; max-width: 24rem; margin: 0; }
-.moment-sub { color: var(--dim); margin: 0; }
+.crest { font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brass-hi); margin: 0; font-size: var(--t-label); }
+.moment-text { font-size: var(--t-lead); line-height: 1.4; font-weight: 500; max-width: 22rem; margin: 0; }
+.moment-sub { color: var(--dim); font-size: var(--t-small); margin: 0; }
 .hold { color: var(--dim); margin: 0.4rem 0 0; min-height: 3.2rem; display: flex; align-items: center; }
 .trouble { color: #f0a090; margin: 0.4rem 0 0; }
 .big {
-  min-height: 3.2rem; min-width: 12rem; padding: 0.7rem 1.6rem;
-  background: var(--accent); border: none; border-radius: 0.6rem; font-size: 1.1rem; color: #fff;
+  min-height: 3.3rem; min-width: 12rem; padding: 0.7rem 1.6rem;
+  background: linear-gradient(180deg, #d42532 0%, #b3141f 100%); border: none; border-radius: 0.95rem;
+  font-size: 1.05rem; font-weight: 600; letter-spacing: 0.01em; color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 20px rgba(191, 25, 37, 0.32);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
+.big:active:not(:disabled) { transform: scale(0.98); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 10px rgba(191, 25, 37, 0.3); }
 .offline {
   position: sticky; top: 0; z-index: 5;
   background: #5a1d14; color: #fff; padding: 0.7rem 1rem; text-align: center; font-size: 0.95rem;
@@ -102,26 +128,43 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 
 /* at rest */
 .rest { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
-.act { padding: 1.1rem 1.2rem 0.6rem; border-bottom: 1px solid var(--line); }
-.act-num { margin: 0; color: var(--dim); font-size: 0.9rem; letter-spacing: 0.06em; text-transform: uppercase; }
-.act-name { margin: 0.1rem 0 0; font-size: 1.7rem; line-height: 1.15; }
-.act-objective { margin: 0.4rem 0 0; color: var(--ink); }
-.sheet { flex: 1; padding: 1.2rem 1.2rem 6rem; max-width: 34rem; width: 100%; margin: 0 auto; }
+.act { padding: 1.2rem 1.3rem 1rem; border-bottom: 1px solid var(--edge); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+.act-num { margin: 0; color: var(--brass-hi); font-size: var(--t-label); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+.act-name { margin: 0.25rem 0 0; font-size: var(--t-display); line-height: 1.1; letter-spacing: -0.005em; }
+.act-objective { margin: 0.5rem 0 0; color: var(--ink); font-size: var(--t-body); }
+.sheet { flex: 1; padding: 1.3rem 1.1rem 7rem; max-width: 34rem; width: 100%; margin: 0 auto; }
+/* The Reticule (Jon, 28 Oct 2026: the menu was crude): an icon over each word,
+   the lit tab in brass on a soft pill, the bar frosted over the page. */
 .tabs {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  display: flex; background: var(--card); border-top: 1px solid var(--line);
-  padding-bottom: env(safe-area-inset-bottom);
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+  display: flex; padding: 0.4rem 0 calc(0.35rem + env(safe-area-inset-bottom));
+  background: rgba(3, 19, 28, 0.88); border-top: 1px solid var(--edge);
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
 }
 /* Seven tabs (eight on a host's phone) fit a narrow phone (25 Oct 2026, the
-   Notes tab; measured 26 Oct): the labels shrink with the screen's width and
-   never wrap; the buttons stay 3.4rem tall and a seventh of the width to tap.
-   The root font is 19px, so the floors are about 12px and 10.5px, and they
-   only bite under 320px wide: a 390px phone shows the seven labels at about
-   14px and the hosts' eight at about 12.5px; the iPhone 11 (414px) at 15px
-   and 13px. "Motives", the widest label, is about 3.6 times the font size. */
-.tab { flex: 1; min-height: 3.4rem; background: none; border: none; color: var(--dim); font-size: clamp(0.62rem, 3.7vw, 0.95rem); padding: 0; white-space: nowrap; min-width: 0; overflow: hidden; letter-spacing: -0.01em; }
-.tabs.eight .tab { font-size: clamp(0.56rem, 3.2vw, 0.9rem); }
-.tab.on { color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
+   Notes tab; measured 26 Oct; an icon over each word since 28 Oct): the
+   labels shrink with the screen's width and never wrap; the buttons stay
+   3.4rem tall and a seventh of the width to tap. The root font is 19px, so
+   the floors are still about 12px and 10.5px: a 390px phone shows the seven
+   labels at about 12.5px and the hosts' eight at about 11.7px; the iPhone 11
+   (414px) at 13px and 12.4px. "Motives", the widest label, is about 3.6
+   times the font size. */
+.tab {
+  flex: 1; min-width: 0; min-height: 3.4rem; padding: 0; background: none; border: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+  color: rgba(169, 184, 192, 0.85); font-size: clamp(0.62rem, 3.2vw, 0.8rem); font-weight: 500; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; transition: color 150ms ease;
+}
+.tabs.eight .tab { font-size: clamp(0.56rem, 3.0vw, 0.74rem); }
+.tab-mark { position: relative; display: grid; place-items: center; width: min(3.1rem, 92%); height: 1.85rem; border-radius: 999px; transition: background 150ms ease; }
+.tab-icon { width: 1.3rem; height: 1.3rem; display: block; }
+.tab-word { display: block; max-width: 100%; overflow: hidden; text-overflow: clip; }
+.tab.on { color: var(--brass-hi); }
+.tab.on .tab-mark { background: rgba(166, 162, 83, 0.2); }
+.tab.on .tab-icon { stroke-width: 2; }
+.tab:active .tab-mark { background: rgba(241, 232, 214, 0.08); }
+.tab .badge { position: absolute; top: 0.1rem; right: calc(50% - 0.95rem); margin: 0; width: 0.6rem; height: 0.6rem; box-shadow: 0 0 0 2px rgba(3, 19, 28, 0.95); }
 
 .you { text-align: center; }
 /* The character card. Playing-card shape, 5 by 7, as wide as the phone allows. */
@@ -156,7 +199,7 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .bag strong { font-size: 1.4rem; color: var(--ink); }
 .idle { margin: 1.4rem 0 0; color: var(--dim); font-style: italic; }
 .idle-cat { font-style: normal; color: var(--ink); }
-.gloss { color: var(--dim); font-size: 0.95rem; margin: 1.2rem 0 0.8rem; }
+.gloss { color: var(--dim); font-size: var(--t-small); margin: 1.2rem 0 0.8rem; }
 
 .motives { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .motive {
@@ -205,7 +248,8 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .house-study { background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.5rem 0.9rem; margin: 0.4rem 0; }
 .house-study .gloss { margin: 0.2rem 0; }
 .start-night { margin-top: 2.5rem; }
-.quiet { background: none; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--dim); min-height: 2.8rem; padding: 0.4rem 1rem; font-size: 0.95rem; }
+.quiet { background: rgba(241, 232, 214, 0.04); border: 1px solid var(--edge); border-radius: 0.95rem; color: var(--dim); min-height: 2.9rem; padding: 0.45rem 1.1rem; font-size: var(--t-small); font-weight: 500; }
+.quiet:active:not(:disabled) { background: rgba(241, 232, 214, 0.09); }
 
 /* preview mode only */
 .preview-act { position: fixed; top: 0.4rem; right: 0.4rem; z-index: 9; background: #333; border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.8rem; color: var(--dim); }
@@ -284,12 +328,15 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 
 /* ---- what a phone is dealt (the Now tab, the Clues tab) ---- */
 .now { display: grid; gap: 1rem; }
-.quiet-line { text-align: center; color: var(--dim); margin: 1.4rem 0 0.4rem; }
-.dealt { background: var(--card); border: 1px solid var(--line); border-radius: 0.9rem; padding: 1rem 1.1rem; display: grid; gap: 0.7rem; }
-.dealt h3 { margin: 0; font-size: 1.35rem; line-height: 1.2; }
+.quiet-now { display: grid; gap: 0.6rem; justify-items: center; text-align: center; padding: 2.4rem 1rem 1rem; }
+.quiet-now::before { content: ''; width: 2.6rem; height: 1px; background: var(--brand-brass); opacity: 0.7; margin-bottom: 0.6rem; }
+.quiet-lead { margin: 0; font-family: var(--serif); font-size: var(--t-lead); line-height: 1.35; max-width: 22rem; }
+.quiet-line { margin: 0; text-align: center; color: var(--dim); font-size: var(--t-small); }
+.dealt { background: var(--surface); border: 1px solid var(--edge); border-radius: var(--radius); padding: 1.25rem 1.2rem; display: grid; gap: 0.75rem; box-shadow: var(--lift); }
+.dealt h3 { margin: 0; font-size: var(--t-title); line-height: 1.15; }
 .dealt p { margin: 0; }
-.dealt .big { justify-self: center; margin-top: 0.3rem; }
-.dealt .eyebrow, .clues .eyebrow { margin: 0; color: var(--dim); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.dealt .big { justify-self: stretch; min-width: 0; margin-top: 0.35rem; }
+.dealt .eyebrow, .clues .eyebrow { margin: 0; color: var(--brass-hi); font-size: var(--t-label); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
 .dealt.go, .dealt.notice { text-align: center; justify-items: center; }
 .chip-tag { justify-self: start; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--brand-parchment); background: var(--brand-claret); border-radius: 0.4rem; padding: 0.15rem 0.5rem; }
 .badge { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--accent); margin-left: 0.35rem; vertical-align: middle; }
@@ -336,11 +383,11 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 
 /* ---- every phone lights up ---- */
 .window { justify-content: flex-start; padding-top: 1.6rem; }
-.window .ask { font-size: 1.7rem; margin: 0.4rem 0 0.6rem; }
+.window .ask { font-size: var(--t-display); line-height: 1.15; margin: 0.4rem 0 0.8rem; }
 .asker { display: grid; justify-items: center; gap: 0.5rem; }
 .choices { display: grid; gap: 0.7rem; width: min(92vw, 24rem); }
-.choice { min-height: 3.8rem; font-size: 1.25rem; background: var(--card); border: 2px solid var(--line); border-radius: 0.9rem; padding: 0.6rem 1rem; }
-.choice:active { border-color: var(--accent); }
+.choice { min-height: 4rem; font-size: 1.2rem; font-weight: 500; background: var(--surface); border: 1px solid var(--edge); border-radius: var(--radius); padding: 0.6rem 1rem; box-shadow: var(--lift); transition: transform 120ms ease, border-color 120ms ease; }
+.choice:active:not(:disabled) { border-color: var(--brass-hi); transform: scale(0.985); }
 .clock { display: grid; justify-items: center; margin-top: auto; padding-top: 1rem; }
 .clock .bar { margin-top: 0; }
 .clock .gloss { margin: 0.4rem 0 0; }
@@ -589,9 +636,8 @@ h1, h2, h3, .who, .act-name { font-family: ui-serif, 'New York', 'Source Serif 4
 .award-list { list-style: none; margin: 0.5rem 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 /* Act 2, Lights Out: the next step at the top of Now (docs/solving-the-case.md) */
-.dealt.lights { text-align: center; justify-items: center; border-color: var(--good); }
-.dealt.lights h3 { font-size: 1.5rem; }
-.dealt.lights.lights-go { box-shadow: 0 0 0 2px var(--good); }
+.dealt.lights { text-align: center; justify-items: center; border-color: rgba(166, 162, 83, 0.45); }
+.dealt.lights.lights-go { border-color: var(--brass-hi); box-shadow: var(--lift), 0 0 0 1px var(--brass-hi), 0 0 28px rgba(166, 162, 83, 0.22); }
 /* the hint cat's line: the whole of what it says; under a greeting, set apart by a rule */
 .hint-line { margin: 0; font-size: 1.1rem; }
 .said + .hint-line { margin-top: 0.2rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
@@ -740,18 +786,27 @@ em.stage { font-style: italic; color: var(--dim); }
 .members.portraits li { display: flex; align-items: center; gap: 0.8rem; }
 .portrait-s { width: 3.6rem; height: 3.6rem; object-fit: contain; border-radius: 50%; background: var(--card); border: 1px solid var(--line); }
 .locked-in { display: flex; align-items: center; gap: 0.8rem; margin: 0; color: var(--good); }
-.dealt.act4 { text-align: center; justify-items: center; border-color: var(--good); }
-.dealt.act4 h3 { font-size: 1.5rem; }
-.waiting-game { display: grid; gap: 0.5rem; width: 100%; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.dealt.act4 { text-align: center; justify-items: center; border-color: rgba(166, 162, 83, 0.45); }
+.waiting-game { display: grid; gap: 0.6rem; width: 100%; margin-top: 0.4rem; padding-top: 1rem; border-top: 1px solid var(--edge); }
 button.link { background: none; border: 0; color: var(--dim); text-decoration: underline; padding: 0.4rem 0; font-size: 0.95rem; }
 
-/* Salem's Motion Game: the whole card tints the colour, so the game works with no lights */
-.salem { display: grid; gap: 0.6rem; }
-.salem-play { display: grid; gap: 0.6rem; width: 100%; padding: 1.4rem 0.8rem; border-radius: 12px; background: var(--card); transition: background 120ms; }
-.salem-play.red { background: #b0141c; color: #fff; }
-.salem-play.green { background: #0d7a3a; color: #fff; }
-.salem-colour { margin: 0; font-size: 2.4rem; font-weight: 700; letter-spacing: 0.04em; }
-.salem-play .slip { margin: 0; font-weight: 600; }
+/* Salem's Motion Game: while a round plays the whole phone is the colour and nothing else (Jon, 28 Oct 2026) */
+.salem { display: grid; gap: 0.8rem; }
+/* the rule, once, before the first round: a red tile and a green tile */
+.salem-key { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%; }
+.salem-key span { display: grid; place-items: center; min-height: 5.6rem; border-radius: 1rem; color: #fff; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px rgba(0, 0, 0, 0.35); }
+.salem-key-red { background: linear-gradient(180deg, #ec2230, #c00f1c); }
+.salem-key-green { background: linear-gradient(180deg, #12b357, #078a3c); }
+.salem-aside { margin: 0; font-family: var(--serif); font-style: italic; color: var(--dim); }
+.salem-play { position: fixed; inset: 0; z-index: 90; display: grid; place-content: center; justify-items: center; gap: 1rem; padding: 2rem 1.2rem; text-align: center; background: #101418; color: #fff; transition: background 80ms; }
+.salem-play.red { background: #e01020; }
+.salem-play.green { background: #08a048; }
+.salem-count { margin: 0; font-size: 8rem; font-weight: 700; line-height: 1; }
+.salem-play .slip { margin: 0; font-size: 1.4rem; font-weight: 600; }
+.salem-round { position: absolute; bottom: 2.4rem; left: 0; right: 0; margin: 0; display: flex; justify-content: center; gap: 0.7rem; }
+.salem-round span { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); }
+.salem-round span.done, .salem-round span.now { background: rgba(255,255,255,0.85); }
+.salem-round span.now { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
 
 /* The Game test tab's practice pages (?practice=salem, ?practice=boo): one card, the night's game in it */
 .practice { min-height: 100vh; min-height: 100dvh; padding: 1.2rem 1rem 3rem; max-width: 34rem; margin: 0 auto; display: grid; align-content: start; gap: 1rem; background: var(--bg); }
@@ -768,9 +823,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .preview-note { position: sticky; top: 0; z-index: 9; margin: 0; padding: 0.5rem 1rem; background: #333; color: var(--ink); font-size: 0.9rem; text-align: center; }
 
 /* Boo's poses on the phones */
-.boo-pose { display: grid; gap: 0.4rem; padding: 1rem; border-radius: 12px; background: var(--brand-claret); }
-.boo-strike { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: 0.06em; }
-.boo-hold { margin: 0; font-size: 1.4rem; color: var(--good); }
+.boo-pose { display: grid; gap: 0.4rem; padding: 1.2rem 1rem; border-radius: var(--radius); background: radial-gradient(ellipse at 50% 40%, rgba(191, 25, 37, 0.45) 0%, rgba(89, 47, 50, 0.35) 55%, transparent 80%); }
+.boo-strike { margin: 0; font-size: 3rem; font-weight: 800; letter-spacing: 0.06em; }
+.boo-hold { margin: 0; font-size: 4rem; font-weight: 700; line-height: 1; color: var(--good); }
 .boo-judge { font-size: 1.2rem; font-style: italic; }
 .boo-phone { display: grid; gap: 0.4rem; }
 .boo-phone-say { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--good); }
@@ -881,7 +936,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .pose-credit figcaption { font-size: min(2.6vw, 3.4vh); color: var(--dim); text-align: center; }
 
 /* The game names (handoff §16): the hook under a game's name, on the phone and on each room's screen. */
-.game-hook { font-style: italic; color: var(--dim); margin: -0.2rem 0 0.8rem; }
+.game-hook { font-family: var(--serif); font-style: italic; font-size: 1.05rem; line-height: 1.35; color: var(--dim); margin: -0.2rem 0 0.8rem; }
 .kiosk .game-name { margin: 0 0 1vw; }
 .kiosk .game-name .kiosk-crest { margin-bottom: 0.3vw; }
 .kiosk .game-hook { font-size: 1.8vw; margin: 0 0 1vw; }
@@ -944,3 +999,55 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .dealt.notice .birthday-card { display: grid; justify-items: center; gap: 0.4rem; }
 .dealt.notice .birthday-irwin { max-height: 11rem; max-width: 100%; object-fit: contain; }
 .dealt.notice .birthday-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 1.5rem; margin: 0; color: var(--good); }
+
+/* ---- The phone's look (Jon, 28 Oct 2026: "make it look pretty... the spacing,
+   it's bland overall... a hierarchy system"): every row and panel on the
+   phone sits on the same lifted surface, with the same corner and edge; the
+   tokens are in :root. Room screens (.kiosk) are not touched. ---- */
+.motive, .pick, .gauge-item, .cat, .passing, .role-row, .panel, .run, .host-msg, .house-study, .name, .info, .option, .notes-box, .name-input {
+  background: var(--surface); border: 1px solid var(--edge); box-shadow: var(--lift);
+}
+.motive, .pick, .name { border-radius: 0.95rem; }
+.gauge-item, .cat, .passing, .role-row, .panel, .run, .notes-box { border-radius: var(--radius); }
+.motives, .pick-list { gap: 0.55rem; }
+.motive { padding: 0.8rem 1rem; transition: opacity 150ms ease; }
+.motive .n, .pick .n { color: var(--brass-hi); font-weight: 600; font-size: var(--t-small); }
+.motive.off { opacity: 0.4; box-shadow: none; }
+.motive-row .motive-note { border-left-color: var(--brand-brass); font-size: var(--t-small); }
+.gauge-item.on, .info.on { border-color: rgba(214, 207, 134, 0.6); }
+.gauge-name, .household-who strong { font-size: 1.2rem; }
+.stop-word { font-size: var(--t-small); }
+.pick.on { border-color: var(--brass-hi); box-shadow: var(--lift), inset 0 0 0 1px var(--brass-hi); }
+.chip { border-radius: 0.8rem; border-color: var(--edge); background: var(--surface-flat); }
+.chip.on { border-color: var(--brass-hi); box-shadow: inset 0 0 0 1px var(--brass-hi); }
+
+/* a cat's face on a card sits in a soft brass glow */
+.dealt .face-l { width: 6.4rem; height: 6.4rem; padding: 0.4rem; border-radius: 50%; background: radial-gradient(circle, rgba(166, 162, 83, 0.26) 0%, rgba(166, 162, 83, 0.08) 52%, transparent 70%); }
+
+/* a host's line: their voice, set apart as a quotation */
+.host-line { text-align: left; font-family: var(--serif); font-size: 1.02rem; line-height: 1.4; background: rgba(241, 232, 214, 0.05); border: 1px solid var(--edge); border-radius: 0.95rem; padding: 0.75rem 0.9rem; margin: 0.2rem 0 0.4rem; }
+
+/* the tabs' own pages: a short gloss, then the content */
+.sheet .gloss:first-child { margin-top: 0; }
+.rules { gap: 1.2rem; }
+.rules h3 { font-size: 1.2rem; color: var(--ink); }
+.rules p { color: var(--ink); opacity: 0.9; }
+.clues-act { gap: 0.7rem; }
+.bio { font-family: var(--serif); font-size: 1.1rem; line-height: 1.45; }
+
+/* the page arrives: what a tab or a card shows settles into place. Movement
+   only, never a fade from nothing: a phone that stalls an animation still
+   shows every word, a few pixels low at worst. */
+.sheet > *, .now > * { animation: rise 280ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+@keyframes rise { from { transform: translateY(8px); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sheet > *, .now > * { animation: none; } }
+
+/* the sheet under the header: a faint light from above, so the page has depth */
+.sheet { background: radial-gradient(ellipse 140% 45% at 50% 0%, rgba(18, 51, 66, 0.55) 0%, transparent 70%), var(--bg); }
+
+/* Two voices (28 Oct 2026): the household speaks in the serif (a cat's words,
+   a host's line, Boo's verdict, the act's line), the phone tells you what to
+   do in the sans. */
+.said, .hint-line, .bag-line, .boo-judge, .role-card { font-family: var(--serif); line-height: 1.45; }
+.said { font-size: 1.12rem; }
+.speaker strong, .speaker h3 { font-size: 1.3rem; }

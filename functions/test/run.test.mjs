@@ -156,7 +156,7 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
 
   // Act 3: supper (the phone stays in the Parlour, charging), the bulletin armed, the dinner wrap-up
   // (the first motives prompt, 25 Oct 2026); then Start Act 4
-  for (const uid of uids) assert.match(cards(db, uid, 'notice').at(-1).text, /Leave your phone here in the Parlour, charging/)
+  for (const uid of uids) assert.match(cards(db, uid, 'notice').at(-1).text, /Leave your phone charging in the Parlour/)
   await next() // arm the bulletin
   await next() // the dinner wrap-up
   assert.equal(night(db, nightId).beat, 'wrap')

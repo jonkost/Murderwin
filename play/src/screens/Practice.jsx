@@ -32,14 +32,14 @@ const ui = uiLines(null)
 
 // The phone's own words while it practises. Salem's last line promises a
 // clue the practice does not give, so it stops before that.
-const PRACTICE_SALEM_LINES = { ...SALEM_LINES, cleared: "Huh. You lot can follow instructions. Backwards ones, anyway." }
+const PRACTICE_SALEM_LINES = { ...SALEM_LINES, cleared: 'Huh. You lot can follow instructions.' }
 const SAY = {
-  closed: 'The practice is closed. Open it again on the Game test page in the workshop to play again.',
-  cleared: 'That was all three rounds. On the night, Salem’s reward shows here. This is practice, so nothing is paid.',
-  joining: 'Joining the practice…',
-  booNotStarted: 'The show has not started. Start it on the Game test page in the workshop, and watch the wall.',
-  booDone: 'That’s the show. This is practice, so nothing is paid.',
-  booWallIdle: 'Practice. Start the show on the Game test page in the workshop.',
+  closed: 'The practice is closed. Open it on the Game test page.',
+  cleared: 'All three rounds done. Nothing is paid in practice.',
+  joining: 'Joining…',
+  booNotStarted: 'Start the show on the Game test page.',
+  booDone: 'That’s the show. Nothing is paid in practice.',
+  booWallIdle: 'Practice. Start the show on the Game test page.',
 }
 
 function Shell({ game, cat, catName, children }) {
@@ -115,7 +115,6 @@ function NameStep({ onName }) {
           placeholder="Your first name" aria-label="Your first name" value={text} onChange={e => setText(e.target.value)} autoFocus />
         <button className="big" type="submit" disabled={!n}>Join the practice</button>
       </form>
-      <p className="gloss">So the others can see who joined. This phone remembers it.</p>
     </main>
   )
 }
@@ -222,9 +221,9 @@ function ShakeMeter({ motion }) {
         <div className="meter-line" />
       </div>
       <p className="gloss">
-        {!motion.ok ? 'This phone has not felt any movement yet.' : shaking ? 'Shaking: past the line counts as a shake.' : 'Still.'}
+        {!motion.ok ? 'No movement felt yet.' : shaking ? 'Shaking' : 'Still'}
       </p>
-      <p className="gloss">On red, keep shaking: still for more than {still} seconds is a slip. On green, any shake past the line is a slip.</p>
+      <p className="gloss">Red: still for {still} s is a slip. Green: past the line is a slip.</p>
     </div>
   )
 }

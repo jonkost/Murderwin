@@ -20,7 +20,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
         <>
           {character && <CharacterCard character={character} />}
           <p className="moment-text">{bioFor(content, character)}</p>
-          <p className="gloss">That is who you are tonight, to everyone, all night. Say it when asked. Your name and job are public; everything else is yours.</p>
+          <p className="gloss">Your name and job are public. Everything else is yours.</p>
         </>
       ),
     },
@@ -29,7 +29,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
       body: (
         <>
           {session.bag ? <p className="bag-big">{session.bag}</p> : <p className="moment-text">The host will hand you one.</p>}
-          <p className="moment-text">Collect the bag with this number. Six ordinary things inside. You may look in your own. Keep it closed unless someone asks you to open it.</p>
+          <p className="moment-text">Collect the bag with this number. Look inside your own. Keep it closed unless someone asks.</p>
         </>
       ),
     },
@@ -48,7 +48,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
               </li>
             ))}
           </ul>
-          <p className="gloss">They talk. Nobody mentions it. Sir Irwin never lies. The others each have their way. How each one feels about you is on the Cats tab.</p>
+          <p className="gloss">They talk. Sir Irwin never lies. How each one feels about you is on the Cats tab.</p>
         </>
       ),
     },
@@ -61,9 +61,9 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
             <dt>Now</dt><dd>What to do at this moment.</dd>
             <dt>You</dt><dd>Your character and your bag.</dd>
             <dt>Clues</dt><dd>Everything you have been told.</dd>
-            <dt>Notes</dt><dd>Your own scribbles. Nobody else can read them.</dd>
+            <dt>Notes</dt><dd>Your own scribbles, for you alone.</dd>
             <dt>Motives</dt><dd>Nineteen reasons. Cross them off.</dd>
-            <dt>Cats</dt><dd>The household, and how each one feels about you.</dd>
+            <dt>Cats</dt><dd>How each one feels about you.</dd>
             <dt>Rules</dt><dd>The rules, any time.</dd>
           </dl>
           <p className="gloss">Nothing on your phone can be sent to another phone. Share with your mouth.</p>

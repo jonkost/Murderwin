@@ -8,6 +8,7 @@ import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, note
 import Act4 from './Act4'
 import Spoken from './Spoken'
 import Allow from './Allow'
+import TabIcon from './TabIcon'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -59,9 +60,8 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       <header className="act">
         {night.act >= 1 && act ? (
           <>
-            <p className="act-num">Act {night.act} · {act.plain}{night.rehearsal ? ' · rehearsal' : ''}</p>
+            <p className="act-num">Act {night.act} · {act.plain}</p>
             <h1 className="act-name">{script.banner || act.name}</h1>
-            {script.objective && <p className="act-objective">{script.objective}</p>}
           </>
         ) : (
           <>
@@ -72,7 +72,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
       </header>
 
       <section className="sheet" aria-live="polite">
-        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} ballot={ballot} over={over} />}
+        {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} ballot={ballot} over={over} objective={script.objective} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
         {shown === 'notes' && <Notes uid={uid} notes={notes} />}
@@ -84,8 +84,9 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
       <nav className={session.host ? 'tabs eight' : 'tabs'} aria-label="Your Reticule">
         {tabs.map(t => (
-          <button key={t.key} className={t.key === shown ? 'tab on' : 'tab'} onClick={() => setTab(t.key)}>
-            {t.label}{t.key === 'now' && waiting > 0 && shown !== 'now' ? <span className="badge" aria-label={`${waiting} waiting`} /> : null}
+          <button key={t.key} className={t.key === shown ? 'tab on' : 'tab'} onClick={() => setTab(t.key)} aria-current={t.key === shown ? 'page' : undefined}>
+            <span className="tab-mark"><TabIcon name={t.key} />{t.key === 'now' && waiting > 0 && shown !== 'now' ? <span className="badge" aria-label={`${waiting} waiting`} /> : null}</span>
+            <span className="tab-word">{t.label}</span>
           </button>
         ))}
       </nav>
@@ -98,7 +99,9 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // screen says so plainly; that is a real state, not an error. The Act 7
 // ballot sits at the top as a card (cue 19), then a small "Your three are in"
 // until the server has this phone's picks. At The End the result stays.
-function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow, ballot = null, over = false }) {
+// `objective` (Jon, 28 Oct 2026: fewer words): the act's one line, said here
+// when there is nothing to do, not over every screen.
+function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow, ballot = null, over = false, objective = '' }) {
   const quiet = over ? 'That is the end of the night. Everything you were told is still here to read.'
     : night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'
   return (
@@ -110,7 +113,10 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
       {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
       {rooms && meetNote && <p className="trouble" role="status">{meetNote}</p>}
       {cards.length === 0 && !lights && !rooms && !ballot && (
-        <p className="moment-text quiet-line">{quiet}</p>
+        <div className="quiet-now">
+          {objective && !over && night.act >= 1 && <p className="quiet-lead">{objective}</p>}
+          <p className="quiet-line">{quiet}</p>
+        </div>
       )}
       {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />)}
       {night.act === 6 && <Eliminations night={night} content={content} />}
@@ -211,7 +217,7 @@ function Motives({ uid, content, notes }) {
   if (!list.length) return <p className="moment-text">The motives are on their way.</p>
   return (
     <div>
-      <p className="gloss">Nineteen reasons someone might. Tap one to cross it off. Your note, nobody else’s.</p>
+      <p className="gloss">Tap a motive to cross it off. Only you see this.</p>
       <ol className="motives">
         {list.map(m => (
           <li key={m.n} className="motive-row">
@@ -293,7 +299,7 @@ function Notes({ uid, notes }) {
   const line = notesLine(text, stored, { failed })
   return (
     <div className="notes">
-      <p className="gloss">Your own notes for tonight. Nobody else can read them.</p>
+      <p className="gloss">Only you can read these.</p>
       <textarea className="notes-box" value={text} onChange={onChange} onBlur={flush} rows={10} aria-label="Your notes"
         placeholder="Who said what, and what you make of it." autoCapitalize="sentences" />
       <p className="gloss saved notes-line">{line}</p>
@@ -320,7 +326,7 @@ function Cats({ session, content, ui, act }) {
   const friend = salemFriendNote(session)
   return (
     <div>
-      <p className="gloss">Where you stand with each of the household. Tap one to learn more.</p>
+      <p className="gloss">How each of them feels about you. Tap one for more.</p>
       <ul className="gauges">
         {cards.map(cat => {
           const level = cat.key === 'irwin' ? 5 : stopOf(session.affection?.[cat.key] ?? 3) // kept in half steps; shown at the nearest stop

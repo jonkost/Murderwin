@@ -36,7 +36,7 @@ export default function Allow({ uid, onDone = null, again = false, onward = 'On 
       {!got && <button className="big" disabled={busy} onClick={allow}>Allow</button>}
       {got && (
         <>
-          {Object.values(got).some(v => v === 'denied') && <p className="gloss">Something said no. That is all right: the game works anyway. Ask the host if a shake game will not feel your phone.</p>}
+          {Object.values(got).some(v => v === 'denied') && <p className="gloss">Something said no. The game works anyway.</p>}
           <button className="big" onClick={done}>{onward}</button>
         </>
       )}
