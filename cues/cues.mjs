@@ -54,7 +54,7 @@ import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
-import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
+import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -305,11 +305,16 @@ let state = { hall: null, sound: null }
 let sceneState = emptySceneState()
 let stops = []
 
+// The Game test tab's Get Off My Lawn! practice, watched all the time (it
+// needs no night), so the strings follow it too (lib/strings.js salemToMirror).
+let practiceSalem = null
+
 let stringsTimer = null
 function mirrorStrings() {
   const now = Date.now()
-  strings.update(stringsColour(docs.salem, now))
-  const next = nextChangeAt(docs.salem, now)
+  const salem = salemToMirror(docs.salem, practiceSalem)
+  strings.update(stringsColour(salem, now))
+  const next = nextChangeAt(salem, now)
   clearTimeout(stringsTimer)
   stringsTimer = next ? setTimeout(mirrorStrings, next - now) : null
 }
@@ -394,6 +399,7 @@ function watchNight(id) {
 }
 
 if (!OFFLINE) {
+  onSnapshot(doc(db, 'public_state/game_test_salem'), snap => { practiceSalem = snap.data() ?? null; mirrorStrings() }, e => log(`salem practice: ${e.message}`))
   onSnapshot(doc(db, 'public_state/active'), snap => {
     const id = snap.data()?.nightId ?? null
     if (id === nightId) return

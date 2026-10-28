@@ -53,6 +53,16 @@ export function stringsColour(salem, now = Date.now()) {
   return colour
 }
 
+// Which of Salem's records the strings follow: the night's while a group is
+// playing it, else the Game test tab's practice (public_state/game_test_salem,
+// the same shape) while that is playing. Jon, 28 Oct 2026: the lights did not
+// go with the practice, because the brain only watched the night's record.
+export function salemToMirror(night, practice) {
+  if (night?.state === 'playing') return night
+  if (practice?.state === 'playing') return practice
+  return night ?? null
+}
+
 // When the colour next changes (the next flip, or the round's end), so the
 // relay can wake exactly then; null when nothing more is scheduled.
 export function nextChangeAt(salem, now = Date.now()) {

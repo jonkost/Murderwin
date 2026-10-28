@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { stringsColour, nextChangeAt, stringsBody, StringLights, createStringsMirror, DEFAULT_STRING_COLOURS, DECOR, RETRY_MS } from '../lib/strings.js'
+import { stringsColour, nextChangeAt, salemToMirror, stringsBody, StringLights, createStringsMirror, DEFAULT_STRING_COLOURS, DECOR, RETRY_MS } from '../lib/strings.js'
 
 const SHEET = JSON.parse(readFileSync(new URL('../scenes.json', import.meta.url), 'utf8'))
 const ts = ms => ({ toMillis: () => ms }) // a Firestore Timestamp
@@ -214,4 +214,14 @@ test('the relay switches the projector through the same `shortcuts run` as the s
   assert.ok(lib.includes('run = runShortcut') && lib.includes('await run(names[state], { timeoutMs })'), 'through runShortcut')
   const example = readFileSync(new URL('../.env.example', import.meta.url), 'utf8')
   for (const k of ['PROJECTOR_SHORTCUTS', 'PROJECTOR_SHORTCUT_ON', 'PROJECTOR_SHORTCUT_OFF']) assert.ok(example.includes(k), `${k} in cues/.env.example`)
+})
+
+test('the strings follow the Game test practice while it plays, and the night\'s game always wins', () => {
+  const playing = { state: 'playing', flips: [{ at: 1000, colour: 'red' }] }
+  const practice = { state: 'playing', flips: [{ at: 1000, colour: 'green' }] }
+  assert.equal(salemToMirror(null, practice), practice)
+  assert.equal(salemToMirror({ state: 'idle' }, practice), practice)
+  assert.equal(salemToMirror(playing, practice), playing)
+  assert.equal(stringsColour(salemToMirror({ state: 'idle' }, { state: 'idle' }), 2000), DECOR)
+  assert.equal(stringsColour(salemToMirror(null, practice), 2000), 'green')
 })
