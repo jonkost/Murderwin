@@ -8,7 +8,8 @@
     "pack-bags": "node pack-bags.mjs",
     "checks": "node checks.mjs",
     "board": "node board.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "upload-station": "node upload-station.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",

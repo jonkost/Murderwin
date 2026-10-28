@@ -34,8 +34,14 @@ on the Canon.
   Node (or opens its download page), keeps the Mac awake and restarts the
   station if it stops. The zip for SKMBA (Desktop, "Study station.zip")
   carries the parts and the settings, so nothing installs but Node.
-  Setting the online key word to match the Macs was refused by Claude
-  Code's permission check: it waits on Jon.
+  On Jon's yes the online key word was set to match station/.env and
+  cues/.env (checked by match only, never printed).
+- The zip is on the workshop (Jon asked): the Study test page's Download
+  the Study station button, shown while the station is not connected. It
+  lives in Cloud Storage at `downloads/study-station.zip`, staff only (a
+  signed-out request gets 403), never on Hosting, since it holds
+  station/.env and the site and repo are public. A new one after any change
+  to station/: `npm --prefix scripts run upload-station`.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 

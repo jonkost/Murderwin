@@ -55,8 +55,8 @@ export const SECTIONS = [
     devices: ['walls', 'phone', 'study'],
     steps: [
       'Save the study key word, once, in the box on this page.',
-      'Ask Claude Code to start the study station on the Mac by the walls.',
-      'Stand at the walls with your phone. Tap Flash the walls, then Teach the taps and touch each hexagon as it lights. The taps are kept on the Mac that runs the study: for the night, teach them on the M1 Air by the walls, once Claude Code has set it up.',
+      'On the Mac by the walls, double-click Start the Study in the Study station folder. No folder yet? Open this page on that Mac, tap Download the Study station below, and unzip it first.',
+      'Stand at the walls with your phone. Tap Flash the walls, then Teach the taps and touch each hexagon as it lights. The taps are kept on the Mac that runs the study: for the night, teach them on the Mac by the walls.',
       'Tap Play a practice round. Copy the pattern on the wall, then enter the colour and the number on the answer pad.',
       'Open Granolia’s screen on the study computer. During your practice round it shows the game; between groups in Act 4 it shows her rules card, and outside Act 4 the Study’s loop or its crest.',
     ],

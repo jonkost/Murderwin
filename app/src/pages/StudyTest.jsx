@@ -19,6 +19,35 @@ import {
 // group, sends no state and deals no clue (station/lib/teach.js and the
 // station's test mode). Nothing sealed reaches this page.
 
+// The Study station zip, for a Mac that does not have the station yet. The
+// link is asked for on the tap (it needs the staff sign-in), then opened.
+function StationZip({ api }) {
+  const [state, setState] = useState('ready') // ready | getting | none | refused | failed
+  const get = async () => {
+    setState('getting')
+    try {
+      const url = await api.zipUrl()
+      if (!url) { setState('none'); return }
+      window.location.assign(url)
+      setState('ready')
+    } catch (e) {
+      const code = e?.code ?? ''
+      setState(code === 'storage/object-not-found' ? 'none' : code === 'storage/unauthorized' || code === 'storage/unauthenticated' ? 'refused' : 'failed')
+    }
+  }
+  return (
+    <>
+      <button type="button" className="primary" onClick={get} disabled={state === 'getting'}>
+        {state === 'getting' ? 'Getting the zip…' : 'Download the Study station'}
+      </button>
+      {state === 'none' && <p className="hint" role="alert">The zip is not there. Ask Claude Code to save it again.</p>}
+      {state === 'refused' && <p className="hint" role="alert">Only your workshop sign-in can download it. Sign in on this Mac, then tap again.</p>}
+      {state === 'failed' && <p className="hint" role="alert">That did not work. Check this Mac's internet, then tap again.</p>}
+      <p className="hint">The first time, macOS may refuse to open Start the Study. Right-click it, choose Open, then Open again. Once is enough.</p>
+    </>
+  )
+}
+
 export default function StudyTest() {
   const api = useRef(null)
   if (!api.current) api.current = studyTestApi()
@@ -77,13 +106,14 @@ export default function StudyTest() {
             ? <p className="st-state good" role="status">The study station is connected.</p>
             : <>
               <p className="st-state bad" role="status">The study station is not connected.</p>
-              <p className="night-line">On the Mac by the walls, double-click Start the Study in the Study station folder. Not on that Mac yet? Ask Claude Code for the Study station zip.</p>
+              <p className="night-line">On the Mac by the walls, double-click Start the Study in the Study station folder. Not on that Mac yet? Open this page on that Mac, download the zip, double-click it to unzip, then double-click Start the Study inside.</p>
               {link.ago !== null && <p className="hint">Last heard from it {agoWords(link.ago)}.</p>}
               <p className="hint">Already running? Check the study key word is saved on this page, and that Claude Code put the same word on the study Mac. The station tries again within 20 seconds.</p>
             </>}
+        <StationZip api={api.current} />
         <details className="gt-claude">
           <summary>For Claude Code</summary>
-          <p className="hint">Start it with the double-click starter station/Start the Study.command (or cd station &amp;&amp; npm start) on the M1 Air by the walls. To move it to a Mac: zip station/ with its node_modules and .env (ditto -c -k --keepParent), AirDrop, unzip, double-click. STATION_KEY= in station/.env must match the key word saved here. The taught taps are saved on whichever Mac runs the station.</p>
+          <p className="hint">Start it with the double-click starter station/Start the Study.command (or cd station &amp;&amp; npm start) on the M1 Air by the walls. To move it to a Mac: the Download button gets the zip from Cloud Storage (downloads/study-station.zip, staff only, never on Hosting: it holds station/.env). After changing station/ or station/.env, save a new one: npm --prefix scripts run upload-station. STATION_KEY= in station/.env must match the key word saved here. The taught taps are saved on whichever Mac runs the station.</p>
         </details>
       </div>
 

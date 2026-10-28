@@ -4,14 +4,22 @@
 // date through the same function. Neither carries anything sealed: the
 // status is counts, states and the last tap, never a round's code.
 //
+// The Study station zip (scripts/upload-station.mjs, 28 Oct 2026) waits in
+// Cloud Storage at downloads/study-station.zip, staff only (storage.rules):
+// it holds station/.env, so it is never on the public site. zipUrl asks for
+// a download link, which only a signed-in staff account gets.
+//
 // On a dev server with ?preview=1 (no sign-in) a pretend station answers,
 // connected, so the page can be looked at.
 
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { app, db } from '../firebase'
+import { ref as storageRef, getDownloadURL } from 'firebase/storage'
+import { app, db, storage } from '../firebase'
 import { EMULATOR, EMULATOR_HOST, EMULATOR_PORTS, REGION } from './config'
 import { PREVIEW } from './previewFlag'
+
+export const STATION_ZIP = 'downloads/study-station.zip'
 
 let real = null
 function realApi() {
@@ -23,6 +31,7 @@ function realApi() {
       send: async (command, name = null) => (await call(name ? { command, name } : { command })).data,
       subscribeStatus: (onData, onError) => onSnapshot(doc(db, 'public_state', 'study_test_status'),
         snap => onData(snap.exists() ? snap.data() : null), onError),
+      zipUrl: () => getDownloadURL(storageRef(storage, STATION_ZIP)),
     }
   }
   return real
@@ -103,6 +112,7 @@ function previewApi() {
       const beat = setInterval(() => push({}), 20_000)
       return () => { listeners.delete(onData); clearInterval(beat) }
     },
+    zipUrl: async () => null,
   }
 }
 
