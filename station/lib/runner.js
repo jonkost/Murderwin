@@ -119,6 +119,7 @@ export function createRunner({
       case 'deck.on': return deck.paint(true)
       case 'deck.off': return deck.paint(false)
       case 'deck.shiver': return deck.shiver()
+      case 'deck.flash': return deck.flash?.(e.ok)
       case 'wait': return sleep(e.ms)
       case 'granolia': granolia = e.hint ? { ...e, at: serverNow() } : null; return
       case 'screen': { const { type, ...shown } = e; onScreen(shown); return sendState() }

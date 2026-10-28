@@ -31,6 +31,7 @@ export class FakeDeck {
   constructor({ log = console.log } = {}) { this.log = log; this.listeners = []; this.lit = false; this.paints = [] }
   async paint(lit) { this.lit = lit; this.paints.push(lit); this.log(`[deck] ${lit ? 'keys lit' : 'keys dark'}`) }
   async shiver() { this.log('[deck] shiver') }
+  async flash(ok) { this.flashes = [...(this.flashes ?? []), ok]; this.log(`[deck] corner ${ok ? 'green' : 'red'}`) }
   onKey(fn) { this.listeners.push(fn) }
   press(name) { this.listeners.forEach(fn => fn(name)) }
   async close() {}

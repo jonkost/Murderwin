@@ -11,16 +11,19 @@ import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } f
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// Only code: a new package needs the whole zip again (Start the Study runs
-// npm install only when the parts are missing).
+// Only code and the Stream Deck's key faces (keys/*.rgb): a new package
+// needs the whole zip again (Start the Study runs npm install only when the
+// parts are missing).
 export function stationFiles(station) {
   const lib = readdirSync(join(station, 'lib')).filter(f => f.endsWith('.js')).sort().map(f => `lib/${f}`)
-  return ['station.mjs', 'teach-touch.mjs', ...lib]
+  const keys = readdirSync(join(station, 'keys')).filter(f => f.endsWith('.rgb')).sort().map(f => `keys/${f}`)
+  return ['station.mjs', 'teach-touch.mjs', ...lib, ...keys]
 }
 
 export function buildStationCode(station, out) {
   rmSync(out, { recursive: true, force: true })
   mkdirSync(join(out, 'lib'), { recursive: true })
+  mkdirSync(join(out, 'keys'), { recursive: true })
   const files = stationFiles(station)
   const hash = createHash('sha256')
   for (const f of files) {

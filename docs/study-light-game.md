@@ -478,6 +478,12 @@ memory only. Nothing about a round is written anywhere except counts and timesta
   pair flashes them red once and shows the pair again. The pauses were tightened (the rest
   between patterns 0.6 s, the replay's extra wait gone). The hexagons sense a hand near them
   (they send hovers), so they read skin or a capacitive (touchscreen) stylus, not a plain stick.
+- The button box's look (Jon, 28 Oct 2026, the game's branding): each key is painted from a
+  face in `station/keys/` (raw RGB, 72 px, drawn by `station/keys/make.html`; to redraw, run
+  `python3 station/keys/save-keys.py`, open http://127.0.0.1:4197/make.html, press Save):
+  Manor blue with a brass rim and parchment serif numbers, the colour keys as colour tiles,
+  Undo in claret, Submit in wax red. The top-right key (blank) flashes a green tick for a right
+  pair and a red cross for a wrong one (`deck.flash`); a wrong pair no longer shivers the keys.
 - Updating the study Mac: `npm run build:site` copies the station's code (never `.env`, never
   `node_modules`) to `hosting/station-code/` (`scripts/station-code.mjs`); *Start the Study*
   fetches it at every start, so a deployed fix arrives by closing and reopening its window. A

@@ -125,7 +125,7 @@ test('a wrong touch replays the same pattern; hints climb at the second and four
   assert.equal(m.snapshot.hint, null)
 })
 
-test('entering: undo clears the last half; a wrong pair shivers and says which half was right; the Lines stay lit', () => {
+test('entering: undo clears the last half; a wrong pair flashes the corner red and says which half was right; the Lines stay lit', () => {
   const m = createStudy({ panelIds: PANELS, rand: seeded(6) })
   let now = 0
   m.touch(101, now); m.drain()
@@ -146,6 +146,7 @@ test('entering: undo clears the last half; a wrong pair shivers and says which h
   // wrong colour, right number
   m.key(otherColour, now); m.key(String(want.number), now); m.key('submit', now)
   let fx = m.drain()
+  assert.ok(fx.some(e => e.type === 'deck.flash' && e.ok === false), 'the corner flashes red')
   const g = fx.find(e => e.type === 'granolia')
   assert.equal(g.hint, 'half')
   assert.equal(g.colourRight, false)
@@ -157,6 +158,7 @@ test('entering: undo clears the last half; a wrong pair shivers and says which h
   assert.equal(m.drain().find(e => e.type === 'granolia').hint, 'words')
   // right
   enter(m, want, now)
+  assert.ok(m.drain().some(e => e.type === 'deck.flash' && e.ok === true), 'the corner flashes green')
   assert.equal(m.snapshot.pairsLocked, 1)
   assert.equal(m.state, 'playing')
   assert.equal(m.snapshot.round, 1)
@@ -235,4 +237,12 @@ test('every pattern starts with the Lines\' green 3, 2, 1; a wrong pair flashes 
   g.key(COLOURS.find(c => c !== want.colour), 3); g.key(String(want.number), 3); g.key('submit', 3)
   const wrong = g.drain().find(e => e.type === 'lines.wrong')
   assert.deepEqual(wrong.show, want)
+})
+
+test('every key has its branded face, and the corner has a tick and a cross', async () => {
+  const { face, FACE_SIZE, CORNER } = await import('../lib/streamdeck.js')
+  assert.equal(DECK.flat()[CORNER], 'blank')
+  for (const name of [...DECK.flat(), 'ok', 'wrong']) assert.equal(face(name)?.length, FACE_SIZE * FACE_SIZE * 3, name)
+  assert.equal(face('5', 96).length, 96 * 96 * 3, 'a bigger key is scaled')
+  assert.equal(face('nothing'), null)
 })

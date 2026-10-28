@@ -217,6 +217,7 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
       const numberRight = m.entry.number === want.number
       if (colourRight && numberRight) {
         m.pairs.push({ ...want })
+        emit({ type: 'deck.flash', ok: true }) // the top-right key: a green tick (Jon, 28 Oct 2026)
         emit({ type: 'deck.off' }); emit({ type: 'lines.rest' })
         m.hint = null; m.entry = { colour: null, number: null }
         emit({ type: 'granolia', hint: null }) // her word about this pair is spent; the next round starts clean
@@ -226,8 +227,8 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
         play(now)
         return
       }
-      // wrong pair: the keys shiver, the Lines flash red once and show the pair again, Granolia says which half was right
-      emit({ type: 'deck.shiver' })
+      // wrong pair: the top-right key flashes a red cross, the Lines flash red once and show the pair again, Granolia says which half was right
+      emit({ type: 'deck.flash', ok: false })
       emit({ type: 'lines.wrong', show: { ...want } })
       m.hint = m.hint === 'half' || m.hint === 'words' ? 'words' : 'half'
       m.entry = { colour: null, number: null }

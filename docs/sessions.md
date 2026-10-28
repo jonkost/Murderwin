@@ -63,6 +63,11 @@ on the Canon.
   Tried in the tests and on the real Lines layout, not yet on the walls.
   Deployed 28 Oct on Jon's yes (hosting, with the station code at
   `/station-code/`, version 3e5bd24aac00). Not pushed.
+- The Stream Deck in the game's branding (Jon picked branding over three
+  mock-ups): faces drawn once in a browser (`station/keys/make.html`) and
+  painted from files; the top-right key flashes a green tick for a right
+  pair, a red cross for a wrong one. The faces travel with the station
+  code, so SKMBA gets them on a restart after a deploy.
 - macOS on SKMBA refused the downloaded starter; right-click Open no longer
   works, so the page now says Open Anyway in Privacy & Security.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
