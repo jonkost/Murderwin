@@ -257,7 +257,7 @@ game; it serves the lights and the speakers.
    all night.
 4. *The study.* Your key word is kept from the rehearsal (if you ever save a
    new one, on the Game test tab or under The study, change `station/.env`
-   and `cues/.env` to match and restart both). On the M1 Air, double-click *Start the Study* in the Study station folder (or `cd station && npm start`). No folder on that Mac yet? Open the Study test page on it, tap Download the Study station, unzip, then double-click *Start the Study* (the first time, macOS may refuse: right-click it, choose Open, then Open again). Alive when
+   and `cues/.env` to match and restart both). On the M1 Air, double-click *Start the Study* in the Study station folder (or `cd station && npm start`). No folder on that Mac yet? Open the Study test page on it, tap Download the Study station, unzip, then double-click *Start the Study* (the first time, macOS refuses: click Done, then System Settings, Privacy & Security, Open Anyway beside Start the Study, and the Mac's password). Alive when
    the terminal prints `study station up` with the panel counts. `DOWN`
    beside either wall means the game runs on the screen instead; the clue
    still lands.

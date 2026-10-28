@@ -43,7 +43,7 @@ function StationZip({ api }) {
       {state === 'none' && <p className="hint" role="alert">The zip is not there. Ask Claude Code to save it again.</p>}
       {state === 'refused' && <p className="hint" role="alert">Only your workshop sign-in can download it. Sign in on this Mac, then tap again.</p>}
       {state === 'failed' && <p className="hint" role="alert">That did not work. Check this Mac's internet, then tap again.</p>}
-      <p className="hint">The first time, macOS may refuse to open Start the Study. Right-click it, choose Open, then Open again. Once is enough.</p>
+      <p className="hint">The first time, macOS refuses to open Start the Study. Click Done, open System Settings, Privacy &amp; Security, scroll down, click Open Anyway beside Start the Study, and type the Mac's password. Once is enough.</p>
     </>
   )
 }
