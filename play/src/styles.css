@@ -791,10 +791,10 @@ em.stage { font-style: italic; color: var(--dim); }
 button.link { background: none; border: 0; color: var(--dim); text-decoration: underline; padding: 0.4rem 0; font-size: 0.95rem; }
 
 /* Salem's Motion Game: while a round plays the whole phone is the colour and nothing else (Jon, 28 Oct 2026) */
-.salem { display: grid; gap: 0.8rem; }
+.salem { display: grid; gap: 0.8rem; justify-self: stretch; }
 /* the rule, once, before the first round: a red tile and a green tile */
 .salem-key { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; width: 100%; }
-.salem-key span { display: grid; place-items: center; min-height: 5.6rem; border-radius: 1rem; color: #fff; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px rgba(0, 0, 0, 0.35); }
+.salem-key span { display: grid; place-items: center; min-height: 5.6rem; border-radius: 1rem; color: #fff; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px rgba(0, 0, 0, 0.35); }
 .salem-key-red { background: linear-gradient(180deg, #ec2230, #c00f1c); }
 .salem-key-green { background: linear-gradient(180deg, #12b357, #078a3c); }
 .salem-aside { margin: 0; font-family: var(--serif); font-style: italic; color: var(--dim); }
