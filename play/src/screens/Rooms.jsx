@@ -363,11 +363,14 @@ export function FolderBack() {
 // ---- the Entryway: Boo's catwalk (?kiosk=boo) ------------------------------
 
 // The runway music: play/public/boo/catwalk.mp3 when Jon drops one in, else a
-// soft beat from the screen itself. It plays while Boo struts and stops for
-// each pose ("when the music stops, strike a pose").
+// groove the screen plays itself (kick, hats, a bass line). It plays while Boo
+// struts and stops for each pose ("when the music stops, strike a pose"); the
+// stop is a record scratch, so nobody can miss it (27 Oct 2026, Jon's note:
+// the game was not clear).
 function useRunwayMusic(on) {
   const audio = useRef(null)
   const beat = useRef(null)
+  const playing = useRef(false)
   useEffect(() => {
     if (!audio.current) {
       const a = new Audio(`${BASE}boo/catwalk.mp3`)
@@ -378,41 +381,115 @@ function useRunwayMusic(on) {
     if (on) {
       if (audio.current) audio.current.play().catch(() => startBeat(beat))
       else startBeat(beat)
+      playing.current = true
     } else {
       audio.current?.pause()
       stopBeat(beat)
+      if (playing.current) scratch()
+      playing.current = false
     }
     return () => {}
   }, [on])
   useEffect(() => () => { audio.current?.pause(); stopBeat(beat) }, [])
 }
+
+let sharedCtx = null
+function audioCtx() {
+  try {
+    if (!sharedCtx) sharedCtx = new (window.AudioContext || window.webkitAudioContext)()
+    if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {})
+    return sharedCtx
+  } catch { return null }
+}
+
+// One bar of the groove at 116 beats a minute, scheduled a little ahead.
+const BPM = 116
+const BASS = [55, 55, 65.4, 55, 73.4, 55, 65.4, 49] // eighth notes, A minor-ish
 function startBeat(ref) {
   if (ref.current) return
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    let n = 0
-    const id = setInterval(() => {
-      const o = ctx.createOscillator(), g = ctx.createGain()
-      o.frequency.value = n % 4 === 0 ? 110 : n % 2 === 0 ? 220 : 330
-      g.gain.setValueAtTime(0.0001, ctx.currentTime)
-      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01)
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18)
-      o.connect(g).connect(ctx.destination)
-      o.start(); o.stop(ctx.currentTime + 0.2)
+  const ctx = audioCtx()
+  if (!ctx) return // no sound on this screen: the wall still shows every moment
+  const out = ctx.createGain()
+  out.gain.value = 0.55
+  out.connect(ctx.destination)
+  const eighth = 60 / BPM / 2
+  let next = ctx.currentTime + 0.05
+  let n = 0
+  const noise = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate)
+  noise.getChannelData(0).forEach((_, i, d) => { d[i] = Math.random() * 2 - 1 })
+  const kick = t => {
+    const o = ctx.createOscillator(), g = ctx.createGain()
+    o.frequency.setValueAtTime(140, t)
+    o.frequency.exponentialRampToValueAtTime(42, t + 0.14)
+    g.gain.setValueAtTime(0.9, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3)
+    o.connect(g).connect(out); o.start(t); o.stop(t + 0.32)
+  }
+  const hat = (t, loud) => {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain()
+    s.buffer = noise
+    f.type = 'highpass'; f.frequency.value = 7000
+    g.gain.setValueAtTime(loud ? 0.22 : 0.1, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05)
+    s.connect(f).connect(g).connect(out); s.start(t); s.stop(t + 0.06)
+  }
+  const bass = (t, hz) => {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain()
+    o.type = 'sawtooth'; o.frequency.value = hz
+    f.type = 'lowpass'; f.frequency.value = 420
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.32, t + 0.01)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + eighth * 0.9)
+    o.connect(f).connect(g).connect(out); o.start(t); o.stop(t + eighth)
+  }
+  const id = setInterval(() => {
+    while (next < ctx.currentTime + 0.2) {
+      if (n % 2 === 0) kick(next)
+      hat(next, n % 2 === 1)
+      bass(next, BASS[n % BASS.length])
+      next += eighth
       n++
-    }, 300)
-    ref.current = { ctx, id }
-  } catch { /* no sound on this screen: the wall still shows the poses */ }
+    }
+  }, 50)
+  ref.current = { id, out }
 }
 function stopBeat(ref) {
   if (!ref.current) return
   clearInterval(ref.current.id)
-  ref.current.ctx.close().catch(() => {})
+  const { out } = ref.current
+  try { out.gain.setTargetAtTime(0.0001, out.context.currentTime, 0.02) } catch { /* already gone */ }
+  setTimeout(() => out.disconnect(), 300)
   ref.current = null
+}
+// The needle dragged off the record: the moment to freeze.
+function scratch() {
+  const ctx = audioCtx()
+  if (!ctx) return
+  try {
+    const t = ctx.currentTime
+    const len = 0.35
+    const buf = ctx.createBuffer(1, ctx.sampleRate * len, ctx.sampleRate)
+    buf.getChannelData(0).forEach((_, i, d) => { d[i] = Math.random() * 2 - 1 })
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain()
+    s.buffer = buf
+    f.type = 'bandpass'; f.Q.value = 6
+    f.frequency.setValueAtTime(2400, t)
+    f.frequency.exponentialRampToValueAtTime(300, t + len)
+    g.gain.setValueAtTime(0.6, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + len)
+    s.connect(f).connect(g).connect(ctx.destination); s.start(t); s.stop(t + len)
+  } catch { /* no sound: the wall still flashes */ }
 }
 
 const BOO_FRAMES = ['Boo 1.png', 'Boo 2.png', 'Boo 3.png', 'Boo 4.png']
+const booFrame = name => `${BASE}household/full/${encodeURIComponent(name)}`
 export const BOO_INTRO = RULES_LINES.entryway // Boo's line on her wall and on her Act 4 rules card
+// How the show goes, in three steps, on her rules card and in her intro.
+export const BOO_STEPS = [
+  ['♪', 'The music plays: strut down the runway.'],
+  ['✋', 'The music stops: strike a pose and freeze.'],
+  ['★', 'Hold it while the count runs down. Then Boo judges.'],
+]
 
 export function BooWall({ boo, night, nightId, serverNow }) {
   const told = useRef(false)
@@ -425,42 +502,88 @@ export function BooWall({ boo, night, nightId, serverNow }) {
   return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} night={night} />
 }
 
+function BooSteps() {
+  return (
+    <ol className="boo-steps">
+      {BOO_STEPS.map(([mark, words]) => <li key={words}><span className="boo-step-mark" aria-hidden="true">{mark}</span>{words}</li>)}
+    </ol>
+  )
+}
+
+// Three dots along the runway: the poses done, this one, the ones to come.
+function BooPips({ pose, of }) {
+  return (
+    <p className="boo-pips" aria-label={`Pose ${pose} of ${of}`}>
+      {Array.from({ length: of }, (_, i) => <span key={i} className={i + 1 < pose ? 'done' : i + 1 === pose ? 'now' : ''} />)}
+      <span className="boo-pips-words">Pose {pose} of {of}</span>
+    </p>
+  )
+}
+
 // The wall itself, from one record in the night's shape (lib/night.js
 // booMoment): the night's (above) or the Game test tab's practice
 // (?kiosk=boo&practice=1, screens/Practice.jsx), which pays nobody. Not
 // `live`: outside Act 4 the wall's loop; in Act 4 (and in practice) the rules
 // card, with `idleLine` under it and the room's code only on a real night.
-// Her intro is the rules card too, with her walking frames for the picture.
+// Her intro is the rules card too, with the three steps under her line.
 // `onOver()` is called while the show is over.
+// The look (27 Oct 2026): a lit runway along the bottom of the triangle wall,
+// Boo in a spotlight, and every moment says what to do in plain words.
 export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.', night = null }) {
   useTick(250)
   const now = serverNow()
   const m = booMoment(boo, now)
   useRunwayMusic(m.part === 'strut' || m.part === 'intro')
   useEffect(() => { if (m.part === 'done') onOver?.() })
-  const frame = BOO_FRAMES[Math.floor(now / 450) % BOO_FRAMES.length]
+  const of = boo?.poses?.length || 3
   if (!live || m.part === 'idle') {
     if (night && night.act !== 4) return <Idle title="Sirwin Manor" line="The Entryway" loop="boo" />
     return (
       <RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night?.beat ?? 'practice'} code={!!night} className="boo-wall idle">
+        <BooSteps />
         <p className="kiosk-line">{idleLine}</p>
       </RulesCard>
     )
   }
   // her intro: the group has scanned in, so the card carries no code to scan (26 Oct 2026)
-  if (m.part === 'intro') return <RulesCard id="entryway" line={BOO_INTRO} frame={frame} code={false} className="boo-wall intro" />
+  if (m.part === 'intro') return (
+    <RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false} className="boo-wall intro">
+      <BooSteps />
+      <p className="boo-soon">The music starts in a moment. Get ready to strut.</p>
+    </RulesCard>
+  )
+  // a new photo of her every two seconds while she struts, a fresh one each pose
+  const strutFrame = BOO_FRAMES[(Math.floor(now / 2000) + (m.pose ?? 0)) % BOO_FRAMES.length]
   return (
-    <div className={`kiosk boo-wall ${m.part}`}>
-      {m.part === 'strut' && <img className="boo-strut" src={`${BASE}household/full/${encodeURIComponent(frame)}`} alt="" />}
+    <div className={`kiosk boo-wall boo-stage ${m.part}`}>
+      <div className="boo-light" aria-hidden="true" />
+      <div className="boo-runway" aria-hidden="true" />
+      {m.part === 'strut' && <>
+        <p className="boo-say">♪ The music is on. <strong>Strut!</strong> ♪</p>
+        <BooPips pose={m.pose} of={of} />
+        <img className="boo-star strutting" src={booFrame(strutFrame)} alt="" />
+        <p className="boo-sub">When the music stops, strike a pose and freeze.</p>
+      </>}
       {m.part === 'pose' && <>
-        <p className="boo-strike">STRIKE A POSE</p>
-        <p className="boo-hold">HOLD IT · {m.hold}</p>
+        <div className="boo-flash" aria-hidden="true" />
+        <p className="boo-shout" role="status" aria-live="assertive">STRIKE A POSE!</p>
+        <p className="boo-count" key={m.hold}>{m.hold}</p>
+        <BooPips pose={m.pose} of={of} />
+        <p className="boo-sub">Freeze! Don't move. Boo is watching.</p>
       </>}
       {m.part === 'judge' && <>
-        <img className="boo-judging" src={`${BASE}household/full/${encodeURIComponent('Boo 3.png')}`} alt="" />
-        <p className="kiosk-big"><Spoken text={m.line} /></p>
+        <p className="boo-sub">Boo's verdict on pose {m.pose}</p>
+        <div className="boo-verdict">
+          <img className="boo-star" src={booFrame('Boo 2.png')} alt="" />
+          <p className="boo-bubble"><Spoken text={m.line} /></p>
+        </div>
+        <p className="boo-sub dim">{m.pose < of ? 'Relax. The music starts again in a moment.' : 'Relax. That was the last one.'}</p>
       </>}
-      {m.part === 'done' && <p className="kiosk-big">That's the show, darling.</p>}
+      {m.part === 'done' && <>
+        <img className="boo-star" src={booFrame('Boo 4.png')} alt="" />
+        <p className="boo-say">That's the show, darling.</p>
+        <p className="boo-sub">Look at your phones: Boo has something for you.</p>
+      </>}
     </div>
   )
 }

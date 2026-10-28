@@ -235,13 +235,24 @@ export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's t
   const m = booMoment(boo, now)
   useEffect(() => { if (m.part === 'done') onOver?.() })
   if (m.part === 'idle' || m.part === 'intro') return <p><Spoken text={BOO_LINES.intro} /></p>
-  if (m.part === 'strut') return <p className="gloss">Watch the wall. Pose {m.pose} of 3 is coming.</p>
-  if (m.part === 'pose') return (
-    <div className="boo-pose" role="status" aria-live="assertive">
-      <p className="boo-strike">STRIKE A POSE</p>
-      <p className="boo-hold">HOLD IT · {m.hold}</p>
+  const of = boo?.poses?.length || 3
+  if (m.part === 'strut') return (
+    <div className="boo-phone">
+      <p className="boo-phone-say">♪ The music is on. Strut! ♪</p>
+      <p className="gloss">Pose {m.pose} of {of}. When the music stops, strike a pose and freeze. Put the phone down and watch the wall.</p>
     </div>
   )
-  if (m.part === 'judge') return <p className="boo-judge"><Spoken text={m.line} /></p>
+  if (m.part === 'pose') return (
+    <div className="boo-pose" role="status" aria-live="assertive">
+      <p className="boo-strike">STRIKE A POSE!</p>
+      <p className="boo-hold">Freeze! {m.hold}</p>
+    </div>
+  )
+  if (m.part === 'judge') return (
+    <div className="boo-phone">
+      <p className="gloss">Boo's verdict on pose {m.pose}:</p>
+      <p className="boo-judge"><Spoken text={m.line} /></p>
+    </div>
+  )
   return <p className="gloss">{doneText}</p>
 }

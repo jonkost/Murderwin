@@ -834,3 +834,10 @@ export const RETIRED_FOR_GAME_TEST_1026 = [
   { order: 10001, detail: 'Fixed 26 Oct 2026: each square’s line is cut at the box’s edge, the drawing’s screens are black, and Sir Irwin’s slides read from the left. Try it again.' },
   { order: 10003, detail: 'Fixed 26 Oct 2026: the study screen is in the house look (manor blue under the red wallpaper, a serif title, the clock in brass, Granolia’s own picture beside one panel of words), and so is its card between groups. Try it again.' },
 ]
+
+// 27 Oct 2026: Jon's Game test note on Boo's Catwalk ("I don't get the game",
+// card 10002). The wall is a lit runway with Boo in a spotlight; every moment
+// says what to do; the music stops with a record scratch.
+export const RETIRED_FOR_BOO_1027 = [
+  { order: 10002, detail: 'Fixed 27 Oct 2026: Boo’s wall is a lit runway with Boo in a spotlight. Her card lists the three steps; while she struts it says Strut!, with the pose dots; the music stops with a record scratch; STRIKE A POSE! flashes with a big count; her verdict is a speech bubble. The phones say the same. Try it again: Boo’s wall, the whole show, a sample.' },
+]

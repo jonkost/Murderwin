@@ -772,6 +772,8 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .boo-strike { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: 0.06em; }
 .boo-hold { margin: 0; font-size: 1.4rem; color: var(--good); }
 .boo-judge { font-size: 1.2rem; font-style: italic; }
+.boo-phone { display: grid; gap: 0.4rem; }
+.boo-phone-say { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--good); }
 
 /* the permissions screen */
 .allow-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.7rem; text-align: left; max-width: 26rem; }
@@ -805,15 +807,60 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* a 7-pair board dealt before the first round became 6 pairs (26 Oct 2026) still fits, 7 by 2 */
 .memory-board.cards-14 { --cols: 7; --rows: 2; }
 
-/* Boo's wall: the runway along the bottom edge of the triangle wall */
-.kiosk.boo-wall { background: #000; justify-content: flex-end; gap: 2vh; }
-.boo-strut { height: 34vh; object-fit: contain; animation: boo-strut 6s linear infinite alternate; }
-.boo-strut.still { animation: none; }
-@keyframes boo-strut { from { transform: translateX(-30vw); } to { transform: translateX(30vw); } }
-.kiosk.boo-wall .boo-strike { font-size: min(9vw, 14vh); }
-.kiosk.boo-wall .boo-hold { font-size: min(5vw, 8vh); }
-.boo-judging { height: 30vh; object-fit: contain; }
-@media (prefers-reduced-motion: reduce) { .boo-strut { animation: none; } }
+/* Boo's wall (27 Oct 2026): a lit runway along the bottom edge of the triangle
+   wall, Boo in a spotlight, and plain words for every moment. Everything sits
+   in the lower two thirds, where the triangle is wide. */
+.kiosk.boo-wall { background: #000; }
+.kiosk.boo-stage { position: relative; overflow: hidden; justify-content: flex-end; gap: 1.4vh; padding-bottom: 3vh;
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, #2a0f12 0%, #0b0405 60%, #000 100%); }
+.kiosk.boo-stage > * { position: relative; z-index: 1; }
+.kiosk.boo-stage > .boo-light, .kiosk.boo-stage > .boo-runway, .kiosk.boo-stage > .boo-flash { position: absolute; z-index: 0; pointer-events: none; }
+/* the spotlight: a warm cone from above onto the runway */
+.boo-light { left: 50%; bottom: 0; width: 70vw; height: 100%; transform: translateX(-50%);
+  background: radial-gradient(ellipse 34% 46% at 50% 74%, rgba(255, 228, 170, 0.34) 0%, rgba(255, 210, 140, 0.12) 45%, transparent 75%); }
+/* the runway: a claret carpet with brass edges, running away from the room */
+.boo-runway { left: 50%; bottom: 0; width: 64vw; height: 22vh; transform: translateX(-50%);
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  background: linear-gradient(to bottom, #3a1418, var(--brand-claret) 40%, #7a2a30);
+  box-shadow: inset 0 0 0 0.5vh var(--brand-brass); }
+.boo-runway::after { content: ''; position: absolute; inset: 0; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  background: repeating-linear-gradient(to bottom, transparent 0 3vh, rgba(0,0,0,0.18) 3vh 3.4vh); }
+.boo-star { height: min(34vh, 30vw); object-fit: contain; filter: drop-shadow(0 2vh 3vh rgba(0,0,0,0.8)); }
+.boo-star.strutting { animation: boo-sashay 1s ease-in-out infinite alternate; }
+@keyframes boo-sashay { from { transform: translateX(-6vw) rotate(-4deg); } to { transform: translateX(6vw) rotate(4deg); } }
+.boo-say { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(5.4vw, 8vh); margin: 0; line-height: 1.1; color: var(--brand-parchment); }
+.boo-say strong { color: var(--brand-brass); }
+.boo-sub { font-size: min(2.8vw, 4.4vh); margin: 0; color: var(--brand-parchment); max-width: 80vw; }
+.boo-sub.dim { color: var(--dim); font-size: min(2.2vw, 3.4vh); }
+.boo-pips { display: flex; align-items: center; gap: 1.2vw; margin: 0.6vh 0 0; }
+.boo-pips span:not(.boo-pips-words) { width: min(1.8vw, 2.8vh); height: min(1.8vw, 2.8vh); border-radius: 50%; border: 0.3vh solid var(--brand-brass); }
+.boo-pips span.done { background: var(--brand-brass); }
+.boo-pips span.now { background: var(--brand-red); border-color: var(--brand-parchment); }
+.boo-pips-words { font-size: min(2vw, 3.2vh); color: var(--dim); margin-left: 0.6vw; letter-spacing: 0.06em; text-transform: uppercase; }
+/* the pose: a camera flash, then red, the shout and a big count */
+.kiosk.boo-stage.pose { background: radial-gradient(ellipse 70% 80% at 50% 100%, var(--brand-red) 0%, #5a0c12 55%, #1a0305 100%); justify-content: center; }
+.boo-flash { inset: 0; background: #fff; animation: boo-flash 0.6s ease-out forwards; }
+@keyframes boo-flash { from { opacity: 0.95; } to { opacity: 0; } }
+.boo-shout { font-size: min(10vw, 16vh); font-weight: 900; letter-spacing: 0.04em; margin: 0; line-height: 1; color: #fff; text-shadow: 0 0.6vh 0 #000; }
+.boo-count { font-size: min(18vw, 30vh); font-weight: 900; margin: 0; line-height: 1; color: var(--brand-parchment); font-variant-numeric: tabular-nums; animation: boo-tick 1s ease-out; }
+@keyframes boo-tick { from { transform: scale(1.3); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
+/* the verdict: Boo and a speech bubble */
+.boo-verdict { display: flex; align-items: center; gap: 3vw; max-width: 90vw; }
+.boo-verdict .boo-star { height: min(40vh, 30vw); }
+.boo-bubble { position: relative; margin: 0; max-width: 46vw; padding: 2.4vh 2.6vw; border-radius: 2vw; background: var(--brand-parchment); color: #1a0d0e;
+  font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4vw, 6.4vh); line-height: 1.2; text-align: left; font-style: italic; }
+.boo-bubble::before { content: ''; position: absolute; left: -2vw; top: 50%; transform: translateY(-50%); border: 1.4vw solid transparent; border-right: 2vw solid var(--brand-parchment); border-left: 0; }
+/* the rules card and her intro: the three steps under her line */
+.boo-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2vh; text-align: left; }
+.boo-steps li { display: flex; align-items: center; gap: 1.4vw; font-size: min(2.6vw, 4vh); }
+.boo-step-mark { display: inline-grid; place-items: center; width: min(4.4vw, 6.6vh); height: min(4.4vw, 6.6vh); border-radius: 50%; background: var(--brand-claret); border: 0.3vh solid var(--brand-brass); color: var(--brand-parchment); flex: 0 0 auto; }
+.boo-soon { margin: 0; font-size: min(2.4vw, 3.6vh); color: var(--brand-brass); animation: boo-blink 1.4s ease-in-out infinite alternate; }
+@keyframes boo-blink { from { opacity: 0.55; } to { opacity: 1; } }
+.kiosk.rules-card.boo-wall { background: radial-gradient(ellipse 60% 80% at 30% 60%, #2a0f12 0%, #000 75%); gap: 1.4vh; }
+.kiosk.rules-card.boo-wall .rules-cat { height: min(34vh, 30vw); }
+.kiosk.rules-card.boo-wall > .kiosk-line { font-size: min(2.2vw, 3.4vh); margin: 0; color: var(--dim); }
+.kiosk.rules-card.boo-wall .boo-steps li { font-size: min(2.2vw, 3.4vh); }
+@media (prefers-reduced-motion: reduce) { .boo-star.strutting, .boo-flash, .boo-count, .boo-soon { animation: none; } .boo-flash { opacity: 0; } }
 /* Boo's camera (?kiosk=pose, card 450): the group sees itself, mirrored; one photo at the last pose */
 .kiosk.pose-cam { background: #000; position: relative; overflow: hidden; }
 .pose-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }

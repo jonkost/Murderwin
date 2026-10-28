@@ -39,7 +39,7 @@ import { setFromAddress } from './lib/gametest'
 // door slide), kiosk-living-rules (slide 3 and its square), Sir Irwin's
 // prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
 // the iPad Pro (since 26 Oct 2026; kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
-// Boo's wall (kiosk-boo, kiosk-boo-pose). A rehearsal night's band:
+// Boo's wall (kiosk-boo, kiosk-boo-pose, kiosk-boo-judge; kiosk-boo-show plays the whole show live). A rehearsal night's band:
 // kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
 // host-house-window, host-house-act2. The cue list's screens (25 Oct 2026):
 // the join code (kiosk-join, kiosk-rejoin), the room codes of Act 2
@@ -257,6 +257,17 @@ const IRWIN = SCREEN('irwin', { title: 'Sir Irwin', act: 5, beat: 'irwin', mood:
 // the memory match board as the server shapes it: twelve trace ids, no names
 const MEMORY = (cleared = false) => ({ groupId: 'g1', boardId: 'g1-3', step: cleared ? 2 : 0, cleared, boards: { 0: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'coffee', 'ink', 'seeds', 'coins', 'flour', 'petals'], 1: [], 2: [] } })
 const BOO = (offset) => ({ groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT - offset), poses: [{ strutAt: stamp(PHASE_AT - offset + 9000), poseAt: stamp(PHASE_AT - offset + 18000), holdUntil: stamp(PHASE_AT - offset + 23000), judgeUntil: stamp(PHASE_AT - offset + 29000), line: 'Bold. Wrong, but bold.' }], endsAt: stamp(PHASE_AT - offset + 29000) })
+// Boo's whole show, as booShow lays it out (9 s intro; 8 s strut, 5 s hold, 6 s verdict, three times)
+const BOO_SHOW = (() => {
+  const lines = ['Dreadful. I loved it.', 'Bold. Wrong, but bold.', 'Fine. Fine! You may stay.']
+  const poses = []
+  let t = PHASE_AT + 9000
+  for (let i = 0; i < 3; i++) {
+    poses.push({ strutAt: stamp(t), poseAt: stamp(t + 8000), holdUntil: stamp(t + 13000), judgeUntil: stamp(t + 19000), line: lines[i] })
+    t += 19000
+  }
+  return { groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT), poses, endsAt: stamp(t) }
+})()
 // nine guests with a strike each, two of them picked by the server for a silent phone: the board must not tell
 const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2 }, ana: { name: 'Ana', characterId: 'devine', bag: 4 }, kit: { name: 'Kit', characterId: 'barnes', bag: 5 }, ren: { name: 'Ren', characterId: 'steeps', bag: 7 }, oli: { name: 'Oli', characterId: 'vayne', bag: 9 } }
 const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
@@ -291,6 +302,9 @@ const KIOSK = {
   'kiosk-prompts': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'cat' }} relay={null} trace={null} finale={null} screen={SCREEN('prompts', { title: 'Sir Irwin has ideas', prompts: { lines: bagLines.prompts.lines, order: bagLines.prompts.lines.map((_, i) => i), startedAt: stamp(PHASE_AT), everyMs: 180000 } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-title': (night, serverNow) => <Living night={{ ...night, act: 4, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('title', { title: 'Act 4 · Behind Closed Doors', lines: ['Look at your phone and find your group.'], rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-boo': (night, serverNow) => <BooWall boo={BOO(12000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  // the whole show, three poses, from the moment the preview opens: it plays out live (about 70 seconds)
+  'kiosk-boo-show': (night, serverNow) => <BooWall boo={BOO_SHOW} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-boo-judge': (night, serverNow) => <BooWall boo={BOO(25000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap
   'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO(19000)} nightId="preview" serverNow={serverNow} />,

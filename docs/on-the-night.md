@@ -428,8 +428,11 @@ game; it serves the lights and the speakers.
     faster. The phones tint red and green, and the string lights follow if
     they answer the brain. Pays a bag hint (Salem's may be backwards).
   - The Entryway: Boo's Catwalk, on the triangle wall from
-    Susan's MacBook Pro and the projector: Boo struts, the music stops, the
-    group strikes a pose and holds it, Boo judges, three times. Pays one
+    Susan's MacBook Pro and the projector: a lit runway with Boo in a
+    spotlight. Her card lists the three steps. While the music plays the
+    wall says Strut!; the music stops with a record scratch; STRIKE A POSE!
+    flashes red with a big count to hold; then Boo's verdict in a speech
+    bubble. Three times, with three dots for the poses. Pays one
     wrong motive crossed off and a bag hint. If Boo's camera is up, Jenna's
     iPad Pro facing the catwalk shows the group to itself and takes one
     photo a moment into each group's last pose, for the end credits. Nothing

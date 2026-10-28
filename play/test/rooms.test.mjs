@@ -143,7 +143,9 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // where each room shows it: the Library between groups, Boo\'s wall idle and intro, the Orangerie all through Act 4, the Study while idle
   assert.ok(rooms.includes('<RulesCard id="library" line={rulesLine(\'library\', content)} pick={night.beat}>'), 'the Library, with the workshop\'s line first')
   assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night?.beat'), 'Boo\'s wall, idle')
-  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame={frame}'), 'Boo\'s wall, her intro with her walking frames')
+  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'Boo\'s wall, her intro, no code to scan')
+  // her three steps, on the card between groups and in her intro (27 Oct 2026)
+  assert.equal((rooms.match(/<BooSteps \/>/g) ?? []).length, 2, 'the three steps on both')
   assert.ok(rooms.includes('<RulesCard id="orangerie" line={RULES_LINES.orangerie} pick={salem?.groupId ?? night.beat} code={!busy}>'), 'the Orangerie, its code only between groups')
   // a group is at play in the Orangerie while public/salem is intro, playing or passed; idle and cleared are between groups (26 Oct 2026)
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"), 'cleared is not busy')
@@ -155,7 +157,7 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   assert.equal((kiosk.match(/The station has gone quiet\. Find a host\./g) ?? []).length, 2, 'said on the card and on the game')
   // in practice (no night) the card has no code to scan: there is no night to join; Boo's intro has none either, the group has scanned
   assert.ok(rooms.includes('code={!!night}'), 'no code in practice')
-  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame={frame} code={false}'), 'no code on Boo\'s intro')
+  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'no code on Boo\'s intro')
 })
 
 test('the join code on the TV, the rejoin code under the ballot clock, the birthday cards, the Orangerie kiosk and the host\'s two new dots', () => {

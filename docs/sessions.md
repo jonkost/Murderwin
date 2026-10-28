@@ -9,6 +9,27 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 27 Oct 2026 · Claude Code (the workshop's slow sign-in; Boo's Catwalk)
+
+- The workshop's sign-in was slow: every boot replayed all 23 board
+  migrations, one server transaction each (and a query or two before most).
+  Now `ensureSeeded` reads `meta/seeded` and `meta/migrations` once and runs
+  only migrations not yet applied (each still rechecks inside its own
+  transaction). Not timed live: it needs Jon's sign-in and a deploy.
+- Boo's Catwalk (Jon's note 10002, "I don't get the game … looks ugly"):
+  the wall is now a lit runway with Boo in a spotlight. The card between
+  groups and her intro list the three steps; the strut says Strut! with
+  three pose dots; the music stops with a record scratch; STRIKE A POSE!
+  flashes red with a big count; the verdict is a speech bubble; the end
+  says to look at the phones. The fallback music is a real groove (kick,
+  hats, bass) instead of beeps. The phones say the same in fewer words.
+  The show's timing and the server are unchanged. New sample on the Game
+  test tab: Boo's wall, the whole show (`?preview=kiosk-boo-show`).
+- Board: migration `2026-10-27-boo-catwalk` marks card 10002 done.
+- Left: Jon tries Boo's Catwalk again; deploy when Jon says. Start Here's
+  snapshot not updated this session.
+- Decisions: none.
+
 ## 26 Oct 2026, evening · Claude Code (Jon's Game test notes)
 
 **What changed** (on `main`; deployed and pushed on Jon's yes)

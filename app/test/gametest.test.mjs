@@ -42,7 +42,7 @@ test('seven sections in the order of the night, each named, filed under a real m
 test('every sample screen named here exists on the phones, and the practices and the real game have their addresses', () => {
   const preview = playSrc('Preview.jsx')
   const names = SECTIONS.flatMap(s => s.tries.map(t => t.params.preview).filter(Boolean))
-  assert.equal(names.length, 28) // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026
+  assert.equal(names.length, 29) // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, and Boo's whole show, 27 Oct
   for (const n of [...names, 'questions']) {
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }

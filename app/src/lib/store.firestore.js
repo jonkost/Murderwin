@@ -12,7 +12,25 @@ import { planAddition, taskOrdersOf, decisionKeysOf } from './additions'
 // concurrent boots cannot double-seed. Never auto-seeds again. A fresh seed
 // already contains everything, so it also stamps every ADDITIONS id as
 // applied; older databases get them via applyAdditions.
+//
+// Fast path (27 Oct): sign-in used to replay all of ADDITIONS, one server
+// transaction each, on every boot. Now one read of the two meta docs decides
+// what is left; only migrations not yet applied run (each still rechecks
+// inside its own transaction, so two devices cannot apply one twice).
+const REPAIR_ID = '2026-08-30-unwrap-asset-items'
 export async function ensureSeeded() {
+  const [guardSnap, migSnap] = await Promise.all([
+    getDoc(doc(db, 'meta', 'seeded')),
+    getDoc(doc(db, 'meta', 'migrations')),
+  ])
+  if (guardSnap.exists()) {
+    const applied = migSnap.exists() ? migSnap.data().applied ?? [] : []
+    const pending = ADDITIONS.filter(a => !applied.includes(a.id))
+    if (pending.length) await applyAdditions(pending)
+    if (!applied.includes(REPAIR_ID)) await repairNestedAreaDocs()
+    return { seeded: false }
+  }
+
   const { tasks, decisions } = (await seedTasks()).default
   const docs = seedDocs()
   const addTasks = ADDITIONS.flatMap(a => a.tasks ?? [])
@@ -45,7 +63,6 @@ export async function ensureSeeded() {
 // One-time repair for docs the buggy first migration double-nested.
 // Unwraps in place (data preserved), guarded by meta/migrations.
 async function repairNestedAreaDocs() {
-  const REPAIR_ID = '2026-08-30-unwrap-asset-items'
   await runTransaction(db, async tx => {
     const migRef = doc(db, 'meta', 'migrations')
     const migSnap = await tx.get(migRef)
