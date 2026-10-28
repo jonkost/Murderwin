@@ -480,7 +480,10 @@ are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
   loop again, black at The End. The brain switches the projector's plug off
   for the blackout and from the drawing's intro to the end of Act 6; on
   again when the power returns and for the ballot. The MacBook stays on with
-  its lid open, sleep off.
+  its lid open, sleep off. In Act 4 it plays Boo's music on the Parlour
+  HomePod (Jon, 27 Oct): the brain takes that HomePod out of the house
+  music for the act (`boo` in `cues/scenes.json`), and the wall runs the
+  music two seconds ahead for the AirPlay delay (`&airplay=`).
 - M1 MacBook Air — the study station (`?kiosk=study`, `station/`): Stream Deck
   over USB, Nanoleaf over wifi (Open API, plain HTTP, port 16021), the study's
   on-screen information. Both walls were paired and tried on 24 Oct, from

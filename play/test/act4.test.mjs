@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, booMoment, ROOMS, lightsStep } from '../src/lib/night.js'
+import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, booMoment, booLead, BOO_AIRPLAY_MS, ROOMS, lightsStep } from '../src/lib/night.js'
 import { promptShown, standaloneBoards, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips } from '../src/lib/rooms.js'
 import news from '../../seed/woof-news.json' with { type: 'json' }
 import { askMotion, unlockSound, keepAwake, PERMISSION_LINES } from '../src/lib/permissions.js'
@@ -158,4 +158,24 @@ test('F26 every colour change in Salem\'s game reaches every phone in the group 
     }
   }
   assert.ok(worst <= 500, `F26 the latest a phone shows a change is ${Math.round(worst)} ms after its time`)
+})
+
+// Boo's music through the Parlour HomePod (Jon, 27 Oct 2026): the wall runs
+// the music ahead of itself by the AirPlay delay, so the scratch lands on
+// STRIKE A POSE. Two seconds on the night's wall, none in practice;
+// &airplay=<seconds> sets it, 0 to 5.
+test('Boo\'s music leads her wall by the AirPlay delay: two seconds on the night, none in practice, &airplay= sets it', () => {
+  assert.equal(BOO_AIRPLAY_MS, 2000)
+  assert.equal(booLead('?kiosk=boo'), 2000)
+  assert.equal(booLead('?kiosk=boo&practice=1', { practice: true }), 0)
+  assert.equal(booLead('?kiosk=boo&airplay=1.5'), 1500)
+  assert.equal(booLead('?kiosk=boo&practice=1&airplay=2', { practice: true }), 2000)
+  assert.equal(booLead('?kiosk=boo&airplay=0'), 0, 'the Mac\'s own speakers')
+  for (const bad of ['9', '-1', 'abc', '']) assert.equal(booLead(`?kiosk=boo&airplay=${bad}`), 2000, bad)
+  // with the lead, the room hears the stop two seconds before the wall flashes, so it lands on the flash
+  const t = 1_000_000
+  const show = { state: 'show', startsAt: t, endsAt: t + 40_000, poses: [{ strutAt: t + 9000, poseAt: t + 17_000, holdUntil: t + 22_000, judgeUntil: t + 28_000, line: 'x' }] }
+  assert.equal(booMoment(show, t + 14_500 + 2000).part, 'strut', 'two and a half seconds before the flash the music still plays')
+  assert.equal(booMoment(show, t + 15_000).part, 'strut', 'two seconds before the flash the wall still struts')
+  assert.equal(booMoment(show, t + 15_000 + 2000).part, 'pose', 'and the music stops, to be heard on the flash')
 })

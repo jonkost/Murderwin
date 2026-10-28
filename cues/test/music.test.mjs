@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { createMusic, SCRIPTS, playlistNames, musicProblem, runOsascript, FADE_STEPS } from '../lib/music.js'
+import { createMusic, SCRIPTS, playlistNames, musicProblem, runOsascript, FADE_STEPS, parseSpeakers } from '../lib/music.js'
 
 const JAZZ = { name: 'Murderwin · Jazz', volume: 70 }
 const INTENSE = { name: 'Murderwin · Intense', volume: 40 }
@@ -258,4 +258,21 @@ test('followTrack: after `seconds` when Music cannot be read, or the song never 
   assert.equal(polls, 0, 'nothing to follow')
   assert.equal(lines.at(-1), '[music] the song did not start; the sheet comes back after 10 seconds')
   for (const l of lines) assert.ok(!l.includes('Song'), 'the song is never named in the lines')
+})
+
+test('Boo\'s speaker (27 Oct 2026): out of the house music and back in by its name, as an argument; a name Music does not know is one plain line; the list reads', async () => {
+  const lines = []
+  const { run, calls } = fakeRun({ speaker: args => (args[1] === 'Living Room' ? 'done' : 'missing'), speakers: 'Living Room\ttrue\nOffice HomePod mini\tfalse\n' })
+  const m = createMusic({ run, log: l => lines.push(l) })
+  await m.speaker({ name: 'Living Room', on: false })
+  await m.speaker({ name: 'Living Room', on: true })
+  await m.speaker({ name: 'Parlor', on: false })
+  assert.deepEqual(calls.map(c => c.args), [['off', 'Living Room'], ['on', 'Living Room'], ['off', 'Parlor']])
+  assert.deepEqual(lines, [
+    '[music] Living Room is out of the house music, for Boo\'s Catwalk',
+    '[music] Living Room is back in the house music',
+    '[music] no speaker called "Parlor" in Music\'s AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)',
+  ])
+  assert.deepEqual(await m.speakers(), [{ name: 'Living Room', on: true }, { name: 'Office HomePod mini', on: false }])
+  assert.deepEqual(parseSpeakers(''), [])
 })

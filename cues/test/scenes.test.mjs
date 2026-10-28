@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { planScenes, emptySceneState, targetFor, momentOf, doorOpen, drawingRunning, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, DUCK_TAIL_MS, DRAWING_RUNNING, afterCake, studyWants, cutTriggered } from '../lib/scenes.js'
+import { planScenes, emptySceneState, targetFor, momentOf, doorOpen, drawingRunning, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, DUCK_TAIL_MS, DRAWING_RUNNING, afterCake, studyWants, speakerWants, cutTriggered } from '../lib/scenes.js'
 import { plan, SOUND_IDS, SOUND_STALE_MS } from '../lib/cues.js'
 import { demoNight } from '../lib/demo.js'
 
@@ -15,6 +15,7 @@ function words(actions) {
     a.type === 'scene' ? `scene ${a.name}`
       : a.type === 'projector' ? `projector ${a.do}`
         : a.type === 'cake' ? 'cake'
+          : a.type === 'speaker' ? `speaker ${a.name} ${a.do}`
           : a.do === 'pause' ? 'stop' : `play ${a.playlist}`)
 }
 
@@ -67,7 +68,7 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['Act 3, phones down: no change', { night: night(3, 'down'), cues: red }, []],
     ['cue 9, bulletin 2 on the HomePods: no change (the sounder ducks it)', { night: night(3, 'bulletin'), cues: red, sounds: { current: { id: 'sounder-bulletin', at: 5 } } }, []],
     ['cue 10, dinner wrap-up: no change', { night: night(3, 'wrap'), cues: red }, []],
-    ['the two-minute warning: no change', { night: night(4, 'warn'), cues: red }, []],
+    ['the two-minute warning: the Parlour HomePod leaves the house music for Boo (Jon, 27 Oct 2026)', { night: night(4, 'warn'), cues: red }, ['speaker Living Room off']],
     ['cue 11, Start Act 4: no change (one playlist for the whole house, roomMusic default)', { night: night(4, 'groups'), cues: red }, []],
     ['each round change: no change', { night: night(4, 'round1'), cues: red, study: { state: 'idle' } }, []],
     ['a group at the study wall: the study dims', { night: night(4, 'round1'), cues: red, study: { state: 'playing' } }, ['scene Murderwin Study Dim']],
@@ -79,7 +80,7 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['', { night: night(4, 'round3'), cues: red, study: { state: 'idle' } }, ['scene Murderwin Default']],
     ['', { night: night(4, 'round4'), cues: red, study: { state: 'idle' } }, []],
     ['', { night: night(4, 'round5'), cues: red, study: { state: 'idle' } }, []],
-    ['cue 12, dessert: no change (the chime ducks it)', { night: night(5, 'roam'), cues: red, sounds: { current: { id: 'chime-phone', at: 6 } } }, []],
+    ['cue 12, dessert: the Parlour HomePod back in the house music (the chime ducks it)', { night: night(5, 'roam'), cues: red, sounds: { current: { id: 'chime-phone', at: 6 } } }, ['speaker Living Room on']],
     ['cue 13, Cake!: the song and the candles', { night: night(5, 'roam'), cues: { hall: 'red', cake: { at: 1_000_000 + 30_000 } }, sounds: { current: { id: 'chime-phone', at: 6 } } }, ['cake', 'scene Murderwin Candles']],
     ['the same press again: nothing', { night: night(5, 'roam'), cues: { hall: 'red', cake: { at: 1_000_000 + 30_000 } } }, []],
     ['cue 14, Sir Irwin speaks: no change (the chime ducks it)', { night: night(5, 'irwin'), cues: red, sounds: { current: { id: 'chime-irwin', at: 7 } } }, []],
@@ -182,11 +183,11 @@ test('the dim study: the playing scene when a group is at the wall in Act 4, the
   assert.equal(studyWants({ night: night(4, 'round1', 'blackout'), study: { state: 'playing' } }, SHEET), 'idle', 'never in the dark')
   assert.equal(studyWants({ night: night(4, 'round1') }, SHEET), 'idle', 'no study doc yet')
   walk([
-    ['Act 4 starts, nobody at the wall', { night: night(4, 'groups') }, ['play jazz', 'scene Murderwin Default', 'projector on']],
+    ['Act 4 starts, nobody at the wall', { night: night(4, 'groups') }, ['play jazz', 'scene Murderwin Default', 'projector on', 'speaker Living Room off']],
     ['the study doc says idle: nothing', { night: night(4, 'round1'), study: { state: 'idle' } }, []],
     ['a group plays', { night: night(4, 'round1'), study: { state: 'playing' } }, ['scene Murderwin Study Dim']],
     ['the same state again: nothing', { night: night(4, 'round1'), study: { state: 'playing' } }, []],
-    ['Act 5 arrives while they are still at it: the lamp back with the act', { night: night(5, 'roam'), study: { state: 'playing' } }, ['scene Murderwin Default']],
+    ['Act 5 arrives while they are still at it: the lamp back with the act', { night: night(5, 'roam'), study: { state: 'playing' } }, ['scene Murderwin Default', 'speaker Living Room on']],
     ['and no more while the study doc says playing outside Act 4', { night: night(5, 'irwin'), study: { state: 'playing' } }, []],
   ])
 })
@@ -328,4 +329,22 @@ test('the pretend night (npm run demo) walks the whole sheet: every scene, every
   // the demo names no family
   const text = JSON.stringify(demoNight().map(s => s.patch(1)))
   for (const f of ['food', 'bathroom', 'screens', 'out-and-about', 'personal']) assert.ok(!text.includes(f), f)
+})
+
+test('Boo\'s speaker (Jon, 27 Oct 2026): the Parlour HomePod leaves the house music in Act 4 and comes back after; nothing before her act; the sheet checks its name', () => {
+  assert.deepEqual(SHEET.boo, { acts: [4], speaker: 'Living Room' })
+  assert.equal(speakerWants({ night: night(4, 'round1') }, SHEET), 'lent')
+  assert.equal(speakerWants({ night: night(3, 'supper') }, SHEET), 'house')
+  assert.equal(speakerWants({ night: night(4, 'round1', 'blackout') }, SHEET), 'house', 'never in the dark')
+  assert.equal(speakerWants({ night: night(4, 'round1') }, { ...SHEET, boo: undefined }), null, 'no boo on the sheet: nothing')
+  walk([
+    ['a relay started in Act 3: nothing for the speaker', { night: night(3, 'supper') }, ['play jazz', 'scene Murderwin Default', 'projector on']],
+    ['Act 4: out', { night: night(4, 'warn') }, ['speaker Living Room off']],
+    ['the rounds: nothing more', { night: night(4, 'round3') }, []],
+    ['a pause in Act 4: still out', { night: { act: 4, beat: 'round3', phase: 'paused', pausedFrom: 'act' } }, []],
+    ['Act 5: back in', { night: night(5, 'roam') }, ['speaker Living Room on']],
+    ['Act 6: nothing more', { night: night(6, 'parlour') }, []],
+  ])
+  assert.ok(sceneProblems({ ...SHEET, boo: { acts: [4], speaker: '' } }).includes('boo.speaker is not a speaker name'))
+  assert.ok(sceneProblems({ ...SHEET, boo: { acts: [9], speaker: 'x' } }).includes('boo.acts is not a list of acts'))
 })

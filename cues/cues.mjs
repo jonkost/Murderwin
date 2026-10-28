@@ -14,6 +14,7 @@
 //   npm start -- --scenes     list the bridge's scenes and check the six Murderwin ones, then quit
 //   npm start -- --scene "Murderwin Default"   recall one scene, then quit
 //   npm start -- --check-music      play each playlist and the cake's song a few seconds, duck, stop, then quit
+//   npm start -- --speakers         list the AirPlay speakers Music sees (for boo.speaker in scenes.json), then quit
 //   npm start -- --check-strings    string lights red, green, then decor, then quit
 //   npm start -- --check-projector  the projector's plug off, then on, then quit
 //   npm run fake              no hardware: prints what it would do
@@ -66,6 +67,7 @@ const LIST = has('--lights')
 const SCENES = has('--scenes')
 const ONE_SCENE = args.indexOf('--scene') >= 0 ? String(args[args.indexOf('--scene') + 1] ?? '') : null
 const CHECK_MUSIC = has('--check-music')
+const SPEAKERS = has('--speakers')
 const CHECK_STRINGS = has('--check-strings')
 const CHECK_PROJECTOR = has('--check-projector')
 const TOOL = LIST || SCENES || ONE_SCENE !== null || CHECK_MUSIC || CHECK_STRINGS || CHECK_PROJECTOR
@@ -174,6 +176,14 @@ if (ONE_SCENE !== null) {
   const n = await hue.recallScene(ONE_SCENE)
   console.log(n ? `recalled ${n} scene${n === 1 ? '' : 's'} called "${ONE_SCENE}"` : `no scene called "${ONE_SCENE}" on the bridge (npm start -- --scenes lists them)`)
   process.exit(n ? 0 : 1)
+}
+if (SPEAKERS) {
+  const m = createMusic({ fake: FAKE, log })
+  const list = await m.speakers().catch(e => { log(`[music] ${e.message}`); return [] })
+  for (const sp of list) console.log(`${sp.on ? '[x]' : '[ ]'} ${sp.name}`)
+  const want = sheet?.boo?.speaker
+  if (want) console.log(list.some(sp => sp.name === want) ? `Boo's speaker "${want}" is in the list` : `Boo's speaker "${want}" is not in the list: put the right name in cues/scenes.json, boo.speaker`)
+  process.exit(0)
 }
 if (CHECK_MUSIC) {
   if (!sheet) { console.log('cues/scenes.json needs fixing first'); process.exit(2) }
@@ -315,6 +325,7 @@ function apply() {
     if (a.type === 'music' && music) { if (a.do === 'play') music.play(a); else music.pause() }
     if (a.type === 'scene' && scenesOn) recallScene(a.name)
     if (a.type === 'projector') projector.set(a.do)
+    if (a.type === 'speaker' && music) music.speaker({ name: a.name, on: a.do === 'on' })
     if (a.type === 'cake') serveCake(a)
   }
   for (const a of actions) {

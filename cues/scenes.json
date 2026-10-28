@@ -11,6 +11,7 @@
     "cut: on that act and beat, the music is cut the moment the newscast begins (trigger clips: the closing bulletin's first recorded part, the first Name press) and stays off for that beat.",
     "study: in those acts, the playing scene while the study's public state is one of states (a group at the wall), the idle scene when it leaves them.",
     "cake: the Cake! button. That one song from the Music library at that volume, with that scene; the sheet's music and scene come back when the song ends, or after seconds if Music cannot be read.",
+    "boo: in those acts the speaker (the Parlour HomePod, by its name in Music's AirPlay list) leaves the house music, so Susan's MacBook Pro can play Boo's Catwalk on it; it rejoins when the acts are over. npm start -- --speakers lists the names (Jon, 27 Oct 2026).",
     "strings: the Orangerie string lights in Salem's game (red, green) and the rest of the night (decor). hue 0 to 360, sat and brightness 0 to 100."
   ],
   "playlists": {
@@ -62,6 +63,7 @@
   },
   "cut": { "acts": [7], "beats": ["reveal"], "trigger": "clips" },
   "study": { "acts": [4], "playing": "Murderwin Study Dim", "idle": "Murderwin Default", "states": ["playing", "reproducing", "entering"] },
+  "boo": { "acts": [4], "speaker": "Living Room" },
   "cake": { "song": "Happy Birthday for Dogs", "volume": 60, "hue": "Murderwin Candles", "seconds": 75 },
   "strings": {
     "red": { "hue": 0, "sat": 100, "brightness": 100 },

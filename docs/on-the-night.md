@@ -432,7 +432,11 @@ game; it serves the lights and the speakers.
     spotlight. Her card lists the three steps. While the music plays the
     wall says Strut!; the music stops with a record scratch; STRIKE A POSE!
     flashes red with a big count to hold; then Boo's verdict in a speech
-    bubble. Three times, with three dots for the poses. Pays one
+    bubble. Three times, with three dots for the poses. Its music plays
+    on the Parlour HomePod from Susan's MacBook Pro (Jon, 27 Oct): the
+    brain takes that HomePod out of the house music when Act 4 starts and
+    puts it back for dessert, and the wall runs the music two seconds
+    ahead of itself, so the scratch lands on the flash. Pays one
     wrong motive crossed off and a bag hint. If Boo's camera is up, Jenna's
     iPad Pro facing the catwalk shows the group to itself and takes one
     photo a moment into each group's last pose, for the end credits. Nothing
@@ -604,6 +608,7 @@ on the party night both are gone.
 | Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. In Act 2 the Entryway's printed code does Boo's screen's job. If the projector's plug never came back on after the blackout or the drawing, switch it on by hand in the Home app; the brain carries on, and the projector takes a moment to warm up. |
 | The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card back. |
 | A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
+| Boo's music (the Parlour HomePod) | Carry on: the wall shows every moment. To get the sound back, pick the Parlour HomePod again in Control Centre, Sound, on Susan's MacBook Pro; or pick its own speakers and add `&airplay=0` to the wall's address, so the music is not two seconds early. |
 | Boo's camera (Jenna's iPad Pro in the Entryway) | Carry on. The catwalk runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; the phones tint red and green whatever the lights do. |
 | A room code will not scan | Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |

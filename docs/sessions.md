@@ -25,10 +25,22 @@ on the Canon.
   hats, bass) instead of beeps. The phones say the same in fewer words.
   The show's timing and the server are unchanged. New sample on the Game
   test tab: Boo's wall, the whole show (`?preview=kiosk-boo-show`).
-- Board: migration `2026-10-27-boo-catwalk` marks card 10002 done.
-- Left: Jon tries Boo's Catwalk again; deploy when Jon says. Start Here's
-  snapshot not updated this session.
-- Decisions: none.
+- Boo's music on the Parlour HomePod (Jon's decision, same day): the
+  brain takes the Parlour HomePod out of Music's AirPlay speakers when Act 4
+  starts and puts it back when it ends (`boo` in `cues/scenes.json`,
+  `music.speaker`, `npm start -- --speakers`); Susan's MacBook Pro plays the
+  wall's music to it; the wall starts and stops the music two seconds early
+  for the AirPlay delay (`booLead`, `&airplay=`; none in practice unless
+  set). New Game test try: the practice wall through the HomePod. Untried
+  on the hardware: the HomePod's name (the list hung on a permission
+  question), the switch itself, and whether a chime takes the HomePod back.
+- Board: migration `2026-10-27-boo-catwalk` marks card 10002 done and adds
+  Jon's cards 507 (the HomePod's name), 508 (Susan's MacBook Pro to the
+  HomePod before Start Act 4) and 509 (tune the delay by ear).
+- Left: Jon tries Boo's Catwalk again; the three cards; deploy when Jon
+  says. Start Here's snapshot and the Canon page not updated yet.
+- Decisions: Boo's music plays on the Parlour HomePod in Act 4, not the
+  house jazz (Jon, 27 Oct; changes cue 11).
 
 ## 26 Oct 2026, evening · Claude Code (Jon's Game test notes)
 

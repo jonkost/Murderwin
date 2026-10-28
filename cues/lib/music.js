@@ -14,6 +14,9 @@
 //   pause()                 stop the music (Music is never opened just to pause it)
 //   duck() / unduck()       Music's own volume down to a whisper under a cue
 //                           sound, and back to the playlist's volume after
+//   speaker({ name, on })   that AirPlay speaker in or out of the music (Boo's
+//                           Parlour HomePod in Act 4, 27 Oct 2026)
+//   speakers()              [{ name, on }] for every AirPlay speaker Music sees
 //
 // Commands run one at a time, in order. A failure (no permission yet, a
 // playlist that is not there, Music not answering) logs one plain line and
@@ -93,6 +96,28 @@ export const SCRIPTS = {
     'if application "Music" is not running then return "not running"',
     'tell application "Music" to pause',
     'return "paused"',
+  ],
+  // argv: "on" or "off", the speaker's name in Music's AirPlay list
+  speaker: [
+    'on run argv',
+    'set want to ((item 1 of argv) is "on")',
+    'set n to (item 2 of argv) as text',
+    'tell application "Music"',
+    'if not (exists AirPlay device n) then return "missing"',
+    'set selected of AirPlay device n to want',
+    'end tell',
+    'return "done"',
+    'end run',
+  ],
+  // every AirPlay speaker Music sees: name, tab, true or false, one a line
+  speakers: [
+    'set out to ""',
+    'tell application "Music"',
+    'repeat with d in AirPlay devices',
+    'set out to out & (name of d) & tab & ((selected of d) as text) & linefeed',
+    'end repeat',
+    'end tell',
+    'return out',
   ],
   // argv: the volume to end on, the number of steps (a short fade)
   fade: [
@@ -226,7 +251,26 @@ export function createMusic({ run = runOsascript, fake = false, log = () => {}, 
     })
   }
 
-  return { play, playTrack, nowPlaying, pause, duck, unduck, ducked: () => ducked, idle: () => chain }
+  function speaker({ name, on }) {
+    return enqueue(async () => {
+      if (fake) { log(`[music] would ${on ? 'add' : 'take'} ${name} ${on ? 'to' : 'out of'} the house music`); return }
+      const r = await run(SCRIPTS.speaker, [on ? 'on' : 'off', String(name)])
+      if (r === 'missing') log(`[music] no speaker called "${name}" in Music's AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)`)
+      else log(on ? `[music] ${name} is back in the house music` : `[music] ${name} is out of the house music, for Boo's Catwalk`)
+    })
+  }
+
+  function speakers() {
+    if (fake) return Promise.resolve([])
+    return run(SCRIPTS.speakers).then(parseSpeakers)
+  }
+
+  return { play, playTrack, nowPlaying, pause, duck, unduck, speaker, speakers, ducked: () => ducked, idle: () => chain }
+}
+
+// Music's AirPlay list, from the speakers script: [{ name, on }].
+export function parseSpeakers(text) {
+  return String(text ?? '').split('\n').map(l => l.split('\t')).filter(([n]) => n && n.trim()).map(([name, sel]) => ({ name: name.trim(), on: String(sel).trim() === 'true' }))
 }
 
 // Follow one song to its end (Cake!, 25 Oct 2026). Once a second, ask Music

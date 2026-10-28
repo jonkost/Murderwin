@@ -114,8 +114,19 @@ export function studyWants(docs = {}, cfg) {
   return (s.states ?? []).includes(docs.study?.state) ? 'playing' : 'idle'
 }
 
+// Boo's music (27 Oct 2026, Jon): in `boo.acts` the Parlour HomePod
+// (`boo.speaker`) leaves the house music, so Susan's MacBook Pro can play
+// Boo's Catwalk on it; outside them it is in the house music. Returns
+// 'lent' | 'house', or null with no `boo` on the sheet.
+export function speakerWants(docs = {}, cfg) {
+  const b = cfg?.boo
+  const m = momentOf(docs.night)
+  if (!b || !m) return null
+  return (b.acts ?? []).includes(m.act) && m.phase !== 'blackout' ? 'lent' : 'house'
+}
+
 export function emptySceneState() {
-  return { music: null, hue: null, projector: null, playlist: null, cut: null, study: null, cakeCmd: null, musicCmd: null, sceneCmd: null }
+  return { music: null, hue: null, projector: null, playlist: null, cut: null, study: null, speaker: null, cakeCmd: null, musicCmd: null, sceneCmd: null }
 }
 
 function playAction(cfg, key, why) {
@@ -133,6 +144,7 @@ function fresh(at, now) {
 //   { type: 'scene', name, why }                                  recall every Hue scene with that name
 //   { type: 'projector', do: 'on'|'off', why }                     the projector's plug
 //   { type: 'cake', song, volume, seconds, why: 'host' }           play that one song; the sheet comes back after
+//   { type: 'speaker', name, do: 'off'|'on', why: 'boo' }           that HomePod out of the house music, or back in
 // `why` is 'sheet' (scenes.json), 'host' (a Host tab button), 'study' (the
 // dim study scene) or 'cake' (the candles).
 export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now(), cfg = null) {
@@ -167,6 +179,14 @@ export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now()
       actions.push({ type: 'scene', name: want === 'playing' ? cfg.study.playing : cfg.study.idle, why: 'study' })
     }
     state.study = want
+  }
+
+  // Boo's speaker: out of the house music in her acts, back when they end
+  // (edge-triggered like the dim study: nothing until her act first comes)
+  if (cfg.boo) {
+    const want = speakerWants(docs, cfg)
+    if (want !== prev.speaker && (want === 'lent' || prev.speaker === 'lent')) actions.push({ type: 'speaker', name: cfg.boo.speaker, do: want === 'lent' ? 'off' : 'on', why: 'boo' })
+    state.speaker = want
   }
 
   // Cake! (the Host tab's button, public/cues.cake.at): once per stamp, while
@@ -307,6 +327,10 @@ export function sceneProblems(cfg, { soundIds = SOUND_IDS } = {}) {
     checkActs('study', cfg.study.acts)
     for (const k of ['playing', 'idle']) if (typeof cfg.study[k] !== 'string' || !cfg.study[k].trim()) out.push(`study.${k} is not a scene name`)
     if (!Array.isArray(cfg.study.states) || !cfg.study.states.length || !cfg.study.states.every(s => typeof s === 'string' && s.trim())) out.push('study.states is not a list of the study\'s states')
+  }
+  if (cfg.boo) {
+    checkActs('boo', cfg.boo.acts)
+    if (typeof cfg.boo.speaker !== 'string' || !cfg.boo.speaker.trim()) out.push('boo.speaker is not a speaker name')
   }
   if (cfg.cake) {
     if (typeof cfg.cake.song !== 'string' || !cfg.cake.song.trim()) out.push('cake.song is not a song name')

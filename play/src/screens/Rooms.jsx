@@ -3,7 +3,7 @@ import { callMemoryStep, callBooDone } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
-import { ms, booMoment } from '../lib/night'
+import { ms, booMoment, booLead } from '../lib/night'
 import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
@@ -499,7 +499,7 @@ export function BooWall({ boo, night, nightId, serverNow }) {
     callBooDone({ nightId }).catch(() => { told.current = false })
   }
   useEffect(() => { told.current = false }, [boo?.groupId, boo?.startsAt])
-  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} night={night} />
+  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} night={night} lead={booLead(window.location.search)} />
 }
 
 function BooSteps() {
@@ -526,14 +526,16 @@ function BooPips({ pose, of }) {
 // `live`: outside Act 4 the wall's loop; in Act 4 (and in practice) the rules
 // card, with `idleLine` under it and the room's code only on a real night.
 // Her intro is the rules card too, with the three steps under her line.
-// `onOver()` is called while the show is over.
+// `onOver()` is called while the show is over. `lead`: how many ms ahead of
+// the wall the music starts and stops (booLead: the AirPlay delay).
 // The look (27 Oct 2026): a lit runway along the bottom of the triangle wall,
 // Boo in a spotlight, and every moment says what to do in plain words.
-export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.', night = null }) {
-  useTick(250)
+export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.', night = null, lead = 0 }) {
+  useTick(lead ? 100 : 250)
   const now = serverNow()
   const m = booMoment(boo, now)
-  useRunwayMusic(m.part === 'strut' || m.part === 'intro')
+  const heard = booMoment(boo, now + lead).part // what the room hears, once the AirPlay delay has passed
+  useRunwayMusic(live && (heard === 'strut' || heard === 'intro'))
   useEffect(() => { if (m.part === 'done') onOver?.() })
   const of = boo?.poses?.length || 3
   if (!live || m.part === 'idle') {

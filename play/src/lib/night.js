@@ -319,6 +319,21 @@ export function booMoment(doc, now) {
   return { part: 'done' }
 }
 
+// Boo's music runs ahead of her wall by the AirPlay delay (Jon, 27 Oct 2026:
+// in Act 4 Susan's MacBook Pro plays it on the Parlour HomePod, which sounds
+// about two seconds late). The wall starts and stops the music this much
+// early, so the scratch lands on STRIKE A POSE. `&airplay=<seconds>` on the
+// wall's address sets it (0 to 5, tuned by ear on the tech run); without it,
+// two seconds on the night's wall and none in practice.
+export const BOO_AIRPLAY_MS = 2000
+export function booLead(search, { practice = false } = {}) {
+  let v = null
+  try { v = new URLSearchParams(search ?? '').get('airplay') } catch { v = null }
+  const n = v === null || v.trim() === '' ? NaN : Number(v)
+  if (Number.isFinite(n) && n >= 0 && n <= 5) return Math.round(n * 1000)
+  return practice ? 0 : BOO_AIRPLAY_MS
+}
+
 // The cat a room's square code names (/play/?meet=granolia). Null when there is none.
 export const MEET_CATS = ['granolia', 'salem', 'zimothy', 'boo']
 export function meetParam(search) {

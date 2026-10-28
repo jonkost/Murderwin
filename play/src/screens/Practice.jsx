@@ -4,7 +4,7 @@ import { useAuthUid, useDoc, useOnline } from '../lib/hooks'
 import { watchWake } from '../lib/clock'
 import { uiLines } from '../lib/content'
 import { GAME_NAMES } from '../lib/rooms'
-import { SALEM_SHAKE, SALEM_STILL_MS } from '../lib/night'
+import { SALEM_SHAKE, SALEM_STILL_MS, booLead } from '../lib/night'
 import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, booPractice, clockSample, keepSample, practiceError } from '../lib/gametest'
 import { SalemRounds, SALEM_LINES, BooMoments, useMotion } from './Act4'
 import { BooRunway } from './Rooms'
@@ -281,7 +281,7 @@ export function BooWallPractice() {
       <RehearsalBand on label="PRACTICE" />
       {error
         ? <div className="kiosk boo-wall idle"><p className="kiosk-line">{ui.OFFLINE}</p></div>
-        : <BooRunway key={p.runId ?? 'practice'} boo={p.show} live={p.status === 'show'} serverNow={serverNow} idleLine={SAY.booWallIdle} />}
+        : <BooRunway key={p.runId ?? 'practice'} boo={p.show} live={p.status === 'show'} serverNow={serverNow} idleLine={SAY.booWallIdle} lead={booLead(window.location.search, { practice: true })} />}
       <StaleDot view={view} online={online} />
       <Wake />
     </>

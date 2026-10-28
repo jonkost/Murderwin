@@ -246,6 +246,16 @@ Shortcuts apps are yours.)
    Security, Automation, Terminal, and tick Music. If the music comes out of
    the Mac and not the HomePods, click the AirPlay button in the Music window
    and tick the same HomePods.
+8b. **Boo's speaker (27 Oct 2026).** In Act 4 the Parlour HomePod plays
+   Boo's Catwalk from Susan's MacBook Pro, not the house music. The brain
+   takes it out of Music's AirPlay speakers when Act 4 starts and puts it
+   back when Act 4 ends, by its name (`boo` in `cues/scenes.json`, set to
+   Living Room). Run `npm start -- --speakers` to list the names Music sees
+   and check it. Susan's MacBook Pro picks the Parlour HomePod as its sound
+   output after the two-minute warning (Control Centre, Sound). The wall
+   runs its music two seconds ahead for the AirPlay delay; `&airplay=<seconds>`
+   on its address changes that. Untried: whether a chime (the brain's own
+   sound output) takes the HomePod back mid-show.
 9. **Levels.** Each setting's loudness is Music's own volume, set in
    `cues/scenes.json` (`volume`: jazz 55, jazzLow 30, intense35 35,
    intense60 60, credits 35, the song 60 out of 100), and so is the whisper

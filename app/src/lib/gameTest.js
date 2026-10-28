@@ -105,7 +105,7 @@ export const SECTIONS = [
     what: 'Boo struts on the wall above the Parlour. When the music stops, the group strikes a pose and holds it, then Boo judges. Three poses.',
     devices: ['projector', 'phone', 'ipadpro'],
     steps: [
-      'Open Boo’s wall for the practice show on the projector computer, or any screen, full screen. Tap it once so it can play sound.',
+      'Open Boo’s wall for the practice show on the projector computer, or any screen, full screen. Tap it once so it can play sound. On the night its music plays on the Parlour HomePod: to hear it that way, pick the Parlour HomePod as the Mac’s sound output and open the HomePod version below.',
       'Open the practice show on one or more phones. For the end credits’ photo, also open Boo’s camera on Jenna’s iPad Pro (or any iPad with a camera), stand it facing you, and tap Turn on the camera.',
       'Tap Start the show.',
       'While the music plays, strut. When it stops (a record scratch), strike a pose and freeze while the big number counts down, then Boo gives her verdict. Three poses, then That’s the show. At the last pose the camera takes the photo and keeps it on its own screen.',
@@ -113,6 +113,7 @@ export const SECTIONS = [
     ],
     tries: [
       { key: 'wall', label: 'Boo’s wall, the practice show', device: 'projector', params: { kiosk: 'boo', practice: '1' } },
+      { key: 'wallHomePod', label: 'Boo’s wall, the practice show, through the Parlour HomePod (the music runs two seconds ahead)', device: 'projector', params: { kiosk: 'boo', practice: '1', airplay: '2' } },
       { key: 'phones', label: 'The practice show on a phone', device: 'phone', params: { practice: 'boo' } },
       preview('kiosk-boo-show', 'Boo’s wall, the whole show, a sample (about a minute, no workshop needed)', 'projector'),
       preview('kiosk-boo', 'Boo’s wall, one pose, a sample', 'projector'),
