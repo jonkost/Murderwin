@@ -12,7 +12,7 @@
     "emulate:seed": "node scripts/seed-emulator.mjs",
     "fake-night": "node scripts/fake-players.mjs",
     "checks": "node scripts/checks.mjs",
-    "build:site": "npm --prefix app run build:site && npm --prefix play run build:site",
+    "build:site": "npm --prefix app run build:site && npm --prefix play run build:site && node scripts/station-code.mjs",
     "check-build": "node scripts/check-build.mjs",
     "deploy": "npm run build:site && npm run check-build && firebase deploy --only hosting,firestore:rules,storage,functions",
     "deploy:site": "npm run build:site && npm run check-build && firebase deploy --only hosting",

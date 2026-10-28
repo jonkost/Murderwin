@@ -113,3 +113,24 @@ test('a taught tap id names its hexagon; untaught ones pass through', async () =
   assert.equal(taught.unitOf(4242), 4242)
   assert.equal(taught.taughtPanels, 1, 'a map entry for a panel the layout lacks does not count')
 })
+
+test('a fast touch counts at once, once, and the stream\'s late copy is dropped', async () => {
+  const { TapMerger, readTouchPacket } = await import('../lib/nanoleaf.js')
+  let t = 0
+  const m = new TapMerger(() => t)
+  // what the real wall sent on 28 Oct: a hover nearby, then down, holds and up
+  assert.equal(m.fast(7, 0), false, 'a hover is no tap')
+  assert.equal(m.fast(9, 1), true, 'down counts at once')
+  for (t = 140; t <= 700; t += 140) assert.equal(m.fast(9, 2), false, 'a held finger counts once')
+  t = 1120; assert.equal(m.fast(9, 3), false, 'its up, 0.4 s after the last hold, is no second tap')
+  t = 1130; assert.equal(m.slow(9, 0), false, 'the stream\'s copy, about 1.1 s late, is dropped')
+  t = 5000; assert.equal(m.slow(9, 0), true, 'a tap the fast road missed still counts')
+  assert.equal(m.slow(9, 2), true, 'swipes pass')
+  t = 6000; assert.equal(m.fast(9, 3), true, 'an up with no down before it counts')
+  t = 6030; assert.equal(m.fast(9, 3), false, 'and its echo does not')
+  t = 7000; assert.equal(m.fast(9, 1), true, 'a new touch counts')
+  t = 9000; assert.equal(m.fast(9, 1), true, 'a finger lost without an up does not block the next touch')
+  const pkt = Buffer.from([0, 2, 0x4d, 0x98, 0x31, 0xff, 0xff, 0x6e, 0x9c, 0x00, 0xff, 0xff])
+  assert.deepEqual(readTouchPacket(pkt), [{ id: 19864, type: 3 }, { id: 28316, type: 0 }])
+  assert.deepEqual(readTouchPacket(Buffer.from([0, 3, 1])), [])
+})

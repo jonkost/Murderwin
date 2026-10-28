@@ -52,3 +52,4 @@ play/public/loops/*
 
 # the study station's taught taps, saved on the Mac that runs it
 station/touch-map.json
+station/.station-version

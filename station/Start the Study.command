@@ -39,7 +39,27 @@ echo ""
 echo "  The study station is starting. Leave this window open."
 echo "  On the workshop's Study test page it should say: connected."
 echo ""
+# The newest station code from the site, at every start: a fix reaches this
+# Mac when the window is closed and opened again. No internet, no change.
+SITE="https://murderwin-at-sirwin-manor.web.app/station-code"
+update() {
+  [ -d ../.git ] && return   # the repo's own station/ (the brain): never overwrite the code
+  curl -fsS --max-time 10 "$SITE/manifest.txt" -o .manifest.new 2>/dev/null || { rm -f .manifest.new; return }
+  local new=$(head -1 .manifest.new) old=$(cat .station-version 2>/dev/null)
+  if [ -n "$new" ] && [ "$new" != "$old" ]; then
+    local tmp=$(mktemp -d) ok=1 f
+    for f in $(tail -n +2 .manifest.new); do
+      mkdir -p "$tmp/${f:h}"
+      curl -fsS --max-time 20 "$SITE/$f" -o "$tmp/$f" || { ok=0; break }
+    done
+    if [ $ok = 1 ]; then cp -R "$tmp/" . && echo "$new" > .station-version && echo "  The study station is up to date."; fi
+    rm -rf "$tmp"
+  fi
+  rm -f .manifest.new
+}
+
 while true; do
+  update
   caffeinate -dimsu node station.mjs
   echo "The station stopped. Starting it again in 5 seconds (close this window to stop it)."
   sleep 5

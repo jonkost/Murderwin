@@ -1,16 +1,18 @@
 // Nanoleaf Open API v1 over plain HTTP, port 16021. One controller, one
 // token. Works for the Elements (white panels, touch) and the Lines (colour
 // bars, no touch). The layout read, the frames and the flash were tried on
-// both real walls on 24 Oct 2026; touch is still to try (only a swipe has
-// come through so far). docs/study-light-game.md, technical.
+// both real walls on 24 Oct 2026; touch on 28 Oct (the fast UDP road
+// below). docs/study-light-game.md, technical.
 //
 // Pairing (once per controller): hold the controller's power button for
 // 5–7 seconds until the LED flashes, then within 30 seconds:
 //   curl -X POST http://<ip>:16021/api/v1/new      → { "auth_token": "…" }
 // The token does not expire. Put it in station/.env (never committed).
 
+import dgram from 'node:dgram'
+
 export class Nanoleaf {
-  constructor({ host, token, name = 'nanoleaf', fetchImpl = globalThis.fetch, log = () => {}, touchMap = {} } = {}) {
+  constructor({ host, token, name = 'nanoleaf', fetchImpl = globalThis.fetch, log = () => {}, touchMap = {}, fastTouch = true } = {}) {
     if (!host || !token) throw new Error(`${name}: host and token are required`)
     this.base = `http://${host}:16021/api/v1/${token}`
     this.name = name
@@ -21,6 +23,7 @@ export class Nanoleaf {
     this.panelOf = new Map() // piece id → the id of the panel it belongs to
     this.lastError = null
     this.strayTouches = new Set()
+    this.fastTouch = fastTouch
     // touch id → panel id, taught on the real wall (lib/teach.js): the
     // Elements name a tapped hexagon by an id their layout never lists
     this.touchMap = new Map()
@@ -94,14 +97,41 @@ export class Nanoleaf {
   // Calls onTouch(panelId, gesture, tapId): the panel the tap names, and the
   // id the wall itself sent (what lib/teach.js learns). Reconnects on its
   // own. Returns a stop().
+  //
+  // The stream's tap comes about 1.1 seconds after the finger (measured on
+  // the real Elements, 28 Oct 2026: it waits to rule out a double tap). So
+  // the stream is opened with TouchEventsPort, and the wall also sends the
+  // raw touch to a UDP port at once, by the same ids; that counts as the tap
+  // (TapMerger below) and the stream's late copy is dropped. If no UDP
+  // arrives (a firewall), the stream's taps still count, only later.
   listenTouch(onTouch) {
     let stopped = false
     let controller = null
+    const merger = new TapMerger()
+    const emit = (panelId, gesture) => {
+      const id = this.unitOf(panelId)
+      // a tap on a piece the layout never named: said once per piece, for the hardware evening
+      if ((gesture === 0 || gesture === 1) && !this.panels.some(p => p.id === id) && !this.strayTouches.has(panelId)) {
+        this.strayTouches.add(panelId)
+        this.log(`${this.name}: a tap on piece ${panelId}, which is in no panel of the layout (teach the taps: the workshop's Study test page, or npm run teach-touch)`)
+      }
+      onTouch(id, gesture, panelId)
+    }
+    let udp = null
+    const udpPort = !this.fastTouch ? Promise.resolve(null) : new Promise(resolve => {
+      try {
+        udp = dgram.createSocket('udp4')
+        udp.on('error', () => resolve(null))
+        udp.on('message', msg => { for (const t of readTouchPacket(msg)) if (merger.fast(t.id, t.type)) emit(t.id, 0) })
+        udp.bind(0, () => resolve(udp.address().port))
+      } catch { resolve(null) }
+    })
     const loop = async () => {
+      const port = await udpPort
       while (!stopped) {
         controller = new AbortController()
         try {
-          const res = await this.fetch(`${this.base}/events?id=4`, { signal: controller.signal })
+          const res = await this.fetch(`${this.base}/events?id=4`, port ? { signal: controller.signal, headers: { TouchEventsPort: String(port) } } : { signal: controller.signal })
           if (!res.ok || !res.body) throw new Error(`${this.name}: events → ${res.status}`)
           const reader = res.body.getReader()
           const decoder = new TextDecoder()
@@ -118,13 +148,7 @@ export class Nanoleaf {
               try {
                 const parsed = JSON.parse(data)
                 for (const ev of parsed.events ?? []) {
-                  const id = this.unitOf(ev.panelId)
-                  // a tap on a piece the layout never named: said once per piece, for the hardware evening
-                  if ((ev.gesture === 0 || ev.gesture === 1) && !this.panels.some(p => p.id === id) && !this.strayTouches.has(ev.panelId)) {
-                    this.strayTouches.add(ev.panelId)
-                    this.log(`${this.name}: a tap on piece ${ev.panelId}, which is in no panel of the layout (teach the taps: the workshop's Study test page, or npm run teach-touch)`)
-                  }
-                  onTouch(id, ev.gesture, ev.panelId)
+                  if (merger.slow(ev.panelId, ev.gesture)) emit(ev.panelId, ev.gesture)
                 }
               } catch { /* a partial line; wait for more */ }
             }
@@ -137,7 +161,60 @@ export class Nanoleaf {
       }
     }
     loop()
-    return () => { stopped = true; controller?.abort() }
+    return () => { stopped = true; controller?.abort(); try { udp?.close() } catch { /* already closed */ } }
+  }
+}
+
+// ---- the fast taps ------------------------------------------------------------
+// The UDP touch packet (Nanoleaf Open API, touch data stream): two bytes, the
+// count of pieces, then five bytes a piece: its id (two bytes), its touch
+// type in the top four bits (0 hover, 1 down, 2 hold, 3 up, 4 swipe) and
+// strength in the bottom four, and the id swiped from (two bytes).
+export function readTouchPacket(msg) {
+  if (!msg || msg.length < 2) return []
+  const n = msg.readUInt16BE(0), out = []
+  for (let i = 0; i < n && 2 + i * 5 + 5 <= msg.length; i++) {
+    const o = 2 + i * 5
+    out.push({ id: msg.readUInt16BE(o), type: msg[o + 2] >> 4 })
+  }
+  return out
+}
+
+// One touch counts once. Down or hold starts a tap unless that piece's
+// finger is already down (a held finger sends a hold every 140 ms, and its
+// up comes about 0.4 s after the last hold: seen on the real wall, 28 Oct);
+// up lifts it. An up with no down before it (the wall sometimes sends only
+// that) counts when the piece has been quiet for QUIET_MS. A finger that sent
+// nothing for LOST_MS is taken as lifted. A hover never counts (the wall sends
+// hovers when a hand is only near). The stream's tap for a piece the fast road
+// already counted, within LATE_MS, is its late copy and is dropped; swipes and
+// taps the fast road missed pass.
+export class TapMerger {
+  static QUIET_MS = 400
+  static LOST_MS = 1500
+  static LATE_MS = 2500
+  constructor(now = () => Date.now()) { this.now = now; this.down = new Map(); this.last = new Map(); this.counted = new Map() }
+  fast(id, type) {
+    if (type < 1 || type > 3) return false
+    const at = this.now(), last = this.last.get(id)
+    const quiet = last == null || at - last >= TapMerger.QUIET_MS
+    const held = this.down.get(id) && last != null && at - last < TapMerger.LOST_MS
+    this.last.set(id, at)
+    if (type === 3) {
+      this.down.delete(id)
+      if (held || !quiet) return false
+    } else {
+      this.down.set(id, true)
+      if (held) return false
+    }
+    this.counted.set(id, at)
+    return true
+  }
+  slow(id, gesture) {
+    if (gesture !== 0 && gesture !== 1) return true
+    const at = this.counted.get(id)
+    if (at != null && this.now() - at < TapMerger.LATE_MS) { this.counted.delete(id); return false }
+    return true
   }
 }
 

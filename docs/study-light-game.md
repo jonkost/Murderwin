@@ -465,7 +465,17 @@ memory only. Nothing about a round is written anywhere except counts and timesta
   panel IDs and positions, so nobody hand-types a layout. Light individual panels with a
   static `display` effect written through `PUT /effects` (`write` command). Touch: subscribe to
   the server-sent events stream, `GET /events?id=4`, which reports gesture type and panel ID per
-  tap. Elements are white-only (colour temperature 1500 to 4000 K), so patterns are brightness
+  tap. Measured on the real Elements (28 Oct 2026): that gesture comes about 1.1 s after the
+  finger, and a press held about a second never comes at all. So the stream is opened with a
+  `TouchEventsPort` header and the wall also sends raw touch (down, hold, up, hover) to that UDP
+  port at once, by the same ids; `TapMerger` in `station/lib/nanoleaf.js` counts one tap per
+  touch from it and drops the stream's late copy. With no UDP (a firewall), the stream still
+  works, only later.
+- Updating the study Mac: `npm run build:site` copies the station's code (never `.env`, never
+  `node_modules`) to `hosting/station-code/` (`scripts/station-code.mjs`); *Start the Study*
+  fetches it at every start, so a deployed fix arrives by closing and reopening its window. A
+  new package still needs the zip (`npm --prefix scripts run upload-station`, the Study test
+  page's download). Elements are white-only (colour temperature 1500 to 4000 K), so patterns are brightness
   only. Lines take full colour. Verify every call on the real controllers; the Elements'
   per-panel write format is the one thing most likely to need a fix. Reserve both controllers'
   addresses on the router.
