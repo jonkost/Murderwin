@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess } from '../firebase'
+import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
 import { newsClips, closingClips, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
@@ -824,6 +825,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
     <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat} className="papered">
       <p className="kiosk-line">{names ? `Expecting ${names}.` : 'The next group will be along.'}</p>
+      <StudyWalls />
       {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
       <p className="kiosk-line">{SAY.idle}</p>
       {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
@@ -877,6 +879,32 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
       {s.map && <WallMap layout={s.layout} order={s.map} />}
       {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
       {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
+    </div>
+  )
+}
+
+// The two walls as they hang (Jon's photos, 28 Oct 2026), on the rules card
+// between groups: the hexagons to watch and touch, the bars that answer with
+// a colour and a count.
+function StudyWalls() {
+  const bars = LINE_BARS.flat()
+  const lw = Math.max(...bars.map(p => p[0])), lh = Math.max(...bars.map(p => p[1]))
+  const hw = Math.max(...HEX_CENTRES.map(p => p[0])), hh = Math.max(...HEX_CENTRES.map(p => p[1]))
+  const r = 100 / Math.sqrt(3) - 2
+  return (
+    <div className="study-walls" aria-hidden="true">
+      <figure>
+        <svg viewBox={`${-r - 6} ${-r - 6} ${hw + 2 * r + 12} ${hh + 2 * r + 12}`}>
+          {HEX_CENTRES.map((c, i) => <polygon key={i} points={hexPoints(c, r)} className="wall-hex" />)}
+        </svg>
+        <figcaption><b>1.</b> The hexagons: watch the pattern, then touch it back.</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox={`-10 -10 ${lw + 20} ${lh + 20}`}>
+          {LINE_BARS.map(([a, b], i) => <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} className="wall-bar" />)}
+        </svg>
+        <figcaption><b>2.</b> The lines: after three patterns, note the colour and count the lit bars.</figcaption>
+      </figure>
     </div>
   )
 }

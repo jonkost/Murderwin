@@ -24,6 +24,11 @@ on the Canon.
   dropped, renaming Boo to Miss Beaux LaRue: her name stays Miss Boo LaRue.
 - All six test suites, `npm run checks` (all clear) and the build pass.
   Deployed 28 Oct on Jon's yes (hosting; no function changed). Not pushed.
+- The study's rules card draws both walls as they hang, read from the
+  controllers' layouts and levelled to Jon's photos (`play/src/lib/walls.js`).
+- The study station was started on the brain; it reached both walls but the
+  key word saved online did not match station/.env. SKMBA is up: the station
+  moves there (a zip of station/ with its settings, made for AirDrop).
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
   Boo's motive cross-off); trying the turns on the iPad (card 510).
 

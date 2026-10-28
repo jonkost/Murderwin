@@ -418,7 +418,9 @@ game; it serves the lights and the speakers.
   server's clock: the chime sends every group to a room, and every group
   visits all four rooms once:
   - The Study: Granolia's Lightbulb Moment (the light puzzle), upstairs.
-    Pays the Ghost's trace and a bag hint.
+    Pays the Ghost's trace and a bag hint. Between groups its rules card
+    draws both walls as they hang: the hexagons (watch, then touch) and
+    the lines (the colour and the count).
   - The Library: In Duplicate (Zimothy's memory match), on the iPad Pro:
     three boards of 6, 10 and 14 pairs. The guests take turns: the screen
     names whose turn it is (from the group, so a trio is known when it

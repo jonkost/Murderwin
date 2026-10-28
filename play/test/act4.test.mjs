@@ -186,3 +186,15 @@ test('the memory match takes turns: the group by its own names, nobody known and
   assert.deepEqual(turnNames(rotation, 'g9'), [])
   assert.deepEqual(turnNames(null, 'g1'), [])
 })
+
+test('the study walls as they hang: ten hexagons a hexagon apart, twelve bars of one length', async () => {
+  const { HEX_CENTRES, LINE_BARS, hexPoints } = await import('../src/lib/walls.js')
+  assert.equal(HEX_CENTRES.length, 10)
+  for (const [i, a] of HEX_CENTRES.entries()) {
+    const near = Math.min(...HEX_CENTRES.filter((_, j) => j !== i).map(b => Math.hypot(a[0] - b[0], a[1] - b[1])))
+    assert.ok(Math.abs(near - 100) < 2, `hexagon ${i} touches another`)
+  }
+  assert.equal(LINE_BARS.length, 12)
+  for (const [a, b] of LINE_BARS) assert.ok(Math.abs(Math.hypot(a[0] - b[0], a[1] - b[1]) - 100) < 2)
+  assert.equal(hexPoints([0, 0], 10).split(' ').length, 6)
+})

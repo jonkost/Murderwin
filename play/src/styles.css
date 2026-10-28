@@ -919,7 +919,18 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* the study's card between groups wears the study's house look too (26 Oct 2026) */
 .kiosk.rules-card.rules-study { --paper-opacity: 0.22; --paper-size: 120vw; background: var(--brand-blue); gap: 1.6vh; }
 .kiosk.rules-card.rules-study > .kiosk-line { font-size: min(2.2vw, 3.4vh); margin: 0; }
-.kiosk.rules-card.rules-study .rules-cat { height: min(40vh, 34vw); }
+.kiosk.rules-card.rules-study .rules-cat { height: min(30vh, 26vw); }
+/* the two walls as they hang (28 Oct 2026): the hexagons to touch, the bars that answer;
+   the words and the code side by side to make room for them */
+.kiosk.rules-card.rules-study .rules-words { grid-template-columns: 1fr auto; align-items: center; gap: 3vw; max-width: 66vw; }
+/* the two walls as they hang (28 Oct 2026): the hexagons to touch, the bars that answer */
+.study-walls { display: flex; gap: 4vw; justify-content: center; align-items: flex-end; max-width: 92vw; }
+.study-walls figure { margin: 0; display: grid; gap: 1vh; justify-items: center; }
+.study-walls svg { height: min(16vh, 13vw); max-width: 42vw; overflow: visible; }
+.study-walls figcaption { font-size: min(1.8vw, 2.6vh); color: var(--brand-parchment); max-width: 40vw; text-align: center; }
+.study-walls figcaption b { color: var(--brand-brass); }
+.wall-hex { fill: #d9c3a3; stroke: #8a6a47; stroke-width: 3; }
+.wall-bar { stroke: #e6e1d8; stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 4px #8a5cd8); }
 .rules-body { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 92vw; }
 .rules-cat { height: min(48vh, 40vw); max-width: 38vw; object-fit: contain; }
 .rules-words { display: grid; gap: 2vh; justify-items: center; max-width: 50vw; }
