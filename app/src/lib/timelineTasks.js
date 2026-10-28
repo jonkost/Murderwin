@@ -860,3 +860,20 @@ export const TURNS_1028_TASKS = [
 export const TURNS_1028_DECISIONS = [
   { key: 'entrywayGame', moment: 'act4.entryway', question: 'The projector cannot reach the landing. What does the Entryway play in Act 4?', options: ['Miss Boo LaRue’s Arcade on Susan’s MacBook Pro and the Stream Deck + XL', 'Keep Boo’s Catwalk on any screen'], answer: null, note: 'Default: the Catwalk stays, as built, until Jon decides. The arcade as talked through on 28 Oct: five games on the + XL (Boo Chasing Her Tail, the Lazy Pointer, Whack-a-Mouse, Knock It Off the Table, Yarn Catch), turns with two tokens each, each player’s own Ghost bag clue on the Mac’s screen after their second game (a trio’s third gets Boo’s line), free play until the chime, "Be on your way." at the chime, and a just-for-fun winner in the arcade, In Duplicate and Get Off My Lawn!. Dropping Boo’s motive cross-off needs a second answer: In Duplicate crosses off two, or accept that foggy nights (dial 1 and 2) end on one motive about 8 in 10 times.' },
 ]
+
+// 28 Oct 2026, evening: Jon's five Game test notes, and the phone's look
+// ("way too many words"; "make it look pretty... a hierarchy system").
+export const RETIRED_FOR_PHONE_LOOK_1028 = [
+  { order: 10004, detail: 'Done 28 Oct 2026: Jon tried Granolia’s Lightbulb Moment at the walls and says it is good to ship.' },
+  { order: 10005, detail: 'Answered 28 Oct 2026: open the address in Safari on the iPad, tap Share, then Add to Home Screen, and open it from that icon: it fills the screen with no Safari bars. One icon per station (In Duplicate, the Library, the bedroom). Try it again.' },
+  { order: 10006, detail: 'Filed 28 Oct 2026: a decision on the board (studySecondScreen), what the study Mac’s second screen shows.' },
+  { order: 10007, detail: 'Fixed 28 Oct 2026: the brain only followed the night’s game, never the Game test practice. It follows the practice now. Start the brain again once (cd cues && npm start), then try it again. The lights still run a second or two behind the phones (stringsLead).' },
+  { order: 10008, detail: 'Fixed 28 Oct 2026: while a round plays, the phone is only red or green, the whole screen, no words. The rule shows once, before the first round: a red Shake tile and a green Freeze tile. Try it again.' },
+]
+export const PHONE_LOOK_1028_TASKS = [
+  { order: 511, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'Put each iPad station on its Home Screen', detail: 'On the iPad Pro, for each address it shows on the night (?kiosk=ipad, ?kiosk=memory, ?kiosk=bedroom): open it in Safari, tap Share, then Add to Home Screen, and name it (the Library, In Duplicate, the bedroom). Open each one from its icon: no Safari bars. Tap once to wake it, as before.' },
+  { order: 512, moment: 'freeze', status: 'todo', who: 'Jon', by: '2026-11-06', title: 'Look over the phone’s new look', detail: 'The phone has fewer words, a type scale (small brass labels, serif titles, the household’s words in serif), lifted cards, and a tab bar with an icon over each word. Salem’s game is only red or green while it plays. After the next deploy, on your phone: murderwin-at-sirwin-manor.web.app/play/?preview=tour walks every screen with a button (Salem’s round on its own: ?preview=salem-round). Or play a rehearsal. Tell Claude Code anything that reads wrong.' },
+]
+export const PHONE_LOOK_1028_DECISIONS = [
+  { key: 'studySecondScreen', moment: 'act4.study', question: 'The study’s Mac (SKMBA) will have a second screen. What goes on it?', options: ['The study’s screen, full screen on the second display, facing the walls; the Mac’s own screen keeps the station’s window', 'Something new on the second screen'], answer: null, note: 'Default: the first, which needs nothing built: ?kiosk=study moves to the second display, full screen, and the station’s window stays in sight on the Mac. A new view (for example the walls’ map big on one screen and Granolia’s words on the other) is new work, and the last new feature lands 11 November.' },
+]

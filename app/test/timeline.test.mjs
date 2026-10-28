@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -975,13 +975,29 @@ test('Boo’s Catwalk, 27 Oct: Jon’s note 10002 marked done by number', () => 
 
 // ---- In Duplicate's turns and the Entryway's game, 28 Oct 2026 ---------------
 
-test('28 Oct: the newest; Jon tries the turns, and the Entryway’s game is his decision', () => {
+test('28 Oct: Jon tries the turns, and the Entryway’s game is his decision', () => {
   const add = ADDITIONS.find(a => a.id === '2026-10-28-turns')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(ADDITIONS.indexOf(add) >= 0)
   assert.equal(add.tasks, TURNS_1028_TASKS)
   assert.deepEqual(TURNS_1028_TASKS.map(t => [t.order, t.who, t.moment]), [[510, 'Jon', 'act4.puzzle']])
   assert.equal(add.decisions, TURNS_1028_DECISIONS)
   assert.deepEqual(TURNS_1028_DECISIONS.map(d => [d.key, d.answer]), [['entrywayGame', null]])
   for (const t of TURNS_1028_TASKS) assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
   for (const d of TURNS_1028_DECISIONS) assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
+})
+
+// ---- Jon's Game test notes and the phone's look, 28 Oct 2026 (evening) -------
+
+test('28 Oct, evening: the newest; Jon’s five Game test notes closed by number, the study’s second screen his decision', () => {
+  const add = ADDITIONS.find(a => a.id === '2026-10-28-phone-look')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(add.retireTasks, RETIRED_FOR_PHONE_LOOK_1028)
+  assert.deepEqual(RETIRED_FOR_PHONE_LOOK_1028.map(r => r.order), [10004, 10005, 10006, 10007, 10008])
+  for (const r of RETIRED_FOR_PHONE_LOOK_1028) assert.match(r.detail, /^(Done|Answered|Filed|Fixed) 28 Oct 2026: /)
+  assert.equal(add.tasks, PHONE_LOOK_1028_TASKS)
+  assert.deepEqual(PHONE_LOOK_1028_TASKS.map(t => [t.order, t.who, t.moment]), [[511, 'Jon', 'freeze'], [512, 'Jon', 'freeze']])
+  assert.equal(add.decisions, PHONE_LOOK_1028_DECISIONS)
+  assert.deepEqual(PHONE_LOOK_1028_DECISIONS.map(d => [d.key, d.answer]), [['studySecondScreen', null]])
+  for (const t of PHONE_LOOK_1028_TASKS) assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+  for (const d of PHONE_LOOK_1028_DECISIONS) assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
 })

@@ -17,6 +17,7 @@ import {
   CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST,
   RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS,
   TURNS_1028_TASKS, TURNS_1028_DECISIONS,
+  RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -849,6 +850,15 @@ export const ADDITIONS = [
     id: '2026-10-28-turns',
     tasks: TURNS_1028_TASKS,
     decisions: TURNS_1028_DECISIONS,
+  },
+  {
+    // 28 Oct, evening: Jon's five Game test notes (the study ships, the iPad
+    // full screen, the study's second screen, Salem's lights and colours)
+    // and the phone's look.
+    id: '2026-10-28-phone-look',
+    tasks: PHONE_LOOK_1028_TASKS,
+    decisions: PHONE_LOOK_1028_DECISIONS,
+    retireTasks: RETIRED_FOR_PHONE_LOOK_1028,
   },
 ]
 

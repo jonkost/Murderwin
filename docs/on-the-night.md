@@ -211,9 +211,9 @@ them.
 | The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the playlists, the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6, and at The End; on again when the power returns and for the ballot) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card in Act 4, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (the intro video and the rules deck from a second browser tab), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
-| Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. |
+| Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
 | Susan's work MacBook Pro | Beside the projector on the upstairs landing, all night, and it never moves (`?kiosk=boo`): its loop on the triangle wall from Act 1, Boo's code in Act 2, Boo's Catwalk in Act 4, its loop again, black at The End. The projector hangs off an IKEA smart plug in Apple Home that the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot. | A browser, full screen, sleep off, lid open. Tap it once. Check on the hardware evening that the browser comes back on the projector when the plug does. |
-| Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | Safari, full screen. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
+| Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | From its Home Screen icons, so no Safari bars show. Once, before the night: open each of its three addresses in Safari, tap Share, then Add to Home Screen (if it asks, keep Open as Web App on), and name it: the Library (`?kiosk=ipad`, also supper), In Duplicate (`?kiosk=memory`), the bedroom (`?kiosk=bedroom`). On the night, open each station from its icon. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
 | Jenna's iPad Pro | Boo's camera in the Entryway, Act 4, on its stand at the end of the catwalk facing the group (`?kiosk=pose`, nice to have). Jenna is at the house to pack the bags and never plays, so it is free all night. | Safari, full screen, before **Start Act 4**. Tap Turn on the camera and allow it. |
 | The older family iPad | Out, unless you say it stays (the question *olderIpad* on the board; your key has no older iPad). If it stays: In Duplicate on its small stand in the Library all night (`?kiosk=memory`), and your iPad Pro stays in the Orangerie from supper until it goes to the bedroom. | Nothing, by default. If it stays: Safari, full screen, tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
@@ -430,7 +430,10 @@ game; it serves the lights and the speakers.
   - The Orangerie: Get Off My Lawn! (Salem's Motion Game), on the group's
     own phones. Red means shake, green means freeze; a slip on any phone
     restarts the round; thirty seconds clean passes it; three rounds, each
-    faster. The phones tint red and green, and the string lights follow if
+    faster. The rule shows once, before the first round: a red Shake tile
+    and a green Freeze tile. While a round plays, each phone's whole screen
+    is only red or green, with no words (Jon, 28 Oct): a count before each
+    round, and one short line after a slip. The string lights follow if
     they answer the brain. Pays a bag hint (Salem's may be backwards).
   - The Entryway: Boo's Catwalk, on the triangle wall from
     Susan's MacBook Pro and the projector: a lit runway with Boo in a
@@ -615,7 +618,7 @@ on the party night both are gone.
 | A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
 | Boo's music (the Parlour HomePod) | Carry on: the wall shows every moment. To get the sound back, pick the Parlour HomePod again in Control Centre, Sound, on Susan's MacBook Pro; or pick its own speakers and add `&airplay=0` to the wall's address, so the music is not two seconds early. |
 | Boo's camera (Jenna's iPad Pro in the Entryway) | Carry on. The catwalk runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
-| Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; the phones tint red and green whatever the lights do. |
+| Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; every phone's screen turns red and green whatever the lights do. |
 | A room code will not scan | Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
 | The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
@@ -754,14 +757,20 @@ clue is dealt.
   - The samples: Granolia's screen, Granolia's screen with the walls down,
     and what a phone shows in the Study.
 - *In Duplicate* (the Library). The real game on its own on the iPad Pro:
-  three boards, Play again deals fresh ones, nothing is paid. Samples of a
-  board, a cleared board and the reward on a phone.
+  three boards, Play again deals fresh ones, nothing is paid. For no Safari
+  bars, open its address in Safari on the iPad, tap Share, then Add to
+  Home Screen, and open it from that icon. Samples of a board, a cleared
+  board and the reward on a phone.
 - *Get Off My Lawn!* (the Orangerie). Tap "Open the practice". Every phone
   that plays scans the square code beside "The practice, for every phone
   that plays", types a first name and allows motion. Anyone taps Ready. Red
   means shake, green means freeze; thirty seconds with no slip passes a
-  round; three rounds. Each phone shows a shake meter, so you can feel how
-  hard a shake has to be, and the tab lists who joined and every slip. Tap
+  round; three rounds. While a round plays, the phone is only the colour;
+  before and between rounds each phone shows a shake meter, so you can
+  feel how hard a shake has to be, and the tab lists who joined and every
+  slip. If the brain is running, the string lights follow the practice
+  too (since 28 Oct: stop the brain and start it again once to pick this
+  up). Tap
   "Stop" when you are done. Up to twelve phones.
 - *Boo's Catwalk* (the Entryway). Open "Boo's wall, the practice show" on
   the projector computer or any screen, full screen, and tap it once so it

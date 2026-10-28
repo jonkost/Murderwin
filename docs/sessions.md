@@ -9,6 +9,46 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 28 Oct 2026 · Claude Code (the phone's look; Jon's five Game test notes)
+
+- The phone app has a new look (Jon: "make it look pretty", "the menu at
+  the bottom is crude", "a hierarchy system"): one ladder of text sizes for
+  the whole app (label, small, body, lead, title, display), the serif for
+  what the household says and a plain face for what the phone tells you,
+  brass edges and a soft glow on the cards and the big buttons, and a new
+  tab bar with a small line drawing above each word, the lit tab in brass.
+  The header is the act's number and name. Every tab word fits on a phone
+  320 to 390 pixels wide (checked in the preview).
+- Fewer words (Jon: "way too many words on the pages"): the Act 4
+  directions and arrivals, every notice, the lights-out lines, the Relay
+  Drawing's screens, Salem's and Boo's phone screens, the Welcome and the
+  practices. The TV cards keep their full rules; a test checks that the
+  phones' short rules agree with them.
+- Get Off My Lawn! (card 10008): while a round plays, each phone's whole
+  screen is only red or green, with no words. The rule shows once, before
+  the first round: a red Shake tile and a green Freeze tile.
+- The string lights and the practice (card 10007): the brain followed only
+  the night's game, never the Game test practice. Now it follows the
+  practice too, and the night's game wins if both play. Stop the brain and
+  start it again once to pick this up.
+- In Duplicate full screen (card 10005): the page now lets an iPad open it
+  from a Home Screen icon with no Safari bars (Share, then Add to Home
+  Screen). Nothing ever asks anyone to install. New card 511 for Jon: the
+  three icons on the iPad Pro.
+- The study's second screen (card 10006): a decision card,
+  studySecondScreen. Its default needs nothing built: the study's screen
+  full screen on the second display, the station's window on the Mac.
+- Granolia's Lightbulb Moment (card 10004): done, it ships.
+- Tests: functions 279, cues 69, station 48, play 149 and scripts 52 pass;
+  the workshop 125 of 126. The one failing test belongs to the Boo arcade
+  work in progress in the same folder (another session), which this commit
+  leaves out. Not deployed, not pushed. A deploy carries functions too (the
+  shorter server lines).
+- Left: Jon looks over the new look on his phone after a deploy (card 512),
+  starts the brain again once, and puts the iPad stations on its Home
+  Screen (card 511).
+- Decisions: studySecondScreen, new and open.
+
 ## 28 Oct 2026 · Claude Code (In Duplicate's turns; the Entryway's game)
 
 - In Duplicate takes turns (Jon, 27 Oct): the Library screen names whose
