@@ -203,7 +203,9 @@ member's phone, so a trio that splits up afterwards still all have it.
 
 ## 7. Setting up the room on the day
 
-- [ ] Couch stays. Pointer on the desk, within reach of the wall.
+- [ ] Couch stays. Pointer on the desk, within reach of the wall. The hexagons read skin, not
+      pressure, so the pointer must be metal with a touchscreen-stylus tip (a wooden or plastic
+      one does nothing). Try it on a hexagon before the night.
 - [ ] Room light low. The hexagons' resting glow is enough to see by.
 - [ ] M1 Air awake, sleep off, plugged in, on the house wifi. Stream Deck plugged in by USB.
 - [ ] Quit the Elgato Stream Deck app on the M1. The station talks to the keys directly, and
