@@ -61,6 +61,8 @@ on the Canon.
   count reads), a green 3, 2, 1 on the Lines before every pattern, one red
   flash on the Lines for a wrong touch or a wrong pair, tighter pauses.
   Tried in the tests and on the real Lines layout, not yet on the walls.
+  Deployed 28 Oct on Jon's yes (hosting, with the station code at
+  `/station-code/`, version 3e5bd24aac00). Not pushed.
 - macOS on SKMBA refused the downloaded starter; right-click Open no longer
   works, so the page now says Open Anyway in Privacy & Security.
 - Left: Jon's answer on entrywayGame (and, if the arcade, how to make up
