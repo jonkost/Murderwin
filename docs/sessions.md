@@ -163,7 +163,14 @@ on the Canon.
   guest's screen if a line is ever missing, by 11 November);
   entrywayGame answered; ghostProof added; 514 (Jon's try)
   and 515 (the arcade on the night) written again. The Canon and Start
-  Here's snapshot updated. Not deployed: Jon says when.
+  Here's snapshot updated.
+- Deployed 29 Oct on Jon's yes, from a clean copy of 27f3777: hosting
+  only, since no function, rule or study station code changed after the
+  last deploy (40dc5c8). It also carried the arcade's menu (53b6266) and
+  the setup-words sweep (41cb5a9). Every test and npm run checks passed
+  in the copy first; all 119 live files match the build; the live
+  arcade's Boo Chasing Her Tail starts with Back to the games at the top
+  and no console errors. Not pushed.
 
 ## 29 Oct 2026 · Claude Code (the arcade's menu: Boo's face, paws and a flashing top row)
 
@@ -212,8 +219,8 @@ on the Canon.
 - Board: card 523 (the menu) done, and a line on Jon's try of the arcade
   (514). No decision changed, so the Canon is as it was. Start Here's
   snapshot says so. `docs/boo-arcade.md` (§1, §3 and the technical
-  notes) and `docs/test-plan.md` (G54) updated. Not deployed: Jon says
-  when.
+  notes) and `docs/test-plan.md` (G54) updated. Deployed later on
+  29 Oct, with the arcade made again (27f3777).
 
 ## 29 Oct 2026 · Claude Code (Whack-a-Mouse's pets, the black cat, the words on the strip)
 
