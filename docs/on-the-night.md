@@ -253,7 +253,9 @@ game; it serves the lights and the speakers.
    `cues/.env` is wrong; the night runs on without the lights.
 3. *The party box, then your phone.* On the workshop's Game night page, tick
    "This is the party night" (untick it after the party). Then open the game
-   on your phone, tap "Host? Start the night", type your name. If a rehearsal
+   on your phone, tap "Host? Start the night", type your name. Do it before
+   any guest arrives: until a night is live, every phone that opens the game
+   shows that button. If a rehearsal
    night is still on, press **Start a new night** on its Host tab instead.
    The Host tab appears. No red REHEARSAL band means the box worked. Under
    "Who is here", a green dot sits beside every phone the house has heard
@@ -264,15 +266,21 @@ game; it serves the lights and the speakers.
    and `cues/.env` to match and restart both). On the M1 Air, double-click *Start the Study* in the Study station folder (or `cd station && npm start`). No folder on that Mac yet? Open the Study test page on it, tap Download the Study station, unzip, then double-click *Start the Study* (the first time, macOS refuses: click Done, then System Settings, Privacy & Security, Open Anyway beside Start the Study, and the Mac's password). Alive when
    the terminal prints `study station up` with the panel counts. `DOWN`
    beside either wall means the game runs on the screen instead; the clue
-   still lands.
+   still lands. Then minimise that window (the yellow button at its top
+   left): it keeps running, and the Study's guests see only the game, never
+   the station's lines (your rule of 29 October: no setup words in front of
+   the guests). Your Host tab, under The house, says whether the station is
+   up.
 5. *The screens.* Open the Parlour screen (`?kiosk=living`), the study, the
    iPad Pro (`?kiosk=ipad`: in the Library with Zimothy for Act 2, as your
    cue list has it), Susan's MacBook Pro by
    the projector on the landing (`?kiosk=boo`, where it stays all night) and
    the brain's own browser
-   (`?kiosk=orangerie`, facing the Orangerie table), full screen. Each one shows
-   a small "tap once to wake" note in the bottom right corner, so the
-   browser lets it make a sound; tap anywhere once and leave it (the brain's
+   (`?kiosk=orangerie`, facing the Orangerie table), full screen. Tap each
+   one once, anywhere, and leave it, so the browser lets it make a sound. On
+   a rehearsal a small "tap once to wake" note sits in the bottom right
+   corner until you do; on the party night there is no note, so just tap
+   once (the brain's
    browser shows the bell but rings nothing: the brain's own sound already
    comes out of the HomePods, so a tap there is harmless). Each shows
    its loop, once your files are in `play/public/loops`, or its crest and a
@@ -289,11 +297,14 @@ game; it serves the lights and the speakers.
    tab the iPad Pro's dot for its earlier station goes quiet after each move
    (the Library and Orangerie one from Act 4, the memory match one once it
    is in the bedroom); that is right, not a fault.
-   A small dot in the bottom left corner is green while the screen can hear
-   the house, amber if it has gone quiet, red if it is off the wifi. A bell
-   in the top right corner shows for three seconds whenever a sound is
-   called for, so you can tell a silent speaker from a missed cue. The Host
-   tab has a dot for each screen.
+   On a rehearsal a small dot in the bottom left corner is green while the
+   screen can hear the house, amber if it has gone quiet, red if it is off
+   the wifi. On the party night the screens show no dot and no words about
+   the connection (your rule of 29 October: no setup words in front of the
+   guests): check each screen on your Host tab, under The house, which has
+   a dot for each. A bell in the top right corner shows for three seconds
+   whenever a sound is called for, so you can tell a silent speaker from a
+   missed cue; nothing shows in the corners while a room is dark.
 6. *The rooms.* The four room codes on the walls: Granolia in the Study
    (upstairs), Salem in the Orangerie, Zimothy in the Library, Boo in the
    Entryway. None in the Parlour. The same codes serve Act 2 and Act 4. In
@@ -799,16 +810,28 @@ at all: nothing is paid and no clue is dealt.
   it facing you and tap Turn on the camera: at the last pose it takes the
   photo and keeps it on its own screen, never sent anywhere.
 - *Miss Boo LaRue's Arcade* (the Entryway, not on the night yet). Built
-  28 October to try: the night still plays *Boo's Catwalk* until you answer
-  the question *entrywayGame* on the board. On a Mac in Google Chrome
+  28 October to try. You chose it for the night on 29 October (the Catwalk is
+  scrapped), but until it is wired into Act 4 the night still plays *Boo's
+  Catwalk*. On a Mac in Google Chrome
   (Safari cannot reach the Stream Deck): quit the Stream Deck app, set the
   Mac's sound output to its own speakers (through a HomePod the sounds come
   about two seconds late), plug in the Stream Deck + XL, open "The arcade,
   free play", tap "Connect the Stream Deck" once and pick it from the list.
-  Press a game in the middle of the second row of keys, then any key or
-  dial to start; two minutes a game. No Stream Deck? The deck drawn on the
-  screen plays with the mouse, or the arrow keys and the space bar. For a
-  group's visit, tap "Practise a group's visit" at the bottom of the free
+  The Mac's screen then becomes the scoreboard (the points, the time, the
+  strikes, Boo): the Stream Deck is the game. Press a game in the middle of
+  the second row of keys, then any key or dial to start; two minutes a game,
+  and "Back to the games" at the top of the screen leaves one early.
+  Only the two outside dials play (one key a click; in *Boo Chasing Her
+  Tail* they move Boo herself, the left one across and the right one up and
+  down, after the white tip of her tail); *Knock It Off the
+  Table* is the keys at the end of its four tables, and *Yarn Catch* moves
+  its basket with a tap on the left or the right of the touch strip. No
+  Stream Deck? The deck drawn on the screen plays with the mouse, or the
+  arrow keys and the space bar. If the touch strip ever looks scrambled, add
+  `&strip=whole` to the address and tell Claude Code. On the night (card
+  515) the screen shows only the game: no Connect and no setup words, so set
+  the Stream Deck up before the guests arrive. For a
+  group's visit, tap "Try a group's visit" at the bottom of the free
   play page, or close the free play tab before opening "A group's visit,
   for practice": only one arcade tab plays on the Stream Deck at a time,
   and the other says so. It asks for two or three first names: two tokens
@@ -818,8 +841,9 @@ at all: nothing is paid and no clue is dealt.
   second game (in practice, a line in square brackets), Boo's line instead
   for a trio's third player, Boo's winner (unless the chime comes first),
   then free play until the chime ten minutes in, when Boo says "Be on your
-  way." "Ring the chime", beside the clock, tries the ending at once. Samples of a player's clue, a trio's third player and
-  the chime. The whole game: `docs/boo-arcade.md`.
+  way." "Ring the chime", beside the clock, tries the ending at once, and
+  "Back to free play", beside it, leaves the visit straight away. Samples of
+  a player's clue, a trio's third player and the chime. The whole game: `docs/boo-arcade.md`.
 - *The Parlour Games.* Every set in the workshop's bank, numbered, each with
   "See it on a phone": Boo's line and the three questions, exactly as a
   phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4
@@ -899,7 +923,7 @@ workshop") are in quotes, never bold. No em dashes anywhere in this file.
 `?kiosk=living | ipad | memory | boo | pose | bedroom | study | orangerie`, plus
 `?kiosk=memory&play=1` (the standalone memory match, no night) and
 `?kiosk=boo&play=1` (Miss Boo LaRue's Arcade, 28 Oct, not on the night until
-Jon answers entrywayGame; `&visit=1` is the practice visit): `play/src/main.jsx`
+card 515 wires it in, entrywayGame answered 29 Oct; `&visit=1` is the practice visit): `play/src/main.jsx`
 sends it to `BooArcade` (`play/src/screens/Arcade.jsx`) before the kiosks, so
 it never goes through `Kiosk.jsx`: no sign-in, no presence, no night
 (`docs/boo-arcade.md`). The device
@@ -938,8 +962,10 @@ the phones have it, else `RULES_LINES`, copied from `functions/lib/hosts.js`
 for the Study and the Library, tested equal; Salem's and Boo's intros from the
 phones) and `catPictureUrl(cat, key)` over
 `CAT_PICTURES` (Jon's file names, encoded, varied by `variant(key, n)`). The
-study's card keeps Granolia's IDLE line and the station's "gone quiet"
-warning. `Bell` takes `silent`, true for the orangerie kiosk (the brain's
+study's card keeps Granolia's IDLE line and, when the station has sent
+nothing for 90 seconds, "Granolia has dozed off. Find a host." (it said "The
+station has gone quiet" until 29 Oct 2026: no setup words in front of the
+guests). `Bell` takes `silent`, true for the orangerie kiosk (the brain's
 browser), so no cue sounds twice through the HomePods. The loop `<video>` is
 transparent (`opacity: 0`), never `display: none`, until its first frame, and
 `play()` is called then, so Safari autoplays it. The loop files are

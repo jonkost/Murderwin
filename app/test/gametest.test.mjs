@@ -106,9 +106,15 @@ test('Miss Boo LaRue’s Arcade: right after Boo’s Catwalk, on its own page in
   // holds the deck at a time, so the visit starts from free play's own button
   assert.match(arcade.steps[0], /sound output to its own speakers/)
   const visit = arcade.steps.find(s => s.startsWith('For a group’s visit'))
-  assert.match(visit, /tap Practise a group’s visit at the bottom of the free play page, or close the free play tab/)
-  assert.ok(playSrc('screens/Arcade.jsx').includes("Practise a group's visit"), 'the button the step names is on the page')
+  assert.match(visit, /tap Try a group’s visit at the bottom of the free play page, or close the free play tab/)
+  assert.ok(playSrc('screens/Arcade.jsx').includes("Try a group's visit"), 'the button the step names is on the page')
   assert.match(visit, /the last game is shorter when time runs short/, 'two minutes a game, but not past the chime')
+  // 29 Oct 2026, Jon: "on the pratice page I need a back button. Im stuck and cant get back."
+  // The steps name the page's two Backs, and the page has both.
+  const page = playSrc('screens/Arcade.jsx')
+  assert.match(arcade.steps.find(s => s.startsWith('Free play:')), /Back to the games, at the top of the screen, leaves a game early\./)
+  assert.match(arcade.steps.at(-1), /Ring the chime, beside the clock, tries the ending at once, and Back to free play, beside it, leaves the visit straight away\./)
+  for (const words of ["'Back to the games'", "'Back to free play'", 'Ring the chime']) assert.ok(page.includes(words), `the page has ${words}`)
 })
 
 test('addresses: on top of the play page, with or without a query already there', () => {

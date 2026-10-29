@@ -8,7 +8,7 @@ feature lands Wednesday 11 November, after the second full tech run; then checks
 
 > **24 Oct 2026, evening handoff (`docs/handoff-2026-10-24.md`, from Claude chat).** Jon cast the news team: Jon plays Mic Cameron (the field reporter), Susan plays Ava Waves (the studio anchor). The practice run is Sunday 25 October: a rehearsal night, the whole night, Acts 1 to 7, every screen on, Jon and Susan playing with the spare iPhone 11 as a third player (run sheet: Claude Doc https://claude.ai/artifact/3Ekk4JUd8VpN31NJWx56AK). Answered by Jon that evening: bulletin2Voice (Susan reads bulletin 2, as Ava Waves), bulletin2Known (accepted: Susan, who records it, knows which family each line points at) and worstDial (build the worst-dial proof now, before the second tech run; Claude chat is building it and sends it as a patch, `docs/patches/2026-10-24-worst-dial.patch`, with how to apply it: Claude Code does not start it). This handoff wins over older docs where they disagree. Its item 4 was built on 25 Oct (Claude Code): the Home rows, the motive card pictures, the morning after, replay by seed, the pose photo, and the test plan's Not yet checks.
 
-> **Decisions (24 Oct, evening; two added 25 Oct; six from the cue list, 25 to 26 Oct; two added 28 Oct).** Open, each a card on the board and Jon's call only, each with its default built: ballotMajority, diningName, handOn, granoliaIntro (new 24 Oct, on the board after the next deploy: Granolia's hello in the Study; default the new words, which Claude Code puts in, card 473), tidyFolders (housekeeping in the repo folder, now a Claude Code card: ask Jon once, when you get there), and from the test plan's checks on 25 Oct: dialSpill (does the dial start again after Spill the Beans? default: yes, as built, though the Canon says it never resets; check G24) and senseClue (a sense-only bag clue can point at one bag in a party of four to six, about once in a thousand deals; default: leave it; check G09), and from the house's hardware on 25 Oct: stringsLead (the string lights run through Apple Home 1 to 2 seconds behind the phones, so should Salem's intro say to follow the phones? default: the phones lead; nothing built yet: Claude chat rewrites the lines, Claude Code copies them in), and from the cue list (25 Oct; each default built 25 to 26 Oct): roomMusic (default: one playlist for the whole house, bulletin 2 on every HomePod), olderIpad (default: out; the iPad Pro roams), cueSounds (default: one chime for every chime moment, the stings optional, no power sound), bedroomName (default: "the bedroom"), blackoutAuto (default: the power returns on its own after 5 seconds) and promptScreen (default: the TV stays dark through the role cards; cue 5's loop is the alternative; filed by step 3), and from Jon's Game test notes (28 Oct): studySecondScreen (the study's Mac, SKMBA, gets a second screen; default: the study's screen full screen on it, facing the walls, and the station's window on the Mac's own screen; nothing to build), and from the Entryway (28 Oct): entrywayGame (the projector cannot reach the landing, so what does the Entryway play in Act 4? default: Boo's Catwalk stays, on any screen; Miss Boo LaRue's Arcade on Susan's MacBook Pro and the Stream Deck + XL is built on a page of its own to try, `docs/boo-arcade.md`, and never reads a night). Answered: newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut) and dialMapping (fixed, as built), with the 23 Oct handoff's defaults on 24 Oct (Jon may change any); bulletin2Voice, bulletin2Known and worstDial (Jon, 24 Oct evening, above); rulesDeckScreen (the Parlour TV shows the join code through Act 1; the video and the slides in a second tab; the cue list, 25 Oct); grossnola (keep it offstage, 31 Aug) and swapMotive (keep all 19, 8 Oct), answered long ago and only now off the open list.
+> **Decisions (24 Oct, evening; two added 25 Oct; six from the cue list, 25 to 26 Oct; two added 28 Oct; one answered and one added 29 Oct).** Open, each a card on the board and Jon's call only, each with its default built: ballotMajority, diningName, handOn, granoliaIntro (new 24 Oct, on the board after the next deploy: Granolia's hello in the Study; default the new words, which Claude Code puts in, card 473), tidyFolders (housekeeping in the repo folder, now a Claude Code card: ask Jon once, when you get there), and from the test plan's checks on 25 Oct: dialSpill (does the dial start again after Spill the Beans? default: yes, as built, though the Canon says it never resets; check G24) and senseClue (a sense-only bag clue can point at one bag in a party of four to six, about once in a thousand deals; default: leave it; check G09), and from the house's hardware on 25 Oct: stringsLead (the string lights run through Apple Home 1 to 2 seconds behind the phones, so should Salem's intro say to follow the phones? default: the phones lead; nothing built yet: Claude chat rewrites the lines, Claude Code copies them in), and from the cue list (25 Oct; each default built 25 to 26 Oct): roomMusic (default: one playlist for the whole house, bulletin 2 on every HomePod), olderIpad (default: out; the iPad Pro roams), cueSounds (default: one chime for every chime moment, the stings optional, no power sound), bedroomName (default: "the bedroom"), blackoutAuto (default: the power returns on its own after 5 seconds) and promptScreen (default: the TV stays dark through the role cards; cue 5's loop is the alternative; filed by step 3), and from Jon's Game test notes (28 Oct): studySecondScreen (the study's Mac, SKMBA, gets a second screen; default: the study's screen full screen on it, facing the walls, and the station's window on the Mac's own screen; nothing to build), and from Jon's question (29 Oct): ghostProof ("there is not enough to reveal the ghost": the Ghost's clues are only in Act 4, the Study's trace and one bag word from each cat, and nothing proves they are enough while Claude chat's worst-dial patch has not come; should Claude Code build the Ghost check itself, on stand-in nights, counts only? default: wait for the patch). Answered: entrywayGame (Jon, 29 Oct: "Catwalk is 100% scarped"; the Entryway plays Miss Boo LaRue's Arcade, `docs/boo-arcade.md`, for a clue about the Ghost, not a motive, "its not motive its a ghost clue"; Boo's motive cross-off is not replaced; putting the arcade on the night is a Claude Code card), newsVideo (video), bagsAct4 (the bags stay), tutorial8 (kept buried), stewardPictures (no), partnerAwards (cut) and dialMapping (fixed, as built), with the 23 Oct handoff's defaults on 24 Oct (Jon may change any); bulletin2Voice, bulletin2Known and worstDial (Jon, 24 Oct evening, above); rulesDeckScreen (the Parlour TV shows the join code through Act 1; the video and the slides in a second tab; the cue list, 25 Oct); grossnola (keep it offstage, 31 Aug) and swapMotive (keep all 19, 8 Oct), answered long ago and only now off the open list.
 
 > **23 Oct 2026 handoff (`docs/handoff-2026-10-23.md`, with section 15, the final bag items, and section 16, the game names, both added 24 Oct): applied and built on 24 Oct.** It is the master handoff: the night in order, every decision with its date, the sound and light plan, the device table, and the build list. It wins over this file and every older doc wherever they disagree (the 24 Oct evening handoff above wins over it). `docs/sensory-bags.md` is the owner of everything about the bags. Left to do from it: the nice-to-have pose photo, and the Claude chat cards (the project copy marked Applied, two rules deck slides). Its decisions are in the Decisions line above.
 
@@ -239,8 +239,8 @@ handoff; not yet tried on the real wall and bulb):
 The game names (Jon, 24 Oct; `seed/game-names.json`, display text only; ids,
 routes, kiosk names and cue ids keep the old names): Granolia's Lightbulb
 Moment (the study light puzzle), In Duplicate (the memory match), Get Off My
-Lawn! (Salem's Motion Game), Boo's Catwalk, Sir Irwin Needs a Hand (the Relay
-Drawing). The Act 6 deduction round has no name.
+Lawn! (Salem's Motion Game), Miss Boo LaRue's Arcade (since 29 Oct; Boo's
+Catwalk is scrapped), Sir Irwin Needs a Hand (the Relay Drawing). The Act 6 deduction round has no name.
 
 Decided with Jon on 21 Oct 2026 (Canon updated to match):
 - Parlour Games (12 a night, the bank, how the cats lean): `docs/parlour-games.md`
@@ -392,8 +392,9 @@ and tell Jon.
   News bulletin 1 (Act 2) crosses off one family; all four cats give each guest
   a hint (two wrong families a guest, so at least two always stand) and a bag
   clue about the Murderer; bulletin 2 (Act 3) hints at the real family; the
-  Act 4 rooms (a motive crossed off by In Duplicate and by Boo, and a bag clue
-  about the Ghost from each cat);
+  Act 4 rooms (a motive crossed off by In Duplicate, and a bag clue about the
+  Ghost from each cat; since 29 Oct Boo's arcade pays a clue about the Ghost,
+  no motive);
   Irwin's countdown (Act 5, five cards at dial 1 down to one at dial 5);
   Study trace (Ghost) and trace reveal (Murderer); closing bulletin and
   credits in Act 7.
@@ -433,6 +434,12 @@ and tell Jon.
   a path. Pad 1 s of silence for AirPlay spin-up. Always build a visual
   fallback: every recording's words also show on a screen.
 - An 11-year-old and a 70-year-old must be able to use every surface, in dim light.
+- No setup words in front of the guests (Jon, 29 Oct 2026: "make sure there is no programing
+  things like connect stream deck and such visible to the players on the real game"). On the
+  night no screen a guest sees shows a Connect button, a device, app or browser name, a status
+  line, an address or a practice button. Setup is done before the guests arrive and its controls
+  go once it is done; a fix during the night happens out of the guests' sight. Practice pages
+  (`&play=1`, the Game test tab) may keep theirs.
 
 ## HARDWARE (decided 25 Sep — no Raspberry Pi anywhere; device table 23 Oct; Jon's key 25 Oct, built 26 Oct)
 
@@ -476,7 +483,8 @@ are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
   black at The End.
 - Susan's work MacBook Pro (SKMBP) feeds the borrowed projector on the
   upstairs landing all night and never moves (`?kiosk=boo`): its loop on the
-  triangle wall from Act 1, Boo's code in Act 2, Boo's Catwalk in Act 4, its
+  triangle wall from Act 1, Boo's code in Act 2, Boo's Catwalk in Act 4 (the
+  arcade since 29 Oct), its
   loop again, black at The End. The brain switches the projector's plug off
   for the blackout and from the drawing's intro to the end of Act 6; on
   again when the power returns and for the ballot. The MacBook stays on with

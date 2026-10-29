@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029 } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029, RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029 } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -1030,9 +1030,7 @@ test('28 Oct, night: followed by the winners; the arcade built to try, Jon’s t
     const card = after.tasks.find(c => c.order === t.order && !c.deleted)
     assert.ok(card && card.title === t.title && card.status === t.status, `card ${t.order} on the board`)
   }
-  // docs/boo-arcade.md §8 sends its open questions to card 515 by its title
-  const doc = readFileSync(new URL('../../docs/boo-arcade.md', import.meta.url), 'utf8')
-  assert.match(doc, /On the board: The\s+arcade on the night, if entrywayGame picks it\./)
+  // card 515's first title (since 29 Oct, evening: The arcade on the night)
   assert.equal(ARCADE_1028_TASKS.find(t => t.order === 515).title, 'The arcade on the night, if entrywayGame picks it')
   // card 518 only asks: roomMusic stays open on the board until Jon says which stands
   assert.equal(decisionList(after).find(d => d.key === 'roomMusic')?.answer ?? null, null)
@@ -1115,7 +1113,7 @@ test('29 Oct: the newest; Whack-a-Mouse’s pets, the black cat and the strike w
 
 test('the arcade menu migration (29 Oct 2026, later): Boo’s face, paws and a flashing top row, done (523), and a line on Jon’s try (514)', () => {
   const { before, add, newId } = boardThrough('2026-10-29-arcade-menu')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-29-arcade-rework', 'followed by the arcade made again')
   assert.ok(add.tasks === ARCADE_MENU_1029_TASKS && add.fileTasks === FILED_FOR_ARCADE_MENU_1029)
   assert.ok(!add.decisions && !add.retireTasks && !add.rewriteTasks && !add.answerDecisions, 'it decides, closes and rewrites nothing')
   assert.deepEqual(ARCADE_MENU_1029_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [[523, 'Claude Code', 'act4.entryway', 'done']])
@@ -1137,4 +1135,64 @@ test('the arcade menu migration (29 Oct 2026, later): Boo’s face, paws and a f
   // once only
   const again = applyPlan(planAddition(add, after, { newId, now: 2 }), after)
   assert.deepEqual(again.tasks, after.tasks, 'never twice')
+})
+
+// ---- The arcade made again, 29 Oct 2026 (evening) ------------------------------
+
+test('the arcade rework (29 Oct 2026, evening): the newest; Jon’s three notes closed by number, the rework done and plain, entrywayGame answered, ghostProof his decision, his try and the night card written again, the rules deck to Claude chat, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-29-arcade-rework')
+  const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal)\b|\.env|—/i
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(add.tasks === ARCADE_REWORK_1029_TASKS && add.retireTasks === RETIRED_FOR_ARCADE_REWORK_1029 && add.rewriteTasks === REWRITTEN_FOR_ARCADE_REWORK_1029)
+  assert.ok(add.answerDecisions === ANSWERED_FOR_ARCADE_REWORK_1029 && add.decisions === ARCADE_REWORK_1029_DECISIONS)
+  assert.ok(!add.fileTasks, 'Jon’s try is written again, not added to')
+  // Jon's three Game test notes, closed by number (the Game test tab files them, not the repo)
+  assert.deepEqual(RETIRED_FOR_ARCADE_REWORK_1029.map(r => r.order), [10009, 10010, 10011])
+  for (const r of RETIRED_FOR_ARCADE_REWORK_1029) {
+    assert.match(r.detail, /^Fixed 29 Oct 2026: .+ Try it again\.$/)
+    assert.ok(!plain.test(r.detail), `note ${r.order}: plain words`)
+  }
+  // the rework done, the rules deck for Claude chat
+  assert.deepEqual(ARCADE_REWORK_1029_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [[524, 'Claude Code', 'act4.entryway', 'done'], [525, 'Claude chat', 'act1.rules', 'todo'], [526, 'Claude Code', 'allnight', 'done'], [527, 'Claude Code', 'act4.puzzle', 'todo'], [528, 'Claude Code', 'act4.entryway', 'done'], [529, 'Claude Code', 'allnight', 'todo']])
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of ARCADE_REWORK_1029_TASKS) {
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    assert.ok(!plain.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+  }
+  // entrywayGame was open and is answered; ghostProof is new, open and Jon's
+  assert.equal(before.decisions.entrywayGame?.answer, null, 'entrywayGame open before')
+  assert.deepEqual(Object.keys(ANSWERED_FOR_ARCADE_REWORK_1029), ['entrywayGame'])
+  assert.ok(!before.decisions.ghostProof, 'ghostProof is a new question')
+  assert.deepEqual(ARCADE_REWORK_1029_DECISIONS.map(d => [d.key, d.answer, d.moment, d.options.length]), [['ghostProof', null, 'freeze', 2]])
+  // Jon's try and the night card are open on the board by number and title
+  for (const r of REWRITTEN_FOR_ARCADE_REWORK_1029) {
+    const card = before.tasks.find(c => c.order === r.order && !c.deleted)
+    assert.ok(card && card.title === r.title && card.status === 'todo', `card ${r.order} open on the board`)
+    assert.ok(!plain.test(`${r.set.title ?? ''} ${r.set.detail}`), `card ${r.order}: plain words`)
+  }
+  const after = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  const card = (order) => after.tasks.find(c => c.order === order && !c.deleted)
+  const was = (order) => before.tasks.find(c => c.order === order && !c.deleted)
+  assert.equal(card(524).status, 'done')
+  assert.equal(card(525).status, 'todo')
+  assert.equal(card(514).detail, REWRITTEN_FOR_ARCADE_REWORK_1029[0].set.detail, 'Jon’s try written again')
+  assert.equal(card(514).status, 'todo')
+  assert.equal(card(514).title, was(514).title)
+  assert.deepEqual(card(514).previous[add.id], { detail: was(514).detail, tech: was(514).tech }, 'the old words kept on the card, the pets’ and the menu’s lines with them')
+  assert.equal(card(515).title, 'The arcade on the night')
+  assert.ok(!/if entrywayGame|Only if you answer/.test(`${card(515).title} ${card(515).detail}`), 'no longer an if')
+  assert.equal(card(515).previous[add.id].title, 'The arcade on the night, if entrywayGame picks it')
+  // docs/boo-arcade.md §8 sends its open questions to card 515 by its new title
+  const doc = readFileSync(new URL('../../docs/boo-arcade.md', import.meta.url), 'utf8')
+  assert.match(doc, /On the board: The\s+arcade on the night, card 515\./)
+  assert.equal(after.decisions.entrywayGame.answer, ANSWERED_FOR_ARCADE_REWORK_1029.entrywayGame)
+  assert.equal(after.decisions.ghostProof.answer, null)
+  assert.ok(openDecisions(decisionList(after)).some(d => d.key === 'ghostProof'), 'ghostProof on the open list')
+  assert.ok(!openDecisions(decisionList(after)).some(d => d.key === 'entrywayGame'), 'entrywayGame off it')
+  // once only
+  const again = applyPlan(planAddition(add, after, { newId, now: 2 }), after)
+  assert.deepEqual(again.tasks, after.tasks, 'never twice')
+  assert.deepEqual(again.decisions, after.decisions, 'never twice')
 })

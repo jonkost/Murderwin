@@ -22,6 +22,7 @@ import {
   RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS,
   MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029,
   ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029,
+  RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -896,6 +897,19 @@ export const ADDITIONS = [
     id: '2026-10-29-arcade-menu',
     tasks: ARCADE_MENU_1029_TASKS,
     fileTasks: FILED_FOR_ARCADE_MENU_1029,
+  },
+  {
+    // 29 Oct, evening: the arcade made again from Jon's three Game test notes
+    // (card 524), the notes closed by number; entrywayGame answered (the
+    // arcade, for a clue about the Ghost), so the night card (515) loses its
+    // if and Claude chat gets the rules deck (525); ghostProof is Jon's
+    // decision; his try (514) written again for the new games.
+    id: '2026-10-29-arcade-rework',
+    tasks: ARCADE_REWORK_1029_TASKS,
+    retireTasks: RETIRED_FOR_ARCADE_REWORK_1029,
+    rewriteTasks: REWRITTEN_FOR_ARCADE_REWORK_1029,
+    answerDecisions: ANSWERED_FOR_ARCADE_REWORK_1029,
+    decisions: ARCADE_REWORK_1029_DECISIONS,
   },
 ]
 

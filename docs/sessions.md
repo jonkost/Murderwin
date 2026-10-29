@@ -9,6 +9,162 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026, evening · Claude Code (the arcade made again from Jon's notes and his try; the Entryway's answer; no setup words in front of the guests)
+
+- Jon's three Game test notes on Miss Boo LaRue's Arcade (10009 to 10011:
+  "The stream deck is the game.", "Think glam!", the tail "not cat like"),
+  his line after them, "Catwalk is 100% scarped", and his words since: "we can do far
+  more the touch strip", "We need to use green for all sucessful input.
+  Like a check if you get the mouse." and "make the yawn use the touch
+  strip for left and right controls".
+- The Stream Deck is the game. While it is connected the Mac's screen is
+  a scoreboard in big type (the game, the points, the time, the strikes,
+  Boo's words, a pop for every point and every strike), never the
+  controls. With no Stream Deck the deck is still drawn on the screen,
+  to play with the mouse.
+- The five games made again (`docs/boo-arcade.md` §4). Boo Chasing Her
+  Tail: a fluffy black tail with a white tip round the 22 outside keys,
+  caught with Boo's paw on the two outside dials, one key a click. The
+  Lazy Pointer: the dot one key a click on the two outside dials,
+  sparkles to catch, Boo stalking the dot. Whack-a-Mouse: quicker, two
+  mice at first and up to six. Knock It Off the Table: four tables, the
+  end keys only, things sliding one key a beat (Boo's own tables, not a
+  copy of a classic game, so no root beer). Yarn Catch: a row at a time,
+  never skipping one, the basket moved by the touch strip's two halves.
+  Three of them count three strikes, shown as boxes crossed in red on the
+  strip; every success is a green tick on its key. The look: black
+  lacquer and gold with claret and parchment, from the house's colours,
+  no dark blue.
+- Smoother: the deck's writes were timed on the real + XL (Jon said yes
+  to it being taken over for about 20 seconds). One write at a time
+  through one queue: the pressed key first, pictures before flat keys,
+  the strip last, in six parts and only those that changed; every face's
+  picture made once and kept, and a game's faces made ready before they
+  are needed; the game ticks every 16 ms. If it is still not smooth, the
+  fallback is Jon's own (10010): the games on the Mac's screen, the
+  Stream Deck as the controller.
+- Jon answered entrywayGame: "its not motive its a ghost clue". Boo's
+  Catwalk is scrapped; the arcade gives each player a clue about the
+  Ghost, and no motive is crossed off. The Canon, CLAUDE.md,
+  `docs/solving-the-case.md` and `docs/room-screens.md` say so. He asked
+  whether there is enough to reveal the Ghost: nothing proves it yet on
+  the foggiest night (the worst-dial check is Claude chat's patch,
+  worstDial), so that is a new decision card, ghostProof (default: wait
+  for the patch).
+- "Practise a group's visit" is now "Try a group's visit" (Jon:
+  "Spelling?"). Jon's rule: "make sure there is no programing things
+  like connect stream deck and such visible to the players on the real
+  game". The arcade's "connected" line is gone, card 515 (the arcade on
+  the night) carries the rule, and it is in CLAUDE.md's CLIENT RULES and
+  on the Canon. Then a sweep of every screen a guest sees on the night
+  (check F31): on the party night the room screens lose their corner
+  dot and their Tap once to wake this screen note (the bell stays: it is
+  the cue's fallback), nothing shows in the corners while a room is dark, the TV no longer says Held
+  (the Host tab does), the Study says "Granolia has dozed off. Find a
+  host." if its station goes quiet, a failed call shows the screen's own
+  plain words (never a code like [400]), the Rehearsal text tag shows
+  only on a rehearsal, and the Library says the game is on the screen.
+  Rehearsals and the practice pages keep their setup words. The sweep's
+  check found a Library fault: a finished board the house did not hear
+  is never sent again (card 527).
+- Jon then tried it on the Mac: "They need to be bigger." (the coins);
+  "the Tail game is better(on the mac but I can just hold an arrow
+  button and it circles and win. Make it run over the entire board and
+  out boos face for the front. make the paws boos face and dont let
+  players hit it from the front. It blocks them. As time goes on it goes
+  fast and add obsticals like maybe walls and other pets."; "I want a
+  better name than pets as they have these personas of friends to the
+  family and the birthday boy."; and "on the pratice page I need a back
+  button. Im stuck and cant get back."
+- Boo Chasing Her Tail made again on the whole board: you move Boo
+  herself (her face on a gold key; the left dial across, the right dial
+  up and down); her tail runs about by itself, end first, white tip at
+  the back, running from her when she is close; its end and middle block
+  her, so the tip is caught only from behind or the side; it quickens,
+  and from 15 seconds a wall or one of her friends comes out every 15
+  seconds, up to six, never shutting a key in. A held arrow key now catches one tip at most
+  in a whole game (about 209 before). Read "out
+  boos face for the front" as "put Boo's face for the front"; the snake
+  reading (Boo's face at the head of her own tail) is offered to Jon.
+- The decoys are Sir Irwin and his friends, not pets: Whack-a-Mouse's
+  how-to, its rule, the strike words ("Strike 2! That's Zimothy
+  Clawford, Esq."; Sir Irwin is "the birthday boy"), the lose line and
+  the fun fact. Boo's coins bigger on the keys and about two and a half
+  times on the screen. Back at the top of the page: Back to the games in
+  a free-play game, Back to free play in a visit (no chime, no farewell),
+  and Escape leaves a free-play game. With the Stream Deck connected the
+  moment's Start, Back and OK are not drawn (the keys do it); pops keep
+  their spot.
+- From the earlier review, in the same build: one click of a dial is one
+  key, every click (a quick turn sends several in one report; six at
+  most); more mice up at once as Whack-a-Mouse goes on, up to six; a
+  press just after a thing got off a table is forgiven, and the things
+  are drawn over the ticks and crosses; gold caught counts in the fun
+  facts; every strike a big red cross; no device's name in the game's
+  words ("Pick a game"). Built by a workflow (the game and the pictures
+  side by side, each checked by another agent trying to break it, then
+  repaired). The checkers found four faults, all repaired: a game left
+  open across a reload of the page broke on the new game (it is now
+  filled in and plays on); a test helper could hang the run instead of
+  failing; the walls were brighter than Boo (now grey stone, so she is
+  the brightest key); and nothing tested which way the tail's pieces
+  point (now tested).
+- A review of the page and the board found, and fixed: the points from an
+  old game all popping up again at once on the scoreboard (now cleared
+  with each new game and each time the Stream Deck comes or goes); the
+  page's very first click missing Connect or Try a group's visit (the
+  foot of the page no longer moves under the pointer at the press); the
+  Devices page and Where we are still calling entrywayGame open; card
+  526 saying no setup word was left anywhere on the night (it now names
+  what is left, and card 529 holds the notes a guest would see if a
+  line were missing); the tail's measured points (about 107, 208 and
+  527 at a key every 250, 150 and 64 milliseconds, 40 games each); Jon's
+  "Catwalk is 100% scarped" quoted as he typed it (the Canon too); and
+  this log's line about the bell. Also: the player whose turn it is is
+  ringed in gold, and the pops land well apart.
+- The painter's tests were written again (53) and found three faults,
+  now fixed: a strip that could not be drawn could leave the touch strip
+  torn between two strips; faces made ready before a clear were never
+  made ready again; and a paint with no options given as null threw. The
+  game's own tests were written again for the new games (the game 67,
+  the pictures 19, the painter 53).
+- The arcade doc's technical part and its four checks in the test plan
+  (G54, G55, G56, L09) were written again from the code by a workflow,
+  then checked line by line by three agents. They found 24 places the
+  doc said more or less than the code does, all now fixed: among them a
+  slow pair after a 45-second walk loses its second clue nearly every
+  time (about 96 visits in 100, not 4 in 5); the tail turns about every
+  other step, not mostly straight on; the sparkle-only Pointer player is
+  out in about 15 seconds with about 30 points; Try a group's visit
+  starts the fun facts again; the Pointer's menu key keeps its red glow.
+  The held-arrow test now checks one catch at most, as measured and as
+  §4 says. Stale words fixed in four files (a styles comment, a test's
+  name, a section number in the sound code, and the household pictures
+  note, which had said the cats' full pictures showed nowhere: the room
+  screens have shown them since 26 October).
+- Tests: functions 281 (2 skipped, 2 to do), cues 69, station 53, the
+  workshop 132, play 254 and scripts 53 pass; npm run checks all clear
+  (20,042 of 20,042 case checks on 1,000 practice cases, the fake night
+  and the 5 leak checks; not saved, since the script has no way into
+  Firestore from this Mac); the site builds and its build check passes.
+  Checked in the browser pane, in a tab of its own: the first click on a
+  fresh page opens Try a group's visit, whose form has Back to free play;
+  Boo Chasing Her Tail drawn (the claret floor, Boo on gold, the tail
+  running off), the first wall at 15 seconds, and two walls and Sir
+  Irwin by 45; Escape back to the menu; no console errors. Not tried on
+  the real Stream Deck + XL since the rework: that is Jon's try (514).
+- Board: the notes 10009 to 10011 closed by number; card 524 (the arcade
+  made again) done; card 525 for Claude chat (the rules deck and the
+  Intro script name the arcade, not the Catwalk, by 6 November); card
+  526 (no setup words on the guests' screens) and 528 (the tail over the
+  whole board, Back and bigger coins) done; card 527 for Claude Code (the
+  Library's finished board sent again until the house hears it, by 11
+  November); card 529 for Claude Code (no note about the game on a
+  guest's screen if a line is ever missing, by 11 November);
+  entrywayGame answered; ghostProof added; 514 (Jon's try)
+  and 515 (the arcade on the night) written again. The Canon and Start
+  Here's snapshot updated. Not deployed: Jon says when.
+
 ## 29 Oct 2026 · Claude Code (the arcade's menu: Boo's face, paws and a flashing top row)
 
 - Jon, looking at the arcade's menu on the practice server: "Use the boo

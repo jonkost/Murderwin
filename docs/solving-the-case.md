@@ -34,7 +34,7 @@ Players must name three things at the end. Each has its own track through the ni
 | 1 · The Invitation | None | Characters and rules |
 | 2 · Lights Out | W-O-O-F News bulletin 1 crosses off **exactly one** family. All four cats give each player a private motive hint. | Role reveal, the bag peek, and from every cat a bag clue about the Murderer |
 | 3 · Supper | W-O-O-F News bulletin 2 hints at the real family, plainness set by the dial | Table shares; the bags come to the table |
-| 4 · Behind Closed Doors | The Library (In Duplicate) and the Entryway (Boo's Catwalk) each cross off one wrong motive for the group. | The Study (Granolia's Lightbulb Moment) shows the Ghost's trace; every room's cat gives a bag hint about the Ghost |
+| 4 · Behind Closed Doors | The Library (In Duplicate) crosses off one wrong motive for the group. The Entryway's cross-off goes with Boo's Catwalk, which Jon scrapped on 29 October: the arcade in its place pays a clue about the Ghost (until it is wired in, the night still runs the Catwalk). | The Study (Granolia's Lightbulb Moment) shows the Ghost's trace; every room's cat gives a bag hint about the Ghost |
 | 5 · Dessert | Irwin's countdown settles the motive | |
 | 6 · The Final Hour | None | 2 Parlour Games, Relay Drawing, then the trace reveal (the Murderer) |
 | 7 · Unmasked | | Picks, closing bulletin reveal, end credits |
@@ -165,12 +165,12 @@ Four game rooms, pairs and trios, about an hour (Jon's plan, 23 Oct; built 24 Oc
 | The Study (upstairs) | Granolia | Granolia's Lightbulb Moment: the light puzzle | **The Ghost's trace**, at the dial's level, plus a bag hint |
 | The Library | Zimothy | In Duplicate: the memory match, three rounds, on the iPad Pro | **One wrong motive crossed off**, plus a bag hint |
 | The Orangerie | Salem | Get Off My Lawn!: backwards red light, green light on the phones | A bag hint, which may be backwards |
-| The Entryway | Boo | Boo's Catwalk: strike a pose when the music stops, on the wall | **One wrong motive crossed off**, plus a bag hint |
+| The Entryway | Boo | Miss Boo LaRue's Arcade on the Stream Deck + XL (Jon, 29 October: Boo's Catwalk is scrapped; the night runs the Catwalk until the arcade is wired in) | **A clue about the Ghost** for each player; no motive crossed off |
 | The Parlour | Sir Irwin | No game: Sir Irwin's prompts on the TV, Parlour Games waiting on the phone | Nothing recorded |
 
 - **Every cat reward uses the group's average affection with that cat** at the moment it is paid. The bag hints are about **the Ghost's** bag. The trace level comes from the dial, not from affection. The cross-offs happen whatever the affection.
 - **Boo speaks to every group in Act 4**, at any affection (her one exception, G48).
-- **The cross-offs** (Zimothy's and Boo's) never take the real motive, and never the same motive twice for one group, or one already crossed off for another group (G51). The game picks one the group might still have: inside the real family first, then any family the group has not ruled out.
+- **The cross-offs** (Zimothy's, and Boo's until the arcade replaces the Catwalk) never take the real motive, and never the same motive twice for one group, or one already crossed off for another group (G51). The game picks one the group might still have: inside the real family first, then any family the group has not ruled out.
 - **Parlour Games wait on the phone in Act 4** and are played when the guest is free, never in a game room (`docs/parlour-games.md`).
 - The old stations, the cat station, the bags station and the Free time card are gone (23 Oct). A group with no room this round reads "Nothing for your group right now. Make yourselves at home in the Parlour. Sir Irwin has ideas." with one of the tips below, the same tip for the whole group.
 
