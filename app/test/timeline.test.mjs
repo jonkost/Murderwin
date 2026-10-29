@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029 } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -1040,9 +1040,9 @@ test('28 Oct, night: followed by the winners; the arcade built to try, Jon’s t
 
 // ---- The just-for-fun winners, 29 Oct 2026 ------------------------------------
 
-test('29 Oct: the newest; the two just-for-fun winners closed by number and title, Jon’s try new and plain, once only', () => {
+test('29 Oct: followed by the mice’s pets; the two just-for-fun winners closed by number and title, Jon’s try new and plain, once only', () => {
   const { before, add, newId } = boardThrough('2026-10-29-winners')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-29-mice-pets', 'followed by the mice’s pets')
   assert.equal(add.retireTasks, RETIRED_FOR_WINNERS_1029)
   assert.deepEqual(RETIRED_FOR_WINNERS_1029.map(r => [r.order, r.title]), [[516, 'A just-for-fun winner in In Duplicate'], [517, 'A just-for-fun winner in Get Off My Lawn!']])
   for (const r of RETIRED_FOR_WINNERS_1029) assert.match(r.detail, /^Done 29 Oct 2026: /)
@@ -1072,6 +1072,42 @@ test('29 Oct: the newest; the two just-for-fun winners closed by number and titl
   assert.ok(tryCard && tryCard.who === 'Jon' && tryCard.status === 'todo')
   // the arcade's other cards stay as they were: Jon's try, the arcade on the night, roomMusic
   for (const order of [514, 515, 518]) assert.equal(after.tasks.find(c => c.order === order && !c.deleted)?.status, 'todo', `card ${order} still open`)
+  // once only
+  const again = applyPlan(planAddition(add, after, { newId, now: 2 }), after)
+  assert.deepEqual(again.tasks, after.tasks, 'never twice')
+})
+
+// ---- Whack-a-Mouse's pets, 29 Oct 2026 ----------------------------------------
+
+test('29 Oct: the newest; Whack-a-Mouse’s pets, the black cat and the strike words done and plain, a line on Jon’s try, the mice’s points and the menu’s fish on the night card, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-29-mice-pets')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.ok(add.tasks === MICE_PETS_1029_TASKS && add.fileTasks === FILED_FOR_MICE_PETS_1029 && add.rewriteTasks === REWRITTEN_FOR_MICE_PETS_1029)
+  assert.ok(!add.decisions && !add.retireTasks && !add.answerDecisions, 'it decides and closes nothing')
+  assert.deepEqual(MICE_PETS_1029_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [[520, 'Claude Code', 'act4.entryway', 'done'], [521, 'Claude Code', 'act4.entryway', 'done'], [522, 'Claude Code', 'act4.entryway', 'done']])
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of MICE_PETS_1029_TASKS) {
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    assert.ok(!/\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal)\b|\.env|—/i.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+  }
+  for (const f of FILED_FOR_MICE_PETS_1029) assert.ok(!/\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal)\b|\.env|—/i.test(f.note), 'the line on Jon’s try is plain')
+  // Jon's try and the night card are open on the board by number and title
+  for (const r of [...FILED_FOR_MICE_PETS_1029, ...REWRITTEN_FOR_MICE_PETS_1029]) {
+    const card = before.tasks.find(c => c.order === r.order && !c.deleted)
+    assert.ok(card && card.title === r.title && card.status === 'todo', `card ${r.order} open on the board`)
+  }
+  const after = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  const card = (order) => after.tasks.find(c => c.order === order && !c.deleted)
+  for (const order of [520, 521, 522]) assert.equal(card(order).status, 'done', `card ${order}`)
+  assert.ok(card(514).detail.endsWith(` ${FILED_FOR_MICE_PETS_1029[0].note}`), 'the line about the pets at the end of Jon’s try')
+  assert.equal(card(514).status, 'todo')
+  const was = before.tasks.find(c => c.order === 515)
+  assert.equal(card(515).tech, was.tech.replace('57 to 156 for the mice', '45 to 113 for the mice since the pets of 29 Oct (57 to 156 before)'), 'only the mice’s numbers change')
+  assert.equal(card(515).detail, was.detail.replace(' (and its key on the menu)', ''), 'the menu’s key is a black cat now: only the treat is a fish')
+  assert.notEqual(card(515).detail, was.detail)
+  assert.deepEqual(card(515).previous[add.id], { detail: was.detail, tech: was.tech }, 'the old words kept on the card')
   // once only
   const again = applyPlan(planAddition(add, after, { newId, now: 2 }), after)
   assert.deepEqual(again.tasks, after.tasks, 'never twice')

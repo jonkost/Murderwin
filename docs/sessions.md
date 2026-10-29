@@ -9,6 +9,93 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026 · Claude Code (Whack-a-Mouse's pets, the black cat, the words on the strip)
+
+- Jon: "lets add a decoy element to the mouse", and asked what the decoy
+  should be: "all the pets. zimmy is a similar color. I think after 3
+  missed your out, or it ends at 2 mins". Built in Miss Boo LaRue's
+  Arcade's Whack-a-Mouse.
+- From five seconds in, about one in four of what pops up is one of the
+  household's five pets (Sir Irwin, Granolia, Boo, Zimothy and Salem),
+  each its own face picture from `play/public/household/faces/`, up as
+  long as a mouse. A pet tapped scores nothing, plays the miss and shows
+  on red for 0.6 seconds; the third ends the game ("You tapped three
+  pets. 12 points.", and Boo: "Not the household, darling. Out you go.").
+  While it plays, the strip (in place of the game's name) and the screen
+  beside the points say "Pets tapped: 1 of 3". Read as Jon's "missed": a
+  mouse that hides, or a tap on an empty key, costs nothing. Otherwise
+  the game still ends at its two minutes (80 seconds for a trio). A key a
+  mouse has just left stays empty for half a second, so a tap a moment
+  late never lands on a pet.
+- Pretend players who never tap a pet now score about 113, 106 and 45
+  (quick, typical, slow; 156, 144 and 57 before, as there are fewer
+  mice). One who takes one pet in 20 for a mouse (Zimothy one in ten) is
+  out in about one game in four, usually in the second minute. How often
+  a real guest does is for Jon's try (card 514).
+- Then, the same day: "Lets use the black cat emoji for the tail", and
+  asked where, "The Tail key on the menu". The Tail key shows a black cat
+  in a pale glow; the treat in the game stays a fish. And "Make sure all
+  strike systems show some verbage in the touch screen": every strike
+  says so on the touch strip for a second and a half, in place of the
+  points ("Strike 1! That's a pet.", then "Strike 2! That's a pet.",
+  which stay up while mice are tapped; "Too soon!" or "Too late!" in
+  Knock It Off the Table, where a knock brings the points back sooner).
+  The build adds: the strip says Whack-a-Mouse's rule before it starts
+  ("Three pets and you're out."), and when any game ends, its strip says
+  how ("Boo bit her own tail.", "You tapped three pets.", "Time's up.")
+  beside the points. Yarn Catch has no strikes (a ball that falls past
+  only scores nothing), so while it plays its strip shows the points, as
+  before.
+- Checked in the browser pane (in a tab of its own, beside Jon's): the
+  five pets and their red faces drawn side by side by the page's own
+  code, "Pets tapped" on the strip and beside the points, and three pets
+  tapped (by a test tapper) ending the game with Boo's line and picture.
+  Every new strip drawn in the real fonts fits at full size (nothing
+  shrunk or cut; the tightest, Knock It Off the Table's result, 289 of
+  302 pixels); on the page, the ready strip with the rule, "Strike 2!
+  That's a pet." 20 ms after a tap and the points again after 1.5
+  seconds, and the result's "You tapped three pets."; the black cat on
+  the menu. No console errors. After the second review, again in a tab
+  of its own: Zimothy tapped and a mouse 43 ms later, and "Strike 1!
+  That's a pet." stayed its whole 1.5 seconds before "1 point"; no
+  console errors. Not tried on the real Stream Deck + XL.
+- Reviewed twice, each finding checked again before anything was fixed.
+  The first (13 findings, 5 real) found that a tap a moment late for a
+  mouse could land on a pet that came up in its place: a key a mouse
+  leaves now stays empty for half a second. The second (19 findings, all
+  real, most small) found that a mouse tapped just after a strike wiped
+  its words, sometimes before the strip could show them: now they stay
+  their whole second and a half in Whack-a-Mouse (the screen shows the
+  points meanwhile), and only a knock ends them sooner in Knock It Off
+  the Table. The rest were checks that could not fail (now they can: the
+  black cat's glow, Boo's face loading first, each pet's picture late in
+  turn with its own stand-in, the strike words found among what was
+  shown, a game ending while a strike's words still show) and wording in
+  the docs and on card 522. Also new: a check that each pet's fitting
+  box matches its face picture, so a new picture fails it until it is
+  fitted again (the household pictures' README tells Jon). Left for
+  Jon's try: on two strips the middle words sit close to the side ones
+  (the ready strip with the rule, and Knock It Off the Table's win), 34
+  and 41 pixels apart on a strip 1,200 wide.
+- Tests: functions 281 (2 skipped, 2 to do), cues 69, station 53, the
+  workshop 130, play 178 and scripts 53 pass; `npm run checks` all clear;
+  the build and its check pass. Twenty-seven deliberate breaks of the new
+  code, each in a throwaway copy, each fail a test: among them no rests,
+  the red key free, a pet up longer, no strike words or short ones, a
+  mouse tapped that wipes them, a knock that keeps them, the words wrong
+  on the edge or on the way back, the result showing a strike's words,
+  no rule, the old result strip, a fish on the Tail key or a cat with no
+  glow, Boo's face not first, a wrong stand-in, a late picture used and a
+  box measured wrong. Not deployed, not pushed.
+- Board: cards 520 (the pets), 521 (the black cat) and 522 (the words on
+  the strip) done; a line about all three added to Jon's try of the
+  arcade (514); card 515's points for the mice brought up to date and the
+  menu's fish taken out of its questions (its old words kept on the
+  card). No decision changed, so the Canon is
+  as it was. Start Here's snapshot says so. `docs/boo-arcade.md` (§1, §3,
+  §4, §5, §6, §7, §8 and the technical notes), `docs/test-plan.md` (G54
+  and G56) and `play/public/household/README.md` updated.
+
 ## 29 Oct 2026 · Claude Code (the two just-for-fun winners)
 
 - Jon, 28 Oct: "Make boo's, zimmy's, and Salem have a winner. Just for

@@ -20,6 +20,7 @@ import {
   RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS,
   ARCADE_1028_TASKS,
   RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS,
+  MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -876,6 +877,16 @@ export const ADDITIONS = [
     id: '2026-10-29-winners',
     tasks: WINNERS_1029_TASKS,
     retireTasks: RETIRED_FOR_WINNERS_1029,
+  },
+  {
+    // 29 Oct: Whack-a-Mouse's pets (card 520), the black cat on the Tail key
+    // (521) and the strike words on the touch strip (522), built; a line about
+    // them on Jon's try (514), and the mice's points and the menu's fish on the
+    // arcade-on-the-night card (515).
+    id: '2026-10-29-mice-pets',
+    tasks: MICE_PETS_1029_TASKS,
+    fileTasks: FILED_FOR_MICE_PETS_1029,
+    rewriteTasks: REWRITTEN_FOR_MICE_PETS_1029,
   },
 ]
 
