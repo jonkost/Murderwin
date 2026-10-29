@@ -86,7 +86,13 @@ on the Canon.
   on the edge or on the way back, the result showing a strike's words,
   no rule, the old result strip, a fish on the Tail key or a cat with no
   glow, Boo's face not first, a wrong stand-in, a late picture used and a
-  box measured wrong. Not deployed, not pushed.
+  box measured wrong.
+- Deployed 29 Oct on Jon's yes, from a clean copy of 40dc5c8, together
+  with the two winners (the entry below): the site, the rules (unchanged)
+  and all 25 functions. The clean copy passed every test and check
+  first; afterwards all 118 live files matched the build, and the live
+  arcade loaded with the new words and the black cat, no console errors.
+  Not pushed.
 - Board: cards 520 (the pets), 521 (the black cat) and 522 (the words on
   the strip) done; a line about all three added to Jon's try of the
   arcade (514); card 515's points for the mice brought up to date and the
@@ -132,7 +138,8 @@ on the Canon.
 - Tests: functions 281 (2 skipped, 2 to do), cues 69, station 53, the
   workshop 129, play 171 and scripts 53 pass. `npm run checks`: all clear
   (not saved to the Health page from here: no way into Firestore). The
-  build and its check pass. Not deployed, not pushed.
+  build and its check pass. Deployed later on 29 Oct with Whack-a-Mouse's
+  pets (the entry above); not pushed.
 - Board: cards 516 and 517 done; new 519 (Jon tries the two winners on a
   rehearsal night that reaches Act 4, by 6 Nov). Start Here's snapshot
   says so. No decision changed, so the Canon is as it was.
