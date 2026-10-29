@@ -8,7 +8,8 @@
 // Big pictures, few words: the keys are read from a seat across the table,
 // in dim light. The animals and the things on the table are colour emoji (no
 // new picture files: household/play is Jon's to fill). Boo is her own face
-// picture, household/faces/Boo Face.png, white outline and all.
+// picture, household/faces/Boo Face.png, white outline and all, and so is each
+// of Whack-a-Mouse's pets (household/faces/, PET_FILES).
 //
 // Nothing is drawn at import, so node can import this file for the tests.
 // The face ids are lib/arcade.js's (§6, FACE_IDS); ART_FACES is the list this
@@ -33,11 +34,13 @@ const EMOJI = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-s
 // Knock It Off the Table's eight things, in the order they come.
 const OBJECTS = ['vase', 'teacup', 'teapot', 'candle', 'picture', 'glass', 'plant', 'cake']
 const PICTURE = {
-  fish: '🐟', mouse: '🐭', bonk: '💥', crash: '💥', swipe: '🐾', yarn: '🧶', basket: '🧺',
+  fish: '🐟', mouse: '🐭', bonk: '💥', crash: '💥', swipe: '🐾', yarn: '🧶', basket: '🧺', cat: '🐈‍⬛',
   vase: '🏺', teacup: '☕', teapot: '🫖', candle: '🕯️', picture: '🖼️', glass: '🍷', plant: '🪴', cake: '🎂',
 }
-// The menu's five keys: each game's picture over its short name (lib/arcade.js GAMES).
-const MENU = { tail: ['fish', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse', 'Mice'], knock: ['vase', 'Knock'], yarn: ['yarn', 'Yarn'] }
+// The menu's five keys: each game's picture over its short name (lib/arcade.js
+// GAMES). The Tail key is a black cat (Jon, 29 Oct 2026; the treat in the game
+// stays a fish).
+const MENU = { tail: ['cat', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse', 'Mice'], knock: ['vase', 'Knock'], yarn: ['yarn', 'Yarn'] }
 
 // Faces that are one flat colour. The deck paints these with fillKeyColor
 // (one small report, no picture to send); the rest are pictures.
@@ -118,11 +121,16 @@ function dataUrl(c) {
 
 // ---- loading ----------------------------------------------------------------
 
-// Boo's face picture is 1500 pixels square and a key wants about a hundred.
-// Halving it a few times, smoothly, keeps her eyes and whiskers clean when it
+// The household's face pictures: Boo's for her own keys, and all five for
+// Whack-a-Mouse's pets (lib/arcade.js PETS).
+export const PET_FILES = Object.freeze({
+  boo: 'Boo Face.png', granola: 'Granola Face.png', irwin: 'Irwin Face.png', salem: 'Salem Face.png', zimmy: 'Zimmy Face.png',
+})
+// Each face picture is 1500 pixels square and a key wants about a hundred.
+// Halving it a few times, smoothly, keeps the eyes and whiskers clean when it
 // is drawn small: the halves are kept smallest first, the picture itself last.
-let booLevels = null
-let booWaitOver = false // loadArt has stopped waiting: a picture that comes after that is not used
+const levels = new Map() // pet -> its halvings
+let waitOver = false // loadArt has stopped waiting: a picture that comes after that is not used
 function shrink(img) {
   const levels = [img]
   let src = img, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height
@@ -140,16 +148,17 @@ function shrink(img) {
 }
 // The load event, not decode(): decode() waits for the page to draw a frame,
 // and a page opened behind another tab draws none. The first drawImage decodes it.
-async function loadBoo() {
-  if (booLevels) return true
+async function loadFace(pet) {
+  if (levels.has(pet)) return true
   if (typeof Image !== 'function') return false
   const img = new Image()
+  img.fetchPriority = pet === 'boo' ? 'high' : 'low' // Boo's face first: her keys are in every game
   await new Promise((ok, no) => {
     img.onload = ok; img.onerror = no
-    img.src = `${import.meta.env?.BASE_URL ?? '/'}household/faces/${encodeURIComponent('Boo Face.png')}`
+    img.src = `${import.meta.env?.BASE_URL ?? '/'}household/faces/${encodeURIComponent(PET_FILES[pet])}`
   })
-  if (booWaitOver || !(img.naturalWidth > 0)) return false
-  booLevels = shrink(img)
+  if (waitOver || !(img.naturalWidth > 0)) return false
+  levels.set(pet, shrink(img))
   return true
 }
 // Waits for at most `ms` and never fails: a font that never comes, or a
@@ -162,12 +171,12 @@ function settle(make, ms = 6000) {
   })
 }
 
-// Waits for the two house fonts (play/index.html loads them) and Boo's face
-// picture, then forgets every face drawn so far, so each is drawn again with
-// them. Call it once, before the first paint: a face drawn earlier (with the
-// stand-in cat's head) is only replaced if the caller asks for it again. A
-// picture that comes after the wait is not used: the stand-in stays until a
-// reload, so a Boo key drawn later always matches the ones already drawn.
+// Waits for the two house fonts (play/index.html loads them) and the five face
+// pictures, then forgets every face drawn so far, so each is drawn again with
+// them. Call it once, before the first paint: a face drawn earlier (with a
+// stand-in) is only replaced if the caller asks for it again. A picture that
+// comes after the wait is not used: its stand-in stays until a reload, so a
+// key drawn later always matches the ones already drawn.
 // Never throws; resolves true once Boo's picture is in, false without it.
 let loading = null
 export async function loadArt() {
@@ -179,11 +188,11 @@ async function fetchArt() {
   await Promise.all([
     settle(() => fonts?.load('600 40px "Source Serif 4"')),
     settle(() => fonts?.load('600 40px "Source Sans 3"')),
-    settle(loadBoo),
+    ...Object.keys(PET_FILES).map(pet => settle(() => loadFace(pet))),
   ])
-  booWaitOver = true
+  waitOver = true
   clearArt()
-  return booLevels !== null
+  return levels.has('boo')
 }
 
 // ---- the faces --------------------------------------------------------------
@@ -234,6 +243,7 @@ function paint(g, k, id) {
     if (kind === 'num' && /^\d$/.test(arg)) return number(g, arg)
     if (kind === 'menu' && has(MENU, arg)) return menu(g, k, arg)
     if (OBJECTS.includes(arg) && has(SCENES, kind)) return SCENES[kind](g, k, arg)
+    if (has(PET_FILES, arg) && has(PETS_DRAWN, kind)) return PETS_DRAWN[kind](g, k, arg)
   }
   ground(g); big(g, '?', 40) // a face this file does not know: plain to see when testing
 }
@@ -298,6 +308,8 @@ function menu(g, k, game) {
   const [pic, label] = MENU[game]
   ground(g); rim(g)
   if (pic === 'dot') laserDot(g, k, MID, 28, 12)
+  // a black cat on Manor blue: a parchment glow, drawn twice to be strong, as Boo's picture has its white outline
+  else if (pic === 'cat') glowing(g, k, 'rgba(241, 232, 214, 0.9)', 5, () => { emoji(g, PICTURE.cat, 36, MID, 28); emoji(g, PICTURE.cat, 36, MID, 28) })
   else emoji(g, PICTURE[pic], 36, MID, 28)
   words(g, label, 15, 56.5, { max: 56 })
 }
@@ -341,12 +353,25 @@ const SCENES = {
   },
 }
 
+// ---- Whack-a-Mouse's pets ---------------------------------------------------
+
+// Each pet (lib/arcade.js PETS) up among the mice, and just tapped (petFace,
+// below, draws the sticker).
+const PET_SIZE = 56, OOPS_SIZE = 50
+const PETS_DRAWN = {
+  // up: on Manor blue, like a mouse
+  pet: (g, k, pet) => { ground(g); petFace(g, k, pet, PET_SIZE) },
+  // tapped: on red, framed, like Boo when she bites her tail
+  oops: (g, k, pet) => { ground(g, BRAND.red, '#e23a44'); petFace(g, k, pet, OOPS_SIZE); rim(g, BRAND.parchment) },
+}
+
 // Every face this file draws, made from the tables that draw them (FACES, the
-// count's 3, 2, 1, MENU, SCENES), so the list can never name a face that has
-// no drawing.
+// count's 3, 2, 1, MENU, SCENES, PETS_DRAWN), so the list can never name a
+// face that has no drawing.
 export const ART_FACES = Object.freeze([
   ...Object.keys(FACES), 'num:1', 'num:2', 'num:3', ...Object.keys(MENU).map(g => `menu:${g}`),
   ...Object.keys(SCENES).flatMap(scene => OBJECTS.map(o => `${scene}:${o}`)),
+  ...Object.keys(PETS_DRAWN).flatMap(kind => Object.keys(PET_FILES).map(pet => `${kind}:${pet}`)),
 ])
 const KNOWN = new Set(ART_FACES)
 export function knowsFace(id) { return typeof id === 'string' && KNOWN.has(id) }
@@ -489,10 +514,39 @@ const BOO_TALL = 0.975, BOO_NUDGE = 0.01
 const BOO_FRAMED = 58, BOO_FULL = 66 // inside a rim; on a key with no rim
 function booFace(g, k, h) {
   const d = h / BOO_TALL
-  const src = booLevels?.find(c => (c.naturalWidth || c.width) >= d * k) ?? booLevels?.[booLevels.length - 1]
+  const src = levelFor('boo', d * k)
   if (!src) return catHead(g, MID, MID, h * 0.88) // its outline is outside its height
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'
   g.drawImage(src, MID - d / 2 + d * BOO_NUDGE, MID - d / 2, d, d)
+}
+// The smallest halving of a face picture at least `px` wide (else the picture
+// itself), or null before it has loaded.
+function levelFor(pet, px) {
+  const list = levels.get(pet)
+  return list ? list.find(c => (c.naturalWidth || c.width) >= px) ?? list[list.length - 1] : null
+}
+
+// Whack-a-Mouse's pets: each sticker, outline and all, as big across its
+// longer side as `size`, its middle on the key's. Where each sticker sits in
+// its 1500-pixel picture, as shares of it (left, top, right, bottom; measured
+// 29 Oct 2026 where the picture is more than faintly there, alpha over 100, so
+// Granola's and Zimothy's faint whiskers do not count), so the five look the
+// same size on the keys. A test reads each picture and checks its box, so a new
+// face picture fails there until it is measured again (household/README.md).
+export const PET_BOXES = Object.freeze({
+  boo: [0.091, 0.013, 0.891, 0.989], granola: [0.041, 0.085, 0.939, 0.97], irwin: [0.068, 0.033, 0.977, 0.996],
+  salem: [0.089, 0.045, 0.945, 0.956], zimmy: [0.041, 0.014, 0.965, 0.951],
+})
+// Before its picture has loaded: Boo's stand-in cat's head, a whole dog for
+// Sir Irwin (a dog's face looks too like the mouse's), a cat for the rest.
+const PET_STAND_IN = { irwin: '🐕', granola: '🐱', salem: '🐱', zimmy: '🐱' }
+function petFace(g, k, pet, size) {
+  const [l, t, r, b] = PET_BOXES[pet]
+  const d = size / Math.max(r - l, b - t) // the whole picture, drawn this big
+  const src = levelFor(pet, d * k)
+  if (!src) return pet === 'boo' ? catHead(g, MID, MID, size * 0.8) : emoji(g, PET_STAND_IN[pet], size * 0.8)
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'
+  g.drawImage(src, MID - d * (l + r) / 2, MID - d * (t + b) / 2, d, d)
 }
 // The stand-in: a black cat's head with a white outline, `h` high from the
 // tips of the ears to the chin.

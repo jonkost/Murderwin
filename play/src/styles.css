@@ -1095,6 +1095,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-score { margin: 0; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0.4vh 1.6vw; font-size: min(2.2vw, 3.4vh); color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
 .arcade-score strong { font-family: var(--serif); font-size: 1.6em; color: var(--brand-brass); }
 .arcade-left { color: var(--dim); }
+.arcade-tally { flex-basis: 100%; } /* Whack-a-Mouse's pets tapped, on a line of its own */
 .arcade-plain { margin: 0; max-width: 100%; font-size: min(2.4vw, 3.8vh); line-height: 1.3; color: var(--brand-parchment); }
 .arcade-boo.playing .arcade-plain { font-size: min(1.7vw, 2.7vh); color: var(--dim); }
 

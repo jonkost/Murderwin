@@ -7,7 +7,11 @@ included. Brought up to date 23 October 2026.
 ## What the game reads
 
 **faces/** — head and shoulders, square. Shown small on the phone's Cats tab
-and anywhere a cat speaks to you in a line of text.
+and anywhere a cat speaks to you in a line of text. Miss Boo LaRue's Arcade
+shows all five too, as the pets in Whack-a-Mouse (and Boo's on her own keys),
+each fitted to its key by where the animal sits in the picture. So after you
+swap in a new face picture, ask Claude Code to fit it again: its checks will
+say so until it does.
 
 | File | Who |
 |---|---|

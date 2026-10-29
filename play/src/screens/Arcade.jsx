@@ -225,7 +225,9 @@ export default function BooArcade({ sample = null }) {
     return () => clearInterval(id)
   }, [live])
 
-  // The pictures: the fonts and Boo's face once, then everything is drawn with them.
+  // The pictures: the fonts and the five face pictures once, then everything is
+  // drawn with them. Boo's pictures for the screen come after, so they never
+  // hold up the faces.
   useEffect(() => {
     let on = true
     loadArt().then(() => {
@@ -234,8 +236,8 @@ export default function BooArcade({ sample = null }) {
       setArtReady(true)
       const v = viewRef.current
       heldRef.current?.painter.paint(v.faces, v.strip)
+      for (const name of BOO_PICTURES) { const img = new Image(); img.src = booUrl(name) }
     })
-    for (const name of BOO_PICTURES) { const img = new Image(); img.src = booUrl(name) }
     return () => { on = false }
   }, [])
 
@@ -410,7 +412,7 @@ export default function BooArcade({ sample = null }) {
 }
 
 // Boo, her line and what to do, beside the deck: the menu, and a game in play
-// with its points and time.
+// with its points and time (and Whack-a-Mouse's pets tapped).
 function BooSide({ screen }) {
   const playing = screen.stage === 'play' && !!screen.game
   return (
@@ -422,6 +424,7 @@ function BooSide({ screen }) {
         <p className="arcade-score">
           <span><strong>{screen.score}</strong> {pointsWord(screen.score)}</span>
           <span className="arcade-left">{clockOf(screen.timeLeftMs)} left</span>
+          {screen.tally ? <span className="arcade-tally">{screen.tally}</span> : null}
         </p>
       ) : null}
       <p className="arcade-plain" aria-live="polite">{screen.plain}</p>

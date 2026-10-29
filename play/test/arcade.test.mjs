@@ -5,11 +5,12 @@ import {
   ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIALS, RIGHT_DIALS, MENU_KEYS, BACK_KEY,
   TOKENS, ROUND_MS, FREE_GAME_MS, GAME_MS, TRIO_GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS, gameLengthMs,
   STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, BOO_LINES,
-  GAMES, KNOCK_OBJECTS, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf,
+  GAMES, KNOCK_OBJECTS, PETS, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf,
   newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeView, arcadeSample,
   TAIL_STEP_MS, TAIL_STEP_FASTER_MS, TAIL_FISH, TAIL_FISH_POINTS, TAIL_WIN_POINTS, TAIL_TIME_POINT_MS,
   POINTER_STEP_MS, POINTER_STEP_FASTER_MS, POINTER_POINT_MS, POINTER_LAST_POINTS,
   MICE_UP_MS, MICE_UP_END_MS, MICE_GOLD_UP_MS, MICE_TWO_FROM_MS, MICE_BONK_MS, MICE_GOLD_POINTS,
+  MICE_PETS_FROM_MS, MICE_PET_ONE_IN, MICE_PETS_OUT, MICE_OOPS_MS, MICE_REST_MS, STRIKE_WORDS_MS,
   KNOCK_STEP_MS, KNOCK_STEP_FASTER_MS, KNOCK_STEP_MIN_MS, KNOCK_DWELL_STEPS, KNOCK_FALL_MS, KNOCK_CRASH_MS, KNOCK_SWIPE_MS, KNOCK_REST_MS, KNOCK_POINTS,
   YARN_FLASH_MS, YARN_FALLING, YARN_POINTS, YARN_GOLD_POINTS,
   READY_MS, COUNT_MS, RESULT_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS,
@@ -157,7 +158,7 @@ const onResult = (g, extra = {}) => ({ ...newArcade({ mode: 'free', seed: 3, now
 // Every word a view puts on the strip or the screen.
 function shownWords(v) {
   const s = v.screen
-  return [v.strip.left, v.strip.centre, v.strip.right, ...v.strip.dials, s.title, s.plain, s.boo, s.game?.name, s.game?.how,
+  return [v.strip.left, v.strip.centre, v.strip.right, ...v.strip.dials, s.title, s.plain, s.boo, s.game?.name, s.game?.how, s.tally,
     s.clue, s.note, s.third, s.farewell, ...s.pending, ...(s.winner?.names ?? []), s.player, ...s.players.map(p => p.name)]
     .filter(x => typeof x === 'string' && x)
 }
@@ -422,6 +423,245 @@ test('G54 Whack-a-Mouse: points only for a mouse, gold is worth three, one at a 
   assert.equal(most, 1)
   assert.equal(mostLate, 2)
   assert.ok(seen > 200 && golds / seen > 0.03 && golds / seen < 0.2, `${golds} gold of ${seen}`)
+})
+
+test('G54 Whack-a-Mouse\'s pets: from five seconds in, about one in four that pop up is a pet, all five in turn; a pet scores nothing and shows on red; the third tapped ends the game, points kept', () => {
+  // Jon's rule (29 Oct 2026), and the how-to-play line that says it
+  assert.equal(MICE_PETS_OUT, 3)
+  assert.match(GAMES.find(g => g.id === 'mice').how, /Leave the pets alone: tap three and you're out\.$/)
+  assert.deepEqual([...PETS].sort(), ['boo', 'granola', 'irwin', 'salem', 'zimmy'])
+
+  // left alone: none in the first five seconds, then about one in four, up as long as a plain mouse;
+  // never more up at once than the mice alone may be, never two on a key, and one left alone never counts
+  let pets = 0, all = 0
+  const met = new Set()
+  for (const seed of [21, 22, 23, 24]) {
+    let s = newGame('mice', { seed, lengthMs: 120000, now: 0 })
+    const seen = new Set()
+    for (let t = 0; t <= 120000; t += 50) {
+      s = stepGame(s, t)
+      const up = [...s.mice, ...s.pets]
+      assert.ok(up.length <= (t < MICE_TWO_FROM_MS ? 1 : 2), `at most ${t < MICE_TWO_FROM_MS ? 'one' : 'two'} up at ${t}`)
+      assert.equal(new Set(up.map(x => x.key)).size, up.length, 'one thing to a key')
+      for (const x of up) {
+        const pet = s.pets.includes(x)
+        const id = `${pet ? 'pet' : 'mouse'}${x.key}@${x.downAt}`
+        if (seen.has(id)) continue
+        seen.add(id)
+        all += 1
+        if (!pet) continue
+        pets += 1
+        met.add(x.pet)
+        assert.ok(t >= MICE_PETS_FROM_MS, `no pet before five seconds: ${t}`)
+        assert.ok(x.downAt - t <= MICE_UP_MS && x.downAt - t > MICE_UP_END_MS - 50, 'up as long as a plain mouse')
+      }
+    }
+    assert.equal(s.outcome, 'time')
+    assert.equal(s.petTaps, 0, 'a pet left alone never counts')
+  }
+  assert.ok(Math.abs(pets / all - 1 / MICE_PET_ONE_IN) < 0.08, `${pets} pets of ${all}`)
+  assert.deepEqual([...met].sort(), [...PETS].sort(), 'all five pets come')
+
+  // a tap on a pet: nothing scored, a miss, the pet on red for a moment, and its key empty
+  let g = newGame('mice', { seed: 21, lengthMs: 120000, now: 0 })
+  let t = 0
+  while (!g.pets.length) { t += 50; g = step(g, t) }
+  const p = g.pets[0]
+  const h = input(g, key(p.key), t)
+  assert.equal(h.score, g.score, 'a pet scores nothing')
+  assert.equal(h.petTaps, 1)
+  assert.deepEqual(h.events, ['miss'])
+  assert.equal(h.pets.length, 0)
+  assert.equal(h.over, false)
+  assert.deepEqual(json(h), h, 'still plain JSON')
+  assert.equal(gameFaces(g, t)[p.key], `pet:${p.pet}`)
+  assert.equal(gameFaces(h, t)[p.key], `oops:${p.pet}`)
+  assert.equal(gameFaces(h, t + MICE_OOPS_MS)[p.key], 'blank')
+  assert.deepEqual(input(h, key(p.key), t + 10).events, [], 'a tapped pet\'s key is empty')
+  // nothing pops up on its key while it is red
+  let r = h
+  for (let u = t; u < t + MICE_OOPS_MS; u += 10) {
+    r = step(r, u)
+    assert.ok(![...r.mice, ...r.pets].some(x => x.key === p.key), `nothing on the red key at ${u}`)
+  }
+
+  // the third ends the game at once: a loss, with the points scored so far and no miss sound on top
+  const third = input({ ...g, score: 7, petTaps: MICE_PETS_OUT - 1 }, key(p.key), t)
+  assert.equal(third.over, true)
+  assert.equal(third.outcome, 'lose')
+  assert.equal(third.endedAt, t)
+  assert.equal(third.score, 7)
+  assert.deepEqual(third.events, ['lose'])
+  assert.equal(gameFaces(third, t)[p.key], `oops:${p.pet}`, 'the last board shows the pet it ended on')
+  assert.equal(step(third, t + 5000).over, true)
+  assert.deepEqual(json(third), third)
+
+  // on the strip and beside the points, in Whack-a-Mouse only: the pets tapped so far
+  let a = aIn(aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey('mice')), 0), press(0), 0)
+  assert.equal(arcadeView(a, 0).screen.tally, null, 'not on the count')
+  t = COUNT_MS
+  a = aStep(a, t)
+  assert.equal(a.stage, 'play')
+  assert.equal(arcadeView(a, t).strip.left, 'Pets tapped: 0 of 3')
+  assert.equal(arcadeView(a, t).screen.tally, 'Pets tapped: 0 of 3')
+  for (let n = 1; a.stage === 'play'; t += 50) {
+    a = aStep(a, t)
+    if (a.stage !== 'play' || !a.game.pets.length) continue
+    a = aIn(a, key(a.game.pets[0].key), t)
+    if (n < MICE_PETS_OUT) {
+      assert.equal(arcadeView(a, t).screen.tally, `Pets tapped: ${n} of 3`)
+      assert.equal(arcadeView(a, t).strip.left, `Pets tapped: ${n} of 3`)
+    }
+    n += 1
+  }
+  assert.equal(a.stage, 'result')
+  const out = arcadeView(a, t).screen
+  assert.equal(out.plain, `You tapped three pets. ${a.game.score} ${a.game.score === 1 ? 'point' : 'points'}.`)
+  assert.equal(out.boo, BOO_LINES.pets)
+  assert.equal(out.picture, 'Boo 3.png')
+  assert.equal(out.tally, null)
+  // the other games keep their name on the strip and have no count
+  let y = aStep(aIn(aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey('yarn')), 0), press(0), 0), COUNT_MS)
+  assert.equal(y.stage, 'play')
+  assert.equal(arcadeView(y, COUNT_MS).strip.left, 'Yarn Catch')
+  assert.equal(arcadeView(y, COUNT_MS).screen.tally, null)
+})
+
+test('G54 Whack-a-Mouse is fair: a key a mouse has just left rests a moment, and a tapped pet\'s key stays red and empty, so a late tap never meets a pet; a pet is up as long as a mouse', () => {
+  // every key but K busy, so whatever comes up can only come up on K
+  const K = keyAt(2, 4), T = 10000
+  const g0 = newGame('mice', { seed: 21, lengthMs: 120000, now: 0 })
+  const busy = ALL_KEYS.filter(k => k !== K).map(k => ({ key: k, until: 100000 }))
+  const board = extra => ({ ...g0, at: T - 1000, mice: [], pets: [], bonks: busy, oops: [], rests: [], nextSpawnAt: 100000, ...extra })
+  // what comes up when one is due at `t`
+  const comesUp = (g, t) => { const s = step({ ...g, nextSpawnAt: t }, t); return [...s.mice, ...s.pets].map(x => x.key) }
+
+  // a mouse that hides: its key rests, then is free again
+  const hid = step(board({ mice: [{ key: K, gold: false, downAt: T }] }), T)
+  assert.deepEqual(hid.mice, [])
+  assert.deepEqual(comesUp(hid, T), [], 'nothing comes up where it hid, the same moment')
+  assert.deepEqual(comesUp(hid, T + MICE_REST_MS - 1), [], 'nor while its key rests')
+  assert.deepEqual(comesUp(hid, T + MICE_REST_MS), [K], 'then the key is free')
+  // a mouse tapped: the same
+  const hit = input(board({ mice: [{ key: K, gold: false, downAt: T + 1000 }] }), key(K), T)
+  assert.deepEqual(hit.events, ['point'])
+  assert.deepEqual(comesUp(hit, T + MICE_REST_MS - 1), [])
+  assert.deepEqual(comesUp(hit, T + MICE_REST_MS), [K])
+  // a pet tapped: its key is red, and empty, all the time it is red
+  const oops = input(board({ pets: [{ key: K, pet: 'zimmy', downAt: T + 1000 }] }), key(K), T)
+  for (let u = T; u < T + MICE_OOPS_MS; u += 25) assert.equal(gameFaces(oops, u)[K], 'oops:zimmy', `red at ${u}`)
+  assert.equal(gameFaces(oops, T + MICE_OOPS_MS)[K], 'blank')
+  assert.deepEqual(comesUp(oops, T + MICE_OOPS_MS - 1), [])
+  assert.deepEqual(comesUp(oops, T + MICE_OOPS_MS), [K])
+  // a key a pet has just left is free at once (a pet leaves no rest): what comes up there may be a mouse or another pet
+  const petHid = step(board({ pets: [{ key: K, pet: 'salem', downAt: T }] }), T)
+  assert.deepEqual(comesUp(petHid, T), [K])
+
+  // a pet is up as long as a plain mouse would be, the moment it comes up
+  const plainUp = t => MICE_UP_MS + (MICE_UP_END_MS - MICE_UP_MS) * t / 120000
+  let s = newGame('mice', { seed: 22, lengthMs: 120000, now: 0 })
+  const seen = new Set()
+  for (let t = 0; t <= 120000; t += 10) {
+    s = stepGame(s, t)
+    for (const p of s.pets) {
+      if (seen.has(`${p.key}@${p.downAt}`)) continue
+      seen.add(`${p.key}@${p.downAt}`)
+      const up = p.downAt - t // it came up in the last 10 ms
+      assert.ok(up > plainUp(t) - 11 && up < plainUp(t) + 1, `a pet up ${up} ms at ${t}, a mouse ${plainUp(t)}`)
+    }
+  }
+  assert.ok(seen.size > 20, `${seen.size} pets`)
+})
+
+test('G54 every strike says so on the touch strip (Jon, 29 Oct 2026): a pet tapped, a press too soon or too late, for a moment in place of the points; the rule before Whack-a-Mouse starts', () => {
+  assert.ok(STRIKE_WORDS_MS >= 1000 && STRIKE_WORDS_MS <= 3000, 'long enough to read, and gone again')
+  const pts = n => `${n} ${n === 1 ? 'point' : 'points'}`
+  const strip = (a, t) => arcadeView(a, t).strip
+  const started = id => aStep(aIn(aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey(id)), 0), press(0), 0), COUNT_MS)
+
+  // the rule on the ready strip and the count's, for the one game that counts strikes; then the clock
+  for (const { id } of GAMES) {
+    const rule = id === 'mice' ? "Three pets and you're out." : ''
+    const ready = aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey(id)), 0)
+    assert.equal(strip(ready, 0).right, rule, `${id}: ready`)
+    assert.equal(strip(aIn(ready, press(0), 0), 1500).right, rule, `${id}: the count`)
+    assert.equal(strip(started(id), COUNT_MS).right, '2:00', `${id}: then the clock`)
+  }
+  const visit = aIn(newArcade({ mode: 'visit', players: ['Jessa'], seed: 6, now: 0 }), key(menuKey('mice')), 0)
+  assert.equal(strip(visit, 0).right, "Three pets and you're out.", 'on a visit too')
+
+  // Whack-a-Mouse: a pet tapped says its strike, then the points again
+  let a = started('mice'), t = COUNT_MS
+  const tapPet = () => {
+    while (!a.game.pets.length) { t += 50; a = aStep(a, t) }
+    a = aIn(a, key(a.game.pets[0].key), t)
+  }
+  tapPet()
+  assert.equal(strip(a, t).centre, "Strike 1! That's a pet.")
+  assert.equal(strip(a, t).left, 'Pets tapped: 1 of 3')
+  assert.equal(strip(a, t + STRIKE_WORDS_MS - 1).centre, "Strike 1! That's a pet.")
+  const later = aStep(a, t + STRIKE_WORDS_MS)
+  assert.equal(strip(later, t + STRIKE_WORDS_MS).centre, pts(later.game.score), 'then the points again')
+  // a mouse tapped while they show: they stay their whole time, then the points, that mouse's included
+  const g = a.game
+  const empty = ALL_KEYS.find(k => ![...g.mice, ...g.pets, ...g.oops, ...g.bonks, ...g.rests].some(x => x.key === k))
+  const bonked = aIn({ ...a, game: { ...g, mice: [...g.mice, { key: empty, gold: false, downAt: t + 1000 }] } }, key(empty), t + 100)
+  assert.equal(bonked.game.score, g.score + 1)
+  assert.equal(strip(bonked, t + 100).centre, "Strike 1! That's a pet.")
+  assert.equal(strip(bonked, t + STRIKE_WORDS_MS - 1).centre, "Strike 1! That's a pet.")
+  assert.equal(strip(aStep(bonked, t + STRIKE_WORDS_MS), t + STRIKE_WORDS_MS).centre, pts(g.score + 1))
+  tapPet()
+  assert.equal(strip(a, t).centre, "Strike 2! That's a pet.")
+  assert.equal(strip(a, t).left, 'Pets tapped: 2 of 3')
+  // the third, while the second's words still show: the result, which says how it ended
+  while (!a.game.pets.length) { t += 50; a = aStep(a, t) }
+  assert.equal(strip(a, t).centre, "Strike 2! That's a pet.", 'the second strike still shows')
+  tapPet()
+  assert.equal(a.stage, 'result')
+  assert.deepEqual(strip(a, t), { left: 'Whack-a-Mouse', centre: 'You tapped three pets.', right: pts(a.game.score), bar: null, dials: ['', '', '', '', '', ''] })
+
+  // Knock It Off the Table: a press too soon or too late says so, and a knock is the points again
+  let k = started('knock')
+  t = COUNT_MS + 100
+  k = aIn(k, press(3), t)
+  assert.equal(strip(k, t).centre, 'Too soon!', 'on its way to the edge')
+  assert.equal(strip(k, t + STRIKE_WORDS_MS - 1).centre, 'Too soon!')
+  assert.equal(strip(aStep(k, t + STRIKE_WORDS_MS), t + STRIKE_WORDS_MS).centre, '0 points')
+  // just before the edge, and on the edge while the paw still rests: too soon; once it has rested, knocked off
+  let before = k
+  while (k.game.phase !== 'edge') { before = k; t += 10; k = aStep(k, t) }
+  const arrived = t
+  let m = aIn(before, press(0), arrived - 10)
+  assert.equal(strip(m, arrived - 10).centre, 'Too soon!')
+  m = aIn(m, press(0), arrived + 10)
+  assert.equal(m.game.phase, 'edge')
+  assert.equal(strip(m, arrived + 10).centre, 'Too soon!', 'the paw is resting')
+  assert.equal(strip(m, arrived - 10 + STRIKE_WORDS_MS).centre, 'Too soon!', 'its own words, not the press before')
+  m = aIn(m, press(0), arrived + 10 + KNOCK_REST_MS)
+  assert.equal(m.game.knocked, 1)
+  assert.equal(strip(m, arrived + 10 + KNOCK_REST_MS).centre, pts(KNOCK_POINTS), 'knocked off: the points at once')
+  // left on the edge until it goes back: too late
+  while (k.game.phase === 'edge') { t += 10; k = aStep(k, t) }
+  assert.equal(k.game.phase, 'left')
+  k = aIn(k, press(0), t)
+  assert.equal(strip(k, t).centre, 'Too late!')
+  k = aIn(k, press(0), t + 100)
+  assert.equal(k.game.phase, 'left')
+  assert.equal(strip(k, t + 100).centre, 'Too late!', 'and while the paw rests on its way back')
+  // the time runs out while a miss's words show: the result's strip says how it ended, not the miss
+  let late = started('knock'), u = late.game.endsAt - 1400
+  late = aStep(late, u)
+  while (late.game.phase === 'edge') { u += 10; late = aStep(late, u) }
+  late = aIn(late, press(0), u)
+  assert.ok(['Too soon!', 'Too late!'].includes(strip(late, u).centre))
+  const over = aStep(late, late.game.endsAt + 10)
+  assert.equal(over.stage, 'result')
+  assert.ok(over.game.endsAt + 10 < u + STRIKE_WORDS_MS, 'its words not yet gone')
+  assert.equal(strip(over, over.game.endsAt + 10).centre, "Time's up.")
+  // a press while the last one falls says nothing
+  const falling = aIn(m, press(0), arrived + 20 + KNOCK_REST_MS)
+  assert.equal(falling.game.phase, 'fall')
+  assert.equal(strip(falling, arrived + 20 + KNOCK_REST_MS).centre, pts(KNOCK_POINTS))
 })
 
 test('G54 Knock It Off the Table: a press scores only on the edge, a miss rests the paw, and knocking all eight off wins', () => {
@@ -1146,6 +1386,10 @@ test('G56 every word the arcade can show passes F09, and Boo\'s lines carry no n
   runVisit(['Jessa'], ['yarn', 'pointer'], { look })
   runVisit(['Jessa', 'Mari'], ['knock', 'tail'], { look, during: knocker })
   runVisit(['Margaret', 'Tom', 'Ellie'], ['mice', 'knock', 'tail', 'pointer', 'yarn'], { look })
+  // every strike's words: pets tapped in Whack-a-Mouse, presses too soon and too late in Knock It Off the Table
+  const striker = (a, t) => a.game.id === 'mice' ? (a.game.pets.length ? aIn(a, key(a.game.pets[0].key), t) : a)
+    : a.game.id === 'knock' && a.game.phase !== 'edge' ? aIn(a, press(0), t) : a
+  runVisit(['Jessa', 'Mari'], ['mice', 'knock'], { look, during: striker })
   for (const { id } of GAMES) {
     let f = newArcade({ mode: 'free', seed: 5, now: 0 })
     look(f, 0)
@@ -1162,19 +1406,30 @@ test('G56 every word the arcade can show passes F09, and Boo\'s lines carry no n
   let knocked = newGame('knock', { seed: 1, now: 0 })
   for (let t = 0; !knocked.over; t += 10) { knocked = stepGame(knocked, t); if (knocked.phase === 'edge') knocked = inputGame(knocked, press(0), t) }
   const timeUp = stepGame(newGame('mice', { seed: 1, now: 0 }), FREE_GAME_MS)
-  const results = [bite, fishWin, caught, knocked, timeUp]
-  assert.deepEqual(results.map(g => g.outcome), ['lose', 'win', 'lose', 'win', 'time'])
+  let petsOut = newGame('mice', { seed: 21, now: 0 }) // every pet that comes is tapped
+  for (let t = 0; !petsOut.over; t += 50) {
+    petsOut = stepGame(petsOut, t)
+    if (petsOut.pets.length) petsOut = inputGame(petsOut, key(petsOut.pets[0].key), t)
+  }
+  const results = [bite, fishWin, caught, knocked, timeUp, petsOut]
+  assert.deepEqual(results.map(g => g.outcome), ['lose', 'win', 'lose', 'win', 'time', 'lose'])
   const visit = arcadeSample('clue', 0)
   for (const g of results) {
     look(onResult(g), g.endedAt)
     look(onResult(g, { mode: 'visit', players: visit.players, turn: 0, roundEndsAt: g.endedAt + 60000 }), g.endedAt)
   }
   const resultLines = results.map(g => arcadeView(onResult(g), g.endedAt).screen)
-  assert.deepEqual(resultLines.map(s => s.boo), [BOO_LINES.bite, resultLines[1].boo, BOO_LINES.caught, resultLines[3].boo, BOO_LINES.time])
+  assert.deepEqual(resultLines.map(s => s.boo), [BOO_LINES.bite, resultLines[1].boo, BOO_LINES.caught, resultLines[3].boo, BOO_LINES.time, BOO_LINES.pets])
   assert.ok(BOO_LINES.win.includes(resultLines[1].boo) && BOO_LINES.win.includes(resultLines[3].boo))
-  assert.deepEqual(resultLines.map(s => s.picture), ['Boo 3.png', ' Boo 5.png', 'Boo 3.png', ' Boo 5.png', 'Boo 4.png'])
+  assert.deepEqual(resultLines.map(s => s.picture), ['Boo 3.png', ' Boo 5.png', 'Boo 3.png', ' Boo 5.png', 'Boo 4.png', 'Boo 3.png'])
+  assert.equal(resultLines[5].plain, `You tapped three pets. ${petsOut.score} ${petsOut.score === 1 ? 'point' : 'points'}.`)
   assert.equal(resultLines[0].plain, `Boo bit her own tail. ${bite.score} points.`)
   assert.equal(resultLines[4].plain, "Time's up. 0 points.")
+  // the result's strip: the game, how it ended, the points
+  const resultStrips = results.map(g => arcadeView(onResult(g), g.endedAt).strip)
+  assert.deepEqual(resultStrips.map(s => s.centre), ['Boo bit her own tail.', 'Boo is full.', 'Boo caught the red dot.', 'Everything is off the table.', "Time's up.", 'You tapped three pets.'])
+  assert.deepEqual(resultStrips.map(s => s.left), results.map(g => GAMES.find(x => x.id === g.id).name))
+  assert.deepEqual(resultStrips.map(s => s.right), results.map(g => `${g.score} ${g.score === 1 ? 'point' : 'points'}`))
   assert.equal(arcadeView(onResult(caught, { mode: 'visit', players: visit.players, turn: 0 }), caught.endedAt).screen.plain, 'Boo caught the red dot. Jessa: 3 points.')
   look(arcadeChime(arcadeSample('menu', 0), 10), 10) // Mari is left out
   const trio = newArcade({ mode: 'visit', players: ['Margaret', 'Tom', 'Ellie'], seed: 1, now: 0 })
@@ -1183,16 +1438,18 @@ test('G56 every word the arcade can show passes F09, and Boo\'s lines carry no n
 
   // the words
   const words = new Set([ARCADE_NAME, STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, ...Object.values(BOO_LINES).flat(),
-    ...GAMES.flatMap(g => [g.name, g.short, g.how, g.boo, ...g.dials])])
+    ...GAMES.flatMap(g => [g.name, g.short, g.how, g.boo, ...(g.rule ? [g.rule] : []), ...g.dials])])
   for (const v of views) for (const w of shownWords(v)) words.add(w)
   assert.ok(words.size > 60, `${words.size} lines`)
   for (const w of words) {
     assert.ok(!WAITING.test(w), `F09: ${w}`)
     assert.ok(!w.includes('\u2014'), `no em dash: ${w}`)
   }
-  assert.ok(words.has('Out of time before their clue: Mari.'))
-  assert.ok(words.has("Out of time before their clue: Margaret and Tom. Out of time before Boo's line: Ellie."))
-  assert.ok(words.has("Out of time before Boo's line: Ellie."))
+  const shown = new Set(views.flatMap(shownWords)) // what a view showed, not the lists above
+  for (const w of ["Strike 1! That's a pet.", "Strike 2! That's a pet.", 'Too soon!', 'Too late!', "Three pets and you're out.", 'You tapped three pets.']) assert.ok(shown.has(w), `shown: ${w}`)
+  assert.ok(shown.has('Out of time before their clue: Mari.'))
+  assert.ok(shown.has("Out of time before their clue: Margaret and Tom. Out of time before Boo's line: Ellie."))
+  assert.ok(shown.has("Out of time before Boo's line: Ellie."))
   assert.ok(views.some(v => v.screen.stage === 'third') && views.some(v => v.screen.stage === 'winner') && views.some(v => v.screen.stage === 'farewell'))
 
   // Boo's own lines

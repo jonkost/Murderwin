@@ -43,6 +43,11 @@ export const MICE_TWO_FROM_MS = 30000    // two at once from 30 seconds in
 export const MICE_BONK_MS = 300
 export const MICE_POINTS = 1
 export const MICE_GOLD_POINTS = 3
+export const MICE_PETS_FROM_MS = 5000    // the pets pop up too from 5 seconds in:
+export const MICE_PET_ONE_IN = 4         // one in four that pop up is a pet, not a mouse
+export const MICE_PETS_OUT = 3           // tap three pets and you're out (Jon, 29 Oct 2026)
+export const MICE_OOPS_MS = 600          // a tapped pet shows on red this long
+export const MICE_REST_MS = 500          // a key a mouse has just left stays empty this long, so a late tap meant for it never meets a pet
 // Knock It Off the Table
 export const KNOCK_STEP_MS = 350         // one key along the table this often at first,
 export const KNOCK_STEP_FASTER_MS = 20   // this much quicker for every knock,
@@ -69,6 +74,7 @@ export const DIAL_MAX_KEYS = 3           // a fast spin moves at most three keys
 export const READY_MS = 15000            // the how-to-play screen starts the count by itself after this
 export const COUNT_MS = 3000             // 3, 2, 1
 export const RESULT_MS = 5000
+export const STRIKE_WORDS_MS = 1500      // a strike's words stay on the strip this long (Jon, 29 Oct 2026), mice tapped meanwhile or not; only a knock ends them sooner
 export const CLUE_MIN_MS = 3000          // a press moves the clue on only after this,
 export const CLUE_MAX_MS = 60000         // and it moves on by itself after this
 export const WINNER_MS = 10000
@@ -139,6 +145,7 @@ export const BOO_LINES = {
   win: ['Ha! Oh, that was good. I mean, adequate.', "Well, well. Somebody's been practising."],
   bite: "That's mine, darling. Hands off.",
   caught: 'Mine. Obviously.',
+  pets: 'Not the household, darling. Out you go.',
   lose: 'Tragic. Truly. Next.',
   time: 'Time, darling. Everything ends.',
   clue: 'You amused me. Here.',
@@ -150,7 +157,8 @@ export const BOO_LINES = {
 
 // The five games, in menu order (keys 11 to 15). `how` is the plain line
 // (one or two short sentences), `boo` her line while it runs, `dials` the
-// six labels along the bottom of the strip.
+// six labels along the bottom of the strip, and `rule`, for the game that
+// counts strikes, what the strip says before it starts.
 const ACROSS = '◀ ▶', UP_DOWN = '▼ ▲'
 export const GAMES = [
   {
@@ -167,7 +175,8 @@ export const GAMES = [
   },
   {
     id: 'mice', name: 'Whack-a-Mouse', short: 'Mice',
-    how: 'Tap a mouse before it hides. Gold mice are worth more.',
+    how: "Tap a mouse before it hides; gold ones are worth more. Leave the pets alone: tap three and you're out.",
+    rule: "Three pets and you're out.",
     boo: 'Mice. In my house. Unthinkable.',
     dials: ['', '', '', '', '', ''],
   },
@@ -189,13 +198,17 @@ const GAME = Object.fromEntries(GAMES.map(g => [g.id, g]))
 // The things on Boo's table, in the order they come.
 export const KNOCK_OBJECTS = ['vase', 'teacup', 'teapot', 'candle', 'picture', 'glass', 'plant', 'cake']
 
+// Whack-a-Mouse's decoys: all the household's pets, Boo too (Jon, 29 Oct
+// 2026). Each is its own face picture (lib/arcadeArt.js PET_FILES).
+export const PETS = ['boo', 'granola', 'irwin', 'salem', 'zimmy']
+
 // Every face a key can show (the art draws each one).
 export const FACE_IDS = [
   'off', 'blank', 'star', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3',
   ...GAMES.map(g => `menu:${g.id}`),
   'tail-head', 'tail-body', 'tail-tip', 'fish', 'bite',
   'dot', 'chaser', 'caught',
-  'mouse', 'mouse-gold', 'bonk',
+  'mouse', 'mouse-gold', 'bonk', ...PETS.map(p => `pet:${p}`), ...PETS.map(p => `oops:${p}`),
   'table', 'edge', 'below', 'crash', 'swipe',
   ...KNOCK_OBJECTS.map(o => `table:${o}`), ...KNOCK_OBJECTS.map(o => `edge:${o}`), ...KNOCK_OBJECTS.map(o => `fall:${o}`),
   'yarn', 'yarn-gold', 'basket', 'basket-catch', 'yarn-miss',
@@ -373,41 +386,80 @@ const pointer = {
 
 // ---- 3. Whack-a-Mouse ----
 
+// The pets pop up among the mice from 5 seconds in. A pet is up as long as a
+// plain mouse; tapping one scores nothing, and the third ends the game. A
+// mouse that hides, or an empty key, never counts against anyone, and a key a
+// mouse has just left (hidden or tapped) rests a moment, so a late tap meant
+// for that mouse never meets a pet.
 const mice = {
   start(s) {
     s.mice = [] // { key, gold, downAt }
+    s.pets = [] // { key, pet, downAt }
     s.bonks = [] // { key, until }
+    s.oops = [] // { key, pet, until }: a pet just tapped
+    s.rests = [] // { key, until }: a key a mouse has just left
+    s.petTaps = 0
     s.nextSpawnAt = s.startedAt
   },
-  due: s => Math.min(s.nextSpawnAt, ...s.mice.map(m => m.downAt)),
+  due: s => Math.min(s.nextSpawnAt, ...s.mice.map(m => m.downAt), ...s.pets.map(p => p.downAt)),
   fire(s, t) {
-    // a mouse ducks (before any new one comes at the same moment)
-    if (s.mice.some(m => m.downAt <= t)) { s.mice = s.mice.filter(m => m.downAt > t); return }
-    const room = (t - s.startedAt >= MICE_TWO_FROM_MS ? 2 : 1) - s.mice.length
+    // a mouse or a pet ducks (before any new one comes at the same moment)
+    if ([...s.mice, ...s.pets].some(m => m.downAt <= t)) {
+      const left = s.mice.filter(m => m.downAt <= t).map(m => ({ key: m.key, until: t + MICE_REST_MS }))
+      s.rests = [...s.rests.filter(r => r.until > t), ...left]
+      s.mice = s.mice.filter(m => m.downAt > t)
+      s.pets = s.pets.filter(p => p.downAt > t)
+      return
+    }
+    const room = (t - s.startedAt >= MICE_TWO_FROM_MS ? 2 : 1) - s.mice.length - s.pets.length
     if (room > 0) {
-      const busy = new Set([...s.mice.map(m => m.key), ...s.bonks.filter(b => b.until > t).map(b => b.key)])
+      const flashing = [...s.bonks, ...s.oops, ...s.rests].filter(b => b.until > t)
+      const busy = new Set([...s.mice, ...s.pets, ...flashing].map(x => x.key))
       const free = ALL_KEYS.filter(k => !busy.has(k))
       if (free.length) {
         const key = pick(s, free)
-        const gold = isGold(s)
-        s.mice.push({ key, gold, downAt: t + (gold ? MICE_GOLD_UP_MS : lerp(MICE_UP_MS, MICE_UP_END_MS, along(s, t))) })
+        const up = lerp(MICE_UP_MS, MICE_UP_END_MS, along(s, t))
+        if (t - s.startedAt >= MICE_PETS_FROM_MS && rand(s) < 1 / MICE_PET_ONE_IN) {
+          s.pets.push({ key, pet: pick(s, PETS), downAt: t + up })
+        } else {
+          const gold = isGold(s)
+          s.mice.push({ key, gold, downAt: t + (gold ? MICE_GOLD_UP_MS : up) })
+        }
       }
     }
     s.nextSpawnAt = t + lerp(MICE_SPAWN_MS, MICE_SPAWN_END_MS, along(s, t))
   },
   input(s, e, t) {
     if (e.kind !== 'key') return
+    const p = s.pets.find(x => x.key === e.index)
+    if (p) {
+      s.pets = s.pets.filter(x => x !== p)
+      s.petTaps += 1
+      s.oops = [...s.oops.filter(o => o.until > t), { key: p.key, pet: p.pet, until: t + MICE_OOPS_MS }]
+      if (s.petTaps >= MICE_PETS_OUT) return finish(s, 'lose', t)
+      s.events.push('miss')
+      s.said = { words: `Strike ${s.petTaps}! That's a pet.`, until: t + STRIKE_WORDS_MS }
+      return
+    }
     const m = s.mice.find(x => x.key === e.index)
     if (!m) return // an empty key does nothing
     s.mice = s.mice.filter(x => x !== m)
     s.score += m.gold ? MICE_GOLD_POINTS : MICE_POINTS
     s.events.push(m.gold ? 'gold' : 'point')
     s.bonks = [...s.bonks.filter(b => b.until > t), { key: m.key, until: t + MICE_BONK_MS }]
+    s.rests = [...s.rests.filter(r => r.until > t), { key: m.key, until: t + MICE_REST_MS }]
+    // a strike's words stay up their whole time: the screen shows the points meanwhile
   },
-  tidy(s) { s.bonks = s.bonks.filter(b => b.until > s.at) },
+  tidy(s) {
+    s.bonks = s.bonks.filter(b => b.until > s.at)
+    s.oops = s.oops.filter(o => o.until > s.at)
+    s.rests = s.rests.filter(r => r.until > s.at)
+  },
   faces(s, f, now) {
     for (const b of s.bonks) if (b.until > now) f[b.key] = 'bonk'
+    for (const o of s.oops) if (o.until > now) f[o.key] = `oops:${o.pet}`
     for (const m of s.mice) f[m.key] = m.gold ? 'mouse-gold' : 'mouse'
+    for (const p of s.pets) f[p.key] = `pet:${p.pet}`
   },
 }
 
@@ -461,6 +513,7 @@ const knock = {
       s.knocked += 1
       s.score += KNOCK_POINTS
       s.events.push('knock')
+      s.said = null // the points again
       s.phase = 'fall'
       s.knockedAt = t
       s.fallObj = s.obj
@@ -471,6 +524,7 @@ const knock = {
       // from here, so presses closer together than the rest knock nothing off
       // (a steady press slower than that still can: docs/boo-arcade.md §8)
       s.events.push('miss')
+      s.said = { words: s.phase === 'left' ? 'Too late!' : 'Too soon!', until: t + STRIKE_WORDS_MS }
       s.swipeUntil = t + KNOCK_SWIPE_MS
       s.restUntil = t + KNOCK_REST_MS
     }
@@ -592,7 +646,8 @@ export function newGame(id, { seed, lengthMs, now = 0 } = {}) {
   const rules = RULES[id]
   if (!rules) throw new Error(`No such game: ${id}`)
   const length = Number(lengthMs) > 0 ? Number(lengthMs) : FREE_GAME_MS
-  const s = { id, startedAt: now, endsAt: now + length, at: now, score: 0, over: false, outcome: null, endedAt: null, events: [], rs: seedOf(seed) }
+  // `said`: a strike's words for the strip, until a time (Whack-a-Mouse's pets, Knock It Off's misses)
+  const s = { id, startedAt: now, endsAt: now + length, at: now, score: 0, over: false, outcome: null, endedAt: null, events: [], said: null, rs: seedOf(seed) }
   rules.start(s)
   return s
 }
@@ -873,6 +928,13 @@ function clockText(ms) {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 }
 const pointsOf = n => `${n} ${n === 1 ? 'point' : 'points'}`
+// Whack-a-Mouse's count of pets tapped, on the strip and beside the deck.
+const tallyOf = g => g?.id === 'mice' ? `Pets tapped: ${g.petTaps ?? 0} of ${MICE_PETS_OUT}` : null
+// A strike's words, while they last: in place of the points on the strip (Jon,
+// 29 Oct 2026: every strike says so on the touch strip). Its game's rule, for
+// a game that counts strikes, on the strip before it starts.
+const saidOf = (g, now) => g?.said && now < g.said.until ? g.said.words : null
+const ruleOf = g => (g && GAME[g.id]?.rule) || ''
 function andList(names) {
   const list = names.filter(Boolean)
   return list.length <= 1 ? (list[0] ?? '') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
@@ -918,15 +980,15 @@ function stripOf(a, now) {
   switch (a.stage) {
     case 'home': return line('Free play', 'Press a game')
     case 'menu': return line(`${who}'s turn`, 'Press a game', `Tokens: ${a.players[a.turn]?.tokens ?? 0}`)
-    case 'ready': return line(name, 'Press any key to start', '', null, dials)
-    case 'count': return line(name, String(countOf(a, now)), '', null, dials)
+    case 'ready': return line(name, 'Press any key to start', ruleOf(g), null, dials)
+    case 'count': return line(name, String(countOf(a, now)), ruleOf(g), null, dials)
     case 'play': {
       if (!g) return line('', '')
       const left = Math.max(0, g.endsAt - now)
       const bar = Math.min(1, Math.ceil(left / 1000) / Math.max(1, Math.round((g.endsAt - g.startedAt) / 1000)))
-      return line(name, pointsOf(g.score), clockText(left), bar, dials)
+      return line(tallyOf(g) ?? name, saidOf(g, now) ?? pointsOf(g.score), clockText(left), bar, dials)
     }
-    case 'result': return line(name, g ? pointsOf(g.score) : '')
+    case 'result': return g ? line(name, outcomeOf(g), pointsOf(g.score)) : line('', '')
     case 'clue': return line(who, 'Your clue is on the screen')
     case 'third': return line('', who)
     case 'winner': return line('', `Most points: ${andList(winnerOf(a).names)}`)
@@ -936,12 +998,14 @@ function stripOf(a, now) {
 }
 
 const WIN_WORDS = { tail: 'Boo is full.', knock: 'Everything is off the table.' }
-const LOSE_WORDS = { tail: 'Boo bit her own tail.', pointer: 'Boo caught the red dot.' }
+const LOSE_WORDS = { tail: 'Boo bit her own tail.', pointer: 'Boo caught the red dot.', mice: 'You tapped three pets.' }
+const LOSE_LINES = { tail: BOO_LINES.bite, pointer: BOO_LINES.caught, mice: BOO_LINES.pets }
+// How a game ended, in a few words: on the result's strip and its screen.
+const outcomeOf = g => g.outcome === 'win' ? WIN_WORDS[g.id] ?? 'Well played.' : g.outcome === 'lose' ? LOSE_WORDS[g.id] ?? 'Game over.' : "Time's up."
 function resultLine(a) {
   const g = a.game
-  const what = g.outcome === 'win' ? WIN_WORDS[g.id] ?? 'Well played.' : g.outcome === 'lose' ? LOSE_WORDS[g.id] ?? 'Game over.' : "Time's up."
   const who = counted(a) && a.players[a.turn] ? `${a.players[a.turn].name}: ` : ''
-  return `${what} ${who}${pointsOf(g.score)}.`
+  return `${outcomeOf(g)} ${who}${pointsOf(g.score)}.`
 }
 
 function plainOf(a, info, yours, winner) {
@@ -975,7 +1039,7 @@ function booOf(a, info, winner) {
     case 'result': {
       const g = a.game
       if (g?.outcome === 'win') return BOO_LINES.win[hashOf(`${a.seed}:win:${a.played}`) % BOO_LINES.win.length]
-      if (g?.outcome === 'lose') return g.id === 'tail' ? BOO_LINES.bite : g.id === 'pointer' ? BOO_LINES.caught : BOO_LINES.lose
+      if (g?.outcome === 'lose') return LOSE_LINES[g.id] ?? BOO_LINES.lose
       return BOO_LINES.time
     }
     case 'clue': return BOO_LINES.clue
@@ -1018,6 +1082,7 @@ function screenOf(a, now) {
     boo: booOf(a, info, winner),
     picture: pictureOf(a),
     score: g ? g.score : null,
+    tally: a.stage === 'play' ? tallyOf(g) : null, // Whack-a-Mouse's pets tapped, beside the points
     timeLeftMs: left == null ? null : wholeMs(left),
     clockMs: a.mode === 'visit' && a.roundEndsAt != null ? wholeMs(a.roundEndsAt - now) : null,
     count: a.stage === 'count' ? countOf(a, now) : null,

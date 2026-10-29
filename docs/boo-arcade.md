@@ -1,16 +1,19 @@
 # Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet)
 
-Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October.
+Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October, when
+*Whack-a-Mouse* also got its pets, the Tail key on the menu its black cat, and every strike its
+words on the touch strip.
 Everything here is structure: no answers, no clue text. Safe for you to read.
 
 **Not on the night yet.** On the night the Entryway still plays *Boo's Catwalk*, as built.
 Whether the arcade takes its place is the decision card *entrywayGame* on the board, and only you
 answer it. Until then the arcade is a page you can play any day, and nothing in it touches a night.
 
-**Where the settled parts come from:** your words on 28 October (the talk that designed it,
-quoted in §1), the note on the decision card *entrywayGame*, and the build of 28 October. Where
-the build goes past your words (the speeds, the points, Boo's lines), those are starting points,
-and a note from the Game test tab changes them.
+**Where the settled parts come from:** your words on 28 October (the talk that designed it) and
+29 October (the pets in *Whack-a-Mouse*, the black cat, the words on the strip), quoted in §1,
+the note on the decision card *entrywayGame*, and the build of 28 October. Where the build goes
+past your words (the speeds, the points, how often a pet comes, Boo's lines, most of the words
+on the strip), those are starting points, and a note from the Game test tab changes them.
 
 ---
 
@@ -50,6 +53,24 @@ In your words (28 October):
 - The name: Miss Boo LaRue's Arcade. (Miss Beaux LaRue was floated and dropped: she stays
   Miss Boo LaRue.)
 - "We need to get boos game up for testing. Not the cat walk the arcade games."
+
+On 29 October, for *Whack-a-Mouse*: "lets add a decoy element to the mouse", and then "all the
+pets. zimmy is a similar color. I think after 3 missed your out, or it ends at 2 mins". Settled:
+the decoys are the five household pets (Zimothy's colour is close to the mouse's, so he is the
+sneaky one), and the third pet tapped ends the game; otherwise it ends at its two minutes, as
+before. The build reads a miss as a pet tapped: a mouse that hides, or a tap on an empty key,
+costs nothing.
+
+Also on 29 October: "Lets use the black cat emoji for the tail", and asked where, the Tail key on
+the menu. Settled: the key shows a black cat; the treat Boo chases in the game stays a fish. And
+"Make sure all strike systems show some verbage in the touch screen". Settled: every strike says
+so on the touch strip for a moment, in place of the points ("Strike 1! That's a pet." in
+*Whack-a-Mouse*). The build adds: a miss in *Knock It Off the Table* counts as a strike ("Too
+soon!" or "Too late!"); before *Whack-a-Mouse* starts, the strip says its rule ("Three pets and
+you're out."); and when any game ends, the strip says how ("Boo bit her own tail.", "Boo caught
+the red dot.", "You tapped three pets.", "Time's up."). It counts a ball that falls past the
+basket in *Yarn Catch* as no strike (it only scores nothing), so while that game plays its strip
+shows the points as before.
 
 ---
 
@@ -102,7 +123,7 @@ dials along the bottom.
 | Second row | The menu: two blank keys, the five games, two blank keys. From the left: *Boo Chasing Her Tail*, *The Lazy Pointer*, *Whack-a-Mouse*, *Knock It Off the Table*, *Yarn Catch*. |
 | Third row | In a visit, the player's two tokens either side of the middle: a full coin for a token left, an empty ring for one spent. |
 | Bottom row | Blank. Its left-hand key is Back, on the screen before a game starts. |
-| The touch strip | Whose turn it is, the game's name, the points, the time left as a bar and a clock, and what each dial does in this game. A tap on the strip counts as a dial press. |
+| The touch strip | Whose turn it is, the game's name (in *Whack-a-Mouse*, while it plays, the pets tapped in its place), the points (for a moment after a strike, the strike's words instead: §4), the time left as a bar and a clock, and what each dial does in this game. Before *Whack-a-Mouse* starts, its rule; when a game ends, how it ended and the points. A tap on the strip counts as a dial press. |
 | The dials | The left three turn left and right (clockwise is right). The right three turn up and down (clockwise is up), like an Etch A Sketch. Every dial is a button too: press it. |
 
 During a game the keys are the game's board. Between games: a big 3, 2, 1 on the middle key of
@@ -129,16 +150,27 @@ the Game test tab is a quick change.
    sixth step she stops for a beat: she is lazy. A point for every two whole seconds you last,
    and 20 more for lasting to the end. She lands on the dot: caught, and it ends.
 3. *Whack-a-Mouse*. Mice pop up on the keys. Tap one before it hides: 1 point, a gold mouse 3
-   (one in ten, and it hides sooner). One mouse at a time at first, up to two at once from 30
-   seconds in; they come faster and hide sooner as the game goes on. Tapping an empty key does
-   nothing.
+   (one in ten, and it hides sooner). One at a time at first, up to two at once from 30 seconds
+   in; they come faster and hide sooner as the game goes on. From five seconds in, the
+   household's pets pop up among them (about one in four of what pops up): Sir Irwin, Granolia,
+   Boo, Zimothy and Salem, each their own face picture, up as long as a mouse. Leave them alone:
+   a pet tapped scores nothing and shows on red for a moment, and the third one ends the game
+   ("You tapped three pets."). Each pet tapped says so on the strip for a second and a half, in
+   place of the points, mice tapped meanwhile or not: "Strike 1! That's a pet." The strip and
+   the screen count them: "Pets tapped: 1 of 3", and before the game starts the strip says the
+   rule: "Three pets and you're out." A mouse that
+   hides, or a tap on an empty key, costs nothing. A key a mouse has just left (hidden or tapped)
+   stays empty for half a second, so a tap a moment late never lands on a pet, and a tapped
+   pet's key stays red, and empty, for 0.6 seconds.
 4. *Knock It Off the Table*. The top row is the table, its right-hand key the edge, and Boo
    watches from the row below. A thing slides along the table to the edge, sits there for two
    steps, slides back and comes again. Press any dial (or tap the edge key, or the strip) while
    it is on the edge: knocked off, 10 points, and it falls and crashes. Press while it is not on
    the edge: a miss, and Boo's paw rests for a moment (0.4 seconds). A press while it rests is
-   another miss and starts the rest again, so mashing knocks nothing off. (A steady press about
-   twice a second still clears the table without looking: §8.) Eight
+   another miss and starts the rest again, so mashing knocks nothing off. A miss says so on the
+   strip for a moment (a knock brings the points back sooner): "Too soon!" (before it reaches the
+   edge, or on the edge while the paw still rests) or "Too late!" (on its way back, the paw resting
+   or not). (A steady press about twice a second still clears the table without looking: §8.) Eight
    things in turn (a vase, a teacup, a teapot, a candle, a picture, a glass, a plant, a cake), a
    little faster after every knock. Knock all eight and you win.
 5. *Yarn Catch*. Balls of yarn drop down the keys; Boo's basket sits on the bottom row. Turn any
@@ -151,7 +183,7 @@ the Game test tab is a quick change.
 |---|---|---|---|
 | *Boo Chasing Her Tail* | one key every 0.7 s | 0.45 s (0.04 s quicker a fish) | 10 a fish; five fish 20 more, plus 1 for every whole 5 s left |
 | *The Lazy Pointer* | Boo a key every 1 s | 0.45 s (0.1 s quicker every 15 s) | 1 for every 2 whole seconds; 20 for lasting to the end |
-| *Whack-a-Mouse* | a mouse every 1.2 s, up for 1.6 s (gold 1.2 s) | every 0.7 s, up for 1.25 s (gold 1.2 s) | 1; gold 3 |
+| *Whack-a-Mouse* | one pops up every 1.2 s, up for 1.6 s (gold 1.2 s); from 5 s in, one in four is a pet | every 0.7 s, up for 1.25 s (gold 1.2 s) | 1; gold 3; a pet nothing, and the third ends the game |
 | *Knock It Off the Table* | one key every 0.35 s, two steps on the edge, back twice as fast; a miss rests the paw 0.4 s | 0.2 s (0.02 s quicker a knock) | 10 a knock |
 | *Yarn Catch* | down one row every 0.65 s, a new ball every 1.6 s | 0.4 s, a new ball every 1 s | 1; gold 3 |
 
@@ -162,7 +194,12 @@ and nine tenths to see something and press):
 
 - *Boo Chasing Her Tail*: about 90 for anyone.
 - *The Lazy Pointer*: about 30, 12 and 8, and more for a player who spins the dials fast.
-- *Whack-a-Mouse*: about 156, 144 and 57.
+- *Whack-a-Mouse*: about 113, 106 and 45 for a player who never taps a pet (156, 144 and 57
+  before the pets: a quarter of what pops up is a pet now, so there are fewer mice, about 95 mice
+  and 30 pets in two minutes for a player who taps every mouse). A player who takes one pet in 20
+  for a mouse (Zimothy one in ten) is out in about one game in four, most often in the second
+  minute; one in ten (Zimothy one in five), in seven games in ten. How often a guest really does is
+  for your try to say.
 - *Knock It Off the Table*: 80 at most (eight things, ten each), and a steady press without
   looking gets all eight (§8).
 - *Yarn Catch*: about 110, 107 and 94.
@@ -213,9 +250,10 @@ that player for Boo's winner. The two minutes are your words; the cut is the bui
 point like the speeds.
 
 Tried with pretend groups that pick only *Whack-a-Mouse* and *Yarn Catch* (the two games that
-always run their full time), 100 visits each. An ordinary pace is 5 to 12 seconds to pick a
-game, 6 to 14 on how to play and 15 to 30 on a clue; a slow one is 8 to 20 to pick, the
-how-to-play screen left to start by itself, and 20 to 60 on a clue.
+run their full time, unless three pets are tapped, so the slowest visits), 100 visits each. An
+ordinary pace is 5 to 12 seconds to pick a game, 6 to 14 on how to play and 15 to 30 on a clue;
+a slow one is 8 to 20 to pick, the how-to-play screen left to start by itself, and 20 to 60 on a
+clue.
 
 - A pair at an ordinary pace gets both clues every time, the second 15 seconds before the
   chime. (Before the cut, it lost the second clue 86 times in 100.)
@@ -232,19 +270,21 @@ how-to-play screen left to start by itself, and 20 to 60 on a clue.
   ordinary pair or trio still gets both clues, but a slow pair loses the second about 4 times in
   5, and a slow trio loses one about half the time.
 
-A game that ends early (a bite, a catch, all eight knocked off) gives its time back.
+A game that ends early (a bite, five fish, a catch, all eight knocked off, three pets tapped) gives
+its time back.
 
 ---
 
 ## 6. The sounds
 
-Every sound is made in the browser from simple tones: no files. A coin when a game is picked, a
-tick for each count and a go, a blip for a point (three notes for gold), a low two-note miss, a
-knock (a swish and a thud), a bite, a short rising tune for a win and a falling one for a loss,
-three rising notes when a clue appears, a tap for Back, and at the end the chime: the same four
-quick notes as the brain's stand-in chime today. Boo makes no cat sounds: her words are on the
-screen. When a game ends on a bite, the bite plays first and the falling tune straight after it;
-the last fish or the last knock plays before the rising one.
+Every sound is made in the browser from simple tones: no files. A coin when a game is picked, a tick
+for each count and a go, a blip for a point (three notes for gold), a low two-note miss (a knock too
+soon or too late, or a pet tapped), a knock (a swish and a thud), a bite, a short rising tune for a
+win and a falling one for a loss (the third pet tapped plays only the falling one), three rising
+notes when a clue appears, a tap for Back, and at the end the chime: the same four quick notes as
+the brain's stand-in chime today. Boo makes no cat sounds: her words are on the screen. When a game
+ends on a bite, the bite plays first and the falling tune straight after it; the last fish or the
+last knock plays before the rising one.
 
 They play from the Mac's sound output the moment they happen, so set it to the Mac's own
 speakers: through a HomePod they come about two seconds late.
@@ -262,6 +302,7 @@ speakers: through a HomePod they come about two seconds late.
   hint lines, her Parlour Game lines or her Catwalk verdicts. The plain words say what to do.
 - The practice visit shows the PRACTICE band, so a square-bracket line is never mistaken for a
   clue.
+- The pets in *Whack-a-Mouse* are only faces on the keys: no names and no words.
 
 ---
 
@@ -281,13 +322,18 @@ speakers: through a HomePod they come about two seconds late.
 - *A player the chime catches before their clue.* What they get on the night is not decided; it
   comes with *entrywayGame*. (Every other Act 4 room pays its reward at the chime anyway.) In
   practice the chime's screen names them.
-- *The fish in Boo Chasing Her Tail.* Her treat, and the game's key on the menu, is a fish, and
-  "fish-shaped" is one of the open bag clue words. On the night a guest might take the fish for a
-  hint. Worth a look if the arcade goes on the night: another treat would do. (On the board: The
-  arcade on the night, if entrywayGame picks it.)
+- *The fish in Boo Chasing Her Tail.* Her treat is a fish (the game's key on the menu is a
+  black cat since 29 October), and "fish-shaped" is one of the open bag clue words. On the night a
+  guest might take the fish for a hint. Worth a look if the arcade goes on the night: another treat
+  would do. (On the board: The arcade on the night, if entrywayGame picks it.)
 - *Knock It Off the Table without looking.* The paw's rest stops mashing, but a steady press
   about twice a second, without looking, still knocks all eight off and scores the full 80. If
   that spoils it once you have tried it, a miss could cost a point or two. (On the same card.)
+- *The pets in Whack-a-Mouse* (29 October). About one in four of what pops up is a pet, from
+  five seconds in, and the third tapped ends the game. How often a guest really takes one for a
+  mouse is for your try to say: Zimothy is the one to watch. If it feels too hard or too easy,
+  how often they come, when they start and how long a tapped one stays red are quick changes;
+  the three is your rule.
 
 ---
 
@@ -328,9 +374,24 @@ straight away.
   `inputGame`, `gameFaces`), the visit machine (`newArcade`, `arcadeStep`, `arcadeInput`,
   `arcadeChime`), the view (`arcadeView`: 36 face ids, the strip, the screen words, a `sig`), the
   samples (`arcadeSample`), `FACE_IDS`, `STAND_IN_CLUE`, `CLUE_NOTE`, `THIRD_LINE`,
-  `FAREWELL_LINE`. Every call returns a new, JSON-safe object; `events` lists the sounds that call
-  made; `now` is one monotonic clock (`performance.now()` on the page). `lengthFor(s, t)` is the
-  one rule for a game's length: `FREE_GAME_MS` in free play (a visit's too), otherwise
+  `FAREWELL_LINE`. *Whack-a-Mouse*'s pets (29 Oct): `PETS` (boo, granola, irwin, salem, zimmy),
+  `MICE_PETS_FROM_MS` 5000, `MICE_PET_ONE_IN` 4, `MICE_PETS_OUT` 3, `MICE_OOPS_MS` 600; the game
+  keeps `pets`, `oops` and `petTaps`, its faces are `pet:<id>` and `oops:<id>`, and while it
+  plays the strip's left field and the view's `screen.tally` say "Pets tapped: N of 3"
+  (`tallyOf`); the third ends it with 'lose' (`LOSE_WORDS.mice`, and `BOO_LINES.pets` through
+  `LOSE_LINES`). `MICE_REST_MS` 500: a mouse that hides or is tapped leaves its key in `rests`,
+  busy for a spawn like `bonks` and `oops` (a pet that hides leaves none). The strike words (29
+  Oct): a game's `said` (`{ words, until }`, null from `newGame`) is set for `STRIKE_WORDS_MS` 1500
+  by a pet tapped ("Strike N! That's a pet.") and by a knock miss ('Too late!' while the phase is
+  'left', otherwise 'Too soon!'), and cleared only by a knock (a mouse tapped leaves them up: the
+  screen shows the points); the strip's centre in play is `saidOf(g, now) ?? pointsOf(score)`, so
+  the view's `sig` repaints it. `GAMES` entries may carry `rule` (only *Whack-a-Mouse*'s), the
+  strip's right field on ready and the count (`ruleOf`). The result's strip is
+  `{ left: name, centre: outcomeOf(g), right: points }`; `outcomeOf` (`WIN_WORDS`, `LOSE_WORDS`,
+  else "Time's up.") also opens `resultLine`. Every call returns a new, JSON-safe object; `events`
+  lists the sounds that call made; `now` is one monotonic clock (`performance.now()` on the page).
+  `lengthFor(s, t)` is the one rule for a game's length: `FREE_GAME_MS` in free play (a visit's
+  too), otherwise
   `min(gameLengthMs, max(CUT_MIN_MS, roundEndsAt - t - RESULT_MS - CLUE_KEEP_MS))`. `gameAt`
   builds both the ready screen's board and the game with it, and before play the view's
   `timeLeftMs` is the length the game gets if it starts now. At the chime `ring()` sets
@@ -338,12 +399,22 @@ straight away.
   two sentences: "Out of time before their clue: ..." and "Out of time before Boo's line: ...".
 - `play/src/lib/arcadeArt.js`: browser. Draws every face and the strip on a canvas in the house
   look (`station/keys/make.html`'s ground, rim and serif text, scaled by size / 72), colour
-  emoji for the pictures, Boo's face picture; caches RGBA buffers for the deck and data URLs for
-  the screen. `ART_FACES` is made from its own drawing tables (`FACES`, the count's 3, 2, 1,
-  `MENU`, `SCENES`), so it never names a face with no drawing. Boo's face picture waits for its
-  load event, never `decode()` (which waits for a drawn frame, and a tab opened behind another
-  draws none), for at most six seconds; one that comes later is never used, so every Boo key
-  keeps the stand-in cat until a reload and the keys always match.
+  emoji for the pictures, the five face pictures (`PET_FILES`, `play/public/household/faces/`:
+  Boo's for her own keys, all five for the pets); caches RGBA buffers for the deck and data URLs
+  for the screen. `ART_FACES` is made from its own drawing tables (`FACES`, the count's 3, 2, 1,
+  `MENU`, `SCENES`, `PETS_DRAWN`), so it never names a face with no drawing. Each face picture
+  waits for its load event, never `decode()` (which waits for a drawn frame, and a tab opened
+  behind another draws none), for at most six seconds; one that comes later is never used, so
+  its keys keep their stand-in until a reload (the drawn cat for Boo, 🐕 for Sir Irwin, a whole
+  dog because a dog's face looks too like the mouse's, 🐱 for the other cats) and the keys
+  always match. Boo's face loads with `fetchPriority` 'high', the other four 'low', and the
+  page asks for Boo's screen pictures only once `loadArt()` is done, so nothing holds up the
+  faces. A pet is fitted by its sticker's box in its picture (`PET_BOXES`, measured 29 Oct where
+  the picture's alpha is over 100, so faint whiskers do not count), so the five look the same
+  size. G54 reads each face picture's box from its PNG the same way, so a new face picture fails
+  until `PET_BOXES` is measured again (`play/public/household/README.md` tells Jon).
+  `MENU.tail` is `['cat', 'Tail']` (`PICTURE.cat` 🐈‍⬛, drawn twice in a parchment glow
+  so it shows on the Manor blue); the fish stays the game's treat.
 - `play/src/lib/arcadeDeck.js`: browser. WebHID through `@elgato-stream-deck/webhid` 7.8.0
   (exact pin in `play/package.json`), loaded with `await import()` so it is its own chunk.
   `deckSupported`, `reopenDeck`, `chooseDeck`, `deckEvents`, `deckPainter`, `watchPlugs`, and
@@ -366,7 +437,8 @@ straight away.
   fish or knock before the win tune; every other sound starts at once.
 - `play/src/screens/Arcade.jsx`: the page (default export `BooArcade({ sample })`): one 50 ms
   loop in a ref, the deck, the on-screen deck, the screen, the sounds, the setup form, `<Wake />`,
-  and `<RehearsalBand on label="PRACTICE" />` in a visit. A replug that cannot open the deck says
+  and `<RehearsalBand on label="PRACTICE" />` in a visit. Beside the points, *Whack-a-Mouse*'s
+  pets tapped (`.arcade-tally`, on a line of its own). A replug that cannot open the deck says
   why on the bottom line (`deckProblem()`, or the line it had). A winner's names line over 28
   characters gets the class `long` (smaller names, a smaller Boo), and the winner and clue
   moments scroll rather than clip in a small window.
@@ -408,8 +480,22 @@ copied as text (that file is Node) and kept equal by G56.
   mouse always up for less time than a plain one, and the knock's rest (a press while the paw
   rests is another miss and starts the rest again, the rest is under the cake's time on the
   edge, a press a little early then one on the edge still knocks it off, and a press every
-  150 ms through a whole pass knocks nothing off); every face a game shows is in `FACE_IDS`,
-  always 36.
+  150 ms through a whole pass knocks nothing off), and the pets (none before five seconds,
+  about one in four, all five, up as long as a plain mouse, at most one or two things up and one
+  to a key; a tap scores nothing, plays the miss and shows `oops:` for `MICE_OOPS_MS`, nothing
+  popping up on that key meanwhile; the third ends it with 'lose' and the points kept; the tally
+  on the strip and the screen in this game only). Fairness, on a board with every key but one
+  busy: a key a mouse left (hidden or tapped) takes nothing for `MICE_REST_MS`, a tapped pet's
+  key stays `oops:` and empty for `MICE_OOPS_MS`, a key a pet left is free at once, and a pet
+  is up within 10 ms of a plain mouse's time at that moment. The strike words: "Strike 1!" and
+  "Strike 2! That's a pet." on the strip for `STRIKE_WORDS_MS` and then the points, a mouse
+  tapped meanwhile leaving them up; "Too soon!" on the way to the edge and on the edge while the
+  paw rests (its own words, not the press before), "Too late!" on the way back and again while
+  the paw rests there, a knock bringing the points back at once and a press while it falls
+  saying nothing; the rule on the ready and count strips of *Whack-a-Mouse* only; the result's
+  strip for the third pet, tapped while the second's words still show, and "Time's up." when the
+  time runs out while a miss's words show. Every state after a pet tapped is plain JSON. Every
+  face a game shows is in `FACE_IDS`, always 36.
 - G55: the visit: turns round the group, two tokens each, the clue after a player's second game
   for the first two and `THIRD_LINE` for a trio's third, the winner and ties, free play after the
   visit recording nothing, the chime ending everything from any moment, then free play. The cut
@@ -418,8 +504,10 @@ copied as text (that file is Node) and kept equal by G56.
   game gets the floor, and before play the screen's `timeLeftMs` is the length the game gets.
   The farewell's two sentences, told apart by place (two guests named Sam).
 - G56: Boo's words and Jon's two lines: `STAND_IN_CLUE` against `bagclues.js`, `THIRD_LINE` and
-  `FAREWELL_LINE` word for word, every word the arcade can show (the two farewell sentences
-  included) passing the phone's F09 check, no em dash in the arcade's files.
+  `FAREWELL_LINE` word for word, every word the arcade can show (the two farewell sentences, the
+  strike words and the rule included) passing the phone's F09 check, the strike words and the
+  rule found among what the views showed (not the word lists), the result's strip for every way
+  a game ends, no em dash in the arcade's files.
 - L09: the arcade reads no night and shows nothing sealed: `arcade.js`, `arcadeArt.js` and
   `arcadeSound.js` import nothing and `arcadeDeck.js` only `@elgato-stream-deck/webhid`, in its
   one `import(`; the page imports only its own files and three small things of the house's, holds
@@ -429,7 +517,13 @@ copied as text (that file is Node) and kept equal by G56.
 `play/test/arcadeMedia.test.mjs` (G54, in node with a fake canvas, picture and AudioContext):
 every face drawn with none falling back to the art's "?", every sound played and reaching the
 speakers, a win or lose tune starting once the bite, last fish or last knock has faded out, and
-Boo's face picture on every Boo key in time (even with no frame drawn) and never used when late.
+Boo's face picture on every Boo key in time (even with no frame drawn) and never used when late,
+and each pet's picture on its keys, up and tapped, in time, while one that comes late (each of
+the four in turn) keeps its stand-in all session (🐕 for Sir Irwin, 🐱 for the cats); Boo's face
+asked for first (`fetchPriority`) and her screen pictures only inside `loadArt().then`; each
+pet's `PET_BOXES` against the box read from its PNG (within 0.002); the Tail key on the menu
+is the black cat, drawn twice in the parchment glow, over its name with no glow, no fish, while
+the game's fish is still a fish.
 `play/test/arcadeDeck.test.mjs` (no ID) is the deck's code, above.
 
 **What the night would need** (not built; after *entrywayGame*). `functions/lib/act4.js` (the
