@@ -599,6 +599,18 @@ game; it serves the lights and the speakers.
   his motive cards on the screen. **At the paper** and the drawing's four
   names are on your phone's drawing screen, only while the drawing runs: the
   Host tab is away then, like every tab, so there is nothing to find.
+- A red line at the top of the Host tab, from Act 2 on, if a cat ever had
+  no motive hint for a guest or the Study no trace for a group. For example:
+  "A cat had no motive hint ready for a guest once. The guests read plain
+  words instead. Nothing to do: the game goes on." It says how many times,
+  never which cat, guest or group. On the party night the guest read the
+  house's own plain words in its place, never a note about the game: "Miss
+  Boo LaRue has nothing to tell you about the motive." (with that cat's
+  name), or from the Study, "Nothing for you this time." On a rehearsal the
+  card shows the note in brackets instead, marked Rehearsal text. The checks
+  prove it should never happen (G59); if you see it on a rehearsal, tell
+  Claude Code. Which words the guests read is yours to choose: the question
+  *quietWords* on the board.
 
 ## What each screen shows
 
@@ -645,6 +657,7 @@ on the party night both are gone.
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; every phone's screen turns red and green whatever the lights do. |
 | A room code will not scan | Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
+| A cat's hint or the Study's trace never came (a red line at the top of your Host tab) | Nothing to do. The guest read plain words in its place and the game goes on. The line says how many times, never which. |
 | The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
 | The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue, and it puts the right music and scene back. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers, the music and the recorded voices (only bulletin 2's once the bulletins are videos); the words still show on the TV and the iPad. Once the box is ticked, the bulletin videos play from the TV itself. |
 | A W-O-O-F News recording or video does not play | The words are on the screens anyway. For bulletin 2, check that `cues/.env` has the same key word as the study, then restart the brain. For a video, check its file is in `play/public/video` and deployed. |
@@ -1230,3 +1243,25 @@ decides what the box shows when the doc changes under it (a refused write's
 rollback never empties it) and `notesAfterRefusal` puts the sent words back.
 Nothing on the server reads the text; the morning-after discard drops the
 night's `byNight` branch with it.
+
+*Added 29 Oct, the night, never a note in a line's place* (card 529, check
+G59 in `docs/test-plan.md`). When a cat has no line (no family for the
+guest, a hole in the bank, or `catHintLine` throws), `deal.hintLine` gives
+`HINT_QUIET` with the cat's name and `placeholder: false, none: true` on the
+party night (`c.rehearsal` false), else `HINT_PLACEHOLDER` with `placeholder:
+true` as before; `station.studyClueCard` gives `STUDY_QUIET` the same way
+when there is no reveal. `night.noteMissingLine(db, nightId, kind)` (kinds in
+`MISSING_KINDS`: `hint`, `study`) adds one to `nights/{id}.missingLines.<kind>`
+in a transaction: `greetGuest` calls it when the dealt hint is `none`,
+`dealStudy` when it deals a card with no reveal (once a group, as the deal is
+once). Counts only, never a cat, a guest, a group or a line.
+`play/src/lib/house.js` `missingLineWords(night)` makes the red line
+(`houseView().missing`, drawn in Host.jsx under the case warning). The
+phone's `Clue` card with no text says `CLUE_QUIET` on the party night (tested
+equal to `STUDY_QUIET`) and "(Nothing came through. Ask the host.)" on a
+rehearsal. The check is `checks.everyLineOk(c, roster)`: every guest and
+`LATE_JOINER`, the four `HINT_CATS`, rungs 1 to 5, each line through
+`realLine(text)`, and the Study's reveal at every dial from `revealsOf`. The
+fake night fails G59 if a hint or a study card comes with `none`, a phone has
+no study card, or the night doc has `missingLines`. Not covered yet: the news
+flash's own note (`NEWS_FLASH_PLACEHOLDER`), card 530.

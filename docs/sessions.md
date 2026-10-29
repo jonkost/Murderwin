@@ -9,6 +9,50 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026, night · Claude Code (never a note about the game on a guest's screen: card 529, check G59)
+
+- Started from the arcade session, as a side task, for card 529. If a
+  cat's motive hint or the Study's trace were ever missing on the party
+  night, the guest would have read the house's own note in brackets,
+  "(Here the cat would rule something out.)". It should never happen, and
+  now, if it ever does, nothing in brackets reaches a guest on the party
+  night.
+- On the party night a missing hint reads "Miss Boo LaRue has nothing to
+  tell you about the motive." (with that cat's name), and a missing trace
+  in the Study "Nothing for you this time."; a clue card with no words
+  says the same. A rehearsal keeps the note in brackets, marked Rehearsal
+  text, so a hole shows when we practise.
+- Jon's Host tab says so in a red line at the top: how many times, never
+  which cat, guest or group, and that there is nothing to do. The night
+  keeps the counts only (`missingLines`). `docs/on-the-night.md` has it,
+  in the Host tab's list and in When something dies.
+- A new check, G59, on every practice deal: every guest, and a guest who
+  arrives late, gets a real line from every cat at every rung from 1 to
+  5, and the Study always has the Ghost's trace to show. A real line is
+  words with every blank filled: no square brackets, no blank left, no
+  "undefined". It is one of the case checks now (twenty-one on every
+  case, so 21,042 on the 1,000), and the fake night fails it too. Tried
+  on broken cases to prove it fails them: a guest with no family left, a
+  hole in the bank, a blank left unfilled, a line that breaks, a Ghost
+  with no trace.
+- Found while building: the first news flash would show its own note in
+  brackets on the Parlour TV on the party night if its line were ever
+  missing. Not changed here: card 530.
+- Tests: functions 291 (2 skipped, 2 to do), cues 69, station 53, the
+  workshop 133, play 256 and scripts 53 pass; npm run checks all clear
+  (21,042 of 21,042 case checks on 1,000 practice cases, the fake night
+  and the 5 leak checks; not saved, so the Health page still shows the
+  last saved run). Not seen in the browser: the red line shows only when
+  a line is missing, which no practice deal has; its words and its place
+  on the Host tab are tested.
+- Board: card 529 done; card 530 for Claude Code (the news flash, by 11
+  November); the question quietWords for Jon (the plain words, or nothing
+  on the card; default the plain words, built), in CLAUDE.md's open
+  decisions too. No decision taken. Start Here's snapshot and the Canon
+  not updated from this session. Not deployed, pushed or merged: this
+  branch and the In Duplicate one (card 527) each add a migration after
+  the arcade rework, so merging both keeps both, in order.
+
 ## 29 Oct 2026, evening · Claude Code (the arcade made again from Jon's notes and his try; the Entryway's answer; no setup words in front of the guests)
 
 - Jon's three Game test notes on Miss Boo LaRue's Arcade (10009 to 10011:
