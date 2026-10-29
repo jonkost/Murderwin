@@ -45,6 +45,15 @@
         "cd play && npx vite --port 5175 --strictPort --host"
       ],
       "port": 5175
+    },
+    {
+      "name": "play-5176",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd play && npx vite --port 5176 --strictPort --host"
+      ],
+      "port": 5176
     }
   ]
 }
