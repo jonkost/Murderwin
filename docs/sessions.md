@@ -50,10 +50,16 @@ on the Canon.
 - Tests: functions 279 (4 skipped), cues 69, station 53, the workshop 128,
   play 169 and scripts 53 pass. `npm run checks`: all clear. The build
   and its check pass.
-- Not deployed. The live site has a mid-build copy of the arcade (the
-  phone-look deploy carried the folder as it stood on 28 Oct); the
-  reviewed version and the station fix go out with the next deploy, on
-  Jon's word. The station picks up its fix at its next start after that.
+- Deployed 29 Oct on Jon's yes, from a clean copy of dc6a6af (another
+  session was at work in the same folder, so none of its edits went out):
+  hosting, the rules (unchanged) and the functions (all 25 skipped,
+  unchanged since 28 Oct). The tests, the checks and the build passed on
+  that copy first. Checked live: all 118 files match the build byte for
+  byte, the study station's code is version 94791318b2c7, and the arcade
+  opens and plays at ?kiosk=boo&play=1 with no errors. The workshop could
+  not be opened signed in from here, so the board's new cards (513 to 518)
+  land the next time Jon opens it. The station picks up its fix at its
+  next start. Not pushed.
 - Board: card 513 done; new 514 (Jon tries the arcade with the + XL, by
   1 Nov), 515 (the arcade on the night, only if entrywayGame picks it,
   with the questions to ask then: even points, Knock's steady press, each
