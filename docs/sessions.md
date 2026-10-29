@@ -9,6 +9,68 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 28 to 29 Oct 2026 · Claude Code (Miss Boo LaRue's Arcade, built to try)
+
+- Jon: "We need to get boos game up for testing. Not the cat walk the
+  arcade games." Miss Boo LaRue's Arcade is built from Jon's 28 Oct talk,
+  on a page of its own: `?kiosk=boo&play=1` (free play) and `&visit=1`
+  (a practice visit; `&names=` starts one at once). It reads no night,
+  pays nothing and deals no clue. The night keeps Boo's Catwalk until Jon
+  answers entrywayGame. `docs/boo-arcade.md` has the whole game.
+- Five games on the Stream Deck + XL (Boo Chasing Her Tail, The Lazy
+  Pointer, Whack-a-Mouse, Knock It Off the Table, Yarn Catch), picked from
+  the middle of the second row of keys, two blank keys at each end. The
+  left three dials steer left and right, the right three up and down, and
+  a press on any dial knocks. With no Stream Deck the deck drawn on the
+  screen plays the same, with the mouse or the keyboard.
+- The visit: two or three names, two tokens each in turns, two minutes a
+  game (80 seconds for a trio), each player's clue on the screen after
+  their second game (in practice a line in square brackets), a trio's
+  third player gets "Didn't I give you enough? Now be off! I'm done
+  playing games.", Boo's winner (the most points, ties named), free play,
+  and "Be on your way." at the chime, ten minutes in or on Ring the chime.
+- Reviewed on 29 Oct (a Workflow of reviewers and bot players), and the
+  confirmed findings fixed: in a visit, a game that would run into the
+  chime is cut short (never under 30 seconds) so its clue usually still
+  comes first (a pair at an ordinary pace lost its second clue 86 times in
+  100 before; none now); the chime names a trio's third player apart; the
+  knock's paw rests 0.4 seconds, and a press while it rests misses again;
+  the mice stay up a little longer; one arcade tab holds the Stream Deck
+  at a time (the tab opened last takes it, and the other says so, with
+  Connect to take it back); a long winner's line fits; Boo's picture and
+  the sounds wait properly; the practice note's words. The study station
+  now opens only a fifteen-key deck, so the + XL beside it never confuses
+  it (`station/lib/streamdeck.js`), and the hardware check counts the
+  same way.
+- Checked in the browser pane at 1280 by 720, on the built site: free
+  play, a visit with three 30-character names, the count, the chime's
+  two-sentence farewell and the clue screen all fit, with no console
+  errors. Not tried: the real Stream Deck + XL in Chrome, and how fast
+  each game feels.
+- Tests: functions 279 (4 skipped), cues 69, station 53, the workshop 128,
+  play 169 and scripts 53 pass. `npm run checks`: all clear. The build
+  and its check pass.
+- Not deployed. The live site has a mid-build copy of the arcade (the
+  phone-look deploy carried the folder as it stood on 28 Oct); the
+  reviewed version and the station fix go out with the next deploy, on
+  Jon's word. The station picks up its fix at its next start after that.
+- Board: card 513 done; new 514 (Jon tries the arcade with the + XL, by
+  1 Nov), 515 (the arcade on the night, only if entrywayGame picks it,
+  with the questions to ask then: even points, Knock's steady press, each
+  clue's affection, the sounds, the two-minute games, the fish), 516 and
+  517 (Jon's just-for-fun winners for In Duplicate and Get Off My Lawn!),
+  and 518 (below).
+- The Canon's Genuinely open list (checked 29 Oct) gains the three open
+  questions it was missing: promptScreen (25 Oct), studySecondScreen and
+  entrywayGame (28 Oct). Start Here's snapshot is dated 29 Oct. Noticed on
+  the way: the Canon and Start Here say Jon answered roomMusic on 25 Oct
+  (one Apple Home scene per cue), while the board, `CLAUDE.md` and the
+  build keep it open on its default (one playlist through the brain).
+  Card 518 asks Jon once which stands; nothing changed meanwhile.
+- Left: Jon's try (card 514), then his answer to entrywayGame.
+- Decisions: none changed. entrywayGame stays open (default: Boo's
+  Catwalk), now listed in `CLAUDE.md` and on the Canon.
+
 ## 28 Oct 2026 · Claude Code (the phone's look; Jon's five Game test notes)
 
 - The phone app has a new look (Jon: "make it look pretty", "the menu at

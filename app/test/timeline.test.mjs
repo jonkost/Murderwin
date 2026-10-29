@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -988,9 +988,9 @@ test('28 Oct: Jon tries the turns, and the Entryway’s game is his decision', (
 
 // ---- Jon's Game test notes and the phone's look, 28 Oct 2026 (evening) -------
 
-test('28 Oct, evening: the newest; Jon’s five Game test notes closed by number, the study’s second screen his decision', () => {
+test('28 Oct, evening: Jon’s five Game test notes closed by number, the study’s second screen his decision', () => {
   const add = ADDITIONS.find(a => a.id === '2026-10-28-phone-look')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-28-arcade', 'followed by the arcade')
   assert.equal(add.retireTasks, RETIRED_FOR_PHONE_LOOK_1028)
   assert.deepEqual(RETIRED_FOR_PHONE_LOOK_1028.map(r => r.order), [10004, 10005, 10006, 10007, 10008])
   for (const r of RETIRED_FOR_PHONE_LOOK_1028) assert.match(r.detail, /^(Done|Answered|Filed|Fixed) 28 Oct 2026: /)
@@ -1000,4 +1000,40 @@ test('28 Oct, evening: the newest; Jon’s five Game test notes closed by number
   assert.deepEqual(PHONE_LOOK_1028_DECISIONS.map(d => [d.key, d.answer]), [['studySecondScreen', null]])
   for (const t of PHONE_LOOK_1028_TASKS) assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
   for (const d of PHONE_LOOK_1028_DECISIONS) assert.ok(MOMENT_KEYS.includes(d.moment), d.moment)
+})
+
+// ---- Miss Boo LaRue's Arcade, 28 Oct 2026 (night; reviewed and fixed 29 Oct) ----
+
+test('28 Oct, night: the newest; the arcade built to try, Jon’s try, the arcade on the night only if entrywayGame picks it, the two just-for-fun winners, and roomMusic’s mismatch', () => {
+  const { before, add, newId } = boardThrough('2026-10-28-arcade')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(add.tasks, ARCADE_1028_TASKS)
+  assert.ok(!add.decisions && !add.retireTasks && !add.rewriteTasks, 'it answers and retires nothing: entrywayGame stays Jon’s')
+  assert.deepEqual(ARCADE_1028_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [
+    [513, 'Claude Code', 'act4.entryway', 'done'],
+    [514, 'Jon', 'act4.entryway', 'todo'],
+    [515, 'Claude Code', 'act4.entryway', 'todo'],
+    [516, 'Claude Code', 'act4.puzzle', 'todo'],
+    [517, 'Claude Code', 'act4.orangerie', 'todo'],
+    [518, 'Claude Code', 'act4.groups', 'todo'],
+  ])
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of ARCADE_1028_TASKS) {
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    if (t.by) assert.match(t.by, /^2026-1[01]-\d{2}$/)
+    assert.ok(!/\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal)\b|\.env|—/i.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+  }
+  const after = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  for (const t of ARCADE_1028_TASKS) {
+    const card = after.tasks.find(c => c.order === t.order && !c.deleted)
+    assert.ok(card && card.title === t.title && card.status === t.status, `card ${t.order} on the board`)
+  }
+  // docs/boo-arcade.md §8 sends its open questions to card 515 by its title
+  const doc = readFileSync(new URL('../../docs/boo-arcade.md', import.meta.url), 'utf8')
+  assert.match(doc, /On the board: The\s+arcade on the night, if entrywayGame picks it\./)
+  assert.equal(ARCADE_1028_TASKS.find(t => t.order === 515).title, 'The arcade on the night, if entrywayGame picks it')
+  // card 518 only asks: roomMusic stays open on the board until Jon says which stands
+  assert.equal(decisionList(after).find(d => d.key === 'roomMusic')?.answer ?? null, null)
 })

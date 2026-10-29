@@ -18,6 +18,7 @@ import {
   RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS,
   TURNS_1028_TASKS, TURNS_1028_DECISIONS,
   RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS,
+  ARCADE_1028_TASKS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -859,6 +860,14 @@ export const ADDITIONS = [
     tasks: PHONE_LOOK_1028_TASKS,
     decisions: PHONE_LOOK_1028_DECISIONS,
     retireTasks: RETIRED_FOR_PHONE_LOOK_1028,
+  },
+  {
+    // 28 Oct, night (reviewed and fixed 29 Oct): Miss Boo LaRue's Arcade, built
+    // to try on its own page; Jon's try; the arcade on the night if
+    // entrywayGame picks it; the just-for-fun winners for In Duplicate and
+    // Get Off My Lawn!; and roomMusic's mismatch between the Canon and the board.
+    id: '2026-10-28-arcade',
+    tasks: ARCADE_1028_TASKS,
   },
 ]
 
