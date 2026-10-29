@@ -9,6 +9,51 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026 · Claude Code (the two just-for-fun winners)
+
+- Jon, 28 Oct: "Make boo's, zimmy's, and Salem have a winner. Just for
+  fun." Boo's arcade had its winner; this session built the other two
+  (cards 516 and 517), picked the arcade's way: the best count wins, a tie
+  names everyone tied, and one player names nobody.
+- In Duplicate: each pair counts for the player whose turn it was, over
+  all three boards. After the third board the Library's screen names
+  whoever found the most pairs, in Zimothy's voice ("The sharpest clerk at
+  the table. I'd hire you. Cheaply."; a tie: "A tie. I'll split the credit
+  and bill you both."), the name big and a plain line under it ("Most
+  pairs: Margaret, 12."). If the chime comes first, nobody is named.
+- Get Off My Lawn!: each slip counts against the phone that made it. Once
+  Salem's game is cleared, the Orangerie's screen (the brain's browser)
+  names whoever slipped least, in Salem's voice ("That one barely
+  trampled my lawn. Don't let it go to your head."; a tie: "A tie. Can't
+  tell you lot apart. Never could."). A phone that can't feel a shake
+  never slips, so it would always win: every phone now says whether it
+  felt a shake as the clean mark passes, and only those phones (and any
+  that slipped) can win.
+- Neither changes anything: the whole group is paid the same, and nothing
+  earns a clue. The counts live on the server by place in the group,
+  numbers only (no names on the rooms' public docs, L07), so a reloaded
+  screen still names the right player; the screens put the names to them
+  from the Act 4 groups.
+- Samples: `?preview=kiosk-memory-winner`, `kiosk-memory-tie`,
+  `kiosk-orangerie-winner` and `kiosk-orangerie-tie`, and one of each on
+  the Game test tab under its game. Checked in the browser pane at 800 by
+  600 and at the iPad's 1366 by 1024: all four, and the rules card and the
+  memory board as before, with no console errors. Not tried on a
+  rehearsal night yet (card 519).
+- Checks G57 and G58 (`docs/test-plan.md`); `docs/room-screens.md` and
+  `docs/on-the-night.md` updated.
+- Tests: functions 281 (2 skipped, 2 to do), cues 69, station 53, the
+  workshop 129, play 171 and scripts 53 pass. `npm run checks`: all clear
+  (not saved to the Health page from here: no way into Firestore). The
+  build and its check pass. Not deployed, not pushed.
+- Board: cards 516 and 517 done; new 519 (Jon tries the two winners on a
+  rehearsal night that reaches Act 4, by 6 Nov). Start Here's snapshot
+  says so. No decision changed, so the Canon is as it was.
+- Noticed, not changed: the Game test practices name no winner (the
+  memory match on its own has no names, and Salem's practice has no
+  group); the Game test tab and the Devices page still say In Duplicate
+  has 7, 10 and 14 pairs (the game deals 6, 10 and 14).
+
 ## 28 to 29 Oct 2026 · Claude Code (Miss Boo LaRue's Arcade, built to try)
 
 - Jon: "We need to get boos game up for testing. Not the cat walk the

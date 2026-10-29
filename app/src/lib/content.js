@@ -19,6 +19,7 @@ import {
   TURNS_1028_TASKS, TURNS_1028_DECISIONS,
   RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS,
   ARCADE_1028_TASKS,
+  RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -868,6 +869,13 @@ export const ADDITIONS = [
     // Get Off My Lawn!; and roomMusic's mismatch between the Canon and the board.
     id: '2026-10-28-arcade',
     tasks: ARCADE_1028_TASKS,
+  },
+  {
+    // 29 Oct: Jon's two just-for-fun winners, built (cards 516 and 517), and
+    // his try.
+    id: '2026-10-29-winners',
+    tasks: WINNERS_1029_TASKS,
+    retireTasks: RETIRED_FOR_WINNERS_1029,
   },
 ]
 

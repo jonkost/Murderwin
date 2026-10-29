@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -1004,9 +1004,9 @@ test('28 Oct, evening: Jon’s five Game test notes closed by number, the study�
 
 // ---- Miss Boo LaRue's Arcade, 28 Oct 2026 (night; reviewed and fixed 29 Oct) ----
 
-test('28 Oct, night: the newest; the arcade built to try, Jon’s try, the arcade on the night only if entrywayGame picks it, the two just-for-fun winners, and roomMusic’s mismatch', () => {
+test('28 Oct, night: followed by the winners; the arcade built to try, Jon’s try, the arcade on the night only if entrywayGame picks it, the two just-for-fun winners, and roomMusic’s mismatch', () => {
   const { before, add, newId } = boardThrough('2026-10-28-arcade')
-  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-10-29-winners', 'followed by the winners')
   assert.equal(add.tasks, ARCADE_1028_TASKS)
   assert.ok(!add.decisions && !add.retireTasks && !add.rewriteTasks, 'it answers and retires nothing: entrywayGame stays Jon’s')
   assert.deepEqual(ARCADE_1028_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [
@@ -1036,4 +1036,43 @@ test('28 Oct, night: the newest; the arcade built to try, Jon’s try, the arcad
   assert.equal(ARCADE_1028_TASKS.find(t => t.order === 515).title, 'The arcade on the night, if entrywayGame picks it')
   // card 518 only asks: roomMusic stays open on the board until Jon says which stands
   assert.equal(decisionList(after).find(d => d.key === 'roomMusic')?.answer ?? null, null)
+})
+
+// ---- The just-for-fun winners, 29 Oct 2026 ------------------------------------
+
+test('29 Oct: the newest; the two just-for-fun winners closed by number and title, Jon’s try new and plain, once only', () => {
+  const { before, add, newId } = boardThrough('2026-10-29-winners')
+  assert.equal(ADDITIONS.at(-1), add, 'the newest migration')
+  assert.equal(add.retireTasks, RETIRED_FOR_WINNERS_1029)
+  assert.deepEqual(RETIRED_FOR_WINNERS_1029.map(r => [r.order, r.title]), [[516, 'A just-for-fun winner in In Duplicate'], [517, 'A just-for-fun winner in Get Off My Lawn!']])
+  for (const r of RETIRED_FOR_WINNERS_1029) assert.match(r.detail, /^Done 29 Oct 2026: /)
+  assert.ok(!add.decisions && !add.rewriteTasks && !add.answerDecisions, 'it decides nothing')
+  assert.equal(add.tasks, WINNERS_1029_TASKS)
+  assert.deepEqual(WINNERS_1029_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [[519, 'Jon', 'act4.groups', 'todo']])
+  const earlier = new Set(before.tasks.map(t => t.order))
+  for (const t of WINNERS_1029_TASKS) {
+    assert.ok(!earlier.has(t.order), `order ${t.order} is new`)
+    assert.ok(OWNERS.includes(t.who), `${t.title}: ${t.who}`)
+    assert.ok(MOMENT_KEYS.includes(t.moment), t.moment)
+    assert.match(t.by, /^2026-1[01]-\d{2}$/)
+    assert.ok(!/\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal)\b|\.env|—/i.test(`${t.title} ${t.detail}`), `${t.title}: plain words, the line itself under tech`)
+  }
+  // both cards are open on the board by number and title, and close with the reason added
+  for (const r of RETIRED_FOR_WINNERS_1029) {
+    const card = before.tasks.find(c => c.order === r.order && !c.deleted)
+    assert.ok(card && card.title === r.title && card.status === 'todo', `card ${r.order} open on the board`)
+  }
+  const after = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  for (const r of RETIRED_FOR_WINNERS_1029) {
+    const card = after.tasks.find(c => c.order === r.order && !c.deleted)
+    assert.equal(card.status, 'done', `card ${r.order} done`)
+    assert.ok(card.detail.endsWith(` ${r.detail}`), 'the reason at the end of the card')
+  }
+  const tryCard = after.tasks.find(c => c.order === 519 && !c.deleted)
+  assert.ok(tryCard && tryCard.who === 'Jon' && tryCard.status === 'todo')
+  // the arcade's other cards stay as they were: Jon's try, the arcade on the night, roomMusic
+  for (const order of [514, 515, 518]) assert.equal(after.tasks.find(c => c.order === order && !c.deleted)?.status, 'todo', `card ${order} still open`)
+  // once only
+  const again = applyPlan(planAddition(add, after, { newId, now: 2 }), after)
+  assert.deepEqual(again.tasks, after.tasks, 'never twice')
 })
