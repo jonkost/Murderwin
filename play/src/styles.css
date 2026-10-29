@@ -619,7 +619,9 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .kiosk-dot .dot-mark { width: 1.2vw; height: 1.2vw; border-radius: 50%; background: #3cae5c; box-shadow: 0 0 0.6vw rgba(0,0,0,0.5); }
 .kiosk-dot.amber .dot-mark { background: #d9a023; }
 .kiosk-dot.red .dot-mark { background: var(--brand-red); }
-.kiosk.dark ~ .kiosk-dot, .kiosk.dark ~ .kiosk-bell { opacity: 0.35; }
+/* no corner mark beside a near-black screen (the blackout, the role cards, the pause card, The End), the bell
+   ringing or not (29 Oct 2026); it was a dim note and a dim dot until then. Kiosk.jsx puts them after the screen. */
+.kiosk.dark ~ .kiosk-dot, .kiosk.dark ~ .kiosk-bell, .kiosk.dark ~ .kiosk-wake { display: none; }
 .relay-rules { margin: 0 0 1rem; padding-left: 1.4rem; text-align: left; display: grid; gap: 0.4rem; color: var(--ink); font-size: 1rem; }
 /* ---- Act 7 (I, 18 Oct 2026): the calculating bar, the achievements reel, the closing story, the award card ---- */
 .calc { width: 70vw; height: 1.6vw; border-radius: 1vw; background: rgba(241,232,214,0.12); overflow: hidden; margin: 0 0 2vw; }

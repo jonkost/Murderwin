@@ -155,10 +155,21 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // the study's card keeps Granolia's own start line and the station's silence, so docs/study-light-game.md stays true (26 Oct 2026)
   assert.ok(kiosk.includes('<p className="kiosk-line">{SAY.idle}</p>'), 'Touch any panel to begin, on the card')
   assert.ok(kiosk.indexOf('const stale = s.updatedAt') < kiosk.indexOf('<RulesCard id="study"'), 'the station\'s silence is known before the card')
-  assert.equal((kiosk.match(/The station has gone quiet\. Find a host\./g) ?? []).length, 2, 'said on the card and on the game')
+  // in Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
+  assert.equal((kiosk.match(/\{stale && <p className="kiosk-next">Granolia has dozed off\. Find a host\.<\/p>\}/g) ?? []).length, 2, 'said on the card and on the game')
+  assert.ok(!kiosk.includes('The station has gone quiet'), 'the old words are gone')
   // in practice (no night) the card has no code to scan: there is no night to join; Boo's intro has none either, the group has scanned
   assert.ok(rooms.includes('code={!!night}'), 'no code in practice')
   assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'no code on Boo\'s intro')
+})
+
+test('F31 the Library\'s screen says one plain line when a cleared board is not heard, never the server\'s own words (Jon, 29 Oct 2026)', () => {
+  // the server's message comes with a code (" [403]", or a bare "internal"): not for the guests' eyes
+  const rooms = src('../src/screens/Rooms.jsx')
+  const memory = rooms.slice(rooms.indexOf('export function MemoryRounds('), rooms.indexOf('export function RoomWinner('))
+  assert.ok(memory.includes("catch { setMsg('The Library did not hear that. Try the last pair again.') }"), 'the one plain line, every time')
+  assert.ok(!memory.includes('.message'), 'never the error\'s own message')
+  assert.ok(memory.includes('{msg && <p className="kiosk-next">{msg}</p>}'), 'shown under the board')
 })
 
 test('the join code on the TV, the rejoin code under the ballot clock, the birthday cards, the Orangerie kiosk and the host\'s two new dots', () => {

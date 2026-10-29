@@ -163,3 +163,22 @@ test('F14 the Cats tab shows the five-stop slider, Cold shoulder to Devoted, and
   assert.ok(bare.test('<p className="stop-word">{level}</p>') && !bare.test('<Slider level={level} />') && !bare.test('`stop-${level}`'), 'the rule catches a bare number and nothing else')
   assert.ok(!/toFixed|\{\s*Math\.round/.test(tab), 'F14 no rounded number is rendered either')
 })
+
+// ---- no setup words ------------------------------------------------------------
+
+// No setup words in front of the guests (Jon, 29 Oct 2026): on the night a
+// guest's phone never names a device, an app or a browser and never shows an
+// address. The Host tab (Host.jsx) and the practice pages are not in the list.
+const SETUP_WORDS = /\b(?:iPad|iPhone|Mac|MacBook|Stream Deck|Nanoleaf|Chrome|Safari|Firefox|browser|HomePod|AirPlay|Bluetooth|Wi-?Fi|kiosk|Firebase|Firestore)\b|https?:\/\/|www\.|\.web\.app\b/i
+// the code a file runs, without its comments and its imports
+const drawn = text => shown(text).replace(/^\s*import\s[\s\S]*?\sfrom\s+['"][^'"\n]+['"];?[ \t]*$/gm, '')
+
+test('F31 a guest\'s phone names no device, app or browser and shows no address', () => {
+  const screens = ['play/src/App.jsx', ...['Cards', 'Act4', 'Join', 'Windows', 'Rest', 'Clues', 'Moments', 'Welcome', 'Allow', 'Relay'].map(f => `play/src/screens/${f}.jsx`)]
+  const hits = screens.flatMap(f => drawn(read(f)).split('\n').filter(l => SETUP_WORDS.test(l)).map(l => `${f}: ${l.trim().slice(0, 80)}`))
+  assert.deepEqual(hits, [])
+  // the check bites, and leaves the house's own words alone
+  assert.ok(SETUP_WORDS.test("library: 'The game is on the iPad.',") && SETUP_WORDS.test('Open it in Google Chrome') && SETUP_WORDS.test('murderwin-at-sirwin-manor.web.app/play/') && SETUP_WORDS.test('https://example.test'))
+  assert.ok(!SETUP_WORDS.test("library: 'The game is on the screen.',") && !SETUP_WORDS.test('W-O-O-F News is on the Parlour TV. Watch it.') && !SETUP_WORDS.test('Keep your phone close.'))
+  assert.equal(drawn("import { callMeet } from '../firebase'\nimport {\n  a,\n} from '../lib/firebase'\nconst x = 1 // on the iPad").trim(), 'const x = 1', 'imports and comments are not on the screen')
+})

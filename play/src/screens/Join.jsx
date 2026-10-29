@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { callJoin } from '../firebase'
+import { troubleLine } from '../lib/trouble'
 import { Seal } from './Moments'
 
 // "Who are you?" — type your name, and the game hands you a character.
@@ -19,7 +20,7 @@ export default function Join({ night, ui, notice = null }) {
       await callJoin({ nightId: night.nightId, name: n })
       // the session doc arrives through its own listener; nothing else to do
     } catch (e) {
-      setError(e?.message || 'The Manor did not answer. Try again.')
+      setError(troubleLine(e, 'The Manor did not answer. Try again.'))
       setBusy(false)
     }
   }

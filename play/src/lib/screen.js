@@ -1,12 +1,12 @@
 // Pure rules for the room screens (the Parlour TV, the iPad, the
 // bedroom and the study): which view to show, the board rows, the door's
-// hold, the bell and the corner dot. No React, no Firebase, so play/test can
-// run them under node --test. Everything here reads public docs any phone
-// may read, and nothing it returns names a role, a dial value or a motive
-// that is still in play.
+// hold, the bell, the corner dot and when it shows. No React, no Firebase,
+// so play/test can run them under node --test. Everything here reads public
+// docs any phone may read, and nothing it returns names a role, a dial value
+// or a motive that is still in play.
 
 import { isStale, secondsSinceHeard } from './clock.js'
-import { effectivePhase, isOver } from './night.js'
+import { effectivePhase, isOver, isRehearsalNight } from './night.js'
 
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
@@ -128,6 +128,19 @@ export function heardText(seconds) {
   if (seconds < 5) return 'heard just now'
   if (seconds < 90) return `heard ${seconds} s ago`
   return `heard ${Math.round(seconds / 60)} min ago`
+}
+
+// The corner dot and the "tap once to wake" note are for whoever sets the
+// screens up, so no guest sees them on the party night (Jon, 29 Oct 2026: no
+// setup words in front of the guests). They show on a rehearsal or a dry run
+// (isRehearsalNight) and on a screen with no night live; on the party night
+// the Host tab's house panel keeps a dot for every screen. `looked`: the
+// screen has signed in and read the night (or found there is none, or could
+// not sign in), so one reloaded during the party never flashes them while
+// its night is still on its way.
+export function showSetup(night, { looked = true } = {}) {
+  if (!looked) return false
+  return !night || isRehearsalNight(night)
 }
 
 // Sir Irwin's door slide ("Pawsome!"), drawn above "The door is open" while

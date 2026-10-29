@@ -134,6 +134,21 @@ test('BK-11 each name card cuts in only after its lead-in has played; the words 
   assert.ok(kiosk.includes('NAME_STAGES.includes(finaleStage(finale, serverNow())) ? revealView(finale, serverNow()).fresh : null'))
 })
 
+test('F31 Held shows on the Parlour TV only on a rehearsal, like the Rehearsal tag; on the party night the Host tab says so (Jon, 29 Oct 2026)', () => {
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  const finale = kiosk.slice(kiosk.indexOf('export function Finale('), kiosk.indexOf('// The calculating bar'))
+  assert.equal((finale.match(/<p className="kiosk-next">Held<\/p>/g) ?? []).length, 3, 'the counting, the graph slot and the reveal')
+  assert.equal((finale.match(/\{held && finale\.rehearsal && <p className="kiosk-next">Held<\/p>\}/g) ?? []).length, 3, 'every one behind the rehearsal test')
+  assert.ok(finale.includes('{finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}'), 'the same test as the Rehearsal tag')
+  // the hold itself still stops the screen on every night
+  assert.ok(kiosk.includes("animationPlayState: finale.holdAt ? 'paused' : 'running'"), 'the bar and the credits stand still')
+  // and the host still knows: the Host tab's reveal panel says so and offers Carry on
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  const panel = host.slice(host.indexOf('export function RevealPanel('), host.indexOf('export function AchievementsPanel('))
+  assert.ok(panel.includes("held ? 'The screen is held where it is.'"), 'the reveal panel says the screen is held')
+  assert.ok(panel.includes('>Carry on</button>') && panel.includes('>Hold the screen</button>'), 'and offers Carry on')
+})
+
 test('a named card finds its character for the portrait, by id, by character name, or by a unique guest name', () => {
   const characters = [{ id: 'rye', name: 'Dorothy Rye' }, { id: 'arms', name: 'Roger Arms' }]
   const roster = { a: { name: 'Ana', characterId: 'arms' }, b: { name: 'Ben', characterId: 'rye' }, c: { name: 'Ben', characterId: 'arms' } }

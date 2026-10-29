@@ -10,7 +10,7 @@ import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText } from '../lib/screen'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { isRehearsalNight } from '../lib/night'
 import { RehearsalBand } from './Moments'
@@ -47,17 +47,25 @@ import Spoken from './Spoken'
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, the
 // board) and public/sounds (the bell in the corner, and this screen's own
-// chime). Three things sit in the corners of every kiosk: a small "tap to
-// wake" (bottom right, until the first tap or key anywhere on the page) so
-// the browser lets it make a sound, a bell for three seconds whenever a
-// sound is called for, and a dot that says whether the house can still be
-// heard. None of them ever covers the content, and none of them shows while
-// the room is dark: a kiosk that reloads during the blackout stays
-// near-black. On a rehearsal night a red REHEARSAL band runs across the top
-// of every room screen (never on the party night, never in the dark).
+// chime). Three things sit in the corners of a kiosk: a small "tap to wake"
+// (bottom right, until the first tap or key anywhere on the page) so the
+// browser lets it make a sound, a bell for three seconds whenever a sound is
+// called for, and a dot that says whether the house can still be heard. The
+// wake note and the dot are setup marks: they show on a rehearsal and on a
+// screen with no night live, never on the party night (Jon, 29 Oct 2026: no
+// setup words in front of the guests; lib/screen.js showSetup). There the
+// first tap or key anywhere still wakes the sound, and the Host tab's house
+// panel keeps a dot for every screen. The bell shows on every night. None of
+// them ever covers the content, and none of them shows while the room is
+// dark, the bell ringing or not (styles.css hides all three beside a
+// near-black screen: the blackout, the role cards, the pause card, The End):
+// a kiosk that reloads during the blackout stays near-black. On a rehearsal
+// night a red REHEARSAL band runs across the top of every room screen (never
+// on the party night, never in the blackout, the role cards or The End; it
+// stays over the pause card, as it does on the phones through a pause).
 
 export default function Kiosk({ which }) {
-  const { uid } = useAuthUid()
+  const { uid, error: signInError } = useAuthUid()
   const living = which === 'living' || which === 'ipad'
   const active = useDoc(uid ? 'public_state/active' : null)
   const nightId = active.data?.nightId ?? null
@@ -84,6 +92,10 @@ export default function Kiosk({ which }) {
   // dark: the blackout and the prompt (paused or not), The End (the night is over),
   // or a black screen the server wrote; nothing in the corners shows while the room is dark
   const dark = !!n && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  // the dot and the wake note: on a rehearsal and with no night live, never on the party night (Jon,
+  // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
+  const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
+  const setup = showSetup(n, { looked })
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
   let body
@@ -103,8 +115,8 @@ export default function Kiosk({ which }) {
       <RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />
       {body}
       <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />
-      <StaleDot view={night} online={online} />
-      <Wake hidden={dark} />
+      {setup && <StaleDot view={night} online={online} />}
+      <Wake hidden={dark || !setup} />
     </>
   )
 }
@@ -445,10 +457,13 @@ export function Board({ night, content, title = 'The deduction round', compact =
 // ---- the three corners -----------------------------------------------------
 
 // One tap, once per load, so the browser lets this screen make a sound: a
-// small control in the bottom right corner, never over the content, and
-// never shown while the room is dark. The first tap or key anywhere on the
-// page counts, so nobody has to find the corner; the screen works without
-// it (the chime is only a fallback for the bell).
+// small control in the bottom right corner, never over the content. The
+// first tap or key anywhere on the page counts, so nobody has to find the
+// corner; the screen works without it (the chime is only a fallback for the
+// bell). `hidden` takes the control away and keeps the listener: the kiosk
+// hides it while the room is dark and on the party night (Jon, 29 Oct 2026:
+// no setup words in front of the guests), where the first tap or key
+// anywhere still wakes the sound.
 export function Wake({ hidden = false }) {
   const [woke, setWoke] = useState(() => chime.ctx?.state === 'running')
   useEffect(() => {
@@ -485,7 +500,10 @@ export function Bell({ sounds, serverNow, silent = false }) {
 }
 
 // The dot: green live, amber painting from cache for twenty seconds, red
-// offline, with how long since the house was last heard from.
+// offline, with how long since the house was last heard from. A setup mark:
+// the kiosk draws it on a rehearsal and with no night live, never on the
+// party night (Jon, 29 Oct 2026), when the Host tab's house panel has a dot
+// for every screen instead.
 export function StaleDot({ view, online }) {
   const d = dotState(view, online, Date.now())
   return (
@@ -577,13 +595,16 @@ const NAME_WHAT = { murderer: 'Murderer', motive: 'Motive', victim: 'Victim' }
 export function Finale({ night, finale, content = null, serverNow }) {
   const now = serverNow()
   const stage = finaleStage(finale, now)
+  // the host's hold freezes the screen on every night; the word "Held" is for the host, so it shows only on a
+  // rehearsal, like the Rehearsal tag (Jon, 29 Oct 2026: no setup words in front of the guests). On the party
+  // night the Host tab's reveal panel says the screen is held.
   const held = !!finale.holdAt
   if (stage === 'stats' || stage === 'awards') return (
     <div className={`kiosk finale ${stage}`}>
       <p className="kiosk-crest">While the Manor counts</p>
       <CalcBar finale={finale} now={now} />
       {stage === 'stats' ? <StatsReel finale={finale} now={now} /> : <AwardsReel finale={finale} now={now} />}
-      {held && <p className="kiosk-next">Held</p>}
+      {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
   )
   // the dial's journey waits until after the reveal (handoff §8); before the names, W-O-O-F News is coming
@@ -591,7 +612,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
     <div className="kiosk finale">
       <p className="kiosk-crest">W-O-O-F News</p>
       <p className="kiosk-line">Breaking news from Sirwin Manor. Stay tuned.</p>
-      {held && <p className="kiosk-next">Held</p>}
+      {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
   )
   if (stage === 'journey') return (
@@ -643,7 +664,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
       {stage !== 'done' && rv.captions.map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
-      {held && <p className="kiosk-next">Held</p>}
+      {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
   )
 }
@@ -821,7 +842,8 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
   const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null
-  // the station has gone quiet (no write for ninety seconds): said on the rules card and on the game alike
+  // the station has sent nothing for ninety seconds: said on the rules card and on the game alike, in
+  // Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
   const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
   if (night && night.act !== 4 && !STUDY_RUNNING.includes(s.state)) return <Idle title="Sirwin Manor" line="The Study" loop="study" />
   if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
@@ -830,7 +852,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
       <StudyWalls />
       {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
       <p className="kiosk-line">{SAY.idle}</p>
-      {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
+      {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
     </RulesCard>
   )
   const started = ms(s.startedAt)
@@ -880,7 +902,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
       </div>
       {s.map && <WallMap layout={s.layout} order={s.map} />}
       {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
-      {stale && <p className="kiosk-next">The station has gone quiet. Find a host.</p>}
+      {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { ms } from './night.js'
+import { troubleLine } from './trouble.js'
 
 // The pages the workshop's Game test tab opens (24 Oct 2026), so a game can
 // be tried before the night without a night:
@@ -127,17 +128,13 @@ export function keepSample(prev, next) {
 }
 
 // What a practice phone says when a call fails. A server sentence (the
-// practice is full, closed, not joined) is shown as it is; the bare codes
-// the Firebase library gives for a weak signal or a function that did not
-// answer never reach the screen.
+// practice is full, closed, not joined) is shown without the HTTP status the
+// Firebase library puts after it; the bare codes it gives for a weak signal
+// or a function that did not answer never reach the screen (lib/trouble.js,
+// the same rule as the night's screens, 29 Oct 2026).
 export const NO_ANSWER = 'The house did not answer. Check your signal and try again.'
-const SAID_BY_SERVER = new Set(['permission-denied', 'failed-precondition', 'not-found', 'resource-exhausted', 'invalid-argument', 'already-exists', 'unauthenticated'])
 export function practiceError(e) {
-  const code = String(e?.code ?? '').replace(/^functions\//, '')
-  const message = String(e?.message ?? '').trim()
-  const sentence = message.includes(' ') && message !== code
-  if (SAID_BY_SERVER.has(code) && sentence) return message
-  return NO_ANSWER
+  return troubleLine(e, NO_ANSWER)
 }
 
 // ---------------------------------------------------------------------------

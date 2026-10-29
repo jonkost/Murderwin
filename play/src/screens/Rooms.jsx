@@ -349,10 +349,12 @@ export function MemoryRounds({ board, night, nightId, content = null, rotation =
   )
   const cards = board.boards?.[String(step)] ?? []
   const players = turnNames(rotation, board.groupId)
+  // a refused or lost board says the same plain line every time: the server's own message carries a code
+  // like " [403]" or a bare "internal" (Jon, 29 Oct 2026: no setup words in front of the guests)
   const send = async (pairs, by) => {
     if (nightId === 'preview') return
     setMsg(null)
-    try { await callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) }) } catch (e) { setMsg(e?.message || 'The Library did not hear that. Try the last pair again.') }
+    try { await callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) }) } catch { setMsg('The Library did not hear that. Try the last pair again.') }
   }
   const win = board.cleared ? mostPairs(players, board.pairsBy) : null
   return (

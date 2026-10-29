@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { callMeet, callSalemReady, callSalemSlip, callSalemPassed, callBooDone } from '../firebase'
 import { useDoc, useTick } from '../lib/hooks'
 import { ROOMS, freeForGames, waitingGames, salemColourAt, salemFlipAt, salemSlip, booMoment, ms, SALEM_GRACE_MS, SALEM_SHAKE } from '../lib/night'
+import { troubleLine } from '../lib/trouble'
 import { CatFace, HostLine } from './Cards'
 import { Questions } from './Windows'
 import Spoken from './Spoken'
@@ -31,9 +32,11 @@ export const SALEM_LINES = {
 export const BOO_LINES = {
   intro: 'Watch the wall. When the music stops, strike a pose.',
 }
+// No device names in front of the guests (Jon, 29 Oct 2026): the iPad on its
+// stand is "the Library's screen" (docs/room-screens.md).
 const ROOM_GAMES = {
   study: 'The game is on the wall.',
-  library: 'The game is on the iPad.',
+  library: 'The game is on the screen.',
 }
 
 export default function Act4({ step, session, nightId, uid, serverNow, notes }) {
@@ -47,7 +50,7 @@ export default function Act4({ step, session, nightId, uid, serverNow, notes }) 
   const scan = async () => {
     if (!room || nightId === 'preview') return
     setBusy(true); setMsg(null)
-    try { await callMeet({ nightId, cat: room.cat }) } catch (e) { setMsg(e?.message || 'The house did not answer. Try again.') } finally { setBusy(false) }
+    try { await callMeet({ nightId, cat: room.cat }) } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')) } finally { setBusy(false) }
   }
   if (game) {
     return (

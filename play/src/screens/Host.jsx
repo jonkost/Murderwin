@@ -8,6 +8,7 @@ import { houseView } from '../lib/house'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
+import { troubleLine } from '../lib/trouble'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -125,7 +126,9 @@ export default function Host({ night, content, serverNow }) {
       const r = await callHost({ nightId: night.nightId, command, arg })
       setMsg(describe(command, r.data ?? {}))
     } catch (e) {
-      setMsg(`That didn’t work: ${e?.message ?? 'no answer from the Manor'}`)
+      // a dropped connection and a function that broke get the same words, since the answer to
+      // both is to press again (lib/trouble.js; no codes on the Host tab either, 29 Oct 2026)
+      setMsg(`That didn’t work: ${troubleLine(e, 'press it again.')}`)
     } finally {
       setBusy(null)
     }
@@ -450,7 +453,7 @@ export function HostRelayPanel({ relay, nightId, inline = false }) {
     if (!live || busy) return
     setBusy(true)
     try { const r = await fn(); setMsg({ text: said(r.data ?? {}) }) }
-    catch (e) { setMsg({ text: `That didn’t work: ${e?.message ?? 'no answer from the Manor'}` }) }
+    catch (e) { setMsg({ text: `That didn’t work: ${troubleLine(e, 'press it again.')}` }) }
     finally { setBusy(false) }
   }
   const atPaper = () => call(() => callHost({ nightId, command: 'at-the-paper' }), paperReply)
@@ -662,7 +665,7 @@ export function StartNight({ ui }) {
     try {
       await callHost({ command: 'create' })
     } catch (e) {
-      setError(e?.message ?? 'The Manor did not answer.')
+      setError(troubleLine(e, 'The Manor did not answer.'))
       setBusy(false)
     }
   }

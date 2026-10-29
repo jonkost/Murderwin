@@ -76,8 +76,10 @@ is lost. The phone keeps showing what it last saw and catches up on its own.
 
 Every screen a guest will see between the door and the reveal now exists on
 the phone, with stand-in text wherever the real words are not written yet.
-Stand-in text is always in brackets and marked "Rehearsal text", so nothing
-on a phone can be mistaken for content. The real lines and your workshop
+Stand-in text is always in brackets, and on a rehearsal night it is also
+marked "Rehearsal text", so nothing on a phone can be mistaken for content.
+On the party night that mark never shows (your rule of 29 October 2026: no
+setup words in front of the guests). The real lines and your workshop
 lines drop in later without changing a single screen.
 
 **Getting started.** The first time a phone has a character it walks the

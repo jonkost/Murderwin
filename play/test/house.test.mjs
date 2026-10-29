@@ -38,6 +38,18 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(houseView({ night: NIGHT, now: NOW }).station.quietFor, null, 'never heard from: no "since"')
 })
 
+test('F31 the Study screen says Granolia has dozed off at ninety seconds, half a minute before the Host tab calls the station quiet (29 Oct 2026)', () => {
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('serverNow() - ms(s.updatedAt) > 90_000'), 'the Study screen warns after ninety seconds')
+  const alive = (ago) => houseView({ night: NIGHT, study: { state: 'playing', groupId: 'g2', updatedAt: stamp(NOW - ago) }, rotation: ROTATION, now: NOW }).station.alive
+  assert.equal(alive(100_000), true, 'past the screen\'s warning the Host tab still says alive')
+  assert.equal(QUIET_MS, 2 * 60_000)
+  assert.equal(alive(QUIET_MS + 1_000), false, 'quiet at two minutes')
+  // room-screens.md gives Jon both times
+  const doc = readFileSync(new URL('../../docs/room-screens.md', import.meta.url), 'utf8').replace(/\s+/g, ' ')
+  assert.ok(doc.includes('says quiet half a minute later, once the station has sent nothing for two minutes'), 'the doc says when the Host tab calls it quiet')
+})
+
 test('the group due, its clock from the station\'s startedAt, and the round\'s slot when there is no station (ten minutes since 24 Oct)', () => {
   const running = houseView({ night: NIGHT, study: { state: 'reproducing', groupId: 'g2', startedAt: NOW - 4 * 60_000, updatedAt: stamp(NOW) }, rotation: ROTATION, now: NOW })
   assert.equal(running.study.names, 'Jacob, Ignatius Fume')
@@ -106,6 +118,21 @@ test('X-4 the memory match iPad has its own dot: the key its heartbeat carries',
   assert.equal(houseView({ night: NIGHT, presence: { 'kiosk-memory': NOW - QUIET_MS - 1 }, now: NOW }).machines.find(m => m.key === 'kiosk-memory').alive, false)
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes('`kiosk-${which}`'), 'the memory kiosk heartbeats as kiosk-memory')
+})
+
+test('F31 every room screen has its own dot on the Host tab, now that the screens show none on the party night (Jon, 29 Oct 2026)', () => {
+  // every kiosk Kiosk.jsx names has a row, by the key its heartbeat carries (`kiosk-${which}`)
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  const kiosks = (kiosk.match(/\/play\/\?kiosk=([a-z |]+)\./)?.[1] ?? '').split('|').map(s => s.trim()).filter(Boolean)
+  assert.deepEqual([...kiosks].sort(), ['bedroom', 'boo', 'ipad', 'living', 'memory', 'orangerie', 'pose', 'study'])
+  for (const k of kiosks) assert.ok(MACHINES.some(m => m.key === `kiosk-${k}` && m.label), `${k} has a row`)
+  // each row a dot: green while heard from in the last two minutes
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes('house.machines.map(m =>') && host.includes("m.alive ? 'dot on' : 'dot'"), 'a dot per screen')
+  const presence = Object.fromEntries(kiosks.map(k => [`kiosk-${k}`, NOW - 30_000]))
+  const screens = houseView({ night: NIGHT, presence, now: NOW }).machines.filter(m => m.key.startsWith('kiosk-'))
+  assert.equal(screens.length, kiosks.length)
+  assert.ok(screens.every(m => m.alive), 'every screen heard from: every dot green')
 })
 
 test('X-6 Act 2 cat visits: a count of guests who have seen all four, nothing else', () => {

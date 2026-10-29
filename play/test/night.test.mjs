@@ -313,6 +313,39 @@ test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, nev
   assert.ok(css.includes(':root.rehearsal-on body { padding-top: var(--band-h); }'), 'the page moves down so nothing is covered')
 })
 
+// No setup words on the party night (Jon, 29 Oct 2026): a cat's card or a
+// room's clue with a stand-in says "Rehearsal text" on a rehearsal night only.
+test('F31 the Rehearsal text tag: rehearsal nights only, never the party night', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs')
+  const cards = readFileSync(new URL('../src/screens/Cards.jsx', import.meta.url), 'utf8')
+  // the tag asks App which night it is; a page App does not draw (the workshop's previews, rehearsal nights all) keeps it
+  assert.ok(cards.includes('export const RehearsalNight = createContext(true)'))
+  const from = cards.indexOf('export function Rehearsal(')
+  const tag = cards.slice(from, cards.indexOf('\n}\n', from))
+  assert.ok(tag.includes('const rehearsal = useContext(RehearsalNight)'))
+  assert.ok(tag.includes('return rehearsal && card?.placeholder ? <span className="chip-tag">Rehearsal text</span> : null'))
+  // App answers by the same test as the red band, around the tabs (the Now cards and the Clues tab)
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.ok(app.includes('<RehearsalNight.Provider value={isRehearsalNight(n)}><Rest '))
+  assert.equal(app.split('<Rest ').length - 1, 1, 'App draws Rest once, inside the answer')
+  assert.equal(isRehearsalNight({ forceRehearsal: false }), false, 'the party night: no tag, even on a card with a stand-in')
+  assert.equal(isRehearsalNight({ forceRehearsal: false, dryRun: true }), true, 'a dry run keeps it')
+  // and on a phone Rest is the only way to the tag, so the party night never gets the default: the cards
+  // that carry it come from Rest and the Clues tab, Clues from Rest, and Rest from App (and the previews)
+  const src = new URL('../src/', import.meta.url)
+  const files = (dir) => readdirSync(new URL(dir, src), { withFileTypes: true }).flatMap(d => d.isDirectory() ? files(`${dir}${d.name}/`) : /\.jsx?$/.test(d.name) ? [`${dir}${d.name}`] : [])
+  const all = files('').map(f => [f, readFileSync(new URL(f, src), 'utf8')])
+  const importers = (re) => all.filter(([, text]) => re.test(text)).map(([f]) => f).sort()
+  assert.deepEqual(importers(/import \{[^}]*\b(?:Card|Testimony|Clue|Rehearsal)\b[^}]*\} from '\.{1,2}\/(?:screens\/)?Cards'/), ['screens/Clues.jsx', 'screens/Rest.jsx'])
+  assert.deepEqual(importers(/import Clues\b/), ['screens/Rest.jsx'])
+  assert.deepEqual(importers(/import Rest\b/), ['App.jsx', 'Preview.jsx'])
+  // and no other screen writes the words
+  const screens = new URL('../src/screens/', import.meta.url)
+  const shown = readdirSync(screens).filter(f => f.endsWith('.jsx') && readFileSync(new URL(f, screens), 'utf8').includes('Rehearsal text'))
+  assert.deepEqual(shown, ['Cards.jsx'])
+  assert.ok(!app.replace(/\/\/.*$/gm, '').includes('Rehearsal text'))
+})
+
 test('CL-24 a True Friend sees the honour again at the top of Salem\'s row', async () => {
   assert.equal(salemFriendNote({ salemFriend: false, cards: [] }), null)
   assert.equal(salemFriendNote(null), null)

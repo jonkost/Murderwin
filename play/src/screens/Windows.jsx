@@ -4,6 +4,7 @@ import { useTick } from '../lib/hooks'
 import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
 import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
+import { troubleLine } from '../lib/trouble'
 import { Seal } from './Moments'
 import { HostLine, Result } from './Cards'
 
@@ -49,8 +50,8 @@ export function Questions({ w, nightId, serverNow, onDone }) {
   const [error, setError] = useState(null)
   const beat = set.beats?.[i]
 
-  const retry = (message) => {
-    setError(message || 'The Manor did not hear that. Try again.')
+  const retry = (e = null) => {
+    setError(troubleLine(e, 'The Manor did not hear that. Try again.'))
     setPicks([]); setI(0); setBusy(false)
   }
   const choose = async (k) => {
@@ -64,7 +65,7 @@ export function Questions({ w, nightId, serverNow, onDone }) {
       else retry()
     } catch (e) {
       if (outcomeForError(e) === 'thanks') setSent(true)
-      else retry(e?.message)
+      else retry(e)
     }
   }
 
@@ -125,7 +126,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
     try {
       await callBallot({ nightId, murderer: pick.murderer, motive: pick.motive, victim: pick.victim })
       onDone?.()
-    } catch (e) { setError(e?.message || 'The Manor did not hear that. Try again.'); setBusy(false) }
+    } catch (e) { setError(troubleLine(e, 'The Manor did not hear that. Try again.')); setBusy(false) }
   }
 
   const Box = card ? 'section' : 'div'
@@ -218,7 +219,7 @@ export function Eliminate({ w, night, session, content, nightId, serverNow, onDo
   const send = async (target) => {
     setBusy(true); setError(null)
     try { await callEliminate({ nightId, target }); onDone?.() }
-    catch (e) { setError(e?.message || 'The Manor did not hear that. Try again.'); setBusy(false) }
+    catch (e) { setError(troubleLine(e, 'The Manor did not hear that. Try again.')); setBusy(false) }
   }
   return (
     <div className="moment window eliminate papered">

@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, slideTime, boardRows, bellShown, soundFresh, dotState, heardText, relayRules, showRules,
+  livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, slideTime, boardRows, bellShown, soundFresh, dotState, heardText, showSetup, relayRules, showRules,
   DEFAULT_RELAY_RULES, BELL_MS, DOOR_HOLD_MS, SLIDE_FALLBACK_MS,
 } from '../src/lib/screen.js'
 import { STALE_MS } from '../src/lib/clock.js'
@@ -211,6 +211,51 @@ test('the dot: green live, amber after twenty seconds from cache, red offline, w
   assert.equal(heardText(130), 'heard 2 min ago')
 })
 
+test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and the wake note on a rehearsal and with no night live, never on the party night', () => {
+  // the party night: the workshop's "This is the party night" box (forceRehearsal false), and not a dry run
+  const party = { ...NIGHT, forceRehearsal: false }
+  assert.equal(showSetup(party), false, 'the party night: no dot, no wake note')
+  assert.equal(showSetup({ ...party, act: 7, beat: 'end', over: true }), false, 'nor at The End')
+  // every rehearsal keeps them: the party box unticked (forceRehearsal true, or never written), or a fake-players dry run
+  assert.equal(showSetup({ ...NIGHT, forceRehearsal: true }), true)
+  assert.equal(showSetup(NIGHT), true, 'no box written: a rehearsal')
+  assert.equal(showSetup({ ...party, dryRun: true }), true, 'a dry run is never the party')
+  // no night live: the screens are being set up
+  assert.equal(showSetup(null), true)
+  assert.equal(showSetup(undefined), true)
+  // a screen still looking for its night (just loaded) shows neither, so one reloaded during the party never flashes them
+  assert.equal(showSetup(party, { looked: false }), false)
+  assert.equal(showSetup(NIGHT, { looked: false }), false)
+  assert.equal(showSetup(null, { looked: false }), false)
+  assert.equal(showSetup(NIGHT, { looked: true }), true)
+  // the kiosk draws no dot at all, and the wake note goes while its listener stays, so the first tap still wakes the sound
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError'), 'looked: signed in and the night read, or the sign-in failed')
+  assert.ok(kiosk.includes('const setup = showSetup(n, { looked })'))
+  assert.ok(kiosk.includes('{setup && <StaleDot view={night} online={online} />}'), 'no dot on the party night')
+  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} />'), 'no wake note on the party night, nor in the dark')
+  const wake = kiosk.slice(kiosk.indexOf('export function Wake('), kiosk.indexOf('export function Bell('))
+  assert.ok(wake.indexOf("window.addEventListener('pointerdown', wake)") >= 0 && wake.indexOf("window.addEventListener('pointerdown', wake)") < wake.indexOf('if (woke || hidden) return null'), 'the listener is set whether or not the note shows')
+  assert.ok(wake.includes('}, [woke])'), 'hiding the note never takes the listener away')
+  // the bell is not a setup mark: it shows on every night
+  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />"), 'the bell on every night')
+})
+
+test('F31 nothing in the corners beside a near-black screen, the bell ringing or not (29 Oct 2026)', () => {
+  // it was a dim note and a dim dot (opacity 0.35, which beat the bell's own 0) through the blackout, the role cards, a pause and The End
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.ok(css.includes('.kiosk.dark ~ .kiosk-dot, .kiosk.dark ~ .kiosk-bell, .kiosk.dark ~ .kiosk-wake { display: none; }'), 'all three gone in the dark')
+  assert.ok(!/\.kiosk\.dark ~ [^{]*\{[^}]*opacity/.test(css), 'never a dim mark left in the dark')
+  // the rule finds them because the corners come after the screen, and both near-black screens carry .kiosk.dark
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  const from = kiosk.indexOf('<RehearsalBand on={!!n')
+  const corners = kiosk.slice(from, kiosk.indexOf('</>', from))
+  const at = (t) => { const i = corners.indexOf(t); assert.ok(i >= 0, t); return i }
+  for (const mark of ['<Bell ', '<StaleDot ', '<Wake ']) assert.ok(at('{body}') < at(mark), `${mark.trim()} after the screen`)
+  assert.ok(kiosk.includes('<div className="kiosk dark" aria-label="Sirwin Manor" />'), 'the dark')
+  assert.ok(kiosk.includes('<div className="kiosk dark paused">'), 'the pause card')
+})
+
 test('the relay rules: three lines from the workshop or the defaults, on the first walk of grid one only', () => {
   // X-2: the defaults say what the night does now: walk first, describe from the TV, tell the host the guess
   // (fifteen seconds a turn and the host's tap since 25 Oct 2026, Jon's cue list)
@@ -273,8 +318,8 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   // the iPad heartbeats under its own key, never as the living room TV
   assert.ok(kiosk.includes('`kiosk-${which}`'), 'the heartbeat key is the kiosk name itself')
   assert.ok(!kiosk.includes("which === 'ipad' ? 'living'"), 'the iPad never borrows the TV key')
-  // the wake control: a corner control that never shows while the room is dark
-  assert.ok(kiosk.includes('<Wake hidden={dark} />'), 'the wake control is hidden while dark')
+  // the wake control: a corner control that never shows while the room is dark, nor on the party night (29 Oct 2026)
+  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} />'), 'the wake control is hidden while dark and on the party night')
   assert.ok(kiosk.includes("window.addEventListener('pointerdown', wake)"), 'any tap on the page wakes the screen')
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   const wake = css.split('\n').find(l => l.startsWith('.kiosk-wake {')) ?? ''

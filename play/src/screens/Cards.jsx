@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { callMeet, callLeave, callNotYet, callLockIn } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
 import { portraitUrls } from '../lib/content'
 import { catPictureUrl } from '../lib/rooms'
 import { chime } from '../lib/permissions'
+import { troubleLine } from '../lib/trouble'
 import { TraceView } from './Kiosk'
 import Spoken from './Spoken'
 
@@ -30,8 +31,17 @@ export function Card({ card, uid, notes, nightId = null, over = false }) {
   }
 }
 
+// Whether the phone's night is a rehearsal (lib/night.js isRehearsalNight;
+// App.jsx says so around the tabs, the only way to these cards on a phone).
+// The Rehearsal text tag is setup language, so on a phone it shows on a
+// rehearsal night only, never on the party night (Jon, 29 Oct 2026). A page
+// App does not draw keeps it: the workshop's previews, whose sample nights
+// are rehearsals, like a room screen with no night live (lib/screen.js showSetup).
+export const RehearsalNight = createContext(true)
+
 export function Rehearsal({ card }) {
-  return card?.placeholder ? <span className="chip-tag">Rehearsal text</span> : null
+  const rehearsal = useContext(RehearsalNight)
+  return rehearsal && card?.placeholder ? <span className="chip-tag">Rehearsal text</span> : null
 }
 
 // A host's line (functions/lib/hosts.js): the cat's face and their words.
@@ -104,7 +114,7 @@ export function LightsStep({ lights, uid, nightId, notes, note = null }) {
   const call = async (fn, args) => {
     if (nightId === 'preview') return
     setBusy(true); setMsg(null)
-    try { await fn({ nightId, ...args }) } catch (e) { setMsg(e?.message || 'The house did not answer. Try again.') } finally { setBusy(false) }
+    try { await fn({ nightId, ...args }) } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')) } finally { setBusy(false) }
   }
   const goNow = () => { if (uid && uid !== 'preview') writeNotes(uid, { seen: { [onWayKey]: true } }).catch(() => {}) }
   const short = (lights.catName ?? 'the cat').split(' ')[0]

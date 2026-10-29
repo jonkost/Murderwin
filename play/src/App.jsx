@@ -3,7 +3,9 @@ import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, isDark, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showRehearsalBand, showsPrompt, wantsWelcome } from './lib/night'
+import { clockFor, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showRehearsalBand, showsPrompt, wantsWelcome } from './lib/night'
+import { troubleLine } from './lib/trouble'
+import { RehearsalNight } from './screens/Cards'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
@@ -65,7 +67,7 @@ export default function App() {
     if (!cat || !activeKey || !nightId) return
     meetRef.current = null
     try { const u = new URL(window.location.href); u.searchParams.delete('meet'); window.history.replaceState(null, '', u) } catch { /* the address stays; harmless */ }
-    callMeet({ nightId, cat }).then(() => setMeetNote(null)).catch(e => setMeetNote(e?.message || 'The cat did not answer. Try the code again.'))
+    callMeet({ nightId, cat }).then(() => setMeetNote(null)).catch(e => setMeetNote(troubleLine(e, 'The cat did not answer. Try the code again.')))
   }, [activeKey, nightId])
 
   // Off the network, or the house has not confirmed the night for twenty
@@ -181,7 +183,10 @@ export default function App() {
   } else if (lock !== 'over' && doneKey && !notes.seen[doneKey]) {
     base = <RelayDone uid={uid} relay={r} seenKey={doneKey} />
   } else {
-    base = <Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} ballot={ballot} over={lock === 'over'} />
+    // the cards under the tabs are told whether the night is a rehearsal: their
+    // Rehearsal text tag never shows on the party night (Cards.jsx, 29 Oct 2026).
+    // Rest is the only way to those cards, so it never goes without this.
+    base = <RehearsalNight.Provider value={isRehearsalNight(n)}><Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} ballot={ballot} over={lock === 'over'} /></RehearsalNight.Provider>
   }
   return <>{band}{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
 }

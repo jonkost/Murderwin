@@ -17,7 +17,8 @@ Pro's four stations, Jenna's iPad Pro as Boo's camera, and Susan's MacBook
 Pro on the projector all night; and on 28 October for Miss Boo LaRue's
 Arcade, a page of its own to try, not on the night yet; and on 29 October for
 the two just-for-fun winners, Zimothy's on the Library's screen and Salem's on
-the Orangerie's. Everything on this page
+the Orangerie's, and for your rule of no setup words in front of the guests
+(the screens' corners, the study's warning and Held on the TV). Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -33,7 +34,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
-| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: the Entryway keeps Boo's Catwalk until you answer *entrywayGame* | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: two tokens each, turns, each player's clue on the screen after their second game (in practice the square-bracket line), Boo's line for a trio's third player, the winner, free play, and the chime ten minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
+| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: you chose it for the Entryway on 29 October, and the night keeps Boo's Catwalk until it is wired in | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: two tokens each, turns, each player's clue on the screen after their second game (in practice the square-bracket line), Boo's line for a trio's third player, the winner, free play, and the chime ten minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
 | `?kiosk=pose` | Jenna's iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
 | `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
@@ -146,7 +147,9 @@ brackets.
   it took one), and Irwin's "Can we play again?" Through the reveal every
   guest's phone is locked on "Eyes on the screen."; through the credits it
   shows its own result with "Thank you for playing."; the two host phones
-  keep their tabs.
+  keep their tabs. **Hold the screen** on your Host tab stops the TV where
+  it is: on a rehearsal the TV says Held, and on the party night only your
+  Host tab says so ("The screen is held where it is.").
 - *The End.* The host's last Next, after everyone's result (25 October, cue
   23): the TV goes black (kind `black`), every other screen goes black with
   it and the projector is off, and every phone opens up for good with
@@ -185,7 +188,11 @@ of them is on its loop.
 
 - *The study, Granolia's Lightbulb Moment.* Granolia, the three jewels for
   the pairs found, the round and pattern, the ten-minute clock, and what
-  Granolia says. `docs/study-light-game.md` has it all.
+  Granolia says. `docs/study-light-game.md` has it all. If the study station
+  sends nothing for ninety seconds, the screen says "Granolia has dozed off.
+  Find a host." (until 29 October it said "The station has gone quiet").
+  Your Host tab's Study station row, under The house, says quiet half a
+  minute later, once the station has sent nothing for two minutes.
 - *The Library, In Duplicate.* "Sir Irwin scattered his files. Match every
   copy. He bills by the pair." Zimothy's line for the round, then the board:
   turn two folders at a time. Three rounds: 6, 10 and 14 pairs. After the
@@ -227,20 +234,28 @@ of them is on its loop.
 
 ## The three corners of every screen
 
+On a rehearsal, and on a screen opened before any night is started, all
+three show. On the party night only the bell does (your rule of 29 October:
+no setup words in front of the guests). None of them ever covers the
+screen, and none of them shows while a room is dark: the blackout, the role
+cards, the "One moment" pause on the TV and the iPad, and The End. A screen
+that reloads during the blackout stays black.
+
 - *Tap once to wake.* A small note in the bottom right corner. Browsers will
   not play a sound until someone has touched the page; one tap anywhere on
-  the page (or any key), then leave it. It never covers the screen, and it
-  does not show while the room is dark, so a screen that reloads during the
-  blackout stays black.
-- *The bell.* Top right, for three seconds, whenever a sound is called for.
-  The screen rings a small chime of its own at the same moment. If you see
-  the bell and hear nothing from the speakers, the brain or the speakers are
-  the trouble, not the night.
+  the page (or any key), then leave it. On the party night there is no
+  note, but the tap still counts: tap each screen once, anywhere, as you set
+  it up, and again if it ever reloads.
+- *The bell.* Top right, for three seconds, whenever a sound is called for,
+  on every night. The screen rings a small chime of its own at the same
+  moment. If you see the bell and hear nothing from the speakers, the brain
+  or the speakers are the trouble, not the night.
 - *The dot.* Bottom left. Green while the screen can hear the house; amber,
   with how long since it last heard, when it has gone quiet for twenty
-  seconds; red when it is off the wifi. Nothing on the screen ever covers
-  the content. The Host tab shows a dot for each screen too, the memory match
-  iPad included.
+  seconds; red when it is off the wifi. On the party night no screen shows
+  it: your Host tab, under The house, has a dot for every screen instead,
+  green while that screen has been heard from in the last two minutes, the
+  memory match iPad and Boo's camera included.
 
 ## The sounds
 
@@ -301,8 +316,9 @@ pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem, rotation })`
 playing or passed; Salem's winner while it is cleared, 28 Oct); `MemoryRounds` (now takes `content`), `BooRunway` (now
 takes `night`; `code={!!night}` so the practice show has no code, and
 `code={false}` on her intro) and Kiosk.jsx's `Study` (now takes `night` and
-`content`; its rules card keeps Granolia's IDLE line and the "station has
-gone quiet" warning) and `Bedroom` use them. Kiosk.jsx subscribes
+`content`; its rules card keeps Granolia's IDLE line and the 90-second
+warning, "Granolia has dozed off. Find a host." since 29 Oct 2026) and
+`Bedroom` use them. Kiosk.jsx subscribes
 `public/salem` and `public/rotation` for the orangerie kiosk and `public/content` for the memory
 kiosk too, and dispatches `roomCode` before the room branches and
 `Orangerie` before the Living fallback; its `Bell` takes `silent`, true for
@@ -376,7 +392,7 @@ parts' `holdMs` have passed (`news.closingStage`; a hold pushes it back).
 
 `play/src/lib/screen.js` holds the pure client rules (`livingView`
 precedence, `roomDark(night, screen)`, `captionsOf`, `doorStage`, `doorSlideOf`, `slideAt`,
-`boardRows`, `bellShown`, `soundFresh`, `dotState`, `heardText`), tested
+`boardRows`, `bellShown`, `soundFresh`, `dotState`, `heardText`, `showSetup`), tested
 under node in `play/test/screen.test.mjs`; `relayRules` and `showRules` are
 still exported but no screen uses them. `play/src/screens/Kiosk.jsx` renders them
 (`ScreenCard`, `IrwinFace`, `Captions`, `Board`, `DoorScreen`, `Bedroom`,
@@ -417,8 +433,29 @@ kiosk-loop-memory | kiosk-loop-boo | kiosk-loop-bedroom |
 kiosk-loop-orangerie | kiosk-quiet | kiosk-end`. The list grows as screens
 are added: `KIOSK` in `Preview.jsx` is the source.
 
-*Miss Boo LaRue's Arcade (28 Oct 2026, not on the night until Jon answers
-entrywayGame).* Not a kiosk screen: `play/src/main.jsx` sends
+*No setup words in front of the guests (Jon, 29 Oct 2026).*
+`showSetup(night, { looked })` in `play/src/lib/screen.js`: the corner dot
+and the wake note show with no night live, or on a rehearsal or a dry run
+(`isRehearsalNight`), never on the party night. `looked` (Kiosk.jsx: signed
+in and both `public_state/active` and the night doc read, or the sign-in
+failed) keeps them away while a reloaded screen is still finding its night,
+so a reload during the party never flashes them. Kiosk.jsx renders
+`{setup && <StaleDot />}` and `<Wake hidden={dark || !setup} />`; `hidden`
+keeps the window listener, so the first tap or key still wakes the sound.
+`styles.css` hides `.kiosk-dot`, `.kiosk-bell` and `.kiosk-wake`
+(`display: none`) after a `.kiosk.dark` screen (`Dark`, and `OneMoment`'s
+pause card), so Kiosk.jsx keeps the corners after `{body}`; until 29 Oct
+they sat there at opacity 0.35, the bell's note included. `Finale` shows
+"Held" only when `finale.rehearsal`, the same test as its Rehearsal tag; the
+Host tab's reveal panel says "The screen is held where it is." on every
+night. `MemoryRounds` shows its own line when `callMemoryStep` fails, never
+the error's message. Every kiosk has a row and a dot on the Host tab's house
+panel (`play/src/lib/house.js` `MACHINES`, keyed `kiosk-<which>` like the
+heartbeat); `play/test/house.test.mjs` checks each kiosk Kiosk.jsx names has
+one.
+
+*Miss Boo LaRue's Arcade (28 Oct 2026, not on the night until card 515 wires
+it in; entrywayGame answered 29 Oct).* Not a kiosk screen: `play/src/main.jsx` sends
 `?kiosk=boo&play=1` to `BooArcade` (`play/src/screens/Arcade.jsx`) before the
 kiosks, so it never goes through `Kiosk.jsx` (no sign-in, no presence, no
 night); `&visit=1` is the practice visit. `?kiosk=boo` alone is still Boo's
