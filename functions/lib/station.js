@@ -12,7 +12,7 @@
 
 import { randomInt } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
-import { NightError } from './night.js'
+import { NightError, noteMissingLine } from './night.js'
 import { noteDealt } from './ledger.js' // the safeguards' ledger (never content)
 import { traceOf, workReveal, shownReveal } from './traces.js'
 import { pickFor } from './seed.js'
@@ -51,6 +51,11 @@ export function makeGroups(keys, { apart = [], pickInt = randomInt, maxGroups = 
 // person. At level 3 the second option is never the Murderer's trace, so the
 // study never spoils the door. The station never sees any of it.
 export const STUDY_PLACEHOLDER = '(The study pays out the trace the victim left behind, when the three jewels are lit or the ten minutes are up.)'
+// On the party night a trace that is missing never shows that note (card
+// 529): the group reads the house's plain words (the question quietWords on
+// the board), and dealStudy tells the Host tab. Either way the card is marked
+// `none`. The checks make sure it never happens (G59).
+export const STUDY_QUIET = 'Nothing for you this time.'
 
 // The pay-out, worked out once per group: { level, trace, label } or, at level 3, { level, images }.
 export async function studyReveal(db, { c, roster = {}, pick = randomInt }) {
@@ -68,7 +73,7 @@ export async function studyReveal(db, { c, roster = {}, pick = randomInt }) {
 export function traceStandIn(who, level) { return `[the ${who}'s trace, level ${level ?? 3}]` }
 export function studyClueCard(c, act, beat, reveal = null) {
   const base = { id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the Study' }
-  if (!reveal) return { ...base, text: STUDY_PLACEHOLDER, placeholder: true }
+  if (!reveal) return c && !c.rehearsal ? { ...base, text: STUDY_QUIET, placeholder: false, none: true } : { ...base, text: STUDY_PLACEHOLDER, placeholder: true, none: true }
   if (!c || c.rehearsal) return { ...base, text: traceStandIn('Ghost', reveal.level), placeholder: true }
   return { ...base, text: 'Something was left behind.', trace: reveal, placeholder: false }
 }
@@ -140,6 +145,7 @@ export async function dealStudy(db, { nightId, groupId, outcome }) {
     if (await dealOnce(db, uid, studyClueCard(c, act, beat, reveal))) dealt++
   }
   if (dealt) await noteDealt(db, nightId, { kind: 'study', act: night.act ?? 4, beat: night.beat ?? 'station', groupId }) // the ledger: the study's clue is out (safeguards)
+  if (dealt && !reveal) await noteMissingLine(db, nightId, 'study') // the Host tab is told, once a group: a count, never which (card 529)
   return dealt
 }
 

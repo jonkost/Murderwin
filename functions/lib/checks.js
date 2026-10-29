@@ -9,7 +9,7 @@
 // SEAL RULE: every result is { id, pass } (and a count). Nothing here returns,
 // prints or logs a word, a lean, a bag, a picture or a case fact.
 
-import { FAMILIES, ALL_MOTIVES, familyOf, hintsOf, familyForCat, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues, HINT_CATS } from './families.js'
+import { FAMILIES, ALL_MOTIVES, familyOf, hintsOf, hintFamiliesFor, familyForCat, memoryPick, irwinOptions, irwinCount, remainingMotives, roomClues, HINT_CATS } from './families.js'
 import { hintLine } from './cats.js'
 import { wordBags, clueWords, bagPlan, bagLine, BAG_CATS, PROMPTS, promptsWithClueWords } from './bagclues.js'
 import { roomFor, roundsFor, ROOM_KEYS, PARLOUR, MEMORY_ROUNDS, ALL_TRACES, memoryBoards } from './act4.js'
@@ -46,6 +46,7 @@ export const CHECK_NAMES = {
   G50: 'The memory match: 6, 10 and 14 pairs, all fourteen traces',
   G51: 'Zimothy and Boo never cross off the real motive, never the same one twice',
   G53: 'Every bulletin 2 line, at every level, points at the real family',
+  G59: 'Every guest gets a real line from every cat, and the Study a real trace',
   L01: 'No sealed file in the repo or its history',
   L06: 'The bag packing is not in the repo',
   L08: 'Sir Irwin\'s prompts never contain a clue word',
@@ -93,6 +94,8 @@ export function caseChecks(c, { roster, packing = null, rng, reroll = true }) {
   }
   add('G33', g33)
   add('G45', g45)
+  // G59: never the house's note where a line should be: every guest and a late joiner, every cat, every rung, and the Study
+  add('G59', everyLineOk(c, roster))
 
   // G47 and G51: the groups walk the rooms; Zimothy and Boo cross off one each
   const groups = keys.length >= 2 ? makeGroups(keys, { apart: [c.murderer, c.ghost].filter(Boolean), pickInt: rng }) : []
@@ -284,7 +287,7 @@ export function irwinWinsOk(c, keys, { irwin = band => irwinOptions(c, { band, s
       if (!family) continue
       for (let level = 1; level <= 5; level++) {
         const line = hintLine(c, { cat, level, act: 2, family, seed: `${guestSeed(c, k)}\u0000${cat}`, bonusFamilies: [...fams, ...(s.newsOut ?? [])] })
-        if (!line.text) continue
+        if (!line.text) continue // a missing line says nothing to disagree with; G59 fails it
         const says = cat === 'salem'
           ? n => (line.straight ? familyOf(n) !== family : familyOf(n) === family)
           : n => !line.families.includes(familyOf(n)) && !line.motives.includes(n)
@@ -321,6 +324,37 @@ export function murdererHiddenOk(c, roster, packing, rng, { plan: planOf = opts 
     }
   }
   return true
+}
+
+// G59: never the house's note where a line should be (card 529). Every guest,
+// and a late joiner the case does not know yet (deal.js greetGuest gives one
+// the pair the fewest hold), has a family for every cat and a real line from
+// it at every rung of its ladder: words, with no blank left unfilled. A line
+// that throws counts as missing. And the Study has a real trace for the Ghost
+// at every level of the dial. It draws no random number, so the checks after
+// it see the same draws as before.
+export const LATE_JOINER = 'late-joiner'
+export function realLine(text) {
+  return typeof text === 'string' && text.trim().length > 0
+    && !/\[[^\]]*\]|___|\b(undefined|null|NaN)\b|\bmotive \d+\b|\s[.,!?;:]|\s{2}/.test(text)
+}
+export function everyLineOk(c, roster) {
+  const s = c?.solving
+  if (!s) return false
+  for (const k of [...roster.map(g => g.key), LATE_JOINER]) {
+    const fams = hintFamiliesFor(s, k)
+    for (const cat of HINT_CATS) {
+      const family = familyForCat(fams, { cat, seed: guestSeed(c, k) })
+      if (!family) return false
+      for (let level = 1; level <= 5; level++) {
+        let line = null
+        try { line = hintLine(c, { cat, level, act: 2, family, seed: `${guestSeed(c, k)}\u0000${cat}`, bonusFamilies: [...fams, ...(s.newsOut ?? [])] }) } catch { return false }
+        if (!realLine(line?.text)) return false
+      }
+    }
+  }
+  const { out } = revealsOf(c, roster, () => 0)
+  return out.filter(r => r.where === 'study').every(r => Array.isArray(r.traces) && r.traces.length > 0 && r.traces.every(Boolean))
 }
 
 // G23: Spill the Beans on this case (case.js rerollCase, with a fresh deal the

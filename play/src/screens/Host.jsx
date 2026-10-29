@@ -154,6 +154,8 @@ export default function Host({ night, content, serverNow }) {
       </p>
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
+      {/* a cat's hint or the Study's trace that never came (card 529): counts only, never which */}
+      {house.missing && <p className="host-msg trouble" role="alert">{house.missing}</p>}
 
       <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} act4={act4.data} />
       <RevealPanel night={night} finale={finale.data} busy={busy} run={run} serverNow={serverNow} />

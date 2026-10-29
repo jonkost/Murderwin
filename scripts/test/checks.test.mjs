@@ -57,7 +57,7 @@ test('the checks can fail: a bag of six fails PK1; no packing fails all three', 
 test('npm run checks: the case group also runs the new case checks and the two fairness checks', () => {
   const r = runCaseGroup({ count: 30 })
   assert.equal(r.passed, r.total)
-  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53']) assert.ok(r.ids.includes(id), id)
+  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59']) assert.ok(r.ids.includes(id), id)
 })
 
 test('L01 no tracked JSON is shaped like sealed content: a dealt case, kernels, a code-to-motive map or a lean table is caught, and the repo has none', () => {
