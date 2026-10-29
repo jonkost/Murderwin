@@ -16,6 +16,7 @@ import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, Dark as KioskDark } from './screens/Kiosk'
 import { MemoryRounds, MemoryStandalone, BooWall, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import { PoseCamera } from './screens/Pose'
+import BooArcade from './screens/Arcade'
 import { SalemRounds, BooMoments } from './screens/Act4'
 import { HousePanel } from './screens/Host'
 import { houseView } from './lib/house'
@@ -40,7 +41,9 @@ import { setFromAddress } from './lib/gametest'
 // door slide), kiosk-living-rules (slide 3 and its square), Sir Irwin's
 // prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
 // the iPad Pro (since 26 Oct 2026; kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone) and
-// Boo's wall (kiosk-boo, kiosk-boo-pose, kiosk-boo-judge; kiosk-boo-show plays the whole show live). A rehearsal night's band:
+// Boo's wall (kiosk-boo, kiosk-boo-pose, kiosk-boo-judge; kiosk-boo-show plays the whole show live). Miss Boo LaRue's
+// Arcade (28 Oct 2026), each a frozen moment with no loop, deck or sound: kiosk-arcade (free play's menu),
+// kiosk-arcade-play (a game running), kiosk-arcade-clue, kiosk-arcade-third and kiosk-arcade-farewell. A rehearsal night's band:
 // kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
 // host-house-window, host-house-act2. The cue list's screens (25 Oct 2026):
 // the join code (kiosk-join, kiosk-rejoin), the room codes of Act 2
@@ -321,6 +324,12 @@ const KIOSK = {
   'kiosk-boo-show': (night, serverNow) => <BooWall boo={BOO_SHOW} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-judge': (night, serverNow) => <BooWall boo={BOO(25000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
   'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  // Miss Boo LaRue's Arcade (28 Oct 2026): a moment of the engine's own samples (lib/arcade.js arcadeSample), frozen
+  'kiosk-arcade': () => <BooArcade sample="home" />,
+  'kiosk-arcade-play': () => <BooArcade sample="play" />,
+  'kiosk-arcade-clue': () => <BooArcade sample="clue" />,
+  'kiosk-arcade-third': () => <BooArcade sample="third" />,
+  'kiosk-arcade-farewell': () => <BooArcade sample="farewell" />,
   // the group's phones in the Orangerie and the Entryway (28 Oct 2026): Salem's rule, then a live round; Boo's show as the phones see it
   'salem-rule': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={{ state: 'intro' }} serverNow={serverNow} motion={{ ...NO_SENSOR, ok: true }} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
   'salem-round': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={SALEM_ROUND} serverNow={serverNow} motion={NO_SENSOR} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,

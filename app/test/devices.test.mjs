@@ -82,6 +82,19 @@ test('what Jon reads is plain: no Terminal, no commands, no file names; the exac
   assert.ok(DEVICES.find(d => d.key === 'study').start.some(s => s.includes('Double-click Start the study')))
 })
 
+// 28 Oct 2026: Miss Boo LaRue’s Arcade on its own page; 29 Oct, the review: through a
+// HomePod its sounds land two seconds after the press
+test('Miss Boo LaRue’s Arcade: an address of its own beside Boo’s wall, in Chrome, the sound on the Mac’s own speakers, not on the night yet', () => {
+  const arcade = DEVICES.find(d => d.key === 'arcadeplay')
+  assert.ok(arcade, 'listed')
+  assert.equal(deviceUrl('https://example.test/play/', arcade), 'https://example.test/play/?kiosk=boo&play=1', 'a query of its own, so Boo’s wall stays the night’s boo screen')
+  assert.ok(arcade.start.some(s => /Google Chrome/.test(s)) && arcade.start.some(s => /Safari cannot reach the Stream Deck/.test(s)))
+  assert.ok(arcade.start.some(s => /quit the Stream Deck app/i.test(s)))
+  assert.ok(arcade.start.some(s => /sound output to its own speakers/.test(s)), 'its sounds on the Mac’s own speakers')
+  assert.match(arcade.note, /not on the night yet/i)
+  assert.match(arcade.note, /entrywayGame/, 'the note names the question')
+})
+
 test('the commands a device names exist', () => {
   const pkg = (p) => JSON.parse(read(p)).scripts ?? {}
   const cmds = DEVICES.flatMap(d => [...d.start, d.tech ?? '']).join('\n')

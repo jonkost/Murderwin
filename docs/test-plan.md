@@ -1,9 +1,9 @@
 # Sirwin Manor — Test Plan for Claude Code
 
-Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built; that evening Jon answered worstDial: build the worst-dial proof now) and 25 October (card 479: the checks that were Not yet, written; every test that had no ID renamed; the host seats in the fake night). Put this file at `docs/test-plan.md` in the repo.
+Written 19 October 2026, updated 22 October (from `docs/handoff-2026-10-22.md`), 23 October (where every check stands; then again for Jon's two decisions that day: the cats' secret lines retired, the Act 2 safe taken out) 24 October (the 23 October handoff's checks, its section 11; `npm run checks`, the Health page and Jenna's checks built; that evening Jon answered worstDial: build the worst-dial proof now) 25 October (card 479: the checks that were Not yet, written; every test that had no ID renamed; the host seats in the fake night), 28 October (Miss Boo LaRue's Arcade, a page of its own to try, not on the night yet: G54 to G56 and L09) and 29 October (the arcade's review: G54, G55, G56 and L09 check more). Put this file at `docs/test-plan.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
-**Every check is listed here** (24 Oct), including the ones first written in `docs/parlour-games.md` (G25 to G31, F19, L05), `docs/solving-the-case.md` (G32 to G38, F20, F21) and the 23 October handoff (G39 to G52, F22 to F28, L06 to L08). Those docs keep the longer wording. Where each check stands today is in the table at the end, "Where every check stands".
+**Every check is listed here** (24 Oct), including the ones first written in `docs/parlour-games.md` (G25 to G31, F19, L05), `docs/solving-the-case.md` (G32 to G38, F20, F21) and the 23 October handoff (G39 to G52, F22 to F28, L06 to L08), and since 28 October Miss Boo LaRue's Arcade (G54 to G56 and L09, `docs/boo-arcade.md`). Those docs keep the longer wording. Where each check stands today is in the table at the end, "Where every check stands".
 
 **Three IDs changed meaning on 24 October.** The handoff reused G39, G40 and G41 for the bag checks, and the handoff wins. The old G39 (one real Act 2 hint each) is retired: every cat now gives a hint (G44). The old G40 (every bulletin 2 line points at the real family) is now **G53**. The old G41 (every cat line only rules out wrong answers) was already G18b, and lives on under that ID.
 
@@ -146,6 +146,11 @@ Since 23 October there are no secret sets: the deal draws the motive itself and,
 - **G51** Zimothy's and Boo's cross-offs never cross off the real motive, and never the same motive for one group.
 - **G52** Every Act 4 reward is paid by the ten-minute cap even if the group never finishes.
 
+**Miss Boo LaRue's Arcade** (28 October; a page of its own to try, not on the night yet: the Entryway keeps Boo's Catwalk until Jon answers *entrywayGame*. Not case checks: they run in `npm test`, not in `npm run checks`. `docs/boo-arcade.md`)
+- **G54** The menu sits on the second row of keys, the five games with two blank keys at each end, and each of the five games plays, scores and ends by its rules: the same seed plays the same way, and every game ends at its time unless it ended sooner. Boo's first fish is never under her, right in front of her or under the how-to-play screen's Back key, and each later one is never under her or right in front of her (300 seeds); a gold mouse always hides sooner than a plain one; in Knock It Off the Table a press while the paw rests is another miss and starts the rest again, so presses closer together than the rest knock nothing off, while a press a little early and then one on the edge still knocks it off. Every face a game shows is drawn (on a fake canvas, none falling back to the art's "?"), 36 keys every time. Every sound the engine asks for plays, a win or a loss tune waits for the bite, the last fish or the last knock before it, and Boo's face picture is on every Boo key when it comes in time and never used when it comes late (29 October).
+- **G55** A group's visit: the turns go round the group, two tokens each; after a player's second game the first two players get their clue and a trio's third gets Boo's line instead; the most points wins, and a tie names everyone tied; free play after the visit records nothing; the chime ends everything from any moment, then free play. A visit's game that would run into the chime is cut short, so its clue still comes first: the full length while it fits, never under 30 seconds, free play never cut, and a pair and a trio at an ordinary pace get both clues before the chime. The chime names who it caught short in two sentences, a clue owed to the first two and Boo's line to a trio's third player, told apart by place, never by name (29 October).
+- **G56** Boo's words: the practice clue is the house's own square-bracket stand-in, word for word, and Jon's two lines ("Didn't I give you enough? Now be off! I'm done playing games." and "Be on your way.") are word for word. Every word the arcade can show passes F09, the chime's two sentences included. No em dash in the arcade's files.
+
 ---
 
 ## Group F · The full dry run (eight fake players)
@@ -204,6 +209,7 @@ These protect Jon's ability to play. Run them with every other check.
 - **L06** The bag packing is not in the repo, and Jon's account cannot read it.
 - **L07** The Parlour TV never shows sealed content or anything about a specific player.
 - **L08** Sir Irwin's prompts never contain a clue word (changed 24 October: prompts 13 to 16 name a tag or a shape, not a sense).
+- **L09** Miss Boo LaRue's Arcade reads no night and shows nothing sealed: its game logic uses nothing from React, Firebase or the browser, and the only clue it shows is the stand-in (28 October). Since 29 October: its pictures and sounds import nothing and its Stream Deck code only the Stream Deck library, the page holds no square-bracket line of its own, its one loop runs every 50 ms, and a sample screen stays frozen.
 
 ---
 
@@ -246,6 +252,8 @@ Waiting on Jon (each written as a `test.todo` with the reason, so it shows in th
 
 Checked at the tech run, not in a test: F26's half second over the real Wi-Fi. The tests prove the schedule, the redraw rate and the clock rule (a phone stays within half a second while its round trip to the server is under 0.8 seconds); the house's own Wi-Fi is the tech run's to measure.
 
+Miss Boo LaRue's Arcade (28 October): G54 to G56 and L09 test the games and the visit without a screen, and since 29 October the pictures and the sounds on a fake canvas and speaker. The Stream Deck's own code has tests with no ID, as it is not a check on the game (`play/test/arcadeDeck.test.mjs`: the presses, the painter, reopening, the plugs, and one arcade tab at a time). The real Stream Deck + XL is not tried yet: its keys, dials and touch strip in Google Chrome, and how fast each game feels, are Jon's first try on the Game test tab. Putting it on the night waits on *entrywayGame*; if it goes on, the checks that lean on Boo's cross-off (G32, G48, G51) and the fake night change with it.
+
 Dropped on 23 October: the old item "Salem's testimony straight at 5 (G17)". Jon retired the secret lines, so Salem has no testimony.
 
 There is no freeze date (23 Oct). Any check not done before the second full tech run is marked "after the party" in the table, not left silent.
@@ -254,7 +262,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 
 ---
 
-## Where every check stands (checked 25 October 2026)
+## Where every check stands (checked 25 October 2026; the arcade's four rows added 28 October, updated 29 October)
 
 - **Has a test**: an automated test checks it, and the test's name starts with the ID.
 - **Has a test, no ID**: a test checks it, but its name does not carry the ID yet. Rename it so the Health page can count it.
@@ -319,6 +327,9 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | G51 | Zimothy's and Boo's cross-offs | Has a test | Inside the G50 and G52 tests (`functions/test/solving.test.mjs`, `functions/test/act4.test.mjs`); also in `npm run checks` |
 | G52 | Every Act 4 reward paid by the cap | Has a test | `functions/test/act4.test.mjs`; the fake night |
 | G53 | Every bulletin 2 line points at the real family (was G40) | Has a test | `functions/test/case-checks.test.mjs` (all 25 lines, every family and every level), `functions/test/screen.test.mjs` (on a party night, with its recording); also in `npm run checks` |
+| G54 | Miss Boo LaRue's Arcade: the menu and the five games, their pictures and sounds | Has a test | `play/test/arcade.test.mjs` ("G54"), `play/test/arcadeMedia.test.mjs` ("G54": every face drawn, every sound played, a tune waits for the sound before it, Boo's picture in time and late). Not on the night yet (*entrywayGame*); not tried on the real Stream Deck + XL yet |
+| G55 | The arcade's visit: turns, two tokens each, the clue after a second game, the trio's line, the winner, free play, the chime, a game cut short near the chime, who the chime caught | Has a test | `play/test/arcade.test.mjs` ("G55") |
+| G56 | Boo's words in the arcade and Jon's two lines, word for word | Has a test | `play/test/arcade.test.mjs` ("G56") |
 | F01 | All seven acts run | Has a test | `functions/test/run.test.mjs` ("F01 and G01"), `scripts/test/fake-players.test.mjs` ("F01, F24 and L03") |
 | F02 | Host seats played by bots, no different | Has a test | `scripts/test/fake-players.test.mjs` ("F02 and G05"); the fake night prints "Host seats ... (F02)" |
 | F03 | A dropped phone rejoins | Has a test | `functions/test/night.test.mjs` (the F03 tests) |
@@ -357,6 +368,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | L06 | The packing is not in the repo or readable by Jon | Partly | `npm run checks` (no tracked JSON shaped like a packing); `functions/test/rules.test.mjs` covers `sealed/*` for Jon's account |
 | L07 | The Parlour TV never shows anything sealed or about one player | Has a test | `functions/test/act4.test.mjs` ("L07": the rooms' public docs), `functions/test/screen.test.mjs` ("F27 and L07 the night walk"); the fake night's seal check |
 | L08 | Sir Irwin's prompts never contain a clue word | Has a test | `functions/test/bagclues.test.mjs`; also in `npm run checks` |
+| L09 | The arcade reads no night and shows nothing sealed | Has a test | `play/test/arcade.test.mjs` ("L09") |
 | PK1, PK2, LN1, RP1 | Jenna's checks on the real content | Has a test | `functions/test/steward.test.mjs` (the checks op); `functions/lib/checks.js` |
 | (old) | Innocent event screens need a tap (the old F06) | Retired | No act has hidden events (closed 22 Oct) |
 | (old) | Checks on hidden-event copy for Acts 4 and 6 | Retired | Same reason |
@@ -366,4 +378,4 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 
 ## Not designed yet — don't invent these
 
-Nothing open today. The bags are decided (they stay, 23 Oct: Act 2 bag clues about the Murderer, Act 4 bag hints about the Ghost). Act 4's games are designed: see `docs/solving-the-case.md` and the 23 October handoff, sections 9.6 to 9.9.
+One thing open (28 Oct): Miss Boo LaRue's Arcade on the night. It is built to try on a page of its own; whether it takes the Entryway from Boo's Catwalk is *entrywayGame*, Jon's call, with its second answer about Boo's lost motive cross-off (`docs/boo-arcade.md`, Not decided yet). Do not wire it into Act 4, or write checks for it on the night, before Jon answers. The bags are decided (they stay, 23 Oct: Act 2 bag clues about the Murderer, Act 4 bag hints about the Ghost). Act 4's games are designed: see `docs/solving-the-case.md` and the 23 October handoff, sections 9.6 to 9.9.

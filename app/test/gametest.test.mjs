@@ -23,13 +23,14 @@ const playSrc = p => readFileSync(join(here, '..', '..', 'play', 'src', p), 'utf
 const decode = s => JSON.parse(Buffer.from(s, 'base64url').toString('utf8'))
 const BASE = 'https://murderwin-at-sirwin-manor.web.app/play/'
 
-test('seven sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
-  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'boo', 'parlour', 'drawing', 'deduction'])
+test('eight sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
+  // Miss Boo LaRue's Arcade (28 Oct 2026) sits beside Boo's Catwalk, under the Entryway's moment
+  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'boo', 'arcade', 'parlour', 'drawing', 'deduction'])
   const named = Object.fromEntries(gameNames.games.map(g => [g.id, g.name]))
   assert.deepEqual(SECTIONS.map(s => s.name), [
-    named.study, named.library, named.orangerie, named.entryway, 'The Parlour Games', named.drawing, 'The deduction round',
+    named.study, named.library, named.orangerie, named.entryway, 'Miss Boo LaRue’s Arcade', 'The Parlour Games', named.drawing, 'The deduction round',
   ])
-  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.eliminate'])
+  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.eliminate'])
   for (const s of SECTIONS) {
     assert.ok(MOMENT_KEYS.includes(s.moment), `${s.key}: ${s.moment} is a row on the Timeline`)
     assert.ok(s.steps.length >= 3 && s.steps.length <= 5, `${s.key}: 3 to 5 steps`)
@@ -42,12 +43,14 @@ test('seven sections in the order of the night, each named, filed under a real m
 test('every sample screen named here exists on the phones, and the practices and the real game have their addresses', () => {
   const preview = playSrc('Preview.jsx')
   const names = SECTIONS.flatMap(s => s.tries.map(t => t.params.preview).filter(Boolean))
-  assert.equal(names.length, 29) // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, and Boo's whole show, 27 Oct
+  // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, Boo's whole show, 27 Oct,
+  // and the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime
+  assert.equal(names.length, 32)
   for (const n of [...names, 'questions']) {
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }
   const queries = SECTIONS.flatMap(s => s.tries.map(t => queryOf(t.params)))
-  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=boo&practice=1', '?practice=boo', '?kiosk=living', '?kiosk=bedroom']) {
+  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=boo&practice=1', '?practice=boo', '?kiosk=living', '?kiosk=bedroom', '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1']) {
     assert.ok(queries.includes(q), q)
   }
   // the drawing's previews, in the order the contract lists them; since 25 Oct 2026 (the cue list) the
@@ -77,7 +80,32 @@ test('the words Jon sees are plain: no engineer words, no long dashes', () => {
   assert.equal(tryWords('ipadpro'), 'Try it on the iPad Pro')
   assert.ok(!/older iPad/.test(tryWords('ipad')), 'no device sends Jon to the older iPad')
   assert.equal(tryWords('tv'), 'Try it on the Parlour TV computer')
+  assert.equal(tryWords('deck'), 'Try it on a Mac with the Stream Deck + XL')
   assert.equal(tryWords('nope'), 'Try it somewhere else')
+})
+
+// 28 Oct 2026: the arcade is built to try, and the night still plays the
+// Catwalk until Jon answers the decision card entrywayGame.
+test('Miss Boo LaRue’s Arcade: right after Boo’s Catwalk, on its own page in Chrome, never a night, and not on the night yet', () => {
+  const arcade = SECTIONS.find(s => s.key === 'arcade')
+  assert.equal(SECTION_KEYS.indexOf('arcade'), SECTION_KEYS.indexOf('boo') + 1, 'beside the Catwalk, which stays')
+  assert.deepEqual(arcade.devices, ['deck', 'projector'])
+  assert.deepEqual(arcade.tries.map(t => queryOf(t.params)), [
+    '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1', '?preview=kiosk-arcade-clue', '?preview=kiosk-arcade-third', '?preview=kiosk-arcade-farewell',
+  ])
+  assert.ok(arcade.tries.every(t => !t.night && (t.key || t.params.preview)), 'no try follows a night, and each has a key for the list')
+  assert.match(arcade.where, /not on the night yet/)
+  assert.match(arcade.note, /not on the night yet/i)
+  assert.match(arcade.note, /entrywayGame/, 'the note names the question')
+  assert.match(arcade.steps.join(' '), /Google Chrome/, 'Safari has no way to the Stream Deck')
+  assert.match(arcade.steps.join(' '), /Quit the Stream Deck app/)
+  // 29 Oct 2026, the review: through a HomePod the sounds lag two seconds, and one arcade tab
+  // holds the deck at a time, so the visit starts from free play's own button
+  assert.match(arcade.steps[0], /sound output to its own speakers/)
+  const visit = arcade.steps.find(s => s.startsWith('For a group’s visit'))
+  assert.match(visit, /tap Practise a group’s visit at the bottom of the free play page, or close the free play tab/)
+  assert.ok(playSrc('screens/Arcade.jsx').includes("Practise a group's visit"), 'the button the step names is on the page')
+  assert.match(visit, /the last game is shorter when time runs short/, 'two minutes a game, but not past the chime')
 })
 
 test('addresses: on top of the play page, with or without a query already there', () => {

@@ -12,7 +12,8 @@
 // A device with a `kiosk` opens the game at PLAY_URL?kiosk=<kiosk>, full
 // screen. One with `plain: true` opens the game itself, as a spare phone.
 // One with neither has no address: its `start` steps say how it comes up.
-// `query` adds to the address (the standalone memory match). `pending` says
+// `query` adds to the address (the standalone memory match and Miss Boo
+// LaRue's Arcade, each a game on its own with no night). `pending` says
 // why an address does not work yet; `note` is anything still undecided.
 // `start` is plain words for Jon (24 Oct 2026: no Terminal); `tech` is the
 // exact line Claude Code runs, shown in a closed For Claude Code fold.
@@ -160,6 +161,22 @@ export const DEVICE_ROOMS = [
         key: 'memoryplay', name: 'In Duplicate, just for fun', machine: 'Any iPad or computer, any day', kiosk: 'memory', query: 'play=1',
         what: 'The memory match on its own: three boards, no case, no clues, nothing sent. For playing any time.',
         start: ['Open the address. Play again starts fresh boards.'],
+      },
+      // 28 Oct 2026: the arcade on its own, like the memory match. It has a
+      // query, so Boo's wall stays the one boo screen of the night.
+      {
+        key: 'arcadeplay', name: 'Miss Boo LaRue’s Arcade, just for fun', machine: 'A Mac with Google Chrome and the Stream Deck + XL, any day', kiosk: 'boo', query: 'play=1',
+        what: 'Boo’s five little games on the Stream Deck + XL, with Boo on the Mac’s screen: free play, no case, no clues, nothing sent. Practise a group’s visit, at the bottom of the page, tries the turns, the two tokens each, the clue after each player’s second game and the chime.',
+        start: [
+          'On a Mac with Google Chrome: quit the Stream Deck app, then plug in the Stream Deck + XL.',
+          'Set the Mac’s sound output to its own speakers first: through a HomePod the sounds come about two seconds late.',
+          'Open the address in Google Chrome. Safari cannot reach the Stream Deck.',
+          'Tap Connect the Stream Deck and pick it from the list, once. Then make the window full screen.',
+          'No Stream Deck? The deck drawn on the screen plays the same games with the mouse or the keyboard.',
+        ],
+        alive: 'Boo and the deck on the screen. Once the Stream Deck is connected, the bottom of the page says so.',
+        note: 'Not on the night yet: the Entryway keeps Boo’s Catwalk until you answer the question entrywayGame on the board.',
+        tech: 'play/src/main.jsx sends ?kiosk=boo&play=1 to play/src/screens/Arcade.jsx (BooArcade) before the kiosks: no sign-in, no presence, no night. &visit=1 is the practice visit. WebHID through @elgato-stream-deck/webhid, in Chrome or Edge on https or localhost only; one arcade tab holds the deck at a time (the Web Lock arcade-deck). docs/boo-arcade.md.',
       },
     ],
   },

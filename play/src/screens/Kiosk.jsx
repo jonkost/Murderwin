@@ -26,7 +26,9 @@ import Spoken from './Spoken'
 // The memory match (?kiosk=memory, the iPad in the Library in Act 4)
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's wall (?kiosk=boo, Susan's MacBook
-// Pro at the projector) is her catwalk (screens/Rooms.jsx). Boo's
+// Pro at the projector) is her catwalk (screens/Rooms.jsx); with &play=1 it is
+// Miss Boo LaRue's Arcade instead (screens/Arcade.jsx, 28 Oct 2026), which
+// main.jsx sends there before this file: no sign-in, no presence, no night. Boo's
 // camera (?kiosk=pose, the iPad facing the catwalk in Act 4) follows the
 // same show and photographs each group's last pose for the end credits
 // (screens/Pose.jsx). The Orangerie's screen (?kiosk=orangerie, the brain's

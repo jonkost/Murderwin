@@ -14,7 +14,8 @@ pictures, the Happy Birthday Irwin card with Sir Irwin's picture, the rejoin
 code under the ballot clock, and the Orangerie's screen on the brain's
 browser; and on 26 October for the devices in your cue list's key: your iPad
 Pro's four stations, Jenna's iPad Pro as Boo's camera, and Susan's MacBook
-Pro on the projector all night. Everything on this page
+Pro on the projector all night; and on 28 October for Miss Boo LaRue's
+Arcade, a page of its own to try, not on the night yet. Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -30,6 +31,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
+| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: the Entryway keeps Boo's Catwalk until you answer *entrywayGame* | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: two tokens each, turns, each player's clue on the screen after their second game (in practice the square-bracket line), Boo's line for a trio's third player, the winner, free play, and the chime ten minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
 | `?kiosk=pose` | Jenna's iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
 | `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
@@ -372,7 +374,9 @@ kiosk-living-vote | kiosk-relay-called | kiosk-relay-square |
 kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to
 kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
 kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
-kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-pose | kiosk-prompts |
+kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-arcade |
+kiosk-arcade-play | kiosk-arcade-clue | kiosk-arcade-third |
+kiosk-arcade-farewell | kiosk-pose | kiosk-prompts |
 kiosk-title | kiosk-finale |
 kiosk-finale-awards | kiosk-finale-graph | kiosk-finale-reveal |
 kiosk-finale-leadin | kiosk-finale-victim | kiosk-finale-done |
@@ -385,3 +389,13 @@ kiosk-birthday | kiosk-loop-living | kiosk-loop-ipad | kiosk-loop-study |
 kiosk-loop-memory | kiosk-loop-boo | kiosk-loop-bedroom |
 kiosk-loop-orangerie | kiosk-quiet | kiosk-end`. The list grows as screens
 are added: `KIOSK` in `Preview.jsx` is the source.
+
+*Miss Boo LaRue's Arcade (28 Oct 2026, not on the night until Jon answers
+entrywayGame).* Not a kiosk screen: `play/src/main.jsx` sends
+`?kiosk=boo&play=1` to `BooArcade` (`play/src/screens/Arcade.jsx`) before the
+kiosks, so it never goes through `Kiosk.jsx` (no sign-in, no presence, no
+night); `&visit=1` is the practice visit. `?kiosk=boo` alone is still Boo's
+wall. The five samples (`kiosk-arcade`, `kiosk-arcade-play`,
+`kiosk-arcade-clue`, `kiosk-arcade-third`, `kiosk-arcade-farewell`) are
+`<BooArcade sample="..." />` frozen: no loop, no input, no deck, no sound.
+The whole build: `docs/boo-arcade.md`.

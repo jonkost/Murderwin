@@ -1051,3 +1051,119 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .said, .hint-line, .bag-line, .boo-judge, .role-card { font-family: var(--serif); line-height: 1.45; }
 .said { font-size: 1.12rem; }
 .speaker strong, .speaker h3 { font-size: 1.3rem; }
+
+/* Miss Boo LaRue's Arcade (28 Oct 2026, screens/Arcade.jsx, docs/boo-arcade.md): the house look on one
+   screen that never scrolls. The title and the round's clock along the top, Boo on the left, the Stream
+   Deck + XL drawn on the right at its own shape (1280 by 1081), the deck's state and the players along
+   the bottom. A moment (how to play, the count, the points, a clue, the winner, the chime) takes the
+   middle. Every size is capped by the screen's height as well as its width, so a 16:10 Mac, a 16:9 TV
+   and a 4:3 screen all fit, PRACTICE band included. */
+.kiosk.arcade { --paper-opacity: 0.22; --paper-size: 120vw; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: stretch; justify-content: stretch; align-content: stretch; gap: 1.6vh; height: calc(100vh - var(--band-h)); height: calc(100dvh - var(--band-h)); min-height: 0;
+  overflow: hidden; padding: 2.4vh 2.6vw 1.8vh; text-align: left; background: var(--brand-blue); -webkit-user-select: none; user-select: none; }
+.arcade-top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; min-width: 0; }
+.arcade-name { min-width: 0; }
+.arcade-name h1 { margin: 0; font-size: min(3.6vw, 5.6vh); line-height: 1.1; color: var(--brand-parchment); }
+.arcade-sub { margin: 0.4vh 0 0; font-size: min(1.8vw, 2.8vh); color: var(--brand-brass); }
+.arcade-round { flex: none; display: flex; align-items: center; gap: 1.4vw; }
+.arcade-top .study-clock { font-size: min(3.6vw, 5.8vh); }
+.arcade-chime { min-height: max(2.2rem, 5vh); padding: 0 1.4vw; border: 0; border-radius: 1vh; background: rgba(0, 25, 37, 0.85); box-shadow: inset 0 0 0 0.25vh var(--brand-brass);
+  color: var(--brass-hi); font-size: min(1.6vw, 2.6vh); font-weight: 600; }
+
+/* the middle: Boo beside the deck */
+.arcade-main { position: relative; min-height: 0; display: flex; align-items: stretch; gap: 2.4vw; container-type: size; }
+.arcade-boo { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6vh; text-align: center; }
+.arcade-picture { flex: 1 1 0; min-height: 0; width: 100%; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.6)); }
+.arcade-game { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(2.6vw, 4vh); line-height: 1.15; color: var(--brand-parchment); }
+/* her bubble sits under her picture, its tail pointing up at her */
+.arcade-bubble { max-width: 100%; padding: 1.8vh 2vw; font-size: min(2.2vw, 3.4vh); text-align: center; }
+.arcade-bubble::before { left: 50%; top: 0; transform: translate(-50%, -100%); border: 0; border-left: 1.4vh solid transparent; border-right: 1.4vh solid transparent; border-bottom: 2vh solid var(--brand-parchment); }
+.arcade-score { margin: 0; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0.4vh 1.6vw; font-size: min(2.2vw, 3.4vh); color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
+.arcade-score strong { font-family: var(--serif); font-size: 1.6em; color: var(--brand-brass); }
+.arcade-left { color: var(--dim); }
+.arcade-plain { margin: 0; max-width: 100%; font-size: min(2.4vw, 3.8vh); line-height: 1.3; color: var(--brand-parchment); }
+.arcade-boo.playing .arcade-plain { font-size: min(1.7vw, 2.7vh); color: var(--dim); }
+
+/* the deck drawn on the screen: its keys, strip and dials placed as on the real one */
+.arcade-deck { flex: none; align-self: center; position: relative; width: min(64cqw, calc(100cqh * 1280 / 1081)); aspect-ratio: 1280 / 1081; border-radius: 2.6% / 3.1%;
+  background: linear-gradient(180deg, #1c1e22 0%, #0d0e10 100%); box-shadow: inset 0 0 0 1px rgba(241, 232, 214, 0.08), 0 2vh 5vh rgba(0, 0, 0, 0.55); container-type: inline-size; }
+.arcade-key, .arcade-strip, .arcade-dial { position: absolute; }
+.arcade-key, .arcade-strip, .arcade-turn, .arcade-knob { margin: 0; padding: 0; border: 0; color: var(--brand-parchment); touch-action: manipulation; -webkit-touch-callout: none; }
+.arcade-key { overflow: hidden; border-radius: 12%; background: #000; box-shadow: 0 0 0 0.3cqi #2a2d32, 0 0.5cqi 1cqi rgba(0, 0, 0, 0.6); transition: transform 0.08s ease-out, filter 0.08s ease-out; }
+.arcade-strip { overflow: hidden; border-radius: 0.8cqi; background: var(--brand-blue); box-shadow: 0 0 0 0.3cqi #2a2d32; }
+.arcade-key img, .arcade-strip img { display: block; width: 100%; height: 100%; pointer-events: none; }
+.arcade-dial { display: flex; align-items: center; justify-content: space-between; }
+.arcade-turn { width: 26%; height: 76%; display: grid; place-items: center; border-radius: 1.2cqi; background: #23262b; box-shadow: inset 0 0 0 1px rgba(241, 232, 214, 0.1); transition: transform 0.08s ease-out; }
+.arcade-turn svg { width: 62%; height: 62%; }
+.arcade-knob { width: 43.75%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #50545a 0%, #26292d 55%, #111214 100%);
+  box-shadow: inset 0 0 0 0.35cqi var(--brand-brass), 0 0.5cqi 1.2cqi rgba(0, 0, 0, 0.6); transition: transform 0.08s ease-out; }
+.arcade-knob.lit { box-shadow: inset 0 0 0 0.5cqi var(--brass-hi), 0 0 1.6cqi rgba(214, 207, 134, 0.45); }
+.arcade-key:hover, .arcade-strip:hover, .arcade-turn:hover, .arcade-knob:hover { filter: brightness(1.15); }
+.arcade-key:active, .arcade-turn:active, .arcade-knob:active { transform: scale(0.94); }
+.arcade-deck :focus-visible { outline: 0.4cqi solid var(--brass-hi); outline-offset: 0.3cqi; }
+
+/* a moment across the middle */
+.arcade-moment { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; padding: 2vh 3vw;
+  overflow: hidden; border-radius: 1.6vh; background: var(--brand-blue); box-shadow: inset 0 0 0 0.25vh rgba(166, 162, 83, 0.35); text-align: center; animation: arcade-in 0.25s ease-out; }
+@keyframes arcade-in { from { opacity: 0; } to { opacity: 1; } }
+.arcade-moment-name { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(4.6vw, 7.4vh); line-height: 1.1; color: var(--brand-parchment); }
+.arcade-moment-name.small { font-size: min(3vw, 4.8vh); color: var(--brand-brass); }
+.arcade-how { margin: 0; max-width: min(62ch, 90cqw); font-size: min(2.6vw, 4.2vh); line-height: 1.35; color: var(--brand-parchment); }
+.arcade-how.dim { font-size: min(1.9vw, 3vh); color: var(--dim); }
+.arcade-do { margin: 0; max-width: 90cqw; font-size: min(2.2vw, 3.4vh); line-height: 1.3; color: var(--brass-hi); }
+.arcade-count { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(22vw, 34vh); line-height: 1; color: var(--brand-parchment); font-variant-numeric: tabular-nums; animation: boo-tick 1s ease-out; }
+.arcade-says { display: flex; align-items: center; justify-content: center; gap: 3vw; max-width: 100%; }
+.arcade-says img { flex: none; height: min(24vh, 20vw); width: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.6)); }
+.arcade-says .boo-bubble { max-width: min(46vw, 56cqw); font-size: min(2.8vw, 4.4vh); }
+.arcade-moment.farewell .arcade-says .boo-bubble { font-size: min(5vw, 8vh); }
+.arcade-points { margin: 0; display: flex; align-items: baseline; gap: 0.6vw; font-family: var(--serif); font-size: min(2.6vw, 4.2vh); color: var(--brand-parchment); }
+.arcade-points strong { font-size: 2em; line-height: 1; color: var(--brand-brass); font-variant-numeric: tabular-nums; }
+/* the clue, on a card of parchment; in practice the house's stand-in, dim and in italics like every stand-in */
+.arcade-clue { max-width: min(80cqw, 64rem); padding: 2vh 3vw; border-radius: 1.4vh; background: var(--brand-parchment); box-shadow: 0 1.2vh 3vh rgba(0, 0, 0, 0.45); }
+.arcade-clue-text { margin: 0; font-family: var(--serif); font-style: italic; font-size: min(3vw, 4.8vh); line-height: 1.25; color: #6e625b; }
+.arcade-clue-note { margin: 1vh 0 0; font-size: min(1.7vw, 2.7vh); color: #6e625b; }
+.arcade-winner { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(6vw, 10vh); line-height: 1.1; color: var(--brand-brass); }
+/* a long names line (a tie, or long names) is set smaller, and Boo with it, so OK stays on the screen */
+.arcade-moment.winner.long .arcade-winner { font-size: min(4vw, 6.5vh); }
+.arcade-moment.winner.long .arcade-says img { height: min(16vh, 14vw); }
+/* the winner and a clue can still outgrow a short screen when long names fill the bottom row: then they run
+   off the bottom, never the top, and scroll down to OK */
+.arcade-moment.winner, .arcade-moment.clue { overflow-y: auto; justify-content: safe center; }
+.arcade-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6vw; }
+.arcade-btn { min-height: max(2.6rem, 6.4vh); min-width: 10vw; padding: 0 2.6vw; border: 0; border-radius: 1.2vh; background: var(--brand-red); color: var(--brand-parchment); font-size: min(2.2vw, 3.6vh); font-weight: 600; }
+.arcade-btn.quiet { background: transparent; box-shadow: inset 0 0 0 0.25vh var(--line); color: var(--dim); }
+.arcade-btn:disabled { opacity: 0.4; cursor: default; }
+/* the practice visit's names */
+.arcade-names { display: grid; gap: 1.2vh; width: min(34rem, 60cqw); }
+.arcade-input { min-height: max(2.6rem, 6.4vh); padding: 0 1.4vw; border-radius: 1vh; border: 0.2vh solid var(--line); background: var(--card); color: var(--ink); font: inherit;
+  font-size: min(2.2vw, 3.6vh); -webkit-user-select: text; user-select: text; }
+.arcade-input::placeholder { color: var(--dim); }
+
+/* the bottom: the deck on the left, the players on the right, clear of the wake corner until the first click */
+.arcade-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1vh 2.4vw; min-height: max(2.2rem, 5vh); font-size: min(1.6vw, 2.6vh); color: var(--dim); }
+.arcade-foot.waking { padding-right: 26vw; }
+.arcade-deckline { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.6vh 1.2vw; }
+.arcade-deckline.on { color: var(--brass-hi); }
+.arcade-connect { min-height: max(2.2rem, 5vh); padding: 0 1.6vw; border: 0; border-radius: 1vh; background: var(--brand-red); color: var(--brand-parchment); font-size: inherit; font-weight: 600; }
+.arcade-connect:disabled { opacity: 0.5; cursor: default; }
+.arcade-problem { color: var(--brand-parchment); }
+.arcade-players { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6vh 2.4vw; }
+.arcade-player { display: flex; align-items: center; gap: 0.8vw; }
+.arcade-player-name { font-weight: 600; color: var(--brand-parchment); }
+.arcade-player.now .arcade-player-name { color: var(--brass-hi); }
+.arcade-tokens { display: inline-flex; gap: 0.4vw; }
+.arcade-token { width: min(1.3vw, 2.1vh); height: min(1.3vw, 2.1vh); border-radius: 50%; background: var(--brand-brass); box-shadow: inset 0 0 0 0.25vh var(--brand-brass); }
+.arcade-token.spent { background: transparent; }
+.arcade-scores { color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
+.arcade-fun { margin: 0 0 0 auto; display: flex; align-items: center; gap: 1.4vw; }
+.arcade-small { min-height: max(2rem, 4.4vh); padding: 0 1.2vw; border: 0; border-radius: 1vh; background: transparent; box-shadow: inset 0 0 0 0.2vh var(--line); color: var(--brand-parchment); font-size: inherit; }
+/* a screen standing up (an iPad held tall): Boo above the deck */
+@media (orientation: portrait) {
+  .arcade-main { flex-direction: column; gap: 1.6vh; }
+  .arcade-deck { width: min(100cqw, calc(58cqh * 1280 / 1081)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arcade-moment, .arcade-count { animation: none; }
+  .arcade-key, .arcade-turn, .arcade-knob { transition: none; }
+  .arcade-key:active, .arcade-turn:active, .arcade-knob:active { transform: none; }
+}

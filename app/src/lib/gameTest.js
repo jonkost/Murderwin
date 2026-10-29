@@ -8,7 +8,10 @@
 //
 // Nothing here is sealed. Every address is a sample screen (?preview=, made
 // up data, no case), a practice that never touches a night (?practice=), or
-// the standalone memory match. The two room screens a test night needs are
+// a game on its own that never touches a night either: the standalone memory
+// match (?kiosk=memory&play=1) and Miss Boo LaRue's Arcade (?kiosk=boo&play=1,
+// &visit=1 for a practice visit; 28 Oct 2026, not on the night until Jon
+// answers entrywayGame). The two room screens a test night needs are
 // marked `night`, so the page turns them off while the party box is ticked
 // or the live night is the party or a dry run.
 
@@ -34,6 +37,7 @@ export const DEVICES = {
   study: 'On the study computer',
   bedroom: 'On the bedroom screen',
   walls: 'At the study walls',
+  deck: 'On a Mac with the Stream Deck + XL', // Miss Boo LaRue's Arcade, 28 Oct 2026
   other: 'Somewhere else',
 }
 
@@ -45,9 +49,11 @@ export function tryWords(device) {
 
 const preview = (name, label, device) => ({ label, device, params: { preview: name } })
 
-// The seven sections, in the order of the night. `moment` is the Timeline
+// The eight sections, in the order of the night. `moment` is the Timeline
 // row a note is filed under (lib/timeline.js MOMENT_KEYS). `devices` is the
-// feedback box's "which screen" list, first is the default.
+// feedback box's "which screen" list, first is the default. The arcade sits
+// beside Boo's Catwalk under the Entryway's moment, but the night still plays
+// the Catwalk: the decision card entrywayGame is Jon's.
 export const SECTIONS = [
   {
     key: 'study', name: NAME.study, where: 'Act 4 · the Study', moment: 'act4.study',
@@ -119,6 +125,27 @@ export const SECTIONS = [
       preview('kiosk-boo', 'Boo’s wall, one pose, a sample', 'projector'),
       preview('kiosk-boo-pose', 'Boo’s wall at the pose, a sample', 'projector'),
       { key: 'camera', label: 'Boo’s camera, the practice show', device: 'ipadpro', params: { kiosk: 'pose', practice: '1' } },
+    ],
+  },
+  {
+    // 28 Oct 2026, a page on its own like the memory match: no night, no sign-in.
+    key: 'arcade', name: 'Miss Boo LaRue’s Arcade', where: 'Act 4 · the Entryway (not on the night yet)', moment: 'act4.entryway',
+    what: 'Five little games on the Stream Deck + XL’s keys and dials, with Boo on the Mac’s screen. In a group’s visit everyone has two tokens and the players take turns; after their second game each player gets their own clue on the screen. Then free play until the chime.',
+    devices: ['deck', 'projector'],
+    steps: [
+      'Open it on a Mac in Google Chrome (Safari cannot reach the Stream Deck). Quit the Stream Deck app first, then plug in the Stream Deck + XL. Set the Mac’s sound output to its own speakers first: through a HomePod the sounds come about two seconds late.',
+      'Tap Connect the Stream Deck once and pick it from the list. No Stream Deck? Play the deck on the screen with the mouse, or the keyboard: the arrow keys turn, the space bar presses.',
+      'Free play: press a game in the middle of the second row of keys (Boo Chasing Her Tail, The Lazy Pointer, Whack-a-Mouse, Knock It Off the Table, Yarn Catch), then any key or dial to start. The screen says how each one plays. Two minutes a game.',
+      'For a group’s visit, tap Practise a group’s visit at the bottom of the free play page, or close the free play tab before opening the practice visit: only one arcade tab plays on the Stream Deck at a time. Type two or three first names. Two tokens each, one game at a time in turns (80 seconds a game for a trio, and the last game is shorter when time runs short, so its clue usually still comes before the chime). After a player’s second game their clue shows on the screen (in practice, a line in square brackets); a trio’s third player gets Boo’s line instead. Then Boo’s winner, unless the chime comes first, then free play.',
+      'The practice visit lasts ten minutes, like an Act 4 round, and ends at the chime: Boo says Be on your way. Ring the chime, beside the clock, tries the ending at once.',
+    ],
+    note: 'Not on the night yet: the Entryway keeps Boo’s Catwalk until you answer the question entrywayGame on the board. On its own the arcade reads no night, so nothing is paid and no clue is dealt.',
+    tries: [
+      { key: 'free', label: 'The arcade, free play', device: 'deck', params: { kiosk: 'boo', play: '1' } },
+      { key: 'visit', label: 'A group’s visit, for practice', device: 'deck', params: { kiosk: 'boo', play: '1', visit: '1' } },
+      preview('kiosk-arcade-clue', 'A player’s clue after their second game, a sample', 'projector'),
+      preview('kiosk-arcade-third', 'A trio’s third player: Boo’s line instead of a clue, a sample', 'projector'),
+      preview('kiosk-arcade-farewell', 'At the chime: Be on your way, a sample', 'projector'),
     ],
   },
   {

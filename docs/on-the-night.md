@@ -733,8 +733,8 @@ Every game has the same parts: what it is and where it plays, the steps, a
 code to open it on another device), an "It works" button, and a box for what
 to fix. Beside each game's name a chip says Not tried yet, Works (with the
 day) or Needs a fix. The sample screens show made-up data, and the two
-practices (Salem's and Boo's) have no night at all: nothing is paid and no
-clue is dealt.
+practices (Salem's and Boo's) and *Miss Boo LaRue's Arcade* have no night
+at all: nothing is paid and no clue is dealt.
 
 - *First, the study key word.* While no word is saved, a box at the top of
   the tab says so. Save the same word the study Mac and the brain already
@@ -782,6 +782,28 @@ clue is dealt.
   camera too, open "Boo's camera, the practice show" on the iPad Pro, stand
   it facing you and tap Turn on the camera: at the last pose it takes the
   photo and keeps it on its own screen, never sent anywhere.
+- *Miss Boo LaRue's Arcade* (the Entryway, not on the night yet). Built
+  28 October to try: the night still plays *Boo's Catwalk* until you answer
+  the question *entrywayGame* on the board. On a Mac in Google Chrome
+  (Safari cannot reach the Stream Deck): quit the Stream Deck app, set the
+  Mac's sound output to its own speakers (through a HomePod the sounds come
+  about two seconds late), plug in the Stream Deck + XL, open "The arcade,
+  free play", tap "Connect the Stream Deck" once and pick it from the list.
+  Press a game in the middle of the second row of keys, then any key or
+  dial to start; two minutes a game. No Stream Deck? The deck drawn on the
+  screen plays with the mouse, or the arrow keys and the space bar. For a
+  group's visit, tap "Practise a group's visit" at the bottom of the free
+  play page, or close the free play tab before opening "A group's visit,
+  for practice": only one arcade tab plays on the Stream Deck at a time,
+  and the other says so. It asks for two or three first names: two tokens
+  each, one game at a time in turns (80 seconds a game for a trio, and the
+  last game is shorter when time runs short, so its clue usually still
+  comes before the chime), each player's clue on the screen after their
+  second game (in practice, a line in square brackets), Boo's line instead
+  for a trio's third player, Boo's winner (unless the chime comes first),
+  then free play until the chime ten minutes in, when Boo says "Be on your
+  way." "Ring the chime", beside the clock, tries the ending at once. Samples of a player's clue, a trio's third player and
+  the chime. The whole game: `docs/boo-arcade.md`.
 - *The Parlour Games.* Every set in the workshop's bank, numbered, each with
   "See it on a phone": Boo's line and the three questions, exactly as a
   phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4
@@ -859,12 +881,18 @@ workshop") are in quotes, never bold. No em dashes anywhere in this file.
 
 *The kiosks* (`play/src/screens/Kiosk.jsx`, `play/src/screens/Rooms.jsx`):
 `?kiosk=living | ipad | memory | boo | pose | bedroom | study | orangerie`, plus
-`?kiosk=memory&play=1` (the standalone memory match, no night). The device
+`?kiosk=memory&play=1` (the standalone memory match, no night) and
+`?kiosk=boo&play=1` (Miss Boo LaRue's Arcade, 28 Oct, not on the night until
+Jon answers entrywayGame; `&visit=1` is the practice visit): `play/src/main.jsx`
+sends it to `BooArcade` (`play/src/screens/Arcade.jsx`) before the kiosks, so
+it never goes through `Kiosk.jsx`: no sign-in, no presence, no night
+(`docs/boo-arcade.md`). The device
 table is `app/src/lib/devices.js`, to Jon's key (`docs/cue-list.md`, built
 26 Oct): the iPad Pro is `ipad` in Acts 2 and 3 (the Library, then the
 Orangerie), `memory` in Act 4 and `bedroom` from Act 6, one `DEVICE_ROOMS`
 group; Susan's MacBook Pro is `boo` all night (the projector's plug is the
-brain's, `docs/cues-relay.md`); Jenna's iPad Pro is `pose`; the brain's
+brain's, `docs/cues-relay.md`; the arcade's Spares entry `arcadeplay` carries
+`play=1`, so `byKiosk('boo')` still finds her Mac); Jenna's iPad Pro is `pose`; the brain's
 browser is `orangerie`; the older family iPad is listed with no address, its
 note naming the question olderIpad. `app/test/devices.test.mjs` pins all of
 that. The living kiosk takes the relay guesses (`callRelayGuess`) and
@@ -1087,7 +1115,9 @@ in-memory stand-in for Firestore (the default, no services at all).
 `#/game-test`; `#/study-test` redirects to `#/game-test#study`, and a hash
 of any section key opens that section. The pure part is
 `app/src/lib/gameTest.js` (`SECTIONS` in the order of the night: study,
-memory, salem, boo, parlour, drawing, deduction; `nightStrip`, `chipOf`,
+memory, salem, boo, arcade, parlour, drawing, deduction; the arcade, 28 Oct,
+sits beside the Catwalk under `act4.entryway` with the device `deck`, and is
+not on the night; `nightStrip`, `chipOf`,
 `feedbackTask`, `stewardTask`); the reads and the chip writes are
 `app/src/lib/gameTestApi.js` (chips in `meta/game_test`, each write also in
 `workshop_history`). A note is a `tasks` card with `source: 'game-test'`,
