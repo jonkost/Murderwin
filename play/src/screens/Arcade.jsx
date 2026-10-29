@@ -138,7 +138,7 @@ export default function BooArcade({ sample = null }) {
   const sigRef = useRef(view.sig)
   const [early, setEarly] = useState(false) // the moment's OK is not ready yet
   const earlyRef = useRef(false)
-  const [artReady, setArtReady] = useState(false)
+  const [artReady, setArtReady] = useState(0) // how often the art has settled: each time, the screen draws its faces again
   const artRef = useRef(false)
   const [deck, setDeck] = useState(() => (!live ? 'none' : deckSupported() ? 'looking' : 'unsupported'))
   const [problem, setProblem] = useState(null)
@@ -233,7 +233,7 @@ export default function BooArcade({ sample = null }) {
     loadArt().then(() => {
       if (!on) return
       artRef.current = true
-      setArtReady(true)
+      setArtReady(n => n + 1) // a hot reload's new art module too, which starts with no pictures
       const v = viewRef.current
       heldRef.current?.painter.paint(v.faces, v.strip)
       for (const name of BOO_PICTURES) { const img = new Image(); img.src = booUrl(name) }

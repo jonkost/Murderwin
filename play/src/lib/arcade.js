@@ -80,6 +80,7 @@ export const CLUE_MAX_MS = 60000         // and it moves on by itself after this
 export const WINNER_MS = 10000
 export const WINNER_MIN_MS = 3000
 export const FAREWELL_MS = 8000
+export const MARQUEE_STEP_MS = 250       // the top row's lit paws move one key in towards the middle this often (Jon, 29 Oct 2026: flashing like an arcade game)
 
 // ---- the deck ----
 
@@ -204,7 +205,7 @@ export const PETS = ['boo', 'granola', 'irwin', 'salem', 'zimmy']
 
 // Every face a key can show (the art draws each one).
 export const FACE_IDS = [
-  'off', 'blank', 'star', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3',
+  'off', 'blank', 'paw', 'paw-lit', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3',
   ...GAMES.map(g => `menu:${g.id}`),
   'tail-head', 'tail-body', 'tail-tip', 'fish', 'bite',
   'dot', 'chaser', 'caught',
@@ -946,9 +947,16 @@ function winnerOf(a) {
   return { names: a.players.filter((p, i) => totals[i] === best).map(p => p.name), total: best }
 }
 
-function menuFaces(a) {
+// The top row's lights at `now`, the stage's own: each paw lit one step in
+// three, so the lit ones run one key in towards the middle every step.
+function marquee(f, a, now) {
+  const step = Math.max(0, Math.floor((now - a.stageAt) / MARQUEE_STEP_MS))
+  for (let c = 0; c < COLS; c++) f[keyAt(0, c)] = (Math.abs(c - 4) + step) % 3 === 0 ? 'paw-lit' : 'paw'
+}
+
+function menuFaces(a, now) {
   const f = new Array(KEY_COUNT).fill('blank')
-  for (let c = 0; c < COLS; c++) f[keyAt(0, c)] = 'star'
+  marquee(f, a, now)
   f[keyAt(0, 4)] = 'boo'
   GAMES.forEach((g, i) => { f[MENU_KEYS[i]] = `menu:${g.id}` })
   if (a.stage === 'menu') {
@@ -959,13 +967,13 @@ function menuFaces(a) {
 }
 
 function facesOf(a, now) {
-  if (a.stage === 'home' || a.stage === 'menu') return menuFaces(a)
+  if (a.stage === 'home' || a.stage === 'menu') return menuFaces(a, now)
   if (a.stage === 'ready' && a.game) { const f = gameFaces(a.game, now); f[BACK_KEY] = 'back'; return f }
   if ((a.stage === 'play' || a.stage === 'result') && a.game) return gameFaces(a.game, now) // the result: the last board
   const f = new Array(KEY_COUNT).fill('off')
   if (a.stage === 'count') f[MIDDLE_KEY] = `num:${countOf(a, now)}`
   else if (a.stage === 'clue' || a.stage === 'third') f[MIDDLE_KEY] = 'ok' // press anything to go on
-  else if (a.stage === 'winner') { for (let c = 0; c < COLS; c++) f[keyAt(0, c)] = 'star'; f[MIDDLE_KEY] = 'boo' }
+  else if (a.stage === 'winner') { marquee(f, a, now); f[MIDDLE_KEY] = 'boo' }
   else if (a.stage === 'farewell') f[MIDDLE_KEY] = 'boo'
   return f
 }

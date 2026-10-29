@@ -2,7 +2,8 @@
 
 Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October, when
 *Whack-a-Mouse* also got its pets, the Tail key on the menu its black cat, and every strike its
-words on the touch strip.
+words on the touch strip. Later that day the menu's top row became flashing paws, and the Knock
+key Boo's paws.
 Everything here is structure: no answers, no clue text. Safe for you to read.
 
 **Not on the night yet.** On the night the Entryway still plays *Boo's Catwalk*, as built.
@@ -10,10 +11,11 @@ Whether the arcade takes its place is the decision card *entrywayGame* on the bo
 answer it. Until then the arcade is a page you can play any day, and nothing in it touches a night.
 
 **Where the settled parts come from:** your words on 28 October (the talk that designed it) and
-29 October (the pets in *Whack-a-Mouse*, the black cat, the words on the strip), quoted in §1,
-the note on the decision card *entrywayGame*, and the build of 28 October. Where the build goes
-past your words (the speeds, the points, how often a pet comes, Boo's lines, most of the words
-on the strip), those are starting points, and a note from the Game test tab changes them.
+29 October (the pets in *Whack-a-Mouse*, the black cat, the words on the strip, the menu's
+look), quoted in §1, the note on the decision card *entrywayGame*, and the build of 28 October.
+Where the build goes past your words (the speeds, the points, how often a pet comes, Boo's
+lines, most of the words on the strip), those are starting points, and a note from the Game test
+tab changes them.
 
 ---
 
@@ -72,6 +74,17 @@ the red dot.", "You tapped three pets.", "Time's up."). It counts a ball that fa
 basket in *Yarn Catch* as no strike (it only scores nothing), so while that game plays its strip
 shows the points as before.
 
+Later on 29 October, looking at the menu: "Use the boo face image. Make the drop shadow less
+noticeable on the 'tail.' Knock should be the cat paws. instead of the stars on the top row. Make
+it flashing like an arcade game." Settled: Boo's face picture on the top row's middle key (a
+fresh page already showed it; the page now draws its keys again whenever the pictures come in,
+so a page left open while the code changes shows it too); the black cat on the Tail key in a
+faint glow; the Knock key shows Boo's paws, the paws she swipes with in the game (the vase stays
+on her table). The build reads the rest as paws in place of the stars on the top row, flashing
+like an arcade's sign: one paw in three lit, the lights running in towards Boo four times a
+second. The winner's top row flashes the same way. If you meant Boo's face along the row
+instead, say so and it changes.
+
 ---
 
 ## 2. The page, and how to open it
@@ -119,7 +132,7 @@ dials along the bottom.
 
 | Where | What it shows |
 |---|---|
-| Top row | Stars, with Boo in the middle. |
+| Top row | Paws, with Boo's face in the middle: one paw in three lit, the lights running in towards her, like an arcade's sign. |
 | Second row | The menu: two blank keys, the five games, two blank keys. From the left: *Boo Chasing Her Tail*, *The Lazy Pointer*, *Whack-a-Mouse*, *Knock It Off the Table*, *Yarn Catch*. |
 | Third row | In a visit, the player's two tokens either side of the middle: a full coin for a token left, an empty ring for one spent. |
 | Bottom row | Blank. Its left-hand key is Back, on the screen before a game starts. |
@@ -128,7 +141,8 @@ dials along the bottom.
 
 During a game the keys are the game's board. Between games: a big 3, 2, 1 on the middle key of
 the second row for the count, one green key with a tick while a clue or Boo's line is up (a press
-goes on: any key, or a dial pressed in), stars and Boo for the winner, and Boo alone at the chime.
+goes on: any key, or a dial pressed in), the flashing paws and Boo for the winner, and Boo alone
+at the chime.
 
 ---
 
@@ -372,7 +386,10 @@ straight away.
   `gameLengthMs(players)`, and for the cut near the chime `CLUE_KEEP_MS` 15000 and `CUT_MIN_MS`
   30000), the seeded random (`nextRand`, mulberry32), the five engines (`newGame`, `stepGame`,
   `inputGame`, `gameFaces`), the visit machine (`newArcade`, `arcadeStep`, `arcadeInput`,
-  `arcadeChime`), the view (`arcadeView`: 36 face ids, the strip, the screen words, a `sig`), the
+  `arcadeChime`), the view (`arcadeView`: 36 face ids, the strip, the screen words, a `sig`;
+  on the menu and the winner's screen the top row is `marquee()`, `paw` and `paw-lit` by
+  `(|col - 4| + step) % 3 === 0` with step `floor((now - stageAt) / MARQUEE_STEP_MS)`, 250, so
+  the sig changes four times a second there and the deck writes about five keys a step), the
   samples (`arcadeSample`), `FACE_IDS`, `STAND_IN_CLUE`, `CLUE_NOTE`, `THIRD_LINE`,
   `FAREWELL_LINE`. *Whack-a-Mouse*'s pets (29 Oct): `PETS` (boo, granola, irwin, salem, zimmy),
   `MICE_PETS_FROM_MS` 5000, `MICE_PET_ONE_IN` 4, `MICE_PETS_OUT` 3, `MICE_OOPS_MS` 600; the game
@@ -413,8 +430,15 @@ straight away.
   the picture's alpha is over 100, so faint whiskers do not count), so the five look the same
   size. G54 reads each face picture's box from its PNG the same way, so a new face picture fails
   until `PET_BOXES` is measured again (`play/public/household/README.md` tells Jon).
-  `MENU.tail` is `['cat', 'Tail']` (`PICTURE.cat` 🐈‍⬛, drawn twice in a parchment glow
-  so it shows on the Manor blue); the fish stays the game's treat.
+  `MENU.tail` is `['cat', 'Tail']` (`PICTURE.cat` 🐈‍⬛, drawn once in a faint parchment glow,
+  0.35 and a blur of 2 units, Jon's "less noticeable"); the fish stays the game's treat.
+  `MENU.knock` is `['swipe', 'Knock']` (🐾, no glow: a glow blurs its grey prints); the vase
+  stays on the table. The top row's faces are `paw` (flat dim brass) and `paw-lit` (bright
+  brass in a warm glow), both `pawPrint` (four toes over a pad); the star face is gone (`star()`
+  stays for the coin). The page's `artReady` is a count, one more each time `loadArt()`
+  settles, so the screen draws its faces again: a Vite hot update makes a new art module with no
+  pictures, Fast Refresh runs the effect again, and with a plain true nothing re-rendered, so
+  Boo's key kept the drawn cat (Jon's tab on 29 Oct).
 - `play/src/lib/arcadeDeck.js`: browser. WebHID through `@elgato-stream-deck/webhid` 7.8.0
   (exact pin in `play/package.json`), loaded with `await import()` so it is its own chunk.
   `deckSupported`, `reopenDeck`, `chooseDeck`, `deckEvents`, `deckPainter`, `watchPlugs`, and
@@ -495,7 +519,10 @@ copied as text (that file is Node) and kept equal by G56.
   saying nothing; the rule on the ready and count strips of *Whack-a-Mouse* only; the result's
   strip for the third pet, tapped while the second's words still show, and "Time's up." when the
   time runs out while a miss's words show. Every state after a pet tapped is plain JSON. Every
-  face a game shows is in `FACE_IDS`, always 36.
+  face a game shows is in `FACE_IDS`, always 36. The top row: the first four steps exactly, the
+  two sides mirrored, round again every third step, Boo always in the middle, each paw lit one
+  step in three, nothing else on the menu moving, a visit's menu starting its lights when it
+  opens, and the winner's nine paws.
 - G55: the visit: turns round the group, two tokens each, the clue after a player's second game
   for the first two and `THIRD_LINE` for a trio's third, the winner and ties, free play after the
   visit recording nothing, the chime ending everything from any moment, then free play. The cut
@@ -522,8 +549,11 @@ and each pet's picture on its keys, up and tapped, in time, while one that comes
 the four in turn) keeps its stand-in all session (🐕 for Sir Irwin, 🐱 for the cats); Boo's face
 asked for first (`fetchPriority`) and her screen pictures only inside `loadArt().then`; each
 pet's `PET_BOXES` against the box read from its PNG (within 0.002); the Tail key on the menu
-is the black cat, drawn twice in the parchment glow, over its name with no glow, no fish, while
-the game's fish is still a fish.
+is the black cat, drawn once in a faint parchment glow (0.35 at most), over its name with no
+glow, no fish, while the game's fish is still a fish; the Knock key is the paws with no glow
+and no vase, the same paws as the game's swipe, while the vase is still on the table; the top
+row's paws are drawn with no words, the lit one in a glow and the unlit one flat; and the page
+counts each settle of `loadArt()` (`setArtReady(n => n + 1)`).
 `play/test/arcadeDeck.test.mjs` (no ID) is the deck's code, above.
 
 **What the night would need** (not built; after *entrywayGame*). `functions/lib/act4.js` (the

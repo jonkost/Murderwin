@@ -30,9 +30,11 @@ async function withBrowser(things, run) {
 
 // A pretend canvas. Its pen takes any call and writes its name down, measures
 // every word small, keeps what fillText was asked to write and the glow behind
-// it, and puts its settings back on restore(), as a browser's does.
+// it, and each shape filled with the glow behind it, and puts its settings back
+// on restore(), as a browser's does.
 const written = []
 const glows = [] // each fillText's words, with the shadowColor and shadowBlur behind them
+const fills = [] // each fill() of a shape: its fillStyle, shadowColor and shadowBlur
 class FakeCanvas {
   constructor(width, height) {
     this.width = width; this.height = height; this.calls = []
@@ -48,6 +50,7 @@ class FakeCanvas {
           if (name === 'save') saved.push({ ...kept })
           if (name === 'restore' && saved.length) { const was = saved.pop(); for (const k of Object.keys(kept)) delete kept[k]; Object.assign(kept, was) }
           if (name === 'fillText') { written.push(args[0]); glows.push([args[0], kept.shadowColor, kept.shadowBlur]) }
+          if (name === 'fill') fills.push([kept.fillStyle, kept.shadowColor, kept.shadowBlur])
         }
       },
       set(_, name, value) { kept[name] = value; return true },
@@ -73,22 +76,49 @@ test('G54 every face a game can show is drawn, and none is the art\'s "?" for a 
   })
 })
 
-test('G54 the Tail key on the menu is a black cat (Jon, 29 Oct 2026); the treat in the game is still a fish', async () => {
-  const CAT = '\u{1F408}\u200D\u2B1B', FISH = '\u{1F41F}'
+test('G54 the Tail key on the menu is a black cat in a faint glow, the Knock key Boo\'s paws (Jon, 29 Oct 2026); the fish and the vase stay in their games', async () => {
+  const CAT = '\u{1F408}\u200D\u2B1B', FISH = '\u{1F41F}', PAWS = '\u{1F43E}', VASE = '\u{1F3FA}'
   await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {
-    // drawn fresh, at a size no other test has drawn
-    const drawn = id => { written.length = 0; glows.length = 0; faceCanvas(id, FACE_SIZE + 1); return [...written] }
+    // each draw at a size of its own, so faceCanvas never hands back a face it drew already (that writes nothing)
+    let size = FACE_SIZE + 1
+    const drawn = id => { written.length = 0; glows.length = 0; faceCanvas(id, size++); return [...written] }
     const tail = drawn('menu:tail')
     assert.ok(tail.includes(CAT), 'a black cat')
     assert.ok(tail.includes('Tail'), 'over its name')
     assert.ok(!tail.includes(FISH), 'no fish on the menu')
-    // so it shows on the dark blue: drawn twice in a parchment glow, and its name plain
+    // so it stands off the dark blue, and no more (Jon: the glow less noticeable): drawn once, in a faint parchment glow, its name plain
     const cats = glows.filter(([w]) => w === CAT)
-    assert.equal(cats.length, 2, 'drawn twice')
-    for (const [, colour, blur] of cats) assert.ok(colour === 'rgba(241, 232, 214, 0.9)' && blur > 0, `in the glow: ${colour} ${blur}`)
-    assert.ok(glows.filter(([w]) => w === 'Tail').every(([, colour]) => !colour), 'its name has no glow')
+    assert.equal(cats.length, 1, 'drawn once')
+    const [, colour, blur] = cats[0]
+    const alpha = Number(/^rgba\(241, 232, 214, ([\d.]+)\)$/.exec(colour)?.[1])
+    assert.ok(alpha > 0 && alpha <= 0.35 && blur > 0 && blur <= 2 * (FACE_SIZE + 1) / 72, `a faint glow: ${colour} ${blur}`)
+    assert.ok(glows.filter(([w]) => w === 'Tail').every(([, c]) => !c), 'its name has no glow')
     assert.ok(drawn('fish').includes(FISH), 'the fish in the game')
+    // the Knock key: the paws Boo swipes with in the game, crisp, with no glow
+    const knock = drawn('menu:knock')
+    assert.ok(knock.includes(PAWS) && knock.includes('Knock'), 'the paws over its name')
+    assert.ok(!knock.includes(VASE), 'no vase on the menu')
+    assert.ok(glows.every(([, c]) => !c), 'no glow on the Knock key')
+    assert.ok(drawn('swipe').includes(PAWS), 'the same paws as the swipe in the game')
+    assert.ok(drawn('table:vase').includes(VASE), 'the vase still on the table')
     for (const id of ['menu:pointer', 'menu:mice', 'menu:knock', 'menu:yarn']) assert.ok(!drawn(id).includes(CAT), `no cat on ${id}`)
+    for (const id of ['menu:tail', 'menu:pointer', 'menu:mice', 'menu:yarn']) assert.ok(!drawn(id).includes(PAWS), `no paws on ${id}`)
+  })
+})
+
+test('G54 the top row\'s paws (Jon, 29 Oct 2026: in place of the stars): drawn, no words, a lit paw glows and an unlit one does not', async () => {
+  assert.ok(!ART_FACES.includes('star'), 'no stars now')
+  await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {
+    const drawn = id => { written.length = 0; fills.length = 0; faceCanvas(id, FACE_SIZE + 2); return { words: [...written], fills: [...fills] } }
+    const off = drawn('paw'), on = drawn('paw-lit')
+    for (const [name, paw] of [['paw', off], ['paw-lit', on]]) {
+      assert.deepEqual(paw.words, [], `${name}: a drawing, no words or emoji`)
+      assert.equal(paw.fills.length, 1, `${name}: the paw is one shape`)
+    }
+    const [unlitFill, unlitGlow] = off.fills[0], [, litGlow, litBlur] = on.fills[0]
+    assert.equal(typeof unlitFill, 'string', 'an unlit paw is one flat colour')
+    assert.ok(!unlitGlow, 'an unlit paw has no glow')
+    assert.ok(litGlow && litBlur > 0, 'a lit paw glows')
   })
 })
 
@@ -273,6 +303,9 @@ test('G54 Boo\'s face picture is asked for first and the other four after it, an
   const page = readFileSync(new URL('../src/screens/Arcade.jsx', import.meta.url), 'utf8')
   assert.match(page, /loadArt\(\)\.then\(\(\) => \{[^}]*for \(const name of BOO_PICTURES\) \{ const img = new Image\(\); img\.src = booUrl\(name\) \}\s*\}\)/, 'inside loadArt().then')
   assert.equal(page.match(/of BOO_PICTURES/g)?.length, 1, 'and nowhere else')
+  // each time the art settles the screen draws its keys again, so a hot reload's
+  // new art module (no pictures at first) never leaves the drawn cat on Boo's key
+  assert.match(page, /loadArt\(\)\.then\(\(\) => \{[^}]*setArtReady\(n => n \+ 1\)/, 'a count, so every settle redraws')
 })
 
 // Where a face picture is more than faintly there (alpha over 100), as shares

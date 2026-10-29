@@ -13,7 +13,7 @@ import {
   MICE_PETS_FROM_MS, MICE_PET_ONE_IN, MICE_PETS_OUT, MICE_OOPS_MS, MICE_REST_MS, STRIKE_WORDS_MS,
   KNOCK_STEP_MS, KNOCK_STEP_FASTER_MS, KNOCK_STEP_MIN_MS, KNOCK_DWELL_STEPS, KNOCK_FALL_MS, KNOCK_CRASH_MS, KNOCK_SWIPE_MS, KNOCK_REST_MS, KNOCK_POINTS,
   YARN_FLASH_MS, YARN_FALLING, YARN_POINTS, YARN_GOLD_POINTS,
-  READY_MS, COUNT_MS, RESULT_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS,
+  READY_MS, COUNT_MS, RESULT_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS, MARQUEE_STEP_MS,
 } from '../src/lib/arcade.js'
 
 // Miss Boo LaRue's Arcade (28 Oct 2026): the pure engine (lib/arcade.js).
@@ -178,7 +178,7 @@ test('G54 the menu: the five games on the second row with two blank keys each si
   for (const g of GAMES) assert.equal(g.dials.length, DIALS)
 
   const home = arcadeView(newArcade({ mode: 'free', seed: 1, now: 0 }), 0)
-  assert.deepEqual(rowFaces(home.faces, 0), ['star', 'star', 'star', 'star', 'boo', 'star', 'star', 'star', 'star'])
+  assert.deepEqual(rowFaces(home.faces, 0), ['paw', 'paw-lit', 'paw', 'paw', 'boo', 'paw', 'paw', 'paw-lit', 'paw'])
   assert.deepEqual(rowFaces(home.faces, 1), ['blank', 'blank', 'menu:tail', 'menu:pointer', 'menu:mice', 'menu:knock', 'menu:yarn', 'blank', 'blank'])
   assert.deepEqual(rowFaces(home.faces, 2), Array(COLS).fill('blank'))
   assert.deepEqual(rowFaces(home.faces, 3), Array(COLS).fill('blank'))
@@ -205,6 +205,41 @@ test('G54 the menu: the five games on the second row with two blank keys each si
     assert.deepEqual(b.events, ['coin'])
     assert.equal(b.players[0].tokens, TOKENS, 'picking spends nothing yet')
   })
+})
+
+test('G54 the top row flashes like an arcade game (Jon, 29 Oct 2026): cat paws for the stars, one in three lit, the lights running in towards Boo in the middle, and the winner\'s row too', () => {
+  const row = faces => rowFaces(faces, 0).map(f => ({ paw: '.', 'paw-lit': 'L', boo: 'B' })[f] ?? '?').join('')
+  // the stage's own clock: a step every MARQUEE_STEP_MS, each one key further in, then round again
+  const home = newArcade({ mode: 'free', seed: 1, now: 1000 })
+  const at = n => row(arcadeView(home, 1000 + n * MARQUEE_STEP_MS).faces)
+  assert.deepEqual([0, 1, 2, 3].map(at), ['.L..B..L.', '..L.B.L..', 'L..LBL..L', '.L..B..L.'])
+  assert.equal(row(arcadeView(home, 1000 + MARQUEE_STEP_MS - 1).faces), at(0), 'still within the first step')
+  assert.equal(row(arcadeView(home, 999).faces), at(0), 'a moment before the stage began is its first step')
+  for (let n = 0; n < 30; n++) {
+    const r = at(n)
+    assert.equal(r, [...r].reverse().join(''), 'the two sides mirror each other')
+    assert.equal(r, at(n + 3), 'round again every third step')
+    assert.equal(r[4], 'B', "Boo's face stays in the middle")
+    assert.ok(r.includes('L'), 'always some lit')
+  }
+  for (let c = 0; c < COLS; c++) {
+    if (c === 4) continue
+    assert.equal([0, 1, 2].filter(n => at(n)[c] === 'L').length, 1, `key ${c} is lit one step in three`)
+  }
+  assert.ok(MARQUEE_STEP_MS >= 150 && MARQUEE_STEP_MS <= 500, 'quick enough to flash, slow enough that the page\'s 50 ms loop shows every step')
+  // nothing else on the menu moves
+  const still = f => f.slice(COLS)
+  assert.deepEqual(still(arcadeView(home, 1000).faces), still(arcadeView(home, 1000 + MARQUEE_STEP_MS).faces))
+  // a visit's menu starts its lights when it opens
+  const v = newArcade({ mode: 'visit', players: ['Jessa', 'Mari'], seed: 1, now: 5000 })
+  assert.equal(row(arcadeView(v, 5000).faces), '.L..B..L.')
+  // the winner: nine paws (Boo is on the middle key below), the same lights
+  const w = arcadeSample('winner', 0)
+  const wRow = n => row(arcadeView(w, w.stageAt + n * MARQUEE_STEP_MS).faces)
+  assert.deepEqual([0, 1, 2].map(wRow), ['.L..L..L.', '..L...L..', 'L..L.L..L'])
+  assert.equal(arcadeView(w, w.stageAt).faces[keyAt(1, 4)], 'boo')
+  for (const f of ['paw', 'paw-lit']) assert.ok(FACE_IDS.includes(f))
+  assert.ok(!FACE_IDS.includes('star'), 'no stars now')
 })
 
 test('G54 every face a game shows is one the art knows, always 36 of them, and every sound is a known one', () => {
@@ -979,7 +1014,7 @@ test('G55 the winner names everyone who tied', () => {
   assert.equal(v.screen.boo, BOO_LINES.tie)
   assert.equal(v.strip.centre, 'Most points: Jessa and Mari')
   assert.equal(v.screen.picture, ' Boo 5.png')
-  assert.deepEqual(rowFaces(v.faces, 0), Array(COLS).fill('star'))
+  assert.deepEqual(rowFaces(v.faces, 0), ['paw', 'paw-lit', 'paw', 'paw', 'paw-lit', 'paw', 'paw', 'paw-lit', 'paw'], 'nine paws, three lit as the winner begins')
   assert.equal(v.faces[keyAt(1, 4)], 'boo')
   // three ways
   const trio = { ...a, players: ['Margaret', 'Tom', 'Ellie'].map(name => ({ name, tokens: 0, reached: true, games: [{ game: 'mice', score: 7 }, { game: 'yarn', score: 3 }] })) }

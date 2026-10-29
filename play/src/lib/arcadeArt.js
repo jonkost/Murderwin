@@ -39,8 +39,9 @@ const PICTURE = {
 }
 // The menu's five keys: each game's picture over its short name (lib/arcade.js
 // GAMES). The Tail key is a black cat (Jon, 29 Oct 2026; the treat in the game
-// stays a fish).
-const MENU = { tail: ['cat', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse', 'Mice'], knock: ['vase', 'Knock'], yarn: ['yarn', 'Yarn'] }
+// stays a fish), and the Knock key is Boo's paws, her swipe in the game (Jon,
+// 29 Oct 2026; the vase stays on the table).
+const MENU = { tail: ['cat', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse', 'Mice'], knock: ['swipe', 'Knock'], yarn: ['yarn', 'Yarn'] }
 
 // Faces that are one flat colour. The deck paints these with fillKeyColor
 // (one small report, no picture to send); the rest are pictures.
@@ -252,8 +253,10 @@ const FACES = {
   off: g => flat(g, '#000'),
   blank: g => flat(g, BRAND.blue),
   below: g => flat(g, BRAND.soot),
-  // the menu's top row: a marquee of brass stars, Boo framed in the middle
-  star: (g, k) => { ground(g); glowing(g, k, 'rgba(166, 162, 83, 0.6)', 7, () => star(g, MID, 38.5, 25, 10, brassFill(g, 13, 60))) },
+  // the menu's top row: a marquee of brass paws, one in three lit at a time
+  // (lib/arcade.js marquee), Boo framed in the middle
+  paw: g => { ground(g); pawPrint(g, '#4e4b27') },
+  'paw-lit': (g, k) => { ground(g); glowing(g, k, 'rgba(255, 226, 122, 0.9)', 9, () => pawPrint(g, litBrass(g))) },
   boo: (g, k) => { ground(g, BRAND.claret, '#7a4448'); booFace(g, k, BOO_FRAMED); rim(g) },
   back: g => { ground(g, BRAND.claret, '#6e3b3f'); rim(g); arrowLeft(g, MID, 27); words(g, 'Back', 15, 54) },
   ok: g => { ground(g, GREEN, '#33bd66'); rim(g, BRAND.parchment); tick(g) },
@@ -308,8 +311,8 @@ function menu(g, k, game) {
   const [pic, label] = MENU[game]
   ground(g); rim(g)
   if (pic === 'dot') laserDot(g, k, MID, 28, 12)
-  // a black cat on Manor blue: a parchment glow, drawn twice to be strong, as Boo's picture has its white outline
-  else if (pic === 'cat') glowing(g, k, 'rgba(241, 232, 214, 0.9)', 5, () => { emoji(g, PICTURE.cat, 36, MID, 28); emoji(g, PICTURE.cat, 36, MID, 28) })
+  // the black cat in a faint parchment glow, to stand off the Manor blue (Jon, 29 Oct 2026: less noticeable)
+  else if (pic === 'cat') glowing(g, k, 'rgba(241, 232, 214, 0.35)', 2, () => emoji(g, PICTURE.cat, 36, MID, 28))
   else emoji(g, PICTURE[pic], 36, MID, 28)
   words(g, label, 15, 56.5, { max: 56 })
 }
@@ -455,11 +458,30 @@ function star(g, x, y, R, r, fill) {
   }
   g.closePath(); g.fillStyle = fill; g.fill()
 }
-// Brass, lit from above.
-function brassFill(g, from, to) {
-  const f = g.createLinearGradient(0, from, 0, to)
-  f.addColorStop(0, '#ddd68a'); f.addColorStop(1, '#8a8640')
+// A lit paw's brass: bright like a bulb, lit from above.
+function litBrass(g) {
+  const f = g.createLinearGradient(0, 15, 0, 58)
+  f.addColorStop(0, '#fff6c4'); f.addColorStop(1, '#d8c45a')
   return f
+}
+// A cat's paw print, filling most of the key: four toes over a soft pad.
+const TOES = [[-15, -4, 0.45], [-6, -14, 0.15], [6, -14, -0.15], [15, -4, -0.45]] // x, y, lean
+function pawPrint(g, fill) {
+  const u = 40 / 44, p = (x, y) => [MID + x * u, MID + y * u] // drawn in a 44-unit box
+  g.beginPath()
+  for (const [x, y, lean] of TOES) {
+    const [cx, cy] = p(x, y)
+    g.moveTo(cx + 5 * u * Math.cos(lean), cy - 5 * u * Math.sin(lean)) // where the toe's outline starts
+    g.ellipse(cx, cy, 5 * u, 7 * u, -lean, 0, Math.PI * 2)
+  }
+  g.moveTo(...p(0, 1))
+  g.bezierCurveTo(...p(7, 1), ...p(13, 8), ...p(13, 14))
+  g.bezierCurveTo(...p(13, 19.5), ...p(8.5, 21.5), ...p(4.5, 20))
+  g.bezierCurveTo(...p(2, 19), ...p(-2, 19), ...p(-4.5, 20))
+  g.bezierCurveTo(...p(-8.5, 21.5), ...p(-13, 19.5), ...p(-13, 14))
+  g.bezierCurveTo(...p(-13, 8), ...p(-7, 1), ...p(0, 1))
+  g.closePath()
+  g.fillStyle = fill; g.fill()
 }
 // A token: a brass coin with a star struck in it, softly lit.
 function coin(g, k) {

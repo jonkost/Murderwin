@@ -9,6 +9,56 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026 · Claude Code (the arcade's menu: Boo's face, paws and a flashing top row)
+
+- Jon, looking at the arcade's menu on the practice server: "Use the boo
+  face image. Make the drop shadow less noticeable on the "tail." Knock
+  should be the cat paws.  instead of the stars on the top row. Make it
+  flashing like an arcade game."
+- Boo's face picture: a fresh page already showed it on the top row's
+  middle key. Jon's page showed the drawn stand-in cat because it had
+  been open while the code changed: the practice server swapped in new
+  picture code that had not loaded the pictures, and nothing told the
+  screen to draw its keys again. Now the screen draws its keys again
+  each time the pictures come in.
+- The black cat on the Tail key: drawn once in a faint glow (it was
+  drawn twice in a strong one). The Knock key: Boo's paws (🐾, the paws
+  she swipes with in the game), with no glow, as a glow blurred them;
+  the vase stays on her table. Glow strengths were compared side by side
+  before choosing.
+- The top row: read as paws in place of the stars, flashing like an
+  arcade's sign. Brass paw prints, one in three lit, the lights running
+  in towards Boo's face four times a second; the winner's top row
+  flashes the same way. The other reading (Boo's face along the row) is
+  offered to Jon on card 523.
+- Checked in the browser pane, in a tab of its own beside Jon's: the
+  menu's lights moving in towards Boo step by step, her face picture in
+  the middle, the new Knock and Tail keys, and the winner's row
+  flashing. Not tried on the real Stream Deck + XL: on it the menu
+  writes about five keys a step, four steps a second.
+- Reviewed by a workflow (three readers, then a check of each finding):
+  nothing wrong in the game. Four fixes to the tests: the Tail and Knock
+  test now draws each key fresh (it was reading kept pictures, so its
+  "no cat" and "no paws" checks could never fail), the winner's top row
+  is compared key by key, and the flashing speed is checked as a range
+  (150 to 500 ms), not one number. Turned down: a hot-update order that
+  does not happen, and the Knock key's grey paws on the dark blue, which
+  Jon judges on the real deck (his notes since ask for brighter colours
+  than the dark blue, so the ground changes in the rework anyway).
+- Tests: functions 281 (2 skipped, 2 to do), cues 69, station 53, the
+  workshop 131, play 180 and scripts 53 pass; `npm run checks`
+  all clear; the build and its check pass. Sixteen deliberate breaks of
+  the new code, each in a throwaway copy, each fail a test: among them
+  the lights running outward or standing still, two in three lit, Boo
+  gone from the middle, the winner's row still, the vase back on Knock,
+  the cat drawn twice or in the old glow, a glow on the Knock paws or on
+  an unlit paw, and the screen not drawing its keys again.
+- Board: card 523 (the menu) done, and a line on Jon's try of the arcade
+  (514). No decision changed, so the Canon is as it was. Start Here's
+  snapshot says so. `docs/boo-arcade.md` (§1, §3 and the technical
+  notes) and `docs/test-plan.md` (G54) updated. Not deployed: Jon says
+  when.
+
 ## 29 Oct 2026 · Claude Code (Whack-a-Mouse's pets, the black cat, the words on the strip)
 
 - Jon: "lets add a decoy element to the mouse", and asked what the decoy

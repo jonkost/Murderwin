@@ -21,6 +21,7 @@ import {
   ARCADE_1028_TASKS,
   RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS,
   MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029,
+  ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -887,6 +888,14 @@ export const ADDITIONS = [
     tasks: MICE_PETS_1029_TASKS,
     fileTasks: FILED_FOR_MICE_PETS_1029,
     rewriteTasks: REWRITTEN_FOR_MICE_PETS_1029,
+  },
+  {
+    // 29 Oct, later: the arcade's menu (card 523): Boo's face picture, a
+    // fainter glow on the black cat, Boo's paws on the Knock key and a
+    // flashing row of paws on top; a line about it on Jon's try (514).
+    id: '2026-10-29-arcade-menu',
+    tasks: ARCADE_MENU_1029_TASKS,
+    fileTasks: FILED_FOR_ARCADE_MENU_1029,
   },
 ]
 
