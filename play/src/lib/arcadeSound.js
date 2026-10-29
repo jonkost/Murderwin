@@ -11,7 +11,7 @@
 // It never throws. Every effect is over in under a second. A win or a loss
 // waits for the sound still playing to end.
 
-// The names, as lib/arcade.js puts them in `events` (§8).
+// The names, as lib/arcade.js puts them in `events` (docs/boo-arcade.md §6).
 export const SOUNDS = Object.freeze(['coin', 'tick', 'go', 'point', 'gold', 'miss', 'knock', 'bite', 'win', 'lose', 'clue', 'chime', 'back'])
 
 // How loud a note gets: a little under the kiosk chime's 0.3, since a game
@@ -36,7 +36,7 @@ const FIGURES = {
 }
 
 // When the sounds now playing on each context end. A win or a loss starts
-// then: the engine hands over a bite and the lose tune, or the last fish or
+// then: the engine hands over a bite and the lose tune, or a last point or
 // knock and the win tune, in one go, and played at once they would clash.
 // Every other sound starts at once.
 const ends = new WeakMap()

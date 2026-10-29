@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
-  CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeView, arcadeSample,
+  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeView, arcadeSample,
 } from '../lib/arcade'
-import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl } from '../lib/arcadeArt'
+import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
 import { deckSupported, reopenDeck, chooseDeck, deckEvents, deckPainter, watchPlugs, deckProblem } from '../lib/arcadeDeck'
 import { sfx } from '../lib/arcadeSound'
 import { wakeAudio, Wake } from './Kiosk'
@@ -17,23 +17,39 @@ import Spoken from './Spoken'
 // never goes through Kiosk.jsx: no sign-in, no presence row, no night. The
 // only clue it ever shows is the house's square-bracket stand-in.
 //
-// One arcade (lib/arcade.js) lives in a ref. A 50 ms loop steps it on the
+// One arcade (lib/arcade.js) lives in a ref. A 16 ms loop steps it on the
 // page's own clock (performance.now(): there is no night and no server
 // here); a press on the Stream Deck + XL (lib/arcadeDeck.js), on the deck
-// drawn on the screen or on the keyboard moves it at once. Every view goes
-// to the deck's painter, which paints only the keys that changed; the screen
-// re-renders only when the view's sig changes. The sounds (lib/arcadeSound.js)
+// drawn on the screen or on the keyboard moves it at once, and the keys that
+// press changed are painted first. Every view goes to the deck's painter,
+// which paints only the keys that changed; the screen re-renders only when
+// the view's sig changes. With the Stream Deck connected the deck is the game
+// and the screen shows the game's news: its points, time and strikes, a pop
+// for each point and strike, and the fun facts (Jon, 29 Oct 2026); without
+// it, the deck is drawn on the screen to play there. The sounds (lib/arcadeSound.js)
 // play through the kiosk's one AudioContext once a click has woken it: a
 // press on the deck cannot, so the Wake corner stays until the first click.
-// The painter itself blanks the deck when the page is closed or left.
+// The painter itself blanks the deck when the page is closed or left. Back,
+// at the top of the screen, ends a visit at once for free play, and leaves a
+// free-play game for the menu (Jon, 29 Oct 2026: "on the pratice page I need
+// a back button. Im stuck and cant get back.").
 //
 // <BooArcade sample="clue" /> is a Preview's frozen moment (arcadeSample):
 // no loop, no input, no deck, no sound, no setup form, no band.
 
-const TICK_MS = 50
+const TICK_MS = 16
 const BASE = import.meta.env.BASE_URL
 const booUrl = name => `${BASE}household/full/${encodeURIComponent(name)}`
 const ART = { faceRgba, faceSolid, stripRgba } // what the deck's painter draws with
+// Every face, the menu's first: the deck makes each one ready once, while it
+// has nothing else to do, so no game waits on a picture.
+const WARM_FACES = [...new Set([...MENU_FACES, ...FACE_IDS])]
+// The arrow keys play the games.
+const ARROW_KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
+// &strip=whole: the touch strip is sent whole every time, if the parts ever show wrong.
+function wholeStrip() {
+  try { return new URLSearchParams(window.location.search).get('strip') === 'whole' } catch { return false }
+}
 
 // The Stream Deck + XL's face in its own units, 1280 by 1081, so the deck on
 // the screen has the shape of the one on the table: each key's corner, the
@@ -74,7 +90,7 @@ const PROBLEM = {
 // row, and a line on the strip.
 const RESTING = {
   faces: Array.from({ length: KEY_COUNT }, (_, i) => (i === keyAt(1, 4) ? 'boo' : 'off')),
-  strip: { left: '', centre: 'Type the names on the screen', right: '', bar: null, dials: ['', '', '', '', '', ''] },
+  strip: { left: '', centre: 'Type the names on the screen', right: '', score: null, marks: null, lights: null, zones: false, dials: ['', '', '', '', '', ''] },
   screen: null,
   sig: 'resting',
 }
@@ -82,6 +98,8 @@ const RESTING = {
 // The moments that take the middle of the screen; the menu and a game in
 // play leave Boo and the deck side by side.
 const MOMENTS = ['ready', 'count', 'result', 'clue', 'third', 'winner', 'farewell']
+// A free-play game, from its how-to to its points, can be left for the menu.
+const LEAVABLE = ['ready', 'count', 'play', 'result']
 // A clue, Boo's line for a trio's third player and the winner wait this long
 // before a press moves them on (the engine's own rule), so OK waits too.
 const OK_AFTER = { clue: CLUE_MIN_MS, third: CLUE_MIN_MS, winner: WINNER_MIN_MS }
@@ -113,6 +131,19 @@ function andList(names) {
   return list.length <= 1 ? (list[0] ?? '') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
 }
 const noFocus = e => e.preventDefault() // a click leaves the focus where it was, so the space bar stays the first dial
+// The keys a press changed: painted before any other.
+const changed = (before, after) => after.flatMap((face, i) => (face !== before?.[i] ? [i] : []))
+// What a press or a moment just did in a game, as a pop on the screen: its
+// points, or a strike (a miss, in Yarn Catch). Null for anything else.
+function popOf(a, next) {
+  const g0 = a?.game, g1 = next?.game
+  if (next?.stage !== 'play' || !g0 || !g1 || g0.startedAt !== g1.startedAt) return null
+  const gain = g1.score - g0.score
+  if (gain > 0) return { text: `+${gain}`, kind: next.events.includes('gold') ? 'gold' : 'gain' }
+  if (next.events.includes('miss') || next.events.includes('bite')) return { text: g1.id === 'yarn' ? 'Missed!' : 'Strike!', kind: 'strike' }
+  return null
+}
+const POPS_KEPT = 4
 const cleanNames = list => list.map(n => String(n ?? '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, MAX_PLAYERS)
 
 // What the page opens on: a sample, a visit named in the address, the visit's
@@ -146,15 +177,20 @@ export default function BooArcade({ sample = null }) {
   const attachRef = useRef(null)
   const heardRef = useRef(false)
   const [heard, setHeard] = useState(false)
-  const deckBoxRef = useRef(null)
+  const mainRef = useRef(null)
   const inputRef = useRef(null)
   const tickRef = useRef(null)
+  const leaveRef = useRef(null)
+  const [pops, setPops] = useState([]) // the newest few points and strikes, for the screen
+  const popId = useRef(0)
 
-  // The view at `now` goes to the deck every time, and to the screen when it changed.
-  function show(a, now) {
+  // The view at `now` goes to the deck every time, and to the screen when it
+  // changed. After a press, the keys it changed go to the deck first.
+  function show(a, now, pressed = false) {
     const v = a ? arcadeView(a, now) : RESTING
+    const urgent = pressed ? changed(viewRef.current?.faces, v.faces) : null
     viewRef.current = v
-    if (artRef.current) heldRef.current?.painter.paint(v.faces, v.strip)
+    if (artRef.current) heldRef.current?.painter.paint(v.faces, v.strip, { urgent })
     const wait = tooSoon(a, now)
     if (wait !== earlyRef.current) { earlyRef.current = wait; setEarly(wait) }
     if (v.sig !== sigRef.current) { sigRef.current = v.sig; setView(v) }
@@ -164,16 +200,19 @@ export default function BooArcade({ sample = null }) {
     const ctx = wakeAudio()
     for (const name of events) sfx(ctx, name)
   }
-  function move(next, now) {
+  function move(next, now, pressed = false) {
+    const pop = popOf(arcadeRef.current, next)
+    if (pop) { const id = ++popId.current; setPops(list => [...list.slice(1 - POPS_KEPT), { ...pop, id, slot: id % POPS_KEPT }]) }
+    else if (next.stage !== 'play' && arcadeRef.current?.stage === 'play') setPops([])
     arcadeRef.current = next
     play(next.events)
-    show(next, now)
+    show(next, now, pressed)
   }
   function input(ev) {
     const a = arcadeRef.current
     if (!live || !a) return
     const now = performance.now()
-    move(arcadeInput(a, ev, now), now)
+    move(arcadeInput(a, ev, now), now, true)
   }
   function tick() {
     const a = arcadeRef.current
@@ -187,21 +226,31 @@ export default function BooArcade({ sample = null }) {
     const now = performance.now()
     move(arcadeChime(a, now), now)
   }
+  function leave() {
+    const a = arcadeRef.current
+    if (!live || !a) return
+    const now = performance.now()
+    move(arcadeBack(a, now), now)
+  }
+  // A new arcade never keeps the old one's pops: kept, they would all play again at once on the scoreboard.
   function begin(names) {
     const now = performance.now()
     arcadeRef.current = newArcade({ mode: 'visit', players: cleanNames(names), seed: Date.now(), now })
     setSetup(false)
+    setPops([])
     show(arcadeRef.current, now)
   }
   function freePlay() {
     const now = performance.now()
     arcadeRef.current = newArcade({ mode: 'free', seed: Date.now(), now })
     setSetup(false)
+    setPops([])
     show(arcadeRef.current, now)
   }
   function practise() {
     arcadeRef.current = null
     setSetup(true)
+    setPops([])
     show(null, performance.now())
   }
   // Connect: the browser's chooser opens only inside the click, so it is asked
@@ -217,6 +266,7 @@ export default function BooArcade({ sample = null }) {
   }
   inputRef.current = input
   tickRef.current = tick
+  leaveRef.current = leave
 
   // The loop.
   useEffect(() => {
@@ -236,23 +286,27 @@ export default function BooArcade({ sample = null }) {
       setArtReady(n => n + 1) // a hot reload's new art module too, which starts with no pictures
       const v = viewRef.current
       heldRef.current?.painter.paint(v.faces, v.strip)
+      heldRef.current?.painter.warm(WARM_FACES)
       for (const name of BOO_PICTURES) { const img = new Image(); img.src = booUrl(name) }
     })
     return () => { on = false }
   }, [])
 
   // Sound: the first click or key wakes the kiosk's AudioContext, and every one after keeps it awake.
+  // The footer keeps the Wake corner's room until the click is over: made
+  // smaller at the press, it would move a button such as Connect out from
+  // under the pointer, and the click would miss it.
   useEffect(() => {
     if (!live) return
-    const wake = () => { heardRef.current = true; wakeAudio(); setHeard(true) }
+    const wake = e => { heardRef.current = true; wakeAudio(); if (e.type !== 'pointerdown') setHeard(true) }
     for (const type of ['pointerdown', 'click', 'keydown']) window.addEventListener(type, wake, true)
     return () => { for (const type of ['pointerdown', 'click', 'keydown']) window.removeEventListener(type, wake, true) }
   }, [live])
 
-  // The keyboard: the left and right arrows turn the first dial, up and down
-  // the last one, the space bar or Enter presses the first dial, 1 to 5 are
-  // the five games on the menu, Escape is Back before a game starts. Never
-  // while a name is being typed.
+  // The keyboard: the arrows play the games (the outside dials' turns, and
+  // Yarn Catch's strip), the space bar or Enter presses the first dial, 1 to 5
+  // are the five games on the menu, Escape is Back before a game starts, and
+  // in free play leaves a game at any moment. Never while a name is being typed.
   useEffect(() => {
     if (!live) return
     const onKey = e => {
@@ -262,13 +316,14 @@ export default function BooArcade({ sample = null }) {
       // a button of the page's own (Connect, OK) keeps its space bar; on the deck drawn on the screen it is the first dial
       const control = !t?.closest?.('.arcade-deck') && !!t?.closest?.('button, a[href], summary')
       let ev = null
-      if (e.key === 'ArrowLeft') ev = { kind: 'turn', dial: 0, amount: -1 }
-      else if (e.key === 'ArrowRight') ev = { kind: 'turn', dial: 0, amount: 1 }
-      else if (e.key === 'ArrowUp') ev = { kind: 'turn', dial: DIALS - 1, amount: 1 }
-      else if (e.key === 'ArrowDown') ev = { kind: 'turn', dial: DIALS - 1, amount: -1 }
+      if (ARROW_KEYS[e.key]) ev = { kind: 'arrow', dir: ARROW_KEYS[e.key] }
       else if (e.repeat) return
       else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = { kind: 'press', dial: 0 } }
-      else if (e.key === 'Escape') { if (arcadeRef.current?.stage === 'ready') ev = { kind: 'key', index: BACK_KEY } }
+      else if (e.key === 'Escape') {
+        const a = arcadeRef.current
+        if (a?.stage === 'ready') ev = { kind: 'key', index: BACK_KEY }
+        else if (a?.mode === 'free' && LEAVABLE.includes(a.stage)) { e.preventDefault(); leaveRef.current(); return }
+      }
       else if (/^[1-9]$/.test(e.key) && Number(e.key) <= MENU_KEYS.length) ev = { kind: 'key', index: MENU_KEYS[Number(e.key) - 1] }
       if (!ev) return
       e.preventDefault()
@@ -278,10 +333,12 @@ export default function BooArcade({ sample = null }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [live])
 
-  // The mouse wheel over a dial turns it (on a Mac, with its natural
-  // scrolling: fingers to the right or up turn it clockwise).
+  // The mouse wheel over a dial of the deck drawn on the screen turns it (on a
+  // Mac, with its natural scrolling: fingers to the right or up turn it
+  // clockwise). Heard on the page's middle, which is always there: the drawn
+  // deck comes and goes with the Stream Deck.
   useEffect(() => {
-    const box = deckBoxRef.current
+    const box = mainRef.current
     if (!live || !box) return
     let w = { dial: -1, dir: 0, sum: 0, turns: 0, at: -Infinity }
     const onWheel = e => {
@@ -323,21 +380,24 @@ export default function BooArcade({ sample = null }) {
       held.off()
       held.painter.close()
     }
+    // The scoreboard comes and goes with the deck, so the pops start afresh each time.
     const lost = (d, error) => {
       if (cancelled || heldRef.current?.deck !== d) return
       drop()
       setDeck('none')
+      setPops([])
       setProblem(deckProblem(error) ?? 'gone')
     }
     const attach = d => {
       if (cancelled || !d) return
       if (heldRef.current?.deck !== d) {
         drop()
-        const painter = deckPainter(d, ART, { onLost: error => lost(d, error) })
+        const painter = deckPainter(d, ART, { onLost: error => lost(d, error), wholeStrip: wholeStrip() })
         const off = deckEvents(d, ev => inputRef.current(ev), error => lost(d, error))
         heldRef.current = { deck: d, painter, off }
         const v = viewRef.current
-        if (artRef.current) painter.paint(v.faces, v.strip)
+        if (artRef.current) { painter.paint(v.faces, v.strip); painter.warm(WARM_FACES) }
+        setPops([])
       }
       setDeck('connected')
       setProblem(null)
@@ -354,6 +414,7 @@ export default function BooArcade({ sample = null }) {
         if (cancelled) return
         drop()
         setDeck('none')
+        setPops([])
         setProblem('gone')
       },
     })
@@ -378,8 +439,13 @@ export default function BooArcade({ sample = null }) {
   const visit = setup || screen?.mode === 'visit'
   const moment = screen && MOMENTS.includes(stage) ? stage : null
   const sub = !visit ? 'Free play' : screen?.free && stage !== 'farewell' ? 'Free play until the chime' : "A group's visit, for practice"
-  const go = live ? () => input({ kind: 'press', dial: 0 }) : null
-  const back = live ? () => input({ kind: 'key', index: BACK_KEY }) : null
+  const onDeck = deck === 'connected' // the Stream Deck is the game: the screen shows its news
+  // a moment's Start, Back and OK on the screen only while the deck is drawn there: with the Stream Deck, its keys do it
+  const go = live && !onDeck ? () => input({ kind: 'press', dial: 0 }) : null
+  const back = live && !onDeck ? () => input({ kind: 'key', index: BACK_KEY }) : null
+  // Back at the top: a visit, at any moment, ends for free play; a free-play game goes back to the games
+  const leaving = !live || setup || !screen ? null : visit ? 'Back to free play' : LEAVABLE.includes(stage) ? 'Back to the games' : null
+  const clock = screen?.clockMs ?? null
 
   return (
     <div className="kiosk arcade papered" inert={sample ? true : undefined}>
@@ -389,16 +455,18 @@ export default function BooArcade({ sample = null }) {
           <h1>{ARCADE_NAME}</h1>
           <p className="arcade-sub">{sub}</p>
         </div>
-        {screen?.clockMs != null ? (
+        {leaving || clock != null ? (
           <div className="arcade-round">
-            {live && stage !== 'farewell' ? <button type="button" className="arcade-chime" onMouseDown={noFocus} onClick={ring}>Ring the chime</button> : null}
-            <p className={`study-clock${screen.clockMs <= 60000 ? ' warn' : ''}`} aria-label="Time left in the round">{clockOf(screen.clockMs)}</p>
+            {leaving ? <button type="button" className="arcade-back" onMouseDown={noFocus} onClick={leave}>{leaving}</button> : null}
+            {live && clock != null && stage !== 'farewell' ? <button type="button" className="arcade-chime" onMouseDown={noFocus} onClick={ring}>Ring the chime</button> : null}
+            {clock != null ? <p className={`study-clock${clock <= 60000 ? ' warn' : ''}`} aria-label="Time left in the round">{clockOf(clock)}</p> : null}
           </div>
         ) : null}
       </header>
-      <main className="arcade-main">
-        {screen ? <BooSide screen={screen} /> : <div className="arcade-boo" />}
-        <Deck view={view} art={artReady} onInput={live ? input : null} boxRef={deckBoxRef} />
+      <main className={`arcade-main${onDeck ? ' on-deck' : ''}`} ref={mainRef}>
+        {screen ? <BooSide screen={screen} numbers={!onDeck} /> : <div className="arcade-boo" />}
+        {onDeck ? screen ? <Scoreboard screen={screen} pops={pops} art={artReady} /> : <div className="arcade-board" />
+          : <Deck view={view} art={artReady} onInput={live ? input : null} />}
         {setup && live ? <Setup onStart={begin} onCancel={freePlay} />
           : moment ? <Moment key={moment} screen={screen} early={early} onGo={go} onBack={back} /> : null}
       </main>
@@ -411,24 +479,78 @@ export default function BooArcade({ sample = null }) {
   )
 }
 
-// Boo, her line and what to do, beside the deck: the menu, and a game in play
-// with its points and time (and Whack-a-Mouse's pets tapped).
-function BooSide({ screen }) {
+// Boo, her line and what to do: the menu, and a game in play. Beside the
+// deck drawn on the screen she has the game's points and time too (numbers);
+// beside the scoreboard it has them.
+function BooSide({ screen, numbers }) {
   const playing = screen.stage === 'play' && !!screen.game
   return (
     <section className={`arcade-boo${playing ? ' playing' : ''}`}>
-      {playing ? <p className="arcade-game">{screen.game.name}</p> : null}
+      {playing && numbers ? <p className="arcade-game">{screen.game.name}</p> : null}
       <img className="arcade-picture" src={booUrl(screen.picture)} alt="Miss Boo LaRue" draggable={false} />
       <p className="boo-bubble arcade-bubble"><Spoken text={screen.boo} /></p>
-      {playing ? (
+      {playing && numbers ? (
         <p className="arcade-score">
           <span><strong>{screen.score}</strong> {pointsWord(screen.score)}</span>
           <span className="arcade-left">{clockOf(screen.timeLeftMs)} left</span>
-          {screen.tally ? <span className="arcade-tally">{screen.tally}</span> : null}
+          {screen.marks ? <span className="arcade-tally">Strikes: {screen.marks.used} of {screen.marks.of}</span> : null}
         </p>
       ) : null}
       <p className="arcade-plain" aria-live="polite">{screen.plain}</p>
     </section>
+  )
+}
+
+// The screen while the Stream Deck is the game (Jon, 29 Oct 2026: "the page
+// on the computer needs to not show the controls but game info, maybe
+// points, silly things"). In a game: its name, its points big in gold, its
+// time, its three strike boxes, its own tally, a strike's words, and a pop
+// for every point and strike. On the menu: the five games, as their keys
+// show them, and the fun facts so far (kept only while the page is open).
+function Scoreboard({ screen, pops, art }) {
+  if (screen.stage === 'play' && screen.game) {
+    return (
+      <section className="arcade-board playing" aria-label={screen.game.name}>
+        <p className="arcade-board-game">{screen.game.name}</p>
+        <p className="arcade-board-score"><strong>{screen.score}</strong> <span>{pointsWord(screen.score)}</span></p>
+        <div className="arcade-board-row">
+          <p className="arcade-board-stat"><strong>{clockOf(screen.timeLeftMs)}</strong> <span>left</span></p>
+          {screen.marks ? <Strikes marks={screen.marks} /> : null}
+          {screen.tally ? <p className="arcade-board-stat"><strong>{screen.tally.value}</strong> <span>{screen.tally.label}</span></p> : null}
+        </div>
+        <p className="arcade-board-said" aria-live="polite">{screen.said ?? ''}</p>
+        <div className="arcade-pops" aria-hidden="true">
+          {pops.map(p => <span key={p.id} className={`arcade-pop ${p.kind} slot-${p.slot}`}>{p.text}</span>)}
+        </div>
+      </section>
+    )
+  }
+  return (
+    <section className="arcade-board menu">
+      <p className="arcade-board-do">Pick a game</p>
+      <ol className="arcade-games" aria-label="The games">
+        {GAMES.map(g => (
+          <li key={g.id}>
+            {art ? <img src={faceUrl(`menu:${g.id}`, 224)} alt="" draggable={false} /> : null}
+            <span>{g.name}</span>
+          </li>
+        ))}
+      </ol>
+      {screen.facts?.length ? (
+        <dl className="arcade-facts" aria-label="So far">
+          {screen.facts.map(f => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}
+        </dl>
+      ) : null}
+    </section>
+  )
+}
+
+// A game's three strikes: a gold box each, red with a cross for each strike so far.
+function Strikes({ marks }) {
+  return (
+    <p className="arcade-strikes" aria-label={`Strikes: ${marks.used} of ${marks.of}`}>
+      {Array.from({ length: marks.of }, (_, i) => <span key={i} className={`arcade-strike${i < marks.used ? ' used' : ''}`}>{i < marks.used ? '✕' : ''}</span>)}
+    </p>
   )
 }
 
@@ -554,12 +676,13 @@ function stripHit(onInput) {
   }
 }
 
-// The Stream Deck + XL drawn on the screen: the 36 keys, the touch strip and
-// the six dials, each a real button, with the same pictures the deck shows.
-function Deck({ view, art, onInput, boxRef }) {
+// The Stream Deck + XL drawn on the screen, to play without it: the 36 keys,
+// the touch strip and the six dials, each a real button, with the same
+// pictures the deck shows.
+function Deck({ view, art, onInput }) {
   const labels = view.strip?.dials ?? []
   return (
-    <div className="arcade-deck" ref={boxRef} role="group" aria-label="The Stream Deck">
+    <div className="arcade-deck" role="group" aria-label="The Stream Deck">
       {view.faces.map((face, i) => {
         const url = art ? faceUrl(face, 224) : null
         return (
@@ -609,7 +732,8 @@ function Arrow({ dir }) {
   )
 }
 
-// The bottom left: whether the Stream Deck is connected, and Connect when it is not.
+// The bottom left: Connect when the Stream Deck is not connected, and nothing
+// once it is (Jon, 29 Oct 2026: no setup words in front of the players).
 function DeckLine({ state, problem, onConnect }) {
   if (state === 'unsupported') {
     const insecure = typeof window !== 'undefined' && window.isSecureContext === false
@@ -619,7 +743,7 @@ function DeckLine({ state, problem, onConnect }) {
       </p>
     )
   }
-  if (state === 'connected') return <p className="arcade-deckline on">Stream Deck + XL: connected.</p>
+  if (state === 'connected') return null
   if (state === 'looking') return <p className="arcade-deckline">Looking for the Stream Deck.</p>
   return (
     <div className="arcade-deckline">
@@ -629,8 +753,9 @@ function DeckLine({ state, problem, onConnect }) {
   )
 }
 
-// The bottom right: in a visit, each player with their tokens and points,
-// the player whose turn it is in brass; in free play, a way to a practice visit.
+// The bottom right: in a visit, each player with their tokens (Boo's coin for
+// one left, an empty ring once spent) and points, the player whose turn it is
+// ringed in gold; in free play, a way to a practice visit.
 function Players({ screen, setup, onPractise }) {
   const players = screen?.players ?? []
   if (players.length) {
@@ -640,7 +765,9 @@ function Players({ screen, setup, onPractise }) {
           <li key={i} className={`arcade-player${p.now ? ' now' : ''}`}>
             <span className="arcade-player-name">{p.name}</span>
             <span className="arcade-tokens" aria-label={`${p.tokens} of ${TOKENS} tokens left`}>
-              {Array.from({ length: TOKENS }, (_, k) => <span key={k} className={`arcade-token${k < TOKENS - p.tokens ? ' spent' : ''}`} />)}
+              {Array.from({ length: TOKENS }, (_, k) => k < TOKENS - p.tokens
+                ? <span key={k} className="arcade-token spent" />
+                : <img key={k} className="arcade-token coin" src={coinUrl()} alt="" draggable={false} />)}
             </span>
             {p.scores.length ? <span className="arcade-scores">{p.scores.length > 1 ? `${p.scores.join(' + ')} = ${p.total}` : p.scores[0]}</span> : null}
           </li>
@@ -652,7 +779,7 @@ function Players({ screen, setup, onPractise }) {
   return (
     <p className="arcade-fun">
       <span>Just for fun</span>
-      {onPractise ? <button type="button" className="arcade-small" onMouseDown={noFocus} onClick={onPractise}>Practise a group's visit</button> : null}
+      {onPractise ? <button type="button" className="arcade-small" onMouseDown={noFocus} onClick={onPractise}>Try a group's visit</button> : null}
     </p>
   )
 }

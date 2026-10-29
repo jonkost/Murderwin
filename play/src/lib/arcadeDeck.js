@@ -25,7 +25,10 @@ const FACE_BYTES = 112 * 112 * 4 // one key in RGBA: the library wants exactly t
 const STRIP_BYTES = 1200 * 100 * 4 // the touch strip (lcd 0) in RGBA
 const BRIGHTNESS = 90
 const PREPARED_MAX = 800 // prepared key pictures a painter keeps, the oldest dropped first
-const STRIP_GAP_MS = 250 // the strip at most 4 times a second
+const STRIP_GAP_MS = 150 // a new strip at most about 7 times a second
+const BANDS = 6, BAND_W = 200 // the strip goes in six parts, each only when it changed
+const BAND_BYTES = BAND_W * 100 * 4
+const WARM_KEY = 0 // the key a face is made ready on before it is shown
 const BLACK = [0, 0, 0]
 
 let held = null // the open + XL: { deck, device, offs, claim }
@@ -197,7 +200,7 @@ async function openFirst(devices, hid, load, locks, steal) {
       // Left open by an earlier copy of this page (a hot reload): close it first.
       if (device.opened) { try { await device.close() } catch { /* then the open below says why */ } }
       let deck = null
-      try { deck = await lib.openDevice(device) } catch (error) { lastError = error; say('could not open it.', error); continue }
+      try { deck = await lib.openDevice(device, { encodeJPEG: encodeJpeg }) } catch (error) { lastError = error; say('could not open it.', error); continue }
       if (claim.lost) { await discard(deck); break } // the other tab paints it now
       if (modelOf(deck) !== PLUS_XL) {
         lastError = new Error('That is not the Stream Deck + XL.')
@@ -275,10 +278,11 @@ export async function chooseDeck({ hid, load = loadLibrary, locks, steal = false
 // The deck's presses as the arcade's events: a key is { kind: 'key', index }
 // (0 to 35), a dial pressed is { kind: 'press', dial } (0 to 5, left to right),
 // a dial turned is { kind: 'turn', dial, amount } (clockwise is positive; a
-// fast spin sends more than 1), a tap on the touch strip is { kind: 'strip', x }.
-// Releases, long presses, swipes and the NFC reader are ignored. The deck's
-// 'error' goes to onError, if given. Returns the unsubscribe, which takes away
-// exactly these listeners.
+// fast spin sends more than 1), a tap on the touch strip, short or long, is
+// { kind: 'strip', x }, and a swipe along it { kind: 'swipe', from, to } (x
+// runs 0 to 1199, left to right). Releases and the NFC reader are ignored.
+// The deck's 'error' goes to onError, if given. Returns the unsubscribe,
+// which takes away exactly these listeners.
 export function deckEvents(deck, onEvent, onError) {
   if (typeof deck?.on !== 'function') return () => {}
   const tell = event => {
@@ -293,6 +297,8 @@ export function deckEvents(deck, onEvent, onError) {
       if (control && Number.isFinite(amount) && amount !== 0) tell({ kind: 'turn', dial: control.index, amount })
     },
     lcdShortPress: (control, position) => tell({ kind: 'strip', x: position?.x ?? 0 }),
+    lcdLongPress: (control, position) => tell({ kind: 'strip', x: position?.x ?? 0 }), // a slow tap is still a tap
+    lcdSwipe: (control, from, to) => tell({ kind: 'swipe', from: from?.x ?? 0, to: to?.x ?? 0 }),
   }
   if (typeof onError === 'function') listeners.error = error => onError(error)
   const pairs = Object.entries(listeners)
@@ -305,29 +311,40 @@ export function deckEvents(deck, onEvent, onError) {
   }
 }
 
-// Paints the deck. paint(faces, strip) takes the 36 face ids (key index = row
-// * 9 + column) and the strip's spec; art is { faceRgba, faceSolid, stripRgba }
-// (lib/arcadeArt.js). The paint budget: only keys whose face changed are
-// painted; one write at a time; a key that changes again before its turn is
-// painted once, with its newest face; a face already prepared for a key is
-// sent again without drawing it again; 'off' and flat faces are one cheap
-// colour fill; the strip only when it changed, at most every stripGapMs.
-// Any write that fails: painting stops and onLost(error) is called once, and
-// the deck is let go, so Connect opens it afresh. Another arcade tab taking
-// the deck does the same, with an error deckProblem() reads as 'tab', and from
-// then on nothing here writes to the deck, not even close()'s clear.
+// Paints the deck. paint(faces, strip, { urgent }) takes the 36 face ids (key
+// index = row * 9 + column), the strip's spec and, if given, the keys to
+// paint before any other (the ones a press just changed); art is { faceRgba,
+// faceSolid, stripRgba } (lib/arcadeArt.js). The paint budget (Jon, 29 Oct
+// 2026: "far smoother"): only keys whose face changed are painted, one write
+// at a time, each key with its newest face; the urgent keys first, then keys
+// gaining a picture before keys going back to a flat colour, then in order; a
+// face already prepared for a key is sent again without drawing it again, and
+// a face shown on another key is made into a JPEG only once (encodeJpeg);
+// 'off' and flat faces are one cheap colour fill; the strip only when it
+// changed, at most every stripGapMs, after the keys, and only its parts
+// that changed (wholeStrip: the whole strip every time). warm(faces) makes
+// those faces ready while nothing else is waiting, so a game's first mouse is
+// not late. Any write that fails: painting stops and onLost(error) is called
+// once, and the deck is let go, so Connect opens it afresh. Another arcade tab
+// taking the deck does the same, with an error deckProblem() reads as 'tab',
+// and from then on nothing here writes to the deck, not even close()'s clear.
 // clear() blanks the deck and forgets what was painted and asked for: nothing
 // shows until the next paint(), which draws every key afresh (so call it after
 // the art changes, too). close() clears, lets the deck go and closes it.
 // idle() settles when nothing is being written. A second painter on the same
 // deck takes over from the first.
-export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {}) {
+export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS, wholeStrip = false } = {}) {
   const nothing = async () => {}
-  if (!deck || typeof deck !== 'object') return { paint() {}, clear: nothing, close: nothing, idle: nothing }
+  if (!deck || typeof deck !== 'object') return { paint() {}, warm() {}, clear: nothing, close: nothing, idle: nothing }
   const painted = new Array(KEY_COUNT).fill(null) // the face on each key, as far as we know
-  let paintedStrip = null // the strip on the deck, as JSON
   let wantFaces = null // the newest faces asked for
+  const urgent = new Set() // keys to paint before any other
   let wantStrip = null // the newest strip asked for, as JSON
+  let takenStrip = null // the strip whose parts are being sent, as JSON
+  const sentBands = new Array(BANDS).fill(null) // each part of the strip on the deck, as far as we know
+  let bandsDue = [] // the parts of takenStrip still to send
+  let warmList = [] // faces to make ready
+  const warmed = new Set()
   let wantClear = false
   const prepared = new Map() // `${index}|${face}` -> its prepared buffer, oldest first
   const warned = new Set()
@@ -350,10 +367,18 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
   const onHide = () => { clear() }
   page?.addEventListener?.('pagehide', onHide)
 
-  function paint(faces, strip) {
+  function paint(faces, strip, opts) {
     if (lost || stopped) return
+    const keys = opts?.urgent
     if (Array.isArray(faces)) wantFaces = faces.slice(0, KEY_COUNT)
+    if (Array.isArray(keys)) for (const i of keys) if (Number.isInteger(i) && i >= 0 && i < KEY_COUNT) urgent.add(i)
     if (strip != null) { try { wantStrip = JSON.stringify(strip) } catch { /* not a strip: keep the last */ } }
+    kick()
+  }
+
+  function warm(faces) {
+    if (lost || stopped || !Array.isArray(faces)) return
+    warmList = [...new Set(faces.filter(f => typeof f === 'string' && !warmed.has(f)))]
     kick()
   }
 
@@ -362,6 +387,10 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
       wantClear = true
       wantFaces = null // nothing shows again until the next paint()
       wantStrip = null
+      urgent.clear()
+      bandsDue = []
+      warmList = []
+      warmed.clear() // so a warm() straight after this makes them ready again
       kick()
     }
     return idle()
@@ -411,14 +440,27 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
 
   function dirty() {
     if (lost || stopped) return false
-    if (wantClear) return true
-    if (wantFaces?.some((face, i) => face != null && face !== painted[i])) return true
-    return wantStrip !== null && wantStrip !== paintedStrip && !stripTimer
+    if (wantClear || nextKey() >= 0 || bandsDue.length || warmList.length) return true
+    return wantStrip !== null && wantStrip !== takenStrip && !stripTimer
   }
 
-  // The one write queue. Each pass reads the newest faces at each key's turn,
-  // so a key changed twice meanwhile is painted once; then the strip; then
-  // another pass while anything still differs.
+  // The key to paint next, or -1: an urgent key first, then a key gaining a
+  // picture, then a key going back to a flat colour; left to right, top to
+  // bottom among equals. Always its newest face.
+  function nextKey() {
+    if (!wantFaces) return -1
+    let best = -1, bestRank = 3
+    for (let i = 0; i < KEY_COUNT; i++) {
+      const face = wantFaces[i]
+      if (face == null || face === painted[i]) continue
+      const rank = urgent.has(i) ? 0 : face === 'off' || solidOf(face) ? 2 : 1
+      if (rank < bestRank) { best = i; bestRank = rank; if (rank === 0) break }
+    }
+    return best
+  }
+
+  // The one write queue: one write a turn, the keys first, then the strip's
+  // parts, then a face to make ready; it stops when there is nothing to do.
   async function drain() {
     if (ready) { await ready; ready = null }
     while (!lost && !stopped) {
@@ -426,31 +468,32 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
         wantClear = false
         if (!(await write(() => deck.clearPanel()))) return
         painted.fill(null)
-        paintedStrip = null
+        sentBands.fill(null)
+        takenStrip = null
         prepared.clear() // drawn afresh, so new art shows
+        warmed.clear()
         continue
       }
-      let wrote = false
-      for (let i = 0; i < KEY_COUNT && !lost && !stopped && !wantClear; i++) {
-        const face = wantFaces?.[i]
-        if (face == null || face === painted[i]) continue
+      const i = nextKey()
+      if (i >= 0) {
+        const face = wantFaces[i]
+        urgent.delete(i)
         if (!(await write(() => paintKey(i, face)))) return
         painted[i] = face
-        wrote = true
+        continue
       }
-      if (lost || stopped || wantClear) continue
-      if (wantStrip !== null && wantStrip !== paintedStrip) {
-        const wait = stripAt + stripGapMs - clock()
-        if (wait > 0) later(wait)
-        else {
-          const json = wantStrip
-          stripAt = clock()
-          if (!(await write(() => paintStrip(json)))) return
-          paintedStrip = json
-          wrote = true
-        }
+      urgent.clear()
+      if (takeStrip()) continue
+      if (bandsDue.length) {
+        const part = bandsDue.shift()
+        if (!(await write(() => sendStrip(part)))) return
+        continue
       }
-      if (!wrote) return
+      if (warmList.length) {
+        await warmFace(warmList.shift())
+        continue
+      }
+      return
     }
   }
 
@@ -474,19 +517,60 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
       if (!rgba) return deck.fillKeyColor(i, 0, 0, 0) // a face the art cannot draw stays dark
       buffer = await deck.prepareFillKeyBuffer(i, rgba, { format: 'rgba' })
     }
-    prepared.set(id, buffer)
-    if (prepared.size > PREPARED_MAX) prepared.delete(prepared.keys().next().value)
+    keep(id, buffer)
     return deck.sendPreparedBuffer(buffer)
   }
 
-  async function paintStrip(json) {
+  function keep(id, buffer) {
+    prepared.set(id, buffer)
+    if (prepared.size > PREPARED_MAX) prepared.delete(prepared.keys().next().value)
+  }
+
+  // A face drawn and made into a JPEG before it is shown (prepared on
+  // WARM_KEY; on any other key its JPEG is found again). Nothing is sent, and
+  // a face that fails is only not ready: it is made when it is first shown.
+  async function warmFace(face) {
+    if (warmed.has(face)) return
+    warmed.add(face)
+    if (face === 'off' || solidOf(face) || typeof deck.prepareFillKeyBuffer !== 'function') return
+    const id = `${WARM_KEY}|${face}`
+    if (prepared.has(id)) return
+    const rgba = rgbaOf(face)
+    if (!rgba) return
+    try { keep(id, await deck.prepareFillKeyBuffer(WARM_KEY, rgba, { format: 'rgba' })) } catch { /* made when first shown */ }
+  }
+
+  // A new strip, if one is due: the parts of it that differ from what the
+  // deck shows are due to be sent. True when it took one.
+  function takeStrip() {
+    if (wantStrip === null || wantStrip === takenStrip) return false
+    const wait = stripAt + stripGapMs - clock()
+    if (wait > 0) { later(wait); return false }
+    stripAt = clock()
+    takenStrip = wantStrip
     let rgba = null
-    try { rgba = art?.stripRgba(JSON.parse(json)) } catch { rgba = null }
+    try { rgba = art?.stripRgba(JSON.parse(takenStrip)) } catch { rgba = null }
     if (rgba?.length !== STRIP_BYTES) {
       if (!warned.has('strip')) { warned.add('strip'); say('no picture for the strip.') }
-      return // the strip keeps what it shows
+      return true // the strip keeps what it shows, and the older strip's parts still to send go on
     }
-    return deck.fillLcd(0, rgba, { format: 'rgba', width: 1200, height: 100 })
+    bandsDue = []
+    if (wholeStrip) { bandsDue.push({ band: -1, rgba }); return true }
+    for (let b = 0; b < BANDS; b++) {
+      const part = bandOf(rgba, b)
+      if (!same(part, sentBands[b])) bandsDue.push({ band: b, rgba: part })
+    }
+    return true
+  }
+
+  async function sendStrip({ band, rgba }) {
+    if (band < 0) {
+      sentBands.fill(null)
+      return deck.fillLcd(0, rgba, { format: 'rgba', width: 1200, height: 100 })
+    }
+    sentBands[band] = null // not known until it is sent
+    await deck.fillLcdRegion(0, band * BAND_W, 0, rgba, { format: 'rgba', width: BAND_W, height: 100 })
+    sentBands[band] = rgba
   }
 
   function solidOf(face) {
@@ -504,7 +588,77 @@ export function deckPainter(deck, art, { onLost, stripGapMs = STRIP_GAP_MS } = {
     return null
   }
 
-  return { paint, clear, close, idle }
+  return { paint, warm, clear, close, idle }
+}
+
+// One part of the strip (`b`, 0 to 5, left to right): its 200 x 100 pixels.
+function bandOf(rgba, b) {
+  const part = new Uint8Array(BAND_BYTES)
+  const row = 1200 * 4, partRow = BAND_W * 4
+  for (let y = 0; y < 100; y++) part.set(rgba.subarray(y * row + b * partRow, y * row + (b + 1) * partRow), y * partRow)
+  return part
+}
+function same(a, b) {
+  if (!a || !b || a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
+  return true
+}
+
+// ---- the JPEGs ----------------------------------------------------------------
+
+// The library makes every picture it sends into a JPEG, on a new canvas each
+// time. The arcade hands it this instead (openDevice's encodeJPEG): one canvas
+// per size, kept, and each JPEG kept by a hash of its pixels (as the library
+// hands them over, already turned for the deck), so a face on many keys, or
+// shown again, is made into a JPEG once. The strip's parts are kept apart,
+// so they never push the keys' out.
+const JPEG_QUALITY = 0.8
+const JPEGS_KEPT = { key: 600, other: 24 }
+const jpegs = { key: new Map(), other: new Map() } // `${w}x${h}:${hash}` -> the JPEG's bytes (a promise), the oldest first
+const jpegCanvases = new Map() // `${w}x${h}` -> { canvas, pen }
+
+export function encodeJpeg(bytes, width, height) {
+  const kind = width === 112 && height === 112 ? 'key' : 'other'
+  const kept = jpegs[kind]
+  const key = `${width}x${height}:${pixelHash(bytes)}`
+  let made = kept.get(key)
+  if (made) kept.delete(key) // set again below, as the newest
+  else {
+    made = makeJpeg(bytes, width, height)
+    made.catch(() => { if (kept.get(key) === made) kept.delete(key) }) // one that failed is made afresh next time
+  }
+  kept.set(key, made)
+  while (kept.size > JPEGS_KEPT[kind]) kept.delete(kept.keys().next().value)
+  return made
+}
+
+// Two 32-bit hashes over every byte, so two pictures a few pixels apart never share a JPEG.
+function pixelHash(bytes) {
+  let a = 0x811c9dc5, b = 0x9e3779b9
+  for (let i = 0; i < bytes.length; i++) {
+    a = Math.imul(a ^ bytes[i], 0x01000193)
+    b = Math.imul(b ^ bytes[i], 0x85ebca6b) + (b >>> 15)
+  }
+  return `${(a >>> 0).toString(36)}.${(b >>> 0).toString(36)}`
+}
+
+async function makeJpeg(bytes, width, height) {
+  const size = `${width}x${height}`
+  let c = jpegCanvases.get(size)
+  if (!c) {
+    const canvas = typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(width, height) : globalThis.document.createElement('canvas')
+    canvas.width = width; canvas.height = height
+    c = { canvas, pen: canvas.getContext('2d') }
+    jpegCanvases.set(size, c)
+  }
+  const image = c.pen.createImageData(width, height)
+  image.data.set(bytes)
+  c.pen.putImageData(image, 0, 0)
+  // the canvas's picture is copied as the JPEG is asked for, so the next one can be drawn at once
+  const blob = typeof c.canvas.convertToBlob === 'function'
+    ? await c.canvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY })
+    : await new Promise((ok, no) => c.canvas.toBlob(b => (b ? ok(b) : no(new Error('No image generated'))), 'image/jpeg', JPEG_QUALITY))
+  return new Uint8Array(await blob.arrayBuffer())
 }
 
 // Calls onPlug(device) when a Stream Deck + XL is plugged in and

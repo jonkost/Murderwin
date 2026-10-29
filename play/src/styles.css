@@ -1076,15 +1076,22 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
    and a 4:3 screen all fit, PRACTICE band included. */
 .kiosk.arcade { --paper-opacity: 0.22; --paper-size: 120vw; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
   align-items: stretch; justify-content: stretch; align-content: stretch; gap: 1.6vh; height: calc(100vh - var(--band-h)); height: calc(100dvh - var(--band-h)); min-height: 0;
-  overflow: hidden; padding: 2.4vh 2.6vw 1.8vh; text-align: left; background: var(--brand-blue); -webkit-user-select: none; user-select: none; }
+  overflow: hidden; padding: 2.4vh 2.6vw 1.8vh; text-align: left; -webkit-user-select: none; user-select: none;
+  /* black lacquer, a claret glow from above, gold (Jon, 29 Oct 2026: "brighter and fun, colorful and high contrast. Think glam!") */
+  --gold-hi: #fff6c4; --gold: #d6cf86; --gold-lo: #a6903a; --win: #33bd66;
+  background: radial-gradient(120% 85% at 50% 0%, #3a1a1d 0%, #120a0b 52%, #000 100%); }
 .arcade-top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; min-width: 0; }
 .arcade-name { min-width: 0; }
-.arcade-name h1 { margin: 0; font-size: min(3.6vw, 5.6vh); line-height: 1.1; color: var(--brand-parchment); }
-.arcade-sub { margin: 0.4vh 0 0; font-size: min(1.8vw, 2.8vh); color: var(--brand-brass); }
+.arcade-name h1 { margin: 0; font-size: min(3.6vw, 5.6vh); line-height: 1.1; color: var(--gold);
+  background: linear-gradient(180deg, var(--gold-hi) 0%, #d8c45a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.arcade-sub { margin: 0.4vh 0 0; font-size: min(1.8vw, 2.8vh); color: var(--brand-parchment); }
 .arcade-round { flex: none; display: flex; align-items: center; gap: 1.4vw; }
 .arcade-top .study-clock { font-size: min(3.6vw, 5.8vh); }
-.arcade-chime { min-height: max(2.2rem, 5vh); padding: 0 1.4vw; border: 0; border-radius: 1vh; background: rgba(0, 25, 37, 0.85); box-shadow: inset 0 0 0 0.25vh var(--brand-brass);
-  color: var(--brass-hi); font-size: min(1.6vw, 2.6vh); font-weight: 600; }
+.arcade-chime { min-height: max(2.2rem, 5vh); padding: 0 1.4vw; border: 0; border-radius: 1vh; background: rgba(0, 0, 0, 0.7); box-shadow: inset 0 0 0 0.25vh var(--gold);
+  color: var(--gold-hi); font-size: min(1.6vw, 2.6vh); font-weight: 600; }
+/* Back, a quieter ring than the chime's (Jon, 29 Oct 2026: "on the pratice page I need a back button") */
+.arcade-back { min-height: max(2.2rem, 5vh); padding: 0 1.4vw; border: 0; border-radius: 1vh; background: rgba(0, 0, 0, 0.7); box-shadow: inset 0 0 0 0.2vh var(--brand-parchment);
+  color: var(--brand-parchment); font-size: min(1.6vw, 2.6vh); font-weight: 600; }
 
 /* the middle: Boo beside the deck */
 .arcade-main { position: relative; min-height: 0; display: flex; align-items: stretch; gap: 2.4vw; container-type: size; }
@@ -1095,9 +1102,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-bubble { max-width: 100%; padding: 1.8vh 2vw; font-size: min(2.2vw, 3.4vh); text-align: center; }
 .arcade-bubble::before { left: 50%; top: 0; transform: translate(-50%, -100%); border: 0; border-left: 1.4vh solid transparent; border-right: 1.4vh solid transparent; border-bottom: 2vh solid var(--brand-parchment); }
 .arcade-score { margin: 0; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0.4vh 1.6vw; font-size: min(2.2vw, 3.4vh); color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
-.arcade-score strong { font-family: var(--serif); font-size: 1.6em; color: var(--brand-brass); }
+.arcade-score strong { font-family: var(--serif); font-size: 1.6em; color: var(--gold); }
 .arcade-left { color: var(--dim); }
-.arcade-tally { flex-basis: 100%; } /* Whack-a-Mouse's pets tapped, on a line of its own */
+.arcade-tally { flex-basis: 100%; } /* Whack-a-Mouse's friends tapped, on a line of its own */
 .arcade-plain { margin: 0; max-width: 100%; font-size: min(2.4vw, 3.8vh); line-height: 1.3; color: var(--brand-parchment); }
 .arcade-boo.playing .arcade-plain { font-size: min(1.7vw, 2.7vh); color: var(--dim); }
 
@@ -1107,7 +1114,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-key, .arcade-strip, .arcade-dial { position: absolute; }
 .arcade-key, .arcade-strip, .arcade-turn, .arcade-knob { margin: 0; padding: 0; border: 0; color: var(--brand-parchment); touch-action: manipulation; -webkit-touch-callout: none; }
 .arcade-key { overflow: hidden; border-radius: 12%; background: #000; box-shadow: 0 0 0 0.3cqi #2a2d32, 0 0.5cqi 1cqi rgba(0, 0, 0, 0.6); transition: transform 0.08s ease-out, filter 0.08s ease-out; }
-.arcade-strip { overflow: hidden; border-radius: 0.8cqi; background: var(--brand-blue); box-shadow: 0 0 0 0.3cqi #2a2d32; }
+.arcade-strip { overflow: hidden; border-radius: 0.8cqi; background: #000; box-shadow: 0 0 0 0.3cqi #2a2d32; }
 .arcade-key img, .arcade-strip img { display: block; width: 100%; height: 100%; pointer-events: none; }
 .arcade-dial { display: flex; align-items: center; justify-content: space-between; }
 .arcade-turn { width: 26%; height: 76%; display: grid; place-items: center; border-radius: 1.2cqi; background: #23262b; box-shadow: inset 0 0 0 1px rgba(241, 232, 214, 0.1); transition: transform 0.08s ease-out; }
@@ -1121,25 +1128,27 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 
 /* a moment across the middle */
 .arcade-moment { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; padding: 2vh 3vw;
-  overflow: hidden; border-radius: 1.6vh; background: var(--brand-blue); box-shadow: inset 0 0 0 0.25vh rgba(166, 162, 83, 0.35); text-align: center; animation: arcade-in 0.25s ease-out; }
+  overflow: hidden; border-radius: 1.6vh; background: radial-gradient(110% 80% at 50% 0%, #2a1416 0%, #0b0708 60%, #000 100%);
+  box-shadow: inset 0 0 0 0.35vh var(--gold), 0 2vh 5vh rgba(0, 0, 0, 0.6); text-align: center; animation: arcade-in 0.25s ease-out; }
 @keyframes arcade-in { from { opacity: 0; } to { opacity: 1; } }
 .arcade-moment-name { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(4.6vw, 7.4vh); line-height: 1.1; color: var(--brand-parchment); }
-.arcade-moment-name.small { font-size: min(3vw, 4.8vh); color: var(--brand-brass); }
+.arcade-moment-name.small { font-size: min(3vw, 4.8vh); color: var(--gold); }
 .arcade-how { margin: 0; max-width: min(62ch, 90cqw); font-size: min(2.6vw, 4.2vh); line-height: 1.35; color: var(--brand-parchment); }
 .arcade-how.dim { font-size: min(1.9vw, 3vh); color: var(--dim); }
-.arcade-do { margin: 0; max-width: 90cqw; font-size: min(2.2vw, 3.4vh); line-height: 1.3; color: var(--brass-hi); }
-.arcade-count { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(22vw, 34vh); line-height: 1; color: var(--brand-parchment); font-variant-numeric: tabular-nums; animation: boo-tick 1s ease-out; }
+.arcade-do { margin: 0; max-width: 90cqw; font-size: min(2.2vw, 3.4vh); line-height: 1.3; color: var(--gold-hi); }
+.arcade-count { margin: 0; font-family: var(--serif); font-weight: 700; font-size: min(22vw, 34vh); line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; animation: boo-tick 1s ease-out;
+  background: linear-gradient(180deg, var(--gold-hi) 0%, #d8c45a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .arcade-says { display: flex; align-items: center; justify-content: center; gap: 3vw; max-width: 100%; }
 .arcade-says img { flex: none; height: min(24vh, 20vw); width: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.6)); }
 .arcade-says .boo-bubble { max-width: min(46vw, 56cqw); font-size: min(2.8vw, 4.4vh); }
 .arcade-moment.farewell .arcade-says .boo-bubble { font-size: min(5vw, 8vh); }
 .arcade-points { margin: 0; display: flex; align-items: baseline; gap: 0.6vw; font-family: var(--serif); font-size: min(2.6vw, 4.2vh); color: var(--brand-parchment); }
-.arcade-points strong { font-size: 2em; line-height: 1; color: var(--brand-brass); font-variant-numeric: tabular-nums; }
+.arcade-points strong { font-size: 2em; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
 /* the clue, on a card of parchment; in practice the house's stand-in, dim and in italics like every stand-in */
 .arcade-clue { max-width: min(80cqw, 64rem); padding: 2vh 3vw; border-radius: 1.4vh; background: var(--brand-parchment); box-shadow: 0 1.2vh 3vh rgba(0, 0, 0, 0.45); }
 .arcade-clue-text { margin: 0; font-family: var(--serif); font-style: italic; font-size: min(3vw, 4.8vh); line-height: 1.25; color: #6e625b; }
 .arcade-clue-note { margin: 1vh 0 0; font-size: min(1.7vw, 2.7vh); color: #6e625b; }
-.arcade-winner { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(6vw, 10vh); line-height: 1.1; color: var(--brand-brass); }
+.arcade-winner { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(6vw, 10vh); line-height: 1.1; color: var(--gold); }
 /* a long names line (a tie, or long names) is set smaller, and Boo with it, so OK stays on the screen */
 .arcade-moment.winner.long .arcade-winner { font-size: min(4vw, 6.5vh); }
 .arcade-moment.winner.long .arcade-says img { height: min(16vh, 14vw); }
@@ -1147,12 +1156,13 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
    off the bottom, never the top, and scroll down to OK */
 .arcade-moment.winner, .arcade-moment.clue { overflow-y: auto; justify-content: safe center; }
 .arcade-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6vw; }
-.arcade-btn { min-height: max(2.6rem, 6.4vh); min-width: 10vw; padding: 0 2.6vw; border: 0; border-radius: 1.2vh; background: var(--brand-red); color: var(--brand-parchment); font-size: min(2.2vw, 3.6vh); font-weight: 600; }
+.arcade-btn { min-height: max(2.6rem, 6.4vh); min-width: 10vw; padding: 0 2.6vw; border: 0; border-radius: 1.2vh; background: linear-gradient(180deg, #d6283a 0%, #9a1420 100%);
+  box-shadow: inset 0 0 0 0.25vh var(--gold); color: var(--brand-parchment); font-size: min(2.2vw, 3.6vh); font-weight: 600; }
 .arcade-btn.quiet { background: transparent; box-shadow: inset 0 0 0 0.25vh var(--line); color: var(--dim); }
 .arcade-btn:disabled { opacity: 0.4; cursor: default; }
 /* the practice visit's names */
 .arcade-names { display: grid; gap: 1.2vh; width: min(34rem, 60cqw); }
-.arcade-input { min-height: max(2.6rem, 6.4vh); padding: 0 1.4vw; border-radius: 1vh; border: 0.2vh solid var(--line); background: var(--card); color: var(--ink); font: inherit;
+.arcade-input { min-height: max(2.6rem, 6.4vh); padding: 0 1.4vw; border-radius: 1vh; border: 0.2vh solid var(--gold-lo); background: var(--brand-charcoal); color: var(--ink); font: inherit;
   font-size: min(2.2vw, 3.6vh); -webkit-user-select: text; user-select: text; }
 .arcade-input::placeholder { color: var(--dim); }
 
@@ -1160,26 +1170,76 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1vh 2.4vw; min-height: max(2.2rem, 5vh); font-size: min(1.6vw, 2.6vh); color: var(--dim); }
 .arcade-foot.waking { padding-right: 26vw; }
 .arcade-deckline { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.6vh 1.2vw; }
-.arcade-deckline.on { color: var(--brass-hi); }
+.arcade-deckline.on { color: var(--win); }
 .arcade-connect { min-height: max(2.2rem, 5vh); padding: 0 1.6vw; border: 0; border-radius: 1vh; background: var(--brand-red); color: var(--brand-parchment); font-size: inherit; font-weight: 600; }
 .arcade-connect:disabled { opacity: 0.5; cursor: default; }
 .arcade-problem { color: var(--brand-parchment); }
 .arcade-players { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6vh 2.4vw; }
-.arcade-player { display: flex; align-items: center; gap: 0.8vw; }
+.arcade-player { display: flex; align-items: center; gap: 0.8vw; padding: 0.4vh 0.8vw; border-radius: 1vh; }
 .arcade-player-name { font-weight: 600; color: var(--brand-parchment); }
-.arcade-player.now .arcade-player-name { color: var(--brass-hi); }
-.arcade-tokens { display: inline-flex; gap: 0.4vw; }
-.arcade-token { width: min(1.3vw, 2.1vh); height: min(1.3vw, 2.1vh); border-radius: 50%; background: var(--brand-brass); box-shadow: inset 0 0 0 0.25vh var(--brand-brass); }
-.arcade-token.spent { background: transparent; }
+/* whose turn it is: a gold ring, plain in dim light, where a paler name alone is not */
+.arcade-player.now { box-shadow: inset 0 0 0 0.3vh var(--gold); }
+.arcade-player.now .arcade-player-name { color: var(--gold-hi); }
+/* Boo's coin for each token left, an empty gold ring for each one spent (Jon, 29 Oct 2026, of the coins: "They need to be bigger.") */
+.arcade-tokens { display: inline-flex; gap: 0.6vw; }
+.arcade-token { width: min(3.2vw, 5.2vh); height: min(3.2vw, 5.2vh); border-radius: 50%; }
+.arcade-token.coin { object-view-box: inset(7.5% 8% 7.3% 7.1%); filter: drop-shadow(0 0 0.8vh rgba(255, 226, 122, 0.45)); } /* the picture's clear edge left off (lib/arcadeArt.js COIN_BOX) */
+.arcade-token.spent { box-shadow: inset 0 0 0 0.4vh var(--gold-lo); }
 .arcade-scores { color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
 .arcade-fun { margin: 0 0 0 auto; display: flex; align-items: center; gap: 1.4vw; }
 .arcade-small { min-height: max(2rem, 4.4vh); padding: 0 1.2vw; border: 0; border-radius: 1vh; background: transparent; box-shadow: inset 0 0 0 0.2vh var(--line); color: var(--brand-parchment); font-size: inherit; }
-/* a screen standing up (an iPad held tall): Boo above the deck */
+/* the scoreboard, while the Stream Deck is the game: the points big in gold, the time, the strike boxes, the
+   game's own tally, and a pop for every point and strike; on the menu, the fun facts so far */
+.arcade-board { flex: 1.35 1 0; min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2.4vh; padding: 3vh 3vw; overflow: hidden; border-radius: 2vh; text-align: center;
+  background: radial-gradient(90% 70% at 50% 30%, #241d10 0%, #0a0a0b 60%, #000 100%); box-shadow: inset 0 0 0 0.4vh var(--gold), 0 0 4vh rgba(214, 207, 134, 0.18), 0 2vh 5vh rgba(0, 0, 0, 0.6); }
+.arcade-board-game { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(3.4vw, 5.4vh); line-height: 1.1; color: var(--brand-parchment); }
+.arcade-board-score { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.arcade-board-score strong { font-family: var(--serif); font-weight: 700; font-size: min(15vw, 26vh); line-height: 0.95; font-variant-numeric: tabular-nums; color: var(--gold);
+  background: linear-gradient(180deg, var(--gold-hi) 0%, #d8c45a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 2.6vh rgba(255, 226, 122, 0.35)); }
+.arcade-board-score span { font-size: min(2.4vw, 3.8vh); color: var(--gold); }
+.arcade-board-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2vh 4.4vw; }
+.arcade-board-stat { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.arcade-board-stat strong { font-family: var(--serif); font-weight: 700; font-size: min(4.6vw, 7.4vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
+.arcade-board-stat span { font-size: min(1.8vw, 2.8vh); color: var(--gold); }
+.arcade-strikes { margin: 0; display: flex; gap: 1.2vw; }
+.arcade-strike { width: min(5.4vw, 8.6vh); height: min(5.4vw, 8.6vh); display: grid; place-items: center; border-radius: 1.2vh; box-shadow: inset 0 0 0 0.4vh var(--gold);
+  font-size: min(3.6vw, 5.8vh); font-weight: 700; line-height: 1; color: var(--brand-parchment); }
+.arcade-strike.used { background: var(--brand-red); box-shadow: inset 0 0 0 0.4vh #e8323d, 0 0 2.4vh rgba(232, 50, 61, 0.6); animation: arcade-thump 0.35s ease-out; }
+@keyframes arcade-thump { from { transform: scale(1.35); } to { transform: scale(1); } }
+.arcade-board-said { min-height: 1.3em; margin: 0; font-size: min(2.8vw, 4.4vh); font-weight: 700; color: #ff6b73; }
+.arcade-pops { position: absolute; inset: 0; pointer-events: none; }
+.arcade-pop { position: absolute; left: 50%; top: 34%; font-family: var(--serif); font-weight: 700; font-size: min(6.4vw, 10.4vh); line-height: 1; white-space: nowrap;
+  animation: arcade-pop 0.9s ease-out forwards; }
+/* each pop keeps its own spot while newer ones come and older ones go; one after another land well apart */
+.arcade-pop.slot-1 { left: 42%; } .arcade-pop.slot-2 { left: 58%; } .arcade-pop.slot-3 { left: 26%; } .arcade-pop.slot-0 { left: 74%; }
+.arcade-pop.gain { color: var(--win); text-shadow: 0 0 2vh rgba(51, 189, 102, 0.6); }
+.arcade-pop.gold { color: var(--gold-hi); text-shadow: 0 0 2.4vh rgba(255, 226, 122, 0.9); }
+.arcade-pop.strike { color: #ff4b55; text-shadow: 0 0 2vh rgba(255, 75, 85, 0.6); }
+@keyframes arcade-pop {
+  0% { opacity: 1; transform: translate(-50%, 0) scale(0.7); }
+  25% { opacity: 1; transform: translate(-50%, -3vh) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -14vh) scale(1); }
+}
+.arcade-board.menu { gap: 4vh; }
+.arcade-games { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2vh 2.4vw; }
+.arcade-games li { width: min(9vw, 15vh); display: flex; flex-direction: column; align-items: center; gap: 1vh; font-size: min(1.5vw, 2.4vh); line-height: 1.2; color: var(--brand-parchment); }
+.arcade-games img { width: 100%; aspect-ratio: 1; border-radius: 14%; box-shadow: 0 0 2.4vh rgba(214, 207, 134, 0.25); }
+.arcade-board-do { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(3.6vw, 5.8vh); line-height: 1.15; color: var(--brand-parchment); }
+.arcade-facts { margin: 0; width: 100%; max-width: 64rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: 2.4vh 3vw; }
+.arcade-facts div { display: flex; flex-direction: column; align-items: center; gap: 0.4vh; }
+.arcade-facts dt { order: 2; font-size: min(1.7vw, 2.7vh); color: var(--gold); }
+.arcade-facts dd { order: 1; margin: 0; font-family: var(--serif); font-weight: 700; font-size: min(4vw, 6.4vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
+/* a screen standing up (an iPad held tall): Boo above the deck, or above the scoreboard */
 @media (orientation: portrait) {
   .arcade-main { flex-direction: column; gap: 1.6vh; }
   .arcade-deck { width: min(100cqw, calc(58cqh * 1280 / 1081)); }
+  .arcade-board { flex: 1.6 1 0; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .arcade-pop { display: none; } /* the points are on the board */
+  .arcade-strike.used { animation: none; }
   .arcade-moment, .arcade-count { animation: none; }
   .arcade-key, .arcade-turn, .arcade-knob { transition: none; }
   .arcade-key:active, .arcade-turn:active, .arcade-knob:active { transform: none; }

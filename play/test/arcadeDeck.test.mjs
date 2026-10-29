@@ -1,17 +1,19 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { deckEvents, deckPainter, watchPlugs, reopenDeck, chooseDeck, deckSupported, deckProblem } from '../src/lib/arcadeDeck.js'
+import { deckEvents, deckPainter, watchPlugs, reopenDeck, chooseDeck, deckSupported, deckProblem, encodeJpeg } from '../src/lib/arcadeDeck.js'
 
 // Miss Boo LaRue's Arcade: the Stream Deck + XL link (build spec section 11).
 // Fakes only: a deck that records every write, an art that hands back tagged
-// buffers, a navigator.hid and a library. The real @elgato-stream-deck/webhid
-// is never loaded here. The recorded calls hold full-size picture buffers, so
-// the assertions compare names and small tuples only (assert would print a
-// buffer in full).
+// buffers, a navigator.hid, a library and, for the JPEGs, a browser's
+// canvases. The real @elgato-stream-deck/webhid is never loaded here. The
+// recorded calls hold full-size picture buffers, so the assertions compare
+// names and small tuples only (assert would print a buffer in full).
 
 const FACE_BYTES = 112 * 112 * 4
 const STRIP_BYTES = 1200 * 100 * 4
+const PART_BYTES = 200 * 100 * 4 // one of the strip's six parts
+const PARTS = [0, 200, 400, 600, 800, 1000] // where each part of the strip starts, left to right
 const XL = 0x00c6 // the + XL's USB product id
 const MK2 = 0x0080 // the study's 15-key Stream Deck MK.2
 
@@ -26,15 +28,26 @@ async function quiet(fn) {
   try { return await fn() } finally { console.warn = warn }
 }
 
+// console.warn's lines while fn runs, kept off the terminal.
+async function warnings(fn) {
+  const warn = console.warn
+  const lines = []
+  console.warn = (...args) => { lines.push(args.join(' ')) }
+  try { await fn() } finally { console.warn = warn }
+  return lines
+}
+
 // A deck shaped like StreamDeckWeb: on/off like eventemitter3, and every write
-// recorded. slow: each write waits a turn of the event loop; slowClose: so does
-// close, as a real device's does. fail: { when, error }.
+// recorded (and every prepared buffer it hands back, in buffers). slow: each
+// write waits a turn of the event loop; slowClose: so does close, as a real
+// device's does. fail: { when, error }.
 function fakeDeck({ model = 'plus-xl', device = null, slow = false, slowClose = false, fail = null } = {}) {
   const listeners = new Map()
   const deck = {
     MODEL: model,
     modelInfo: { id: model },
     calls: [],
+    buffers: [],
     inFlight: 0,
     most: 0,
     closed: false,
@@ -45,9 +58,14 @@ function fakeDeck({ model = 'plus-xl', device = null, slow = false, slowClose = 
     count(name) { return (listeners.get(name) ?? []).length },
     removeAllListeners() { listeners.clear(); deck.cleared = true; return deck },
     fillKeyColor: (i, r, g, b) => write('fillKeyColor', [i, r, g, b]),
-    prepareFillKeyBuffer: (i, rgba, options) => write('prepareFillKeyBuffer', [i, rgba, options], () => ({ key: i, rgba })),
+    prepareFillKeyBuffer: (i, rgba, options) => write('prepareFillKeyBuffer', [i, rgba, options], () => {
+      const buffer = { key: i, rgba }
+      deck.buffers.push(buffer)
+      return buffer
+    }),
     sendPreparedBuffer: buffer => write('sendPreparedBuffer', [buffer]),
     fillLcd: (i, rgba, options) => write('fillLcd', [i, rgba, options]),
+    fillLcdRegion: (i, x, y, rgba, options) => write('fillLcdRegion', [i, x, y, rgba, options]),
     clearPanel: () => write('clearPanel', []),
     setBrightness: percent => write('setBrightness', [percent]),
     async close() {
@@ -71,7 +89,10 @@ function fakeDeck({ model = 'plus-xl', device = null, slow = false, slowClose = 
 }
 
 // The art: one cached buffer per face id, tagged with the id, and 'off' and
-// 'flat' as flat colours.
+// 'flat' as flat colours. A strip's picture is six parts of 200 pixels, each
+// all one value: strip.bands[part] when the strip gives bands, else a value of
+// its own for each new strip (200 and up), so two strips with different words
+// differ in every part, and a test that gives bands says which parts differ.
 function fakeArt() {
   const faces = new Map()
   const strips = new Map()
@@ -81,9 +102,17 @@ function fakeArt() {
       return faces.get(id)
     },
     faceSolid: id => (id === 'off' ? [0, 0, 0] : id === 'flat' ? [31, 157, 74] : null),
-    stripRgba(strip) {
-      const json = JSON.stringify(strip)
-      if (!strips.has(json)) strips.set(json, Object.assign(new Uint8ClampedArray(STRIP_BYTES), { strip: json }))
+    stripRgba(spec) {
+      const json = JSON.stringify(spec)
+      if (!strips.has(json)) {
+        const own = 200 + (strips.size % 50)
+        const rgba = new Uint8ClampedArray(STRIP_BYTES)
+        for (let part = 0; part < 6; part++) {
+          const value = spec?.bands?.[part] ?? own
+          for (let y = 0; y < 100; y++) rgba.fill(value, (y * 1200 + part * 200) * 4, (y * 1200 + part * 200 + 200) * 4)
+        }
+        strips.set(json, Object.assign(rgba, { strip: json }))
+      }
       return strips.get(json)
     },
   }
@@ -99,6 +128,18 @@ const lastFaces = deck => {
   return faces
 }
 const named = (deck, name) => deck.calls.filter(c => c[0] === name)
+// The strip's parts that went, in order: [x, value] (each part of the fake art's strip is one value).
+const stripParts = deck => named(deck, 'fillLcdRegion').map(c => [c[2], c[4][0]])
+// Every write that shows something, in order and short: 'k5' key 5, 's400'
+// the part of the strip at x 400, 'strip' the whole strip, 'clear' the deck.
+const shown = deck => deck.calls.flatMap(([name, ...a]) =>
+  name === 'fillKeyColor' ? [`k${a[0]}`]
+    : name === 'sendPreparedBuffer' ? [`k${a[0].key}`]
+      : name === 'fillLcdRegion' ? [`s${a[1]}`]
+        : name === 'fillLcd' ? ['strip']
+          : name === 'clearPanel' ? ['clear'] : [])
+// The pictures made ready, in order: 'key|face'.
+const prepared = deck => named(deck, 'prepareFillKeyBuffer').map(c => `${c[1]}|${c[2].face}`)
 
 const strip = (extra = {}) => ({ left: 'Free play', centre: 'Press a game', right: '', bar: null, dials: ['', '', '', '', '', ''], ...extra })
 
@@ -119,11 +160,13 @@ function fakeHid(granted = []) {
     count(type) { return listeners[type].length },
   }
 }
+// options: what each openDevice was handed, in order.
 function fakeLib() {
   const lib = {
-    opened: [], decks: [], error: null, model: null, slowClose: false, slow: false,
-    async openDevice(device) {
+    opened: [], options: [], decks: [], error: null, model: null, slowClose: false, slow: false,
+    async openDevice(device, options) {
       lib.opened.push(device)
+      lib.options.push(options)
       if (lib.error) throw lib.error
       device.opened = true
       const deck = fakeDeck({ model: lib.model ?? (device.productId === XL ? 'plus-xl' : 'original-mk2'), device, slowClose: lib.slowClose, slow: lib.slow })
@@ -137,7 +180,7 @@ function fakeLib() {
 }
 const chromeError = (name, message) => Object.assign(new Error(message), { name })
 
-test("the deck's presses become the arcade's events: keys, dial presses, dial turns, strip taps", () => {
+test("the deck's presses become the arcade's events: keys, dial presses and turns, strip taps short or long, and swipes", () => {
   const deck = fakeDeck()
   const got = []
   const errors = []
@@ -146,17 +189,24 @@ test("the deck's presses become the arcade's events: keys, dial presses, dial tu
   const names = ['down', 'up', 'rotate', 'lcdShortPress', 'lcdLongPress', 'lcdSwipe', 'error', 'nfcRead']
   const before = names.map(n => deck.count(n))
   const off = deckEvents(deck, event => got.push(event), error => errors.push(error))
+  const segment = { type: 'lcd-segment', id: 0, index: 0 }
 
   deck.emit('down', { type: 'button', index: 7 })
   deck.emit('down', { type: 'encoder', index: 2 })
   deck.emit('rotate', { type: 'encoder', index: 4 }, -3)
   deck.emit('rotate', { type: 'encoder', index: 0 }, 1)
-  deck.emit('lcdShortPress', { type: 'lcd-segment', id: 0, index: 0 }, { x: 640, y: 50 })
-  // ignored: releases, long presses, swipes and the NFC reader
+  deck.emit('lcdShortPress', segment, { x: 640, y: 50 })
+  deck.emit('lcdLongPress', segment, { x: 10, y: 10 }) // a slow tap is still a tap
+  deck.emit('lcdSwipe', segment, { x: 10, y: 10 }, { x: 900, y: 10 })
+  deck.emit('lcdSwipe', segment, { x: 1150, y: 80 }, { x: 300, y: 20 }) // right to left
+  deck.emit('lcdShortPress', segment) // no position given: the left end
+  deck.emit('lcdLongPress', segment)
+  deck.emit('lcdSwipe', segment)
+  // ignored: releases, a turn of nothing and the NFC reader
   deck.emit('up', { type: 'button', index: 7 })
   deck.emit('up', { type: 'encoder', index: 2 })
-  deck.emit('lcdLongPress', { type: 'lcd-segment', id: 0, index: 0 }, { x: 10, y: 10 })
-  deck.emit('lcdSwipe', { type: 'lcd-segment', id: 0, index: 0 }, { x: 10, y: 10 }, { x: 900, y: 10 })
+  deck.emit('rotate', { type: 'encoder', index: 1 }, 0)
+  deck.emit('rotate', { type: 'encoder', index: 1 }, NaN)
   deck.emit('nfcRead', 'abc')
   const boom = new Error('boom')
   deck.emit('error', boom)
@@ -167,6 +217,12 @@ test("the deck's presses become the arcade's events: keys, dial presses, dial tu
     { kind: 'turn', dial: 4, amount: -3 },
     { kind: 'turn', dial: 0, amount: 1 },
     { kind: 'strip', x: 640 },
+    { kind: 'strip', x: 10 },
+    { kind: 'swipe', from: 10, to: 900 },
+    { kind: 'swipe', from: 1150, to: 300 },
+    { kind: 'strip', x: 0 },
+    { kind: 'strip', x: 0 },
+    { kind: 'swipe', from: 0, to: 0 },
   ])
   assert.deepEqual(errors, [boom])
 
@@ -174,7 +230,9 @@ test("the deck's presses become the arcade's events: keys, dial presses, dial tu
   assert.deepEqual(names.map(n => deck.count(n)), before, 'exactly our listeners went')
   deck.emit('down', { type: 'button', index: 1 })
   deck.emit('rotate', { type: 'encoder', index: 1 }, 1)
-  assert.equal(got.length, 5, 'nothing after the unsubscribe')
+  deck.emit('lcdLongPress', segment, { x: 5, y: 5 })
+  deck.emit('lcdSwipe', segment, { x: 5, y: 5 }, { x: 50, y: 5 })
+  assert.equal(got.length, 11, 'nothing after the unsubscribe')
   assert.deepEqual(pages, ['down', 'down', 'down'], "the page's own listener still hears the deck")
   off() // twice is harmless
 
@@ -191,6 +249,8 @@ test('a press the page fails to handle does not stop the next one', async () => 
   deck.emit('down', { type: 'button', index: 1 })
   assert.deepEqual(got, [{ kind: 'key', index: 1 }])
 })
+
+// ---- the painter: the keys ---------------------------------------------------
 
 test('the painter paints only the keys whose face changed', async () => {
   const deck = fakeDeck()
@@ -216,6 +276,16 @@ test('the painter paints only the keys whose face changed', async () => {
   await p.close()
 })
 
+test('paint() takes its options as null or left out, as well as { urgent }', async () => {
+  const deck = fakeDeck()
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.paint(fill('star'), null, null)
+  p.paint(fill('blank'), null)
+  await p.idle()
+  assert.deepEqual(lastFaces(deck), fill('blank'))
+  await p.close()
+})
+
 test('a burst of paints is painted once, with the newest faces, one write at a time', async () => {
   const deck = fakeDeck({ slow: true })
   const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
@@ -232,7 +302,54 @@ test('a burst of paints is painted once, with the newest faces, one write at a t
   assert.deepEqual(lastFaces(deck), C, 'the deck ends on the newest faces')
   assert.equal(writes.length, 37, 'key 0 twice (A was already on its way), every other key once')
   assert.deepEqual(writes[0], [0, 'star'])
-  assert.deepEqual(writes[36], [0, 'mouse'])
+  assert.deepEqual(writes[1], [0, 'mouse'], 'key 0, the first key still to change, gets its newest face next')
+  assert.deepEqual(writes.slice(2).map(([i]) => i), Array.from({ length: 35 }, (_, i) => i + 1), 'then the rest, left to right')
+  await p.close()
+})
+
+test('the keys a press changed (urgent) are painted before any other, even while an earlier paint is on its way', async () => {
+  const deck = fakeDeck({ slow: true })
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.paint(fill('star')) // key 0 is on its way at once
+  const next = fill('star')
+  next[7] = 'blank'
+  next[12] = 'mouse'
+  next[30] = 'off'
+  p.paint(next, null, { urgent: [30, 12, -1, 36, 2.5, '7', null] }) // only real key numbers count
+  await p.idle()
+  const writes = keyWrites(deck)
+  assert.deepEqual(writes.slice(0, 3), [[0, 'star'], [12, 'mouse'], [30, 'rgb(0,0,0)']], 'after the write on its way: the urgent keys, left to right, a flat one too')
+  const rest = Array.from({ length: 36 }, (_, i) => i).filter(i => i !== 0 && i !== 12 && i !== 30)
+  assert.deepEqual(writes.slice(3).map(([i]) => i), rest, 'then every other key, left to right')
+  assert.deepEqual(lastFaces(deck), next.map(face => (face === 'off' ? 'rgb(0,0,0)' : face)), 'each with its newest face')
+  assert.equal(deck.most, 1)
+
+  deck.calls.length = 0
+  p.paint(next, null, { urgent: [3, 12] })
+  await p.idle()
+  assert.deepEqual(deck.calls.map(c => c[0]), [], 'an urgent key with nothing new to show is not painted again')
+  await p.close()
+})
+
+test('keys gaining a picture are painted before keys going back to a flat colour, each left to right', async () => {
+  const deck = fakeDeck()
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.paint(fill('star')); await p.idle()
+  deck.calls.length = 0
+  const next = fill('star')
+  next[0] = 'off'
+  next[1] = 'flat'
+  next[5] = 'mouse'
+  next[20] = 'off'
+  next[33] = 'blank'
+  p.paint(next); await p.idle()
+  assert.deepEqual(keyWrites(deck), [[5, 'mouse'], [33, 'blank'], [0, 'rgb(0,0,0)'], [1, 'rgb(31,157,74)'], [20, 'rgb(0,0,0)']])
+
+  deck.calls.length = 0
+  const back = fill('star')
+  back[2] = 'off'
+  p.paint(back, null, { urgent: [20] }); await p.idle()
+  assert.deepEqual(keyWrites(deck).map(([i]) => i), [20, 0, 1, 5, 33, 2], 'the urgent key, then the pictures, then the flat one')
   await p.close()
 })
 
@@ -245,6 +362,7 @@ test("'off' and flat faces are one colour fill, with no picture drawn", async ()
   faces[2] = 'star'
   p.paint(faces)
   await p.idle()
+  assert.deepEqual(keyWrites(deck)[0], [2, 'star'], 'the one picture first')
   const colours = named(deck, 'fillKeyColor')
   assert.equal(colours.length, 35)
   assert.deepEqual(colours[0], ['fillKeyColor', 0, 0, 0, 0])
@@ -285,35 +403,293 @@ test('prepared pictures are kept to about 800, the oldest dropped first', async 
   await p.close()
 })
 
-test('the strip is painted only when it changes, at most every stripGapMs', async () => {
+// ---- the painter: the touch strip --------------------------------------------
+
+test('the strip goes in six parts of 200 pixels, and after the first only the parts that changed', async () => {
   const deck = fakeDeck()
   const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
   const faces = fill('off')
-  p.paint(faces, strip()); await p.idle()
-  p.paint(faces, strip({ dials: ['', '', '', '', '', ''] })); await p.idle() // the same picture, a new object
-  p.paint(faces, strip({ centre: '3 points' })); await p.idle()
-  const lcd = named(deck, 'fillLcd')
-  assert.equal(lcd.length, 2)
-  assert.equal(lcd[0][1], 0, 'lcd 0: the touch strip')
-  assert.equal(lcd[0][2].length, STRIP_BYTES)
-  assert.deepEqual(lcd[0][3], { format: 'rgba', width: 1200, height: 100 })
-  assert.equal(JSON.parse(lcd[1][2].strip).centre, '3 points')
+  const A = strip({ bands: [1, 2, 3, 4, 5, 6] })
+  p.paint(faces, A); await p.idle()
+  const sent = named(deck, 'fillLcdRegion')
+  assert.deepEqual(sent.map(c => [c[1], c[2], c[3]]), PARTS.map(x => [0, x, 0]), 'lcd 0, every part from the left, at the top')
+  assert.ok(sent.every(c => c[4].length === PART_BYTES), 'each part 200 by 100 pixels')
+  assert.ok(sent.every(c => JSON.stringify(c[5]) === JSON.stringify({ format: 'rgba', width: 200, height: 100 })), 'in RGBA, 200 by 100')
+  assert.deepEqual(stripParts(deck).map(([, value]) => value), [1, 2, 3, 4, 5, 6])
+
+  deck.calls.length = 0
+  p.paint(faces, strip({ bands: [1, 2, 3, 4, 5, 6] })); await p.idle() // the same strip, a new object
+  p.paint(faces, strip({ bands: [1, 2, 3, 4, 5, 6], left: 'New words' })); await p.idle() // new words, the same picture
+  assert.deepEqual(deck.calls.map(c => c[0]), [], 'the same picture: nothing sent')
+
+  p.paint(faces, strip({ bands: [1, 2, 9, 4, 5, 7] })); await p.idle()
+  assert.deepEqual(stripParts(deck), [[400, 9], [1000, 7]], 'only the two parts that changed')
+  p.paint(faces, A); await p.idle()
+  assert.deepEqual(stripParts(deck).slice(2), [[400, 3], [1000, 6]], 'and only those two back again')
+  assert.equal(named(deck, 'fillLcd').length, 0, 'never the whole strip')
+  await p.close()
+})
+
+test('each part of the strip holds exactly its own 200 columns, row by row', async () => {
+  // every pixel says where it is: red and green its column, blue its row
+  const where = new Uint8ClampedArray(STRIP_BYTES)
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 1200; x++) {
+      const at = (y * 1200 + x) * 4
+      where[at] = x & 255
+      where[at + 1] = x >> 8
+      where[at + 2] = y
+      where[at + 3] = 255
+    }
+  }
+  const moved = where.slice() // only the part at x 600 changes: its blue is the row plus 100
+  for (let y = 0; y < 100; y++) for (let x = 600; x < 800; x++) moved[(y * 1200 + x) * 4 + 2] = y + 100
+  const art = { ...fakeArt(), stripRgba: spec => (spec.moved ? moved : where) }
+  const deck = fakeDeck()
+  const p = deckPainter(deck, art, { stripGapMs: 0 })
+  p.paint(fill('off'), { moved: false }); await p.idle()
+  p.paint(fill('off'), { moved: true }); await p.idle()
+  const sent = named(deck, 'fillLcdRegion')
+  assert.deepEqual(sent.map(c => c[2]), [...PARTS, 600])
+  const misplaced = sent.map(([, , x0, , part], n) => {
+    let wrong = 0
+    for (let y = 0; y < 100; y++) {
+      for (let c = 0; c < 200; c++) {
+        const at = (y * 200 + c) * 4
+        const x = x0 + c
+        const blue = n === 6 ? y + 100 : y
+        if (part[at] !== (x & 255) || part[at + 1] !== x >> 8 || part[at + 2] !== blue || part[at + 3] !== 255) wrong++
+      }
+    }
+    return wrong
+  })
+  assert.deepEqual(misplaced, [0, 0, 0, 0, 0, 0, 0], 'no pixel out of place in any part')
+  await p.close()
+})
+
+test('the strip goes after the keys, and a key changed meanwhile goes before the rest of the strip', async () => {
+  const deck = fakeDeck({ slow: true })
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  const faces = fill('off')
+  const send = deck.fillLcdRegion
+  deck.fillLcdRegion = (...args) => {
+    if (args[1] === 0) { const next = faces.slice(); next[9] = 'mouse'; p.paint(next) } // a press while the first part is on its way
+    return send(...args)
+  }
+  p.paint(faces, strip())
+  await p.idle()
+  const keys = Array.from({ length: 36 }, (_, i) => `k${i}`)
+  assert.deepEqual(shown(deck), [...keys, 's0', 'k9', 's200', 's400', 's600', 's800', 's1000'])
+  assert.equal(deck.most, 1, 'one write at a time')
+  await p.close()
+})
+
+test('a newer strip replaces the parts still waiting from an older one, and skips what the deck already shows', async () => {
+  const deck = fakeDeck({ slow: true })
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.paint(null, strip({ bands: [1, 1, 1, 1, 1, 1] })) // its first part is on its way at once
+  p.paint(null, strip({ bands: [1, 2, 2, 2, 2, 2] }))
+  await p.idle()
+  assert.deepEqual(stripParts(deck), [[0, 1], [200, 2], [400, 2], [600, 2], [800, 2], [1000, 2]])
+  assert.deepEqual(keyWrites(deck), [], 'no faces asked for: no key painted')
+  await p.close()
+})
+
+test('a new strip is taken at most every stripGapMs: one asked for too soon waits, then the newest goes by itself', async () => {
+  const deck = fakeDeck()
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 60 })
+  const faces = fill('off')
+  p.paint(faces, strip({ bands: [1, 1, 1, 1, 1, 1] })); await p.idle()
+  assert.equal(stripParts(deck).length, 6)
+  p.paint(faces, strip({ bands: [2, 2, 2, 2, 2, 2] }))
+  p.paint(faces, strip({ bands: [3, 3, 3, 1, 1, 1] }))
+  await p.idle()
+  assert.equal(stripParts(deck).length, 6, 'held back: too soon after the last')
+  const next = faces.slice()
+  next[3] = 'mouse'
+  p.paint(next); await p.idle()
+  assert.deepEqual(keyWrites(deck).at(-1), [3, 'mouse'], 'a key is never held back by the strip')
+  await sleep(150)
+  await p.idle()
+  assert.deepEqual(stripParts(deck).slice(6), [[0, 3], [200, 3], [400, 3]], 'then the newest, with no paint needed, only where it differs; the one between never shown')
+  await sleep(70) // longer than the gap since that strip went, however late its timer came
+  p.paint(faces, strip({ bands: [3, 3, 3, 1, 1, 4] })); await p.idle()
+  assert.deepEqual(stripParts(deck).slice(9), [[1000, 4]], 'long enough after the last: at once')
+  await p.close()
+})
+
+test('with wholeStrip the whole strip goes in one fillLcd, every time it changes', async () => {
+  const deck = fakeDeck()
+  const art = fakeArt()
+  const p = deckPainter(deck, art, { stripGapMs: 0, wholeStrip: true })
+  const faces = fill('off')
+  const A = strip({ bands: [1, 2, 3, 4, 5, 6] })
+  p.paint(faces, A); await p.idle()
+  p.paint(faces, strip({ bands: [1, 2, 3, 4, 5, 6] })); await p.idle() // the same strip again: nothing
+  p.paint(faces, strip({ bands: [1, 2, 3, 4, 5, 6], left: 'New words' })); await p.idle() // the same picture, new words: whole all the same
+  p.paint(faces, strip({ bands: [1, 2, 9, 4, 5, 6] })); await p.idle()
+  const whole = named(deck, 'fillLcd')
+  assert.equal(whole.length, 3)
+  assert.ok(whole.every(c => c[1] === 0), 'lcd 0: the touch strip')
+  assert.ok(whole[0][2] === art.stripRgba(A), "the art's own strip, untouched")
+  assert.ok(whole.every(c => c[2].length === STRIP_BYTES))
+  assert.ok(whole.every(c => JSON.stringify(c[3]) === JSON.stringify({ format: 'rgba', width: 1200, height: 100 })), 'in RGBA, 1200 by 100')
+  assert.deepEqual(whole.map(c => JSON.parse(c[2].strip).bands[2]), [3, 3, 9], 'the newest each time')
+  assert.equal(named(deck, 'fillLcdRegion').length, 0, 'never in parts')
+  await p.clear()
+  p.paint(faces, A); await p.idle()
+  assert.equal(named(deck, 'fillLcd').length, 4, 'after a clear, the strip goes whole again')
+  await p.close()
+})
+
+test('a strip the art cannot draw leaves the strip as it is, is said once, and the painter carries on', async () => {
+  const deck = fakeDeck()
+  const art = fakeArt()
+  const draw = art.stripRgba
+  art.stripRgba = spec => (spec.broken ? new Uint8ClampedArray(16) : draw(spec))
+  const lost = []
+  const p = deckPainter(deck, art, { onLost: error => lost.push(error), stripGapMs: 0 })
+  const faces = fill('off')
+  const lines = await warnings(async () => {
+    p.paint(faces, strip({ bands: [1, 2, 3, 4, 5, 6] })); await p.idle()
+    p.paint(faces, strip({ broken: 1 })); await p.idle()
+    p.paint(faces, strip({ broken: 2 })); await p.idle()
+  })
+  assert.equal(stripParts(deck).length, 6, 'only the strip that could be drawn')
+  assert.deepEqual(lines, ['Stream Deck + XL: no picture for the strip.'], 'said once')
+  const next = faces.slice()
+  next[8] = 'mouse'
+  p.paint(next, strip({ bands: [1, 2, 3, 4, 5, 9] })); await p.idle()
+  assert.deepEqual(keyWrites(deck).at(-1), [8, 'mouse'])
+  assert.deepEqual(stripParts(deck).slice(6), [[1000, 9]], 'the next strip that can be drawn goes, by what the deck shows')
+  assert.deepEqual(lost, [])
+  await p.close()
+})
+
+test('a strip the art cannot draw, asked for while an older strip is half sent, leaves the older strip whole', async () => {
+  const deck = fakeDeck({ slow: true })
+  const art = fakeArt()
+  const draw = art.stripRgba
+  art.stripRgba = spec => (spec.broken ? new Uint8ClampedArray(16) : draw(spec))
+  const p = deckPainter(deck, art, { stripGapMs: 0 })
+  await quiet(async () => {
+    p.paint(null, strip({ bands: [1, 1, 1, 1, 1, 1] })) // its first part is on its way at once
+    p.paint(null, strip({ broken: true }))
+    await p.idle()
+  })
+  assert.deepEqual(stripParts(deck), PARTS.map(x => [x, 1]), 'all six parts of the older strip')
+  await p.close()
+})
+
+// ---- the painter: faces made ready before they are shown (warm) --------------
+
+test('warm() makes pictures ready on key 0 and sends nothing; flat faces and faces already warmed are skipped', async () => {
+  const deck = fakeDeck()
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.warm(['mouse', 'star', 'off', 'flat', 'mouse', 42, null])
+  await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|star'])
+  const first = named(deck, 'prepareFillKeyBuffer')[0]
+  assert.deepEqual(first[3], { format: 'rgba' })
+  assert.equal(first[2].length, FACE_BYTES)
+  assert.deepEqual(deck.calls.map(c => c[0]).filter(name => name !== 'prepareFillKeyBuffer'), [], 'nothing sent: no key, no strip, no clear')
+
+  p.warm(['mouse', 'yarn', 'star'])
+  await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|star', '0|yarn'], 'only the face not warmed yet')
+
+  const faces = fill('off')
+  faces[0] = 'mouse'
+  faces[9] = 'star'
+  p.paint(faces); await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|star', '0|yarn', '9|star'], "key 0 shows its warmed picture without drawing it again; key 9 makes its own")
+  const sends = named(deck, 'sendPreparedBuffer').map(c => c[1])
+  assert.deepEqual(sends.map(b => b.key), [0, 9])
+  assert.ok(sends[0] === deck.buffers[0], 'the very buffer warm() made ready')
   await p.close()
 
-  const slow = fakeDeck()
-  const q = deckPainter(slow, fakeArt(), { stripGapMs: 60 })
-  q.paint(faces, strip()); await q.idle()
-  q.paint(faces, strip({ centre: 'a' }))
-  q.paint(faces, strip({ centre: 'b' }))
-  await q.idle()
-  assert.equal(named(slow, 'fillLcd').length, 1, 'held back: too soon after the last')
-  await sleep(150)
-  await q.idle()
-  const later = named(slow, 'fillLcd')
-  assert.equal(later.length, 2)
-  assert.equal(JSON.parse(later[1][2].strip).centre, 'b', 'then the newest, once')
-  await q.close()
+  const none = deckPainter(null, fakeArt()) // no deck: a painter that does nothing
+  none.warm(['mouse'])
+  none.paint(fill('mouse'), strip())
+  await none.idle()
+  await none.clear()
+  await none.close()
 })
+
+test('warming waits for the keys and the strip: anything asked for meanwhile goes before the faces still to warm', async () => {
+  const deck = fakeDeck({ slow: true })
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.warm(['a', 'b', 'c']) // 'a' is on its way at once
+  const faces = new Array(36).fill(null)
+  faces[4] = 'mouse'
+  faces[5] = 'off'
+  p.paint(faces, strip({ bands: [1, 1, 1, 1, 1, 1] }))
+  await p.idle()
+  const order = deck.calls.map(([name, ...a]) =>
+    name === 'prepareFillKeyBuffer' ? `prepare ${a[0]} ${a[1].face}`
+      : name === 'sendPreparedBuffer' ? `send ${a[0].key}`
+        : name === 'fillKeyColor' ? `colour ${a[0]}`
+          : name === 'fillLcdRegion' ? `part ${a[1]}` : name)
+  assert.deepEqual(order, [
+    'prepare 0 a',
+    'prepare 4 mouse', 'send 4', 'colour 5',
+    'part 0', 'part 200', 'part 400', 'part 600', 'part 800', 'part 1000',
+    'prepare 0 b', 'prepare 0 c',
+  ])
+  assert.equal(deck.most, 1, 'one write at a time, warming too')
+  await p.close()
+})
+
+test('a face that fails to warm is skipped quietly: the deck is kept, the rest are warmed, and it is made when first shown', async () => {
+  let failures = 1
+  const error = new Error('no JPEG')
+  const deck = fakeDeck({ fail: { when: (name, args) => name === 'prepareFillKeyBuffer' && args[1].face === 'star' && failures-- > 0, error } })
+  const lost = []
+  const p = deckPainter(deck, fakeArt(), { onLost: e => lost.push(e), stripGapMs: 0 })
+  const lines = await warnings(async () => { p.warm(['mouse', 'star', 'yarn']); await p.idle() })
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|star', '0|yarn'])
+  assert.deepEqual(lost, [], 'not lost')
+  assert.deepEqual(lines, [], 'and nothing said')
+  assert.ok(!deck.closed)
+  const faces = fill('off')
+  faces[0] = 'star'
+  p.paint(faces); await p.idle()
+  assert.deepEqual(prepared(deck).at(-1), '0|star', 'made when it is first shown')
+  assert.deepEqual(keyWrites(deck)[0], [0, 'star'])
+  assert.deepEqual(lost, [])
+  await p.close()
+})
+
+test('clear() forgets what was warmed, and drops the faces still waiting to be warmed', async () => {
+  const deck = fakeDeck({ slow: true })
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.warm(['mouse', 'star', 'yarn']) // 'mouse' is on its way at once
+  await p.clear()
+  assert.deepEqual(deck.calls.map(c => c[0]), ['prepareFillKeyBuffer', 'clearPanel'], 'the rest were dropped')
+
+  p.warm(['mouse', 'star']); await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|mouse', '0|star'], 'warmed again after the clear, so new art shows')
+
+  await p.clear()
+  const faces = fill('off')
+  faces[0] = 'star'
+  p.paint(faces); await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|mouse', '0|star', '0|star'], 'the warmed picture was forgotten too: drawn afresh')
+  await p.close()
+})
+
+test('warm() asked for straight after clear(), before the deck is blank, still warms the faces warmed before the clear', async () => {
+  const deck = fakeDeck()
+  const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+  p.warm(['mouse']); await p.idle()
+  p.clear() // not waited for: new art, then the faces again
+  p.warm(['mouse'])
+  await p.idle()
+  assert.deepEqual(prepared(deck), ['0|mouse', '0|mouse'], 'made ready again after the clear forgot it')
+  await p.close()
+})
+
+// ---- the painter: when things go wrong, clear, close, and the page going ----
 
 test('a failing write calls onLost once, then nothing more is written and the deck is let go', async () => {
   const error = chromeError('NotAllowedError', 'Failed to write the report.')
@@ -327,7 +703,7 @@ test('a failing write calls onLost once, then nothing more is written and the de
   })
   assert.deepEqual(lost, [error], 'onLost, once, with the error')
   assert.deepEqual(keyWrites(deck).map(([i]) => i), [0, 1, 2, 3, 4, 5], 'it stopped at the key that failed')
-  assert.equal(named(deck, 'fillLcd').length, 0)
+  assert.equal(named(deck, 'fillLcdRegion').length + named(deck, 'fillLcd').length, 0, 'the strip was never reached')
   assert.ok(deck.closed, 'the deck is let go and closed, so Connect opens it afresh')
   assert.ok(deck.cleared, 'and our listeners on it are gone')
   assert.equal(deckProblem(lost[0]), 'gone')
@@ -336,12 +712,37 @@ test('a failing write calls onLost once, then nothing more is written and the de
   const seen = deck.calls.length
   p.paint(fill('blank'), strip({ centre: 'x' }))
   p.paint(fill('mouse'))
+  p.warm(['yarn'])
   await p.clear()
   await flush()
-  assert.equal(deck.calls.length, seen, 'nothing more is written')
+  assert.equal(deck.calls.length, seen, 'nothing more is written, not even a face made ready')
   assert.equal(lost.length, 1)
   await p.close()
   assert.equal(named(deck, 'clearPanel').length, 0, 'closing a lost deck does not try to clear it')
+})
+
+test('a part of the strip that fails to go is lost the same way: onLost once, and nothing more', async () => {
+  const error = chromeError('NotAllowedError', 'Failed to write the report.')
+  const deck = fakeDeck({ fail: { when: (name, args) => name === 'fillLcdRegion' && args[1] === 400, error } })
+  const lost = []
+  const p = deckPainter(deck, fakeArt(), { onLost: e => lost.push(e), stripGapMs: 0 })
+  await quiet(async () => {
+    p.paint(fill('off'), strip())
+    await p.idle()
+    await flush()
+  })
+  assert.deepEqual(lost, [error])
+  assert.deepEqual(stripParts(deck).map(([x]) => x), [0, 200, 400], 'it stopped at the part that failed')
+  assert.ok(deck.closed)
+  assert.equal(deckProblem(lost[0]), 'gone')
+  const seen = deck.calls.length
+  p.paint(fill('star'), strip({ centre: 'later' }))
+  p.warm(['mouse'])
+  await p.idle()
+  await flush()
+  assert.equal(deck.calls.length, seen, 'nothing more is written')
+  await p.close()
+  assert.equal(named(deck, 'clearPanel').length, 0)
 })
 
 test('clear() blanks the deck and forgets; close() clears and closes; a closed painter paints nothing', async () => {
@@ -354,7 +755,7 @@ test('clear() blanks the deck and forgets; close() clears and closes; a closed p
   assert.deepEqual(deck.calls.map(c => c[0]), ['clearPanel'], 'blank, and nothing painted again until asked')
   p.paint(faces, strip()); await p.idle()
   assert.equal(keyWrites(deck).length, 36, 'every key painted again')
-  assert.equal(named(deck, 'fillLcd').length, 1, 'and the strip')
+  assert.deepEqual(stripParts(deck).map(([x]) => x), PARTS, 'and every part of the strip, though it is the same strip')
   assert.equal(named(deck, 'prepareFillKeyBuffer').length, 4, 'pictures drawn afresh, so new art shows')
 
   deck.calls.length = 0
@@ -362,8 +763,34 @@ test('clear() blanks the deck and forgets; close() clears and closes; a closed p
   assert.deepEqual(deck.calls.map(c => c[0]), ['clearPanel', 'close'])
   assert.ok(deck.cleared)
   p.paint(fill('mouse'), strip({ centre: 'later' }))
+  p.warm(['yarn'])
   await flush()
   assert.deepEqual(deck.calls.map(c => c[0]), ['clearPanel', 'close'], 'nothing after close')
+})
+
+test('leaving the page blanks the deck (pagehide), and a closed painter stops listening for it', async () => {
+  const listeners = new Map()
+  const page = {
+    addEventListener: (type, fn) => listeners.set(type, [...(listeners.get(type) ?? []), fn]),
+    removeEventListener: (type, fn) => listeners.set(type, (listeners.get(type) ?? []).filter(f => f !== fn)),
+  }
+  const saved = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  Object.defineProperty(globalThis, 'window', { value: page, configurable: true, writable: true })
+  try {
+    const deck = fakeDeck()
+    const p = deckPainter(deck, fakeArt(), { stripGapMs: 0 })
+    assert.equal(listeners.get('pagehide')?.length, 1)
+    p.paint(fill('star'), strip()); await p.idle()
+    deck.calls.length = 0
+    for (const fn of listeners.get('pagehide')) fn({ type: 'pagehide' })
+    await p.idle()
+    assert.deepEqual(deck.calls.map(c => c[0]), ['clearPanel'], 'blanked, and nothing painted again')
+    await p.close()
+    assert.equal(listeners.get('pagehide').length, 0)
+  } finally {
+    if (saved) Object.defineProperty(globalThis, 'window', saved)
+    else delete globalThis.window
+  }
 })
 
 test('a second painter on the same deck takes over: still one write at a time', async () => {
@@ -374,11 +801,13 @@ test('a second painter on the same deck takes over: still one write at a time', 
   const second = deckPainter(deck, art, { stripGapMs: 0 }) // React StrictMode mounts twice
   second.paint(fill('blank'))
   first.paint(fill('mouse')) // the first one is retired: ignored
+  first.warm(['yarn'])
   await first.idle()
   await second.idle()
   assert.equal(deck.most, 1)
   assert.deepEqual(lastFaces(deck), fill('blank'))
   assert.ok(keyWrites(deck).every(([, face]) => face !== 'mouse'))
+  assert.ok(!prepared(deck).includes('0|yarn'), 'nor does it warm')
   await second.close()
 })
 
@@ -410,6 +839,8 @@ test('deckProblem: tab, busy, gone or other, from what Chrome and the library th
   assert.equal(deckProblem(chromeError('SecurityError', 'Must be handling a user gesture to show a permission request.')), 'other')
   assert.equal(deckProblem(null), null)
 })
+
+// ---- opening the deck ----------------------------------------------------------
 
 test('reopenDeck opens the + XL once, however many ask at once, and never another deck', async () => {
   const xl = fakeDevice(XL)
@@ -448,6 +879,22 @@ test('reopenDeck closes a + XL left open by an earlier copy of the page, then op
   assert.ok(deck)
   assert.equal(xl.closes, 1)
   await deckPainter(deck, fakeArt()).close()
+})
+
+test("the deck is opened with the arcade's own JPEG maker (openDevice's encodeJPEG), by reopenDeck and by chooseDeck", async () => {
+  const lib = fakeLib()
+  const xl = fakeDevice(XL)
+  const hid = fakeHid([xl])
+  hid.chosen = [xl]
+  const deck = await reopenDeck({ hid, load: lib.load })
+  assert.ok(deck)
+  assert.equal(lib.options.length, 1)
+  assert.ok(lib.options[0]?.encodeJPEG === encodeJpeg, 'reopenDeck')
+  await deckPainter(deck, fakeArt()).close()
+  const chosen = await chooseDeck({ hid, load: lib.load })
+  assert.ok(chosen && chosen !== deck)
+  assert.ok(lib.options[1]?.encodeJPEG === encodeJpeg, 'chooseDeck')
+  await deckPainter(chosen, fakeArt()).close()
 })
 
 test('chooseDeck asks inside the click for the + XL alone; another model, a closed chooser or a busy deck give null', async () => {
@@ -678,9 +1125,10 @@ test('one arcade tab holds the deck: the newer tab takes it, and the older lets 
   offA()
   await painterA.close()
   painterA.paint(fill('mouse'), strip({ centre: 'later' }))
+  painterA.warm(['yarn'])
   await painterA.clear()
   await flush()
-  assert.deepEqual(deckA.calls.slice(seen).map(c => c[0]).filter(name => name !== 'close'), [], 'no clear, no key and no strip once it was taken')
+  assert.deepEqual(deckA.calls.slice(seen).map(c => c[0]).filter(name => name !== 'close'), [], 'no clear, no key, no strip and no face made ready once it was taken')
   assert.ok(deckA.closed && deckA.cleared, 'its handle closed and its listeners gone')
   assert.equal(a.hid.count('disconnect'), 0)
   assert.equal(lost.length, 1)
@@ -689,6 +1137,7 @@ test('one arcade tab holds the deck: the newer tab takes it, and the older lets 
   const painterB = b.arcade.deckPainter(deckB, fakeArt(), { stripGapMs: 0 })
   painterB.paint(fill('blank'), strip()); await painterB.idle()
   assert.deepEqual(lastFaces(deckB), fill('blank'))
+  assert.deepEqual(stripParts(deckB).map(([x]) => x), PARTS)
   await painterB.close()
   assert.equal(locks.holder, null)
 })
@@ -861,10 +1310,203 @@ test('without Web Locks (an older browser) the deck opens as it always has; with
       const lib = fakeLib()
       const deck = await arcade.reopenDeck({ hid: fakeHid([fakeDevice(XL)]), load: lib.load, steal: true })
       assert.ok(deck, locks ? 'with Web Locks' : 'without them')
+      assert.ok(lib.options[0]?.encodeJPEG === arcade.encodeJpeg, "each copy of the page hands the library its own JPEG maker")
       if (locks) assert.deepEqual(locks.asked, [{ name: 'arcade-deck', steal: true }])
       await arcade.deckPainter(deck, fakeArt()).close()
       assert.equal(named(deck, 'clearPanel').length, 2, 'set up, then blanked when the page let it go')
       if (locks) assert.equal(locks.holder, null)
     })
   }
+})
+
+// ---- the JPEGs (encodeJpeg) --------------------------------------------------------
+
+// A copy of the module of its own, so its JPEGs and canvases start empty.
+const freshCopy = () => import(`../src/lib/arcadeDeck.js?jpeg=${++copies}`)
+
+// A picture of w by h in RGBA, a pattern of its own, with n in its first two bytes.
+function picture(w, h, n) {
+  const bytes = new Uint8Array(w * h * 4)
+  for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 7 + n) & 255
+  return stamp(bytes, n)
+}
+function stamp(bytes, n) {
+  bytes[0] = n & 255
+  bytes[1] = (n >> 8) & 255
+  return bytes
+}
+// What a fake JPEG says about the picture it was made from: its first four bytes and its last.
+const marks = bytes => [bytes[0], bytes[1], bytes[2], bytes[3], bytes[bytes.length - 1]]
+
+// The browser's canvases for one test, all fake, put back after: an
+// OffscreenCanvas, or with page: true none, and a canvas from
+// document.createElement instead. Every canvas made and every JPEG asked for
+// is in the log. A JPEG is 0xff 0xd8 and then the marks of the picture on the
+// canvas when it was asked for (a real canvas copies its picture then), and it
+// comes a turn of the event loop later. log.fail: how many JPEGs fail before
+// they work; log.empty: toBlob hands back no blob.
+async function withCanvases({ page = false, fail = 0 } = {}, fn) {
+  const log = { canvases: [], tags: [], asks: [], fail, empty: false }
+  const blob = bytes => ({ type: 'image/jpeg', arrayBuffer: async () => Uint8Array.from(bytes).buffer })
+  const canvas = (width, height, how) => {
+    let showing = null
+    const c = {
+      width, height, how, puts: [], contexts: [],
+      getContext(type) {
+        c.contexts.push(type)
+        return {
+          createImageData: (w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
+          putImageData(image, x, y) { showing = image; c.puts.push({ image, x, y }) },
+        }
+      },
+    }
+    // the JPEG of what the canvas shows now, or null when this one fails
+    const ask = (how, type, quality) => {
+      log.asks.push({ size: `${c.width}x${c.height}`, how, type, quality })
+      if (log.fail > 0) { log.fail--; return null }
+      return showing && !log.empty ? [0xff, 0xd8, ...marks(showing.data)] : null
+    }
+    if (page) {
+      c.toBlob = (callback, type, quality) => {
+        const jpeg = ask('toBlob', type, quality)
+        setImmediate(() => callback(jpeg ? blob(jpeg) : null))
+      }
+    } else {
+      c.convertToBlob = ({ type, quality } = {}) => {
+        const jpeg = ask('convertToBlob', type, quality)
+        return new Promise((resolve, reject) => setImmediate(() => (jpeg ? resolve(blob(jpeg)) : reject(new Error('The canvas made no JPEG.')))))
+      }
+    }
+    log.canvases.push(c)
+    return c
+  }
+  const saved = ['OffscreenCanvas', 'document'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])
+  const put = (name, value) => Object.defineProperty(globalThis, name, { value, configurable: true, writable: true })
+  if (page) {
+    put('OffscreenCanvas', undefined)
+    put('document', { createElement(tag) { log.tags.push(tag); return canvas(300, 150, 'page') } })
+  } else {
+    put('OffscreenCanvas', class { constructor(width, height) { return canvas(width, height, 'offscreen') } })
+  }
+  try { return await fn(log) } finally {
+    for (const [name, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor)
+      else delete globalThis[name]
+    }
+  }
+}
+
+test('encodeJpeg: the same pixels at the same size give the very same JPEG, made once on one kept canvas', async () => {
+  await withCanvases({}, async log => {
+    const { encodeJpeg: jpeg } = await freshCopy()
+    const face = picture(112, 112, 7)
+    const first = jpeg(face, 112, 112)
+    assert.ok(first instanceof Promise)
+    assert.ok(jpeg(face, 112, 112) === first, 'asked again: the very same JPEG')
+    assert.ok(jpeg(face.slice(), 112, 112) === first, 'the same pixels in a new buffer (the same face on another key): the same JPEG')
+    const made = await first
+    assert.ok(made instanceof Uint8Array)
+    assert.deepEqual([...made], [0xff, 0xd8, ...marks(face)], "the canvas's JPEG of those pixels")
+    assert.deepEqual(log.asks, [{ size: '112x112', how: 'convertToBlob', type: 'image/jpeg', quality: 0.8 }], 'one JPEG, at quality 0.8')
+    assert.equal(log.canvases.length, 1)
+    const [canvas] = log.canvases
+    assert.deepEqual([canvas.how, canvas.width, canvas.height, canvas.contexts], ['offscreen', 112, 112, ['2d']])
+    assert.equal(canvas.puts.length, 1)
+    const { image, x, y } = canvas.puts[0]
+    assert.deepEqual([x, y, image.width, image.height], [0, 0, 112, 112])
+    let wrong = 0
+    for (let i = 0; i < face.length; i++) if (image.data[i] !== face[i]) wrong++
+    assert.equal(wrong, 0, 'every byte of the picture on the canvas')
+
+    // one byte apart, anywhere: a JPEG of its own, on the same canvas
+    const near = [0, face.length >> 1, face.length - 1].map(at => {
+      const bytes = face.slice()
+      bytes[at] ^= 1
+      return jpeg(bytes, 112, 112)
+    })
+    assert.ok(near.every(p => p !== first) && new Set(near).size === 3, 'three pictures one byte from it: three new JPEGs')
+    // the same pixels at another size: a JPEG of its own, on a canvas of that size
+    const tall = jpeg(face, 56, 224)
+    assert.ok(tall !== first)
+    await Promise.all([...near, tall])
+    assert.equal(log.asks.length, 5)
+    assert.deepEqual(log.canvases.map(c => `${c.width}x${c.height}`), ['112x112', '56x224'], 'one canvas per size, kept')
+  })
+})
+
+test('encodeJpeg: pictures asked for at once on the one canvas each get the JPEG of their own pixels', async () => {
+  await withCanvases({}, async log => {
+    const { encodeJpeg: jpeg } = await freshCopy()
+    const pictures = [1, 2, 3].map(n => picture(112, 112, n))
+    const made = await Promise.all(pictures.map(p => jpeg(p, 112, 112)))
+    assert.deepEqual(made.map(bytes => [...bytes]), pictures.map(p => [0xff, 0xd8, ...marks(p)]))
+    assert.equal(log.canvases.length, 1)
+    assert.equal(log.asks.length, 3)
+  })
+})
+
+test('encodeJpeg keeps key pictures and other sizes apart: 24 strip parts and 600 key pictures, the oldest dropped first', async () => {
+  await withCanvases({}, async log => {
+    const { encodeJpeg: jpeg } = await freshCopy()
+    const all = []
+    const key = picture(112, 112, 1)
+    const keyJpeg = jpeg(key, 112, 112)
+    // the + XL turns each 200 by 100 part of the strip, so the library hands it over as 100 by 200
+    const parts = Array.from({ length: 30 }, (_, n) => picture(100, 200, n + 1))
+    const partJpegs = parts.map(p => jpeg(p, 100, 200))
+    all.push(keyJpeg, ...partJpegs)
+    assert.ok(jpeg(key, 112, 112) === keyJpeg, 'thirty strip parts never pushed the key picture out')
+    assert.ok(jpeg(parts[29], 100, 200) === partJpegs[29], 'the newest part is kept')
+    assert.ok(jpeg(parts[6], 100, 200) === partJpegs[6], 'and the oldest of the 24 newest')
+    const remade = jpeg(parts[5], 100, 200)
+    all.push(remade)
+    assert.ok(remade !== partJpegs[5], 'one older than that was dropped, so it is made again')
+    assert.equal(log.asks.length, 32)
+
+    // 600 more key pictures: the first key picture is then the oldest of 601, so it goes
+    const many = picture(112, 112, 0)
+    let newest = null
+    for (let n = 1000; n < 1600; n++) all.push(newest = jpeg(stamp(many, n), 112, 112))
+    assert.ok(jpeg(many, 112, 112) === newest, 'the newest key picture is kept')
+    assert.ok(jpeg(parts[29], 100, 200) === partJpegs[29], 'and 600 key pictures never pushed a part out')
+    const again = jpeg(key, 112, 112)
+    all.push(again)
+    assert.ok(again !== keyJpeg, 'the oldest key picture was dropped: made again')
+    assert.equal(log.asks.length, 32 + 600 + 1)
+    assert.deepEqual(log.canvases.map(c => `${c.width}x${c.height}`), ['112x112', '100x200'], 'still one canvas per size')
+    await Promise.all(all)
+  })
+})
+
+test('encodeJpeg: a JPEG that failed is not kept, so the next ask makes it afresh', async () => {
+  await withCanvases({ fail: 1 }, async log => {
+    const { encodeJpeg: jpeg } = await freshCopy()
+    const face = picture(112, 112, 9)
+    const first = jpeg(face, 112, 112)
+    assert.ok(jpeg(face, 112, 112) === first, 'while it is being made: the same one')
+    await assert.rejects(first, /made no JPEG/)
+    const again = jpeg(face, 112, 112)
+    assert.ok(again !== first, 'made afresh')
+    assert.deepEqual([...(await again)], [0xff, 0xd8, ...marks(face)])
+    assert.ok(jpeg(face, 112, 112) === again, 'and that one is kept')
+    assert.equal(log.asks.length, 2)
+  })
+})
+
+test('encodeJpeg without OffscreenCanvas draws on one canvas from the page per size, and asks toBlob for the JPEG', async () => {
+  await withCanvases({ page: true }, async log => {
+    const { encodeJpeg: jpeg } = await freshCopy()
+    const pictures = [[112, 112, 4], [112, 112, 5], [100, 200, 6]].map(([w, h, n]) => [picture(w, h, n), w, h])
+    const made = await Promise.all(pictures.map(([bytes, w, h]) => jpeg(bytes, w, h)))
+    assert.deepEqual(made.map(bytes => [...bytes]), pictures.map(([bytes]) => [0xff, 0xd8, ...marks(bytes)]))
+    assert.deepEqual(log.tags, ['canvas', 'canvas'])
+    assert.deepEqual(log.canvases.map(c => [c.how, `${c.width}x${c.height}`, c.contexts]), [['page', '112x112', ['2d']], ['page', '100x200', ['2d']]], 'one canvas per size, sized by the arcade')
+    assert.deepEqual(log.asks.map(ask => [ask.how, ask.type, ask.quality]), Array.from({ length: 3 }, () => ['toBlob', 'image/jpeg', 0.8]))
+
+    log.empty = true
+    const face = picture(112, 112, 7)
+    await assert.rejects(jpeg(face, 112, 112), /No image generated/)
+    log.empty = false
+    assert.deepEqual([...(await jpeg(face, 112, 112))], [0xff, 0xd8, ...marks(face)], 'made afresh once the canvas gives a JPEG again')
+  })
 })
