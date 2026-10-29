@@ -450,6 +450,43 @@ test('G57 In Duplicate\'s just-for-fun winner: each board\'s pairs add up by the
   assert.deepEqual(addPairsBy([3], undefined, 6), null)
 })
 
+// The Library's iPad sends a finished board again until the house hears it
+// (card 527, play/src/lib/rooms.js sendUntilHeard), so the same board and step
+// may come twice: once heard and its answer lost, or two at once when a resend
+// crosses a slow answer.
+test('F32 a board sent again is safe: a board the house has heard comes back already, counting and paying nothing again, even when two land at once', async () => {
+  const { db, nightId, now } = await party(9)
+  const rot = await intoRounds(db, nightId, now)
+  let r = 1
+  while (!db.store.get(memoryPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const doc = () => db.store.get(memoryPath(nightId))
+  const g = rot.groups.find(x => x.id === doc().groupId)
+  // every pair found by the first player, so the count is easy to add up
+  const send = step => {
+    const d = doc()
+    const pairs = pairsOf(d.boards[String(step)])
+    return player.memoryStep(db, { nightId, boardId: d.boardId, step, pairs, by: pairs.map(() => 0), now })
+  }
+  const rewards = () => g.members.map(m => cardsOf(db, uidOf(db, nightId, m.key), 'clue').filter(c => c.room === 'library').length)
+  // the first board, heard, then sent again
+  assert.equal((await send(0)).step, 1)
+  const heard = structuredClone(doc())
+  assert.deepEqual(await send(0), { ok: true, already: true })
+  assert.deepEqual(doc(), heard, 'the same board on the table, the same count')
+  assert.equal((await send(1)).step, 2)
+  // the last board twice at once: it clears once, counts once and pays the group once
+  const [a, b] = await Promise.all([send(2), send(2)])
+  assert.equal(doc().cleared, true)
+  assert.deepEqual(doc().pairsBy, [6 + 10 + 14], 'every pair counted once')
+  assert.equal((a.paid ?? 0) + (b.paid ?? 0), g.members.length, 'the group paid once')
+  assert.deepEqual(rewards(), g.members.map(() => 1), 'one reward a guest')
+  // and once more, later: already, and nothing changes
+  const cleared = structuredClone(doc())
+  assert.deepEqual(await send(2), { ok: true, already: true })
+  assert.deepEqual(doc(), cleared)
+  assert.deepEqual(rewards(), g.members.map(() => 1))
+})
+
 test('G58 Get Off My Lawn!\'s just-for-fun winner: each slip counts against the phone that sent it, by place; every phone that can feel a shake says so as the clean mark passes, first or not; nothing else changes', async () => {
   // the counts alone
   assert.deepEqual(plusOne(undefined, 2), [0, 0, 1])

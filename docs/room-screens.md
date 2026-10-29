@@ -208,6 +208,15 @@ of them is on its loop.
   clue for it. If the chime comes before the third board is clear, nobody is
   named, as in Boo's arcade. The count is the house's, not the iPad's, so a
   screen that reloads names the same winner.
+  *A finished board the house did not hear* (29 October, card 527; check
+  F32): if the iPad loses the signal as the last pair is found, the screen
+  says "The Library did not hear that. Trying again." under the board and
+  sends the board again by itself, a second later, then two, four and eight
+  seconds, then every ten, until the house hears it; the line goes then, and
+  the next board comes up. Nobody has to do anything: every card is face up
+  by then. A board the house had heard after all is only heard once, so
+  nothing is counted or paid twice. If the signal never comes back before
+  the chime, the group is paid anyway, as for any room.
 - *The Entryway, Boo's Catwalk.* "When the music stops, strike a pose.
   She's always judging." Boo struts across the wall to runway music (a
   simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the

@@ -166,6 +166,50 @@ export function standaloneBoards(seed) {
   return MEMORY_ROUNDS.map(n => { const faces = shuffled(ALL_TRACES, rng).slice(0, n); return shuffled([...faces, ...faces], rng) })
 }
 
+// ---- a finished board the house did not hear (card 527, 29 Oct 2026) ----------
+
+// Once the last pair is found every card is face up, so the group has nothing
+// left to try: the iPad sends the board again by itself, a second after the
+// first miss, then two, four and eight, then every ten, for as long as it is
+// the board on the table (screens/Rooms.jsx Board). A repeat is safe:
+// memoryStep answers `already` for a board it has heard, and counts and pays
+// nothing again, and payRoom claims the reward once (functions/lib/act4.js).
+export const RESEND_FIRST_MS = 1000
+export const RESEND_MAX_MS = 10_000
+// The one plain line under the board meanwhile: never the server's own words,
+// which carry a code like " [403]" or a bare "internal" (Jon, 29 Oct 2026: no
+// setup words in front of the guests).
+export const UNHEARD_LINE = 'The Library did not hear that. Trying again.'
+
+// How long to wait after the `misses`th miss before sending again.
+export function resendAfter(misses) {
+  return Math.min(RESEND_MAX_MS, RESEND_FIRST_MS * 2 ** Math.max(0, misses - 1))
+}
+
+const sleep = t => new Promise(done => setTimeout(done, t))
+
+// Sends with `send` until it is heard (its promise resolves), waiting
+// resendAfter after each miss, while `live()` says the board is still on the
+// table. `missed(n)` after the nth miss, `heard(answer)` once. Once `live()`
+// is false nothing more is sent and neither is called, so a late answer about
+// a board that has left the table changes nothing. True once heard.
+export async function sendUntilHeard(send, { live = () => true, wait = sleep, missed = () => {}, heard = () => {} } = {}) {
+  let misses = 0
+  while (live()) {
+    try {
+      const answer = await send()
+      if (!live()) return false
+      heard(answer)
+      return true
+    } catch {
+      if (!live()) return false
+      missed(++misses)
+    }
+    await wait(resendAfter(misses))
+  }
+  return false
+}
+
 // ---- the loops, the room codes and the Act 4 rules cards (25 Oct 2026, the cue list) ----
 
 // Every idle screen plays a looping graphic once Jon's file is in

@@ -44,7 +44,10 @@ export const callNotYet = httpsCallable(functions, 'notYet')
 // Act 4: Locked in; the iPad's memory match boards (?kiosk=memory); Salem's
 // Motion Game; Boo's show over (?kiosk=boo or a phone).
 export const callLockIn = httpsCallable(functions, 'lockIn')
-export const callMemoryStep = httpsCallable(functions, 'memoryStep')
+// A board the house has not answered in 15 seconds counts as not heard, so the
+// iPad sends it again (card 527) rather than waiting out the usual 70; a repeat
+// is safe (lib/rooms.js sendUntilHeard).
+export const callMemoryStep = httpsCallable(functions, 'memoryStep', { timeout: 15_000 })
 export const callSalemReady = httpsCallable(functions, 'salemReady')
 export const callSalemSlip = httpsCallable(functions, 'salemSlip')
 export const callSalemPassed = httpsCallable(functions, 'salemPassed')
