@@ -82,20 +82,45 @@ export function keyImage(name, size, { lit = true } = {}) {
   return buf
 }
 
-// Open the first Stream Deck. Returns { paint(lit), shiver(), flash(ok), onKey(fn), close() }
-// or null when none is plugged in or the module is missing.
-export async function openDeck({ log = () => {} } = {}) {
+// The study's deck: fifteen keys, every one a button 72 pixels wide. That is
+// each fifteen-key model, and never the arcade's Stream Deck + XL, which may
+// share the Mac. It reads a deck as listed, so no other deck is ever opened:
+// an open holds the deck, and the arcade's page could not then reach it.
+// scripts/hardware-check.mjs counts decks by this same test.
+export function isStudyDeck(listed) {
+  const controls = listed?.modelInfo?.controls ?? []
+  return controls.length === DECK.flat().length
+    && controls.every(c => c.type === 'button' && c.pixelSize?.width === FACE_SIZE)
+}
+
+// Open the study's Stream Deck. Returns { size, paint(lit), shiver(), flash(ok), onKey(fn), close() },
+// or null when the module is missing, no fifteen-key deck is plugged in or
+// none will open, so the station stays up and the keyboard stands in.
+// `load` is for the tests.
+export async function openDeck({ log = () => {}, load = () => import('@elgato-stream-deck/node') } = {}) {
   let mod
-  try { mod = await import('@elgato-stream-deck/node') } catch { log('stream deck: module not installed'); return null }
-  const devices = await mod.listStreamDecks()
-  if (!devices.length) { log('stream deck: none plugged in'); return null }
-  const deck = await mod.openStreamDeck(devices[0].path)
-  const size = deck.ICON_SIZE ?? deck.BUTTON_WIDTH_PX ?? 72
+  try { mod = await load() } catch { log('stream deck: module not installed'); return null }
+  let devices
+  try { devices = await mod.listStreamDecks() } catch (e) { log(`stream deck: cannot list the decks (${e?.message ?? e})`); return null }
+  const kept = devices.filter(isStudyDeck)
+  if (!kept.length) {
+    const skipped = [...new Set(devices.map(d => d.modelInfo?.name ?? d.model))]
+    log(skipped.length ? `stream deck: no fifteen-key deck (skipped ${skipped.join(', ')})` : 'stream deck: none plugged in')
+    return null
+  }
+  let deck = null
+  for (const d of kept) {
+    try { deck = await mod.openStreamDeck(d.path); break } catch (e) { log(`stream deck: ${d.modelInfo.name} would not open (${e?.message ?? e})`) }
+  }
+  // Nothing tries the deck again while the station runs: the restart loop
+  // only follows a stop.
+  if (!deck) { log("stream deck: quit the Stream Deck app, then close and reopen the station's window"); return null }
+  const size = deck.CONTROLS?.find(c => c.type === 'button')?.pixelSize?.width ?? FACE_SIZE
   const keys = DECK.flat()
   const listeners = []
   deck.on('down', (control) => {
-    const index = typeof control === 'number' ? control : control.index
-    const name = keys[index]
+    if (control?.type !== 'button') return   // a dial's press is not a key
+    const name = keys[control.index]
     if (name && name !== 'blank') listeners.forEach(fn => fn(name))
   })
   deck.on('error', (e) => log(`stream deck: ${e?.message ?? e}`))

@@ -378,8 +378,10 @@ Built blind, tested against fakes. (First run on the real walls on 24 October: Â
   Parlour Game is open the guest list shows only "3 of 9 have answered", never who, so a host
   who happens to be the Ghost or the Murderer learns nothing from it.
 - **The hardware check.** `node scripts/hardware-check.mjs` prints PASS or FAIL for the
-  Nanoleaf walls, the Hue bridge and the Stream Deck, and nothing else. Run it one evening
-  before the second full tech run with everything plugged in. `--fake` runs it with no hardware.
+  Nanoleaf walls, the Hue bridge and the study's fifteen-key Stream Deck, and nothing else.
+  Another Stream Deck on its own, such as the arcade's Stream Deck + XL, is a FAIL that names
+  it. Run it one evening before the second full tech run with everything plugged in. `--fake`
+  runs it with no hardware.
 
 (The deferred question about firing the Parlour Games on a study finish is moot since 21 Oct:
 they pop up on their own times.)
@@ -460,7 +462,14 @@ memory only. Nothing about a round is written anywhere except counts and timesta
 
 **Devices.**
 - Stream Deck: `@elgato-stream-deck/node` over HID. Draw each key (colour fill, label), read
-  key-down events. The Elgato app must not be running.
+  key-down events. The Elgato app must not be running. The station opens only the study's deck:
+  `isStudyDeck` in `station/lib/streamdeck.js` keeps a listed deck whose model info has fifteen
+  controls, every one a button 72 pixels wide (every fifteen-key model), and no other deck is
+  ever opened, so the arcade's Stream Deck + XL on the same Mac stays free for Chrome (the log
+  says `stream deck: no fifteen-key deck (skipped Stream Deck + XL)`). A deck that will not open
+  leaves the station up with the keyboard standing in, and the log says to quit the Stream Deck
+  app, then close and reopen the station's window. `scripts/hardware-check.mjs` counts decks by
+  the same test; `station/test/streamdeck.test.mjs` checks the rule on the library's own models.
 - Nanoleaf Elements and Lines: Open API v1 over HTTP, port 16021, one token per controller
   (pairing: hold the controller's power button, then `POST /api/v1/new` within the window;
   tokens do not expire; they stay paired to HomeKit). Read `panelLayout/layout` at start for

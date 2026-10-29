@@ -164,8 +164,10 @@ them.
   Game night page's "This is the party night" box is ticked. A rehearsal
   night shows a big red REHEARSAL band on every phone and every room screen.
 - *The hardware evening* (the first full tech run, Monday 2 to Friday
-  6 November). Wall, Stream Deck and bulb plugged in.
-  `node scripts/hardware-check.mjs` prints PASS or FAIL. Then one run of the
+  6 November). Wall, the study's Stream Deck and bulb plugged in.
+  `node scripts/hardware-check.mjs` prints PASS or FAIL (it checks the
+  study's fifteen-key deck; the arcade's Stream Deck + XL on its own is a
+  FAIL that names it). Then one run of the
   study and one grid of the drawing, the HomePods at party volume (the
   Orangerie one too, `media/README.md` says how), the Hue scenes, the
   Orangerie string lights through Apple Home (the three Shortcuts on the

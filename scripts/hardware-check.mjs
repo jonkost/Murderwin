@@ -1,5 +1,5 @@
 // The hardware smoke check. Run it one evening before the freeze with the
-// Nanoleaf walls, the Hue bridge and the Stream Deck plugged in:
+// Nanoleaf walls, the Hue bridge and the study's Stream Deck plugged in:
 //
 //   node scripts/hardware-check.mjs          the real devices
 //   node scripts/hardware-check.mjs --fake   no hardware: three PASS lines
@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { parseEnv } from '../cues/lib/cues.js'
 import { bridgeFetch } from '../cues/lib/hue.js'
+import { isStudyDeck } from '../station/lib/streamdeck.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -47,14 +48,20 @@ async function hue(host, key, fetchImpl) {
   }
 }
 
-// The deck is on USB. The module lives with the station.
+// The deck is on USB. The module lives with the station. Only the study's
+// fifteen-key deck counts, by the station's own test, so another deck on its
+// own (the arcade's Stream Deck + XL) is a FAIL that names it.
 async function streamDeck(listDecks) {
+  let devices
   try {
-    const devices = await listDecks()
-    return devices.length ? null : 'none plugged in'
+    devices = await listDecks()
   } catch (e) {
     return 'module not installed (npm install in station/)'
   }
+  if (devices.some(isStudyDeck)) return null
+  if (!devices.length) return 'none plugged in'
+  const others = [...new Set(devices.map(d => d.modelInfo?.name ?? d.model))]
+  return `only ${others.map(name => `a ${name}`).join(' and ')}, not the study's fifteen-key deck`
 }
 
 async function defaultListDecks() {
