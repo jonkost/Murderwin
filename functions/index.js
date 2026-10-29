@@ -140,11 +140,12 @@ async function atTheParty(req, nightId) {
 
 // Act 4, the Library: one of the memory match's three boards is clear on the
 // iPad (?kiosk=memory). The server checks the pairs against the board; the
-// third pays the group (lib/act4.js memoryStep).
+// third pays the group (lib/act4.js memoryStep). `by`: who found each pair,
+// by place, for Zimothy's just-for-fun winner (28 Oct 2026).
 export const memoryStep = onCall({ cors: true }, wrap(async req => {
-  const { nightId, boardId, step, pairs } = req.data ?? {}
+  const { nightId, boardId, step, pairs, by } = req.data ?? {}
   await atTheParty(req, nightId)
-  return run.player.memoryStep(db, { nightId, boardId, step, pairs })
+  return run.player.memoryStep(db, { nightId, boardId, step, pairs, by })
 }))
 
 // Act 4, the Orangerie: Salem's Motion Game, from the group's phones.
@@ -160,8 +161,8 @@ export const salemSlip = onCall({ cors: true }, wrap(async req => {
 }))
 export const salemPassed = onCall({ cors: true }, wrap(async req => {
   const uid = requireUid(req)
-  const { nightId, attempt } = req.data ?? {}
-  return run.player.salemPassed(db, { uid, nightId, attempt })
+  const { nightId, attempt, felt } = req.data ?? {}
+  return run.player.salemPassed(db, { uid, nightId, attempt, felt: felt === true })
 }))
 
 // Act 4, the Entryway: the iPad Pro facing the catwalk (?kiosk=pose) sends

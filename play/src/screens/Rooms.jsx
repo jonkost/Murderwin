@@ -4,7 +4,7 @@ import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
 import { ms, booMoment, booLead } from '../lib/night'
-import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, standaloneBoards, turnNames, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
+import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
 // The room screens added on 23 Oct 2026 (docs/handoff-2026-10-23.md):
@@ -171,9 +171,19 @@ export function BirthdayScreen({ screen }) {
 // Get Off My Lawn! runs on the group's phones, so this screen only ever
 // explains: in Act 4 the rules card with Salem's line and the room's code,
 // varied by the group due (public/salem.groupId); outside Act 4 its loop. Act 2's
-// code is Kiosk.jsx's, before this component.
-export function Orangerie({ night, salem = null }) {
+// code is Kiosk.jsx's, before this component. Once a group clears all three
+// rounds, Salem names whoever slipped least (28 Oct 2026, just for fun) until
+// the chime brings the next group; the names come from `rotation`.
+export function Orangerie({ night, salem = null, rotation = null }) {
   if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Orangerie" loop="orangerie" />
+  const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null
+  if (win) return (
+    <div className="kiosk room-won orangerie-won">
+      <GameName id="orangerie" />
+      <RoomWinner cat="salem" line={win.names.length > 1 ? SALEM_SCREEN_LINES.tie : SALEM_SCREEN_LINES.winner} names={win.names}
+        plain={winnerPlain(win, 'Fewest slips')} pick={salem.groupId} />
+    </div>
+  )
   // a group is at play while public/salem (functions/lib/act4.js) says intro, playing or passed;
   // idle and cleared are between groups, when the code to scan is back (26 Oct 2026)
   const busy = ['intro', 'playing', 'passed'].includes(salem?.state)
@@ -251,28 +261,37 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
 // ---- the Library: Zimothy's memory match (?kiosk=memory) -------------------
 
 // One board: cards face down (Zimothy's file folders), two at a time; a pair
-// stays up, a miss turns back over after a moment. `onClear(pairs)` once every
-// pair is found.
+// stays up, a miss turns back over after a moment. `onClear(pairs, by)` once
+// every pair is found.
 // `players` (Jon, 27 Oct 2026): the group's names, in turn. Whoever's turn it
 // is turns two cards; a pair keeps the turn, a miss passes it on. `first` says
 // who starts, so each round starts with someone else. The whole group is paid
 // whoever finds the pairs. No names (the standalone game), no turns.
+// `by` (28 Oct 2026): for each pair, the place in `players` of whoever's turn
+// it was, for Zimothy's just-for-fun winner; null when the board had no turns
+// from its first pair.
 function Board({ cards, boardKey, onClear, disabled = false, players = [], first = 0 }) {
   const [up, setUp] = useState([])
   const [found, setFound] = useState([])
+  const [by, setBy] = useState([])
   const [turn, setTurn] = useState(first)
   const sent = useRef(null)
-  useEffect(() => { setUp([]); setFound([]); setTurn(first); sent.current = null }, [boardKey])
+  useEffect(() => { setUp([]); setFound([]); setBy([]); setTurn(first); sent.current = null }, [boardKey])
   const done = cards.length > 0 && found.length * 2 === cards.length
   useEffect(() => {
     if (!done || sent.current === boardKey) return
     sent.current = boardKey
-    onClear(found)
+    onClear(found, by.length === found.length && by.every(Number.isInteger) ? by : null)
   }, [done, boardKey])
   useEffect(() => {
     if (up.length !== 2) return
     const [a, b] = up
-    if (cards[a] === cards[b]) { setFound(f => [...f, [a, b]]); setUp([]); return }
+    if (cards[a] === cards[b]) {
+      setFound(f => [...f, [a, b]])
+      setBy(w => [...w, players.length > 1 ? turn % players.length : null])
+      setUp([])
+      return
+    }
     const id = setTimeout(() => { setUp([]); setTurn(t => t + 1) }, 1100)
     return () => clearTimeout(id)
   }, [up, cards])
@@ -314,6 +333,9 @@ export function GameName({ id, extra = null }) {
 // Zimothy's bag hint, on their phones).
 // `content` (26 Oct 2026): the night's published content, so a host line Jon changed in the workshop reaches the card.
 // `rotation`: the Act 4 groups, so the board knows who is at the table and takes turns (27 Oct 2026).
+// Once the third board is clear, Zimothy names whoever found the most pairs
+// (28 Oct 2026, just for fun), from the server's count (public/memory.pairsBy),
+// so a screen that reloads names the same winner.
 export function MemoryRounds({ board, night, nightId, content = null, rotation = null }) {
   const [msg, setMsg] = useState(null)
   const boardId = board?.boardId ?? null
@@ -327,17 +349,38 @@ export function MemoryRounds({ board, night, nightId, content = null, rotation =
   )
   const cards = board.boards?.[String(step)] ?? []
   const players = turnNames(rotation, board.groupId)
-  const send = async pairs => {
+  const send = async (pairs, by) => {
     if (nightId === 'preview') return
     setMsg(null)
-    try { await callMemoryStep({ nightId, boardId, step, pairs }) } catch (e) { setMsg(e?.message || 'The Library did not hear that. Try the last pair again.') }
+    try { await callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) }) } catch (e) { setMsg(e?.message || 'The Library did not hear that. Try the last pair again.') }
   }
+  const win = board.cleared ? mostPairs(players, board.pairsBy) : null
   return (
-    <div className="kiosk memory">
+    <div className={`kiosk memory${win ? ' room-won' : ''}`}>
       <GameName id="library" extra={`round ${Math.min(step + 1, 3)} of 3`} />
       <p className="kiosk-line"><Spoken text={board.cleared ? `${ZIMOTHY_LINES.cleared} Look at your phones.` : ZIMOTHY_LINES.rounds[step]} /></p>
+      {win && <RoomWinner cat="zimothy" line={win.names.length > 1 ? ZIMOTHY_LINES.tie : ZIMOTHY_LINES.winner} names={win.names}
+        plain={winnerPlain(win, 'Most pairs')} pick={board.groupId} />}
       {!board.cleared && <Board cards={cards} boardKey={`${boardId}-${step}`} onClear={send} players={players} first={step} />}
       {msg && <p className="kiosk-next">{msg}</p>}
+    </div>
+  )
+}
+
+// A room's just-for-fun winner at the end of a group's visit (28 Oct 2026):
+// the arcade's winner moment on a room screen. The cat's line in a bubble
+// beside its picture (varied by `pick`), the names big, the plain line under
+// them. A long line of names (a tie, or long names) is set smaller.
+export function RoomWinner({ cat, line, names = [], plain, pick = null }) {
+  const who = andList(names)
+  return (
+    <div className={`room-winner${who.length > 28 ? ' long' : ''}`} role="status">
+      <div className="room-winner-says">
+        <Picture src={catPictureUrl(cat, pick, BASE)} className="room-winner-cat" />
+        <p className="winner-bubble"><Spoken text={line} /></p>
+      </div>
+      <p className="room-winner-names">{who}</p>
+      <p className="kiosk-line room-winner-plain">{plain}</p>
     </div>
   )
 }

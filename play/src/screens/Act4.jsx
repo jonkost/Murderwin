@@ -133,14 +133,16 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
     <SalemRounds doc={doc} serverNow={serverNow} motion={motion}
       ready={() => callSalemReady({ nightId })}
       slip={(attempt, colour) => callSalemSlip({ nightId, attempt, colour })}
-      passed={attempt => callSalemPassed({ nightId, attempt })} />
+      passed={(attempt, felt) => callSalemPassed({ nightId, attempt, felt })} />
   )
 }
 
 // The rounds themselves, on one record in the night's shape ({ state: intro |
 // idle | playing | passed | cleared, round, attempt, flips, startsAt, cleanAt,
-// lastSlip }). `ready()`, `slip(attempt, colour)` and `passed(attempt)` send
-// to the server and return a promise; a refused slip or pass is sent again.
+// lastSlip }). `ready()`, `slip(attempt, colour)` and `passed(attempt, felt)`
+// send to the server and return a promise; a refused slip or pass is sent
+// again. `felt`: this phone can feel a shake, so it counts for Salem's
+// just-for-fun winner on the Orangerie's screen (28 Oct 2026).
 export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines = SALEM_LINES }) {
   const sent = useRef({})
   const [slipShown, setSlipShown] = useState(null)
@@ -179,7 +181,7 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
     const key = `passed-${doc.attempt}`
     if (sent.current[key]) return
     sent.current[key] = true
-    Promise.resolve(passed(doc.attempt)).catch(() => { sent.current[key] = false })
+    Promise.resolve(passed(doc.attempt, motion.ok)).catch(() => { sent.current[key] = false })
   })
 
   const onReady = () => Promise.resolve(ready()).catch(() => {})

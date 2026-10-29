@@ -38,6 +38,7 @@ export const DEVICES = {
   bedroom: 'On the bedroom screen',
   walls: 'At the study walls',
   deck: 'On a Mac with the Stream Deck + XL', // Miss Boo LaRue's Arcade, 28 Oct 2026
+  orangerie: 'On the Orangerie’s screen, the brain', // Salem's just-for-fun winner, 28 Oct 2026
   other: 'Somewhere else',
 }
 
@@ -74,7 +75,7 @@ export const SECTIONS = [
   },
   {
     key: 'memory', name: NAME.library, where: 'Act 4 · the Library', moment: 'act4.puzzle',
-    what: 'Zimothy’s memory match on the iPad Pro, back in the Library for Act 4 (the older family iPad only if you answer olderIpad that it stays): three boards of 7, 10 and 14 pairs. Clearing it, or the ten minutes running out, crosses a motive off for the group.',
+    what: 'Zimothy’s memory match on the iPad Pro, back in the Library for Act 4 (the older family iPad only if you answer olderIpad that it stays): three boards of 7, 10 and 14 pairs. Clearing it, or the ten minutes running out, crosses a motive off for the group. On the night the players take turns, and after the third board Zimothy names whoever found the most pairs, just for fun.',
     devices: ['ipadpro', 'phone'],
     steps: [
       'On the iPad Pro, scan the square code for the real game, or open it there.',
@@ -87,13 +88,14 @@ export const SECTIONS = [
       { label: 'The real game, on its own', device: 'ipadpro', params: { kiosk: 'memory', play: '1' } },
       preview('kiosk-memory', 'The first board, a sample', 'ipadpro'),
       preview('kiosk-memory-clear', 'A cleared board, a sample', 'ipadpro'),
+      preview('kiosk-memory-winner', 'After the third board: Zimothy names who found the most pairs, just for fun, a sample', 'ipadpro'),
       preview('room-paid', 'The reward on a phone, a sample', 'phone'),
     ],
   },
   {
     key: 'salem', name: NAME.orangerie, where: 'Act 4 · the Orangerie', moment: 'act4.orangerie',
-    what: 'Salem’s red light, green light on the group’s phones, backwards: red means shake, green means freeze. A slip starts the round again, thirty seconds clean passes it, three rounds.',
-    devices: ['phone'],
+    what: 'Salem’s red light, green light on the group’s phones, backwards: red means shake, green means freeze. A slip starts the round again, thirty seconds clean passes it, three rounds. On the night, the Orangerie’s screen then names whoever slipped least, just for fun.',
+    devices: ['phone', 'orangerie'],
     steps: [
       'Tap Open the practice.',
       'On every phone that plays, scan the square code below and type a first name. Allow motion when the phone asks.',
@@ -104,6 +106,7 @@ export const SECTIONS = [
     tries: [
       { key: 'join', label: 'The practice, for every phone that plays', device: 'phone', params: { practice: 'salem' } },
       preview('room-salem', 'What a phone shows in the Orangerie, a sample', 'phone'),
+      preview('kiosk-orangerie-winner', 'After the third round: Salem names who slipped least, just for fun, a sample', 'orangerie'),
     ],
   },
   {

@@ -8,6 +8,7 @@ import { FREE_TIME_TIPS, lightsProgressOf, lightsPath, ms } from '../lib/deal.js
 import {
   ACT4_TEXT, DIRECTIONS, ROOMS, ROOM_KEYS, PARLOUR, roomFor, readRotation, act4Path, salemPath, booPath, memoryPath, parlourTip,
   salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, booShow, BOO_POSES, BOO_JUDGING, ROUND_MS,
+  addPairsBy, plusOne, markAt, PLACES_MAX,
 } from '../lib/act4.js'
 import { rehearsalCase } from '../lib/case.js'
 
@@ -396,4 +397,116 @@ test('F26 Salem\'s colours: the whole round\'s schedule is written once, three s
     assert.equal(salemColourAt(doc(), ms(f.at)), f.colour)
     assert.equal(salemColourAt(structuredClone(doc()), ms(f.at) + 499), salemColourAt(doc(), ms(f.at) + 499), 'two phones agree')
   }
+})
+
+// ---- the just-for-fun winners (Jon, 28 Oct 2026; built 29 Oct) ----------------
+// The counts the Library's and the Orangerie's screens name a winner from
+// (play/src/lib/rooms.js mostPairs, fewestSlips), by place in the group: the
+// public docs carry numbers, never a name (L07), and nothing else changes.
+
+const pairsOf = cards => Object.values(cards.reduce((at, t, i) => { (at[t] ??= []).push(i); return at }, {}))
+
+test('G57 In Duplicate\'s just-for-fun winner: each board\'s pairs add up by the place of whoever found them; an odd count counts nothing and never refuses a board; the reward is the same', async () => {
+  // the count alone
+  assert.deepEqual(addPairsBy(undefined, [0, 1, 0], 3), [2, 1])
+  assert.deepEqual(addPairsBy([2, 1], [2, 2], 2), [2, 1, 2], 'a third player joins the count')
+  assert.equal(addPairsBy([2, 1], [0, 1], 3), null, 'one place per pair, or nothing')
+  for (const odd of [[0, -1, 1], [0, 1.5, 1], [0, PLACES_MAX, 1], [0, '1', 1], null, '0,1,1', { 0: 1 }]) assert.equal(addPairsBy([2, 1], odd, 3), null, JSON.stringify(odd))
+  // through the dealer: the Library's group plays its three boards
+  const { db, nightId, now } = await party(9)
+  const rot = await intoRounds(db, nightId, now)
+  let r = 1
+  while (!db.store.get(memoryPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const doc = () => db.store.get(memoryPath(nightId))
+  const g = rot.groups.find(x => x.id === doc().groupId)
+  const clear = async by => {
+    const d = doc()
+    const pairs = pairsOf(d.boards[String(d.step)])
+    return player.memoryStep(db, { nightId, boardId: d.boardId, step: d.step, pairs, by: typeof by === 'function' ? by(pairs.length) : by, now })
+  }
+  // the first board (6 pairs): the first player finds five, the second the last one
+  await clear(n => Array.from({ length: n }, (_, i) => (i < n - 1 ? 0 : 1)))
+  assert.equal(doc().step, 1)
+  assert.deepEqual(doc().pairsBy, [5, 1])
+  // the second (10 pairs) with a count that makes no sense: the board still moves on, the count stands
+  await clear([0, 1])
+  assert.equal(doc().step, 2, 'never refused for the count')
+  assert.deepEqual(doc().pairsBy, [5, 1])
+  // the third (14 pairs) round the group: it clears and pays as ever
+  const r3 = await clear(n => Array.from({ length: n }, (_, i) => i % g.members.length))
+  assert.equal(r3.cleared, true)
+  assert.equal(doc().cleared, true)
+  const third = Array.from({ length: g.members.length }, (_, p) => Array.from({ length: 14 }, (_, i) => i % g.members.length).filter(x => x === p).length)
+  assert.deepEqual(doc().pairsBy, third.map((n, p) => n + ([5, 1][p] ?? 0)))
+  assert.equal(doc().pairsBy.reduce((a, b) => a + b, 0), 6 + 14, 'every pair counted once, the odd board none')
+  for (const m of g.members) {
+    const card = cardsOf(db, uidOf(db, nightId, m.key), 'clue').find(x => x.room === 'library')
+    assert.ok(card && !/most pairs|winner/i.test(JSON.stringify(card)), 'the same reward for the whole group, no word of a winner')
+  }
+  // L07: numbers by place, never a name
+  const text = JSON.stringify(doc())
+  for (const grp of rot.groups) for (const m of grp.members) assert.ok(!text.includes(m.name), 'no name on the memory doc')
+  // a board sent with no count at all (an older screen) still clears
+  assert.deepEqual(addPairsBy([3], undefined, 6), null)
+})
+
+test('G58 Get Off My Lawn!\'s just-for-fun winner: each slip counts against the phone that sent it, by place; every phone that can feel a shake says so as the clean mark passes, first or not; nothing else changes', async () => {
+  // the counts alone
+  assert.deepEqual(plusOne(undefined, 2), [0, 0, 1])
+  assert.deepEqual(plusOne([1, 'x'], 0), [2, 0])
+  for (const p of [-1, 1.5, PLACES_MAX, '0', null]) assert.equal(plusOne([1], p), null)
+  assert.deepEqual(markAt(undefined, 1), [false, true])
+  assert.deepEqual(markAt([true, 'yes'], 0), [true, false])
+  assert.equal(markAt([true], -1), null)
+  // through the dealer
+  const { db, nightId, now } = await party(8)
+  const rot = await intoRounds(db, nightId, now)
+  let r = 1
+  while (!db.store.get(salemPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const doc = () => db.store.get(salemPath(nightId))
+  const g = rot.groups.find(x => x.id === doc().groupId)
+  const [a, b] = g.members.map(m => uidOf(db, nightId, m.key)) // places 0 and 1
+  const other = rot.groups.find(x => x.id !== g.id).members.map(m => uidOf(db, nightId, m.key))[0]
+  await player.meetCat(db, { nightId, uid: a, cat: 'salem', now })
+  let t = now
+  const round = async ({ slipper = null, colour = 'green', passer, others = [] }) => {
+    await player.salemReady(db, { nightId, uid: a, now: t })
+    let attempt = doc().attempt
+    if (slipper) {
+      t = ms(doc().startsAt) + 5000
+      await player.salemSlip(db, { nightId, uid: slipper, attempt, colour, now: t })
+      // the other phone's slip of the same moment is stale: it restarts nothing and counts nothing
+      await player.salemSlip(db, { nightId, uid: slipper === a ? b : a, attempt, colour, now: t })
+      attempt = doc().attempt
+    }
+    t = ms(doc().cleanAt)
+    await player.salemPassed(db, { nightId, uid: passer, attempt, felt: true, now: t })
+    // the rest say so too, after the first: the round is already passed, the mark still counts
+    for (const [uid, felt] of others) await player.salemPassed(db, { nightId, uid, attempt, felt, now: t + 200 })
+  }
+  // round 1: the second phone slips on green; the first passes it, the second says it felt a shake too
+  await round({ slipper: b, passer: a, others: [[b, true]] })
+  assert.equal(doc().state, 'passed')
+  assert.deepEqual(doc().slipsBy, [0, 1], 'the slip counts against the phone that sent it, by place')
+  assert.equal(doc().slips, 1, 'the round\'s own count, as before')
+  assert.deepEqual(doc().feltBy, [true, true])
+  // round 2: no slips; a phone that cannot feel a shake changes nothing, nor does another group's phone
+  await round({ passer: b, others: [[a, false], [other, true]] })
+  assert.deepEqual(doc().slipsBy, [0, 1], 'kept across the rounds')
+  assert.equal(doc().slips, 0, 'the round\'s count starts again')
+  assert.deepEqual(doc().feltBy, [true, true])
+  // round 3: the first phone freezes on red; then the game is cleared and Salem pays as ever
+  await round({ slipper: a, colour: 'red', passer: b })
+  assert.equal(doc().state, 'cleared')
+  assert.deepEqual(doc().slipsBy, [1, 1])
+  for (const m of g.members) {
+    const card = cardsOf(db, uidOf(db, nightId, m.key), 'clue').find(x => x.room === 'orangerie')
+    assert.ok(card && /follow instructions/.test(card.text) && !/fewest|winner/i.test(JSON.stringify(card)), 'the same reward, no word of a winner')
+  }
+  // L07: numbers by place, never a name or a guest
+  const text = JSON.stringify(doc())
+  for (const grp of rot.groups) for (const m of grp.members) assert.ok(!text.includes(m.name) && !text.includes(`"${m.key}"`), 'no name on Salem\'s doc')
+  // a fresh group starts with no counts
+  await host(db, nightId, 'next', t)
+  assert.ok(!doc().slipsBy && !doc().feltBy, 'the next group\'s doc is new')
 })

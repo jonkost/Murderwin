@@ -512,9 +512,48 @@ export function memoryDoc(gid, round, { now = Date.now(), pick = randomInt } = {
   return { groupId: gid, boardId: `${gid}-${round}`, step: 0, boards: Object.fromEntries(memoryBoards(pick).map((b, i) => [String(i), b])), cleared: false, at: new Date(now) }
 }
 
+// The just-for-fun winners (Jon, 28 Oct 2026: "Make boo's, zimmy's, and Salem
+// have a winner. Just for fun."): the Library's screen names whoever found the
+// most pairs, the Orangerie's whoever slipped least (play/src/lib/rooms.js
+// mostPairs, fewestSlips). Each count goes by the player's place in the group
+// (the rotation's order), so the public docs carry numbers, never a name
+// (L07). Display only: nothing here changes a reward, a clue or a score.
+export const PLACES_MAX = 8 // more than any group: pairs and trios, a four only past fifteen guests (makeGroups)
+const isPlace = p => Number.isInteger(p) && p >= 0 && p < PLACES_MAX
+// A per-place count with one more at `place`; null for no place.
+export function plusOne(list, place) {
+  if (!isPlace(place)) return null
+  const had = Array.isArray(list) ? list : []
+  const out = Array.from({ length: Math.max(place + 1, had.length) }, (_, i) => Math.max(0, Math.floor(Number(had[i]) || 0)))
+  out[place]++
+  return out
+}
+// A per-place mark set at `place`; null for no place.
+export function markAt(list, place) {
+  if (!isPlace(place)) return null
+  const had = Array.isArray(list) ? list : []
+  const out = Array.from({ length: Math.max(place + 1, had.length) }, (_, i) => had[i] === true)
+  out[place] = true
+  return out
+}
+// The memory match's pairs per player after one board: `by` is the place of
+// whoever found each pair. Null unless it is one place per pair.
+export function addPairsBy(had, by, pairs) {
+  if (!Array.isArray(by) || by.length !== pairs || !by.every(isPlace)) return null
+  return by.reduce((out, place) => plusOne(out, place), Array.isArray(had) ? had : [])
+}
+// A guest's place in their group, in the rotation's order; -1 when unknown.
+async function placeIn(db, nightId, gid, key) {
+  const rot = await readRotation(db, nightId)
+  return (rot?.groups ?? []).find(g => g.id === gid)?.members?.findIndex(m => m.key === key) ?? -1
+}
+
 // The iPad: one board is clear. `pairs` are the board's pairs of card
 // positions; each pair must show the same trace and every card be in one.
-export async function memoryStep(db, { nightId, boardId, step, pairs, now = Date.now() }) {
+// `by` (28 Oct 2026): the place in the group's turns of whoever found each
+// pair; the boards add up in public/memory.pairsBy for Zimothy's just-for-fun
+// winner. A missing or odd `by` counts nothing and never refuses a board.
+export async function memoryStep(db, { nightId, boardId, step, pairs, by = null, now = Date.now() }) {
   const ref = db.doc(memoryPath(nightId))
   const board = (await ref.get()).data()
   if (!board?.boardId || board.boardId !== boardId) throw new NightError('closed', 'That board is not the one on the table.')
@@ -525,7 +564,9 @@ export async function memoryStep(db, { nightId, boardId, step, pairs, now = Date
   const whole = Array.isArray(pairs) && pairs.length === cards.length / 2 && new Set(flat).size === cards.length && flat.every(i => i >= 0 && i < cards.length)
   if (!whole || !pairs.every(([a, b]) => cards[a] === cards[b])) throw new NightError('invalid', 'Those pairs do not match.')
   const last = board.step >= MEMORY_ROUNDS.length - 1
-  await ref.update(last ? { cleared: true, clearedAt: new Date(now) } : { step: board.step + 1 })
+  const pairsBy = addPairsBy(board.pairsBy, by, pairs.length)
+  const tally = pairsBy ? { pairsBy } : {}
+  await ref.update(last ? { cleared: true, clearedAt: new Date(now), ...tally } : { step: board.step + 1, ...tally })
   if (!last) return { ok: true, step: board.step + 1 }
   // how long the group took, for the end credits' Sharpest Memory (finale.js)
   const seconds = Math.max(0, Math.round((now - ms(board.at)) / 1000))
@@ -544,9 +585,13 @@ export async function memoryStep(db, { nightId, boardId, step, pairs, now = Date
 // string lights flip together (F26); the brain mirrors the colour to the
 // Holiday String Lights (cues/). A phone with no motion sensor never slips (F25).
 //
-// public/salem { groupId, round, state, attempt, flips: [{ at, colour }], startsAt, cleanAt, at }
+// public/salem { groupId, round, state, attempt, flips: [{ at, colour }], startsAt, cleanAt, at,
+//                slips, lastSlip, slipsBy, feltBy }
 //   state  idle (no group, or not arrived) · intro (arrived, waiting for Ready)
 //          · playing · passed (a round cleared, waiting for Ready) · cleared
+//   slips  this round's restarts; slipsBy (28 Oct 2026) the visit's slips by
+//          each phone and feltBy whether each phone felt a shake, by place in
+//          the group, for Salem's just-for-fun winner on the Orangerie's screen
 export const SALEM_CLEAN_MS = 30_000
 export const SALEM_LEAD_MS = 3_000
 export const SALEM_ROUNDS = 3
@@ -574,10 +619,13 @@ export function salemFlips(round, start, pick = randomInt) {
   return flips
 }
 
-async function salemGroupOf(db, nightId, uid) {
+async function salemGuestOf(db, nightId, uid) {
   const s = (await db.doc(`sessions/${uid}`).get()).data()
   if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
-  return s.group ?? null
+  return { gid: s.group ?? null, key: s.guestKey ?? null }
+}
+async function salemGroupOf(db, nightId, uid) {
+  return (await salemGuestOf(db, nightId, uid)).gid
 }
 
 // The group has arrived (the scan): Salem's intro.
@@ -605,31 +653,42 @@ export async function salemReady(db, { nightId, uid, now = Date.now(), pick = ra
 }
 
 // A phone slipped: the round starts again for the whole group (a stale
-// attempt, a second phone's slip of the same moment, changes nothing).
+// attempt, a second phone's slip of the same moment, changes nothing). The
+// slip counts against the phone that sent it (slipsBy, by its place).
 export async function salemSlip(db, { nightId, uid, attempt, colour = null, now = Date.now(), pick = randomInt }) {
-  const gid = await salemGroupOf(db, nightId, uid)
+  const { gid, key } = await salemGuestOf(db, nightId, uid)
+  const place = await placeIn(db, nightId, gid, key)
   const ref = db.doc(salemPath(nightId))
   return db.runTransaction(async tx => {
     const d = (await tx.get(ref)).data()
     if (!d || d.groupId !== gid || d.state !== 'playing' || Number(attempt) !== d.attempt) return { ok: true, already: true }
     if (now < ms(d.startsAt)) return { ok: true, already: true }
     const startsAt = now + SALEM_LEAD_MS
-    tx.update(ref, { attempt: d.attempt + 1, flips: salemFlips(d.round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: (d.slips ?? 0) + 1, lastSlip: colour === 'red' || colour === 'green' ? colour : null, at: new Date(now) })
+    const slipsBy = plusOne(d.slipsBy, place)
+    tx.update(ref, { attempt: d.attempt + 1, flips: salemFlips(d.round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: (d.slips ?? 0) + 1, lastSlip: colour === 'red' || colour === 'green' ? colour : null, ...(slipsBy ? { slipsBy } : {}), at: new Date(now) })
     return { ok: true, restarted: true }
   })
 }
 
 // Thirty seconds clean (any phone may say so once the clean mark has passed):
 // the round is passed, or after the third the game is cleared and Salem pays.
-export async function salemPassed(db, { nightId, uid, attempt, now = Date.now() }) {
-  const gid = await salemGroupOf(db, nightId, uid)
+// `felt` (28 Oct 2026): this phone can feel a shake. Every phone says so as
+// the clean mark passes, first or not, and only those count for Salem's
+// winner: a phone that cannot feel a shake never slips, so it would always win.
+export async function salemPassed(db, { nightId, uid, attempt, felt = false, now = Date.now() }) {
+  const { gid, key } = await salemGuestOf(db, nightId, uid)
+  const place = felt === true ? await placeIn(db, nightId, gid, key) : -1
   const ref = db.doc(salemPath(nightId))
   const r = await db.runTransaction(async tx => {
     const d = (await tx.get(ref)).data()
-    if (!d || d.groupId !== gid || d.state !== 'playing' || Number(attempt) !== d.attempt) return { already: true }
+    const feltBy = d && d.groupId === gid && d.feltBy?.[place] !== true ? markAt(d.feltBy, place) : null
+    if (!d || d.groupId !== gid || d.state !== 'playing' || Number(attempt) !== d.attempt) {
+      if (feltBy) tx.update(ref, { feltBy })
+      return { already: true }
+    }
     if (now < ms(d.cleanAt) - 1000) throw new NightError('invalid', 'Not yet. Keep going.')
     const cleared = d.round >= SALEM_ROUNDS
-    tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now) })
+    tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now), ...(feltBy ? { feltBy } : {}) })
     return { cleared }
   })
   if (r.already) return { ok: true, already: true }

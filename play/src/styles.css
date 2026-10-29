@@ -863,6 +863,20 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* a 7-pair board dealt before the first round became 6 pairs (26 Oct 2026) still fits, 7 by 2 */
 .memory-board.cards-14 { --cols: 7; --rows: 2; }
 
+/* the just-for-fun winners (28 Oct 2026): In Duplicate's on the Library's screen and Get Off My Lawn!'s on the
+   Orangerie's, at the end of a group's visit. The arcade's winner moment on a room screen: the cat beside its line
+   in a speech bubble (the same bubble as Boo's), the names big in brass, the plain line under them. A long line of
+   names is set smaller, and the cat with it */
+.kiosk.orangerie-won { background: var(--brand-peat); gap: 2.4vh; }
+.room-winner { display: flex; flex-direction: column; align-items: center; gap: 1.6vh; max-width: 92vw; }
+.room-winner-says { display: flex; align-items: center; justify-content: center; gap: 3vw; max-width: 100%; }
+.room-winner-cat { flex: none; height: min(28vh, 24vw); width: auto; max-width: 34vw; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.6)); }
+.room-winner .winner-bubble { max-width: min(50vw, 40rem); font-size: min(2.8vw, 4.4vh); }
+.room-winner-names { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(6vw, 10vh); line-height: 1.1; color: var(--brand-brass); }
+.room-winner.long .room-winner-names { font-size: min(4vw, 6.5vh); }
+.room-winner.long .room-winner-cat { height: min(18vh, 15vw); }
+.kiosk .room-winner .room-winner-plain { font-size: min(2.6vw, 3.8vh); max-width: 90vw; margin: 0; color: var(--brand-parchment); }
+
 /* Boo's wall (27 Oct 2026): a lit runway along the bottom edge of the triangle
    wall, Boo in a spotlight, and plain words for every moment. Everything sits
    in the lower two thirds, where the triangle is wide. */
@@ -903,9 +917,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* the verdict: Boo and a speech bubble */
 .boo-verdict { display: flex; align-items: center; gap: 3vw; max-width: 90vw; }
 .boo-verdict .boo-star { height: min(40vh, 30vw); }
-.boo-bubble { position: relative; margin: 0; max-width: 46vw; padding: 2.4vh 2.6vw; border-radius: 2vw; background: var(--brand-parchment); color: #1a0d0e;
+.boo-bubble, .winner-bubble { position: relative; margin: 0; max-width: 46vw; padding: 2.4vh 2.6vw; border-radius: 2vw; background: var(--brand-parchment); color: #1a0d0e;
   font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4vw, 6.4vh); line-height: 1.2; text-align: left; font-style: italic; }
-.boo-bubble::before { content: ''; position: absolute; left: -2vw; top: 50%; transform: translateY(-50%); border: 1.4vw solid transparent; border-right: 2vw solid var(--brand-parchment); border-left: 0; }
+.boo-bubble::before, .winner-bubble::before { content: ''; position: absolute; left: -2vw; top: 50%; transform: translateY(-50%); border: 1.4vw solid transparent; border-right: 2vw solid var(--brand-parchment); border-left: 0; }
 /* the rules card and her intro: the three steps under her line */
 .boo-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2vh; text-align: left; }
 .boo-steps li { display: flex; align-items: center; gap: 1.4vw; font-size: min(2.6vw, 4vh); }

@@ -206,7 +206,7 @@ test('the shared games: the night and the practice play the same component, and 
   // the night's game still pays through its own calls
   assert.match(act4, /callSalemReady\(\{ nightId \}\)/)
   assert.match(act4, /callSalemSlip\(\{ nightId, attempt, colour \}\)/)
-  assert.match(act4, /callSalemPassed\(\{ nightId, attempt \}\)/)
+  assert.match(act4, /callSalemPassed\(\{ nightId, attempt, felt \}\)/, 'and says whether this phone can feel a shake (G58)')
   assert.match(act4, /callBooDone\(\{ nightId \}\)/)
   assert.match(rooms, /callBooDone\(\{ nightId \}\)/)
   // a preview's Parlour Game ends on Thanks and sends nothing

@@ -65,12 +65,18 @@ export const GAME_NAMES = Object.fromEntries(names.games.map(g => [g.id, g]))
 // fourteen traces as art (the same as functions/lib/act4.js).
 export const MEMORY_ROUNDS = [6, 10, 14]
 
-// Who takes turns at the memory match (27 Oct 2026): the group's guests by
-// their own names (a character name only if a guest has none), in the
-// rotation's order. Nobody known, nobody listed, and the board has no turns.
-export function turnNames(rotation, groupId) {
+// A group's guests by place, in the rotation's order (functions/lib/act4.js
+// makeRooms): each by their own name (a character name only if a guest has
+// none), '' for a guest with neither, so every place keeps its number.
+export function groupNames(rotation, groupId) {
   const g = (rotation?.groups ?? []).find(x => x.id === groupId)
-  return (g?.members ?? []).map(m => m.name || m.characterName).filter(Boolean)
+  return (g?.members ?? []).map(m => m.name || m.characterName || '')
+}
+// Who takes turns at the memory match (27 Oct 2026): the group's guests by
+// their own names, in the rotation's order. Nobody known, nobody listed, and
+// the board has no turns.
+export function turnNames(rotation, groupId) {
+  return groupNames(rotation, groupId).filter(Boolean)
 }
 export const ALL_TRACES = [...new Set(characters.characters.map(c => c.trace).filter(Boolean))]
 export const ZIMOTHY_LINES = {
@@ -81,6 +87,63 @@ export const ZIMOTHY_LINES = {
   ],
   cleared: 'Order. Restored.',
   standalone: 'Order restored. Sir Irwin is already back in the office.',
+  // naming the winner at the end of the visit (28 Oct 2026): transactional, as ever
+  winner: "The sharpest clerk at the table. I'd hire you. Cheaply.",
+  tie: "A tie. I'll split the credit and bill you both.",
+}
+// Salem on the Orangerie's screen, naming the steadiest at the end of the
+// visit (28 Oct 2026). His lines on the phones are SALEM_LINES (screens/Act4.jsx).
+export const SALEM_SCREEN_LINES = {
+  winner: "That one barely trampled my lawn. Don't let it go to your head.",
+  tie: "A tie. Can't tell you lot apart. Never could.",
+}
+
+// ---- the just-for-fun winners (Jon, 28 Oct 2026) -------------------------------
+
+// "Make boo's, zimmy's, and Salem have a winner. Just for fun." In Duplicate
+// names whoever found the most pairs and Get Off My Lawn! whoever slipped
+// least, by the rule of Miss Boo LaRue's Arcade (lib/arcade.js winnerOf): the
+// best count names its player, a tie names everyone tied, and one player
+// alone names nobody. Each room's screen names them at the end of the group's
+// visit, unless the chime comes first. Display only: no reward, clue or score
+// changes. The counts go by place in the group, so the public docs carry
+// numbers, never a name (L07).
+const countAt = (list, i) => Math.max(0, Math.floor(Number(list?.[i]) || 0))
+
+// In Duplicate: `names` the board's turns (turnNames), `pairsBy` the pairs
+// each found, by the same place (public/memory.pairsBy). Nobody named while
+// nobody has found a pair.
+export function mostPairs(names = [], pairsBy = []) {
+  const who = names.map((name, i) => ({ name, n: countAt(pairsBy, i) })).filter(p => p.name)
+  if (who.length < 2) return null
+  const best = Math.max(...who.map(p => p.n))
+  if (best < 1) return null
+  return { names: who.filter(p => p.n === best).map(p => p.name), count: best }
+}
+
+// Get Off My Lawn!: `names` the group by place (groupNames), `slipsBy` the
+// slips each phone caused and `feltBy` whether each phone felt a shake, by
+// the same place (public/salem). A phone that never felt one could never
+// slip, so it is left out: it would win every time.
+export function fewestSlips(names = [], slipsBy = [], feltBy = []) {
+  const who = names
+    .map((name, i) => ({ name, n: countAt(slipsBy, i), played: !!feltBy?.[i] || countAt(slipsBy, i) > 0 }))
+    .filter(p => p.name && p.played)
+  if (who.length < 2) return null
+  const best = Math.min(...who.map(p => p.n))
+  return { names: who.filter(p => p.n === best).map(p => p.name), count: best }
+}
+
+// "Margaret, Tom and Ellie"
+export function andList(names = []) {
+  const list = names.filter(Boolean)
+  return list.length <= 1 ? (list[0] ?? '') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+// The plain line under the names, the arcade's way ("Most points: Jessa, 74."):
+// `what` is "Most pairs" or "Fewest slips".
+export function winnerPlain(win, what) {
+  if (!win?.names?.length) return ''
+  return win.names.length > 1 ? `A tie: ${andList(win.names)}, ${win.count} each.` : `${what}: ${win.names[0]}, ${win.count}.`
 }
 
 // A small seeded shuffle, so the standalone game deals fresh boards each time.

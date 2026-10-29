@@ -44,8 +44,11 @@ test('every sample screen named here exists on the phones, and the practices and
   const preview = playSrc('Preview.jsx')
   const names = SECTIONS.flatMap(s => s.tries.map(t => t.params.preview).filter(Boolean))
   // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, Boo's whole show, 27 Oct,
-  // and the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime
-  assert.equal(names.length, 32)
+  // the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime; and the two
+  // just-for-fun winners, 29 Oct: Zimothy's after the third board, Salem's on the Orangerie's screen
+  assert.equal(names.length, 34)
+  assert.ok(names.includes('kiosk-memory-winner') && names.includes('kiosk-orangerie-winner'), 'both winners')
+  assert.ok(SECTIONS.find(s => s.key === 'salem').devices.includes('orangerie'), 'a note on Salem can be about the Orangerie’s screen')
   for (const n of [...names, 'questions']) {
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }

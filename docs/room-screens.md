@@ -15,7 +15,9 @@ code under the ballot clock, and the Orangerie's screen on the brain's
 browser; and on 26 October for the devices in your cue list's key: your iPad
 Pro's four stations, Jenna's iPad Pro as Boo's camera, and Susan's MacBook
 Pro on the projector all night; and on 28 October for Miss Boo LaRue's
-Arcade, a page of its own to try, not on the night yet. Everything on this page
+Arcade, a page of its own to try, not on the night yet; and on 29 October for
+the two just-for-fun winners, Zimothy's on the Library's screen and Salem's on
+the Orangerie's. Everything on this page
 is safe to read: no screen ever shows who did it, who died, which motive is
 live, or which way the hidden pair have pulled.
 
@@ -25,9 +27,9 @@ live, or which way the hidden pair have pulled.
 |---|---|---|
 | `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below: the join code through Act 1 and at the dinner wrap-up, the Parlour's loop whenever nothing else is up. In the drawing the four names show here; the host taps the room's guess on their phone, and a tap here still counts, the fallback. |
 | `?kiosk=ipad` | Your iPad Pro, its first two stations: in the Library with Zimothy in Act 2, then on its stand in the Orangerie for Act 3 (carried there on the way in to supper) | The words of W-O-O-F News bulletins 1 and 2, kept up through supper; Zimothy's code during the Act 2 cat visits; the Library's loop whenever it has no words to show. In Act 4 it is the memory match (`?kiosk=memory`, below), and from Act 6 the bedroom screen (`?kiosk=bedroom`). |
-| `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code (the game itself runs on the group's phones); its loop otherwise, if you make one. |
+| `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code (the game itself runs on the group's phones), and once a group clears all three rounds, Salem names whoever slipped least, just for fun, until the next group's chime; its loop otherwise, if you make one. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
-| `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
+| `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list, and Zimothy names whoever found the most pairs, just for fun. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
@@ -39,7 +41,8 @@ live, or which way the hidden pair have pulled.
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
 runs on the group's own phones, and the Orangerie string lights follow if
 they answer the brain; the brain's browser in the room (`?kiosk=orangerie`)
-only explains it, with the rules card and the code to scan. The old iPhone 11
+only explains it, with the rules card and the code to scan, and names Salem's
+winner once a group clears it. The old iPhone 11
 is the spare phone. The workshop's Devices page lists every screen with its
 address and a square code.
 
@@ -187,6 +190,17 @@ of them is on its loop.
   copy. He bills by the pair." Zimothy's line for the round, then the board:
   turn two folders at a time. Three rounds: 6, 10 and 14 pairs. After the
   third, "Order. Restored." and the reward goes to the group's phones.
+  *Zimothy's winner* (your words, 28 October: "Zimmy's who got more
+  matches"): every pair counts for whoever's turn it was, and after the
+  third board the screen names whoever found the most, beside Zimothy and
+  his line: "The sharpest clerk at the table. I'd hire you. Cheaply." A tie
+  names everyone tied, with "A tie. I'll split the credit and bill you
+  both." Under the names, plainly: "Most pairs: Margaret, 12." or "A tie:
+  Margaret and Ellie, 11 each." It stays up until the chime brings the next
+  group. Just for fun: the whole group is paid the same, and nobody earns a
+  clue for it. If the chime comes before the third board is clear, nobody is
+  named, as in Boo's arcade. The count is the house's, not the iPad's, so a
+  screen that reloads names the same winner.
 - *The Entryway, Boo's Catwalk.* "When the music stops, strike a pose.
   She's always judging." Boo struts across the wall to runway music (a
   simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the
@@ -198,6 +212,18 @@ of them is on its loop.
   screen red (shake) or green (freeze), with Salem's lines. The brain's
   browser in the room (`?kiosk=orangerie`) shows the rules card and the code
   to scan, and "Eyes on your phones." while a group plays.
+  *Salem's winner* (your words, 28 October: "salems who did better"): every
+  slip counts against the phone that caused it, and when the group clears
+  all three rounds the screen names whoever slipped least, beside Salem and
+  his line: "That one barely trampled my lawn. Don't let it go to your
+  head." A tie names everyone tied, with "A tie. Can't tell you lot apart.
+  Never could." Under the names: "Fewest slips: Tom, 0." It stays up until
+  the chime brings the next group, when the rules card and the code come
+  back. A phone that cannot feel a shake (no motion, or motion not allowed
+  after a reload) never slips, so it is left out, or it would win every
+  time; with fewer than two phones that played, nobody is named. Just for
+  fun: the group is paid the same, and nobody earns a clue for it. If the
+  chime comes first, nobody is named.
 
 ## The three corners of every screen
 
@@ -270,14 +296,14 @@ rather than `display: none` until then, since Safari autoplays only a video
 it counts as on screen; its children until the first frame and on `onError`;
 never a fetch), `Idle({ title, line, loop })` (moved here from Kiosk.jsx),
 `RoomCode`, `SmallCode`, `RejoinCode`, `JoinScreen`, `RulesCard({ id, line,
-pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem })` (busy,
+pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem, rotation })` (busy,
 "Eyes on your phones." and no code, while `public/salem.state` is intro,
-playing or passed); `MemoryRounds` (now takes `content`), `BooRunway` (now
+playing or passed; Salem's winner while it is cleared, 28 Oct); `MemoryRounds` (now takes `content`), `BooRunway` (now
 takes `night`; `code={!!night}` so the practice show has no code, and
 `code={false}` on her intro) and Kiosk.jsx's `Study` (now takes `night` and
 `content`; its rules card keeps Granolia's IDLE line and the "station has
 gone quiet" warning) and `Bedroom` use them. Kiosk.jsx subscribes
-`public/salem` for the orangerie kiosk and `public/content` for the memory
+`public/salem` and `public/rotation` for the orangerie kiosk and `public/content` for the memory
 kiosk too, and dispatches `roomCode` before the room branches and
 `Orangerie` before the Living fallback; its `Bell` takes `silent`, true for
 the orangerie kiosk, so the brain's browser never chimes through the
@@ -374,7 +400,8 @@ kiosk-living-vote | kiosk-relay-called | kiosk-relay-square |
 kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to
 kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
 kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
-kiosk-memory-standalone | kiosk-boo | kiosk-boo-pose | kiosk-arcade |
+kiosk-memory-winner | kiosk-memory-tie | kiosk-memory-standalone |
+kiosk-orangerie-winner | kiosk-orangerie-tie | kiosk-boo | kiosk-boo-pose | kiosk-arcade |
 kiosk-arcade-play | kiosk-arcade-clue | kiosk-arcade-third |
 kiosk-arcade-farewell | kiosk-pose | kiosk-prompts |
 kiosk-title | kiosk-finale |
@@ -399,3 +426,29 @@ wall. The five samples (`kiosk-arcade`, `kiosk-arcade-play`,
 `kiosk-arcade-clue`, `kiosk-arcade-third`, `kiosk-arcade-farewell`) are
 `<BooArcade sample="..." />` frozen: no loop, no input, no deck, no sound.
 The whole build: `docs/boo-arcade.md`.
+
+*The just-for-fun winners (Jon, 28 Oct 2026; built 29 Oct).* The rule is the
+arcade's (`play/src/lib/arcade.js` `winnerOf`): the best count names its
+player, a tie names everyone tied, one player alone names nobody.
+`play/src/lib/rooms.js`: `groupNames(rotation, groupId)` (the group by place,
+'' for a guest with no name, so places line up with the server's;
+`turnNames` is it without the blanks), `mostPairs(names, pairsBy)`,
+`fewestSlips(names, slipsBy, feltBy)` (only the places that felt a shake or
+slipped), `winnerPlain(win, what)` ("Most pairs: Margaret, 12." / "A tie:
+Margaret and Ellie, 11 each."), `andList`, `ZIMOTHY_LINES.winner` and `tie`,
+`SALEM_SCREEN_LINES`. `Rooms.jsx` `RoomWinner({ cat, line, names, plain,
+pick })` draws it (the arcade's winner moment: the cat's picture, the line in
+a `.winner-bubble`, which shares `.boo-bubble`'s look, the names in brass, set
+smaller past 28 characters). The counts live on the public docs by place in
+the group (the rotation's order), numbers only, never a name (L07):
+`public/memory.pairsBy` (`Board` records `turn % players.length` for each
+pair and sends it as `by` with `callMemoryStep`; `act4.memoryStep` adds it up
+with `addPairsBy`, and ignores a `by` that is not one place per pair, never
+refusing the board) and `public/salem.slipsBy` and `feltBy` (`act4.salemSlip`
+counts the accepted slip against the sender's place; `SalemRounds` sends
+`passed(attempt, motion.ok)`, and `act4.salemPassed` marks the place of every
+phone that says `felt: true`, the first to pass or not; a new group's doc
+starts with neither). `salemReady` still zeroes `slips`, the round's own
+count, and leaves the visit's counts alone. Nothing here touches `payRoom`.
+The Game test tab's practice of Get Off My Lawn! has no screen and names no
+winner. Checks G57 and G58.

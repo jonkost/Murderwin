@@ -37,7 +37,9 @@ box for each guest's own scribbles; and the devices in your cue list's key
 brain switches the projector's plug, your iPad Pro roams through four
 stations, Jenna's iPad Pro is Boo's camera, and the older family iPad is
 out unless you say it stays, the question *olderIpad*). The Host tab's six
-scene buttons are the cue list's six scenes.
+scene buttons are the cue list's six scenes. Updated 29 October for your two
+just-for-fun winners: Zimothy names who found the most pairs in In Duplicate,
+and Salem who slipped least in Get Off My Lawn!, each on its room's screen.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -428,7 +430,10 @@ game; it serves the lights and the speakers.
     names whose turn it is (from the group, so a trio is known when it
     arrives); a pair keeps the turn, a miss passes it on, and each board
     starts with someone else. Pays one wrong motive crossed off and a bag
-    hint, to the whole group.
+    hint, to the whole group. After the third board, just for fun, Zimothy
+    names whoever found the most pairs (every pair counts for whoever's turn
+    it was; a tie names everyone tied), and it stays up until the chime. It
+    changes nothing: the whole group is paid the same.
   - The Orangerie: Get Off My Lawn! (Salem's Motion Game), on the group's
     own phones. Red means shake, green means freeze; a slip on any phone
     restarts the round; thirty seconds clean passes it; three rounds, each
@@ -436,7 +441,12 @@ game; it serves the lights and the speakers.
     and a green Freeze tile. While a round plays, each phone's whole screen
     is only red or green, with no words (Jon, 28 Oct): a count before each
     round, and one short line after a slip. The string lights follow if
-    they answer the brain. Pays a bag hint (Salem's may be backwards).
+    they answer the brain. Pays a bag hint (Salem's may be backwards). When
+    the group clears all three rounds, the Orangerie's screen (the brain's
+    browser) names, just for fun, whoever slipped least: every slip counts
+    against the phone that caused it, and a phone that cannot feel a shake
+    is left out. A tie names everyone tied. It stays up until the chime and
+    changes nothing.
   - The Entryway: Boo's Catwalk, on the triangle wall from
     Susan's MacBook Pro and the projector: a lit runway with Boo in a
     spotlight. Her card lists the three steps. While the music plays the
@@ -458,7 +468,8 @@ game; it serves the lights and the speakers.
   "Touch any panel to begin"), a full picture of the cat (a different one as the groups change)
   and the room's code, so a group arriving knows what to do before anyone
   explains; the Orangerie's screen (the brain's browser) shows its card all
-  through Act 4, since its game is on the phones. A group that finishes early is
+  through Act 4, since its game is on the phones, except for Salem's winner
+  after a group clears it. A group that finishes early is
   paid at once and goes back to the Parlour; at the chime, any room not
   finished is paid anyway. The bag hints are about the Ghost's bag. With
   five groups there are five rounds, and each round one group waits in the
@@ -585,7 +596,7 @@ game; it serves the lights and the speakers.
 | 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro, in the Library, keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad Pro in the Library (`?kiosk=ipad`; `?kiosk=memory` shows his code too), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
 | 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
-| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate. Susan's MacBook Pro on the wall: Boo's Catwalk. Boo's camera (Jenna's iPad Pro), if it is up: the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
+| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro on the wall: Boo's Catwalk. Boo's camera (Jenna's iPad Pro), if it is up: the group like a mirror, and the photo of the last pose in its corner. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and the deduction board. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
 | 7 | The ballot clock with the trace, a small rejoin code under the clock, and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's Catwalk photos, when there are any) and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen goes black and the projector is off. |
@@ -762,7 +773,9 @@ at all: nothing is paid and no clue is dealt.
   three boards, Play again deals fresh ones, nothing is paid. For no Safari
   bars, open its address in Safari on the iPad, tap Share, then Add to
   Home Screen, and open it from that icon. Samples of a board, a cleared
-  board and the reward on a phone.
+  board, Zimothy's winner after the third board, and the reward on a phone.
+  On its own the game has no names, so no turns and no winner: those come
+  on a night.
 - *Get Off My Lawn!* (the Orangerie). Tap "Open the practice". Every phone
   that plays scans the square code beside "The practice, for every phone
   that plays", types a first name and allows motion. Anyone taps Ready. Red
@@ -773,7 +786,10 @@ at all: nothing is paid and no clue is dealt.
   slip. If the brain is running, the string lights follow the practice
   too (since 28 Oct: stop the brain and start it again once to pick this
   up). Tap
-  "Stop" when you are done. Up to twelve phones.
+  "Stop" when you are done. Up to twelve phones. The practice has no
+  Orangerie screen, so it names no winner: the sample "After the third
+  round: Salem names who slipped least" shows what the screen shows on the
+  night.
 - *Boo's Catwalk* (the Entryway). Open "Boo's wall, the practice show" on
   the projector computer or any screen, full screen, and tap it once so it
   can play sound. Open the practice show on one or more phones. Tap "Start
@@ -937,7 +953,7 @@ join code: `livingView` returns `join` for kind `join` and `JoinScreen` draws
 `roomDark(night, screen)` is true once `isOver(night)` or on a black doc with
 no title, so every kiosk goes dark through the one rule. The new kiosk
 `?kiosk=orangerie` (`Rooms.jsx` `Orangerie`, reads `public/salem` for the
-group due) comes before the Living fallback; `play/src/lib/house.js` MACHINES
+group due, and since 28 Oct `public/rotation` for Salem's winner) comes before the Living fallback; `play/src/lib/house.js` MACHINES
 gains `kiosk-orangerie` and `kiosk-pose`. Tests: `play/test/rooms.test.mjs`,
 `play/test/screen.test.mjs` (the join view, The End, the preview list),
 `play/test/house.test.mjs`. Previews: `?preview=kiosk-join | kiosk-rejoin |

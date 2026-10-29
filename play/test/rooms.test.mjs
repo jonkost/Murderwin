@@ -4,6 +4,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import {
   loopFor, loopUrl, LOOP_OF, roomCode, ROOM_CODE_CATS, codeWords, meetUrl, CAT_NAMES, CAT_ROOMS,
   CAT_PICTURES, variant, catPicture, catPictureUrl, ROOM_GAME, RULES_LINES, rulesLine, GAME_NAMES,
+  groupNames, turnNames, mostPairs, fewestSlips, andList, winnerPlain, ZIMOTHY_LINES, SALEM_SCREEN_LINES,
 } from '../src/lib/rooms.js'
 import { MACHINES } from '../src/lib/house.js'
 import { HOST_LINES } from '../../functions/lib/hosts.js'
@@ -183,7 +184,7 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   const deal = src('../../functions/lib/deal.js')
   assert.ok(/NOTICE_IMAGES\s*=\s*\{[^}]*roam:\s*'birthday'/.test(deal), 'deal.js puts image birthday on the roam notice')
   // the Orangerie kiosk: its loop, Salem\'s code in Act 2 (above), the rules card in Act 4
-  assert.ok(rooms.includes('export function Orangerie({ night, salem = null })'), 'the Orangerie')
+  assert.ok(rooms.includes('export function Orangerie({ night, salem = null, rotation = null })'), 'the Orangerie (the rotation since 28 Oct 2026, for Salem\'s winner)')
   assert.ok(kiosk.includes("which === 'orangerie' ? `nights/${nightId}/public/salem` : null"), 'it reads Salem\'s public doc for the group due')
   const main = src('../src/main.jsx')
   assert.ok(main.includes('orangerie'), 'main.jsx names the kiosk')
@@ -200,4 +201,78 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   for (const k of ['kiosk-join', 'kiosk-code-study', 'kiosk-rules-orangerie', 'kiosk-birthday', 'kiosk-end']) assert.ok(screensDoc.includes(k), `room-screens.md lists ${k}`)
   const night = src('../../docs/on-the-night.md')
   assert.ok(night.includes('?kiosk=orangerie'), 'on-the-night.md has the Orangerie kiosk')
+})
+
+// ---- the just-for-fun winners (Jon, 28 Oct 2026; built 29 Oct) ----------------
+
+const TRIO = { groups: [{ id: 'g1', members: [{ name: 'Margaret' }, { name: '', characterName: 'Lord B' }, { name: 'Ellie' }] }, { id: 'g2', members: [{ name: '' }, { name: 'Di' }] }] }
+
+test('G57 and G58 the winners: the most pairs and the fewest slips by the arcade\'s rule, a tie names everyone tied, one player names nobody, and a phone that never felt a shake is left out', () => {
+  // the group by place: a guest with no name keeps their place, so the server's counts line up
+  assert.deepEqual(groupNames(TRIO, 'g1'), ['Margaret', 'Lord B', 'Ellie'])
+  assert.deepEqual(groupNames(TRIO, 'g2'), ['', 'Di'])
+  assert.deepEqual(turnNames(TRIO, 'g2'), ['Di'], 'the turns skip the nameless')
+  assert.deepEqual(groupNames(null, 'g1'), [])
+  // In Duplicate: the most pairs
+  const names = groupNames(TRIO, 'g1')
+  assert.deepEqual(mostPairs(names, [12, 9, 9]), { names: ['Margaret'], count: 12 })
+  assert.deepEqual(mostPairs(names, [11, 8, 11]), { names: ['Margaret', 'Ellie'], count: 11 }, 'a tie names everyone tied')
+  assert.deepEqual(mostPairs(names, [10, 10, 10]), { names, count: 10 })
+  assert.deepEqual(mostPairs(names, [0, 3]), { names: ['Lord B'], count: 3 }, 'a missing place counts none')
+  assert.equal(mostPairs(names, []), null, 'nobody named while nobody has found a pair')
+  assert.equal(mostPairs(names, undefined), null)
+  assert.equal(mostPairs(['Di'], [14]), null, 'one player alone: nobody')
+  assert.equal(mostPairs([], [3, 4]), null)
+  assert.deepEqual(mostPairs(['', 'Di', 'Cy'], [9, 2, 1]), { names: ['Di'], count: 2 }, 'a place with no name is never named')
+  assert.deepEqual(mostPairs(names, ['7', -2, 'x']), { names: ['Margaret'], count: 7 }, 'odd counts read as numbers, never below none')
+  // Get Off My Lawn!: the fewest slips, among the phones that played
+  assert.deepEqual(fewestSlips(names, [2, 0, 1], [true, true, true]), { names: ['Lord B'], count: 0 })
+  assert.deepEqual(fewestSlips(names, [1, 0, 1], [true, false, true]), { names: ['Margaret', 'Ellie'], count: 1 }, 'a phone that never felt a shake is left out, or it would win every time')
+  assert.deepEqual(fewestSlips(names, [1, 2, 1], [false, false, false]), { names: ['Margaret', 'Ellie'], count: 1 }, 'a phone that slipped felt one')
+  assert.deepEqual(fewestSlips(names, [], [true, true, true]), { names, count: 0 }, 'nobody slipped: everyone tied')
+  assert.equal(fewestSlips(names, [0, 0, 0], [true, false, false]), null, 'one phone that played: nobody')
+  assert.deepEqual(fewestSlips(names, [0, 3, 0], [true, false, false]), { names: ['Margaret'], count: 0 }, 'the one who slipped played too')
+  assert.equal(fewestSlips(names, undefined, undefined), null, 'no phone said it could feel a shake: nobody')
+  assert.equal(fewestSlips(['', 'Di'], [0, 2], [true, true]), null, 'a place with no name is never named, so one is left')
+  // the words, the arcade's way
+  assert.equal(andList(['Margaret', 'Tom', 'Ellie']), 'Margaret, Tom and Ellie')
+  assert.equal(andList(['Margaret', '', 'Ellie']), 'Margaret and Ellie')
+  assert.equal(andList(['Di']), 'Di')
+  assert.equal(winnerPlain({ names: ['Margaret'], count: 12 }, 'Most pairs'), 'Most pairs: Margaret, 12.')
+  assert.equal(winnerPlain({ names: ['Margaret', 'Ellie'], count: 11 }, 'Most pairs'), 'A tie: Margaret and Ellie, 11 each.')
+  assert.equal(winnerPlain({ names: ['Lord B'], count: 0 }, 'Fewest slips'), 'Fewest slips: Lord B, 0.')
+  assert.equal(winnerPlain(null, 'Fewest slips'), '')
+  // the cats' lines: in voice, short, no number, no rule, no long dash
+  for (const line of [ZIMOTHY_LINES.winner, ZIMOTHY_LINES.tie, SALEM_SCREEN_LINES.winner, SALEM_SCREEN_LINES.tie]) {
+    assert.ok(line.length > 10 && line.length < 80, line)
+    assert.ok(!/\d|—|motive|clue|murder|ghost/i.test(line), line)
+  }
+  assert.match(ZIMOTHY_LINES.tie, /^A tie\./)
+  assert.match(SALEM_SCREEN_LINES.tie, /^A tie\./)
+})
+
+test('G57 and G58 the screens: the Library names its winner once the third board is clear, the Orangerie once Salem\'s game is cleared; the counts come from the server, by place', () => {
+  const rooms = src('../src/screens/Rooms.jsx')
+  const kiosk = src('../src/screens/Kiosk.jsx')
+  const act4 = src('../src/screens/Act4.jsx')
+  // the board counts each pair for whoever's turn it was, and sends it with the board
+  assert.ok(rooms.includes('setBy(w => [...w, players.length > 1 ? turn % players.length : null])'), 'the turn\'s place, or none with no turns')
+  assert.ok(rooms.includes('onClear(found, by.length === found.length && by.every(Number.isInteger) ? by : null)'), 'one place per pair, or nothing')
+  assert.ok(rooms.includes('callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) })'), 'sent with the board')
+  // the Library: after the third board, from the server's count, Zimothy's line for one or a tie
+  assert.ok(rooms.includes('const win = board.cleared ? mostPairs(players, board.pairsBy) : null'), 'the server\'s count, so a reload names the same winner')
+  assert.ok(rooms.includes("line={win.names.length > 1 ? ZIMOTHY_LINES.tie : ZIMOTHY_LINES.winner}") && rooms.includes("plain={winnerPlain(win, 'Most pairs')}"))
+  // the Orangerie: once cleared, by place in the group, from the rotation the kiosk now reads
+  assert.ok(rooms.includes("const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null"))
+  assert.ok(rooms.includes("line={win.names.length > 1 ? SALEM_SCREEN_LINES.tie : SALEM_SCREEN_LINES.winner}") && rooms.includes("plain={winnerPlain(win, 'Fewest slips')}"))
+  assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups')
+  assert.ok(kiosk.includes('<Orangerie night={n} salem={salem.data} rotation={rotation.data} />'))
+  // every phone says whether it can feel a shake as the clean mark passes
+  assert.ok(act4.includes('passed(doc.attempt, motion.ok)') && act4.includes('passed={(attempt, felt) => callSalemPassed({ nightId, attempt, felt })}'))
+  // the samples
+  const preview = src('../src/Preview.jsx')
+  for (const k of ['kiosk-memory-winner', 'kiosk-memory-tie', 'kiosk-orangerie-winner', 'kiosk-orangerie-tie']) assert.ok(preview.includes(`'${k}':`), k)
+  // the docs name them
+  const screensDoc = src('../../docs/room-screens.md')
+  for (const k of ['kiosk-memory-winner', 'kiosk-orangerie-winner']) assert.ok(screensDoc.includes(k), `room-screens.md lists ${k}`)
 })
