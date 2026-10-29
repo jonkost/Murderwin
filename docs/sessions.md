@@ -42,11 +42,19 @@ on the Canon.
 - Tests: functions 279, cues 69, station 48, play 149 and scripts 52 pass;
   the workshop 125 of 126. The one failing test belongs to the Boo arcade
   work in progress in the same folder (another session), which this commit
-  leaves out. Not deployed, not pushed. A deploy carries functions too (the
-  shorter server lines).
-- Left: Jon looks over the new look on his phone after a deploy (card 512),
-  starts the brain again once, and puts the iPad stations on its Home
-  Screen (card 511).
+  leaves out.
+- Deployed 28 Oct on Jon's yes: hosting, the rules and all 25 functions.
+  The first try stopped before anything went out (Google's us-central1
+  was briefly unreachable); the second went through. Checked live: the new
+  tab bar and Salem's red screen on the phone, the board's changes in the
+  workshop. The deploy also carried the Boo arcade session's uncommitted
+  work as the folder stood (Jon: deploy now, arcade bits and all): its
+  Game test entries and its own page at ?kiosk=boo&play=1, which no
+  guest's phone and no night screen opens. Not pushed.
+- Left: Jon looks over the new look on his phone (card 512) and puts the
+  iPad stations on its Home Screen (card 511). The brain was not running,
+  so its next start follows the practice. The board marks the five notes
+  done the next time the workshop opens.
 - Decisions: studySecondScreen, new and open.
 
 ## 28 Oct 2026 · Claude Code (In Duplicate's turns; the Entryway's game)
