@@ -9,6 +9,29 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 30 Oct 2026 · Claude Code (cards 527 and 529 deployed)
+
+- Deployed on Jon's yes, from a clean copy of main at 3bfe05d: the site,
+  the rules, storage and the functions, since card 529 changed four
+  server files (`functions/lib/deal.js`, `night.js`, `station.js` and
+  `checks.js`). Every test (functions 288, cues 69, station 53, workshop
+  134, play 257, scripts 53) and npm run checks (21,042 of 21,042, the
+  fake night and the 5 leak checks) passed in the copy first.
+- Live: all 119 files match the build; all 25 functions updated, the same
+  25 the code exports; the rules were already up to date, so they did not
+  change. `tick` started on its new version and ran clean the next minute
+  (it logs counts only). The live In Duplicate page loads the new build
+  with no console errors. The study station's code (94791318b2c7) and the
+  brain's are unchanged, so neither Mac needs a restart; a screen left
+  open takes the new pages when it is reloaded.
+- Left: neither fix is tried on the real devices (527 on the iPad on a
+  rehearsal night, its Wi-Fi off as the last pair is found; 529's red line
+  shows only if a line is missing on the party night). The board's
+  migrations for cards 527 and 529 (with card 530 and the question
+  quietWords) land when Jon next opens the workshop signed in. Not pushed.
+  No decision taken, so the Canon is unchanged; Start Here's snapshot
+  updated.
+
 ## 29 Oct 2026, night · Claude Code (never a note about the game on a guest's screen: card 529, check G59)
 
 - Started from the arcade session, as a side task, for card 529. If a
@@ -51,7 +74,8 @@ on the Canon.
   decisions too. No decision taken. Start Here's snapshot and the Canon
   not updated from this session. Not deployed, pushed or merged: this
   branch and the In Duplicate one (card 527) each add a migration after
-  the arcade rework, so merging both keeps both, in order.
+  the arcade rework, so merging both keeps both, in order. Merged into
+  main on 29 Oct (d3326a0); deployed 30 Oct (the entry above).
 
 ## 29 Oct 2026, night · Claude Code (In Duplicate's finished board sent again until the house hears it, card 527)
 
@@ -94,7 +118,8 @@ on the Canon.
 - Left: not tried on the real iPad (on a rehearsal night, its Wi-Fi off as
   the last pair is found, then on). Not deployed, not pushed. No decision
   changed, so the Canon is unchanged; Start Here's snapshot is not updated
-  here.
+  here. Merged into main on 29 Oct (f6bb471); deployed 30 Oct (the entry
+  at the top).
 
 ## 29 Oct 2026, evening · Claude Code (the arcade made again from Jon's notes and his try; the Entryway's answer; no setup words in front of the guests)
 
@@ -266,8 +291,8 @@ on the Canon.
   note. On the merged main every test passes (functions 288, cues 69,
   station 53, workshop 134, play 257, scripts 53), npm run checks is all
   clear (21,042 of 21,042) and the site builds. The Canon gained
-  quietWords on its open list, and Start Here's snapshot says so. Not
-  deployed, not pushed.
+  quietWords on its open list, and Start Here's snapshot says so.
+  Deployed 30 Oct (the entry at the top); not pushed.
 
 ## 29 Oct 2026 · Claude Code (the arcade's menu: Boo's face, paws and a flashing top row)
 
