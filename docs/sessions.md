@@ -9,6 +9,49 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 29 Oct 2026, night · Claude Code (In Duplicate's finished board sent again until the house hears it, card 527)
+
+- Card 527, found by the setup-words check: when the house did not hear a
+  finished In Duplicate board (a dropped signal), the Library's screen said
+  "Try the last pair again." with every card already face up, and nothing
+  sent the board again: only a reload (the group played it again) or the
+  next board got past it, and the line stayed on the next board.
+- Now the board sends itself again (`play/src/lib/rooms.js` `sendUntilHeard`
+  and `resendAfter`): a second after the first miss, then two, four and
+  eight, then every ten, for as long as it is the board on the table. It
+  stops with the board (the next board, another group, the act), and a late
+  answer about a board that has gone changes nothing. Under the board
+  meanwhile: "The Library did not hear that. Trying again." (`UNHEARD_LINE`),
+  gone once it is heard. Each board is a Board of its own
+  (`key={boardKey}`), so the line goes with it and a finished board is
+  never sent as the next (before, a group cut off with exactly six pairs
+  found could send them once against the next group's first board).
+- The Library's call (`callMemoryStep`) gives up after 15 seconds, not the
+  usual 70, so a call that hangs counts as not heard and goes again.
+- Checked `functions/lib/act4.js` `memoryStep`, unchanged: safe to repeat. A
+  board it has heard comes back `already` (its step has moved on, or the
+  match is cleared) and counts nothing; `payRoom` claims the reward in a
+  transaction and deals each card by its id, so two at once pay once (the
+  new test sees both take the clearing path and one pay). A board the house
+  never hears is paid at the round's end, as before.
+- Check F32, new (`docs/test-plan.md`): `play/test/rooms.test.mjs` (the
+  waits, the misses, a board that leaves the table, a late answer, the
+  screen's shape, the 15 seconds) and `functions/test/act4.test.mjs` (a
+  heard board sent again; the last board twice at once). F31's Library test
+  checks the new line. `docs/room-screens.md` (the Library) and
+  `docs/on-the-night.md` (the trouble table) say what the screen does.
+- The board: migration `2026-10-29-memory-resend` marks card 527 done.
+- `npm test` at the root: all pass. In the browser pane, on this
+  worktree's own build: the game on its own played through its three
+  boards, each next board fresh and face down; the Library's sample ended
+  with no line; and with the sample's send made to fail twice (a throwaway
+  patch, reverted), the line showed at once and went with the third send,
+  one and then two seconds later. No console errors.
+- Left: not tried on the real iPad (on a rehearsal night, its Wi-Fi off as
+  the last pair is found, then on). Not deployed, not pushed. No decision
+  changed, so the Canon is unchanged; Start Here's snapshot is not updated
+  here.
+
 ## 29 Oct 2026, evening · Claude Code (the arcade made again from Jon's notes and his try; the Entryway's answer; no setup words in front of the guests)
 
 - Jon's three Game test notes on Miss Boo LaRue's Arcade (10009 to 10011:

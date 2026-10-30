@@ -23,6 +23,7 @@ import {
   MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029,
   ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029,
   RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029,
+  RETIRED_FOR_MEMORY_RESEND_1029,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -910,6 +911,12 @@ export const ADDITIONS = [
     rewriteTasks: REWRITTEN_FOR_ARCADE_REWORK_1029,
     answerDecisions: ANSWERED_FOR_ARCADE_REWORK_1029,
     decisions: ARCADE_REWORK_1029_DECISIONS,
+  },
+  {
+    // 29 Oct, night: In Duplicate's finished board goes again by itself until
+    // the house hears it (card 527, done).
+    id: '2026-10-29-memory-resend',
+    retireTasks: RETIRED_FOR_MEMORY_RESEND_1029,
   },
 ]
 

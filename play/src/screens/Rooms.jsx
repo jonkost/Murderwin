@@ -4,7 +4,7 @@ import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
 import { ms, booMoment, booLead } from '../lib/night'
-import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
+import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
 // The room screens added on 23 Oct 2026 (docs/handoff-2026-10-23.md):
@@ -270,18 +270,24 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
 // `by` (28 Oct 2026): for each pair, the place in `players` of whoever's turn
 // it was, for Zimothy's just-for-fun winner; null when the board had no turns
 // from its first pair.
+// Each board is a Board of its own (key={boardKey}), so it starts fresh and a
+// finished one is never sent as the next. If the house did not hear it
+// (`onClear` fails), a finished board goes again by itself until it is heard,
+// for as long as it is on the table (card 527, 29 Oct 2026), with UNHEARD_LINE
+// under it meanwhile; the line goes once it is heard, and with the board.
 function Board({ cards, boardKey, onClear, disabled = false, players = [], first = 0 }) {
   const [up, setUp] = useState([])
   const [found, setFound] = useState([])
   const [by, setBy] = useState([])
   const [turn, setTurn] = useState(first)
-  const sent = useRef(null)
-  useEffect(() => { setUp([]); setFound([]); setBy([]); setTurn(first); sent.current = null }, [boardKey])
+  const [unheard, setUnheard] = useState(false)
   const done = cards.length > 0 && found.length * 2 === cards.length
   useEffect(() => {
-    if (!done || sent.current === boardKey) return
-    sent.current = boardKey
-    onClear(found, by.length === found.length && by.every(Number.isInteger) ? by : null)
+    if (!done) return
+    let live = true
+    sendUntilHeard(() => onClear(found, by.length === found.length && by.every(Number.isInteger) ? by : null),
+      { live: () => live, missed: () => setUnheard(true), heard: () => setUnheard(false) })
+    return () => { live = false }
   }, [done, boardKey])
   useEffect(() => {
     if (up.length !== 2) return
@@ -311,6 +317,7 @@ function Board({ cards, boardKey, onClear, disabled = false, players = [], first
         ))}
       </div>
     </div>
+    {unheard && <p className="kiosk-next">{UNHEARD_LINE}</p>}
     </>
   )
 }
@@ -337,7 +344,6 @@ export function GameName({ id, extra = null }) {
 // (28 Oct 2026, just for fun), from the server's count (public/memory.pairsBy),
 // so a screen that reloads names the same winner.
 export function MemoryRounds({ board, night, nightId, content = null, rotation = null }) {
-  const [msg, setMsg] = useState(null)
   const boardId = board?.boardId ?? null
   const step = board?.step ?? 0
   // outside Act 4 the Library's loop; in Act 4, between groups, the rules card with Zimothy's line and the room's code
@@ -349,13 +355,12 @@ export function MemoryRounds({ board, night, nightId, content = null, rotation =
   )
   const cards = board.boards?.[String(step)] ?? []
   const players = turnNames(rotation, board.groupId)
-  // a refused or lost board says the same plain line every time: the server's own message carries a code
-  // like " [403]" or a bare "internal" (Jon, 29 Oct 2026: no setup words in front of the guests)
-  const send = async (pairs, by) => {
+  // fails when the house did not hear the board, and the Board sends it again (card 527)
+  const send = (pairs, by) => {
     if (nightId === 'preview') return
-    setMsg(null)
-    try { await callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) }) } catch { setMsg('The Library did not hear that. Try the last pair again.') }
+    return callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) })
   }
+  const boardKey = `${boardId}-${step}`
   const win = board.cleared ? mostPairs(players, board.pairsBy) : null
   return (
     <div className={`kiosk memory${win ? ' room-won' : ''}`}>
@@ -363,8 +368,7 @@ export function MemoryRounds({ board, night, nightId, content = null, rotation =
       <p className="kiosk-line"><Spoken text={board.cleared ? `${ZIMOTHY_LINES.cleared} Look at your phones.` : ZIMOTHY_LINES.rounds[step]} /></p>
       {win && <RoomWinner cat="zimothy" line={win.names.length > 1 ? ZIMOTHY_LINES.tie : ZIMOTHY_LINES.winner} names={win.names}
         plain={winnerPlain(win, 'Most pairs')} pick={board.groupId} />}
-      {!board.cleared && <Board cards={cards} boardKey={`${boardId}-${step}`} onClear={send} players={players} first={step} />}
-      {msg && <p className="kiosk-next">{msg}</p>}
+      {!board.cleared && <Board key={boardKey} cards={cards} boardKey={boardKey} onClear={send} players={players} first={step} />}
     </div>
   )
 }
@@ -398,7 +402,7 @@ export function MemoryStandalone() {
     <div className="kiosk memory standalone">
       <GameName id="library" extra={cleared ? null : `round ${step + 1} of 3`} />
       <p className="kiosk-line"><Spoken text={cleared ? ZIMOTHY_LINES.standalone : ZIMOTHY_LINES.rounds[step]} /></p>
-      {!cleared && <Board cards={boards[step]} boardKey={`${seed}-${step}`} onClear={() => setTimeout(() => setStep(s => s + 1), 900)} />}
+      {!cleared && <Board key={`${seed}-${step}`} cards={boards[step]} boardKey={`${seed}-${step}`} onClear={() => setTimeout(() => setStep(s => s + 1), 900)} />}
       {cleared && <button className="big" onClick={() => { setSeed(Date.now()); setStep(0) }}>Play again</button>}
       <p className="kiosk-next">{ALL_TRACES.length} traces · just for fun</p>
     </div>

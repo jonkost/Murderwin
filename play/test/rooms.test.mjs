@@ -5,6 +5,7 @@ import {
   loopFor, loopUrl, LOOP_OF, roomCode, ROOM_CODE_CATS, codeWords, meetUrl, CAT_NAMES, CAT_ROOMS,
   CAT_PICTURES, variant, catPicture, catPictureUrl, ROOM_GAME, RULES_LINES, rulesLine, GAME_NAMES,
   groupNames, turnNames, mostPairs, fewestSlips, andList, winnerPlain, ZIMOTHY_LINES, SALEM_SCREEN_LINES,
+  resendAfter, sendUntilHeard, RESEND_FIRST_MS, RESEND_MAX_MS, UNHEARD_LINE,
 } from '../src/lib/rooms.js'
 import { MACHINES } from '../src/lib/house.js'
 import { HOST_LINES } from '../../functions/lib/hosts.js'
@@ -163,13 +164,87 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'no code on Boo\'s intro')
 })
 
-test('F31 the Library\'s screen says one plain line when a cleared board is not heard, never the server\'s own words (Jon, 29 Oct 2026)', () => {
+test('F31 the Library\'s screen says one plain line when a finished board is not heard, never the server\'s own words (Jon, 29 Oct 2026)', () => {
   // the server's message comes with a code (" [403]", or a bare "internal"): not for the guests' eyes
+  assert.equal(UNHEARD_LINE, 'The Library did not hear that. Trying again.')
+  assert.ok(!/\[|\d|internal|server|network|wi-?fi|ipad|—/i.test(UNHEARD_LINE), 'plain words, no code, no device')
   const rooms = src('../src/screens/Rooms.jsx')
+  const library = rooms.slice(rooms.indexOf('function Board('), rooms.indexOf('export function RoomWinner('))
+  assert.equal(library.split('<p className="kiosk-next">{UNHEARD_LINE}</p>').length - 1, 1, 'the one plain line, every time, under the board')
+  assert.ok(!library.includes('.message'), 'never the error\'s own message')
+  // every card is face up by then, and the board goes again by itself (F32): nothing to ask the group to try
+  assert.ok(!rooms.includes('Try the last pair again'), 'the old line is gone')
+})
+
+// ---- a finished board the house did not hear (card 527, 29 Oct 2026) ----------
+
+test('F32 a finished In Duplicate board the house did not hear goes again by itself, a little later each time, while it is the board on the table, and the line goes once it is heard', async () => {
+  // the waits: a second after the first miss, then two, four and eight, then every ten
+  assert.equal(RESEND_FIRST_MS, 1000)
+  assert.equal(RESEND_MAX_MS, 10_000)
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 50].map(resendAfter), [1000, 2000, 4000, 8000, 10_000, 10_000, 10_000])
+  assert.equal(resendAfter(0), 1000)
+  // two misses, then heard: sent three times, the line from the first miss until it is heard
+  const said = []
+  const quick = { wait: async t => { said.push(`wait ${t}`) }, missed: n => said.push(`missed ${n}`), heard: a => said.push(`heard ${a?.data?.ok}`) }
+  let sends = 0
+  const flaky = async () => { sends++; if (sends < 3) throw Object.assign(new Error('internal'), { code: 'functions/internal' }); return { data: { ok: true } } }
+  assert.equal(await sendUntilHeard(flaky, quick), true)
+  assert.equal(sends, 3)
+  assert.deepEqual(said, ['missed 1', 'wait 1000', 'missed 2', 'wait 2000', 'heard true'])
+  // heard at once: no line, no wait; a board with nothing to send (the game on its own, a sample) is heard too
+  said.length = 0
+  assert.equal(await sendUntilHeard(async () => ({ data: { ok: true, already: true } }), quick), true)
+  assert.equal(await sendUntilHeard(() => undefined, quick), true)
+  assert.deepEqual(said, ['heard true', 'heard undefined'])
+  // a send that throws before it is sent counts as a miss, like one the house did not answer
+  said.length = 0
+  let thrown = 0
+  assert.equal(await sendUntilHeard(() => { if (thrown++ < 1) throw new Error('deadline-exceeded'); return {} }, quick), true)
+  assert.deepEqual(said, ['missed 1', 'wait 1000', 'heard undefined'])
+  // a long outage: it never gives up while the board is on the table, every ten seconds once it is long
+  said.length = 0
+  let down = 0
+  assert.equal(await sendUntilHeard(async () => { if (down++ < 8) throw new Error('unavailable'); return {} }, quick), true)
+  assert.deepEqual(said.filter(s => s.startsWith('wait')), ['wait 1000', 'wait 2000', 'wait 4000', 'wait 8000', 'wait 10000', 'wait 10000', 'wait 10000', 'wait 10000'])
+  // the board leaves the table while it waits (the next board, the group's chime, the act): nothing more is sent or said
+  let live = true
+  let sent = 0
+  const after = []
+  const gone = await sendUntilHeard(async () => { sent++; throw new Error('unavailable') }, { live: () => live, wait: async () => { live = false }, missed: n => after.push(n), heard: () => after.push('heard') })
+  assert.equal(gone, false)
+  assert.equal(sent, 1)
+  assert.deepEqual(after, [1], 'only the miss before it left')
+  // a late answer about a board that has left the table changes nothing, heard or not
+  for (const late of [() => {}, () => { throw new Error('unavailable') }]) {
+    let on = true
+    const told = []
+    const r = await sendUntilHeard(async () => { on = false; return late() }, { live: () => on, wait: async () => told.push('wait'), missed: () => told.push('missed'), heard: () => told.push('heard') })
+    assert.equal(r, false)
+    assert.deepEqual(told, [])
+  }
+  // nothing is sent for a board that is no longer on the table
+  let never = 0
+  assert.equal(await sendUntilHeard(async () => { never++ }, { live: () => false }), false)
+  assert.equal(never, 0)
+  // the screen: the finished board sent until it is heard, the line on a miss and off once heard, stopped with the board
+  const rooms = src('../src/screens/Rooms.jsx')
+  const board = rooms.slice(rooms.indexOf('function Board('), rooms.indexOf('export function GameName('))
+  assert.ok(board.includes('sendUntilHeard(() => onClear(found, by.length === found.length && by.every(Number.isInteger) ? by : null),'), 'sent until heard')
+  assert.ok(board.includes('{ live: () => live, missed: () => setUnheard(true), heard: () => setUnheard(false) })'), 'the line on a miss, off once heard')
+  assert.ok(board.includes('return () => { live = false }'), 'it stops when the board leaves the table')
+  assert.ok(!board.includes('sent.current'), 'no longer sent once and never again')
+  // each board is a Board of its own: it starts fresh, its line goes with it, and a finished one is never sent as the next
+  assert.ok(rooms.includes('<Board key={boardKey} cards={cards} boardKey={boardKey} onClear={send}'), 'the Library keys each board')
+  assert.ok(rooms.includes('<Board key={`${seed}-${step}`} cards={boards[step]}'), 'the game on its own too')
+  assert.ok(!board.includes('setFound([])'), 'no reset by hand: a new board is a new Board')
+  // the Library's send fails when the house did not hear, and leaves the rest to the board
   const memory = rooms.slice(rooms.indexOf('export function MemoryRounds('), rooms.indexOf('export function RoomWinner('))
-  assert.ok(memory.includes("catch { setMsg('The Library did not hear that. Try the last pair again.') }"), 'the one plain line, every time')
-  assert.ok(!memory.includes('.message'), 'never the error\'s own message')
-  assert.ok(memory.includes('{msg && <p className="kiosk-next">{msg}</p>}'), 'shown under the board')
+  assert.ok(memory.includes('return callMemoryStep({ nightId, boardId, step, pairs, ...(by ? { by } : {}) })'), 'the call itself, handed back')
+  assert.ok(!/catch|setMsg/.test(memory), 'no catch of its own')
+  // a call the house never answers counts as not heard after 15 seconds, not the usual 70
+  const fb = src('../src/firebase.js')
+  assert.ok(fb.includes("export const callMemoryStep = httpsCallable(functions, 'memoryStep', { timeout: 15_000 })"))
 })
 
 test('the join code on the TV, the rejoin code under the ballot clock, the birthday cards, the Orangerie kiosk and the host\'s two new dots', () => {
