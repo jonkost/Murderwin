@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, studyFinished } from '../lib/run.js'
-import { stationCommand, reassignStudy, rotationPath, studyPath } from '../lib/station.js'
+import { stationCommand, reassignStudy, rotationPath, studyPath, STUDY_PLACEHOLDER, STUDY_QUIET } from '../lib/station.js'
 import { makeRooms, act4PrivatePath } from '../lib/act4.js'
 
 const makeRotation = (db, { nightId }) => makeRooms(db, nightId)
@@ -131,4 +131,37 @@ test('the hall light by hand, and the answered count on an open window names nob
   await player.answer(db, { nightId, uid, windowId: w.id, picks: set.beats.map(b => b.choices[0].k), now: t.now })
   assert.equal(night(db, nightId).window.answered, 1)
   assert.ok(!JSON.stringify(night(db, nightId).window).includes('jessa'), 'a count, never who')
+})
+
+test('G59 a study with no trace to pay: the house\'s plain words on the party night, the note on a rehearsal, never a note in brackets on the party night; the Host tab told once a group', async () => {
+  for (const rehearsal of [false, true]) {
+    const { db, nightId } = await party(6)
+    const t = { now: 12_000_000 }
+    await intoAct4(db, nightId, t)
+    const c = db.store.get(`cases/${nightId}`)
+    await db.doc(`cases/${nightId}`).update({ rehearsal })
+    // the Ghost's character has no trace: nothing for the study to pay
+    await db.doc(`nights/${nightId}`).update({ [`roster.${c.ghost}.characterId`]: 'nobody' })
+    const gid = db.store.get(studyPath(nightId)).groupId ?? db.store.get(rotationPath(nightId)).studyOrder[0]
+    await stationCommand(db, { nightId, command: 'finished', payload: { groupId: gid, outcome: 'solved', seconds: 240, pairs: 3 } })
+    const ks = members(db, nightId, gid)
+    assert.ok(ks.length >= 2)
+    for (const k of ks) {
+      const [card] = cards(db, uidOf(db, nightId, k), 'clue')
+      assert.equal(card.none, true)
+      assert.equal(card.trace, undefined)
+      if (rehearsal) {
+        assert.equal(card.text, STUDY_PLACEHOLDER)
+        assert.equal(card.placeholder, true)
+      } else {
+        assert.equal(card.text, STUDY_QUIET)
+        assert.equal(card.placeholder, false)
+        assert.ok(!/[()[\]]/.test(card.text), 'never a note in brackets')
+      }
+    }
+    assert.deepEqual(night(db, nightId).missingLines, { study: 1 }, 'one count for the group, never who')
+    // the same group again pays nothing more and counts nothing more
+    await stationCommand(db, { nightId, command: 'finished', payload: { groupId: gid, outcome: 'solved', seconds: 240, pairs: 3 } })
+    assert.deepEqual(night(db, nightId).missingLines, { study: 1 })
+  }
 })

@@ -5,16 +5,16 @@ import { createNight, join, CHARACTERS, MOTIVES } from '../lib/night.js'
 import { rehearsalCase, buildCase } from '../lib/case.js'
 import { FAMILIES, familyOf, irwinOptions } from '../lib/families.js'
 import { NEWS, bulletin2 } from '../lib/news.js'
-import { hintLine as catHintLine, HINT_CATS } from '../lib/cats.js'
+import { hintLine as catHintLine, HINT_CATS, CAT_LINES } from '../lib/cats.js'
 import { wordBags } from '../lib/bagclues.js'
 import {
   caseChecks, CHECK_NAMES, rolesOk, castOk, bulletin2Ok, salemAloneOk, irwinWinsOk, murdererHiddenOk, spillChecks, SPILL_IDS,
-  fairnessChecks, standInRoster, HOST_SEATS,
+  fairnessChecks, standInRoster, HOST_SEATS, everyLineOk, realLine, LATE_JOINER,
 } from '../lib/checks.js'
 
 // The case-level checks `npm run checks` runs on every stand-in case
 // (functions/lib/checks.js): G01, G03, G04, G05, G06, G09, G17, G19, G20,
-// G21, G23 and G53. Every case here is a throwaway rehearsal case made and
+// G21, G23, G53 and G59. Every case here is a throwaway rehearsal case made and
 // dropped inside the test, every packing is made of bracketed stand-in
 // words. A failing assertion names the check and a seed, never a clue, a
 // role or a motive.
@@ -53,7 +53,7 @@ function standIn(seed, n = 4 + (seed % 9)) {
 const resultOf = (results, id) => results.find(r => r.id === id)
 
 test('every new case check has a plain name for the Health page', () => {
-  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53']) {
+  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59']) {
     assert.ok(typeof CHECK_NAMES[id] === 'string' && CHECK_NAMES[id].length > 10, `${id} has a name`)
   }
 })
@@ -67,7 +67,7 @@ test('the case checks pass on 200 stand-in cases of 4 to 12 guests, with a packi
       assert.deepEqual(Object.keys(r).sort(), ['id', 'pass'], 'a result is an id and a pass, nothing else')
       if (!r.pass) bad[r.id] = (bad[r.id] ?? 0) + 1
     }
-    for (const id of ['G01', 'G03', 'G04', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53']) assert.ok(resultOf(results, id), `${id} runs on every case`)
+    for (const id of ['G01', 'G03', 'G04', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59']) assert.ok(resultOf(results, id), `${id} runs on every case`)
   }
   assert.deepEqual(Object.keys(bad), [], `checks that failed somewhere: ${Object.keys(bad).join(' ')}`)
 })
@@ -312,4 +312,61 @@ test('G53 every bulletin 2 line, for every family and every level, is the real f
   const { c } = standIn(17)
   const wrong = FAMILIES.map(f => f.key).find(k => k !== c.solving.family)
   assert.equal(bulletin2Ok({ ...c, solving: { ...c.solving, family: wrong } }), false, 'G53 the wrong family\'s lines fail')
+})
+
+// ---- G59 ---------------------------------------------------------------------
+
+test('G59 every guest, a late joiner, every cat and every rung get a real line, and the Study a real trace, on 300 stand-in cases; the bank has a line for every wrong family whatever the motive', () => {
+  for (let seed = 1; seed <= 300; seed++) {
+    const { c, roster } = standIn(seed)
+    assert.ok(everyLineOk(c, roster), `G59 seed ${seed}`)
+    assert.equal(resultOf(caseChecks(c, { roster, rng: seeded(seed), reroll: false }), 'G59').pass, true, `G59 in the case checks, seed ${seed}`)
+  }
+  // every motive as the real one, every wrong family, every cat, every rung
+  for (const m of MOTIVES) {
+    const real = familyOf(m.n)
+    const wrong = FAMILIES.map(f => f.key).filter(k => k !== real)
+    for (const family of wrong) for (const cat of HINT_CATS) for (let level = 1; level <= 5; level++) {
+      const line = catHintLine({ motive: m.n }, { cat, level, act: 2, family, seed: `g59-${m.n}`, bonusFamilies: wrong })
+      assert.ok(realLine(line.text), `G59 motive ${m.n}, a wrong family, ${cat} at ${level}`)
+    }
+  }
+})
+
+test('G59 the check bites: a late joiner with no family left, a hole in the bank, a blank left unfilled, a line that throws, a Ghost with no trace', () => {
+  const { c, roster } = standIn(23)
+  assert.ok(everyLineOk(c, roster))
+  // every wrong family taken by the news: a guest the case does not know yet has none left
+  const wrong = FAMILIES.map(f => f.key).filter(k => k !== c.solving.family)
+  assert.equal(everyLineOk({ ...c, solving: { ...c.solving, newsOut: wrong } }, roster), false, 'G59 the late joiner')
+  assert.ok(!roster.some(g => g.key === LATE_JOINER), 'the late joiner is nobody at the party')
+  // no case to read
+  assert.equal(everyLineOk({ ...c, solving: null }, roster), false, 'G59 no case')
+  // the bank, changed for a moment and put back
+  const was = { boo: { ...CAT_LINES.boo.family4 }, salem: { ...CAT_LINES.salem.act2 }, zim: CAT_LINES.zimothy.levels['3'] }
+  try {
+    for (const f of wrong) CAT_LINES.boo.family4[f] = undefined
+    assert.equal(everyLineOk(c, roster), false, 'G59 a hole in the bank')
+    Object.assign(CAT_LINES.boo.family4, was.boo)
+    CAT_LINES.zimothy.levels['3'] = `${was.zim} [WHO]`
+    assert.equal(everyLineOk(c, roster), false, 'G59 a blank left unfilled')
+    CAT_LINES.zimothy.levels['3'] = was.zim
+    for (const f of wrong) delete CAT_LINES.salem.act2[f]
+    assert.equal(everyLineOk(c, roster), false, 'G59 a line that throws')
+  } finally {
+    Object.assign(CAT_LINES.boo.family4, was.boo)
+    Object.assign(CAT_LINES.salem.act2, was.salem)
+    CAT_LINES.zimothy.levels['3'] = was.zim
+  }
+  assert.ok(everyLineOk(c, roster), 'the bank as it was')
+  // the Ghost's character has no trace: nothing for the study to pay
+  const noTrace = roster.map(g => (g.key === c.ghost ? { ...g, characterId: 'nobody' } : g))
+  assert.equal(everyLineOk(c, noTrace), false, 'G59 the Study')
+})
+
+test('G59 a real line is words with every blank filled', () => {
+  for (const ok of ['Not the dog.', 'Ew. Do I know you?', '*snort* Not that one, darling.']) assert.ok(realLine(ok), ok)
+  for (const bad of [null, undefined, '', '   ', 7, 'Not [MOTIVE].', 'Not ___.', 'Not undefined.', 'Not null.', 'Not motive 12.', 'Not that, and .', 'Not  that.', 'Not that , either.']) {
+    assert.equal(realLine(bad), false, String(bad))
+  }
 })

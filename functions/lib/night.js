@@ -47,6 +47,21 @@ export class NightError extends Error {
   constructor(code, message) { super(message); this.code = code }
 }
 
+// A cat's motive hint or the Study's trace that was missing when it was dealt
+// (card 529): nights/{id}.missingLines { hint, study }, a count of each, for
+// the Host tab. Never which cat, guest or group, and never a word.
+export const MISSING_KINDS = ['hint', 'study']
+export async function noteMissingLine(db, nightId, kind) {
+  if (!nightId || !MISSING_KINDS.includes(kind)) return
+  const ref = db.doc(`nights/${nightId}`)
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) return
+    const had = Math.max(0, Math.floor(Number(snap.data()?.missingLines?.[kind]) || 0))
+    tx.update(ref, { [`missingLines.${kind}`]: had + 1 })
+  })
+}
+
 function shuffled(list, pick = randomInt) {
   const a = [...list]
   for (let i = a.length - 1; i > 0; i--) {

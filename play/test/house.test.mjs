@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { houseView, studyNames, catVisits, QUIET_MS, MACHINES } from '../src/lib/house.js'
+import { houseView, studyNames, catVisits, missingLineWords, QUIET_MS, MACHINES } from '../src/lib/house.js'
 
 // The Host tab's house panel, as a pure view over the public docs. Fixtures
 // are throwaway shapes, never content.
@@ -148,4 +148,22 @@ test('X-6 Act 2 cat visits: a count of guests who have seen all four, nothing el
   // the Host tab says it in one line, a count only
   const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
   assert.ok(host.includes('Cat visits: {house.catVisits.done} of {house.catVisits.of} guests have seen all four.'))
+})
+
+test('G59 a cat\'s hint or the Study\'s trace that never came: the Host tab says how often, never which, and what the guests read (card 529)', () => {
+  assert.equal(missingLineWords(NIGHT), null, 'nothing missing, nothing said')
+  assert.equal(missingLineWords({ ...NIGHT, missingLines: { hint: 0, study: 0 } }), null)
+  assert.equal(houseView({ night: NIGHT, now: NOW }).missing, null)
+  const party = { ...NIGHT, forceRehearsal: false }
+  assert.equal(missingLineWords({ ...party, missingLines: { hint: 1 } }), 'A cat had no motive hint ready for a guest once. The guests read plain words instead. Nothing to do: the game goes on.')
+  assert.equal(missingLineWords({ ...party, missingLines: { hint: 2, study: 3 } }), 'A cat had no motive hint ready for a guest twice. The Study had no trace ready for a group 3 times. The guests read plain words instead. Nothing to do: the game goes on.')
+  assert.match(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { study: 1 } }), /^The Study had no trace ready for a group once\. On a rehearsal the card shows the note in brackets\./)
+  assert.match(missingLineWords({ ...NIGHT, missingLines: { study: 1 } }), /On a rehearsal/, 'a night that is not marked the party is a rehearsal')
+  // counts only: no cat, guest or group in the words, whatever else the doc carries
+  const words = missingLineWords({ ...party, missingLines: { hint: 1, study: 1, jon: 5, boo: 2 } })
+  for (const name of ['Boo', 'Salem', 'Zimothy', 'Granolia', 'Jon', 'Jessa', 'g1', '5']) assert.ok(!words.includes(name), name)
+  assert.equal(houseView({ night: { ...party, missingLines: { study: 1 } }, now: NOW }).missing, missingLineWords({ ...party, missingLines: { study: 1 } }))
+  // the Host tab shows it at the top, beside the case warning
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes('{house.missing && <p className="host-msg trouble" role="alert">{house.missing}</p>}'))
 })

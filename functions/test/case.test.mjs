@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES } from '../lib/night.js'
 import { hostCommand } from '../lib/run.js'
-import { buildCaseForNight, ensureCase, catHintCard, hintLine, HINT_PLACEHOLDER, CAT_NAMES, CAT_ROOMS } from '../lib/deal.js'
+import { buildCaseForNight, ensureCase, catHintCard, hintLine, HINT_PLACEHOLDER, HINT_QUIET, CAT_NAMES, CAT_ROOMS } from '../lib/deal.js'
+import { FAMILIES } from '../lib/families.js'
 import { buildCase, rehearsalCase, CASE_KEYS, DIAL_SIGN } from '../lib/case.js'
 import { studyClueCard } from '../lib/station.js'
 import { walkLights } from './lights-walk.mjs'
@@ -240,6 +241,61 @@ test('F28 the same walk on a rehearsal night: every hint and bag clue is a brack
   const card = catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint })
   assert.equal(card.placeholder, true)
   assert.deepEqual(card.lines, [])
+  assertNothingLeaked()
+})
+
+test('G59 a missing hint: the house\'s note on a rehearsal, the house\'s plain words on the party night, never a note; a hole in the bank counts as missing', () => {
+  const party = hintLine({ rehearsal: false, motive: 1 }, null, { cat: 'boo' })
+  assert.deepEqual(party, { hint: { text: 'Miss Boo LaRue has nothing to tell you about the motive.', placeholder: false, none: true }, ruled: null })
+  assert.equal(party.hint.text, HINT_QUIET.replace('[CAT]', CAT_NAMES.boo))
+  assert.ok(!/[()[\]]/.test(party.hint.text), 'no note in brackets on the party night')
+  assert.equal(catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint: party.hint }).placeholder, false, 'a card the phone shows plain')
+  for (const cat of ['granolia', 'salem', 'zimothy']) assert.equal(hintLine({ rehearsal: false }, null, { cat }).hint.text, `${CAT_NAMES[cat]} has nothing to tell you about the motive.`)
+  const rehearsal = hintLine({ rehearsal: true, motive: 1 }, null, { cat: 'boo' })
+  assert.deepEqual(rehearsal.hint, { text: HINT_PLACEHOLDER, placeholder: true, none: true })
+  // a family the bank has no line for throws inside the cats' code: missing, not a crash
+  const broken = hintLine({ rehearsal: false, motive: 1 }, 'no-such-family', { cat: 'salem', level: 2 })
+  assert.equal(broken.hint.none, true)
+  assert.equal(broken.ruled, null)
+})
+
+test('G59 a guest the case has no family for: on the party night all four cats say the house\'s plain words, on a rehearsal the note; the Host tab is told a count, and everyone else hears a real line', async () => {
+  for (const partyNight of [true, false]) {
+    const { db, nightId, uids } = await party({ partyNight })
+    db.store.set('sealed/bags', { words: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [String(i + 1), { [`(synthetic-${i % 4})`]: ['touch'], [`(synthetic-${4 + (i % 3)})`]: ['smell'] }])) })
+    const now = 5_000_000
+    const next = () => hostCommand(db, { nightId, command: 'next', now })
+    await toPower(db, nightId, now)
+    await next() // news
+    await next() // peek
+    // a case with no family left for Jon: none of his own, and every wrong family taken by the news
+    const c = db.store.get(`cases/${nightId}`)
+    const wrong = FAMILIES.map(f => f.key).filter(k => k !== c.solving.family)
+    await db.doc(`cases/${nightId}`).update({ 'solving.newsOut': wrong, 'solving.hints.jon': [] })
+    await next() // cat
+    await walkLights(db, nightId, { now })
+    const jon = cards(db, uids.jon, 'testimony')
+    assert.equal(jon.length, 4, 'all four cats still see him')
+    for (const t of jon) {
+      assert.equal(t.hint.none, true)
+      if (partyNight) {
+        assert.equal(t.hint.text, `${CAT_NAMES[t.cat]} has nothing to tell you about the motive.`)
+        assert.equal(t.hint.placeholder, false)
+        assert.equal(t.placeholder, false)
+        assert.ok(!/[()[\]]/.test(t.hint.text), 'never a note in brackets')
+      } else {
+        assert.equal(t.hint.text, HINT_PLACEHOLDER)
+        assert.equal(t.placeholder, true)
+      }
+    }
+    for (const [name, uid] of Object.entries(uids)) {
+      if (name === 'jon') continue
+      for (const t of cards(db, uid, 'testimony')) assert.ok(!t.hint.none && t.hint.text, `${name} hears a real line`)
+    }
+    // the Host tab: one count a card, never which cat or which guest
+    assert.deepEqual(night(db, nightId).missingLines, { hint: 4 })
+    assert.equal(db.store.get(`cases/${nightId}`).solving.ruled?.['jon-boo'], undefined, 'nothing ruled out for the solver')
+  }
   assertNothingLeaked()
 })
 

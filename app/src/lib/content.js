@@ -24,6 +24,7 @@ import {
   ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029,
   RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029,
   RETIRED_FOR_MEMORY_RESEND_1029,
+  RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -917,6 +918,16 @@ export const ADDITIONS = [
     // the house hears it (card 527, done).
     id: '2026-10-29-memory-resend',
     retireTasks: RETIRED_FOR_MEMORY_RESEND_1029,
+  },
+  {
+    // 29 Oct, night: never a note about the game on a guest's screen (card
+    // 529, done): the party night's plain words for a missing hint or trace,
+    // and the Host tab told; quietWords is Jon's to choose; the news flash's
+    // own note in brackets is a new card (530).
+    id: '2026-10-29-never-a-note',
+    retireTasks: RETIRED_FOR_NEVER_A_NOTE_1029,
+    tasks: NEVER_A_NOTE_1029_TASKS,
+    decisions: NEVER_A_NOTE_1029_DECISIONS,
   },
 ]
 

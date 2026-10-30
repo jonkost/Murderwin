@@ -226,8 +226,12 @@ function Station({ card, uid, notes, onDone }) {
 // A clue a room paid out (Act 4): the study's trace (the same five-level
 // picture as the bedroom door, never a name), a cat's reward line with a
 // crossed-off motive, and the cat's bag hint about the Ghost; with a button
-// that crosses the motive off the Motives tab.
+// that crosses the motive off the Motives tab. A clue with no words shows the
+// note in brackets on a rehearsal only; on the party night, the house's plain
+// words, the Study's own (functions/lib/station.js STUDY_QUIET; card 529).
+const CLUE_QUIET = 'Nothing for you this time.'
 export function Clue({ card, uid = null, notes = null }) {
+  const rehearsal = useContext(RehearsalNight)
   const n = Number(card.cross) || null
   const crossed = n && !!notes?.crossed?.[n]
   const cross = () => { if (uid && uid !== 'preview') writeNotes(uid, { crossed: { [n]: true } }).catch(() => {}) }
@@ -237,7 +241,7 @@ export function Clue({ card, uid = null, notes = null }) {
         {card.cat && <CatFace cat={card.cat} name={card.catName} />}
         <h3>{card.title}</h3>
       </header>
-      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || '(Nothing came through. Ask the host.)'} /></p>}
+      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || (rehearsal ? '(Nothing came through. Ask the host.)' : CLUE_QUIET)} /></p>}
       {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
       {n && uid && (crossed ? <p className="gloss">Crossed off.</p> : <button className="chip" onClick={cross}>Cross it off</button>)}
       <Rehearsal card={card} />

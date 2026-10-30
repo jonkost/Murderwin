@@ -23,7 +23,7 @@ import { randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MOTIVES, NightError, readArea, characterById, CHARACTERS } from './night.js'
+import { MOTIVES, NightError, readArea, characterById, CHARACTERS, noteMissingLine } from './night.js'
 import { traceStandIn } from './station.js'
 import { buildCase, rehearsalCase } from './case.js'
 import { readPacking } from './bags.js'
@@ -296,11 +296,17 @@ export const SUPPER_NOTE = { title: "Supper's ready!", text: "The cats you haven
 // the guest (or a cat with no line) carries this marked stand-in, which names
 // nothing. On a rehearsal night every sealed slot shows a bracketed stand-in
 // saying what would show there (Jon, 23 Oct 2026), never a filled line.
+// On the party night a missing line never shows the house's note (card 529):
+// the guest reads the house's plain words, HINT_QUIET (the question
+// quietWords on the board), and greetGuest tells the Host tab. Either way the
+// hint is marked `none`. The checks make sure it never happens (G59).
 export const HINT_PLACEHOLDER = '(Here the cat would rule something out.)'
+export const HINT_QUIET = '[CAT] has nothing to tell you about the motive.'
 export function hintStandIn(cat) { return `[${CAT_SHORT[cat] ?? 'The cat'}'s motive hint appears here]` }
 export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [], bonusFamilies = null } = {}) {
-  const line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude, bonusFamilies }) : null
-  if (!line?.text) return { hint: { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
+  let line = null
+  try { line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude, bonusFamilies }) : null } catch { line = null } // a hole in the bank is a missing line
+  if (!line?.text) return { hint: c && !c.rehearsal ? { text: HINT_QUIET.replace('[CAT]', CAT_NAMES[cat] ?? 'The cat'), placeholder: false, none: true } : { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
   if (c?.rehearsal) return { hint: { text: hintStandIn(cat), placeholder: true }, ruled: { families: line.families, motives: line.motives } }
   return { hint: { text: line.text, placeholder: false }, ruled: { families: line.families, motives: line.motives } }
 }
@@ -488,6 +494,7 @@ async function greetGuest(db, nightId, { c, g, cat, act, beat, bags = null, rost
   }
   const dealt = await dealCard(db, g.uid, catHintCard({ id: `${act}-${beat}-cat-${cat}`, act, beat, cat, hint, bag, note }))
   if (!dealt) return false
+  if (hint.none) await noteMissingLine(db, nightId, 'hint') // the Host tab is told: a count, never which cat or guest (card 529)
   const patch = {}
   // what the line rules out, for the solver checks (families.roomClues); case only, never a phone
   if (ruled && c?.solving) patch[`solving.ruled.${g.key}-${cat}`] = ruled

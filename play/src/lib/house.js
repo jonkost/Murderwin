@@ -38,6 +38,22 @@ export function catVisits(night) {
   return { done: Math.min(of, Math.max(0, Math.floor(Number(p.done) || 0))), of }
 }
 
+// A cat's motive hint or the Study's trace that was missing when it was
+// dealt (card 529): night.missingLines = { hint, study }, written by the
+// server, a count of each. Never which cat, guest or group. On the party
+// night the guest read the house's plain words; on a rehearsal, the note in
+// brackets with its Rehearsal text tag.
+export function missingLineWords(night) {
+  const count = k => Math.max(0, Math.floor(Number(night?.missingLines?.[k]) || 0))
+  const times = n => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`)
+  const said = []
+  if (count('hint')) said.push(`A cat had no motive hint ready for a guest ${times(count('hint'))}.`)
+  if (count('study')) said.push(`The Study had no trace ready for a group ${times(count('study'))}.`)
+  if (!said.length) return null
+  const party = night?.forceRehearsal === false
+  return `${said.join(' ')} ${party ? 'The guests read plain words instead.' : 'On a rehearsal the card shows the note in brackets.'} Nothing to do: the game goes on.`
+}
+
 function clock(msLeft) {
   const s = Math.max(0, Math.ceil(msLeft / 1000))
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -89,6 +105,7 @@ export function houseView({ night, study, rotation, presence = {}, now = Date.no
     groups,
     canReassign: !!groupId && !paid && groups.some(g => !g.paid && !g.due),
     catVisits: catVisits(night),
+    missing: missingLineWords(night),
     hall: night?.act >= 1 ? 'on' : 'off',
   }
 }

@@ -289,14 +289,16 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const rooms = await walkRooms()
     if (!rooms.ok) summary.checks.push(...(rooms.twoAtACat ? ['F20'] : []), ...(rooms.untold ? ['F21'] : []))
     // every cat gives a motive hint and a bag clue (23 Oct 2026); nothing else is said
-    let hints = 0, bagClues = 0
+    let hints = 0, bagClues = 0, missing = 0
     for (const uid of uids) {
       for (const t of cardsOf(await sessionOf(uid), 'testimony')) {
         if (t.hint?.text && !(t.lines ?? []).length) hints++
         if (t.bag?.text) bagClues++
+        if (t.hint?.none) missing++ // the house's note (or plain words) where a cat's line should be (card 529)
       }
     }
     if (hints !== bagClues || hints !== 4 * uids.length) summary.checks.push('G44')
+    if (missing || (await nightDoc()).missingLines) summary.checks.push('G59')
     // everyone has seen all four cats: the supper chime came on its own (F24)
     const supper = (await nightDoc()).beat === 'supper'
     if (!supper) summary.checks.push('F24')
@@ -345,6 +347,9 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     // G47 and G52: every group visited every room once, and every room paid every group
     const paid = (await db.doc(act4.act4PrivatePath(nightId)).get()).data()?.paid ?? {}
     if (Object.keys(paid).length !== rot4.groups.length * act4.ROOM_KEYS.length) summary.checks.push('G52')
+    // G59: every group's study card carries a trace, never the house's note (card 529)
+    const studyCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.id?.endsWith('-study-clue')))
+    if (studyCards.length !== uids.length || studyCards.some(c => c.none) || (await nightDoc()).missingLines) summary.checks.push('G59')
     const roomCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.room)).length
     actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${booShows} catwalks`, `${games4} waiting Parlour Games, ${played4} played`])
 

@@ -4,10 +4,10 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { fakeNight, PHONES, SEAT_DEALS } from '../fake-players.mjs'
 import { FakeFirestore } from '../../functions/test/fake-firestore.mjs'
-import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, LIGHTS_TEXT, NIGHT } from '../../functions/lib/deal.js'
+import { NOTICES, ROLE_CARDS, FREE_TIME_TIPS, HINT_PLACEHOLDER, HINT_QUIET, LIGHTS_TEXT, NIGHT } from '../../functions/lib/deal.js'
 import { DIRECTIONS, REWARD_LINES } from '../../functions/lib/act4.js'
 import { NEWS_FLASH_PLACEHOLDER } from '../../functions/lib/screen.js'
-import { STUDY_PLACEHOLDER } from '../../functions/lib/station.js'
+import { STUDY_PLACEHOLDER, STUDY_QUIET } from '../../functions/lib/station.js'
 import { ROUND_SIZES } from '../../functions/lib/relay-bank.js'
 import { CHARACTERS } from '../../functions/lib/night.js'
 
@@ -18,7 +18,7 @@ const CARD_TEXT = [
   ...Object.values(NOTICES).map(n => n.text),
   ...Object.values(ROLE_CARDS),
   ...Object.values(DIRECTIONS), ...Object.values(REWARD_LINES).flatMap(r => [r.done.slice(0, 30), r.capped.slice(0, 30)]), ...FREE_TIME_TIPS,
-  STUDY_PLACEHOLDER, HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
+  STUDY_PLACEHOLDER, HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, STUDY_QUIET, HINT_QUIET.replace('[CAT]', '').trim(), ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
   'From the Library', 'Cross it off', "bag clue about the", "motive hint appears here",
 ]
 
