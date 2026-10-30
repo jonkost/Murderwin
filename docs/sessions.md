@@ -258,6 +258,16 @@ on the Canon.
   in the copy first; all 119 live files match the build; the live
   arcade's Boo Chasing Her Tail starts with Back to the games at the top
   and no console errors. Not pushed.
+- Cards 527 and 529 ran as side sessions of their own (entries above),
+  each on its own branch; both checked here (every test on each branch,
+  and the checks on 529's), then merged into main on Jon's yes (f6bb471
+  and d3326a0). Where both added to the board, this log and the test
+  plan, both are kept: the In Duplicate migration first, then never a
+  note. On the merged main every test passes (functions 288, cues 69,
+  station 53, workshop 134, play 257, scripts 53), npm run checks is all
+  clear (21,042 of 21,042) and the site builds. The Canon gained
+  quietWords on its open list, and Start Here's snapshot says so. Not
+  deployed, not pushed.
 
 ## 29 Oct 2026 · Claude Code (the arcade's menu: Boo's face, paws and a flashing top row)
 
