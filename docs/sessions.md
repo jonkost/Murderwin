@@ -9,6 +9,54 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 30 Oct 2026 · Claude Code (the Boo Arcade handoff from Jon's playtest)
+
+- Applied Jon's handoff of 30 Oct (`docs/handoff-2026-10-30.md`, a Claude
+  Doc): the five arcade games changed as his playtest asked, one round of
+  each game a player, the scores saved per guest and per game and shown with
+  the achievements in Act 7. Nine commits on main, one concern each, not
+  deployed, not pushed.
+- Every game: the third dial pressed in is Exit (labelled on the strip while
+  a game counts down or runs), Leave this game and Escape on the screen; a
+  game left never counts and its token comes back; "practice" with a C
+  everywhere. The Tail: Boo's bottle green in place of the claret that read
+  as brown (the rug, her keys and the tablecloths), the tail one smooth band
+  with a sheen, quicker by the end, a key longer at a quarter and at half,
+  Boo wrapping round the edges with a moment's pause, a fish to eat for 3,
+  cucumbers that freeze her; a tail boxed in slips away. The Pointer: Boo
+  faster, walls from 20 s, closer calls, a faded sparkle costs 2. The Mice:
+  up to eight at once. The Knock: tables two and four run right to left,
+  friends sit on the tables (knocking one off is a miss that says who), a
+  beat of 0.38 s down to 0.18 by two fifths in, a tighter window, a miss
+  turns the whole table red, the boxes labelled Misses. The Yarn: the strip
+  is the basket's rail (a touch or a slide puts the basket under the
+  finger), the arrows wrap, five misses end it, friends fall.
+- The visit: five tokens, one a game; a game played is dimmed with a tick and
+  refused; the clue still after the second game, then the rest, then the
+  winner; forty seconds a game, the same for everyone (an adaptive share was
+  tried and dropped: it made a brisk pair's last game two minutes, unfair for
+  the per-game awards); a brisk pair fits all ten games, a trio most of its
+  fifteen. Every counted round is written down (`records`; the page's
+  `onRecord` hook, which the practice page does not use).
+- The server: `functions/lib/arcade.js` keeps one score a guest a game
+  (`arcadeScore`, `nights/{id}/public/arcade`; the first round counts) and
+  the finale puts the top scorer in each game and the best all round, by
+  place, after the host's achievements, widening the segment to fit. Check
+  G60 (`functions/test/arcade.test.mjs`): one score a guest a game, the
+  places, and no role anywhere near it.
+- The board: cards 531 to 539 (done), a line on 514 and 515, the questions
+  arcadeOverall and arcadeExit (defaults built). Docs: `docs/boo-arcade.md`
+  (§1, §4, §5, §8 and the technical notes), `docs/on-the-night.md`,
+  `docs/room-screens.md`, `docs/test-plan.md` (G54, G55, G60), `CLAUDE.md`.
+  The handoff is marked Applied in both copies. Claude chat keeps the Canon
+  and Start Here for this handoff, as it says.
+- Left: the arcade is still not wired into Act 4 (card 515), so on a real
+  night nothing writes a score; Jon's try of the changed games on the deck
+  (514); forty seconds a game and the points from game to game are starting
+  points for him to tune. Tests: functions 296, play 264, workshop (app) all
+  pass; `functions/test/study-clock.test.mjs` has a flake ("Which group?")
+  that fails on the previous commit too, untouched. Not deployed.
+
 ## 30 Oct 2026 · Claude Code (cards 527 and 529 deployed)
 
 - Deployed on Jon's yes, from a clean copy of main at 3bfe05d: the site,

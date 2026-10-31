@@ -823,40 +823,52 @@ at all: nothing is paid and no clue is dealt.
   it facing you and tap Turn on the camera: at the last pose it takes the
   photo and keeps it on its own screen, never sent anywhere.
 - *Miss Boo LaRue's Arcade* (the Entryway, not on the night yet). Built
-  28 October to try. You chose it for the night on 29 October (the Catwalk is
-  scrapped), but until it is wired into Act 4 the night still plays *Boo's
-  Catwalk*. On a Mac in Google Chrome
-  (Safari cannot reach the Stream Deck): quit the Stream Deck app, set the
-  Mac's sound output to its own speakers (through a HomePod the sounds come
-  about two seconds late), plug in the Stream Deck + XL, open "The arcade,
-  free play", tap "Connect the Stream Deck" once and pick it from the list.
-  The Mac's screen then becomes the scoreboard (the points, the time, the
-  strikes, Boo): the Stream Deck is the game. Press a game in the middle of
-  the second row of keys, then any key or dial to start; two minutes a game,
-  and "Back to the games" at the top of the screen leaves one early.
-  Only the two outside dials play (one key a click; in *Boo Chasing Her
-  Tail* they move Boo herself, the left one across and the right one up and
-  down, after the white tip of her tail); *Knock It Off the
-  Table* is the keys at the end of its four tables, and *Yarn Catch* moves
-  its basket with a tap on the left or the right of the touch strip. No
-  Stream Deck? The deck drawn on the screen plays with the mouse, or the
-  arrow keys and the space bar. If the touch strip ever looks scrambled, add
-  `&strip=whole` to the address and tell Claude Code. On the night (card
-  515) the screen shows only the game: no Connect and no setup words, so set
-  the Stream Deck up before the guests arrive. For a
-  group's visit, tap "Try a group's visit" at the bottom of the free
-  play page, or close the free play tab before opening "A group's visit,
-  for practice": only one arcade tab plays on the Stream Deck at a time,
-  and the other says so. It asks for two or three first names: two tokens
-  each, one game at a time in turns (80 seconds a game for a trio, and the
-  last game is shorter when time runs short, so its clue usually still
-  comes before the chime), each player's clue on the screen after their
+  28 October to try, and changed on 30 October from your playtest. You chose
+  it for the night on 29 October (the Catwalk is scrapped), but until it is
+  wired into Act 4 the night still plays *Boo's Catwalk*. On a Mac in Google
+  Chrome (Safari cannot reach the Stream Deck): quit the Stream Deck app, set
+  the Mac's sound output to its own speakers (through a HomePod the sounds
+  come about two seconds late), plug in the Stream Deck + XL, open "The
+  arcade, free play", tap "Connect the Stream Deck" once and pick it from the
+  list. The Mac's screen then becomes the scoreboard (the points, the time,
+  the strikes or misses with their word, Boo): the Stream Deck is the game.
+  Press a game in the middle of the second row of keys, then any key or dial
+  to start; two minutes a game in free play. To leave a game early press the
+  third dial in (it says Exit on the strip while a game counts down or runs),
+  or "Leave this game" at the top of the screen, or Escape; a game left never
+  counts. Only the two outside dials steer (one key a click; in *Boo Chasing
+  Her Tail* they move Boo herself, the left one across and the right one up
+  and down, after the white tip of her tail, round the edges and in at the
+  other side, eating the fish and keeping off the cucumbers); *Knock It Off
+  the Table* is the keys at the end of its four tables, two tables running
+  each way, and *Yarn Catch* moves its basket by sliding a finger along the
+  touch strip, the basket going to the column under the finger. Sir Irwin
+  and his friends are in all but the tail game: never tap, knock off or
+  catch them. No Stream Deck? The deck drawn on the screen plays with the
+  mouse, or the arrow keys and the space bar. If the touch strip ever looks
+  scrambled, add `&strip=whole` to the address and tell Claude Code. On the
+  night (card 515) the screen shows only the game: no Connect and no setup
+  words, so set the Stream Deck up before the guests arrive. For a group's
+  visit, tap "Try a group's visit" at the bottom of the free play page, or
+  close the free play tab before opening "A group's visit, for practice":
+  only one arcade tab plays on the Stream Deck at a time, and the other says
+  so. It asks for two or three first names: five tokens each, one for each
+  game (your decision of 30 October: one round of each), in turns; a game
+  you have played is dimmed with a tick on your turn; forty seconds a game
+  (the last one shorter when time runs short, so its clue usually still
+  comes before the chime); each player's clue on the screen after their
   second game (in practice, a line in square brackets), Boo's line instead
-  for a trio's third player, Boo's winner (unless the chime comes first),
-  then free play until the chime ten minutes in, when Boo says "Be on your
-  way." "Ring the chime", beside the clock, tries the ending at once, and
-  "Back to free play", beside it, leaves the visit straight away. Samples of
-  a player's clue, a trio's third player and the chime. The whole game: `docs/boo-arcade.md`.
+  for a trio's third player, then the other games, Boo's winner (unless the
+  chime comes first), then free play until the chime ten minutes in, when
+  Boo says "Be on your way." A brisk pair gets through all ten games; a
+  trio most of its fifteen. "Ring the chime", beside the clock, tries the
+  ending at once, and "Back to free play", beside it, leaves the visit
+  straight away. Samples of a player's clue, a trio's third player and the
+  chime. In practice nothing is saved; on the night each counted round's
+  score is kept per guest and per game, and the Parlour TV shows the top
+  scorer in each game and the best all round with the achievements in Act 7
+  (the only awards that compare one player with another, on purpose). The
+  whole game: `docs/boo-arcade.md`.
 - *The Parlour Games.* Every set in the workshop's bank, numbered, each with
   "See it on a phone": Boo's line and the three questions, exactly as a
   phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4

@@ -1,4 +1,4 @@
-# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet)
+# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet; the five games, the visit and the scores changed 30 Oct 2026)
 
 Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October, when
 *Whack-a-Mouse* also got its pets, the Tail key on the menu its black cat, and every strike its
@@ -25,11 +25,16 @@ tab changes them.
 
 ## 1. What it is, in one breath
 
-A group sits at the Stream Deck + XL in front of a Mac. Each player has two tokens. They take
-turns: press a game on the keys, play it with the keys and the dials, pass to the next player.
-After their second game each player's own clue shows on the Mac's screen; a trio's third player
-gets Boo's line instead. Boo names the winner, just for fun, and everyone plays freely until the
-chime, when Boo says "Be on your way."
+A group sits at the Stream Deck + XL in front of a Mac. Each player has five tokens, one for
+each game: one round of each of the five games a player (your decision of 30 October; it was two
+tokens for any two games before). They take turns: press a game you have not played yet, play it
+with the keys and the dials, pass to the next player. After their second game each player's own
+clue shows on the Mac's screen; a trio's third player gets Boo's line instead; then the other
+three games each. Boo names the winner, just for fun, and everyone plays freely until the chime,
+when Boo says "Be on your way." A game left early (the Exit dial, or Leave this game on the
+screen) never counts, and the token comes back. Each counted round's score is saved with the
+night, per player and per game (once the arcade is wired into Act 4, card 515), and the Act 7
+reel shows the top scorer in each game and the best all round (§5).
 
 In your words (28 October):
 
@@ -45,10 +50,11 @@ In your words (28 October):
   became *Knock It Off the Table*. *Whack-a-Mouse* and *Yarn Catch* make five. (*Cushion Stack*
   was cut: four rows is too short.)
 - "The game select should be centered with five games 2 open on each end equaling 9."
-- "Make the games last 2 minutes each?" Settled: two minutes a game for one or two players,
-  80 seconds for a trio. The build adds one rule: in a visit, a game that would run into the
-  chime is cut short (never under 30 seconds), so its clue usually still comes before the chime
-  (§5).
+- "Make the games last 2 minutes each?" Settled then: two minutes a game. Since 30 October a
+  visit's game is forty seconds, the same for everyone, so that five games each fit the round
+  and a score means the same wherever it was made; free play keeps the two minutes. The build
+  adds one rule: in a visit, a game that would run into the chime is cut short (never under 30
+  seconds), so its clue usually still comes before the chime (§5).
 - "Not motives it has to be ghost clues. Act 4 is focused on getting insight on the dearly
   departed."
 - "We can do the clue of SKMBP": each player's clue shows on Susan's MacBook Pro's screen.
@@ -118,8 +124,8 @@ for left and right controls".
 Settled, and built that evening: the games stay on the Stream Deck, made smoother (the technical
 notes say how), and while it is connected the Mac's screen is the scoreboard (§3). Every success
 is a green tick on its key, every strike a red cross, and the strikes are three boxes on the
-touch strip. The keys are black lacquer and gold, with the house's claret and parchment, and no
-dark blue. The five games were made again to your notes (§4): the tail is a fluffy black tail
+touch strip. The keys are black lacquer and gold, with Boo's bottle green (the house's claret read as
+brown on the keys: your note of 30 October) and parchment, and no dark blue. The five games were made again to your notes (§4): the tail is a fluffy black tail
 round the outside keys, and only the two outside dials play, one key a click. Not root beer:
 *Knock It Off the Table* keeps Boo's own tables rather than copy a classic game. If the deck is
 still not smooth enough, your fallback stands: the games move to the Mac's screen (§8).
@@ -203,14 +209,15 @@ Spares. Free play also has a small Try a group's visit button at the bottom of t
 
 The Stream Deck + XL has 36 keys (nine across, four down), a touch strip under them, and six
 dials along the bottom. The look (Jon, 29 October: "Think glam!", the house's colours, "Not the
-darker blue"): black lacquer keys with a gold rim, gold words and pictures, Boo's claret rug and
-tables; a success is a green tick on its key, a strike a big red cross over its key.
+darker blue"): black lacquer keys with a gold rim, gold words and pictures, Boo's green rug and
+tables (bottle green since 30 October); a success is a green tick on its key, a strike a big red
+cross over its key.
 
 | Where | What it shows |
 |---|---|
 | Top row | On the menu: paws, with Boo's face in the middle: one paw in three lit, the lights running in towards her, like an arcade's sign. |
 | Second row | The menu: two blank keys, the five games, two blank keys. From the left: *Boo Chasing Her Tail*, *The Lazy Pointer*, *Whack-a-Mouse*, *Knock It Off the Table*, *Yarn Catch*. Each is the game's picture on a round parchment plate over its short name in gold: a black cat for the tail, Boo's paws for the knock. None glows but the red dot on the Pointer key, which glows as it does in its game. A game pressed shows the green tick for a moment. |
-| Third row | In a visit, the player's two tokens either side of the middle: Boo's gold coin (your picture of it, 29 October; bigger since your note "They need to be bigger.") for a token left, an empty ring for one spent. The Mac's screen lists each player with the same coins, bigger there too. |
+| Third row | In a visit, the player's five tokens, one under each game (30 October): Boo's gold coin (your picture of it, 29 October; bigger since your note "They need to be bigger.") for a token left, an empty ring for one spent. The Mac's screen lists each player with the same coins, bigger there too. |
 | Bottom row | Blank. Its left-hand key is Back, on the screen before a game starts. |
 | The touch strip | On the menu: in a visit, whose turn it is, Press a game and their tokens; in free play, Free play and Press a game. Before a game: its name, Press any key to start, its rule (the three games with strikes) and, in the two games that steer, what the outside dials do; before *Yarn Catch*, only Press any key to start, between its two halves. While it plays: the points, big, in gold (for a moment after a strike, its words instead: "Strike 1! That's Salem."); the time, as eight lights going out one by one; the three strikes as boxes, crossed in red as they go (in the three games that count them, in place of the game's name); and in the two games that steer, along the bottom of the strip above the two outside dials, what each one does. In *Yarn Catch* the strip is the control: a left half and a right half, each with its arrow and Tap, and the points between. When a game ends: how it ended and the points. |
 | The dials | Only the two outside dials play, and only in the two games that steer: one click is one key, every click, however fast the turn (at most six keys for one quick spin). In *Boo Chasing Her Tail* the left one moves Boo left and right (clockwise is right), the right one up and down (clockwise is up). In *The Lazy Pointer* the same, for the dot. The four middle dials do nothing. A dial pressed in moves on from a moment, like a key. |
@@ -224,166 +231,179 @@ the winner, and Boo alone at the chime.
 
 ## 4. The five games
 
-Made again on 29 October, from your notes, and *Boo Chasing Her Tail* again that night, from your
-try (§1). Two minutes a game (80 seconds a game when three
-play a visit, and in a visit a game that would run into the chime is cut short: §5). Every game
-ends at its time unless it ended sooner. Three of them count strikes, and three strikes and you're
-out: *The Lazy Pointer*, *Whack-a-Mouse* and *Knock It Off the Table*. Each strike crosses a box
-on the strip, says so on the strip for a second and a half in place of the points, and shows a big
-red cross over its key; the screen counts them too. Every success shows a green tick on its key for a
-moment. The speeds and the points are starting points, kept in one place at the top of the game's
-code, so a note from the Game test tab is a quick change.
+Made again on 29 October from your notes, *Boo Chasing Her Tail* again that night from your try
+(§1), and all five changed again on 30 October from your playtest (`docs/handoff-2026-10-30.md`).
+Forty seconds a game in a visit (two minutes in free play; in a visit a game that would run into
+the chime is cut short: §5). Every game ends at its time unless it ended sooner. Four of them
+count strikes or misses, in boxes on the strip and the screen with the word under them (Strikes
+or Misses, since you could not tell what the dots meant): *The Lazy Pointer*, *Whack-a-Mouse*
+and *Knock It Off the Table* three, *Yarn Catch* five. Each strike crosses a box, says so on the
+strip for a second and a half in place of the points, and shows a big red cross over its key (at
+the tables, over the whole table). Every success shows a green tick on its key for a moment. An
+Exit dial (the third dial, labelled on the strip while a game counts down or runs) or Leave this
+game on the screen leaves any game at once; a game left is not counted and its token comes back.
+The speeds and the points are starting points, kept in one place at the top of the game's code,
+so a note from the Game test tab is a quick change.
 
-1. *Boo Chasing Her Tail*. All 36 keys are Boo's claret rug, and the piece you move is Boo
-   herself, her face on a gold key: the left dial moves her left and right (clockwise is right),
-   the right dial up and down (clockwise is up), one key a click, or the arrow keys. Her tail is
-   three keys of fluffy black fur with a white tip, and it runs about the board by itself, one key
-   a step, its end first and the white tip trailing at the back. Where it could go straight on it
-   turns about one step in four, and the board's edges (it is only four keys high), the walls and
-   her friends turn it often too, so about every other step is a turn. It never goes into a dead
-   end when it has another way, and when Boo comes within three keys of it, it goes the way that
-   takes it furthest from her. Its end and its middle block her, like the board's edge, the walls
-   and her friends: she stops there, and nothing else happens, so the tip can be caught only from
-   behind or from the side, never head-on. Move her onto the white tip: caught, 2 points, the
-   green tick, and the tail whips away and comes back whole somewhere else, at least four keys
-   from her. It steps every 0.65 seconds at the start
-   and every 0.3 seconds by the end. From 15 seconds in, a brick wall or one of her friends
-   (Granolia, Sir Irwin, Salem or Zimothy, each once before any comes twice) comes out every 15
-   seconds, a wall first, up to six, at least two keys from Boo and from her tail, and stays put
-   to the end; none ever shuts a key in or leaves a dead end. No strikes: it ends at its time.
-   Holding one arrow key down no longer wins it: a whole game of that catches one tip at most.
+1. *Boo Chasing Her Tail*. All 36 keys are Boo's rug, bottle green now (your note: no more poo
+   brown on the keys), and the piece you move is Boo herself, her face on a gold key: the left
+   dial moves her left and right (clockwise is right), the right dial up and down (clockwise is
+   up), one key a click, or the arrow keys. She wraps round the edges, Pac-Man style: off the
+   top, in at the bottom; off the left, in at the right; and she stops a moment (0.7 s) where
+   she comes in. Her tail is a smooth black band with a round white tip, redrawn (no tufts, no
+   ruff: "It still looks like poop"), three keys long at first and a key longer a quarter of the
+   way in and again at half, so five by the end, to block her more. It runs about the board by
+   itself, one key a step, its end first and the white tip trailing at the back: she can catch
+   the tip from behind or from the side, never head on, as the rest of it is in her way. It
+   turns about one step in four where it could go straight on, never into a dead end when it
+   has another way, and when Boo comes within three keys of it (the short way round) it goes
+   the way that takes it furthest from her, and off her row and column, since she sweeps along
+   them when she wraps. It steps every 0.65 seconds at the start and every 0.22 seconds by the
+   end. Move her onto the white tip: caught, 2 points, the green tick, and the tail whips away
+   and comes back whole somewhere else, at least four keys from her. From 15 seconds in, a brick
+   wall or one of her friends (Granolia, Sir Irwin, Salem or Zimothy, each once before any comes
+   twice) comes out every 15 seconds, a wall first, up to six, and stays put; none ever shuts a
+   key in or leaves a dead end. From 10 seconds in a fish comes out now and then (one at a time,
+   for six seconds, the next nine seconds after it went): Boo onto it eats it for 3 points. From
+   20 seconds in cucumbers come out (one every twelve seconds, two at most, each for nine
+   seconds): Boo onto one freezes her for a second and a half with her "!" and the words "Eek! A
+   cucumber." on the strip, no points lost, no strike. The tail steps over a fish and never onto
+   a cucumber; a tail coiled into a corner with nowhere to go slips away whole, no points to
+   anyone, so the game never stands still. No strikes: it ends at its time. Holding an arrow key
+   on the Mac's keyboard sweeps her round and round; it catches about a quarter of what chasing
+   the tip does.
 2. *The Lazy Pointer*. Your red dot and Boo, on the whole board. The left dial moves the dot left
    and right, the right dial up and down, one key a click; the edges stop it, and it never moves
-   onto Boo. Sparkles come and go, two at most, each for six seconds: move the dot onto one, 3
-   points. Boo naps, wakes when her nap is over or when the dot comes right next to her (her !
-   shows), and stalks the dot one key at a time, quicker as the game goes on; if the dot stays far
-   from her for two of her steps she gets bored and naps again. When she lands on the dot: a
-   strike ("Strike 1! Boo caught it."), and the dot starts again on the key furthest from her while
-   she naps. Three catches and you're out ("Boo caught the dot three times."). Lasting to the end:
-   20 more.
+   onto Boo. Sparkles come and go, two at most, each for six seconds, one in two near Boo: move
+   the dot onto one, 3 points. A sparkle that fades ungrabbed costs 2 points (never below
+   nought), with a crossed-out sparkle where it was and "A sparkle faded. -2" on the strip, so
+   keeping the dot far from her is not the whole game. Boo naps, wakes when her nap is over or
+   when the dot comes right next to her (her ! shows), and stalks the dot one key at a time,
+   faster than before (a step every 0.6 seconds at the start, 0.3 by the end); if the dot stays
+   five or more keys from her for three of her steps she gets bored and naps again. From 20
+   seconds in, grey stone walls come out, one every 15 seconds, five at most: the dot stops at a
+   wall, and Boo goes round them the shortest way (walled off from the dot altogether, she gives
+   up and naps). When she lands on the dot: a strike ("Strike 1! Boo caught it."), and the dot
+   starts again on the free key furthest from her while she naps. Three catches and you're out
+   ("Boo caught the dot three times."). Lasting to the end: 20 more.
 3. *Whack-a-Mouse*. Mice pop up on the keys: tap one before it hides, 1 point, a gold one 3 (one in
-   ten, and it hides sooner). Two can be up at once at first, one more every 20 seconds up to six,
-   and they come faster and hide sooner as the game goes on: a new one comes as soon as a mouse's
-   time up shared among as many as may be up, so the board fills as it goes; a tapped mouse's
-   place fills again in a moment. From five seconds in, Sir Irwin and his friends pop up among
-   them (about one in four of what pops up): Sir Irwin, Granolia, Boo, Zimothy and Salem, each
-   their own face picture, up as long as a mouse. Leave them alone: one tapped scores nothing and
-   is a strike that says who ("Strike 1! That's the birthday boy." for Sir Irwin, "Strike 2!
-   That's Zimothy Clawford, Esq."), a big red cross over its key for a moment; the third ends the
-   game ("You tapped three friends.").
-   A mouse that hides, or a tap on an empty key, costs nothing. A key a mouse has just left stays
-   empty for half a second, so a tap a moment late never lands on a friend, and a tap just after a
-   mouse hid still gets it (the deck shows every change a moment late). The gold ones caught,
-   here and in *Yarn Catch*, count in the fun facts.
-4. *Knock It Off the Table*. Each row of keys is one of Boo's four tables, on a claret cloth, its
-   right-hand key the end. Things come on at the left of a table and slide along it one key a
-   beat, never jumping: a vase, a teacup, a teapot, a candle, a picture, a clock, a plant and a
-   cake, in turn, at most two on a table, three keys apart. Press the end key of a table as a thing
-   gets there: knocked off, 1 point. A press with nothing there is a strike ("Strike 1! Too
-   soon."), and so is a thing left on the end past its beat ("Strike 2! It got away."). A press a
-   moment before a thing arrives still knocks it off, and a press a moment after one got away (up
-   to 0.3 seconds) is not a second strike: its getting away was the strike. A thing arriving at
-   an end is always drawn over a tick or a cross there. Only the end keys count: no dials and no
-   strip. The beat, and the new things, come quicker as the game goes on. Three misses and you're
-   out ("Three misses.").
+   ten, and it hides sooner). Two can be up at once at first, one more every 15 seconds up to
+   eight by the end, and they come faster and hide sooner as the game goes on: a new one comes
+   as soon as a mouse's time up shared among as many as may be up, so the board fills as it
+   goes; a tapped mouse's place fills again in a moment. From five seconds in, Sir Irwin and his
+   friends pop up among them (about one in four of what pops up): Sir Irwin, Granolia, Boo,
+   Zimothy and Salem, each their own face picture, up as long as a mouse. Leave them alone: one
+   tapped scores nothing and is a strike that says who ("Strike 1! That's the birthday boy." for
+   Sir Irwin, "Strike 2! That's Zimothy Clawford, Esq."), a big red cross over its key for a
+   moment; the third ends the game ("You tapped three friends."). A mouse that hides, or a tap
+   on an empty key, costs nothing. A key a mouse has just left stays empty for half a second, so
+   a tap a moment late never lands on a friend, and a tap just after a mouse hid still gets it.
+   Your favourite, so nothing else changed.
+4. *Knock It Off the Table*. Each row of keys is one of Boo's four tables, on a green cloth. The
+   first and third tables run left to right and end at the right-hand key; the second and fourth
+   run right to left and end at the left-hand key, so you watch the whole board. Things come on
+   at the start of a table and slide along it one key a beat, never jumping: a vase, a teacup, a
+   teapot, a candle, a picture, a clock, a plant and a cake, in turn, at most two on a table,
+   three keys apart. Press the end key of a table as a thing gets there: knocked off, 1 point.
+   From ten seconds in, about one in four of what comes on is Sir Irwin or a friend, sitting on
+   the table: knock one off and it is a miss that says who, their face under the cross on the
+   end; one that reaches the end just goes, no miss. A press with nothing there is a miss
+   ("Strike 1! Too soon."), and so is a thing left on the end past its beat ("Strike 2! It got
+   away."). A press a moment before a thing arrives (60 ms) still knocks it off, and a press a
+   moment after one got away (up to 0.3 seconds) is not a second miss: its getting away was the
+   miss. The window is tighter than it was: a thing stays on the end a tenth of a second past its
+   beat. Every miss turns the whole table red for a moment. Only the end keys count: no dials
+   and no strip. Much faster, and at top speed much earlier: a beat every 0.38 seconds at the
+   start and every 0.18 seconds from two fifths of the way in; a new thing every third beat at
+   first and nearly every beat by the end, as the room on the tables allows. Three misses and
+   you're out ("Three misses.").
 5. *Yarn Catch*. Balls of yarn drop down the columns one row at a time, never skipping a row;
-   Boo's basket sits on the bottom row. Tap the left half of the touch strip to move the basket one
-   key left, the right half one key right (a swipe moves it the swipe's way; the edges stop it). A
-   ball into the basket: 1 point, a gold one 3 (one in ten), and the basket flashes green. A ball
-   on the bottom row waits a fifth of a second for the basket, then it is missed: a red cross where
-   it fell and no points, but no strike. Up to three fall at once, faster and more often as the
-   game goes on.
+   Boo's basket sits on the bottom row. The touch strip is the basket's rail: a row of nine marks
+   along its top, the basket's column lit. Slide a finger along it, or touch it, and the basket
+   goes to the column under the finger, wherever it lands (no tapping left and right); the arrow
+   keys move it one column and wrap round the edges, so every ball can be reached. A ball into
+   the basket: 1 point, a gold one 3 (one in ten), and the basket flashes green. A ball on the
+   bottom row waits a fifth of a second for the basket, then it is missed: a red cross where it
+   fell, "Miss 1! It fell." on the strip. Five misses end the round ("Five misses."). From ten
+   seconds in, Sir Irwin and his friends fall too (about one in four of what falls): one into
+   the basket is a miss that says who, their face under the cross on the basket; one that lands
+   on the floor is nothing. Up to three fall at once, faster and more often as the game goes on.
 
 **The numbers at the start** (all starting points):
 
 | Game | At the start | By the end | Points |
 |---|---|---|---|
-| *Boo Chasing Her Tail* | the tail a key every 0.65 s; a wall or a friend every 15 s from 15 s in | a key every 0.3 s; six walls and friends at most | 2 a catch |
-| *The Lazy Pointer* | Boo, awake, a key every 0.8 s; naps of 3.5 to 5.25 s; a sparkle every 1.4 s, up for 6 s | a key every 0.42 s | 3 a sparkle; 20 for lasting to the end |
-| *Whack-a-Mouse* | a mouse every 0.65 s, up for 1.3 s (gold 0.9 s), two at once; from 5 s in, one in four is a friend | about every 0.13 s, up for 0.8 s (gold 0.6 s), up to six at once (one more every 20 s) | 1; gold 3; a friend nothing |
-| *Knock It Off the Table* | a key a beat every 0.5 s, a new thing every fourth beat | every 0.26 s, a new thing every other beat | 1 a knock |
-| *Yarn Catch* | down a row every 0.65 s, a new ball every 1.6 s, three at most | 0.4 s, a new ball every 1 s | 1; gold 3 |
+| *Boo Chasing Her Tail* | the tail a key every 0.65 s, three keys long; a wall or a friend every 15 s from 15 s in; a fish from 10 s, a cucumber from 20 s | a key every 0.22 s, five keys long from halfway; six walls and friends at most, two cucumbers | 2 a catch; 3 a fish |
+| *The Lazy Pointer* | Boo, awake, a key every 0.6 s; naps of 3.5 to 5.25 s; a sparkle every 1.4 s, up for 6 s; walls from 20 s in | a key every 0.3 s; five walls | 3 a sparkle; -2 one that fades; 20 for lasting to the end |
+| *Whack-a-Mouse* | a mouse every 0.65 s, up for 1.3 s (gold 0.9 s), two at once; from 5 s in, one in four is a friend | about every 0.1 s, up for 0.8 s (gold 0.6 s), up to eight at once (one more every 15 s) | 1; gold 3; a friend nothing |
+| *Knock It Off the Table* | a key a beat every 0.38 s, a new thing every third beat; friends from 10 s in | every 0.18 s from two fifths in, a new thing nearly every beat | 1 a knock; a friend a miss |
+| *Yarn Catch* | down a row every 0.65 s, a new ball every 1.6 s, three at most; friends from 10 s in | 0.4 s, a new ball every 1 s | 1; gold 3; a friend a miss |
 
-**The points do not match from game to game yet.** Pretend players who never miss, two minutes
-each: in *Boo Chasing Her Tail* one who takes the shortest way to the tip scores about 107 at a
-key every quarter of a second, 208 at a key every 0.15 seconds and 527 at a key every 64
-milliseconds (far quicker than a hand can); about 512 in *Whack-a-Mouse* (289 before more could
-be up at once), 117 in *Knock It Off the Table* and 113 in *Yarn Catch*; one who
-steers *The Lazy Pointer* only towards the sparkles, never away from Boo, is out in about 15
-seconds with about 30. A player who does nothing scores nothing (but for a few balls that fall
-into *Yarn Catch*'s basket where it stands): *Knock It Off the Table* ends in about 9 seconds and
-*The Lazy Pointer* in about a minute. Evening them out waits for your try on the real deck: a
-note from the Game test tab says which games feel stingy or generous.
+**The points do not match from game to game.** Each game pays on its own scale; that is why the
+best all round at the achievements is by place in each game, not by points (*arcadeOverall*,
+§5). Evening them out waits for your next try on the real deck: a note from the Game test tab
+says which games feel stingy or generous.
 
 ---
 
 ## 5. A group's visit
 
 1. **Who is playing.** Two or three first names, in the order they will play.
-2. **Two tokens each.** Turns go round in that order: first, second, third, first, second,
-   third.
-3. **Your turn.** The screen and the strip say whose turn it is. Press a game (the same game
-   twice is fine). The next screen gives its name and how to play; any key or dial starts it,
-   and after 15 seconds it starts on its own. Back returns to the menu with the token still
-   unspent. Then a 3, 2, 1, and the token is spent as the count starts.
-4. **The game.** Two minutes, or 80 seconds each when three play, unless the round is running
-   out (below). Then the points, for five seconds.
+2. **Five tokens each, one a game** (30 October). Turns go round in that order: first, second,
+   third, first, second, third. On your turn the games you have played are marked done on the
+   menu (dimmed, a green tick) and their tokens under them spent; pressing one does nothing.
+3. **Your turn.** The screen and the strip say whose turn it is. Press a game you have not
+   played yet. The next screen gives its name and how to play; any key or dial starts it, and
+   after 15 seconds it starts on its own. Back returns to the menu with the token still unspent.
+   Then a 3, 2, 1, and the token is spent as the count starts.
+4. **The game.** Forty seconds, the same for everyone, unless the round is running out (below).
+   Then the points, for five seconds. Leaving a game early (the Exit dial or Leave this game)
+   throws that round away: no points, no record, the token back, so the player picks again later
+   (*arcadeExit*'s default: they can play it again).
 5. **The clue moment.** After a player's second game the screen shows their clue, with their
    name. In practice it is the house's square-bracket line, the one a rehearsal night shows:
    [Boo's bag clue about the Ghost appears here], with a dim note under it: "Practice: on the
-   night, your own clue about the Ghost shows here." After three seconds a
-   press goes on (any key, a dial pressed in, or a tap on the strip; turning a dial does not).
-   After a minute it goes on by itself.
+   night, your own clue about the Ghost shows here." After three seconds a press goes on (any
+   key, a dial pressed in, or a tap on the strip; turning a dial does not). After a minute it
+   goes on by itself. Then their other three games come round in turn.
 6. **A trio's third player** gets no clue. After their second game Boo says, in your words,
    "Didn't I give you enough? Now be off! I'm done playing games." It goes on the way a clue
    does.
-7. **The winner.** When every token is spent: the most points over each player's two games,
+7. **The winner.** When every token is spent: the most points over each player's five games,
    just for fun, for ten seconds; after the first three, a press ends it. A tie names everyone
-   who tied (a long line of names is set smaller, so it fits). A visit of one player skips it.
+   who tied. A visit of one player skips it.
 8. **Free play until the chime.** Anyone can play anything; nothing counts now.
 9. **The chime.** Ten minutes after the visit starts (or at once, with Ring the chime beside the
    round clock), whatever is on stops, the chime plays, and Boo says "Be on your way." for eight
-   seconds. If the chime caught anyone short, the screen names them, those still owed a clue
-   first and a trio's third player apart: "Out of time before their clue: Margaret and Tom.
-   Out of time before Boo's line: Ellie." Then free play starts afresh.
+   seconds. If the chime caught anyone short of their clue or Boo's line, the screen names them,
+   those still owed a clue first and a trio's third player apart. Then free play starts afresh.
 
-**The timing.** A pair plays four games of two minutes and a trio six of 80 seconds: eight
-minutes of play either way, and the picking, the how-to-play screens, the counts, the points and
-the clues come on top. So a game that would run into the chime is cut short: it ends 20 seconds
-before the chime (five seconds for its points, then 15 kept for the clue), and is never cut
-below 30 seconds (so the chime can still stop it). Free play is never cut, before the visit or
-after it. The time left on the screen, and the strip's eight lights, show the shorter time from
-the start. A shorter game usually scores fewer points, which counts against
-that player for Boo's winner. The two minutes are your words; the cut is the build's, a starting
-point like the speeds.
+**The timing.** Five games each at forty seconds: a pair's ten games are 400 seconds of play and
+a trio's fifteen are 600, before the picking, the how-to-play screens, the counts, the points
+and the clues. So a game that would run into the chime is cut short: it ends 20 seconds before
+the chime (five seconds for its points, then 15 kept for the clue), and is never cut below 30
+seconds (so the chime can still stop it). Free play is never cut. Tried with pretend groups
+(30 October): a brisk pair (four seconds to pick, five on how to play, fifteen on a clue) plays
+all ten games with both clues, the winner and free play before the chime; a brisk trio plays ten
+to fourteen of its fifteen, with both clues and the third's line; a pair at an ordinary pace
+(twelve seconds to pick, fourteen on how to play, thirty on a clue) plays six to nine, both clues
+in time, the last game cut short; a slow pair still gets both clues. A game a player never gets
+to scores nothing at the achievements (*arcadeOverall*: a game someone missed gives them no
+points). Forty seconds is a starting point, like the speeds: yours to change.
 
-Tried with pretend groups that pick only *Whack-a-Mouse* and *Yarn Catch* (games that run their
-full time, unless three friends are tapped, so the slowest visits), 100 visits each, before the
-games were made again on 29 October (the lengths and the cut did not change). An
-ordinary pace is 5 to 12 seconds to pick a game, 6 to 14 on how to play and 15 to 30 on a clue;
-a slow one is 8 to 20 to pick, the how-to-play screen left to start by itself, and 20 to 60 on a
-clue.
-
-- A pair at an ordinary pace gets both clues every time, the second 15 seconds before the
-  chime. (Before the cut, it lost the second clue 86 times in 100.)
-- A slow pair loses the second clue about once in 25 visits. With the 30-second floor, its last
-  clue can come only a few seconds before the chime.
-- A trio at an ordinary pace gets both clues every time; a slow trio loses one about once in 20.
-- A trio's third player met the chime before Boo's line in every one of these visits: Boo's line
-  needs a brisk group, or games that end early.
-- With only those two games, the chime also came before Boo's winner in every visit at an
-  ordinary or a slow pace. With games picked at random and nobody playing them, measured again on
-  the games as they are now (left alone, *Knock It Off the Table* ends in about 9 seconds and *The
-  Lazy Pointer* in about a minute; played well, none ends early), the winner came first in about
-  35 visits of 40 for a pair and 20 of 40 for a trio at an ordinary pace, and in 24 and 3 of 40 at
-  a slow one.
-- The practice clock starts when you press Start the visit. On the night the round's clock would
-  start in the Parlour, so the walk to the Entryway would come off it. After a 45-second walk an
-  ordinary pair or trio still gets both clues, but a slow pair loses the second nearly every time
-  (about 96 visits in 100), and a slow trio loses one nearly as often (about 92 in 100).
-
-A game that ends early (the dot caught three times, three friends tapped, three misses at the
-tables) gives its time back.
+**The scores and the Act 7 reel** (30 October). Every counted round is written down as it ends
+(`records` in the arcade's state; the page hands each to the night through `onRecord`). On the
+night the server keeps one score a guest a game, the first counted round the one that counts
+(a round left early never reaches it, so a guest may play that game again). When the Parlour TV
+shows the stats and achievements in Act 7 (cue 20, before the reveal), it also shows the top
+scorer in each game, with the score, and the best all round: *arcadeOverall*'s default, by
+place: in each game first place gets as many points as there are players, down to 1 for last,
+ties sharing the higher points, a game someone never played nothing; most points wins; ties
+show everyone tied. This is a deliberate exception to the rule that no award compares one player
+with another (`docs/parlour-games.md`); it covers the arcade only. No score can depend on a
+player's role: the scores come from the deck and the awards from the scores and the roster's
+names alone (G60), so nothing shown before the reveal hints at the Murderer or the Ghost. The
+practice page writes nothing anywhere.
 
 ---
 
@@ -423,6 +443,13 @@ speakers: through a HomePod they come about two seconds late.
 
 ## 8. Not decided yet
 
+- *arcadeOverall* (30 October, built): the five games score in different ways; how is the best
+  all round worked out? Default, built: by place in each game (§5). The other way: most points
+  added up.
+- *arcadeExit* (30 October, built): a game left unfinished never counts; can that guest play it
+  again later? Default, built: yes, the token comes back. The other way: that was their one
+  round, and the game stands as missed.
+
 - *entrywayGame* is answered (29 October): the arcade, for a clue about the Ghost. Boo's motive
   cross-off goes with the Catwalk and nothing replaces it, so foggy nights (dial 1 and 2) end on
   one motive about 8 times in 10 (the card's estimate). You may still have *In Duplicate* cross off
@@ -439,8 +466,8 @@ speakers: through a HomePod they come about two seconds late.
 - *A player the chime catches before their clue.* What they get on the night is not decided; it
   comes with wiring the arcade into Act 4. (Every other Act 4 room pays its reward at the chime
   anyway.) In practice the chime's screen names them. (On the board: The arcade on the night, card 515.)
-- *The points from game to game* (§4). Each game still pays on its own scale; evening them out
-  waits for your try. (On the same card.)
+- *The points from game to game* (§4). Each game still pays on its own scale (the best all round is
+  by place for that reason); evening them out waits for your next try. (On the same card.)
 - *Smooth enough?* (your note, 29 October: "If the stream deck can not be far more smooth. We can
   look into shifting games to the mac screen and using the stream deck as a controller. Touch
   based games stay on the controller like mouse.") The games stay on the Stream Deck for now, made
@@ -451,8 +478,8 @@ speakers: through a HomePod they come about two seconds late.
   real deck yet. If the strip ever looks scrambled, add `&strip=whole` to the address (the strip
   is sent whole, as before: slower, the same picture), and if left and right come out the wrong
   way round, say so: each is a one-line change.
-- *The fish and the knocking without looking* are gone: since the evening of 29 October the tail
-  game has no treat, and every miss at the tables is a strike.
+- *The knocking without looking* is gone: since the evening of 29 October every miss at the tables
+  is a strike. The fish is back since 30 October, as a bonus to catch on the way.
 - *Sir Irwin and his friends in Whack-a-Mouse* (29 October; the pets, until your note that
   night). About one in four of what pops up is one of them, from five seconds in, and the third
   tapped ends the game. How often a guest really takes one for a
@@ -500,40 +527,50 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   `arcadeChime`, `arcadeBack`) takes a time `now` (the page's `performance.now()`) and returns a
   new, JSON-safe object whose `events` lists the sounds that call made; `gameFaces(g, now)` (the
   36 faces) and `arcadeView(a, now)` (`{ faces, strip, screen, sig }`) only read, and the helpers
-  (`keyAt`, `rowOf`, `colOf`, `gameLengthMs`, `nextRand`, `hashOf`) take no time. Chance is
+  (`keyAt`, `rowOf`, `colOf`, `nextRand`, `hashOf`) take no time. Chance is
   seeded: `nextRand` (mulberry32) and `hashOf` (FNV-1a); each game's seed is
   ``hashOf(`${seed}:${played}`)``. The constants sit at the top, by game, all exported: every
   game's `HIT_MS` 350 (a success's `hit` on its key), `MISS_MS` 600 (a strike's red face),
-  `STRIKES_OUT` 3, `STRIKE_WORDS_MS` 1500 and `DIAL_MAX_KEYS` 6; the tail's `TAIL_STEP_MS` 650 to
-  `TAIL_STEP_END_MS` 300, `TAIL_TURN_ONE_IN` 4, `TAIL_FLEE_KEYS` 3, `TAIL_AWAY_KEYS` 4,
-  `TAIL_BLOCKS_FROM_MS` 15000, `TAIL_BLOCKS_EVERY_MS` 15000, `TAIL_BLOCKS_MAX` 6, `TAIL_POINTS` 2;
-  the pointer's `POINTER_STEP_MS` 800 to `POINTER_STEP_END_MS` 420, `POINTER_NAP_MS` 3500 (times
-  a random 1 to 1.5), `POINTER_WAKE_KEYS` 1, `POINTER_BORED_KEYS` 4, `POINTER_SPARKLE_MS` 1400,
-  `POINTER_SPARKLES` 2, `POINTER_SPARKLE_UP_MS` 6000, `POINTER_POINTS` 3, `POINTER_LAST_POINTS`
-  20; the mice's `MICE_SPAWN_MIN_MS` 120, `MICE_REFILL_MS` 150 plus up to `MICE_REFILL_MORE_MS`
+  `STRIKES_OUT` 3, `STRIKE_WORDS_MS` 1500 and `DIAL_MAX_KEYS` 6; `EXIT_DIAL` 2 (pressed in on the
+  how-to, the count or in play: `leaveGame`); the tail's `TAIL_STEP_MS` 650 to `TAIL_STEP_END_MS`
+  220, `TAIL_TURN_ONE_IN` 4, `TAIL_FLEE_KEYS` 3, `TAIL_AWAY_KEYS` 4, `TAIL_LENGTH` 3 growing at
+  `TAIL_GROWS_AT` [0.25, 0.5] to `TAIL_LENGTH_MAX` 5, `TAIL_BLOCKS_FROM_MS` 15000,
+  `TAIL_BLOCKS_EVERY_MS` 15000, `TAIL_BLOCKS_MAX` 6, `TAIL_POINTS` 2, `TAIL_TREAT_FROM_MS` 10000,
+  `TAIL_TREAT_EVERY_MS` 9000, `TAIL_TREAT_UP_MS` 6000, `TAIL_TREAT_POINTS` 3,
+  `TAIL_HAZARD_FROM_MS` 20000, `TAIL_HAZARD_EVERY_MS` 12000, `TAIL_HAZARD_UP_MS` 9000,
+  `TAIL_HAZARDS_MAX` 2, `TAIL_FREEZE_MS` 1500, `TAIL_WRAP_MS` 700; the pointer's `POINTER_STEP_MS`
+  600 to `POINTER_STEP_END_MS` 300, `POINTER_NAP_MS` 3500 (times a random 1 to 1.5),
+  `POINTER_WAKE_KEYS` 1, `POINTER_BORED_KEYS` 5 for `POINTER_BORED_STEPS` 3, `POINTER_SPARKLE_MS`
+  1400, `POINTER_SPARKLES` 2, `POINTER_SPARKLE_UP_MS` 6000, `POINTER_NEAR_ONE_IN` 2,
+  `POINTER_POINTS` 3, `POINTER_MISS_POINTS` 2, `POINTER_LAST_POINTS` 20, `POINTER_BLOCKS_FROM_MS`
+  20000, `POINTER_BLOCKS_EVERY_MS` 15000, `POINTER_BLOCKS_MAX` 5; the mice's `MICE_SPAWN_MIN_MS` 120, `MICE_REFILL_MS` 150 plus up to `MICE_REFILL_MORE_MS`
   300 after a tap, `MICE_UP_MS` 1300 to `MICE_UP_END_MS` 800, `MICE_GOLD_UP_MS` 900 to
-  `MICE_GOLD_UP_END_MS` 600, `MICE_AT_ONCE` 2 plus one every `MICE_MORE_EVERY_MS` 20000 to
-  `MICE_AT_ONCE_MAX` 6, `MICE_POINTS` 1, `MICE_GOLD_POINTS` 3, `MICE_PETS_FROM_MS` 5000,
+  `MICE_GOLD_UP_END_MS` 600, `MICE_AT_ONCE` 2 plus one every `MICE_MORE_EVERY_MS` 15000 to
+  `MICE_AT_ONCE_MAX` 8, `MICE_POINTS` 1, `MICE_GOLD_POINTS` 3, `MICE_PETS_FROM_MS` 5000,
   `MICE_PET_ONE_IN` 4, `MICE_PETS_OUT` (`STRIKES_OUT`), `MICE_REST_MS` 500 and `MICE_LATE_MS` 150
-  (a tap that soon after a mouse hid still gets it); the knock's `KNOCK_BEAT_MS` 500 to
-  `KNOCK_BEAT_END_MS` 260, `KNOCK_EVERY_BEATS` 4 to `KNOCK_EVERY_BEATS_END` 2, `KNOCK_PER_TABLE` 2,
-  `KNOCK_APART` 3, `KNOCK_LATE_MS` 150 (on the end past its beat), `KNOCK_EARLY_MS` 120 (a press
-  that soon before the beat takes the thing about to arrive), `KNOCK_GONE_MS` 300 (a press on an
-  end that soon after its thing got away is forgiven, once), `KNOCK_POINTS` 1; the yarn's
+  (a tap that soon after a mouse hid still gets it); the knock's `KNOCK_BEAT_MS` 380 to
+  `KNOCK_BEAT_END_MS` 180 by `KNOCK_TOP_AT` 0.4 of the game, `KNOCK_EVERY_BEATS` 3 to
+  `KNOCK_EVERY_BEATS_END` 1, `KNOCK_PER_TABLE` 2, `KNOCK_APART` 3, `KNOCK_LATE_MS` 100 (on the end
+  past its beat), `KNOCK_EARLY_MS` 60 (a press that soon before the beat takes the thing about to
+  arrive), `KNOCK_GONE_MS` 300 (a press on an end that soon after its thing got away is forgiven,
+  once), `KNOCK_POINTS` 1, `KNOCK_FRIENDS_FROM_MS` 10000, `KNOCK_FRIEND_ONE_IN` 4; the yarn's
   `YARN_STEP_MS` 650 to `YARN_STEP_END_MS` 400, `YARN_SPAWN_MS` 1600 to `YARN_SPAWN_END_MS` 1000,
-  `YARN_FALLING` 3, `YARN_LAND_MS` 200, `YARN_POINTS` 1, `YARN_GOLD_POINTS` 3; `GOLD_ONE_IN` 10
-  (mice and yarn). Each pair written "A to B" (a constant and its `_END` one) runs from A at
-  a game's start to B at its end, over the game's own length. The moments: `READY_MS` 15000,
+  `YARN_FALLING` 3, `YARN_LAND_MS` 200, `YARN_POINTS` 1, `YARN_GOLD_POINTS` 3, `YARN_MISSES_OUT` 5,
+  `YARN_FRIENDS_FROM_MS` 10000, `YARN_FRIEND_ONE_IN` 4; `GOLD_ONE_IN` 10 (mice and yarn);
+  `MARK_LABELS` (Strikes or Misses) and `marksOutOf(id)`. Each pair written "A to B" (a constant
+  and its `_END` one) runs from A at a game's start to B at its end, over the game's own length. The moments: `READY_MS` 15000,
   `COUNT_MS` 3000, `RESULT_MS` 5000, `PICK_MS` 250, `CLUE_MIN_MS` 3000, `CLUE_MAX_MS` 60000,
   `WINNER_MS` 10000, `WINNER_MIN_MS` 3000, `FAREWELL_MS` 8000, `MARQUEE_STEP_MS` 250,
   `TIME_LIGHTS` 8. The deck: `ARCADE_NAME`, `COLS` 9, `ROWS` 4,
   `KEY_COUNT` 36, `DIALS` 6, `keyAt`, `rowOf`, `colOf`, `LEFT_DIAL` 0 and `RIGHT_DIAL` 5 (the only
   dials a game reads), `MENU_KEYS` [11..15], `BACK_KEY` 27 (keyAt(3, 0)), `STRIP_WIDTH` 1200,
-  `TABLE_ENDS` [8, 17, 26, 35]; not exported, `TOKEN_KEYS` (keyAt(2, 3) and keyAt(2, 5)) and
-  `MIDDLE_KEY` (keyAt(1, 4)). The visit: `TOKENS` 2, `MAX_PLAYERS` 3, `ROUND_MS` 600000,
-  `FREE_GAME_MS` 120000, `GAME_MS` 120000 and `TRIO_GAME_MS` 80000 through
-  `gameLengthMs(players)`, and for the cut near the chime `CLUE_KEEP_MS` 15000 and `CUT_MIN_MS`
-  30000. The words and lists: `STAND_IN_CLUE`, `CLUE_NOTE`, `THIRD_LINE`, `FAREWELL_LINE`,
+  `TABLE_WAYS` [1, -1, 1, -1] and `TABLE_ENDS` [8, 9, 26, 27] (`tableEndCol`, `tableStartCol`);
+  not exported, `TOKEN_KEYS` (keyAt(2, 2) to keyAt(2, 6), one under each game) and `MIDDLE_KEY`
+  (keyAt(1, 4)). The visit: `TOKENS` 5 (one a game), `CLUE_AFTER_GAMES` 2, `MAX_PLAYERS` 3,
+  `ROUND_MS` 600000, `FREE_GAME_MS` 120000, `GAME_MS` 40000 (a visit's game), and for the cut
+  near the chime `CLUE_KEEP_MS` 15000 and `CUT_MIN_MS` 30000. `records` on the arcade's state:
+  every counted game as it ended (`{ player, name, game, score, outcome, at }`); the page's
+  `onRecord` prop hands each to the night. `arcadeExit(a, now)` is Leave this game. The words and lists: `STAND_IN_CLUE`, `CLUE_NOTE`, `THIRD_LINE`, `FAREWELL_LINE`,
   `BOO_LINES` (its keys are ids only: `pets` holds the line after three friends tapped), `GAMES`
   (`id`, `name`, `short`, `how`, `boo`, `dials`, `rule` for the three games that count strikes,
   `counts`), `KNOCK_OBJECTS` (vase, teacup, teapot, candle, picture, clock, plant, cake), `PETS`
@@ -625,8 +662,10 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   the token kept and anything else starts the count, where the token is spent; clue, third and
   winner take a key, a dial pressed or a strip tap after `CLUE_MIN_MS` or `WINNER_MIN_MS`.
   `lengthFor(s, t)` is the one rule for a game's length: `FREE_GAME_MS` in free play (a visit's
-  too), otherwise `min(gameLengthMs, max(CUT_MIN_MS, roundEndsAt - t - RESULT_MS -
-  CLUE_KEEP_MS))`. At the chime `ring()` sets `pending`, and `thirdPending` by place (`players[2]`
+  too), otherwise `min(GAME_MS, max(CUT_MIN_MS, roundEndsAt - t - RESULT_MS - CLUE_KEEP_MS))`.
+  On the menu a counted player's played games are `menu-done:<id>` and do nothing when pressed
+  (`playedBy`); `afterResult` gives the clue after `CLUE_AFTER_GAMES` games, else the next turn
+  while anyone has a token, else the winner. At the chime `ring()` sets `pending`, and `thirdPending` by place (`players[2]`
   of three, never by name). `arcadeBack` first catches up (a round that ran out rings first); in a
   visit, at any stage, its free play and its farewell too, it puts a fresh free arcade in its
   place (`afresh`, the events and the stats kept) and plays 'back'; in free play it takes ready,
@@ -653,9 +692,9 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   name, how, rule }`), `plain`, `boo`, `picture`, `score`, `tally` (`{ label, value }`, the label
   from `GAMES[].counts`), `marks`, `said`, `timeLeftMs` (before play, the length the game will
   get if its count starts now; no screen shows it until play), `clockMs`, `count`, `player`,
-  `players` (`{ name, tokens, scores, total, now }`), `result`, `clue`, `note`, `third`,
+  `players` (`{ name, tokens, scores, played, total, now }`), `result`, `clue`, `note`, `third`,
   `winner`, `pending`, `farewell` and `facts`. The result: `outcomeOf` (`LOSE_WORDS`: 'Boo caught the dot three
-  times.', 'You tapped three friends.', 'Three misses.'; otherwise "Time's up."; its 'Well
+  times.', 'You tapped three friends.', 'Three misses.', 'Five misses.'; otherwise "Time's up."; its 'Well
   played.' is for a 'win', which no game makes now) on its strip and in `resultLine`; `pictureOf`
   gives 'Boo 1.png' on the menus, 'Boo 2.png' for a game, and on the result ' Boo 5.png' when
   `pleased` (its time run out with points), 'Boo 3.png' for a loss, else 'Boo 4.png'. No word the
@@ -674,20 +713,23 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   seeds, each arrow; G54 checks the same, over 40).
 - `play/src/lib/arcadeArt.js`: browser. Draws every face and the strip on a canvas, each face in
   a 72-unit square scaled by size / 72 (`FACE_SIZE` 112, `STRIP_W` 1200, `STRIP_H` 100). Black
-  lacquer and gold: `GOLD` (hi #fff6c4, mid #d6cf86, lo #a6903a, dim #5c5426), the house's claret,
-  red, brass, parchment and charcoal in `HOUSE`, `GREEN` #33bd66 and `INK` #111114. `SOLID` faces
-  are one flat colour the painter fills by colour (`faceSolid`): `off` and `blank` black and
-  `rug` claret (89, 47, 50); there is no `ring` face any more. `hit` and `ok` are green with a
+  lacquer and gold: `GOLD` (hi #fff6c4, mid #d6cf86, lo #a6903a, dim #5c5426), the house's red,
+  brass, parchment, charcoal and bottle in `HOUSE`, Boo's `BOO` greens (#0e4a39, lit #1f7a5e;
+  30 Oct: no more brown on the keys), `GREEN` #33bd66 and `INK` #111114. `SOLID` faces are one
+  flat colour the painter fills by colour (`faceSolid`): `off` and `blank` black and `rug` green
+  (14, 74, 57); there is no `ring` face any more. `hit` and `ok` are green with a
   black tick; `strike()` draws `miss`, `caught` (Boo's face) and `oops:<pet>` (the friend at
   `OOPS_SIZE` 50): the house red, the face at alpha 0.4, and a parchment cross (width 7.5) over a
   dark red one (#5a0a10, width 11). The tail's board: `rug` flat; `tail-boo` Boo's face
   (`BOO_PIECE` 60) on gold in a white glow, with an ink rim and a gold rim; `wall` (`bricks()`:
   three courses of grey stone, #a29c92 to #6c6860, in charcoal mortar, lighter than the rug and
-  darker than Boo's gold); `pet:<friend>` (`PET_SIZE` 56, on a dark spot); and the tail, one band
-  of black fur (half-width `TAIL_R` 15) drawn key by key by `tailFur`, `tailEnd` (narrowing to
-  0.72) and `tailTip` (a white puff, radius 13.5, 13 units out its way) along `tailPoints`
-  (straight, or a quarter arc round a corner) with `furPath`, each piece the rug with the fur
-  filled once in a gold glow (`furOnRug`, rgba(255, 226, 122, 1), blur 8). The art keeps its own
+  darker than Boo's gold); `pet:<friend>` (`PET_SIZE` 56, on a dark spot); `treat` (🐟 in a glow)
+  and `cucumber` (🥒) on the rug; and the tail, one smooth band of black (half-width `TAIL_R` 15,
+  discs along its line, no tufts since 30 Oct) drawn key by key by `tailFur`, `tailEnd`
+  (narrowing to 0.72) and `tailTip` (a flat white disc, radius 13.5, 13 units out its way, ringed
+  in black) along `tailPoints` (straight, or a quarter arc round a corner) with `furPath`, each
+  piece the rug with the band filled once in a gold glow (`furOnRug`, rgba(255, 226, 122, 1),
+  blur 8) and a sheen stroke along it (rgba(255, 255, 255, 0.16), width 3.5). The art keeps its own
   copy of `FUR_PAIRS`. The menu (`MENU`): each game's picture on a parchment plate (radius 18)
   over its short name in `GOLD.mid`, with no glow but the pointer's dot (`menu()` draws it with
   `laserDot(g, k, MID, 27, 10)`, in its red glow, rgba(255, 42, 42, 0.85), blur 9): `tail` is
@@ -695,10 +737,13 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   `['mouse', 'Mice']`, `knock` `['swipe', 'Knock']` (🐾, Boo's paws; no game face uses it), `yarn`
   `['yarn', 'Yarn']`; the vase stays on the table. The top row's `paw` (flat `GOLD.dim`) and `paw-lit` (lit gold in a warm
   glow, rgba(255, 226, 122, 0.9), blur 9), both `pawPrint`. `boo` is Boo's face (`BOO_FRAMED` 58)
-  on a claret jewel in a gold rim. The tables are claret cloth with a gold braid (`tableTop`),
-  the end key with a gold post and an arrow; `SCENES` stand a thing on the cloth
-  (`table:<obj>`) or tilt it on the end (`edge:<obj>`). `yarn-miss` is a faint ball under a red
-  (#e8323d) cross. The pictures: `PET_FILES` (the five face pictures in
+  on a green jewel in a gold rim. The tables are green cloth with a gold braid (`tableTop`),
+  the end key with a gold post and an arrow, mirrored for a table that runs to the left
+  (`edge-left`); `SCENES` stand a thing on the cloth (`table:<obj>`) or tilt it on an end
+  (`edge:<obj>`, `edge-left:<obj>`); `PETS_DRAWN` seat a friend on the cloth or an end
+  (`table-pet:<pet>`, `edge-pet:<pet>`, `edge-left-pet:<pet>`). `yarn-miss` is a faint ball under
+  a red (#e8323d) cross; `sparkle-miss` a faint sparkle under one. `menu-done:<id>` is the menu
+  key dimmed under a green tick. The pictures: `PET_FILES` (the five face pictures in
   `play/public/household/faces/`) and `COIN_FILE` ('Boo Coin.png', Jon's picture of Boo's coin,
   29 Oct). Each loads on its load event, never `decode()` (which waits for a drawn frame, and a
   tab opened behind another draws none), Boo's with `fetchPriority` 'high' and the rest 'low',
@@ -721,8 +766,9 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   does not know draws "?". Caches: canvases (300), data URLs (300), the deck's RGBA buffers (120)
   and the last `STRIPS_KEPT` 6 strips. `faceCanvas(id, size)`, `faceRgba(id)` (112 by 112 by 4),
   `faceUrl(id, 224)`, `stripCanvas`, `stripRgba`, `stripUrl`. `drawStrip`: gold rules top and
-  bottom; Yarn Catch's `halves` (big gold arrows at 140 and 1060, each with Tap); the strike
-  boxes (`strikeBoxes`, from `PAD` 24, 46 across with dial labels and 56 without); the time lights
+  bottom; Yarn Catch's `rail` (nine marks along the top, `RAIL_TOP` 5, `RAIL_H` 10, the basket's
+  lit); the strike boxes (`strikeBoxes`, from `PAD` 24, 46 across with dial labels and 56
+  without, their word under them in small capitals); the time lights
   (`timeLights`, ending at 1176, radius 10 or 12); the points big in gold in the middle, or the
   words, a long line with only the boxes and the lights beside it centred between them and shrunk
   to fit (`fit`); the dial labels over `DIAL_X` [60, 276, 492, 708, 924, 1140] at y 83. The
@@ -900,11 +946,12 @@ arcade and whole visits every 250 ms (`playGame`, `runVisit`) or stage by stage 
   until `KNOCK_LATE_MS` after its beat, then away; an empty end a strike; the dials and the strip
   nothing; a press within `KNOCK_GONE_MS` after a thing got away forgiven once, on its own table
   only; a thing coming onto an end drawn over the tick or the cross there. The yarn: one row a
-  step, shown on every row, waiting on the bottom row, then missed; the strip's halves, a swipe
-  and the arrows move the basket one column, the edges stop it, the dials and keys do nothing.
-  The strip in play: the points, the boxes, eight lights going out one every eighth of the game,
-  the outside dials' labels; Yarn Catch's halves with no lights or labels; left alone, a game's
-  strip changes only as its lights go out. Every game: the same seed the same game, ending at
+  step, shown on every row, waiting on the bottom row, then missed; a touch or a slide on the
+  strip puts the basket under it, the arrows wrap, the dials and keys do nothing; five misses end
+  it; friends fall from ten seconds in and one caught is a miss. The strip in play: the points,
+  the boxes with their word, eight lights going out one every eighth of the game, the outside
+  dials' labels and Exit; Yarn Catch's rail along the top; left alone, a game's strip changes
+  only as its lights go out. Every game: the same seed the same game, ending at
   its time unless sooner, then standing still; ten seconds slept at once played out exactly as
   the 16 ms ticks would; pure (nothing handed in changed, every state plain JSON); `mended` (a
   tail from the old ring laid out afresh, its catches, points and time kept; the knock's pardons
@@ -917,10 +964,12 @@ arcade and whole visits every 250 ms (`playGame`, `runVisit`) or stage by stage 
   each 16 or more from the one before; `setPops([])` in `begin`, `freePlay`, `practice`, `lost`,
   `attach` and `onUnplug`; the wake listener on `pointerdown`, `click` and `keydown`, and the
   footer's `waking` class.
-- G55: the visit (turns round the group, two tokens spent as each count starts, the clue after a
-  player's second game for the first two and `THIRD_LINE` for a trio's third, a trio's shorter
-  games, the winner and ties, a visit of one with no winner, free play after the visit recording
-  nothing while the round clock runs on); the ready screen (Back spends nothing, anything else
+- G55: the visit (turns round the group, five tokens each, one a game, spent as each count starts,
+  a game played marked done and refused, the clue after a player's second game for the first two
+  and `THIRD_LINE` for a trio's third, then the rest of the games, the winner and ties, a visit
+  of one with no winner, free play after the visit recording nothing while the round clock runs
+  on, every counted game in `records`; Leave this game and the Exit dial from the how-to, the
+  count and the play, the token back; forty-second games cut near the chime); the ready screen (Back spends nothing, anything else
   starts the count, it starts by itself after 15 s, and the game is the board the deck showed);
   the count (three ticks a second apart on the middle key over the board, then go); a clue's 3 s
   and 60 s; names cleaned (trimmed, 30 characters, a blank one numbered, three at most). The cut
