@@ -108,7 +108,7 @@ export default function Kiosk({ which }) {
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
   else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
   else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
-  else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} />
+  else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>

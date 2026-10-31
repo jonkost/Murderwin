@@ -21,7 +21,10 @@ test('the address picks the practice page: Salem or Boo on a phone, Boo on the w
   assert.equal(practiceParam('?practice=salem'), 'salem')
   assert.equal(practiceParam('?practice=boo'), 'boo')
   assert.equal(practiceParam('?kiosk=boo&practice=1'), 'boo-wall')
-  assert.equal(practiceParam('?kiosk=living&practice=1'), null, 'only Boo has a practice wall')
+  assert.equal(practiceParam('?kiosk=orangerie&practice=1'), 'orangerie-wall', 'Salem\'s board on the brain\'s browser (31 Oct 2026)')
+  assert.equal(practiceParam('?kiosk=pose&practice=1'), 'pose-wall')
+  assert.equal(practiceParam('?kiosk=living&practice=1'), null, 'only Boo, her camera and the Orangerie have a practice screen')
+  assert.equal(practiceParam('?kiosk=orangerie'), null, 'the night\'s Orangerie screen is not the practice')
   assert.equal(practiceParam('?kiosk=boo'), null, 'the night\'s wall is not the practice')
   assert.equal(practiceParam('?practice=study'), null)
   assert.equal(practiceParam(''), null)
@@ -194,13 +197,16 @@ test('the shared games: the night and the practice play the same component, and 
   assert.match(practice, /<SalemRounds /)
   assert.match(practice, /<BooMoments /)
   assert.match(practice, /<BooRunway /)
+  assert.match(rooms, /export function Orangerie[\s\S]*?<SalemBoard doc=\{salem\} names=\{groupNames\(rotation, salem\.groupId\)\} serverNow=\{serverNow\} \/>/, 'the night\'s Orangerie screen is SalemBoard while a group plays (31 Oct 2026)')
+  assert.match(practice, /export function OrangeriePractice[\s\S]*?<SalemBoard key=\{p\.runId \?\? 'practice'\} doc=\{p\.game\} names=\{p\.players\.map\(x => x\.name\)\} serverNow=\{serverNow\} practice \/>/, 'the practice\'s board is the same component, on the practice record in the night\'s shape')
+  assert.match(main, /'orangerie-wall': OrangeriePractice/, 'routed from ?kiosk=orangerie&practice=1')
   // the practice sends only through gameTest, reads only its own records, and its clock names no night
   assert.ok(!/nights\/|callSalem|callBooDone|callMeet|callJoin/.test(practice), 'no night, no night\'s calls')
   // the clock asks the gameTest function, and nothing writes presence/{uid}:
   // that row is the browser's, and a room screen in another tab is let in by it
   assert.ok(!/useServerClock|setDoc|'presence'|`presence|firebase\/firestore/.test(practice), 'a practice never writes presence or any doc')
   assert.match(practice, /callGameTest\(\{ command: 'clock' \}\)/)
-  assert.equal((practice.match(/= usePracticeClock\(uid\)/g) ?? []).length, 2, 'both practices measure the clock that way')
+  assert.equal((practice.match(/= usePracticeClock\(uid\)/g) ?? []).length, 3, 'all three practices measure the clock that way (Salem\'s board since 31 Oct 2026)')
   assert.ok(!practice.includes('<Kiosk'), 'the practice wall is not a room screen')
   assert.match(main, /Practicing \? <Practicing \/> : kiosk \? <Kiosk which=\{kiosk\} \/>/, '?kiosk=boo&practice=1 is routed before the room screens')
   // the night's game still pays through its own calls

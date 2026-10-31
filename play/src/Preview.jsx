@@ -42,7 +42,8 @@ import { setFromAddress } from './lib/gametest'
 // prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
 // the iPad Pro (since 26 Oct 2026; kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone;
 // Zimothy's just-for-fun winner, 28 Oct 2026: kiosk-memory-winner, kiosk-memory-tie), Salem's
-// winner on the Orangerie's screen (kiosk-orangerie-winner, kiosk-orangerie-tie) and
+// winner on the Orangerie's screen (kiosk-orangerie-winner, kiosk-orangerie-tie), Salem's board while the
+// group plays (kiosk-orangerie-ready, kiosk-orangerie-round, kiosk-orangerie-passed; 31 Oct 2026) and
 // Boo's wall (kiosk-boo, kiosk-boo-pose, kiosk-boo-judge; kiosk-boo-show plays the whole show live). Miss Boo LaRue's
 // Arcade (28 Oct 2026), each a frozen moment with no loop, deck or sound: kiosk-arcade (free play's menu),
 // kiosk-arcade-play (a game running), kiosk-arcade-clue, kiosk-arcade-third and kiosk-arcade-farewell. A rehearsal night's band:
@@ -325,6 +326,11 @@ const KIOSK = {
   'kiosk-memory-tie': (night) => <MemoryRounds board={MEMORY(true, [11, 8, 11])} night={{ ...night, act: 4 }} nightId="preview" rotation={MEMORY_GROUP} />,
   // Salem's game cleared: the Orangerie's screen names whoever slipped least; in the tie Tom's phone
   // never felt a shake, so it is left out
+  // Salem's board while the group plays (31 Oct 2026): waiting for Ready, a live round (the count, then the
+  // colours from the moment the preview opens, after one restart), and a round passed
+  'kiosk-orangerie-ready': (night, serverNow) => <Orangerie night={{ ...night, act: 4, beat: 'round2' }} salem={{ groupId: 'g1', state: 'intro', round: 0, attempt: 0 }} rotation={MEMORY_GROUP} serverNow={serverNow} />,
+  'kiosk-orangerie-round': (night, serverNow) => <Orangerie night={{ ...night, act: 4, beat: 'round2' }} salem={{ ...SALEM_ROUND, groupId: 'g1', attempt: 2, slips: 1, lastSlip: 'green', slipsBy: [1, 0, 0], feltBy: [true, true, true] }} rotation={MEMORY_GROUP} serverNow={serverNow} />,
+  'kiosk-orangerie-passed': (night, serverNow) => <Orangerie night={{ ...night, act: 4, beat: 'round2' }} salem={{ groupId: 'g1', state: 'passed', round: 2, attempt: 3, slipsBy: [1, 0, 2], feltBy: [true, true, true] }} rotation={MEMORY_GROUP} serverNow={serverNow} />,
   'kiosk-orangerie-winner': (night) => <Orangerie night={{ ...night, act: 4, beat: 'round2' }} salem={SALEM_CLEARED([2, 0, 1], [true, true, true])} rotation={MEMORY_GROUP} />,
   'kiosk-orangerie-tie': (night) => <Orangerie night={{ ...night, act: 4, beat: 'round2' }} salem={SALEM_CLEARED([1, 0, 1], [true, false, true])} rotation={MEMORY_GROUP} />,
   'kiosk-memory-standalone': () => <MemoryStandalone />,

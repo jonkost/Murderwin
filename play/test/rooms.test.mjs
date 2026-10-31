@@ -270,7 +270,7 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   const deal = src('../../functions/lib/deal.js')
   assert.ok(/NOTICE_IMAGES\s*=\s*\{[^}]*roam:\s*'birthday'/.test(deal), 'deal.js puts image birthday on the roam notice')
   // the Orangerie kiosk: its loop, Salem\'s code in Act 2 (above), the rules card in Act 4
-  assert.ok(rooms.includes('export function Orangerie({ night, salem = null, rotation = null })'), 'the Orangerie (the rotation since 28 Oct 2026, for Salem\'s winner)')
+  assert.ok(rooms.includes('export function Orangerie({ night, salem = null, rotation = null, serverNow = null })'), 'the Orangerie (the rotation since 28 Oct 2026, for Salem\'s winner; the clock since 31 Oct, for his board)')
   assert.ok(kiosk.includes("which === 'orangerie' ? `nights/${nightId}/public/salem` : null"), 'it reads Salem\'s public doc for the group due')
   const main = src('../src/main.jsx')
   assert.ok(main.includes('orangerie'), 'main.jsx names the kiosk')
@@ -352,7 +352,7 @@ test('G57 and G58 the screens: the Library names its winner once the third board
   assert.ok(rooms.includes("const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null"))
   assert.ok(rooms.includes("line={win.names.length > 1 ? SALEM_SCREEN_LINES.tie : SALEM_SCREEN_LINES.winner}") && rooms.includes("plain={winnerPlain(win, 'Fewest slips')}"))
   assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups')
-  assert.ok(kiosk.includes('<Orangerie night={n} salem={salem.data} rotation={rotation.data} />'))
+  assert.ok(kiosk.includes('<Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />'))
   // every phone says whether it can feel a shake as the clean mark passes
   assert.ok(act4.includes('passed(doc.attempt, motion.ok)') && act4.includes('passed={(attempt, felt) => callSalemPassed({ nightId, attempt, felt })}'))
   // the samples
@@ -361,4 +361,35 @@ test('G57 and G58 the screens: the Library names its winner once the third board
   // the docs name them
   const screensDoc = src('../../docs/room-screens.md')
   for (const k of ['kiosk-memory-winner', 'kiosk-orangerie-winner']) assert.ok(screensDoc.includes(k), `room-screens.md lists ${k}`)
+})
+
+test('Salem\'s board on the Orangerie\'s screen while a group plays (31 Oct 2026, note 10012): the phones\' colour with the word, the count, the thirty seconds, the slips by place, and the same board for the practice', () => {
+  const rooms = src('../src/screens/Rooms.jsx')
+  const board = rooms.slice(rooms.indexOf('export function SalemBoard'), rooms.indexOf('function slipsWord'))
+  assert.ok(board.length > 0)
+  // the colour is the server-clock schedule, read ten times a second, the same rule as the phones and the brain
+  assert.ok(board.includes('useTick(100)') && board.includes('const colour = started ? salemColourAt(doc, now) : null'))
+  assert.ok(rooms.includes("export const SALEM_BOARD_WORDS = { red: 'SHAKE', green: 'FREEZE' }"), 'the screen says the word; the phones only tint (28 Oct 2026)')
+  assert.ok(board.includes('const count = playing && !started ? Math.max(1, Math.ceil((startsAt - now) / 1000)) : null'), 'the count before a round')
+  assert.ok(board.includes('(now - startsAt) / (cleanAt - startsAt)'), 'the thirty seconds filling, from the record\'s own marks')
+  assert.ok(board.includes('slipsWord(doc?.slipsBy?.[i])') && board.includes('{!practice && '), 'the slips by place on the night, none in practice')
+  assert.ok(board.includes("catPictureUrl('salem', pick, BASE)"), 'Salem\'s picture, varied')
+  // on the night: while the group is at play, and only with the kiosk\'s clock; between groups the rules card and the code as before
+  assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"))
+  assert.ok(rooms.includes('if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={serverNow} />'))
+  assert.ok(rooms.indexOf('if (win) return') < rooms.indexOf('if (busy && serverNow) return <SalemBoard'), 'the winner first, once cleared')
+  // the samples and the Game test tab\'s tries
+  const preview = src('../src/Preview.jsx')
+  for (const k of ['kiosk-orangerie-ready', 'kiosk-orangerie-round', 'kiosk-orangerie-passed']) assert.ok(preview.includes(`'${k}':`), k)
+  const tab = src('../../app/src/lib/gameTest.js')
+  assert.ok(tab.includes("params: { kiosk: 'orangerie', practice: '1' }"), 'the Game test tab opens the board for the practice')
+  assert.ok(tab.includes("preview('kiosk-orangerie-round'"), 'and the sample')
+  // the docs
+  const screensDoc = src('../../docs/room-screens.md')
+  assert.ok(screensDoc.includes('kiosk-orangerie-round') && screensDoc.includes('`?kiosk=orangerie&practice=1`'), 'room-screens.md has the board and the practice page')
+  const night = src('../../docs/on-the-night.md')
+  assert.ok(night.includes('?kiosk=orangerie&practice=1'), 'on-the-night.md has the practice page')
+  // the look: the whole screen the colour, the word big, the bar, the crew
+  const css = src('../src/styles.css')
+  for (const sel of ['.kiosk.salem-board.red', '.kiosk.salem-board.green', '.salem-board-word', '.salem-clean-fill', '.salem-crew li']) assert.ok(css.includes(sel), sel)
 })

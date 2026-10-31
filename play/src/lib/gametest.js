@@ -6,6 +6,7 @@ import { troubleLine } from './trouble.js'
 //   ?practice=salem             Get Off My Lawn! on any phone
 //   ?practice=boo               Boo's Catwalk on the phones
 //   ?kiosk=boo&practice=1       the same show on the wall
+//   ?kiosk=orangerie&practice=1 Salem's board for the Get Off My Lawn! practice (31 Oct 2026)
 //   ?preview=questions&set=…    one of the workshop's Parlour Game sets, as a phone shows it
 // A practice follows its own record in public_state (game_test_salem,
 // game_test_boo), written only by the gameTest function. It never reads or
@@ -16,14 +17,16 @@ import { troubleLine } from './trouble.js'
 export const PRACTICE_DOCS = { salem: 'public_state/game_test_salem', boo: 'public_state/game_test_boo' }
 
 // Which practice page the address asks for: 'salem', 'boo' (the phones),
-// 'boo-wall' (?kiosk=boo&practice=1), or null for none.
+// 'boo-wall' (?kiosk=boo&practice=1), 'pose-wall' (?kiosk=pose&practice=1),
+// 'orangerie-wall' (?kiosk=orangerie&practice=1, Salem's board on the brain's
+// browser, 31 Oct 2026), or null for none.
 export function practiceParam(search) {
   try {
     const p = new URLSearchParams(search ?? window.location.search)
     const v = p.get('practice')
     if (!v) return null
     const kiosk = p.get('kiosk')
-    if (kiosk) return kiosk === 'boo' ? 'boo-wall' : kiosk === 'pose' ? 'pose-wall' : null
+    if (kiosk) return kiosk === 'boo' ? 'boo-wall' : kiosk === 'pose' ? 'pose-wall' : kiosk === 'orangerie' ? 'orangerie-wall' : null
     return v === 'salem' || v === 'boo' ? v : null
   } catch { return null }
 }

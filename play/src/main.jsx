@@ -6,7 +6,7 @@ import ErrorBoundary from './ErrorBoundary'
 import Kiosk from './screens/Kiosk'
 import PhoneFrame from './PhoneFrame'
 import Check from './screens/Check'
-import { SalemPractice, BooPractice, BooWallPractice, PoseCameraPractice } from './screens/Practice'
+import { SalemPractice, BooPractice, BooWallPractice, PoseCameraPractice, OrangeriePractice } from './screens/Practice'
 import BooArcade from './screens/Arcade'
 import { practiceParam } from './lib/gametest'
 import './styles.css'
@@ -22,9 +22,10 @@ const phone = new URLSearchParams(window.location.search).get('phone')
 // Does the phone say what the workshop says? /play/?check=1
 const check = new URLSearchParams(window.location.search).get('check')
 // The workshop's Game test tab: /play/?practice=salem | boo on any phone, and
-// /play/?kiosk=boo&practice=1 on the wall. No night; nothing is paid.
+// /play/?kiosk=boo&practice=1 on the wall, and /play/?kiosk=orangerie&practice=1 for Salem's
+// board on the brain's browser (31 Oct 2026). No night; nothing is paid.
 const practice = practiceParam()
-const PRACTICE = { salem: SalemPractice, boo: BooPractice, 'boo-wall': BooWallPractice, 'pose-wall': PoseCameraPractice }
+const PRACTICE = { salem: SalemPractice, boo: BooPractice, 'boo-wall': BooWallPractice, 'pose-wall': PoseCameraPractice, 'orangerie-wall': OrangeriePractice }
 const Practicing = practice ? PRACTICE[practice] : null
 
 createRoot(document.getElementById('root')).render(

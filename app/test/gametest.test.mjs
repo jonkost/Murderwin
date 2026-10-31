@@ -46,7 +46,7 @@ test('every sample screen named here exists on the phones, and the practices and
   // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, Boo's whole show, 27 Oct,
   // the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime; and the two
   // just-for-fun winners, 29 Oct: Zimothy's after the third board, Salem's on the Orangerie's screen
-  assert.equal(names.length, 34)
+  assert.equal(names.length, 35) // 31 Oct 2026: Salem's board on the Orangerie's screen, a round
   assert.ok(names.includes('kiosk-memory-winner') && names.includes('kiosk-orangerie-winner'), 'both winners')
   assert.ok(SECTIONS.find(s => s.key === 'salem').devices.includes('orangerie'), 'a note on Salem can be about the Orangerie’s screen')
   for (const n of [...names, 'questions']) {

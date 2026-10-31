@@ -3,11 +3,11 @@ import { callGameTest } from '../firebase'
 import { useAuthUid, useDoc, useOnline } from '../lib/hooks'
 import { watchWake } from '../lib/clock'
 import { uiLines } from '../lib/content'
-import { GAME_NAMES } from '../lib/rooms'
+import { GAME_NAMES, RULES_LINES } from '../lib/rooms'
 import { SALEM_SHAKE, SALEM_STILL_MS, booLead } from '../lib/night'
 import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, booPractice, clockSample, keepSample, practiceError } from '../lib/gametest'
 import { SalemRounds, SALEM_LINES, BooMoments, useMotion } from './Act4'
-import { BooRunway } from './Rooms'
+import { BooRunway, SalemBoard, RulesCard } from './Rooms'
 import { PoseCamera } from './Pose'
 import { Wake, StaleDot } from './Kiosk'
 import { CatFace } from './Cards'
@@ -40,6 +40,8 @@ const SAY = {
   booNotStarted: 'Start the show on the Game test page.',
   booDone: 'That’s the show. Nothing is paid in practice.',
   booWallIdle: 'Practice. Start the show on the Game test page.',
+  salemWallNone: 'Practice. Open the practice on the Game test page.',
+  salemWallClosed: 'The practice has stopped. Open it again on the Game test page.',
 }
 
 function Shell({ game, cat, catName, children }) {
@@ -266,6 +268,34 @@ export function PoseCameraPractice() {
         ? <div className="kiosk pose-cam"><p className="kiosk-line">{ui.OFFLINE}</p></div>
         : <PoseCamera boo={p.show} nightId="practice" serverNow={serverNow} practice />}
       <StaleDot view={view} online={online} />
+    </>
+  )
+}
+
+// The Orangerie's screen for the Get Off My Lawn! practice
+// (?kiosk=orangerie&practice=1, on the brain's browser, 31 Oct 2026): Salem's
+// board from the practice's record, with the players who joined. No kiosk
+// heartbeat, and no presence row at all; nothing is paid.
+export function OrangeriePractice() {
+  const { uid, error } = useAuthUid()
+  const view = useDoc(uid ? PRACTICE_DOCS.salem : null)
+  const serverNow = usePracticeClock(uid)
+  const online = useOnline()
+  const p = salemPractice(view.data)
+  let body
+  if (error) body = <div className="kiosk salem-board rest"><p className="kiosk-line">{ui.OFFLINE}</p></div>
+  else if (p.status !== 'open') body = (
+    <RulesCard id="orangerie" line={RULES_LINES.orangerie} pick="practice" code={false}>
+      <p className="kiosk-line">{p.status === 'closed' ? SAY.salemWallClosed : SAY.salemWallNone}</p>
+    </RulesCard>
+  )
+  else body = <SalemBoard key={p.runId ?? 'practice'} doc={p.game} names={p.players.map(x => x.name)} serverNow={serverNow} practice />
+  return (
+    <>
+      <RehearsalBand on label="PRACTICE" />
+      {body}
+      <StaleDot view={view} online={online} />
+      <Wake />
     </>
   )
 }

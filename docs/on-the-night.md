@@ -173,8 +173,11 @@ them.
   study and one grid of the drawing, the HomePods at party volume (the
   Orangerie one too, `media/README.md` says how), the Hue scenes, the
   Orangerie string lights through Apple Home (the three Shortcuts on the
-  brain; if they will not answer, stop there: the phones carry Salem's
-  colours on their own), the projector on the landing with Susan's MacBook
+  brain, `npm start -- --check-strings` in `cues/`; if a Shortcut's report
+  says "partially succeeded", the lights changed but something else in its
+  Home scene is not answering: open the scene in the Home app and take out
+  whatever shows No Response; if they will not answer at all, stop there:
+  the phones carry Salem's colours on their own), the projector on the landing with Susan's MacBook
   Pro on `?kiosk=boo`, and the projector's plug: let the brain switch it off
   and on (a blackout on a test night does it) and check the full-screen
   browser comes back on the projector, not on the MacBook's own screen. The
@@ -212,7 +215,7 @@ them.
 
 | Machine | Its job | How it starts |
 |---|---|---|
-| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the playlists, the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6, and at The End; on again when the power returns and for the ballot) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card in Act 4, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
+| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the playlists, the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6, and at The End; on again when the power returns and for the ballot) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (the intro video and the rules deck from a second browser tab), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
@@ -451,10 +454,17 @@ game; it serves the lights and the speakers.
     faster. The rule shows once, before the first round: a red Shake tile
     and a green Freeze tile. While a round plays, each phone's whole screen
     is only red or green, with no words (Jon, 28 Oct): a count before each
-    round, and one short line after a slip. The string lights follow if
-    they answer the brain. Pays a bag hint (Salem's may be backwards). When
-    the group clears all three rounds, the Orangerie's screen (the brain's
-    browser) names, just for fun, whoever slipped least: every slip counts
+    round, and one short line after a slip; since 31 Oct Salem's head is
+    loose on the phone through the round, thrown about by the phone's own
+    motion (it changes no rule). The string lights follow if they answer
+    the brain. The Orangerie's screen (the brain's browser) shows the room
+    Salem's board while the group plays (31 Oct, Jon's note): the phones'
+    colour over the whole screen with SHAKE or FREEZE on it, the count
+    before a round, the thirty seconds filling along the bottom, how many
+    times the round started again and why, and the group's names with the
+    slips each has caused. Pays a bag hint (Salem's may be backwards). When
+    the group clears all three rounds, the Orangerie's screen names, just
+    for fun, whoever slipped least: every slip counts
     against the phone that caused it, and a phone that cannot feel a shake
     is left out. A tie names everyone tied. It stays up until the chime and
     changes nothing.
@@ -650,7 +660,7 @@ on the party night both are gone.
 | The bedroom screen | Nobody goes to the bedroom. Press **Show the trace on the TV** under The Big Solve: ten seconds after the door opens, the TV shows the trace, and again at the ballot. |
 | The memory match (the iPad Pro in the Library) | Carry on. A group that did not clear it is paid its cross-off at the chime anyway. If its screen says "The Library did not hear that. Trying again.", leave it: the iPad sends the finished board again by itself, every few seconds, until the house hears it. |
 | Boo's wall or the projector | Carry on, or open `?kiosk=boo` on any screen the group can see. A group that did not finish is paid at the chime anyway. In Act 2 the Entryway's printed code does Boo's screen's job. If the projector's plug never came back on after the blackout or the drawing, switch it on by hand in the Home app; the brain carries on, and the projector takes a moment to warm up. |
-| The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card back. |
+| The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card and Salem's board back. |
 | A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
 | Boo's music (the Parlour HomePod) | Carry on: the wall shows every moment. To get the sound back, pick the Parlour HomePod again in Control Centre, Sound, on Susan's MacBook Pro; or pick its own speakers and add `&airplay=0` to the wall's address, so the music is not two seconds early. |
 | Boo's camera (Jenna's iPad Pro in the Entryway) | Carry on. The catwalk runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
@@ -807,13 +817,15 @@ at all: nothing is paid and no clue is dealt.
   round; three rounds. While a round plays, the phone is only the colour;
   before and between rounds each phone shows a shake meter, so you can
   feel how hard a shake has to be, and the tab lists who joined and every
-  slip. If the brain is running, the string lights follow the practice
-  too (since 28 Oct: stop the brain and start it again once to pick this
-  up). Tap
-  "Stop" when you are done. Up to twelve phones. The practice has no
-  Orangerie screen, so it names no winner: the sample "After the third
-  round: Salem names who slipped least" shows what the screen shows on the
-  night.
+  slip, and Salem's head bounces about on the phone as it is shaken. "The
+  Orangerie's screen, for the practice" (`?kiosk=orangerie&practice=1`, on
+  the brain, full screen) is Salem's board for the practice: the colour
+  with the word, the count, the thirty seconds, the restarts and the names
+  that joined. If the brain is running, the string lights follow the
+  practice too (since 28 Oct: stop the brain and start it again once to
+  pick this up). Tap "Stop" when you are done. Up to twelve phones. The
+  practice names no winner: the sample "After the third round: Salem names
+  who slipped least" shows what the screen shows on the night.
 - *Boo's Catwalk* (the Entryway). Open "Boo's wall, the practice show" on
   the projector computer or any screen, full screen, and tap it once so it
   can play sound. Open the practice show on one or more phones. Tap "Start

@@ -119,12 +119,37 @@ test('F25 a phone with no motion sensor never causes a slip in Salem\'s game: no
   // the screen: ok is false until the first reading, and the rules never run without it
   const { readFileSync } = await import('node:fs')
   const src = readFileSync(new URL('../src/screens/Act4.jsx', import.meta.url), 'utf8')
-  assert.match(src, /useState\(\(\) => \(\{ ok: false, mag: 0, lastShakeAt: 0, g: null \}\)\)/, 'no reading yet: ok is false')
+  assert.match(src, /useState\(\(\) => \(\{ ok: false, mag: 0, lastShakeAt: 0, g: null, ax: 0, ay: 0, gx: 0, gy: 0, spin: 0 \}\)\)/, 'no reading yet: ok is false')
   assert.match(src, /if \(typeof window === 'undefined' \|\| !\('DeviceMotionEvent' in window\)\) return/, 'no sensor at all: never listens, ok stays false')
   assert.match(src, /\} else return\n\s*state\.ok = true/, 'ok turns true only on a real reading')
   assert.match(src, /if \(!started \|\| !colour \|\| !motion\.ok\) return/, 'the rules never run without a reading')
   assert.match(src, /const s = salemSlip\(\{ colour, motion, local, flipAt, grace \}\)/)
   assert.match(src, /\{!motion\.ok && <p className="gloss">\{lines\.noSensor\}<\/p>\}/, 'and the phone says so: watch the lights and cheer')
+})
+
+test('Salem\'s head on the phone (31 Oct 2026, note 10012): loose on the screen while a round plays, moved by the phone\'s own motion, and never a rule', async () => {
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../src/screens/Act4.jsx', import.meta.url), 'utf8')
+  const head = src.slice(src.indexOf('export function SalemHead'), src.indexOf('function SalemGame'))
+  assert.ok(head.length > 0, 'the head is its own component')
+  // the readings it uses come from the same motion hook as the rules, and are only read, never written
+  for (const k of ['motion.ax', 'motion.ay', 'motion.gx', 'motion.gy', 'motion.spin', 'motion.mag', 'motion.ok']) assert.ok(head.includes(k), k)
+  assert.ok(!/motion\.\w+\s*=[^=]/.test(head), 'the head never writes a reading')
+  assert.ok(!/salemSlip|slip\(|passed\(|ready\(/.test(head), 'it sends nothing and decides nothing')
+  // drawn to the element each frame, with no React redraw; the edges bounce; a hard shake swells it
+  assert.ok(head.includes('requestAnimationFrame(step)') && head.includes('el.style.transform ='), 'a frame loop on the element')
+  assert.ok(head.includes('cancelAnimationFrame(raf)'), 'and it stops with the round')
+  assert.ok(/h\.x > maxX[\s\S]*h\.x < -maxX[\s\S]*h\.y > maxY[\s\S]*h\.y < -maxY/.test(head), 'four edges')
+  assert.ok(head.includes("prefers-reduced-motion: reduce"), 'a phone that asks for less motion gets the gentle float')
+  assert.ok(head.includes("household/faces/") && head.includes("Salem Face.png"), 'his face, the arcade\'s picture')
+  // on the round's screen, under the count and the round dots, and nowhere else
+  assert.ok(src.includes('<SalemHead motion={motion} />'), 'in SalemRounds')
+  assert.equal((src.match(/<SalemHead /g) ?? []).length, 1)
+  const rounds = src.slice(src.indexOf('export function SalemRounds'), src.indexOf('// Boo\'s catwalk'))
+  assert.ok(/salem-play[^\n]*\n\s*<SalemHead motion=\{motion\} \/>\n\s*\{!started && <p className="salem-count">/.test(rounds), 'first in the coloured screen, so the count draws over it')
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.ok(css.includes('.salem-head { position: absolute;') && css.includes('pointer-events: none'), 'it never catches a tap')
+  assert.ok(css.includes('.salem-play .salem-count, .salem-play .slip, .salem-play .salem-round { position: relative; z-index: 1; }'), 'the count and the dots stay on top')
 })
 
 test('F26 every colour change in Salem\'s game reaches every phone in the group within half a second of its time', async () => {

@@ -3,7 +3,7 @@ import { callMemoryStep, callBooDone } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
-import { ms, booMoment, booLead } from '../lib/night'
+import { ms, booMoment, booLead, salemColourAt } from '../lib/night'
 import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
@@ -174,7 +174,7 @@ export function BirthdayScreen({ screen }) {
 // code is Kiosk.jsx's, before this component. Once a group clears all three
 // rounds, Salem names whoever slipped least (28 Oct 2026, just for fun) until
 // the chime brings the next group; the names come from `rotation`.
-export function Orangerie({ night, salem = null, rotation = null }) {
+export function Orangerie({ night, salem = null, rotation = null, serverNow = null }) {
   if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Orangerie" loop="orangerie" />
   const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null
   if (win) return (
@@ -187,11 +187,78 @@ export function Orangerie({ night, salem = null, rotation = null }) {
   // a group is at play while public/salem (functions/lib/act4.js) says intro, playing or passed;
   // idle and cleared are between groups, when the code to scan is back (26 Oct 2026)
   const busy = ['intro', 'playing', 'passed'].includes(salem?.state)
+  // while a group plays, the room's board (31 Oct 2026, Jon's note 10012): the colour, the count, the slips
+  if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={serverNow} />
   return (
     <RulesCard id="orangerie" line={RULES_LINES.orangerie} pick={salem?.groupId ?? night.beat} code={!busy}>
       <p className="kiosk-line">{busy ? 'Eyes on your phones.' : 'The next group will be along.'}</p>
     </RulesCard>
   )
+}
+
+// Salem's board on the Orangerie's screen while a group plays Get Off My
+// Lawn! (Jon's note 10012, 31 Oct 2026: "I would like a visual component to
+// that just like I have for Boo's arcade game"). The game stays on the
+// phones; this is the room's view of it, from the same public record the
+// phones read (public/salem, or the practice's record in the night's shape):
+// the colour the phones show, the whole screen, with the word on it (SHAKE
+// on red, FREEZE on green: the screen may say it, the phones only tint), the
+// count before a round, the thirty seconds clean filling along the bottom,
+// the round's restarts, and the group's names with the slips each phone has
+// caused so far, from the server's counts by place (slipsBy). Salem's
+// picture changes with the colour and every restart. `names`: the group by
+// place on the night, the practice's players in practice (no counts by
+// phone there: the practice keeps none).
+export const SALEM_BOARD_LINES = {
+  intro: 'Tap Ready on any phone.',
+  count: 'Here it comes.',
+  slipGreen: 'Someone moved on green. From the top.',
+  slipRed: 'Someone stopped shaking on red. From the top.',
+  clean: 'Thirty seconds clean passes it.',
+  restarted: n => `Started again ${n === 1 ? 'once' : `${n} times`}. Keep going.`,
+  passed: 'Tap Ready for the next one.',
+  cleared: 'That is the lot.',
+}
+export const SALEM_BOARD_WORDS = { red: 'SHAKE', green: 'FREEZE' }
+export function SalemBoard({ doc, names = [], serverNow, practice = false }) {
+  useTick(100)
+  const now = serverNow()
+  const state = doc?.state
+  const playing = state === 'playing'
+  const startsAt = ms(doc?.startsAt)
+  const cleanAt = ms(doc?.cleanAt)
+  const started = playing && now >= startsAt
+  const colour = started ? salemColourAt(doc, now) : null
+  const round = Math.min(3, Math.max(1, Number(doc?.round) || 1))
+  const count = playing && !started ? Math.max(1, Math.ceil((startsAt - now) / 1000)) : null
+  const clean = started && cleanAt > startsAt ? Math.min(1, (now - startsAt) / (cleanAt - startsAt)) : 0
+  const slips = Number(doc?.slips) || 0
+  const word = colour ? SALEM_BOARD_WORDS[colour] : count ? String(count) : state === 'passed' ? `Round ${round} passed` : state === 'cleared' ? 'All three' : 'Ready?'
+  const line = colour ? (slips ? SALEM_BOARD_LINES.restarted(slips) : SALEM_BOARD_LINES.clean)
+    : count ? (slips && doc?.lastSlip ? (doc.lastSlip === 'green' ? SALEM_BOARD_LINES.slipGreen : SALEM_BOARD_LINES.slipRed) : SALEM_BOARD_LINES.count)
+      : state === 'passed' ? SALEM_BOARD_LINES.passed : state === 'cleared' ? SALEM_BOARD_LINES.cleared : SALEM_BOARD_LINES.intro
+  const pick = `${doc?.groupId ?? 'practice'}-${doc?.attempt ?? 0}-${colour ?? state ?? ''}`
+  const tone = colour ?? (count ? 'wait' : 'rest')
+  return (
+    <div className={`kiosk salem-board ${tone}`} role="status" aria-live="polite" aria-label={colour ? `${colour}: ${word}` : word}>
+      <GameName id="orangerie" extra={`round ${round} of 3`} />
+      <div className="salem-stage">
+        <Picture src={catPictureUrl('salem', pick, BASE)} className="salem-board-cat" />
+        <p className={`salem-board-word${count ? ' count' : ''}`} key={word}>{word}</p>
+      </div>
+      <p className="kiosk-line salem-board-line">{line}</p>
+      <div className="salem-clean" aria-hidden="true"><div className="salem-clean-fill" style={{ width: `${Math.round(clean * 1000) / 10}%` }} /></div>
+      {names.filter(Boolean).length > 0 && (
+        <ul className="salem-crew">
+          {names.map((name, i) => name ? <li key={i}>{name}{!practice && <span>{slipsWord(doc?.slipsBy?.[i])}</span>}</li> : null)}
+        </ul>
+      )}
+    </div>
+  )
+}
+function slipsWord(n) {
+  const k = Math.max(0, Math.floor(Number(n) || 0))
+  return k === 0 ? 'no slips' : k === 1 ? '1 slip' : `${k} slips`
 }
 
 // ---- the Parlour TV ---------------------------------------------------------

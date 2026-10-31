@@ -28,7 +28,8 @@ live, or which way the hidden pair have pulled.
 |---|---|---|
 | `?kiosk=living` | The Parlour TV (your work MacBook Pro) | Everything below: the join code through Act 1 and at the dinner wrap-up, the Parlour's loop whenever nothing else is up. In the drawing the four names show here; the host taps the room's guess on their phone, and a tap here still counts, the fallback. |
 | `?kiosk=ipad` | Your iPad Pro, its first two stations: in the Library with Zimothy in Act 2, then on its stand in the Orangerie for Act 3 (carried there on the way in to supper) | The words of W-O-O-F News bulletins 1 and 2, kept up through supper; Zimothy's code during the Act 2 cat visits; the Library's loop whenever it has no words to show. In Act 4 it is the memory match (`?kiosk=memory`, below), and from Act 6 the bedroom screen (`?kiosk=bedroom`). |
-| `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code (the game itself runs on the group's phones), and once a group clears all three rounds, Salem names whoever slipped least, just for fun, until the next group's chime; its loop otherwise, if you make one. |
+| `?kiosk=orangerie` | The brain's own browser (your M3 Air), in the Orangerie | Salem's code during the Act 2 cat visits; in Act 4 the rules card for Get Off My Lawn! with Salem's line and the room's code between groups, and while a group plays, Salem's board (31 October, your note): the phones' colour over the whole screen with the word on it (SHAKE on red, FREEZE on green), the count before a round, the thirty seconds filling along the bottom, how many times the round started again, Salem beside the word, and the group's names with the slips each has caused; once a group clears all three rounds, Salem names whoever slipped least, just for fun, until the next group's chime; its loop otherwise, if you make one. |
+| `?kiosk=orangerie&practice=1` | The brain's browser, any day (the workshop's Game test tab) | Salem's board for the Get Off My Lawn! practice: the same board, from the practice's record, with the first names of the phones that joined (no slips by phone: the practice keeps none). Nothing is paid. |
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
 | `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list, and Zimothy names whoever found the most pairs, just for fun. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
@@ -42,7 +43,8 @@ live, or which way the hidden pair have pulled.
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
 runs on the group's own phones, and the Orangerie string lights follow if
 they answer the brain; the brain's browser in the room (`?kiosk=orangerie`)
-only explains it, with the rules card and the code to scan, and names Salem's
+explains it between groups, with the rules card and the code to scan, shows
+Salem's board while a group plays (since 31 October), and names Salem's
 winner once a group clears it. The old iPhone 11
 is the spare phone. The workshop's Devices page lists every screen with its
 address and a square code.
@@ -225,9 +227,26 @@ of them is on its loop.
   reward on the phones. Boo's camera on Jenna's iPad Pro, if it is up,
   follows the same show and takes its photo at the third pose.
 - *The Orangerie, Get Off My Lawn!* The group's phones tint their whole
-  screen red (shake) or green (freeze), with Salem's lines. The brain's
+  screen red (shake) or green (freeze), with Salem's lines, and since
+  31 October Salem's head is loose on each phone while a round plays: every
+  jolt throws it the other way, it rolls to whichever side is down, bounces
+  off the edges, turns against the phone's turning and swells with a hard
+  shake, so the phone shows it can feel what the guest is doing (it changes
+  no rule; a phone with no motion shows it floating gently). The brain's
   browser in the room (`?kiosk=orangerie`) shows the rules card and the code
-  to scan, and "Eyes on your phones." while a group plays.
+  to scan between groups, and while a group plays, *Salem's board* (your
+  note of 31 October: "a visual component, just like Boo's arcade"): the
+  phones' colour over the whole screen with the word on it, SHAKE on red and
+  FREEZE on green (the screen may say it; the phones only tint), the count
+  before a round with "Here it comes." or, after a slip, "Someone moved on
+  green. From the top." / "Someone stopped shaking on red. From the top.",
+  the thirty seconds filling along the bottom, "Thirty seconds clean passes
+  it." or "Started again twice. Keep going.", Salem's picture (changing with
+  the colour and every restart) and the group's names with the slips each
+  has caused so far ("Margaret · 1 slip"). Between rounds: "Round 2 passed",
+  "Tap Ready for the next one." The same board serves the Game test tab's
+  practice at `?kiosk=orangerie&practice=1`, with the first names that
+  joined.
   *Salem's winner* (your words, 28 October: "salems who did better"): every
   slip counts against the phone that caused it, and when the group clears
   all three rounds the screen names whoever slipped least, beside Salem and
@@ -320,7 +339,7 @@ rather than `display: none` until then, since Safari autoplays only a video
 it counts as on screen; its children until the first frame and on `onError`;
 never a fetch), `Idle({ title, line, loop })` (moved here from Kiosk.jsx),
 `RoomCode`, `SmallCode`, `RejoinCode`, `JoinScreen`, `RulesCard({ id, line,
-pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem, rotation })` (busy,
+pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem, rotation, serverNow })` (busy,
 "Eyes on your phones." and no code, while `public/salem.state` is intro,
 playing or passed; Salem's winner while it is cleared, 28 Oct); `MemoryRounds` (now takes `content`), `BooRunway` (now
 takes `night`; `code={!!night}` so the practice show has no code, and
@@ -426,6 +445,7 @@ kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to
 kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
 kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
 kiosk-memory-winner | kiosk-memory-tie | kiosk-memory-standalone |
+kiosk-orangerie-ready | kiosk-orangerie-round | kiosk-orangerie-passed |
 kiosk-orangerie-winner | kiosk-orangerie-tie | kiosk-boo | kiosk-boo-pose | kiosk-arcade |
 kiosk-arcade-play | kiosk-arcade-clue | kiosk-arcade-third |
 kiosk-arcade-farewell | kiosk-pose | kiosk-prompts |

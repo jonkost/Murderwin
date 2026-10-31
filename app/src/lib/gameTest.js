@@ -94,18 +94,20 @@ export const SECTIONS = [
   },
   {
     key: 'salem', name: NAME.orangerie, where: 'Act 4 · the Orangerie', moment: 'act4.orangerie',
-    what: 'Salem’s red light, green light on the group’s phones, backwards: red means shake, green means freeze. A slip starts the round again, thirty seconds clean passes it, three rounds. On the night, the Orangerie’s screen then names whoever slipped least, just for fun.',
+    what: 'Salem’s red light, green light on the group’s phones, backwards: red means shake, green means freeze. A slip starts the round again, thirty seconds clean passes it, three rounds. The Orangerie’s screen (the brain’s browser) shows the room what the phones are doing: the colour, the count, the thirty seconds filling, who slipped; on the night it then names whoever slipped least, just for fun. Salem’s head bounces about on each phone as it is shaken.',
     devices: ['phone', 'orangerie'],
     steps: [
-      'Tap Open the practice.',
+      'Tap Open the practice. On the brain, open the Orangerie’s screen for the practice (below), full screen; if the brain is running, the string lights follow too.',
       'On every phone that plays, scan the square code below and type a first name. Allow motion when the phone asks.',
-      'Anyone taps Ready. Red means shake, green means freeze.',
+      'Anyone taps Ready. Red means shake, green means freeze. Salem’s head on the phone shows what the phone feels; the screen shows the colour, the count and who slipped.',
       'Thirty seconds with no slip passes a round. Play all three.',
       'Tap Stop when you are done. Nothing is paid and no night changes.',
     ],
     tries: [
       { key: 'join', label: 'The practice, for every phone that plays', device: 'phone', params: { practice: 'salem' } },
+      { key: 'wall', label: 'The Orangerie’s screen, for the practice', device: 'orangerie', params: { kiosk: 'orangerie', practice: '1' } },
       preview('room-salem', 'What a phone shows in the Orangerie, a sample', 'phone'),
+      preview('kiosk-orangerie-round', 'A round on the Orangerie’s screen, a sample', 'orangerie'),
       preview('kiosk-orangerie-winner', 'After the third round: Salem names who slipped least, just for fun, a sample', 'orangerie'),
     ],
   },

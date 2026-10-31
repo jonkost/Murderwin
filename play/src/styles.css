@@ -809,6 +809,11 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .salem-round span { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); }
 .salem-round span.done, .salem-round span.now { background: rgba(255,255,255,0.85); }
 .salem-round span.now { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); }
+/* Salem's head, loose on the screen while a round plays (31 Oct 2026): moved by the phone's own motion, under the count */
+.salem-head { position: absolute; left: 50%; top: 50%; width: 44vmin; height: 44vmin; margin: -22vmin 0 0 -22vmin; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; will-change: transform; filter: drop-shadow(0 1.2rem 1.6rem rgba(0, 0, 0, 0.45)); }
+.salem-play .salem-count, .salem-play .slip, .salem-play .salem-round { position: relative; z-index: 1; }
+.salem-play .salem-count { text-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.5); }
+.salem-play .salem-round { position: absolute; }
 
 /* The Game test tab's practice pages (?practice=salem, ?practice=boo): one card, the night's game in it */
 .practice { min-height: 100vh; min-height: 100dvh; padding: 1.2rem 1rem 3rem; max-width: 34rem; margin: 0 auto; display: grid; align-content: start; gap: 1rem; background: var(--bg); }
@@ -864,6 +869,29 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .memory-board.cards-28 { --cols: 7; --rows: 4; }
 /* a 7-pair board dealt before the first round became 6 pairs (26 Oct 2026) still fits, 7 by 2 */
 .memory-board.cards-14 { --cols: 7; --rows: 2; }
+
+/* Get Off My Lawn! on the Orangerie's screen while a group plays (31 Oct 2026, Jon's note 10012): the phones'
+   colour over the whole screen with the word on it, the count before a round, the thirty seconds filling along
+   the bottom, Salem beside the word, and the group's names with their slips */
+.kiosk.salem-board { gap: 2.2vh; justify-content: center; background: var(--brand-peat); color: #fff; transition: background 80ms; }
+.kiosk.salem-board.red { background: #e01020; }
+.kiosk.salem-board.green { background: #08a048; }
+.kiosk.salem-board.wait { background: #101418; }
+.kiosk.salem-board .game-name .kiosk-crest { color: var(--brand-parchment); opacity: 0.9; }
+.kiosk.salem-board .game-hook { color: var(--brand-parchment); opacity: 0.75; }
+.salem-stage { display: flex; align-items: center; justify-content: center; gap: 4vw; max-width: 94vw; }
+.salem-board-cat { flex: none; height: min(40vh, 32vw); max-width: 34vw; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.5)); }
+.salem-board-word { margin: 0; font-family: var(--serif); font-weight: 700; font-size: min(15vw, 26vh); line-height: 1; letter-spacing: 0.04em; color: #fff; text-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.45); animation: salem-word 0.25s ease-out; }
+.salem-board-word.count { font-size: min(24vw, 40vh); font-variant-numeric: tabular-nums; }
+@keyframes salem-word { from { transform: scale(1.25); } to { transform: none; } }
+.kiosk.salem-board .salem-board-line { margin: 0; font-size: min(3vw, 4.4vh); color: #fff; max-width: 90vw; }
+.salem-clean { width: 70vw; height: 2.4vh; border-radius: 1.2vh; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
+.salem-clean-fill { height: 100%; width: 0; background: #fff; transition: width 100ms linear; }
+.salem-crew { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2vh 3vw; max-width: 92vw; }
+.salem-crew li { font-size: min(2.6vw, 3.8vh); font-weight: 700; color: #fff; }
+.salem-crew li span { margin-left: 0.8vw; font-weight: 400; opacity: 0.85; }
+.salem-crew li span::before { content: '· '; }
+@media (prefers-reduced-motion: reduce) { .salem-board-word { animation: none; } .salem-clean-fill { transition: none; } }
 
 /* the just-for-fun winners (28 Oct 2026): In Duplicate's on the Library's screen and Get Off My Lawn!'s on the
    Orangerie's, at the end of a group's visit. The arcade's winner moment on a room screen: the cat beside its line

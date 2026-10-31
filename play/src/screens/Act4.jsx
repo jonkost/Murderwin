@@ -104,26 +104,95 @@ function RoomGame({ room, nightId, uid, serverNow, groupId }) {
 
 // Movement, in m/s² with gravity taken out, from the phone's motion sensor.
 // `ok` is false until a reading arrives (a phone with no sensor never slips).
+// Since 31 Oct 2026 (Jon's note 10012) it keeps the last reading itself as
+// well, for Salem's head on the screen: `ax`, `ay` the push sideways and up
+// the screen, `gx`, `gy` which way is down (gravity), and `spin` how fast the
+// phone is turning flat (degrees a second). None of it changes the rules.
 export function useMotion() {
-  const [state] = useState(() => ({ ok: false, mag: 0, lastShakeAt: 0, g: null }))
+  const [state] = useState(() => ({ ok: false, mag: 0, lastShakeAt: 0, g: null, ax: 0, ay: 0, gx: 0, gy: 0, spin: 0 }))
   useEffect(() => {
     if (typeof window === 'undefined' || !('DeviceMotionEvent' in window)) return
     const on = e => {
       let x, y, z
-      if (e.acceleration && e.acceleration.x != null) ({ x, y, z } = e.acceleration)
-      else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x != null) {
-        const a = e.accelerationIncludingGravity
-        state.g = state.g ? { x: state.g.x * 0.9 + a.x * 0.1, y: state.g.y * 0.9 + a.y * 0.1, z: state.g.z * 0.9 + a.z * 0.1 } : { x: a.x, y: a.y, z: a.z }
-        x = a.x - state.g.x; y = a.y - state.g.y; z = a.z - state.g.z
+      const ag = e.accelerationIncludingGravity
+      if (e.acceleration && e.acceleration.x != null) {
+        ({ x, y, z } = e.acceleration)
+        if (ag && ag.x != null) state.g = { x: ag.x - x, y: ag.y - y, z: ag.z - z }
+      } else if (ag && ag.x != null) {
+        state.g = state.g ? { x: state.g.x * 0.9 + ag.x * 0.1, y: state.g.y * 0.9 + ag.y * 0.1, z: state.g.z * 0.9 + ag.z * 0.1 } : { x: ag.x, y: ag.y, z: ag.z }
+        x = ag.x - state.g.x; y = ag.y - state.g.y; z = ag.z - state.g.z
       } else return
       state.ok = true
       state.mag = Math.sqrt(x * x + y * y + z * z)
       if (state.mag > SALEM_SHAKE) state.lastShakeAt = Date.now()
+      state.ax = x; state.ay = y
+      state.gx = state.g?.x ?? 0; state.gy = state.g?.y ?? 0
+      state.spin = Number(e.rotationRate?.alpha) || 0
     }
     window.addEventListener('devicemotion', on)
     return () => window.removeEventListener('devicemotion', on)
   }, [state])
   return state
+}
+
+// Salem's head, loose on the phone's screen while a round plays (Jon's note
+// 10012, 31 Oct 2026: "the phone should have a little bit more insight, some
+// characteristics of the game moving, like with the accelerometer the head
+// bounces around, being able to rotate"). A thing in a shaken box: every jolt
+// throws it the other way, it rolls to whichever side is down, it bounces off
+// the edges, it turns against the phone's own turning, and it swells with a
+// hard shake. Nothing it does changes the rules (lib/night.js salemSlip); it
+// only shows the phone can feel what the guest is doing. With no sensor, or
+// before the first reading, it floats gently in the middle. Drawn straight
+// to the element, sixty times a second, with no React redraw.
+export const HEAD_PUSH = 140 // px/s² of head for each m/s² of phone
+export const HEAD_ROLL = 60 // px/s² of head for each m/s² of gravity sideways
+export function SalemHead({ motion, src = `${import.meta.env.BASE_URL}household/faces/${encodeURIComponent('Salem Face.png')}` }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof window === 'undefined' || !window.requestAnimationFrame) return
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    const h = { x: 0, y: 0, vx: 0, vy: 0, a: 0, va: 0, last: performance.now(), t: 0 }
+    let raf = 0
+    const step = (now) => {
+      const dt = Math.min(0.05, Math.max(0.001, (now - h.last) / 1000))
+      h.last = now
+      h.t += dt
+      const size = el.offsetWidth || Math.min(window.innerWidth, window.innerHeight) * 0.44
+      const maxX = Math.max(0, (window.innerWidth - size) / 2)
+      const maxY = Math.max(0, (window.innerHeight - size) / 2)
+      if (motion.ok && !still) {
+        // the phone's jolt throws the head the other way; the screen's y runs down, the phone's y runs up
+        h.vx += (-motion.ax * HEAD_PUSH - motion.gx * HEAD_ROLL) * dt
+        h.vy += (motion.ay * HEAD_PUSH + motion.gy * HEAD_ROLL) * dt
+        h.va += -motion.spin * dt * 0.8
+      } else {
+        // no reading: a gentle float
+        h.vx += (Math.sin(h.t * 0.9) * 18 - h.x * 2) * dt
+        h.vy += (Math.cos(h.t * 0.7) * 14 - h.y * 2) * dt
+      }
+      // a soft spring to the middle and some drag, so it settles when the phone does
+      h.vx += -h.x * 2.5 * dt; h.vy += -h.y * 2.5 * dt
+      h.vx *= 1 - 1.4 * dt; h.vy *= 1 - 1.4 * dt
+      h.x += h.vx * dt; h.y += h.vy * dt
+      // the edges: a bounce, and the knock sets it spinning
+      if (h.x > maxX) { h.x = maxX; h.vx = -Math.abs(h.vx) * 0.6; h.va += h.vy * 0.4 }
+      if (h.x < -maxX) { h.x = -maxX; h.vx = Math.abs(h.vx) * 0.6; h.va -= h.vy * 0.4 }
+      if (h.y > maxY) { h.y = maxY; h.vy = -Math.abs(h.vy) * 0.6; h.va -= h.vx * 0.4 }
+      if (h.y < -maxY) { h.y = -maxY; h.vy = Math.abs(h.vy) * 0.6; h.va += h.vx * 0.4 }
+      // the turn eases back upright
+      h.va += -h.a * 1.5 * dt
+      h.va *= 1 - 1.6 * dt
+      h.a += h.va * dt
+      const swell = motion.ok ? 1 + Math.min(0.45, motion.mag / 24) : 1
+      el.style.transform = `translate(${h.x.toFixed(1)}px, ${h.y.toFixed(1)}px) rotate(${h.a.toFixed(1)}deg) scale(${swell.toFixed(3)})`
+      raf = window.requestAnimationFrame(step)
+    }
+    raf = window.requestAnimationFrame(step)
+    return () => window.cancelAnimationFrame(raf)
+  }, [motion])
+  return <img ref={ref} className="salem-head" src={src} alt="" aria-hidden="true" draggable="false" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
 }
 
 function SalemGame({ nightId, uid, serverNow, groupId }) {
@@ -210,6 +279,7 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
   const count = Math.max(1, Math.ceil((ms(doc.startsAt) - now) / 1000))
   return (
     <div className={`salem-play ${colour ?? 'wait'}`} role="status" aria-live="assertive" aria-label={colour ?? 'get ready'}>
+      <SalemHead motion={motion} />
       {!started && <p className="salem-count">{count}</p>}
       {!started && slipShown && <p className="slip">{slipShown === 'green' ? lines.slipGreen : lines.slipRed}</p>}
       <p className="salem-round" aria-hidden="true">{[1, 2, 3].map(r => <span key={r} className={r < doc.round ? 'done' : r === doc.round ? 'now' : ''} />)}</p>
