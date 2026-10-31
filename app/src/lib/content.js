@@ -25,6 +25,7 @@ import {
   RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029,
   RETIRED_FOR_MEMORY_RESEND_1029,
   RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS,
+  ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -928,6 +929,16 @@ export const ADDITIONS = [
     retireTasks: RETIRED_FOR_NEVER_A_NOTE_1029,
     tasks: NEVER_A_NOTE_1029_TASKS,
     decisions: NEVER_A_NOTE_1029_DECISIONS,
+  },
+  {
+    // 30 Oct: the Boo Arcade handoff from Jon's playtest, all built the same
+    // day: one card a job (531 to 539, done), the two questions
+    // arcadeOverall and arcadeExit with their defaults built, and a line on
+    // Jon's try (514) and the night card (515).
+    id: '2026-10-30-boo-arcade',
+    tasks: ARCADE_PLAYTEST_1030_TASKS,
+    fileTasks: FILED_FOR_ARCADE_PLAYTEST_1030,
+    decisions: ARCADE_PLAYTEST_1030_DECISIONS,
   },
 ]
 
