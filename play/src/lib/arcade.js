@@ -265,10 +265,10 @@ export const GAMES = [
   },
   {
     id: 'yarn', name: 'Yarn Catch', short: 'Yarn',
-    how: 'Slide a finger along the touch strip to move the basket under the falling yarn. Gold yarn is worth more. Never catch Sir Irwin or his friends.',
+    how: 'Turn the left dial, or slide a finger along the touch strip, to move the basket under the falling yarn; off one edge, in at the other. Gold yarn is worth more. Never catch Sir Irwin or his friends.',
     rule: "Five misses and you're out.",
     boo: "Catch it, darling. I don't fetch.",
-    dials: NO_DIALS,
+    dials: [ACROSS, '', '', '', '', ''],
     counts: 'Yarn caught',
   },
 ]
@@ -997,15 +997,17 @@ function knockStrike(s, t, row, words, endFace = 'miss') {
 
 // ---- 5. Yarn Catch: balls of yarn drop down the columns into Boo's basket ----
 
-// The touch strip is the basket's rail (Jon, 30 Oct 2026: "Slide to move",
-// "No tapping"): the basket goes to the column under the finger, wherever it
-// touches or lets go; the arrow keys move it one column and wrap round the
-// edges. Five misses end the round. From ten seconds in, Sir Irwin and his
-// friends fall too: one caught is a miss that says who; one that reaches the
-// floor is nothing.
+// The left dial moves the basket a column a click, and a slide along the touch
+// strip moves it a column for every ninth of the strip the finger travelled,
+// the way it went; both go off one edge and in at the other, so every ball can
+// be reached (Jon, 31 Oct 2026: "I do want the swipe", "go back to the dial";
+// a tap does nothing). The deck reports a slide only when the finger lifts,
+// which is why the dial is there too. Five misses end the round. From ten
+// seconds in, Sir Irwin and his friends fall too: one caught is a miss that
+// says who; one that reaches the floor is nothing.
 const yarnStepMs = (s, t) => lerp(YARN_STEP_MS, YARN_STEP_END_MS, along(s, t))
-// The column under a touch at x on the strip.
-const columnAt = x => Math.min(COLS - 1, Math.max(0, Math.floor(x / STRIP_WIDTH * COLS)))
+// How many columns a slide along the strip moves the basket: one a ninth of the strip, at least one, the way it went.
+const slideColumns = (from, to) => Math.sign(to - from) * Math.min(COLS - 1, Math.max(1, Math.round(Math.abs(to - from) / (STRIP_WIDTH / COLS))))
 
 const yarn = {
   start(s) {
@@ -1053,12 +1055,13 @@ const yarn = {
     s.nextSpawnAt = t + lerp(YARN_SPAWN_MS, YARN_SPAWN_END_MS, along(s, t))
   },
   input(s, e, t) {
-    // the touch strip: the basket goes to the column under the touch (a slide ends where the finger lets go); an arrow one column, round the edges
-    let c
-    if (e.kind === 'strip') c = columnAt(e.x)
-    else if (e.kind === 'swipe') c = columnAt(e.to)
-    else if (e.kind === 'arrow' && (e.dir === 'left' || e.dir === 'right')) c = (s.basket + (e.dir === 'left' ? -1 : 1) + COLS) % COLS
-    else return
+    // the left dial (a column a click) or an arrow, or a slide along the strip (a column a ninth of it), round the edges; a tap, the right dial: nothing
+    let dc = 0
+    const m = movesOf(e)
+    if (m && m.dc) dc = m.dc * m.keys
+    else if (e.kind === 'swipe') dc = slideColumns(e.from, e.to)
+    if (!dc) return
+    const c = (((s.basket + dc) % COLS) + COLS) % COLS
     if (c === s.basket) return
     s.basket = c
     const waiting = s.balls.find(b => b.missAt != null && b.col === c)
@@ -1595,7 +1598,7 @@ function stripOf(a, now) {
   const name = info?.name ?? ''
   // the game's dials, and Exit over the dial that leaves it while it counts down or runs
   const dials = (info?.dials ?? NO_DIALS).map((x, i) => (i === EXIT_DIAL && (a.stage === 'count' || a.stage === 'play') ? 'Exit' : x))
-  const zones = g?.id === 'yarn' ? { of: COLS, at: g.basket } : null
+  const zones = null // Yarn Catch's rail along the top went with the tap (31 Oct 2026); the basket's key shows where it is
   const who = a.players[a.turn]?.name ?? ''
   const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, lights: null, zones: null, dials: [...NO_DIALS], ...more })
   switch (a.stage) {

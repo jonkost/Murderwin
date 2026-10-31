@@ -762,8 +762,7 @@ const PAD = 24, GAP = 28 // the strip's side margins, and the space around the m
 
 // The strip as lib/arcade.js describes it, tidied: the three words; in a
 // game, its points (`score`), its strike boxes (`marks`), its time as lights
-// (`lights`) and, for Yarn Catch, the basket's rail (`zones`: how many
-// columns, and which the basket is under); six dial labels.
+// (`lights`); six dial labels. `zones` is always null since 31 Oct 2026.
 const upTo = (v, top) => Math.min(top, Math.max(0, Math.round(Number(v)) || 0))
 function stripShape(strip) {
   const t = v => (v == null ? '' : String(v))
@@ -773,7 +772,7 @@ function stripShape(strip) {
     score: strip?.score == null || !Number.isFinite(n) ? null : Math.max(0, Math.round(n)),
     marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5), label: t(strip.marks.label) } : null,
     lights: strip?.lights ? { of: upTo(strip.lights.of, 12), lit: upTo(strip.lights.lit, 12) } : null,
-    zones: strip?.zones ? { of: upTo(strip.zones.of, 12), at: upTo(strip.zones.at, 11) } : null,
+    zones: null, // Yarn Catch's rail along the top went on 31 Oct 2026; kept in the shape so every strip has the same parts
     dials: [0, 1, 2, 3, 4, 5].map(i => t(strip?.dials?.[i])),
   }
 }
@@ -816,8 +815,7 @@ function drawStrip(s) {
     g.fillStyle = rule; g.fillRect(0, 0, STRIP_W, 3); g.fillRect(0, STRIP_H - 3, STRIP_W, 3)
 
     const dials = s.dials.some(Boolean)
-    const y = dials ? (s.zones ? 40 : 36) : STRIP_H / 2 // the middle of the top line (a touch lower under the rail)
-    if (s.zones) rail(g, s.zones)
+    const y = dials ? 36 : STRIP_H / 2 // the middle of the top line
     let left = PAD, right = STRIP_W - PAD // where the words may start and end
     if (s.marks) left = strikeBoxes(g, s.marks, PAD, y, dials ? 46 : 56) + GAP
     if (s.lights) right = timeLights(g, s.lights, STRIP_W - PAD, y, dials ? 10 : 12) - GAP
@@ -898,25 +896,6 @@ function timeLights(g, { of, lit }, right, y, r) {
   }
   return start
 }
-// Yarn Catch's strip is the basket's rail (Jon, 30 Oct 2026: "Slide to
-// move"): a row of marks along the top, one a column, dim gold, and the
-// basket's column a lit gold block, so a finger finds the basket where it
-// touches. The words, the boxes and the lights sit below as in every game.
-const RAIL_TOP = 5, RAIL_H = 10
-function rail(g, { of, at }) {
-  const w = STRIP_W / of
-  for (let i = 0; i < of; i++) {
-    const x = i * w
-    if (i === at) {
-      g.save(); g.shadowColor = 'rgba(255, 226, 122, 0.9)'; g.shadowBlur = 8
-      g.fillStyle = litGold(g); g.beginPath(); roundRect(g, x + 3, RAIL_TOP, w - 6, RAIL_H, 3); g.fill()
-      g.restore()
-    } else {
-      g.fillStyle = GOLD.dim; g.beginPath(); roundRect(g, x + 3, RAIL_TOP + 3, w - 6, RAIL_H - 6, 2); g.fill()
-    }
-  }
-}
-
 // A dial's label, centred over the dial. The arrows are drawn, not typed, so
 // they look the same on every Mac (no font has to carry them).
 const ARROWS = { '◀': 'left', '▶': 'right', '▲': 'up', '▼': 'down' }
