@@ -1619,13 +1619,13 @@ test('G54 Whack-a-Mouse: tap a mouse before it hides for a point (gold for more)
   assert.ok(Math.abs(golds / all - 1 / GOLD_ONE_IN) < 0.05, `${golds} gold of ${all}`)
 })
 
-test('G54 Whack-a-Mouse lets more up at once as it goes (Jon, 29 Oct 2026: "Allow for more at once"): two at first, one more every 20 seconds up to six, friends counted too; never more, never two on a key', () => {
+test('G54 Whack-a-Mouse lets more up at once as it goes (Jon, 29 Oct 2026: "Allow for more at once"; 30 Oct: "More mice up at once toward the end"): two at first, one more every 15 seconds up to eight, friends counted too; never more, never two on a key', () => {
   const cap = t => Math.min(MICE_AT_ONCE_MAX, MICE_AT_ONCE + Math.floor(t / MICE_MORE_EVERY_MS))
-  assert.deepEqual([MICE_AT_ONCE, MICE_MORE_EVERY_MS, MICE_AT_ONCE_MAX], [2, 20000, 6])
-  assert.deepEqual([0, 19999, 20000, 39999, 40000, 60000, 80000, 119999].map(cap), [2, 2, 3, 3, 4, 5, 6, 6])
+  assert.deepEqual([MICE_AT_ONCE, MICE_MORE_EVERY_MS, MICE_AT_ONCE_MAX], [2, 15000, 8])
+  assert.deepEqual([0, 14999, 15000, 29999, 30000, 45000, 60000, 75000, 90000, 119999].map(cap), [2, 2, 3, 3, 4, 5, 6, 7, 8, 8])
   // with n up and one due: one more comes only while fewer than the cap are up, a friend as good as a mouse
   const g0 = newGame('mice', { seed: 21, lengthMs: 120000, now: 0 })
-  for (const t of [1000, 19999, 20000, 45000, 79999, 80000, 110000]) {
+  for (const t of [1000, 14999, 15000, 45000, 89999, 90000, 110000]) {
     for (let n = 0; n <= MICE_AT_ONCE_MAX; n++) {
       const mice = Array.from({ length: Math.ceil(n / 2) }, (_, i) => ({ key: i, gold: false, downAt: t + 5000 }))
       const pets = Array.from({ length: Math.floor(n / 2) }, (_, i) => ({ key: 20 + i, pet: PETS[i], downAt: t + 5000 }))
@@ -1655,10 +1655,10 @@ test('G54 Whack-a-Mouse: as many as MICE_AT_ONCE_MAX can be up at once by the en
     let s = newGame('mice', { seed, lengthMs: 120000, now: 0 })
     for (let t = 0; t <= 120000; t += TICK) {
       s = stepGame(s, t)
-      if (t >= 80000) most = Math.max(most, s.mice.length + s.pets.length)
+      if (t >= 90000) most = Math.max(most, s.mice.length + s.pets.length)
     }
   }
-  assert.equal(most, MICE_AT_ONCE_MAX, `at most ${most} up at once in the last 40 seconds`)
+  assert.equal(most, MICE_AT_ONCE_MAX, `at most ${most} up at once in the last 30 seconds`)
 })
 
 test('G54 Whack-a-Mouse\'s friends (Jon, 29 Oct 2026: "I want a better name than pets"): from five seconds in about one in four that pop up is Sir Irwin or a friend, all five of them, each up as long as a plain mouse; one tapped scores nothing and is a strike on red, named on the strip; the third ends the game, points kept', () => {
