@@ -41,8 +41,8 @@ export const TAIL_STEP_END_MS = 220      // this often by the end (Jon, 30 Oct 2
 export const TAIL_TURN_ONE_IN = 4       // about one step in four it turns, when it can
 export const TAIL_FLEE_KEYS = 3          // with Boo this close to any key of it (along the rows and columns), it runs from her
 export const TAIL_AWAY_KEYS = 4          // a caught tail comes back with every key at least this far from her
-export const TAIL_LENGTH = 3             // three keys long at first,
-export const TAIL_GROWS_AT = [0.25, 0.5] // a key longer a quarter of the way in and again at half (Jon, 30 Oct 2026: "Maybe the tail grows longer too, to block Boo")
+export const TAIL_LENGTH = 3             // three keys long,
+export const TAIL_GROWS_AT = []          // and it stays so (Jon, 31 Oct 2026: the growing tail read as the fish's doing, "maybe the tail doesn't even grow"; add a share of the game here and it grows a key there)
 export const TAIL_LENGTH_MAX = TAIL_LENGTH + TAIL_GROWS_AT.length
 export const TAIL_BLOCKS_FROM_MS = 15000 // the walls and her friends come out from 15 seconds in,
 export const TAIL_BLOCKS_EVERY_MS = 15000 // one more every 15 seconds,
@@ -58,7 +58,6 @@ export const TAIL_HAZARD_EVERY_MS = 12000 // one more every 12 seconds,
 export const TAIL_HAZARD_UP_MS = 9000    // each for 9 seconds,
 export const TAIL_HAZARDS_MAX = 2        // two at most at once
 export const TAIL_FREEZE_MS = 1500       // Boo onto a cucumber: she freezes this long, and it is gone
-export const TAIL_WRAP_MS = 700          // off one edge and in at the other (Jon, 30 Oct 2026: Pac-Man style): she stops there this long
 // The Lazy Pointer: lead the red dot to the sparkles; Boo naps, wakes and stalks it
 export const POINTER_STEP_MS = 600       // awake, Boo steps towards the dot this often at first (Jon, 30 Oct 2026: "Boo is faster"),
 export const POINTER_STEP_END_MS = 300   // this often by the end
@@ -413,9 +412,10 @@ function plainEvent(ev) {
 // in her way ("dont let players hit it from the front. It blocks them.").
 // Walls and her friends come out as the game goes on (s.blocks), and stay
 // put; none ever shuts a key in or leaves a dead end. Boo goes off one edge
-// and comes in at the other, like Pac-Man (Jon, 30 Oct 2026). A fish now and
-// then is worth more than a tip (s.treat); a cucumber (s.hazards) freezes her
-// a moment, and only the tail stays clear of those.
+// and comes in at the other, like Pac-Man (Jon, 30 Oct 2026), with no pause
+// (31 Oct: it felt like dropped clicks). A fish now and then is worth more
+// than a tip (s.treat); a cucumber (s.hazards) freezes her a moment, and only
+// the tail stays clear of those.
 const tailStepMs = (s, t) => lerp(TAIL_STEP_MS, TAIL_STEP_END_MS, along(s, t))
 // How far Boo is from a key, the short way round the board: she wraps, so her reach does too.
 const reach = (k, boo) => {
@@ -461,14 +461,12 @@ const tail = {
     // is, and the rest of the turn; off an edge she comes in at the other
     for (let n = 0; m && n < m.keys; n++) {
       const r = rowOf(s.boo) + m.dr, c = colOf(s.boo) + m.dc
-      const wraps = !onBoard(r, c)
       const to = keyAt((r + ROWS) % ROWS, (c + COLS) % COLS)
       if (to === s.tail[s.tail.length - 1]) return caughtTail(s, to, t) // the white tip: caught, and that ends the turn
       if (s.tail.includes(to) || blocked(s, to)) return
       s.boo = to
       if (hazardAt(s, to)) return eek(s, to, t) // a cucumber: frozen, and that ends the turn too
       if (s.treat?.key === to) ateTreat(s, to, t)
-      if (wraps) { s.frozenUntil = t + TAIL_WRAP_MS; return } // in at the other edge: she stops there a moment, and that ends the turn
     }
   },
   tidy: tidyFlashes,

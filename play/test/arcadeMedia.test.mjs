@@ -244,13 +244,13 @@ test('G54 every strike is a big red cross, the face faint under it: a miss at th
   })
 })
 
-test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; Boo\'s green floor since 30 Oct, "No more poo brown"): a green floor, her black tail lying on it in a gold glow with its white tip, smooth (no tufts, no ruff: "Redraw the tail. It still looks like poop.") with a sheen along it, a fish and a cucumber on the floor, stone walls lighter than the floor and darker than Boo\'s gold, and her friends in the dark', async () => {
+test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; a black floor since 31 Oct, "I just want black"): a black floor, her flat black tail lying on it in a white glow with its white tip (no tufts, no ruff, no sheen: "a black tail with a white drop shadow"), a fish on the floor and a cucumber on red, stone walls lighter than the floor and darker than Boo\'s gold, and her friends in the dark', async () => {
   // the ring and her paw are gone
   for (const id of ['ring', 'tail-paw']) assert.ok(!ART_FACES.includes(id), `no ${id} now`)
   assert.equal(faceSolid('ring'), null)
-  // the floor is one flat green (the house's bottle green, lit), so the deck paints it as a colour, not a picture
-  assert.deepEqual([...faceSolid('rug')], [14, 74, 57])
-  const CLARET = '#0e4a39', INK = '#111114' // the rug's colour (CLARET by name since the floor was claret; Boo's green since 30 Oct)
+  // the floor is one flat black, so the deck paints it as a colour, not a picture
+  assert.deepEqual([...faceSolid('rug')], [0, 0, 0])
+  const CLARET = '#000', INK = '#111114' // the rug's colour (CLARET by name since the floor was claret; black since 31 Oct)
   await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {
     let size = FACE_SIZE + 80
     // every key of the tail is that claret all over, so it lies on the floor
@@ -263,15 +263,13 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; Boo\'s gree
       assert.deepEqual(ops[0].args, [0, 0, 72, 72], `${id}: all over`)
       const fur = ops.filter(op => op.name === 'fill' && op.fillStyle === INK)
       assert.equal(fur.length, 1, `${id}: the fur is one shape`)
-      assert.ok(fur[0].shadowColor && fur[0].shadowBlur > 0, `${id}: in a glow`)
-      // smooth: only the discs along its line, close together, none out to the side (no tufts), and one sheen stroke along it
+      assert.ok(fur[0].shadowColor?.startsWith('rgba(255, 255, 255') && fur[0].shadowBlur > 0, `${id}: in a white glow, its drop shadow`)
+      // flat: only the discs along its line, close together, none out to the side (no tufts), and no sheen stroke
       const discs = ops.slice(0, ops.indexOf(fur[0])).filter(op => op.name === 'arc')
       const main = discs.filter(op => op.args[2] >= 10)
       assert.ok(main.length >= 8 && main.every(op => op.args[2] <= 17), `${id}: a band of big discs`)
       assert.ok(discs.every(op => op.args[2] >= 10), `${id}: no little tufts`)
-      const sheen = ops.filter(op => op.name === 'stroke' && String(op.strokeStyle).startsWith('rgba(255, 255, 255'))
-      assert.equal(sheen.length, 1, `${id}: one sheen along it`)
-      assert.ok(ops.indexOf(sheen[0]) > ops.indexOf(fur[0]), `${id}: over the fur`)
+      assert.equal(ops.filter(op => op.name === 'stroke').length, 0, `${id}: no sheen, flat (31 Oct 2026)`)
       const white = ops.filter(op => op.name === 'fill' && op.fillStyle === '#fff')
       assert.equal(white.length, id.startsWith('tail-tip:') ? 1 : 0, `${id}: white at the tip only`)
       if (white.length) assert.ok(ops.indexOf(white[0]) > ops.indexOf(fur[0]) && !white[0].shadowColor, `${id}: the white over the fur`)
@@ -292,10 +290,10 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; Boo\'s gree
     assert.ok(stone.every(([, foot]) => lightOf(foot) >= 2 * lightOf(CLARET)), 'lighter than the rug')
     assert.ok(stone.every(([top]) => lightOf(top) <= lightOf('#fff6c4') / 2), 'at most half as light as Boo\'s gold')
     assert.ok(!wall.some(op => op.name === 'drawImage' || op.name === 'fillText'), 'a wall is only bricks')
-    // the fish and the cucumber: each on the rug, its picture big; the fish in a glow, the cucumber not
+    // the fish on the rug in a glow; the cucumber on red (31 Oct 2026: keep off), no glow
     const fish = painted(faceCanvas('treat', size++)), cucumber = painted(faceCanvas('cucumber', size++))
-    for (const [name, ops, ch] of [['treat', fish, '🐟'], ['cucumber', cucumber, '🥒']]) {
-      assert.equal(ops[0].fillStyle, CLARET, `${name}: on the rug`)
+    for (const [name, ops, ch, ground] of [['treat', fish, '🐟', CLARET], ['cucumber', cucumber, '🥒', '#bf1925']]) {
+      assert.equal(ops[0].fillStyle, ground, `${name}: on its ground`)
       const word = ops.find(op => op.name === 'fillText')
       assert.equal(word?.args[0], ch, `${name}: its picture`)
     }
@@ -309,7 +307,7 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; Boo\'s gree
   })
 })
 
-test('G54 a face of one flat colour is that colour on the Mac\'s screen too: the deck paints it from faceSolid, the screen draws it (faceCanvas), so Boo\'s rug is the same green on both', async () => {
+test('G54 a face of one flat colour is that colour on the Mac\'s screen too: the deck paints it from faceSolid, the screen draws it (faceCanvas), so Boo\'s rug is the same black on both', async () => {
   const solid = [...new Set([...FACE_IDS, ...ART_FACES])].filter(id => faceSolid(id))
   for (const id of ['off', 'blank', 'rug']) assert.ok(solid.includes(id), id)
   await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {

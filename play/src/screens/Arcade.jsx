@@ -336,8 +336,8 @@ export default function BooArcade({ sample = null, onRecord = null }) {
       // a button of the page's own (Connect, OK) keeps its space bar; on the deck drawn on the screen it is the first dial
       const control = !t?.closest?.('.arcade-deck') && !!t?.closest?.('button, a[href], summary')
       let ev = null
+      if (e.repeat) return // a key held down is one press, like one click of a dial (31 Oct 2026: nothing on the deck can be held)
       if (ARROW_KEYS[e.key]) ev = { kind: 'arrow', dir: ARROW_KEYS[e.key] }
-      else if (e.repeat) return
       else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = { kind: 'press', dial: 0 } }
       else if (e.key === 'Escape') {
         const a = arcadeRef.current

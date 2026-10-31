@@ -11,7 +11,7 @@ import {
   HIT_MS, MISS_MS, STRIKES_OUT, STRIKE_WORDS_MS, DIAL_MAX_KEYS,
   TAIL_STEP_MS, TAIL_STEP_END_MS, TAIL_TURN_ONE_IN, TAIL_FLEE_KEYS, TAIL_AWAY_KEYS, TAIL_LENGTH, TAIL_GROWS_AT, TAIL_LENGTH_MAX,
   TAIL_BLOCKS_FROM_MS, TAIL_BLOCKS_EVERY_MS, TAIL_BLOCKS_MAX, TAIL_POINTS,
-  TAIL_TREAT_FROM_MS, TAIL_TREAT_EVERY_MS, TAIL_TREAT_UP_MS, TAIL_TREAT_POINTS, TAIL_HAZARD_FROM_MS, TAIL_HAZARD_EVERY_MS, TAIL_HAZARD_UP_MS, TAIL_HAZARDS_MAX, TAIL_FREEZE_MS, TAIL_WRAP_MS,
+  TAIL_TREAT_FROM_MS, TAIL_TREAT_EVERY_MS, TAIL_TREAT_UP_MS, TAIL_TREAT_POINTS, TAIL_HAZARD_FROM_MS, TAIL_HAZARD_EVERY_MS, TAIL_HAZARD_UP_MS, TAIL_HAZARDS_MAX, TAIL_FREEZE_MS,
   POINTER_STEP_MS, POINTER_STEP_END_MS, POINTER_NAP_MS, POINTER_WAKE_KEYS, POINTER_BORED_KEYS, POINTER_BORED_STEPS,
   POINTER_SPARKLE_MS, POINTER_SPARKLES, POINTER_SPARKLE_UP_MS, POINTER_NEAR_ONE_IN, POINTER_POINTS, POINTER_MISS_POINTS, POINTER_LAST_POINTS,
   POINTER_BLOCKS_FROM_MS, POINTER_BLOCKS_EVERY_MS, POINTER_BLOCKS_MAX,
@@ -497,8 +497,8 @@ test('G54 one click of a dial is one key, every click (Jon, 29 Oct 2026): a repo
   assert.equal(input({ ...tail, boo: keyAt(0, 5) }, turn(LEFT_DIAL, -2), at).boo, keyAt(0, 3), 'a report of -2 moves 2 back')
   assert.equal(input(tail, turn(LEFT_DIAL, 40), at).boo, keyAt(0, DIAL_MAX_KEYS), 'a report of 40 moves at most 6')
   const round = input(tail, turn(RIGHT_DIAL, -40), at)
-  assert.equal(round.boo, keyAt(0, 0), 'down to the edge, in again at the top (30 Oct 2026), and coming in ends the rest')
-  assert.equal(round.frozenUntil, at + TAIL_WRAP_MS, 'and she stops there a moment')
+  assert.equal(round.boo, keyAt(2, 0), 'six keys down: to the edge, in again at the top (30 Oct 2026) and on, with no pause (31 Oct)')
+  assert.equal(round.frozenUntil, 0)
   assert.equal(input({ ...tail, blocks: [{ key: keyAt(0, 4), friend: null }] }, turn(LEFT_DIAL, 6), at).boo, keyAt(0, 3), 'a wall stops the rest')
   assert.equal(input({ ...tail, blocks: [{ key: keyAt(2, 0), friend: 'salem' }] }, turn(RIGHT_DIAL, -3), at).boo, keyAt(1, 0), 'a friend stops the rest')
   const fur = { ...tail, boo: keyAt(2, 4), tail: [keyAt(1, 7), keyAt(2, 7), keyAt(3, 7)] }
@@ -841,15 +841,14 @@ test('G54 Boo Chasing Her Tail (Jon, 29 Oct 2026: "dont let players hit it from 
   const straight = [keyAt(1, 6), keyAt(1, 5), keyAt(1, 4)]
   const corner = [keyAt(1, 6), keyAt(1, 5), keyAt(2, 5)]
   const out = [{ key: keyAt(3, 3), friend: null }, { key: keyAt(0, 2), friend: 'zimmy' }]
-  // the edges: off one side, in at the other, and she stops there a moment (Jon, 30 Oct 2026: Pac-Man style)
+  // the edges: off one side, in at the other (Jon, 30 Oct 2026: Pac-Man style), with no pause (31 Oct)
   for (const [boo, ev, to] of [[keyAt(0, 0), arrow('left'), keyAt(0, END)], [keyAt(0, 0), arrow('up'), keyAt(3, 0)], [keyAt(3, END), turn(LEFT_DIAL, 1), keyAt(3, 0)], [keyAt(3, END), turn(RIGHT_DIAL, -1), keyAt(0, END)]]) {
     const g = board(boo, straight, out)
     const h = input(g, ev, T)
     assert.equal(h.boo, to, `${JSON.stringify(ev)} from ${boo}: in at the other side`)
-    assert.equal(h.frozenUntil, T + TAIL_WRAP_MS)
-    assert.deepEqual(without(h, 'boo', 'frozenUntil'), without(step(g, T), 'boo', 'frozenUntil'), 'and nothing else happens')
-    assert.equal(input(h, ev, T + TAIL_WRAP_MS - 1).boo, to, 'she stops there a moment')
-    assert.notEqual(input(h, ev, T + TAIL_WRAP_MS).boo, to, 'then goes on')
+    assert.equal(h.frozenUntil, 0, 'no pause (31 Oct 2026)')
+    assert.deepEqual(without(h, 'boo'), without(step(g, T), 'boo'), 'and nothing else happens')
+    assert.notEqual(input(h, ev, T + 1).boo, to, 'and straight on')
   }
   for (const [boo, tail, ev, why] of [
     [keyAt(1, 7), straight, arrow('left'), 'its end, head on'], [keyAt(0, 6), straight, arrow('down'), 'its end, from above'],
@@ -964,7 +963,7 @@ test('G54 Boo Chasing Her Tail: her tail runs about the whole board by itself, o
   assert.equal(visited.size, KEY_COUNT, 'it runs over the whole board')
   assert.ok(steps > 5000 && fled > 200 && could > 1000, `${steps} steps, ${fled} running from her, ${could} free to turn`)
   assert.ok(slipped < steps / 50, `${slipped} slips away, boxed in: rare`)
-  assert.ok(grew >= 30 * TAIL_GROWS_AT.length * 0.75 && grew < 30 * TAIL_GROWS_AT.length * 1.25, `it grows twice a game (30 Oct 2026), at a step or as it comes back after a catch: ${grew} at a step in 30 games`)
+  assert.equal(grew, 0, 'it never grows (31 Oct 2026)')
   assert.equal(TAIL_TURN_ONE_IN, 4)
   assert.ok(Math.abs(turned / could - 1 / TAIL_TURN_ONE_IN) < 0.04, `turned ${turned} of ${could} times it could`)
 
@@ -1114,7 +1113,9 @@ test('G54 Boo Chasing Her Tail: after a catch the tail comes back whole on free 
   assert.ok(roomless < catches / 20, `${roomless} catches with no room four keys off`)
 })
 
-test('G54 Boo Chasing Her Tail: Jon\'s exploit stays gone (29 Oct 2026: "I can just hold an arrow button and it circles and win"; since 30 Oct she wraps round the edges, and stops a moment each time): an arrow key held down all game on the Mac\'s keyboard sweeps her round and catches a few, about a quarter of what chasing the tip does, whichever arrow', () => {
+test('G54 Boo Chasing Her Tail: Jon\'s exploit stays gone (29 Oct 2026: "I can just hold an arrow button and it circles and win"): the page takes a key held down as one press, like one click of a dial, so nothing sweeps her round; were the engine fed an arrow every 50 ms it would catch about half of what chasing the tip does, whichever arrow', () => {
+  const page = uncommented(src('../src/screens/Arcade.jsx'))
+  assert.match(page, /if \(e\.repeat\) return\s*if \(ARROW_KEYS\[e\.key\]\) ev = \{ kind: 'arrow', dir: ARROW_KEYS\[e\.key\] \}/, 'a repeat is dropped before the arrows (31 Oct 2026)')
   for (const dir of ['left', 'right', 'up', 'down']) {
     let most = 0, sum = 0
     for (let seed = 1; seed <= 40; seed++) {
@@ -1123,9 +1124,8 @@ test('G54 Boo Chasing Her Tail: Jon\'s exploit stays gone (29 Oct 2026: "I can j
       most = Math.max(most, g.catches)
       sum += g.catches
     }
-    assert.ok(most <= 35 && sum / 40 <= 12, `${dir} held down: at most ${most} caught, ${(sum / 40).toFixed(1)} on average`)
+    assert.ok(most <= 75 && sum / 40 <= 26, `${dir} fed every 50 ms: at most ${most} caught, ${(sum / 40).toFixed(1)} on average`)
   }
-  assert.equal(TAIL_WRAP_MS, 700)
 })
 
 test('G54 Boo Chasing Her Tail replays exactly: one seed and the same moves are the same game, the walls and friends too', () => {
@@ -1143,33 +1143,22 @@ test('G54 Boo Chasing Her Tail replays exactly: one seed and the same moves are 
   assert.notDeepEqual(run(3).tail, run(4).tail, 'another seed, another game')
 })
 
-test('G54 Boo Chasing Her Tail grows (Jon, 30 Oct 2026: "Maybe the tail grows longer too, to block Boo"): three keys at first, four a quarter of the way in, five at half, each new key the end going on with the rest staying put; it comes back as long as it was after a catch; its middle keys all block her and only its tip is caught', () => {
-  assert.deepEqual([TAIL_LENGTH, TAIL_GROWS_AT, TAIL_LENGTH_MAX], [3, [0.25, 0.5], 5])
+test('G54 Boo Chasing Her Tail stays three keys long (Jon, 31 Oct 2026: the growing tail read as the fish\'s doing; the code can still grow it by TAIL_GROWS_AT): three keys all game, back three after a catch; its two keys behind the tip block her and only its tip is caught; drawn as an end, a middle and a tip', () => {
+  assert.deepEqual([TAIL_LENGTH, TAIL_GROWS_AT, TAIL_LENGTH_MAX], [3, [], 3], 'it does not grow (31 Oct 2026)')
   for (const seed of [1, 2, 3, 4]) {
-    const lengths = []
-    const g = playTail(seed, chaseMove, { every: 100, look: (prev, h, t) => { lengths.push([t, h.tail.length]); if (h.catches > prev.catches) assert.ok(tailShaped(h.tail), `seed ${seed}: back whole, as long as it should be by now or as the room allows`) } })
-    assert.ok(g.tail.length >= TAIL_LENGTH_MAX - 1, `seed ${seed}: ${g.tail.length} long at the end (a catch at the last moment may leave it a key short)`)
-    assert.ok(lengths.filter(([t]) => t < 30000).every(([, n]) => n === 3), `seed ${seed}: three to a quarter`)
-    assert.ok(lengths.filter(([t]) => t > 31000 && t < 60000).every(([, n]) => n >= 3 && n <= 4) && lengths.filter(([t]) => t > 32000 && t < 60000).filter(([, n]) => n === 4).length > 200, `seed ${seed}: four to half`)
-    assert.ok(lengths.filter(([t]) => t > 61000).every(([, n]) => n >= 3) && lengths.filter(([t]) => t > 62000).filter(([, n]) => n === 5).length > 400, `seed ${seed}: five after (shorter only for a step or two after a catch with little room)`)
-    assert.ok(g.catches > 30, `seed ${seed}: still caught ${g.catches} times`)
+    const g = playTail(seed, chaseMove, { every: 100, look: (prev, h) => assert.equal(h.tail.length, 3, `seed ${seed}: three keys`) })
+    assert.ok(g.catches > 30, `seed ${seed}: caught ${g.catches} times`)
   }
-  // a shorter game grows over its own time
-  const short = newGame('tail', { seed: 5, lengthMs: 40000, now: 0 })
-  let g = short
-  for (let t = 100; t <= 40000; t += 100) g = step(g, t)
-  assert.equal(g.tail.length, 5)
-  assert.equal(step(short, 9000).tail.length, 3)
-  // with five keys (past halfway), the four behind the tip all block her, and the tip is caught from the side
+  // a longer tail handed in (an older game) comes back three after a catch, and the keys behind the tip block her
   const T = 70000
   const five = [keyAt(1, 2), keyAt(1, 3), keyAt(1, 4), keyAt(1, 5), keyAt(1, 6)]
   const board = boo => ({ ...newGame('tail', { seed: 7, lengthMs: 120000, now: 0 }), at: T - 100, nextAt: T + 400, boo, tail: five })
   for (const k of five.slice(0, -1)) assert.equal(input(board(keyAt(0, colOf(k))), arrow('down'), T).boo, keyAt(0, colOf(k)), `key ${k} of it blocks her`)
   const c = input(board(keyAt(0, 6)), arrow('down'), T)
   assert.equal(c.catches, 1)
-  assert.equal(c.tail.length, 5, 'back five long')
+  assert.equal(c.tail.length, 3, 'back three long')
   assert.ok(tailShaped(c.tail))
-  // drawn: an end, three middle pieces and a tip
+  // drawn: an end, the middle pieces and a tip
   const f = gameFaces(board(keyAt(3, 0)), T)
   assert.equal(f[five[0]], 'tail-end:right')
   for (const k of five.slice(1, -1)) assert.equal(f[k], 'tail-fur:left-right')

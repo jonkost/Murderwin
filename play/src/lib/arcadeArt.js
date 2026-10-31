@@ -59,12 +59,12 @@ const MENU = { tail: ['cat', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse
 // Faces that are one flat colour. The deck paints these with fillKeyColor
 // (one small report, no picture to send); the rest are pictures. The deck on
 // the Mac's screen draws them (FACES) from the same colours, so the two match.
-const RUG = BOO.green // Boo Chasing Her Tail's floor, under every key of her tail too
+const RUG = '#000' // Boo Chasing Her Tail's floor, black (Jon, 31 Oct 2026: "I just want black"), under every key of her tail too
 const rgbOf = hex => Object.freeze([1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16))) // '#rrggbb' as [r, g, b]
 const SOLID = new Map([
   ['off', Object.freeze([0, 0, 0])],
   ['blank', Object.freeze([0, 0, 0])],
-  ['rug', rgbOf(RUG)],
+  ['rug', Object.freeze([0, 0, 0])],
 ])
 export function faceSolid(id) { return SOLID.get(id) ?? null }
 
@@ -291,14 +291,14 @@ const FACES = {
   // a player's tokens: Boo's gold coin to spend, an empty ring as big once spent
   coin: (g, k) => { lacquer(g); coin(g, k) },
   'coin-spent': g => { lacquer(g); ring(g, MID, MID, COIN_ACROSS / 2 - 2.5, 3.5, 'rgba(214, 207, 134, 0.5)') },
-  // Boo Chasing Her Tail, over the whole board (Jon, 29 Oct 2026): the green
+  // Boo Chasing Her Tail, over the whole board (Jon, 29 Oct 2026): the black
   // rug is the floor; Boo herself, the player's piece, big and bright on gold
   // in a gold frame; walls of grey stone (bricks) and her friends (PETS_DRAWN's
   // pet faces) in her way; her black tail and its white tip (tailFur, tailEnd,
   // tailTip); a fish to eat and a cucumber to keep off (Jon, 30 Oct 2026)
   rug: g => flat(g, RUG),
   treat: (g, k) => { flat(g, RUG); glowing(g, k, 'rgba(255, 252, 230, 0.9)', 8, () => emoji(g, PICTURE.fish, 46)) },
-  cucumber: g => { flat(g, RUG); emoji(g, PICTURE.cucumber, 46) },
+  cucumber: g => { flat(g, HOUSE.red); emoji(g, PICTURE.cucumber, 46) }, // on red: keep off (Jon, 31 Oct 2026)
   'tail-boo': (g, k) => { goldGround(g); glowing(g, k, 'rgba(255, 255, 255, 0.95)', 5, () => booFace(g, k, BOO_PIECE)); rim(g, INK, 6, 1.6); goldRim(g, 2.5, 3.5) },
   wall: g => bricks(g),
   // The Lazy Pointer: the red dot, the sparkles, and Boo napping, waking and after the dot
@@ -348,38 +348,33 @@ function menuDone(g, k, game) {
 
 // ---- Boo Chasing Her Tail: her tail ---------------------------------------
 
-// Her tail is one smooth band of black fur, three to five keys long, anywhere
-// on the board (Jon, 29 Oct 2026: "run over the entire board"), drawn key by
-// key so the keys line up: across a key, or round a corner (tailFur), from the
-// side it comes from to the middle at its end (tailEnd), and to a round white
-// tip ringed in black (tailTip), pointing the way it lies. Each of its keys is
-// the rug under it, so it lies on the floor next to anything; the band has a
-// soft gold glow, so it stands out from the green, and a sheen along it. No
-// tufts and no ruff (Jon, 30 Oct 2026: "Redraw the tail. It still looks like
-// poop.").
+// Her tail is one flat band of black, three keys long, anywhere on the board
+// (Jon, 29 Oct 2026: "run over the entire board"), drawn key by key so the
+// keys line up: across a key, or round a corner (tailFur), from the side it
+// comes from to the middle at its end (tailEnd), and to a round white tip
+// (tailTip), pointing the way it lies. Each of its keys is the black rug under
+// it; the band is black in a soft white glow, like a drop shadow, so it shows
+// on the black (Jon, 31 Oct 2026: "a black tail with a white drop shadow on a
+// dark background", "make the tail just look flat"). No tufts, no ruff, no
+// sheen.
 const TURNS = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }
 const FUR_PAIRS = ['left-right', 'down-up', 'down-left', 'down-right', 'left-up', 'right-up'] // lib/arcade.js FUR_PAIRS
 const SIDE = { left: [0, MID], right: [UNIT, MID], up: [MID, 0], down: [MID, UNIT] } // each side's middle
 const TAIL_R = 15 // the tail's half-width
-function tailFur(g, k, a, b) { const pts = tailPoints(a, b, 15); furOnRug(g, k, () => furPath(g, pts, TAIL_R), pts) }
-function tailEnd(g, k, way) { const pts = tailPoints(way, null, 8); furOnRug(g, k, () => furPath(g, pts, TAIL_R, 0.72), pts) }
+function tailFur(g, k, a, b) { furOnRug(g, k, () => furPath(g, tailPoints(a, b, 15), TAIL_R)) }
+function tailEnd(g, k, way) { furOnRug(g, k, () => furPath(g, tailPoints(way, null, 8), TAIL_R, 0.72)) }
 function tailTip(g, k, way) {
   const back = { up: 'down', down: 'up', left: 'right', right: 'left' }[way]
   const x = MID + Math.cos(TURNS[way]) * 13, y = MID + Math.sin(TURNS[way]) * 13
-  furOnRug(g, k, () => { furPath(g, tailPoints(back, null, 8), TAIL_R); g.moveTo(x + 17, y); g.arc(x, y, 17, 0, Math.PI * 2) }, tailPoints(back, null, 8))
+  furOnRug(g, k, () => { furPath(g, tailPoints(back, null, 8), TAIL_R); g.moveTo(x + 17, y); g.arc(x, y, 17, 0, Math.PI * 2) })
   disc(g, x, y, 13.5, '#fff')
 }
-// The rug, and the black band on it in a gold glow. The band is one shape,
-// filled once, so the glow goes round its outside only; then a soft sheen
-// along it (a thin light stroke, a little above its middle), so it reads as
-// sleek fur, not a lump.
-function furOnRug(g, k, shape, sheen = null) {
+// The rug, and the flat black band on it in a white glow (its drop shadow on
+// the black). The band is one shape, filled once, so the glow goes round its
+// outside only.
+function furOnRug(g, k, shape) {
   flat(g, RUG)
-  glowing(g, k, 'rgba(255, 226, 122, 1)', 8, () => { g.beginPath(); shape(); g.fillStyle = INK; g.fill() })
-  if (!sheen) return
-  g.beginPath()
-  sheen.forEach(([x, y], i) => (i ? g.lineTo(x - 3, y - 4) : g.moveTo(x - 3, y - 4)))
-  g.lineWidth = 3.5; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = 'rgba(255, 255, 255, 0.16)'; g.stroke()
+  glowing(g, k, 'rgba(255, 255, 255, 0.85)', 7, () => { g.beginPath(); shape(); g.fillStyle = INK; g.fill() })
 }
 // Points along the tail from one side's middle to another's (or to the key's
 // middle, for null): straight, or round the corner two sides share.
