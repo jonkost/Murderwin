@@ -92,7 +92,9 @@ door).
   (*Projector Murderwin On* and *Projector Murderwin Off*, each running one
   Home scene you make): off for the blackout, back on when the power
   returns, off from the drawing's intro, on again for the ballot, off at The
-  End. The projector takes a moment to warm up when its plug comes back; the
+  End. Like every Shortcut the brain runs (step 18), it counts as done three
+  quarters of a second after it starts, so a scene with an accessory that is
+  not answering never holds the night up. The projector takes a moment to warm up when its plug comes back; the
   Entryway code it shows in Act 2 is printed too, so nothing waits on it.
 - **The Orangerie string lights.** During Salem's Motion Game the strings
   turn red and green when the phones do (1 to 2 seconds behind through Apple
@@ -341,11 +343,15 @@ Shortcuts apps are yours.)
     scene is not answering, and Apple Home waited a minute for it: open the
     scene in the Home app and take out whatever shows No Response, or make
     the scene again with only the Holiday Lights in it. The game never
-    waits on it: since 31 October the brain counts a colour as sent a
-    second and a half after it starts the Shortcut, whether or not the
-    Shortcut has finished, so the strings keep up with the phones, and a
-    late report costs one line in the brain's window, not a restart of the
-    colour. If none answer, leave `STRINGS_SHORTCUTS` empty: the strings
+    waits on it: since 31 October the brain counts a colour as sent three
+    quarters of a second after it starts the Shortcut, whether or not the
+    Shortcut has finished (a real failure, such as a Shortcut that is not
+    on this Mac, reports in under a tenth of a second), so the strings keep
+    up with the phones, and a late report costs one line in the brain's
+    window, not a restart of the colour. The same goes for every Shortcut
+    the brain runs: the projector's plug today, and any Home scene a cue is
+    given later. Running the same Shortcut again while an earlier run is
+    still waiting cancels that run; the brain says nothing about it. If none answer, leave `STRINGS_SHORTCUTS` empty: the strings
     are decoration, and the phones carry the colour.
 
 **All of it at once**

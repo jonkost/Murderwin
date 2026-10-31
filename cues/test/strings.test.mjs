@@ -171,7 +171,7 @@ test('runShortcut asks macOS to run the named Shortcut, and a failure rejects', 
 
 test('a colour counts as sent after the head start, whether or not the Shortcut has finished; a late failure is one plain line that says what to fix', async () => {
   const { ShortcutLights, shortcutColours, SHORTCUT_HEAD_START_MS, SHORTCUT_TIMEOUT_MS } = await import('../lib/strings.js')
-  assert.ok(SHORTCUT_HEAD_START_MS >= 1000 && SHORTCUT_HEAD_START_MS <= 2500, 'the lights take the colour in about a second')
+  assert.ok(SHORTCUT_HEAD_START_MS >= 500 && SHORTCUT_HEAD_START_MS <= 1500, 'well past the tenth of a second a real failure takes, well under the shortest hold of a colour')
   assert.ok(SHORTCUT_TIMEOUT_MS >= 70_000, 'longer than the minute Apple Home waits on a straggler')
   const colours = shortcutColours()
   const logs = []
@@ -221,6 +221,14 @@ test('a colour counts as sent after the head start, whether or not the Shortcut 
   await settle(); await settle()
   assert.match(logs.at(-1), /did not finish after 90 s/)
   await slow.idle()
+  // the same Shortcut run again cancels the earlier run still waiting on its straggler: the newer colour took over, nothing to say
+  const n = logs.length
+  let cancel
+  const twice = new ShortcutLights({ run: () => new Promise((_, r) => { cancel = r }), wait: async () => {}, log: l => logs.push(l) })
+  await twice.show(colours.green)
+  cancel(Object.assign(new Error('shortcut Green Murderwin Strings v2: Running was cancelled'), { partial: false, cancelled: true, took: 56_000 }))
+  await settle(); await settle()
+  assert.equal(logs.length, n, 'a cancelled run is quiet')
 })
 
 test('both roads at once: the pairing first, and the Shortcuts from the first time it fails, with one line that says why', async () => {
@@ -280,7 +288,7 @@ test('the projector: two Shortcuts by their exact names, renamed only in cues/.e
   const p = createProjectorSwitch({ enabled: true, run: async (name, { timeoutMs }) => { ran.push([name, timeoutMs]) }, log: l => logs.push(l) })
   p.set('off'); p.set('on')
   await p.idle()
-  assert.deepEqual(ran, [['Projector Murderwin Off', 8000], ['Projector Murderwin On', 8000]], 'one Shortcut per change, in order')
+  assert.deepEqual(ran, [['Projector Murderwin Off', 90_000], ['Projector Murderwin On', 90_000]], 'one Shortcut per change, in order, with the long timeout behind the head start (31 Oct 2026)')
   assert.deepEqual(logs, ['[projector] off', '[projector] on'])
   await p.set('sideways')
   assert.equal(ran.length, 2, 'only on and off')
@@ -314,7 +322,7 @@ test('the relay switches the projector through the same `shortcuts run` as the s
   assert.ok(src.includes('onSwitch(env.PROJECTOR_SHORTCUTS)'))
   assert.ok(src.includes('createProjectorSwitch({ enabled: projectorOn, names: projectorShortcutNames(env)'))
   const lib = readFileSync(new URL('../lib/strings.js', import.meta.url), 'utf8')
-  assert.ok(lib.includes('run = runShortcut') && lib.includes('await run(names[state], { timeoutMs })'), 'through runShortcut')
+  assert.ok(lib.includes('run = runShortcut') && lib.includes('await runner.fire(names[state])'), 'through the one Shortcut runner (31 Oct 2026)')
   const example = readFileSync(new URL('../.env.example', import.meta.url), 'utf8')
   for (const k of ['PROJECTOR_SHORTCUTS', 'PROJECTOR_SHORTCUT_ON', 'PROJECTOR_SHORTCUT_OFF']) assert.ok(example.includes(k), `${k} in cues/.env.example`)
 })
@@ -327,4 +335,29 @@ test('the strings follow the Game test practice while it plays, and the night\'s
   assert.equal(salemToMirror(playing, practice), playing)
   assert.equal(stringsColour(salemToMirror({ state: 'idle' }, { state: 'idle' }), 2000), DECOR)
   assert.equal(stringsColour(salemToMirror(null, practice), 2000), 'green')
+})
+
+test('game wide (31 Oct 2026): the projector goes through the same runner, so a Home scene with a straggler never stalls a cue; a late failure is one plain line', async () => {
+  const { createProjectorSwitch, createShortcutRunner, runShortcut } = await import('../lib/strings.js')
+  const logs = []
+  let settle
+  const p = createProjectorSwitch({ enabled: true, run: () => new Promise((_, r) => { settle = r }), wait: async () => {}, log: l => logs.push(l) })
+  await p.set('off')
+  assert.deepEqual(logs, ['[projector] off'], 'done after the head start, the Shortcut still running')
+  assert.equal(p.running(), 1)
+  settle(Object.assign(new Error('shortcut Projector Murderwin Off: Action set execution partially succeeded.'), { partial: true, took: 61_000 }))
+  await p.idle()
+  assert.equal(logs.length, 2)
+  assert.match(logs[1], /^\[projector\] the Projector Murderwin Off Shortcut ran for 61 s and then said "partially succeeded".*Home app.*No Response/)
+  // runShortcut marks a cancelled run, and the runner says nothing about one
+  const cancelled = (cmd, args, opts, cb) => cb(Object.assign(new Error('x'), { code: 1 }), '', 'Error: Running was cancelled\n')
+  const e = await runShortcut('Green Murderwin Strings v2', { execFileImpl: cancelled }).catch(e => e)
+  assert.equal(e.cancelled, true)
+  const quiet = []
+  let r2
+  const runner = createShortcutRunner({ tag: 'test', run: () => new Promise((_, r) => { r2 = r }), wait: async () => {}, log: l => quiet.push(l) })
+  await runner.fire('Anything')
+  r2(e)
+  await runner.idle()
+  assert.deepEqual(quiet, [])
 })

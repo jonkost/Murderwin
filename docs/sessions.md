@@ -40,11 +40,16 @@ on the Canon.
   seconds) and end "Action set execution partially succeeded": something
   else in each Home scene is not answering. The brain cut each run off at
   eight seconds and counted it as the lights not answering, so the colours
-  fell behind. Now (`cues/lib/strings.js`) a colour counts as sent after a
-  head start of 1.5 s whether or not the Shortcut has finished (a 90 s
-  timeout behind it), a failure inside the head start still rejects, a late
-  failure is one plain line that says what to fix, and `--check-strings`
-  waits for that report. `TwoWayLights` tries the pairing first and the
+  fell behind. Now (`cues/lib/strings.js` `createShortcutRunner`) every
+  Shortcut the brain runs, the projector's plug included, counts as done
+  after a head start of 0.75 s whether or not the Shortcut has finished (a
+  90 s timeout behind it; a missing Shortcut reports in 70 ms, measured), a
+  failure inside the head start still rejects, a late failure is one plain
+  line that says what to fix, a cancelled run (the same Shortcut run again
+  while the earlier one waits) is quiet, and `--check-strings` waits for
+  the report. Jon, from his window: "tighten it up. I'm concerned because a
+  lot of these cues will be done with shortcuts, game wide": hence one
+  runner for all of them, and the shorter head start. `TwoWayLights` tries the pairing first and the
   Shortcuts from its first failure when both are set (the token in
   `cues/.env` is empty, so today it is the Shortcuts alone). Tried on the
   real Shortcuts: red, green, decor in 1.5 s each, then the Green v2 report
@@ -52,8 +57,9 @@ on the Canon.
 - Suites: cues 71, play 266, workshop 135, all passing. Looked at in the
   browser: the board's round sample and the phone's round sample.
 - Left: Jon opens each of the three Home scenes and takes out whatever
-  shows No Response (card 543), then stops and starts the brain once so it
-  runs the new relay code; the arcade still not wired into Act 4 (515). No
+  shows No Response (card 543), then stops and starts the brain once more
+  so it runs the tightened relay code (the brain is not deployed: it runs
+  from this checkout); the arcade still not wired into Act 4 (515). No
   decision taken, so the Canon is unchanged.
 
 ## 31 Oct 2026 · Claude Code (the Boo Arcade handoff deployed)

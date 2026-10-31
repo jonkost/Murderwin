@@ -99,44 +99,24 @@ export class StringLights {
 // The three Apple Shortcuts on the brain, one per colour.
 export const STRING_SHORTCUTS = { red: 'Red Murderwin Strings', green: 'Green Murderwin Strings', decor: 'Decor Murderwin Strings' }
 
-// The projector's plug (25 Oct 2026, the cue list): an IKEA smart switch in
-// Apple Home, switched from the brain by two more Shortcuts on this Mac,
-// each running one Home scene Jon made (the plug on; the plug off). Which
-// moments want it on or off is the `projector` layer of cues/scenes.json
-// (lib/scenes.js); this only runs the Shortcut, through the same
-// `shortcuts run` as the string lights. PROJECTOR_SHORTCUTS=on in cues/.env
-// turns it on; the names may be changed there (PROJECTOR_SHORTCUT_ON / _OFF).
-export const PROJECTOR_SHORTCUTS = { on: 'Projector Murderwin On', off: 'Projector Murderwin Off' }
-
-// The Shortcut names from cues/.env, or the defaults.
-export function projectorShortcutNames(env = {}) {
-  const named = k => String(env[`PROJECTOR_SHORTCUT_${k.toUpperCase()}`] ?? '').trim() || PROJECTOR_SHORTCUTS[k]
-  return { on: named('on'), off: named('off') }
-}
-
-// The switch: set('on' | 'off') runs that Shortcut. The planner is
-// edge-triggered, so this is asked once per change; a failure is one plain
-// line (the projector takes a moment to warm up anyway, and its code in
-// Act 2 is printed too). Not enabled (or fake): it says what it would do.
-export function createProjectorSwitch({ enabled = false, names = PROJECTOR_SHORTCUTS, run = runShortcut, log = () => {}, fake = false, timeoutMs = 8000 } = {}) {
-  let chain = Promise.resolve()
-  function set(state) {
-    if (state !== 'on' && state !== 'off') return chain
-    if (fake || !enabled) { log(`[projector] would switch the projector ${state}${fake ? '' : ' (PROJECTOR_SHORTCUTS is not on in cues/.env)'}`); return chain }
-    chain = chain.then(async () => {
-      try { await run(names[state], { timeoutMs }); log(`[projector] ${state}`) } catch (e) { log(`[projector] ${state} failed (${e.message}); switch the plug in the Home app`) }
-    })
-    return chain
-  }
-  return { set, idle: () => chain }
-}
-
-// The mirror's colours when the strings go through Shortcuts: each colour
-// names its Shortcut. With `colours` (cues/scenes.json "strings") the Open
-// API body stays beside it, so TwoWayLights can take either road.
-export function shortcutColours(names = STRING_SHORTCUTS, colours = null) {
-  return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { ...(colours?.[colour] ?? {}), shortcut: name }]))
-}
+// ---- Apple Shortcuts, game wide (31 Oct 2026) -------------------------------
+//
+// Everything the brain asks Apple Home for goes through one Shortcut each
+// (the string lights' three colours, the projector's plug, and any Home scene
+// a cue is given later), run with macOS's own `shortcuts run`. A Home scene
+// answers in about a second when every accessory in it is reachable. When one
+// is not (Jon, 31 Oct 2026: every string-light Shortcut turned the lights at
+// once, then ran a full minute and ended "Action set execution partially
+// succeeded"), Apple Home waits about a minute for the straggler before the
+// tool returns. The brain used to wait on the tool and cut it off at eight
+// seconds, so every cue behind it stalled. So: a Shortcut counts as done
+// SHORTCUT_HEAD_START_MS after it starts, whether or not the tool has
+// returned. A failure inside the head start is a real one (`shortcuts`
+// missing, no Shortcut by that name: the tool says so in under a tenth of a
+// second, measured). A failure after it is a late one: the scene was sent, so
+// it costs one plain line that says what to fix, not a retry. The same
+// Shortcut run again while an earlier run still waits cancels that run
+// ("Running was cancelled"): the newer cue took over, nothing to say.
 
 // Run one shortcut by name with macOS's own `shortcuts` tool; rejects when it
 // is missing, is not on this Mac, or fails. `shortcuts run` reads its input
@@ -150,66 +130,103 @@ export function runShortcut(name, { timeoutMs = SHORTCUT_TIMEOUT_MS, execFileImp
       if (!err) return resolve()
       const said = String(stderr ?? '').trim().replace(/^Error:\s*/i, '')
       const reason = said || (err.killed || err.signal ? 'it did not finish' : err.code ?? err.message)
-      reject(Object.assign(new Error(`shortcut ${name}: ${reason}`), { partial: /partially succeeded/i.test(said), took: now() - startedAt }))
+      reject(Object.assign(new Error(`shortcut ${name}: ${reason}`), { partial: /partially succeeded/i.test(said), cancelled: /cancelled/i.test(said), took: now() - startedAt }))
     })
     child?.stdin?.end?.()
   })
 }
 
-// A Home scene through a Shortcut answers in about a second when every
-// accessory in the scene is reachable. When one is not (Jon, 31 Oct 2026:
-// the Red Shortcut turned the strings red at once, then ran a full minute
-// and ended "Action set execution partially succeeded"), Apple Home waits
-// about a minute for the straggler before the tool returns an error. So a
-// colour counts as sent after SHORTCUT_HEAD_START_MS, whether or not the
-// Shortcut has finished: the lights have taken it by then. A failure inside
-// the head start is a real one (`shortcuts` missing, no Shortcut by that
-// name: the tool says so in well under a second). A failure after it is a
-// late one: the scene was sent, so it costs one plain line that says what to
-// fix, not a restart of the colour.
-export const SHORTCUT_HEAD_START_MS = 1500
+export const SHORTCUT_HEAD_START_MS = 750
 export const SHORTCUT_TIMEOUT_MS = 90_000
 
-export class ShortcutLights {
-  constructor({ run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
-    this.run = run
-    this.headStartMs = headStartMs
-    this.timeoutMs = timeoutMs
-    this.log = log
-    this.wait = wait
-    this.pending = new Set()
-    this.warned = false
+// The runner every Shortcut goes through. fire(name) resolves once the
+// Shortcut has finished or the head start has passed, whichever comes first,
+// and rejects only when it fails inside the head start. `tag` names the cue
+// in the late line ("strings", "projector"). idle() waits for every run still
+// going (for the checks); running() counts them.
+export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
+  const pending = new Set()
+  let warned = false
+
+  // The job was most likely done; say once what is wrong, until a run succeeds.
+  function late(name, e) {
+    if (e?.cancelled || /cancelled/i.test(e?.message ?? '')) return
+    if (warned) return
+    warned = true
+    const secs = Math.round((e?.took ?? 0) / 1000)
+    if (e?.partial) log(`[${tag}] the ${name} Shortcut ran for ${secs} s and then said "partially succeeded": it did its job, but something else in its Home scene is not answering. In the Home app, open that scene and take out whatever shows No Response (or make it again with only what it needs). Nothing waits on it.`)
+    else log(`[${tag}] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); it may still have done its job`)
   }
 
-  // Resolves once the Shortcut has finished or the head start has passed,
-  // whichever comes first; rejects only when it fails inside the head start.
-  async show(setting) {
-    if (!setting?.shortcut) throw new Error('string lights: no shortcut for that colour')
-    const name = setting.shortcut
+  async function fire(name) {
     let over = false
-    const run = this.run(name, { timeoutMs: this.timeoutMs }).then(
-      () => { over = true; this.warned = false },
+    const p = run(name, { timeoutMs }).then(
+      () => { over = true; warned = false },
       e => { over = true; throw e },
     )
-    this.pending.add(run)
-    run.catch(() => {}).then(() => this.pending.delete(run))
-    const head = this.wait(this.headStartMs)
-    await Promise.race([run, head])
-    if (!over) run.catch(e => this.late(name, e))
+    pending.add(p)
+    p.catch(() => {}).then(() => pending.delete(p))
+    await Promise.race([p, wait(headStartMs)])
+    if (!over) p.catch(e => late(name, e))
   }
 
-  // The lights most likely changed; say once what is wrong, until a run succeeds.
-  late(name, e) {
-    if (this.warned) return
-    this.warned = true
-    const secs = Math.round((e?.took ?? 0) / 1000)
-    if (e?.partial) this.log(`[strings] the ${name} Shortcut ran for ${secs} s and then said "partially succeeded": the lights changed, but something else in its Home scene is not answering. In the Home app, open that scene and take out whatever shows No Response (or make it again with only the Holiday Lights in it). The game does not wait on it.`)
-    else this.log(`[strings] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); the lights may still have changed, and the phones carry the colour`)
+  return { fire, idle: () => Promise.allSettled([...pending]), running: () => pending.size }
+}
+
+// The string lights through their three Shortcuts, one per colour.
+export class ShortcutLights {
+  constructor({ run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait } = {}) {
+    this.runner = createShortcutRunner({ tag: 'strings', run, headStartMs, timeoutMs, log, ...(wait ? { wait } : {}) })
   }
 
-  // Every Shortcut still running has finished (for --check-strings).
-  idle() { return Promise.allSettled([...this.pending]) }
-  running() { return this.pending.size }
+  async show(setting) {
+    if (!setting?.shortcut) throw new Error('string lights: no shortcut for that colour')
+    await this.runner.fire(setting.shortcut)
+  }
+
+  idle() { return this.runner.idle() }
+  running() { return this.runner.running() }
+}
+
+// The projector's plug (25 Oct 2026, the cue list): an IKEA smart switch in
+// Apple Home, switched from the brain by two more Shortcuts on this Mac,
+// each running one Home scene Jon made (the plug on; the plug off). Which
+// moments want it on or off is the `projector` layer of cues/scenes.json
+// (lib/scenes.js); this only runs the Shortcut, through the same runner as
+// the string lights. PROJECTOR_SHORTCUTS=on in cues/.env turns it on; the
+// names may be changed there (PROJECTOR_SHORTCUT_ON / _OFF).
+export const PROJECTOR_SHORTCUTS = { on: 'Projector Murderwin On', off: 'Projector Murderwin Off' }
+
+// The Shortcut names from cues/.env, or the defaults.
+export function projectorShortcutNames(env = {}) {
+  const named = k => String(env[`PROJECTOR_SHORTCUT_${k.toUpperCase()}`] ?? '').trim() || PROJECTOR_SHORTCUTS[k]
+  return { on: named('on'), off: named('off') }
+}
+
+// The switch: set('on' | 'off') runs that Shortcut. The planner is
+// edge-triggered, so this is asked once per change; a failure inside the
+// head start is one plain line (the projector takes a moment to warm up
+// anyway, and its code in Act 2 is printed too). Not enabled (or fake): it
+// says what it would do.
+export function createProjectorSwitch({ enabled = false, names = PROJECTOR_SHORTCUTS, run = runShortcut, log = () => {}, fake = false, timeoutMs = SHORTCUT_TIMEOUT_MS, headStartMs = SHORTCUT_HEAD_START_MS, wait } = {}) {
+  const runner = createShortcutRunner({ tag: 'projector', run, headStartMs, timeoutMs, log, ...(wait ? { wait } : {}) })
+  let chain = Promise.resolve()
+  function set(state) {
+    if (state !== 'on' && state !== 'off') return chain
+    if (fake || !enabled) { log(`[projector] would switch the projector ${state}${fake ? '' : ' (PROJECTOR_SHORTCUTS is not on in cues/.env)'}`); return chain }
+    chain = chain.then(async () => {
+      try { await runner.fire(names[state]); log(`[projector] ${state}`) } catch (e) { log(`[projector] ${state} failed (${e.message}); switch the plug in the Home app`) }
+    })
+    return chain
+  }
+  return { set, idle: () => chain.then(() => runner.idle()), running: () => runner.running() }
+}
+
+// The mirror's colours when the strings go through Shortcuts: each colour
+// names its Shortcut. With `colours` (cues/scenes.json "strings") the Open
+// API body stays beside it, so TwoWayLights can take either road.
+export function shortcutColours(names = STRING_SHORTCUTS, colours = null) {
+  return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { ...(colours?.[colour] ?? {}), shortcut: name }]))
 }
 
 // Both roads at once (31 Oct 2026): cues/.env has the strings' own address
