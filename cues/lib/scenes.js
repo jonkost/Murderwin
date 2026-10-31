@@ -18,6 +18,7 @@
 // tab's scene or music buttons) holds until the sheet next changes.
 
 import { SOUND_IDS, SOUND_STALE_MS, phaseOf, stamp } from './cues.js'
+import { musicShortcutProblems } from './shortcutMusic.js'
 
 // The drawing is running while public/relay.state is one of these.
 export const DRAWING_RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
@@ -318,6 +319,7 @@ export function sceneProblems(cfg, { soundIds = SOUND_IDS } = {}) {
     if (cfg.drawing.unlocked) checkLayer('drawing.unlocked', cfg.drawing.unlocked)
   }
   if (cfg.offForTheNight) out.push('offForTheNight is gone since 25 Oct 2026: the newscast cut is "cut" (acts, beats, trigger)')
+  out.push(...musicShortcutProblems(cfg))
   if (cfg.cut) {
     checkActs('cut', cfg.cut.acts)
     if (!Array.isArray(cfg.cut.beats) || !cfg.cut.beats.length || !cfg.cut.beats.every(b => typeof b === 'string' && b.trim())) out.push('cut.beats is not a list of beat names')

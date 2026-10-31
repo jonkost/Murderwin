@@ -54,6 +54,7 @@ import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
+import { createShortcutMusic, shortcutsFor } from './lib/shortcutMusic.js'
 import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
@@ -191,6 +192,27 @@ if (SPEAKERS) {
   if (want) console.log(list.some(sp => sp.name === want) ? `Boo's speaker "${want}" is in the list` : `Boo's speaker "${want}" is not in the list: put the right name in cues/scenes.json, boo.speaker`)
   process.exit(0)
 }
+if (CHECK_MUSIC && onSwitch(env.MUSIC_SHORTCUTS)) {
+  // the Shortcut road: each setting's Shortcut(s) in the sheet's order, then the stop
+  if (!sheet) { console.log('cues/scenes.json needs fixing first'); process.exit(2) }
+  const m = createShortcutMusic({ names: sheet.musicShortcuts, fallback: offSwitch(env.MUSIC) ? null : createMusic({ fake: FAKE, log }), log, fake: FAKE })
+  const keys = Object.keys(sheet.musicShortcuts ?? {}).filter(k => k !== 'off' && sheet.playlists?.[k])
+  for (const key of keys) {
+    log(`now ${key} (${shortcutsFor(sheet.musicShortcuts, key).join(', then ')}), for six seconds`)
+    await m.play({ playlist: key, ...sheet.playlists[key] })
+    await sleep(6000)
+  }
+  if (sheet.cake) {
+    log('now the song for the cake, from the Music app, for six seconds')
+    const r = await m.playTrack({ name: sheet.cake.song, volume: sheet.cake.volume })
+    if (r === 'playing') await sleep(6000)
+  }
+  log('now the stop')
+  await m.pause()
+  await m.idle()
+  log(`done: if you heard all ${keys.length} settings on the HomePods${sheet.cake ? ', then the song' : ''}, and then silence, the music is ready through Apple Home`)
+  process.exit(0)
+}
 if (CHECK_MUSIC) {
   if (!sheet) { console.log('cues/scenes.json needs fixing first'); process.exit(2) }
   const m = createMusic({ fake: FAKE, log, whisper: sheet.whisper })
@@ -254,8 +276,15 @@ setInterval(() => { if (wantHall && !FAKE && hue) setHall(wantHall) }, 5000)
 const player = createPlayer({ mediaDir: MEDIA_DIR, exists: existsSync, spawn, log, fake: FAKE })
 
 // Apple Music (lib/music.js): MUSIC=off in cues/.env leaves it all to Jon.
-const music = sheet && !offSwitch(env.MUSIC) ? createMusic({ fake: FAKE, log, whisper: sheet.whisper }) : null
+// MUSIC_SHORTCUTS=on (31 Oct 2026, the formal rundown): the music runs
+// through Apple Home instead, one Shortcut per setting (lib/shortcutMusic.js,
+// the names in cues/scenes.json musicShortcuts); the Music app then plays
+// only the cake's song.
+const musicApp = sheet && !offSwitch(env.MUSIC) ? createMusic({ fake: FAKE, log, whisper: sheet.whisper }) : null
+const musicByShortcuts = !!sheet && onSwitch(env.MUSIC_SHORTCUTS)
+const music = musicByShortcuts ? createShortcutMusic({ names: sheet.musicShortcuts, fallback: musicApp, log, fake: FAKE }) : musicApp
 if (sheet && !music) log('[music] off (MUSIC=off in cues/.env): run the Music app by hand')
+if (musicByShortcuts && !shortcutsFor(sheet.musicShortcuts, 'off').length) log('[music] no Shortcut named to stop the music (cues/scenes.json musicShortcuts.off): the HomePods play on through the rules, the news and the blackout until you stop them')
 
 // Hue scenes by name: HUE_SCENES=off in cues/.env leaves them to the Hue app.
 const scenesOn = !!sheet && !offSwitch(env.HUE_SCENES) && (FAKE || !!hue)
@@ -450,4 +479,4 @@ if (FAKE && process.stdin.isTTY) {
 log('cue relay up', FAKE ? '(fake)' : '', OFFLINE ? '(offline: no Firebase)' : '', `media: ${MEDIA_DIR}`)
 for (const line of soundFilesLines(soundReport)) log(`sounds: ${line}`)
 log(`recordings: ${recordingFiles(MEDIA_DIR, existsSync)} of ${CLIP_IDS.length} have a file; ${String(env.STATION_KEY ?? '').trim().length >= 4 ? 'STATION_KEY set, coded recordings will play' : 'no STATION_KEY in cues/.env, so only a night with no station key saved plays them'}`)
-log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · projector: ${FAKE ? 'fake' : projectorOn ? 'on, through Apple Home' : 'not set up'} · string lights: ${stringsHow}`)
+log(`music: ${musicByShortcuts ? 'on, through Apple Home' : music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · projector: ${FAKE ? 'fake' : projectorOn ? 'on, through Apple Home' : 'not set up'} · string lights: ${stringsHow}`)

@@ -33,11 +33,11 @@ function walk(steps, { cfg = SHEET, start = emptySceneState(), t0 = 1_000_000 } 
   return s
 }
 
-test('scenes.json is sound: no problems, the five playlist settings on three Music playlists, the six scenes and the song, named exactly as the cue list has them', () => {
+test('scenes.json is sound: no problems, the six playlist settings on three Music playlists, the six scenes and the song, named exactly as the cue list has them', () => {
   assert.deepEqual(sceneProblems(SHEET), [])
-  assert.deepEqual(Object.keys(SHEET.playlists), ['jazz', 'jazzLow', 'intense35', 'intense60', 'credits'])
+  assert.deepEqual(Object.keys(SHEET.playlists), ['jazz', 'jazzLow', 'intense35', 'intense60', 'credits', 'act4'], 'act4 since 31 Oct 2026: the rooms\' own music through Apple Home, last so the host\'s next button cycles as before')
   assert.deepEqual(playlistNamesOf(SHEET), ['Murderwin · Jazz', 'Murderwin · Intense', 'Murderwin · Credits'])
-  assert.deepEqual(Object.values(SHEET.playlists).map(p => p.volume), [55, 30, 35, 60, 35])
+  assert.deepEqual(Object.values(SHEET.playlists).map(p => p.volume), [55, 20, 35, 60, 35, 55], 'the rundown\'s 20% for the lowered jazz (31 Oct 2026)')
   assert.deepEqual(sceneNames(SHEET).sort(), ['Murderwin Blackout', 'Murderwin Candles', 'Murderwin Default', 'Murderwin Dimmed', 'Murderwin Drawing', 'Murderwin Study Dim'])
   assert.deepEqual(SHEET.cake, { song: 'Happy Birthday for Dogs', volume: 60, hue: 'Murderwin Candles', seconds: 75 })
   assert.deepEqual(SHEET.cut, { acts: [7], beats: ['reveal'], trigger: 'clips' })
@@ -69,8 +69,8 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['cue 9, bulletin 2 on the HomePods: no change (the sounder ducks it)', { night: night(3, 'bulletin'), cues: red, sounds: { current: { id: 'sounder-bulletin', at: 5 } } }, []],
     ['cue 10, dinner wrap-up: no change', { night: night(3, 'wrap'), cues: red }, []],
     ['the two-minute warning: the Parlour HomePod leaves the house music for Boo (Jon, 27 Oct 2026)', { night: night(4, 'warn'), cues: red }, ['speaker Living Room off']],
-    ['cue 11, Start Act 4: no change (one playlist for the whole house, roomMusic default)', { night: night(4, 'groups'), cues: red }, []],
-    ['each round change: no change', { night: night(4, 'round1'), cues: red, study: { state: 'idle' } }, []],
+    ['cue 11, Start Act 4: no change yet (the warning and the groups keep the jazz)', { night: night(4, 'groups'), cues: red }, []],
+    ['the first round: the house jazz, then the Study\'s and the Orangerie\'s own music (act4, 31 Oct 2026, through the music Shortcuts)', { night: night(4, 'round1'), cues: red, study: { state: 'idle' } }, ['play act4']],
     ['a group at the study wall: the study dims', { night: night(4, 'round1'), cues: red, study: { state: 'playing' } }, ['scene Murderwin Study Dim']],
     ['they go on reproducing: no change', { night: night(4, 'round1'), cues: red, study: { state: 'reproducing' } }, []],
     ['they enter the code: no change', { night: night(4, 'round1'), cues: red, study: { state: 'entering' } }, []],
@@ -80,7 +80,7 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['', { night: night(4, 'round3'), cues: red, study: { state: 'idle' } }, ['scene Murderwin Default']],
     ['', { night: night(4, 'round4'), cues: red, study: { state: 'idle' } }, []],
     ['', { night: night(4, 'round5'), cues: red, study: { state: 'idle' } }, []],
-    ['cue 12, dessert: the Parlour HomePod back in the house music (the chime ducks it)', { night: night(5, 'roam'), cues: red, sounds: { current: { id: 'chime-phone', at: 6 } } }, ['speaker Living Room on']],
+    ['cue 12, dessert: the default jazz back on every HomePod (cue 14; act4\'s room music ends), the Parlour HomePod back in the house music (the chime ducks it)', { night: night(5, 'roam'), cues: red, sounds: { current: { id: 'chime-phone', at: 6 } } }, ['play jazz', 'speaker Living Room on']],
     ['cue 13, Cake!: the song and the candles', { night: night(5, 'roam'), cues: { hall: 'red', cake: { at: 1_000_000 + 30_000 } }, sounds: { current: { id: 'chime-phone', at: 6 } } }, ['cake', 'scene Murderwin Candles']],
     ['the same press again: nothing', { night: night(5, 'roam'), cues: { hall: 'red', cake: { at: 1_000_000 + 30_000 } } }, []],
     ['cue 14, Sir Irwin speaks: no change (the chime ducks it)', { night: night(5, 'irwin'), cues: red, sounds: { current: { id: 'chime-irwin', at: 7 } } }, []],
@@ -184,10 +184,10 @@ test('the dim study: the playing scene when a group is at the wall in Act 4, the
   assert.equal(studyWants({ night: night(4, 'round1') }, SHEET), 'idle', 'no study doc yet')
   walk([
     ['Act 4 starts, nobody at the wall', { night: night(4, 'groups') }, ['play jazz', 'scene Murderwin Default', 'projector on', 'speaker Living Room off']],
-    ['the study doc says idle: nothing', { night: night(4, 'round1'), study: { state: 'idle' } }, []],
+    ['the first round: the rooms\' music (act4, 31 Oct 2026); the study doc says idle: nothing for the lamp', { night: night(4, 'round1'), study: { state: 'idle' } }, ['play act4']],
     ['a group plays', { night: night(4, 'round1'), study: { state: 'playing' } }, ['scene Murderwin Study Dim']],
     ['the same state again: nothing', { night: night(4, 'round1'), study: { state: 'playing' } }, []],
-    ['Act 5 arrives while they are still at it: the lamp back with the act', { night: night(5, 'roam'), study: { state: 'playing' } }, ['scene Murderwin Default', 'speaker Living Room on']],
+    ['Act 5 arrives while they are still at it: the lamp back with the act, and the jazz everywhere (the rooms\' music ends)', { night: night(5, 'roam'), study: { state: 'playing' } }, ['play jazz', 'scene Murderwin Default', 'speaker Living Room on']],
     ['and no more while the study doc says playing outside Act 4', { night: night(5, 'irwin'), study: { state: 'playing' } }, []],
   ])
 })
@@ -231,7 +231,8 @@ test('the host\'s music buttons: play, pause, next, each once per press, and nev
   assert.deepEqual(press('next', t + 40), ['play intense35'])
   assert.deepEqual(press('next', t + 50), ['play intense60'])
   assert.deepEqual(press('next', t + 60), ['play credits'])
-  assert.deepEqual(press('next', t + 70), ['play jazz'], 'and round again')
+  assert.deepEqual(press('next', t + 70), ['play act4'], 'then Act 4\'s rooms setting, last (31 Oct 2026)')
+  assert.deepEqual(press('next', t + 75), ['play jazz'], 'and round again')
   assert.deepEqual(press('pause', t + 80 - SOUND_STALE_MS, t + 80), [], 'a press older than the stale window is remembered, not obeyed')
   assert.deepEqual(press('shuffle', t + 90), [], 'an unknown command does nothing')
   // the host's choice holds until the sheet next changes
@@ -340,9 +341,9 @@ test('Boo\'s speaker (Jon, 27 Oct 2026): the Parlour HomePod leaves the house mu
   walk([
     ['a relay started in Act 3: nothing for the speaker', { night: night(3, 'supper') }, ['play jazz', 'scene Murderwin Default', 'projector on']],
     ['Act 4: out', { night: night(4, 'warn') }, ['speaker Living Room off']],
-    ['the rounds: nothing more', { night: night(4, 'round3') }, []],
+    ['the rounds: nothing more for the speaker (the rooms\' music starts at the first round, 31 Oct 2026)', { night: night(4, 'round3') }, ['play act4']],
     ['a pause in Act 4: still out', { night: { act: 4, beat: 'round3', phase: 'paused', pausedFrom: 'act' } }, []],
-    ['Act 5: back in', { night: night(5, 'roam') }, ['speaker Living Room on']],
+    ['Act 5: back in, with the jazz on every HomePod again', { night: night(5, 'roam') }, ['play jazz', 'speaker Living Room on']],
     ['Act 6: nothing more', { night: night(6, 'parlour') }, []],
   ])
   assert.ok(sceneProblems({ ...SHEET, boo: { acts: [4], speaker: '' } }).includes('boo.speaker is not a speaker name'))

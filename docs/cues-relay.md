@@ -73,6 +73,26 @@ door).
   newscast and The End. Playlists play on shuffle and repeat. Whenever a cue
   sound or a recording plays, the music dips to a whisper and comes back
   after (bulletin 2 plays over the dipped music, it never cuts it).
+- **Music through Apple Home (31 October, your formal rundown).** The other
+  road: `MUSIC_SHORTCUTS=on` in `cues/.env`, and the brain runs one Shortcut
+  per music setting instead of the Music app, each running a Home scene
+  that plays on the HomePods themselves. The names, from your list, are in
+  `cues/scenes.json` under `musicShortcuts`: *Default Jazz* (the jazz),
+  *Default Jazz 20%* (the drawing's intro), *Intense Music 35%*, *Intense
+  Music 60%*, *Credit Roll Music*, and for Act 4 three in a row, *Default
+  Jazz*, then *Lightbulb Moment Music* (the Study's HomePod), then *Get Off
+  My Grass Game Music* (the Orangerie's), from the first round until
+  dessert, when *Default Jazz* brings every HomePod back. You also make
+  one called *Stop Music* that stops them, for the house rules, the
+  blackout, bulletin 1's video, the newscast and The End; without it the
+  brain says so once and the HomePods play on. The Music app then plays
+  only the cake's song. On this road the music does not dip under a cue
+  sound (the HomePods play their own stream), and the chimes and recordings
+  reach the HomePods by AirPlay as before: try one chime over the jazz on
+  the tech run, and if the jazz does not come back after it, say so. Each
+  Shortcut goes through the same runner as the string lights (step 18):
+  three quarters of a second and the next one goes, whatever Apple Home is
+  still waiting on.
 - **Cake!** When you press **Cake!** on the Host tab in Act 5, the brain
   plays the song *Happy Birthday for Dogs* from its Music library on every
   HomePod, once, at 60, and switches the lights to Murderwin Candles. When
@@ -253,6 +273,18 @@ Shortcuts apps are yours.)
    Security, Automation, Terminal, and tick Music. If the music comes out of
    the Mac and not the HomePods, click the AirPlay button in the Music window
    and tick the same HomePods.
+8c. **The music through Apple Home (31 Oct 2026).** Instead of steps 6 and
+   8, or as well: in the Home app, one scene per music setting that plays
+   the right music on the right HomePods, and in Shortcuts one shortcut per
+   scene, named exactly *Default Jazz*, *Default Jazz 20%*, *Lightbulb
+   Moment Music*, *Get Off My Grass Game Music*, *Intense Music 35%*,
+   *Intense Music 60%*, *Credit Roll Music* and *Stop Music*. Make *Default
+   Jazz* play on every HomePod, and the two room ones on their own HomePod
+   only: in Act 4 the brain runs the jazz first and the two rooms after it.
+   In `cues/.env`, `MUSIC_SHORTCUTS=on`. Then `npm start -- --check-music`
+   runs each setting for six seconds in turn, the song, and the stop; a
+   Shortcut that is not on this Mac is named in the window. Keep step 7:
+   the cake's song still comes from the Music app.
 8b. **Boo's speaker (27 Oct 2026).** In Act 4 the Parlour HomePod plays
    Boo's Catwalk from Susan's MacBook Pro, not the house music. The brain
    takes it out of Music's AirPlay speakers when Act 4 starts and puts it
@@ -383,6 +415,7 @@ them on the night.
 | `MEDIA_DIR` | Where the sound files are. Leave it as `../media`. |
 | `STATION_KEY` | The study's key word, the same as on the Host tab, so the news recordings play. |
 | `MUSIC` | `on`, or `off` to leave the music to you and the Music app (Cake! then only switches the lights). |
+| `MUSIC_SHORTCUTS` | `on` to run the music through the Shortcuts named in `cues/scenes.json` `musicShortcuts` (one Home scene each, on the HomePods) instead of the Music app, which then plays only the cake's song. |
 | `HUE_SCENES` | `on`, or `off` to leave the scenes to the Hue app on your phone. |
 | `PROJECTOR_SHORTCUTS` | `on` to switch the projector's plug from the brain through the two Shortcuts. Empty or `off`: the brain only says what it would do. |
 | `PROJECTOR_SHORTCUT_ON`, `PROJECTOR_SHORTCUT_OFF` | Only if a Shortcut has another name on this Mac than *Projector Murderwin On* / *Off*. |
