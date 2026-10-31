@@ -28,6 +28,7 @@ import {
   ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS,
   SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031,
   ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS,
+  MUSIC_SHORTCUTS_1031_TASKS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -961,6 +962,13 @@ export const ADDITIONS = [
     tasks: ARCADE_PLAYTEST_1031_TASKS,
     fileTasks: FILED_FOR_ARCADE_PLAYTEST_1031,
     decisions: ARCADE_PLAYTEST_1031_DECISIONS,
+  },
+  {
+    // 31 Oct, evening: the music through Jon's seven Shortcuts, from the
+    // formal rundown (550, done); Stop Music, the switch and the check are
+    // Jon's (551).
+    id: '2026-10-31-music-shortcuts',
+    tasks: MUSIC_SHORTCUTS_1031_TASKS,
   },
 ]
 

@@ -9,6 +9,27 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 31 Oct 2026, evening · Claude Code (the music through Jon's seven Shortcuts)
+
+- Jon's formal rundown (`Murderwin Rundown.xlsx` on his Desktop, the same
+  23 cues as `docs/cue-list.md`) and his seven music Shortcuts: Default
+  Jazz, Default Jazz 20%, Lightbulb Moment Music, Get Off My Grass Game
+  Music, Intense Music 60%, Intense Music 35%, Credit Roll Music. Built:
+  `cues/lib/shortcutMusic.js` (the Music app's interface, on the Shortcut
+  runner), `musicShortcuts` in `cues/scenes.json` by the playlist keys,
+  a sixth setting `act4` that runs three Shortcuts in order (the house
+  jazz, then the Study's, then the Orangerie's) from the first round of
+  Act 4 until dessert, `jazzLow` at 20, `MUSIC_SHORTCUTS=on` in
+  `cues/.env` to take that road, `--check-music` walking the Shortcuts on
+  it. The Music app keeps the cake's song. No dip under a cue sound on this
+  road; the chimes still reach the HomePods by AirPlay, to be tried over
+  the jazz on the tech run. Jon's part (card 551): a Stop Music Shortcut,
+  the scenes' HomePods, and the switch. Cards 550 and 551 (544 to 549 went
+  to the second arcade playtest, built in another session at the same
+  time). Cues 78 tests, workshop suite green. Committed on main; the brain
+  not restarted to it (the switch stays off until Jon's Shortcut exists);
+  nothing on the site changed; not pushed.
+
 ## 31 Oct 2026, evening · Claude Code (the arcade from Jon's second playtest; fifteen-minute rounds)
 
 - Jon's second playtest of Miss Boo LaRue's Arcade on the real Stream Deck
