@@ -48,6 +48,10 @@ on the Canon.
   `docs/on-the-night.md`, `docs/room-screens.md`, `docs/test-plan.md` (G54,
   G55), this log, `CLAUDE.md`. Claude chat keeps the Canon and Start Here
   (the 30 October handoff's split).
+- A flaky test found on the way, not from this work: G59 in
+  `functions/test/study-clock.test.mjs` took the study's round 1 group,
+  which with three groups and four shuffled rooms is nobody about two runs
+  in five; it takes the first group the study order names now.
 - Left: Jon's try of the changed games on the deck (514); the arcade on the
   night (515); the deploy, on Jon's say-so.
 

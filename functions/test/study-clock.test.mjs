@@ -142,7 +142,10 @@ test('G59 a study with no trace to pay: the house\'s plain words on the party ni
     await db.doc(`cases/${nightId}`).update({ rehearsal })
     // the Ghost's character has no trace: nothing for the study to pay
     await db.doc(`nights/${nightId}`).update({ [`roster.${c.ghost}.characterId`]: 'nobody' })
-    const gid = db.store.get(studyPath(nightId)).groupId ?? db.store.get(rotationPath(nightId)).studyOrder[0]
+    // three groups and four rooms: one round has nobody in the study, and the
+    // rooms are shuffled, so round 1 may be that round; the first group the
+    // study order names will do (finishStudy pays any unpaid group in it)
+    const gid = db.store.get(studyPath(nightId)).groupId ?? db.store.get(rotationPath(nightId)).studyOrder.find(Boolean)
     await stationCommand(db, { nightId, command: 'finished', payload: { groupId: gid, outcome: 'solved', seconds: 240, pairs: 3 } })
     const ks = members(db, nightId, gid)
     assert.ok(ks.length >= 2)
