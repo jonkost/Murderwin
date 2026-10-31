@@ -236,7 +236,7 @@ export function createTestMode({
   function startPractice() {
     if (mode === 'practice') return say('A practice round is already going. Press Stop to end it.')
     if (mode === 'teach') return say('Stop the teaching first, then play a practice round.')
-    if (!elementsOk) return say('The white hexagons were not answering when the station started, so there is nothing to practise on. Check the wall, then restart the station (npm start).')
+    if (!elementsOk) return say('The white hexagons were not answering when the station started, so there is nothing to practice on. Check the wall, then restart the station (npm start).')
     if (studyNotFree()) return
     begin('practice')
     const p = { runner: null, alive: true, done: false, lastInputAt: now() }

@@ -202,7 +202,7 @@ test('the shared games: the night and the practice play the same component, and 
   assert.match(practice, /callGameTest\(\{ command: 'clock' \}\)/)
   assert.equal((practice.match(/= usePracticeClock\(uid\)/g) ?? []).length, 2, 'both practices measure the clock that way')
   assert.ok(!practice.includes('<Kiosk'), 'the practice wall is not a room screen')
-  assert.match(main, /Practising \? <Practising \/> : kiosk \? <Kiosk which=\{kiosk\} \/>/, '?kiosk=boo&practice=1 is routed before the room screens')
+  assert.match(main, /Practicing \? <Practicing \/> : kiosk \? <Kiosk which=\{kiosk\} \/>/, '?kiosk=boo&practice=1 is routed before the room screens')
   // the night's game still pays through its own calls
   assert.match(act4, /callSalemReady\(\{ nightId \}\)/)
   assert.match(act4, /callSalemSlip\(\{ nightId, attempt, colour \}\)/)

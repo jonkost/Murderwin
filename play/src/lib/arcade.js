@@ -122,6 +122,10 @@ export const LEFT_DIAL = 0               // the outside dials: the games are pla
 export const RIGHT_DIAL = DIALS - 1
 export const MENU_KEYS = [11, 12, 13, 14, 15] // the second row: two blank, five games, two blank
 export const BACK_KEY = 27 // keyAt(3, 0): Back, on the ready screen only
+// Pressed in while a game runs (or counts down): the game is left, unfinished
+// and uncounted, and the player is back on the menu (Jon, 30 Oct 2026: "An
+// exit button in every game, to go back"). Labelled Exit on the strip.
+export const EXIT_DIAL = 2
 const TOKEN_KEYS = [keyAt(2, 3), keyAt(2, 5)] // the player's two tokens, on the menu
 const MIDDLE_KEY = keyAt(1, 4) // the count, OK, and Boo
 export const STRIP_WIDTH = 1200 // the touch strip, in its own pixels: a tap's x runs 0 to 1199, left to right
@@ -173,7 +177,7 @@ export const BOO_LINES = {
   ],
   freePlay: "Play on, darlings. I'll pretend not to look.",
   freePlayOne: "Play on, darling. I'll pretend not to look.",
-  win: ['Ha! Oh, that was good. I mean, adequate.', "Well, well. Somebody's been practising."],
+  win: ['Ha! Oh, that was good. I mean, adequate.', "Well, well. Somebody's been practicing."],
   caught: 'Mine. Obviously.',
   pets: 'Hands off my friends, darling. Out you go.',
   lose: 'Tragic. Truly. Next.',
@@ -1191,12 +1195,13 @@ function take(s, e, t) {
     }
     case 'ready':
       if (t - s.stageAt < PICK_MS) return // the picked key's tick: a double tap does not skip the how-to
-      if (e.kind === 'key' && e.index === BACK_KEY) {
-        s.events.push('back') // no token spent
-        return counted(s) ? toMenu(s, t, s.turn) : toHome(s, t)
-      }
+      if ((e.kind === 'key' && e.index === BACK_KEY) || isExit(e)) return leaveGame(s, t) // no token spent
       return toCount(s, t) // any other key, dial, tap or arrow
+    case 'count':
+      if (isExit(e)) leaveGame(s, t)
+      return
     case 'play': {
+      if (isExit(e)) return leaveGame(s, t)
       const g = inputGame(s.game, e, t)
       s.events.push(...g.events)
       s.game = { ...g, events: [] }
@@ -1210,8 +1215,34 @@ function take(s, e, t) {
       if (pressed && t - s.stageAt >= WINNER_MIN_MS) toFreePlay(s, t)
       return
     default:
-      return // the count, the result and the farewell take no presses
+      return // the result and the farewell take no presses
   }
+}
+
+const isExit = e => e.kind === 'press' && e.dial === EXIT_DIAL
+
+// A game left before its end (Jon, 30 Oct 2026: "An exit button in every
+// game, to go back"; "A game left unfinished doesn't count"): no points are
+// kept, and in a visit the token comes back, so the player picks again
+// (arcadeExit's default: they can play it again). From the how-to nothing was
+// spent. From the result it only moves on: that game is over, and counted.
+function leaveGame(s, t) {
+  if (s.stage === 'result') return afterResult(s, t)
+  if (!PLAYING.includes(s.stage)) return
+  if (counted(s) && s.stage !== 'ready') { const p = s.players[s.turn]; p.tokens = Math.min(TOKENS, p.tokens + 1) }
+  s.events.push('back')
+  return counted(s) ? toMenu(s, t, s.turn) : toHome(s, t)
+}
+
+// The Leave this game button on the screen, and Escape: the same as the Exit
+// dial. On the menu, a clue, the winner or the farewell it does nothing.
+export function arcadeExit(a, now) {
+  const s = copy(a)
+  s.events = []
+  catchUp(s, now)
+  leaveGame(s, now)
+  s.events = uniq(s.events)
+  return s
 }
 
 // The Ring the chime button: the round ends now.
@@ -1238,7 +1269,7 @@ export function arcadeBack(a, now) {
     afresh(s, now, 'back')
     s.events.push('back')
   } else if (PLAYING.includes(s.stage)) {
-    toHome(s, now)
+    leaveGame(s, now)
     s.events.push('back')
   }
   s.events = uniq(s.events)
@@ -1319,7 +1350,8 @@ function stripOf(a, now) {
   const g = PLAYING.includes(a.stage) ? a.game : null
   const info = g ? GAME[g.id] : null
   const name = info?.name ?? ''
-  const dials = info?.dials ?? NO_DIALS
+  // the game's dials, and Exit over the dial that leaves it while it counts down or runs
+  const dials = (info?.dials ?? NO_DIALS).map((x, i) => (i === EXIT_DIAL && (a.stage === 'count' || a.stage === 'play') ? 'Exit' : x))
   const zones = g?.id === 'yarn'
   const who = a.players[a.turn]?.name ?? ''
   const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, lights: null, zones: false, dials: [...NO_DIALS], ...more })

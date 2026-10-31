@@ -25,12 +25,12 @@ const check = new URLSearchParams(window.location.search).get('check')
 // /play/?kiosk=boo&practice=1 on the wall. No night; nothing is paid.
 const practice = practiceParam()
 const PRACTICE = { salem: SalemPractice, boo: BooPractice, 'boo-wall': BooWallPractice, 'pose-wall': PoseCameraPractice }
-const Practising = practice ? PRACTICE[practice] : null
+const Practicing = practice ? PRACTICE[practice] : null
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      {check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practising ? <Practising /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
+      {check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
     </ErrorBoundary>
   </React.StrictMode>,
 )

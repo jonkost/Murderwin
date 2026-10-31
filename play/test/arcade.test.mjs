@@ -2,12 +2,12 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, existsSync } from 'node:fs'
 import {
-  ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, STRIP_WIDTH,
+  ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, STRIP_WIDTH,
   TABLE_ENDS,
   TOKENS, MAX_PLAYERS, ROUND_MS, FREE_GAME_MS, GAME_MS, TRIO_GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS, gameLengthMs,
   STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, BOO_LINES,
   GAMES, KNOCK_OBJECTS, PETS, FRIEND_NAMES, TAIL_FRIENDS, FUR_PAIRS, MENU_FACES, GAME_FACES, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf,
-  newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeView, arcadeSample,
+  newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
   HIT_MS, MISS_MS, STRIKES_OUT, STRIKE_WORDS_MS, DIAL_MAX_KEYS,
   TAIL_STEP_MS, TAIL_STEP_END_MS, TAIL_TURN_ONE_IN, TAIL_FLEE_KEYS, TAIL_AWAY_KEYS,
   TAIL_BLOCKS_FROM_MS, TAIL_BLOCKS_EVERY_MS, TAIL_BLOCKS_MAX, TAIL_POINTS,
@@ -70,6 +70,8 @@ const STRUCK = { boo: "That's Miss Boo.", granola: "That's Granolia.", irwin: "T
 // A starting point that moves to an end point over a two-minute game started at 0, as the engine's speeds do.
 const over2min = (from, to, t) => from + (to - from) * Math.min(1, Math.max(0, t / 120000))
 const NO_DIALS = ['', '', '', '', '', '']
+// The dial labels with Exit over the dial that leaves the game, while it counts down or runs (30 Oct 2026).
+const withExit = d => d.map((x, i) => (i === EXIT_DIAL ? 'Exit' : x))
 const SAMPLES = ['home', 'menu', 'play', 'clue', 'third', 'winner', 'farewell']
 
 // Random presses, turns, taps, swipes, arrows and junk through a whole game, at the page's ticks.
@@ -120,7 +122,7 @@ function playGame(a, t, id, during, every = 250) {
   a = aIn(a, key(menuKey(id)), t)
   assert.equal(a.stage, 'ready')
   t += PICK_MS
-  a = aIn(a, press(2), t)
+  a = aIn(a, press(1), t)
   assert.equal(a.stage, 'count')
   t += COUNT_MS
   a = aStep(a, t)
@@ -186,7 +188,7 @@ function runVisit(names, picks, { seed = 21, during, look = () => {}, roundMs = 
     if (a.stage === 'menu') {
       a = aIn(a, key(menuKey(picks[n++ % picks.length])), t); look(a, t)
       t += PICK_MS
-      a = aIn(a, press(2), t); look(a, t)
+      a = aIn(a, press(1), t); look(a, t)
     } else if (['clue', 'third', 'winner'].includes(a.stage)) {
       t += a.stage === 'winner' ? WINNER_MIN_MS : CLUE_MIN_MS
       a = aStep(a, t); look(a, t)
@@ -1862,7 +1864,7 @@ test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big 
       assert.deepEqual(c, { ...r, centre: '3' })
     } else {
       assert.deepEqual(r, { left: name, centre: 'Press any key to start', right: rule ?? '', score: null, marks: null, lights: null, zones: false, dials })
-      assert.deepEqual(c, { ...r, centre: '3' })
+      assert.deepEqual(c, { ...r, centre: '3', dials: withExit(dials) }, 'the count: Exit over its dial')
     }
     // the game
     const [a, t] = started(id)
@@ -1874,7 +1876,7 @@ test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big 
       assert.deepEqual(s, { left: '', centre: '', right: '', score: 0, marks: null, lights: null, zones: true, dials: NO_DIALS })
       continue
     }
-    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? { of: STRIKES_OUT, used: 0 } : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones: false, dials })
+    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? { of: STRIKES_OUT, used: 0 } : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones: false, dials: withExit(dials) })
     // one light goes out every eighth of the game
     for (let n = 1; n < TIME_LIGHTS; n++) {
       const out = g.startedAt + n * L / TIME_LIGHTS
@@ -3000,7 +3002,7 @@ test('L09 the arcade reads no night and shows nothing sealed: no Firebase, no ho
   const main = src('../src/main.jsx')
   assert.match(main, /import BooArcade from '\.\/screens\/Arcade'/)
   assert.match(main, /const arcade = kiosk === 'boo' && new URLSearchParams\(window\.location\.search\)\.get\('play'\) === '1'/)
-  assert.match(main, / : arcade \? <BooArcade \/> : Practising \? <Practising \/> : kiosk \? <Kiosk which=\{kiosk\} \/> : <App \/>/)
+  assert.match(main, / : arcade \? <BooArcade \/> : Practicing \? <Practicing \/> : kiosk \? <Kiosk which=\{kiosk\} \/> : <App \/>/)
 })
 
 test('L09 the page: one 16 ms loop, stopped when it goes; the deck only through lib/arcadeDeck.js, its painter handed every view and the faces to make ready; the arrow keys and the mouse wheel play; the Scoreboard while the Stream Deck is connected; the sounds only through sfx on the kiosk\'s AudioContext; the PRACTICE band only in a visit; nothing kept', () => {
@@ -3093,24 +3095,33 @@ test('the Preview has the arcade\'s five samples, each a frozen moment the engin
   const page = uncommented(src('../src/screens/Arcade.jsx'))
   assert.match(page, /^\s*const live = !sample\s*$/m)
   assert.equal((page.match(/if \(!live\) return/g) ?? []).length, 4, 'the loop, the sound, the keyboard and the title')
-  assert.equal((page.match(/if \(!live \|\| !a\) return/g) ?? []).length, 3, 'a press, the chime and Back')
+  assert.equal((page.match(/if \(!live \|\| !a\) return/g) ?? []).length, 4, 'a press, the chime, Back and Leave this game')
   assert.match(page, /if \(!live \|\| !box\) return/, 'the mouse wheel')
   assert.match(page, /if \(!live \|\| !deckSupported\(\)\) return/, 'the deck')
   assert.match(page, /inert=\{sample \? true : undefined\}/, 'nothing on a sample answers a click')
   assert.match(page, /onInput=\{live \? input : null\}/, 'the drawn deck answers nothing on a sample')
 })
 
-test('G54 Back at the top of the page (Jon, 29 Oct 2026: "on the pratice page I need a back button. Im stuck and cant get back."): a visit ends for free play, a free-play game goes back to the games, and Escape leaves a free-play game', () => {
+test('G54 Back at the top of the page (Jon, 29 Oct 2026: "on the pratice page I need a back button. Im stuck and cant get back."): a visit ends for free play, a free-play result goes back to the games; and Leave this game beside it (Jon, 30 Oct 2026: an exit in every game), from the how-to to the play in a visit too, like Escape and the Exit dial', () => {
   const page = uncommented(src('../src/screens/Arcade.jsx'))
   assert.match(page, /\barcadeBack\b[^;]*\} from '\.\.\/lib\/arcade'/, 'the engine\'s Back')
+  assert.match(page, /\barcadeExit\b[^;]*\} from '\.\.\/lib\/arcade'/, 'the engine\'s Exit')
   assert.match(page, /function leave\(\) \{\s*const a = arcadeRef\.current\s*if \(!live \|\| !a\) return\s*const now = performance\.now\(\)\s*move\(arcadeBack\(a, now\), now\)\s*\}/)
+  assert.match(page, /function exit\(\) \{\s*const a = arcadeRef\.current\s*if \(!live \|\| !a\) return\s*const now = performance\.now\(\)\s*move\(arcadeExit\(a, now\), now\)\s*\}/)
   assert.match(page, /leaveRef\.current = leave/)
-  const leavable = /const LEAVABLE = (\[[^\]]*\])/.exec(page)
-  assert.ok(leavable, 'the free-play stages Back leaves')
-  assert.deepEqual(JSON.parse(leavable[1].replace(/'/g, '"')), ['ready', 'count', 'play', 'result'])
-  assert.match(page, /const leaving = !live \|\| setup \|\| !screen \? null : visit \? 'Back to free play' : LEAVABLE\.includes\(stage\) \? 'Back to the games' : null/)
+  assert.match(page, /exitRef\.current = exit/)
+  const exitable = /const EXITABLE = (\[[^\]]*\])/.exec(page)
+  assert.ok(exitable, 'the stages a game can be left from')
+  assert.deepEqual(JSON.parse(exitable[1].replace(/'/g, '"')), ['ready', 'count', 'play'])
+  assert.match(page, /const exiting = live && !setup && screen && EXITABLE\.includes\(stage\) \? 'Leave this game' : null/)
+  assert.match(page, /const leaving = !live \|\| setup \|\| !screen \? null : visit \? 'Back to free play' : stage === 'result' \? 'Back to the games' : null/)
+  assert.match(page, /\{exiting \? <button type="button" className="arcade-back" onMouseDown=\{noFocus\} onClick=\{exit\}>\{exiting\}<\/button> : null\}/)
   assert.match(page, /\{leaving \? <button type="button" className="arcade-back" onMouseDown=\{noFocus\} onClick=\{leave\}>\{leaving\}<\/button> : null\}/)
-  assert.match(page, /if \(a\?\.stage === 'ready'\) ev = \{ kind: 'key', index: BACK_KEY \}\s*else if \(a\?\.mode === 'free' && LEAVABLE\.includes\(a\.stage\)\) \{ e\.preventDefault\(\); leaveRef\.current\(\); return \}/)
+  // Escape: Back on the how-to, Leave this game while a game counts down or runs (in a visit too), Back to the games on a free-play result
+  assert.match(page, /if \(a\?\.stage === 'ready'\) ev = \{ kind: 'key', index: BACK_KEY \}\s*else if \(EXITABLE\.includes\(a\?\.stage\)\) \{ e\.preventDefault\(\); exitRef\.current\(\); return \}\s*else if \(a\?\.mode === 'free' && a\?\.stage === 'result'\) \{ e\.preventDefault\(\); leaveRef\.current\(\); return \}/)
+  // the drawn deck's Exit dial: lit and named while the strip labels it
+  assert.match(page, /labels\[d\] === 'Press' \|\| labels\[d\] === 'Exit' \? ' lit' : ''/)
+  assert.match(page, /aria-label=\{labels\[d\] === 'Exit' \? 'Exit: leave this game' : `Press dial \$\{d \+ 1\}`\}/)
   // the page offers Back to the games where the engine leaves a free-play game, and Back to free play in a visit
   const ready = aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey('mice')), 0)
   const count = aIn(ready, press(0), PICK_MS)
@@ -3125,6 +3136,61 @@ test('G54 Back at the top of the page (Jon, 29 Oct 2026: "on the pratice page I 
   const [visit, tv] = started('mice', { players: ['Ann', 'Bo'] })
   const left = arcadeBack(visit, tv)
   assert.deepEqual([left.mode, left.stage, left.events], ['free', 'home', ['back']], 'a visit: free play at once, no chime, no farewell')
+})
+
+test('G55 Leave this game, Escape and the Exit dial (Jon, 30 Oct 2026: "An exit button in every game, to go back", "A game left unfinished doesn\'t count"): from the how-to, the count or the play, in a visit the token comes back and the same player picks again, nothing is counted or recorded; from the result it only moves on; on the menu, a clue, the winner and the farewell nothing happens; every game, free play too', () => {
+  for (const { id, dials } of GAMES) {
+    const [play, tp] = started(id, { players: ['Ann', 'Bo'], seed: 11 })
+    const before = play.players[0]
+    assert.equal(before.tokens, TOKENS - 1, 'the token was spent as the count started')
+    // the Exit dial, in play
+    const x = aIn(play, press(EXIT_DIAL), tp + 500)
+    assert.deepEqual([x.stage, x.turn, x.game, x.pick, x.events], ['menu', 0, null, null, ['back']], `${id}: back on the menu, the same player`)
+    assert.equal(x.players[0].tokens, TOKENS, `${id}: the token is back`)
+    assert.deepEqual(x.players[0].games, [], `${id}: nothing recorded`)
+    assert.deepEqual(x.stats, play.stats, `${id}: nothing in the fun facts`)
+    assert.equal(arcadeView(x, tp + 500).screen.plain, "Ann's turn: press a game.")
+    // the button, in play and in the count, is the same
+    assert.deepEqual(without(arcadeExit(frozen(play), tp + 500), 'events'), without(x, 'events'), `${id}: Leave this game is the Exit dial`)
+    const count = aIn(aIn(newArcade({ mode: 'visit', players: ['Ann', 'Bo'], seed: 11, now: 0 }), key(menuKey(id)), 0), press(0), PICK_MS)
+    assert.equal(count.stage, 'count')
+    for (const leave of [a => arcadeExit(frozen(a), PICK_MS + 1000), a => aIn(a, press(EXIT_DIAL), PICK_MS + 1000)]) {
+      const c = leave(count)
+      assert.deepEqual([c.stage, c.players[0].tokens, c.players[0].games.length, c.events.includes('back')], ['menu', TOKENS, 0, true], `${id}: left from the count`)
+    }
+    // the how-to: like Back, nothing was spent
+    const ready = aIn(newArcade({ mode: 'visit', players: ['Ann', 'Bo'], seed: 11, now: 0 }), key(menuKey(id)), 0)
+    for (const leave of [a => arcadeExit(frozen(a), PICK_MS + 10), a => aIn(a, press(EXIT_DIAL), PICK_MS + 10)]) {
+      const r = leave(ready)
+      assert.deepEqual([r.stage, r.players[0].tokens, r.events], ['menu', TOKENS, ['back']], `${id}: left from the how-to`)
+    }
+    assert.equal(aIn(ready, press(EXIT_DIAL), PICK_MS - 1).stage, 'ready', 'not during the picked key\'s tick')
+    // the strip names it only while the game counts down or runs
+    assert.equal(arcadeView(ready, PICK_MS).strip.dials[EXIT_DIAL], dials[EXIT_DIAL], `${id}: no Exit on the how-to`)
+    if (id !== 'yarn') {
+      assert.equal(arcadeView(count, PICK_MS + 10).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit on the count`)
+      assert.equal(arcadeView(play, tp).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit in play`)
+    }
+    // the other dials pressed in do nothing to the game in play
+    for (let d = 0; d < DIALS; d++) if (d !== EXIT_DIAL) assert.equal(aIn(play, press(d), tp + 500).stage, 'play', `${id}: dial ${d + 1}`)
+    // free play: back to the games, nothing counted
+    const [free, tf] = started(id, { seed: 12 })
+    const f = aIn(free, press(EXIT_DIAL), tf + 500)
+    assert.deepEqual([f.mode, f.stage, f.events, f.stats.games], ['free', 'home', ['back'], 0], `${id}: free play`)
+    assert.deepEqual(without(arcadeExit(frozen(free), tf + 500), 'events'), without(f, 'events'))
+  }
+  // from the result: the game is over and counted, and Exit only moves on
+  let [a, t] = playGame(newArcade({ mode: 'visit', players: ['Ann', 'Bo'], seed: 11, now: 0, roundMs: 3600000 }), 0, 'knock', knocker)
+  assert.equal(a.stage, 'result')
+  const moved = arcadeExit(frozen(a), t + 100)
+  assert.deepEqual([moved.stage, moved.turn, moved.players[0].games.length, moved.players[0].tokens, moved.events], ['menu', 1, 1, TOKENS - 1, [], ], 'the result moves on to the next turn, the game kept')
+  assert.equal(aIn(a, press(EXIT_DIAL), t + 100).stage, 'result', 'the result takes no presses')
+  // nowhere else
+  const home = newArcade({ mode: 'visit', players: ['Ann', 'Bo'], seed: 11, now: 0 })
+  for (const [name, x, at] of [['menu', home, 10], ['clue', arcadeSample('clue', 1000), 1000], ['third', arcadeSample('third', 1000), 1000], ['winner', arcadeSample('winner', 1000), 1000], ['farewell', arcadeSample('farewell', 1000), 1000], ['home', arcadeSample('home', 1000), 1000]]) {
+    assert.deepEqual(arcadeExit(frozen(x), at), aStep(x, at), name)
+    assert.deepEqual(arcadeExit(x, at).events, [], name)
+  }
 })
 
 test('G54 the page with the Stream Deck connected: the moment\'s Start, Back and OK only on the deck drawn on the screen, and each pop keeps its spot', () => {
@@ -3160,7 +3226,7 @@ test('G54 the page starts every arcade and every deck with no old pops, and the 
   const page = uncommented(src('../src/screens/Arcade.jsx'))
   // a new arcade (a visit begun, free play, the visit's form) and the deck coming or going: the pops start afresh,
   // so pops kept from before never all play again at once when the scoreboard comes
-  for (const head of ['function begin(', 'function freePlay(', 'function practise(', 'const lost = (d, error) => {', 'const attach = d => {', 'onUnplug: () => {']) {
+  for (const head of ['function begin(', 'function freePlay(', 'function practice(', 'const lost = (d, error) => {', 'const attach = d => {', 'onUnplug: () => {']) {
     assert.match(bodyOf(page, head), /setPops\(\[\]\)/, `${head} clears the pops`)
   }
   // the first press wakes the sound at once, but the footer keeps the Wake corner's room until the click is over:

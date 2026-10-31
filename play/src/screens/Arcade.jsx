@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
-  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeView, arcadeSample,
+  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
 } from '../lib/arcade'
 import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
 import { deckSupported, reopenDeck, chooseDeck, deckEvents, deckPainter, watchPlugs, deckProblem } from '../lib/arcadeDeck'
@@ -30,9 +30,10 @@ import Spoken from './Spoken'
 // play through the kiosk's one AudioContext once a click has woken it: a
 // press on the deck cannot, so the Wake corner stays until the first click.
 // The painter itself blanks the deck when the page is closed or left. Back,
-// at the top of the screen, ends a visit at once for free play, and leaves a
-// free-play game for the menu (Jon, 29 Oct 2026: "on the pratice page I need
-// a back button. Im stuck and cant get back.").
+// at the top of the screen, ends a visit at once for free play (Jon, 29 Oct
+// 2026: "on the pratice page I need a back button. Im stuck and cant get
+// back."), and Leave this game, beside it, leaves the game on the deck for
+// the menu, uncounted, like the Exit dial (Jon, 30 Oct 2026).
 //
 // <BooArcade sample="clue" /> is a Preview's frozen moment (arcadeSample):
 // no loop, no input, no deck, no sound, no setup form, no band.
@@ -100,6 +101,8 @@ const RESTING = {
 const MOMENTS = ['ready', 'count', 'result', 'clue', 'third', 'winner', 'farewell']
 // A free-play game, from its how-to to its points, can be left for the menu.
 const LEAVABLE = ['ready', 'count', 'play', 'result']
+// A game can be left (Leave this game, Escape, the Exit dial) from its how-to to its play, in a visit too (Jon, 30 Oct 2026).
+const EXITABLE = ['ready', 'count', 'play']
 // A clue, Boo's line for a trio's third player and the winner wait this long
 // before a press moves them on (the engine's own rule), so OK waits too.
 const OK_AFTER = { clue: CLUE_MIN_MS, third: CLUE_MIN_MS, winner: WINNER_MIN_MS }
@@ -181,6 +184,7 @@ export default function BooArcade({ sample = null }) {
   const inputRef = useRef(null)
   const tickRef = useRef(null)
   const leaveRef = useRef(null)
+  const exitRef = useRef(null)
   const [pops, setPops] = useState([]) // the newest few points and strikes, for the screen
   const popId = useRef(0)
 
@@ -247,11 +251,18 @@ export default function BooArcade({ sample = null }) {
     setPops([])
     show(arcadeRef.current, now)
   }
-  function practise() {
+  function practice() {
     arcadeRef.current = null
     setSetup(true)
     setPops([])
     show(null, performance.now())
+  }
+  // Leave this game (Jon, 30 Oct 2026: an exit in every game): the same as the Exit dial.
+  function exit() {
+    const a = arcadeRef.current
+    if (!live || !a) return
+    const now = performance.now()
+    move(arcadeExit(a, now), now)
   }
   // Connect: the browser's chooser opens only inside the click, so it is asked
   // first. It takes the deck from another arcade tab, if one has it.
@@ -267,6 +278,7 @@ export default function BooArcade({ sample = null }) {
   inputRef.current = input
   tickRef.current = tick
   leaveRef.current = leave
+  exitRef.current = exit
 
   // The loop.
   useEffect(() => {
@@ -322,7 +334,8 @@ export default function BooArcade({ sample = null }) {
       else if (e.key === 'Escape') {
         const a = arcadeRef.current
         if (a?.stage === 'ready') ev = { kind: 'key', index: BACK_KEY }
-        else if (a?.mode === 'free' && LEAVABLE.includes(a.stage)) { e.preventDefault(); leaveRef.current(); return }
+        else if (EXITABLE.includes(a?.stage)) { e.preventDefault(); exitRef.current(); return }
+        else if (a?.mode === 'free' && a?.stage === 'result') { e.preventDefault(); leaveRef.current(); return }
       }
       else if (/^[1-9]$/.test(e.key) && Number(e.key) <= MENU_KEYS.length) ev = { kind: 'key', index: MENU_KEYS[Number(e.key) - 1] }
       if (!ev) return
@@ -443,8 +456,10 @@ export default function BooArcade({ sample = null }) {
   // a moment's Start, Back and OK on the screen only while the deck is drawn there: with the Stream Deck, its keys do it
   const go = live && !onDeck ? () => input({ kind: 'press', dial: 0 }) : null
   const back = live && !onDeck ? () => input({ kind: 'key', index: BACK_KEY }) : null
-  // Back at the top: a visit, at any moment, ends for free play; a free-play game goes back to the games
-  const leaving = !live || setup || !screen ? null : visit ? 'Back to free play' : LEAVABLE.includes(stage) ? 'Back to the games' : null
+  // At the top: Leave this game while one is on its how-to, its count or its play (Jon, 30 Oct 2026: an exit in
+  // every game), and in a visit, at any moment, Back to free play, which ends the visit
+  const exiting = live && !setup && screen && EXITABLE.includes(stage) ? 'Leave this game' : null
+  const leaving = !live || setup || !screen ? null : visit ? 'Back to free play' : stage === 'result' ? 'Back to the games' : null
   const clock = screen?.clockMs ?? null
 
   return (
@@ -455,8 +470,9 @@ export default function BooArcade({ sample = null }) {
           <h1>{ARCADE_NAME}</h1>
           <p className="arcade-sub">{sub}</p>
         </div>
-        {leaving || clock != null ? (
+        {exiting || leaving || clock != null ? (
           <div className="arcade-round">
+            {exiting ? <button type="button" className="arcade-back" onMouseDown={noFocus} onClick={exit}>{exiting}</button> : null}
             {leaving ? <button type="button" className="arcade-back" onMouseDown={noFocus} onClick={leave}>{leaving}</button> : null}
             {live && clock != null && stage !== 'farewell' ? <button type="button" className="arcade-chime" onMouseDown={noFocus} onClick={ring}>Ring the chime</button> : null}
             {clock != null ? <p className={`study-clock${clock <= 60000 ? ' warn' : ''}`} aria-label="Time left in the round">{clockOf(clock)}</p> : null}
@@ -472,7 +488,7 @@ export default function BooArcade({ sample = null }) {
       </main>
       <footer className={`arcade-foot${live && !heard ? ' waking' : ''}`}>
         {live ? <DeckLine state={deck} problem={problem} onConnect={connect} /> : null}
-        <Players screen={screen} setup={setup} onPractise={live ? practise : null} />
+        <Players screen={screen} setup={setup} onPractice={live ? practice : null} />
       </footer>
       {live ? <Wake /> : null}
     </div>
@@ -699,7 +715,7 @@ function Deck({ view, art, onInput }) {
         return (
           <div key={d} className="arcade-dial" style={box} data-dial={d}>
             <button type="button" className="arcade-turn" aria-label={`Dial ${d + 1}, ${ccw.word}`} {...hit(onInput, { kind: 'turn', dial: d, amount: -1 })}><Arrow dir={ccw.dir} /></button>
-            <button type="button" className={`arcade-knob${labels[d] === 'Press' ? ' lit' : ''}`} aria-label={`Press dial ${d + 1}`} {...hit(onInput, { kind: 'press', dial: d })} />
+            <button type="button" className={`arcade-knob${labels[d] === 'Press' || labels[d] === 'Exit' ? ' lit' : ''}`} aria-label={labels[d] === 'Exit' ? 'Exit: leave this game' : `Press dial ${d + 1}`} {...hit(onInput, { kind: 'press', dial: d })} />
             <button type="button" className="arcade-turn" aria-label={`Dial ${d + 1}, ${cw.word}`} {...hit(onInput, { kind: 'turn', dial: d, amount: 1 })}><Arrow dir={cw.dir} /></button>
           </div>
         )
@@ -756,7 +772,7 @@ function DeckLine({ state, problem, onConnect }) {
 // The bottom right: in a visit, each player with their tokens (Boo's coin for
 // one left, an empty ring once spent) and points, the player whose turn it is
 // ringed in gold; in free play, a way to a practice visit.
-function Players({ screen, setup, onPractise }) {
+function Players({ screen, setup, onPractice }) {
   const players = screen?.players ?? []
   if (players.length) {
     return (
@@ -779,7 +795,7 @@ function Players({ screen, setup, onPractise }) {
   return (
     <p className="arcade-fun">
       <span>Just for fun</span>
-      {onPractise ? <button type="button" className="arcade-small" onMouseDown={noFocus} onClick={onPractise}>Try a group's visit</button> : null}
+      {onPractice ? <button type="button" className="arcade-small" onMouseDown={noFocus} onClick={onPractice}>Try a group's visit</button> : null}
     </p>
   )
 }

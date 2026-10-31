@@ -484,9 +484,9 @@ not replaced. Wiring it into Act 4 is its own card (515); until it lands, Boo's 
 the night and on its own Game test section, untouched.
 
 **The route.** `play/src/main.jsx` sends `?kiosk=boo&play=1` to `BooArcade`
-(`play/src/screens/Arcade.jsx`) before `Practising` and the kiosks, keeping the substring
-`Practising ? <Practising /> : kiosk ? <Kiosk which={kiosk} />` that `play/test/gametest.test.mjs`
-pins (L09 pins the whole chain, `arcade ? <BooArcade /> : Practising ? ...`). It never renders
+(`play/src/screens/Arcade.jsx`) before `Practicing` and the kiosks, keeping the substring
+`Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} />` that `play/test/gametest.test.mjs`
+pins (L09 pins the whole chain, `arcade ? <BooArcade /> : Practicing ? ...`). It never renders
 `Kiosk` (it borrows only `wakeAudio` and `Wake` from `Kiosk.jsx`): no anonymous sign-in, no
 presence row, no night reads, no Bell. `?kiosk=boo` alone is still Boo's wall, and
 `?kiosk=boo&practice=1` the Catwalk's practice show. `&visit=1` opens the practice visit's setup
@@ -775,7 +775,7 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   has heard a click or a key, and adds a pop from `popOf` (+N, gold or gain; Strike!, or Missed!
   in Yarn Catch, from a 'miss' or a 'bite'): the newest `POPS_KEPT` 4, each with a `slot`, its id
   modulo 4 (the class `slot-N`, not its place in the list, which moves as old ones drop out).
-  Leaving play clears the pops, and so do `begin`, `freePlay`, `practise`, and a deck attached,
+  Leaving play clears the pops, and so do `begin`, `freePlay`, `practice`, and a deck attached,
   lost or unplugged. Back (Jon, 29 Oct: "on the pratice page I need a back button. Im stuck and
   cant get back."): `leave()` calls the engine's `arcadeBack`; the header's `.arcade-back` says
   Back to free play in a visit (any stage) and Back to the games in a free-play `LEAVABLE` stage
@@ -914,7 +914,7 @@ arcade and whole visits every 250 ms (`playGame`, `runVisit`) or stage by stage 
   Back at the top (`leave()` on `arcadeBack`, `LEAVABLE`, the two labels, Escape) and the
   engine's Back from each free-play stage and from a visit; with the deck connected `go` and
   `back` null and each pop placed by its `slot`, the four spots between 20 and 80 percent across,
-  each 16 or more from the one before; `setPops([])` in `begin`, `freePlay`, `practise`, `lost`,
+  each 16 or more from the one before; `setPops([])` in `begin`, `freePlay`, `practice`, `lost`,
   `attach` and `onUnplug`; the wake listener on `pointerdown`, `click` and `keydown`, and the
   footer's `waking` class.
 - G55: the visit (turns round the group, two tokens spent as each count starts, the clue after a

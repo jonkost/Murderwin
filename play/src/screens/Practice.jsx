@@ -30,7 +30,7 @@ import Allow from './Allow'
 
 const ui = uiLines(null)
 
-// The phone's own words while it practises. Salem's last line promises a
+// The phone's own words while it practices. Salem's last line promises a
 // clue the practice does not give, so it stops before that.
 const PRACTICE_SALEM_LINES = { ...SALEM_LINES, cleared: 'Huh. You lot can follow instructions.' }
 const SAY = {
