@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, existsSync } from 'node:fs'
 import {
-  ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, STRIP_WIDTH,
+  ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, SCORE_KEYS, STRIP_WIDTH,
   TABLE_ENDS, TABLE_WAYS, tableEndCol, tableStartCol,
   TOKENS, MAX_PLAYERS, CLUE_AFTER_GAMES, ROUND_MS, FREE_GAME_MS, GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS,
   STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, BOO_LINES,
@@ -218,7 +218,7 @@ function runVisit(names, picks, { seed = 21, during, look = () => {}, roundMs = 
     } else if (['clue', 'third', 'winner'].includes(a.stage)) {
       t += a.stage === 'winner' ? WINNER_MIN_MS : CLUE_MIN_MS
       a = aStep(a, t); look(a, t)
-      a = aIn(a, key(13), t); look(a, t)
+      a = aIn(a, key(0), t); look(a, t) // not a player's score key (31 Oct 2026)
     } else {
       t += 250
       a = aStep(a, t)
@@ -412,7 +412,7 @@ test('G54 the top row flashes like an arcade game (Jon, 29 Oct 2026): cat paws f
   const w = arcadeSample('winner', 0)
   const wRow = n => row(arcadeView(w, w.stageAt + n * MARQUEE_STEP_MS).faces)
   assert.deepEqual([0, 1, 2].map(wRow), ['.L..L..L.', '..L...L..', 'L..L.L..L'])
-  assert.equal(arcadeView(w, w.stageAt).faces[MIDDLE], 'boo')
+  assert.deepEqual(SCORE_KEYS.map(k => arcadeView(w, w.stageAt).faces[k]), ['num:1', 'num:2', 'off'], 'a key a player for their scores (31 Oct 2026), a pair here')
   for (const f of ['paw', 'paw-lit']) assert.ok(MENU_FACES.includes(f))
   assert.ok(!FACE_IDS.includes('star'), 'no stars now')
 })
@@ -2535,7 +2535,7 @@ test('G54 a game begun by an older copy of the engine plays on (the page keeps i
 
 test('G55 a visit of two (one round of each game a player since 30 Oct 2026): turns go round, five tokens each, one a game, spent as each count starts; a game played is marked done on the menu and cannot be picked again; a clue after each second game; then the rest of the games; every token spent, the winner, then free play; every counted game is written down for the night', () => {
   assert.equal(TOKENS, GAMES.length, 'a token a game')
-  assert.equal(CLUE_AFTER_GAMES, 2)
+  assert.equal(CLUE_AFTER_GAMES, TOKENS, 'the clue once all five are played (31 Oct 2026)')
   let a = newArcade({ mode: 'visit', players: ['Jessa', 'Mari'], seed: 4, now: 0, roundMs: 3600000 })
   assert.equal(a.stage, 'menu')
   assert.equal(a.turn, 0)
@@ -2573,7 +2573,24 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   ;[a, t] = playGame(a, t, 'mice')
   assert.equal(a.players[0].tokens, 3)
   a = aStep(a, (t = a.stageAt + RESULT_MS))
-  assert.equal(a.stage, 'clue', 'after her second game')
+  assert.equal(a.stage, 'menu', 'no clue yet: it comes once all five are played (31 Oct 2026)')
+  assert.equal(a.turn, 1)
+  // on round the group until each has one game left
+  const turns = [0, 1, 0]
+  while (a.players.some(p => p.tokens > 1)) {
+    turns.push(a.turn)
+    const p = a.players[a.turn]
+    ;[a, t] = playGame(a, t, GAMES.map(g => g.id).find(id => !p.games.some(x => x.game === id)))
+    a = aStep(a, (t = a.stageAt + RESULT_MS))
+    assert.equal(a.stage, 'menu', 'on round the group')
+  }
+  assert.deepEqual(turns, [0, 1, 0, 1, 0, 1, 0, 1])
+  assert.deepEqual(a.players.map(p => p.tokens), [1, 1])
+  // Jessa's fifth game: her clue
+  assert.equal(a.turn, 0)
+  ;[a, t] = playGame(a, t, GAMES.map(g => g.id).find(id => !a.players[0].games.some(x => x.game === id)))
+  a = aStep(a, (t = a.stageAt + RESULT_MS))
+  assert.equal(a.stage, 'clue', 'after her fifth game')
   assert.deepEqual(a.events, ['clue'])
   v = arcadeView(a, t)
   assert.equal(v.screen.player, 'Jessa')
@@ -2592,23 +2609,12 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   t += CLUE_MIN_MS
   assert.equal(a.stage, 'menu')
   assert.equal(a.turn, 1)
-  // Mari's second game, her clue, then on round the group through the other three each
-  ;[a, t] = playGame(a, t, 'tail')
+  // Mari's fifth game, her clue, then the winner
+  ;[a, t] = playGame(a, t, GAMES.map(g => g.id).find(id => !a.players[1].games.some(x => x.game === id)))
   a = aStep(a, (t = a.stageAt + RESULT_MS))
   assert.equal(a.stage, 'clue')
   assert.equal(arcadeView(a, t).screen.player, 'Mari')
   a = aIn(a, tap(40), (t += CLUE_MIN_MS))
-  assert.equal(a.stage, 'menu')
-  assert.equal(a.turn, 0)
-  const turns = []
-  for (let n = 0; n < 6; n++) {
-    turns.push(a.turn)
-    const p = a.players[a.turn]
-    ;[a, t] = playGame(a, t, GAMES.map(g => g.id).find(id => !p.games.some(x => x.game === id)))
-    a = aStep(a, (t = a.stageAt + RESULT_MS))
-    if (n < 5) assert.equal(a.stage, 'menu', `game ${n + 3} of each: on round the group`)
-  }
-  assert.deepEqual(turns, [0, 1, 0, 1, 0, 1])
   assert.deepEqual(a.players.map(p => [p.tokens, p.games.length, p.reached]), [[0, 5, true], [0, 5, true]])
   for (const p of a.players) assert.deepEqual(p.games.map(x => x.game).sort(), GAMES.map(g => g.id).sort(), 'one round of each')
   assert.equal(a.records.length, 10, 'ten games written down')
@@ -2623,13 +2629,27 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   assert.equal(v.screen.boo, v.screen.winner.names.length > 1 ? BOO_LINES.tie : BOO_LINES.winner)
   assert.equal(v.screen.picture, ' Boo 5.png')
   assert.deepEqual(v.screen.players.map(p => [p.name, p.tokens, p.scores.length]), [['Jessa', 0, 5], ['Mari', 0, 5]])
+  // a player's key puts their five scores up, and the winner's clock starts again (31 Oct 2026: no running math under the players)
+  assert.equal(v.screen.scores, null)
+  assert.equal(v.strip.left, 'Scores: press 1, 2')
+  assert.deepEqual(SCORE_KEYS.map(k => v.faces[k]), ['num:1', 'num:2', 'off'])
+  const shown = aIn(a, key(SCORE_KEYS[1]), t + 1000)
+  assert.deepEqual([shown.stage, shown.showing, shown.stageAt], ['winner', 1, t + 1000])
+  const sv = arcadeView(shown, t + 1000).screen.scores
+  assert.equal(sv.name, 'Mari')
+  assert.deepEqual(sv.games.map(g => [g.game, g.score]), a.players[1].games.map(x => [x.game, x.score]))
+  assert.equal(sv.games[0].name, GAMES.find(g => g.id === sv.games[0].game).name)
+  assert.equal(sv.total, mari)
+  assert.equal(aIn(shown, key(0), t + 1000 + WINNER_MIN_MS - 1).stage, 'winner', 'the clock started again')
+  assert.equal(aIn(shown, key(SCORE_KEYS[2]), t + 1000 + WINNER_MIN_MS).stage, 'home', 'a key with no player behind it is a press like any other: on it goes')
+  assert.equal(aIn(shown, key(0), t + 1000 + WINNER_MIN_MS).stage, 'home', 'then on')
   assert.equal(aIn(a, key(0), t + WINNER_MIN_MS - 1).stage, 'winner')
   a = aIn(a, key(0), (t += WINNER_MIN_MS))
   assert.equal(a.stage, 'home')
   assert.equal(a.free, true)
   assert.equal(a.mode, 'visit')
   v = arcadeView(a, t)
-  assert.equal(v.screen.plain, 'Free play until the chime. Nothing counts now.')
+  assert.equal(v.screen.plain, 'Free play until the chime. Nothing counts now. Listen out for it.')
   assert.equal(v.screen.boo, BOO_LINES.freePlay)
   assert.ok(v.screen.clockMs > 0)
   assert.equal(a.records.length, 10, 'free play writes nothing down')
@@ -2679,7 +2699,7 @@ test('G55 the winner names everyone who tied', () => {
   assert.equal(v.strip.centre, 'Most points: Jessa and Mari')
   assert.equal(v.screen.picture, ' Boo 5.png')
   assert.deepEqual(rowFaces(v.faces, 0), ['paw', 'paw-lit', 'paw', 'paw', 'paw-lit', 'paw', 'paw', 'paw-lit', 'paw'], 'nine paws, three lit as the winner begins')
-  assert.equal(v.faces[MIDDLE], 'boo')
+  assert.deepEqual(SCORE_KEYS.map(k => v.faces[k]), ['num:1', 'num:2', 'off'], 'a key a player, for their scores')
   // three ways
   const trio = { ...a, players: ['Margaret', 'Tom', 'Ellie'].map(name => ({ name, tokens: 0, reached: true, games: [{ game: 'mice', score: 7 }, { game: 'yarn', score: 3 }] })) }
   assert.equal(arcadeView(trio, t).screen.plain, 'A tie: Margaret, Tom and Ellie, 10 each.')
@@ -2849,7 +2869,7 @@ test('G55 names are cleaned: trimmed, spaces closed up, thirty characters at mos
 })
 
 test('G55 a visit\'s game is forty seconds, the same for everyone (30 Oct 2026: five games each, and a score means the same wherever it was made); one that would run into the chime is cut short so its clue comes first, never under thirty seconds; free play\'s two minutes are never cut; a brisk pair plays all ten games and a brisk trio most of its fifteen', () => {
-  assert.deepEqual([GAME_MS, FREE_GAME_MS, CUT_MIN_MS, CLUE_KEEP_MS], [40000, 120000, 30000, 15000])
+  assert.deepEqual([GAME_MS, FREE_GAME_MS, CUT_MIN_MS, CLUE_KEEP_MS, ROUND_MS], [50000, 120000, 30000, 15000, 900000], 'fifty seconds a game in a fifteen-minute round (31 Oct 2026)')
   // the rule: the full length while it fits before its points and the clue's fifteen seconds, a second less for every second later
   const lengthFrom = (a, start, id = 'mice') => {
     const g = aStep(aIn(aIn(a, key(menuKey(id)), start - COUNT_MS - PICK_MS), press(0), start - COUNT_MS), start).game
@@ -2883,25 +2903,22 @@ test('G55 a visit\'s game is forty seconds, the same for everyone (30 Oct 2026: 
   // a brisk trio plays most of its fifteen, its last cut short, every clue and the third's line
   const trio = pacedVisit(['Ann', 'Bob', 'Cat'], ['mice'], BRISK)
   check(trio)
-  assert.ok(trio.games.length >= 10 && trio.games.length < 15, `a brisk trio plays most of its fifteen: ${trio.games.length}`)
+  assert.ok(trio.games.length >= 12 && trio.games.length <= 15, `a brisk trio plays all or nearly all of its fifteen in the fifteen minutes: ${trio.games.length}`)
   assert.deepEqual(trio.came.map(c => c.stage), ['clue', 'clue', 'third'])
-  assert.equal(trio.a.stage, 'farewell')
-  assert.deepEqual(trio.a.pending, [])
+  assert.ok(trio.a.stage === 'farewell' ? trio.a.pending.length === 0 : trio.a.stage === 'home' && trio.a.free, 'to the chime with nobody caught short, or through the winner to free play')
   // at an ordinary pace: fewer games, both clues still before the chime, the last game cut short
   const pair = pacedVisit(['Ann', 'Bob'], ['mice'], ORDINARY)
   check(pair)
-  assert.ok(pair.games.length >= 6 && pair.games.length < 10, `${pair.games.length} games at an ordinary pace`)
-  assert.deepEqual(pair.came.map(c => c.stage), ['clue', 'clue'])
+  assert.ok(pair.games.length >= 8 && pair.games.length <= 10, `${pair.games.length} games at an ordinary pace in the fifteen minutes`)
+  assert.deepEqual(pair.came.map(c => c.stage), ['clue', 'clue'], 'both clues, after all five games each')
   assert.ok(pair.came.every(c => c.at <= ROUND_MS - CLUE_KEEP_MS), 'each with time to read it')
-  const last = pair.games.at(-1)
-  assert.ok(last.length < GAME_MS && last.length >= CUT_MIN_MS, 'the last cut short')
-  assert.equal(pair.a.stage, 'farewell')
-  assert.deepEqual(pair.a.pending, [], 'the chime caught nobody short')
+  assert.ok(pair.games.every(g => g.length <= GAME_MS && g.length >= CUT_MIN_MS))
+  assert.ok(pair.a.stage === 'farewell' ? pair.a.pending.length === 0 : pair.a.stage === 'home' && pair.a.free, 'the chime caught nobody short')
   // a slow pair: still both clues
   const slow = pacedVisit(['Ann', 'Bob'], ['mice'], SLOW)
   check(slow)
   assert.deepEqual(slow.came.map(c => c.stage), ['clue', 'clue'])
-  assert.equal(slow.a.stage, 'farewell')
+  assert.ok(slow.a.stage === 'farewell' || (slow.a.stage === 'home' && slow.a.free), 'the chime, or through to free play')
 })
 
 test('G55 the chime names who it caught short: a clue owed to the first two, Boo\'s line to a trio\'s third player, told apart by place', () => {
@@ -2914,12 +2931,12 @@ test('G55 the chime names who it caught short: a clue owed to the first two, Boo
   assert.ok(owed.includes('Ellie'), `the chime caught the third player short: ${owed}`)
   assert.deepEqual(v.pending, owed)
   assert.equal(v.plain, [owed.length > 1 ? `Out of time before their clue: ${listed(owed.slice(0, -1))}.` : '', "Out of time before Boo's line: Ellie."].filter(Boolean).join(' '))
-  // a crawling pair: the chime comes before the second player's clue
+  // a crawling pair: the chime comes before either clue (they come after all five games, 31 Oct 2026)
   const pair = pacedVisit(['Jessa', 'Mari'], ['mice'], CRAWL)
   v = arcadeView(pair.a, pair.a.stageAt).screen
   assert.equal(v.stage, 'farewell')
-  assert.deepEqual(v.pending, ['Mari'])
-  assert.equal(v.plain, 'Out of time before their clue: Mari.')
+  assert.deepEqual(v.pending, ['Jessa', 'Mari'])
+  assert.equal(v.plain, 'Out of time before their clue: Jessa and Mari.')
   // both at once: those owed a clue first
   const start = newArcade({ mode: 'visit', players: ['Margaret', 'Tom', 'Ellie'], seed: 1, now: 0 })
   assert.equal(arcadeView(arcadeChime(start, 10), 10).screen.plain, "Out of time before their clue: Margaret and Tom. Out of time before Boo's line: Ellie.")
@@ -3404,7 +3421,7 @@ test('G56 every word the arcade can show passes F09 and names no device, the res
   for (const w of words) assert.ok(!/stream ?deck|elgato|\bmac(book)?\b|chrome|safari|browser|\busb\b|connect|plug/i.test(w), `no device's name: ${w}`)
   assert.equal(arcadeView(newArcade({ mode: 'free', seed: 1, now: 0 }), 0).screen.plain, 'Press a game. Just for fun.')
   assert.equal(arcadeView(arcadeSample('menu', 0), 0).screen.plain, "Mari's turn: press a game you have not played yet.")
-  assert.ok(shown.has('Out of time before their clue: Mari.'))
+  assert.ok([...shown].some(w => /^Out of time before their clue: [A-Z]/.test(w)), 'the chime names who it caught short')
   assert.ok(shown.has("Out of time before their clue: Margaret and Tom. Out of time before Boo's line: Ellie."))
   assert.ok(shown.has("Out of time before Boo's line: Ellie."))
   assert.ok(views.some(v => v.screen.stage === 'third') && views.some(v => v.screen.stage === 'winner') && views.some(v => v.screen.stage === 'farewell'))

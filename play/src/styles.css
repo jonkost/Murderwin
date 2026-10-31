@@ -1229,6 +1229,10 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-board-score span { font-size: min(2.4vw, 3.8vh); color: var(--gold); }
 .arcade-board-bar { width: min(60cqw, 40rem); height: 1.2vh; border-radius: 0.6vh; background: rgba(214, 207, 134, 0.18); overflow: hidden; } /* the time, counting down (31 Oct 2026) */
 .arcade-board-bar div { height: 100%; border-radius: inherit; background: var(--gold); box-shadow: 0 0 1.2vh rgba(255, 226, 122, 0.6); transition: width 0.9s linear; }
+.arcade-player-scores { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, auto); gap: 0.6vh 2vw; font-size: min(2vw, 3.2vh); color: var(--brand-parchment); }
+.arcade-player-scores li { display: contents; }
+.arcade-player-scores strong { font-family: var(--serif); color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+.arcade-player-scores .total span { color: var(--gold-hi); }
 .arcade-board-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2vh 4.4vw; }
 .arcade-board-stat { margin: 0; display: flex; flex-direction: column; align-items: center; }
 .arcade-board-stat strong { font-family: var(--serif); font-weight: 700; font-size: min(4.6vw, 7.4vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
@@ -1254,14 +1258,14 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
   100% { opacity: 0; transform: translate(-50%, -14vh) scale(1); }
 }
 .arcade-board.menu { gap: 4vh; }
-.arcade-games { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2vh 2.4vw; }
-.arcade-games li { width: min(9vw, 15vh); display: flex; flex-direction: column; align-items: center; gap: 1vh; font-size: min(1.5vw, 2.4vh); line-height: 1.2; color: var(--brand-parchment); }
+.arcade-games { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: nowrap; justify-content: center; gap: 1.6vh 1.6vw; } /* one line (Jon, 31 Oct 2026) */
+.arcade-games li { width: min(7vw, 11vh); display: flex; flex-direction: column; align-items: center; gap: 0.8vh; font-size: min(1.1vw, 1.8vh); line-height: 1.15; text-align: center; color: var(--brand-parchment); }
 .arcade-games img { width: 100%; aspect-ratio: 1; border-radius: 14%; box-shadow: 0 0 2.4vh rgba(214, 207, 134, 0.25); }
 .arcade-board-do { margin: 0; font-family: var(--serif); font-weight: 600; font-size: min(3.6vw, 5.8vh); line-height: 1.15; color: var(--brand-parchment); }
-.arcade-facts { margin: 0; width: 100%; max-width: 64rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: 2.4vh 3vw; }
+.arcade-facts { margin: 0; width: 100%; max-width: 64rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2vh 2vw; } /* three across, small, so they fit (Jon, 31 Oct 2026) */
 .arcade-facts div { display: flex; flex-direction: column; align-items: center; gap: 0.4vh; }
-.arcade-facts dt { order: 2; font-size: min(1.7vw, 2.7vh); color: var(--gold); }
-.arcade-facts dd { order: 1; margin: 0; font-family: var(--serif); font-weight: 700; font-size: min(4vw, 6.4vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
+.arcade-facts dt { order: 2; font-size: min(1.2vw, 1.9vh); line-height: 1.15; text-align: center; color: var(--gold); }
+.arcade-facts dd { order: 1; margin: 0; font-family: var(--serif); font-weight: 700; font-size: min(2.6vw, 4.2vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
 /* a screen standing up (an iPad held tall): Boo above the deck, or above the scoreboard */
 @media (orientation: portrait) {
   .arcade-main { flex-direction: column; gap: 1.6vh; }

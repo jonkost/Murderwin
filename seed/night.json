@@ -308,7 +308,7 @@
   },
   "act4": {
     "_about": "Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, 23 Oct 2026; functions/lib/act4.js). Start Act 4 gives every phone a two-minute warning (warnMinutes); then the group cards with Locked in, and the rounds start when everyone is locked in or lockMinutes have passed. Every group visits the four game rooms, roundMinutes each, on the server's clock; at most maxGroups groups (pairs and trios). Jon may change any of these.",
-    "roundMinutes": 10,
+    "roundMinutes": 15,
     "warnMinutes": 2,
     "lockMinutes": 2,
     "maxGroups": 5,

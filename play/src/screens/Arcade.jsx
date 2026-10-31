@@ -655,12 +655,18 @@ function Moment({ screen, early, onGo, onBack }) {
         </div>
       )
     case 'winner': {
-      // a long names line (a tie, or long names) is set smaller, so OK stays on the screen
+      // a long names line (a tie, or long names) is set smaller, so OK stays on the screen; a player's key puts their scores up (31 Oct 2026)
       const who = andList(screen.winner?.names)
       return (
         <div className={`arcade-moment winner${who.length > 28 ? ' long' : ''}`}>
           <Says screen={screen} />
           <p className="arcade-winner">{who}</p>
+          {screen.scores ? (
+            <ol className="arcade-player-scores" aria-label={`${screen.scores.name}'s scores`}>
+              {screen.scores.games.map(g => <li key={g.game}><span>{g.name}</span><strong>{g.score}</strong></li>)}
+              <li className="total"><span>{screen.scores.name}</span><strong>{screen.scores.total}</strong></li>
+            </ol>
+          ) : null}
           <p className="arcade-do">{screen.plain}</p>
           {ok}
         </div>
@@ -804,7 +810,6 @@ function Players({ screen, setup, onPractice }) {
                 ? <span key={g.id} className="arcade-token spent" title={g.name} />
                 : <img key={g.id} className="arcade-token coin" src={coinUrl()} alt="" title={g.name} draggable={false} />))}
             </span>
-            {p.scores.length ? <span className="arcade-scores">{p.scores.length > 1 ? `${p.scores.join(' + ')} = ${p.total}` : p.scores[0]}</span> : null}
           </li>
         ))}
       </ol>

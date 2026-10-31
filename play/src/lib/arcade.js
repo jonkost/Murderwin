@@ -146,6 +146,7 @@ export const LEFT_DIAL = 0               // the outside dials: the games are pla
 export const RIGHT_DIAL = DIALS - 1
 export const MENU_KEYS = [11, 12, 13, 14, 15] // the second row: two blank, five games, two blank
 export const BACK_KEY = 27 // keyAt(3, 0): Back, on the ready screen only
+export const SCORE_KEYS = [12, 13, 14] // on the winner's screen: a key a player (1, 2, 3), each showing that player's five scores on the screen (Jon, 31 Oct 2026)
 // Pressed in while a game runs (or counts down): the game is left, unfinished
 // and uncounted, and the player is back on the menu (Jon, 30 Oct 2026: "An
 // exit button in every game, to go back"). Labelled Exit on the strip.
@@ -172,16 +173,17 @@ export const tableStartCol = row => (TABLE_WAYS[row] > 0 ? 0 : COLS - 1)
 // never counted, and the token comes back (arcadeExit's default).
 export const TOKENS = 5 // GAMES.length: a test keeps them equal
 export const MAX_PLAYERS = 3
-export const CLUE_AFTER_GAMES = 2 // a player's clue (or a trio's third player's line) comes after their second counted game
-export const ROUND_MS = 600000 // the practice round, ten minutes like an Act 4 round
+export const CLUE_AFTER_GAMES = TOKENS // a player's clue (or a trio's third player's line) comes once all five of their games are played (Jon, 31 Oct 2026: "not until all five are done")
+export const ROUND_MS = 900000 // the practice round, fifteen minutes like an Act 4 round (Jon, 31 Oct 2026: 15 for every Act 4 room)
 export const FREE_GAME_MS = 120000 // a free-play game: two minutes
-// A visit's game: forty seconds, the same for every player and every group,
+// A visit's game: fifty seconds, the same for every player and every group,
 // so a score in one game means the same wherever it was made (the Act 7
 // awards compare them). Five games each and the picking, counts, points and
-// clues between: a brisk pair fits all ten in the ten minutes, a trio most of
-// its fifteen; a game a player never gets to scores nothing (arcadeOverall).
-// A starting point, like the speeds: Jon's to change.
-export const GAME_MS = 40000
+// clues between: a brisk pair fits all ten in the fifteen minutes, a trio most
+// of its fifteen; a game a player never gets to scores nothing (arcadeOverall).
+// A starting point, like the speeds: Jon's to change (31 Oct: forty "could
+// have been a little more").
+export const GAME_MS = 50000
 // A visit's game that would run into the chime is cut short, so its clue still comes first:
 export const CLUE_KEEP_MS = 15000 // after its points, this long is kept for the clue before the chime,
 export const CUT_MIN_MS = 30000 // but no game is cut shorter than this
@@ -210,8 +212,8 @@ export const BOO_LINES = {
     'Chin up. Pick something.',
     "Quickly now. I'm not getting any younger.",
   ],
-  freePlay: "Play on, darlings. I'll pretend not to look.",
-  freePlayOne: "Play on, darling. I'll pretend not to look.",
+  freePlay: "Play on, darlings, or go and powder your noses. The chime will tell you when to go.",
+  freePlayOne: "Play on, darling, or go and powder your nose. The chime will tell you when to go.",
   win: ['Ha! Oh, that was good. I mean, adequate.', "Well, well. Somebody's been practicing."],
   caught: 'Mine. Obviously.',
   pets: 'Hands off my friends, darling. Out you go.',
@@ -1250,6 +1252,7 @@ export function newArcade({ mode = 'free', players = [], seed, now = 0, roundMs 
     roundEndsAt: visit ? now + (Number(roundMs) > 0 ? Number(roundMs) : ROUND_MS) : null,
     records: [], // every counted game, as it ended: { player, name, game, score, outcome, at }, for the night to keep (30 Oct 2026)
     pick: null,
+    showing: null, // on the winner's screen, the player whose scores are up (an index), or null
     pickedKey: null, // the menu key just pressed, green for PICK_MS
     game: null,
     played: 0, // games begun on this arcade: each one's seed comes from it
@@ -1263,7 +1266,7 @@ export function newArcade({ mode = 'free', players = [], seed, now = 0, roundMs 
 
 function enter(s, stage, t) { s.stage = stage; s.stageAt = t }
 function toHome(s, t) { s.pick = null; s.game = null; enter(s, 'home', t) }
-function toFreePlay(s, t) { s.free = true; toHome(s, t) }
+function toFreePlay(s, t) { s.free = true; s.showing = null; toHome(s, t) }
 function toMenu(s, t, turn) { s.turn = turn; s.pick = null; s.game = null; enter(s, 'menu', t) }
 // The next player round the group who still has a token.
 function nextTurn(s) {
@@ -1454,9 +1457,13 @@ function take(s, e, t) {
     case 'clue': case 'third':
       if (pressed && t - s.stageAt >= CLUE_MIN_MS) afterClue(s, t)
       return
-    case 'winner':
+    case 'winner': {
+      // a player's key: their scores on the screen, and the winner's clock starts again; anything else moves on after a moment
+      const who = e.kind === 'key' ? SCORE_KEYS.indexOf(e.index) : -1
+      if (who >= 0 && who < s.players.length) { s.showing = who; s.stageAt = t; return }
       if (pressed && t - s.stageAt >= WINNER_MIN_MS) toFreePlay(s, t)
       return
+    }
     default:
       return // the result and the farewell take no presses
   }
@@ -1578,7 +1585,7 @@ function facesOf(a, now) {
   if ((a.stage === 'play' || a.stage === 'result') && a.game) return gameFaces(a.game, now) // the result: the last board
   const f = new Array(KEY_COUNT).fill('off')
   if (a.stage === 'clue' || a.stage === 'third') f[MIDDLE_KEY] = 'ok' // press anything to go on
-  else if (a.stage === 'winner') { marquee(f, a, now); f[MIDDLE_KEY] = 'boo' }
+  else if (a.stage === 'winner') { marquee(f, a, now); a.players.forEach((p, i) => { f[SCORE_KEYS[i]] = `num:${i + 1}` }) }
   else if (a.stage === 'farewell') f[MIDDLE_KEY] = 'boo'
   return f
 }
@@ -1612,7 +1619,7 @@ function stripOf(a, now) {
     case 'result': return g ? line(name, outcomeOf(g), pointsOf(g.score)) : line('', '')
     case 'clue': return line(who, 'Your clue is on the screen')
     case 'third': return line('', who)
-    case 'winner': return line('', `Most points: ${andList(winnerOf(a).names)}`)
+    case 'winner': return line(`Scores: press ${a.players.map((p, i) => i + 1).join(', ')}`, `Most points: ${andList(winnerOf(a).names)}`)
     case 'farewell': return line('', FAREWELL_LINE)
     default: return line('', '')
   }
@@ -1633,7 +1640,7 @@ function resultLine(a) {
 function plainOf(a, info, yours, winner) {
   switch (a.stage) {
     // no device's name in front of the guests (Jon, 29 Oct 2026)
-    case 'home': return a.free ? 'Free play until the chime. Nothing counts now.' : 'Press a game. Just for fun.'
+    case 'home': return a.free ? 'Free play until the chime. Nothing counts now. Listen out for it.' : 'Press a game. Just for fun.'
     case 'menu': return `${yours?.name ?? ''}'s turn: press a game you have not played yet.`
     case 'ready': return 'Press any key or dial to start, or press Back to choose again.'
     case 'count': case 'play': return info?.how ?? ''
@@ -1739,6 +1746,8 @@ function screenOf(a, now) {
     note: a.stage === 'clue' ? CLUE_NOTE : null, // the dim line under the clue
     third: a.stage === 'third' ? THIRD_LINE : null,
     winner,
+    // a player's five scores on the winner's screen, when their key was pressed (Jon, 31 Oct 2026: no running math under the players)
+    scores: a.stage === 'winner' && a.showing != null && a.players[a.showing] ? { name: a.players[a.showing].name, games: a.players[a.showing].games.map(x => ({ game: x.game, name: GAME_NAMES[x.game], score: x.score })), total: totalOf(a.players[a.showing]) } : null,
     pending: a.stage === 'farewell' ? [...a.pending] : [],
     farewell: a.stage === 'farewell' ? FAREWELL_LINE : null,
     facts: factsOf(a.stats ?? NO_STATS),
