@@ -315,6 +315,7 @@ const FACES = {
   // Knock It Off the Table (the things on it: SCENES below)
   cloth: g => tableTop(g),
   edge: g => tableTop(g, true),
+  'edge-left': g => tableTop(g, true, true), // the end of a table that runs to the left (30 Oct 2026)
   // Yarn Catch
   yarn: g => { spot(g); emoji(g, PICTURE.yarn, 48) },
   'yarn-gold': (g, k) => { goldGround(g); glowing(g, k, 'rgba(255, 252, 230, 0.95)', 9, () => emoji(g, PICTURE.yarn, 48)) },
@@ -399,9 +400,11 @@ function furPath(g, points, r, end = 1) {
 
 // A table across each row: a green cloth with a gold braid along its top and
 // gold tassels under it. The end key's cloth stops at a gold post, with a
-// gold arrow down where things fall, and a gold rim: the key to press.
+// gold arrow down where things fall, and a gold rim: the key to press. A
+// table that runs to the left ends at its left-hand key: the same, mirrored.
 const TOP = 44, BAND = 12 // where the cloth starts, and how deep it is
-function tableTop(g, edge = false) {
+function tableTop(g, edge = false, left = false) {
+  if (left) { g.save(); g.translate(UNIT, 0); g.scale(-1, 1); tableTop(g, edge); g.restore(); return }
   lacquer(g)
   const end = edge ? 54 : UNIT
   const w = g.createLinearGradient(0, TOP, 0, TOP + BAND)
@@ -423,6 +426,11 @@ const SCENES = {
     tableTop(g, true)
     g.save(); g.translate(30, TOP - 1); g.rotate(0.2); emoji(g, PICTURE[obj], 40, 0, 0, true); g.restore()
   },
+  // on a left-hand end: teetering the other way
+  'edge-left': (g, k, obj) => {
+    tableTop(g, true, true)
+    g.save(); g.translate(UNIT - 30, TOP - 1); g.rotate(-0.2); emoji(g, PICTURE[obj], 40, 0, 0, true); g.restore()
+  },
 }
 
 // ---- Boo's friends ----------------------------------------------------------
@@ -436,6 +444,10 @@ const PETS_DRAWN = {
   pet: (g, k, pet) => { spot(g); petFace(g, k, pet, PET_SIZE) },
   // tapped: a strike, the friend faint under the cross
   oops: (g, k, pet) => strike(g, () => petFace(g, k, pet, OOPS_SIZE)),
+  // sitting on one of Boo's tables (30 Oct 2026), on the cloth or on either end
+  'table-pet': (g, k, pet) => { tableTop(g); petFace(g, k, pet, 44, MID, TOP - 23) },
+  'edge-pet': (g, k, pet) => { tableTop(g, true); petFace(g, k, pet, 44, 30, TOP - 23) },
+  'edge-left-pet': (g, k, pet) => { tableTop(g, true, true); petFace(g, k, pet, 44, UNIT - 30, TOP - 23) },
 }
 
 // Every face this file draws, made from the tables that draw them (FACES, the
@@ -712,13 +724,13 @@ export const PET_BOXES = Object.freeze({
 // Before its picture has loaded: Boo's stand-in cat's head, a whole dog for
 // Sir Irwin (a dog's face looks too like the mouse's), a cat for the rest.
 const PET_STAND_IN = { irwin: '🐕', granola: '🐱', salem: '🐱', zimmy: '🐱' }
-function petFace(g, k, pet, size) {
+function petFace(g, k, pet, size, x = MID, y = MID) {
   const [l, t, r, b] = PET_BOXES[pet]
   const d = size / Math.max(r - l, b - t) // the whole picture, drawn this big
   const src = levelFor(pet, d * k)
-  if (!src) return pet === 'boo' ? catHead(g, MID, MID, size * 0.8) : emoji(g, PET_STAND_IN[pet], size * 0.8)
+  if (!src) return pet === 'boo' ? catHead(g, x, y, size * 0.8) : emoji(g, PET_STAND_IN[pet], size * 0.8, x, y)
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'
-  g.drawImage(src, MID - d * (l + r) / 2, MID - d * (t + b) / 2, d, d)
+  g.drawImage(src, x - d * (l + r) / 2, y - d * (t + b) / 2, d, d)
 }
 // The stand-in: a black cat's head with a white outline, `h` high from the
 // tips of the ears to the chin.
@@ -754,7 +766,7 @@ function stripShape(strip) {
   return {
     left: t(strip?.left), centre: t(strip?.centre), right: t(strip?.right),
     score: strip?.score == null || !Number.isFinite(n) ? null : Math.max(0, Math.round(n)),
-    marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5) } : null,
+    marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5), label: t(strip.marks.label) } : null,
     lights: strip?.lights ? { of: upTo(strip.lights.of, 12), lit: upTo(strip.lights.lit, 12) } : null,
     zones: !!strip?.zones,
     dials: [0, 1, 2, 3, 4, 5].map(i => t(strip?.dials?.[i])),
@@ -840,11 +852,17 @@ function stripGold(g, y) {
   f.addColorStop(0, GOLD.hi); f.addColorStop(1, '#d8c45a')
   return f
 }
-// Three strike boxes from `x` (Jon, 29 Oct 2026: "show x on the touch strip
+// The strike boxes from `x` (Jon, 29 Oct 2026: "show x on the touch strip
 // like 3 strikes"): gold outlines, and the house red with a parchment cross
-// for each strike so far. Returns where they end.
-function strikeBoxes(g, { of, used }, x, y, size) {
+// for each strike so far, and under them what they count, in a small word
+// (Jon, 30 Oct 2026: "Jon couldn't tell what the dots at the bottom mean").
+// Returns where they end.
+function strikeBoxes(g, { of, used, label }, x, y, size) {
   const gap = size * 0.28
+  if (label) {
+    g.font = `600 ${Math.round(size * 0.3)}px ${SANS}`; g.fillStyle = GOLD.mid; g.textAlign = 'left'; g.textBaseline = 'top'
+    g.fillText(label.toUpperCase(), x, y + size / 2 + 3)
+  }
   for (let i = 0; i < of; i++) {
     const bx = x + i * (size + gap), by = y - size / 2
     g.beginPath(); roundRect(g, bx, by, size, size, size * 0.2)

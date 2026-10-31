@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import { readFileSync, existsSync } from 'node:fs'
 import {
   ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, STRIP_WIDTH,
-  TABLE_ENDS,
+  TABLE_ENDS, TABLE_WAYS, tableEndCol, tableStartCol,
   TOKENS, MAX_PLAYERS, ROUND_MS, FREE_GAME_MS, GAME_MS, TRIO_GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS, gameLengthMs,
   STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, BOO_LINES,
-  GAMES, KNOCK_OBJECTS, PETS, FRIEND_NAMES, TAIL_FRIENDS, FUR_PAIRS, MENU_FACES, GAME_FACES, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf,
+  GAMES, KNOCK_OBJECTS, PETS, FRIEND_NAMES, TAIL_FRIENDS, FUR_PAIRS, MENU_FACES, GAME_FACES, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf, MARK_LABELS,
   newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
   HIT_MS, MISS_MS, STRIKES_OUT, STRIKE_WORDS_MS, DIAL_MAX_KEYS,
   TAIL_STEP_MS, TAIL_STEP_END_MS, TAIL_TURN_ONE_IN, TAIL_FLEE_KEYS, TAIL_AWAY_KEYS, TAIL_LENGTH, TAIL_GROWS_AT, TAIL_LENGTH_MAX,
@@ -18,8 +18,8 @@ import {
   MICE_SPAWN_MIN_MS, MICE_REFILL_MS, MICE_REFILL_MORE_MS, MICE_UP_MS, MICE_UP_END_MS, MICE_GOLD_UP_MS, MICE_GOLD_UP_END_MS,
   MICE_AT_ONCE, MICE_MORE_EVERY_MS, MICE_AT_ONCE_MAX, MICE_POINTS, MICE_GOLD_POINTS,
   MICE_PETS_FROM_MS, MICE_PET_ONE_IN, MICE_PETS_OUT, MICE_REST_MS, MICE_LATE_MS,
-  KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, KNOCK_PER_TABLE, KNOCK_APART,
-  KNOCK_LATE_MS, KNOCK_EARLY_MS, KNOCK_GONE_MS, KNOCK_POINTS,
+  KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, KNOCK_PER_TABLE, KNOCK_APART,
+  KNOCK_LATE_MS, KNOCK_EARLY_MS, KNOCK_GONE_MS, KNOCK_POINTS, KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN,
   YARN_STEP_MS, YARN_STEP_END_MS, YARN_SPAWN_MS, YARN_SPAWN_END_MS, YARN_FALLING, YARN_LAND_MS, YARN_POINTS, YARN_GOLD_POINTS, GOLD_ONE_IN,
   READY_MS, COUNT_MS, RESULT_MS, PICK_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS, MARQUEE_STEP_MS, TIME_LIGHTS,
 } from '../src/lib/arcade.js'
@@ -72,6 +72,8 @@ const STRUCK = { boo: "That's Miss Boo.", granola: "That's Granolia.", irwin: "T
 // A starting point that moves to an end point over a two-minute game started at 0, as the engine's speeds do.
 const over2min = (from, to, t) => from + (to - from) * Math.min(1, Math.max(0, t / 120000))
 const NO_DIALS = ['', '', '', '', '', '']
+// The strike boxes as the strip and the screen show them, with their word (30 Oct 2026).
+const marksOf = (id, used) => ({ of: STRIKES_OUT, used, label: MARK_LABELS[id] })
 // The dial labels with Exit over the dial that leaves the game, while it counts down or runs (30 Oct 2026).
 const withExit = d => d.map((x, i) => (i === EXIT_DIAL ? 'Exit' : x))
 const SAMPLES = ['home', 'menu', 'play', 'clue', 'third', 'winner', 'farewell']
@@ -140,14 +142,14 @@ function playGame(a, t, id, during, every = 250) {
 // Knock off everything on the end of a table.
 function knocker(a, t) {
   if (a.game.id !== 'knock') return a
-  for (const x of a.game.things.filter(y => y.col === END)) if (a.stage === 'play') a = aIn(a, key(TABLE_ENDS[x.row]), t)
+  for (const x of a.game.things.filter(y => y.col === tableEndCol(y.row) && !y.friend)) if (a.stage === 'play') a = aIn(a, key(TABLE_ENDS[x.row]), t)
   return a
 }
 // Strike on purpose: tap Sir Irwin or a friend, or press the end of the first table with nothing coming.
 function striker(a, t) {
   const g = a.game
   if (g.id === 'mice' && g.pets.length) return aIn(a, key(g.pets[0].key), t)
-  if (g.id === 'knock' && !g.things.some(x => x.row === 0 && x.col >= END - 1)) return aIn(a, key(TABLE_ENDS[0]), t)
+  if (g.id === 'knock' && !g.things.some(x => x.row === 0 && x.col >= END - 1)) return aIn(a, key(TABLE_ENDS[0]), t) // the first table runs to the right
   return a
 }
 
@@ -530,7 +532,7 @@ test('G54 green for every success and red for every strike (Jon, 29 Oct 2026: "L
     ['a gold mouse bonked', input({ ...mice, mice: [{ key: 7, gold: true, downAt: T + 800 }] }, key(7), T), T, 7, 'hit', HIT_MS, 'blank', 'gold'],
     ['a friend tapped', input({ ...mice, pets: [{ key: 8, pet: 'salem', downAt: T + 800 }] }, key(8), T), T, 8, 'oops:salem', MISS_MS, 'blank', 'miss'],
     ['a thing knocked off', input({ ...knock, things: [{ row: 0, col: END, obj: 'vase', goneAt: null }] }, key(TABLE_ENDS[0]), T), T, TABLE_ENDS[0], 'hit', HIT_MS, 'edge', 'knock'],
-    ['an end pressed too soon', input(knock, key(TABLE_ENDS[1]), T), T, TABLE_ENDS[1], 'miss', MISS_MS, 'edge', 'miss'],
+    ['an end pressed too soon', input(knock, key(TABLE_ENDS[1]), T), T, TABLE_ENDS[1], 'miss', MISS_MS, 'edge-left', 'miss'],
     ['a thing got away', step({ ...knock, things: [{ row: 2, col: END, obj: 'cake', goneAt: T + 100 }] }, T + 100), T + 100, TABLE_ENDS[2], 'miss', MISS_MS, 'edge', 'miss'],
     ['a ball of yarn caught', step({ ...yarn, balls: [{ col: 4, row: 2, gold: false, nextAt: T + 100, missAt: null }] }, T + 100), T + 100, keyAt(3, 4), 'basket-catch', HIT_MS, 'basket', 'point'],
     ['a ball of yarn missed', step({ ...yarn, balls: [{ col: 6, row: 3, gold: false, nextAt: T, missAt: T + 100 }] }, T + 100), T + 100, keyAt(3, 6), 'yarn-miss', MISS_MS, 'blank', 'miss'],
@@ -561,7 +563,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     assert.equal(view(aIn(ready, press(0), PICK_MS), PICK_MS + 1500).strip.right, RULES[id], `${id}: the count`)
     const [a, t] = started(id)
     const v = view(a, t)
-    assert.deepEqual(v.strip.marks, RULES[id] ? { of: STRIKES_OUT, used: 0 } : null, `${id}: the boxes`)
+    assert.deepEqual(v.strip.marks, RULES[id] ? marksOf(id, 0) : null, `${id}: the boxes`)
     assert.deepEqual(v.screen.marks, v.strip.marks)
     assert.equal(v.strip.right, '', 'the rule goes as the game starts')
     assert.equal(v.strip.left, id === 'tail' ? name : '', 'the boxes on the left, in the name\'s place')
@@ -578,8 +580,8 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     const v = view(a, t)
     assert.equal(v.strip.centre, `Strike ${n}! ${words}`)
     assert.equal(v.strip.score, null, 'in place of the points')
-    assert.deepEqual(v.strip.marks, { of: STRIKES_OUT, used: n })
-    assert.deepEqual(v.screen.marks, { of: STRIKES_OUT, used: n })
+    assert.deepEqual(v.strip.marks, marksOf(a.game.id, n))
+    assert.deepEqual(v.screen.marks, marksOf(a.game.id, n))
     assert.equal(v.screen.said, `Strike ${n}! ${words}`)
     assert.equal(view(a, at + STRIKE_WORDS_MS - 1).strip.centre, `Strike ${n}! ${words}`)
     const later = aStep(a, at + STRIKE_WORDS_MS)
@@ -615,7 +617,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   tapPet()
   assert.equal(a.stage, 'result')
   assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped three friends.', right: pts(a.game.score), score: null, marks: null, lights: null, zones: false, dials: NO_DIALS })
-  assert.deepEqual(view(a, t).screen.marks, { of: STRIKES_OUT, used: 3 }, 'the screen shows the three on the result')
+  assert.deepEqual(view(a, t).screen.marks, marksOf('mice', 3), 'the screen shows the three on the result')
   assert.equal(view(a, t).screen.result.outcome, 'lose')
 
   // The Lazy Pointer, left alone: Boo catches the dot three times
@@ -1537,7 +1539,7 @@ test('G54 The Lazy Pointer, more of a challenge (Jon, 30 Oct 2026): walls from t
   const v = arcadeView(after, ta + 1000)
   assert.equal(v.strip.centre, 'A sparkle faded. -2')
   assert.equal(v.strip.score, null)
-  assert.deepEqual(v.strip.marks, { of: STRIKES_OUT, used: 0 }, 'not a strike')
+  assert.deepEqual(v.strip.marks, marksOf('pointer', 0), 'not a strike')
   assert.equal(v.screen.said, 'A sparkle faded. -2')
   assert.equal(arcadeView(after, ta + 1000 + STRIKE_WORDS_MS).strip.score, 4)
   // the page pops it as -2
@@ -1783,12 +1785,16 @@ test('G54 Whack-a-Mouse is fair: a key a mouse has just left rests a moment, and
   for (let u = T; u < T + MICE_LATE_MS; u += 10) assert.deepEqual(input(hid, key(K), u).events, ['point'], `a late tap at ${u}`)
 })
 
-test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"): four tables, one a row; everything slides one key along each beat and never jumps; at most two on a table, at least three keys apart; the beat quickens and new things come more often', () => {
-  assert.deepEqual(TABLE_ENDS, [0, 1, 2, 3].map(r => keyAt(r, END)))
+test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"; 30 Oct: "Use the whole screen"): four tables, one a row, the first and third running to the right and the second and fourth to the left; everything slides one key along each beat and never jumps; at most two on a table, at least three keys apart; the beat quickens, to top speed two fifths of the way in, and new things come more often', () => {
+  assert.deepEqual(TABLE_WAYS, [1, -1, 1, -1])
+  assert.deepEqual(TABLE_ENDS, [keyAt(0, END), keyAt(1, 0), keyAt(2, END), keyAt(3, 0)])
+  assert.deepEqual([0, 1, 2, 3].map(tableEndCol), [END, 0, END, 0])
+  assert.deepEqual([0, 1, 2, 3].map(tableStartCol), [0, END, 0, END])
   assert.deepEqual([KNOCK_PER_TABLE, KNOCK_APART], [2, 3])
+  assert.deepEqual([KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END], [380, 180, 0.4, 3, 1])
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const f0 = gameFaces(g0, 0)
-  for (let r = 0; r < ROWS; r++) assert.deepEqual(rowFaces(f0, r), [...Array(END).fill('cloth'), 'edge'], `table ${r + 1}`)
+  for (let r = 0; r < ROWS; r++) assert.deepEqual(rowFaces(f0, r), TABLE_WAYS[r] > 0 ? [...Array(END).fill('cloth'), 'edge'] : ['edge-left', ...Array(END).fill('cloth')], `table ${r + 1}`)
   // the first beat brings the first thing, at the start of a table
   assert.equal(g0.nextAt, KNOCK_BEAT_MS)
   let g = step(g0, KNOCK_BEAT_MS - 1)
@@ -1796,73 +1802,79 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"): f
   g = step(g, KNOCK_BEAT_MS)
   assert.equal(g.things.length, 1)
   const first = g.things[0]
-  assert.equal(first.col, 0)
+  const way = TABLE_WAYS[first.row], start = tableStartCol(first.row)
+  assert.equal(first.col, start)
   assert.equal(first.obj, KNOCK_OBJECTS[0])
-  assert.equal(gameFaces(g, g.at)[keyAt(first.row, 0)], `table:${first.obj}`)
-  // beat by beat, one key along, on the beat and not before
-  for (let col = 1; col <= END; col++) {
+  assert.equal(gameFaces(g, g.at)[keyAt(first.row, start)], `table:${first.obj}`)
+  // beat by beat, one key along its table's way, on the beat and not before
+  for (let n = 1; n <= END; n++) {
+    const col = start + n * way
     const beat = g.nextAt
-    assert.equal(step(g, beat - 1).things.find(x => x.obj === first.obj).col, col - 1, 'not before its beat')
+    assert.equal(step(g, beat - 1).things.find(x => x.obj === first.obj).col, col - way, 'not before its beat')
     g = step(g, beat)
     const x = g.things.find(y => y.obj === first.obj)
     assert.equal(x.col, col)
     assert.equal(x.row, first.row)
-    assert.equal(gameFaces(g, beat)[keyAt(first.row, col)], `${col === END ? 'edge' : 'table'}:${first.obj}`)
-    assert.equal(gameFaces(g, beat)[keyAt(first.row, col - 1)], 'cloth', 'and gone from the key before')
+    assert.equal(gameFaces(g, beat)[keyAt(first.row, col)], `${n === END ? (way > 0 ? 'edge' : 'edge-left') : 'table'}:${first.obj}`)
+    assert.equal(gameFaces(g, beat)[keyAt(first.row, col - way)], 'cloth', 'and gone from the key before')
   }
   // the things come in KNOCK_OBJECTS's order
-  assert.deepEqual(g.things.map(x => x.obj), KNOCK_OBJECTS.slice(0, g.things.length))
+  assert.deepEqual(g.things.filter(x => !x.friend).map(x => x.obj), KNOCK_OBJECTS.slice(0, g.things.filter(x => !x.friend).length))
 
-  // whole games, everything on an end knocked off as it comes
+  // whole games, everything on an end knocked off as it comes (never a friend)
+  const beatAt = at => KNOCK_BEAT_MS + (KNOCK_BEAT_END_MS - KNOCK_BEAT_MS) * Math.min(1, at / (120000 * KNOCK_TOP_AT))
   for (const seed of [1, 2, 3]) {
     let s = newGame('knock', { seed, lengthMs: 120000, now: 0 })
     let prev = s
     const rows = new Set(), beats = [], made = []
+    const nameOf = x => x.obj ?? `friend:${x.friend}:${x.row}`
     for (let t = 0; t <= 120000 && !s.over; t += TICK) {
       s = stepGame(s, t)
-      const objs = s.things.map(x => x.obj)
+      const objs = s.things.filter(x => !x.friend).map(x => x.obj)
       assert.equal(new Set(objs).size, objs.length, 'each thing on the tables is its own')
       for (const x of s.things) {
         rows.add(x.row)
-        const was = prev.things.find(y => y.obj === x.obj)
-        if (!was) { assert.equal(x.col, 0, 'a new thing starts at the start of its table'); continue }
+        const was = prev.things.find(y => y.row === x.row && nameOf(y) === nameOf(x) && Math.abs(y.col - x.col) <= 1)
+        if (!was) { assert.equal(x.col, tableStartCol(x.row), 'a new thing starts at the start of its table'); continue }
         assert.equal(x.row, was.row, 'it stays on its table')
-        assert.ok(x.col === was.col || x.col === was.col + 1, `one key at a time, never a jump: ${was.col} to ${x.col}`)
+        assert.ok(x.col === was.col || x.col === was.col + TABLE_WAYS[x.row], `one key at a time its table's way, never a jump: ${was.col} to ${x.col}`)
         if (x.col !== was.col) assert.equal(s.beats, prev.beats + 1, 'and only on a beat')
       }
       for (let r = 0; r < ROWS; r++) {
         const on = s.things.filter(x => x.row === r).map(x => x.col).sort((a, b) => a - b)
         assert.ok(on.length <= KNOCK_PER_TABLE, `at most two on table ${r + 1}`)
-        for (let i = 1; i < on.length; i++) assert.ok(on[i] - on[i - 1] >= KNOCK_APART, `three keys apart: ${on}`)
+        const moving = s.things.filter(x => x.row === r && x.goneAt == null).map(x => x.col).sort((a, b) => a - b) // one sitting on its end its last beat may be closer
+        for (let i = 1; i < moving.length; i++) assert.ok(moving[i] - moving[i - 1] >= KNOCK_APART, `three keys apart: ${moving}`)
       }
       if (s.beats > prev.beats) {
         assert.equal(s.beats, prev.beats + 1, 'one beat at a time')
         beats.push([prev.nextAt, s.nextAt - prev.nextAt])
-        made.push([prev.nextAt, s.made - prev.made])
+        made.push([prev.nextAt, s.things.length - prev.things.length + (prev.things.length - s.things.filter(x => prev.things.some(y => y.row === x.row && nameOf(y) === nameOf(x))).length)])
       }
-      for (const x of s.things.filter(y => y.col === END)) s = inputGame(s, key(TABLE_ENDS[x.row]), t)
+      for (const x of s.things.filter(y => y.col === tableEndCol(y.row) && !y.friend)) s = inputGame(s, key(TABLE_ENDS[x.row]), t)
       prev = s
     }
     assert.equal(s.outcome, 'time', 'nothing got away')
     assert.equal(s.strikes, 0)
     assert.equal(s.score, s.knocked * KNOCK_POINTS)
     assert.deepEqual([...rows].sort(), [0, 1, 2, 3], 'all four tables')
-    // the beat quickens from KNOCK_BEAT_MS to KNOCK_BEAT_END_MS
-    for (const [at, ms] of beats) assert.ok(near(ms, over2min(KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, at)), `a beat of ${ms} at ${at}`)
+    // the beat quickens from KNOCK_BEAT_MS to KNOCK_BEAT_END_MS, top speed two fifths of the way in
+    for (const [at, ms] of beats) assert.ok(near(ms, beatAt(at)), `a beat of ${ms} at ${at}`)
     assert.ok(beats[0][1] > KNOCK_BEAT_MS - 5 && beats.at(-1)[1] < KNOCK_BEAT_END_MS + 5)
-    // a new thing every fourth beat at first, every other beat by the end
+    assert.ok(beats.filter(([at]) => at >= 120000 * KNOCK_TOP_AT).every(([, ms]) => near(ms, KNOCK_BEAT_END_MS)), 'top speed from two fifths on')
+    // a new thing about every third beat at first, nearly every beat by the end (as the room on the tables allows)
     const rate = list => list.reduce((n, [, x]) => n + x, 0) / list.length
-    assert.ok(Math.abs(rate(made.filter(([at]) => at < 30000)) - 1 / KNOCK_EVERY_BEATS) < 0.03)
-    assert.ok(Math.abs(rate(made.filter(([at]) => at >= 90000)) - 1 / KNOCK_EVERY_BEATS_END) < 0.05)
+    assert.ok(Math.abs(rate(made.filter(([at]) => at < 30000)) - 1 / KNOCK_EVERY_BEATS) < 0.06, `${rate(made.filter(([at]) => at < 30000))} a beat at first`)
+    assert.ok(rate(made.filter(([at]) => at >= 90000)) > 0.7, `${rate(made.filter(([at]) => at >= 90000))} a beat by the end`)
   }
 })
 
 test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only the key at the end of a table knocks; a press a moment early knocks the thing about to arrive; a thing on the end can be knocked until a moment after the beat it leaves on, then it got away; an empty end is a strike; dials and the strip do nothing', () => {
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const T = 10000
-  const board = things => ({ ...g0, at: T - 1000, beats: 3, things, nextAt: T })
+  const board = things => ({ ...g0, at: T - 1000, beats: 4, things, nextAt: T }) // the beat at T brings nothing new (every third beat)
   // with a thing on the end of the second table: every other key, the dials, the strip, the arrows and the presses do nothing
-  const one = board([{ row: 1, col: END, obj: 'vase', goneAt: null }])
+  const one = board([{ row: 1, col: 0, obj: 'vase', friend: null, goneAt: null }]) // the second table ends at the left
   for (const ev of [...ALL_KEYS.filter(k => !TABLE_ENDS.includes(k)).map(key), turn(LEFT_DIAL, 1), turn(RIGHT_DIAL, -1), turn(2, 3), press(0), press(5), tap(1100), tap(0), swipe(0, 1199), arrow('right'), arrow('down')]) {
     assert.deepEqual(input(one, ev, T - 500), step(one, T - 500), JSON.stringify(ev))
   }
@@ -1874,14 +1886,14 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   assert.deepEqual(k.things, [])
   assert.equal(k.strikes, 0)
   assert.equal(gameFaces(k, T - 500)[TABLE_ENDS[1]], 'hit')
-  assert.equal(gameFaces(k, T - 500 + HIT_MS)[TABLE_ENDS[1]], 'edge')
+  assert.equal(gameFaces(k, T - 500 + HIT_MS)[TABLE_ENDS[1]], 'edge-left')
   // another table's end: nothing there, a strike, and the vase stays
   const wrong = input(one, key(TABLE_ENDS[0]), T - 500)
   assert.equal(wrong.strikes, 1)
   assert.equal(wrong.things.length, 1)
 
   // a moment early (KNOCK_EARLY_MS before the beat it arrives on): the thing about to arrive
-  const coming = board([{ row: 2, col: END - 1, obj: 'teapot', goneAt: null }])
+  const coming = board([{ row: 2, col: END - 1, obj: 'teapot', friend: null, goneAt: null }])
   for (const t of [T - KNOCK_EARLY_MS, T - 1]) {
     const e = input(coming, key(TABLE_ENDS[2]), t)
     assert.deepEqual(e.events, ['knock'], `a press at ${t}`)
@@ -1894,9 +1906,9 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   assert.equal(step(soon, T).things[0].col, END, 'and it still comes')
 
   // on the end: from its arrival to KNOCK_LATE_MS after the next beat, when it would leave
-  const arrived = board([{ row: 3, col: END, obj: 'cake', goneAt: null }])
+  const arrived = board([{ row: 3, col: 0, obj: 'cake', friend: null, goneAt: null }]) // the fourth table ends at the left
   const sat = step(arrived, T)
-  assert.equal(sat.things[0].col, END, 'it stays on the end a beat')
+  assert.equal(sat.things[0].col, 0, 'it stays on the end a beat')
   assert.equal(sat.things[0].goneAt, T + KNOCK_LATE_MS)
   for (const t of [T - 400, T, T + KNOCK_LATE_MS - 1]) assert.deepEqual(input(t < T ? arrived : sat, key(TABLE_ENDS[3]), t).events, ['knock'], `a press at ${t}`)
   // then it got away: a strike, its words, the red cross on its end
@@ -1906,7 +1918,8 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   assert.deepEqual(away.events, ['miss'])
   assert.deepEqual(away.said, { words: 'Strike 1! It got away.', until: T + KNOCK_LATE_MS + STRIKE_WORDS_MS })
   assert.equal(gameFaces(away, T + KNOCK_LATE_MS)[TABLE_ENDS[3]], 'miss')
-  assert.equal(gameFaces(away, T + KNOCK_LATE_MS + MISS_MS)[TABLE_ENDS[3]], 'edge')
+  assert.ok(rowFaces(gameFaces(away, T + KNOCK_LATE_MS), 3).every(f => f === 'miss'), 'the whole table red (30 Oct 2026: misses obvious)')
+  assert.equal(gameFaces(away, T + KNOCK_LATE_MS + MISS_MS)[TABLE_ENDS[3]], 'edge-left')
   assert.equal(away.score, 0)
 
   // an empty end: a strike, "Too soon.", the red cross on it
@@ -1937,7 +1950,7 @@ test('G54 Knock It Off the Table: a press a moment after a thing got away costs 
   assert.equal(KNOCK_GONE_MS, 300)
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const T = 10000
-  const sat = step({ ...g0, at: T - 1000, beats: 3, things: [{ row: 3, col: END, obj: 'cake', goneAt: null }], nextAt: T }, T)
+  const sat = step({ ...g0, at: T - 1000, beats: 4, things: [{ row: 3, col: 0, obj: 'cake', friend: null, goneAt: null }], nextAt: T }, T)
   const goneAt = sat.things[0].goneAt
   const late = input(sat, key(TABLE_ENDS[3]), goneAt + 10)
   assert.equal(late.strikes, 1, 'one strike: it got away')
@@ -1961,7 +1974,7 @@ test('G54 Knock It Off the Table: a press a moment after a thing got away costs 
   assert.equal(input(gone, key(TABLE_ENDS[0]), goneAt + 10).said.words, 'Strike 2! Too soon.')
   assert.deepEqual(json(late), late, 'still plain JSON')
   // and the next thing on that table still knocks off as ever
-  const next = input({ ...late, things: [{ row: 3, col: END, obj: 'vase', goneAt: null }] }, key(TABLE_ENDS[3]), goneAt + 30)
+  const next = input({ ...late, things: [{ row: 3, col: 0, obj: 'vase', friend: null, goneAt: null }] }, key(TABLE_ENDS[3]), goneAt + 30)
   assert.deepEqual(next.events, ['knock'])
   assert.equal(next.strikes, 1)
 })
@@ -1970,24 +1983,101 @@ test('G54 Knock It Off the Table: a thing that comes onto a table\'s end shows o
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const T = 10000
   // a vase coming onto the third table's end at the beat, T + 200
-  const coming = { ...g0, at: T - 1000, beats: 3, nextAt: T + 200, things: [{ row: 2, col: END - 1, obj: 'vase', goneAt: null }] }
+  const coming = { ...g0, at: T - 1000, beats: 4, nextAt: T + 200, things: [{ row: 2, col: END - 1, obj: 'vase', friend: null, goneAt: null }] }
   // a cake on that end gets away at T + 100: the red cross is still on the end when the vase comes
-  const missed = step({ ...coming, things: [{ row: 2, col: END, obj: 'cake', goneAt: T + 100 }, ...coming.things] }, T + 200)
+  const missed = step({ ...coming, things: [{ row: 2, col: END, obj: 'cake', friend: null, goneAt: T + 100 }, ...coming.things] }, T + 200)
   assert.equal(missed.strikes, 1)
   assert.ok(missed.flashes.some(f => f.key === TABLE_ENDS[2] && f.face === 'miss' && f.until > T + 200), 'the cross is still there')
   assert.equal(gameFaces(missed, T + 200)[TABLE_ENDS[2]], 'edge:vase')
   // a cake knocked off at T: the green tick is still on the end when the vase comes
-  const hit = input({ ...coming, things: [{ row: 2, col: END, obj: 'cake', goneAt: null }, ...coming.things] }, key(TABLE_ENDS[2]), T)
+  const hit = input({ ...coming, things: [{ row: 2, col: END, obj: 'cake', friend: null, goneAt: null }, ...coming.things] }, key(TABLE_ENDS[2]), T)
   const knocked = step(hit, T + 200)
   assert.equal(knocked.knocked, 1)
   assert.ok(knocked.flashes.some(f => f.key === TABLE_ENDS[2] && f.face === 'hit' && f.until > T + 200), 'the tick is still there')
   assert.equal(gameFaces(knocked, T + 200)[TABLE_ENDS[2]], 'edge:vase')
   // with nothing on it, the end shows its tick or its cross
   assert.equal(gameFaces(hit, T + 100)[TABLE_ENDS[2]], 'hit')
-  assert.equal(gameFaces(step({ ...coming, things: [{ row: 2, col: END, obj: 'cake', goneAt: T + 100 }] }, T + 200), T + 200)[TABLE_ENDS[2]], 'miss')
+  assert.equal(gameFaces(step({ ...coming, things: [{ row: 2, col: END, obj: 'cake', friend: null, goneAt: T + 100 }] }, T + 200), T + 200)[TABLE_ENDS[2]], 'miss')
   // and a thing further along the table shows over a flash as well
-  const along = { ...g0, at: T - 1, nextAt: T + 400, things: [{ row: 1, col: 3, obj: 'clock', goneAt: null }], flashes: [{ key: keyAt(1, 3), face: 'miss', until: T + 300 }] }
+  const along = { ...g0, at: T - 1, nextAt: T + 400, things: [{ row: 1, col: 3, obj: 'clock', friend: null, goneAt: null }], flashes: [{ key: keyAt(1, 3), face: 'miss', until: T + 300 }] }
   assert.equal(gameFaces(along, T)[keyAt(1, 3)], 'table:clock')
+})
+
+test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends sit on the tables from ten seconds in, about one in four of what comes on; one knocked off is a strike that says who, their face under the cross on the end, and one that reaches the end just goes, no strike; a tighter window; every miss turns the whole table red; the boxes say Misses on the strip and the screen', () => {
+  assert.deepEqual([KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN, KNOCK_LATE_MS, KNOCK_EARLY_MS], [10000, 4, 100, 60])
+  assert.equal(MARK_LABELS.knock, 'Misses')
+  // whole games: friends come after ten seconds, about one in four, each of the five; left alone they go at the end with no strike
+  let friends = 0, things = 0
+  const met = new Set()
+  for (let seed = 1; seed <= 12; seed++) {
+    let g = newGame('knock', { seed, lengthMs: 120000, now: 0 })
+    let prev = g
+    for (let t = 0; t <= 120000 && !g.over; t += TICK) {
+      g = stepGame(g, t)
+      for (const x of g.things) {
+        if (prev.things.some(y => y.row === x.row && y.col === x.col && y.friend === x.friend && y.obj === x.obj) || x.col !== tableStartCol(x.row)) continue
+        things += 1
+        if (x.friend) { friends += 1; met.add(x.friend); assert.ok(t >= KNOCK_FRIENDS_FROM_MS, 'from ten seconds in'); assert.equal(x.obj, null) }
+        else assert.ok(KNOCK_OBJECTS.includes(x.obj))
+      }
+      // a friend that went from the end cost nothing
+      for (const y of prev.things.filter(y => y.friend && y.goneAt != null && y.goneAt <= t)) if (!g.things.includes(y)) assert.equal(g.strikes, prev.strikes, 'a friend that goes is no strike')
+      // every thing on the tables is drawn where it is, friends on the cloth or an end
+      const f = gameFaces(g, t)
+      for (const x of g.things) {
+        const where = x.col !== tableEndCol(x.row) ? 'table' : TABLE_WAYS[x.row] > 0 ? 'edge' : 'edge-left'
+        assert.equal(f[keyAt(x.row, x.col)], x.friend ? `${where}-pet:${x.friend}` : `${where}:${x.obj}`)
+      }
+      for (const x of g.things.filter(y => y.col === tableEndCol(y.row) && !y.friend)) g = inputGame(g, key(TABLE_ENDS[x.row]), t)
+      prev = g
+    }
+    assert.equal(g.outcome, 'time', `seed ${seed}: the friends left alone, nothing got away`)
+    assert.equal(g.strikes, 0)
+  }
+  assert.ok(Math.abs(friends / things - 1 / KNOCK_FRIEND_ONE_IN) < 0.05, `${friends} friends of ${things}`)
+  assert.deepEqual([...met].sort(), [...PETS].sort(), 'all five come')
+  // a friend knocked off: a strike that says who, the friend's face under the cross on the end, the whole table red, no points
+  const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
+  const T = 20000
+  const board = things => ({ ...g0, at: T - 1000, beats: 4, things, nextAt: T })
+  for (const [row, pet] of [[0, 'irwin'], [1, 'zimmy'], [3, 'granola']]) {
+    const g = board([{ row, col: tableEndCol(row), obj: null, friend: pet, goneAt: null }])
+    const k = input(g, key(TABLE_ENDS[row]), T - 500)
+    assert.deepEqual([k.strikes, k.friendsOff, k.knocked, k.score, k.things], [1, 1, 0, 0, []], pet)
+    assert.deepEqual(k.events, ['miss'])
+    assert.equal(k.said.words, `Strike 1! ${STRUCK[pet]}`)
+    const f = gameFaces(k, T - 500)
+    assert.equal(f[TABLE_ENDS[row]], `oops:${pet}`, 'the friend under the cross on the end')
+    assert.ok(rowFaces(f, row).every((x, c) => (keyAt(row, c) === TABLE_ENDS[row] ? x === `oops:${pet}` : x === 'miss')), 'the rest of the table red')
+    assert.equal(gameFaces(k, T - 500 + MISS_MS)[TABLE_ENDS[row]], TABLE_WAYS[row] > 0 ? 'edge' : 'edge-left')
+    // a moment early knocks the friend coming too
+    const coming = board([{ row, col: tableEndCol(row) - TABLE_WAYS[row], obj: null, friend: pet, goneAt: null }])
+    assert.equal(input(coming, key(TABLE_ENDS[row]), T - KNOCK_EARLY_MS).strikes, 1)
+  }
+  // a friend on the end a beat, then gone, quietly
+  const sat = step(board([{ row: 2, col: END, obj: null, friend: 'salem', goneAt: null }]), T)
+  assert.equal(sat.things[0].goneAt, T + KNOCK_LATE_MS)
+  const went = step(sat, T + KNOCK_LATE_MS)
+  assert.deepEqual([went.things.filter(x => x.friend), went.strikes, went.events, went.gotAway], [[], 0, [], []])
+  // the third friend knocked off ends it like any third miss
+  const third = input({ ...board([{ row: 0, col: END, obj: null, friend: 'boo', goneAt: null }]), strikes: 2, score: 5 }, key(TABLE_ENDS[0]), T - 500)
+  assert.deepEqual([third.over, third.outcome, third.score], [true, 'lose', 5])
+  // a plain miss turns its whole table red too, and only that table
+  const empty = input(g0, key(TABLE_ENDS[1]), 100)
+  const fe = gameFaces(empty, 100)
+  assert.ok(rowFaces(fe, 1).every(x => x === 'miss'))
+  for (const r of [0, 2, 3]) assert.ok(!rowFaces(fe, r).includes('miss'), `table ${r + 1} untouched`)
+  // the boxes are labelled Misses on the strip and the screen; Strikes in the other two games
+  const [a, ta] = started('knock')
+  const v = arcadeView(a, ta)
+  assert.deepEqual(v.strip.marks, marksOf('knock', 0))
+  assert.deepEqual(v.screen.marks, marksOf('knock', 0))
+  assert.deepEqual(MARK_LABELS, { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses' })
+  const page = src('../src/screens/Arcade.jsx')
+  assert.match(page, /<span className="arcade-strikes-label">\{label\}<\/span>/)
+  assert.match(page, /\{screen\.marks\.label \|\| 'Strikes'\}: \{screen\.marks\.used\} of \{screen\.marks\.of\}/)
+  // and the how-to says to leave the friends
+  assert.equal(GAMES.find(g => g.id === 'knock').how, 'Things slide along four tables, two one way and two the other. Press the key at the end of a table as something reaches it, and knock it off. Leave Sir Irwin and his friends on the table.')
 })
 
 test('G54 Yarn Catch (Jon, 29 Oct 2026: "it is skipping a row"): every ball drops exactly one row a step and shows on every row, the bottom one too, where it waits a moment for the basket before it is missed', () => {
@@ -2155,7 +2245,7 @@ test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big 
       assert.deepEqual(s, { left: '', centre: '', right: '', score: 0, marks: null, lights: null, zones: true, dials: NO_DIALS })
       continue
     }
-    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? { of: STRIKES_OUT, used: 0 } : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones: false, dials: withExit(dials) })
+    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? marksOf(id, 0) : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones: false, dials: withExit(dials) })
     // one light goes out every eighth of the game
     for (let n = 1; n < TIME_LIGHTS; n++) {
       const out = g.startedAt + n * L / TIME_LIGHTS

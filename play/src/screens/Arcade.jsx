@@ -510,7 +510,7 @@ function BooSide({ screen, numbers }) {
         <p className="arcade-score">
           <span><strong>{screen.score}</strong> {pointsWord(screen.score)}</span>
           <span className="arcade-left">{clockOf(screen.timeLeftMs)} left</span>
-          {screen.marks ? <span className="arcade-tally">Strikes: {screen.marks.used} of {screen.marks.of}</span> : null}
+          {screen.marks ? <span className="arcade-tally">{screen.marks.label || 'Strikes'}: {screen.marks.used} of {screen.marks.of}</span> : null}
         </p>
       ) : null}
       <p className="arcade-plain" aria-live="polite">{screen.plain}</p>
@@ -564,9 +564,11 @@ function Scoreboard({ screen, pops, art }) {
 
 // A game's three strikes: a gold box each, red with a cross for each strike so far.
 function Strikes({ marks }) {
+  const label = marks.label || 'Strikes'
   return (
-    <p className="arcade-strikes" aria-label={`Strikes: ${marks.used} of ${marks.of}`}>
+    <p className="arcade-strikes" aria-label={`${label}: ${marks.used} of ${marks.of}`}>
       {Array.from({ length: marks.of }, (_, i) => <span key={i} className={`arcade-strike${i < marks.used ? ' used' : ''}`}>{i < marks.used ? '✕' : ''}</span>)}
+      <span className="arcade-strikes-label">{label}</span>
     </p>
   )
 }

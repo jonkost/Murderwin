@@ -97,16 +97,19 @@ export const MICE_LATE_MS = 150          // a tap this soon after a mouse hid st
 // Knock It Off the Table: four tables, things sliding along them one key a
 // beat, the key at each table's end knocks them off (Jon, 29 Oct 2026:
 // "linear", "button press only", "a few tables")
-export const KNOCK_BEAT_MS = 500         // everything moves one key along this often at first,
-export const KNOCK_BEAT_END_MS = 260     // this often by the end
-export const KNOCK_EVERY_BEATS = 4       // a new thing every fourth beat at first,
-export const KNOCK_EVERY_BEATS_END = 2   // every other beat by the end
+export const KNOCK_BEAT_MS = 380         // everything moves one key along this often at first (Jon, 30 Oct 2026: "Much faster, and at top speed much earlier"),
+export const KNOCK_BEAT_END_MS = 180     // this often at top speed,
+export const KNOCK_TOP_AT = 0.4          // which it reaches two fifths of the way through
+export const KNOCK_EVERY_BEATS = 3       // a new thing every third beat at first,
+export const KNOCK_EVERY_BEATS_END = 1   // every beat by the end (as the room on the tables allows)
 export const KNOCK_PER_TABLE = 2         // at most two on a table,
 export const KNOCK_APART = 3             // at least three keys apart
-export const KNOCK_LATE_MS = 150         // a thing on the end can still be knocked this long after the beat it leaves on,
-export const KNOCK_EARLY_MS = 120        // and a press this soon before it gets there knocks it as it comes
+export const KNOCK_LATE_MS = 100         // a thing on the end can still be knocked this long after the beat it leaves on (Jon, 30 Oct 2026: "A tighter hit window"),
+export const KNOCK_EARLY_MS = 60         // and a press this soon before it gets there knocks it as it comes
 export const KNOCK_GONE_MS = 300         // a press on an end this soon after its thing got away is forgiven: the strike was its getting away
 export const KNOCK_POINTS = 1
+export const KNOCK_FRIENDS_FROM_MS = 10000 // Sir Irwin and his friends sit on the tables too from 10 seconds in (Jon, 30 Oct 2026: "Friends pop up along the way, which the player must not knock off"):
+export const KNOCK_FRIEND_ONE_IN = 4     // one in four of what comes onto a table is a friend; knocking one off is a strike, and one that reaches the end just goes
 // Yarn Catch (Jon, 29 Oct 2026: "use the touch strip for left and right controls")
 export const YARN_STEP_MS = 650          // a ball drops one row this often at first,
 export const YARN_STEP_END_MS = 400      // this often by the end
@@ -152,8 +155,14 @@ export const STRIP_WIDTH = 1200 // the touch strip, in its own pixels: a tap's x
 const ALL_KEYS = Array.from({ length: KEY_COUNT }, (_, i) => i)
 const ALL_COLUMNS = Array.from({ length: COLS }, (_, c) => c)
 
-// Knock It Off the Table: a table along each row; the last key of each is its end.
-export const TABLE_ENDS = [8, 17, 26, 35]
+// Knock It Off the Table: a table along each row. The first and third run
+// left to right and end at the right-hand key; the second and fourth run
+// right to left and end at the left-hand key (Jon, 30 Oct 2026: "Use the
+// whole screen. Today you only watch one part of it.").
+export const TABLE_WAYS = [1, -1, 1, -1] // the way along each table: 1 rightwards, -1 leftwards
+export const TABLE_ENDS = TABLE_WAYS.map((way, r) => keyAt(r, way > 0 ? COLS - 1 : 0))
+export const tableEndCol = row => (TABLE_WAYS[row] > 0 ? COLS - 1 : 0)
+export const tableStartCol = row => (TABLE_WAYS[row] > 0 ? 0 : COLS - 1)
 
 // ---- the visit ----
 
@@ -241,7 +250,7 @@ export const GAMES = [
   },
   {
     id: 'knock', name: 'Knock It Off the Table', short: 'Knock',
-    how: 'Things slide along four tables. Press the key at the end of a table as something reaches it, and knock it off.',
+    how: 'Things slide along four tables, two one way and two the other. Press the key at the end of a table as something reaches it, and knock it off. Leave Sir Irwin and his friends on the table.',
     rule: "Three misses and you're out.",
     boo: "It was in my way. They're all in my way.",
     dials: NO_DIALS,
@@ -284,7 +293,7 @@ export const GAME_FACES = {
   tail: ['rug', 'tail-boo', 'boo-alert', 'wall', 'treat', 'cucumber', ...TAIL_FRIENDS.map(p => `pet:${p}`), ...FUR_PAIRS.map(p => `tail-fur:${p}`), ...WAYS.map(w => `tail-end:${w}`), ...WAYS.map(w => `tail-tip:${w}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   pointer: ['blank', 'dot', 'sparkle', 'sparkle-miss', 'wall', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   mice: ['blank', 'mouse', 'mouse-gold', ...PETS.map(p => `pet:${p}`), ...PETS.map(p => `oops:${p}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
-  knock: ['cloth', 'edge', ...KNOCK_OBJECTS.map(o => `table:${o}`), ...KNOCK_OBJECTS.map(o => `edge:${o}`), 'hit', 'miss', 'back', 'num:1', 'num:2', 'num:3'],
+  knock: ['cloth', 'edge', 'edge-left', ...KNOCK_OBJECTS.flatMap(o => [`table:${o}`, `edge:${o}`, `edge-left:${o}`]), ...PETS.flatMap(p => [`table-pet:${p}`, `edge-pet:${p}`, `edge-left-pet:${p}`, `oops:${p}`]), 'hit', 'miss', 'back', 'num:1', 'num:2', 'num:3'],
   yarn: ['blank', 'yarn', 'yarn-gold', 'basket', 'basket-catch', 'yarn-miss', 'back', 'num:1', 'num:2', 'num:3'],
 }
 export const FACE_IDS = [...new Set([...MENU_FACES, ...Object.values(GAME_FACES).flat()])]
@@ -867,18 +876,28 @@ const mice = {
   },
 }
 
-// ---- 4. Knock It Off the Table: four tables, each row one, its last key the end ----
+// ---- 4. Knock It Off the Table: four tables, each row one, two running each way ----
 
-const END = COLS - 1
-const knockBeatMs = (s, t) => lerp(KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, along(s, t))
+// Things come on at the start of a table and slide along it one key a beat
+// to its end (TABLE_WAYS: the first and third tables run to the right, the
+// second and fourth to the left, so the whole board is watched). From ten
+// seconds in, one in four of what comes on is Sir Irwin or a friend: knock
+// one off and it is a strike that says who; one that reaches the end just
+// goes. A strike flashes the whole table red, so a miss is never in doubt
+// (Jon, 30 Oct 2026: "Make misses obvious").
+const knockBeatMs = (s, t) => lerp(KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, Math.min(1, along(s, t) / KNOCK_TOP_AT))
 const knockEvery = (s, t) => Math.round(lerp(KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, along(s, t)))
+// How far along its table a thing is, from its start: 0 at the start, COLS - 1 at the end.
+const alongTable = x => (TABLE_WAYS[x.row] > 0 ? x.col : COLS - 1 - x.col)
+const atEnd = x => x.col === tableEndCol(x.row)
 
 const knock = {
   start(s) {
-    s.things = [] // { row, col, obj, goneAt }: goneAt, once it has sat on the end its beat
+    s.things = [] // { row, col, obj, friend, goneAt }: obj one of KNOCK_OBJECTS (null for a friend); goneAt, once it has sat on the end its beat
     s.beats = 0
     s.made = 0 // things put on the tables so far: they come in KNOCK_OBJECTS's order
     s.knocked = 0
+    s.friendsOff = 0 // friends knocked off (each a strike)
     s.strikes = 0
     s.flashes = []
     s.gotAway = [] // { row, until }: a table whose thing got away a moment ago (a press on its end until then is forgiven, once)
@@ -886,29 +905,32 @@ const knock = {
   },
   due: s => Math.min(s.nextAt, ...s.things.filter(x => x.goneAt != null).map(x => x.goneAt)),
   fire(s, t) {
-    // a thing left on the end past its beat gets away (first)
+    // a thing left on the end past its beat goes (first): a strike, unless it is a friend
     const gone = s.things.find(x => x.goneAt != null && x.goneAt <= t)
     if (gone) {
       s.things = s.things.filter(x => x !== gone)
+      if (gone.friend) return
       s.gotAway = [...s.gotAway.filter(x => x.until > t), { row: gone.row, until: t + KNOCK_GONE_MS }]
-      return knockStrike(s, t, keyAt(gone.row, END), 'It got away.')
+      return knockStrike(s, t, gone.row, 'It got away.')
     }
     if (s.nextAt > t) return
     // the beat: everything moves one key along; a thing on the end stays a moment more
     s.beats += 1
     for (const x of s.things) {
-      if (x.col < END) x.col += 1
+      if (!atEnd(x)) x.col += TABLE_WAYS[x.row]
       else if (x.goneAt == null) x.goneAt = t + KNOCK_LATE_MS
     }
     // and now and then a new one, at the start of a table with room on it
     if ((s.beats - 1) % knockEvery(s, t) === 0) {
       const room = [0, 1, 2, 3].filter(row => {
         const on = s.things.filter(x => x.row === row)
-        return on.length < KNOCK_PER_TABLE && on.every(x => x.col >= KNOCK_APART)
+        return on.length < KNOCK_PER_TABLE && on.every(x => alongTable(x) >= KNOCK_APART)
       })
       if (room.length) {
-        s.things.push({ row: pick(s, room), col: 0, obj: KNOCK_OBJECTS[s.made % KNOCK_OBJECTS.length], goneAt: null })
-        s.made += 1
+        const row = pick(s, room)
+        const friend = t - s.startedAt >= KNOCK_FRIENDS_FROM_MS && rand(s) < 1 / KNOCK_FRIEND_ONE_IN ? pick(s, PETS) : null
+        s.things.push({ row, col: tableStartCol(row), obj: friend ? null : KNOCK_OBJECTS[s.made % KNOCK_OBJECTS.length], friend, goneAt: null })
+        if (!friend) s.made += 1
       }
     }
     s.nextAt = t + knockBeatMs(s, t)
@@ -917,15 +939,22 @@ const knock = {
     if (e.kind !== 'key') return // the keys only: no dial, no strip
     const row = TABLE_ENDS.indexOf(e.index)
     if (row < 0) return // only the end of a table knocks
-    let x = s.things.find(y => y.row === row && y.col === END)
-    if (!x && s.nextAt - t <= KNOCK_EARLY_MS) x = s.things.find(y => y.row === row && y.col === END - 1) // just a moment early
+    const end = tableEndCol(row)
+    let x = s.things.find(y => y.row === row && y.col === end)
+    if (!x && s.nextAt - t <= KNOCK_EARLY_MS) x = s.things.find(y => y.row === row && y.col === end - TABLE_WAYS[row]) // just a moment early
     if (!x) {
       // a moment too late for a thing that got away: its getting away was the strike, so this press is forgiven, once
       const late = s.gotAway.find(y => y.row === row && y.until > t)
       if (late) { s.gotAway = s.gotAway.filter(y => y !== late); return }
-      return knockStrike(s, t, e.index, 'Too soon.')
+      return knockStrike(s, t, row, 'Too soon.')
     }
     s.things = s.things.filter(y => y !== x)
+    if (x.friend) {
+      // one of her friends knocked off: a strike that says who, their face under the cross on the end
+      s.friendsOff += 1
+      const name = FRIEND_NAMES[x.friend]
+      return knockStrike(s, t, row, `That's ${name}${name.endsWith('.') ? '' : '.'}`, `oops:${x.friend}`)
+    }
     s.knocked += 1
     s.score += KNOCK_POINTS
     s.events.push('knock')
@@ -937,17 +966,23 @@ const knock = {
   },
   faces(s, f, now) {
     for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < END; c++) f[keyAt(r, c)] = 'cloth'
-      f[keyAt(r, END)] = 'edge'
+      for (let c = 0; c < COLS; c++) f[keyAt(r, c)] = 'cloth'
+      f[TABLE_ENDS[r]] = TABLE_WAYS[r] > 0 ? 'edge' : 'edge-left'
     }
     // the flashes, then the things over them: a thing coming to an end is never hidden under a tick or a cross
     flashFaces(s, f, now)
-    for (const x of s.things) f[keyAt(x.row, x.col)] = `${x.col === END ? 'edge' : 'table'}:${x.obj}`
+    for (const x of s.things) {
+      const where = !atEnd(x) ? 'table' : TABLE_WAYS[x.row] > 0 ? 'edge' : 'edge-left'
+      f[keyAt(x.row, x.col)] = x.friend ? `${where}-pet:${x.friend}` : `${where}:${x.obj}`
+    }
   },
 }
-function knockStrike(s, t, key, words) {
+// A miss: the strike, the whole table red for a moment (its end under the
+// cross, or the friend's face under it), the words; the third ends the game.
+function knockStrike(s, t, row, words, endFace = 'miss') {
   s.strikes += 1
-  flash(s, key, 'miss', t, MISS_MS)
+  for (let c = 0; c < COLS; c++) flash(s, keyAt(row, c), 'miss', t, MISS_MS)
+  if (endFace !== 'miss') flash(s, TABLE_ENDS[row], endFace, t, MISS_MS)
   if (s.strikes >= STRIKES_OUT) return finish(s, 'lose', t)
   s.events.push('miss')
   s.said = { words: `Strike ${s.strikes}! ${words}`, until: t + STRIKE_WORDS_MS }
@@ -1032,6 +1067,9 @@ const RULES = { tail, pointer, mice, knock, yarn }
 // What a game has counted so far, for the screen: its own tally and its strikes.
 const tallyCount = g => ({ tail: g.catches, pointer: g.sparkled, mice: g.bonked, knock: g.knocked, yarn: g.caught })[g.id] ?? 0
 const strikesOf = g => g.id === 'mice' ? g.petTaps : g.id === 'pointer' || g.id === 'knock' ? g.strikes : null
+// What the boxes count, in a word, on the strip and the screen (Jon, 30 Oct 2026: "Jon couldn't tell what the dots at the bottom mean").
+export const MARK_LABELS = { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses' }
+const marksOf = g => { const n = strikesOf(g); return n == null ? null : { of: STRIKES_OUT, used: n, label: MARK_LABELS[g.id] } }
 
 // ---- one game ----
 
@@ -1518,8 +1556,7 @@ function stripOf(a, now) {
     case 'count': return zones ? line('', String(countOf(a, now)), '', { zones }) : line(name, String(countOf(a, now)), ruleOf(g), { dials: [...dials] })
     case 'play': {
       if (!g) return line('', '')
-      const strikes = strikesOf(g)
-      const marks = strikes == null ? null : { of: STRIKES_OUT, used: strikes }
+      const marks = marksOf(g)
       const said = saidOf(g, now)
       if (zones) return line('', said ?? '', '', { score: said ? null : g.score, zones })
       return line(marks ? '' : name, said ?? '', '', { score: said ? null : g.score, marks, lights: { of: TIME_LIGHTS, lit: lightsOf(g, now) }, dials: [...dials] })
@@ -1627,7 +1664,6 @@ function screenOf(a, now) {
     : a.stage === 'play' ? g.endsAt - now
       : a.stage === 'result' ? g.endsAt - (g.endedAt ?? g.endsAt)
         : lengthFor(a, (a.stage === 'count' ? a.stageAt : now) + COUNT_MS)
-  const strikes = g && (a.stage === 'play' || a.stage === 'result') ? strikesOf(g) : null
   return {
     title: ARCADE_NAME,
     mode: a.mode,
@@ -1640,7 +1676,7 @@ function screenOf(a, now) {
     score: g ? g.score : null,
     // the game's own tally ("Mice bonked: 12") and its strikes, while it plays and on its result
     tally: g && (a.stage === 'play' || a.stage === 'result') ? { label: info.counts, value: tallyCount(g) } : null,
-    marks: strikes == null ? null : { of: STRIKES_OUT, used: strikes },
+    marks: g && (a.stage === 'play' || a.stage === 'result') ? marksOf(g) : null,
     said: a.stage === 'play' ? saidOf(g, now) : null,
     timeLeftMs: left == null ? null : wholeMs(left),
     clockMs: a.mode === 'visit' && a.roundEndsAt != null ? wholeMs(a.roundEndsAt - now) : null,
