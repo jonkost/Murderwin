@@ -35,7 +35,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
 | `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
-| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: you chose it for the Entryway on 29 October, and the night keeps Boo's Catwalk until it is wired in | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, forty seconds a game, each player's clue on the screen after their second game (in practice the square-bracket line), Boo's line for a trio's third player, the rest of the games, the winner, free play, and the chime ten minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
+| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: you chose it for the Entryway on 29 October, and the night keeps Boo's Catwalk until it is wired in | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, fifty seconds a game, each player's clue on the screen once all five of their games are played (31 October; in practice the square-bracket line), Boo's line for a trio's third player, the winner with each player's scores on a key, free play, and the chime fifteen minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
 | `?kiosk=pose` | Jenna's iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
 | `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
@@ -101,7 +101,7 @@ brackets.
 - *Act 4, Behind Closed Doors.* After the two-minute warning, the title
   card: "Act 4 · Behind Closed Doors" and "Look at your phone and find your
   group." It is silent; the brain changes the music. Then, through every
-  ten-minute round, Sir Irwin's prompts again, for whoever is waiting in the
+  fifteen-minute round (31 Oct 2026), Sir Irwin's prompts again, for whoever is waiting in the
   Parlour.
 - *Act 5, Sir Irwin's countdown.* Irwin in one of his five moods, his
   opener, the line that says how sure he is, five to one motive cards (five
@@ -189,7 +189,7 @@ groups). Outside Act 4 every one
 of them is on its loop.
 
 - *The study, Granolia's Lightbulb Moment.* Granolia, the three jewels for
-  the pairs found, the round and pattern, the ten-minute clock, and what
+  the pairs found, the round and pattern, the fifteen-minute clock, and what
   Granolia says. `docs/study-light-game.md` has it all. If the study station
   sends nothing for ninety seconds, the screen says "Granolia has dozed off.
   Find a host." (until 29 October it said "The station has gone quiet").

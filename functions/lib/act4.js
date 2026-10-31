@@ -1,6 +1,7 @@
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9;
 // Jon's plan, 23 Oct 2026). Pairs and trios, three to five groups. Every
-// group visits all four game rooms, one round each, ten minutes a round on the
+// group visits all four game rooms, one round each, fifteen minutes a round (the
+// seed's roundMinutes; ten until 31 Oct 2026) on the
 // server's clock for every room, the study included; a group with no room
 // this round waits in the Parlour, where Sir Irwin's prompts run on the TV.
 //

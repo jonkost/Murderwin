@@ -121,7 +121,7 @@ test('tick leaves a paused night alone, and a night that does not exist', async 
   assert.equal((await tick(db, 'no-such-night', now)).skipped, 'no-night')
 })
 
-test('tick in Act 4 runs the clock: the warning gives way to the groups, the groups to the first round, a round to the next at ten minutes', async () => {
+test('tick in Act 4 runs the clock: the warning gives way to the groups, the groups to the first round, a round to the next at fifteen minutes (31 Oct 2026; ten before)', async () => {
   const { db, nightId } = await party(8)
   let now = 3_000_000
   const tickHost = t => hostCommand(db, { nightId, command: 'tick', now: t })
@@ -133,7 +133,7 @@ test('tick in Act 4 runs the clock: the warning gives way to the groups, the gro
   assert.equal((await tickHost(now + 4 * 60_000)).clock, 'round1', 'nobody locked in: two minutes on, the rounds start anyway')
   const round = db.store.get(`nights/${nightId}/public/act4`)
   assert.equal(round.round, 1)
-  assert.equal(ms(round.roundEndsAt) - ms(round.roundStartsAt), 10 * 60_000)
+  assert.equal(ms(round.roundEndsAt) - ms(round.roundStartsAt), 15 * 60_000, 'seed/night.json act4.roundMinutes')
   assert.equal((await tickHost(ms(round.roundEndsAt) - 1000)).clock, null)
   assert.equal((await tickHost(ms(round.roundEndsAt))).clock, 'round2')
   assert.equal(night(db, nightId).beat, 'round2')

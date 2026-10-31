@@ -9,9 +9,9 @@ credits have two study awards (§9), and Granolia's intro on the phone has its n
 
 **Updated 24 October 2026** (the 23 October handoff, built that day): the game has a name,
 **Granolia's Lightbulb Moment**, with its line *"She knows how to turn on the lights. It's on the
-tip of her tongue."* on the phones and the study screen. The cap is **ten minutes** (was fifteen),
+tip of her tongue."* on the phones and the study screen. The cap is the Act 4 round, **fifteen minutes** again since 31 Oct 2026 (ten from 23 Oct),
 the same as every Act 4 room. The study is no longer the clock for the house: Act 4 is four game
-rooms in ten-minute rounds on the server's clock, every group visits the Study once, and the
+rooms in fifteen-minute rounds on the server's clock (31 Oct 2026), every group visits the Study once, and the
 study pays the Ghost's trace plus a bag hint about the Ghost's bag. Where the dated build notes in
 §12 say otherwise, this paragraph wins.
 

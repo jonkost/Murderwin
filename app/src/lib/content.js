@@ -27,6 +27,7 @@ import {
   RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS,
   ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS,
   SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031,
+  ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -949,6 +950,17 @@ export const ADDITIONS = [
     id: '2026-10-31-salem-board',
     tasks: SALEM_1031_TASKS,
     retireTasks: RETIRED_FOR_SALEM_1031,
+  },
+  {
+    // 31 Oct, evening: Jon's second playtest of the arcade on the real deck,
+    // one card a change, all done (544 to 549: five strikes, the black tail
+    // game, the yarn's dial and slide, the strip's bar, the visit, and every
+    // Act 4 round fifteen minutes), a line on his try (514), and the question
+    // arcadeWarmUp with its default (no warm-up) built.
+    id: '2026-10-31-arcade-playtest',
+    tasks: ARCADE_PLAYTEST_1031_TASKS,
+    fileTasks: FILED_FOR_ARCADE_PLAYTEST_1031,
+    decisions: ARCADE_PLAYTEST_1031_DECISIONS,
   },
 ]
 

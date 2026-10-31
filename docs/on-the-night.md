@@ -432,7 +432,7 @@ game; it serves the lights and the speakers.
   groups (nobody sees them yet). Two minutes later, on its own: the chime,
   the title card on the Parlour TV, and every phone shows its group as
   portraits with a Locked in button. The rounds start when everyone is
-  locked in, or two minutes after that. Each round is ten minutes on the
+  locked in, or two minutes after that. Each round is fifteen minutes (31 Oct 2026; it was ten) on the
   server's clock: the chime sends every group to a room, and every group
   visits all four rooms once:
   - The Study: Granolia's Lightbulb Moment (the light puzzle), upstairs.
@@ -843,20 +843,20 @@ at all: nothing is paid and no clue is dealt.
   come about two seconds late), plug in the Stream Deck + XL, open "The
   arcade, free play", tap "Connect the Stream Deck" once and pick it from the
   list. The Mac's screen then becomes the scoreboard (the points, the time,
-  the strikes or misses with their word, Boo): the Stream Deck is the game.
-  Press a game in the middle of the second row of keys, then any key or dial
-  to start; two minutes a game in free play. To leave a game early press the
+  the strikes or misses with their word, the time as a bar counting down,
+  Boo): the Stream Deck is the game. Press a game in the middle of the second
+  row of keys, then any key or dial to start; two minutes a game in free play. To leave a game early press the
   third dial in (it says Exit on the strip while a game counts down or runs),
   or "Leave this game" at the top of the screen, or Escape; a game left never
   counts. Only the two outside dials steer (one key a click; in *Boo Chasing
   Her Tail* they move Boo herself, the left one across and the right one up
   and down, after the white tip of her tail, round the edges and in at the
-  other side, eating the fish and keeping off the cucumbers); *Knock It Off
-  the Table* is the keys at the end of its four tables, two tables running
-  each way, and *Yarn Catch* moves its basket by sliding a finger along the
-  touch strip, the basket going to the column under the finger. Sir Irwin
-  and his friends are in all but the tail game: never tap, knock off or
-  catch them. No Stream Deck? The deck drawn on the screen plays with the
+  other side, eating the fish and keeping off the red cucumbers); *Knock It
+  Off the Table* is the keys at the end of its four tables, two tables
+  running each way, and *Yarn Catch* moves its basket with the left dial or
+  a slide of a finger along the touch strip, round the edges. Sir Irwin and
+  his friends are in all but the tail game: never tap, knock off or catch
+  them. Five strikes or misses end a game. No Stream Deck? The deck drawn on the screen plays with the
   mouse, or the arrow keys and the space bar. If the touch strip ever looks
   scrambled, add `&strip=whole` to the address and tell Claude Code. On the
   night (card 515) the screen shows only the game: no Connect and no setup
@@ -866,14 +866,15 @@ at all: nothing is paid and no clue is dealt.
   only one arcade tab plays on the Stream Deck at a time, and the other says
   so. It asks for two or three first names: five tokens each, one for each
   game (your decision of 30 October: one round of each), in turns; a game
-  you have played is dimmed with a tick on your turn; forty seconds a game
-  (the last one shorter when time runs short, so its clue usually still
-  comes before the chime); each player's clue on the screen after their
-  second game (in practice, a line in square brackets), Boo's line instead
-  for a trio's third player, then the other games, Boo's winner (unless the
-  chime comes first), then free play until the chime ten minutes in, when
-  Boo says "Be on your way." A brisk pair gets through all ten games; a
-  trio most of its fifteen. "Ring the chime", beside the clock, tries the
+  you have played is dimmed with a tick on your turn, and your tokens spend
+  from the left; fifty seconds a game (the last one shorter when time runs
+  short, so its clue usually still comes before the chime); each player's
+  clue on the screen once all five of their games are played (31 October;
+  in practice, a line in square brackets), Boo's line instead for a trio's
+  third player, Boo's winner (the keys 1, 2 and 3 put each player's five
+  scores up), then free play until the chime fifteen minutes in, when Boo
+  says "Be on your way." A brisk pair gets through all ten games; a brisk
+  trio all or nearly all of its fifteen. "Ring the chime", beside the clock, tries the
   ending at once, and "Back to free play", beside it, leaves the visit
   straight away. Samples of a player's clue, a trio's third player and the
   chime. In practice nothing is saved; on the night each counted round's

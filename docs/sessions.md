@@ -9,6 +9,48 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 31 Oct 2026, evening · Claude Code (the arcade from Jon's second playtest; fifteen-minute rounds)
+
+- Jon's second playtest of Miss Boo LaRue's Arcade on the real Stream Deck
+  + XL, sent as a transcript of his recording with a screenshot of the
+  scoreboard. Reviewed and built on main in five commits (5aa8ae6, c9542f5,
+  1e6da44, a03c112, 3a5a675) and this one for the board and the docs. Not
+  deployed, not pushed: the live site still has the 30 October arcade.
+- Every game with strikes has five (`STRIKES_OUT` 5; Yarn Catch already had
+  five misses). Boo Chasing Her Tail: the rug black, the tail one flat black
+  band in a white glow (its drop shadow) with a white tip, three keys long
+  all game (`TAIL_GROWS_AT` []: the growth read as the fish's doing),
+  cucumbers on red, no pause at the edge (`TAIL_WRAP_MS` gone; a pause had
+  felt like dropped clicks), and the page ignores a held key's repeats.
+  Knock It Off the Table: a beat every 0.5 s at the start, 0.2 s from three
+  fifths in; a miss crosses the table's end key only; the claret cloth back.
+  Yarn Catch: the left dial a column a click and a slide along the strip a
+  column a ninth of it, round the edges; no tap, no rail. The strip: the
+  time a gold bar counting down with m:ss under it and the points beside it
+  (`countdown` in `arcadeArt.js`, `clockOf` in the engine), whose turn big in
+  the middle of the menu, tokens spent from the left whatever game was
+  picked. The visit: the clue after all five games (`CLUE_AFTER_GAMES` =
+  `TOKENS`), fifty-second games (`GAME_MS` 50000), no running maths under the
+  players, the keys 1 to 3 (`SCORE_KEYS`) putting one player's five scores on
+  the Mac's screen at the winner, Boo's free-play line says to listen for the
+  chime, the scoreboard's games on one line and the fun facts fitting.
+- Every Act 4 round is fifteen minutes (`seed/night.json` `act4.roundMinutes`
+  15, read by `functions/lib/act4.js`; the arcade's `ROUND_MS` 900000). Act 4
+  is about an hour and ten minutes now. The docs that said ten minutes say
+  fifteen (`CLAUDE.md`, `docs/on-the-night.md`, `docs/room-screens.md`,
+  `docs/study-light-game.md`, `docs/solving-the-case.md` G52).
+- Not found in the code: a reason both dials could not turn at once, or a
+  click that did not move Boo with nothing in her way; filed on card 514 for
+  Jon's next try. Jon's maybe of a ten-second warm-up round is the question
+  arcadeWarmUp (default no, nothing built).
+- The board: migration `2026-10-31-arcade-playtest` (cards 544 to 549 done, a
+  line on 514, arcadeWarmUp). The docs: `docs/boo-arcade.md`,
+  `docs/on-the-night.md`, `docs/room-screens.md`, `docs/test-plan.md` (G54,
+  G55), this log, `CLAUDE.md`. Claude chat keeps the Canon and Start Here
+  (the 30 October handoff's split).
+- Left: Jon's try of the changed games on the deck (514); the arcade on the
+  night (515); the deploy, on Jon's say-so.
+
 ## 31 Oct 2026, afternoon · Claude Code (Get Off My Lawn!: the screen, the phone, the string lights)
 
 - Jon's Game test note 10012 on Get Off My Lawn!, worked in full and closed

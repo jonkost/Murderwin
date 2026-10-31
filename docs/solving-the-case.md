@@ -284,7 +284,7 @@ Flavor only: intro text in each character's voice, no change to play. Lines in `
 - **G49** Salem's bag clue is wrong at 1 to 3 and right at 5.
 - **G50** The memory match uses all fourteen traces, 6, 10 and 14 pairs, and never crosses off the real motive.
 - **G51** Zimothy's and Boo's cross-offs never take the real motive, never the same one twice for a group.
-- **G52** Every Act 4 reward is paid by the ten-minute cap.
+- **G52** Every Act 4 reward is paid by the round's cap (fifteen minutes since 31 Oct 2026).
 - **G53** Every bulletin 2 line at every dial level points at the real family (was G40 until 24 Oct).
 - **G18b** Every cat line, at every affection level, only rules out wrong answers (was G41 until 24 Oct).
 - **F20** Only one player is at a cat's code at a time in Act 2.
