@@ -9,6 +9,48 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 31 Oct 2026, afternoon · Claude Code (Get Off My Lawn!: the screen, the phone, the string lights)
+
+- Jon's Game test note 10012 on Get Off My Lawn!, worked in full and closed
+  by number. Built on main, not deployed, not pushed.
+- The Orangerie's screen (the brain's browser, `?kiosk=orangerie`) shows
+  Salem's board while a group plays (`play/src/screens/Rooms.jsx`
+  `SalemBoard`): the phones' colour over the whole screen with SHAKE or
+  FREEZE on it, the count before a round, the thirty seconds filling, the
+  restarts and why, Salem's picture, and the group's names with the slips
+  each has caused (from `public/salem` `slipsBy`, by place). Between groups
+  the rules card and the code as before; after the third round, the winner.
+  The same board serves the practice at `?kiosk=orangerie&practice=1`
+  (`Practice.jsx` `OrangeriePractice`, routed as `orangerie-wall`), opened
+  from the Game test tab's new try; three new samples (`kiosk-orangerie-
+  ready`, `-round`, `-passed`).
+- Salem's head on the phone (`Act4.jsx` `SalemHead`): loose on the screen
+  through a round, thrown by the phone's own motion, rolling downhill,
+  bouncing off the edges, turning against the phone's turning, swelling
+  with a hard shake; a frame loop on the element, no React redraw; a phone
+  with no motion, or one asking for less motion, gets a gentle float. The
+  motion hook keeps the extra readings (`ax`, `ay`, `gx`, `gy`, `spin`);
+  the rules (`salemSlip`) are untouched.
+- The string lights, found on this Mac: all three Shortcuts change the
+  lights at once, then run on for about a minute (the green one twenty
+  seconds) and end "Action set execution partially succeeded": something
+  else in each Home scene is not answering. The brain cut each run off at
+  eight seconds and counted it as the lights not answering, so the colours
+  fell behind. Now (`cues/lib/strings.js`) a colour counts as sent after a
+  head start of 1.5 s whether or not the Shortcut has finished (a 90 s
+  timeout behind it), a failure inside the head start still rejects, a late
+  failure is one plain line that says what to fix, and `--check-strings`
+  waits for that report. `TwoWayLights` tries the pairing first and the
+  Shortcuts from its first failure when both are set (the token in
+  `cues/.env` is empty, so today it is the Shortcuts alone). Tried on the
+  real Shortcuts: red, green, decor in 1.5 s each, then the Green v2 report
+  after 20 s. The Home-app fix is Jon's card 543.
+- Suites: cues 71, play 266, workshop 135, all passing. Looked at in the
+  browser: the board's round sample and the phone's round sample.
+- Left: Jon opens each of the three Home scenes and takes out whatever
+  shows No Response (card 543); the arcade still not wired into Act 4
+  (515). No decision taken, so the Canon is unchanged.
+
 ## 31 Oct 2026 · Claude Code (the Boo Arcade handoff deployed)
 
 - Deployed on Jon's yes ("Deploy now"), from a clean copy of main at 2645ca4:

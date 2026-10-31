@@ -26,6 +26,7 @@ import {
   RETIRED_FOR_MEMORY_RESEND_1029,
   RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS,
   ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS,
+  SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -939,6 +940,15 @@ export const ADDITIONS = [
     tasks: ARCADE_PLAYTEST_1030_TASKS,
     fileTasks: FILED_FOR_ARCADE_PLAYTEST_1030,
     decisions: ARCADE_PLAYTEST_1030_DECISIONS,
+  },
+  {
+    // 31 Oct: Jon's Game test note on Get Off My Lawn! (10012, closed by
+    // number): Salem's board on the Orangerie's screen and for the practice
+    // (540), his head on the phone (541), the brain and the Shortcuts that run
+    // a minute (542), and Jon's card for the Home scenes (543).
+    id: '2026-10-31-salem-board',
+    tasks: SALEM_1031_TASKS,
+    retireTasks: RETIRED_FOR_SALEM_1031,
   },
 ]
 
