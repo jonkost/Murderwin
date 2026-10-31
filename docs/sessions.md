@@ -14,8 +14,12 @@ on the Canon.
 - Jon's second playtest of Miss Boo LaRue's Arcade on the real Stream Deck
   + XL, sent as a transcript of his recording with a screenshot of the
   scoreboard. Reviewed and built on main in five commits (5aa8ae6, c9542f5,
-  1e6da44, a03c112, 3a5a675) and this one for the board and the docs. Not
-  deployed, not pushed: the live site still has the 30 October arcade.
+  1e6da44, a03c112, 3a5a675), one for the board and the docs (34d6f93)
+  and one for a flaky test (c507571). Deployed on Jon's "Deploy now" that
+  evening from a clean copy of c507571: the whole site, the rules and all 26
+  functions (every one updated, since the seed's round length changed); 119
+  of 119 live files match the build; the tick ran clean after the
+  switchover. Not pushed.
 - Every game with strikes has five (`STRIKES_OUT` 5; Yarn Catch already had
   five misses). Boo Chasing Her Tail: the rug black, the tail one flat black
   band in a white glow (its drop shadow) with a white tip, three keys long
