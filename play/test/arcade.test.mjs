@@ -21,6 +21,7 @@ import {
   KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, KNOCK_PER_TABLE, KNOCK_APART,
   KNOCK_LATE_MS, KNOCK_EARLY_MS, KNOCK_GONE_MS, KNOCK_POINTS, KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN,
   YARN_STEP_MS, YARN_STEP_END_MS, YARN_SPAWN_MS, YARN_SPAWN_END_MS, YARN_FALLING, YARN_LAND_MS, YARN_POINTS, YARN_GOLD_POINTS, GOLD_ONE_IN,
+  YARN_MISSES_OUT, YARN_FRIENDS_FROM_MS, YARN_FRIEND_ONE_IN, marksOutOf,
   READY_MS, COUNT_MS, RESULT_MS, PICK_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS, MARQUEE_STEP_MS, TIME_LIGHTS,
 } from '../src/lib/arcade.js'
 
@@ -73,11 +74,24 @@ const STRUCK = { boo: "That's Miss Boo.", granola: "That's Granolia.", irwin: "T
 const over2min = (from, to, t) => from + (to - from) * Math.min(1, Math.max(0, t / 120000))
 const NO_DIALS = ['', '', '', '', '', '']
 // The strike boxes as the strip and the screen show them, with their word (30 Oct 2026).
-const marksOf = (id, used) => ({ of: STRIKES_OUT, used, label: MARK_LABELS[id] })
+const marksOf = (id, used) => ({ of: marksOutOf(id), used, label: MARK_LABELS[id] })
 // The dial labels with Exit over the dial that leaves the game, while it counts down or runs (30 Oct 2026).
 const withExit = d => d.map((x, i) => (i === EXIT_DIAL ? 'Exit' : x))
 const SAMPLES = ['home', 'menu', 'play', 'clue', 'third', 'winner', 'farewell']
 
+// Yarn Catch's basket, played well since 30 Oct 2026: a tap on the strip under the lowest ball's
+// column (the strip is the rail), never under a friend about to land or waiting on the floor, and
+// out from under one. A tap event, or null to stay.
+const colTap = col => tap((col + 0.5) * STRIP_WIDTH / COLS)
+const ALL_COLUMNS = Array.from({ length: COLS }, (_, c) => c)
+function yarnChase(g) {
+  const danger = col => g.balls.some(b => b.friend && b.col === col && b.row >= 2)
+  const balls = g.balls.filter(b => !b.friend)
+  const low = balls.reduce((a, b) => (!a || b.row > a.row ? b : a), null)
+  let col = low && !danger(low.col) ? low.col : g.basket
+  if (danger(col)) col = ALL_COLUMNS.filter(c => !danger(c)).sort((a, b) => Math.abs(a - g.basket) - Math.abs(b - g.basket))[0] ?? col
+  return col === g.basket ? null : colTap(col)
+}
 // Random presses, turns, taps, swipes, arrows and junk through a whole game, at the page's ticks.
 function randomGame(id, seed, lengthMs = 30000) {
   let g = newGame(id, { seed, lengthMs, now: 0 })
@@ -267,11 +281,11 @@ function endings() {
   }
   const miceNone = stepGame(newGame('mice', { seed: 1, lengthMs: 120000, now: 0 }), 120000)
   const knockOut = stepGame(newGame('knock', { seed: 1, lengthMs: 120000, now: 0 }), 120000) // nobody presses: three get away
-  let yarnPoints = newGame('yarn', { seed: 4, lengthMs: 120000, now: 0 }) // the basket goes under the lowest ball
+  let yarnPoints = newGame('yarn', { seed: 4, lengthMs: 120000, now: 0 }) // the basket goes under the lowest ball, never a friend
   for (let t = 0; t <= 120000; t += TICK) {
     yarnPoints = stepGame(yarnPoints, t)
-    const low = yarnPoints.balls.reduce((a, b) => (!a || b.row > a.row ? b : a), null)
-    if (low && low.col !== yarnPoints.basket && t % (3 * TICK) === 0) yarnPoints = inputGame(yarnPoints, tap(low.col < yarnPoints.basket ? 100 : 1100), t)
+    const ev = t % (3 * TICK) === 0 ? yarnChase(yarnPoints) : null
+    if (ev) yarnPoints = inputGame(yarnPoints, ev, t)
   }
   return { tailPoints, tailNone, pointerOut, pointerLasted, miceOut, miceNone, knockOut, yarnPoints }
 }
@@ -304,14 +318,14 @@ test('G54 the menu: the five games on the second row with two blank keys each si
   assert.deepEqual(rowFaces(home.faces, 1), ['blank', 'blank', 'menu:tail', 'menu:pointer', 'menu:mice', 'menu:knock', 'menu:yarn', 'blank', 'blank'])
   assert.deepEqual(rowFaces(home.faces, 2), Array(COLS).fill('blank'))
   assert.deepEqual(rowFaces(home.faces, 3), Array(COLS).fill('blank'))
-  assert.deepEqual(home.strip, { left: 'Free play', centre: 'Press a game', right: '', score: null, marks: null, lights: null, zones: false, dials: NO_DIALS })
+  assert.deepEqual(home.strip, { left: 'Free play', centre: 'Press a game', right: '', score: null, marks: null, lights: null, zones: null, dials: NO_DIALS })
 
   // a visit's menu: the player's two tokens on the third row
   const a = newArcade({ mode: 'visit', players: ['Jessa', 'Mari'], seed: 1, now: 0 })
   const v = arcadeView(a, 0)
   assert.equal(v.faces[keyAt(2, 3)], 'coin')
   assert.equal(v.faces[keyAt(2, 5)], 'coin')
-  assert.deepEqual(v.strip, { left: "Jessa's turn", centre: 'Press a game', right: 'Tokens: 2', score: null, marks: null, lights: null, zones: false, dials: NO_DIALS })
+  assert.deepEqual(v.strip, { left: "Jessa's turn", centre: 'Press a game', right: 'Tokens: 2', score: null, marks: null, lights: null, zones: null, dials: NO_DIALS })
   // any other key, a dial, the strip, an arrow or nonsense does nothing, and makes no sound
   for (const ev of [key(0), key(10), key(16), key(BACK_KEY), key(KEY_COUNT), turn(0, 1), turn(5, -3), press(3), tap(600), swipe(100, 900), arrow('left'), arrow('up'), { kind: 'up' }, null]) {
     const b = aIn(a, ev, 100)
@@ -502,7 +516,7 @@ test('G54 one click of a dial is one key, every click (Jon, 29 Oct 2026): a repo
   assert.equal(input(tail, arrow('right'), at).boo, keyAt(0, 1))
   assert.equal(input(pointer, arrow('right'), at).dot, keyAt(2, 1))
   const yarn = newGame('yarn', { seed: 9, lengthMs: 120000, now: 0 })
-  assert.equal(input(yarn, tap(1100), at).basket, yarn.basket + 1)
+  assert.equal(input(yarn, tap(1100), at).basket, 8, 'a tap puts the basket under it (30 Oct 2026)')
   assert.equal(input(yarn, arrow('left'), at).basket, yarn.basket - 1)
   // the labels on the strip say so: only the outside two, and only where they play
   assert.deepEqual(Object.fromEntries(GAMES.map(g => [g.id, g.dials.map(l => l !== '')])), {
@@ -553,7 +567,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   assert.equal(MICE_PETS_OUT, STRIKES_OUT)
   assert.ok(STRIKE_WORDS_MS >= 1000 && STRIKE_WORDS_MS <= 3000, 'long enough to read, and gone again')
   const view = (a, t) => arcadeView(a, t)
-  const RULES = { tail: '', pointer: "Caught three times and you're out.", mice: "Tap three friends and you're out.", knock: "Three misses and you're out.", yarn: '' }
+  const RULES = { tail: '', pointer: "Caught three times and you're out.", mice: "Tap three friends and you're out.", knock: "Three misses and you're out.", yarn: "Five misses and you're out." }
   // the rule on the ready strip and the count's, and on the screen; then three empty boxes in its place
   for (const { id, name, rule } of GAMES) {
     assert.equal(rule ?? '', RULES[id])
@@ -616,7 +630,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   struck(a, t, 2, STRUCK[who])
   tapPet()
   assert.equal(a.stage, 'result')
-  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped three friends.', right: pts(a.game.score), score: null, marks: null, lights: null, zones: false, dials: NO_DIALS })
+  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped three friends.', right: pts(a.game.score), score: null, marks: null, lights: null, zones: null, dials: NO_DIALS })
   assert.deepEqual(view(a, t).screen.marks, marksOf('mice', 3), 'the screen shows the three on the result')
   assert.equal(view(a, t).screen.result.outcome, 'lose')
 
@@ -661,8 +675,8 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   assert.equal(view(out, ends + 10).strip.centre, "Time's up.")
   assert.equal(view(out, ends + 10).screen.said, null)
 
-  // the two games with no strikes have no boxes, on the strip or the screen
-  for (const id of ['tail', 'yarn']) {
+  // the one game with no strikes (Yarn Catch counts five misses since 30 Oct 2026) has no boxes, on the strip or the screen
+  for (const id of ['tail']) {
     const [b, u] = started(id)
     assert.equal(view(b, u).strip.marks, null)
     assert.equal(view(b, u).screen.marks, null)
@@ -2072,7 +2086,7 @@ test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends s
   const v = arcadeView(a, ta)
   assert.deepEqual(v.strip.marks, marksOf('knock', 0))
   assert.deepEqual(v.screen.marks, marksOf('knock', 0))
-  assert.deepEqual(MARK_LABELS, { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses' })
+  assert.deepEqual(MARK_LABELS, { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses', yarn: 'Misses' })
   const page = src('../src/screens/Arcade.jsx')
   assert.match(page, /<span className="arcade-strikes-label">\{label\}<\/span>/)
   assert.match(page, /\{screen\.marks\.label \|\| 'Strikes'\}: \{screen\.marks\.used\} of \{screen\.marks\.of\}/)
@@ -2120,7 +2134,7 @@ test('G54 Yarn Catch (Jon, 29 Oct 2026: "it is skipping a row"): every ball drop
   assert.equal(gameFaces(missed, at + YARN_LAND_MS)[keyAt(3, 6)], 'yarn-miss')
   assert.equal(gameFaces(missed, at + YARN_LAND_MS + MISS_MS)[keyAt(3, 6)], 'blank')
   // the basket slid under it in time: caught
-  const saved = input(input(s, tap(1100), at + 50), tap(1100), at + 100)
+  const saved = input(s, colTap(6), at + 100) // slid under it (30 Oct 2026: the strip is the rail)
   assert.equal(saved.basket, 6)
   assert.equal(saved.caught, 1)
   assert.equal(saved.score, YARN_POINTS)
@@ -2144,108 +2158,162 @@ test('G54 Yarn Catch (Jon, 29 Oct 2026: "it is skipping a row"): every ball drop
   // whole games: every ball is seen on row after row from the top, none skipped. One ball to a
   // column, so a column names its ball while it falls. With the basket left in the middle (even
   // seeds), a ball over it is caught as it lands, so it is seen on the top three rows; every other
-  // ball is seen on all four and missed from the bottom row. With the basket chasing (odd seeds),
-  // nearly every ball is caught.
+  // ball is seen on all four and missed from the bottom row, and the fifth miss ends the game
+  // (30 Oct 2026). With the basket chasing (odd seeds), nearly every ball is caught and the game
+  // runs its time; a friend on the way down is dodged, and one on the floor is seen on all four rows.
   for (const seed of [1, 2, 3, 4]) {
     let y = newGame('yarn', { seed, lengthMs: 120000, now: 0 })
     const falling = new Map() // a column: the rows its ball has been seen on
     const gone = [] // each ball gone before the end: its column and the rows it was seen on
-    for (let t = 0; t <= 120000; t += TICK) {
+    for (let t = 0; t <= 120000 && !y.over; t += TICK) {
       y = stepGame(y, t)
       assert.ok(y.balls.length <= YARN_FALLING)
       assert.equal(new Set(y.balls.map(b => b.col)).size, y.balls.length, 'one ball to a column')
       for (const [col, seen] of falling) {
         const b = y.balls.find(x => x.col === col)
-        if (!b || b.row < seen.at(-1)) { if (!y.over) gone.push({ col, rows: seen.join('') }); falling.delete(col) }
+        if (!b || b.row < seen.rows.at(-1)) { if (!y.over) gone.push({ col, rows: seen.rows.join(''), friend: seen.friend }); falling.delete(col) }
       }
       for (const b of y.balls) {
         const seen = falling.get(b.col)
-        if (!seen) { assert.equal(b.row, 0, 'a new ball starts on the top row'); falling.set(b.col, [0]) }
-        else if (seen.at(-1) !== b.row) { assert.equal(b.row, seen.at(-1) + 1, 'one row a step, never two'); seen.push(b.row) }
-        assert.match(gameFaces(y, t)[keyAt(b.row, b.col)], /^yarn/, 'it shows where it is')
+        if (!seen) { assert.equal(b.row, 0, 'a new ball starts on the top row'); falling.set(b.col, { rows: [0], friend: b.friend }) }
+        else if (seen.rows.at(-1) !== b.row) { assert.equal(b.row, seen.rows.at(-1) + 1, 'one row a step, never two'); seen.rows.push(b.row) }
+        assert.match(gameFaces(y, t)[keyAt(b.row, b.col)], b.friend ? /^pet:/ : /^yarn/, 'it shows where it is')
       }
-      if (seed % 2 && y.balls.length && t % (3 * TICK) === 0) { // the basket chases the lowest ball
-        const low = y.balls.reduce((a, b) => (b.row > a.row ? b : a))
-        if (low.col !== y.basket) y = inputGame(y, tap(low.col < y.basket ? 100 : 1100), t)
-      }
+      if (seed % 2 && t % (3 * TICK) === 0) { const ev = yarnChase(y); if (ev) y = inputGame(y, ev, t) }
     }
-    assert.equal(y.outcome, 'time')
-    assert.ok(gone.length > 50, `${gone.length} balls`)
+    const balls = gone.filter(b => !b.friend)
     for (const b of gone) assert.ok(['012', '0123'].includes(b.rows), `a ball in column ${b.col + 1} was seen on rows ${b.rows}`)
     if (seed % 2 === 0) {
+      assert.equal(y.outcome, 'lose', 'the basket left in the middle: five balls fall')
+      assert.equal(y.strikes, YARN_MISSES_OUT)
       assert.equal(y.basket, 4)
-      for (const b of gone) assert.equal(b.rows, b.col === 4 ? '012' : '0123', `column ${b.col + 1}`)
-      assert.ok(gone.some(b => b.col === 4) && gone.some(b => b.col !== 4))
-      assert.equal(y.caught, gone.filter(b => b.col === 4).length, 'the ones over the basket caught')
-      assert.equal(y.dropped, gone.filter(b => b.col !== 4).length, 'the rest missed')
+      for (const b of balls) assert.equal(b.rows, b.col === 4 ? '012' : '0123', `column ${b.col + 1}`)
+      assert.equal(y.caught, balls.filter(b => b.col === 4).length, 'the ones over the basket caught')
+      assert.equal(y.dropped, balls.filter(b => b.col !== 4).length + 1, 'the rest missed (the fifth ended the game before it was written down)')
     } else {
+      assert.equal(y.outcome, 'time')
+      assert.ok(gone.length > 50, `${gone.length} balls`)
       assert.ok(y.caught > 50 && y.caught > 10 * y.dropped, `a basket that chases catches nearly all: ${y.caught} caught, ${y.dropped} missed`)
+      for (const b of gone.filter(b => b.friend)) assert.equal(b.rows, '0123', 'a friend dodged falls all the way')
     }
   }
 })
 
-test('G54 Yarn Catch (Jon, 29 Oct 2026: "make the yarn use the touch strip for left and right controls"): a tap on the strip\'s left half moves the basket one column left, on its right half one right; a swipe one column its way; the left and right arrows too; the edges stop it, and the dials and keys do nothing', () => {
+test('G54 Yarn Catch (Jon, 29 Oct 2026: "make the yarn use the touch strip for left and right controls"; 30 Oct: "Slide to move", "The basket wraps around"): the strip is the basket\'s rail, nine columns across it: a touch or a slide puts the basket under the finger, wherever it lands; the left and right arrows move it one column and wrap round the edges; the dials and keys do nothing', () => {
   const g0 = newGame('yarn', { seed: 9, lengthMs: 120000, now: 0 })
   const at = 100
   const moved = ev => input(g0, ev, at).basket
-  assert.equal(moved(tap(0)), 3)
-  assert.equal(moved(tap(STRIP_WIDTH / 2 - 1)), 3, 'the left half')
-  assert.equal(moved(tap(STRIP_WIDTH / 2)), 5, 'the right half')
-  assert.equal(moved(tap(STRIP_WIDTH - 1)), 5)
-  assert.equal(moved(tap(-40)), 3, 'off the left end is the left')
-  assert.equal(moved(tap(5000)), 5, 'off the right end is the right')
-  assert.equal(moved(swipe(100, 1100)), 5)
-  assert.equal(moved(swipe(1100, 100)), 3)
-  assert.equal(moved(swipe(900, 950)), 5, 'a short swipe right, on either half, is one column right')
-  assert.equal(moved(swipe(250, 200)), 3)
-  assert.equal(moved(swipe(200, 250)), 5)
-  assert.equal(moved(swipe(700, 700)), 5, 'a swipe that goes nowhere is a tap where it was')
-  assert.equal(moved(swipe(300, 300)), 3)
+  const w = STRIP_WIDTH / COLS
+  for (let c = 0; c < COLS; c++) {
+    assert.equal(moved(tap(c * w)), c, `the left of column ${c + 1}`)
+    assert.equal(moved(tap(c * w + w - 1)), c, `the right of column ${c + 1}`)
+    assert.equal(moved(swipe(400, c * w + w / 2)), c, `a slide that ends over column ${c + 1}`)
+  }
+  assert.equal(moved(tap(-40)), 0, 'off the left end is the first column')
+  assert.equal(moved(tap(5000)), END, 'off the right end is the last')
+  assert.equal(moved(swipe(700, 700)), Math.floor(700 / w), 'a slide that goes nowhere is a touch where it is')
   assert.equal(moved(arrow('left')), 3)
   assert.equal(moved(arrow('right')), 5)
-  assert.deepEqual(input(g0, tap(1100), at).events, [], 'a move makes no sound')
-  // one column a tap, however many: click by click
-  assert.equal([1, 2, 3].reduce((g, n) => input(g, tap(1100), at + n), g0).basket, 7)
+  assert.deepEqual(input(g0, colTap(7), at).events, [], 'a move makes no sound')
+  assert.deepEqual(input(g0, colTap(4), at), step(g0, at), 'a touch under the basket changes nothing')
+  // the arrows wrap round the edges
+  assert.equal(input({ ...g0, basket: 0 }, arrow('left'), at).basket, END)
+  assert.equal(input({ ...g0, basket: END }, arrow('right'), at).basket, 0)
+  assert.equal(gameFaces(input({ ...g0, basket: 0 }, arrow('left'), at), at)[keyAt(3, END)], 'basket')
   // the up and down arrows, every dial, a press, any key: nothing
   const nothing = [arrow('up'), arrow('down'), press(0), press(5), key(keyAt(3, 3)), key(keyAt(3, 5)), key(0), key(keyAt(3, 4))]
   for (let d = 0; d < DIALS; d++) nothing.push(turn(d, 1), turn(d, -1))
   for (const ev of nothing) assert.deepEqual(input(g0, ev, at), step(g0, at), JSON.stringify(ev))
-  // the edges stop it
-  let g = g0
-  for (let n = 1; n <= 6; n++) g = input(g, tap(10), at + n)
-  assert.equal(g.basket, 0)
-  for (let n = 1; n <= 10; n++) g = input(g, swipe(100, 1000), at + 10 + n)
-  assert.equal(g.basket, END)
-  assert.equal(gameFaces(g, at + 30)[keyAt(3, END)], 'basket')
-  // it has no strikes: its misses cost nothing but the ball, and it ends on its time
-  assert.equal(step(g0, 120000).outcome, 'time')
+  // the drawn strip on the screen sends where a finger or the pointer is as it slides
+  const page = src('../src/screens/Arcade.jsx')
+  assert.match(page, /onPointerMove: e => \{\s*if \(!\(e\.buttons & 1\)\) return/)
+  // five misses end it (30 Oct 2026); the how-to says so
+  assert.equal(YARN_MISSES_OUT, 5)
+  assert.equal(GAMES.find(g => g.id === 'yarn').rule, "Five misses and you're out.")
+  assert.equal(GAMES.find(g => g.id === 'yarn').how, 'Slide a finger along the touch strip to move the basket under the falling yarn. Gold yarn is worth more. Never catch Sir Irwin or his friends.')
+  assert.equal(step(g0, 120000).outcome, 'lose', 'left alone, five balls fall')
+  assert.equal(step(g0, 120000).strikes, 5)
 })
 
-test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big in the middle, three strike boxes in the games that count strikes, the time as eight lights going out one every eighth of the game, the outside dials\' labels; Yarn Catch\'s two halves, with no lights or labels', () => {
+test('G54 Yarn Catch (Jon, 30 Oct 2026): a ball on the floor is a miss, the fifth ends the round with the points kept; from ten seconds in about one in four of what falls is Sir Irwin or a friend, all five of them, drawn falling; a friend into the basket is a miss that says who, their face under the cross on the basket; a friend on the floor is nothing; the boxes say Misses, five of them', () => {
+  assert.deepEqual([YARN_FRIENDS_FROM_MS, YARN_FRIEND_ONE_IN, YARN_MISSES_OUT, MARK_LABELS.yarn, marksOutOf('yarn'), marksOutOf('knock')], [10000, 4, 5, 'Misses', 5, STRIKES_OUT])
+  const g0 = newGame('yarn', { seed: 9, lengthMs: 120000, now: 0 })
+  const T = 10000
+  // a miss: the words, the count, the miss sound
+  const one = { ...g0, at: T, nextSpawnAt: 100000, balls: [{ col: 6, row: 3, gold: false, friend: null, nextAt: T, missAt: T + 100 }] }
+  const missed = step(one, T + 100)
+  assert.deepEqual([missed.strikes, missed.dropped, missed.events], [1, 1, ['miss']])
+  assert.deepEqual(missed.said, { words: 'Miss 1! It fell.', until: T + 100 + STRIKE_WORDS_MS })
+  // the fifth ends it, points kept, no bonus
+  const fifth = step({ ...one, strikes: 4, dropped: 4, score: 7 }, T + 100)
+  assert.deepEqual([fifth.over, fifth.outcome, fifth.endedAt, fifth.score, fifth.events], [true, 'lose', T + 100, 7, ['lose']])
+  // a friend falling: drawn as their face on the way down
+  const friend = { ...g0, at: T, nextSpawnAt: 100000, balls: [{ col: 2, row: 1, gold: false, friend: 'zimmy', nextAt: T + 100, missAt: null }] }
+  assert.equal(gameFaces(friend, T)[keyAt(1, 2)], 'pet:zimmy')
+  // into the basket: a miss that says who, the face under the cross on the basket, no points
+  const under = { ...friend, basket: 2, score: 3 }
+  const caught = step(under, T + 100)
+  assert.equal(caught.balls.length, 1, 'still on the way: row 3 next')
+  const landed = step(caught, caught.balls[0].nextAt)
+  assert.deepEqual([landed.strikes, landed.friendsCaught, landed.caught, landed.score, landed.balls], [1, 1, 0, 3, []])
+  assert.deepEqual(landed.events, ['miss'])
+  assert.equal(landed.said.words, "Miss 1! That's Zimothy Clawford, Esq.")
+  assert.equal(gameFaces(landed, landed.at)[keyAt(3, 2)], 'oops:zimmy')
+  assert.equal(gameFaces(landed, landed.at + MISS_MS)[keyAt(3, 2)], 'basket')
+  // the basket slid under a friend waiting on the floor: the same
+  const waiting = { ...g0, at: T, nextSpawnAt: 100000, balls: [{ col: 6, row: 3, gold: false, friend: 'irwin', nextAt: T, missAt: T + 150 }] }
+  const slid = input(waiting, colTap(6), T + 50)
+  assert.deepEqual([slid.strikes, slid.friendsCaught, slid.said.words], [1, 1, "Miss 1! That's the birthday boy."])
+  // a friend on the floor: gone, and nothing
+  const floor = step(waiting, T + 150)
+  assert.deepEqual([floor.strikes, floor.dropped, floor.balls, floor.events, floor.said], [0, 0, [], [], null])
+  assert.equal(gameFaces(floor, T + 150)[keyAt(3, 6)], 'blank', 'no cross for a friend on the floor')
+  // whole games: friends from ten seconds in, about one in four, all five; a basket that chases the balls and dodges the friends lasts
+  let friends = 0, all = 0
+  const met = new Set()
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
+    let y = newGame('yarn', { seed, lengthMs: 120000, now: 0 })
+    let prev = y
+    for (let t = 0; t <= 120000 && !y.over; t += TICK) {
+      y = stepGame(y, t)
+      for (const b of y.balls) {
+        if (prev.balls.some(p => p.col === b.col && p.friend === b.friend && p.row <= b.row)) continue
+        all += 1
+        if (b.friend) { friends += 1; met.add(b.friend); assert.ok(t >= YARN_FRIENDS_FROM_MS); assert.equal(b.gold, false) }
+      }
+      const ev = t % (3 * TICK) === 0 ? yarnChase(y) : null
+      if (ev) y = inputGame(y, ev, t)
+      prev = y
+    }
+    assert.equal(y.outcome, 'time', `seed ${seed}: lasted (${y.strikes} misses)`)
+    assert.ok(y.caught > 40 && y.friendsCaught <= 1, `seed ${seed}: ${y.caught} caught, ${y.friendsCaught} friends`)
+  }
+  assert.ok(Math.abs(friends / all - 1 / YARN_FRIEND_ONE_IN) < 0.06, `${friends} friends of ${all}`)
+  assert.deepEqual([...met].sort(), [...PETS].sort())
+  // on the strip and the screen: five boxes, Misses
+  const [a, ta] = started('yarn')
+  assert.deepEqual(arcadeView(a, ta).strip.marks, { of: 5, used: 0, label: 'Misses' })
+  assert.deepEqual(arcadeView(a, ta).screen.marks, { of: 5, used: 0, label: 'Misses' })
+})
+
+test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big in the middle, the strike boxes in the games that count strikes, the time as eight lights going out one every eighth of the game, the outside dials\' labels; Yarn Catch\'s rail along the top (30 Oct 2026)', () => {
   const KEYS = ['left', 'centre', 'right', 'score', 'marks', 'lights', 'zones', 'dials']
   for (const { id, name, dials, rule } of GAMES) {
     // ready and the count
     const ready = aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey(id)), 0)
     const r = arcadeView(ready, PICK_MS).strip
     const c = arcadeView(aIn(ready, press(0), PICK_MS), PICK_MS).strip
-    if (id === 'yarn') {
-      assert.deepEqual(r, { left: '', centre: 'Press any key to start', right: '', score: null, marks: null, lights: null, zones: true, dials: NO_DIALS })
-      assert.deepEqual(c, { ...r, centre: '3' })
-    } else {
-      assert.deepEqual(r, { left: name, centre: 'Press any key to start', right: rule ?? '', score: null, marks: null, lights: null, zones: false, dials })
-      assert.deepEqual(c, { ...r, centre: '3', dials: withExit(dials) }, 'the count: Exit over its dial')
-    }
+    const zones = id === 'yarn' ? { of: COLS, at: 4 } : null // Yarn Catch's rail along the top: nine columns, the basket under the fifth (30 Oct 2026)
+    assert.deepEqual(r, { left: name, centre: 'Press any key to start', right: rule ?? '', score: null, marks: null, lights: null, zones, dials })
+    assert.deepEqual(c, { ...r, centre: '3', dials: withExit(dials) }, 'the count: Exit over its dial')
     // the game
     const [a, t] = started(id)
     const g = a.game
     const L = g.endsAt - g.startedAt
     const s = arcadeView(a, t).strip
     assert.deepEqual(Object.keys(s), KEYS)
-    if (id === 'yarn') {
-      assert.deepEqual(s, { left: '', centre: '', right: '', score: 0, marks: null, lights: null, zones: true, dials: NO_DIALS })
-      continue
-    }
-    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? marksOf(id, 0) : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones: false, dials: withExit(dials) })
+    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? marksOf(id, 0) : null, lights: { of: TIME_LIGHTS, lit: TIME_LIGHTS }, zones, dials: withExit(dials) })
+    if (id === 'yarn') assert.deepEqual(arcadeView(aIn(a, colTap(7), t), t).strip.zones, { of: COLS, at: 7 }, 'the rail follows the basket')
     // one light goes out every eighth of the game
     for (let n = 1; n < TIME_LIGHTS; n++) {
       const out = g.startedAt + n * L / TIME_LIGHTS
@@ -2450,8 +2518,8 @@ test('G54 a game begun by an older copy of the engine plays on (the page keeps i
       if (c.stage !== 'play') break
       const g = c.game
       if (id === 'mice') for (const m of g.mice) c = aIn(c, key(m.key), ct)
-      const low = id === 'yarn' && g.balls.reduce((x, y) => (!x || y.row > x.row ? y : x), null)
-      if (low && low.col !== g.basket) c = aIn(c, tap(low.col < g.basket ? 100 : 1100), ct)
+      const ev = id === 'yarn' ? yarnChase(g) : null
+      if (ev) c = aIn(c, ev, ct)
     }
     assert.equal(c.stage, 'result')
     assert.ok(c.game.golds > 0, `${id}: ${c.game.golds} gold`)
@@ -2765,9 +2833,9 @@ test('G55 a visit\'s game that would run into the chime is cut short so its clue
   assert.equal(lengthFrom(newArcade({ mode: 'free', seed: 3, now: 0 }), ROUND_MS - 10000), FREE_GAME_MS)
   assert.equal(lengthFrom({ ...two, free: true, stage: 'home' }, ROUND_MS - 20000), FREE_GAME_MS)
 
-  // a pair at an ordinary pace, all four games ones that run their full time (Whack-a-Mouse and Yarn Catch left alone):
+  // a pair at an ordinary pace, all four games ones that run their full time (Whack-a-Mouse left alone; Yarn Catch ends at five misses since 30 Oct 2026):
   // three games of two minutes, the last cut short, and the second player's clue before the chime
-  const pair = pacedVisit(['Ann', 'Bob'], ['mice', 'mice', 'yarn', 'yarn'], ORDINARY)
+  const pair = pacedVisit(['Ann', 'Bob'], ['mice', 'mice', 'mice', 'mice'], ORDINARY)
   assert.deepEqual(pair.came.map(c => c.stage), ['clue', 'clue'])
   assert.deepEqual(pair.games.slice(0, 3).map(g => g.length), [GAME_MS, GAME_MS, GAME_MS])
   const last = pair.games[3]
@@ -2781,7 +2849,7 @@ test('G55 a visit\'s game that would run into the chime is cut short so its clue
   for (const g of pair.games) assert.deepEqual([g.said, g.counting, g.left], [g.length, g.length, g.length])
 
   // a trio at the same pace: both clues before the chime (the second player's last game cut short)
-  const trio = pacedVisit(['Ann', 'Bob', 'Cat'], ['mice', 'mice', 'mice', 'yarn', 'yarn', 'yarn'], ORDINARY)
+  const trio = pacedVisit(['Ann', 'Bob', 'Cat'], ['mice', 'mice', 'mice', 'mice', 'mice', 'mice'], ORDINARY)
   assert.deepEqual(trio.came.slice(0, 2).map(c => c.stage), ['clue', 'clue'])
   assert.ok(trio.came.slice(0, 2).every(c => c.at <= ROUND_MS - CLUE_KEEP_MS), 'each with time to read it')
   assert.deepEqual(trio.games.slice(0, 4).map(g => g.length), Array(4).fill(TRIO_GAME_MS))
@@ -2789,7 +2857,7 @@ test('G55 a visit\'s game that would run into the chime is cut short so its clue
   for (const g of trio.games) assert.deepEqual([g.said, g.counting], [g.length, g.length])
 
   // a slow pair: the last game still gets its thirty seconds, and runs into the chime
-  const slow = pacedVisit(['Ann', 'Bob'], ['mice', 'mice', 'yarn', 'yarn'], SLOW)
+  const slow = pacedVisit(['Ann', 'Bob'], ['mice', 'mice', 'mice', 'mice'], SLOW)
   assert.equal(slow.games[3].length, CUT_MIN_MS)
   assert.ok(slow.games[3].start + CUT_MIN_MS > ROUND_MS)
   assert.equal(slow.a.stage, 'farewell')
@@ -2797,13 +2865,13 @@ test('G55 a visit\'s game that would run into the chime is cut short so its clue
 
 test('G55 the chime names who it caught short: a clue owed to the first two, Boo\'s line to a trio\'s third player, told apart by place', () => {
   // a trio at an ordinary pace: the chime comes while the second player reads their clue
-  const trio = pacedVisit(['Margaret', 'Tom', 'Ellie'], ['mice', 'mice', 'mice', 'yarn', 'yarn', 'yarn'], ORDINARY)
+  const trio = pacedVisit(['Margaret', 'Tom', 'Ellie'], ['mice', 'mice', 'mice', 'mice', 'mice', 'mice'], ORDINARY)
   let v = arcadeView(trio.a, trio.a.stageAt).screen
   assert.equal(v.stage, 'farewell')
   assert.deepEqual(v.pending, ['Ellie'])
   assert.equal(v.plain, "Out of time before Boo's line: Ellie.")
   // a slow pair: the chime comes in the second player's last game
-  const pair = pacedVisit(['Jessa', 'Mari'], ['mice', 'mice', 'yarn', 'yarn'], SLOW)
+  const pair = pacedVisit(['Jessa', 'Mari'], ['mice', 'mice', 'mice', 'mice'], SLOW)
   v = arcadeView(pair.a, pair.a.stageAt).screen
   assert.equal(v.stage, 'farewell')
   assert.deepEqual(v.pending, ['Mari'])
@@ -3536,10 +3604,8 @@ test('G55 Leave this game, Escape and the Exit dial (Jon, 30 Oct 2026: "An exit 
     assert.equal(aIn(ready, press(EXIT_DIAL), PICK_MS - 1).stage, 'ready', 'not during the picked key\'s tick')
     // the strip names it only while the game counts down or runs
     assert.equal(arcadeView(ready, PICK_MS).strip.dials[EXIT_DIAL], dials[EXIT_DIAL], `${id}: no Exit on the how-to`)
-    if (id !== 'yarn') {
-      assert.equal(arcadeView(count, PICK_MS + 10).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit on the count`)
-      assert.equal(arcadeView(play, tp).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit in play`)
-    }
+    assert.equal(arcadeView(count, PICK_MS + 10).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit on the count`)
+    assert.equal(arcadeView(play, tp).strip.dials[EXIT_DIAL], 'Exit', `${id}: Exit in play`)
     // the other dials pressed in do nothing to the game in play
     for (let d = 0; d < DIALS; d++) if (d !== EXIT_DIAL) assert.equal(aIn(play, press(d), tp + 500).stage, 'play', `${id}: dial ${d + 1}`)
     // free play: back to the games, nothing counted

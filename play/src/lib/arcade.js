@@ -119,6 +119,9 @@ export const YARN_FALLING = 3            // at most this many falling at once
 export const YARN_LAND_MS = 200          // a ball on the bottom row waits this long for the basket, then it is missed
 export const YARN_POINTS = 1
 export const YARN_GOLD_POINTS = 3
+export const YARN_MISSES_OUT = 5         // five misses and the round is over (Jon, 30 Oct 2026)
+export const YARN_FRIENDS_FROM_MS = 10000 // Sir Irwin and his friends fall too from 10 seconds in (Jon, 30 Oct 2026: "Friends fall too, which the player must not catch"):
+export const YARN_FRIEND_ONE_IN = 4      // one in four of what falls is a friend; one caught is a miss, one that lands on the floor is nothing
 // the mice and the yarn
 export const GOLD_ONE_IN = 10            // one in ten is gold
 // the visit's moments
@@ -258,7 +261,8 @@ export const GAMES = [
   },
   {
     id: 'yarn', name: 'Yarn Catch', short: 'Yarn',
-    how: 'Tap the left or the right of the touch strip to slide the basket under the falling yarn. Gold yarn is worth more.',
+    how: 'Slide a finger along the touch strip to move the basket under the falling yarn. Gold yarn is worth more. Never catch Sir Irwin or his friends.',
+    rule: "Five misses and you're out.",
     boo: "Catch it, darling. I don't fetch.",
     dials: NO_DIALS,
     counts: 'Yarn caught',
@@ -294,7 +298,7 @@ export const GAME_FACES = {
   pointer: ['blank', 'dot', 'sparkle', 'sparkle-miss', 'wall', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   mice: ['blank', 'mouse', 'mouse-gold', ...PETS.map(p => `pet:${p}`), ...PETS.map(p => `oops:${p}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   knock: ['cloth', 'edge', 'edge-left', ...KNOCK_OBJECTS.flatMap(o => [`table:${o}`, `edge:${o}`, `edge-left:${o}`]), ...PETS.flatMap(p => [`table-pet:${p}`, `edge-pet:${p}`, `edge-left-pet:${p}`, `oops:${p}`]), 'hit', 'miss', 'back', 'num:1', 'num:2', 'num:3'],
-  yarn: ['blank', 'yarn', 'yarn-gold', 'basket', 'basket-catch', 'yarn-miss', 'back', 'num:1', 'num:2', 'num:3'],
+  yarn: ['blank', 'yarn', 'yarn-gold', 'basket', 'basket-catch', 'yarn-miss', ...PETS.flatMap(p => [`pet:${p}`, `oops:${p}`]), 'back', 'num:1', 'num:2', 'num:3'],
 }
 export const FACE_IDS = [...new Set([...MENU_FACES, ...Object.values(GAME_FACES).flat()])]
 
@@ -990,17 +994,27 @@ function knockStrike(s, t, row, words, endFace = 'miss') {
 
 // ---- 5. Yarn Catch: balls of yarn drop down the columns into Boo's basket ----
 
+// The touch strip is the basket's rail (Jon, 30 Oct 2026: "Slide to move",
+// "No tapping"): the basket goes to the column under the finger, wherever it
+// touches or lets go; the arrow keys move it one column and wrap round the
+// edges. Five misses end the round. From ten seconds in, Sir Irwin and his
+// friends fall too: one caught is a miss that says who; one that reaches the
+// floor is nothing.
 const yarnStepMs = (s, t) => lerp(YARN_STEP_MS, YARN_STEP_END_MS, along(s, t))
+// The column under a touch at x on the strip.
+const columnAt = x => Math.min(COLS - 1, Math.max(0, Math.floor(x / STRIP_WIDTH * COLS)))
 
 const yarn = {
   start(s) {
     s.basket = 4 // its column, on the bottom row: keyAt(3, 4)
-    s.balls = [] // { col, row, gold, nextAt, missAt }: missAt, once it waits on the bottom row
+    s.balls = [] // { col, row, gold, friend, nextAt, missAt }: friend one of PETS (a ball then is no ball); missAt, once it waits on the bottom row
     s.flashes = []
     s.catchUntil = 0 // the basket shows green until then
     s.caught = 0
     s.golds = 0 // gold ones caught
-    s.dropped = 0
+    s.dropped = 0 // balls that fell to the floor
+    s.friendsCaught = 0
+    s.strikes = 0 // the misses: balls dropped and friends caught
     s.nextSpawnAt = s.startedAt
   },
   due: s => Math.min(s.nextSpawnAt, ...s.balls.map(b => b.missAt ?? b.nextAt)),
@@ -1010,10 +1024,10 @@ const yarn = {
     if (ball) {
       if (ball.missAt != null) {
         s.balls = s.balls.filter(b => b !== ball)
+        if (ball.friend) return // a friend on the floor is nothing
         s.dropped += 1
-        s.events.push('miss')
         flash(s, keyAt(ROWS - 1, ball.col), 'yarn-miss', t, MISS_MS)
-        return
+        return yarnMiss(s, t, 'It fell.')
       }
       ball.row += 1
       if (ball.row < ROWS - 1) { ball.nextAt = t + yarnStepMs(s, t); return }
@@ -1028,48 +1042,66 @@ const yarn = {
       const free = ALL_COLUMNS.filter(c => !used.has(c))
       if (free.length) {
         const col = pick(s, free)
-        const gold = isGold(s)
-        s.balls.push({ col, row: 0, gold, nextAt: t + yarnStepMs(s, t), missAt: null })
+        const friend = t - s.startedAt >= YARN_FRIENDS_FROM_MS && rand(s) < 1 / YARN_FRIEND_ONE_IN ? pick(s, PETS) : null
+        const gold = !friend && isGold(s)
+        s.balls.push({ col, row: 0, gold, friend, nextAt: t + yarnStepMs(s, t), missAt: null })
       }
     }
     s.nextSpawnAt = t + lerp(YARN_SPAWN_MS, YARN_SPAWN_END_MS, along(s, t))
   },
   input(s, e, t) {
-    // the touch strip: a tap on its left half moves the basket one key left, on its right half one right
-    const dc = e.kind === 'strip' ? (e.x < STRIP_WIDTH / 2 ? -1 : 1)
-      : e.kind === 'swipe' ? Math.sign(e.to - e.from)
-        : e.kind === 'arrow' ? ({ left: -1, right: 1 }[e.dir] ?? 0) : 0
-    if (!dc) return
-    const c = s.basket + dc
-    if (c < 0 || c >= COLS) return // the edges stop it
+    // the touch strip: the basket goes to the column under the touch (a slide ends where the finger lets go); an arrow one column, round the edges
+    let c
+    if (e.kind === 'strip') c = columnAt(e.x)
+    else if (e.kind === 'swipe') c = columnAt(e.to)
+    else if (e.kind === 'arrow' && (e.dir === 'left' || e.dir === 'right')) c = (s.basket + (e.dir === 'left' ? -1 : 1) + COLS) % COLS
+    else return
+    if (c === s.basket) return
     s.basket = c
     const waiting = s.balls.find(b => b.missAt != null && b.col === c)
-    if (waiting) caughtYarn(s, waiting, t) // just in time
+    if (waiting) caughtYarn(s, waiting, t) // just in time (or a friend, more's the pity)
   },
   tidy: tidyFlashes,
   faces(s, f, now) {
-    for (const b of s.balls) f[keyAt(b.row, b.col)] = b.gold ? 'yarn-gold' : 'yarn'
+    for (const b of s.balls) f[keyAt(b.row, b.col)] = b.friend ? `pet:${b.friend}` : b.gold ? 'yarn-gold' : 'yarn'
     flashFaces(s, f, now)
-    f[keyAt(ROWS - 1, s.basket)] = now < s.catchUntil ? 'basket-catch' : 'basket'
+    const basket = keyAt(ROWS - 1, s.basket)
+    if (!s.flashes.some(x => x.key === basket && x.until > now)) f[basket] = now < s.catchUntil ? 'basket-catch' : 'basket'
   },
 }
+// Into the basket: a ball's points (gold for more) and the green basket; a
+// friend is a miss that says who, their face under the cross on the basket.
 function caughtYarn(s, ball, t) {
   s.balls = s.balls.filter(b => b !== ball)
+  if (ball.friend) {
+    s.friendsCaught += 1
+    flash(s, keyAt(ROWS - 1, ball.col), `oops:${ball.friend}`, t, MISS_MS)
+    const name = FRIEND_NAMES[ball.friend]
+    return yarnMiss(s, t, `That's ${name}${name.endsWith('.') ? '' : '.'}`)
+  }
   s.caught += 1
   if (ball.gold) s.golds += 1
   s.score += ball.gold ? YARN_GOLD_POINTS : YARN_POINTS
   s.events.push(ball.gold ? 'gold' : 'point')
   s.catchUntil = t + HIT_MS
 }
+// A miss: the fifth ends the round, the points kept.
+function yarnMiss(s, t, words) {
+  s.strikes += 1
+  if (s.strikes >= YARN_MISSES_OUT) return finish(s, 'lose', t)
+  s.events.push('miss')
+  s.said = { words: `Miss ${s.strikes}! ${words}`, until: t + STRIKE_WORDS_MS }
+}
 
 const RULES = { tail, pointer, mice, knock, yarn }
 
 // What a game has counted so far, for the screen: its own tally and its strikes.
 const tallyCount = g => ({ tail: g.catches, pointer: g.sparkled, mice: g.bonked, knock: g.knocked, yarn: g.caught })[g.id] ?? 0
-const strikesOf = g => g.id === 'mice' ? g.petTaps : g.id === 'pointer' || g.id === 'knock' ? g.strikes : null
+const strikesOf = g => g.id === 'mice' ? g.petTaps : g.id === 'pointer' || g.id === 'knock' || g.id === 'yarn' ? g.strikes : null
 // What the boxes count, in a word, on the strip and the screen (Jon, 30 Oct 2026: "Jon couldn't tell what the dots at the bottom mean").
-export const MARK_LABELS = { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses' }
-const marksOf = g => { const n = strikesOf(g); return n == null ? null : { of: STRIKES_OUT, used: n, label: MARK_LABELS[g.id] } }
+export const MARK_LABELS = { pointer: 'Strikes', mice: 'Strikes', knock: 'Misses', yarn: 'Misses' }
+export const marksOutOf = id => (id === 'yarn' ? YARN_MISSES_OUT : STRIKES_OUT)
+const marksOf = g => { const n = strikesOf(g); return n == null ? null : { of: marksOutOf(g.id), used: n, label: MARK_LABELS[g.id] } }
 
 // ---- one game ----
 
@@ -1536,30 +1568,29 @@ function facesOf(a, now) {
 }
 
 // The touch strip. Words on the left, in the middle and on the right; in a
-// game, its points big in the middle (`score`), the three strike boxes on the
-// left (`marks`), its time as lights on the right (`lights`); for Yarn Catch
-// its two halves are the basket's left and right (`zones`); the dial labels
-// along the bottom.
+// game, its points big in the middle (`score`), the strike boxes on the left
+// (`marks`), its time as lights on the right (`lights`); for Yarn Catch a
+// row of nine marks along the top, the basket's column lit (`zones`: the
+// strip is the basket's rail); the dial labels along the bottom.
 function stripOf(a, now) {
   const g = PLAYING.includes(a.stage) ? a.game : null
   const info = g ? GAME[g.id] : null
   const name = info?.name ?? ''
   // the game's dials, and Exit over the dial that leaves it while it counts down or runs
   const dials = (info?.dials ?? NO_DIALS).map((x, i) => (i === EXIT_DIAL && (a.stage === 'count' || a.stage === 'play') ? 'Exit' : x))
-  const zones = g?.id === 'yarn'
+  const zones = g?.id === 'yarn' ? { of: COLS, at: g.basket } : null
   const who = a.players[a.turn]?.name ?? ''
-  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, lights: null, zones: false, dials: [...NO_DIALS], ...more })
+  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, lights: null, zones: null, dials: [...NO_DIALS], ...more })
   switch (a.stage) {
     case 'home': return line('Free play', 'Press a game')
     case 'menu': return line(`${who}'s turn`, 'Press a game', `Tokens: ${a.players[a.turn]?.tokens ?? 0}`)
-    case 'ready': return zones ? line('', 'Press any key to start', '', { zones }) : line(name, 'Press any key to start', ruleOf(g), { dials: [...dials] })
-    case 'count': return zones ? line('', String(countOf(a, now)), '', { zones }) : line(name, String(countOf(a, now)), ruleOf(g), { dials: [...dials] })
+    case 'ready': return line(name, 'Press any key to start', ruleOf(g), { zones, dials: [...dials] })
+    case 'count': return line(name, String(countOf(a, now)), ruleOf(g), { zones, dials: [...dials] })
     case 'play': {
       if (!g) return line('', '')
       const marks = marksOf(g)
       const said = saidOf(g, now)
-      if (zones) return line('', said ?? '', '', { score: said ? null : g.score, zones })
-      return line(marks ? '' : name, said ?? '', '', { score: said ? null : g.score, marks, lights: { of: TIME_LIGHTS, lit: lightsOf(g, now) }, dials: [...dials] })
+      return line(marks ? '' : name, said ?? '', '', { score: said ? null : g.score, marks, lights: { of: TIME_LIGHTS, lit: lightsOf(g, now) }, zones, dials: [...dials] })
     }
     case 'result': return g ? line(name, outcomeOf(g), pointsOf(g.score)) : line('', '')
     case 'clue': return line(who, 'Your clue is on the screen')
@@ -1570,7 +1601,7 @@ function stripOf(a, now) {
   }
 }
 
-const LOSE_WORDS = { pointer: 'Boo caught the dot three times.', mice: 'You tapped three friends.', knock: 'Three misses.' }
+const LOSE_WORDS = { pointer: 'Boo caught the dot three times.', mice: 'You tapped three friends.', knock: 'Three misses.', yarn: 'Five misses.' }
 const LOSE_LINES = { pointer: BOO_LINES.caught, mice: BOO_LINES.pets }
 // How a game ended, in a few words: on the result's strip and its screen.
 const outcomeOf = g => g.outcome === 'lose' ? LOSE_WORDS[g.id] ?? 'Game over.' : g.outcome === 'win' ? 'Well played.' : "Time's up."

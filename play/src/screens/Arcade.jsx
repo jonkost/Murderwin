@@ -91,7 +91,7 @@ const PROBLEM = {
 // row, and a line on the strip.
 const RESTING = {
   faces: Array.from({ length: KEY_COUNT }, (_, i) => (i === keyAt(1, 4) ? 'boo' : 'off')),
-  strip: { left: '', centre: 'Type the names on the screen', right: '', score: null, marks: null, lights: null, zones: false, dials: ['', '', '', '', '', ''] },
+  strip: { left: '', centre: 'Type the names on the screen', right: '', score: null, marks: null, lights: null, zones: null, dials: ['', '', '', '', '', ''] },
   screen: null,
   sig: 'resting',
 }
@@ -688,6 +688,12 @@ function stripHit(onInput) {
     onPointerDown: e => {
       if (e.button !== 0) return
       e.preventDefault()
+      const r = e.currentTarget.getBoundingClientRect()
+      onInput({ kind: 'strip', x: r.width > 0 ? (e.clientX - r.left) / r.width * STRIP_W : 0 })
+    },
+    // a finger or the pointer sliding along it (Yarn Catch's rail, 30 Oct 2026): where it is now
+    onPointerMove: e => {
+      if (!(e.buttons & 1)) return
       const r = e.currentTarget.getBoundingClientRect()
       onInput({ kind: 'strip', x: r.width > 0 ? (e.clientX - r.left) / r.width * STRIP_W : 0 })
     },

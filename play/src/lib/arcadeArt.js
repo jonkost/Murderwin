@@ -758,7 +758,8 @@ const PAD = 24, GAP = 28 // the strip's side margins, and the space around the m
 
 // The strip as lib/arcade.js describes it, tidied: the three words; in a
 // game, its points (`score`), its strike boxes (`marks`), its time as lights
-// (`lights`) and, for Yarn Catch, its two halves (`zones`); six dial labels.
+// (`lights`) and, for Yarn Catch, the basket's rail (`zones`: how many
+// columns, and which the basket is under); six dial labels.
 const upTo = (v, top) => Math.min(top, Math.max(0, Math.round(Number(v)) || 0))
 function stripShape(strip) {
   const t = v => (v == null ? '' : String(v))
@@ -768,7 +769,7 @@ function stripShape(strip) {
     score: strip?.score == null || !Number.isFinite(n) ? null : Math.max(0, Math.round(n)),
     marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5), label: t(strip.marks.label) } : null,
     lights: strip?.lights ? { of: upTo(strip.lights.of, 12), lit: upTo(strip.lights.lit, 12) } : null,
-    zones: !!strip?.zones,
+    zones: strip?.zones ? { of: upTo(strip.zones.of, 12), at: upTo(strip.zones.at, 11) } : null,
     dials: [0, 1, 2, 3, 4, 5].map(i => t(strip?.dials?.[i])),
   }
 }
@@ -811,8 +812,8 @@ function drawStrip(s) {
     g.fillStyle = rule; g.fillRect(0, 0, STRIP_W, 3); g.fillRect(0, STRIP_H - 3, STRIP_W, 3)
 
     const dials = s.dials.some(Boolean)
-    const y = dials ? 36 : STRIP_H / 2 // the middle of the top line
-    if (s.zones) halves(g)
+    const y = dials ? (s.zones ? 40 : 36) : STRIP_H / 2 // the middle of the top line (a touch lower under the rail)
+    if (s.zones) rail(g, s.zones)
     let left = PAD, right = STRIP_W - PAD // where the words may start and end
     if (s.marks) left = strikeBoxes(g, s.marks, PAD, y, dials ? 46 : 56) + GAP
     if (s.lights) right = timeLights(g, s.lights, STRIP_W - PAD, y, dials ? 10 : 12) - GAP
@@ -833,7 +834,6 @@ function drawStrip(s) {
         : s.left || s.right || s.marks || s.lights ? Math.min(560, 2 * Math.min(x - left, right - x)) : STRIP_W - 2 * PAD
       const t = fit(g, middle, short ? (dials ? 62 : 74) : 44, room, SERIF, short ? 700 : 600)
       const w = g.measureText(t).width
-      if (s.zones) { g.fillStyle = '#000'; g.fillRect(x - w / 2 - 18, 8, w + 36, STRIP_H - 16) } // over the line between the halves
       g.fillStyle = short ? stripGold(g, y) : HOUSE.parchment
       g.textAlign = 'center'; g.fillText(t, x, y + (short ? 3 : 0))
       side = (STRIP_W - w) / 2 - PAD - GAP
@@ -894,16 +894,23 @@ function timeLights(g, { of, lit }, right, y, r) {
   }
   return start
 }
-// Yarn Catch's strip: its two halves, the one you tap is the way the basket
-// goes (Jon, 29 Oct 2026), a big gold arrow in each and a gold line between.
-function halves(g) {
-  g.fillStyle = 'rgba(214, 207, 134, 0.5)'; g.fillRect(STRIP_W / 2 - 1.5, 12, 3, STRIP_H - 24)
-  g.fillStyle = GOLD.mid
-  arrowHead(g, 'left', 140, STRIP_H / 2, 56)
-  arrowHead(g, 'right', STRIP_W - 140, STRIP_H / 2, 56)
-  g.font = `600 28px ${SANS}`; g.textBaseline = 'middle'
-  g.textAlign = 'left'; g.fillText('Tap', 186, STRIP_H / 2)
-  g.textAlign = 'right'; g.fillText('Tap', STRIP_W - 186, STRIP_H / 2)
+// Yarn Catch's strip is the basket's rail (Jon, 30 Oct 2026: "Slide to
+// move"): a row of marks along the top, one a column, dim gold, and the
+// basket's column a lit gold block, so a finger finds the basket where it
+// touches. The words, the boxes and the lights sit below as in every game.
+const RAIL_TOP = 5, RAIL_H = 10
+function rail(g, { of, at }) {
+  const w = STRIP_W / of
+  for (let i = 0; i < of; i++) {
+    const x = i * w
+    if (i === at) {
+      g.save(); g.shadowColor = 'rgba(255, 226, 122, 0.9)'; g.shadowBlur = 8
+      g.fillStyle = litGold(g); g.beginPath(); roundRect(g, x + 3, RAIL_TOP, w - 6, RAIL_H, 3); g.fill()
+      g.restore()
+    } else {
+      g.fillStyle = GOLD.dim; g.beginPath(); roundRect(g, x + 3, RAIL_TOP + 3, w - 6, RAIL_H - 6, 2); g.fill()
+    }
+  }
 }
 
 // A dial's label, centred over the dial. The arrows are drawn, not typed, so
