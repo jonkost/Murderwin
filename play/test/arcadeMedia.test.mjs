@@ -408,19 +408,20 @@ test('G54 a strike\'s words name a friend in full, and the longest, "Strike 2! T
       const NONE = ['', '', '', '', '', ''], POINTER = ['◀ ▶', '', '', '', '', '▼ ▲']
       // Whack-a-Mouse's strip has no dial labels; the same words with them, too
       for (const dials of [NONE, POINTER]) {
-        const strip = art.stripCanvas({ left: '', centre: LONGEST, right: '', score: null, marks: { of: 3, used: 2 }, lights: { of: 8, lit: 5 }, zones: false, dials })
+        const strip = art.stripCanvas({ left: '', centre: LONGEST, right: '', score: null, marks: { of: 5, used: 2, label: 'Strikes' }, clock: { left: 25000, length: 40000 }, zones: null, dials })
         const said = strip.log.find(op => op.name === 'fillText' && String(op.args[0]).startsWith('Strike'))
         assert.equal(said.args[0], LONGEST, 'the whole line, never cut short')
         assert.equal(said.textAlign, 'center')
         assert.ok(px(said.font) >= 26, `big enough to read (${px(said.font).toFixed(1)} pixels)`)
         const half = ruler(LONGEST, said.font) / 2, x = said.args[1]
-        const boxes = strip.log.filter(op => op.name === 'roundRect'), lights = strip.log.filter(op => op.name === 'arc')
-        assert.equal(boxes.length, 3, 'the three strike boxes')
-        assert.equal(lights.length, 8, 'the eight time lights')
+        const boxes = strip.log.filter(op => op.name === 'roundRect'), bar = strip.log.filter(op => op.name === 'fillRect' && op.args[0] > 600 && op.args[2] >= 100)
+        assert.equal(boxes.length, 5, 'the five strike boxes (31 Oct 2026)')
+        assert.equal(bar.length, 2, 'the time bar: its track and its gold fill (31 Oct 2026)')
+        assert.ok(strip.log.some(op => op.name === 'fillText' && op.args[0] === '0:25'), 'the time under it')
         const boxesEnd = Math.max(...boxes.map(op => op.args[0] + op.args[2]))
-        const lightsStart = Math.min(...lights.map(op => op.args[0] - op.args[2]))
+        const barStart = Math.min(...bar.map(op => op.args[0]))
         assert.ok(x - half - boxesEnd >= 24, `clear of the strike boxes (${(x - half - boxesEnd).toFixed(1)} pixels)`)
-        assert.ok(lightsStart - (x + half) >= 24, `clear of the time lights and their glow (${(lightsStart - x - half).toFixed(1)} pixels)`)
+        assert.ok(barStart - (x + half) >= 24, `clear of the time bar and its glow (${(barStart - x - half).toFixed(1)} pixels)`)
       }
     })
   } finally {

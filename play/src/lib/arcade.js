@@ -134,7 +134,6 @@ export const WINNER_MS = 10000
 export const WINNER_MIN_MS = 3000
 export const FAREWELL_MS = 8000
 export const MARQUEE_STEP_MS = 250       // the top row's lit paws move one key in towards the middle this often (Jon, 29 Oct 2026: flashing like an arcade game)
-export const TIME_LIGHTS = 8             // a game's time on the strip: eight lights, one going out every eighth of it
 
 // ---- the deck ----
 
@@ -151,7 +150,7 @@ export const BACK_KEY = 27 // keyAt(3, 0): Back, on the ready screen only
 // and uncounted, and the player is back on the menu (Jon, 30 Oct 2026: "An
 // exit button in every game, to go back"). Labelled Exit on the strip.
 export const EXIT_DIAL = 2
-const TOKEN_KEYS = [2, 3, 4, 5, 6].map(c => keyAt(2, c)) // the player's five tokens, one a game, on the menu under the games
+const TOKEN_KEYS = [2, 3, 4, 5, 6].map(c => keyAt(2, c)) // the player's five tokens on the menu, under the games, spent from the left
 const MIDDLE_KEY = keyAt(1, 4) // the count, OK, and Boo
 export const STRIP_WIDTH = 1200 // the touch strip, in its own pixels: a tap's x runs 0 to 1199, left to right
 const ALL_KEYS = Array.from({ length: KEY_COUNT }, (_, i) => i)
@@ -1539,12 +1538,11 @@ function winnerOf(a) {
   const best = Math.max(0, ...totals)
   return { names: a.players.filter((p, i) => totals[i] === best).map(p => p.name), total: best }
 }
-// A game's time as the strip's lights: all eight lit at the start, one going
-// out every eighth of the game (so the strip changes only eight times a game).
-function lightsOf(g, now) {
-  const length = Math.max(1, g.endsAt - g.startedAt)
-  const left = Math.max(0, g.endsAt - Math.max(now, g.startedAt))
-  return Math.min(TIME_LIGHTS, Math.ceil(left / length * TIME_LIGHTS))
+// A game's time on the strip: a bar that counts down, with the time under it
+// (Jon, 31 Oct 2026: "a linear progress bar that counts down with the time
+// underneath it"), in whole seconds, so the strip changes once a second.
+function clockOf(g, now) {
+  return { left: wholeMs(Math.max(0, g.endsAt - Math.max(now, g.startedAt))), length: g.endsAt - g.startedAt }
 }
 
 // The top row's lights at `now`, the stage's own: each paw lit one step in
@@ -1559,12 +1557,10 @@ function menuFaces(a, now) {
   marquee(f, a, now)
   f[keyAt(0, 4)] = 'boo'
   const yours = counted(a) && (a.stage === 'menu' || a.stage === 'ready') ? a.players[a.turn] : null
-  // a visit: a game this player has had their round of is marked done, and its token under it spent (one a game, 30 Oct 2026)
-  GAMES.forEach((g, i) => {
-    const done = !!yours && playedBy(yours, g.id)
-    f[MENU_KEYS[i]] = done ? `menu-done:${g.id}` : `menu:${g.id}`
-    if (yours) f[TOKEN_KEYS[i]] = done ? 'coin-spent' : 'coin'
-  })
+  // a visit: a game this player has had their round of is marked done (one a game, 30 Oct 2026), and their tokens
+  // spend from the left, whatever the game (Jon, 31 Oct 2026: "the coins should just come left to right")
+  GAMES.forEach((g, i) => { f[MENU_KEYS[i]] = yours && playedBy(yours, g.id) ? `menu-done:${g.id}` : `menu:${g.id}` })
+  if (yours) TOKEN_KEYS.forEach((k, i) => { f[k] = i < TOKENS - yours.tokens ? 'coin-spent' : 'coin' })
   return f
 }
 
@@ -1589,7 +1585,7 @@ function facesOf(a, now) {
 
 // The touch strip. Words on the left, in the middle and on the right; in a
 // game, its points big in the middle (`score`), the strike boxes on the left
-// (`marks`), its time as lights on the right (`lights`); for Yarn Catch a
+// (`marks`), its time as a bar counting down on the right (`clock`); for Yarn Catch a
 // row of nine marks along the top, the basket's column lit (`zones`: the
 // strip is the basket's rail); the dial labels along the bottom.
 function stripOf(a, now) {
@@ -1600,17 +1596,18 @@ function stripOf(a, now) {
   const dials = (info?.dials ?? NO_DIALS).map((x, i) => (i === EXIT_DIAL && (a.stage === 'count' || a.stage === 'play') ? 'Exit' : x))
   const zones = null // Yarn Catch's rail along the top went with the tap (31 Oct 2026); the basket's key shows where it is
   const who = a.players[a.turn]?.name ?? ''
-  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, lights: null, zones: null, dials: [...NO_DIALS], ...more })
+  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, clock: null, zones: null, dials: [...NO_DIALS], ...more })
   switch (a.stage) {
     case 'home': return line('Free play', 'Press a game')
-    case 'menu': return line(`${who}'s turn`, 'Press a game', `Tokens: ${a.players[a.turn]?.tokens ?? 0}`)
+    // whose turn, big in the middle (Jon, 31 Oct 2026: "say it is player 2's turn, but make it a little bigger")
+    case 'menu': return line('Press a game', `${who}'s turn`, `Tokens: ${a.players[a.turn]?.tokens ?? 0}`)
     case 'ready': return line(name, 'Press any key to start', ruleOf(g), { zones, dials: [...dials] })
     case 'count': return line(name, String(countOf(a, now)), ruleOf(g), { zones, dials: [...dials] })
     case 'play': {
       if (!g) return line('', '')
       const marks = marksOf(g)
       const said = saidOf(g, now)
-      return line(marks ? '' : name, said ?? '', '', { score: said ? null : g.score, marks, lights: { of: TIME_LIGHTS, lit: lightsOf(g, now) }, zones, dials: [...dials] })
+      return line(marks ? '' : name, said ?? '', '', { score: said ? null : g.score, marks, clock: clockOf(g, now), zones, dials: [...dials] })
     }
     case 'result': return g ? line(name, outcomeOf(g), pointsOf(g.score)) : line('', '')
     case 'clue': return line(who, 'Your clue is on the screen')
@@ -1730,6 +1727,7 @@ function screenOf(a, now) {
     marks: g && (a.stage === 'play' || a.stage === 'result') ? marksOf(g) : null,
     said: a.stage === 'play' ? saidOf(g, now) : null,
     timeLeftMs: left == null ? null : wholeMs(left),
+    gameMs: g ? g.endsAt - g.startedAt : null, // the whole, for the bar that counts down (31 Oct 2026)
     clockMs: a.mode === 'visit' && a.roundEndsAt != null ? wholeMs(a.roundEndsAt - now) : null,
     count: a.stage === 'count' ? countOf(a, now) : null,
     player: yours ? yours.name : null,

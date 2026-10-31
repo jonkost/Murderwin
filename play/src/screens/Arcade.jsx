@@ -537,6 +537,9 @@ function Scoreboard({ screen, pops, art }) {
       <section className="arcade-board playing" aria-label={screen.game.name}>
         <p className="arcade-board-game">{screen.game.name}</p>
         <p className="arcade-board-score"><strong>{screen.score}</strong> <span>{pointsWord(screen.score)}</span></p>
+        <div className="arcade-board-bar" role="progressbar" aria-label="time left" aria-valuemin={0} aria-valuemax={screen.gameMs ?? 0} aria-valuenow={screen.timeLeftMs ?? 0}>
+          <div style={{ width: `${screen.gameMs ? Math.max(0, Math.min(100, 100 * (screen.timeLeftMs ?? 0) / screen.gameMs)) : 0}%` }} />
+        </div>
         <div className="arcade-board-row">
           <p className="arcade-board-stat"><strong>{clockOf(screen.timeLeftMs)}</strong> <span>left</span></p>
           {screen.marks ? <Strikes marks={screen.marks} /> : null}

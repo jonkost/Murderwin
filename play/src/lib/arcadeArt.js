@@ -762,7 +762,8 @@ const PAD = 24, GAP = 28 // the strip's side margins, and the space around the m
 
 // The strip as lib/arcade.js describes it, tidied: the three words; in a
 // game, its points (`score`), its strike boxes (`marks`), its time as lights
-// (`lights`); six dial labels. `zones` is always null since 31 Oct 2026.
+// (`clock`: the time left and the whole, as a bar counting down with the time
+// under it); six dial labels. `zones` is always null since 31 Oct 2026.
 const upTo = (v, top) => Math.min(top, Math.max(0, Math.round(Number(v)) || 0))
 function stripShape(strip) {
   const t = v => (v == null ? '' : String(v))
@@ -771,7 +772,7 @@ function stripShape(strip) {
     left: t(strip?.left), centre: t(strip?.centre), right: t(strip?.right),
     score: strip?.score == null || !Number.isFinite(n) ? null : Math.max(0, Math.round(n)),
     marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5), label: t(strip.marks.label) } : null,
-    lights: strip?.lights ? { of: upTo(strip.lights.of, 12), lit: upTo(strip.lights.lit, 12) } : null,
+    clock: strip?.clock && Number.isFinite(Number(strip.clock.length)) && Number(strip.clock.length) > 0 ? { left: Math.max(0, Number(strip.clock.left) || 0), length: Number(strip.clock.length) } : null,
     zones: null, // Yarn Catch's rail along the top went on 31 Oct 2026; kept in the shape so every strip has the same parts
     dials: [0, 1, 2, 3, 4, 5].map(i => t(strip?.dials?.[i])),
   }
@@ -799,9 +800,8 @@ export function stripUrl(strip) {
 // Black lacquer with a gold rule along each edge; the words in the parchment
 // serif (the middle biggest); a game's points big in gold in the middle, its
 // strike boxes on the left (a red box with a cross for each strike), its time
-// as gold lights on the right, one going out every eighth; for Yarn Catch a
-// big gold arrow in each half, the half you tap; the dial labels small, each
-// over its dial.
+// as a gold bar on the right that empties as the game runs, the time under it
+// (Jon, 31 Oct 2026); the dial labels small, each over its dial.
 function drawStrip(s) {
   const c = newCanvas(STRIP_W, STRIP_H)
   if (!c) return null
@@ -817,8 +817,8 @@ function drawStrip(s) {
     const dials = s.dials.some(Boolean)
     const y = dials ? 36 : STRIP_H / 2 // the middle of the top line
     let left = PAD, right = STRIP_W - PAD // where the words may start and end
-    if (s.marks) left = strikeBoxes(g, s.marks, PAD, y, dials ? 46 : 56) + GAP
-    if (s.lights) right = timeLights(g, s.lights, STRIP_W - PAD, y, dials ? 10 : 12) - GAP
+    if (s.marks) left = strikeBoxes(g, s.marks, PAD, y, dials ? 42 : 50) + GAP // five boxes since 31 Oct 2026, so a little smaller
+    if (s.clock) right = countdown(g, s.clock, STRIP_W - PAD, y, dials) - GAP
 
     g.textBaseline = 'middle'
     let side = STRIP_W / 2 - PAD - GAP // how wide the left and right words may be
@@ -830,10 +830,10 @@ function drawStrip(s) {
       // longest ("Strike 2! That's Zimothy Clawford, Esq.") shrinks to fit it
       // and never reaches either. The rest is centred on the strip, and kept
       // clear of them too.
-      const between = !short && !s.left && !s.right && !!(s.marks || s.lights)
+      const between = !short && !s.left && !s.right && !!(s.marks || s.clock)
       const x = between ? (left + right) / 2 : STRIP_W / 2
       const room = between ? right - left
-        : s.left || s.right || s.marks || s.lights ? Math.min(560, 2 * Math.min(x - left, right - x)) : STRIP_W - 2 * PAD
+        : s.left || s.right || s.marks || s.clock ? Math.min(560, 2 * Math.min(x - left, right - x)) : STRIP_W - 2 * PAD
       const t = fit(g, middle, short ? (dials ? 62 : 74) : 44, room, SERIF, short ? 700 : 600)
       const w = g.measureText(t).width
       g.fillStyle = short ? stripGold(g, y) : HOUSE.parchment
@@ -842,7 +842,7 @@ function drawStrip(s) {
     }
     g.fillStyle = HOUSE.parchment
     if (s.left && !s.marks) { const t = fit(g, s.left, 30, Math.min(side, right - left)); g.textAlign = 'left'; g.fillText(t, left, y) }
-    if (s.right && !s.lights) { const t = fit(g, s.right, 30, Math.min(side, right - left)); g.textAlign = 'right'; g.fillText(t, right, y) }
+    if (s.right && !s.clock) { const t = fit(g, s.right, 30, Math.min(side, right - left)); g.textAlign = 'right'; g.fillText(t, right, y) }
 
     s.dials.forEach((label, i) => { if (label) dialLabel(g, label, DIAL_X[i], 83, 25) })
   } catch { /* the strip stays as far as it got */ }
@@ -877,24 +877,25 @@ function strikeBoxes(g, { of, used, label }, x, y, size) {
   }
   return x + of * (size + gap) - gap
 }
-// A game's time as gold lights ending at `right`: the lit ones first, and the
-// last lit one goes out next. Returns where they start.
-function timeLights(g, { of, lit }, right, y, r) {
-  const gap = r * 1.1
-  const start = right - of * 2 * r - (of - 1) * gap
-  for (let i = 0; i < of; i++) {
-    const x = start + r + i * (2 * r + gap)
-    if (i < lit) {
-      g.save(); g.shadowColor = 'rgba(255, 226, 122, 0.9)'; g.shadowBlur = r * 1.4
-      const f = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 1, x, y, r)
-      f.addColorStop(0, GOLD.hi); f.addColorStop(1, '#d8c45a')
-      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = f; g.fill()
-      g.restore()
-    } else {
-      g.beginPath(); g.arc(x, y, r - 1.5, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = GOLD.dim; g.stroke()
-    }
+// A game's time as a bar ending at `right`, COUNTDOWN_W across: a dim track
+// and a gold fill that shrinks from the left as the time goes, the time left
+// under it in whole seconds (Jon, 31 Oct 2026: "a linear progress bar that
+// counts down with the time underneath it"). Returns where it starts.
+const COUNTDOWN_W = 200, COUNTDOWN_H = 10
+function countdown(g, { left, length }, right, y, dials) {
+  const x = right - COUNTDOWN_W
+  const top = y - (dials ? 15 : 17)
+  g.fillStyle = GOLD.dim; g.fillRect(x, top, COUNTDOWN_W, COUNTDOWN_H)
+  const share = Math.max(0, Math.min(1, left / length))
+  if (share > 0) {
+    g.save(); g.shadowColor = 'rgba(255, 226, 122, 0.8)'; g.shadowBlur = 6
+    g.fillStyle = litGold(g); g.fillRect(x, top, Math.max(2, COUNTDOWN_W * share), COUNTDOWN_H)
+    g.restore()
   }
-  return start
+  const secs = Math.ceil(left / 1000)
+  g.font = `600 ${dials ? 22 : 26}px ${SANS}`; g.fillStyle = HOUSE.parchment; g.textAlign = 'center'; g.textBaseline = 'middle'
+  g.fillText(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`, x + COUNTDOWN_W / 2, top + COUNTDOWN_H + (dials ? 15 : 18))
+  return x
 }
 // A dial's label, centred over the dial. The arrows are drawn, not typed, so
 // they look the same on every Mac (no font has to carry them).

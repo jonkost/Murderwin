@@ -1227,6 +1227,8 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
   background: linear-gradient(180deg, var(--gold-hi) 0%, #d8c45a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 2.6vh rgba(255, 226, 122, 0.35)); }
 .arcade-board-score span { font-size: min(2.4vw, 3.8vh); color: var(--gold); }
+.arcade-board-bar { width: min(60cqw, 40rem); height: 1.2vh; border-radius: 0.6vh; background: rgba(214, 207, 134, 0.18); overflow: hidden; } /* the time, counting down (31 Oct 2026) */
+.arcade-board-bar div { height: 100%; border-radius: inherit; background: var(--gold); box-shadow: 0 0 1.2vh rgba(255, 226, 122, 0.6); transition: width 0.9s linear; }
 .arcade-board-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2vh 4.4vw; }
 .arcade-board-stat { margin: 0; display: flex; flex-direction: column; align-items: center; }
 .arcade-board-stat strong { font-family: var(--serif); font-weight: 700; font-size: min(4.6vw, 7.4vh); line-height: 1.05; color: var(--brand-parchment); font-variant-numeric: tabular-nums; }
