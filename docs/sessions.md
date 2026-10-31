@@ -9,6 +9,21 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 31 Oct 2026 · Claude Code (the Boo Arcade handoff deployed)
+
+- Deployed on Jon's yes ("Deploy now"), from a clean copy of main at 2645ca4:
+  the site, the rules, storage and the functions, since the handoff added
+  `functions/lib/arcade.js`, the `arcadeScore` callable and the finale's
+  arcade lines. Every suite (functions 293, cues 69, station 53, workshop
+  135, play 264, scripts 53) and `npm run checks` (the dry run and the five
+  leak checks, all clear) passed in the copy first.
+- Live: all 119 files match the build; 26 functions, the same 26 the code
+  exports (`arcadeScore` created, the other 25 updated); both rules files
+  compiled. `tick` ran clean on its new revision the next minute (counts
+  only). The live arcade page loads with no console errors.
+- Left: as the 30 Oct entry says. The arcade is still not wired into Act 4
+  (card 515); Jon's try of the changed games on the deck (514). Not pushed.
+
 ## 30 Oct 2026 · Claude Code (the Boo Arcade handoff from Jon's playtest)
 
 - Applied Jon's handoff of 30 Oct (`docs/handoff-2026-10-30.md`, a Claude
