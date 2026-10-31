@@ -60,16 +60,22 @@ export const TAIL_HAZARDS_MAX = 2        // two at most at once
 export const TAIL_FREEZE_MS = 1500       // Boo onto a cucumber: she freezes this long, and it is gone
 export const TAIL_WRAP_MS = 700          // off one edge and in at the other (Jon, 30 Oct 2026: Pac-Man style): she stops there this long
 // The Lazy Pointer: lead the red dot to the sparkles; Boo naps, wakes and stalks it
-export const POINTER_STEP_MS = 800       // awake, Boo steps towards the dot this often at first,
-export const POINTER_STEP_END_MS = 420   // this often by the end
+export const POINTER_STEP_MS = 600       // awake, Boo steps towards the dot this often at first (Jon, 30 Oct 2026: "Boo is faster"),
+export const POINTER_STEP_END_MS = 300   // this often by the end
 export const POINTER_NAP_MS = 3500       // she naps this long (and up to half as long again),
 export const POINTER_WAKE_KEYS = 1       // wakes sooner when the dot comes this close (keys along a row or a column),
-export const POINTER_BORED_KEYS = 4      // and a dot this far away two steps running bores her back to sleep
+export const POINTER_BORED_KEYS = 5      // and a dot this far away POINTER_BORED_STEPS steps running bores her back to sleep
+export const POINTER_BORED_STEPS = 3     // (Jon, 30 Oct 2026: "More close calls with Boo": she keeps after it longer)
 export const POINTER_SPARKLE_MS = 1400   // a new sparkle this often,
 export const POINTER_SPARKLES = 2        // at most this many at once,
 export const POINTER_SPARKLE_UP_MS = 6000 // each for this long
+export const POINTER_NEAR_ONE_IN = 2     // one in two comes near her (within two keys): the dot has to go close to get it
 export const POINTER_POINTS = 3          // a sparkle
+export const POINTER_MISS_POINTS = 2     // a sparkle that fades ungrabbed costs this much, never below nought (Jon, 30 Oct 2026: "A missed star costs points")
 export const POINTER_LAST_POINTS = 20    // for lasting to the end
+export const POINTER_BLOCKS_FROM_MS = 20000 // the furniture comes out from 20 seconds in (Jon, 30 Oct 2026: "More obstacles as time goes on"),
+export const POINTER_BLOCKS_EVERY_MS = 15000 // one more every 15 seconds,
+export const POINTER_BLOCKS_MAX = 5      // five at most, and they stay put
 // Whack-a-Mouse (Jon, 29 Oct 2026: "speed up more. Allow for more at once")
 export const MICE_SPAWN_MIN_MS = 120     // a new one comes a mouse's time up shared among as many as may be up, never sooner than this
 export const MICE_REFILL_MS = 150        // a tapped mouse's place is taken again this soon,
@@ -219,7 +225,7 @@ export const GAMES = [
   },
   {
     id: 'pointer', name: 'The Lazy Pointer', short: 'Pointer',
-    how: 'The left dial moves the red dot left and right, the right dial up and down. Grab the sparkles, and keep the dot away from Boo.',
+    how: 'The left dial moves the red dot left and right, the right dial up and down. Grab the sparkles before they fade, and keep the dot away from Boo.',
     rule: "Caught three times and you're out.",
     boo: 'That little red dot. I will have it.',
     dials: [ACROSS, '', '', '', '', UP_DOWN],
@@ -276,7 +282,7 @@ export const FUR_PAIRS = ['left-right', 'down-up', 'down-left', 'down-right', 'l
 export const MENU_FACES = ['off', 'blank', 'paw', 'paw-lit', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3', 'hit', ...GAMES.map(g => `menu:${g.id}`)]
 export const GAME_FACES = {
   tail: ['rug', 'tail-boo', 'boo-alert', 'wall', 'treat', 'cucumber', ...TAIL_FRIENDS.map(p => `pet:${p}`), ...FUR_PAIRS.map(p => `tail-fur:${p}`), ...WAYS.map(w => `tail-end:${w}`), ...WAYS.map(w => `tail-tip:${w}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
-  pointer: ['blank', 'dot', 'sparkle', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
+  pointer: ['blank', 'dot', 'sparkle', 'sparkle-miss', 'wall', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   mice: ['blank', 'mouse', 'mouse-gold', ...PETS.map(p => `pet:${p}`), ...PETS.map(p => `oops:${p}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   knock: ['cloth', 'edge', ...KNOCK_OBJECTS.map(o => `table:${o}`), ...KNOCK_OBJECTS.map(o => `edge:${o}`), 'hit', 'miss', 'back', 'num:1', 'num:2', 'num:3'],
   yarn: ['blank', 'yarn', 'yarn-gold', 'basket', 'basket-catch', 'yarn-miss', 'back', 'num:1', 'num:2', 'num:3'],
@@ -624,20 +630,36 @@ function roomy(keys) {
 
 // ---- 2. The Lazy Pointer: the red dot, the sparkles, and Boo after the dot ----
 
+// Walls come out from 20 seconds in (s.blocks, grey stone like the tail
+// game's; Jon, 30 Oct 2026: "More obstacles as time goes on"): the dot stops
+// at one, and Boo goes round them, the shortest way. A sparkle that fades
+// ungrabbed costs points ("A missed star costs points"), so the safe play of
+// keeping the dot far from her is not the whole game.
 const pointerStepMs = (s, t) => lerp(POINTER_STEP_MS, POINTER_STEP_END_MS, along(s, t))
 const napMs = s => POINTER_NAP_MS * (1 + rand(s) / 2)
-// Boo's step towards the dot: along a row or down a column, never both at
-// once, the longer way first (so the dot can slip past her).
+const walled = (s, k) => s.blocks.some(b => b.key === k)
+// Boo's step towards the dot: one key along a row or a column, the shortest
+// way round the walls; where two ways are as short, the longer way first (so
+// the dot can slip past her). Null when no way leads to it.
 function stalk(s) {
+  const dist = new Map([[s.dot, 0]])
+  for (const k of dist.keys()) for (const n of besideOf(k)) if (!walled(s, n) && !dist.has(n)) dist.set(n, dist.get(k) + 1)
+  const steps = besideOf(s.boo).filter(k => dist.has(k))
+  if (!steps.length) return null
+  const best = Math.min(...steps.map(k => dist.get(k)))
+  const top = steps.filter(k => dist.get(k) === best)
+  if (top.length === 1) return top[0]
   const dr = rowOf(s.dot) - rowOf(s.boo), dc = colOf(s.dot) - colOf(s.boo)
   const across = Math.abs(dc) > Math.abs(dr) || (Math.abs(dc) === Math.abs(dr) && rand(s) < 0.5)
-  return across ? keyAt(rowOf(s.boo), colOf(s.boo) + Math.sign(dc)) : keyAt(rowOf(s.boo) + Math.sign(dr), colOf(s.boo))
+  return top.find(k => (across ? rowOf(k) === rowOf(s.boo) : colOf(k) === colOf(s.boo))) ?? top[0]
 }
 
 const pointer = {
   start(s) {
     s.dot = keyAt(1, 1)
     s.boo = keyAt(2, 7)
+    s.blocks = [] // { key }: the walls, in the order they came
+    s.nextBlockAt = s.startedAt + POINTER_BLOCKS_FROM_MS // null once they are all out
     s.awake = false
     s.wakeAt = s.startedAt + napMs(s) // the end of her nap
     s.nextAt = null // her next step, while she is awake
@@ -647,26 +669,32 @@ const pointer = {
     s.nextSparkleAt = s.startedAt + 600
     s.strikes = 0
     s.sparkled = 0
+    s.missed = 0 // sparkles that faded ungrabbed
+    s.penalty = 0 // the points they cost, as far as there were points to lose
     s.flashes = []
   },
-  due: s => Math.min(s.awake ? s.nextAt : s.wakeAt, s.nextSparkleAt, ...s.sparkles.map(x => x.until)),
+  due: s => Math.min(s.awake ? s.nextAt : s.wakeAt, s.nextSparkleAt, s.nextBlockAt ?? Infinity, ...s.sparkles.map(x => x.until)),
   fire(s, t) {
-    // a sparkle fades (first), then Boo wakes or steps, then a new sparkle comes
-    if (s.sparkles.some(x => x.until <= t)) { s.sparkles = s.sparkles.filter(x => x.until > t); return }
+    // a sparkle fades (first), then a wall comes out, then Boo wakes or steps, then a new sparkle comes
+    const faded = s.sparkles.find(x => x.until <= t)
+    if (faded) return missedSparkle(s, faded, t)
+    if (s.nextBlockAt != null && s.nextBlockAt <= t) return placeFurniture(s, t)
     if (!s.awake && s.wakeAt <= t) return wake(s, t)
     if (s.awake && s.nextAt <= t) {
-      s.boo = stalk(s)
+      const to = stalk(s)
+      if (to == null) return nap(s, t) // walled off from it: she gives up and naps
+      s.boo = to
       if (s.boo === s.dot) return pounced(s, t)
       s.far = apart(s.boo, s.dot) >= POINTER_BORED_KEYS ? s.far + 1 : 0
-      if (s.far >= 2) return nap(s, t) // bored: back to sleep
+      if (s.far >= POINTER_BORED_STEPS) return nap(s, t) // bored: back to sleep
       s.nextAt = t + pointerStepMs(s, t)
       return
     }
     if (s.nextSparkleAt > t) return
     if (s.sparkles.length < POINTER_SPARKLES) {
-      const free = ALL_KEYS.filter(k => k !== s.dot && k !== s.boo && !s.sparkles.some(x => x.key === k))
-      // one in three comes near her: the dot has to go close to get it
-      const near = rand(s) < 1 / 3 ? free.filter(k => apart(k, s.boo) <= 2) : []
+      const free = ALL_KEYS.filter(k => k !== s.dot && k !== s.boo && !walled(s, k) && !s.sparkles.some(x => x.key === k))
+      // one in two comes near her: the dot has to go close to get it
+      const near = rand(s) < 1 / POINTER_NEAR_ONE_IN ? free.filter(k => apart(k, s.boo) <= 2) : []
       const list = near.length ? near : free
       if (list.length) s.sparkles.push({ key: pick(s, list), until: t + POINTER_SPARKLE_UP_MS })
     }
@@ -679,7 +707,7 @@ const pointer = {
       const r = rowOf(s.dot) + m.dr, c = colOf(s.dot) + m.dc
       if (!onBoard(r, c)) return // the edges stop it, and the rest of the turn
       const to = keyAt(r, c)
-      if (to === s.boo) return // and it stops beside her
+      if (to === s.boo || walled(s, to)) return // and it stops beside her, and at a wall
       s.dot = to
       const got = s.sparkles.find(x => x.key === to)
       if (got) {
@@ -695,6 +723,7 @@ const pointer = {
   timeUp(s) { s.score += POINTER_LAST_POINTS },
   tidy: tidyFlashes,
   faces(s, f, now) {
+    for (const b of s.blocks) f[b.key] = 'wall'
     for (const x of s.sparkles) f[x.key] = 'sparkle'
     f[s.dot] = 'dot'
     f[s.boo] = !s.awake ? 'boo-nap' : now < s.alertUntil ? 'boo-alert' : 'chaser'
@@ -713,16 +742,39 @@ function nap(s, t) {
   s.wakeAt = t + napMs(s)
 }
 // She has the dot: a strike, the red cross on her, and the dot starts again
-// on the free key furthest from her while she naps.
+// on the free key furthest from her (round the walls, so it never lands where
+// it cannot move) while she naps.
 function pounced(s, t) {
   s.strikes += 1
   s.events.push('bite')
   flash(s, s.boo, 'caught', t, MISS_MS)
   if (s.strikes >= STRIKES_OUT) return finish(s, 'lose', t)
   s.said = { words: `Strike ${s.strikes}! Boo caught it.`, until: t + STRIKE_WORDS_MS }
-  const free = ALL_KEYS.filter(k => k !== s.boo && !s.sparkles.some(x => x.key === k))
+  const free = ALL_KEYS.filter(k => k !== s.boo && !walled(s, k) && !s.sparkles.some(x => x.key === k))
   s.dot = free.reduce((best, k) => (apart(k, s.boo) > apart(best, s.boo) ? k : best), free[0])
   nap(s, t)
+}
+// A sparkle fades ungrabbed: its points off (never below nought), the miss
+// sound, a crossed-out sparkle where it was for a moment, and the strip says
+// so. Not a strike.
+function missedSparkle(s, x, t) {
+  s.sparkles = s.sparkles.filter(y => y !== x)
+  s.missed += 1
+  const cost = Math.min(POINTER_MISS_POINTS, s.score)
+  s.score -= cost
+  s.penalty += cost
+  s.events.push('miss')
+  flash(s, x.key, 'sparkle-miss', t, MISS_MS)
+  s.said = { words: `A sparkle faded. ${cost > 0 ? `-${cost}` : 'No points to lose.'}`, until: t + STRIKE_WORDS_MS }
+}
+// A wall comes out: on a free key two or more from the dot and from Boo,
+// clear of the sparkles, where it shuts nothing in and leaves no dead end
+// (roomy, the tail game's rule), picked by chance; none when no key will do
+// (it tries again at the next); five at most, and they stay put.
+function placeFurniture(s, t) {
+  const spots = ALL_KEYS.filter(k => !walled(s, k) && apart(k, s.dot) >= 2 && apart(k, s.boo) >= 2 && !s.sparkles.some(x => x.key === k) && roomy([...s.blocks.map(b => b.key), k]))
+  if (spots.length) s.blocks.push({ key: pick(s, spots) })
+  s.nextBlockAt = s.blocks.length < POINTER_BLOCKS_MAX ? t + POINTER_BLOCKS_EVERY_MS : null
 }
 
 // ---- 3. Whack-a-Mouse ----
@@ -1028,10 +1080,12 @@ export function newGame(id, { seed, lengthMs, now = 0 } = {}) {
 // a hot reload on the dev server, so one can meet this copy mid-game: what this
 // copy added is filled in, so it plays on and is drawn rather than throwing.
 // Boo Chasing Her Tail's board is laid out afresh (the old ring has no place
-// on it), its points and its time kept; the Knock's pardons and the gold counts
-// start empty. `g` itself when nothing is missing, else a mended copy.
+// on it), its points and its time kept; the Pointer's walls, the Knock's
+// pardons and the gold counts start empty. `g` itself when nothing is
+// missing, else a mended copy.
 function mended(g) {
   const missing = g.id === 'tail' ? !Array.isArray(g.tail) || !Array.isArray(g.hazards)
+    : g.id === 'pointer' ? !Array.isArray(g.blocks)
     : g.id === 'knock' ? !Array.isArray(g.gotAway)
       : g.id === 'mice' || g.id === 'yarn' ? !Number.isFinite(g.golds) : false
   if (!missing) return g
@@ -1040,7 +1094,8 @@ function mended(g) {
     for (const k of ['paw', 'tip', 'side', 'way']) delete s[k] // the ring's
     layTail(s, s.at)
     s.treats ??= 0; s.eeks ??= 0
-  } else if (s.id === 'knock') s.gotAway = []
+  } else if (s.id === 'pointer') { s.blocks = []; s.nextBlockAt = null; s.missed = 0; s.penalty = 0 }
+  else if (s.id === 'knock') s.gotAway = []
   else s.golds = 0
   return s
 }

@@ -303,6 +303,8 @@ const FACES = {
   // The Lazy Pointer: the red dot, the sparkles, and Boo napping, waking and after the dot
   dot: (g, k) => { lacquer(g); laserDot(g, k, MID, MID, 19) },
   sparkle: (g, k) => { lacquer(g); glowing(g, k, 'rgba(255, 226, 122, 0.95)', 8, () => sparkle(g, MID, MID, 27, litGold(g))) },
+  // a sparkle that faded ungrabbed (30 Oct 2026): faint, crossed out in red, no strike
+  'sparkle-miss': g => { lacquer(g); g.globalAlpha = 0.35; sparkle(g, MID, MID, 27, GOLD.mid); g.globalAlpha = 1; cross(g, MID, MID, 14, '#e8323d', 6) },
   'boo-nap': (g, k) => { flat(g, HOUSE.charcoal); g.globalAlpha = 0.55; booFace(g, k, 46, MID - 5, MID + 8); g.globalAlpha = 1; snore(g) },
   'boo-alert': (g, k) => { jewel(g, BOO.green, BOO.light); booFace(g, k, BOO_FULL - 8, MID - 4, MID + 4); bang(g) },
   chaser: (g, k) => { jewel(g, BOO.green, BOO.light); booFace(g, k, BOO_FULL) },

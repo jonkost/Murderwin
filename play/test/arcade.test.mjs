@@ -12,8 +12,9 @@ import {
   TAIL_STEP_MS, TAIL_STEP_END_MS, TAIL_TURN_ONE_IN, TAIL_FLEE_KEYS, TAIL_AWAY_KEYS, TAIL_LENGTH, TAIL_GROWS_AT, TAIL_LENGTH_MAX,
   TAIL_BLOCKS_FROM_MS, TAIL_BLOCKS_EVERY_MS, TAIL_BLOCKS_MAX, TAIL_POINTS,
   TAIL_TREAT_FROM_MS, TAIL_TREAT_EVERY_MS, TAIL_TREAT_UP_MS, TAIL_TREAT_POINTS, TAIL_HAZARD_FROM_MS, TAIL_HAZARD_EVERY_MS, TAIL_HAZARD_UP_MS, TAIL_HAZARDS_MAX, TAIL_FREEZE_MS, TAIL_WRAP_MS,
-  POINTER_STEP_MS, POINTER_STEP_END_MS, POINTER_NAP_MS, POINTER_WAKE_KEYS, POINTER_BORED_KEYS,
-  POINTER_SPARKLE_MS, POINTER_SPARKLES, POINTER_SPARKLE_UP_MS, POINTER_POINTS, POINTER_LAST_POINTS,
+  POINTER_STEP_MS, POINTER_STEP_END_MS, POINTER_NAP_MS, POINTER_WAKE_KEYS, POINTER_BORED_KEYS, POINTER_BORED_STEPS,
+  POINTER_SPARKLE_MS, POINTER_SPARKLES, POINTER_SPARKLE_UP_MS, POINTER_NEAR_ONE_IN, POINTER_POINTS, POINTER_MISS_POINTS, POINTER_LAST_POINTS,
+  POINTER_BLOCKS_FROM_MS, POINTER_BLOCKS_EVERY_MS, POINTER_BLOCKS_MAX,
   MICE_SPAWN_MIN_MS, MICE_REFILL_MS, MICE_REFILL_MORE_MS, MICE_UP_MS, MICE_UP_END_MS, MICE_GOLD_UP_MS, MICE_GOLD_UP_END_MS,
   MICE_AT_ONCE, MICE_MORE_EVERY_MS, MICE_AT_ONCE_MAX, MICE_POINTS, MICE_GOLD_POINTS,
   MICE_PETS_FROM_MS, MICE_PET_ONE_IN, MICE_PETS_OUT, MICE_REST_MS, MICE_LATE_MS,
@@ -583,7 +584,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     assert.equal(view(a, at + STRIKE_WORDS_MS - 1).strip.centre, `Strike ${n}! ${words}`)
     const later = aStep(a, at + STRIKE_WORDS_MS)
     const w = view(later, at + STRIKE_WORDS_MS)
-    if (later.stage === 'play') {
+    if (later.stage === 'play' && !/^A sparkle faded\./.test(w.strip.centre)) { // unless a sparkle faded meanwhile (30 Oct 2026)
       assert.equal(w.strip.centre, '', 'then the points again')
       assert.equal(w.strip.score, later.game.score)
       assert.equal(w.screen.said, null)
@@ -1294,7 +1295,7 @@ test('G54 The Lazy Pointer: the left dial moves the red dot left and right, the 
   }
 })
 
-test('G54 The Lazy Pointer: Boo naps; she wakes when her nap ends or the dot comes beside her, and is alert until her first step; awake, she stalks the dot one key a step along a row or a column, quicker as the game goes on; a dot far away two steps running bores her back to sleep', () => {
+test('G54 The Lazy Pointer: Boo naps; she wakes when her nap ends or the dot comes beside her, and is alert until her first step; awake, she stalks the dot one key a step along a row or a column, quicker as the game goes on (Jon, 30 Oct 2026: "Boo is faster"); a dot far away three steps running bores her back to sleep', () => {
   const g0 = newGame('pointer', { seed: 3, lengthMs: 120000, now: 0 })
   // naps of POINTER_NAP_MS to half as long again, one seed to the next
   const naps = Array.from({ length: 60 }, (_, i) => newGame('pointer', { seed: i + 1, now: 0 }).wakeAt)
@@ -1311,13 +1312,20 @@ test('G54 The Lazy Pointer: Boo naps; she wakes when her nap ends or the dot com
   g = step(g, first)
   assert.equal(g.boo, keyAt(2, 6), 'one key, along the row: the longer way to the dot')
   assert.equal(gameFaces(g, first)[g.boo], 'chaser')
-  // the dot POINTER_BORED_KEYS or more away for two steps running: back to sleep
+  // the dot POINTER_BORED_KEYS or more away for POINTER_BORED_STEPS steps running: back to sleep (three since 30 Oct 2026: she keeps after it longer)
+  assert.deepEqual([POINTER_BORED_KEYS, POINTER_BORED_STEPS], [5, 3])
   assert.ok(apart(g.boo, g.dot) >= POINTER_BORED_KEYS)
   g = step(g, g.nextAt)
   assert.equal(g.boo, keyAt(2, 5))
-  assert.equal(g.awake, false, 'bored')
-  assert.equal(gameFaces(g, g.at)[g.boo], 'boo-nap')
-  assert.ok(g.wakeAt - g.at >= POINTER_NAP_MS && g.wakeAt - g.at <= POINTER_NAP_MS * 1.5)
+  assert.equal(g.awake, true, 'two far steps: still after it')
+  let far = { ...g0, at: 999, awake: true, nextAt: 1000, alertUntil: 0, nextSparkleAt: 100000, nextBlockAt: null, boo: keyAt(2, 8), dot: keyAt(1, 0) }
+  for (const [n, to] of [[1, keyAt(2, 7)], [2, keyAt(2, 6)]]) { far = step(far, far.nextAt); assert.equal(far.boo, to); assert.equal(far.awake, true, `step ${n}: still after it`) }
+  far = step(far, far.nextAt)
+  assert.equal(far.boo, keyAt(2, 5))
+  assert.equal(far.awake, false, 'the third far step: bored')
+  assert.equal(gameFaces(far, far.at)[far.boo], 'boo-nap')
+  assert.ok(far.wakeAt - far.at >= POINTER_NAP_MS && far.wakeAt - far.at <= POINTER_NAP_MS * 1.5)
+  g = far
 
   // the dot beside her wakes her at once (POINTER_WAKE_KEYS: one key along a row or a column)
   assert.equal(POINTER_WAKE_KEYS, 1)
@@ -1348,8 +1356,11 @@ test('G54 The Lazy Pointer: Boo naps; she wakes when her nap ends or the dot com
         assert.equal(apart(s.boo, prev.boo), 1, 'one key')
         assert.ok(prev.awake, 'never in her sleep')
         const dr = Math.abs(rowOf(prev.dot) - rowOf(prev.boo)), dc = Math.abs(colOf(prev.dot) - colOf(prev.boo))
-        if (dc > dr) assert.equal(rowOf(s.boo), rowOf(prev.boo), 'along the row')
-        if (dr > dc) assert.equal(colOf(s.boo), colOf(prev.boo), 'down the column')
+        if (!prev.blocks.length) { // with walls out (30 Oct 2026) she goes round them, the shortest way
+          if (dc > dr) assert.equal(rowOf(s.boo), rowOf(prev.boo), 'along the row')
+          if (dr > dc) assert.equal(colOf(s.boo), colOf(prev.boo), 'down the column')
+        }
+        assert.ok(!prev.blocks.some(b => b.key === s.boo), 'never onto a wall')
       }
       prev = s
     }
@@ -1448,18 +1459,90 @@ test('G54 The Lazy Pointer: sparkles come one at a time, at most two at once, ea
   assert.equal(end.outcome, 'time')
   assert.equal(end.endedAt, 120000)
   assert.equal(end.strikes, 0)
-  assert.equal(end.score, 9 + POINTER_LAST_POINTS)
-  assert.deepEqual(end.events, ['win'])
+  assert.equal(end.score, 9 + POINTER_LAST_POINTS - end.penalty, 'less what the faded sparkles cost (30 Oct 2026)')
+  assert.ok(end.missed > 0 && end.penalty === Math.min(9, end.missed * POINTER_MISS_POINTS), `${end.missed} faded, ${end.penalty} lost`)
+  assert.deepEqual(end.events, ['miss', 'win'])
   // and it can be done: a dot kept away from her lasts the two minutes, and one led to the sparkles too
   for (const seed of [1, 2]) {
     const kept = playPointer(seed, flee)
     assert.equal(kept.outcome, 'time', `seed ${seed}`)
     assert.equal(kept.strikes, 0)
-    assert.equal(kept.score, kept.sparkled * POINTER_POINTS + POINTER_LAST_POINTS)
+    assert.equal(kept.score, kept.sparkled * POINTER_POINTS + POINTER_LAST_POINTS - kept.penalty)
     const led = playPointer(seed, lure)
     assert.equal(led.outcome, 'time')
     assert.ok(led.sparkled > 20, `${led.sparkled} sparkles grabbed`)
   }
+})
+
+test('G54 The Lazy Pointer, more of a challenge (Jon, 30 Oct 2026): walls from twenty seconds in, one more every fifteen, five at most, each on a free key two or more from the dot and from Boo, clear of the sparkles, nothing shut in; the dot stops at a wall and Boo goes round them the shortest way, never onto one; one sparkle in two comes near her; a sparkle that fades ungrabbed costs 2 points, never below nought, with the miss sound, a crossed-out sparkle for a moment and the strip\'s words, and is not a strike', () => {
+  assert.deepEqual([POINTER_BLOCKS_FROM_MS, POINTER_BLOCKS_EVERY_MS, POINTER_BLOCKS_MAX, POINTER_NEAR_ONE_IN, POINTER_MISS_POINTS], [20000, 15000, 5, 2, 2])
+  assert.deepEqual([POINTER_STEP_MS, POINTER_STEP_END_MS], [600, 300], 'Boo is faster')
+  // the walls, game by game, the dot kept away from her
+  for (const seed of [1, 2, 3, 4, 5]) {
+    let g = newGame('pointer', { seed, lengthMs: 120000, now: 0 })
+    const came = []
+    let prev = g
+    for (let t = 0; t <= 120000 && !g.over; t += TICK) {
+      g = stepGame(g, t)
+      if (!g.over && t % (6 * TICK) === 0) g = flee(g, t)
+      for (const b of g.blocks.slice(prev.blocks.length)) {
+        came.push(t)
+        assert.ok(apart(b.key, prev.dot) >= 2 && apart(b.key, prev.boo) >= 2, 'two or more from the dot and from Boo')
+        assert.ok(!prev.sparkles.some(x => x.key === b.key), 'clear of the sparkles')
+        assert.ok(roomyOf(g.blocks.map(x => x.key)), 'nothing shut in')
+        assert.equal(gameFaces(g, t)[b.key], 'wall')
+      }
+      assert.deepEqual(g.blocks.slice(0, prev.blocks.length), prev.blocks, 'they stay put')
+      assert.ok(!g.blocks.some(b => b.key === g.boo || b.key === g.dot), 'neither on a wall')
+      for (const x of g.sparkles) assert.ok(!g.blocks.some(b => b.key === x.key), 'no sparkle on a wall')
+      prev = g
+    }
+    assert.ok(came.length === POINTER_BLOCKS_MAX && came.every((at, i) => near(at, POINTER_BLOCKS_FROM_MS + i * POINTER_BLOCKS_EVERY_MS, TICK)), `seed ${seed}: at ${came}`)
+    assert.equal(g.outcome, 'time', `seed ${seed}: kept away from her to the end`)
+  }
+  // the dot stops at a wall, and the rest of the turn
+  const g0 = { ...newGame('pointer', { seed: 3, lengthMs: 120000, now: 0 }), wakeAt: 100000, nextSparkleAt: 100000, nextBlockAt: null, blocks: [{ key: keyAt(1, 3) }] }
+  assert.equal(input(g0, turn(LEFT_DIAL, 4), 300).dot, keyAt(1, 2))
+  assert.equal(input(g0, arrow('right'), 300).dot, keyAt(1, 2))
+  assert.deepEqual(input({ ...g0, dot: keyAt(1, 2) }, arrow('right'), 300), step({ ...g0, dot: keyAt(1, 2) }, 300), 'nothing else happens')
+  // Boo goes round a wall between her and the dot, the shortest way, one key a step, and never onto it
+  const T = 1000
+  const walled = { ...g0, at: T - 1, awake: true, nextAt: T, alertUntil: 0, boo: keyAt(1, 5), dot: keyAt(1, 1), blocks: [{ key: keyAt(1, 4) }, { key: keyAt(0, 4) }] }
+  const s1 = step(walled, T)
+  assert.equal(s1.boo, keyAt(2, 5), 'down, round the wall')
+  const s2 = step(s1, s1.nextAt)
+  assert.equal(s2.boo, keyAt(2, 4))
+  // walled off from it altogether: she gives up and naps
+  const shut = { ...walled, boo: keyAt(0, 8), blocks: [{ key: keyAt(0, 7) }, { key: keyAt(1, 8) }] }
+  const gave = step(shut, T)
+  assert.equal(gave.boo, keyAt(0, 8))
+  assert.equal(gave.awake, false)
+  // a sparkle fading: 2 off, the miss sound, the crossed-out sparkle, the words; never below nought; not a strike
+  const one = { ...g0, blocks: [], score: 5, sparkles: [{ key: keyAt(2, 2), until: 5000 }] }
+  const faded = step(one, 5000)
+  assert.deepEqual([faded.score, faded.missed, faded.penalty, faded.strikes, faded.sparkles], [3, 1, 2, 0, []])
+  assert.deepEqual(faded.events, ['miss'])
+  assert.deepEqual(faded.said, { words: 'A sparkle faded. -2', until: 5000 + STRIKE_WORDS_MS })
+  assert.equal(gameFaces(faded, 5000)[keyAt(2, 2)], 'sparkle-miss')
+  assert.equal(gameFaces(faded, 5000 + MISS_MS)[keyAt(2, 2)], 'blank')
+  const broke = step({ ...one, score: 1 }, 5000)
+  assert.deepEqual([broke.score, broke.penalty], [0, 1], 'only what there is to lose')
+  const none = step({ ...one, score: 0 }, 5000)
+  assert.deepEqual([none.score, none.penalty, none.missed], [0, 0, 1])
+  assert.equal(none.said.words, 'A sparkle faded. No points to lose.')
+  // on the strip and the screen while the words show: the words in the points' place, the boxes unchanged
+  const [a, ta] = started('pointer')
+  const withOne = { ...a, game: { ...a.game, score: 6, sparkles: [{ key: keyAt(3, 0), until: ta + 1000 }], nextSparkleAt: ta + 100000, wakeAt: ta + 100000 } }
+  const after = aStep(withOne, ta + 1000)
+  const v = arcadeView(after, ta + 1000)
+  assert.equal(v.strip.centre, 'A sparkle faded. -2')
+  assert.equal(v.strip.score, null)
+  assert.deepEqual(v.strip.marks, { of: STRIKES_OUT, used: 0 }, 'not a strike')
+  assert.equal(v.screen.said, 'A sparkle faded. -2')
+  assert.equal(arcadeView(after, ta + 1000 + STRIKE_WORDS_MS).strip.score, 4)
+  // the page pops it as -2
+  const page = src('../src/screens/Arcade.jsx')
+  assert.match(page, /if \(gain < 0\) return \{ text: String\(gain\), kind: 'strike' \}/)
 })
 
 test('G54 Whack-a-Mouse: tap a mouse before it hides for a point (gold for more) and a green tick; an empty key does nothing; a tapped mouse\'s place is taken again soon; a tap a moment after a mouse hid still gets it', () => {
@@ -2180,7 +2263,7 @@ test('G54 a page that sleeps (Jon, 29 Oct 2026: "All the games are not reacting 
   assert.equal(slept.outcome, 'lose')
   assert.equal(slept.endedAt, ticked.endedAt)
   assert.ok(slept.endedAt < 119000)
-  assert.deepEqual(slept.events, ['bite', 'lose'])
+  assert.deepEqual(slept.events, ['miss', 'bite', 'lose'], 'sparkles faded (30 Oct 2026), and the bites')
   // a yarn ball caught in a sleep, the basket waiting under its column
   const y0 = newGame('yarn', { seed: 4, lengthMs: 120000, now: 0 })
   const first = step(y0, 0).balls[0]
@@ -2829,7 +2912,7 @@ test('G55 a page that sleeps through stages catches up exactly: a minute and mor
   for (let t = PICK_MS + TICK; t <= 130000; t += TICK) { ticked = arcadeStep(ticked, t); heard.push(...ticked.events) }
   assert.deepEqual(without(jumped, 'events'), without(ticked, 'events'))
   assert.deepEqual(jumped.events, uniq(heard))
-  assert.deepEqual(jumped.events, ['tick', 'go', 'bite', 'lose'])
+  assert.deepEqual(jumped.events, ['tick', 'go', 'miss', 'bite', 'lose'])
   assert.deepEqual(jumped.players[0].games, [{ game: 'pointer', score: 0 }])
   // and on through the result to Mari's turn, either way
   assert.equal(jumped.stage, 'menu')

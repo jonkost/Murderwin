@@ -143,7 +143,8 @@ function popOf(a, next) {
   if (next?.stage !== 'play' || !g0 || !g1 || g0.startedAt !== g1.startedAt) return null
   const gain = g1.score - g0.score
   if (gain > 0) return { text: `+${gain}`, kind: next.events.includes('gold') ? 'gold' : 'gain' }
-  if (next.events.includes('miss') || next.events.includes('bite')) return { text: g1.id === 'yarn' ? 'Missed!' : 'Strike!', kind: 'strike' }
+  if (gain < 0) return { text: String(gain), kind: 'strike' } // a sparkle that faded (30 Oct 2026)
+  if (next.events.includes('miss') || next.events.includes('bite')) return { text: g1.id === 'yarn' ? 'Missed!' : g1.id === 'pointer' && !next.events.includes('bite') ? 'Faded!' : g1.id === 'tail' ? 'Eek!' : 'Strike!', kind: 'strike' }
   return null
 }
 const POPS_KEPT = 4
