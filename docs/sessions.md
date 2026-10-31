@@ -26,9 +26,18 @@ on the Canon.
   the jazz on the tech run. Jon's part (card 551): a Stop Music Shortcut,
   the scenes' HomePods, and the switch. Cards 550 and 551 (544 to 549 went
   to the second arcade playtest, built in another session at the same
-  time). Cues 78 tests, workshop suite green. Committed on main; the brain
-  not restarted to it (the switch stays off until Jon's Shortcut exists);
-  nothing on the site changed; not pushed.
+  time). Two real runs of `--check-music` on this Mac taught three things,
+  built the same evening: a Home audio action stays "in progress" for ten
+  to twenty seconds and Apple Home refuses any Shortcut meanwhile, so the
+  runner tries a refused run again every 1.5 s for up to 30 s and drops it
+  if a newer cue has come; a run a newer one has replaced says nothing
+  when it fails late; a setting's Shortcuts (Act 4's three) finish one by
+  one. `MUSIC_SHORTCUTS=on` is set in `cues/.env` (Jon: "just wire it").
+  For Jon: Intense Music 60% and Credit Roll Music fail with "Object not
+  found" (each Shortcut's own scene needs re-picking), Stop Music does not
+  exist, and the cake's song is not in the Music library. Cues 79 tests,
+  workshop suite green. Committed on main; Jon restarting the Mac; nothing
+  on the site changed; not pushed.
 
 ## 31 Oct 2026, evening · Claude Code (the arcade from Jon's second playtest; fifteen-minute rounds)
 
