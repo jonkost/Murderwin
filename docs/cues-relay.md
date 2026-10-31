@@ -289,6 +289,11 @@ Shortcuts apps are yours.)
    *Intense Music 60%*, *Credit Roll Music* and *Stop Music*. Make *Default
    Jazz* play on every HomePod, and the two room ones on their own HomePod
    only: in Act 4 the brain runs the jazz first and the two rooms after it.
+   Set the volume inside every scene's audio action (31 October: with none
+   set, the HomePods stay wherever the last scene left them, so the jazz
+   came back at the 20% level): Default Jazz 55, Default Jazz 20% 20, the
+   two rooms' at about 55, Intense Music 35% 35, Intense Music 60% 60,
+   Credit Roll Music 35.
    In `cues/.env`, `MUSIC_SHORTCUTS=on`. Then `npm start -- --check-music`
    runs each setting for six seconds in turn, the song, and the stop; a
    Shortcut that is not on this Mac is named in the window. Keep step 7:
