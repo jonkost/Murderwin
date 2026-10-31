@@ -54,7 +54,7 @@ import { connectFirestoreEmulator } from 'firebase/firestore'
 import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
-import { StringLights, ShortcutLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
+import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -134,19 +134,25 @@ if (!FAKE) {
   }
 }
 
-// The string lights: paired straight to their Nanoleaf controller, or through
-// Apple Home with three Shortcuts on this Mac (STRINGS_SHORTCUTS=on, lib/strings.js).
+// The string lights: paired straight to their Nanoleaf controller, through
+// Apple Home with three Shortcuts on this Mac (STRINGS_SHORTCUTS=on,
+// lib/strings.js), or both (31 Oct 2026): the pairing first, and the
+// Shortcuts from the first time it fails.
 let stringLights = null
 let stringColours = sheet?.strings ?? DEFAULT_STRING_COLOURS
 const stringsByShortcuts = !FAKE && onSwitch(env.STRINGS_SHORTCUTS)
-if (!FAKE && env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN) {
-  stringLights = new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() })
-} else if (stringsByShortcuts) {
-  stringLights = new ShortcutLights()
+const stringsPaired = !FAKE && !!(env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN)
+if (stringsByShortcuts) {
   // a Shortcut renamed on the Mac is named here, never in the code
   const named = c => String(env[`STRINGS_SHORTCUT_${c.toUpperCase()}`] ?? '').trim() || STRING_SHORTCUTS[c]
-  stringColours = shortcutColours({ red: named('red'), green: named('green'), decor: named('decor') })
+  stringColours = shortcutColours({ red: named('red'), green: named('green'), decor: named('decor') }, stringColours)
 }
+if (stringsPaired || stringsByShortcuts) {
+  const direct = stringsPaired ? new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() }) : null
+  const shortcuts = stringsByShortcuts ? new ShortcutLights({ log }) : null
+  stringLights = direct && shortcuts ? new TwoWayLights({ direct, shortcuts, log }) : direct ?? shortcuts
+}
+const stringsHow = FAKE ? 'fake' : !stringLights ? 'not set up' : stringsPaired && stringsByShortcuts ? 'on, paired, the Shortcuts behind it' : stringsByShortcuts ? 'on, through Apple Home' : 'on, paired'
 
 // The projector's plug, through Apple Home with two Shortcuts on this Mac
 // (PROJECTOR_SHORTCUTS=on, lib/strings.js). Off or unset: it only says what it would do.
@@ -215,6 +221,12 @@ if (CHECK_STRINGS) {
     await sleep(2000)
   }
   log('done: if the strings went red, green, then warm, they are ready')
+  // a Shortcut whose Home scene has a straggler runs on for about a minute before it reports (lib/strings.js)
+  if (stringLights.running?.()) {
+    log(`[strings] ${stringLights.running()} Shortcut${stringLights.running() === 1 ? ' is' : 's are'} still running: waiting for the report, up to a minute and a half`)
+    await stringLights.idle()
+    log('[strings] the Shortcuts have finished')
+  }
   process.exit(0)
 }
 if (CHECK_PROJECTOR) {
@@ -438,4 +450,4 @@ if (FAKE && process.stdin.isTTY) {
 log('cue relay up', FAKE ? '(fake)' : '', OFFLINE ? '(offline: no Firebase)' : '', `media: ${MEDIA_DIR}`)
 for (const line of soundFilesLines(soundReport)) log(`sounds: ${line}`)
 log(`recordings: ${recordingFiles(MEDIA_DIR, existsSync)} of ${CLIP_IDS.length} have a file; ${String(env.STATION_KEY ?? '').trim().length >= 4 ? 'STATION_KEY set, coded recordings will play' : 'no STATION_KEY in cues/.env, so only a night with no station key saved plays them'}`)
-log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · projector: ${FAKE ? 'fake' : projectorOn ? 'on, through Apple Home' : 'not set up'} · string lights: ${FAKE ? 'fake' : stringLights ? (stringsByShortcuts && !env.NANOLEAF_STRINGS_TOKEN ? 'on, through Apple Home' : 'on') : 'not set up'}`)
+log(`music: ${music ? 'on' : 'off'} · Hue scenes: ${scenesOn ? 'on' : 'off'} · projector: ${FAKE ? 'fake' : projectorOn ? 'on, through Apple Home' : 'not set up'} · string lights: ${stringsHow}`)

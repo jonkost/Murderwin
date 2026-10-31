@@ -131,32 +131,117 @@ export function createProjectorSwitch({ enabled = false, names = PROJECTOR_SHORT
   return { set, idle: () => chain }
 }
 
-// The mirror's colours when the strings go through Shortcuts.
-export function shortcutColours(names = STRING_SHORTCUTS) {
-  return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { shortcut: name }]))
+// The mirror's colours when the strings go through Shortcuts: each colour
+// names its Shortcut. With `colours` (cues/scenes.json "strings") the Open
+// API body stays beside it, so TwoWayLights can take either road.
+export function shortcutColours(names = STRING_SHORTCUTS, colours = null) {
+  return Object.fromEntries(Object.entries(names).map(([colour, name]) => [colour, { ...(colours?.[colour] ?? {}), shortcut: name }]))
 }
 
 // Run one shortcut by name with macOS's own `shortcuts` tool; rejects when it
-// is missing or fails, so the mirror says once that the strings did not answer.
-// `shortcuts run` reads its input from stdin until it closes, so stdin is
-// closed at once (left open, it waits until the timeout kills it).
-export function runShortcut(name, { timeoutMs = 8000, execFileImpl = execFile } = {}) {
+// is missing, is not on this Mac, or fails. `shortcuts run` reads its input
+// from stdin until it closes, so stdin is closed at once (left open, it waits
+// until the timeout kills it). The error carries what the tool said, whether
+// that was "partially succeeded", and how long the run took.
+export function runShortcut(name, { timeoutMs = SHORTCUT_TIMEOUT_MS, execFileImpl = execFile, now = () => Date.now() } = {}) {
+  const startedAt = now()
   return new Promise((resolve, reject) => {
-    const child = execFileImpl('shortcuts', ['run', name], { timeout: timeoutMs }, err => (err ? reject(new Error(`shortcut ${name}: ${err.code ?? err.signal ?? err.message}`)) : resolve()))
+    const child = execFileImpl('shortcuts', ['run', name], { timeout: timeoutMs }, (err, stdout, stderr) => {
+      if (!err) return resolve()
+      const said = String(stderr ?? '').trim().replace(/^Error:\s*/i, '')
+      const reason = said || (err.killed || err.signal ? 'it did not finish' : err.code ?? err.message)
+      reject(Object.assign(new Error(`shortcut ${name}: ${reason}`), { partial: /partially succeeded/i.test(said), took: now() - startedAt }))
+    })
     child?.stdin?.end?.()
   })
 }
 
+// A Home scene through a Shortcut answers in about a second when every
+// accessory in the scene is reachable. When one is not (Jon, 31 Oct 2026:
+// the Red Shortcut turned the strings red at once, then ran a full minute
+// and ended "Action set execution partially succeeded"), Apple Home waits
+// about a minute for the straggler before the tool returns an error. So a
+// colour counts as sent after SHORTCUT_HEAD_START_MS, whether or not the
+// Shortcut has finished: the lights have taken it by then. A failure inside
+// the head start is a real one (`shortcuts` missing, no Shortcut by that
+// name: the tool says so in well under a second). A failure after it is a
+// late one: the scene was sent, so it costs one plain line that says what to
+// fix, not a restart of the colour.
+export const SHORTCUT_HEAD_START_MS = 1500
+export const SHORTCUT_TIMEOUT_MS = 90_000
+
 export class ShortcutLights {
-  constructor({ run = runShortcut, timeoutMs = 8000 } = {}) {
+  constructor({ run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
     this.run = run
+    this.headStartMs = headStartMs
     this.timeoutMs = timeoutMs
+    this.log = log
+    this.wait = wait
+    this.pending = new Set()
+    this.warned = false
+  }
+
+  // Resolves once the Shortcut has finished or the head start has passed,
+  // whichever comes first; rejects only when it fails inside the head start.
+  async show(setting) {
+    if (!setting?.shortcut) throw new Error('string lights: no shortcut for that colour')
+    const name = setting.shortcut
+    let over = false
+    const run = this.run(name, { timeoutMs: this.timeoutMs }).then(
+      () => { over = true; this.warned = false },
+      e => { over = true; throw e },
+    )
+    this.pending.add(run)
+    run.catch(() => {}).then(() => this.pending.delete(run))
+    const head = this.wait(this.headStartMs)
+    await Promise.race([run, head])
+    if (!over) run.catch(e => this.late(name, e))
+  }
+
+  // The lights most likely changed; say once what is wrong, until a run succeeds.
+  late(name, e) {
+    if (this.warned) return
+    this.warned = true
+    const secs = Math.round((e?.took ?? 0) / 1000)
+    if (e?.partial) this.log(`[strings] the ${name} Shortcut ran for ${secs} s and then said "partially succeeded": the lights changed, but something else in its Home scene is not answering. In the Home app, open that scene and take out whatever shows No Response (or make it again with only the Holiday Lights in it). The game does not wait on it.`)
+    else this.log(`[strings] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); the lights may still have changed, and the phones carry the colour`)
+  }
+
+  // Every Shortcut still running has finished (for --check-strings).
+  idle() { return Promise.allSettled([...this.pending]) }
+  running() { return this.pending.size }
+}
+
+// Both roads at once (31 Oct 2026): cues/.env has the strings' own address
+// and token and STRINGS_SHORTCUTS=on. The pairing is tried first (it answers
+// in milliseconds); the first time it fails the pairing is given up for the
+// run, with one line that says why, and the Shortcuts carry every colour
+// from then on. A 401 or 403 is a stale token: the strings' Wi-Fi was reset
+// on 24 October, so the token in cues/.env may no longer be theirs.
+export class TwoWayLights {
+  constructor({ direct, shortcuts, log = () => {} }) {
+    if (!direct || !shortcuts) throw new Error('string lights: both roads are needed')
+    this.direct = direct
+    this.shortcuts = shortcuts
+    this.log = log
+    this.directOff = false
   }
 
   async show(setting) {
-    if (!setting?.shortcut) throw new Error('string lights: no shortcut for that colour')
-    await this.run(setting.shortcut, { timeoutMs: this.timeoutMs })
+    if (!this.directOff) {
+      try { await this.direct.show(setting); return } catch (e) {
+        this.directOff = true
+        const stale = /\b40[13]\b/.test(e?.message ?? '')
+        this.log(stale
+          ? '[strings] the strings refused their saved pairing (NANOLEAF_STRINGS_TOKEN in cues/.env is stale: leave both NANOLEAF lines empty, or pair again); the Shortcuts carry the colours from here'
+          : `[strings] the strings did not answer at their own address (${e?.message ?? 'no answer'}); the Shortcuts carry the colours from here`)
+      }
+    }
+    await this.shortcuts.show(setting)
   }
+
+  idle() { return this.shortcuts.idle() }
+  running() { return this.shortcuts.running() }
 }
 
 // The mirror: call update(colour) as often as you like; it sends only a

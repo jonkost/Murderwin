@@ -120,6 +120,11 @@ test('the relay watches Salem\'s public doc and checks the colour ten times a se
   assert.ok(src.includes("'salem'"), 'nights/{id}/public/salem')
   assert.ok(src.includes('setInterval(mirrorStrings, 100)'))
   assert.ok(src.includes('NANOLEAF_STRINGS_HOST') && src.includes('NANOLEAF_STRINGS_TOKEN'))
+  // 31 Oct 2026: with the pairing and STRINGS_SHORTCUTS=on both set, both roads; and --check-strings
+  // waits for a Shortcut that is still running, so its report (the "partially succeeded" line) is seen
+  assert.ok(src.includes('new TwoWayLights({ direct, shortcuts, log })'), 'both roads')
+  assert.ok(src.includes('new ShortcutLights({ log })'), 'the Shortcuts log their late lines')
+  assert.ok(src.includes('await stringLights.idle()'), 'the check waits for the report')
 })
 
 // ---- through Apple Home: one Shortcut per colour (STRINGS_SHORTCUTS=on) ----
@@ -129,6 +134,7 @@ test('through Apple Home: each colour runs its own Shortcut, by its exact name',
   assert.deepEqual(Object.keys(STRING_SHORTCUTS).sort(), ['decor', 'green', 'red'])
   const colours = shortcutColours()
   assert.deepEqual(colours.red, { shortcut: 'Red Murderwin Strings' })
+  assert.deepEqual(colours, { red: { shortcut: 'Red Murderwin Strings' }, green: { shortcut: 'Green Murderwin Strings' }, decor: { shortcut: 'Decor Murderwin Strings' } })
   const ran = []
   const lights = new ShortcutLights({ run: async (name) => { ran.push(name) } })
   await lights.show(colours.green)
@@ -148,6 +154,103 @@ test('runShortcut asks macOS to run the named Shortcut, and a failure rejects', 
   assert.ok(closed, 'stdin is closed so the Shortcut does not wait for input')
   const missing = (cmd, args, opts, cb) => cb(Object.assign(new Error('not found'), { code: 1 }))
   await assert.rejects(runShortcut('Nope', { execFileImpl: missing }), /shortcut Nope/)
+  // what the tool said comes through, with how long it took and whether the scene only partly ran (31 Oct 2026)
+  let clock = 0
+  const partial = (cmd, args, opts, cb) => { clock += 64_000; cb(Object.assign(new Error('Command failed'), { code: 1 }), '', 'Error: Action set execution partially succeeded.\n') }
+  const e = await runShortcut('Red Murderwin Strings', { execFileImpl: partial, now: () => clock }).catch(e => e)
+  assert.match(e.message, /^shortcut Red Murderwin Strings: Action set execution partially succeeded\./)
+  assert.equal(e.partial, true)
+  assert.equal(e.took, 64_000)
+  const killed = (cmd, args, opts, cb) => cb(Object.assign(new Error('killed'), { killed: true, signal: 'SIGTERM' }))
+  const k = await runShortcut('Red Murderwin Strings', { execFileImpl: killed }).catch(e => e)
+  assert.match(k.message, /did not finish/)
+  assert.equal(k.partial, false)
+})
+
+// ---- 31 Oct 2026: a Home scene with a straggler runs a minute, then "partially succeeded" ----
+
+test('a colour counts as sent after the head start, whether or not the Shortcut has finished; a late failure is one plain line that says what to fix', async () => {
+  const { ShortcutLights, shortcutColours, SHORTCUT_HEAD_START_MS, SHORTCUT_TIMEOUT_MS } = await import('../lib/strings.js')
+  assert.ok(SHORTCUT_HEAD_START_MS >= 1000 && SHORTCUT_HEAD_START_MS <= 2500, 'the lights take the colour in about a second')
+  assert.ok(SHORTCUT_TIMEOUT_MS >= 70_000, 'longer than the minute Apple Home waits on a straggler')
+  const colours = shortcutColours()
+  const logs = []
+  // the run hangs until released; the head start is released by hand too
+  let release, releaseHead
+  let runs = 0
+  const lights = new ShortcutLights({
+    run: (name) => { runs++; return new Promise((_, reject) => { release = reject }) },
+    wait: () => new Promise(r => { releaseHead = r }),
+    log: l => logs.push(l),
+  })
+  const shown = lights.show(colours.red)
+  let done = false
+  shown.then(() => { done = true })
+  await settle()
+  assert.equal(done, false, 'not yet: neither the Shortcut nor the head start')
+  assert.equal(lights.running(), 1)
+  releaseHead(); await settle(); await settle()
+  assert.equal(done, true, 'the head start passed: the colour counts as sent')
+  assert.deepEqual(logs, [], 'nothing to say yet')
+  // a minute later the tool says the scene only partly ran: one line, with the fix
+  release(Object.assign(new Error('shortcut Red Murderwin Strings: Action set execution partially succeeded.'), { partial: true, took: 64_000 }))
+  await settle(); await settle()
+  assert.equal(logs.length, 1)
+  assert.match(logs[0], /Red Murderwin Strings Shortcut ran for 64 s and then said "partially succeeded"/)
+  assert.match(logs[0], /Home app.*No Response/)
+  assert.equal(lights.running(), 0)
+  // the next colour's late failure says nothing more, until a run succeeds
+  const again = lights.show(colours.green)
+  releaseHead(); await settle(); await settle()
+  await again
+  release(Object.assign(new Error('partial'), { partial: true, took: 63_000 }))
+  await settle(); await settle()
+  assert.equal(logs.length, 1, 'quiet the second time')
+  // a run that finishes inside the head start: no waiting, and the warning is cleared
+  const quick = new ShortcutLights({ run: async () => {}, wait: () => new Promise(() => {}), log: l => logs.push(l) })
+  await quick.show(colours.decor)
+  assert.equal(quick.running(), 0)
+  // a run that fails inside the head start is a real failure: the colour is not sent
+  const broken = new ShortcutLights({ run: async () => { throw new Error('shortcut Nope: not found') }, wait: () => new Promise(() => {}) })
+  await assert.rejects(broken.show(colours.decor), /not found/)
+  // a late failure that is not a partial success: the other line
+  let rej
+  const slow = new ShortcutLights({ run: () => new Promise((_, r) => { rej = r }), wait: async () => {}, log: l => logs.push(l) })
+  await slow.show(colours.red)
+  rej(Object.assign(new Error('shortcut Red Murderwin Strings: it did not finish'), { partial: false, took: 90_000 }))
+  await settle(); await settle()
+  assert.match(logs.at(-1), /did not finish after 90 s/)
+  await slow.idle()
+})
+
+test('both roads at once: the pairing first, and the Shortcuts from the first time it fails, with one line that says why', async () => {
+  const { TwoWayLights, ShortcutLights, StringLights, shortcutColours } = await import('../lib/strings.js')
+  const colours = shortcutColours(undefined, SHEET.strings)
+  assert.deepEqual(colours.red, { ...SHEET.strings.red, shortcut: 'Red Murderwin Strings' }, 'each colour carries both the Open API body and its Shortcut')
+  const puts = []
+  const ran = []
+  const logs = []
+  let status = 204
+  const direct = new StringLights({ host: 'h', token: 't', fetchImpl: async (url, opts) => { puts.push(JSON.parse(opts.body).hue.value); return { ok: status < 300, status } } })
+  const shortcuts = new ShortcutLights({ run: async name => { ran.push(name) }, wait: () => new Promise(() => {}) })
+  const both = new TwoWayLights({ direct, shortcuts, log: l => logs.push(l) })
+  await both.show(colours.red)
+  assert.deepEqual([puts, ran], [[0], []], 'the pairing answers: no Shortcut')
+  status = 401
+  await both.show(colours.green)
+  assert.deepEqual([puts, ran], [[0, 120], ['Green Murderwin Strings']], 'refused: the Shortcut carries it')
+  assert.equal(logs.length, 1)
+  assert.match(logs[0], /stale/)
+  status = 204
+  await both.show(colours.decor)
+  assert.deepEqual([puts, ran], [[0, 120], ['Green Murderwin Strings', 'Decor Murderwin Strings']], 'the pairing is not tried again this run')
+  assert.equal(logs.length, 1)
+  // no answer at all: the other line
+  const dead = new StringLights({ host: 'h', token: 't', fetchImpl: async () => { throw new Error('no route to host') } })
+  const other = new TwoWayLights({ direct: dead, shortcuts, log: l => logs.push(l) })
+  await other.show(colours.red)
+  assert.match(logs.at(-1), /did not answer at their own address/)
+  assert.throws(() => new TwoWayLights({ direct: null, shortcuts }))
 })
 
 test('the mirror drives Shortcuts like the paired strings: only changes, one line when they stop answering', async () => {

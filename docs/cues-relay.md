@@ -184,8 +184,13 @@ Shortcuts apps are yours.)
   matters is that the bulb stays out of the zone the scenes use (step 8).
   Off in the blackout is new on 25 October and untried on the bulb.
 - The string lights run through Apple Home, not by pairing: three Home
-  scenes and three Shortcuts on the brain (step 14). Red and the warm decor
+  scenes and three Shortcuts on the brain (step 17). Red and the warm decor
   colour work, each in 1 to 2 seconds; the green Shortcut is being rebuilt.
+  On 31 October all three Shortcuts changed the lights at once but ran on
+  for a minute (the green one twenty seconds) and ended "Action set
+  execution partially succeeded": something else in each scene is not
+  answering (step 18 says what to do). The brain no longer waits on a
+  Shortcut's report, so the lights keep up with the phones regardless.
 - New on 25 October and not yet made: the three playlists under their new
   names, the song in the library, the six scenes, the dim study scene's lamp,
   the Patio light in the Decor strings scene, the projector's plug in Home
@@ -323,12 +328,25 @@ Shortcuts apps are yours.)
     in Salem's game the phones lead and the strings follow.
     **Not this way:** pairing straight to the strings. Holding their button
     resets their Wi-Fi (24 October), and they never opened pairing. The code
-    for it stays (`NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`, which
-    win over the Shortcuts if both are set).
+    for it stays (`NANOLEAF_STRINGS_HOST` and `NANOLEAF_STRINGS_TOKEN`). With
+    both of those and `STRINGS_SHORTCUTS=on` set, the pairing is tried first
+    and the Shortcuts carry every colour from the first time it fails (a
+    401 or 403 is a stale token: the brain says so once).
 18. **Check them.** `npm start -- --check-strings` turns them red, green,
-    then the warm colour. If one never changes, open its Shortcut and check it
-    runs the right scene. If none answer, leave `STRINGS_SHORTCUTS` empty:
-    the strings are decoration, and the phones carry the colour.
+    then the warm colour, and then waits (up to a minute and a half) for
+    any Shortcut still running to report. If one never changes, open its
+    Shortcut and check it runs the right scene. If the report says a
+    Shortcut "ran for 64 s and then said partially succeeded" (31 October:
+    all three did), the lights changed but something else in that Home
+    scene is not answering, and Apple Home waited a minute for it: open the
+    scene in the Home app and take out whatever shows No Response, or make
+    the scene again with only the Holiday Lights in it. The game never
+    waits on it: since 31 October the brain counts a colour as sent a
+    second and a half after it starts the Shortcut, whether or not the
+    Shortcut has finished, so the strings keep up with the phones, and a
+    late report costs one line in the brain's window, not a restart of the
+    colour. If none answer, leave `STRINGS_SHORTCUTS` empty: the strings
+    are decoration, and the phones carry the colour.
 
 **All of it at once**
 
