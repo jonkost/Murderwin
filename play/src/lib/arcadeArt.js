@@ -407,7 +407,7 @@ function furPath(g, points, r, end = 1) {
 
 // ---- Knock It Off the Table's scenes ----------------------------------------
 
-// A table across each row: a green cloth with a gold braid along its top and
+// A table across each row: a claret cloth with a gold braid along its top and
 // gold tassels under it. The end key's cloth stops at a gold post, with a
 // gold arrow down where things fall, and a gold rim: the key to press. A
 // table that runs to the left ends at its left-hand key: the same, mirrored.
@@ -417,7 +417,7 @@ function tableTop(g, edge = false, left = false) {
   lacquer(g)
   const end = edge ? 54 : UNIT
   const w = g.createLinearGradient(0, TOP, 0, TOP + BAND)
-  w.addColorStop(0, BOO.light); w.addColorStop(1, BOO.green)
+  w.addColorStop(0, '#8a4a50'); w.addColorStop(1, HOUSE.claret) // the claret cloth (Jon, 31 Oct 2026: "I like the table look before")
   g.fillStyle = w; g.fillRect(0, TOP, end, BAND)
   g.fillStyle = GOLD.mid
   g.fillRect(0, TOP - 1.5, end, 2.5)

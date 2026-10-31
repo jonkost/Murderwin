@@ -570,11 +570,11 @@ test('G54 green for every success and red for every strike (Jon, 29 Oct 2026: "L
 })
 
 test('G54 three strikes and you\'re out, in the three games that count them (Jon, 29 Oct 2026: "like 3 strikes"): the rule before it starts, the strike\'s words on the touch strip for a moment in place of the points, three boxes on the strip and the screen, and the third ends the game with its points kept', () => {
-  assert.equal(STRIKES_OUT, 3)
+  assert.equal(STRIKES_OUT, 5, 'five since 31 Oct 2026: every game with strikes has five')
   assert.equal(MICE_PETS_OUT, STRIKES_OUT)
   assert.ok(STRIKE_WORDS_MS >= 1000 && STRIKE_WORDS_MS <= 3000, 'long enough to read, and gone again')
   const view = (a, t) => arcadeView(a, t)
-  const RULES = { tail: '', pointer: "Caught three times and you're out.", mice: "Tap three friends and you're out.", knock: "Three misses and you're out.", yarn: "Five misses and you're out." }
+  const RULES = { tail: '', pointer: "Caught five times and you're out.", mice: "Tap five friends and you're out.", knock: "Five misses and you're out.", yarn: "Five misses and you're out." }
   // the rule on the ready strip and the count's, and on the screen; then three empty boxes in its place
   for (const { id, name, rule } of GAMES) {
     assert.equal(rule ?? '', RULES[id])
@@ -590,7 +590,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     assert.equal(v.strip.left, id === 'tail' ? name : '', 'the boxes on the left, in the name\'s place')
   }
   const visit = aIn(newArcade({ mode: 'visit', players: ['Jessa'], seed: 6, now: 0 }), key(menuKey('mice')), 0)
-  assert.equal(view(visit, PICK_MS).strip.right, "Tap three friends and you're out.", 'on a visit too')
+  assert.equal(view(visit, PICK_MS).strip.right, "Tap five friends and you're out.", 'on a visit too')
 
   // the words, then the points again
   // `pressed`: the strike was the press at t; otherwise a timer that came due in the tick that ended at t
@@ -607,7 +607,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     assert.equal(view(a, at + STRIKE_WORDS_MS - 1).strip.centre, `Strike ${n}! ${words}`)
     const later = aStep(a, at + STRIKE_WORDS_MS)
     const w = view(later, at + STRIKE_WORDS_MS)
-    if (later.stage === 'play' && !/^A sparkle faded\./.test(w.strip.centre)) { // unless a sparkle faded meanwhile (30 Oct 2026)
+    if (later.stage === 'play' && !/^A sparkle faded\.|^Strike \d/.test(w.strip.centre)) { // unless a sparkle faded or another strike came meanwhile
       assert.equal(w.strip.centre, '', 'then the points again')
       assert.equal(w.strip.score, later.game.score)
       assert.equal(w.screen.said, null)
@@ -633,15 +633,14 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   assert.equal(view(bonked, t + 100).strip.centre, words1)
   assert.equal(view(bonked, t + STRIKE_WORDS_MS - 1).strip.centre, words1)
   assert.equal(view(aStep(bonked, t + STRIKE_WORDS_MS), t + STRIKE_WORDS_MS).strip.score, aStep(bonked, t + STRIKE_WORDS_MS).game.score)
-  tapPet()
-  struck(a, t, 2, STRUCK[who])
-  tapPet()
+  for (let n = 2; n < STRIKES_OUT; n++) { tapPet(); struck(a, t, n, STRUCK[who]) }
+  tapPet() // the fifth (31 Oct 2026)
   assert.equal(a.stage, 'result')
-  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped three friends.', right: pts(a.game.score), score: null, marks: null, lights: null, zones: null, dials: NO_DIALS })
-  assert.deepEqual(view(a, t).screen.marks, marksOf('mice', 3), 'the screen shows the three on the result')
+  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped five friends.', right: pts(a.game.score), score: null, marks: null, lights: null, zones: null, dials: NO_DIALS })
+  assert.deepEqual(view(a, t).screen.marks, marksOf('mice', STRIKES_OUT), 'the screen shows the five on the result')
   assert.equal(view(a, t).screen.result.outcome, 'lose')
 
-  // The Lazy Pointer, left alone: Boo catches the dot three times
+  // The Lazy Pointer, left alone: Boo catches the dot, each catch's words; five catches end it (31 Oct 2026), or the clock does first
   ;[a, t] = started('pointer')
   let n = 0
   while (a.stage === 'play') {
@@ -650,9 +649,9 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     a = aStep(a, t)
     if (a.stage === 'play' && a.game.strikes > before) { n += 1; struck(a, t, n, 'Boo caught it.', false) }
   }
-  assert.equal(n, 2)
-  assert.equal(view(a, t).strip.centre, 'Boo caught the dot three times.')
-  assert.equal(a.game.outcome, 'lose')
+  assert.ok(n >= 2)
+  if (a.game.outcome === 'lose') { assert.equal(n, STRIKES_OUT - 1); assert.equal(view(a, t).strip.centre, 'Boo caught the dot five times.') }
+  else assert.equal(view(a, t).strip.centre, "Time's up.")
 
   // Knock It Off the Table: an end pressed too soon, then a thing left to get away, then out
   ;[a, t] = started('knock')
@@ -661,12 +660,16 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   struck(a, t, 1, 'Too soon.')
   while (a.game.strikes < 2) { t += TICK; a = aStep(a, t) }
   struck(a, t, 2, 'It got away.', false)
-  // the third: an end with nothing coming (not the one whose thing just got away: a press there a moment late is forgiven)
-  const away = a.game.gotAway.map(x => TABLE_ENDS[x.row])
-  assert.equal(away.length, 1)
-  a = aIn(a, key(TABLE_ENDS.find(k => !away.includes(k) && !a.game.things.some(x => x.col >= END - 1 && TABLE_ENDS[x.row] === k))), t + 10)
+  // the rest: ends with nothing coming (never the one whose thing just got away: a press there a moment late is forgiven); the fifth ends it (31 Oct 2026)
+  const emptyEnd = () => {
+    const away = a.game.gotAway.map(x => TABLE_ENDS[x.row])
+    return TABLE_ENDS.find(k => !away.includes(k) && !a.game.things.some(x => TABLE_ENDS[x.row] === k && Math.abs(x.col - tableEndCol(x.row)) <= 1))
+  }
+  assert.equal(a.game.gotAway.length, 1)
+  for (let n = 3; n < STRIKES_OUT; n++) { a = aIn(a, key(emptyEnd()), (t += 10)); struck(a, t, n, 'Too soon.') }
+  a = aIn(a, key(emptyEnd()), t + 10)
   assert.equal(a.stage, 'result')
-  assert.equal(view(a, t + 10).strip.centre, 'Three misses.')
+  assert.equal(view(a, t + 10).strip.centre, 'Five misses.')
   assert.equal(a.game.score, 0)
 
   // the clock runs out while a strike's words show: the result's strip says how it ended, not the strike
@@ -1419,8 +1422,8 @@ test('G54 The Lazy Pointer: when Boo lands on the dot it is a strike, the red fa
   const second = step({ ...ready, strikes: 1 }, T)
   assert.equal(second.strikes, 2)
   assert.equal(second.said.words, 'Strike 2! Boo caught it.')
-  // the third: the game ends at that moment, lost, the points kept and no bonus for lasting
-  const third = step({ ...ready, strikes: 2 }, T + 5000)
+  // the fifth (31 Oct 2026): the game ends at that moment, lost, the points kept and no bonus for lasting
+  const third = step({ ...ready, strikes: STRIKES_OUT - 1 }, T + 5000)
   assert.equal(third.over, true)
   assert.equal(third.outcome, 'lose')
   assert.equal(third.endedAt, T)
@@ -1686,8 +1689,8 @@ test('G54 Whack-a-Mouse: as many as MICE_AT_ONCE_MAX can be up at once by the en
 
 test('G54 Whack-a-Mouse\'s friends (Jon, 29 Oct 2026: "I want a better name than pets"): from five seconds in about one in four that pop up is Sir Irwin or a friend, all five of them, each up as long as a plain mouse; one tapped scores nothing and is a strike on red, named on the strip; the third ends the game, points kept', () => {
   // Jon's rule (29 Oct 2026), and the how-to-play line that says it
-  assert.equal(MICE_PETS_OUT, 3)
-  assert.match(GAMES.find(g => g.id === 'mice').how, /Leave Sir Irwin and his friends alone: tap three and you're out\.$/)
+  assert.equal(MICE_PETS_OUT, 5)
+  assert.match(GAMES.find(g => g.id === 'mice').how, /Leave Sir Irwin and his friends alone: tap five and you're out\.$/)
   assert.deepEqual([...PETS].sort(), ['boo', 'granola', 'irwin', 'salem', 'zimmy'])
 
   // left alone: none in the first five seconds, then about one in four, each up as long as a plain mouse
@@ -1812,7 +1815,7 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"; 30
   assert.deepEqual([0, 1, 2, 3].map(tableEndCol), [END, 0, END, 0])
   assert.deepEqual([0, 1, 2, 3].map(tableStartCol), [0, END, 0, END])
   assert.deepEqual([KNOCK_PER_TABLE, KNOCK_APART], [2, 3])
-  assert.deepEqual([KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END], [380, 180, 0.4, 3, 1])
+  assert.deepEqual([KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END], [500, 200, 0.6, 3, 1], 'slower at the start since 31 Oct 2026, top speed three fifths in')
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const f0 = gameFaces(g0, 0)
   for (let r = 0; r < ROWS; r++) assert.deepEqual(rowFaces(f0, r), TABLE_WAYS[r] > 0 ? [...Array(END).fill('cloth'), 'edge'] : ['edge-left', ...Array(END).fill('cloth')], `table ${r + 1}`)
@@ -1939,7 +1942,7 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   assert.deepEqual(away.events, ['miss'])
   assert.deepEqual(away.said, { words: 'Strike 1! It got away.', until: T + KNOCK_LATE_MS + STRIKE_WORDS_MS })
   assert.equal(gameFaces(away, T + KNOCK_LATE_MS)[TABLE_ENDS[3]], 'miss')
-  assert.ok(rowFaces(gameFaces(away, T + KNOCK_LATE_MS), 3).every(f => f === 'miss'), 'the whole table red (30 Oct 2026: misses obvious)')
+  assert.equal(rowFaces(gameFaces(away, T + KNOCK_LATE_MS), 3).filter(f => f === 'miss').length, 1, 'the cross on the end key only (31 Oct 2026)')
   assert.equal(gameFaces(away, T + KNOCK_LATE_MS + MISS_MS)[TABLE_ENDS[3]], 'edge-left')
   assert.equal(away.score, 0)
 
@@ -1954,7 +1957,7 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   assert.equal(again.strikes, 2, 'and again while the cross shows')
   assert.equal(again.said.words, 'Strike 2! Too soon.')
   // the third strike ends it: a loss, the points kept, no miss sound on top
-  const third = input({ ...one, strikes: 2, score: 4, knocked: 4 }, key(TABLE_ENDS[0]), T - 500)
+  const third = input({ ...one, strikes: STRIKES_OUT - 1, score: 4, knocked: 4 }, key(TABLE_ENDS[0]), T - 500)
   assert.equal(third.over, true)
   assert.equal(third.outcome, 'lose')
   assert.equal(third.endedAt, T - 500)
@@ -1964,7 +1967,7 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "button press only"): only t
   // left alone, three get away
   const alone = step(g0, 120000)
   assert.equal(alone.outcome, 'lose')
-  assert.equal(alone.strikes, 3)
+  assert.equal(alone.strikes, STRIKES_OUT)
 })
 
 test('G54 Knock It Off the Table: a press a moment after a thing got away costs that one strike, not a second one worded "Too soon."; forgiven for KNOCK_GONE_MS, once, on its own table\'s end only', () => {
@@ -2069,7 +2072,7 @@ test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends s
     assert.equal(k.said.words, `Strike 1! ${STRUCK[pet]}`)
     const f = gameFaces(k, T - 500)
     assert.equal(f[TABLE_ENDS[row]], `oops:${pet}`, 'the friend under the cross on the end')
-    assert.ok(rowFaces(f, row).every((x, c) => (keyAt(row, c) === TABLE_ENDS[row] ? x === `oops:${pet}` : x === 'miss')), 'the rest of the table red')
+    assert.ok(rowFaces(f, row).every((x, c) => (keyAt(row, c) === TABLE_ENDS[row] ? x === `oops:${pet}` : x === 'cloth')), 'the rest of the table as it was (31 Oct 2026)')
     assert.equal(gameFaces(k, T - 500 + MISS_MS)[TABLE_ENDS[row]], TABLE_WAYS[row] > 0 ? 'edge' : 'edge-left')
     // a moment early knocks the friend coming too
     const coming = board([{ row, col: tableEndCol(row) - TABLE_WAYS[row], obj: null, friend: pet, goneAt: null }])
@@ -2081,13 +2084,13 @@ test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends s
   const went = step(sat, T + KNOCK_LATE_MS)
   assert.deepEqual([went.things.filter(x => x.friend), went.strikes, went.events, went.gotAway], [[], 0, [], []])
   // the third friend knocked off ends it like any third miss
-  const third = input({ ...board([{ row: 0, col: END, obj: null, friend: 'boo', goneAt: null }]), strikes: 2, score: 5 }, key(TABLE_ENDS[0]), T - 500)
+  const third = input({ ...board([{ row: 0, col: END, obj: null, friend: 'boo', goneAt: null }]), strikes: STRIKES_OUT - 1, score: 5 }, key(TABLE_ENDS[0]), T - 500)
   assert.deepEqual([third.over, third.outcome, third.score], [true, 'lose', 5])
-  // a plain miss turns its whole table red too, and only that table
+  // a plain miss: the cross on that table's end key, nothing else touched
   const empty = input(g0, key(TABLE_ENDS[1]), 100)
   const fe = gameFaces(empty, 100)
-  assert.ok(rowFaces(fe, 1).every(x => x === 'miss'))
-  for (const r of [0, 2, 3]) assert.ok(!rowFaces(fe, r).includes('miss'), `table ${r + 1} untouched`)
+  assert.equal(fe[TABLE_ENDS[1]], 'miss')
+  assert.equal(fe.filter(x => x === 'miss').length, 1)
   // the boxes are labelled Misses on the strip and the screen; Strikes in the other two games
   const [a, ta] = started('knock')
   const v = arcadeView(a, ta)
@@ -2669,11 +2672,13 @@ test('G55 a trio: round the group five times, the third player gets Boo\'s line 
 
 test('G55 the winner names everyone who tied', () => {
   const seen = []
-  runVisit(['Jessa', 'Mari'], ['knock'], { look: (x, t) => seen.push([x, t]) }) // nobody presses: three get away, nought each
+  runVisit(['Jessa', 'Mari'], ['knock'], { look: (x, t) => seen.push([x, t]) }) // nobody presses: the same nothing for both, so the same points
   const [a, t] = seen.find(([x]) => x.stage === 'winner')
   const v = arcadeView(a, t)
-  assert.deepEqual(v.screen.winner, { names: ['Jessa', 'Mari'], total: 0 })
-  assert.equal(v.screen.plain, 'A tie: Jessa and Mari, 0 each.')
+  const same = a.players[0].games.reduce((n, x) => n + x.score, 0)
+  assert.equal(a.players[1].games.reduce((n, x) => n + x.score, 0), same)
+  assert.deepEqual(v.screen.winner, { names: ['Jessa', 'Mari'], total: same })
+  assert.equal(v.screen.plain, `A tie: Jessa and Mari, ${same} each.`)
   assert.equal(v.screen.boo, BOO_LINES.tie)
   assert.equal(v.strip.centre, 'Most points: Jessa and Mari')
   assert.equal(v.screen.picture, ' Boo 5.png')
@@ -3113,8 +3118,8 @@ test('G55 a page that sleeps through stages catches up exactly: a minute and mor
   for (let t = PICK_MS + TICK; t <= 130000; t += TICK) { ticked = arcadeStep(ticked, t); heard.push(...ticked.events) }
   assert.deepEqual(without(jumped, 'events'), without(ticked, 'events'))
   assert.deepEqual(jumped.events, uniq(heard))
-  assert.deepEqual(jumped.events, ['tick', 'go', 'miss', 'bite', 'lose'])
-  assert.deepEqual(jumped.players[0].games, [{ game: 'pointer', score: 0 }])
+  assert.deepEqual(jumped.events, ['tick', 'go', 'miss', 'bite', ticked.players[0].games[0].score ? 'win' : 'lose'], 'out, or lasted (five catches since 31 Oct 2026)')
+  assert.equal(jumped.players[0].games[0].game, 'pointer')
   // and on through the result to Mari's turn, either way
   assert.equal(jumped.stage, 'menu')
   assert.equal(jumped.turn, 1)
@@ -3149,11 +3154,13 @@ test('G55 the fun facts (Jon, 29 Oct 2026: "game info, maybe points, silly thing
     { label: 'Gold ones caught', value: String(mice.golds) },
     { label: 'Best game', value: `${pts(mice.score)}, Whack-a-Mouse` },
   ])
-  // The Lazy Pointer, left alone: three catches for Boo, no points; the best game stays
+  // The Lazy Pointer, left alone: Boo's catches counted; the best game stays
   a = aStep(a, (t = a.stageAt + RESULT_MS))
   ;[a, t] = playGame(a, t, 'pointer')
+  const caughtDot = a.game.strikes
+  assert.ok(caughtDot > 0 && a.game.score < mice.score)
   assert.deepEqual(arcadeView(a, t).screen.facts.map(f => [f.label, f.value]), [
-    ['Games played', '2'], ['Mice bonked', String(mice.bonked)], ['Friends tapped by mistake', '2'], ['Times Boo caught the dot', '3'], ['Gold ones caught', String(mice.golds)],
+    ['Games played', '2'], ['Mice bonked', String(mice.bonked)], ['Friends tapped by mistake', '2'], ['Times Boo caught the dot', String(caughtDot)], ['Gold ones caught', String(mice.golds)],
     ['Best game', `${pts(mice.score)}, Whack-a-Mouse`],
   ])
   // each of the others, its own fact; a better game takes the best
@@ -3171,7 +3178,7 @@ test('G55 the fun facts (Jon, 29 Oct 2026: "game info, maybe points, silly thing
   const facts = arcadeView(a, a.stageAt).screen.facts
   assert.deepEqual(facts.map(f => [f.label, f.value]), [
     ['Games played', '6'], ['Mice bonked', String(mice.bonked)], ['Friends tapped by mistake', '2'], ['Tail tips caught', '4'], ['Sparkles grabbed', String(grabbed)],
-    ['Times Boo caught the dot', '3'], ['Things knocked off the tables', '9'], ['Balls of yarn caught', '5'], ['Gold ones caught', String(mice.golds)],
+    ['Times Boo caught the dot', '5'], ['Things knocked off the tables', '9'], ['Balls of yarn caught', '5'], ['Gold ones caught', String(mice.golds)],
     ['Best game', `${pts(grabbed * POINTER_POINTS + POINTER_LAST_POINTS)}, The Lazy Pointer`],
   ])
   // kept only in the arcade: a fresh one has none
@@ -3359,14 +3366,14 @@ test('G56 every word the arcade can show passes F09 and names no device, the res
     look(onResult(g, { mode: 'visit', players: visit.players, turn: 0, roundEndsAt: g.endedAt + 60000 }), g.endedAt)
   }
   const shownOn = results.map(g => arcadeView(onResult(g), g.endedAt))
-  const how = ["Time's up.", "Time's up.", 'Boo caught the dot three times.', "Time's up.", 'You tapped three friends.', "Time's up.", 'Three misses.', "Time's up."]
+  const how = ["Time's up.", "Time's up.", 'Boo caught the dot five times.', "Time's up.", 'You tapped five friends.', "Time's up.", 'Five misses.', "Time's up."]
   // the result's strip: the game, how it ended, the points
   assert.deepEqual(shownOn.map(v => v.strip.centre), how)
   assert.deepEqual(shownOn.map(v => v.strip.left), results.map(g => GAMES.find(x => x.id === g.id).name))
   assert.deepEqual(shownOn.map(v => v.strip.right), results.map(g => pts(g.score)))
   // the screen: the same words, then the points; on a visit the player's name
   assert.deepEqual(shownOn.map(v => v.screen.plain), results.map((g, i) => `${how[i]} ${pts(g.score)}.`))
-  assert.equal(arcadeView(onResult(ends.pointerOut, { mode: 'visit', players: visit.players, turn: 0 }), ends.pointerOut.endedAt).screen.plain, 'Boo caught the dot three times. Jessa: 0 points.')
+  assert.equal(arcadeView(onResult(ends.pointerOut, { mode: 'visit', players: visit.players, turn: 0 }), ends.pointerOut.endedAt).screen.plain, 'Boo caught the dot five times. Jessa: 0 points.')
   // the clock run out with points pleases her; with none, or a loss, does not
   const pleased = v => BOO_LINES.win.includes(v.screen.boo)
   assert.deepEqual(shownOn.map(pleased), [true, false, false, true, false, false, false, true])
@@ -3388,8 +3395,8 @@ test('G56 every word the arcade can show passes F09 and names no device, the res
   }
   const shown = new Set(views.flatMap(shownWords)) // what a view showed, not the lists above
   for (const w of ['Strike 1! Too soon.', 'Strike 2! Too soon.', 'Strike 1! It got away.', 'Strike 2! It got away.',
-    'Strike 1! Boo caught it.', 'Strike 2! Boo caught it.', "Caught three times and you're out.", "Tap three friends and you're out.", "Three misses and you're out.",
-    'You tapped three friends.', 'Boo caught the dot three times.', 'Three misses.', "Time's up.", 'Games played', 'Best game']) {
+    'Strike 1! Boo caught it.', 'Strike 2! Boo caught it.', "Caught five times and you're out.", "Tap five friends and you're out.", "Five misses and you're out.",
+    'You tapped five friends.', 'Boo caught the dot five times.', 'Five misses.', "Time's up.", 'Games played', 'Best game']) {
     assert.ok(shown.has(w), `shown: ${w}`)
   }
   // a friend tapped is named (Jon, 29 Oct 2026: not "a pet")

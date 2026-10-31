@@ -30,7 +30,7 @@
 // Every game
 export const HIT_MS = 350                // a success's green tick stays on its key this long
 export const MISS_MS = 600               // a strike's red cross stays on its key this long
-export const STRIKES_OUT = 3             // three strikes and you're out, in the three games that count them
+export const STRIKES_OUT = 5             // five strikes and you're out, in the four games that count them (Jon, 31 Oct 2026: "all the games should have 5 strikes if they have a strike system")
 export const STRIKE_WORDS_MS = 1500      // a strike's words stay on the strip this long (Jon, 29 Oct 2026)
 export const DIAL_MAX_KEYS = 6           // one report from a dial moves at most this many keys, so a glitch never throws anything across the board
 // Boo Chasing Her Tail: Boo herself (the outside two dials) chases her tail's
@@ -97,9 +97,9 @@ export const MICE_LATE_MS = 150          // a tap this soon after a mouse hid st
 // Knock It Off the Table: four tables, things sliding along them one key a
 // beat, the key at each table's end knocks them off (Jon, 29 Oct 2026:
 // "linear", "button press only", "a few tables")
-export const KNOCK_BEAT_MS = 380         // everything moves one key along this often at first (Jon, 30 Oct 2026: "Much faster, and at top speed much earlier"),
-export const KNOCK_BEAT_END_MS = 180     // this often at top speed,
-export const KNOCK_TOP_AT = 0.4          // which it reaches two fifths of the way through
+export const KNOCK_BEAT_MS = 500         // everything moves one key along this often at first (Jon, 31 Oct 2026: with the tables running both ways, "start slower"),
+export const KNOCK_BEAT_END_MS = 200     // this often at top speed (30 Oct: "Much faster"),
+export const KNOCK_TOP_AT = 0.6          // which it reaches three fifths of the way through
 export const KNOCK_EVERY_BEATS = 3       // a new thing every third beat at first,
 export const KNOCK_EVERY_BEATS_END = 1   // every beat by the end (as the room on the tables allows)
 export const KNOCK_PER_TABLE = 2         // at most two on a table,
@@ -119,7 +119,7 @@ export const YARN_FALLING = 3            // at most this many falling at once
 export const YARN_LAND_MS = 200          // a ball on the bottom row waits this long for the basket, then it is missed
 export const YARN_POINTS = 1
 export const YARN_GOLD_POINTS = 3
-export const YARN_MISSES_OUT = 5         // five misses and the round is over (Jon, 30 Oct 2026)
+export const YARN_MISSES_OUT = STRIKES_OUT // five misses and the round is over (Jon, 30 Oct 2026)
 export const YARN_FRIENDS_FROM_MS = 10000 // Sir Irwin and his friends fall too from 10 seconds in (Jon, 30 Oct 2026: "Friends fall too, which the player must not catch"):
 export const YARN_FRIEND_ONE_IN = 4      // one in four of what falls is a friend; one caught is a miss, one that lands on the floor is nothing
 // the mice and the yarn
@@ -243,15 +243,15 @@ export const GAMES = [
   {
     id: 'pointer', name: 'The Lazy Pointer', short: 'Pointer',
     how: 'The left dial moves the red dot left and right, the right dial up and down. Grab the sparkles before they fade, and keep the dot away from Boo.',
-    rule: "Caught three times and you're out.",
+    rule: "Caught five times and you're out.",
     boo: 'That little red dot. I will have it.',
     dials: [ACROSS, '', '', '', '', UP_DOWN],
     counts: 'Sparkles grabbed',
   },
   {
     id: 'mice', name: 'Whack-a-Mouse', short: 'Mice',
-    how: "Tap a mouse before it hides; gold ones are worth more. Leave Sir Irwin and his friends alone: tap three and you're out.",
-    rule: "Tap three friends and you're out.",
+    how: "Tap a mouse before it hides; gold ones are worth more. Leave Sir Irwin and his friends alone: tap five and you're out.",
+    rule: "Tap five friends and you're out.",
     boo: 'Mice. In my house. Unthinkable.',
     dials: NO_DIALS,
     counts: 'Mice bonked',
@@ -259,7 +259,7 @@ export const GAMES = [
   {
     id: 'knock', name: 'Knock It Off the Table', short: 'Knock',
     how: 'Things slide along four tables, two one way and two the other. Press the key at the end of a table as something reaches it, and knock it off. Leave Sir Irwin and his friends on the table.',
-    rule: "Three misses and you're out.",
+    rule: "Five misses and you're out.",
     boo: "It was in my way. They're all in my way.",
     dials: NO_DIALS,
     counts: 'Knocked off',
@@ -892,8 +892,8 @@ const mice = {
 // second and fourth to the left, so the whole board is watched). From ten
 // seconds in, one in four of what comes on is Sir Irwin or a friend: knock
 // one off and it is a strike that says who; one that reaches the end just
-// goes. A strike flashes the whole table red, so a miss is never in doubt
-// (Jon, 30 Oct 2026: "Make misses obvious").
+// goes. A strike puts the red cross on the table's end and its words on the
+// strip (Jon, 30 Oct 2026: "Make misses obvious"; 31 Oct: the end key only).
 const knockBeatMs = (s, t) => lerp(KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, Math.min(1, along(s, t) / KNOCK_TOP_AT))
 const knockEvery = (s, t) => Math.round(lerp(KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, along(s, t)))
 // How far along its table a thing is, from its start: 0 at the start, COLS - 1 at the end.
@@ -986,12 +986,12 @@ const knock = {
     }
   },
 }
-// A miss: the strike, the whole table red for a moment (its end under the
-// cross, or the friend's face under it), the words; the third ends the game.
+// A miss: the strike, the red cross on the table's end key (or the friend's
+// face under it; Jon, 31 Oct 2026: the whole table red was distracting while
+// the other tables went on), the words; the fifth ends the game.
 function knockStrike(s, t, row, words, endFace = 'miss') {
   s.strikes += 1
-  for (let c = 0; c < COLS; c++) flash(s, keyAt(row, c), 'miss', t, MISS_MS)
-  if (endFace !== 'miss') flash(s, TABLE_ENDS[row], endFace, t, MISS_MS)
+  flash(s, TABLE_ENDS[row], endFace, t, MISS_MS)
   if (s.strikes >= STRIKES_OUT) return finish(s, 'lose', t)
   s.events.push('miss')
   s.said = { words: `Strike ${s.strikes}! ${words}`, until: t + STRIKE_WORDS_MS }
@@ -1620,7 +1620,7 @@ function stripOf(a, now) {
   }
 }
 
-const LOSE_WORDS = { pointer: 'Boo caught the dot three times.', mice: 'You tapped three friends.', knock: 'Three misses.', yarn: 'Five misses.' }
+const LOSE_WORDS = { pointer: 'Boo caught the dot five times.', mice: 'You tapped five friends.', knock: 'Five misses.', yarn: 'Five misses.' }
 const LOSE_LINES = { pointer: BOO_LINES.caught, mice: BOO_LINES.pets }
 // How a game ended, in a few words: on the result's strip and its screen.
 const outcomeOf = g => g.outcome === 'lose' ? LOSE_WORDS[g.id] ?? 'Game over.' : g.outcome === 'win' ? 'Well played.' : "Time's up."
