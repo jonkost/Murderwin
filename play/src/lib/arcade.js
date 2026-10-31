@@ -152,7 +152,7 @@ export const BACK_KEY = 27 // keyAt(3, 0): Back, on the ready screen only
 // and uncounted, and the player is back on the menu (Jon, 30 Oct 2026: "An
 // exit button in every game, to go back"). Labelled Exit on the strip.
 export const EXIT_DIAL = 2
-const TOKEN_KEYS = [keyAt(2, 3), keyAt(2, 5)] // the player's two tokens, on the menu
+const TOKEN_KEYS = [2, 3, 4, 5, 6].map(c => keyAt(2, c)) // the player's five tokens, one a game, on the menu under the games
 const MIDDLE_KEY = keyAt(1, 4) // the count, OK, and Boo
 export const STRIP_WIDTH = 1200 // the touch strip, in its own pixels: a tap's x runs 0 to 1199, left to right
 const ALL_KEYS = Array.from({ length: KEY_COUNT }, (_, i) => i)
@@ -169,19 +169,24 @@ export const tableStartCol = row => (TABLE_WAYS[row] > 0 ? 0 : COLS - 1)
 
 // ---- the visit ----
 
-export const TOKENS = 2
+// One round of each of the five games a player (Jon, 30 Oct 2026): a token a
+// game, and that round's score is the one that counts. A round left early
+// never counted, and the token comes back (arcadeExit's default).
+export const TOKENS = 5 // GAMES.length: a test keeps them equal
 export const MAX_PLAYERS = 3
+export const CLUE_AFTER_GAMES = 2 // a player's clue (or a trio's third player's line) comes after their second counted game
 export const ROUND_MS = 600000 // the practice round, ten minutes like an Act 4 round
-export const FREE_GAME_MS = 120000
-export const GAME_MS = 120000 // a visit's game for one or two players,
-export const TRIO_GAME_MS = 80000 // and for three, so six games fit the round
+export const FREE_GAME_MS = 120000 // a free-play game: two minutes
+// A visit's game: forty seconds, the same for every player and every group,
+// so a score in one game means the same wherever it was made (the Act 7
+// awards compare them). Five games each and the picking, counts, points and
+// clues between: a brisk pair fits all ten in the ten minutes, a trio most of
+// its fifteen; a game a player never gets to scores nothing (arcadeOverall).
+// A starting point, like the speeds: Jon's to change.
+export const GAME_MS = 40000
 // A visit's game that would run into the chime is cut short, so its clue still comes first:
 export const CLUE_KEEP_MS = 15000 // after its points, this long is kept for the clue before the chime,
 export const CUT_MIN_MS = 30000 // but no game is cut shorter than this
-export function gameLengthMs(players) {
-  const n = Array.isArray(players) ? players.length : Number(players) || 0
-  return n >= 3 ? TRIO_GAME_MS : GAME_MS
-}
 
 // ---- the words ----
 
@@ -292,7 +297,7 @@ export const FUR_PAIRS = ['left-right', 'down-up', 'down-left', 'down-right', 'l
 // Every face a key can show (the art draws each one), and the ones each game
 // shows: the page has the deck make each game's pictures ready before it
 // starts, so no key waits on one in play.
-export const MENU_FACES = ['off', 'blank', 'paw', 'paw-lit', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3', 'hit', ...GAMES.map(g => `menu:${g.id}`)]
+export const MENU_FACES = ['off', 'blank', 'paw', 'paw-lit', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3', 'hit', ...GAMES.map(g => `menu:${g.id}`), ...GAMES.map(g => `menu-done:${g.id}`)]
 export const GAME_FACES = {
   tail: ['rug', 'tail-boo', 'boo-alert', 'wall', 'treat', 'cucumber', ...TAIL_FRIENDS.map(p => `pet:${p}`), ...FUR_PAIRS.map(p => `tail-fur:${p}`), ...WAYS.map(w => `tail-end:${w}`), ...WAYS.map(w => `tail-tip:${w}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   pointer: ['blank', 'dot', 'sparkle', 'sparkle-miss', 'wall', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
@@ -1207,13 +1212,14 @@ const TURN_STAGES = ['menu', 'ready', 'count', 'play', 'result', 'clue', 'third'
 const PLAYING = ['ready', 'count', 'play', 'result']
 const counted = s => s.mode === 'visit' && !s.free // a visit's games, before its free play
 const gameSeed = s => hashOf(`${s.seed}:${s.played}`)
-// How long a game that starts at `t` runs. In a visit, one that would run into
-// the chime is cut short (CLUE_KEEP_MS, CUT_MIN_MS); free play is never cut.
+const playedBy = (p, id) => p.games.some(x => x.game === id) // this player has had their round of the game
+// How long a game that starts at `t` runs: GAME_MS in a visit, where one that
+// would run into the chime is cut short (CLUE_KEEP_MS, CUT_MIN_MS); free
+// play's two minutes, never cut.
 function lengthFor(s, t) {
   if (!counted(s)) return FREE_GAME_MS
-  const full = gameLengthMs(s.players.length)
-  if (s.roundEndsAt == null) return full
-  return Math.min(full, Math.max(CUT_MIN_MS, s.roundEndsAt - t - RESULT_MS - CLUE_KEEP_MS))
+  if (s.roundEndsAt == null) return GAME_MS
+  return Math.min(GAME_MS, Math.max(CUT_MIN_MS, s.roundEndsAt - t - RESULT_MS - CLUE_KEEP_MS))
 }
 // The game `id` as it starts at `t`: the ready screen's board and the game itself are both made here.
 const gameAt = (s, id, t) => ({ ...newGame(id, { seed: gameSeed(s), lengthMs: lengthFor(s, t), now: t }), events: [] })
@@ -1242,6 +1248,7 @@ export function newArcade({ mode = 'free', players = [], seed, now = 0, roundMs 
     })),
     turn: 0,
     roundEndsAt: visit ? now + (Number(roundMs) > 0 ? Number(roundMs) : ROUND_MS) : null,
+    records: [], // every counted game, as it ended: { player, name, game, score, outcome, at }, for the night to keep (30 Oct 2026)
     pick: null,
     pickedKey: null, // the menu key just pressed, green for PICK_MS
     game: null,
@@ -1286,7 +1293,11 @@ function toPlay(s, t) {
 }
 function toResult(s, t) {
   const g = s.game
-  if (counted(s)) s.players[s.turn].games.push({ game: g.id, score: g.score })
+  if (counted(s)) {
+    const p = s.players[s.turn]
+    p.games.push({ game: g.id, score: g.score })
+    s.records.push({ player: s.turn, name: p.name, game: g.id, score: g.score, outcome: g.outcome, at: t })
+  }
   const st = s.stats
   st.games += 1
   if (g.id === 'mice') { st.mice += g.bonked; st.pets += g.petTaps; st.gold += g.golds }
@@ -1300,12 +1311,16 @@ function toResult(s, t) {
 function afterResult(s, t) {
   if (!counted(s)) return toHome(s, t)
   const p = s.players[s.turn]
-  if (p.tokens > 0) return toMenu(s, t, nextTurn(s))
-  // their second game: a clue for the first two, Boo's line for a trio's third
-  p.reached = true
-  if (s.turn < 2) { enter(s, 'clue', t); s.events.push('clue') }
-  else enter(s, 'third', t)
+  // their second game: a clue for the first two, Boo's line for a trio's third; then their other games go on
+  if (!p.reached && p.games.length >= CLUE_AFTER_GAMES) {
+    p.reached = true
+    if (s.turn < 2) { enter(s, 'clue', t); s.events.push('clue') }
+    else enter(s, 'third', t)
+    return
+  }
+  afterClue(s, t)
 }
+// On round the group while anyone has a token; every token spent, the winner.
 function afterClue(s, t) {
   if (s.players.some(p => p.tokens > 0)) return toMenu(s, t, nextTurn(s))
   if (s.players.length > 1) { enter(s, 'winner', t); s.events.push('win') }
@@ -1325,10 +1340,10 @@ function ring(s, t) {
 // A fresh free-play arcade in this one's place, its seed made from this
 // one's and `why` (the events made so far, and the fun facts, stay).
 function afresh(s, t, why) {
-  const { events, stats } = s
+  const { events, stats, records } = s
   const fresh = newArcade({ mode: 'free', seed: hashOf(`${s.seed}:${why}`), now: t })
   for (const k of Object.keys(s)) delete s[k]
-  Object.assign(s, fresh, { events, stats })
+  Object.assign(s, fresh, { events, stats, records })
 }
 // After the farewell: a fresh free play.
 const afterFarewell = (s, t) => afresh(s, t, 'farewell')
@@ -1416,7 +1431,9 @@ function take(s, e, t) {
   switch (s.stage) {
     case 'home': case 'menu': {
       const i = e.kind === 'key' ? MENU_KEYS.indexOf(e.index) : -1
-      if (i >= 0) toReady(s, GAMES[i].id, t, e.index) // any other key, dial or tap: nothing
+      if (i < 0) return // any other key, dial or tap: nothing
+      if (counted(s) && playedBy(s.players[s.turn], GAMES[i].id)) return // their round of it is played: one each (30 Oct 2026)
+      toReady(s, GAMES[i].id, t, e.index)
       return
     }
     case 'ready':
@@ -1540,11 +1557,13 @@ function menuFaces(a, now) {
   const f = new Array(KEY_COUNT).fill('blank')
   marquee(f, a, now)
   f[keyAt(0, 4)] = 'boo'
-  GAMES.forEach((g, i) => { f[MENU_KEYS[i]] = `menu:${g.id}` })
-  if (a.stage === 'menu' || (a.stage === 'ready' && counted(a))) {
-    const left = a.players[a.turn]?.tokens ?? 0
-    TOKEN_KEYS.forEach((k, i) => { f[k] = i < TOKENS - left ? 'coin-spent' : 'coin' })
-  }
+  const yours = counted(a) && (a.stage === 'menu' || a.stage === 'ready') ? a.players[a.turn] : null
+  // a visit: a game this player has had their round of is marked done, and its token under it spent (one a game, 30 Oct 2026)
+  GAMES.forEach((g, i) => {
+    const done = !!yours && playedBy(yours, g.id)
+    f[MENU_KEYS[i]] = done ? `menu-done:${g.id}` : `menu:${g.id}`
+    if (yours) f[TOKEN_KEYS[i]] = done ? 'coin-spent' : 'coin'
+  })
   return f
 }
 
@@ -1617,7 +1636,7 @@ function plainOf(a, info, yours, winner) {
   switch (a.stage) {
     // no device's name in front of the guests (Jon, 29 Oct 2026)
     case 'home': return a.free ? 'Free play until the chime. Nothing counts now.' : 'Press a game. Just for fun.'
-    case 'menu': return `${yours?.name ?? ''}'s turn: press a game.`
+    case 'menu': return `${yours?.name ?? ''}'s turn: press a game you have not played yet.`
     case 'ready': return 'Press any key or dial to start, or press Back to choose again.'
     case 'count': case 'play': return info?.how ?? ''
     case 'result': return a.game ? resultLine(a) : ''
@@ -1714,7 +1733,7 @@ function screenOf(a, now) {
     count: a.stage === 'count' ? countOf(a, now) : null,
     player: yours ? yours.name : null,
     players: a.players.map((p, i) => ({
-      name: p.name, tokens: p.tokens, scores: p.games.map(x => x.score), total: totalOf(p), now: !!yours && i === a.turn,
+      name: p.name, tokens: p.tokens, scores: p.games.map(x => x.score), played: p.games.map(x => x.game), total: totalOf(p), now: !!yours && i === a.turn,
     })),
     result: a.stage === 'result' && g ? { score: g.score, outcome: g.outcome } : null,
     clue: a.stage === 'clue' ? STAND_IN_CLUE : null,
@@ -1741,7 +1760,7 @@ export function arcadeView(a, now) {
 const SAMPLE_SEED = 1115
 const PAIR = ['Jessa', 'Mari']
 const TRIO = ['Margaret', 'Tom', 'Ellie']
-const PAIR_DONE = [[['tail', 34], ['knock', 40]], [['mice', 23], ['pointer', 62]]]
+const PAIR_DONE = [[['tail', 34], ['knock', 40], ['mice', 19], ['pointer', 51], ['yarn', 12]], [['mice', 23], ['pointer', 62], ['tail', 28], ['yarn', 9], ['knock', 31]]]
 
 // A visit at a moment: each player's games so far ([game, score] pairs), the
 // stage and whose turn, how long ago the stage began and the round time left.
@@ -1751,7 +1770,7 @@ function sampleVisit(names, games, stage, turn, now, ago, left) {
     ...p,
     tokens: TOKENS - games[i].length,
     games: games[i].map(([game, score]) => ({ game, score })),
-    reached: games[i].length === TOKENS,
+    reached: games[i].length >= CLUE_AFTER_GAMES,
   }))
   return { ...a, players, stage, stageAt: now - ago, turn, played: games.flat().length }
 }

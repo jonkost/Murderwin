@@ -163,7 +163,11 @@ function opening(sample) {
   return { now, arcade: newArcade({ mode: 'free', seed: Date.now(), now }), setup: false }
 }
 
-export default function BooArcade({ sample = null }) {
+// `onRecord(record)`: every counted game of a visit as it ends ({ player, name,
+// game, score, outcome, at }), for the night to keep (30 Oct 2026: one round
+// of each game a player, the score saved per player and per game). The
+// practice page passes nothing and keeps nothing.
+export default function BooArcade({ sample = null, onRecord = null }) {
   const live = !sample
   const [start] = useState(() => opening(sample))
   const arcadeRef = useRef(start.arcade)
@@ -209,6 +213,9 @@ export default function BooArcade({ sample = null }) {
     const pop = popOf(arcadeRef.current, next)
     if (pop) { const id = ++popId.current; setPops(list => [...list.slice(1 - POPS_KEPT), { ...pop, id, slot: id % POPS_KEPT }]) }
     else if (next.stage !== 'play' && arcadeRef.current?.stage === 'play') setPops([])
+    // a counted game just ended: the night may keep its score
+    const had = arcadeRef.current?.records?.length ?? 0
+    if (onRecord && (next.records?.length ?? 0) > had) for (const rec of next.records.slice(had)) { try { onRecord(rec) } catch { /* the night's problem, never the game's */ } }
     arcadeRef.current = next
     play(next.events)
     show(next, now, pressed)
@@ -789,10 +796,10 @@ function Players({ screen, setup, onPractice }) {
         {players.map((p, i) => (
           <li key={i} className={`arcade-player${p.now ? ' now' : ''}`}>
             <span className="arcade-player-name">{p.name}</span>
-            <span className="arcade-tokens" aria-label={`${p.tokens} of ${TOKENS} tokens left`}>
-              {Array.from({ length: TOKENS }, (_, k) => k < TOKENS - p.tokens
-                ? <span key={k} className="arcade-token spent" />
-                : <img key={k} className="arcade-token coin" src={coinUrl()} alt="" draggable={false} />)}
+            <span className="arcade-tokens" aria-label={`${p.tokens} of ${TOKENS} games to play`}>
+              {GAMES.map(g => (p.played?.includes(g.id)
+                ? <span key={g.id} className="arcade-token spent" title={g.name} />
+                : <img key={g.id} className="arcade-token coin" src={coinUrl()} alt="" title={g.name} draggable={false} />))}
             </span>
             {p.scores.length ? <span className="arcade-scores">{p.scores.length > 1 ? `${p.scores.join(' + ')} = ${p.total}` : p.scores[0]}</span> : null}
           </li>

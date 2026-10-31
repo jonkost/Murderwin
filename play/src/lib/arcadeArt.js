@@ -264,6 +264,7 @@ function paint(g, k, id) {
     const kind = id.slice(0, at), arg = id.slice(at + 1)
     if (kind === 'num' && /^\d$/.test(arg)) return number(g, arg)
     if (kind === 'menu' && has(MENU, arg)) return menu(g, k, arg)
+    if (kind === 'menu-done' && has(MENU, arg)) return menuDone(g, k, arg)
     if (kind === 'tail-tip' && has(TURNS, arg)) return tailTip(g, k, arg)
     if (kind === 'tail-end' && has(TURNS, arg)) return tailEnd(g, k, arg)
     if (kind === 'tail-fur' && FUR_PAIRS.includes(arg)) return tailFur(g, k, ...arg.split('-'))
@@ -335,6 +336,14 @@ function menu(g, k, game) {
   if (pic === 'dot') laserDot(g, k, MID, 27, 10)
   else emoji(g, PICTURE[pic], 28, MID, 27)
   words(g, label, 15, 57, { colour: GOLD.mid, max: 56 })
+}
+// A game this player has had their round of (30 Oct 2026: one each): the
+// same, dimmed, with a green tick over the plate, so the eye goes to the games left.
+function menuDone(g, k, game) {
+  menu(g, k, game)
+  g.fillStyle = 'rgba(0, 0, 0, 0.55)'; g.fillRect(0, 0, UNIT, UNIT)
+  disc(g, MID, 27, 13, GREEN)
+  tick(g, 0.5, MID, 27)
 }
 
 // ---- Boo Chasing Her Tail: her tail ---------------------------------------
@@ -454,7 +463,7 @@ const PETS_DRAWN = {
 // count's 3, 2, 1, MENU, the tail's pieces, SCENES, PETS_DRAWN), so the list can
 // never name a face that has no drawing.
 export const ART_FACES = Object.freeze([
-  ...Object.keys(FACES), 'num:1', 'num:2', 'num:3', ...Object.keys(MENU).map(g => `menu:${g}`),
+  ...Object.keys(FACES), 'num:1', 'num:2', 'num:3', ...Object.keys(MENU).flatMap(g => [`menu:${g}`, `menu-done:${g}`]),
   ...Object.keys(TURNS).flatMap(way => [`tail-tip:${way}`, `tail-end:${way}`]), ...FUR_PAIRS.map(pair => `tail-fur:${pair}`),
   ...Object.keys(SCENES).flatMap(scene => OBJECTS.map(o => `${scene}:${o}`)),
   ...Object.keys(PETS_DRAWN).flatMap(kind => Object.keys(PET_FILES).map(pet => `${kind}:${pet}`)),

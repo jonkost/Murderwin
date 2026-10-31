@@ -689,8 +689,8 @@ test('G54 Boo\'s coin (Jon, 29 Oct 2026): a token left is his picture of her gol
   })
   // the screen's list of players: a token left is the same picture, a spent one the empty ring
   const page = readFileSync(new URL('../src/screens/Arcade.jsx', import.meta.url), 'utf8')
-  assert.match(page, /<img key=\{k\} className="arcade-token coin" src=\{coinUrl\(\)\}/)
-  assert.match(page, /<span key=\{k\} className="arcade-token spent" \/>/)
+  assert.match(page, /<img key=\{g\.id\} className="arcade-token coin" src=\{coinUrl\(\)\}/)
+  assert.match(page, /<span key=\{g\.id\} className="arcade-token spent" title=\{g\.name\} \/>/)
 })
 
 // Where a face picture is more than faintly there (alpha over 100), as shares

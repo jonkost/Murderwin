@@ -182,6 +182,16 @@ export const booDone = onCall({ cors: true }, wrap(async req => {
   return run.player.booDone(db, { nightId })
 }))
 
+// Act 4, the Entryway: a guest's round of one of Miss Boo LaRue's five games
+// is over, from the arcade's Mac (?kiosk=boo): the score is saved with the
+// night, per guest and per game, the first round of a game the one that
+// counts (lib/arcade.js, 30 Oct 2026). Shown with the achievements in Act 7.
+export const arcadeScore = onCall({ cors: true }, wrap(async req => {
+  const { nightId, guestKey, game, score } = req.data ?? {}
+  await atTheParty(req, nightId)
+  return run.player.arcadeScore(db, { nightId, guestKey, game, score })
+}))
+
 // The study station on the M1 Air. Signed in anonymously like a phone, it
 // presents the host-set key. It sends counts and words; the clue is dealt here.
 export const stationCommand = onCall({ cors: true }, wrap(async req => {

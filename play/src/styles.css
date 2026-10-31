@@ -1182,7 +1182,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .arcade-player.now .arcade-player-name { color: var(--gold-hi); }
 /* Boo's coin for each token left, an empty gold ring for each one spent (Jon, 29 Oct 2026, of the coins: "They need to be bigger.") */
 .arcade-tokens { display: inline-flex; gap: 0.6vw; }
-.arcade-token { width: min(3.2vw, 5.2vh); height: min(3.2vw, 5.2vh); border-radius: 50%; }
+.arcade-token { width: min(2.4vw, 4vh); height: min(2.4vw, 4vh); border-radius: 50%; } /* five a player since 30 Oct 2026: one a game */
 .arcade-token.coin { object-view-box: inset(7.5% 8% 7.3% 7.1%); filter: drop-shadow(0 0 0.8vh rgba(255, 226, 122, 0.45)); } /* the picture's clear edge left off (lib/arcadeArt.js COIN_BOX) */
 .arcade-token.spent { box-shadow: inset 0 0 0 0.4vh var(--gold-lo); }
 .arcade-scores { color: var(--brand-parchment); font-variant-numeric: tabular-nums; }

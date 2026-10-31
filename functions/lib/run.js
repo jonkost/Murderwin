@@ -17,6 +17,7 @@ import * as screen from './screen.js'
 import * as finale from './finale.js'
 import * as safeguards from './safeguards.js'
 import * as act4 from './act4.js'
+import { recordArcadeScore } from './arcade.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -508,4 +509,6 @@ export const player = {
   salemSlip: (db, args) => act4.salemSlip(db, args),
   salemPassed: (db, args) => act4.salemPassed(db, args),
   booDone: (db, args) => act4.booDone(db, args),
+  // Act 4, the Entryway: a round of one of Miss Boo LaRue's five games, from the arcade's Mac (30 Oct 2026)
+  arcadeScore: (db, args) => recordArcadeScore(db, args),
 }

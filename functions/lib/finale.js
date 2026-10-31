@@ -13,8 +13,9 @@
 // bulletin: news.<stage> = [{ who, text, card }] (captions, at once) and
 // cardAt.<stage> = the moment the TV may show the name card, once the
 // recorded parts before it have had their holdMs (seed/woof-news.json).
-// The early reel's achievements are only the ones the host gave during the
-// night; the end credits' awards are in credits.awards, shown once, after.
+// The early reel's achievements are the ones the host gave during the night,
+// then Miss Boo LaRue's Arcade's top scorers (30 Oct 2026); the end credits'
+// awards are in credits.awards, shown once, after.
 //
 // SEAL RULE: nothing here returns content. Counts, stages and ok flags.
 
@@ -26,6 +27,7 @@ import { stopOf } from './parlour.js'
 import { closingStage } from './news.js'
 import { play, bulletinVideo } from './screen.js'
 import { posesFor } from './pose.js'
+import { arcadePath, arcadeAwards, arcadeAchievements } from './arcade.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -233,8 +235,8 @@ export function jokeCounters(nightId) {
 // the host presses. Written once at the reveal beat.
 
 export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickInt } = {}) {
-  const [rotSnap, relaySnap, awardsSnap] = await Promise.all([
-    db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/public/relay`).get(), db.doc(awardsPath(nightId)).get(),
+  const [rotSnap, relaySnap, awardsSnap, arcadeSnap] = await Promise.all([
+    db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}/public/relay`).get(), db.doc(awardsPath(nightId)).get(), db.doc(arcadePath(nightId)).get(),
   ])
   const rot = rotSnap.exists ? rotSnap.data() : null
   const relay = relaySnap.exists ? relaySnap.data() : null
@@ -301,9 +303,16 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const night = (await db.doc(`nights/${nightId}`).get()).data() ?? {}
   const awards = creditAwards({ people, rot, memoryTimes: memSnap.exists ? memSnap.data() : {}, night, game: gameSnap.exists ? gameSnap.data() : {} })
     .map(a => ({ title: a.title, name: a.name, line: a.line }))
-  const shown = given.map(a => ({ name: a.name, title: a.title, line: a.line }))
-  const achievements = shown.map((a, i) => ({ ...a, showAt: FINALE_SCHEDULE.awards + Math.min(i * AWARD_EVERY_MS, FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards - 2_000) }))
+  // Miss Boo LaRue's Arcade (30 Oct 2026): the top scorer in each game and the best all round, with the
+  // achievements, worked out from the scores and the roster's names alone, never a role (lib/arcade.js)
+  const arcade = arcadeAwards(arcadeSnap.exists ? arcadeSnap.data().scores ?? {} : {}, list.map(g => ({ key: g.key, name: g.name })))
+  const shown = [...given.map(a => ({ name: a.name, title: a.title, line: a.line })), ...arcadeAchievements(arcade)]
   const schedule = { ...FINALE_SCHEDULE }
+  // the segment grows with what there is to show (three seconds a line, two to read the last), the graph and the names after it
+  const segment = Math.max(FINALE_SCHEDULE.graph - FINALE_SCHEDULE.awards, shown.length * AWARD_EVERY_MS + 2_000)
+  schedule.graph = schedule.awards + segment
+  schedule.names = schedule.graph + (FINALE_SCHEDULE.names - FINALE_SCHEDULE.graph)
+  const achievements = shown.map((a, i) => ({ ...a, showAt: schedule.awards + Math.min(i * AWARD_EVERY_MS, schedule.graph - schedule.awards - 2_000) }))
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 
   const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
@@ -311,6 +320,7 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   const poses = await posesFor(db, nightId, rot)
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
+    arcade: { games: arcade.games.map(g => ({ game: g.game, title: g.title, name: g.name, score: g.score })), overall: arcade.overall ? { name: arcade.overall.name, points: arcade.overall.points } : null },
     graph: { points, running, sides, hush, high, low, clues: clueLevels },
     credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), poses, thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
     news: {}, cardAt: {},
