@@ -12,7 +12,11 @@ on the Canon.
 ## 31 Oct 2026, afternoon · Claude Code (Get Off My Lawn!: the screen, the phone, the string lights)
 
 - Jon's Game test note 10012 on Get Off My Lawn!, worked in full and closed
-  by number. Built on main, not deployed, not pushed.
+  by number. Built on main; deployed on Jon's yes ("Deploy now") the same
+  afternoon, the site only (hosting, from a clean copy of 81914f7; the
+  functions and rules are unchanged since the morning's deploy, and the
+  brain's change runs on this Mac): all 119 live files match the build. Not
+  pushed.
 - The Orangerie's screen (the brain's browser, `?kiosk=orangerie`) shows
   Salem's board while a group plays (`play/src/screens/Rooms.jsx`
   `SalemBoard`): the phones' colour over the whole screen with SHAKE or
@@ -48,8 +52,9 @@ on the Canon.
 - Suites: cues 71, play 266, workshop 135, all passing. Looked at in the
   browser: the board's round sample and the phone's round sample.
 - Left: Jon opens each of the three Home scenes and takes out whatever
-  shows No Response (card 543); the arcade still not wired into Act 4
-  (515). No decision taken, so the Canon is unchanged.
+  shows No Response (card 543), then stops and starts the brain once so it
+  runs the new relay code; the arcade still not wired into Act 4 (515). No
+  decision taken, so the Canon is unchanged.
 
 ## 31 Oct 2026 · Claude Code (the Boo Arcade handoff deployed)
 
