@@ -92,7 +92,15 @@ door).
   the tech run, and if the jazz does not come back after it, say so. Each
   Shortcut goes through the same runner as the string lights (step 18):
   three quarters of a second and the next one goes, whatever Apple Home is
-  still waiting on.
+  still waiting on. One more thing the first real run taught (31 October):
+  Apple Home refuses any Shortcut while it is still carrying out the last
+  one's Home action ("Action set execution in progress"), and a HomePod
+  audio action stays in progress for ten to twenty seconds. So the brain
+  tries a refused Shortcut again every second and a half for up to thirty
+  seconds, quietly, and drops it if a newer cue has come meanwhile; in Act 4
+  the two rooms' music waits for the house jazz to finish first. Two music
+  changes within twenty seconds of each other still reach the HomePods, a
+  little late.
 - **Cake!** When you press **Cake!** on the Host tab in Act 5, the brain
   plays the song *Happy Birthday for Dogs* from its Music library on every
   HomePod, once, at 60, and switches the lights to Murderwin Candles. When

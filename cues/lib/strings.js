@@ -138,6 +138,14 @@ export function runShortcut(name, { timeoutMs = SHORTCUT_TIMEOUT_MS, execFileImp
 
 export const SHORTCUT_HEAD_START_MS = 750
 export const SHORTCUT_TIMEOUT_MS = 90_000
+// "Action set execution in progress." (the music check, 31 Oct 2026): Apple
+// Home refuses a Shortcut while it is still carrying out the last one's
+// Home action, at once; a HomePod audio action stays in progress for ten to
+// twenty seconds. So a refused run is tried again every RETRY_IN_PROGRESS_MS
+// for up to RETRY_FOR_MS, unless a newer run has come to this runner
+// meanwhile (then it is dropped, quietly: the newer one is the one wanted).
+export const RETRY_IN_PROGRESS_MS = 1500
+export const RETRY_FOR_MS = 30_000
 
 // The runner every Shortcut goes through. fire(name) resolves once the
 // Shortcut has finished or the head start has passed, whichever comes first,
@@ -167,16 +175,29 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
 
   async function fire(name) {
     const mine = ++seq
-    let over = false
-    const p = run(name, { timeoutMs }).then(
-      () => { over = true; warned = false },
-      e => { over = true; throw e },
-    )
-    pending.add(p)
-    const done = p.catch(() => {}).then(() => { pending.delete(p) })
-    await Promise.race([p, wait(headStartMs)])
-    if (!over) p.catch(e => { if (mine === seq) late(name, e) })
-    return { done }
+    let waited = 0
+    for (;;) {
+      let over = false
+      const p = run(name, { timeoutMs }).then(
+        () => { over = true; warned = false },
+        e => { over = true; throw e },
+      )
+      pending.add(p)
+      const done = p.catch(() => {}).then(() => { pending.delete(p) })
+      try {
+        await Promise.race([p, wait(headStartMs)])
+      } catch (e) {
+        if (!/in progress/i.test(e?.message ?? '')) throw e
+        if (mine !== seq) return { done, dropped: true } // a newer run wants something else now
+        if (waited >= RETRY_FOR_MS) throw new Error(`shortcut ${name}: Apple Home was still busy with the last action after ${Math.round(waited / 1000)} s`)
+        await wait(RETRY_IN_PROGRESS_MS)
+        waited += RETRY_IN_PROGRESS_MS
+        if (mine !== seq) return { done, dropped: true }
+        continue
+      }
+      if (!over) p.catch(e => { if (mine === seq) late(name, e) })
+      return { done }
+    }
   }
 
   return { fire, idle: () => Promise.allSettled([...pending]), running: () => pending.size }

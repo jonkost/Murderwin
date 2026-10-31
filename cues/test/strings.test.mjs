@@ -363,6 +363,36 @@ test('game wide (31 Oct 2026): the projector goes through the same runner, so a 
   await two.idle()
   assert.equal(quiet2.length, 1, 'the newest run still reports')
   assert.match(quiet2[0], /the Two Shortcut did not finish after 11 s/)
+  // "in progress": tried again every RETRY_IN_PROGRESS_MS until Home is free, unless a newer run has come
+  const { RETRY_IN_PROGRESS_MS, RETRY_FOR_MS } = await import('../lib/strings.js')
+  assert.ok(RETRY_IN_PROGRESS_MS >= 1000 && RETRY_IN_PROGRESS_MS <= 3000 && RETRY_FOR_MS >= 20_000)
+  let busyFor = 2
+  const tries = []
+  const delays = []
+  // the head start never passes in these runners (a refusal comes in 70 ms, well inside it); the retry wait passes at once
+  const headNever = ms => { delays.push(ms); return ms === RETRY_IN_PROGRESS_MS ? Promise.resolve() : new Promise(() => {}) }
+  const busy = createShortcutRunner({ tag: 't', run: async name => { tries.push(name); if (busyFor-- > 0) throw new Error(`shortcut ${name}: Action set execution in progress.`) }, wait: headNever, log: l => quiet2.push(l) })
+  const got = await busy.fire('Jazz')
+  assert.deepEqual(tries, ['Jazz', 'Jazz', 'Jazz'], 'refused twice, then ran')
+  assert.deepEqual(delays.filter(d => d === RETRY_IN_PROGRESS_MS).length, 2)
+  assert.ok(!got.dropped)
+  assert.equal(quiet2.length, 1, 'nothing said about the waiting')
+  // a newer run while one is waiting: the older is dropped, quietly
+  busyFor = 100
+  tries.length = 0
+  let release
+  const slow = createShortcutRunner({ tag: 't', run: async name => { tries.push(name); if (name === 'Old') throw new Error('shortcut Old: Action set execution in progress.'); return 'ok' }, wait: ms => (ms === RETRY_IN_PROGRESS_MS ? new Promise(r => { release = r }) : new Promise(() => {})), log: l => quiet2.push(l) })
+  const old = slow.fire('Old')
+  while (!release) await settle() // until Old is waiting to try again
+  await slow.fire('New')
+  release()
+  const o = await old
+  assert.equal(o.dropped, true)
+  assert.deepEqual(tries, ['Old', 'New'], 'Old was not tried again')
+  assert.equal(quiet2.length, 1)
+  // still busy after RETRY_FOR_MS: a real failure
+  const forever = createShortcutRunner({ tag: 't', run: async name => { throw new Error(`shortcut ${name}: Action set execution in progress.`) }, wait: headNever })
+  await assert.rejects(forever.fire('Stuck'), /still busy with the last action after 30 s/)
   // runShortcut marks a cancelled run, and the runner says nothing about one
   const cancelled = (cmd, args, opts, cb) => cb(Object.assign(new Error('x'), { code: 1 }), '', 'Error: Running was cancelled\n')
   const e = await runShortcut('Green Murderwin Strings v2', { execFileImpl: cancelled }).catch(e => e)
