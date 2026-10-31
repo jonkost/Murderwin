@@ -53,7 +53,12 @@ export function musicShortcutProblems(cfg) {
   return out
 }
 
-export function createShortcutMusic({ names = {}, runner = null, fallback = null, log = () => {}, fake = false, headStartMs } = {}) {
+// A setting that runs several Shortcuts lets each finish before the next,
+// or waits this long: a Home audio scene takes a few seconds to set its
+// HomePods, and the next one starting too soon makes it fail (31 Oct 2026).
+export const SEQUENCE_WAIT_MS = 8000
+
+export function createShortcutMusic({ names = {}, runner = null, fallback = null, log = () => {}, fake = false, headStartMs, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   const run = runner ?? createShortcutRunner({ tag: 'music', log, ...(headStartMs ? { headStartMs } : {}) })
   let chain = Promise.resolve()
   const said = new Set()
@@ -65,11 +70,14 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
   }
 
   // One Shortcut: a failure inside the head start is one plain line.
+  // Resolves to { done } (the run's end, for the sequence), or null when it
+  // did not run. The handle is an object on purpose: an async function
+  // that returned the promise itself would wait for the whole run.
   async function fire(name) {
-    if (fake) { log(`[music] would run the ${name} Shortcut`); return true }
-    try { await run.fire(name); return true } catch (e) {
+    if (fake) { log(`[music] would run the ${name} Shortcut`); return { done: Promise.resolve() } }
+    try { return { done: (await run.fire(name))?.done ?? Promise.resolve() } } catch (e) {
       once(`missing:${name}`, `[music] the ${name} Shortcut did not run (${e?.message ?? 'no reason'}): make it in Shortcuts on this Mac, named exactly that, or name it in cues/scenes.json musicShortcuts`)
-      return false
+      return null
     }
   }
 
@@ -83,7 +91,13 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
     }
     return enqueue(async () => {
       const ran = []
-      for (const name of list) if (await fire(name)) ran.push(name)
+      for (const [i, name] of list.entries()) {
+        const r = await fire(name)
+        if (r === null) continue
+        ran.push(name)
+        // the next one only once this one has finished, or after the wait
+        if (i < list.length - 1 && !fake) await Promise.race([r.done, wait(SEQUENCE_WAIT_MS)])
+      }
       if (ran.length && !fake) log(`[music] ${ran.join(', then ')}`)
     })
   }

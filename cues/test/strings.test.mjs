@@ -349,6 +349,20 @@ test('game wide (31 Oct 2026): the projector goes through the same runner, so a 
   await p.idle()
   assert.equal(logs.length, 2)
   assert.match(logs[1], /^\[projector\] the Projector Murderwin Off Shortcut ran for 61 s and then said "partially succeeded".*Home app.*No Response/)
+  // a run a newer one has replaced says nothing when it fails late; fire() hands back its `done`
+  const quiet2 = []
+  const rejects = []
+  const two = createShortcutRunner({ tag: 't', run: () => new Promise((_, r) => { rejects.push(r) }), wait: async () => {}, log: l => quiet2.push(l) })
+  const first = await two.fire('One')
+  await two.fire('Two')
+  assert.ok(first.done instanceof Promise)
+  rejects[0](Object.assign(new Error('shortcut One: Action set execution failed.'), { partial: false, took: 6000 }))
+  await first.done
+  assert.deepEqual(quiet2, [], 'the replaced run is quiet')
+  rejects[1](Object.assign(new Error('shortcut Two: Action set execution failed.'), { partial: false, took: 11_000 }))
+  await two.idle()
+  assert.equal(quiet2.length, 1, 'the newest run still reports')
+  assert.match(quiet2[0], /the Two Shortcut did not finish after 11 s/)
   // runShortcut marks a cancelled run, and the runner says nothing about one
   const cancelled = (cmd, args, opts, cb) => cb(Object.assign(new Error('x'), { code: 1 }), '', 'Error: Running was cancelled\n')
   const e = await runShortcut('Green Murderwin Strings v2', { execFileImpl: cancelled }).catch(e => e)

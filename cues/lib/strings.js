@@ -144,9 +144,16 @@ export const SHORTCUT_TIMEOUT_MS = 90_000
 // and rejects only when it fails inside the head start. `tag` names the cue
 // in the late line ("strings", "projector"). idle() waits for every run still
 // going (for the checks); running() counts them.
+// fire() resolves to { done }: a promise that settles (never rejects) when
+// that run has ended, for a caller that must let one finish before the next
+// (the music's Act 4 trio). A run a newer one has already replaced says
+// nothing when it fails late (the music check, 31 Oct 2026: a Home audio
+// scene still setting up fails with "Action set execution failed" when the
+// next one starts; the newer one is the one that counts).
 export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   const pending = new Set()
   let warned = false
+  let seq = 0
 
   // The job was most likely done; say once what is wrong, until a run succeeds.
   function late(name, e) {
@@ -159,15 +166,17 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
   }
 
   async function fire(name) {
+    const mine = ++seq
     let over = false
     const p = run(name, { timeoutMs }).then(
       () => { over = true; warned = false },
       e => { over = true; throw e },
     )
     pending.add(p)
-    p.catch(() => {}).then(() => pending.delete(p))
+    const done = p.catch(() => {}).then(() => { pending.delete(p) })
     await Promise.race([p, wait(headStartMs)])
-    if (!over) p.catch(e => late(name, e))
+    if (!over) p.catch(e => { if (mine === seq) late(name, e) })
+    return { done }
   }
 
   return { fire, idle: () => Promise.allSettled([...pending]), running: () => pending.size }

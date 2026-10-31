@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { createShortcutMusic, shortcutsFor, musicShortcutProblems } from '../lib/shortcutMusic.js'
+import { createShortcutMusic, shortcutsFor, musicShortcutProblems, SEQUENCE_WAIT_MS } from '../lib/shortcutMusic.js'
 import { createShortcutRunner } from '../lib/strings.js'
 import { sceneProblems, planScenes, emptySceneState } from '../lib/scenes.js'
 
@@ -121,4 +121,26 @@ test('the relay: MUSIC_SHORTCUTS=on puts the music on the Shortcut road with the
   assert.ok(src.includes("musicByShortcuts ? 'on, through Apple Home'"), 'the start-up line says so')
   const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8')
   assert.ok(env.includes('MUSIC_SHORTCUTS='))
+})
+
+test('a setting of several Shortcuts lets each finish before the next, or waits SEQUENCE_WAIT_MS: the rooms never cut the house jazz off mid-change', async () => {
+  assert.ok(SEQUENCE_WAIT_MS >= 5000 && SEQUENCE_WAIT_MS <= 15_000)
+  const ran = []
+  const finish = []
+  const runner = createShortcutRunner({ tag: 'music', run: name => { ran.push(name); return new Promise(r => { finish.push(r) }) }, wait: async () => {} })
+  const waits = []
+  const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, wait: ms => new Promise(r => { waits.push({ ms, r }) }) })
+  const playing = m.play({ playlist: 'act4' })
+  await settle(); await settle()
+  assert.deepEqual(ran, ['Default Jazz'], 'the jazz first, and nothing more until it finishes')
+  finish[0]()
+  await settle(); await settle(); await settle()
+  assert.deepEqual(ran, ['Default Jazz', 'Lightbulb Moment Music'], 'the Study once the jazz is done')
+  assert.equal(waits.at(-1).ms, SEQUENCE_WAIT_MS)
+  waits.at(-1).r() // the Study's run drags on: the wait passes instead
+  await settle(); await settle(); await settle()
+  assert.deepEqual(ran, ['Default Jazz', 'Lightbulb Moment Music', 'Get Off My Grass Game Music'])
+  finish[1](); finish[2]()
+  await playing
+  await m.idle()
 })
