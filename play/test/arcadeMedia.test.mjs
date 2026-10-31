@@ -244,13 +244,13 @@ test('G54 every strike is a big red cross, the face faint under it: a miss at th
   })
 })
 
-test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026): a claret floor, her black tail lying on it in a gold glow with its white tip, stone walls lighter than the floor and darker than Boo\'s gold, and her friends in the dark', async () => {
+test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026; Boo\'s green floor since 30 Oct, "No more poo brown"): a green floor, her black tail lying on it in a gold glow with its white tip, smooth (no tufts, no ruff: "Redraw the tail. It still looks like poop.") with a sheen along it, a fish and a cucumber on the floor, stone walls lighter than the floor and darker than Boo\'s gold, and her friends in the dark', async () => {
   // the ring and her paw are gone
   for (const id of ['ring', 'tail-paw']) assert.ok(!ART_FACES.includes(id), `no ${id} now`)
   assert.equal(faceSolid('ring'), null)
-  // the floor is one flat claret, so the deck paints it as a colour, not a picture
-  assert.deepEqual([...faceSolid('rug')], [89, 47, 50])
-  const CLARET = '#592F32', INK = '#111114'
+  // the floor is one flat green (the house's bottle green, lit), so the deck paints it as a colour, not a picture
+  assert.deepEqual([...faceSolid('rug')], [14, 74, 57])
+  const CLARET = '#0e4a39', INK = '#111114' // the rug's colour (CLARET by name since the floor was claret; Boo's green since 30 Oct)
   await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {
     let size = FACE_SIZE + 80
     // every key of the tail is that claret all over, so it lies on the floor
@@ -264,6 +264,14 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026): a claret f
       const fur = ops.filter(op => op.name === 'fill' && op.fillStyle === INK)
       assert.equal(fur.length, 1, `${id}: the fur is one shape`)
       assert.ok(fur[0].shadowColor && fur[0].shadowBlur > 0, `${id}: in a glow`)
+      // smooth: only the discs along its line, close together, none out to the side (no tufts), and one sheen stroke along it
+      const discs = ops.slice(0, ops.indexOf(fur[0])).filter(op => op.name === 'arc')
+      const main = discs.filter(op => op.args[2] >= 10)
+      assert.ok(main.length >= 8 && main.every(op => op.args[2] <= 17), `${id}: a band of big discs`)
+      assert.ok(discs.every(op => op.args[2] >= 10), `${id}: no little tufts`)
+      const sheen = ops.filter(op => op.name === 'stroke' && String(op.strokeStyle).startsWith('rgba(255, 255, 255'))
+      assert.equal(sheen.length, 1, `${id}: one sheen along it`)
+      assert.ok(ops.indexOf(sheen[0]) > ops.indexOf(fur[0]), `${id}: over the fur`)
       const white = ops.filter(op => op.name === 'fill' && op.fillStyle === '#fff')
       assert.equal(white.length, id.startsWith('tail-tip:') ? 1 : 0, `${id}: white at the tip only`)
       if (white.length) assert.ok(ops.indexOf(white[0]) > ops.indexOf(fur[0]) && !white[0].shadowColor, `${id}: the white over the fur`)
@@ -284,6 +292,15 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026): a claret f
     assert.ok(stone.every(([, foot]) => lightOf(foot) >= 2 * lightOf(CLARET)), 'lighter than the rug')
     assert.ok(stone.every(([top]) => lightOf(top) <= lightOf('#fff6c4') / 2), 'at most half as light as Boo\'s gold')
     assert.ok(!wall.some(op => op.name === 'drawImage' || op.name === 'fillText'), 'a wall is only bricks')
+    // the fish and the cucumber: each on the rug, its picture big; the fish in a glow, the cucumber not
+    const fish = painted(faceCanvas('treat', size++)), cucumber = painted(faceCanvas('cucumber', size++))
+    for (const [name, ops, ch] of [['treat', fish, '🐟'], ['cucumber', cucumber, '🥒']]) {
+      assert.equal(ops[0].fillStyle, CLARET, `${name}: on the rug`)
+      const word = ops.find(op => op.name === 'fillText')
+      assert.equal(word?.args[0], ch, `${name}: its picture`)
+    }
+    assert.ok(fish.find(op => op.name === 'fillText').shadowBlur > 0, 'the fish glows')
+    assert.ok(!cucumber.find(op => op.name === 'fillText').shadowBlur, 'the cucumber does not')
     // her friends sit in the spotlight's dark, never on gold: Boo is the only gold key
     for (const pet of FRIENDS) {
       const [ground] = painted(faceCanvas(`pet:${pet}`, size++))
@@ -292,7 +309,7 @@ test('G54 Boo Chasing Her Tail on the whole board (Jon, 29 Oct 2026): a claret f
   })
 })
 
-test('G54 a face of one flat colour is that colour on the Mac\'s screen too: the deck paints it from faceSolid, the screen draws it (faceCanvas), so Boo\'s rug is the same claret on both', async () => {
+test('G54 a face of one flat colour is that colour on the Mac\'s screen too: the deck paints it from faceSolid, the screen draws it (faceCanvas), so Boo\'s rug is the same green on both', async () => {
   const solid = [...new Set([...FACE_IDS, ...ART_FACES])].filter(id => faceSolid(id))
   for (const id of ['off', 'blank', 'rug']) assert.ok(solid.includes(id), id)
   await withBrowser({ OffscreenCanvas: FakeCanvas }, () => {
@@ -345,15 +362,20 @@ test('G54 her tail joins up wherever the engine lays it: on every board of a doz
       for (let t = 0; t <= 60000; t += 100) {
         g = stepGame(g, t)
         const f = gameFaces(g, t)
-        const [end, mid, tip] = ['end', 'fur', 'tip'].map(part => f.findIndex(x => x.startsWith(`tail-${part}:`)))
-        if ([end, mid, tip].includes(-1)) continue // a tick on a key of it
-        places.add(`${end} ${mid} ${tip}`)
-        const toEnd = way(mid, end), toTip = way(mid, tip)
-        assert.ok(way(end, mid) && toEnd && toTip, `seed ${seed}: its keys side by side`)
-        assert.deepEqual(sidesOf(piece(f[end]).fur), [way(end, mid)], `${f[end]} towards ${f[mid]}`)
-        assert.deepEqual(sidesOf(piece(f[mid]).fur), Object.keys(EDGES).filter(side => side === toEnd || side === toTip), f[mid])
-        assert.deepEqual(sidesOf(piece(f[tip]).fur), [way(tip, mid)], `${f[tip]} towards ${f[mid]}`)
-        assert.equal(puffWay(piece(f[tip]).puff), toTip, `${f[tip]}: its white puff away from the rest of the tail`)
+        if (g.tail.some(k => !f[k].startsWith('tail-'))) continue // a tick on a key of it
+        const n = g.tail.length
+        places.add(g.tail.join(' '))
+        // three to five keys (it grows, 30 Oct 2026), each beside the next
+        for (let i = 1; i < n; i++) assert.ok(way(g.tail[i - 1], g.tail[i]), `seed ${seed}: its keys side by side`)
+        const [end, tip] = [g.tail[0], g.tail[n - 1]]
+        assert.ok(f[end].startsWith('tail-end:') && f[tip].startsWith('tail-tip:') && g.tail.slice(1, -1).every(k => f[k].startsWith('tail-fur:')), `seed ${seed}: an end, a tip and fur between`)
+        assert.deepEqual(sidesOf(piece(f[end]).fur), [way(end, g.tail[1])], `${f[end]} towards ${f[g.tail[1]]}`)
+        for (let i = 1; i < n - 1; i++) {
+          const toBack = way(g.tail[i], g.tail[i - 1]), toFront = way(g.tail[i], g.tail[i + 1])
+          assert.deepEqual(sidesOf(piece(f[g.tail[i]]).fur), Object.keys(EDGES).filter(side => side === toBack || side === toFront), f[g.tail[i]])
+        }
+        assert.deepEqual(sidesOf(piece(f[tip]).fur), [way(tip, g.tail[n - 2])], `${f[tip]} towards ${f[g.tail[n - 2]]}`)
+        assert.equal(puffWay(piece(f[tip]).puff), way(g.tail[n - 2], tip), `${f[tip]}: its white puff away from the rest of the tail`)
       }
     }
     assert.ok(places.size >= 100, `${places.size} places on the board`)

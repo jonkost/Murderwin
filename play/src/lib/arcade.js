@@ -37,14 +37,28 @@ export const DIAL_MAX_KEYS = 6           // one report from a dial moves at most
 // white tip over the whole board (Jon, 29 Oct 2026: "Make it run over the
 // entire board", "As time goes on it goes fast and add obsticals")
 export const TAIL_STEP_MS = 650          // the tail moves one key this often at first,
-export const TAIL_STEP_END_MS = 300      // this often by the end
+export const TAIL_STEP_END_MS = 220      // this often by the end (Jon, 30 Oct 2026: "The tail speeds up as the game goes on")
 export const TAIL_TURN_ONE_IN = 4       // about one step in four it turns, when it can
 export const TAIL_FLEE_KEYS = 3          // with Boo this close to any key of it (along the rows and columns), it runs from her
 export const TAIL_AWAY_KEYS = 4          // a caught tail comes back with every key at least this far from her
+export const TAIL_LENGTH = 3             // three keys long at first,
+export const TAIL_GROWS_AT = [0.25, 0.5] // a key longer a quarter of the way in and again at half (Jon, 30 Oct 2026: "Maybe the tail grows longer too, to block Boo")
+export const TAIL_LENGTH_MAX = TAIL_LENGTH + TAIL_GROWS_AT.length
 export const TAIL_BLOCKS_FROM_MS = 15000 // the walls and her friends come out from 15 seconds in,
 export const TAIL_BLOCKS_EVERY_MS = 15000 // one more every 15 seconds,
 export const TAIL_BLOCKS_MAX = 6         // six at most, and they stay put
 export const TAIL_POINTS = 2             // a catch
+// Treats to catch on the way, and cucumbers to keep away from (Jon, 30 Oct 2026: "Bonus rewards", "Hazards")
+export const TAIL_TREAT_FROM_MS = 10000  // a fish comes out from 10 seconds in,
+export const TAIL_TREAT_EVERY_MS = 9000  // the next 9 seconds after the last went (eaten or not),
+export const TAIL_TREAT_UP_MS = 6000     // each for 6 seconds, one at a time
+export const TAIL_TREAT_POINTS = 3       // a fish
+export const TAIL_HAZARD_FROM_MS = 20000 // a cucumber comes out from 20 seconds in,
+export const TAIL_HAZARD_EVERY_MS = 12000 // one more every 12 seconds,
+export const TAIL_HAZARD_UP_MS = 9000    // each for 9 seconds,
+export const TAIL_HAZARDS_MAX = 2        // two at most at once
+export const TAIL_FREEZE_MS = 1500       // Boo onto a cucumber: she freezes this long, and it is gone
+export const TAIL_WRAP_MS = 700          // off one edge and in at the other (Jon, 30 Oct 2026: Pac-Man style): she stops there this long
 // The Lazy Pointer: lead the red dot to the sparkles; Boo naps, wakes and stalks it
 export const POINTER_STEP_MS = 800       // awake, Boo steps towards the dot this often at first,
 export const POINTER_STEP_END_MS = 420   // this often by the end
@@ -198,7 +212,7 @@ const ACROSS = '◀ ▶', UP_DOWN = '▼ ▲', NO_DIALS = ['', '', '', '', '', '
 export const GAMES = [
   {
     id: 'tail', name: 'Boo Chasing Her Tail', short: 'Tail',
-    how: 'The left dial moves Boo left and right, the right dial up and down. Catch the white tip of her tail. The rest of her tail, the walls and her friends block her way.',
+    how: 'The left dial moves Boo left and right, the right dial up and down. Catch the white tip of her tail. The rest of her tail, the walls and her friends block her way. Eat the fish; mind the cucumbers.',
     boo: 'That tail mocks me, darling.',
     dials: [ACROSS, '', '', '', '', UP_DOWN],
     counts: 'Tail tips caught',
@@ -261,7 +275,7 @@ export const FUR_PAIRS = ['left-right', 'down-up', 'down-left', 'down-right', 'l
 // starts, so no key waits on one in play.
 export const MENU_FACES = ['off', 'blank', 'paw', 'paw-lit', 'boo', 'back', 'ok', 'coin', 'coin-spent', 'num:1', 'num:2', 'num:3', 'hit', ...GAMES.map(g => `menu:${g.id}`)]
 export const GAME_FACES = {
-  tail: ['rug', 'tail-boo', 'wall', ...TAIL_FRIENDS.map(p => `pet:${p}`), ...FUR_PAIRS.map(p => `tail-fur:${p}`), ...WAYS.map(w => `tail-end:${w}`), ...WAYS.map(w => `tail-tip:${w}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
+  tail: ['rug', 'tail-boo', 'boo-alert', 'wall', 'treat', 'cucumber', ...TAIL_FRIENDS.map(p => `pet:${p}`), ...FUR_PAIRS.map(p => `tail-fur:${p}`), ...WAYS.map(w => `tail-end:${w}`), ...WAYS.map(w => `tail-tip:${w}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   pointer: ['blank', 'dot', 'sparkle', 'chaser', 'boo-nap', 'boo-alert', 'caught', 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   mice: ['blank', 'mouse', 'mouse-gold', ...PETS.map(p => `pet:${p}`), ...PETS.map(p => `oops:${p}`), 'hit', 'back', 'num:1', 'num:2', 'num:3'],
   knock: ['cloth', 'edge', ...KNOCK_OBJECTS.map(o => `table:${o}`), ...KNOCK_OBJECTS.map(o => `edge:${o}`), 'hit', 'miss', 'back', 'num:1', 'num:2', 'num:3'],
@@ -368,16 +382,29 @@ function plainEvent(ev) {
 // ---- 1. Boo Chasing Her Tail: Boo chases her own tail's white tip over the whole board ----
 
 // The whole board is her rug, and Boo herself is on it (Jon, 29 Oct 2026:
-// "make the paws boos face"). Her tail (s.tail: its end, its middle and its
-// white tip) runs about the board by itself, end first, so the tip trails at
-// the back: she can catch it from behind or from the side, never head on, as
-// its end and its middle are in her way ("dont let players hit it from the
-// front. It blocks them."). Walls and her friends come out as the game goes
-// on (s.blocks), and stay put; none ever shuts a key in or leaves a dead end.
+// "make the paws boos face"). Her tail (s.tail: its end first, its tip last,
+// three keys long at first and five by halfway, Jon 30 Oct 2026) runs about
+// the board by itself, end first, so the tip trails at the back: she can
+// catch it from behind or from the side, never head on, as the rest of it is
+// in her way ("dont let players hit it from the front. It blocks them.").
+// Walls and her friends come out as the game goes on (s.blocks), and stay
+// put; none ever shuts a key in or leaves a dead end. Boo goes off one edge
+// and comes in at the other, like Pac-Man (Jon, 30 Oct 2026). A fish now and
+// then is worth more than a tip (s.treat); a cucumber (s.hazards) freezes her
+// a moment, and only the tail stays clear of those.
 const tailStepMs = (s, t) => lerp(TAIL_STEP_MS, TAIL_STEP_END_MS, along(s, t))
+// How far Boo is from a key, the short way round the board: she wraps, so her reach does too.
+const reach = (k, boo) => {
+  const dr = Math.abs(rowOf(k) - rowOf(boo)), dc = Math.abs(colOf(k) - colOf(boo))
+  return Math.min(dr, ROWS - dr) + Math.min(dc, COLS - dc)
+}
+const nearestReach = (keys, boo) => Math.min(...keys.map(k => reach(k, boo)))
 const blocked = (s, k) => s.blocks.some(b => b.key === k) // a wall or a friend is on it
-// A key the tail can step onto: not Boo, not a wall or a friend, not its own.
-const tailFree = (s, k) => k !== s.boo && !s.tail.includes(k) && !blocked(s, k)
+const hazardAt = (s, k) => s.hazards.some(h => h.key === k)
+// A key the tail can step onto: not Boo, not a wall, a friend or a cucumber, not its own.
+const tailFree = (s, k) => k !== s.boo && !s.tail.includes(k) && !blocked(s, k) && !hazardAt(s, k)
+// How long her tail is at `t`: a key longer at each of TAIL_GROWS_AT along the game.
+const tailLengthAt = (s, t) => TAIL_LENGTH + TAIL_GROWS_AT.filter(f => along(s, t) >= f).length
 // The way from one key to its neighbour, as the tail's pieces point.
 function wayOf(from, to) {
   const dr = rowOf(to) - rowOf(from), dc = colOf(to) - colOf(from)
@@ -388,71 +415,97 @@ const tail = {
   start(s) {
     layTail(s, s.startedAt)
     s.catches = 0
+    s.treats = 0 // fish eaten
+    s.eeks = 0 // cucumbers stepped on
     s.flashes = []
   },
-  due: s => Math.min(s.nextAt, s.nextBlockAt ?? Infinity),
+  due: s => Math.min(s.nextAt, s.nextBlockAt ?? Infinity, s.nextTreatAt ?? Infinity, s.treat?.until ?? Infinity, s.nextHazardAt ?? Infinity, ...s.hazards.map(h => h.until)),
   fire(s, t) {
-    // a wall or a friend comes out (first), then the tail steps
+    // a fish or a cucumber goes (first), then a wall or a friend comes out, then a fish or a cucumber, then the tail steps
+    if (s.treat && s.treat.until <= t) { s.treat = null; s.nextTreatAt = t + TAIL_TREAT_EVERY_MS; return }
+    if (s.hazards.some(h => h.until <= t)) { s.hazards = s.hazards.filter(h => h.until > t); return }
     if (s.nextBlockAt != null && s.nextBlockAt <= t) return placeBlock(s, t)
-    stepTail(s)
+    if (s.nextTreatAt != null && s.nextTreatAt <= t) return placeTreat(s, t)
+    if (s.nextHazardAt != null && s.nextHazardAt <= t) return placeHazard(s, t)
+    stepTail(s, t)
     s.nextAt = t + tailStepMs(s, t)
   },
   input(s, e, t) {
+    if (t < (s.frozenUntil ?? 0)) return // a cucumber: she cannot move yet
     const m = movesOf(e)
-    // key by key: the board's edge, a wall, a friend and the rest of her tail
-    // stop her where she is, and the rest of the turn; nothing else happens
+    // key by key: a wall, a friend and the rest of her tail stop her where she
+    // is, and the rest of the turn; off an edge she comes in at the other
     for (let n = 0; m && n < m.keys; n++) {
       const r = rowOf(s.boo) + m.dr, c = colOf(s.boo) + m.dc
-      if (!onBoard(r, c)) return
-      const to = keyAt(r, c)
-      if (to === s.tail[2]) return caughtTail(s, to, t) // the white tip: caught, and that ends the turn
+      const wraps = !onBoard(r, c)
+      const to = keyAt((r + ROWS) % ROWS, (c + COLS) % COLS)
+      if (to === s.tail[s.tail.length - 1]) return caughtTail(s, to, t) // the white tip: caught, and that ends the turn
       if (s.tail.includes(to) || blocked(s, to)) return
       s.boo = to
+      if (hazardAt(s, to)) return eek(s, to, t) // a cucumber: frozen, and that ends the turn too
+      if (s.treat?.key === to) ateTreat(s, to, t)
+      if (wraps) { s.frozenUntil = t + TAIL_WRAP_MS; return } // in at the other edge: she stops there a moment, and that ends the turn
     }
   },
   tidy: tidyFlashes,
   faces(s, f, now) {
     for (const k of ALL_KEYS) f[k] = 'rug'
     for (const b of s.blocks) f[b.key] = b.friend ? `pet:${b.friend}` : 'wall'
-    // her tail: its end (pointing the way its middle lies), its middle (straight or round a corner) and its tip
-    const [end, mid, tip] = s.tail
-    f[end] = `tail-end:${wayOf(end, mid)}`
-    f[mid] = `tail-fur:${[wayOf(mid, tip), wayOf(mid, end)].sort().join('-')}`
-    f[tip] = `tail-tip:${wayOf(mid, tip)}`
+    for (const h of s.hazards) f[h.key] = 'cucumber'
+    if (s.treat) f[s.treat.key] = 'treat'
+    // her tail: its end (pointing the way the next key lies), its middle keys (straight or round a corner) and its tip
+    const n = s.tail.length
+    f[s.tail[0]] = `tail-end:${wayOf(s.tail[0], s.tail[1])}`
+    for (let i = 1; i < n - 1; i++) f[s.tail[i]] = `tail-fur:${[wayOf(s.tail[i], s.tail[i + 1]), wayOf(s.tail[i], s.tail[i - 1])].sort().join('-')}`
+    f[s.tail[n - 1]] = `tail-tip:${wayOf(s.tail[n - 2], s.tail[n - 1])}`
     f[s.boo] = 'tail-boo'
     flashFaces(s, f, now)
   },
 }
-// Her board laid out from `t`: Boo on the left, no walls or friends yet, and
-// her tail in the right half heading away from her; its first step a step
-// after `t`, the first wall TAIL_BLOCKS_FROM_MS after. A new game is laid out
+// Her board laid out from `t`: Boo on the left, no walls, friends, fish or
+// cucumbers yet, and her tail of three in the right half heading away from
+// her; its first step a step after `t`, the first wall TAIL_BLOCKS_FROM_MS
+// after, the first fish and cucumber at their times. A new game is laid out
 // so, and so is one an older copy of this engine began (mended).
 function layTail(s, t) {
   s.boo = keyAt(2, 1) // Boo herself, on the left
   s.blocks = [] // { key, friend }: a wall (friend null) or one of her friends, in the order they came
+  s.treat = null // { key, until }: the fish out now
+  s.hazards = [] // { key, until }: the cucumbers out now
+  s.frozenUntil = 0
   s.tail = []
   // her tail in the right half, heading away from her
-  whipTail(s, place => place.every(k => colOf(k) >= COLS / 2) && apart(aheadOf(place[1], place[0]), s.boo) > apart(place[0], s.boo))
+  whipTail(s, TAIL_LENGTH, place => place.every(k => colOf(k) >= COLS / 2) && apart(aheadOf(place[1], place[0]), s.boo) > apart(place[0], s.boo))
   s.nextAt = t + tailStepMs(s, t)
   s.nextBlockAt = t + TAIL_BLOCKS_FROM_MS // null once they are all out
+  s.nextTreatAt = s.startedAt + TAIL_TREAT_FROM_MS
+  s.nextHazardAt = s.startedAt + TAIL_HAZARD_FROM_MS
 }
-// The tail's step: its end onto a free key beside it, its middle and tip
-// after it. Mostly straight on, now and then a turn; never into a dead end
-// when it has another way; and with Boo close it runs from her. With nowhere
-// to go (Boo in its way) it waits.
-function stepTail(s) {
-  const [end, mid] = s.tail
+// The tail's step: its end onto a free key beside it, the rest after it (or,
+// when it is due to grow, the rest staying put, so it is a key longer).
+// Mostly straight on, now and then a turn; never into a dead end when it has
+// another way; and with Boo close it runs from her. With nowhere to go it
+// waits for Boo to move, or, boxed in without her, slips away.
+function stepTail(s, t) {
+  const end = s.tail[0], body = s.tail.slice(0, -1)
   const free = besideOf(end).filter(k => tailFree(s, k))
-  if (!free.length) return
-  // the ways on from a key once the end is there (the tip will have moved on)
-  const onward = k => besideOf(k).filter(n => n !== end && n !== s.boo && !blocked(s, n)).length
+  if (!free.length) {
+    // nowhere to go: with Boo the only thing in its way it waits for her to move; coiled into a
+    // corner by itself, the walls and the cucumbers (a longer tail can, 30 Oct 2026), it slips
+    // away to come back whole somewhere else, no points to anyone, so the game never stands still
+    if (besideOf(end).includes(s.boo)) return
+    return whipTail(s, tailLengthAt(s, t))
+  }
+  // the ways on from a key once the end is there (the tip will have moved on, the rest not yet)
+  const onward = k => besideOf(k).filter(n => n !== end && !body.includes(n) && n !== s.boo && !blocked(s, n) && !hazardAt(s, n)).length
   const open = free.filter(k => onward(k) > 0)
   const ways = open.length ? open : free
-  const ahead = aheadOf(mid, end)
+  const ahead = aheadOf(s.tail[1], end)
   let to
-  if (nearest(s.tail, s.boo) <= TAIL_FLEE_KEYS) {
-    // she is close: the key furthest from her, the most open of those, straight on if it is one
-    const rank = k => apart(k, s.boo) * 4 + onward(k)
+  if (nearestReach(s.tail, s.boo) <= TAIL_FLEE_KEYS) {
+    // she is close (the short way round): the key furthest from her, then one off her row and column (she
+    // sweeps along them when she wraps), then the most open; straight on if it is one of the best
+    const rank = k => reach(k, s.boo) * 4 + (rowOf(k) !== rowOf(s.boo) && colOf(k) !== colOf(s.boo) ? 2 : 0) + onward(k)
     const best = Math.max(...ways.map(rank))
     const top = ways.filter(k => rank(k) === best)
     to = top.includes(ahead) ? ahead : pick(s, top)
@@ -460,12 +513,12 @@ function stepTail(s) {
     const turns = ways.filter(k => k !== ahead)
     to = ways.includes(ahead) && !(turns.length && rand(s) < 1 / TAIL_TURN_ONE_IN) ? ahead : pick(s, turns)
   }
-  s.tail = [to, end, mid]
+  s.tail = s.tail.length < tailLengthAt(s, t) ? [to, ...s.tail] : [to, ...s.tail.slice(0, -1)]
 }
-// Every way the whole tail can lie, its end first: three free keys in a row or
-// round a corner, with a free key straight on from its end to go to.
+// Every way three keys of the tail can lie, its end first: three free keys in
+// a row or round a corner, with a free key straight on from its end to go to.
 function tailPlaces(s) {
-  const free = k => k != null && k !== s.boo && !blocked(s, k)
+  const free = k => k != null && k !== s.boo && !blocked(s, k) && !hazardAt(s, k)
   const places = []
   for (const mid of ALL_KEYS.filter(free)) {
     const by = besideOf(mid).filter(free)
@@ -473,37 +526,84 @@ function tailPlaces(s) {
   }
   return places
 }
-// The tail comes back whole somewhere else, by chance, and so it starts:
-// every key of it at least TAIL_AWAY_KEYS from Boo, or as far as any place
-// can be. `fits` narrows the places it may come.
-function whipTail(s, fits = () => true) {
+// The tail comes back whole somewhere else, by chance, `length` keys long,
+// and so it starts: three keys as tailPlaces lays them, every key at least
+// TAIL_AWAY_KEYS from Boo (or as far as any place can be), then a key at a
+// time on from its end, as far from her as the free keys allow. `fits`
+// narrows the places it may come.
+function whipTail(s, length, fits = () => true) {
   const places = tailPlaces(s).filter(fits)
   if (!places.length) return // never, on a board this size
-  const far = Math.min(TAIL_AWAY_KEYS, Math.max(...places.map(p => nearest(p, s.boo))))
-  s.tail = pick(s, places.filter(p => nearest(p, s.boo) >= far))
+  const far = Math.min(TAIL_AWAY_KEYS, Math.max(...places.map(p => nearestReach(p, s.boo))))
+  s.tail = pick(s, places.filter(p => nearestReach(p, s.boo) >= far))
+  while (s.tail.length < length) {
+    const on = besideOf(s.tail[0]).filter(k => tailFree(s, k))
+    if (!on.length) return // no room to be longer here: it grows at its next step
+    const best = Math.max(...on.map(k => reach(k, s.boo)))
+    s.tail = [pick(s, on.filter(k => reach(k, s.boo) === best)), ...s.tail]
+  }
 }
 // A catch: Boo on the tip's key, its green tick there, and the tail whips away
-// to come back whole somewhere else, its next step a whole step later.
+// to come back whole somewhere else, as long as it should be by now, its next
+// step a whole step later.
 function caughtTail(s, key, t) {
   s.boo = key
   s.catches += 1
   s.score += TAIL_POINTS
   s.events.push('point')
   flash(s, key, 'hit', t, HIT_MS)
-  whipTail(s)
+  if (s.treat?.key === key) ateTreat(s, key, t) // a fish under the tip: eaten too
+  whipTail(s, tailLengthAt(s, t)) // as long as it should be by now
   s.nextAt = t + tailStepMs(s, t)
 }
+// A fish eaten: its points, the gold sound, the tick; the next comes in its time.
+function ateTreat(s, key, t) {
+  s.treat = null
+  s.nextTreatAt = t + TAIL_TREAT_EVERY_MS
+  s.treats += 1
+  s.score += TAIL_TREAT_POINTS
+  s.events.push('gold')
+  flash(s, key, 'hit', t, HIT_MS)
+}
+// A cucumber stepped on: it is gone, Boo stands frozen with her "!" for a
+// moment (no points lost, no strike), and the strip says so.
+function eek(s, key, t) {
+  s.hazards = s.hazards.filter(h => h.key !== key)
+  s.eeks += 1
+  s.frozenUntil = t + TAIL_FREEZE_MS
+  s.events.push('miss')
+  flash(s, key, 'boo-alert', t, TAIL_FREEZE_MS)
+  s.said = { words: 'Eek! A cucumber.', until: t + STRIKE_WORDS_MS }
+}
+// The keys a fish or a cucumber may come on at `t`: free (no tick or cross still showing there either), two or more from Boo and from every key of her tail.
+const itemSpots = (s, t) => ALL_KEYS.filter(k => !blocked(s, k) && !hazardAt(s, k) && s.treat?.key !== k && !s.tail.includes(k) && !s.flashes.some(f => f.key === k && f.until > t) && reach(k, s.boo) >= 2 && nearest(s.tail, k) >= 2)
 // A wall or a friend comes out, in turn, a wall first: on a free key at least
-// two keys from Boo and from every key of her tail, where it shuts nothing in
-// and leaves no dead end, picked by chance. If no key will do, none comes
-// this time: it tries again at the next.
+// two keys from Boo and from every key of her tail, clear of the fish and the
+// cucumbers, where it shuts nothing in and leaves no dead end (with the
+// cucumbers out now, and once they have gone), picked by chance. If no key
+// will do, none comes this time: it tries again at the next.
 function placeBlock(s, t) {
-  const spots = ALL_KEYS.filter(k => !blocked(s, k) && apart(k, s.boo) >= 2 && nearest(s.tail, k) >= 2 && roomy([...s.blocks.map(b => b.key), k]))
+  const walls = s.blocks.map(b => b.key), cucumbers = s.hazards.map(h => h.key)
+  const spots = itemSpots(s, t).filter(k => roomy([...walls, k]) && (!cucumbers.length || roomy([...walls, ...cucumbers, k])))
   if (spots.length) {
     const friend = s.blocks.length % 2 === 1 ? nextFriend(s) : null
     s.blocks.push({ key: pick(s, spots), friend })
   }
   s.nextBlockAt = s.blocks.length < TAIL_BLOCKS_MAX ? t + TAIL_BLOCKS_EVERY_MS : null
+}
+// A fish comes out, one at a time, for its while; none if no key will do (it tries again at the next).
+function placeTreat(s, t) {
+  const spots = itemSpots(s, t)
+  if (spots.length) { s.treat = { key: pick(s, spots), until: t + TAIL_TREAT_UP_MS }; s.nextTreatAt = null }
+  else s.nextTreatAt = t + TAIL_TREAT_EVERY_MS
+}
+// A cucumber comes out, for its while, where it shuts nothing in (with the walls, the friends and the other cucumber); two at most.
+function placeHazard(s, t) {
+  if (s.hazards.length < TAIL_HAZARDS_MAX) {
+    const spots = itemSpots(s, t).filter(k => roomy([...s.blocks.map(b => b.key), ...s.hazards.map(h => h.key), k]))
+    if (spots.length) s.hazards.push({ key: pick(s, spots), until: t + TAIL_HAZARD_UP_MS })
+  }
+  s.nextHazardAt = t + TAIL_HAZARD_EVERY_MS
 }
 // One of her friends: each comes once before any comes twice.
 function nextFriend(s) {
@@ -931,7 +1031,7 @@ export function newGame(id, { seed, lengthMs, now = 0 } = {}) {
 // on it), its points and its time kept; the Knock's pardons and the gold counts
 // start empty. `g` itself when nothing is missing, else a mended copy.
 function mended(g) {
-  const missing = g.id === 'tail' ? !Array.isArray(g.tail)
+  const missing = g.id === 'tail' ? !Array.isArray(g.tail) || !Array.isArray(g.hazards)
     : g.id === 'knock' ? !Array.isArray(g.gotAway)
       : g.id === 'mice' || g.id === 'yarn' ? !Number.isFinite(g.golds) : false
   if (!missing) return g
@@ -939,6 +1039,7 @@ function mended(g) {
   if (s.id === 'tail') {
     for (const k of ['paw', 'tip', 'side', 'way']) delete s[k] // the ring's
     layTail(s, s.at)
+    s.treats ??= 0; s.eeks ??= 0
   } else if (s.id === 'knock') s.gotAway = []
   else s.golds = 0
   return s
@@ -1548,7 +1649,8 @@ export function arcadeSample(name, now = 0) {
         boo: keyAt(2, 3),
         tail: [keyAt(1, 7), keyAt(1, 6), keyAt(2, 6)], // heading right, its tip round the corner below
         blocks: [{ key: keyAt(1, 2), friend: null }, { key: keyAt(3, 5), friend: 'irwin' }],
-        catches: 4, score: 4 * TAIL_POINTS, nextAt: now + 300, nextBlockAt: now + 14000, at: now,
+        treat: { key: keyAt(3, 1), until: now + 4000 }, hazards: [{ key: keyAt(0, 7), until: now + 6000 }], frozenUntil: 0, treats: 1, eeks: 0,
+        catches: 4, score: 4 * TAIL_POINTS + TAIL_TREAT_POINTS, nextAt: now + 300, nextBlockAt: now + 14000, nextTreatAt: null, nextHazardAt: now + 9000, at: now,
       }
       return { ...a, stage: 'play', stageAt: g.startedAt, pick: 'tail', game, played: 1 }
     }

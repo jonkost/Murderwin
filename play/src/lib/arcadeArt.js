@@ -6,9 +6,11 @@
 //
 // Black lacquer and gold (Jon, 29 Oct 2026: "Not the darker blue", "brighter
 // and fun, colorful and high contrast. Think glam!"): black keys, gold rims
-// and lights, the house's claret, red and parchment, and green for every
-// success, a black tick on it ("Like a check if you get the mouse"). Every
-// strike is the house red with a big parchment cross, over whatever was hit.
+// and lights, Boo's bottle green (the house's, lit; Jon, 30 Oct 2026: "No
+// more poo brown on the tiles and dials": the claret read as brown on the
+// keys), red and parchment, and green for every success, a black tick on it
+// ("Like a check if you get the mouse"). Every strike is the house red with a
+// big parchment cross, over whatever was hit.
 //
 // Big pictures, few words: the keys are read from a seat across the table,
 // in dim light. The animals and the things on the table are colour emoji (no
@@ -31,7 +33,10 @@ export const FACE_SIZE = 112, STRIP_W = 1200, STRIP_H = 100
 const UNIT = 72, MID = UNIT / 2
 
 // The house palette (play/src/styles.css), and the arcade's gold and green.
-const HOUSE = { claret: '#592F32', red: '#bf1925', brass: '#A6A253', parchment: '#F1E8D6', charcoal: '#1F2124' }
+const HOUSE = { claret: '#592F32', red: '#bf1925', brass: '#A6A253', parchment: '#F1E8D6', charcoal: '#1F2124', bottle: '#00261E' }
+// Boo's own colour on the keys: the house's bottle green, lit so it reads as
+// green on the deck's little screens, and lighter in the middle of a jewel.
+const BOO = { green: '#0e4a39', light: '#1f7a5e' }
 const GOLD = { hi: '#fff6c4', mid: '#d6cf86', lo: '#a6903a', dim: '#5c5426' }
 const GREEN = '#33bd66' // a success, with a black tick on it (8.6 to 1)
 const INK = '#111114' // Boo's black fur, and the tick
@@ -44,6 +49,7 @@ const OBJECTS = ['vase', 'teacup', 'teapot', 'candle', 'picture', 'clock', 'plan
 const PICTURE = {
   mouse: '🐭', swipe: '🐾', yarn: '🧶', basket: '🧺', cat: '🐈‍⬛',
   vase: '🏺', teacup: '☕', teapot: '🫖', candle: '🕯️', picture: '🖼️', clock: '🕰️', plant: '🪴', cake: '🎂',
+  fish: '🐟', cucumber: '🥒',
 }
 // The menu's five keys: each game's picture on a parchment plate over its
 // short name in gold (lib/arcade.js GAMES). The Tail key is a black cat (Jon,
@@ -53,7 +59,7 @@ const MENU = { tail: ['cat', 'Tail'], pointer: ['dot', 'Pointer'], mice: ['mouse
 // Faces that are one flat colour. The deck paints these with fillKeyColor
 // (one small report, no picture to send); the rest are pictures. The deck on
 // the Mac's screen draws them (FACES) from the same colours, so the two match.
-const RUG = HOUSE.claret // Boo Chasing Her Tail's floor, under every key of her tail too
+const RUG = BOO.green // Boo Chasing Her Tail's floor, under every key of her tail too
 const rgbOf = hex => Object.freeze([1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16))) // '#rrggbb' as [r, g, b]
 const SOLID = new Map([
   ['off', Object.freeze([0, 0, 0])],
@@ -279,24 +285,27 @@ const FACES = {
   // (lib/arcade.js marquee), Boo in the middle
   paw: g => { lacquer(g); pawPrint(g, GOLD.dim) },
   'paw-lit': (g, k) => { lacquer(g); glowing(g, k, 'rgba(255, 226, 122, 0.9)', 9, () => pawPrint(g, litGold(g))) },
-  boo: (g, k) => { jewel(g, HOUSE.claret, '#8a4a50'); booFace(g, k, BOO_FRAMED); goldRim(g) },
-  back: g => { jewel(g, HOUSE.claret, '#7a4247'); goldRim(g); arrowLeft(g, MID, 27); words(g, 'Back', 15, 54) },
+  boo: (g, k) => { jewel(g, BOO.green, BOO.light); booFace(g, k, BOO_FRAMED); goldRim(g) },
+  back: g => { jewel(g, BOO.green, '#1a6b52'); goldRim(g); arrowLeft(g, MID, 27); words(g, 'Back', 15, 54) },
   // a player's tokens: Boo's gold coin to spend, an empty ring as big once spent
   coin: (g, k) => { lacquer(g); coin(g, k) },
   'coin-spent': g => { lacquer(g); ring(g, MID, MID, COIN_ACROSS / 2 - 2.5, 3.5, 'rgba(214, 207, 134, 0.5)') },
-  // Boo Chasing Her Tail, over the whole board (Jon, 29 Oct 2026): the claret
+  // Boo Chasing Her Tail, over the whole board (Jon, 29 Oct 2026): the green
   // rug is the floor; Boo herself, the player's piece, big and bright on gold
   // in a gold frame; walls of grey stone (bricks) and her friends (PETS_DRAWN's
-  // pet faces) in her way; her black tail and its white tip (tailFur, tailEnd, tailTip)
+  // pet faces) in her way; her black tail and its white tip (tailFur, tailEnd,
+  // tailTip); a fish to eat and a cucumber to keep off (Jon, 30 Oct 2026)
   rug: g => flat(g, RUG),
+  treat: (g, k) => { flat(g, RUG); glowing(g, k, 'rgba(255, 252, 230, 0.9)', 8, () => emoji(g, PICTURE.fish, 46)) },
+  cucumber: g => { flat(g, RUG); emoji(g, PICTURE.cucumber, 46) },
   'tail-boo': (g, k) => { goldGround(g); glowing(g, k, 'rgba(255, 255, 255, 0.95)', 5, () => booFace(g, k, BOO_PIECE)); rim(g, INK, 6, 1.6); goldRim(g, 2.5, 3.5) },
   wall: g => bricks(g),
   // The Lazy Pointer: the red dot, the sparkles, and Boo napping, waking and after the dot
   dot: (g, k) => { lacquer(g); laserDot(g, k, MID, MID, 19) },
   sparkle: (g, k) => { lacquer(g); glowing(g, k, 'rgba(255, 226, 122, 0.95)', 8, () => sparkle(g, MID, MID, 27, litGold(g))) },
   'boo-nap': (g, k) => { flat(g, HOUSE.charcoal); g.globalAlpha = 0.55; booFace(g, k, 46, MID - 5, MID + 8); g.globalAlpha = 1; snore(g) },
-  'boo-alert': (g, k) => { jewel(g, HOUSE.claret, '#8a4a50'); booFace(g, k, BOO_FULL - 8, MID - 4, MID + 4); bang(g) },
-  chaser: (g, k) => { jewel(g, HOUSE.claret, '#8a4a50'); booFace(g, k, BOO_FULL) },
+  'boo-alert': (g, k) => { jewel(g, BOO.green, BOO.light); booFace(g, k, BOO_FULL - 8, MID - 4, MID + 4); bang(g) },
+  chaser: (g, k) => { jewel(g, BOO.green, BOO.light); booFace(g, k, BOO_FULL) },
   caught: (g, k) => strike(g, () => booFace(g, k, BOO_FRAMED)),
   // Whack-a-Mouse (Boo's friends: PETS_DRAWN below)
   mouse: g => { spot(g); emoji(g, PICTURE.mouse, 50) },
@@ -327,30 +336,38 @@ function menu(g, k, game) {
 
 // ---- Boo Chasing Her Tail: her tail ---------------------------------------
 
-// Her tail is one band of black fur, three keys long, anywhere on the board
-// (Jon, 29 Oct 2026: "run over the entire board"), drawn key by key so the
-// keys line up: across a key, or round a corner (tailFur), from the side it
-// comes from to the middle at its end (tailEnd), and to a white puff ringed in
-// black at its tip (tailTip), pointing the way it lies. Each of its keys is the
-// rug under it, so it lies on the floor next to anything, and the black fur
-// has a soft gold glow, so it stands out from the claret.
+// Her tail is one smooth band of black fur, three to five keys long, anywhere
+// on the board (Jon, 29 Oct 2026: "run over the entire board"), drawn key by
+// key so the keys line up: across a key, or round a corner (tailFur), from the
+// side it comes from to the middle at its end (tailEnd), and to a round white
+// tip ringed in black (tailTip), pointing the way it lies. Each of its keys is
+// the rug under it, so it lies on the floor next to anything; the band has a
+// soft gold glow, so it stands out from the green, and a sheen along it. No
+// tufts and no ruff (Jon, 30 Oct 2026: "Redraw the tail. It still looks like
+// poop.").
 const TURNS = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }
 const FUR_PAIRS = ['left-right', 'down-up', 'down-left', 'down-right', 'left-up', 'right-up'] // lib/arcade.js FUR_PAIRS
 const SIDE = { left: [0, MID], right: [UNIT, MID], up: [MID, 0], down: [MID, UNIT] } // each side's middle
 const TAIL_R = 15 // the tail's half-width
-function tailFur(g, k, a, b) { furOnRug(g, k, () => furPath(g, tailPoints(a, b, 15), TAIL_R)) }
-function tailEnd(g, k, way) { furOnRug(g, k, () => furPath(g, tailPoints(way, null, 8), TAIL_R, 0.72)) }
+function tailFur(g, k, a, b) { const pts = tailPoints(a, b, 15); furOnRug(g, k, () => furPath(g, pts, TAIL_R), pts) }
+function tailEnd(g, k, way) { const pts = tailPoints(way, null, 8); furOnRug(g, k, () => furPath(g, pts, TAIL_R, 0.72), pts) }
 function tailTip(g, k, way) {
   const back = { up: 'down', down: 'up', left: 'right', right: 'left' }[way]
   const x = MID + Math.cos(TURNS[way]) * 13, y = MID + Math.sin(TURNS[way]) * 13
-  furOnRug(g, k, () => { furPath(g, tailPoints(back, null, 8), TAIL_R); fluffPath(g, x, y, 17) })
-  fluff(g, x, y, 13.5, '#fff')
+  furOnRug(g, k, () => { furPath(g, tailPoints(back, null, 8), TAIL_R); g.moveTo(x + 17, y); g.arc(x, y, 17, 0, Math.PI * 2) }, tailPoints(back, null, 8))
+  disc(g, x, y, 13.5, '#fff')
 }
-// The rug, and black fur on it in a gold glow. The fur is one shape, filled
-// once, so the glow goes round its outside only.
-function furOnRug(g, k, shape) {
+// The rug, and the black band on it in a gold glow. The band is one shape,
+// filled once, so the glow goes round its outside only; then a soft sheen
+// along it (a thin light stroke, a little above its middle), so it reads as
+// sleek fur, not a lump.
+function furOnRug(g, k, shape, sheen = null) {
   flat(g, RUG)
   glowing(g, k, 'rgba(255, 226, 122, 1)', 8, () => { g.beginPath(); shape(); g.fillStyle = INK; g.fill() })
+  if (!sheen) return
+  g.beginPath()
+  sheen.forEach(([x, y], i) => (i ? g.lineTo(x - 3, y - 4) : g.moveTo(x - 3, y - 4)))
+  g.lineWidth = 3.5; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = 'rgba(255, 255, 255, 0.16)'; g.stroke()
 }
 // Points along the tail from one side's middle to another's (or to the key's
 // middle, for null): straight, or round the corner two sides share.
@@ -366,27 +383,19 @@ function tailPoints(from, to, n) {
   }
   return Array.from({ length: n }, (_, i) => [x0 + (x1 - x0) * i / (n - 1), y0 + (y1 - y0) * i / (n - 1)])
 }
-// Fur along the points, `r` thick each side (narrowing to `end` of it at the
-// last point), with a tuft out each side every other point: added to the
-// pen's path, for furOnRug to fill.
+// The band along the points, `r` thick each side (narrowing to `end` of it at
+// the last point): discs close together, one smooth shape, added to the pen's
+// path for furOnRug to fill.
 function furPath(g, points, r, end = 1) {
   points.forEach(([x, y], i) => {
     const w = r * (1 - (1 - end) * i / Math.max(1, points.length - 1))
     g.moveTo(x + w, y); g.arc(x, y, w, 0, Math.PI * 2)
-    if (i % 2) return
-    const [px, py] = points[Math.max(0, i - 1)], [nx, ny] = points[Math.min(points.length - 1, i + 1)]
-    const len = Math.hypot(nx - px, ny - py) || 1
-    const ux = -(ny - py) / len, uy = (nx - px) / len // across the tail
-    for (const side of [1, -1]) {
-      const tx = x + ux * w * 0.86 * side, ty = y + uy * w * 0.86 * side
-      g.moveTo(tx + w * 0.38, ty); g.arc(tx, ty, w * 0.38, 0, Math.PI * 2)
-    }
   })
 }
 
 // ---- Knock It Off the Table's scenes ----------------------------------------
 
-// A table across each row: a claret cloth with a gold braid along its top and
+// A table across each row: a green cloth with a gold braid along its top and
 // gold tassels under it. The end key's cloth stops at a gold post, with a
 // gold arrow down where things fall, and a gold rim: the key to press.
 const TOP = 44, BAND = 12 // where the cloth starts, and how deep it is
@@ -394,7 +403,7 @@ function tableTop(g, edge = false) {
   lacquer(g)
   const end = edge ? 54 : UNIT
   const w = g.createLinearGradient(0, TOP, 0, TOP + BAND)
-  w.addColorStop(0, '#8a4a50'); w.addColorStop(1, HOUSE.claret)
+  w.addColorStop(0, BOO.light); w.addColorStop(1, BOO.green)
   g.fillStyle = w; g.fillRect(0, TOP, end, BAND)
   g.fillStyle = GOLD.mid
   g.fillRect(0, TOP - 1.5, end, 2.5)
@@ -608,16 +617,6 @@ function laserDot(g, k, x, y, r) {
     disc(g, x, y, r, f)
   })
 }
-// A puff of fur: a disc with a ruff of little ones round it, one shape
-// (fluffPath adds it to the pen's path; fluff fills it).
-function fluffPath(g, x, y, r) {
-  for (let i = 0; i < 14; i++) {
-    const a = (i / 14) * Math.PI * 2, cx = x + Math.cos(a) * r * 0.78, cy = y + Math.sin(a) * r * 0.78
-    g.moveTo(cx + r * 0.3, cy); g.arc(cx, cy, r * 0.3, 0, Math.PI * 2)
-  }
-  g.moveTo(x + r * 0.84, y); g.arc(x, y, r * 0.84, 0, Math.PI * 2)
-}
-function fluff(g, x, y, r, fill) { g.beginPath(); fluffPath(g, x, y, r); g.fillStyle = fill; g.fill() }
 // Boo asleep: two little gold z's.
 function snore(g) {
   g.fillStyle = GOLD.mid; g.textAlign = 'center'; g.textBaseline = 'middle'
