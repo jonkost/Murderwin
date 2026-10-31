@@ -1418,7 +1418,7 @@ test('the music Shortcuts migration (31 Oct 2026, evening): last; one done card 
     assert.ok(t.tech, 'the technical line under its own heading')
   }
   for (const name of ['Default Jazz', 'Default Jazz 20%', 'Lightbulb Moment Music', 'Get Off My Grass Game Music', 'Intense Music 35%', 'Intense Music 60%', 'Credit Roll Music']) assert.ok(MUSIC_SHORTCUTS_1031_TASKS[0].detail.includes(name), name)
-  assert.match(MUSIC_SHORTCUTS_1031_TASKS[1].detail, /Stop Music/)
+  assert.match(MUSIC_SHORTCUTS_1031_TASKS[1].detail, /PANIC/, "Jon's stop Shortcut")
   let state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
   const once = state.tasks.filter(t => t.order >= 550 && t.order <= 551).length
   state = applyPlan(planAddition(add, state, { newId, now: 2 }), state)

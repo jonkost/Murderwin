@@ -82,10 +82,10 @@ door).
   Music 60%*, *Credit Roll Music*, and for Act 4 three in a row, *Default
   Jazz*, then *Lightbulb Moment Music* (the Study's HomePod), then *Get Off
   My Grass Game Music* (the Orangerie's), from the first round until
-  dessert, when *Default Jazz* brings every HomePod back. You also make
-  one called *Stop Music* that stops them, for the house rules, the
-  blackout, bulletin 1's video, the newscast and The End; without it the
-  brain says so once and the HomePods play on. The Music app then plays
+  dessert, when *Default Jazz* brings every HomePod back. Your *PANIC*
+  Shortcut, which stops all four HomePods, is the stop: the brain runs it
+  for the house rules, the blackout, bulletin 1's video, the newscast and
+  The End. The Music app then plays
   only the cake's song. On this road the music does not dip under a cue
   sound (the HomePods play their own stream), and the chimes and recordings
   reach the HomePods by AirPlay as before: try one chime over the jazz on
@@ -286,7 +286,8 @@ Shortcuts apps are yours.)
    the right music on the right HomePods, and in Shortcuts one shortcut per
    scene, named exactly *Default Jazz*, *Default Jazz 20%*, *Lightbulb
    Moment Music*, *Get Off My Grass Game Music*, *Intense Music 35%*,
-   *Intense Music 60%*, *Credit Roll Music* and *Stop Music*. Make *Default
+   *Intense Music 60%*, *Credit Roll Music* and *PANIC* (the stop: all four
+   HomePods). Make *Default
    Jazz* play on every HomePod, and the two room ones on their own HomePod
    only: in Act 4 the brain runs the jazz first and the two rooms after it.
    Set the volume inside every scene's audio action (31 October: with none

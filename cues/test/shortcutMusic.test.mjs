@@ -19,7 +19,7 @@ test('the sheet names the seven Shortcuts from the rundown, by the playlist keys
     intense35: 'Intense Music 35%',
     intense60: 'Intense Music 60%',
     credits: 'Credit Roll Music',
-    off: 'Stop Music',
+    off: 'PANIC',
   })
   assert.deepEqual(sceneProblems(SHEET), [])
   assert.equal(SHEET.acts['4'].music, 'act4', 'Act 4 is its own setting (cue 11: the Study and the Orangerie play their own music)')
@@ -55,7 +55,7 @@ test('play runs the setting\'s Shortcut(s) in order; pause runs the stop and pau
   await m.duck(); await m.unduck(); await m.speaker({ name: 'Living Room', on: false })
   assert.equal(ran.length, 4, 'nothing more ran')
   await m.pause()
-  assert.equal(ran.at(-1), 'Stop Music')
+  assert.equal(ran.at(-1), 'PANIC', 'the stop is Jon\'s PANIC Shortcut: all four HomePods')
   assert.equal(app.paused, 1, 'the Music app paused too, in case the cake song was on')
   assert.equal(await m.playTrack({ name: 'Happy Birthday for Dogs', volume: 60 }), 'playing', 'the cake song is the Music app\'s')
   assert.deepEqual(await m.nowPlaying(), { playing: true })
@@ -95,7 +95,7 @@ test('fake mode runs nothing and says what it would run', async () => {
   const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner: createShortcutRunner({ run: async () => { throw new Error('must not run') } }), log: l => logs.push(l), fake: true })
   await m.play({ playlist: 'act4' })
   await m.pause()
-  assert.deepEqual(logs, ['[music] would run the Default Jazz Shortcut', '[music] would run the Lightbulb Moment Music Shortcut', '[music] would run the Get Off My Grass Game Music Shortcut', '[music] would run the Stop Music Shortcut'])
+  assert.deepEqual(logs, ['[music] would run the Default Jazz Shortcut', '[music] would run the Lightbulb Moment Music Shortcut', '[music] would run the Get Off My Grass Game Music Shortcut', '[music] would run the PANIC Shortcut'])
 })
 
 test('the planner asks for act4 on entering Act 4 and jazz again for dessert, so the rooms\' music comes and goes with the act', () => {
