@@ -47,6 +47,8 @@ const ART = { faceRgba, faceSolid, stripRgba } // what the deck's painter draws 
 const WARM_FACES = [...new Set([...MENU_FACES, ...FACE_IDS])]
 // The arrow keys play the games.
 const ARROW_KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }
+const STRIP_TAP = { kind: 'strip', x: 0 } // the winner's page goes on only at a tap on the strip, so its OK and the space bar are one
+const SLIDE_MIN = 16 // strip pixels: a click on the drawn strip that wanders less than this is a tap
 // &strip=whole: the touch strip is sent whole every time, if the parts ever show wrong.
 function wholeStrip() {
   try { return new URLSearchParams(window.location.search).get('strip') === 'whole' } catch { return false }
@@ -338,7 +340,7 @@ export default function BooArcade({ sample = null, onRecord = null }) {
       let ev = null
       if (e.repeat) return // a key held down is one press, like one click of a dial (31 Oct 2026: nothing on the deck can be held)
       if (ARROW_KEYS[e.key]) ev = { kind: 'arrow', dir: ARROW_KEYS[e.key] }
-      else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = { kind: 'press', dial: 0 } }
+      else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = arcadeRef.current?.stage === 'winner' ? STRIP_TAP : { kind: 'press', dial: 0 } }
       else if (e.key === 'Escape') {
         const a = arcadeRef.current
         if (a?.stage === 'ready') ev = { kind: 'key', index: BACK_KEY }
@@ -462,7 +464,7 @@ export default function BooArcade({ sample = null, onRecord = null }) {
   const sub = !visit ? 'Free play' : screen?.free && stage !== 'farewell' ? 'Free play until the chime' : "A group's visit, for practice"
   const onDeck = deck === 'connected' // the Stream Deck is the game: the screen shows its news
   // a moment's Start, Back and OK on the screen only while the deck is drawn there: with the Stream Deck, its keys do it
-  const go = live && !onDeck ? () => input({ kind: 'press', dial: 0 }) : null
+  const go = live && !onDeck ? () => input(stage === 'winner' ? STRIP_TAP : { kind: 'press', dial: 0 }) : null
   const back = live && !onDeck ? () => input({ kind: 'key', index: BACK_KEY }) : null
   // At the top: Leave this game while one is on its how-to, its count or its play (Jon, 30 Oct 2026: an exit in
   // every game), and in a visit, at any moment, Back to free play, which ends the visit
@@ -698,22 +700,32 @@ function hit(onInput, ev) {
     onClick: e => { if (e.detail === 0) onInput(ev) },
   }
 }
-function stripHit(onInput) {
+// The strip drawn on the screen says what the real one says, once the finger
+// lifts: a tap where it touched, or a slide from there to where it lifted (a
+// click that wanders less than SLIDE_MIN is still a tap). `slide` keeps where
+// it touched: the deck may be drawn again before the finger lifts.
+function stripHit(onInput, slide) {
   if (!onInput) return {}
+  const at = e => {
+    const r = e.currentTarget.getBoundingClientRect()
+    return r.width > 0 ? (e.clientX - r.left) / r.width * STRIP_W : 0
+  }
   return {
     onPointerDown: e => {
       if (e.button !== 0) return
       e.preventDefault()
-      const r = e.currentTarget.getBoundingClientRect()
-      onInput({ kind: 'strip', x: r.width > 0 ? (e.clientX - r.left) / r.width * STRIP_W : 0 })
+      e.currentTarget.setPointerCapture?.(e.pointerId) // the lift counts even off the strip's end
+      slide.current = at(e)
     },
-    // a finger or the pointer sliding along it (Yarn Catch's rail, 30 Oct 2026): where it is now
-    onPointerMove: e => {
-      if (!(e.buttons & 1)) return
-      const r = e.currentTarget.getBoundingClientRect()
-      onInput({ kind: 'strip', x: r.width > 0 ? (e.clientX - r.left) / r.width * STRIP_W : 0 })
+    onPointerUp: e => {
+      const from = slide.current
+      if (from == null) return
+      slide.current = null
+      const to = at(e)
+      onInput(Math.abs(to - from) < SLIDE_MIN ? { kind: 'strip', x: from } : { kind: 'swipe', from, to })
     },
-    onClick: e => { if (e.detail === 0) onInput({ kind: 'press', dial: 0 }) },
+    onPointerCancel: () => { slide.current = null },
+    onClick: e => { if (e.detail === 0) onInput(STRIP_TAP) },
   }
 }
 
@@ -722,6 +734,7 @@ function stripHit(onInput) {
 // pictures the deck shows.
 function Deck({ view, art, onInput }) {
   const labels = view.strip?.dials ?? []
+  const slide = useRef(null)
   return (
     <div className="arcade-deck" role="group" aria-label="The Stream Deck">
       {view.faces.map((face, i) => {
@@ -732,7 +745,7 @@ function Deck({ view, art, onInput }) {
           </button>
         )
       })}
-      <button type="button" className="arcade-strip" style={STRIP_BOX} aria-label="The touch strip" {...stripHit(onInput)}>
+      <button type="button" className="arcade-strip" style={STRIP_BOX} aria-label="The touch strip" {...stripHit(onInput, slide)}>
         {art ? <StripPicture strip={view.strip} /> : null}
       </button>
       {DIAL_BOXES.map((box, d) => {

@@ -759,11 +759,13 @@ function catHead(g, x, y, h) {
 // centres, 100 to 1180, less the strip's left edge at 40).
 const DIAL_X = [60, 276, 492, 708, 924, 1140]
 const PAD = 24, GAP = 28 // the strip's side margins, and the space around the middle words
+const STRIP_BASKET = 72 // Yarn Catch's basket on the strip, the size it is on a key
 
 // The strip as lib/arcade.js describes it, tidied: the three words; in a
 // game, its points (`score`), its strike boxes (`marks`), its time as lights
 // (`clock`: the time left and the whole, as a bar counting down with the time
 // under it); six dial labels. `zones` is always null since 31 Oct 2026.
+// `basket`, in Yarn Catch's play, is where the basket sits along the strip.
 const upTo = (v, top) => Math.min(top, Math.max(0, Math.round(Number(v)) || 0))
 function stripShape(strip) {
   const t = v => (v == null ? '' : String(v))
@@ -774,6 +776,7 @@ function stripShape(strip) {
     marks: strip?.marks ? { of: upTo(strip.marks.of, 5), used: upTo(strip.marks.used, 5), label: t(strip.marks.label) } : null,
     clock: strip?.clock && Number.isFinite(Number(strip.clock.length)) && Number(strip.clock.length) > 0 ? { left: Math.max(0, Number(strip.clock.left) || 0), length: Number(strip.clock.length) } : null,
     zones: null, // Yarn Catch's rail along the top went on 31 Oct 2026; kept in the shape so every strip has the same parts
+    basket: strip?.basket == null || !Number.isFinite(Number(strip.basket)) ? null : upTo(strip.basket, STRIP_W),
     dials: [0, 1, 2, 3, 4, 5].map(i => t(strip?.dials?.[i])),
   }
 }
@@ -813,6 +816,12 @@ function drawStrip(s) {
     const rule = g.createLinearGradient(0, 0, STRIP_W, 0)
     rule.addColorStop(0, GOLD.lo); rule.addColorStop(0.5, GOLD.hi); rule.addColorStop(1, GOLD.lo)
     g.fillStyle = rule; g.fillRect(0, 0, STRIP_W, 3); g.fillRect(0, STRIP_H - 3, STRIP_W, 3)
+
+    // Yarn Catch: nothing but the basket, kept whole on the strip (Jon, 1 Nov 2026: "only the basket emoji")
+    if (s.basket != null) {
+      emoji(g, PICTURE.basket, STRIP_BASKET, Math.min(STRIP_W - STRIP_BASKET * 0.6, Math.max(STRIP_BASKET * 0.6, s.basket)), STRIP_H / 2)
+      return c
+    }
 
     const dials = s.dials.some(Boolean)
     const y = dials ? 36 : STRIP_H / 2 // the middle of the top line

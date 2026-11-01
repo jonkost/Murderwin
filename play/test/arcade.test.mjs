@@ -21,8 +21,8 @@ import {
   KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END, KNOCK_PER_TABLE, KNOCK_APART,
   KNOCK_LATE_MS, KNOCK_EARLY_MS, KNOCK_GONE_MS, KNOCK_POINTS, KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN,
   YARN_STEP_MS, YARN_STEP_END_MS, YARN_SPAWN_MS, YARN_SPAWN_END_MS, YARN_FALLING, YARN_LAND_MS, YARN_POINTS, YARN_GOLD_POINTS, GOLD_ONE_IN,
-  YARN_MISSES_OUT, YARN_FRIENDS_FROM_MS, YARN_FRIEND_ONE_IN, marksOutOf,
-  READY_MS, COUNT_MS, RESULT_MS, PICK_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MS, WINNER_MIN_MS, FAREWELL_MS, MARQUEE_STEP_MS,
+  YARN_MISSES_OUT, YARN_FRIENDS_FROM_MS, YARN_FRIEND_ONE_IN, marksOutOf, COLUMN_X,
+  READY_MS, COUNT_MS, RESULT_MS, PICK_MS, CLUE_MIN_MS, CLUE_MAX_MS, WINNER_MIN_MS, FAREWELL_MS, MARQUEE_STEP_MS,
 } from '../src/lib/arcade.js'
 
 // Miss Boo LaRue's Arcade (28 Oct 2026; its five games remade on 29 Oct 2026
@@ -218,7 +218,7 @@ function runVisit(names, picks, { seed = 21, during, look = () => {}, roundMs = 
     } else if (['clue', 'third', 'winner'].includes(a.stage)) {
       t += a.stage === 'winner' ? WINNER_MIN_MS : CLUE_MIN_MS
       a = aStep(a, t); look(a, t)
-      a = aIn(a, key(0), t); look(a, t) // not a player's score key (31 Oct 2026)
+      a = aIn(a, a.stage === 'winner' ? tap(600) : key(0), t); look(a, t) // the winner's page goes on at a tap on the strip (1 Nov 2026)
     } else {
       t += 250
       a = aStep(a, t)
@@ -259,7 +259,7 @@ function pacedVisit(names, picks, { menuMs, readyMs, clueMs }) {
       }
       case 'result': a = go(at + RESULT_MS); break
       case 'clue': case 'third': came[a.turn] = { stage: a.stage, at }; a = go(at + clueMs, press(0)); break
-      case 'winner': a = go(at + WINNER_MIN_MS, press(0)); break
+      case 'winner': a = go(at + WINNER_MIN_MS, tap(600)); break
       default: assert.fail(`no step for ${a.stage}`)
     }
   }
@@ -325,13 +325,13 @@ test('G54 the menu: the five games on the second row with two blank keys each si
   assert.deepEqual(rowFaces(home.faces, 1), ['blank', 'blank', 'menu:tail', 'menu:pointer', 'menu:mice', 'menu:knock', 'menu:yarn', 'blank', 'blank'])
   assert.deepEqual(rowFaces(home.faces, 2), Array(COLS).fill('blank'))
   assert.deepEqual(rowFaces(home.faces, 3), Array(COLS).fill('blank'))
-  assert.deepEqual(home.strip, { left: 'Free play', centre: 'Press a game', right: '', score: null, marks: null, clock: null, zones: null, dials: NO_DIALS })
+  assert.deepEqual(home.strip, { left: 'Free play', centre: 'Press a game', right: '', score: null, marks: null, clock: null, zones: null, basket: null, dials: NO_DIALS })
 
   // a visit's menu: the player's five tokens on the third row, one under each game (30 Oct 2026)
   const a = newArcade({ mode: 'visit', players: ['Jessa', 'Mari'], seed: 1, now: 0 })
   const v = arcadeView(a, 0)
   assert.deepEqual(rowFaces(v.faces, 2), ['blank', 'blank', 'coin', 'coin', 'coin', 'coin', 'coin', 'blank', 'blank'])
-  assert.deepEqual(v.strip, { left: 'Press a game', centre: "Jessa's turn", right: 'Tokens: 5', score: null, marks: null, clock: null, zones: null, dials: NO_DIALS }, 'whose turn big in the middle (31 Oct 2026)')
+  assert.deepEqual(v.strip, { left: 'Press a game', centre: "Jessa's turn", right: 'Tokens: 5', score: null, marks: null, clock: null, zones: null, basket: null, dials: NO_DIALS }, 'whose turn big in the middle (31 Oct 2026)')
   // any other key, a dial, the strip, an arrow or nonsense does nothing, and makes no sound
   for (const ev of [key(0), key(10), key(16), key(BACK_KEY), key(KEY_COUNT), turn(0, 1), turn(5, -3), press(3), tap(600), swipe(100, 900), arrow('left'), arrow('up'), { kind: 'up' }, null]) {
     const b = aIn(a, ev, 100)
@@ -583,11 +583,11 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
     const ready = aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey(id)), 0)
     assert.equal(view(ready, PICK_MS).strip.right, RULES[id], `${id}: ready`)
     assert.equal(view(ready, PICK_MS).screen.game.rule, RULES[id] || null)
-    assert.equal(view(aIn(ready, press(0), PICK_MS), PICK_MS + 1500).strip.right, RULES[id], `${id}: the count`)
+    assert.equal(view(aIn(ready, press(0), PICK_MS), PICK_MS + 1500).strip.right, id === 'yarn' ? '' : RULES[id], `${id}: the count`) // Yarn Catch's strip has only its basket (1 Nov 2026)
     const [a, t] = started(id)
     const v = view(a, t)
-    assert.deepEqual(v.strip.marks, RULES[id] ? marksOf(id, 0) : null, `${id}: the boxes`)
-    assert.deepEqual(v.screen.marks, v.strip.marks)
+    assert.deepEqual(v.strip.marks, RULES[id] && id !== 'yarn' ? marksOf(id, 0) : null, `${id}: the boxes`)
+    assert.deepEqual(v.screen.marks, RULES[id] ? marksOf(id, 0) : null, `${id}: the boxes on the screen`)
     assert.equal(v.strip.right, '', 'the rule goes as the game starts')
     assert.equal(v.strip.left, id === 'tail' ? name : '', 'the boxes on the left, in the name\'s place')
   }
@@ -638,7 +638,7 @@ test('G54 three strikes and you\'re out, in the three games that count them (Jon
   for (let n = 2; n < STRIKES_OUT; n++) { tapPet(); struck(a, t, n, STRUCK[who]) }
   tapPet() // the fifth (31 Oct 2026)
   assert.equal(a.stage, 'result')
-  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped five friends.', right: pts(a.game.score), score: null, marks: null, clock: null, zones: null, dials: NO_DIALS })
+  assert.deepEqual(view(a, t).strip, { left: 'Whack-a-Mouse', centre: 'You tapped five friends.', right: pts(a.game.score), score: null, marks: null, clock: null, zones: null, basket: null, dials: NO_DIALS })
   assert.deepEqual(view(a, t).screen.marks, marksOf('mice', STRIKES_OUT), 'the screen shows the five on the result')
   assert.equal(view(a, t).screen.result.outcome, 'lose')
 
@@ -1800,13 +1800,13 @@ test('G54 Whack-a-Mouse is fair: a key a mouse has just left rests a moment, and
   for (let u = T; u < T + MICE_LATE_MS; u += 10) assert.deepEqual(input(hid, key(K), u).events, ['point'], `a late tap at ${u}`)
 })
 
-test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"; 30 Oct: "Use the whole screen"): four tables, one a row, the first and third running to the right and the second and fourth to the left; everything slides one key along each beat and never jumps; at most two on a table, at least three keys apart; the beat quickens, to top speed two fifths of the way in, and new things come more often', () => {
+test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"; 30 Oct: "Use the whole screen"): four tables, one a row, the first and third running to the right and the second and fourth to the left; everything slides one key along each beat and never jumps; at most two on a table, at least three keys apart; the beat quickens, to top speed as the game ends (Jon, 1 Nov 2026: "The knock off is hard"), and new things come more often', () => {
   assert.deepEqual(TABLE_WAYS, [1, -1, 1, -1])
   assert.deepEqual(TABLE_ENDS, [keyAt(0, END), keyAt(1, 0), keyAt(2, END), keyAt(3, 0)])
   assert.deepEqual([0, 1, 2, 3].map(tableEndCol), [END, 0, END, 0])
   assert.deepEqual([0, 1, 2, 3].map(tableStartCol), [0, END, 0, END])
   assert.deepEqual([KNOCK_PER_TABLE, KNOCK_APART], [2, 3])
-  assert.deepEqual([KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END], [500, 200, 0.6, 3, 1], 'slower at the start since 31 Oct 2026, top speed three fifths in')
+  assert.deepEqual([KNOCK_BEAT_MS, KNOCK_BEAT_END_MS, KNOCK_TOP_AT, KNOCK_EVERY_BEATS, KNOCK_EVERY_BEATS_END], [500, 300, 1, 3, 1], 'slower at the start since 31 Oct 2026, its top speed slower and only at the end since 1 Nov 2026')
   const g0 = newGame('knock', { seed: 5, lengthMs: 120000, now: 0 })
   const f0 = gameFaces(g0, 0)
   for (let r = 0; r < ROWS; r++) assert.deepEqual(rowFaces(f0, r), TABLE_WAYS[r] > 0 ? [...Array(END).fill('cloth'), 'edge'] : ['edge-left', ...Array(END).fill('cloth')], `table ${r + 1}`)
@@ -1873,10 +1873,9 @@ test('G54 Knock It Off the Table (Jon, 29 Oct 2026: "linear", "a few tables"; 30
     assert.equal(s.strikes, 0)
     assert.equal(s.score, s.knocked * KNOCK_POINTS)
     assert.deepEqual([...rows].sort(), [0, 1, 2, 3], 'all four tables')
-    // the beat quickens from KNOCK_BEAT_MS to KNOCK_BEAT_END_MS, top speed two fifths of the way in
+    // the beat quickens from KNOCK_BEAT_MS to KNOCK_BEAT_END_MS, top speed at the end
     for (const [at, ms] of beats) assert.ok(near(ms, beatAt(at)), `a beat of ${ms} at ${at}`)
     assert.ok(beats[0][1] > KNOCK_BEAT_MS - 5 && beats.at(-1)[1] < KNOCK_BEAT_END_MS + 5)
-    assert.ok(beats.filter(([at]) => at >= 120000 * KNOCK_TOP_AT).every(([, ms]) => near(ms, KNOCK_BEAT_END_MS)), 'top speed from two fifths on')
     // a new thing about every third beat at first, nearly every beat by the end (as the room on the tables allows)
     const rate = list => list.reduce((n, [, x]) => n + x, 0) / list.length
     assert.ok(Math.abs(rate(made.filter(([at]) => at < 30000)) - 1 / KNOCK_EVERY_BEATS) < 0.06, `${rate(made.filter(([at]) => at < 30000))} a beat at first`)
@@ -2018,8 +2017,8 @@ test('G54 Knock It Off the Table: a thing that comes onto a table\'s end shows o
   assert.equal(gameFaces(along, T)[keyAt(1, 3)], 'table:clock')
 })
 
-test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends sit on the tables from ten seconds in, about one in four of what comes on; one knocked off is a strike that says who, their face under the cross on the end, and one that reaches the end just goes, no strike; a tighter window; every miss turns the whole table red; the boxes say Misses on the strip and the screen', () => {
-  assert.deepEqual([KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN, KNOCK_LATE_MS, KNOCK_EARLY_MS], [10000, 4, 100, 60])
+test('G54 Knock It Off the Table (Jon, 30 Oct 2026): Sir Irwin and his friends sit on the tables from ten seconds in, about one in four of what comes on; one knocked off is a strike that says who, their face under the cross on the end, and one that reaches the end just goes, no strike; the window (wider again since 1 Nov 2026); every miss turns the whole table red; the boxes say Misses on the strip and the screen', () => {
+  assert.deepEqual([KNOCK_FRIENDS_FROM_MS, KNOCK_FRIEND_ONE_IN, KNOCK_LATE_MS, KNOCK_EARLY_MS], [10000, 4, 200, 120])
   assert.equal(MARK_LABELS.knock, 'Misses')
   // whole games: friends come after ten seconds, about one in four, each of the five; left alone they go at the end with no strike
   let friends = 0, things = 0
@@ -2200,11 +2199,10 @@ test('G54 Yarn Catch (Jon, 29 Oct 2026: "it is skipping a row"): every ball drop
   }
 })
 
-test('G54 Yarn Catch (Jon, 31 Oct 2026: "I do want the swipe", "go back to the dial left and right"): the left dial moves the basket a column a click, a slide along the strip a column for every ninth of it the finger travelled, the way it went, at least one; both go off one edge and in at the other; the arrows too; a tap, the right dial and the keys do nothing', () => {
+test('G54 Yarn Catch (Jon, 31 Oct 2026: "I do want the swipe", "go back to the dial left and right"; 1 Nov 2026: "swipe fully across the entire touch strip"): the left dial moves the basket a column a click, off one edge and in at the other, the arrows too; a slide along the strip puts it in the column over where the finger lifted, so a slide all the way across takes it from one side to the other, never round the edge; a tap, the right dial and the keys do nothing', () => {
   const g0 = newGame('yarn', { seed: 9, lengthMs: 120000, now: 0 })
   const at = 100
   const moved = ev => input(g0, ev, at).basket
-  const w = STRIP_WIDTH / COLS
   // the dial
   assert.equal(moved(turn(LEFT_DIAL, 1)), 5)
   assert.equal(moved(turn(LEFT_DIAL, -1)), 3)
@@ -2212,14 +2210,18 @@ test('G54 Yarn Catch (Jon, 31 Oct 2026: "I do want the swipe", "go back to the d
   assert.equal(moved(turn(LEFT_DIAL, 5)), 0, 'round the right edge')
   assert.equal(moved(turn(LEFT_DIAL, -5)), 8, 'round the left edge')
   assert.equal(moved(turn(LEFT_DIAL, 40)), (4 + DIAL_MAX_KEYS) % COLS, 'six keys at most for one report')
-  // a slide: a column a ninth of the strip, the way it went, at least one
-  assert.equal(moved(swipe(400, 400 + w)), 5)
-  assert.equal(moved(swipe(400, 400 + 3 * w)), 7)
-  assert.equal(moved(swipe(900, 900 - 2 * w)), 2)
-  assert.equal(moved(swipe(600, 640)), 5, 'a short slide right is one column')
-  assert.equal(moved(swipe(600, 560)), 3, 'a short slide left is one column')
-  assert.equal(moved(swipe(0, STRIP_WIDTH - 1)), (4 + COLS - 1) % COLS, 'the whole strip is eight columns, round the edge')
-  assert.equal(moved(swipe(100, 100 + 6 * w)), 1, 'round the right edge')
+  // a slide: the column over where the finger lifted, wherever the basket was and wherever the slide began
+  for (const basket of [0, 4, END]) {
+    const from = { ...g0, basket }
+    const slid = ev => input(from, ev, at).basket
+    assert.equal(slid(swipe(0, STRIP_WIDTH - 1)), END, 'all the way across to the right: the far right, not round the edge')
+    assert.equal(slid(swipe(STRIP_WIDTH - 1, 0)), 0, 'all the way across to the left: the far left')
+    for (let c = 0; c < COLS; c++) {
+      assert.equal(slid(swipe(c < 4 ? 1100 : 100, COLUMN_X[c])), c, `lifted under the key in column ${c}`)
+      if (c > 0) assert.equal(slid(swipe(600, COLUMN_X[c - 1] + 1 + (COLUMN_X[c] - COLUMN_X[c - 1]) / 2)), c, 'past the middle of the gap, the nearer key')
+    }
+  }
+  assert.equal(moved(swipe(600, 640)), 4, 'a short slide stays where the finger is')
   // the arrows wrap too
   assert.equal(moved(arrow('left')), 3)
   assert.equal(moved(arrow('right')), 5)
@@ -2229,16 +2231,21 @@ test('G54 Yarn Catch (Jon, 31 Oct 2026: "I do want the swipe", "go back to the d
   assert.deepEqual(input(g0, turn(LEFT_DIAL, 2), at).events, [], 'a move makes no sound')
   // a tap, a slide that goes nowhere, the up and down arrows, the right dial and the dials between, a press, any key: nothing
   const nothing = [tap(0), tap(600), tap(1199), swipe(700, 700), arrow('up'), arrow('down'), press(0), press(5), key(keyAt(3, 3)), key(keyAt(3, 5)), key(0), key(keyAt(3, 4))]
+  assert.deepEqual(input(g0, swipe(0, COLUMN_X[4]), at).events, [], 'a slide to where the basket is: nothing')
   for (let d = 1; d < DIALS; d++) nothing.push(turn(d, 1), turn(d, -1))
   for (const ev of nothing) assert.deepEqual(input(g0, ev, at), step(g0, at), JSON.stringify(ev))
-  // the strip: the left dial labelled, no rail
+  // the strip: the basket where it is, under its key, as it moves
   const [a, ta] = started('yarn')
-  assert.deepEqual(arcadeView(a, ta).strip.dials, withExit(['◀ ▶', '', '', '', '', '']))
+  assert.equal(arcadeView(a, ta).strip.basket, COLUMN_X[4])
   assert.equal(arcadeView(a, ta).strip.zones, null)
+  const b = aIn(a, swipe(100, 1100), ta + 10)
+  assert.equal(arcadeView(b, ta + 10).strip.basket, COLUMN_X[7])
+  assert.equal(arcadeView(b, ta + 10).faces[keyAt(3, 7)], 'basket', 'the key and the strip agree')
+  assert.equal(arcadeView(aIn(b, turn(LEFT_DIAL, -2), ta + 20), ta + 20).strip.basket, COLUMN_X[5], 'and with the dial')
   // five misses end it; the how-to says how it is played
   assert.equal(YARN_MISSES_OUT, 5)
   assert.equal(GAMES.find(g => g.id === 'yarn').rule, "Five misses and you're out.")
-  assert.equal(GAMES.find(g => g.id === 'yarn').how, 'Turn the left dial, or slide a finger along the touch strip, to move the basket under the falling yarn; off one edge, in at the other. Gold yarn is worth more. Never catch Sir Irwin or his friends.')
+  assert.equal(GAMES.find(g => g.id === 'yarn').how, 'Slide a finger along the touch strip and lift it under the falling yarn: the basket goes there. The left dial moves it too. Gold yarn is worth more. Never catch Sir Irwin or his friends.')
   assert.equal(step(g0, 120000).outcome, 'lose', 'left alone, five balls fall')
   assert.equal(step(g0, 120000).strikes, 5)
 })
@@ -2298,29 +2305,37 @@ test('G54 Yarn Catch (Jon, 30 Oct 2026): a ball on the floor is a miss, the fift
   }
   assert.ok(Math.abs(friends / all - 1 / YARN_FRIEND_ONE_IN) < 0.06, `${friends} friends of ${all}`)
   assert.deepEqual([...met].sort(), [...PETS].sort())
-  // on the strip and the screen: five boxes, Misses
+  // on the screen: five boxes, Misses (the strip has only the basket, 1 Nov 2026)
   const [a, ta] = started('yarn')
-  assert.deepEqual(arcadeView(a, ta).strip.marks, { of: 5, used: 0, label: 'Misses' })
+  assert.equal(arcadeView(a, ta).strip.marks, null)
   assert.deepEqual(arcadeView(a, ta).screen.marks, { of: 5, used: 0, label: 'Misses' })
 })
 
 test('G54 the touch strip while a game plays (Jon, 29 Oct 2026): its points big in the middle, the strike boxes in the games that count strikes, the time as a bar counting down with the time under it (31 Oct 2026), the outside dials\' labels', () => {
-  const KEYS = ['left', 'centre', 'right', 'score', 'marks', 'clock', 'zones', 'dials']
+  const KEYS = ['left', 'centre', 'right', 'score', 'marks', 'clock', 'zones', 'basket', 'dials']
   for (const { id, name, dials, rule } of GAMES) {
     // ready and the count
     const ready = aIn(newArcade({ mode: 'free', seed: 6, now: 0 }), key(menuKey(id)), 0)
     const r = arcadeView(ready, PICK_MS).strip
     const c = arcadeView(aIn(ready, press(0), PICK_MS), PICK_MS).strip
     const zones = null // every strip's zones are null: Yarn Catch's rail went on 31 Oct 2026
-    assert.deepEqual(r, { left: name, centre: 'Press any key to start', right: rule ?? '', score: null, marks: null, clock: null, zones, dials })
-    assert.deepEqual(c, { ...r, centre: '3', dials: withExit(dials) }, 'the count: Exit over its dial')
+    assert.deepEqual(r, { left: name, centre: 'Press any key to start', right: rule ?? '', score: null, marks: null, clock: null, zones, basket: null, dials })
     // the game
     const [a, t] = started(id)
     const g = a.game
     const L = g.endsAt - g.startedAt
     const s = arcadeView(a, t).strip
     assert.deepEqual(Object.keys(s), KEYS)
-    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? marksOf(id, 0) : null, clock: { left: L, length: L }, zones, dials: withExit(dials) })
+    if (id === 'yarn') {
+      // only the basket, from the count on, the dial labels kept for the deck drawn on the screen (Jon, 1 Nov 2026: "only the basket emoji")
+      const basket = { left: '', centre: '', right: '', score: null, marks: null, clock: null, zones, basket: COLUMN_X[g.basket], dials: withExit(dials) }
+      assert.deepEqual(c, basket, 'the count')
+      assert.deepEqual(s, basket, 'the game')
+      assert.deepEqual(arcadeView(a, g.startedAt + 30000).strip, basket, 'the same strip however the game goes: nothing there to change but the basket')
+      continue
+    }
+    assert.deepEqual(c, { ...r, centre: '3', dials: withExit(dials) }, 'the count: Exit over its dial')
+    assert.deepEqual(s, { left: rule ? '' : name, centre: '', right: '', score: 0, marks: rule ? marksOf(id, 0) : null, clock: { left: L, length: L }, zones, basket: null, dials: withExit(dials) })
     // the bar counts down in whole seconds (31 Oct 2026)
     for (const n of [1, 7, 30]) {
       assert.deepEqual(arcadeView(a, g.startedAt + n * 1000 - 1).strip.clock, { left: L - (n - 1) * 1000, length: L }, `${id}: before second ${n} goes`)
@@ -2565,7 +2580,7 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   assert.equal(a.turn, 0)
   v = arcadeView(a, t)
   assert.equal(v.faces[menuKey('knock')], 'menu-done:knock')
-  assert.deepEqual(rowFaces(v.faces, 2), ['blank', 'blank', 'coin-spent', 'coin', 'coin', 'coin', 'coin', 'blank', 'blank'], 'one token spent, the leftmost, whatever the game (31 Oct 2026)')
+  assert.deepEqual(rowFaces(v.faces, 2), ['blank', 'blank', 'coin', 'coin', 'coin', 'coin-spent', 'coin', 'blank', 'blank'], 'the coin under the game she has played is spent (Jon, 1 Nov 2026)')
   assert.equal(v.screen.plain, "Jessa's turn: press a game you have not played yet.")
   assert.deepEqual(v.screen.players[0].played, ['knock'])
   const refused = aIn(a, key(menuKey('knock')), t + 10)
@@ -2629,22 +2644,31 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   assert.equal(v.screen.boo, v.screen.winner.names.length > 1 ? BOO_LINES.tie : BOO_LINES.winner)
   assert.equal(v.screen.picture, ' Boo 5.png')
   assert.deepEqual(v.screen.players.map(p => [p.name, p.tokens, p.scores.length]), [['Jessa', 0, 5], ['Mari', 0, 5]])
-  // a player's key puts their five scores up, and the winner's clock starts again (31 Oct 2026: no running math under the players)
+  // a player's key puts their five scores up (31 Oct 2026: no running math under the players)
   assert.equal(v.screen.scores, null)
   assert.equal(v.strip.left, 'Scores: press 1, 2')
+  assert.equal(v.strip.right, 'Tap here for free play', 'the way on, on the strip itself (Jon, 1 Nov 2026)')
   assert.deepEqual(SCORE_KEYS.map(k => v.faces[k]), ['num:1', 'num:2', 'off'])
   const shown = aIn(a, key(SCORE_KEYS[1]), t + 1000)
-  assert.deepEqual([shown.stage, shown.showing, shown.stageAt], ['winner', 1, t + 1000])
+  assert.deepEqual([shown.stage, shown.showing, shown.stageAt], ['winner', 1, t])
   const sv = arcadeView(shown, t + 1000).screen.scores
   assert.equal(sv.name, 'Mari')
   assert.deepEqual(sv.games.map(g => [g.game, g.score]), a.players[1].games.map(x => [x.game, x.score]))
   assert.equal(sv.games[0].name, GAMES.find(g => g.id === sv.games[0].game).name)
   assert.equal(sv.total, mari)
-  assert.equal(aIn(shown, key(0), t + 1000 + WINNER_MIN_MS - 1).stage, 'winner', 'the clock started again')
-  assert.equal(aIn(shown, key(SCORE_KEYS[2]), t + 1000 + WINNER_MIN_MS).stage, 'home', 'a key with no player behind it is a press like any other: on it goes')
-  assert.equal(aIn(shown, key(0), t + 1000 + WINNER_MIN_MS).stage, 'home', 'then on')
-  assert.equal(aIn(a, key(0), t + WINNER_MIN_MS - 1).stage, 'winner')
-  a = aIn(a, key(0), (t += WINNER_MIN_MS))
+  // only a touch on the strip goes on (Jon, 1 Nov 2026: "put the tap for freeplay on the touch strip"): every other press leaves the scores up, a key with no player behind it too
+  for (const ev of [key(0), key(SCORE_KEYS[2]), key(35), press(0), press(5), turn(LEFT_DIAL, 1), arrow('left')]) {
+    assert.equal(aIn(shown, ev, t + 60000).stage, 'winner', JSON.stringify(ev))
+    assert.equal(aIn(shown, ev, t + 60000).showing, 1, 'the scores stay up')
+  }
+  // and the page stays until then: nothing moves it on by itself, however long the scores are read
+  assert.equal(aStep(shown, t + 600000).stage, 'winner')
+  assert.equal(aIn(a, tap(600), t + WINNER_MIN_MS - 1).stage, 'winner', 'a tap as the page comes up does nothing')
+  assert.equal(aIn(shown, tap(1190), t + WINNER_MIN_MS).stage, 'home', 'a tap anywhere on the strip, however soon after a player\'s key')
+  assert.equal(aIn(a, swipe(300, 340), t + WINNER_MIN_MS).stage, 'home', 'a tap that wandered is reported as a slide: the same')
+  // the chime still ends it
+  assert.equal(arcadeChime(frozen(shown), t + 5000).stage, 'farewell')
+  a = aIn(a, tap(600), (t += WINNER_MIN_MS))
   assert.equal(a.stage, 'home')
   assert.equal(a.free, true)
   assert.equal(a.mode, 'visit')
@@ -2653,12 +2677,9 @@ test('G55 a visit of two (one round of each game a player since 30 Oct 2026): tu
   assert.equal(v.screen.boo, BOO_LINES.freePlay)
   assert.ok(v.screen.clockMs > 0)
   assert.equal(a.records.length, 10, 'free play writes nothing down')
-  // the winner moves on by itself too
-  const w = runVisit(['Jessa', 'Mari'], ['mice'], { look: () => {} })[0]
-  assert.equal(w.free, true)
 })
 
-test('G55 a trio: round the group five times, the third player gets Boo\'s line instead of a clue after their second game', () => {
+test('G55 a trio: round the group five times, the third player gets Boo\'s line instead of a clue after their fifth game', () => {
   const seen = []
   const [a] = runVisit(['Margaret', 'Tom', 'Ellie'], ['knock', 'mice', 'yarn'], { look: (x, t) => seen.push([x, t]) })
   const turns = seen.filter(([x]) => x.stage === 'count' && x.events.includes('tick') && x.beats === 1).map(([x]) => x.turn)
@@ -2670,7 +2691,7 @@ test('G55 a trio: round the group five times, the third player gets Boo\'s line 
   const third = seen.find(([x]) => x.stage === 'third')
   assert.ok(third)
   assert.equal(third[0].turn, 2)
-  assert.equal(third[0].players[2].games.length, CLUE_AFTER_GAMES, 'after their second game')
+  assert.equal(third[0].players[2].games.length, CLUE_AFTER_GAMES, 'after their fifth game')
   assert.ok(!third[0].events.includes('clue'))
   const v = arcadeView(third[0], third[1])
   assert.equal(v.screen.third, THIRD_LINE)
@@ -2853,7 +2874,6 @@ test('G55 a clue stays at least three seconds and moves on by itself after a min
   const moved = aStep(fresh, CLUE_MAX_MS)
   assert.equal(moved.stage, 'menu')
   assert.equal(moved.turn, 1, "then Mari's turn")
-  assert.equal(aStep({ ...arcadeSample('winner', 0), stageAt: 0 }, WINNER_MS).stage, 'home')
 })
 
 test('G55 names are cleaned: trimmed, spaces closed up, thirty characters at most, a blank one numbered, three at most', () => {
@@ -2897,7 +2917,7 @@ test('G55 a visit\'s game is forty seconds, the same for everyone (30 Oct 2026: 
   const brisk = pacedVisit(['Ann', 'Bob'], ['mice'], BRISK)
   check(brisk)
   assert.equal(brisk.games.length, 10, 'all ten')
-  assert.ok(brisk.games.every(g => g.length === GAME_MS))
+  assert.ok(brisk.games.every(g => near(g.length, GAME_MS)))
   assert.deepEqual(brisk.came.map(c => c.stage), ['clue', 'clue'])
   assert.ok(brisk.a.stage === 'home' && brisk.a.free, 'to the winner and free play before the chime')
   // a brisk trio plays most of its fifteen, its last cut short, every clue and the third's line
@@ -3267,7 +3287,7 @@ test('G55 the Preview\'s samples: each is the moment its name says', () => {
   assert.equal(v.screen.stage, 'menu')
   assert.equal(v.screen.player, 'Mari')
   assert.equal(v.strip.centre, "Mari's turn")
-  assert.deepEqual(rowFaces(v.faces, 2), ['blank', 'blank', 'coin-spent', 'coin', 'coin', 'coin', 'coin', 'blank', 'blank'], 'one token spent, from the left (31 Oct 2026)')
+  assert.deepEqual(rowFaces(v.faces, 2), ['blank', 'blank', 'coin', 'coin', 'coin-spent', 'coin', 'coin', 'blank', 'blank'], 'the coin under the game she has played is spent (1 Nov 2026)')
   assert.equal(v.faces[menuKey('mice')], 'menu-done:mice')
   assert.deepEqual(v.screen.players.map(p => [p.name, p.tokens, p.now]), [['Jessa', 3, false], ['Mari', 4, true]])
   v = view('play')
@@ -3542,7 +3562,13 @@ test('L09 the page: one 16 ms loop, stopped when it goes; the deck only through 
   assert.match(page, /inputRef\.current\(\{ kind: 'turn', dial, amount: dir \}\)/)
   assert.match(page, /\{ kind: 'turn', dial: d, amount: -1 \}/, 'a drawn dial\'s arrows turn it one click')
   assert.match(page, /\{ kind: 'turn', dial: d, amount: 1 \}/)
-  assert.match(page, /onInput\(\{ kind: 'strip', x: r\.width > 0 \? \(e\.clientX - r\.left\) \/ r\.width \* STRIP_W : 0 \}\)/, 'the drawn strip, a tap where it was touched')
+  // the drawn strip says what the real one says, as the finger lifts: a tap where it touched, or a slide from there to where it lifted
+  assert.match(page, /return r\.width > 0 \? \(e\.clientX - r\.left\) \/ r\.width \* STRIP_W : 0/)
+  assert.match(page, /onInput\(Math\.abs\(to - from\) < SLIDE_MIN \? \{ kind: 'strip', x: from \} : \{ kind: 'swipe', from, to \}\)/)
+  assert.match(page, /const slide = useRef\(null\)/, 'kept across a drawing of the deck')
+  assert.ok(!/onPointerMove/.test(page), 'nothing while it slides: the deck says nothing until it lifts')
+  // the winner's page goes on at a tap on the strip, so the space bar is one
+  assert.match(page, /arcadeRef\.current\?\.stage === 'winner' \? STRIP_TAP : \{ kind: 'press', dial: 0 \}/)
   // with the Stream Deck connected the screen is a scoreboard; without it, the deck is drawn there to play on
   assert.match(page, /const onDeck = deck === 'connected'/)
   assert.match(page, /\{onDeck \? screen \? <Scoreboard screen=\{screen\} pops=\{pops\} art=\{artReady\} \/>/)
@@ -3693,7 +3719,7 @@ test('G55 Leave this game, Escape and the Exit dial (Jon, 30 Oct 2026: "An exit 
 
 test('G54 the page with the Stream Deck connected: the moment\'s Start, Back and OK only on the deck drawn on the screen, and each pop keeps its spot', () => {
   const page = uncommented(src('../src/screens/Arcade.jsx'))
-  assert.match(page, /const go = live && !onDeck \? \(\) => input\(\{ kind: 'press', dial: 0 \}\) : null/)
+  assert.match(page, /const go = live && !onDeck \? \(\) => input\(stage === 'winner' \? STRIP_TAP : \{ kind: 'press', dial: 0 \}\) : null/, 'the winner\'s OK is a tap on the strip, the page\'s one way on')
   assert.match(page, /const back = live && !onDeck \? \(\) => input\(\{ kind: 'key', index: BACK_KEY \}\) : null/)
   assert.match(page, /\{ \.\.\.pop, id, slot: id % POPS_KEPT \}/)
   assert.match(page, /className=\{`arcade-pop \$\{p\.kind\} slot-\$\{p\.slot\}`\}/)

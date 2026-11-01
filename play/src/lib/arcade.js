@@ -1,7 +1,7 @@
 // Miss Boo LaRue's Arcade (28 Oct 2026, docs/boo-arcade.md): the pure engine.
 // Five small games on the Stream Deck + XL (36 keys, six dials and a touch
-// strip), the practice visit (two tokens each, a clue after each player's
-// second game, a trio's third player gets Boo's line, the winner, free play,
+// strip), the practice visit (five tokens each, a clue after each player's
+// fifth game, a trio's third player gets Boo's line, the winner, free play,
 // the chime), the face every key shows, the strip, and the words on the
 // screen. screens/Arcade.jsx runs it; lib/arcadeArt.js draws the faces.
 //
@@ -97,14 +97,14 @@ export const MICE_LATE_MS = 150          // a tap this soon after a mouse hid st
 // beat, the key at each table's end knocks them off (Jon, 29 Oct 2026:
 // "linear", "button press only", "a few tables")
 export const KNOCK_BEAT_MS = 500         // everything moves one key along this often at first (Jon, 31 Oct 2026: with the tables running both ways, "start slower"),
-export const KNOCK_BEAT_END_MS = 200     // this often at top speed (30 Oct: "Much faster"),
-export const KNOCK_TOP_AT = 0.6          // which it reaches three fifths of the way through
+export const KNOCK_BEAT_END_MS = 300     // this often at top speed (30 Oct: "Much faster" made it 200; Jon, 1 Nov 2026: "The knock off is hard", so a bit easier),
+export const KNOCK_TOP_AT = 1            // which it reaches only as the game ends (1 Nov 2026; it was three fifths of the way through)
 export const KNOCK_EVERY_BEATS = 3       // a new thing every third beat at first,
 export const KNOCK_EVERY_BEATS_END = 1   // every beat by the end (as the room on the tables allows)
 export const KNOCK_PER_TABLE = 2         // at most two on a table,
 export const KNOCK_APART = 3             // at least three keys apart
-export const KNOCK_LATE_MS = 100         // a thing on the end can still be knocked this long after the beat it leaves on (Jon, 30 Oct 2026: "A tighter hit window"),
-export const KNOCK_EARLY_MS = 60         // and a press this soon before it gets there knocks it as it comes
+export const KNOCK_LATE_MS = 200         // a thing on the end can still be knocked this long after the beat it leaves on (1 Nov 2026; 30 Oct's "A tighter hit window" made it 100),
+export const KNOCK_EARLY_MS = 120        // and a press this soon before it gets there knocks it as it comes (1 Nov 2026; it was 60)
 export const KNOCK_GONE_MS = 300         // a press on an end this soon after its thing got away is forgiven: the strike was its getting away
 export const KNOCK_POINTS = 1
 export const KNOCK_FRIENDS_FROM_MS = 10000 // Sir Irwin and his friends sit on the tables too from 10 seconds in (Jon, 30 Oct 2026: "Friends pop up along the way, which the player must not knock off"):
@@ -130,8 +130,7 @@ export const RESULT_MS = 5000
 export const PICK_MS = 250               // a game picked on the menu: its key shows the green tick this long
 export const CLUE_MIN_MS = 3000          // a press moves the clue on only after this,
 export const CLUE_MAX_MS = 60000         // and it moves on by itself after this
-export const WINNER_MS = 10000
-export const WINNER_MIN_MS = 3000
+export const WINNER_MIN_MS = 3000        // a tap on the strip moves the winner's page on only after this
 export const FAREWELL_MS = 8000
 export const MARQUEE_STEP_MS = 250       // the top row's lit paws move one key in towards the middle this often (Jon, 29 Oct 2026: flashing like an arcade game)
 
@@ -151,9 +150,10 @@ export const SCORE_KEYS = [12, 13, 14] // on the winner's screen: a key a player
 // and uncounted, and the player is back on the menu (Jon, 30 Oct 2026: "An
 // exit button in every game, to go back"). Labelled Exit on the strip.
 export const EXIT_DIAL = 2
-const TOKEN_KEYS = [2, 3, 4, 5, 6].map(c => keyAt(2, c)) // the player's five tokens on the menu, under the games, spent from the left
+const TOKEN_KEYS = MENU_KEYS.map(k => k + COLS) // the player's five tokens on the menu, each under its game
 const MIDDLE_KEY = keyAt(1, 4) // the count, OK, and Boo
 export const STRIP_WIDTH = 1200 // the touch strip, in its own pixels: a tap's x runs 0 to 1199, left to right
+export const COLUMN_X = [27, 170, 314, 457, 601, 744, 888, 1031, 1175] // each column's key over the strip, in the strip's own pixels (the device's key centres, less the strip's left edge at 40)
 const ALL_KEYS = Array.from({ length: KEY_COUNT }, (_, i) => i)
 const ALL_COLUMNS = Array.from({ length: COLS }, (_, c) => c)
 
@@ -266,7 +266,7 @@ export const GAMES = [
   },
   {
     id: 'yarn', name: 'Yarn Catch', short: 'Yarn',
-    how: 'Turn the left dial, or slide a finger along the touch strip, to move the basket under the falling yarn; off one edge, in at the other. Gold yarn is worth more. Never catch Sir Irwin or his friends.',
+    how: 'Slide a finger along the touch strip and lift it under the falling yarn: the basket goes there. The left dial moves it too. Gold yarn is worth more. Never catch Sir Irwin or his friends.',
     rule: "Five misses and you're out.",
     boo: "Catch it, darling. I don't fetch.",
     dials: [ACROSS, '', '', '', '', ''],
@@ -998,17 +998,19 @@ function knockStrike(s, t, row, words, endFace = 'miss') {
 
 // ---- 5. Yarn Catch: balls of yarn drop down the columns into Boo's basket ----
 
-// The left dial moves the basket a column a click, and a slide along the touch
-// strip moves it a column for every ninth of the strip the finger travelled,
-// the way it went; both go off one edge and in at the other, so every ball can
-// be reached (Jon, 31 Oct 2026: "I do want the swipe", "go back to the dial";
-// a tap does nothing). The deck reports a slide only when the finger lifts,
-// which is why the dial is there too. Five misses end the round. From ten
-// seconds in, Sir Irwin and his friends fall too: one caught is a miss that
-// says who; one that reaches the floor is nothing.
+// The left dial moves the basket a column a click, off one edge and in at the
+// other. The whole touch strip is the whole bottom row (Jon, 1 Nov 2026: "swipe
+// fully across the entire touch strip"): a slide puts the basket in the column
+// over where the finger lifted, so a slide all the way across takes it from one
+// side to the other, and in play the strip shows only the basket ("only the
+// basket emoji"). A tap does nothing (Jon, 31 Oct 2026). The deck reports a
+// slide only when the finger lifts, so the basket goes there then, and never
+// follows the finger. Five misses end the round. From ten seconds in, Sir Irwin
+// and his friends fall too: one caught is a miss that says who; one that
+// reaches the floor is nothing.
 const yarnStepMs = (s, t) => lerp(YARN_STEP_MS, YARN_STEP_END_MS, along(s, t))
-// How many columns a slide along the strip moves the basket: one a ninth of the strip, at least one, the way it went.
-const slideColumns = (from, to) => Math.sign(to - from) * Math.min(COLS - 1, Math.max(1, Math.round(Math.abs(to - from) / (STRIP_WIDTH / COLS))))
+// The column over a place on the strip: the nearest key.
+const columnOver = x => COLUMN_X.reduce((best, mid, c) => (Math.abs(mid - x) < Math.abs(COLUMN_X[best] - x) ? c : best), 0)
 
 const yarn = {
   start(s) {
@@ -1056,13 +1058,11 @@ const yarn = {
     s.nextSpawnAt = t + lerp(YARN_SPAWN_MS, YARN_SPAWN_END_MS, along(s, t))
   },
   input(s, e, t) {
-    // the left dial (a column a click) or an arrow, or a slide along the strip (a column a ninth of it), round the edges; a tap, the right dial: nothing
-    let dc = 0
+    // the left dial (a column a click) or an arrow, round the edges; a slide along the strip, to where it lifted; a tap, the right dial: nothing
+    let c = s.basket
     const m = movesOf(e)
-    if (m && m.dc) dc = m.dc * m.keys
-    else if (e.kind === 'swipe') dc = slideColumns(e.from, e.to)
-    if (!dc) return
-    const c = (((s.basket + dc) % COLS) + COLS) % COLS
+    if (m && m.dc) c = (((s.basket + m.dc * m.keys) % COLS) + COLS) % COLS
+    else if (e.kind === 'swipe') c = columnOver(e.to)
     if (c === s.basket) return
     s.basket = c
     const waiting = s.balls.find(b => b.missAt != null && b.col === c)
@@ -1314,7 +1314,7 @@ function toResult(s, t) {
 function afterResult(s, t) {
   if (!counted(s)) return toHome(s, t)
   const p = s.players[s.turn]
-  // their second game: a clue for the first two, Boo's line for a trio's third; then their other games go on
+  // their last game: a clue for the first two, Boo's line for a trio's third
   if (!p.reached && p.games.length >= CLUE_AFTER_GAMES) {
     p.reached = true
     if (s.turn < 2) { enter(s, 'clue', t); s.events.push('clue') }
@@ -1386,10 +1386,6 @@ function moveOn(s, limit) {
       if (s.stageAt + CLUE_MAX_MS > limit) return false
       afterClue(s, s.stageAt + CLUE_MAX_MS)
       return true
-    case 'winner':
-      if (s.stageAt + WINNER_MS > limit) return false
-      toFreePlay(s, s.stageAt + WINNER_MS)
-      return true
     case 'farewell':
       if (s.stageAt + FAREWELL_MS > limit) return false
       afterFarewell(s, s.stageAt + FAREWELL_MS)
@@ -1458,10 +1454,11 @@ function take(s, e, t) {
       if (pressed && t - s.stageAt >= CLUE_MIN_MS) afterClue(s, t)
       return
     case 'winner': {
-      // a player's key: their scores on the screen, and the winner's clock starts again; anything else moves on after a moment
+      // a player's key: their scores on the screen. The page stays up for as long as the scores are wanted, until a
+      // touch on the strip goes on to free play (Jon, 1 Nov 2026: "put the tap for freeplay on the touch strip"), or the chime
       const who = e.kind === 'key' ? SCORE_KEYS.indexOf(e.index) : -1
-      if (who >= 0 && who < s.players.length) { s.showing = who; s.stageAt = t; return }
-      if (pressed && t - s.stageAt >= WINNER_MIN_MS) toFreePlay(s, t)
+      if (who >= 0 && who < s.players.length) { s.showing = who; return }
+      if ((e.kind === 'strip' || e.kind === 'swipe') && t - s.stageAt >= WINNER_MIN_MS) toFreePlay(s, t)
       return
     }
     default:
@@ -1564,10 +1561,12 @@ function menuFaces(a, now) {
   marquee(f, a, now)
   f[keyAt(0, 4)] = 'boo'
   const yours = counted(a) && (a.stage === 'menu' || a.stage === 'ready') ? a.players[a.turn] : null
-  // a visit: a game this player has had their round of is marked done (one a game, 30 Oct 2026), and their tokens
-  // spend from the left, whatever the game (Jon, 31 Oct 2026: "the coins should just come left to right")
-  GAMES.forEach((g, i) => { f[MENU_KEYS[i]] = yours && playedBy(yours, g.id) ? `menu-done:${g.id}` : `menu:${g.id}` })
-  if (yours) TOKEN_KEYS.forEach((k, i) => { f[k] = i < TOKENS - yours.tokens ? 'coin-spent' : 'coin' })
+  // a visit: a game this player has had their round of is marked done (one a game, 30 Oct 2026), and each game's coin
+  // sits under it, lit until that game is played (Jon, 1 Nov 2026: "the coins ... line up with the games not played")
+  GAMES.forEach((g, i) => {
+    f[MENU_KEYS[i]] = yours && playedBy(yours, g.id) ? `menu-done:${g.id}` : `menu:${g.id}`
+    if (yours) f[TOKEN_KEYS[i]] = playedBy(yours, g.id) ? 'coin-spent' : 'coin'
+  })
   return f
 }
 
@@ -1592,9 +1591,11 @@ function facesOf(a, now) {
 
 // The touch strip. Words on the left, in the middle and on the right; in a
 // game, its points big in the middle (`score`), the strike boxes on the left
-// (`marks`), its time as a bar counting down on the right (`clock`); for Yarn Catch a
-// row of nine marks along the top, the basket's column lit (`zones`: the
-// strip is the basket's rail); the dial labels along the bottom.
+// (`marks`), its time as a bar counting down on the right (`clock`); the dial
+// labels along the bottom. Yarn Catch's count and play show only the basket
+// (`basket`, where it sits along the strip): the strip is its rail, the points
+// and the time are on the screen, and the dial labels stay in the view for the
+// deck drawn on the screen, but are not drawn on the strip.
 function stripOf(a, now) {
   const g = PLAYING.includes(a.stage) ? a.game : null
   const info = g ? GAME[g.id] : null
@@ -1603,7 +1604,8 @@ function stripOf(a, now) {
   const dials = (info?.dials ?? NO_DIALS).map((x, i) => (i === EXIT_DIAL && (a.stage === 'count' || a.stage === 'play') ? 'Exit' : x))
   const zones = null // Yarn Catch's rail along the top went with the tap (31 Oct 2026); the basket's key shows where it is
   const who = a.players[a.turn]?.name ?? ''
-  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, clock: null, zones: null, dials: [...NO_DIALS], ...more })
+  const line = (left, centre, right = '', more = {}) => ({ left, centre, right, score: null, marks: null, clock: null, zones: null, basket: null, dials: [...NO_DIALS], ...more })
+  if (g?.id === 'yarn' && (a.stage === 'count' || a.stage === 'play')) return line('', '', '', { basket: COLUMN_X[g.basket], dials: [...dials] })
   switch (a.stage) {
     case 'home': return line('Free play', 'Press a game')
     // whose turn, big in the middle (Jon, 31 Oct 2026: "say it is player 2's turn, but make it a little bigger")
@@ -1619,7 +1621,7 @@ function stripOf(a, now) {
     case 'result': return g ? line(name, outcomeOf(g), pointsOf(g.score)) : line('', '')
     case 'clue': return line(who, 'Your clue is on the screen')
     case 'third': return line('', who)
-    case 'winner': return line(`Scores: press ${a.players.map((p, i) => i + 1).join(', ')}`, `Most points: ${andList(winnerOf(a).names)}`)
+    case 'winner': return line(`Scores: press ${a.players.map((p, i) => i + 1).join(', ')}`, `Most points: ${andList(winnerOf(a).names)}`, 'Tap here for free play')
     case 'farewell': return line('', FAREWELL_LINE)
     default: return line('', '')
   }

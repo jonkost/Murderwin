@@ -429,6 +429,22 @@ test('G54 a strike\'s words name a friend in full, and the longest, "Strike 2! T
   }
 })
 
+test('G54 Yarn Catch\'s strip (Jon, 1 Nov 2026: "only the basket emoji"): the basket and nothing else, whole on the strip at either end, under its key; no words, boxes, bar or dial labels', async () => {
+  await withBrowser({ OffscreenCanvas: FakeCanvas }, async () => {
+    const art = await import('../src/lib/arcadeArt.js?strip-basket')
+    const strip = x => art.stripCanvas({ left: 'Yarn Catch', centre: 'words', right: 'more', score: 12, marks: { of: 5, used: 2, label: 'Misses' }, clock: { left: 25000, length: 40000 }, zones: null, basket: x, dials: ['◀ ▶', '', 'Exit', '', '', ''] })
+    const drawn = c => c.log.filter(op => op.name === 'fillText')
+    for (const [x, at] of [[27, 43.2], [601, 601], [1175, 1156.8]]) {
+      const c = strip(x)
+      assert.deepEqual(drawn(c).map(op => op.args[0]), ['🧺'], 'only the basket')
+      assert.ok(Math.abs(drawn(c)[0].args[1] - at) < 0.001, `at ${at}`)
+      assert.ok(!c.log.some(op => op.name === 'roundRect'), 'no strike boxes')
+    }
+    const words = art.stripCanvas({ left: 'Yarn Catch', centre: 'Press any key to start', right: '', score: null, marks: null, clock: null, zones: null, basket: null, dials: ['', '', '', '', '', ''] })
+    assert.ok(!drawn(words).some(op => op.args[0] === '🧺'), 'no basket on any other strip')
+  })
+})
+
 // ---- the sounds --------------------------------------------------------------
 
 // A pretend AudioContext, running. It writes down every node it makes, when
