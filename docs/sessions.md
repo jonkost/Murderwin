@@ -12,8 +12,11 @@ on the Canon.
 ## 1 Nov 2026 · Claude Code (the arcade: Jon's five notes)
 
 - Jon's message after playing the arcade ("Boo arcade is great"), five
-  notes. Built on main; not deployed, not pushed; not tried on the real
-  Stream Deck + XL.
+  notes. Built on main and deployed on his "Deploy now" the same day: the
+  site only (hosting, from a clean copy of 432070b; no functions, rules,
+  storage or seed changed since c507571). 119 of 119 live files match the
+  build, and the live arcade starts on the new bundle with no errors. Not
+  pushed; not tried on the real Stream Deck + XL.
 - The coins: each token sits under its game and goes when that game is
   played (`TOKEN_KEYS`, `menuFaces`), so the coins left are the games left.
   They spent from the left before (31 Oct).
@@ -43,8 +46,10 @@ on the Canon.
   time and the misses are on the Mac's screen; the Exit label went from the
   strip, and the third dial still exits.
 - The Knock: `KNOCK_BEAT_END_MS` 300 (was 200), `KNOCK_TOP_AT` 1 (was 0.6),
-  `KNOCK_LATE_MS` 200 (was 100), `KNOCK_EARLY_MS` 120 (was 60); how often
-  things come is unchanged. Three made-up players over 300 seeds on the real
+  `KNOCK_LATE_MS` 200 (was 100), `KNOCK_EARLY_MS` 120 (was 60). The rule
+  for a new thing per beat is unchanged, but the beats are slower, so about
+  a third fewer things come (73 in fifty seconds, not 112). Three made-up
+  players over 300 seeds on the real
   engine, counts only: the ordinary one lasted about 25 of the 50 seconds and
   never finished, and now finishes 98 games in 100 with about 50 points; the
   casual one lasts about 37 seconds, was 16; the keen one always finishes,
@@ -54,20 +59,53 @@ on the Canon.
   the engine's own header still described the visit before 30 Oct (two
   tokens, a clue after the second game, eighty seconds, ten minutes). The
   Game test tab's steps are tested now.
-- Noticed, not changed: on the practice page's keyboard the digits at the
-  winner map to the menu's keys, so 2 shows player 1's scores. The real
-  deck's keys are right.
+- The review before the deploy, under ultracode: four read-only reviewers
+  on a clean copy of b1c8585 (the engine, the road from the deck, the board
+  and the site, the written claims), a skeptic on each one's findings, and
+  a critic; muted, nothing near Firestore, no sealed content. Verdict: safe
+  to ship, no blockers; 18 findings survived and 7 were refuted, with
+  several overlapping. Fixed before the deploy, because neither
+  `fileTasks` nor `rewriteTasks` touches a done card, so a done card's words
+  cannot be corrected by a later migration: card 556's false "How often new
+  things come has not changed". Also fixed first: the space bar and Enter
+  left the winner's page with the real deck connected (`heldRef` now; only
+  the strip does); the digits at the winner on the practice page (1 to 3
+  are `SCORE_KEYS`; 2 showed player 1's scores); the clue and third-player
+  samples show a fifth game (`TRIO_DONE`); the slide test starts from every
+  column; "Leave this game", fifteen minutes and a trio's clue on the Game
+  test tab; the arcade as tried on Where we are; the line on card 514 now
+  lists what only the deck can show and corrects two older lines on that
+  card; the stale lines in `docs/boo-arcade.md`, some from 31 Oct. The
+  review's harness (the real page and library on a fake HID device, muted)
+  passed all 17 checks on the fixes.
+- Two findings went to the board, not into this deploy. Card 557 for Claude
+  Code: the Study's stop, its warning and its clocks are still ten minutes
+  in a fifteen-minute round (`station/lib/study.js` `capMs`, `Kiosk.jsx`
+  `CAP_MS`, `house.js` `STUDY_CAP_MS`, and the words in `seed/night.json`
+  and Granolia's lines), though `CLAUDE.md`, `docs/study-light-game.md` and
+  card 549 say fifteen; older than this work (31 Oct), and a stopped group
+  is still paid. The question arcadeTrioTime for Jon: a trio's first two
+  players need fourteen games and the round holds about eleven to thirteen
+  full ones, so at full length a brisk trio gets its first player's clue
+  only and an ordinary one none; the pretend groups in the test only finish
+  because games left alone end early on strikes. Default as built; it wants
+  an answer before card 515.
+- Found in the shared folder during the session, not mine, left alone:
+  `play/public/audio/Scream.mp3`, untracked, which nothing reads. A clean
+  copy of the commit kept it out of the deploy.
 - The board: migration `2026-11-01-arcade-notes` (cards 552 to 556 done, a
   line on 514). The docs: `docs/boo-arcade.md`, `docs/on-the-night.md`,
   `docs/test-plan.md` (G54, G55), this log, `CLAUDE.md`. Claude chat keeps
-  the Canon and Start Here (the 30 October handoff's split). Tests: play 267
-  and app 139, all passing.
+  the Canon and Start Here (the 30 October handoff's split). Tests: all six
+  suites pass on 432070b, `npm run checks` all clear.
 - Tried in the browser with sound blocked, since Jon's rule on audio stands
   (the arcade's tones count): the strip's pictures, a full slide and a tap, a
   whole visit with the coins checked at every turn, and the winner's page
   still up a minute later.
-- Left: the deploy, on Jon's say-so; Jon's try on the deck (514); the arcade
-  on the night (515).
+- The next workshop open applies two migrations, `2026-10-31-music-shortcuts`
+  and this one: cards 550 to 557, the line on 514 and the question.
+- Left: Jon's try on the deck, after reloading any arcade tab (514); the
+  Study (557); arcadeTrioTime; the arcade on the night (515).
 
 ## 31 Oct 2026, evening · Claude Code (the music through Jon's seven Shortcuts)
 
