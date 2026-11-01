@@ -108,7 +108,14 @@ test('Miss Boo LaRue’s Arcade: right after Boo’s Catwalk, on its own page in
   const visit = arcade.steps.find(s => s.startsWith('For a group’s visit'))
   assert.match(visit, /tap Try a group’s visit at the bottom of the free play page, or close the free play tab/)
   assert.ok(playSrc('screens/Arcade.jsx').includes("Try a group's visit"), 'the button the step names is on the page')
-  assert.match(visit, /the last game is shorter when time runs short/, 'two minutes a game, but not past the chime')
+  assert.match(visit, /the last game is shorter when time runs short/, 'fifty seconds a game, but not past the chime')
+  // 1 Nov 2026: the tab says what the page does now: five tokens, the clue after the fifth game
+  // (it still said two tokens and the second game), and the winner's page held for a tap on the strip
+  assert.match(visit, /Five tokens each, one under each game/)
+  assert.match(visit, /After a player’s fifth game their clue shows/)
+  assert.match(visit, /it stays until you tap the touch strip/)
+  assert.match(arcade.what, /five tokens, one for each game/)
+  assert.match(arcade.steps.at(-1), /^The practice visit lasts fifteen minutes/)
   // 29 Oct 2026, Jon: "on the pratice page I need a back button. Im stuck and cant get back."
   // The steps name the page's two Backs, and the page has both.
   const page = playSrc('screens/Arcade.jsx')

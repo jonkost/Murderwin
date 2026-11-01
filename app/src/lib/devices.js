@@ -166,7 +166,7 @@ export const DEVICE_ROOMS = [
       // query, so Boo's wall stays the one boo screen of the night.
       {
         key: 'arcadeplay', name: 'Miss Boo LaRue’s Arcade, just for fun', machine: 'A Mac with Google Chrome and the Stream Deck + XL, any day', kiosk: 'boo', query: 'play=1',
-        what: 'Boo’s five little games on the Stream Deck + XL, with Boo on the Mac’s screen: free play, no case, no clues, nothing sent. Try a group’s visit, at the bottom of the page, tries the turns, the two tokens each, the clue after each player’s second game and the chime.',
+        what: 'Boo’s five little games on the Stream Deck + XL, with Boo on the Mac’s screen: free play, no case, no clues, nothing sent. Try a group’s visit, at the bottom of the page, tries the turns, the five tokens each, the clue after each player’s fifth game and the chime.',
         start: [
           'On a Mac with Google Chrome: quit the Stream Deck app, then plug in the Stream Deck + XL.',
           'Set the Mac’s sound output to its own speakers first: through a HomePod the sounds come about two seconds late.',
