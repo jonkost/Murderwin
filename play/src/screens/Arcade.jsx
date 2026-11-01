@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
+  ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, SCORE_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
   MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
 } from '../lib/arcade'
 import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
@@ -327,8 +327,9 @@ export default function BooArcade({ sample = null, onRecord = null }) {
 
   // The keyboard: the arrows play the games (the outside dials' turns, and
   // Yarn Catch's strip), the space bar or Enter presses the first dial, 1 to 5
-  // are the five games on the menu, Escape is Back before a game starts, and
-  // in free play leaves a game at any moment. Never while a name is being typed.
+  // are the five games on the menu (at the winner, 1 to 3 are each player's
+  // scores), Escape is Back before a game starts, and in free play leaves a
+  // game at any moment. Never while a name is being typed.
   useEffect(() => {
     if (!live) return
     const onKey = e => {
@@ -340,14 +341,18 @@ export default function BooArcade({ sample = null, onRecord = null }) {
       let ev = null
       if (e.repeat) return // a key held down is one press, like one click of a dial (31 Oct 2026: nothing on the deck can be held)
       if (ARROW_KEYS[e.key]) ev = { kind: 'arrow', dir: ARROW_KEYS[e.key] }
-      else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = arcadeRef.current?.stage === 'winner' ? STRIP_TAP : { kind: 'press', dial: 0 } }
+      // at the winner they stand for a tap on the strip, but only for the deck drawn on the screen: with the real one, only the real strip moves on (1 Nov 2026)
+      else if (e.key === ' ' || e.key === 'Enter') { if (!control) ev = arcadeRef.current?.stage !== 'winner' ? { kind: 'press', dial: 0 } : heldRef.current ? null : STRIP_TAP }
       else if (e.key === 'Escape') {
         const a = arcadeRef.current
         if (a?.stage === 'ready') ev = { kind: 'key', index: BACK_KEY }
         else if (EXITABLE.includes(a?.stage)) { e.preventDefault(); exitRef.current(); return }
         else if (a?.mode === 'free' && a?.stage === 'result') { e.preventDefault(); leaveRef.current(); return }
       }
-      else if (/^[1-9]$/.test(e.key) && Number(e.key) <= MENU_KEYS.length) ev = { kind: 'key', index: MENU_KEYS[Number(e.key) - 1] }
+      else if (/^[1-9]$/.test(e.key)) {
+        const index = (arcadeRef.current?.stage === 'winner' ? SCORE_KEYS : MENU_KEYS)[Number(e.key) - 1]
+        if (index != null) ev = { kind: 'key', index }
+      }
       if (!ev) return
       e.preventDefault()
       inputRef.current(ev)

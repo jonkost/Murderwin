@@ -1771,6 +1771,7 @@ const SAMPLE_SEED = 1115
 const PAIR = ['Jessa', 'Mari']
 const TRIO = ['Margaret', 'Tom', 'Ellie']
 const PAIR_DONE = [[['tail', 34], ['knock', 40], ['mice', 19], ['pointer', 51], ['yarn', 12]], [['mice', 23], ['pointer', 62], ['tail', 28], ['yarn', 9], ['knock', 31]]]
+const TRIO_DONE = [[['yarn', 9], ['pointer', 52], ['tail', 30], ['mice', 21], ['knock', 38]], [['mice', 27], ['knock', 30], ['yarn', 11], ['tail', 26], ['pointer', 47]], [['tail', 21], ['yarn', 12], ['pointer', 40], ['knock', 33], ['mice', 18]]]
 
 // A visit at a moment: each player's games so far ([game, score] pairs), the
 // stage and whose turn, how long ago the stage began and the round time left.
@@ -1787,8 +1788,9 @@ function sampleVisit(names, games, stage, turn, now, ago, left) {
 
 // 'home' free play's menu; 'menu' a visit of two, the second player's (last)
 // turn; 'play' Boo Chasing Her Tail, four tips caught, about a minute left,
-// a wall and a friend out; 'clue' a pair, the first player's clue; 'third' a
-// trio's third player; 'winner' a pair; 'farewell' a pair, nobody left out.
+// a wall and a friend out; 'clue' a pair, the first player's clue after her
+// fifth game; 'third' a trio's third player after theirs; 'winner' a pair;
+// 'farewell' a pair, nobody left out.
 export function arcadeSample(name, now = 0) {
   switch (name) {
     case 'menu': return sampleVisit(PAIR, [[['knock', 30], ['tail', 34]], [['mice', 23]]], 'menu', 1, now, 3000, 330000)
@@ -1805,9 +1807,8 @@ export function arcadeSample(name, now = 0) {
       }
       return { ...a, stage: 'play', stageAt: g.startedAt, pick: 'tail', game, played: 1 }
     }
-    case 'clue': return sampleVisit(PAIR, [[['tail', 34], ['knock', 40]], [['mice', 23]]], 'clue', 0, now, 4000, 300000)
-    case 'third':
-      return sampleVisit(TRIO, [[['yarn', 9], ['pointer', 52]], [['mice', 27], ['knock', 30]], [['tail', 21], ['yarn', 12]]], 'third', 2, now, 4000, 50000)
+    case 'clue': return sampleVisit(PAIR, [PAIR_DONE[0], PAIR_DONE[1].slice(0, -1)], 'clue', 0, now, 4000, 300000)
+    case 'third': return sampleVisit(TRIO, TRIO_DONE, 'third', 2, now, 4000, 50000)
     case 'winner': return sampleVisit(PAIR, PAIR_DONE, 'winner', 1, now, 2000, 140000)
     case 'farewell': {
       const a = sampleVisit(PAIR, PAIR_DONE, 'farewell', 1, now, 2000, 0)

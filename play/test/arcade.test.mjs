@@ -2211,7 +2211,7 @@ test('G54 Yarn Catch (Jon, 31 Oct 2026: "I do want the swipe", "go back to the d
   assert.equal(moved(turn(LEFT_DIAL, -5)), 8, 'round the left edge')
   assert.equal(moved(turn(LEFT_DIAL, 40)), (4 + DIAL_MAX_KEYS) % COLS, 'six keys at most for one report')
   // a slide: the column over where the finger lifted, wherever the basket was and wherever the slide began
-  for (const basket of [0, 4, END]) {
+  for (let basket = 0; basket < COLS; basket++) {
     const from = { ...g0, basket }
     const slid = ev => input(from, ev, at).basket
     assert.equal(slid(swipe(0, STRIP_WIDTH - 1)), END, 'all the way across to the right: the far right, not round the edge')
@@ -3306,11 +3306,13 @@ test('G55 the Preview\'s samples: each is the moment its name says', () => {
   assert.equal(v.strip.score, 4 * TAIL_POINTS + TAIL_TREAT_POINTS)
   v = view('clue')
   assert.equal(v.screen.stage, 'clue')
+  assert.deepEqual(v.screen.players.map(p => p.tokens), [0, 1], 'after her fifth game, so the sample shows what the Game test tab calls it (1 Nov 2026)')
   assert.equal(v.screen.player, 'Jessa')
   assert.equal(v.screen.clue, STAND_IN_CLUE)
   assert.equal(v.screen.players.length, 2)
   v = view('third')
   assert.equal(v.screen.stage, 'third')
+  assert.deepEqual(v.screen.players.map(p => p.tokens), [0, 0, 0], 'after their fifth game')
   assert.equal(v.screen.player, 'Ellie')
   assert.equal(v.screen.players.length, 3)
   assert.equal(v.screen.third, THIRD_LINE)
@@ -3568,7 +3570,10 @@ test('L09 the page: one 16 ms loop, stopped when it goes; the deck only through 
   assert.match(page, /const slide = useRef\(null\)/, 'kept across a drawing of the deck')
   assert.ok(!/onPointerMove/.test(page), 'nothing while it slides: the deck says nothing until it lifts')
   // the winner's page goes on at a tap on the strip, so the space bar is one
-  assert.match(page, /arcadeRef\.current\?\.stage === 'winner' \? STRIP_TAP : \{ kind: 'press', dial: 0 \}/)
+  // the space bar and Enter tap the strip at the winner only for the drawn deck, and the digits are the score keys there (1 Nov 2026)
+  assert.match(page, /arcadeRef\.current\?\.stage !== 'winner' \? \{ kind: 'press', dial: 0 \} : heldRef\.current \? null : STRIP_TAP/)
+  assert.match(page, /\(arcadeRef\.current\?\.stage === 'winner' \? SCORE_KEYS : MENU_KEYS\)\[Number\(e\.key\) - 1\]/)
+  assert.match(page, /if \(index != null\) ev = \{ kind: 'key', index \}/, 'a digit with no key behind it does nothing')
   // with the Stream Deck connected the screen is a scoreboard; without it, the deck is drawn there to play on
   assert.match(page, /const onDeck = deck === 'connected'/)
   assert.match(page, /\{onDeck \? screen \? <Scoreboard screen=\{screen\} pops=\{pops\} art=\{artReady\} \/>/)
