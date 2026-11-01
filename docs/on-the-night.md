@@ -846,7 +846,8 @@ at all: nothing is paid and no clue is dealt.
   the strikes or misses with their word, the time as a bar counting down,
   Boo): the Stream Deck is the game. Press a game in the middle of the second
   row of keys, then any key or dial to start; two minutes a game in free play. To leave a game early press the
-  third dial in (it says Exit on the strip while a game counts down or runs),
+  third dial in (it says Exit on the strip while a game counts down or runs,
+  except in *Yarn Catch*, whose strip shows only the basket),
   or "Leave this game" at the top of the screen, or Escape; a game left never
   counts. Only the two outside dials steer (one key a click; in *Boo Chasing
   Her Tail* they move Boo herself, the left one across and the right one up
@@ -870,14 +871,16 @@ at all: nothing is paid and no clue is dealt.
   game (your decision of 30 October: one round of each), in turns; a game
   you have played is dimmed with a tick on your turn and the coin under it
   has gone, so the coins left are the games left; fifty seconds a game (the last one shorter when time runs
-  short, so its clue usually still comes before the chime); each player's
+  short); each player's
   clue on the screen once all five of their games are played (31 October;
   in practice, a line in square brackets), Boo's line instead for a trio's
   third player, Boo's winner (the keys 1, 2 and 3 put each player's five
   scores up; it stays until you tap the touch strip), then free play until
   the chime fifteen minutes in, when Boo
-  says "Be on your way." A brisk pair gets through all ten games; a brisk
-  trio all or nearly all of its fifteen. "Ring the chime", beside the clock, tries the
+  says "Be on your way." A brisk pair gets through all ten games, and a
+  pair gets both clues at any pace but a crawl. A trio's fifteen games do not
+  fit at full length: a brisk trio plays about thirteen, which is its first
+  player's clue only (the question arcadeTrioTime). "Ring the chime", beside the clock, tries the
   ending at once, and "Back to free play", beside it, leaves the visit
   straight away. Samples of a player's clue, a trio's third player and the
   chime. In practice nothing is saved; on the night each counted round's

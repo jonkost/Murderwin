@@ -45,7 +45,7 @@ const BUILT = [
   ['The whole night on the phone', 'One button, Next, runs every beat of every act: role cards at the blackout, the four cat visits, Supper’s ready, Start Act 4 and its four rooms, the drawing, the deduction round, the ballot, the reveal and each phone’s result.'],
   ['How the case gets solved', 'Bulletin 1 crosses off a wrong family for everyone; in Act 2 all four cats give each guest a motive hint and a clue about the Murderer’s bag; bulletin 2 at supper; in Act 4 each room pays a reward and a clue about the Ghost’s bag; Sir Irwin’s countdown of motive cards at dessert; the study pays the Ghost’s trace; the bedroom door shows the Murderer’s.'],
   ['W-O-O-F News', 'Bulletin 1 and the closing bulletin play as video on the Parlour TV once the videos are in and the box on the Game night page is ticked; until then the brain plays your recordings and the TV shows the words. Bulletin 2 is armed from your phone at supper and plays on all four HomePods, with its words on the Orangerie iPad.'],
-  ['Act 4 on the phones', 'A two-minute warning, the groups with portraits and Locked in, then ten-minute rounds: each group visits all four rooms, Granolia’s Lightbulb Moment, In Duplicate, Get Off My Lawn! and Boo’s Catwalk, and waits in the Parlour between them, where Parlour Games wait on the phone.'],
+  ['Act 4 on the phones', 'A two-minute warning, the groups with portraits and Locked in, then fifteen-minute rounds: each group visits all four rooms, Granolia’s Lightbulb Moment, In Duplicate, Get Off My Lawn! and Boo’s Catwalk, and waits in the Parlour between them, where Parlour Games wait on the phone.'],
   ['Granolia’s Lightbulb Moment', 'The study station, the two Nanoleaf walls, the Stream Deck, Granolia’s screen. Ten minutes a group.'],
   ['Miss Boo LaRue’s Arcade, for testing', 'Built 28 October, on a page of its own: five little games on the Stream Deck + XL (or on the deck drawn on the screen), and a practice visit with five tokens each, turns, a clue after each player’s fifth game, Boo’s line for a trio’s third, the winner, free play and the chime. Not on the night yet: you chose it for the Entryway on 29 Oct, for a clue about the Ghost, and it goes on the night with the card The arcade on the night; until then the night still runs Boo’s Catwalk. Try it on Game test.'],
   ['Sir Irwin Needs a Hand', 'His rules slides on the TV, a practice smiley, three rounds, a player called by portrait and character name, the room’s guess tapped on the host’s phone (the Parlour TV’s names as the fallback), then Irwin’s Pawsome! slide and the trace on the bedroom screen. The hall light turns from red to green.'],
@@ -66,6 +66,7 @@ const TRIED = [
   ['8 Oct', 'Joining by square code, on your phone.'],
   ['24 Oct', 'The hall bulb went red and green from the brain, through the Hue bridge.'],
   ['24 Oct', 'Both study walls answered and showed the game’s lights. Two of the ten taps were taught; none was kept.'],
+  ['30 and 31 Oct', 'Miss Boo LaRue’s Arcade on the real Stream Deck + XL, in your two playtests: its keys, dials and touch strip in Google Chrome.'],
 ]
 // Not tried for real yet. The weekend practice game and the hardware
 // evening are the first tries; Game test has a way into each game.
@@ -74,7 +75,7 @@ const NOT_TRIED = [
   'The Parlour TV, the iPad Pro at its four stations (the Library code, the captions, the memory match, the bedroom), Jenna’s iPad Pro as Boo’s camera and Susan’s MacBook Pro on the projector, on their real machines.',
   'The sound on the HomePods (there is no AirPlay group yet), the music and the Hue scenes.',
   'The study taps, the Stream Deck and the M1 Air; the string lights; Boo’s wall on the projector.',
-  'Miss Boo LaRue’s Arcade on the real Stream Deck + XL: its keys, dials and touch strip in Google Chrome, and how fast each game feels.',
+  'Miss Boo LaRue’s Arcade as changed on 1 November, on the real Stream Deck + XL: the coins under their games, the tap for free play on the strip, the slide and the basket in Yarn Catch, and the easier Knock.',
   'Get Off My Lawn! on real phones, and how touchy the shake feels.',
   'Sir Irwin Needs a Hand in the house, the door and the trace.',
   'The party-night version on the real leans and drawing pictures.',
