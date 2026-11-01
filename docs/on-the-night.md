@@ -853,8 +853,10 @@ at all: nothing is paid and no clue is dealt.
   and down, after the white tip of her tail, round the edges and in at the
   other side, eating the fish and keeping off the red cucumbers); *Knock It
   Off the Table* is the keys at the end of its four tables, two tables
-  running each way, and *Yarn Catch* moves its basket with the left dial or
-  a slide of a finger along the touch strip, round the edges. Sir Irwin and
+  running each way, and *Yarn Catch* moves its basket with the left dial,
+  round the edges, or a slide of a finger along the touch strip: the basket
+  goes to where you lift your finger, and the strip shows only the basket in
+  this game, the points being on the screen. Sir Irwin and
   his friends are in all but the tail game: never tap, knock off or catch
   them. Five strikes or misses end a game. No Stream Deck? The deck drawn on the screen plays with the
   mouse, or the arrow keys and the space bar. If the touch strip ever looks
@@ -866,13 +868,14 @@ at all: nothing is paid and no clue is dealt.
   only one arcade tab plays on the Stream Deck at a time, and the other says
   so. It asks for two or three first names: five tokens each, one for each
   game (your decision of 30 October: one round of each), in turns; a game
-  you have played is dimmed with a tick on your turn, and your tokens spend
-  from the left; fifty seconds a game (the last one shorter when time runs
+  you have played is dimmed with a tick on your turn and the coin under it
+  has gone, so the coins left are the games left; fifty seconds a game (the last one shorter when time runs
   short, so its clue usually still comes before the chime); each player's
   clue on the screen once all five of their games are played (31 October;
   in practice, a line in square brackets), Boo's line instead for a trio's
   third player, Boo's winner (the keys 1, 2 and 3 put each player's five
-  scores up), then free play until the chime fifteen minutes in, when Boo
+  scores up; it stays until you tap the touch strip), then free play until
+  the chime fifteen minutes in, when Boo
   says "Be on your way." A brisk pair gets through all ten games; a brisk
   trio all or nearly all of its fifteen. "Ring the chime", beside the clock, tries the
   ending at once, and "Back to free play", beside it, leaves the visit

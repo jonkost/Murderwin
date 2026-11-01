@@ -1,4 +1,4 @@
-# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet; the five games, the visit and the scores changed 30 Oct 2026, and again from Jon's second playtest on 31 Oct)
+# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet; the five games, the visit and the scores changed 30 Oct 2026, again from Jon's second playtest on 31 Oct, and from his five notes on 1 Nov)
 
 Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October, when
 *Whack-a-Mouse* also got its pets, the Tail key on the menu its black cat, and every strike its
@@ -8,6 +8,12 @@ made again, the Mac's screen became the scoreboard, and the deck went black and 
 Later that night, from your try on the Mac, Boo herself chases her tail over the whole board,
 the decoys are Sir Irwin and his friends, the coins are bigger, and the page has Back (§1, §2,
 §4). Everything here is structure: no answers, no clue text. Safe for you to read.
+
+**Your notes of 1 November:** each coin sits under its game and goes when that game is played,
+so the coins left are the games left (§5). The winner's page stays until a tap on the touch
+strip, which says so (§5). In *Yarn Catch* the strip shows only the basket, and a slide puts
+the basket where your finger lifts, so a slide all the way across takes it all the way across
+(§3, §4). *Knock It Off the Table* is easier (§4). Not tried on the real deck yet.
 
 **Going on the night (Jon, 29 October): "Catwalk is 100% scarped."** The Entryway plays the
 arcade in Act 4, and its prize is a clue about the Ghost, not a motive ("its not motive its a ghost
@@ -219,7 +225,7 @@ cross over its key.
 | Second row | The menu: two blank keys, the five games, two blank keys. From the left: *Boo Chasing Her Tail*, *The Lazy Pointer*, *Whack-a-Mouse*, *Knock It Off the Table*, *Yarn Catch*. Each is the game's picture on a round parchment plate over its short name in gold: a black cat for the tail, Boo's paws for the knock. None glows but the red dot on the Pointer key, which glows as it does in its game. A game pressed shows the green tick for a moment. |
 | Third row | In a visit, the player's five tokens, one under each game (30 October): Boo's gold coin (your picture of it, 29 October; bigger since your note "They need to be bigger.") for a token left, an empty ring for one spent. The Mac's screen lists each player with the same coins, bigger there too. |
 | Bottom row | Blank. Its left-hand key is Back, on the screen before a game starts. |
-| The touch strip | On the menu: in a visit, whose turn it is, Press a game and their tokens; in free play, Free play and Press a game. Before a game: its name, Press any key to start, its rule (the three games with strikes) and, in the two games that steer, what the outside dials do; before *Yarn Catch*, only Press any key to start, between its two halves. While it plays: the points, big, in gold (for a moment after a strike, its words instead: "Strike 1! That's Salem."); the time, as eight lights going out one by one; the three strikes as boxes, crossed in red as they go (in the three games that count them, in place of the game's name); and in the two games that steer, along the bottom of the strip above the two outside dials, what each one does. In *Yarn Catch* the strip is the control: a left half and a right half, each with its arrow and Tap, and the points between. When a game ends: how it ended and the points. |
+| The touch strip | On the menu: in a visit, whose turn it is, Press a game and their tokens; in free play, Free play and Press a game. Before a game: its name, Press any key to start, its rule (the games with strikes) and, in the games that steer, what the outside dials do. While it plays: the points, big, in gold (for a moment after a strike, its words instead: "Strike 1! That's Salem."); the time, as a bar counting down; the five strikes as boxes, crossed in red as they go (in the games that count them, in place of the game's name); and in the two games that steer, along the bottom of the strip above the two outside dials, what each one does. In *Yarn Catch*, once the count starts, the strip shows only the basket, over the column it is in (1 November: "only the basket emoji"), and the points, the time and the misses are on the Mac's screen. When a game ends: how it ended and the points. On the winner's page: which keys show each player's scores, who has the most points, and at the right-hand end Tap here for free play (1 November). |
 | The dials | Only the two outside dials play, and only in the two games that steer: one click is one key, every click, however fast the turn (at most six keys for one quick spin). In *Boo Chasing Her Tail* the left one moves Boo left and right (clockwise is right), the right one up and down (clockwise is up). In *The Lazy Pointer* the same, for the dot. The four middle dials do nothing. A dial pressed in moves on from a moment, like a key. |
 
 During a game the keys are the game's board. Between games: the game's board under a big 3, 2, 1
@@ -313,22 +319,24 @@ so a note from the Game test tab is a quick change.
    the table: knock one off and it is a miss that says who, their face under the cross on the
    end; one that reaches the end just goes, no miss. A press with nothing there is a miss
    ("Strike 1! Too soon."), and so is a thing left on the end past its beat ("Strike 2! It got
-   away."). A press a moment before a thing arrives (60 ms) still knocks it off, and a press a
+   away."). A press a moment before a thing arrives (up to 0.12 seconds) still knocks it off, and a press a
    moment after one got away (up to 0.3 seconds) is not a second miss: its getting away was the
-   miss. The window is tighter than it was: a thing stays on the end a tenth of a second past its
-   beat. A miss puts the red cross on that table's end key (31 October: the whole table red was
+   miss. A thing stays on the end 0.2 seconds past its beat (1 November: "The knock off is hard";
+   it was a tenth of a second). A miss puts the red cross on that table's end key (31 October: the whole table red was
    distracting while the other tables went on). Only the end keys count: no dials and no strip.
-   Slower at the start, since two tables run each way, then fast (31 October): a beat every 0.5
-   seconds at the start and every 0.2 seconds from three fifths of the way in; a new thing every
-   third beat at first and nearly every beat by the end, as the room on the tables allows. Five
+   Slower at the start, since two tables run each way, and quickening all the way through (1
+   November; it was at top speed from three fifths of the way in): a beat every 0.5 seconds at the
+   start and every 0.3 seconds as the game ends; a new thing every third beat at first and nearly every beat by the end, as the room on the tables allows. Five
    misses and you're out ("Five misses.").
 5. *Yarn Catch*. Balls of yarn drop down the columns one row at a time, never skipping a row;
-   Boo's basket sits on the bottom row. The left dial moves it a column a click, and a slide
-   along the touch strip moves it a column for every ninth of the strip your finger travels, the
-   way it went (31 October: "I do want the swipe", "go back to the dial"; a tap does nothing, and
-   the deck reports a slide only when the finger lifts, which is why the dial is there too); both
-   go off one edge and in at the other, so every ball can be reached. The basket's key shows where
-   it is. A ball into
+   Boo's basket sits on the bottom row. The left dial moves it a column a click, off one edge
+   and in at the other, so every ball can be reached. A slide along the touch strip puts it in
+   the column over where your finger lifts, so a slide all the way across takes it all the way
+   across (1 November; on 31 October a slide counted ninths of the strip, and a full slide went
+   round the edge and landed one key the wrong way). A tap does nothing (31 October). The deck
+   tells the page about a slide only once, as one event, so the basket jumps there and cannot
+   follow the finger, which is why the dial is there too. The basket shows on the strip and on
+   its key. A ball into
    the basket: 1 point, a gold one 3 (one in ten), and the basket flashes green. A ball on the
    bottom row waits a fifth of a second for the basket, then it is missed: a red cross where it
    fell, "Miss 1! It fell." on the strip. Five misses end the round ("Five misses."). From ten
@@ -343,7 +351,7 @@ so a note from the Game test tab is a quick change.
 | *Boo Chasing Her Tail* | the tail a key every 0.65 s, three keys long; a wall or a friend every 15 s from 15 s in; a fish from 10 s, a cucumber from 20 s | a key every 0.22 s; six walls and friends at most, two cucumbers | 2 a catch; 3 a fish |
 | *The Lazy Pointer* | Boo, awake, a key every 0.6 s; naps of 3.5 to 5.25 s; a sparkle every 1.4 s, up for 6 s; walls from 20 s in | a key every 0.3 s; five walls | 3 a sparkle; -2 one that fades; 20 for lasting to the end |
 | *Whack-a-Mouse* | a mouse every 0.65 s, up for 1.3 s (gold 0.9 s), two at once; from 5 s in, one in four is a friend | about every 0.1 s, up for 0.8 s (gold 0.6 s), up to eight at once (one more every 15 s) | 1; gold 3; a friend nothing |
-| *Knock It Off the Table* | a key a beat every 0.5 s, a new thing every third beat; friends from 10 s in | every 0.2 s from three fifths in, a new thing nearly every beat | 1 a knock; a friend a miss |
+| *Knock It Off the Table* | a key a beat every 0.5 s, a new thing every third beat; friends from 10 s in | every 0.3 s at the very end, a new thing nearly every beat | 1 a knock; a friend a miss |
 | *Yarn Catch* | down a row every 0.65 s, a new ball every 1.6 s, three at most; friends from 10 s in | 0.4 s, a new ball every 1 s | 1; gold 3; a friend a miss |
 
 **The points do not match from game to game.** Each game pays on its own scale; that is why the
@@ -358,8 +366,9 @@ says which games feel stingy or generous.
 1. **Who is playing.** Two or three first names, in the order they will play.
 2. **Five tokens each, one a game** (30 October). Turns go round in that order: first, second,
    third, first, second, third. On your turn the games you have played are marked done on the
-   menu (dimmed, a green tick) and your tokens spend from the left, whatever you picked (31
-   October); pressing a game you have played does nothing.
+   menu (dimmed, a green tick) and the coin under each one has gone, so the coins left are the
+   games left (1 November: "the coins on the stream deck line up with the games not played"; they
+   spent from the left before); pressing a game you have played does nothing.
 3. **Your turn.** The strip says whose turn it is, big in the middle. Press a game you have not
    played yet. The next screen gives its name and how to play; any key or dial starts it, and
    after 15 seconds it starts on its own. Back returns to the menu with the token still unspent.
@@ -378,9 +387,10 @@ says which games feel stingy or generous.
    "Didn't I give you enough? Now be off! I'm done playing games." It goes on the way a clue
    does.
 7. **The winner.** When every token is spent: the most points over each player's five games,
-   just for fun, for ten seconds; after the first three, a press ends it. The keys 1, 2 and 3
-   (one a player) put that player's five scores up on the Mac's screen and start the ten seconds
-   again (31 October: no running maths under the players' names; the screen lists only names
+   just for fun. The page stays until a tap on the touch strip, after the first three seconds (1
+   November: the strip says Tap here for free play; it used to go on by itself after ten seconds,
+   and any press ended it). Nothing else moves it on, and the chime still ends it. The keys 1, 2
+   and 3 (one a player) put that player's five scores up on the Mac's screen (31 October: no running maths under the players' names; the screen lists only names
    and tokens until then). A tie names everyone who tied. A visit of one player skips it.
 8. **Free play until the chime.** Anyone can play anything; nothing counts now. Boo says to
    play on or go and powder your noses, and that the chime will say when to go.
@@ -569,9 +579,9 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   `MICE_AT_ONCE_MAX` 8, `MICE_POINTS` 1, `MICE_GOLD_POINTS` 3, `MICE_PETS_FROM_MS` 5000,
   `MICE_PET_ONE_IN` 4, `MICE_PETS_OUT` (`STRIKES_OUT`), `MICE_REST_MS` 500 and `MICE_LATE_MS` 150
   (a tap that soon after a mouse hid still gets it); the knock's `KNOCK_BEAT_MS` 500 to
-  `KNOCK_BEAT_END_MS` 200 by `KNOCK_TOP_AT` 0.6 of the game (31 Oct), `KNOCK_EVERY_BEATS` 3 to
-  `KNOCK_EVERY_BEATS_END` 1, `KNOCK_PER_TABLE` 2, `KNOCK_APART` 3, `KNOCK_LATE_MS` 100 (on the end
-  past its beat), `KNOCK_EARLY_MS` 60 (a press that soon before the beat takes the thing about to
+  `KNOCK_BEAT_END_MS` 300 by `KNOCK_TOP_AT` 1, the game's end (1 Nov), `KNOCK_EVERY_BEATS` 3 to
+  `KNOCK_EVERY_BEATS_END` 1, `KNOCK_PER_TABLE` 2, `KNOCK_APART` 3, `KNOCK_LATE_MS` 200 (on the end
+  past its beat), `KNOCK_EARLY_MS` 120 (a press that soon before the beat takes the thing about to
   arrive), `KNOCK_GONE_MS` 300 (a press on an end that soon after its thing got away is forgiven,
   once), `KNOCK_POINTS` 1, `KNOCK_FRIENDS_FROM_MS` 10000, `KNOCK_FRIEND_ONE_IN` 4; the yarn's
   `YARN_STEP_MS` 650 to `YARN_STEP_END_MS` 400, `YARN_SPAWN_MS` 1600 to `YARN_SPAWN_END_MS` 1000,
@@ -580,12 +590,12 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   `MARK_LABELS` (Strikes or Misses) and `marksOutOf(id)`. Each pair written "A to B" (a constant
   and its `_END` one) runs from A at a game's start to B at its end, over the game's own length. The moments: `READY_MS` 15000,
   `COUNT_MS` 3000, `RESULT_MS` 5000, `PICK_MS` 250, `CLUE_MIN_MS` 3000, `CLUE_MAX_MS` 60000,
-  `WINNER_MS` 10000, `WINNER_MIN_MS` 3000, `FAREWELL_MS` 8000, `MARQUEE_STEP_MS` 250,
+  `WINNER_MIN_MS` 3000, `FAREWELL_MS` 8000, `MARQUEE_STEP_MS` 250,
   `TIME_LIGHTS` 8. The deck: `ARCADE_NAME`, `COLS` 9, `ROWS` 4,
   `KEY_COUNT` 36, `DIALS` 6, `keyAt`, `rowOf`, `colOf`, `LEFT_DIAL` 0 and `RIGHT_DIAL` 5 (the only
-  dials a game reads), `MENU_KEYS` [11..15], `BACK_KEY` 27 (keyAt(3, 0)), `STRIP_WIDTH` 1200,
+  dials a game reads), `MENU_KEYS` [11..15], `BACK_KEY` 27 (keyAt(3, 0)), `STRIP_WIDTH` 1200, `COLUMN_X` (each column's key over the strip, in the strip's own pixels),
   `TABLE_WAYS` [1, -1, 1, -1] and `TABLE_ENDS` [8, 9, 26, 27] (`tableEndCol`, `tableStartCol`);
-  not exported, `TOKEN_KEYS` (keyAt(2, 2) to keyAt(2, 6), spent from the left) and `MIDDLE_KEY`
+  not exported, `TOKEN_KEYS` (keyAt(2, 2) to keyAt(2, 6), each under its game) and `MIDDLE_KEY`
   (keyAt(1, 4)); `SCORE_KEYS` [12, 13, 14] (a player's scores on the winner's screen, 31 Oct). The
   visit: `TOKENS` 5 (one a game), `CLUE_AFTER_GAMES` = `TOKENS` (31 Oct: after all five),
   `MAX_PLAYERS` 3, `ROUND_MS` 900000 (15 minutes, 31 Oct), `FREE_GAME_MS` 120000, `GAME_MS` 50000
@@ -656,8 +666,9 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   `basket` (a column, 4 at the start, on the bottom row), `balls` (`{ col, row, gold, nextAt,
   missAt }`), `catchUntil`, `caught`, `golds`, `dropped`, `nextSpawnAt`; a ball drops one row a
   step and on the bottom row lands in the basket or waits `YARN_LAND_MS` (`missAt`), then is
-  dropped (`yarn-miss`, 'miss', no strike); a strip tap's half, a swipe's way or a left or right
-  arrow moves the basket one column, and onto a waiting ball catches it. No game wins early: each
+  dropped (`yarn-miss`, 'miss', no strike); a left or right arrow or the left dial moves the basket
+  a column, round the edges, a swipe puts it in the column nearest where the finger lifted
+  (`columnOver`, never round the edges), and onto a waiting ball catches it. No game wins early: each
   ends at three strikes ('lose') or at its time ('time', which plays 'win'). `mended(g)` fills in
   a game begun by an older copy of the engine (the page keeps its game across a hot reload): a
   tail with no `tail` array loses the old ring's `paw`, `tip`, `side` and `way` and is laid out
@@ -681,8 +692,9 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   when the count ends, its length from `lengthFor` at that moment, so near the chime it can be
   shorter than the ready board's); on ready nothing
   counts for `PICK_MS`, so a double press never skips how to play, then `BACK_KEY` goes back with
-  the token kept and anything else starts the count, where the token is spent; clue, third and
-  winner take a key, a dial pressed or a strip tap after `CLUE_MIN_MS` or `WINNER_MIN_MS`.
+  the token kept and anything else starts the count, where the token is spent; clue and third
+  take a key, a dial pressed or a strip tap after `CLUE_MIN_MS`; winner takes only a strip tap
+  or a swipe, after `WINNER_MIN_MS`, and its `SCORE_KEYS` show a player's scores.
   `lengthFor(s, t)` is the one rule for a game's length: `FREE_GAME_MS` in free play (a visit's
   too), otherwise `min(GAME_MS, max(CUT_MIN_MS, roundEndsAt - t - RESULT_MS - CLUE_KEEP_MS))`.
   On the menu a counted player's played games are `menu-done:<id>` and do nothing when pressed
@@ -705,12 +717,13 @@ form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
   then the game's board with `back` on `BACK_KEY`; in the count `num:N` on the middle key over
   the board; for a clue or the third player's line every key `off` and `ok` in the middle; for
   the winner the marquee with `boo` in the middle; at the farewell `boo` in the middle. `stripOf`
-  gives `{ left, centre, right, score, marks, lights, zones, dials }`: in play `marks` (`{ of,
+  gives `{ left, centre, right, score, marks, clock, zones, basket, dials }`: in play `marks` (`{ of,
   used }`, in the three games that count strikes, in the name's place), `lights` (`{ of:
   TIME_LIGHTS, lit }`, `lightsOf` over the game's own length), the `said` words in place of
   `score`, and `dials` from `GAMES[].dials` ('◀ ▶' and '▼ ▲', on the outside two only, for the
-  tail and the pointer only); the ready and count strips carry the rule; Yarn Catch has `zones`
-  and no lights or labels. `screenOf` gives `title`, `mode`, `free`, `stage`, `game` (`{ id,
+  tail and the pointer only); the ready and count strips carry the rule; Yarn Catch's count and play give
+  only `basket` (`COLUMN_X` of its column), which `drawStrip` draws alone, the emoji at
+  `STRIP_BASKET` 72, kept whole at the two ends. `screenOf` gives `title`, `mode`, `free`, `stage`, `game` (`{ id,
   name, how, rule }`), `plain`, `boo`, `picture`, `score`, `tally` (`{ label, value }`, the label
   from `GAMES[].counts`), `marks`, `said`, `timeLeftMs` (before play, the length the game will
   get if its count starts now; no screen shows it until play), `clockMs`, `count`, `player`,
@@ -969,10 +982,10 @@ arcade and whole visits every 250 ms (`playGame`, `runVisit`) or stage by stage 
   nothing; a press within `KNOCK_GONE_MS` after a thing got away forgiven once, on its own table
   only; a thing coming onto an end drawn over the tick or the cross there. The yarn: one row a
   step, shown on every row, waiting on the bottom row, then missed; the left dial a column a
-  click and a slide a column a ninth of the strip, round the edges, the arrows too, a tap and the
-  other dials nothing; five misses end it; friends fall from ten seconds in and one caught is a
+  click, round the edges, the arrows too; a slide to the column under where it ended, from every
+  column to every column, never round the edges; a tap and the other dials nothing; five misses end it; friends fall from ten seconds in and one caught is a
   miss. The strip in play: the points, the boxes with their word, the bar counting down with the
-  time under it (once a second), the dials' labels and Exit; left alone, a game's strip changes
+  time under it (once a second), the dials' labels and Exit, and in Yarn Catch only the basket; left alone, a game's strip changes
   once a second. Every game: the same seed the same game, ending at
   its time unless sooner, then standing still; ten seconds slept at once played out exactly as
   the 16 ms ticks would; pure (nothing handed in changed, every state plain JSON); `mended` (a

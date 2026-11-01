@@ -1,8 +1,10 @@
 # CLAUDE.md — A Murderwin at Sirwin Manor
 
 Rules for working in this repo. These are load-bearing. Read fully before any task.
-Updated 28 October 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
+Updated 1 November 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
 feature lands Wednesday 11 November, after the second full tech run; then checks and fixes only.
+
+> **1 Nov 2026, Jon's five notes on the arcade (built on main, not deployed, not tried on the real deck):** each coin under its game, gone when that game is played (not left to right any more); the winner's page holds until a tap on the touch strip, which says Tap here for free play (no ten-second timer; the chime still ends it); in Yarn Catch the strip shows only the basket emoji, and a slide puts the basket in the column over where the finger lifts, so a full slide goes all the way across (the Stream Deck reports a slide once, so the basket jumps and cannot follow the finger; a tap still does nothing); the Knock easier (top speed a beat every 0.3 seconds, reached only as the game ends; the hit window about twice as wide), which partly undoes the 30 Oct "Much faster".
 
 > **31 Oct 2026, Jon's second arcade playtest (a transcript in chat, built the same day):** five strikes in every game with strikes; the tail game black, the tail flat with a white shadow, no growth, cucumbers on red, no pause at the edge; the Knock slower at the start, its cross on the end key only, the claret cloth back; Yarn Catch on the left dial and a real slide, no tap; the strip's time as a bar counting down, whose turn big, tokens left to right; the clue after all five games, fifty-second games, the keys 1 to 3 for each player's scores at the winner, no maths under the players; **every Act 4 round is fifteen minutes** (`seed/night.json` roundMinutes; Act 4 is now about an hour and ten minutes). Open: arcadeWarmUp (default no). Deployed 31 Oct.
 

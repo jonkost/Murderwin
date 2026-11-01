@@ -29,6 +29,7 @@ import {
   SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031,
   ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS,
   MUSIC_SHORTCUTS_1031_TASKS,
+  ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -969,6 +970,15 @@ export const ADDITIONS = [
     // Jon's (551).
     id: '2026-10-31-music-shortcuts',
     tasks: MUSIC_SHORTCUTS_1031_TASKS,
+  },
+  {
+    // 1 Nov: Jon's five notes on the arcade, one card a change, all done
+    // (552 to 556: the coins under their games, the tap for free play on
+    // the strip, the yarn's strip only the basket, a full slide all the way
+    // across, an easier Knock), and a line on his try (514).
+    id: '2026-11-01-arcade-notes',
+    tasks: ARCADE_NOTES_1101_TASKS,
+    fileTasks: FILED_FOR_ARCADE_NOTES_1101,
   },
 ]
 

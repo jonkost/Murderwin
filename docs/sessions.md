@@ -9,6 +9,66 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 1 Nov 2026 · Claude Code (the arcade: Jon's five notes)
+
+- Jon's message after playing the arcade ("Boo arcade is great"), five
+  notes. Built on main; not deployed, not pushed; not tried on the real
+  Stream Deck + XL.
+- The coins: each token sits under its game and goes when that game is
+  played (`TOKEN_KEYS`, `menuFaces`), so the coins left are the games left.
+  They spent from the left before (31 Oct).
+- The winner's page: the strip says Tap here for free play at its right-hand
+  end, and the page stays until a touch on the strip after `WINNER_MIN_MS`
+  (`WINNER_MS` gone). My calls, for Jon to overrule: the ten-second timer
+  went, so a group cannot miss the scores; only a strip touch leaves the
+  page, the other keys and the dials no longer do; a tap that wanders and
+  arrives as a swipe counts; the chime still ends it. The keys 1 to 3 are
+  unchanged. On the page the Space bar and the OK button stand for the tap.
+- Yarn Catch, Jon's question: yes, a full slide can move the basket all the
+  way across. A slide now puts it in the column over where the finger lifts
+  (`COLUMN_X`, `columnOver`; the old `slideColumns` counted ninths, so a full
+  slide went round the edge and landed one key the wrong way). The limit:
+  `@elgato-stream-deck` core 7.8.0 gives only `lcdShortPress`, `lcdLongPress`
+  and `lcdSwipe(from, to)`, so a slide arrives once, as one event, and the
+  basket jumps there and cannot follow the finger. Whether a slow slide is
+  reported as a long press, which would do nothing, is not known until it is
+  tried on the deck (on card 514). The dial still wraps; a swipe does not; a
+  tap still does nothing (Jon, 31 Oct). The page's drawn strip now behaves
+  like the real one: one event when the pointer lifts, a tap under
+  `SLIDE_MIN` 16 pixels.
+- Yarn Catch's strip: only the basket emoji in the count and the play
+  (`basket` in `stripOf`, `STRIP_BASKET` 72 in `drawStrip`, whole at the two
+  ends). The ready strip keeps Press any key to start. The basket stays on its
+  bottom-row key too, which paints faster than the strip. The points, the
+  time and the misses are on the Mac's screen; the Exit label went from the
+  strip, and the third dial still exits.
+- The Knock: `KNOCK_BEAT_END_MS` 300 (was 200), `KNOCK_TOP_AT` 1 (was 0.6),
+  `KNOCK_LATE_MS` 200 (was 100), `KNOCK_EARLY_MS` 120 (was 60); how often
+  things come is unchanged. Three made-up players over 300 seeds on the real
+  engine, counts only: the ordinary one lasted about 25 of the 50 seconds and
+  never finished, and now finishes 98 games in 100 with about 50 points; the
+  casual one lasts about 37 seconds, was 16; the keen one always finishes,
+  was 83 in 100. This partly undoes Jon's "Much faster" and "A tighter hit
+  window" of 30 Oct, so the card says so.
+- Fixed on the way: the Game test tab, the Devices page, the status page and
+  the engine's own header still described the visit before 30 Oct (two
+  tokens, a clue after the second game, eighty seconds, ten minutes). The
+  Game test tab's steps are tested now.
+- Noticed, not changed: on the practice page's keyboard the digits at the
+  winner map to the menu's keys, so 2 shows player 1's scores. The real
+  deck's keys are right.
+- The board: migration `2026-11-01-arcade-notes` (cards 552 to 556 done, a
+  line on 514). The docs: `docs/boo-arcade.md`, `docs/on-the-night.md`,
+  `docs/test-plan.md` (G54, G55), this log, `CLAUDE.md`. Claude chat keeps
+  the Canon and Start Here (the 30 October handoff's split). Tests: play 267
+  and app 139, all passing.
+- Tried in the browser with sound blocked, since Jon's rule on audio stands
+  (the arcade's tones count): the strip's pictures, a full slide and a tap, a
+  whole visit with the coins checked at every turn, and the winner's page
+  still up a minute later.
+- Left: the deploy, on Jon's say-so; Jon's try on the deck (514); the arcade
+  on the night (515).
+
 ## 31 Oct 2026, evening · Claude Code (the music through Jon's seven Shortcuts)
 
 - Jon's formal rundown (`Murderwin Rundown.xlsx` on his Desktop, the same
