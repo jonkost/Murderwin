@@ -45,9 +45,10 @@ export function Offline({ ui, seconds }) {
 }
 
 // The strip over a window the host has paused: the choices stay on screen
-// but nothing can be tapped and the clock stands still.
-export function PausedStrip({ ui }) {
-  return <div className="paused-strip" role="status">{ui['PAUSED BY HOST']}</div>
+// but nothing can be tapped and the clock stands still. On the two host
+// phones it carries Resume (App.jsx).
+export function PausedStrip({ ui, foot }) {
+  return <div className="paused-strip" role="status">{ui['PAUSED BY HOST']}{foot}</div>
 }
 
 // A rehearsal night (lib/night.js isRehearsalNight): a big red band fixed

@@ -335,7 +335,7 @@ test('handover wipes the previous owner\'s notes for this night, so the next per
   assert.deepEqual(db.store.get('notes/u-jon'), { byNight: { 'old-night': { seen: { welcome: true } } } })
 })
 
-test('a pause freezes every clock in one batch and resume moves them all on by the pause length', async () => {
+test('a pause freezes every clock and resume moves them all on by the pause length, at once', async () => {
   const db = seeded()
   const { nightId } = await createNight(db)
   for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob']]) await join(db, { uid, nightId, name })
@@ -385,6 +385,26 @@ test('a pause freezes every clock in one batch and resume moves them all on by t
   const again = await runCommand(db, { nightId, command: 'resume', now: tResume + 1 })
   assert.equal(again.already, true)
   assert.ok(PAUSE_SHIFTED['public/relay'].includes('turnEndsAt') && PAUSE_SHIFTED['public/study'].includes('slotEndsAt'))
+})
+
+test('both host phones pressing Resume at once move every clock once, not twice', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-susan', 'Susan'], ['u-jessa', 'Jessa']]) await join(db, { uid, nightId, name })
+  const t0 = 1_000_000
+  await runCommand(db, { nightId, command: 'act', arg: 2, now: t0 })
+  const due = t0 + 900_000
+  db.store.set(`nights/${nightId}/public/act4`, { roundEndsAt: new Date(due) })
+  db.store.set(`nights/${nightId}/public/study`, { slotEndsAt: new Date(due) })
+  const before = db.store.get(`nights/${nightId}`).phase
+  await runCommand(db, { nightId, command: 'pause', now: t0 + 60_000 })
+  const tResume = t0 + 360_000
+  const replies = await Promise.all([1, 2].map(() => runCommand(db, { nightId, command: 'resume', now: tResume })))
+  assert.equal(replies.filter(r => r.shiftMs === 300_000).length, 1, 'one press moved the clocks')
+  assert.equal(replies.filter(r => r.already).length, 1, 'the other found the night already resumed')
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/act4`).roundEndsAt), due + 300_000, 'the chime moved by the pause, once')
+  assert.equal(msOf(db.store.get(`nights/${nightId}/public/study`).slotEndsAt), due + 300_000, 'and the study with it')
+  assert.equal(db.store.get(`nights/${nightId}`).phase, before, 'and the night is back where it was')
 })
 
 test('while paused with no window open, nothing moves the night on until the host resumes', async () => {

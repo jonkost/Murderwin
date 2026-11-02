@@ -18,7 +18,7 @@ import { MemoryRounds, MemoryStandalone, BooWall, Idle, RoomCode, Orangerie } fr
 import { PoseCamera } from './screens/Pose'
 import BooArcade from './screens/Arcade'
 import { SalemRounds, BooMoments } from './screens/Act4'
-import { HousePanel } from './screens/Host'
+import { HousePanel, ResumeNight } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 import Allow from './screens/Allow'
@@ -477,7 +477,7 @@ const DEALT = {
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'paused-host', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -515,6 +515,9 @@ export default function Preview({ screen }) {
     case 'allow': body = <Allow uid="preview" onDone={() => {}} />; break
     case 'superseded': body = <Join night={night} ui={ui} notice={ui.SUPERSEDED} />; break
     case 'paused': body = <Moment text={ui.PAUSED} crest />; break
+    // the two host phones (1 Nov 2026): Resume on the pause card, and on the strip over a held window
+    case 'paused-host': body = <Moment text={ui.PAUSED} crest foot={<ResumeNight nightId="preview" />} />; break
+    case 'paused-window-host': body = <><PausedStrip ui={ui} foot={<ResumeNight nightId="preview" />} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break
     case 'blackout': body = <Blackout />; break
     // after the blackout (25 Oct 2026): the one button, then the role card with no button
     case 'prompt-continue': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" stage="continue" card={CARDS.role} notes={null} />; break

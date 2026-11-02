@@ -13,7 +13,7 @@ import Allow from './screens/Allow'
 import { keepAwake } from './lib/permissions'
 import { Questions, Eliminate, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip, RehearsalBand } from './screens/Moments'
-import { StartNight } from './screens/Host'
+import { ResumeNight, StartNight } from './screens/Host'
 import Relay, { RelayDone, ms } from './screens/Relay'
 
 // One page. What a phone shows is a pure function of three documents:
@@ -122,8 +122,12 @@ export default function App() {
   // Where each shows is lib/night.js placement: a Parlour Game on top of the
   // screen, the deduction round as the screen, the ballot as a card on Now.
   // During a pause the clock stands still at the moment of the pause, so an
-  // open window stays on screen, disabled, until the host resumes.
+  // open window stays on screen, disabled, until the host resumes. A pause
+  // takes the tabs off every phone, the Host tab's Resume with them, so the
+  // two host phones carry that one button, on the pause card or on the strip
+  // over a held window, and nothing else stays live (1 Nov 2026).
   const paused = n.phase === 'paused'
+  const resume = paused && s.host ? <ResumeNight nightId={nightId} /> : null
   const w = openWindow(n, s, clock)
   const where = placement(w)
   let screen = null
@@ -132,7 +136,7 @@ export default function App() {
     if (w.kind === 'questions') screen = <Questions w={w} nightId={nightId} serverNow={clock} onDone={done} />
     if (w.kind === 'eliminate') screen = <Eliminate w={w} night={n} session={s} content={content.data} nightId={nightId} serverNow={clock} onDone={done} />
   }
-  const held = screen && paused ? <><PausedStrip ui={ui} /><div className="paused-shell" inert>{screen}</div></> : screen
+  const held = screen && paused ? <><PausedStrip ui={ui} foot={resume} /><div className="paused-shell" inert>{screen}</div></> : screen
   const over = Boolean(screen) && where === 'overlay'
   if (screen && !over) return <>{band}{banner}{held}</>
 
@@ -143,8 +147,8 @@ export default function App() {
   // page goes inert under the strip, and the frozen clock holds its bar still.
   const heldCard = paused && where === 'card'
   const top = over ? <div className="overlay" role="dialog" aria-modal="true" aria-label={w.title || 'Parlour Game'}>{held}</div> : null
-  const strip = heldCard ? <PausedStrip ui={ui} /> : null
-  if (paused && !over && !heldCard) return <>{band}{banner}<Moment text={ui.PAUSED} crest /></>
+  const strip = heldCard ? <PausedStrip ui={ui} foot={resume} /> : null
+  if (paused && !over && !heldCard) return <>{band}{banner}<Moment text={ui.PAUSED} crest foot={resume} /></>
 
   // The ballot (Act 7; a card since 25 Oct 2026, Jon's cue list, cue 19) goes
   // down to Rest for the Now tab, with every tab reachable: the window, whether

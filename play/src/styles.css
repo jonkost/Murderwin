@@ -248,6 +248,8 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .house-study { background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.5rem 0.9rem; margin: 0.4rem 0; }
 .house-study .gloss { margin: 0.2rem 0; }
 .start-night { margin-top: 2.5rem; }
+.resume-night { margin-top: 2rem; }
+.paused-strip .resume-night { margin-top: 0.6rem; }
 .quiet { background: rgba(241, 232, 214, 0.04); border: 1px solid var(--edge); border-radius: 0.95rem; color: var(--dim); min-height: 2.9rem; padding: 0.45rem 1.1rem; font-size: var(--t-small); font-weight: 500; }
 .quiet:active:not(:disabled) { background: rgba(241, 232, 214, 0.09); }
 

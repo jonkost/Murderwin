@@ -73,9 +73,9 @@ test('the ballot is a card on Now with the tabs reachable: App hands the window 
   // the picks so far live above the tab switch: the Now pane unmounts when a guest opens Clues or Motives, App never does
   assert.match(app, /const \[draft, setDraft\] = useState\(null\)/, 'App holds the ballot draft, not the Now pane')
   // a pause with the card up keeps it on screen, inert under the strip, like any paused window
-  assert.match(app, /const heldCard = paused && where === 'card'/)
-  assert.match(app, /if \(paused && !over && !heldCard\) return <>\{band\}\{banner\}<Moment text=\{ui\.PAUSED\} crest \/><\/>/, 'the paused line yields to the held card')
-  assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} \/> : null/)
+  assert.match(app, /const heldCard = paused && where === 'card'\n/)
+  assert.match(app, /if \(paused && !over && !heldCard\) return <>\{band\}\{banner\}<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/><\/>/, 'the paused line yields to the held card')
+  assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/)
   assert.match(app, /<Rest [^\n]*ballot=\{ballot\}[^\n]*over=\{lock === 'over'\}/)
   const rest = read('screens/Rest.jsx')
   assert.match(rest, /ballot\?\.w\?\.id/, 'the phone jumps to Now when the ballot opens')
@@ -102,6 +102,35 @@ test('the ballot is a card on Now with the tabs reachable: App hands the window 
 // Act 7 on the phone (the cue list, cues 20 to 23): eyes on the screen through
 // the reveal, the result with a thank-you through the credits, then The End
 // opens everything up for good with the result kept on Now.
+// A pause takes the tabs off every phone, the Host tab's Resume with them, so
+// for a long time nothing on a phone could carry on (1 Nov 2026). The two host
+// phones get that one button and nothing else: no tab, no room game and no
+// other Host tab button stays live in a pause.
+test('a pause leaves the two host phones one button, Resume, wherever the pause shows, and leaves guests none', async () => {
+  const { readFileSync } = await import('node:fs')
+  const read = f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
+  const app = read('App.jsx')
+  assert.match(app, /const resume = paused && s\.host \? <ResumeNight nightId=\{nightId\} \/> : null/, 'a host phone in a pause, never a guest and never outside a pause')
+  // all three places a pause shows carry it, and it sits outside anything inert
+  assert.match(app, /<><PausedStrip ui=\{ui\} foot=\{resume\} \/><div className="paused-shell" inert>\{screen\}<\/div><\/>/, 'the strip over a held game or deduction round')
+  assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/, 'the strip over the ballot card')
+  assert.match(app, /return <>\{band\}\{banner\}\{strip\}<div className=\{over \? 'beneath covered'/, 'that strip goes in front of the inert page, not inside it')
+  assert.match(app, /<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/>/, 'the pause card')
+  assert.ok(!/<PausedStrip ui=\{ui\} \/>/.test(app), 'no strip goes without it')
+  // the pause card comes before every tab, lock and game on a host's phone too: the button is all a host keeps
+  assert.ok(!/paused[^\n]*s\.host[^\n]*\n[^\n]*\n*\s*return <Rest/.test(app))
+  assert.ok(app.indexOf('<Moment text={ui.PAUSED}') < app.indexOf('<RehearsalNight.Provider'), 'the pause card is drawn before the tabs')
+  assert.ok(app.indexOf('<Moment text={ui.PAUSED}') < app.indexOf('const lock = lockFor(n, s)'), 'and before the locks and the drawing')
+  assert.match(read('screens/Moments.jsx'), /\{ui\['PAUSED BY HOST'\]\}\{foot\}<\/div>/, 'the strip shows the button it is given')
+  assert.match(read('screens/Moments.jsx'), /<p className="moment-text">\{text\}<\/p>\s*\{foot\}/, 'the pause card shows the button it is given')
+  // it does what the Host tab's Resume does, and says so if it fails
+  const host = read('screens/Host.jsx')
+  const button = host.slice(host.indexOf('export function ResumeNight'))
+  assert.match(button, /await callHost\(\{ nightId, command: 'resume' \}\)/)
+  assert.match(button, /That didn’t work: \$\{troubleLine\(e, 'press it again\.'\)\}/)
+  assert.match(button, /<button className="big" disabled=\{busy\} onClick=\{resume\}>Resume<\/button>/)
+})
+
 test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the result beat, open for good at The End, and nowCards keeps the result when the night is over', async () => {
   const { phoneLock, lockFor, isOver, nowCards, resultCard, EMPTY_NOTES } = await import('../src/lib/night.js')
   assert.equal(phoneLock({ act: 7, beat: 'ballot', phase: 'act' }), null, 'the ballot is a card, not a lock')

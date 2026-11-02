@@ -127,7 +127,7 @@ test('F31 no screen shows a failed call\'s raw message: every one goes through t
     ['play/src/screens/Join.jsx', 'The Manor did not answer. Try again.', 1],
     ['play/src/screens/Windows.jsx', 'The Manor did not hear that. Try again.', 3],
     // the Host tab: true whether the connection dropped or a function broke (the Manor did answer then)
-    ['play/src/screens/Host.jsx', 'press it again.', 2],
+    ['play/src/screens/Host.jsx', 'press it again.', 3],
     ['play/src/screens/Host.jsx', 'The Manor did not answer.', 1],
   ]) {
     const src = read(file)

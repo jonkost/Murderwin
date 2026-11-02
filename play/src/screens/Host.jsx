@@ -678,3 +678,28 @@ export function StartNight({ ui }) {
     </div>
   )
 }
+
+// The one button a pause leaves on the two host phones (App.jsx, 1 Nov 2026):
+// the pause takes the tabs off every phone, the Host tab's own Resume with them.
+export function ResumeNight({ nightId }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const resume = async () => {
+    if (nightId === 'preview') return
+    setBusy(true)
+    setError(null)
+    try {
+      await callHost({ nightId, command: 'resume' })
+    } catch (e) {
+      setError(`That didn’t work: ${troubleLine(e, 'press it again.')}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="resume-night">
+      <button className="big" disabled={busy} onClick={resume}>Resume</button>
+      {error && <p className="trouble" role="alert">{error}</p>}
+    </div>
+  )
+}

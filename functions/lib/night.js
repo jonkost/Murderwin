@@ -401,7 +401,7 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 }
 
 // Pause and resume. Pausing stores the moment; resuming measures how long the
-// pause lasted and moves every deadline on by that much, in one batch, so no
+// pause lasted and moves every deadline on by that much, all at once, so no
 // window settles, no relay turn ends and no study slot expires while the
 // host is dealing with a dog in the garden. The fields that move:
 //   nights/{id}.window.opensAt, .window.closesAt
@@ -442,29 +442,34 @@ export async function pauseNight(db, { nightId, now = Date.now() } = {}) {
 
 export async function resumeNight(db, { nightId, now = Date.now() } = {}) {
   const ref = db.doc(`nights/${nightId}`)
-  const night = (await ref.get()).data()
-  if (!night) throw new NightError('no-night', 'No such night.')
-  if (night.phase !== 'paused') return { ok: true, already: true }
-  const shift = Math.max(0, now - msOf(night.pausedAt))
-  const batch = db.batch()
-  let moved = 0
-  const nightPatch = { phase: night.pausedFrom ?? 'act', pausedFrom: null, pausedAt: null, phaseAt: FieldValue.serverTimestamp() }
-  for (const f of PAUSE_SHIFTED.night) {
-    const v = pathGet(night, f)
-    if (v) { nightPatch[f] = new Date(msOf(v) + shift); moved++ }
-  }
-  batch.update(ref, nightPatch)
-  for (const sub of Object.keys(PAUSE_SHIFTED).filter(k => k !== 'night')) {
-    const subRef = db.doc(`nights/${nightId}/${sub}`)
-    const snap = await subRef.get()
-    if (!snap.exists) continue
-    const data = snap.data()
-    const patch = {}
-    for (const f of PAUSE_SHIFTED[sub]) { const v = pathGet(data, f); if (v) { patch[f] = new Date(msOf(v) + shift); moved++ } }
-    if (Object.keys(patch).length) batch.update(subRef, patch)
-  }
-  await batch.commit()
-  return { ok: true, shiftMs: shift, moved }
+  // One transaction, reads and writes: the two host phones can press Resume at
+  // the same moment, and only one of them may move the clocks (1 Nov 2026).
+  return db.runTransaction(async tx => {
+    const night = (await tx.get(ref)).data()
+    if (!night) throw new NightError('no-night', 'No such night.')
+    if (night.phase !== 'paused') return { ok: true, already: true }
+    const shift = Math.max(0, now - msOf(night.pausedAt))
+    let moved = 0
+    const nightPatch = { phase: night.pausedFrom ?? 'act', pausedFrom: null, pausedAt: null, phaseAt: FieldValue.serverTimestamp() }
+    for (const f of PAUSE_SHIFTED.night) {
+      const v = pathGet(night, f)
+      if (v) { nightPatch[f] = new Date(msOf(v) + shift); moved++ }
+    }
+    const patches = []
+    for (const sub of Object.keys(PAUSE_SHIFTED).filter(k => k !== 'night')) {
+      const subRef = db.doc(`nights/${nightId}/${sub}`)
+      const snap = await tx.get(subRef)
+      if (!snap.exists) continue
+      const data = snap.data()
+      const patch = {}
+      for (const f of PAUSE_SHIFTED[sub]) { const v = pathGet(data, f); if (v) { patch[f] = new Date(msOf(v) + shift); moved++ } }
+      if (Object.keys(patch).length) patches.push([subRef, patch])
+    }
+    // every read comes before the first write, as a transaction requires
+    tx.update(ref, nightPatch)
+    for (const [subRef, patch] of patches) tx.update(subRef, patch)
+    return { ok: true, shiftMs: shift, moved }
+  })
 }
 
 // Who may press the host buttons: the admin (Google sign-in in the workshop,
