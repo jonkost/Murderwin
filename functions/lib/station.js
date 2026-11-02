@@ -189,11 +189,16 @@ export async function finishStudy(db, { nightId, groupId, outcome = 'solved', se
     [`finished.${groupId}`]: { outcome, seconds, pairs, at: now },
     current, rotatedAt: now,
   })
-  // The station's own report puts the study at rest. Which group is due next
-  // is the rotation's to say (deal.rotate is the only writer of groupId), so
-  // the pointer is left where it is; an absent pay-out leaves the doc alone,
-  // since a game may be running in there.
-  if (reportedIn) await db.doc(studyPath(nightId)).set({ state: 'idle', lastOutcome: outcome, reassignedFrom: null, updatedAt: now }, { merge: true })
+  // Which group is due next is the rotation's to say (deal.rotate is the only
+  // writer of groupId), so the pointer is left where it is. The station's own
+  // report leaves the state to the station, which sends done straight after
+  // it, so the screen goes from the game to the finished page (1 Nov 2026). An
+  // absent pay-out through here (the host's Finish this group now, study-tick)
+  // has no report behind it: with the station gone nothing else would take the
+  // game off the screen, so it puts the study at rest, and a running station
+  // puts its state back at its next write. The chime's pay-out leaves the doc
+  // alone, since a game may be running in there.
+  if (reportedIn) await db.doc(studyPath(nightId)).set({ ...(outcome === 'absent' ? { state: 'idle' } : {}), lastOutcome: outcome, reassignedFrom: null, updatedAt: now }, { merge: true })
   return { ok: true, dealt, nextGroup, groupId, reassigned }
 }
 

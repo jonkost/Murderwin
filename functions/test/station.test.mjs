@@ -89,12 +89,32 @@ test('finished: deals to every phone in the group, advances the study order, and
   }
   const after = db.store.get(rotationPath(nightId))
   assert.equal(after.finished[first].seconds, 301)
-  // the pointer at the group due is the round's to move (act4.startRound), never the station's report
-  assert.equal(db.store.get(studyPath(nightId)).state, 'idle')
+  // the pointer at the group due is the round's to move (act4.startRound), never the station's report,
+  // and the state is the station's to write, so the screen goes straight from the game to the finished page
+  assert.equal(db.store.get(studyPath(nightId)).lastOutcome, 'solved')
+  assert.notEqual(db.store.get(studyPath(nightId)).state, 'idle')
   const again = await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first } })
   assert.equal(again.repeated, true)
   for (const id of due.slice(1)) await stationCommand(db, { nightId, command: 'finished', payload: { groupId: id, outcome: 'capped' } })
   assert.equal(Object.keys(db.store.get(rotationPath(nightId)).finished).length, due.length)
+})
+
+// The Study's screen reads the state. An idle written here, between the game
+// and the station's done, flashed the rules card at every group (1 Nov 2026).
+test('a report leaves the state to the station, so the screen goes from the game to the finished page; the host\'s Finish this group now pays without a report, and puts the study at rest', async () => {
+  const { db, nightId } = await party(8)
+  await makeRotation(db, { nightId })
+  const rot = db.store.get(rotationPath(nightId))
+  const [first, second, third] = rot.studyOrder.filter(Boolean)
+  await stationCommand(db, { nightId, command: 'state', payload: { state: 'entering' } })
+  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: first, outcome: 'solved', seconds: 301, pairs: 3 } })
+  assert.equal(db.store.get(studyPath(nightId)).state, 'entering', 'still the game, until the station says done')
+  assert.equal(db.store.get(studyPath(nightId)).lastOutcome, 'solved')
+  await stationCommand(db, { nightId, command: 'state', payload: { state: 'entering' } })
+  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: second, outcome: 'capped', seconds: 890, pairs: 1 } })
+  assert.equal(db.store.get(studyPath(nightId)).state, 'entering', 'a stopped game the same')
+  await stationCommand(db, { nightId, command: 'finished', payload: { groupId: third, outcome: 'absent' } })
+  assert.equal(db.store.get(studyPath(nightId)).state, 'idle', 'with the station gone, nothing else would take the game off the screen')
 })
 
 test('state: only the words the study knows; the server\'s own fields never come from the station', async () => {

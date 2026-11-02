@@ -842,16 +842,18 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   const s = study ?? { state: 'idle' }
   const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
   const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null
+  // the group due has been paid and the chime has not come yet: nobody is expected here (1 Nov 2026)
+  const paid = !!rotation?.finished?.[s.groupId]
   // the station has sent nothing for ninety seconds: said on the rules card and on the game alike, in
   // Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
   const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
   if (night && night.act !== 4 && !STUDY_RUNNING.includes(s.state)) return <Idle title="Sirwin Manor" line="The Study" loop="study" />
   if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
     <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat} className="papered">
-      <p className="kiosk-line">{names ? `Expecting ${names}.` : 'The next group will be along.'}</p>
+      <p className="kiosk-line">{names && !paid ? `Expecting ${names}.` : 'The next group will be along.'}</p>
       <StudyWalls />
       {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
-      <p className="kiosk-line">{SAY.idle}</p>
+      {!paid && <p className="kiosk-line">{SAY.idle}</p>}
       {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
     </RulesCard>
   )
@@ -879,7 +881,8 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
       <div className="study-stage">
         <Picture src={catPictureUrl('granolia', s.groupId ?? 'study')} className="study-cat" />
         <div className="study-panel">
-          {names && <p className="study-group">{names}</p>}
+          {/* no names on the finished page: the chime may already have moved the study on to the next group */}
+          {names && s.state !== 'done' && <p className="study-group">{names}</p>}
           <div className="study-progress">
             <div className="jewels" aria-label="pairs found">
               {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
@@ -900,7 +903,8 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
           )}
         </div>
       </div>
-      {s.map && <WallMap layout={s.layout} order={s.map} />}
+      {/* the finished page has no use for it: a group stopped while stuck on a pattern still has its map in the doc */}
+      {s.map && s.state !== 'done' && <WallMap layout={s.layout} order={s.map} />}
       {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
       {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
     </div>
