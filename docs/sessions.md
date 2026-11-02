@@ -12,7 +12,24 @@ on the Canon.
 ## 1 Nov 2026, later · Claude Code (the Study's stop, and the scream)
 
 - Jon's message: "make the stop 15mins, I had that scream from the blackout."
-  Built on main; not deployed, not pushed, not tried on the real wall.
+  Built on main, and deployed on his "Deploy now" on 2 Nov: a full deploy
+  (the site, the rules, storage and all 26 functions) from a clean copy of
+  a9fe0db, after every suite and `npm run checks` (1,000 stand-in cases)
+  passed on it. 119 of 119 live files match the build, the scream is not on
+  the site, the rules are the same as before, and tick runs cleanly on the new
+  code. Not pushed; not tried on the real wall.
+- Three checkers then tried to prove the deploy wrong, and could not: every
+  file matched plain, cache-busted and compressed (238 and 476 fetches), 182
+  probes found no scream, all 26 functions carry the deploy hash of a9fe0db's
+  functions folder, tick ran 13 times cleanly, and Start the Study's update
+  step, run alone in a sandbox against the live site, fetched the 27 new
+  station files and said "The study station is up to date." What they added:
+  no page updates itself (no service worker; the HTML is never cached), so a
+  phone or screen open since before the deploy keeps the old code until it is
+  reloaded; and an old station with the new functions can miss the finished
+  page, so restarting the station is required, not optional. The M1 Air
+  itself could not be seen: if its Start the Study is older than 28 Oct, sits
+  in a git checkout or is started with `npm start`, it fetches nothing.
 - The stop. The game in the Study now stops at the end of the round, fifteen
   minutes from the chime, five seconds early (below), and with no round (a
   practice) fifteen minutes from the first touch. My call, for Jon to overrule: he said fifteen, and
@@ -132,13 +149,15 @@ on the Canon.
   and a new Decided line. Start Here's snapshot, 1 November. The Canon's arcade
   section still describes two tokens: that is the 30 October handoff's, which
   Claude chat keeps.
-- Left: a full deploy on Jon's word (functions, seed, site and the station's
-  code, from a clean copy of the commit: `play/public/` goes into any build,
-  so a deploy from this checkout would put Scream.mp3 on the site), then
-  Start the Study closed and opened again on the M1 Air and the Study's
-  screen reloaded (an open tab keeps the old clock); the first
-  hearing of the scream (134); arcadeTrioTime; the deck (514); the arcade on
-  the night (515).
+- Left: on the M1 Air, Start the Study closed and opened again (if it is
+  running there), watching for "The study station is up to date.", then the
+  Study's screen reloaded; every phone or screen that had the game open
+  before the deploy reloaded once, the two host phones first (only then do
+  they show Resume and count to the new stop); the first hearing of the
+  scream (134); arcadeTrioTime; the deck (514); the arcade on the night
+  (515). The deploy went from a clean copy of
+  the commit because `play/public/` goes into any build: a deploy from this
+  checkout would have put Scream.mp3 on the site.
 
 ## 1 Nov 2026 · Claude Code (the arcade: Jon's five notes)
 
