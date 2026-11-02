@@ -9,6 +9,137 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 1 Nov 2026, later · Claude Code (the Study's stop, and the scream)
+
+- Jon's message: "make the stop 15mins, I had that scream from the blackout."
+  Built on main; not deployed, not pushed, not tried on the real wall.
+- The stop. The game in the Study now stops at the end of the round, fifteen
+  minutes from the chime, five seconds early (below), and with no round (a
+  practice) fifteen minutes from the first touch. My call, for Jon to overrule: he said fifteen, and
+  `CLAUDE.md` already said "The cap is the Act 4 round". The game's clock
+  starts at the first touch and the round's at the chime, and a running game
+  was never cut short, so a plain fifteen from the first touch would have run
+  past the chime by the length of the group's walk upstairs: the next group
+  would have found an old game on the wall and lost that time.
+  `public/study`'s `slotEndsAt` now reaches the station (`follow.js`,
+  `runner.due(group, settings, slot)`), and `study.js` `tick(now, slotEndsAt)`
+  stops at the sooner of the two (the round's end less `STOP_EARLY_MS`).
+  `capMs` 15 minutes, `warnMs` 13: Granolia's
+  warning comes two minutes before the stop that will really happen, so a
+  group that started late hears it at the right time.
+- A new round. `setRooms` writes the group and the slot in one write, so both
+  changing means the round moved on, and `runner.due` then stops a running
+  game (`machine.stop`). A swap ("this group is in the study") changes only
+  the group and a resume only the slot, and neither stops it. This also fixes
+  something older than this work: the host's Next left the old game running.
+- A pause. `paused()` moves the station's held slot on by the pause when the
+  server's resume has not done it yet, and leaves it when it has, so the two
+  can arrive in either order.
+- The clocks. `house.js` `studyStopAt` is the one rule for the Host tab and
+  the Study's screen (`Kiosk.jsx` `CAP_MS` gone), and `studyMsLeft` the one
+  count, on the clock that stands still in a pause. `STUDY_CAP_MS` and
+  `ABSENT_SLOT_MS` are fifteen minutes, and two tests now tie them, `capMs`
+  and `warnMs` to the seed's `roundMinutes`, so they cannot drift apart again.
+- The words moved to fifteen: Granolia's slow line, the station's page, the
+  First round beat, the placeholder when the fifteen minutes are up, and the
+  workshop's labels. A read of `safe_content` (18 areas, 307 items, nothing
+  sealed) found no workshop line overriding them. Left at ten on purpose: a
+  practice nobody touches (`station/lib/testmode.js`), the late bulletin in
+  `Rooms.jsx`, the Game test tab's clock (`CLOCK_KEEP_MS`), old done cards and
+  the handoffs.
+- The scream. `play/public/audio/Scream.mp3` is Jon's, for the blackout (the
+  entry below called it not mine). Card 134 asks for a file named blackout on
+  the brain, so it is there: `media/blackout.wav`, 2.97 seconds, the one
+  second of silence first, peak -6.7 dB, in place of the three-second tone
+  (gitignored; to go back, delete `media/blackout.wav` and run
+  `node scripts/make-placeholder-sounds.mjs`, without `--force`, which would
+  rewrite every sound). Nobody has heard it: audio stays off until Jon says. His original is
+  untouched, untracked and not on the site.
+- The finished page. It showed only when a heartbeat happened to land in the
+  rest, after a flash of the rules card that invited the group to start
+  again. `runner` now sends `done` straight after the report, and the report
+  no longer writes `idle` (`finishStudy`; only a pay-out without a report
+  does, the host's Finish this group now or `study-tick`), so the screen goes
+  straight from the game to the finished page and holds it through the twenty
+  seconds' rest. The rules card after the rest no longer greets a group that
+  has finished, and the finished page no longer keeps the numbered wall map
+  of a group stopped while stuck on a pattern.
+- A swap. The chime pays the group the round named: `finishStudy` redirects
+  to the group the host named only for the station's own report
+  (`reportedIn`). Before, a swapped-out group could end the night with no
+  trace.
+- Why five seconds early. The next chime lands on the round's end to within
+  the network's jitter, and the report comes 2.4 seconds after a stop (the
+  walls) or 3.3 after a solve. Stopped on the end itself, report and chime
+  tossed a coin about every second round. `STOP_EARLY_MS` puts the report
+  first. A game stopped mid-pattern can still lose, which does no harm.
+- Pause and Resume, which Jon did not ask for. Pause has always taken the tabs
+  off every phone, the Host tab with them, so nothing on a phone could reach
+  Resume, only `node functions/host.mjs resume` on the brain. The two host
+  phones now carry that one button (`ResumeNight`), on the pause card and on
+  the strip over a held window, and everything else about a pause is as it
+  was. `resumeNight` is now one transaction, so the two phones pressing it
+  together move the clocks once. My first fix kept their whole tabs instead, and the second review
+  showed what that let through in a pause: Salem's colours and Boo's show
+  still running and paying a group, Cake! wiping Sir Irwin's countdown off
+  the TV, Name the Murderer playing the news under One moment, and the Host
+  tab's clocks running on. So the tabs stay away. The Host tab's own Resume
+  branch stays, unreachable, as it was.
+- Two reviews, each with its findings replayed on the code by a second agent,
+  and the phones rendered from the real `App.jsx`. The first found the
+  finished page, the swap, Pause, a game capped within a second when the
+  network was down across a chime (the stop now ignores a round already over
+  at the first touch), clocks that ran on through a pause (`studyMsLeft`), a
+  finished group told it was expected, and the chime race. The second replayed
+  all of that on the fixes and found the blink before the finished page, the
+  Host tab's reach in a pause, and the rules deck, the Intro script and the
+  Steward Handbook still at ten minutes a room (a line on Claude chat's card
+  525). Left as they are, on purpose: a game a new group started on the wall
+  during an internet outage across a chime stops when the Mac hears of the
+  new round, and they start again with the rest of the round; their trace
+  still comes (the failure table says so). A guest's touch on the wall before
+  the first round reports for no group and retries once a second, as it
+  always has, which costs a function call a second and nothing else.
+- A third, short review, of the Resume button and the report change only
+  (seven agents, each finding replayed from nothing, then a critic that ran
+  every suite and the build in a clean clone). No blocker. It found the two
+  phones' Resume race (the transaction above), the leftover wall map, and
+  three sentences that were wrong: that a failed report holds the finished
+  page back (it does not), that Finish this group now has no game to end (it
+  may have, and that game plays on, as it always has), and that a pause stops
+  every clock (the cats' line, Salem's round and Boo's show run on, so a long
+  pause can end them; no clue is lost; `docs/on-the-night.md` now says so).
+  Left as it is, on purpose: after Resume a phone lands on Now, one tap from
+  the Host tab, the same as before. The fix would change every guest's phone
+  too, for one tap. It is in `docs/on-the-night.md` and on card 332.
+- Tests, on Node 26.7: app 140 of 140, play 271 of 271, functions 297 of 301
+  (0 fail, 2 skipped, 2 todo), station 67 of 67, cues 79 of 79, scripts 53 of
+  53, and `node scripts/checks.mjs --local --cases 300` all clear. New since
+  the third review: both host phones pressing Resume (it fails on the old
+  code), a failed report, the wall map and the pause card's button. The race
+  sweep on the fake database, 300 trials at each gap from 0 to 700 ms, moved
+  no clock twice. Not run anywhere real: no real phone, wall, Stream Deck or
+  Firestore, and the Firestore emulator needs Java, which this Mac has not
+  got, so the transaction's order of reads and writes rests on the fake and
+  on reading the SDK.
+- The board: migration `2026-11-01-study-stop` (card 557 done, a line on 134,
+  which stays open until Jon has heard the scream, a line on the first tech
+  run, 332, to try Pause and Resume, and the line on 525). The docs:
+  `docs/study-light-game.md`, `docs/solving-the-case.md`, `docs/build-plan.md`,
+  `docs/play-side.md`, `docs/room-screens.md`, `docs/test-plan.md` (G52, F12,
+  F16), `docs/on-the-night.md`, this log, `CLAUDE.md`. The Canon: the rounds and the
+  stop, which it still gave as ten (the 31 October change had not reached it),
+  and a new Decided line. Start Here's snapshot, 1 November. The Canon's arcade
+  section still describes two tokens: that is the 30 October handoff's, which
+  Claude chat keeps.
+- Left: a full deploy on Jon's word (functions, seed, site and the station's
+  code, from a clean copy of the commit: `play/public/` goes into any build,
+  so a deploy from this checkout would put Scream.mp3 on the site), then
+  Start the Study closed and opened again on the M1 Air and the Study's
+  screen reloaded (an open tab keeps the old clock); the first
+  hearing of the scream (134); arcadeTrioTime; the deck (514); the arcade on
+  the night (515).
+
 ## 1 Nov 2026 · Claude Code (the arcade: Jon's five notes)
 
 - Jon's message after playing the arcade ("Boo arcade is great"), five
@@ -92,7 +223,8 @@ on the Canon.
   an answer before card 515.
 - Found in the shared folder during the session, not mine, left alone:
   `play/public/audio/Scream.mp3`, untracked, which nothing reads. A clean
-  copy of the commit kept it out of the deploy.
+  copy of the commit kept it out of the deploy. (Later that day: it is Jon's,
+  for the blackout; see the entry above.)
 - The board: migration `2026-11-01-arcade-notes` (cards 552 to 556 done, a
   line on 514). The docs: `docs/boo-arcade.md`, `docs/on-the-night.md`,
   `docs/test-plan.md` (G54, G55), this log, `CLAUDE.md`. Claude chat keeps

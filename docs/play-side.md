@@ -37,7 +37,9 @@ Reticule, which began as four tabs (it is seven now, with *Now*, *Clues* and
   seconds measured against the server's clock, with no button; then the
   main page on its own. Act 2 begins. The case is built at this moment,
   blind (17 Oct).
-- *Pause* — "Sir Irwin requires the garden."
+- *Pause* — "Sir Irwin requires the garden." A pause takes the tabs off every phone, the Host
+  tab's Resume with them, so the two host phones carry that one button, on this card or on the
+  paused strip over a held window, and nothing else (1 Nov).
 - *Acts 1 to 7* — the act name and its objective line appear at the top of
   every phone.
 
@@ -274,7 +276,7 @@ Where this section and an older one below disagree, this one wins.
   unvisited gets their lines as a note.
 - **Act 4: four game rooms.** Start Act 4 (on the Host tab in Act 3), a
   two-minute warning, the groups as portraits with Locked in, then
-  ten-minute rounds on the server's clock. Each group visits Granolia's
+  fifteen-minute rounds on the server's clock. Each group visits Granolia's
   Lightbulb Moment (the Study), In Duplicate (the memory match in the
   Library, three boards, all fourteen traces), Get Off My Lawn! (Salem's
   red light, green light on the phones in the Orangerie) and Boo's Catwalk
@@ -518,11 +520,12 @@ plus the run.js ones below and the dry-run trio `dry-run`, `settle-now`,
 the switch statements.
 
 Safety nets (17 Oct): `pause` stores `pausedAt`; `resume` moves every deadline on by
-the length of the pause in one batch (the window's `opensAt` and `closesAt`, the
+the length of the pause in one transaction, so the two host phones pressing it at once move them once (the window's `opensAt` and `closesAt`, the
 relay's four `*EndsAt`, the study's `slotEndsAt`, the finale's `at`; the list is
 `PAUSE_SHIFTED` in `functions/lib/night.js`). Nothing settles and the relay does
 not advance while paused. A paused phone keeps an open window on screen, greyed,
-with its clock standing still. `handover` (arg: a roster key or a uid) moves a
+with its clock standing still; a host phone shows the same, with `ResumeNight` on the
+pause card or the strip (`resume` in `App.jsx`, 1 Nov). `handover` (arg: a roster key or a uid) moves a
 phone's cards, windows and affection into the private deck (`handed[guestKey]`,
 unreadable by any phone), drops the deck's pointer from that guest to the phone,
 wipes the phone's notes for the night, marks the session `handed` and bumps
@@ -716,7 +719,7 @@ still opens one.
   relay-done | door | eliminate | ballot | ballot-sent | eyes | result-lock |
   result | reveal | clues | cats |
   cats-act4 | cats-friend | rehearsal | you | offline | host | paused |
-  paused-window | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in
+  paused-host | paused-window | paused-window-host | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in
   `docs/room-screens.md`). `?preview=questions&set=<base64url>` shows one of
   the workshop's own Parlour Game sets (the Game test tab's See it on a phone;
   words only, never a point or a lean).

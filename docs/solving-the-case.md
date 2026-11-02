@@ -158,7 +158,7 @@ Four game rooms, pairs and trios, about an hour (Jon's plan, 23 Oct; built 24 Oc
 
 **The groups.** Three to five groups (at most five), pairs and trios. The Murderer and the Ghost are never in the same group. Information is shared only inside your group.
 
-**The rounds.** Ten minutes each, on the server's clock, for every room. Every group visits each of the four rooms once (G47); a room never holds two groups. With five groups there are five rounds and one group waits in the Parlour each round. The group scans the room's code to begin (the same four codes as Act 2). A group that finishes early is paid at once and goes back to the Parlour; at the chime, a group that has not finished is paid anyway (G52).
+**The rounds.** Fifteen minutes each, on the server's clock, for every room. Every group visits each of the four rooms once (G47); a room never holds two groups. With five groups there are five rounds and one group waits in the Parlour each round. The group scans the room's code to begin (the same four codes as Act 2). A group that finishes early is paid at once and goes back to the Parlour; at the chime, a group that has not finished is paid anyway (G52).
 
 | Room | Host | The game (its name since 24 Oct) | The reward |
 |---|---|---|---|
@@ -189,7 +189,7 @@ Parlour tips:
 
 ### The Study: the Ghost's trace
 
-The light puzzle's reward is **the Ghost's trace**, shown at whatever level the clarity dial is at the moment the group finishes (or when the ten-minute cap runs out).
+The light puzzle's reward is **the Ghost's trace**, shown at whatever level the clarity dial is at the moment the group finishes (or when the fifteen-minute cap runs out).
 
 - It uses the **same five-level trace reveal** as Act 6. No new art.
 - It names the trace, never the person.

@@ -436,7 +436,14 @@ game; it serves the lights and the speakers.
   server's clock: the chime sends every group to a room, and every group
   visits all four rooms once:
   - The Study: Granolia's Lightbulb Moment (the light puzzle), upstairs.
-    Pays the Ghost's trace and a bag hint. Between groups its rules card
+    Pays the Ghost's trace and a bag hint. The game runs to the end of the
+    round, fifteen minutes from the chime (your word, 1 November), stopping
+    five seconds early so the group's result is in before the chime rings:
+    the study's screen counts down to that, Granolia says two minutes left
+    two minutes before it, and then the walls stop, the screen shows the
+    pairs not yet found for twenty seconds while the walls rest, and the
+    trace goes anyway. It never runs on into the next group's turn, and
+    **Next** stops it too. Between groups its rules card
     draws both walls as they hang: the hexagons (watch, then touch) and
     the lines (the colour and the count).
   - The Library: In Duplicate (Zimothy's memory match), on the iPad Pro:
@@ -497,7 +504,9 @@ game; it serves the lights and the speakers.
   Parlour, where Sir Irwin's prompts run on the TV and any waiting Parlour
   Game can be played. Your Host tab says the round and the time to the next
   chime; **Next** moves everyone on at once. **Finish this group now** pays
-  the group in the study at once. After the last round every phone says
+  the group in the study at once; a game still on the wall carries on until
+  the round's end or **Next**, and the Study's screen may show its rules card
+  for up to half a minute first. After the last round every phone says
   back to the Parlour, and **Next** goes on to Act 5. **Make the groups**
   makes the groups early if you ever need them before Start Act 4.
   After Act 4, carry the iPad Pro from the Library into the bedroom, open
@@ -592,8 +601,17 @@ game; it serves the lights and the speakers.
 - Achievements: through Act 5, tap a guest, then an achievement from the
   workshop's list. It lands on their phone at once and plays on the TV at the
   end. After Act 5 the list is closed.
-- **Pause, Irwin needs the garden** stops every clock in the house. **Resume**
-  carries on from where it stopped; nobody loses time.
+- **Pause, Irwin needs the garden** stops the clocks that decide the night:
+  the Parlour Games, the deduction round, the ballot, the rounds, the Study,
+  the drawing and the reveal. **Resume** carries them on from where they
+  stopped, and no clue is lost. The line for the cats, Salem's round and Boo's
+  show run on, so a long pause can end them, and a bulletin that fell due in
+  the pause plays straight after Resume. A pause takes the tabs off every
+  phone, this tab with them, so **Resume** is on the pause card on your phone
+  and Susan's, or on the strip across the top if a Parlour Game, the deduction
+  round or the ballot is held greyed out behind it. Every other phone shows
+  the same with no button. The tabs come back at Resume on Now: tap Host to
+  get back here.
 - The house: scenes. The brain changes the music and the Hue scenes on its
   own as the night moves. If you want one by hand: **Default**, **Dimmed**,
   **Blackout**, **Drawing**, **Candles** or **Study Dim** recalls that
@@ -640,8 +658,10 @@ Granolia's rules card with her "Touch any panel to begin" under it. Every screen
 from the blackout, through the five seconds and the role cards, until your
 first **Next** in Act 2 (built so on purpose, so every eye is on its own
 phone while the roles are read; cue 5 says the loop comes back at once, and
-the question *promptScreen* on the board lets you choose), and near-black
-with "One moment" while the night is paused. The phones say where to look.
+the question *promptScreen* on the board lets you choose). While the night is
+paused the Parlour TV and the iPad go near-black with "One moment"; the other
+room screens stay as they are, and the Study's clock stands still. The phones
+say where to look.
 On a
 rehearsal night every phone and screen has a red REHEARSAL band, and every
 slot that would show a secret shows a stand-in in square brackets instead;

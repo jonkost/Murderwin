@@ -60,8 +60,9 @@ that screen shows its crest and a line instead, and nothing waits on it.
 `play/public/loops/README.md` has the names and the rules for the files.
 
 Every screen is dark from the blackout, through the five seconds and the
-role cards, until the host's first Next in Act 2, and near-black with "One
-moment" while the night is paused. At "The End" (the host's last Next, after
+role cards, until the host's first Next in Act 2. While the night is paused
+the TV and the iPad go near-black with "One moment"; the other room screens
+stay as they are, and the Study's clock stands still. At "The End" (the host's last Next, after
 everyone's result) every screen goes black and stays black. On a rehearsal
 night a big red REHEARSAL band runs across every phone and every room
 screen, and every slot that would show a secret shows a stand-in in square

@@ -8,7 +8,7 @@ is on the workshop's Timeline page.**
 
 **24 October:** the 23 October handoff changed several things this page
 describes, so read these lines as history: the living room is the Parlour;
-Act 4 is four game rooms in ten-minute rounds (the study no longer moves
+Act 4 is four game rooms in fifteen-minute rounds (the study no longer moves
 the house on, and the stations and the bags station are gone); every cat
 gives a bag clue; the bedroom screen is Susan's MacBook Pro and the older
 iPad is the memory match; and there is no freeze date (the second full tech

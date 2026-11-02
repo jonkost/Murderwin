@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029, RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029, RETIRED_FOR_MEMORY_RESEND_1029, RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS, ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS, SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031, ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS, MUSIC_SHORTCUTS_1031_TASKS, ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029, RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029, RETIRED_FOR_MEMORY_RESEND_1029, RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS, ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS, SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031, ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS, MUSIC_SHORTCUTS_1031_TASKS, ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS, RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101 } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -1426,10 +1426,10 @@ test('the music Shortcuts migration (31 Oct 2026, evening): before the arcade no
   assert.equal(once, 2)
 })
 
-test('the arcade notes migration (1 Nov 2026): last; five done cards in the Entryway and a job in the Study, plain; a line on Jon\'s try; one question; nothing closed; once only', () => {
+test('the arcade notes migration (1 Nov 2026): before the Study\'s stop; five done cards in the Entryway and a job in the Study, plain; a line on Jon\'s try; one question; nothing closed; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-01-arcade-notes')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-1), add, 'the last migration')
+  assert.equal(ADDITIONS[ADDITIONS.indexOf(add) + 1]?.id, '2026-11-01-study-stop', 'before the Study\'s stop')
   assert.ok(add.tasks === ARCADE_NOTES_1101_TASKS && add.fileTasks === FILED_FOR_ARCADE_NOTES_1101 && add.decisions === ARCADE_NOTES_1101_DECISIONS)
   assert.ok(!add.retireTasks && !add.rewriteTasks && !add.answerDecisions, 'nothing closed or answered')
   assert.deepEqual(ARCADE_NOTES_1101_TASKS.map(t => [t.order, t.status, t.who, t.moment]), [...[552, 553, 554, 555, 556].map(n => [n, 'done', 'Claude Code', 'act4.entryway']), [557, 'todo', 'Claude Code', 'act4.study']])
@@ -1463,4 +1463,39 @@ test('the arcade notes migration (1 Nov 2026): last; five done cards in the Entr
   const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
   assert.equal(after.tasks.filter(t => t.order >= 552 && t.order <= 557).length, once, 'once only')
   assert.deepEqual(after.decisions, state.decisions, 'the question never twice')
+})
+
+test('the Study stop migration (1 Nov 2026): last; card 557 done by number and title, a line on the blackout sound, which stays open, one on the tech run for Pause and one on the rules deck\'s card; plain; once only', () => {
+  const { before, add, newId } = boardThrough('2026-11-01-study-stop')
+  const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
+  assert.equal(ADDITIONS.at(-1), add, 'the last migration')
+  assert.ok(add.retireTasks === RETIRED_FOR_STUDY_STOP_1101 && add.fileTasks === FILED_FOR_STUDY_STOP_1101)
+  assert.ok(!add.tasks && !add.decisions && !add.rewriteTasks && !add.answerDecisions, 'no new cards, nothing answered')
+  assert.deepEqual(RETIRED_FOR_STUDY_STOP_1101.map(r => r.order), [557])
+  assert.deepEqual(FILED_FOR_STUDY_STOP_1101.map(f => f.order), [134, 332, 525])
+  const done = RETIRED_FOR_STUDY_STOP_1101[0], note = FILED_FOR_STUDY_STOP_1101[0].note, pause = FILED_FOR_STUDY_STOP_1101[1].note, deck = FILED_FOR_STUDY_STOP_1101[2].note
+  assert.match(done.detail, /^Done 1 Nov 2026, your word \("make the stop 15mins"\)/)
+  assert.match(done.detail, /Start the Study/, 'how it reaches the study Mac')
+  assert.match(note, /^\(1 Nov 2026: your scream.*has not heard it.*\)$/)
+  assert.match(pause, /^\(1 Nov 2026: press Pause and then Resume.*\)$/)
+  assert.match(pause, /Resume button on the pause card/, 'what is there now, not the tabs a first try kept')
+  assert.match(deck, /^\(1 Nov 2026: a second job.*ten minutes a room.*Steward Handbook.*\)$/)
+  for (const line of [done.detail, note, pause, deck]) assert.ok(!plain.test(line) && !PLAIN.test(line), `plain words: ${line.slice(0, 40)}`)
+  const study = before.tasks.find(t => t.order === 557), sound = before.tasks.find(t => t.order === 134)
+  assert.ok(study.title === done.title && study.status === 'todo', '557 is open on the board under that title')
+  assert.ok(sound.title === FILED_FOR_STUDY_STOP_1101[0].title && sound.status !== 'done', '134 is open on the board under that title')
+  const script = before.tasks.find(t => t.order === 525)
+  assert.ok(script.title === FILED_FOR_STUDY_STOP_1101[2].title && script.status !== 'done' && script.who === 'Claude chat', '525 is open, and Claude chat\'s, under that title')
+  // applied twice, the card closes once and the line lands once
+  const state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  const closed = state.tasks.find(t => t.order === 557)
+  assert.equal(closed.status, 'done')
+  assert.ok(closed.detail.startsWith(study.detail) && closed.detail.endsWith(done.detail), 'what was found stays on the card')
+  const heard = state.tasks.find(t => t.order === 134)
+  assert.notEqual(heard.status, 'done', 'open until Jon has heard it')
+  assert.ok(heard.detail.endsWith(note))
+  assert.equal(state.tasks.length, before.tasks.length, 'no new cards')
+  const after = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  assert.equal(after.tasks.find(t => t.order === 134).detail, heard.detail, 'once only')
+  assert.equal(after.tasks.find(t => t.order === 557).detail, closed.detail, 'once only')
 })

@@ -30,6 +30,7 @@ import {
   ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS,
   MUSIC_SHORTCUTS_1031_TASKS,
   ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS,
+  RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -161,7 +162,7 @@ export const STUDY_LABELS = [
   { value: 'SLOW', label: 'SLOW: after a few misses, the pattern again, slower' }, { value: 'MAP', label: 'MAP: the panels numbered on screen' },
   { value: 'HALF COLOUR', label: 'HALF COLOUR: the number was right, the colour was not' }, { value: 'HALF NUMBER', label: 'HALF NUMBER: the colour was right, the number was not' },
   { value: 'NEITHER', label: 'NEITHER: both halves wrong' }, { value: 'TIME', label: 'TIME: two minutes left' },
-  { value: 'SOLVED', label: 'SOLVED: the three jewels are lit' }, { value: 'CAPPED', label: 'CAPPED: the ten minutes are up' },
+  { value: 'SOLVED', label: 'SOLVED: the three jewels are lit' }, { value: 'CAPPED', label: 'CAPPED: the fifteen minutes are up' },
 ]
 
 // The Act 4 station cards, one line each (retired 23 Oct 2026: Act 4 is four
@@ -241,7 +242,7 @@ export const AREAS = {
     codec: labelCodec,
     fields: [
       { key: 'label', label: 'Which moment', placeholder: 'Pick one', kind: 'select', options: STUDY_LABELS },
-      { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Ten minutes.', kind: 'textarea', main: true },
+      { key: 'text', label: 'What Granolia says', placeholder: 'e.g. Again, slower. I have all day. Well. Fifteen minutes.', kind: 'textarea', main: true },
     ] },
   trailoffs: { label: 'Granolia losing her thread (retired)', moment: 'Retired: Granolia, like every cat, says only her hint line', why: 'The old way Granolia lost her thread. Since 23 Oct 2026 she says only her hint line, so nothing reads these. Kept, not used.', group: 'The household', tabs: null, guide: null, goal: 8, hidden: true, retired: true,
     fields: [line('The aside', 'e.g. … that’s how I remember it, anyway. *snrk.* Mostly.')] },
@@ -982,6 +983,16 @@ export const ADDITIONS = [
     tasks: ARCADE_NOTES_1101_TASKS,
     fileTasks: FILED_FOR_ARCADE_NOTES_1101,
     decisions: ARCADE_NOTES_1101_DECISIONS,
+  },
+  {
+    // 1 Nov, later: Jon's word on the Study ("make the stop 15mins"): the game
+    // stops with the round (557, done), a line on the blackout sound (134),
+    // since his scream is on the brain, one on the first tech run (332), to
+    // try Pause and the host phones' new Resume button, and one on Claude
+    // chat's card for the rules deck (525): the ten minutes a room it still says.
+    id: '2026-11-01-study-stop',
+    retireTasks: RETIRED_FOR_STUDY_STOP_1101,
+    fileTasks: FILED_FOR_STUDY_STOP_1101,
   },
 ]
 

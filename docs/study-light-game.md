@@ -33,10 +33,10 @@ those, it says so under "Decisions this doc makes".
 A group walks into the study. One wall of white hexagons plays a pattern. They touch it back.
 Do that three times and the colour lights on the other wall answer with a colour and a number.
 They press that pair on the little button box. Three rounds, three pairs, and the study sends
-every phone in the group the trace the victim left behind. Ten minutes, then out, whatever
+every phone in the group the trace the victim left behind. Fifteen minutes, then out, whatever
 happened. Granolia hosts and helps.
 
-The Study is one of Act 4's four game rooms. Every group visits it once, in its own ten-minute
+The Study is one of Act 4's four game rooms. Every group visits it once, in its own fifteen-minute
 round; the round's chime, not the study, moves the house on.
 
 Granolia's only Act 4 job is the study. With the trace she gives the group a bag hint about the
@@ -102,11 +102,17 @@ says *Something has been sent to your phones*, every phone in the group receives
 (§5), the walls do a short celebration, and the group goes back to the Parlour until the chime.
 The study goes back to rest for the next group.
 
-**The clock.** Ten minutes from the first touch, hard, on the server's clock. At eight minutes
-Granolia mentions the time. At ten the walls stop testing, the screen shows every pair the
-group had not yet earned, and the trace is sent anyway. *"Thank you for trying your best. Off
-you go."* The round's chime (ten minutes from the start of the round) also pays a group that is
-still in there. Nobody leaves the study without the trace.
+**The clock (Jon, 1 November: "make the stop 15mins").** The game stops at the end of the round,
+fifteen minutes from the chime, on the server's clock, five seconds early so that the group's
+result is in before the chime rings. The group's own walk upstairs comes out of that, so the screen
+counts down to the stop, not from their first touch, and the game can never run on into the next
+group's turn. Two minutes before the stop Granolia mentions the time. At the stop the walls stop
+testing, the screen shows every pair the group had not yet earned, and the trace is sent anyway.
+*"Thank you for trying your best. Off you go."* That page holds while the walls rest, twenty
+seconds, then the card waits for the next group; a group already paid is no longer expected. With
+no round (a practice from the Game test tab) the stop is fifteen minutes from the first touch. If
+the round moves on while a game is running (the host presses Next), the game stops there and then.
+The round's chime also pays a group the station has not. Nobody leaves the study without the trace.
 
 ---
 
@@ -118,8 +124,8 @@ still in there. Nobody leaves the study without the trace.
 | 2 | 4, then 5, then 6 | Medium. About 0.6 s. |
 | 3 | 5, then 6, then 7 | Quick. About 0.45 s. |
 
-- A clean run is about four minutes. Each mistake costs about half a minute. The ten-minute cap
-  allows roughly a dozen mistakes, less the walk upstairs.
+- A clean run is about four minutes. Each mistake costs about half a minute. The fifteen-minute
+  round allows roughly twenty mistakes, less the walk upstairs.
 - Six colours: red, yellow, green, blue, pink, white. Six numbers: one to six. Thirty-six
   possible pairs per round, so the full code is one in 46,656. Guessing is not a strategy.
 - Every pattern is random. The same panel can repeat inside a pattern only if there is at least
@@ -140,8 +146,8 @@ out looking brilliant.
 | Fourth miss on the same pattern | The screen shows a drawing of the wall with the panels numbered in the order they lit. She reads it out in words. |
 | Wrong pair entered | Says which half was right. |
 | A second wrong pair | Names the colour in words and shows the count as a number on screen. |
-| Eight minutes | Mentions the time, kindly. |
-| Ten minutes | Stops the game, gives everything, sends everyone on. |
+| Two minutes before the stop | Mentions the time, kindly. |
+| The stop (the round's end) | Stops the game, gives everything, sends everyone on. |
 
 In the study Granolia is always right. (Her old habit of getting one detail of the night wrong was
 retired on 23 October 2026 with the cats' secret lines; her hint lines only ramble or forget.)
@@ -164,7 +170,7 @@ large. The blank key stays blank. Decided 25 September; unchanged here.
 ## 5. What the group wins
 
 **Changed 21 and 22 October.** The trace the victim left behind (the Ghost's own trace), as
-clearly as the clarity dial allows at the moment the group finishes or the ten minutes run
+clearly as the clarity dial allows at the moment the group finishes or the fifteen minutes run
 out, plus Granolia's bag hint about the Ghost's bag (since 24 October):
 
 | Level | What the group gets |
@@ -236,8 +242,8 @@ Delay, never destroy. The trace is sent whatever happens.
 |---|---|
 | The hexagons stop answering touch | The pattern plays on the screen over a drawing of the wall, with the panels numbered. The group taps the numbers on the button box in order. Same game, same keys. |
 | The Lines go dark | The colour and the count appear on the screen instead. |
-| The whole station is down | The study is cut. The group's round runs on the ten-minute clock like every room, and at the chime the server sends the group the trace and the bag hint. Granolia's lines show on their phones. |
-| The server cannot be reached | The station keeps running the game locally and sends "finished" when it reconnects. The group's phones catch up on their own. |
+| The whole station is down | The study is cut. The group's round runs on the fifteen-minute clock like every room, and at the chime the server sends the group the trace and the bag hint. Granolia's lines show on their phones. |
+| The server cannot be reached | The station keeps running the game locally and sends "finished" when it reconnects. The group's phones catch up on their own. If a chime passes while it is out, the game a new group started goes on until the station hears of the new round, then stops, and after the rest the group can start again. Their trace still comes at the chime. |
 
 The Nanoleaf layer is on the list of things that are safe to cut in the last days (there is no
 freeze date). The trace is not.
@@ -247,7 +253,7 @@ freeze date). The trace is not.
 ## 9. What it leaves for the end credits
 
 - **Bright Sparks:** the group that cracked the study lights fastest.
-- **Left in the Dark:** every group the ten minutes beat, or, if every group cracked it, the
+- **Left in the Dark:** every group the fifteen minutes beat, or, if every group cracked it, the
   slowest one (*"Granolia still believes in you."*).
 - Decided 22 Oct (handoff §8). Still nothing about hints.
 
@@ -357,7 +363,7 @@ Built blind, tested against fakes. (First run on the real walls on 24 October: �
   was told about is done". Which group that was, and who comes next, is the rotation's. The
   station re-arms for whichever group the server's study document names, never from its own
   memory, so a second group is never greeted as the first and paid as the first.
-- **No station? Twelve minutes a group.** (Superseded 24 Oct: the round's ten-minute chime pays the group; *study-tick* is kept with a ten-minute slot.) If the study station has not reported in for two
+- **No station? Twelve minutes a group.** (Superseded 24 Oct: the round's chime pays the group; *study-tick* is kept with a slot the length of the round, fifteen minutes since 1 November.) If the study station has not reported in for two
   minutes when a rotation happens, the study runs on a twelve-minute timer instead: the trace
   card rides with the station card, and when the twelve minutes are up the house moves on, paid
   as "absent". Your Host tab keeps that clock (it asks the server once a minute through
@@ -579,18 +585,66 @@ plus `trace`; `STUDY_PLACEHOLDER` when there is no reveal) to each member with `
 The case has had no `studyClue` since 23 October 2026 (the per-motive secret sets are retired).
 The no-station path deals the same card from `deal.rotate`.
 
-**Clock.** The cap is `startedAt + 10 min` on server time (`capMs`, 24 Oct; `warnMs` 8 min).
-Separately, `act4.setRooms` writes `public/study { groupId, slotEndsAt }` at the start of each
+**Clock.** The cap is `startedAt + capMs` on server time (`capMs` 15 min, `warnMs` 13 min, 1 Nov);
+on the night the round's end comes first (The stop, below). Separately, `act4.setRooms` writes `public/study { groupId, slotEndsAt }` at the start of each
 round (the round's end), and the round's chime pays the group with `act4.payRoom` if the
 station has not. The station keeps server skew the
 same way the phones do (write, read back the server stamp). The kiosk page renders the clock
-from `startedAt`, never from its own timer.
+from `startedAt` and `slotEndsAt` (`house.studyStopAt`), never from its own timer.
+
+**The stop (1 November).** `act4.setRooms` writes `public/study { groupId, reassignedFrom: null,
+slotEndsAt }` at every chime; the follower hands `slotEndsAt` to `runner.due`, and every second
+`runner.tick` passes it to `study.tick(now, slotEndsAt)`. The game stops at `min(startedAt + capMs,
+slotEndsAt - STOP_EARLY_MS)`, and the warning comes `capMs - warnMs` before that. `STOP_EARLY_MS` is
+five seconds (`play/src/lib/house.js` keeps the same number as `STUDY_STOP_EARLY_MS`, and
+`studyStopAt` the same rule, for both clocks; `play/test/gametest.test.mjs` ties them). It is there
+because `slotEndsAt` is `now + ROUND_MS` from the tick that rang the chime, and fifteen minutes is a
+whole number of ticks (45 Host tab nudges, 15 minute ticks), so the next chime lands on `slotEndsAt`
+to within the network's jitter, and the station's report comes 2.4 seconds after the stop (the walls'
+celebration), 3.3 on a solve (the corner's flash). Stopped at `slotEndsAt` itself, the report and
+the chime tossed a coin on every stopped round. Five seconds early, the station reports and
+`act4.payRoom` pays the group before the chime, and the chime finds it paid. A game stopped in the
+middle of a pattern still loses that race (the pattern plays out first, up to about fifteen seconds
+on a slow replay), and that does no harm: nothing is left to solve, the chime pays the group
+`absent`, and `absent` and `capped` read the same at the finale. A slot that ended before the first touch is no limit
+(`roundStop > startedAt`): that Mac has not heard the chime yet, its internet being down, say, and the
+game must not stop the moment it starts. A group that changes together with `slotEndsAt` is a new
+round (the chime or the host's Next, written as one write by `setRooms`): `runner.due` calls
+`study.stop` there and then. A group that changes alone is the host's reassign, and a `slotEndsAt`
+that changes alone is a resume: neither stops the game.
+
+**The finished page.** `finish()` queues `server.finished` before its `screen` effect, and the
+runner's `server.finished` waits out the rest and swaps in the next machine, so that effect never
+shows `done`. `runner` therefore calls `sendState()` right after the report, while the machine is
+still `done`, so "something has been sent to your phones" is true when it shows, in the usual
+run. The report itself writes no state (`finishStudy` writes `idle` only for `absent`, the host's
+Finish this group now and `study-tick`, which pay without a report: with the station gone nothing
+else would take the game off the screen, and a running station puts its state back at its next
+write, so a game still on the wall carries on to the round's stop), so the screen goes straight from
+the game to the finished page with no rules card between them, and a report the chime beat
+(`repeated`) writes nothing at all. A failed report does not hold the page: `done` goes out anyway,
+`tick` sends the report again every second, and the page is a moment ahead of the cards, as it is
+when a heartbeat lands during the walls' celebration. With the whole link down the state fails too,
+so the game stays on the screen until a state gets through, and after the rest that state is `idle`,
+so the page may not show at all. Once the rest ends the state
+is `idle` again with `groupId` still the group that finished until the chime moves it, so the kiosk
+checks `rotation.finished` and shows "The next group will be along." with no start line. The finished
+page shows no names: the chime may already have moved `groupId` on. A touch by a paid group still
+starts a game (`finishStudy` answers its report `repeated`); it pays nothing and harms nothing.
+
+**A swap and the chime.** `finishStudy` redirects to the group the host named only for the
+station's own report (`reportedIn`). The chime's `payRoom` pays the group the round named, or the
+redirect would use up that group's `gid-study` claim and it would end the night with no trace. The
+group the host named is paid by the report, or failing that in its own turn, or at Act 5's flush.
 
 **Pause.** The station also watches `nights/{id}` (station/lib/follow.js). While `phase` is
 `paused` its clock stands still and the wall ignores touches; on resume the game's `startedAt`
 moves on by the length of the pause (`runner.paused`), the next state write carries the moved
-start to the kiosk, and the group gets its whole ten minutes. The no-station slot
-(`public/study.slotEndsAt`) is moved by the server's `resume` instead (`PAUSE_SHIFTED`).
+start to the kiosk, and the group gets its whole fifteen minutes. The kiosk and the Host tab read
+the clock through `house.js` `studyMsLeft`, which uses the phones' frozen clock (`clockFor`), so both
+stand still through the pause. The round's end
+(`public/study.slotEndsAt`) is moved by the server's `resume` (`PAUSE_SHIFTED`); the runner moves
+its own copy by the same length if that write has not landed yet, once, whichever comes first.
 
 **Which group.** The rotation (`deal.rotate`, `station.makeRotation` for the first group)
 publishes who is due in the study. The station greets that group and pays out to it. It does
@@ -603,10 +657,10 @@ a workshop ui_copy line `HOST GRANOLIA`, if one is ever written, wins over the d
 **Fallbacks.** Elements unreachable for 5 s → the kiosk page shows the numbered wall and the
 station accepts number keys as the answer. Lines unreachable → colour and count rendered on the
 kiosk page. Station offline → nothing extra is written: `act4.setRooms` has already set `public/study { groupId, reassignedFrom: null, slotEndsAt }` (the round's end), and the round's chime pays the group through `act4.payRoom`;
-`station.tickStudy(db, nightId, now)` (host command `study-tick`, called by the Host tab on load
-and once a minute in Act 4; any scheduled tick may call it too) ends a slot that has passed by
+`station.tickStudy(db, nightId, now)` (host command `study-tick`, from the terminal: nothing calls
+it on its own, the chime having taken over) ends a slot that has passed by
 calling `run.studyFinished` with `outcome: 'absent'`, once per group (`rotation.finished` is the
-guard). A station that died mid-act never wrote a slot, so the beat's `beatAt` plus ten minutes (`ABSENT_SLOT_MS`) stands in. A live heartbeat (`updatedAt` within `STATION_QUIET_MS`) stops the tick.
+guard). A station that died mid-act never wrote a slot, so the beat's `beatAt` plus fifteen minutes (`ABSENT_SLOT_MS`) stands in. A live heartbeat (`updatedAt` within `STATION_QUIET_MS`) stops the tick.
 
 **Who owns `public/study.groupId` (17 Oct, second pass).** `deal.rotate` (and `makeRotation`
 for the first group) are the only writers. `stationCommand('state')` drops `groupId`,
