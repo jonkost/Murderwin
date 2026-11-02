@@ -181,6 +181,29 @@ test('settings ride on the study doc: the station takes sane ones and keeps the 
   assert.deepEqual(runner.machine.settings.rounds, DEFAULT_SETTINGS.rounds)
 })
 
+test('the round\'s end rides on the study doc as a server time: a swap leaves the game running, a new round stops it', { timeout: 5000 }, async () => {
+  const server = fakeServer({ studyOrder: ['g1', 'g3'] })
+  const end = Date.now() + 60_000
+  server.write('public_state/active', { nightId: 'n1' })
+  server.write('nights/n1/public/study', { state: 'idle', groupId: 'g1', slotEndsAt: { toMillis: () => end } })
+  const { runner, follower } = station(server)
+  follower.start()
+  await flush(runner)
+  runner.touch(PANELS[0])
+  await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing')
+  server.write('nights/n1/public/study', { groupId: 'g2', reassignedFrom: 'g1' })
+  assert.equal(runner.machine.state, 'reproducing', 'the host\'s swap keeps the round\'s end')
+  server.write('nights/n1/public/study', { groupId: 'g3', reassignedFrom: null, slotEndsAt: { toMillis: () => end + 15 * 60_000 } })
+  assert.equal(runner.machine.state, 'done', 'setRooms writes the group and the round\'s end together')
+  await flush(runner)
+  const fin = server.sent.filter(a => a.command === 'finished')
+  assert.equal(fin.length, 1)
+  assert.equal(fin[0].payload.outcome, 'capped')
+  assert.equal(fin[0].payload.groupId, 'g1')
+  follower.stop()
+})
+
 test('the station follows the night\'s phase: a pause freezes its clock, a resume lets it run, and the listener moves with the night', { timeout: 5000 }, async () => {
   const server = fakeServer()
   server.write('public_state/active', { nightId: 'n1' })

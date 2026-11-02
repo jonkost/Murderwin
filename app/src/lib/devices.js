@@ -70,7 +70,7 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'study', name: 'The study screen and station', machine: 'M1 MacBook Air, with the Stream Deck on USB', kiosk: 'study',
-        what: 'Granolia’s screen: her code during the Act 2 cat visits, then in Act 4 the light puzzle on the Nanoleaf walls and the button box, ten minutes a group, with her rules card between groups; her loop otherwise.',
+        what: 'Granolia’s screen: her code during the Act 2 cat visits, then in Act 4 the light puzzle on the Nanoleaf walls and the button box, fifteen minutes a group, with her rules card between groups; her loop otherwise.',
         start: [
           'Save the study key word at the top of the Game test tab, once: it is kept from night to night.',
           'Quit the Elgato app on this Mac.',

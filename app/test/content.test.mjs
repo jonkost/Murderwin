@@ -308,8 +308,8 @@ test('Salem is Crooknog everywhere, and an old Crookshank line still opens as hi
   assert.equal(npcCodec.join(old), 'SALEM CROOKNOG — the long-time groundskeeper. Forty years on these grounds.', 'saving it writes the new name')
 })
 
-test('no list, card or example tells the old story: the living room, the orangery, fifteen minutes, Crookshank', () => {
-  const words = /living room|orangery|fifteen minutes|crookshank|kept quiet earlier/i
+test('no list, card or example tells the old story: the living room, the orangery, ten minutes, Crookshank', () => {
+  const words = /living room|orangery|\bten minutes|crookshank|kept quiet earlier/i
   for (const [area, spec] of Object.entries(AREAS)) {
     if (spec.retired) continue
     const card = ALL_CARDS[area]

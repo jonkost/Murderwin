@@ -230,7 +230,7 @@ function runVisit(names, picks, { seed = 21, during, look = () => {}, roundMs = 
   return [a, t]
 }
 
-// A visit on the ten-minute round at a steady pace: `menuMs` to pick a game,
+// A visit on the fifteen-minute round at a steady pace: `menuMs` to pick a game,
 // `readyMs` on how to play, `clueMs` on a clue or Boo's line, and nobody
 // touches a game. It notes when each player's clue (or a trio's third line)
 // came, and for each game when it started, how long it ran, what the screen

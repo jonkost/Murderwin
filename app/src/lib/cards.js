@@ -275,7 +275,7 @@ const CARDS = {
     howTo: 'Pick the moment, then one or two sentences in her voice: bookish, kind, a little forgetful, the snort (*snrk.*) now and then. Twenty words at most, read from across a room.',
     example: [
       { field: 'Which moment', text: 'SLOW' },
-      { field: 'What Granolia says', text: 'Again, slower. I have all day. Well. Ten minutes.' },
+      { field: 'What Granolia says', text: 'Again, slower. I have all day. Well. Fifteen minutes.' },
     ],
     emptyState: 'Nothing yet. Twelve moments, each with a plain default already. Start with IDLE: what she says before anyone touches the wall.',
     doneLine: 'Granolia has something to say at every moment. Most of it is helpful.',

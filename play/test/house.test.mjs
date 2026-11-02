@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { houseView, studyNames, catVisits, missingLineWords, QUIET_MS, MACHINES } from '../src/lib/house.js'
+import { houseView, studyNames, catVisits, missingLineWords, studyStopAt, studyMsLeft, QUIET_MS, MACHINES, STUDY_CAP_MS, STUDY_STOP_EARLY_MS } from '../src/lib/house.js'
 
 // The Host tab's house panel, as a pure view over the public docs. Fixtures
 // are throwaway shapes, never content.
@@ -50,11 +50,11 @@ test('F31 the Study screen says Granolia has dozed off at ninety seconds, half a
   assert.ok(doc.includes('says quiet half a minute later, once the station has sent nothing for two minutes'), 'the doc says when the Host tab calls it quiet')
 })
 
-test('the group due, its clock from the station\'s startedAt, and the round\'s slot when there is no station (ten minutes since 24 Oct)', () => {
+test('the group due, its clock from the station\'s startedAt, and the round\'s slot when there is no station (fifteen minutes since 1 Nov)', () => {
   const running = houseView({ night: NIGHT, study: { state: 'reproducing', groupId: 'g2', startedAt: NOW - 4 * 60_000, updatedAt: stamp(NOW) }, rotation: ROTATION, now: NOW })
   assert.equal(running.study.names, 'Jacob, Ignatius Fume')
   assert.equal(running.study.running, true)
-  assert.equal(running.study.clockLeft, '6:00')
+  assert.equal(running.study.clockLeft, '11:00')
   assert.equal(running.study.paid, false)
   const absent = houseView({ night: NIGHT, study: { state: 'absent', groupId: 'g1', slotEndsAt: stamp(NOW + 90_000) }, rotation: ROTATION, now: NOW })
   assert.equal(absent.study.clockLeft, '1:30')
@@ -62,6 +62,41 @@ test('the group due, its clock from the station\'s startedAt, and the round\'s s
   const idle = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g1' }, rotation: ROTATION, now: NOW })
   assert.equal(idle.study.clockLeft, null)
   assert.equal(houseView({ night: NIGHT, study: { state: 'idle', groupId: null }, rotation: ROTATION, now: NOW }).study, null)
+})
+
+test('the Study\'s clock counts to the stop, just before the round\'s end when that comes first; a practice has fifteen minutes from the first touch', () => {
+  const late = houseView({ night: NIGHT, study: { state: 'reproducing', groupId: 'g2', startedAt: NOW - 60_000, slotEndsAt: stamp(NOW + 12 * 60_000), updatedAt: stamp(NOW) }, rotation: ROTATION, now: NOW })
+  assert.equal(late.study.clockLeft, '11:55', 'the group that touched late sees what is really left')
+  assert.equal(STUDY_CAP_MS, 15 * 60_000)
+  assert.equal(studyStopAt({ startedAt: NOW }), NOW + STUDY_CAP_MS)
+  assert.equal(studyStopAt({ startedAt: NOW, slotEndsAt: stamp(NOW + 14 * 60_000) }), NOW + 14 * 60_000 - STUDY_STOP_EARLY_MS)
+  assert.equal(studyStopAt({ startedAt: NOW, slotEndsAt: stamp(NOW + 20 * 60_000) }), NOW + STUDY_CAP_MS)
+  // a round over before the first touch is no limit, the same rule as the station's
+  assert.equal(studyStopAt({ startedAt: NOW, slotEndsAt: stamp(NOW - 60_000) }), NOW + STUDY_CAP_MS)
+  assert.equal(studyStopAt({ startedAt: NOW, slotEndsAt: stamp(NOW + STUDY_STOP_EARLY_MS) }), NOW + STUDY_CAP_MS)
+})
+
+test('the Study\'s clock stands still in a pause, on the Host tab and the Study\'s screen alike', () => {
+  const paused = { ...NIGHT, phase: 'paused', pausedAt: stamp(NOW) }
+  const study = { state: 'reproducing', groupId: 'g2', startedAt: NOW - 5 * 60_000, updatedAt: stamp(NOW) }
+  const later = NOW + 3 * 60_000
+  assert.equal(houseView({ night: paused, study, rotation: ROTATION, now: later }).study.clockLeft, '10:00', 'three minutes into the pause it reads what it read at the pause')
+  assert.equal(houseView({ night: NIGHT, study, rotation: ROTATION, now: later }).study.clockLeft, '7:00')
+  assert.equal(studyMsLeft(study, paused, () => later), 10 * 60_000)
+  assert.equal(studyMsLeft(study, NIGHT, () => later), 7 * 60_000)
+  assert.equal(studyMsLeft(study, null, () => later), 7 * 60_000, 'a screen that has not loaded its night yet')
+  assert.equal(studyMsLeft(study, NIGHT, () => NOW + 60 * 60_000), 0, 'never below nothing')
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('studyMsLeft(s, night, serverNow)'), 'the Study\'s screen reads the same clock')
+})
+
+test('a group that has finished is not expected back: the rules card waits for the next group, and the finished page names nobody', () => {
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('const paid = !!rotation?.finished?.[s.groupId]'))
+  assert.ok(kiosk.includes("names && !paid ? `Expecting ${names}.` : 'The next group will be along.'"))
+  assert.ok(kiosk.includes('{!paid && <p className="kiosk-line">{SAY.idle}</p>}'), 'and is not invited to begin again')
+  assert.ok(kiosk.includes("names && s.state !== 'done' && <p className=\"study-group\">"), 'the chime may have moved the study on to the next group\'s names')
+  assert.ok(kiosk.includes("s.map && s.state !== 'done' && <WallMap"), 'and the wall map of a group stopped while stuck on a pattern does not stay behind')
 })
 
 test('the picker offers only unpaid groups that are not already due, and closes once the group due is paid', () => {

@@ -1,9 +1,9 @@
 // The station follows the live night. It watches public_state/active; when
 // the night changes it detaches the old night's listeners, puts the machine
 // back to idle, and listens to the new night's public/study, which says
-// which group is due (the server owns that) and may carry settings, and to
-// the night doc itself for its phase: a pause by the host freezes the
-// station's clock, a resume lets it run (runner.paused).
+// which group is due and when the round ends (the server owns both) and may
+// carry settings, and to the night doc itself for its phase: a pause by the
+// host freezes the station's clock, a resume lets it run (runner.paused).
 // `watch(path, onData)` is handed in (Firestore's onSnapshot in station.mjs,
 // a fake in the tests) and returns an unsubscribe function.
 
@@ -23,7 +23,7 @@ export function createFollower({ runner, watch, log = () => {} } = {}) {
   let studyListeners = 0
 
   function onStudy(data) {
-    runner.due(data?.groupId ?? null, data?.settings ?? null)
+    runner.due(data?.groupId ?? null, data?.settings ?? null, ms(data?.slotEndsAt))
   }
 
   function onNight(data) {

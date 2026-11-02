@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { createStudy, makePattern, settingsFrom, DECK, deckKeys, COLOURS, DEFAULT_SETTINGS } from '../lib/study.js'
+import { createStudy, makePattern, settingsFrom, DECK, deckKeys, COLOURS, DEFAULT_SETTINGS, STOP_EARLY_MS } from '../lib/study.js'
 
 const PANELS = [101, 102, 103, 104, 105, 106, 107]
 function seeded(seed = 1) {
@@ -164,33 +164,97 @@ test('entering: undo clears the last half; a wrong pair flashes the corner red a
   assert.equal(m.snapshot.round, 1)
 })
 
-test('F16 the cap: a warning at eight minutes, then at ten (the round) the rest of the code is shown and the clue still goes', () => {
+test('F16 the cap: a warning at thirteen minutes, then at fifteen (the round) the rest of the code is shown and the clue still goes', () => {
   const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
   const t0 = 1_000_000
   m.touch(101, t0); m.drain()
   reproduce(m, t0 + 1000)
-  m.tick(t0 + 7 * 60_000)
+  m.tick(t0 + 12 * 60_000)
   assert.equal(m.snapshot.warned, false)
-  m.tick(t0 + 8 * 60_000)
+  m.tick(t0 + 13 * 60_000)
   assert.equal(m.snapshot.warned, true)
   assert.ok(m.drain().some(e => e.type === 'granolia' && e.hint === 'time'))
-  m.tick(t0 + 9 * 60_000 + 59_000)
+  m.tick(t0 + 14 * 60_000 + 59_000)
   assert.notEqual(m.state, 'done')
-  m.tick(t0 + 10 * 60_000)
+  m.tick(t0 + 15 * 60_000)
   assert.equal(m.state, 'done')
   const fx = m.drain()
   const finished = fx.find(e => e.type === 'server.finished')
   assert.equal(finished.outcome, 'capped')
   assert.equal(finished.pairs, 0)
   assert.equal(m.snapshot.revealed.length, 3, 'every pair the group had not earned is shown')
-  m.tick(t0 + 11 * 60_000)
+  m.tick(t0 + 16 * 60_000)
   assert.equal(m.drain().filter(e => e.type === 'server.finished').length, 0, 'finished fires once')
   // touches after done do nothing; reset returns to idle with the walls at rest
-  m.touch(101, t0 + 16 * 60_000)
+  m.touch(101, t0 + 21 * 60_000)
   assert.equal(m.state, 'done')
-  m.reset(t0 + 17 * 60_000)
+  m.reset(t0 + 22 * 60_000)
   assert.equal(m.state, 'idle')
   assert.equal(m.snapshot.pairsLocked, 0)
+})
+
+test('the game stops just before the round\'s end when that comes first: a group that touched late never runs on into the next group\'s turn', () => {
+  const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
+  const chime = 1_000_000, t0 = chime + 90_000, slotEndsAt = chime + 15 * 60_000 // the chime, the walk upstairs, the first touch
+  const stop = slotEndsAt - STOP_EARLY_MS
+  m.touch(101, t0); m.drain()
+  reproduce(m, t0 + 1000)
+  m.tick(stop - 2 * 60_000 - 1, slotEndsAt)
+  assert.equal(m.snapshot.warned, false)
+  m.tick(stop - 2 * 60_000, slotEndsAt)
+  assert.equal(m.snapshot.warned, true, 'Granolia\'s two minutes are two minutes to the stop')
+  assert.ok(m.drain().some(e => e.type === 'granolia' && e.hint === 'time'))
+  m.tick(stop - 1, slotEndsAt)
+  assert.notEqual(m.state, 'done')
+  m.tick(stop, slotEndsAt)
+  assert.equal(m.state, 'done', 'stopped five seconds before the round\'s end, so the report beats the chime')
+  const finished = m.drain().find(e => e.type === 'server.finished')
+  assert.equal(finished.outcome, 'capped')
+  assert.equal(finished.seconds, 13.5 * 60 - 5)
+  assert.equal(m.snapshot.revealed.length, 3)
+})
+
+test('a round already over at the first touch is no limit: the next group\'s game is not stopped before the chime reaches this Mac', () => {
+  const slotEndsAt = 1_000_000
+  for (const t0 of [slotEndsAt + 90_000, slotEndsAt, slotEndsAt - STOP_EARLY_MS, slotEndsAt - STOP_EARLY_MS + 1]) {
+    const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
+    m.touch(101, t0); m.drain()
+    m.tick(t0 + 500, slotEndsAt)
+    assert.notEqual(m.state, 'done', 'the wall still plays for them')
+    m.tick(t0 + 15 * 60_000 - 1, slotEndsAt)
+    assert.notEqual(m.state, 'done')
+    m.tick(t0 + 15 * 60_000, slotEndsAt)
+    assert.equal(m.state, 'done', 'the fifteen minutes still hold')
+  }
+})
+
+test('with no round, or a round that ends later, the game stops fifteen minutes from the first touch', () => {
+  for (const slot of [0, 2_000_000_000]) {
+    const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g2' })
+    const t0 = 1_000_000
+    m.touch(101, t0); m.drain()
+    m.tick(t0 + 15 * 60_000 - 1, slot)
+    assert.notEqual(m.state, 'done')
+    m.tick(t0 + 15 * 60_000, slot)
+    assert.equal(m.state, 'done')
+  }
+})
+
+test('stop ends a running game as the cap does, once; an idle or finished study takes no notice', () => {
+  const idle = createStudy({ panelIds: PANELS, rand: seeded(7) })
+  idle.drain()
+  idle.stop(5000)
+  assert.equal(idle.state, 'idle')
+  assert.deepEqual(idle.drain(), [])
+  const m = createStudy({ panelIds: PANELS, rand: seeded(7), groupId: 'g1' })
+  m.touch(101, 1000); m.drain()
+  m.stop(61_000)
+  assert.equal(m.state, 'done')
+  const fx = m.drain()
+  assert.equal(fx.find(e => e.type === 'server.finished').outcome, 'capped')
+  assert.ok(fx.some(e => e.type === 'elements.rest') && fx.some(e => e.type === 'lines.rest'))
+  m.stop(62_000)
+  assert.equal(m.drain().filter(e => e.type === 'server.finished').length, 0, 'finished fires once')
 })
 
 test('the screen state never carries the code or the patterns while playing', () => {

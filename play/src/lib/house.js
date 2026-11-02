@@ -1,4 +1,4 @@
-import { ms } from './night.js'
+import { clockFor, ms } from './night.js'
 
 // What the Host tab's house panel shows: is the study station alive, are the
 // room screens and the cue relay alive, which group is due in the study and
@@ -11,8 +11,25 @@ import { ms } from './night.js'
 // learns nothing from who answered when.
 
 export const QUIET_MS = 2 * 60_000          // a machine not heard from for two minutes is quiet
-export const STUDY_CAP_MS = 10 * 60_000     // the study's own clock, from the first touch: the Act 4 round (24 Oct 2026)
-export const ABSENT_SLOT_MS = 10 * 60_000   // with no station, a group's turn in the study: the round
+export const STUDY_CAP_MS = 15 * 60_000     // the study's own clock, from the first touch: the Act 4 round (1 Nov 2026)
+export const STUDY_STOP_EARLY_MS = 5_000    // the game stops this long before the round's end, so its report beats the chime (station/lib/study.js STOP_EARLY_MS)
+export const ABSENT_SLOT_MS = 15 * 60_000   // with no station, a group's turn in the study: the round
+
+// When the game in the study stops: just before the round's end, or with no
+// round (a practice) fifteen minutes from the first touch, whichever comes
+// first, the same rule as the station's (station/lib/study.js tick).
+export function studyStopAt(study) {
+  const started = ms(study?.startedAt)
+  const capAt = started + STUDY_CAP_MS
+  const roundStop = ms(study?.slotEndsAt) - STUDY_STOP_EARLY_MS
+  return roundStop > started ? Math.min(capAt, roundStop) : capAt
+}
+
+// What is left of the game in the study, on the clock that stands still in a
+// pause: the Study's screen and the Host tab both count this.
+export function studyMsLeft(study, night, serverNow) {
+  return Math.max(0, studyStopAt(study) - clockFor(night, serverNow)())
+}
 
 // The machines, by the guest key their heartbeat carries.
 export const MACHINES = [
@@ -87,7 +104,7 @@ export function houseView({ night, study, rotation, presence = {}, now = Date.no
   const started = ms(study?.startedAt)
   const running = ['playing', 'reproducing', 'entering'].includes(study?.state)
   let clockLeft = null
-  if (running && started) clockLeft = clock(started + STUDY_CAP_MS - now)
+  if (running && started) clockLeft = clock(studyMsLeft(study, night, () => now))
   else if (study?.state === 'absent' && ms(study.slotEndsAt)) clockLeft = clock(ms(study.slotEndsAt) - now)
 
   // every group, for the "this group is in the study" picker: never a paid one

@@ -220,19 +220,27 @@ test('the shared games: the night and the practice play the same component, and 
   assert.match(windows, /if \(nightId === 'preview'\) \{ setSent\(true\); return \}/)
 })
 
-test('Granolia speaks of a ten-minute round, warned at eight', () => {
+test('Granolia speaks of a fifteen-minute round, warned at thirteen, and the Study\'s clocks are the round in the seed', () => {
   // lib/content.js reads a JSON file the browser's way, so its words are read here as text
   const content = src('../src/lib/content.js')
   const block = name => content.slice(content.indexOf(`export const ${name} = {`), content.indexOf('\n}\n', content.indexOf(`export const ${name} = {`)))
   const words = block('DEFAULT_STUDY_LINES') + block('DEFAULT_STATION_TEXT')
   assert.ok(words.length > 200)
-  assert.ok(!/fifteen/i.test(words), 'no fifteen minutes')
+  assert.ok(!/\bten minutes/i.test(words), 'no ten minutes')
   assert.ok(!/three minutes left/i.test(words))
   assert.match(words, /TIME: 'Two minutes left, dear\./)
-  assert.match(words, /SLOW: '[^']*Ten minutes\.'/)
+  assert.match(words, /SLOW: '[^']*Fifteen minutes\.'/)
   const study = src('../../station/lib/study.js')
-  assert.match(study, /capMs: 10 \* 60_000/)
-  assert.match(study, /warnMs: 8 \* 60_000/)
+  // the round's length lives in the seed; a change there must reach the Study's clocks too (card 557)
+  const round = JSON.parse(src('../../seed/night.json')).act4.roundMinutes
+  assert.equal(round, 15)
+  assert.match(study, new RegExp(`capMs: ${round} \\* 60_000`))
+  assert.match(study, new RegExp(`warnMs: ${round - 2} \\* 60_000`))
+  const house = src('../src/lib/house.js')
+  assert.match(house, new RegExp(`STUDY_CAP_MS = ${round} \\* 60_000`))
+  assert.match(house, new RegExp(`ABSENT_SLOT_MS = ${round} \\* 60_000`))
+  // the stop before the round's end: the station and both clocks keep the one number
+  assert.equal(house.match(/STUDY_STOP_EARLY_MS = ([\d_]+)/)[1], study.match(/STOP_EARLY_MS = ([\d_]+)/)[1])
 })
 
 test('the practice clock keeps the reading with the shortest round trip, and a fresh one after ten minutes', () => {

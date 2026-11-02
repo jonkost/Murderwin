@@ -407,10 +407,11 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 //   nights/{id}.window.opensAt, .window.closesAt
 //   nights/{id}.reveal.at (older nights only; since 18 Oct the reveal lives in public/finale, below)
 //   nights/{id}/public/relay: introEndsAt (Sir Irwin's slides), turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
-//   nights/{id}/public/act4: warnEndsAt, lockEndsAt, roundStartsAt, roundEndsAt (Act 4's ten-minute rounds)
+//   nights/{id}/public/act4: warnEndsAt, lockEndsAt, roundStartsAt, roundEndsAt (Act 4's fifteen-minute rounds)
 //   nights/{id}/public/study: slotEndsAt (the round's end, the study's slot;
-//     a live station keeps its own fifteen-minute clock and freezes it itself
-//     by watching this night's phase, station/lib/follow.js)
+//     a live station stops its game there, keeps its own fifteen-minute clock
+//     from the first touch, and freezes both itself by watching this night's
+//     phase, station/lib/follow.js)
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
 //     victimAt, and cardAt.<stage> (when the TV may show a name card)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.

@@ -13,6 +13,7 @@ import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { isRehearsalNight } from '../lib/night'
+import { studyMsLeft } from '../lib/house'
 import { RehearsalBand } from './Moments'
 import Spoken from './Spoken'
 
@@ -825,8 +826,6 @@ export function TugOfWar({ graph }) {
 // through this screen. Granolia's lines: the workshop's study lines list,
 // with a plain default for each moment.
 
-const CAP_MS = 10 * 60_000 // the study's cap is the ten-minute round (handoff 23 Oct 2026)
-
 // Granolia's lines come from the workshop's study lines list (published with
 // the night's content) over the phone's defaults; see lib/content.js.
 
@@ -858,7 +857,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
     </RulesCard>
   )
   const started = ms(s.startedAt)
-  const left = started && s.state !== 'done' && s.state !== 'idle' ? Math.max(0, CAP_MS - (serverNow() - started)) : null
+  const left = started && s.state !== 'done' && s.state !== 'idle' ? studyMsLeft(s, night, serverNow) : null
   const mm = left != null ? Math.floor(left / 60_000) : null
   const ss = left != null ? Math.floor((left % 60_000) / 1000) : null
 

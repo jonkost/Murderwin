@@ -58,14 +58,14 @@ const preview = (name, label, device) => ({ label, device, params: { preview: na
 export const SECTIONS = [
   {
     key: 'study', name: NAME.study, where: 'Act 4 · the Study', moment: 'act4.study',
-    what: 'Copy the light pattern on the white wall, then enter the colour and the number on the button box. Three rounds, ten minutes a group.',
+    what: 'Copy the light pattern on the white wall, then enter the colour and the number on the button box. Three rounds, fifteen minutes a group.',
     devices: ['walls', 'phone', 'study'],
     steps: [
       'Save the study key word, once, in the box on this page.',
       'On the Mac by the walls, double-click Start the Study in the Study station folder. No folder yet? Open this page on that Mac, tap Download the Study station below, and unzip it first.',
       'Stand at the walls with your phone. Tap Flash the walls, then Teach the taps and touch each hexagon as it lights. The taps are kept on the Mac that runs the study: for the night, teach them on the Mac by the walls.',
       'Tap Play a practice round. Copy the pattern on the wall, then enter the colour and the number on the answer pad.',
-      'Open Granolia’s screen on the study computer. During your practice round it shows the game; between groups in Act 4 it shows her rules card, and outside Act 4 the Study’s loop or its crest.',
+      'Open Granolia’s screen on the study computer. A practice round stays on this page and does not reach her screen: it shows the game only on a night, with a group in the Study. Between groups in Act 4 it shows her rules card, and outside Act 4 the Study’s loop or its crest.',
     ],
     tries: [
       preview('kiosk-study', 'Granolia’s screen, a sample', 'study'),

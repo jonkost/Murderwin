@@ -85,14 +85,14 @@ export function uiLines(content) {
 }
 
 // Granolia's lines on the study screen, by moment: the workshop's
-// "MOMENT: line" list over these defaults (18 Oct 2026). The round is ten
-// minutes and TIME shows at eight (station/lib/study.js capMs, warnMs).
+// "MOMENT: line" list over these defaults (18 Oct 2026). The round is fifteen
+// minutes and TIME shows two minutes before the stop (station/lib/study.js capMs, warnMs).
 export const DEFAULT_STUDY_LINES = {
   IDLE: 'Touch any panel to begin. The wall will show you a pattern; touch it back.',
   PLAYING: 'Watch.',
   REPRODUCING: 'Now you. Touch them in the same order.',
   ENTERING: 'Look at the other wall. A colour, and a number of bars. Press them on the button box, then Submit.',
-  SLOW: 'Again, slower. I have all day. Well. Ten minutes.',
+  SLOW: 'Again, slower. I have all day. Well. Fifteen minutes.',
   MAP: 'Here, I have numbered them for you. Follow the numbers.',
   'HALF COLOUR': 'The number is right, dear. Look at the colour again.',
   'HALF NUMBER': 'The colour is right, dear. Count the bars again.',
@@ -113,7 +113,7 @@ export function studyLines(content) {
 // The five Act 4 station cards' lines, as the dealer reads them (the phone
 // only shows what it was dealt; this is for the Check page).
 export const DEFAULT_STATION_TEXT = {
-  STUDY: 'Go up to the study. Touch any panel to begin. Granolia is in there somewhere; she helps. Ten minutes, then out, whatever happened.',
+  STUDY: 'Go up to the study. Touch any panel to begin. Granolia is in there somewhere; she helps. Fifteen minutes, then out, whatever happened.',
   CAT: 'Find [CAT]. The cat talks to all of you at once.',
   BAGS: 'Something [PROPERTY] is in [COUNT] of the bags in this house. Ask people to open theirs. Narrow it down; nobody is accused here.',
   PUZZLE: 'Watch the four shapes, then tap them back in the same order. Do it together; argue if you must.',

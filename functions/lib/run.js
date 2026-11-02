@@ -356,7 +356,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
     case 'station-key':
       return station.setStationKey(db, arg)
     case 'study-tick':
-      // the clock for a study with no station: ends a twelve-minute slot that has run out, once
+      // the clock for a study with no station: ends a slot that has run out, once
       return station.tickStudy(db, nightId, now, { finished: payload => studyFinished(db, { nightId, payload, now }) })
     case 'study-finish': {
       // the host moves the house on without waiting for the study (the group is paid, outcome 'absent')

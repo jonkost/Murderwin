@@ -11,8 +11,8 @@ export const COLOURS = ['red', 'yellow', 'green', 'blue', 'pink', 'white']
 export const NUMBERS = [1, 2, 3, 4, 5, 6]
 
 export const DEFAULT_SETTINGS = {
-  capMs: 10 * 60_000,          // ten minutes from the first touch, hard: the round (handoff 23 Oct 2026)
-  warnMs: 8 * 60_000,          // Granolia mentions the time
+  capMs: 15 * 60_000,          // fifteen minutes from the first touch, hard: the round (Jon, 1 Nov 2026; on the night the round's end comes first, see tick)
+  warnMs: 13 * 60_000,         // Granolia mentions the time: two minutes before the stop
   rounds: [
     { lengths: [3, 4, 5], onMs: 800, gapMs: 300 },
     { lengths: [4, 5, 6], onMs: 600, gapMs: 250 },
@@ -22,6 +22,14 @@ export const DEFAULT_SETTINGS = {
   mapHintMisses: 4,            // fourth miss: the numbered map on screen
   restMs: 600,                 // pause between a clear and the next pattern (tightened 28 Oct)
 }
+
+// On the night the game stops this long before the round's end. A group's
+// report reaches the server about three seconds after the game ends (the walls
+// first), and the chime can land on the round's end to the second, so without
+// this the two race on every other round, and a group that solved in the last
+// seconds can lose to the chime (1 Nov 2026). The same number is in
+// play/src/lib/house.js (STUDY_STOP_EARLY_MS), for the clocks.
+export const STOP_EARLY_MS = 5_000
 
 // The Stream Deck face, five columns of three (Canon, 25 Sep 2026).
 export const DECK = [
@@ -145,6 +153,12 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
     show()
   }
 
+  // Time is up: the walls stop testing, every pair not yet earned shows, and the clue still goes.
+  function cap(now) {
+    emit({ type: 'elements.rest' }); emit({ type: 'lines.rest' })
+    finish(now, 'capped')
+  }
+
   function nextStep(now) {
     m.missesThisPattern = 0; m.hint = null
     if (m.pattern < 2) { m.pattern += 1; play(now); return }
@@ -244,14 +258,27 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
       show()
     },
 
-    // The clock. Called often; only the cap and the warning live here.
-    tick(now) {
+    // The round moved on while this game ran (the runner saw it): it stops now.
+    stop(now) {
       if (m.state === 'idle' || m.state === 'done' || !m.startedAt) return
-      if (!m.warned && now - m.startedAt >= s.warnMs) { m.warned = true; emit({ type: 'granolia', hint: 'time' }); show() }
-      if (now - m.startedAt >= s.capMs) {
-        emit({ type: 'elements.rest' }); emit({ type: 'lines.rest' })
-        finish(now, 'capped')
-      }
+      cap(now)
+    },
+
+    // The clock. Called often; only the cap and the warning live here.
+    // `slotEndsAt` is the round's end on the server's clock, 0 with no round.
+    // The game stops just before it (STOP_EARLY_MS) or at capMs from the first
+    // touch, whichever comes first, so a group that touched late never runs on
+    // into the next group's turn (Jon, 1 Nov 2026), and the warning keeps the
+    // same lead before it. A round already over at the first touch is no limit:
+    // this Mac has not heard the chime yet (the Mac's internet is down, say),
+    // and a game must not stop the moment it starts.
+    tick(now, slotEndsAt = 0) {
+      if (m.state === 'idle' || m.state === 'done' || !m.startedAt) return
+      const capAt = m.startedAt + s.capMs
+      const roundStop = slotEndsAt - STOP_EARLY_MS
+      const stopAt = roundStop > m.startedAt ? Math.min(capAt, roundStop) : capAt
+      if (!m.warned && now >= stopAt - (s.capMs - s.warnMs)) { m.warned = true; emit({ type: 'granolia', hint: 'time' }); show() }
+      if (now >= stopAt) cap(now)
     },
   }
   reset(0)

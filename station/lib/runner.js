@@ -26,6 +26,8 @@ export function createRunner({
   let nightId = null
   let groupId = null              // the group the server says is due; the server owns this
   let settings = {}               // from public/study.settings when the night carries any
+  let slotEndsAt = 0              // the round's end (public/study.slotEndsAt, server clock), 0 with no round
+  let slotAtPause = 0             // slotEndsAt when the host paused, to move it only once on resume
   let skew = 0
   const serverNow = () => now() + skew
   const fresh = () => createStudy({ panelIds, groupId, settings })
@@ -131,10 +133,15 @@ export function createRunner({
           // from the public/study snapshot (the server's rotation owns it)
           try { await call('finished', payload) } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
         }
-        // the finished screen now, while the walls rest (the study test's
-        // practice round shows how it went); its own screen effect only comes
-        // after the rest. The live runner hands in no onScreen.
+        // the finished screen now, while the walls rest: its own screen effect
+        // only comes after the rest, with the next machine in place. The study
+        // test's practice round takes it through onScreen, a night through
+        // the state. It goes after the report, so "something has been sent to
+        // your phones" is true when it shows, but it does not hold on a report
+        // that failed: that one goes again from tick, the cards come a moment
+        // behind the words, and the chime pays the group anyway.
         onScreen({ ...machine.snapshot })
+        sendState()
         // the walls rest, then the station is re-armed for whichever group the latest snapshot says
         await sleep(restMs)
         granolia = null
@@ -173,23 +180,27 @@ export function createRunner({
     // follower). While paused the clock stands still and the wall ignores
     // touches; on resume the game's start moves on by the length of the
     // pause, so the group gets its whole fifteen minutes, and the kiosk's
-    // clock is told. `at` is the server's moment of the change.
+    // clock is told. The round's end moves by the same length: the server
+    // writes that too (PAUSE_SHIFTED), and its write may land either side of
+    // this one, so it moves here only if it has not moved yet. `at` is the
+    // server's moment of the change.
     paused(flag, at = serverNow()) {
       if (flag) {
-        if (pausedAt == null) { pausedAt = at; log('paused') }
+        if (pausedAt == null) { pausedAt = at; slotAtPause = slotEndsAt; log('paused') }
         return
       }
       if (pausedAt == null) return
       const length = Math.max(0, at - pausedAt)
       pausedAt = null
       log(`resumed after ${Math.round(length / 1000)}s`)
+      if (slotEndsAt && slotEndsAt === slotAtPause) slotEndsAt += length
       machine.shift(length) // its screen effect carries the moved start to the kiosk
       drain()
     },
     get isPaused() { return pausedAt != null },
     // once a second: the cap, the warning, and any "finished" the server missed
     tick() {
-      if (pausedAt == null) { machine.tick(serverNow()); drain() }
+      if (pausedAt == null) { machine.tick(serverNow(), slotEndsAt); drain() }
       if (pendingFinished && nightId) {
         const e = pendingFinished; pendingFinished = null
         call('finished', { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs })
@@ -203,6 +214,7 @@ export function createRunner({
       nightId = id
       groupId = null
       settings = {}
+      slotEndsAt = 0
       granolia = null
       pendingFinished = null
       pausedAt = null
@@ -211,17 +223,24 @@ export function createRunner({
       drain()
       sendState()
     },
-    // the server says which group is due (and may send settings). Always
-    // remembered; the machine is rebuilt for them when it is idle, and after
-    // the rest that follows a finish (a running game is never cut short).
-    due(next, nextSettings = null) {
+    // the server says which group is due and when the round ends (and may
+    // send settings). Always remembered; the machine is rebuilt for them when
+    // it is idle, and after the rest that follows a finish. A running game
+    // goes on through a swap of groups (the host's "this group is in the
+    // study" keeps the round's end) and through a resume (that keeps the
+    // group), but when both change at once the round has moved on, by the
+    // chime or by the host's Next, and the game stops there (1 Nov 2026).
+    due(next, nextSettings = null, nextSlot = 0) {
       next = next ?? null
+      const movedOn = next !== groupId && nextSlot !== slotEndsAt
+      slotEndsAt = nextSlot
       const s = settingsFrom(nextSettings)
       const settingsChanged = JSON.stringify(s) !== JSON.stringify(settings)
       if (settingsChanged) { settings = s; log('settings:', Object.keys(s).length ? Object.keys(s).join(' ') : 'defaults') }
       if (next === groupId && !settingsChanged) return
       if (next !== groupId) { groupId = next; log('next group:', groupId ?? 'none') }
       if (machine.state === 'idle') { machine = fresh(); drain() }
+      else if (movedOn) { machine.stop(serverNow()); drain() }
     },
     get settings() { return settings },
     // the host's reset key in fake mode

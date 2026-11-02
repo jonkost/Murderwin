@@ -4,6 +4,7 @@ import { keyImage } from '../lib/streamdeck.js'
 import { countSegments, Nanoleaf } from '../lib/nanoleaf.js'
 import { FakeWall, FakeDeck } from '../lib/fakes.js'
 import { createRunner } from '../lib/runner.js'
+import { STOP_EARLY_MS } from '../lib/study.js'
 
 test('key images: the right size, a solid blank, text on the lit keys', () => {
   const size = 72
@@ -195,26 +196,30 @@ test('with the Elements down the wall is left alone and the screen gets the patt
   assert.equal(runner.machine.snapshot.pattern, 1, 'the number keys reproduce it')
 })
 
-// ---- a pause: the ten-minute clock stands still with the rest of the house
+// ---- a pause: the fifteen-minute clock stands still with the rest of the house
 
 // A station on a clock the test turns by hand; the server answers with the same clock, so skew is zero.
-function stationOnClock() {
+function stationOnClock({ sleep = () => Promise.resolve(), failFinished = 0 } = {}) {
   const clock = { t: 1_000_000 }
   const elements = new FakeWall({ name: 'elements', panelIds: PANELS, log: () => {} })
   const lines = new FakeWall({ name: 'lines', panelIds: [21, 22, 23, 24, 25, 26, 27], log: () => {} })
   const deck = new FakeDeck({ log: () => {} })
   const sent = []
-  const callStation = async (args) => { sent.push(args); return { data: { ok: true, serverTime: clock.t } } }
+  const callStation = async (args) => {
+    sent.push(args)
+    if (args.command === 'finished' && failFinished-- > 0) throw new Error('internal')
+    return { data: { ok: true, serverTime: clock.t } }
+  }
   const runner = createRunner({
     elements, lines, deck, panelIds: PANELS, layout: PANELS.map((id, i) => ({ id, x: i * 100, y: 0 })),
-    callStation, stationKey: 'k', restMs: 20_000, sleep: () => Promise.resolve(), now: () => clock.t,
+    callStation, stationKey: 'k', restMs: 20_000, sleep, now: () => clock.t,
   })
   runner.night('n1')
   runner.due('g1')
   return { runner, clock, sent }
 }
 
-test('the host pauses the night: the cap waits out the pause and the group gets its whole ten minutes', { timeout: 5000 }, async () => {
+test('the host pauses the night: the cap waits out the pause and the group gets its whole fifteen minutes', { timeout: 5000 }, async () => {
   const { runner, clock, sent } = stationOnClock()
   await flush(runner)
   const cap = runner.machine.settings.capMs
@@ -223,7 +228,7 @@ test('the host pauses the night: the cap waits out the pause and the group gets 
   assert.equal(runner.machine.state, 'reproducing')
   const startedAt = runner.machine.snapshot.startedAt
   assert.equal(startedAt, clock.t)
-  // seven minutes in, the host pauses for six
+  // seven minutes in, the host pauses for nine
   clock.t += 7 * 60_000
   runner.tick(); await flush(runner)
   assert.equal(runner.machine.state, 'reproducing')
@@ -233,18 +238,18 @@ test('the host pauses the night: the cap waits out the pause and the group gets 
   runner.touch(runner.machine.patterns[0][0][0]) // a touch during the pause does nothing
   await flush(runner)
   assert.equal(runner.machine.snapshot.pattern, patternBefore)
-  clock.t += 6 * 60_000
+  clock.t += 9 * 60_000
   runner.tick(); await flush(runner)
-  assert.equal(runner.machine.state, 'reproducing', 'thirteen minutes on the wall clock, but only seven of them count')
+  assert.equal(runner.machine.state, 'reproducing', 'sixteen minutes on the wall clock, but only seven of them count')
   assert.equal(runner.machine.snapshot.outcome, null, 'not capped during the pause')
   // the host resumes: the clock picks up at seven minutes
   runner.paused(false, clock.t)
   await flush(runner)
   assert.equal(runner.isPaused, false)
-  assert.equal(runner.machine.snapshot.startedAt, startedAt + 6 * 60_000, 'the start moved on by the length of the pause')
+  assert.equal(runner.machine.snapshot.startedAt, startedAt + 9 * 60_000, 'the start moved on by the length of the pause')
   const lastState = sent.filter(a => a.command === 'state').at(-1)
-  assert.equal(lastState.payload.startedAt, startedAt + 6 * 60_000, 'the kiosk clock is told')
-  clock.t = startedAt + 6 * 60_000 + cap - 1
+  assert.equal(lastState.payload.startedAt, startedAt + 9 * 60_000, 'the kiosk clock is told')
+  clock.t = startedAt + 9 * 60_000 + cap - 1
   runner.tick(); await flush(runner)
   assert.equal(runner.machine.state, 'reproducing', 'one second short of the cap')
   clock.t += 1
@@ -259,4 +264,155 @@ test('the host pauses the night: the cap waits out the pause and the group gets 
   // a pause with no game running, and a resume twice, change nothing
   runner.paused(true, clock.t); runner.paused(false, clock.t + 5000); runner.paused(false, clock.t + 9000)
   assert.equal(runner.isPaused, false)
+})
+
+// ---- the round's end: the game stops with the round, never past it (Jon, 1 Nov 2026)
+
+// A game under way for g1: the chime, the walk upstairs, the first touch.
+async function gameInRound(options) {
+  const s = stationOnClock(options)
+  const slot = s.clock.t + 15 * 60_000
+  s.runner.due('g1', null, slot)
+  await flush(s.runner)
+  s.clock.t += 90_000
+  s.runner.touch(PANELS[0])
+  await flush(s.runner)
+  assert.equal(s.runner.machine.state, 'reproducing')
+  return { ...s, slot }
+}
+const finishedSent = sent => sent.filter(a => a.command === 'finished')
+
+test('the game stops just before the round\'s end, not fifteen minutes from a late first touch, and the wall is ready for the next group', { timeout: 5000 }, async () => {
+  const { runner, clock, sent, slot } = await gameInRound()
+  clock.t = slot - STOP_EARLY_MS - 1
+  runner.tick(); await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'one moment short of the stop')
+  clock.t = slot - STOP_EARLY_MS
+  runner.tick()
+  assert.equal(runner.machine.state, 'done')
+  assert.equal(runner.machine.snapshot.outcome, 'capped')
+  await flush(runner) // the walls rest (instantly here) and the station re-arms
+  assert.equal(finishedSent(sent).length, 1)
+  assert.equal(finishedSent(sent)[0].payload.groupId, 'g1')
+  assert.equal(finishedSent(sent)[0].payload.outcome, 'capped')
+  assert.equal(finishedSent(sent)[0].payload.seconds, 13.5 * 60 - 5)
+  assert.equal(runner.machine.state, 'idle')
+  // the chime lands a moment later: the next group finds the wall waiting for them, and is not stopped
+  runner.due('g2', null, slot + 15 * 60_000)
+  await flush(runner)
+  assert.equal(runner.machine.state, 'idle')
+  assert.equal(runner.machine.snapshot.groupId, 'g2')
+  runner.touch(PANELS[0])
+  await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'the next group\'s game starts at their first touch')
+  assert.equal(finishedSent(sent).length, 1)
+})
+
+test('the stop leaves the report time to beat the chime: the walls take well under the five seconds, with room for the corner\'s flash and the network', { timeout: 5000 }, async () => {
+  const slept = []
+  const { runner, clock, slot } = await gameInRound({ sleep: ms => { slept.push(ms); return Promise.resolve() } })
+  slept.length = 0
+  clock.t = slot - STOP_EARLY_MS
+  runner.tick(); await flush(runner)
+  const walls = slept.filter(ms => ms !== 20_000).reduce((sum, ms) => sum + ms, 0) // all but the rest, which comes after the report
+  assert.ok(walls > 0, 'the walls do take a moment')
+  const FLASH_MS = 900, NETWORK_MS = 1500 // a solve's last pair flashes the corner first (lib/streamdeck.js)
+  assert.ok(walls + FLASH_MS + NETWORK_MS <= STOP_EARLY_MS, `the walls take ${walls} ms`)
+})
+
+test('the finished page goes up after the report and holds through the rest: the group reads how it went, not the rules card', { timeout: 5000 }, async () => {
+  const { runner, clock, sent, slot } = await gameInRound()
+  clock.t = slot - STOP_EARLY_MS
+  runner.tick(); await flush(runner)
+  const report = sent.findIndex(a => a.command === 'finished')
+  assert.ok(report >= 0)
+  const after = sent.slice(report + 1).filter(a => a.command === 'state')
+  assert.equal(after[0].payload.state, 'done', 'the page says something has been sent to the phones, so it follows the report')
+  assert.equal(after[0].payload.outcome, 'capped')
+  assert.equal(after[0].payload.revealed.length, 3, 'with the pairs not found')
+  assert.equal(after.at(-1).payload.state, 'idle', 'and the rest ends with the wall ready')
+})
+
+test('a report that fails does not hold the finished page: done goes out anyway, and the report goes again on the next tick, once', { timeout: 5000 }, async () => {
+  const { runner, clock, sent, slot } = await gameInRound({ failFinished: 1 })
+  clock.t = slot - STOP_EARLY_MS
+  runner.tick(); await flush(runner)
+  assert.equal(finishedSent(sent).length, 1)
+  const report = sent.findIndex(a => a.command === 'finished')
+  assert.equal(sent.slice(report + 1).find(a => a.command === 'state').payload.state, 'done', 'the game does not stay on the screen for a report that failed')
+  runner.tick(); await flush(runner)
+  assert.equal(finishedSent(sent).length, 2, 'sent again')
+  assert.deepEqual(finishedSent(sent)[1].payload, finishedSent(sent)[0].payload)
+  runner.tick(); await flush(runner)
+  assert.equal(finishedSent(sent).length, 2, 'and once it has landed, that is the end of it')
+})
+
+test('the round moves on while a game runs (the chime, or the host\'s Next): the game stops there and then, and reports once', { timeout: 5000 }, async () => {
+  const { runner, clock, sent, slot } = await gameInRound()
+  clock.t = slot - 5 * 60_000
+  runner.tick(); await flush(runner)
+  runner.due('g2', null, clock.t + 15 * 60_000)
+  assert.equal(runner.machine.state, 'done', 'stopped on the new round, not at the old round\'s end')
+  await flush(runner)
+  assert.equal(finishedSent(sent).length, 1)
+  assert.equal(finishedSent(sent)[0].payload.groupId, 'g1', 'the group that played, never the group due next')
+  assert.equal(finishedSent(sent)[0].payload.outcome, 'capped')
+  assert.equal(runner.machine.state, 'idle')
+  assert.equal(runner.machine.snapshot.groupId, 'g2')
+})
+
+test('the last round ends with a game running: the server writes no group and no round, and the game stops', { timeout: 5000 }, async () => {
+  const { runner, sent } = await gameInRound()
+  runner.due(null, null, 0)
+  assert.equal(runner.machine.state, 'done')
+  await flush(runner)
+  assert.equal(finishedSent(sent).at(-1).payload.groupId, 'g1')
+  assert.equal(runner.machine.snapshot.groupId, null)
+})
+
+test('the host\'s "this group is in the study" and a resume each leave a running game alone', { timeout: 5000 }, async () => {
+  const { runner, slot } = await gameInRound()
+  runner.due('g2', null, slot) // the swap: another group, the same round
+  assert.equal(runner.machine.state, 'reproducing', 'the group changed but the round did not')
+  assert.equal(runner.groupId, 'g2')
+  runner.due('g2', null, slot + 60_000) // a resume: the same group, the round's end moved
+  assert.equal(runner.machine.state, 'reproducing', 'the round\'s end moved but the group did not')
+})
+
+test('a pause that runs past the round\'s end: the end moves with the pause, once, whichever write lands first', { timeout: 5000 }, async () => {
+  for (const first of ['night', 'study']) {
+    const { runner, clock, sent, slot } = await gameInRound()
+    clock.t = slot - 60_000
+    runner.tick(); await flush(runner)
+    runner.paused(true, clock.t)
+    clock.t += 5 * 60_000 // past the old end
+    runner.tick(); await flush(runner)
+    assert.equal(runner.machine.state, 'reproducing', 'nothing stops during a pause')
+    const moved = slot + 5 * 60_000
+    if (first === 'study') runner.due('g1', null, moved)
+    runner.paused(false, clock.t)
+    runner.tick(); await flush(runner)
+    assert.equal(runner.machine.state, 'reproducing', `${first} first: the old end does not stop the game`)
+    if (first === 'night') runner.due('g1', null, moved)
+    clock.t = moved - STOP_EARLY_MS - 1
+    runner.tick(); await flush(runner)
+    assert.equal(runner.machine.state, 'reproducing', `${first} first: the group gets every minute back`)
+    clock.t = moved - STOP_EARLY_MS
+    runner.tick()
+    assert.equal(runner.machine.state, 'done', `${first} first: the end moved by the pause, not twice`)
+    await flush(runner)
+    assert.equal(finishedSent(sent).at(-1).payload.outcome, 'capped')
+  }
+})
+
+test('a new night forgets the old night\'s round', { timeout: 5000 }, async () => {
+  const { runner, clock, slot } = await gameInRound()
+  runner.night('n2')
+  runner.due('g1')
+  await flush(runner)
+  clock.t = slot + 60_000
+  runner.touch(PANELS[0])
+  await flush(runner)
+  runner.tick(); await flush(runner)
+  assert.equal(runner.machine.state, 'reproducing', 'the old round\'s end does not stop a game on the new night')
 })

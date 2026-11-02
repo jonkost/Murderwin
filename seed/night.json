@@ -170,7 +170,7 @@
         {
           "key": "round1",
           "name": "First round",
-          "what": "The chime sends every group to its first room (or the Parlour). Comes on its own once everyone is locked in, or two minutes after the group cards. Ten minutes, then the next round on its own.",
+          "what": "The chime sends every group to its first room (or the Parlour). Comes on its own once everyone is locked in, or two minutes after the group cards. Fifteen minutes, then the next round on its own.",
           "action": "act4:round",
           "screen": "prompts",
           "sound": "chime-phone"

@@ -17,8 +17,9 @@
 //   round1  chime-phone sends the groups to their first rooms, once every
 //           guest is locked in or lockMinutes have passed (the clock).
 //   round2… every roundMinutes the chime, the cap pays every room not yet
-//           paid, and the groups move on. After the last round everyone goes
-//           back to the Parlour.
+//           paid, and the groups move on. The study's game stops with the
+//           round (station/lib/study.js tick). After the last round everyone
+//           goes back to the Parlour.
 // The clock is the minute tick plus the Host tab's own (run.js clockTick);
 // the host's Next moves on at once. A group that finishes early is paid at
 // once and waits in the Parlour; a group that does not finish is paid at the
@@ -54,7 +55,7 @@ import { play } from './screen.js'
 import { hostLine } from './hosts.js'
 
 const CFG = NIGHT.act4 ?? {}
-export const ROUND_MS = (Number(CFG.roundMinutes) || 10) * 60_000
+export const ROUND_MS = (Number(CFG.roundMinutes) || 15) * 60_000
 export const WARN_MS = (Number(CFG.warnMinutes) || 2) * 60_000
 export const LOCK_MS = (Number(CFG.lockMinutes) || 2) * 60_000
 export const MAX_GROUPS = Number(CFG.maxGroups) || 5

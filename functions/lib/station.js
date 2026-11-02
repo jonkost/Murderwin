@@ -50,7 +50,7 @@ export function makeGroups(keys, { apart = [], pickInt = randomInt, maxGroups = 
 // every phone in the group. It names the trace (at level 5), never the
 // person. At level 3 the second option is never the Murderer's trace, so the
 // study never spoils the door. The station never sees any of it.
-export const STUDY_PLACEHOLDER = '(The study pays out the trace the victim left behind, when the three jewels are lit or the ten minutes are up.)'
+export const STUDY_PLACEHOLDER = '(The study pays out the trace the victim left behind, when the three jewels are lit or the fifteen minutes are up.)'
 // On the party night a trace that is missing never shows that note (card
 // 529): the group reads the house's plain words (the question quietWords on
 // the board), and dealStudy tells the Host tab. Either way the card is marked
@@ -91,9 +91,9 @@ async function dealOnce(db, uid, card) {
 
 // Has the study station reported in lately? (Within two minutes.)
 export const STATION_QUIET_MS = 120_000
-// With no station, a group's turn in the study is the round (ten minutes,
+// With no station, a group's turn in the study is the round (fifteen minutes,
 // act4.ROUND_MS); kept for the host's study-tick and older callers.
-export const ABSENT_SLOT_MS = 10 * 60_000
+export const ABSENT_SLOT_MS = 15 * 60_000
 // The only words the station may use for its state. 'absent' is the server's
 // own word (a slot with no station), so the station can never claim it.
 export const STATION_STATES = ['idle', 'playing', 'reproducing', 'entering', 'done']
@@ -225,9 +225,9 @@ export async function reassignStudy(db, { nightId, groupId }) {
 // The clock for a study with no station. act4.setRooms writes the round's
 // slotEndsAt for the group due; with the station quiet, once that moment has
 // passed and the group has not been paid, this pays it exactly as a station's
-// "finished" would (run.studyFinished; the round's chime also pays it). Called
-// by the Host tab on load and once a minute in Act 4, and by any scheduled
-// tick; safe to call as often as you like, it acts once per group.
+// "finished" would (run.studyFinished; the round's chime also pays it, and
+// has taken over: only the host command study-tick calls this now). Safe to
+// call as often as you like, it acts once per group.
 export async function tickStudy(db, nightId, now = Date.now(), { finished = null } = {}) {
   const [studySnap, rotSnap, nightSnap] = await Promise.all([
     db.doc(studyPath(nightId)).get(), db.doc(rotationPath(nightId)).get(), db.doc(`nights/${nightId}`).get(),

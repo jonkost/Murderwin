@@ -103,8 +103,9 @@ export default function Host({ night, content, serverNow }) {
   const act4 = useDoc(live && night.act === 4 ? `nights/${night.nightId}/public/act4` : null)
   const awards = useDoc(live && night.act <= 5 ? `nights/${night.nightId}/public/achievements` : null)
   // Acts 2 and 4 run on the clock (the cat queue and the supper chime; Act 4's
-  // warning, lock-in and ten-minute rounds). The server ticks once a minute on
-  // its own; this tab nudges it every twenty seconds so a chime is never late.
+  // warning, lock-in and fifteen-minute rounds). The server ticks once a minute on
+  // its own; this tab, while it is the one showing, nudges it every twenty
+  // seconds, so a chime comes up to twenty seconds late, not a minute.
   useEffect(() => {
     if (!live || ![2, 4].includes(night.act)) return
     const tick = () => callHost({ nightId: night.nightId, command: 'tick' }).catch(() => {})

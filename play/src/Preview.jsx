@@ -195,7 +195,7 @@ const STUDY_ROTATION = { groups: [
 ], studyOrder: ['g1', 'g2'], finished: {} }
 const STUDY = (extra = {}) => ({
   state: 'reproducing', round: 1, pattern: 0, pairsLocked: 1, misses: 0, hint: null, entry: { colour: null, number: null }, outcome: null,
-  startedAt: Date.now() - 4 * 60_000, finishedAt: null, warned: false, map: null, lines: null, revealed: null, groupId: 'g1',
+  startedAt: Date.now() - 4 * 60_000, slotEndsAt: stamp(Date.now() + 10 * 60_000), finishedAt: null, warned: false, map: null, lines: null, revealed: null, groupId: 'g1',
   layout: STUDY_LAYOUT, elementsOk: true, linesOk: true, granolia: null, fallbackPattern: null, updatedAt: stamp(Date.now()), ...extra,
 })
 // the finale doc as the server shapes it: the reel and the graph on the clock, the names only as the host releases them

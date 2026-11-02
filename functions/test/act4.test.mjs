@@ -11,9 +11,10 @@ import {
   addPairsBy, plusOne, markAt, PLACES_MAX,
 } from '../lib/act4.js'
 import { rehearsalCase } from '../lib/case.js'
+import { ABSENT_SLOT_MS } from '../lib/station.js'
 
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9):
-// the warning, the group cards, four game rooms on a ten-minute clock, the
+// the warning, the group cards, four game rooms on a fifteen-minute clock, the
 // rewards. Every case is the dealer's throwaway case in a fake Firestore,
 // made and dropped here; the packing is a bracketed stand-in. Nothing is printed.
 
@@ -331,7 +332,12 @@ test('Act 2: the night doc counts the guests who have seen all four cats, and no
 
 // ---- F12 and F26 --------------------------------------------------------------
 
-test('F12 puzzles appear on the chime, not on arrival: every room\'s game is set for its group when the round starts, and the ten minutes run from the chime', async () => {
+test('with no station a group\'s turn in the study is the round: fifteen minutes', () => {
+  assert.equal(ROUND_MS, 15 * 60_000)
+  assert.equal(ABSENT_SLOT_MS, ROUND_MS)
+})
+
+test('F12 puzzles appear on the chime, not on arrival: every room\'s game is set for its group when the round starts, and the fifteen minutes run from the chime', async () => {
   const { db, nightId, uids, now } = await party(8)
   // before the chime nobody can start a room: the group cards are out, the rounds are not
   await host(db, nightId, 'act', now, 3)
@@ -355,8 +361,8 @@ test('F12 puzzles appear on the chime, not on arrival: every room\'s game is set
   for (const room of ['library', 'orangerie', 'entryway']) assert.equal(ms(atChime[room].at), chime, `F12 the ${room} was set at the chime`)
   const pub = db.store.get(act4Path(nightId))
   assert.equal(ms(pub.roundStartsAt), chime)
-  assert.equal(ms(pub.roundEndsAt), chime + ROUND_MS, 'F12 ten minutes from the chime, for every room')
-  assert.equal(ms(atChime.study.slotEndsAt), chime + ROUND_MS, 'the study\'s ten minutes too')
+  assert.equal(ms(pub.roundEndsAt), chime + ROUND_MS, 'F12 fifteen minutes from the chime, for every room')
+  assert.equal(ms(atChime.study.slotEndsAt), chime + ROUND_MS, 'the study\'s fifteen minutes too')
   // a group that arrives late does not get a fresh puzzle or a longer clock
   const libraryGroup = rot.groups.find(g => g.id === atChime.library.groupId)
   const late = chime + 4 * 60_000
