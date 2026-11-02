@@ -93,6 +93,34 @@ test('a reassigned finish pays the group the host named, never moves the house, 
   assert.equal(db.store.get(rotationPath(nightId)).finished[due].outcome, 'absent')
 })
 
+test('the chime pays the group the round named, after a swap too: a group swapped out still gets its trace (1 Nov 2026)', async () => {
+  const { db, nightId } = await party(8)
+  const t = { now: 9_000_000 }
+  await intoAct4(db, nightId, t)
+  const due = db.store.get(studyPath(nightId)).groupId
+  assert.ok(due, 'a group is due in the study')
+  const other = db.store.get(rotationPath(nightId)).order.find(g => g !== due)
+  await hostCommand(db, { nightId, command: 'study-reassign', arg: other, now: t.now })
+  assert.equal(db.store.get(studyPath(nightId)).reassignedFrom, due)
+  // the chime lands before any report from the station
+  t.now += 15 * 60_000
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  assert.equal(night(db, nightId).beat, 'round2')
+  const rot = db.store.get(rotationPath(nightId))
+  assert.equal(rot.finished[due].outcome, 'absent', 'the group the round named is paid')
+  assert.ok(!rot.finished[other], 'the group the host named is not paid for it')
+  for (const k of members(db, nightId, due)) assert.equal(cards(db, uidOf(db, nightId, k), 'clue').length, 1, 'every phone in that group holds the trace')
+  for (const k of members(db, nightId, other)) assert.equal(cards(db, uidOf(db, nightId, k), 'clue').length, 0)
+  assert.equal(db.store.get(studyPath(nightId)).reassignedFrom, null)
+  // the game the host swapped in reports late, naming the group it was told about: nothing is paid twice
+  const late = await studyFinished(db, { nightId, payload: { groupId: due, outcome: 'capped', seconds: 800, pairs: 1 }, now: t.now })
+  assert.equal(late.repeated, true)
+  for (const k of members(db, nightId, due)) assert.equal(cards(db, uidOf(db, nightId, k), 'clue').length, 1)
+  // and the group the host named is paid by its own turn, or by Act 5 at the latest
+  await hostCommand(db, { nightId, command: 'act', arg: 5, now: t.now })
+  for (const k of members(db, nightId, other)) assert.equal(cards(db, uidOf(db, nightId, k), 'clue').length, 1)
+})
+
 test('groups are set once made: the Host button answers already unless forced', async () => {
   const { db, nightId, uids } = await party(6)
   const t = { now: 10_000_000 }

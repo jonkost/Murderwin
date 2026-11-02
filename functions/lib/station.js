@@ -171,9 +171,11 @@ export async function finishStudy(db, { nightId, groupId, outcome = 'solved', se
   const study = studySnap.exists ? studySnap.data() : {}
   // The host said another group walked in: the station still reports the
   // group it was told about, and the server pays the group the host named.
+  // Only for the station's own report: when the chime pays the group the round
+  // named, that group is paid, or it would end the night with no trace (1 Nov 2026).
   let reassigned = false
   let slotGroup = groupId
-  if (study.reassignedFrom && groupId === study.reassignedFrom && study.groupId && study.groupId !== groupId) {
+  if (reportedIn && study.reassignedFrom && groupId === study.reassignedFrom && study.groupId && study.groupId !== groupId) {
     groupId = study.groupId
     reassigned = true
   }
