@@ -47,10 +47,11 @@ export class NightError extends Error {
   constructor(code, message) { super(message); this.code = code }
 }
 
-// A cat's motive hint or the Study's trace that was missing when it was dealt
-// (card 529): nights/{id}.missingLines { hint, study }, a count of each, for
-// the Host tab. Never which cat, guest or group, and never a word.
-export const MISSING_KINDS = ['hint', 'study']
+// A cat's motive hint, the Study's trace or the news flash's family that was
+// missing when it was dealt (cards 529 and 530): nights/{id}.missingLines
+// { hint, study, news }, a count of each, for the Host tab. Never which cat,
+// guest, group or family, and never a word.
+export const MISSING_KINDS = ['hint', 'study', 'news']
 export async function noteMissingLine(db, nightId, kind) {
   if (!nightId || !MISSING_KINDS.includes(kind)) return
   const ref = db.doc(`nights/${nightId}`)

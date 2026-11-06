@@ -9,6 +9,71 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 5 Nov 2026 · Claude Code (the arcade on the night, and three small cards)
+
+- Jon, over Remote Control from his iPad: "Cook it all up. We are 1 week
+  out!" Every open Claude Code card that could be built without him at a
+  machine: 515, 530, 311 and 518. Built on main and committed; not deployed,
+  not pushed. Nothing tried on the real Mac, deck or phones.
+- Card 515, the arcade on the night. The Entryway's Act 4 round runs Miss
+  Boo LaRue's Arcade on Susan's MacBook Pro and the Stream Deck + XL: plain
+  `?kiosk=boo` is now the night's Entryway screen (`play/src/screens/Rooms.jsx`
+  `BooRoom`), which mounts the same `BooArcade` (`screens/Arcade.jsx`) in a
+  night mode: the players from `public/rotation` in the group's order, the
+  chime at `public/boo.slotEndsAt` on the server's clock (a pause moves it,
+  `PAUSE_SHIFTED`; the host's Next rings it at once and Boo's farewell plays
+  out), every counted round's score to `arcadeScore` with the guest key, and
+  at each of the first two players' clue moment a call to the new
+  `arcadeClue` (`functions/lib/act4.js`; the callable takes it from the
+  kiosk's own presence row, `access.js` `fromKiosk`), which deals that
+  player's reward card to their phone and sends the words back for the
+  screen (`arcadeClueText`, `CLUE_WAIT` until then). The reward
+  (`rewardOf`, `cardFor(place)`) is Boo's bag hint about the Ghost at the
+  group's average affection, the same words for both players; a trio's third
+  gets Boo's line (`ARCADE_THIRD_LINE`, `third: true`, no hint); no
+  cross-off (Jon, 29 Oct), and G32 still holds on all 1,000 stand-in cases.
+  The cap deals every member's card at the chime; a phone that has its card
+  keeps it. The night's screen shows no Connect, practice button, band or
+  wake corner (the kiosk keeps the band and the wake): the deck is connected
+  once from the practice page in the same Chrome before the guests come.
+  Boo's Catwalk is gone from the night, the phones, the practices and the
+  Game test tab (`booDone`, `booShow`, `booMoment`, `boo-start`, `boo-stop`,
+  `public_state/game_test_boo`, `BooWall`, `BooRunway`, `BooMoments`); Boo's
+  camera takes its photo a minute into each visit (`play/src/lib/pose.js`)
+  and practises on a pretend visit; the game name is Miss Boo LaRue's Arcade
+  with the hook "Five little games. One coin each. She's always judging."
+  (`seed/game-names.json`). The fake night plays a visit in every Entryway
+  round. New tests: the arcade on the server (`functions/test/act4.test.mjs`),
+  G55's night mode (`play/test/arcade.test.mjs`), the camera at the arcade.
+  Docs: `docs/on-the-night.md`, `docs/room-screens.md`, `docs/boo-arcade.md`,
+  `docs/solving-the-case.md`, `docs/test-plan.md`, `CLAUDE.md`. Board: 515
+  done, 558 (Boo's Mac set up) and 559 (one visit on a test night) for Jon,
+  lines on 514 and 332, and the questions arcadeClueRung, arcadeCamera and
+  arcadeSound with their defaults built. The cue sheet is unchanged: the
+  brain still lends the Parlour HomePod to Susan's Mac through Act 4 (Jon,
+  27 Oct), which the arcade does not use (arcadeSound asks).
+- Card 530, the news flash. A new case check, G61 (`checks.js` `bulletin1Ok`,
+  in `npm run checks` and the tests): bulletin 1 always has its line, a wrong
+  family's own. On the party night a missing family shows plain words
+  (`screen.js` `NEWS_QUIET`) and the Host tab is told (`noteMissingLine`
+  'news', `house.js` `missingLineWords`); a rehearsal keeps the note in
+  brackets.
+- Card 311, the Trusting lines: a content migration (`2026-11-05-three-cards`)
+  retires Salem's and Boo's household cards by their exact text and adds
+  them again, Salem's under Salem Crooknog with the new Trusting Salem line
+  and Boo's with the new Trusting Boo line. It lands when the workshop next
+  opens. Their texts were read once from `safe_content/npc_cards` (safe
+  content) with the service account, never printed beyond this Mac.
+- Card 518, roomMusic: the board now says what the Canon says (each room its
+  own player through Home scenes), which Jon's music Shortcuts built on
+  31 Oct; nothing in the build changed. CLAUDE.md's Decisions line follows.
+- Suites: functions 297, play 268, workshop 141, scripts 53, cues 79, all
+  passing; `npm run checks` all clear with G61. The Preview's `kiosk-boo`
+  and `kiosk-rules-entryway` looked at in the browser.
+- Left: Jon's two jobs (558, 559) and the three questions; deploy and push
+  when he says. The Canon needs no change (roomMusic and entrywayGame stand
+  as it has them); the three new questions are on the board.
+
 ## 1 Nov 2026, later · Claude Code (the Study's stop, and the scream)
 
 - Jon's message: "make the stop 15mins, I had that scream from the blackout."

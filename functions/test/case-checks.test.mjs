@@ -4,17 +4,17 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, CHARACTERS, MOTIVES } from '../lib/night.js'
 import { rehearsalCase, buildCase } from '../lib/case.js'
 import { FAMILIES, familyOf, irwinOptions } from '../lib/families.js'
-import { NEWS, bulletin2 } from '../lib/news.js'
+import { NEWS, bulletin1, bulletin2 } from '../lib/news.js'
 import { hintLine as catHintLine, HINT_CATS, CAT_LINES } from '../lib/cats.js'
 import { wordBags } from '../lib/bagclues.js'
 import {
-  caseChecks, CHECK_NAMES, rolesOk, castOk, bulletin2Ok, salemAloneOk, irwinWinsOk, murdererHiddenOk, spillChecks, SPILL_IDS,
+  caseChecks, CHECK_NAMES, rolesOk, castOk, bulletin2Ok, bulletin1Ok, salemAloneOk, irwinWinsOk, murdererHiddenOk, spillChecks, SPILL_IDS,
   fairnessChecks, standInRoster, HOST_SEATS, everyLineOk, realLine, LATE_JOINER,
 } from '../lib/checks.js'
 
 // The case-level checks `npm run checks` runs on every stand-in case
 // (functions/lib/checks.js): G01, G03, G04, G05, G06, G09, G17, G19, G20,
-// G21, G23, G53 and G59. Every case here is a throwaway rehearsal case made and
+// G21, G23, G53, G59 and G61. Every case here is a throwaway rehearsal case made and
 // dropped inside the test, every packing is made of bracketed stand-in
 // words. A failing assertion names the check and a seed, never a clue, a
 // role or a motive.
@@ -53,7 +53,7 @@ function standIn(seed, n = 4 + (seed % 9)) {
 const resultOf = (results, id) => results.find(r => r.id === id)
 
 test('every new case check has a plain name for the Health page', () => {
-  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59']) {
+  for (const id of ['G01', 'G03', 'G04', 'G05', 'G06', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59', 'G61']) {
     assert.ok(typeof CHECK_NAMES[id] === 'string' && CHECK_NAMES[id].length > 10, `${id} has a name`)
   }
 })
@@ -67,7 +67,7 @@ test('the case checks pass on 200 stand-in cases of 4 to 12 guests, with a packi
       assert.deepEqual(Object.keys(r).sort(), ['id', 'pass'], 'a result is an id and a pass, nothing else')
       if (!r.pass) bad[r.id] = (bad[r.id] ?? 0) + 1
     }
-    for (const id of ['G01', 'G03', 'G04', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59']) assert.ok(resultOf(results, id), `${id} runs on every case`)
+    for (const id of ['G01', 'G03', 'G04', 'G09', 'G17', 'G19', 'G20', 'G21', 'G23', 'G53', 'G59', 'G61']) assert.ok(resultOf(results, id), `${id} runs on every case`)
   }
   assert.deepEqual(Object.keys(bad), [], `checks that failed somewhere: ${Object.keys(bad).join(' ')}`)
 })
@@ -284,6 +284,31 @@ test('G23 Spill the Beans: the Murderer stays, the motive and the Ghost change, 
     const { rng, roster, c, packing: p } = standIn(seed)
     assert.ok(spillChecks(c, { roster, packing: p, rng }), `G23 seed ${seed}`)
   }
+})
+
+// ---- G61 ---------------------------------------------------------------------
+
+test('G61 the news flash always has its line: a wrong family from the bank, its own line and recording; a case with no family, the real one, or a hole in the bank fails', () => {
+  assert.equal(Object.keys(NEWS.bulletin1.families).sort().join(), FAMILIES.map(f => f.key).sort().join(), 'G61 a line for every family')
+  const all = Object.values(NEWS.bulletin1.families)
+  assert.equal(new Set(all.map(l => l.text)).size, all.length, 'G61 no line shared by two families')
+  assert.equal(new Set(all.map(l => l.clip)).size, all.length, 'G61 no recording shared by two families')
+  for (let seed = 1; seed <= 300; seed++) {
+    const { c } = standIn(seed)
+    assert.ok(bulletin1Ok(c), `G61 seed ${seed}`)
+    const b = bulletin1(c)
+    assert.ok(!b.placeholder && b.lines.length === 3 && b.lines[1] === NEWS.bulletin1.families[c.solving.newsOut[0]].text, `G61 seed ${seed}: the family's own line plays`)
+  }
+  // the check bites: no family, the real family, a family off the bank, and a bank with a hole
+  const { c } = standIn(7)
+  assert.equal(bulletin1Ok({ ...c, solving: { ...c.solving, newsOut: [] } }), false, 'no family to cross off')
+  assert.equal(bulletin1Ok({ ...c, solving: { ...c.solving, newsOut: [c.solving.family] } }), false, 'never the real family')
+  assert.equal(bulletin1Ok({ ...c, solving: { ...c.solving, newsOut: ['nowhere'] } }), false, 'a family the bank has no line for')
+  const family = c.solving.newsOut[0]
+  const was = NEWS.bulletin1.families[family]
+  NEWS.bulletin1.families[family] = { text: '', clip: was.clip }
+  try { assert.equal(bulletin1Ok(c), false, 'a hole in the bank') } finally { NEWS.bulletin1.families[family] = was }
+  assert.ok(bulletin1Ok(c), 'the bank restored')
 })
 
 // ---- G53 ---------------------------------------------------------------------

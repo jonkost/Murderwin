@@ -187,6 +187,8 @@ test('X-6 Act 2 cat visits: a count of guests who have seen all four, nothing el
 
 test('G59 a cat\'s hint or the Study\'s trace that never came: the Host tab says how often, never which, and what the guests read (card 529)', () => {
   assert.equal(missingLineWords(NIGHT), null, 'nothing missing, nothing said')
+  // the news flash with no family to cross off (card 530): counted the same way, never which family
+  assert.equal(missingLineWords({ ...NIGHT, forceRehearsal: false, missingLines: { news: 1 } }), 'The news flash had no family to cross off once. The guests read plain words instead. Nothing to do: the game goes on.')
   assert.equal(missingLineWords({ ...NIGHT, missingLines: { hint: 0, study: 0 } }), null)
   assert.equal(houseView({ night: NIGHT, now: NOW }).missing, null)
   const party = { ...NIGHT, forceRehearsal: false }

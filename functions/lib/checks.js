@@ -16,7 +16,7 @@ import { roomFor, roundsFor, ROOM_KEYS, PARLOUR, MEMORY_ROUNDS, ALL_TRACES, memo
 import { makeGroups } from './station.js'
 import { checkPicture, ROUND_SIZES } from './relay-bank.js'
 import { rehearsalCase, rerollCase } from './case.js'
-import { bulletin2, NEWS } from './news.js'
+import { bulletin1, bulletin2, NEWS } from './news.js'
 import { traceOf, workReveal, shownReveal } from './traces.js'
 import { CHARACTERS, MOTIVES } from './night.js'
 
@@ -46,6 +46,7 @@ export const CHECK_NAMES = {
   G50: 'The memory match: 6, 10 and 14 pairs, all fourteen traces',
   G51: 'Zimothy never crosses off the real motive, never the same one twice',
   G53: 'Every bulletin 2 line, at every level, points at the real family',
+  G61: 'The news flash always has its line, a wrong family crossed off',
   G59: 'Every guest gets a real line from every cat, and the Study a real trace',
   L01: 'No sealed file in the repo or its history',
   L06: 'The bag packing is not in the repo',
@@ -73,8 +74,9 @@ export function caseChecks(c, { roster, packing = null, rng, reroll = true }) {
   add('G01', rolesOk(c, keys))
   add('G03', castOk(c, roster, rng))
   add('G04', Number.isInteger(Number(c.motive)) && ALL_MOTIVES.includes(Number(c.motive)) && MOTIVES.some(m => m.n === Number(c.motive)))
-  // G53: bulletin 2 at every level is the real family's own line
+  // G53: bulletin 2 at every level is the real family's own line; G61: bulletin 1 has its line, a wrong family's (card 530)
   add('G53', bulletin2Ok(c))
+  add('G61', bulletin1Ok(c))
   // G17: Salem's ladder, and everything Salem tells the whole room still leaves two motives standing
   add('G17', salemAloneOk(c, keys))
 
@@ -242,6 +244,21 @@ export function bulletin2Ok(c) {
     if (others.some(o => o.text === line.text || o.clip === line.clip)) return false
   }
   return true
+}
+
+// G61 (card 530, 5 Nov 2026): the news flash (bulletin 1) always has its line:
+// the family it crosses off is one of the bank's, a wrong one, and its line and
+// recording are that family's own, shared with no other. So the Parlour TV
+// never shows the house's note in the line's place.
+export function bulletin1Ok(c) {
+  const s = c?.solving ?? {}
+  const family = s.newsOut?.[0] ?? null
+  const own = NEWS.bulletin1.families?.[family]
+  if (!family || family === s.family || familyOf(c?.motive) === family || !own?.text || !own?.clip) return false
+  const b = bulletin1(c)
+  if (b.placeholder || b.lines.length !== 3 || b.lines[1] !== own.text || b.clips[1] !== own.clip) return false
+  const others = Object.entries(NEWS.bulletin1.families).filter(([f]) => f !== family).map(([, l]) => l)
+  return !others.some(o => o.text === own.text || o.clip === own.clip)
 }
 
 // G17: Salem's ladder for every guest (backwards at 1 to 3, a coin nobody can

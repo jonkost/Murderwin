@@ -28,7 +28,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MOTIVES, CHARACTERS, NightError, readArea } from './night.js'
+import { MOTIVES, CHARACTERS, NightError, readArea, noteMissingLine } from './night.js'
 import { irwinOptions, irwinCount } from './families.js'
 import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS, clipCode } from './news.js'
 import { PROMPTS, PROMPT_EVERY_MS, promptOrder } from './bagclues.js'
@@ -66,8 +66,11 @@ export const MAX_IRWIN_WORDS = 12
 export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something to say.', closer: 'That is everything. I am a good boy.' }
 // Bulletin 1's lines are the open W-O-O-F News bank (seed/woof-news.json).
 // This stand-in shows only for a case with no family to cross off, such as a
-// rehearsal.
+// rehearsal. On the party night (card 530, 5 Nov 2026) it never shows: the
+// plain words below take its place, and the Host tab is told (noteMissingLine
+// 'news'); the check G61 proves every stand-in case has its line.
 export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
+export const NEWS_QUIET = 'W-O-O-F News has nothing more on that just now.'
 // On a rehearsal night every sealed slot is a bracketed stand-in (Jon, 23 Oct 2026).
 export const NEWS_STAND_IN = "[W-O-O-F News crosses off one family of motives here]"
 export const BULLETIN2_STAND_IN = level => `[W-O-O-F News hints at the real family here, plainness ${level} of 5]`
@@ -330,7 +333,10 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
       // a rehearsal plays the opening and the sign-off only: the family's recording is a sealed slot too
       clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
       video = await bulletinVideo(db)
-      const lines = rehearsal && !b.placeholder ? [b.lines[0], NEWS_STAND_IN, ...b.lines.slice(2)] : b.placeholder ? [...b.lines.slice(0, 1), NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines
+      // no family to cross off (it should never happen, G61): a rehearsal shows the house's note, the party night plain words, and the Host tab is told (card 530)
+      const lines = rehearsal && !b.placeholder ? [b.lines[0], NEWS_STAND_IN, ...b.lines.slice(2)]
+        : b.placeholder ? [...b.lines.slice(0, 1), rehearsal ? NEWS_FLASH_PLACEHOLDER : NEWS_QUIET, ...b.lines.slice(1)] : b.lines
+      if (b.placeholder && !rehearsal) await noteMissingLine(db, nightId, 'news')
       // `video: true` only: the TV works out each part's file from the open bank by its words, so no
       // recording's name ever goes on a public doc (a clip id names a family; news.js)
       doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) }, video: video ? true : null })

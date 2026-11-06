@@ -32,6 +32,7 @@ import {
   ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS,
   RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101,
   ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS,
+  ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -1006,6 +1007,17 @@ export const ADDITIONS = [
     retireTasks: RETIRED_FOR_ARCADE_NIGHT_1105,
     fileTasks: FILED_FOR_ARCADE_NIGHT_1105,
     decisions: ARCADE_NIGHT_1105_DECISIONS,
+  },
+  {
+    // 5 Nov, the same session: roomMusic answered on the board as the Canon
+    // has it (518 done), the news flash never a note on the party night (530
+    // done, check G61), and the new Trusting lines on Salem's and Boo's
+    // household cards (311 done): the old cards retired, the new ones added.
+    id: '2026-11-05-three-cards',
+    answerDecisions: ANSWERED_FOR_THREE_CARDS_1105,
+    retireTasks: RETIRED_FOR_THREE_CARDS_1105,
+    retireItems: RETIRED_ITEMS_FOR_THREE_CARDS_1105,
+    appendItems: APPENDED_ITEMS_FOR_THREE_CARDS_1105,
   },
 ]
 
