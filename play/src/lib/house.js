@@ -38,9 +38,9 @@ export const MACHINES = [
   { key: 'kiosk-bedroom', label: 'Bedroom screen' },
   { key: 'kiosk-study', label: 'Study screen' },
   { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
-  { key: 'kiosk-boo', label: 'Boo’s wall' },             // Susan's MacBook Pro on the projector as ?kiosk=boo
+  { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
   { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
-  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, Jenna's iPad Pro facing the catwalk in Act 4 (its row was missing until 25 Oct 2026)
+  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, Jenna's iPad Pro facing the group at the arcade in Act 4 (its row was missing until 25 Oct 2026)
   { key: 'cues', label: 'Hall light and sounds' },
 ]
 

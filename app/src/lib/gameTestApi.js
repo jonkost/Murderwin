@@ -1,11 +1,10 @@
 // The Game test tab's roads. The `gameTest` callable (functions/lib/gametest.js)
-// opens and stops the two practices and starts and moves a test night; it
+// opens and stops Salem's practice and starts and moves a test night; it
 // refuses every night command while the party box is ticked or the live
 // night is the party or a dry run, moves only a night it started itself
 // (gameTest: true), and ends a rehearsal from a phone only with replace,
 // sent after the page asked. The tab reads:
 //   public_state/game_test_salem   Get Off My Lawn!'s practice
-//   public_state/game_test_boo     Boo's practice show
 //   public_state/active, and the live night's own public doc: its act, its
 //                                  name, and whether it is a test night, another
 //                                  rehearsal, a dry run or the party
@@ -41,7 +40,6 @@ function realApi() {
     real = {
       send: async (command, args = {}) => (await call({ ...args, command })).data,
       subscribeSalem: watch('game_test_salem'),
-      subscribeBoo: watch('game_test_boo'),
       // public_state/active names the live night; that night's doc says what it is.
       subscribeLive: (onData, onError) => {
         let inner = null
@@ -77,8 +75,8 @@ function realApi() {
 // what the real one refuses, in the same words, so the page's messages can
 // be looked at.
 function previewApi() {
-  const state = { salem: null, boo: null, live: { nightId: null, night: null }, chips: {} }
-  const subs = { salem: new Set(), boo: new Set(), live: new Set(), chips: new Set() }
+  const state = { salem: null, live: { nightId: null, night: null }, chips: {} }
+  const subs = { salem: new Set(), live: new Set(), chips: new Set() }
   const push = (k) => subs[k].forEach(fn => fn(state[k]))
   const watch = (k) => (onData) => { subs[k].add(onData); queueMicrotask(() => onData(state[k])); return () => subs[k].delete(onData) }
   let runs = 0
@@ -92,15 +90,6 @@ function previewApi() {
       return { ok: true, runId: state.salem.runId }
     },
     'salem-stop': () => { if (state.salem) { state.salem = { ...state.salem, state: 'done' }; push('salem') } return { ok: true } },
-    'boo-start': () => {
-      const start = Date.now() + 3000
-      let t = start + 9000
-      const poses = [0, 1, 2].map(() => { const stopAt = t + 8000; t = stopAt + 5000 + 6000; return { stopAt: new Date(stopAt), holdUntil: new Date(stopAt + 5000), judgedAt: new Date(t) } })
-      state.boo = { runId: runId(), state: 'playing', startsAt: new Date(start), poses, endsAt: new Date(t + 3000), updatedAt: new Date() }
-      push('boo')
-      return { ok: true, runId: state.boo.runId }
-    },
-    'boo-stop': () => { if (state.boo) { state.boo = { ...state.boo, state: 'done' }; push('boo') } return { ok: true } },
     'night-start': () => {
       state.live = { nightId: 'preview-night', night: { act: 0, beat: 'arrive', phase: 'lobby', label: 'Game test', forceRehearsal: true, dryRun: false, gameTest: true } }
       push('live')
@@ -125,7 +114,6 @@ function previewApi() {
       return fn(args)
     },
     subscribeSalem: watch('salem'),
-    subscribeBoo: watch('boo'),
     subscribeLive: watch('live'),
     subscribeChips: watch('chips'),
     saveChip: async (key, entry) => { state.chips = { ...state.chips, [key]: entry }; push('chips') },

@@ -2,14 +2,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
-import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, salemFlips, booShow, BOO_INTRO_MS, BOO_HOLD_MS, BOO_JUDGE_MS, BOO_POSES, BOO_JUDGING } from '../lib/act4.js'
+import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, salemFlips } from '../lib/act4.js'
 import {
-  gameTestRequest, SALEM_DOC, BOO_DOC, PLAYERS_MAX, NAME_MAX, PLAYER_KEEP_MS, BOO_LEAD_MS, TEST_NIGHT_LABEL,
+  gameTestRequest, SALEM_DOC, PLAYERS_MAX, NAME_MAX, PLAYER_KEEP_MS, TEST_NIGHT_LABEL,
   ADMIN_COMMANDS, PLAYER_COMMANDS, PARTY_BOX_MESSAGE, PARTY_NIGHT_MESSAGE, REHEARSAL_MESSAGE, REPLACE_MESSAGE, ACT4_MESSAGE,
 } from '../lib/gametest.js'
 
-// The Game test (lib/gametest.js): the practices of Get Off My Lawn! and
-// Boo's Catwalk on their own public docs, and a test night that is always a
+// The Game test (lib/gametest.js): the practice of Get Off My Lawn! on its
+// own public doc (Boo's Catwalk's went with the Catwalk, 5 Nov 2026), and a test night that is always a
 // rehearsal. Nothing here is sealed: a practice deals nothing and pays
 // nobody, and a test night's case is a throwaway, gone with the db.
 
@@ -44,7 +44,6 @@ function watch(db) {
 const admin = (data) => ({ ...data, uid: 'uid-admin', isAdmin: true })
 const phone = (uid, data) => ({ ...data, uid })
 const salem = db => db.store.get(SALEM_DOC)
-const boo = db => db.store.get(BOO_DOC)
 const ms = t => (t instanceof Date ? t.getTime() : t)
 // An answer is ok flags and a runId, never anything else.
 const flagsOnly = r => Object.entries(r).every(([k, v]) => (k === 'runId' ? typeof v === 'string' || v === null : typeof v === 'boolean'))
@@ -264,52 +263,7 @@ test('salem-stop with no practice yet leaves a stopped one', async () => {
   assert.deepEqual(salem(db).players, {})
 })
 
-test('boo-start: three poses on the real show\'s timing from three seconds on, with Boo\'s verdicts; boo-stop ends it', async () => {
-  const db = house()
-  const r = await gameTestRequest(db, admin({ command: 'boo-start', now: T0, pick: fixedPick() }))
-  assert.deepEqual(Object.keys(r).sort(), ['ok', 'runId'])
-  const d = boo(db)
-  const startsAt = T0 + BOO_LEAD_MS
-  assert.deepEqual(Object.keys(d).sort(), ['endsAt', 'poses', 'runId', 'startsAt', 'state', 'updatedAt'])
-  assert.equal(d.runId, r.runId)
-  assert.equal(d.state, 'playing')
-  assert.equal(ms(d.startsAt), startsAt)
-  assert.ok(d.updatedAt instanceof Date)
-  assert.equal(d.poses.length, BOO_POSES)
-  const real = booShow(startsAt, fixedPick(), {})
-  d.poses.forEach((p, i) => {
-    const want = real.poses[i]
-    assert.deepEqual(Object.keys(p).sort(), ['holdUntil', 'judgeUntil', 'judgedAt', 'line', 'poseAt', 'stopAt', 'strutAt'])
-    assert.ok([p.stopAt, p.holdUntil, p.judgedAt].every(t => t instanceof Date))
-    assert.equal(ms(p.stopAt), ms(want.poseAt), 'the music stops when the real show strikes the pose')
-    assert.equal(ms(p.holdUntil), ms(want.holdUntil))
-    assert.equal(ms(p.judgedAt), ms(want.judgeUntil))
-    assert.equal(ms(p.holdUntil) - ms(p.stopAt), BOO_HOLD_MS)
-    assert.equal(ms(p.judgedAt) - ms(p.holdUntil), BOO_JUDGE_MS)
-    assert.deepEqual([p.strutAt, p.poseAt, p.judgeUntil, p.line], [want.strutAt, want.poseAt, want.judgeUntil, want.line], 'the real show\'s own fields too')
-    assert.ok(BOO_JUDGING.includes(p.line))
-    if (i > 0) assert.equal(ms(p.strutAt), ms(d.poses[i - 1].judgedAt), 'the next strut starts when the verdict ends')
-  })
-  assert.equal(ms(d.poses[0].strutAt) - startsAt, BOO_INTRO_MS, 'Boo\'s intro first, as on the night')
-  assert.equal(ms(d.endsAt), ms(d.poses.at(-1).judgedAt))
-  assert.equal(new Set(d.poses.map(p => p.line)).size, BOO_POSES, 'three different verdicts')
-
-  // Jon's own verdicts from the workshop, when he has written them
-  db.store.set('safe_content/ui_copy', { items: [1, 2, 3, 4, 5, 6].map(i => ({ id: `b${i}`, order: i, text: `BOO JUDGE ${i}: Jon's verdict ${i}.` })) })
-  const again = await gameTestRequest(db, admin({ command: 'boo-start', now: T0 + 60_000 }))
-  assert.notEqual(again.runId, r.runId)
-  assert.ok(boo(db).poses.every(p => /^Jon's verdict \d\.$/.test(p.line)))
-  assert.equal(ms(boo(db).startsAt), T0 + 60_000 + BOO_LEAD_MS, 'a new press starts a new show')
-
-  const stop = await gameTestRequest(db, admin({ command: 'boo-stop' }))
-  assert.equal(stop.runId, again.runId)
-  assert.equal(boo(db).state, 'done')
-  const fresh = house()
-  const r2 = await gameTestRequest(fresh, admin({ command: 'boo-stop' }))
-  assert.deepEqual({ ...boo(fresh), updatedAt: null }, { runId: r2.runId, state: 'done', startsAt: null, poses: [], endsAt: null, updatedAt: null })
-})
-
-test('the seal: the practices read and write only their own docs (and Boo\'s verdicts), never a night, a case or sealed/*', async () => {
+test('the seal: the practice reads and writes only its own doc, never a night, a case or sealed/*', async () => {
   const db = house()
   db.store.set('public_state/active', { nightId: 'n1' })
   db.store.set('nights/n1', { act: 4, forceRehearsal: false })
@@ -327,11 +281,9 @@ test('the seal: the practices read and write only their own docs (and Boo\'s ver
   const s2 = salem(db)
   answers.push(await gameTestRequest(db, phone('uid-a', { command: 'salem-passed', attempt: s2.attempt, now: ms(s2.cleanAt) })))
   answers.push(await gameTestRequest(db, admin({ command: 'salem-stop' })))
-  answers.push(await gameTestRequest(db, admin({ command: 'boo-start', now: T0 })))
-  answers.push(await gameTestRequest(db, admin({ command: 'boo-stop' })))
   assert.ok(seen.reads.length > 0)
-  assert.ok(seen.reads.every(p => p === SALEM_DOC || p === BOO_DOC || p === 'safe_content/ui_copy'), `read only the practice docs (${seen.reads.length} reads)`)
-  assert.deepEqual([...new Set(seen.writes)].sort(), [BOO_DOC, SALEM_DOC])
+  assert.ok(seen.reads.every(p => p === SALEM_DOC), `read only the practice doc (${seen.reads.length} reads)`)
+  assert.deepEqual([...new Set(seen.writes)].sort(), [SALEM_DOC])
   for (const [k, v] of before) assert.deepEqual(db.store.get(k), v, `${k} untouched`)
   for (const a of answers) assert.ok(flagsOnly(a), JSON.stringify(Object.keys(a)))
 })

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, SCORE_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
-  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
+  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample, arcadeClueText, arcadeRoundEnds,
 } from '../lib/arcade'
 import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
 import { deckSupported, reopenDeck, chooseDeck, deckEvents, deckPainter, watchPlugs, deckProblem } from '../lib/arcadeDeck'
@@ -15,7 +15,16 @@ import Spoken from './Spoken'
 // practice, its names asked first; &names=Jon,Susan starts a visit at once.
 // main.jsx sends it here before the practices and the room screens, so it
 // never goes through Kiosk.jsx: no sign-in, no presence row, no night. The
-// only clue it ever shows is the house's square-bracket stand-in.
+// only clue it ever shows then is the house's square-bracket stand-in.
+// On the night (card 515, 5 Nov 2026) the Entryway's screen (Kiosk.jsx, plain
+// ?kiosk=boo, screens/Rooms.jsx BooRoom) mounts it with `night`: the group's
+// visit, its names from the rotation, the chime on the round's end by the
+// house's clock, each counted round's score sent to the house, and each
+// player's clue asked of the house at their clue moment. Then no Connect, no
+// practice buttons, no band and no wake corner: the kiosk keeps those (Jon,
+// 29 Oct 2026: no setup words in front of the guests). The Stream Deck opens
+// by itself, as the browser allowed it before the guests came; without it
+// the deck is drawn on the screen, as always.
 //
 // One arcade (lib/arcade.js) lives in a ref. A 16 ms loop steps it on the
 // page's own clock (performance.now(): there is no night and no server
@@ -152,11 +161,15 @@ function popOf(a, next) {
 const POPS_KEPT = 4
 const cleanNames = list => list.map(n => String(n ?? '').replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, MAX_PLAYERS)
 
-// What the page opens on: a sample, a visit named in the address, the visit's
-// form, or free play.
-function opening(sample) {
+// What the page opens on: a sample, the night's visit, a visit named in the
+// address, the visit's form, or free play.
+function opening(sample, night) {
   const now = performance.now()
   if (sample) return { now, arcade: arcadeSample(sample, now), setup: false }
+  if (night) {
+    const roundMs = Math.max(1000, (night.slotEndsAt ?? 0) - night.serverNow())
+    return { now, arcade: newArcade({ mode: 'visit', players: night.players.map(p => p.name), seed: night.seed ?? Date.now(), now, roundMs, night: true }), setup: false }
+  }
   let p
   try { p = new URLSearchParams(window.location.search) } catch { p = new URLSearchParams() }
   const names = cleanNames(String(p.get('names') ?? '').split(','))
@@ -169,9 +182,20 @@ function opening(sample) {
 // game, score, outcome, at }), for the night to keep (30 Oct 2026: one round
 // of each game a player, the score saved per player and per game). The
 // practice page passes nothing and keeps nothing.
-export default function BooArcade({ sample = null, onRecord = null }) {
+// `night` (5 Nov 2026), from the Entryway's screen: { players: [{ name }],
+// slotEndsAt (the round's end, the house's clock), serverNow(), seed,
+// chime (true once the house has moved the round on: the chime rings now),
+// onClue(place) -> Promise<text> (asks the house for that player's clue and
+// deals it to their phone), onRecord(record), onStage(stage) }. The page
+// re-renders with the newest `night`, so a pause that moves the round's end
+// reaches the chime.
+export default function BooArcade({ sample = null, onRecord = null, night = null }) {
   const live = !sample
-  const [start] = useState(() => opening(sample))
+  const nightRef = useRef(night)
+  nightRef.current = night
+  const asked = useRef(new Set()) // on the night, the places whose clue has been asked for
+  const stageRef = useRef(null)
+  const [start] = useState(() => opening(sample, night))
   const arcadeRef = useRef(start.arcade)
   const [setup, setSetup] = useState(start.setup)
   const [view, setView] = useState(() => (start.arcade ? arcadeView(start.arcade, start.now) : RESTING))
@@ -217,10 +241,27 @@ export default function BooArcade({ sample = null, onRecord = null }) {
     else if (next.stage !== 'play' && arcadeRef.current?.stage === 'play') setPops([])
     // a counted game just ended: the night may keep its score
     const had = arcadeRef.current?.records?.length ?? 0
-    if (onRecord && (next.records?.length ?? 0) > had) for (const rec of next.records.slice(had)) { try { onRecord(rec) } catch { /* the night's problem, never the game's */ } }
+    const keep = nightRef.current?.onRecord ?? onRecord
+    if (keep && (next.records?.length ?? 0) > had) for (const rec of next.records.slice(had)) { try { keep(rec) } catch { /* the night's problem, never the game's */ } }
     arcadeRef.current = next
     play(next.events)
     show(next, now, pressed)
+    // on the night: a player's clue moment asks the house for their clue (once a place), and the room is told the stage
+    const n = nightRef.current
+    if (n && next.stage !== stageRef.current) {
+      stageRef.current = next.stage
+      try { n.onStage?.(next.stage) } catch { /* the room's problem */ }
+      if ((next.stage === 'clue' || next.stage === 'third') && !asked.current.has(next.turn)) {
+        const place = next.turn
+        asked.current.add(place)
+        Promise.resolve().then(() => n.onClue?.(place)).then(text => {
+          const a = arcadeRef.current
+          if (!a || typeof text !== 'string') return
+          arcadeRef.current = arcadeClueText(a, place, text)
+          show(arcadeRef.current, performance.now())
+        }).catch(() => { /* the chime deals the card to the phone anyway */ })
+      }
+    }
   }
   function input(ev) {
     const a = arcadeRef.current
@@ -229,10 +270,17 @@ export default function BooArcade({ sample = null, onRecord = null }) {
     move(arcadeInput(a, ev, now), now, true)
   }
   function tick() {
-    const a = arcadeRef.current
+    let a = arcadeRef.current
     const now = performance.now()
-    if (a) move(arcadeStep(a, now), now)
-    else show(null, now)
+    if (!a) return show(null, now)
+    const n = nightRef.current
+    if (n && a.mode === 'visit' && !a.free && a.stage !== 'farewell') {
+      // the chime on the house's clock: the round's end, which a pause moves on; or at once, when the round has moved on
+      const want = now + ((n.slotEndsAt ?? 0) - n.serverNow())
+      if (Math.abs((a.roundEndsAt ?? 0) - want) > 500) a = arcadeRoundEnds(a, want)
+      if (n.chime) a = arcadeChime(a, now)
+    }
+    move(arcadeStep(a, now), now)
   }
   function ring() {
     const a = arcadeRef.current
@@ -466,7 +514,8 @@ export default function BooArcade({ sample = null, onRecord = null }) {
   const stage = screen?.stage ?? null
   const visit = setup || screen?.mode === 'visit'
   const moment = screen && MOMENTS.includes(stage) ? stage : null
-  const sub = !visit ? 'Free play' : screen?.free && stage !== 'farewell' ? 'Free play until the chime' : "A group's visit, for practice"
+  const sub = night ? (screen?.free && stage !== 'farewell' ? 'Free play until the chime' : 'The Entryway')
+    : !visit ? 'Free play' : screen?.free && stage !== 'farewell' ? 'Free play until the chime' : "A group's visit, for practice"
   const onDeck = deck === 'connected' // the Stream Deck is the game: the screen shows its news
   // a moment's Start, Back and OK on the screen only while the deck is drawn there: with the Stream Deck, its keys do it
   const go = live && !onDeck ? () => input(stage === 'winner' ? STRIP_TAP : { kind: 'press', dial: 0 }) : null
@@ -474,12 +523,12 @@ export default function BooArcade({ sample = null, onRecord = null }) {
   // At the top: Leave this game while one is on its how-to, its count or its play (Jon, 30 Oct 2026: an exit in
   // every game), and in a visit, at any moment, Back to free play, which ends the visit
   const exiting = live && !setup && screen && EXITABLE.includes(stage) ? 'Leave this game' : null
-  const leaving = !live || setup || !screen ? null : visit ? 'Back to free play' : stage === 'result' ? 'Back to the games' : null
+  const leaving = !live || night || setup || !screen ? null : visit ? 'Back to free play' : stage === 'result' ? 'Back to the games' : null
   const clock = screen?.clockMs ?? null
 
   return (
     <div className="kiosk arcade papered" inert={sample ? true : undefined}>
-      <RehearsalBand on={live && visit} label="PRACTICE" />
+      <RehearsalBand on={live && visit && !night} label="PRACTICE" />
       <header className="arcade-top">
         <div className="arcade-name">
           <h1>{ARCADE_NAME}</h1>
@@ -489,7 +538,7 @@ export default function BooArcade({ sample = null, onRecord = null }) {
           <div className="arcade-round">
             {exiting ? <button type="button" className="arcade-back" onMouseDown={noFocus} onClick={exit}>{exiting}</button> : null}
             {leaving ? <button type="button" className="arcade-back" onMouseDown={noFocus} onClick={leave}>{leaving}</button> : null}
-            {live && clock != null && stage !== 'farewell' ? <button type="button" className="arcade-chime" onMouseDown={noFocus} onClick={ring}>Ring the chime</button> : null}
+            {live && !night && clock != null && stage !== 'farewell' ? <button type="button" className="arcade-chime" onMouseDown={noFocus} onClick={ring}>Ring the chime</button> : null}
             {clock != null ? <p className={`study-clock${clock <= 60000 ? ' warn' : ''}`} aria-label="Time left in the round">{clockOf(clock)}</p> : null}
           </div>
         ) : null}
@@ -501,11 +550,11 @@ export default function BooArcade({ sample = null, onRecord = null }) {
         {setup && live ? <Setup onStart={begin} onCancel={freePlay} />
           : moment ? <Moment key={moment} screen={screen} early={early} onGo={go} onBack={back} /> : null}
       </main>
-      <footer className={`arcade-foot${live && !heard ? ' waking' : ''}`}>
-        {live ? <DeckLine state={deck} problem={problem} onConnect={connect} /> : null}
-        <Players screen={screen} setup={setup} onPractice={live ? practice : null} />
+      <footer className={`arcade-foot${live && !heard && !night ? ' waking' : ''}`}>
+        {live && !night ? <DeckLine state={deck} problem={problem} onConnect={connect} /> : null}
+        <Players screen={screen} setup={setup} onPractice={live && !night ? practice : null} />
       </footer>
-      {live ? <Wake /> : null}
+      {live && !night ? <Wake /> : null}
     </div>
   )
 }

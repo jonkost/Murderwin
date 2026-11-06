@@ -6,6 +6,8 @@ feature lands Wednesday 11 November, after the second full tech run; then checks
 
 > **1 Nov 2026, later, Jon's word on the Study ("make the stop 15mins"; built that day and deployed 2 Nov, a full deploy, not pushed; not tried on the real wall):** the game in the Study stops at the end of the Act 4 round, fifteen minutes from the chime, five seconds early so its report beats the chime, and with no round (a practice) fifteen minutes from the first touch (`station/lib/study.js` `capMs`, `STOP_EARLY_MS`, `tick` and `stop`, `station/lib/runner.js` `due`, `play/src/lib/house.js` `studyStopAt` and `studyMsLeft`): a plain fifteen from the first touch would run past the chime into the next group's turn. Granolia's warning comes two minutes before the stop, the Study's screen and the Host tab count to it and stand still in a pause, and the host's Next stops a game too. The review also put right the Study's finished page (it showed only when a heartbeat happened to land in the rest, after a flash of the rules card), a swapped-out group's trace (the chime now pays the group the round named) and Resume: a pause took the tabs off every phone, the Host tab's Resume with them, so the two host phones now carry that one button on the pause card and the strip, and nothing else stays live (`ResumeNight`, `play/src/App.jsx`). A first try that kept their tabs left room games and Host tab buttons live in a pause: do not go back to it. It reaches the M1 Air when Start the Study is closed and opened again, with the Study's screen and the host phones reloaded. Card 557 is done. The same day Jon said the scream is his, for the blackout: `media/blackout.wav` on the brain (gitignored), his file with the one second of silence first, in place of the tone. Card 134 stays open until he has heard it. His original is in `play/public/audio/`, untracked: do not add it.
 
+> **5 Nov 2026, "Cook it all up. We are 1 week out!" (built that day, not deployed, not pushed): card 515, the arcade on the night.** The Entryway's Act 4 round runs Miss Boo LaRue's Arcade on Susan's MacBook Pro and the Stream Deck + XL (plain `?kiosk=boo`, `play/src/screens/Rooms.jsx` `BooRoom`, the same `BooArcade` in a night mode): the group scans Boo's code on her rules card, the visit starts with their names from the rotation, each of the first two players' clue moment asks the house (`arcadeClue`, from the kiosk's own presence row) for the group's bag hint about the Ghost from Boo at the group's average affection, which is dealt to that player's phone then and shown on the screen; a trio's third gets Boo's line on both; every counted round's score goes to `arcadeScore`; the chime rings at the round's end on the server's clock (`public/boo.slotEndsAt`, moved by a pause) or at once when Next moves the round on, and the cap deals every member's card (a phone that has its card keeps it). No motive is crossed off there (Jon, 29 Oct), and G32 still passes on all 1,000 stand-in cases. Boo's Catwalk is gone from the night, the phones, the Game test tab and the practices (`booDone`, `booShow`, `booMoment`, `boo-start`, `boo-stop` deleted); Boo's camera takes one photo a minute into each visit instead of the last pose; the game name is Miss Boo LaRue's Arcade with the hook "Five little games. One coin each. She's always judging." The night's screen shows no Connect or setup words: the deck is connected once from the practice page in the same Chrome before the guests come. New questions on the board, each with its default built: arcadeClueRung (the group's average, as in every room), arcadeCamera (the photo at the arcade), arcadeSound (the Mac's own speakers; the brain still lends the Parlour HomePod to this Mac in Act 4, so the Parlour has no house music then). Not tried on the real Mac, deck or phones.
+
 > **1 Nov 2026, Jon's five notes on the arcade (built and deployed that day, the site only, not pushed; not tried on the real deck):** each coin under its game, gone when that game is played (not left to right any more); the winner's page holds until a tap on the touch strip, which says Tap here for free play (no ten-second timer; the chime still ends it); in Yarn Catch the strip shows only the basket emoji, and a slide puts the basket in the column over where the finger lifts, so a full slide goes all the way across (the Stream Deck reports a slide once, so the basket jumps and cannot follow the finger; a tap still does nothing); the Knock easier (top speed a beat every 0.3 seconds, reached only as the game ends, so about a third fewer things come; a little more time to hit each thing at the start, nearly twice as much in the second half), which partly undoes the 30 Oct "Much faster". From the review before the deploy: open, arcadeTrioTime (a trio's fifteen games do not fit the round at full length, so its clues can run out of time; default as built; wants an answer before card 515); on the board, card 557 (the Study still stopped at ten minutes in a fifteen-minute round; done later that day, above).
 
 > **31 Oct 2026, Jon's second arcade playtest (a transcript in chat, built the same day):** five strikes in every game with strikes; the tail game black, the tail flat with a white shadow, no growth, cucumbers on red, no pause at the edge; the Knock slower at the start, its cross on the end key only, the claret cloth back; Yarn Catch on the left dial and a real slide, no tap; the strip's time as a bar counting down, whose turn big, tokens left to right; the clue after all five games, fifty-second games, the keys 1 to 3 for each player's scores at the winner, no maths under the players; **every Act 4 round is fifteen minutes** (`seed/night.json` roundMinutes; Act 4 is now about an hour and ten minutes). Open: arcadeWarmUp (default no). Deployed 31 Oct.
@@ -489,17 +491,22 @@ are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
   the birthday card, Irwin, the drawing and the room's guesses (tapped on the
   host's phone; the TV is the fallback), the board, the ballot, the reveal,
   black at The End.
-- Susan's work MacBook Pro (SKMBP) feeds the borrowed projector on the
-  upstairs landing all night and never moves (`?kiosk=boo`): its loop on the
-  triangle wall from Act 1, Boo's code in Act 2, Boo's Catwalk in Act 4 (the
-  arcade since 29 Oct), its
-  loop again, black at The End. The brain switches the projector's plug off
-  for the blackout and from the drawing's intro to the end of Act 6; on
-  again when the power returns and for the ballot. The MacBook stays on with
-  its lid open, sleep off. In Act 4 it plays Boo's music on the Parlour
-  HomePod (Jon, 27 Oct): the brain takes that HomePod out of the house
-  music for the act (`boo` in `cues/scenes.json`), and the wall runs the
-  music two seconds ahead for the AirPlay delay (`&airplay=`).
+- Susan's work MacBook Pro (SKMBP) is Boo's screen in the Entryway all
+  night with the Stream Deck + XL on USB, and never moves (`?kiosk=boo`,
+  since 5 Nov; before that it fed the projector on the landing): its loop
+  from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her
+  rules card with the code between groups; the group that scans in plays
+  its visit on the deck, the first two players get the group's bag hint
+  about the Ghost on the screen and their phones, a trio's third gets Boo's
+  line, the chime ends it), its loop again, black at The End. Google
+  Chrome, the Stream Deck app quit, the sound on the Mac's own speakers;
+  the deck is connected once from the arcade's practice page in the same
+  Chrome before the guests come, since the night's screen has no Connect
+  button. The projector is out of the night; the brain still switches its
+  plug (off for the blackout and the drawing, on at the power's return and
+  the ballot), which harms nothing, and still lends the Parlour HomePod to
+  this Mac through Act 4 (Jon, 27 Oct, for the Catwalk's music; the
+  question arcadeSound).
 - M1 MacBook Air — the study station (`?kiosk=study`, `station/`): Stream Deck
   over USB, Nanoleaf over wifi (Open API, plain HTTP, port 16021), the study's
   on-screen information. Both walls were paired and tried on 24 Oct, from
@@ -516,8 +523,9 @@ are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
   its small stand in the Library in Act 4 (`?kiosk=memory`; `&play=1` is the
   standalone game), the bedroom screen from Act 6 (`?kiosk=bedroom`). Jenna's
   iPad Pro (JNIPP) is Boo's camera in the Entryway in Act 4 (`?kiosk=pose`,
-  built 25 Oct, nice to have: one photo of each group's last pose for the end
-  credits). The older family iPad is out unless Jon says it stays (the
+  built 25 Oct, nice to have: one photo of each group a minute into its
+  visit to the arcade, for the end credits; the Catwalk's last pose before
+  5 Nov). The older family iPad is out unless Jon says it stays (the
   question olderIpad, default out; if it stays, it keeps the memory match all
   night and the iPad Pro stays in the Orangerie until the bedroom). Susan's
   8th-gen iPad — decor, handed over if a guest needs a device. The old
@@ -610,7 +618,8 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
   Nov), anything not working is cut, not fixed. Safe to cut: the Nanoleaf
   layer (the study runs on its screen), the Hue bulb and scenes (the TV
   announces the door), the string lights (Get Off My Lawn! runs on the
-  phones), the projector (Boo's wall runs on any screen), an iPad (another
+  phones), the Stream Deck + XL (the deck drawn on Boo's screen plays the
+  arcade), an iPad (another
   screen takes its jobs, since any browser runs them), the videos (the words
   show instead), Boo's camera (the credits have no photos). Never cut: the case deal (`functions/lib/case.js`), the
   reveal order (Murderer, Motive, Victim) and the clue path (both bulletins,

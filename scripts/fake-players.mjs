@@ -71,6 +71,7 @@ const families = await import('../functions/lib/families.js')
 const news = await import('../functions/lib/news.js')
 const screen = await import('../functions/lib/screen.js')
 const act4 = await import('../functions/lib/act4.js')
+const { ARCADE_GAMES } = await import('../functions/lib/arcade.js')
 const checks = await import('../functions/lib/checks.js')
 
 export const PHONES = 8
@@ -218,13 +219,23 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     return (await db.doc(act4.salemPath(nightId)).get()).data()?.state === 'cleared' ? 1 : 0
   }
-  // Act 4, the Entryway: Boo's three poses, then her verdict pays the group
+  // Act 4, the Entryway: a visit to Miss Boo LaRue's Arcade (5 Nov 2026). Each member plays
+  // their five games (a score a game, as the Mac sends them), and the Mac asks for each
+  // player's clue in turn: the first two get the bag hint about the Ghost, a trio's third
+  // Boo's line. The chime pays the rest.
   async function playBoo(gid) {
     if (!(await arrive(gid, 'entryway'))) return 0
     const doc = (await db.doc(act4.booPath(nightId)).get()).data()
-    if (doc?.state !== 'show') return 0
-    const r = await run.player.booDone(db, { nightId, now: deal.ms(doc.endsAt) })
-    return r.paid ? 1 : 0
+    if (doc?.state !== 'visit') return 0
+    const rot = (await db.doc(station.rotationPath(nightId)).get()).data()
+    const members = (rot?.groups ?? []).find(g => g.id === gid)?.members ?? []
+    let clues = 0
+    for (const [place, m] of members.entries()) {
+      for (const g of ARCADE_GAMES) await run.player.arcadeScore(db, { nightId, guestKey: m.key, game: g.id, score: randomInt(120) })
+      const r = await run.player.arcadeClue(db, { nightId, groupId: gid, place })
+      if (r.dealt && !r.third) clues++
+    }
+    return clues ? 1 : 0
   }
   // Act 4's Parlour Games wait on the phones: every phone plays what is waiting
   async function playWaiting() {
@@ -323,7 +334,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     if ((await nightDoc()).beat !== 'round1') throw new Error('Locked in did not start the rounds')
     const rot4 = (await db.doc(station.rotationPath(nightId)).get()).data()
     await heartbeat() // the station is alive: the study's trace is earned in the room
-    let rounds = 0, throughStudy = 0, memoryClears = 0, salemClears = 0, booShows = 0, games4 = 0, played4 = 0, guard = 0
+    let rounds = 0, throughStudy = 0, memoryClears = 0, salemClears = 0, arcadeVisits = 0, games4 = 0, played4 = 0, guard = 0
     while (guard++ < 10 && (await nightDoc()).act === 4) {
       const n = await nightDoc()
       const round = Number(/^round(\d+)$/.exec(n.beat)?.[1] ?? 0)
@@ -334,7 +345,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       const inRoom = room => act4.groupIn(rot4, room, round)
       if (inRoom('library') && randomInt(4)) memoryClears += await clearMemory() // most groups clear the boards; the rest are paid at the chime
       if (inRoom('orangerie') && randomInt(4)) salemClears += await playSalem(inRoom('orangerie'))
-      if (inRoom('entryway')) booShows += await playBoo(inRoom('entryway'))
+      if (inRoom('entryway')) arcadeVisits += await playBoo(inRoom('entryway'))
       const studyDue = (await db.doc(station.studyPath(nightId)).get()).data()?.groupId ?? null
       if (studyDue && randomInt(4)) {
         await heartbeat()
@@ -351,7 +362,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const studyCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.id?.endsWith('-study-clue')))
     if (studyCards.length !== uids.length || studyCards.some(c => c.none) || (await nightDoc()).missingLines) summary.checks.push('G59')
     const roomCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.room)).length
-    actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${booShows} catwalks`, `${games4} waiting Parlour Games, ${played4} played`])
+    actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${arcadeVisits} arcade visits`, `${games4} waiting Parlour Games, ${played4} played`])
 
     // ---- Act 5: cake (the dessert chime), Sir Irwin, the motives update
     // Act 4's last chime brought the house to the cake: any room never paid was paid then
@@ -360,7 +371,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     if (!funnel.ok) summary.checks.push('G32')
     say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
     await next() // update your motives (25 Oct 2026)
-    actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library and Boo`])
+    actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library`])
 
     // ---- Act 6: the two Parlour Games at the start, the drawing, the door, the deduction round
     await next() // the games: the first is on every phone at once

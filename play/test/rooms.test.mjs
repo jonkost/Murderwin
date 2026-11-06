@@ -135,19 +135,16 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // the rooms' cards carry Salem's and Boo's full lines; the phones carry the rule alone (Jon, 28 Oct 2026: fewer words), the same rule
   const act4 = src('../src/screens/Act4.jsx')
   assert.ok(act4.includes("intro: 'RED: shake. GREEN: freeze. Yes, backwards.'") && /RED means GO.*GREEN means FREEZE/.test(RULES_LINES.orangerie), 'Salem\'s phone rule agrees with his card')
-  assert.ok(act4.includes("intro: 'Watch the wall. When the music stops, strike a pose.'") && /When the music stops, strike a pose/.test(RULES_LINES.entryway), 'Boo\'s phone rule agrees with her card')
+  assert.ok(act4.includes("entryway: 'The games are on the deck. Your clue comes to this phone too.'") && /Welcome to my arcade/.test(RULES_LINES.entryway), 'Boo\'s phone line sends the group to the deck; her card welcomes them to the arcade (5 Nov 2026)')
   const rooms = src('../src/screens/Rooms.jsx')
   assert.ok(rooms.includes('export const BOO_INTRO = RULES_LINES.entryway'), 'the wall reads the same line')
   for (const line of Object.values(RULES_LINES)) assert.ok(!line.includes('—'), 'no em dash')
   // the card: the game's name (GameName), the picture varied by pick, the line, the code
   assert.ok(rooms.includes('export function RulesCard({ id, line, pick = null, code = true, frame = null'), 'the card')
   assert.ok(rooms.includes('<GameName id={id} />') && rooms.includes('catPictureUrl(cat, pick, BASE)') && rooms.includes('words="Scan the code to begin."'), 'name, picture, code')
-  // where each room shows it: the Library between groups, Boo\'s wall idle and intro, the Orangerie all through Act 4, the Study while idle
+  // where each room shows it: the Library between groups, Boo's screen between groups (the arcade while a group is at the deck, 5 Nov 2026), the Orangerie all through Act 4, the Study while idle
   assert.ok(rooms.includes('<RulesCard id="library" line={rulesLine(\'library\', content)} pick={night.beat}>'), 'the Library, with the workshop\'s line first')
-  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night?.beat'), 'Boo\'s wall, idle')
-  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'Boo\'s wall, her intro, no code to scan')
-  // her three steps, on the card between groups and in her intro (27 Oct 2026)
-  assert.equal((rooms.match(/<BooSteps \/>/g) ?? []).length, 2, 'the three steps on both')
+  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night.beat} code={!visit} className="boo-wall idle">'), 'Boo\'s screen between groups, its code only then')
   assert.ok(rooms.includes('<RulesCard id="orangerie" line={RULES_LINES.orangerie} pick={salem?.groupId ?? night.beat} code={!busy}>'), 'the Orangerie, its code only between groups')
   // a group is at play in the Orangerie while public/salem is intro, playing or passed; idle and cleared are between groups (26 Oct 2026)
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"), 'cleared is not busy')
@@ -159,9 +156,8 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // in Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
   assert.equal((kiosk.match(/\{stale && <p className="kiosk-next">Granolia has dozed off\. Find a host\.<\/p>\}/g) ?? []).length, 2, 'said on the card and on the game')
   assert.ok(!kiosk.includes('The station has gone quiet'), 'the old words are gone')
-  // in practice (no night) the card has no code to scan: there is no night to join; Boo's intro has none either, the group has scanned
-  assert.ok(rooms.includes('code={!!night}'), 'no code in practice')
-  assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false}'), 'no code on Boo\'s intro')
+  // in the Preview and on the night alike, Boo's card carries its code only between groups: while a group is at the deck it has scanned (5 Nov 2026)
+  assert.ok(rooms.includes("{visit ? 'Eyes on the deck.' : 'The next group will be along.'}"), 'the card says the group is at the deck')
 })
 
 test('F31 the Library\'s screen says one plain line when a finished board is not heard, never the server\'s own words (Jon, 29 Oct 2026)', () => {
@@ -351,7 +347,7 @@ test('G57 and G58 the screens: the Library names its winner once the third board
   // the Orangerie: once cleared, by place in the group, from the rotation the kiosk now reads
   assert.ok(rooms.includes("const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null"))
   assert.ok(rooms.includes("line={win.names.length > 1 ? SALEM_SCREEN_LINES.tie : SALEM_SCREEN_LINES.winner}") && rooms.includes("plain={winnerPlain(win, 'Fewest slips')}"))
-  assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups')
+  assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups, and Boo\'s (the arcade\'s players, 5 Nov 2026)')
   assert.ok(kiosk.includes('<Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />'))
   // every phone says whether it can feel a shake as the clean mark passes
   assert.ok(act4.includes('passed(doc.attempt, motion.ok)') && act4.includes('passed={(attempt, felt) => callSalemPassed({ nightId, attempt, felt })}'))

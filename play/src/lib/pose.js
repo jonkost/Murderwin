@@ -1,35 +1,33 @@
-import { booMoment, ms } from './night.js'
+import { ms } from './night.js'
 
 // The pose camera (card 450, ?kiosk=pose): Jenna's iPad Pro in the Entryway
-// faces the catwalk and takes one photo of each group's last pose, for the
-// end credits (functions/lib/pose.js keeps it). Pure, so play/test can run it.
+// faces the group at Miss Boo LaRue's Arcade and takes one photo of each
+// group at the deck, a minute into its visit, for the end credits
+// (functions/lib/pose.js keeps it). Until 5 Nov 2026 it was Boo's Catwalk's
+// last pose. Pure, so play/test can run it.
 
-export const SHOT_AFTER_MS = 1500 // into the last HOLD IT: everyone has found their pose
+export const SHOT_AFTER_MS = 60_000 // into the visit: everyone is at the deck by then
 export const POSE_MAX_CHARS = 900_000 // the server's cap (functions/lib/pose.js)
 
-// The show's key when the photo is due now: Boo's last pose, held for a
-// moment. Null at any other time. A show is one key, so it is taken once.
+// The visit's key when the photo is due now: a minute into the group's
+// visit, once. Null before then, between groups, and for no record.
 export function poseShotKey(doc, now, afterMs = SHOT_AFTER_MS) {
-  const poses = Array.isArray(doc?.poses) ? doc.poses : []
-  const last = poses[poses.length - 1]
-  if (!last || !doc?.startsAt) return null
-  const m = booMoment(doc, now)
-  if (m.part !== 'pose' || m.pose !== poses.length) return null
-  if (now < ms(last.poseAt) + afterMs) return null
-  return `${doc.groupId ?? doc.runId ?? 'practice'}-${ms(doc.startsAt)}`
+  if (doc?.state !== 'visit' || !doc.groupId) return null
+  const start = ms(doc.startsAt)
+  if (!start || now < start + afterMs) return null
+  return `${doc.groupId}-${start}`
 }
 
-// What the camera screen says over the picture, by Boo's moment.
-export function poseCaption(doc, now) {
-  const m = booMoment(doc, now)
-  if (m.part === 'idle') return { big: '', small: 'The next group will be along.' }
-  if (m.part === 'intro') return { big: '', small: 'Watch the wall.' }
-  if (m.part === 'strut') return { big: '', small: 'Strut!' }
-  if (m.part === 'pose') return { big: 'STRIKE A POSE', small: `HOLD IT · ${m.hold}` }
-  if (m.part === 'judge') return { big: '', small: m.line ?? '' }
-  return { big: '', small: 'That’s the show.' }
+// What the camera screen says over the picture: a count in the last five
+// seconds before the photo, then that it is taken.
+export function poseCaption(doc, now, afterMs = SHOT_AFTER_MS) {
+  if (doc?.state !== 'visit' || !doc.groupId || !ms(doc.startsAt)) return { big: null, small: 'The next group will be along.' }
+  const left = ms(doc.startsAt) + afterMs - now
+  if (left > 5000) return { big: null, small: 'Boo’s camera. One photo of the group, for the end credits.' }
+  if (left > 0) return { big: String(Math.ceil(left / 1000)), small: 'Smile!' }
+  return { big: null, small: 'Play on.' }
 }
 
-// The JPEG qualities to try, best first, until the photo fits under the cap.
+// The JPEG qualities to try, best first, until the photo fits the cap.
 export const QUALITIES = [0.72, 0.55, 0.4]
 export function fits(dataUrl) { return typeof dataUrl === 'string' && dataUrl.length <= POSE_MAX_CHARS }

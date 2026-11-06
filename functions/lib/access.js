@@ -21,3 +21,13 @@ export async function mayTouchNight(db, { uid, nightId, isAdmin = false } = {}) 
   }
   return false
 }
+
+// One room screen in particular (5 Nov 2026, the arcade's clue moment): the
+// kiosk whose heartbeat carries `guestKey` for this night, or the admin. Not
+// a guest's phone, and not another room screen.
+export async function fromKiosk(db, { uid, nightId, guestKey, isAdmin = false } = {}) {
+  if (isAdmin) return true
+  if (!uid || !nightId || !guestKey) return false
+  const p = (await db.doc(`presence/${uid}`).get()).data()
+  return !!p && p.nightId === nightId && p.guestKey === guestKey
+}

@@ -42,7 +42,8 @@ export const callMeet = httpsCallable(functions, 'meetCat')
 export const callLeave = httpsCallable(functions, 'leaveCat')
 export const callNotYet = httpsCallable(functions, 'notYet')
 // Act 4: Locked in; the iPad's memory match boards (?kiosk=memory); Salem's
-// Motion Game; Boo's show over (?kiosk=boo or a phone).
+// Motion Game; the arcade on Boo's Mac (?kiosk=boo): each counted round's
+// score, and the clue moment (5 Nov 2026, card 515).
 export const callLockIn = httpsCallable(functions, 'lockIn')
 // A board the house has not answered in 15 seconds counts as not heard, so the
 // iPad sends it again (card 527) rather than waiting out the usual 70; a repeat
@@ -51,11 +52,12 @@ export const callMemoryStep = httpsCallable(functions, 'memoryStep', { timeout: 
 export const callSalemReady = httpsCallable(functions, 'salemReady')
 export const callSalemSlip = httpsCallable(functions, 'salemSlip')
 export const callSalemPassed = httpsCallable(functions, 'salemPassed')
-export const callBooDone = httpsCallable(functions, 'booDone')
-// the Entryway iPad's photo of a group's last pose, for the end credits (?kiosk=pose)
+export const callArcadeScore = httpsCallable(functions, 'arcadeScore')
+export const callArcadeClue = httpsCallable(functions, 'arcadeClue')
+// the Entryway iPad's photo of a group at the arcade, for the end credits (?kiosk=pose)
 export const callPosePhoto = httpsCallable(functions, 'posePhoto')
-// The workshop's Game test tab: a practice of Get Off My Lawn! or Boo's
-// Catwalk on its own record (public_state/game_test_*), never a night's.
+// The workshop's Game test tab: a practice of Get Off My Lawn! on its own
+// record (public_state/game_test_salem), never a night's.
 // { command: 'salem-join' | 'salem-ready' | 'salem-slip' | 'salem-passed', ... }
 export const callGameTest = httpsCallable(functions, 'gameTest')
 

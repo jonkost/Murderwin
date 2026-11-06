@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { callMemoryStep, callBooDone } from '../firebase'
+import { callMemoryStep, callArcadeClue, callArcadeScore } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
-import { ms, booMoment, booLead, salemColourAt } from '../lib/night'
+import { ms, salemColourAt } from '../lib/night'
+import BooArcade from './Arcade'
+import { STAND_IN_CLUE } from '../lib/arcade'
 import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
@@ -13,8 +15,8 @@ import Spoken from './Spoken'
 //                   bulletins as video (bulletin 1, the closing bulletin)
 //   ?kiosk=memory   Zimothy's memory match in three rounds, all fourteen traces
 //   ?kiosk=memory&play=1   the same game on its own, no case, no clues
-//   ?kiosk=boo      Boo's catwalk on the triangle wall, from Susan's MacBook Pro
-//   ?kiosk=boo&practice=1   the Game test tab's practice show (screens/Practice.jsx)
+//   ?kiosk=boo      the Entryway: Miss Boo LaRue's Arcade on Susan's MacBook Pro and the
+//                   Stream Deck + XL (BooRoom, 5 Nov 2026; Boo's Catwalk until then)
 // And on 25 Oct 2026, for Jon's cue list (docs/cue-list.md, DESIGN section 6):
 //   Idle and Loop   every idle screen's looping graphic, the crest until the file is in
 //   RoomCode        each room's cat code during Act 2's cat visits (cue 7)
@@ -487,233 +489,56 @@ export function FolderBack() {
   )
 }
 
-// ---- the Entryway: Boo's catwalk (?kiosk=boo) ------------------------------
+// ---- the Entryway: Miss Boo LaRue's Arcade (?kiosk=boo) ----------------------
 
-// The runway music: play/public/boo/catwalk.mp3 when Jon drops one in, else a
-// groove the screen plays itself (kick, hats, a bass line). It plays while Boo
-// struts and stops for each pose ("when the music stops, strike a pose"); the
-// stop is a record scratch, so nobody can miss it (27 Oct 2026, Jon's note:
-// the game was not clear).
-function useRunwayMusic(on) {
-  const audio = useRef(null)
-  const beat = useRef(null)
-  const playing = useRef(false)
-  useEffect(() => {
-    if (!audio.current) {
-      const a = new Audio(`${BASE}boo/catwalk.mp3`)
-      a.loop = true
-      a.onerror = () => { audio.current = null }
-      audio.current = a
+// Susan's MacBook Pro in the Entryway with the Stream Deck + XL (5 Nov 2026,
+// card 515; Boo's Catwalk, the three poses on the projector, went on 29 Oct).
+// Outside Act 4 its loop; in Act 4 the rules card with Boo's line and the
+// room's code between groups, and the arcade itself (screens/Arcade.jsx, in
+// its night mode) while the group due here is at the deck: the house says
+// which group and when the round ends (public/boo), the rotation gives the
+// group's names and keys in order, every counted round's score goes to the
+// house (arcadeScore), each player's clue is asked of the house at their
+// moment (arcadeClue: the house deals it to their phone and sends the words
+// back), and the chime rings at the round's end on the house's clock. When
+// the round moves on while a visit is still up, the chime rings at once and
+// Boo's farewell plays out before the card comes back. In the Preview the
+// clue is the stand-in and nothing is sent.
+export const BOO_INTRO = RULES_LINES.entryway
+const visitOf = boo => (boo?.state === 'visit' && boo.groupId ? { groupId: boo.groupId, startsAt: ms(boo.startsAt) } : null)
+const sameVisit = (a, b) => !!a && !!b && a.groupId === b.groupId && a.startsAt === b.startsAt
+
+export function BooRoom({ boo, night, nightId, rotation = null, serverNow }) {
+  const [held, setHeld] = useState(null) // the visit on the screen, kept through its farewell
+  const [stage, setStage] = useState(null) // the arcade's stage, from the page
+  const visit = visitOf(boo)
+  useEffect(() => { if (visit && !sameVisit(held, visit)) { setStage(null); setHeld(visit) } }, [visit?.groupId, visit?.startsAt]) // eslint-disable-line react-hooks/exhaustive-deps
+  const gone = !!held && !sameVisit(held, visit) // the round moved on: the chime, then the farewell, then the card
+  useEffect(() => { if (gone && (stage === 'home' || stage == null)) setHeld(null) }, [gone, stage])
+  if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Entryway" loop="boo" />
+  if (held && (!gone || stage !== 'home')) {
+    const members = (rotation?.groups ?? []).find(g => g.id === held.groupId)?.members ?? []
+    const players = members.map(m => ({ name: m.name || m.characterName || '', key: m.key }))
+    const preview = nightId === 'preview'
+    const nightProps = {
+      players: players.length ? players : [{ name: '', key: null }],
+      slotEndsAt: ms(boo?.slotEndsAt) || held.startsAt + 15 * 60_000,
+      serverNow,
+      seed: held.startsAt,
+      chime: gone,
+      onClue: place => (preview ? Promise.resolve(STAND_IN_CLUE) : callArcadeClue({ nightId, groupId: held.groupId, place }).then(r => r?.data?.text ?? null)),
+      onRecord: rec => {
+        const key = players[rec.player]?.key
+        if (key && !preview) callArcadeScore({ nightId, guestKey: key, game: rec.game, score: rec.score }).catch(() => { /* the score is just for fun; the clue path never waits on it */ })
+      },
+      onStage: setStage,
     }
-    if (on) {
-      if (audio.current) audio.current.play().catch(() => startBeat(beat))
-      else startBeat(beat)
-      playing.current = true
-    } else {
-      audio.current?.pause()
-      stopBeat(beat)
-      if (playing.current) scratch()
-      playing.current = false
-    }
-    return () => {}
-  }, [on])
-  useEffect(() => () => { audio.current?.pause(); stopBeat(beat) }, [])
-}
-
-let sharedCtx = null
-function audioCtx() {
-  try {
-    if (!sharedCtx) sharedCtx = new (window.AudioContext || window.webkitAudioContext)()
-    if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {})
-    return sharedCtx
-  } catch { return null }
-}
-
-// One bar of the groove at 116 beats a minute, scheduled a little ahead.
-const BPM = 116
-const BASS = [55, 55, 65.4, 55, 73.4, 55, 65.4, 49] // eighth notes, A minor-ish
-function startBeat(ref) {
-  if (ref.current) return
-  const ctx = audioCtx()
-  if (!ctx) return // no sound on this screen: the wall still shows every moment
-  const out = ctx.createGain()
-  out.gain.value = 0.55
-  out.connect(ctx.destination)
-  const eighth = 60 / BPM / 2
-  let next = ctx.currentTime + 0.05
-  let n = 0
-  const noise = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate)
-  noise.getChannelData(0).forEach((_, i, d) => { d[i] = Math.random() * 2 - 1 })
-  const kick = t => {
-    const o = ctx.createOscillator(), g = ctx.createGain()
-    o.frequency.setValueAtTime(140, t)
-    o.frequency.exponentialRampToValueAtTime(42, t + 0.14)
-    g.gain.setValueAtTime(0.9, t)
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3)
-    o.connect(g).connect(out); o.start(t); o.stop(t + 0.32)
+    return <BooArcade key={`${held.groupId}-${held.startsAt}`} night={nightProps} />
   }
-  const hat = (t, loud) => {
-    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain()
-    s.buffer = noise
-    f.type = 'highpass'; f.frequency.value = 7000
-    g.gain.setValueAtTime(loud ? 0.22 : 0.1, t)
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05)
-    s.connect(f).connect(g).connect(out); s.start(t); s.stop(t + 0.06)
-  }
-  const bass = (t, hz) => {
-    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain()
-    o.type = 'sawtooth'; o.frequency.value = hz
-    f.type = 'lowpass'; f.frequency.value = 420
-    g.gain.setValueAtTime(0.0001, t)
-    g.gain.exponentialRampToValueAtTime(0.32, t + 0.01)
-    g.gain.exponentialRampToValueAtTime(0.0001, t + eighth * 0.9)
-    o.connect(f).connect(g).connect(out); o.start(t); o.stop(t + eighth)
-  }
-  const id = setInterval(() => {
-    while (next < ctx.currentTime + 0.2) {
-      if (n % 2 === 0) kick(next)
-      hat(next, n % 2 === 1)
-      bass(next, BASS[n % BASS.length])
-      next += eighth
-      n++
-    }
-  }, 50)
-  ref.current = { id, out }
-}
-function stopBeat(ref) {
-  if (!ref.current) return
-  clearInterval(ref.current.id)
-  const { out } = ref.current
-  try { out.gain.setTargetAtTime(0.0001, out.context.currentTime, 0.02) } catch { /* already gone */ }
-  setTimeout(() => out.disconnect(), 300)
-  ref.current = null
-}
-// The needle dragged off the record: the moment to freeze.
-function scratch() {
-  const ctx = audioCtx()
-  if (!ctx) return
-  try {
-    const t = ctx.currentTime
-    const len = 0.35
-    const buf = ctx.createBuffer(1, ctx.sampleRate * len, ctx.sampleRate)
-    buf.getChannelData(0).forEach((_, i, d) => { d[i] = Math.random() * 2 - 1 })
-    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain()
-    s.buffer = buf
-    f.type = 'bandpass'; f.Q.value = 6
-    f.frequency.setValueAtTime(2400, t)
-    f.frequency.exponentialRampToValueAtTime(300, t + len)
-    g.gain.setValueAtTime(0.6, t)
-    g.gain.exponentialRampToValueAtTime(0.001, t + len)
-    s.connect(f).connect(g).connect(ctx.destination); s.start(t); s.stop(t + len)
-  } catch { /* no sound: the wall still flashes */ }
-}
-
-const BOO_FRAMES = ['Boo 1.png', 'Boo 2.png', 'Boo 3.png', 'Boo 4.png']
-const booFrame = name => `${BASE}household/full/${encodeURIComponent(name)}`
-export const BOO_INTRO = RULES_LINES.entryway // Boo's line on her wall and on her Act 4 rules card
-// How the show goes, in three steps, on her rules card and in her intro.
-export const BOO_STEPS = [
-  ['♪', 'The music plays: strut down the runway.'],
-  ['✋', 'The music stops: strike a pose and freeze.'],
-  ['★', 'Hold it while the count runs down. Then Boo judges.'],
-]
-
-export function BooWall({ boo, night, nightId, serverNow }) {
-  const told = useRef(false)
-  const over = () => {
-    if (boo?.state !== 'show' || told.current || nightId === 'preview') return
-    told.current = true
-    callBooDone({ nightId }).catch(() => { told.current = false })
-  }
-  useEffect(() => { told.current = false }, [boo?.groupId, boo?.startsAt])
-  return <BooRunway boo={boo} live={!!night && night.act === 4 && !!boo?.groupId} serverNow={serverNow} onOver={over} night={night} lead={booLead(window.location.search)} />
-}
-
-function BooSteps() {
   return (
-    <ol className="boo-steps">
-      {BOO_STEPS.map(([mark, words]) => <li key={words}><span className="boo-step-mark" aria-hidden="true">{mark}</span>{words}</li>)}
-    </ol>
-  )
-}
-
-// Three dots along the runway: the poses done, this one, the ones to come.
-function BooPips({ pose, of }) {
-  return (
-    <p className="boo-pips" aria-label={`Pose ${pose} of ${of}`}>
-      {Array.from({ length: of }, (_, i) => <span key={i} className={i + 1 < pose ? 'done' : i + 1 === pose ? 'now' : ''} />)}
-      <span className="boo-pips-words">Pose {pose} of {of}</span>
-    </p>
-  )
-}
-
-// The wall itself, from one record in the night's shape (lib/night.js
-// booMoment): the night's (above) or the Game test tab's practice
-// (?kiosk=boo&practice=1, screens/Practice.jsx), which pays nobody. Not
-// `live`: outside Act 4 the wall's loop; in Act 4 (and in practice) the rules
-// card, with `idleLine` under it and the room's code only on a real night.
-// Her intro is the rules card too, with the three steps under her line.
-// `onOver()` is called while the show is over. `lead`: how many ms ahead of
-// the wall the music starts and stops (booLead: the AirPlay delay).
-// The look (27 Oct 2026): a lit runway along the bottom of the triangle wall,
-// Boo in a spotlight, and every moment says what to do in plain words.
-export function BooRunway({ boo, live, serverNow, onOver = null, idleLine = 'The next group will be along.', night = null, lead = 0 }) {
-  useTick(lead ? 100 : 250)
-  const now = serverNow()
-  const m = booMoment(boo, now)
-  const heard = booMoment(boo, now + lead).part // what the room hears, once the AirPlay delay has passed
-  useRunwayMusic(live && (heard === 'strut' || heard === 'intro'))
-  useEffect(() => { if (m.part === 'done') onOver?.() })
-  const of = boo?.poses?.length || 3
-  if (!live || m.part === 'idle') {
-    if (night && night.act !== 4) return <Idle title="Sirwin Manor" line="The Entryway" loop="boo" />
-    return (
-      <RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night?.beat ?? 'practice'} code={!!night} className="boo-wall idle">
-        <BooSteps />
-        <p className="kiosk-line">{idleLine}</p>
-      </RulesCard>
-    )
-  }
-  // her intro: the group has scanned in, so the card carries no code to scan (26 Oct 2026)
-  if (m.part === 'intro') return (
-    <RulesCard id="entryway" line={BOO_INTRO} frame="Boo 1.png" code={false} className="boo-wall intro">
-      <BooSteps />
-      <p className="boo-soon">The music starts in a moment. Get ready to strut.</p>
+    <RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night.beat} code={!visit} className="boo-wall idle">
+      <p className="kiosk-line">{visit ? 'Eyes on the deck.' : 'The next group will be along.'}</p>
     </RulesCard>
-  )
-  // a new photo of her every two seconds while she struts, a fresh one each pose
-  const strutFrame = BOO_FRAMES[(Math.floor(now / 2000) + (m.pose ?? 0)) % BOO_FRAMES.length]
-  return (
-    <div className={`kiosk boo-wall boo-stage ${m.part}`}>
-      <div className="boo-light" aria-hidden="true" />
-      <div className="boo-runway" aria-hidden="true" />
-      {m.part === 'strut' && <>
-        <p className="boo-say">♪ The music is on. <strong>Strut!</strong> ♪</p>
-        <BooPips pose={m.pose} of={of} />
-        <img className="boo-star strutting" src={booFrame(strutFrame)} alt="" />
-        <p className="boo-sub">When the music stops, strike a pose and freeze.</p>
-      </>}
-      {m.part === 'pose' && <>
-        <div className="boo-flash" aria-hidden="true" />
-        <p className="boo-shout" role="status" aria-live="assertive">STRIKE A POSE!</p>
-        <p className="boo-count" key={m.hold}>{m.hold}</p>
-        <BooPips pose={m.pose} of={of} />
-        <p className="boo-sub">Freeze! Don't move. Boo is watching.</p>
-      </>}
-      {m.part === 'judge' && <>
-        <p className="boo-sub">Boo's verdict on pose {m.pose}</p>
-        <div className="boo-verdict">
-          <img className="boo-star" src={booFrame('Boo 2.png')} alt="" />
-          <p className="boo-bubble"><Spoken text={m.line} /></p>
-        </div>
-        <p className="boo-sub dim">{m.pose < of ? 'Relax. The music starts again in a moment.' : 'Relax. That was the last one.'}</p>
-      </>}
-      {m.part === 'done' && <>
-        <img className="boo-star" src={booFrame('Boo 4.png')} alt="" />
-        <p className="boo-say">That's the show, darling.</p>
-        <p className="boo-sub">Look at your phones: Boo has something for you.</p>
-      </>}
-    </div>
   )
 }
 

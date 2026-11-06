@@ -47,8 +47,7 @@ function playCase(seed, { players = 9, band = 3 } = {}) {
   const groups = makeGroups(roster.map(g => g.key), { apart: [c.murderer, c.ghost], pickInt: rng })
   groups.forEach((members, i) => {
     const groupId = `g${i + 1}`
-    c.solving.memory[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt })
-    c.solving.boo[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt, tag: 'boo' })
+    c.solving.memory[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt }) // Boo's cross-off went with her Catwalk (29 Oct 2026)
   })
   const irwin = irwinOptions(c, { band, seed: c.screenSalt })
   return { c, roster, groups, irwin, left: remainingMotives(roomClues(c, { irwin, bulletinBand: band })) }
@@ -244,26 +243,24 @@ test('G50 the memory match: three rounds of 6, 10 and 14 pairs, always all fourt
     assert.equal(new Set(boards[2]).size, 14, `seed ${seed}: the last board holds every trace`)
     assert.ok(!boards.flat().some(t => /[A-Z]/.test(t)), 'trace ids only, never a name')
   }
-  // G51: Zimothy's and Boo's cross-offs never take the real motive, never the same one twice
+  // G51: Zimothy's cross-offs never take the real motive, never the same one twice (Boo's went with her Catwalk, 29 Oct 2026)
   for (let seed = 1; seed <= 1000; seed++) {
     const { c, groups } = playCase(seed, { players: 4 + (seed % 9) })
     const s = c.solving
-    const picks = [...Object.values(s.memory), ...Object.values(s.boo)]
+    const picks = [...Object.values(s.memory)]
     assert.ok(!picks.includes(c.motive), `seed ${seed}: never the real motive`)
     assert.equal(new Set(picks).size, picks.length, `seed ${seed}: never the same motive twice`)
     // one they might still have: replayed group by group, whenever the group still had a wrong one to lose
     const memory = {}
-    const boo = {}
     groups.forEach((members, i) => {
       const groupId = `g${i + 1}`
       const out = new Set([...s.newsOut, ...members.flatMap(k => hintsOf(s, k))])
-      const gone = new Set([...s.struck, ...Object.values(memory), ...Object.values(boo)])
+      const gone = new Set([...s.struck, ...Object.values(memory)])
       const could = ALL_MOTIVES.filter(n => n !== c.motive && !out.has(familyOf(n)) && !gone.has(n))
-      const n = memoryPick({ ...c, solving: { ...s, memory, boo } }, { groupId, members, seed: c.screenSalt })
+      const n = memoryPick({ ...c, solving: { ...s, memory } }, { groupId, members, seed: c.screenSalt })
       assert.equal(n, s.memory[groupId], `seed ${seed}: the same pick every time`)
       if (could.length) assert.ok(could.includes(n), `seed ${seed} group ${i + 1}: a motive the group might still have`)
       memory[groupId] = n
-      boo[groupId] = s.boo[groupId]
     })
   }
 })
@@ -306,13 +303,13 @@ test('the memory match through the dealer: three boards for the group in the Lib
   assert.equal(again.already, true)
   const c = db.store.get(`cases/${nightId}`)
   assert.notEqual(c.solving.memory[board.groupId], c.motive, 'never the real motive')
-  // Act 5: every group has had the Library and the Entryway pay, one motive each, never the real one
+  // Act 5: every group has had the Library pay, one motive each, never the real one; the Entryway crosses nothing off (the arcade, 5 Nov 2026)
   await hostCommand(db, { nightId, command: 'act', arg: 5, now })
   const groups = db.store.get(`nights/${nightId}/public/rotation`).groups
   const after = db.store.get(`cases/${nightId}`).solving
   assert.equal(Object.keys(after.memory).length, groups.length, 'every group crossed one off in the Library by Act 5')
-  assert.equal(Object.keys(after.boo).length, groups.length, 'and one with Boo')
-  assert.ok(![...Object.values(after.memory), ...Object.values(after.boo)].includes(c.motive))
+  assert.deepEqual(after.boo ?? {}, {}, 'and none with Boo: her cross-off went with her Catwalk')
+  assert.ok(!Object.values(after.memory).includes(c.motive))
 })
 
 // ---- G38 ------------------------------------------------------------------

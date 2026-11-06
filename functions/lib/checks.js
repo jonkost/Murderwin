@@ -44,7 +44,7 @@ export const CHECK_NAMES = {
   G47: 'Every group visits every room once; never two groups in a room',
   G49: 'Salem names a wrong word at 1 to 3, the right one at 5',
   G50: 'The memory match: 6, 10 and 14 pairs, all fourteen traces',
-  G51: 'Zimothy and Boo never cross off the real motive, never the same one twice',
+  G51: 'Zimothy never crosses off the real motive, never the same one twice',
   G53: 'Every bulletin 2 line, at every level, points at the real family',
   G59: 'Every guest gets a real line from every cat, and the Study a real trace',
   L01: 'No sealed file in the repo or its history',
@@ -97,7 +97,7 @@ export function caseChecks(c, { roster, packing = null, rng, reroll = true }) {
   // G59: never the house's note where a line should be: every guest and a late joiner, every cat, every rung, and the Study
   add('G59', everyLineOk(c, roster))
 
-  // G47 and G51: the groups walk the rooms; Zimothy and Boo cross off one each
+  // G47 and G51: the groups walk the rooms; Zimothy crosses off one a group (Boo's went with her Catwalk, 29 Oct 2026)
   const groups = keys.length >= 2 ? makeGroups(keys, { apart: [c.murderer, c.ghost].filter(Boolean), pickInt: rng }) : []
   const order = groups.map((_, i) => `g${i + 1}`)
   const rot = { order, rooms: [...ROOM_KEYS], rounds: roundsFor(order.length) }
@@ -118,9 +118,8 @@ export function caseChecks(c, { roster, packing = null, rng, reroll = true }) {
   groups.forEach((members, i) => {
     const groupId = `g${i + 1}`
     s.memory[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt })
-    s.boo[groupId] = memoryPick(c, { groupId, members, seed: c.screenSalt, tag: 'boo' })
   })
-  const picks = [...Object.values(s.memory), ...Object.values(s.boo)]
+  const picks = [...Object.values(s.memory)]
   add('G51', !picks.includes(Number(c.motive)) && new Set(picks).size === picks.length)
 
   // G34 and G32: Sir Irwin's countdown, and every clue together at dial 3

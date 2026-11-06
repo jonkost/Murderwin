@@ -14,10 +14,10 @@ import bagLines from '../../seed/bag-lines.json'
 import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, Dark as KioskDark } from './screens/Kiosk'
-import { MemoryRounds, MemoryStandalone, BooWall, Idle, RoomCode, Orangerie } from './screens/Rooms'
+import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import { PoseCamera } from './screens/Pose'
 import BooArcade from './screens/Arcade'
-import { SalemRounds, BooMoments } from './screens/Act4'
+import { SalemRounds } from './screens/Act4'
 import { HousePanel, ResumeNight } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
@@ -44,7 +44,7 @@ import { setFromAddress } from './lib/gametest'
 // Zimothy's just-for-fun winner, 28 Oct 2026: kiosk-memory-winner, kiosk-memory-tie), Salem's
 // winner on the Orangerie's screen (kiosk-orangerie-winner, kiosk-orangerie-tie), Salem's board while the
 // group plays (kiosk-orangerie-ready, kiosk-orangerie-round, kiosk-orangerie-passed; 31 Oct 2026) and
-// Boo's wall (kiosk-boo, kiosk-boo-pose, kiosk-boo-judge; kiosk-boo-show plays the whole show live). Miss Boo LaRue's
+// Boo's screen in the Entryway (kiosk-boo: a group's visit to the arcade, live, with the stand-in clue). Miss Boo LaRue's
 // Arcade (28 Oct 2026), each a frozen moment with no loop, deck or sound: kiosk-arcade (free play's menu),
 // kiosk-arcade-play (a game running), kiosk-arcade-clue, kiosk-arcade-third and kiosk-arcade-farewell. A rehearsal night's band:
 // kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
@@ -227,7 +227,7 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
-    // Boo's Catwalk photos: on the night each is read from its own doc; here, a stand-in picture
+    // the Entryway camera's photos: on the night each is read from its own doc; here, a stand-in picture
     poses: [{ groupId: 'g1', names: ['Jessa', 'Mari'], image: `${import.meta.env.BASE_URL}portraits/rye.png` }, { groupId: 'g2', names: ['Jon', 'Susan', 'Jacob'], image: `${import.meta.env.BASE_URL}portraits/leech.png` }],
     thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
     memory: { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' },
@@ -267,18 +267,9 @@ const MEMORY_GROUP = { groups: [{ id: 'g1', members: [{ name: 'Margaret' }, { na
 const MEMORY = (cleared = false, pairsBy = null) => ({ groupId: 'g1', boardId: 'g1-3', step: cleared ? 2 : 0, cleared, boards: { 0: ['ink', 'flour', 'coins', 'petals', 'seeds', 'coffee', 'coffee', 'ink', 'seeds', 'coins', 'flour', 'petals'], 1: [], 2: [] }, ...(pairsBy ? { pairsBy } : {}) })
 // Salem's game cleared by the same three (28 Oct 2026): slips and a felt shake by place in the group
 const SALEM_CLEARED = (slipsBy, feltBy) => ({ groupId: 'g1', state: 'cleared', round: 3, attempt: 7, flips: [], slipsBy, feltBy })
-const BOO = (offset) => ({ groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT - offset), poses: [{ strutAt: stamp(PHASE_AT - offset + 9000), poseAt: stamp(PHASE_AT - offset + 18000), holdUntil: stamp(PHASE_AT - offset + 23000), judgeUntil: stamp(PHASE_AT - offset + 29000), line: 'Bold. Wrong, but bold.' }], endsAt: stamp(PHASE_AT - offset + 29000) })
-// Boo's whole show, as booShow lays it out (9 s intro; 8 s strut, 5 s hold, 6 s verdict, three times)
-const BOO_SHOW = (() => {
-  const lines = ['Dreadful. I loved it.', 'Bold. Wrong, but bold.', 'Fine. Fine! You may stay.']
-  const poses = []
-  let t = PHASE_AT + 9000
-  for (let i = 0; i < 3; i++) {
-    poses.push({ strutAt: stamp(t), poseAt: stamp(t + 8000), holdUntil: stamp(t + 13000), judgeUntil: stamp(t + 19000), line: lines[i] })
-    t += 19000
-  }
-  return { groupId: 'g1', state: 'show', startsAt: stamp(PHASE_AT), poses, endsAt: stamp(t) }
-})()
+// the Entryway's record (act4.js booIdle, booArrive): a group's visit to the arcade, `ago` ms in, with the round's end `left` ms away
+const BOO_VISIT = (ago, left = 12 * 60_000) => ({ groupId: 'g1', state: 'visit', startsAt: stamp(Date.now() - ago), slotEndsAt: stamp(Date.now() + left), act4Round: 2 })
+const BOO_IDLE = { groupId: 'g1', state: 'idle', startsAt: null, slotEndsAt: stamp(Date.now() + 15 * 60_000), act4Round: 1 }
 // Get Off My Lawn! on a phone (28 Oct 2026): a round from the moment the preview
 // opens, a three-second count, then the colour alone, changing every few seconds
 const SALEM_ROUND = (() => {
@@ -336,11 +327,8 @@ const KIOSK = {
   'kiosk-memory-standalone': () => <MemoryStandalone />,
   'kiosk-prompts': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'cat' }} relay={null} trace={null} finale={null} screen={SCREEN('prompts', { title: 'Sir Irwin has ideas', prompts: { lines: bagLines.prompts.lines, order: bagLines.prompts.lines.map((_, i) => i), startedAt: stamp(PHASE_AT), everyMs: 180000 } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-title': (night, serverNow) => <Living night={{ ...night, act: 4, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('title', { title: 'Act 4 · Behind Closed Doors', lines: ['Look at your phone and find your group.'], rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  'kiosk-boo': (night, serverNow) => <BooWall boo={BOO(12000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
-  // the whole show, three poses, from the moment the preview opens: it plays out live (about 70 seconds)
-  'kiosk-boo-show': (night, serverNow) => <BooWall boo={BOO_SHOW} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
-  'kiosk-boo-judge': (night, serverNow) => <BooWall boo={BOO(25000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
-  'kiosk-boo-pose': (night, serverNow) => <BooWall boo={BOO(19000)} night={{ ...night, act: 4 }} nightId="preview" serverNow={serverNow} />,
+  // Boo's screen in the Entryway (5 Nov 2026): a group's visit to the arcade, live from the moment the preview opens, the stand-in clue, nothing sent
+  'kiosk-boo': (night, serverNow) => <BooRoom boo={BOO_VISIT(2000)} night={{ ...night, act: 4, beat: 'round2' }} nightId="preview" rotation={MEMORY_GROUP} serverNow={serverNow} />,
   // Miss Boo LaRue's Arcade (28 Oct 2026): a moment of the engine's own samples (lib/arcade.js arcadeSample), frozen
   'kiosk-arcade': () => <BooArcade sample="home" />,
   'kiosk-arcade-play': () => <BooArcade sample="play" />,
@@ -350,9 +338,8 @@ const KIOSK = {
   // the group's phones in the Orangerie and the Entryway (28 Oct 2026): Salem's rule, then a live round; Boo's show as the phones see it
   'salem-rule': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={{ state: 'intro' }} serverNow={serverNow} motion={{ ...NO_SENSOR, ok: true }} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
   'salem-round': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={SALEM_ROUND} serverNow={serverNow} motion={NO_SENSOR} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
-  'boo-phone': (night, serverNow) => <PhoneGame room="entryway"><BooMoments boo={BOO_SHOW} serverNow={serverNow} /></PhoneGame>,
-  // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap
-  'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO(19000)} nightId="preview" serverNow={serverNow} />,
+  // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap; the photo comes a minute into the visit
+  'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO_VISIT(50_000)} nightId="preview" serverNow={serverNow} />,
   // the Host tab's house panel: station and screens alive, a group in the study, the hall light
   'host-house': (night) => {
     const n = { ...night, act: 4, beat: 'station2' }
@@ -399,8 +386,7 @@ const KIOSK = {
   // the Act 4 rules cards, between groups: the game's name and hook, the host's line, the cat (varied), the room's code
   'kiosk-rules-study': (night, serverNow) => <Study study={{ state: 'idle', groupId: 'g2', updatedAt: stamp(Date.now()) }} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-rules-library': (night) => <MemoryRounds board={{ groupId: null, boardId: null, step: 0, boards: {}, cleared: false }} night={{ ...night, act: 4, beat: 'round3' }} nightId="preview" />,
-  'kiosk-rules-entryway': (night, serverNow) => <BooWall boo={{ groupId: 'g1', state: 'idle', poses: [] }} night={{ ...night, act: 4, beat: 'round1' }} nightId="preview" serverNow={serverNow} />,
-  'kiosk-boo-intro': (night, serverNow) => <BooWall boo={BOO(2000)} night={{ ...night, act: 4, beat: 'round1' }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-rules-entryway': (night, serverNow) => <BooRoom boo={BOO_IDLE} night={{ ...night, act: 4, beat: 'round1' }} nightId="preview" rotation={MEMORY_GROUP} serverNow={serverNow} />,
   'kiosk-rules-orangerie': (night) => <Orangerie night={{ ...night, act: 4, beat: 'round4' }} salem={{ groupId: 'g1', state: 'idle' }} />,
   // the Happy Birthday Irwin card from the Cake! button, in the server's words
   'kiosk-birthday': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'roam' }} relay={null} trace={null} finale={null} screen={SCREEN('birthday', { ...BIRTHDAY_CARD, act: 5, beat: 'roam', rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
@@ -409,7 +395,7 @@ const KIOSK = {
   'kiosk-loop-ipad': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'roam' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'One Candle', act: 5, beat: 'roam' })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
   'kiosk-loop-study': (night, serverNow) => <Study study={{ state: 'idle' }} rotation={null} serverNow={serverNow} night={{ ...night, act: 5, beat: 'roam' }} />,
   'kiosk-loop-memory': (night) => <MemoryRounds board={null} night={{ ...night, act: 5, beat: 'roam' }} nightId="preview" />,
-  'kiosk-loop-boo': (night, serverNow) => <BooWall boo={null} night={{ ...night, act: 5, beat: 'roam' }} nightId="preview" serverNow={serverNow} />,
+  'kiosk-loop-boo': (night, serverNow) => <BooRoom boo={null} night={{ ...night, act: 5, beat: 'roam' }} nightId="preview" serverNow={serverNow} />,
   'kiosk-loop-bedroom': () => <Bedroom relay={null} trace={null} />,
   'kiosk-loop-orangerie': (night) => <Orangerie night={{ ...night, act: 5, beat: 'roam' }} salem={null} />,
   'kiosk-quiet': () => <Idle title="Sirwin Manor" line="The house is quiet." loop="living" />,

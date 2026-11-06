@@ -17,7 +17,7 @@ import * as night from './lib/night.js'
 import * as run from './lib/run.js'
 import * as station from './lib/station.js'
 import * as windows from './lib/windows.js'
-import { mayTouchNight } from './lib/access.js'
+import { mayTouchNight, fromKiosk } from './lib/access.js'
 import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
@@ -175,11 +175,17 @@ export const posePhoto = onCall({ cors: true }, wrap(async req => {
   return savePose(db, { nightId, groupId, image })
 }))
 
-// Act 4, the Entryway: Boo's show is over (the wall, ?kiosk=boo, or a phone).
-export const booDone = onCall({ cors: true }, wrap(async req => {
-  const { nightId } = req.data ?? {}
-  await atTheParty(req, nightId)
-  return run.player.booDone(db, { nightId })
+// Act 4, the Entryway: the arcade's clue moment (card 515, 5 Nov 2026). The
+// Mac (?kiosk=boo, by its own presence row) asks for the clue of the player
+// at `place` in the group's order once their fifth game is played: that
+// player's reward card is dealt to their phone, and its words come back for
+// the screen (lib/act4.js arcadeClue). Only Boo's Mac or the admin.
+export const arcadeClue = onCall({ cors: true }, wrap(async req => {
+  const uid = requireUid(req)
+  const { nightId, groupId, place } = req.data ?? {}
+  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
+  if (!(await fromKiosk(db, { uid, nightId, guestKey: 'kiosk-boo', isAdmin: ADMIN_UIDS.includes(uid) }))) throw new HttpsError('permission-denied', 'Only the arcade asks for a clue.')
+  return run.player.arcadeClue(db, { nightId, groupId, place })
 }))
 
 // Act 4, the Entryway: a guest's round of one of Miss Boo LaRue's five games

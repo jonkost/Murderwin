@@ -33,11 +33,10 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
 | `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list, and Zimothy names whoever found the most pairs, just for fun. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
-| `?kiosk=boo` | Susan's work MacBook Pro and the projector on the upstairs landing, all night; it never moves. The projector hangs off a smart plug the brain switches: off for the blackout and the drawing, on again when the power returns and for the ballot | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Boo's Catwalk on the triangle wall above the Parlour opening in Act 4 with her rules card between groups, black at The End. |
-| `?kiosk=boo&practice=1` | The projector computer or any screen, any day (the workshop's Game test tab) | Boo's Catwalk as a practice show: started and stopped from the Game test tab, the real timing and Boo's verdicts, no night, nothing paid. The phones join it at `?practice=boo`. |
-| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page). Not on the night yet: you chose it for the Entryway on 29 October, and the night keeps Boo's Catwalk until it is wired in | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, fifty seconds a game, each player's clue on the screen once all five of their games are played (31 October; in practice the square-bracket line), Boo's line for a trio's third player, the winner with each player's scores on a key, free play, and the chime fifteen minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
-| `?kiosk=pose` | Jenna's iPad Pro on its stand at the end of the catwalk, facing the group, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, with Boo's STRIKE A POSE and HOLD IT, and one photo is taken a moment into each group's last pose, for the end credits. It asks for the camera once, with a tap. |
-| `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on the practice show: the photo stays on the iPad's own screen and is never sent. |
+| `?kiosk=boo` | Susan's work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night; it never moves (since 5 November; the projector on the landing before). Google Chrome, the deck connected once from the arcade's practice page first: the night's screen has no Connect button | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Miss Boo LaRue's Arcade in Act 4: her rules card with the code between groups; the group that scans in plays its visit on the deck with their names in the group's order, each of the first two players gets the group's clue about the Ghost on the screen and their phone after their fifth game, a trio's third gets Boo's line, the winner, free play, and the chime at the end of the round on the house's clock; black at The End. |
+| `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page) | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, fifty seconds a game, each player's clue on the screen once all five of their games are played (31 October; in practice the square-bracket line), Boo's line for a trio's third player, the winner with each player's scores on a key, free play, and the chime fifteen minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
+| `?kiosk=pose` | Jenna's iPad Pro on its stand in the Entryway, facing the group at the Stream Deck, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, a count in the last five seconds, and one photo is taken a minute into each group's visit, for the end credits. It asks for the camera once, with a tap. |
+| `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on a pretend visit: the photo comes twelve seconds after the camera is turned on and stays on the iPad's own screen, never sent. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
 
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
@@ -146,8 +145,8 @@ brackets.
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
   part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
-  here, and Boo's Catwalk: each group's last pose from Boo's camera, when
-  it took one), and Irwin's "Can we play again?" Through the reveal every
+  here, and the arcade: each group at the deck from Boo's camera, when it
+  took one), and Irwin's "Can we play again?" Through the reveal every
   guest's phone is locked on "Eyes on the screen."; through the credits it
   shows its own result with "Thank you for playing."; the two host phones
   keep their tabs. **Hold the screen** on your Host tab stops the TV where
@@ -220,13 +219,16 @@ of them is on its loop.
   by then. A board the house had heard after all is only heard once, so
   nothing is counted or paid twice. If the signal never comes back before
   the chime, the group is paid anyway, as for any room.
-- *The Entryway, Boo's Catwalk.* "When the music stops, strike a pose.
-  She's always judging." Boo struts across the wall to runway music (a
-  simple beat, or `play/public/boo/catwalk.mp3` if you add one). When the
-  music stops: STRIKE A POSE, then HOLD IT with a five-second count, then
-  Boo's verdict. Three poses, then "That's the show, darling." and the
-  reward on the phones. Boo's camera on Jenna's iPad Pro, if it is up,
-  follows the same show and takes its photo at the third pose.
+- *The Entryway, Miss Boo LaRue's Arcade* (since 5 November; Boo's Catwalk
+  before). "Five little games. One coin each. She's always judging." Her
+  rules card with the code between groups; the group that scans in plays
+  its visit on the Stream Deck with the Mac's screen as the scoreboard
+  (`docs/boo-arcade.md`). After each of the first two players' fifth game
+  the screen shows their clue with their name: the group's bag hint about
+  the Ghost from Boo, which reaches their phone at the same moment; a
+  trio's third gets Boo's line. The winner, free play, and the chime at the
+  end of the round: "Be on your way." No motive is crossed off here. Boo's
+  camera on Jenna's iPad Pro, if it is up, takes its photo a minute in.
 - *The Orangerie, Get Off My Lawn!* The group's phones tint their whole
   screen red (shake) or green (freeze), with Salem's lines, and since
   31 October Salem's head is loose on each phone while a round plays: every
@@ -484,12 +486,16 @@ panel (`play/src/lib/house.js` `MACHINES`, keyed `kiosk-<which>` like the
 heartbeat); `play/test/house.test.mjs` checks each kiosk Kiosk.jsx names has
 one.
 
-*Miss Boo LaRue's Arcade (28 Oct 2026, not on the night until card 515 wires
-it in; entrywayGame answered 29 Oct).* Not a kiosk screen: `play/src/main.jsx` sends
-`?kiosk=boo&play=1` to `BooArcade` (`play/src/screens/Arcade.jsx`) before the
-kiosks, so it never goes through `Kiosk.jsx` (no sign-in, no presence, no
-night); `&visit=1` is the practice visit. `?kiosk=boo` alone is still Boo's
-wall. The five samples (`kiosk-arcade`, `kiosk-arcade-play`,
+*Miss Boo LaRue's Arcade (28 Oct 2026 on its own; on the night since 5 Nov,
+card 515; entrywayGame answered 29 Oct).* On its own it is not a kiosk
+screen: `play/src/main.jsx` sends `?kiosk=boo&play=1` to `BooArcade`
+(`play/src/screens/Arcade.jsx`) before the kiosks, so it never goes through
+`Kiosk.jsx` (no sign-in, no presence, no night); `&visit=1` is the practice
+visit. `?kiosk=boo` alone is the night's Entryway screen: `Rooms.jsx`
+`BooRoom` mounts the same `BooArcade` with `night` (the players from
+`public/rotation`, the chime at `public/boo.slotEndsAt`, `arcadeScore` and
+`arcadeClue`) while `public/boo` is a group's visit, and Boo's rules card
+between groups. The five samples (`kiosk-arcade`, `kiosk-arcade-play`,
 `kiosk-arcade-clue`, `kiosk-arcade-third`, `kiosk-arcade-farewell`) are
 `<BooArcade sample="..." />` frozen: no loop, no input, no deck, no sound.
 The whole build: `docs/boo-arcade.md`.

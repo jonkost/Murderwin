@@ -279,13 +279,13 @@ export const ROOM_GAME = { study: 'study', memory: 'library', boo: 'entryway', o
 // The hosts' lines, copied from the server's open defaults: the Study's and
 // the Library's from functions/lib/hosts.js HOST_LINES (a test keeps them the
 // same), Salem's intro from the phone's Get Off My Lawn! (screens/Act4.jsx),
-// Boo's from her wall. The defaults only: rulesLine, below, puts the
+// Boo's for her arcade (5 Nov 2026). The defaults only: rulesLine, below, puts the
 // workshop's own words first.
 export const RULES_LINES = {
   study: "Oh! You're here! The wall flashes a pattern. Touch the same lights in the same order. Do that three times, then press the colour and the number on the buttons, and press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah.",
   library: "Disaster. Sir Irwin bounded through my office, and my files are everywhere. I keep everything in duplicate, so match each pair and put my records back in order. Do it, and I'll strike one motive from your list. I'll waive my fee, just this once.",
   orangerie: "Forty years I've kept these grounds, and now you want to play on 'em. Fine. Watch the lights, not your phones. RED means GO: shake that thing like it owes you money. GREEN means FREEZE. Yes, backwards. I've done everything backwards for forty years and nobody's complained.",
-  entryway: "Darling. Welcome to my runway. Watch the wall. When the music stops, strike a pose and HOLD it. I'll be judging. I'm always judging.",
+  entryway: "Darling. Welcome to my arcade. Five little games, one coin each, and you take turns. Amuse me, and I'll tell you something about the one who screamed. I'm always judging.",
 }
 // A rules card's host line (26 Oct 2026, the screens' review): the workshop's
 // own words first, as on the phones (functions/lib/hosts.js hostLine reads the

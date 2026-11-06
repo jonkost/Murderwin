@@ -29,7 +29,7 @@ test('the devices follow Jon’s key: the iPad Pro’s stations are one machine,
   const ipadRooms = new Set(['ipad', 'memory', 'bedroom'].map(k => byKiosk(k).room))
   assert.equal(ipadRooms.size, 1, 'the iPad Pro’s three addresses sit together under one heading')
   for (const k of ['ipad', 'memory', 'bedroom']) assert.match(byKiosk(k).machine, /iPad Pro/, `${k} is the iPad Pro`)
-  assert.match(byKiosk('boo').machine, /Susan.s work MacBook Pro.*all night/, 'Susan’s MacBook Pro is the projector all night')
+  assert.match(byKiosk('boo').machine, /Susan.s work MacBook Pro in the Entryway with the Stream Deck \+ XL.*all night/, 'Susan’s MacBook Pro is Boo’s screen all night (the arcade, 5 Nov 2026)')
   assert.ok(!/Susan/.test(byKiosk('bedroom').machine), 'the bedroom screen is not Susan’s MacBook Pro any more')
   assert.match(byKiosk('pose').machine, /Jenna.s iPad Pro/, 'Boo’s camera is Jenna’s iPad Pro')
   assert.match(byKiosk('orangerie').machine, /brain/, 'the Orangerie screen is the brain’s browser')
@@ -83,16 +83,21 @@ test('what Jon reads is plain: no Terminal, no commands, no file names; the exac
 })
 
 // 28 Oct 2026: Miss Boo LaRue’s Arcade on its own page; 29 Oct, the review: through a
-// HomePod its sounds land two seconds after the press
-test('Miss Boo LaRue’s Arcade: an address of its own beside Boo’s wall, in Chrome, the sound on the Mac’s own speakers, not on the night yet', () => {
+// HomePod its sounds land two seconds after the press; 5 Nov 2026: the same arcade is the
+// night's Entryway screen (plain ?kiosk=boo), with no setup words on it
+test('Miss Boo LaRue’s Arcade: an address of its own beside Boo’s screen, in Chrome, the sound on the Mac’s own speakers; the night’s screen connects the deck from it first', () => {
   const arcade = DEVICES.find(d => d.key === 'arcadeplay')
   assert.ok(arcade, 'listed')
-  assert.equal(deviceUrl('https://example.test/play/', arcade), 'https://example.test/play/?kiosk=boo&play=1', 'a query of its own, so Boo’s wall stays the night’s boo screen')
+  assert.equal(deviceUrl('https://example.test/play/', arcade), 'https://example.test/play/?kiosk=boo&play=1', 'a query of its own, so Boo’s screen stays the night’s boo screen')
   assert.ok(arcade.start.some(s => /Google Chrome/.test(s)) && arcade.start.some(s => /Safari cannot reach the Stream Deck/.test(s)))
   assert.ok(arcade.start.some(s => /quit the Stream Deck app/i.test(s)))
   assert.ok(arcade.start.some(s => /sound output to its own speakers/.test(s)), 'its sounds on the Mac’s own speakers')
-  assert.match(arcade.note, /not on the night yet/i)
-  assert.match(arcade.note, /entrywayGame/, 'the note names the question')
+  assert.match(arcade.note, /runs on the night on Boo’s screen/, 'the note says the night runs the same arcade')
+  const byKiosk = (k) => DEVICES.find(d => d.kiosk === k && !d.query)
+  const boo = byKiosk('boo')
+  assert.ok(boo.start.some(s => /no Connect button/.test(s)), 'the night’s screen has no setup words: the deck is connected once from the practice page')
+  assert.ok(boo.start.some(s => /Google Chrome/.test(s)) && /Stream Deck \+ XL/.test(boo.machine) && /Stream Deck/.test(boo.what))
+  assert.ok(!/projector/i.test(boo.what + boo.machine), 'the projector is out of the Entryway')
 })
 
 test('the commands a device names exist', () => {

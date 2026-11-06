@@ -280,9 +280,9 @@ test('the relay rules: three lines from the workshop or the defaults, on the fir
 test('the previews cover every screen the plan names, and the kiosk has the three corners', () => {
   const preview = readFileSync(new URL('../src/Preview.jsx', import.meta.url), 'utf8')
   for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'kiosk-rehearsal', 'host-house-act2',
-    // the cue list's screens (25 Oct 2026): the join and rejoin codes, the four room codes, the four rules cards and Boo's intro, the birthday card, every loop slot, The End
+    // the cue list's screens (25 Oct 2026): the join and rejoin codes, the four room codes, the four rules cards and Boo's arcade (5 Nov 2026), the birthday card, every loop slot, The End
     'kiosk-join', 'kiosk-rejoin', 'kiosk-code-study', 'kiosk-code-library', 'kiosk-code-entryway', 'kiosk-code-orangerie',
-    'kiosk-rules-study', 'kiosk-rules-library', 'kiosk-rules-entryway', 'kiosk-boo-intro', 'kiosk-rules-orangerie', 'kiosk-birthday',
+    'kiosk-rules-study', 'kiosk-rules-library', 'kiosk-rules-entryway', 'kiosk-boo', 'kiosk-rules-orangerie', 'kiosk-birthday',
     'kiosk-loop-living', 'kiosk-loop-ipad', 'kiosk-loop-study', 'kiosk-loop-memory', 'kiosk-loop-boo', 'kiosk-loop-bedroom', 'kiosk-loop-orangerie', 'kiosk-end']) assert.ok(preview.includes(`'${k}'`), k)
   for (const k of ['cats-friend', 'rehearsal']) assert.ok(preview.includes(`case '${k}'`), k)
   // D1-18, BK-7: the samples come from the open banks and say what the night says now

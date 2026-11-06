@@ -40,10 +40,10 @@ test('the phone\'s own lines list offers every label the phone and the dealer re
   for (const k of NOTICE_KEYS) assert.ok(values.includes(`NOTICE ${k.toUpperCase()}`), k)
   assert.equal(new Set(values).size, values.length, 'no label twice')
   assert.equal(goalOf(AREAS.ui_copy), COUNTED_UI_LABELS.length, 'the goal counts only the lines with no words of their own yet')
-  assert.equal(UI_LABELS.filter(l => l.extra).length, 54, 'fifty-four extra lines the game reads (Act 2 and Act 4 added 23 Oct 2026)')
+  assert.equal(UI_LABELS.filter(l => l.extra).length, 49, 'forty-nine extra lines the game reads (Act 2 and Act 4 added 23 Oct 2026; Boo’s six Catwalk verdicts went and the arcade’s third-player line came, 5 Nov 2026)')
   assert.deepEqual(UI_LABELS.filter(l => l.retired).map(l => l.value), ['HIDE', 'HOLD', 'NUMBERS', 'NOTICE SCRAP', 'NOTICE CHECKIN', 'GREET SALEM', 'GREET ZIMOTHY', 'GREET BOO', 'GREET GRANOLIA'], 'the role card’s hide button and hold line (25 Oct 2026), the safe’s lines, the check-in and the greetings, retired, still show what was written')
   assert.ok(values.includes('CONTINUE'), 'the one button after the blackout (25 Oct 2026)')
-  assert.equal(UI_LABELS.length - COUNTED_UI_LABELS.length, 63, 'neither the extra nor the retired lines count')
+  assert.equal(UI_LABELS.length - COUNTED_UI_LABELS.length, 58, 'neither the extra nor the retired lines count (five fewer since 5 Nov 2026: the six Catwalk verdicts went, the arcade’s third-player line came)')
   assert.equal(STUDY_LABELS.length, 12)
   assert.equal(STATION_LABELS.map(o => o.value).join(','), 'STUDY,CAT,BAGS,PUZZLE,CHECKIN')
   assert.ok(AREAS.station_text.retired && AREAS.station_text.hidden, 'the five stations are retired: Act 4 is four rooms')
@@ -155,7 +155,7 @@ test('the extra labels are the ones the game reads, can be picked, and pass the 
     ...['WAIT', 'LATER', 'GO', 'NEXT', 'ARRIVE', 'WITH', 'DONE', 'SUPPER'].map(k => `LIGHTS ${k}`), 'SUPPER NOTE',
     ...['WARN', 'GROUP', 'STUDY', 'LIBRARY', 'ORANGERIE', 'ENTRYWAY', 'PARLOUR', 'ARRIVE', 'CHIME', 'PAID', 'OVER'].map(k => `ACT4 ${k}`),
     ...['STUDY', 'LIBRARY', 'ORANGERIE', 'ENTRYWAY'].flatMap(k => [`REWARD ${k} DONE`, `REWARD ${k} CAPPED`]),
-    ...[1, 2, 3, 4, 5, 6].map(i => `BOO JUDGE ${i}`),
+    'REWARD ENTRYWAY THIRD', // a trio's third player at the arcade (5 Nov 2026; Boo's six Catwalk verdicts went with the Catwalk)
     'SALEM FRIEND', 'HOST GRANOLIA', 'HOST ZIMOTHY', 'HOST SALEM',
     ...[1, 2, 3, 4, 5, 6].map(i => `HOST BOO ${i}`), ...[1, 2, 3, 4, 5].map(i => `HOST IRWIN TRACE ${i}`),
     ...['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE'].map(w => `IRWIN ${w}`),
@@ -165,7 +165,8 @@ test('the extra labels are the ones the game reads, can be picked, and pass the 
   const act4 = read('act4.js')
   assert.ok(deal.includes('`LIGHTS ${variant.toUpperCase()}`') && deal.includes("ui['LIGHTS ARRIVE']") && deal.includes("ui['SUPPER NOTE']") && deal.includes("ui['SALEM FRIEND']"))
   for (const k of ['wait', 'later', 'go', 'next', 'with', 'done', 'supper']) assert.match(deal, new RegExp(`^  ${k}: \\{ title:`, 'm'), `LIGHTS ${k.toUpperCase()} has a default`)
-  for (const k of ['ACT4 WARN', 'ACT4 GROUP', 'ACT4 ARRIVE', 'ACT4 CHIME', 'ACT4 PAID', 'ACT4 OVER', 'BOO JUDGE']) assert.ok(act4.includes(k), k)
+  for (const k of ['ACT4 WARN', 'ACT4 GROUP', 'ACT4 ARRIVE', 'ACT4 CHIME', 'ACT4 PAID', 'ACT4 OVER', 'REWARD ENTRYWAY THIRD']) assert.ok(act4.includes(k), k)
+  assert.ok(!act4.includes('BOO JUDGE'), 'the Catwalk verdicts are gone')
   assert.ok(act4.includes('`ACT4 ${room.toUpperCase()}`') && act4.includes('`REWARD ${room.toUpperCase()} ${outcome'), 'the room directions and rewards')
   assert.ok(hosts.includes('`HOST ${key.toUpperCase()}`') && hosts.includes('`HOST BOO ${i + 1}`') && hosts.includes('`HOST IRWIN TRACE ${l}`'))
   for (const w of ['FIVE', 'FOUR', 'THREE', 'TWO', 'ONE']) assert.ok(screen.includes(`'IRWIN ${w}'`), `IRWIN ${w}`)

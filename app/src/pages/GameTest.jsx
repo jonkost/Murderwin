@@ -8,7 +8,7 @@ import { callError } from '../lib/studyTest'
 import { useDictation } from '../lib/useDictation'
 import {
   SECTIONS, SECTION_KEYS, DEVICES, tryWords, playUrl, queryOf, parlourSets, nightStrip, nightOff,
-  salemView, booView, chipOf, feedbackTask, stewardTask, nextOrder, gameTestCards, sentLine, openNotesText,
+  salemView, chipOf, feedbackTask, stewardTask, nextOrder, gameTestCards, sentLine, openNotesText,
 } from '../lib/gameTest'
 import StudyTest from './StudyTest'
 import KeyWord from '../components/KeyWord'
@@ -136,7 +136,6 @@ export default function GameTest() {
             </>
           )}
           {s.key === 'salem' && <SalemPractice api={api.current} {...nightProps} />}
-          {s.key === 'boo' && <BooPractice api={api.current} {...nightProps} />}
           {s.key === 'parlour' && (
             <>
               <NightButtons which={['parlour']} {...nightProps} />
@@ -405,34 +404,6 @@ function SalemPractice({ api, busy, said, run }) {
       </div>
       {said?.area === 'salem' && <p className="hint" role="status">{said.text}</p>}
       <p className="hint">Each phone that plays shows a shake meter, so you can feel how hard a shake has to be.</p>
-    </div>
-  )
-}
-
-function BooPractice({ api, busy, said, run }) {
-  const [doc, setDoc] = useState(undefined)
-  const [failed, setFailed] = useState(false)
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => api.subscribeBoo(d => { setDoc(d); setFailed(false) }, () => setFailed(true)), [api])
-  const v = booView(doc, now)
-  // only to say which part of the show is on; the times are the server's
-  useEffect(() => {
-    if (!v.running) return
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [v.running])
-  return (
-    <div className="gt-block">
-      <h3>The practice show</h3>
-      {failed && <div className="banner error" role="alert">Cannot read the show. Check your signal, then reload this page.</div>}
-      <p className="st-big" aria-live="polite">{v.line}</p>
-      <div className="gt-actions">
-        <button className="primary" disabled={busy !== null} onClick={() => { setNow(Date.now()); run('boo', 'boo-start', {}, 'The show starts in three seconds.') }}>
-          {busy === 'boo-start' ? 'Sending…' : 'Start the show'}
-        </button>
-        <button className="ghost" disabled={busy !== null || !doc || doc.state !== 'playing'} onClick={() => run('boo', 'boo-stop', {}, 'The show is stopped.')}>Stop</button>
-      </div>
-      {said?.area === 'boo' && <p className="hint" role="status">{said.text}</p>}
     </div>
   )
 }

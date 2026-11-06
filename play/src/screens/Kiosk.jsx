@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess } from '../firebase'
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
-import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooWall, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
+import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
 import { newsClips, closingClips, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
@@ -26,11 +26,12 @@ import Spoken from './Spoken'
 // with the words only: it keeps the news and the bulletin up through dinner.
 // The memory match (?kiosk=memory, the iPad in the Library in Act 4)
 // shows the boards for the group in the Library this round; with &play=1 it is
-// the same game on its own, for fun. Boo's wall (?kiosk=boo, Susan's MacBook
-// Pro at the projector) is her catwalk (screens/Rooms.jsx); with &play=1 it is
-// Miss Boo LaRue's Arcade instead (screens/Arcade.jsx, 28 Oct 2026), which
-// main.jsx sends there before this file: no sign-in, no presence, no night. Boo's
-// camera (?kiosk=pose, the iPad facing the catwalk in Act 4) follows the
+// the same game on its own, for fun. Boo's screen (?kiosk=boo, Susan's MacBook
+// Pro in the Entryway with the Stream Deck + XL) is Miss Boo LaRue's Arcade
+// in Act 4 (screens/Rooms.jsx BooRoom, 5 Nov 2026; her Catwalk until then);
+// with &play=1 it is the arcade on its own (screens/Arcade.jsx, 28 Oct 2026),
+// which main.jsx sends there before this file: no sign-in, no presence, no
+// night. Boo's camera (?kiosk=pose, the iPad facing the group at the deck) follows the
 // same show and photographs each group's last pose for the end credits
 // (screens/Pose.jsx). The Orangerie's screen (?kiosk=orangerie, the brain's
 // browser) shows Salem's code in Act 2 and the Get Off My Lawn! rules card in
@@ -73,7 +74,7 @@ export default function Kiosk({ which }) {
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
-  const rotation = useDoc(nightId && (which === 'study' || which === 'memory' || which === 'orangerie') ? `nights/${nightId}/public/rotation` : null) // the Orangerie's too (28 Oct 2026): Salem names his winner
+  const rotation = useDoc(nightId && (which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo') ? `nights/${nightId}/public/rotation` : null) // the Orangerie's too (28 Oct 2026): Salem names his winner; Boo's (5 Nov 2026): the arcade's players
   const content = useDoc(nightId && (which === 'study' || which === 'memory' || living) ? `nights/${nightId}/public/content` : null) // the memory kiosk too (26 Oct 2026): Zimothy's card follows the workshop's host line
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
@@ -107,7 +108,7 @@ export default function Kiosk({ which }) {
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
-  else if (which === 'boo') body = <BooWall boo={boo.data} night={n} nightId={nightId} serverNow={serverNow} />
+  else if (which === 'boo') body = <BooRoom boo={boo.data} night={n} nightId={nightId} rotation={rotation.data} serverNow={serverNow} />
   else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
@@ -388,7 +389,7 @@ export function IrwinFace({ mood }) {
   return <img className="irwin-mood" src={src} alt="" aria-hidden="true" onError={() => setBroken(true)} />
 }
 
-// ---- Act 4: the memory match and Boo's wall live in Rooms.jsx ------------
+// ---- Act 4: the memory match and Boo's arcade room live in Rooms.jsx ------
 export { MemoryRounds as MemoryMatch } from './Rooms'
 
 // The iPad's view: the words of the last news, bulletin or Irwin, kept up.
@@ -745,7 +746,7 @@ function Credits({ finale, now, nightId = null }) {
         </ul>
         {(c.poses ?? []).length > 0 && nightId && (
           <>
-            <p className="kiosk-crest">Boo’s Catwalk</p>
+            <p className="kiosk-crest">At the arcade</p>
             <div className="pose-credits">{c.poses.map(p => <CreditPose key={p.groupId} nightId={nightId} pose={p} />)}</div>
           </>
         )}

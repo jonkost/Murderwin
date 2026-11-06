@@ -11,7 +11,10 @@
 // handed in is ever changed. All chance comes from a seeded generator kept in
 // the state, so one seed and the same presses play the same game, and a page
 // that slept catches up timer by timer. State is plain JSON. It reads no
-// night and nothing sealed: the clue is the house's rehearsal stand-in.
+// night and nothing sealed: in practice the clue is the house's rehearsal
+// stand-in, and on the night (card 515, 5 Nov 2026) the page hands each
+// player's clue in as the house deals it (arcadeClueText) and keeps the
+// chime on the round's end (arcadeRoundEnds).
 // play/test/arcade.test.mjs runs it.
 //
 // Jon's notes of 29 Oct 2026 remade the games: the Stream Deck is the game and
@@ -192,10 +195,11 @@ export const CUT_MIN_MS = 30000 // but no game is cut shorter than this
 
 // The practice clue: the house's rehearsal stand-in, word for word
 // (functions/lib/bagclues.js bagStandIn('boo', 4); a test keeps them equal).
-// On the night (card 515) each player's own bag clue about the Ghost shows
-// here instead.
+// On the night each player's bag clue about the Ghost shows here instead,
+// as the house deals it (a rehearsal night deals the same stand-in).
 export const STAND_IN_CLUE = "[Boo's bag clue about the Ghost appears here]"
 export const CLUE_NOTE = 'Practice: on the night, your own clue about the Ghost shows here.'
+export const CLUE_WAIT = 'One moment, darling.' // on the night, until the house has answered
 // Jon's words (28 Oct 2026), exactly.
 export const THIRD_LINE = "Didn't I give you enough? Now be off! I'm done playing games."
 export const FAREWELL_LINE = 'Be on your way.'
@@ -1233,12 +1237,14 @@ const cleanName = name => String(name ?? '').replace(/\s+/g, ' ').trim().slice(0
 // so a reload forgets them (the page keeps nothing).
 const NO_STATS = { games: 0, mice: 0, gold: 0, pets: 0, tails: 0, sparkles: 0, pounces: 0, knocked: 0, yarn: 0, best: null }
 
-export function newArcade({ mode = 'free', players = [], seed, now = 0, roundMs = ROUND_MS } = {}) {
+export function newArcade({ mode = 'free', players = [], seed, now = 0, roundMs = ROUND_MS, night = false } = {}) {
   const visit = mode === 'visit'
   const names = visit ? (Array.isArray(players) && players.length ? players : ['']).slice(0, MAX_PLAYERS) : []
   return {
     mode: visit ? 'visit' : 'free',
     free: false,
+    night: !!night, // a night's visit (5 Nov 2026): the clues come from the house, and the words say nothing of practice
+    clues: {}, // on the night, each player's clue by their place, once the house has dealt it (arcadeClueText)
     seed: seedOf(seed ?? now),
     stage: visit ? 'menu' : 'home',
     stageAt: now,
@@ -1343,8 +1349,8 @@ function ring(s, t) {
 // A fresh free-play arcade in this one's place, its seed made from this
 // one's and `why` (the events made so far, and the fun facts, stay).
 function afresh(s, t, why) {
-  const { events, stats, records } = s
-  const fresh = newArcade({ mode: 'free', seed: hashOf(`${s.seed}:${why}`), now: t })
+  const { events, stats, records, night } = s
+  const fresh = newArcade({ mode: 'free', seed: hashOf(`${s.seed}:${why}`), now: t, night })
   for (const k of Object.keys(s)) delete s[k]
   Object.assign(s, fresh, { events, stats, records })
 }
@@ -1489,6 +1495,26 @@ export function arcadeExit(a, now) {
   catchUp(s, now)
   leaveGame(s, now)
   s.events = uniq(s.events)
+  return s
+}
+
+// On the night: the house has dealt the clue of the player at `place` (their
+// bag clue about the Ghost, or Boo's line for a trio's third): the screen
+// shows it at their clue moment. Null clears it.
+export function arcadeClueText(a, place, text) {
+  const s = copy(a)
+  s.events = []
+  s.clues = { ...(s.clues ?? {}), [place]: text ?? null }
+  return s
+}
+
+// On the night: the chime rings at the round's end on the house's clock,
+// which a pause moves on. Nothing changes once the chime has rung, or in
+// free play.
+export function arcadeRoundEnds(a, roundEndsAt) {
+  const s = copy(a)
+  s.events = []
+  if (s.mode === 'visit' && !s.free && s.stage !== 'farewell' && Number.isFinite(roundEndsAt)) s.roundEndsAt = roundEndsAt
   return s
 }
 
@@ -1744,8 +1770,8 @@ function screenOf(a, now) {
       name: p.name, tokens: p.tokens, scores: p.games.map(x => x.score), played: p.games.map(x => x.game), total: totalOf(p), now: !!yours && i === a.turn,
     })),
     result: a.stage === 'result' && g ? { score: g.score, outcome: g.outcome } : null,
-    clue: a.stage === 'clue' ? STAND_IN_CLUE : null,
-    note: a.stage === 'clue' ? CLUE_NOTE : null, // the dim line under the clue
+    clue: a.stage !== 'clue' ? null : a.night ? a.clues?.[a.turn] ?? CLUE_WAIT : STAND_IN_CLUE,
+    note: a.stage === 'clue' && !a.night ? CLUE_NOTE : null, // the dim line under the clue, in practice only
     third: a.stage === 'third' ? THIRD_LINE : null,
     winner,
     // a player's five scores on the winner's screen, when their key was pressed (Jon, 31 Oct 2026: no running math under the players)

@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { callPosePhoto } from '../firebase'
 import { useTick } from '../lib/hooks'
-import { poseShotKey, poseCaption, QUALITIES, fits } from '../lib/pose'
+import { poseShotKey, poseCaption, QUALITIES, fits, SHOT_AFTER_MS } from '../lib/pose'
 
 // The pose camera (card 450): /play/?kiosk=pose on Jenna's iPad Pro in the
-// Entryway in Act 4 (Jon's key, 26 Oct 2026), facing the catwalk. It shows the group to itself, like
-// a mirror, follows Boo's show (public/boo, the same doc as her wall) and
-// takes one photo at the group's last pose, for the end credits. The camera
-// waits for a tap: the iPad asks for it once. Without it, Boo's Catwalk runs
-// as before and the credits simply have no photos.
-// With &practice=1 (the Game test tab) it follows the practice show and
-// keeps the photo on this screen only: nothing is sent.
+// Entryway in Act 4 (Jon's key, 26 Oct 2026), facing the group at Miss Boo
+// LaRue's Arcade (since 5 Nov 2026; the Catwalk's last pose until then). It
+// shows the group to itself, like a mirror, follows the Entryway's record
+// (public/boo, the same doc as Boo's screen) and takes one photo a minute
+// into each group's visit, for the end credits. The camera waits for a tap:
+// the iPad asks for it once, before the guests come. Without it the arcade
+// runs as before and the credits simply have no photos.
+// With &practice=1 (the Game test tab) a pretend visit starts as the page
+// opens, the photo comes PRACTICE_SHOT_AFTER_MS after that, and it stays on
+// this screen only: nothing is sent.
 
+export const PRACTICE_SHOT_AFTER_MS = 12_000
 const SAY = {
-  intro: 'Boo’s camera. Point this iPad at the catwalk: it takes one photo of each group’s last pose, for the end credits.',
+  intro: 'Boo’s camera. Point this iPad at the group at the deck: it takes one photo of each group, for the end credits.',
   start: 'Turn on the camera',
   denied: 'The camera is off. Allow the camera for this page in the iPad’s Settings, then reload. Boo’s Catwalk works without it.',
   snapped: 'Snap! For the end credits.',
@@ -37,7 +41,7 @@ function snapFrame(video, maxWidth = 960) {
   return null
 }
 
-export function PoseCamera({ boo, nightId, serverNow, practice = false }) {
+export function PoseCamera({ boo, nightId, serverNow, practice = false, shotAfterMs = SHOT_AFTER_MS }) {
   const video = useRef(null)
   const taken = useRef(new Set())
   const [camera, setCamera] = useState('off') // off | asking | on | denied
@@ -54,7 +58,7 @@ export function PoseCamera({ boo, nightId, serverNow, practice = false }) {
   }
   useEffect(() => () => { video.current?.srcObject?.getTracks?.().forEach(t => t.stop()) }, [])
   const now = serverNow()
-  const key = camera === 'on' ? poseShotKey(boo, now) : null
+  const key = camera === 'on' ? poseShotKey(boo, now, shotAfterMs) : null
   useEffect(() => {
     if (!key || taken.current.has(key)) return
     taken.current.add(key)
@@ -67,7 +71,7 @@ export function PoseCamera({ boo, nightId, serverNow, practice = false }) {
   }, [key])
   // a new group: the last photo leaves the screen
   useEffect(() => { setShot(null) }, [boo?.groupId, boo?.startsAt?.toMillis?.() ?? boo?.startsAt])
-  const cap = poseCaption(boo, now)
+  const cap = poseCaption(boo, now, shotAfterMs)
   return (
     <div className="kiosk pose-cam">
       <video ref={video} className={`pose-video${camera === 'on' ? '' : ' off'}`} playsInline muted />

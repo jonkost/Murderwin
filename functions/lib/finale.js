@@ -316,7 +316,7 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 
   const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
-  // Boo's Catwalk: each group's last pose, when the Entryway's camera took one (pose.js)
+  // the arcade: each group at the deck, when the Entryway's camera took one (pose.js; the Catwalk's last pose until 5 Nov 2026)
   const poses = await posesFor(db, nightId, rot)
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,

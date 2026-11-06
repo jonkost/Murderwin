@@ -304,35 +304,6 @@ export function salemSlip({ colour, motion, local, flipAt, grace }) {
   return null
 }
 
-// Boo's catwalk (public/boo): which part of the show is on at a moment.
-//   intro · strut (pose n coming) · pose (STRIKE A POSE, hold n) · judge (the line) · done
-export function booMoment(doc, now) {
-  if (!doc || doc.state === 'idle' || !doc.startsAt) return { part: 'idle' }
-  if (doc.state === 'done' || now >= ms(doc.endsAt)) return { part: 'done' }
-  const poses = doc.poses ?? []
-  for (let i = 0; i < poses.length; i++) {
-    const p = poses[i]
-    if (now < ms(p.poseAt)) return { part: i === 0 && now < ms(p.strutAt) ? 'intro' : 'strut', pose: i + 1 }
-    if (now < ms(p.holdUntil)) return { part: 'pose', pose: i + 1, hold: Math.ceil((ms(p.holdUntil) - now) / 1000) }
-    if (now < ms(p.judgeUntil)) return { part: 'judge', pose: i + 1, line: p.line }
-  }
-  return { part: 'done' }
-}
-
-// Boo's music runs ahead of her wall by the AirPlay delay (Jon, 27 Oct 2026:
-// in Act 4 Susan's MacBook Pro plays it on the Parlour HomePod, which sounds
-// about two seconds late). The wall starts and stops the music this much
-// early, so the scratch lands on STRIKE A POSE. `&airplay=<seconds>` on the
-// wall's address sets it (0 to 5, tuned by ear on the tech run); without it,
-// two seconds on the night's wall and none in practice.
-export const BOO_AIRPLAY_MS = 2000
-export function booLead(search, { practice = false } = {}) {
-  let v = null
-  try { v = new URLSearchParams(search ?? '').get('airplay') } catch { v = null }
-  const n = v === null || v.trim() === '' ? NaN : Number(v)
-  if (Number.isFinite(n) && n >= 0 && n <= 5) return Math.round(n * 1000)
-  return practice ? 0 : BOO_AIRPLAY_MS
-}
 
 // The cat a room's square code names (/play/?meet=granolia). Null when there is none.
 export const MEET_CATS = ['granolia', 'salem', 'zimothy', 'boo']

@@ -10,7 +10,7 @@ const NAMES = {
   study: ["Granolia's Lightbulb Moment", "She knows how to turn on the lights. It's on the tip of her tongue."],
   library: ['In Duplicate', 'Sir Irwin scattered his files. Match every copy. He bills by the pair.'],
   orangerie: ['Get Off My Lawn!', 'Red means go. Green means freeze. Yes, backwards.'],
-  entryway: ["Boo's Catwalk", "When the music stops, strike a pose. She's always judging."],
+  entryway: ["Miss Boo LaRue's Arcade", "Five little games. One coin each. She's always judging."], // since 5 Nov 2026 (Boo's Catwalk until then)
   drawing: ['Sir Irwin Needs a Hand', 'Three drawings open the door. He only has paws.'],
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { callMeet, callSalemReady, callSalemSlip, callSalemPassed, callBooDone } from '../firebase'
+import { callMeet, callSalemReady, callSalemSlip, callSalemPassed } from '../firebase'
 import { useDoc, useTick } from '../lib/hooks'
-import { ROOMS, freeForGames, waitingGames, salemColourAt, salemFlipAt, salemSlip, booMoment, ms, SALEM_GRACE_MS, SALEM_SHAKE } from '../lib/night'
+import { ROOMS, freeForGames, waitingGames, salemColourAt, salemFlipAt, salemSlip, ms, SALEM_GRACE_MS, SALEM_SHAKE } from '../lib/night'
 import { troubleLine } from '../lib/trouble'
 import { CatFace, HostLine } from './Cards'
 import { Questions } from './Windows'
@@ -10,9 +10,9 @@ import Spoken from './Spoken'
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9).
 // The phone shows where the group goes this round (sessions/{uid}.act4,
 // written by the server at every chime), then, once the group has scanned
-// the code on the wall, that room's game: Salem's Motion Game and Boo's poses
-// run on the phones; the light puzzle and the memory match run on the room's
-// own screen. Whenever the guest is not in a game room, a Parlour Game that
+// the code on the wall, that room's game: Salem's Motion Game runs on the
+// phones; the light puzzle, the memory match and Boo's arcade run on the
+// room's own screen. Whenever the guest is not in a game room, a Parlour Game that
 // is waiting on the phone can be played (§3: never in a game room).
 // Every word here is open copy; nothing sealed reaches a phone except the
 // group's own reward card, which the server deals.
@@ -29,14 +29,13 @@ export const SALEM_LINES = {
   cleared: "Huh. You lot can follow instructions. Here's what I know.",
   noSensor: "This phone can't feel a shake. Just watch.",
 }
-export const BOO_LINES = {
-  intro: 'Watch the wall. When the music stops, strike a pose.',
-}
 // No device names in front of the guests (Jon, 29 Oct 2026): the iPad on its
-// stand is "the Library's screen" (docs/room-screens.md).
+// stand is "the Library's screen" (docs/room-screens.md), and Boo's Mac with
+// the Stream Deck is "the screen" and "the deck" (the arcade, 5 Nov 2026).
 const ROOM_GAMES = {
   study: 'The game is on the wall.',
   library: 'The game is on the screen.',
+  entryway: 'The games are on the deck. Your clue comes to this phone too.',
 }
 
 export default function Act4({ step, session, nightId, uid, serverNow, notes }) {
@@ -89,7 +88,6 @@ export default function Act4({ step, session, nightId, uid, serverNow, notes }) 
 
 function RoomGame({ room, nightId, uid, serverNow, groupId }) {
   if (room === 'orangerie') return <SalemGame nightId={nightId} uid={uid} serverNow={serverNow} groupId={groupId} />
-  if (room === 'entryway') return <BooPoses nightId={nightId} serverNow={serverNow} groupId={groupId} />
   return <p><Spoken text={ROOM_GAMES[room] ?? ''} /></p>
 }
 
@@ -288,50 +286,4 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
 }
 
 // ---------------------------------------------------------------------------
-// Boo's catwalk (§9.7): the show is on the wall (?kiosk=boo); the phones
-// flash STRIKE A POSE with the five-second HOLD IT and Boo's verdict, all
-// from the server's schedule (public/boo). When the show is over, the first
-// phone to notice tells the server, and Boo pays. The practice
-// (?practice=boo) shows the same moments through BooMoments, and pays nobody.
-function BooPoses({ nightId, serverNow, groupId }) {
-  const view = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/boo` : null)
-  const doc = view.data
-  const told = useRef(false)
-  const mine = doc && doc.groupId === groupId
-  if (!mine) return <p className="gloss">Boo is finishing with the last lot.</p>
-  const over = () => {
-    if (doc.state !== 'show' || told.current) return
-    told.current = true
-    callBooDone({ nightId }).catch(() => { told.current = false })
-  }
-  return <BooMoments boo={doc} serverNow={serverNow} onOver={over} />
-}
 
-// The show's moments on a phone, from one record in the night's shape (see
-// lib/night.js booMoment). `onOver()` is called while the show is over.
-export function BooMoments({ boo, serverNow, onOver = null, doneText = "That's the show." }) {
-  useTick(250)
-  const now = serverNow()
-  const m = booMoment(boo, now)
-  useEffect(() => { if (m.part === 'done') onOver?.() })
-  if (m.part === 'idle' || m.part === 'intro') return <p><Spoken text={BOO_LINES.intro} /></p>
-  const of = boo?.poses?.length || 3
-  if (m.part === 'strut') return (
-    <div className="boo-phone">
-      <p className="boo-phone-say">♪ Strut! ♪</p>
-      <p className="gloss">Pose {m.pose} of {of}</p>
-    </div>
-  )
-  if (m.part === 'pose') return (
-    <div className="boo-pose" role="status" aria-live="assertive">
-      <p className="boo-strike">POSE!</p>
-      <p className="boo-hold">{m.hold}</p>
-    </div>
-  )
-  if (m.part === 'judge') return (
-    <div className="boo-phone">
-      <p className="boo-judge"><Spoken text={m.line} /></p>
-    </div>
-  )
-  return <p className="gloss">{doneText}</p>
-}

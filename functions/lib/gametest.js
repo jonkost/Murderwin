@@ -14,18 +14,10 @@
 //     done     Jon pressed Stop
 //     attempt never goes back to 0, not even when the practice is opened
 //     again: a phone that stayed on the page counts its reports by attempt.
-//   public_state/game_test_boo     Boo's Catwalk, on the wall and the phones
-//     { runId, state: idle | playing | done, startsAt,
-//       poses: [{ stopAt, holdUntil, judgedAt, strutAt, poseAt, judgeUntil, line }] x 3,
-//       endsAt, updatedAt }
-//     stopAt   the music stops: STRIKE A POSE (the real show's poseAt)
-//     holdUntil  HOLD IT until then
-//     judgedAt   Boo's verdict shows until then (the real show's judgeUntil)
-//     The show is laid out by the real game's own act4.booShow, so the
-//     timing is the real one, and each pose also carries the real show's
-//     field names: the phones and the wall read it with the same booMoment.
+//   (Boo's Catwalk practice, boo-start and boo-stop, went with the Catwalk, 5 Nov 2026:
+//   Miss Boo LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
 //
-//   salem-open, salem-stop, boo-start, boo-stop   the admin only
+//   salem-open, salem-stop                        the admin only
 //   salem-join { name }, clock                    any signed-in phone
 //   salem-ready, salem-slip { attempt, colour },
 //   salem-passed { attempt }                      a phone that joined
@@ -37,8 +29,7 @@
 // a room screen's calls are let in by it (access.js mayTouchNight).
 //
 // SEAL RULE: a practice never reads or writes nights/*, cases/* or sealed/*:
-// it never deals, never writes the clue ledger and never pays anyone. Boo's
-// verdicts come from the workshop's own copy (safe_content/ui_copy). A test
+// it never deals, never writes the clue ledger and never pays anyone. A test
 // night is always a rehearsal (createNight with forceRehearsal), and every
 // night-* command is refused while the party box is ticked or while the live
 // night is the party night or a dry run, so a test can never move a night
@@ -50,13 +41,12 @@
 
 import { randomInt, randomBytes } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
-import { NightError, createNight, readArea } from './night.js'
-import { labelled, ms } from './deal.js'
-import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, salemFlips, booShow } from './act4.js'
+import { NightError, createNight } from './night.js'
+import { ms } from './deal.js'
+import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, salemFlips } from './act4.js'
 import { hostCommand } from './run.js'
 
 export const SALEM_DOC = 'public_state/game_test_salem'
-export const BOO_DOC = 'public_state/game_test_boo'
 export const PLAYERS_MAX = 12
 export const NAME_MAX = 30
 // A phone that joined longer ago than this is left off when the practice is
@@ -64,11 +54,9 @@ export const NAME_MAX = 30
 // toward the twelve. Joining never drops anyone: a phone still on the page
 // would lose its place with nothing on its screen to say so.
 export const PLAYER_KEEP_MS = 3 * 60 * 60_000
-// Boo's practice show starts this long after Start the show is pressed.
-export const BOO_LEAD_MS = 3_000
 export const TEST_NIGHT_LABEL = 'Game test'
 
-export const ADMIN_COMMANDS = ['salem-open', 'salem-stop', 'boo-start', 'boo-stop', 'night-start', 'night-act', 'night-beat', 'night-parlour']
+export const ADMIN_COMMANDS = ['salem-open', 'salem-stop', 'night-start', 'night-act', 'night-beat', 'night-parlour']
 export const PLAYER_COMMANDS = ['salem-join', 'salem-ready', 'salem-slip', 'salem-passed', 'clock']
 export const COMMANDS = [...ADMIN_COMMANDS, ...PLAYER_COMMANDS]
 // The test night's buttons, and the host command each one is (run.js).
@@ -226,43 +214,6 @@ export async function salemPassed(db, { uid, attempt, now = Date.now() } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Boo's Catwalk practice: the real show's timing and Boo's verdicts (the
-// workshop's BOO JUDGE lines when Jon has written them), laid out from three
-// seconds after the press. Nothing is paid; no booDone is ever called for it.
-
-export function booPractice(startsAt, show) {
-  return {
-    state: 'playing',
-    startsAt: new Date(startsAt),
-    poses: show.poses.map(p => ({
-      stopAt: p.poseAt, holdUntil: p.holdUntil, judgedAt: p.judgeUntil,
-      strutAt: p.strutAt, poseAt: p.poseAt, judgeUntil: p.judgeUntil, line: p.line,
-    })),
-    endsAt: show.endsAt,
-  }
-}
-
-export async function booStart(db, { now = Date.now(), pick = randomInt } = {}) {
-  const startsAt = now + BOO_LEAD_MS
-  const show = booShow(startsAt, pick, labelled(await readArea(db, 'ui_copy')))
-  const runId = newRunId()
-  await db.doc(BOO_DOC).set({ runId, ...booPractice(startsAt, show), updatedAt: FieldValue.serverTimestamp() })
-  return { ok: true, runId }
-}
-
-export async function booStop(db) {
-  const ref = db.doc(BOO_DOC)
-  const snap = await ref.get()
-  if (!snap.exists) {
-    const runId = newRunId()
-    await ref.set({ runId, state: 'done', startsAt: null, poses: [], endsAt: null, updatedAt: FieldValue.serverTimestamp() })
-    return { ok: true, runId }
-  }
-  await ref.update({ state: 'done', updatedAt: FieldValue.serverTimestamp() })
-  return { ok: true, runId: snap.data().runId ?? null }
-}
-
-// ---------------------------------------------------------------------------
 // The test night. A party night is a night whose forceRehearsal is false (the
 // dealer's own rule, deal.js); a dry run carries dryRun. Either one, or the
 // party box, refuses every button here. A test night is one this tab
@@ -328,8 +279,6 @@ export async function gameTestRequest(db, { command, uid = null, isAdmin = false
     case 'salem-ready': return salemReady(db, { uid, now, pick })
     case 'salem-slip': return salemSlip(db, { uid, attempt, colour, now, pick })
     case 'salem-passed': return salemPassed(db, { uid, attempt, now })
-    case 'boo-start': return booStart(db, { now, pick })
-    case 'boo-stop': return booStop(db)
     case 'clock': return { ok: true, now }
     case 'night-start': return nightStart(db, { replace: replace === true })
     case 'night-act': return nightCommand(db, { command, arg: act, now })

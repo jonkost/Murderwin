@@ -7,7 +7,7 @@ import gameNames from '../../seed/game-names.json' with { type: 'json' }
 import {
   SECTIONS, SECTION_KEYS, DEVICES, tryWords, playUrl, queryOf, base64url, setOf, setParam, parlourSets,
   nightStrip, nightOff, actWords, BOX_TICKED, LIVE_IS_PARTY, LIVE_IS_REHEARSAL, ACT4_NEEDS_TWO, ROLE_CARD_FIRST, TICK_AGAIN, PARTY_DAY,
-  salemView, booView, dayWords, whenWords, stewardTask,
+  salemView, dayWords, whenWords, stewardTask,
   firstWords, gameTestCards, nextOrder, feedbackTask, chipOf, sentLine, openNotesText, FIRST_ORDER,
 } from '../src/lib/gameTest.js'
 import { MOMENT_KEYS, ownerOf, taskWhen } from '../src/lib/timeline.js'
@@ -23,14 +23,15 @@ const playSrc = p => readFileSync(join(here, '..', '..', 'play', 'src', p), 'utf
 const decode = s => JSON.parse(Buffer.from(s, 'base64url').toString('utf8'))
 const BASE = 'https://murderwin-at-sirwin-manor.web.app/play/'
 
-test('eight sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
-  // Miss Boo LaRue's Arcade (28 Oct 2026) sits beside Boo's Catwalk, under the Entryway's moment
-  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'boo', 'arcade', 'parlour', 'drawing', 'deduction'])
+test('seven sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
+  // Miss Boo LaRue's Arcade is the Entryway's game (on the night since 5 Nov 2026; Boo's Catwalk had its own section until then)
+  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'arcade', 'parlour', 'drawing', 'deduction'])
   const named = Object.fromEntries(gameNames.games.map(g => [g.id, g.name]))
+  assert.equal(named.entryway, "Miss Boo LaRue's Arcade")
   assert.deepEqual(SECTIONS.map(s => s.name), [
-    named.study, named.library, named.orangerie, named.entryway, 'Miss Boo LaRue’s Arcade', 'The Parlour Games', named.drawing, 'The deduction round',
+    named.study, named.library, named.orangerie, named.entryway, 'The Parlour Games', named.drawing, 'The deduction round',
   ])
-  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.eliminate'])
+  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.eliminate'])
   for (const s of SECTIONS) {
     assert.ok(MOMENT_KEYS.includes(s.moment), `${s.key}: ${s.moment} is a row on the Timeline`)
     assert.ok(s.steps.length >= 3 && s.steps.length <= 5, `${s.key}: 3 to 5 steps`)
@@ -53,7 +54,7 @@ test('every sample screen named here exists on the phones, and the practices and
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }
   const queries = SECTIONS.flatMap(s => s.tries.map(t => queryOf(t.params)))
-  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=boo&practice=1', '?practice=boo', '?kiosk=living', '?kiosk=bedroom', '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1']) {
+  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=pose&practice=1', '?kiosk=living', '?kiosk=bedroom', '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1']) {
     assert.ok(queries.includes(q), q)
   }
   // the drawing's previews, in the order the contract lists them; since 25 Oct 2026 (the cue list) the
@@ -87,19 +88,20 @@ test('the words Jon sees are plain: no engineer words, no long dashes', () => {
   assert.equal(tryWords('nope'), 'Try it somewhere else')
 })
 
-// 28 Oct 2026: the arcade is built to try, and the night still plays the
-// Catwalk until Jon answers the decision card entrywayGame.
-test('Miss Boo LaRue’s Arcade: right after Boo’s Catwalk, on its own page in Chrome, never a night, and not on the night yet', () => {
+// 28 Oct 2026: the arcade is built to try; 5 Nov 2026: it is the Entryway's
+// game on the night (Jon answered entrywayGame on 29 Oct), so its section is
+// the Entryway's, with Boo's camera beside it.
+test('Miss Boo LaRue’s Arcade: the Entryway’s section, on its own page in Chrome to practise, the night’s screen and the camera as samples', () => {
   const arcade = SECTIONS.find(s => s.key === 'arcade')
-  assert.equal(SECTION_KEYS.indexOf('arcade'), SECTION_KEYS.indexOf('boo') + 1, 'beside the Catwalk, which stays')
-  assert.deepEqual(arcade.devices, ['deck', 'projector'])
+  assert.equal(SECTION_KEYS.indexOf('arcade'), SECTION_KEYS.indexOf('salem') + 1, 'after the Orangerie, in the order of the rooms')
+  assert.deepEqual(arcade.devices, ['deck', 'ipadpro'])
   assert.deepEqual(arcade.tries.map(t => queryOf(t.params)), [
-    '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1', '?preview=kiosk-arcade-clue', '?preview=kiosk-arcade-third', '?preview=kiosk-arcade-farewell',
+    '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1', '?preview=kiosk-boo', '?preview=kiosk-rules-entryway', '?preview=kiosk-arcade-clue', '?preview=kiosk-arcade-third', '?preview=kiosk-arcade-farewell',
+    '?kiosk=pose&practice=1', '?preview=kiosk-pose',
   ])
   assert.ok(arcade.tries.every(t => !t.night && (t.key || t.params.preview)), 'no try follows a night, and each has a key for the list')
-  assert.match(arcade.where, /not on the night yet/)
-  assert.match(arcade.note, /not on the night yet/i)
-  assert.match(arcade.note, /entrywayGame/, 'the note names the question')
+  assert.equal(arcade.where, 'Act 4 · the Entryway')
+  assert.match(arcade.note, /no Connect button/, 'the night\'s screen has no setup words: the deck is connected from the practice page first')
   assert.match(arcade.steps.join(' '), /Google Chrome/, 'Safari has no way to the Stream Deck')
   assert.match(arcade.steps.join(' '), /Quit the Stream Deck app/)
   // 29 Oct 2026, the review: through a HomePod the sounds lag two seconds, and one arcade tab
@@ -257,14 +259,14 @@ test('the strip\'s words are the server\'s, word for word', () => {
 })
 
 test('Jenna\'s Needs more: fixed words only, never a note of their own', () => {
-  const boo = SECTIONS.find(s => s.key === 'boo')
+  const boo = SECTIONS.find(s => s.key === 'arcade')
   const now = new Date(2026, 9, 24, 15, 41).getTime()
   const card = stewardTask({ section: boo, now, order: 10009 })
   assert.equal(card.title, `Game test · ${boo.name}: Jenna says needs more`)
   assert.equal(card.steward, true)
   assert.equal(card.who, 'Claude Code')
   assert.equal(card.moment, 'act4.entryway')
-  assert.equal(card.test, 'boo')
+  assert.equal(card.test, 'arcade')
   assert.equal(card.order, 10009)
   assert.equal(card.tried, null)
   assert.ok(card.detail.startsWith('Jenna tried this game and says it needs more.'))
@@ -290,31 +292,6 @@ test('Get Off My Lawn!\'s practice in words: the round, who joined in order, the
   assert.equal(salemView({ state: 'playing', round: 1, slips: 2, lastSlip: 'green' }).slips, 'Slips this round: 2. The last one: someone moved on green.')
   assert.equal(salemView({ state: 'playing', round: 1, slips: 1, lastSlip: 'red' }).slips, 'Slips this round: 1. The last one: someone stopped shaking on red.')
   assert.equal(salemView({ state: 'idle', round: 9 }).line, 'Round 3 of 3. Waiting for someone to tap Ready.')
-})
-
-test('Boo\'s practice show in words, from the server\'s times', () => {
-  const t = 1_000_000
-  const show = {
-    state: 'playing', startsAt: new Date(t), endsAt: new Date(t + 100_000),
-    poses: [
-      { stopAt: new Date(t + 20_000), holdUntil: new Date(t + 25_000), judgedAt: new Date(t + 31_000) },
-      { stopAt: { toMillis: () => t + 45_000 }, holdUntil: { toMillis: () => t + 50_000 }, judgedAt: { toMillis: () => t + 56_000 } },
-      { stopAt: { seconds: (t + 70_000) / 1000 }, holdUntil: { seconds: (t + 75_000) / 1000 }, judgedAt: { seconds: (t + 81_000) / 1000 } },
-    ],
-  }
-  assert.equal(booView(undefined).line, '…')
-  assert.equal(booView(null).running, false)
-  assert.equal(booView({ state: 'idle' }).line, 'Ready for a show. Tap Start the show.')
-  assert.equal(booView({ ...show, state: 'done' }, t + 30_000).running, false)
-  assert.deepEqual(booView(show, t - 1000), { line: 'The show is about to start.', running: true })
-  assert.equal(booView(show, t + 5000).line, 'Boo is strutting.')
-  assert.equal(booView(show, t + 21_000).line, 'Pose 1 of 3: strike a pose and hold it.')
-  assert.equal(booView(show, t + 27_000).line, 'Pose 1 of 3: Boo is judging.')
-  assert.equal(booView(show, t + 40_000).line, 'Boo is strutting.')
-  assert.equal(booView(show, t + 46_000).line, 'Pose 2 of 3: strike a pose and hold it.')
-  assert.equal(booView(show, t + 80_000).line, 'Pose 3 of 3: Boo is judging.')
-  assert.equal(booView(show, t + 90_000).line, 'Boo is taking her bow.')
-  assert.deepEqual(booView(show, t + 100_000), { line: 'That’s the show. Tap Start the show to go again.', running: false })
 })
 
 test('dates in the house\'s words', () => {
@@ -411,7 +388,7 @@ test('a rail tab, the routes, one callable and only public reads', () => {
   assert.ok(api.includes("httpsCallable(functions, 'gameTest')"))
   const reads = [...api.matchAll(/doc\(db, ('[^']+'), ([^)]+)\)/g)].map(m => `${m[1]} ${m[2]}`)
   assert.deepEqual(reads.sort(), ["'meta' 'game_test'", "'meta' 'game_test'", "'nights' nightId", "'public_state' 'active'", "'public_state' id"].sort())
-  assert.ok(api.includes("watch('game_test_salem')") && api.includes("watch('game_test_boo')"))
+  assert.ok(api.includes("watch('game_test_salem')") && !api.includes('game_test_boo'), 'Salem\'s practice only: the Catwalk\'s went (5 Nov 2026)')
   const page = src('pages/GameTest.jsx')
   for (const s of [api, page, src('lib/gameTest.js'), src('components/KeyWord.jsx')]) {
     assert.ok(!/['"`/](sealed|cases)\b|private/.test(s.replace(/\/\/.*$/gm, '')), 'never a sealed, case or private path')
@@ -422,7 +399,7 @@ test('a rail tab, the routes, one callable and only public reads', () => {
   assert.ok(page.includes('addTask('), 'notes go through the workshop\'s own addTask')
   // the night buttons go through the callable only, never the host command
   assert.ok(!/hostCommand/.test(page + api))
-  for (const c of ['night-start', 'night-act', 'night-parlour', 'salem-open', 'salem-stop', 'boo-start', 'boo-stop']) {
+  for (const c of ['night-start', 'night-act', 'night-parlour', 'salem-open', 'salem-stop']) {
     assert.ok(page.includes(`'${c}'`), c)
     assert.ok(api.includes(`'${c}'`), `the pretend server answers ${c}`)
   }

@@ -7,7 +7,7 @@ import { hostCommand, player } from '../lib/run.js'
 import { FREE_TIME_TIPS, lightsProgressOf, lightsPath, ms } from '../lib/deal.js'
 import {
   ACT4_TEXT, DIRECTIONS, ROOMS, ROOM_KEYS, PARLOUR, roomFor, readRotation, act4Path, salemPath, booPath, memoryPath, parlourTip,
-  salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, booShow, BOO_POSES, BOO_JUDGING, ROUND_MS,
+  salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, ROUND_MS, ARCADE_THIRD_LINE, ARCADE_CLUES,
   addPairsBy, plusOne, markAt, PLACES_MAX,
 } from '../lib/act4.js'
 import { rehearsalCase } from '../lib/case.js'
@@ -155,14 +155,16 @@ test('G52 every room pays at the chime even if the group never finished; on a pa
         assert.equal(x.placeholder, false)
         assert.ok(x.bag.text && !/___|\[sense/.test(x.bag.text), `a filled bag hint (${x.room}: ${x.bag.text.length})`)
         assert.equal(x.catName.length > 0, true)
-        if (x.room === 'library' || x.room === 'entryway') {
+        if (x.room === 'library') {
           assert.ok(MOTIVES.some(mm => mm.n === x.cross), 'one wrong motive crossed off')
           assert.notEqual(x.cross, c.motive, 'never the real one (G51)')
           assert.ok(x.text.includes(MOTIVES.find(mm => mm.n === x.cross).rhyme), 'the cat names the rhyme')
         }
+        if (x.room === 'entryway') assert.equal(x.cross, undefined, 'the arcade crosses nothing off (Jon, 29 Oct 2026)')
       }
     }
-    assert.notEqual(c.solving.memory[g.id], c.solving.boo[g.id], 'never the same motive twice for one group (G51)')
+    assert.ok(MOTIVES.some(mm => mm.n === c.solving.memory[g.id]), 'one cross-off a group, the Library\'s (G51)')
+    assert.deepEqual(c.solving.boo ?? {}, {}, 'Boo\'s went with her Catwalk')
     for (const cat of ['granolia', 'zimothy', 'salem', 'boo']) assert.ok(c.bagClues.act4[g.id][cat], 'the case records what each bag hint named')
   }
   // everyone back in the Parlour
@@ -191,7 +193,7 @@ test('F28 a rehearsal: the rooms pay bracketed stand-ins for the cross-off and t
       assert.equal(x.placeholder, true)
       assert.equal(x.cross, undefined)
       assert.match(x.bag.text, /bag clue about the Ghost appears here\]$/)
-      if (x.room === 'library' || x.room === 'entryway') assert.match(x.text, /cross-off appears here/)
+      if (x.room === 'library') assert.match(x.text, /cross-off appears here/)
     }
   }
 })
@@ -247,28 +249,47 @@ test('Salem\'s Motion Game: red means go, green means freeze; a slip restarts th
   }
 })
 
-test('Boo\'s catwalk: the show is laid out with timestamps at the scan, three poses, five-second holds, a judging line each; Boo pays when it is over', async () => {
-  let k = 0
-  const show = booShow(1000, n => (k++ * 3) % n)
-  assert.equal(show.poses.length, BOO_POSES)
-  for (const p of show.poses) {
-    assert.equal(ms(p.holdUntil) - ms(p.poseAt), 5000)
-    assert.ok(BOO_JUDGING.includes(p.line))
-  }
-  assert.ok(ms(show.endsAt) - 1000 < ROUND_MS, 'the show fits in the round')
-  const { db, nightId, now } = await party(8)
+test('the arcade (5 Nov 2026, card 515): the scan opens the visit; the Mac asks for each player\'s clue, which reaches their phone at once; a trio\'s third gets Boo\'s line; the chime pays the rest and changes nothing for those dealt', async () => {
+  const { db, nightId, now } = await party(9, { partyNight: true })
   const rot = await intoRounds(db, nightId, now)
-  let r = 1
-  while (!db.store.get(booPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
   const doc = () => db.store.get(booPath(nightId))
-  const g = rot.groups.find(x => x.id === doc().groupId)
-  const uid = uidOf(db, nightId, g.members[0].key)
-  await player.meetCat(db, { nightId, uid, cat: 'boo', now })
-  assert.equal(doc().state, 'show')
-  assert.equal((await player.booDone(db, { nightId, now: now + 1000 })).notYet, true, 'not before the show is over')
-  await player.booDone(db, { nightId, now: ms(doc().endsAt) })
-  assert.equal(doc().state, 'done')
-  assert.ok(cardsOf(db, uid, 'clue').some(x => x.room === 'entryway'))
+  const groupOf = () => rot.groups.find(x => x.id === doc().groupId)
+  // walk the rounds to one with a trio in the Entryway (nine guests: at least one trio)
+  let r = 1
+  while (!(groupOf()?.members.length === 3) && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const g = groupOf()
+  assert.equal(g.members.length, 3, 'a trio in the Entryway')
+  const uidAt = i => uidOf(db, nightId, g.members[i].key)
+  assert.equal(doc().state, 'idle')
+  assert.equal(ms(doc().slotEndsAt), ms(db.store.get(act4Path(nightId)).roundEndsAt), 'the round\'s end, for the chime')
+  await assert.rejects(player.arcadeClue(db, { nightId, groupId: g.id, place: 0, now }), /not expecting/, 'not before the scan')
+  await player.meetCat(db, { nightId, uid: uidAt(0), cat: 'boo', now })
+  assert.equal(doc().state, 'visit')
+  assert.ok(ms(doc().startsAt) > 0)
+  const first = await player.arcadeClue(db, { nightId, groupId: g.id, place: 0, now })
+  assert.deepEqual([first.dealt, first.third, first.placeholder], [true, false, false])
+  assert.match(first.text, /scream/, 'about the one who screamed: the Ghost')
+  const card = cardsOf(db, uidAt(0), 'clue').find(x => x.room === 'entryway')
+  assert.equal(card.bag.text, first.text, 'the same words on the phone')
+  assert.equal(card.text, 'You amused me, darling. Keep it.')
+  assert.equal(card.cross, undefined, 'no motive crossed off (Jon, 29 Oct 2026)')
+  assert.equal(cardsOf(db, uidAt(1), 'clue').some(x => x.room === 'entryway'), false, 'the second player waits for their own moment')
+  assert.equal((await player.arcadeClue(db, { nightId, groupId: g.id, place: 0, now })).dealt, false, 'asked twice, dealt once')
+  const third = await player.arcadeClue(db, { nightId, groupId: g.id, place: 2, now })
+  assert.deepEqual([third.dealt, third.third, third.text], [true, true, ARCADE_THIRD_LINE])
+  await assert.rejects(player.arcadeClue(db, { nightId, groupId: 'g9', place: 0, now }), /not expecting/)
+  await assert.rejects(player.arcadeClue(db, { nightId, groupId: g.id, place: 3, now }), /Which player/)
+  // the chime: the rest of the group is paid; a card already dealt stands
+  await host(db, nightId, 'next', now)
+  for (const [i, m] of g.members.entries()) {
+    const cards = cardsOf(db, uidOf(db, nightId, m.key), 'clue').filter(x => x.room === 'entryway')
+    assert.equal(cards.length, 1, `one card for member ${i + 1}`)
+    if (i < ARCADE_CLUES) { assert.equal(cards[0].bag.text, first.text, 'the group\'s one bag hint'); assert.equal(cards[0].third, undefined) }
+    else { assert.equal(cards[0].third, true); assert.equal(cards[0].bag, undefined); assert.equal(cards[0].text, ARCADE_THIRD_LINE) }
+  }
+  assert.equal(cardsOf(db, uidAt(0), 'clue').find(x => x.room === 'entryway').text, 'You amused me, darling. Keep it.', 'dealt at the clue moment, so never the capped line')
+  assert.match(cardsOf(db, uidAt(1), 'clue').find(x => x.room === 'entryway').text, /Time, darling/, 'the second, caught by the chime, gets the capped line')
+  assert.equal(doc().state, 'idle', 'the next group\'s record')
 })
 
 test('G25b and F08 Act 4 Parlour Games wait on the phone: never on the night doc, played when free, and the rest answered at random when Act 4 ends', async () => {

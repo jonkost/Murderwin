@@ -96,19 +96,19 @@ export const DEVICE_ROOMS = [
   },
   {
     key: 'entryway', room: 'The Entryway',
-    why: 'Boo’s room, the front hall: her code in Act 2 and Boo’s Catwalk in Act 4, projected on the triangle wall above the Parlour opening, with her camera at the end of the catwalk.',
+    why: 'Boo’s room, the front hall: her code in Act 2 and Miss Boo LaRue’s Arcade in Act 4 on Susan’s MacBook Pro and the Stream Deck + XL (since 5 Nov 2026; Boo’s Catwalk on the projector before), with her camera facing the group at the deck.',
     devices: [
       {
-        key: 'boo', name: 'Boo’s wall', machine: 'Susan’s work MacBook Pro and the projector, on the upstairs landing, all night', kiosk: 'boo',
-        what: 'On the triangle wall from Act 1 to The End: its loop (Sir Irwin’s portrait and Boo walking), Boo’s code during the Act 2 cat visits, Boo’s Catwalk in Act 4 (Boo struts, the music stops, the group strikes a pose, and she judges it; her rules card between groups), its loop again, black at The End. The MacBook never moves. The brain switches the projector’s plug off for the blackout and from the drawing’s intro to the end of Act 6; on again when the power returns and for the ballot.',
-        start: ['Plug it into the projector with the short HDMI cable and aim at the triangle wall. Sleep off, lid open.', 'Open the address in a browser, full screen, and tap once to wake it, so the music can play.'],
-        alive: 'Its loop, or Boo and a waiting line, on the wall.',
-        note: 'Try on the hardware evening: when the projector’s plug comes back on, the full-screen browser must come back on the projector, not on the MacBook’s own screen.',
+        key: 'boo', name: 'Boo’s screen', machine: 'Susan’s work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night', kiosk: 'boo',
+        what: 'From Act 1 to The End: its loop (Sir Irwin’s portrait and Boo walking), Boo’s code during the Act 2 cat visits, Miss Boo LaRue’s Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the Stream Deck, each of the first two players gets the clue about the Ghost on the screen and their phone, a trio’s third gets Boo’s line, and the chime ends it), its loop again, black at The End. The MacBook never moves.',
+        start: ['In Google Chrome (Safari cannot reach the Stream Deck), with the Stream Deck app quit and the Stream Deck + XL plugged in. Sleep off, lid open, the sound on the Mac’s own speakers.', 'Before the guests arrive, open the arcade’s practice page from the Game test tab in the same browser and tap Connect the Stream Deck once: the night’s screen has no Connect button and remembers the deck.', 'Then open this address, full screen, and tap once to wake it, so the games can make their sounds.'],
+        alive: 'Its loop, or Boo’s rules card with a waiting line, on the screen.',
+        note: 'With no Stream Deck the deck is drawn on the screen and the mouse and the keyboard play the games: the clues and the chime come the same.',
       },
       {
-        key: 'pose', name: 'Boo’s camera (nice to have)', machine: 'Jenna’s iPad Pro, on its stand at the end of the catwalk, facing the group, Act 4 only', kiosk: 'pose',
-        what: 'Shows the group to itself like a mirror and takes one photo of each group’s last pose for the end credits. Jenna is at the house to pack the bags and never plays, so her iPad is free all night. Without it the catwalk runs the same and the credits have no photos.',
-        start: ['Before Start Act 4, stand it at the end of the catwalk facing where the group poses.', 'Open the address in Safari, full screen, and tap Turn on the camera. Allow the camera when the iPad asks.'],
+        key: 'pose', name: 'Boo’s camera (nice to have)', machine: 'Jenna’s iPad Pro, on its stand in the Entryway, facing the group at the deck, Act 4 only', kiosk: 'pose',
+        what: 'Shows the group to itself like a mirror and takes one photo of each group a minute into its visit to the arcade, for the end credits. Jenna is at the house to pack the bags and never plays, so her iPad is free all night. Without it the arcade runs the same and the credits have no photos.',
+        start: ['Before Start Act 4, stand it facing where the group stands at the Stream Deck.', 'Open the address in Safari, full screen, and tap Turn on the camera. Allow the camera when the iPad asks.'],
         alive: 'The room on the screen, like a mirror, and a waiting line.',
       },
     ],
@@ -163,7 +163,7 @@ export const DEVICE_ROOMS = [
         start: ['Open the address. Play again starts fresh boards.'],
       },
       // 28 Oct 2026: the arcade on its own, like the memory match. It has a
-      // query, so Boo's wall stays the one boo screen of the night.
+      // query, so Boo's screen stays the one boo screen of the night.
       {
         key: 'arcadeplay', name: 'Miss Boo LaRue’s Arcade, just for fun', machine: 'A Mac with Google Chrome and the Stream Deck + XL, any day', kiosk: 'boo', query: 'play=1',
         what: 'Boo’s five little games on the Stream Deck + XL, with Boo on the Mac’s screen: free play, no case, no clues, nothing sent. Try a group’s visit, at the bottom of the page, tries the turns, the five tokens each, the clue after each player’s fifth game and the chime.',
@@ -175,7 +175,7 @@ export const DEVICE_ROOMS = [
           'No Stream Deck? The deck drawn on the screen plays the same games with the mouse or the keyboard.',
         ],
         alive: 'Boo and the deck on the screen. Once the Stream Deck is connected, the Mac’s screen becomes the scoreboard (Boo, the points, the time) and the games are on the keys.',
-        note: 'Not on the night yet: you chose it for the Entryway on 29 Oct (the question entrywayGame), for a clue about the Ghost, and it goes on the night with the card The arcade on the night. Until then the night still runs Boo’s Catwalk.',
+        note: 'The same arcade runs on the night on Boo’s screen above, for the group that scans in, with the house’s clue and the chime (5 Nov 2026). This page is for practice and for fun.',
         tech: 'play/src/main.jsx sends ?kiosk=boo&play=1 to play/src/screens/Arcade.jsx (BooArcade) before the kiosks: no sign-in, no presence, no night. &visit=1 is the practice visit. WebHID through @elgato-stream-deck/webhid, in Chrome or Edge on https or localhost only; one arcade tab holds the deck at a time (the Web Lock arcade-deck). docs/boo-arcade.md.',
       },
     ],
@@ -191,7 +191,7 @@ export const SWITCH_ON = [
   'The brain: network cable in, sleep off, then double-click Start the brain on its desktop. When the night begins, the bulb outside the bedroom turns green for the welcome; it goes out for the blackout and comes back red.',
   'The party box, then your phone, before any guest arrives. On the Game night page, tick This is the party night. Then open the game on your phone, tap Host? Start the night and type your name. No red REHEARSAL band means the box worked. Until a night is live, every phone that opens the game shows that button.',
   'The study: on the M1 Air, quit the Elgato app and double-click Start the study on its desktop. Once its window says the station is up, minimise the window.',
-  'The screens: the Parlour TV, the study screen, the iPad Pro in the Library with Zimothy, Susan’s MacBook Pro by the projector on the landing, and the brain’s own browser facing the Orangerie table. Open each address below, full screen, and tap once to wake it. The iPad Pro moves three times in the night: to the Orangerie for supper, back to the Library before Start Act 4, into the bedroom after Act 4. Jenna’s iPad Pro, Boo’s camera, comes out before Start Act 4.',
+  'The screens: the Parlour TV, the study screen, the iPad Pro in the Library with Zimothy, Susan’s MacBook Pro in the Entryway with the Stream Deck + XL, and the brain’s own browser facing the Orangerie table. Open each address below, full screen, and tap once to wake it. The iPad Pro moves three times in the night: to the Orangerie for supper, back to the Library before Start Act 4, into the bedroom after Act 4. Jenna’s iPad Pro, Boo’s camera, comes out before Start Act 4.',
   'The rooms: the four room codes on the walls (none in the Parlour), the paper roll and markers in the Library with the iPad Pro’s small stand, the Orangerie table set. Jenna packs the bags where nobody who plays can see.',
   'The guests: they scan the square code at the door, type their name and tap Allow. Watch the green dots fill in on your Host tab.',
 ]

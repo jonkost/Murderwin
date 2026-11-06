@@ -110,8 +110,8 @@ test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass
   // twelve Parlour Games a night, planned five, five and two in Acts 2, 4 and 6, every phone answering
   assert.match(line(2), /5 Parlour Games, 40 answers/)
   // four groups walk the four rooms; every room pays every group (G47, G52); Act 4's games wait on the phones
-  assert.match(line(4), /4 groups, 4 rounds, 32 room rewards, \d+ through the study, \d+ memory matches cleared, \d+ Salem games cleared, 4 catwalks, [1-5] waiting Parlour Games, \d+ played/)
-  assert.match(line(5), /8 motives crossed off by the Library and Boo/, 'every group crossed two off by the end of Act 4')
+  assert.match(line(4), /4 groups, 4 rounds, 32 room rewards, \d+ through the study, \d+ memory matches cleared, \d+ Salem games cleared, 4 arcade visits, [1-5] waiting Parlour Games, \d+ played/)
+  assert.match(line(5), /4 motives crossed off by the Library/, 'every group crossed one off by the end of Act 4: the Library\'s (Boo\'s went with her Catwalk, 29 Oct 2026)')
   // the Act 2 rooms (F20, F21, F24) and the motive funnel (G32), as pass or fail and counts
   assert.ok(lines.some(l => /^Act 2 rooms: 32 visits in \d+ waves; one guest at a cat at a time \(F20\) PASS; every phone told where to go \(F21\) PASS; supper on its own \(F24\) PASS$/.test(l)))
   assert.ok(lines.some(l => /^Motive funnel: PASS, \d+ left after Sir Irwin named [1-5]$/.test(l)))

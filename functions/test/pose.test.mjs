@@ -5,14 +5,15 @@ import { NightError } from '../lib/night.js'
 import { savePose, posesFor, validPhoto, posePath, fromPoseCamera, POSE_MAX_CHARS } from '../lib/pose.js'
 import { finaleDoc } from '../lib/finale.js'
 
-// The pose photo (card 450): the Entryway iPad's photo of each group's last
-// pose, for the end credits. A photo is a souvenir, never a clue; nothing
+// The pose photo (card 450): the Entryway iPad's photo of each group at the
+// arcade (since 5 Nov 2026; the Catwalk's last pose before), for the end
+// credits. A photo is a souvenir, never a clue; nothing
 // here is sealed. The "photos" are a few bytes of base64, not pictures.
 
 const PHOTO = `data:image/jpeg;base64,${'A'.repeat(400)}`
 const N = 'n1'
 
-function world({ booGroup = 'g2', state = 'show' } = {}) {
+function world({ booGroup = 'g2', state = 'visit' } = {}) {
   const db = new FakeFirestore()
   db.store.set(`nights/${N}`, { nightId: N, roster: {} })
   db.store.set(`nights/${N}/private/deck`, { uids: {} })
@@ -34,25 +35,23 @@ test('a photo is a small JPEG as a data URL, and nothing else', () => {
   }
 })
 
-test('the photo is kept for the group Boo is judging, with the group\'s names', async () => {
+test('the photo is kept for the group at the arcade, with the group\'s names', async () => {
   const db = world()
   assert.deepEqual(await savePose(db, { nightId: N, groupId: 'g2', image: PHOTO, now: 5 }), { ok: true })
   const doc = db.store.get(posePath(N, 'g2'))
   assert.equal(doc.image, PHOTO)
   assert.deepEqual(doc.names, ['Pat', 'Lee', 'Ana'])
-  // the last pose again (a second shot) replaces it
+  // a second shot replaces it
   await savePose(db, { nightId: N, groupId: 'g2', image: PHOTO.replace(/A$/, 'B'), now: 6 })
   assert.ok(db.store.get(posePath(N, 'g2')).image.endsWith('B'))
 })
 
-test('never for another group, an idle runway, a bad photo or a strange group id', async () => {
+test('never for another group, between groups, a bad photo or a strange group id', async () => {
   await refused(savePose(world(), { nightId: N, groupId: 'g1', image: PHOTO }), 'closed')
   await refused(savePose(world({ state: 'idle' }), { nightId: N, groupId: 'g2', image: PHOTO }), 'closed')
+  await refused(savePose(world({ state: 'show' }), { nightId: N, groupId: 'g2', image: PHOTO }), 'closed') // the Catwalk's old state is nobody's now
   await refused(savePose(world(), { nightId: N, groupId: 'g2', image: 'nope' }), 'invalid')
   await refused(savePose(world(), { nightId: N, groupId: '../boo', image: PHOTO }), 'invalid')
-  const db = world({ state: 'done' })
-  await savePose(db, { nightId: N, groupId: 'g2', image: PHOTO })
-  assert.ok(db.store.get(posePath(N, 'g2')), 'just after the show is still the show')
 })
 
 test('the end credits list the groups that have a photo, with their names, never the photo itself', async () => {

@@ -5,7 +5,7 @@ import {
   ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, SCORE_KEYS, STRIP_WIDTH,
   TABLE_ENDS, TABLE_WAYS, tableEndCol, tableStartCol,
   TOKENS, MAX_PLAYERS, CLUE_AFTER_GAMES, ROUND_MS, FREE_GAME_MS, GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS,
-  STAND_IN_CLUE, CLUE_NOTE, THIRD_LINE, FAREWELL_LINE, BOO_LINES,
+  STAND_IN_CLUE, CLUE_NOTE, CLUE_WAIT, THIRD_LINE, FAREWELL_LINE, BOO_LINES, arcadeClueText, arcadeRoundEnds,
   GAMES, KNOCK_OBJECTS, PETS, FRIEND_NAMES, TAIL_FRIENDS, FUR_PAIRS, MENU_FACES, GAME_FACES, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf, MARK_LABELS,
   newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
   HIT_MS, MISS_MS, STRIKES_OUT, STRIKE_WORDS_MS, DIAL_MAX_KEYS,
@@ -3456,6 +3456,7 @@ test('G56 every word the arcade can show passes F09 and names no device, the res
     assert.ok(!/\b(motives?|famil(y|ies)|rooms?|bags?|senses?|objects?|ghost|murder\w*|clues?|points?|score|dial|key|press|strikes?)\b/i.test(line), `no rule or case word: ${line}`)
     assert.ok(!/\b(meow|miaow|mew|purr\w*|hiss\w*)\b/i.test(line), `no cat sound: ${line}`)
     assert.ok(!line.includes('Ew. Do I know you?'))
+    if (line === THIRD_LINE) continue // Jon's words for a trio's third player: the house deals the same line to their phone (functions/lib/act4.js ARCADE_THIRD_LINE, 5 Nov 2026)
     for (const text of echoes) assert.ok(!text.includes(line), `not an echo of another Boo line: ${line}`)
   }
   assert.ok(boo.has(THIRD_LINE) && boo.has(FAREWELL_LINE))
@@ -3582,8 +3583,8 @@ test('L09 the page: one 16 ms loop, stopped when it goes; the deck only through 
   // the sounds
   assert.ok(!/AudioContext/.test(page), 'no AudioContext of its own')
   assert.match(page, /const ctx = wakeAudio\(\)\s*for \(const name of events\) sfx\(ctx, name\)/)
-  assert.match(page, /<RehearsalBand on=\{live && visit\} label="PRACTICE" \/>/)
-  assert.match(page, /\{live \? <Wake \/> : null\}/, 'the wake corner, never on a sample')
+  assert.match(page, /<RehearsalBand on=\{live && visit && !night\} label="PRACTICE" \/>/) // on the night the kiosk's own band shows (5 Nov 2026)
+  assert.match(page, /\{live && !night \? <Wake \/> : null\}/, 'the wake corner, never on a sample, and on the night the kiosk keeps it (5 Nov 2026)')
   assert.ok(!/localStorage|sessionStorage|indexedDB|fetch\(/.test(page), 'it keeps nothing and sends nothing')
   for (const words of Object.values({
     tab: 'The Stream Deck went to another arcade tab. Press Connect to bring it back here.',
@@ -3645,7 +3646,7 @@ test('G54 Back at the top of the page (Jon, 29 Oct 2026: "on the pratice page I 
   assert.ok(exitable, 'the stages a game can be left from')
   assert.deepEqual(JSON.parse(exitable[1].replace(/'/g, '"')), ['ready', 'count', 'play'])
   assert.match(page, /const exiting = live && !setup && screen && EXITABLE\.includes\(stage\) \? 'Leave this game' : null/)
-  assert.match(page, /const leaving = !live \|\| setup \|\| !screen \? null : visit \? 'Back to free play' : stage === 'result' \? 'Back to the games' : null/)
+  assert.match(page, /const leaving = !live \|\| night \|\| setup \|\| !screen \? null : visit \? 'Back to free play' : stage === 'result' \? 'Back to the games' : null/)
   assert.match(page, /\{exiting \? <button type="button" className="arcade-back" onMouseDown=\{noFocus\} onClick=\{exit\}>\{exiting\}<\/button> : null\}/)
   assert.match(page, /\{leaving \? <button type="button" className="arcade-back" onMouseDown=\{noFocus\} onClick=\{leave\}>\{leaving\}<\/button> : null\}/)
   // Escape: Back on the how-to, Leave this game while a game counts down or runs (in a visit too), Back to the games on a free-play result
@@ -3762,5 +3763,40 @@ test('G54 the page starts every arcade and every deck with no old pops, and the 
   // made smaller at the press, it would move Connect or Try a group's visit out from under the pointer
   assert.match(page, /const wake = e => \{ heardRef\.current = true; wakeAudio\(\); if \(e\.type !== 'pointerdown'\) setHeard\(true\) \}/)
   assert.match(page, /for \(const type of \['pointerdown', 'click', 'keydown'\]\) window\.addEventListener\(type, wake, true\)/)
-  assert.match(page, /<footer className=\{`arcade-foot\$\{live && !heard \? ' waking' : ''\}`\}>/)
+  assert.match(page, /<footer className=\{`arcade-foot\$\{live && !heard && !night \? ' waking' : ''\}`\}>/)
+})
+
+// ---- the night's visit (card 515, 5 Nov 2026) ----
+
+test('G55 on the night: the clue is the house\'s, shown once it comes, the chime follows the house\'s clock, and the free play after the farewell is still the night\'s', () => {
+  const a = { ...arcadeSample('clue', 0), night: true, clues: {} }
+  let v = arcadeView(a, 0).screen
+  assert.equal(v.clue, CLUE_WAIT, 'until the house answers, Boo asks for a moment')
+  assert.equal(v.note, null, 'no word of practice in front of the guests')
+  const told = arcadeClueText(a, 0, 'Something about the one who screamed.')
+  assert.equal(arcadeView(told, 0).screen.clue, 'Something about the one who screamed.')
+  assert.equal(arcadeView(told, 0).screen.note, null)
+  assert.equal(arcadeView(arcadeClueText(told, 0, null), 0).screen.clue, CLUE_WAIT, 'cleared, it waits again')
+  assert.deepEqual(a.clues, {}, 'the one handed in is untouched')
+  // in practice the stand-in and its note, as before
+  const p = arcadeView(arcadeSample('clue', 0), 0).screen
+  assert.equal(p.clue, STAND_IN_CLUE)
+  assert.equal(p.note, CLUE_NOTE)
+  // a night's visit: the house's clock sets the chime, and a pause can move it
+  const n = newArcade({ mode: 'visit', players: ['Jon', 'Susan'], seed: 7, now: 0, roundMs: 300_000, night: true })
+  assert.equal(n.night, true)
+  assert.equal(n.roundEndsAt, 300_000)
+  const later = arcadeRoundEnds(n, 420_000)
+  assert.equal(later.roundEndsAt, 420_000)
+  assert.equal(n.roundEndsAt, 300_000, 'the one handed in is untouched')
+  assert.equal(arcadeStep(later, 300_001).stage, 'menu', 'no chime at the old end')
+  const rung = arcadeStep(later, 420_000)
+  assert.equal(rung.stage, 'farewell')
+  assert.equal(arcadeRoundEnds(rung, 500_000).roundEndsAt, rung.roundEndsAt, 'once the chime has rung, nothing moves it')
+  const after = arcadeStep(rung, 420_000 + FAREWELL_MS)
+  assert.equal(after.stage, 'home')
+  assert.equal(after.mode, 'free')
+  assert.equal(after.night, true, 'the free play after the farewell is still the night\'s: no practice words')
+  assert.equal(arcadeRoundEnds(after, 900_000).roundEndsAt, after.roundEndsAt, 'free play has no chime to move')
+  assert.equal(newArcade({ mode: 'free', seed: 1, now: 0 }).night, false)
 })

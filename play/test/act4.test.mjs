@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, booMoment, booLead, BOO_AIRPLAY_MS, ROOMS, lightsStep } from '../src/lib/night.js'
+import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, ROOMS, lightsStep } from '../src/lib/night.js'
 import { promptShown, standaloneBoards, turnNames, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips } from '../src/lib/rooms.js'
 import news from '../../seed/woof-news.json' with { type: 'json' }
 import { askMotion, unlockSound, keepAwake, PERMISSION_LINES } from '../src/lib/permissions.js'
@@ -42,21 +42,6 @@ test('Salem\'s colour at a moment: the last flip whose time has come; none unles
   assert.equal(salemColourAt(doc, 5000), 'red')
   assert.equal(salemFlipAt(doc, 5000), 4000)
   assert.equal(salemColourAt({ ...doc, state: 'passed' }, 5000), null)
-})
-
-test('Boo\'s show at a moment: intro, strut, pose with a hold count, judge, done', () => {
-  const poses = [
-    { strutAt: 9000, poseAt: 20000, holdUntil: 25000, judgeUntil: 31000, line: 'Bold. Wrong, but bold.' },
-    { strutAt: 31000, poseAt: 40000, holdUntil: 45000, judgeUntil: 51000, line: 'Fine. Fine! You may stay.' },
-  ]
-  const doc = { state: 'show', startsAt: 1, poses, endsAt: 51000 }
-  assert.equal(booMoment(doc, 5000).part, 'intro')
-  assert.deepEqual(booMoment(doc, 12000), { part: 'strut', pose: 1 })
-  assert.deepEqual(booMoment(doc, 21500), { part: 'pose', pose: 1, hold: 4 })
-  assert.equal(booMoment(doc, 26000).line, 'Bold. Wrong, but bold.')
-  assert.equal(booMoment(doc, 35000).part, 'strut')
-  assert.equal(booMoment(doc, 52000).part, 'done')
-  assert.equal(booMoment({ state: 'idle' }, 0).part, 'idle')
 })
 
 test('the Parlour TV turns Sir Irwin\'s prompts on the server\'s clock, in the order it was given', () => {
@@ -189,22 +174,6 @@ test('F26 every colour change in Salem\'s game reaches every phone in the group 
 // the music ahead of itself by the AirPlay delay, so the scratch lands on
 // STRIKE A POSE. Two seconds on the night's wall, none in practice;
 // &airplay=<seconds> sets it, 0 to 5.
-test('Boo\'s music leads her wall by the AirPlay delay: two seconds on the night, none in practice, &airplay= sets it', () => {
-  assert.equal(BOO_AIRPLAY_MS, 2000)
-  assert.equal(booLead('?kiosk=boo'), 2000)
-  assert.equal(booLead('?kiosk=boo&practice=1', { practice: true }), 0)
-  assert.equal(booLead('?kiosk=boo&airplay=1.5'), 1500)
-  assert.equal(booLead('?kiosk=boo&practice=1&airplay=2', { practice: true }), 2000)
-  assert.equal(booLead('?kiosk=boo&airplay=0'), 0, 'the Mac\'s own speakers')
-  for (const bad of ['9', '-1', 'abc', '']) assert.equal(booLead(`?kiosk=boo&airplay=${bad}`), 2000, bad)
-  // with the lead, the room hears the stop two seconds before the wall flashes, so it lands on the flash
-  const t = 1_000_000
-  const show = { state: 'show', startsAt: t, endsAt: t + 40_000, poses: [{ strutAt: t + 9000, poseAt: t + 17_000, holdUntil: t + 22_000, judgeUntil: t + 28_000, line: 'x' }] }
-  assert.equal(booMoment(show, t + 14_500 + 2000).part, 'strut', 'two and a half seconds before the flash the music still plays')
-  assert.equal(booMoment(show, t + 15_000).part, 'strut', 'two seconds before the flash the wall still struts')
-  assert.equal(booMoment(show, t + 15_000 + 2000).part, 'pose', 'and the music stops, to be heard on the flash')
-})
-
 test('the memory match takes turns: the group by its own names, nobody known and no turns', () => {
   const rotation = { groups: [{ id: 'g1', members: [{ name: 'Ann', characterName: 'Lady A' }, { name: '', characterName: 'Lord B' }, { name: 'Cy' }] }, { id: 'g2', members: [{ name: 'Di' }] }] }
   assert.deepEqual(turnNames(rotation, 'g1'), ['Ann', 'Lord B', 'Cy'])

@@ -412,6 +412,7 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 //     a live station stops its game there, keeps its own fifteen-minute clock
 //     from the first touch, and freezes both itself by watching this night's
 //     phase, station/lib/follow.js)
+//   nights/{id}/public/boo: slotEndsAt (the round's end again: the arcade's Mac rings its chime there)
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
 //     victimAt, and cardAt.<stage> (when the TV may show a name card)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
@@ -419,6 +420,7 @@ export const PAUSE_SHIFTED = {
   night: ['window.opensAt', 'window.closesAt', 'reveal.at'],
   'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
+  'public/boo': ['slotEndsAt'], // the arcade's chime, the round's end (act4.js booIdle, 5 Nov 2026)
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
   'public/act4': ['warnEndsAt', 'lockEndsAt', 'roundStartsAt', 'roundEndsAt'], // Act 4's clock (act4.js)

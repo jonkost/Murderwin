@@ -8,7 +8,7 @@
 //   The Study       Granolia   the light puzzle (station/)        the Ghost's trace + a bag hint
 //   The Library     Zimothy    the memory match, three rounds      one wrong motive crossed off + a bag hint
 //   The Orangerie   Salem      Salem's Motion Game                 a bag hint, maybe backwards
-//   The Entryway    Boo        Boo's catwalk, three poses          one wrong motive crossed off + a bag hint
+//   The Entryway    Boo        Miss Boo LaRue's Arcade (5 Nov 2026) a bag hint about the Ghost, no cross-off
 //
 // How it starts (the beats in seed/night.json, Act 4):
 //   warn    Jon presses Start Act 4: every phone gets a two-minute warning.
@@ -32,7 +32,7 @@
 //   nights/{id}/public/rotation { groups, order, rooms, rounds, studyOrder, finished }
 //   nights/{id}/public/memory  the Library's boards: traces only, all fourteen as art
 //   nights/{id}/public/salem   Salem's game: the schedule of colours
-//   nights/{id}/public/boo     Boo's catwalk: the schedule of poses
+//   nights/{id}/public/boo     the Entryway: which group is at the arcade, and the round's end
 // Private: nights/{id}/private/act4 { paid: { 'gid-room': { outcome, at } }, arrived: { 'gid-room': at } }.
 // Each phone's own step: sessions/{uid}.act4 { round, room, title, text, arrive, paid, here, at }.
 //
@@ -104,10 +104,15 @@ export const REWARD_LINES = {
   study: { done: 'Granolia remembers one more thing.', capped: 'Granolia remembers one more thing.' },
   library: { done: 'Order. Restored. Strike [RHYME] from your list; it was not that. Invoice to follow.', capped: 'Time, and my patience, are billable. Leave the files. Here is what you have earned anyway: strike [RHYME] from your list; it was not that.' },
   orangerie: { done: "Huh. You lot can follow instructions. Backwards ones, anyway. Here's what I know.", capped: "Time's up. The sprinklers are on a timer. Here's what I know anyway, since you tried." },
-  entryway: { done: "Since you asked so nicely with your faces: strike [RHYME] off your list. It wasn't that. I was there. It was tedious.", capped: "Time, darling. Keep the pose. Here's your prize anyway: strike [RHYME] off your list. It wasn't that." },
+  // the arcade (5 Nov 2026, card 515): no cross-off; the bag hint about the Ghost is the prize, and a trio's
+  // third player gets Boo's line instead (Jon's words, 28 Oct 2026)
+  entryway: { done: 'You amused me, darling. Keep it.', capped: "Time, darling. Here's your prize anyway." },
 }
+export const ARCADE_THIRD_LINE = "Didn't I give you enough? Now be off! I'm done playing games." // play/src/lib/arcade.js THIRD_LINE; a test keeps them equal
+// How many of a group get a clue at the arcade: the first two in the group's order; a trio's third gets the line
+export const ARCADE_CLUES = 2
 // On a rehearsal night the cross-off is a stand-in too (Jon, 23 Oct 2026).
-export function crossStandIn(room) { return `[${room === 'library' ? 'Zimothy' : 'Boo'}'s cross-off appears here: one wrong motive]` }
+export function crossStandIn() { return "[Zimothy's cross-off appears here: one wrong motive]" }
 
 function shuffled(list, pick = randomInt) {
   const a = [...list]
@@ -311,7 +316,7 @@ async function setRooms(db, nightId, rot, round, { now = Date.now(), endsAt = nu
   await db.doc(studyPath(nightId)).set({ groupId: due('study'), reassignedFrom: null, slotEndsAt: endsAt }, { merge: true })
   await db.doc(memoryPath(nightId)).set(memoryDoc(due('library'), round, { now, pick }))
   await db.doc(salemPath(nightId)).set(salemIdle(due('orangerie'), round, now))
-  await db.doc(booPath(nightId)).set(booIdle(due('entryway'), round, now))
+  await db.doc(booPath(nightId)).set(booIdle(due('entryway'), round, now, endsAt))
 }
 
 // After the last round (or Next past it): every room not yet paid is paid,
@@ -404,27 +409,16 @@ async function crossOff(db, nightId, gid, tag, members) {
   })
 }
 
-// Pay one room's reward to one group, once (G52): the cat's line, the
-// cross-off where the room has one, and the bag hint about the Ghost, on one
-// card on every member's phone. The study's trace is dealt by the station's
-// finish (station.finishStudy), here too when the group never finished.
-export async function payRoom(db, nightId, gid, room, { outcome = 'done', now = Date.now() } = {}) {
-  if (!ROOMS[room]) throw new NightError('invalid', 'No such room.')
-  const privRef = db.doc(act4PrivatePath(nightId))
-  const key = `${gid}-${room}`
-  const claimed = await db.runTransaction(async tx => {
-    const snap = await tx.get(privRef)
-    const d = snap.data() ?? {}
-    if (d.paid?.[key]) return false
-    if (snap.exists) tx.update(privRef, { [`paid.${key}`]: { outcome, at: new Date(now) } })
-    else tx.set(privRef, { paid: { [key]: { outcome, at: new Date(now) } }, arrived: {} })
-    return true
-  })
-  if (!claimed) return { ok: true, already: true }
+// A room's reward for a group, worked out once: the cat's line, the cross-off
+// where the room has one (the Library), and the bag hint about the Ghost.
+// `cardFor(place)` is the card for the member at that place in the group's
+// order: the same for everyone, except at the arcade, where the first two get
+// the hint and a trio's third gets Boo's line (ARCADE_CLUES). Null for a group
+// the rotation does not know.
+async function rewardOf(db, nightId, gid, room, { outcome = 'done' } = {}) {
   const rot = await readRotation(db, nightId)
   const grp = (rot?.groups ?? []).find(g => g.id === gid)
-  if (!grp) return { ok: true, paid: 0 }
-  if (room === 'study' && !rot.finished?.[gid]) await finishStudy(db, { nightId, groupId: gid, outcome: outcome === 'done' ? 'solved' : 'absent' })
+  if (!grp) return null
   const { night, list } = await guests(db, nightId)
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const members = grp.members.map(m => m.key)
@@ -445,30 +439,86 @@ export async function payRoom(db, nightId, gid, room, { outcome = 'done', now = 
     bag = { text: fill.text, placeholder: false }
     await db.doc(`cases/${nightId}`).update({ [`bagClues.act4.${gid}.${cat}`]: { rung, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null } })
   }
-  // the cross-off (Zimothy's match, Boo's catwalk): always paid, whatever the affection
+  // the cross-off (Zimothy's match): always paid, whatever the affection. Boo's went with her
+  // Catwalk (Jon, 29 Oct 2026): the arcade pays a clue about the Ghost, no motive
   let cross = null
-  if (room === 'library' || room === 'entryway') cross = await crossOff(db, nightId, gid, room === 'library' ? 'memory' : 'boo', members)
+  if (room === 'library') cross = await crossOff(db, nightId, gid, 'memory', members)
   const said = ui[`REWARD ${room.toUpperCase()} ${outcome === 'done' ? 'DONE' : 'CAPPED'}`] ?? REWARD_LINES[room][outcome === 'done' ? 'done' : 'capped']
   const rhyme = cross ? MOTIVES.find(m => m.n === cross)?.rhyme ?? '' : ''
   const rehearsal = !c || !!c.rehearsal
   const text = said.includes('[RHYME]')
     ? (rehearsal ? said.replace(/strike \[RHYME\][^.]*\./i, crossStandIn(room)) : said.replace(/\[RHYME\]/g, `number ${cross}, “${rhyme}”`))
     : said
-  const card = {
+  const base = {
     id: `4-room-${room}-${gid}`, act: 4, beat: night.act === 4 ? night.beat : 'rooms', kind: 'clue', room, cat, catName: CAT_NAMES[cat],
-    title: `From ${ROOMS[room].name}`, text, bag, placeholder: rehearsal,
+    title: `From ${ROOMS[room].name}`, placeholder: rehearsal,
     ...(cross && !rehearsal ? { cross } : {}),
   }
+  const third = ui['REWARD ENTRYWAY THIRD'] ?? ARCADE_THIRD_LINE
+  const cardFor = place => (room === 'entryway' && place >= ARCADE_CLUES ? { ...base, text: third, third: true } : { ...base, text, bag })
+  return { rot, grp, night, byKey, members, ui, cardFor }
+}
+
+// Pay one room's reward to one group, once (G52): the cat's line, the
+// cross-off where the room has one, and the bag hint about the Ghost, on one
+// card on every member's phone (a phone that has its card already, from the
+// arcade's clue moment, keeps it). The study's trace is dealt by the station's
+// finish (station.finishStudy), here too when the group never finished.
+export async function payRoom(db, nightId, gid, room, { outcome = 'done', now = Date.now() } = {}) {
+  if (!ROOMS[room]) throw new NightError('invalid', 'No such room.')
+  const privRef = db.doc(act4PrivatePath(nightId))
+  const key = `${gid}-${room}`
+  const claimed = await db.runTransaction(async tx => {
+    const snap = await tx.get(privRef)
+    const d = snap.data() ?? {}
+    if (d.paid?.[key]) return false
+    if (snap.exists) tx.update(privRef, { [`paid.${key}`]: { outcome, at: new Date(now) } })
+    else tx.set(privRef, { paid: { [key]: { outcome, at: new Date(now) } }, arrived: {} })
+    return true
+  })
+  if (!claimed) return { ok: true, already: true }
+  const rot = await readRotation(db, nightId)
+  if (!(rot?.groups ?? []).some(g => g.id === gid)) return { ok: true, paid: 0 }
+  if (room === 'study' && !rot.finished?.[gid]) await finishStudy(db, { nightId, groupId: gid, outcome: outcome === 'done' ? 'solved' : 'absent' })
+  const r = await rewardOf(db, nightId, gid, room, { outcome })
+  if (!r) return { ok: true, paid: 0 }
   let dealt = 0
-  for (const k of members) {
-    const g = byKey[k]
+  let beat = 'rooms'
+  for (const [place, k] of r.members.entries()) {
+    const g = r.byKey[k]
     if (!g) continue
+    const card = r.cardFor(place)
+    beat = card.beat
     if (await dealCard(db, g.uid, card)) dealt++
     const s = (await db.doc(`sessions/${g.uid}`).get()).data()
-    if (s?.act4?.room === room) await db.doc(`sessions/${g.uid}`).update({ 'act4.paid': true, 'act4.paidText': ui['ACT4 PAID'] ?? ACT4_TEXT.paid })
+    if (s?.act4?.room === room) await db.doc(`sessions/${g.uid}`).update({ 'act4.paid': true, 'act4.paidText': r.ui['ACT4 PAID'] ?? ACT4_TEXT.paid })
   }
-  await noteDealt(db, nightId, { kind: 'room', act: 4, beat: card.beat, groupId: gid }) // the ledger (safeguards)
+  await noteDealt(db, nightId, { kind: 'room', act: 4, beat, groupId: gid }) // the ledger (safeguards)
   return { ok: true, paid: dealt, outcome }
+}
+
+// The arcade's clue moment (card 515, 5 Nov 2026): once a player's fifth game
+// is played, the Mac asks for the clue of the player at `place` in the
+// group's order. That player's reward card is dealt to their phone there and
+// then (the same card the chime would deal; the chime then changes nothing
+// for them), and its words go back for the Mac's screen. A trio's third
+// player gets Boo's line, not a clue. Only for the group at the arcade this
+// round, while its visit is on. Nothing here names a motive: the bag hint is
+// a compass word, as in every other room.
+export async function arcadeClue(db, { nightId, groupId, place, now = Date.now() }) {
+  const p = Number(place)
+  if (!Number.isInteger(p) || p < 0 || p >= 3) throw new NightError('invalid', 'Which player?')
+  const d = (await db.doc(booPath(nightId)).get()).data()
+  if (!d?.groupId || d.groupId !== groupId || d.state !== 'visit') throw new NightError('closed', 'Boo is not expecting that group just now.')
+  const r = await rewardOf(db, nightId, groupId, 'entryway', { outcome: 'done' })
+  if (!r) throw new NightError('invalid', 'No such group.')
+  const key = r.members[p]
+  if (!key) throw new NightError('invalid', 'Which player?')
+  const card = r.cardFor(p)
+  const g = r.byKey[key]
+  const dealt = g ? await dealCard(db, g.uid, card) : false
+  if (dealt) await noteDealt(db, nightId, { kind: 'room', act: 4, beat: card.beat, groupId, key }, { now })
+  return { ok: true, dealt, third: !!card.third, text: card.third ? card.text : card.bag?.text ?? null, placeholder: !!card.placeholder }
 }
 
 // The cap: every group's room this round, unless already paid.
@@ -707,65 +757,29 @@ export function salemColourAt(doc, now) {
 }
 
 // ---------------------------------------------------------------------------
-// The Entryway: Boo's catwalk (§9.7), projected on the triangle wall above the
-// Parlour from Susan's MacBook Pro (?kiosk=boo). Boo struts; three times the
-// music stops, the wall and the phones flash STRIKE A POSE, a five-second HOLD
-// IT, then Boo judges with one line. No scoring. Then the reward. The server
-// lays out the whole show with timestamps when the group scans in, so the wall
-// and the phones agree; the reward is paid once the show is over (the tick,
-// or any screen calling booDone).
+// The Entryway: Miss Boo LaRue's Arcade (docs/boo-arcade.md; on the night
+// since 5 Nov 2026, card 515; Jon, 29 Oct: "its not motive its a ghost
+// clue"), on Susan's MacBook Pro and the Stream Deck + XL (?kiosk=boo). The
+// group scans in, and the Mac runs the visit itself (play/src/lib/arcade.js):
+// five tokens each, turns, a clue after each of the first two players' fifth
+// game (arcadeClue, above), Boo's line for a trio's third, the winner, free
+// play, and the chime at the round's end, which the cap pays (payRound:
+// every member's card, a phone that has its card already unchanged). Each
+// counted round's score comes to arcade.js recordArcadeScore. Boo's Catwalk,
+// the three poses, went with the projector (29 Oct 2026).
 //
-// public/boo { groupId, state: idle | show | done, startsAt, poses: [{ poseAt, holdUntil, judgeUntil, line }], endsAt }
-export const BOO_INTRO_MS = 9_000
-export const BOO_STRUT_MS = [7_000, 12_000]
-export const BOO_HOLD_MS = 5_000
-export const BOO_JUDGE_MS = 6_000
-export const BOO_POSES = 3
-export const BOO_JUDGING = [
-  'Dreadful. I loved it.',
-  'Bold. Wrong, but bold.',
-  "I've seen worse. Last Tuesday.",
-  'Somebody get these people a drink so I can knock it off a table.',
-  'Fine. Fine! You may stay.',
-  "I'm telling everyone about this. Everyone.",
-]
-
-export function booIdle(gid, round, now = Date.now()) {
-  return { groupId: gid ?? null, state: 'idle', poses: [], startsAt: null, endsAt: null, act4Round: round, at: new Date(now) }
+// public/boo { groupId, state: idle | visit, startsAt, slotEndsAt, act4Round, at }
+//   slotEndsAt is the round's end, when the Mac rings the chime; a pause
+//   moves it on (night.js PAUSE_SHIFTED), and the Mac follows.
+export function booIdle(gid, round, now = Date.now(), endsAt = null) {
+  return { groupId: gid ?? null, state: 'idle', startsAt: null, slotEndsAt: endsAt, act4Round: round, at: new Date(now) }
 }
 
-export function booShow(start, pick = randomInt, ui = {}) {
-  const lines = shuffled(BOO_JUDGING.map((l, i) => ui[`BOO JUDGE ${i + 1}`] ?? l), pick)
-  const poses = []
-  let t = start + BOO_INTRO_MS
-  for (let i = 0; i < BOO_POSES; i++) {
-    const [lo, hi] = BOO_STRUT_MS
-    const poseAt = t + lo + pick(hi - lo + 1)
-    const holdUntil = poseAt + BOO_HOLD_MS
-    const judgeUntil = holdUntil + BOO_JUDGE_MS
-    poses.push({ strutAt: new Date(t), poseAt: new Date(poseAt), holdUntil: new Date(holdUntil), judgeUntil: new Date(judgeUntil), line: lines[i % lines.length] })
-    t = judgeUntil
-  }
-  return { poses, endsAt: new Date(t) }
-}
-
-// The group has arrived (the scan): the show is laid out from now.
-export async function booArrive(db, nightId, gid, { now = Date.now(), pick = randomInt } = {}) {
+// The group has arrived (the scan): the visit is on, from now.
+export async function booArrive(db, nightId, gid, { now = Date.now() } = {}) {
   const ref = db.doc(booPath(nightId))
   const d = (await ref.get()).data()
   if (!d || d.groupId !== gid || d.state !== 'idle') return { ok: true, already: true }
-  const show = booShow(now, pick, labelled(await readArea(db, 'ui_copy')))
-  await ref.update({ state: 'show', startsAt: new Date(now), ...show, at: new Date(now) })
+  await ref.update({ state: 'visit', startsAt: new Date(now), at: new Date(now) })
   return { ok: true }
-}
-
-// The show is over: Boo pays (once). Any screen may ask; the clock asks too.
-export async function booDone(db, { nightId, now = Date.now() }) {
-  const ref = db.doc(booPath(nightId))
-  const d = (await ref.get()).data()
-  if (!d || d.state !== 'show' || !d.groupId) return { ok: true, already: true }
-  if (now < ms(d.endsAt)) return { ok: true, notYet: true }
-  await ref.update({ state: 'done', at: new Date(now) })
-  await payRoom(db, nightId, d.groupId, 'entryway', { outcome: 'done', now })
-  return { ok: true, paid: true }
 }

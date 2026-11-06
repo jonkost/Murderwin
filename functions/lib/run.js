@@ -113,7 +113,7 @@ async function onSolving(db, nightId, act, beat, now) {
 
 // The clock for Acts 2 and 4 (the minute tick, and the Host tab's own while
 // those acts run): the supper chime once every guest has seen all four cats
-// (F24), and Act 4's warning, lock-in and rounds, and Boo's show ending.
+// (F24), and Act 4's warning, lock-in and rounds.
 export async function clockTick(db, nightId, now = Date.now(), { allSeen = false } = {}) {
   const n = (await db.doc(`nights/${nightId}`).get()).data()
   if (!n || n.phase !== 'act') return { moved: null }
@@ -122,7 +122,6 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
     return { moved: 'supper' }
   }
   if (n.act === 4) {
-    await act4.booDone(db, { nightId, now })
     const due = await act4.due(db, nightId, now)
     if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
     if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
@@ -472,8 +471,8 @@ export async function studyFinished(db, { nightId, payload = {}, now = Date.now(
 }
 
 // A code on a room's wall (?meet=<cat>): in Act 2 the guest is with that cat;
-// in Act 4 the group has arrived in that room, and Salem's and Boo's games
-// start for it.
+// in Act 4 the group has arrived in that room, and Salem's game and Boo's
+// arcade visit start for it.
 async function meetCat(db, args) {
   const n = (await db.doc(`nights/${args.nightId}`).get()).data()
   if (n?.act !== 4) return deal.meetCat(db, args)
@@ -502,13 +501,13 @@ export const player = {
   meetCat: async (db, args) => (await meetCat(db, args).then(r => afterLights(db, args.nightId, r, args.now))),
   leaveCat: async (db, args) => afterLights(db, args.nightId, await deal.leaveCat(db, args), args.now),
   notYet: (db, args) => deal.notYet(db, args),
-  // Act 4: Locked in; the iPad's boards; Salem's game; Boo's show over
+  // Act 4: Locked in; the iPad's boards; Salem's game; the arcade's clue moment (the Mac, 5 Nov 2026)
   lockIn: async (db, args) => { const r = await act4.lockIn(db, args); await clockTick(db, args.nightId, args.now ?? Date.now()); return r },
   memoryStep: (db, args) => act4.memoryStep(db, args),
   salemReady: (db, args) => act4.salemReady(db, args),
   salemSlip: (db, args) => act4.salemSlip(db, args),
   salemPassed: (db, args) => act4.salemPassed(db, args),
-  booDone: (db, args) => act4.booDone(db, args),
+  arcadeClue: (db, args) => act4.arcadeClue(db, args),
   // Act 4, the Entryway: a round of one of Miss Boo LaRue's five games, from the arcade's Mac (30 Oct 2026)
   arcadeScore: (db, args) => recordArcadeScore(db, args),
 }

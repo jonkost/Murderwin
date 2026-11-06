@@ -10,8 +10,8 @@
 // up data, no case), a practice that never touches a night (?practice=), or
 // a game on its own that never touches a night either: the standalone memory
 // match (?kiosk=memory&play=1) and Miss Boo LaRue's Arcade (?kiosk=boo&play=1,
-// &visit=1 for a practice visit; 28 Oct 2026, not on the night until Jon
-// answers entrywayGame). The two room screens a test night needs are
+// &visit=1 for a practice visit; 28 Oct 2026, on the night since 5 Nov 2026,
+// when it took Boo's Catwalk's place). The two room screens a test night needs are
 // marked `night`, so the page turns them off while the party box is ticked
 // or the live night is the party or a dry run.
 
@@ -22,10 +22,8 @@ import { millisOf } from './studyTest.js'
 
 const NAME = Object.fromEntries(gameNames.games.map(g => [g.id, g.name]))
 
-// Get Off My Lawn! plays three rounds (functions/lib/act4.js SALEM_ROUNDS),
-// and Boo's Catwalk three poses (BOO_POSES).
+// Get Off My Lawn! plays three rounds (functions/lib/act4.js SALEM_ROUNDS).
 export const SALEM_ROUNDS = 3
-export const BOO_POSES = 3
 
 // Where Jon tries a thing, said the way the house says it.
 export const DEVICES = {
@@ -52,9 +50,8 @@ const preview = (name, label, device) => ({ label, device, params: { preview: na
 
 // The eight sections, in the order of the night. `moment` is the Timeline
 // row a note is filed under (lib/timeline.js MOMENT_KEYS). `devices` is the
-// feedback box's "which screen" list, first is the default. The arcade sits
-// beside Boo's Catwalk under the Entryway's moment, but the night still plays
-// the Catwalk: the decision card entrywayGame is Jon's.
+// feedback box's "which screen" list, first is the default. The arcade is the
+// Entryway's game (Jon, 29 Oct 2026, entrywayGame; on the night since 5 Nov).
 export const SECTIONS = [
   {
     key: 'study', name: NAME.study, where: 'Act 4 · the Study', moment: 'act4.study',
@@ -112,31 +109,12 @@ export const SECTIONS = [
     ],
   },
   {
-    key: 'boo', name: NAME.entryway, where: 'Act 4 · the Entryway', moment: 'act4.entryway',
-    what: 'Boo struts on the wall above the Parlour. When the music stops, the group strikes a pose and holds it, then Boo judges. Three poses.',
-    devices: ['projector', 'phone', 'ipadpro'],
-    steps: [
-      'Open Boo’s wall for the practice show on the projector computer, or any screen, full screen. Tap it once so it can play sound. On the night its music plays on the Parlour HomePod: to hear it that way, pick the Parlour HomePod as the Mac’s sound output and open the HomePod version below.',
-      'Open the practice show on one or more phones. For the end credits’ photo, also open Boo’s camera on Jenna’s iPad Pro (or any iPad with a camera), stand it facing you, and tap Turn on the camera.',
-      'Tap Start the show.',
-      'While the music plays, strut. When it stops (a record scratch), strike a pose and freeze while the big number counts down, then Boo gives her verdict. Three poses, then That’s the show. At the last pose the camera takes the photo and keeps it on its own screen.',
-      'Tap Start the show to go again. Nothing is paid.',
-    ],
-    tries: [
-      { key: 'wall', label: 'Boo’s wall, the practice show', device: 'projector', params: { kiosk: 'boo', practice: '1' } },
-      { key: 'wallHomePod', label: 'Boo’s wall, the practice show, through the Parlour HomePod (the music runs two seconds ahead)', device: 'projector', params: { kiosk: 'boo', practice: '1', airplay: '2' } },
-      { key: 'phones', label: 'The practice show on a phone', device: 'phone', params: { practice: 'boo' } },
-      preview('kiosk-boo-show', 'Boo’s wall, the whole show, a sample (about a minute, no workshop needed)', 'projector'),
-      preview('kiosk-boo', 'Boo’s wall, one pose, a sample', 'projector'),
-      preview('kiosk-boo-pose', 'Boo’s wall at the pose, a sample', 'projector'),
-      { key: 'camera', label: 'Boo’s camera, the practice show', device: 'ipadpro', params: { kiosk: 'pose', practice: '1' } },
-    ],
-  },
-  {
-    // 28 Oct 2026, a page on its own like the memory match: no night, no sign-in.
-    key: 'arcade', name: 'Miss Boo LaRue’s Arcade', where: 'Act 4 · the Entryway (not on the night yet)', moment: 'act4.entryway',
-    what: 'Five little games on the Stream Deck + XL’s keys and dials, with Boo on the Mac’s screen. In a group’s visit everyone has five tokens, one for each game, and the players take turns; after all five of their games each player gets their own clue on the screen. Then free play until the chime.',
-    devices: ['deck', 'projector'],
+    // 28 Oct 2026, a page on its own like the memory match: no night, no sign-in. On
+    // the night since 5 Nov 2026 (card 515): the Entryway's screen runs the same arcade
+    // for the group that scans in, with the house's clues and the chime on its clock.
+    key: 'arcade', name: NAME.entryway, where: 'Act 4 · the Entryway', moment: 'act4.entryway',
+    what: 'Five little games on the Stream Deck + XL’s keys and dials, with Boo on the Mac’s screen. In a group’s visit everyone has five tokens, one for each game, and the players take turns; after all five of their games each of the first two players gets the group’s clue about the Ghost on the screen and on their own phone, and a trio’s third gets Boo’s line. Then free play until the chime. On the night the Entryway’s screen runs it for the group that scans in, and Boo’s camera takes one photo of each group a minute in.',
+    devices: ['deck', 'ipadpro'],
     steps: [
       'Open it on a Mac in Google Chrome (Safari cannot reach the Stream Deck). Quit the Stream Deck app first, then plug in the Stream Deck + XL. Set the Mac’s sound output to its own speakers first: through a HomePod the sounds come about two seconds late.',
       'Tap Connect the Stream Deck once and pick it from the list. The Mac’s screen then becomes the scoreboard: the Stream Deck is the game. No Stream Deck? Play the deck on the screen with the mouse, or the keyboard: the arrow keys play, the space bar presses.',
@@ -144,13 +122,17 @@ export const SECTIONS = [
       'For a group’s visit, tap Try a group’s visit at the bottom of the free play page, or close the free play tab before opening the practice visit: only one arcade tab plays on the Stream Deck at a time. Type two or three first names. Five tokens each, one under each game, one game at a time in turns (fifty seconds a game, and the last game is shorter when time runs short, so a pair’s clues come before the chime; a trio can run out of time first). After a player’s fifth game their clue shows on the screen (in practice, a line in square brackets); a trio’s third player gets Boo’s line instead. Then Boo’s winner, unless the chime comes first: the keys 1, 2 and 3 show each player’s scores, and it stays until you tap the touch strip. Then free play.',
       'The practice visit lasts fifteen minutes, like an Act 4 round, and ends at the chime: Boo says Be on your way. Ring the chime, beside the clock, tries the ending at once, and Back to free play, beside it, leaves the visit straight away.',
     ],
-    note: 'Not on the night yet: you chose it for the Entryway on 29 Oct (the question entrywayGame), for a clue about the Ghost, and it goes on the night with the card The arcade on the night. Until then the night still runs Boo’s Catwalk. On its own the arcade reads no night, so nothing is paid and no clue is dealt.',
+    note: 'On the night: open the Entryway’s screen (the Devices page) on Susan’s MacBook Pro in Google Chrome with the Stream Deck + XL plugged in, before the guests arrive. The night’s screen has no Connect button: connect the Stream Deck once from this practice page in the same browser first, and it remembers the deck. The night’s screen shows the group the same arcade, with the house’s clue in place of the square-bracket line, and rings the chime at the end of the round.',
     tries: [
       { key: 'free', label: 'The arcade, free play', device: 'deck', params: { kiosk: 'boo', play: '1' } },
       { key: 'visit', label: 'A group’s visit, for practice', device: 'deck', params: { kiosk: 'boo', play: '1', visit: '1' } },
-      preview('kiosk-arcade-clue', 'A player’s clue after their fifth game, a sample', 'projector'),
-      preview('kiosk-arcade-third', 'A trio’s third player: Boo’s line instead of a clue, a sample', 'projector'),
-      preview('kiosk-arcade-farewell', 'At the chime: Be on your way, a sample', 'projector'),
+      preview('kiosk-boo', 'The Entryway’s screen with a group at the deck, live, a sample (nothing sent)', 'deck'),
+      preview('kiosk-rules-entryway', 'Boo’s rules card between groups, a sample', 'deck'),
+      preview('kiosk-arcade-clue', 'A player’s clue after their fifth game, a sample', 'deck'),
+      preview('kiosk-arcade-third', 'A trio’s third player: Boo’s line instead of a clue, a sample', 'deck'),
+      preview('kiosk-arcade-farewell', 'At the chime: Be on your way, a sample', 'deck'),
+      { key: 'camera', label: 'Boo’s camera, a practice photo (kept on the iPad)', device: 'ipadpro', params: { kiosk: 'pose', practice: '1' } },
+      preview('kiosk-pose', 'Boo’s camera, a sample', 'ipadpro'),
     ],
   },
   {
@@ -371,28 +353,6 @@ export function salemView(doc) {
   if (n && doc.lastSlip === 'green') slips += ' The last one: someone moved on green.'
   if (n && doc.lastSlip === 'red') slips += ' The last one: someone stopped shaking on red.'
   return { line, open: true, joined, slips }
-}
-
-// Boo's practice show (public_state/game_test_boo), at a moment. The times
-// are the server's; the page only compares them with its clock to say which
-// part is on, and never counts down.
-export function booView(doc, now = Date.now()) {
-  if (doc === undefined) return { line: '…', running: false }
-  if (!doc) return { line: 'No show yet. Open the wall, then tap Start the show.', running: false }
-  if (doc.state === 'done') return { line: 'The show is stopped. Tap Start the show to go again.', running: false }
-  if (doc.state !== 'playing') return { line: 'Ready for a show. Tap Start the show.', running: false }
-  const ends = millisOf(doc.endsAt)
-  if (ends !== null && now >= ends) return { line: 'That’s the show. Tap Start the show to go again.', running: false }
-  const starts = millisOf(doc.startsAt)
-  if (starts !== null && now < starts) return { line: 'The show is about to start.', running: true }
-  const poses = Array.isArray(doc.poses) ? doc.poses : []
-  const begun = poses.filter(p => (millisOf(p?.stopAt) ?? Infinity) <= now)
-  const p = begun[begun.length - 1]
-  if (!p) return { line: 'Boo is strutting.', running: true }
-  const k = begun.length
-  if (now < (millisOf(p.holdUntil) ?? 0)) return { line: `Pose ${k} of ${BOO_POSES}: strike a pose and hold it.`, running: true }
-  if (now < (millisOf(p.judgedAt) ?? 0)) return { line: `Pose ${k} of ${BOO_POSES}: Boo is judging.`, running: true }
-  return { line: k >= BOO_POSES ? 'Boo is taking her bow.' : 'Boo is strutting.', running: true }
 }
 
 // ---- dates, in the house's words ------------------------------------------

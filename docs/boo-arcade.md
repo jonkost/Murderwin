@@ -1,4 +1,4 @@
-# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, not on the night yet; the five games, the visit and the scores changed 30 Oct 2026, again from Jon's second playtest on 31 Oct, and from his five notes on 1 Nov)
+# Miss Boo LaRue's Arcade: Boo's games on the Stream Deck + XL (Act 4, on the night since 5 Nov 2026; the five games, the visit and the scores changed 30 Oct 2026, again from Jon's second playtest on 31 Oct, and from his five notes on 1 Nov)
 
 Built 28 October 2026, for testing, on a page of its own; reviewed and fixed on 29 October, when
 *Whack-a-Mouse* also got its pets, the Tail key on the menu its black cat, and every strike its
@@ -38,8 +38,10 @@ with the keys and the dials, pass to the next player. After their fifth game eac
 clue shows on the Mac's screen; a trio's third player gets Boo's line instead. Boo names the winner, just for fun, and everyone plays freely until the chime,
 when Boo says "Be on your way." A game left early (the Exit dial, or Leave this game on the
 screen) never counts, and the token comes back. Each counted round's score is saved with the
-night, per player and per game (once the arcade is wired into Act 4, card 515), and the Act 7
-reel shows the top scorer in each game and the best all round (§5).
+night, per player and per game, and the Act 7 reel shows the top scorer in each game and the
+best all round (§5). On the night since 5 November (card 515): the Entryway's screen runs the same
+arcade for the group that scans in, with the house's clue in place of the practice's line and the
+chime at the end of the round.
 
 In your words (28 October):
 
@@ -163,6 +165,7 @@ Clawford, Esq."). And the page has Back at the top (§2).
 |---|---|
 | `?kiosk=boo&play=1` | Free play: pick any game, as often as you like. Nothing counts. |
 | `?kiosk=boo&play=1&visit=1` | A group's visit, for practice: names, turns, tokens, the clue moment, the winner, free play, and a fifteen-minute round that ends at the chime. |
+| `?kiosk=boo` | The night's Entryway screen (since 5 November): Boo's rules card with the code between groups, and the group that scans in plays its visit with their names from the groups, the house's clue at each player's moment, each counted score sent to the house, and the chime at the end of the round. No Connect, no practice buttons, no band: the Stream Deck is connected once from the practice page in the same Chrome before the guests come, and the night's screen remembers it. |
 
 Both are on the workshop's Game test tab, in the section *Miss Boo LaRue's Arcade* ("The arcade,
 free play" and "A group's visit, for practice"), and the first is on the Devices page under
@@ -381,14 +384,19 @@ says which games feel stingy or generous.
    throws that round away: no points, no record, the token back, so the player picks again later
    (*arcadeExit*'s default: they can play it again).
 5. **The clue moment.** Once a player has played all five games (31 October: "not until all five
-   are done"; it was after the second) the screen shows their clue, with their name. In practice it is the house's square-bracket line, the one a rehearsal night shows:
+   are done"; it was after the second) the screen shows their clue, with their name. On the
+   night (5 November) it is the group's bag hint about the Ghost from Boo, at the group's average
+   affection with her, like every room's hint (the question *arcadeClueRung*): the house deals
+   that player's reward card to their phone at that moment and sends the words back for the
+   screen, so the second player sees the same words at their own moment, and both have them on
+   their phones. In practice it is the house's square-bracket line, the one a rehearsal night shows:
    [Boo's bag clue about the Ghost appears here], with a dim note under it: "Practice: on the
    night, your own clue about the Ghost shows here." After three seconds a press goes on (any
    key, a dial pressed in, or a tap on the strip; turning a dial does not). After a minute it
    goes on by itself.
 6. **A trio's third player** gets no clue. After their fifth game Boo says, in your words,
    "Didn't I give you enough? Now be off! I'm done playing games." It goes on the way a clue
-   does.
+   does; on the night their phone gets the same line in the room's card, and no hint.
 7. **The winner.** When every token is spent: the most points over each player's five games,
    just for fun. The page stays until a tap on the touch strip, after the first three seconds (1
    November: the strip says Tap here for free play; it used to go on by itself after ten seconds,
@@ -401,7 +409,10 @@ says which games feel stingy or generous.
    fifteen minutes) (or at once, with Ring the chime beside the
    round clock), whatever is on stops, the chime plays, and Boo says "Be on your way." for eight
    seconds. If the chime caught anyone short of their clue or Boo's line, the screen names them,
-   those still owed a clue first and a trio's third player apart. Then free play starts afresh.
+   those still owed a clue first and a trio's third player apart; on the night the house deals
+   every member's card at the chime anyway, so the clue reaches their phone (delay, never
+   destroy). Then free play starts afresh. When the host's Next moves the round on early, the
+   chime rings at once and Boo's farewell plays out before the rules card comes back.
 
 **The timing.** Five games each at fifty seconds in a fifteen-minute round: a pair's ten games
 are 500 seconds of play and a trio's fifteen are 750, before the picking, the how-to-play
@@ -488,22 +499,27 @@ speakers: through a HomePod they come about two seconds late.
   the dials. Try again and say exactly what happened; the deck's own driver may be the place.
 
 - *entrywayGame* is answered (29 October): the arcade, for a clue about the Ghost. Boo's motive
-  cross-off goes with the Catwalk and nothing replaces it, so foggy nights (dial 1 and 2) end on
-  one motive about 8 times in 10 (the card's estimate). You may still have *In Duplicate* cross off
-  two.
+  cross-off goes with the Catwalk and nothing replaces it (built, 5 November; at dial 3 the
+  solver still finds exactly one motive on all 1,000 stand-in cases, G32). You may still have
+  *In Duplicate* cross off two.
+- *arcadeClueRung* (5 November, built): each player's clue is the group's hint at the group's
+  average affection with Boo, like every other room's. The other way: each player's own
+  affection, which would give a pair two different hints and could point at one bag.
+- *arcadeCamera* (5 November, built): Boo's camera takes one photo of each group a minute into
+  its visit, in place of the Catwalk's last pose. The other way: the camera goes with the Catwalk.
 - *ghostProof* (new 29 October, after you said "there is not enough to reveal the ghost"): the
   Ghost's clues are only in Act 4, and nothing proves they are enough. Should Claude Code build the
   Ghost check itself, instead of waiting for Claude chat's patch? Default: wait. Only you answer
   it, on the board.
-- *The sounds on the night: the Mac's own speakers, or over AirPlay?* In Act 4 Susan's MacBook
-  Pro plays Boo's music on the Parlour HomePod over AirPlay, which arrives about two seconds late
-  (the wall starts the music two seconds early to make up for it). A game's blips cannot start
-  early: over AirPlay they would land two seconds after the press, so they would need the Mac's
-  own speakers.
-- *A player the chime catches before their clue.* What they get on the night is not decided; it
-  comes with wiring the arcade into Act 4. (Every other Act 4 room pays its reward at the chime
-  anyway.) In practice the chime's screen names them. (On the board: The arcade on the night, card 515.)
-  A trio usually runs out of time: the question *arcadeTrioTime*.
+- *arcadeSound* (5 November, on the board): the arcade's sounds come from the Mac's own
+  speakers, as the setup says, since over AirPlay a blip lands two seconds after the press. The
+  brain still lends the Parlour HomePod to Susan's Mac through Act 4 (your call of 27 October,
+  for the Catwalk's music), so the Parlour has no house music then and the HomePod plays nothing.
+  Your call: leave it, or have the brain keep the HomePod in the house music (one line in
+  `cues/scenes.json`).
+- *A player the chime catches before their clue* is settled by the build (5 November): the house
+  deals every member's card at the chime, so the clue is on their phone, and the screen names
+  them. A trio usually runs out of time: the question *arcadeTrioTime*.
 - *The points from game to game* (§4). Each game still pays on its own scale (the best all round is
   by place for that reason); evening them out waits for your next try. (On the same card.)
 - *Smooth enough?* (your note, 29 October: "If the stream deck can not be far more smooth. We can
@@ -544,26 +560,43 @@ that is your next try (the card Try Miss Boo LaRue's Arcade with the Stream Deck
 
 ## For Claude Code (technical)
 
-**Not on the night yet.** Built standalone on 28 Oct 2026. Jon answered *entrywayGame* on
-29 Oct: the arcade goes on the night for a clue about the Ghost, and Boo's motive cross-off is
-not replaced. Wiring it into Act 4 is its own card (515); until it lands, Boo's Catwalk stays on
-the night and on its own Game test section, untouched.
+**On the night since 5 Nov 2026 (card 515).** Built standalone on 28 Oct 2026. Jon answered
+*entrywayGame* on 29 Oct: the arcade goes on the night for a clue about the Ghost, and Boo's
+motive cross-off is not replaced. The wiring: `functions/lib/act4.js` keeps `public/boo` as
+`{ groupId, state: idle | visit, startsAt, slotEndsAt, act4Round, at }` (`booIdle` at every
+`setRooms`, `booArrive` at the scan; `slotEndsAt` is the round's end, in `PAUSE_SHIFTED`), pays
+the Entryway through `rewardOf` + `payRoom` with a card per member (`cardFor(place)`: the first
+`ARCADE_CLUES` members get Boo's bag hint about the Ghost at the group's rung, the third
+`ARCADE_THIRD_LINE` with `third: true` and no bag; no cross-off), and `arcadeClue(db, { nightId,
+groupId, place })` deals that member's card at the clue moment and returns `{ text, third,
+dealt, placeholder }`. The callable `arcadeClue` (index.js) takes it from the kiosk whose presence
+row is `kiosk-boo` (`access.js` `fromKiosk`) or the admin. On the client `Rooms.jsx` `BooRoom`
+(plain `?kiosk=boo`) mounts `BooArcade` with `night`: `{ players, slotEndsAt, serverNow, seed,
+chime, onClue, onRecord, onStage }`; the page keeps the engine's `roundEndsAt` on the house's
+clock each tick (`arcadeRoundEnds`), rings at once when `chime` is true (the round moved on),
+asks `onClue(place)` once a place as the clue or third stage opens and shows the words with
+`arcadeClueText` (`CLUE_WAIT` until then), sends every counted record through `onRecord` to
+`arcadeScore` with the guest key from the rotation, and shows no Connect, practice button, band
+or wake corner (the kiosk keeps the band and the wake). Boo's Catwalk, its practice (`boo-start`,
+`boo-stop`, `public_state/game_test_boo`), `booDone`, `booShow` and `booMoment` are deleted; the
+pose camera follows the visit (`play/src/lib/pose.js`).
 
 **The route.** `play/src/main.jsx` sends `?kiosk=boo&play=1` to `BooArcade`
 (`play/src/screens/Arcade.jsx`) before `Practicing` and the kiosks, keeping the substring
 `Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} />` that `play/test/gametest.test.mjs`
 pins (L09 pins the whole chain, `arcade ? <BooArcade /> : Practicing ? ...`). It never renders
 `Kiosk` (it borrows only `wakeAudio` and `Wake` from `Kiosk.jsx`): no anonymous sign-in, no
-presence row, no night reads, no Bell. `?kiosk=boo` alone is still Boo's wall, and
-`?kiosk=boo&practice=1` the Catwalk's practice show. `&visit=1` opens the practice visit's setup
-form; `names=Jon,Susan[,Ellie]` starts a visit straight away.
+presence row, no night reads, no Bell. `?kiosk=boo` alone is the night's Entryway screen
+(above). `&visit=1` opens the practice visit's setup form; `names=Jon,Susan[,Ellie]` starts a
+visit straight away.
 
 **The files.**
 - `play/src/lib/arcade.js`, the engine: pure (no import at all, no DOM, no clock, no
   `Math.random`), node-tested. Remade on the evening of 29 Oct from Jon's Game test notes, and
   *Boo Chasing Her Tail* again that night from his try. Every call that makes a game or the arcade
   or moves one on (`newGame`, `stepGame`, `inputGame`, `newArcade`, `arcadeStep`, `arcadeInput`,
-  `arcadeChime`, `arcadeBack`) takes a time `now` (the page's `performance.now()`) and returns a
+  `arcadeChime`, `arcadeBack`, and on the night `arcadeClueText` and `arcadeRoundEnds`) takes a
+  time `now` (the page's `performance.now()`) and returns a
   new, JSON-safe object whose `events` lists the sounds that call made; `gameFaces(g, now)` (the
   36 faces) and `arcadeView(a, now)` (`{ faces, strip, screen, sig }`) only read, and the helpers
   (`keyAt`, `rowOf`, `colOf`, `nextRand`, `hashOf`) take no time. Chance is

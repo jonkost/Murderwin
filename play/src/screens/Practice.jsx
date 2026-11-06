@@ -4,11 +4,11 @@ import { useAuthUid, useDoc, useOnline } from '../lib/hooks'
 import { watchWake } from '../lib/clock'
 import { uiLines } from '../lib/content'
 import { GAME_NAMES, RULES_LINES } from '../lib/rooms'
-import { SALEM_SHAKE, SALEM_STILL_MS, booLead } from '../lib/night'
-import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, booPractice, clockSample, keepSample, practiceError } from '../lib/gametest'
-import { SalemRounds, SALEM_LINES, BooMoments, useMotion } from './Act4'
-import { BooRunway, SalemBoard, RulesCard } from './Rooms'
-import { PoseCamera } from './Pose'
+import { SALEM_SHAKE, SALEM_STILL_MS } from '../lib/night'
+import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, clockSample, keepSample, practiceError } from '../lib/gametest'
+import { SalemRounds, SALEM_LINES, useMotion } from './Act4'
+import { SalemBoard, RulesCard } from './Rooms'
+import { PoseCamera, PRACTICE_SHOT_AFTER_MS } from './Pose'
 import { Wake, StaleDot } from './Kiosk'
 import { CatFace } from './Cards'
 import { Moment, Seal, RehearsalBand } from './Moments'
@@ -19,11 +19,13 @@ import Allow from './Allow'
 //   ?practice=salem          Get Off My Lawn!: join with a first name, then the
 //                            same rounds as the night, plus a shake meter and
 //                            a line for every slip
-//   ?practice=boo            Boo's Catwalk on the phones
-//   ?kiosk=boo&practice=1    Boo's Catwalk on the wall
-// Each follows its own record (public_state/game_test_salem, game_test_boo),
-// which only the gameTest function writes; the workshop opens, starts and
-// stops them. Nothing here reads a night or pays anyone, and nothing writes
+//   ?kiosk=orangerie&practice=1  Salem's board for it, on the brain's browser
+//   ?kiosk=pose&practice=1   Boo's camera, a photo kept on the iPad's own screen
+// (Boo's Catwalk practices went with the Catwalk, 5 Nov 2026: Miss Boo
+// LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
+// Salem's follows its own record (public_state/game_test_salem), which only
+// the gameTest function writes; the workshop opens and stops it. Nothing here
+// reads a night or pays anyone, and nothing writes
 // presence/{uid}: that row is the whole browser's, and a room screen in
 // another tab of the same browser is let in by it. The clock asks the
 // gameTest function the time instead (usePracticeClock).
@@ -37,9 +39,6 @@ const SAY = {
   closed: 'The practice is closed. Open it on the Game test page.',
   cleared: 'All three rounds done. Nothing is paid in practice.',
   joining: 'Joining…',
-  booNotStarted: 'Start the show on the Game test page.',
-  booDone: 'That’s the show. Nothing is paid in practice.',
-  booWallIdle: 'Practice. Start the show on the Game test page.',
   salemWallNone: 'Practice. Open the practice on the Game test page.',
   salemWallClosed: 'The practice has stopped. Open it again on the Game test page.',
 }
@@ -230,44 +229,18 @@ function ShakeMeter({ motion }) {
   )
 }
 
-// ---- Boo's Catwalk ----------------------------------------------------------
+// ---- Boo's camera -----------------------------------------------------------
 
-function useBooPractice() {
-  const { uid, error } = useAuthUid()
-  const view = useDoc(uid ? PRACTICE_DOCS.boo : null)
-  const serverNow = usePracticeClock(uid)
-  return { uid, error, view, serverNow, p: booPractice(view.data) }
-}
-
-// The phones: the same moments as the night, from the practice's show.
-export function BooPractice() {
-  const { uid, error, view, serverNow, p } = useBooPractice()
-  return (
-    <>
-      <RehearsalBand on label="PRACTICE" />
-      {error ? <Moment text={ui.OFFLINE} crest /> : (
-        <Shell game="entryway" cat="boo" catName="Miss Boo LaRue">
-          {!uid || !view.loaded ? <p className="gloss">One moment…</p>
-            : p.status !== 'show' ? <p>{SAY.booNotStarted}</p>
-            : <BooMoments key={p.runId ?? 'practice'} boo={p.show} serverNow={serverNow} doneText={SAY.booDone} />}
-        </Shell>
-      )}
-    </>
-  )
-}
-
-// Boo's camera (?kiosk=pose&practice=1): the practice show, and the photo kept
-// on the iPad's own screen. Nothing is sent.
+// Boo's camera (?kiosk=pose&practice=1): a pretend visit that starts when the
+// page opens, so the photo comes a few seconds after the camera is turned on,
+// and stays on the iPad's own screen. No record, no night; nothing is sent.
 export function PoseCameraPractice() {
-  const { error, view, serverNow, p } = useBooPractice()
-  const online = useOnline()
+  const [startsAt] = useState(() => Date.now())
+  const serverNow = useCallback(() => Date.now(), [])
   return (
     <>
       <RehearsalBand on label="PRACTICE" />
-      {error
-        ? <div className="kiosk pose-cam"><p className="kiosk-line">{ui.OFFLINE}</p></div>
-        : <PoseCamera boo={p.show} nightId="practice" serverNow={serverNow} practice />}
-      <StaleDot view={view} online={online} />
+      <PoseCamera boo={{ groupId: 'practice', state: 'visit', startsAt }} nightId="practice" serverNow={serverNow} practice shotAfterMs={PRACTICE_SHOT_AFTER_MS} />
     </>
   )
 }
@@ -294,23 +267,6 @@ export function OrangeriePractice() {
     <>
       <RehearsalBand on label="PRACTICE" />
       {body}
-      <StaleDot view={view} online={online} />
-      <Wake />
-    </>
-  )
-}
-
-// The wall: the night's runway, from the practice's show. No kiosk heartbeat,
-// and no presence row at all.
-export function BooWallPractice() {
-  const { error, view, serverNow, p } = useBooPractice()
-  const online = useOnline()
-  return (
-    <>
-      <RehearsalBand on label="PRACTICE" />
-      {error
-        ? <div className="kiosk boo-wall idle"><p className="kiosk-line">{ui.OFFLINE}</p></div>
-        : <BooRunway key={p.runId ?? 'practice'} boo={p.show} live={p.status === 'show'} serverNow={serverNow} idleLine={SAY.booWallIdle} lead={booLead(window.location.search, { practice: true })} />}
       <StaleDot view={view} online={online} />
       <Wake />
     </>

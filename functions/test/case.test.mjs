@@ -209,8 +209,10 @@ test('a whole party night: every cat\'s card is the cat, its room, its open hint
     for (const k of cards(db, uid, 'clue')) {
       clues++
       assert.equal(k.placeholder, false); assert.ok(k.text.length > 10)
-      if (k.room) assert.ok(k.bag?.text && !/___|\[sense/.test(k.bag.text), 'each room pays a filled bag hint about the Ghost')
-      if (k.room === 'library' || k.room === 'entryway') assert.ok(MOTIVES.some(m => m.n === k.cross), 'Zimothy and Boo cross off a motive')
+      if (k.room && !k.third) assert.ok(k.bag?.text && !/___|\[sense/.test(k.bag.text), 'each room pays a filled bag hint about the Ghost')
+      if (k.room === 'entryway' && k.third) assert.equal(k.bag, undefined, 'a trio\'s third at the arcade gets Boo\'s line, no hint (5 Nov 2026)')
+      if (k.room === 'library') assert.ok(MOTIVES.some(m => m.n === k.cross), 'Zimothy crosses off a motive')
+      if (k.room === 'entryway') assert.equal(k.cross, undefined, 'Boo crosses nothing off: her Catwalk went (29 Oct 2026)')
     }
     assert.equal(db.store.get(`sessions/${uid}`).solved, undefined)
   }

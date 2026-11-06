@@ -6,7 +6,7 @@
 //   status   whether it can open yet, and why not. Never content.
 //   open     { confirm: 'OPEN' }  copies the party night into an archive
 //            (archive/{nightId} and its parts: the case, the night, its
-//            private records, every guest's phone, Boo's Catwalk photos,
+//            private records, every guest's phone, the Entryway camera's photos,
 //            and the three secrets that ran: the packing, the cats' leans,
 //            the drawing pictures), then marks it open (archive/_morning, a
 //            doc no client may write). Nothing is moved or deleted, but for
@@ -170,7 +170,7 @@ export function morningView(parts, { bagItems = [] } = {}) {
   // the drawing: the answer to each round, or a made-up stand-in
   const grids = parts['private-relay']?.grids ?? []
   const drawing = grids.filter(g => g.number >= 1).map(g => ({ round: g.number, picture: g.named ? (g.options?.[g.answer]?.name ?? '') : 'a made-up picture (the bank had none)' }))
-  // Boo's Catwalk: each group's last pose, as the end credits showed it
+  // the Entryway's camera: each group at the arcade, as the end credits showed it
   const poses = Object.entries(parts).filter(([k]) => /^public-pose-g\d+$/.test(k)).map(([, d]) => ({ names: d.names ?? [], image: d.image ?? null })).filter(p => p.image)
   const pushes = { ghost: 0, murderer: 0 }
   for (const p of c.dialLog ?? []) if (p?.role in pushes) pushes[p.role] += 1

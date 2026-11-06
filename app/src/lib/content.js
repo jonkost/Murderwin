@@ -31,6 +31,7 @@ import {
   MUSIC_SHORTCUTS_1031_TASKS,
   ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS,
   RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101,
+  ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS,
 } from './timelineTasks.js'
 
 // The fourteen characters are fixed (seed/characters.json): the game deals
@@ -118,7 +119,8 @@ const EXTRA_UI_LABELS = (() => {
       { value: `REWARD ${k} DONE`, label: `REWARD ${k} DONE: the cat’s line when a group finishes ${where}`, extra: true },
       { value: `REWARD ${k} CAPPED`, label: `REWARD ${k} CAPPED: the cat’s line when the chime comes first in ${where}`, extra: true },
     ]),
-    ...[1, 2, 3, 4, 5, 6].map(i => ({ value: `BOO JUDGE ${i}`, label: `BOO JUDGE ${i}: one of Boo’s six verdicts on a pose`, extra: true })),
+    // Boo's six Catwalk verdicts (BOO JUDGE 1 to 6) went with the Catwalk, 5 Nov 2026; the arcade's line for a trio's third player took their place
+    { value: 'REWARD ENTRYWAY THIRD', label: 'REWARD ENTRYWAY THIRD: Boo’s line for a trio’s third player at the arcade, who gets no clue', extra: true },
     ...Object.entries(host).map(([k, what]) => ({ value: `HOST ${k}`, label: `HOST ${k}: ${what}`, extra: true })),
     ...[1, 2, 3, 4, 5, 6].map(i => ({ value: `HOST BOO ${i}`, label: `HOST BOO ${i}: one of Boo’s six lines before a Parlour Game`, extra: true })),
     ...[1, 2, 3, 4, 5].map(i => ({ value: `HOST IRWIN TRACE ${i}`, label: `HOST IRWIN TRACE ${i}: what Sir Irwin says over the trace at level ${i}`, extra: true })),
@@ -993,6 +995,17 @@ export const ADDITIONS = [
     id: '2026-11-01-study-stop',
     retireTasks: RETIRED_FOR_STUDY_STOP_1101,
     fileTasks: FILED_FOR_STUDY_STOP_1101,
+  },
+  {
+    // 5 Nov: the arcade on the night (515, done), two jobs for Jon (558 Boo's
+    // Mac set up, 559 one visit tried on a test night), lines on his try (514)
+    // and the tech run (332), and the questions arcadeClueRung, arcadeCamera
+    // and arcadeSound with their defaults built.
+    id: '2026-11-05-arcade-night',
+    tasks: ARCADE_NIGHT_1105_TASKS,
+    retireTasks: RETIRED_FOR_ARCADE_NIGHT_1105,
+    fileTasks: FILED_FOR_ARCADE_NIGHT_1105,
+    decisions: ARCADE_NIGHT_1105_DECISIONS,
   },
 ]
 
