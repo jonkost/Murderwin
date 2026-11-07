@@ -425,7 +425,10 @@ async function rewardOf(db, nightId, gid, room, { outcome = 'done' } = {}) {
   const uids = members.map(k => byKey[k]?.uid).filter(Boolean)
   const c = await readCase(db, nightId)
   const cat = ROOMS[room].cat
-  const rung = await groupRung(db, uids, cat)
+  // the rung is worked out once a group and room: the arcade asks for each player's card at their
+  // own moment, and a Parlour Game between the two must not change the words
+  const had = c?.bagClues?.act4?.[gid]?.[cat]?.rung
+  const rung = Number.isFinite(had) ? had : await groupRung(db, uids, cat)
   const salt = c?.screenSalt ?? nightId
   const ui = labelled(await readArea(db, 'ui_copy'))
   // the bag hint about the Ghost: from the packing on the party night, a stand-in on a rehearsal

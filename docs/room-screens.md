@@ -435,8 +435,9 @@ still exported but no screen uses them. `play/src/screens/Kiosk.jsx` renders the
 `GameName`, which reads `seed/game-names.json` through `GAME_NAMES` in
 `play/src/lib/rooms.js`) and the 25 Oct ones (`Loop`, `Idle`, `RoomCode`,
 `SmallCode`, `RejoinCode`, `JoinScreen`, `RulesCard`, `BirthdayScreen`,
-`Orangerie`). The boo kiosk reads `public/boo` (the show's
-schedule from `act4.booShow`) and calls `booDone`; the memory kiosk reads
+`Orangerie`). The boo kiosk reads `public/boo` (which group is at the
+arcade and when the round ends, from `act4.booArrive` and `booIdle`) and
+calls `arcadeClue` and `arcadeScore` (5 Nov); the memory kiosk reads
 `public/memory` and calls `memoryStep` per cleared board. The living kiosk
 and the iPad subscribe to `public/content` for the character names on the
 board; the study kiosk for Granolia's lines. Previews (`play/src/Preview.jsx`

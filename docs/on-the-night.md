@@ -1025,7 +1025,7 @@ shows `prompts` and `title` screens (`livingView`) and bulletin video
 (`BulletinVideo`, clips from `newsClips` / `closingClips` in
 `play/src/lib/rooms.js`, files at `play/public/video/<clip>.mp4`; the screen
 doc carries only `video: true`, the finale doc only `video.<stage>: true`, never a clip name). The memory kiosk takes
-`callMemoryStep`, the boo kiosk `callBooDone`. W-O-O-F News clips reach the
+`callMemoryStep`, the boo kiosk `callArcadeClue` and `callArcadeScore` (5 Nov). W-O-O-F News clips reach the
 relay as codes derived from the clip id and the station key (`STATION_KEY`
 in `cues/.env`, `media/README.md`), and the relay logs counts only; a sounds
 doc with `video: true` rings the chime and skips the clips. Whether the TV
@@ -1149,8 +1149,8 @@ in Act 4 `deal.dealWaitingGame` puts it on each phone as a waiting game),
 plays an armed bulletin 2 and deals its notice (`screen.tickBulletin`, then
 `notice:bulletin`), and moves the Act 2 cat queue on (`deal.tickLights`).
 Then `run.clockTick`: the supper beat once every guest has seen all four
-cats, and Act 4's warning, lock-in, rounds and Boo's show (`act4.due`,
-`act4.booDone`). The Host tab calls the host command `tick` when it opens
+cats, and Act 4's warning, lock-in and rounds (`act4.due`; Boo's show and
+`booDone` went with the Catwalk, 5 Nov). The Host tab calls the host command `tick` when it opens
 and every twenty seconds in Acts 2 and 4.
 `node functions/host.mjs tick` is the hand version. Logs are counts only.
 `note-exposure <murderer|ghost>` is the older name for `hush`: the same
@@ -1262,9 +1262,10 @@ Jenna card only its title and section. The study section is
 (`docs/study-light-game.md`); the key word box is
 `app/src/components/KeyWord.jsx` (`meta/game.station_key`, the field the
 Host tab's Save key writes). The `gameTest` callable
-(`functions/lib/gametest.js`) writes the two practices to
-`public_state/game_test_salem` and `public_state/game_test_boo` with the
-Admin SDK, on the real game's own rules and timing (`act4.salemFlips`), and
+(`functions/lib/gametest.js`) writes the Get Off My Lawn! practice to
+`public_state/game_test_salem` with the Admin SDK, on the real game's own
+rules and timing (`act4.salemFlips`; the Catwalk's `game_test_boo` went on
+5 Nov, the arcade's practice needs no night), and
 never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. The
 practice pages are `play/src/screens/Practice.jsx`: `?practice=salem` and
 `?kiosk=orangerie&practice=1`, which take the server's time from the

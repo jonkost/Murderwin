@@ -274,8 +274,9 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
     const now = performance.now()
     if (!a) return show(null, now)
     const n = nightRef.current
-    if (n && a.mode === 'visit' && !a.free && a.stage !== 'farewell') {
-      // the chime on the house's clock: the round's end, which a pause moves on; or at once, when the round has moved on
+    if (n && a.mode === 'visit' && a.stage !== 'farewell') {
+      // the chime on the house's clock: the round's end, which a pause moves on; or at once, when the round
+      // has moved on. In the visit's free play too, so Next never leaves a game running for the next group
       const want = now + ((n.slotEndsAt ?? 0) - n.serverNow())
       if (Math.abs((a.roundEndsAt ?? 0) - want) > 500) a = arcadeRoundEnds(a, want)
       if (n.chime) a = arcadeChime(a, now)

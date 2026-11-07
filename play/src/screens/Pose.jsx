@@ -19,7 +19,7 @@ export const PRACTICE_SHOT_AFTER_MS = 12_000
 const SAY = {
   intro: 'Boo’s camera. Point this iPad at the group at the deck: it takes one photo of each group, for the end credits.',
   start: 'Turn on the camera',
-  denied: 'The camera is off. Allow the camera for this page in the iPad’s Settings, then reload. Boo’s Catwalk works without it.',
+  denied: 'The camera is off. Allow the camera for this page in the iPad’s Settings, then reload. The arcade plays on without it.',
   snapped: 'Snap! For the end credits.',
   practice: 'Snap! Practice: this photo stays on this screen. On the night it goes in the end credits.',
   missed: 'The photo did not go through. The next group gets theirs.',

@@ -1509,12 +1509,12 @@ export function arcadeClueText(a, place, text) {
 }
 
 // On the night: the chime rings at the round's end on the house's clock,
-// which a pause moves on. Nothing changes once the chime has rung, or in
-// free play.
+// which a pause moves on, in the visit's free play as much as in its games.
+// Nothing changes once the chime has rung.
 export function arcadeRoundEnds(a, roundEndsAt) {
   const s = copy(a)
   s.events = []
-  if (s.mode === 'visit' && !s.free && s.stage !== 'farewell' && Number.isFinite(roundEndsAt)) s.roundEndsAt = roundEndsAt
+  if (s.mode === 'visit' && s.stage !== 'farewell' && Number.isFinite(roundEndsAt)) s.roundEndsAt = roundEndsAt
   return s
 }
 

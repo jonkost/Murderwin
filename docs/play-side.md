@@ -725,8 +725,8 @@ still opens one.
   words only, never a point or a lean).
 - The Game test tab's practices (24 Oct, `play/src/screens/Practice.jsx`, no
   night): `?practice=salem` (Get Off My Lawn! on any phone that joins, with a
-  shake meter), `?practice=boo` (Boo's Catwalk on the phones) and
-  `?kiosk=boo&practice=1` (the wall). They follow `public_state/game_test_salem`
-  and `game_test_boo`, which only the `gameTest` callable writes, and never
-  write `presence/{uid}`. `docs/on-the-night.md` has the tab. A second dev server config, `play-5175`, exists
+  shake meter), which follows `public_state/game_test_salem`, written only by
+  the `gameTest` callable, and never writes `presence/{uid}`; the arcade's
+  practice is `?kiosk=boo&play=1`, with no night and no doc (Boo's Catwalk
+  practices went on 5 Nov). `docs/on-the-night.md` has the tab. A second dev server config, `play-5175`, exists
   for when another session already holds 5174.
