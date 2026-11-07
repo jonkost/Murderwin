@@ -9,6 +9,42 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 6 Nov 2026 · Claude Code (the stability sweep, and the deploy)
+
+- Jon: "The intro content and the credits are also still to come. Deploy
+  what we have thus far. Do a solid sweep for stability." The sweep: every
+  suite (functions 297, cues 79, station 67, app 141, play 268, scripts 53),
+  `npm run checks` (all clear, saved for the Health page), the live
+  functions against the exports (`booDone` out, `arcadeClue` in), and a
+  fresh review of the two 5 Nov commits.
+- The review found one thing that would have shown on the night, fixed
+  (`52556a8`): the arcade's chime was ignored once a group reached free
+  play after the winner, so the host's Next left a free-play game running
+  (up to two minutes) before the rules card and Boo's code came back for
+  the next group, and a pause left the chime at its old time. Now the
+  house's chime ends the visit's free play too (`play/src/lib/arcade.js`
+  `arcadeRoundEnds`, `screens/Arcade.jsx` `tick`; a test). Also from the
+  review: the arcade's rung is worked out once a group and room
+  (`functions/lib/act4.js` `rewardOf` reuses the recorded rung), so a
+  Parlour Game between the two players' clue moments cannot change the
+  words; the camera page's "allow the camera" line no longer names the
+  Catwalk; the last Catwalk words in `docs/on-the-night.md`,
+  `docs/room-screens.md` and `docs/play-side.md` are gone.
+- Noted and left: a pause moves the arcade's chime on but the deck plays
+  on through it, while the Study stands still (the question arcadePause,
+  on the board with its default built); any signed-in phone could write a
+  kiosk key into its own presence row and ask for the group's clue early
+  (the same trust every kiosk key has had since the station; a family
+  party; left).
+- Deployed: a full deploy from a clean copy of `52556a8` (the site, the
+  rules, the functions; `booDone` deleted, `arcadeClue` new), then the site
+  again for the board's new question. Every live file compared with the
+  build. Not pushed.
+- Left: Jon's cards 558 (Boo's Mac set up) and 559 (one visit on a test
+  night), the questions arcadeClueRung, arcadeCamera, arcadeSound,
+  arcadePause and arcadeTrioTime, the intro content and the credits (Jon's,
+  not code), and the machine-bound cards.
+
 ## 5 Nov 2026 · Claude Code (the arcade on the night, and three small cards)
 
 - Jon, over Remote Control from his iPad: "Cook it all up. We are 1 week
