@@ -39,7 +39,8 @@ on the Canon.
 - Deployed: a full deploy from a clean copy of `52556a8` (the site, the
   rules, the functions; `booDone` deleted, `arcadeClue` new), then the site
   again for the board's new question. Every live file compared with the
-  build. Not pushed.
+  build. Pushed on 8 Nov on Jon's word (three iCloud duplicate files inside
+  `.git`, "HEAD 2" and "index 2", had broken fetch; removed).
 - Left: Jon's cards 558 (Boo's Mac set up) and 559 (one visit on a test
   night), the questions arcadeClueRung, arcadeCamera, arcadeSound,
   arcadePause and arcadeTrioTime, the intro content and the credits (Jon's,
