@@ -9,6 +9,41 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 11 Nov 2026 · Claude Code (before the walk-through: the media, a sweep, the postmortem)
+
+- Jon: "This evening will be the full walk through with 3 players. Before
+  that start I will have all content ready. Please make sure I know where to
+  put the media and make sure the game is rock solid. I would like to have a
+  system in place to have a postmortem review of how things went."
+- The sweep: every suite passes (`npm test`), `npm run checks` all clear
+  (22,042 case checks on 1,000 pretend cases, the dry run, the leak checks),
+  `npm run fake-night` passes with 8 phones and with 2, 3, 4, 5, 9 and 10,
+  the live site answers. Nothing in the game's code changed.
+- Found, nothing broken: with three players there is one Act 4 group, so the
+  Library crosses off one motive and the clues can leave two standing when
+  Sir Irwin shows three cards. With four or more the checks find exactly one
+  every time (500 pretend cases at each size). The fake night takes
+  `--phones N` now and knows this. Card 562, and a line in
+  `docs/on-the-night.md`.
+- The media: `docs/media.md` (every folder and name on one page), `npm run
+  media` (what is in, missing or misspelt; `-- --live` asks the site), and
+  the bulletin videos' folder `play/public/video/` with its own page,
+  gitignored like the loops. Today: the nine cue sounds are in; no news
+  recording, video, loop or Sydney's photo yet; `media/power.wav` is an old
+  file nothing reads.
+- The postmortem (`docs/postmortem.md`): the workshop's Postmortem page (one
+  note at a time, each a Timeline card, the board prints them first), `npm
+  run night-log` on the brain (read only, every move of the night with its
+  time), and `npm run postmortem`, which writes `docs/postmortems/<date>.md`.
+- The board: cards 560 to 564 (three done, two for Jon: the night log before
+  a run, the Postmortem page after it). The board still shows 515, 518, 530
+  and 311 open because the workshop has not been opened since the 6 Nov
+  deploy; they close when it is.
+- Not deployed, not pushed. The Postmortem page reaches the workshop with the
+  next `npm run deploy:site`; the night log and the media check work now.
+- Left: Jon's cards 558, 559, 563, 564; the machine-bound cards; the open
+  questions.
+
 ## 6 Nov 2026 · Claude Code (the stability sweep, and the deploy)
 
 - Jon: "The intro content and the credits are also still to come. Deploy

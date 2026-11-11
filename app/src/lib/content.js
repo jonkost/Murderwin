@@ -31,7 +31,7 @@ import {
   MUSIC_SHORTCUTS_1031_TASKS,
   ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS,
   RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101,
-  ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS, SWEEP_1106_DECISIONS,
+  ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS, SWEEP_1106_DECISIONS, POSTMORTEM_1111_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1024,6 +1024,14 @@ export const ADDITIONS = [
     // review, arcadePause, with its default built.
     id: '2026-11-06-sweep',
     decisions: SWEEP_1106_DECISIONS,
+  },
+  {
+    // 11 Nov, before the walk-through with three players: the postmortem (560)
+    // and the media check (561) done, a note on three players and the motive
+    // (562), and two jobs for Jon: the night log before a run (563), the
+    // Postmortem page after it (564).
+    id: '2026-11-11-postmortem',
+    tasks: POSTMORTEM_1111_TASKS,
   },
 ]
 

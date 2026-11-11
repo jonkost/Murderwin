@@ -568,3 +568,9 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .gt-sent li.done { color: var(--muted); }
 .gt-night .st-state { margin-bottom: 0.2rem; }
 .gt-actions button:disabled, .gt-try-actions button:disabled { opacity: 0.45; cursor: default; }
+
+/* The Postmortem page (11 Nov 2026): the notes already sent, as plain lists. */
+.pm-here, .pm-all { list-style: none; padding: 0; margin: 0.4rem 0 0.8rem; display: grid; gap: 0.5rem; }
+.pm-here li, .pm-all li { border: 1px solid var(--line); border-radius: var(--r-control); padding: 0.55rem 0.8rem; background: var(--field); overflow-wrap: anywhere; }
+.pm-when { display: block; font-size: 0.85rem; opacity: 0.75; }
+.gt-feedback input[type="date"] { width: 100%; font-size: 1.05rem; min-height: 48px; }

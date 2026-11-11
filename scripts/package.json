@@ -9,7 +9,10 @@
     "checks": "node checks.mjs",
     "board": "node board.mjs",
     "test": "node --test test/*.test.mjs",
-    "upload-station": "node upload-station.mjs"
+    "upload-station": "node upload-station.mjs",
+    "night-log": "node postmortem.mjs record",
+    "postmortem": "node postmortem.mjs report",
+    "media": "node media-check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",

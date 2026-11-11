@@ -1,7 +1,7 @@
 {
   "name": "murderwin",
   "private": true,
-  "description": "A Murderwin at Sirwin Manor — workshop (app/), phone client (play/), Cloud Functions (functions/), the cue relay (cues/), the study station (station/), scripts (scripts/).",
+  "description": "A Murderwin at Sirwin Manor \u2014 workshop (app/), phone client (play/), Cloud Functions (functions/), the cue relay (cues/), the study station (station/), scripts (scripts/).",
   "engines": {
     "node": ">=22"
   },
@@ -17,6 +17,9 @@
     "deploy": "npm run build:site && npm run check-build && firebase deploy --only hosting,firestore:rules,storage,functions",
     "deploy:site": "npm run build:site && npm run check-build && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
-    "deploy:rules": "firebase deploy --only firestore:rules,storage"
+    "deploy:rules": "firebase deploy --only firestore:rules,storage",
+    "night-log": "npm --prefix scripts run night-log",
+    "postmortem": "npm --prefix scripts run postmortem --",
+    "media": "node scripts/media-check.mjs"
   }
 }

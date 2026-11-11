@@ -145,6 +145,7 @@ export default function Night() {
         <h2>Try the games</h2>
         <p className="why">Every game in Acts 4 and 6, and the Parlour Games, to try before the night on the device it runs on. A test never touches the party night.</p>
         <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
+        <p className="night-line"><Link className="primary dl" to="/postmortem">Postmortem: how the last run went</Link></p>
       </section>
 
       <section className="panel">

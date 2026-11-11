@@ -30,6 +30,13 @@ export function ownerOf(task) {
 
 export const isGameTest = task => task?.source === 'game-test' || /^Game test ·/.test(String(task?.title ?? ''))
 export const isSteward = task => task?.steward === true
+// Jon's notes from a run of the night (the workshop's Postmortem page, 11 Nov
+// 2026): printed first, the newest run first, what broke before what was rough.
+export const isPostmortem = task => task?.source === 'postmortem'
+const KIND_RANK = { broke: 0, rough: 1, idea: 2 }
+const byPostmortem = (a, b) => String(b.run ?? '').localeCompare(String(a.run ?? ''))
+  || (KIND_RANK[a.kind] ?? 3) - (KIND_RANK[b.kind] ?? 3)
+  || (typeof a.order === 'number' ? a.order : Infinity) - (typeof b.order === 'number' ? b.order : Infinity)
 const isOpen = task => !!task && !task.deleted && task.status !== 'done'
 const orderOf = task => (typeof task?.order === 'number' && Number.isFinite(task.order) ? task.order : Infinity)
 // Claude Code's alone, or shared with someone ("Jon and Claude Code").
@@ -39,7 +46,8 @@ export const isClaudeCodes = task => ownerOf(task) === 'Claude Code' || /\bclaud
 export function claudeCodeCards(tasks = []) {
   const mine = tasks.filter(t => isOpen(t) && isClaudeCodes(t))
   const byOrder = (a, b) => orderOf(a) - orderOf(b)
-  return [...mine.filter(isGameTest).sort(byOrder), ...mine.filter(t => !isGameTest(t)).sort(byOrder)]
+  const rest = t => !isGameTest(t) && !isPostmortem(t)
+  return [...mine.filter(isPostmortem).sort(byPostmortem), ...mine.filter(isGameTest).sort(byOrder), ...mine.filter(rest).sort(byOrder)]
 }
 
 // One card as plain lines: the fields the board keeps, nothing more.
@@ -55,6 +63,7 @@ export function cardLines(task) {
   }
   const detail = String(task.detail ?? '').trim()
   if (detail) for (const line of detail.split('\n')) lines.push(`  ${line}`)
+  if (isPostmortem(task)) lines.push(`  postmortem: the run of ${task.run ?? '?'} · ${task.kind ?? 'note'}`)
   if (isGameTest(task)) {
     const facts = [task.test ? `section ${task.test}` : null, task.tried ? `last opened ${task.tried}` : null].filter(Boolean)
     if (facts.length) lines.push(`  game test: ${facts.join(' · ')}`)
@@ -68,7 +77,8 @@ export function boardText(tasks = []) {
   const cards = claudeCodeCards(tasks)
   if (!cards.length) return ['No open cards for Claude Code.']
   const tests = cards.filter(isGameTest).length
-  const out = [`Open cards for Claude Code: ${cards.length} (from the Game test tab: ${tests})`]
+  const runs = cards.filter(isPostmortem).length
+  const out = [`Open cards for Claude Code: ${cards.length} (from the Game test tab: ${tests}${runs ? `; from the postmortem: ${runs}, printed first` : ''})`]
   for (const c of cards) out.push('', ...cardLines(c))
   return out
 }

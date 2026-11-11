@@ -15,6 +15,7 @@ import Status from './pages/Status'
 import Health from './pages/Health'
 import Steward from './pages/Steward'
 import GameTest from './pages/GameTest'
+import Postmortem from './pages/Postmortem'
 import Morning from './pages/Morning'
 import { useFrozen } from './components/Frozen'
 import { FROZEN_CHIP } from './lib/frozen'
@@ -111,6 +112,8 @@ function Shell({ user }) {
         <Route path="/health" element={<Health />} />
         {/* Every game of Acts 4 and 6 and the Parlour Games, to try before the night, with a note to Claude Code for each. Also linked from Devices and Game night. */}
         <Route path="/game-test" element={<GameTest />} />
+        {/* After a run of the night: one note at a time, each a Timeline card for Claude Code (11 Nov 2026). Reached from Home, Where we are and Game night; the rail is full on a phone. */}
+        <Route path="/postmortem" element={<Postmortem />} />
         <Route path="/morning" element={<Morning />} />
         {/* The old Study test address opens the study section of Game test (flash, teach the taps, a practice round). */}
         <Route path="/study-test" element={<Navigate to="/game-test#study" replace />} />

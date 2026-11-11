@@ -203,6 +203,18 @@ them.
   (the study screen, the iPad Pro in the Library, the projector, the brain's
   browser in the Orangerie); the printed codes are the fallback for a screen
   that has died or a projector still warming up.
+- *Where every file goes.* `docs/media.md` is the one page: the sounds and
+  recordings, the bulletin videos, the loops and Sydney's photo, each with
+  its folder and its exact names. `npm run media` says what is in, what is
+  missing and what is misspelt.
+- *The postmortem.* Before any run, start the night log on the brain (`npm
+  run night-log`; it only watches, and writes down the time of every move).
+  After the run, ten minutes on the workshop's Postmortem page. Then tell
+  Claude Code "do the postmortem". `docs/postmortem.md` has the three steps.
+- *A night with three players.* Three players make one group in Act 4, so
+  the Library crosses off one motive, not two or more, and the clues can
+  leave two motives standing when Sir Irwin shows three cards. That is the
+  size of the party, not a fault. With four or more it does not happen.
 - *The loops.* Five silent looping videos, one per idle screen, dropped into
   `play/public/loops/` by their exact names (`play/public/loops/README.md`
   has the list: Sir Irwin in the Parlour, Granolia, Zimothy in the Library,

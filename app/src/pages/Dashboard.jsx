@@ -149,6 +149,7 @@ export default function Dashboard() {
         <h2>Try the games</h2>
         <p className="why">Every game in Acts 4 and 6, and the Parlour Games, ready to try before the night. Tell Claude Code what to fix from there: your note goes on the Timeline.</p>
         <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
+        <p className="night-line"><Link className="primary dl" to="/postmortem">Postmortem: how the last run went</Link></p>
       </section>
 
       <details className="panel more">

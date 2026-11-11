@@ -24,6 +24,8 @@ feature lands Wednesday 11 November, after the second full tech run; then checks
 
 > **22 Oct 2026 handoff (`docs/handoff-2026-10-22.md`): applied and built on 22 Oct** (commits c8b76a4 to f705587; deployed 23 Oct). The 23 Oct handoff wins where they disagree. Decided by Jon on 23 Oct: secretLines (retired: the cats say only their open hint lines) and act2Safe (the Act 2 safe is taken out). What is left is on the workshop's Timeline. Every session follows HOW WE WORK below.
 
+> **11 Nov 2026, before the walk-through with three players ("make sure I know where to put the media and make sure the game is rock solid. I would like to have a system in place to have a postmortem review of how things went"; built that day, not deployed, not pushed):** `docs/media.md` is the one page for every media file, `npm run media` (`scripts/media-check.mjs`) says what is in, missing or misspelt, and `play/public/video/` now exists with its own page (the videos are gitignored like the loops). The postmortem is three steps (`docs/postmortem.md`): `npm run night-log` on the brain during a run (read only: the two public documents, a test pins them), the workshop's Postmortem page after it (each note a Timeline card with source `postmortem`, printed first by the board), and `npm run postmortem`, which writes `docs/postmortems/<date>.md` for the review. Found on the way, nothing broken: with fewer than four players there is one Act 4 group, so the Library crosses off one motive and two can be left standing at dial 3 (G32 is dealt on 4 to 12 guests; `npm run fake-night -- --phones 3` now knows).
+
 ## RULE 1 — THE HOST PLAYS
 
 Jon (the human you are working with) is the host, the developer, AND a player.
@@ -182,7 +184,9 @@ job or a decision lives.
 Start of every Claude Code session: run `npm --prefix scripts run board`. It is
 read only (the Timeline's cards and nothing else) and prints the open Claude
 Code cards, Jon's Game test notes first. Work the Game test notes: they are
-Jon's notes from trying each game on the workshop's Game test tab. When one is
+Jon's notes from trying each game on the workshop's Game test tab. Notes from a
+postmortem (the workshop's Postmortem page, 11 Nov 2026) print before them:
+when Jon says "do the postmortem", follow `docs/postmortem.md`. When one is
 fixed, mark its card done by its number and title (in the session's ADDITIONS
 migration), so the game's chip on the tab goes back to Not tried yet and Jon
 tries it again. A card Jenna filed prints only its title and section; never
@@ -228,6 +232,8 @@ End of every Claude Code session, in this order:
 | Live status | Workshop "Where we are", https://murderwin-at-sirwin-manor.web.app/workshop/#/status, and the Where we are Claude Doc, https://claude.ai/artifact/8LkaQjCZd6juQq58jcW3RZ |
 | Trying each game before the night, and Jon's notes on them | Workshop Game test tab, https://murderwin-at-sirwin-manor.web.app/workshop/#/game-test (the notes are Timeline cards for Claude Code; `npm --prefix scripts run board` prints them) |
 | The last run of `npm run checks` | Workshop Health page, https://murderwin-at-sirwin-manor.web.app/workshop/#/health |
+| Where every media file goes | `docs/media.md`; `npm run media` says what is in, missing or misspelt |
+| The postmortem of a run (Jon's notes, the night's timings, the review) | Workshop Postmortem page, https://murderwin-at-sirwin-manor.web.app/workshop/#/postmortem (notes are Timeline cards, printed first by the board); `npm run night-log` on the brain during the run; `npm run postmortem` writes `docs/postmortems/<date>.md`; the routine is `docs/postmortem.md` |
 | Claude chat handoffs | `docs/handoff-YYYY-MM-DD.md`, plus the dated Claude Doc |
 | The cue walk-through (canon for sound, light, video and the phones) | `docs/cue-list.md`; Claude Doc https://claude.ai/artifact/XYhrKSQX193YXnNKdqScBw (the handoff) |
 | Session log | `docs/sessions.md` |

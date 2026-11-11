@@ -181,6 +181,7 @@ export default function Status() {
           {LINKS.map(([t, d, href]) => <li key={href}><a href={href} target="_blank" rel="noreferrer"><b>{t}</b></a> <span className="hint">{d}</span></li>)}
           <li><Link to="/timeline"><b>The Timeline</b></Link> <span className="hint">every job, in the order of the night</span></li>
           <li><Link to="/game-test"><b>Game test</b></Link> <span className="hint">try every game before the night</span></li>
+          <li><Link to="/postmortem"><b>Postmortem</b></Link> <span className="hint">after a run: say what broke, what was rough and what to keep</span></li>
           <li><Link to="/night"><b>Game night</b></Link> <span className="hint">the hosts, the party box, Freeze the workshop</span></li>
           <li><Link to="/devices"><b>Every device</b></Link> <span className="hint">room by room, with its address, and the order to switch on</span></li>
           <li><Link to="/health"><b>Health</b></Link> <span className="hint">the last run of the checks: one line per group</span></li>

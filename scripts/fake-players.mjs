@@ -23,6 +23,7 @@
 //
 //   npm run fake-night                       in-process, against an in-memory stand-in Firestore
 //   npm run fake-night -- --emulator         against the local emulators (npm run emulate first)
+//   npm run fake-night -- --phones 3         that many fake phones in place of eight (a small walk-through)
 //   npm run fake-night -- --seed tulip-4471  a rehearsal dealt from that seed word (functions/lib/seed.js):
 //                                            the same deal as any night from that word; the fake
 //                                            phones' own taps still differ. Every rehearsal prints its word
@@ -369,7 +370,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await next() // Sir Irwin on the screen
     const funnel = await motiveFunnel()
     if (!funnel.ok) summary.checks.push('G32')
-    say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}`)
+    say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}${funnel.small ? ' (under four phones there is one group, so more than one motive can be left at dial 3)' : ''}`)
     await next() // update your motives (25 Oct 2026)
     actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library`])
 
@@ -495,8 +496,12 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const named = c?.rehearsal ? families.irwinOptions(c, { band, seed: screen.screenSeed(c, nightId) }) : (screenDoc?.choices ?? []).map(x => x.n)
     const bulletinBand = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.level ?? null
     const left = families.remainingMotives(families.roomClues(c, { irwin: named, bulletinBand }))
-    const ok = named.length === families.irwinCount(band) && left.includes(Number(c?.motive)) && (band !== 3 || left.length === 1)
-    return { ok, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length + Object.keys(c?.solving?.boo ?? {}).length }
+    // One motive left at dial 3 needs two groups in Act 4 (four phones or more): the
+    // Library crosses one off for each group, and a lone group leaves two standing
+    // (found 11 Nov 2026 with --phones 3; 500 stand-in cases each at 2 and 3 guests, counts only).
+    const small = phones < 4
+    const ok = named.length === families.irwinCount(band) && left.includes(Number(c?.motive)) && (band !== 3 || small || left.length === 1)
+    return { ok, small, left: left.length, named: named.length, crossed: Object.keys(c?.solving?.memory ?? {}).length + Object.keys(c?.solving?.boo ?? {}).length }
   }
 
   // The Act 6 drawing on its own clock: the room taps a guess at random on
@@ -558,7 +563,13 @@ async function main() {
     const { FakeFirestore } = await import('../functions/test/fake-firestore.mjs')
     db = new FakeFirestore()
   }
-  const summary = await fakeNight({ db, realSecrets, seed })
+  const pAt = args.indexOf('--phones')
+  const phones = pAt >= 0 ? Math.floor(Number(args[pAt + 1])) : PHONES
+  if (!(phones >= 1 && phones <= 14)) {
+    console.log('--phones takes a number from 1 to 14.')
+    return 2
+  }
+  const summary = await fakeNight({ db, realSecrets, seed, phones })
   return summary.ok ? 0 : 1
 }
 
