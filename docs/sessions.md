@@ -16,7 +16,8 @@ on the Canon.
 - **The credits checked**, in the preview (`?preview=kiosk-finale-credits`): the roll, 73 seconds, every part present, nothing a stand-in. Missing: `sydney.jpg` (his line shows alone, card 567). Measured with a full night's lists (22 awards, 36 questions, 17 names): each line is on a 720-high screen about six seconds. Not changed; card 570 asks Jon to watch it.
 - **Three phones:** `npm run fake-night -- --phones 3` PASS: one group, four rounds, every act. Under four players two motives can stand (card 562, as before).
 - `npm test` passes in every package; the site builds.
-- **Left:** not deployed, not pushed. The band stays on the live site until Jon says publish (the site only).
+- **Deployed** the same evening on Jon's "Yes, publish" (967d27b, the site only, from this checkout with the videos in; not pushed): the live phone page is the build's own file and carries the Host tab's new line.
+- **The house, asked the same evening** ("is all the house online?"): the walls and the Hue bridge answer; no Stream Deck on this Mac; the brain's sounds and lights are not started; no room screen has been heard from for days; the live night is still the 8 Oct rehearsal at the doors. Nothing changed by the check.
 - **Decisions:** Jon: the REHEARSAL band goes.
 
 ## 11 Nov 2026, later · Claude Code (Jon's folder of exports, and the closing bulletin's own clips)
