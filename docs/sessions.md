@@ -18,6 +18,7 @@ on the Canon.
 - **Reviewed** by four readers, each finding checked by another: a film replaying after a hold, a reloaded TV, the chime's moment, the old holds, no files with the box ticked, the Host tab's line. All fixed. One build error caught on screen first.
 - **Tried:** both films in the preview with the sound off (`?preview=kiosk-finale-film`, `kiosk-finale-film-victim`, `&mute=1`). Not on the real TV, and never with sound.
 - **Left:** a full deploy on Jon's word (functions and site; deploy from this checkout or copy the videos in, since a clean worktree has none), then the videos box. No loops, no `sydney.jpg`. No screen shows `Irwin Framed.png`. The 28 `rules-…` sound files are not the game's. Cards 565 to 567.
+- **Deployed** 11 Nov evening on Jon's "Yes, publish" (eafcf05, a full deploy from a clean copy with the videos copied in, not pushed): 26 of 26 functions updated, 211 of 211 site files match, all 62 videos online. The videos box is still Jon's to tick; every open screen and phone needs a reload.
 - **Decisions:** none by Jon. Mine, to confirm with him: the static sits after the motive clip, before the motive card (`closing.video.cut.after`).
 
 ## 11 Nov 2026 · Claude Code (before the walk-through: the media, a sweep, the postmortem)
