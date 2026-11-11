@@ -11,6 +11,7 @@ on the Canon.
 
 ## 11 Nov 2026 · Claude Code (before the walk-through: the media, a sweep, the postmortem)
 
+- Deployed the same day on Jon's word ("Yes, publish"): the site only (`npm run deploy:site`), from a clean copy of dbb6ef9; 121 of 121 live files match the build, and the Postmortem page is in the live workshop. Not pushed.
 - Jon: "This evening will be the full walk through with 3 players. Before
   that start I will have all content ready. Please make sure I know where to
   put the media and make sure the game is rock solid. I would like to have a
