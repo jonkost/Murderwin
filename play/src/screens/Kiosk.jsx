@@ -4,7 +4,7 @@ import { callRelayAdvance, callRelayGuess } from '../firebase'
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
-import { newsClips, closingClips, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
+import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
@@ -177,7 +177,9 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
 
   // a soft note at each reveal, as the card cuts in after its lead-in; never again once the
   // closing story, the journey or the credits are up (a screen reloaded then stays quiet)
-  const fresh = finale && night?.act === 7 && NAME_STAGES.includes(finaleStage(finale, serverNow())) ? revealView(finale, serverNow()).fresh : null
+  // (a name that plays as a film rings from Finale, when the film ends and its card really cuts in)
+  const freshStage = finale && night?.act === 7 ? finaleStage(finale, serverNow()) : null
+  const fresh = NAME_STAGES.includes(freshStage) && !finale.video?.[freshStage] ? revealView(finale, serverNow()).fresh : null
   useEffect(() => {
     if (!fresh) return
     if (lastReveal.current !== fresh) { chime('right'); lastReveal.current = fresh }
@@ -593,9 +595,19 @@ export { finaleStage }
 const NAME_STAGES = ['murderer', 'motive', 'victim']
 const NAME_CREST = { murderer: 'The murderer', motive: 'The motive', victim: 'The one who died', done: 'Unmasked' }
 const NAME_WHAT = { murderer: 'Murderer', motive: 'Motive', victim: 'Victim' }
+export const FILM_GRACE_MS = 20_000
+// The film for one name: the pick is the character behind the name, or the motive's number.
+function filmFor(stage, names, who) {
+  if (stage === 'motive') return closingSequence('motive', names.motive?.n, names.motive?.rhyme ?? '')
+  return closingSequence(stage, revealCharacterId(names[stage], who), names[stage]?.characterName ?? '')
+}
 
 export function Finale({ night, finale, content = null, serverNow }) {
   const now = serverNow()
+  // the closing bulletin's video for a name, once it is over: { [name]: how many clips really played }
+  const [filmDone, setFilmDone] = useState({})
+  const filmBegan = useRef({}) // the films this screen was showing before their cardAt
+  const filmRang = useRef(null)
   const stage = finaleStage(finale, now)
   // the host's hold freezes the screen on every night; the word "Held" is for the host, so it shows only on a
   // rehearsal, like the Rehearsal tag (Jon, 29 Oct 2026: no setup words in front of the guests). On the party
@@ -638,12 +650,30 @@ export function Finale({ night, finale, content = null, serverNow }) {
     </div>
   )
   const names = finale.names ?? {}
-  // the lead-in plays first, under the cards already named; the new card cuts in when it is over
-  const rv = revealView(finale, now)
-  // the closing bulletin as video (23 Oct 2026): this stage's parts play during the lead-in
-  const clips = NAME_STAGES.includes(stage) && finale.video?.[stage] ? closingClips(stage) : null
-  if (rv.waiting && clips?.length) return <BulletinVideo clips={clips} lines={rv.captions.map(p => `${p.who}: ${p.text}`)} startedAt={ms(finale.cardAt?.[stage]) - 1} serverNow={null} />
   const who = { characters: content?.characters ?? [], roster: night?.roster ?? {} }
+  // the closing bulletin as video (23 Oct 2026; the night's own clips, 11 Nov 2026): the name the host
+  // just pressed for plays as one film, its recorded parts, Mic saying the name or the motive, the
+  // static cut, and its card cuts in when the film is over. The server's cardAt is when that should
+  // be; the film's own end decides, up to FILM_GRACE_MS after it (a slow start over the wifi), so a
+  // card never cuts in over Mic and a screen reloaded later goes straight to the cards. A film with
+  // no file at all is over at once, so its card shows at once.
+  const filmStage = NAME_STAGES.includes(stage) ? stage : stage === 'done' && finale.stage === 'victim' ? 'victim' : null
+  const film = filmStage && finale.video?.[filmStage] ? filmFor(filmStage, names, who) : []
+  // one film a name a reveal: the reveal's own start never moves, where a hold moves cardAt
+  const filmKey = filmStage ? `${filmStage}:${ms(finale.at)}` : ''
+  const filmCardAt = filmStage ? ms(finale.cardAt?.[filmStage]) : 0
+  const filmOver = filmKey in filmDone
+  // the grace is only for a film this screen began before its cardAt: a screen that loads later goes straight to the cards
+  if (film.length && filmCardAt && now < filmCardAt) filmBegan.current[filmKey] = true
+  const filmLive = filmCardAt > 0 && (now < filmCardAt || (filmBegan.current[filmKey] && now < filmCardAt + FILM_GRACE_MS))
+  if (film.length && !filmOver && filmLive) {
+    return <BulletinVideo clips={film.map(c => c.clip)} clipLines={film.map(c => c.line)} lines={film.map(c => c.line).filter(Boolean)} startedAt={0} serverNow={null}
+      onDone={n => setFilmDone(d => ({ ...d, [filmKey]: n }))} />
+  }
+  // a film that is over, played or with no file at all: the card cuts in now, not after a wait on the words
+  const rv = revealView(finale, filmOver ? Math.max(now, filmCardAt) : now)
+  // the soft note as the card cuts in, once a film (Living rings it for a name with no film)
+  if (film.length && rv.fresh && NAME_STAGES.includes(stage) && filmRang.current !== filmKey) { filmRang.current = filmKey; chime('right') }
   return (
     <div className={`kiosk finale reveal ${stage}`}>
       <p className="kiosk-crest">{rv.waiting ? 'W-O-O-F News' : NAME_CREST[stage]}</p>

@@ -98,3 +98,31 @@ export function closingStage(stage) {
   const leadMs = parts.slice(from, cardIndex(stage) + 1).reduce((sum, p) => sum + p.holdMs, 0)
   return { parts: mine, leadMs }
 }
+
+// The closing bulletin as video (11 Nov 2026, Jon's recordings): after the
+// part that carries a card the Parlour TV plays the night's own clip, Mic
+// Cameron saying the name or the motive (closing.video in the bank: a file
+// for every character and every motive, so the files say nothing about a
+// night), then, where the bank says so, one second of static. `pick` is the
+// character id (Murderer, Victim) or the motive's number; with none, or one
+// the bank has no clip for, the stage is its recorded parts alone.
+// Returns the clips in order, each with how long it runs. play/src/lib/rooms.js
+// closingSequence builds the same list for the TV; a test checks they agree.
+export const CLOSING_VIDEO = NEWS.closing.video ?? {}
+export const CLIP_SLACK_MS = 400 // a file's start over the house wifi
+export function closingVideoStage(stage, pick) {
+  const { parts } = closingStage(stage)
+  const cardKey = CLOSING_CARDS[stage]
+  const bank = CLOSING_VIDEO[cardKey]
+  const id = String(pick ?? '')
+  const runs = bank && /^[A-Za-z0-9-]+$/.test(id) ? Number(bank.ms?.[id]) : NaN
+  const cut = CLOSING_VIDEO.cut
+  const seq = []
+  for (const p of parts) {
+    seq.push({ clip: p.clip, ms: Number(CLOSING_VIDEO.parts?.[p.clip]) || p.holdMs })
+    if (p.card !== cardKey || !(runs > 0)) continue
+    seq.push({ clip: `${bank.prefix}${id}`, ms: runs, reveal: true })
+    if (cut?.clip && cut.after === cardKey) seq.push({ clip: cut.clip, ms: Number(cut.ms) || 0, cut: true })
+  }
+  return { seq, totalMs: seq.reduce((sum, c) => sum + c.ms + CLIP_SLACK_MS, 0) }
+}

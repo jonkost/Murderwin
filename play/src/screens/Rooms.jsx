@@ -294,12 +294,15 @@ export function TitleCard({ screen }) {
 // me"): the clips play one after another from play/public/video/<clip>.mp4,
 // with the TV's own sound. A clip with no file is skipped; with none at all,
 // or once they are done, the words stay on the screen, as they always have.
-export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', startedAt = 0, serverNow }) {
+// &mute=1 in the address plays the videos with no sound: for trying a screen without waking the house.
+const VIDEO_MUTED = typeof location !== 'undefined' && /[?&]mute=1(&|$)/.test(location.search)
+export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', startedAt = 0, serverNow, clipLines = null, onDone = null }) {
   const [i, setI] = useState(0)
   const [done, setDone] = useState(false)
   const ref = useRef(null)
+  const played = useRef(0)
   const key = `${startedAt}-${clips.join(',')}`
-  useEffect(() => { setI(0); setDone(false) }, [key])
+  useEffect(() => { setI(0); setDone(false); played.current = 0 }, [key])
   // a screen that reloads long after the bulletin began shows the words, not the start again
   const late = startedAt && serverNow ? serverNow() - startedAt > 10 * 60_000 : false
   useEffect(() => {
@@ -307,7 +310,12 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
     if (!v || done || late) return
     v.play().catch(() => {}) // a screen nobody tapped may refuse sound: the words are there anyway
   }, [i, done, late])
-  const next = () => { if (i + 1 < clips.length) setI(i + 1); else setDone(true) }
+  // `onDone(n)` (11 Nov 2026): the last clip is over; n is how many clips really played (0: no file at all)
+  const next = ok => {
+    if (ok) played.current += 1
+    if (i + 1 < clips.length) setI(i + 1)
+    else { setDone(true); onDone?.(played.current) }
+  }
   const words = (
     <div className="kiosk-lines video-words">
       {lines.map((l, k) => <p key={k} className="kiosk-line"><Spoken text={l} /></p>)}
@@ -319,10 +327,12 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
       {words}
     </div>
   )
+  // `clipLines`: one caption a clip (the closing bulletin, whose clips are not one a line); else the lines in order
+  const caption = clipLines ? clipLines[i] ?? '' : lines[Math.min(i, lines.length - 1)] ?? ''
   return (
     <div className="kiosk video-screen">
-      <video ref={ref} key={clips[i]} className="bulletin-video" src={videoUrl(clips[i])} autoPlay playsInline onEnded={next} onError={next} />
-      <p className="video-caption"><Spoken text={lines[Math.min(i, lines.length - 1)] ?? ''} /></p>
+      <video ref={ref} key={`${i}-${clips[i]}`} className="bulletin-video" src={videoUrl(clips[i])} autoPlay playsInline muted={VIDEO_MUTED} onEnded={() => next(true)} onError={() => next(false)} />
+      {caption && <p className="video-caption"><Spoken text={caption} /></p>}
     </div>
   )
 }

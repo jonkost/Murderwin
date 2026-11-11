@@ -12,7 +12,8 @@
     "upload-station": "node upload-station.mjs",
     "night-log": "node postmortem.mjs record",
     "postmortem": "node postmortem.mjs report",
-    "media": "node media-check.mjs"
+    "media": "node media-check.mjs",
+    "media-import": "node media-import.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",

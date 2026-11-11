@@ -9,6 +9,17 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 11 Nov 2026, later · Claude Code (Jon's folder of exports, and the closing bulletin's own clips)
+
+- Jon: "I have all the media and updated... a MOV file of a static (tv static) transition... I would like to just put the folder in the repo and you move it and see if anything is missing."
+- **Sorted** from his Desktop folder `FINAL EXPORTS` (originals untouched): 62 videos into `play/public/video/` at 1080p (his exports are 4K at about 70 Mbit/s); bulletin 2's 27 recordings into `media/` with the second of silence; Irwin's new portrait over `play/public/Irwin Framed.png`. `npm run media-import -- "<folder>"` (`scripts/media-import.mjs`) does all of it again for a later export, then runs the media check.
+- **The 11 Nov handoff applied** (the reveal name cards): each `woof-close-name-<id>` clip became `woof-close-murderer-<id>.mp4` and `woof-close-ghost-<id>.mp4`, the still card from `play/public/reveal/` with the clip's sound. The stills are committed, like the portraits.
+- **Built:** in video mode each name is one film on the Parlour TV: its recorded parts, then the night's own clip (name card or Mic saying the motive), a second of static after the motive clip; the card cuts in when the film ends, the Victim's after Ava's close. Lengths in `seed/woof-news.json` `closing.video`; the server sets `cardAt` and `victimAt` from the whole film (`closingVideoStage`); the Host tab says the bulletin is playing. With the box unticked nothing changed (the recordings' holds are as they were).
+- **Reviewed** by four readers, each finding checked by another: a film replaying after a hold, a reloaded TV, the chime's moment, the old holds, no files with the box ticked, the Host tab's line. All fixed. One build error caught on screen first.
+- **Tried:** both films in the preview with the sound off (`?preview=kiosk-finale-film`, `kiosk-finale-film-victim`, `&mute=1`). Not on the real TV, and never with sound.
+- **Left:** a full deploy on Jon's word (functions and site; deploy from this checkout or copy the videos in, since a clean worktree has none), then the videos box. No loops, no `sydney.jpg`. No screen shows `Irwin Framed.png`. The 28 `rules-…` sound files are not the game's. Cards 565 to 567.
+- **Decisions:** none by Jon. Mine, to confirm with him: the static sits after the motive clip, before the motive card (`closing.video.cut.after`).
+
 ## 11 Nov 2026 · Claude Code (before the walk-through: the media, a sweep, the postmortem)
 
 - Deployed the same day on Jon's word ("Yes, publish"): the site only (`npm run deploy:site`), from a clean copy of dbb6ef9; 121 of 121 live files match the build, and the Postmortem page is in the live workshop. Not pushed.

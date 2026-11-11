@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { act4Step, freeForGames, waitingGames, salemColourAt, salemFlipAt, ROOMS, lightsStep } from '../src/lib/night.js'
-import { promptShown, standaloneBoards, turnNames, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips } from '../src/lib/rooms.js'
+import { promptShown, standaloneBoards, turnNames, MEMORY_ROUNDS, ALL_TRACES, videoUrl, newsClips, closingClips, closingSequence } from '../src/lib/rooms.js'
+import { readFileSync } from 'node:fs'
 import news from '../../seed/woof-news.json' with { type: 'json' }
 import { askMotion, unlockSound, keepAwake, PERMISSION_LINES } from '../src/lib/permissions.js'
 
@@ -191,4 +192,22 @@ test('the study walls as they hang: ten hexagons a hexagon apart, twelve bars of
   assert.equal(LINE_BARS.length, 12)
   for (const [a, b] of LINE_BARS) assert.ok(Math.abs(Math.hypot(a[0] - b[0], a[1] - b[1]) - 100) < 2)
   assert.equal(hexPoints([0, 0], 10).split(' ').length, 6)
+})
+
+test('the closing bulletin\'s film: the same clips as the server works out, a caption a clip, and no clip of the night\'s own without a pick', async () => {
+  const { closingVideoStage } = await import('../../functions/lib/news.js')
+  const chars = JSON.parse(readFileSync(new URL('../../seed/characters.json', import.meta.url), 'utf8'))
+  const ids = (chars.characters ?? chars).map(c => c.id)
+  for (const [stage, picks] of [['murderer', ids], ['victim', ids], ['motive', Array.from({ length: 19 }, (_, i) => i + 1)]]) {
+    for (const pick of picks) {
+      const seq = closingSequence(stage, pick, 'the words')
+      assert.deepEqual(seq.map(c => c.clip), closingVideoStage(stage, pick).seq.map(c => c.clip), `${stage} ${pick}`)
+      assert.ok(seq.every(c => typeof c.line === 'string'))
+    }
+    assert.deepEqual(closingSequence(stage, null).map(c => c.clip), closingClips(stage), 'no pick: the recorded parts alone')
+    assert.deepEqual(closingSequence(stage, '../x').map(c => c.clip), closingClips(stage))
+  }
+  assert.deepEqual(closingSequence('nobody', ids[0]), [])
+  const said = closingSequence('murderer', ids[0], 'Lady Example')
+  assert.ok(said.at(-1).line.endsWith('Lady Example'), 'the name clip is captioned with the name')
 })

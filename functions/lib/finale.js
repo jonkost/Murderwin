@@ -24,7 +24,7 @@ import { MOTIVES, NightError, readArea, characterById, nameKey } from './night.j
 import { rotationPath } from './station.js'
 import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: one record, one reader (safeguards)
 import { stopOf } from './parlour.js'
-import { closingStage } from './news.js'
+import { closingStage, closingVideoStage } from './news.js'
 import { play, bulletinVideo } from './screen.js'
 import { posesFor } from './pose.js'
 import { arcadePath, arcadeAwards, arcadeAchievements } from './arcade.js'
@@ -339,7 +339,7 @@ export async function reveal(db, nightId, c, { now = Date.now(), pick = pickInt 
   if ((await pubRef.get()).exists) return { ok: true, already: true }
   const { night } = await roster(db, nightId)
   const ros = night.roster ?? {}
-  const person = key => (key && ros[key] ? { key, name: ros[key].name, characterName: characterById(ros[key].characterId)?.name ?? '' } : null)
+  const person = key => (key && ros[key] ? { key, name: ros[key].name, characterName: characterById(ros[key].characterId)?.name ?? '', characterId: ros[key].characterId ?? null } : null)
   const motive = MOTIVES.find(m => m.n === c.motive) ?? null
   const frames = (await readArea(db, 'epilogue_frames')).map(i => i.text)
   const frame = choice(frames, pick) ?? DEFAULT_EPILOGUE
@@ -380,25 +380,29 @@ export async function stage(db, nightId, { now = Date.now() } = {}) {
   if (!r) throw new NightError('invalid', 'The answer is missing. Press Back one, then Next.')
   const patch = { stage: next }
   if (next === 'motive') patch['names.motive'] = { n: r.motive?.n ?? null, rhyme: r.motive?.rhyme ?? '' }
-  else patch[`names.${next}`] = { name: r[next]?.name ?? '', characterName: r[next]?.characterName ?? '' }
+  else patch[`names.${next}`] = { name: r[next]?.name ?? '', characterName: r[next]?.characterName ?? '', characterId: r[next]?.characterId ?? null }
   // the closing W-O-O-F News bulletin (news.js): this stage's recorded parts play and their
   // words go up as captions at once; the card itself waits on the server clock (cardAt) until
   // the parts before it have been said. Murderer: the studio, then Mic's first line; Motive:
   // his second; Victim: his third, then his sign-off and the studio's close under the cards.
   const { parts, leadMs } = closingStage(next)
+  // as video on the Parlour TV (Jon, 23 Oct 2026): the kiosk plays this stage's parts as video (it
+  // works out the files from the open bank, so no recording is named here) and the brain stays quiet.
+  // Since 11 Nov 2026 the video also carries the night's own clip (Mic saying the name or the motive)
+  // and the static cut, and the card waits until the whole of it has played: the Victim's card comes
+  // after the studio's close, not under it.
+  const video = parts.length ? await bulletinVideo(db) : false
+  const film = video ? closingVideoStage(next, next === 'motive' ? r.motive?.n : r[next]?.characterId) : null
   if (next === 'victim') {
     // the closing story (EPILOGUE_AFTER_MS after victimAt) and everything after it wait
     // until the Victim's parts have been said, so Ava's sign-off is never talked over
-    const saidMs = parts.reduce((sum, p) => sum + p.holdMs, 0)
+    const saidMs = film ? film.totalMs : parts.reduce((sum, p) => sum + p.holdMs, 0)
     patch.victimNamedAt = new Date(now)
     patch.victimAt = new Date(now + Math.max(0, saidMs + STORY_GAP_MS - EPILOGUE_AFTER_MS))
     patch.epilogue = fillEpilogue(r.frame, r)
   }
   patch[`news.${next}`] = parts.map(p => ({ who: p.who, text: p.text, card: p.card }))
-  patch[`cardAt.${next}`] = new Date(now + leadMs)
-  // as video on the Parlour TV (Jon, 23 Oct 2026): the kiosk plays this stage's parts as video (it
-  // works out the files from the open bank, so no recording is named here) and the brain stays quiet
-  const video = parts.length ? await bulletinVideo(db) : false
+  patch[`cardAt.${next}`] = new Date(now + (film ? film.totalMs : leadMs))
   if (video) patch[`video.${next}`] = true
   await pubRef.update(patch)
   if (parts.length) await play(db, nightId, null, { now, clips: parts.map(p => p.clip), video })

@@ -50,6 +50,38 @@ export function closingClips(stage) {
   return parts.slice(from, to).map(p => p.clip)
 }
 
+// The closing bulletin as video for one name (11 Nov 2026; the same rule as
+// functions/lib/news.js closingVideoStage, and a test checks they agree):
+// the stage's recorded parts, and after the part that carries the card the
+// night's own clip (Mic Cameron saying the name or the motive), then the
+// static cut where the bank asks for one. `pick` is the character id or the
+// motive's number, known to this screen only once the host has pressed for
+// that name; `say` is that clip's words for the caption. No pick, or one
+// the bank has no clip for: the recorded parts alone.
+// Returns [{ clip, line }], the caption under each clip.
+export function closingSequence(stage, pick, say = '') {
+  const parts = news.closing.parts
+  const order = Object.keys(CLOSING_CARDS)
+  const i = order.indexOf(stage)
+  const cardKey = CLOSING_CARDS[stage]
+  const cardIndex = s => parts.findIndex(p => p.card === CLOSING_CARDS[s])
+  if (i < 0 || cardIndex(stage) < 0) return []
+  const from = i === 0 ? 0 : cardIndex(order[i - 1]) + 1
+  const to = i === order.length - 1 ? parts.length : cardIndex(stage) + 1
+  const video = news.closing.video ?? {}
+  const bank = video[cardKey]
+  const id = String(pick ?? '')
+  const runs = bank && /^[A-Za-z0-9-]+$/.test(id) ? Number(bank.ms?.[id]) : NaN
+  const seq = []
+  for (const p of parts.slice(from, to)) {
+    seq.push({ clip: p.clip, line: `${p.who}: ${p.text}` })
+    if (p.card !== cardKey || !(runs > 0)) continue
+    seq.push({ clip: `${bank.prefix}${id}`, line: say ? `${p.who}: ${say}` : '' })
+    if (video.cut?.clip && video.cut.after === cardKey) seq.push({ clip: video.cut.clip, line: '' })
+  }
+  return seq
+}
+
 // A bulletin clip's video file, in play/public/video/ (Jon drops them in
 // before the deploy): the clip's own name, as in seed/woof-news.json.
 export function videoUrl(clip) {

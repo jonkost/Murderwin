@@ -5,7 +5,7 @@ import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft } from '../lib/night'
 import { houseView } from '../lib/house'
-import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME } from '../lib/finale'
+import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
 import { troubleLine } from '../lib/trouble'
@@ -502,7 +502,11 @@ export function RevealPanel({ night, finale, busy, run, serverNow }) {
   const ready = namesReady(finale, now)
   const wait = secondsUntilNames(finale, now)
   const held = !!finale.holdAt
+  // as video (11 Nov 2026) a name is a film of up to 45 seconds: say so, so the next press waits for the card
+  const cardMs = stage !== 'stats' && finale.video?.[stage] ? finaleMs(finale.cardAt?.[stage]) : 0
+  const playing = !held && cardMs > 0 && now < cardMs
   const line = held ? 'The screen is held where it is.'
+    : playing ? `The bulletin is playing on the TV. About ${Math.ceil((cardMs - now) / 1000)} seconds.`
     : !ready ? `The screen is counting. ${wait} seconds until the first name.`
     : next ? 'The screen is ready for the next name.'
     : 'All three are named. Press Next for everyone’s result.'

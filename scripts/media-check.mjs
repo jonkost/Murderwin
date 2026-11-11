@@ -29,6 +29,18 @@ export const LOOP_MAX_BYTES = 30 * 1024 * 1024
 // The two bulletins the Parlour TV plays as video: every clip that is not bulletin 2's.
 export const VIDEO_CLIPS = CLIP_IDS.filter(id => !id.startsWith('bulletin2-'))
 export const BULLETIN2_CLIPS = CLIP_IDS.filter(id => id.startsWith('bulletin2-'))
+// The closing bulletin's own clips for a night (11 Nov 2026): one for every
+// character as the Murderer and as the Ghost, one for every motive, and the
+// static cut. All of them, always: which exist says nothing about a night.
+const NEWS = JSON.parse(readFileSync(join(root, 'seed', 'woof-news.json'), 'utf8'))
+const FILM = NEWS.closing.video ?? {}
+const filmIds = k => Object.keys(FILM[k]?.ms ?? {}).map(id => `${FILM[k].prefix}${id}`)
+export const MURDERER_CLIPS = filmIds('murderer')
+export const GHOST_CLIPS = filmIds('ghost')
+export const MOTIVE_CLIPS = filmIds('motive')
+export const CUT_CLIPS = FILM.cut?.clip ? [FILM.cut.clip] : []
+// On the site for the Parlour TV's second tab; the game does not play it.
+export const EXTRA_VIDEOS = ['sirwin-intro']
 
 // The folder the brain plays from: MEDIA_DIR in cues/.env, else media/.
 export function mediaDir(envText = '') {
@@ -101,6 +113,11 @@ export function report({ media, video, loops, household, sizes = {} }) {
     groups: [
       { title: 'Bulletin 1', ids: VIDEO_CLIPS.filter(id => id.startsWith('newsflash-')), need: 'With the videos box ticked, a missing part shows its words only.' },
       { title: 'The closing bulletin', ids: VIDEO_CLIPS.filter(id => id.startsWith('woof-close-')), need: 'With the videos box ticked, a missing part shows its words only.' },
+      { title: 'The Murderer name cards (one a character)', ids: MURDERER_CLIPS, need: 'A missing one is skipped: the name card shows without Mic saying it.' },
+      { title: 'The Ghost name cards (one a character)', ids: GHOST_CLIPS, need: 'A missing one is skipped: the name card shows without Mic saying it.' },
+      { title: 'The motives (one a motive)', ids: MOTIVE_CLIPS, need: 'A missing one is skipped: the motive card shows without Mic saying it.' },
+      { title: 'The static cut', ids: CUT_CLIPS, need: 'Fine: the motive card cuts in without it.' },
+      { title: 'The intro video (for the second tab; the game does not play it)', ids: EXTRA_VIDEOS, need: 'Fine: play it from your own file.' },
     ],
     then: 'npm run deploy:site, then tick The bulletins are videos on the workshop\'s Game night page.',
   }))

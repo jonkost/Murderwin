@@ -20,6 +20,7 @@
     "deploy:rules": "firebase deploy --only firestore:rules,storage",
     "night-log": "npm --prefix scripts run night-log",
     "postmortem": "npm --prefix scripts run postmortem --",
-    "media": "node scripts/media-check.mjs"
+    "media": "node scripts/media-check.mjs",
+    "media-import": "node scripts/media-import.mjs"
   }
 }

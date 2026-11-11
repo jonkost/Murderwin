@@ -33,7 +33,8 @@ import { setFromAddress } from './lib/gametest'
 //
 // Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
 // kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-awards, kiosk-finale-graph,
-// kiosk-finale-leadin (a name pressed, its lead-in still playing), kiosk-finale-reveal,
+// kiosk-finale-leadin (a name pressed, its lead-in still playing), kiosk-finale-film and
+// kiosk-finale-film-victim (the closing bulletin as video; add &mute=1), kiosk-finale-reveal,
 // kiosk-finale-done, kiosk-finale-credits, kiosk-living-turn, kiosk-living-vote, kiosk-study,
 // kiosk-study-fallback (full-bleed, as on the MacBooks), and the screens the
 // beats name: kiosk-news, kiosk-bulletin, kiosk-irwin, kiosk-black,
@@ -204,6 +205,7 @@ const NAMES = { murderer: { name: 'Jacob', characterName: 'Roger Arms' }, motive
 const CLOSING = woofNews.closing.parts.map(({ who, text, card }) => ({ who, text, ...(card ? { card } : {}) }))
 const CLOSING_NEWS = { murderer: CLOSING.slice(0, 2), motive: CLOSING.slice(2, 3), victim: CLOSING.slice(3) }
 const NAMED = (stage) => ['murderer', 'motive', 'victim'].slice(0, ['stats', 'murderer', 'motive', 'victim'].indexOf(stage))
+const FILM_T0 = Date.now()
 const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
   at: stamp(Date.now() - agoMs),
   stage,
@@ -369,6 +371,9 @@ const KIOSK = {
   'kiosk-finale-reveal': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(90000, 'motive')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   // the Motive just pressed: Mic's lead-in plays under the Murderer's card, and the Motive's card waits for it
   'kiosk-finale-leadin': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(90000, 'motive', { cardAt: { murderer: stamp(Date.now() - 30000), motive: stamp(Date.now() + 60000) } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  // the closing bulletin as video (11 Nov 2026): the Motive's film, Mic's line, the motive clip, the static, then the card
+  'kiosk-finale-film': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={{ ...FINALE(90000, 'motive', { cardAt: { murderer: stamp(FILM_T0 - 30000), motive: stamp(FILM_T0 + 9000) }, video: { motive: true } }), at: stamp(FILM_T0 - 90000) }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-finale-film-victim': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={{ ...FINALE(120000, 'victim', { cardAt: { murderer: stamp(FILM_T0 - 60000), motive: stamp(FILM_T0 - 30000), victim: stamp(FILM_T0 + 45000) }, video: { victim: true } }), at: stamp(FILM_T0 - 120000), victimAt: stamp(FILM_T0 + 36000) }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-finale-done': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(120000, 'victim')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   // the Victim's card is up: Mic's sign-off and the studio's close run under the three cards
   'kiosk-finale-victim': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(120000, 'victim', { sinceVictim: 6000 })} content={CONTENT} serverNow={serverNow} nightId="preview" />,

@@ -751,9 +751,62 @@ test('closingStage: each stage\'s parts and lead-in, from the open bank', () => 
   assert.deepEqual(closingStage('murderer').parts.map(p => p.clip), ['woof-close-studio-open', 'woof-close-field-murderer'])
   assert.deepEqual(closingStage('motive').parts.map(p => p.clip), ['woof-close-field-motive'])
   assert.deepEqual(closingStage('victim').parts.map(p => p.clip), ['woof-close-field-victim', 'woof-close-field-out', 'woof-close-studio-close'])
-  assert.equal(closingStage('murderer').leadMs, 15_000)
-  assert.equal(closingStage('motive').leadMs, 3_000)
-  assert.equal(closingStage('victim').leadMs, 3_000)
+  const hold = clip => NEWS.closing.parts.find(p => p.clip === clip).holdMs
+  assert.equal(closingStage('murderer').leadMs, hold('woof-close-studio-open') + hold('woof-close-field-murderer'))
+  assert.equal(closingStage('motive').leadMs, hold('woof-close-field-motive'))
+  assert.equal(closingStage('victim').leadMs, hold('woof-close-field-victim'))
   assert.deepEqual(closingStage('stats'), { parts: [], leadMs: 0 })
   assert.equal(parts.flatMap(p => p.clip).length, NEWS.closing.parts.length)
+})
+
+test('the closing bulletin as video: the night\'s own clip after each card\'s part, the static after the motive, every character and motive with a file', async () => {
+  const { closingVideoStage, CLOSING_VIDEO, CLIP_SLACK_MS } = await import('../lib/news.js')
+  const { CHARACTERS, MOTIVES } = await import('../lib/night.js')
+  const V = CLOSING_VIDEO
+  // a file for every character in both roles and for every motive: which exist says nothing about a night
+  for (const c of CHARACTERS) for (const k of ['murderer', 'ghost']) assert.ok(V[k].ms[c.id] > 0, `${k} ${c.id}`)
+  assert.equal(Object.keys(V.murderer.ms).length, CHARACTERS.length)
+  assert.equal(Object.keys(V.ghost.ms).length, CHARACTERS.length)
+  for (const m of MOTIVES) assert.ok(V.motive.ms[String(m.n)] > 0, `motive ${m.n}`)
+  assert.equal(Object.keys(V.motive.ms).length, MOTIVES.length)
+  const id = CHARACTERS[0].id
+  const clips = (stage, pick) => closingVideoStage(stage, pick).seq.map(c => c.clip)
+  assert.deepEqual(clips('murderer', id), ['woof-close-studio-open', 'woof-close-field-murderer', `woof-close-murderer-${id}`])
+  assert.deepEqual(clips('motive', 7), ['woof-close-field-motive', 'woof-close-motive-7', 'woof-close-field-trans-static'])
+  assert.deepEqual(clips('victim', id), ['woof-close-field-victim', `woof-close-ghost-${id}`, 'woof-close-field-out', 'woof-close-studio-close'])
+  // no pick, or one the bank does not have, or one that is not a plain id: the recorded parts alone
+  for (const bad of [null, undefined, '', 'nobody', '../x', 99]) {
+    assert.deepEqual(clips('murderer', bad), ['woof-close-studio-open', 'woof-close-field-murderer'])
+    assert.deepEqual(clips('motive', bad), ['woof-close-field-motive'])
+  }
+  const film = closingVideoStage('motive', 7)
+  assert.equal(film.totalMs, film.seq.reduce((n, c) => n + c.ms + CLIP_SLACK_MS, 0))
+  assert.deepEqual(closingVideoStage('stats', id), { seq: [], totalMs: 0 })
+})
+
+test('the closing bulletin as video: with the box ticked each card waits for the whole of its film, and the story for the Victim\'s', async () => {
+  const { closingVideoStage } = await import('../lib/news.js')
+  const { EPILOGUE_AFTER_MS, STORY_GAP_MS } = await import('../lib/finale.js')
+  const { db, nightId, t } = await revealed(5)
+  db.store.set('meta/game', { ...(db.store.get('meta/game') ?? {}), bulletinVideo: true })
+  await hostCommand(db, { nightId, command: 'act', arg: 7, now: t.now })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'next', now: t.now })
+  const f = () => db.store.get(finalePath(nightId))
+  const r = db.store.get(`nights/${nightId}/private/reveal`)
+  assert.ok(r.murderer.characterId && r.victim.characterId, 'the reveal record carries each character id')
+  t.now += 90_000
+  for (const [stage, pick] of [['murderer', r.murderer.characterId], ['motive', r.motive.n], ['victim', r.victim.characterId]]) {
+    t.now += 20_000
+    await hostCommand(db, { nightId, command: 'reveal-stage', now: t.now })
+    const film = closingVideoStage(stage, pick)
+    assert.ok(film.seq.some(c => c.reveal), `${stage}: the night's own clip is in the film`)
+    assert.equal(ms(f().cardAt[stage]), t.now + film.totalMs, `${stage}: the card waits for the whole film`)
+    assert.equal(f().video[stage], true)
+    if (stage !== 'motive') assert.equal(f().names[stage].characterId, pick, 'the TV is told which character, only now')
+    // the brain is told only the open parts, never the night's own clip
+    const sounds = db.store.get(`nights/${nightId}/public/sounds`).current
+    assert.ok(!JSON.stringify(sounds).includes(String(stage === 'motive' ? 'woof-close-motive-' : pick)), 'no clip of the night\'s own in the sounds doc')
+    if (stage === 'victim') assert.equal(ms(f().victimAt), t.now + film.totalMs + STORY_GAP_MS - EPILOGUE_AFTER_MS)
+  }
 })

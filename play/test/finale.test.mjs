@@ -127,11 +127,15 @@ test('BK-11 each name card cuts in only after its lead-in has played; the words 
   assert.deepEqual(revealView(doc(), at), { cards: [], fresh: null, waiting: false, captions: [] })
   // the TV draws from revealView, with the character's portrait on the people's cards
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  assert.ok(kiosk.includes('const rv = revealView(finale, now)'))
+  assert.ok(kiosk.includes('const rv = revealView(finale, '))
   assert.ok(kiosk.includes('rv.cards.map(') && kiosk.includes('rv.captions.map('))
   assert.ok(kiosk.includes('className="reveal-portrait"'))
   // the chime sounds as a card cuts in, never for a screen reloaded during the story, the journey or the credits
-  assert.ok(kiosk.includes('NAME_STAGES.includes(finaleStage(finale, serverNow())) ? revealView(finale, serverNow()).fresh : null'))
+  assert.ok(kiosk.includes('NAME_STAGES.includes(freshStage) && !finale.video?.[freshStage] ? revealView(finale, serverNow()).fresh : null'))
+  // a name that plays as a film: one film a reveal whatever a hold does to cardAt, the grace only for a film this screen began, the note from Finale
+  assert.ok(kiosk.includes('const filmKey = filmStage ? `${filmStage}:${ms(finale.at)}` : \'\''))
+  assert.ok(kiosk.includes('filmBegan.current[filmKey] && now < filmCardAt + FILM_GRACE_MS'))
+  assert.ok(kiosk.includes('filmRang.current !== filmKey'))
 })
 
 test('F31 Held shows on the Parlour TV only on a rehearsal, like the Rehearsal tag; on the party night the Host tab says so (Jon, 29 Oct 2026)', () => {

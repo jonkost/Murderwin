@@ -20,6 +20,18 @@ page out of the repo).
 | `woof-close-field-murderer.mp4`, `woof-close-field-motive.mp4`, `woof-close-field-victim.mp4`, `woof-close-field-out.mp4` | The closing bulletin: Mic Cameron outside the manor, one part for each name you press. |
 | `woof-close-studio-close.mp4` | The closing bulletin: the studio closes. |
 
+Since 11 November 2026 the closing bulletin also plays the night's own
+clips, so the folder holds these too (all of them, always, so the files say
+nothing about a night):
+
+| File | What it is |
+|---|---|
+| `woof-close-murderer-<character>.mp4`, 14 | The Murderer's name card with Mic saying the name. Made by `npm run media-import` from your `woof-close-name-<character>` clip and the still card in `play/public/reveal/murderer/`. Plays after `woof-close-field-murderer`. |
+| `woof-close-motive-<number>.mp4`, 19 | Mic saying the motive. Plays after `woof-close-field-motive`. |
+| `woof-close-field-trans-static.mp4` | One second of static, straight after the motive clip, before the motive card. |
+| `woof-close-ghost-<character>.mp4`, 14 | The Ghost's name card with Mic saying the name. Plays after `woof-close-field-victim`, before Mic's sign-off. |
+| `sirwin-intro.mp4` | The intro video, for the second tab. The game does not play it. |
+
 Thirteen files. The names are the same as each line's name in the W-O-O-F
 News Recording Script, with `.mp4` on the end.
 

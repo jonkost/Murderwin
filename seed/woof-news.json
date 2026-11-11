@@ -163,7 +163,7 @@
   }
  },
  "closing": {
-  "about": "Act 7, the reveal: the closing bulletin that bookends bulletin 1, video on the Parlour TV once the files are in and the box is ticked, otherwise the recordings with the words on screen. Susan as Ava Waves opens and closes in the studio; Jon as Mic Cameron reads the four field parts. The lines are generic; the game cuts in the Murderer, Motive and Ghost cards between them. Order: Murderer, Motive, Victim. Each part's holdMs is how long its recording runs, in milliseconds: the TV shows a name card once the parts before it have had their time (finale.js). Claude Code sets them once the recordings exist.",
+  "about": "Act 7, the reveal: the closing bulletin that bookends bulletin 1, video on the Parlour TV once the files are in and the box is ticked, otherwise the recordings with the words on screen. Susan as Ava Waves opens and closes in the studio; Jon as Mic Cameron reads the four field parts. The lines are generic; the game cuts in the Murderer, Motive and Ghost cards between them. Order: Murderer, Motive, Victim. Each part's holdMs is how long its recording runs, in milliseconds: the TV shows a name card once the parts before it have had their time (finale.js). Claude Code sets them once the sound recordings exist; the videos' own lengths are in video.parts.",
   "parts": [
    {
     "clip": "woof-close-studio-open",
@@ -204,6 +204,84 @@
     "who": "Ava Waves",
     "text": "Well, there you have it, folks. A real cat-astrophe, but this case is finally closed. Most importantly, a very happy birthday to Sir Irwin, the goodest boy in the county. And thank you to everyone who helped crack this paw-ful crime. Good night, and stay paw-sitive."
    }
-  ]
+  ],
+  "video": {
+   "about": "As video only (11 Nov 2026, Jon's recordings): after the part that carries a card the Parlour TV plays that night's own clip, Mic Cameron saying the name or the motive, and each card cuts in when its clips are over. murderer and ghost: the character's still card with Jon's voice, one file a character (prefix + character id). motive: Mic on camera, one file a motive (prefix + number). cut: one second of TV static played straight after the clip of the card named in after, to hide the cut from Mic on camera to the next picture. Every character and every motive has a file, so the files say nothing about a night. ms is how long each file runs. parts is how long each recorded part runs as video.",
+   "parts": {
+    "woof-close-studio-open": 19100,
+    "woof-close-field-murderer": 8050,
+    "woof-close-field-motive": 2500,
+    "woof-close-field-victim": 1950,
+    "woof-close-field-out": 11950,
+    "woof-close-studio-close": 24800
+   },
+   "murderer": {
+    "prefix": "woof-close-murderer-",
+    "ms": {
+     "white": 2150,
+     "arms": 1600,
+     "rye": 1950,
+     "ledger": 1750,
+     "devine": 2000,
+     "barnes": 2150,
+     "fume": 2350,
+     "mourningstone": 3350,
+     "steeps": 2450,
+     "vayne": 2400,
+     "shushwell": 3150,
+     "leech": 3200,
+     "prof-jonathan": 3050,
+     "prof-susan": 3450
+    }
+   },
+   "ghost": {
+    "prefix": "woof-close-ghost-",
+    "ms": {
+     "white": 2150,
+     "arms": 1600,
+     "rye": 1950,
+     "ledger": 1750,
+     "devine": 2000,
+     "barnes": 2150,
+     "fume": 2350,
+     "mourningstone": 3350,
+     "steeps": 2450,
+     "vayne": 2400,
+     "shushwell": 3150,
+     "leech": 3200,
+     "prof-jonathan": 3050,
+     "prof-susan": 3450
+    }
+   },
+   "motive": {
+    "prefix": "woof-close-motive-",
+    "ms": {
+     "1": 2950,
+     "2": 3650,
+     "3": 3950,
+     "4": 3650,
+     "5": 4050,
+     "6": 5200,
+     "7": 2750,
+     "8": 3200,
+     "9": 3650,
+     "10": 4750,
+     "11": 3850,
+     "12": 3150,
+     "13": 4900,
+     "14": 3550,
+     "15": 4100,
+     "16": 3350,
+     "17": 2350,
+     "18": 3750,
+     "19": 5850
+    }
+   },
+   "cut": {
+    "clip": "woof-close-field-trans-static",
+    "after": "motive",
+    "ms": 1050
+   }
+  }
  }
 }

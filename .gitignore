@@ -57,3 +57,6 @@ station/.station-version
 # the bulletin videos the Parlour TV plays (play/public/video/README.md): Jon's files stay local and deploy from his Mac, like the loops
 play/public/video/*
 !play/public/video/README.md
+
+# Jon's folder of exports, sorted into the game by `npm run media-import` (11 Nov 2026)
+media-in/
