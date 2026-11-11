@@ -119,8 +119,8 @@ fails, the fix is "run it again".
 
 ## Rehearsals, the party night and dry runs (decided 17 October 2026)
 
-Every night you start from your phone is a rehearsal, and every phone and room
-screen shows a red REHEARSAL band. A rehearsal reads none of the secrets: the
+Every night you start from your phone is a rehearsal, and the Host tab
+says so. A rehearsal reads none of the secrets: the
 cats lean at random, the bags card names a stand-in property, and the drawing
 uses stand-in pictures. The one thing it takes from the packing is how many
 bags there are, so the bag numbers are real; never what is in them.

@@ -3,7 +3,7 @@ import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
 import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
-import { beatsOf, beatSpec, secondsLeft } from '../lib/night'
+import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView } from '../lib/house'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
@@ -152,6 +152,7 @@ export default function Host({ night, content, serverNow }) {
       <p className="host-status">
         {night.act ? `Act ${night.act} · ${ACTS[night.act]?.plain}` : 'Before Act 1'} · {PHASE_WORDS[night.phase] ?? night.phase}
         <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
+        <br />{isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'}
       </p>
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}

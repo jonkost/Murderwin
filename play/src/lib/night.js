@@ -145,10 +145,6 @@ export function isRehearsalNight(night) {
   if (!night) return false
   return night.forceRehearsal !== false || night.dryRun === true
 }
-export function showRehearsalBand(night) {
-  const phase = effectivePhase(night)
-  return isRehearsalNight(night) && phase !== 'blackout' && phase !== 'prompt'
-}
 
 // The Welcome tour shows the first time a phone has a character on this
 // night, whatever the act (a late arrival at Act 3 still gets it), but never

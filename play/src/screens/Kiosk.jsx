@@ -12,9 +12,7 @@ import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
-import { isRehearsalNight } from '../lib/night'
 import { studyMsLeft } from '../lib/house'
-import { RehearsalBand } from './Moments'
 import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | pose | orangerie.
@@ -114,7 +112,6 @@ export default function Kiosk({ which }) {
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
     <>
-      <RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />
       {body}
       <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />
       {setup && <StaleDot view={night} online={online} />}

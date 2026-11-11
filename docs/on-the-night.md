@@ -164,7 +164,8 @@ them.
   night", type your name, and press **Next** through the evening with Susan's
   phone and a spare joined. Every night you start is a rehearsal unless the
   Game night page's "This is the party night" box is ticked. A rehearsal
-  night shows a big red REHEARSAL band on every phone and every room screen.
+  night looks like the party night on every phone and room screen (no red
+  band since 11 Nov); the Host tab says "This night is a rehearsal".
 - *The hardware evening* (the first full tech run, Monday 2 to Friday
   6 November). Wall, the study's Stream Deck and bulb plugged in.
   `node scripts/hardware-check.mjs` prints PASS or FAIL (it checks the
@@ -275,7 +276,8 @@ game; it serves the lights and the speakers.
    any guest arrives: until a night is live, every phone that opens the game
    shows that button. If a rehearsal
    night is still on, press **Start a new night** on its Host tab instead.
-   The Host tab appears. No red REHEARSAL band means the box worked. Under
+   The Host tab appears. Its top lines say "This is the party night": the box worked. If they say
+   "This night is a rehearsal", stop, tick the box and start a new night. Under
    "Who is here", a green dot sits beside every phone the house has heard
    from in the last two minutes. That dot is how you know a phone is alive
    all night.
@@ -692,9 +694,9 @@ paused the Parlour TV and the iPad go near-black with "One moment"; the other
 room screens stay as they are, and the Study's clock stands still. The phones
 say where to look.
 On a
-rehearsal night every phone and screen has a red REHEARSAL band, and every
+rehearsal night the Host tab says "This night is a rehearsal", and every
 slot that would show a secret shows a stand-in in square brackets instead;
-on the party night both are gone.
+on the party night the Host tab says "This is the party night" and the stand-ins are gone.
 
 ## When something dies
 
@@ -770,8 +772,8 @@ says so, ask Claude Code.
 A night started on the real game with the party box unticked is a rehearsal
 too: a throwaway case, a stand-in in square brackets wherever a secret would
 show (the cats' hints, the bag clues, the cross-offs, the trace, the news
-line), stand-in drawing pictures, and the red REHEARSAL band on every
-screen.
+line), stand-in drawing pictures, and "This night is a rehearsal" on the Host
+tab.
 
 *Playing a rehearsal again.* Every rehearsal is dealt from a seed word,
 like tulip-4471. The Game night page's "Play a rehearsal again" lists the
@@ -961,8 +963,8 @@ page have no night at all: nothing is paid and no clue is dealt.
 of the tab says which night is live, with four buttons: "Start a test
 night", "Go to Act 4", "Go to Act 6" and "Parlour Game now". Its rules:
 
-- A test night is always a rehearsal: nothing sealed is read, the red
-  REHEARSAL band shows, and it is never the party.
+- A test night is always a rehearsal: nothing sealed is read, the Host tab
+  says "This night is a rehearsal", and it is never the party.
 - The buttons move only a night this tab started. A rehearsal started from
   a phone (the practice run, a tech run) may have guests on it, so the
   buttons leave it alone, and the start button turns into "Start a test

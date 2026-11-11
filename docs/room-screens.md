@@ -63,8 +63,7 @@ role cards, until the host's first Next in Act 2. While the night is paused
 the TV and the iPad go near-black with "One moment"; the other room screens
 stay as they are, and the Study's clock stands still. At "The End" (the host's last Next, after
 everyone's result) every screen goes black and stays black. On a rehearsal
-night a big red REHEARSAL band runs across every phone and every room
-screen, and every slot that would show a secret shows a stand-in in square
+night every slot that would show a secret shows a stand-in in square
 brackets.
 
 ## What the TV shows, beat by beat

@@ -53,7 +53,7 @@ const BUILT = [
   ['The screens for every beat', 'W-O-O-F News, Sir Irwin’s countdown at cake, the board of strikes and the door on the TV; the iPad keeps the words up through supper.'],
   ['The hosts’ lines', 'Boo opens each Parlour Game, Granolia the study, Zimothy the memory match, Salem the final picks, and Sir Irwin speaks over the trace.'],
   ['The end credits', 'The closing bulletin, the dial’s journey, the awards from the final sliders, the joke counters, the room’s split, the thanks and Sydney, then Sir Irwin’s last card.'],
-  ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night, and a big red REHEARSAL band on every screen on a rehearsal night.'],
+  ['Safety nets', 'A dead phone, a borrowed phone, a late arrival, a pause that stops every clock, the role card readable all night, and a line on the Host tab that says whether the night is a rehearsal or the party night.'],
   ['Jenna’s page', 'Their own page for the packing list, the cats’ leans and the real checks, opening for their account only; yours is refused by the server.'],
   ['The bags', 'Your 24 items, fourteen clue words, packed on 24 October without anyone seeing it (ten bags, every rule passed), and the cats’ bag clues: a compass, not a pointer. Sir Irwin’s sixteen prompts on the Parlour TV.'],
   ['The checks', 'A thousand made-up cases dealt and checked, and a fake night played. The Health page shows the last run.'],

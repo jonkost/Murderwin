@@ -169,8 +169,8 @@ button waits for the window to run out.
 
 **Rehearsing.** Start a night, join from a few phones (or a few browser tabs
 in private windows), and press Next. The first time roles are needed the
-server deals a throwaway case for that night only. On a rehearsal night a
-big red REHEARSAL band runs across every phone and every room screen. Every
+server deals a throwaway case for that night only. On a rehearsal night the
+Host tab says "This night is a rehearsal" (the red band went on 11 Nov). Every
 screen can also be looked at without a night at `?preview=<name>`, and
 `?preview=tour` walks through them all with arrows at the top. The preview
 samples use the real W-O-O-F News and Cat Hint Lines.

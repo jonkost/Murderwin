@@ -51,7 +51,7 @@ test('F19 a Parlour Game shows over the screen beneath, which stays mounted in t
   // so React keeps its state (the tab, a half-typed answer, the scroll)
   assert.equal((app.match(/<Rest /g) ?? []).length, 1, 'Rest is rendered from one place only')
   // (a pause with the ballot card up keeps that same page beneath, inert under the strip: 25 Oct 2026)
-  assert.match(app, /return <>\{band\}\{banner\}\{strip\}<div className=\{over \? 'beneath covered' : heldCard \? 'beneath paused-shell' : 'beneath'\} inert=\{over \|\| heldCard \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
+  assert.match(app, /return <>\{banner\}\{strip\}<div className=\{over \? 'beneath covered' : heldCard \? 'beneath paused-shell' : 'beneath'\} inert=\{over \|\| heldCard \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
   // the slider shows the nearest stop of an affection kept in half steps
   assert.equal(stopOf(2.5), 3); assert.equal(stopOf(4.5), 5); assert.equal(stopOf(1), 1); assert.equal(stopOf(undefined), 3); assert.equal(stopOf(9), 5)
 })
@@ -74,7 +74,7 @@ test('the ballot is a card on Now with the tabs reachable: App hands the window 
   assert.match(app, /const \[draft, setDraft\] = useState\(null\)/, 'App holds the ballot draft, not the Now pane')
   // a pause with the card up keeps it on screen, inert under the strip, like any paused window
   assert.match(app, /const heldCard = paused && where === 'card'\n/)
-  assert.match(app, /if \(paused && !over && !heldCard\) return <>\{band\}\{banner\}<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/><\/>/, 'the paused line yields to the held card')
+  assert.match(app, /if \(paused && !over && !heldCard\) return <>\{banner\}<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/><\/>/, 'the paused line yields to the held card')
   assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/)
   assert.match(app, /<Rest [^\n]*ballot=\{ballot\}[^\n]*over=\{lock === 'over'\}/)
   const rest = read('screens/Rest.jsx')
@@ -114,7 +114,7 @@ test('a pause leaves the two host phones one button, Resume, wherever the pause 
   // all three places a pause shows carry it, and it sits outside anything inert
   assert.match(app, /<><PausedStrip ui=\{ui\} foot=\{resume\} \/><div className="paused-shell" inert>\{screen\}<\/div><\/>/, 'the strip over a held game or deduction round')
   assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/, 'the strip over the ballot card')
-  assert.match(app, /return <>\{band\}\{banner\}\{strip\}<div className=\{over \? 'beneath covered'/, 'that strip goes in front of the inert page, not inside it')
+  assert.match(app, /return <>\{banner\}\{strip\}<div className=\{over \? 'beneath covered'/, 'that strip goes in front of the inert page, not inside it')
   assert.match(app, /<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/>/, 'the pause card')
   assert.ok(!/<PausedStrip ui=\{ui\} \/>/.test(app), 'no strip goes without it')
   // the pause card comes before every tab, lock and game on a host's phone too: the button is all a host keeps

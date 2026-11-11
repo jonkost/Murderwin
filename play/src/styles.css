@@ -755,9 +755,9 @@ em.stage { font-style: italic; color: var(--dim); }
 .gauge-more .friend-note { padding-top: 0.6rem; font-size: 1rem; color: var(--ink); }
 .gauge-more .friend-note strong { color: var(--good); }
 
-/* A rehearsal night: a wide red band fixed across the top of every phone and
-   room screen (RehearsalBand in Moments.jsx). The page moves down by its
-   height, so it never covers anything. Never on the party night. */
+/* A practice page: a wide red band fixed across the top (RehearsalBand in
+   Moments.jsx). The page moves down by its height, so it never covers
+   anything. Never on a night, rehearsal or party (11 Nov 2026). */
 :root { --band-h: 0px; }
 :root.rehearsal-on { --band-h: max(2.6rem, 7vh); }
 .rehearsal-band {

@@ -9,6 +9,16 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 11 Nov 2026, evening · Claude Code (before the walk-through: the band off, the credits, three phones)
+
+- Jon: "At this point this game should be 100% finished. I need to make sure the credits are ready and I need to make sure when I run the test tonight we have 3 players... I need to see the way my app looks. It will be step by step. Also make sure the larger rehearsals banner is not there." The three: Jon, Susan and a third, each on a device that scans in, any role, one team of three going room to room.
+- **The band is off.** No red REHEARSAL band on any phone or room screen (`play/src/App.jsx`, `Kiosk.jsx`; `showRehearsalBand` deleted, the two preview samples with it). The Host tab's top lines say "This night is a rehearsal" or "This is the party night" (`Host.jsx`), which is now the check that the party box worked. The practice pages keep their PRACTICE band; the small Rehearsal word on the Parlour TV's cards stays.
+- **The credits checked**, in the preview (`?preview=kiosk-finale-credits`): the roll, 73 seconds, every part present, nothing a stand-in. Missing: `sydney.jpg` (his line shows alone, card 567). Measured with a full night's lists (22 awards, 36 questions, 17 names): each line is on a 720-high screen about six seconds. Not changed; card 570 asks Jon to watch it.
+- **Three phones:** `npm run fake-night -- --phones 3` PASS: one group, four rounds, every act. Under four players two motives can stand (card 562, as before).
+- `npm test` passes in every package; the site builds.
+- **Left:** not deployed, not pushed. The band stays on the live site until Jon says publish (the site only).
+- **Decisions:** Jon: the REHEARSAL band goes.
+
 ## 11 Nov 2026, later · Claude Code (Jon's folder of exports, and the closing bulletin's own clips)
 
 - Jon: "I have all the media and updated... a MOV file of a static (tv static) transition... I would like to just put the folder in the repo and you move it and see if anything is missing."

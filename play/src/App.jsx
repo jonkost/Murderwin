@@ -3,7 +3,7 @@ import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showRehearsalBand, showsPrompt, wantsWelcome } from './lib/night'
+import { clockFor, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
 import { troubleLine } from './lib/trouble'
 import { RehearsalNight } from './screens/Cards'
 import Join from './screens/Join'
@@ -12,7 +12,7 @@ import Welcome from './screens/Welcome'
 import Allow from './screens/Allow'
 import { keepAwake } from './lib/permissions'
 import { Questions, Eliminate, EyesLock, ResultLock } from './screens/Windows'
-import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip, RehearsalBand } from './screens/Moments'
+import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { ResumeNight, StartNight } from './screens/Host'
 import Relay, { RelayDone, ms } from './screens/Relay'
 
@@ -82,14 +82,13 @@ export default function App() {
   if (!night.loaded && !night.data) return <Dark />
   const n = night.data
   if (!n) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />
-  // a rehearsal night: the red band across the top of every screen from here on, except in the dark
-  const band = <RehearsalBand on={showRehearsalBand(n)} />
+  // No REHEARSAL band on a phone (Jon, 11 Nov 2026): a rehearsal looks like the party night. The Host tab says which it is.
 
   const s = session.data && session.data.nightId === nightId ? session.data : null
   // The character was taken by another phone. Not a dead end: tap your name
   // to bring it back here, or type another name to join as someone else.
-  if (s?.status === 'superseded') return <>{band}{banner}<Join night={n} ui={ui} notice={ui.SUPERSEDED} /></>
-  if (!s || s.status !== 'active') return <>{band}{banner}<Join night={n} ui={ui} /></>
+  if (s?.status === 'superseded') return <>{banner}<Join night={n} ui={ui} notice={ui.SUPERSEDED} /></>
+  if (!s || s.status !== 'active') return <>{banner}<Join night={n} ui={ui} /></>
 
   // The blackout, and a pause taken during it, keep every phone near-black.
   // Then the power returns (the cue list, 25 Oct 2026): one button, "Sorry
@@ -109,13 +108,13 @@ export default function App() {
   // The permissions screen (§9.10): once per night, before the tour, never
   // over the dark. A phone that allowed already keeps its screen awake.
   if (notesDoc.loaded && !notes.seen.allow && wantsWelcome(n, { byNight: {} }, nightId)) {
-    return <>{band}<Allow uid={uid} /></>
+    return <Allow uid={uid} />
   }
 
   // Getting started: the first time this phone has a character on this
   // night, whatever the act, and on request from the You tab.
   if (tour || (notesDoc.loaded && wantsWelcome(n, notesDoc.data, nightId))) {
-    return <>{band}<Welcome uid={uid} session={s} content={content.data} ui={ui} onDone={() => setTour(false)} /></>
+    return <Welcome uid={uid} session={s} content={content.data} ui={ui} onDone={() => setTour(false)} />
   }
 
   // Every phone lights up at once: questions, the deduction round, the ballot.
@@ -138,7 +137,7 @@ export default function App() {
   }
   const held = screen && paused ? <><PausedStrip ui={ui} foot={resume} /><div className="paused-shell" inert>{screen}</div></> : screen
   const over = Boolean(screen) && where === 'overlay'
-  if (screen && !over) return <>{band}{banner}{held}</>
+  if (screen && !over) return <>{banner}{held}</>
 
   // A Parlour Game sits on top of the screen the phone was on, which stays
   // mounted underneath (inert, hidden from screen readers) and comes back
@@ -148,7 +147,7 @@ export default function App() {
   const heldCard = paused && where === 'card'
   const top = over ? <div className="overlay" role="dialog" aria-modal="true" aria-label={w.title || 'Parlour Game'}>{held}</div> : null
   const strip = heldCard ? <PausedStrip ui={ui} foot={resume} /> : null
-  if (paused && !over && !heldCard) return <>{band}{banner}<Moment text={ui.PAUSED} crest foot={resume} /></>
+  if (paused && !over && !heldCard) return <>{banner}<Moment text={ui.PAUSED} crest foot={resume} /></>
 
   // The ballot (Act 7; a card since 25 Oct 2026, Jon's cue list, cue 19) goes
   // down to Rest for the Now tab, with every tab reachable: the window, whether
@@ -192,5 +191,5 @@ export default function App() {
     // Rest is the only way to those cards, so it never goes without this.
     base = <RehearsalNight.Provider value={isRehearsalNight(n)}><Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} ballot={ballot} over={lock === 'over'} /></RehearsalNight.Provider>
   }
-  return <>{band}{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
+  return <>{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
 }

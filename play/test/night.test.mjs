@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   notesFor, notesPatch, mergeNotes, seen, wantsWelcome, buzzOnce, resetBuzzGuard, mayCheck, needsHandoverReset,
   clueCards, roleCard, nowCards, openWindow, clockFor, secondsLeft, KEEPS, KINDS, TRANSIENT, effectivePhase, isDark, presenceKey,
-  lightsStep, meetParam, LIGHTS_STEPS, isRehearsalNight, showRehearsalBand, salemFriendNote, SALEM_FRIEND,
+  lightsStep, meetParam, LIGHTS_STEPS, isRehearsalNight, salemFriendNote, SALEM_FRIEND,
 } from '../src/lib/night.js'
 import { isStale, secondsSinceHeard, watchWake, STALE_MS } from '../src/lib/clock.js'
 
@@ -285,7 +285,7 @@ test('a handed-over phone stops heartbeating as the previous owner', () => {
   assert.equal(presenceKey(active, null), null)
 })
 
-test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, never in the dark', async () => {
+test('CL-8 a rehearsal night: no band on a phone, the Host tab says which night it is', async () => {
   // nights rehearse unless the workshop's party box was ticked (forceRehearsal false)
   assert.equal(isRehearsalNight({ forceRehearsal: true, rehearsal: false, phase: 'lobby' }), true, 'at the doors, before any case is dealt')
   assert.equal(isRehearsalNight({ forceRehearsal: true, rehearsal: true }), true)
@@ -293,21 +293,13 @@ test('CL-8 the REHEARSAL band: every rehearsal night, never the party night, nev
   assert.equal(isRehearsalNight({ forceRehearsal: false, rehearsal: false }), false, 'the party night')
   assert.equal(isRehearsalNight({ forceRehearsal: false, dryRun: true }), true, 'a fake-players dry run is not the party')
   assert.equal(isRehearsalNight(null), false)
-  // the band goes dark with the room
-  const night = { forceRehearsal: true, phase: 'act' }
-  assert.equal(showRehearsalBand(night), true)
-  assert.equal(showRehearsalBand({ ...night, phase: 'blackout' }), false)
-  assert.equal(showRehearsalBand({ ...night, phase: 'prompt' }), false)
-  assert.equal(showRehearsalBand({ ...night, phase: 'paused', pausedFrom: 'blackout' }), false)
-  assert.equal(showRehearsalBand({ ...night, phase: 'paused', pausedFrom: 'act' }), true)
-  assert.equal(showRehearsalBand({ ...night, phase: 'lobby' }), true)
-  assert.equal(showRehearsalBand({ forceRehearsal: false, phase: 'act' }), false)
-  // every phone screen after the doors carries it, except the blackout and the prompt
+  // no band on any phone since 11 Nov 2026 (Jon: a rehearsal must look like the party night); the Host tab says which night it is
   const { readFileSync } = await import('node:fs')
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  assert.ok(app.includes('<RehearsalBand on={showRehearsalBand(n)} />'))
-  assert.equal((app.match(/return <>\{band\}/g) ?? []).length, 7, 'join, superseded, the permissions, welcome, a window, the pause and the phone at rest')
-  assert.ok(app.includes('if (isDark(n)) return <Blackout />'), 'the blackout has no band')
+  assert.ok(!app.includes('RehearsalBand') && !app.includes('{band}'), 'no band on a phone')
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes("isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'"), 'the Host tab says which night it is')
+  // the practice pages keep theirs, saying PRACTICE
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   assert.ok(/\.rehearsal-band \{[^}]*position: fixed; top: 0;/.test(css), 'the band is fixed across the top')
   assert.ok(css.includes(':root.rehearsal-on body { padding-top: var(--band-h); }'), 'the page moves down so nothing is covered')

@@ -248,7 +248,7 @@ test('F31 nothing in the corners beside a near-black screen, the bell ringing or
   assert.ok(!/\.kiosk\.dark ~ [^{]*\{[^}]*opacity/.test(css), 'never a dim mark left in the dark')
   // the rule finds them because the corners come after the screen, and both near-black screens carry .kiosk.dark
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  const from = kiosk.indexOf('<RehearsalBand on={!!n')
+  const from = kiosk.indexOf('      {body}\n      <Bell ')
   const corners = kiosk.slice(from, kiosk.indexOf('</>', from))
   const at = (t) => { const i = corners.indexOf(t); assert.ok(i >= 0, t); return i }
   for (const mark of ['<Bell ', '<StaleDot ', '<Wake ']) assert.ok(at('{body}') < at(mark), `${mark.trim()} after the screen`)
@@ -279,12 +279,12 @@ test('the relay rules: three lines from the workshop or the defaults, on the fir
 
 test('the previews cover every screen the plan names, and the kiosk has the three corners', () => {
   const preview = readFileSync(new URL('../src/Preview.jsx', import.meta.url), 'utf8')
-  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'kiosk-rehearsal', 'host-house-act2',
+  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'host-house-act2',
     // the cue list's screens (25 Oct 2026): the join and rejoin codes, the four room codes, the four rules cards and Boo's arcade (5 Nov 2026), the birthday card, every loop slot, The End
     'kiosk-join', 'kiosk-rejoin', 'kiosk-code-study', 'kiosk-code-library', 'kiosk-code-entryway', 'kiosk-code-orangerie',
     'kiosk-rules-study', 'kiosk-rules-library', 'kiosk-rules-entryway', 'kiosk-boo', 'kiosk-rules-orangerie', 'kiosk-birthday',
     'kiosk-loop-living', 'kiosk-loop-ipad', 'kiosk-loop-study', 'kiosk-loop-memory', 'kiosk-loop-boo', 'kiosk-loop-bedroom', 'kiosk-loop-orangerie', 'kiosk-end']) assert.ok(preview.includes(`'${k}'`), k)
-  for (const k of ['cats-friend', 'rehearsal']) assert.ok(preview.includes(`case '${k}'`), k)
+  for (const k of ['cats-friend']) assert.ok(preview.includes(`case '${k}'`), k)
   // D1-18, BK-7: the samples come from the open banks and say what the night says now
   assert.ok(preview.includes("from '../../seed/woof-news.json'") && preview.includes("from '../../seed/cat-lines.json'"), 'the previews import the open banks')
   assert.ok(!preview.includes('constable'), 'no struck-motives bulletin')
@@ -298,8 +298,8 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   // BK-15: the memory match's face-down cards are file folders, not a star (the match lives in Rooms.jsx since 23 Oct)
   const rooms = readFileSync(new URL('../src/screens/Rooms.jsx', import.meta.url), 'utf8')
   assert.ok(rooms.includes('<FolderBack />') && !rooms.includes('✦') && !kiosk.includes('✦'), 'the card backs are file folders')
-  // CL-8: the rehearsal band on every room screen, hidden while the room is dark
-  assert.ok(kiosk.includes('<RehearsalBand on={!!n && !dark && isRehearsalNight(n)} />'), 'the kiosk shows the band on a rehearsal night')
+  // CL-8 (changed 11 Nov 2026): no REHEARSAL band on a room screen; a rehearsal looks like the party night
+  assert.ok(!kiosk.includes('RehearsalBand'), 'no band on a room screen')
   for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')

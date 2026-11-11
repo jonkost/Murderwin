@@ -3,7 +3,7 @@ import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
 import { Questions, Ballot, Eliminate, EyesLock, ResultLock } from './screens/Windows'
-import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip, RehearsalBand } from './screens/Moments'
+import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { uiLines } from './lib/content'
 import { slideTime } from './lib/screen'
 import motivesSeed from '../../seed/motives.json'
@@ -47,8 +47,8 @@ import { setFromAddress } from './lib/gametest'
 // group plays (kiosk-orangerie-ready, kiosk-orangerie-round, kiosk-orangerie-passed; 31 Oct 2026) and
 // Boo's screen in the Entryway (kiosk-boo: a group's visit to the arcade, live, with the stand-in clue). Miss Boo LaRue's
 // Arcade (28 Oct 2026), each a frozen moment with no loop, deck or sound: kiosk-arcade (free play's menu),
-// kiosk-arcade-play (a game running), kiosk-arcade-clue, kiosk-arcade-third and kiosk-arcade-farewell. A rehearsal night's band:
-// kiosk-rehearsal, rehearsal. The Host tab's house panel: host-house,
+// kiosk-arcade-play (a game running), kiosk-arcade-clue, kiosk-arcade-third and kiosk-arcade-farewell.
+// The Host tab's house panel: host-house,
 // host-house-window, host-house-act2. The cue list's screens (25 Oct 2026):
 // the join code (kiosk-join, kiosk-rejoin), the room codes of Act 2
 // (kiosk-code-study, kiosk-code-library, kiosk-code-entryway,
@@ -289,8 +289,6 @@ const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2
 const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
 const KIOSK = {
   'kiosk-news': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'news' }} relay={null} trace={null} finale={null} screen={SCREEN('news', { title: 'W-O-O-F News', lines: NEWS_LINES })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  // a rehearsal night: the red band across the top of a room screen
-  'kiosk-rehearsal': (night, serverNow) => <><RehearsalBand on /><Living night={{ ...night, act: 2, beat: 'news' }} relay={null} trace={null} finale={null} screen={SCREEN('news', { title: 'W-O-O-F News', lines: NEWS_LINES })} content={CONTENT} serverNow={serverNow} nightId="preview" /></>,
   'kiosk-bulletin': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'bulletin' }} relay={null} trace={null} finale={null} screen={BULLETIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-irwin': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'irwin' }} relay={null} trace={null} finale={null} screen={IRWIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-black': (night, serverNow) => <Living night={{ ...night, act: 1, beat: 'ready', phase: 'blackout' }} relay={null} trace={null} finale={null} screen={SCREEN('black')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
@@ -524,8 +522,6 @@ export default function Preview({ screen }) {
     case 'notes': body = <Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={{ seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '[Your own notes land here: who said what, and what you make of it.]' }} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     // a True Friend of the Groundskeeper: tap Salem to read the honour again at the top of his row
     case 'cats-friend': body = <Rest uid="preview" night={night} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 5 }, salemFriend: true }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
-    // a rehearsal night: the red band across the top of the phone
-    case 'rehearsal': body = <><RehearsalBand on /><Rest uid="preview" night={{ ...night, rehearsal: true }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} /></>; break
     case 'lobby': body = <Rest uid="preview" night={{ ...night, act: 0, phase: 'lobby' }} session={SESSION} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     default:
       if (dealt) {

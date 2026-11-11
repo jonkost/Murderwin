@@ -51,12 +51,12 @@ export function PausedStrip({ ui, foot }) {
   return <div className="paused-strip" role="status">{ui['PAUSED BY HOST']}{foot}</div>
 }
 
-// A rehearsal night (lib/night.js isRehearsalNight): a big red band fixed
-// across the top of every phone and room screen, never on the party night,
-// never while the room is dark. The page moves down by the band's height
-// (html.rehearsal-on in styles.css), so the band never covers anything.
-// The Game test tab's practice pages wear the same band, saying PRACTICE.
-export function RehearsalBand({ on, label = 'REHEARSAL' }) {
+// The red band across the top of the Game test tab's practice pages, saying
+// PRACTICE. The page moves down by the band's height (html.rehearsal-on in
+// styles.css), so the band never covers anything. A rehearsal night wore it
+// too, saying REHEARSAL, until 11 Nov 2026 (Jon: a rehearsal must look like
+// the party night); the Host tab says which kind of night it is.
+export function RehearsalBand({ on, label = 'PRACTICE' }) {
   useEffect(() => {
     if (!on || typeof document === 'undefined') return
     const root = document.documentElement
