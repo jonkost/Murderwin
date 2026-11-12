@@ -1,28 +1,31 @@
 import { useEffect, useRef, useState } from 'react'
-import { Ground, Cat, Splash, GameCard, TheEnd, Dedication, Phone, NowCard, RulesSwipe, VoteCard } from './parts'
-import { SPLASHES, SPLASH_ROOMS, NOW_STATES, WINS, HOUSE_TIPS } from './look'
+import { Ground, Splash, GameCard, BigWin, TheEnd, Dedication, Phone, NowSample, RulesSwipe, VoteCard, SmallWin } from './parts'
+import { SPLASHES, SPLASH_ROOMS, NOW_STATES, WINS } from './look'
 import { celebrate } from '../lib/celebrate'
 import { unlock } from '../lib/soundkit'
 import { filmTimeline } from '../lib/rulesfilm'
 import RulesFilm from '../screens/RulesFilm'
 
-// The look book (handoff 11 Nov 2026, B1): /play/?look=1. Eight real screens
-// in the new look, with the real art, for Jon to say yes or no to before
-// anything rolls out. A page on its own: no sign-in, no night, nothing
-// written. Never linked from a guest's screen.
+// The look book: /play/?look=1. The nine screens Jon approved on 12 Nov 2026
+// (docs/look-approved.html), built for real, with the real art, in the order
+// of his drawings; then the Rules tab's cards and the little wins. A page on
+// its own: no sign-in, no night, nothing written. Never linked from a guest's
+// screen.
 //
-//   /play/?look=1                       the book
-//   /play/?look=1&show=splash&room=study   one room screen, filling the window
-//   (show: splash, second, game, end, dedication; room and game pick which;
-//    show=film&n=7 is slide 7 of the rules film, silent, as the Parlour TV draws it)
+//   /play/?look=1                          the book
+//   /play/?look=1&show=splash&room=study   one screen, filling the window
+//   (show: splash, second, game, win, end, dedication, now, vote, met, rules;
+//    room, game, state, word and who pick which; &still=1 holds it still;
+//    show=film&n=7 is slide 7 of the rules film as the Parlour TV shows it)
 
 const BASE = import.meta.env.BASE_URL
 const GAME_IDS = ['orangerie', 'study', 'library', 'entryway']
 const GAME_LABEL = { orangerie: 'Get Off My Lawn!', study: 'Lightbulb Moment', library: 'In Duplicate', entryway: 'Boo’s Arcade' }
 const CODE_OF = { orangerie: 'salem', study: 'granolia', library: 'zimothy', entryway: 'boo' }
+const HOST_OF = { orangerie: 'salem', study: 'granolia', library: 'zimothy', entryway: 'boo' }
 const codeUrl = id => `https://murderwin-at-sirwin-manor.web.app/play/?meet=${CODE_OF[id]}`
 
-// Something that moves on by itself: the cat's picture, the tip.
+// Something that moves on by itself: the cat's picture.
 function useTurn(ms) {
   const [n, setN] = useState(0)
   useEffect(() => { const id = setInterval(() => setN(k => k + 1), ms); return () => clearInterval(id) }, [ms])
@@ -51,57 +54,27 @@ function Chips({ items, value, onPick }) {
 }
 
 const open = query => { window.location.assign(`${BASE}?look=1&${query}`) }
-const SAMPLE_PICKS = { murderer: 'ledger', motive: 12, ghost: 'barnes' }
-
-// The stage the wins play on: a room's screen with its cat and one card.
-function Stage({ stageRef = null, className = '' }) {
-  return (
-    <div ref={stageRef} className={`lk-screen lk-stage${className ? ` ${className}` : ''}`}>
-      <Ground />
-      <Cat who="zimothy" n={3} />
-      <div className="lk-card">
-        <p className="lk-label">In Duplicate</p>
-        <p className="lk-big">A match!</p>
-      </div>
-    </div>
-  )
-}
-// &show=win&level=big: the stage filling the window, the win played once (quiet: nobody tapped).
-// &freeze=1 stops every piece part of the way through its flight, for a picture of the win.
-function WinStage({ level, freeze = false }) {
-  const stage = useRef(null)
-  useEffect(() => {
-    if (!level) return undefined
-    const id = setTimeout(() => {
-      celebrate(level, { root: stage.current, at: stage.current?.querySelector('.lk-card') ?? null, quiet: true, base: BASE })
-      if (!freeze) return
-      for (const el of stage.current?.querySelectorAll('.lk-fx > *') ?? []) {
-        const length = parseFloat(getComputedStyle(el).animationDuration) || 1
-        el.style.animationDelay = `${-(el.classList.contains('lk-flash') ? 0.16 : 0.42) * length}s`
-        el.style.animationPlayState = 'paused'
-      }
-    }, freeze ? 1200 : 300)
-    return () => clearTimeout(id)
-  }, [level, freeze])
-  return <>{freeze && <img src={`${BASE}brand/seal.png`} alt="" hidden />}<Stage stageRef={stage} className="full" /></>
-}
+// sample picks for a picture of the vote: no night's answer (there is none here)
+const SAMPLE_PICKS = { murderer: 'steeps', motive: 8, ghost: 'devine' }
 
 // One screen, filling the window, as its room would show it.
 function Show({ show, params }) {
   const turn = useTurn(20_000)
-  const tip = HOUSE_TIPS[useTurn(60_000) % HOUSE_TIPS.length]
-  const room = SPLASHES[params.get('room')] ? params.get('room') : 'living'
+  const fixed = params.has('n') ? Number(params.get('n')) || 0 : null
+  const room = SPLASHES[params.get('room')] ? params.get('room') : 'study'
   const game = GAME_IDS.includes(params.get('game')) ? params.get('game') : 'orangerie'
-  if (show === 'second') return <Splash room={room} turn={turn} calm className="full" />
-  if (show === 'game') return <GameCard id={game} turn={turn} codeUrl={codeUrl(game)} className="full" />
-  if (show === 'end') return <TheEnd className="full" />
-  if (show === 'dedication') return <Dedication className="full" />
-  // the three phone screens, filling the window: on a phone they are life size
-  if (show === 'now') return <div className="lk-fullphone"><Phone label="Act 2" title="Lights Out" on="now"><NowCard state={NOW_STATES[params.get('state')] ? params.get('state') : 'cat'} /></Phone></div>
-  if (show === 'rules') return <div className="lk-fullphone"><Phone label="The rules" title="How to play" on="rules"><RulesSwipe /></Phone></div>
-  // &picks=1 fills the three rows with sample picks (no night's answer: there is none here); &locked=1 shows the seal
-  if (show === 'vote') return <div className="lk-fullphone"><Phone label="Act 7" title="Unmasked" on="now"><VoteCard initial={params.has('picks') ? SAMPLE_PICKS : null} startLocked={params.has('locked')} /></Phone></div>
-  if (show === 'win') return <WinStage level={params.get('level')} freeze={params.has('freeze')} />
+  const who = params.get('who') || 'boo'
+  if (show === 'second') return <Splash room={room} turn={fixed ?? turn} calm className="full" />
+  if (show === 'game') return <GameCard id={game} turn={fixed ?? turn + 1} codeUrl={codeUrl(game)} className="full" />
+  if (show === 'win') return <BigWin word={params.get('word') || 'Solved!'} who={params.get('who') || 'granolia'} sound={false} className="full" />
+  if (show === 'end') return <TheEnd burst={!params.has('still')} className="full" />
+  if (show === 'dedication') return <Dedication photo={params.has('photo') ? `${BASE}household/sydney.jpg` : null} className="full" />
+  // the phone screens, filling the window: on a phone they are life size
+  if (show === 'now') return <div className="lk-fullphone"><Phone on="now"><NowSample state={NOW_STATES[params.get('state')] ? params.get('state') : 'room'} /></Phone></div>
+  if (show === 'rules') return <div className="lk-fullphone"><Phone on="rules"><RulesSwipe /></Phone></div>
+  // &picks=1 fills the three rows with sample picks; &locked=1 shows the seal
+  if (show === 'vote') return <div className="lk-fullphone"><Phone title="The Vote" on="now"><VoteCard title={false} left={72} initial={params.has('picks') ? SAMPLE_PICKS : null} startLocked={params.has('locked')} /></Phone></div>
+  if (show === 'met') return <div className="lk-fullphone"><SmallWin who={who} met={['granolia', who]} sound={false} /></div>
   if (show === 'film') {
     const film = filmTimeline()
     const k = Math.max(0, Math.min(film.slides.length - 1, (Number(params.get('n')) || 1) - 1))
@@ -109,106 +82,109 @@ function Show({ show, params }) {
     const voice = params.has('voice') ? Number(params.get('voice')) || 0 : null
     return <RulesFilm at={{ startedAt: 0, index: k, slide: film.slides[k], into: 0, voice, count: film.slides.length, total: film.total }} />
   }
-  return <Splash room={room} turn={turn} tip={tip} className="full" />
+  return <Splash room={room} turn={fixed ?? turn} className="full" />
 }
 
 export default function LookBook() {
   const params = new URLSearchParams(window.location.search)
   const show = params.get('show')
   const [room, setRoom] = useState('study')
-  const [second, setSecond] = useState(false)
-  const [now, setNow] = useState('cat')
+  const [second, setSecond] = useState('study')
+  const [now, setNow] = useState('room')
   const [game, setGame] = useState('orangerie')
+  const [winKey, setWinKey] = useState(0)
   const [endKey, setEndKey] = useState(0)
   const [voteKey, setVoteKey] = useState(0)
+  const [metKey, setMetKey] = useState(0)
+  const [met, setMet] = useState('boo')
   const stage = useRef(null)
-  const end = useRef(null)
   const turn = useTurn(7000)
-  const tip = HOUSE_TIPS[useTurn(9000) % HOUSE_TIPS.length]
   // &still=1 holds every screen still, for a picture of it
   const still = params.has('still')
   useEffect(() => { document.documentElement.classList.toggle('lk-still', still) }, [still])
 
   if (show) return <Show show={show} params={params} />
 
-  const win = level => { unlock(); celebrate(level, { root: stage.current, at: stage.current?.querySelector('.lk-card') ?? null, base: BASE }) }
-  const again = () => { unlock(); setEndKey(k => k + 1); setTimeout(() => celebrate('big', { root: end.current, base: BASE }), 60) }
+  const little = level => { unlock(); celebrate(level, { root: stage.current, base: BASE }) }
 
   return (
     <main className="lk-book">
-      <Ground calm />
+      <Ground tall frame={false} />
       <div className="lk-book-in">
         <header className="lk-book-top">
-          <p className="lk-label">Sirwin Manor</p>
           <h1>The look book</h1>
           <hr />
-          <p>Eight screens in the new look. Tell Claude Code yes, or what to change, by number. Nothing rolls out until you do.</p>
+          <p>The nine screens you approved on 12 November, built for real. Tell Claude Code what to change, by number.</p>
         </header>
 
-        <Section n="1" title="A room’s splash" line="What a room screen shows when nobody is playing on it. Its own cat, always moving.">
-          <Splash room={room} turn={turn} tip={second ? null : tip} tipMs={9000} calm={second} className="lk-tv" />
+        <Section n="1" title="Room splash" line="What a room’s screen shows when nobody is playing on it.">
+          <Splash room={room} turn={turn} className="lk-tv" />
           <Chips items={SPLASH_ROOMS.map(k => [k, SPLASHES[k].name.replace('The ', '')])} value={room} onPick={setRoom} />
-          <Chips items={[['main', 'The room’s screen'], ['second', 'A second display']]} value={second ? 'second' : 'main'} onPick={k => setSecond(k === 'second')} />
-          <p className="lk-note">The cat’s picture changes through the night. A tip fades in once a minute (faster here).</p>
-          <button type="button" className="lk-open" onClick={() => open(`show=${second ? 'second' : 'splash'}&room=${room}`)}>See it fill the screen</button>
+          <button type="button" className="lk-open" onClick={() => open(`show=splash&room=${room}`)}>See it fill the screen</button>
         </Section>
 
-        <Section n="2" title="The phone’s Now tab" line="One big card: what to do right now, and one button.">
-          <div className="lk-handset short">
-            <Phone label="Act 2" title="Lights Out" on="now">
-              <NowCard key={now} state={now} onGo={el => { unlock(); celebrate('small', { root: el.closest('.lk-phone'), at: el, base: BASE }) }} />
-            </Phone>
-          </div>
+        <Section n="2" title="A Mac’s second display" line="The seal, the room’s name and the cat.">
+          <Splash room={second} turn={turn} calm className="lk-tv wide" />
+          <Chips items={[['study', 'Study'], ['living', 'Parlour']]} value={second} onPick={setSecond} />
+          <button type="button" className="lk-open" onClick={() => open(`show=second&room=${second}`)}>See it fill the screen</button>
+        </Section>
+
+        <Section n="3" title="A game’s card" line="On a room’s screen between groups.">
+          <GameCard key={game} id={game} turn={turn + 1} codeUrl={codeUrl(game)} className="lk-tv" />
+          <Chips items={GAME_IDS.map(k => [k, GAME_LABEL[k]])} value={game} onPick={setGame} />
+          <button type="button" className="lk-open" onClick={() => open(`show=game&game=${game}`)}>See it fill the screen</button>
+        </Section>
+
+        <Section n="4" title="A big win" line="On a room’s screen when a room is solved. Turn your sound on.">
+          <BigWin key={winKey} word="Solved!" who={HOST_OF[game]} sound={winKey > 0} className="lk-tv" />
+          <div className="lk-chips"><button type="button" className="lk-chip go" onClick={() => { unlock(); setWinKey(k => k + 1) }}>Play it again, with sound</button></div>
+          <button type="button" className="lk-open" onClick={() => open(`show=win&who=${HOST_OF[game]}`)}>See it fill the screen</button>
+        </Section>
+
+        <Section n="5" title="The End" line="The last thing on every screen.">
+          <TheEnd key={endKey} burst={endKey > 0} className="lk-tv" />
+          <div className="lk-chips"><button type="button" className="lk-chip go" onClick={() => { unlock(); setEndKey(k => k + 1) }}>Play it again</button></div>
+          <button type="button" className="lk-open" onClick={() => open('show=end')}>See it fill the screen</button>
+        </Section>
+
+        <Section n="6" title="The dedication" line="One card in the credits. The photo goes in the round frame when it is in.">
+          <Dedication photo={`${BASE}household/sydney.jpg`} className="lk-tv" />
+          <button type="button" className="lk-open" onClick={() => open('show=dedication')}>See it fill the screen</button>
+        </Section>
+
+        <Section n="7" title="Phone: Now" line="Where to go, and one button.">
+          <div className="lk-handset"><Phone on="now"><NowSample key={now} state={now} onGo={el => { unlock(); celebrate('small', { root: el.closest('.lk-phone'), at: el, base: BASE }) }} /></Phone></div>
           <Chips items={Object.entries(NOW_STATES).map(([k, s]) => [k, s.chip])} value={now} onPick={setNow} />
           <button type="button" className="lk-open" onClick={() => open(`show=now&state=${now}`)}>See it fill the screen</button>
         </Section>
 
-        <Section n="3" title="The phone’s Rules tab" line="Cards to swipe. One idea a card, a picture on each.">
-          <div className="lk-handset short">
-            <Phone label="The rules" title="How to play" on="rules">
-              <RulesSwipe />
-            </Phone>
-          </div>
+        <Section n="8" title="Phone: The vote" line="Tap a row, pick, come back. Lock in lights when all three are filled.">
+          <div className="lk-handset"><Phone title="The Vote" on="now"><VoteCard key={voteKey} title={false} left={72} /></Phone></div>
+          <div className="lk-chips"><button type="button" className="lk-chip" onClick={() => setVoteKey(k => k + 1)}>Start the vote again</button></div>
+          <button type="button" className="lk-open" onClick={() => open('show=vote&picks=1')}>See it fill the screen</button>
+        </Section>
+
+        <Section n="9" title="Phone: A small win" line="After a cat has told you what it knows.">
+          <div className="lk-handset"><SmallWin key={`${met}${metKey}`} who={met} met={['granolia', met]} sound={metKey > 0} className="framed" onDone={() => { unlock(); setMetKey(k => k + 1) }} /></div>
+          <Chips items={[['boo', 'Boo'], ['granolia', 'Granolia'], ['zimothy', 'Zimothy'], ['salem', 'Salem']]} value={met} onPick={setMet} />
+          <button type="button" className="lk-open" onClick={() => open(`show=met&who=${met}`)}>See it fill the screen</button>
+        </Section>
+
+        <Section n="10" title="Phone: Rules" line="Cards to swipe, as built on 11 November.">
+          <div className="lk-handset"><Phone on="rules"><RulesSwipe /></Phone></div>
           <button type="button" className="lk-open" onClick={() => open('show=rules')}>See it fill the screen</button>
         </Section>
 
-        <Section n="4" title="A win, small and big" line="Every win gets a moment. Tap each one. Turn your sound on.">
-          <Stage stageRef={stage} className="lk-tv" />
+        <Section n="11" title="The little wins" line="A sparkle, a seal, a burst, a soft buzz. Tap each one, with your sound on.">
+          <div ref={stage}><Splash room="library" turn={2} className="lk-tv" /></div>
           <div className="lk-when">
             {WINS.map(w => (
-              <button key={w.level} type="button" className="lk-press" onClick={() => win(w.level)}>
+              <button key={w.level} type="button" className="lk-press" onClick={() => little(w.level)}>
                 <b>{w.name}</b>
                 <span>{w.when}</span>
               </button>
             ))}
           </div>
-        </Section>
-
-        <Section n="5" title="The vote" line="One card, three rows. Lock in lights when all three are filled.">
-          <div className="lk-handset">
-            <Phone label="Act 7" title="Unmasked" on="now">
-              <VoteCard key={voteKey} />
-            </Phone>
-          </div>
-          <div className="lk-chips"><button type="button" className="lk-chip" onClick={() => setVoteKey(k => k + 1)}>Start the vote again</button></div>
-          <button type="button" className="lk-open" onClick={() => open('show=vote')}>See it fill the screen</button>
-        </Section>
-
-        <Section n="6" title="A game’s rules card" line="On a room’s screen between groups. The name in lights, two short lines, the code.">
-          <GameCard key={game} id={game} turn={turn} codeUrl={codeUrl(game)} className="lk-tv" />
-          <Chips items={GAME_IDS.map(k => [k, GAME_LABEL[k]])} value={game} onPick={setGame} />
-          <button type="button" className="lk-open" onClick={() => open(`show=game&game=${game}`)}>See it fill the screen</button>
-        </Section>
-
-        <Section n="7" title="The End" line="The last thing on every screen. Jazz plays and the lights are up.">
-          <div ref={end}><TheEnd key={endKey} burst={endKey === 0} className="lk-tv" /></div>
-          <div className="lk-chips"><button type="button" className="lk-chip go" onClick={again}>Play it again, with sound</button></div>
-          <button type="button" className="lk-open" onClick={() => open('show=end')}>See it fill the screen</button>
-        </Section>
-
-        <Section n="8" title="The dedication" line="One card in the credits, held for eight seconds. Your words go here when they come.">
-          <Dedication className="lk-tv" />
-          <button type="button" className="lk-open" onClick={() => open('show=dedication')}>See it fill the screen</button>
         </Section>
       </div>
     </main>

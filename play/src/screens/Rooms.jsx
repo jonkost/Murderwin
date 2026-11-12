@@ -30,7 +30,7 @@ import Spoken from './Spoken'
 // Everything here reads public docs and open lines only.
 
 import { Splash } from '../look/parts'
-import { lookOn, SPLASH_OF, splashNow, TIP_MS } from '../look/look'
+import { lookOn, SPLASH_OF, splashNow } from '../look/look'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -59,11 +59,10 @@ export function Loop({ which, children = null, className = '' }) {
 }
 
 // The idle view of every kiosk: the loop when its file is in, else the crest.
-// With the look's splash switched on (look/look.js LOOK.splash, once Jon has
-// said yes; handoff 11 Nov 2026, B2), the crest's place is taken by the room's
-// live splash: its own cat, large and slowly moving, the room's name, one
-// inviting line, and a tip from the house once a minute. A loop file still
-// wins if Jon ever drops one in. `room` names the splash when the screen has
+// With the look's splash switched on (look/look.js LOOK.splash; Jon's yes of
+// 12 Nov 2026), the crest's place is taken by the room's live splash: the
+// room's name in lights, its own cat, large, and the cat's name. No other
+// words. A loop file still wins if Jon ever drops one in. `room` names the splash when the screen has
 // no loop of its own (a second display); `calm` is that smaller, quieter one.
 export function Idle({ title, line, loop = null, room = null, calm = false }) {
   const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null
@@ -78,13 +77,12 @@ export function Idle({ title, line, loop = null, room = null, calm = false }) {
   )
 }
 
-// The room's splash, alive: the picture and the tip move on by the clock on
-// the wall (no night is needed, so it shows before one is started too).
+// The room's splash, alive: the cat's picture moves on by the clock on the
+// wall (no night is needed, so it shows before one is started too).
 function LiveSplash({ room, calm = false }) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 15_000); return () => clearInterval(id) }, [])
-  const { turn, tip } = splashNow(now)
-  return <Splash room={room} turn={turn} tip={calm ? null : tip} tipMs={TIP_MS} calm={calm} className="full" />
+  return <Splash room={room} turn={splashNow(now).turn} calm={calm} className="full" />
 }
 
 // A picture from play/public that may not be there: nothing shows until it is.

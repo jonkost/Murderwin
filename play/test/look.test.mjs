@@ -1,8 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
-import { PICTURES, pictureFor, SPLASHES, SPLASH_ROOMS, HOUSE_TIPS, GAME_HOW, RULE_CARDS, NOW_STATES, WINS, bulbSpots, lookParam } from '../src/look/look.js'
-import { CAT_PICTURES } from '../src/lib/rooms.js'
+import { PICTURES, pictureFor, SPLASHES, SPLASH_ROOMS, GAME_STEPS, RULE_CARDS, NOW_STATES, WINS, TRIMS, FACES, HEADS, CATS, TWINKLES, WIN_PAWS, confetti, trimOf, trimStyle, headStyle, lookParam } from '../src/look/look.js'
+import { CAT_PICTURES, CAT_NAMES } from '../src/lib/rooms.js'
 import { SOUNDS, soundMs, play, unlock } from '../src/lib/soundkit.js'
 import { LEVELS, pieces, celebrate } from '../src/lib/celebrate.js'
 
@@ -45,52 +45,129 @@ test('the look’s pictures are the household’s own, and every file is in the 
   assert.ok(!/--brand-peat|#262500/i.test(css), 'no olive ground anywhere in the look')
 })
 
-test('each room’s splash has its own cat and one short, inviting line', () => {
+// The look is the one Jon approved on 12 Nov 2026 (docs/look-approved.html; handoff 12 Nov, jobs 2 and 3).
+test('each room’s splash: its own cat, the room’s name in lights, the cat’s name, and no other words', () => {
   assert.deepEqual(SPLASH_ROOMS, ['living', 'study', 'library', 'orangerie', 'entryway', 'bedroom'])
   const who = Object.fromEntries(SPLASH_ROOMS.map(r => [r, SPLASHES[r].who]))
   assert.deepEqual(who, { living: 'irwin', study: 'granolia', library: 'zimothy', orangerie: 'salem', entryway: 'boo', bedroom: 'irwin' }, 'the handoff’s table')
   for (const r of SPLASH_ROOMS) {
     const s = SPLASHES[r]
+    assert.deepEqual(Object.keys(s).sort(), ['name', 'who'], `${r}: a cat and a name, nothing else to say`)
     assert.ok(PICTURES[s.who], `${r} has pictures`)
-    assert.ok(words(s.line) <= 12 && sentences(s.line) <= 2, `${r}: ${s.line}`)
     assert.ok(/^The /.test(s.name), `${r} is named like a room`)
+    assert.ok(CAT_NAMES[s.who], `${r}: the cat’s own name goes on the red bar`)
   }
-  // the tips are the house's own five
-  const deal = read('../../functions/lib/deal.js')
-  const block = deal.slice(deal.indexOf('export const FREE_TIME_TIPS = ['), deal.indexOf(']', deal.indexOf('export const FREE_TIME_TIPS = [')))
-  const server = [...block.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map(m => m[1])
-  assert.deepEqual(HOUSE_TIPS, server, 'the same tips as the server’s FREE_TIME_TIPS')
+  const parts = read('../src/look/parts.jsx')
+  const splash = parts.slice(parts.indexOf('export function Splash('), parts.indexOf('// 3. A game’s card'))
+  assert.ok(splash.includes('<Marquee><h2 className="lk-big" style={{ \'--chars\': s.name.length }}>{s.name}</h2></Marquee>'), 'the room’s name sits in a marquee frame')
+  assert.ok(splash.includes('<p className="lk-namebar"><i aria-hidden="true" /><b>{CAT_NAMES[s.who]}</b></p>'), 'the cat’s name on a red bar')
+  // Jon, 12 Nov: "Anywhere there is random text that is not mission critical lose it."
+  assert.ok(!/Sirwin Manor|lk-tip|lk-line|\.line\b|tip=/i.test(splash), 'no SIRWIN MANOR, no line under the name, no tip')
+  // a Mac's second display: the seal, the room's name and the cat
+  const second = splash.slice(splash.indexOf('if (calm) {'), splash.indexOf('<div className={`lk-screen lk-splash'))
+  assert.ok(second.includes('<img className="lk-seal-mark" src={SEAL} alt="" aria-hidden="true" />') && !second.includes('lk-namebar') && !second.includes('<Marquee'), 'the second display has the seal, the name and the cat')
+  // the splash's tips are gone from the look; the server still has its own for the Parlour TV's prompts
+  assert.ok(!/HOUSE_TIPS|TIP_MS/.test(read('../src/look/look.js') + read('../src/screens/Rooms.jsx')))
 })
 
-test('the word rule: two short sentences a screen, and nothing over 25 words', () => {
+test('every picture is cut to its own edges, and every head and face has its place', () => {
+  for (const [who, files] of Object.entries(PICTURES)) {
+    for (const f of files) {
+      const [x, y, w, h, r] = trimOf(f)
+      assert.ok(TRIMS[f], `${who}: ${f} has been measured`)
+      assert.ok(x >= 0 && y >= 0 && w > 0.3 && h > 0.3 && x + w <= 1.001 && y + h <= 1.001 && r > 0.3 && r < 2, `${f}: a box inside the picture`)
+      const st = trimStyle(f)
+      assert.ok(parseFloat(st.width) >= 100 && parseFloat(st.left) <= 0 && parseFloat(st.top) <= 0, `${f}: the picture is slid so only the cat shows`)
+    }
+  }
+  assert.deepEqual(trimOf('not-a-file.png'), [0, 0, 1, 1, 1], 'a picture nobody measured shows whole')
+  assert.deepEqual(CATS, ['granolia', 'boo', 'zimothy', 'salem'], 'the four cats a guest meets, in the drawing’s order')
+  for (const c of [...CATS, 'irwin']) {
+    assert.ok(existsSync(new URL(`../public/household/faces/${FACES[c]}`, import.meta.url)), `${c}’s face is in the folder`)
+    assert.ok(TRIMS[FACES[c]], `${c}’s face has been measured`)
+  }
+  // every character's portrait has a head crop, and the two in the drawing match it
+  const people = JSON.parse(read('../../seed/characters.json')).characters
+  for (const p of people) {
+    assert.ok(HEADS[p.id], `${p.id} has a head crop`)
+    assert.ok(existsSync(new URL(`../public/portraits/${p.id}.png`, import.meta.url)), `${p.id}’s portrait is in the folder`)
+  }
+  const near = (a, b, by) => Math.abs(a - b) <= by
+  assert.ok(near(HEADS.steeps[0], 221.22, 3) && near(HEADS.steeps[1], -51.061, 2) && near(HEADS.steeps[2], -4.907, 2), 'Jasper Steeps as drawn')
+  assert.ok(near(HEADS.devine[0], 250.45, 3) && near(HEADS.devine[1], -65.315, 2) && near(HEADS.devine[2], -7.057, 2), 'Iris DeVine as drawn')
+  assert.deepEqual(headStyle('nobody'), { width: '200%', left: '-50%', top: '-3%' })
+})
+
+test('the word rule (Jon, 12 Nov): a title, one line at most, one button; only what a player needs', () => {
   const lines = [
-    ...SPLASH_ROOMS.map(r => SPLASHES[r].line),
-    ...Object.values(GAME_HOW).flat(),
+    ...Object.values(GAME_STEPS).flat(),
     ...RULE_CARDS.map(c => c.body ?? c.three.join(' ')),
-    ...Object.values(NOW_STATES).flatMap(s => [s.lead, s.sub, s.button, s.quiet].filter(Boolean)),
+    ...Object.values(NOW_STATES).flatMap(s => [s.lead, s.button, s.quiet].filter(Boolean)),
     ...WINS.map(w => w.when),
-    ...HOUSE_TIPS,
   ]
   for (const line of lines) assert.ok(words(line) <= 25, line)
-  for (const how of Object.values(GAME_HOW)) assert.equal(how.length, 2, 'a rules card says two short lines')
+  // a game's card: three steps as numbered cards, and step 1 is always the room's code
+  assert.deepEqual(Object.keys(GAME_STEPS).sort(), ['entryway', 'library', 'orangerie', 'study'])
+  for (const [id, steps] of Object.entries(GAME_STEPS)) {
+    assert.equal(steps.length, 3, `${id}: three steps`)
+    assert.ok(/^Scan .+’s code\.$/.test(steps[0]), `${id}: step 1 is the code`)
+    for (const s of steps) assert.ok(words(s) <= 5 && s.length <= 24, `${id}: a step is a few words: ${s}`)
+  }
+  assert.deepEqual(GAME_STEPS.orangerie, ['Scan Salem’s code.', 'Red means shake.', 'Green means freeze.'], 'as drawn')
+  // the Now card: where to go and one button; no act's name, no RIGHT NOW, no second sentence
+  for (const [k, s] of Object.entries(NOW_STATES)) {
+    assert.ok(sentences(s.lead) <= 1 && words(s.lead) <= 5, `${k}: ${s.lead}`)
+    assert.ok(!('label' in s) && !('sub' in s), `${k}: no label and no second sentence`)
+  }
+  assert.deepEqual([NOW_STATES.room.lead, NOW_STATES.room.button], ['Go to the Orangerie', 'Scan Salem’s code'], 'as drawn')
   for (const c of RULE_CARDS) if (c.body) assert.ok(sentences(c.body) <= 2, c.body)
-  for (const s of Object.values(NOW_STATES)) assert.ok(sentences(s.lead) <= 1 && (!s.sub || sentences(s.sub) <= 2), s.lead)
   assert.deepEqual(RULE_CARDS[0].three, ['Who did it?', 'Why?', 'Who is the Ghost?'], 'the first card is the whole game in three lines')
-  assert.deepEqual(Object.keys(GAME_HOW).sort(), ['entryway', 'library', 'orangerie', 'study'])
   // plain American English in what a guest reads
   for (const line of lines) assert.ok(!/colour|favourite|whilst|—/.test(line), line)
+  // none of the look's screens carries an act's name, a tip or a label that only names the card
+  const parts = read('../src/look/parts.jsx')
+  for (const gone of ['Right now', 'RIGHT NOW', 'Your vote', 'Sirwin Manor', 'Swipe for the next one', 'Scan to begin', 'seconds left', 'Lights Out', 'Unmasked']) assert.ok(!parts.includes(gone), `“${gone}” is off the screens`)
+  assert.ok(parts.includes('<figcaption>Scan to start</figcaption>') && parts.includes('>The Vote</h3>') && parts.includes("'Lock in'"), 'the words that stay')
 })
 
-test('a marquee’s bulbs go evenly round the box, in three sets that take turns', () => {
-  assert.deepEqual(bulbSpots(0, 10), [])
-  for (const [w, h] of [[900, 160], [400, 90], [1700, 320], [240, 240]]) {
-    const spots = bulbSpots(w, h)
-    assert.ok(spots.length >= 10, `${w}x${h} has bulbs`)
-    assert.equal(spots.length % 3, 0, 'the three sets are the same size')
-    for (const s of spots) assert.ok(s.x >= 0 && s.x <= 100 && s.y >= 0 && s.y <= 100 && (s.x === 0 || s.x === 100 || s.y === 0 || s.y === 100), 'every bulb sits on the edge')
-    assert.deepEqual(spots[0], { x: 0, y: 0 }, 'from the top left')
-    assert.equal(new Set(spots.map(s => `${s.x},${s.y}`)).size, spots.length, 'no two bulbs share a spot')
+test('the glitz Jon kept: slow bulbs, twinkles, the seal stamping in, paw prints, confetti across the whole screen', () => {
+  const css = read('../src/look/look.css')
+  const parts = read('../src/look/parts.jsx')
+  // the marquee: a row of bulbs above and below, three sets taking turns, slow on a splash and quicker on a game's card
+  assert.ok(parts.includes('<div className={`lk-marquee${fast ? \' fast\' : \'\'}${className ? ` ${className}` : \'\'}`}>{row}{children}{row}</div>'))
+  assert.ok(css.includes('animation: lk-bulb 2.4s ease-in-out infinite') && css.includes('.lk-marquee.fast .lk-bulbs i { animation-duration: 1.2s; }'))
+  assert.ok(css.includes('.lk-bulbs i:nth-child(3n+2) { animation-delay: 0.8s; }') && css.includes('.lk-bulbs i:nth-child(3n) { animation-delay: 1.6s; }'))
+  for (const [k, spots] of Object.entries(TWINKLES)) {
+    assert.ok(spots.length >= 4, `${k} has twinkles`)
+    for (const [x, y, size, delay, tone] of spots) assert.ok(x > 0 && x < 100 && y > 0 && y < 100 && size > 0 && delay >= 0 && ['brass', 'paper'].includes(tone), `${k}: a twinkle on the screen`)
   }
+  // a big win: ten paw prints fly out from the middle to where they rest
+  assert.equal(WIN_PAWS.length, 10)
+  for (const [x, y, size, lean, tone, fx, fy] of WIN_PAWS) {
+    assert.ok(x > 0 && x < 100 && y > 0 && y < 100 && size > 2 && Math.abs(lean) <= 30 && ['brass', 'paper', 'red'].includes(tone))
+    assert.ok(Math.abs(x + fx - 50) < 6 && Math.abs(y + fy - 46) < 6, 'it starts near the middle')
+  }
+  // confetti: the same shower every time, spread across the whole width, paw prints and strips
+  assert.deepEqual(confetti(), confetti())
+  const wide = confetti()
+  assert.equal(wide.filter(c => c.kind === 'paw').length, 12)
+  assert.equal(wide.filter(c => c.kind === 'strip').length, 8)
+  assert.ok(Math.min(...wide.map(c => c.x)) < 10 && Math.max(...wide.map(c => c.x)) > 88, 'across the whole screen')
+  for (const c of [...wide, ...confetti(true)]) assert.ok(c.x >= 0 && c.x <= 96 && c.ms >= 5000 && c.ms <= 9000 && c.delay <= 0, 'every piece is already falling when the screen opens')
+  assert.equal(confetti(true).length, 13, 'a phone’s shower, as drawn')
+  // The End: the confetti falls behind the words
+  const end = parts.slice(parts.indexOf('export function TheEnd('), parts.indexOf('// 6. The dedication'))
+  assert.ok(end.indexOf('<Confetti />') > 0 && end.indexOf('<Confetti />') < end.indexOf('<Marquee fast>'), 'behind the words')
+  assert.ok(end.includes("line = 'Happy first birthday, Sir Irwin.'"))
+  // the big win: one big word, the seal, the cat hopping, and no card
+  const win = parts.slice(parts.indexOf('export function BigWin('), parts.indexOf('// 5. The End'))
+  assert.ok(win.includes("word = 'Solved!'") && win.includes('<img className="lk-stamp"') && win.includes('move="hop"') && !/lk-card|lk-pcard/.test(win))
+  // the dedication: the photo in a round brass frame above the line, no heading, and nothing standing in for him
+  const ded = parts.slice(parts.indexOf('export function Dedication('), parts.indexOf('// ---- the phone'))
+  assert.ok(ded.includes("line = 'In loving memory of Sydney, the original good boy'") && ded.includes('{photo && !lost && <span className="lk-photo">') && !/<h[1-6]|lk-label/.test(ded))
+  assert.ok(css.includes('.lk-photo { display: block; width: 21.875cqw; height: 21.875cqw; box-sizing: border-box; border-radius: 50%;'))
+  // less movement when a device asks for it
+  assert.ok(css.includes('@media (prefers-reduced-motion: reduce)') && css.includes('.lk-confetti { display: none; }'))
 })
 
 test('the sound kit: made in code, short, and every level of a win has its sound', () => {
@@ -132,8 +209,8 @@ test('a celebration’s pieces: the same burst for the same seed, and the right 
 })
 
 test('B2, the room splash on every idle screen: on since Jon said yes to all eight (12 Nov 2026)', async () => {
-  const { LOOK, lookOn, SPLASH_OF, splashNow, SPLASH_TURN_MS, TIP_MS } = await import('../src/look/look.js')
-  assert.deepEqual(LOOK, { splash: true }, 'Jon: "Yes to all 8"')
+  const { LOOK, lookOn, SPLASH_OF, splashNow, SPLASH_TURN_MS } = await import('../src/look/look.js')
+  assert.equal(LOOK.splash, true, 'Jon: "Yes to all 8", then "yes this is great" to the drawings')
   assert.equal(lookOn('splash', ''), true)
   assert.equal(lookOn('nothing-yet', ''), false, 'a part that is not switched on stays off')
   assert.equal(lookOn('nothing-yet', '?kiosk=study&nothing-yet=1'), true, 'and can be tried on a real screen by its address')
@@ -149,12 +226,11 @@ test('B2, the room splash on every idle screen: on since Jon said yes to all eig
   for (const loop of new Set(Object.values(LOOP_OF))) assert.ok(SPLASHES[SPLASH_OF[loop]], `${loop} has a splash`)
   assert.equal(SPLASH_OF.memory, 'library')
   assert.equal(SPLASH_OF.boo, 'entryway')
-  // the picture moves on every few minutes and the tip every minute, by the clock on the wall
+  // the picture moves on every few minutes, by the clock on the wall
   const t = 1_800_000_000_000
   assert.equal(splashNow(t).turn + 1, splashNow(t + SPLASH_TURN_MS).turn)
   assert.equal(splashNow(t).turn, splashNow(t + SPLASH_TURN_MS - 1 - (t % SPLASH_TURN_MS)).turn, 'a reload shows the same picture')
-  assert.notEqual(splashNow(t).tip, splashNow(t + TIP_MS).tip)
-  assert.ok(HOUSE_TIPS.includes(splashNow(t).tip))
+  assert.deepEqual(Object.keys(splashNow(t)), ['turn'], 'and no tip')
   const rooms = read('../src/screens/Rooms.jsx')
   assert.ok(rooms.includes("const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null"))
   assert.ok(rooms.includes('<Loop which={loop}><LiveSplash room={splash} calm={calm} /></Loop>'), 'a loop file still wins if Jon ever drops one in')
