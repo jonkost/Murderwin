@@ -40,6 +40,7 @@
 // what they name goes to the group's own phones and into cases/{id}, never to
 // a public doc, a log or a return value.
 
+import { readyLimits, roundOver, gameOver, SALEM_GAME_MAX_MS } from './salemlimits.js'
 import { randomInt } from 'node:crypto'
 import { NightError, MOTIVES, CHARACTERS, characterById, readArea, GAME_NAMES } from './night.js'
 import { NIGHT, guests, dealCard, labelled, readCase, ensureCase, ms, CAT_NAMES, FREE_TIME_TIPS } from './deal.js'
@@ -750,6 +751,8 @@ export const SALEM_SEGMENTS = { 1: [4500, 7000], 2: [3500, 5500], 3: [2800, 4500
 export const SALEM_GRACE_MS = { 1: 1200, 2: 1000, 3: 900 }
 // A round a group cannot get through passes itself on this many slips, so no group is ever stuck.
 export const SALEM_MAX_SLIPS = 5
+// ...and after two and a half minutes, and the whole game after eight (A9, 12 Nov 2026; lib/salemlimits.js)
+export { SALEM_ROUND_MAX_MS, SALEM_GAME_MAX_MS } from './salemlimits.js'
 
 export function salemIdle(gid, round, now = Date.now()) {
   return { groupId: gid ?? null, round: 0, state: 'idle', attempt: 0, flips: [], startsAt: null, cleanAt: null, act4Round: round, at: new Date(now) }
@@ -784,23 +787,32 @@ export async function salemArrive(db, nightId, gid, { now = Date.now() } = {}) {
   const ref = db.doc(salemPath(nightId))
   const d = (await ref.get()).data()
   if (!d || d.groupId !== gid || d.state !== 'idle') return { ok: true, already: true }
-  await ref.update({ state: 'intro', at: new Date(now) })
+  // the game's eight minutes start here, with the scan (A9, 12 Nov 2026: no group spends more than eight minutes in it)
+  await ref.update({ state: 'intro', at: new Date(now), gameEndsAt: new Date(now + SALEM_GAME_MAX_MS) })
   return { ok: true }
 }
 
 // "Ready" (any phone in the group): the next round starts three seconds on.
+// It also sets the round's limit and, the first time, the game's (A9,
+// lib/salemlimits.js); a Ready after the game's limit clears the game.
 export async function salemReady(db, { nightId, uid, now = Date.now(), pick = randomInt }) {
   const gid = await salemGroupOf(db, nightId, uid)
   const ref = db.doc(salemPath(nightId))
-  return db.runTransaction(async tx => {
+  const r = await db.runTransaction(async tx => {
     const d = (await tx.get(ref)).data()
     if (!d || d.groupId !== gid) throw new NightError('invalid', 'Salem is not expecting your group just now.')
     if (!['intro', 'passed'].includes(d.state)) return { ok: true, already: true, state: d.state }
+    if (gameOver(d, now)) {
+      tx.update(ref, { state: 'cleared', flips: [], at: new Date(now), letThrough: true })
+      return { ok: true, cleared: true, letThrough: true }
+    }
     const round = (d.round ?? 0) + 1
     const startsAt = now + SALEM_LEAD_MS
-    tx.update(ref, { state: 'playing', round, attempt: (d.attempt ?? 0) + 1, flips: salemFlips(round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: 0, at: new Date(now) })
+    tx.update(ref, { state: 'playing', round, attempt: (d.attempt ?? 0) + 1, flips: salemFlips(round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: 0, at: new Date(now), ...readyLimits(d, now, SALEM_MAX_SLIPS) })
     return { ok: true, round }
   })
+  if (r.cleared) await payRoom(db, nightId, gid, 'orangerie', { outcome: 'done', now })
+  return r
 }
 
 // A phone slipped: the round starts again for the whole group (a stale
@@ -816,9 +828,10 @@ export async function salemSlip(db, { nightId, uid, attempt, colour = null, now 
     if (now < ms(d.startsAt)) return { ok: true, already: true }
     const startsAt = now + SALEM_LEAD_MS
     const slipsBy = plusOne(d.slipsBy, place)
-    // never stuck (12 Nov 2026): the slip that makes the round's fifth passes the round for the group
-    if ((d.slips ?? 0) + 1 >= SALEM_MAX_SLIPS) {
-      const cleared = d.round >= SALEM_ROUNDS
+    // never stuck (12 Nov 2026): the slip that makes the round's fifth passes the round for the group,
+    // and so does any slip once the round's two and a half minutes or the game's eight are up (A9)
+    if ((d.slips ?? 0) + 1 >= SALEM_MAX_SLIPS || roundOver(d, now) || gameOver(d, now)) {
+      const cleared = d.round >= SALEM_ROUNDS || gameOver(d, now)
       tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now), slips: (d.slips ?? 0) + 1, ...(slipsBy ? { slipsBy } : {}), letThrough: true })
       return { ok: true, letThrough: true, cleared }
     }
@@ -841,13 +854,20 @@ export async function salemPassed(db, { nightId, uid, attempt, felt = false, now
   const r = await db.runTransaction(async tx => {
     const d = (await tx.get(ref)).data()
     const feltBy = d && d.groupId === gid && d.feltBy?.[place] !== true ? markAt(d.feltBy, place) : null
+    // the game's eight minutes are up (A9): Salem lets the group through, from a round or between rounds
+    if (d && d.groupId === gid && gameOver(d, now) && ['intro', 'playing', 'passed'].includes(d.state)) {
+      tx.update(ref, { state: 'cleared', flips: [], at: new Date(now), letThrough: true, ...(feltBy ? { feltBy } : {}) })
+      return { cleared: true }
+    }
     if (!d || d.groupId !== gid || d.state !== 'playing' || Number(attempt) !== d.attempt) {
       if (feltBy) tx.update(ref, { feltBy })
       return { already: true }
     }
-    if (now < ms(d.cleanAt) - 1000) throw new NightError('invalid', 'Not yet. Keep going.')
+    // thirty seconds clean, or the round's two and a half minutes are up (A9)
+    const clean = now >= ms(d.cleanAt) - 1000
+    if (!clean && !roundOver(d, now)) throw new NightError('invalid', 'Not yet. Keep going.')
     const cleared = d.round >= SALEM_ROUNDS
-    tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now), ...(feltBy ? { feltBy } : {}) })
+    tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now), ...(clean ? {} : { letThrough: true }), ...(feltBy ? { feltBy } : {}) })
     return { cleared }
   })
   if (r.already) return { ok: true, already: true }

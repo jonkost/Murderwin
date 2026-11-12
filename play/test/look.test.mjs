@@ -264,7 +264,8 @@ test('a room’s rules card on the night is the approved game card: the name in 
   assert.ok(card.includes('<GameCard id={id} file={frame ?? catPicture(cat, pick)} codeUrl={code && cat ? meetUrl(cat, PLAY_URL) : null} className="full">'), 'the room’s own cat picture and the room’s own code')
   // the host's long line is off the screen, and so are the lines that only fill the wait
   const look = card.slice(card.indexOf("if (lookOn('game') && game) {"), card.indexOf('const src = frame'))
-  assert.ok(!/\{line\}|<Spoken|Scan the code to begin/.test(look), 'no host’s paragraph and no old caption')
+  assert.ok(!/<Spoken|rules-line|SmallCode|words=/.test(look), 'no host’s paragraph and no old caption')
+  assert.ok(look.includes("const say = id === 'study' && line ? [<p key=\"say\" className=\"kiosk-line\">{line}</p>] : []"), 'the Study’s one line is its state (Touch any hexagon to start.), so it stays')
   const filler = new RegExp(card.match(/export const CARD_FILLER = \/(.+)\/\n/)[1])
   for (const gone of ['The next group will be along.', 'Expecting Mabel, Gus.']) assert.ok(filler.test(gone), `“${gone}” is not said`)
   for (const kept of ['Eyes on your phones.', 'Eyes on the deck.', 'Granolia has dozed off. Find a host.', 'Touch any hexagon to start.']) assert.ok(!filler.test(kept), `“${kept}” is a working line and stays`)

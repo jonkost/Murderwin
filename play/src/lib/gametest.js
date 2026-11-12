@@ -76,15 +76,18 @@ export function salemPractice(doc, uid = null) {
     flips: Array.isArray(doc.flips) ? doc.flips : [],
     startsAt: doc.startsAt ?? null, cleanAt: doc.cleanAt ?? null,
     slips: Number(doc.slips) || 0, lastSlip: doc.lastSlip === 'red' || doc.lastSlip === 'green' ? doc.lastSlip : null,
+    // the limits and the slips a round allows, so the practice shows and keeps the night's countdown (A9, 12 Nov 2026)
+    roundEndsAt: doc.roundEndsAt ?? null, gameEndsAt: doc.gameEndsAt ?? null,
+    maxSlips: Number(doc.maxSlips) || null, letThrough: doc.letThrough === true,
   }
   return { status: 'open', runId, players, joined, game }
 }
 
 // A plain line for each slip, under the game on the practice page.
 export const SLIP_LINES = {
-  green: 'Someone moved on green. The round starts again.',
-  red: 'Someone stopped shaking on red. The round starts again.',
-  other: 'Someone slipped. The round starts again.',
+  green: 'Someone moved. From the top!', // A9, 12 Nov 2026: the night's one restart line
+  red: 'Someone froze. From the top!',
+  other: 'Someone slipped. From the top!',
 }
 export function slipLine(colour) {
   return SLIP_LINES[colour] ?? SLIP_LINES.other

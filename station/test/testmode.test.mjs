@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeWall, FakeDeck } from '../lib/fakes.js'
-import { createRunner } from '../lib/runner.js'
+import { createRunner, ELEMENTS_WAIT } from '../lib/runner.js'
 import { createTestMode, HEARTBEAT_MS } from '../lib/testmode.js'
 import { createTeacher, touchMapFile } from '../lib/teach.js'
 
@@ -256,7 +256,7 @@ test('half an entry says what to do; Stop just after a shiver still leaves the k
   open()
   await flush(r)
   assert.equal(r.deck.lit, false, 'the keys rest after the shiver is done')
-  assert.deepEqual(r.elements.frames.at(-1)[PANELS[0]], [40, 40, 40], 'and so do the walls')
+  assert.deepEqual(r.elements.frames.at(-1)[PANELS[0]], ELEMENTS_WAIT, 'and the walls go back to the waiting glow (A8)')
 })
 
 test('with the Lines down the page is told what they would show, and only then', { timeout: 5000 }, async () => {
@@ -341,10 +341,15 @@ test('teaching: each hexagon in turn, taps go to the teacher only, the map is sa
   assert.equal(r.saved.length, 1)
   assert.deepEqual(r.saved[0], want, 'saved')
   assert.equal(r.elements.touchMap.get(905), 15, 'and the wall uses it at once')
-  assert.deepEqual(r.elements.frames.at(-1)[PANELS[3]], [40, 40, 40], 'the walls are back at rest')
+  assert.deepEqual(r.elements.frames.at(-1)[PANELS[3]], ELEMENTS_WAIT, 'the walls are back at the waiting glow (A8)')
   r.tapPanel(PANELS[1])
   await flush(r)
-  assert.equal(r.runner.machine.state, 'reproducing', 'with the test over the live game has the wall again')
+  // A8 (12 Nov 2026): on a live night nobody is due, so the live game keeps the wall resting
+  assert.equal(r.runner.machine.state, 'idle', 'with the test over the live game has the wall again, and waits for a group')
+  r.runner.due('g1')
+  r.tapPanel(PANELS[1])
+  await flush(r)
+  assert.equal(r.runner.machine.state, 'reproducing', 'the group due starts it')
 })
 
 test('stop ends a teach part way, and nothing of it is kept', { timeout: 5000 }, async () => {
@@ -375,13 +380,14 @@ test('stop ends a practice round: the walls rest and its runner can no longer re
   await flush(r)
   assert.equal(r.testMode.mode, 'idle')
   assert.equal(r.testMode.status.practice, null)
-  assert.deepEqual(r.elements.frames.at(-1)[PANELS[0]], [40, 40, 40])
+  assert.deepEqual(r.elements.frames.at(-1)[PANELS[0]], ELEMENTS_WAIT)
   assert.equal(r.deck.lit, false)
   const frames = r.elements.frames.length
   for (const id of p.machine.patterns[0][0]) p.touch(id) // a straggler from the old round
   await flush(r)
   assert.equal(r.elements.frames.length, frames, 'the stopped round is mute')
   r.deck.press('red')
+  r.runner.due('g1')
   r.tapPanel(PANELS[2])
   await flush(r)
   assert.equal(r.runner.machine.state, 'reproducing', 'taps go back to the live game')
@@ -438,8 +444,8 @@ test('lastTap: every tap, known or not; a swipe is not a tap, and the page is to
   assert.equal(r.testMode.status.lastTap.panel, null, 'a swipe leaves the last tap alone')
   assert.match(r.testMode.status.message, /felt a swipe, not a tap/)
   await flush(r)
-  // the first tap began a round on the live wall that nobody was due for: a practice round puts it to rest
-  assert.notEqual(r.runner.machine.state, 'idle')
+  // A8 (12 Nov 2026): a tap with nobody due starts nothing on a live night
+  assert.equal(r.runner.machine.state, 'idle')
   r.push('practice')
   await flush(r)
   assert.equal(r.testMode.mode, 'practice')

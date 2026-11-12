@@ -43,7 +43,8 @@ import { randomInt, randomBytes } from 'node:crypto'
 import { FieldValue } from 'firebase-admin/firestore'
 import { NightError, createNight } from './night.js'
 import { ms } from './deal.js'
-import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, salemFlips } from './act4.js'
+import { SALEM_LEAD_MS, SALEM_CLEAN_MS, SALEM_ROUNDS, SALEM_MAX_SLIPS, salemFlips } from './act4.js'
+import { readyLimits, roundOver, gameOver } from './salemlimits.js'
 import { hostCommand } from './run.js'
 
 export const SALEM_DOC = 'public_state/game_test_salem'
@@ -166,11 +167,17 @@ export async function salemReady(db, { uid, now = Date.now(), pick = randomInt }
     const d = joinedPractice((await tx.get(ref)).data(), uid)
     if (d.state === 'done') throw new NightError('closed', 'The practice has stopped. Open it again on the Game test tab.')
     if (d.state !== 'idle') return { ok: true, already: true }
+    // the night's limits, so the practice can no more trap a group than the night (A9, 12 Nov 2026)
+    if (gameOver(d, now)) {
+      tx.update(ref, { state: 'passed', flips: [], letThrough: true, updatedAt: FieldValue.serverTimestamp() })
+      return { ok: true, cleared: true }
+    }
     const round = Math.min(SALEM_ROUNDS, Math.max(1, count(d.round)))
     const startsAt = now + SALEM_LEAD_MS
     tx.update(ref, {
       state: 'playing', round, attempt: count(d.attempt) + 1, flips: salemFlips(round, startsAt, pick),
       startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: 0, lastSlip: null,
+      ...readyLimits(d, now, SALEM_MAX_SLIPS),
       updatedAt: FieldValue.serverTimestamp(),
     })
     return { ok: true }
@@ -185,6 +192,15 @@ export async function salemSlip(db, { uid, attempt, colour = null, now = Date.no
     const d = joinedPractice((await tx.get(ref)).data(), uid)
     if (d.state !== 'playing' || Number(attempt) !== d.attempt) return { ok: true, already: true }
     if (now < ms(d.startsAt)) return { ok: true, already: true }
+    // the fifth slip, or any slip past the round's or the game's limit, passes the round, as on the night (A9)
+    if (count(d.slips) + 1 >= SALEM_MAX_SLIPS || roundOver(d, now) || gameOver(d, now)) {
+      const cleared = d.round >= SALEM_ROUNDS || gameOver(d, now)
+      tx.update(ref, {
+        state: cleared ? 'passed' : 'idle', round: cleared ? d.round : count(d.round) + 1, flips: [],
+        slips: count(d.slips) + 1, letThrough: true, updatedAt: FieldValue.serverTimestamp(),
+      })
+      return { ok: true, letThrough: true, cleared }
+    }
     const startsAt = now + SALEM_LEAD_MS
     tx.update(ref, {
       attempt: d.attempt + 1, flips: salemFlips(d.round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS),
@@ -202,11 +218,18 @@ export async function salemPassed(db, { uid, attempt, now = Date.now() } = {}) {
   const ref = db.doc(SALEM_DOC)
   return db.runTransaction(async tx => {
     const d = joinedPractice((await tx.get(ref)).data(), uid)
+    // the game's eight minutes are up: the practice is passed, from a round or between rounds (A9)
+    if (gameOver(d, now) && (d.state === 'playing' || d.state === 'idle')) {
+      tx.update(ref, { state: 'passed', flips: [], letThrough: true, updatedAt: FieldValue.serverTimestamp() })
+      return { ok: true, cleared: true }
+    }
     if (d.state !== 'playing' || Number(attempt) !== d.attempt) return { ok: true, already: true }
-    if (now < ms(d.cleanAt)) throw new NightError('invalid', 'Not yet. Keep going.')
+    const clean = now >= ms(d.cleanAt)
+    if (!clean && !roundOver(d, now)) throw new NightError('invalid', 'Not yet. Keep going.')
     const cleared = d.round >= SALEM_ROUNDS
     tx.update(ref, {
       state: cleared ? 'passed' : 'idle', round: cleared ? d.round : count(d.round) + 1, flips: [],
+      ...(clean ? {} : { letThrough: true }),
       updatedAt: FieldValue.serverTimestamp(),
     })
     return { ok: true, cleared }

@@ -22,6 +22,12 @@ export class FakeWall {
     const lit = this.panels.filter(p => (frame[p.id] ?? [0, 0, 0]).some(v => v > 60)).map(p => this.panels.indexOf(p) + 1)
     this.log(`[${this.name}] ${lit.length ? 'lit ' + lit.join(' ') : 'dark'}`)
   }
+  // the waiting look (A8): recorded as its bright frame, so a test sees the wall lit
+  async breathe(low, high, tenths) {
+    this.breaths = [...(this.breaths ?? []), { low, high, tenths }]
+    this.frames.push(high)
+    this.log(`[${this.name}] breathing`)
+  }
   listenTouch(fn) { this.touchListener = fn; return () => { this.touchListener = null } }
   // tests and the terminal poke this; a fake wall taps by the panel's own id
   touch(index) { const id = this.panels[index - 1]?.id; this.touchListener?.(id, 0, id) }

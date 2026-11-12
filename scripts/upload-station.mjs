@@ -25,8 +25,8 @@ import { say } from './lib.mjs'
 export const STATION_ZIP = 'downloads/study-station.zip'
 const PROJECT = 'murderwin-at-sirwin-manor'
 // Left out: the tests, the example settings, and the taps taught on this Mac
-// (taps belong to the Mac that runs the station).
-export const LEFT_OUT = new Set(['test', '.env.example', 'touch-map.json'])
+// and its hexagon map (both belong to the Mac that runs the station).
+export const LEFT_OUT = new Set(['test', '.env.example', 'touch-map.json', 'hex-map.json'])
 
 export function keep(src, station) {
   const rel = src.slice(station.length + 1)

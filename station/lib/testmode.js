@@ -25,6 +25,7 @@
 import { createRunner, ELEMENTS_REST, LINES_REST } from './runner.js'
 import { createTeacher } from './teach.js'
 import { ms } from './follow.js'
+import { CHECK_HEXES, HEX_CENTRES, isHexMap } from './hexmap.js'
 
 export const KEY_NAMES = ['red', 'yellow', 'green', 'blue', 'pink', 'white', '1', '2', '3', '4', '5', '6', 'undo', 'submit']
 export const HEARTBEAT_MS = 20_000   // station.mjs sends the status this often even when nothing changed
@@ -55,10 +56,11 @@ function hold(device, open) {
 
 export function createTestMode({
   elements, lines, deck, elementsOk = true, linesOk = true, panelIds, layout, deckKind = 'keyboard',
-  live, send, watch, saveTouchMap = () => {}, makeRunner = createRunner,
+  live, send, watch, saveTouchMap = () => {}, saveHexMap = () => {}, makeRunner = createRunner,
   log = () => {}, sleep = defaultSleep, now = Date.now, setTimer = setTimeout,
 } = {}) {
-  let mode = 'idle'               // idle | flash | teach | practice
+  let mode = 'idle'               // idle | flash | teach | practice | match
+  let match = null                // Check the map (A8): { kind: check | remap, step, of, hex, picks, done, ok }
   let message = 'The study station is ready.'
   let teacher = null
   let practice = null             // { runner, alive, done, lastInputAt }
@@ -69,7 +71,7 @@ export function createTestMode({
   let started = false
   let swipeSaidAt = -Infinity
 
-  const testing = () => mode === 'teach' || mode === 'practice'
+  const testing = () => mode === 'teach' || mode === 'practice' || mode === 'match'
   const liveBusy = () => (live()?.machine.state ?? 'idle') !== 'idle'
   const liveGroup = () => live()?.groupId ?? null
   // the live wall is mid-round for a group (the machine was made for one)
@@ -89,6 +91,7 @@ export function createTestMode({
       deck: deckKind,
       teach: teacher ? { step: Math.max(1, teacher.step), of: teacher.of } : null,
       practice: practiceView,
+      match: match ? { kind: match.kind, step: match.step, of: match.of, hex: match.hex, done: !!match.done, ok: !!match.ok } : null,
       lastTap,
       seenSeq: seenSeq ?? 0,
       stationAt: now(),
@@ -141,6 +144,7 @@ export function createTestMode({
   function begin(kind) {
     mode = kind
     practiceView = null
+    match = null
     groupAtStart = liveGroup()
   }
 
@@ -152,8 +156,10 @@ export function createTestMode({
     if (teacher) { teacher.stop(); teacher = null }
     const r = practice?.runner
     if (practice) { practice.alive = false; practice = null }
+    if (match && !match.done) match = null
     mode = 'idle'
-    Promise.resolve(r?.settled()).then(() => { if (!testing()) return rest() })
+    // the walls rest, then go back to the live runner's waiting look (A8: lit while the room waits)
+    Promise.resolve(r?.settled()).then(() => { if (!testing()) return rest().then(() => { if (!testing()) live()?.glow?.() }) })
   }
 
   // Teach and practice need the study free. Says why not and returns true
@@ -320,6 +326,81 @@ export function createTestMode({
     practice.runner.key(name)
   }
 
+  // ---- Check the map (A8, 12 Nov 2026) ------------------------------------------------
+  // Granolia's hint draws the wall with the rules card's ten hexagons. The
+  // wall lights one panel and the page draws the hexagon the station thinks
+  // it is, for the first, a middle and the last: Jon taps Yes or No. A No
+  // walks every panel in turn and Jon taps, on the drawing, the hexagon that
+  // is lit on the wall; the new map is saved beside the taught taps and the
+  // check runs again.
+  function lightOne(panelId) {
+    const dark = (wall, ok, frame) => ok ? Promise.resolve(wall.frame(frame, 1)).catch(e => log(`${wall.name}: ${e?.message ?? e}`)) : null
+    return Promise.all([
+      dark(elements, elementsOk, Object.fromEntries(elements.panels.map(p => [p.id, p.id === panelId ? [255, 255, 255] : [0, 0, 0]]))),
+      dark(lines, linesOk, Object.fromEntries(lines.panels.map(p => [p.id, [0, 0, 0]]))),
+    ])
+  }
+  function checkStep() {
+    const hexes = live()?.hexes
+    const hex = CHECK_HEXES[match.step - 1]
+    const panel = elements.panels[hexes.indexOf(hex)]
+    match.hex = hex
+    lightOne(panel?.id)
+    say(`Check ${match.step} of 3. Is the hexagon lit on the wall the one lit in the drawing?`)
+  }
+  function remapStep() {
+    match.hex = null
+    lightOne(elements.panels[match.step - 1]?.id)
+    say(`Hexagon ${match.step} of ${match.of} is lit on the wall. Tap the same one in the drawing.`)
+  }
+  function startCheck() {
+    match = { kind: 'check', step: 1, of: CHECK_HEXES.length, hex: null, picks: [], done: false, ok: false }
+    if (!isHexMap(live()?.hexes ?? null, elements.panels.length) || elements.panels.length !== HEX_CENTRES.length) return startRemap()
+    checkStep()
+  }
+  function startRemap() {
+    match = { kind: 'remap', step: 1, of: elements.panels.length, hex: null, picks: [], done: false, ok: false }
+    remapStep()
+  }
+  function checkMap() {
+    if (mode === 'match') return say('Already checking. Tap Yes or No, or Stop.')
+    if (testing()) return say('Stop the test first, then check the map.')
+    if (!elementsOk || elements.panels.length !== HEX_CENTRES.length) return say(`The white hexagons need all ${HEX_CENTRES.length} panels answering to check the map. Check the wall, then restart the station.`)
+    if (studyNotFree()) return
+    begin('match')
+    log('study test: check the map')
+    startCheck()
+  }
+  function answer(yes) {
+    if (mode !== 'match' || !match) return say('Tap Check the map first.')
+    if (match.kind === 'remap') return say('Tap the lit hexagon in the drawing.')
+    if (!yes) { log(`study test: the map is wrong at check ${match.step}`); return startRemap() }
+    if (match.step < match.of) { match.step += 1; return checkStep() }
+    match = { ...match, done: true, ok: true, hex: null }
+    log('study test: the map matches the wall')
+    end()
+    say('All three match. Granolia\'s map is the right way round.')
+  }
+  function pickHex(name) {
+    if (mode !== 'match' || match?.kind !== 'remap') return say('Tap Check the map first.')
+    const k = Number(name)
+    if (!Number.isInteger(k) || k < 0 || k >= HEX_CENTRES.length) return say('That is not one of the hexagons.')
+    match.picks[match.step - 1] = k
+    if (match.step < match.of) { match.step += 1; return remapStep() }
+    if (!isHexMap(match.picks, elements.panels.length)) {
+      match = null
+      end()
+      return say('Two lights went to the same hexagon, so nothing was kept. Tap Check the map to try again.')
+    }
+    const hexes = match.picks.slice()
+    live()?.setHexes?.(hexes)
+    let saved = true
+    try { saveHexMap(hexes) } catch (e) { saved = false; log('study test: hex-map.json not saved:', e?.message ?? e) }
+    log(`study test: the map was set by hand${saved ? ', saved hex-map.json' : ''}`)
+    startCheck()
+    say(`${saved ? 'Saved.' : 'Set until the station restarts (it could not save).'} Check 1 of 3. Is the hexagon lit on the wall the one lit in the drawing?`)
+  }
+
   // ---- stop -------------------------------------------------------------------------
   function stop() {
     if (!testing()) return say(mode === 'flash' ? 'The flash is over in a moment.' : 'Nothing is running.')
@@ -344,6 +425,10 @@ export function createTestMode({
       case 'practice': return startPractice()
       case 'stop': return stop()
       case 'key': return pageKey(entry.name)
+      case 'match': return checkMap()
+      case 'yes': return answer(true)
+      case 'no': return answer(false)
+      case 'hex': return pickHex(entry.name)
       default: return say('The station does not know that command.')
     }
   }
@@ -398,6 +483,7 @@ export function createTestMode({
         else if (teacher) noteTap(teacher.tap(tapId ?? panelId) ?? panelId)
         return   // touches while teaching go to the teacher only
       }
+      if (mode === 'match') { if (tap) noteTap(panelId); return } // checking the map: the wall is only lit, never played
       // a group's own game is theirs: its taps never reach the status
       if (mode === 'practice' || !groupsGame()) { if (tap) noteTap(panelId); else swiped() }
       if (mode === 'practice') { practice.lastInputAt = now(); practice.runner.touch(panelId, gesture) }
@@ -407,7 +493,7 @@ export function createTestMode({
     // A button-box key (the Stream Deck, or the keyboard standing in).
     key(name) {
       if (mode === 'practice') return pressPractice(name)
-      if (mode === 'teach') return
+      if (mode === 'teach' || mode === 'match') return
       live().key(name)
     },
 

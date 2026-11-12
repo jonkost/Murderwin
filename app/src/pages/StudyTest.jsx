@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { studyTestApi } from '../lib/studyTestApi'
+import CheckTheMap from '../components/CheckTheMap'
 import {
   COLOURS, NUMBERS, connection, agoWords, tapAgo, wallLines, tapLine, teachLine,
   practiceLine, roundLine, pairsLine, entryLine, shownLine, modeLine, sentLine,
@@ -140,6 +141,8 @@ export default function StudyTest() {
           {status?.lastTap && ago !== null && <span className="hint"> ({agoWords(ago)})</span>}
         </p>
       </div>
+
+      <CheckTheMap status={link.connected ? status : null} send={send} off={off} />
 
       {practice && <Practice practice={practice} live={mode === 'practice'} said={practiceLive ? said : null} send={send} />}
 

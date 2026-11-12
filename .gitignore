@@ -52,6 +52,8 @@ play/public/loops/*
 
 # the study station's taught taps, saved on the Mac that runs it
 station/touch-map.json
+# and its map of the hexagons for Granolia's hint (A8, 12 Nov 2026)
+station/hex-map.json
 station/.station-version
 
 # the bulletin videos the Parlour TV plays (play/public/video/README.md): Jon's files stay local and deploy from his Mac, like the loops

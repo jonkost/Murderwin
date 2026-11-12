@@ -32,10 +32,13 @@ export const QUEUE_DOC = 'public_state/study_test'
 export const STATUS_DOC = 'public_state/study_test_status'
 export const QUEUE_KEEP = 30
 
-export const COMMANDS = ['flash', 'teach', 'practice', 'stop', 'key']
+// match, yes, no, hex { name: '0'..'9' }: Check the map (A8, 12 Nov 2026),
+// the wall lit one panel at a time against Granolia's drawing of it
+export const COMMANDS = ['flash', 'teach', 'practice', 'stop', 'key', 'match', 'yes', 'no', 'hex']
+export const HEX_COUNT = 10 // the Elements wall's hexagons (play/src/lib/walls.js HEX_CENTRES)
 // The button box's keys, as the station's runner names them (station/lib/streamdeck.js).
 export const KEY_NAMES = ['red', 'yellow', 'green', 'blue', 'pink', 'white', '1', '2', '3', '4', '5', '6', 'undo', 'submit']
-export const MODES = ['idle', 'flash', 'teach', 'practice']
+export const MODES = ['idle', 'flash', 'teach', 'practice', 'match']
 export const DECKS = ['stream-deck', 'keyboard']
 export const TEXT_MAX = 200
 
@@ -107,6 +110,18 @@ function practice(v, linesDown) {
   }
 }
 
+// Check the map: which step, and which drawn hexagon the page lights (a
+// number from 0 to 9, or null while Jon picks one). Nothing about a night.
+function match(v) {
+  if (!isObj(v)) return null
+  const hex = Number.isInteger(v.hex) && v.hex >= 0 && v.hex < HEX_COUNT ? v.hex : null
+  return {
+    kind: v.kind === 'remap' ? 'remap' : 'check',
+    step: int(v.step, { min: 1 }), of: int(v.of),
+    hex, done: v.done === true, ok: v.ok === true,
+  }
+}
+
 function lastTap(v) {
   if (!isObj(v)) return null
   return {
@@ -126,6 +141,7 @@ export function cleanStatus(raw) {
     deck: DECKS.includes(s.deck) ? s.deck : 'keyboard',
     teach: teach(s.teach),
     practice: practice(s.practice, linesDown),
+    match: match(s.match),
     lastTap: lastTap(s.lastTap),
     seenSeq: int(s.seenSeq, { max: BIG_MAX }),
     stationAt: int(s.stationAt, { max: BIG_MAX }),
@@ -165,5 +181,7 @@ export async function studyTestRequest(db, { command, name, key, status, isAdmin
   if (!COMMANDS.includes(command)) throw new NightError('invalid', 'The study test does not know that command.')
   if (!isAdmin) throw new NightError('permission-denied', 'Only the workshop can do that.')
   if (command === 'key' && !KEY_NAMES.includes(name)) throw new NightError('invalid', 'That is not a key on the button box.')
-  return queueCommand(db, { command, name: command === 'key' ? name : null, now })
+  const hexName = /^\d{1,2}$/.test(String(name ?? '')) && Number(name) < HEX_COUNT ? String(Number(name)) : null
+  if (command === 'hex' && hexName == null) throw new NightError('invalid', 'That is not one of the hexagons.')
+  return queueCommand(db, { command, name: command === 'key' ? name : command === 'hex' ? hexName : null, now })
 }

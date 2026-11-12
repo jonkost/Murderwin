@@ -88,18 +88,18 @@ export function uiLines(content) {
 // "MOMENT: line" list over these defaults (18 Oct 2026). The round is fifteen
 // minutes and TIME shows two minutes before the stop (station/lib/study.js capMs, warnMs).
 export const DEFAULT_STUDY_LINES = {
-  IDLE: 'Touch any panel to begin. The wall will show you a pattern; touch it back.',
+  IDLE: 'Touch any hexagon to start.', // A8, 12 Nov 2026: one line a state
   PLAYING: 'Watch.',
-  REPRODUCING: 'Now you. Touch them in the same order.',
-  ENTERING: 'Look at the other wall. A colour, and a number of bars. Press them on the button box, then Submit.',
+  REPRODUCING: 'Your turn. Same order.',
+  ENTERING: 'Press the color and the number of bars, then Submit.',
   SLOW: 'Again, slower. I have all day. Well. Fifteen minutes.',
   MAP: 'Here, I have numbered them for you. Follow the numbers.',
   'HALF COLOUR': 'The number is right, dear. Look at the colour again.',
   'HALF NUMBER': 'The colour is right, dear. Count the bars again.',
   NEITHER: 'Neither half, I am afraid. Look again at both.',
   TIME: 'Two minutes left, dear. Not that I am counting. I am counting.',
-  SOLVED: 'Oh, well done. Something has been sent to your phones. Off you go.',
-  CAPPED: 'Thank you for trying your best. Here is the rest. Something has been sent to your phones. Off you go.',
+  SOLVED: 'Well done. Your clue is on your phones.',
+  CAPPED: "Time's up. Your clue is on your phones.",
 }
 export function studyLines(content) {
   const out = { ...DEFAULT_STUDY_LINES }

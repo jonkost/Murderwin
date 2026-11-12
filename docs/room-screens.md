@@ -247,8 +247,10 @@ of them is on its loop.
   note of 31 October: "a visual component, just like Boo's arcade"): the
   phones' colour over the whole screen with the word on it, SHAKE on red and
   FREEZE on green (the screen may say it; the phones only tint), the count
-  before a round with "Here it comes." or, after a slip, "Someone moved on
-  green. From the top." / "Someone stopped shaking on red. From the top.",
+  before a round with "Here it comes." or, after a slip, "Someone moved.
+  From the top!" / "Someone froze. From the top!" (12 Nov), and since
+  12 Nov "Round 2 of 3", the thirty clean seconds as a big number and
+  "3 slips left", as on the phones,
   the thirty seconds filling along the bottom, "Thirty seconds clean passes
   it." or "Started again twice. Keep going.", Salem's picture (changing with
   the colour and every restart) and the group's names with the slips each

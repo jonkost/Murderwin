@@ -552,9 +552,17 @@ the screen awake by itself where the iPad lets it.
     two minutes before it, and then the walls stop, the screen shows the
     pairs not yet found for twenty seconds while the walls rest, and the
     trace goes anyway. It never runs on into the next group's turn, and
-    **Next** stops it too. Between groups its rules card
-    draws both walls as they hang: the hexagons (watch, then touch) and
-    the lines (the colour and the count).
+    **Next** stops it too. Since 12 Nov the Study's screen has three plain
+    states, one line each: ready ("Touch any hexagon to start.", only while
+    a group is due and has not played), playing (Granolia's one line), and
+    done. The room stays lit until the group's first touch: the room on
+    Murderwin Default, both walls glowing a soft warm white; Study Dim comes
+    on at the first touch and Default comes back when the group is done. On
+    a night the wall starts a game only on a group's turn: a touch on the
+    way past, in Act 2 or between groups, does nothing. Granolia's numbered
+    hint is drawn with the same ten hexagons as the rules card, the way
+    round the wall hangs (check it once on the Game test tab, Granolia's
+    map, below).
   - The Library: In Duplicate (Zimothy's memory match), on the iPad Pro:
     three boards of 6, 10 and 14 pairs. The guests take turns: the screen
     names whose turn it is (from the group, so a trio is known when it
@@ -584,6 +592,19 @@ the screen awake by itself where the iPad lets it.
     against the phone that caused it, and a phone that cannot feel a shake
     is left out. A tie names everyone tied. It stays up until the chime and
     changes nothing.
+    Since 12 Nov (A9; Jon: "if you're not doing well, you get stuck"):
+    every phone in the game and Salem's board show "Round 2 of 3", the
+    thirty clean seconds as a big number counting down, and "3 slips
+    left"; after a slip, one line: "Someone moved. From the top!" (or
+    "Someone froze."). No group can be stuck: a round passes by itself on
+    its fifth slip or two and a half minutes after its Ready, and eight
+    minutes after the group scans in Salem lets them through and pays the
+    hint as if they had cleared it. A round passed is a wax seal, the game
+    cleared a burst of paw prints, a slip a soft buzz (the board shows them
+    without the sound). The speed is unchanged. Nothing for you to do. If
+    the Orangerie's screen ever stands still while the phones play, reload
+    it; since 12 Nov the room screens keep nothing on the machine, so the
+    workshop open in the same Chrome cannot stall them.
   - The Entryway: Miss Boo LaRue's Arcade, on Susan's MacBook Pro and the
     Stream Deck + XL (since 5 Nov).
     The group scans Boo's code on her rules card, and the visit starts with
@@ -606,8 +627,8 @@ the screen awake by itself where the iPad lets it.
   The group scans the room's code to begin. Between groups each room's
   screen shows its game's rules card: the name and its line, the host cat's
   words (the Study's and the Library's follow a host line you change in the
-  workshop, the same as the phones; the study's card also carries Granolia's
-  "Touch any panel to begin"), a full picture of the cat (a different one as the groups change)
+  workshop, the same as the phones; the study's card carries only Granolia's
+  "Touch any hexagon to start", since 12 Nov), a full picture of the cat (a different one as the groups change)
   and the room's code, so a group arriving knows what to do before anyone
   explains; the Orangerie's screen (the brain's browser) shows its card all
   through Act 4, since its game is on the phones, except for Salem's winner
@@ -1046,8 +1067,15 @@ page have no night at all: nothing is paid and no clue is dealt.
     and no clue. Copy the pattern on the white wall, then put in the colour
     and the number on the answer pad on your phone (it does what the Stream
     Deck does: a colour, a number, Undo, Submit).
+  - "Check the map" (Granolia's map, 12 Nov): stand facing the hexagons.
+    The wall lights one hexagon and your phone's drawing lights one: tap
+    "Yes, the same" or "No", for the first, a middle one and the last. A No
+    lights each hexagon on the wall in turn and you tap the same one in the
+    drawing; the station keeps that map on the M1 Air (beside the taught
+    taps) and checks again. Under a minute. Do it once on the M1 Air before
+    the night.
   - "Stop" ends any of them. In Act 4, while a group is due at the study or
-    playing there, the teach and the practice do nothing.
+    playing there, the teach, the practice and the map check do nothing.
   - The samples: Granolia's screen, Granolia's screen with the walls down,
     and what a phone shows in the Study.
 - *In Duplicate* (the Library). The real game on its own on the iPad Pro:
@@ -1072,7 +1100,10 @@ page have no night at all: nothing is paid and no clue is dealt.
   practice too (since 28 Oct: stop the brain and start it again once to
   pick this up). Tap "Stop" when you are done. Up to twelve phones. The
   practice names no winner: the sample "After the third round: Salem names
-  who slipped least" shows what the screen shows on the night.
+  who slipped least" shows what the screen shows on the night. The practice
+  keeps the night's limits (12 Nov): the fifth slip or two and a half
+  minutes passes a round, and eight minutes after the first Ready it ends,
+  so nobody is stuck in it.
 - *Miss Boo LaRue's Arcade* (the Entryway). Built 28 October to try,
   changed from your playtests on 30 and 31 October and 1 November, and on
   the night since 5 November (your call of
@@ -1506,7 +1537,20 @@ Host tab's Save key writes). The `gameTest` callable
 `public_state/game_test_salem` with the Admin SDK, on the real game's own
 rules and timing (`act4.salemFlips`; `game_test_boo` went on
 5 Nov, the arcade's practice needs no night), and
-never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. The
+never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. Since
+12 Nov (A9) both the night (`act4.js`) and the practice take their limits
+from `functions/lib/salemlimits.js`: a Ready writes `roundEndsAt` (150 s,
+never past the game's), `gameEndsAt` (480 s from `salemArrive` on the night,
+from the first Ready in the practice), `maxSlips` and `letThrough`; both
+times are in `night.js` `PAUSE_SHIFTED`. The phones' rule for saying
+"passed" is `play/src/lib/salem.js` `salemPassDue` (clean, round, game), and
+`salemView` feeds `play/src/screens/SalemCount.jsx` on the phones
+(`SalemRounds`) and the board (`SalemBoard`), with `useSalemWins` calling
+`celebrate`. `functions/test/a9-lawn.test.mjs` plays the worst group and
+proves eight minutes. Room screens (`?kiosk=`, `?setup=`, `?practice=`) use
+`memoryLocalCache` (`play/src/firebase.js`): the workshop's multi-tab
+persistent cache and the phones' single-tab one on the same origin were the
+likely cause of the Orangerie's page standing still on 11 Nov. The
 practice pages are `play/src/screens/Practice.jsx`: `?practice=salem` and
 `?kiosk=orangerie&practice=1`, which take the server's time from the
 callable's `clock` and never write `presence/{uid}`. `?preview=questions&set=<base64url>`

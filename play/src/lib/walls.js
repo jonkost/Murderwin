@@ -22,3 +22,47 @@ export function hexPoints([cx, cy], r) {
     .map(d => [cx + r * Math.cos(d * Math.PI / 180), cy + r * Math.sin(d * Math.PI / 180)])
     .map(([x, y]) => `${Math.round(x * 10) / 10},${Math.round(y * 10) / 10}`).join(' ')
 }
+
+// Which drawn hexagon each of the station's panels is (A8, 12 Nov 2026):
+// `layout` is the station's [{ id, x, y }] in the controller's units (y up),
+// the same order as the hint's panel numbers. The station sends its own map
+// (public/study.hexes, set on the Study test page or worked out the same
+// way); this is the same fit, for a station that sends none. It turns the
+// controller's shape onto HEX_CENTRES (no mirror) and returns, for each
+// panel, its HEX_CENTRES index, or null when the shape does not fit one to
+// one. A copy of station/lib/hexmap.js fitHexes (a station test keeps them equal).
+export function hexOf(layout, centres = HEX_CENTRES) {
+  if (!Array.isArray(layout) || layout.length !== centres.length) return null
+  const pts = layout.map(p => [Number(p?.x), -Number(p?.y)])
+  if (pts.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y))) return null
+  let near = Infinity
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) near = Math.min(near, Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]))
+  if (!(near > 0)) return null
+  const mid = list => [list.reduce((s, p) => s + p[0], 0) / list.length, list.reduce((s, p) => s + p[1], 0) / list.length]
+  const [hx, hy] = mid(centres)
+  const [px, py] = mid(pts)
+  const scale = 100 / near
+  let best = null
+  for (let deg = 0; deg < 360; deg++) {
+    const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a)
+    const pick = pts.map(([x, y]) => {
+      const dx = (x - px) * scale, dy = (y - py) * scale
+      const mx = dx * c - dy * s + hx, my = dx * s + dy * c + hy
+      let k = -1, d = Infinity
+      centres.forEach(([cx, cy], i) => { const e = Math.hypot(cx - mx, cy - my); if (e < d) { d = e; k = i } })
+      return { k, d }
+    })
+    if (new Set(pick.map(p => p.k)).size !== centres.length) continue
+    const worst = Math.max(...pick.map(p => p.d))
+    if (worst > 15) continue
+    if (!best || worst < best.worst) best = { worst, map: pick.map(p => p.k) }
+  }
+  return best ? best.map : null
+}
+
+// The map to draw with: the station's own when it is one hexagon each, else the fit.
+export function hexesFor(study) {
+  const h = study?.hexes
+  if (Array.isArray(h) && h.length === HEX_CENTRES.length && h.every(n => Number.isInteger(n) && n >= 0 && n < HEX_CENTRES.length) && new Set(h).size === h.length) return h
+  return hexOf(study?.layout)
+}

@@ -282,7 +282,7 @@ const BOO_IDLE = { groupId: 'g1', state: 'idle', startsAt: null, slotEndsAt: sta
 const SALEM_ROUND = (() => {
   const start = PHASE_AT + 3000
   const flips = [0, 3500, 6000, 9500, 11000, 14500, 17000, 21000, 23500, 27000].map((t, i) => ({ at: stamp(start + t), colour: i % 2 ? 'green' : 'red' }))
-  return { state: 'playing', round: 2, attempt: 1, startsAt: stamp(start), cleanAt: stamp(start + 30000), flips }
+  return { state: 'playing', round: 2, attempt: 1, startsAt: stamp(start), cleanAt: stamp(start + 30000), flips, slips: 2, maxSlips: 5, lastSlip: 'green' } // A9: the countdown's slips
 })()
 const NO_SENSOR = { ok: false, mag: 0, lastShakeAt: 0 }
 const quietly = () => Promise.resolve()
@@ -331,6 +331,9 @@ const KIOSK = {
   'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, beat: 'ballot', roster: NINE, window: VOTE_WINDOW({ answered: 7 }) }} relay={null} trace={null} finale={null} screen={VOTE_SCREEN} serverNow={serverNow} nightId="preview" />,
   'kiosk-voted': (night, serverNow) => <Living night={{ ...night, act: 7, beat: 'ballot', roster: NINE, window: VOTE_WINDOW({ answered: 9, settled: true, allIn: true }) }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={VOTE_SCREEN} serverNow={serverNow} nightId="preview" />,
   'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
+  // A8 (12 Nov 2026): Granolia's map on the real wall's layout, drawn as the wall hangs; and the ready card
+  'kiosk-study-map': (night, serverNow) => <Study study={STUDY({ hint: 'map', misses: 4, map: [10, 3, 7, 1], layout: [[7787, 310, 224], [1295, 511, 224], [3869, 210, 166], [8588, 411, 166], [5517, 612, 166], [15090, 813, 166], [7456, 109, 108], [6844, 712, 108], [4930, 913, 108], [5065, 612, 50]].map(([id, x, y]) => ({ id, x, y })) })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
+  'kiosk-study-ready': (night, serverNow) => <Study study={STUDY({ state: 'idle', startedAt: null })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" rotation={MEMORY_GROUP} />,
   'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
   // the third board clear: Zimothy names whoever found the most pairs (30 in all), or everyone tied

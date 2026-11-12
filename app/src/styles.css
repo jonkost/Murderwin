@@ -512,6 +512,7 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .st-list { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; }
 .st-pad { display: grid; gap: 0.6rem; margin-top: 0.8rem; }
 .st-pad .hint { margin: 0; }
+.st-hexes { width: 100%; max-width: 520px; display: block; margin: 0.6rem auto; }
 .st-keys { display: grid; gap: 0.5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .st-keys.numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .st-keys.ends { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -121,7 +121,8 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
     m.state = 'idle'; m.round = 0; m.pattern = 0; m.pairs = []; m.code = null; m.patterns = null
     m.current = null; m.progress = 0; m.missesThisPattern = 0; m.hint = null
     m.entry = { colour: null, number: null }; m.outcome = null; m.startedAt = null; m.finishedAt = null; m.warned = false
-    emit({ type: 'elements.rest' }); emit({ type: 'lines.rest' }); emit({ type: 'deck.off' })
+    // the waiting look (A8, 12 Nov 2026): the room is lit until the first touch
+    emit({ type: 'elements.rest', waiting: true }); emit({ type: 'lines.rest', waiting: true }); emit({ type: 'deck.off' })
     show()
   }
 
@@ -142,6 +143,8 @@ export function createStudy({ panelIds, settings = {}, rand = Math.random, group
     m.code = makeCode(rand)
     m.patterns = s.rounds.map(r => r.lengths.map(len => makePattern(rand, panelIds, len)))
     m.round = 0; m.pattern = 0; m.pairs = []
+    // the first touch: the hexagons drop to the game's dim at once, before the bars count 3, 2, 1
+    emit({ type: 'elements.rest', transition: 2 })
     emit({ type: 'deck.off' })
     play(now)
   }

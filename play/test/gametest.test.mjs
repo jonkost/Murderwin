@@ -72,7 +72,7 @@ test('Get Off My Lawn! practice: the record turns into the night\'s states, roun
 })
 
 test('a plain line for every slip seen while the page is open, and none for a fresh page or a new practice', () => {
-  assert.equal(slipLine('green'), 'Someone moved on green. The round starts again.')
+  assert.equal(slipLine('green'), 'Someone moved. From the top!')
   assert.equal(slipLine('red'), SLIP_LINES.red)
   assert.equal(slipLine(null), SLIP_LINES.other)
   const a = { runId: 'r1', state: 'playing', round: 1, attempt: 2, slips: 1, lastSlip: 'red' }

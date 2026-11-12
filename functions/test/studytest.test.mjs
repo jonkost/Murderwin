@@ -117,7 +117,7 @@ test('status: only the listed fields, strings cut, numbers made whole, no arrays
     },
   })
   const s = db.store.get(STATUS_DOC)
-  assert.deepEqual(Object.keys(s).sort(), ['deck', 'lastTap', 'message', 'mode', 'practice', 'seenSeq', 'stationAt', 'teach', 'updatedAt', 'walls'])
+  assert.deepEqual(Object.keys(s).sort(), ['deck', 'lastTap', 'match', 'message', 'mode', 'practice', 'seenSeq', 'stationAt', 'teach', 'updatedAt', 'walls'])
   assert.equal(s.stale, undefined, 'a set, not a merge')
   assert.equal(s.mode, 'idle')
   assert.equal(s.message.length, TEXT_MAX)
@@ -136,7 +136,7 @@ test('status: only the listed fields, strings cut, numbers made whole, no arrays
 test('status: arrays and nonsense in place of the parts give safe defaults', () => {
   assert.deepEqual(cleanStatus(['idle']), {
     mode: 'idle', message: '', walls: { elements: { ok: false, panels: 0, lights: 0, taught: 0 }, lines: { ok: false, bars: 0 } },
-    deck: 'keyboard', teach: null, practice: null, lastTap: null, seenSeq: 0, stationAt: 0,
+    deck: 'keyboard', teach: null, practice: null, match: null, lastTap: null, seenSeq: 0, stationAt: 0,
   })
   const s = cleanStatus({
     mode: 'practice', message: { text: 'no' }, deck: 'piano', walls: [1, 2], teach: [1, 10], practice: ['done'],

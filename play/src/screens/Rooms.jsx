@@ -1,4 +1,5 @@
 import { Children, useEffect, useMemo, useRef, useState } from 'react'
+import { SalemCount, useSalemWins } from './SalemCount'
 import { callMemoryStep, callArcadeClue, callArcadeScore } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
@@ -115,7 +116,7 @@ export function SmallCode({ text, words }) {
   return (
     <figure className="small-code">
       <img src={qr} alt="" />
-      <figcaption>{words}</figcaption>
+      {words && <figcaption>{words}</figcaption>}
     </figure>
   )
 }
@@ -163,11 +164,14 @@ export const CARD_FILLER = /^(The next group will be along\.|Expecting .+\.)$/
 export function cardNotes(children) {
   return Children.toArray(children).filter(c => !(typeof c?.props?.children === 'string' && CARD_FILLER.test(c.props.children)))
 }
-export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null }) {
+export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null, words = 'Scan the code to begin.' }) {
   const game = GAME_NAMES[id]
   const cat = game?.host ?? null
   if (lookOn('game') && game) {
-    const notes = cardNotes(children)
+    // the Study's line is its state, one short line (Touch any hexagon to start.), so it stays; the other
+    // rooms' `line` is the host's long hello, which is off the screen
+    const say = id === 'study' && line ? [<p key="say" className="kiosk-line">{line}</p>] : []
+    const notes = [...say, ...cardNotes(children)]
     return (
       <div className={`kiosk rules-card rules-look rules-${id}${className ? ` ${className}` : ''}`}>
         <GameCard id={id} file={frame ?? catPicture(cat, pick)} codeUrl={code && cat ? meetUrl(cat, PLAY_URL) : null} className="full">
@@ -184,7 +188,7 @@ export function RulesCard({ id, line, pick = null, code = true, frame = null, cl
         <Picture src={src} className="rules-cat" />
         <div className="rules-words">
           <p className="kiosk-line rules-line"><Spoken text={line} /></p>
-          {code && cat && <SmallCode text={meetUrl(cat, PLAY_URL)} words="Scan the code to begin." />}
+          {code && cat && <SmallCode text={meetUrl(cat, PLAY_URL)} words={words} />}
         </div>
       </div>
       {children}
@@ -253,8 +257,8 @@ export function Orangerie({ night, salem = null, rotation = null, serverNow = nu
 export const SALEM_BOARD_LINES = {
   intro: 'Tap Ready on any phone.',
   count: 'Here it comes.',
-  slipGreen: 'Someone moved on green. From the top.',
-  slipRed: 'Someone stopped shaking on red. From the top.',
+  slipGreen: 'Someone moved. From the top!', // A9, 12 Nov 2026: the one line when a round starts over
+  slipRed: 'Someone froze. From the top!',
   clean: 'Thirty seconds clean passes it.',
   restarted: n => `Started again ${n === 1 ? 'once' : `${n} times`}. Keep going.`,
   passed: 'Tap Ready for the next one.',
@@ -263,6 +267,7 @@ export const SALEM_BOARD_LINES = {
 export const SALEM_BOARD_WORDS = { red: 'SHAKE', green: 'FREEZE' }
 export function SalemBoard({ doc, names = [], serverNow, practice = false }) {
   useTick(100)
+  useSalemWins(doc, { quiet: true })
   const now = serverNow()
   const state = doc?.state
   const playing = state === 'playing'
@@ -288,6 +293,8 @@ export function SalemBoard({ doc, names = [], serverNow, practice = false }) {
         <p className={`salem-board-word${count ? ' count' : ''}`} key={word}>{word}</p>
       </div>
       <p className="kiosk-line salem-board-line">{line}</p>
+      {/* the round, the clean seconds big, the slips left (A9, 12 Nov 2026); quiet wins here: the brain's speakers are the house's */}
+      <SalemCount doc={doc} now={now} className="board" />
       <div className="salem-clean" aria-hidden="true"><div className="salem-clean-fill" style={{ width: `${Math.round(clean * 1000) / 10}%` }} /></div>
       {names.filter(Boolean).length > 0 && (
         <ul className="salem-crew">

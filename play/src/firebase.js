@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator } from 'firebase/auth'
-import { initializeFirestore, persistentLocalCache, connectFirestoreEmulator } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, memoryLocalCache, connectFirestoreEmulator } from 'firebase/firestore'
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions'
 import { firebaseConfig, EMULATOR, EMULATOR_HOST, EMULATOR_PORTS, REGION } from './lib/config'
 
@@ -13,7 +13,13 @@ export const auth = getAuth(app)
 // Persistent cache: a reloaded phone paints from what it last saw, then
 // catches up to the server silently (Canon: locked phone, dropped connection
 // and late arrival all recover the same way).
-export const db = initializeFirestore(app, { localCache: persistentLocalCache() })
+// A room screen (?kiosk=, ?setup, ?practice=) keeps nothing on the machine
+// (A9, 12 Nov 2026): the brain's Chrome also has the workshop open, whose
+// cache is shared between tabs, and two kinds of cache on one site can leave
+// a page that stops hearing the house (the Orangerie's stuck page, 11 Nov).
+// A screen is always on and always online, so it loses nothing by it.
+const ROOM_SCREEN = /[?&](kiosk|setup|practice)=/.test(globalThis.location?.search ?? '')
+export const db = initializeFirestore(app, { localCache: ROOM_SCREEN ? memoryLocalCache() : persistentLocalCache() })
 export const functions = getFunctions(app, REGION)
 
 if (EMULATOR) {
