@@ -8,7 +8,8 @@
   --brand-soot:   #332526;  /* Soot — deepest warm shadow */
   --brand-ash:    #332C2D;  /* Ash — neutral dark, borders, dividers */
   --brand-brass:  #A6A253;  /* Brass — highlights, rules, Irwin's hints, "in" */
-  --brand-peat:   #262500;  /* Peat — darkest olive, idle kiosks */
+  --brand-peat:   #262500;  /* Peat — darkest olive (a portrait card tone; the room screens left it on 12 Nov 2026) */
+  --kiosk-ground: var(--brand-blue); /* the room screens' ground: Manor blue, like the phones (Jon, 12 Nov 2026: "I hate this design, mostly the color") */
   --brand-bottle: #00261E;  /* Bottle green — the orangery, dinner, the Ghost */
   --brand-charcoal: #1F2124; /* Charcoal — the dark grey, for contrast against the blue */
   --brand-parchment: #F1E8D6; /* Parchment — the light text colour */
@@ -281,7 +282,7 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 
 /* ---- the room screens ---- */
 .kiosk { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2vw; background: var(--bg); color: var(--ink); }
-.kiosk.idle { background: var(--brand-peat); }
+.kiosk.idle { background: var(--kiosk-ground); }
 .kiosk-crest { font-size: 2.2vw; color: var(--dim); margin: 0 0 1vw; letter-spacing: 0.04em; text-transform: uppercase; }
 .kiosk-big { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: 9vw; margin: 0; line-height: 1.1; }
 .kiosk-line { font-size: 3.2vw; margin: 1vw 0 0; max-width: 80vw; }
@@ -847,7 +848,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .allow-list .allow-denied .mark { color: var(--accent); }
 
 /* the Parlour TV: Sir Irwin's prompts, the Act 4 title card, a bulletin as video */
-.kiosk.prompts { background: var(--brand-peat); gap: 2vh; }
+.kiosk.prompts { background: var(--kiosk-ground); gap: 2vh; }
 .prompts-irwin { max-height: 34vh; object-fit: contain; }
 .kiosk.prompts .prompt-line { font-size: min(5.2vw, 7vh); max-width: 80vw; text-align: center; }
 .kiosk.title-card { background: var(--brand-blue); gap: 3vh; }
@@ -875,7 +876,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* Get Off My Lawn! on the Orangerie's screen while a group plays (31 Oct 2026, Jon's note 10012): the phones'
    colour over the whole screen with the word on it, the count before a round, the thirty seconds filling along
    the bottom, Salem beside the word, and the group's names with their slips */
-.kiosk.salem-board { gap: 2.2vh; justify-content: center; background: var(--brand-peat); color: #fff; transition: background 80ms; }
+.kiosk.salem-board { gap: 2.2vh; justify-content: center; background: var(--kiosk-ground); color: #fff; transition: background 80ms; }
 .kiosk.salem-board.red { background: #e01020; }
 .kiosk.salem-board.green { background: #08a048; }
 .kiosk.salem-board.wait { background: #101418; }
@@ -899,7 +900,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
    Orangerie's, at the end of a group's visit. The arcade's winner moment on a room screen: the cat beside its line
    in a speech bubble (the same bubble as Boo's), the names big in brass, the plain line under them. A long line of
    names is set smaller, and the cat with it */
-.kiosk.orangerie-won { background: var(--brand-peat); gap: 2.4vh; }
+.kiosk.orangerie-won { background: var(--kiosk-ground); gap: 2.4vh; }
 .room-winner { display: flex; flex-direction: column; align-items: center; gap: 1.6vh; max-width: 92vw; }
 .room-winner-says { display: flex; align-items: center; justify-content: center; gap: 3vw; max-width: 100%; }
 .room-winner-cat { flex: none; height: min(28vh, 24vw); width: auto; max-width: 34vw; object-fit: contain; filter: drop-shadow(0 1.6vh 2.4vh rgba(0, 0, 0, 0.6)); }
@@ -992,7 +993,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk.idle, .kiosk.bedroom.closed, .join-side { position: relative; overflow: hidden; }
 .kiosk.idle { margin: 0; font-style: normal; color: var(--ink); } /* the phone's .idle rule (the Rest tab's small talk) also matches this box: undo its margin and italics */
 /* transparent until its first frame, never display none: Safari autoplays only a video it counts as on screen (26 Oct 2026) */
-.kiosk-loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--brand-peat); opacity: 0; pointer-events: none; }
+.kiosk-loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--kiosk-ground); opacity: 0; pointer-events: none; }
 .kiosk-loop.on { opacity: 1; }
 .kiosk-loop.behind.on { opacity: 0.55; }
 .kiosk.bedroom.closed .over-loop { position: relative; z-index: 1; display: grid; justify-items: center; }
@@ -1007,15 +1008,21 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .ballot-clock { display: flex; align-items: center; justify-content: center; gap: 4vw; }
 .ballot-clock .small-code img { width: min(10vw, 14vh); }
 /* the join code on the Parlour TV: the loop or the crest on the left, the square and the words on the right */
-.kiosk.join-screen { flex-direction: row; gap: 4vw; padding: 2vw 4vw; background: var(--brand-peat); }
-.join-side { flex: 1 1 0; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.5vw; background: rgba(0,0,0,0.25); }
+/* the code on the left, the house on the right (Jon, 12 Nov 2026) */
+.kiosk.join-screen { flex-direction: row-reverse; gap: 4vw; padding: 2vw 4vw; background: radial-gradient(ellipse 90% 80% at 30% 40%, #082a3b 0%, var(--kiosk-ground) 75%); }
+.join-side { flex: 1 1 0; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; border-radius: 1.5vw; background: rgba(0, 12, 18, 0.55); border: 0.25vh solid rgba(166, 162, 83, 0.55); --paper-opacity: 0.28; --paper-size: 60vw; }
+.join-seal { width: min(16vw, 26vh); height: auto; filter: drop-shadow(0 1vh 2.5vh rgba(0, 0, 0, 0.6)); }
+.join-side .kiosk-crest { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4.2vw, 7vh); color: var(--brand-parchment); text-transform: none; letter-spacing: 0.01em; margin: 0; }
+.join-side .join-sub { margin: 0; font-size: min(1.5vw, 2.4vh); letter-spacing: 0.3em; text-transform: uppercase; color: var(--brand-brass); }
 .join-side .kiosk-loop.inset { border-radius: 1.5vw; }
 .join-code { flex: 0 0 auto; display: grid; justify-items: center; gap: 1.5vh; }
 .join-code .code-qr { width: min(42vw, calc(58vh - var(--band-h))); }
 .join-title { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4.6vw, 7vh); margin: 0; line-height: 1.1; }
 .join-code .join-line { font-size: min(2.2vw, 3.4vh); max-width: 44vw; margin: 0; color: var(--dim); }
+.join-code .join-title { color: var(--brand-parchment); }
+.join-code .code-qr { border: 0.5vh solid var(--brand-brass); }
 /* the Act 4 rules card: the game's name, the cat and the host's line side by side, the room's code, a waiting line */
-.kiosk.rules-card { background: var(--brand-peat); gap: 2vh; justify-content: center; }
+.kiosk.rules-card { background: var(--kiosk-ground); gap: 2vh; justify-content: center; }
 .kiosk.rules-card.boo-wall { background: #000; }
 /* the study's card between groups wears the study's house look too (26 Oct 2026) */
 .kiosk.rules-card.rules-study { --paper-opacity: 0.22; --paper-size: 120vw; background: var(--brand-blue); gap: 1.6vh; }
@@ -1314,8 +1321,8 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .send-list .chip { min-height: 2.75rem; min-width: 4.5rem; }
 
 /* the countdown to the intro, across the bottom of every room screen while the guests arrive */
-.kiosk-countdown { position: fixed; left: 3vw; bottom: 3vh; z-index: 60; pointer-events: none; }
-.kiosk-countdown span { display: inline-block; padding: 0.5em 1.2em; border-radius: 0.6em; background: rgba(0, 25, 37, 0.85); color: var(--ink); font-size: clamp(1.4rem, 3.2vw, 3.4rem); font-variant-numeric: tabular-nums; }
+.kiosk-countdown { position: fixed; right: 6vw; bottom: 9vh; z-index: 60; pointer-events: none; }
+.kiosk-countdown span { display: inline-block; padding: 0.5em 1.2em; border-radius: 0.6em; background: rgba(0, 12, 18, 0.9); border: 0.2vh solid var(--brand-brass); color: var(--ink); font-size: clamp(1.4rem, 3.2vw, 3.4rem); font-variant-numeric: tabular-nums; }
 .kiosk-countdown b { font-weight: 700; margin-left: 0.4em; }
 .kiosk.intro-video { background: #000; display: flex; align-items: center; justify-content: center; padding: 0; }
 .kiosk.intro-video video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }

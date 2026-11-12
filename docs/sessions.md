@@ -9,6 +9,13 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, during the test · Claude Code (the room screens' colour, the join screen, files for each device)
+
+- Jon, with a screenshot of the Parlour TV: "I hate this design, mostly the color and put the qr code on the other side."
+- The room screens' ground is Manor blue, like the phones (`--kiosk-ground`; the olive is gone from the idle screens, the join screen, the rules cards, the prompts, Salem's board and the loops' backing). The join screen has the code on the left with a brass edge, and on the right the wax seal, Sirwin Manor in the serif, the wallpaper. The countdown sits lower right in a brass-edged box.
+- Earlier in the test: the send list also sits under the workshop's Start button (no joining first), and a folder Murderwin screens on the brain's Desktop holds one file per device to AirDrop (each opens that device's page), with the Study station zip.
+- Tried in the preview only.
+
 ## 12 Nov 2026, night · Claude Code (plain words, a smaller workshop)
 
 - Jon: "You can kill all the timeline and where are we. Development is done. I won't be testing the individual games anymore, it's all about the 1 game... Don't call it start run through, I need clean wording. I need it simple."

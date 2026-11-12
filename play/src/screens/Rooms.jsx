@@ -112,9 +112,11 @@ export function JoinScreen({ screen, loop = 'living' }) {
   const qr = useQr(PLAY_URL, 720)
   return (
     <div className="kiosk join-screen">
-      <div className="join-side">
+      <div className="join-side papered">
         <Loop which={loop} className="inset">
+          <img className="join-seal" src={`${BASE}brand/seal.png`} alt="" />
           <p className="kiosk-crest">Sirwin Manor</p>
+          <p className="join-sub">A Murderwin</p>
         </Loop>
       </div>
       <div className="join-code">
