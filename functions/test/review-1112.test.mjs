@@ -122,3 +122,34 @@ test('S1 dueSlot back to back: the second game is due once the first has fired, 
   assert.equal(dueSlot({ count: 2, due0: new Date(5_000), due1: new Date(90_000), fired: {} }, { now: 1_000, backToBack: true }), null)
   assert.equal(dueSlot({ ...sched, fired: { 0: true, 1: true } }, { now: 10_000, backToBack: true }), null)
 })
+
+// ---- S2: a Next pressed as the clock moved the night on moves nothing -------------
+
+// A practice night in Act 4's first round, the real players locked in (their lock-in starts the round).
+async function intoRounds() {
+  const p = await practice()
+  await host(p.db, p.nightId, 'act', 3)
+  await host(p.db, p.nightId, 'start-act4')
+  await host(p.db, p.nightId, 'next') // the group cards
+  for (const uid of p.uids) await player.lockIn(p.db, { nightId: p.nightId, uid, now: T0 })
+  return p
+}
+
+test('S2 the Host tab\'s Next names the beat it is showing: stale, it moves nothing and says so; current, it moves one', async () => {
+  const { db, nightId } = await intoRounds()
+  assert.equal(nightOf(db, nightId).beat, 'round1')
+  // the clock had already moved the night from the group cards to round 1 when Jon pressed Next on the group cards
+  const stale = await host(db, nightId, 'next', { from: '4/groups' }, T0 + 1_000)
+  assert.deepEqual(stale, { ok: true, moved: null, stale: true })
+  assert.equal(nightOf(db, nightId).beat, 'round1', 'not sent past a room it never played')
+  const r = await host(db, nightId, 'next', { from: '4/round1' }, T0 + 2_000)
+  assert.equal(r.beat, 'round2')
+  assert.equal(nightOf(db, nightId).beat, 'round2')
+})
+
+test('S2 a Next with no `from` (the workshop, the brain, the fake players) moves as it always has', async () => {
+  const { db, nightId } = await intoRounds()
+  const r = await host(db, nightId, 'next', undefined, T0 + 1_000)
+  assert.equal(r.beat, 'round2')
+  assert.equal(nightOf(db, nightId).beat, 'round2')
+})

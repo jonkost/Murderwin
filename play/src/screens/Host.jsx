@@ -74,7 +74,8 @@ function describe(command, r) {
     case 'at-the-paper': return paperReply(r)
     case 'tv-trace': return r.tvTrace ? 'The Parlour screen shows the trace once the door has been open ten seconds.' : 'The trace is off the Parlour screen.'
     case 'station-key': return 'Station key saved. Type the same key into station/.env on the study Mac.'
-    case 'next': case 'beat': case 'back': if (r.armed) return 'Armed.'
+    case 'next': case 'beat': case 'back': if (r.stale) return 'The night had already moved on.'
+      if (r.armed) return 'Armed.'
       return r.act ? `Act ${r.act}: ${beatSpec(r.act, r.beat)?.name ?? r.beat}.${r.dealt != null ? ` Sent to ${r.dealt} phones.` : ''}${r.phones != null ? ` ${r.phones} phones lit.` : ''}` : 'Moved.'
     case 'light-up': return r.waiting ? `A Parlour Game is waiting on ${r.phones} phones. Each guest plays it when free.` : `Parlour Game on ${r.phones} phones. Sixty seconds.`
     case 'settle': return r.settled ? `Picked for ${r.settled} phones that had not chosen.` : 'Everyone had chosen.'
@@ -434,7 +435,7 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
       )}
       {!open && w?.kind === 'ballot' && here?.action === 'window:ballot' && <p className="host-msg" role="status">The votes are in.</p>}
       <div className="host-row">
-        <button className="big wide" disabled={!canNext} onClick={() => run('next')}>{nextLabel}</button>
+        <button className="big wide" disabled={!canNext} onClick={() => run('next', { from: `${night.act ?? 0}/${night.beat ?? ''}` })}>{nextLabel}</button>
       </div>
       <div className="host-row">
         <button className="chip" disabled={!!busy || !here || idx === 0 && night.act <= 2} onClick={() => run('back')}>Back one</button>

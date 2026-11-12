@@ -324,6 +324,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
 
   switch (command) {
     case 'next': {
+      // the Host tab sends the act and beat it is showing (review 12 Nov 2026): a Next pressed as a clock moved
+      // the night on moves nothing, so a group is never sent past a room it never played. No `from`, as ever.
+      if (arg && typeof arg === 'object' && typeof arg.from === 'string' && arg.from !== `${n.act ?? 0}/${n.beat ?? ''}`) return { ok: true, moved: null, stale: true }
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
       await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
