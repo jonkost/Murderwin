@@ -423,7 +423,9 @@ and Granolia's hint "was reversed... backwards to the actual design".
   touch drops the hexagons to the game's dim at once. The room's lamp is
   the brain's: Murderwin Default until the station says playing, then
   Study Dim, then Default again at done (cues/scenes.json `study`,
-  unchanged).
+  unchanged). Since 12 Nov the power's return after the blackout (or a
+  Blackout test) brings the walls back to this same glow when nobody is
+  playing (`runner.dark(false)`), not the game's dim rest.
 - **Why the room could be dark before the start on 11 Nov.** Any touch
   started a game, in any act, with or without a group due. In Act 2 every
   guest stands at this wall to scan Granolia's code, so a game could start

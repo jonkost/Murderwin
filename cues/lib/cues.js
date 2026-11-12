@@ -220,6 +220,8 @@ export function plan(prev, next, now = Date.now(), { readClip = clipReader() } =
     if (clipsOnly) actions.push(video ? { type: 'video', count: sent.length } : { type: 'sound', id: null, clips, ...(unknown ? { unknown } : {}) })
     else if (!knownSound(soundId)) actions.push({ type: 'refused', count: 1 })
     else if (video) actions.push({ type: 'sound', id: soundId, video: true, ...(sent.length ? { onTv: sent.length } : {}) })
+    // a cue stamped ahead (the blackout's scream, review 12 Nov 2026) waits for its moment here too
+    else if (next.sounds?.current?.ahead === true && soundAt > now) actions.push({ type: 'sound', id: soundId, ...extra, waitMs: soundAt - now, at: soundAt })
     else actions.push({ type: 'sound', id: soundId, ...extra })
   }
   return { actions, state: { hall: hall ?? prev.hall ?? null, sound: key ?? prev.sound ?? null } }

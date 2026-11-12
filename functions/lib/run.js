@@ -23,7 +23,13 @@ import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
 import { setIpad } from './ipad.js'
-import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout } from './blackout.js'
+import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout, blackoutRunning } from './blackout.js'
+
+// Is the press that is running a Blackout test?
+async function testRunning(db, nightId, now) {
+  const b = (await db.doc(`nights/${nightId}`).get()).data()?.blackout
+  return b?.test === true && blackoutRunning(b, now)
+}
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -37,6 +43,22 @@ export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'p
 // command, so no phone counts them; the tests pass their own sleep.
 export { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS }
 const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+// The Blackout's waits run to its marks (review 12 Nov 2026): `until(t)` sleeps for the time left until t on
+// the clock, never a fixed length, so the reads and writes before it do not stretch the lead or the dark. On
+// the server the clock is the real one; a test's own sleep (and a `clock` it may pass) is a clock that starts
+// at the press and moves only when it sleeps, so a test can see each wait's length.
+export function blackoutClock(start, sleep = realSleep, clock = null) {
+  let virtual = start
+  const now = clock ?? (sleep === realSleep ? () => Date.now() : () => virtual)
+  const until = async t => {
+    const left = Math.max(0, t - now())
+    virtual += left
+    if (left > 0) await sleep(left)
+  }
+  until.now = now
+  return until
+}
 // The six Hue scenes Jon makes in the Hue app (his cue list, 25 Oct 2026;
 // cues/scenes.json names the same six); the brain recalls one by name when
 // the host asks (public/cues.scene).
@@ -216,7 +238,9 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
     // a practice night with fill-in players: one clock takes each move (claimMove, below); any other night, as ever.
     // The claim is named for where the move goes (round2, finish): each is made once a night, and a clock that read
     // the night after another moved its beat, but before the round's own record caught up, finds the claim taken.
-    if (due && n.fillIns && n.forceRehearsal === true && (n.beat === due || !(await claimMove(db, nightId, due, now)))) return { moved: null }
+    // A beat written whose round never started (a throw between the two) is started again by the next clock once the
+    // claim has run out (review 12 Nov 2026): only a beat whose Act 4 record has caught up is left alone.
+    if (due && n.fillIns && n.forceRehearsal === true && ((n.beat === due && await act4Entered(db, nightId, due)) || !(await claimMove(db, nightId, due, now)))) return { moved: null }
     if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
     if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
   }
@@ -231,6 +255,14 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
 // fifteen seconds leaves it alone. (If the one that took it failed, the next
 // clock after that takes it again.) Never asked on any other night.
 export const MOVE_CLAIM_MS = 15_000
+// Has Act 4's public record caught up with the beat (the group cards dealt, the round begun)?
+async function act4Entered(db, nightId, beat) {
+  const pub = (await db.doc(act4.act4Path(nightId)).get()).data() ?? {}
+  if (pub.phase === 'done') return true
+  if (beat === 'groups') return !!pub.phase && pub.phase !== 'warn'
+  const round = roundOf(beat)
+  return !round || (pub.phase === 'rounds' && Number(pub.round) >= round)
+}
 async function claimMove(db, nightId, key, now) {
   const ref = db.doc(act4.act4PrivatePath(nightId))
   return db.runTransaction(async tx => {
@@ -306,7 +338,7 @@ async function powerReturns(db, nightId, { now = Date.now() } = {}) {
   return { ok: true }
 }
 
-export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep } = {}) {
+export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep, clock = null } = {}) {
   // the phone's big Start the night button sends { real, introAt } (12 Nov 2026), and on a practice night
   // { fillIns } too (A4, 11 Nov 2026); a plain create is a night at the doors
   if (command === 'create' && arg && typeof arg === 'object') return startEvening(db, { real: arg.real === true, introAt: arg.introAt, fillIns: arg.fillIns, now })
@@ -324,6 +356,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
 
   switch (command) {
     case 'next': {
+      // the Host tab sends the act and beat it is showing (review 12 Nov 2026): a Next pressed as a clock moved
+      // the night on moves nothing, so a group is never sent past a room it never played. No `from`, as ever.
+      if (arg && typeof arg === 'object' && typeof arg.from === 'string' && arg.from !== `${n.act ?? 0}/${n.beat ?? ''}`) return { ok: true, moved: null, stale: true }
       if (n.phase === 'blackout') throw new NightError('invalid', 'Press Power returns first.')
       await refuseIfDrawing(db, nightId, n)
       await settleIfDue(db, nightId, now)
@@ -385,17 +420,25 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       if (n.phase === 'blackout') return { ok: true, already: true }
       if (n.act !== 1) throw new NightError('invalid', 'The blackout ends Act 1. To move the night, press an act.')
       const marks = await pressBlackout(db, nightId, { now })
-      if (!marks) return { ok: true, already: true }
+      // a Blackout test still running refuses the real one (no case is dealt over a test), and the reply says so
+      // (review 12 Nov 2026), so the Host tab can say to press again in a few seconds
+      if (!marks) return { ok: true, already: await testRunning(db, nightId, now) ? 'test' : true }
       const darkAt = marks.darkAt.getTime()
-      await sleep(BLACKOUT_LEAD_MS)
-      // paused or moved during the lead: no dark at all, and the marks come off
+      const powerAt = marks.powerAt.getTime()
+      // review 12 Nov 2026 ("those cues need to get tight as hell"): the scream is written at the press, stamped
+      // for the dark mark, so every page has it in hand and starts it on the mark; each wait runs to its mark
+      // (the time left, never a fixed length), so the reads and writes on the way do not stretch the dark
+      const until = blackoutClock(now, sleep, clock)
+      await screen.play(db, nightId, 'blackout', { now: darkAt, ahead: true })
+      await until(darkAt)
+      // paused or moved during the lead: no dark at all, the marks come off and the scream is called off
       const still = (await ref.get()).data()
-      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); return { ok: true, powerReturned: false, dark: false } }
+      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now() }); return { ok: true, powerReturned: false, dark: false } }
       await night.hostCommand(db, { nightId, command: 'blackout', arg, now: darkAt })
-      await screen.onPhase(db, nightId, 'blackout', { now: darkAt })
-      await sleep(BLACKOUT_POWER_MS)
+      await screen.onPhase(db, nightId, 'blackout', { now: darkAt, sound: false })
+      await until(powerAt)
       // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
-      const r = await powerReturns(db, nightId, { now: darkAt + BLACKOUT_POWER_MS })
+      const r = await powerReturns(db, nightId, { now: powerAt })
       return { ok: true, powerReturned: !r.already }
     }
     case 'blackout-test': {
@@ -407,9 +450,10 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       const marks = await pressBlackout(db, nightId, { now, test: true })
       if (!marks) return { ok: true, already: true }
       const darkAt = marks.darkAt.getTime()
-      await sleep(BLACKOUT_LEAD_MS)
-      await screen.play(db, nightId, 'blackout', { now: darkAt })
-      await sleep(BLACKOUT_POWER_MS)
+      const until = blackoutClock(now, sleep, clock)
+      await screen.play(db, nightId, 'blackout', { now: darkAt, ahead: true }) // in hand at the press, played at the dark (review 12 Nov)
+      await until(darkAt)
+      await until(marks.powerAt.getTime())
       await clearBlackout(db, nightId, marks)
       return { ok: true, test: true }
     }
@@ -680,9 +724,45 @@ async function fillInsVoteNow(db, nightId, uid, now) {
   }
 }
 
+// A Parlour Game closed on its last answer (review 12 Nov 2026, A6 step 6): the
+// seats that joined late get their pick, then the night carries on at once: in
+// Act 6 the second game opens (windows.tickParlour) and after it the drawing
+// starts (clockTick). Never throws: the answer is in, and the minute's tick and
+// the host's Next are the fallback.
+async function afterGameIn(db, nightId, now) {
+  await afterAllIn(db, nightId)
+  try {
+    await windows.tickParlour(db, nightId, now)
+    await clockTick(db, nightId, now)
+  } catch (e) {
+    console.error('after the last answer', e?.code ?? e?.name ?? 'error')
+  }
+}
+
+// The same for a Parlour Game as fillInsVoteNow is for the vote: when a real
+// phone's answer leaves only fill-ins to answer, they answer at once.
+async function fillInsAnswerNow(db, nightId, uid, now) {
+  try {
+    if (isFillInUid(uid)) return
+    const n = (await db.doc(`nights/${nightId}`).get()).data()
+    if (!n?.fillIns || n.forceRehearsal !== true) return
+    const fillins = await import('./fillins.js')
+    await fillins.answerNow(db, nightId, { now })
+  } catch (e) {
+    console.error('fill-ins not answered', e?.code ?? e?.name ?? 'error')
+  }
+}
+
 // What a player phone may call, besides join.
 export const player = {
-  answer: (db, args) => deal.answer(db, args),
+  // a Parlour Game: the reply is { ok }, { ok, already } or { ok, late }, whoever answered last
+  answer: async (db, args) => {
+    const { closed, ...reply } = await deal.answer(db, args)
+    const now = args.now ?? Date.now()
+    if (closed) await afterGameIn(db, args.nightId, now)
+    else if (!reply.already && !reply.late) await fillInsAnswerNow(db, args.nightId, args.uid, now)
+    return reply
+  },
   // the vote: the reply is { ok } or { ok, already }, whoever locked in last
   ballot: async (db, args) => {
     const { closed, ...reply } = await deal.castBallot(db, args)

@@ -33,7 +33,11 @@ door).
   with the moment each one plays: `chime-phone` (every "look at your phone"
   moment, the sound test and the dessert chime too), `blackout`,
   `chime-news`, `sounder-bulletin`, `chime-irwin`, `sting-solved`,
-  `sting-door`, `sting-reveal` and `sting-result`. A file is named after its
+  `sting-door`, `sting-reveal` and `sting-result`. (Since 12 Nov the
+  `blackout` cue is written at the Blackout's press, stamped `ahead` for the
+  dark mark: every phone, room screen and, on the "brain" road, this relay
+  holds it and starts it on the mark exactly, and a pause in the lead calls it
+  off.) A file is named after its
   id and nothing else: `chime-phone.m4a`. Every file starts with one second of
   silence (the pad rule) so the speakers have woken up before the sound
   begins. Only two are required (decided 25 October, *cueSounds*):

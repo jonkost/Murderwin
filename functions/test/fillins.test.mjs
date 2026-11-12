@@ -875,7 +875,9 @@ test('F01 with fill-ins: a whole practice night, eight seats, Start to The End; 
   assert.equal(s.ok, true)
   assert.deepEqual([s.seats, s.fillIns, s.groups, s.rounds, s.earlyChimes, s.ballots, s.results, s.over], [8, 6, 4, 4, 4, 8, 8, true])
   assert.deepEqual([s.moves.locked, s.moves.voted], [6, 6], 'six taps of Locked in and six votes, each a fill-in\'s own')
-  assert.ok(s.moves.answered >= 6 * 3, 'and every Parlour Game answered in time')
+  // the Act 4 game waiting on the phone is answered on the fill-ins' own clock; the games on every phone close on the
+  // real players' last answer, each fill-in answering at once (the GAME-WAITS and FILL-ANSWER checks, review 12 Nov 2026)
+  assert.ok(s.moves.answered >= 6, 'and every Parlour Game answered in time')
   assert.ok(s.drawers >= 1 && s.drawers <= 2, 'only the two real players were ever called to the paper')
   // the one bank a practice night may read is its own practice pictures (A7: sealed/relay_pictures_practice), never the party's
   assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/relay_pictures_practice'], 'a practice night reads its own case and its own practice pictures, never the party\'s packing, leans or pictures')

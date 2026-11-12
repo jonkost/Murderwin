@@ -19,7 +19,7 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 - **Every phone lights up at the same moment** with one set (in Act 4, it arrives at the same moment and waits): three questions in a row, two answers each. Tap one.
 - **Boo hosts the Parlour Games** (flavor only). Each game opens with one of her six lines, picked at random (`docs/handoff-2026-10-22.md` §6b). She judges whatever you pick and never hints which answer she likes.
 - **No numbers, no scores, no "+1"** anywhere on any phone. Ever.
-- **No "waiting for other players" screen.** The window never closes early.
+- **No "waiting for other players" screen.** A game in Acts 2 and 6 closes when the last phone has answered or at one minute, whichever is first (review 12 Nov, the handoff's A6 step 6; `deal.answer`, `run.player.answer`). In Act 6 the second game then opens at once, and when it closes the drawing starts at once. On a practice night with fill-ins, the moment only fill-ins are left they answer at once with their own random picks (`fillins.answerNow`), so the brain off never holds a game to its clock. The Act 4 games that wait on the phone are not this.
 - **If someone doesn't answer,** a random answer is picked for them when the window closes (in Act 4, when the act ends). No penalty.
 
 ---

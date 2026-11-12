@@ -230,6 +230,36 @@ export async function voteNow(db, nightId, { now = Date.now() } = {}) {
   return { ok: true, voted }
 }
 
+// A Parlour Game on every phone (Acts 2 and 6), the same rule as the vote
+// (review 12 Nov 2026): the moment only fill-ins are left to answer, each
+// answers at once, with the same seeded random picks it would make on its own
+// clock, and the last of them closes the game. So the brain off never holds a
+// game to its minute. Does nothing while a real player is still choosing, on
+// the real night, or from the party day on. Returns counts only.
+export async function answerNow(db, nightId, { now = Date.now() } = {}) {
+  if (now >= PARTY_DAY) return { ok: true, answered: 0 }
+  const night = (await db.doc(`nights/${nightId}`).get()).data()
+  if (!night || night.forceRehearsal !== true || !night.fillIns) return { ok: true, answered: 0 }
+  const w = night.window
+  if (!w || w.kind !== 'questions' || w.settled) return { ok: true, answered: 0 }
+  const uids = (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.uids ?? {}
+  const seats = fillInKeys(night.roster).map(key => ({ key, uid: uids[key] })).filter(s => isFillInUid(s.uid))
+  const left = []
+  for (const seat of seats) {
+    const s = (await db.doc(`sessions/${seat.uid}`).get()).data()
+    if (s?.status === 'active' && s.nightId === nightId && s.guestKey === seat.key && s.windows?.[w.id] && !s.answers?.[w.id]) left.push({ ...seat, set: s.windows[w.id] })
+  }
+  if (!left.length || (w.answered ?? 0) + left.length < Number(w.of)) return { ok: true, answered: 0 }
+  let answered = 0
+  for (const { key, uid, set } of left) {
+    try {
+      const r = await run.player.answer(db, { nightId, uid, windowId: w.id, picks: picksFor(nightId, key, w.id, set), now })
+      if (r?.ok && !r.already && !r.late) answered++
+    } catch (e) { if (!(e instanceof NightError)) throw e }
+  }
+  return { ok: true, answered }
+}
+
 // The live night's pass, for the `fillIns` callable: finds the night that is
 // on, steps it, and leaves a heartbeat (presence/fillins-<nightId>, at most
 // every thirty seconds) so the Host tab can say the fill-ins are playing

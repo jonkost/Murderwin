@@ -265,8 +265,15 @@ export function createRunner({
         Promise.resolve(deck?.paint?.(false)).then(() => deck?.brightness?.(0)).catch(() => {})
         return
       }
-      safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 3))
-      safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 3))
+      if (machine.state === 'idle') {
+        // nobody playing: the same soft breathing glow a new machine and glow() give (review 12 Nov 2026), not
+        // the dim rest, which until Act 4 looked like a wall left off
+        waitLook(elements, elementsOk, ELEMENTS_WAIT, ELEMENTS_WAIT_LOW)
+        waitLook(lines, linesOk, LINES_WAIT, LINES_WAIT_LOW)
+      } else {
+        safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 3))
+        safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 3))
+      }
       Promise.resolve(deck?.brightness?.(DECK_BRIGHTNESS)).then(() => deck?.paint?.(machine.state !== 'idle')).catch(() => {})
     },
     get isDark() { return darkOn },

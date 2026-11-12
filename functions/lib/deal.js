@@ -861,14 +861,19 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
     const set = s.windows?.[windowId]
     if (!set || !validPicks(set, picks)) throw new NightError('invalid', 'Pick one answer to each question.')
     tx.update(sessionRef, { [`answers.${windowId}`]: { picks, at: new Date(), defaulted: false } })
-    tx.update(db.doc(`nights/${nightId}`), { 'window.answered': (w.answered ?? 0) + 1 }) // a count only, never who
-    return { key: s.guestKey, act: w.act ?? night.act ?? null }
+    // a count only, never who; the last seat dealt the game closes it in the same write (handoff 11 Nov 2026,
+    // A6 step 6: a Parlour Game closes when the last phone has answered or at one minute, whichever is first)
+    const answered = (w.answered ?? 0) + 1
+    const allIn = Number(w.of) > 0 && answered >= Number(w.of)
+    tx.update(db.doc(`nights/${nightId}`), { 'window.answered': answered, ...(allIn ? { 'window.settled': true, 'window.allIn': true } : {}) })
+    return { key: s.guestKey, act: w.act ?? night.act ?? null, closed: allIn }
   })
   if (got.already) return { ok: true, already: true }
   if (got.late) return { ok: true, late: true }
   const c = await readCase(db, nightId)
   await applyPoints(db, nightId, got.key, windowId, picks, c, got.act)
-  return { ok: true }
+  // `closed` tells run.js to carry on (as castBallot's does); it never reaches a phone
+  return got.closed ? { ok: true, closed: true } : { ok: true }
 }
 
 // The vote (Act 7): the Murderer, the Motive and the Ghost, in one call (the

@@ -174,10 +174,13 @@ export function cueDue(lastKey, sounds, now, { first = false, tv = false } = {})
   const video = cur.video === true
   if (clips && !video) return null
   if (video && tv) return null
-  const startAt = ms(cur.at) + CUE_LEAD_MS
+  // a cue the server stamped ahead (`ahead`: the blackout's scream, written at the press for the dark mark;
+  // review 12 Nov 2026) starts on its stamp exactly: every page has it in hand already, so no lead is needed
+  const ahead = cur.ahead === true
+  const startAt = ms(cur.at) + (ahead ? 0 : CUE_LEAD_MS)
   if (now - startAt > CUE_LATE_MS) return null
   if (startAt - now > CUE_AHEAD_MS) return null
-  return { id: cur.id, key, waitMs: Math.max(0, startAt - now) }
+  return { id: cur.id, key, waitMs: Math.max(0, startAt - now), ...(ahead ? { ahead: true } : {}) }
 }
 
 // What a page remembers about cues, and what it does when its view of the
@@ -192,15 +195,35 @@ export function cueDue(lastKey, sounds, now, { first = false, tv = false } = {})
 //     old bell skipped the first cue every screen ever saw.);
 //   - a `silent` page (the brain's own browser, a second display) plays
 //     nothing and still keeps track, so it can never play an old cue later.
+//   - one exception to the first read: a cue stamped ahead whose moment is
+//     still to come (the blackout's scream, on a page that reloads in the
+//     lead) is not old news, and plays at its stamp like everywhere else.
 export const NO_CUES_YET = Object.freeze({ scope: undefined, heard: null })
 export function cueStep(memory, { loaded = false, sounds = null, scope = null, now = Date.now(), silent = false, tv = false } = {}) {
   if (!loaded) return { memory, due: null }
   const key = cueKeyOf(sounds)
-  if (memory.scope !== scope) return { memory: { scope, heard: key }, due: null }
+  latestKey = key
+  if (memory.scope !== scope) {
+    const early = !silent && sounds?.current?.ahead === true && ms(sounds.current.at) > now ? cueDue(null, sounds, now, { tv }) : null
+    return { memory: { scope, heard: key }, due: hold(early) }
+  }
   if (key === memory.heard) return { memory, due: null }
   const due = silent ? null : cueDue(memory.heard, sounds, now, { tv })
-  return { memory: { scope, heard: key }, due }
+  return { memory: { scope, heard: key }, due: hold(due) }
 }
+
+// A cue stamped ahead is held until just before its moment and played only if
+// the sounds doc still names it then: a blackout called off in its lead (a
+// pause) writes a fresh record, and the scream is let go (review 12 Nov 2026).
+// The page's last view of the doc is kept here by cueStep.
+export const AHEAD_ARM_MS = 250 // the sound is handed to the speaker this long before its moment
+let latestKey = null
+let heldAhead = null // { id, key } of the cue stamped ahead that cueStep last handed out
+function hold(due) {
+  heldAhead = due?.ahead ? { id: due.id, key: due.key } : null
+  return due
+}
+export function stillWanted(key) { return latestKey === key }
 
 // ---- the page's cue player ----------------------------------------------------
 
@@ -387,6 +410,15 @@ export function playCue(id, { waitMs = 0, w = globalThis.window, now = () => glo
   const ctx = audioContext(w)
   if (!spec || !ctx) return false
   const dueAt = now() + Math.max(0, waitMs)
+  // a cue stamped ahead (cueStep's hold, above): wait until just before its moment, then play it only if the
+  // doc still names it, so a scream called off in the blackout's lead never sounds
+  const held = heldAhead?.id === id ? heldAhead : null
+  if (held && waitMs > AHEAD_ARM_MS) {
+    heldAhead = null
+    timer(() => { if (stillWanted(held.key)) playCue(id, { waitMs: Math.max(0, dueAt - now()), w, now, timer }) }, waitMs - AHEAD_ARM_MS)
+    return true
+  }
+  if (held) heldAhead = null
   const start = () => {
     try {
       const out = cueBus(ctx)
@@ -416,4 +448,6 @@ export function resetCueSounds() {
   bus = null
   noise = null
   installed = false
+  latestKey = null
+  heldAhead = null
 }

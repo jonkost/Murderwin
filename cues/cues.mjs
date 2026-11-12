@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes } from './lib/cues.js'
+import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes, stamp } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
@@ -492,22 +492,27 @@ function apply() {
   }
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
-    if (a.type === 'sound') {
-      // every cue brings the music back when it ends, even one with nothing
-      // to play here: it may have cut off a cue that had ducked it.
-      // The cue's own sound plays here only when the brain speaks after it,
-      // or the sheet says "brain" (lib/scenes.js brainPlaysId): the room
-      // screens and the phones play it themselves, and twice would be an echo.
-      const startedAt = Date.now()
-      const here = brainPlaysId(a, sheet)
-      const elsewhere = !!a.id && !here
-      if (ducksFor(a)) cueStarts(a)
-      player.play(here ? a.id : null, a.clips ?? [], { unknown: a.unknown ?? 0, onTv: a.onTv ?? 0, elsewhere, onDone: () => cueEnds(a, startedAt, elsewhere) })
-    }
+    // stamped ahead (the scream, written at the Blackout's press; review 12 Nov 2026): played at its moment, if the
+    // doc still names it then (a pause in the lead calls it off)
+    if (a.type === 'sound' && a.waitMs > 0) setTimeout(() => { if (stamp(docs.sounds?.current?.at) === a.at) playSound(a) }, a.waitMs)
+    else if (a.type === 'sound') playSound(a)
     if (a.type === 'video') log(playLine({ onTv: a.count }))
     if (a.type === 'refused') log(`[sound] refused ${a.count} id outside the catalogue`)
   }
   mirrorStrings()
+}
+
+function playSound(a) {
+  // every cue brings the music back when it ends, even one with nothing
+  // to play here: it may have cut off a cue that had ducked it.
+  // The cue's own sound plays here only when the brain speaks after it,
+  // or the sheet says "brain" (lib/scenes.js brainPlaysId): the room
+  // screens and the phones play it themselves, and twice would be an echo.
+  const startedAt = Date.now()
+  const here = brainPlaysId(a, sheet)
+  const elsewhere = !!a.id && !here
+  if (ducksFor(a)) cueStarts(a)
+  player.play(here ? a.id : null, a.clips ?? [], { unknown: a.unknown ?? 0, onTv: a.onTv ?? 0, elsewhere, onDone: () => cueEnds(a, startedAt, elsewhere) })
 }
 
 // ---- a pretend night, for fake mode with no Firebase ---------------------------

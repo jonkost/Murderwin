@@ -430,7 +430,9 @@ the screen awake by itself where the iPad lets it.
 
 - **Next** is the one button. It does whatever the next beat needs on every
   phone at once and tells you only how many phones it reached. The beat you
-  are on and what it is for are written above the button.
+  are on and what it is for are written above the button. If the clock moved
+  the night on as you pressed, Next moves nothing and says "The night had
+  already moved on."
 - Act 1: arrivals, the house rules, meet the household, introductions, then
   ready for the dark. The Parlour TV shows the join code, big, through the
   whole of Act 1 (*rulesDeckScreen* is answered by your cue list: the Parlour
@@ -464,6 +466,8 @@ the screen awake by itself where the iPad lets it.
   are dealt, so press it as often as you like before the guests come. The
   string lights need a fourth Shortcut for the dark, Off Murderwin Strings
   (a Home scene with the strings off); without it they stay as they are.
+  Blackout pressed while a test runs does nothing and says "A Blackout test
+  is running. Press Blackout again in a few seconds."
 - Act 2 begins when the power returns. Every phone buzzes (where it can) and
   shows one button, "Sorry for the interruption, continue here". The tap
   brings up that phone's role card, with no button and no early tap, for
