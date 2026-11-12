@@ -120,9 +120,9 @@ test('S1 the party night (no fill-ins) closes on the last real answer too', asyn
 })
 
 test('S1 dueSlot back to back: the second game is due once the first has fired, whatever its time; never the first early', () => {
-  const sched = { count: 2, due0: new Date(0), due1: new Date(90_000), fired: { 0: true }, lastAt: new Date(0) }
+  const sched = { act: 6, count: 2, due0: new Date(0), due1: new Date(90_000), fired: { 0: true }, lastAt: new Date(0) }
   assert.equal(dueSlot(sched, { now: 10_000, gapMs: 90_000 }), null, 'the plain rule waits for the gap')
-  assert.equal(dueSlot(sched, { now: 10_000, gapMs: 90_000, backToBack: true }), 1)
+  assert.equal(dueSlot(sched, { now: 10_000, gapMs: 90_000, backToBack: true, closedBeat: 'p0' }), 1)
   assert.equal(dueSlot({ count: 2, due0: new Date(5_000), due1: new Date(90_000), fired: {} }, { now: 1_000, backToBack: true }), null)
   assert.equal(dueSlot({ ...sched, fired: { 0: true, 1: true } }, { now: 10_000, backToBack: true }), null)
 })

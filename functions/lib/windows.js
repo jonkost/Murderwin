@@ -101,12 +101,13 @@ export function playsAtStart(act) {
 // Which game, if any, is due now. Pure, for the tick and the tests.
 // backToBack (Act 6, which plays its games at the start): a game after the first is due the moment the
 // one before it has closed (the caller only asks with no window open), so two games answered quickly
-// are not held to the gap (review 12 Nov 2026).
-export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000, backToBack = false } = {}) {
+// are not held to the gap (review 12 Nov 2026). closedBeat is the beat of the window that closed on its
+// last answer: only the game just before this one counts, never a game left over from an earlier act.
+export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000, backToBack = false, closedBeat = null } = {}) {
   if (!sched || isClosed(sched)) return null // the drawing has started: nothing opens again (A5)
   for (let i = 0; i < (sched.count ?? 0); i++) {
     if (sched.fired?.[i]) continue
-    if (backToBack && i > 0 && sched.fired?.[i - 1]) return i
+    if (backToBack && i > 0 && sched.fired?.[i - 1] && closedBeat === slotBeat(sched.act, sched.slots?.[i - 1] ?? { act: sched.act, slot: i - 1 })) return i
     if (now < ms(sched[`due${i}`])) return null
     if (sched.lastAt && now < ms(sched.lastAt) + gapMs) return null
     return i
@@ -134,7 +135,8 @@ export async function tickParlour(db, nightId, now) {
     if (!sched || sched.act !== Number(night.act)) return null
     // Act 6: the game before closed on its last answer, so the next follows at once (review 12 Nov 2026);
     // one the clock closed keeps the short gap
-    const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour), backToBack: playsAtStart(night.act) && cur.window?.allIn === true })
+    const backToBack = playsAtStart(night.act) && cur.window?.allIn === true && Number(cur.window.act) === Number(night.act)
+    const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour), backToBack, closedBeat: cur.window?.beat ?? null })
     if (i === null) return null
     tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
     return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i }, lastAt: sched.lastAt ?? null }
