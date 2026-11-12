@@ -357,7 +357,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(screen().captions, null)
   await next() // the group cards
   assert.equal(screen().kind, 'title')
-  assert.equal(screen().title, 'Act 4 · Behind Closed Doors')
+  assert.equal(screen().title, 'Find your group')
   assert.equal((await currentSound(db, nightId)).id, 'chime-phone')
   await next() // round 1
   assert.equal(screen().kind, 'prompts')

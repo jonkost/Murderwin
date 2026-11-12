@@ -221,8 +221,8 @@ test('a reward line with no motive to cross off leaves out the sentence that wou
     assert.ok(out.length > 10 && !/\[|\]|strike|it was not that/i.test(out), 'no blank, and nothing about striking a motive')
     assert.ok(said.startsWith(out.split('. ')[0]), 'the cat\'s own opening words stay')
   }
-  assert.equal(withoutCross(REWARD_LINES.library.done), 'Order. Restored. Invoice to follow.')
-  assert.equal(withoutCross(REWARD_LINES.library.capped), 'Time, and my patience, are billable. Leave the files.')
+  assert.equal(withoutCross(REWARD_LINES.library.done), 'Order restored.')
+  assert.equal(withoutCross(REWARD_LINES.library.capped), 'Time is billable.')
   // a workshop line that is one sentence, or has no full stop at all, still loses the blank
   assert.equal(withoutCross('Strike [RHYME] from your list.'), 'Strike from your list.')
   assert.equal(withoutCross('Strike [RHYME] from your list'), 'Strike from your list')
@@ -275,7 +275,7 @@ test('Salem\'s Motion Game: red means go, green means freeze; a slip restarts th
   for (const m of g.members) {
     const card = cardsOf(db, uidOf(db, nightId, m.key), 'clue').find(x => x.room === 'orangerie')
     assert.ok(card, 'cleared: Salem pays at once')
-    assert.match(card.text, /follow instructions/)
+    assert.match(card.text, /followed the backwards ones/)
     assert.equal(session(db, uidOf(db, nightId, m.key)).act4.paid, true, 'the group goes back to the Parlour until the chime')
   }
 })
@@ -626,7 +626,7 @@ test('G58 Get Off My Lawn!\'s just-for-fun winner: each slip counts against the 
   assert.deepEqual(doc().slipsBy, [1, 1])
   for (const m of g.members) {
     const card = cardsOf(db, uidOf(db, nightId, m.key), 'clue').find(x => x.room === 'orangerie')
-    assert.ok(card && /follow instructions/.test(card.text) && !/fewest|winner/i.test(JSON.stringify(card)), 'the same reward, no word of a winner')
+    assert.ok(card && /followed the backwards ones/.test(card.text) && !/fewest|winner/i.test(JSON.stringify(card)), 'the same reward, no word of a winner')
   }
   // L07: numbers by place, never a name or a guest
   const text = JSON.stringify(doc())

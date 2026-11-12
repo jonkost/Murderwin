@@ -16,9 +16,9 @@ import { createHash } from 'node:crypto'
 
 export const HOST_LINES = {
   // The new words (25 Oct 2026, the default of the decision granoliaIntro, card 473): the game is played by touching the wall; the buttons take the colour and the number at the end.
-  granolia: "Oh! You're here! The wall flashes a pattern. Touch the same lights in the same order. Do that three times, then press the colour and the number on the buttons, and press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah.",
-  zimothy: "Disaster. Sir Irwin bounded through my office, and my files are everywhere. I keep everything in duplicate, so match each pair and put my records back in order. Do it, and I'll strike one motive from your list. I'll waive my fee, just this once.",
-  salem: "Forty years I've kept these grounds, and I've never seen so many people trampling on them. This is it. The whole night comes down to this, and frankly, it's past my bedtime. Name the Murderer, the motive and the victim. You've got two minutes, then I'm turning on the sprinklers. And before you ask, it wasn't me. I was out filling in every hole Sir Irwin dug in my lawn. All 1,118 of them.",
+  granolia: "Oh! You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
+  zimothy: "Disaster. My files are everywhere. Match each pair, and I'll strike one motive from your list.",
+  salem: "Forty years I've kept these grounds. Name the Murderer, the motive and the victim. And it wasn't me.",
   boo: [
     "Let's see how disappointing you are.",
     "Choose carefully, darling. Everyone's watching. Mostly me.",
