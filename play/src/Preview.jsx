@@ -13,7 +13,8 @@ import catLines from '../../seed/cat-lines.json'
 import bagLines from '../../seed/bag-lines.json'
 import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
-import { Living, Bedroom, Study, Dark as KioskDark, IntroCountdown } from './screens/Kiosk'
+import { Living, Bedroom, Study, IntroCountdown } from './screens/Kiosk'
+import { RoomEnd } from './screens/Closing'
 import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import BooArcade from './screens/Arcade'
 import { SalemRounds } from './screens/Act4'
@@ -36,7 +37,7 @@ import { setFromAddress } from './lib/gametest'
 // kiosk-finale, kiosk-finale-awards, kiosk-finale-graph,
 // kiosk-finale-leadin (a name pressed, its lead-in still playing), kiosk-finale-film and
 // kiosk-finale-film-victim (the closing bulletin as video; add &mute=1), kiosk-finale-reveal,
-// kiosk-finale-done, kiosk-finale-credits, kiosk-living-turn, kiosk-living-vote, kiosk-study,
+// kiosk-finale-done, kiosk-finale-credits, kiosk-finale-dedication, kiosk-living-turn, kiosk-living-vote, kiosk-study,
 // kiosk-study-fallback (full-bleed, as on the MacBooks), and the screens the
 // beats name: kiosk-news, kiosk-bulletin, kiosk-irwin, kiosk-black,
 // kiosk-ipad, kiosk-living-done, kiosk-living-hold (Sir Irwin's
@@ -233,7 +234,8 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
     thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
-    memory: { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' },
+    special: [],
+    dedication: { line: 'For Sydney, The Best Big Brother A Pup Could Ask For', photo: 'household/sydney.jpg' },
     last: { cat: 'irwin', line: 'Can we play again?' },
   },
   news: Object.fromEntries(NAMED(stage).map(k => [k, CLOSING_NEWS[k]])),
@@ -418,7 +420,8 @@ const KIOSK = {
   'kiosk-loop-orangerie': (night) => <Orangerie night={{ ...night, act: 5, beat: 'roam' }} salem={null} />,
   'kiosk-quiet': () => <Idle title="Sirwin Manor" line="The house is quiet." loop="living" />,
   // The End (cue 23): every screen black
-  'kiosk-end': () => <KioskDark />,
+  'kiosk-end': () => <RoomEnd />,
+  'kiosk-finale-dedication': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(200000, 'victim', { sinceVictim: 127000 })} serverNow={serverNow} nightId="preview" />,
 }
 
 // Act 2's next step, as the server writes it (functions/lib/deal.js lightsCard).

@@ -51,6 +51,6 @@ export function demoNight() {
     { say: 'the reveal: dimmed for the tally', patch: now => ({ night: { act: 7, beat: 'reveal', phase: 'act' }, sounds: { current: { id: 'sting-reveal', at: now } } }) },
     { say: 'the first name: the newscast on the TV, the music cut', patch: now => ({ sounds: { current: { id: null, at: now, clips: ['woof-close-studio-open'], video: true } } }) },
     { say: 'everyone\'s result: the credits roll', patch: now => ({ night: { act: 7, beat: 'result', phase: 'act' }, sounds: { current: { id: 'sting-result', at: now } } }) },
-    { say: 'The End: the music off, the projector off', patch: () => ({ night: { act: 7, beat: 'end', phase: 'act' } }) },
+    { say: 'The End: the music off, the lights on Default', patch: () => ({ night: { act: 7, beat: 'end', phase: 'act' } }) },
   ]
 }

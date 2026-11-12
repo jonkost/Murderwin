@@ -53,6 +53,7 @@ export const HOST_COMMANDS = [
   { name: 'fetch-champion', arg: '<guestKey>', what: 'The first guest the real Sir Irwin brings a toy to. Once. It shows in the end credits.' },
   { name: 'salem-petted', arg: '<guestKey>', what: 'The real Salem chose this guest: their Salem goes to the top and tells it straight. Never the two hosts.' },
   { name: 'award', arg: '<guestKey:n>', what: 'Give achievement n from the workshop list to a guest. Through Act 5 only.' },
+  { name: 'good-night', arg: '', what: 'After The End: Good night. The night is over for good; every screen keeps The End, the house keeps the jazz and the everyday lights. A second press changes nothing.' },
   // the safeguards (run.js, safeguards.js)
   { name: 'spill', arg: '', what: 'Spill the Beans: ask the Manor to change the story. Through Act 5 only. It decides silently and says nothing either way.' },
   { name: 'hush', arg: '<murderer|ghost>', what: 'The Hush: that role has been found out. Their answers move nothing from now on. No phone changes.' },

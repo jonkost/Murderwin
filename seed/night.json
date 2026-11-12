@@ -295,7 +295,7 @@
         {
           "key": "end",
           "name": "The End",
-          "what": "Every screen goes black and the projector is off. Every phone opens with everything readable, for good: the result, the clues, the notes.",
+          "what": "Every screen shows The End: Sir Irwin, his birthday line, paw prints. The lights go to Default. Every phone opens with everything readable, for good, The End on Now and the result under it. Then press Good night below.",
           "action": "end",
           "screen": "black"
         }

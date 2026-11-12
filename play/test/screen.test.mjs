@@ -64,19 +64,18 @@ test('the living room: the phase wins, then the finale, the vote, a drawing, the
   assert.equal(roomDark(null), false)
 })
 
-test('The End (cue 23, 25 Oct 2026): every room screen goes black once the night is over, and stays black', () => {
-  // nights/{id}.over, written by the end beat, darkens the kiosks that never read public/screen
-  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act', over: true }), true)
-  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }), true, 'the end beat alone is enough')
+test('The End (C1, 11 Nov 2026): no room screen goes dark once the night is over; the dark rule still holds before it', () => {
+  // nights/{id}.over, written by the end beat, or the end beat alone: never dark (closing.test.mjs checks the card)
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act', over: true }), false)
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }), false, 'the end beat alone')
   assert.equal(roomDark({ act: 7, beat: 'result', phase: 'act' }), false, 'the result beat is not the end')
-  assert.equal(roomDark({ act: 5, beat: 'roam', phase: 'act', over: true }), true, 'a night marked over is over whatever beat it says')
+  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }, { kind: 'black', title: '' }), false, 'the end beat\'s black doc is not dark either')
   // the TV and the iPad read the screen doc: a black doc with no title is dark, the titled one is the pause card
-  assert.equal(roomDark({ act: 7, beat: 'end', phase: 'act' }, { kind: 'black', title: '' }), true)
   assert.equal(roomDark({ act: 6, beat: 'door', phase: 'act' }, { kind: 'black', title: '' }), true)
   assert.equal(roomDark({ act: 6, beat: 'door', phase: 'paused' }, { kind: 'black', title: 'One moment' }), false, 'the pause card is not the dark')
   assert.equal(roomDark({ act: 6, beat: 'door', phase: 'act' }, { kind: 'door' }), false)
-  // the living view agrees: the end beat's black doc is dark there too
-  assert.equal(livingView({ night: { act: 7, beat: 'end', phase: 'act', over: true }, screen: { kind: 'black', title: '' } }), 'dark')
+  // the living view: The End, not the dark
+  assert.equal(livingView({ night: { act: 7, beat: 'end', phase: 'act', over: true }, screen: { kind: 'black', title: '' } }), 'end')
   // every kiosk goes through roomDark with the screen doc the TV reads, and the dispatch darkens before any room branch
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null)) body = <Dark />"), 'the dark branch comes first')

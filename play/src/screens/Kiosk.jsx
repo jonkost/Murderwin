@@ -11,13 +11,15 @@ import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
+import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
+import { RoomEnd, CreditsDedication, SpecialThanks } from './Closing'
+import { roomEnded } from '../lib/closing'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -44,7 +46,7 @@ import Spoken from './Spoken'
 // screen shows its game's rules card between groups (Rooms.jsx RulesCard);
 // the Parlour TV shows the join code through Act 1 and at the dinner wrap-up
 // (screen kind `join`) and a rejoin code under the ballot clock; and at The
-// End every screen goes black (lib/screen.js roomDark).
+// End every screen shows The End, for good (C1, 11 Nov 2026: Closing.jsx RoomEnd).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, Talk it
@@ -60,7 +62,7 @@ import Spoken from './Spoken'
 // panel keeps a dot for every screen. The bell shows on every night. None of
 // them ever covers the content, and none of them shows while the room is
 // dark, the bell ringing or not (styles.css hides all three beside a
-// near-black screen: the blackout, the role cards, the pause card, The End):
+// near-black screen: the blackout, the role cards, the pause card):
 // a kiosk that reloads during the blackout stays near-black. No room screen
 // says which kind of night it is (11 Nov 2026): the red REHEARSAL band went
 // first, then the small word Rehearsal under the TV's screens, since a
@@ -115,7 +117,9 @@ export default function Kiosk({ which }) {
   const r = relay.data
   // dark: the blackout and the prompt (paused or not), The End (the night is over),
   // or a black screen the server wrote; nothing in the corners shows while the room is dark
-  const dark = !!n && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  // The End (C1, 11 Nov 2026) is a card on every room screen, never the dark
+  const ended = !!n && roomEnded(n)
+  const dark = !!n && !ended && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
   // the dot and the wake note: on a rehearsal and with no night live, never on the party night (Jon,
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
@@ -132,6 +136,7 @@ export default function Kiosk({ which }) {
   let body
   if (standalone) body = <MemoryStandalone />
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
+  else if (ended) body = <RoomEnd />
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
   else if (code) body = <RoomCode cat={code} />
   else if (film) body = <RulesFilm at={film} />
@@ -311,6 +316,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     voteHeard.current = { id: voteId, n: voteN, settled: voteSettled }
   }, [voteId, voteN, voteSettled])
 
+  if (view === 'end') return <RoomEnd />
   if (view === 'dark') return <Dark />
   if (view === 'paused') return <OneMoment />
   // Act 7: the finale runs on this screen against the server's clock
@@ -817,6 +823,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
     </div>
   )
   if (stage === 'credits') return <Credits finale={finale} now={now} />
+  if (stage === 'dedication') return <CreditsDedication finale={finale} />
   if (stage === 'last') return (
     <div className="kiosk finale last">
       <img className="last-irwin" src={`${import.meta.env.BASE_URL}household/full/Irwin 5.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
@@ -924,11 +931,13 @@ function AwardsReel({ finale, now }) {
 
 // The end credits: the achievements the host gave, then the end-credit
 // awards (credits.awards), the joke counters, the room's split on every
-// Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
+// Parlour Game, the thanks and Jon's special thanks (none until his lines are in). One slow
+// roll on the server's clock; the dedication follows it on a card of its own (Closing.jsx).
 function Credits({ finale, now }) {
   const c = finale.credits ?? {}
-  const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - CREDITS_AFTER_MS)
-  const span = LAST_AFTER_MS - CREDITS_AFTER_MS
+  const times = creditsTimes(finale)
+  const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - times.credits)
+  const span = times.dedication - times.credits
   const climb = Math.min(1, since / 20_000)
   return (
     <div className="kiosk finale credits">
@@ -949,12 +958,7 @@ function Credits({ finale, now }) {
         </ul>
         <p className="kiosk-crest">Thank you</p>
         <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
-        {c.memory && (
-          <div className="in-memory">
-            <img src={`${import.meta.env.BASE_URL}${c.memory.photo}`} alt="" onError={e => { e.currentTarget.style.display = 'none' }} />
-            <p>{c.memory.line}</p>
-          </div>
-        )}
+        <SpecialThanks finale={finale} />
       </div>
     </div>
   )

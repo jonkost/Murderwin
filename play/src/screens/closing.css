@@ -1,0 +1,4 @@
+/* The End on a phone's Now tab (Closing.jsx PhoneEnd): the look's card in a
+   box of its own, since the card sizes itself to its box (look.css .lk-screen). */
+.phone-end { margin: 0 0 1rem; }
+.phone-end .lk-screen { width: 100%; aspect-ratio: 4 / 3; border-radius: 0.8rem; }

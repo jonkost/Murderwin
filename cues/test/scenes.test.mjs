@@ -100,7 +100,7 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['cue 21, the first Name press: the newscast on the TV, the music cuts', { night: night(7, 'reveal'), cues: green, sounds: { current: { id: null, at: 11, clips: ['x'], video: true } } }, ['stop']],
     ['the next name: still off', { night: night(7, 'reveal'), cues: green, sounds: { current: { id: null, at: 12, clips: ['y'], video: true } } }, []],
     ['cue 22, everyone\'s result: the credits roll at 35, Default', { night: night(7, 'result'), cues: green, sounds: { current: { id: 'sting-result', at: 13 } } }, ['play credits', 'scene Murderwin Default']],
-    ['cue 23, The End: the music off, the lights left, the projector off', { night: night(7, 'end'), cues: green }, ['stop', 'projector off']],
+    ['cue 23, The End (C1, 11 Nov 2026): the music as the sheet says, the lights on Default (already, from the result), the projector left on', { night: night(7, 'end'), cues: green }, ['stop']],
   ])
 })
 
@@ -240,7 +240,7 @@ test('the host\'s music buttons: play, pause, next, each once per press, and nev
   assert.deepEqual(words(r.actions), ['stop', 'scene Murderwin Dimmed'], 'the sheet changes: its music again')
   // a first press with nothing played yet starts the sheet's playlist, or the first
   const fresh = planScenes(emptySceneState(), { night: night(7, 'end'), cues: { music: { command: 'next', at: t } } }, t, SHEET)
-  assert.deepEqual(words(fresh.actions), ['stop', 'projector off', 'play jazz'], 'the host may play music after The End')
+  assert.deepEqual(words(fresh.actions), ['stop', 'scene Murderwin Default', 'projector on', 'play jazz'], 'the host may play music after The End')
 })
 
 test('the host\'s scene button: recalled once per press while fresh; the sheet does not undo it until the sheet changes', () => {
