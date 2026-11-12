@@ -80,11 +80,11 @@ export function step(state, { reply = null, error = null, now = Date.now() } = {
 // The loop: ask, wait for the answer, print what changed, sleep, ask again.
 // Never two calls at once. `call`, `sleep`, `say` and `now` are handed in, so
 // the test drives it with no network. Returns how many times it asked.
-export async function drive({ call, sleep, say, now = () => Date.now(), max = Infinity } = {}) {
+export async function drive({ call, sleep, say, now = () => Date.now(), max = Infinity, until = () => false } = {}) {
   const state = fresh()
   let asked = 0
   if (now() >= PARTY_DAY) { say(WORDS.partyDay); return asked }
-  while (asked < max) {
+  while (asked < max && !until()) {
     let reply = null
     let error = null
     asked++
@@ -95,4 +95,33 @@ export async function drive({ call, sleep, say, now = () => Date.now(), max = In
     await sleep(r.waitMs)
   }
   return asked
+}
+
+// Started with the night, with no step for Jon (the cue relay, cues.mjs):
+// the relay already watches the live night all evening, so it hands each
+// copy of the night's document to see(). The first time a practice night
+// with fill-in players shows, the fill-ins' clock starts inside the relay;
+// it stops when the night that is on no longer has them (a new night, the
+// real one, none), and starts again for the next that does. Only two of the
+// night's public fields are read: forceRehearsal and the count fillIns.
+// `npm run fill-ins` on its own does the same; two clocks at once are
+// harmless, since each move is made once whoever asks.
+export function wantsFillIns(night, now = Date.now()) {
+  return now < PARTY_DAY && night?.forceRehearsal === true && Number(night?.fillIns) > 0
+}
+export function autoDriver({ call, sleep, say, now = () => Date.now() } = {}) {
+  let wanted = false
+  let running = false
+  return {
+    see(night) {
+      wanted = wantsFillIns(night, now())
+      if (!wanted || running) return
+      running = true
+      say('fill-ins: a practice night with fill-in players is on; their clock is running')
+      drive({ call, sleep, say: line => say(`fill-ins: ${line}`), now, until: () => !wanted })
+        .catch(() => say('fill-ins: their clock stopped'))
+        .finally(() => { running = false; if (!wanted) say('fill-ins: their clock is stopped') })
+    },
+    get running() { return running },
+  }
 }

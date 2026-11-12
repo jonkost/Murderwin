@@ -145,3 +145,35 @@ test('the driver is blind: one function, no key, no document, nothing written', 
   // and the house has the function it calls
   assert.ok(read('../../functions/index.js').includes('export const fillIns = onCall('))
 })
+
+// ---- started with the night: the cue relay runs the clock (no step for Jon) -----------------
+
+test('the relay starts the fill-ins\' clock when a practice night with fill-ins shows, and stops it when that night is gone', async () => {
+  const { autoDriver, wantsFillIns } = await import('../lib/fillins.js')
+  assert.equal(wantsFillIns({ forceRehearsal: true, fillIns: 6 }, T), true)
+  assert.equal(wantsFillIns({ forceRehearsal: true }, T), false, 'a practice night with none')
+  assert.equal(wantsFillIns({ forceRehearsal: false, fillIns: 6 }, T), false, 'the real night, whatever it carries')
+  assert.equal(wantsFillIns({ forceRehearsal: true, fillIns: 6 }, PARTY_DAY), false, 'nor from the party day on')
+  assert.equal(wantsFillIns(null, T), false)
+  let calls = 0
+  const lines = []
+  let release
+  const gate = () => new Promise(r => { release = r })
+  const d = autoDriver({ call: async () => { calls++; return on() }, sleep: gate, say: l => lines.push(l), now: () => T })
+  d.see({ forceRehearsal: false, fillIns: 6 })
+  assert.equal(d.running, false, 'never for the real night')
+  d.see({ forceRehearsal: true, fillIns: 6 })
+  assert.equal(d.running, true)
+  d.see({ forceRehearsal: true, fillIns: 6 }) // every copy of the night doc: still one clock
+  await new Promise(r => setImmediate(r))
+  assert.equal(calls, 1, 'one clock, one call at a time')
+  d.see(null) // the night is gone
+  release()
+  await new Promise(r => setImmediate(r))
+  await new Promise(r => setImmediate(r))
+  assert.equal(d.running, false)
+  assert.equal(calls, 1)
+  assert.ok(lines.every(l => l.startsWith('fill-ins: ')) && !lines.some(l => /murderer|ghost|motive|role/i.test(l)), 'its own lines, counts only')
+  const relay = read('../cues.mjs')
+  assert.ok(relay.includes("fillIns?.see(docs.night)") && relay.includes("httpsCallable(fns, 'fillIns'"), 'the relay hands it the night it already watches')
+})

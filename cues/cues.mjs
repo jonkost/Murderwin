@@ -57,6 +57,7 @@ import { createMusic, followTrack } from './lib/music.js'
 import { createShortcutMusic, shortcutsFor } from './lib/shortcutMusic.js'
 import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
+import { autoDriver } from './lib/fillins.js' // a practice night's fill-in players (A4): their clock starts with the night
 
 const here = dirname(fileURLToPath(import.meta.url))
 const args = process.argv.slice(2)
@@ -428,14 +429,23 @@ if (!OFFLINE) {
   }
   await signInAnonymously(auth)
 }
+// The fill-in players' clock (A4, 11 Nov 2026; lib/fillins.js): one call that takes nothing and answers with counts.
+const fillIns = db ? autoDriver({ call: await fillInsCall(), sleep, say: log }) : null
+async function fillInsCall() {
+  const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import('firebase/functions')
+  const fns = getFunctions(auth.app, 'us-central1')
+  if (env.MURDERWIN_EMULATOR === '1') connectFunctionsEmulator(fns, env.MURDERWIN_EMULATOR_HOST || '127.0.0.1', 5001)
+  const call = httpsCallable(fns, 'fillIns', { timeout: 20_000 })
+  return async () => { if (!auth.currentUser) await signInAnonymously(auth); return (await call({})).data }
+}
 
 // The night doc (act, beat, phase) and five public docs, all readable by any phone.
 function watchNight(id) {
   for (const stop of stops) stop()
   stops = []
   docs = {}
-  if (!id) return
-  stops.push(onSnapshot(doc(db, `nights/${id}`), snap => { docs = { ...docs, night: snap.data() ?? null }; apply() }, e => log(`night: ${e.message}`)))
+  if (!id) { fillIns?.see(null); return }
+  stops.push(onSnapshot(doc(db, `nights/${id}`), snap => { docs = { ...docs, night: snap.data() ?? null }; apply(); fillIns?.see(docs.night) }, e => log(`night: ${e.message}`)))
   for (const name of ['cues', 'relay', 'sounds', 'salem', 'study']) {
     stops.push(onSnapshot(doc(db, `nights/${id}/public/${name}`), snap => { docs = { ...docs, [name]: snap.data() ?? null }; apply() }, e => log(`${name}: ${e.message}`)))
   }
