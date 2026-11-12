@@ -222,7 +222,6 @@ named after the character (the README in that folder lists the names), then
 - Replaying a night from its seed, and Home's count-only rows for whether
   the leans, the packing list and the drawing pictures exist.
   Both are cards on the board.
-- The pose photo for the end credits (a nice-to-have card).
 
 Closed on 24 October with the handoff's defaults: no Partner in Crime or
 Ghost Whisperer awards (*partnerAwards*: cut), and no Drawing pictures tab
