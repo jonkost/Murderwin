@@ -9,6 +9,16 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 11 Nov 2026, late · Claude Code (the night started, and one address for every screen)
+
+- Jon, during the walk-through's setup: "Yes, start it" (the brain), "All sounds can go live", "Start the night", then "the night setup is so difficult. I need it to be easy and clean."
+- **Started:** the brain on this Mac (a Terminal tab; all nine sounds, music, Hue scenes and string lights on; the projector's plug not set up) and a new rehearsal night, "Walk-through, Wed 11 Nov", from `functions/host.mjs create`. The brain and the night log both moved to the new night on their own.
+- **Built:** `/setup` (`firebase.json` sends it to `/play/?setup=1`; `play/src/screens/Setup.jsx`, `play/src/lib/setup.js`): "Which screen is this?", one button per room screen, the machine's last choice marked, a second button under Boo's for connecting the deck. No sign-in, no night, nothing written but the browser's own note. A test holds it to the Devices page's list.
+- A code Jon sent from the work MacBook Pro was the workshop's "not on the staff list" code. Not added: that Mac needs only the Parlour TV page.
+- **Tried:** in the preview: the page, a tap through to the Parlour screen, the mark on return. Not on the other machines.
+- **Left:** the study station on the M1 Air (card 474) is still the hard part of setup; the Stream Deck's connect is still a step. Card 572 asks Jon what is still hard.
+- **Decisions:** none.
+
 ## 11 Nov 2026, evening · Claude Code (before the walk-through: the band off, the credits, three phones)
 
 - Jon: "At this point this game should be 100% finished. I need to make sure the credits are ready and I need to make sure when I run the test tonight we have 3 players... I need to see the way my app looks. It will be step by step. Also make sure the larger rehearsals banner is not there." The three: Jon, Susan and a third, each on a device that scans in, any role, one team of three going room to room.

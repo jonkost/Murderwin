@@ -253,6 +253,17 @@ game; it serves the lights and the speakers.
 
 ## Start order, and how you know each one is alive
 
+*One address for every screen (11 Nov).* On each machine type
+`murderwin-at-sirwin-manor.web.app/setup`. The page asks "Which screen is
+this?" with one big button per room: the Parlour TV, the Study, Boo's arcade,
+the Orangerie, the iPad Pro's three stations, Boo's camera. Tap the room,
+make the window full screen, click once. It needs no sign-in. The machine's
+last choice is marked the next time, so on the party night it is the same
+tap. Boo's button has a second one under it for connecting the Stream Deck
+first. When the iPad Pro moves, press Back (or type the address again) and
+tap its next room. The page is for before the guests come; no guest screen
+links to it.
+
 1. *The router, the Hue bridge and bulb, both Nanoleaf controllers, the
    string lights and the projector's plug.* On first. Give them five
    minutes. The plug is an IKEA smart switch in the Home app, with the

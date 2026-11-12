@@ -1281,3 +1281,19 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
   .arcade-key, .arcade-turn, .arcade-knob { transition: none; }
   .arcade-key:active, .arcade-turn:active, .arcade-knob:active { transform: none; }
 }
+
+/* ---- The setup page (/setup, 11 Nov 2026): which screen is this? Before the guests, never on the night ---- */
+.setup { min-height: 100vh; min-height: 100dvh; padding: 2rem 1rem 3rem; max-width: 46rem; margin: 0 auto; }
+.setup h1 { font-size: 2rem; margin: 0 0 0.4rem; }
+.setup-sub { color: var(--dim); margin: 0 0 1.4rem; }
+.setup-list, .setup-extras { list-style: none; padding: 0; margin: 0 0 1.6rem; display: grid; gap: 0.8rem; }
+.setup-go { display: grid; gap: 0.2rem; width: 100%; text-align: left; padding: 1rem 1.2rem; min-height: 4.5rem; background: var(--card); border: 2px solid var(--line); border-radius: 0.8rem; }
+.setup-go:hover, .setup-go:focus-visible { border-color: var(--ink); }
+.setup-room.last .setup-go { border-color: var(--good); }
+.setup-name { font-size: 1.5rem; font-weight: 700; }
+.setup-machine { font-size: 1.05rem; }
+.setup-when { font-size: 0.95rem; color: var(--dim); }
+.setup-first { margin: 0.5rem 0 0 1.2rem; }
+.setup-first button { padding: 0.6rem 1rem; background: none; border: 1px solid var(--line); border-radius: 0.6rem; }
+.setup-first p, .setup-extras span { color: var(--dim); font-size: 0.95rem; margin: 0.3rem 0 0; }
+.setup-extras a { color: var(--ink); font-size: 1.1rem; }

@@ -30,6 +30,8 @@ feature lands Wednesday 11 November, after the second full tech run; then checks
 
 > **11 Nov 2026, evening, Jon before the walk-through ("make sure the larger rehearsals banner is not there"; built that day, not deployed, not pushed):** no red REHEARSAL band on any phone or room screen, so a rehearsal looks like the party night. The Host tab's top lines say "This night is a rehearsal" or "This is the party night", and that line is the check that the party box worked. The practice pages keep their PRACTICE band. Do not put the band back. The walk-through is three devices that scan in (Jon, Susan and a third), any role, one team of three. The credits were checked: complete, 73 seconds, no `sydney.jpg`; with nine guests each line is on screen about six seconds (card 570).
 
+> **11 Nov 2026, late, Jon setting up the walk-through ("the night setup is so difficult. I need it to be easy and clean"; built that night):** one address for every screen, `murderwin-at-sirwin-manor.web.app/setup` (`firebase.json` redirect to `/play/?setup=1`, `play/src/lib/setup.js`, `play/src/screens/Setup.jsx`): "Which screen is this?" and one button per room screen; the machine's last choice is marked. A new room screen needs a button there (a test checks it against the Devices page). It is a setup page: no guest screen may link to it.
+
 ## RULE 1 — THE HOST PLAYS
 
 Jon (the human you are working with) is the host, the developer, AND a player.

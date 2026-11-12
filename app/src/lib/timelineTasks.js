@@ -1171,3 +1171,10 @@ export const WALKTHROUGH_1111_TASKS = [
   { order: 570, moment: 'act7.result', status: 'todo', who: 'Jon', by: '2026-11-12', title: 'Tonight: watch the credits to the end and say if they roll too fast', detail: 'On the walk-through, let the credits play all the way to Can we play again? Tonight they are short, with three players. With nine guests the list is about three times as long in the same 73 seconds, so each line stays about six seconds. If that sounds too fast to read, say so on the Postmortem page and Claude Code makes the roll longer.' },
 ]
 
+// 11 Nov 2026, late ("the night setup is so difficult. I need it to be easy
+// and clean"): one address for every screen. One done card, one job for Jon.
+export const SETUP_1111_TASKS = [
+  { order: 571, moment: 'setup', status: 'done', who: 'Claude Code', title: 'One short address sets up every screen', detail: 'Done 11 Nov 2026. On any machine, type murderwin-at-sirwin-manor.web.app/setup. The page asks Which screen is this? and has one big button for each room: the Parlour TV, the Study, Boo’s arcade, the Orangerie, the three stations of your iPad Pro, and Boo’s camera. Tap the room, make the window full screen and click once. No sign-in is needed. Each machine remembers its last choice and marks it, so on the party night it is the same tap again. Under Boo’s button there is a second one for connecting the Stream Deck first.' },
+  { order: 572, moment: 'setup', status: 'todo', who: 'Jon', by: '2026-11-13', title: 'Try the setup address on every machine and say what is still hard', detail: 'On each machine type murderwin-at-sirwin-manor.web.app/setup and tap its room. Then say on the Postmortem page which parts of setting up were still slow or confusing, one at a time: for example the Stream Deck, the study’s walls, the second tab for the intro video, or moving the iPad Pro. Claude Code makes each one simpler.' },
+]
+

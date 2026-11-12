@@ -9,6 +9,8 @@ import Check from './screens/Check'
 import { SalemPractice, PoseCameraPractice, OrangeriePractice } from './screens/Practice'
 import BooArcade from './screens/Arcade'
 import { practiceParam } from './lib/gametest'
+import Setup from './screens/Setup'
+import { setupParam } from './lib/setup'
 import './styles.css'
 
 const preview = previewScreen()
@@ -28,11 +30,13 @@ const check = new URLSearchParams(window.location.search).get('check')
 const practice = practiceParam()
 const PRACTICE = { salem: SalemPractice, 'pose-wall': PoseCameraPractice, 'orangerie-wall': OrangeriePractice }
 const Practicing = practice ? PRACTICE[practice] : null
+// The setup page: /setup (firebase.json) or /play/?setup=1. Which screen is this? One tap opens that room (11 Nov 2026).
+const setup = setupParam()
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      {check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
+      {setup ? <Setup /> : check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
     </ErrorBoundary>
   </React.StrictMode>,
 )

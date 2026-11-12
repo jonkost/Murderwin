@@ -25,6 +25,10 @@
       "firebase.json",
       "**/.*"
     ],
+    "redirects": [
+      { "source": "/setup", "destination": "/play/?setup=1", "type": 302 },
+      { "source": "/setup/", "destination": "/play/?setup=1", "type": 302 }
+    ],
     "headers": [
       {
         "source": "**/*.html",
