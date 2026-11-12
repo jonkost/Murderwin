@@ -2,7 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, nameKey } from '../lib/night.js'
-import { hostCommand, player } from '../lib/run.js'
+import { hostCommand, player, clockTick, MOVE_CLAIM_MS } from '../lib/run.js'
+import { act4Path, act4PrivatePath } from '../lib/act4.js'
 import { ms } from '../lib/deal.js'
 import { GRACE_MS, parlourPath, dueSlot } from '../lib/windows.js'
 import { isFillInUid } from '../lib/seats.js'
@@ -144,6 +145,26 @@ test('S2 the Host tab\'s Next names the beat it is showing: stale, it moves noth
   assert.equal(nightOf(db, nightId).beat, 'round1', 'not sent past a room it never played')
   const r = await host(db, nightId, 'next', { from: '4/round1' }, T0 + 2_000)
   assert.equal(r.beat, 'round2')
+  assert.equal(nightOf(db, nightId).beat, 'round2')
+})
+
+test('S3 a round whose beat was written but never started is started by the next clock, once, after the claim runs out', async () => {
+  const { db, nightId } = await intoRounds()
+  const pub = () => db.store.get(act4Path(nightId))
+  assert.deepEqual([pub().phase, pub().round], ['rounds', 1])
+  // round 1 has run out; a clock took the move to round 2, wrote the beat, and then failed before the round began
+  const at = ms(pub().roundEndsAt) + 1_000
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), beat: 'round2' })
+  const priv = db.store.get(act4PrivatePath(nightId)) ?? { paid: {}, arrived: {} }
+  db.store.set(act4PrivatePath(nightId), { ...priv, moves: { ...(priv.moves ?? {}), round2: new Date(at) } })
+  assert.deepEqual(await clockTick(db, nightId, at + 5_000), { moved: null }, 'inside the claim: the clock that took it may still be at work')
+  assert.equal(pub().round, 1)
+  const r = await clockTick(db, nightId, at + MOVE_CLAIM_MS + 1_000)
+  assert.equal(r.moved, 'round2', 'the round is started, not left for fifteen minutes')
+  assert.deepEqual([pub().phase, pub().round], ['rounds', 2])
+  const started = ms(pub().roundStartsAt)
+  assert.deepEqual(await clockTick(db, nightId, at + 2 * MOVE_CLAIM_MS + 2_000), { moved: null }, 'and only once')
+  assert.equal(ms(pub().roundStartsAt), started)
   assert.equal(nightOf(db, nightId).beat, 'round2')
 })
 

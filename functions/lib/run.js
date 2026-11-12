@@ -216,7 +216,9 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
     // a practice night with fill-in players: one clock takes each move (claimMove, below); any other night, as ever.
     // The claim is named for where the move goes (round2, finish): each is made once a night, and a clock that read
     // the night after another moved its beat, but before the round's own record caught up, finds the claim taken.
-    if (due && n.fillIns && n.forceRehearsal === true && (n.beat === due || !(await claimMove(db, nightId, due, now)))) return { moved: null }
+    // A beat written whose round never started (a throw between the two) is started again by the next clock once the
+    // claim has run out (review 12 Nov 2026): only a beat whose Act 4 record has caught up is left alone.
+    if (due && n.fillIns && n.forceRehearsal === true && ((n.beat === due && await act4Entered(db, nightId, due)) || !(await claimMove(db, nightId, due, now)))) return { moved: null }
     if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
     if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
   }
@@ -231,6 +233,14 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
 // fifteen seconds leaves it alone. (If the one that took it failed, the next
 // clock after that takes it again.) Never asked on any other night.
 export const MOVE_CLAIM_MS = 15_000
+// Has Act 4's public record caught up with the beat (the group cards dealt, the round begun)?
+async function act4Entered(db, nightId, beat) {
+  const pub = (await db.doc(act4.act4Path(nightId)).get()).data() ?? {}
+  if (pub.phase === 'done') return true
+  if (beat === 'groups') return !!pub.phase && pub.phase !== 'warn'
+  const round = roundOf(beat)
+  return !round || (pub.phase === 'rounds' && Number(pub.round) >= round)
+}
 async function claimMove(db, nightId, key, now) {
   const ref = db.doc(act4.act4PrivatePath(nightId))
   return db.runTransaction(async tx => {
