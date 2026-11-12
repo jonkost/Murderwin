@@ -5,10 +5,16 @@
 //
 // The smiley is public (Sir Irwin's slide 3 shows one square of it). The three
 // real pictures are SEALED: a bank Jon never sees, at sealed/relay_pictures,
-// written by scripts/generate-relay-pictures.mjs (blind, counts only) or by
-// Jenna. The drawing reads it on the party night only; a rehearsal, or a bank
-// with no good picture for a round, uses the random stand-in grids
-// (relay-gen.js) for that round instead.
+// written by scripts/generate-relay-pictures.mjs (blind, counts only). The
+// drawing reads it on the party night only. A bank with no good picture for
+// a round uses the random stand-in grids (relay-gen.js) for that round.
+//
+// Two banks since 12 Nov 2026 (handoff 11 Nov, job A7): sealed/relay_pictures
+// for the party night, sealed/relay_pictures_practice for a practice night.
+// Jon sees the practice pictures on a practice night, so their names are
+// burned: the maker keeps every one of them off the party bank. A practice
+// night reads the practice bank and never the party's; the party night reads
+// the party's and never the practice one (bankDocFor, readBank).
 //
 // sealed/relay_pictures = { pictures: [{ id, round: 1|2|3, name, decoys: [3 names], cells: { A1: [stroke] } }] }
 // Strokes are relay-gen.js's: line, arc, circle, dot, in cell-local 0..1.
@@ -24,16 +30,30 @@ import { createHash } from 'node:crypto'
 import { cellLabel } from './relay-gen.js'
 
 export const BANK_DOC = 'sealed/relay_pictures'
+export const PRACTICE_BANK_DOC = 'sealed/relay_pictures_practice'
+// The one bank a night reads, by its party flag: the party's on the party
+// night, the practice bank on any other night.
+export const bankDocFor = ({ party = false } = {}) => (party === true ? BANK_DOC : PRACTICE_BANK_DOC)
+export async function readBank(db, { party = false } = {}) {
+  const snap = await db.doc(bankDocFor({ party })).get()
+  return snap.exists ? snap.data() ?? null : null
+}
 export const ROUND_SIZES = { 1: 3, 2: 4, 3: 5 }
 // pictures the blind script keeps per round (scripts/generate-relay-pictures.mjs);
 // the night picks one of them at random, so a full bank is nine
 export const PER_ROUND = 3
 // the most drawn squares a round may have, so the night's turns fit the drawing's time
 export const ROUND_CAPS = { 1: 9, 2: 11, 3: 13 }
+// the most strokes one square may hold: what a person copies by hand in a
+// fifteen-second turn (was two until 12 Nov 2026, when the maker began
+// cutting whole pictures into squares)
+export const STROKES_PER_SQUARE = 3
 // The style samples, the star Jon wrote as the example of the art, and the
 // teapot the generator's brief once gave as its example name: pictures Jon
-// could guess (Rule 1). The brief now gives no example picture at all.
-export const DISQUALIFIED = ['smiley', 'smile', 'house', 'diamond', 'star', 'teapot']
+// could guess (Rule 1). The brief now gives no example picture at all. The
+// examples in the 11 Nov handoff (a fish, a kite, a checkerboard, a pinwheel,
+// a snowflake) joined on 12 Nov, for the same reason: Jon read them.
+export const DISQUALIFIED = ['smiley', 'smile', 'house', 'diamond', 'star', 'teapot', 'fish', 'kite', 'checkerboard', 'checker', 'pinwheel', 'snowflake']
 // Things that are clues elsewhere in the game, so a picture of one would read
 // as a clue in Act 6: the drawn traces, and the objects on the motive cards
 // (docs/handoff-2026-10-22.md §3). The generator's brief names them too.
@@ -96,7 +116,7 @@ export function checkPicture(p, round) {
   if (drawn.length < size || drawn.length > ROUND_CAPS[round]) bad.push('squares')
   for (const [label, strokes] of drawn) {
     if (!labels.has(label)) { bad.push('label'); continue }
-    if (strokes.length > 2) bad.push('strokes')
+    if (strokes.length > STROKES_PER_SQUARE) bad.push('strokes')
     for (const s of strokes) {
       if (!KINDS.includes(s?.kind)) { bad.push('kind'); continue }
       if (s.kind === 'line' || s.kind === 'arc') { if (!inUnit(s.from) || !inUnit(s.to)) bad.push('bounds') }

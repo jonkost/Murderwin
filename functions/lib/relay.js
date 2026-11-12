@@ -37,7 +37,7 @@
 import { randomInt } from 'node:crypto'
 import { generateSet, cellLabel } from './relay-gen.js'
 import { NightError, characterById, GAME_NAMES } from './night.js'
-import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
+import { relayGrids, readBank, PRACTICE } from './relay-bank.js'
 import { nightSeed, pickFor } from './seed.js'
 import { drawerKeys } from './seats.js'
 import { IRWIN_LINES, lineTiming } from './slide-voice.js'
@@ -148,10 +148,10 @@ export async function start(db, { nightId, now = Date.now(), seed = null, force 
   if (seed == null) seed = pickFor(word, 'relay')(2 ** 31)
   const keys = word ? Object.keys(roster).sort() : Object.keys(roster)
   if (keys.length < 2) throw new NightError('invalid', 'The drawing needs at least two people.')
-  // the sealed bank, on the party night only; a rehearsal never reads it
+  // the party's bank on the party night, the practice bank on any other (relay-bank.js readBank)
   const caseSnap = await db.doc(`cases/${nightId}`).get()
   const party = caseSnap.exists && caseSnap.data().rehearsal === false
-  const bank = party ? (await db.doc(BANK_DOC).get()).data() ?? null : null
+  const bank = await readBank(db, { party })
   const set = relayGrids({ bank, standIn: generateSet(seed), seed })
   const turns = set.grids.reduce((n, g) => n + g.order.length, 0)
   if (turns > MAX_TURNS) throw new NightError('invalid', 'The drawing would run over its time.')

@@ -50,11 +50,16 @@ You run each command. Each prints counts and PASS or FAIL only.
   two answers each of the four listening cats would pick. The command fills
   only the blanks, so a lean Jenna set is never replaced. A blank still works
   on the night: the cat picks at random.
-- **The Relay Drawing pictures.** Simple thick-line pictures for the three real
-  rounds, each with three wrong names for the guess. Up to three per round; the
-  night picks one per round at random. A picture is refused if its name or any
-  wrong name is a style sample, a star, a trace object or a motive-card object.
-  The command never touches a picture already there. Rehearsals never use them.
+- **The Relay Drawing pictures.** Simple thick-line pictures for the three
+  rounds, each with three wrong names for the guess, in two banks: the party's
+  and the practice nights' (12 Nov 2026). About six per round; the night picks
+  one per round at random from its own bank. Each picture is designed whole by
+  the Claude API, cut into squares by code, and kept only if a vision model,
+  asked three times without the name, names it twice. A picture is refused if
+  its name or any wrong name is a style sample, a star, a trace object or a
+  motive-card object; a party picture also if it has a practice picture's
+  name (Jon sees those). Each run rebuilds its bank. A practice night never
+  reads the party's bank.
 - **The bag packing.** See "The bags" below.
 - **Each night's case.** Made by the game at the blackout, from who came: who
   did it, who died, the motive (drawn at random from the nineteen), which
@@ -168,7 +173,8 @@ Every sealed path, its writer and its readers (no client reads any of them;
 | Path | Written by | Read by |
 |---|---|---|
 | `sealed/parlour_leans` | `scripts/generate-leans.mjs` (`run leans`, blanks only); the Steward's `lean` | `deal.buildCaseForNight` on a party night only (copied into `parlourPlan.leans`), `steward.js opLeans`, `steward.js opChecks` (LN1, a count) |
-| `sealed/relay_pictures` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures`) | `relay.start` on a party night only (`cases/{id}.rehearsal === false`), `steward.js opChecks` (RP1, a count) |
+| `sealed/relay_pictures` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures -- --party`) | `relay.start` on a party night only (`cases/{id}.rehearsal === false`), `steward.js opChecks` (RP1, a count) |
+| `sealed/relay_pictures_practice` | `scripts/generate-relay-pictures.mjs` (`run relay-pictures -- --practice`) | `relay.start` on any other night, the party run of the maker (the names only, for its never-list), `steward.js opChecks` (RP1, a count) |
 | `sealed/bags` | `scripts/pack-bags.mjs` (`run pack-bags`) | `bags.readPacking` for the bag clues (`bagclues.js`) on a party night only: `deal.greetGuest` (Act 2, the Murderer's bag) and `act4.payRoom` (Act 4, the Ghost's bag); `night.packedBagCount` at `createNight` on every night (the highest bag number only, never an item); `steward.js opBags` and `opChecks` (PK1, G43, PK2, counts) |
 | `cases/{nightId}` | `deal.buildCaseForNight` at the Act 1 blackout; then kept up to date by `deal.js` (late joiners, what each clue crossed off), `windows.js` (the dial), `ledger.js` (dealt clues, exposure) and `safeguards.js` (Spill the Beans) | Functions only: `deal.js`, `screen.js`, `station.js`, `windows.js`, `safeguards.js`, `ledger.js`; `relay.js` and `discard.js` read its `rehearsal` flag only |
 | `nights/{id}/private/*` | the Functions (the Act 2 rooms, the bulletin, the drawing, the dial clues) | Functions only |
@@ -212,13 +218,20 @@ and prints counts only. The dealer copies it into the case's `parlourPlan` at
 a party deal; a rehearsal never reads the table, so its `parlourPlan.leans`
 is `{}`, and a blank lean is a coin flip on the night.
 
-Drawing pictures: `sealed/relay_pictures`, written by
-`npm --prefix scripts run relay-pictures` (`generate-relay-pictures.mjs`,
-`--dry` counts what is missing). It tops each round up to `PER_ROUND` = 3
-pictures that pass `relay-bank.checkPicture` (which also refuses the
-never-list: the style samples, a star, a teapot, the trace objects and the motive-card
-objects, in the name or any decoy), never touches existing ones, prints counts
-and PASS/FAIL only, and `relay.start` reads it on the party night only. Shape
+Drawing pictures: `sealed/relay_pictures_practice`, then `sealed/relay_pictures`,
+written by `npm --prefix scripts run relay-pictures -- --practice` and
+`-- --party` (`generate-relay-pictures.mjs` with `relay-art.mjs`; `-- --dry`
+designs and judges and writes nothing). The Claude API designs each whole
+picture on one canvas; code cuts it into squares, runs the code checks and
+`relay-bank.checkPicture` (the never-list: the style samples, a star, a
+teapot, the 11 Nov handoff's examples, the trace objects and the motive-card
+objects, in the name or any decoy; for the party, every practice name); a
+vision model sees the cut picture as a PNG in memory, three times without the
+name, and two matching answers keep it. Each run REBUILDS its bank (the 11
+Nov handoff; this replaces "never touches existing ones" for this bank). It
+prints counts by check and PASS/FAIL only: never a name, a stroke, an answer
+or a reply, and an error as its class and a length. `relay.start` reads the
+party bank on the party night only and the practice bank on any other. Shape
 and checks: `docs/relay-drawing-game.md`, For Claude Code.
 
 Bag contents: `sealed/bags`, written by the blind packer

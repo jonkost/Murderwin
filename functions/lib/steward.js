@@ -27,7 +27,7 @@
 import { createHash } from 'node:crypto'
 import { NightError, readArea } from './night.js'
 import { LISTENERS, ANSWERS, QUESTIONS } from './parlour.js'
-import { BANK_DOC } from './relay-bank.js'
+import { BANK_DOC, PRACTICE_BANK_DOC } from './relay-bank.js'
 
 // The Steward's hash: the SHA-256 of their verified Google email, lower
 // case. The same value as isAdmin() in firestore.rules (the admin-drift
@@ -163,14 +163,14 @@ async function opLean(db, data, { now }) {
 async function opChecks(db, { rng = n => Math.floor(Math.random() * n) } = {}) {
   // loaded here, not at the top: checks.js reaches act4.js, which reaches deal.js, which imports this file
   const { packingChecks, leanChecks, pictureChecks, CHECK_NAMES } = await import('./checks.js')
-  const [bags, leans, pictures, items] = await Promise.all([
-    db.doc('sealed/bags').get(), db.doc(LEANS_DOC).get(), db.doc(BANK_DOC).get(), readArea(db, 'scenarios'),
+  const [bags, leans, pictures, items, practice] = await Promise.all([
+    db.doc('sealed/bags').get(), db.doc(LEANS_DOC).get(), db.doc(BANK_DOC).get(), readArea(db, 'scenarios'), db.doc(PRACTICE_BANK_DOC).get(),
   ])
   const sets = items.filter(i => Array.isArray(i.beats) && i.beats.length === QUESTIONS).map(i => ({ id: String(i.id) }))
   const results = [
     ...packingChecks(bags.exists ? bags.data() : null, { rng }),
     ...leanChecks(leans.exists ? (leans.data().sets ?? {}) : {}, sets),
-    ...pictureChecks(pictures.exists ? pictures.data() : null),
+    ...pictureChecks(pictures.exists ? pictures.data() : null, practice.exists ? practice.data() : null),
   ].map(r => ({ id: r.id, name: CHECK_NAMES[r.id] ?? r.id, pass: !!r.pass, ...(Number.isFinite(r.count) ? { count: r.count, of: r.of } : {}) }))
   return { ok: true, allPass: results.every(r => r.pass), results }
 }

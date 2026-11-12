@@ -876,7 +876,8 @@ test('F01 with fill-ins: a whole practice night, eight seats, Start to The End; 
   assert.deepEqual([s.moves.locked, s.moves.voted], [6, 6], 'six taps of Locked in and six votes, each a fill-in\'s own')
   assert.ok(s.moves.answered >= 6 * 3, 'and every Parlour Game answered in time')
   assert.ok(s.drawers >= 1 && s.drawers <= 2, 'only the two real players were ever called to the paper')
-  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), [], 'nothing sealed: a practice night reads its own case, never the party\'s packing (bags.js packingFor)')
+  // the one bank a practice night may read is its own practice pictures (A7: sealed/relay_pictures_practice), never the party's
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/relay_pictures_practice'], 'a practice night reads its own case and its own practice pictures, never the party\'s packing, leans or pictures')
   assert.equal(lines.length, 1)
   assert.match(lines[0], /^Fill-in night: 8 seats \(6 fill-ins\), 4 groups, 4 rounds, 4 early chimes; .* PASS$/)
   assert.ok(!/murderer|ghost|motive/i.test(lines[0]), 'counts only')

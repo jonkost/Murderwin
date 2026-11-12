@@ -215,7 +215,7 @@ These protect Jon's ability to play. Run them with every other check.
 
 - **L01** No sealed content anywhere in the repo or its git history: generated cases, the dial mapping, the Parlour lean table, the Relay Drawing picture bank, bag contents, and the retired per-motive sets still in Firestore (kernels, document texts, echo fragments, the code-to-motive manifest). (The W-O-O-F News, cat hint and Irwin line banks are open and may be in the repo; the per-night pick never is.) The test checks every tracked file, and every file name in git history, for the guarded patterns (anything named `sealed*`, `*.sealed.json`, a `cases/` JSON, `service-account*`). It also checks that no tracked JSON looks like a sealed doc (a kernels key holding text, or a code-to-motive map). It prints only counts and PASS or FAIL, never a match. Plain words like "bags" or "manifest" are not markers: normal files such as `scripts/pack-bags.mjs` use them.
 - **L02** No test output, log file, or browser console line contains sealed text.
-- **L03** A rehearsal night never reads the secrets: on a rehearsal the dealer skips the leans, the bag clues skip the packing (they show stand-ins), and the Relay Drawing skips the picture bank (checked by a test). Every night, rehearsals included, reads the packing's bag count when it is made, never an item.
+- **L03** A rehearsal night never reads the secrets: on a rehearsal the dealer skips the leans, the bag clues skip the packing (they show stand-ins), and the Relay Drawing reads only the practice picture bank, never the party's (checked by a test; 12 Nov 2026). Every night, rehearsals included, reads the packing's bag count when it is made, never an item.
 - **L04** Jon's workshop account cannot open sealed content. Only Jenna's can.
 - **L05** The lean table is not in the repo, and Jon's account cannot read it.
 - **L06** The bag packing is not in the repo, and Jon's account cannot read it.
@@ -232,7 +232,7 @@ Run on the server from Jenna's page ("Run the checks"), never in a terminal. Eac
 - **G43** Every bag has at least two clue words (on the real packing).
 - **PK2** With two bags sitting out (eight guests), nearly every bag still keeps two clue words: at least nine in ten, over 200 random draws.
 - **LN1** Every Parlour Game question has a lean for every cat.
-- **RP1** The drawing has a good picture for each of its three rounds.
+- **RP1** The drawing has a good picture for each of its three rounds, in the party bank and in the practice bank (a count of six), and no party picture has the name of a practice one (12 Nov 2026).
 
 ---
 
