@@ -406,6 +406,41 @@ Decisions made while building, on top of §10:
 
 ---
 
+## 12a. Ready, lit, the right way round (12 November 2026, A8)
+
+Jon, after the 11 Nov practice: "it needs to be lit until the game starts",
+and Granolia's hint "was reversed... backwards to the actual design".
+
+- **Three states on the screen, one line each.** Ready: "Touch any hexagon
+  to start." (only while a group is due and has not played). Playing:
+  Granolia's one line, the jewels and the clock. Done: her last line, or
+  "Done. Back to the Parlour." for a group that has played. With nobody due
+  the card has no line. The workshop's study lines still win over these
+  defaults when Jon wrote one (IDLE is the ready line).
+- **Lit until the first touch.** While the room waits, the hexagons glow a
+  soft white and the bars a warm white, breathing slowly when the
+  controller takes a looping frame (still, if it does not). The first
+  touch drops the hexagons to the game's dim at once. The room's lamp is
+  the brain's: Murderwin Default until the station says playing, then
+  Study Dim, then Default again at done (cues/scenes.json `study`,
+  unchanged).
+- **Why the room could be dark before the start on 11 Nov.** Any touch
+  started a game, in any act, with or without a group due. In Act 2 every
+  guest stands at this wall to scan Granolia's code, so a game could start
+  then and still be on the wall (playing, then waiting for a touch back)
+  when Act 4 began; in Act 4 that state recalls Study Dim. With one group
+  on 11 Nov the Study had nobody due in three rounds of four, so a stray
+  touch then dimmed the room too. A game nobody was due for also ended in
+  a report the server refused, which the station sent again every second.
+  Now, on a live night, the wall starts only for the group due, once; a
+  report with no group is never sent, and a refused one is not sent again.
+- **Granolia's map, the right way round.** The hint is drawn with the rules
+  card's ten hexagons (play/src/lib/walls.js HEX_CENTRES). The controller's
+  own layout is that shape turned half way round (not mirrored), so the old
+  drawing was upside down and back to front. The station works out which
+  drawn hexagon each panel is from the layout, or uses the map set by hand
+  on the Game test tab (Check the map, §13), kept beside the taught taps.
+
 ## 13. Trying it before the night: the study test (24 October 2026)
 
 The first section of the workshop's Game test tab is the study test (the old Study test address
@@ -432,6 +467,11 @@ the tab says it is connected, and:
   pattern on the white wall, then put in the colour and the number on the answer pad on your
   phone, which does what the button box does (a colour, a number, Undo, Submit). The tab follows
   the round, the pairs and the misses. A round nobody touches for ten minutes ends on its own.
+- *Check the map* (12 Nov 2026, A8). Stand facing the hexagons. The wall lights one and the tab
+  draws the rules card's ten hexagons with one lit: Yes or No, for the first on the left, one in
+  the middle and the last on the right. A No lights each panel in turn and Jon taps the same one
+  in the drawing; the station saves that map and checks again. Granolia's numbered hint on the
+  Study's screen uses this map, so three Yeses mean the hint is the right way round.
 - *Stop* ends any of them. The tab also shows the last tap, and what each wall is doing.
 
 In Act 4, while a group is due at the study or playing there, the teach and the practice do
@@ -530,6 +570,24 @@ id (`listenTouch` hands it as `tapId`, never through an older map) to that panel
 start and `setTouchMap` takes a newly taught one with no restart; it lives on whichever Mac runs the
 station (not in the repo), so it must be taught on the M1 Air or copied there.
 `npm run teach-touch` in `station/` does the same from the terminal, with the station stopped.
+
+Granolia's map (A8, 12 Nov 2026): `lib/hexmap.js` says which `HEX_CENTRES` index (the rules card's
+drawing, copied from `play/src/lib/walls.js`, a test keeps them equal) each panel is, in the
+station's panel order. `fitHexes(layout)` turns the controller's shape (x, -y) onto the drawing by
+whole degrees, no mirror, and takes the one-to-one fit within 15 units; the real wall's fixture
+fits at 180 degrees exactly, `[7, 5, 8, 6, 4, 1, 9, 2, 0, 3]`. `station/hex-map.json` (panel id to
+hexagon, not in the repo, left out of the zip like `touch-map.json`) wins when it names every panel
+once; it is written by the test mode's Check the map (commands `match`, `yes`, `no`, `hex`, the
+status's `match` part, whitelisted in `functions/lib/studytest.js`). The runner sends the map as
+`hexes` with every state; the screen draws with it (`play/src/screens/StudyHexes.jsx HexHint`), or
+with `walls.js hexOf` (the same fit) when the station sends none, or the old circles when neither
+fits. The waiting look: `reset` marks its rest effects `waiting`, which the runner paints as
+`ELEMENTS_WAIT` and `LINES_WAIT`, through `Nanoleaf.breathe` (one looping custom frame, two steps a
+piece) or a still frame if the controller refuses; `begin` emits a plain `elements.rest` so the
+first touch drops to `ELEMENTS_REST`. The test mode hands the walls back with `runner.glow()`. The
+gate: `runner.closed` (a night, the machine idle, and no group due or the group just reported
+finished) makes `touch` and `key` do nothing. A `server.finished` with no group is never sent, and
+one the server refuses (invalid, permission, not found) is not retried.
 A tap on a piece no panel holds is logged once per piece. Tried on 24 Oct: pairing, the layout
 read, frames and `identify` on both walls; two of ten hexagons taught on another Mac, nothing kept.
 Not yet: the full teach on the M1 Air, the Stream Deck, a whole round.

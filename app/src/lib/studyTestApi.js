@@ -95,6 +95,19 @@ function previewApi() {
     }
     if (command === 'stop') { clearTimeout(timer); push({ mode: 'idle', teach: null, message: 'Stopped. Both walls are back to rest.' }) }
     if (command === 'key') key(name)
+    // Check the map (A8): three checks, a No walks the ten hexagons
+    if (command === 'match') push({ mode: 'match', match: { kind: 'check', step: 1, of: 3, hex: 0, done: false, ok: false } })
+    if (command === 'yes' && status.match) {
+      const m = status.match
+      if (m.step >= 3) push({ mode: 'idle', match: { ...m, hex: null, done: true, ok: true }, message: 'All three match.' })
+      else push({ match: { ...m, step: m.step + 1, hex: [0, 5, 9][m.step] } })
+    }
+    if (command === 'no') push({ match: { kind: 'remap', step: 1, of: 10, hex: null, done: false, ok: false } })
+    if (command === 'hex' && status.match?.kind === 'remap') {
+      const m = status.match
+      push({ match: m.step >= 10 ? { kind: 'check', step: 1, of: 3, hex: 0, done: false, ok: false } : { ...m, step: m.step + 1 } })
+    }
+    if (command === 'stop') push({ match: null })
     push({ seenSeq: mine })
   }
 

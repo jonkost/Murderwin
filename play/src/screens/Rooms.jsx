@@ -117,7 +117,7 @@ export function SmallCode({ text, words }) {
   return (
     <figure className="small-code">
       <img src={qr} alt="" />
-      <figcaption>{words}</figcaption>
+      {words && <figcaption>{words}</figcaption>}
     </figure>
   )
 }
@@ -154,7 +154,7 @@ export function JoinScreen({ screen, loop = 'living' }) {
 // line, the cat's picture (varied by `pick`: the group due or the round, so it
 // changes through the night) and the room's code to scan on arrival. `frame`
 // names one picture instead (Boo's walking frames during her intro).
-export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null }) {
+export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null, words = 'Scan the code to begin.' }) {
   const game = GAME_NAMES[id]
   const cat = game?.host ?? null
   const src = frame ? `${BASE}household/full/${encodeURIComponent(frame)}` : catPictureUrl(cat, pick, BASE)
@@ -165,7 +165,7 @@ export function RulesCard({ id, line, pick = null, code = true, frame = null, cl
         <Picture src={src} className="rules-cat" />
         <div className="rules-words">
           <p className="kiosk-line rules-line"><Spoken text={line} /></p>
-          {code && cat && <SmallCode text={meetUrl(cat, PLAY_URL)} words="Scan the code to begin." />}
+          {code && cat && <SmallCode text={meetUrl(cat, PLAY_URL)} words={words} />}
         </div>
       </div>
       {children}

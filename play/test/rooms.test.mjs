@@ -140,7 +140,7 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   for (const line of Object.values(RULES_LINES)) assert.ok(!line.includes('—'), 'no em dash')
   // the card: the game's name (GameName), the picture varied by pick, the line, the code
   assert.ok(rooms.includes('export function RulesCard({ id, line, pick = null, code = true, frame = null'), 'the card')
-  assert.ok(rooms.includes('<GameName id={id} />') && rooms.includes('catPictureUrl(cat, pick, BASE)') && rooms.includes('words="Scan the code to begin."'), 'name, picture, code')
+  assert.ok(rooms.includes('<GameName id={id} />') && rooms.includes('catPictureUrl(cat, pick, BASE)') && rooms.includes("words = 'Scan the code to begin.'"), 'name, picture, code')
   // where each room shows it: the Library between groups, Boo's screen between groups (the arcade while a group is at the deck, 5 Nov 2026), the Orangerie all through Act 4, the Study while idle
   assert.ok(rooms.includes('<RulesCard id="library" line={rulesLine(\'library\', content)} pick={night.beat}>'), 'the Library, with the workshop\'s line first')
   assert.ok(rooms.includes('<RulesCard id="entryway" line={BOO_INTRO} pick={boo?.groupId ?? night.beat} code={!visit} className="boo-wall idle">'), 'Boo\'s screen between groups, its code only then')
@@ -148,9 +148,9 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   // a group is at play in the Orangerie while public/salem is intro, playing or passed; idle and cleared are between groups (26 Oct 2026)
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"), 'cleared is not busy')
   const kiosk = src('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes('<RulesCard id="study" line={rulesLine(\'study\', content)} pick={s.groupId ?? night.beat} className="papered">'), 'the Study, with the workshop\'s line first')
-  // the study's card keeps Granolia's own start line and the station's silence, so docs/study-light-game.md stays true (26 Oct 2026)
-  assert.ok(kiosk.includes('<p className="kiosk-line">{SAY.idle}</p>'), 'Touch any panel to begin, on the card')
+  // A8 (12 Nov 2026): the Study's card is one line, Granolia's start line (the workshop's IDLE) while a group is due, and the code with no words
+  assert.ok(kiosk.includes('<RulesCard id="study" line={view === \'ready\' ? SAY.idle'), 'the Study, one line')
+  assert.ok(kiosk.includes('className="papered study-ready" words="">'), 'its code with no caption')
   assert.ok(kiosk.indexOf('const stale = s.updatedAt') < kiosk.indexOf('<RulesCard id="study"'), 'the station\'s silence is known before the card')
   // in Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
   assert.equal((kiosk.match(/\{stale && <p className="kiosk-next">Granolia has dozed off\. Find a host\.<\/p>\}/g) ?? []).length, 2, 'said on the card and on the game')

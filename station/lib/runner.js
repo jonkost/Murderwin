@@ -11,8 +11,19 @@ import { COLOUR_RGB, countSegments, chainHalves } from './nanoleaf.js'
 
 // the walls at rest, between groups (the study test rests them the same way)
 export const ELEMENTS_REST = [40, 40, 40], LINES_REST = [20, 10, 30]
+// The walls while the room waits for its group (A8, 12 Nov 2026; Jon: "it
+// needs to be lit until the game starts"): a soft white on the hexagons and a
+// warm white on the bars, breathing between the two numbers when the
+// controller takes a looping frame, still at the brighter one when it does
+// not. The first touch drops them to the game's dim (ELEMENTS_REST), which the
+// patterns need for their contrast, so that stays as it was.
+export const ELEMENTS_WAIT = [150, 150, 150], ELEMENTS_WAIT_LOW = [70, 70, 70]
+export const LINES_WAIT = [200, 140, 70], LINES_WAIT_LOW = [90, 60, 30]
+export const BREATHE_TENTHS = 25 // each way, in tenths of a second
 const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0], GREEN = [0, 255, 0], RED = [255, 0, 0]
 export const COUNTDOWN_MS = 500   // each step of the Lines' green 3, 2, 1
+// a report the server answered with a refusal (a group it does not know, say), not a dropped line
+const refused = (err) => /invalid|permission|not-found|failed-precondition/.test(String(err?.code ?? ''))
 function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
 const defaultSleep = (ms) => new Promise(r => setTimeout(r, ms))
 
@@ -21,7 +32,7 @@ export const REST_MS = 20_000 // the walls rest after a group finishes, then the
 export function createRunner({
   elements, lines, deck, elementsOk = true, linesOk = true, panelIds, layout,
   callStation, stationKey = '', log = () => {}, sleep = defaultSleep, restMs = REST_MS, now = Date.now,
-  onScreen = () => {},
+  onScreen = () => {}, hexes = null,
 } = {}) {
   let nightId = null
   let groupId = null              // the group the server says is due; the server owns this
@@ -35,6 +46,8 @@ export function createRunner({
   let granolia = null
   let pendingFinished = null
   let pausedAt = null             // the moment the host paused the night (server clock), while it is paused
+  let finishedFor = null          // the group this station last reported finished: its turn is over here
+  let hexMap = hexes              // which drawn hexagon each panel is (lib/hexmap.js), for Granolia's hint
 
   // ---- the effect queue: one effect at a time, never waited on from inside an effect
   let queue = Promise.resolve()
@@ -57,6 +70,16 @@ export function createRunner({
   }
   const linesRed = () => safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, RED), 1); await sleep(450) })
 
+  // the waiting look: breathing when the wall takes it, else still
+  function waitLook(wall, ok, hi, lo) {
+    return safe(wall, ok, async () => {
+      if (typeof wall.breathe === 'function') {
+        try { await wall.breathe(allPanels(wall, lo), allPanels(wall, hi), BREATHE_TENTHS); return } catch (e) { log(`${wall.name}: no breathing (${e?.message ?? e}), a still glow instead`) }
+      }
+      await wall.frame(allPanels(wall, hi), 10)
+    })
+  }
+
   async function safe(wall, ok, fn) {
     if (!ok) return
     try { await fn() } catch (e) { log(`${wall.name}: ${e?.message ?? e}`) }
@@ -70,7 +93,7 @@ export function createRunner({
     if (!nightId) return
     const snap = machine.snapshot
     const payload = {
-      ...snap, layout, elementsOk, linesOk, granolia, ...extra,
+      ...snap, layout, hexes: hexMap, elementsOk, linesOk, granolia, ...extra,
       fallbackPattern: !elementsOk && (snap.state === 'playing' || snap.state === 'reproducing') ? currentPatternIndexes() : null,
     }
     call('state', payload)
@@ -84,7 +107,7 @@ export function createRunner({
 
   async function apply(e) {
     switch (e.type) {
-      case 'elements.rest': return safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 10))
+      case 'elements.rest': return e.waiting ? waitLook(elements, elementsOk, ELEMENTS_WAIT, ELEMENTS_WAIT_LOW) : safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), e.transition ?? 10))
       // a wrong touch: the hexagons go dark and the Lines flash red once, together
       case 'elements.dim': return Promise.all([
         safe(elements, elementsOk, async () => { await elements.frame(allPanels(elements, OFF), 2); await sleep(300); await elements.frame(allPanels(elements, DIM), 3) }),
@@ -108,7 +131,7 @@ export function createRunner({
         drain()
         return
       }
-      case 'lines.rest': return safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 10))
+      case 'lines.rest': return e.waiting ? waitLook(lines, linesOk, LINES_WAIT, LINES_WAIT_LOW) : safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 10))
       case 'lines.show': return safe(lines, linesOk, () => linesCount(e.number, COLOUR_RGB[e.colour], 3))
       // green 3, 2, 1, then dark while the hexagons play
       case 'lines.countdown': return safe(lines, linesOk, async () => {
@@ -128,10 +151,16 @@ export function createRunner({
       case 'server.finished': {
         log(`group ${e.groupId ?? '?'} finished: ${e.outcome}, ${e.pairs} pairs, ${e.seconds}s`)
         const payload = { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs }
-        if (nightId) {
+        if (e.groupId != null) finishedFor = e.groupId
+        // a game with no group is nobody's to report: the server would only refuse it (A8, 12 Nov 2026)
+        if (nightId && e.groupId != null) {
           // the answer says only that it landed; which group is due next comes
           // from the public/study snapshot (the server's rotation owns it)
-          try { await call('finished', payload) } catch (err) { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
+          try { await call('finished', payload) } catch (err) {
+            // a report the server refused as wrong is never sent again; one that did not get there is
+            if (refused(err)) log('finished refused:', err?.message ?? err)
+            else { log('finished not sent (will retry):', err?.message ?? err); pendingFinished = e }
+          }
         }
         // the finished screen now, while the walls rest: its own screen effect
         // only comes after the rest, with the next machine in place. The study
@@ -153,8 +182,26 @@ export function createRunner({
     }
   }
 
+  // A8 (12 Nov 2026): on a live night the wall starts a game only on a
+  // group's turn. With no group due (Act 2's code scans at the wall, the
+  // other acts, between rounds) or for a group that has already played here,
+  // a touch on the resting wall does nothing, so nobody dims the study by
+  // accident. Without a night (fake mode, the study test's practice runner)
+  // it plays for anyone, as before.
+  const closed = () => nightId != null && machine.state === 'idle' && (groupId == null || finishedFor === groupId)
+
   return {
     get machine() { return machine },
+    get hexes() { return hexMap },
+    // a map set on the Study test page takes over at once, and the screen hears of it
+    setHexes(next) { hexMap = next ?? null; sendState() },
+    // the walls back to the waiting look after a test, when nobody is playing
+    glow() {
+      if (machine.state !== 'idle') return
+      run(() => apply({ type: 'elements.rest', waiting: true }))
+      run(() => apply({ type: 'lines.rest', waiting: true }))
+    },
+    get closed() { return closed() },
     get groupId() { return groupId },
     get granolia() { return granolia },
     serverNow,
@@ -166,12 +213,14 @@ export function createRunner({
     touch(panelId, gesture = 0) {
       if (gesture !== 0 && gesture !== 1) return
       if (pausedAt != null) return                // the house is paused: the wall waits with it
+      if (closed()) return                         // not this group's turn: the wall stays lit and waits
       machine.touch(panelId, serverNow())
       drain()
     },
     // a button-box key; with the Elements down the number keys stand in for panels 1–6
     key(name) {
       if (pausedAt != null) return
+      if (closed()) return
       if (!elementsOk && /^[1-6]$/.test(name) && machine.state !== 'entering') machine.touch(Number(name), serverNow())
       else machine.key(name, serverNow())
       drain()
@@ -204,7 +253,7 @@ export function createRunner({
       if (pendingFinished && nightId) {
         const e = pendingFinished; pendingFinished = null
         call('finished', { groupId: e.groupId, outcome: e.outcome, seconds: e.seconds, pairs: e.pairs })
-          .catch(() => { pendingFinished = e })
+          .catch((err) => { if (!refused(err)) pendingFinished = e })
       }
     },
     // the live night changed: whatever was running belonged to the old night,
@@ -218,6 +267,7 @@ export function createRunner({
       granolia = null
       pendingFinished = null
       pausedAt = null
+      finishedFor = null
       machine = fresh()
       log('night:', nightId ?? 'none')
       drain()

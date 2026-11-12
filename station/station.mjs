@@ -24,6 +24,7 @@ import { createFollower } from './lib/follow.js'
 import { createTestMode, HEARTBEAT_MS } from './lib/testmode.js'
 import { writeTouchMap } from './lib/teach.js'
 import { Nanoleaf } from './lib/nanoleaf.js'
+import { resolveHexes, readHexMap, writeHexMap } from './lib/hexmap.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
 import { connectFunctionsEmulator } from 'firebase/functions'
@@ -113,6 +114,13 @@ const layout = elementsOk
   ? elements.panels.map(p => ({ id: p.id, x: p.x, y: p.y }))
   : panelIds.map((id, i) => ({ id, x: i * 100, y: 0 }))
 
+// Which drawn hexagon each panel is, for Granolia's hint on the Study's
+// screen (A8): set by hand on the Study test page (Check the map) and saved
+// beside the taught taps, else worked out from the layout.
+const HEX_MAP = join(here, 'hex-map.json')
+const hexes = elementsOk ? resolveHexes(layout, readHexMap(HEX_MAP)) : null
+log(`granolia's map: ${hexes ? (readHexMap(HEX_MAP) ? 'set on the Study test page' : 'worked out from the layout') : 'none (the screen draws circles)'}`)
+
 const watchDoc = (path, onData) => onSnapshot(doc(db, ...path.split('/')), (snap) => onData(snap.data() ?? null), (e) => log(`${path}: ${e.message}`))
 
 // The study test (the workshop's Study test page). Taps and keys pass
@@ -124,12 +132,13 @@ const testMode = createTestMode({
   send: (status) => callStudyTest({ command: 'status', key: STATION_KEY, status }),
   watch: watchDoc,
   saveTouchMap: (touches) => writeTouchMap(join(here, 'touch-map.json'), touches),
+  saveHexMap: (next) => writeHexMap(HEX_MAP, layout, next),
   log,
 })
 
 const runner = createRunner({
   elements: testMode.shield(elements), lines: testMode.shield(lines), deck: testMode.shield(deck),
-  elementsOk, linesOk, panelIds, layout, callStation, stationKey: STATION_KEY, log,
+  elementsOk, linesOk, panelIds, layout, hexes, callStation, stationKey: STATION_KEY, log,
 })
 
 // ---- inputs ----------------------------------------------------------------

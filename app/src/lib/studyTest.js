@@ -141,6 +141,7 @@ export function modeLine(status) {
     case 'flash': return 'The walls are flashing.'
     case 'teach': return teachLine(status.teach) || 'Teaching the taps.'
     case 'practice': return 'A practice round is running.'
+    case 'match': return 'Checking Granolia\'s map.'
     default: return 'Resting. Pick something to try.'
   }
 }

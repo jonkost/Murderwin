@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess, callIntroDue } from '../firebase'
 import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/start'
-import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
+import { HEX_CENTRES, LINE_BARS, hexPoints, hexesFor } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
 import { portraitUrls, portraitFit } from '../lib/content'
@@ -18,6 +18,7 @@ import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
+import { HexHint, ReadyHexes, studyState, STUDY_DONE_LINE } from './StudyHexes'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -1031,23 +1032,22 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   const L = lines ?? studyLines(null)
   const SAY = { idle: L.IDLE, playing: L.PLAYING, reproducing: L.REPRODUCING, entering: L.ENTERING, slow: L.SLOW, map: L.MAP, halfColour: L['HALF COLOUR'], halfNumber: L['HALF NUMBER'], neither: L.NEITHER, time: L.TIME, solved: L.SOLVED, capped: L.CAPPED }
   const s = study ?? { state: 'idle' }
-  const group = (rotation?.groups ?? []).find(g => g.id === s.groupId)
-  const names = group ? group.members.map(m => m.characterName || m.name).join(', ') : null
-  // the group due has been paid and the chime has not come yet: nobody is expected here (1 Nov 2026)
-  const paid = !!rotation?.finished?.[s.groupId]
+  // the group due has been paid and the chime has not come yet: nobody is expected here (1 Nov 2026): studyState says done
   // the station has sent nothing for ninety seconds: said on the rules card and on the game alike, in
   // Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
   const stale = s.updatedAt && serverNow() - ms(s.updatedAt) > 90_000
   if (night && night.act !== 4 && !STUDY_RUNNING.includes(s.state)) return <Idle title="Sirwin Manor" line="The Study" loop="study" />
-  if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) return (
-    <RulesCard id="study" line={rulesLine('study', content)} pick={s.groupId ?? night.beat} className="papered">
-      <p className="kiosk-line">{names && !paid ? `Expecting ${names}.` : 'The next group will be along.'}</p>
-      <StudyWalls />
-      {/* Granolia's own start line (the workshop's IDLE) stays on the card, so the group knows the first touch begins (26 Oct 2026) */}
-      {!paid && <p className="kiosk-line">{SAY.idle}</p>}
-      {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
-    </RulesCard>
-  )
+  // A8 (12 Nov 2026): three plain states, one line each. Ready: the group due, "Touch any hexagon to start."
+  // (the workshop's IDLE line when Jon wrote one); a group that has played: done; nobody due: no line.
+  if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) {
+    const view = studyState(s, rotation)
+    return (
+      <RulesCard id="study" line={view === 'ready' ? SAY.idle : view === 'done' ? STUDY_DONE_LINE : ''} pick={s.groupId ?? night.beat} className="papered study-ready" words="">
+        <ReadyHexes />
+        {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
+      </RulesCard>
+    )
+  }
   const started = ms(s.startedAt)
   const left = started && s.state !== 'done' && s.state !== 'idle' ? studyMsLeft(s, night, serverNow) : null
   const mm = left != null ? Math.floor(left / 60_000) : null
@@ -1072,15 +1072,11 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
       <div className="study-stage">
         <Picture src={catPictureUrl('granolia', s.groupId ?? 'study')} className="study-cat" />
         <div className="study-panel">
-          {/* no names on the finished page: the chime may already have moved the study on to the next group */}
-          {names && s.state !== 'done' && <p className="study-group">{names}</p>}
+          {/* one line a state (A8, 12 Nov 2026): the jewels say how far, Granolia's one line what to do */}
           <div className="study-progress">
             <div className="jewels" aria-label="pairs found">
               {[0, 1, 2].map(i => <span key={i} className={`jewel${i < (s.pairsLocked ?? 0) ? ' lit' : ''}`} />)}
             </div>
-            {s.state !== 'idle' && s.state !== 'done' && (
-              <p className="study-round">Round {(s.round ?? 0) + 1} of 3 · pattern {(s.pattern ?? 0) + 1} of 3</p>
-            )}
           </div>
           <p className="granolia-says"><Spoken text={line} /></p>
           {s.state === 'entering' && (
@@ -1089,14 +1085,12 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
           {s.state === 'entering' && s.linesOk === false && s.lines && (
             <p className="study-entry">{s.lines.colour}, {s.lines.number}</p>
           )}
-          {s.state === 'done' && s.revealed?.length > 0 && (
-            <p className="study-rest">The rest: {s.revealed.map(p => `${p.colour} and ${p.number}`).join(' · ')}</p>
-          )}
         </div>
       </div>
       {/* the finished page has no use for it: a group stopped while stuck on a pattern still has its map in the doc */}
-      {s.map && s.state !== 'done' && <WallMap layout={s.layout} order={s.map} />}
-      {s.fallbackPattern && <WallMap layout={s.layout} order={s.fallbackPattern} fallback />}
+      {/* Granolia's map: the rules card's hexagons, the right way round (A8); the old circles only with no map */}
+      {s.map && s.state !== 'done' && (hexesFor(s) ? <HexHint study={s} order={s.map} /> : <WallMap layout={s.layout} order={s.map} />)}
+      {s.fallbackPattern && (hexesFor(s) ? <HexHint study={s} order={s.fallbackPattern} fallback /> : <WallMap layout={s.layout} order={s.fallbackPattern} fallback />)}
       {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
     </div>
   )

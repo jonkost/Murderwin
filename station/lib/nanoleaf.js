@@ -93,6 +93,26 @@ export class Nanoleaf {
     })
   }
 
+  // A slow breath between two frames, looping on the controller until the
+  // next frame replaces it (A8, 12 Nov 2026: the walls glow while the room
+  // waits). Each piece goes up to its `high` colour and back down to its
+  // `low` over `tenths` tenths of a second each way. A controller that will
+  // not take it answers with an error, and the runner shows `high` still.
+  async breathe(low, high, tenths = 25) {
+    const ids = this.pieces.length ? this.pieces : this.panels.map(p => p.id)
+    const parts = [String(ids.length)]
+    for (const id of ids) {
+      const unit = this.unitOf(id)
+      const [r1, g1, b1] = high[unit] ?? [0, 0, 0]
+      const [r0, g0, b0] = low[unit] ?? [0, 0, 0]
+      parts.push(`${id} 2 ${r1} ${g1} ${b1} 0 ${tenths} ${r0} ${g0} ${b0} 0 ${tenths}`)
+    }
+    return this.call('/effects', {
+      method: 'PUT',
+      body: { write: { command: 'display', animType: 'custom', animData: parts.join(' '), loop: true, palette: [] } },
+    })
+  }
+
   // A static frame by piece: { [pieceId]: [r, g, b] }, every other piece dark.
   // The Lines' counts light one half of a bar (chainHalves below).
   async framePieces(frame, transition = 1) {
