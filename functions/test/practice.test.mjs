@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
 import { join, MOTIVES, CHARACTERS } from '../lib/night.js'
@@ -13,7 +14,7 @@ import { hintsOf, familyForCat, irwinOptions, irwinCount } from '../lib/families
 import { stopOf } from '../lib/parlour.js'
 import { NEWS } from '../lib/news.js'
 import { dialBand } from '../lib/screen.js'
-import { bagPlan, bagLine } from '../lib/bagclues.js'
+import { bagPlan, bagLine, wordBags } from '../lib/bagclues.js'
 import { packingFor } from '../lib/bags.js'
 
 // A practice night plays for real (docs/handoff-2026-11-11-polish.md, job A3;
@@ -78,10 +79,13 @@ function bracketCount(db, nightId) {
 }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+const CLUE_WORDS = JSON.parse(readFileSync(new URL('../../seed/bag-items.json', import.meta.url), 'utf8')).words.map(w => w.word)
 
-test('F28 a practice night started the way Jon\'s phone starts it (Start the night, the real-night box unticked), walked to the bedroom door: every clue is the real thing from its own throwaway case, no note in square brackets anywhere, and nothing under sealed/ is read, scanned or written', async () => {
+// Three practice nights, each dealt from its own seed word (the Game night page's Replay box), so a night
+// that fails here can be walked again exactly. The fake players (scripts/) walk nights nobody chose.
+for (const word of ['tulip-4471', 'heron-2024', 'otter-1215']) test(`F28 a practice night started the way Jon's phone starts it (Start the night, the real-night box unticked), walked to the bedroom door: every clue is the real thing from its own throwaway case, no note in square brackets anywhere, and nothing under sealed/ is read, scanned or written (seed ${word})`, async () => {
   const db = new FakeFirestore()
-  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', replay_seed: word })
   const secrets = syntheticSecrets()
   for (const [path, data] of Object.entries(secrets)) db.store.set(path, data)
   const touched = sealedTouches(db) // from before the night is made
@@ -107,6 +111,7 @@ test('F28 a practice night started the way Jon\'s phone starts it (Start the nig
   // ---- the night is a practice night, at Arrivals; eight seats scan in
   assert.equal(nightDoc().forceRehearsal, true)
   assert.deepEqual([nightDoc().act, nightDoc().beat], [1, 'arrive'])
+  assert.equal(db.store.get(`nights/${nightId}/private/deck`).seed, word, 'dealt from the word, so it can be walked again')
   const uids = {}
   for (const name of SEATS) { const uid = `u-${name.toLowerCase()}`; await join(db, { uid, nightId, name }); uids[name.toLowerCase()] = uid }
   const roster = nightDoc().roster
@@ -136,9 +141,16 @@ test('F28 a practice night started the way Jon\'s phone starts it (Start the nig
   const walked = await walkLights(db, nightId, { now })
   assert.equal(walked.meetings, 4 * SEATS.length)
   const c2 = caseDoc()
-  // the packing this night's bag clues read (bags.js packingFor): never the sealed one on a practice night
+  // the packing this night's bag clues read (bags.js packingFor): its own practice packing, ten bags of the
+  // items Jon bought, never the sealed one
   const packing = await packingFor(db, c2)
-  let hints = 0
+  assert.ok(packing && same(Object.keys(packing.words).map(Number).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 'the night\'s own practice packing: ten bags')
+  assert.ok(!JSON.stringify(packing).includes('synthetic'), 'nothing of what sits at sealed/bags')
+  const at = wordBags(packing, inPlay)
+  // a word a line names is one of the fourteen clue words, in two or three of the bags in play; right means
+  // it is in the bag the line is about, and only Salem ever names a wrong one
+  const wordOk = (line, bag, cat) => !line.word || (CLUE_WORDS.includes(line.word) && [2, 3].includes(at[line.word]?.length ?? 0) && !!packing.words[String(bag)][line.word] === line.right && (cat === 'salem' || line.right === true))
+  let hints = 0, named = 0
   for (const [key, uid] of Object.entries(uids)) {
     const fams = hintsOf(c2.solving, key)
     const all = cardsOf(uid, 'testimony')
@@ -153,11 +165,14 @@ test('F28 a practice night started the way Jon\'s phone starts it (Start the nig
       const bag = bagLine(plan, { cat: t.cat, act: 2, rung: level, seed: `${c2.screenSalt}\u0000bag\u0000${key}\u0000${t.cat}` })
       assert.ok(bag.text && t.bag.text === bag.text && t.bag.placeholder === false, `the cat's real bag clue about the Murderer (${t.cat}, lengths ${t.bag.text.length} and ${bag.text?.length ?? 0})`)
       assert.ok(same(c2.bagClues.act2[key][t.cat], { rung: level, word: bag.word ?? null, sense: bag.sense ?? null, right: bag.right ?? null }), 'what the bag clue named is kept in the case')
+      assert.ok(wordOk(bag, roster[c2.murderer].bag, t.cat), `a clue word of the Murderer's practice bag, or Salem's wrong one (${t.cat})`)
       assert.equal(t.placeholder, false)
       hints++
+      if (bag.word) named++
     }
   }
   assert.equal(hints, 4 * SEATS.length)
+  assert.ok(named >= SEATS.length, `the bag clues name clue words (${named} of ${hints}): Salem's for every guest at least`)
   look('the cats')
 
   // ---- Act 3, bulletin 2: the real family's own line at the dial's level, and its recording
@@ -213,6 +228,7 @@ test('F28 a practice night started the way Jon\'s phone starts it (Start the nig
         const want = bagLine(plan, { cat: x.cat, act: 4, rung: kept.rung, seed: `${c4.screenSalt}\u0000bag4\u0000${g.id}\u0000${x.cat}` })
         assert.ok(want.text && x.bag.text === want.text && x.bag.placeholder === false, `the room's real bag hint about the Ghost (${x.room}, lengths ${x.bag.text.length} and ${want.text?.length ?? 0})`)
         assert.ok(same([kept.word, kept.sense, kept.right], [want.word ?? null, want.sense ?? null, want.right ?? null]), 'what the bag hint named is kept in the case')
+        assert.ok(wordOk(want, roster[c4.ghost].bag, x.cat), `a clue word of the Ghost's practice bag, or Salem's wrong one (${x.room})`)
         if (x.room === 'library') {
           assert.ok(x.cross === c4.solving.memory[g.id] && x.cross !== c4.motive && MOTIVES.some(mm => mm.n === x.cross), 'Zimothy crosses off a wrong motive, the one the case picked for this group')
           assert.ok(x.text.includes(`number ${x.cross}, “${MOTIVES.find(mm => mm.n === x.cross).rhyme}”`), 'and says which')

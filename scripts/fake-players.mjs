@@ -57,7 +57,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json', 'bag-lines.json', 'game-names.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json', 'bag-lines.json', 'bag-items.json', 'game-names.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
@@ -103,7 +103,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
-  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, text: { looks: 0, strings: 0, brackets: 0, where: [] }, checks: [], tally: null, secrets: null, fairness: null, discard: null, ok: false, error: null }
+  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, text: { looks: 0, strings: 0, brackets: 0, where: [] }, checks: [], tally: null, secrets: null, bagWords: null, fairness: null, discard: null, ok: false, error: null }
 
   // a party-night dry run is never dealt from a word; a rehearsal always is (the caller's, or a fresh one)
   const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label, ...(seed ? { seed } : {}) }
@@ -454,6 +454,10 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     summary.secrets = await secretsUsed()
     const { leanSets, bags, packed, fromBank } = summary.secrets
     say(`Party secrets used: the cats' leans for ${leanSets} ${leanSets === 1 ? 'set' : 'sets'}, the packing on ${packed} of ${bags} bag clues, the picture bank for ${fromBank} of 3 drawing rounds`)
+    // the cats' bag lines, one a guest a cat in Act 2 and one a group a room in Act 4: how many name a clue
+    // word (on a practice night from its own practice packing, bags.js; the rest name a sense, or nothing)
+    summary.bagWords = await bagWords()
+    say(`Bag clues: ${summary.bagWords.named} of ${summary.bagWords.lines} lines name a clue word`)
 
     // F02: the host seats played the Professors and were dealt and answered exactly like every other phone
     const seats = await hostSeats()
@@ -529,6 +533,14 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     const fromBank = (await db.doc(relay.relayPaths(nightId).priv).get()).data()?.fromBank ?? 0
     return { leanSets: Object.keys(c?.parlourPlan?.leans ?? {}).length, bags, packed, fromBank }
+  }
+
+  // What the case kept of each bag line (deal.js greetGuest, act4.js rewardOf): how many there were and
+  // how many named a word. Counts only: never a word, a bag or a guest.
+  async function bagWords() {
+    const kept = (await db.doc(`cases/${nightId}`).get()).data()?.bagClues ?? {}
+    const all = [...Object.values(kept.act2 ?? {}), ...Object.values(kept.act4 ?? {})].flatMap(byCat => Object.values(byCat ?? {}))
+    return { lines: all.length, named: all.filter(x => x?.word).length }
   }
 
   // G32 on this night: every structured clue the room shared by the end of

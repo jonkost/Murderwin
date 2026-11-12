@@ -123,6 +123,11 @@ test('F01, F24, F28 and L03 eight fake phones walk a whole practice night: real 
   assert.deepEqual([...reads].filter(p => p.startsWith('sealed')), [], 'and reads nothing sealed')
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is as it was')
   assert.ok(lines.includes('Party secrets used: the cats\' leans for 0 sets, the packing on 0 of 64 bag clues, the picture bank for 0 of 3 drawing rounds'))
+  // the cats' bag lines name real clue words all the same, from the night's own practice packing: one line
+  // a guest a cat in Act 2, one a group a room in Act 4; Salem names a word at every rung, so never none
+  assert.equal(summary.bagWords.lines, 4 * PHONES + 4 * 4)
+  assert.ok(summary.bagWords.named >= PHONES && summary.bagWords.named <= summary.bagWords.lines, `${summary.bagWords.named} lines name a clue word`)
+  assert.ok(lines.includes(`Bag clues: ${summary.bagWords.named} of 48 lines name a clue word`))
   // F28: every card, notice and screen document, at eight looks through the night: no square bracket in any string
   assert.equal(summary.text.brackets, 0, 'no note in square brackets on any phone or room screen')
   assert.deepEqual(summary.text.where, [])
@@ -190,6 +195,7 @@ test('--real-secrets is a party night as a dry run: it reads the leans, the pack
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is untouched')
   assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
   assert.equal(summary.text.brackets, 0, 'F28 the party night shows no note in square brackets either')
+  assert.equal(summary.bagWords.lines, 48, 'the same count of bag lines as a practice night')
 })
 
 test('F28 has teeth: a note in square brackets on a card fails the night, and the fake players name the place, never the words', async () => {
