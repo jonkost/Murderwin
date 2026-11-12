@@ -20,6 +20,7 @@ import { unlock as unlockSound, play as playSound, soundReady, audioContext } fr
 import { useCueSounds } from '../lib/useCueSounds'
 import { useBlackoutMarks } from '../lib/useBlackout'
 import { blackoutHit } from '../lib/blackout'
+import { useDeckDark } from '../lib/useDeckDark'
 import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
@@ -121,6 +122,7 @@ export default function Kiosk({ which }) {
   // dark: the blackout and the prompt (paused or not), The End (the night is over),
   // or a black screen the server wrote; nothing in the corners shows while the room is dark
   const dark = !!n && (roomDark(n, living ? screen.data : null, serverNow()) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  useDeckDark(which === 'boo', !!n && blackoutHit(n, serverNow())) // the arcade's deck goes dark with the house (A1)
   // the dot and the wake note: on a rehearsal and with no night live, never on the party night (Jon,
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError

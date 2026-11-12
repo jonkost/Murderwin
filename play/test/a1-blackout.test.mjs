@@ -60,3 +60,16 @@ test('the Host tab: Blackout test beside Blackout, practice nights only, and the
   assert.ok(button.includes("onClick={() => run('blackout-test')}"))
   assert.ok(button.includes('>Blackout test</button>'))
 })
+
+test('the arcade deck: blanked and its backlight to nothing in the dark, the backlight back after; no deck, no trouble', async () => {
+  const { deckDark } = await import('../src/lib/useDeckDark.js')
+  const { BRIGHTNESS } = await import('../src/lib/arcadeDeck.js')
+  const calls = []
+  const deck = { clearPanel: async () => calls.push('clear'), setBrightness: async v => calls.push(`light ${v}`) }
+  assert.equal(await deckDark(true, { open: async () => deck }), true)
+  assert.equal(await deckDark(false, { open: async () => deck }), true)
+  assert.deepEqual(calls, ['clear', 'light 0', `light ${BRIGHTNESS}`])
+  assert.equal(await deckDark(true, { open: async () => null }), false)
+  assert.equal(await deckDark(true, { open: async () => { throw new Error('gone') } }), false)
+  assert.ok(src('../src/screens/Kiosk.jsx').includes("useDeckDark(which === 'boo', !!n && blackoutHit(n, serverNow()))"))
+})
