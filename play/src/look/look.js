@@ -42,7 +42,9 @@ export const SPLASH_ROOMS = Object.keys(SPLASHES)
 // number at a time: `splash` is number 1, every idle room screen (B2).
 // A room screen opened with &splash=1 in its address shows it anyway, for
 // trying it on the real machine before it is switched on.
-export const LOOK = { splash: false }
+// Jon, 12 Nov 2026: "Yes to all 8". The splash is on. (The Now tab, the Rules tab, the wins, the vote card,
+// the rules cards, The End and the dedication come on as each is wired into the night's own screens.)
+export const LOOK = { splash: true }
 export function lookOn(part, search = typeof window === 'undefined' ? '' : window.location.search) {
   return LOOK[part] === true || new URLSearchParams(search).has(part)
 }

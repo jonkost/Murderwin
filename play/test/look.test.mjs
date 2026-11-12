@@ -131,12 +131,19 @@ test('a celebration’s pieces: the same burst for the same seed, and the right 
   assert.equal(celebrate('nonsense'), 0)
 })
 
-test('B2, the room splash on every idle screen: built, and off until Jon says yes to the look', async () => {
+test('B2, the room splash on every idle screen: on since Jon said yes to all eight (12 Nov 2026)', async () => {
   const { LOOK, lookOn, SPLASH_OF, splashNow, SPLASH_TURN_MS, TIP_MS } = await import('../src/look/look.js')
-  assert.deepEqual(LOOK, { splash: false }, 'nothing rolls out before the yes')
-  assert.equal(lookOn('splash', ''), false)
-  assert.equal(lookOn('splash', '?kiosk=study&splash=1'), true, 'a room screen can be tried with it on, by its address')
-  assert.equal(lookOn('splash', '?kiosk=study'), false)
+  assert.deepEqual(LOOK, { splash: true }, 'Jon: "Yes to all 8"')
+  assert.equal(lookOn('splash', ''), true)
+  assert.equal(lookOn('nothing-yet', ''), false, 'a part that is not switched on stays off')
+  assert.equal(lookOn('nothing-yet', '?kiosk=study&nothing-yet=1'), true, 'and can be tried on a real screen by its address')
+  // a Mac's own screen beside its room screen gets its room's splash, from the setup page and the send list
+  const { SECOND_DISPLAY_ROOMS, setupHref } = await import('../src/lib/setup.js')
+  assert.deepEqual(SECOND_DISPLAY_ROOMS.map(r => setupHref('/play/', r)), ['/play/?kiosk=decor&room=living', '/play/?kiosk=decor&room=study'])
+  for (const r of SECOND_DISPLAY_ROOMS) for (const line of [r.room, r.machine, r.when]) assert.ok(!/—|kiosk|localhost/.test(line), line)
+  const { secondDisplayLinks } = await import('../src/lib/start.js')
+  assert.deepEqual(secondDisplayLinks('https://example.test/play/').map(s => s.url), ['https://example.test/play/?kiosk=decor&room=living', 'https://example.test/play/?kiosk=decor&room=study', 'https://example.test/play/?kiosk=decor'])
+  assert.ok(read('../src/screens/Setup.jsx').includes('SECOND_DISPLAY_ROOMS.map(r =>') && read('../src/screens/Host.jsx').includes('seconds.map(s =>'))
   // every idle room screen has its splash: the loop names the room screens idle on (lib/rooms.js LOOP_OF)
   const { LOOP_OF } = await import('../src/lib/rooms.js')
   for (const loop of new Set(Object.values(LOOP_OF))) assert.ok(SPLASHES[SPLASH_OF[loop]], `${loop} has a splash`)

@@ -6,7 +6,7 @@
 // half past four, a run-through five minutes after the tap, which is time to
 // send each screen its page. Every room screen counts down to it on the
 // server's clock, and the server moves the night on its own at that moment.
-import { SETUP_ROOMS, SECOND_DISPLAY } from './setup.js'
+import { SETUP_ROOMS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS } from './setup.js'
 
 export const INTRO_TIME = { hour: 16, minute: 30 }   // the real night: 4:30 pm, the phone's own time zone
 export const RUN_THROUGH_MS = 5 * 60_000             // a run-through: this long after the tap
@@ -57,6 +57,11 @@ export function screenLinks(playUrl) {
 export function secondDisplayLink(playUrl) {
   const base = String(playUrl ?? '').split('?')[0]
   return { key: SECOND_DISPLAY.key, room: SECOND_DISPLAY.room, machine: SECOND_DISPLAY.machine, url: `${base}?kiosk=${SECOND_DISPLAY.kiosk}`, presenceKey: null }
+}
+// The two Macs' own screens, each with its room's splash (12 Nov 2026), then the plain one for any other.
+export function secondDisplayLinks(playUrl) {
+  const base = String(playUrl ?? '').split('?')[0]
+  return [...SECOND_DISPLAY_ROOMS.map(r => ({ key: r.key, room: r.room, machine: r.machine, url: `${base}?kiosk=${r.kiosk}&${r.query}`, presenceKey: null })), secondDisplayLink(playUrl)]
 }
 
 // The intro video on the Parlour TV at The house rules, from the moment the

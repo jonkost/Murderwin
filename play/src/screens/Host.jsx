@@ -5,7 +5,7 @@ import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
-import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink } from '../lib/start'
+import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, secondDisplayLinks } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
@@ -723,6 +723,7 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
   }
   const links = screenLinks(PLAY_URL)
   const second = secondDisplayLink(PLAY_URL)
+  const seconds = secondDisplayLinks(PLAY_URL).filter(s => s.key !== second.key) // the two Macs' own screens, each with its room's splash
   const up = links.filter(s => now - (presence[s.presenceKey] ?? 0) < QUIET_MS).length
   return (
     <details className="send-screens" open={open || undefined}>
@@ -741,6 +742,13 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
             </li>
           )
         })}
+        {seconds.map(s => (
+          <li key={s.key}>
+            <span className="dot hidden" aria-hidden="true" />
+            <span className="send-name">{s.room}<small>{s.machine}</small></span>
+            <button className="chip" onClick={() => send(s)}>Send</button>
+          </li>
+        ))}
         <li key={second.key}>
           <span className="dot hidden" aria-hidden="true" />
           <span className="send-name">{second.room}<small>{second.machine}</small></span>
