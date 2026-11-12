@@ -18,8 +18,9 @@ is on the brain as *AudioPanic*. One step: his Home scene PANIC, which
 pauses four HomePods (the Orangerie's, the bedroom's, the Parlour's and the
 Study's). The sheet was still asking for a Shortcut called PANIC.
 
-**What changed** (the brain's own code and sheet: nothing to publish; it
-takes hold the next time the brain's program is started)
+**What changed** (33ea73c the brain's own code and sheet, 51a5807 the board
+and the guides: nothing to publish for the stop to work; it takes hold the
+next time the brain's program is started)
 
 - `cues/scenes.json` `musicShortcuts.off` is *AudioPanic*. Jon was not asked
   to rename it. `npm start -- --check-shortcuts` (names only) now says all 10
