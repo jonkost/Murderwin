@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import { writeNotes } from '../lib/hooks'
-import { PERMISSION_LINES, allowAll } from '../lib/permissions'
+import { PERMISSION_LINES, allowAll, chime } from '../lib/permissions'
 import { Seal } from './Moments'
 
 // "To play tonight, allow these:" (§9.10). One Allow button, then a check
 // beside each line, then on into the game. Shown once per night at sign-in;
 // the You tab's Allow again link brings it back (onDone closes it). The Game
 // test tab's Salem practice shows it too, going on to the practice instead.
+// The moment sound is allowed the phone plays the house's chime once (11 Nov
+// 2026), so the guest hears that their phone is on and how loud it is.
 export default function Allow({ uid, onDone = null, again = false, onward = 'On to the party' }) {
   const [got, setGot] = useState(null)
   const [busy, setBusy] = useState(false)
   const allow = async () => {
     setBusy(true)
     const r = await allowAll()
+    if (r.sound === 'ok') chime()
     setGot(r)
     setBusy(false)
   }

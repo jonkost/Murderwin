@@ -260,19 +260,82 @@ test('followTrack: after `seconds` when Music cannot be read, or the song never 
   for (const l of lines) assert.ok(!l.includes('Song'), 'the song is never named in the lines')
 })
 
-test('Boo\'s speaker (27 Oct 2026): out of the house music and back in by its name, as an argument; a name Music does not know is one plain line; the list reads', async () => {
-  const lines = []
-  const { run, calls } = fakeRun({ speaker: args => (args[1] === 'Living Room' ? 'done' : 'missing'), speakers: 'Living Room\ttrue\nOffice HomePod mini\tfalse\n' })
-  const m = createMusic({ run, log: l => lines.push(l) })
-  await m.speaker({ name: 'Living Room', on: false })
-  await m.speaker({ name: 'Living Room', on: true })
-  await m.speaker({ name: 'Parlor', on: false })
-  assert.deepEqual(calls.map(c => c.args), [['off', 'Living Room'], ['on', 'Living Room'], ['off', 'Parlor']])
-  assert.deepEqual(lines, [
-    '[music] Living Room is out of the house music, for Boo\'s Catwalk',
-    '[music] Living Room is back in the house music',
-    '[music] no speaker called "Parlor" in Music\'s AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)',
+// ---- 11 Nov 2026: the cake's song on every HomePod ("the audio cue needs to be louder… and on all HomePods") ----
+
+test('the speakers list reads each speaker\'s name, whether it is ticked, and its kind; no speaker is lent to anyone any more', async () => {
+  const { run } = fakeRun({ speakers: 'Computer\ttrue\tcomputer\nLiving Room\tfalse\tHomePod\nOffice TV\tfalse\tApple TV\nOld line\ttrue\n' })
+  const m = createMusic({ run })
+  assert.deepEqual(await m.speakers(), [
+    { name: 'Computer', on: true, kind: 'computer' },
+    { name: 'Living Room', on: false, kind: 'HomePod' },
+    { name: 'Office TV', on: false, kind: 'Apple TV' },
+    { name: 'Old line', on: true, kind: 'unknown' },
   ])
-  assert.deepEqual(await m.speakers(), [{ name: 'Living Room', on: true }, { name: 'Office HomePod mini', on: false }])
   assert.deepEqual(parseSpeakers(''), [])
+  assert.equal(m.speaker, undefined, 'the lend to Susan\'s Mac is gone')
+  assert.equal(SCRIPTS.speaker, undefined)
+  assert.ok(SCRIPTS.speakers.join('\n').includes('(kind of d) as text'))
+})
+
+test('the Music app onto the HomePods for the song: every HomePod it can see, or the ones named; then back to the Mac\'s own speakers', async () => {
+  const lines = []
+  const { run, calls } = fakeRun({ toHomePods: args => (args.length > 1 && args[1] === 'Nowhere' ? 'none' : `set\t${args.length > 1 ? args.length - 1 : 4}`), releaseSpeakers: 'released' })
+  const m = createMusic({ run, log: l => lines.push(l) })
+  assert.equal(await m.toHomePods({ volume: 60 }), 'set')
+  assert.deepEqual(calls.at(-1), { which: 'toHomePods', args: ['60'] }, 'no names: every HomePod')
+  assert.equal(lines.at(-1), '[music] the Music app is playing through 4 HomePods')
+  assert.equal(await m.toHomePods({ names: ['Living Room', 'Study'], volume: 55 }), 'set')
+  assert.deepEqual(calls.at(-1), { which: 'toHomePods', args: ['55', 'Living Room', 'Study'] }, 'the names arrive as arguments')
+  assert.equal(await m.toHomePods({ names: ['Nowhere'], volume: 60 }), 'none')
+  assert.match(lines.at(-1), /none of the speakers named for the cake .* The song plays from this Mac$/)
+  assert.equal(await m.releaseSpeakers(), 'released')
+  assert.equal(lines.at(-1), '[music] the Music app has let go of the HomePods')
+  // Music cannot see a HomePod at all, or will not answer: the song still plays, from the Mac
+  const blind = createMusic({ run: fakeRun({ toHomePods: 'none' }).run, log: l => lines.push(l) })
+  assert.equal(await blind.toHomePods({ volume: 60 }), 'none')
+  assert.match(lines.at(-1), /the Music app can see no HomePod/)
+  const denied = createMusic({ run: fakeRun({ toHomePods: new Error('Not authorized (-1743)'), releaseSpeakers: new Error('Not authorized (-1743)') }).run, log: l => lines.push(l) })
+  assert.equal(await denied.toHomePods({ volume: 60 }), 'failed')
+  assert.equal(await denied.releaseSpeakers(), 'failed')
+  // the scripts: the picks are ticked before anything is unticked (Music will not untick its last speaker), the
+  // Mac's own speakers leave the song, nothing is changed when no pick is there, and no name is pasted in
+  const to = SCRIPTS.toHomePods.join('\n')
+  assert.ok(to.includes('if (kind of d) is HomePod then set pick to true') && to.includes('if wanted contains n then set pick to true'))
+  assert.ok(to.indexOf('set selected of d to true') < to.indexOf('set selected of d to false'), 'tick first, untick after')
+  assert.ok(to.indexOf('if (count of picked) is 0 then return "none"') < to.indexOf('set selected of d to false'), 'nothing unticked when there is nowhere to play')
+  assert.ok(to.includes('set sound volume of d to vol'))
+  const back = SCRIPTS.releaseSpeakers.join('\n')
+  assert.ok(back.includes('if application "Music" is not running then return "not running"'), 'Music is never opened just to let go')
+  assert.ok(back.indexOf('if (kind of d) is computer then') < back.indexOf('if (kind of d) is not computer then'), 'the Mac first, then the rest off')
+  for (const s of [to, back]) assert.ok(!/Living Room|HomePod mini/.test(s))
+  // fake mode says what it would do and runs nothing
+  const { run: never, calls: none } = fakeRun()
+  const fake = createMusic({ run: never, fake: true, log: l => lines.push(l) })
+  assert.equal(await fake.toHomePods({ volume: 60 }), 'set')
+  assert.equal(lines.at(-1), '[music] would send the song to the HomePods')
+  assert.equal(await fake.releaseSpeakers(), 'released')
+  assert.equal(await fake.hasTrack('x'), true)
+  assert.equal(none.length, 0)
+})
+
+test('is the song in the library? yes, no, or cannot tell: asked before anything is stopped for it', async () => {
+  const { run, calls } = fakeRun({ hasTrack: args => (args[0] === 'Happy Birthday for Dogs' ? 'yes' : 'no') })
+  const m = createMusic({ run })
+  assert.equal(await m.hasTrack('Happy Birthday for Dogs'), true)
+  assert.equal(await m.hasTrack('Another'), false)
+  assert.deepEqual(calls.at(-1), { which: 'hasTrack', args: ['Another'] })
+  assert.equal(await createMusic({ run: fakeRun({ hasTrack: new Error('Not authorized (-1743)') }).run }).hasTrack('x'), null)
+  assert.equal(await createMusic({ run: fakeRun({ hasTrack: '' }).run }).hasTrack('x'), null)
+  assert.ok(!SCRIPTS.hasTrack.join('\n').includes('Happy Birthday'), 'the name arrives as an argument')
+  // the relay asks first, stops the music before the song and waits for the stop, lets go of the HomePods after,
+  // and a stop by hand during the song keeps the music off
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  const cake = src.slice(src.indexOf('async function serveCake(a) {'), src.indexOf('// The Orangerie string lights mirror'))
+  const at = s => { const i = cake.indexOf(s); assert.ok(i >= 0, s); return i }
+  assert.ok(at('music.hasTrack?.(a.song)') < at('await music.pause()'), 'a missing song is found out before the music is stopped')
+  assert.ok(at('await music.pause()') < at('music.toHomePods(') && at('music.toHomePods(') < at('music.playTrack('), 'the stop, the HomePods, then the song')
+  assert.ok(at('music.playTrack(') < at('await music.releaseSpeakers()') && at('await music.releaseSpeakers()') < at('sceneState = afterCake(sceneState)'), 'the song, the HomePods let go, then the sheet again')
+  assert.ok(cake.includes("a.speakers !== 'mac'"), 'cake.speakers "mac" keeps the song on this Mac')
+  assert.ok(cake.includes('if (cakeQuiet === mine)') && src.includes("if (a.type === 'music' && a.do === 'pause' && a.why === 'host') cakeQuiet = cakeSeq"), 'the host\'s own stop ends the song for good')
+  assert.ok(cake.includes("if (started !== 'playing') {"), 'a song that did not start never leaves the room in silence for its length')
 })

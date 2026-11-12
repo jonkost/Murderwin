@@ -14,9 +14,15 @@
 //   pause()                 stop the music (Music is never opened just to pause it)
 //   duck() / unduck()       Music's own volume down to a whisper under a cue
 //                           sound, and back to the playlist's volume after
-//   speaker({ name, on })   that AirPlay speaker in or out of the music (Boo's
-//                           Parlour HomePod in Act 4, 27 Oct 2026)
-//   speakers()              [{ name, on }] for every AirPlay speaker Music sees
+//   speakers()              [{ name, on, kind }] for every AirPlay speaker Music sees
+//   hasTrack(name)          true or false: is that song in the library? null
+//                           when Music cannot be asked
+//   toHomePods({ names, volume })  the Music app plays through those AirPlay
+//                           speakers (none named: every HomePod it can see) and
+//                           not through the Mac: 'set', 'none' (no such speaker
+//                           is there) or 'failed'. For the cake's song, 11 Nov 2026
+//   releaseSpeakers()       the Music app lets go of them: back to the Mac's own
+//                           speakers, so the HomePods can take their own music again
 //
 // Commands run one at a time, in order. A failure (no permission yet, a
 // playlist that is not there, Music not answering) logs one plain line and
@@ -97,27 +103,99 @@ export const SCRIPTS = {
     'tell application "Music" to pause',
     'return "paused"',
   ],
-  // argv: "on" or "off", the speaker's name in Music's AirPlay list
-  speaker: [
-    'on run argv',
-    'set want to ((item 1 of argv) is "on")',
-    'set n to (item 2 of argv) as text',
-    'tell application "Music"',
-    'if not (exists AirPlay device n) then return "missing"',
-    'set selected of AirPlay device n to want',
-    'end tell',
-    'return "done"',
-    'end run',
-  ],
-  // every AirPlay speaker Music sees: name, tab, true or false, one a line
+  // every AirPlay speaker Music sees: name, tab, true or false (is it ticked),
+  // tab, its kind (computer, HomePod, Apple TV...), one a line
   speakers: [
     'set out to ""',
     'tell application "Music"',
     'repeat with d in AirPlay devices',
-    'set out to out & (name of d) & tab & ((selected of d) as text) & linefeed',
+    'set k to "unknown"',
+    'try',
+    'set k to (kind of d) as text',
+    'end try',
+    'set out to out & (name of d) & tab & ((selected of d) as text) & tab & k & linefeed',
     'end repeat',
     'end tell',
     'return out',
+  ],
+  // argv: the song's exact name. "yes" or "no": is it in the library?
+  hasTrack: [
+    'on run argv',
+    'set songName to (item 1 of argv) as text',
+    'tell application "Music"',
+    'try',
+    'set t to (first track whose name is songName)',
+    'return "yes"',
+    'on error',
+    'return "no"',
+    'end try',
+    'end tell',
+    'end run',
+  ],
+  // argv: volume, then the speakers' names in Music's AirPlay list (none
+  // named: every HomePod Music can see). Ticks each one that is there and
+  // sets its volume, then unticks every other speaker, the Mac's own among
+  // them, so the song plays on those alone. The ticking comes first: Music
+  // will not untick its last speaker. "none" when not one of them is there
+  // (nothing is changed then); else "set", tab, how many.
+  toHomePods: [
+    'on run argv',
+    'set vol to (item 1 of argv) as integer',
+    'set wanted to rest of argv',
+    'set picked to {}',
+    'tell application "Music"',
+    'repeat with d in AirPlay devices',
+    'set n to (name of d) as text',
+    'set pick to false',
+    'if (count of wanted) is 0 then',
+    'if (kind of d) is HomePod then set pick to true',
+    'else',
+    'if wanted contains n then set pick to true',
+    'end if',
+    'if pick then',
+    'try',
+    'set selected of d to true',
+    'set end of picked to n',
+    'end try',
+    'end if',
+    'end repeat',
+    'if (count of picked) is 0 then return "none"',
+    'repeat with d in AirPlay devices',
+    'set n to (name of d) as text',
+    'if picked contains n then',
+    'try',
+    'set sound volume of d to vol',
+    'end try',
+    'else',
+    'try',
+    'set selected of d to false',
+    'end try',
+    'end if',
+    'end repeat',
+    'end tell',
+    'return "set" & tab & (count of picked)',
+    'end run',
+  ],
+  // back to the Mac's own speakers: tick the computer first, then untick the rest
+  releaseSpeakers: [
+    'if application "Music" is not running then return "not running"',
+    'tell application "Music"',
+    'repeat with d in AirPlay devices',
+    'if (kind of d) is computer then',
+    'try',
+    'set selected of d to true',
+    'end try',
+    'end if',
+    'end repeat',
+    'repeat with d in AirPlay devices',
+    'if (kind of d) is not computer then',
+    'try',
+    'set selected of d to false',
+    'end try',
+    'end if',
+    'end repeat',
+    'end tell',
+    'return "released"',
   ],
   // argv: the volume to end on, the number of steps (a short fade)
   fade: [
@@ -251,26 +329,49 @@ export function createMusic({ run = runOsascript, fake = false, log = () => {}, 
     })
   }
 
-  function speaker({ name, on }) {
-    return enqueue(async () => {
-      if (fake) { log(`[music] would ${on ? 'add' : 'take'} ${name} ${on ? 'to' : 'out of'} the house music`); return }
-      const r = await run(SCRIPTS.speaker, [on ? 'on' : 'off', String(name)])
-      if (r === 'missing') log(`[music] no speaker called "${name}" in Music's AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)`)
-      else log(on ? `[music] ${name} is back in the house music` : `[music] ${name} is out of the house music, for Boo's Catwalk`)
-    })
-  }
-
   function speakers() {
     if (fake) return Promise.resolve([])
     return run(SCRIPTS.speakers).then(parseSpeakers)
   }
 
-  return { play, playTrack, nowPlaying, pause, duck, unduck, speaker, speakers, ducked: () => ducked, idle: () => chain }
+  // Is that song in the library? true, false, or null when Music cannot be
+  // asked (no permission, not a Mac). The song is never named in a line.
+  function hasTrack(name) {
+    if (fake) return Promise.resolve(true)
+    return run(SCRIPTS.hasTrack, [String(name)]).then(r => (r === 'yes' ? true : r === 'no' ? false : null), () => null)
+  }
+
+  // The Music app onto the HomePods (the cake's song, 11 Nov 2026: "on all
+  // HomePods"). `names`: speakers by their names in Music's AirPlay list, or
+  // none for every HomePod it can see. Resolves 'set', 'none' or 'failed';
+  // on anything but 'set' the song plays where Music was already playing.
+  function toHomePods({ names = [], volume: v = 60 } = {}) {
+    return enqueue(async () => {
+      if (fake) { log('[music] would send the song to the HomePods'); return 'set' }
+      const r = await run(SCRIPTS.toHomePods, [String(v), ...names.map(String)])
+      if (r.startsWith('set')) { log(`[music] the Music app is playing through ${Number(r.split('\t')[1]) || 0} HomePod${Number(r.split('\t')[1]) === 1 ? '' : 's'}`); return 'set' }
+      log(names.length
+        ? '[music] none of the speakers named for the cake (cues/scenes.json cake.speakers) is in Music\'s AirPlay list; npm start -- --speakers lists them. The song plays from this Mac'
+        : '[music] the Music app can see no HomePod; npm start -- --speakers lists what it sees. The song plays from this Mac')
+      return 'none'
+    }).then(r => r ?? 'failed', () => 'failed')
+  }
+
+  function releaseSpeakers() {
+    return enqueue(async () => {
+      if (fake) { log('[music] would let go of the HomePods'); return 'released' }
+      const r = await run(SCRIPTS.releaseSpeakers)
+      if (r === 'released') log('[music] the Music app has let go of the HomePods')
+      return r
+    }).then(r => r ?? 'failed', () => 'failed')
+  }
+
+  return { play, playTrack, nowPlaying, pause, duck, unduck, speakers, hasTrack, toHomePods, releaseSpeakers, ducked: () => ducked, idle: () => chain }
 }
 
-// Music's AirPlay list, from the speakers script: [{ name, on }].
+// Music's AirPlay list, from the speakers script: [{ name, on, kind }].
 export function parseSpeakers(text) {
-  return String(text ?? '').split('\n').map(l => l.split('\t')).filter(([n]) => n && n.trim()).map(([name, sel]) => ({ name: name.trim(), on: String(sel).trim() === 'true' }))
+  return String(text ?? '').split('\n').map(l => l.split('\t')).filter(([n]) => n && n.trim()).map(([name, sel, kind]) => ({ name: name.trim(), on: String(sel).trim() === 'true', kind: String(kind ?? '').trim() || 'unknown' }))
 }
 
 // Follow one song to its end (Cake!, 25 Oct 2026). Once a second, ask Music

@@ -192,6 +192,54 @@ test('the heartbeat row is the shape the rules allow, under the guest key cues, 
   assert.ok(src.includes("'presence'") && src.includes('serverTimestamp()'), 'the relay writes its row with a server stamp')
 })
 
+// ---- 11 Nov 2026: the brain says when it cannot stop the music ----
+
+test('the heartbeat row carries one yes-or-no for the Host tab: can the brain stop the music? Left out when the question does not arise, and dropped if the house\'s rules refuse it', () => {
+  assert.deepEqual(presenceRow('n1', { canStop: false }), { nightId: 'n1', guestKey: 'cues', sound: false }, 'the stop\'s Shortcut is not on this Mac')
+  assert.deepEqual(presenceRow('n1', { canStop: true }), { nightId: 'n1', guestKey: 'cues', sound: true })
+  assert.deepEqual(presenceRow('n1', { canStop: null }), { nightId: 'n1', guestKey: 'cues' }, 'the music is not on the Shortcut road: nothing to say')
+  assert.deepEqual(presenceRow('n1', {}), { nightId: 'n1', guestKey: 'cues' })
+  // the rules let a row carry `sound`, a yes or a no, and nothing else new
+  const rules = readFileSync(new URL('../../firestore.rules', import.meta.url), 'utf8')
+  const allowed = /presence\/\{uid\}[\s\S]*?hasOnly\(\[([^\]]*)\]\)/.exec(rules)[1].replace(/['\s]/g, '').split(',')
+  for (const k of Object.keys(presenceRow('n1', { canStop: false }))) assert.ok(allowed.includes(k), `${k} is allowed by the rules`)
+  assert.ok(rules.includes('request.resource.data.sound is bool'))
+  const src = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
+  assert.ok(src.includes('presenceRow(nightId, plainRow ? {} : { canStop })'))
+  assert.ok(src.includes("e?.code === 'permission-denied'") && src.includes('plainRow = true') && src.includes('return heartbeat()'), 'rules older than the relay: the row goes without it, so the Host tab never loses the brain')
+  // the relay reads this Mac's Shortcuts when it starts, and looks again each minute while the stop is missing
+  assert.ok(src.includes('const r = shortcutCheck(shortcutNames, have)'))
+  assert.ok(src.includes('if (shortcutNames.length) { await checkShortcuts(); heartbeat() }'), 'at the start, before the guests come')
+  assert.ok(src.includes('if (canStop === false) await checkShortcuts({ quiet: true }); heartbeat()'), 'so the Host tab\'s line goes within a minute of the Shortcut being made')
+  assert.ok(src.includes("'--check-shortcuts'"), 'and on its own, as a check that runs nothing')
+  assert.ok(!/execFile\(|spawn\('shortcuts'/.test(src), 'the relay itself never runs a Shortcut tool directly: lib/strings.js does')
+})
+
+test('a cue the screens and phones play: the brain spawns nothing for it, says so in one count-only line, and still reports done; its recordings still play here', async () => {
+  const { spawn, procs } = fakeSpawn()
+  const lines = []
+  const done = []
+  const player = createPlayer({ mediaDir: '/m', exists: () => true, spawn, log: l => lines.push(l) })
+  player.play(null, [], { elsewhere: true, onDone: () => done.push('chime') })
+  assert.equal(procs.length, 0, 'no afplay for a chime')
+  assert.deepEqual(done, ['chime'])
+  assert.equal(lines.at(-1), '[sound] a cue for the screens and phones: they play it, nothing plays here')
+  assert.equal(playLine({ elsewhere: true }), '[sound] a cue for the screens and phones: they play it, nothing plays here')
+  // bulletin 2: the brain speaks, so it plays the sounder itself and the line is the old one
+  player.play('sounder-bulletin', ['bulletin2-opening', 'bulletin2-signoff'], { elsewhere: false })
+  assert.equal(procs.length, 1)
+  assert.equal(procs[0].file, '/m/sounder-bulletin.m4a')
+  assert.equal(lines.at(-1), '[sound] sound playing; bulletin: 2 recordings')
+  // a cue for the screens stops a recording the brain was speaking, as any newer cue does
+  player.play(null, [], { elsewhere: true })
+  assert.equal(procs[0].killed, true)
+  for (const l of lines) for (const id of [...SOUND_IDS, ...CLIP_IDS]) assert.ok(!l.includes(id), 'counts only, never an id')
+  // fake mode
+  const fake = createPlayer({ mediaDir: '/m', exists: () => true, spawn, fake: true, log: l => lines.push(l) })
+  fake.play(null, [], { elsewhere: true })
+  assert.equal(lines.at(-1), '[sound] a cue for the screens and phones: they play it, nothing plays here (fake: nothing plays)')
+})
+
 test('.env values lose a trailing space and one pair of quotes; a bad bridge address is named', () => {
   const env = parseEnv('HUE_BRIDGE_HOST=192.168.1.40 \nHUE_APP_KEY="abc-123"\n# a comment\nHUE_HALL_LIGHT_ID=\'id\'\nMEDIA_DIR=/m \n')
   assert.deepEqual(env, { HUE_BRIDGE_HOST: '192.168.1.40', HUE_APP_KEY: 'abc-123', HUE_HALL_LIGHT_ID: 'id', MEDIA_DIR: '/m' })
@@ -465,7 +513,7 @@ test('the relay watches the night doc as well as the public docs (the study too)
   assert.ok(src.includes("if (a.type === 'cake') serveCake(a)") && src.includes('sceneState = afterCake(sceneState)'))
   assert.ok(src.includes('PROJECTOR_SHORTCUTS') && src.includes('projectorShortcutNames(env)'), 'the projector is on with PROJECTOR_SHORTCUTS=on, its Shortcut names from cues/.env')
   // every cue brings the music back when it ends, even one that played nothing after cutting off a ducked one
-  assert.ok(src.includes('if (ducksFor(a)) cueStarts()') && src.includes('onDone: () => cueEnds(a, startedAt)'))
+  assert.ok(src.includes('if (ducksFor(a)) cueStarts(a)') && src.includes('onDone: () => cueEnds(a, startedAt, elsewhere)'))
   // the hall bulb keeps its own logic: scenes never set it
   assert.ok(!/recallScene\([^)]*HALL/.test(src))
   // offline mode never signs in

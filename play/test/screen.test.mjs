@@ -242,8 +242,8 @@ test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and 
   assert.ok(listens.includes('for (const e of WAKE_EVENTS) window.addEventListener(e, wake)') && listens.includes('}, [])'), 'the page listens from its first moment to its last')
   // a finger going down is not a tap to a browser; lifting it is (an iPad would never get its sound on the press alone)
   for (const e of ['pointerup', 'touchend', 'click', 'keydown']) assert.ok(kiosk.includes(`'${e}'`) && /const WAKE_EVENTS = \[[^\]]*\]/.exec(kiosk)[0].includes(`'${e}'`), `${e} wakes the sound`)
-  // the bell is not a setup mark: it shows on every night
-  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the bell on every night')
+  // the bell is not a setup mark: it shows on every night (and since 11 Nov 2026 it is the screen's cue player too)
+  assert.ok(kiosk.includes("<Bell sounds={sounds} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} tv={which === 'living'} scope={nightId} />"), 'the bell on every night')
 })
 
 test('F31 nothing in the corners beside a near-black screen, the bell ringing or not (29 Oct 2026)', () => {

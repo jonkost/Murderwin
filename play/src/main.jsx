@@ -12,7 +12,13 @@ import { practiceParam } from './lib/gametest'
 import Setup from './screens/Setup'
 import { setupParam } from './lib/setup'
 import { lookParam } from './look/look'
+import { installUnlock } from './lib/cueSounds'
 import './styles.css'
+
+// Every page, phone or room screen: the first tap or key anywhere wakes the page's sound, and so does the
+// first one after any reload (handoff 11 Nov 2026, A2). A browser lets a page make sound only after a tap,
+// and a phone that scans a room's code opens a fresh page, so the Allow screen alone was never enough.
+installUnlock()
 
 // The look book: /play/?look=1 (handoff 11 Nov 2026, B1). Eight screens in the new look, for Jon to approve.
 // A page on its own, loaded only when asked for: no sign-in, no night. Never linked from a guest's screen.
