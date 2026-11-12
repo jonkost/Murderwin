@@ -141,12 +141,18 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       await run.player.answer(db, { nightId, uid, windowId: w.id, picks })
       answered++
     }
-    await host('settle-now')
+    // since 12 Nov a game closes on its last answer (and in Act 6 the next opens at once): the dry run closes
+    // only one still open
+    const after = (await nightDoc()).window
+    if (after?.id === w.id && !after.settled) await host('settle-now')
     return answered
   }
   // the act's next Parlour Game, at its own time: the clock is wound forward to it (and past the gap
   // after the last one), the game pops up on every phone, every phone answers, the dry run closes it
   async function nextParlour() {
+    // a game already open (Act 6's second, opened on the first's last answer) is answered first
+    const open = (await nightDoc()).window
+    if (open && !open.settled && open.kind === 'questions') return answerWindow()
     const ref = db.doc(windows.parlourPath(nightId))
     const sched = (await ref.get()).data()
     const i = Array.from({ length: sched?.count ?? 0 }, (_, k) => k).find(k => !sched.fired?.[k])
