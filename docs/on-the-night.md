@@ -14,7 +14,7 @@ four game rooms, the bags are in, the game names, and the device table.
 Updated again on the evening of 24 October: the workshop's Game test tab
 (see "Trying the games" below) and the news team's cast (Susan plays Ava
 Waves, you play Mic Cameron). Updated 25 October: the Home rows that count
-the secrets, the motive card pictures, Boo's camera for the end credits,
+the secrets, the motive card pictures,
 replaying a rehearsal by its seed word, and the morning after. Updated 25 and
 26 October for your cue list (`docs/cue-list.md`), the whole build: the
 blackout ends on its own after five seconds, then the "Sorry for the
@@ -33,13 +33,15 @@ with the cats' pictures, the Happy Birthday Irwin card with Sir Irwin's
 picture, a rejoin code under the ballot clock, and the brain's browser as
 the Orangerie's screen, `?kiosk=orangerie`); a Notes tab on every phone, a
 box for each guest's own scribbles; and the devices in your cue list's key
-(Susan's MacBook Pro feeds the projector all night and never moves, the
+(Susan's MacBook Pro never moves, the
 brain switches the projector's plug, your iPad Pro roams through four
-stations, Jenna's iPad Pro is Boo's camera, and the older family iPad is
+stations, and the older family iPad is
 out unless you say it stays, the question *olderIpad*). The Host tab's six
 scene buttons are the cue list's six scenes. Updated 29 October for your two
 just-for-fun winners: Zimothy names who found the most pairs in In Duplicate,
 and Salem who slipped least in Get Off My Lawn!, each on its room's screen.
+Updated 11 November: Boo's camera is gone. Jenna's iPad has no job on the
+night, the end credits have no photos, and nothing is left to set up for it.
 Commands are typed like `npm test`. Buttons on your phone's Host tab are in
 bold type. A test checks that every one of them exists. Your jobs before the
 night are cards on the workshop's Timeline page; this page says how to do
@@ -237,7 +239,6 @@ them.
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
 | Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
 | Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | From its Home Screen icons, so no Safari bars show. Once, before the night: open each of its three addresses in Safari, tap Share, then Add to Home Screen (if it asks, keep Open as Web App on), and name it: the Library (`?kiosk=ipad`, also supper), In Duplicate (`?kiosk=memory`), the bedroom (`?kiosk=bedroom`). On the night, open each station from its icon. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
-| Jenna's iPad Pro | Boo's camera in the Entryway, Act 4, on its stand facing the group at the Stream Deck (`?kiosk=pose`, nice to have): one photo of each group a minute into its visit, for the end credits. Jenna is at the house to pack the bags and never plays, so it is free all night. | Safari, full screen, before **Start Act 4**. Tap Turn on the camera and allow it. |
 | The older family iPad | Out, unless you say it stays (the question *olderIpad* on the board; your key has no older iPad). If it stays: In Duplicate on its small stand in the Library all night (`?kiosk=memory`), and your iPad Pro stays in the Orangerie from supper until it goes to the bedroom. | Nothing, by default. If it stays: Safari, full screen, tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
 | The old iPhone 11 | The spare phone. | Charged, on the plain game address, left on the join screen. |
@@ -284,7 +285,7 @@ is in its place:
 *One address for every screen (11 Nov).* On each machine type
 `murderwin-at-sirwin-manor.web.app/setup`. The page asks "Which screen is
 this?" with one big button per room: the Parlour TV, the Study, Boo's arcade,
-the Orangerie, the iPad Pro's three stations, Boo's camera. Tap the room,
+the Orangerie, the iPad Pro's three stations. Tap the room,
 make the window full screen, click once. It needs no sign-in. The machine's
 last choice is marked the next time, so on the party night it is the same
 tap. Boo's button has a second one under it for connecting the Stream Deck
@@ -351,8 +352,7 @@ links to it.
    move is in the act bullets below: to its stand in the Orangerie for
    supper (the same address), back to the Library as the memory match
    (`?kiosk=memory`) before **Start Act 4**, and into the bedroom
-   (`?kiosk=bedroom`) after Act 4. Jenna's iPad Pro comes out before
-   **Start Act 4** as Boo's camera. The older family iPad stays in the
+   (`?kiosk=bedroom`) after Act 4. The older family iPad stays in the
    drawer unless you say it stays (the question *olderIpad*). On your Host
    tab the iPad Pro's dot for its earlier station goes quiet after each move
    (the Library and Orangerie one from Act 4, the memory match one once it
@@ -481,10 +481,7 @@ links to it.
 - Act 4, Behind Closed Doors: four game rooms, pairs and trios, about an
   hour. Before you press it: carry the iPad Pro from the Orangerie back to
   its small stand in the Library, open `?kiosk=memory` on it in Safari, full
-  screen, and tap it once (In Duplicate waits there for each group). If you
-  are using Boo's camera, Jenna's iPad Pro stands in the Entryway facing
-  the group at the Stream Deck, on `?kiosk=pose` in Safari, full screen,
-  with Turn on the camera tapped.
+  screen, and tap it once (In Duplicate waits there for each group).
   **Start Act 4** gives every phone a two-minute warning and makes the
   groups (nobody sees them yet). Two minutes later, on its own: the chime,
   the title card on the Parlour TV, and every phone shows its group as
@@ -533,7 +530,7 @@ links to it.
     is left out. A tie names everyone tied. It stays up until the chime and
     changes nothing.
   - The Entryway: Miss Boo LaRue's Arcade, on Susan's MacBook Pro and the
-    Stream Deck + XL (since 5 Nov; Boo's Catwalk on the projector before).
+    Stream Deck + XL (since 5 Nov).
     The group scans Boo's code on her rules card, and the visit starts with
     their names in the order of the group: five coins each, one a game, in
     turns, fifty seconds a game, the Mac's screen the scoreboard and the
@@ -548,9 +545,7 @@ links to it.
     clock: "Be on your way." Anyone the chime caught short still gets the
     clue on their phone at the chime. No motive is crossed off here (your
     call of 29 Oct). Each counted round's score goes to the house for the
-    Act 7 awards. If Boo's camera is up, Jenna's iPad Pro facing the group
-    shows them to themselves and takes one photo a minute into the visit,
-    for the end credits. Nothing to press; the brain still lends the
+    Act 7 awards. Nothing to press; the brain still lends the
     Parlour HomePod to Susan's Mac through Act 4 (Jon, 27 Oct), which the
     arcade does not use (the question arcadeSound).
   The group scans the room's code to begin. Between groups each room's
@@ -646,7 +641,7 @@ links to it.
   seconds). The cards come up when each film ends, so wait for the cards
   before the next press. A film with no file shows the words instead. After the
   Victim, on their own: the closing story, the dial's journey, the end
-  credits (with each group at the arcade from Boo's camera, if it was up) and
+  credits and
   Sir Irwin's last card, about two minutes. **Hold the screen**
   stops it where it is (a toast, a photograph); **Carry on** resumes, and
   nothing on the screen is skipped. **Next** for everyone's result only works
@@ -717,10 +712,10 @@ links to it.
 | 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro, in the Library, keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad Pro in the Library (`?kiosk=ipad`; `?kiosk=memory` shows his code too), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
 | 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
-| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. Boo's camera (Jenna's iPad Pro), if it is up: the group like a mirror, and its photo a minute into the visit. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
+| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and the deduction board. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
-| 7 | The ballot clock with the trace, a small rejoin code under the clock, and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits (with Boo's camera's photos from the arcade, when there are any) and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen goes black and the projector is off. |
+| 7 | The ballot clock with the trace, a small rejoin code under the clock, and the board. Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen goes black and the projector is off. |
 
 Outside Act 4 the study screen is on its loop (its crest until the file is
 in) unless a round is under way; in Act 4, between groups, it shows
@@ -752,8 +747,6 @@ on the party night the Host tab says "This is the party night" and the stand-ins
 | Boo's screen or the Stream Deck | Carry on: a group that did not finish is paid at the chime anyway, with its clue on every phone. With the Stream Deck gone, the deck drawn on the screen plays the games with the mouse and the keyboard. If the Mac itself goes, open `?kiosk=boo` in Google Chrome on any screen the group can see. In Act 2 the Entryway's printed code does Boo's screen's job. |
 | The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card and Salem's board back. |
 | A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
-| Boo's music (the Parlour HomePod) | Carry on: the wall shows every moment. To get the sound back, pick the Parlour HomePod again in Control Centre, Sound, on Susan's MacBook Pro; or pick its own speakers and add `&airplay=0` to the wall's address, so the music is not two seconds early. |
-| Boo's camera (Jenna's iPad Pro in the Entryway) | Carry on. The arcade runs the same without it; the end credits have no photo for that group. If it says the camera is off, allow the camera for the page in the iPad's Settings and reload. |
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; every phone's screen turns red and green whatever the lights do. |
 | A room code will not scan | Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
@@ -839,16 +832,13 @@ night page has "The morning after" under After the party.
   screen). Before that the page says "Not yet" and why, and nothing else.
   A rehearsal, a dry run or a Game test night never opens it.
 - Type OPEN and tap "Open the case". The night is copied into an archive
-  first: the case, everyone's phone, the night's own records, Boo's
-  camera's photos, and the three secrets that ran. Nothing is moved, except
-  the guests' photos: they leave the game site (where anyone with the game
-  open could read them) and stay in the archive, shown on the page to
-  save.
+  first: the case, everyone's phone, the night's own records, and the
+  three secrets that ran. Nothing is moved.
 - The page then shows what really happened: the Murderer, the motive and
   the victim, everyone's character and role and bag, which families each
   guest's cats ruled out and which family the first bulletin crossed off,
-  where the clarity dial ended, every bag's contents, the drawing's
-  pictures, and each group's photo from Boo's camera, to save.
+  where the clarity dial ended, every bag's contents and the drawing's
+  pictures.
 - Last, your call on the secrets: "Keep the secrets" leaves the packing
   list, the cats' leans and the drawing pictures sealed as they are; "Clear
   the secrets" takes them out of the sealed lists. Either way the archive
@@ -867,8 +857,8 @@ Every game has the same parts: what it is and where it plays, the steps, a
 "Try it" list (a button that opens each screen in a new tab, and a square
 code to open it on another device), an "It works" button, and a box for what
 to fix. Beside each game's name a chip says Not tried yet, Works (with the
-day) or Needs a fix. The sample screens show made-up data, and the
-practices (Salem's, Boo's camera's) and *Miss Boo LaRue's Arcade* on its own
+day) or Needs a fix. The sample screens show made-up data, and
+Salem's practice and *Miss Boo LaRue's Arcade* on its own
 page have no night at all: nothing is paid and no clue is dealt.
 
 - *First, the study key word.* While no word is saved, a box at the top of
@@ -918,7 +908,7 @@ page have no night at all: nothing is paid and no clue is dealt.
   who slipped least" shows what the screen shows on the night.
 - *Miss Boo LaRue's Arcade* (the Entryway). Built 28 October to try,
   changed from your playtests on 30 and 31 October and 1 November, and on
-  the night since 5 November, in Boo's Catwalk's place (your call of
+  the night since 5 November (your call of
   29 October). On a Mac in Google
   Chrome (Safari cannot reach the Stream Deck): quit the Stream Deck app, set
   the Mac's sound output to its own speakers (through a HomePod the sounds
@@ -952,9 +942,7 @@ page have no night at all: nothing is paid and no clue is dealt.
   players' clue comes from the house at their moment (on the screen and on
   their phone), a trio's third gets Boo's line, and the chime rings at the
   end of the round; a player caught short gets the clue on their phone at
-  the chime. To try Boo's camera, open "Boo's camera, a practice photo" on
-  the iPad Pro and tap Turn on the camera: twelve seconds later it takes
-  the photo and keeps it on its own screen, never sent anywhere. For a group's
+  the chime. For a group's
   visit, tap "Try a group's visit" at the bottom of the free play page, or
   close the free play tab before opening "A group's visit, for practice":
   only one arcade tab plays on the Stream Deck at a time, and the other says
@@ -1055,7 +1043,7 @@ from `seed/night.json` ("Arm the bulletin") and workshop buttons ("Freeze the
 workshop") are in quotes, never bold. No em dashes anywhere in this file.
 
 *The kiosks* (`play/src/screens/Kiosk.jsx`, `play/src/screens/Rooms.jsx`):
-`?kiosk=living | ipad | memory | boo | pose | bedroom | study | orangerie`, plus
+`?kiosk=living | ipad | memory | boo | bedroom | study | orangerie`, plus
 `?kiosk=memory&play=1` (the standalone memory match, no night) and
 `?kiosk=boo&play=1` (Miss Boo LaRue's Arcade on its own, 28 Oct; `&visit=1`
 is the practice visit): `play/src/main.jsx` sends it to `BooArcade`
@@ -1076,7 +1064,7 @@ Orangerie), `memory` in Act 4 and `bedroom` from Act 6, one `DEVICE_ROOMS`
 group; Susan's MacBook Pro is `boo` all night, in the Entryway with the Stream
 Deck + XL since 5 Nov (the projector's plug is still the brain's, unused,
 `docs/cues-relay.md`; the arcade's Spares entry `arcadeplay` carries
-`play=1`, so `byKiosk('boo')` still finds her Mac); Jenna's iPad Pro is `pose`; the brain's
+`play=1`, so `byKiosk('boo')` still finds her Mac); the brain's
 browser is `orangerie`; the older family iPad is listed with no address, its
 note naming the question olderIpad. `app/test/devices.test.mjs` pins all of
 that. The living kiosk takes the relay guesses (`callRelayGuess`) and
@@ -1093,8 +1081,8 @@ plays the two bulletins as video is `meta/game.bulletinVideo` (only `true` means
 *Added 25 Oct, the evening, the screens* (the cue list, step 6 of
 `docs/handoff-2026-10-25.md`; `docs/room-screens.md` has the detail). The loop
 slot: `Rooms.jsx` `Loop` and `Idle({ title, line, loop })`, the file from
-`play/src/lib/rooms.js` `loopUrl(which)` (`LOOP_OF`: `ipad` plays `memory`,
-`pose` none), shown from `onLoadedData`, the crest until then and on
+`play/src/lib/rooms.js` `loopUrl(which)` (`LOOP_OF`: `ipad` plays `memory`),
+shown from `onLoadedData`, the crest until then and on
 `onError`, never a fetch. The room codes: `roomCode(which, night)` picks the
 cat (`ROOM_CODE_CATS`) only while `act === 2 && beat === 'cat'` and the night
 is not paused; Kiosk.jsx
@@ -1124,10 +1112,10 @@ join code: `livingView` returns `join` for kind `join` and `JoinScreen` draws
 no title, so every kiosk goes dark through the one rule. The new kiosk
 `?kiosk=orangerie` (`Rooms.jsx` `Orangerie`, reads `public/salem` for the
 group due, and since 28 Oct `public/rotation` for Salem's winner) comes before the Living fallback; `play/src/lib/house.js` MACHINES
-gains `kiosk-orangerie` and `kiosk-pose`. Tests: `play/test/rooms.test.mjs`,
+gains `kiosk-orangerie`. Tests: `play/test/rooms.test.mjs`,
 `play/test/screen.test.mjs` (the join view, The End, the preview list),
 `play/test/house.test.mjs`. Previews: `?preview=kiosk-join | kiosk-rejoin |
-kiosk-code-* | kiosk-rules-* | kiosk-boo-intro | kiosk-birthday | kiosk-loop-* |
+kiosk-code-* | kiosk-rules-* | kiosk-birthday | kiosk-loop-* |
 kiosk-end`.
 
 *Added 25 Oct, the evening, the night's shape* (the cue list, step 5 of
@@ -1170,13 +1158,11 @@ numbers only from `sealed/bags`, `sealed/parlour_leans` against the bank,
 check it against the archive and the day again; the reveal must have been
 named on the party day or later (`victimNamedAt`), so a night started with
 the box ticked before the party never opens; Clear copies each secret as it
-stands, as a `cleared-*` part, before removing it) and `posePhoto` (`functions/lib/pose.js`, at the
-party, from the pose camera's own presence row (`fromPoseCamera`, the
-guest key `kiosk-pose`) or the admin: a JPEG data URL of at most
-`POSE_MAX_CHARS`, kept at
-`nights/{id}/public/pose-<group>` only while `public/boo` is that group's
-visit to the arcade; `finaleDoc` lists the groups with a photo in `credits.poses`, and the
-TV reads each photo from its own doc). Replay by seed is
+stands, as a `cleared-*` part, before removing it). Boo's camera went on
+11 Nov 2026: the `posePhoto` callable, `functions/lib/pose.js`,
+`play/src/screens/Pose.jsx`, `play/src/lib/pose.js`, the `kiosk-pose` row and
+`credits.poses` are deleted, and the first deploy after it asks whether to
+delete the function `posePhoto`: answer yes. Replay by seed is
 `functions/lib/seed.js`: a rehearsal's word in
 `nights/{id}/private/deck.seed` (the caller's `seed`, else
 `meta/game.replay_seed`, used once and never by a Game test night, else
@@ -1185,10 +1171,7 @@ and `pickFor(seed, purpose...)` gives each random choice its own stream
 (`deck`, `bags`, `affection`, `case`, `waves`, `rooms`, `memory`, `relay`,
 `relay-order`, `trace`, `study`, `finale`, `spill`, `default`). A party night
 and a dry run have no seed and keep crypto randomness. Salem's colours keep
-their own timing. The pose camera is `play/src/screens/Pose.jsx`
-(`?kiosk=pose`: one photo a minute into each group's visit,
-`play/src/lib/pose.js` `SHOT_AFTER_MS`; and `?kiosk=pose&practice=1`, a
-pretend visit that sends nothing); the motive pictures are
+their own timing. The motive pictures are
 `MotivePicture` in `play/src/screens/Kiosk.jsx` over
 `play/src/lib/motives.js`.
 
@@ -1208,8 +1191,8 @@ in Act 4 `deal.dealWaitingGame` puts it on each phone as a waiting game),
 plays an armed bulletin 2 and deals its notice (`screen.tickBulletin`, then
 `notice:bulletin`), and moves the Act 2 cat queue on (`deal.tickLights`).
 Then `run.clockTick`: the supper beat once every guest has seen all four
-cats, and Act 4's warning, lock-in and rounds (`act4.due`; Boo's show and
-`booDone` went with the Catwalk, 5 Nov). The Host tab calls the host command `tick` when it opens
+cats, and Act 4's warning, lock-in and rounds (`act4.due`; `booDone`
+went on 5 Nov). The Host tab calls the host command `tick` when it opens
 and every twenty seconds in Acts 2 and 4.
 `node functions/host.mjs tick` is the hand version. Logs are counts only.
 `note-exposure <murderer|ghost>` is the older name for `hush`: the same
@@ -1303,8 +1286,7 @@ in-memory stand-in for Firestore (the default, no services at all).
 of any section key opens that section. The pure part is
 `app/src/lib/gameTest.js` (`SECTIONS` in the order of the night: study,
 memory, salem, arcade, parlour, drawing, deduction; the arcade is the
-Entryway's section since 5 Nov, with the devices `deck` and `ipadpro`, Boo's
-camera beside it; `nightStrip`, `chipOf`,
+Entryway's section since 5 Nov, with the device `deck`; `nightStrip`, `chipOf`,
 `feedbackTask`, `stewardTask`); the reads and the chip writes are
 `app/src/lib/gameTestApi.js` (chips in `meta/game_test`, each write also in
 `workshop_history`). A note is a `tasks` card with `source: 'game-test'`,
@@ -1323,14 +1305,12 @@ Jenna card only its title and section. The study section is
 Host tab's Save key writes). The `gameTest` callable
 (`functions/lib/gametest.js`) writes the Get Off My Lawn! practice to
 `public_state/game_test_salem` with the Admin SDK, on the real game's own
-rules and timing (`act4.salemFlips`; the Catwalk's `game_test_boo` went on
+rules and timing (`act4.salemFlips`; `game_test_boo` went on
 5 Nov, the arcade's practice needs no night), and
 never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. The
 practice pages are `play/src/screens/Practice.jsx`: `?practice=salem` and
 `?kiosk=orangerie&practice=1`, which take the server's time from the
-callable's `clock` and never write `presence/{uid}`, and
-`?kiosk=pose&practice=1`, a pretend visit for Boo's camera with no clock at
-all (Boo's Catwalk practices went with the Catwalk, 5 Nov). `?preview=questions&set=<base64url>`
+callable's `clock` and never write `presence/{uid}`. `?preview=questions&set=<base64url>`
 shows one workshop set (`setParam`: the three questions and their first two
 choices, never a point or a lean). The test night: `night-start` calls
 `createNight` with `forceRehearsal: true, gameTest: true` and the label

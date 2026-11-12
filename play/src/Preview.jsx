@@ -15,7 +15,6 @@ import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, Dark as KioskDark, IntroCountdown } from './screens/Kiosk'
 import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
-import { PoseCamera } from './screens/Pose'
 import BooArcade from './screens/Arcade'
 import { SalemRounds } from './screens/Act4'
 import { HousePanel, ResumeNight, StartNight } from './screens/Host'
@@ -53,7 +52,7 @@ import { setFromAddress } from './lib/gametest'
 // the join code (kiosk-join, kiosk-rejoin), the room codes of Act 2
 // (kiosk-code-study, kiosk-code-library, kiosk-code-entryway,
 // kiosk-code-orangerie), the Act 4 rules cards (kiosk-rules-study,
-// kiosk-rules-library, kiosk-rules-entryway, kiosk-boo-intro,
+// kiosk-rules-library, kiosk-rules-entryway,
 // kiosk-rules-orangerie), the birthday card (kiosk-birthday), the loop slot
 // on each idle screen (kiosk-loop-living, kiosk-loop-ipad, kiosk-loop-study,
 // kiosk-loop-memory, kiosk-loop-boo, kiosk-loop-bedroom, kiosk-loop-orangerie;
@@ -229,8 +228,6 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
-    // the Entryway camera's photos: on the night each is read from its own doc; here, a stand-in picture
-    poses: [{ groupId: 'g1', names: ['Jessa', 'Mari'], image: `${import.meta.env.BASE_URL}portraits/rye.png` }, { groupId: 'g2', names: ['Jon', 'Susan', 'Jacob'], image: `${import.meta.env.BASE_URL}portraits/leech.png` }],
     thanks: ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Mari', 'Jacob'],
     memory: { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' },
     last: { cat: 'irwin', line: 'Can we play again?' },
@@ -335,11 +332,9 @@ const KIOSK = {
   'kiosk-arcade-clue': () => <BooArcade sample="clue" />,
   'kiosk-arcade-third': () => <BooArcade sample="third" />,
   'kiosk-arcade-farewell': () => <BooArcade sample="farewell" />,
-  // the group's phones in the Orangerie and the Entryway (28 Oct 2026): Salem's rule, then a live round; Boo's show as the phones see it
+  // the group's phones in the Orangerie (28 Oct 2026): Salem's rule, then a live round
   'salem-rule': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={{ state: 'intro' }} serverNow={serverNow} motion={{ ...NO_SENSOR, ok: true }} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
   'salem-round': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={SALEM_ROUND} serverNow={serverNow} motion={NO_SENSOR} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
-  // Boo's camera on the Entryway iPad (?kiosk=pose): the camera waits for a tap; the photo comes a minute into the visit
-  'kiosk-pose': (night, serverNow) => <PoseCamera boo={BOO_VISIT(50_000)} nightId="preview" serverNow={serverNow} />,
   // the Host tab's house panel: station and screens alive, a group in the study, the hall light
   'host-house': (night) => {
     const n = { ...night, act: 4, beat: 'station2' }

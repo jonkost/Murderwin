@@ -6,12 +6,10 @@
 //   status   whether it can open yet, and why not. Never content.
 //   open     { confirm: 'OPEN' }  copies the party night into an archive
 //            (archive/{nightId} and its parts: the case, the night, its
-//            private records, every guest's phone, the Entryway camera's photos,
+//            private records, every guest's phone,
 //            and the three secrets that ran: the packing, the cats' leans,
 //            the drawing pictures), then marks it open (archive/_morning, a
-//            doc no client may write). Nothing is moved or deleted, but for
-//            the guests' photos: once archived they leave the night's public
-//            docs, which anyone signed in to the game could read.
+//            doc no client may write). Nothing is moved or deleted.
 //   read     the archive as plain sections for the workshop's Morning after
 //            page: who did it, to whom, why, everyone's role, what the cats
 //            ruled out, the dial, the bags, the drawing.
@@ -113,7 +111,7 @@ export async function openCase(db, { confirm, now = Date.now(), log = (...a) => 
   parts.night = party.night
   for (const ref of await db.collection(`nights/${nightId}/private`).listDocuments()) await take(`private-${ref.id}`, ref.path)
   for (const ref of await db.collection(`nights/${nightId}/public`).listDocuments()) {
-    if (['finale', 'trace', 'relay', 'act4', 'screen', 'rotation'].includes(ref.id) || /^pose-g\d{1,2}$/.test(ref.id)) await take(`public-${ref.id}`, ref.path)
+    if (['finale', 'trace', 'relay', 'act4', 'screen', 'rotation'].includes(ref.id)) await take(`public-${ref.id}`, ref.path)
   }
   // every guest's phone: what each of them was dealt and answered
   const uids = parts['private-deck']?.uids ?? {}
@@ -123,8 +121,6 @@ export async function openCase(db, { confirm, now = Date.now(), log = (...a) => 
   for (const [part, data] of Object.entries(parts)) batch.set(db.doc(partPath(nightId, part)), data)
   batch.set(db.doc(archivePath(nightId)), { nightId, label: party.night.label ?? '', openedAt: new Date(now), parts: Object.keys(parts).sort() })
   batch.set(db.doc(MORNING_DOC), { nightId, label: party.night.label ?? '', openedAt: new Date(now), secrets: null })
-  // the guests' photos, now in the archive, off the public docs
-  for (const part of Object.keys(parts).filter(p => /^public-pose-g\d{1,2}$/.test(p))) batch.delete(db.doc(`nights/${nightId}/public/${part.slice('public-'.length)}`))
   await batch.commit()
   log('morningAfter open', JSON.stringify({ parts: Object.keys(parts).length }))
   return { ok: true, parts: Object.keys(parts).length }
@@ -170,8 +166,6 @@ export function morningView(parts, { bagItems = [] } = {}) {
   // the drawing: the answer to each round, or a made-up stand-in
   const grids = parts['private-relay']?.grids ?? []
   const drawing = grids.filter(g => g.number >= 1).map(g => ({ round: g.number, picture: g.named ? (g.options?.[g.answer]?.name ?? '') : 'a made-up picture (the bank had none)' }))
-  // the Entryway's camera: each group at the arcade, as the end credits showed it
-  const poses = Object.entries(parts).filter(([k]) => /^public-pose-g\d+$/.test(k)).map(([, d]) => ({ names: d.names ?? [], image: d.image ?? null })).filter(p => p.image)
   const pushes = { ghost: 0, murderer: 0 }
   for (const p of c.dialLog ?? []) if (p?.role in pushes) pushes[p.role] += 1
   return {
@@ -187,7 +181,6 @@ export function morningView(parts, { bagItems = [] } = {}) {
     dial: { level: traceLevel(c.dial ?? 0), total: c.dial ?? 0, pushes },
     bags: { murderer: roster[c.murderer]?.bag ?? null, ghost: roster[c.ghost]?.bag ?? null, list: bags },
     drawing,
-    poses,
     leans: Object.keys(parts['sealed-parlour_leans']?.sets ?? {}).length,
     spills: c.spills ?? 0,
   }

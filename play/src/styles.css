@@ -821,7 +821,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .salem-play .salem-count { text-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.5); }
 .salem-play .salem-round { position: absolute; }
 
-/* The Game test tab's practice pages (?practice=salem, ?practice=boo): one card, the night's game in it */
+/* The Game test tab's practice page (?practice=salem): one card, the night's game in it */
 .practice { min-height: 100vh; min-height: 100dvh; padding: 1.2rem 1rem 3rem; max-width: 34rem; margin: 0 auto; display: grid; align-content: start; gap: 1rem; background: var(--bg); }
 .practice .dealt { width: 100%; }
 .shake-meter { display: grid; gap: 0.4rem; width: 100%; margin-top: 0.6rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
@@ -834,14 +834,6 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .slip-log li { padding: 0.45rem 0.7rem; border-radius: 0.5rem; background: var(--brand-claret); }
 /* ?preview=questions&set=…: which set this is, or why it is the sample */
 .preview-note { position: sticky; top: 0; z-index: 9; margin: 0; padding: 0.5rem 1rem; background: #333; color: var(--ink); font-size: 0.9rem; text-align: center; }
-
-/* Boo's poses on the phones */
-.boo-pose { display: grid; gap: 0.4rem; padding: 1.2rem 1rem; border-radius: var(--radius); background: radial-gradient(ellipse at 50% 40%, rgba(191, 25, 37, 0.45) 0%, rgba(89, 47, 50, 0.35) 55%, transparent 80%); }
-.boo-strike { margin: 0; font-size: 3rem; font-weight: 800; letter-spacing: 0.06em; }
-.boo-hold { margin: 0; font-size: 4rem; font-weight: 700; line-height: 1; color: var(--good); }
-.boo-judge { font-size: 1.2rem; font-style: italic; }
-.boo-phone { display: grid; gap: 0.4rem; }
-.boo-phone-say { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--good); }
 
 /* the permissions screen */
 .allow-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.7rem; text-align: left; max-width: 26rem; }
@@ -913,77 +905,17 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .room-winner.long .room-winner-cat { height: min(18vh, 15vw); }
 .kiosk .room-winner .room-winner-plain { font-size: min(2.6vw, 3.8vh); max-width: 90vw; margin: 0; color: var(--brand-parchment); }
 
-/* Boo's wall (27 Oct 2026): a lit runway along the bottom edge of the triangle
-   wall, Boo in a spotlight, and plain words for every moment. Everything sits
-   in the lower two thirds, where the triangle is wide. */
+/* Boo's screen in the Entryway: her rules card between groups at the arcade, and the speech bubble
+   she shares with the just-for-fun winners */
 .kiosk.boo-wall { background: #000; }
-.kiosk.boo-stage { position: relative; overflow: hidden; justify-content: flex-end; gap: 1.4vh; padding-bottom: 3vh;
-  background: radial-gradient(ellipse 60% 70% at 50% 100%, #2a0f12 0%, #0b0405 60%, #000 100%); }
-.kiosk.boo-stage > * { position: relative; z-index: 1; }
-.kiosk.boo-stage > .boo-light, .kiosk.boo-stage > .boo-runway, .kiosk.boo-stage > .boo-flash { position: absolute; z-index: 0; pointer-events: none; }
-/* the spotlight: a warm cone from above onto the runway */
-.boo-light { left: 50%; bottom: 0; width: 70vw; height: 100%; transform: translateX(-50%);
-  background: radial-gradient(ellipse 34% 46% at 50% 74%, rgba(255, 228, 170, 0.34) 0%, rgba(255, 210, 140, 0.12) 45%, transparent 75%); }
-/* the runway: a claret carpet with brass edges, running away from the room */
-.boo-runway { left: 50%; bottom: 0; width: 64vw; height: 22vh; transform: translateX(-50%);
-  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
-  background: linear-gradient(to bottom, #3a1418, var(--brand-claret) 40%, #7a2a30);
-  box-shadow: inset 0 0 0 0.5vh var(--brand-brass); }
-.boo-runway::after { content: ''; position: absolute; inset: 0; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
-  background: repeating-linear-gradient(to bottom, transparent 0 3vh, rgba(0,0,0,0.18) 3vh 3.4vh); }
-.boo-star { height: min(34vh, 30vw); object-fit: contain; filter: drop-shadow(0 2vh 3vh rgba(0,0,0,0.8)); }
-.boo-star.strutting { animation: boo-sashay 1s ease-in-out infinite alternate; }
-@keyframes boo-sashay { from { transform: translateX(-6vw) rotate(-4deg); } to { transform: translateX(6vw) rotate(4deg); } }
-.boo-say { font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(5.4vw, 8vh); margin: 0; line-height: 1.1; color: var(--brand-parchment); }
-.boo-say strong { color: var(--brand-brass); }
-.boo-sub { font-size: min(2.8vw, 4.4vh); margin: 0; color: var(--brand-parchment); max-width: 80vw; }
-.boo-sub.dim { color: var(--dim); font-size: min(2.2vw, 3.4vh); }
-.boo-pips { display: flex; align-items: center; gap: 1.2vw; margin: 0.6vh 0 0; }
-.boo-pips span:not(.boo-pips-words) { width: min(1.8vw, 2.8vh); height: min(1.8vw, 2.8vh); border-radius: 50%; border: 0.3vh solid var(--brand-brass); }
-.boo-pips span.done { background: var(--brand-brass); }
-.boo-pips span.now { background: var(--brand-red); border-color: var(--brand-parchment); }
-.boo-pips-words { font-size: min(2vw, 3.2vh); color: var(--dim); margin-left: 0.6vw; letter-spacing: 0.06em; text-transform: uppercase; }
-/* the pose: a camera flash, then red, the shout and a big count */
-.kiosk.boo-stage.pose { background: radial-gradient(ellipse 70% 80% at 50% 100%, var(--brand-red) 0%, #5a0c12 55%, #1a0305 100%); justify-content: center; }
-.boo-flash { inset: 0; background: #fff; animation: boo-flash 0.6s ease-out forwards; }
-@keyframes boo-flash { from { opacity: 0.95; } to { opacity: 0; } }
-.boo-shout { font-size: min(10vw, 16vh); font-weight: 900; letter-spacing: 0.04em; margin: 0; line-height: 1; color: #fff; text-shadow: 0 0.6vh 0 #000; }
-.boo-count { font-size: min(18vw, 30vh); font-weight: 900; margin: 0; line-height: 1; color: var(--brand-parchment); font-variant-numeric: tabular-nums; animation: boo-tick 1s ease-out; }
+/* the count before a game at the arcade pops in with this (.arcade-count, below) */
 @keyframes boo-tick { from { transform: scale(1.3); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
-/* the verdict: Boo and a speech bubble */
-.boo-verdict { display: flex; align-items: center; gap: 3vw; max-width: 90vw; }
-.boo-verdict .boo-star { height: min(40vh, 30vw); }
 .boo-bubble, .winner-bubble { position: relative; margin: 0; max-width: 46vw; padding: 2.4vh 2.6vw; border-radius: 2vw; background: var(--brand-parchment); color: #1a0d0e;
   font-family: ui-serif, 'New York', 'Source Serif 4', Georgia, serif; font-size: min(4vw, 6.4vh); line-height: 1.2; text-align: left; font-style: italic; }
 .boo-bubble::before, .winner-bubble::before { content: ''; position: absolute; left: -2vw; top: 50%; transform: translateY(-50%); border: 1.4vw solid transparent; border-right: 2vw solid var(--brand-parchment); border-left: 0; }
-/* the rules card and her intro: the three steps under her line */
-.boo-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2vh; text-align: left; }
-.boo-steps li { display: flex; align-items: center; gap: 1.4vw; font-size: min(2.6vw, 4vh); }
-.boo-step-mark { display: inline-grid; place-items: center; width: min(4.4vw, 6.6vh); height: min(4.4vw, 6.6vh); border-radius: 50%; background: var(--brand-claret); border: 0.3vh solid var(--brand-brass); color: var(--brand-parchment); flex: 0 0 auto; }
-.boo-soon { margin: 0; font-size: min(2.4vw, 3.6vh); color: var(--brand-brass); animation: boo-blink 1.4s ease-in-out infinite alternate; }
-@keyframes boo-blink { from { opacity: 0.55; } to { opacity: 1; } }
 .kiosk.rules-card.boo-wall { background: radial-gradient(ellipse 60% 80% at 30% 60%, #2a0f12 0%, #000 75%); gap: 1.4vh; }
 .kiosk.rules-card.boo-wall .rules-cat { height: min(34vh, 30vw); }
 .kiosk.rules-card.boo-wall > .kiosk-line { font-size: min(2.2vw, 3.4vh); margin: 0; color: var(--dim); }
-.kiosk.rules-card.boo-wall .boo-steps li { font-size: min(2.2vw, 3.4vh); }
-@media (prefers-reduced-motion: reduce) { .boo-star.strutting, .boo-flash, .boo-count, .boo-soon { animation: none; } .boo-flash { opacity: 0; } }
-/* Boo's camera (?kiosk=pose, card 450): the group sees itself, mirrored; one photo at the last pose */
-.kiosk.pose-cam { background: #000; position: relative; overflow: hidden; }
-.pose-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-.pose-video.off { visibility: hidden; }
-.pose-ask { position: relative; display: grid; gap: 3vh; justify-items: center; max-width: 80vw; }
-.pose-ask button { font-size: min(3.4vw, 4.4vh); padding: 1.6vh 4vw; min-height: 44px; border-radius: 1vw; }
-.pose-caption { position: absolute; left: 0; right: 0; bottom: 4vh; display: grid; gap: 1vh; justify-items: center; text-shadow: 0 2px 12px #000; }
-.kiosk.pose-cam .boo-strike { font-size: min(9vw, 13vh); }
-.kiosk.pose-cam .boo-hold { font-size: min(5vw, 7vh); }
-.pose-shot { position: absolute; right: 3vw; top: 3vh; width: min(34vw, 46vh); background: var(--card); border: 2px solid var(--good); border-radius: 1.2vw; padding: 1vw; display: grid; gap: 0.8vh; }
-.pose-shot img { width: 100%; border-radius: 0.8vw; }
-.pose-shot p { margin: 0; font-size: min(2.2vw, 3vh); }
-/* the end credits: each group's last pose */
-.pose-credits { display: flex; flex-wrap: wrap; gap: 2vw; justify-content: center; margin: 0 0 4vh; }
-.pose-credit { margin: 0; width: min(40vw, 46vh); display: grid; gap: 0.8vh; }
-.pose-credit img { width: 100%; border-radius: 1vw; border: 2px solid var(--line); }
-.pose-credit figcaption { font-size: min(2.6vw, 3.4vh); color: var(--dim); text-align: center; }
 
 /* The game names (handoff §16): the hook under a game's name, on the phone and on each room's screen. */
 .game-hook { font-family: var(--serif); font-style: italic; font-size: 1.05rem; line-height: 1.35; color: var(--dim); margin: -0.2rem 0 0.8rem; }
@@ -1102,9 +1034,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .sheet { background: radial-gradient(ellipse 140% 45% at 50% 0%, rgba(18, 51, 66, 0.55) 0%, transparent 70%), var(--bg); }
 
 /* Two voices (28 Oct 2026): the household speaks in the serif (a cat's words,
-   a host's line, Boo's verdict, the act's line), the phone tells you what to
+   a host's line, the act's line), the phone tells you what to
    do in the sans. */
-.said, .hint-line, .bag-line, .boo-judge, .role-card { font-family: var(--serif); line-height: 1.45; }
+.said, .hint-line, .bag-line, .role-card { font-family: var(--serif); line-height: 1.45; }
 .said { font-size: 1.12rem; }
 .speaker strong, .speaker h3 { font-size: 1.3rem; }
 

@@ -247,9 +247,8 @@ export async function sendUntilHeard(send, { live = () => true, wait = sleep, mi
 // Every idle screen plays a looping graphic once Jon's file is in
 // (play/public/loops/<name>.mp4, see loops/README.md); the crest shows until
 // then, and whenever the file is missing or will not play. The iPad Pro plays
-// the Library's loop (it stands with Zimothy in Act 2); Boo's camera has no
-// loop, it is a mirror. The Orangerie's file is optional: the brain's browser
-// shows its crest without one.
+// the Library's loop (it stands with Zimothy in Act 2). The Orangerie's file
+// is optional: the brain's browser shows its crest without one.
 export const LOOP_OF = { living: 'living', study: 'study', memory: 'memory', ipad: 'memory', boo: 'boo', bedroom: 'bedroom', orangerie: 'orangerie' }
 export function loopFor(which) { return LOOP_OF[which] ?? null }
 export function loopUrl(which, base = import.meta.env?.BASE_URL ?? '/') {

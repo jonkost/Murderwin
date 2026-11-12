@@ -20,14 +20,13 @@ import { MEET_CATS } from '../src/lib/night.js'
 
 const src = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
 
-test('the loop slot: one file per screen in play/public/loops, the iPad borrows the Library\'s, Boo\'s camera has none', () => {
+test('the loop slot: one file per screen in play/public/loops, the iPad borrows the Library\'s', () => {
   assert.deepEqual(LOOP_OF, { living: 'living', study: 'study', memory: 'memory', ipad: 'memory', boo: 'boo', bedroom: 'bedroom', orangerie: 'orangerie' })
   assert.equal(loopFor('ipad'), 'memory', 'the iPad Pro stands in the Library in Act 2')
-  assert.equal(loopFor('pose'), null, 'the camera is a mirror')
   assert.equal(loopFor('nonsense'), null)
   assert.equal(loopUrl('living', '/play/'), '/play/loops/living.mp4')
   assert.equal(loopUrl('ipad', '/play/'), '/play/loops/memory.mp4')
-  assert.equal(loopUrl('pose', '/play/'), null)
+  assert.equal(loopUrl('nonsense', '/play/'), null)
   // the README lists the five files Jon makes, by their exact names, and says the Orangerie's is optional
   const readme = src('../public/loops/README.md')
   for (const f of ['living.mp4', 'study.mp4', 'memory.mp4', 'bedroom.mp4', 'boo.mp4']) assert.ok(readme.includes(`\`${f}\``), `README names ${f}`)
@@ -72,7 +71,7 @@ test('the room codes of Act 2 (cue 7): each room screen shows its cat\'s code du
   assert.equal(roomCode('ipad', cat), 'zimothy')
   assert.equal(roomCode('orangerie', cat), 'salem')
   assert.equal(roomCode('living', cat), null, 'the Parlour TV shows Sir Irwin\'s prompts, never a code')
-  assert.equal(roomCode('pose', cat), null)
+  assert.equal(roomCode('nonsense', cat), null)
   assert.equal(roomCode('study', { act: 2, beat: 'peek' }), null, 'not before the visits')
   assert.equal(roomCode('study', { act: 2, beat: 'supper' }), null, 'not after')
   assert.equal(roomCode('study', { act: 4, beat: 'round1' }), null, 'Act 4 has the rules card instead')
@@ -273,10 +272,10 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   // the brain's browser shows the bell but never chimes: the brain's sound output is the HomePods, where the real sound already plays (26 Oct 2026)
   assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the Orangerie kiosk is silent')
   assert.ok(kiosk.includes('if (!first && !silent && soundFresh(sounds, serverNow())) chime(\'cue\')'), 'silent skips the chime, the bell still shows')
-  // the Host tab's dots: the Orangerie screen and Boo\'s camera
+  // the Host tab's dots: the Orangerie screen has its row; Boo\'s camera has none (it went, 11 Nov 2026)
   const keys = MACHINES.map(m => m.key)
-  assert.ok(keys.includes('kiosk-orangerie') && keys.includes('kiosk-pose'), 'both rows')
-  assert.ok(keys.indexOf('kiosk-orangerie') < keys.indexOf('cues') && keys.indexOf('kiosk-pose') < keys.indexOf('cues'), 'before the brain\'s row')
+  assert.ok(keys.includes('kiosk-orangerie') && !keys.includes('kiosk-pose'), 'the Orangerie\'s row, no camera row')
+  assert.ok(keys.indexOf('kiosk-orangerie') < keys.indexOf('cues'), 'before the brain\'s row')
   // the docs name the new kiosk and the codes on the screens
   const screensDoc = src('../../docs/room-screens.md')
   assert.ok(screensDoc.includes('`?kiosk=orangerie`'), 'room-screens.md has the Orangerie kiosk')

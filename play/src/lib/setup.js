@@ -14,7 +14,6 @@ export const SETUP_ROOMS = [
   { key: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro', kiosk: 'ipad', when: 'Act 2, then on its stand in the Orangerie for supper' },
   { key: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library', kiosk: 'memory', when: 'Act 4' },
   { key: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro', kiosk: 'bedroom', when: 'From Act 6' },
-  { key: 'pose', room: 'The Entryway: Boo’s camera', machine: 'Jenna’s iPad Pro, facing the group at the deck', kiosk: 'pose', when: 'Act 4, nice to have' },
 ]
 
 // The second tab on the Parlour TV's Mac: the game does not play the intro video.

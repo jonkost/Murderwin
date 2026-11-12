@@ -24,7 +24,7 @@ const decode = s => JSON.parse(Buffer.from(s, 'base64url').toString('utf8'))
 const BASE = 'https://murderwin-at-sirwin-manor.web.app/play/'
 
 test('seven sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
-  // Miss Boo LaRue's Arcade is the Entryway's game (on the night since 5 Nov 2026; Boo's Catwalk had its own section until then)
+  // Miss Boo LaRue's Arcade is the Entryway's game (on the night since 5 Nov 2026)
   assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'arcade', 'parlour', 'drawing', 'deduction'])
   const named = Object.fromEntries(gameNames.games.map(g => [g.id, g.name]))
   assert.equal(named.entryway, "Miss Boo LaRue's Arcade")
@@ -47,16 +47,17 @@ test('every sample screen named here exists on the phones, and the practices and
   // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, Boo's whole show, 27 Oct,
   // the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime; and the two
   // just-for-fun winners, 29 Oct: Zimothy's after the third board, Salem's on the Orangerie's screen
-  assert.equal(names.length, 35) // 31 Oct 2026: Salem's board on the Orangerie's screen, a round
+  assert.equal(names.length, 34) // 31 Oct 2026: Salem's board on the Orangerie's screen, a round; 11 Nov 2026: Boo's camera's sample went
   assert.ok(names.includes('kiosk-memory-winner') && names.includes('kiosk-orangerie-winner'), 'both winners')
   assert.ok(SECTIONS.find(s => s.key === 'salem').devices.includes('orangerie'), 'a note on Salem can be about the Orangerie’s screen')
   for (const n of [...names, 'questions']) {
     assert.ok(new RegExp(`['"]${n}['"]|\\b${n.replace(/-/g, '\\-')}: \\{`).test(preview), `?preview=${n} is in play/src/Preview.jsx`)
   }
   const queries = SECTIONS.flatMap(s => s.tries.map(t => queryOf(t.params)))
-  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=pose&practice=1', '?kiosk=living', '?kiosk=bedroom', '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1']) {
+  for (const q of ['?kiosk=memory&play=1', '?practice=salem', '?kiosk=living', '?kiosk=bedroom', '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1']) {
     assert.ok(queries.includes(q), q)
   }
+  assert.ok(!queries.some(q => /pose/.test(q)), 'no address for Boo\'s camera: it went on 11 Nov 2026')
   // the drawing's previews, in the order the contract lists them; since 25 Oct 2026 (the cue list) the
   // host's own phone follows each walk and each guess: At the paper, then the four names as buttons
   const drawing = SECTIONS.find(s => s.key === 'drawing').tries.map(t => t.params.preview).filter(Boolean)
@@ -90,15 +91,15 @@ test('the words Jon sees are plain: no engineer words, no long dashes', () => {
 
 // 28 Oct 2026: the arcade is built to try; 5 Nov 2026: it is the Entryway's
 // game on the night (Jon answered entrywayGame on 29 Oct), so its section is
-// the Entryway's, with Boo's camera beside it.
-test('Miss Boo LaRue’s Arcade: the Entryway’s section, on its own page in Chrome to practise, the night’s screen and the camera as samples', () => {
+// the Entryway's. Boo's camera went on 11 Nov 2026.
+test('Miss Boo LaRue’s Arcade: the Entryway’s section, on its own page in Chrome to practise, the night’s screen as samples, no camera', () => {
   const arcade = SECTIONS.find(s => s.key === 'arcade')
   assert.equal(SECTION_KEYS.indexOf('arcade'), SECTION_KEYS.indexOf('salem') + 1, 'after the Orangerie, in the order of the rooms')
-  assert.deepEqual(arcade.devices, ['deck', 'ipadpro'])
+  assert.deepEqual(arcade.devices, ['deck'])
   assert.deepEqual(arcade.tries.map(t => queryOf(t.params)), [
     '?kiosk=boo&play=1', '?kiosk=boo&play=1&visit=1', '?preview=kiosk-boo', '?preview=kiosk-rules-entryway', '?preview=kiosk-arcade-clue', '?preview=kiosk-arcade-third', '?preview=kiosk-arcade-farewell',
-    '?kiosk=pose&practice=1', '?preview=kiosk-pose',
   ])
+  assert.ok(!/camera|photo/i.test([arcade.what, arcade.note, ...arcade.steps, ...arcade.tries.map(t => t.label)].join(' ')), 'not a word about a camera')
   assert.ok(arcade.tries.every(t => !t.night && (t.key || t.params.preview)), 'no try follows a night, and each has a key for the list')
   assert.equal(arcade.where, 'Act 4 · the Entryway')
   assert.match(arcade.note, /no Connect button/, 'the night\'s screen has no setup words: the deck is connected from the practice page first')

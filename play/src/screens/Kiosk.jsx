@@ -4,7 +4,6 @@ import { callRelayAdvance, callRelayGuess, callIntroDue } from '../firebase'
 import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/start'
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
-import { PoseCamera, PoseShot } from './Pose'
 import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
 import { portraitUrls } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
@@ -17,7 +16,7 @@ import { studyMsLeft } from '../lib/house'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
 
-// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | pose | orangerie.
+// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
@@ -28,12 +27,10 @@ import Spoken from './Spoken'
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's screen (?kiosk=boo, Susan's MacBook
 // Pro in the Entryway with the Stream Deck + XL) is Miss Boo LaRue's Arcade
-// in Act 4 (screens/Rooms.jsx BooRoom, 5 Nov 2026; her Catwalk until then);
+// in Act 4 (screens/Rooms.jsx BooRoom, 5 Nov 2026);
 // with &play=1 it is the arcade on its own (screens/Arcade.jsx, 28 Oct 2026),
 // which main.jsx sends there before this file: no sign-in, no presence, no
-// night. Boo's camera (?kiosk=pose, the iPad facing the group at the deck) follows the
-// same show and photographs each group's last pose for the end credits
-// (screens/Pose.jsx). The Orangerie's screen (?kiosk=orangerie, the brain's
+// night. The Orangerie's screen (?kiosk=orangerie, the brain's
 // browser) shows Salem's code in Act 2 and the Get Off My Lawn! rules card in
 // Act 4 (screens/Rooms.jsx Orangerie).
 //
@@ -79,7 +76,7 @@ export default function Kiosk({ which }) {
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
   const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
-  const boo = useDoc(nightId && (which === 'boo' || which === 'pose') ? `nights/${nightId}/public/boo` : null)
+  const boo = useDoc(nightId && which === 'boo' ? `nights/${nightId}/public/boo` : null)
   const salem = useDoc(nightId && which === 'orangerie' ? `nights/${nightId}/public/salem` : null) // the Orangerie's rules card varies its picture by the group due
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
@@ -135,7 +132,6 @@ export default function Kiosk({ which }) {
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
   else if (which === 'boo') body = <BooRoom boo={boo.data} night={n} nightId={nightId} rotation={rotation.data} serverNow={serverNow} />
-  else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
@@ -717,7 +713,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
       {hushLines(finale).map(t => <p key={t} className="kiosk-next">{t}</p>)}
     </div>
   )
-  if (stage === 'credits') return <Credits finale={finale} now={now} nightId={night?.nightId} />
+  if (stage === 'credits') return <Credits finale={finale} now={now} />
   if (stage === 'last') return (
     <div className="kiosk finale last">
       <img className="last-irwin" src={`${import.meta.env.BASE_URL}household/full/Irwin 5.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
@@ -827,7 +823,7 @@ function AwardsReel({ finale, now }) {
 // The end credits: the achievements the host gave, then the end-credit
 // awards (credits.awards), the joke counters, the room's split on every
 // Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
-function Credits({ finale, now, nightId = null }) {
+function Credits({ finale, now }) {
   const c = finale.credits ?? {}
   const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - CREDITS_AFTER_MS)
   const span = LAST_AFTER_MS - CREDITS_AFTER_MS
@@ -849,12 +845,6 @@ function Credits({ finale, now, nightId = null }) {
         <ul className="splits">
           {(c.splits ?? []).map((q, i) => <li key={i}><span className="split-q">{q.q}</span><span>{q.a.text} {q.a.count} · {q.b.text} {q.b.count}</span></li>)}
         </ul>
-        {(c.poses ?? []).length > 0 && nightId && (
-          <>
-            <p className="kiosk-crest">At the arcade</p>
-            <div className="pose-credits">{c.poses.map(p => <CreditPose key={p.groupId} nightId={nightId} pose={p} />)}</div>
-          </>
-        )}
         <p className="kiosk-crest">Thank you</p>
         <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
         {c.memory && (
@@ -866,12 +856,6 @@ function Credits({ finale, now, nightId = null }) {
       </div>
     </div>
   )
-}
-
-// One group's photo in the credits, from its own doc (nights/{id}/public/pose-<group>).
-function CreditPose({ nightId, pose }) {
-  const doc = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/pose-${pose.groupId}` : null)
-  return <PoseShot src={doc.data?.image ?? pose.image ?? null} names={pose.names} />
 }
 
 function Epilogue({ text }) {

@@ -8,7 +8,6 @@ import { SALEM_SHAKE, SALEM_STILL_MS } from '../lib/night'
 import { PRACTICE_DOCS, salemPractice, slipsSince, savedName, saveName, cleanName, clockSample, keepSample, practiceError } from '../lib/gametest'
 import { SalemRounds, SALEM_LINES, useMotion } from './Act4'
 import { SalemBoard, RulesCard } from './Rooms'
-import { PoseCamera, PRACTICE_SHOT_AFTER_MS } from './Pose'
 import { Wake, StaleDot } from './Kiosk'
 import { CatFace } from './Cards'
 import { Moment, Seal, RehearsalBand } from './Moments'
@@ -20,9 +19,7 @@ import Allow from './Allow'
 //                            same rounds as the night, plus a shake meter and
 //                            a line for every slip
 //   ?kiosk=orangerie&practice=1  Salem's board for it, on the brain's browser
-//   ?kiosk=pose&practice=1   Boo's camera, a photo kept on the iPad's own screen
-// (Boo's Catwalk practices went with the Catwalk, 5 Nov 2026: Miss Boo
-// LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
+// (Miss Boo LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
 // Salem's follows its own record (public_state/game_test_salem), which only
 // the gameTest function writes; the workshop opens and stops it. Nothing here
 // reads a night or pays anyone, and nothing writes
@@ -226,22 +223,6 @@ function ShakeMeter({ motion }) {
       </p>
       <p className="gloss">Red: still for {still} s is a slip. Green: past the line is a slip.</p>
     </div>
-  )
-}
-
-// ---- Boo's camera -----------------------------------------------------------
-
-// Boo's camera (?kiosk=pose&practice=1): a pretend visit that starts when the
-// page opens, so the photo comes a few seconds after the camera is turned on,
-// and stays on the iPad's own screen. No record, no night; nothing is sent.
-export function PoseCameraPractice() {
-  const [startsAt] = useState(() => Date.now())
-  const serverNow = useCallback(() => Date.now(), [])
-  return (
-    <>
-      <RehearsalBand on label="PRACTICE" />
-      <PoseCamera boo={{ groupId: 'practice', state: 'visit', startsAt }} nightId="practice" serverNow={serverNow} practice shotAfterMs={PRACTICE_SHOT_AFTER_MS} />
-    </>
   )
 }
 

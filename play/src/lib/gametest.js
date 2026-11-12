@@ -5,10 +5,8 @@ import { troubleLine } from './trouble.js'
 // be tried before the night without a night:
 //   ?practice=salem             Get Off My Lawn! on any phone
 //   ?kiosk=orangerie&practice=1 Salem's board for the Get Off My Lawn! practice (31 Oct 2026)
-//   ?kiosk=pose&practice=1      Boo's camera, a photo kept on the iPad's own screen
 //   ?preview=questions&set=…    one of the workshop's Parlour Game sets, as a phone shows it
-// (Boo's Catwalk practices went with the Catwalk, 5 Nov 2026; Miss Boo
-// LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
+// (Miss Boo LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
 // Salem's practice follows its own record in public_state (game_test_salem),
 // written only by the gameTest function. It never reads or
 // writes a night, never pays anyone, and never writes presence (its clock
@@ -17,8 +15,8 @@ import { troubleLine } from './trouble.js'
 
 export const PRACTICE_DOCS = { salem: 'public_state/game_test_salem' }
 
-// Which practice page the address asks for: 'salem' (the phones), 'pose-wall'
-// (?kiosk=pose&practice=1), 'orangerie-wall' (?kiosk=orangerie&practice=1,
+// Which practice page the address asks for: 'salem' (the phones),
+// 'orangerie-wall' (?kiosk=orangerie&practice=1,
 // Salem's board on the brain's browser, 31 Oct 2026), or null for none.
 export function practiceParam(search) {
   try {
@@ -26,7 +24,7 @@ export function practiceParam(search) {
     const v = p.get('practice')
     if (!v) return null
     const kiosk = p.get('kiosk')
-    if (kiosk) return kiosk === 'pose' ? 'pose-wall' : kiosk === 'orangerie' ? 'orangerie-wall' : null
+    if (kiosk) return kiosk === 'orangerie' ? 'orangerie-wall' : null
     return v === 'salem' ? v : null
   } catch { return null }
 }

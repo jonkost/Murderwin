@@ -43,7 +43,6 @@ async function playedNight({ db = new FakeFirestore(), party = true, revealed = 
   await hostCommand(db, { nightId, command: 'blackout', now: 2_000_000, sleep: () => {} }) // the power returns on its own (25 Oct 2026)
   db.store.set(`nights/${nightId}/private/relay`, { grids: [{ number: 0, named: true, options: [{ name: 'practice' }], answer: 0 }, { number: 1, named: true, options: [{ name: 'x' }, { name: SYNTH[2] }], answer: 1 }, { number: 2, named: false, options: [] }] })
   db.store.set(`nights/${nightId}/public/finale`, revealed ? { stage: 'victim', victimNamedAt: new Date(revealedAt), victimAt: new Date(revealedAt + 20_000) } : { stage: 'motive' })
-  db.store.set(`nights/${nightId}/public/pose-g1`, { groupId: 'g1', names: ['Jessa', 'Jacob'], image: 'data:image/jpeg;base64,AAAA' })
   return { db, nightId }
 }
 
@@ -164,12 +163,12 @@ test('the open mark cannot be forged: one in meta/ means nothing, and one with n
   for (const p of SECRET_DOCS) assert.ok(db.store.get(p), 'nothing cleared')
 })
 
-test('clear keeps the secret as it stood at the clear, even if it changed after the open; the photos are in the archive and on the page', async () => {
+test('clear keeps the secret as it stood at the clear, even if it changed after the open; the archive holds no photos (the camera went, 11 Nov 2026)', async () => {
   const { db, nightId } = await playedNight()
   await morningOp(db, { op: 'open', confirm: 'OPEN' }, { now: AFTER, log: () => {} })
   const { view } = await morningOp(db, { op: 'read' }, { now: AFTER, log: () => {} })
-  assert.deepEqual(view.poses, [{ names: ['Jessa', 'Jacob'], image: 'data:image/jpeg;base64,AAAA' }])
-  assert.equal(db.store.get(`nights/${nightId}/public/pose-g1`), undefined, 'the guests\' photos leave the public docs once archived')
+  assert.ok(!('poses' in view), 'no photos on the page')
+  assert.ok(!db.store.get(archivePath(nightId)).parts.some(p => /pose/.test(p)), 'and none in the archive')
   db.store.set('sealed/parlour_leans', { sets: { [SYNTH[3]]: { 0: { boo: 'b' } } }, editedAt: 2 })
   await morningOp(db, { op: 'secrets', choice: 'clear' }, { now: AFTER, log: () => {} })
   assert.equal(db.store.get(`archive/${nightId}/parts/cleared-sealed-parlour_leans`).editedAt, 2, 'the newer version kept')

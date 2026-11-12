@@ -1,11 +1,11 @@
 # The room screens
 
-What the Parlour TV, the iPads, Boo's wall, the bedroom screen and the
+What the Parlour TV, the iPad Pro, Boo's screen, the bedroom screen and the
 study screen show at every beat of the night, and the sound that goes with
 it. Written 18 October 2026, brought up to date 24 October 2026 for the
 23 October handoff (the Parlour, the four Act 4 games and their names, the
-device table, the bulletins as video), on 25 October for Boo's camera
-and the motive card pictures, and on the evening of 25 October for Jon's
+device table, the bulletins as video), on 25 October for
+the motive card pictures, and on the evening of 25 October for Jon's
 cue list: the join code on the Parlour TV through Act 1 and at the dinner
 wrap-up, the dessert chime, and The End; and later that evening for the
 screens themselves: a looping graphic on every idle screen, each room's cat
@@ -13,8 +13,8 @@ code during the Act 2 cat visits, the Act 4 rules cards with the cats' full
 pictures, the Happy Birthday Irwin card with Sir Irwin's picture, the rejoin
 code under the ballot clock, and the Orangerie's screen on the brain's
 browser; and on 26 October for the devices in your cue list's key: your iPad
-Pro's four stations, Jenna's iPad Pro as Boo's camera, and Susan's MacBook
-Pro on the projector all night; and on 28 October for Miss Boo LaRue's
+Pro's four stations, and Susan's MacBook
+Pro, which never moves (Boo's screen in the Entryway since 5 November); and on 28 October for Miss Boo LaRue's
 Arcade, a page of its own to try, not on the night yet; and on 29 October for
 the two just-for-fun winners, Zimothy's on the Library's screen and Salem's on
 the Orangerie's, and for your rule of no setup words in front of the guests
@@ -35,8 +35,6 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
 | `?kiosk=boo` | Susan's work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night; it never moves (since 5 November; the projector on the landing before). Google Chrome, the deck connected once from the arcade's practice page first: the night's screen has no Connect button | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Miss Boo LaRue's Arcade in Act 4: her rules card with the code between groups; the group that scans in plays its visit on the deck with their names in the group's order, each of the first two players gets the group's clue about the Ghost on the screen and their phone after their fifth game, a trio's third gets Boo's line, the winner, free play, and the chime at the end of the round on the house's clock; black at The End. |
 | `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page) | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, fifty seconds a game, each player's clue on the screen once all five of their games are played (31 October; in practice the square-bracket line), Boo's line for a trio's third player, the winner with each player's scores on a key, free play, and the chime fifteen minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
-| `?kiosk=pose` | Jenna's iPad Pro on its stand in the Entryway, facing the group at the Stream Deck, Act 4 (nice to have; Jenna is at the house to pack the bags and never plays) | Boo's camera: the group sees itself like a mirror, a count in the last five seconds, and one photo is taken a minute into each group's visit, for the end credits. It asks for the camera once, with a tap. |
-| `?kiosk=pose&practice=1` | Any iPad with a camera, any day (the workshop's Game test tab) | Boo's camera on a pretend visit: the photo comes twelve seconds after the camera is turned on and stays on the iPad's own screen, never sent. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
 
 The Act 4 game in the Orangerie, Get Off My Lawn! (Salem's Motion Game),
@@ -144,8 +142,7 @@ brackets.
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
   part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
-  here, and the arcade: each group at the deck from Boo's camera, when it
-  took one), and Irwin's "Can we play again?" Through the reveal every
+  here), and Irwin's "Can we play again?" Through the reveal every
   guest's phone is locked on "Eyes on the screen."; through the credits it
   shows its own result with "Thank you for playing."; the two host phones
   keep their tabs. **Hold the screen** on your Host tab stops the TV where
@@ -180,9 +177,7 @@ which changes with the group
 due or the round so it is not the same picture all night, and the room's
 code with "Scan the code to begin." The study shows it whenever Granolia is
 idle in Act 4, with her own "Touch any panel to begin" under it; the Library
-between groups; Boo's wall between groups and
-through her intro (with her walking frames for the picture, and no code,
-since the group has scanned); the Orangerie
+between groups; Boo's screen between groups; the Orangerie
 all through Act 4, since its game is on the phones (its code only between
 groups). Outside Act 4 every one
 of them is on its loop.
@@ -218,16 +213,15 @@ of them is on its loop.
   by then. A board the house had heard after all is only heard once, so
   nothing is counted or paid twice. If the signal never comes back before
   the chime, the group is paid anyway, as for any room.
-- *The Entryway, Miss Boo LaRue's Arcade* (since 5 November; Boo's Catwalk
-  before). "Five little games. One coin each. She's always judging." Her
+- *The Entryway, Miss Boo LaRue's Arcade* (since 5 November).
+  "Five little games. One coin each. She's always judging." Her
   rules card with the code between groups; the group that scans in plays
   its visit on the Stream Deck with the Mac's screen as the scoreboard
   (`docs/boo-arcade.md`). After each of the first two players' fifth game
   the screen shows their clue with their name: the group's bag hint about
   the Ghost from Boo, which reaches their phone at the same moment; a
   trio's third gets Boo's line. The winner, free play, and the chime at the
-  end of the round: "Be on your way." No motive is crossed off here. Boo's
-  camera on Jenna's iPad Pro, if it is up, takes its photo a minute in.
+  end of the round: "Be on your way." No motive is crossed off here.
 - *The Orangerie, Get Off My Lawn!* The group's phones tint their whole
   screen red (shake) or green (freeze), with Salem's lines, and since
   31 October Salem's head is loose on each phone while a round plays: every
@@ -285,7 +279,7 @@ that reloads during the blackout stays black.
   seconds; red when it is off the wifi. On the party night no screen shows
   it: your Host tab, under The house, has a dot for every screen instead,
   green while that screen has been heard from in the last two minutes, the
-  memory match iPad and Boo's camera included.
+  memory match iPad included.
 
 ## The sounds
 
@@ -314,7 +308,7 @@ shows the words.
 *The cue list's screens (25 Oct 2026, DESIGN section 6).* Pure rules in
 `play/src/lib/rooms.js`, tested in `play/test/rooms.test.mjs`: `LOOP_OF` /
 `loopFor(which)` / `loopUrl(which, base)` (the loop file per kiosk; `ipad`
-plays `memory`, `pose` none); `ROOM_CODE_CATS` / `roomCode(which, night)`
+plays `memory`); `ROOM_CODE_CATS` / `roomCode(which, night)`
 (the cat whose code a kiosk shows, only while `night.act === 2 && beat ===
 'cat'` and never while the night is paused, when the TV and the iPad show One
 moment); `meetUrl(cat, PLAY_URL)` (the printed codes' address) and
@@ -343,9 +337,8 @@ never a fetch), `Idle({ title, line, loop })` (moved here from Kiosk.jsx),
 `RoomCode`, `SmallCode`, `RejoinCode`, `JoinScreen`, `RulesCard({ id, line,
 pick, code, frame })`, `BirthdayScreen`, `Orangerie({ night, salem, rotation, serverNow })` (busy,
 "Eyes on your phones." and no code, while `public/salem.state` is intro,
-playing or passed; Salem's winner while it is cleared, 28 Oct); `MemoryRounds` (now takes `content`), `BooRunway` (now
-takes `night`; `code={!!night}` so the practice show has no code, and
-`code={false}` on her intro) and Kiosk.jsx's `Study` (now takes `night` and
+playing or passed; Salem's winner while it is cleared, 28 Oct); `MemoryRounds` (now takes `content`), `BooRoom` (her
+rules card between groups, `code={!visit}`; 5 Nov) and Kiosk.jsx's `Study` (now takes `night` and
 `content`; its rules card keeps Granolia's IDLE line and the 90-second
 warning, "Granolia has dozed off. Find a host." since 29 Oct 2026) and
 `Bedroom` use them. Kiosk.jsx subscribes
@@ -354,7 +347,7 @@ kiosk too, and dispatches `roomCode` before the room branches and
 `Orangerie` before the Living fallback; its `Bell` takes `silent`, true for
 the orangerie kiosk, so the brain's browser never chimes through the
 HomePods on top of the real sound. `play/src/lib/house.js` MACHINES gains
-`kiosk-orangerie` and `kiosk-pose`. `Cards.jsx` `Notice` draws `card.image
+`kiosk-orangerie`. `Cards.jsx` `Notice` draws `card.image
 === 'birthday'` (`Birthday`). `play/public/loops/README.md` lists the files;
 `.gitignore` keeps the files themselves out of the repo (`play/public/loops/*`,
 the README kept), so they deploy from Jon's Mac like the sounds in `media/`.
@@ -449,9 +442,9 @@ kiosk-bedroom-5 | kiosk-ballot | kiosk-ballot-no-trace | kiosk-study |
 kiosk-study-fallback | kiosk-memory | kiosk-memory-clear |
 kiosk-memory-winner | kiosk-memory-tie | kiosk-memory-standalone |
 kiosk-orangerie-ready | kiosk-orangerie-round | kiosk-orangerie-passed |
-kiosk-orangerie-winner | kiosk-orangerie-tie | kiosk-boo | kiosk-boo-pose | kiosk-arcade |
+kiosk-orangerie-winner | kiosk-orangerie-tie | kiosk-boo | kiosk-arcade |
 kiosk-arcade-play | kiosk-arcade-clue | kiosk-arcade-third |
-kiosk-arcade-farewell | kiosk-pose | kiosk-prompts |
+kiosk-arcade-farewell | kiosk-prompts |
 kiosk-title | kiosk-finale |
 kiosk-finale-awards | kiosk-finale-graph | kiosk-finale-reveal |
 kiosk-finale-leadin | kiosk-finale-victim | kiosk-finale-done |
@@ -459,7 +452,7 @@ kiosk-finale-journey | kiosk-finale-credits | kiosk-finale-last |
 host-house | host-house-window | host-house-act2 | kiosk-join | kiosk-rejoin |
 kiosk-code-study | kiosk-code-library | kiosk-code-entryway |
 kiosk-code-orangerie | kiosk-rules-study | kiosk-rules-library |
-kiosk-rules-entryway | kiosk-boo-intro | kiosk-rules-orangerie |
+kiosk-rules-entryway | kiosk-rules-orangerie |
 kiosk-birthday | kiosk-loop-living | kiosk-loop-ipad | kiosk-loop-study |
 kiosk-loop-memory | kiosk-loop-boo | kiosk-loop-bedroom |
 kiosk-loop-orangerie | kiosk-quiet | kiosk-end`. The list grows as screens

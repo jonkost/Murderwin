@@ -40,12 +40,11 @@ export const MACHINES = [
   { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
   { key: 'kiosk-orangerie', label: 'Orangerie screen', quiet: true }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
-  { key: 'kiosk-pose', label: 'Boo’s camera', quiet: true },          // ?kiosk=pose, Jenna's iPad Pro facing the group at the arcade in Act 4 (its row was missing until 25 Oct 2026)
   { key: 'cues', label: 'Hall light and sounds', quiet: true },
 ]
 export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
 // `quiet`: a machine that makes no sound of its own by design (the brain's browser, whose
-// sound is the HomePods'; the camera; the brain itself), so it has no sound mark.
+// sound is the HomePods'; the brain itself), so it has no sound mark.
 
 // Act 2's cat visits: night.lightsProgress = { done, total }, written by the
 // server whenever the line moves (guests who have seen all four cats, and
