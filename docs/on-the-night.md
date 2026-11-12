@@ -182,8 +182,9 @@ them.
   whatever shows No Response; if they will not answer at all, stop there:
   the phones carry Salem's colours on their own), Susan's MacBook Pro in
   the Entryway on `?kiosk=boo` with the Stream Deck + XL (in Google Chrome;
-  connect the deck once from the arcade's practice page in the same browser
-  first, since the night's screen has no Connect button), and one visit of
+  connect the deck once from `/setup` in the same browser first, where the
+  line under Boo's button says Deck ready, since the night's screen has no
+  Connect button), and one visit of
   the arcade from the scan to the chime. The projector is out of the night
   since the arcade took the Entryway (5 Nov); the brain still switches its
   plug, which harms nothing. The
@@ -238,7 +239,7 @@ them.
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing, the three questions over everyone's portraits while the room talks it over, the vote's clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
-| Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
+| Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open `/setup` in the same Chrome: the line under Boo's button says Deck ready, or what to do (Press Connect once, with the button right there): the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
 | Your iPad Pro | Roaming, one page all night (`?kiosk=ipad`, 12 Nov) that follows the night by itself: Act 1 the Library's picture with Zimothy; Act 2 his code during the cat visits (and bulletin 1's words); Act 3 on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up; Act 4 back on its small stand in the Library as In Duplicate; Act 5 the Library's picture; from the drawing in Act 6, and Act 7, the bedroom screen, door closed. *The iPad shows* on your Host tab switches it by hand. `?kiosk=memory` and `?kiosk=bedroom` stay for any other device. | From its Home Screen icon, so no Safari bars show (*Full screen on the iPad*, below). Tap it once to wake its sound. You only carry it: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. Never reload it. |
 | The older family iPad | Out, unless you say it stays (the question *olderIpad* on the board; your key has no older iPad). If it stays: In Duplicate on its small stand in the Library all night (`?kiosk=memory`), and your iPad Pro stays in the Orangerie from supper until it goes to the bedroom. | Nothing, by default. If it stays: Safari, full screen, tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
@@ -268,7 +269,14 @@ is in its place:
    Send beside a room, pick AirDrop, pick that room's machine. Its page opens
    there. Click once on it and it goes full screen. A dot turns on beside the
    room when the house has heard from it. (For a link to open in Chrome, make
-   Chrome that Mac's usual browser once.)
+   Chrome that Mac's usual browser once. Or, for Susan's MacBook Pro, AirDrop
+   *3 Entryway - Boo's arcade.command* from the *Murderwin screens* folder on
+   the brain's Desktop, which `npm run screen-files` makes: it opens Boo's
+   arcade in Google Chrome by name. The first time, that Mac says it cannot
+   check the file: open System Settings, Privacy & Security, scroll down, press
+   Open Anyway beside it and type the Mac's password; after that a
+   double-click opens it. A work Mac may not let it run at all: then make
+   Chrome its usual browser.)
    A Mac with two screens (the Parlour's, the Study's): send it A second
    display as well and drag that window to its other screen. It shows the
    crest and the countdown, and goes dark with the room.
@@ -289,8 +297,14 @@ this?" with one big button per room: the Parlour TV, the Study, Boo's arcade,
 the Orangerie, the iPad. Tap the room,
 make the window full screen, click once. It needs no sign-in. The machine's
 last choice is marked the next time, so on the party night it is the same
-tap. Boo's button has a second one under it for connecting the Stream Deck
-first. The iPad has one button: its page follows the night, so it is never
+tap. Under Boo's button one line says where the Stream Deck stands (12
+Nov): Deck ready; Open this page in Chrome; Press Connect (with the Connect
+button right there: pick the Stream Deck + XL in the list Chrome shows);
+Quit the Stream Deck app (in the menu bar; then Check again); or This Mac
+cannot see the deck (plug it straight into the Mac, no hub, and press Connect
+again; if it still cannot, the deck drawn on the screen plays the arcade).
+On Susan's MacBook Pro it looks by itself; elsewhere it waits for Check the
+Stream Deck. The iPad has one button: its page follows the night, so it is never
 tapped again when it moves (In Duplicate and the bedroom on another device
 sit under a fold, for when the iPad is busy or dead). The page is for before
 the guests come; no guest screen links to it.
@@ -354,7 +368,7 @@ the screen awake by itself where the iPad lets it.
    iPad Pro (`?kiosk=ipad`: in the Library with Zimothy for Act 2, as your
    cue list has it), Susan's MacBook Pro in the Entryway with the Stream
    Deck + XL (`?kiosk=boo` in Google Chrome, where it stays all night; the
-   deck connected once from the arcade's practice page first) and
+   deck connected once from `/setup` first) and
    the brain's own browser
    (`?kiosk=orangerie`, facing the Orangerie table), full screen. Tap each
    one once, anywhere, and leave it, so the browser lets it make a sound. On
@@ -996,9 +1010,9 @@ page have no night at all: nothing is paid and no clue is dealt.
   mouse, or the arrow keys and the space bar. If the touch strip ever looks
   scrambled, add `&strip=whole` to the address and tell Claude Code. On the
   night Boo's screen (`?kiosk=boo`, the Devices page) shows only the game:
-  no Connect and no setup words, so connect the Stream Deck once from this
-  practice page in the same Chrome before the guests arrive; the night's
-  screen remembers it. There the group scans Boo's code on her rules card,
+  no Connect and no setup words, so connect the Stream Deck once from
+  `/setup` (or this practice page) in the same Chrome before the guests
+  arrive; the night's screen remembers it. There the group scans Boo's code on her rules card,
   the visit starts with their names from the groups, each of the first two
   players' clue comes from the house at their moment (on the screen and on
   their phone), a trio's third gets Boo's line, and the chime rings at the

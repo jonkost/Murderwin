@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SetupDeck from './SetupDeck'
 import { SETUP_ROOMS, SETUP_SPARES, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
 
 // The setup page (lib/setup.js): which screen is this? One tap opens that
@@ -26,12 +27,7 @@ export default function Setup() {
               <span className="setup-machine">{r.machine}</span>
               <span className="setup-when">{r.when}{r.key === last ? ' · This machine last time' : ''}</span>
             </button>
-            {r.first && (
-              <div className="setup-first">
-                <button type="button" onClick={() => go(r, r.first)}>{r.first.label}</button>
-                <p>{r.first.note}</p>
-              </div>
-            )}
+            {r.deck && <SetupDeck auto={last === r.key} />}
           </li>
         ))}
       </ul>

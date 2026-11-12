@@ -22,6 +22,7 @@
     "postmortem": "npm --prefix scripts run postmortem --",
     "media": "node scripts/media-check.mjs",
     "media-import": "node scripts/media-import.mjs",
-    "rules-film": "node scripts/rules-film.mjs"
+    "rules-film": "node scripts/rules-film.mjs",
+    "screen-files": "node scripts/screen-files.mjs"
   }
 }

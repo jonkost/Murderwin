@@ -17,7 +17,7 @@ test('the setup page (11 Nov 2026): one short address, a button for every room s
   assert.equal(setupHref('/play/', SETUP_ROOMS[0]), '/play/?kiosk=living')
   const boo = SETUP_ROOMS.find(r => r.key === 'boo')
   assert.equal(setupHref('/play/', boo), '/play/?kiosk=boo', 'the night’s own screen, no Connect button')
-  assert.equal(setupHref('/play/', boo.first), '/play/?kiosk=boo&play=1', 'the deck is connected from the practice page first')
+  assert.equal(boo.deck, true, 'the Stream Deck line and its Connect sit under Boo’s button (A11), so nobody visits the practice page first')
   // /setup lands on the play page's setup mode, ahead of everything else
   assert.equal(setupParam('?setup=1'), true)
   assert.equal(setupParam('?setup'), true)
