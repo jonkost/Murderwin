@@ -922,7 +922,7 @@ open `/play/?look=1` on any device.
 | Where | What a guest sees |
 |---|---|
 | A room's screen with nobody playing | Since the afternoon of 12 Nov 2026, the screen saver: one of the five faces crossing the screen and turning at every edge, a new face after every tenth edge. No words. (Before that, and still if a face picture will not load: the room's name in lights, its cat, large, and the cat's name on a red bar.) |
-| A Mac's own screen beside its room screen | The seal, the room's name and the cat. |
+| A Mac's own screen beside its room screen | Since the evening of 12 Nov 2026, the screen saver too, all night (your word: "I want to have this on the second screenes"). On `/setup` its three lines begin The screen saver. (Before that, and still if a face picture will not load: the seal, the room's name and the cat.) |
 | A room's screen in Act 4, between groups | The game's name in lights, three numbered steps, the room's code with Scan to start, and the cat. |
 | A phone's Now tab | One card: where to go, and one button. The room's cat looks over it. *Not yet, call me later* and *Cannot scan?* are still there, small, under the button. |
 | The top of every phone tab | The seal, and a round camera button top right. No act's name. |
@@ -957,7 +957,7 @@ guest's Allow tap, also with the ring switch off.
 | The memory match (the iPad Pro in the Library) | Carry on. A group that did not clear it is paid its cross-off at the chime anyway. If its screen says "The Library did not hear that. Trying again.", leave it: the iPad sends the finished board again by itself, every few seconds, until the house hears it. |
 | Boo's screen or the Stream Deck | Carry on: a group that did not finish is paid at the chime anyway, with its clue on every phone. With the Stream Deck gone, the deck drawn on the screen plays the games with the mouse and the keyboard. If the Mac itself goes, open `?kiosk=boo` in Google Chrome on any screen the group can see. In Act 2 the Entryway's printed code does Boo's screen's job. |
 | The Orangerie screen (the brain's browser) | Carry on. Salem's game is on the phones; the printed code in the Orangerie serves Act 2 and Act 4, and the phones have "Cannot scan?" anyway. Open `?kiosk=orangerie` on any spare screen if you want the rules card and Salem's board back. |
-| A room screen with nothing to do | Since the afternoon of 12 Nov 2026 it plays the screen saver: one of the five faces (Sir Irwin, Granolia, Miss Boo LaRue, Zimothy, Salem) crosses the screen in about six seconds and turns at every edge. It keeps its face for ten edges, about twenty-five seconds, then becomes the next. About every four minutes it lands square in a corner. Nothing to do. If a face picture will not load, or the five are slow to come, the screen shows its room's splash instead (the room's name in lights, its own cat and the cat's name). A Mac's own screen beside its room screen shows its room's splash, smaller: on `/setup`, The Parlour: the Mac's own screen, or The Study: the Mac's own screen. |
+| A room screen with nothing to do | Since the afternoon of 12 Nov 2026 it plays the screen saver: one of the five faces (Sir Irwin, Granolia, Miss Boo LaRue, Zimothy, Salem) crosses the screen in about six seconds and turns at every edge. It keeps its face for ten edges, about twenty-five seconds, then becomes the next. About every four minutes it lands square in a corner. Nothing to do. If a face picture will not load, or the five are slow to come, the screen shows its room's splash instead (the room's name in lights, its own cat and the cat's name). A Mac's own screen beside its room screen plays the screen saver all night as well: open `/setup` on that screen and tap The screen saver: the Parlour Mac's own screen, The screen saver: the Study Mac's own screen, or The screen saver: any other second screen. It counts down with the rest and goes dark with the room. |
 | A loop will not play | The screen shows its crest and a line instead, and nothing else changes. Check the file's name against `play/public/loops/README.md` and that it was deployed. |
 | Get Off My Lawn! (a phone with no motion sensor, or the string lights) | Nothing to do. A phone that cannot feel a shake never slips; every phone's screen turns red and green whatever the lights do. |
 | A room code will not scan | The camera button top right reads it inside the game; the phone's own camera still works too. Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
@@ -1417,7 +1417,9 @@ from the wall clock alone (`play/src/lib/saver.js` `saverAt`), so a reload
 carries on from the same place; one square moves, and each face is centred
 on it, so nothing hops when the picture changes; the room's splash shows
 only if a picture fails to load or the five are not in after four seconds;
-a second display (`calm`) keeps its splash. The
+a second display (`calm`) plays it too, all night, from a start of its own
+(`saverPlace` says which screens play it; `SAVER_ON` switches the room
+screens or the second screens off in one word). The
 join code: `livingView` returns `join` for kind `join` and `JoinScreen` draws
 `PLAY_URL` with `useQr` (`play/src/lib/qr.js`, shared with Host.jsx);
 `RejoinCode` sits under the ballot clock on the TV only. The birthday card:

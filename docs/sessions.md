@@ -34,10 +34,18 @@ not pushed)
   another number, only in a corner, or never.
 - It takes the place of the room's splash on those screens (the room's name
   in lights, approved that morning). The splash now shows only if a face
-  picture will not load, or the five are not in after four seconds. A Mac's
-  second display keeps its splash. The join code keeps its seal. The dark,
-  the cat codes, the films and the games come before the idle screen as
-  before, so none of them can show it.
+  picture will not load, or the five are not in after four seconds. The
+  join code keeps its seal. The dark, the cat codes, the films and the games
+  come before the idle screen as before, so none of them can show it.
+- A Mac's second screen plays it too, all night. At first it kept its
+  splash; then Jon: "I want to have this on the second screenes. I'll need a
+  link to it in the game setup." The three second-screen lines on `/setup`,
+  in the Host tab's send list and in the workshop's list now begin *The
+  screen saver* (the same three addresses), and the setup page says which
+  lines they are. `saverPlace` in `play/src/lib/saver.js` names each screen's
+  place on the path, and `SAVER_ON` switches the room screens or the second
+  screens off in one word. Whether he meant the second screens as well as
+  the room screens, or only them, was asked of him; as built it is both.
 - Built as part of the room screens' own page, not as video files: a file
   has one shape and would stop short of the edge on a screen of another
   shape (a 16:9 file on a Mac or the iPad). The page measures its own screen,

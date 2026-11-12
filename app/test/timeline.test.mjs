@@ -1865,7 +1865,8 @@ test('the idle screens’ screen saver (12 Nov 2026, Jon’s word): last; one do
   }
   // his own words are on the card, and what it costs: the room's name in lights gives way on those screens
   assert.match(SCREEN_SAVER_1112_TASKS[0].detail, /For the loops just make the classic dvd screen saver with the cats and dog face picture when it bounces off the edge of the screen/)
-  assert.match(SCREEN_SAVER_1112_TASKS[0].detail, /it takes the place of the room’s name in lights; a Mac’s own second screen keeps its room’s name/)
+  assert.match(SCREEN_SAVER_1112_TASKS[0].detail, /it takes the place of the room’s name in lights\. A Mac’s own second screen plays it too, all night/)
+  assert.match(SCREEN_SAVER_1112_TASKS[0].detail, /on the setup page its three lines begin The screen saver/)
   // the cards it closes or rewords are on the board, open, by number and title; plain words in what it writes
   for (const r of [...RETIRED_FOR_SCREEN_SAVER_1112, ...REWRITTEN_FOR_SCREEN_SAVER_1112]) {
     const card = before.tasks.find(b => b.order === r.order)
