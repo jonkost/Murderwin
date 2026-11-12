@@ -414,9 +414,12 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   now += NIGHT.windows.questions.ms + 1
   await next() // the drawing
   const { pub, priv } = relayPaths(nightId)
-  for (let g = 1; g <= 4; g++) {
+  assert.equal(db.store.get(priv).grids.length, 3, 'three rounds, no practice round (11 Nov 2026)')
+  for (let g = 1; g <= db.store.get(priv).grids.length; g++) {
     let p = db.store.get(pub)
+    let turns = 0
     while (p.state !== 'vote') {
+      assert.ok(turns++ < 200, `grid ${g} never reached its guess (state ${p.state})`)
       now += Math.max(WALK_MS, PULL_MS, TURN_MS) + 1
       await step(() => advanceRelay(db, { nightId, now }))
       p = db.store.get(pub)

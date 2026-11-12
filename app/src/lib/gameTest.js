@@ -148,7 +148,7 @@ export const SECTIONS = [
   },
   {
     key: 'drawing', name: NAME.drawing, where: 'Act 6 · the Parlour and the Library', moment: 'act6.drawing',
-    what: 'Sir Irwin’s rules and a practice square, then three grids. A player called at random draws on paper in the Library while the room describes the square and tells the host its guess, tapped on the host’s phone (the TV’s names still work, the fallback). The third picture opens the bedroom door.',
+    what: 'Sir Irwin’s rules, then three grids, each bigger than the last (no practice round). A player called at random draws on paper in the Library while the room describes the square and tells the host its guess, tapped on the host’s phone (the TV’s names still work, the fallback). A wrong guess is crossed off and the room guesses again at once. The third picture opens the bedroom door.',
     devices: ['tv', 'phone', 'bedroom'],
     ready: 'Have ready: paper and markers in the Library, and the Parlour TV page open on a screen people can reach.',
     steps: [
@@ -161,7 +161,7 @@ export const SECTIONS = [
     tries: [
       { key: 'living', label: 'The Parlour TV page, for a test night', device: 'tv', params: { kiosk: 'living' }, night: true },
       { key: 'bedroom', label: 'The bedroom screen, for a test night', device: 'bedroom', params: { kiosk: 'bedroom' }, night: true },
-      preview('kiosk-living-rules', 'Sir Irwin’s rules and the practice square, a sample', 'tv'),
+      preview('kiosk-living-rules', 'Sir Irwin’s rules, with one square as his example, a sample', 'tv'),
       preview('kiosk-relay-called', 'A name is called, a sample', 'tv'),
       preview('kiosk-relay-square', 'The square the room describes, a sample', 'tv'),
       preview('kiosk-relay-guess', 'The four names on the TV, the fallback, a sample', 'tv'),

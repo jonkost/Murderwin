@@ -411,7 +411,8 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 // host is dealing with a dog in the garden. The fields that move:
 //   nights/{id}.window.opensAt, .window.closesAt
 //   nights/{id}.reveal.at (older nights only; since 18 Oct the reveal lives in public/finale, below)
-//   nights/{id}/public/relay: introEndsAt (Sir Irwin's slides), turnEndsAt, walkEndsAt, voteEndsAt, lockoutEndsAt
+//   nights/{id}/public/relay: introEndsAt (Sir Irwin's slides), turnEndsAt, walkEndsAt, voteEndsAt
+//     (no lockoutEndsAt since 11 Nov 2026: a wrong pick has no wait)
 //   nights/{id}/public/act4: warnEndsAt, lockEndsAt, roundStartsAt, roundEndsAt (Act 4's fifteen-minute rounds)
 //   nights/{id}/public/study: slotEndsAt (the round's end, the study's slot;
 //     a live station stops its game there, keeps its own fifteen-minute clock
@@ -423,7 +424,7 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
 export const PAUSE_SHIFTED = {
   night: ['window.opensAt', 'window.closesAt', 'reveal.at'],
-  'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
+  'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt'],
   'public/study': ['slotEndsAt'],
   'public/boo': ['slotEndsAt'], // the arcade's chime, the round's end (act4.js booIdle, 5 Nov 2026)
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],

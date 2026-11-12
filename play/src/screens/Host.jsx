@@ -8,7 +8,7 @@ import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
 import { OWN_SLIDES } from '../lib/rulesfilm'
 import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, secondDisplayLinks } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
-import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
+import { hostRelayControl, guessReply, paperReply, guessWaiting } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
 import { troubleLine } from '../lib/trouble'
 
@@ -148,6 +148,7 @@ export default function Host({ night, content, serverNow }) {
   const left = countdownLeft(night, clock) // the countdown to the intro (lib/start.js)
   const startDrawing = () => {
     // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
+    // ('lockout' is an older server's name for the guess: lib/relayhost.js)
     const underWay = ['walk', 'turn', 'vote', 'lockout', 'done'].includes(relay.data?.state)
     if (underWay && !window.confirm('A drawing is already on the paper. Restart it from the beginning?')) return
     run('relay-start', underWay ? 'force' : undefined)
@@ -447,7 +448,9 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
 // moment they are there, so the square shows at once (the walk's twenty
 // seconds are a limit, not a wait). While the room guesses: the four options,
 // A to D, the room's names or the figures of a stand-in round; a crossed one
-// is dimmed; a tap is the room's guess, through the same callable as the
+// is dimmed and the rest stay live, so the room guesses again at once (no
+// wait after a wrong pick, 11 Nov 2026); a tap is the room's guess, through
+// the same callable as the
 // Parlour TV, whose own options stay as the fallback (the trackpad). The
 // rules (which state shows which control, the reply words) are pure helpers
 // in lib/relayhost.js. Every phone leaves its tabs for the drawing's screen
@@ -475,13 +478,17 @@ export function HostRelayPanel({ relay, nightId, inline = false }) {
   const call = async (fn, said) => {
     if (!live || busy) return
     setBusy(true)
-    try { const r = await fn(); setMsg({ text: said(r.data ?? {}) }) }
+    try { const r = await fn(); const text = said(r.data ?? {}); if (text) setMsg({ text }) }
     catch (e) { setMsg({ text: `That didn’t work: ${troubleLine(e, 'press it again.')}` }) }
     finally { setBusy(false) }
   }
   const atPaper = () => call(() => callHost({ nightId, command: 'at-the-paper' }), paperReply)
-  const pick = (i) => call(() => callRelayGuess({ nightId, pick: i }), guessReply)
-  const locked = relay.state === 'lockout'
+  // on the host's drawing screen (`inline`) the big line above already says "Not that one. Guess again."
+  // after a wrong pick, so the reply under the names is not said twice
+  const pick = (i) => call(() => callRelayGuess({ nightId, pick: i }), r => (inline && !r.right ? null : guessReply(r)))
+  // no wait after a wrong pick (11 Nov 2026): the names left standing stay live. Only an older
+  // server's ten-second wait dims them (lib/relayhost.js guessWaiting)
+  const locked = guessWaiting(relay)
   const crossed = relay.crossed ?? []
   return (
     <section className={inline ? 'host-relay inline' : 'host-relay'}>

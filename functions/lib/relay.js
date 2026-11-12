@@ -4,17 +4,23 @@
 // Public doc  nights/{id}/public/relay   — what every phone and kiosk sees:
 //   the current cell only, who draws (their character, never a real name),
 //   the deadlines, the four options at guess time. Never the whole drawing.
-// Private doc nights/{id}/private/relay  — the four grids, the answers,
+// Private doc nights/{id}/private/relay  — the three grids, the answers,
 //   the turn order. No client reads it.
 //
-// Updated 22 Oct (docs/handoff-2026-10-22.md §7): a practice smiley, then
-// three rounds (3 × 3, 4 × 4, 5 × 5) from the sealed picture bank on the
-// party night (relay-bank.js), stand-in grids otherwise. Each turn the game
-// calls a random player (repeats allowed); they walk to the paper before the
-// square is shown. The room agrees its guess and the host taps it on their
-// own phone (25 Oct 2026, Jon's cue list, cue 17; the living room kiosk's
-// own options stay as the fallback), through `guess`; a wrong pick is crossed
-// off until it is right. The third picture named opens the door.
+// Updated 22 Oct (docs/handoff-2026-10-22.md §7): three rounds (3 × 3, 4 × 4,
+// 5 × 5) from the sealed picture bank on the party night (relay-bank.js),
+// stand-in grids otherwise. Each turn the game calls a random player (repeats
+// allowed); they walk to the paper before the square is shown. The room
+// agrees its guess and the host taps it on their own phone (25 Oct 2026,
+// Jon's cue list, cue 17; the living room kiosk's own options stay as the
+// fallback), through `guess`; a wrong pick is crossed off until it is right.
+// The third picture named opens the door.
+//
+// Updated 11 Nov 2026 (docs/handoff-2026-11-11-polish.md, A7; Jon: "I don't
+// need a practice round in Act 6", "You have to wait 10 seconds… let's lose
+// that"): no practice round, so the first grid is Round 1, and no wait after
+// a wrong pick: it is crossed off and the room guesses again at once. The
+// public smiley stays only as slide 3's example square.
 //
 // Timing: every deadline is a server timestamp written here; the phones and
 // the living room kiosk render against it and call `advance` when it has
@@ -41,7 +47,7 @@ export const TURN_MS = 15_000      // fifteen seconds a turn, whatever the grid
 export const WALK_MS = 20_000      // at most: the next drawer walks to the paper, At the paper ends it sooner
 export const PULL_MS = 20_000      // at most: pull the paper down to the next grid, At the paper ends it sooner
 export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
-export const LOCKOUT_MS = 10_000   // after a wrong pick
+// (No wait after a wrong pick since 11 Nov 2026: LOCKOUT_MS and the `lockout` state are gone.)
 // Each of Sir Irwin's rules slides stays up long enough to read aloud: five
 // seconds, and 0.4 of a second a word (the 42-word slide gets about 22 s, all
 // seven about 1.8 minutes). Nothing is recorded, so the room reads them.
@@ -54,28 +60,29 @@ const words = text => String(text ?? '').trim().split(/\s+/).filter(Boolean).len
 export function slideMs(text) { return SLIDE_BASE_MS + SLIDE_WORD_MS * words(text) }
 // Sir Irwin's rules slides (the Relay Drawing How to Play doc): on the main
 // display after the Act 6 Parlour Games, then slide 8 when the door opens.
-// Slide 3 points at "this arc in B1": it carries the practice smiley's B1
-// square (public, relay-bank.js PRACTICE) for the TV to draw beside the text.
+// Slide 3 points at "this arc in B1": it carries the public smiley's B1
+// square (relay-bank.js PRACTICE) for the TV to draw beside the text.
 const SLIDE_TEXT = [
   { title: GAME_NAMES.drawing?.name ?? 'Welcome', hook: GAME_NAMES.drawing?.hook ?? null, text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
   { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
   { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.', cell: { label: 'B1', strokes: PRACTICE.cells.B1 } },
   { title: 'The shouting', text: "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },
   { title: 'Guessing', text: "Think you know the picture? Pick it from the list. Wrong guesses get crossed off. That's okay. Boo crosses me off all the time. It's how she says hello." },
-  { title: 'The rounds', text: 'Practice first, then three grids, each bigger than the last. Small, medium, BIG.' },
+  { title: 'The rounds', text: 'Three grids, each bigger than the last. Small, medium, BIG.' },
   { title: 'The clue', text: "Name all three and the door opens. Then I'll sniff out whatever's in there and bring it straight to you. Helping is my favorite! Ready? Paws on the paper. Let's go!" },
 ]
 // slides = [{ title, text, ms, cell? }]: the TV shows slide i from the sum of the earlier ms.
 export const IRWIN_SLIDES = SLIDE_TEXT.map(s => ({ ...s, ms: slideMs(s.text) }))
 export const INTRO_MS = IRWIN_SLIDES.reduce((sum, s) => sum + s.ms, 0)
 export const IRWIN_DOOR_SLIDE = { title: 'The door', text: "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
-export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, introMs: INTRO_MS }
+export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, introMs: INTRO_MS }
 
 // The time budget: the drawing itself (every turn plus the walk before it, at
 // its full limit) fits twenty-six minutes (docs/relay-drawing-game.md §5;
 // 25 Oct 2026, with the fifteen-second turn). The generator caps the drawn
 // cells per grid so the turns never add up to more than this: MAX_TURNS is 44
-// and the caps keep every set at 42 or fewer, the practice included.
+// and the caps keep every set at 33 or fewer (9 + 11 + 13; 42 while there was
+// a practice round, before 11 Nov 2026).
 export const DRAW_BUDGET_MS = 26 * 60_000
 export const MAX_TURNS = Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS))
 
@@ -105,8 +112,22 @@ function characterOf(roster, key) {
   const ch = characterById(roster?.[key]?.characterId)
   return { characterId: ch?.id ?? null, characterName: ch?.name ?? 'Someone' }
 }
-const ROUND_NAMES = ['Practice', 'Round 1', 'Round 2', 'Round 3']
+// A grid's name comes from its own number, never from its place in the list:
+// 1 to 3 are the rounds. Number 0 was the practice smiley, which only a
+// drawing started before 11 Nov 2026 still holds; it keeps its name, and its
+// misses stay out of the credits (roundMisses), so that drawing reads right.
+export function roundName(grid) {
+  const n = Number(grid?.number)
+  return n >= 1 ? `Round ${n}` : 'Practice'
+}
+// The misses the credits count: one number a round, in round order.
+export function roundMisses(grids = [], misses = []) {
+  return grids.map((g, i) => ({ n: Number(g?.number), m: Number(misses[i]) || 0 })).filter(x => x.n >= 1).map(x => x.m)
+}
 
+// `lockout` is the ten-second wait an older server wrote after a wrong pick.
+// Nothing writes it now; it stays in the list so a drawing caught mid-wait by
+// a publish still counts as running (advance turns it into `vote` at once).
 export const RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
 
 // Is a drawing under way (or finished and still on the screens)?
@@ -149,13 +170,13 @@ export async function start(db, { nightId, now = Date.now(), seed = null, force 
   const nextChar = characterOf(roster, order[0])
   batch.set(db.doc(pub), {
     state: 'intro',              // Sir Irwin's rules slides, then the first drawer walks to the paper
-    grid: 1, gridCount: set.grids.length, round: ROUND_NAMES[0], gridSize: first.size, gridTurns: first.order.length, gridDone: [],
+    grid: 1, gridCount: set.grids.length, round: roundName(first), gridSize: first.size, gridTurns: first.order.length, gridDone: [],
     turnIndex: 0, turnsTotal: turns,
     drawerKey: null, drawerName: null, drawerCharacterId: null,
     nextKey: order[0], nextName: nextChar.characterName, nextCharacterId: nextChar.characterId,
     cell: null,
     slides: IRWIN_SLIDES, introEndsAt: at(now, INTRO_MS),
-    turnEndsAt: null, walkEndsAt: null, voteEndsAt: null, lockoutEndsAt: null,
+    turnEndsAt: null, walkEndsAt: null, voteEndsAt: null,
     options: null, crossed: [], votesIn: 0, votesNeeded: present.length, lastResult: null,
     doorOpen: false, startedAt: at(now, 0), finishedAt: null, stats: null,
     timing: { ...TIMING }, // the phones draw their bars from these, never from their own constants
@@ -217,8 +238,12 @@ export async function atThePaper(db, { nightId, now = Date.now() } = {}) {
 
 // The room's guess, tapped by the host on their phone (or on the living room
 // kiosk, the fallback): the same callable either way. Right: the next grid, or
-// the door opens after the last. Wrong: crossed off, a short lockout, then
-// guess again from what is left. One guess per tap.
+// the door opens after the last. Wrong: crossed off, and the room guesses
+// again at once from what is left (no wait since 11 Nov 2026; the state stays
+// `vote`, and `lastResult: 'wrong'` with the longer crossed list is what the
+// screens buzz on). One guess per tap. A doc an older server left in
+// `lockout` takes a guess like `vote`.
+const GUESSING = ['vote', 'lockout']
 export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
   const { pub, priv } = relayPaths(nightId)
   const nightSnap = await db.doc(`nights/${nightId}`).get()
@@ -228,7 +253,7 @@ export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
     const [pubSnap, privSnap] = await Promise.all([tx.get(db.doc(pub)), tx.get(db.doc(priv))])
     const p = pubSnap.exists ? pubSnap.data() : null
     const d = privSnap.exists ? privSnap.data() : null
-    if (!p || !d?.grids || p.state !== 'vote') throw new NightError('closed', 'Nothing to guess right now.')
+    if (!p || !d?.grids || !GUESSING.includes(p.state)) throw new NightError('closed', 'Nothing to guess right now.')
     if (!(idx >= 0 && idx < 4) || (p.crossed ?? []).includes(idx)) throw new NightError('invalid', 'Pick one still standing.')
     const g = d.grids[p.grid - 1]
     const misses = [...(d.misses ?? d.grids.map(() => 0))]
@@ -237,7 +262,7 @@ export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
         const totalSeconds = Math.round((now - ms(p.startedAt)) / 1000)
         tx.update(db.doc(pub), {
           state: 'done', doorOpen: true, lastResult: 'right', options: null, doorSlide: IRWIN_DOOR_SLIDE,
-          finishedAt: at(now, 0), stats: { totalSeconds, misses: misses.slice(1) }, // the practice round is not counted
+          finishedAt: at(now, 0), stats: { totalSeconds, misses: roundMisses(d.grids, misses) }, // one number a round
         })
         tx.set(db.doc(`nights/${nightId}/public/sounds`), { current: { id: 'sting-door', at: at(now, 0) } }, { merge: true }) // the door sting (screen.js SOUND_IDS)
         return { ok: true, right: true, state: 'done' }
@@ -248,7 +273,7 @@ export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
       tx.update(db.doc(priv), { crossed: [] })
       tx.update(db.doc(pub), {
         state: 'walk', lastResult: 'right', options: null, crossed: [],
-        grid: p.grid + 1, round: ROUND_NAMES[p.grid] ?? `Round ${p.grid}`, gridSize: nextGrid.size, gridTurns: nextGrid.order.length, gridDone: [],
+        grid: p.grid + 1, round: roundName(nextGrid), gridSize: nextGrid.size, gridTurns: nextGrid.order.length, gridDone: [],
         turnIndex: p.turnIndex + 1, nextKey, nextName: ch.characterName, nextCharacterId: ch.characterId,
         walkEndsAt: at(now, PULL_MS),
       })
@@ -257,8 +282,8 @@ export async function guess(db, { nightId, pick, now = Date.now() } = {}) {
     const crossed = [...(p.crossed ?? []), idx]
     misses[p.grid - 1] += 1
     tx.update(db.doc(priv), { crossed, misses })
-    tx.update(db.doc(pub), { state: 'lockout', lastResult: 'wrong', crossed, lockoutEndsAt: at(now, LOCKOUT_MS) })
-    return { ok: true, right: false, state: 'lockout' }
+    tx.update(db.doc(pub), { state: 'vote', lastResult: 'wrong', crossed })
+    return { ok: true, right: false, state: 'vote' }
   })
 }
 
@@ -326,10 +351,9 @@ export async function advance(db, { nightId, now = Date.now() } = {}) {
       return { moved: true, state: 'turn' }
     }
 
-    // ---- the lockout ends → guess again over what is left
+    // ---- a wait an older server left behind → guess again at once (nothing writes `lockout` now)
     if (p.state === 'lockout') {
-      if (now < ms(p.lockoutEndsAt)) return { moved: false, state: p.state }
-      tx.update(db.doc(pub), { state: 'vote', lockoutEndsAt: null, lastResult: null })
+      tx.update(db.doc(pub), { state: 'vote' })
       return { moved: true, state: 'vote' }
     }
     return { moved: false, state: p.state }
