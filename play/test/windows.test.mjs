@@ -52,7 +52,7 @@ test('F19 a Parlour Game shows over the screen beneath, which stays mounted in t
   // so React keeps its state (the tab, a half-typed answer, the scroll)
   assert.equal((app.match(/<Rest /g) ?? []).length, 1, 'Rest is rendered from one place only')
   // (a pause with the ballot card up keeps that same page beneath, inert under the strip: 25 Oct 2026)
-  assert.match(app, /return <>\{banner\}\{strip\}<div className=\{over \? 'beneath covered' : heldCard \? 'beneath paused-shell' : 'beneath'\} inert=\{over \|\| heldCard \|\| undefined\}[^>]*>\{base\}<\/div>\{top\}<\/>/)
+  assert.match(app, /return <>\{banner\}\{strip\}<div className=\{over \? 'beneath covered' : heldCard \? 'beneath paused-shell' : 'beneath'\} inert=\{over \|\| heldCard \|\| undefined\}[^>]*>\{base\}<\/div>(\{scanOn && <ScanButton .*? \/>\})?\{top\}<\/>/) // the camera button (A12) sits beside the page, never inside the inert part
   // the slider shows the nearest stop of an affection kept in half steps
   assert.equal(stopOf(2.5), 3); assert.equal(stopOf(4.5), 5); assert.equal(stopOf(1), 1); assert.equal(stopOf(undefined), 3); assert.equal(stopOf(9), 5)
 })

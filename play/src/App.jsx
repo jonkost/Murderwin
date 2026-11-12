@@ -15,6 +15,7 @@ import { Questions, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { ResumeNight, StartNight } from './screens/Host'
 import Relay, { RelayDone, ms } from './screens/Relay'
+import ScanButton from './screens/ScanButton'
 
 // One page. What a phone shows is a pure function of three documents:
 // the active night (public), this phone's session (private), and this
@@ -177,6 +178,7 @@ export default function App() {
   const doneKey = r?.state === 'done' ? `relay-${ms(r.startedAt)}` : null
   const drawing = lock !== 'over' && r && ['intro', 'walk', 'turn', 'vote', 'lockout'].includes(r.state) && !(r.state === 'intro' && s.host)
   let base
+  let scanOn = false // the camera button (A12): over the tabs only
   if (lock === 'eyes') {
     base = <EyesLock />
   } else if (lock === 'result') {
@@ -190,7 +192,8 @@ export default function App() {
     // the cards under the tabs are told whether the night is a rehearsal: their
     // Rehearsal text tag never shows on the party night (Cards.jsx, 29 Oct 2026).
     // Rest is the only way to those cards, so it never goes without this.
+    scanOn = !over && !heldCard && lock !== 'over'
     base = <RehearsalNight.Provider value={isRehearsalNight(n)}><Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} ballot={ballot} over={lock === 'over'} /></RehearsalNight.Provider>
   }
-  return <>{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{top}</>
+  return <>{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{scanOn && <ScanButton nightId={nightId} onNote={setMeetNote} />}{top}</>
 }
