@@ -20,6 +20,7 @@ import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FieldValue } from 'firebase-admin/firestore'
 import { cleanSeed, newSeedWord, pickFor, replayRecord, REPLAY_DOC } from './seed.js'
+import { resumedRound } from './salemlimits.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const seedDir = joinPath(here, '..', 'seed') // copied from ../seed by `npm run seed`
@@ -437,11 +438,13 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 //     from the first touch, and freezes both itself by watching this night's
 //     phase, station/lib/follow.js)
 //   nights/{id}/public/boo: slotEndsAt (the round's end again: the arcade's Mac rings its chime there)
-//   nights/{id}/public/salem: roundEndsAt, gameEndsAt (Get Off My Lawn!'s two and a half and eight minutes),
-//     and a round under way: startsAt, cleanAt and every colour's time in flips (the review of 12 Nov 2026:
-//     without them the thirty clean seconds ran out during the pause and the round passed itself after it)
+//   nights/{id}/public/salem: roundEndsAt, gameEndsAt (Get Off My Lawn!'s two and a half and eight minutes);
+//     and a round under way starts again from its three-second count (lib/salemlimits.js resumedRound,
+//     the review of 12 Nov 2026: its thirty clean seconds ran out during the pause, so the round passed
+//     itself after it)
 //   nights/{id}.beatAt, at The house rules only: the Parlour TV's intro video and the rules film run from
-//     the beat's start (12 Nov 2026: a pause there made the film skip what the pause covered)
+//     the beat's start (12 Nov 2026: a pause there made the film skip what the pause covered); beatShift
+//     adds up how far, so a screen still knows the beat it was in
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
 //     victimAt, and cardAt.<stage> (when the TV may show a name card)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
@@ -450,7 +453,7 @@ export const PAUSE_SHIFTED = {
   'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt'],
   'public/study': ['slotEndsAt'],
   'public/boo': ['slotEndsAt'], // the arcade's chime, the round's end (act4.js booIdle, 5 Nov 2026)
-  'public/salem': ['roundEndsAt', 'gameEndsAt', 'startsAt', 'cleanAt'], // Get Off My Lawn!'s limits (A9, 12 Nov 2026, lib/salemlimits.js) and the round under way (its flips too, below)
+  'public/salem': ['roundEndsAt', 'gameEndsAt'], // Get Off My Lawn!'s limits (A9, 12 Nov 2026, lib/salemlimits.js); a round under way starts again (resumeNight)
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
   'public/act4': ['warnEndsAt', 'lockEndsAt', 'roundStartsAt', 'roundEndsAt'], // Act 4's clock (act4.js)
@@ -490,8 +493,14 @@ export async function resumeNight(db, { nightId, now = Date.now() } = {}) {
     }
     // The house rules: the Parlour TV's intro video and the rules film run from the beat's own start, so it
     // moves on by the pause too and the film picks up where it stopped. Only there: every other beat's start
-    // is a record of when it began (and run.js introDue compares Arrivals' with the intro's time).
-    if (night.act === 1 && night.beat === 'rules' && night.beatAt) { nightPatch.beatAt = new Date(msOf(night.beatAt) + shift); moved++ }
+    // is a record of when it began (and run.js introDue compares Arrivals' with the intro's time). beatShift
+    // adds up how far it has moved: beatAt less beatShift is the same number before and after a pause, so the
+    // TV knows it is still in the beat whose video it has played (play/src/lib/rulesfilm.js).
+    if (night.act === 1 && night.beat === 'rules' && night.beatAt) {
+      nightPatch.beatAt = new Date(msOf(night.beatAt) + shift)
+      nightPatch.beatShift = (Number(night.beatShift) || 0) + shift
+      moved++
+    }
     const patches = []
     for (const sub of Object.keys(PAUSE_SHIFTED).filter(k => k !== 'night')) {
       const subRef = db.doc(`nights/${nightId}/${sub}`)
@@ -500,11 +509,11 @@ export async function resumeNight(db, { nightId, now = Date.now() } = {}) {
       const data = snap.data()
       const patch = {}
       for (const f of PAUSE_SHIFTED[sub]) { const v = pathGet(data, f); if (v) { patch[f] = new Date(msOf(v) + shift); moved++ } }
-      // Get Off My Lawn!'s colours are a list of times (act4.js salemFlips): each moves on with the round, so a
-      // round that was paused picks up on the colour it stopped on, with as much of its thirty seconds left
-      if (sub === 'public/salem' && Array.isArray(data.flips) && data.flips.length) {
-        patch.flips = data.flips.map(f => ({ ...f, at: new Date(msOf(f.at) + shift) }))
-        moved++
+      // A Get Off My Lawn! round that was under way starts again from its count (lib/salemlimits.js): a new
+      // attempt, its thirty clean seconds whole, and no phone slipping in the instant play comes back
+      if (sub === 'public/salem') {
+        const again = resumedRound(data, now)
+        if (again) { Object.assign(patch, again); moved++ }
       }
       if (Object.keys(patch).length) patches.push([subRef, patch])
     }

@@ -21,7 +21,7 @@ export function useJustWon(on, known = true, ms = WIN_MS) {
   const was = useRef(null)
   const [won, setWon] = useState(false)
   useEffect(() => {
-    if (!known) return undefined
+    if (!known) { setWon(false); return undefined }
     const { was: next, rose } = winStep(was.current, on, known)
     was.current = next
     if (!on) { setWon(false); return undefined }

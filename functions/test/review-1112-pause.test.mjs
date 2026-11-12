@@ -4,8 +4,10 @@
 //      pause covered. Resume now moves that start on by the pause, there only.
 //   2. A Get Off My Lawn! round under way kept its clock through a pause, so
 //      its thirty clean seconds ran out and the round passed itself after
-//      Resume. Resume now moves the round's start, its clean mark and every
-//      colour's time on by the pause.
+//      Resume. Resume now starts that round again from its three-second
+//      count: a new attempt, the same colours re-timed, its slips kept. (Only
+//      moving the times on was not enough: a phone that sat still through the
+//      pause slipped on red the instant play came back.)
 // Every case is a throwaway night in a fake Firestore. Nothing is printed.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -13,7 +15,9 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
 import { ms } from '../lib/deal.js'
-import { readRotation, salemPath, salemColourAt, SALEM_CLEAN_MS } from '../lib/act4.js'
+import { readRotation, salemPath, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS } from '../lib/act4.js'
+import { resumedRound, SALEM_RESUME_LEAD_MS } from '../lib/salemlimits.js'
+import * as phoneRules from '../../play/src/lib/night.js'
 import * as phone from '../../play/src/lib/salem.js'
 import { rulesFilmAt, filmTimeline, INTRO_MS, AFTER_INTRO_MS } from '../../play/src/lib/rulesfilm.js'
 
@@ -47,6 +51,7 @@ test('a pause at The house rules: Resume moves the beat\'s start on, so the rule
   const r = await hostCommand(db, { nightId, command: 'resume', now: tResume })
   assert.equal(r.shiftMs, 7 * 60_000)
   assert.equal(ms(night().beatAt), t0 + 7 * 60_000, 'the beat\'s start moved on by the pause')
+  assert.equal(night().beatShift, 7 * 60_000, 'and the night says how far, so the TV knows it is the same beat')
   const after = rulesFilmAt(night(), tResume, film)
   assert.ok(after, 'the film is on again')
   assert.equal(after.index, before.index, 'on the same slide')
@@ -55,6 +60,7 @@ test('a pause at The house rules: Resume moves the beat\'s start on, so the rule
   await hostCommand(db, { nightId, command: 'pause', now: tResume + 1000 })
   await hostCommand(db, { nightId, command: 'resume', now: tResume + 1000 + film.total + 60_000 })
   assert.ok(rulesFilmAt(night(), tResume + 1000 + film.total + 60_000, film), 'still the film, not the join code')
+  assert.equal(ms(night().beatAt) - night().beatShift, t0, 'the start less the shift is the beat it always was')
 })
 
 test('a pause at any other beat leaves the beat\'s start alone', async () => {
@@ -68,6 +74,7 @@ test('a pause at any other beat leaves the beat\'s start alone', async () => {
   await hostCommand(db, { nightId, command: 'pause', now: t0 + 10_000 })
   await hostCommand(db, { nightId, command: 'resume', now: t0 + 70_000 })
   assert.equal(ms(night().beatAt), t0, 'Arrivals keeps its start: the intro\'s own clock compares with it')
+  assert.equal(night().beatShift, undefined)
 })
 
 async function lawn(now) {
@@ -85,7 +92,7 @@ async function lawn(now) {
   return { db, nightId, doc, uids: g.members.map(m => uidOf(m.key)), host }
 }
 
-test('a pause in a Get Off My Lawn! round: the round picks up where it stopped, and does not pass itself', async () => {
+test('a pause in a Get Off My Lawn! round: Resume starts the round again from its count, and it does not pass itself', async () => {
   const t0 = 7_000_000
   const n = await lawn(t0)
   const [a, b] = n.uids
@@ -97,28 +104,72 @@ test('a pause in a Get Off My Lawn! round: the round picks up where it stopped, 
   assert.equal(cleanAt - startsAt, SALEM_CLEAN_MS)
   // ten seconds into the round the host pauses, for two minutes: far longer than the clean thirty seconds
   const tPause = startsAt + 10_000
-  const colour = salemColourAt(was, tPause)
   const shift = 120_000
+  const tResume = tPause + shift
   await n.host('pause', undefined, tPause)
-  await n.host('resume', undefined, tPause + shift)
+  await n.host('resume', undefined, tResume)
   const d = n.doc()
   assert.equal(d.state, 'playing', 'still the same round')
-  assert.equal(d.attempt, was.attempt, 'and the same attempt')
-  assert.equal(ms(d.startsAt), startsAt + shift)
-  assert.equal(ms(d.cleanAt), cleanAt + shift)
+  assert.equal(d.round, was.round)
+  assert.equal(d.attempt, was.attempt + 1, 'a new attempt: anything a phone says about the old one is ignored')
+  assert.equal(d.slips ?? 0, was.slips ?? 0, 'a pause is not a slip')
+  assert.equal(SALEM_RESUME_LEAD_MS, SALEM_LEAD_MS, 'the same three-second count as any attempt')
+  assert.equal(ms(d.startsAt), tResume + SALEM_LEAD_MS, 'the count starts at Resume')
+  assert.equal(ms(d.cleanAt), tResume + SALEM_LEAD_MS + SALEM_CLEAN_MS, 'and its thirty clean seconds are whole again')
+  // the same colours, re-timed from the new start
   assert.equal(d.flips.length, was.flips.length)
-  d.flips.forEach((f, i) => { assert.equal(ms(f.at), ms(was.flips[i].at) + shift); assert.equal(f.colour, was.flips[i].colour) })
-  assert.equal(salemColourAt(d, tPause + shift), colour, 'on the colour it stopped on')
-  assert.equal(ms(d.roundEndsAt), ms(was.roundEndsAt) + shift, 'its limits moved too, as before')
+  d.flips.forEach((f, i) => {
+    assert.equal(ms(f.at) - ms(d.startsAt), ms(was.flips[i].at) - startsAt)
+    assert.equal(f.colour, was.flips[i].colour)
+  })
+  assert.equal(ms(d.flips[0].at), ms(d.startsAt), 'the first colour comes with the start')
+  assert.equal(salemColourAt(d, tResume + 1000), null, 'no colour during the count, so no phone can slip in the instant play comes back')
+  assert.equal(ms(d.roundEndsAt), ms(was.roundEndsAt) + shift, 'its limits moved on by the pause, as before')
+  assert.equal(ms(d.gameEndsAt), ms(was.gameEndsAt) + shift)
+  // a phone still on the old attempt is ignored, slip or pass
+  const stale = await player.salemSlip(n.db, { nightId: n.nightId, uid: a, attempt: was.attempt, colour: 'red', now: tResume + 100 })
+  assert.equal(stale.already, true)
+  const stalePass = await player.salemPassed(n.db, { nightId: n.nightId, uid: b, attempt: was.attempt, now: tResume + 100 })
+  assert.equal(stalePass.already, true)
+  assert.equal(n.doc().attempt, d.attempt)
   // just after Resume no phone thinks the round is done, and the server refuses one that says so
-  assert.equal(phone.salemPassDue(d, tPause + shift + 500), null, 'the phones do not call it passed')
-  await assert.rejects(player.salemPassed(n.db, { nightId: n.nightId, uid: b, attempt: d.attempt, now: tPause + shift + 500 }), /Not yet/)
+  assert.equal(phone.salemPassDue(d, tResume + 500), null, 'the phones do not call it passed')
+  await assert.rejects(player.salemPassed(n.db, { nightId: n.nightId, uid: b, attempt: d.attempt, now: tResume + 500 }), /Not yet/)
   assert.equal(n.doc().state, 'playing')
-  // twenty clean seconds later, the thirty are up: it passes as any round does
-  const tClean = cleanAt + shift
+  // a phone that sat still through the pause: on red it gets the colour's whole grace from the new start
+  const first = d.flips[0]
+  const grace = phoneRules.SALEM_GRACE_MS[d.round]
+  const still = { ok: true, mag: 0, lastShakeAt: 0 }
+  assert.equal(phoneRules.salemSlip({ colour: 'red', motion: still, local: ms(first.at) + grace, flipAt: ms(first.at), grace }), null)
+  // thirty clean seconds from the new start: it passes as any round does
+  const tClean = ms(d.cleanAt)
   assert.equal(phone.salemPassDue(n.doc(), tClean), 'clean')
   await player.salemPassed(n.db, { nightId: n.nightId, uid: b, attempt: d.attempt, now: tClean })
   assert.equal(n.doc().state, 'passed')
+})
+
+test('a pause during the count before a round starts the count again; a round not under way is left alone', async () => {
+  const t0 = 9_000_000
+  const n = await lawn(t0)
+  const [a] = n.uids
+  await player.meetCat(n.db, { nightId: n.nightId, uid: a, cat: 'salem', now: t0 })
+  await player.salemReady(n.db, { nightId: n.nightId, uid: a, now: t0 })
+  const was = n.doc()
+  await n.host('pause', undefined, t0 + 1000)           // one second into the three-second count
+  await n.host('resume', undefined, t0 + 61_000)
+  const d = n.doc()
+  assert.equal(ms(d.startsAt), t0 + 61_000 + SALEM_LEAD_MS)
+  assert.equal(d.attempt, was.attempt + 1)
+  // pure: nothing for a record with no round under way
+  assert.equal(resumedRound({ state: 'intro' }, 5), null)
+  assert.equal(resumedRound({ state: 'passed', startsAt: new Date(1), cleanAt: new Date(2), flips: [] }, 5), null)
+  assert.equal(resumedRound({ state: 'cleared', startsAt: new Date(1) }, 5), null)
+  assert.equal(resumedRound({ state: 'idle', startsAt: null }, 5), null)
+  assert.equal(resumedRound(null, 5), null)
+  // both host phones pressing Resume at once: the second finds the night playing and moves nothing
+  const again = await n.host('resume', undefined, t0 + 61_001)
+  assert.equal(again.already, true)
+  assert.equal(n.doc().attempt, d.attempt)
 })
 
 test('a pause between rounds moves no colours (there are none), and Ready still starts the next round', async () => {

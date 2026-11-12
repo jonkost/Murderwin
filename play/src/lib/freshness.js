@@ -41,7 +41,7 @@ export function isNewer(remote, local) {
 // `fullscreen`: the browser's own full screen from a click on a room screen, which a reload would leave
 // with nobody there to click again, so the browser's bar would show in the room: such a screen waits.
 // `overlay`: something is open over the page (a Parlour Game the guest is part-way through in Act 4,
-// which has no window on the night's own record; a cat's page): a reload would lose their place in it.
+// which has no window on the night's own record; the camera; a little win): a reload would lose it.
 export function mayReload({ page = 'phone', which = null, night = null, session = null, relay = null, screen = null, now = Date.now(), typing = false, fullscreen = false, overlay = false } = {}) {
   if (typing || overlay) return false
   if (page === 'room' && fullscreen) return false
@@ -76,9 +76,10 @@ function typingNow() {
   return !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.isContentEditable === true)
 }
 // Is something open over the page? Every card that opens over a phone is drawn in an .overlay (a Parlour
-// Game), the look's sheet (a cat's page) or the viewfinder (the camera).
+// Game, Allow again), the look's sheet (the vote's picker), the viewfinder (the camera) or the little win
+// (a cat met).
 function overlayNow() {
-  return typeof document !== 'undefined' && !!document.querySelector('.overlay, .lk-sheet, .viewfinder')
+  return typeof document !== 'undefined' && !!document.querySelector('.overlay, .lk-sheet, .viewfinder, .lk-smallwin')
 }
 function triedFor() { try { return sessionStorage.getItem(TRIED_KEY) } catch { return null } }
 function markTried(stamp) { try { sessionStorage.setItem(TRIED_KEY, stamp) } catch { /* no storage: a reload is still safe */ } }

@@ -59,8 +59,12 @@ export function stringsColour(salem, now = Date.now()) {
 // What the strings show, the blackout first: between its dark and power marks
 // (nights/{id}.blackout) they are off, whatever Salem's game says; the rest of
 // the time stringsColour.
+// In a pause they hold the colour the round stopped on (the review of 12 Nov
+// 2026: they went on flipping red and green over the pause card), like the
+// Orangerie's board; Resume starts the round again from its count.
 export function stringsWanted(salem, night, now = Date.now()) {
   if (blackoutStageOf(night, now) === 'dark' || night?.phase === 'blackout') return OFF
+  if (night?.phase === 'paused') return stringsColour(salem, stamp(night.pausedAt) || now)
   return stringsColour(salem, now)
 }
 

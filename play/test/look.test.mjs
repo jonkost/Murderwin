@@ -362,7 +362,7 @@ test('every win gets a moment: Solved! on the Study and the Library, and the sma
   w = winStep(w.was, true, true)                // solved while the screen is up
   assert.deepEqual(w, { was: true, rose: true }, 'a game solved in front of the room does')
   assert.deepEqual(winStep(true, true, true), { was: true, rose: false }, 'once')
-  assert.ok(win.includes('if (!known) return undefined'))
+  assert.ok(win.includes('if (!known) { setWon(false); return undefined }'), 'and a record that goes away takes the win page with it')
   assert.ok(kiosk.includes('known={study.loaded}') && kiosk.includes('known={memory.loaded}') && kiosk.includes('memoryKnown={memory.loaded}'), 'each screen says when its record is in')
   assert.ok(read('../src/screens/Ipad.jsx').includes('known={memoryKnown}'), 'the iPad\'s In Duplicate too')
   // the phone

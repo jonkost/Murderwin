@@ -33,6 +33,30 @@ export function readyLimits(doc, now, maxSlips) {
   return { roundEndsAt: new Date(roundEndsAt), gameEndsAt: new Date(gameEndsAt), maxSlips, letThrough: false }
 }
 
+// After a pause (the review of 12 Nov 2026): a round that was under way starts
+// again from its three-second count, as a new attempt with the same colours
+// re-timed from the new start, so its thirty clean seconds are whole again and
+// nobody slips in the instant play comes back (a phone that sat still through
+// the pause would slip on red at once, and one picked up on green would too).
+// It is not a slip: the round's slips stand, and its limits have already moved
+// on by the pause (night.js PAUSE_SHIFTED). Null when no round is under way.
+// `lead` is act4.js SALEM_LEAD_MS (a test holds the two together).
+export const SALEM_RESUME_LEAD_MS = 3_000
+export function resumedRound(doc, now, lead = SALEM_RESUME_LEAD_MS) {
+  if (doc?.state !== 'playing' || !msOf(doc.startsAt)) return null
+  const startsAt = now + lead
+  const move = startsAt - msOf(doc.startsAt)
+  const clean = msOf(doc.cleanAt) ? msOf(doc.cleanAt) + move : startsAt + 30_000
+  return {
+    attempt: (Number(doc.attempt) || 0) + 1,
+    flips: (Array.isArray(doc.flips) ? doc.flips : []).map(f => ({ ...f, at: new Date(msOf(f.at) + move) })),
+    startsAt: new Date(startsAt),
+    cleanAt: new Date(clean),
+    lastSlip: null,
+    at: new Date(now),
+  }
+}
+
 // Has the round's limit come (a record with no limit never has)?
 export const roundOver = (doc, now) => !!msOf(doc?.roundEndsAt) && now >= msOf(doc.roundEndsAt)
 // Has the game's limit come?

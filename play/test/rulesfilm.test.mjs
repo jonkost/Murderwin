@@ -126,7 +126,7 @@ test('the intro video is never cut, no join code shows between it and the film, 
   const film = filmTimeline()
   const filmAt = BEAT + INTRO_MS + AFTER_INTRO_MS
   // while the video plays: the intro
-  assert.deepEqual(rulesScreenAt(NIGHT, BEAT + 1000, null), { show: 'intro', startedAt: BEAT })
+  assert.deepEqual(rulesScreenAt(NIGHT, BEAT + 1000, null), { show: 'intro', startedAt: BEAT, beat: BEAT })
   // the video ended on time: dark for the moment before the first slide, never the join code
   const onTime = { at: BEAT, played: true, lag: introLag(NIGHT, BEAT + INTRO_MS) }
   assert.equal(onTime.lag, 0)
@@ -157,9 +157,24 @@ test('the intro video is never cut, no join code shows between it and the film, 
   assert.equal(rulesScreenAt(NIGHT, filmAt + 10, none).show, 'film')
   // a screen that reloads part-way knows nothing of its video: mid-film it goes straight to its slide
   assert.equal(rulesScreenAt(NIGHT, filmAt + film.slides[6].at + 100, null).at.index, 6)
-  // what a screen knew belongs to one start of the beat: after a pause the start has moved on, and the video picks up
-  const moved = { ...NIGHT, beatAt: BEAT + 60_000 }
-  assert.deepEqual(rulesScreenAt(moved, BEAT + 60_000 + 30_000, onTime), { show: 'intro', startedAt: BEAT + 60_000 })
+  // what a screen knew belongs to one beat. The beat entered again (Back, then Next) is a new start: the video plays again
+  const again = { ...NIGHT, beatAt: BEAT + 60_000 }
+  assert.deepEqual(rulesScreenAt(again, BEAT + 60_000 + 30_000, onTime), { show: 'intro', startedAt: BEAT + 60_000, beat: BEAT + 60_000 })
+  // ...but a pause only moves the beat's start on, and the night says how far (beatShift): it is the same beat, so
+  // the screen still knows its video is over and how far behind its film runs
+  const paused = { ...NIGHT, beatAt: BEAT + 420_000, beatShift: 420_000 }
+  // a pause in the film's first seconds: straight back to the slide, never the video again
+  const back = rulesScreenAt(paused, filmAt + 420_000 + 2000, onTime)
+  assert.equal(back.show, 'film'); assert.equal(back.at.index, 0); assert.equal(back.at.into, 2000)
+  // a film that ran three seconds late keeps its three seconds: no word of the slide it was on is skipped
+  const mid = filmAt + film.slides[11].at + 5000
+  const before = rulesScreenAt(NIGHT, mid + 3000, late)
+  const after = rulesScreenAt(paused, mid + 3000 + 420_000, late)
+  assert.equal(after.at.index, before.at.index); assert.equal(after.at.into, before.at.into); assert.equal(after.at.index, 11)
+  // a pause in the middle of the video: the video picks up (it seeks to the moved start)
+  assert.deepEqual(rulesScreenAt(paused, BEAT + 420_000 + 30_000, null), { show: 'intro', startedAt: BEAT + 420_000, beat: BEAT })
+  // two pauses add up
+  assert.equal(rulesScreenAt({ ...NIGHT, beatAt: BEAT + 500_000, beatShift: 500_000 }, filmAt + 500_000 + 2000, onTime).show, 'film')
   // never outside The house rules, in a pause, or before the beat
   assert.equal(rulesScreenAt({ ...NIGHT, phase: 'paused' }, BEAT + 1000, null), null)
   assert.equal(rulesScreenAt({ ...NIGHT, beat: 'arrive' }, BEAT + 1000, null), null)
@@ -179,7 +194,7 @@ test('the Parlour TV plays it by itself, and there is no second tab any more', (
   assert.ok(dark > 0 && intro > dark && film > intro && gap > film, 'after the dark: the intro, the film, or the dark moment between them (rulesScreenAt says which)')
   // the video says how it ended: to its end (true), or no file and a refused play (false: the join code until the film)
   assert.ok(kiosk.includes('onEnded={() => onOver(true)} onError={() => onOver(false)}'))
-  assert.ok(kiosk.includes('lag: played ? introLag(n, serverNow()) : 0'), 'a film that waited for the video runs that far behind')
+  assert.ok(kiosk.includes('setIntroOver({ at: rules.beat, played, lag: played ? introLag(n, serverNow()) : 0 })'), 'a film that waited for the video runs that far behind, in the beat the video belonged to')
   const screen = read('../src/screens/RulesFilm.jsx')
   assert.ok(screen.includes('a.currentTime = voice'), 'a reload joins the voice where the clock says')
   assert.ok(screen.includes("p.catch(() => {})"), 'a screen refused sound still turns its slides')

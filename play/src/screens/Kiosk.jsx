@@ -129,7 +129,7 @@ export default function Kiosk({ which }) {
     window.addEventListener('keydown', go)
     return () => { window.removeEventListener('pointerup', go); window.removeEventListener('keydown', go) }
   }, [])
-  const [introOver, setIntroOver] = useState(null) // this screen's intro video is over: { at: its start time, played: to its end, lag } (lib/rulesfilm.js)
+  const [introOver, setIntroOver] = useState(null) // this screen's intro video is over: { at: the beat it belonged to, played: to its end, lag } (lib/rulesfilm.js)
 
   const n = night.data
   const r = relay.data
@@ -159,7 +159,7 @@ export default function Kiosk({ which }) {
   else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />
   else if (which === 'ipad') body = <IpadScreen night={n} nightId={nightId} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} memory={memory.data} memoryKnown={memory.loaded} rotation={rotation.data} serverNow={serverNow} />
   else if (code) body = <RoomCode cat={code} />
-  else if (rules?.show === 'intro') body = <IntroVideo startedAt={rules.startedAt} serverNow={serverNow} onOver={played => setIntroOver({ at: rules.startedAt, played, lag: played ? introLag(n, serverNow()) : 0 })} />
+  else if (rules?.show === 'intro') body = <IntroVideo startedAt={rules.startedAt} serverNow={serverNow} onOver={played => setIntroOver({ at: rules.beat, played, lag: played ? introLag(n, serverNow()) : 0 })} />
   else if (rules?.show === 'film') body = <RulesFilm at={rules.at} />
   else if (rules?.show === 'gap') body = <Dark />
   // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a

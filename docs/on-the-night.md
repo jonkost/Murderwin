@@ -791,9 +791,10 @@ the screen awake by itself where the iPad lets it.
 - **Pause, Irwin needs the garden** stops the clocks that decide the night:
   the Parlour Games, the vote, the rounds, the Study,
   the drawing and the reveal, and since 12 November a Get Off My Lawn! round
-  (the Orangerie's board stands still) and the intro video and rules film on
-  the Parlour TV. **Resume** carries them on from where they
-  stopped, and no clue is lost. The line for the cats and Boo's arcade
+  (the Orangerie's board and the string lights stand still, and at Resume
+  the round starts again from its 3, 2, 1, with no slip counted) and the
+  intro video and rules film on the Parlour TV. **Resume** carries them on
+  from where they stopped, and no clue is lost. The line for the cats and Boo's arcade
   run on, so a long pause can end them, and a bulletin that fell due in
   the pause plays straight after Resume. A pause takes the tabs off every
   phone, this tab with them, so **Resume** is on the pause card on your phone

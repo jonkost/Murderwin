@@ -46,7 +46,7 @@ test('the limits: two and a half minutes a round, eight for the game, mirrored o
   assert.equal(ms(late.roundEndsAt), 60_000, 'a round never runs past the game')
   assert.equal(roundOver({}, 1e12), false, 'an older record has no limit')
   assert.equal(gameOver({ gameEndsAt: new Date(5) }, 5), true)
-  assert.deepEqual(PAUSE_SHIFTED['public/salem'], ['roundEndsAt', 'gameEndsAt', 'startsAt', 'cleanAt'], 'a pause moves both limits, and the round under way (review-1112-pause.test.mjs)')
+  assert.deepEqual(PAUSE_SHIFTED['public/salem'], ['roundEndsAt', 'gameEndsAt'], 'a pause moves both (and a round under way starts again: review-1112-pause.test.mjs)')
 })
 
 // The worst group: slow to tap Ready (`readyAfter`), and it slips on every

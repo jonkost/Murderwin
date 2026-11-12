@@ -234,8 +234,8 @@ export function Orangerie({ night, salem = null, rotation = null, serverNow = nu
   // idle and cleared are between groups, when the code to scan is back (26 Oct 2026)
   const busy = ['intro', 'playing', 'passed'].includes(salem?.state)
   // while a group plays, the room's board (31 Oct 2026, Jon's note 10012): the colour, the count, the slips.
-  // In a pause the board stands still where it was, like the phones under their pause card: Resume moves
-  // the round's times on by the pause, so the round picks up exactly there (functions/lib/night.js, 12 Nov 2026)
+  // In a pause the board stands still where it was, like the phones under their pause card; Resume starts
+  // the round again from its count (functions/lib/night.js and lib/salemlimits.js resumedRound, 12 Nov 2026)
   const clock = night.phase === 'paused' && night.pausedAt ? () => ms(night.pausedAt) : serverNow
   if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={clock} />
   return (
