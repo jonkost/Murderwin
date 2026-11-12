@@ -3,6 +3,8 @@ import { Ground, Cat, Splash, GameCard, TheEnd, Dedication, Phone, NowCard, Rule
 import { SPLASHES, SPLASH_ROOMS, NOW_STATES, WINS, HOUSE_TIPS } from './look'
 import { celebrate } from '../lib/celebrate'
 import { unlock } from '../lib/soundkit'
+import { filmTimeline } from '../lib/rulesfilm'
+import RulesFilm from '../screens/RulesFilm'
 
 // The look book (handoff 11 Nov 2026, B1): /play/?look=1. Eight real screens
 // in the new look, with the real art, for Jon to say yes or no to before
@@ -11,7 +13,8 @@ import { unlock } from '../lib/soundkit'
 //
 //   /play/?look=1                       the book
 //   /play/?look=1&show=splash&room=study   one room screen, filling the window
-//   (show: splash, second, game, end, dedication; room and game pick which)
+//   (show: splash, second, game, end, dedication; room and game pick which;
+//    show=film&n=7 is slide 7 of the rules film, silent, as the Parlour TV draws it)
 
 const BASE = import.meta.env.BASE_URL
 const GAME_IDS = ['orangerie', 'study', 'library', 'entryway']
@@ -99,6 +102,13 @@ function Show({ show, params }) {
   // &picks=1 fills the three rows with sample picks (no night's answer: there is none here); &locked=1 shows the seal
   if (show === 'vote') return <div className="lk-fullphone"><Phone label="Act 7" title="Unmasked" on="now"><VoteCard initial={params.has('picks') ? SAMPLE_PICKS : null} startLocked={params.has('locked')} /></Phone></div>
   if (show === 'win') return <WinStage level={params.get('level')} freeze={params.has('freeze')} />
+  if (show === 'film') {
+    const film = filmTimeline()
+    const k = Math.max(0, Math.min(film.slides.length - 1, (Number(params.get('n')) || 1) - 1))
+    // &voice=3 starts the slide's recording three seconds in (add &mute=1 to try it without a sound)
+    const voice = params.has('voice') ? Number(params.get('voice')) || 0 : null
+    return <RulesFilm at={{ startedAt: 0, index: k, slide: film.slides[k], into: 0, voice, count: film.slides.length, total: film.total }} />
+  }
   return <Splash room={room} turn={turn} tip={tip} className="full" />
 }
 

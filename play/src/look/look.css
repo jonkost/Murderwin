@@ -81,6 +81,19 @@
 .lk-splash.calm .lk-cat { height: 84cqh; bottom: -6cqh; animation-duration: 14s; }
 .lk-splash.calm .lk-line, .lk-splash.calm .lk-tip { display: none; }
 
+/* ---- the rules film: one slide at a time on the Parlour TV (screens/RulesFilm.jsx) */
+
+.lk-rules .lk-words { position: absolute; z-index: 1; left: 6cqw; top: 50%; transform: translateY(-53%); width: 55cqw; }
+.lk-rules .lk-words-in { display: grid; gap: 2.4cqh; text-align: left; animation: lk-rise 0.7s ease-out 1; }
+.lk-rules .lk-label { font-size: 2.7cqh; }
+.lk-rules .lk-big { font-size: min(6.6cqw, 14cqh); line-height: 1.02; }
+.lk-rules .lk-rule { width: 100%; }
+.lk-rules-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5cqh; font-family: var(--serif); font-weight: 600; font-size: min(3.15cqw, 6cqh); line-height: 1.18; color: var(--brand-parchment); text-shadow: 0 0.3cqh 1.2cqh rgba(0, 10, 16, 0.9); }
+.lk-rules .lk-cat { right: -9cqw; bottom: -6cqh; height: 100cqh; width: auto; max-width: 52cqw; --tilt: -2deg; }
+.lk-rules-n { position: absolute; z-index: 1; right: 3cqw; top: 3.6cqh; margin: 0; font-family: var(--serif); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; font-size: 2.1cqh; color: var(--brass-hi); text-shadow: 0 2px 8px rgba(0, 10, 16, 0.95); }
+.lk-rules-bar { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: 0.9cqh; background: rgba(214, 207, 134, 0.16); }
+.lk-rules-bar i { display: block; height: 100%; background: var(--brass-hi); transition: width 300ms linear; }
+
 /* ---- the marquee: chasing bulbs round a game's name ------------------------- */
 
 .lk-marquee { position: relative; display: inline-block; padding: var(--mq-pad, 3.2cqh 4.6cqw); border-radius: 1.2cqh; background: rgba(0, 12, 18, 0.5); box-shadow: inset 0 0 0 0.3cqh rgba(214, 207, 134, 0.5), 0 2cqh 5cqh rgba(0, 0, 0, 0.5); }
@@ -278,5 +291,5 @@
   .lk-tip { opacity: 1; }
 }
 /* &still=1: everything holds still, for a picture of a screen */
-.lk-still .lk-wall, .lk-still .lk-gas, .lk-still .lk-cat, .lk-still .lk-bulb, .lk-still .lk-tip, .lk-still .lk-clock b, .lk-still .lk-card, .lk-still .lk-big, .lk-still .lk-locked img { animation: none !important; }
+.lk-still .lk-wall, .lk-still .lk-gas, .lk-still .lk-cat, .lk-still .lk-bulb, .lk-still .lk-tip, .lk-still .lk-clock b, .lk-still .lk-card, .lk-still .lk-big, .lk-still .lk-locked img, .lk-still .lk-words-in { animation: none !important; }
 .lk-still .lk-tip { opacity: 1; }

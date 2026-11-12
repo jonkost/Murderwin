@@ -135,7 +135,7 @@ export function report({ media, video, loops, household, sizes = {} }) {
   const big = Object.entries(sizes).filter(([, b]) => b > LOOP_MAX_BYTES).map(([f]) => f)
   if (big.length) out.push(`  Over 30 MB (slow to start on the house wifi): ${big.join(', ')}`)
   out.push('', '4. Sydney\'s photo (the end credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. His card shows his name only.'}`, '  Then: npm run deploy:site.')
-  out.push('', '5. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  The rules deck: a second browser tab on the Parlour TV\'s Mac, after the intro video. The game plays the intro by itself, not the deck.')
+  out.push('', '5. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself (the rules film\'s 28 recordings: npm run rules-film).')
   return out
 }
 

@@ -59,7 +59,7 @@
         {
           "key": "rules",
           "name": "The house rules",
-          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video on its own. When it ends the join code comes back: show the rules slides from the second tab, then switch back to the game tab and press Next. The sound-test chime is the Sound test button.",
+          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video and then the rules, by itself: about sixteen minutes. When it ends the join code comes back. Press Next when the room is ready; Next also goes sooner. The sound-test chime is the Sound test button.",
           "screen": "join"
         },
         {

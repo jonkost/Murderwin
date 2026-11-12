@@ -17,13 +17,12 @@ export const SETUP_ROOMS = [
   { key: 'pose', room: 'The Entryway: Boo’s camera', machine: 'Jenna’s iPad Pro, facing the group at the deck', kiosk: 'pose', when: 'Act 4, nice to have' },
 ]
 
-// The second tab on the Parlour TV's Mac: the game does not play the intro video.
 // A Mac with two displays (the Parlour's, the Study's): its other screen gets the crest page, so no desktop shows.
 export const SECOND_DISPLAY = { key: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen', kiosk: 'decor', when: 'All night: the crest, the countdown, dark with the room' }
 
-export const SETUP_EXTRAS = [
-  { key: 'intro', label: 'The intro video', note: 'For a second tab on the Parlour TV’s Mac.', path: 'video/sirwin-intro.mp4' },
-]
+// Nothing extra to open since 11 Nov 2026: the Parlour TV plays the intro video and the rules film by
+// itself at The house rules, so there is no second tab.
+export const SETUP_EXTRAS = []
 
 export const SETUP_LAST_KEY = 'murderwin.setup.last'
 

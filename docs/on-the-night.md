@@ -196,9 +196,9 @@ them.
   the same page: the same four codes serve Act 2 and Act 4. The Parlour TV
   shows the join code itself through Act 1 and again at the dinner wrap-up
   (*rulesDeckScreen*, answered by your cue list: the Parlour TV), and a small
-  one under the ballot clock; the intro
-  video and the rules slides play from a second browser tab or a player at
-  "The house rules", and you switch back to the game tab after them. The join
+  one under the ballot clock; at "The house rules" the Parlour TV plays the
+  intro video and then the rules film by itself (since 11 Nov 2026: no second
+  tab, nothing to switch), and the join code comes back after them. The join
   code is also printed at the door, the fallback. The room screens show their
   own cat's code during the Act 2 cat visits and on the Act 4 rules cards
   (the study screen, the iPad Pro in the Library, the projector, the brain's
@@ -233,7 +233,7 @@ them.
 |---|---|---|
 | The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the music (the playlists from the Music app, or since 31 Oct the music Shortcuts through Apple Home, one Home scene per setting, with the Study's and the Orangerie's own music in Act 4), the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6, and at The End; on again when the power returns and for the ballot) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
-| Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (the intro video and the rules deck from a second browser tab), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
+| Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing and the deduction board, the ballot clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
 | Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
 | Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | From its Home Screen icons, so no Safari bars show. Once, before the night: open each of its three addresses in Safari, tap Share, then Add to Home Screen (if it asks, keep Open as Web App on), and name it: the Library (`?kiosk=ipad`, also supper), In Duplicate (`?kiosk=memory`), the bedroom (`?kiosk=bedroom`). On the night, open each station from its icon. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
@@ -387,10 +387,13 @@ links to it.
 - Act 1: arrivals, the house rules, meet the household, introductions, then
   ready for the dark. The Parlour TV shows the join code, big, through the
   whole of Act 1 (*rulesDeckScreen* is answered by your cue list: the Parlour
-  TV). "The house rules" is the beat for the intro video and the rules
-  slides: play them from a second browser tab or a player on the same
-  MacBook, and switch back to the game tab for the next beat; the brain stops
-  the music and dims the lights for them. When the rules reach the
+  TV). "The house rules" is the beat for the intro video and the rules: the
+  Parlour TV plays the intro and then the rules film by itself, your 28
+  recordings each over its own slide, about sixteen minutes in all, and the
+  join code comes back when it ends (Next goes sooner). The brain stops the
+  music and dims the lights for them. The film has sound only if that screen
+  has been clicked once since it opened: the Host tab says Sound on beside
+  the Parlour screen when it has. When the rules reach the
   sound test, press **Sound test** (under The house, beside the hall light):
   the chime plays on every HomePod, so the room hears the speakers work. Act 1
   ends with
@@ -714,7 +717,7 @@ links to it.
 
 | Act | The Parlour TV | The other screens |
 |---|---|---|
-| 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. The intro video and the rules slides in a second browser tab or a player, at "The house rules". | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
+| 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. At "The house rules" it plays the intro video and then the rules film by itself, and the join code comes back. | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro, in the Library, keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad Pro in the Library (`?kiosk=ipad`; `?kiosk=memory` shows his code too), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
 | 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
 | 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. Boo's camera (Jenna's iPad Pro), if it is up: the group like a mirror, and its photo a minute into the visit. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |

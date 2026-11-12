@@ -14,6 +14,8 @@ import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
+import { rulesFilmAt } from '../lib/rulesfilm'
+import RulesFilm from './RulesFilm'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
 
@@ -120,6 +122,9 @@ export default function Kiosk({ which }) {
   const setup = showSetup(n, { looked })
   // The house rules: the Parlour TV plays the intro video from the moment the beat began (lib/start.js)
   const intro = n && n.phase === 'act' ? introPlaying(n, serverNow()) : null
+  // ...and then the rules as a film, Jon's 28 recordings each over its slide (lib/rulesfilm.js, 11 Nov 2026),
+  // from just after the intro until the last slide; then the join code comes back. No second tab.
+  const film = which === 'living' && n ? rulesFilmAt(n, serverNow()) : null
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
   let body
@@ -127,6 +132,7 @@ export default function Kiosk({ which }) {
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} />
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
   else if (code) body = <RoomCode cat={code} />
+  else if (film) body = <RulesFilm at={film} />
   else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
   // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a
   // room; it counts down with the rest and goes dark with the room (the blackout, the role cards, The End)
