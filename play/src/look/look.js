@@ -109,7 +109,7 @@ export const SPLASH_ROOMS = Object.keys(SPLASHES)
 // to the drawings on 12 Nov 2026, and that is the yes (handoff 12 Nov, job 2):
 // the look is on. A part that is not listed is off, and a screen opened with
 // &<part>=1 in its address shows it anyway, for trying it on the real machine.
-export const LOOK = { splash: true, game: true, now: true, vote: true, wins: true }
+export const LOOK = { splash: true, game: true, now: true, vote: true, wins: true, rules: true }
 export function lookOn(part, search = typeof window === 'undefined' ? '' : window.location.search) {
   return LOOK[part] === true || new URLSearchParams(search).has(part)
 }

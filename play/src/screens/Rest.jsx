@@ -12,7 +12,7 @@ import Allow from './Allow'
 import TabIcon from './TabIcon'
 import { PhoneEnd } from './Closing'
 import { lookOn } from '../look/look'
-import { NowCard, SmallWin } from '../look/parts'
+import { NowCard, SmallWin, RulesSwipe } from '../look/parts'
 import { celebrate } from '../lib/celebrate'
 import { play } from '../lib/soundkit'
 import {
@@ -91,7 +91,8 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
         {shown === 'notes' && <Notes uid={uid} notes={notes} />}
         {shown === 'motives' && <Motives uid={uid} content={content} notes={notes} />}
         {shown === 'cats' && <Cats session={session} content={content} ui={ui} act={night.act} />}
-        {shown === 'rules' && <Rules content={content} />}
+        {/* the Rules tab is cards to swipe, one idea a card, a picture on each (B3; Jon's yes of 12 Nov) */}
+        {shown === 'rules' && (lookOn('rules') ? <RulesSwipe /> : <Rules content={content} />)}
         {shown === 'host' && <Host night={night} content={content} serverNow={serverNow} />}
       </section>
 

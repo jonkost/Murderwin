@@ -363,3 +363,12 @@ test('every win gets a moment: Solved! on the Study and the Library, and the sma
   assert.ok(guide.includes('## The look, and every win (12 November)'))
   for (const row of ['| Small |', '| A cat met |', '| Medium |', '| Big |', '| Not quite |']) assert.ok(guide.includes(row), row)
 })
+
+test('the phone’s Rules tab is the cards to swipe: one idea a card, a picture on each, the whole game first', async () => {
+  const { LOOK } = await import('../src/look/look.js')
+  assert.equal(LOOK.rules, true)
+  const rest = read('../src/screens/Rest.jsx')
+  assert.ok(rest.includes("{shown === 'rules' && (lookOn('rules') ? <RulesSwipe /> : <Rules content={content} />)}"))
+  assert.equal(RULE_CARDS.length, 9)
+  for (const c of RULE_CARDS) assert.ok(PICTURES[c.who] && words(c.title) <= 4, c.title)
+})
