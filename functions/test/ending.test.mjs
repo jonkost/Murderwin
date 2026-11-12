@@ -88,12 +88,12 @@ test('no Parlour Game opens over Talk it over, and none in Act 7: Start the vote
   let now = 4_000_000
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
   await hostCommand(db, { nightId, command: 'next', now })
-  // Act 6 opens on a Parlour Game at once; every game Act 2 had no time for came along, so more are due
+  // Act 6 opens on a Parlour Game at once; its own two and no more (A5: nothing carried in), so one more is due
   await hostCommand(db, { nightId, command: 'act', arg: 6, now })
   const first = night(db, nightId).window
   assert.equal(first.kind, 'questions')
   const sched = () => db.store.get(parlourPath(nightId))
-  assert.ok(sched().count >= 3, 'games still to come')
+  assert.equal(sched().count, 2, 'its own two, the second still to come')
   now = ms(first.closesAt) + GRACE_MS
   await hostCommand(db, { nightId, command: 'tick', now }) // the first is settled; the next is not due yet
   assert.equal(night(db, nightId).window.settled, true)
@@ -101,7 +101,7 @@ test('no Parlour Game opens over Talk it over, and none in Act 7: Start the vote
   // well past every due time: the tick opens nothing while people talk
   now = ms(sched()[`due${sched().count - 1}`]) + 10 * 60_000
   const fired = JSON.stringify(sched().fired)
-  assert.deepEqual(await tickParlour(db, nightId, now), { opened: false, reason: 'talk' })
+  assert.deepEqual(await tickParlour(db, nightId, now), { opened: false, reason: 'beat' }, 'not one of the games\' own beats (A5)')
   const r = await hostCommand(db, { nightId, command: 'tick', now })
   assert.equal(r.parlour.opened, false)
   assert.equal(night(db, nightId).window.id, first.id, 'still the game from the start of the act')

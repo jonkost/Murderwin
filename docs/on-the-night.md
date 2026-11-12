@@ -441,12 +441,17 @@ links to it.
   start of Act 6, one after the other. Boo opens each one. Every phone at
   once, the same three questions, sixty seconds on the server's clock, and it
   never closes early. It sits on top of whatever the phone was showing and
-  hands it back when it is done. None pops up during the drawing. A game an
-  act ends before moves to the next act; one that Act 6 cannot fit is simply
-  not played. **Next** waits for an open one. When the time is up, the server
+  hands it back when it is done. A game comes only in its own beats: the cat
+  visits, the Act 4 rounds and Act 6's games; one that falls due anywhere
+  else (the news, the bag peek, supper, the group cards) waits, and none
+  comes over a bulletin or Sir Irwin. A game Act 2 ends before moves to
+  Act 4; nothing moves into Act 6, which plays its own two and no more. From
+  the moment the drawing starts no game comes again: not at the door, not in
+  Talk it over, not in Act 7. **Next** waits for an open one. When the time is up, the server
   picks for anyone who did not, within a minute, on its own;
   **Pick for the rest** does the same thing sooner if you are standing there.
-  Press **Parlour Game now** for an extra one in Acts 2, 4 or 6. A phone that
+  Press **Parlour Game now** for an extra one in the cat visits or an Act 4
+  round (the button shows only there). A phone that
   answers after the time is up sees the same thank-you as everyone else, and
   its late answer changes nothing. Act 4 is the one difference: there a
   Parlour Game does not pop up over everything. It waits on each phone and
@@ -607,9 +612,9 @@ links to it.
   on `?kiosk=bedroom` and the door is closed.
 - Act 6 opens with a note on every phone (two Parlour Games on their way,
   then the final event in the Parlour, a good moment for a stretch) and the
-  two Parlour Games, back to back. Wait until the second has
-  ended on your own phone, then **Next** starts Sir Irwin Needs a Hand (the
-  Relay Drawing; or **Start the drawing**). Sir Irwin explains it on the TV,
+  two Parlour Games, back to back. When the second has closed, Sir Irwin
+  Needs a Hand (the Relay Drawing) starts by itself; **Next** (or **Start the
+  drawing**) starts it sooner, and any game not yet played is dropped. Sir Irwin explains it on the TV,
   reading each slide aloud from the TV's own speaker (about a minute and a
   quarter in all; click the TV once before the night so the Host tab says
   *Sound on*, or the slides turn silently on time), while every
@@ -836,6 +841,13 @@ Anything that cannot be fixed by then is cut.
   night page and press "Freeze the workshop". Every list goes read-only and
   the phones keep the words as they are. Unfreeze only if something really
   must change, then freeze again.
+- A deploy reaches the open screens by itself (12 November). Every phone and
+  room screen looks once a minute for a newer site and reloads at a quiet
+  moment: never in a game, a film, a bulletin, the drawing, the vote or the
+  reveal, and a phone never while its guest is typing a note. It comes back
+  exactly where it was. A room screen you clicked into full screen waits
+  instead, since a reload would leave full screen with nobody there to
+  click: reload that one by hand at a quiet moment, then click it again.
 
 ## Rehearsing without touching the party
 
@@ -1092,9 +1104,9 @@ page have no night at all: nothing is paid and no clue is dealt.
   whole game: `docs/boo-arcade.md`.
 - *The Parlour Games.* Every set in the workshop's bank, numbered, each with
   "See it on a phone": Boo's line and the three questions, exactly as a
-  phone shows them. Nothing is sent anywhere. On a test night in Act 2, 4
-  or 6, "Parlour Game now" sends one to every phone in it (in Act 4 it waits
-  on each phone).
+  phone shows them. Nothing is sent anywhere. On a test night in Act 2's
+  cat visits or an Act 4 round, "Parlour Game now" sends one to every phone
+  in it (in Act 4 it waits on each phone).
 - *Sir Irwin Needs a Hand* (Act 6). Samples of every screen: Sir Irwin's
   rules with one square as his example, a name called, the square, the guess,
   his
@@ -1133,7 +1145,8 @@ night", "Go to Act 4", "Go to Act 6" and "Parlour Game now". Its rules:
 - The first time a test night reaches Act 2 or later, every phone shows the
   "Sorry for the interruption, continue here" button, then its role card
   for fifteen seconds, for this test night only, and carries on by itself.
-- "Parlour Game now" works in Acts 2, 4 and 6.
+- "Parlour Game now" works in the cat visits of Act 2 and the Act 4 rounds:
+  go to that beat first. Act 6 plays its own two by itself.
 
 *On the party night the party box turns testing off.* While "This is the
 party night" is ticked on the Game night page, or the live night is the
@@ -1528,3 +1541,28 @@ rehearsal. The check is `checks.everyLineOk(c, roster)`: every guest and
 fake night fails G59 if a hint or a study card comes with `none`, a phone has
 no study card, or the night doc has `missingLines`. Not covered yet: the news
 flash's own note (`NEWS_FLASH_PLACEHOLDER`), card 530.
+
+*The flow* (A5, 12 Nov 2026). `functions/lib/flow.js` is the one rule for
+when a Parlour Game may open: `holdReason({ night, relay, screen, now })`
+is null only in the beats listed in `seed/night.json` `parlour.beats`
+(Act 2 `cat`, Act 4 `round1` to `round5`, Act 6 `games`), with the phase
+`act`, no drawing started (`relay` running or `done`), no bulletin up in its
+first `BULLETIN_HOLD_MS`, and no Irwin, door, trace, talk or vote screen.
+`windows.tickParlour` and the host's `light-up` both ask it (`light-up` is
+refused in Act 6 too). `windows.startParlour` carries nothing into an act
+in `parlour.atStart`. `flow.closeParlour` sets `closed` on
+`nights/{id}/private/parlour` when the drawing starts (`run.enterBeat` and
+`relay-start`), and `dueSlot` returns nothing for a closed schedule.
+`run.clockTick` moves Act 6 `games` to `drawing` once
+`flow.claimGamesDone` finds every game fired and the window settled; the
+Host tab ticks in Act 6 as in Acts 2 and 4. `functions/test/flow.test.mjs`
+walks a whole night at full length, squeezed to 20 seconds a beat, and the
+11 Nov practice, checking all of that at every beat, and that every phone
+has a line (`direction`); a beat with nothing else gets one in
+`seed/beat-lines.json`, which `play/src/lib/flow.js` `beatLine` shows on a
+quiet Now. Screens update themselves: `play/vite.config.js` writes the
+build's stamp into the page (`__BUILD_STAMP__`) and as `play/build.json`
+(no-cache in `firebase.json`); `play/src/lib/freshness.js` `useFreshness`,
+one line in `App.jsx` and in `Kiosk.jsx`, reads it once a minute and
+reloads when `mayReload` says the page is quiet (pure, tested in
+`play/test/flow.test.mjs`), once per build (`sessionStorage`).

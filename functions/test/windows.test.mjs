@@ -6,7 +6,7 @@ import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, ROLE_CARDS, REHEARSAL_SETS, ms, roleCardsFor, ROLE_CARD_ID } from '../lib/deal.js'
 import { studyPath, rotationPath } from '../lib/station.js'
 import {
-  tick, activeNightId, pushDial, wordCount, dueSlot, parlourPath,
+  tick, tickParlour, activeNightId, pushDial, wordCount, dueSlot, parlourPath,
   parityCheck, fillerLine, GRACE_MS, PARITY_TOLERANCE, DEFAULT_FILLER, HIDDEN_ROLES,
 } from '../lib/windows.js'
 import { extraListeners, catMoves, applyMoves } from '../lib/parlour.js'
@@ -36,15 +36,16 @@ const uidOf = (db, nightId, key) => db.store.get(`nights/${nightId}/private/deck
 // (the host's Light up button: no beat, so every phone draws at random).
 async function litUp(db, nightId, now) {
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now }) // a Parlour Game opens only in the cat visits (A5)
   await hostCommand(db, { nightId, command: 'light-up', now })
   return night(db, nightId).window
 }
 // Into Act 2, then the clock to the act's first Parlour Game: it pops up on its own.
 async function firstGame(db, nightId, now) {
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'next', now }) // news: the role prompt is over
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now }) // the cat visits: the role prompt is over (A5: the games open only here)
   const due = ms(db.store.get(parlourPath(nightId)).due0)
-  await hostCommand(db, { nightId, command: 'tick', now: due })
+  await tickParlour(db, nightId, due) // the Parlour Games' own clock: the whole tick would also move the cat line on
   return night(db, nightId).window
 }
 // A deterministic picker, so a statistical test is the same run after run.
@@ -240,7 +241,8 @@ test('F05 and F08 across thirty nights every phone holds the same set at the sam
     seen.add(planned.setId)
     // the seal: no phone and no public doc carries a value, a set id, a lean, a listening cat, or a role
     for (const uid of uids) {
-      const text = JSON.stringify(session(db, uid))
+      const { lights, ...held } = session(db, uid) // the Act 2 line names the cat a guest is sent to; that is no secret
+      const text = JSON.stringify(held)
       for (const token of ['"av":', '"bv":', '"values":', '"setId":', '"lean":', '"listeners":', '"parlourPlan":', '"cat":', '"role":', '"dial":', '"exposure":']) assert.ok(!text.includes(token), `session carries ${token}`)
       assert.deepEqual(Object.keys(session(db, uid).windows[w.id]).sort(), ['beats', 'kind', 'opensAt'], 'the same shape on every phone')
     }

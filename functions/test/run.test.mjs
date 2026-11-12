@@ -8,6 +8,7 @@ import {
   NIGHT, beatsOf, ms, openWindow, runAction,
 } from '../lib/deal.js'
 import { roomFor, groupIn, roundsFor, ROOM_KEYS, PARLOUR } from '../lib/act4.js'
+import { tickParlour, GRACE_MS } from '../lib/windows.js'
 
 // A throwaway night with four phones. Nothing here is a real case; the
 // rehearsal case is generated fresh by the dealer and thrown away with the db.
@@ -96,6 +97,39 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     assert.ok(['wait', 'go'].includes(session(db, uid).lights.step), 'every phone has a next step')
     assert.equal(cards(db, uid, 'testimony').length, 0, 'nothing is said until the guest is with the cat')
   }
+  // the first Parlour Game pops up on its own when it is due, during the cat visits and in no other beat of Act 2 (A5)
+  const sched = db.store.get(`nights/${nightId}/private/parlour`)
+  assert.equal(sched.act, 2); assert.equal(sched.count, 5)
+  await tickParlour(db, nightId, ms(sched.due0) - 1) // the Parlour Games' own clock: the whole tick would also move the cat line on
+  assert.ok(!night(db, nightId).window, 'not a moment early')
+  await tickParlour(db, nightId, ms(sched.due0))
+  const w = night(db, nightId).window
+  assert.equal(w.kind, 'questions'); assert.equal(w.settled, false)
+  assert.equal(w.id, 'questions-2-p0')
+  const wOpened = ms(w.opensAt)
+  assert.equal(ms(w.closesAt) - wOpened, NIGHT.windows.questions.ms)
+  const shown = session(db, uids[0]).windows[w.id]
+  for (const uid of uids) {
+    const set = session(db, uid).windows[w.id]
+    assert.deepEqual(Object.keys(set).sort(), ['beats', 'kind', 'opensAt'], 'no cat, no numbers: the listening cat is a secret')
+    assert.deepEqual(set, shown, 'every phone gets the same set')
+    assert.equal(set.beats.length, 3)
+    for (const b of set.beats) {
+      assert.equal(b.choices.length, 2, 'exactly two answers')
+      for (const ch of b.choices) assert.deepEqual(Object.keys(ch).sort(), ['k', 'text'], 'no numbers on a phone')
+    }
+  }
+  // two phones answer; Next refuses while the window is open; after it closes the other two get random picks
+  const first = session(db, uids[1]).windows[w.id]
+  await player.answer(db, { nightId, uid: uids[1], windowId: w.id, picks: first.beats.map(b => b.choices[0].k), now: wOpened })
+  await player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['a', 'b', 'a'], now: wOpened })
+  await assert.rejects(() => player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['x', 'b', 'a'], now: wOpened }).then(r => { if (r.already) throw new Error('already') }), /already/)
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'next', now: wOpened }), /still choosing/)
+  await hostCommand(db, { nightId, command: 'settle', now: wOpened + NIGHT.windows.questions.ms + 1 })
+  assert.equal(night(db, nightId).window.settled, true)
+  for (const uid of uids) assert.ok(session(db, uid).answers[w.id].picks.length === 3)
+  assert.equal(session(db, uids[0]).answers[w.id].defaulted, true)
+  assert.equal(session(db, uids[1]).answers[w.id].defaulted, false)
   const walked = await walkLights(db, nightId, { now })
   assert.equal(walked.meetings, 4 * uids.length, 'every guest visits all four cats'); assert.equal(walked.worst, 1, 'never two guests at a cat')
   for (const uid of uids) {
@@ -118,41 +152,11 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, 'chime-phone')
   assert.equal(db.store.get(`nights/${nightId}/private/puzzles`), undefined, 'no safe numbers anywhere')
   for (const uid of uids) assert.equal(cards(db, uid, 'puzzle').length, 0, 'no safe on any phone')
-  // the first Parlour Game pops up on its own when it is due: the once-a-minute tick
-  const sched = db.store.get(`nights/${nightId}/private/parlour`)
-  assert.equal(sched.act, 2); assert.equal(sched.count, 5)
-  await hostCommand(db, { nightId, command: 'tick', now: ms(sched.due0) - 1 })
-  assert.ok(!night(db, nightId).window, 'not a moment early')
-  now = ms(sched.due0)
-  await hostCommand(db, { nightId, command: 'tick', now })
-  const w = night(db, nightId).window
-  assert.equal(w.kind, 'questions'); assert.equal(w.settled, false)
-  assert.equal(w.id, 'questions-2-p0')
-  assert.equal(ms(w.closesAt) - ms(w.opensAt), NIGHT.windows.questions.ms)
-  const shown = session(db, uids[0]).windows[w.id]
-  for (const uid of uids) {
-    const set = session(db, uid).windows[w.id]
-    assert.deepEqual(Object.keys(set).sort(), ['beats', 'kind', 'opensAt'], 'no cat, no numbers: the listening cat is a secret')
-    assert.deepEqual(set, shown, 'every phone gets the same set')
-    assert.equal(set.beats.length, 3)
-    for (const b of set.beats) {
-      assert.equal(b.choices.length, 2, 'exactly two answers')
-      for (const ch of b.choices) assert.deepEqual(Object.keys(ch).sort(), ['k', 'text'], 'no numbers on a phone')
-    }
-  }
-  // two phones answer; Next refuses while the window is open; after it closes the other two get random picks
-  const first = session(db, uids[1]).windows[w.id]
-  await player.answer(db, { nightId, uid: uids[1], windowId: w.id, picks: first.beats.map(b => b.choices[0].k), now })
-  await player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['a', 'b', 'a'], now })
-  await assert.rejects(() => player.answer(db, { nightId, uid: uids[2], windowId: w.id, picks: ['x', 'b', 'a'], now }).then(r => { if (r.already) throw new Error('already') }), /already/)
-  await assert.rejects(next, /still choosing/)
-  now += NIGHT.windows.questions.ms + 1
-  await next() // Act 3 (settles first)
+  // supper: a Parlour Game that falls due now waits (it is carried to Act 4); the tick opens nothing (A5)
+  await hostCommand(db, { nightId, command: 'tick', now: ms(sched.due1) + 10 * 60_000 })
+  assert.equal(night(db, nightId).window.id, w.id, 'no Parlour Game over supper')
+  await next() // Act 3
   assert.equal(night(db, nightId).act, 3)
-  assert.equal(night(db, nightId).window.settled, true)
-  for (const uid of uids) assert.ok(session(db, uid).answers[w.id].picks.length === 3)
-  assert.equal(session(db, uids[0]).answers[w.id].defaulted, true)
-  assert.equal(session(db, uids[1]).answers[w.id].defaulted, false)
   for (const uid of uids) for (const v of Object.values(session(db, uid).affection)) assert.ok(v >= 1 && v <= 5)
   // the hidden roles' points reach the dial; their phones look like everyone else's
   assert.equal(typeof db.store.get(`cases/${nightId}`).dial, 'number')
@@ -419,6 +423,8 @@ test('back moves without dealing; act jump to 2 deals the roles; light-up opens 
   await hostCommand(db, { nightId, command: 'back' })
   assert.equal(night(db, nightId).beat, 'orient')
   for (const uid of uids) assert.equal(cards(db, uid, 'notice').filter(c => c.key === 'news').length, 1, 'back deals nothing new')
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'light-up' }), /cat visits/, 'not over the orientation (A5)')
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat' })
   const r = await hostCommand(db, { nightId, command: 'light-up' })
   assert.equal(r.phones, 4)
   assert.equal(night(db, nightId).window.kind, 'questions')
@@ -457,14 +463,21 @@ test('an act jump that skips the power beat still builds the case and deals ever
   for (const uid of Object.values(p2)) assert.equal(cards(db2, uid, 'role').length, 0)
 })
 
-test('a Parlour Game opens once at its time: a second tick opens nothing twice and pushes the dial once; light-up is always fresh; none during the drawing', async () => {
+test('a Parlour Game opens once at its time, in its own beat only; light-up is always fresh; Act 6 plays its own two, then the drawing starts by itself and nothing opens again (A5)', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   let now = 3_000_000
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
   await hostCommand(db, { nightId, command: 'next', now }) // news: the role prompt is over
   const sched = () => db.store.get(`nights/${nightId}/private/parlour`)
+  // due, but the news flash is on: it waits (A5)
   now = ms(sched().due0)
+  assert.equal((await hostCommand(db, { nightId, command: 'tick', now })).parlour.opened, false)
+  assert.ok(!night(db, nightId).window, 'nothing opens over the news flash')
+  await hostCommand(db, { nightId, command: 'next', now }) // the bag peek
+  await hostCommand(db, { nightId, command: 'tick', now })
+  assert.ok(!night(db, nightId).window, 'nor over the bag peek')
+  await hostCommand(db, { nightId, command: 'next', now }) // the cat visits: the games' own beat
   await hostCommand(db, { nightId, command: 'tick', now })
   const w1 = night(db, nightId).window
   assert.equal(w1.id, 'questions-2-p0', 'the id names the act and the slot, not the moment')
@@ -492,36 +505,51 @@ test('a Parlour Game opens once at its time: a second tick opens nothing twice a
   for (const u of uids) assert.equal(Object.keys(session(db, u).windows).length, 2)
   const priv = db.store.get(`nights/${nightId}/private/windows`)
   assert.notEqual(priv[lit.id].setId, priv[w1.id].setId, 'light-up picks a set not used tonight')
-  // Act 6 opens on its Parlour Games, back to back, before the drawing (22 Oct). The four
-  // Act 2 games that never got their turn come along (the twelve are one budget for the
-  // night), first in line, then Act 6's own two; the first opens the moment the act does
+  // Act 6 plays its own two and no more (A5): the four Act 2 games that never got their turn are dropped
   now += NIGHT.windows.questions.ms + 1
   await hostCommand(db, { nightId, command: 'act', arg: 6, now })
   assert.equal(night(db, nightId).beat, 'games')
   assert.equal(sched().act, 6)
-  assert.equal(sched().count, 4 + 2)
-  assert.deepEqual(sched().slots.map(s => `${s.act}-${s.slot}`), ['2-1', '2-2', '2-3', '2-4', '6-0', '6-1'])
-  for (let i = 1; i < 6; i++) assert.equal(ms(sched()[`due${i}`]) - ms(sched()[`due${i - 1}`]), NIGHT.parlour.startGapSec * 1000, 'back to back')
-  const carried = night(db, nightId).window
-  assert.equal(carried.id, 'questions-6-p2-1', 'game 1 of Act 2, played first in Act 6, at once')
-  // the next follows one short gap later, not the four minutes of Acts 2 and 4
-  now += NIGHT.windows.questions.ms + 1
-  await hostCommand(db, { nightId, command: 'tick', now })
-  assert.equal(night(db, nightId).window.id, carried.id, 'not before its gap')
+  assert.equal(sched().count, 2)
+  assert.deepEqual(sched().slots.map(s => `${s.act}-${s.slot}`), ['6-0', '6-1'])
+  assert.equal(ms(sched().due1) - ms(sched().due0), NIGHT.parlour.startGapSec * 1000, 'back to back')
+  const first6 = night(db, nightId).window
+  assert.equal(first6.id, 'questions-6-p0', 'the first of Act 6, at once')
+  // it closes; the next follows one short gap later, not the four minutes of Acts 2 and 4
+  let r = await hostCommand(db, { nightId, command: 'tick', now: ms(first6.closesAt) + GRACE_MS })
+  assert.equal(r.windowSettled, true); assert.equal(r.parlour.opened, false); assert.equal(r.clock, null)
+  assert.equal(night(db, nightId).beat, 'games', 'one game still to come')
   now = ms(sched().due1)
-  await hostCommand(db, { nightId, command: 'tick', now })
-  assert.equal(night(db, nightId).window.id, 'questions-6-p2-2')
-  // the host moves on to the drawing; a game that falls due waits until the drawing is over
-  now += NIGHT.windows.questions.ms + 1
-  await hostCommand(db, { nightId, command: 'next', now })
+  r = await hostCommand(db, { nightId, command: 'tick', now })
+  assert.equal(r.parlour.opened, true)
+  const second6 = night(db, nightId).window
+  assert.equal(second6.id, 'questions-6-p1')
+  // the last one closes: the night goes on to the drawing by itself
+  r = await hostCommand(db, { nightId, command: 'tick', now: ms(second6.closesAt) + GRACE_MS })
+  assert.equal(r.clock, 'drawing')
   assert.equal(night(db, nightId).beat, 'drawing')
-  now = ms(sched().due2) + 1
-  await hostCommand(db, { nightId, command: 'tick', now })
-  assert.equal(night(db, nightId).window.id, 'questions-6-p2-2', 'nothing pops up over the drawing')
+  assert.equal(db.store.get(`nights/${nightId}/public/relay`).state, 'intro')
+  assert.equal(sched().closed, true, 'what was left is dropped for good')
+  // nothing opens over the drawing, at the door, in Talk it over or in Act 7, and the button is refused
+  now = ms(second6.closesAt) + GRACE_MS
+  const ids = () => Object.keys(db.store.get(`nights/${nightId}/private/windows`)).filter(id => id.startsWith('questions-')).sort()
+  const had = ids()
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'light-up', now }), /Not now/)
+  await hostCommand(db, { nightId, command: 'tick', now: now + 600_000 })
+  await hostCommand(db, { nightId, command: 'relay-reset', now })
+  await hostCommand(db, { nightId, command: 'next', now }) // the door
+  await hostCommand(db, { nightId, command: 'tick', now: now + 700_000 })
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'light-up', now }), /Not now/)
+  // a Back to the games beat stays where it is put, and still opens nothing
+  await hostCommand(db, { nightId, command: 'back', now }); await hostCommand(db, { nightId, command: 'back', now })
+  assert.equal(night(db, nightId).beat, 'games')
+  r = await hostCommand(db, { nightId, command: 'tick', now: now + 800_000 })
+  assert.equal(r.clock, null); assert.equal(r.parlour.opened, false)
+  assert.equal(night(db, nightId).beat, 'games')
+  assert.deepEqual(ids(), had, 'no Parlour Game after the drawing started')
   const c = db.store.get(`cases/${nightId}`)
-  const priv6 = db.store.get(`nights/${nightId}/private/windows`)[carried.id]
-  assert.equal(priv6.planAct, 2); assert.equal(priv6.slot, 1)
-  assert.equal(priv6.setId, c.parlourPlan.acts[2][1].setId, 'the set the plan named for it')
+  const priv6 = db.store.get(`nights/${nightId}/private/windows`)[first6.id]
+  assert.equal(priv6.setId, c.parlourPlan.acts[6][0].setId, 'the set the plan named for it')
 })
 
 test('the safe is gone: no beat deals it, the old action is refused, and no phone may call solve', async () => {

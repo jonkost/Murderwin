@@ -21,6 +21,7 @@ import { recordArcadeScore } from './arcade.js'
 import { PARTY_DAY } from './morning.js'
 import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
+import * as flow from './flow.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -69,6 +70,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
     // the drawing starts before the beat moves, so a failed start leaves Next on this beat to try again;
     // the beat never forces, so a drawing already running (or done) is kept, never wiped
     started = await relay.start(db, { nightId, now })
+    await flow.closeParlour(db, nightId, { now }) // every Parlour Game still unplayed is dropped for good (A5)
   }
   // The End (the 'end' action, deal.end) sets nights/{id}.over; any other beat takes it off again, so a Back
   // from The End or an act jump in a rehearsal opens the night back up (25 Oct 2026, the cue list)
@@ -77,12 +79,11 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   // the hall bulb: green for the welcome from Act 1's first beat, red from the power's return (powerReturns
   // writes it); here only when nothing has set it yet (cue list 25 Oct 2026)
   if (act >= 1) await deal.ensureHall(db, nightId, act === 1 ? 'green' : 'red', now)
-  if (run) {
-    const sched = await windows.startParlour(db, nightId, act, { now }) // Acts 2, 4 and 6: the act's Parlour Games, once per act
-    // Act 6 plays its games at the start (22 Oct): the first opens now, not at the next minute's tick
-    if (sched?.count && !sched.already && windows.playsAtStart(act)) await windows.tickParlour(db, nightId, now)
-  }
+  const sched = run ? await windows.startParlour(db, nightId, act, { now }) : null // Acts 2, 4 and 6: the act's Parlour Games, once per act
   await screen.onBeat(db, nightId, { act, beat, spec, phase, now, run }) // the room screens and the beat's sound (screen.js)
+  // Act 6 plays its games at the start (22 Oct): the first opens now, not at the next minute's tick; after the
+  // beat's screen is up, so the screen the night just left never holds it back (A5)
+  if (sched?.count && !sched.already && windows.playsAtStart(act)) await windows.tickParlour(db, nightId, now)
   if (run) await onSolving(db, nightId, act, beat, now) // the Act 2 rooms and the Act 4 memory match close out on time
   if (!run || !spec?.action) return { ok: true, act, beat }
   if (spec.action === 'relay:start') return { ok: true, act, beat, ...started }
@@ -202,6 +203,10 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
   if (n.act === 2 && n.beat === 'cat' && allSeen) {
     await enterBeat(db, nightId, 2, 'supper', { now })
     return { moved: 'supper' }
+  }
+  // Act 6's games beat: once its last game has closed, the drawing starts by itself (A5). Once only
+  if (await flow.claimGamesDone(db, nightId, n, { now })) {
+    try { await enterBeat(db, nightId, 6, 'drawing', { now }); return { moved: 'drawing' } } catch (e) { return { moved: null, held: e?.code ?? 'failed' } }
   }
   if (n.act === 4) {
     const due = await act4.due(db, nightId, now)
@@ -391,6 +396,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       // Every phone lights up with three questions, any time in Acts 2, 4 and 6. In Act 4 the
       // game waits on each phone until the guest is free (handoff 23 Oct §3).
       if (![2, 4, 6].includes(n.act)) throw new NightError('invalid', 'The phones light up in Acts 2, 4 and 6.')
+      // only in the games' own beats, and never over a bulletin, Sir Irwin, the drawing or anything after it (A5)
+      if (await flow.parlourHold(db, nightId, n, now)) throw new NightError('invalid', flow.NOT_NOW)
+      if (n.act === 6) throw new NightError('invalid', flow.ACT6_OWN) // its own two, by themselves, and no more
       if (n.act === 4) return deal.dealWaitingGame(db, nightId, { now, act: 4 })
       await settleIfDue(db, nightId, now)
       return deal.openWindow(db, nightId, 'questions', { now, act: n.act }) // no beat: a fresh window every press
@@ -452,7 +460,11 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return deal.settleWindow(db, nightId, { now })
     case 'relay-start':
       // a drawing under way is kept unless the host said "restart" (the Host tab asks first)
-      return relay.start(db, { nightId, now, force: arg === 'force' })
+    {
+      const r = await relay.start(db, { nightId, now, force: arg === 'force' })
+      await flow.closeParlour(db, nightId, { now }) // the drawing has started: no Parlour Game after it (A5)
+      return r
+    }
     case 'relay-reset':
       return relay.reset(db, { nightId, now })
     case 'relay-advance':

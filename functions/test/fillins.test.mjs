@@ -505,7 +505,7 @@ function recordReads(db) {
 async function inAct2(opts) {
   const p = await practice(opts)
   await host(p.db, p.nightId, 'act', 2)
-  await host(p.db, p.nightId, 'beat', 'news')
+  await host(p.db, p.nightId, 'beat', 'cat') // the cat visits: a Parlour Game opens only in its own beats (A5)
   return p
 }
 // A practice night in Act 4's first round, the real players locked in.
@@ -658,11 +658,12 @@ test('nobody moves while no phone would: at the doors, on the role cards, in a p
   const made = await createNight(lobby, { forceRehearsal: true })
   await seatFillIns(lobby, made.nightId, 6, { now: T0 })
   assert.deepEqual(await stepFillIns(lobby, made.nightId, { now: T0 + 60_000 }), { ok: true, on: true, act: 0, seats: 6, did: 0, why: 'held' })
-  // on the role cards: a game lit while every phone is still on its card
+  // on the role cards: every phone is still on its card, no game can be lit there (A5: a window opens only
+  // while the night is playing, in a game's own beat), and nobody moves
   const { db, nightId } = await practice()
   await host(db, nightId, 'act', 2)
   assert.equal(nightOf(db, nightId).phase, 'prompt')
-  await host(db, nightId, 'light-up')
+  await assert.rejects(host(db, nightId, 'light-up'), /Not now/)
   assert.deepEqual(await stepFillIns(db, nightId, { now: T0 + 20_000 }), { ok: true, on: true, act: 2, seats: 6, did: 0, why: 'held' })
   // in a pause: the clocks stand still, and the pauses start again from the window's new opening
   const p = await inAct2()
@@ -688,7 +689,7 @@ test('guard: a real night is never stepped, even with every mark forged onto it,
   const { nightId } = await createNight(db)
   for (const name of ['Jon', 'Susan', 'Jessa']) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
   await host(db, nightId, 'act', 2)
-  await host(db, nightId, 'beat', 'news')
+  await host(db, nightId, 'beat', 'cat') // the cat visits: a Parlour Game's own beat (A5)
   const T1 = T0 + 60_000
   await host(db, nightId, 'light-up', undefined, T1)
   // forge everything a fill-in night would carry: the count, the mark on a seat, its made-up uid and session

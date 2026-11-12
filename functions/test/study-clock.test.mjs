@@ -150,6 +150,7 @@ test('the hall light by hand, and the answered count on an open window names nob
   assert.equal(r.hall, 'green')
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green')
   await assert.rejects(hostCommand(db, { nightId, command: 'hall', arg: 'blue', now: t.now }), /red or green/)
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now: t.now }) // the cat visits (A5)
   await hostCommand(db, { nightId, command: 'light-up', now: t.now })
   const w = night(db, nightId).window
   assert.equal(w.answered ?? 0, 0)
