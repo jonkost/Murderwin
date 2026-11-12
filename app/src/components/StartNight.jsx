@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { startWords, liveLine, REPLACE_ASK, AFTER_START, SCREENS, screenUrl } from '../lib/startNight'
+import { startWords, liveLine, REPLACE_ASK, AFTER_START, SCREENS, screenUrl, MAX_FILL_INS, fillInsOffered } from '../lib/startNight'
 import { PLAY_URL } from '../lib/config'
 import { startNight } from '../lib/startNightApi'
 import { gameTestApi } from '../lib/gameTestApi'
@@ -9,6 +9,7 @@ import { gameTestApi } from '../lib/gameTestApi'
 // real night before the party day.
 export default function StartNight() {
   const [real, setReal] = useState(false)
+  const [fillIns, setFillIns] = useState(0) // A4: a practice night's players with no phone, 0 to 8
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
   const [err, setErr] = useState(null)
@@ -30,7 +31,7 @@ export default function StartNight() {
     if (live?.nightId && live?.night && !window.confirm(REPLACE_ASK)) return
     setBusy(true); setMsg(null); setErr(null)
     try {
-      await startNight({ real })
+      await startNight({ real, fillIns })
       setMsg(AFTER_START)
     } catch (e) {
       setErr(e?.message && !/internal/i.test(e.message) ? e.message : 'That did not start. Check your signal and press it again.')
@@ -47,6 +48,14 @@ export default function StartNight() {
         <input type="checkbox" checked={real} disabled={busy} onChange={e => setReal(e.target.checked)} />
         <span>This is the real night</span>
       </label>
+      {fillInsOffered({ real }) && (
+        <label className="field start-fill">
+          <span>Fill-in players</span>
+          <select value={fillIns} disabled={busy} onChange={e => setFillIns(Number(e.target.value))}>
+            {Array.from({ length: MAX_FILL_INS + 1 }, (_, n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+      )}
       <p className="hint">{words.note}</p>
       {msg && <p className="start-done" role="status">{msg}</p>}
       {err && <div className="banner error" role="alert">{err}</div>}

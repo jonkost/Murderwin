@@ -37,6 +37,7 @@ import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
 import { nightSeed, pickFor } from './seed.js'
+import { lineGuests } from './seats.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -509,7 +510,10 @@ export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), 
   await ensureCase(db, nightId)
   const ref = db.doc(lightsPath(nightId))
   if ((await ref.get()).exists) return { ok: true, already: true }
-  const { list } = await guests(db, nightId)
+  // the line is the guests with a phone: a practice night's fill-in players stay out of it (seats.js
+  // lineGuests), so no cat waits on one and supper comes when the real players have seen all four.
+  // On any other night this is every guest, in the same order.
+  const list = lineGuests((await guests(db, nightId)).list)
   const seed = await nightSeed(db, nightId)
   const { routes, queues } = planWaves((seed ? byKey(list) : list).map(g => g.key), pick ?? pickFor(seed, 'waves'))
   const state = {
@@ -607,7 +611,7 @@ export async function notYet(db, { nightId, uid, now = Date.now() }) {
 export async function tickLights(db, nightId, now = Date.now()) {
   if (!(await db.doc(lightsPath(nightId)).get()).exists) return { ok: true, moved: 0, allSeen: false }
   const { list } = await guests(db, nightId)
-  const keys = list.map(g => g.key)
+  const keys = lineGuests(list).map(g => g.key) // a late joiner is given a route; never a practice night's fill-in player
   const r = await moveLights(db, nightId, state => {
     const changed = []
     const greet = []

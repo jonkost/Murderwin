@@ -131,6 +131,12 @@ door).
   supper (cue 8). If the strings do not answer, the brain says so once and
   carries on: every phone in the group tints its whole screen the same
   colour, so the game never waits on the lights.
+- **Fill-in players (a practice night only, A4).** When a practice night
+  started with Fill-in players is on, the relay runs their clock: every two
+  seconds it asks the house to make the fill-ins' moves that are due. Its
+  lines start "fill-ins:" and are counts only. It never runs on the real
+  night or from the party day on. `npm run fill-ins` does the same on its
+  own; the night never waits on a fill-in either way.
 
 ### When the music, the lights and the projector change
 

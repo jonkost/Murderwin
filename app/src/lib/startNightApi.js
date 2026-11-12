@@ -5,11 +5,11 @@ import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/
 import { app } from '../firebase'
 import { EMULATOR, EMULATOR_HOST, EMULATOR_PORTS, REGION } from './config'
 import { PREVIEW } from './previewFlag'
-import { introAtFor } from './startNight'
+import { introAtFor, fillInArg } from './startNight'
 
 let call = null
-export async function startNight({ real = false } = {}) {
-  const arg = { real, introAt: introAtFor({ real }) }
+export async function startNight({ real = false, fillIns = 0 } = {}) {
+  const arg = { real, introAt: introAtFor({ real }), ...fillInArg({ real, fillIns }) }
   if (PREVIEW) return { ok: true, nightId: 'preview', real, introAt: arg.introAt }
   if (!call) {
     const functions = getFunctions(app, REGION)

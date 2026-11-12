@@ -33,6 +33,7 @@ import { generateSet, cellLabel } from './relay-gen.js'
 import { NightError, characterById, GAME_NAMES } from './night.js'
 import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
 import { nightSeed, pickFor } from './seed.js'
+import { drawerKeys } from './seats.js'
 
 // Fifteen seconds a turn, whatever the grid (Jon, 25 Oct 2026, the cue list:
 // "really fun, but tricky" at ten). The walk is a limit of twenty seconds, not
@@ -139,7 +140,9 @@ export async function start(db, { nightId, now = Date.now(), seed = null, force 
   const turns = set.grids.reduce((n, g) => n + g.order.length, 0)
   if (turns > MAX_TURNS) throw new NightError('invalid', 'The drawing would run over its time.')
   const present = await presentKeys(db, nightId, keys, now)
-  const order = turnOrder(keys, turns, pickFor(word, 'relay-order'))
+  // who is called to the paper: everyone at the party; on a practice night with fill-in players, only the
+  // real ones, since a fill-in has no hands (seats.js drawerKeys: every key, in this order, on any other night)
+  const order = turnOrder(drawerKeys(roster, keys), turns, pickFor(word, 'relay-order'))
   const { pub, priv } = relayPaths(nightId)
   const batch = db.batch()
   batch.set(db.doc(priv), {

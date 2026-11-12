@@ -8,6 +8,7 @@
     "start": "node cues.mjs",
     "fake": "node cues.mjs --fake",
     "demo": "node cues.mjs --demo --fake",
+    "fill-ins": "node fill-ins.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
