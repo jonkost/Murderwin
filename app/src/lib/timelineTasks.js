@@ -1244,3 +1244,17 @@ export const FILED_FOR_REVIEW_1112 = [
   { order: 585, title: 'On the practice night, check these by ear and eye', note: '(12 Nov 2026, later: first set the brain’s sound to the Mac’s own speakers, turned up, not a HomePod: its screen is the Orangerie’s speaker for the chimes. Reload once, by hand, any room screen left open since yesterday, then click it: a page in full screen does not reload itself. And try one Pause during the rules film and one during Get Off My Lawn!: after Resume the film carries on where it stopped, and the round starts again from its 3, 2, 1.)' },
 ]
 
+// 12 Nov 2026, Jon's two Shortcuts for the blackout ("I have added 2 new
+// shortcuts to help with the black out. Blackout and afterblackout. Please use
+// these if it helps make the blackout hit hard."): one done card, his
+// Shortcuts card reworded (one left to make: PANIC), a note on his practice card.
+export const BLACKOUT_SHORTCUTS_1112_TASKS = [
+  { order: 592, moment: 'act1.ready', status: 'done', who: 'Claude Code', title: 'Your Blackout and AfterBlackOut Shortcuts run in the blackout', detail: 'Done 12 Nov 2026 ("Please use these if it helps make the blackout hit hard"). When you press Blackout, the brain runs your Blackout Shortcut about half a second later, so every light in the house goes out as the screens go dark and the scream plays, not only the lights on the Hue bridge. As the power returns it runs AfterBlackOut, and a few seconds after that it sends the string lights their warm colour again. The Blackout test on your Host tab runs both too, so you can time them by eye. Nothing was run to try it: no light, no sound. It takes hold the next time the brain’s program is started.' },
+]
+export const REWRITTEN_FOR_BLACKOUT_SHORTCUTS_1112 = [
+  { order: 582, title: 'Make two Shortcuts on the brain: PANIC and Off Murderwin Strings', set: { title: 'Make one more Shortcut on the brain: PANIC', detail: 'Your Blackout and AfterBlackOut Shortcuts turn the lights off and on, but neither has a HomePod in it, so the music still plays through the dark. The Home app already has a scene called PANIC that pauses the speakers. What is missing is a Shortcut on the brain, named exactly PANIC, that runs it. In the Shortcuts app: duplicate Blackout, name the copy PANIC, open it and choose the scene PANIC. Then, in the Home app, add TV Wonder to the PANIC scene: Intense Music, Credit Roll and the Study’s music play on it, and PANIC does not pause it. Off Murderwin Strings is no longer needed: your Blackout Shortcut turns the strings off with the rest.' } },
+]
+export const FILED_FOR_BLACKOUT_SHORTCUTS_1112 = [
+  { order: 585, title: 'On the practice night, check these by ear and eye', note: '(12 Nov 2026, your two Shortcuts: press Blackout test and watch the house lights against the screens. If the lights go out after the screens, tell Claude Code "sooner"; if before, "later". It changes one number, and you start the brain’s program again.)' },
+]
+

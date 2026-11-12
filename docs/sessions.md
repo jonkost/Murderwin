@@ -9,6 +9,64 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, mid-morning · Claude Code (Jon's two Shortcuts for the blackout)
+
+Jon: "I have added 2 new shortcuts to help with the black out. Blackout and
+afterblackout. Please use these if it helps make the blackout hit hard."
+
+**What they are** (read from the Mac's own records, nothing run): on the
+brain they are named *Blackout* and *AfterBlackOut*. Each runs one Home
+scene: ALL OFF (every light in the house off, the Orangerie's string lights
+and the Study's two walls with them) and House Default (the house back: the
+lights at set levels, the strings and the walls on at full). Neither has a
+HomePod in it.
+
+**What changed** (04e8635, the brain's own code: nothing to publish)
+
+- The brain runs *Blackout* `shortcutLeadMs` before the dark mark (1500 to
+  start, so about half a second after the press: a Home scene takes a second
+  or two to land), and *AfterBlackOut* as the power returns, or at once when
+  the blackout ends sooner (Power returns by hand, a pause after the lights
+  had gone). Each once a press; the house is never left dark, and never lit
+  by a press that never went dark (`cues/lib/blackoutShortcuts.js`, pure,
+  with its tests; `cues/cues.mjs` `stepBlackout`). The Hue scene the brain
+  already recalled at the dark reaches only the lights on the Hue bridge;
+  Jon's scene reaches the rest.
+- The Blackout test runs both too, so the lead is timed by eye. Names and
+  leads are in `cues/scenes.json` under `blackout`; a name that differs only
+  in capitals is found, and the brain says at its start which it will run.
+- A few seconds after AfterBlackOut the string lights are sent their warm
+  colour again (House Default turns them on at full). The strings' own Off
+  Shortcut is no longer asked for.
+- Fake mode has a key, `b`, for a pretend press with its marks: the order
+  was read there (the music's stop, Blackout, the dark's Hue scene and hall
+  bulb, AfterBlackOut, the lights back).
+- The guides (`docs/on-the-night.md`, `docs/cues-relay.md`), the board
+  (card 592 done; card 582 reworded to the one Shortcut still missing; a
+  note on card 585) and `CLAUDE.md`.
+
+**Found on the way, for Jon**
+
+- **The music still cannot be stopped.** The Home app has a scene called
+  PANIC (it pauses four speakers), but this Mac has no Shortcut by that name,
+  and the brain can only run Shortcuts. Duplicate *Blackout*, name the copy
+  PANIC, choose the scene PANIC in it.
+- The PANIC scene pauses four speakers; the scenes for Intense Music, Credit
+  Roll and the Study's music also play on a fifth, TV Wonder in the Office,
+  which PANIC does not pause.
+- *Default Jazz 20%* runs the same Home scene as *Default Jazz* and then
+  sets this Mac's own volume, so the HomePods do not get quieter for the
+  drawing's intro. Not changed: Jon's to decide.
+- House Default turns the Study's walls on at full; the Study's game takes
+  them back at the first touch.
+
+**Not done:** nothing was run (no Shortcut, no light, no sound), so the
+timing on the real house is untried: the Blackout test tonight is the try.
+The board's new cards reach the workshop with the next publish.
+
+**Decisions taken:** Jon's: use his two Shortcuts. Mine, to confirm by eye:
+Blackout starts 1500 ms before the dark; AfterBlackOut on the power's mark.
+
 ## 11 to 12 Nov 2026 · Claude Code (the polish pass, and the look Jon approved)
 
 Three handoffs from Claude chat, all applied: `docs/handoff-2026-11-11-polish.md`
