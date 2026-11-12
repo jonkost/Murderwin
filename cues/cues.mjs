@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine } from './lib/cues.js'
+import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator } from 'firebase/firestore'
@@ -62,7 +62,7 @@ import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake, brainPlaysId, cueSoundsRoad } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
 import { createShortcutMusic, shortcutsFor } from './lib/shortcutMusic.js'
-import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck } from './lib/strings.js'
+import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, stringsWanted, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -153,7 +153,8 @@ const stringsByShortcuts = !FAKE && onSwitch(env.STRINGS_SHORTCUTS)
 const stringsPaired = !FAKE && !!(env.NANOLEAF_STRINGS_HOST && env.NANOLEAF_STRINGS_TOKEN)
 // a Shortcut renamed on the Mac is named in cues/.env, never in the code
 const stringShortcutName = c => String(env[`STRINGS_SHORTCUT_${c.toUpperCase()}`] ?? '').trim() || STRING_SHORTCUTS[c]
-const stringShortcutNames = { red: stringShortcutName('red'), green: stringShortcutName('green'), decor: stringShortcutName('decor') }
+const stringShortcutNames = { red: stringShortcutName('red'), green: stringShortcutName('green'), decor: stringShortcutName('decor'), off: stringShortcutName('off') }
+stringColours = { ...stringColours, off: { off: true } } // the blackout (A1): their own address turns them off; on the Shortcut road, the Off Murderwin Strings Shortcut
 if (stringsByShortcuts) stringColours = shortcutColours(stringShortcutNames, stringColours)
 if (stringsPaired || stringsByShortcuts) {
   const direct = stringsPaired ? new StringLights({ host: env.NANOLEAF_STRINGS_HOST.trim(), token: env.NANOLEAF_STRINGS_TOKEN.trim() }) : null
@@ -449,15 +450,34 @@ let stringsTimer = null
 function mirrorStrings() {
   const now = Date.now()
   const salem = salemToMirror(docs.salem, practiceSalem)
-  strings.update(stringsColour(salem, now))
+  strings.update(stringsWanted(salem, docs.night, now))
   const next = nextChangeAt(salem, now)
   clearTimeout(stringsTimer)
   stringsTimer = next ? setTimeout(mirrorStrings, next - now) : null
 }
 setInterval(mirrorStrings, 100)
 
+// The blackout's marks (A1, 11 Nov 2026): the press arrives as a write to the
+// night (the music stops at once); the dark and the power are times on it, so
+// the brain plans again at each one on its own clock: the Blackout scene, the
+// hall bulb and the strings off at the dark mark, all back at the power's.
+let marksKey = null
+let marksTimers = []
+function scheduleMarks() {
+  const m = blackoutMarkTimes(docs.night)
+  const key = m ? `${m.pressAt}` : null
+  if (key === marksKey) return
+  marksKey = key
+  for (const t of marksTimers) clearTimeout(t)
+  marksTimers = []
+  if (!m) return
+  const now = Date.now()
+  for (const at of [m.darkAt, m.powerAt]) if (at > now) marksTimers.push(setTimeout(apply, at - now + 5))
+}
+
 function apply() {
   const now = Date.now()
+  scheduleMarks()
   const { actions, state: next } = plan(state, docs, now, { readClip })
   state = next
   const scene = planScenes(sceneState, docs, now, sheet)

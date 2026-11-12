@@ -17,10 +17,38 @@
 
 import { createHmac } from 'node:crypto'
 
+// The blackout's marks (A1, 11 Nov 2026; functions/lib/blackout.js):
+// nights/{id}.blackout = { pressAt, darkAt, powerAt, test }. 'press' from the
+// press to the dark (the music stops first), 'dark' from the dark to the
+// power, else null. The brain reads them on its own clock, so the lights go
+// at the mark, not when the phase's news arrives; the Blackout test has
+// marks and no phase at all.
+export function blackoutStageOf(night, now = Date.now()) {
+  const b = night?.blackout
+  if (!b) return null
+  const press = stamp(b.pressAt)
+  const dark = stamp(b.darkAt)
+  const power = stamp(b.powerAt)
+  if (!dark || !power || now < press) return null
+  if (now < dark) return 'press'
+  if (now < power) return 'dark'
+  return null
+}
+
+// The marks as milliseconds, or null: when the brain must plan again.
+export function blackoutMarkTimes(night) {
+  const b = night?.blackout
+  if (!b) return null
+  const t = { pressAt: stamp(b.pressAt), darkAt: stamp(b.darkAt), powerAt: stamp(b.powerAt) }
+  return t.darkAt && t.powerAt ? t : null
+}
+
 // Where the night is, as a phase. A paused night counts as the phase it was
-// paused from (a pause in the blackout is still the blackout).
-export function phaseOf(night) {
+// paused from (a pause in the blackout is still the blackout). Between the
+// blackout's dark and power marks it is the blackout, whatever the phase says.
+export function phaseOf(night, now = Date.now()) {
   if (!night) return null
+  if (blackoutStageOf(night, now) === 'dark') return 'blackout'
   return night.phase === 'paused' ? (night.pausedFrom || 'act') : (night.phase || 'act')
 }
 
@@ -31,9 +59,9 @@ export function phaseOf(night) {
 // green even before the cues doc catches up. At The End (nights/{id}.over,
 // 12 Nov 2026) the answer is 'free': the brain lets go of the bulb, leaves it
 // as it is and stops re-sending, so the house's own controls work again.
-export function hallColour({ night, cues, relay } = {}) {
+export function hallColour({ night, cues, relay } = {}, now = Date.now()) {
   if (night?.over === true) return 'free'
-  if (phaseOf(night) === 'blackout') return 'off'
+  if (phaseOf(night, now) === 'blackout') return 'off'
   if (cues?.hall === 'green' || relay?.doorOpen) return 'green'
   if (cues?.hall === 'red') return 'red'
   return null
@@ -175,7 +203,7 @@ export const SOUND_STALE_MS = 30_000
 // { type: 'video', count: n }, which plays nothing here and does not duck.
 export function plan(prev, next, now = Date.now(), { readClip = clipReader() } = {}) {
   const actions = []
-  const hall = hallColour(next)
+  const hall = hallColour(next, now)
   if (hall && hall !== prev.hall) actions.push({ type: 'hall', colour: hall })
   const soundId = next.sounds?.current?.id ?? null
   const soundAt = stamp(next.sounds?.current?.at)

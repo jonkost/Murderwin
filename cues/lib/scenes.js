@@ -17,7 +17,7 @@
 // music, lights and projector back once, and a host's own choice (the Host
 // tab's scene or music buttons) holds until the sheet next changes.
 
-import { SOUND_IDS, SOUND_STALE_MS, phaseOf, stamp } from './cues.js'
+import { SOUND_IDS, SOUND_STALE_MS, phaseOf, stamp, blackoutStageOf } from './cues.js'
 import { musicShortcutProblems } from './shortcutMusic.js'
 
 // The drawing is running while public/relay.state is one of these.
@@ -37,9 +37,9 @@ export function drawingRunning(docs = {}) {
 }
 
 // Where the night is. A paused night counts as the phase it was paused from.
-export function momentOf(night) {
+export function momentOf(night, now = Date.now()) {
   if (!night) return null
-  return { act: Number(night.act) || 0, beat: night.beat ?? null, phase: phaseOf(night) }
+  return { act: Number(night.act) || 0, beat: night.beat ?? null, phase: phaseOf(night, now) }
 }
 
 function pick(key, ...layers) {
@@ -66,8 +66,8 @@ function layerOver(base, layer) {
 // `drawing.unlocked` once the door is open (cue 18: the music comes up to 60
 // the moment the third picture is named, before the host presses Next).
 // `cut` is the newscast having begun (planScenes keeps it): the music is off.
-export function targetFor(docs = {}, cfg, { cut = false } = {}) {
-  const m = momentOf(docs.night)
+export function targetFor(docs = {}, cfg, { cut = false, now = Date.now() } = {}) {
+  const m = momentOf(docs.night, now)
   if (!m || !cfg) return { music: null, hue: null, projector: null }
   const actCfg = cfg.acts?.[String(m.act)] ?? null
   const beatCfg = (m.beat && actCfg?.beats?.[m.beat]) || null
@@ -80,6 +80,8 @@ export function targetFor(docs = {}, cfg, { cut = false } = {}) {
     else if (doorOpen(docs)) t = layerOver(t, d.unlocked)
   }
   if (cut) t.music = OFF
+  // the blackout's press (A1): the music stops the moment it is pressed, ahead of the dark
+  if (blackoutStageOf(docs.night, now) === 'press') t.music = OFF
   return t
 }
 
@@ -154,13 +156,13 @@ export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now()
   const actions = []
   const state = { ...emptySceneState(), ...prev }
   if (!cfg) return { actions, state }
-  const m = momentOf(docs.night)
+  const m = momentOf(docs.night, now)
 
   // the newscast's cut: sticky for its beat, forgotten when the beat changes
   const ck = cutKey(m, cfg)
   state.cut = ck && (prev.cut === ck || cutTriggered(docs, cfg)) ? ck : null
 
-  const t = targetFor(docs, cfg, { cut: !!state.cut })
+  const t = targetFor(docs, cfg, { cut: !!state.cut, now })
   const mk = momentKey(m)
   if (t.music !== null && t.music !== prev.music) {
     if (t.music === OFF) actions.push({ type: 'music', do: 'pause', why: 'sheet' })

@@ -26,16 +26,19 @@
 // phones carry the colour and the strings follow.
 
 import { execFile } from 'node:child_process'
-import { stamp } from './cues.js'
+import { stamp, blackoutStageOf } from './cues.js'
 
 export const STRING_COLOURS = ['red', 'green']
 export const DECOR = 'decor'
+// The blackout (A1, 11 Nov 2026): the strings go dark with everything else.
+export const OFF = 'off'
 
 // The same as cues/scenes.json "strings", for when that file cannot be read.
 export const DEFAULT_STRING_COLOURS = {
   red: { hue: 0, sat: 100, brightness: 100 },
   green: { hue: 120, sat: 100, brightness: 100 },
   decor: { hue: 32, sat: 70, brightness: 35 },
+  off: { off: true },
 }
 
 // The colour the strings should show at `now`: 'red', 'green' or 'decor'.
@@ -51,6 +54,14 @@ export function stringsColour(salem, now = Date.now()) {
     if (at >= last) { colour = f.colour; last = at }
   }
   return colour
+}
+
+// What the strings show, the blackout first: between its dark and power marks
+// (nights/{id}.blackout) they are off, whatever Salem's game says; the rest of
+// the time stringsColour.
+export function stringsWanted(salem, night, now = Date.now()) {
+  if (blackoutStageOf(night, now) === 'dark' || night?.phase === 'blackout') return OFF
+  return stringsColour(salem, now)
 }
 
 // Which of Salem's records the strings follow: the night's while a group is
@@ -75,7 +86,8 @@ export function nextChangeAt(salem, now = Date.now()) {
 
 // The Open API body for one colour: { hue 0-360, sat 0-100, brightness 0-100 }
 // from cues/scenes.json "strings".
-export function stringsBody({ hue, sat, brightness }) {
+export function stringsBody({ hue, sat, brightness, off = false }) {
+  if (off) return { on: { value: false } }
   return { on: { value: true }, hue: { value: hue }, sat: { value: sat }, brightness: { value: brightness, duration: 0 } }
 }
 
@@ -97,7 +109,7 @@ export class StringLights {
 }
 
 // The three Apple Shortcuts on the brain, one per colour.
-export const STRING_SHORTCUTS = { red: 'Red Murderwin Strings', green: 'Green Murderwin Strings', decor: 'Decor Murderwin Strings' }
+export const STRING_SHORTCUTS = { red: 'Red Murderwin Strings', green: 'Green Murderwin Strings', decor: 'Decor Murderwin Strings', off: 'Off Murderwin Strings' }
 
 // ---- Apple Shortcuts, game wide (31 Oct 2026) -------------------------------
 //
@@ -171,7 +183,7 @@ export function shortcutsNeeded({ music = null, strings = null, projector = null
     }
   }
   for (const [colour, name] of Object.entries(strings ?? {})) {
-    for (const n of list(name)) out.push({ name: n, tag: 'strings', key: colour, does: `the string lights will not turn ${colour === 'decor' ? 'back to their warm glow' : colour} (the phones carry the colour)` })
+    for (const n of list(name)) out.push({ name: n, tag: 'strings', key: colour, does: colour === 'off' ? 'the string lights stay lit through the blackout' : `the string lights will not turn ${colour === 'decor' ? 'back to their warm glow' : colour} (the phones carry the colour)` })
   }
   for (const [state, name] of Object.entries(projector ?? {})) {
     for (const n of list(name)) out.push({ name: n, tag: 'projector', key: state, does: `the projector's plug will not switch ${state}` })

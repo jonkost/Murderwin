@@ -40,7 +40,10 @@ test('the rest of the time: the warm decor colour', () => {
 })
 
 test('the Open API request: one PUT to the strings\' state, plain HTTP on port 16021, with the colour from scenes.json', async () => {
-  assert.deepEqual(SHEET.strings, DEFAULT_STRING_COLOURS, 'the built-in colours match scenes.json')
+  const { off, ...lit } = DEFAULT_STRING_COLOURS
+  assert.deepEqual(SHEET.strings, lit, 'the built-in colours match scenes.json')
+  assert.deepEqual(off, { off: true }, 'and the blackout\'s off (A1, 11 Nov 2026)')
+  assert.deepEqual(stringsBody(off), { on: { value: false } })
   assert.deepEqual(stringsBody(SHEET.strings.red), { on: { value: true }, hue: { value: 0 }, sat: { value: 100 }, brightness: { value: 100, duration: 0 } })
   const calls = []
   const lights = new StringLights({ host: '192.168.1.60', token: 'tok', fetchImpl: async (url, opts) => { calls.push({ url, opts }); return { ok: true, status: 204 } } })
@@ -131,10 +134,10 @@ test('the relay watches Salem\'s public doc and checks the colour ten times a se
 
 test('through Apple Home: each colour runs its own Shortcut, by its exact name', async () => {
   const { ShortcutLights, shortcutColours, STRING_SHORTCUTS } = await import('../lib/strings.js')
-  assert.deepEqual(Object.keys(STRING_SHORTCUTS).sort(), ['decor', 'green', 'red'])
+  assert.deepEqual(Object.keys(STRING_SHORTCUTS).sort(), ['decor', 'green', 'off', 'red'])
   const colours = shortcutColours()
   assert.deepEqual(colours.red, { shortcut: 'Red Murderwin Strings' })
-  assert.deepEqual(colours, { red: { shortcut: 'Red Murderwin Strings' }, green: { shortcut: 'Green Murderwin Strings' }, decor: { shortcut: 'Decor Murderwin Strings' } })
+  assert.deepEqual(colours, { red: { shortcut: 'Red Murderwin Strings' }, green: { shortcut: 'Green Murderwin Strings' }, decor: { shortcut: 'Decor Murderwin Strings' }, off: { shortcut: 'Off Murderwin Strings' } })
   const ran = []
   const lights = new ShortcutLights({ run: async (name) => { ran.push(name) } })
   await lights.show(colours.green)
@@ -426,8 +429,9 @@ test('every Shortcut the brain runs, from the roads that are on: the music\'s fr
   const all = shortcutsNeeded({ music: SHEET.musicShortcuts, strings: STRING_SHORTCUTS, projector: PROJECTOR_SHORTCUTS })
   assert.deepEqual([...new Set(all.map(s => s.name))].sort(), [
     'Decor Murderwin Strings', 'Default Jazz', 'Default Jazz 20%', 'Get Off My Grass Game Music', 'Green Murderwin Strings', 'Intense Music 35%', 'Intense Music 60%',
-    'Lightbulb Moment Music', 'PANIC', 'Projector Murderwin Off', 'Projector Murderwin On', 'Red Murderwin Strings',
+    'Lightbulb Moment Music', 'Off Murderwin Strings', 'PANIC', 'Projector Murderwin Off', 'Projector Murderwin On', 'Red Murderwin Strings',
   ])
+  assert.equal(all.find(s => s.name === 'Off Murderwin Strings').does, 'the string lights stay lit through the blackout')
   assert.deepEqual(all.find(s => s.name === 'PANIC'), { name: 'PANIC', tag: 'music', key: 'off', does: 'the brain cannot stop the music' })
   assert.equal(all.filter(s => s.name === 'Default Jazz').length, 2, 'once for the jazz, once for Act 4')
   assert.equal(all.find(s => s.key === 'duck').does, 'the music will not go quiet under a recording')
@@ -442,18 +446,19 @@ test('the check: the missing stop first and in capitals, one line each for the r
   const have = ['Default Jazz 20%', 'Lightbulb Moment Music', 'Get Off My Grass Game Music', 'Intense Music 60%', 'Intense Music 35%', 'Credit Roll Music', 'Default Jazz', 'Green Murderwin Strings v2', 'Red Murderwin Strings', 'Decor Murderwin Strings', 'Music Controls']
   const r = shortcutCheck(needed, have)
   assert.equal(r.stop, 'missing')
-  assert.deepEqual(r.missing.map(s => s.name), ['PANIC', 'Green Murderwin Strings', 'Projector Murderwin On', 'Projector Murderwin Off'])
-  assert.equal(r.lines.length, 4, 'one line each')
+  assert.deepEqual(r.missing.map(s => s.name), ['PANIC', 'Green Murderwin Strings', 'Off Murderwin Strings', 'Projector Murderwin On', 'Projector Murderwin Off'])
+  assert.equal(r.lines.length, 5, 'one line each')
   assert.match(r.lines[0], /^\[music\] THE BRAIN CANNOT STOP THE MUSIC: no Shortcut called "PANIC" on this Mac\. Make one in the Shortcuts app, named exactly that, that stops all four HomePods/)
   assert.equal(r.lines[1], '[strings] no Shortcut called "Green Murderwin Strings" on this Mac, so the string lights will not turn green (the phones carry the colour)')
-  assert.equal(r.lines[2], '[projector] no Shortcut called "Projector Murderwin On" on this Mac, so the projector\'s plug will not switch on')
+  assert.equal(r.lines[2], '[strings] no Shortcut called "Off Murderwin Strings" on this Mac, so the string lights stay lit through the blackout')
+  assert.equal(r.lines[3], '[projector] no Shortcut called "Projector Murderwin On" on this Mac, so the projector\'s plug will not switch on')
   // a name that differs only in capitals is pointed out, and still counts as missing
   const near = shortcutCheck(needed, [...have, 'Panic'])
   assert.equal(near.stop, 'missing', 'the names must match exactly')
   assert.ok(near.lines[0].includes('(there is one called "Panic": the two names must match exactly)'))
   // all there
-  const full = shortcutCheck(needed, [...have, 'PANIC', 'Green Murderwin Strings', 'Projector Murderwin On', 'Projector Murderwin Off'])
-  assert.deepEqual(full, { missing: [], lines: ['Shortcuts: all 12 the brain runs are on this Mac'], stop: 'ok' })
+  const full = shortcutCheck(needed, [...have, 'PANIC', 'Green Murderwin Strings', 'Off Murderwin Strings', 'Projector Murderwin On', 'Projector Murderwin Off'])
+  assert.deepEqual(full, { missing: [], lines: ['Shortcuts: all 13 the brain runs are on this Mac'], stop: 'ok' })
   // the music not on the Shortcut road: no stop to speak of
   assert.equal(shortcutCheck(shortcutsNeeded({ strings: STRING_SHORTCUTS }), have).stop, 'none')
   assert.deepEqual(shortcutCheck([], have), { missing: [], lines: [], stop: 'none' })
