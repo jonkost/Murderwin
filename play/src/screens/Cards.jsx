@@ -7,6 +7,7 @@ import { catPictureUrl, CAT_SHORT } from '../lib/rooms'
 import { lookOn } from '../look/look'
 import { NowCard } from '../look/parts'
 import { openScanner } from './ScanButton'
+import { celebrate } from '../lib/celebrate'
 import { chime } from '../lib/permissions'
 import { troubleLine } from '../lib/trouble'
 import { TraceView } from './Kiosk'
@@ -200,6 +201,7 @@ function Group({ card, uid, nightId, notes, onDone }) {
   const [busy, setBusy] = useState(false)
   const lockIn = async () => {
     setBusy(true)
+    celebrate('medium') // Locked in: the seal stamps down (B4)
     if (uid && uid !== 'preview') {
       writeNotes(uid, { seen: { [lockedKey]: true } }).catch(() => {})
       try { await callLockIn({ nightId }) } catch { /* the clock starts the rounds anyway */ }
@@ -291,6 +293,10 @@ function Award({ card, onDone }) {
 // Act 7: this phone's three answers against the truth. On the result beat it
 // fills the screen with no button (Windows.jsx ResultLock); on Now, Keep this
 // puts it away until The End, when it stays (lib/night.js nowCards).
+// How many of the three this phone named (the result card's own marks).
+export function rightCount(card) {
+  return ['murderer', 'motive', 'victim'].filter(k => card?.[k]).length
+}
 export function Result({ card, onDone, seen }) {
   // the same three names as the vote's rows (11 Nov 2026: the third is the Ghost; the field is still `victim`)
   const rows = [['murderer', 'The Murderer'], ['motive', 'The Motive'], ['victim', 'The Ghost']]

@@ -30,6 +30,8 @@ import { roomEnded } from '../lib/closing'
 import { useFreshness } from '../lib/freshness'
 import IpadScreen, { useRoomScreenDevice } from './Ipad'
 import { HexHint, ReadyHexes, studyState, STUDY_DONE_LINE } from './StudyHexes'
+import { BigWin } from '../look/parts'
+import { useJustWon } from '../lib/useWin'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -1061,6 +1063,8 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   const L = lines ?? studyLines(null)
   const SAY = { idle: L.IDLE, playing: L.PLAYING, reproducing: L.REPRODUCING, entering: L.ENTERING, slow: L.SLOW, map: L.MAP, halfColour: L['HALF COLOUR'], halfNumber: L['HALF NUMBER'], neither: L.NEITHER, time: L.TIME, solved: L.SOLVED, capped: L.CAPPED }
   const s = study ?? { state: 'idle' }
+  // a room solved is a big win (B4; the approved look, screen 4): Solved!, for a few seconds, then the finished page
+  const won = useJustWon(s.state === 'done' && s.outcome !== 'capped')
   // the group due has been paid and the chime has not come yet: nobody is expected here (1 Nov 2026): studyState says done
   // the station has sent nothing for ninety seconds: said on the rules card and on the game alike, in
   // Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
@@ -1090,6 +1094,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   if (s.warned && s.state !== 'done' && !s.hint && s.state !== 'entering') line = SAY.time
   if (s.state === 'done') line = s.outcome === 'capped' ? SAY.capped : SAY.solved
 
+  if (won) return <BigWin word="Solved!" who="granolia" className="full" />
   // the house look (Jon, 26 Oct 2026: clean, on the branding): manor blue with the red wallpaper,
   // the title and the clock along the top, Granolia's own picture beside one panel of words
   return (

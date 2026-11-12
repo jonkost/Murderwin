@@ -861,6 +861,36 @@ screen. The one place that says which night it is: the top of the Host tab,
 "This night is a rehearsal" or "This is the party night". Check that line
 before the guests arrive on Sunday.
 
+## The look, and every win (12 November)
+
+The look is the one you approved on 12 November ("yes this is great"), kept
+as drawn in `docs/look-approved.html`. To see all nine screens for real,
+open `/play/?look=1` on any device.
+
+| Where | What a guest sees |
+|---|---|
+| A room's screen with nobody playing | The room's name in lights, its cat, large, and the cat's name on a red bar. No other words. |
+| A Mac's own screen beside its room screen | The seal, the room's name and the cat. |
+| A room's screen in Act 4, between groups | The game's name in lights, three numbered steps, the room's code with Scan to start, and the cat. |
+| A phone's Now tab | One card: where to go, and one button. The room's cat looks over it. *Not yet, call me later* and *Cannot scan?* are still there, small, under the button. |
+| The top of every phone tab | The seal, and a round camera button top right. No act's name. |
+| The vote | The Vote, a bar for the time left, three rows with each pick's portrait, *Lock in*. |
+
+Every win gets a moment. Nothing here is a button of yours: each plays by
+itself, on the screen or phone where the win happened.
+
+| Win | What happens | When |
+|---|---|---|
+| Small | A sparkle and a ding | A clue lands on a phone (the Clues tab hops too); a motive is crossed off (a pencil scratch) |
+| A cat met | The phone fills with the cat's picture, the seal, "You met Miss Boo LaRue", the four cat faces and *Done* | A guest taps Done after reading a cat in Act 2 |
+| Medium | The wax seal stamps down with a chime | *Locked in* in Act 4; a Parlour Game finished; a round of Get Off My Lawn! passed; a picture named, on the phones |
+| Big | One big word (Solved!), the seal, paw prints, twinkles, the room's cat hopping, a fanfare | The Study solved; the Library's third board cleared; Get Off My Lawn! cleared; a picture named and the door opening, on the Parlour TV; three out of three on a phone's result |
+| Not quite | A soft buzz and a shake | A wrong pick in the drawing; a slip in Get Off My Lawn! |
+
+A room screen makes its sound only if it was clicked once after it opened
+(the Host tab says *Sound on* beside it). A phone makes its sound after the
+guest's Allow tap, also with the ring switch off.
+
 ## When something dies
 
 | What died | What to do |

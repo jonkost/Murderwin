@@ -30,7 +30,8 @@ import Spoken from './Spoken'
 //                   the Get Off My Lawn! rules card in Act 4, its loop otherwise
 // Everything here reads public docs and open lines only.
 
-import { Splash, GameCard } from '../look/parts'
+import { Splash, GameCard, BigWin } from '../look/parts'
+import { useJustWon } from '../lib/useWin'
 import { lookOn, SPLASH_OF, splashNow } from '../look/look'
 
 const BASE = import.meta.env.BASE_URL
@@ -486,6 +487,8 @@ export function GameName({ id, extra = null }) {
 export function MemoryRounds({ board, night, nightId, content = null, rotation = null }) {
   const boardId = board?.boardId ?? null
   const step = board?.step ?? 0
+  // the third board cleared is a big win (B4; the approved look, screen 4): Solved!, then Zimothy names his winner
+  const won = useJustWon(!!board?.cleared)
   // outside Act 4 the Library's loop; in Act 4, between groups, the rules card with Zimothy's line and the room's code
   if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Library" loop="memory" />
   if (!boardId) return (
@@ -502,6 +505,7 @@ export function MemoryRounds({ board, night, nightId, content = null, rotation =
   }
   const boardKey = `${boardId}-${step}`
   const win = board.cleared ? mostPairs(players, board.pairsBy) : null
+  if (won) return <BigWin word="Solved!" who="zimothy" className="full" />
   return (
     <div className={`kiosk memory${win ? ' room-won' : ''}`}>
       <GameName id="library" extra={`round ${Math.min(step + 1, 3)} of 3`} />

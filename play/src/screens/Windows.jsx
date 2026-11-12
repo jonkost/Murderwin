@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { callAnswer, callBallot } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { characterById, motives } from '../lib/content'
@@ -6,7 +6,8 @@ import { ms, secondsLeft } from '../lib/night'
 import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
 import { troubleLine } from '../lib/trouble'
 import { Seal } from './Moments'
-import { HostLine, Result } from './Cards'
+import { HostLine, Result, rightCount } from './Cards'
+import { celebrate } from '../lib/celebrate'
 import { lookOn } from '../look/look'
 import { VoteCard, VoteLocked } from '../look/parts'
 
@@ -32,6 +33,7 @@ function Clock({ w, serverNow }) {
 // The same last screen for every answer: in time, late (the server had
 // already picked for this phone), or sent twice. One tap to put it away.
 export function Thanks({ onDone }) {
+  useEffect(() => { celebrate('medium') }, []) // a Parlour Game done (B4)
   return (
     <div className="moment window papered">
       <Seal />
@@ -224,6 +226,9 @@ export function EyesLock() {
 }
 
 export function ResultLock({ card }) {
+  // the pay-off (A6, B4): this phone's own score, with a celebration. Three right is the big one.
+  const right = rightCount(card)
+  useEffect(() => { if (right > 0) celebrate(right === 3 ? 'big' : 'medium') }, [card?.id, right])
   return (
     <div className="moment lock papered">
       <p className="crest">Sirwin Manor</p>

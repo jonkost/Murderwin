@@ -13,6 +13,8 @@ import TabIcon from './TabIcon'
 import { PhoneEnd } from './Closing'
 import { lookOn } from '../look/look'
 import { NowCard, SmallWin } from '../look/parts'
+import { celebrate } from '../lib/celebrate'
+import { play } from '../lib/soundkit'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -56,6 +58,19 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   // rooms, the ballot), the phone goes to Now on its own.
   const lights = lightsStep(session, night.act)
   const rooms = act4Step(session, night.act)
+  // a clue lands (B4): a sparkle and a ding, and the Clues tab bounces. Never at first sight (a reload).
+  const clueId = now.find(c => ['testimony', 'clue', 'station'].includes(c.kind))?.id ?? null
+  const lastClue = useRef(undefined)
+  const [bounce, setBounce] = useState(false)
+  useEffect(() => {
+    const landed = lastClue.current !== undefined && clueId && clueId !== lastClue.current
+    lastClue.current = clueId
+    if (!landed) return undefined
+    celebrate('small')
+    setBounce(true)
+    const id = setTimeout(() => setBounce(false), 900)
+    return () => clearTimeout(id)
+  }, [clueId])
   const newest = [over && 'the-end', now[0]?.id, ballot?.w?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
   useEffect(() => { if (newest) setTab('now') }, [newest])
 
@@ -82,7 +97,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
       <nav className={session.host ? 'tabs eight' : 'tabs'} aria-label="Your Reticule">
         {tabs.map(t => (
-          <button key={t.key} className={t.key === shown ? 'tab on' : 'tab'} onClick={() => setTab(t.key)} aria-current={t.key === shown ? 'page' : undefined}>
+          <button key={t.key} className={`${t.key === shown ? 'tab on' : 'tab'}${t.key === 'clues' && bounce ? ' bounce' : ''}`} onClick={() => setTab(t.key)} aria-current={t.key === shown ? 'page' : undefined}>
             <span className="tab-mark"><TabIcon name={t.key} />{t.key === 'now' && waiting > 0 && shown !== 'now' ? <span className="badge" aria-label={`${waiting} waiting`} /> : null}</span>
             <span className="tab-word">{t.label}</span>
           </button>
@@ -223,7 +238,9 @@ function Motives({ uid, content, notes }) {
   const [open, setOpen] = useState(null)
   const [crossed, setCrossed] = useState(notes?.crossed ?? {})
   useEffect(() => { if (notes?.crossed) setCrossed(notes.crossed) }, [notes?.crossed])
-  const toggle = (n) => {
+  const toggle = (n, el = null) => {
+    // crossed off (B4): a pencil scratches through it, with the sound, and a sparkle where it was tapped
+    if (!crossed[n]) { play('scratch'); celebrate('small', { at: el, quiet: true }) }
     const next = { ...crossed, [n]: !crossed[n] }
     setCrossed(next)
     writeNotes(uid, { crossed: { [n]: !crossed[n] } }).catch(() => {})
@@ -235,7 +252,7 @@ function Motives({ uid, content, notes }) {
       <ol className="motives">
         {list.map(m => (
           <li key={m.n} className="motive-row">
-            <button className={crossed[m.n] ? 'motive off' : 'motive'} onClick={() => toggle(m.n)} aria-pressed={!!crossed[m.n]}>
+            <button className={crossed[m.n] ? 'motive off' : 'motive'} onClick={e => toggle(m.n, e.currentTarget)} aria-pressed={!!crossed[m.n]}>
               <span className="n">{m.n}</span>
               <span className="rhyme">{m.rhyme}</span>
             </button>

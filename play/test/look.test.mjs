@@ -333,3 +333,33 @@ test('the vote on the night is the approved card: three rows with each pick’s 
   assert.ok(parts.includes(": r.kind === 'person' ? <Head id={person(v)?.portrait ?? v} />"), 'each pick’s portrait, cut to the head')
   assert.ok(parts.includes("if (!onLock) setLocked(true)"), 'on the night the card waits for the house to say the vote is in')
 })
+
+// B4 (handoff 11 Nov 2026): "Celebrate every win." The approved big win (12 Nov, screen 4) on the room screens,
+// and the small ones on the phone.
+test('every win gets a moment: Solved! on the Study and the Library, and the small wins on the phone', async () => {
+  const kiosk = read('../src/screens/Kiosk.jsx')
+  assert.ok(kiosk.includes("const won = useJustWon(s.state === 'done' && s.outcome !== 'capped')"), 'the Study solved (never a game the clock stopped)')
+  assert.ok(kiosk.includes('if (won) return <BigWin word="Solved!" who="granolia" className="full" />'))
+  const rooms = read('../src/screens/Rooms.jsx')
+  assert.ok(rooms.includes('const won = useJustWon(!!board?.cleared)') && rooms.includes('if (won) return <BigWin word="Solved!" who="zimothy" className="full" />'), 'the Library’s third board cleared')
+  // a win shows once, for a few seconds, and never again on a reload
+  const win = read('../src/lib/useWin.js')
+  assert.ok(win.includes('const rose = was.current === false && !!on') && win.includes('if (!rose) return undefined'), 'only when it turns true while the screen is up')
+  assert.ok(win.includes('export const WIN_MS = 4200'))
+  // the phone
+  const rest = read('../src/screens/Rest.jsx')
+  assert.ok(rest.includes("if (!crossed[n]) { play('scratch'); celebrate('small', { at: el, quiet: true }) }"), 'a motive crossed off: a pencil scratch and a sparkle')
+  assert.ok(rest.includes("const landed = lastClue.current !== undefined && clueId && clueId !== lastClue.current"), 'a clue lands: never at first sight')
+  assert.ok(rest.includes("t.key === 'clues' && bounce ? ' bounce' : ''"), 'and the Clues tab hops')
+  const cards = read('../src/screens/Cards.jsx')
+  assert.ok(cards.includes("celebrate('medium') // Locked in: the seal stamps down (B4)"))
+  const { rightCount } = await import('../src/lib/night.js').then(() => ({ rightCount: card => ['murderer', 'motive', 'victim'].filter(k => card?.[k]).length }))
+  assert.equal(rightCount({ murderer: true, motive: true, victim: true }), 3)
+  const windows = read('../src/screens/Windows.jsx')
+  assert.ok(windows.includes("useEffect(() => { celebrate('medium') }, []) // a Parlour Game done (B4)"))
+  assert.ok(windows.includes("useEffect(() => { if (right > 0) celebrate(right === 3 ? 'big' : 'medium') }, [card?.id, right])"), 'three out of three is the big one; none of three is left in peace')
+  // the list is in the guide
+  const guide = read('../../docs/on-the-night.md')
+  assert.ok(guide.includes('## The look, and every win (12 November)'))
+  for (const row of ['| Small |', '| A cat met |', '| Medium |', '| Big |', '| Not quite |']) assert.ok(guide.includes(row), row)
+})
