@@ -13,7 +13,8 @@
     "night-log": "node postmortem.mjs record",
     "postmortem": "node postmortem.mjs report",
     "media": "node media-check.mjs",
-    "media-import": "node media-import.mjs"
+    "media-import": "node media-import.mjs",
+    "web-sounds": "node web-sounds.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",

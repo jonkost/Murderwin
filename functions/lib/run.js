@@ -364,9 +364,12 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return { ok: true, music: arg }
     }
     case 'sound-test': {
-      // Sound test (cue 2, 25 Oct 2026): the chime on every HomePod while the rules are read, so the
-      // room hears the speakers work. Nothing else moves.
-      return screen.play(db, nightId, 'chime-phone', { now })
+      // Sound test (cue 2, 25 Oct 2026): a cue's sound on every room screen and phone, so the room hears
+      // them work. With no arg the chime; with a cue id (the Host tab's list, 11 Nov 2026), that cue
+      // once. Nothing else moves.
+      const id = arg ? String(arg) : 'chime-phone'
+      if (!screen.SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
+      return screen.play(db, nightId, id, { now })
     }
     case 'cake': {
       // Cake! (cue 13, 25 Oct 2026): a fresh stamp on public/cues.cake, which the brain plays Happy

@@ -396,8 +396,9 @@ links to it.
   music and dims the lights for them. The film has sound only if that screen
   has been clicked once since it opened: the Host tab says Sound on beside
   the Parlour screen when it has. When the rules reach the
-  sound test, press **Sound test** (under The house, beside the hall light):
-  the chime plays on every HomePod, so the room hears the speakers work. Act 1
+  sound test, press **Phone chime** (under The house, in the Sound test
+  list): the chime plays on every room screen and phone, so the room hears
+  them work. Act 1
   ends with
   **Blackout**: every phone and screen goes black, the thunder and the crash
   play, the hall bulb goes out and the projector's plug goes off, and five
@@ -705,9 +706,15 @@ links to it.
   choice holds until the night's next change. The buttons never say why.
 - The hall light: **Red** and **Green**, under The house, if the bulb ever
   needs setting by hand.
-- **Sound test**, under The house beside the hall light: the chime on every
-  HomePod, to hear the speakers work. The rules ask for it in Act 1; it is
-  harmless at any time and moves nothing.
+- **Sound test**, under The house: a short list, one button a cue (Phone
+  chime, News chime, The scream, Bulletin sounder, Solved, Sir Irwin, The
+  door, The reveal, The result) and **Silence**. A cue button plays that one
+  sound on every room screen and phone at once; it is harmless at any time
+  and moves nothing. **Silence** tells the brain to stop the music on the
+  HomePods. If the brain has no Shortcut to stop the music, a red line above
+  the list says so and names the Shortcut to make (today PANIC); until
+  it exists, Silence and every "music off" do nothing. The brain's window
+  says the same when it starts, with any other missing Shortcut.
 - **Cake!** shows above Next in Act 5 only. Pressed while Sir Irwin's
   countdown is on the TV, it plays the song and dims the lights but leaves
   his motive cards on the screen. **At the paper** and the drawing's four
@@ -1250,8 +1257,10 @@ role's Parlour Game answers still move a cat but move the dial by 0, logged
 `hushed`, and the Act 7 screen says one line about it.
 
 *The cue list's Host tab buttons (25 Oct, evening).* Three host commands in
-`run.js` and `commands.js`: `sound-test` (`screen.play` of `chime-phone`,
-nothing else), `cake` (a fresh stamp on `nights/{id}/public/cues.cake = { at }`,
+`run.js` and `commands.js`: `sound-test` (`screen.play` of the cue id in its
+arg, `chime-phone` with none; refused for an id not in `SOUND_IDS`; nothing
+else; the Host tab's list is `play/src/screens/SoundList.jsx`, its warning
+from the brain's presence `sound`, `play/src/lib/soundList.js`), `cake` (a fresh stamp on `nights/{id}/public/cues.cake = { at }`,
 which the brain plays Happy Birthday for Dogs from and recalls the candles
 scene, `cues/`; and `screen.birthday`, the screen kind `birthday` on the
 Parlour TV, `livingView` 'birthday', until the next beat's screen. It reads

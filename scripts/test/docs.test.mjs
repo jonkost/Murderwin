@@ -15,7 +15,7 @@ const read = p => readFileSync(join(root, p), 'utf8')
 const scriptsOf = p => Object.keys(JSON.parse(read(p)).scripts ?? {})
 
 const runbook = read('docs/on-the-night.md')
-const hostJsx = read('play/src/screens/Host.jsx')
+const hostJsx = read('play/src/screens/Host.jsx') + read('play/src/screens/SoundList.jsx') + read('play/src/lib/soundList.js') // the Host tab's own parts (11 Nov 2026)
 const spans = (text, re) => [...text.matchAll(re)].map(m => m[1])
 
 test('on-the-night.md: every npm command it names is a script that exists', () => {

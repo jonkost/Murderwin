@@ -428,13 +428,13 @@ test('the unlock is armed on every page load, not only at the Allow screen; Allo
   assert.deepEqual(makers, ['../src/lib/soundkit.js'])
 })
 
-test('every room screen plays the cues through its bell; the second display and the brain\'s own browser never sound, and the TV leaves its own film alone', () => {
+test('every room screen plays the cues through its bell, the brain\'s own browser included; the second display never sounds, and the TV leaves its own film alone', () => {
   const kiosk = read('../src/screens/Kiosk.jsx')
   assert.ok(kiosk.includes("import { useCueSounds } from '../lib/useCueSounds'"))
   const bell = kiosk.slice(kiosk.indexOf('export function Bell('), kiosk.indexOf('// The dot: green live'))
   assert.ok(bell.includes('useCueSounds(sounds, serverNow, { silent, tv, scope })'))
   assert.ok(bell.includes('kiosk-bell'), 'the bell mark stays as it was')
   assert.ok(!bell.includes("chime('cue')"), 'not the one soft beep any more')
-  assert.ok(kiosk.includes("silent={which === 'orangerie' || which === 'decor'} tv={which === 'living'} scope={nightId}"))
+  assert.ok(kiosk.includes("silent={which === 'decor'} tv={which === 'living'} scope={nightId}"))
   assert.ok(!kiosk.includes("which === 'ipad'} scope"), 'the iPad shows the words only, so it chimes for the news like any other screen')
 })

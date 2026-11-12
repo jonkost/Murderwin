@@ -152,7 +152,7 @@ export default function Kiosk({ which }) {
     <>
       {body}
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
-      <Bell sounds={sounds} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} tv={which === 'living'} scope={nightId} />
+      <Bell sounds={sounds} serverNow={serverNow} silent={which === 'decor'} tv={which === 'living'} scope={nightId} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} woke={sound} />
     </>
@@ -677,11 +677,11 @@ export function Wake({ hidden = false, woke: known = null }) {
 // else a fuller sound made in code), in step with every other screen and
 // every phone. Until then it was one soft beep beside the brain's speakers.
 // `sounds` is the live view of nights/{id}/public/sounds (useDoc).
-// `silent`: the brain's own browser (?kiosk=orangerie) and a Mac's second
-// display (?kiosk=decor) show the bell and never sound: the second display
-// sits beside its room's own screen, and the brain's browser makes no sound
-// by design (the Host tab has no sound mark for it; the phones in the
-// Orangerie carry the cue there).
+// `silent`: a Mac's second display (?kiosk=decor) shows the bell and never
+// sounds: it sits beside its room's own screen, which already plays the cue.
+// The brain's own browser (?kiosk=orangerie) plays the cues like every room
+// screen, from the brain's own speakers: the brain itself plays no cue sound
+// since 11 Nov 2026, so this is the Orangerie's speaker.
 // `tv`: the Parlour TV does not chime over a bulletin it plays as video.
 export function Bell({ sounds, serverNow, silent = false, tv = false, scope = null }) {
   useCueSounds(sounds, serverNow, { silent, tv, scope })

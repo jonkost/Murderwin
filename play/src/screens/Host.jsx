@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import SoundList from './SoundList'
 import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
 import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
@@ -60,7 +61,7 @@ function describe(command, r) {
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
     case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.clock ? 'The clock moved the night on.' : 'Every clock is where it should be.'
     case 'hall': return `The hall light is ${r.hall}.`
-    case 'sound-test': return 'The chime is playing on every HomePod.'
+    case 'sound-test': return 'That sound is playing on every room screen and phone.'
     case 'cake': return r.card === false
       ? 'Happy Birthday for Dogs on every HomePod and the candles scene. Sir Irwin’s countdown stays on the TV. The jazz comes back when the song ends.'
       : 'Happy Birthday for Dogs on every HomePod, the candles scene, the birthday card on the TV. The jazz comes back when the song ends.'
@@ -188,7 +189,7 @@ export default function Host({ night, content, serverNow }) {
           : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
       </div>
 
-      <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+      <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} brainSound={screenSound.cues} />
       <ScenesPanel busy={busy} run={run} />
       <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
       <SalemPanel night={night} busy={busy} run={run} />
@@ -260,7 +261,7 @@ export default function Host({ night, content, serverNow }) {
 // its clock, a picker for the group that actually walked in, and the hall
 // light by hand. Everything here is a count, a name or a dot.
 // While a window is open the per-guest dots are hidden (see houseView).
-export function HousePanel({ house, cues, night, busy, run }) {
+export function HousePanel({ house, cues, night, busy, run, brainSound = null }) {
   const [picking, setPicking] = useState(false)
   const s = house.station
   const st = house.study
@@ -315,11 +316,8 @@ export function HousePanel({ house, cues, night, busy, run }) {
         <button className="chip" disabled={!!busy || hall === 'red'} onClick={() => run('hall', 'red')}>Red</button>
         <button className="chip" disabled={!!busy || hall === 'green'} onClick={() => run('hall', 'green')}>Green</button>
       </div>
-      {/* Sound test (cue 2, 25 Oct 2026): the chime on every HomePod while the rules are read, so the room hears the speakers work */}
-      <div className="host-row">
-        <span className="gloss">Speakers:</span>
-        <button className="chip" disabled={!!busy} onClick={() => run('sound-test')} title="The chime on every HomePod. Nothing else moves">Sound test</button>
-      </div>
+      {/* Sound test (11 Nov 2026, A2): each cue once on every room screen and phone, and Silence */}
+      <SoundList busy={busy} run={run} brainSound={brainSound} brainAlive={!!house.machines.find(m => m.key === 'cues')?.alive} />
     </section>
   )
 }

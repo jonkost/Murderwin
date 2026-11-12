@@ -13,6 +13,8 @@
 //                                  the still card (play/public/reveal/) with the clip's own sound
 //   bulletin2-*.wav, newsflash-*.wav, woof-close-*.wav, the nine cue sounds
 //                                → media/ on the brain, one second of silence first
+//   then the nine cue sounds in media/ → play/public/sound/<id>.mp3, for the screens and
+//                                phones: no silence, made loud, never a recording (web-sounds.mjs)
 //   living|study|memory|bedroom|boo|orangerie.mp4|mov → play/public/loops/
 //   Irwin portrait.png           → play/public/Irwin Framed.png
 //   sydney.jpg                   → play/public/household/sydney.jpg
@@ -27,6 +29,7 @@ import { fileURLToPath } from 'node:url'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { SOUND_IDS, CLIP_IDS } from '../cues/lib/cues.js'
 import { LOOPS, OPTIONAL_LOOPS, mediaDir } from './media-check.mjs'
+import { writeWebSounds } from './web-sounds.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -129,6 +132,8 @@ function main() {
   if (dropped.length) console.log(`Two exports of the same clip, the shorter left out: ${dropped.join(', ')}`)
   if (count.failed.length) console.log(`COULD NOT BE MADE: ${count.failed.join(', ')}`)
   if (other.length) console.log(`Not the game's (left where they are): ${other.length} files, for example ${other.slice(0, 3).join(', ')}`)
+  const web = writeWebSounds({ media: MEDIA })
+  count.failed.push(...web.failed)
   console.log('')
   spawnSync(process.execPath, [join(here, 'media-check.mjs')], { stdio: 'inherit' })
   console.log('\nIf a closing clip changed length, tell Claude Code: the lengths in seed/woof-news.json are set by hand from the files.')

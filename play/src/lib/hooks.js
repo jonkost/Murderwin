@@ -149,7 +149,8 @@ export function lastHandoverSeen() {
 // Who has been heard from lately, by guest key → last heartbeat (ms). Only a
 // host phone (or the admin) may read presence; anyone else gets an empty map.
 // `usePresenceRows` also says, for each room screen, whether its newest row has its sound
-// on (11 Nov 2026): { seen: key -> ms, sound: key -> true or false }.
+// on (11 Nov 2026): { seen: key -> ms, sound: key -> true, false, or null when the row does not say }.
+// The brain's row (key 'cues') carries whether it can stop the music (play/src/lib/soundList.js).
 export function usePresenceRows(nightId) {
   const [rows, setRows] = useState({ seen: {}, sound: {} })
   useEffect(() => {
@@ -162,7 +163,7 @@ export function usePresenceRows(nightId) {
         const p = d.data()
         if (!p.guestKey) return
         const at = p.at?.toMillis?.() ?? 0
-        if (at >= (seen[p.guestKey] ?? 0)) { seen[p.guestKey] = at; sound[p.guestKey] = p.sound === true }
+        if (at >= (seen[p.guestKey] ?? 0)) { seen[p.guestKey] = at; sound[p.guestKey] = typeof p.sound === 'boolean' ? p.sound : null }
       })
       setRows({ seen, sound })
     }, () => setRows({ seen: {}, sound: {} }))

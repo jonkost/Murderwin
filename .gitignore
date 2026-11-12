@@ -61,6 +61,9 @@ play/public/video/*
 # the rules film's recordings, one a slide (play/public/rules/README.md): Jon's files stay local and deploy from his Mac, like the videos
 play/public/rules/*
 !play/public/rules/README.md
+# the cue sounds the room screens and phones play (play/public/sound/README.md): made from media/ by npm run web-sounds, not kept in git, like the videos
+play/public/sound/*
+!play/public/sound/README.md
 
 # Jon's folder of exports, sorted into the game by `npm run media-import` (11 Nov 2026)
 media-in/
