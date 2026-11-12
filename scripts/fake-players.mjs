@@ -14,8 +14,10 @@
 // standing (G32, counts only), that the host seats were dealt and answered
 // like everyone else (F02), and, over 2,000 cases dealt by the case deal
 // itself on stand-in rosters, that every seat, both host seats included,
-// lands the Murderer and the Ghost about equally often (G05). At the end it
-// checks the seal (no phone can read a role,
+// lands the Murderer and the Ghost about equally often (G05). All the way
+// through it checks that nothing a phone or a room screen reads holds a note
+// in square brackets (F28: a practice night plays for real, 11 Nov 2026). At
+// the end it checks the seal (no phone can read a role,
 // no public document carries the case), prints one line per act, a tally and
 // how much of the party's secrets the night used, and discards the night: the
 // case, the night, every session. Nothing it prints is ever a card. Counts,
@@ -101,7 +103,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   const say = line => log(line)
   const runId = Math.random().toString(36).slice(2, 8)
   const uids = Array.from({ length: phones }, (_, i) => `fake-${runId}-${i + 1}`)
-  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, checks: [], tally: null, secrets: null, fairness: null, discard: null, ok: false, error: null }
+  const summary = { nightId: null, rehearsal: null, acts: [], seal: { checks: 0, failed: [] }, text: { looks: 0, strings: 0, brackets: 0, where: [] }, checks: [], tally: null, secrets: null, fairness: null, discard: null, ok: false, error: null }
 
   // a party-night dry run is never dealt from a word; a rehearsal always is (the caller's, or a fresh one)
   const nightOpts = realSecrets ? { forceRehearsal: false, dryRun: true, label } : { forceRehearsal: true, dryRun: true, label, ...(seed ? { seed } : {}) }
@@ -235,6 +237,11 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
       for (const g of ARCADE_GAMES) await run.player.arcadeScore(db, { nightId, guestKey: m.key, game: g.id, score: randomInt(120) })
       const r = await run.player.arcadeClue(db, { nightId, groupId: gid, place })
       if (r.dealt && !r.third) clues++
+      // the Mac's screen shows the answer itself: no note in square brackets there either (F28)
+      if (typeof r.text === 'string') {
+        summary.text.strings++
+        if (/[[\]]/.test(r.text)) { summary.text.brackets++; for (const [list, x] of [[summary.text.where, 'arcadeClue.text'], [summary.checks, 'F28:arcade']]) if (!list.includes(x)) list.push(x) }
+      }
     }
     return clues ? 1 : 0
   }
@@ -276,6 +283,33 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     summary.seal.failed.push(...failed)
   }
 
+  // F28, a practice night plays for real (handoff 11 Nov 2026, job A3): nothing a phone or a room
+  // screen can read holds a note in square brackets. Every string of every fake phone's session, the
+  // night doc and the night's public docs (not public/content: the workshop's own lines, with blanks
+  // the phone fills in), at each look. Counts and field names only, never the words.
+  async function bracketCheck(stage) {
+    const hits = {}
+    let strings = 0
+    const walk = (v, where) => {
+      if (typeof v === 'string') { strings++; if (/[[\]]/.test(v)) hits[where] = (hits[where] ?? 0) + 1 }
+      else if (Array.isArray(v)) v.forEach(x => walk(x, where))
+      else if (v && typeof v === 'object' && !(v instanceof Date) && typeof v.toMillis !== 'function') for (const [k, x] of Object.entries(v)) walk(x, where.includes('.') ? where : `${where}.${k}`)
+    }
+    for (const uid of uids) {
+      const { cards = [], ...rest } = await sessionOf(uid)
+      for (const card of cards) for (const [k, x] of Object.entries(card)) walk(x, `card:${card.kind}.${k}`)
+      walk(rest, 'session')
+    }
+    walk(await nightDoc(), 'night')
+    for (const ref of await db.collection(`nights/${nightId}/public`).listDocuments()) if (ref.id !== 'content') walk((await ref.get()).data(), `public/${ref.id}`)
+    const found = Object.values(hits).reduce((a, b) => a + b, 0)
+    summary.text.looks++
+    summary.text.strings += strings
+    summary.text.brackets += found
+    for (const where of Object.keys(hits)) if (!summary.text.where.includes(where)) summary.text.where.push(where)
+    if (found) summary.checks.push(`F28:${stage}`)
+  }
+
   try {
     // ---- Act 1: arrivals, three notices, the blackout
     // the first two phones are the hosts (F02): their names play the Professors, bots play them like everyone else
@@ -295,6 +329,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Case: ${summary.rehearsal ? 'rehearsal' : 'party'}${n2.caseWarning ? `; warning: ${String(n2.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join('; ')}` : ''}`)
     const roleCards = await countCards('role')
     await next() // news
+    await bracketCheck('news') // bulletin 1 on the Parlour TV
     await next() // the bag peek
     await next() // cat: the first wave goes
     const p2 = await allParlours() // the act's Parlour Games, each at its own time
@@ -311,6 +346,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     }
     if (hints !== bagClues || hints !== 4 * uids.length) summary.checks.push('G44')
     if (missing || (await nightDoc()).missingLines) summary.checks.push('G59')
+    await bracketCheck('cats') // every cat's hint and bag clue
     // everyone has seen all four cats: the supper chime came on its own (F24)
     const supper = (await nightDoc()).beat === 'supper'
     if (!supper) summary.checks.push('F24')
@@ -325,6 +361,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const played = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.played === true
     if (!armed.armed || !played) summary.checks.push('B2')
     await sealCheck('bulletin') // the recordings it just sent are on the public sounds doc
+    await bracketCheck('bulletin') // bulletin 2's words
     await next() // the dinner wrap-up (25 Oct 2026): the motives prompt, the join code on the TV
     actLine(3, [`${await countCards('notice', 3)} notices`, `bulletin 2 ${played ? 'played' : 'DID NOT PLAY'}`])
 
@@ -363,11 +400,13 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const studyCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.id?.endsWith('-study-clue')))
     if (studyCards.length !== uids.length || studyCards.some(c => c.none) || (await nightDoc()).missingLines) summary.checks.push('G59')
     const roomCards = (await Promise.all(uids.map(sessionOf))).flatMap(s => cardsOf(s, 'clue').filter(c => c.room)).length
+    await bracketCheck('act4') // every room's reward, the Study's trace
     actLine(4, [`${rot4.groups.length} groups, ${rounds} rounds`, `${roomCards} room rewards`, `${throughStudy} through the study`, `${memoryClears} memory matches cleared`, `${salemClears} Salem games cleared`, `${arcadeVisits} arcade visits`, `${games4} waiting Parlour Games, ${played4} played`])
 
     // ---- Act 5: cake (the dessert chime), Sir Irwin, the motives update
     // Act 4's last chime brought the house to the cake: any room never paid was paid then
     await next() // Sir Irwin on the screen
+    await bracketCheck('irwin') // his motive cards
     const funnel = await motiveFunnel()
     if (!funnel.ok) summary.checks.push('G32')
     say(`Motive funnel: ${funnel.ok ? 'PASS' : 'FAIL'}, ${funnel.left} left after Sir Irwin named ${funnel.named}${funnel.small ? ' (under four phones there is one group, so more than one motive can be left at dial 3)' : ''}`)
@@ -382,6 +421,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await next() // the drawing starts
     const drawing = await playDrawing()
     await next() // the door
+    await bracketCheck('door') // the trace behind the bedroom door
     await next() // the deduction round
     const n6 = await nightDoc()
     const keys = Object.keys(n6.roster ?? {})
@@ -403,6 +443,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await host('settle-now')
     await next() // reveal: the reel on the screen, no name out yet
     for (let i = 0; i < 3; i++) await host('reveal-stage') // the Murderer, the Motive, the Victim, one press each
+    await bracketCheck('reveal') // all three named, the closing story
     const r7 = await next() // results
     const results = await countCards('result')
     const theEnd = await next() // The End (25 Oct 2026): the screens black, the night over for good
@@ -425,8 +466,12 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     say(`Seat fairness (G05): ${g05.pass ? 'PASS' : 'FAIL'}, ${g05.count} of ${g05.of} seats fair over ${SEAT_DEALS.toLocaleString('en-GB')} dealt cases, both host seats included`)
 
     await sealCheck('end')
+    await bracketCheck('end')
     if (summary.seal.failed.length) say(`Seal: FAIL, ${summary.seal.failed.length} of ${summary.seal.checks} checks: ${summary.seal.failed.join(' ')}`)
     else say(`Seal: PASS, ${summary.seal.checks} checks`)
+    // F28: counts and field names, never a word of what was read
+    const { looks, strings, brackets, where } = summary.text
+    say(`Real lines (F28): ${brackets ? `FAIL, ${brackets} of ${strings.toLocaleString('en-GB')} strings hold a square bracket (${where.join(', ')})` : `PASS, no square bracket in ${strings.toLocaleString('en-GB')} strings`}, ${looks} looks at the phones and the room screens`)
     if (summary.checks.length) say(`Checks: FAIL ${summary.checks.join(' ')}`)
     summary.ok = summary.seal.failed.length === 0 && summary.checks.length === 0
   } catch (e) {
@@ -468,16 +513,19 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
   }
 
   // How much of the party's three secrets the night used: the lean table
-  // (sets with a lean, in the case's Parlour plan), the packing (bag clues
-  // that are not stand-ins) and the drawing's picture bank (rounds it filled).
-  // A rehearsal uses none of them. Counts only: never a lean, a property or
-  // a picture.
+  // (sets with a lean, in the case's Parlour plan), the packing (the bag
+  // clues of a party case: only the party night reads sealed/bags, bags.js
+  // packingFor) and the drawing's picture bank (rounds it filled).
+  // A rehearsal uses none of them: its bag clues are real lines too since
+  // 11 Nov 2026, but never from the party's packing. Counts only: never a
+  // lean, a property or a picture.
   async function secretsUsed() {
     const c = (await db.doc(`cases/${nightId}`).get()).data()
+    const party = c?.rehearsal === false
     let bags = 0, packed = 0
     for (const uid of uids) {
       const s = await sessionOf(uid)
-      for (const card of [...cardsOf(s, 'testimony'), ...cardsOf(s, 'clue')].filter(x => x.bag)) { bags++; if (!card.bag.placeholder) packed++ }
+      for (const card of [...cardsOf(s, 'testimony'), ...cardsOf(s, 'clue')].filter(x => x.bag)) { bags++; if (party && !card.bag.placeholder) packed++ }
     }
     const fromBank = (await db.doc(relay.relayPaths(nightId).priv).get()).data()?.fromBank ?? 0
     return { leanSets: Object.keys(c?.parlourPlan?.leans ?? {}).length, bags, packed, fromBank }
@@ -492,8 +540,8 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const c = (await db.doc(`cases/${nightId}`).get()).data()
     const screenDoc = (await db.doc(`nights/${nightId}/public/screen`).get()).data()
     const band = Number(screenDoc?.mood) || 3
-    // a rehearsal shows a stand-in for Sir Irwin's cards: the same options, worked out from the case here
-    const named = c?.rehearsal ? families.irwinOptions(c, { band, seed: screen.screenSeed(c, nightId) }) : (screenDoc?.choices ?? []).map(x => x.n)
+    // Sir Irwin's cards as the Parlour TV shows them, on a practice night as on the party night (11 Nov 2026)
+    const named = (screenDoc?.choices ?? []).map(x => x.n)
     const bulletinBand = (await db.doc(`nights/${nightId}/private/bulletin`).get()).data()?.level ?? null
     const left = families.remainingMotives(families.roomClues(c, { irwin: named, bulletinBand }))
     // One motive left at dial 3 needs two groups in Act 4 (four phones or more): the

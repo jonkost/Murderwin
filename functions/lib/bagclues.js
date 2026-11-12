@@ -3,9 +3,10 @@
 // the Ghost's) and in one or two other bags in play, never only one, and
 // never an item, a bag number or a person: a compass, not a pointer.
 //
-// Pure: the words come from the packing (sealed/bags `words`, written blind by
-// scripts/pack-bags.mjs), the lines from the open bank (seed/bag-lines.json).
-// The dealer (deal.js) reads the packing with the Admin SDK and calls these.
+// Pure: the words come from the night's packing (bags.js packingFor: on the
+// party night sealed/bags `words`, written blind by scripts/pack-bags.mjs; a
+// practice night never reads that one), the lines from the open bank
+// (seed/bag-lines.json). The dealer (deal.js, act4.js) hands the packing in.
 //
 //   Act 2  every cat a guest visits gives one bag clue about the Murderer, at
 //          the rung its affection for that guest sets at the scan.
@@ -29,7 +30,6 @@ import { createHash } from 'node:crypto'
 const here = dirname(fileURLToPath(import.meta.url))
 export const BAG_LINES = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'bag-lines.json'), 'utf8')) // copied from ../seed by `npm run seed`
 export const BAG_CATS = ['granolia', 'zimothy', 'boo', 'salem']
-export const CAT_SHORT = { granolia: 'Granolia', zimothy: 'Zimothy', boo: 'Boo', salem: 'Salem' }
 export const SENSES = Object.keys(BAG_LINES.senses)
 
 function unit(...parts) {
@@ -167,12 +167,6 @@ export function bagLine(plan, { cat, act = 2, rung = 3, seed = '' } = {}) {
 export function unfilled(template) {
   const kept = String(template ?? '').match(/[^.!?]+[.!?]+/g)?.filter(x => !/___|\[sense/.test(x)).join('').trim()
   return kept || 'Nothing to report.'
-}
-
-// The rehearsal stand-in: a rehearsal never reads the packing, so the slot
-// says what would show there (Jon, 23 Oct 2026).
-export function bagStandIn(cat, act = 2) {
-  return `[${CAT_SHORT[cat] ?? 'The cat'}'s bag clue about the ${act === 4 ? 'Ghost' : 'Murderer'} appears here]`
 }
 
 // ---------------------------------------------------------------------------

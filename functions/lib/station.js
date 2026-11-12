@@ -67,14 +67,12 @@ export async function studyReveal(db, { c, roster = {}, pick = randomInt }) {
   return shownReveal({ level, trace: owner.trace, label: owner.traceLabel, partner, pick })
 }
 
-// The study's card. On a rehearsal night the trace slot is a bracketed
-// stand-in naming what would show there, at the level it would show (Jon,
-// 23 Oct 2026), never the picture.
-export function traceStandIn(who, level) { return `[the ${who}'s trace, level ${level ?? 3}]` }
+// The study's card: the trace, as a picture, at the level the dial allows. A
+// practice night shows the picture too, from its own throwaway case (Jon,
+// 11 Nov 2026; the bracketed stand-in of 23 Oct is gone).
 export function studyClueCard(c, act, beat, reveal = null) {
   const base = { id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the Study' }
   if (!reveal) return c && !c.rehearsal ? { ...base, text: STUDY_QUIET, placeholder: false, none: true } : { ...base, text: STUDY_PLACEHOLDER, placeholder: true, none: true }
-  if (!c || c.rehearsal) return { ...base, text: traceStandIn('Ghost', reveal.level), placeholder: true }
   return { ...base, text: 'Something was left behind.', trace: reveal, placeholder: false }
 }
 

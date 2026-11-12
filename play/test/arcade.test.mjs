@@ -3336,14 +3336,15 @@ test('G55 the Preview\'s samples: each is the moment its name says', () => {
 
 // ---- G56: the words ------------------------------------------------------------
 
-test('G56 the practice clue is the house\'s rehearsal stand-in, word for word (functions/lib/bagclues.js)', () => {
-  const bag = src('../../functions/lib/bagclues.js')
-  const short = /export const CAT_SHORT = (\{[^}]*\})/.exec(bag)
-  const fn = /export function bagStandIn\(cat, act = 2\) \{\s*return (`[^`]*`)/.exec(bag)
-  assert.ok(short && fn, 'bagStandIn and CAT_SHORT are where they were')
-  const bagStandIn = new Function('CAT_SHORT', 'cat', 'act', `return ${fn[1]}`)
-  assert.equal(STAND_IN_CLUE, bagStandIn(new Function(`return ${short[1]}`)(), 'boo', 4))
+test('G56 the practice page\'s clue is a note in brackets of the arcade\'s own; no night ever deals one (a practice night deals Boo\'s real line since 11 Nov 2026)', () => {
   assert.equal(STAND_IN_CLUE, "[Boo's bag clue about the Ghost appears here]")
+  // the house's own stand-in is gone: on a night, a practice night too, the Mac shows what the arcadeClue
+  // callable sends, and the server has no line in square brackets left to send
+  const bag = src('../../functions/lib/bagclues.js')
+  assert.ok(!bag.includes('bagStandIn') && !bag.includes('appears here'), 'no stand-in in the bag clue engine')
+  for (const file of ['deal.js', 'act4.js', 'station.js', 'screen.js']) assert.ok(!/appears? here\]|StandIn|STAND_IN/.test(src(`../../functions/lib/${file}`)), `${file} deals no stand-in`)
+  // and the page shows its note only with no night behind it (the practice page, the workshop's preview)
+  assert.ok(src('../src/lib/arcade.js').includes("clue: a.stage !== 'clue' ? null : a.night ? a.clues?.[a.turn] ?? CLUE_WAIT : STAND_IN_CLUE,"))
 })
 
 test('G56 Jon\'s two lines, word for word, where he wants them', () => {

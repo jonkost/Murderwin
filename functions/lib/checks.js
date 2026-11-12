@@ -48,6 +48,7 @@ export const CHECK_NAMES = {
   G53: 'Every bulletin 2 line, at every level, points at the real family',
   G61: 'The news flash always has its line, a wrong family crossed off',
   G59: 'Every guest gets a real line from every cat, and the Study a real trace',
+  F28: 'A practice night shows real lines, never a note in brackets',
   L01: 'No sealed file in the repo or its history',
   L06: 'The bag packing is not in the repo',
   L08: 'Sir Irwin\'s prompts never contain a clue word',

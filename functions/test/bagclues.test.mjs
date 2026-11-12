@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  BAG_LINES, BAG_CATS, wordBags, clueWords, wrongWords, bagPlan, bagLine, fillLine, templateOf, salemStraight, bagStandIn, unfilled,
+  BAG_LINES, BAG_CATS, wordBags, clueWords, wrongWords, bagPlan, bagLine, fillLine, templateOf, salemStraight, unfilled,
   PROMPTS, PROMPT_EVERY_MS, promptOrder, promptAt, promptsWithClueWords,
 } from '../lib/bagclues.js'
 
@@ -45,9 +45,23 @@ test('the lines: five rungs per cat in both acts; a blank is ___ or a sense; run
   }
   assert.equal(fillLine('Something ___ in it. You would [sense:verb] it, by [sense], with your [sense:organ].', { word: 'minty', sense: 'smell' }), 'Something minty in it. You would smell it, by smell, with your nose.')
   assert.equal(fillLine('If you [sense:verb] it.', { sense: 'sound' }), 'If you hear it.')
-  assert.equal(bagStandIn('salem', 2), "[Salem's bag clue about the Murderer appears here]")
-  assert.equal(bagStandIn('boo', 4), "[Boo's bag clue about the Ghost appears here]")
   assert.equal(unfilled('Off my lawn. Fine. The bag? Something ___ in it. Now git.'), 'Off my lawn. Fine. The bag? Now git.')
+})
+
+test('F28 with no packing for the bag every cat still says a line of its own, at every rung, with no blank and no note in brackets; it names no word', async () => {
+  // the rehearsal stand-in ("[Salem's bag clue about the Murderer appears here]") is gone (11 Nov 2026)
+  assert.equal((await import('../lib/bagclues.js')).bagStandIn, undefined)
+  for (const plan of [null, undefined, bagPlan(null, { bag: 3, inPlay: [1, 2, 3] }), bagPlan({ words: {} }, { bag: 3, inPlay: [1, 2, 3] }), { truth: null, wrong: null, sense: null }]) {
+    for (const cat of BAG_CATS) for (const act of [2, 4]) for (let rung = 1; rung <= 5; rung++) {
+      const line = bagLine(plan, { cat, act, rung, seed: 'none' })
+      assert.ok(typeof line.text === 'string' && line.text.length > 10, `${cat} act ${act} rung ${rung}: a line`)
+      assert.ok(!/___|\[|\]/.test(line.text), `${cat} act ${act} rung ${rung}: no blank, no bracket`)
+      assert.deepEqual([line.word, line.sense, line.right], [null, null, null], 'nothing is named')
+    }
+  }
+  // the words are the cat's own, minus the sentence that would have named something
+  assert.equal(bagLine(null, { cat: 'salem', act: 2, rung: 5 }).text, unfilled(templateOf('salem', 2, 1)))
+  assert.equal(bagLine(null, { cat: 'granolia', act: 2, rung: 5 }).text, templateOf('granolia', 2, 2), 'the highest rung of hers that names nothing')
 })
 
 test('G41 and G43 every clue word a cat names sits in two or three of the bags in play, never one; G39 a true word is in the bag it is about', () => {

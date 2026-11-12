@@ -10,16 +10,29 @@ import { NEWS_FLASH_PLACEHOLDER, NEWS_QUIET } from '../../functions/lib/screen.j
 import { STUDY_PLACEHOLDER, STUDY_QUIET } from '../../functions/lib/station.js'
 import { ROUND_SIZES } from '../../functions/lib/relay-bank.js'
 import { CHARACTERS } from '../../functions/lib/night.js'
+import { BAG_LINES, BAG_CATS } from '../../functions/lib/bagclues.js'
+import { NEWS } from '../../functions/lib/news.js'
+import { CAT_LINES } from '../../functions/lib/cats.js'
 
 // The fake players print counts, keys and act names and nothing a phone was
 // dealt. These are the strings a leak would carry; none may reach the output.
+// A practice night deals real lines since 11 Nov 2026, so the open banks'
+// own words are here too: the cats' hint lines and bag lines, both bulletins'
+// family lines, the trace card's words.
+const opening = text => String(text).slice(0, 24)
+const BANK_TEXT = [
+  ...[2, 4].flatMap(act => BAG_CATS.flatMap(cat => BAG_LINES[`act${act}`][cat].map(opening))),
+  ...Object.values(NEWS.bulletin1.families).map(l => opening(l.text)), ...Object.values(NEWS.bulletin2.families).flat().map(l => opening(l.text)),
+  ...Object.values(CAT_LINES.salem.act2).flatMap(p => [opening(p.was), opening(p.wasnt)]), ...Object.values(CAT_LINES.boo.levels).map(opening), ...Object.values(CAT_LINES.boo.family4).map(opening),
+  ...Object.values(CAT_LINES.zimothy.levels).map(opening), ...Object.values(CAT_LINES.granolia.levels).map(opening),
+].filter(s => s.length >= 12 && !s.startsWith('['))
 const CARD_TEXT = [
   'Rehearsal', 'Synthetic',
   ...Object.values(NOTICES).map(n => n.text),
   ...Object.values(ROLE_CARDS),
   ...Object.values(DIRECTIONS), ...Object.values(REWARD_LINES).flatMap(r => [r.done.slice(0, 30), r.capped.slice(0, 30)]), ...FREE_TIME_TIPS,
   STUDY_PLACEHOLDER, HINT_PLACEHOLDER, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET, STUDY_QUIET, HINT_QUIET.replace('[CAT]', '').trim(), ...Object.values(LIGHTS_TEXT).map(l => l.text.slice(0, 30)),
-  'From the Library', 'Cross it off', "bag clue about the", "motive hint appears here",
+  'From the Library', 'Cross it off', 'Something was left behind', ...BANK_TEXT,
 ]
 
 function assertClean(text) {
@@ -42,6 +55,22 @@ function readsOf(db) {
   const get = db._get.bind(db)
   db._get = path => { paths.add(path); return get(path) }
   return paths
+}
+
+// Every path under sealed/ the night touches, by any road the stand-in
+// Firestore has: a read, a scan of the collection, a write, an update, a
+// delete. Paths only, never what is there. An empty collection scans without
+// a read, so the tests put a throwaway doc at every sealed path as well.
+function sealedTouches(db) {
+  const touched = []
+  const note = (how, path) => { if (String(path) === 'sealed' || String(path).startsWith('sealed/')) touched.push(`${how} ${path}`) }
+  for (const m of ['_get', '_set', '_update', '_delete']) {
+    const real = db[m].bind(db)
+    db[m] = (path, ...rest) => { note(m.slice(1), path); return real(path, ...rest) }
+  }
+  const collection = db.collection.bind(db)
+  db.collection = name => { note('scan', name); return collection(name) }
+  return touched
 }
 
 // Throwaway stand-ins for the party's three secrets (the cats' leans, the
@@ -74,22 +103,32 @@ function syntheticSecrets() {
 // (a trace with no look-alike among the guests, more likely since the hosts play the Professors)
 const caseLine = (l, kind) => l === `Case: ${kind}` || l === `Case: ${kind}; warning: one trace at the party has no look-alike among the guests`
 
-test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass the seal, and the night is gone afterwards', async () => {
+test('F01, F24, F28 and L03 eight fake phones walk a whole practice night: real lines everywhere, no note in square brackets, nothing sealed touched, the seal passed, and the night is gone afterwards', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true }) // the box is ticked, and still ignored without --real-secrets
-  for (const [path, data] of Object.entries(syntheticSecrets())) db.store.set(path, data) // there, and a rehearsal never reads them
+  const secrets = syntheticSecrets()
+  for (const [path, data] of Object.entries(secrets)) db.store.set(path, data) // there, and a practice night never touches them
   const reads = readsOf(db)
+  const touched = sealedTouches(db) // from before the night is made
   const { result: summary, lines } = await captured(log => fakeNight({ db, log }))
   const out = lines.join('\n')
   assertClean(out)
   assert.equal(summary.ok, true, out)
-  assert.equal(summary.rehearsal, true, 'stand-ins unless --real-secrets')
+  assert.equal(summary.rehearsal, true, 'a practice night unless --real-secrets')
   // the deal is random: a trace with no look-alike at the party is the only warning a night may carry
   assert.ok(lines.some(l => caseLine(l, 'rehearsal')), 'Case: rehearsal')
-  // a rehearsal reads no lean, no picture and no motive set; the packing only
-  // for its count of bags when the night is made (night.js packedBagCount), never for a clue
-  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'a rehearsal reads nothing else sealed')
+  // a practice night reads no lean, no picture and no packing, not even its count of bags (handoff
+  // 11 Nov 2026, job A3): nothing under sealed/ is read, scanned or written, from before the night is made
+  assert.deepEqual(touched, [], 'a practice night touches nothing sealed')
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed')), [], 'and reads nothing sealed')
+  for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is as it was')
   assert.ok(lines.includes('Party secrets used: the cats\' leans for 0 sets, the packing on 0 of 64 bag clues, the picture bank for 0 of 3 drawing rounds'))
+  // F28: every card, notice and screen document, at eight looks through the night: no square bracket in any string
+  assert.equal(summary.text.brackets, 0, 'no note in square brackets on any phone or room screen')
+  assert.deepEqual(summary.text.where, [])
+  assert.equal(summary.text.looks, 8, 'the news, the cats, bulletin 2, Act 4, Sir Irwin, the door, the reveal and the end')
+  assert.ok(summary.text.strings > 15_000, `the looks read the night's words (${summary.text.strings} strings)`)
+  assert.ok(lines.some(l => /^Real lines \(F28\): PASS, no square bracket in [\d,]+ strings, 8 looks at the phones and the room screens$/.test(l)))
   assert.equal(summary.error, null)
   for (const act of [1, 2, 3, 4, 5, 6, 7]) assert.ok(lines.some(l => l.startsWith(`Act ${act}, `)), `one line for act ${act}`)
   assert.equal(lines.filter(l => /^Act \d, /.test(l)).length, 7, 'exactly one line per act')
@@ -150,6 +189,27 @@ test('--real-secrets is a party night as a dry run: it reads the leans, the pack
   assert.equal(keysUnder(db, 'nights/').length, 0)
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is untouched')
   assert.deepEqual(summary.seal.failed, [], 'no public doc carried a recording by its name')
+  assert.equal(summary.text.brackets, 0, 'F28 the party night shows no note in square brackets either')
+})
+
+test('F28 has teeth: a note in square brackets on a card fails the night, and the fake players name the place, never the words', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  // a line with a stand-in left in it, the way a rehearsal's cards carried one until 11 Nov 2026: here the bag peek's notice
+  db.store.set('safe_content/ui_copy', { items: [{ id: 'x1', text: 'NOTICE PEEK: [Synthetic stand-in appears here]', deleted: false, order: 0 }] })
+  const { result: summary, lines } = await captured(log => fakeNight({ db, log }))
+  const out = lines.join('\n')
+  assertClean(out)
+  assert.ok(!out.includes('appears here'), 'the words are never printed')
+  assert.equal(summary.ok, false)
+  assert.equal(summary.error, null, 'the night ran to its end')
+  // the news look comes before the notice is dealt; every look after it finds the card on all eight phones
+  assert.deepEqual(summary.checks, ['F28:cats', 'F28:bulletin', 'F28:act4', 'F28:irwin', 'F28:door', 'F28:reveal', 'F28:end'])
+  assert.equal(summary.text.brackets, 7 * PHONES)
+  assert.deepEqual(summary.text.where, ['card:notice.text'], 'a field name, not a word of the card')
+  assert.ok(lines.some(l => /^Real lines \(F28\): FAIL, 56 of [\d,]+ strings hold a square bracket \(card:notice\.text\), 8 looks at the phones and the room screens$/.test(l)))
+  assert.ok(lines.some(l => l === 'Checks: FAIL F28:cats F28:bulletin F28:act4 F28:irwin F28:door F28:reveal F28:end'))
+  assert.equal(lines.at(-1), 'FAIL')
 })
 
 test('F02 and G05 the two host seats play the Professors and are played by bots like every other seat; every seat lands Murderer and Ghost about equally often', async () => {

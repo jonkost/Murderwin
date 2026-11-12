@@ -111,7 +111,7 @@ test('G11 and G12 pickPartner: in play only, never the excluded trace, Professor
   assert.equal(pickPartner('coffee', ['elbow-patch']), 'elbow-patch', 'a Professor when nobody else fits')
 })
 
-test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
+test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a practice night shows the picture too, never a note in brackets', async () => {
   for (const [dial, rehearsal] of [[0, false], [9, false], [-9, false], [-4, false], [4, false], [0, true], [9, true]]) {
     const { db, nightId } = await party(8)
     const t = { now: 5_000_000 }
@@ -135,15 +135,14 @@ test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hal
       const inPlay = Object.values(night(db, nightId).roster).map(x => CHARACTERS.find(ch => ch.id === x.characterId).trace)
       assert.ok(inPlay.includes(doc.partner))
     } else assert.equal(doc.partner, null)
-    assert.equal(doc.placeholder, rehearsal)
+    assert.equal(c.rehearsal, rehearsal)
+    assert.equal(doc.placeholder, false, 'a practice night plays for real (11 Nov 2026)')
     // what the room screens read carries only what the level allows: the dial's work is not undone by one read
     const pub = db.store.get(`nights/${nightId}/public/trace`)
     assert.equal(pub.level, doc.level)
     assert.ok(!('partner' in pub), 'the public doc never says which picture is the real one')
-    if (rehearsal) {
-      assert.equal(pub.standIn, `[the Murderer's trace, level ${doc.level}]`)
-      assert.ok(!('trace' in pub) && !('images' in pub), 'a rehearsal never shows the picture (Jon, 23 Oct)')
-    } else if (doc.level === 3) {
+    assert.ok(!('standIn' in pub) && pub.placeholder === false && !Object.values(pub).some(v => typeof v === 'string' && /[[\]]/.test(v)), 'no stand-in on any night: the picture, at its level')
+    if (doc.level === 3) {
       assert.ok(!('trace' in pub), 'at level 3 the public doc never says which of the two is the real one')
       assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
     } else {

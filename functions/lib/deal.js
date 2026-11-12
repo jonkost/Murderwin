@@ -24,10 +24,9 @@ import { readFileSync } from 'node:fs'
 import { dirname, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MOTIVES, NightError, readArea, characterById, CHARACTERS, noteMissingLine } from './night.js'
-import { traceStandIn } from './station.js'
 import { buildCase, rehearsalCase } from './case.js'
-import { readPacking } from './bags.js'
-import { bagPlan, bagLine, bagStandIn, CAT_SHORT } from './bagclues.js'
+import { packingFor } from './bags.js'
+import { bagPlan, bagLine } from './bagclues.js'
 import { pushDial, parityCheck, fillerLine, GRACE_MS } from './windows.js'
 import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlour.js'
 import { LEANS_DOC } from './steward.js'
@@ -294,20 +293,20 @@ export const SUPPER_NOTE = { title: "Supper's ready!", text: "The cats you haven
 
 // The motive hint and the bag clue on a cat's card. A case with no family for
 // the guest (or a cat with no line) carries this marked stand-in, which names
-// nothing. On a rehearsal night every sealed slot shows a bracketed stand-in
-// saying what would show there (Jon, 23 Oct 2026), never a filled line.
+// nothing. A practice night shows the cat's real line, from that night's own
+// throwaway case, exactly as the party night does (Jon, 11 Nov 2026: "I want
+// actual clues... I don't want the insert text"; the bracketed stand-ins of
+// 23 Oct are gone).
 // On the party night a missing line never shows the house's note (card 529):
 // the guest reads the house's plain words, HINT_QUIET (the question
 // quietWords on the board), and greetGuest tells the Host tab. Either way the
 // hint is marked `none`. The checks make sure it never happens (G59).
 export const HINT_PLACEHOLDER = '(Here the cat would rule something out.)'
 export const HINT_QUIET = '[CAT] has nothing to tell you about the motive.'
-export function hintStandIn(cat) { return `[${CAT_SHORT[cat] ?? 'The cat'}'s motive hint appears here]` }
 export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [], bonusFamilies = null } = {}) {
   let line = null
   try { line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude, bonusFamilies }) : null } catch { line = null } // a hole in the bank is a missing line
   if (!line?.text) return { hint: c && !c.rehearsal ? { text: HINT_QUIET.replace('[CAT]', CAT_NAMES[cat] ?? 'The cat'), placeholder: false, none: true } : { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
-  if (c?.rehearsal) return { hint: { text: hintStandIn(cat), placeholder: true }, ruled: { families: line.families, motives: line.motives } }
   return { hint: { text: line.text, placeholder: false }, ruled: { families: line.families, motives: line.motives } }
 }
 
@@ -432,10 +431,11 @@ export function allSeen(state) {
   return p.total > 0 && p.done === p.total
 }
 
-// What the cats' bag clues read on the night: the packing, only on the party
-// (a rehearsal never reads it), and the bags the guests at the party hold.
+// What the cats' bag clues read on the night: the night's packing (bags.js
+// packingFor decides which: the sealed one on the party night only, never on a
+// practice night), and the bags the guests at the party hold.
 async function bagContext(db, c, roster) {
-  const packing = c && !c.rehearsal ? await readPacking(db) : null
+  const packing = await packingFor(db, c)
   const inPlay = [...new Set(Object.values(roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
   return { packing, inPlay }
 }
@@ -483,15 +483,11 @@ async function greetGuest(db, nightId, { c, g, cat, act, beat, bags = null, rost
   }
   const family = familyForCat(families, { cat, seed: `${salt}\u0000${g.key}` })
   const { hint, ruled } = hintLine(c, family, { cat, level, act: 2, seed: `${salt}\u0000${g.key}\u0000${cat}`, bonusFamilies: [...families, ...(c?.solving?.newsOut ?? [])] })
-  // the bag clue: from the packing on the party night, a stand-in on a rehearsal
-  let bag
-  let fill = null
-  if (!c || c.rehearsal) bag = { text: bagStandIn(cat, 2), placeholder: true }
-  else {
-    const plan = bagPlan(bags?.packing, { bag: roster?.[c.murderer]?.bag, inPlay: bags?.inPlay ?? [], seed: `${salt}\u0000bag\u0000${g.key}` })
-    fill = bagLine(plan, { cat, act: 2, rung: level, seed: `${salt}\u0000bag\u0000${g.key}\u0000${cat}` })
-    bag = { text: fill.text, placeholder: false }
-  }
+  // the bag clue about the Murderer, from the night's packing (bagContext) on every night. With no
+  // packing for that bag the cat says its own line with no clue word in it (bagclues.bagLine)
+  const plan = c ? bagPlan(bags?.packing, { bag: roster?.[c.murderer]?.bag, inPlay: bags?.inPlay ?? [], seed: `${salt}\u0000bag\u0000${g.key}` }) : null
+  const fill = bagLine(plan, { cat, act: 2, rung: level, seed: `${salt}\u0000bag\u0000${g.key}\u0000${cat}` })
+  const bag = { text: fill.text, placeholder: false }
   const dealt = await dealCard(db, g.uid, catHintCard({ id: `${act}-${beat}-cat-${cat}`, act, beat, cat, hint, bag, note }))
   if (!dealt) return false
   if (hint.none) await noteMissingLine(db, nightId, 'hint') // the Host tab is told: a count, never which cat or guest (card 529)
@@ -499,7 +495,7 @@ async function greetGuest(db, nightId, { c, g, cat, act, beat, bags = null, rost
   // what the line rules out, for the solver checks (families.roomClues); case only, never a phone
   if (ruled && c?.solving) patch[`solving.ruled.${g.key}-${cat}`] = ruled
   // what the bag clue named, for the bag checks (G39, G41, G44, G46, G49); case only
-  if (fill) patch[`bagClues.act2.${g.key}.${cat}`] = { rung: level, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null }
+  if (c) patch[`bagClues.act2.${g.key}.${cat}`] = { rung: level, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null }
   if (Object.keys(patch).length) await db.doc(`cases/${nightId}`).update(patch)
   if (family) await noteDealt(db, nightId, { kind: 'hint', act, beat, key: g.key }) // the ledger: a hint is out (safeguards)
   return true
@@ -1044,16 +1040,16 @@ export async function revealTrace(db, nightId, { now = Date.now(), force = false
   const victimTrace = traceOf(roster[c.ghost]?.characterId)?.trace ?? null
   // the look-alike is never the Ghost's own trace: the study shows that one (G36)
   const { level, partner } = workReveal({ owner: murdererChar, inPlay, exclude: [victimTrace].filter(Boolean), dial: c.dial, pick: await nightPickOf(db, nightId, 'trace') })
-  const base = { level, placeholder: !!c.rehearsal, at: new Date(now), irwinLine: irwinTraceLine(level, labelled(await readArea(db, 'ui_copy'))) } // Irwin hosts the reveal (hosts.js); the workshop's HOST IRWIN TRACE lines win
+  const base = { level, placeholder: false, at: new Date(now), irwinLine: irwinTraceLine(level, labelled(await readArea(db, 'ui_copy'))) } // Irwin hosts the reveal (hosts.js); the workshop's HOST IRWIN TRACE lines win
   const full = {
     ...base, trace: murdererChar.trace,
     label: level === 5 ? murdererChar.traceLabel : null,
     partner: level === 3 ? partner : null,
   }
   // Any phone can read public/*, so the public doc carries only what the
-  // level allows the room to see (traces.shownReveal). On a rehearsal night
-  // the slot is a bracketed stand-in at that level, never the picture (Jon, 23 Oct 2026).
-  const shown = c.rehearsal ? { ...base, standIn: traceStandIn('Murderer', level) } : { ...base, ...shownReveal({ level, trace: full.trace, label: full.label, partner }) }
+  // level allows the room to see (traces.shownReveal). A practice night shows
+  // the picture too, from its own throwaway case (Jon, 11 Nov 2026).
+  const shown = { ...base, ...shownReveal({ level, trace: full.trace, label: full.label, partner }) }
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}/private/trace`), full)
   batch.set(ref, shown)

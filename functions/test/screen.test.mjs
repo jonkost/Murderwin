@@ -11,10 +11,11 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, NEWS_STAND_IN, BULLETIN2_STAND_IN, JOIN_CARDS,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
+import { irwinOptions, irwinCount } from '../lib/families.js'
 
 // Everything here is a throwaway: the dealer's own rehearsal case in a fake
 // Firestore, and bracketed stand-ins made in the test. Nothing is printed.
@@ -263,13 +264,17 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal((await currentSound(db, nightId)).id, 'blackout', 'the blackout\'s sound stays the last: the power has none')
   assert.deepEqual(await host('power'), { ok: true, already: true })
 
-  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off;
-  // on a rehearsal night the family's line is a bracketed stand-in and its recording is not played
+  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off.
+  // A practice night plays it whole (11 Nov 2026): the family's own line, and its recording with the
+  // other two. Compared here with the bank, never printed.
   await next() // news
   const news = screen()
   assert.equal(news.kind, 'news')
   const c2 = db.store.get(`cases/${nightId}`)
-  assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS_STAND_IN, NEWS.bulletin1.signoff.text])
+  assert.equal(c2.rehearsal, true)
+  const crossed = NEWS.bulletin1.families[c2.solving.newsOut[0]]
+  assert.ok(news.lines.length === 3 && news.lines[0] === NEWS.bulletin1.opening.text && news.lines[1] === crossed.text && news.lines[2] === NEWS.bulletin1.signoff.text, 'the opening, the crossed-off family\'s own line, the sign-off')
+  assert.ok(!news.lines.some(l => /[[\]]/.test(l)), 'no note in brackets')
   assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
   assert.ok(!news.video, 'with Show the words instead ticked, the bulletin is the recordings with the words on screen')
@@ -277,7 +282,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.deepEqual(news.captions.lines, news.lines)
   const newsSound = await currentSound(db, nightId)
   assert.equal(newsSound.id, 'chime-news')
-  assert.deepEqual(newsSound.clips, ['newsflash-opening', 'newsflash-signoff'])
+  assert.ok(newsSound.clips.length === 3 && newsSound.clips[0] === 'newsflash-opening' && newsSound.clips[1] === crossed.clip && newsSound.clips[2] === 'newsflash-signoff', 'all three recordings, the family\'s own in the middle')
   assert.ok(!newsSound.video, 'the brain plays the recordings')
   await next() // peek: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
@@ -321,9 +326,13 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(bulletin.kind, 'bulletin')
   const c = db.store.get(`cases/${nightId}`)
   const level = Math.min(5, Math.max(1, 3 + Math.sign(c.dial) * Math.round(Math.abs(c.dial) / 4)))
-  assert.deepEqual(bulletin.lines, [NEWS.bulletin2.opening.text, BULLETIN2_STAND_IN(level), NEWS.bulletin2.signoff.text], 'a rehearsal: the real family\'s slot, at the dial, as a stand-in')
+  // a practice night plays it whole (11 Nov 2026): the real family's own line at the dial's level, and its recording
+  const real = NEWS.bulletin2.families[c.solving.family][level - 1]
+  assert.ok(bulletin.lines.length === 3 && bulletin.lines[0] === NEWS.bulletin2.opening.text && bulletin.lines[1] === real.text && bulletin.lines[2] === NEWS.bulletin2.signoff.text, 'the opening, the real family\'s line at the dial\'s level, the sign-off')
+  assert.ok(!bulletin.lines.some(l => /[[\]]/.test(l)), 'no note in brackets')
   assert.equal((await currentSound(db, nightId)).id, 'sounder-bulletin')
-  assert.equal((await currentSound(db, nightId)).clips.length, 2, 'the opening and the sign-off; never the family\'s recording on a rehearsal')
+  const b2 = (await currentSound(db, nightId)).clips
+  assert.ok(b2.length === 3 && b2[0] === NEWS.bulletin2.opening.clip && b2[1] === real.clip && b2[2] === NEWS.bulletin2.signoff.clip, 'all three recordings, the family\'s own in the middle')
   for (const uid of Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)) assert.ok(db.store.get(`sessions/${uid}`).cards.some(x => x.key === 'bulletin'), 'every phone hears about it')
   await host('tick')
   assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
@@ -374,9 +383,15 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
   assert.ok(Object.values(IRWIN_OPTION_LINES).includes(irwin.lines[1]), 'the countdown line straight after the opener')
   assert.equal('irwin' in db.store.get(`cases/${nightId}`), false, 'the case carries no Irwin lines at all')
-  assert.equal(irwin.choices.length, 1, 'a rehearsal: one stand-in for the cards')
-  assert.match(irwin.choices[0].rhyme, /^\[Sir Irwin's [1-5] motive cards? appear here\]$/)
+  // a practice night shows his real cards (11 Nov 2026): the motives the case gives him at the dial's band,
+  // in number order with their rhymes, the real one among them. Worked out here from the case, never printed.
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
+  const c5 = db.store.get(`cases/${nightId}`)
+  const cards5 = irwinOptions(c5, { band: irwin.mood, seed: c5.screenSalt })
+  assert.equal(irwin.choices.length, irwinCount(irwin.mood), 'five cards at dial 1 down to one at dial 5')
+  assert.ok(irwin.choices.every((x, i) => x.n === cards5[i] && x.rhyme === MOTIVES.find(m => m.n === x.n)?.rhyme), 'his motive cards, as the case deals them')
+  assert.ok(irwin.choices.some(x => x.n === c5.motive), 'the real motive is always among them')
+  assert.ok(!irwin.choices.some(x => /[[\]]/.test(x.rhyme)) && !irwin.captions.lines.some(l => /[[\]]/.test(l)), 'no note in brackets, on the TV or in the captions')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {
     if (!Object.values(IRWIN_OPTION_LINES).includes(l)) assert.ok(l.split(' ').length <= 12, 'his own lines stay short; the countdown line is kept whole')

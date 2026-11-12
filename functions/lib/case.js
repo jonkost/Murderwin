@@ -11,9 +11,10 @@
 // CASE_SHAPE: the contract every consumer reads (the dealer, the windows
 // engine, the room screens, the finale, the safeguards). cases/{nightId} =
 // {
-//   rehearsal: boolean          true on a rehearsal night (the leans, the bags
-//                               clue's packing and the drawing pictures are never
-//                               read; createNight still reads the bag count)
+//   rehearsal: boolean          true on a practice night: nothing sealed is read
+//                               (not the leans, the packing or its bag count, nor
+//                               the drawing pictures), and every clue is the real
+//                               line from this throwaway case (11 Nov 2026)
 //   createdAt: Date
 //   roles: { guestKey: 'detective' | 'murderer' | 'ghost' }
 //   murderer: guestKey | null

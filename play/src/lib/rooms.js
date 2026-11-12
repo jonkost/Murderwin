@@ -29,7 +29,9 @@ export function promptShown(prompts, now) {
 
 // Bulletin 1's parts, from the words on the screen: each line found in the
 // open bank (seed/woof-news.json) by its text. A line the bank does not have
-// (a rehearsal's stand-in) has no video and is skipped.
+// (the house's plain words where a family's line is missing) has no video
+// and is skipped. A practice night's bulletin carries the family's own line,
+// so all three parts play (11 Nov 2026).
 export function newsClips(lines = []) {
   const parts = [news.bulletin1.opening, ...Object.values(news.bulletin1.families), news.bulletin1.signoff]
   return lines.map(t => parts.find(p => p.text === t)?.clip).filter(Boolean)
