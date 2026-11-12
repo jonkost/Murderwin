@@ -264,6 +264,11 @@ is in its place:
    rehearsal; ticked, it says Start the REAL night, and it only works on the
    party day. If an old night is still on, the same button is at the bottom
    of its Host tab under A fresh night.
+   On a practice night the card also has **Fill-in players**: tap plus for up
+   to eight seats with no phone, so two of you can play a full-size night
+   (see "Fill-in players" under Rehearsing, below). It starts at nought every
+   time. Tick the real-night box and the row is gone: the real night never
+   has one.
 2. Type your name. The Host tab opens with *Send each screen its page*: tap
    Send beside a room, pick AirDrop, pick that room's machine. Its page opens
    there. Click once on it and it goes full screen. A dot turns on beside the
@@ -848,6 +853,43 @@ job. The Host tab says "This night is a rehearsal".
 
 Cards are dealt once. A practice night that was already running when this
 was published keeps the cards it had, so start a fresh one.
+
+*Fill-in players (11 Nov, a practice night only).* On the Start card, with
+the real-night box unticked, tap plus beside **Fill-in players** for up to
+eight extra seats (six is the practice night's plan: you, Susan and six
+fill-ins make eight). Their names are Mabel, Gus, Dot, Walt, Pearl, Otis,
+then Hazel and Ned. Each one is a real seat with no phone: a character, a
+bag number, and any role by the same deal as everyone, so a fill-in can be
+the Murderer or the Ghost, and all of them are names in the vote and the
+reveal. Your Host tab lists them under Who is here, marked "fill-in", with
+no dot and no **Hand this phone on** (there is no phone), and one line above
+the list says how many there are.
+
+The night never waits for a fill-in:
+
+- The cats in Act 2 call only the people with phones, so supper comes when
+  you have all seen the four cats.
+- Locked in counts only the people with phones, so Act 4's rounds start
+  when you have all tapped it.
+- In Act 4 the people with phones share one group and walk the four rooms
+  together (up to three of you; from four you are split as on any night).
+  The fill-ins make up the other groups. No room's screen is ever set for a
+  fill-in group, and each of those groups is paid its reward at the chime,
+  like any group that did not finish.
+- The drawing calls only the people with phones to the paper.
+- A Parlour Game or the vote picks for a fill-in when it closes, as it does
+  for any phone that did not answer.
+
+A fill-in never speaks, so nobody can ask one what a cat said or look in its
+bag: on a fill-in night the motive is worked out from the bulletins, your
+own cats, your own Library cross-off and Sir Irwin's cards. That is right
+for a practice. If a guest does turn up, they can type a fill-in's name on
+the join screen and take that seat, character, cards and all; the names are
+not on the tap list, so nobody takes one by accident.
+
+The real night can never have a fill-in: the row is hidden with the box
+ticked and from the party day on, the server throws the number away on a
+real night, and it refuses to seat one on any night that is not a practice.
 
 *Playing a rehearsal again.* Every rehearsal is dealt from a seed word,
 like tulip-4471. The Game night page's "Play a rehearsal again" lists the

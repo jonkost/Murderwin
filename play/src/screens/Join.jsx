@@ -9,7 +9,9 @@ export default function Join({ night, ui, notice = null }) {
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const roster = Object.values(night.roster ?? {}).sort((a, b) => a.name.localeCompare(b.name))
+  // the names to tap are the guests with a phone: a practice night's fill-in players are never offered,
+  // so nobody takes one's seat by a stray tap (11 Nov 2026; every guest, on any other night)
+  const roster = Object.values(night.roster ?? {}).filter(r => r?.fillIn !== true).sort((a, b) => a.name.localeCompare(b.name))
 
   const go = async (chosen) => {
     const n = (chosen ?? name).trim()

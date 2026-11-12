@@ -1268,6 +1268,11 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .start-go { width: 100%; min-height: 4.5rem; font-size: 1.5rem; font-weight: 700; }
 .start-real { display: flex; align-items: center; gap: 0.7rem; font-size: 1.15rem; min-height: 2.75rem; cursor: pointer; }
 .start-real input { width: 1.6rem; height: 1.6rem; }
+/* Fill-in players (11 Nov 2026): a practice night only. Name, minus, the count, plus. */
+.start-fill { display: flex; align-items: center; justify-content: center; gap: 0.7rem; font-size: 1.15rem; min-height: 2.75rem; }
+.start-fill-name { margin-right: 0.3rem; }
+.start-fill .chip { min-width: 2.75rem; min-height: 2.75rem; font-size: 1.4rem; line-height: 1; }
+.start-fill-count { min-width: 1.4rem; text-align: center; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
 .start-note { margin: 0; color: var(--dim); font-size: 0.95rem; text-align: center; }
 .send-screens { margin: 0.8rem 0; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--card); }
 .send-screens summary { font-weight: 700; font-size: 1.1rem; min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; }
