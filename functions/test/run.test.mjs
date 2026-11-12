@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
 import { createNight, join, MOTIVES, hostCommand as baseCommand } from '../lib/night.js'
-import { hostCommand, nextOf, prevOf, firstBeat, player, BLACKOUT_POWER_MS } from '../lib/run.js'
+import { hostCommand, nextOf, prevOf, firstBeat, player, BLACKOUT_POWER_MS, BLACKOUT_LEAD_MS } from '../lib/run.js'
 import {
   NIGHT, beatsOf, ms, openWindow, runAction,
 } from '../lib/deal.js'
@@ -67,7 +67,7 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   // returns on its own: roles land, held on every phone the same way (25 Oct 2026, the cue list)
   const sleeps = []
   assert.deepEqual(await hostCommand(db, { nightId, command: 'blackout', now, sleep: ms => { sleeps.push(ms) } }), { ok: true, powerReturned: true })
-  assert.deepEqual(sleeps, [BLACKOUT_POWER_MS], 'five seconds of dark, waited on the server')
+  assert.deepEqual(sleeps, [BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS], 'the lead (the music stops first), then five seconds of dark, waited on the server (A1, 11 Nov 2026)')
   const n2 = night(db, nightId)
   assert.equal(n2.act, 2); assert.equal(n2.phase, 'prompt'); assert.equal(n2.beat, 'orient'); assert.equal(n2.rehearsal, true)
   const c = db.store.get(`cases/${nightId}`)
@@ -334,6 +334,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'green', 'green for the welcome through Act 1')
     let slept = null
     const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async waitMs => {
+      if (waitMs === BLACKOUT_LEAD_MS) { assert.equal(night(db, nightId).phase, 'act', 'the lead: the music stops, the dark is still to come'); return }
       slept = waitMs
       assert.equal(night(db, nightId).phase, 'blackout', 'dark while the server waits')
       assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, 'blackout', 'the blackout sound plays at the press')
@@ -343,7 +344,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     assert.equal(slept, BLACKOUT_POWER_MS)
     assert.equal(night(db, nightId).phase, 'prompt'); assert.equal(night(db, nightId).act, 2)
     for (const uid of Object.values(phones)) assert.equal(cards(db, uid, 'role').length, 1)
-    assert.equal(ms(db.store.get(`nights/${nightId}/private/parlour`).startedAt), now + BLACKOUT_POWER_MS, 'the power\'s moment is five seconds after the press')
+    assert.equal(ms(db.store.get(`nights/${nightId}/private/parlour`).startedAt), now + BLACKOUT_LEAD_MS + BLACKOUT_POWER_MS, 'the power\'s moment is five seconds after the dark, which is the lead after the press')
     assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
     assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, 'blackout', 'no power sound: the blackout\'s stays the last')
     assert.equal(db.store.get(`nights/${nightId}/public/screen`).kind, 'black', 'the TV stays dark through the prompt')
@@ -354,7 +355,7 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     const { db, nightId } = await party()
     const now = 5_000_000
     for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
-    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: () => hostCommand(db, { nightId, command: 'pause', now: now + 1000 }) })
+    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: waitMs => waitMs === BLACKOUT_POWER_MS && hostCommand(db, { nightId, command: 'pause', now: now + 1000 }) })
     assert.deepEqual(r, { ok: true, powerReturned: false })
     const n = night(db, nightId)
     assert.equal(n.phase, 'paused'); assert.equal(n.pausedFrom, 'blackout'); assert.equal(n.act, 1)
@@ -373,7 +374,8 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     const now = 6_000_000
     for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
     let byHand = null
-    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {
+    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async waitMs => {
+      if (waitMs !== BLACKOUT_POWER_MS) return
       byHand = await hostCommand(db, { nightId, command: 'power', now: now + 1000 })
     } })
     assert.deepEqual(byHand, { ok: true }, 'the hand press did the return')

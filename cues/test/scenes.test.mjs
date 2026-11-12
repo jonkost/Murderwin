@@ -62,8 +62,8 @@ test('the cue sheet (Jon\'s cue list, 25 Oct 2026), moment by moment, on the bea
     ['cue 3, characters and bags: the jazz and Default again', { night: night(1, 'introduce'), cues: { hall: 'green' } }, ['play jazz', 'scene Murderwin Default']],
     ['', { night: night(1, 'ready'), cues: { hall: 'green' } }, []],
     ['cue 4, the blackout: the music stops, every light off, the projector off', { night: night(1, 'ready', 'blackout'), cues: { hall: 'green' }, sounds: { current: { id: 'blackout', at: 2 } } }, ['stop', 'scene Murderwin Blackout', 'projector off']],
-    ['cue 5, the power returns: the jazz, Default, the projector on', { night: night(2, 'orient', 'prompt'), cues: red }, ['play jazz', 'scene Murderwin Default', 'projector on']],
-    ['Act 2 orient: no change', { night: night(2, 'orient'), cues: red }, []],
+    ['cue 5, the power returns: still silent through the role cards (A1, 11 Nov 2026), Default, the projector on', { night: night(2, 'orient', 'prompt'), cues: red }, ['stop again', 'scene Murderwin Default', 'projector on']],
+    ['Act 2 orient turns to act: the jazz comes back', { night: night(2, 'orient'), cues: red }, ['play jazz']],
     ['cue 6, bulletin 1 on the TV: the music cuts, the lights dim', { night: night(2, 'news'), cues: red, sounds: { current: { id: 'chime-news', at: 3, video: true } } }, ['stop', 'scene Murderwin Dimmed']],
     ['cue 7, to the investigation: the jazz returns, Default', { night: night(2, 'peek'), cues: red }, ['play jazz', 'scene Murderwin Default']],
     ['the cat visits: no change', { night: night(2, 'cat'), cues: red }, []],
@@ -119,7 +119,7 @@ test('the stop is sent again when the night moves on and the sheet still wants s
     ['the Blackout pressed from the rules: the stop once more, with the dark', { night: night(1, 'rules', 'blackout') }, ['stop again', 'scene Murderwin Blackout', 'projector off']],
     ['still dark: nothing', { night: night(1, 'rules', 'blackout') }, []],
     ['a pause in the dark is the same moment: nothing', { night: { act: 1, beat: 'rules', phase: 'paused', pausedFrom: 'blackout' } }, []],
-    ['the power returns: the jazz', { night: night(2, 'orient', 'prompt') }, ['play jazz', 'scene Murderwin Default', 'projector on']],
+    ['the power returns: still silent (A1, 11 Nov 2026), the stop once more', { night: night(2, 'orient', 'prompt') }, ['stop again', 'scene Murderwin Default', 'projector on']],
   ])
   assert.equal(s.moment, momentKey({ act: 2, beat: 'orient', phase: 'prompt' }))
   assert.equal(momentKey(null), null)

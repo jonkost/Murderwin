@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
-import { hostCommand, studyFinished, advanceRelay, guessRelay } from '../lib/run.js'
+import { hostCommand, studyFinished, advanceRelay, guessRelay, BLACKOUT_POWER_MS } from '../lib/run.js'
 import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
@@ -619,7 +619,8 @@ test('a pause before any screen, then a resume, leaves the beat\'s screen up and
   // 25 Oct 2026): the power does not come back on its own, the TV stays dark throughout, and after the
   // resume the night is still in the dark for Power returns by hand
   await host('next'); await host('next'); await host('next'); await host('next')
-  const dark = await host('blackout', undefined, { sleep: async () => {
+  const dark = await host('blackout', undefined, { sleep: async waitMs => {
+    if (waitMs !== BLACKOUT_POWER_MS) return // the lead before the dark (A1, 11 Nov 2026)
     assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
     await host('pause')
   } })
