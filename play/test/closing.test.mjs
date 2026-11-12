@@ -47,10 +47,10 @@ test('the dedication holds eight seconds after the roll, then the last card; emp
   assert.equal(finaleStage({ ...empty, holdAt: new Date(victimAt + LAST_AFTER_MS + 1_000) }, victimAt + 999_999), 'dedication')
 })
 
-test('the dedication card: the look\'s part, its photo only when the credits carry one; Special thanks shows nothing while empty', () => {
+test('the dedication card: the look\'s part, always its photo\'s address; Special thanks shows nothing while empty', () => {
   assert.equal(dedicationPhoto(DED, '/play/'), '/play/household/sydney.jpg')
-  assert.equal(dedicationPhoto({ line: 'x', photo: null }, '/play/'), null)
-  assert.equal(dedicationPhoto(null), null)
+  assert.equal(dedicationPhoto({ line: 'x', photo: null }, '/play/'), '/play/household/sydney.jpg', 'always an address: the part handles a missing file')
+  assert.equal(dedicationPhoto(null), '/household/sydney.jpg')
   const closing = src('screens/Closing.jsx')
   assert.ok(closing.includes("import { TheEnd, Dedication } from '../look/parts'"), 'the look\'s own parts')
   assert.ok(closing.includes('<Dedication line={d.line} photo={dedicationPhoto(d, BASE)} className="full" />'))

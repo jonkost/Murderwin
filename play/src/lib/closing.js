@@ -38,9 +38,11 @@ export function minutesText(seconds) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-// The dedication card's picture, for the look's Dedication part: the full
-// address when the credits carry one, else null (the words alone).
+// The dedication card's picture, for the look's Dedication part: always an
+// address (Sydney's photo unless the credits name another). The part leaves
+// its frame off by itself when the file will not load.
+export const DEDICATION_PHOTO = 'household/sydney.jpg'
 export function dedicationPhoto(dedication, base = '/') {
-  const p = String(dedication?.photo ?? '').trim()
-  return p ? `${base}${p}` : null
+  const p = String(dedication?.photo ?? '').trim() || DEDICATION_PHOTO
+  return `${base}${p}`
 }
