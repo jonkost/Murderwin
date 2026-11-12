@@ -42,7 +42,7 @@ see this tab.
 checks the real packing (PK1: ten bags of four or five, each pair in the bag it is listed for; G43: every bag has two clue words; PK2: with two bags
 sitting out, nearly every bag still keeps two clue words), the cats' leans
 (LN1: every question has a lean for every cat) and the drawing pictures
-(RP1: a good picture for each of the three rounds). Each line says PASS or FIX NEEDED, the check's number and its name, and a count for every check but PK1. Nothing it read is
+(RP1: a good picture for each of the three rounds, in the party bank and in the practice bank, and no party picture named like a practice one). Each line says PASS or FIX NEEDED, the check's number and its name, and a count for every check but PK1. Nothing it read is
 shown. Run it after packing and after any change to the leans; tell Jon
 "done" when every line says PASS, or "needs more" and the check's number.
 
@@ -115,7 +115,7 @@ and never touches a picture already there.
   log line is `steward <op>`, nothing else. Refusals are `NightError` codes
   `permission-denied`, `unauthenticated`, `invalid`, `no-doc`, mapped in
   `CODE_MAP`. `checks` (24 Oct) reads `sealed/bags`, `sealed/parlour_leans`,
-  `sealed/relay_pictures` and the scenarios list, runs `packingChecks`,
+  `sealed/relay_pictures`, `sealed/relay_pictures_practice` and the scenarios list, runs `packingChecks`,
   `leanChecks` and `pictureChecks` from `functions/lib/checks.js` (loaded
   lazily: `checks.js` reaches `act4.js`, which reaches `deal.js`, which
   imports `steward.js`), and returns `{ allPass, results: [{ id, name, pass,
@@ -131,11 +131,11 @@ and never touches a picture already there.
 - The blind scripts: `generate-leans.mjs` (`sealed/parlour_leans`, fills
   blanks only, so the Steward's leans survive), `pack-bags.mjs` (`sealed/bags`,
   refuses to replace without `--repack`) and `generate-relay-pictures.mjs`
-  (`sealed/relay_pictures`, tops each round up to three, never touches a
-  picture already there). `generate-sealed.mjs` and `validate-sealed.mjs` are
+  (`sealed/relay_pictures_practice` and `sealed/relay_pictures`; since 12 Nov
+  2026 each run rebuilds its bank: nobody edits the pictures). `generate-sealed.mjs` and `validate-sealed.mjs` are
   deleted (23 Oct 2026); the 19 `sealed/{code}` sets and `sealed/manifest`
   stay in Firestore and nothing reads them. Only `checks` reads
-  `sealed/relay_pictures`, for RP1's count; no Steward op reads `cases/*`.
+  the two picture banks, for RP1's count; no Steward op reads `cases/*`.
 - Tests: `functions/test/steward.test.mjs` (the gate, the five ops, the old
   secrets ops refused, the log carries the op only, the checks return nothing
   they read) and `app/test/steward.test.mjs` (the route, the packing list, no

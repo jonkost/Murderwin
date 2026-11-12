@@ -68,9 +68,11 @@ them.
   2. `npm --prefix scripts run leans` (which way each cat leans in the
      Parlour Games). Run it again after adding a Parlour Game; it fills only
      the new ones.
-  3. `npm --prefix scripts run relay-pictures` (the drawing pictures, made
-     blind; you never see them). Until it has run, the drawing uses stand-in
-     pictures.
+  3. `npm --prefix scripts run relay-pictures -- --practice`, then
+     `npm --prefix scripts run relay-pictures -- --party` (the drawing
+     pictures, made blind; you see only the practice ones, on a practice
+     night, and no party picture shares a name with one). Until each has run,
+     its nights' drawing uses stand-in pictures.
   4. Run this with no night running. First close the TV and the room
      screens, and keep your phone and Susan's off the game page until it
      says PASS or FAIL: the screens and phones follow the newest night, and

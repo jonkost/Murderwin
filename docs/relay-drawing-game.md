@@ -208,16 +208,43 @@ the new limit would be refused, and that round would use a stand-in.
 
 ## 6. Where the pictures come from
 
-**The three real pictures (changed 22 October).** They come from a sealed bank of simple
-thick-line pictures, up to three per round, each with three wrong names for the guess. A
-command you run makes them blind (`npm --prefix scripts run relay-pictures`). It prints counts
-and PASS or FAIL only. On the party night the game picks one picture per round at random. You
-never see the bank: you see each square when everyone else does.
+**The real pictures (remade 12 November).** They come from two sealed banks of simple
+thick-line pictures, about six a round, each with three wrong names for the guess: one bank for
+the party night, one for practice nights. On any night the game picks one picture per round at
+random from that night's bank. You never see the party bank: you see each square when everyone
+else does. You do see the practice pictures on a practice night, so they are burned: no party
+picture may have the name of a practice one.
+
+How they are made (Jon, 11 November: "Make the line art better. It just looked like slop."). A
+command makes them blind, and prints counts and PASS or FAIL only:
+1. The Claude API designs each WHOLE picture on one canvas the size of the grid, from lines,
+   arcs, circles and dots on quarter-square points, with its name, three wrong names of the same
+   kind and a few close synonyms. Rounds 1 and 2: a thing a child can name in a word or two.
+   Round 3: a tidy pattern with a mirror or a repeat that has a name a room can pick from four.
+2. Plain code cuts the picture into squares, so the strokes always meet at the squares' edges,
+   and checks it: every stroke inside the canvas and on the quarter points, no square with more
+   than three strokes, not too many empty squares, four different names, nothing on the
+   never-list.
+3. A blind judge: the cut squares are drawn back into a picture in memory, and a vision model is
+   asked what it is, three separate times, without the name. The picture is kept only if two of
+   the three answers match its name or one of its synonyms.
+
+Make the practice bank first, then the party bank (the party bank's never-list reads the
+practice names):
+
+    npm --prefix scripts run relay-pictures -- --practice
+    npm --prefix scripts run relay-pictures -- --party
+
+`-- --dry` designs and judges practice pictures and writes nothing. Each run rebuilds its bank
+from scratch (nobody ever edited the old one). A round the command cannot fill says how many it
+is short; run it again.
 
 **What a picture may never be.** The bank check refuses, and drops without showing, any
 picture whose name or any of its three wrong names is:
 - one of the style samples: the smiley, the house, the diamond pattern;
 - a star (your example of the art) or a teapot (the command's old example name);
+- an example in the 11 November handoff: a fish, a kite, a checkerboard, a pinwheel, a snowflake;
+- for the party bank, the name of any practice picture;
 - a trace object (boots, spectacles, a candle, a cup and the rest): drawing one at the finale
   would read as a clue;
 - an object on a motive card (pizza, a toilet roll, a phone, a charger, a door, a shopping cart
@@ -228,16 +255,18 @@ The command also asks for none of these. A round with no good picture left uses 
 **The smiley** is public. It was the practice round until 11 November; now it is only Sir
 Irwin's example: his third slide shows its B1 square. A smiley can never be a real picture.
 
-**Stand-ins.** Rehearsals never read the bank. They, and any round the bank has no good picture
-for, use stand-in grids the server makes up on the spot from a random seed: straight lines,
+**Stand-ins.** Any round whose bank has no good picture (a practice night before the practice
+bank is made, say) uses stand-in grids the server makes up on the spot from a random seed: straight lines,
 arcs, circles and dots, under rules that make a shape (round 1), a shape with an extra on it
 (round 2), or a pattern (round 3). Their four options are small drawings: the real one plus
 three decoys made by changing it.
 
 Rules every picture keeps (most come from the practice player):
-- Each drawn square holds one or two strokes. Strokes start and end on simple points (corners,
-  the middle of a side, the centre, the quarter points) so the room can say them.
-- Strokes in neighbouring squares meet at the shared edge, so the picture joins up.
+- Each drawn square holds one to three strokes (a stand-in one or two). The designer's points
+  are quarter points so the room can say them; where a stroke crosses a square's edge the cut
+  point sits wherever it crosses.
+- Strokes in neighbouring squares meet at the shared edge, so the picture joins up (the real
+  pictures by construction: they are cut from one whole drawing).
 - No single square gives the picture away.
 - The squares drawn stay inside each round's limit (§4), so the drawing fits its time.
 
@@ -254,9 +283,10 @@ Extra rules for the stand-ins:
 
 ## 7. Rule 1 check
 
-- The three real pictures are made blind and never previewed: not in the repo, never in your
-  terminal, not on any page you can open. You see each square when everyone else does.
-  Rehearsals never use them.
+- The party's pictures are made blind and never previewed: not in the repo, never in your
+  terminal, not on any page you can open. You see each square when everyone else does. A
+  practice night never reads them: it draws from the practice bank, whose names are kept off
+  the party bank.
 - Whether Jenna may see and swap the pictures on their page was the decision stewardPictures:
   answered 24 October with the handoff's default, no. Their page does not show them, so nobody
   looks at them before the party.
@@ -365,8 +395,8 @@ practice, with stand-in grids; the 11 November changes have not been played yet.
 - **The game**: `functions/lib/relay.js` (the clock, Irwin's slides, the guess),
   `functions/lib/relay-bank.js` (the public smiley, the bank check, the night's three grids)
   and `functions/lib/relay-gen.js` (the stand-ins).
-- **The picture command**: `scripts/generate-relay-pictures.mjs`, run with
-  `npm --prefix scripts run relay-pictures`. Counts only.
+- **The picture command**: `scripts/generate-relay-pictures.mjs` (with `scripts/relay-art.mjs`),
+  run with `npm --prefix scripts run relay-pictures -- --practice`, then `-- --party`. Counts only.
 - **The phones**: "To the Parlour. Eyes on the TV." during the slides, "You're up next. Walk to
   the paper." for the person called, the drawer's prompt ("Draw what they say!"), everyone
   else's view of the square ("{Name} is drawing. Describe this square!"), "Look at the paper.
@@ -469,8 +499,10 @@ with no per-slide `ms` falls back to `timing.slideMs`. `IRWIN_DOOR_SLIDE` is wri
 door is open" until the trace takes the screen.
 
 **Generation.** `relay.start` (host command `relay-start`, or the beat's `relay:start` action)
-reads `cases/{nightId}` and, only when its `rehearsal === false`, `sealed/relay_pictures`
-(`relay-bank.BANK_DOC`). `relayGrids({ bank, standIn: generateSet(seed), seed })` returns three
+reads `cases/{nightId}` and then one bank, by the night's flag (`relay-bank.readBank`,
+`bankDocFor`): `sealed/relay_pictures` (`BANK_DOC`) only when `rehearsal === false`, else
+`sealed/relay_pictures_practice` (`PRACTICE_BANK_DOC`). A practice night reads nothing else
+under `sealed/` (`functions/test/relay-banks.test.mjs`, `practice.test.mjs`, L03). `relayGrids({ bank, standIn: generateSet(seed), seed })` returns three
 grids (no practice grid since 11 Nov; `PRACTICE` stays exported for slide 3 and the tests): for
 each round one random bank picture that passes
 `checkPicture(p, round)`, else that round's stand-in (`fromBank` counts the rounds the bank
@@ -482,18 +514,35 @@ allowed. `start` refuses a set over `MAX_TURNS` = 44 (`DRAW_BUDGET_MS` 26 min / 
 `{ kind: line|arc|circle|dot, from, to, bulge }` / `{ at, r }`, rendered to SVG on the clients;
 `relay-gen` keeps the §6 stand-in rules as unit tests across many seeds.
 
-**The bank.** `sealed/relay_pictures = { pictures: [{ id, round: 1|2|3, name, decoys[3],
-cells: { A1: [stroke] } }], generatedAt }`, strokes in cell-local 0..1. `checkPicture` returns
+**The banks.** `sealed/relay_pictures` (party) and `sealed/relay_pictures_practice` (practice
+nights), each `{ pictures: [{ id, round: 1|2|3, name, decoys[3], cells: { A1: [stroke] } }],
+generatedAt, maker }`, strokes in cell-local 0..1. `checkPicture` returns
 generic reason codes and never a name or a stroke: `name`, `decoys` (exactly three, all four
 names different), `disqualified` (the name or any decoy says a word in `DISQUALIFIED`: the
-style samples, a star, a teapot), `never` (the name or any decoy says a word in `NEVER_WORDS` =
-`TRACE_WORDS` + `MOTIVE_WORDS`; `namesAny` also matches plurals and longer words), `squares`
-(between the grid size and the round's cap), `label`, `strokes` (at most two a square), `kind`,
-`bounds`, `bulge`, `radius`. `scripts/generate-relay-pictures.mjs` (`npm --prefix scripts run relay-pictures`;
-`--dry` counts what is missing and calls nothing) tops each round up to `PER_ROUND` = 3 good
-pictures, never touches a picture already there (one that fails today's check is kept but never
-used, and its round is topped up), drops and counts any new one that fails the check, prints
-counts and PASS/FAIL only through `say()`, redacts errors, and exits 1 while a round is short.
+style samples, a star, a teapot, the 11 Nov handoff's examples), `never` (the name or any decoy
+says a word in `NEVER_WORDS` = `TRACE_WORDS` + `MOTIVE_WORDS`; `namesAny` also matches plurals
+and longer words), `squares` (between the grid size and the round's cap), `label`, `strokes`
+(at most `STROKES_PER_SQUARE` = 3 a square; two before 12 Nov), `kind`, `bounds`, `bulge`,
+`radius`.
+
+**The maker.** `scripts/generate-relay-pictures.mjs` (`npm --prefix scripts run relay-pictures
+-- --practice | --party | --dry`) with its plain-code half in `scripts/relay-art.mjs`. The
+designer (`MODEL`, default `claude-opus-5-5`, effort high, streamed) returns JSON pictures on a
+canvas 0..size, `DESIGNS_PER_CALL` = 4 a call, at most `MAX_CALLS` = 8 calls a round, the three
+rounds in parallel, aiming at `MAKE_PER_ROUND` = 6. `cutPicture` splits each stroke where it
+crosses x = k or y = k (sampled, then bisected), turns each piece into a line or an arc with
+the piece's own belly (split again past a bulge of 0.55), and gives both squares across an edge
+the same point. `codeChecks` (shape, grid, canvas, names, never, burned, empty
+`MIN_SQUARES` {1: 6, 2: 8, 3: 10}, squares, busy), then `checkPicture`, then a repeat check.
+`renderPng` draws the cut squares like `Figure` (100 px a square, 9 px lines, clipped to each
+square) into an 8-bit gray PNG written by hand with `node:zlib`; `eyeVerdict` asks the vision
+model (`EYE_MODEL`, default the same) up to three times with three phrasings and keeps a
+picture on two matches (`answerMatches`: case, plurals, articles, lead-ins, whole-word
+containment, the designer's synonyms), stopping early once two agree. The party run reads the
+practice bank's names first and refuses to run without them. A run replaces its bank only when
+it kept something. It prints counts by check through `say()`, an error as its class and a
+length, and exits 1 while a round is short. RP1 (`checks.pictureChecks`) counts good rounds in
+both banks (of six) and fails on a party name shared with a practice one.
 No Steward op reads the bank (stewardPictures answered no, 24 Oct).
 
 **Driving the clock.** Cloud Functions do not run timers. The callable `relayAdvance({ nightId })`
@@ -585,4 +634,7 @@ the 26-minute budget over 400 stand-in sets, and At the paper: it ends the walk 
 in every other state and while paused, and a pause shifts the walk).
 `play/test/relayhost.test.mjs` covers the host's controls, the words at a turn and at the guess,
 the buzz and the old `lockout` word on the clients. `scripts/test/generate-relay-pictures.test.mjs` covers the
-command on a memory db with its stdout checked for content. Throwaway night, nothing persisted.
+cutter, the rasterizer, the loose match and the two-of-three rule, the code checks, the
+never-list and the burned practice names, and whole runs with a stub designer and eye on a
+memory db, their stdout checked for content; `functions/test/relay-banks.test.mjs` the bank a
+night reads, by its flag, with every read under `sealed/` counted, and RP1. Throwaway night, nothing persisted.
