@@ -1,9 +1,12 @@
 // The idle screens' screen saver (Jon, 12 Nov 2026: "For the loops just make
 // the classic dvd screen saver with the cats and dog face picture when it
 // bounces off the edge of the screen"). One of the household's five faces
-// crosses the screen in a straight line, turns at every edge, and becomes the
-// next face each time it meets one. No React, no Firebase: whose face shows,
-// and where, is worked out from the clock on the wall alone, so a reload or a
+// crosses the screen in a straight line and turns at every edge. It keeps its
+// face for FACE_EVERY edges and then becomes the next one, at an edge (Jon, on
+// seeing the first clip, the same day: "You can make if faster and don't
+// change faces with every bounce"; the first build changed at every edge and
+// took eleven seconds to cross). No React, no Firebase: whose face shows, and
+// where, is worked out from the clock on the wall alone, so a reload or a
 // screen that comes back to idle carries on from the same place, and
 // play/test can read it.
 import { trimOf } from '../look/look.js'
@@ -14,13 +17,14 @@ import { trimOf } from '../look/look.js'
 export const SAVER_FACES = ['irwin', 'granolia', 'boo', 'zimothy', 'salem']
 export const SAVER_FILES = { irwin: 'Irwin Face.png', granolia: 'Granola Face.png', boo: 'Boo Face.png', zimothy: 'Zimmy Face.png', salem: 'Salem Face.png' }
 
-export const CROSS_MS = 11_000 // one way across the screen
-export const DROP_MS = 7_400   // one way down it
-// Both edges are met in the same instant once every CORNER_MS: the face lands
-// square in a corner, the moment everyone waits for. Between two of those it
-// comes close many times and misses.
-export const CORNER_MS = 407_000
-export const FACE_PART = 0.3   // a face's size, as a part of the screen's shorter side
+export const CROSS_MS = 6_000 // one way across the screen
+export const DROP_MS = 4_100  // one way down it
+// Both edges are met in the same instant once every CORNER_MS (a little over
+// four minutes): the face lands square in a corner, the moment everyone waits
+// for. Between two of those it comes close several times and misses.
+export const CORNER_MS = 246_000
+export const FACE_EVERY = 10  // edges met before the face changes: about every twenty-five seconds
+export const FACE_PART = 0.3  // a face's size, as a part of the screen's shorter side
 
 // Each room screen starts somewhere else along the same path, so two screens
 // in sight of each other are never in step (the names are lib/rooms.js LOOP_OF's).
@@ -35,10 +39,11 @@ export function backAndForth(turns) {
   return { at: n % 2 === 0 ? f : 1 - f, hits: n }
 }
 
-// Whose face it is after `hits` edges.
+// Whose face it is after `hits` edges: the same one for FACE_EVERY edges,
+// then the next in the order.
 export function saverFace(hits) {
   const n = Number.isFinite(hits) && hits > 0 ? Math.floor(hits) : 0
-  return SAVER_FACES[n % SAVER_FACES.length]
+  return SAVER_FACES[Math.floor(n / FACE_EVERY) % SAVER_FACES.length]
 }
 
 // What moves is one square, the same for every face, so the path never jumps

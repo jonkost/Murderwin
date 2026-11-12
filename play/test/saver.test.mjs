@@ -1,13 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, CROSS_MS, DROP_MS, CORNER_MS, FACE_PART, backAndForth, saverFace, saverSide, faceBox, saverAt } from '../src/lib/saver.js'
+import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, CROSS_MS, DROP_MS, CORNER_MS, FACE_EVERY, FACE_PART, backAndForth, saverFace, saverSide, faceBox, saverAt } from '../src/lib/saver.js'
 import { TRIMS } from '../src/look/look.js'
 import { faceUrl } from '../src/lib/night.js'
 import { LOOP_OF } from '../src/lib/rooms.js'
 
 // The idle screens' screen saver (Jon, 12 Nov 2026: "For the loops just make the classic dvd screen saver with
-// the cats and dog face picture when it bounces off the edge of the screen").
+// the cats and dog face picture when it bounces off the edge of the screen"; and on seeing the first clip:
+// "You can make if faster and don't change faces with every bounce").
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 const NOW = 1_794_520_000_000 // an afternoon in November 2026
 const SCREENS = [[1920, 1080], [1728, 1080], [1366, 1024], [1024, 1366], [640, 360]]
@@ -87,25 +88,36 @@ test('it touches each edge exactly, and turns there, from every room screen’s 
   }
 })
 
-test('the face changes at every edge, and only at an edge, in the same order round and round', () => {
+test('it keeps a face for ten edges, then becomes the next one, and only ever changes at an edge', () => {
+  assert.equal(FACE_EVERY, 10, 'Jon: "don’t change faces with every bounce"')
   const [w, h] = [1728, 1080]
   let last = saverAt(NOW, w, h)
   let changes = 0
-  for (let t = NOW + 1; t <= NOW + 3 * 60_000; t += 1) {
+  let edges = 0
+  for (let t = NOW + 1; t <= NOW + 5 * 60_000; t += 1) {
     const s = saverAt(t, w, h)
+    if (s.hits !== last.hits) {
+      edges += s.hits - last.hits
+      assert.ok(t % CROSS_MS === 0 || t % DROP_MS === 0, `an edge was counted at ${t - NOW} ms, which is not one`)
+    }
     if (s.who !== last.who) {
       changes++
-      assert.ok(t % CROSS_MS === 0 || t % DROP_MS === 0, `the face changed at ${t - NOW} ms, which is not an edge`)
-      const steps = s.hits - last.hits
-      assert.equal(s.who, SAVER_FACES[(SAVER_FACES.indexOf(last.who) + steps) % SAVER_FACES.length], 'the next in the order')
+      assert.notEqual(s.hits, last.hits, 'a face only ever changes as an edge is met')
+      assert.equal(Math.floor(s.hits / FACE_EVERY), Math.floor(last.hits / FACE_EVERY) + 1, 'and only when the tenth edge is met')
+      assert.equal(s.who, SAVER_FACES[(SAVER_FACES.indexOf(last.who) + 1) % SAVER_FACES.length], 'the next in the order')
     } else {
-      assert.equal(s.hits, last.hits, 'no edge, no change')
+      assert.equal(Math.floor(s.hits / FACE_EVERY), Math.floor(last.hits / FACE_EVERY), 'the same face until then')
     }
     last = s
   }
-  // three minutes of crossings and drops, none of them at the same instant here: one change each
-  assert.equal(changes, Math.floor((NOW + 180_000) / CROSS_MS) - Math.floor(NOW / CROSS_MS) + Math.floor((NOW + 180_000) / DROP_MS) - Math.floor(NOW / DROP_MS))
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6].map(saverFace), ['irwin', 'granolia', 'boo', 'zimothy', 'salem', 'irwin', 'granolia'])
+  // five minutes: over a hundred edges, and a tenth as many changes
+  assert.ok(edges > 100, `${edges} edges`)
+  assert.equal(changes, Math.floor(last.hits / FACE_EVERY) - Math.floor(saverAt(NOW, w, h).hits / FACE_EVERY))
+  assert.ok(changes >= 10 && changes <= edges / FACE_EVERY + 1, `${changes} changes in ${edges} edges`)
+  // a face stays for about twenty-five seconds: long enough to watch it, short enough to meet all five
+  const lasts = FACE_EVERY / (1000 / CROSS_MS + 1000 / DROP_MS)
+  assert.ok(lasts > 15 && lasts < 40, `${lasts.toFixed(1)} seconds a face`)
+  assert.deepEqual([0, 9, 10, 19, 20, 30, 40, 49, 50, 61].map(saverFace), ['irwin', 'irwin', 'granolia', 'granolia', 'boo', 'zimothy', 'salem', 'salem', 'irwin', 'granolia'])
   assert.equal(saverFace(-1), 'irwin')
   assert.equal(saverFace(NaN), 'irwin')
 })
@@ -114,14 +126,14 @@ test('nothing jumps when the face changes: the same square carries every face', 
   for (const [w, h] of [[1920, 1080], [1366, 1024]]) {
     let last = saverAt(NOW, w, h)
     let changes = 0
-    for (let t = NOW + 1; t <= NOW + 2 * 60_000; t += 1) {
+    for (let t = NOW + 1; t <= NOW + 3 * 60_000; t += 1) {
       const s = saverAt(t, w, h)
       if (s.who !== last.who) changes++
-      assert.ok(Math.abs(s.left - last.left) < 0.2 && Math.abs(s.top - last.top) < 0.2, `a millisecond apart is a fraction of a pixel, at a change too (${t - NOW} ms)`)
+      assert.ok(Math.abs(s.left - last.left) < 0.5 && Math.abs(s.top - last.top) < 0.5, `a millisecond apart is a fraction of a pixel, at a change too (${t - NOW} ms)`)
       assert.equal(s.side, last.side)
       last = s
     }
-    assert.ok(changes > 20, 'and the face did change, many times')
+    assert.ok(changes >= 5, 'and the face did change, several times')
   }
 })
 
@@ -156,10 +168,13 @@ test('a reload carries on from the same place, and no two room screens are in st
   assert.equal(new Set(starts).size, starts.length)
   const places = Object.keys(SAVER_START_MS).map(k => { const s = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS[k] }); return `${Math.round(s.left / 20)},${Math.round(s.top / 20)}` })
   assert.equal(new Set(places).size, places.length, 'six screens, six different places at the same moment')
-  // it moves at a walk: across a 1080p TV in eleven seconds, a few pixels a frame
+  // it moves briskly and smoothly: across a 1080p TV in six seconds (it was eleven), a few pixels a frame
+  assert.equal(CROSS_MS, 6_000)
+  assert.equal(DROP_MS, 4_100)
   const p = saverAt(NOW, 1920, 1080)
   const q = saverAt(NOW + 16, 1920, 1080)
-  assert.ok(Math.hypot(q.left - p.left, q.top - p.top) < 4)
+  const step = Math.hypot(q.left - p.left, q.top - p.top)
+  assert.ok(step > 3 && step < 7, `${step.toFixed(1)} pixels a frame`)
 })
 
 test('an idle room screen plays it; a Mac’s second display and a loop file are as they were', () => {

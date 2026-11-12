@@ -63,9 +63,10 @@ export function Loop({ which, children = null, className = '' }) {
 
 // The screen saver on an idle room screen (Jon, 12 Nov 2026: "For the loops
 // just make the classic dvd screen saver with the cats and dog face picture
-// when it bounces off the edge of the screen"). One face crosses the screen
-// and becomes the next of the five at every edge (lib/saver.js works out
-// whose, and where, from the clock on the wall). All five pictures are drawn
+// when it bounces off the edge of the screen"). One face crosses the screen,
+// turns at every edge, and after every tenth edge becomes the next of the
+// five (lib/saver.js works out whose, and where, from the clock on the wall;
+// faster, and fewer changes, since his word on the first clip). All five pictures are drawn
 // once, one over the other, and only the one whose turn it is shows; a frame
 // moves one square and nothing else, and the pictures are laid out again only
 // when the screen changes size. While the five pictures come in the screen is

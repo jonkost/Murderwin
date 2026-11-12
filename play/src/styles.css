@@ -984,7 +984,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk-loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--kiosk-ground); opacity: 0; pointer-events: none; }
 .kiosk-loop.on { opacity: 1; }
 .kiosk-loop.behind.on { opacity: 0.55; }
-/* the screen saver on an idle room screen (Jon, 12 Nov 2026): one of the five faces crossing the screen, the next face at every edge.
+/* the screen saver on an idle room screen (Jon, 12 Nov 2026): one of the five faces crossing the screen, the next face after every tenth edge.
    See-through until all five pictures are in (never display none: they must load); the plain ground shows meanwhile, and the room's
    splash if a picture will not load or they are slow. The mover is one square; each face is placed inside it by the frame loop. */
 .saver { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; }

@@ -192,7 +192,7 @@ export default function LookBook() {
           </div>
         </Section>
 
-        <Section n="12" title="The screen saver" line="What a room’s screen shows when nobody is playing on it. A face crosses the screen and changes at every edge.">
+        <Section n="12" title="The screen saver" line="What a room’s screen shows when nobody is playing on it. A face crosses the screen and turns at every edge; after ten edges it becomes the next face.">
           <div className="lk-tv lk-saver"><Saver which={IDLE_OF[room] ?? 'living'} /></div>
           <button type="button" className="lk-open" onClick={() => open(`show=saver&room=${room}`)}>See it fill the screen</button>
         </Section>
