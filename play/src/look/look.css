@@ -373,6 +373,7 @@
 .lk-sec-head p { margin: 0; font-family: var(--serif); font-size: 1rem; color: #c9d3d8; }
 .lk-tv { width: 100%; aspect-ratio: 16 / 9; box-shadow: 0 0 0 1px #214050, 0 16px 30px rgba(0, 0, 0, 0.5); }
 .lk-tv.wide { aspect-ratio: 16 / 10; max-width: 46rem; margin: 0 auto; }
+.lk-saver { position: relative; overflow: hidden; background: var(--kiosk-ground, var(--lk-blue)); }
 .lk-handset { position: relative; width: min(100%, 390px); height: 844px; max-height: 92vh; margin: 0 auto; border-radius: 28px; overflow: hidden; box-shadow: 0 0 0 1px #214050, 0 16px 30px rgba(0, 0, 0, 0.5); }
 .lk-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
 .lk-chip { min-height: 2.7rem; padding: 0.4rem 1rem; border-radius: 999px; border: 1px solid rgba(214, 207, 134, 0.55); background: rgba(0, 12, 18, 0.55); color: var(--lk-paper); font-family: var(--serif); font-size: 0.98rem; cursor: pointer; }

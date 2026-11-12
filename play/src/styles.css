@@ -984,6 +984,15 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk-loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--kiosk-ground); opacity: 0; pointer-events: none; }
 .kiosk-loop.on { opacity: 1; }
 .kiosk-loop.behind.on { opacity: 0.55; }
+/* the screen saver on an idle room screen (Jon, 12 Nov 2026): one of the five faces crossing the screen, the next face at every edge.
+   See-through until all five pictures are in (never display none: they must load); the plain ground shows meanwhile, and the room's
+   splash if a picture will not load or they are slow. The mover is one square; each face is placed inside it by the frame loop. */
+.saver { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; }
+.saver.on { opacity: 1; }
+.saver-mover { position: absolute; left: 0; top: 0; will-change: transform; filter: drop-shadow(0 0.8vh 1.6vh rgba(0, 0, 0, 0.45)); }
+.saver-face { position: absolute; overflow: hidden; visibility: hidden; }
+.saver-face.on { visibility: visible; }
+.saver-face img { position: absolute; display: block; height: auto; max-width: none; }
 .kiosk.bedroom.closed .over-loop { position: relative; z-index: 1; display: grid; justify-items: center; }
 /* a room's cat code, big, during Act 2's cat visits */
 .kiosk.room-code { background: var(--brand-parchment); color: var(--brand-charcoal); gap: 2vh; }

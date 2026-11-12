@@ -4,7 +4,7 @@ import { callMemoryStep, callArcadeClue, callArcadeScore } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
 import { PLAY_URL } from '../lib/config'
-import { ms, salemColourAt } from '../lib/night'
+import { ms, salemColourAt, faceUrl } from '../lib/night'
 import BooArcade from './Arcade'
 import { STAND_IN_CLUE } from '../lib/arcade'
 import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPicture, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
@@ -32,7 +32,8 @@ import Spoken from './Spoken'
 
 import { Splash, GameCard, BigWin } from '../look/parts'
 import { useJustWon } from '../lib/useWin'
-import { lookOn, SPLASH_OF, splashNow } from '../look/look'
+import { lookOn, SPLASH_OF, splashNow, trimStyle } from '../look/look'
+import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, saverAt, faceBox } from '../lib/saver'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -60,15 +61,92 @@ export function Loop({ which, children = null, className = '' }) {
   )
 }
 
+// The screen saver on an idle room screen (Jon, 12 Nov 2026: "For the loops
+// just make the classic dvd screen saver with the cats and dog face picture
+// when it bounces off the edge of the screen"). One face crosses the screen
+// and becomes the next of the five at every edge (lib/saver.js works out
+// whose, and where, from the clock on the wall). All five pictures are drawn
+// once, one over the other, and only the one whose turn it is shows; a frame
+// moves one square and nothing else, and the pictures are laid out again only
+// when the screen changes size. While the five pictures come in the screen is
+// its plain ground (a moment; no splash flashes by each time a screen goes
+// idle). If one of them will not load, or they are not all in after
+// SAVER_WAIT_MS, the children show instead (the room's splash), so a screen is
+// never left empty. The box is see-through until all five are in, never
+// display none: its pictures must load.
+const SAVER_WAIT_MS = 4000
+export function Saver({ which, children = null }) {
+  const box = useRef(null)
+  const mover = useRef(null)
+  const faces = useRef({})
+  const [loaded, setLoaded] = useState(0)
+  const [failed, setFailed] = useState(false)
+  const [slow, setSlow] = useState(false)
+  const ready = !failed && loaded >= SAVER_FACES.length
+  useEffect(() => { const id = setTimeout(() => setSlow(true), SAVER_WAIT_MS); return () => clearTimeout(id) }, [])
+  useEffect(() => {
+    let frame = 0
+    let last = ''
+    let size = ''
+    const step = () => {
+      const el = box.current
+      const m = mover.current
+      if (el && m) {
+        const w = el.clientWidth
+        const h = el.clientHeight
+        const s = saverAt(Date.now(), w, h, { startMs: SAVER_START_MS[which] ?? 0 })
+        m.style.transform = `translate3d(${s.left.toFixed(2)}px, ${s.top.toFixed(2)}px, 0)`
+        if (`${w}x${h}` !== size) {
+          size = `${w}x${h}`
+          m.style.width = `${s.side.toFixed(2)}px`
+          m.style.height = `${s.side.toFixed(2)}px`
+          for (const who of SAVER_FACES) {
+            const f = faces.current[who]
+            const b = faceBox(who, w, h)
+            if (f) Object.assign(f.style, { left: `${b.dx.toFixed(2)}px`, top: `${b.dy.toFixed(2)}px`, width: `${b.w.toFixed(2)}px`, height: `${b.h.toFixed(2)}px` })
+          }
+        }
+        if (s.who !== last) {
+          for (const who of SAVER_FACES) faces.current[who]?.classList.toggle('on', who === s.who)
+          last = s.who
+        }
+      }
+      frame = requestAnimationFrame(step)
+    }
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [which])
+  return (
+    <>
+      {(failed || (slow && !ready)) && children}
+      <div ref={box} className={`saver${ready ? ' on' : ''}`} aria-hidden="true">
+        <div ref={mover} className="saver-mover">
+          {SAVER_FACES.map(who => (
+            <span key={who} ref={el => { faces.current[who] = el }} className="saver-face">
+              <img src={faceUrl(who)} alt="" draggable="false" style={trimStyle(SAVER_FILES[who])} onLoad={() => setLoaded(n => n + 1)} onError={() => setFailed(true)} />
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
 // The idle view of every kiosk: the loop when its file is in, else the crest.
 // With the look's splash switched on (look/look.js LOOK.splash; Jon's yes of
 // 12 Nov 2026), the crest's place is taken by the room's live splash: the
 // room's name in lights, its own cat, large, and the cat's name. No other
-// words. A loop file still wins if Jon ever drops one in. `room` names the splash when the screen has
-// no loop of its own (a second display); `calm` is that smaller, quieter one.
+// words. Since the afternoon of 12 Nov 2026 a room screen with a loop of its
+// own plays the screen saver in its place (Saver, above); the splash is what
+// shows if a face picture will not load. A loop file still wins if Jon ever drops one
+// in. `room` names the splash when the screen has no loop of its own (a
+// second display); `calm` is that smaller, quieter one, which keeps its splash.
 export function Idle({ title, line, loop = null, room = null, calm = false }) {
   const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null
-  if (splash) return <div className="kiosk idle"><Loop which={loop}><LiveSplash room={splash} calm={calm} /></Loop></div>
+  if (splash) {
+    const still = <LiveSplash room={splash} calm={calm} />
+    return <div className="kiosk idle"><Loop which={loop}>{loop && !calm ? <Saver which={loop}>{still}</Saver> : still}</Loop></div>
+  }
   return (
     <div className="kiosk idle">
       <Loop which={loop}>

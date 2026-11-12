@@ -1,0 +1,186 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, CROSS_MS, DROP_MS, CORNER_MS, FACE_PART, backAndForth, saverFace, saverSide, faceBox, saverAt } from '../src/lib/saver.js'
+import { TRIMS } from '../src/look/look.js'
+import { faceUrl } from '../src/lib/night.js'
+import { LOOP_OF } from '../src/lib/rooms.js'
+
+// The idle screens' screen saver (Jon, 12 Nov 2026: "For the loops just make the classic dvd screen saver with
+// the cats and dog face picture when it bounces off the edge of the screen").
+const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
+const NOW = 1_794_520_000_000 // an afternoon in November 2026
+const SCREENS = [[1920, 1080], [1728, 1080], [1366, 1024], [1024, 1366], [640, 360]]
+const near = (a, b, by = 1e-6) => Math.abs(a - b) <= by
+
+test('the five faces are the household’s own, each cut to its edges', () => {
+  assert.deepEqual(SAVER_FACES, ['irwin', 'granolia', 'boo', 'zimothy', 'salem'], 'the dog and the four cats')
+  for (const who of SAVER_FACES) {
+    assert.ok(faceUrl(who).endsWith(`household/faces/${encodeURIComponent(SAVER_FILES[who])}`), `${who} is the phone’s own face picture`)
+    assert.ok(TRIMS[SAVER_FILES[who]], `${SAVER_FILES[who]} is measured (look/look.js TRIMS)`)
+  }
+  assert.equal(Object.keys(SAVER_FILES).length, SAVER_FACES.length)
+})
+
+test('something going back and forth between two walls', () => {
+  assert.deepEqual(backAndForth(0), { at: 0, hits: 0 })
+  assert.deepEqual(backAndForth(0.25), { at: 0.25, hits: 0 })
+  assert.deepEqual(backAndForth(1), { at: 1, hits: 1 }, 'at the far wall, having met it')
+  assert.deepEqual(backAndForth(1.25), { at: 0.75, hits: 1 }, 'on its way back')
+  assert.deepEqual(backAndForth(2), { at: 0, hits: 2 }, 'home again')
+  for (const odd of [-3, NaN, Infinity, undefined]) assert.deepEqual(backAndForth(odd), { at: 0, hits: 0 }, `${odd} is the start`)
+})
+
+test('one square moves; each face sits in it at its own shape, the same size as the others', () => {
+  for (const [w, h] of SCREENS) {
+    const side = saverSide(w, h)
+    assert.ok(near(side, Math.min(w, h) * FACE_PART, 1e-9), 'a part of the screen’s shorter side')
+    assert.ok(side < w && side < h, 'and it fits the screen')
+    for (const who of SAVER_FACES) {
+      const b = faceBox(who, w, h)
+      assert.ok(near(b.w / b.h, TRIMS[SAVER_FILES[who]][4], 1e-9), `${who} keeps its shape on ${w} by ${h}`)
+      assert.ok(near(b.w * b.h, side * side, 1e-6), `${who} is as big as the others`)
+      assert.ok(near(b.dx, (side - b.w) / 2, 1e-9) && near(b.dy, (side - b.h) / 2, 1e-9), `${who} is centred on the square`)
+      // so when the square meets a wall, the cat's own edge is within a sixteenth of its size of it: the outline's width
+      assert.ok(Math.abs(b.dx) <= side * 0.06 && Math.abs(b.dy) <= side * 0.06, `${who} is close to the square’s edges (${(b.dx / side).toFixed(3)}, ${(b.dy / side).toFixed(3)})`)
+    }
+  }
+  assert.ok(saverSide(0, 0) > 0 && Number.isFinite(saverSide(undefined, NaN)), 'a screen with no size yet never divides by nothing')
+  const none = faceBox('irwin', 0, 0)
+  assert.ok(none.w > 0 && none.h > 0 && Number.isFinite(none.dx))
+  assert.ok(near(faceBox('nobody', 1920, 1080).w, saverSide(1920, 1080)), 'a name it does not know is the plain square')
+})
+
+test('the square never leaves the screen, on any screen, at any moment', () => {
+  for (const [w, h] of SCREENS) {
+    for (const which of Object.keys(SAVER_START_MS)) {
+      for (let t = NOW; t < NOW + 10 * 60_000; t += 137) {
+        const s = saverAt(t, w, h, { startMs: SAVER_START_MS[which] })
+        assert.ok(s.left >= 0 && s.left + s.side <= w + 1e-6, `left ${s.left} on ${w}`)
+        assert.ok(s.top >= 0 && s.top + s.side <= h + 1e-6, `top ${s.top} on ${h}`)
+        assert.ok(SAVER_FACES.includes(s.who))
+      }
+    }
+  }
+  const tiny = saverAt(NOW, 0, 0)
+  assert.ok(tiny.left === 0 && tiny.top === 0 && Number.isFinite(tiny.side), 'a screen with no size yet')
+  assert.deepEqual(Object.keys(saverAt(NOW, 1920, 1080)), ['who', 'hits', 'side', 'left', 'top'])
+})
+
+test('it touches each edge exactly, and turns there, from every room screen’s own start', () => {
+  const [w, h] = [1920, 1080]
+  for (const startMs of Object.values(SAVER_START_MS)) {
+    const at = (t, opts = { startMs }) => saverAt(t - startMs, w, h, opts) // t is the path's own clock
+    // a moment the far side is met: an odd number of crossings since the clock began
+    const k = Math.ceil(NOW / CROSS_MS) | 1
+    const atRight = k * CROSS_MS
+    const hit = at(atRight)
+    assert.ok(near(hit.left + hit.side, w, 1e-6), 'the square’s edge is on the screen’s edge')
+    assert.ok(at(atRight - 400).left + hit.side < w && at(atRight + 400).left + hit.side < w, 'short of it before, and away from it after')
+    assert.equal(hit.hits, at(atRight - 1).hits + 1, 'that was one edge met')
+    assert.ok(near(at(atRight + CROSS_MS).left, 0, 1e-6), 'and the left edge, one crossing later')
+    // top and bottom the same way
+    const j = Math.ceil(NOW / DROP_MS) | 1
+    const bottom = at(j * DROP_MS)
+    assert.ok(near(bottom.top + bottom.side, h, 1e-6))
+    assert.ok(near(at((j + 1) * DROP_MS).top, 0, 1e-6))
+  }
+})
+
+test('the face changes at every edge, and only at an edge, in the same order round and round', () => {
+  const [w, h] = [1728, 1080]
+  let last = saverAt(NOW, w, h)
+  let changes = 0
+  for (let t = NOW + 1; t <= NOW + 3 * 60_000; t += 1) {
+    const s = saverAt(t, w, h)
+    if (s.who !== last.who) {
+      changes++
+      assert.ok(t % CROSS_MS === 0 || t % DROP_MS === 0, `the face changed at ${t - NOW} ms, which is not an edge`)
+      const steps = s.hits - last.hits
+      assert.equal(s.who, SAVER_FACES[(SAVER_FACES.indexOf(last.who) + steps) % SAVER_FACES.length], 'the next in the order')
+    } else {
+      assert.equal(s.hits, last.hits, 'no edge, no change')
+    }
+    last = s
+  }
+  // three minutes of crossings and drops, none of them at the same instant here: one change each
+  assert.equal(changes, Math.floor((NOW + 180_000) / CROSS_MS) - Math.floor(NOW / CROSS_MS) + Math.floor((NOW + 180_000) / DROP_MS) - Math.floor(NOW / DROP_MS))
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6].map(saverFace), ['irwin', 'granolia', 'boo', 'zimothy', 'salem', 'irwin', 'granolia'])
+  assert.equal(saverFace(-1), 'irwin')
+  assert.equal(saverFace(NaN), 'irwin')
+})
+
+test('nothing jumps when the face changes: the same square carries every face', () => {
+  for (const [w, h] of [[1920, 1080], [1366, 1024]]) {
+    let last = saverAt(NOW, w, h)
+    let changes = 0
+    for (let t = NOW + 1; t <= NOW + 2 * 60_000; t += 1) {
+      const s = saverAt(t, w, h)
+      if (s.who !== last.who) changes++
+      assert.ok(Math.abs(s.left - last.left) < 0.2 && Math.abs(s.top - last.top) < 0.2, `a millisecond apart is a fraction of a pixel, at a change too (${t - NOW} ms)`)
+      assert.equal(s.side, last.side)
+      last = s
+    }
+    assert.ok(changes > 20, 'and the face did change, many times')
+  }
+})
+
+test('once in a while it lands square in a corner', () => {
+  assert.equal(CORNER_MS % CROSS_MS, 0)
+  assert.equal(CORNER_MS % DROP_MS, 0)
+  for (let ms = CROSS_MS; ms < CORNER_MS; ms += CROSS_MS) assert.notEqual(ms % DROP_MS, 0, 'and never sooner than that')
+  const [w, h] = [1920, 1080]
+  const corner = Math.ceil(NOW / CORNER_MS) * CORNER_MS
+  const s = saverAt(corner, w, h)
+  const onSide = near(s.left, 0, 1e-6) || near(s.left + s.side, w, 1e-6)
+  const onTopOrBottom = near(s.top, 0, 1e-6) || near(s.top + s.side, h, 1e-6)
+  assert.ok(onSide && onTopOrBottom, 'both edges in the same instant')
+  assert.equal(s.hits, saverAt(corner - 1, w, h).hits + 2, 'two edges met at once')
+  // between two corners it comes close and misses: within a third of a second of both edges, at least twice
+  let close = 0
+  for (let x = Math.ceil(NOW / CROSS_MS) * CROSS_MS; x < NOW + CORNER_MS; x += CROSS_MS) {
+    const off = x % DROP_MS
+    const gap = Math.min(off, DROP_MS - off)
+    if (gap > 0 && gap <= 333) close++
+  }
+  assert.ok(close >= 2, `${close} near misses between corners`)
+})
+
+test('a reload carries on from the same place, and no two room screens are in step', () => {
+  const a = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS.study })
+  const b = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS.study })
+  assert.deepEqual(a, b, 'the clock alone says where it is')
+  // every room screen that idles has its own start, and no two are the same
+  for (const loop of new Set(Object.values(LOOP_OF))) assert.ok(Number.isFinite(SAVER_START_MS[loop]), `${loop} has a start`)
+  const starts = Object.values(SAVER_START_MS)
+  assert.equal(new Set(starts).size, starts.length)
+  const places = Object.keys(SAVER_START_MS).map(k => { const s = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS[k] }); return `${Math.round(s.left / 20)},${Math.round(s.top / 20)}` })
+  assert.equal(new Set(places).size, places.length, 'six screens, six different places at the same moment')
+  // it moves at a walk: across a 1080p TV in eleven seconds, a few pixels a frame
+  const p = saverAt(NOW, 1920, 1080)
+  const q = saverAt(NOW + 16, 1920, 1080)
+  assert.ok(Math.hypot(q.left - p.left, q.top - p.top) < 4)
+})
+
+test('an idle room screen plays it; a Mac’s second display and a loop file are as they were', () => {
+  const rooms = read('../src/screens/Rooms.jsx')
+  assert.ok(rooms.includes('export function Saver({ which, children = null })'))
+  assert.ok(rooms.includes("const still = <LiveSplash room={splash} calm={calm} />"), 'the splash is still drawn')
+  assert.ok(rooms.includes('<Loop which={loop}>{loop && !calm ? <Saver which={loop}>{still}</Saver> : still}</Loop>'), 'the saver on a screen with a loop of its own, the splash alone on a second display; a loop file still wins')
+  assert.ok(rooms.includes('{(failed || (slow && !ready)) && children}'), 'the splash shows if a face will not load or they are slow, and never flashes by while they come in')
+  assert.ok(rooms.includes('const SAVER_WAIT_MS = 4000') && rooms.includes('setTimeout(() => setSlow(true), SAVER_WAIT_MS)') && rooms.includes('clearTimeout(id)'), 'four seconds, then the splash until they are in')
+  assert.ok(rooms.includes('const ready = !failed && loaded >= SAVER_FACES.length'), 'all five, and none broken')
+  assert.ok(rooms.includes('const w = el.clientWidth') && rooms.includes('saverAt(Date.now(), w, h,'), 'the screen’s own size, so the square meets the real edge on a TV, a Mac or an iPad')
+  assert.ok(rooms.includes('cancelAnimationFrame(frame)'), 'and it stops when the screen has something to show')
+  // the join code keeps its seal, and the bedroom's loop slot is as it was: the saver is for idle screens only
+  assert.equal(rooms.split('<Saver ').length - 1, 1, 'one place only')
+  const css = read('../src/styles.css')
+  assert.ok(css.includes('.saver { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; }') && css.includes('.saver.on { opacity: 1; }'), 'see-through until ready')
+  assert.ok(!/\.saver[^{]*\{[^}]*display: none/.test(css), 'never display none: its pictures must load')
+  // nothing for a guest to read, and no setup words
+  const part = rooms.slice(rooms.indexOf('export function Saver'), rooms.indexOf('// The idle view of every kiosk'))
+  assert.ok(part.length > 500 && !/>[A-Za-z][^<{]*</.test(part.replace(/alt=""/g, '')), 'the saver draws no words')
+  // the look book shows it with no night and no sign-in
+  const book = read('../src/look/LookBook.jsx')
+  assert.ok(book.includes("if (show === 'saver')") && book.includes('<Section n="12" title="The screen saver"'))
+})

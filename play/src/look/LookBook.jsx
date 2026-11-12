@@ -5,6 +5,7 @@ import { celebrate } from '../lib/celebrate'
 import { unlock } from '../lib/soundkit'
 import { filmTimeline } from '../lib/rulesfilm'
 import RulesFilm from '../screens/RulesFilm'
+import { Saver } from '../screens/Rooms'
 
 // The look book: /play/?look=1. The nine screens Jon approved on 12 Nov 2026
 // (docs/look-approved.html), built for real, with the real art, in the order
@@ -14,7 +15,7 @@ import RulesFilm from '../screens/RulesFilm'
 //
 //   /play/?look=1                          the book
 //   /play/?look=1&show=splash&room=study   one screen, filling the window
-//   (show: splash, second, game, win, end, dedication, now, vote, met, rules;
+//   (show: splash, saver, second, game, win, end, dedication, now, vote, met, rules;
 //    room, game, state, word and who pick which; &still=1 holds it still;
 //    show=film&n=7 is slide 7 of the rules film as the Parlour TV shows it)
 
@@ -54,6 +55,8 @@ function Chips({ items, value, onPick }) {
 }
 
 const open = query => { window.location.assign(`${BASE}?look=1&${query}`) }
+// a room's splash -> the name its screen idles under (lib/rooms.js LOOP_OF), for the screen saver
+const IDLE_OF = { living: 'living', study: 'study', library: 'memory', entryway: 'boo', bedroom: 'bedroom', orangerie: 'orangerie' }
 // sample picks for a picture of the vote: no night's answer (there is none here)
 const SAMPLE_PICKS = { murderer: 'steeps', motive: 8, ghost: 'devine' }
 
@@ -65,6 +68,8 @@ function Show({ show, params }) {
   const game = GAME_IDS.includes(params.get('game')) ? params.get('game') : 'orangerie'
   const who = params.get('who') || 'boo'
   if (show === 'second') return <Splash room={room} turn={fixed ?? turn} calm className="full" />
+  // an idle room screen as it is since 12 Nov 2026: the screen saver (the splash only if a face will not load)
+  if (show === 'saver') return <div className="kiosk idle"><Saver which={IDLE_OF[room] ?? 'living'}><Splash room={room} turn={fixed ?? turn} className="full" /></Saver></div>
   if (show === 'game') return <GameCard id={game} turn={fixed ?? turn + 1} codeUrl={codeUrl(game)} className="full" />
   if (show === 'win') return <BigWin word={params.get('word') || 'Solved!'} who={params.get('who') || 'granolia'} sound={false} className="full" />
   if (show === 'end') return <TheEnd burst={!params.has('still')} className="full" />
@@ -117,7 +122,7 @@ export default function LookBook() {
           <p>The nine screens you approved on 12 November, built for real. Tell Claude Code what to change, by number.</p>
         </header>
 
-        <Section n="1" title="Room splash" line="What a room’s screen shows when nobody is playing on it.">
+        <Section n="1" title="Room splash" line="A room’s name in lights. Since the afternoon of 12 November an idle screen plays the screen saver (12); a Mac’s second display keeps this.">
           <Splash room={room} turn={turn} className="lk-tv" />
           <Chips items={SPLASH_ROOMS.map(k => [k, SPLASHES[k].name.replace('The ', '')])} value={room} onPick={setRoom} />
           <button type="button" className="lk-open" onClick={() => open(`show=splash&room=${room}`)}>See it fill the screen</button>
@@ -185,6 +190,11 @@ export default function LookBook() {
               </button>
             ))}
           </div>
+        </Section>
+
+        <Section n="12" title="The screen saver" line="What a room’s screen shows when nobody is playing on it. A face crosses the screen and changes at every edge.">
+          <div className="lk-tv lk-saver"><Saver which={IDLE_OF[room] ?? 'living'} /></div>
+          <button type="button" className="lk-open" onClick={() => open(`show=saver&room=${room}`)}>See it fill the screen</button>
         </Section>
       </div>
     </main>
