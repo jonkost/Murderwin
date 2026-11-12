@@ -97,6 +97,11 @@ them.
   countdown and on the motive's card at the reveal. A motive with no
   picture shows its rhyme alone, so the game works with none, some or all
   of them. `npm run deploy` after adding them.
+- *Sir Irwin's voice for the drawing.* `npm run irwin-voice` on the brain
+  makes his eight lines (seven slides and the door) with the Mac's voice,
+  silently, into `play/public/voice/`. To use your own voice instead, save a
+  recording there with the same name and run it again; yours is never
+  replaced (`play/public/voice/README.md`). Then `npm run deploy`.
 - *Put the game live.* `npm run deploy`. This is the one line to run whenever
   Claude says a build is done. It builds the workshop and the phone client,
   refuses to go on if either came out empty, and then publishes the site, the
@@ -603,18 +608,26 @@ links to it.
   two Parlour Games, back to back. Wait until the second has
   ended on your own phone, then **Next** starts Sir Irwin Needs a Hand (the
   Relay Drawing; or **Start the drawing**). Sir Irwin explains it on the TV,
-  each slide up long enough to read (about two minutes in all), while every
+  reading each slide aloud from the TV's own speaker (about a minute and a
+  quarter in all; click the TV once before the night so the Host tab says
+  *Sound on*, or the slides turn silently on time), while every
   phone says to be in the Parlour for the final event and the brain switches
   the projector off for the drawing (its plug comes back on for the ballot);
-  then a practice smiley and three rounds.
+  then three rounds, each grid bigger than the last. There is no practice
+  round (your word, 11 November).
   The game calls a random player by their character's picture and name; they
   walk to the paper in the Library before the square shows. The walk allows
   twenty seconds, a limit, not a wait: the moment they are at the paper,
   press **At the paper** on your phone and the square shows at once. The
-  room describes it, words only, fifteen seconds a turn. When a grid is full
+  room describes it, words only, fifteen seconds a turn: every other phone
+  says who is drawing and *Describe this square!*, and the drawer's own says
+  *Draw what they say!* When a grid is full
   the room agrees and tells you, and you tap the room's guess on your own
   phone: the four names, A to D (the TV's own names still take a tap, the
-  fallback, with the trackpad); a wrong one is crossed off. While the drawing
+  fallback, with the trackpad). A right one is a big win on the TV and a
+  smaller one on every phone. A wrong one is crossed off with a buzz from
+  the TV and the phones, every screen says *Not that one. Guess again.*, and you tap the
+  next guess straight away: there is no wait (11 November). While the drawing
   runs your phone shows it like everyone else's, with At the paper and the
   four names on it, so you never have to find the Host tab; Susan's phone has
   them too. While it
@@ -740,7 +753,7 @@ links to it.
 | 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
 | 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
-| 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
+| 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
 | 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen goes black and the projector is off. |
 
 Outside Act 4 the study screen is on its loop (its crest until the file is
@@ -1070,7 +1083,8 @@ page have no night at all: nothing is paid and no clue is dealt.
   or 6, "Parlour Game now" sends one to every phone in it (in Act 4 it waits
   on each phone).
 - *Sir Irwin Needs a Hand* (Act 6). Samples of every screen: Sir Irwin's
-  rules and the practice square, a name called, the square, the guess, his
+  rules with one square as his example, a name called, the square, the guess,
+  his
   door slide, each phone's turn, and the bedroom screen shut and open. For
   the whole game, use a test night: paper and markers in the Library, the
   Parlour TV page open on a screen people can reach, then "Start a test

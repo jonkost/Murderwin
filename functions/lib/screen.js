@@ -32,6 +32,8 @@ import { MOTIVES, CHARACTERS, NightError, readArea, noteMissingLine } from './ni
 import { irwinOptions, irwinCount } from './families.js'
 import { bulletin1, bulletin2, bulletin2Delay, CLIP_IDS, clipCode } from './news.js'
 import { PROMPTS, PROMPT_EVERY_MS, promptOrder } from './bagclues.js'
+import { IRWIN_LINES, lineTiming } from './slide-voice.js'
+const DOOR_LINE = lineTiming(IRWIN_LINES.door)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json'), 'utf8'))
@@ -374,7 +376,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     // the Act 4 title card: silent, jazz from the HomePods
     doc = screenDoc('title', { ...base, title: ACT4_TITLE.title, lines: [ACT4_TITLE.line], rehearsal: !!night.rehearsal })
   } else if (kind === 'door') {
-    doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })
+    doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: Math.max(DOOR_HOLD_MS, DOOR_LINE.voice ? DOOR_LINE.ms : 0), rehearsal: !!night.rehearsal }) // held at least as long as Sir Irwin's door line (lib/slide-voice.js)
   } else if (kind === 'talk' || kind === 'vote') {
     // Talk it over (Act 6's last beat) and the vote (Act 7): the three questions, nothing else
     const card = kind === 'talk' ? TALK_CARD : VOTE_CARD

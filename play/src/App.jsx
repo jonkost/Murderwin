@@ -172,7 +172,9 @@ export default function App() {
   // the two host phones during the slides, which keep their tabs (Pause and
   // Start the drawing live on the Host tab; the drawing's own controls come
   // with the first walk). Never once the night is over: The End opens on Now,
-  // even for a phone that never put the door card away.
+  // even for a phone that never put the door card away. ('lockout' is an older
+  // server's name for the guess, lib/relayhost.js: it stays in the list so a
+  // phone on new pages never drops out of the drawing at a wrong pick.)
   const r = relay.data
   const doneKey = r?.state === 'done' ? `relay-${ms(r.startedAt)}` : null
   const drawing = lock !== 'over' && r && ['intro', 'walk', 'turn', 'vote', 'lockout'].includes(r.state) && !(r.state === 'intro' && s.host)

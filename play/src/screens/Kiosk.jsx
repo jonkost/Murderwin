@@ -8,6 +8,7 @@ import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl
 import { portraitUrls, portraitFit } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
+import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
@@ -18,6 +19,8 @@ import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
+import IrwinVoice from './IrwinVoice'
+import { celebrate } from '../lib/celebrate'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -270,7 +273,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     const deadline = relay.state === 'turn' ? ms(relay.turnEndsAt)
       : relay.state === 'walk' ? ms(relay.walkEndsAt)
       : relay.state === 'intro' ? ms(relay.introEndsAt)
-      : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0
+      : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0 // an older server's wait after a wrong pick: it ends on that server's clock
     const now = serverNow()
     if (deadline && now >= deadline) {
       if (now - nudged.current > 800) {
@@ -280,18 +283,22 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     }
   })
 
-  // sounds on state changes
+  // sounds on state changes. A wrong pick buzzes the moment it is crossed off (11 Nov 2026: no wait
+  // after it, so the state stays at the guess and the crossed list growing is the cue).
+  const lastCrossed = useRef(0)
   useEffect(() => {
     if (!relay) return
     const key = `${relay.state}:${relay.turnIndex}:${relay.lastResult}:${relay.crossed?.length}`
     if (lastState.current && lastState.current !== key) {
-      if (relay.state === 'walk' && relay.lastResult === 'right') chime('right')
-      else if (relay.state === 'lockout') chime('wrong')
+      // a picture named is a big win (handoff B4); a wrong pick is crossed off with a buzz and a shake
+      if (relay.state === 'walk' && relay.lastResult === 'right') celebrate('big')
+      else if (wrongPick(lastCrossed.current, relay)) celebrate('miss', { at: document.querySelector('.kiosk-options') })
       else if (relay.state === 'walk') chime('end')
       else if (relay.state === 'turn') chime('start')
-      else if (relay.state === 'done') chime('right')
+      else if (relay.state === 'done') celebrate('big')
     }
     lastState.current = key
+    lastCrossed.current = isGuessing(relay) ? (relay.crossed?.length ?? 0) : 0
   }, [relay?.state, relay?.turnIndex, relay?.lastResult, relay?.crossed?.length])
 
   // the vote: a wax seal's thunk each time a seat locks in, and the stamp with its two notes as the vote
@@ -345,7 +352,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   // for its own time. A slide with a square (slide 3: the practice smiley's
   // B1) draws it the way a turn does, dark, with its label beside the words.
   if (relay.state === 'intro') {
-    const { index, slide: s, count } = slideAt(relay, serverNow())
+    const { index, slide: s, count, into } = slideAt(relay, serverNow())
     return (
       <div className={`kiosk relay-slide${s?.cell ? ' with-cell' : ''}`}>
         <IrwinFace mood={5} />
@@ -360,6 +367,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
               </div>
             </div>
           : <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>)}
+        {s?.voice && !captionsOnly && <IrwinVoice key={`${ms(relay.startedAt)}:${index}`} id={s.voice} voiceMs={s.voiceMs} into={into} />}
       </div>
     )
   }
@@ -385,9 +393,9 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     )
   }
   // the fallback for the room's guess (the host taps it on their phone, 25 Oct 2026): a tap here is
-  // the room's pick; a wrong one is crossed off
-  if (relay.state === 'vote' || relay.state === 'lockout') {
-    return <Guess relay={relay} nightId={nightId} serverNow={serverNow} />
+  // the room's pick; a wrong one is crossed off and the room guesses again at once
+  if (isGuessing(relay)) {
+    return <Guess relay={relay} nightId={nightId} />
   }
   // a finished drawing is the door (livingView), with Sir Irwin's door slide on it
   return null
@@ -404,10 +412,12 @@ function Portrait({ characterId, className = 'called-portrait' }) {
 
 // The guess: four named pictures (or drawn ones, on a stand-in round). Since 25 Oct 2026 (the cue
 // list) the host taps the room's guess on their own phone (Host.jsx HostRelayPanel); a tap here still
-// works, as the fallback, through the same callable.
-function Guess({ relay, nightId, serverNow }) {
+// works, as the fallback, through the same callable. No wait after a wrong pick (Jon, 11 Nov 2026): it
+// is crossed off with a buzz, the line says "Not that one. Guess again.", and the names left standing
+// stay live. No clock and no countdown anywhere on this screen.
+function Guess({ relay, nightId }) {
   const [busy, setBusy] = useState(false)
-  const locked = relay.state === 'lockout'
+  const locked = guessWaiting(relay) // only an older server's ten-second wait; never with today's
   const crossed = relay.crossed ?? []
   const pick = async (i) => {
     if (busy || locked || crossed.includes(i) || nightId === 'preview') return
@@ -417,7 +427,7 @@ function Guess({ relay, nightId, serverNow }) {
   return (
     <div className="kiosk vote">
       <p className="kiosk-crest">{relay.round ?? `Grid ${relay.grid}`} · {relay.gridSize} by {relay.gridSize}</p>
-      <p className="kiosk-line">{locked ? 'Not that one.' : 'What is the picture? Agree, then tell the host.'}</p>
+      <p className="kiosk-line">{guessLine(relay, 'tv')}</p>
       <div className="kiosk-options">
         {(relay.options ?? []).map((o, i) => (
           <button key={i} className={`kiosk-option${crossed.includes(i) ? ' out' : ''}`} disabled={busy || locked || crossed.includes(i)} onClick={() => pick(i)}>
@@ -426,7 +436,6 @@ function Guess({ relay, nightId, serverNow }) {
           </button>
         ))}
       </div>
-      {locked && <Countdown endsAt={relay.lockoutEndsAt} serverNow={serverNow} />}
     </div>
   )
 }
@@ -511,6 +520,7 @@ export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
         <div className="door-slide">
           <IrwinFace mood={5} />
           <p className="kiosk-line slide-text"><Spoken text={slide.text} /></p>
+          {slide.voice && <IrwinVoice key={`door:${ms(relay.finishedAt)}`} id={slide.voice} voiceMs={slide.voiceMs} into={serverNow() - ms(relay.finishedAt)} />}
         </div>
       )}
       <p className="kiosk-crest">All three drawings named</p>
@@ -694,11 +704,6 @@ export function StaleDot({ view, online }) {
       <span className="dot-text">{d.colour === 'green' ? '' : `${d.label} · ${heardText(d.seconds)}`}</span>
     </div>
   )
-}
-
-function Countdown({ endsAt, serverNow }) {
-  const left = Math.max(0, Math.ceil((ms(endsAt) - serverNow()) / 1000))
-  return <p className="kiosk-count" aria-live="off">{left}</p>
 }
 
 // The bedroom: the door is closed until the drawing is named. Then the

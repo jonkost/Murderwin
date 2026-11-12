@@ -1,0 +1,45 @@
+{
+  "voice": "Eddy (English (US))",
+  "lines": {
+    "irwin-slide-1": {
+      "seconds": 10.3,
+      "words": "eb512fd94ddc",
+      "by": "say"
+    },
+    "irwin-slide-2": {
+      "seconds": 13.5,
+      "words": "1c699e115bb1",
+      "by": "say"
+    },
+    "irwin-slide-3": {
+      "seconds": 9.1,
+      "words": "1a235209d22b",
+      "by": "say"
+    },
+    "irwin-slide-4": {
+      "seconds": 8.2,
+      "words": "7b99541a6fda",
+      "by": "say"
+    },
+    "irwin-slide-5": {
+      "seconds": 10.3,
+      "words": "655d8ab43de2",
+      "by": "say"
+    },
+    "irwin-slide-6": {
+      "seconds": 4.6,
+      "words": "63a6f841cfca",
+      "by": "say"
+    },
+    "irwin-slide-7": {
+      "seconds": 10.5,
+      "words": "e9cf78d23712",
+      "by": "say"
+    },
+    "irwin-door": {
+      "seconds": 9.4,
+      "words": "926c948d2e59",
+      "by": "say"
+    }
+  }
+}

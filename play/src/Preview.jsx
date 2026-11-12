@@ -181,7 +181,9 @@ function relayDoc(state) {
   if (state === 'walk') return { ...base, walkEndsAt: stamp(Date.now() + 9000) }
   if (state === 'vote') return { ...base, options: [{ name: 'A smiley face' }, { name: 'A sun' }, { name: 'A clock' }, { name: 'A cookie' }] }
   if (state === 'intro') return { ...base, introEndsAt: stamp(Date.now() + SLIDES[2].ms - 2000) } // two seconds into slide 3
-  if (state === 'lockout') return { ...base, options: g.options.map(cells => ({ size: 3, cells })), crossed: [1], lastResult: 'wrong', lockoutEndsAt: stamp(Date.now() + 9000) }
+  // a wrong pick (11 Nov 2026): crossed off, and the room guesses again at once. The state stays at the
+  // guess; a stand-in round's four small drawings, to show those too
+  if (state === 'wrong') return { ...base, state: 'vote', options: g.options.map(cells => ({ size: 3, cells })), crossed: [1], lastResult: 'wrong' }
   return base
 }
 
@@ -312,7 +314,9 @@ const KIOSK = {
   'kiosk-living-rules': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('intro')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-relay-called': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('walk')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-relay-square': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  'kiosk-relay-guess': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={{ ...relayDoc('vote'), crossed: [2] }} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-relay-guess': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('vote')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  // after a wrong pick (11 Nov 2026): the pick crossed off, "Not that one. Guess again.", the rest still live
+  'kiosk-relay-wrong': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={{ ...relayDoc('vote'), crossed: [2], lastResult: 'wrong' }} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-bedroom-closed': () => <Bedroom relay={null} trace={null} />,
   'kiosk-bedroom-1': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(1)} />,
   'kiosk-bedroom-2': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(2)} />,
@@ -517,7 +521,11 @@ export default function Preview({ screen }) {
     case 'relay-turn': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('turn')} serverNow={serverNow} />; break
     case 'relay-draw': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jessa' }} relay={relayDoc('turn')} serverNow={serverNow} />; break
     case 'relay-vote': body = <Relay uid="preview" night={night} session={SESSION} relay={relayDoc('vote')} serverNow={serverNow} />; break
-    case 'relay-lockout': body = <Relay uid="preview" night={night} session={SESSION} relay={relayDoc('lockout')} serverNow={serverNow} />; break
+    // after a wrong pick: "Not that one. Guess again.", the pick crossed off, no bar and no wait (11 Nov 2026).
+    // 'relay-lockout' is this screen's old name, from when a wrong pick had a ten-second wait: the tour still asks for it
+    case 'relay-lockout':
+    case 'relay-wrong': body = <Relay uid="preview" night={night} session={SESSION} relay={relayDoc('wrong')} serverNow={serverNow} />; break
+    case 'relay-wrong-host': body = <Relay uid="preview" night={night} session={{ ...SESSION, host: 'jonathan' }} relay={{ ...relayDoc('vote'), crossed: [2], lastResult: 'wrong' }} serverNow={serverNow} />; break
     case 'relay-done': body = <RelayDone uid="preview" relay={relayDoc('done')} seenKey="x" />; break
     case 'join': body = <Join night={night} ui={ui} />; break
     case 'allow': body = <Allow uid="preview" onDone={() => {}} />; break

@@ -118,15 +118,16 @@ brackets.
 - *Act 6, Sir Irwin Needs a Hand (the Relay Drawing).* Irwin's seven rules
   slides, each up long enough to read (about 5 seconds plus 0.4 seconds a
   word); the first carries the game's name and its line ("Three drawings
-  open the door. He only has paws."), and slide 3 shows the practice
-  smiley's B1 square. Each turn, only the called player's portrait and
+  open the door. He only has paws."), and slide 3 shows one square of a
+  smiley face, B1, as his example. Each turn, only the called player's portrait and
   character name while they walk to the paper in the Library, then a black
   screen with one white square and its label (the walk allows twenty
   seconds, and the host's **At the paper** ends it sooner). After each
   picture, four names to agree on; the room tells the host, who taps the
   guess on their phone (a tap here still counts, the fallback): a wrong pick
-  is crossed off and the room waits ten seconds before guessing again.
-  Practice smiley, then 3 by 3, 4 by 4, 5 by 5.
+  is crossed off with a buzz, the screen says *Not that one. Guess again.*,
+  and the room guesses again at once (no wait since 11 November).
+  Three grids, with no practice round: 3 by 3, 4 by 4, 5 by 5.
 - *Act 6, the door.* Irwin's "Pawsome!" slide above "The door is open". The
   hall light goes green and the bedroom screen shows the trace. If the
   bedroom screen has died, press **Show the trace on the TV** on the Host tab: after

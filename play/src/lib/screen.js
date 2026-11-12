@@ -11,6 +11,9 @@ import { effectivePhase, isOver, isRehearsalNight } from './night.js'
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
 export const DOOR_HOLD_MS = 10_000
+// The drawing is on the screens in these states. 'lockout' is an older server's
+// ten-second wait after a wrong pick (gone 11 Nov 2026, lib/relayhost.js): it
+// stays here so the TV never leaves the drawing if such a server is behind it.
 export const RELAY_RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
 export const CAPTION_KINDS = ['news', 'bulletin', 'irwin']
 
@@ -189,7 +192,7 @@ export function slideAt(relay, now) {
   let index = 0
   let from = 0
   while (index < slides.length - 1 && t >= from + lengths[index]) { from += lengths[index]; index++ }
-  return { index, slide: slides[index], count: slides.length }
+  return { index, slide: slides[index], count: slides.length, into: t - from } // into: ms into this slide, for its voice
 }
 
 // Three rules lines for the drawing, from the workshop's RELAY RULES line

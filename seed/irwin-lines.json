@@ -1,0 +1,13 @@
+{
+  "about": "Sir Irwin's words for the drawing (Act 6): his seven rules slides and his line when the door opens. These are the words on the Parlour TV AND the words his voice says (npm run irwin-voice makes play/public/voice/<id>.m4a from them). Change a line here and run npm run irwin-voice again: a voice the command made is made again, a recording of Jon's is kept and measured. A title of null is filled in by the game (slide 1 is the game's own name).",
+  "slides": [
+    { "id": "irwin-slide-1", "title": null, "text": "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
+    { "id": "irwin-slide-2", "title": "The idea", "text": "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
+    { "id": "irwin-slide-3", "title": "A turn", "text": "First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1." },
+    { "id": "irwin-slide-4", "title": "The shouting", "text": "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },
+    { "id": "irwin-slide-5", "title": "Guessing", "text": "Think you know the picture? Pick it from the list. Wrong guesses get crossed off. That's okay. Boo crosses me off all the time. It's how she says hello." },
+    { "id": "irwin-slide-6", "title": "The rounds", "text": "Three grids, each bigger than the last. Small, medium, BIG." },
+    { "id": "irwin-slide-7", "title": "The clue", "text": "Name all three and the door opens. Then I'll sniff out whatever's in there and bring it straight to you. Helping is my favorite! Ready? Paws on the paper. Let's go!" }
+  ],
+  "door": { "id": "irwin-door", "title": "The door", "text": "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
+}
