@@ -79,6 +79,11 @@ Granolia, the Parlour. The device codes are in the key at the end.
 | Susan's iPad (8th gen) | Backup personal device | — |
 | iPhone 11 | Backup personal device | — |
 
+(Changed by Jon, 11 Nov 2026, `docs/handoff-2026-11-11-polish.md`: the Catwalk
+and its camera are gone. Susan's MacBook Pro (SKMBP) is Boo's screen in the
+Entryway with the Stream Deck + XL, as it has been since 5 Nov, and Jenna's
+iPad Pro (JNIPP) has no job on the night.)
+
 ## What the night needs
 
 **Scenes (music):** the default jazz; the Study light-game music; the
