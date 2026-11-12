@@ -36,6 +36,8 @@ feature lands Wednesday 11 November, after the second full tech run; then checks
 
 > **12 Nov 2026, night, Jon: "Development is done... I need it simple."** The button is called Start the night (never "run-through"); an unticked night is "a practice night". The workshop's menu is Home, Game night, For Jenna, Devices: Timeline, Where we are and Game test are off it (the pages still open at their addresses; the board script still works). From here: fixes only, plain words, no new jobs for Jon unless something is broken.
 
+> **12 Nov 2026, the walk-through: Get Off My Lawn! trapped the group (round 3, attempt 43).** Slower colours (`SALEM_SEGMENTS`), a longer time to react (`SALEM_GRACE_MS`, mirrored in `play/src/lib/night.js`), and a round passes itself on its fifth slip (`SALEM_MAX_SLIPS`), so no group can be stuck. Do not make it faster again without Jon's word.
+
 ## RULE 1 — THE HOST PLAYS
 
 Jon (the human you are working with) is the host, the developer, AND a player.

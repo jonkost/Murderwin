@@ -651,9 +651,12 @@ export const SALEM_CLEAN_MS = 30_000
 export const SALEM_LEAD_MS = 3_000
 export const SALEM_ROUNDS = 3
 // How long each colour holds, by round: slower, then faster.
-export const SALEM_SEGMENTS = { 1: [4000, 6500], 2: [2500, 4000], 3: [1500, 2600] }
+// Slower since 12 Nov 2026: on the walk-through three players were on round 3 for 43 attempts.
+export const SALEM_SEGMENTS = { 1: [4500, 7000], 2: [3500, 5500], 3: [2800, 4500] }
 // After a flip, a phone has this long to react before a slip counts.
-export const SALEM_GRACE_MS = { 1: 700, 2: 600, 3: 500 }
+export const SALEM_GRACE_MS = { 1: 1200, 2: 1000, 3: 900 }
+// A round a group cannot get through passes itself on this many slips, so no group is ever stuck.
+export const SALEM_MAX_SLIPS = 5
 
 export function salemIdle(gid, round, now = Date.now()) {
   return { groupId: gid ?? null, round: 0, state: 'idle', attempt: 0, flips: [], startsAt: null, cleanAt: null, act4Round: round, at: new Date(now) }
@@ -714,15 +717,23 @@ export async function salemSlip(db, { nightId, uid, attempt, colour = null, now 
   const { gid, key } = await salemGuestOf(db, nightId, uid)
   const place = await placeIn(db, nightId, gid, key)
   const ref = db.doc(salemPath(nightId))
-  return db.runTransaction(async tx => {
+  const r = await db.runTransaction(async tx => {
     const d = (await tx.get(ref)).data()
     if (!d || d.groupId !== gid || d.state !== 'playing' || Number(attempt) !== d.attempt) return { ok: true, already: true }
     if (now < ms(d.startsAt)) return { ok: true, already: true }
     const startsAt = now + SALEM_LEAD_MS
     const slipsBy = plusOne(d.slipsBy, place)
+    // never stuck (12 Nov 2026): the slip that makes the round's fifth passes the round for the group
+    if ((d.slips ?? 0) + 1 >= SALEM_MAX_SLIPS) {
+      const cleared = d.round >= SALEM_ROUNDS
+      tx.update(ref, { state: cleared ? 'cleared' : 'passed', flips: [], at: new Date(now), slips: (d.slips ?? 0) + 1, ...(slipsBy ? { slipsBy } : {}), letThrough: true })
+      return { ok: true, letThrough: true, cleared }
+    }
     tx.update(ref, { attempt: d.attempt + 1, flips: salemFlips(d.round, startsAt, pick), startsAt: new Date(startsAt), cleanAt: new Date(startsAt + SALEM_CLEAN_MS), slips: (d.slips ?? 0) + 1, lastSlip: colour === 'red' || colour === 'green' ? colour : null, ...(slipsBy ? { slipsBy } : {}), at: new Date(now) })
     return { ok: true, restarted: true }
   })
+  if (r.cleared) await payRoom(db, nightId, gid, 'orangerie', { outcome: 'done', now })
+  return r
 }
 
 // Thirty seconds clean (any phone may say so once the clean mark has passed):

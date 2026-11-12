@@ -282,7 +282,7 @@ export function salemFlipAt(doc, now) {
   for (const f of doc?.flips ?? []) { if (ms(f.at) <= now) at = ms(f.at); else break }
   return at
 }
-export const SALEM_GRACE_MS = { 1: 700, 2: 600, 3: 500 }
+export const SALEM_GRACE_MS = { 1: 1200, 2: 1000, 3: 900 } // the server's (functions/lib/act4.js); longer since 12 Nov 2026
 // A shake is movement above this, in m/s² with gravity taken out; red wants
 // one at least every SALEM_STILL_MS, green wants none.
 export const SALEM_SHAKE = 3.5

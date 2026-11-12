@@ -7,7 +7,7 @@ import { hostCommand, player } from '../lib/run.js'
 import { FREE_TIME_TIPS, lightsProgressOf, lightsPath, ms } from '../lib/deal.js'
 import {
   ACT4_TEXT, DIRECTIONS, ROOMS, ROOM_KEYS, PARLOUR, roomFor, readRotation, act4Path, salemPath, booPath, memoryPath, parlourTip,
-  salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, ROUND_MS, ARCADE_THIRD_LINE, ARCADE_CLUES,
+  salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, SALEM_MAX_SLIPS, SALEM_SEGMENTS, SALEM_GRACE_MS, ROUND_MS, ARCADE_THIRD_LINE, ARCADE_CLUES,
   addPairsBy, plusOne, markAt, PLACES_MAX,
 } from '../lib/act4.js'
 import { rehearsalCase } from '../lib/case.js'
@@ -396,6 +396,36 @@ test('F12 puzzles appear on the chime, not on arrival: every room\'s game is set
   await host(db, nightId, 'next', chime2)
   const atChime2 = rooms()
   for (const room of ROOM_KEYS) assert.equal(atChime2[room].groupId, rot.order.find(gid => roomFor(rot, gid, 2) === room) ?? null, `F12 the ${room} is set for its round-2 group at the second chime`)
+})
+
+test('Salem\'s game never traps a group (12 Nov 2026): the round\'s fifth slip passes the round, the third round\'s pays; the late rounds leave time to react', async () => {
+  // on the walk-through three players were on round 3 for 43 attempts: every colour now holds well past the reaction time
+  for (const round of [1, 2, 3]) assert.ok(SALEM_SEGMENTS[round][0] >= SALEM_GRACE_MS[round] * 3, `round ${round}: a colour holds at least three reaction times`)
+  assert.ok(SALEM_GRACE_MS[3] >= 900 && SALEM_SEGMENTS[3][0] >= 2800)
+  const { db, nightId, now } = await party(8)
+  const rot = await intoRounds(db, nightId, now)
+  let r = 1
+  while (!db.store.get(salemPath(nightId)).groupId && r < rot.rounds) { await host(db, nightId, 'next', now); r++ }
+  const doc = () => db.store.get(salemPath(nightId))
+  const g = rot.groups.find(x => x.id === doc().groupId)
+  const uid = uidOf(db, nightId, g.members[0].key)
+  await player.meetCat(db, { nightId, uid, cat: 'salem', now })
+  let t = now
+  for (let round = 1; round <= SALEM_ROUNDS; round++) {
+    await player.salemReady(db, { nightId, uid, now: t })
+    assert.equal(doc().slips, 0, 'each round counts its own slips')
+    for (let k = 1; k <= SALEM_MAX_SLIPS; k++) {
+      assert.equal(doc().state, 'playing', `slip ${k} of round ${round} finds the round on`)
+      t = ms(doc().startsAt) + 2000
+      const out = await player.salemSlip(db, { nightId, uid, attempt: doc().attempt, colour: 'red', now: t })
+      assert.equal(!!out.letThrough, k === SALEM_MAX_SLIPS)
+    }
+    assert.equal(doc().state, round === SALEM_ROUNDS ? 'cleared' : 'passed', 'let through')
+    // a late slip from another phone changes nothing
+    await player.salemSlip(db, { nightId, uid: uidOf(db, nightId, g.members[1].key), attempt: doc().attempt, now: t })
+    assert.equal(doc().state, round === SALEM_ROUNDS ? 'cleared' : 'passed')
+  }
+  for (const m of g.members) assert.ok(cardsOf(db, uidOf(db, nightId, m.key), 'clue').find(x => x.room === 'orangerie'), 'Salem pays, as for a clean pass')
 })
 
 test('F26 Salem\'s colours: the whole round\'s schedule is written once, three seconds before the first change, on the server\'s clock; every phone reads the same', async () => {

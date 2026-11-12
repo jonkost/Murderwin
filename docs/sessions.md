@@ -9,6 +9,14 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, during the test · Claude Code (Get Off My Lawn! could trap a group)
+
+- Jon, mid-test: "we are stuck in the get off my grass game." The live record showed three players on round 3, attempt 43, 28 slips (17, 10 and 13 by phone). Round 3 changed colour every 1.5 to 2.6 seconds with half a second to react, and one slip by anyone restarts all three.
+- **Fixed** (`functions/lib/act4.js`, `play/src/lib/night.js`): each colour holds longer (round 1: 4.5 to 7 s, round 2: 3.5 to 5.5 s, round 3: 2.8 to 4.5 s), the time to react is longer (1.2, 1.0, 0.9 s), and a round's fifth slip passes that round for the group (`SALEM_MAX_SLIPS`; the third round's pays, as a clean pass does). A new test; `npm test` and two fake nights pass.
+- The way out on the night was always Next, and the chime pays the group anyway.
+- **Left:** a full deploy on Jon's word (the server's numbers and the phones' copy of the reaction time).
+- **Decisions:** mine, to confirm: five slips lets a round through.
+
 ## 12 Nov 2026, during the test · Claude Code (the room screens' colour, the join screen, files for each device)
 
 - Jon, with a screenshot of the Parlour TV: "I hate this design, mostly the color and put the qr code on the other side."
