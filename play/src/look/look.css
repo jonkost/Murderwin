@@ -94,6 +94,11 @@
 .lk-rules-bar { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: 0.9cqh; background: rgba(214, 207, 134, 0.16); }
 .lk-rules-bar i { display: block; height: 100%; background: var(--brass-hi); transition: width 300ms linear; }
 
+/* Jon's own slide, whole: nothing drawn over it, a soft fade from the last one (his deck's own transition) */
+.lk-rules-own { background: #001925; }
+.lk-rules-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; animation: lk-fade 300ms ease-out 1; }
+.lk-rules-next { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
 /* ---- the marquee: chasing bulbs round a game's name ------------------------- */
 
 .lk-marquee { position: relative; display: inline-block; padding: var(--mq-pad, 3.2cqh 4.6cqw); border-radius: 1.2cqh; background: rgba(0, 12, 18, 0.5); box-shadow: inset 0 0 0 0.3cqh rgba(214, 207, 134, 0.5), 0 2cqh 5cqh rgba(0, 0, 0, 0.5); }

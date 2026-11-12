@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, writeFileSync, mkdirSync, utimesSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RULES_FILES, CUTS, cutPoint, findRecordings } from '../rules-film.mjs'
+import { RULES_FILES, CUTS, cutPoint, findRecordings, findDeckPdf, slidePictures } from '../rules-film.mjs'
+import { rulesLines } from '../media-check.mjs'
 
 // The rules film's importer (handoff 11 Nov 2026, A14): pure parts only. Nothing here runs ffmpeg or plays a sound.
 
@@ -16,12 +17,12 @@ test('the importer knows the 28 recordings by the manifest’s names', () => {
   assert.equal(root.scripts['rules-film'], 'node scripts/rules-film.mjs')
 })
 
-test('rule 25 is stopped at the pause before the round that used to follow the door, and left whole when a retake has no pause there', () => {
-  const cut = CUTS['rules-25-act6-the-final-hour']
-  assert.ok(cut && cut.at > 30 && cut.at < 40)
-  // the pauses measured in Jon's take of 11 Nov 2026
+test('nothing of Jon’s is cut (12 Nov 2026: "Do not change the rule cards!"); the cut machinery still works if he ever asks', () => {
+  assert.deepEqual(CUTS, {}, 'every recording plays whole')
+  // how a cut would be placed: at the long pause nearest the written time (the pauses of Jon's rule 25, 11 Nov 2026)
+  const cut = { at: 35.68, near: 1.2, why: 'a test' }
   const pauses = [[29.28, 29.93], [31.91, 32.14], [32.65, 33.30], [33.40, 33.73], [35.68, 36.71], [38.05, 38.32], [38.82, 39.33], [40.74, 41.39], [44.41, 45.20]].map(([start, end]) => ({ start, end }))
-  assert.equal(cutPoint(pauses, cut), 35.98, 'a little into the long pause after "with the Murderer’s trace inside."')
+  assert.equal(cutPoint(pauses, cut), 35.98)
   // a short breath near the time is not a sentence's end
   assert.equal(cutPoint([{ start: 35.7, end: 35.95 }], cut), null)
   // a retake whose pauses are somewhere else: nothing is cut by guesswork
@@ -29,7 +30,6 @@ test('rule 25 is stopped at the pause before the round that used to follow the d
   assert.equal(cutPoint([], cut), null)
   // a recording with no cut is never touched
   assert.equal(cutPoint(pauses, undefined), null)
-  assert.deepEqual(Object.keys(CUTS), ['rules-25-act6-the-final-hour'], 'only the one sentence is cut')
 })
 
 test('recordings are found by name in a folder, two levels down, the newest take winning', () => {
@@ -44,4 +44,37 @@ test('recordings are found by name in a folder, two levels down, the newest take
   assert.deepEqual(Object.keys(found).sort(), ['rules-01-cover', 'rules-28-good-luck'])
   assert.equal(found['rules-01-cover'], a, 'the newer file')
   assert.equal(found['rules-28-good-luck'], c)
+})
+
+// Handoff 12 Nov 2026, job 1: the film's pictures are Jon's own 28 slides. The importer looks for his deck as a
+// PDF beside his recordings, and the media check says which set the film shows.
+test('Jon’s deck is looked for as a PDF in the folder or the one above it, and his slide pictures are counted', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rules-deck-'))
+  mkdirSync(join(dir, 'FINAL EXPORTS'))
+  assert.equal(findDeckPdf(join(dir, 'FINAL EXPORTS')), null, 'no deck: nothing is guessed')
+  const old = join(dir, 'The Rules old.pdf')
+  const deck = join(dir, 'Sirwin Manor The Rules.pdf')
+  for (const f of [old, deck, join(dir, 'Intro and Rules Script.pdf'), join(dir, 'Run sheet.pdf')]) writeFileSync(f, 'x')
+  utimesSync(old, new Date(1_700_000_000_000), new Date(1_700_000_000_000))
+  assert.equal(findDeckPdf(join(dir, 'FINAL EXPORTS')), deck, 'the newest PDF of the rules, never the script')
+  const pics = mkdtempSync(join(tmpdir(), 'rules-pics-'))
+  assert.equal(slidePictures(pics), 0)
+  for (const f of RULES_FILES.slice(0, 27)) writeFileSync(join(pics, `${f}.jpg`), 'x')
+  assert.equal(slidePictures(pics), 27)
+  writeFileSync(join(pics, `${RULES_FILES[27]}.jpg`), 'x')
+  assert.equal(slidePictures(pics), 28)
+})
+
+test('npm run media says whether the film shows Jon’s own slides or the drawn ones', () => {
+  const voices = RULES_FILES.map(f => `${f}.m4a`)
+  const pictures = RULES_FILES.map(f => `${f}.jpg`)
+  const all = rulesLines({ dir: '/r', files: [...voices, ...pictures, 'README.md'], own: true }).join('\n')
+  assert.ok(all.includes('Your recordings: 28 of 28 in.'))
+  assert.ok(all.includes('Your own slides: 28 of 28 in. The film shows your own slides.'))
+  const some = rulesLines({ dir: '/r', files: [...voices.slice(0, 20), ...pictures.slice(0, 5)], own: false }).join('\n')
+  assert.ok(some.includes('Your recordings: 20 of 28 in. A slide with no recording shows in silence.'))
+  assert.ok(some.includes('Your own slides: 5 of 28 in. The film shows drawn slides until all 28 are in.'))
+  // the pictures were copied in by hand and the film was never told
+  assert.ok(rulesLines({ dir: '/r', files: [...voices, ...pictures], own: false }).join('\n').includes('Run npm run rules-film again.'))
+  assert.ok(rulesLines({ dir: '/r', files: null }).join('\n').includes('does not exist yet'))
 })

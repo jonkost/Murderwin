@@ -1,9 +1,14 @@
 // The rules as a film (handoff 11 Nov 2026, A14: "the rules as a film, straight
 // after the intro, with no second tab"). The Parlour TV plays it by itself at
 // The house rules: the intro video, then Jon's 28 recordings, each over its
-// own slide, drawn in code from the lines below. No deck to export, nothing to
-// switch to. Pure, so play/test and the importer (scripts/rules-film.mjs) can
-// read it.
+// own slide. Nothing to switch to. Pure, so play/test and the importer
+// (scripts/rules-film.mjs) can read it.
+//
+// THE SLIDES ARE JON'S OWN (handoff 12 Nov 2026, job 1: "Do not change the
+// rule cards!" ... "The 28 slides and VO."): the 28 he made, as pictures, in
+// his order, whole, with his recordings whole. The titles and lines below are
+// only the fallback, drawn in code when his pictures are not in (OWN_SLIDES).
+// Never reword, restyle or reorder his slides or his recordings.
 //
 // The recordings are Jon's (docs/rules-voiceover-manifest.md: one file a slide,
 // rules-01-cover to rules-28-good-luck). `npm run rules-film -- "<folder>"`
@@ -59,6 +64,14 @@ export const AFTER_INTRO_MS = 1500
 const seconds = name => Number(lengths?.slides?.[name]) || 0
 // The intro video's length (the importer measures it; 112 seconds when it has not).
 export const INTRO_MS = Math.round((Number(lengths?.intro) || 112.1) * 1000)
+
+// Are Jon's own 28 slides in, as pictures (play/public/rules/<name>.jpg)? Then the film shows them, whole,
+// with nothing drawn over them (Jon, 12 Nov 2026: "Do not change the rule cards!"); the slides drawn in
+// code above are only the fallback for a picture that is missing.
+export const OWN_SLIDES = lengths?.pictures === true
+export function rulesPictureUrl(file, base = '/play/') {
+  return `${base}rules/${file}.jpg`
+}
 
 // Where a recording lives on the site (play/public/rules/, not in git).
 export function rulesAudioUrl(file, base = '/play/') {

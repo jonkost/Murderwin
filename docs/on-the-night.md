@@ -389,8 +389,9 @@ links to it.
   ready for the dark. The Parlour TV shows the join code, big, through the
   whole of Act 1 (*rulesDeckScreen* is answered by your cue list: the Parlour
   TV). "The house rules" is the beat for the intro video and the rules: the
-  Parlour TV plays the intro and then the rules film by itself, your 28
-  recordings each over its own slide, about sixteen minutes in all, and the
+  Parlour TV plays the intro and then the rules film by itself, your own 28
+  slides each with your recording for it, whole, about sixteen minutes in
+  all (the Host tab says in Act 1 whether the film shows your own slides), and the
   join code comes back when it ends (Next goes sooner). The brain stops the
   music and dims the lights for them. The film has sound only if that screen
   has been clicked once since it opened: the Host tab says Sound on beside

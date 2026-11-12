@@ -5,6 +5,7 @@ import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
+import { OWN_SLIDES } from '../lib/rulesfilm'
 import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, secondDisplayLinks } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
@@ -160,6 +161,7 @@ export default function Host({ night, content, serverNow }) {
         <br />{isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'}
       </p>
       {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, on its own. Next goes sooner.</p>}
+      {night.act === 1 && <p className="gloss">{OWN_SLIDES ? 'The rules film shows your own 28 slides.' : 'The rules film shows drawn slides: your own 28 are not in yet.'}</p>}
       {night.act <= 1 && <SendScreens presence={presence} sound={screenSound} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
