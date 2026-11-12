@@ -102,10 +102,18 @@ export async function claimGamesDone(db, nightId, night, { now = Date.now() } = 
   if (!night || night.phase !== 'act' || Number(night.act) !== 6 || night.beat !== 'games') return false
   if (night.window && !night.window.settled) return false
   const ref = db.doc(scheduleOf(nightId))
+  const nightRef = db.doc(`nights/${nightId}`)
   return db.runTransaction(async tx => {
+    // the night inside the claim (review 12 Nov 2026): the last game is fired at its claim but its window is
+    // written only when it has been dealt, so the drawing waits until the night's window is that game's own, closed
+    const cur = (await tx.get(nightRef)).data()
     const snap = await tx.get(ref)
     const sched = snap.exists ? snap.data() : null
     if (!sched || Number(sched.act) !== 6 || sched.closed || !allFired(sched)) return false
+    if (!cur || cur.phase !== 'act' || Number(cur.act) !== 6 || cur.beat !== 'games') return false
+    const last = sched.slots?.[sched.count - 1] ?? { act: 6, slot: sched.count - 1 }
+    const lastBeat = Number(last.act) === 6 ? `p${last.slot}` : `p${last.act}-${last.slot}` // windows.slotBeat
+    if (!cur.window || cur.window.settled !== true || cur.window.beat !== lastBeat || Number(cur.window.act) !== 6) return false
     tx.update(ref, { closed: true, closedAt: new Date(now), auto: true })
     return true
   })
