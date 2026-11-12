@@ -5,7 +5,7 @@ import { celebrate } from '../lib/celebrate'
 import { unlock } from '../lib/soundkit'
 import { filmTimeline } from '../lib/rulesfilm'
 import RulesFilm from '../screens/RulesFilm'
-import { Saver } from '../screens/Rooms'
+import { Saver, Idle } from '../screens/Rooms'
 
 // The look book: /play/?look=1. The nine screens Jon approved on 12 Nov 2026
 // (docs/look-approved.html), built for real, with the real art, in the order
@@ -15,7 +15,8 @@ import { Saver } from '../screens/Rooms'
 //
 //   /play/?look=1                          the book
 //   /play/?look=1&show=splash&room=study   one screen, filling the window
-//   (show: splash, saver, second, game, win, end, dedication, now, vote, met, rules;
+//   (show: splash, saver (add &second=living, study or any for a Mac's second screen), second, game, win, end,
+//    dedication, now, vote, met, rules;
 //    room, game, state, word and who pick which; &still=1 holds it still;
 //    show=film&n=7 is slide 7 of the rules film as the Parlour TV shows it)
 
@@ -68,6 +69,8 @@ function Show({ show, params }) {
   const game = GAME_IDS.includes(params.get('game')) ? params.get('game') : 'orangerie'
   const who = params.get('who') || 'boo'
   if (show === 'second') return <Splash room={room} turn={fixed ?? turn} calm className="full" />
+  // a Mac's second screen as it is since the evening of 12 Nov 2026: the real idle screen, with no night
+  if (show === 'saver' && params.has('second')) return <Idle title="Sirwin Manor" line="" loop={null} room={SPLASHES[params.get('second')] ? params.get('second') : null} calm />
   // an idle room screen as it is since 12 Nov 2026: the screen saver (the splash only if a face will not load)
   if (show === 'saver') return <div className="kiosk idle"><Saver which={IDLE_OF[room] ?? 'living'}><Splash room={room} turn={fixed ?? turn} className="full" /></Saver></div>
   if (show === 'game') return <GameCard id={game} turn={fixed ?? turn + 1} codeUrl={codeUrl(game)} className="full" />
@@ -128,10 +131,11 @@ export default function LookBook() {
           <button type="button" className="lk-open" onClick={() => open(`show=splash&room=${room}`)}>See it fill the screen</button>
         </Section>
 
-        <Section n="2" title="A Mac’s second display" line="The seal, the room’s name and the cat.">
+        <Section n="2" title="A Mac’s second display" line="The seal, the room’s name and the cat. Since the evening of 12 November a second screen plays the screen saver (12); this shows only if a face will not load.">
           <Splash room={second} turn={turn} calm className="lk-tv wide" />
           <Chips items={[['study', 'Study'], ['living', 'Parlour']]} value={second} onPick={setSecond} />
           <button type="button" className="lk-open" onClick={() => open(`show=second&room=${second}`)}>See it fill the screen</button>
+          <button type="button" className="lk-open" onClick={() => open(`show=saver&second=${second}`)}>See the screen saver on it</button>
         </Section>
 
         <Section n="3" title="A game’s card" line="On a room’s screen between groups.">

@@ -33,7 +33,7 @@ import Spoken from './Spoken'
 import { Splash, GameCard, BigWin } from '../look/parts'
 import { useJustWon } from '../lib/useWin'
 import { lookOn, SPLASH_OF, splashNow, trimStyle } from '../look/look'
-import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, saverAt, faceBox } from '../lib/saver'
+import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, saverAt, faceBox, saverPlace } from '../lib/saver'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -138,24 +138,20 @@ export function Saver({ which, children = null }) {
 // 12 Nov 2026), the crest's place is taken by the room's live splash: the
 // room's name in lights, its own cat, large, and the cat's name. No other
 // words. Since the afternoon of 12 Nov 2026 a room screen with a loop of its
-// own plays the screen saver in its place (Saver, above); the splash is what
-// shows if a face picture will not load. A loop file still wins if Jon ever drops one
+// own plays the screen saver in its place (Saver, above), and since that
+// evening so does a Mac's second screen (Jon: "I want to have this on the
+// second screenes"); lib/saver.js saverPlace says which screens do. The
+// splash (or, on a second screen with no room, the crest) is what shows if a
+// face picture will not load. A loop file still wins if Jon ever drops one
 // in. `room` names the splash when the screen has no loop of its own (a
-// second display); `calm` is that smaller, quieter one, which keeps its splash.
+// second display); `calm` is that smaller, quieter one.
 export function Idle({ title, line, loop = null, room = null, calm = false }) {
   const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null
-  if (splash) {
-    const still = <LiveSplash room={splash} calm={calm} />
-    return <div className="kiosk idle"><Loop which={loop}>{loop && !calm ? <Saver which={loop}>{still}</Saver> : still}</Loop></div>
-  }
-  return (
-    <div className="kiosk idle">
-      <Loop which={loop}>
-        <p className="kiosk-crest">{title}</p>
-        <p className="kiosk-line">{line}</p>
-      </Loop>
-    </div>
-  )
+  const still = splash
+    ? <LiveSplash room={splash} calm={calm} />
+    : <><p className="kiosk-crest">{title}</p><p className="kiosk-line">{line}</p></>
+  const place = saverPlace({ loop, room, calm })
+  return <div className="kiosk idle"><Loop which={loop}>{place ? <Saver which={place}>{still}</Saver> : still}</Loop></div>
 }
 
 // The room's splash, alive: the cat's picture moves on by the clock on the

@@ -66,7 +66,7 @@ export const SCREENS = [
   { kiosk: 'boo', room: 'The Entryway: Boo’s arcade', machine: 'Susan’s work MacBook Pro, in Chrome, with the big Stream Deck' },
   { kiosk: 'orangerie', room: 'The Orangerie', machine: 'Jon’s M3 MacBook Air (the brain), facing the table' },
   { kiosk: 'ipad', room: 'The iPad', machine: 'Jon’s iPad Pro, carried room to room' },
-  { kiosk: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen' },
+  { kiosk: 'decor', room: 'The screen saver: any other second screen', machine: 'Any Mac with two screens: its other screen' },
 ]
 export function screenUrl(playUrl, kiosk) {
   return `${String(playUrl ?? '').split('?')[0]}?kiosk=${kiosk}`

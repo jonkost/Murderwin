@@ -45,6 +45,7 @@ export default function Setup() {
           ))}
         </ul>
       </details>
+      <p className="setup-sub setup-second">A Mac’s second screen plays the screen saver. Open this page on that screen and tap its line.</p>
       <ul className="setup-list">
         {SECOND_DISPLAY_ROOMS.map(r => (
           <li key={r.key} className="setup-room">

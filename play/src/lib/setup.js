@@ -21,14 +21,18 @@ export const SETUP_SPARES = [
   { key: 'bedroom', room: 'The bedroom, on another device', machine: 'Only if the iPad is busy or dead', kiosk: 'bedroom', when: 'From Act 6' },
 ]
 
-// A Mac with two displays (the Parlour's, the Study's): its other screen gets the crest page, so no desktop shows.
-export const SECOND_DISPLAY = { key: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen', kiosk: 'decor', when: 'All night: the crest, the countdown, dark with the room' }
+// A Mac with two displays (the Parlour's, the Study's): its other screen gets a page of its own, so no desktop
+// shows. Since the evening of 12 Nov 2026 that page plays the screen saver (Jon: "I want to have this on the
+// second screenes. I'll need a link to it in the game setup"), so each of the three is named for it: these are
+// the links. It still counts down with the rest and goes dark with the room.
+export const SECOND_DISPLAY = { key: 'decor', room: 'The screen saver: any other second screen', machine: 'Any Mac with two screens: its other screen', kiosk: 'decor', when: 'All night: the five faces crossing the screen; dark with the room' }
 
 // A Mac's own screen beside its room screen (Jon, 11 Nov 2026: "a small something on the MacBook Air... and on the
-// MacBook Pro screen as it's sitting next to the Parlour TV"): its room's splash, smaller and calmer, dark with the room.
+// MacBook Pro screen as it's sitting next to the Parlour TV"). The screen saver too; its room's splash, smaller
+// and calmer, only if a face picture will not load.
 export const SECOND_DISPLAY_ROOMS = [
-  { key: 'decor-living', room: 'The Parlour: the Mac’s own screen', machine: 'Jon’s work MacBook Pro, beside the TV', kiosk: 'decor', query: 'room=living', when: 'All night: Sir Irwin, small and calm; dark with the room' },
-  { key: 'decor-study', room: 'The Study: the Mac’s own screen', machine: 'M1 MacBook Air, by the walls', kiosk: 'decor', query: 'room=study', when: 'All night: Granolia, small and calm; dark with the room' },
+  { key: 'decor-living', room: 'The screen saver: the Parlour Mac’s own screen', machine: 'Jon’s work MacBook Pro, beside the TV', kiosk: 'decor', query: 'room=living', when: 'All night: the five faces crossing the screen; dark with the room' },
+  { key: 'decor-study', room: 'The screen saver: the Study Mac’s own screen', machine: 'M1 MacBook Air, by the walls', kiosk: 'decor', query: 'room=study', when: 'All night: the five faces crossing the screen; dark with the room' },
 ]
 
 // Nothing extra to open since 11 Nov 2026: the Parlour TV plays the intro video and the rules film by

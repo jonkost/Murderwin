@@ -1,14 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, CROSS_MS, DROP_MS, CORNER_MS, FACE_EVERY, FACE_PART, backAndForth, saverFace, saverSide, faceBox, saverAt } from '../src/lib/saver.js'
+import { SAVER_FACES, SAVER_FILES, SAVER_START_MS, SAVER_ON, CROSS_MS, DROP_MS, CORNER_MS, FACE_EVERY, FACE_PART, backAndForth, saverFace, saverSide, faceBox, saverAt, saverPlace } from '../src/lib/saver.js'
 import { TRIMS } from '../src/look/look.js'
 import { faceUrl } from '../src/lib/night.js'
 import { LOOP_OF } from '../src/lib/rooms.js'
 
 // The idle screens' screen saver (Jon, 12 Nov 2026: "For the loops just make the classic dvd screen saver with
 // the cats and dog face picture when it bounces off the edge of the screen"; and on seeing the first clip:
-// "You can make if faster and don't change faces with every bounce").
+// "You can make if faster and don't change faces with every bounce"; and then: "I want to have this on the second
+// screenes. I'll need a link to it in the game setup").
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 const NOW = 1_794_520_000_000 // an afternoon in November 2026
 const SCREENS = [[1920, 1080], [1728, 1080], [1366, 1024], [1024, 1366], [640, 360]]
@@ -177,18 +178,60 @@ test('a reload carries on from the same place, and no two room screens are in st
   assert.ok(step > 3 && step < 7, `${step.toFixed(1)} pixels a frame`)
 })
 
-test('an idle room screen plays it; a Mac’s second display and a loop file are as they were', () => {
+test('which screens play it: every room screen that idles, and a Mac’s second screen, each from its own start', () => {
+  assert.deepEqual(SAVER_ON, { rooms: true, second: true }, 'Jon: "For the loops just make...", then "I want to have this on the second screenes"')
+  // a room screen, by its own name
+  for (const loop of new Set(Object.values(LOOP_OF))) assert.equal(saverPlace({ loop }), loop)
+  assert.equal(saverPlace({ loop: 'nonsense' }), null, 'a name it does not know plays nothing')
+  assert.equal(saverPlace({}), null, 'a screen with no loop of its own and not a second screen')
+  assert.equal(saverPlace(), null)
+  // a Mac's second screen (Idle's calm), by the room it stands in, or any other
+  assert.equal(saverPlace({ calm: true, room: 'living' }), 'second-living')
+  assert.equal(saverPlace({ calm: true, room: 'study' }), 'second-study')
+  assert.equal(saverPlace({ calm: true, room: 'library' }), 'second-any')
+  assert.equal(saverPlace({ calm: true }), 'second-any')
+  assert.equal(saverPlace({ calm: true, loop: 'living' }), 'second-any', 'a second screen is never a room screen')
+  // every place has a start of its own, so the Parlour's TV and the Mac beside it are never in step
+  for (const place of ['second-living', 'second-study', 'second-any']) assert.ok(Number.isFinite(SAVER_START_MS[place]), place)
+  assert.notEqual(SAVER_START_MS.living, SAVER_START_MS['second-living'])
+  assert.notEqual(SAVER_START_MS.study, SAVER_START_MS['second-study'])
+  const tv = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS.living })
+  const mac = saverAt(NOW, 1920, 1080, { startMs: SAVER_START_MS['second-living'] })
+  assert.ok(Math.hypot(tv.left - mac.left, tv.top - mac.top) > 100, 'side by side, in different places')
+})
+
+test('the setup page and the Host tab name the second screens for it: those are the links', async () => {
+  const { SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, setupHref } = await import('../src/lib/setup.js')
+  const all = [...SECOND_DISPLAY_ROOMS, SECOND_DISPLAY]
+  assert.deepEqual(all.map(r => r.room), ['The screen saver: the Parlour Mac’s own screen', 'The screen saver: the Study Mac’s own screen', 'The screen saver: any other second screen'])
+  assert.deepEqual(all.map(r => setupHref('/play/', r)), ['/play/?kiosk=decor&room=living', '/play/?kiosk=decor&room=study', '/play/?kiosk=decor'], 'the same three addresses as before')
+  for (const r of all) {
+    assert.match(r.when, /the five faces crossing the screen; dark with the room/)
+    for (const line of [r.room, r.machine, r.when]) assert.ok(!/—|kiosk|localhost|splash|small and calm|crest/.test(line), line)
+  }
+  const { secondDisplayLinks } = await import('../src/lib/start.js')
+  assert.deepEqual(secondDisplayLinks('https://example.test/play/').map(l => l.room), all.map(r => r.room), 'the Host tab’s Send list carries the same names')
+  const setup = read('../src/screens/Setup.jsx')
+  assert.ok(setup.includes('A Mac’s second screen plays the screen saver. Open this page on that screen and tap its line.'), 'the setup page says which lines they are')
+  // a setup page: no guest screen links to it, and the saver itself still draws no words
+  const kiosk = read('../src/screens/Kiosk.jsx')
+  assert.ok(kiosk.includes("else if (which === 'decor') body = <Idle title=\"Sirwin Manor\" line=\"\" loop={null} room={decorRoom} calm />"), 'a second screen is the idle screen, calm')
+  assert.ok(kiosk.indexOf('roomDark(n, living ? screen.data : null, serverNow())) body = <Dark') < kiosk.indexOf("which === 'decor') body"), 'and the dark comes first')
+})
+
+test('an idle room screen and a Mac’s second screen play it; a loop file still wins', () => {
   const rooms = read('../src/screens/Rooms.jsx')
   assert.ok(rooms.includes('export function Saver({ which, children = null })'))
-  assert.ok(rooms.includes("const still = <LiveSplash room={splash} calm={calm} />"), 'the splash is still drawn')
-  assert.ok(rooms.includes('<Loop which={loop}>{loop && !calm ? <Saver which={loop}>{still}</Saver> : still}</Loop>'), 'the saver on a screen with a loop of its own, the splash alone on a second display; a loop file still wins')
+  assert.ok(rooms.includes('? <LiveSplash room={splash} calm={calm} />') && rooms.includes(': <><p className="kiosk-crest">{title}</p><p className="kiosk-line">{line}</p></>'), 'the splash, or the crest, is still drawn: it shows if a face will not load')
+  assert.ok(rooms.includes('const place = saverPlace({ loop, room, calm })'), 'lib/saver.js says which screens play it')
+  assert.ok(rooms.includes('<Loop which={loop}>{place ? <Saver which={place}>{still}</Saver> : still}</Loop>'), 'the saver inside the loop slot: a loop file still wins')
   assert.ok(rooms.includes('{(failed || (slow && !ready)) && children}'), 'the splash shows if a face will not load or they are slow, and never flashes by while they come in')
   assert.ok(rooms.includes('const SAVER_WAIT_MS = 4000') && rooms.includes('setTimeout(() => setSlow(true), SAVER_WAIT_MS)') && rooms.includes('clearTimeout(id)'), 'four seconds, then the splash until they are in')
   assert.ok(rooms.includes('const ready = !failed && loaded >= SAVER_FACES.length'), 'all five, and none broken')
-  assert.ok(rooms.includes('const w = el.clientWidth') && rooms.includes('saverAt(Date.now(), w, h,'), 'the screen’s own size, so the square meets the real edge on a TV, a Mac or an iPad')
+  assert.ok(rooms.includes('const w = el.clientWidth') && rooms.includes('saverAt(Date.now(), w, h, { startMs: SAVER_START_MS[which] ?? 0 })'), 'the screen’s own size and its own start, so the square meets the real edge on a TV, a Mac or an iPad')
   assert.ok(rooms.includes('cancelAnimationFrame(frame)'), 'and it stops when the screen has something to show')
   // the join code keeps its seal, and the bedroom's loop slot is as it was: the saver is for idle screens only
-  assert.equal(rooms.split('<Saver ').length - 1, 1, 'one place only')
+  assert.equal(rooms.split('<Saver ').length - 1, 1, 'one place only: Idle')
   const css = read('../src/styles.css')
   assert.ok(css.includes('.saver { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; }') && css.includes('.saver.on { opacity: 1; }'), 'see-through until ready')
   assert.ok(!/\.saver[^{]*\{[^}]*display: none/.test(css), 'never display none: its pictures must load')

@@ -26,9 +26,28 @@ export const CORNER_MS = 246_000
 export const FACE_EVERY = 10  // edges met before the face changes: about every twenty-five seconds
 export const FACE_PART = 0.3  // a face's size, as a part of the screen's shorter side
 
-// Each room screen starts somewhere else along the same path, so two screens
-// in sight of each other are never in step (the names are lib/rooms.js LOOP_OF's).
-export const SAVER_START_MS = { living: 0, study: 23_300, memory: 41_900, boo: 67_100, bedroom: 89_500, orangerie: 113_700 }
+// Each screen starts somewhere else along the same path, so two screens in
+// sight of each other are never in step: the room screens (the names are
+// lib/rooms.js LOOP_OF's) and a Mac's second screen, by its room or any other.
+export const SAVER_START_MS = {
+  living: 0, study: 23_300, memory: 41_900, boo: 67_100, bedroom: 89_500, orangerie: 113_700,
+  'second-living': 131_300, 'second-study': 151_900, 'second-any': 173_500,
+}
+
+// Which screens play it. `rooms`: a room screen with a loop of its own,
+// whenever it has nothing to show (Jon, 12 Nov 2026: "For the loops just make
+// the classic dvd screen saver..."). `second`: a Mac's second screen, all
+// night (Jon, the same evening: "I want to have this on the second screenes").
+// One word here switches either off; the screen then shows its splash.
+export const SAVER_ON = { rooms: true, second: true }
+
+// A screen's own place on the path (a SAVER_START_MS name), or null when that
+// screen plays no screen saver. `calm` is a Mac's second screen (Rooms.jsx
+// Idle), `room` the room it stands in, `loop` a room screen's own name.
+export function saverPlace({ loop = null, room = null, calm = false } = {}) {
+  if (calm) return SAVER_ON.second ? (SAVER_START_MS[`second-${room}`] != null ? `second-${room}` : 'second-any') : null
+  return loop && SAVER_ON.rooms && SAVER_START_MS[loop] != null ? loop : null
+}
 
 // Something going back and forth between 0 and 1: after `turns` crossings it
 // is at `at`, and it has met a wall `hits` times.

@@ -241,10 +241,10 @@ test('B2, the room splash on every idle screen: on since Jon said yes to all eig
   assert.deepEqual(Object.keys(splashNow(t)), ['turn'], 'and no tip')
   const rooms = read('../src/screens/Rooms.jsx')
   assert.ok(rooms.includes("const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null"))
-  // since the afternoon of 12 Nov 2026 a room screen plays the screen saver over its splash (test/saver.test.mjs); a second display keeps the splash
-  assert.ok(rooms.includes('<Loop which={loop}>{loop && !calm ? <Saver which={loop}>{still}</Saver> : still}</Loop>'), 'a loop file still wins if Jon ever drops one in')
+  // since 12 Nov 2026, later, a room screen and a Mac's second screen play the screen saver in the splash's place (test/saver.test.mjs)
+  assert.ok(rooms.includes('<Loop which={loop}>{place ? <Saver which={place}>{still}</Saver> : still}</Loop>'), 'a loop file still wins if Jon ever drops one in')
   const kiosk = read('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes("const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null"), 'a second display shows its room’s splash, calmer')
+  assert.ok(kiosk.includes("const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null"), 'a second display knows its room: its splash, calmer, is what shows if a face of the screen saver will not load')
   assert.ok(kiosk.includes("if (!open && lookOn('splash')) return <Idle title=\"The bedroom\" line=\"The door is closed.\" loop=\"bedroom\" />"), 'the closed door is an idle screen: the screen saver since the afternoon of 12 Nov 2026, Sir Irwin waiting at it if a face will not load')
 })
 

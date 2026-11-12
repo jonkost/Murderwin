@@ -1290,6 +1290,7 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .setup { min-height: 100vh; min-height: 100dvh; padding: 2rem 1rem 3rem; max-width: 46rem; margin: 0 auto; }
 .setup h1 { font-size: 2rem; margin: 0 0 0.4rem; }
 .setup-sub { color: var(--dim); margin: 0 0 1.4rem; }
+.setup-sub.setup-second { margin-top: 1.6rem; }
 .setup-list, .setup-extras { list-style: none; padding: 0; margin: 0 0 1.6rem; display: grid; gap: 0.8rem; }
 .setup-go { display: grid; gap: 0.2rem; width: 100%; text-align: left; padding: 1rem 1.2rem; min-height: 4.5rem; background: var(--card); border: 2px solid var(--line); border-radius: 0.8rem; }
 .setup-go:hover, .setup-go:focus-visible { border-color: var(--ink); }
