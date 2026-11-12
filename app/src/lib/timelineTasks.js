@@ -1229,3 +1229,18 @@ export const ANSWERED_FOR_POLISH_1112 = {
   arcadeSound: 'Keep the HomePod in the house music: the Parlour has music in Act 4',
 }
 
+// 12 Nov 2026, the review before the practice night, and the publish Jon
+// asked for ("Yes, publish"): one done card for what the reviewers found and
+// what was fixed, the drawing pictures and the publish closed, and a note on
+// Jon's practice-night card.
+export const REVIEW_1112_TASKS = [
+  { order: 591, moment: 'allnight', status: 'done', who: 'Claude Code', title: 'The review before the practice night: what it found is fixed', detail: 'Done 12 Nov 2026. Four helpers read the whole build, each through its own eyes: the phone, the night’s flow, the blackout and sound, the room screens and the ending. A second set then tried to break every fix, and two more rounds checked the repairs. What is now true. On the phone: Done sits right under the cat who is talking; the camera button hides during a game; a little win covers the whole phone; a short phone keeps its button above the tabs. In the flow: a Parlour Game closes when the last phone has answered, so Act 6’s two games and the drawing follow at once; a Next pressed just as the clock moved the night on moves nothing and says so. In the blackout: the dark is five seconds, not six, and the scream lands with the dark; a Blackout pressed while a Blackout test runs says so; a Pause in the two seconds before the dark calls the blackout off, and one during the dark does nothing (it used to leave the house dark, with no button on any phone); the Study’s walls glow again after it. On the room screens: a pause no longer skips the rules film or lets a Get Off My Lawn! round pass itself (the round starts again from its 3, 2, 1); the intro video is never cut and no join code flashes before the film; Solved! never plays twice; the iPad never reloads in the middle of In Duplicate.' },
+]
+export const RETIRED_FOR_REVIEW_1112 = [
+  { order: 214, title: 'Make the drawing pictures', detail: 'Done 12 Nov 2026: the party’s pictures are made, 17 of them (six, six and five for the three rounds; a night uses one a round), and the practice night’s 18. Each was drawn whole, cut into squares, and kept only when a second look could name it. Nobody saw them.' },
+  { order: 581, title: 'Say publish, so tonight’s practice runs on the new game', detail: 'Done 12 Nov 2026, on your word ("Yes, publish"): the site, the rules and the game’s own code are on the site, with every fix from the review. The one rules change is the one you were told of: a room screen may say whether its sound is on. Your account still cannot read the secrets; the rules test passed before it went out.' },
+]
+export const FILED_FOR_REVIEW_1112 = [
+  { order: 585, title: 'On the practice night, check these by ear and eye', note: '(12 Nov 2026, later: first set the brain’s sound to the Mac’s own speakers, turned up, not a HomePod: its screen is the Orangerie’s speaker for the chimes. Reload once, by hand, any room screen left open since yesterday, then click it: a page in full screen does not reload itself. And try one Pause during the rules film and one during Get Off My Lawn!: after Resume the film carries on where it stopped, and the round starts again from its 3, 2, 1.)' },
+]
+

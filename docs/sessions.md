@@ -75,6 +75,63 @@ the loud copy of the scream (`play/public/sound/`), the practice picture bank
 (18 pictures, six a round, in the database, unseen), and fresh screen files on
 the Desktop.
 
+**The review before the practice night (12 Nov, morning)**
+
+Four reviewers read the merged build, each through one lens (the phone, the
+night's flow, the blackout and sound, the room screens and the ending). A
+second set tried to break every fix, a third checked the repairs, and a
+fourth the last changes (sixteen reviewers in all, each on its own lens).
+What they found is fixed, each with a test that fails without it:
+
+- **The phone** (a486612): Done sits under the cat who is talking; a short
+  phone keeps its button above the tabs; the camera button hides during a
+  game and over anything open; the little win covers the whole phone and
+  waits for the house to answer; a pause no longer moves the tab bar.
+- **The flow** (b9f0ed6, 0d71758, a28603d): a Parlour Game closes when the
+  last phone has answered (the fill-ins answer at once when only they are
+  left), so Act 6's second game follows the first at once and the drawing
+  starts on the last answer; the second game and the drawing each wait for
+  the game before, closed, so nothing lands on top of the drawing. The Host
+  tab's Next names the beat it shows, and a Next pressed as the clock moved
+  the night on moves nothing ("The night had already moved on."). On a
+  fill-in night a round whose beat was written but never started is started
+  by the next clock, and Jon's own Next takes the round's claim, so no round
+  starts twice. A game claimed just as its beat ended is sent back. The
+  random picks for late seats after a last answer go to the game that closed,
+  never to one a clock has opened since (bab112f).
+- **The blackout** (b9f0ed6, a28603d): the waits run to the marks, so the
+  dark is five seconds, not six; the scream is written at the press, stamped
+  for the dark, so every page plays it on the mark; a real Blackout during a
+  Blackout test says so; a Pause in the two-second lead calls the scream off
+  at once and takes the marks off; a Pause in the dark is refused (bab112f:
+  a night paused in the dark stayed dark for good, with no Resume on any
+  phone), and the pause and the dark write are each one transaction; the
+  Study's walls glow again after it.
+- **The room screens and the pause** (6638478, ba4cf12): a pause at The
+  house rules moves the beat's start on (and `beatShift` says how far), so
+  the intro video and the rules film pick up where they stopped; a paused Get
+  Off My Lawn! round starts again from its count at Resume, a new attempt
+  with no slip counted (only moving its times on made every phone slip on
+  red), and the board and the string lights stand still in the pause; the
+  intro video is never cut and no join code flashes before the film
+  (`rulesScreenAt`); Solved! never plays twice on a reload; the Study's done
+  card has no code; the iPad never reloads in the middle of In Duplicate, and
+  no phone reloads with a game, the camera or a little win open.
+- **The guides:** the brain's own browser is the Orangerie's speaker for the
+  cue sounds since A2, so the brain's sound stays on its own speakers
+  (`docs/on-the-night.md`, `docs/cues-relay.md`).
+
+Left as they are, known and small: the power's return lands one write after
+its mark (about a fifth of a second); the last phone to answer a Parlour Game
+waits a second or two for its thanks while the next game is dealt; a Next
+pressed in the same instant as the answer to a Back can say "The night had
+already moved on" (press again); a pause in the first six seconds of the
+film, after a reload of the TV, repeats the start of slide 1.
+
+**The party's drawing pictures** are made, blind: 17 (six, six and five for
+the three rounds; the maker's target was 18, and a night uses one a round).
+The practice bank has 18. Counts only; nobody saw them.
+
 **What is left**
 
 - Publish, on Jon's word: a full publish from the main folder (the site, the
