@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import Clues from './Clues'
@@ -134,7 +135,8 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
   const step = lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} onMet={look ? setMet : null} />
   return (
     <div className={look ? 'now now-look' : 'now'}>
-      {met && <SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />}
+      {/* over the whole phone, the camera button and the tabs included, until Done */}
+      {met && createPortal(<SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />, document.body)}
       {over && <PhoneEnd />}
       {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />}
       {locked && <BallotSent />}

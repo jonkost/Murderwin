@@ -307,7 +307,7 @@ test('the phone on the night wears the approved look: the seal and no act’s na
   assert.ok(!/Round \$\{|step\.hook|step\.chime|eyebrow/.test(room), 'no round number, no hook, no chime line')
   // a cat is talking: its card first, Done under it, then the small win over the page with the four faces
   assert.ok(rest.includes("const reading = look && lights?.step === 'with'") && rest.indexOf('{cards.map(c => <Card') < rest.indexOf('{reading && step}'))
-  assert.ok(rest.includes('{met && <SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />}'))
+  assert.ok(rest.includes('{met && createPortal(<SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />, document.body)}'), 'over the whole phone, the camera button included')
   const { metCats } = await import('../src/lib/night.js')
   const session = { cards: [{ kind: 'testimony', act: 2, cat: 'boo' }, { kind: 'testimony', act: 2, cat: 'salem', note: true }, { kind: 'testimony', act: 4, cat: 'zimothy' }, { kind: 'notice', act: 2 }] }
   assert.deepEqual(metCats(session), ['boo'], 'a cat that only left a note at supper was not met, and Act 4 is not a visit')
