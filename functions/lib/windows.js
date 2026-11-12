@@ -137,9 +137,23 @@ export async function tickParlour(db, nightId, now) {
     const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour), backToBack: playsAtStart(night.act) && cur.window?.allIn === true })
     if (i === null) return null
     tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
-    return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i } }
+    return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i }, lastAt: sched.lastAt ?? null }
   })
   if (slot === null) return { opened: false }
+  // the night again, just before the game lands (review 12 Nov 2026): a Next, the drawing or a bulletin that came
+  // in since the claim sends the slot back, as a held game is, so it waits for its beat (or, once the drawing has
+  // started, stays dropped: the schedule is closed)
+  const fresh = (await nightRef.get()).data()
+  const stillHere = fresh && Number(fresh.act) === Number(night.act) && fresh.beat === night.beat && !(fresh.window && !fresh.window.settled)
+  const held = stillHere ? await parlourHold(db, nightId, fresh, now) : 'moved'
+  if (held) {
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(ref)
+      if (!snap.exists || !snap.data().fired?.[slot.i]) return
+      tx.update(ref, { [`fired.${slot.i}`]: false, lastAt: slot.lastAt })
+    })
+    return { opened: false, reason: held }
+  }
   // Act 4: the game waits on each phone until the guest is free (handoff 23 Oct §3); Acts 2 and 6: every phone at once
   const open = Number(night.act) === 4 ? dealWaitingGame : (d, id, o) => openWindow(d, id, 'questions', o)
   const r = await open(db, nightId, { now, act: Number(night.act), beat: slotBeat(night.act, slot.entry) })

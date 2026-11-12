@@ -5,7 +5,9 @@ import { createNight, join, nameKey } from '../lib/night.js'
 import { hostCommand, player, clockTick, MOVE_CLAIM_MS } from '../lib/run.js'
 import { act4Path, act4PrivatePath } from '../lib/act4.js'
 import { ms } from '../lib/deal.js'
-import { GRACE_MS, parlourPath, dueSlot } from '../lib/windows.js'
+import { GRACE_MS, parlourPath, dueSlot, tickParlour } from '../lib/windows.js'
+import { closeParlour } from '../lib/flow.js'
+import { relayPaths } from '../lib/relay.js'
 import { isFillInUid } from '../lib/seats.js'
 
 // The review of 12 Nov 2026 (the morning before the practice night). Every
@@ -166,6 +168,50 @@ test('S3 a round whose beat was written but never started is started by the next
   assert.deepEqual(await clockTick(db, nightId, at + 2 * MOVE_CLAIM_MS + 2_000), { moved: null }, 'and only once')
   assert.equal(ms(pub().roundStartsAt), started)
   assert.equal(nightOf(db, nightId).beat, 'round2')
+})
+
+// ---- S4: a game claimed just as Next left its beat never lands -----------------------
+
+// Runs `then` right after the next transaction the code makes (the slot's claim), as a Next landing between the two.
+function afterNextTransaction(db, then) {
+  const orig = db.runTransaction.bind(db)
+  db.runTransaction = async fn => { db.runTransaction = orig; const r = await orig(fn); await then(); return r }
+}
+
+test('S4 a Parlour Game claimed as Next left the cat visits is sent back, not opened over supper, and opens in its beat later', async () => {
+  const { db, nightId } = await practice()
+  await host(db, nightId, 'act', 2)
+  await host(db, nightId, 'beat', 'cat')
+  const sched = () => db.store.get(parlourPath(nightId))
+  const due = ms(sched().due0)
+  afterNextTransaction(db, () => db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), beat: 'supper' }))
+  const r = await tickParlour(db, nightId, due)
+  assert.equal(r.opened, false)
+  assert.ok(!nightOf(db, nightId).window, 'no game over supper')
+  assert.ok(!sched().fired?.[0], 'the slot is sent back, not spent')
+  // back in its own beat it opens
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), beat: 'cat' })
+  const again = await tickParlour(db, nightId, due + 1_000)
+  assert.equal(again.opened, true)
+  assert.equal(nightOf(db, nightId).window.id, 'questions-2-p0')
+})
+
+test('S4 a Parlour Game claimed as the drawing started is dropped for good', async () => {
+  const { db, nightId, uids } = await practice()
+  await host(db, nightId, 'act', 2)
+  await host(db, nightId, 'act', 6)
+  const first = nightOf(db, nightId).window
+  for (const [i, uid] of uids.entries()) await player.answer(db, { nightId, uid, windowId: first.id, picks: picksOf(db, uid, first.id), now: T0 + 1_000 + i })
+  // the second opened at once (S1); close it on its clock as if nobody had answered, then put the slot back to replay the race
+  const sched = () => db.store.get(parlourPath(nightId))
+  db.store.set(parlourPath(nightId), { ...sched(), fired: { 0: true }, closed: false })
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), beat: 'games', window: { ...first, settled: true, allIn: true } })
+  afterNextTransaction(db, async () => { db.store.set(relayPaths(nightId).pub, { state: 'intro' }); await closeParlour(db, nightId, { now: T0 + 5_000 }) })
+  const r = await tickParlour(db, nightId, T0 + 5_000)
+  assert.equal(r.opened, false)
+  assert.equal(r.reason, 'drawing')
+  assert.equal(nightOf(db, nightId).window.id, first.id, 'nothing opens over the drawing')
+  assert.equal((await tickParlour(db, nightId, T0 + 600_000)).opened, false, 'and never after it')
 })
 
 test('S2 a Next with no `from` (the workshop, the brain, the fake players) moves as it always has', async () => {
