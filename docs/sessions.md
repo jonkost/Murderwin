@@ -11,6 +11,14 @@ on the Canon.
 
 ## 12 Nov 2026, late afternoon · Claude Code (the idle screens' screen saver)
 
+**Pushed** that evening, on Jon's "Push": main, everything from 11 and 12
+November up to and including this line (152 commits; the remote was at the
+8 November push and had nothing this folder lacked). Looked at first: no
+key or settings file, no night log, no video or recording in it, and the
+one key-shaped string is the site's own public web key, already on the
+remote. The night logs and the picture another session left in
+`docs/postmortems/` are not committed and did not go.
+
 Jon, on seeing that none of the six loops was in: "For the loops just make
 the classic dvd screen saver with the cats and dog face picture when it
 bounces off the edge of the screen."
