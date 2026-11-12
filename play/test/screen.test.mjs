@@ -239,7 +239,9 @@ test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and 
   assert.ok(wake.includes('}, [known, own])') && !/\}, \[[^\]]*hidden[^\]]*\]\)/.test(wake), 'hiding the note never takes the listener away')
   // on a room screen the page itself listens (useScreenSound, 11 Nov 2026), always, so the first tap wakes the sound whatever shows
   const listens = kiosk.slice(kiosk.indexOf('export function useScreenSound('), kiosk.indexOf('const KIOSK_SOUNDS'))
-  assert.ok(listens.includes("window.addEventListener('pointerdown', wake)") && listens.includes("window.addEventListener('keydown', wake)") && listens.includes('}, [])'), 'the page listens from its first moment to its last')
+  assert.ok(listens.includes('for (const e of WAKE_EVENTS) window.addEventListener(e, wake)') && listens.includes('}, [])'), 'the page listens from its first moment to its last')
+  // a finger going down is not a tap to a browser; lifting it is (an iPad would never get its sound on the press alone)
+  for (const e of ['pointerup', 'touchend', 'click', 'keydown']) assert.ok(kiosk.includes(`'${e}'`) && /const WAKE_EVENTS = \[[^\]]*\]/.exec(kiosk)[0].includes(`'${e}'`), `${e} wakes the sound`)
   // the bell is not a setup mark: it shows on every night
   assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the bell on every night')
 })

@@ -223,12 +223,14 @@ export function useScreenSound() {
     const settle = r => { if (live) setOn(r === 'ok') }
     unlockSound().then(settle)
     const wake = () => { unlockSound().then(settle) }
-    window.addEventListener('pointerdown', wake)
-    window.addEventListener('keydown', wake)
-    return () => { live = false; window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', wake) }
+    // a finger going down is not a tap to a browser: lifting it is. So listen for the lift, the click and
+    // the key as well as the press, or an iPad would never get its sound.
+    for (const e of WAKE_EVENTS) window.addEventListener(e, wake)
+    return () => { live = false; for (const e of WAKE_EVENTS) window.removeEventListener(e, wake) }
   }, [])
   return on
 }
+const WAKE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']
 
 // A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
 // house's kit: fuller and much louder than the two beeps before it (handoff
