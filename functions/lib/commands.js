@@ -45,6 +45,7 @@ export const HOST_COMMANDS = [
   // the house (run.js; the brain does the sound and the lights, cues/)
   { name: 'sound-test', arg: '', what: 'The chime on every HomePod, so the room hears the speakers work during the rules. Nothing else moves.' },
   { name: 'cake', arg: '', what: 'Cake! (Act 5): the brain plays Happy Birthday for Dogs on every HomePod and dims the lights for the candles; the Parlour TV shows the birthday card. The jazz comes back when the song ends.' },
+  { name: 'ipad', arg: '<auto|code|captions|memory|bedroom>', what: 'What the iPad shows, at once, until the act changes: Zimothy’s code, the supper captions, In Duplicate or the bedroom. Auto follows the night.' },
   { name: 'tv-trace', arg: '[off]', what: 'Show the trace on the living room TV once the door is open (if the bedroom screen has died). Say off to take it down.' },
   // Act 7 on the living room screen (finale.js)
   { name: 'reveal-stage', arg: '', what: 'Put the next name on the screen: the Murderer, then the Motive, then the Victim.' },

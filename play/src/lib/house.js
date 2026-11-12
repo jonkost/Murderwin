@@ -34,10 +34,10 @@ export function studyMsLeft(study, night, serverNow) {
 // The machines, by the guest key their heartbeat carries.
 export const MACHINES = [
   { key: 'kiosk-living', label: 'Parlour screen' },
-  { key: 'kiosk-ipad', label: 'iPad Pro (Library, Orangerie)' }, // ?kiosk=ipad: Zimothy's code in Act 2, the captions at supper; quiet from Act 4 by design (26 Oct 2026, Jon's key)
-  { key: 'kiosk-bedroom', label: 'Bedroom screen' },
+  { key: 'kiosk-ipad', label: 'The iPad' }, // ?kiosk=ipad: one page all night since 12 Nov 2026 (A10): Zimothy's code, the captions, In Duplicate, the bedroom
+  { key: 'kiosk-bedroom', label: 'Bedroom screen (another device)', spare: true }, // ?kiosk=bedroom on another device; the iPad's page shows the bedroom itself
   { key: 'kiosk-study', label: 'Study screen' },
-  { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
+  { key: 'kiosk-memory', label: 'In Duplicate (another device)', spare: true }, // ?kiosk=memory on another device; the iPad's page shows In Duplicate itself
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
   { key: 'kiosk-orangerie', label: 'Orangerie screen', quiet: true }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
   { key: 'cues', label: 'Hall light and sounds', quiet: true },
@@ -45,6 +45,8 @@ export const MACHINES = [
 export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
 // `quiet`: a machine that makes no sound of its own by design (the brain's browser, whose
 // sound is the HomePods'; the brain itself), so it has no sound mark.
+// `spare`: an address only another device opens when the iPad is busy or dead (12 Nov 2026, A10):
+// its row shows only while it is heard from, so the Host tab has no grey dot for it all night.
 
 // Act 2's cat visits: night.lightsProgress = { done, total }, written by the
 // server whenever the line moves (guests who have seen all four cats, and
@@ -103,7 +105,7 @@ export function houseView({ night, study, rotation, presence = {}, sound = {}, n
   const machines = MACHINES.map(m => {
     const alive = now - (presence[m.key] ?? 0) < QUIET_MS
     return { ...m, alive, sound: alive && !m.quiet ? sound[m.key] === true : null }
-  })
+  }).filter(m => !m.spare || m.alive)
 
   // the group due, and its clock
   const groupId = study?.groupId ?? null

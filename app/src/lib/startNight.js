@@ -53,9 +53,7 @@ export const SCREENS = [
   { kiosk: 'study', room: 'The Study', machine: 'M1 MacBook Air, by the walls' },
   { kiosk: 'boo', room: 'The Entryway: Boo’s arcade', machine: 'Susan’s work MacBook Pro, in Chrome, with the big Stream Deck' },
   { kiosk: 'orangerie', room: 'The Orangerie', machine: 'Jon’s M3 MacBook Air (the brain), facing the table' },
-  { kiosk: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro' },
-  { kiosk: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library' },
-  { kiosk: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro' },
+  { kiosk: 'ipad', room: 'The iPad', machine: 'Jon’s iPad Pro, carried room to room' },
   { kiosk: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen' },
 ]
 export function screenUrl(playUrl, kiosk) {

@@ -11,6 +11,7 @@ import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleM
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
 import { troubleLine } from '../lib/trouble'
+import IpadPanel from './IpadPanel'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -82,6 +83,7 @@ function describe(command, r) {
     case 'salem-petted': return r.already ? 'Salem already chose them.' : 'Done. Salem tells them the truth from now on, and their phone says so.'
     case 'resume': return `Resumed. Every clock moved on by ${Math.round((r.shiftMs ?? 0) / 1000)} seconds.`
     case 'spill': return 'Noted. The Manor has decided on its own whether the story could still change. It says nothing either way, and neither does this phone.'
+    case 'ipad': return r.ipad === 'auto' ? 'The iPad follows the night.' : 'The iPad has switched. Auto again from the next act.'
     case 'hush': return r.already ? 'Already hushed. Nothing more to do.' : 'Hushed. Nothing on any phone changes. From now on that player’s answers move nothing, and the reveal will say so.'
     default: return 'Done.'
   }
@@ -189,6 +191,7 @@ export default function Host({ night, content, serverNow }) {
       </div>
 
       <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} />
+      <IpadPanel night={night} cues={cues.data} relay={relay.data} busy={busy} run={run} />
       <ScenesPanel busy={busy} run={run} />
       <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
       <SalemPanel night={night} busy={busy} run={run} />

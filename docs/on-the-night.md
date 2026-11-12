@@ -239,7 +239,7 @@ them.
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing, the three questions over everyone's portraits while the room talks it over, the vote's clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
 | Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
-| Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | From its Home Screen icons, so no Safari bars show. Once, before the night: open each of its three addresses in Safari, tap Share, then Add to Home Screen (if it asks, keep Open as Web App on), and name it: the Library (`?kiosk=ipad`, also supper), In Duplicate (`?kiosk=memory`), the bedroom (`?kiosk=bedroom`). On the night, open each station from its icon. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
+| Your iPad Pro | Roaming, one page all night (`?kiosk=ipad`, 12 Nov) that follows the night by itself: Act 1 the Library's picture with Zimothy; Act 2 his code during the cat visits (and bulletin 1's words); Act 3 on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up; Act 4 back on its small stand in the Library as In Duplicate; Act 5 the Library's picture; from the drawing in Act 6, and Act 7, the bedroom screen, door closed. *The iPad shows* on your Host tab switches it by hand. `?kiosk=memory` and `?kiosk=bedroom` stay for any other device. | From its Home Screen icon, so no Safari bars show (*Full screen on the iPad*, below). Tap it once to wake its sound. You only carry it: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. Never reload it. |
 | The older family iPad | Out, unless you say it stays (the question *olderIpad* on the board; your key has no older iPad). If it stays: In Duplicate on its small stand in the Library all night (`?kiosk=memory`), and your iPad Pro stays in the Orangerie from supper until it goes to the bedroom. | Nothing, by default. If it stays: Safari, full screen, tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
 | The old iPhone 11 | The spare phone. | Charged, on the plain game address, left on the join screen. |
@@ -286,13 +286,31 @@ is in its place:
 *One address for every screen (11 Nov).* On each machine type
 `murderwin-at-sirwin-manor.web.app/setup`. The page asks "Which screen is
 this?" with one big button per room: the Parlour TV, the Study, Boo's arcade,
-the Orangerie, the iPad Pro's three stations. Tap the room,
+the Orangerie, the iPad. Tap the room,
 make the window full screen, click once. It needs no sign-in. The machine's
 last choice is marked the next time, so on the party night it is the same
 tap. Boo's button has a second one under it for connecting the Stream Deck
-first. When the iPad Pro moves, press Back (or type the address again) and
-tap its next room. The page is for before the guests come; no guest screen
-links to it.
+first. The iPad has one button: its page follows the night, so it is never
+tapped again when it moves (In Duplicate and the bedroom on another device
+sit under a fold, for when the iPad is busy or dead). The page is for before
+the guests come; no guest screen links to it.
+
+*Full screen on the iPad (12 Nov).* Use this, once, before the night:
+
+1. Open `murderwin-at-sirwin-manor.web.app/setup` in Safari and tap The iPad.
+2. Tap Share, then Add to Home Screen.
+3. Leave Open as Web App on, and tap Add.
+4. From then on open it from its icon: no bars, and it never needs a reload.
+
+Add this too, so nobody can swipe out of it:
+
+1. Settings, Accessibility, Guided Access: turn it on and set a passcode.
+2. Open the game from its icon.
+3. Triple-click the top button and tap Start.
+4. To leave it, triple-click again and type the passcode.
+
+And Settings, Display & Brightness, Auto-Lock: Never. The page also keeps
+the screen awake by itself where the iPad lets it.
 
 1. *The router, the Hue bridge and bulb, both Nanoleaf controllers, the
    string lights and the projector's plug.* On first. Give them five
@@ -351,13 +369,14 @@ links to it.
    the Parlour screen, the fallback for the drawing's guesses in Act 6 (you
    tap them on your own phone). The iPad Pro moves three times, and each
    move is in the act bullets below: to its stand in the Orangerie for
-   supper (the same address), back to the Library as the memory match
-   (`?kiosk=memory`) before **Start Act 4**, and into the bedroom
-   (`?kiosk=bedroom`) after Act 4. The older family iPad stays in the
-   drawer unless you say it stays (the question *olderIpad*). On your Host
-   tab the iPad Pro's dot for its earlier station goes quiet after each move
-   (the Library and Orangerie one from Act 4, the memory match one once it
-   is in the bedroom); that is right, not a fault.
+   supper, back to the Library before **Start Act 4**, and into the bedroom
+   after Act 4. Its page follows the night by itself: you only carry it. If
+   it ever shows the wrong thing, tap what it should show under *The iPad
+   shows* on your Host tab (Auto, Zimothy's code, Supper captions, In
+   Duplicate, The bedroom); a pick holds until the act changes, then Auto
+   takes over again, and the line under the row says what it shows now. The
+   older family iPad stays in the drawer unless you say it stays (the
+   question *olderIpad*). On your Host tab the iPad has one dot all night.
    On a rehearsal a small dot in the bottom left corner is green while the
    screen can hear the house, amber if it has gone quiet, red if it is off
    the wifi. On the party night the screens show no dot and no words about
@@ -468,8 +487,8 @@ links to it.
   it sooner, press **Supper's ready**. A guest with cats still unvisited
   gets those cats' lines on the phone as a note ("The cats you haven't met
   left you a note"). On your way in to supper, carry the iPad Pro from the
-  Library to its stand on the Orangerie table: the same address
-  (`?kiosk=ipad`), and bulletin 2's words show on it during the meal.
+  Library to its stand on the Orangerie table: it shows bulletin 2's words
+  during the meal by itself.
 - Act 3: phones down, supper in the Orangerie. Every phone says to leave it
   here in the Parlour, charging, and to bring the bag to the table; the whole
   table may share what is in them. Near the end of supper,
@@ -485,8 +504,8 @@ links to it.
   Act 3).
 - Act 4, Behind Closed Doors: four game rooms, pairs and trios, about an
   hour. Before you press it: carry the iPad Pro from the Orangerie back to
-  its small stand in the Library, open `?kiosk=memory` on it in Safari, full
-  screen, and tap it once (In Duplicate waits there for each group).
+  its small stand in the Library (In Duplicate comes up on it by itself in
+  Act 4 and waits there for each group).
   **Start Act 4** gives every phone a two-minute warning and makes the
   groups (nobody sees them yet). Two minutes later, on its own: the chime,
   the title card on the Parlour TV, and every phone shows its group as
@@ -573,9 +592,9 @@ links to it.
   for up to half a minute first. After the last round every phone says
   back to the Parlour, and **Next** goes on to Act 5. **Make the groups**
   makes the groups early if you ever need them before Start Act 4.
-  After Act 4, carry the iPad Pro from the Library into the bedroom, open
-  `?kiosk=bedroom` on it in Safari, full screen, tap it once, and close the
-  door. It shows "The door is closed" until the third picture is named.
+  After Act 4, carry the iPad Pro from the Library into the bedroom and
+  close the door. It shows the Library's picture until the drawing starts,
+  then "The door is closed" until the third picture is named.
   Susan's MacBook Pro stays by the projector all night: the brain turns the
   projector off for the drawing and on again for the ballot.
 - Act 5: the dessert chime plays on every HomePod, and every phone shows the
@@ -592,7 +611,7 @@ links to it.
   "Update your motives": every phone asks for the motives to be updated from
   what Sir Irwin said, and the TV goes back to its loop.
   Before you press **Next** for Act 6, check the iPad Pro is in the bedroom
-  on `?kiosk=bedroom` and the door is closed.
+  and the door is closed.
 - Act 6 opens with a note on every phone (two Parlour Games on their way,
   then the final event in the Parlour, a good moment for a stretch) and the
   two Parlour Games, back to back. Wait until the second has
@@ -1107,9 +1126,13 @@ reward card to their phone and returns its words for the screen) while
 played out if the round moves on first, and Boo's rules card between groups
 (`docs/boo-arcade.md`). The device
 table is `app/src/lib/devices.js`, to Jon's key (`docs/cue-list.md`, built
-26 Oct): the iPad Pro is `ipad` in Acts 2 and 3 (the Library, then the
-Orangerie), `memory` in Act 4 and `bedroom` from Act 6, one `DEVICE_ROOMS`
-group; Susan's MacBook Pro is `boo` all night, in the Entryway with the Stream
+26 Oct): the iPad Pro is `ipad` all night since 12 Nov (A10:
+`play/src/screens/Ipad.jsx` picks the body from `play/src/lib/ipad.js`
+`ipadShows`; the Host tab's row is `play/src/screens/IpadPanel.jsx`, the host
+command `ipad` writes `public/cues.ipad { show, act, at }`,
+`functions/lib/ipad.js`; a pick lapses when the act changes), with `memory`
+and `bedroom` kept as spare addresses for another device (`SETUP_SPARES`; their
+Host tab rows show only while heard from), one `DEVICE_ROOMS` group; Susan's MacBook Pro is `boo` all night, in the Entryway with the Stream
 Deck + XL since 5 Nov (the projector's plug is still the brain's, unused,
 `docs/cues-relay.md`; the arcade's Spares entry `arcadeplay` carries
 `play=1`, so `byKiosk('boo')` still finds her Mac); the brain's

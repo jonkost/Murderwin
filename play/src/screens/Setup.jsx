@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SETUP_ROOMS, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
+import { SETUP_ROOMS, SETUP_SPARES, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
 
 // The setup page (lib/setup.js): which screen is this? One tap opens that
 // room's screen. The last room this machine opened is marked, so on the party
@@ -35,6 +35,20 @@ export default function Setup() {
           </li>
         ))}
       </ul>
+      <details className="setup-spares">
+        <summary>Another device for the iPad’s jobs</summary>
+        <ul className="setup-list">
+          {SETUP_SPARES.map(r => (
+            <li key={r.key} className="setup-room">
+              <button type="button" className="setup-go" onClick={() => go(r)}>
+                <span className="setup-name">{r.room}</span>
+                <span className="setup-machine">{r.machine}</span>
+                <span className="setup-when">{r.when}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
       <ul className="setup-list">
         {SECOND_DISPLAY_ROOMS.map(r => (
           <li key={r.key} className="setup-room">

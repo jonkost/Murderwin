@@ -1,0 +1,10 @@
+{
+  "name": "Sirwin Manor",
+  "short_name": "Sirwin Manor",
+  "display": "standalone",
+  "background_color": "#001925",
+  "theme_color": "#001925",
+  "icons": [
+    { "src": "/play/icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
