@@ -3,8 +3,8 @@ import { writeNotes } from '../lib/hooks'
 import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
-import { Ballot, BallotSent, Eliminations } from './Windows'
-import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
+import { Ballot, BallotSent } from './Windows'
+import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, voteIn, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
 import Act4 from './Act4'
 import Spoken from './Spoken'
 import Allow from './Allow'
@@ -28,12 +28,13 @@ const TABS = [
 // This is what a phone shows whenever nothing else is happening — the idle
 // screen is a real state, indistinguishable from a phone that just finished
 // something.
-// `ballot` (25 Oct 2026, cue 19): the open Act 7 ballot window, as a card on
+// `ballot` (25 Oct 2026, cue 19): the open Act 7 vote, as a card on
 // Now with every tab reachable: { w, sent, onDone, clock, draft, onDraft }. The
 // clock is the server's, frozen in a pause (App's clockFor), and the draft
 // (the picks so far) lives in App, so a look at Clues or Motives never loses
-// them. `over` (cue 23): The End, when the result stays on Now and everything
-// is readable, for good.
+// them. Once this phone's vote is in, the locked-in card holds its place for
+// as long as the night is on the vote (lib/night.js voteIn). `over` (cue 23):
+// The End, when the result stays on Now and everything is readable, for good.
 export default function Rest({ uid, night, session, content, notes, ui, onTour, serverNow, meetNote = null, ballot = null, over = false }) {
   const [tab, setTab] = useState(() => {
     try { return localStorage.getItem('reticule-tab') || 'you' } catch { return 'you' }
@@ -97,29 +98,31 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // What to do at this moment: the cards dealt for this act, newest first,
 // each one gone once it has been answered. When there is nothing to do the
 // screen says so plainly; that is a real state, not an error. The Act 7
-// ballot sits at the top as a card (cue 19), then a small "Your three are in"
-// until the server has this phone's picks. At The End the result stays.
+// vote sits at the top as a card (cue 19); once this phone's vote is in,
+// "Locked in. Eyes on the big screen." holds its place until the reveal
+// (11 Nov 2026: drawn from the session's ballot, not from a passing flag, so
+// it no longer vanishes a second after the tap). At The End the result stays.
 // `objective` (Jon, 28 Oct 2026: fewer words): the act's one line, said here
 // when there is nothing to do, not over every screen.
 function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow, ballot = null, over = false, objective = '' }) {
   const quiet = over ? 'That is the end of the night. Everything you were told is still here to read.'
     : night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'
+  const voting = ballot && !ballot.sent
+  const locked = !voting && (!!ballot?.sent || voteIn(night, session))
   return (
     <div className="now">
-      {ballot && (ballot.sent
-        ? <BallotSent />
-        : <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />)}
+      {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />}
+      {locked && <BallotSent />}
       {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
       {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
       {rooms && meetNote && <p className="trouble" role="status">{meetNote}</p>}
-      {cards.length === 0 && !lights && !rooms && !ballot && (
+      {cards.length === 0 && !lights && !rooms && !voting && !locked && (
         <div className="quiet-now">
           {objective && !over && night.act >= 1 && <p className="quiet-lead">{objective}</p>}
           <p className="quiet-line">{quiet}</p>
         </div>
       )}
       {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />)}
-      {night.act === 6 && <Eliminations night={night} content={content} />}
     </div>
   )
 }

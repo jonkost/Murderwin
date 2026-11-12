@@ -56,8 +56,9 @@ in order:
 2. **The drawing.** This doc. Sir Irwin hosts it.
 3. **The door opens.** The light by the bedroom turns from red to green. The bedroom screen
    shows the trace at the level the clarity dial reached.
-4. **The deduction round**, back in the Parlour: each player publicly commits to one
-   elimination. Settled by default: it comes after the door opens, as built. You may change it.
+4. **Talk it over** (11 Nov 2026), back in the Parlour: the room just talks, with the three
+   questions on the TV over everyone's portraits. No taps and no clock. You start the vote
+   from your phone when the room is ready.
 5. Act 7.
 
 The dial has nothing to do with the drawing. The drawing is pure play. The dial only decides
@@ -183,8 +184,8 @@ second option at level 3 is never the Ghost's trace here, and never the Murderer
 | Whole game | About 23 to 35 minutes, slides included, depending on how quickly the walks are ended. |
 
 Before the practice round was added, Act 6 was about thirty minutes with no slack: the two
-Parlour Games about three, the drawing about eighteen, the bedroom five, the deduction round
-three. With the practice, Irwin's slides and the fifteen-second turns it is now about 34 to 46
+Parlour Games about three, the drawing about eighteen, the bedroom five, the round that
+followed it then three. With the practice, Irwin's slides and the fifteen-second turns it is now about 34 to 46
 minutes. **Check in the rehearsal that Act 6 still fits.** The slack is the walk: press *At the
 paper* promptly, and a brisk night saves about seven minutes over one that lets every walk run
 out. The fifteen seconds a turn are Jon's (25 October). Do not lower a round's square limit once
@@ -322,11 +323,10 @@ The 13 October doc filled these gaps. Their state on 23 October:
 5. **Empty squares are skipped.** Stands.
 6. **The bedroom screen shows the trace as soon as the light goes green** and keeps it up. It
    comes back on the Parlour TV in Act 7. Stands.
-7. **The deduction round goes after the door opens.** Settled by default: built that way. The
-   trace is the last new fact of the night, so eliminating before it would be eliminating with
-   one eye shut. Back in the Parlour, each phone asks *Name one thing it is not*: a person
-   or a motive. The strikes appear on the TV under each player's character as they commit. Nothing is
-   scored, nothing is hidden. You may change the order.
+7. ~~A round after the door where each phone names one thing it is not.~~ **Gone 11 Nov 2026**
+   (Jon: "I did not ask for that, and that needs to go away... There can just be conversation
+   between people"). After the door the room talks it over, with the three questions on the
+   TV, and Jon starts the vote from his phone.
 8. ~~Everyone walks to the paper before each vote.~~ **Replaced 22 Oct:** everyone still walks
    to look before the guess, but the guess is one tap, the host's since 25 Oct (the main
    computer before, and still as the fallback). The TV never shows the whole drawing.

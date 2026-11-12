@@ -33,7 +33,7 @@ import { configOf, catMoves, applyMoves, stopOf, extraListeners } from './parlou
 import { LEANS_DOC } from './steward.js'
 import { hintsOf, hintFamiliesFor, familyForCat, memoryPick } from './families.js'
 import { hintLine as catHintLine, HINT_CATS } from './cats.js'
-import { hostLine, booLine, irwinTraceLine } from './hosts.js'
+import { booLine, irwinTraceLine } from './hosts.js'
 import * as finale from './finale.js'
 import { noteDealt, isHushed, spotlightLines } from './ledger.js' // the safeguards' records (never content)
 import { traceOf, pickPartner, workReveal, shownReveal } from './traces.js'
@@ -80,6 +80,8 @@ export const NOTICES = {
   // Act 6 opens (cue 15, 25 Oct 2026): the break line before the two games
   break: { title: 'The Final Hour', text: 'Two Parlour Games, then the final event. Stretch your legs.', button: 'Noted' },
   door: { title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  // Act 6 ends in talk (handoff 11 Nov 2026, A6). No window, no clock: people talk, and the host starts the vote
+  talk: { title: 'Talk it over', text: 'The vote is next.', button: 'Got it' },
   eyes: { title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
 }
 
@@ -735,11 +737,12 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
   const privSnap = await db.doc(`nights/${nightId}/private/windows`).get()
   if (beat && (night.window?.id === id || (privSnap.exists && privSnap.data()[id]))) return { ok: true, id, phones: list.length, already: true }
   if (night.window && !night.window.settled) await settleWindow(db, nightId, { now, force: true })
-  const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat }
-  // the host's line on every phone alike (hosts.js): Boo for the Parlour Games, Salem for the final picks
-  const hostUi = (kind === 'questions' || kind === 'ballot') ? labelled(await readArea(db, 'ui_copy')) : {}
-  if (kind === 'questions') window.host = { cat: 'boo', line: booLine(id, hostUi) }
-  if (kind === 'ballot') window.host = { cat: 'salem', line: hostLine('salem', hostUi) }
+  // `of`: the seats dealt this window. When that many have answered, the window closes at once
+  // (handoff 11 Nov 2026, A6); a seat that joins later is not waited for. A count, never who.
+  const window = { id, kind, title: spec.title, opensAt: at(now, 0), closesAt: at(now, spec.ms), settled: false, act, beat, of: list.length }
+  // the host's line on every phone alike (hosts.js): Boo for the Parlour Games. The vote has none
+  // since 11 Nov 2026 (Jon: "Don't overcomplicate it"): the card is three rows and Lock in.
+  if (kind === 'questions') window.host = { cat: 'boo', line: booLine(id, labelled(await readArea(db, 'ui_copy'))) }
   let priv = {}
   if (kind === 'questions') {
     // one set for the whole room: the plan's for this slot, or for the host's own button
@@ -757,7 +760,7 @@ export async function openWindow(db, nightId, kind, { now = Date.now(), beat = n
     for (const g of list) await db.doc(`sessions/${g.uid}`).update({ [`windows.${id}`]: { kind } })
   }
   await db.doc(`nights/${nightId}/private/windows`).set({ [id]: priv }, { merge: true })
-  await db.doc(`nights/${nightId}`).update({ window, ...(kind === 'eliminate' ? { eliminations: {} } : {}) })
+  await db.doc(`nights/${nightId}`).update({ window })
   return { ok: true, id, phones: list.length }
 }
 
@@ -867,40 +870,48 @@ export async function answer(db, { nightId, uid, windowId, picks, now = Date.now
   return { ok: true }
 }
 
+// The vote (Act 7): the Murderer, the Motive and the Ghost, in one call (the
+// field is still `victim`: ids keep their old names). One transaction on the
+// phone's session and the night (handoff 11 Nov 2026, A6):
+//  - Lock in is final: a ballot this seat chose stands, and a second one
+//    answers { ok, already } and changes nothing;
+//  - the seat is counted once (window.answered: a count, never who);
+//  - when every seat dealt the vote has locked in, the window is settled in
+//    the same write, so the vote closes the moment the last one does.
+// `closed` tells run.js to carry on; it never reaches a phone. The two minutes
+// stay as the backstop: the tick settles a vote somebody never cast. A seat is
+// anyone at the party with a session, a fill-in player included.
 export async function castBallot(db, { nightId, uid, murderer, motive, victim, now = Date.now() }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
   const sessionRef = db.doc(`sessions/${uid}`)
-  const s = (await sessionRef.get()).data()
-  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
-  const night = (await db.doc(`nights/${nightId}`).get()).data()
-  const w = night?.window
-  if (!w || w.kind !== 'ballot' || w.settled) throw new NightError('closed', 'The ballot is not open.')
-  if (now > ms(w.closesAt) + 5000) throw new NightError('closed', 'The two minutes are up.')
-  const roster = night.roster ?? {}
-  if (!roster[murderer] || !roster[victim]) throw new NightError('invalid', 'Pick people who are at the party.')
-  if (!MOTIVES.some(m => m.n === Number(motive))) throw new NightError('invalid', 'Pick a motive from the list.')
-  await sessionRef.update({ ballot: { murderer, motive: Number(motive), victim, at: new Date(), defaulted: false } })
-  return { ok: true }
-}
-
-export async function eliminate(db, { nightId, uid, target, now = Date.now() }) {
-  if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
-  const s = (await db.doc(`sessions/${uid}`).get()).data()
-  if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
   const nightRef = db.doc(`nights/${nightId}`)
-  const night = (await nightRef.get()).data()
-  const w = night?.window
-  if (!w || w.kind !== 'eliminate' || w.settled) throw new NightError('closed', 'The deduction round is not open.')
-  if (now > ms(w.closesAt) + 5000) throw new NightError('closed', 'The round has closed.')
-  const ok = target && ((target.kind === 'person' && night.roster?.[target.key]) || (target.kind === 'motive' && MOTIVES.some(m => m.n === Number(target.n))))
-  if (!ok) throw new NightError('invalid', 'Pick a person or a motive.')
-  const clean = target.kind === 'person' ? { kind: 'person', key: target.key } : { kind: 'motive', n: Number(target.n) }
-  await nightRef.update({ [`eliminations.${s.guestKey}`]: { ...clean, name: s.guestName, at: new Date() } })
-  return { ok: true }
+  return db.runTransaction(async tx => {
+    const [sessionSnap, nightSnap] = await Promise.all([tx.get(sessionRef), tx.get(nightRef)])
+    const s = sessionSnap.data()
+    if (!s || s.nightId !== nightId || s.status !== 'active') throw new NightError('no-guest', 'This phone is not at the party.')
+    if (s.ballot && !s.ballot.defaulted) return { ok: true, already: true }
+    const night = nightSnap.data()
+    const w = night?.window
+    if (!w || w.kind !== 'ballot' || w.settled) throw new NightError('closed', 'The vote is not open.')
+    if (now > ms(w.closesAt) + 5000) throw new NightError('closed', 'The two minutes are up.')
+    const roster = night.roster ?? {}
+    if (!roster[murderer] || !roster[victim]) throw new NightError('invalid', 'Pick people who are at the party.')
+    if (!MOTIVES.some(m => m.n === Number(motive))) throw new NightError('invalid', 'Pick a motive from the list.')
+    tx.update(sessionRef, { ballot: { murderer, motive: Number(motive), victim, at: new Date(), defaulted: false } })
+    // a seat that joined after the vote opened was not dealt it: its ballot stands, but it is not one of the seats counted
+    if (!s.windows?.[w.id]) return { ok: true }
+    const answered = (w.answered ?? 0) + 1
+    const allIn = Number(w.of) > 0 && answered >= Number(w.of)
+    tx.update(nightRef, { 'window.answered': answered, ...(allIn ? { 'window.settled': true, 'window.allIn': true } : {}) })
+    return allIn ? { ok: true, closed: true } : { ok: true }
+  })
 }
 
-// When the window has passed, phones that chose nothing get a random choice,
-// so a no-show is never a pattern. Refuses to run early unless forced.
+// When the window has passed, phones that chose nothing get a random choice
+// (fillDefaults, below). Refuses to run early unless forced: the host's own
+// buttons never close a window while phones are still choosing. A window
+// closes early only when every seat dealt it has answered (castBallot, above),
+// and then it is settled already.
 export async function settleWindow(db, nightId, { now = Date.now(), force = false } = {}) {
   const nightRef = db.doc(`nights/${nightId}`)
   const { night, list } = await guests(db, nightId)
@@ -911,6 +922,20 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
   if (!force && now < ms(w.closesAt)) {
     throw new NightError('window-open', `The phones are still choosing. ${Math.ceil((ms(w.closesAt) - now) / 1000)} seconds left.`)
   }
+  const { settled } = await fillDefaults(db, nightId, { night, list })
+  await nightRef.update({ 'window.settled': true })
+  return { ok: true, settled }
+}
+
+// Every seat that chose nothing for the night's window gets a random choice,
+// so a no-show is never a pattern. Safe to call again: a seat is picked for
+// once. settleWindow calls it as a window closes on its clock; run.js calls it
+// when a window closed because every seat dealt it had answered, so a seat
+// that joined after the window opened still gets its pick.
+export async function fillDefaults(db, nightId, { night = null, list = null } = {}) {
+  if (!night || !list) ({ night, list } = await guests(db, nightId))
+  const w = night.window
+  if (!w) return { ok: true, settled: 0 }
   const c = await readCase(db, nightId)
   // a seeded rehearsal picks the same answer for the same silent phone (seed.js)
   const seed = await nightSeed(db, nightId)
@@ -935,19 +960,20 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
       await applyPoints(db, nightId, g.key, w.id, picks, c, w.act ?? night.act ?? null)
       settled++
     } else if (w.kind === 'ballot') {
-      if (s.ballot && !s.ballot.defaulted) continue
+      // a seat that locked in keeps its ballot, and a seat already picked for keeps that pick
+      if (s.ballot) continue
       const keys = Object.keys(night.roster ?? {})
-      await ref.update({ ballot: { murderer: choice(keys, pick), motive: choice(MOTIVES, pick).n, victim: choice(keys, pick), at: new Date(), defaulted: true } })
-      settled++
-    } else if (w.kind === 'eliminate') {
-      if (night.eliminations?.[g.key]) continue
-      const keys = Object.keys(night.roster ?? {})
-      const target = pick(2) ? { kind: 'person', key: choice(keys, pick) } : { kind: 'motive', n: choice(MOTIVES, pick).n }
-      await nightRef.update({ [`eliminations.${g.key}`]: { ...target, name: g.name, defaulted: true, at: new Date() } })
-      settled++
+      const ballot = { murderer: choice(keys, pick), motive: choice(MOTIVES, pick).n, victim: choice(keys, pick), at: new Date(), defaulted: true }
+      // written only if the seat still has none by then (a last tap races this loop): Lock in always wins
+      const wrote = await db.runTransaction(async tx => {
+        const cur = (await tx.get(ref)).data()
+        if (!cur || cur.ballot) return false
+        tx.update(ref, { ballot })
+        return true
+      })
+      if (wrote) settled++
     }
   }
-  await nightRef.update({ 'window.settled': true })
   return { ok: true, settled }
 }
 

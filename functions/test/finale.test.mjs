@@ -465,22 +465,20 @@ test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hu
   assert.equal(f2.spotlight.length, 2)
 })
 
-test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the eliminate or ballot windows', async () => {
+test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the vote\'s window', async () => {
   const { db, nightId, uids, names } = await party(4)
   const t = { now: 7_600_000 }
   await firstParlour(db, nightId, t)
   await answerAll(db, nightId, uids, names, t)
   t.now = ms(night(db, nightId).window.closesAt) + 1
   await hostCommand(db, { nightId, command: 'settle', now: t.now })
-  // the two windows that are not Parlour Games land on every phone too
+  // the one window that is not a Parlour Game, the vote, lands on every phone too
   const { openWindow } = await import('../lib/deal.js')
-  for (const [kind, act, beat] of [['eliminate', 6, 'eliminate'], ['ballot', 7, 'ballot']]) {
-    await openWindow(db, nightId, kind, { now: t.now, act, beat })
-    t.now = ms(night(db, nightId).window.closesAt) + 1
-    await hostCommand(db, { nightId, command: 'settle', now: t.now })
-  }
+  await openWindow(db, nightId, 'ballot', { now: t.now, act: 7, beat: 'ballot' })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'settle', now: t.now })
   const anyone = db.store.get(`sessions/${uids[names[0].toLowerCase()]}`)
-  assert.equal(Object.keys(anyone.windows).length, 3, 'three windows on the phone')
+  assert.equal(Object.keys(anyone.windows).length, 2, 'two windows on the phone')
   const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
   const quick = f.stats.find(s => s.label === 'Quickest on the Parlour Games')
   assert.match(quick.value, /, 1 of 1$/, `one Parlour Game dealt, one answered: ${quick.value}`)

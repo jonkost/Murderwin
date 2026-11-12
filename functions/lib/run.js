@@ -90,8 +90,8 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   if (spec.action === 'act4:groups') return { ok: true, act, beat, ...(await act4.dealGroupCards(db, nightId, act, beat, { now })) }
   if (spec.action === 'act4:round') return { ok: true, act, beat, ...(await act4.startRound(db, nightId, roundOf(beat), { now })) }
   const r = await deal.runAction(db, nightId, act, beat, spec.action, { now })
-  // the door and the ballot both lean on the trace: make sure it is there if the drawing is done
-  if (spec.action === 'notice:door' || spec.action === 'window:ballot') await ensureTrace(db, nightId, now)
+  // the door, the talk after it and the vote all lean on the trace: make sure it is there if the drawing is done
+  if (['notice:door', 'notice:talk', 'window:ballot'].includes(spec.action)) await ensureTrace(db, nightId, now)
   return { ok: true, act, beat, ...r }
 }
 
@@ -537,11 +537,29 @@ async function afterLights(db, nightId, r, now = Date.now()) {
   return r
 }
 
+// A window closed because the last seat dealt it answered (handoff 11 Nov 2026,
+// A6: "When anything is entered by the last person, automatically continue").
+// A seat that joined after the window opened still gets its random pick. This
+// runs inside the last seat's own call, so it never throws: that seat's answer
+// is in, whatever happens here, and the minute's tick and the host's Next are
+// the fallback.
+async function afterAllIn(db, nightId) {
+  try {
+    await deal.fillDefaults(db, nightId)
+  } catch (e) {
+    console.error('after the last answer', e?.code ?? e?.name ?? 'error')
+  }
+}
+
 // What a player phone may call, besides join.
 export const player = {
   answer: (db, args) => deal.answer(db, args),
-  ballot: (db, args) => deal.castBallot(db, args),
-  eliminate: (db, args) => deal.eliminate(db, args),
+  // the vote: the reply is { ok } or { ok, already }, whoever locked in last
+  ballot: async (db, args) => {
+    const { closed, ...reply } = await deal.castBallot(db, args)
+    if (closed) await afterAllIn(db, args.nightId)
+    return reply
+  },
   relayVote: (db, args) => relay.vote(db, args),
   relayGuess: (db, args) => guessRelay(db, args),
   relayAdvance: (db, args) => advanceRelay(db, args),

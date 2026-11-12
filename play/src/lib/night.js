@@ -380,19 +380,19 @@ export function openWindow(night, session, serverNow) {
   if (!mine) return null
   if (w.kind === 'questions' && session.answers?.[w.id]) return null
   if (w.kind === 'ballot' && session.ballot && !session.ballot.defaulted) return null
-  if (w.kind === 'eliminate' && night.eliminations?.[session.guestKey]) return null
   return { ...w, mine }
 }
 
-// Where a window shows on the phone (F19; the ballot moved on 25 Oct 2026, cue 19):
+// Where a window shows on the phone (F19; the vote moved on 25 Oct 2026, cue 19):
 //   'overlay': a Parlour Game, on top of whatever the phone was on. The screen
 //              underneath stays mounted, so when the game is done the guest is
 //              back exactly where they were: the same tab, the same half-typed
 //              answer, the same scroll (docs/parlour-games.md).
-//   'screen':  the deduction round, a beat of its own that takes the screen.
-//   'card':    the ballot, a card on the Now tab with every tab reachable, so a
-//              guest can read their clues while they decide. Two minutes on the
-//              server's clock, never closing early, the same as before.
+//   'card':    the vote, a card on the Now tab with every tab reachable, so a
+//              guest can read their clues while they decide. It closes when the
+//              last seat locks in, or at two minutes on the server's clock.
+//   'screen':  nothing since 11 Nov 2026 (a window of a kind this page does not
+//              know would take the screen; there are only the two above).
 export function placement(w) {
   if (!w) return null
   if (w.kind === 'questions') return 'overlay'
@@ -400,6 +400,29 @@ export function placement(w) {
   return 'screen'
 }
 export function overlays(w) { return placement(w) === 'overlay' }
+
+// The drawing's last screen ("The door is open. Go and see.", with Hide this)
+// takes the phone only while the night is still at the drawing or the door.
+// Once the host opens Talk it over, and all through Act 7, the phone is back
+// on its tabs, so the talk notice and the vote reach a guest who never tapped
+// Hide this (11 Nov 2026: a phone left on that screen would never see the
+// vote, and the vote would wait its full two minutes for it).
+export function doorCardHolds(night) {
+  if (!night || Number(night.act) !== 6) return false
+  return beatSpec(6, night.beat)?.action !== 'notice:talk'
+}
+
+// The vote is in for this phone (handoff 11 Nov 2026, A6): the night is on the
+// vote's beat and the session holds a ballot, so Now keeps "Locked in. Eyes on
+// the big screen." up until the reveal takes the phone. It reads the session,
+// not a passing flag, so a reload shows it too. A seat the server picked for
+// when the vote closed shows the same card: a phone that chose and one that
+// did not look alike once the vote is over.
+export function voteIn(night, session) {
+  if (!night || Number(night.act) !== 7) return false
+  if (beatSpec(7, night.beat)?.action !== 'window:ballot') return false
+  return !!session?.ballot
+}
 
 // Act 7 on the phone (Jon's cue list, cues 20 to 23, 25 Oct 2026):
 //   'eyes':   the reveal beat. A full-screen lock, the crest and "Eyes on the

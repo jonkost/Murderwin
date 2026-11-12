@@ -3,7 +3,7 @@
 // the cue relay plays. One public doc each:
 //
 //   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood, prompts, video }
-//     kind: idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday | join
+//     kind: idle | black | news | bulletin | irwin | door | talk | vote | trace | prompts | title | birthday | join
 //     prompts: Sir Irwin's sharing prompts (bagclues.js), one at a time on the TV:
 //       { lines[], order[], startedAt, everyMs }, open lines, so the order says nothing
 //     video: true when the Parlour TV plays the bulletin as video (meta/game.bulletinVideo); the TV
@@ -39,7 +39,15 @@ const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json')
 // `birthday` is the Happy Birthday Irwin card the Cake! button puts on the Parlour TV (cue 13, 25 Oct 2026).
 // `join` is the join code on the Parlour TV: Act 1's beats and the dinner wrap-up name it (cues 3 and 10);
 // the TV draws the square itself from the play address, so the doc carries words only.
-export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title', 'birthday', 'join']
+// `talk` is Talk it over, the last beat of Act 6, and `vote` is the vote in Act 7 (handoff 11 Nov 2026, A6):
+// the three questions on the Parlour TV. The TV draws the portraits, the clock and the count itself.
+export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'door', 'talk', 'vote', 'trace', 'prompts', 'title', 'birthday', 'join']
+
+// The three questions the night comes down to, on the Parlour TV while the room talks and while it
+// votes. Open words, the same every night: nothing here knows the answer.
+export const THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']
+export const TALK_CARD = { title: 'Talk it over', lines: THREE_QUESTIONS }
+export const VOTE_CARD = { title: 'The vote', lines: THREE_QUESTIONS }
 
 // The words beside the join code (screen kind `join`, 25 Oct 2026): "Scan to join"
 // through Act 1, and at the dinner wrap-up the code for anyone who needs to rejoin.
@@ -365,8 +373,10 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     doc = screenDoc('title', { ...base, title: ACT4_TITLE.title, lines: [ACT4_TITLE.line], rehearsal: !!night.rehearsal })
   } else if (kind === 'door') {
     doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })
-  } else if (kind === 'board') {
-    doc = screenDoc('board', { ...base, title: 'The deduction round', lines: ['Each of you has struck one thing out. Here is the board.'], rehearsal: !!night.rehearsal })
+  } else if (kind === 'talk' || kind === 'vote') {
+    // Talk it over (Act 6's last beat) and the vote (Act 7): the three questions, nothing else
+    const card = kind === 'talk' ? TALK_CARD : VOTE_CARD
+    doc = screenDoc(kind, { ...base, title: card.title, lines: card.lines, rehearsal: !!night.rehearsal })
   } else if (kind === 'join') {
     // the join code (cues 3 and 10, 25 Oct 2026): Act 1's beats say scan to join; the dinner wrap-up says rejoin.
     // The captions ride along at the wrap-up, so the Orangerie iPad keeps bulletin 2's words up.

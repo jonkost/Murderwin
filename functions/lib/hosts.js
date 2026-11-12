@@ -8,7 +8,9 @@
 //   Zimothy   the memory match
 //   Boo       the Parlour Games (one of six lines at random per game; she
 //             judges whatever you pick and never hints which answer she likes)
-//   Salem     the Act 7 final picks
+//   Salem     nobody reads his line since 11 Nov 2026: the vote is one card
+//             with three rows and no host (Jon: "Don't overcomplicate it").
+//             Kept, like the workshop's HOST SALEM label, in case it comes back.
 
 import { createHash } from 'node:crypto'
 

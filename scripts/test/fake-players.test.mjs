@@ -119,7 +119,9 @@ test('F01, F24 and L03 eight fake phones walk the whole night on stand-ins, pass
   assert.match(line(6), /[2-5] Parlour Games, \d+ answers/, 'the two of Act 6 and any Act 4 could not fit')
   // the guess goes through the one relay.guess call, the same as the host's phone and the TV (25 Oct 2026): the line no longer names a place
   assert.match(line(6), /drawing done in \d+ turns and \d+ guesses \(\d+ misses\)/)
-  assert.match(line(6), /8 strikes/)
+  // Talk it over ends Act 6 (11 Nov 2026): every phone is told, and no window opens; the vote then closes on the last lock-in
+  assert.match(line(6), /8 told to talk it over/)
+  assert.match(line(6), /^Act 6, The Final Hour: 4 beats, /)
   assert.match(line(7), /8 ballots, 8 results/)
   // and then it is all gone
   assert.equal(keysUnder(db, 'cases/').length, 0)
@@ -175,12 +177,13 @@ test('F02 and G05 the two host seats play the Professors and are played by bots 
 })
 
 test('G38 no hidden events for the Murderer or the Ghost in any act: no beat opens one, and over a whole night every phone gets the same windows and the same cards, kind by kind and act by act', async () => {
-  // the night as written: no beat in any act opens an event, and the only windows are the three everyone gets
-  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'eliminate', 'questions'], 'G38 three kinds of window, all for everyone')
+  // the night as written: no beat in any act opens an event, and the only windows are the two everyone gets
+  // (a Parlour Game and the vote; three until 11 Nov 2026)
+  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'questions'], 'G38 two kinds of window, both for everyone')
   for (const [act, spec] of Object.entries(NIGHT.acts)) {
     for (const b of spec.beats) {
       assert.ok(!/event|hidden/i.test(`${b.action ?? ''} ${b.key}`), `G38 act ${act} beat ${b.key} opens no event`)
-      if (String(b.action ?? '').startsWith('window:')) assert.ok(['window:questions', 'window:eliminate', 'window:ballot'].includes(b.action), `G38 act ${act} beat ${b.key} opens a window for everyone`)
+      if (String(b.action ?? '').startsWith('window:')) assert.ok(['window:questions', 'window:ballot'].includes(b.action), `G38 act ${act} beat ${b.key} opens a window for everyone`)
     }
   }
   // a whole night: every phone as it ended (read before the discard), compared shape by shape
@@ -203,7 +206,8 @@ test('G38 no hidden events for the Murderer or the Ghost in any act: no beat ope
   // the windows: the same ids, the same kinds, on every phone
   const windows = s => JSON.stringify(Object.entries(s.windows ?? {}).map(([id, w]) => [id, w.kind]).sort())
   assert.ok(phones.every(s => windows(s) === windows(phones[0])), 'G38 every phone holds the same windows')
-  assert.ok(Object.values(phones[0].windows).every(w => ['questions', 'eliminate', 'ballot'].includes(w.kind)))
+  assert.ok(Object.values(phones[0].windows).every(w => ['questions', 'ballot'].includes(w.kind)))
+  assert.equal(Object.values(phones[0].windows).filter(w => w.kind === 'ballot').length, 1, 'one vote a night')
   // the cards: the same number of each kind in each act, on every phone, whatever its role
   const shape = s => JSON.stringify((s.cards ?? []).map(c => `${c.act}:${c.kind}`).sort())
   assert.ok(phones.every(s => shape(s) === shape(phones[0])), 'G38 every phone holds the same kinds of card in every act')

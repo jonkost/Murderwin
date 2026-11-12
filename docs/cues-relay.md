@@ -152,7 +152,7 @@ door).
 | 16 | The drawing's intro ("drawing") | Jazz, 30 | Murderwin Dimmed | off |
 | 17 | The drawing runs (the slides begin) | Intense, 35 | Murderwin Drawing | no change |
 | 18 | The door opens (the third picture is named) | Intense, 60 | no change (the hall bulb turns green) | no change |
-| 18 | "Head to the bedroom", the deduction round | no change | no change | no change |
+| 18 | "Head to the bedroom", then Talk it over (11 Nov 2026) | no change | no change | no change |
 | 19 | The ballot (Act 7) | no change (Intense, 60) | Murderwin Default | on |
 | 20 | The tally ("reveal") | no change | Murderwin Dimmed | no change |
 | 21 | The first Name press: the newscast on the TV | cut, for the rest of the reveal beat | no change | no change |
@@ -330,7 +330,7 @@ Shortcuts apps are yours.)
       TV bulletins, the tally).
     - `Murderwin Blackout`: every light off.
     - `Murderwin Drawing`: the Cloud light at 100, everything in the Parlour
-      very low (the drawing, the unlock, the deduction round).
+      very low (the drawing, the unlock, Talk it over).
     - `Murderwin Candles`: Default dimmed for the candles (Cake!).
     - `Murderwin Study Dim`: the study's other lamp low, the rest as Default
       (while a group is at the study wall). Name that lamp in the Hue app;
@@ -539,7 +539,7 @@ sign-in, no heartbeat.
   `cues.hall === 'green'`), the `drawing` layer (intense35, Murderwin
   Drawing) wins over the beat; once the door is open, `drawing.unlocked`
   (intense60, Murderwin Drawing) does, so cue 18 lands the moment the third
-  picture is named and not at the host's Next (the door and eliminate beats
+  picture is named and not at the host's Next (the door and talk beats
   say the same). `cut: { acts, beats, trigger }`: on that act and beat, once
   `cutTriggered` (trigger 'clips': `sounds.current` has no id and clips, the
   closing bulletin's first part at the first Name press; or a sound id) the
@@ -575,9 +575,11 @@ sign-in, no heartbeat.
 The beat keys mapped are the night's after the 25 Oct build (Act 1 arrive,
 rules, meet, introduce, ready; Act 2 orient, news, peek, cat, supper; Act 3
 down, bulletin, wrap; Act 4 warn, groups, round1-5; Act 5 roam, irwin,
-update; Act 6 games, drawing, door, eliminate; Act 7 ballot, reveal, result,
+update; Act 6 games, drawing, door, talk (Talk it over, the last beat of
+Act 6 since 11 Nov 2026; the key was renamed in `cues/scenes.json`, so the
+relay must be started again to read it); Act 7 ballot, reveal, result,
 end). Beat entries: `1/rules`, `2/news`, `6/drawing`, `6/door`,
-`6/eliminate`, `7/reveal` (hue only), `7/result` (music only), `7/end`
+`6/talk`, `7/reveal` (hue only), `7/result` (music only), `7/end`
 (music off, hue null, projector off); every other beat takes its act's
 values. `acts.7.music` is intense60, so the ballot and the reveal carry on
 the door's music.

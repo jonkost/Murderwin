@@ -181,7 +181,7 @@ Fake players tap random choices, read at random speeds, and sometimes walk away 
 **Timing**
 - **F08** All nine phones get each window at the same moment. Act 4 exception (24 Oct): its Parlour Games wait on each phone and are played when the guest is free; Acts 2 and 6 unchanged. G25b has the same exception.
 - **F09** No "waiting for other players" screen ever appears.
-- **F10** A window never closes early.
+- **F10** A window never closes early, with one exception since 11 Nov 2026 (Jon: "When anything is entered by the last person, automatically continue"): the vote closes the moment the last seat locks in, with its two minutes as the backstop. The host's own buttons still never close a window while phones are choosing.
 - **F11** After the blackout (at most five seconds, ended by the server): one button, "Sorry for the interruption, continue here"; then the role card for 15 seconds on the server's clock, with no button; then the main page on its own. (Reworded 25 Oct to Jon's cue list; before, the card held 15 seconds and then showed a hide button.)
 - **F12** Puzzles appear on the chime, not on arrival.
 
@@ -356,7 +356,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | F07 | Sliders behave the same after a Parlour Game | Has a test | `functions/test/parlour.test.mjs` ("F07": the same cats can move, and a marker stays still as often for every role); G29 covers the odds and sizes |
 | F08 | Every phone gets each window at once (Act 4: waiting on the phone) | Has a test | `functions/test/windows.test.mjs` ("F05 and F08"); the Act 4 exception in `functions/test/act4.test.mjs` ("G25b and F08") |
 | F09 | No waiting-for-players screen | Has a test | `play/test/phone.test.mjs` (no such words anywhere a phone or a room screen reads; every finished screen has its own way on) |
-| F10 | A window never closes early | Has a test | `functions/test/windows.test.mjs` (the F10 tests) |
+| F10 | A window never closes early, except the vote on its last lock-in | Has a test | `functions/test/windows.test.mjs` (the F10 tests), `functions/test/ending.test.mjs` (the vote: closes on the last lock-in and not one before, Lock in is final, a late seat is not waited for, the two minutes are the backstop) |
 | F11 | The continue button, then the role card for 15 seconds, then the main page | Has a test | `play/test/phone.test.mjs` (the three stages on the server's clock from the tap; a pause never runs the card out; a phone mid-card keeps its seconds after Next; the gate `showsPrompt` is a little wider than the cue list's wording on purpose: it shows the flow in the prompt phase at any act, so the Game test tab's act jumps, which deal the roles and hold the prompt phase at Acts 3 to 7, show the button and the card too); `functions/test/run.test.mjs` ("F11 the blackout returns the power on its own five seconds later on the server"; Power returns by hand; the two landing together return the power once; the blackout is Act 1 only) |
 | F12 | Puzzles appear on the chime | Has a test | `functions/test/act4.test.mjs` (every Act 4 room's game is set for its group at the round's chime, the fifteen minutes run from the chime, a late arrival gets no fresh puzzle, a scan before the chime is turned away) |
 | F13 | Parlour Games are the only events | Has a test | `functions/test/parlour.test.mjs`, `functions/test/windows.test.mjs` (the F13 tests) |
@@ -365,7 +365,7 @@ G07 and G08 together are the worst-dial proof (everyone can still get two of thr
 | F16 | Fifteen minutes a room, then the reward anyway | Has a test | `station/test/study.test.mjs` ("F16 the cap", the stop before the round's end, a round already over), `station/test/runner.test.mjs` (the stop, the time the walls take, the finished page, a report that fails, a new round, a swap, a pause past the end), `station/test/follow.test.mjs`, `play/test/house.test.mjs` (the clocks, in a pause too), `play/test/gametest.test.mjs` (the Study's clocks match the seed), `functions/test/act4.test.mjs` (the G52 test), `functions/test/study-clock.test.mjs` (a swap, then the chime) |
 | F17 | Two minutes for picks; Murderer, Motive, Victim | Has a test | `functions/test/finale.test.mjs` (the F17 tests) |
 | F18 | The dial graph and the dial's journey | Has a test | `functions/test/finale.test.mjs` ("F18 the finale": the graph; "F18 the end credits": where the dial stood after each act, its high and low, each dial clue's level), `play/test/finale.test.mjs` (the journey shows only after the reveal) |
-| F19 | A Parlour Game returns the phone to where it was | Has a test | `play/test/windows.test.mjs` (also `placement`: a Parlour Game is an overlay, the deduction round the screen, the ballot a card on Now since 25 Oct) |
+| F19 | A Parlour Game returns the phone to where it was | Has a test | `play/test/windows.test.mjs` (also `placement`: a Parlour Game is an overlay, the vote a card on Now since 25 Oct) |
 | F20 | One player at a cat at a time | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
 | F21 | Everyone always has a next step | Has a test | `functions/test/solving.test.mjs`, `scripts/test/fake-players.test.mjs` |
 | F22 | Not yet, the same on every phone, no penalty | Has a test | `functions/test/solving.test.mjs` ("F22") |

@@ -124,7 +124,9 @@ export function houseView({ night, study, rotation, presence = {}, sound = {}, n
 
   return {
     windowOpen,
-    answered: windowOpen ? { n: w.answered ?? 0, of: guestCount } : null,
+    // `of`: the seats dealt this window (the server's count, 11 Nov 2026), so a guest who joined after it
+    // opened is not counted as still to answer; an older window has none, and the roster's size stands in
+    answered: windowOpen ? { n: w.answered ?? 0, of: Number(w.of) > 0 ? Number(w.of) : guestCount } : null,
     showGuests: !windowOpen, // per-guest dots only while no window is open
     station: { alive: stationAlive, quietFor, state: study?.state ?? 'idle' },
     machines,

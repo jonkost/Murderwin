@@ -37,14 +37,15 @@ test('the Thanks copy is plain, short, and says nothing about time or points', (
 test('F19 a Parlour Game shows over the screen beneath, which stays mounted in the same place, so the phone comes back exactly where it was', async () => {
   const { overlays, placement, stopOf } = await import('../src/lib/night.js')
   assert.equal(overlays({ kind: 'questions' }), true)
-  assert.equal(overlays({ kind: 'ballot' }), false, 'the ballot is a card on Now, the deduction round a beat of its own')
-  assert.equal(overlays({ kind: 'eliminate' }), false)
+  assert.equal(overlays({ kind: 'ballot' }), false, 'the vote is a card on Now')
   assert.equal(overlays(null), false)
-  // where each window shows (25 Oct 2026, cue 19: the ballot moved from the whole screen to a card on Now)
+  // where each window shows (25 Oct 2026, cue 19: the vote moved from the whole screen to a card on Now;
+  // since 11 Nov 2026 there are only these two kinds of window)
   assert.equal(placement({ kind: 'questions' }), 'overlay')
-  assert.equal(placement({ kind: 'eliminate' }), 'screen')
   assert.equal(placement({ kind: 'ballot' }), 'card')
   assert.equal(placement(null), null)
+  const { WINDOWS } = await import('../src/lib/night.js')
+  assert.deepEqual(Object.keys(WINDOWS).sort(), ['ballot', 'questions'])
   const { readFileSync } = await import('node:fs')
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   // one place renders the screen beneath, with or without a game on top: same parent, same slot,
@@ -56,11 +57,12 @@ test('F19 a Parlour Game shows over the screen beneath, which stays mounted in t
   assert.equal(stopOf(2.5), 3); assert.equal(stopOf(4.5), 5); assert.equal(stopOf(1), 1); assert.equal(stopOf(undefined), 3); assert.equal(stopOf(9), 5)
 })
 
-// The ballot as a card on the Now tab (Jon's cue list, cue 19, 25 Oct 2026):
+// The vote as a card on the Now tab (Jon's cue list, cue 19, 25 Oct 2026):
 // the tabs stay reachable, the two minutes stay on the server's clock, and
-// after Lock it in a small card holds the place until the session has the
-// ballot. Nothing on the server changed: the window still never closes early.
-test('the ballot is a card on Now with the tabs reachable: App hands the window to Rest, Rest draws it in the Now grid and jumps there, and the sent card follows Lock it in', async () => {
+// after Lock in a card holds the place for as long as the night is on the
+// vote. Since 11 Nov 2026 the vote closes when the last seat locks in, with
+// the two minutes as the backstop.
+test('the vote is a card on Now with the tabs reachable: App hands the window to Rest, Rest draws it in the Now grid and jumps there, and the locked-in card follows Lock in', async () => {
   const { readFileSync } = await import('node:fs')
   const read = f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
   const app = read('App.jsx')
@@ -81,7 +83,22 @@ test('the ballot is a card on Now with the tabs reachable: App hands the window 
   assert.match(rest, /ballot\?\.w\?\.id/, 'the phone jumps to Now when the ballot opens')
   assert.match(rest, /\(ballot && !ballot\.sent \? 1 : 0\)/, 'the Now badge counts an unsent ballot')
   const now = rest.slice(rest.indexOf('function Now('))
-  assert.match(now, /ballot\.sent\s*\? <BallotSent \/>\s*: <Ballot [^\n]*serverNow=\{ballot\.clock\} onDone=\{ballot\.onDone\} draft=\{ballot\.draft\} onDraft=\{ballot\.onDraft\} card \/>/, 'the card variant, on the clock that came down with the window, with the picks so far')
+  assert.match(now, /\{voting && <Ballot [^\n]*serverNow=\{ballot\.clock\} onDone=\{ballot\.onDone\} draft=\{ballot\.draft\} onDraft=\{ballot\.onDraft\} card \/>\}/, 'the card variant, on the clock that came down with the window, with the picks so far')
+  // the locked-in card (11 Nov 2026): from the tap, and then from the session's own ballot for as long as the night is on
+  // the vote, so it no longer vanishes a second after the tap, and Now never falls back to "Nothing to do" under it
+  assert.match(now, /const voting = ballot && !ballot\.sent\n/)
+  assert.match(now, /const locked = !voting && \(!!ballot\?\.sent \|\| voteIn\(night, session\)\)\n/)
+  assert.match(now, /\{locked && <BallotSent \/>\}/)
+  assert.match(now, /cards\.length === 0 && !lights && !rooms && !voting && !locked && \(/, 'the quiet line stays away while the vote or its locked-in card is up')
+  const { voteIn } = await import('../src/lib/night.js')
+  const chose = { ballot: { murderer: 'a', motive: 3, victim: 'b', defaulted: false } }
+  assert.equal(voteIn({ act: 7, beat: 'ballot' }, chose), true)
+  assert.equal(voteIn({ act: 7, beat: 'ballot' }, { ballot: { ...chose.ballot, defaulted: true } }), true, 'a seat the house picked for looks the same once the vote is over')
+  assert.equal(voteIn({ act: 7, beat: 'ballot' }, {}), false, 'no ballot yet: the vote card, or the quiet line')
+  assert.equal(voteIn({ act: 7, beat: 'reveal' }, chose), false, 'the reveal has its own lock')
+  assert.equal(voteIn({ act: 7, beat: 'end', over: true }, chose), false)
+  assert.equal(voteIn({ act: 6, beat: 'talk' }, chose), false)
+  assert.equal(voteIn(null, chose), false)
   const windows = read('screens/Windows.jsx')
   const ballot = windows.slice(windows.indexOf('export function Ballot'), windows.indexOf('export function BallotSent'))
   assert.match(ballot, /card \? 'dealt ballot-card' : 'moment window ballot papered'/)
@@ -90,10 +107,16 @@ test('the ballot is a card on Now with the tabs reachable: App hands the window 
   // the draft is the caller's when the ballot is a card: no step or pick state of the pane's own to lose on a tab switch
   assert.match(ballot, /const \{ step, pick \} = onDraft \? \(draft \?\? EMPTY_DRAFT\) : local/)
   assert.ok(!/useState\(0\)|setStep|setPick/.test(ballot), 'no step or pick state of its own')
+  // 11 Nov 2026: no host line, the third pick is the Ghost, and both lists of people show everyone (the rules tell the Murderer to name themself)
+  assert.ok(!/HostLine|w\.host/.test(ballot), 'no host line on the vote')
+  assert.ok(!/guestKey|\.filter\(/.test(ballot), 'nobody is left out of a list: you may name yourself')
+  assert.match(ballot, /The Murderer[\s\S]*The Motive[\s\S]*The Ghost/)
+  assert.ok(!/[Vv]ictim<|Who died/.test(ballot), 'the word on the phone is the Ghost (the field is still victim)')
+  assert.match(ballot, /\{busy \? 'Sending…' : 'Lock in'\}/)
   const sent = windows.slice(windows.indexOf('export function BallotSent'), windows.indexOf('export function EyesLock'))
-  assert.match(sent, /Your three are in/)
-  assert.ok(!/<button/.test(sent), 'nothing to tap: it goes on its own when the ballot comes back')
-  assert.ok(!/two minutes|are up|when the/i.test(sent), 'promises no timing: the reveal comes when the host presses Next, not on the clock')
+  assert.match(sent, /<h3>Locked in\.<\/h3>\s*<p>Eyes on the big screen\.<\/p>/)
+  assert.ok(!/<button/.test(sent), 'nothing to tap: the reveal takes the phone when it starts')
+  assert.ok(!/two minutes|are up|when the/i.test(sent.replace(/\/\/.*$/gm, '')), 'promises no timing')
   // the preview keeps a page for each shape
   const preview = read('Preview.jsx')
   for (const k of ["case 'ballot':", "case 'ballot-sent':", "case 'eyes':", "case 'result-lock':"]) assert.ok(preview.includes(k), k)
@@ -112,8 +135,8 @@ test('a pause leaves the two host phones one button, Resume, wherever the pause 
   const app = read('App.jsx')
   assert.match(app, /const resume = paused && s\.host \? <ResumeNight nightId=\{nightId\} \/> : null/, 'a host phone in a pause, never a guest and never outside a pause')
   // all three places a pause shows carry it, and it sits outside anything inert
-  assert.match(app, /<><PausedStrip ui=\{ui\} foot=\{resume\} \/><div className="paused-shell" inert>\{screen\}<\/div><\/>/, 'the strip over a held game or deduction round')
-  assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/, 'the strip over the ballot card')
+  assert.match(app, /<><PausedStrip ui=\{ui\} foot=\{resume\} \/><div className="paused-shell" inert>\{screen\}<\/div><\/>/, 'the strip over a held Parlour Game')
+  assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/, 'the strip over the vote card')
   assert.match(app, /return <>\{banner\}\{strip\}<div className=\{over \? 'beneath covered'/, 'that strip goes in front of the inert page, not inside it')
   assert.match(app, /<Moment text=\{ui\.PAUSED\} crest foot=\{resume\} \/>/, 'the pause card')
   assert.ok(!/<PausedStrip ui=\{ui\} \/>/.test(app), 'no strip goes without it')
@@ -148,7 +171,7 @@ test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the re
   assert.equal(phoneLock({ act: 7, beat: 'end', phase: 'act' }), 'over')
   assert.equal(phoneLock({ act: 7, beat: 'end', phase: 'act', over: true }), 'over')
   assert.equal(phoneLock({ act: 6, beat: 'door', phase: 'act', over: true }), 'over', 'a night marked over is over whatever beat it says')
-  assert.equal(phoneLock({ act: 6, beat: 'eliminate', phase: 'act' }), null)
+  assert.equal(phoneLock({ act: 6, beat: 'talk', phase: 'act' }), null, 'Talk it over locks nothing: the tabs, the clues and the notes are what people talk from')
   assert.equal(phoneLock({ act: 2, beat: 'news', phase: 'act' }), null)
   assert.equal(phoneLock(null), null)
   assert.equal(isOver({ act: 7, beat: 'end' }), true)
@@ -168,7 +191,8 @@ test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the re
   const read = f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
   const windows = read('screens/Windows.jsx')
   const eyesLock = windows.slice(windows.indexOf('export function EyesLock'), windows.indexOf('export function ResultLock'))
-  const resultLock = windows.slice(windows.indexOf('export function ResultLock'), windows.indexOf('// Act 6: commit'))
+  const resultLock = windows.slice(windows.indexOf('export function ResultLock'))
+  assert.ok(!/export function (?!ResultLock)/.test(resultLock), 'the result lock is the last thing in the file: nothing follows the vote and its locks')
   assert.match(eyesLock, /Eyes on the screen\./)
   assert.match(resultLock, /Thank you for playing\./)
   assert.match(resultLock, /<Result card=\{card\} seen \/>/, 'the card with nothing to tap')
@@ -180,7 +204,16 @@ test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the re
   assert.match(app, /\['intro', 'walk', 'turn', 'vote', 'lockout'\]\.includes\(r\.state\)/, 'the phones show the drawing from Sir Irwin\'s slides on (cue 16)')
   assert.match(app, /const drawing = lock !== 'over' && r && \[/, 'The End wins over the drawing\'s screens')
   assert.match(app, /&& !\(r\.state === 'intro' && s\.host\)/, 'the two host phones keep their tabs through the slides: Pause lives there')
-  assert.match(app, /else if \(lock !== 'over' && doneKey && !notes\.seen\[doneKey\]\)/, 'a door card never put away does not hide the result at The End')
+  assert.match(app, /else if \(lock !== 'over' && doneKey && !notes\.seen\[doneKey\] && doorCardHolds\(n\)\)/, 'a door card never put away does not hide the result at The End')
+  // nor Talk it over, nor the vote (11 Nov 2026): it holds the phone only while the night is at the drawing or the door,
+  // so a guest who never tapped Hide this still gets the talk notice and the vote card
+  const { doorCardHolds } = await import('../src/lib/night.js')
+  assert.equal(doorCardHolds({ act: 6, beat: 'drawing' }), true)
+  assert.equal(doorCardHolds({ act: 6, beat: 'door' }), true)
+  assert.equal(doorCardHolds({ act: 6, beat: 'talk' }), false)
+  assert.equal(doorCardHolds({ act: 7, beat: 'ballot' }), false)
+  assert.equal(doorCardHolds({ act: 7, beat: 'reveal' }), false)
+  assert.equal(doorCardHolds(null), false)
   const relay = read('screens/Relay.jsx')
   assert.match(relay, /To the Parlour\. Eyes on the TV\./)
   // Now: the result card loses its button at The End, and the quiet line says the night is over

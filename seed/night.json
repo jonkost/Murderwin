@@ -1,5 +1,5 @@
 {
-  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, board) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4). Updated 25 Oct 2026 to Jon's cue list (docs/cue-list.md, docs/handoff-2026-10-25.md): Act 1 gains the house rules and shows the join code on the Parlour TV throughout (screen join); Act 3 ends with the dinner wrap-up (the motives prompt, the join code again); Act 5's cake beat chimes the phones and ends with the motives update; Act 6's games beat carries the break notice; Act 7 ends with The End (action end: nights/{id}.over, the screens black).",
+  "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, talk, vote) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4). Updated 25 Oct 2026 to Jon's cue list (docs/cue-list.md, docs/handoff-2026-10-25.md): Act 1 gains the house rules and shows the join code on the Parlour TV throughout (screen join); Act 3 ends with the dinner wrap-up (the motives prompt, the join code again); Act 5's cake beat chimes the phones and ends with the motives update; Act 6's games beat carries the break notice; Act 7 ends with The End (action end: nights/{id}.over, the screens black). Updated 11 Nov 2026 (docs/handoff-2026-11-11-polish.md, A6): Act 6 ends with Talk it over (a notice, no window: nothing else comes after the door), and the vote is one card that closes when the last seat locks in.",
   "parlour": {
     "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. Act 6 (atStart) plays its games back to back as the act opens, startGapSec apart, before the drawing (22 Oct). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.",
     "counts": {
@@ -36,13 +36,9 @@
       "ms": 60000,
       "title": "Parlour Game"
     },
-    "eliminate": {
-      "ms": 90000,
-      "title": "The deduction round"
-    },
     "ballot": {
       "ms": 120000,
-      "title": "Two minutes to decide"
+      "title": "The vote"
     }
   },
   "acts": {
@@ -263,11 +259,11 @@
           "soundOnce": true
         },
         {
-          "key": "eliminate",
-          "name": "The deduction round",
-          "what": "Each player commits to one thing it is not: a person or a motive. Out loud, and on the phone.",
-          "action": "window:eliminate",
-          "screen": "board"
+          "key": "talk",
+          "name": "Talk it over",
+          "what": "Everyone talks. Every phone says the vote is next, and the Parlour TV shows the three questions over everyone's portraits. No taps and no clock; the music stays as at the door. Press Start the vote when the room is ready.",
+          "action": "notice:talk",
+          "screen": "talk"
         }
       ]
     },
@@ -277,10 +273,10 @@
       "beats": [
         {
           "key": "ballot",
-          "name": "The ballot",
-          "what": "Two minutes. Every phone picks the murderer, the motive and the victim. A phone that does not pick gets a random pick.",
+          "name": "The vote",
+          "what": "Every phone picks the Murderer, the Motive and the Ghost on one card, then taps Lock in. The vote closes the moment the last one locks in, or at two minutes; a phone that did not pick gets a random pick.",
           "action": "window:ballot",
-          "screen": "board"
+          "screen": "vote"
         },
         {
           "key": "reveal",
