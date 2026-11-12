@@ -23,17 +23,19 @@ import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
 import { setIpad } from './ipad.js'
+import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout } from './blackout.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
 // The host commands a pause holds back (everything that moves the night or lights the phones;
 // At the paper moves the drawing's clock, so it waits too).
-export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'supper', 'start-act4', 'at-the-paper'])
+export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'power', 'blackout', 'blackout-test', 'supper', 'start-act4', 'at-the-paper'])
 // The blackout lasts five seconds, then the power comes back on its own (Jon's
-// cue list, cue 4, 25 Oct 2026: blackoutAuto). The wait is on the server,
-// inside the Blackout command, so no phone counts it; the tests pass their
-// own sleep.
-export const BLACKOUT_POWER_MS = 5_000
+// cue list, cue 4, 25 Oct 2026: blackoutAuto). Since 11 Nov 2026 (A1) a lead
+// comes first: the press stops the music, the dark lands BLACKOUT_LEAD_MS
+// later (lib/blackout.js). The waits are on the server, inside the Blackout
+// command, so no phone counts them; the tests pass their own sleep.
+export { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS }
 const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 // The six Hue scenes Jon makes in the Hue app (his cue list, 25 Oct 2026;
 // cues/scenes.json names the same six); the brain recalls one by name when
@@ -289,7 +291,7 @@ async function powerReturns(db, nightId, { now = Date.now() } = {}) {
     if (n?.phase !== 'blackout') return false
     // the same write as night.hostCommand 'power' (the role-dealing act jump still uses that one)
     const stamp = FieldValue.serverTimestamp()
-    tx.update(ref, { act: 2, phase: 'prompt', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null })
+    tx.update(ref, { act: 2, phase: 'prompt', phaseAt: stamp, actStartedAt: stamp, pausedFrom: null, blackout: null })
     return true
   })
   if (!claimed) return { ok: true, already: true }
@@ -377,14 +379,39 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       // host is ready. Act 1 only: since the return moves the night to Act 2 on its own, a press in
       // any other act is refused (the act buttons move the night), and a second press in the dark
       // changes nothing.
+      // Since 11 Nov 2026 (A1, lib/blackout.js) three marks: the press writes them and the brain stops
+      // the music; the dark lands BLACKOUT_LEAD_MS later (the phase, the TV and the scream, every
+      // device cutting on its own clock at the mark); the power five seconds after the dark.
       if (n.phase === 'blackout') return { ok: true, already: true }
       if (n.act !== 1) throw new NightError('invalid', 'The blackout ends Act 1. To move the night, press an act.')
-      await night.hostCommand(db, { nightId, command: 'blackout', arg, now })
-      await screen.onPhase(db, nightId, 'blackout', { now })
+      const marks = await pressBlackout(db, nightId, { now })
+      if (!marks) return { ok: true, already: true }
+      const darkAt = marks.darkAt.getTime()
+      await sleep(BLACKOUT_LEAD_MS)
+      // paused or moved during the lead: no dark at all, and the marks come off
+      const still = (await ref.get()).data()
+      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); return { ok: true, powerReturned: false, dark: false } }
+      await night.hostCommand(db, { nightId, command: 'blackout', arg, now: darkAt })
+      await screen.onPhase(db, nightId, 'blackout', { now: darkAt })
       await sleep(BLACKOUT_POWER_MS)
       // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
-      const r = await powerReturns(db, nightId, { now: now + BLACKOUT_POWER_MS })
+      const r = await powerReturns(db, nightId, { now: darkAt + BLACKOUT_POWER_MS })
       return { ok: true, powerReturned: !r.already }
+    }
+    case 'blackout-test': {
+      // The Blackout test (A1, practice nights only): the same three marks, and only them. No phase,
+      // act, beat, screen or case is touched: each device goes dark at the mark on its own clock and
+      // comes back at the power's mark by itself. The scream plays from the sounds doc at the dark.
+      if (!(n.forceRehearsal || n.rehearsal)) throw new NightError('invalid', 'The Blackout test is for a practice night only.')
+      if (n.phase === 'blackout') return { ok: true, already: true }
+      const marks = await pressBlackout(db, nightId, { now, test: true })
+      if (!marks) return { ok: true, already: true }
+      const darkAt = marks.darkAt.getTime()
+      await sleep(BLACKOUT_LEAD_MS)
+      await screen.play(db, nightId, 'blackout', { now: darkAt })
+      await sleep(BLACKOUT_POWER_MS)
+      await clearBlackout(db, nightId, marks)
+      return { ok: true, test: true }
     }
     case 'power': {
       // Power returns by hand: what the Blackout does on its own after five seconds. Once the power is
@@ -433,9 +460,12 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return { ok: true, music: arg }
     }
     case 'sound-test': {
-      // Sound test (cue 2, 25 Oct 2026): the chime on every HomePod while the rules are read, so the
-      // room hears the speakers work. Nothing else moves.
-      return screen.play(db, nightId, 'chime-phone', { now })
+      // Sound test (cue 2, 25 Oct 2026): a cue's sound on every room screen and phone, so the room hears
+      // them work. With no arg the chime; with a cue id (the Host tab's list, 11 Nov 2026), that cue
+      // once. Nothing else moves.
+      const id = arg ? String(arg) : 'chime-phone'
+      if (!screen.SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
+      return screen.play(db, nightId, id, { now })
     }
     case 'cake': {
       // Cake! (cue 13, 25 Oct 2026): a fresh stamp on public/cues.cake, which the brain plays Happy

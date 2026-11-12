@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { createShortcutMusic, shortcutsFor, musicShortcutProblems, SEQUENCE_WAIT_MS } from '../lib/shortcutMusic.js'
+import { createShortcutMusic, shortcutsFor, musicShortcutProblems, SEQUENCE_WAIT_MS, STOP_RETRY_MS, STOP_TRIES, SPECIAL_KEYS } from '../lib/shortcutMusic.js'
 import { createShortcutRunner } from '../lib/strings.js'
 import { sceneProblems, planScenes, emptySceneState } from '../lib/scenes.js'
 
@@ -11,16 +11,18 @@ import { sceneProblems, planScenes, emptySceneState } from '../lib/scenes.js'
 const SHEET = JSON.parse(readFileSync(new URL('../scenes.json', import.meta.url), 'utf8'))
 const settle = () => new Promise(r => setImmediate(r))
 
-test('the sheet names the seven Shortcuts from the rundown, by the playlist keys, and the stop; Act 4 runs the house jazz first, then the two rooms', () => {
+test('the sheet names the six music Shortcuts from the rundown, by the playlist keys, the stop, and the dip under a recording; Act 4 runs the house jazz first, then the two rooms', () => {
   assert.deepEqual(SHEET.musicShortcuts, {
     jazz: 'Default Jazz',
     jazzLow: 'Default Jazz 20%',
     act4: ['Default Jazz', 'Lightbulb Moment Music', 'Get Off My Grass Game Music'],
     intense35: 'Intense Music 35%',
     intense60: 'Intense Music 60%',
-    credits: 'Credit Roll Music',
     off: 'PANIC',
-  })
+    duck: 'Default Jazz 20%',
+  }, 'the Credit Roll Music Shortcut is off the sheet since 11 Nov 2026: the night ends on the jazz')
+  assert.deepEqual(SPECIAL_KEYS, ['off', 'duck', 'cake'], 'the three keys that are not playlist settings')
+  assert.deepEqual(musicShortcutProblems({ playlists: SHEET.playlists, musicShortcuts: { off: 'PANIC', duck: 'Default Jazz 20%', cake: 'Birthday Song' } }), [], 'the stop, the dip and a cake Shortcut need no playlist of their own')
   assert.deepEqual(sceneProblems(SHEET), [])
   assert.equal(SHEET.acts['4'].music, 'act4', 'Act 4 is its own setting (cue 11: the Study and the Orangerie play their own music)')
   assert.deepEqual(SHEET.playlists.act4, { name: 'Murderwin · Jazz', volume: 55 }, 'on the Music app road it is the jazz')
@@ -42,45 +44,237 @@ test('the sheet names the seven Shortcuts from the rundown, by the playlist keys
   assert.deepEqual(musicShortcutProblems({ playlists: SHEET.playlists }), [], 'no table: the Music app road, nothing to check')
 })
 
-test('play runs the setting\'s Shortcut(s) in order; pause runs the stop and pauses the Music app too; duck, unduck and the speaker do nothing', async () => {
+test('play runs the setting\'s Shortcut(s) in order; pause runs the stop and pauses the Music app too; a plain cue\'s duck and unduck do nothing', async () => {
   const ran = []
   const logs = []
   const runner = createShortcutRunner({ tag: 'music', run: async name => { ran.push(name) }, wait: async () => {}, log: l => logs.push(l) })
-  const app = { paused: 0, play: async () => { throw new Error('the Music app should not play') }, pause: async () => { app.paused++ }, playTrack: async () => 'playing', nowPlaying: async () => ({ playing: true }), speakers: async () => [{ name: 'Living Room', on: true }] }
+  const app = { paused: 0, play: async () => { throw new Error('the Music app should not play') }, pause: async () => { app.paused++ }, playTrack: async () => 'playing', nowPlaying: async () => ({ playing: true }), speakers: async () => [{ name: 'Living Room', on: true }], hasTrack: async () => true, toHomePods: async () => 'set', releaseSpeakers: async () => 'released' }
   const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, fallback: app, log: l => logs.push(l) })
+  assert.equal(m.stopped(), null, 'no stop sent yet')
   await m.play({ playlist: 'jazz', name: 'Murderwin · Jazz', volume: 55 })
   await m.play({ playlist: 'act4', name: 'Murderwin · Jazz', volume: 55 })
   assert.deepEqual(ran, ['Default Jazz', 'Default Jazz', 'Lightbulb Moment Music', 'Get Off My Grass Game Music'])
   assert.deepEqual(logs, ['[music] Default Jazz', '[music] Default Jazz, then Lightbulb Moment Music, then Get Off My Grass Game Music'])
-  await m.duck(); await m.unduck(); await m.speaker({ name: 'Living Room', on: false })
-  assert.equal(ran.length, 4, 'nothing more ran')
+  await m.duck(); await m.unduck()
+  assert.equal(ran.length, 4, 'a chime or a sting: nothing more ran (the HomePods play their own stream)')
+  assert.equal(m.speaker, undefined, 'no HomePod is lent any more (11 Nov 2026)')
   await m.pause()
-  assert.equal(ran.at(-1), 'PANIC', 'the stop is Jon\'s PANIC Shortcut: all four HomePods')
+  assert.equal(ran.at(-1), 'PANIC', 'the stop is the Shortcut the sheet names: all four HomePods')
+  assert.equal(logs.at(-1), '[music] off', 'it ran, so it may say so')
+  assert.equal(m.stopped(), true)
   assert.equal(app.paused, 1, 'the Music app paused too, in case the cake song was on')
   assert.equal(await m.playTrack({ name: 'Happy Birthday for Dogs', volume: 60 }), 'playing', 'the cake song is the Music app\'s')
   assert.deepEqual(await m.nowPlaying(), { playing: true })
   assert.equal((await m.speakers())[0].name, 'Living Room')
+  assert.equal(await m.hasTrack('x'), true)
+  assert.equal(await m.toHomePods({}), 'set')
+  assert.equal(await m.releaseSpeakers(), 'released')
   assert.equal(m.road, 'shortcuts')
   await m.idle()
 })
 
-test('a setting with no Shortcut falls back to the Music app with one line; a Shortcut not on this Mac is one line; no stop named is one line', async () => {
+// ---- 11 Nov 2026: the stop is honest ----
+// The sheet named PANIC as the stop. No Shortcut by that name was on the brain, so every "music off"
+// of the evening failed inside a tenth of a second, and the window printed "[music] off" each time.
+
+// A runner whose Shortcuts behave as told: `fate(name, n)` is called for try n of that name and may throw.
+function runnerWith(fate, logs) {
+  const tried = []
+  const runner = createShortcutRunner({
+    tag: 'music',
+    run: async name => { tried.push(name); await fate(name, tried.filter(x => x === name).length) },
+    wait: () => new Promise(() => {}), // the head start never passes: a failure here is the early, real kind
+    log: l => logs.push(l),
+  })
+  return { runner, tried }
+}
+const notFound = name => { throw new Error(`shortcut ${name}: Couldn’t find shortcut`) }
+
+test('a stop Shortcut that is not on this Mac: never "off", a line in capitals every time, one more try three seconds later and no more', async () => {
+  const logs = []
+  const { runner, tried } = runnerWith((name) => { if (name === 'PANIC') notFound(name) }, logs)
+  const waits = []
+  const app = { paused: 0, pause: async () => { app.paused++ } }
+  const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, fallback: app, log: l => logs.push(l), wait: ms => new Promise(r => waits.push({ ms, r })) })
+  await m.play({ playlist: 'jazz' })
+  await m.pause()
+  assert.ok(!logs.includes('[music] off'), 'it did not happen, so it is not said')
+  assert.equal(logs.at(-1), '[music] THE MUSIC WAS NOT STOPPED: the PANIC Shortcut did not run (Couldn’t find shortcut). Trying once more in 3 seconds')
+  assert.equal(m.stopped(), false)
+  assert.equal(app.paused, 1, 'the Music app is still paused, in case the cake song was on')
+  assert.equal(STOP_RETRY_MS, 3000)
+  assert.equal(STOP_TRIES, 2)
+  assert.deepEqual(waits.map(w => w.ms), [STOP_RETRY_MS])
+  waits[0].r()
+  await settle(); await settle(); await m.idle()
+  assert.deepEqual(tried.filter(n => n === 'PANIC').length, 2, 'the second try')
+  assert.match(logs.at(-1), /^\[music\] THE MUSIC WAS NOT STOPPED: the PANIC Shortcut did not run \(Couldn’t find shortcut\)\. The HomePods play on: stop them in the Home app, and make that Shortcut on this Mac, named exactly that/)
+  assert.equal(waits.length, 1, 'and no third')
+  // the next stop says it all again: this is never a line said once and then swallowed
+  await m.pause()
+  assert.equal(logs.filter(l => l.includes('THE MUSIC WAS NOT STOPPED')).length, 3)
+  assert.ok(!logs.includes('[music] off'))
+})
+
+test('the second try at a stop is dropped the moment a newer play, stop or cake song has come: it can never kill music that has just come back', async () => {
+  for (const newer of ['play', 'pause', 'playTrack', 'playCake']) {
+    const logs = []
+    const { runner, tried } = runnerWith((name, n) => { if (name === 'PANIC' && n === 1) throw new Error('shortcut PANIC: Action set execution failed.') }, logs)
+    const waits = []
+    const app = { pause: async () => {}, playTrack: async () => 'playing' }
+    const m = createShortcutMusic({ names: { ...SHEET.musicShortcuts, cake: 'Birthday Song' }, runner, fallback: app, log: l => logs.push(l), wait: ms => new Promise(r => waits.push({ ms, r })) })
+    await m.pause()
+    assert.equal(waits.length, 1, 'a second try is waiting')
+    if (newer === 'play') await m.play({ playlist: 'jazz' })
+    if (newer === 'pause') await m.pause()
+    if (newer === 'playTrack') await m.playTrack({ name: 'x', volume: 60 })
+    if (newer === 'playCake') await m.playCake()
+    const before = tried.filter(n => n === 'PANIC').length
+    waits[0].r()
+    await settle(); await settle(); await m.idle()
+    assert.equal(tried.filter(n => n === 'PANIC').length, before, `${newer}: the old stop's second try never ran`)
+  }
+})
+
+test('a stop that failed for a passing reason runs on its second try, and only then says off', async () => {
+  const logs = []
+  const { runner, tried } = runnerWith((name, n) => { if (name === 'PANIC' && n === 1) throw new Error('shortcut PANIC: Action set execution failed.') }, logs)
+  const waits = []
+  const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l), wait: ms => new Promise(r => waits.push({ ms, r })) })
+  await m.pause()
+  assert.equal(m.stopped(), false)
+  assert.ok(!logs.includes('[music] off'))
+  waits[0].r()
+  await settle(); await settle(); await m.idle()
+  assert.deepEqual(tried, ['PANIC', 'PANIC'])
+  assert.equal(logs.at(-1), '[music] off')
+  assert.equal(m.stopped(), true)
+})
+
+test('no stop named on the sheet: said in capitals at every stop, and the Music app is still paused', async () => {
+  const logs = []
+  const { runner, tried } = runnerWith(() => {}, logs)
+  const app = { paused: 0, pause: async () => { app.paused++ } }
+  const m = createShortcutMusic({ names: { jazz: 'Default Jazz' }, runner, fallback: app, log: l => logs.push(l) })
+  await m.pause(); await m.pause()
+  assert.equal(logs.filter(l => l.startsWith('[music] THE MUSIC WAS NOT STOPPED: no Shortcut is named to stop it')).length, 2)
+  assert.deepEqual(tried, [])
+  assert.equal(app.paused, 2)
+  assert.equal(m.stopped(), false)
+})
+
+test('a stop whose Home scene only partly ran says a HomePod may still be playing, and is no longer counted as a stop that worked', async () => {
+  const logs = []
+  let fail
+  const runner = createShortcutRunner({ tag: 'music', run: () => new Promise((_, r) => { fail = r }), wait: async () => {}, log: l => logs.push(l) })
+  const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l) })
+  await m.pause()
+  assert.equal(logs.at(-1), '[music] off', 'the Shortcut started, so the stop was sent')
+  assert.equal(m.stopped(), true)
+  fail(Object.assign(new Error('shortcut PANIC: Action set execution partially succeeded.'), { partial: true, took: 61_000 }))
+  await m.idle(); await settle()
+  assert.match(logs.at(-1), /^\[music\] THE STOP MAY NOT HAVE REACHED EVERY HOMEPOD: the PANIC Shortcut ran for 61 s and then said "partially succeeded"/)
+  assert.match(logs.at(-1), /Listen for a HomePod still playing/)
+  assert.ok(!logs.at(-1).includes('it did its job'), 'never the string lights\' "it did its job": for a stop that is not good enough')
+  assert.equal(m.stopped(), false)
+  // any other late failure
+  const logs2 = []
+  let fail2
+  const m2 = createShortcutMusic({ names: SHEET.musicShortcuts, runner: createShortcutRunner({ tag: 'music', run: () => new Promise((_, r) => { fail2 = r }), wait: async () => {}, log: l => logs2.push(l) }), log: l => logs2.push(l) })
+  await m2.pause()
+  fail2(Object.assign(new Error('shortcut PANIC: it did not finish'), { partial: false, took: 90_000 }))
+  await m2.idle(); await settle()
+  assert.equal(logs2.at(-1), '[music] THE STOP MAY NOT HAVE REACHED EVERY HOMEPOD: the PANIC Shortcut did not finish after 90 s (it did not finish)')
+})
+
+test('under a recording the brain speaks, the music goes down by the sheet\'s duck Shortcut and the setting that was on comes back after; a plain cue, or silence, does nothing', async () => {
+  const ran = []
+  const logs = []
+  const runner = createShortcutRunner({ tag: 'music', run: async name => { ran.push(name) }, wait: async () => {}, log: l => logs.push(l) })
+  const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l) })
+  await m.duck({ speech: true })
+  assert.deepEqual(ran, [], 'nothing is playing yet: a dip would start the jazz')
+  await m.play({ playlist: 'jazz' })
+  await m.duck({ speech: false }); await m.unduck()
+  assert.deepEqual(ran, ['Default Jazz'], 'a chime leaves the music be')
+  await m.duck({ speech: true }); await m.duck({ speech: true })
+  assert.deepEqual(ran, ['Default Jazz', 'Default Jazz 20%'], 'down once')
+  assert.equal(logs.at(-1), '[music] down, under the recording')
+  await m.unduck(); await m.unduck()
+  assert.deepEqual(ran, ['Default Jazz', 'Default Jazz 20%', 'Default Jazz'], 'and back once')
+  // in Act 4 the three rooms' music comes back
+  await m.play({ playlist: 'act4' })
+  ran.length = 0
+  await m.duck({ speech: true }); await m.unduck()
+  assert.deepEqual(ran, ['Default Jazz 20%', 'Default Jazz', 'Lightbulb Moment Music', 'Get Off My Grass Game Music'])
+  // the sheet stops the music while the recording plays: the stop is the newer word, nothing comes back
+  await m.play({ playlist: 'jazz' })
+  ran.length = 0
+  await m.duck({ speech: true })
+  await m.pause()
+  await m.unduck()
+  assert.deepEqual(ran, ['Default Jazz 20%', 'PANIC'])
+  await m.duck({ speech: true })
+  assert.deepEqual(ran, ['Default Jazz 20%', 'PANIC'], 'silence stays silence')
+  // the sheet changes the music while the recording plays: that setting stays, at its own level
+  await m.play({ playlist: 'jazz' })
+  await m.duck({ speech: true })
+  await m.play({ playlist: 'intense60' })
+  ran.length = 0
+  await m.unduck()
+  assert.deepEqual(ran, [])
+  // no duck named: nothing, as before
+  const plain = createShortcutMusic({ names: { jazz: 'Default Jazz', off: 'PANIC' }, runner })
+  await plain.play({ playlist: 'jazz' })
+  ran.length = 0
+  await plain.duck({ speech: true }); await plain.unduck()
+  assert.deepEqual(ran, [])
+  // a duck Shortcut that did not run brings nothing back, and says so once
+  const logs3 = []
+  const { runner: flaky, tried } = runnerWith((name) => { if (name === 'Default Jazz 20%') notFound(name) }, logs3)
+  const m3 = createShortcutMusic({ names: SHEET.musicShortcuts, runner: flaky, log: l => logs3.push(l) })
+  await m3.play({ playlist: 'jazz' })
+  await m3.duck({ speech: true }); await m3.unduck()
+  assert.deepEqual(tried, ['Default Jazz', 'Default Jazz 20%'], 'the jazz was not started a second time')
+  assert.ok(logs3.some(l => l.includes('the music stays as loud as it was under the recording')))
+  assert.ok(!logs3.includes('[music] down, under the recording'))
+})
+
+test('the cake\'s song by its own Shortcut when the sheet names one; none named, or one that did not run, hands the song to the Music app', async () => {
+  const ran = []
+  const logs = []
+  const runner = createShortcutRunner({ tag: 'music', run: async name => { ran.push(name) }, wait: async () => {}, log: l => logs.push(l) })
+  const none = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l) })
+  assert.equal(await none.playCake(), null, 'the sheet names no cake Shortcut today')
+  assert.deepEqual(ran, [])
+  const m = createShortcutMusic({ names: { ...SHEET.musicShortcuts, cake: 'Birthday Song' }, runner, log: l => logs.push(l) })
+  assert.equal(await m.playCake(), 'playing')
+  assert.deepEqual(ran, ['Birthday Song'])
+  assert.equal(logs.at(-1), '[cake] Birthday Song')
+  const logs2 = []
+  const { runner: missing } = runnerWith(notFound, logs2)
+  const m2 = createShortcutMusic({ names: { cake: 'Birthday Song' }, runner: missing, log: l => logs2.push(l) })
+  assert.equal(await m2.playCake(), null)
+  assert.match(logs2.at(-1), /^\[cake\] the Birthday Song Shortcut did not run \(Couldn’t find shortcut\): the Music app plays the song instead$/)
+})
+
+test('a setting with no Shortcut falls back to the Music app with one line; a music Shortcut not on this Mac is one line; no stop named is said at every stop', async () => {
   const logs = []
   const ran = []
   // the head start never passes here, so a failing run is the real, early kind (a missing Shortcut reports in 70 ms)
-  const runner = createShortcutRunner({ tag: 'music', run: async name => { if (name === 'Credit Roll Music') throw new Error('shortcut Credit Roll Music: Couldn’t find shortcut'); ran.push(name) }, wait: () => new Promise(() => {}), log: l => logs.push(l) })
+  const runner = createShortcutRunner({ tag: 'music', run: async name => { if (name === 'Intense Music 35%') throw new Error('shortcut Intense Music 35%: Couldn’t find shortcut'); ran.push(name) }, wait: () => new Promise(() => {}), log: l => logs.push(l) })
   const played = []
   const app = { play: async a => { played.push(a.playlist) }, pause: async () => {} }
-  const m = createShortcutMusic({ names: { jazz: 'Default Jazz', credits: 'Credit Roll Music' }, runner, fallback: app, log: l => logs.push(l) })
+  const m = createShortcutMusic({ names: { jazz: 'Default Jazz', intense35: 'Intense Music 35%' }, runner, fallback: app, log: l => logs.push(l) })
   await m.play({ playlist: 'intense60', name: 'Murderwin · Intense', volume: 60 })
   await m.play({ playlist: 'intense60', name: 'Murderwin · Intense', volume: 60 })
   assert.deepEqual(played, ['intense60', 'intense60'], 'the Music app plays it, every time')
   assert.equal(logs.filter(l => l.includes('no Shortcut named for "intense60"')).length, 1, 'said once')
-  await m.play({ playlist: 'credits', name: 'Murderwin · Credits', volume: 35 })
-  await m.play({ playlist: 'credits', name: 'Murderwin · Credits', volume: 35 })
-  assert.equal(logs.filter(l => /the Credit Roll Music Shortcut did not run/.test(l)).length, 1, 'a missing Shortcut, said once')
+  await m.play({ playlist: 'intense35', name: 'Murderwin · Intense', volume: 35 })
+  await m.play({ playlist: 'intense35', name: 'Murderwin · Intense', volume: 35 })
+  assert.equal(logs.filter(l => /the Intense Music 35% Shortcut did not run/.test(l)).length, 1, 'a missing music Shortcut, said once')
   await m.pause(); await m.pause()
-  assert.equal(logs.filter(l => l.includes('no Shortcut named to stop the music')).length, 1)
+  assert.equal(logs.filter(l => l.includes('THE MUSIC WAS NOT STOPPED: no Shortcut is named to stop it')).length, 2, 'a stop that cannot happen is said every time (11 Nov 2026)')
   assert.deepEqual(ran, [], 'nothing ran')
   // with no Music app either: nothing plays, one line
   const none = createShortcutMusic({ names: {}, runner, log: l => logs.push(l) })

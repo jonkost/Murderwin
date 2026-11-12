@@ -78,8 +78,8 @@ test('The End (C1, 11 Nov 2026): no room screen goes dark once the night is over
   assert.equal(livingView({ night: { act: 7, beat: 'end', phase: 'act', over: true }, screen: { kind: 'black', title: '' } }), 'end')
   // every kiosk goes through roomDark with the screen doc the TV reads, and the dispatch darkens before any room branch
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null)) body = <Dark />"), 'the dark branch comes first')
-  assert.ok(kiosk.indexOf('body = <Dark />') < kiosk.indexOf("else if (code) body = <RoomCode"), 'dark before the room code')
+  assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />"), 'the dark branch comes first')
+  assert.ok(kiosk.indexOf('body = <Dark hit=') < kiosk.indexOf("else if (code) body = <RoomCode"), 'dark before the room code')
 })
 
 test('a pause during the blackout or the prompt keeps every room screen dark', () => {
@@ -284,8 +284,8 @@ test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and 
   assert.ok(listens.includes('for (const e of WAKE_EVENTS) window.addEventListener(e, wake)') && listens.includes('}, [])'), 'the page listens from its first moment to its last')
   // a finger going down is not a tap to a browser; lifting it is (an iPad would never get its sound on the press alone)
   for (const e of ['pointerup', 'touchend', 'click', 'keydown']) assert.ok(kiosk.includes(`'${e}'`) && /const WAKE_EVENTS = \[[^\]]*\]/.exec(kiosk)[0].includes(`'${e}'`), `${e} wakes the sound`)
-  // the bell is not a setup mark: it shows on every night
-  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the bell on every night')
+  // the bell is not a setup mark: it shows on every night (and since 11 Nov 2026 it is the screen's cue player too)
+  assert.ok(kiosk.includes("<Bell sounds={sounds} serverNow={serverNow} silent={which === 'decor'} tv={which === 'living'} scope={nightId} />"), 'the bell on every night')
 })
 
 test('F31 nothing in the corners beside a near-black screen, the bell ringing or not (29 Oct 2026)', () => {
@@ -299,7 +299,7 @@ test('F31 nothing in the corners beside a near-black screen, the bell ringing or
   const corners = kiosk.slice(from, kiosk.indexOf('</>', from))
   const at = (t) => { const i = corners.indexOf(t); assert.ok(i >= 0, t); return i }
   for (const mark of ['<Bell ', '<StaleDot ', '<Wake ']) assert.ok(at('{body}') < at(mark), `${mark.trim()} after the screen`)
-  assert.ok(kiosk.includes('<div className="kiosk dark" aria-label="Sirwin Manor" />'), 'the dark')
+  assert.ok(kiosk.includes('<div className={`kiosk dark${hit ? \' blackout-hit\' : \'\'}`} aria-label="Sirwin Manor" />'), 'the dark')
   assert.ok(kiosk.includes('<div className="kiosk dark paused">'), 'the pause card')
 })
 

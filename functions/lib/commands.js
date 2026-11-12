@@ -15,7 +15,8 @@ export const HOST_COMMANDS = [
   { name: 'join-open', arg: '', what: 'Open the doors.' },
   { name: 'join-close', arg: '', what: 'Close the doors.' },
   { name: 'act', arg: '<1-7>', what: 'Jump to an act (a jump to 2 or past it deals the roles first if they are not out yet).' },
-  { name: 'blackout', arg: '', what: 'Act 1 only: every phone goes dark. Five seconds later the power comes back on its own: roles land, Act 2 begins. A second press in the dark changes nothing.' },
+  { name: 'blackout', arg: '', what: 'Act 1 only: the music stops at once, two seconds later every phone, screen and light goes dark with the scream, and five seconds after that the power comes back on its own: roles land, Act 2 begins. A second press changes nothing.' },
+  { name: 'blackout-test', arg: '', what: 'Practice nights only: the same blackout, the music stop, the dark and the scream, with no roles dealt and no act moved. Press it as often as you like.' },
   { name: 'power', arg: '', what: 'The power returns by hand, if it has not come back on its own: roles land, Act 2 begins. Harmless once the power is back.' },
   { name: 'pause', arg: '', what: 'Pause: Sir Irwin requires the garden.' },
   { name: 'resume', arg: '', what: 'Carry on from the pause.' },
@@ -43,7 +44,7 @@ export const HOST_COMMANDS = [
   { name: 'relay-advance', arg: '', what: 'Nudge the drawing clock (the kiosk does this itself).' },
   { name: 'at-the-paper', arg: '', what: 'The drawing: the called player is at the paper, so the walk ends now and the square shows at once. Only while someone is walking.' },
   // the house (run.js; the brain does the sound and the lights, cues/)
-  { name: 'sound-test', arg: '', what: 'The chime on every HomePod, so the room hears the speakers work during the rules. Nothing else moves.' },
+  { name: 'sound-test', arg: '[cue]', what: 'One cue sound on every room screen and phone (the chime with no cue named), so the room hears them work. Nothing else moves.' },
   { name: 'cake', arg: '', what: 'Cake! (Act 5): the brain plays Happy Birthday for Dogs on every HomePod and dims the lights for the candles; the Parlour TV shows the birthday card. The jazz comes back when the song ends.' },
   { name: 'ipad', arg: '<auto|code|captions|memory|bedroom>', what: 'What the iPad shows, at once, until the act changes: Zimothy’s code, the supper captions, In Duplicate or the bedroom. Auto follows the night.' },
   { name: 'tv-trace', arg: '[off]', what: 'Show the trace on the living room TV once the door is open (if the bedroom screen has died). Say off to take it down.' },

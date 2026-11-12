@@ -152,6 +152,8 @@ export async function openDeck({ log = () => {}, load = () => import('@elgato-st
   await deck.clearPanel()
   return {
     size, paint, shiver, flash,
+    // the backlight, 0 to 100 (the blackout, A1, 11 Nov 2026)
+    brightness: async (v) => { try { await deck.setBrightness(Math.max(0, Math.min(100, Math.round(v)))) } catch (e) { log(`stream deck brightness: ${e?.message ?? e}`) } },
     onKey: (fn) => listeners.push(fn),
     close: async () => { try { await deck.clearPanel(); await deck.close() } catch {} },
   }

@@ -125,7 +125,7 @@ test('the Parlour TV plays it by itself, and there is no second tab any more', (
   assert.ok(kiosk.includes("const film = which === 'living' && n ? rulesFilmAt(n, serverNow()) : null"), 'the Parlour TV only (never the iPad’s words-only page)')
   const film = kiosk.indexOf('else if (film) body = <RulesFilm at={film} />')
   const intro = kiosk.indexOf("else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo")
-  const dark = kiosk.indexOf('else if (roomDark(n, living ? screen.data : null)) body = <Dark />')
+  const dark = kiosk.indexOf('else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />')
   assert.ok(dark > 0 && film > dark && intro > film, 'after the dark, before the intro’s own check: a screen that reloads mid-film goes straight to its slide')
   const screen = read('../src/screens/RulesFilm.jsx')
   assert.ok(screen.includes('a.currentTime = voice'), 'a reload joins the voice where the clock says')

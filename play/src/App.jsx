@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
+import { useCueSounds } from './lib/useCueSounds'
+import { useBlackoutMarks } from './lib/useBlackout'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
 import { clockFor, doorCardHolds, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
@@ -34,6 +36,12 @@ export default function App() {
   // The heartbeat names this guest only while the phone holds an active
   // character on this night; a handed-over phone at the doors reports nobody.
   const serverNow = useServerClock(uid, nightId, presenceKey(session.data, nightId))
+  // Every phone is one of the house's speakers (handoff 11 Nov 2026, A2): the moment the night calls a
+  // sound (a chime, a sting, the scream), this phone plays it, with every other phone and room screen.
+  // Read here, above every screen the phone can show, so a dark phone still screams at the blackout. The
+  // same cue at the same moment on every phone, whatever its role: never a tell.
+  const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
+  useCueSounds(sounds, serverNow, { scope: nightId })
   const online = useOnline()
   const ui = useMemo(() => uiLines(content.data), [content.data])
   const [tour, setTour] = useState(false)
@@ -43,6 +51,7 @@ export default function App() {
   const [draft, setDraft] = useState(null)
   useTick(1000) // windows close on the server's clock; re-check once a second
   useFreshness(() => ({ page: 'phone', night: night.data, session: session.data, relay: relay.data, now: serverNow() })) // a newer site: reload at a quiet moment (A5)
+  useBlackoutMarks(night.data, serverNow) // and at the blackout's marks exactly (A1)
 
   // Notes are kept per night: a phone that rehearsed starts the party clean.
   useEffect(() => { setNotesNight(nightId) }, [nightId])
@@ -85,6 +94,7 @@ export default function App() {
   if (!night.loaded && !night.data) return <Dark />
   const n = night.data
   if (!n) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />
+  if (isDark(n, serverNow())) return <Blackout hit /> // every phone, a phone at the doors too (A1)
   // No REHEARSAL band on a phone (Jon, 11 Nov 2026): a rehearsal looks like the party night. The Host tab says which it is.
 
   const s = session.data && session.data.nightId === nightId ? session.data : null
@@ -101,7 +111,7 @@ export default function App() {
   // keeps the screen up on the frozen clock, so nothing bright appears in the
   // dark room either way. Until this phone's notes have loaded the screen
   // stays dark rather than flash the button at a phone that already tapped.
-  if (isDark(n)) return <Blackout />
+  if (isDark(n, serverNow())) return <Blackout hit />
   const clock = clockFor(n, serverNow)
   if (showsPrompt(n, notes, clock)) {
     if (!notesDoc.loaded) return <Blackout />

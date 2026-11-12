@@ -25,7 +25,9 @@ export function createPlayer({ mediaDir, exists, spawn, log = () => {}, fake = f
     if (p) { try { p.kill() } catch { /* already gone */ } }
   }
 
-  function play(id, clips = [], { unknown = 0, onTv = 0, onDone = null } = {}) {
+  // `elsewhere` (11 Nov 2026): the cue's own sound is the screens' and the
+  // phones' to play (the caller passes no id then); the line says so.
+  function play(id, clips = [], { unknown = 0, onTv = 0, elsewhere = false, onDone = null } = {}) {
     const mine = ++sequence
     stop()
     const find = x => soundCandidates(mediaDir, x).find(f => exists(f)) ?? null
@@ -34,7 +36,7 @@ export function createPlayer({ mediaDir, exists, spawn, log = () => {}, fake = f
     const sound = found?.file ?? null
     const recordings = clips.map(find)
     const missing = recordings.filter(f => !f).length
-    log(`${playLine({ sound: id ? (found ? (found.fallback ? 'fallback' : 'ok') : 'missing') : null, recordings: clips.length, missing, unknown, onTv })}${fake ? ' (fake: nothing plays)' : ''}`)
+    log(`${playLine({ sound: id ? (found ? (found.fallback ? 'fallback' : 'ok') : 'missing') : null, recordings: clips.length, missing, unknown, onTv, elsewhere: elsewhere && !id })}${fake ? ' (fake: nothing plays)' : ''}`)
     const queue = [sound, ...recordings].filter(Boolean)
     const nextOne = () => {
       if (mine !== sequence) return // a newer cue has taken over

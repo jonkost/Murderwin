@@ -269,9 +269,10 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   assert.ok(kiosk.includes("which === 'orangerie' ? `nights/${nightId}/public/salem` : null"), 'it reads Salem\'s public doc for the group due')
   const main = src('../src/main.jsx')
   assert.ok(main.includes('orangerie'), 'main.jsx names the kiosk')
-  // the brain's browser shows the bell but never chimes: the brain's sound output is the HomePods, where the real sound already plays (26 Oct 2026)
-  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the Orangerie kiosk is silent')
-  assert.ok(kiosk.includes('if (!first && !silent && soundFresh(sounds, serverNow())) chime(\'cue\')'), 'silent skips the chime, the bell still shows')
+  // the brain's browser is a speaker for the cues like every room screen (11 Nov 2026: the brain itself plays no cue sound now); a second display stays silent, or its room would echo
+  assert.ok(kiosk.includes("<Bell sounds={sounds} serverNow={serverNow} silent={which === 'decor'} tv={which === 'living'} scope={nightId} />"), 'only the second display is silent')
+  assert.ok(kiosk.includes('useCueSounds(sounds, serverNow, { silent, tv, scope })') && kiosk.includes('const shown = bellShown(sounds?.data, serverNow())'), 'silent skips the sound, the bell still shows')
+  assert.ok(src('../src/lib/cueSounds.js').includes('const due = silent ? null : cueDue(memory.heard, sounds, now, { tv })'), 'a silent page plays nothing, and still keeps track of what it has heard')
   // the Host tab's dots: the Orangerie screen has its row; Boo\'s camera has none (it went, 11 Nov 2026)
   const keys = MACHINES.map(m => m.key)
   assert.ok(keys.includes('kiosk-orangerie') && !keys.includes('kiosk-pose'), 'the Orangerie\'s row, no camera row')

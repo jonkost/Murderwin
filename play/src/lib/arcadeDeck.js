@@ -23,7 +23,7 @@ const PLUS_XL = 'plus-xl' // its model id, DeviceModelId.PLUS_XL
 const KEY_COUNT = 36 // 9 columns by 4 rows; key index = row * 9 + column
 const FACE_BYTES = 112 * 112 * 4 // one key in RGBA: the library wants exactly this many
 const STRIP_BYTES = 1200 * 100 * 4 // the touch strip (lcd 0) in RGBA
-const BRIGHTNESS = 90
+export const BRIGHTNESS = 90
 const PREPARED_MAX = 800 // prepared key pictures a painter keeps, the oldest dropped first
 const STRIP_GAP_MS = 150 // a new strip at most about 7 times a second
 const BANDS = 6, BAND_W = 200 // the strip goes in six parts, each only when it changed

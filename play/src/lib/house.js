@@ -39,12 +39,12 @@ export const MACHINES = [
   { key: 'kiosk-study', label: 'Study screen' },
   { key: 'kiosk-memory', label: 'In Duplicate (another device)', spare: true }, // ?kiosk=memory on another device; the iPad's page shows In Duplicate itself
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
-  { key: 'kiosk-orangerie', label: 'Orangerie screen', quiet: true }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
+  { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list); a speaker for the cues since 11 Nov 2026
   { key: 'cues', label: 'Hall light and sounds', quiet: true },
 ]
 export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
-// `quiet`: a machine that makes no sound of its own by design (the brain's browser, whose
-// sound is the HomePods'; the brain itself), so it has no sound mark.
+// `quiet`: a machine that makes no sound of its own by design (the brain itself, whose cue
+// sounds the screens and phones play since 11 Nov 2026), so it has no sound mark.
 // `spare`: an address only another device opens when the iPad is busy or dead (12 Nov 2026, A10):
 // its row shows only while it is heard from, so the Host tab has no grey dot for it all night.
 

@@ -27,8 +27,9 @@ export function Moment({ text, crest, foot }) {
 }
 
 // Phones stay dark through the blackout. Nothing on any screen.
-export function Blackout() {
-  return <div className="moment dark" aria-label="Blackout" />
+// `hit`: the blackout itself (A1): one white flash, then the old-TV squeeze to black (blackout.css).
+export function Blackout({ hit = false }) {
+  return <div className={`moment dark${hit ? ' blackout-hit' : ''}`} aria-label="Blackout" />
 }
 
 // The strip across the top when the house cannot be reached: the phone is

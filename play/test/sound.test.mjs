@@ -21,10 +21,10 @@ test('a room screen that is up says whether its sound is on; the Host tab shows 
   assert.equal(by['kiosk-study'].sound, false, 'up, but nobody has clicked it yet')
   assert.equal(by['kiosk-boo'].sound, null, 'a screen that is down says nothing about its sound')
   assert.equal(by['kiosk-ipad'].sound, null)
-  // the brain's own browser makes no sound by design (its sound is the HomePods'), and the brain is not a screen
-  assert.equal(by['kiosk-orangerie'].sound, null)
+  // the brain's own browser is the Orangerie's speaker for the cues (11 Nov 2026), so it has a sound mark; the brain is not a screen
+  assert.equal(by['kiosk-orangerie'].sound, true)
   assert.equal(by.cues.sound, null)
-  assert.ok(QUIET_SCREENS.has('kiosk-orangerie') && QUIET_SCREENS.has('cues') && !QUIET_SCREENS.has('kiosk-living'))
+  assert.ok(!QUIET_SCREENS.has('kiosk-orangerie') && QUIET_SCREENS.has('cues') && !QUIET_SCREENS.has('kiosk-living'))
   // a screen whose heartbeat carries no word on sound (an older page) is shown as not yet: the safe thing to tell a host
   assert.equal(houseView({ night: NIGHT, presence, now: NOW }).machines.find(m => m.key === 'kiosk-living').sound, false)
   assert.equal(houseView({ night: NIGHT, presence, now: NOW }).machines.length, MACHINES.filter(m => !m.spare).length, 'a spare address that is not up has no row (A10)')

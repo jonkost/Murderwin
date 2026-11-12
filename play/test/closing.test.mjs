@@ -78,7 +78,7 @@ test('The End on every room screen: first in the dispatch for every kiosk kind, 
   const dispatch = kiosk.slice(kiosk.indexOf('  let body\n'), kiosk.indexOf('  return (\n    <>'))
   const end = dispatch.indexOf('else if (ended) body = <RoomEnd />')
   assert.ok(end > 0, 'The End is a branch of the dispatch')
-  assert.ok(end < dispatch.indexOf('body = <Dark />'), 'before the dark')
+  assert.ok(end < dispatch.indexOf('body = <Dark hit={blackoutHit(n, serverNow())} />'), 'before the dark')
   for (const kind of ['decor', 'bedroom', 'study', 'memory', 'boo', 'orangerie']) {
     const at = dispatch.indexOf(`which === '${kind}'`, dispatch.indexOf('else if (roomDark'))
     assert.ok(at > end, `${kind} shows The End`)

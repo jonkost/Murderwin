@@ -1,4 +1,5 @@
 import nightSeed from '../../../seed/night.json' with { type: 'json' }
+import { inBlackout } from './blackout.js'
 
 // The shape of the night on the phone side: the same seed/night.json the
 // server steps through, plus small helpers over the cards and windows a
@@ -131,8 +132,9 @@ export function effectivePhase(night) {
 
 // Phones stay near-black through the blackout, and through a pause taken
 // during it: the host pausing to deal with the dog must not light the room.
-export function isDark(night) {
-  return effectivePhase(night) === 'blackout'
+// The blackout's marks count too (A1, 11 Nov 2026): dark from darkAt to powerAt on the server's clock.
+export function isDark(night, now = Date.now()) {
+  return effectivePhase(night) === 'blackout' || inBlackout(night, now)
 }
 
 // A rehearsal night gets a big red REHEARSAL band across the top of every

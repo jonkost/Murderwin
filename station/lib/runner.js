@@ -21,6 +21,7 @@ export const ELEMENTS_WAIT = [150, 150, 150], ELEMENTS_WAIT_LOW = [70, 70, 70]
 export const LINES_WAIT = [200, 140, 70], LINES_WAIT_LOW = [90, 60, 30]
 export const BREATHE_TENTHS = 25 // each way, in tenths of a second
 const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0], GREEN = [0, 255, 0], RED = [255, 0, 0]
+export const DECK_BRIGHTNESS = 90 // the deck's backlight when the power returns (A1)
 export const COUNTDOWN_MS = 500   // each step of the Lines' green 3, 2, 1
 // a report the server answered with a refusal (a group it does not know, say), not a dropped line
 const refused = (err) => /invalid|permission|not-found|failed-precondition/.test(String(err?.code ?? ''))
@@ -48,6 +49,7 @@ export function createRunner({
   let pausedAt = null             // the moment the host paused the night (server clock), while it is paused
   let finishedFor = null          // the group this station last reported finished: its turn is over here
   let hexMap = hexes              // which drawn hexagon each panel is (lib/hexmap.js), for Granolia's hint
+  let darkOn = false              // the blackout (A1): walls and deck dark, every touch ignored
 
   // ---- the effect queue: one effect at a time, never waited on from inside an effect
   let queue = Promise.resolve()
@@ -212,6 +214,7 @@ export function createRunner({
     // a panel was touched (gestures 0 and 1 are taps; swipes are the app's business)
     touch(panelId, gesture = 0) {
       if (gesture !== 0 && gesture !== 1) return
+      if (darkOn) return                           // the blackout: a hand on the wall must not light it
       if (pausedAt != null) return                // the house is paused: the wall waits with it
       if (closed()) return                         // not this group's turn: the wall stays lit and waits
       machine.touch(panelId, serverNow())
@@ -219,7 +222,7 @@ export function createRunner({
     },
     // a button-box key; with the Elements down the number keys stand in for panels 1–6
     key(name) {
-      if (pausedAt != null) return
+      if (darkOn || pausedAt != null) return
       if (closed()) return
       if (!elementsOk && /^[1-6]$/.test(name) && machine.state !== 'entering') machine.touch(Number(name), serverNow())
       else machine.key(name, serverNow())
@@ -247,6 +250,26 @@ export function createRunner({
       drain()
     },
     get isPaused() { return pausedAt != null },
+    // The blackout (A1, 11 Nov 2026; lib/follow.js): both walls and the deck go dark at the dark mark,
+    // the deck's backlight to nothing, and every touch and key is ignored; at the power the walls rest
+    // again and the deck is as the game left it. Straight to the devices, not through the queue, so the
+    // dark lands at the mark even with an effect running.
+    dark(flag) {
+      flag = !!flag
+      if (flag === darkOn) return
+      darkOn = flag
+      log(flag ? 'blackout: dark' : 'blackout: the power is back')
+      if (flag) {
+        safe(elements, elementsOk, () => elements.frame(allPanels(elements, OFF), 0))
+        safe(lines, linesOk, () => lines.frame(allPanels(lines, OFF), 0))
+        Promise.resolve(deck?.paint?.(false)).then(() => deck?.brightness?.(0)).catch(() => {})
+        return
+      }
+      safe(elements, elementsOk, () => elements.frame(allPanels(elements, DIM), 3))
+      safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 3))
+      Promise.resolve(deck?.brightness?.(DECK_BRIGHTNESS)).then(() => deck?.paint?.(machine.state !== 'idle')).catch(() => {})
+    },
+    get isDark() { return darkOn },
     // once a second: the cap, the warning, and any "finished" the server missed
     tick() {
       if (pausedAt == null) { machine.tick(serverNow(), slotEndsAt); drain() }

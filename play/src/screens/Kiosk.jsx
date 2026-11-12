@@ -11,13 +11,17 @@ import { Cell, Figure } from '../lib/draw'
 import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
 import { studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
+import { useCueSounds } from '../lib/useCueSounds'
+import { useBlackoutMarks } from '../lib/useBlackout'
+import { blackoutHit } from '../lib/blackout'
+import { useDeckDark } from '../lib/useDeckDark'
 import Spoken from './Spoken'
 import IrwinVoice from './IrwinVoice'
 import { celebrate } from '../lib/celebrate'
@@ -58,8 +62,9 @@ import { HexHint, ReadyHexes, studyState, STUDY_DONE_LINE } from './StudyHexes'
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, Talk it
-// over, the vote) and public/sounds (the bell in the corner, and this
-// screen's own chime). Three things sit in the corners of a kiosk: a small "tap to wake"
+// over, the vote) and public/sounds (the bell in the corner, and the cue itself: since
+// 11 Nov 2026 every room screen plays each cue's sound in full, lib/
+// useCueSounds.js). Three things sit in the corners of a kiosk: a small "tap to wake"
 // (bottom right, until the first tap or key anywhere on the page) so the
 // browser lets it make a sound, a bell for three seconds whenever a sound is
 // called for, and a dot that says whether the house can still be heard. The
@@ -106,6 +111,7 @@ export default function Kiosk({ which }) {
   useTick(250)
   useFreshness(() => ({ page: 'room', which: standalone ? 'practice' : which, night: night.data, relay: relay.data, screen: screen.data, now: serverNow() })) // a newer site: reload at a quiet moment (A5)
   useRoomScreenDevice() // the Home Screen manifest and the screen kept awake (screens/Ipad.jsx)
+  useBlackoutMarks(night.data, serverNow) // dark at the blackout's marks exactly (A1)
   // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
   // a browser tab, and a browser only goes full screen on a person's own click). Once a load, never on a
   // touch screen (an iPad's full screen is its own), and Escape still leaves it.
@@ -129,7 +135,8 @@ export default function Kiosk({ which }) {
   // or a black screen the server wrote; nothing in the corners shows while the room is dark
   // The End (C1, 11 Nov 2026) is a card on every room screen, never the dark
   const ended = !!n && roomEnded(n)
-  const dark = !!n && !ended && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  const dark = !!n && !ended && (roomDark(n, living ? screen.data : null, serverNow()) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  useDeckDark(which === 'boo', !!n && blackoutHit(n, serverNow())) // the arcade's deck goes dark with the house (A1)
   // the dot and the wake note: on a rehearsal and with no night live, never on the party night (Jon,
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
@@ -147,7 +154,7 @@ export default function Kiosk({ which }) {
   if (standalone) body = <MemoryStandalone />
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
   else if (ended) body = <RoomEnd />
-  else if (roomDark(n, living ? screen.data : null)) body = <Dark />
+  else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />
   else if (which === 'ipad') body = <IpadScreen night={n} nightId={nightId} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} memory={memory.data} rotation={rotation.data} serverNow={serverNow} />
   else if (code) body = <RoomCode cat={code} />
   else if (film) body = <RulesFilm at={film} />
@@ -166,7 +173,7 @@ export default function Kiosk({ which }) {
     <>
       {body}
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
-      <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />
+      <Bell sounds={sounds} serverNow={serverNow} silent={which === 'decor'} tv={which === 'living'} scope={nightId} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} woke={sound} />
     </>
@@ -211,8 +218,9 @@ function IntroVideo({ startedAt, serverNow, onOver }) {
 }
 
 // Every screen is dark through the blackout and the prompt: near-black, nothing on it.
-export function Dark() {
-  return <div className="kiosk dark" aria-label="Sirwin Manor" />
+// `hit`: the blackout itself (A1): one white flash, then the old-TV squeeze to black (blackout.css).
+export function Dark({ hit = false }) {
+  return <div className={`kiosk dark${hit ? ' blackout-hit' : ''}`} aria-label="Sirwin Manor" />
 }
 
 // The host's pause, on a room screen: near-black with two words.
@@ -258,8 +266,10 @@ const WAKE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']
 
 // A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
 // house's kit: fuller and much louder than the two beeps before it (handoff
-// 11 Nov 2026, A2: "It was hard to hear the chimes").
-const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime', stamp: 'stamp', sealed: 'seal' }
+// 11 Nov 2026, A2: "It was hard to hear the chimes"). These are the screen's
+// own small moments (the drawing's turns, a name card cutting in); the
+// night's cues are the Bell's (below), which plays each one in full.
+const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', stamp: 'stamp', sealed: 'seal' }
 function chime(kind) {
   playSound(KIOSK_SOUNDS[kind] ?? 'ding')
 }
@@ -660,8 +670,11 @@ export function VotedScreen({ night }) {
 // One tap, once per load, so the browser lets this screen make a sound: a
 // small control in the bottom right corner, never over the content. The
 // first tap or key anywhere on the page counts, so nobody has to find the
-// corner; the screen works without it (the chime is only a fallback for the
-// bell). `hidden` takes the control away and keeps the listener: the kiosk
+// corner (main.jsx arms that for every page, lib/cueSounds.js installUnlock).
+// The screen shows everything without it, but makes no sound: since 11 Nov
+// 2026 the room screens are the house's speakers for every cue, so the Host
+// tab says which screens have their sound on.
+// `hidden` takes the control away and keeps the listener: the kiosk
 // hides it while the room is dark and on the party night (Jon, 29 Oct 2026:
 // no setup words in front of the guests), where the first tap or key
 // anywhere still wakes the sound.
@@ -686,21 +699,22 @@ export function Wake({ hidden = false, woke: known = null }) {
   )
 }
 
-// A bell for three seconds whenever the night calls for a sound, and this
-// screen's own small chime, so a cue never silently vanishes. `silent`
-// (26 Oct 2026): the brain's own browser (?kiosk=orangerie) shows the bell
-// but never chimes, since the brain's sound output is the HomePods, where the
-// real sound is already playing; a chime there would sound every cue twice.
-export function Bell({ sounds, serverNow, silent = false }) {
-  const lastAt = useRef(0)
-  const at = ms(sounds?.current?.at)
-  useEffect(() => {
-    if (!at || at === lastAt.current) return
-    const first = lastAt.current === 0
-    lastAt.current = at
-    if (!first && !silent && soundFresh(sounds, serverNow())) chime('cue')
-  }, [at])
-  const shown = bellShown(sounds, serverNow())
+// A bell for three seconds whenever the night calls for a sound, and the
+// sound itself. Since 11 Nov 2026 (handoff A2, layer 1) every room screen is
+// one of the house's speakers: it plays the cue in full the moment the night
+// calls it (lib/useCueSounds.js: the cue's own file when one is on the site,
+// else a fuller sound made in code), in step with every other screen and
+// every phone. Until then it was one soft beep beside the brain's speakers.
+// `sounds` is the live view of nights/{id}/public/sounds (useDoc).
+// `silent`: a Mac's second display (?kiosk=decor) shows the bell and never
+// sounds: it sits beside its room's own screen, which already plays the cue.
+// The brain's own browser (?kiosk=orangerie) plays the cues like every room
+// screen, from the brain's own speakers: the brain itself plays no cue sound
+// since 11 Nov 2026, so this is the Orangerie's speaker.
+// `tv`: the Parlour TV does not chime over a bulletin it plays as video.
+export function Bell({ sounds, serverNow, silent = false, tv = false, scope = null }) {
+  useCueSounds(sounds, serverNow, { silent, tv, scope })
+  const shown = bellShown(sounds?.data, serverNow())
   return <div className={`kiosk-bell${shown ? ' ring' : ''}`} aria-hidden={!shown} aria-label="a sound is playing">&#9835;</div>
 }
 

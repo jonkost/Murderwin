@@ -8,7 +8,17 @@
 //
 // Each ask returns 'ok', 'denied' or 'none' (this phone cannot). Nothing here
 // throws: a phone that says no still plays the whole game (a phone with no
-// motion never slips in Salem's game; the room still hears the brain's chime).
+// motion never slips in Salem's game; the room still hears the chime from
+// every other phone and room screen).
+//
+// Sound (11 Nov 2026): the phone's sound is the page's one AudioContext, the
+// house's sound kit's (lib/soundkit.js), woken here and again by the first
+// tap after any reload (lib/cueSounds.js installUnlock). With it on, the
+// phone plays every cue the night calls (lib/useCueSounds.js), and an iPhone
+// plays them with its ring switch on silent.
+
+import { play as playSound } from './soundkit.js'
+import { wakeSound } from './cueSounds.js'
 
 export const PERMISSION_LINES = [
   { key: 'motion', text: 'Motion: one game asks you to shake your phone.' },
@@ -27,42 +37,17 @@ export async function askMotion(w = globalThis.window) {
   return 'ok'
 }
 
-// One tap unlocks sound for the page: a silent moment through an AudioContext.
-let audio = null
-export async function unlockSound(w = globalThis.window) {
-  const AC = w?.AudioContext || w?.webkitAudioContext
-  if (!AC) return 'none'
-  try {
-    audio = audio ?? new AC()
-    if (audio.state === 'suspended') await audio.resume()
-    const buf = audio.createBuffer(1, 1, 22050)
-    const src = audio.createBufferSource()
-    src.buffer = buf
-    src.connect(audio.destination)
-    src.start(0)
-    return audio.state === 'running' ? 'ok' : 'denied'
-  } catch { return 'denied' }
+// One tap unlocks sound for the page: the kit's one AudioContext, woken.
+export function unlockSound(w = globalThis.window) {
+  return wakeSound(w).catch(() => 'denied')
 }
 
-// A short two-note chime on the phone itself, once sound is unlocked: for the
+// The house's chime on the phone itself, once sound is unlocked: for the
 // moments the phone calls its guest (iPhones cannot vibrate from a web page).
+// Three warm notes from the kit, more than twice as loud as the two beeps
+// this was until 11 Nov 2026 ("It was hard to hear the chimes").
 export function chime() {
-  if (!audio || audio.state !== 'running') return false
-  try {
-    const t = audio.currentTime
-    for (const [i, f] of [[0, 880], [1, 1175]]) {
-      const o = audio.createOscillator()
-      const g = audio.createGain()
-      o.frequency.value = f
-      g.gain.setValueAtTime(0.0001, t + i * 0.18)
-      g.gain.exponentialRampToValueAtTime(0.25, t + i * 0.18 + 0.02)
-      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.35)
-      o.connect(g).connect(audio.destination)
-      o.start(t + i * 0.18)
-      o.stop(t + i * 0.18 + 0.4)
-    }
-    return true
-  } catch { return false }
+  return playSound('chime')
 }
 
 // The screen kept awake (the Screen Wake Lock API). The browser lets go of
@@ -82,10 +67,13 @@ export async function keepAwake(w = globalThis.window, d = globalThis.document) 
   return take()
 }
 
-// All three, from the one Allow tap.
+// All three, from the one Allow tap. The sound is asked for first, in the
+// tap itself: a browser lets a page wake its sound only inside a tap, and an
+// iPhone's motion question can keep the guest longer than a tap lasts.
 export async function allowAll(w = globalThis.window, d = globalThis.document) {
+  const waking = unlockSound(w)
   const motion = await askMotion(w)
-  const sound = await unlockSound(w)
+  const sound = await waking
   const awake = await keepAwake(w, d)
   return { motion, sound, awake }
 }

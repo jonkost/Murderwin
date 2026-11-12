@@ -7,6 +7,7 @@
 
 import { isStale, secondsSinceHeard } from './clock.js'
 import { effectivePhase, isOver, isRehearsalNight } from './night.js'
+import { inBlackout } from './blackout.js'
 
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
@@ -69,11 +70,12 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
 // 2026): once the night is over (nights/{id}.over, or Act 7's end beat) every
 // screen shows The End card, for good (lib/closing.js roomEnded), whatever the
 // screen doc says (the end beat still writes a black doc, for a page from
-// before the card).
-export function roomDark(night, screen = null) {
+// before the card). The blackout's marks (A1): dark at darkAt on the server's clock.
+export function roomDark(night, screen = null, now = Date.now()) {
   if (isOver(night)) return false
   const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return true
+  if (inBlackout(night, now)) return true
   return screen?.kind === 'black' && !screen.title
 }
 
