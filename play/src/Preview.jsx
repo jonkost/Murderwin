@@ -231,7 +231,7 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     // the end-credit awards, in the credits only
     awards: [
       { name: 'Jessa and Mari', title: "Granolia's Favorite", line: null },
-      { name: 'Iris DeVine', title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy. But a toy.' },
+      { name: 'Iris DeVine', title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy, though.' },
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],

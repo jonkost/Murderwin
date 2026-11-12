@@ -672,7 +672,7 @@ test('G31 the end credits\' awards: final sliders never leans, ties shown tied, 
   assert.equal(by("Boo's Least Favorite").name, 'Jessa')
   assert.equal(by("Sir Irwin's Favorite").name, characterById('devine').name, 'always Jessa\'s character')
   assert.equal(by("Sir Irwin's Least Favorite").name, characterById('barnes').name, 'always Jake\'s character')
-  assert.match(by("Sir Irwin's Least Favorite").line, /You can toss them/)
+  assert.match(by("Sir Irwin's Least Favorite").line, /Treats are still welcome/)
   assert.equal(by('Quickest Paw').name, 'Jessa', 'a missed window never counts as an answer')
   assert.equal(by('Took Their Sweet Time').name, 'Jake')
   assert.equal(by('Napping With Irwin').name, 'Pat')

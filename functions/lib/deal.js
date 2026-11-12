@@ -800,7 +800,7 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
 // SALEM FRIEND wins.
 export const SALEM_FRIEND = {
   title: 'True Friend of the Groundskeeper',
-  text: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn.",
+  text: "Salem has chosen you: a True Friend of the Groundskeeper. From now on, he'll tell it to you straight.",
   button: 'Keep it',
 }
 export async function salemPetted(db, nightId, { arg, now = Date.now() } = {}) {

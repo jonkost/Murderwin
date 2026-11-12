@@ -366,7 +366,7 @@ test('CL-24 a True Friend sees the honour again at the top of Salem\'s row', asy
   const card = { id: 'salem-friend', kind: 'notice', title: 'True Friend of the Groundskeeper', text: '[the workshop SALEM FRIEND line]' }
   assert.deepEqual(salemFriendNote({ salemFriend: true, cards: [card] }), { title: card.title, text: card.text }, 'the words the server sent')
   assert.deepEqual(salemFriendNote({ salemFriend: true, cards: [] }), SALEM_FRIEND, 'the card is gone: the default words')
-  assert.ok(SALEM_FRIEND.text.startsWith("Well, I'll be. Salem has chosen you."))
+  assert.ok(SALEM_FRIEND.text.startsWith('Salem has chosen you'))
   const { readFileSync } = await import('node:fs')
   const server = readFileSync(new URL('../../functions/lib/deal.js', import.meta.url), 'utf8')
   assert.ok(server.includes(SALEM_FRIEND.text), 'the same default words as the server')

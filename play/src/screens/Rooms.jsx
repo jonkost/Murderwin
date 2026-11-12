@@ -469,7 +469,6 @@ export function GameName({ id, extra = null }) {
   return (
     <div className="game-name">
       <p className="kiosk-crest">{g.name}{extra ? ` · ${extra}` : ''}</p>
-      <p className="game-hook">{g.hook}</p>
     </div>
   )
 }

@@ -317,8 +317,8 @@ export const ROOM_GAME = { study: 'study', memory: 'library', boo: 'entryway', o
 // Boo's for her arcade (5 Nov 2026). The defaults only: rulesLine, below, puts the
 // workshop's own words first.
 export const RULES_LINES = {
-  study: "Oh! You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
-  library: "Disaster. My files are everywhere. Match each pair, and I'll strike one motive from your list.",
+  study: "You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
+  library: "Disaster: my files are everywhere. Match each pair, and I'll strike one motive from your list.",
   orangerie: "Forty years I've kept these grounds, and now you want to play on 'em. Fine. Watch the lights, not your phones. RED means GO: shake that thing like it owes you money. GREEN means FREEZE. Yes, backwards. I've done everything backwards for forty years and nobody's complained.",
   entryway: "Darling. Welcome to my arcade. Five little games, one coin each, and you take turns. Amuse me, and I'll tell you something about the one who screamed. I'm always judging.",
 }

@@ -16,15 +16,15 @@ import { createHash } from 'node:crypto'
 
 export const HOST_LINES = {
   // The new words (25 Oct 2026, the default of the decision granoliaIntro, card 473): the game is played by touching the wall; the buttons take the colour and the number at the end.
-  granolia: "Oh! You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
-  zimothy: "Disaster. My files are everywhere. Match each pair, and I'll strike one motive from your list.",
-  salem: "Forty years I've kept these grounds. Name the Murderer, the motive and the victim. And it wasn't me.",
+  granolia: "You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
+  zimothy: "Disaster: my files are everywhere. Match each pair, and I'll strike one motive from your list.",
+  salem: "Name the Murderer, the motive and the victim. And before you ask, it wasn't me.",
   boo: [
     "Let's see how disappointing you are.",
-    "Choose carefully, darling. Everyone's watching. Mostly me.",
+    "Choose carefully, darling. Everyone's watching, mostly me.",
     "There's a right answer. I doubt you'll find it.",
     'Try to have taste. Just this once.',
-    "Ugh, fine. Impress me. I won't hold my breath.",
+    "Ugh, fine. Impress me.",
     "I've already judged you, darling. This just makes it official.",
   ],
   // the trace reveal, Act 6 (replaces the 5 Oct draft)

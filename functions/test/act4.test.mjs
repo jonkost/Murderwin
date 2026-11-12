@@ -98,7 +98,7 @@ test('G47 every group visits each of the four rooms once, a room never holds two
           const step = session(db, uidOf(db, nightId, m.key)).act4
           assert.equal(step.room, room, 'every phone says where its group goes')
           assert.equal(step.round, r)
-          if (room === PARLOUR) assert.ok(step.text.startsWith(DIRECTIONS.parlour) && FREE_TIME_TIPS.some(t => step.text.endsWith(t)), 'the Parlour, with a tip')
+          if (room === PARLOUR) assert.ok(step.text === DIRECTIONS.parlour && !FREE_TIME_TIPS.some(t => step.text.includes(t)), 'the Parlour, its one line and no tip (Jon, 12 Nov 2026)')
           else {
             assert.equal(step.text, DIRECTIONS[room])
             assert.equal(step.arrive, ACT4_TEXT.arrive)
