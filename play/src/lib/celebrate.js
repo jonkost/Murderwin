@@ -80,15 +80,24 @@ export function celebrate(level, { root = null, at = null, quiet = false, base =
   if (!doc) return spec.ms
   try { globalThis.window?.dispatchEvent(new CustomEvent('celebrate', { detail: { level, hop: spec.hop } })) } catch { /* an old browser: the cat stays put */ }
   const host = root ?? doc.body
+  const page = host === doc.body
   if (level === 'miss') {
-    const el = at instanceof Element ? at : host
+    // the shake is the card's own, or the box's it plays over; never the whole page's (a moving page would
+    // drag the phone's tab bar and every overlay with it), so a miss with nothing to shake is the buzz alone
+    const el = at instanceof Element ? at : page ? null : host
+    if (!el) return spec.ms
     el.classList.remove('lk-shake')
     void el.offsetWidth // so a second miss shakes again
     el.classList.add('lk-shake')
     setTimeout(() => el.classList.remove('lk-shake'), spec.ms)
     return spec.ms
   }
-  const box = host.getBoundingClientRect()
+  // someone who has asked their phone for less movement gets the sound and no pieces
+  try { if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return spec.ms } catch { /* draw them */ }
+  // over the whole page the pieces are fixed to the window, so the burst lands where the win is on a page
+  // that has been scrolled; over a box they are measured from the box
+  const win = globalThis.window
+  const box = page && win ? { left: 0, top: 0, width: win.innerWidth, height: win.innerHeight } : host.getBoundingClientRect()
   let x = box.width / 2
   let y = box.height / 2
   if (at instanceof Element) {
@@ -97,7 +106,7 @@ export function celebrate(level, { root = null, at = null, quiet = false, base =
     y = b.top - box.top + b.height / 2
   } else if (at && Number.isFinite(at.x) && Number.isFinite(at.y)) { x = at.x; y = at.y }
   const layer = doc.createElement('div')
-  layer.className = `lk-fx lk-fx-${level}${host === doc.body ? ' lk-fx-page' : ''}`
+  layer.className = `lk-fx lk-fx-${level}${page ? ' lk-fx-page' : ''}`
   layer.setAttribute('aria-hidden', 'true')
   // the pieces are sized from the box they play over, so a phone card and a TV both look right
   const em = Math.max(12, Math.min(44, Math.min(box.width, box.height || box.width) / 16))

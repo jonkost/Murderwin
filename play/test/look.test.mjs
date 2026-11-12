@@ -155,3 +155,10 @@ test('B2, the room splash on every idle screen: built, and off until Jon says ye
   assert.ok(kiosk.includes("const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null"), 'a second display shows its room’s splash, calmer')
   assert.ok(kiosk.includes("if (!open && lookOn('splash')) return <Idle title=\"The bedroom\" line=\"The door is closed.\" loop=\"bedroom\" />"), 'the closed door is Sir Irwin waiting at it')
 })
+
+test('celebrate is safe on a phone: the burst lands where the win is, and a miss never shakes the whole page', () => {
+  const src = read('../src/lib/celebrate.js')
+  assert.ok(src.includes('page && win ? { left: 0, top: 0, width: win.innerWidth, height: win.innerHeight } : host.getBoundingClientRect()'), 'over the whole page the pieces are placed in the window, so a scrolled page does not put them off the screen')
+  assert.ok(src.includes('const el = at instanceof Element ? at : page ? null : host') && src.includes('if (!el) return spec.ms'), 'a miss shakes its card or its box, never the body (the tab bar would jump)')
+  assert.ok(src.includes("matchMedia?.('(prefers-reduced-motion: reduce)')"), 'less movement when the phone asks for it: the sound, no pieces')
+})
