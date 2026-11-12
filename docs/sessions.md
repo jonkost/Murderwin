@@ -18,7 +18,8 @@ bounces off the edge of the screen."
 **What it is** (built, tested, reviewed; 2b97322 the code, a0ec85d the
 guides and the media check, b0ecaa3 the board and the notes; then b395c1a
 and 8915028, faster with a face kept for ten edges; then 39caf3c, c47ecef
-and 274aff2, the second screens; not published, not pushed)
+and 274aff2, the second screens; published at about 6:05 pm, below; not
+pushed)
 
 - A room screen with nothing to show plays a screen saver. One of the
   household's five face pictures (Sir Irwin, Granolia, Miss Boo LaRue,
@@ -97,8 +98,32 @@ and 274aff2, the second screens; not published, not pushed)
   the media check's words say an idle screen plays the screen saver. The
   Canon's Screens line is changed to match.
 
+**Published** (the site only, about 6:05 pm, from the main folder at
+65eebc2, on Jon's "Publish"; the third publish of the day; the server and
+the rules untouched)
+
+- He was asked whether the room screens should play it too or only the
+  second screens, and answered "Publish": it went out as built, both.
+  `SAVER_ON.rooms` is the one switch if he says only the second screens.
+- Before: every test, the checks and three fake nights on that exact code
+  (play 392, app 165); a copy of the live site kept and compared with the
+  new build file by file (287 the same, every picture, video and sound and
+  the Study's station code among them; four small files changed; new
+  bundles); one checker on the scope, the devices and the board: go.
+- Kept in the build, so a page on either earlier build of the day still
+  finds its late-loaded parts: the eight older play bundles and the old
+  stylesheet. After: all 297 files on the site match the folder, the stamp
+  is the new build's, the older parts answer, `/setup` shows the three
+  screen saver lines, and the live look book plays the saver.
+- The board: three updates now wait for Jon's next open of the workshop
+  (the blackout Shortcuts, the music's stop, the screen saver).
+
 **For Jon**
 
+- A room screen that is already open in full screen keeps its old page: to
+  see the screen saver there, leave full screen, reload, and click once. A
+  second screen: open `/setup` on it and tap its screen saver line. Phones
+  take the new site by themselves.
 - A short moving preview was sent to him as a file, and then, on his
   asking ("Give me a demo clip"), a 26 second clip at the TV's own size, with
   no sound; and a second clip of the faster version. All are drawn from the
@@ -106,8 +131,6 @@ and 274aff2, the second screens; not published, not pushed)
 - The corners it lands in are the two at the top (top left and top right,
   in turn). A path that meets a corner exactly goes back the way it came, so
   any such path has only two corners; nobody watching would know.
-- It is on the screens once he says publish. Until then the idle screens
-  show the room's name, as this morning.
 - His to say if he wants it otherwise: the bedroom's screen while its door
   is closed, and the Parlour TV when it has no card, now play the saver too.
 
