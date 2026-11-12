@@ -130,3 +130,28 @@ test('a celebration’s pieces: the same burst for the same seed, and the right 
   assert.equal(celebrate('big', { quiet: true }), LEVELS.big.ms)
   assert.equal(celebrate('nonsense'), 0)
 })
+
+test('B2, the room splash on every idle screen: built, and off until Jon says yes to the look', async () => {
+  const { LOOK, lookOn, SPLASH_OF, splashNow, SPLASH_TURN_MS, TIP_MS } = await import('../src/look/look.js')
+  assert.deepEqual(LOOK, { splash: false }, 'nothing rolls out before the yes')
+  assert.equal(lookOn('splash', ''), false)
+  assert.equal(lookOn('splash', '?kiosk=study&splash=1'), true, 'a room screen can be tried with it on, by its address')
+  assert.equal(lookOn('splash', '?kiosk=study'), false)
+  // every idle room screen has its splash: the loop names the room screens idle on (lib/rooms.js LOOP_OF)
+  const { LOOP_OF } = await import('../src/lib/rooms.js')
+  for (const loop of new Set(Object.values(LOOP_OF))) assert.ok(SPLASHES[SPLASH_OF[loop]], `${loop} has a splash`)
+  assert.equal(SPLASH_OF.memory, 'library')
+  assert.equal(SPLASH_OF.boo, 'entryway')
+  // the picture moves on every few minutes and the tip every minute, by the clock on the wall
+  const t = 1_800_000_000_000
+  assert.equal(splashNow(t).turn + 1, splashNow(t + SPLASH_TURN_MS).turn)
+  assert.equal(splashNow(t).turn, splashNow(t + SPLASH_TURN_MS - 1 - (t % SPLASH_TURN_MS)).turn, 'a reload shows the same picture')
+  assert.notEqual(splashNow(t).tip, splashNow(t + TIP_MS).tip)
+  assert.ok(HOUSE_TIPS.includes(splashNow(t).tip))
+  const rooms = read('../src/screens/Rooms.jsx')
+  assert.ok(rooms.includes("const splash = lookOn('splash') ? (room ?? SPLASH_OF[loop] ?? null) : null"))
+  assert.ok(rooms.includes('<Loop which={loop}><LiveSplash room={splash} calm={calm} /></Loop>'), 'a loop file still wins if Jon ever drops one in')
+  const kiosk = read('../src/screens/Kiosk.jsx')
+  assert.ok(kiosk.includes("const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null"), 'a second display shows its room’s splash, calmer')
+  assert.ok(kiosk.includes("if (!open && lookOn('splash')) return <Idle title=\"The bedroom\" line=\"The door is closed.\" loop=\"bedroom\" />"), 'the closed door is Sir Irwin waiting at it')
+})

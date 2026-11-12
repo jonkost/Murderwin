@@ -37,6 +37,25 @@ export const SPLASHES = {
 }
 export const SPLASH_ROOMS = Object.keys(SPLASHES)
 
+// What of the look is switched on for the night's own screens. Nothing rolls
+// out until Jon has said yes in the look book (handoff 11 Nov 2026, B1), one
+// number at a time: `splash` is number 1, every idle room screen (B2).
+// A room screen opened with &splash=1 in its address shows it anyway, for
+// trying it on the real machine before it is switched on.
+export const LOOK = { splash: false }
+export function lookOn(part, search = typeof window === 'undefined' ? '' : window.location.search) {
+  return LOOK[part] === true || new URLSearchParams(search).has(part)
+}
+// A room screen's idle name (lib/rooms.js LOOP_OF: the name of its loop file) -> its splash.
+export const SPLASH_OF = { living: 'living', study: 'study', memory: 'library', boo: 'entryway', bedroom: 'bedroom', orangerie: 'orangerie' }
+// The cat's picture moves on every few minutes, so a screen changes through
+// the night and a reload shows the same one; the tip changes every minute.
+export const SPLASH_TURN_MS = 4 * 60_000
+export const TIP_MS = 60_000
+export function splashNow(now = Date.now()) {
+  return { turn: Math.floor(now / SPLASH_TURN_MS), tip: HOUSE_TIPS[Math.floor(now / TIP_MS) % HOUSE_TIPS.length] }
+}
+
 // The house's tips, one fading in on an idle screen once a minute. The same
 // five as the server's FREE_TIME_TIPS (functions/lib/deal.js; a test keeps
 // them equal).

@@ -66,7 +66,7 @@ test('the phone, the Host tab and the room screens use them; no setup words on a
 test('a Mac\'s second display has a page of its own: the crest, sent like the rest, silent', () => {
   assert.equal(secondDisplayLink('https://example.test/play/').url, 'https://example.test/play/?kiosk=decor')
   const kiosk = read('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes("else if (which === 'decor') body = <Idle title=\"Sirwin Manor\" line=\"\" loop={null} />"), 'the crest and nothing else')
+  assert.ok(kiosk.includes("else if (which === 'decor') body = <Idle title=\"Sirwin Manor\" line=\"\" loop={null} room={decorRoom} calm />"), 'the crest and nothing else (its room’s splash, calmer, once the look is switched on)')
   assert.ok(kiosk.indexOf('roomDark(n, living ? screen.data : null)) body = <Dark />') < kiosk.indexOf("which === 'decor') body"), 'dark with the room first')
   assert.ok(kiosk.includes("silent={which === 'orangerie' || which === 'decor'}"), 'it never chimes: the room\'s own screen does')
   assert.ok(read('../src/screens/Host.jsx').includes('send(second)') && read('../src/screens/Setup.jsx').includes('SECOND_DISPLAY'), 'on the Host tab\'s list and the setup page')

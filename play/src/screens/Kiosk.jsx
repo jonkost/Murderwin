@@ -16,6 +16,7 @@ import { finaleStage, shownStats, shownAchievements, revealView, revealCharacter
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
+import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
 
@@ -67,6 +68,8 @@ import Spoken from './Spoken'
 // night a red REHEARSAL band runs across the top of every room screen (never
 // on the party night, never in the blackout, the role cards or The End; it
 // stays over the pause card, as it does on the phones through a pause).
+
+const DECOR_ROOM = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('room')
 
 export default function Kiosk({ which }) {
   const { uid, error: signInError } = useAuthUid()
@@ -127,16 +130,19 @@ export default function Kiosk({ which }) {
   const film = which === 'living' && n ? rulesFilmAt(n, serverNow()) : null
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
+  // a second display names its room in its address (?kiosk=decor&room=study); with no room, or the look's splash off, the crest
+  const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null
   let body
   if (standalone) body = <MemoryStandalone />
-  else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} />
+  else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
   else if (code) body = <RoomCode cat={code} />
   else if (film) body = <RulesFilm at={film} />
   else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
   // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a
   // room; it counts down with the rest and goes dark with the room (the blackout, the role cards, The End)
-  else if (which === 'decor') body = <Idle title="Sirwin Manor" line="" loop={null} />
+  // (&room=study or &room=living: its room's splash, smaller and calmer, once the look's splash is on; B2)
+  else if (which === 'decor') body = <Idle title="Sirwin Manor" line="" loop={null} room={decorRoom} calm />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
@@ -609,6 +615,8 @@ function Countdown({ endsAt, serverNow }) {
 // closed, the bedroom's loop plays behind the closed-door line (25 Oct 2026).
 export function Bedroom({ relay, trace }) {
   const open = !!relay?.doorOpen || !!trace
+  // with the look's splash on, the closed door is Sir Irwin waiting at it (B2); a loop file still wins
+  if (!open && lookOn('splash')) return <Idle title="The bedroom" line="The door is closed." loop="bedroom" />
   if (!open) return (
     <div className="kiosk bedroom closed">
       <Loop which="bedroom" className="behind" />

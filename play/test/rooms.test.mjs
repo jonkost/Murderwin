@@ -40,7 +40,7 @@ test('the loop slot: one file per screen in play/public/loops, the iPad borrows 
   assert.ok(readme.includes('never committed') || readme.includes('stay local'), 'the README tells Jon the files stay local')
   // the slot itself: Idle plays the file muted and looping, the crest until it loads or when it fails
   const rooms = src('../src/screens/Rooms.jsx')
-  assert.ok(rooms.includes('export function Idle({ title, line, loop = null })'), 'Idle takes a loop')
+  assert.ok(rooms.includes('export function Idle({ title, line, loop = null, room = null, calm = false })'), 'Idle takes a loop (and, since 11 Nov 2026, a room for its splash)')
   assert.ok(rooms.includes('export function Loop({ which, children = null'), 'the Loop slot')
   assert.ok(rooms.includes('autoPlay muted loop playsInline'), 'silent, looping, inline')
   assert.ok(rooms.includes("onLoadedData={loaded} onError={() => setFailed(true)}"), 'the file says whether it is there')
