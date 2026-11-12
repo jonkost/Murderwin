@@ -3,8 +3,9 @@
 **Not needed since 12 November 2026.** You said: "For the loops just make the
 classic dvd screen saver with the cats and dog face picture when it bounces
 off the edge of the screen." So every idle room screen now plays that screen
-saver: one of the five faces, Sir Irwin and the four cats, crosses the screen,
-turns at every edge and becomes the next face there. There is nothing to make.
+saver: one of the five faces, Sir Irwin and the four cats, crosses the screen
+and turns at every edge. After ten edges it becomes the next face. There is
+nothing to make.
 
 This folder still works, in case you ever want a looping video on one screen
 (your cue list, 25 October 2026: "unless otherwise cued, every active screen

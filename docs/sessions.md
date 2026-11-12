@@ -22,9 +22,16 @@ not pushed)
 - A room screen with nothing to show plays a screen saver. One of the
   household's five face pictures (Sir Irwin, Granolia, Miss Boo LaRue,
   Zimothy, Salem; his own art in `play/public/household/faces/`) crosses the
-  screen in a straight line, turns at every edge, and becomes the next face
-  each time it meets one. About every seven minutes it lands square in a
-  corner; between two of those it comes close and misses.
+  screen in a straight line and turns at every edge. It keeps its face for
+  ten edges, about twenty-five seconds, then becomes the next. About every
+  four minutes it lands square in a corner; between two of those it comes
+  close and misses.
+- That is the second version. The first crossed a TV in eleven seconds and
+  changed face at every edge. Jon, on seeing its clip: "You can make if
+  faster and don't change faces with every bounce." Now six seconds across
+  (four down), and a new face after every tenth edge. Which edge to change
+  on was left to Claude Code; ten is its choice, and Jon was told he can say
+  another number, only in a corner, or never.
 - It takes the place of the room's splash on those screens (the room's name
   in lights, approved that morning). The splash now shows only if a face
   picture will not load, or the five are not in after four seconds. A Mac's
@@ -59,6 +66,11 @@ not pushed)
   it is: the part that draws it is tested by reading its source and in the
   browser, not by a render test.
 - Every test, the checks and three fake nights pass (play 390, app 165).
+- The second version (faster, a face kept for ten edges): one reviewer
+  sampled an hour of it at every millisecond for all six screens and four
+  screen shapes and found nothing odd, and read every word that describes
+  it; every test, the checks and the fake nights pass again; the real page
+  was seen running it.
 
 **The board, the guides, the Canon**
 
@@ -74,8 +86,11 @@ not pushed)
 
 - A short moving preview was sent to him as a file, and then, on his
   asking ("Give me a demo clip"), a 26 second clip at the TV's own size, with
-  no sound. Both are drawn from the game's own path and his own five face
-  pictures, not filmed from a screen.
+  no sound; and a second clip of the faster version. All are drawn from the
+  game's own path and his own five face pictures, not filmed from a screen.
+- The corners it lands in are the two at the top (top left and top right,
+  in turn). A path that meets a corner exactly goes back the way it came, so
+  any such path has only two corners; nobody watching would know.
 - It is on the screens once he says publish. Until then the idle screens
   show the room's name, as this morning.
 - His to say if he wants it otherwise: the bedroom's screen while its door
