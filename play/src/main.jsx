@@ -11,7 +11,13 @@ import BooArcade from './screens/Arcade'
 import { practiceParam } from './lib/gametest'
 import Setup from './screens/Setup'
 import { setupParam } from './lib/setup'
+import { lookParam } from './look/look'
 import './styles.css'
+
+// The look book: /play/?look=1 (handoff 11 Nov 2026, B1). Eight screens in the new look, for Jon to approve.
+// A page on its own, loaded only when asked for: no sign-in, no night. Never linked from a guest's screen.
+const LookBook = React.lazy(() => import('./look/LookBook'))
+const look = lookParam()
 
 const preview = previewScreen()
 // A room screen: /play/?kiosk=living | bedroom | study | ipad (the living room's words only) | memory | boo | pose | orangerie (the brain's browser, 25 Oct 2026). Same page, same sign-in, no router.
@@ -36,7 +42,7 @@ const setup = setupParam()
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      {setup ? <Setup /> : check ? <Check /> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
+      {setup ? <Setup /> : check ? <Check /> : look ? <React.Suspense fallback={null}><LookBook /></React.Suspense> : phone ? <PhoneFrame /> : preview ? <Preview screen={preview} /> : arcade ? <BooArcade /> : Practicing ? <Practicing /> : kiosk ? <Kiosk which={kiosk} /> : <App />}
     </ErrorBoundary>
   </React.StrictMode>,
 )
