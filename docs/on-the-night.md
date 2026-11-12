@@ -429,7 +429,9 @@ the screen awake by itself where the iPad lets it.
 
 - **Next** is the one button. It does whatever the next beat needs on every
   phone at once and tells you only how many phones it reached. The beat you
-  are on and what it is for are written above the button.
+  are on and what it is for are written above the button. If the clock moved
+  the night on as you pressed, Next moves nothing and says "The night had
+  already moved on."
 - Act 1: arrivals, the house rules, meet the household, introductions, then
   ready for the dark. The Parlour TV shows the join code, big, through the
   whole of Act 1 (*rulesDeckScreen* is answered by your cue list: the Parlour
