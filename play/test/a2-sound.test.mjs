@@ -40,7 +40,7 @@ test('the missing stop: a warning only when the brain is up and says it cannot s
   assert.ok(src('../src/lib/hooks.js').includes("sound[p.guestKey] = typeof p.sound === 'boolean' ? p.sound : null"))
   // the brain sends the yes-or-no (cues/lib/cues.js presenceRow), and the relay checks its Shortcuts at the start, listing only
   assert.ok(src('../../cues/lib/cues.js').includes("...(typeof canStop === 'boolean' ? { sound: canStop } : {})"))
-  assert.ok(src('../../cues/cues.mjs').includes('if (shortcutNames.length) { await checkShortcuts(); heartbeat() }'))
+  assert.ok(src('../../cues/cues.mjs').includes('if (shortcutNames.length || blackoutSheet.dark || blackoutSheet.after) { await checkShortcuts(); heartbeat() }'))
 })
 
 test('every room screen is a speaker, the Orangerie\'s included; only a second display stays silent; phones too', () => {

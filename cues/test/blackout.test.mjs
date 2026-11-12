@@ -72,5 +72,6 @@ test('the strings go off in the dark, by the marks or the phase, and back after'
   const relay = readFileSync(new URL('../cues.mjs', import.meta.url), 'utf8')
   assert.ok(relay.includes('strings.update(stringsWanted(salem, docs.night, now))'))
   assert.ok(relay.includes("off: stringShortcutName('off')"))
-  assert.ok(relay.includes('for (const at of [m.darkAt, m.powerAt]) if (at > now) marksTimers.push(setTimeout(apply, at - now + 5))'), 'the brain plans again at the dark and at the power')
+  // (and since 12 Nov 2026 at the moments Jon's two blackout Shortcuts are due: test/blackout-shortcuts.test.mjs)
+  assert.ok(relay.includes('for (const at of [m.darkAt, m.powerAt, due.darkAt, due.afterAt]) if (at && at > now) marksTimers.push(setTimeout(apply, at - now + 5))'), 'the brain plans again at the dark and at the power')
 })

@@ -208,8 +208,10 @@ test('the heartbeat row carries one yes-or-no for the Host tab: can the brain st
   assert.ok(src.includes('presenceRow(nightId, plainRow ? {} : { canStop })'))
   assert.ok(src.includes("e?.code === 'permission-denied'") && src.includes('plainRow = true') && src.includes('return heartbeat()'), 'rules older than the relay: the row goes without it, so the Host tab never loses the brain')
   // the relay reads this Mac's Shortcuts when it starts, and looks again each minute while the stop is missing
-  assert.ok(src.includes('const r = shortcutCheck(shortcutNames, have)'))
-  assert.ok(src.includes('if (shortcutNames.length) { await checkShortcuts(); heartbeat() }'), 'at the start, before the guests come')
+  assert.ok(src.includes('const r = shortcutCheck(needed, have)'))
+  // (the strings' own Off Shortcut is not asked for when Jon's Blackout Shortcut is on this Mac: his scene turns them off, 12 Nov 2026)
+  assert.ok(src.includes("const needed = blackoutCfg.dark ? shortcutNames.filter(s => !(s.tag === 'strings' && s.key === 'off')) : shortcutNames"))
+  assert.ok(src.includes('if (shortcutNames.length || blackoutSheet.dark || blackoutSheet.after) { await checkShortcuts(); heartbeat() }'), 'at the start, before the guests come (the blackout\'s two Shortcuts are checked there too, 12 Nov 2026)')
   assert.ok(src.includes('if (canStop === false) await checkShortcuts({ quiet: true }); heartbeat()'), 'so the Host tab\'s line goes within a minute of the Shortcut being made')
   assert.ok(src.includes("'--check-shortcuts'"), 'and on its own, as a check that runs nothing')
   assert.ok(!/execFile\(|spawn\('shortcuts'/.test(src), 'the relay itself never runs a Shortcut tool directly: lib/strings.js does')

@@ -432,5 +432,9 @@ export function createStringsMirror({ lights = null, colours, log = () => {}, fa
     send()
   }
 
-  return { update, shown: () => shown }
+  // Something else has changed the strings (a Home scene of Jon's that has them in it, 12 Nov 2026): what they
+  // show is no longer known, so the next update sends the wanted colour again.
+  function forget() { shown = null }
+
+  return { update, forget, shown: () => shown }
 }

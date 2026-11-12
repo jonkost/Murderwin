@@ -236,6 +236,33 @@ Shortcuts apps are yours.)
   names, the song in the library, the six scenes, the dim study scene's lamp,
   the Patio light in the Decor strings scene, the projector's plug in Home
   with its two scenes and two Shortcuts.
+- **Your two Shortcuts for the blackout (12 November).** *Blackout* runs
+  your Home scene ALL OFF (every light in the house, the string lights and
+  the Study's two walls: off) and *AfterBlackOut* runs House Default (the
+  house back). The brain runs them on the blackout's own marks: Blackout
+  `shortcutLeadMs` before the dark (1500 to start, so about half a second
+  after you press), because a Home scene takes a second or two to land, and
+  AfterBlackOut as the power returns, or sooner if the blackout ends sooner
+  (Power returns by hand, or a Pause after the lights had already gone). Both
+  names and both numbers are in `cues/scenes.json` under `blackout`; a name
+  that differs only in capitals is still found, and the brain says when it
+  starts which it will run. Time them with the Host tab's **Blackout test**:
+  lights after the screens, make `shortcutLeadMs` bigger; before, smaller;
+  then start the brain's program again. In fake mode the key `b` plays a
+  pretend press, to read the order in the window. Neither Shortcut has a
+  HomePod in it, so neither stops the music: that is still *PANIC*, below.
+  A few seconds after AfterBlackOut the brain sends the string lights their
+  warm colour again (House Default turns them on at full). House Default
+  also turns the Study's walls on at full; the Study's game takes them back
+  at the first touch. `BLACKOUT_SHORTCUTS=off` in `cues/.env` leaves both
+  out.
+- **PANIC is a scene but not yet a Shortcut (12 November).** The Home app
+  has a scene called PANIC that pauses four speakers; this Mac has no
+  Shortcut by that name, and the brain can only run Shortcuts, so nothing
+  stops the music yet. In Shortcuts: duplicate *Blackout*, name the copy
+  PANIC, and choose the scene PANIC in it. Also add *TV Wonder* (the Office)
+  to the PANIC scene: Intense Music, Credit Roll and the Study's music play
+  on it, and PANIC does not pause it.
 - The four HomePods are not one AirPlay group, and since 12 November none
   is needed: the cue sounds (the chimes, the stings, the scream) come from
   every room screen and phone, and the music from each HomePod by your

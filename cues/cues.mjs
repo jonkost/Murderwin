@@ -54,6 +54,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
+import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutTimes, stepBlackoutShortcuts, NO_PRESS } from './lib/blackoutShortcuts.js'
 import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes, stamp } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
@@ -62,7 +63,7 @@ import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake, brainPlaysId, cueSoundsRoad } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
 import { createShortcutMusic, shortcutsFor } from './lib/shortcutMusic.js'
-import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, stringsWanted, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck } from './lib/strings.js'
+import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, stringsWanted, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck, createShortcutRunner } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 import { autoDriver } from './lib/fillins.js' // a practice night's fill-in players (A4): their clock starts with the night
 
@@ -206,14 +207,29 @@ const shortcutNames = shortcutsNeeded({
 // is not on the Shortcut road); false: the stop's Shortcut is not on this Mac.
 // The heartbeat carries it to the Host tab, which says so in plain words.
 let canStop = null
+// Jon's two Shortcuts for the blackout (12 Nov 2026, lib/blackoutShortcuts.js): named on the sheet
+// (cues/scenes.json blackout.shortcut and blackout.afterShortcut), run on the blackout's marks. `blackoutCfg`
+// is the pair as this Mac spells them; one that is not on this Mac is not run.
+const blackoutSheet = blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet) // BLACKOUT_SHORTCUTS=off in cues/.env leaves them out
+let blackoutCfg = blackoutSheet
 async function checkShortcuts({ quiet = false } = {}) {
-  if (!shortcutNames.length) { if (!quiet) log('Shortcuts: none to check (MUSIC_SHORTCUTS, STRINGS_SHORTCUTS and PROJECTOR_SHORTCUTS are all off in cues/.env)'); return null }
+  const blackoutNamed = !!(blackoutSheet.dark || blackoutSheet.after)
+  if (!shortcutNames.length && !blackoutNamed) { if (!quiet) log('Shortcuts: none to check (MUSIC_SHORTCUTS, STRINGS_SHORTCUTS and PROJECTOR_SHORTCUTS are all off in cues/.env)'); return null }
   let have
   try { have = await listShortcuts() } catch (e) {
     if (!quiet) log(`Shortcuts: this Mac's list could not be read (${e.message}), so the names the brain runs were not checked`)
     return null
   }
-  const r = shortcutCheck(shortcutNames, have)
+  if (blackoutNamed) {
+    const b = blackoutShortcutCheck(blackoutSheet, have)
+    blackoutCfg = { dark: b.dark, after: b.after }
+    if (!quiet) for (const line of b.lines) log(line)
+  }
+  if (!shortcutNames.length) return { missing: [], lines: [], stop: 'none' }
+  // with Jon's Blackout Shortcut on this Mac the string lights go dark with the rest of the house (his scene has
+  // them in it), so their own Off Shortcut is not needed and its absence is not worth a line
+  const needed = blackoutCfg.dark ? shortcutNames.filter(s => !(s.tag === 'strings' && s.key === 'off')) : shortcutNames
+  const r = shortcutCheck(needed, have)
   const was = canStop
   canStop = sheet && onSwitch(env.MUSIC_SHORTCUTS) ? r.stop === 'ok' : null
   if (!quiet) for (const line of r.lines) log(line)
@@ -473,12 +489,37 @@ function scheduleMarks() {
   marksTimers = []
   if (!m) return
   const now = Date.now()
-  for (const at of [m.darkAt, m.powerAt]) if (at > now) marksTimers.push(setTimeout(apply, at - now + 5))
+  // ...and at the moments Jon's two blackout Shortcuts are due (a little before the dark, and at the power's return)
+  const due = blackoutShortcutTimes(m, blackoutCfg)
+  for (const at of [m.darkAt, m.powerAt, due.darkAt, due.afterAt]) if (at && at > now) marksTimers.push(setTimeout(apply, at - now + 5))
+}
+
+// Jon's two Shortcuts for the blackout (12 Nov 2026: "Please use these if it helps make the blackout hit
+// hard"; lib/blackoutShortcuts.js says when each runs). "Blackout" is his Home scene with every light in the
+// house off, started a little before the dark mark so it lands on it; "AfterBlackOut" brings the house back
+// as the power returns. One runner for the two, so the after one always replaces a dark one still waiting on
+// Apple Home, and the house is never left dark. A few seconds after the house is back the string lights are
+// sent their colour again: his scene has them in it, at full.
+const blackoutRunner = createShortcutRunner({ tag: 'blackout', log })
+const STRINGS_AGAIN_MS = 4000
+let blackoutState = NO_PRESS
+function stepBlackout(now) {
+  const r = stepBlackoutShortcuts(blackoutState, { marks: blackoutMarkTimes(docs.night), now, cfg: blackoutCfg })
+  blackoutState = r.state
+  for (const { which, name } of r.run) {
+    if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : 'the house back'})`)
+    else {
+      log(`[blackout] ${name}`)
+      blackoutRunner.fire(name).catch(e => log(`[blackout] the ${name} Shortcut did not run: ${e?.message ?? 'no reason'}`))
+    }
+    if (which === 'after') setTimeout(() => { strings.forget(); mirrorStrings() }, STRINGS_AGAIN_MS)
+  }
 }
 
 function apply() {
   const now = Date.now()
   scheduleMarks()
+  stepBlackout(now)
   const { actions, state: next } = plan(state, docs, now, { readClip })
   state = next
   const scene = planScenes(sceneState, docs, now, sheet)
@@ -620,11 +661,20 @@ if (FAKE && process.stdin.isTTY) {
     if (ch === 'r') { docs = { ...docs, night: { ...docs.night, phase: 'act' }, cues: { ...docs.cues, hall: 'red' } }; apply() }
     if (ch === 'g') { docs = { ...docs, night: { ...docs.night, phase: 'act' }, cues: { ...docs.cues, hall: 'green' } }; apply() }
     if (ch === 'o') { docs = { ...docs, night: { ...docs.night, phase: 'blackout' } }; apply() }
+    if (ch === 'b') {
+      // a Blackout press with its three marks, as the server writes them (the dark leadMs on, the power five
+      // seconds after that); the marks come off as the power returns. For reading the timeline in this window.
+      const t = Date.now()
+      const lead = Number(sheet?.blackout?.leadMs) >= 0 ? Number(sheet.blackout.leadMs) : 2000
+      docs = { ...docs, night: { act: 1, beat: 'ready', phase: 'act', ...docs.night, blackout: { pressAt: t, darkAt: t + lead, powerAt: t + lead + 5000 } } }
+      apply()
+      setTimeout(() => { docs = { ...docs, night: { ...docs.night, blackout: null } }; apply() }, lead + 5300)
+    }
     if (ch === 's') { docs = { ...docs, sounds: { current: { id: SOUND_IDS[fakeSound++ % SOUND_IDS.length], at: Date.now() } } }; apply() }
     if (ch === 'c') { docs = { ...docs, cues: { ...docs.cues, cake: { at: Date.now() } } }; apply() }
     if (ch === 'n') stepDemo()
   })
-  log('fake mode: r hall red · g hall green · o hall off (the blackout) · s the next sound in the catalogue · c Cake! · n the next moment of a pretend night')
+  log('fake mode: r hall red · g hall green · o hall off (the blackout) · b the Blackout press with its marks · s the next sound in the catalogue · c Cake! · n the next moment of a pretend night')
 }
 log('cue relay up', FAKE ? '(fake)' : '', OFFLINE ? '(offline: no Firebase)' : '', `media: ${MEDIA_DIR}`)
 for (const line of soundFilesLines(soundReport)) log(`sounds: ${line}`)
@@ -636,7 +686,7 @@ log(cueSoundsRoad(sheet) === 'brain'
 // Which of the Shortcuts the brain runs are not on this Mac (it only reads the
 // list). Then, with the music through the Music app and a cake on the sheet:
 // is the song there? Both before the guests come, not at the moment itself.
-if (shortcutNames.length) { await checkShortcuts(); heartbeat() }
+if (shortcutNames.length || blackoutSheet.dark || blackoutSheet.after) { await checkShortcuts(); heartbeat() }
 if (!FAKE && sheet?.cake && musicApp && !(musicByShortcuts && shortcutsFor(sheet.musicShortcuts, 'cake').length)) {
   musicApp.hasTrack(sheet.cake.song).then(has => {
     if (has === false) log(`[cake] NO SONG called "${sheet.cake.song}" in the Music library on this Mac: Cake! will light the candles and play nothing. Add the song (docs/cues-relay.md)`)

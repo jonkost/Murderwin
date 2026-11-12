@@ -459,7 +459,15 @@ the screen awake by itself where the iPad lets it.
   everyone else's; after your own card the Host tab is back, on Act 2's
   first beat. The button only works in Act 1 (in any other act it is greyed
   out and the Manor refuses it), and a second press in the dark changes
-  nothing. A **Pause** in the two seconds before the dark (Susan's phone,
+  nothing. Since 12 November the brain also runs your two Shortcuts for
+  it: *Blackout* (your Home scene with every light in the house off)
+  about half a second after the press, so that the whole house goes dark on
+  the mark and not only the lights on the Hue bridge, and *AfterBlackOut*
+  (the house back) as the power returns; a few seconds later it sends the
+  string lights their warm colour again, since your scene turns them on at
+  full. Neither one stops the music: that is still a Shortcut called PANIC,
+  which this Mac does not have yet (below, under Sound test).
+  A **Pause** in the two seconds before the dark (Susan's phone,
   say) calls the blackout off, with no scream and no dark: press Blackout
   again when you are ready. A Pause in the five dark seconds does nothing
   (12 November: it used to leave the house dark with no button anywhere);
@@ -467,9 +475,14 @@ the screen awake by itself where the iPad lets it.
 - **Blackout test**, beside Blackout on the Host tab, on a practice night
   only: the same two seconds, the same dark everywhere and the same five
   seconds, then everything comes back as it was. No act changes and no roles
-  are dealt, so press it as often as you like before the guests come. The
-  string lights need a fourth Shortcut for the dark, Off Murderwin Strings
-  (a Home scene with the strings off); without it they stay as they are.
+  are dealt, so press it as often as you like before the guests come. It
+  runs your Blackout and AfterBlackOut Shortcuts too, so it is how you
+  time them by eye: if the house lights go out after the screens, make
+  `shortcutLeadMs` bigger in `cues/scenes.json` (it starts at 1500, a
+  second and a half before the dark); if they go out before the screens,
+  make it smaller; then start the brain's program again. Your Blackout
+  Shortcut turns the string lights off with the rest, so the Off Murderwin
+  Strings Shortcut is no longer needed.
   Blackout pressed while a test runs does nothing and says "A Blackout test
   is running. Press Blackout again in a few seconds."
 - Act 2 begins when the power returns. Every phone buzzes (where it can) and
@@ -824,7 +837,12 @@ the screen awake by itself where the iPad lets it.
   and moves nothing. **Silence** tells the brain to stop the music on the
   HomePods. If the brain has no Shortcut to stop the music, a red line above
   the list says so and names the Shortcut to make (today PANIC); until
-  it exists, Silence and every "music off" do nothing. The brain's window
+  it exists, Silence and every "music off" do nothing, the blackout's
+  included. On 12 November the Home app has a scene called PANIC (it pauses
+  four speakers) but this Mac has no Shortcut by that name: in Shortcuts,
+  duplicate Blackout, call the copy PANIC, and choose the scene PANIC in
+  it. Add TV Wonder to that scene as well: Intense Music, Credit Roll and
+  the Study's music play on it, and PANIC does not pause it. The brain's window
   says the same when it starts, with any other missing Shortcut.
 - **Cake!** shows above Next in Act 5 only. Pressed while Sir Irwin's
   countdown is on the TV, it plays the song and dims the lights but leaves
@@ -1640,7 +1658,10 @@ Every device goes dark on its own server clock between the marks, the phase
 the backstop: the phone and room screens (`play/src/lib/blackout.js`,
 `useBlackoutMarks`, `isDark`, `roomDark`; the flash is `blackout.css`), the
 brain (`cues/lib/cues.js` `phaseOf(night, now)`, `hallColour`, `scheduleMarks`
-in `cues.mjs`; the strings' `off` and its Shortcut Off Murderwin Strings), the
+in `cues.mjs`; the strings' `off` and its Shortcut Off Murderwin Strings; and
+since 12 Nov Jon's two Shortcuts on the marks, `cues/lib/blackoutShortcuts.js`
+`stepBlackoutShortcuts`: Blackout `shortcutLeadMs` before the dark,
+AfterBlackOut at the power's return or the moment the marks come off), the
 Study (`station/lib/follow.js` timers, `runner.dark`; the backlight back to
 `DECK_BRIGHTNESS` 90) and the arcade deck (`play/src/lib/useDeckDark.js`,
 `reopenDeck({ steal: false })`, backlight back to `arcadeDeck.BRIGHTNESS`).
