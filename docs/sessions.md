@@ -9,6 +9,89 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 11 to 12 Nov 2026 · Claude Code (the polish pass, and the look Jon approved)
+
+Three handoffs from Claude chat, all applied: `docs/handoff-2026-11-11-polish.md`
+(the walk-through's nineteen jobs), `docs/handoff-2026-11-12.md` (the approved
+look, Jon's own rule slides, the words) and
+`docs/handoff-2026-11-12-dedication.md`. Jon: "Be on the look out for a handoff
+document... Focus on the fun factor." Then "Yes to all 8", then, to the nine
+drawings, "yes this is great". Built on main by Claude Code with helper
+builders in their own worktrees, each job its own commits, merged and tested
+together. **Not deployed, not pushed.**
+
+**What changed**
+
+- **A1, the blackout:** one timeline from the server. The music stops at the
+  press; two seconds later everything goes dark in the same moment (lights,
+  hall bulb, strings, both Study walls and its deck, the arcade's deck, every
+  screen and phone, with a white flash and an old-TV squeeze); the power
+  returns five seconds after. No music through the dark or the role cards. A
+  Blackout test button on the Host tab, practice nights only.
+- **A2, sound:** every room screen and phone plays each cue sound itself, with
+  a house sound kit made in code; a silenced iPhone still chimes; a room
+  screen has sound after one click, and the Host tab shows Sound on. The
+  Living Room HomePod is no longer lent in Act 4; jazz drops out for Sir
+  Irwin's screen; the night ends on jazz. The Sound test is a list with
+  Silence. The brain says which Shortcut it cannot find.
+- **A3:** a practice night shows real lines from its own throwaway case.
+- **A4:** fill-in players, 0 to 8, on the Start card (practice nights only).
+- **A5, the flow:** a Parlour Game opens only in its own beats and never after
+  the drawing starts; pages reload themselves at a quiet moment; the flow
+  test; `docs/run-sheet.md`.
+- **A6, the ending:** the door, Talk it over, Start the vote, one vote card
+  that closes when the last seat locks in.
+- **A7, the drawing:** no wait, no practice round, the new words, Sir Irwin's
+  voice on the slides, and a new blind picture maker with a blind judge and
+  two banks (the party's and a practice one).
+- **A8, the Study:** lit until the first touch, three plain states, the hint
+  the right way round with a Check the map page. **A9, the lawn:** the round,
+  big numbers and slips left; a round passes by itself after two and a half
+  minutes; eight minutes at most.
+- **A10 to A13:** the iPad is one page all night with a switch on the Host
+  tab; `/setup` says what the Stream Deck needs; a camera inside the app; the
+  old Entryway game and Boo's camera are gone.
+- **A14:** video by default; the rules as a film on the Parlour TV, which is
+  now Jon's own 28 slides and his 28 recordings, whole.
+- **The look** (12 Nov): rebuilt to the nine approved drawings
+  (`docs/look-approved.html`, `play/src/look/`): room splash, second display,
+  game card, big win, The End, the dedication, the phone's Now card, the
+  vote, a small win; the phone's Rules tab as swipe cards; every win wired
+  (B4). Pictures in `docs/look-book/`.
+- **C1:** the credits' dedication (Sydney's photo and Jon's words), a place
+  for Special thanks, The End as a card with jazz, and Good night on Jon's
+  phone.
+- **The words** (B3 and the 12 Nov word rule): a title, one line, one button,
+  on every guest screen, with a test.
+- `npm run media` names the stand-in tones, the rules film's slides, Sir
+  Irwin's voice and the loud cue sounds. `CLAUDE.md` and
+  `docs/on-the-night.md` say what is now true.
+
+**Made on the brain, not in git:** Jon's 28 slide pictures and recordings
+(`play/public/rules/`), Sir Irwin's eight voice files (`play/public/voice/`),
+the loud copy of the scream (`play/public/sound/`), the practice picture bank
+(in the database, unseen), and fresh screen files on the Desktop.
+
+**What is left**
+
+- Publish, on Jon's word: a full publish from the main folder (the site, the
+  rules, the functions), then a new Study station zip, then the brain
+  restarted. Two functions go (the old last round, the camera's photo) and
+  new ones come (the fill-ins' clock, the nudge).
+- Only Jon: two Shortcuts on the brain (PANIC, Off Murderwin Strings); the
+  iPad's Home Screen icon and Guided Access; Deck ready on Susan's Mac; his
+  Special thanks lines; rule card 25; and on the practice night, his ears and
+  eyes (the board has the list).
+- Claude chat: bring the Canon's body up to date.
+
+**Decisions taken** (all Jon's, from the handoffs): the look; his own rule
+slides and recordings, whole; the word rule; the dedication's words; Talk it
+over in place of the old last round; a window closes on the last answer;
+fill-ins on practice nights only; no camera at the arcade and the arcade on
+the Mac's own speakers (the questions arcadeCamera and arcadeSound are
+answered). The handoff's table "Choices made for Jon" lists every default
+that was built; Jon changes any with a word.
+
 ## 12 Nov 2026, after the test · Claude Code (the brain lets go of the hall light)
 
 Jon: "Yes, fix it". Found at the end of the walk-through: after The End the

@@ -1,8 +1,19 @@
 # CLAUDE.md — A Murderwin at Sirwin Manor
 
 Rules for working in this repo. These are load-bearing. Read fully before any task.
-Updated 1 November 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct): the last new
-feature lands Wednesday 11 November, after the second full tech run; then checks and fixes only.
+Updated 12 November 2026. Party: Sunday 15 November 2026. No freeze date (23 Oct). The polish pass of
+11 and 12 November (below) reopened the build after the walk-through; from the practice night of Thursday
+12 November on: checks and fixes only.
+
+> **12 Nov 2026, the polish pass and the approved look (built 11 to 12 Nov on main, not deployed, not pushed).** Three handoffs from Claude chat, all applied: `docs/handoff-2026-11-11-polish.md` (the walk-through's nineteen jobs), `docs/handoff-2026-11-12.md` (the look Jon approved, his own rule slides, the words) and `docs/handoff-2026-11-12-dedication.md`. The newest wins. What changed, and where this file's older text below is now wrong, this block wins:
+> - **The look** is the one Jon approved on 12 Nov ("yes this is great"), kept as drawn in `docs/look-approved.html` and built in `play/src/look/` (`/play/?look=1` shows all of it). Every idle room screen is its room's splash (the name in lights, its cat, the cat's name); a room's Act 4 card is the game's name in lights, three numbered steps, the code and the cat; the phone's top is the seal and a camera button, with no act's name; Now is one card (where to go, one button, the room's cat over it); the vote is three rows with portraits; a cat met is a small win page; Solved! is the big win. Every cat is Jon's own picture ("Make sure to use the cat art I have made"). **Words:** "Anywhere there is random text that is not mission critical lose it": a title, one line at most, one button; no tips, flavor lines, act names or labels that only name a card; every clue and every working control stays.
+> - **The rules film** at The house rules is Jon's own 28 slides and his 28 recordings, whole ("Do not change the rule cards!"): never reword, restyle, reorder or cut them. `npm run rules-film` makes both; `npm run media` says which set plays.
+> - **The dedication** in the credits reads exactly "For Sydney, The Best Big Brother A Pup Could Ask For", over Sydney's photo (`play/public/household/sydney.jpg`), one card held eight seconds. Special thanks is a place in `seed/credits.json`, empty until Jon sends his lines.
+> - **The night:** Act 6 ends the door, then **Talk it over** (no taps, no clock), then Jon's **Start the vote**; the old last round of Act 6 is deleted. The vote closes when the last seat locks in (two minutes is the backstop). **A window closes when the last phone has answered, or on its clock, whichever is first** (this replaces "windows never close early"). A Parlour Game opens only in Act 2's cat visits, Act 4's rounds and Act 6's games beat; none after the drawing starts (`functions/lib/flow.js`, `docs/run-sheet.md`). The drawing has three rounds, no practice round and no wait after a wrong pick; Sir Irwin's slides are voiced (`npm run irwin-voice`; the cats still never speak). The End is a card with jazz and the lights on Default, not black; Jon's phone closes the night with **Good night**.
+> - **A practice night** plays for real: real lines from its own throwaway case, a practice packing dealt in memory, and the practice picture bank (`sealed/relay_pictures_practice`, made by the new blind picture maker; Jon sees those pictures, so their names are kept off the party's bank). It still reads nothing else sealed. **Fill-in players** (0 to 8, practice nights only, refused on the real night): real seats the server plays; the brain's relay runs their clock.
+> - **Sound and the blackout:** every room screen and phone plays each cue sound itself (`play/src/lib/soundkit.js`, `cueSounds.js`; `npm run web-sounds` makes loud copies of Jon's own files); a screen has sound only after one click, and the Host tab shows Sound on. The blackout is one timeline (`nights/{id}.blackout`): music stops at the press, the dark comes two seconds later everywhere at once (lights, strings, Study walls and deck, arcade deck, every screen and phone), the power five seconds after. No music through the dark or the role cards. The night ends on jazz. **Jon must make two Shortcuts on the brain: PANIC (nothing stops the music without it) and Off Murderwin Strings.**
+> - **Devices:** the iPad Pro is one page all night (`?kiosk=ipad`, with *The iPad shows* on the Host tab). A camera inside the app reads the house's codes (asked for at the first tap, never at sign-in; `qr-scanner`). Boo's camera and Jenna's iPad are out of the night (`?kiosk=pose` is deleted). `/setup` says what the Stream Deck needs; `npm run screen-files` writes the files to AirDrop. Pages reload themselves at a quiet moment when the site is newer.
+> - **Still for Jon after tonight:** say whether the drawing's pictures look like something; his Special thanks lines; rule card 25 still describes the round that is gone (his to change or leave).
 
 > **1 Nov 2026, later, Jon's word on the Study ("make the stop 15mins"; built that day and deployed 2 Nov, a full deploy, not pushed; not tried on the real wall):** the game in the Study stops at the end of the Act 4 round, fifteen minutes from the chime, five seconds early so its report beats the chime, and with no round (a practice) fifteen minutes from the first touch (`station/lib/study.js` `capMs`, `STOP_EARLY_MS`, `tick` and `stop`, `station/lib/runner.js` `due`, `play/src/lib/house.js` `studyStopAt` and `studyMsLeft`): a plain fifteen from the first touch would run past the chime into the next group's turn. Granolia's warning comes two minutes before the stop, the Study's screen and the Host tab count to it and stand still in a pause, and the host's Next stops a game too. The review also put right the Study's finished page (it showed only when a heartbeat happened to land in the rest, after a flash of the rules card), a swapped-out group's trace (the chime now pays the group the round named) and Resume: a pause took the tabs off every phone, the Host tab's Resume with them, so the two host phones now carry that one button on the pause card and the strip, and nothing else stays live (`ResumeNight`, `play/src/App.jsx`). A first try that kept their tabs left room games and Host tab buttons live in a pause: do not go back to it. It reaches the M1 Air when Start the Study is closed and opened again, with the Study's screen and the host phones reloaded. Card 557 is done. The same day Jon said the scream is his, for the blackout: `media/blackout.wav` on the brain (gitignored), his file with the one second of silence first, in place of the tone. Card 134 stays open until he has heard it. His original is in `play/public/audio/`, untracked: do not add it.
 
@@ -91,7 +102,12 @@ Content is divided into two classes:
 - The bag packing: which numbered bag holds which items (`sealed/bags`)
 - The Relay Drawing picture bank (`sealed/relay_pictures`, simple thick-line
   art, made blind by `scripts/generate-relay-pictures.mjs`; never in the repo
-  or Jon's terminal)
+  or Jon's terminal). Since 12 Nov 2026 the maker designs each whole picture
+  and cuts it into squares, a blind judge keeps only pictures a vision model
+  can name, and there is a second bank for practice nights,
+  `sealed/relay_pictures_practice`: Jon sees those pictures on a practice
+  night, so their names are kept off the party's bank, but Claude Code still
+  never prints either bank
 - Every per-night pick from an open bank: which family is real, which bulletin
   line plays, which two wrong families each guest's cats rule out, and which
   clue word each bag clue names
@@ -322,14 +338,15 @@ and tell Jon.
   5 One Candle (dessert, roaming; Sir Irwin speaks; then every phone asks for
     the motives to be updated from what he said, 25 Oct)
   6 The Final Hour (the Parlour; two Parlour Games, the Relay Drawing, the door
-    opens, then a deduction round where each player publicly commits to one
-    elimination; built with the deduction round after the door)
+    opens, then Talk it over: no taps and no clock, until Jon presses Start the
+    vote; 11 Nov 2026)
   7 Unmasked (~8:00pm; 2 minutes to enter picks, the ballot a card on the Now
     tab; majority decides; metrics plus a visual graph of the clarity dial;
     every phone locked to Eyes on the screen through the tally and to its own
-    result with a thank-you through the credits, 25 Oct; then The End,
-    25 Oct: every screen black, every phone open for good with the result on
-    Now)
+    result with a thank-you through the credits, 25 Oct; then The End: a card
+    on every screen and phone, jazz, the lights on Default, every phone open
+    for good with the result on Now; Jon's phone closes the night with Good
+    night, 11 Nov)
   Reveal order: Murderer → Motive → Victim.
 - Three roles, symmetric, each holds one third: Detective, Murderer, Ghost.
   The Murderer knows they did it, not the motive. The Ghost knows they are dead,
@@ -443,19 +460,23 @@ and tell Jon.
   A locked phone, a dropped connection and a late arrival all recover the same
   way: reconnect, rehydrate to current server state, silently.
 - There is NO waiting-for-players screen anywhere in the game.
-- Windows never close early. No choice → a default fires, leaning random, so a
-  no-show is never a recognisable pattern.
+- A window closes when the last phone has answered, or on its clock, whichever
+  is first (11 Nov 2026; before that a window never closed early). No choice →
+  a default fires, leaning random, so a no-show is never a recognisable pattern.
 - All phones get an event window at once. Read-time parity: innocent content
   matches the choice prompt in length. Every innocent beat needs a required
   interaction before it can be dismissed.
 - The idle screen is a real state, not an error view, and is indistinguishable
   from a phone that just finished choosing an event.
 - The blackout holds every phone near-black for at most 5 seconds; the power
-  returns on its own. Then one button, Sorry for the interruption, continue
+  returns on its own. Since 11 Nov 2026 the dark comes two seconds after the
+  press, at the same moment on every screen, phone, light and deck. Then one button, Sorry for the interruption, continue
   here; then the role card for 15 seconds on the server's clock, with no
   button; then the main page on its own. The role stays readable on the You
   tab.
-- No service worker, no notification permission, no install prompt.
+- No service worker, no notification permission, no install prompt. The camera
+  is asked for only at the first tap of the camera button, never at sign-in
+  (11 Nov 2026).
 - The cue relay performs no logic and stays blind. Sound files are named after
   the cue id. For W-O-O-F News the recordings reach it under codes that do not
   name the family, and the brain's window prints only counts, never a name or
@@ -535,15 +556,16 @@ are Jon's key at the end of `docs/cue-list.md`, which wins over this list.
   teach-touch` in `station/`) and saved on the Mac that runs the station
   (`station/touch-map.json`, not in the repo), so they must be taught on the
   M1 Air. `docs/study-light-game.md` §13.
-- Jon's iPad Pro M2 (JKIPP) roams, four stations in turn: the Library with
-  Zimothy's code in Act 2 (`?kiosk=ipad`), the supper captions on its stand in
-  the Orangerie in Act 3 (`?kiosk=ipad`, the same address), In Duplicate on
-  its small stand in the Library in Act 4 (`?kiosk=memory`; `&play=1` is the
-  standalone game), the bedroom screen from Act 6 (`?kiosk=bedroom`). Jenna's
-  iPad Pro (JNIPP) is Boo's camera in the Entryway in Act 4 (`?kiosk=pose`,
-  built 25 Oct, nice to have: one photo of each group a minute into its
-  visit to the arcade, for the end credits; the Catwalk's last pose before
-  5 Nov). The older family iPad is out unless Jon says it stays (the
+- Jon's iPad Pro M2 (JKIPP) roams on one page all night (`?kiosk=ipad`, since
+  12 Nov 2026) that follows the night with no reload: the Library's splash in
+  Act 1, Zimothy's code in Act 2, the supper captions on its stand in the
+  Orangerie in Act 3, In Duplicate on its small stand in the Library in Act 4,
+  the Library's splash in Act 5, the bedroom's screen from the drawing in Act 6
+  and through Act 7. *The iPad shows* on the Host tab switches it by hand.
+  `?kiosk=memory` (`&play=1` is the standalone game) and `?kiosk=bedroom` stay
+  as addresses for any other device. Jenna's iPad Pro and Boo's camera are out
+  of the night (11 Nov 2026: `?kiosk=pose` is deleted, the credits have no
+  photos). The older family iPad is out unless Jon says it stays (the
   question olderIpad, default out; if it stays, it keeps the memory match all
   night and the iPad Pro stays in the Orangerie until the bedroom). Susan's
   8th-gen iPad — decor, handed over if a guest needs a device. The old
@@ -606,8 +628,8 @@ Full spec in `docs/workshop-spec.md`. Requirements learned the hard way:
    the brain.
 9. Media bank: not done. Stand-in tones until the recordings exist.
 10. Screens as kiosks: built (`?kiosk=living`, `bedroom`, `study`, `ipad`,
-    `memory`, `boo`, `pose`, `orangerie`); setup is on the board and the
-    Devices page.
+    `memory`, `boo`, `orangerie`, and `decor` for a Mac's own screen); setup is
+    `/setup` and the Devices page.
 11. Nanoleaf layer: built (`station/`). On the real walls on 24 Oct the
     walls' lights work: both paired, the layouts read, the game's frames and
     the flash on both, the hexagons and bars grouped (`groupLayout`). Still to
