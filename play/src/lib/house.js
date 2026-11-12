@@ -89,10 +89,23 @@ export function fillInSeats(night) {
   return Object.values(night?.roster ?? {}).filter(r => r?.fillIn === true).length
 }
 // The Host tab's line above Who is here, or null when the night has no fill-in.
-export function fillInLine(night) {
+// The fill-ins tap and answer on their own when something is running them:
+// `npm run fill-ins` on the brain, whose heartbeat reaches the Host tab as the
+// presence row 'fill-ins' (functions/lib/fillins.js). With nothing running
+// them they still answer, on the night's own slower clock, and the night
+// never waits either way.
+export const FILL_IN_PRESENCE = 'fill-ins'
+export const FILL_IN_FRESH_MS = 90_000
+export function fillInsRunning(presence = {}, now = Date.now()) {
+  return now - (presence?.[FILL_IN_PRESENCE] ?? 0) < FILL_IN_FRESH_MS
+}
+export function fillInLine(night, presence = {}, now = Date.now()) {
   const n = fillInSeats(night)
   if (!n) return null
-  return `${n === 1 ? '1 fill-in player has' : `${n} fill-in players have`} no phone. The night never waits for them.`
+  const who = n === 1 ? '1 fill-in player has' : `${n} fill-in players have`
+  return fillInsRunning(presence, now)
+    ? `${who} no phone. They are playing along. The night never waits for them.`
+    : `${who} no phone. Nothing is running them, so they answer late. The night never waits for them.`
 }
 // Act 4's Locked in count: who the rounds wait for. Everyone; on a practice
 // night with fill-in players, the real players only (the server's rule,

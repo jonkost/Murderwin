@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { introAtFor, countdownLeft, countdownText, clockWords, screenLinks, secondDisplayLink, introPlaying, RUN_THROUGH_MS, INTRO_LATE_MS, MAX_FILL_INS, PARTY_DAY, fillInCount, fillInsOffered, fillInArg, fillInWords } from '../src/lib/start.js'
 import { SETUP_ROOMS } from '../src/lib/setup.js'
-import { MACHINES, fillInLine, fillInSeats, lockedInCount } from '../src/lib/house.js'
+import { MACHINES, fillInLine, fillInSeats, fillInsRunning, lockedInCount, FILL_IN_PRESENCE, FILL_IN_FRESH_MS } from '../src/lib/house.js'
 
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 const at = (h, m) => new Date(2026, 10, 15, h, m, 0, 0).getTime()
@@ -118,11 +118,19 @@ test('guard 1: the real night never sends a number, and the row is not shown for
 test('the Host tab marks a fill-in, offers no phone to hand on, and counts the real players at Locked in', () => {
   const night = { roster: { jon: { name: 'Jon' }, sue: { name: 'Sue' }, mabel: { name: 'Mabel', fillIn: true }, gus: { name: 'Gus', fillIn: true } } }
   assert.equal(fillInSeats(night), 2)
-  assert.equal(fillInLine(night), '2 fill-in players have no phone. The night never waits for them.')
-  assert.equal(fillInLine({ roster: { jon: { name: 'Jon' }, mabel: { name: 'Mabel', fillIn: true } } }), '1 fill-in player has no phone. The night never waits for them.')
+  // the line says whether something is running them: the heartbeat of npm run fill-ins on the brain,
+  // which the server leaves as the presence row 'fill-ins' (functions/lib/fillins.js FILL_IN_PRESENCE)
+  const t = 5_000_000
+  assert.equal(fillInLine(night, {}, t), '2 fill-in players have no phone. Nothing is running them, so they answer late. The night never waits for them.')
+  assert.equal(fillInLine(night, { 'fill-ins': t - 30_000 }, t), '2 fill-in players have no phone. They are playing along. The night never waits for them.')
+  assert.equal(fillInLine(night, { 'fill-ins': t - FILL_IN_FRESH_MS }, t), '2 fill-in players have no phone. Nothing is running them, so they answer late. The night never waits for them.', 'a heartbeat a minute and a half old is a stopped clock')
+  assert.equal(fillInLine({ roster: { jon: { name: 'Jon' }, mabel: { name: 'Mabel', fillIn: true } } }, { 'fill-ins': t }, t), '1 fill-in player has no phone. They are playing along. The night never waits for them.')
+  assert.equal(fillInsRunning({ 'fill-ins': t - 1 }, t), true)
+  assert.equal(fillInsRunning({ jon: t }, t), false, 'a guest\'s own heartbeat is not theirs')
+  assert.ok(read('../../functions/lib/fillins.js').includes(`export const FILL_IN_PRESENCE = '${FILL_IN_PRESENCE}'`), 'the same row name as the server writes')
   // a night with no fill-in: no line, and the count is the one it always was
   const plain = { roster: { jon: { name: 'Jon' }, sue: { name: 'Sue' }, amy: { name: 'Amy' } } }
-  assert.equal(fillInLine(plain), null)
+  assert.equal(fillInLine(plain, { 'fill-ins': t }, t), null)
   assert.equal(fillInLine(null), null)
   assert.deepEqual(lockedInCount({ locked: { jon: true, gone: true } }, plain), { locked: 2, of: 3 }, 'today\'s numbers: every key on the doc, every seat')
   assert.deepEqual(lockedInCount({ locked: { jon: true, mabel: true } }, night), { locked: 1, of: 2 }, 'the real players only')
@@ -132,6 +140,7 @@ test('the Host tab marks a fill-in, offers no phone to hand on, and counts the r
   assert.ok(host.includes("{fill ? ' · fill-in' : ''}"), 'marked beside the name')
   assert.ok(host.includes('{!fill && <button className="chip handover"'), 'no Hand this phone on for a seat with no phone')
   assert.ok(host.includes('{house.showGuests && !fill'), 'and no dot to watch')
+  assert.ok(host.includes('fillInLine(night, presence, clock)') && host.includes('{fillLine && <p className="gloss fill-ins">{fillLine}</p>}'), 'one line above the list, on the server\'s clock, only on a night that has them')
   // nobody takes a fill-in's seat by a stray tap: the join screen offers only guests with a phone
   assert.ok(read('../src/screens/Join.jsx').includes('.filter(r => r?.fillIn !== true)'), 'the tap-your-name list leaves fill-ins out')
 })

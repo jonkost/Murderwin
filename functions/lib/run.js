@@ -159,6 +159,18 @@ async function seatFillIns(db, nightId, count, now) {
   }
 }
 
+// One pass of the fill-ins' moves from the tick (fillins.js stepFillIns): how many it made. A pass that
+// fails never fails the tick, which has the night's own clocks to keep.
+async function stepFillIns(db, nightId, now) {
+  try {
+    const fillins = await import('./fillins.js')
+    return (await fillins.stepFillIns(db, nightId, { now })).did ?? 0
+  } catch (e) {
+    console.error('fill-ins not stepped', e?.code ?? e?.name ?? 'error')
+    return 0
+  }
+}
+
 // The intro's time: Arrivals becomes The house rules, once. Never while the
 // night is paused or dark, never from any other beat, and never when the host
 // came back to Arrivals after the time had passed (Back stays where it is put).
@@ -189,10 +201,32 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
   }
   if (n.act === 4) {
     const due = await act4.due(db, nightId, now)
+    // a practice night with fill-in players: one clock takes each move (claimMove, below); any other night, as ever
+    if (due && n.fillIns && n.forceRehearsal === true && !(await claimMove(db, nightId, `${n.beat}_${due}`, now))) return { moved: null }
     if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
     if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
   }
   return { moved: null }
+}
+
+// A practice night with fill-in players has a fast clock of its own beside
+// the Host tab's and the minute's (fillins.js stepFillIns, every two seconds
+// from the brain), so two clocks can reach the same Act 4 move in the same
+// second, and each would ring its chime. On such a night a clock takes the
+// move first, in a transaction, and a clock that finds it taken in the last
+// fifteen seconds leaves it alone. (If the one that took it failed, the next
+// clock after that takes it again.) Never asked on any other night.
+export const MOVE_CLAIM_MS = 15_000
+async function claimMove(db, nightId, key, now) {
+  const ref = db.doc(act4.act4PrivatePath(nightId))
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    const at = deal.ms(snap.data()?.moves?.[key])
+    if (at && Math.abs(now - at) < MOVE_CLAIM_MS) return false
+    if (snap.exists) tx.update(ref, { [`moves.${key}`]: new Date(now) })
+    else tx.set(ref, { paid: {}, arrived: {}, moves: { [key]: new Date(now) } })
+    return true
+  })
 }
 
 // Act 4's Next: a round beyond the night's last (four groups or fewer have
@@ -449,7 +483,10 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       const r = await windows.tick(db, nightId, now)
       if (r.skipped) return r
       const clock = await clockTick(db, nightId, now, { allSeen: !!r.lights?.allSeen })
-      return { ...r, clock: clock.moved }
+      // a practice night's fill-in players (A4, 11 Nov 2026): this tick moves any whose pause has run out, so they
+      // still play when nothing else is running them. Asked only on a night that has them; a count comes back.
+      const fill = n.fillIns && n.forceRehearsal === true ? { fillIns: await stepFillIns(db, nightId, now) } : {}
+      return { ...r, clock: clock.moved, ...fill }
     }
     case 'note-exposure':
       // the older name for the Hush: the same record, through the same path (safeguards.js, ledger.js)

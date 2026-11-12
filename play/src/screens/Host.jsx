@@ -145,7 +145,7 @@ export default function Host({ night, content, serverNow }) {
   const clock = serverNow ? serverNow() : now
   const house = houseView({ night, study: study.data, rotation: rotation.data, presence, sound: screenSound, now: clock })
   const left = countdownLeft(night, clock) // the countdown to the intro (lib/start.js)
-  const fillLine = fillInLine(night) // null on every night with no fill-in player
+  const fillLine = fillInLine(night, presence, clock) // null on every night with no fill-in player
   const startDrawing = () => {
     // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
     const underWay = ['walk', 'turn', 'vote', 'lockout', 'done'].includes(relay.data?.state)

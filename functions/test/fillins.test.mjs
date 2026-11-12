@@ -9,8 +9,13 @@ import { makeRooms, readRotation, fillNightGroups, FILL_NIGHT_GROUPS, MAX_GROUPS
 import { makeGroups, studyPath } from '../lib/station.js'
 import { start as startRelay, turnOrder, relayPaths } from '../lib/relay.js'
 import { seededPick } from '../lib/seed.js'
-import { FILL_IN_NAMES, MAX_FILL_INS, fillInCount, seatFillIns, fillInSeats } from '../lib/fillins.js'
+import { FILL_IN_NAMES, MAX_FILL_INS, fillInCount, seatFillIns, fillInSeats, stepFillIns, stepLiveFillIns, pauseMs, PAUSES, FILL_IN_PRESENCE, HEARTBEAT_EVERY_MS } from '../lib/fillins.js'
 import { fillInUid, isFillInUid, isFillIn, hasFillIns, fillInKeys, realKeys, seatsToWaitFor, drawerKeys, lineGuests } from '../lib/seats.js'
+import { payRoom, roomFor, EARLY_CHIME_MS, ROUND_MS, LOCK_MS } from '../lib/act4.js'
+import { studyFinished, clockTick } from '../lib/run.js'
+import { NIGHT, ms } from '../lib/deal.js'
+import { MOTIVES } from '../lib/night.js'
+import { fillInNight, PRACTICE_START } from './fill-in-night.mjs'
 
 // Fill-in players (the polish pass, job A4, 11 Nov 2026): seats with no
 // phone on a practice night. Every night here is a throwaway rehearsal in a
@@ -474,4 +479,409 @@ test('the deal: eight seats, eight role cards, all three roles dealt over all ei
     for (const k of [c.murderer, c.ghost]) hidden[uids[k] ? 'real' : 'fill']++
   }
   assert.ok(hidden.fill > 0, 'a fill-in can be the Murderer or the Ghost: any role, by the same deal')
+})
+
+// ---- the fill-ins play along (lib/fillins.js stepFillIns) ---------------------------
+// One pass makes every move whose pause has run out. The tests walk the clock by hand: `now` is the
+// only time there is, exactly as the driver on the brain steps it every two seconds.
+
+const fillUids = (db, nightId) => { const d = deckOf(db, nightId).uids; return Object.fromEntries(flagged(nightOf(db, nightId)).map(k => [k, d[k]])) }
+function countWrites(db) {
+  const n = { writes: 0 }
+  for (const m of ['_set', '_update', '_delete']) { const real = db[m].bind(db); db[m] = (...a) => { n.writes++; return real(...a) } }
+  return n
+}
+function recordReads(db) {
+  const paths = new Set()
+  const get = db._get.bind(db)
+  db._get = path => { paths.add(path); return get(path) }
+  return paths
+}
+// A practice night in Act 2, playing (past the role cards).
+async function inAct2(opts) {
+  const p = await practice(opts)
+  await host(p.db, p.nightId, 'act', 2)
+  await host(p.db, p.nightId, 'beat', 'news')
+  return p
+}
+// A practice night in Act 4's first round, the real players locked in.
+async function intoRounds(opts) {
+  const p = await practice(opts)
+  await host(p.db, p.nightId, 'act', 3)
+  await host(p.db, p.nightId, 'start-act4')
+  await host(p.db, p.nightId, 'next') // the group cards
+  for (const uid of Object.values(p.uids)) await player.lockIn(p.db, { nightId: p.nightId, uid, now: T0 })
+  const rot = await readRotation(p.db, p.nightId)
+  return { ...p, rot, mine: rot.groups.find(g => !g.fill) }
+}
+
+test('a pause is the seat\'s own: inside its band, the same every time it is asked, and not the same for everyone', () => {
+  assert.deepEqual(PAUSES, { lock: [3_000, 10_000], answer: [5_000, 20_000], vote: [5_000, 20_000] }, 'Locked in after a few seconds; a Parlour Game in 5 to 20; the vote within 20')
+  const id = '20261112-ab12'
+  for (const kind of Object.keys(PAUSES)) {
+    const all = FILL_IN_NAMES.map(n => pauseMs(id, nameKey(n), kind, 'w1'))
+    for (const p of all) assert.ok(p >= PAUSES[kind][0] && p <= PAUSES[kind][1], `${kind}: inside its band`)
+    assert.deepEqual(FILL_IN_NAMES.map(n => pauseMs(id, nameKey(n), kind, 'w1')), all, `${kind}: the same on a second asking`)
+    assert.ok(new Set(all).size >= 6, `${kind}: the seats do not all move at once`)
+  }
+  assert.notEqual(pauseMs(id, 'mabel', 'answer', 'w1'), pauseMs(id, 'mabel', 'answer', 'w2'), 'another game, another pause')
+  assert.notEqual(pauseMs(id, 'mabel', 'answer', 'w1'), pauseMs('20261113-cd34', 'mabel', 'answer', 'w1'), 'another night, another pause')
+})
+
+test('Locked in: each fill-in taps it three to ten seconds after its group card, once, and starts no round', async () => {
+  const { db, nightId } = await practice()
+  await host(db, nightId, 'act', 3)
+  await host(db, nightId, 'start-act4')
+  await host(db, nightId, 'next') // the group cards, at T0
+  assert.equal(ms(db.store.get(act4Path(nightId)).lockEndsAt), T0 + LOCK_MS)
+  const keys = flagged(nightOf(db, nightId))
+  const locked = () => Object.keys(db.store.get(act4Path(nightId)).locked ?? {}).sort()
+  const early = await stepFillIns(db, nightId, { now: T0 + PAUSES.lock[0] - 1 })
+  assert.deepEqual([early.on, early.act, early.seats, early.did], [true, 4, 6, 0])
+  assert.deepEqual(locked(), [])
+  // each seat at its own moment: not a millisecond before its pause, and on the pass at it
+  for (const key of [...keys].sort((a, b) => pauseMs(nightId, a, 'lock') - pauseMs(nightId, b, 'lock'))) {
+    const at = T0 + pauseMs(nightId, key, 'lock')
+    await stepFillIns(db, nightId, { now: at - 1 })
+    assert.ok(!locked().includes(key), 'not before its pause')
+    const r = await stepFillIns(db, nightId, { now: at })
+    assert.ok(locked().includes(key) && r.locked >= 1, 'on the pass at its pause')
+  }
+  assert.deepEqual(locked(), keys)
+  const again = await stepFillIns(db, nightId, { now: T0 + PAUSES.lock[1] + 1_000 })
+  assert.deepEqual([again.did, again.locked], [0, 0], 'nobody taps twice')
+  assert.equal(nightOf(db, nightId).beat, 'groups', 'the rounds wait for the real players, never for the fill-ins')
+})
+
+test('a Parlour Game on every phone: each fill-in answers five to twenty seconds in, a pick to every question, and only the count moves on the night', async () => {
+  const { db, nightId, uids } = await inAct2()
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  const w = nightOf(db, nightId).window
+  assert.equal(w.kind, 'questions')
+  const fills = fillUids(db, nightId)
+  const answerOf = key => sessionOf(db, fills[key]).answers?.[w.id]
+  assert.equal((await stepFillIns(db, nightId, { now: T1 + PAUSES.answer[0] - 1 })).answered, 0, 'nobody answers in under five seconds')
+  for (const key of Object.keys(fills).sort((a, b) => pauseMs(nightId, a, 'answer', w.id) - pauseMs(nightId, b, 'answer', w.id))) {
+    const at = T1 + pauseMs(nightId, key, 'answer', w.id)
+    await stepFillIns(db, nightId, { now: at - 1 })
+    assert.equal(answerOf(key), undefined, 'not before its pause')
+    await stepFillIns(db, nightId, { now: at })
+    const a = answerOf(key)
+    assert.equal(a.defaulted, false, 'its own answer, not the clock\'s pick')
+    assert.equal(a.picks.length, 3)
+    assert.ok(a.picks.every(p => p === 'a' || p === 'b'))
+  }
+  assert.equal(nightOf(db, nightId).window.answered, 6, 'six have answered: a count, never who')
+  for (const uid of Object.values(uids)) assert.equal(sessionOf(db, uid).answers, undefined, 'a real phone is never answered for')
+  assert.equal((await stepFillIns(db, nightId, { now: T1 + PAUSES.answer[1] + 5_000 })).did, 0, 'once each')
+  assert.equal((await stepFillIns(db, nightId, { now: ms(w.closesAt) + 1 })).did, 0, 'and nothing after the close')
+})
+
+test('two passes in the same moment make each move once: one answer a seat, a hidden role\'s points on the dial once', async () => {
+  const { db, nightId } = await inAct2()
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  const [a, b] = await Promise.all([stepFillIns(db, nightId, { now: T1 + 20_000 }), stepFillIns(db, nightId, { now: T1 + 20_000 })])
+  assert.equal(a.answered + b.answered, 6, 'six answers between the two, none twice')
+  assert.equal(nightOf(db, nightId).window.answered, 6)
+  const c = db.store.get(`cases/${nightId}`)
+  const hidden = [c.murderer, c.ghost].filter(k => flagged(nightOf(db, nightId)).includes(k)).length
+  assert.equal(c.dialLog.length, hidden, 'one push for each hidden fill-in, never two')
+})
+
+test('Act 4: a Parlour Game waiting on the phone is played by each fill-in five to twenty seconds after it lands', async () => {
+  const { db, nightId, uids } = await intoRounds()
+  const T1 = T0 + 60_000
+  const lit = await host(db, nightId, 'light-up', undefined, T1)
+  assert.equal(lit.waiting, true)
+  const fills = fillUids(db, nightId)
+  assert.equal((await stepFillIns(db, nightId, { now: T1 + PAUSES.answer[0] - 1 })).answered, 0)
+  let answered = 0
+  for (let t = PAUSES.answer[0]; t <= PAUSES.answer[1]; t += 1_000) answered += (await stepFillIns(db, nightId, { now: T1 + t })).answered
+  assert.equal(answered, 6)
+  for (const uid of Object.values(fills)) assert.equal(sessionOf(db, uid).answers[lit.id].defaulted, false)
+  for (const uid of Object.values(uids)) assert.equal(sessionOf(db, uid).answers?.[lit.id], undefined, 'the real players play theirs when they are free')
+  assert.equal(nightOf(db, nightId).window, null, 'a waiting game is never a window on the night')
+  assert.equal((await stepFillIns(db, nightId, { now: T1 + 30_000 })).answered, 0, 'once each')
+})
+
+test('the vote: each fill-in casts its own ballot within twenty seconds, two people at the party and a real motive, once', async () => {
+  const { db, nightId, uids } = await practice()
+  await host(db, nightId, 'act', 2)
+  await host(db, nightId, 'act', 7) // straight to the ballot
+  const w = nightOf(db, nightId).window
+  assert.equal(w.kind, 'ballot')
+  const open = ms(w.opensAt)
+  const fills = fillUids(db, nightId)
+  assert.equal((await stepFillIns(db, nightId, { now: open + PAUSES.vote[0] - 1 })).voted, 0)
+  let voted = 0
+  for (let t = PAUSES.vote[0]; t <= PAUSES.vote[1]; t += 1_000) voted += (await stepFillIns(db, nightId, { now: open + t })).voted
+  assert.equal(voted, 6, 'all six, inside twenty seconds')
+  const roster = nightOf(db, nightId).roster
+  const votes = new Set()
+  for (const [key, uid] of Object.entries(fills)) {
+    const b = sessionOf(db, uid).ballot
+    const third = b.victim ?? b.ghost
+    assert.equal(b.defaulted, false, `${key}: its own vote, not the clock's`)
+    assert.ok(roster[b.murderer] && roster[third] && b.murderer !== third, 'two different people at the party')
+    assert.ok(MOTIVES.some(m => m.n === b.motive), 'a motive from the list')
+    votes.add(`${b.murderer}/${b.motive}/${third}`)
+  }
+  assert.ok(votes.size > 1, 'they do not all vote alike')
+  for (const uid of Object.values(uids)) assert.equal(sessionOf(db, uid).ballot, undefined, 'the real players\' votes are their own to cast')
+  assert.equal((await stepFillIns(db, nightId, { now: open + PAUSES.vote[1] + 5_000 })).voted, 0, 'once each')
+})
+
+test('a seat a real phone took over is never moved again', async () => {
+  const { db, nightId } = await inAct2()
+  await join(db, { uid: 'u-real-mabel', nightId, name: 'Mabel' })
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  const w = nightOf(db, nightId).window
+  let answered = 0
+  for (let t = PAUSES.answer[0]; t <= PAUSES.answer[1]; t += 1_000) answered += (await stepFillIns(db, nightId, { now: T1 + t })).answered
+  assert.equal(answered, 5, 'the five who are still fill-ins')
+  assert.equal(sessionOf(db, 'u-real-mabel').answers?.[w.id], undefined, 'her phone answers for itself')
+  assert.equal(sessionOf(db, fillInUid(nightId, 0)).answers?.[w.id], undefined, 'and the fill-in she replaced makes no move')
+  assert.equal((await stepFillIns(db, nightId, { now: T1 + 30_000 })).seats, 5)
+})
+
+test('nobody moves while no phone would: at the doors, on the role cards, in a pause, after The End', async () => {
+  // at the doors: a practice night not started yet
+  const lobby = new FakeFirestore()
+  lobby.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const made = await createNight(lobby, { forceRehearsal: true })
+  await seatFillIns(lobby, made.nightId, 6, { now: T0 })
+  assert.deepEqual(await stepFillIns(lobby, made.nightId, { now: T0 + 60_000 }), { ok: true, on: true, act: 0, seats: 6, did: 0, why: 'held' })
+  // on the role cards: a game lit while every phone is still on its card
+  const { db, nightId } = await practice()
+  await host(db, nightId, 'act', 2)
+  assert.equal(nightOf(db, nightId).phase, 'prompt')
+  await host(db, nightId, 'light-up')
+  assert.deepEqual(await stepFillIns(db, nightId, { now: T0 + 20_000 }), { ok: true, on: true, act: 2, seats: 6, did: 0, why: 'held' })
+  // in a pause: the clocks stand still, and the pauses start again from the window's new opening
+  const p = await inAct2()
+  const T1 = T0 + 60_000
+  await host(p.db, p.nightId, 'light-up', undefined, T1)
+  await host(p.db, p.nightId, 'pause', undefined, T1 + 1_000)
+  assert.equal((await stepFillIns(p.db, p.nightId, { now: T1 + 20_000 })).why, 'held')
+  assert.equal(nightOf(p.db, p.nightId).window.answered, undefined, 'nobody answered in the pause')
+  await host(p.db, p.nightId, 'resume', undefined, T1 + 61_000) // a minute's pause: the window opens a minute later
+  const opens = ms(nightOf(p.db, p.nightId).window.opensAt)
+  assert.equal(opens, T1 + 60_000)
+  assert.equal((await stepFillIns(p.db, p.nightId, { now: opens + PAUSES.answer[0] - 1 })).answered, 0)
+  assert.equal((await stepFillIns(p.db, p.nightId, { now: opens + PAUSES.answer[1] })).answered, 6)
+  // after The End
+  p.db.store.set(`nights/${p.nightId}`, { ...nightOf(p.db, p.nightId), over: true })
+  assert.equal((await stepFillIns(p.db, p.nightId, { now: opens + 30_000 })).why, 'over')
+})
+
+test('guard: a real night is never stepped, even with every mark forged onto it, and no night is from the party day on: not one write', async () => {
+  // a party night in Act 2 with a Parlour Game open
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true })
+  const { nightId } = await createNight(db)
+  for (const name of ['Jon', 'Susan', 'Jessa']) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  await host(db, nightId, 'act', 2)
+  await host(db, nightId, 'beat', 'news')
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  // forge everything a fill-in night would carry: the count, the mark on a seat, its made-up uid and session
+  const n = nightOf(db, nightId)
+  assert.equal(n.forceRehearsal, false)
+  db.store.set(`nights/${nightId}`, { ...n, fillIns: 1, roster: { ...n.roster, jessa: { ...n.roster.jessa, fillIn: true } } })
+  db.store.set(`sessions/${fillInUid(nightId, 0)}`, { ...sessionOf(db, 'u-jessa'), fillIn: true })
+  db.store.set(`nights/${nightId}/private/deck`, { ...deckOf(db, nightId), uids: { ...deckOf(db, nightId).uids, jessa: fillInUid(nightId, 0) } })
+  const before = JSON.stringify([...db.store])
+  const count = countWrites(db)
+  assert.deepEqual(await stepFillIns(db, nightId, { now: T1 + 20_000 }), { ok: true, on: false, why: 'real-night', did: 0 })
+  assert.deepEqual(await stepLiveFillIns(db, { now: T1 + 20_000 }), { ok: true, on: false, why: 'real-night', did: 0 })
+  assert.equal(count.writes, 0, 'not one write')
+  assert.equal(JSON.stringify([...db.store]), before, 'the night is as it was')
+  const tick = await host(db, nightId, 'tick', undefined, T1 + 20_000)
+  assert.equal('fillIns' in tick, false, 'the night\'s own tick never asks on a real night')
+  assert.equal(sessionOf(db, fillInUid(nightId, 0)).answers, undefined)
+  // the party day: a practice night with real fill-in seats is left alone too, before anything is read
+  const p = await inAct2()
+  await host(p.db, p.nightId, 'light-up', undefined, T1)
+  const was = JSON.stringify([...p.db.store])
+  const reads = recordReads(p.db)
+  const writes = countWrites(p.db)
+  assert.deepEqual(await stepFillIns(p.db, p.nightId, { now: PARTY_DAY }), { ok: true, on: false, why: 'party-day', did: 0 })
+  assert.deepEqual(await stepLiveFillIns(p.db, { now: PARTY_DAY + 60_000 }), { ok: true, on: false, why: 'party-day', did: 0 })
+  assert.deepEqual([reads.size, writes.writes], [0, 0])
+  assert.equal(JSON.stringify([...p.db.store]), was)
+})
+
+test('with no driver running, the night\'s own tick moves the fill-ins; a night with none is never asked', async () => {
+  const { db, nightId } = await inAct2()
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  const r = await host(db, nightId, 'tick', undefined, T1 + 30_000)
+  assert.equal(r.fillIns, 6, 'six moves, as a count')
+  assert.equal(nightOf(db, nightId).window.answered, 6)
+  assert.equal((await host(db, nightId, 'tick', undefined, T1 + 40_000)).fillIns, 0)
+  // a practice night with no fill-ins: the tick's reply is the one it always was, key for key
+  const plain = await inAct2({ fillIns: 0 })
+  const t = await host(plain.db, plain.nightId, 'tick', undefined, T1)
+  assert.deepEqual(Object.keys(t).sort(), ['bulletin', 'clock', 'lights', 'ok', 'parlour', 'settled', 'windowSettled'])
+})
+
+test('the callable\'s road: the live night is stepped, counts come back, and a heartbeat says the fill-ins are playing along', async () => {
+  assert.deepEqual(await stepLiveFillIns(new FakeFirestore(), { now: T0 }), { ok: true, on: false, why: 'no-night', did: 0 })
+  const { db, nightId } = await inAct2()
+  const T1 = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, T1)
+  const r = await stepLiveFillIns(db, { now: T1 + 20_000 })
+  assert.deepEqual(Object.keys(r).sort(), ['act', 'answered', 'did', 'locked', 'ok', 'on', 'seats', 'voted'], 'counts and keys, nothing a seat was dealt')
+  assert.deepEqual([r.ok, r.on, r.act, r.seats, r.did, r.answered], [true, true, 2, 6, 6, 6])
+  const path = `presence/fillins-${nightId}`
+  const row = db.store.get(path)
+  assert.deepEqual([row.nightId, row.guestKey, row.at instanceof Date], [nightId, FILL_IN_PRESENCE, true])
+  assert.deepEqual(Object.keys(row).sort(), ['at', 'guestKey', 'nightId'])
+  const v = db.versions.get(path)
+  await stepLiveFillIns(db, { now: T1 + 20_000 + HEARTBEAT_EVERY_MS - 1 })
+  assert.equal(db.versions.get(path), v, 'one heartbeat every thirty seconds at most')
+  await stepLiveFillIns(db, { now: T1 + 20_000 + HEARTBEAT_EVERY_MS })
+  assert.equal(db.versions.get(path), v + 1)
+  // a practice night with no fill-ins: off, and no heartbeat
+  const plain = await practice({ fillIns: 0 })
+  assert.deepEqual(await stepLiveFillIns(plain.db, { now: T0 }), { ok: true, on: false, why: 'no-fill-ins', did: 0 })
+  assert.equal(plain.db.store.get(`presence/fillins-${plain.nightId}`), undefined)
+})
+
+test('the driver on the brain and the house, end to end in memory: it asks every two seconds, the fill-ins answer inside their pauses, the window shows counts only, and it stops for the real night', async () => {
+  const { drive, EVERY_MS, WORDS } = await import('../../cues/lib/fillins.js')
+  const { db, nightId } = await inAct2()
+  let clock = T0 + 60_000
+  await host(db, nightId, 'light-up', undefined, clock)
+  const opened = clock
+  const lines = []
+  // the brain's loop, with the house's own function in place of the network and a clock that moves only when it sleeps
+  const asked = await drive({ call: () => stepLiveFillIns(db, { now: clock }), sleep: async ms => { clock += ms }, say: l => lines.push(l), now: () => clock, max: 13 })
+  assert.equal(asked, 13)
+  assert.equal(clock - opened, 13 * EVERY_MS, 'two seconds a call')
+  assert.equal(nightOf(db, nightId).window.answered, 6, 'all six have answered inside twenty-six seconds')
+  assert.deepEqual(lines, ['Playing 6 fill-in players on the practice night. Act 2.'], 'one line, and no more until something changes')
+  for (const uid of Object.values(fillUids(db, nightId))) assert.equal(sessionOf(db, uid).answers[nightOf(db, nightId).window.id].defaulted, false)
+  // the party night comes on: the driver's next call is its last
+  const party = new FakeFirestore()
+  party.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', party_night: true })
+  await createNight(party)
+  const said = []
+  const calls = await drive({ call: () => stepLiveFillIns(party, { now: clock }), sleep: async () => {}, say: l => said.push(l), now: () => clock, max: 50 })
+  assert.deepEqual([calls, said], [1, [WORDS.realNight]])
+})
+
+// ---- the early chime -----------------------------------------------------------------
+
+test('the early chime: on a fill-in night a round ends thirty seconds after the real players\' group has finished its room, whichever room it is', async () => {
+  const { db, nightId, uids, rot, mine } = await intoRounds()
+  let now = T0 + 60_000
+  const rooms = []
+  for (let round = 1; round <= 4; round++) {
+    assert.equal(nightOf(db, nightId).beat, `round${round}`)
+    const room = roomFor(rot, mine.id, round)
+    rooms.push(room)
+    assert.equal((await clockTick(db, nightId, now)).moved, null, 'not while the real players are still in their room')
+    if (room === 'entryway') {
+      // the arcade: the visit is over at the last player's clue moment, not the first
+      await player.meetCat(db, { nightId, uid: uids.jon, cat: 'boo', now })
+      await player.arcadeClue(db, { nightId, groupId: mine.id, place: 0, now })
+      assert.equal((await clockTick(db, nightId, now + 10 * 60_000)).moved, null, 'one player\'s clue moment is not the end of the visit')
+      now += 5_000
+      await player.arcadeClue(db, { nightId, groupId: mine.id, place: 1, now })
+    } else if (room === 'study') {
+      await studyFinished(db, { nightId, payload: { groupId: mine.id, outcome: 'solved', seconds: 300, pairs: 3 }, now })
+    } else {
+      await payRoom(db, nightId, mine.id, room, { outcome: 'done', now }) // the room's own game cleared: the Library's boards, Salem's rounds
+    }
+    assert.equal((await clockTick(db, nightId, now + EARLY_CHIME_MS - 1)).moved, null, 'not before the thirty seconds')
+    const r = await stepFillIns(db, nightId, { now: now + EARLY_CHIME_MS })
+    assert.equal(r.clock, round < 4 ? `round${round + 1}` : 'finish', 'the fill-ins\' own pass rings it')
+    now += EARLY_CHIME_MS + 10_000
+  }
+  assert.deepEqual([...rooms].sort(), [...ROOM_KEYS].sort(), 'all four rooms were walked')
+  assert.equal(db.store.get(act4Path(nightId)).phase, 'done', 'after the fourth, everyone is back in the Parlour')
+  assert.ok(now - T0 < 6 * 60_000, 'four rounds in minutes, not an hour')
+  assert.equal(Object.keys(db.store.get(act4PrivatePath(nightId)).paid).length, 16, 'and every group was paid for every room')
+})
+
+test('no early chime on a night with no fill-ins, however early its groups finish; none on a fill-in night until the real players are done', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  const uids = []
+  for (const name of ['Jon', 'Susan', 'Jessa', 'Jacob']) { const uid = `u-${name.toLowerCase()}`; await join(db, { uid, nightId, name }); uids.push(uid) }
+  await host(db, nightId, 'act', 3)
+  await host(db, nightId, 'start-act4')
+  await host(db, nightId, 'next')
+  for (const uid of uids) await player.lockIn(db, { nightId, uid, now: T0 })
+  assert.equal(nightOf(db, nightId).beat, 'round1')
+  const rot = await readRotation(db, nightId)
+  for (const g of rot.groups) { const room = roomFor(rot, g.id, 1); if (ROOM_KEYS.includes(room)) await payRoom(db, nightId, g.id, room, { outcome: 'done', now: T0 + 60_000 }) }
+  assert.equal((await clockTick(db, nightId, T0 + 10 * 60_000)).moved, null, 'every group is done and paid, and the round still runs its fifteen minutes')
+  // even a count forged onto the night changes nothing: there is no fill-in group to end the round for
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), fillIns: 6 })
+  assert.equal((await clockTick(db, nightId, T0 + 10 * 60_000)).moved, null)
+  assert.equal((await clockTick(db, nightId, T0 + ROUND_MS)).moved, 'round2', 'the chime at the round\'s own end')
+  // a fill-in night whose real players never finish their room: the round's own end, as ever
+  const p = await intoRounds()
+  assert.equal((await clockTick(p.db, p.nightId, T0 + ROUND_MS - 1)).moved, null)
+  assert.equal((await clockTick(p.db, p.nightId, T0 + ROUND_MS)).moved, 'round2')
+})
+
+test('three clocks at the same round change on a fill-in night ring one chime: the move is taken once', async () => {
+  const { db, nightId } = await intoRounds()
+  let chimes = 0
+  const set = db._set.bind(db)
+  db._set = (path, ...rest) => { if (path === `nights/${nightId}/public/sounds`) chimes++; return set(path, ...rest) }
+  // the round's own end: the minute's tick, the Host tab's tick and the fill-ins' pass all arrive together
+  const at = T0 + ROUND_MS
+  const [a, b, c] = await Promise.all([
+    clockTick(db, nightId, at),
+    stepFillIns(db, nightId, { now: at + 1 }),
+    hostCommand(db, { nightId, command: 'tick', now: at + 2 }),
+  ])
+  assert.deepEqual([a.moved, b.clock ?? null, c.clock].filter(Boolean), ['round2'], 'one of the three made the move')
+  assert.equal(chimes, 1, 'one chime')
+  assert.equal(nightOf(db, nightId).beat, 'round2')
+  assert.equal(db.store.get(act4Path(nightId)).round, 2)
+  // the next round's change is free to be taken, again once
+  const next = at + ROUND_MS + 10
+  const [d, e] = await Promise.all([clockTick(db, nightId, next), clockTick(db, nightId, next + 1)])
+  assert.deepEqual([d.moved, e.moved].filter(Boolean), ['round3'])
+  assert.equal(chimes, 2)
+})
+
+// ---- the whole night -------------------------------------------------------------------
+
+test('F01 with fill-ins: a whole practice night, eight seats, Start to The End; the real players never wait on a fill-in; nothing sealed is read', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  // the party's three secrets are there, in throwaway shapes: a practice night must never read them
+  for (const path of ['sealed/parlour_leans', 'sealed/bags', 'sealed/relay_pictures']) db.store.set(path, { marker: '(never read)' })
+  const reads = recordReads(db)
+  const lines = []
+  const s = await fillInNight({ db, fillIns: 6, real: ['Jon', 'Sue'], start: PRACTICE_START, log: l => lines.push(l) })
+  assert.equal(s.error, null)
+  assert.deepEqual(s.checks, [], 'every check along the way')
+  assert.equal(s.ok, true)
+  assert.deepEqual([s.seats, s.fillIns, s.groups, s.rounds, s.earlyChimes, s.ballots, s.results, s.over], [8, 6, 4, 4, 4, 8, 8, true])
+  assert.deepEqual([s.moves.locked, s.moves.voted], [6, 6], 'six taps of Locked in and six votes, each a fill-in\'s own')
+  assert.ok(s.moves.answered >= 6 * 3, 'and every Parlour Game answered in time')
+  assert.ok(s.drawers >= 1 && s.drawers <= 2, 'only the two real players were ever called to the paper')
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'nothing sealed but the bag count when the night is made')
+  assert.equal(lines.length, 1)
+  assert.match(lines[0], /^Fill-in night: 8 seats \(6 fill-ins\), 4 groups, 4 rounds, 4 early chimes; .* PASS$/)
+  assert.ok(!/murderer|ghost|motive/i.test(lines[0]), 'counts only')
+  // and the other sizes the Start card allows: one fill-in, eight, a third real player, a lone real player
+  for (const [fillIns, real] of [[1, ['Jon', 'Sue']], [8, ['Jon', 'Sue', 'Amy']], [6, ['Jon']]]) {
+    const other = new FakeFirestore()
+    other.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+    const o = await fillInNight({ db: other, fillIns, real })
+    assert.deepEqual([o.ok, o.checks, o.error], [true, [], null], `${fillIns} fill-ins and ${real.length} real`)
+    assert.deepEqual([o.seats, o.over, o.ballots, o.results], [fillIns + real.length, true, fillIns + real.length, fillIns + real.length])
+  }
 })

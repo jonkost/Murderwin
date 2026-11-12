@@ -22,7 +22,7 @@ import { stewardRequest } from './lib/steward.js'
 import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
 import { sealedCounts as countSealed } from './lib/counts.js'
-import { morningOp } from './lib/morning.js'
+import { morningOp, PARTY_DAY } from './lib/morning.js'
 import { savePose, fromPoseCamera } from './lib/pose.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
@@ -249,6 +249,22 @@ export const introDue = onCall({ cors: true }, wrap(async req => {
   const { nightId } = req.data ?? {}
   await atTheParty(req, nightId)
   return run.introDue(db, { nightId })
+}))
+
+// Fill-in players (the polish pass, job A4, 11 Nov 2026; lib/fillins.js): a
+// practice night's seats with no phone. This is their clock: the driver on
+// the brain (npm run fill-ins) calls it every two seconds, and each call makes
+// whatever moves are due on the live night (Locked in, a Parlour Game's
+// answers, the vote), each after its human pause. It takes nothing from the
+// caller and gives back counts only, so anyone signed in may call it: all it
+// can ever do is make a move that was already due. It does nothing on the
+// real night, and nothing at all from the party day on, where the fill-in
+// code is not even loaded.
+export const fillIns = onCall({ cors: true }, wrap(async req => {
+  requireUid(req)
+  if (Date.now() >= PARTY_DAY) return { ok: true, on: false, why: 'party-day', did: 0 }
+  const { stepLiveFillIns } = await import('./lib/fillins.js')
+  return stepLiveFillIns(db)
 }))
 
 // The phones no longer vote (22 Oct): kept so an old phone gets a kind answer.

@@ -398,7 +398,46 @@ export async function due(db, nightId, now = Date.now()) {
     if (allLocked || now >= ms(pub.lockEndsAt)) return 'round1'
   }
   if (pub.phase === 'rounds' && now >= ms(pub.roundEndsAt)) return pub.round + 1 <= (pub.rounds ?? 4) ? `round${pub.round + 1}` : 'finish'
+  // a practice night with fill-in players: the round ends soon after the real players have finished their room (below)
+  if (pub.phase === 'rounds' && night.fillIns && night.forceRehearsal === true && await earlyChime(db, nightId, night, pub, now)) return pub.round + 1 <= (pub.rounds ?? 4) ? `round${pub.round + 1}` : 'finish'
   return null
+}
+
+// A practice night with fill-in players (the polish pass, job A4, 11 Nov
+// 2026; the default built, Jon's to change): nobody else is in the rooms, so
+// a round does not run its fifteen minutes out. It ends about thirty seconds
+// after the real players' own group has finished its room (every real group,
+// when there are several): paid by the room itself (the Study solved, the
+// three boards cleared, Salem's three rounds), or, at the arcade, the last
+// player's clue moment (arcadeClue's mark). A group that never finishes still
+// has the round's own end, and the host's Next. Never on any other night:
+// `due` asks only when the night carries fill-ins, and nothing is read here
+// unless the rotation has a fill-in group.
+export const EARLY_CHIME_MS = 30_000
+async function earlyChime(db, nightId, night, pub, now) {
+  const rot = await readRotation(db, nightId)
+  if (!(rot?.groups ?? []).some(g => g.fill)) return false
+  const roster = night.roster ?? {}
+  const real = rot.groups.filter(g => !g.members.every(m => isFillIn(roster[m.key])))
+  if (!real.length) return false
+  const priv = (await db.doc(act4PrivatePath(nightId)).get()).data() ?? {}
+  let last = 0
+  for (const g of real) {
+    const room = roomFor(rot, g.id, pub.round)
+    if (room === PARLOUR) continue
+    const at = finishedAt(priv, g, room)
+    if (!at) return false
+    last = Math.max(last, at)
+  }
+  return last > 0 && now >= last + EARLY_CHIME_MS
+}
+// When a group finished its room this round, in ms, or 0 while it has not.
+function finishedAt(priv, g, room) {
+  const paid = ms(priv.paid?.[`${g.id}-${room}`]?.at)
+  if (paid || room !== 'entryway') return paid
+  const seen = priv.arcadeSeen?.[g.id] ?? {}
+  const times = g.members.map((_, place) => ms(seen[place]))
+  return times.length && times.every(Boolean) ? Math.max(...times) : 0
 }
 
 // ---------------------------------------------------------------------------
@@ -568,6 +607,11 @@ export async function arcadeClue(db, { nightId, groupId, place, now = Date.now()
   const g = r.byKey[key]
   const dealt = g ? await dealCard(db, g.uid, card) : false
   if (dealt) await noteDealt(db, nightId, { kind: 'room', act: 4, beat: card.beat, groupId, key }, { now })
+  // a practice night with fill-in players: when each player's clue moment came, so the round can end soon
+  // after the last one (earlyChime). A time by place, nothing else; never written on any other night.
+  if (r.night?.fillIns && r.night.forceRehearsal === true) {
+    try { await db.doc(act4PrivatePath(nightId)).update({ [`arcadeSeen.${groupId}.${p}`]: new Date(now) }) } catch { /* the round's own end still comes */ }
+  }
   return { ok: true, dealt, third: !!card.third, text: card.third ? card.text : card.bag?.text ?? null, placeholder: !!card.placeholder }
 }
 
