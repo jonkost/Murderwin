@@ -334,6 +334,6 @@ test('the brain\'s program runs them on the marks, through one runner, and never
   // the strings' dark is left to Jon's scene only when they have no way of their own to go off
   assert.ok(src.includes('stringsOffLeftToBlackout = !!blackoutCfg.dark && stringsByShortcuts && !stringsPaired && !have.includes(stringShortcutNames.off)'))
   assert.ok(src.includes('blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet)'))
-  // neither is the music's stop: that stays its own Shortcut on the sheet
-  assert.equal(SHEET.musicShortcuts.off, 'PANIC')
+  // neither is the music's stop: that stays its own Shortcut on the sheet (AudioPanic, the one Jon made on 12 Nov 2026)
+  assert.equal(SHEET.musicShortcuts.off, 'AudioPanic')
 })

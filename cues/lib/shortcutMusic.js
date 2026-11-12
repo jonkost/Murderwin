@@ -7,8 +7,9 @@
 // same short keys as "playlists" (jazz, jazzLow, intense35, intense60, act4),
 // plus three keys of their own:
 //   off   the Shortcut that stops the music on every HomePod
-//   duck  (optional) the Shortcut that turns the music down while the brain
-//         speaks a recording (bulletin 2); the setting that was on comes back after
+//   duck  (optional) the Shortcut the brain runs while it speaks a recording
+//         (bulletin 2; since 12 Nov 2026 the stop itself, so the music stops
+//         under it); the setting that was on comes back after
 //   cake  (optional) a Shortcut that plays the cake's song on the HomePods,
 //         in place of the Music app
 // A key may name a list of Shortcuts, run in order a head start apart (Act 4:
@@ -39,7 +40,11 @@
 //     newer play or stop has come meanwhile: then the second try is dropped,
 //     so it can never kill music that has just come back;
 //   - a stop that fails late ("partially succeeded": a HomePod in its Home
-//     scene did not answer) says a HomePod may still be playing.
+//     scene did not answer) says a HomePod may still be playing;
+//   - a stop Apple Home will not take yet (it is still carrying out the
+//     last run of the same Shortcut) is asked again only while it is the
+//     newest word: a newer play or stop takes its place at once (12 Nov
+//     2026, the day Jon made the stop: AudioPanic).
 //
 // A setting with no Shortcut named falls back to the Music app, with one
 // line; a music Shortcut that is not on this Mac is one line too (the tool
@@ -165,7 +170,11 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
       let dropped = false
       const why = []
       for (const name of list) {
-        const r = await fire(name, { onLate: e => stopLate(name, e) })
+        // while Apple Home is still busy with the last run of the same Shortcut it refuses this one, and the
+        // runner asks again every second and a half: only while this stop is still the newest word. A newer
+        // play or stop takes its place at once, so music that comes back never waits behind a stop that is
+        // already old (12 Nov 2026: the stop is a real Shortcut now, sent at the press, the dark and the power)
+        const r = await fire(name, { onLate: e => stopLate(name, e), stillWanted: () => mine === seq })
         if (r.ok) ran++
         else if (r.dropped) dropped = true
         else why.push(`the ${name} Shortcut did not run (${r.reason})`)
@@ -202,13 +211,19 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
     return enqueue(async () => {
       if (mine !== seq) return // the music changed before the dip could start
       let ran = 0
+      const landing = []
       for (const name of list) {
         const r = await fire(name)
-        if (r.ok) ran++
+        if (r.ok) { ran++; landing.push(r.done) }
         else if (!r.dropped) once(`missing:${name}`, `[music] the ${name} Shortcut did not run (${r.reason}): the music stays as loud as it was under the recording`)
       }
       if (!ran) { if (mine === seq) ducked = false; return } // nothing went down, so nothing to bring back
       if (!fake) log('[music] down, under the recording')
+      // Let the dip land before the queue goes on (as a setting's Shortcuts do, one by one). Since 12 Nov 2026
+      // the dip is the stop itself, and a recording that ends at once (its files missing, or a chime cutting it
+      // off) brings the setting back within seconds: the jazz must never start while the stop is still on its
+      // way to the HomePods, or the stop could be the last word and supper would sit in silence.
+      if (!fake) await Promise.race([Promise.all(landing), wait(SEQUENCE_WAIT_MS)])
     })
   }
 

@@ -179,7 +179,7 @@ export function report({ media, video, loops, household, rules = null, sizes = {
   if (rules) out.push(...rulesLines(rules))
   if (voice || web) out.push(...madeLines({ voice, web }))
   out.push('', '6. Sydney\'s photo (the dedication in the credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. The dedication shows its words with no photo.'}`, '  Then: npm run deploy:site.')
-  out.push('', '7. Not files in this folder', '  The music: your music Shortcuts on the brain (Default Jazz, Default Jazz 20%, Intense Music 35% and 60%, the two game musics, and PANIC to stop it all) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
+  out.push('', '7. Not files in this folder', '  The music: your music Shortcuts on the brain (Default Jazz, Default Jazz 20%, Intense Music 35% and 60%, the two game musics, and AudioPanic to stop it all) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
   return out
 }
 

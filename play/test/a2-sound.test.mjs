@@ -28,13 +28,13 @@ test('the Sound test list: every cue once, by its id, and Silence; the ids are t
 })
 
 test('the missing stop: a warning only when the brain is up and says it cannot stop the music, with the Shortcut\'s name', () => {
-  assert.equal(stopShortcutName(JSON.parse(src('../../cues/scenes.json'))), 'PANIC')
+  assert.equal(stopShortcutName(JSON.parse(src('../../cues/scenes.json'))), 'AudioPanic')
   assert.equal(stopShortcutName({ musicShortcuts: { off: ['Stop All', 'Other'] } }), 'Stop All')
   assert.equal(stopShortcutName({}), null)
   assert.equal(stopWarning(true, true), null)
   assert.equal(stopWarning(null, true), null, 'not on the Shortcut road: nothing to say')
   assert.equal(stopWarning(false, false), null, 'a brain not heard from lately: its dot says so')
-  assert.match(stopWarning(false, true), /no Shortcut called “PANIC”/)
+  assert.match(stopWarning(false, true), /no Shortcut called “AudioPanic”/)
   assert.match(stopWarning(false, true, {}), /no Shortcut is named to stop it/)
   // the presence map keeps the brain's yes, no and nothing apart
   assert.ok(src('../src/lib/hooks.js').includes("sound[p.guestKey] = typeof p.sound === 'boolean' ? p.sound : null"))
