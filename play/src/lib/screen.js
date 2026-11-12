@@ -11,6 +11,9 @@ import { effectivePhase, isOver, isRehearsalNight } from './night.js'
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
 export const DOOR_HOLD_MS = 10_000
+// The drawing is on the screens in these states. 'lockout' is an older server's
+// ten-second wait after a wrong pick (gone 11 Nov 2026, lib/relayhost.js): it
+// stays here so the TV never leaves the drawing if such a server is behind it.
 export const RELAY_RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
 export const CAPTION_KINDS = ['news', 'bulletin', 'irwin']
 

@@ -6,8 +6,9 @@ import { hostCommand, advanceRelay } from '../lib/run.js'
 import { generateSet, CELL_CAPS, MAX_CELLS } from '../lib/relay-gen.js'
 import {
   start, advance, vote, guess, reset, relayPaths, presentKeys,
-  TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS, MAX_TURNS, DRAW_BUDGET_MS, PRESENT_MS, TIMING,
+  TURN_MS, WALK_MS, PULL_MS, VOTE_MS, MAX_TURNS, DRAW_BUDGET_MS, PRESENT_MS, TIMING,
 } from '../lib/relay.js'
+import { ROUND_CAPS } from '../lib/relay-bank.js'
 import { ms, NIGHT } from '../lib/deal.js'
 
 // The Act 6 door cannot misfire: a second Start keeps the drawing, Clear
@@ -54,14 +55,16 @@ async function solveAll(db, nightId, uids, t, nudge = (args) => advance(db, args
 test('F29 the time budget: fifteen seconds a turn, the walk a limit of twenty, every grid under its cap and the set within twenty-six minutes', () => {
   // Jon's cue list, 25 Oct 2026: fifteen seconds a turn (was ten); the walk becomes a limit the host
   // ends early with At the paper (was a fixed twelve seconds); the budget follows, and MAX_TURNS must
-  // still hold the biggest set the caps allow (9 + 9 + 11 + 13 = 42 with the practice)
+  // still hold the biggest set the caps allow (9 + 11 + 13 = 33; 42 while there was a practice round)
   assert.equal(TURN_MS, 15_000)
   assert.equal(WALK_MS, 20_000)
   assert.equal(PULL_MS, 20_000)
   assert.equal(DRAW_BUDGET_MS, 26 * 60_000)
   assert.equal(MAX_TURNS, 44)
-  assert.ok(MAX_TURNS >= 42, 'the practice and the three rounds at their caps fit the budget')
-  assert.deepEqual(TIMING, { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, lockoutMs: LOCKOUT_MS, introMs: TIMING.introMs })
+  assert.deepEqual(ROUND_CAPS, { 1: 9, 2: 11, 3: 13 }, 'the bank\'s caps are not lowered: a picture over a new cap would be refused')
+  assert.ok(MAX_TURNS >= 9 + 11 + 13, 'the three rounds at their caps fit the budget')
+  // no wait after a wrong pick (Jon, 11 Nov 2026), so no timing for one is sent to the phones
+  assert.deepEqual(TIMING, { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, introMs: TIMING.introMs })
   assert.deepEqual(CELL_CAPS, [9, 11, 12])
   assert.equal(MAX_CELLS, 32)
   assert.equal(MAX_TURNS, Math.floor(DRAW_BUDGET_MS / (TURN_MS + WALK_MS)))
@@ -82,7 +85,7 @@ test('start twice keeps the drawing: turnIndex and seed stand; force restarts it
   assert.equal(first.already, undefined)
   const { pub, priv } = relayPaths(nightId)
   assert.deepEqual(db.store.get(pub).timing, TIMING)
-  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['introMs', 'lockoutMs', 'pullMs', 'turnMs', 'voteMs', 'walkMs'])
+  assert.deepEqual(Object.keys(db.store.get(pub).timing).sort(), ['introMs', 'pullMs', 'turnMs', 'voteMs', 'walkMs'])
   assert.equal(db.store.get(pub).state, 'intro', 'Sir Irwin\'s slides first')
   t.now = ms(db.store.get(pub).introEndsAt); await advance(db, { nightId, now: t.now })
   t.now += PULL_MS; await advance(db, { nightId, now: t.now })
@@ -136,6 +139,6 @@ test('reset on an idle night is harmless and leaves the hall red', async () => {
   await reset(db, { nightId, now: 5 })
   assert.equal(db.store.get(relayPaths(nightId).pub).state, 'idle')
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).hall, 'red')
-  assert.equal(LOCKOUT_MS, TIMING.lockoutMs)
+  assert.ok(!('lockoutMs' in TIMING))
   assert.equal(VOTE_MS, TIMING.voteMs)
 })

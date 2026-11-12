@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { callRelayAdvance } from '../firebase'
 import { useTick, writeNotes } from '../lib/hooks'
 import { Cell, Figure } from '../lib/draw'
+import { isGuessing, guessLine, wrongPick } from '../lib/relayhost'
 import { Seal } from './Moments'
 import { HostRelayPanel } from './Host'
 
@@ -13,6 +14,11 @@ import { HostRelayPanel } from './Host'
 // is still standing, and a host's phone (session.host) carries At the paper
 // while someone walks and the four options to tap while the room guesses
 // (HostRelayPanel). All timing is read from server deadlines.
+//
+// 11 Nov 2026 (Jon's practice, handoff A7): no wait after a wrong pick (it
+// is crossed off, the phone buzzes, and the room guesses again at once); the
+// words at a turn are "{Name} is drawing." and "Describe this square!", and
+// on the drawer's own phone "Draw what they say!".
 
 // A server timestamp, a Date, or a plain millisecond number (the study station sends numbers).
 export function ms(t) {
@@ -29,18 +35,18 @@ function Bar({ endsAt, total, serverNow }) {
 // The bar totals come from the server (public/relay.timing, written at start);
 // these stand in only for a doc written before the server sent them (the
 // cue list's numbers, 25 Oct 2026: fifteen seconds a turn, the walk at most twenty).
-const FALLBACK = { turnMs: 15_000, walkMs: 20_000, pullMs: 20_000, voteMs: 45_000, lockoutMs: 10_000 }
+const FALLBACK = { turnMs: 15_000, walkMs: 20_000, pullMs: 20_000, voteMs: 45_000 }
 export function timingOf(relay) {
   const t = relay?.timing ?? {}
   const pick = (k) => (typeof t[k] === 'number' && t[k] > 0 ? t[k] : FALLBACK[k])
-  return { TURN_MS: pick('turnMs'), WALK_MS: pick('walkMs'), PULL_MS: pick('pullMs'), VOTE_MS: pick('voteMs'), LOCKOUT_MS: pick('lockoutMs') }
+  return { TURN_MS: pick('turnMs'), WALK_MS: pick('walkMs'), PULL_MS: pick('pullMs'), VOTE_MS: pick('voteMs') }
 }
 
 export default function Relay({ uid, night, session, relay, serverNow, rules = null }) {
   useTick(250)
   const me = session.guestKey
   const host = !!session.host // the two host phones carry the drawing's controls (HostRelayPanel)
-  const { TURN_MS, WALK_MS, PULL_MS, VOTE_MS, LOCKOUT_MS } = timingOf(relay)
+  const { TURN_MS, WALK_MS, PULL_MS } = timingOf(relay)
   const nudged = useRef(0)
 
   // A phone may nudge the clock too, so a kiosk that fell over never stalls the room.
@@ -48,7 +54,7 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     const deadline = relay.state === 'turn' ? ms(relay.turnEndsAt)
       : relay.state === 'walk' ? ms(relay.walkEndsAt)
       : relay.state === 'intro' ? ms(relay.introEndsAt)
-      : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0
+      : relay.state === 'lockout' ? ms(relay.lockoutEndsAt) : 0 // an older server's wait: it ends on that server's clock
     const now = serverNow()
     if (night.nightId === 'preview') return
     if (deadline && now > deadline + 2500 && now - nudged.current > 6000) {
@@ -63,6 +69,17 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
       try { navigator.vibrate?.([200, 100, 200]) } catch {}
     }
   }, [relay.state, relay.drawerKey, relay.nextKey, relay.turnIndex, me])
+
+  // a short buzz on every phone when a pick is crossed off (the TV buzzes aloud). Only when the
+  // list grows while this phone is watching: a phone that opens on a crossed list stays quiet.
+  const crossedCount = isGuessing(relay) ? (relay.crossed?.length ?? 0) : 0
+  const lastCrossed = useRef(crossedCount)
+  useEffect(() => {
+    if (wrongPick(lastCrossed.current, relay)) {
+      try { navigator.vibrate?.(250) } catch {}
+    }
+    lastCrossed.current = crossedCount
+  }, [crossedCount, relay.lastResult])
 
   // Sir Irwin's slides on the TV (cue 16, 25 Oct 2026): every phone says to be in the Parlour
   if (relay.state === 'intro') {
@@ -103,15 +120,12 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
       <div className="moment relay papered">
         <p className="crest">{relay.cell?.label} · {relay.round ?? `grid ${relay.grid}`}</p>
         {mine ? (
-          <>
-            <p className="moment-text">Draw!</p>
-            <p className="moment-sub">Marker down at the buzz.</p>
-          </>
+          <p className="moment-text">Draw what they say!</p>
         ) : (
           <>
             <Cell strokes={relay.cell?.strokes} />
-            <p className="moment-text">Tell {relay.drawerName} how.</p>
-            {relay.nextName && <p className="gloss">Next: {relay.nextName}</p>}
+            {/* the name is the person at the paper now: the server writes the drawer only when their walk ends */}
+            <p className="moment-text">{relay.drawerName ?? 'Someone'} is drawing.<br />Describe this square!</p>
           </>
         )}
         <Bar endsAt={relay.turnEndsAt} total={TURN_MS} serverNow={serverNow} />
@@ -119,13 +133,14 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
     )
   }
 
-  if (relay.state === 'vote' || relay.state === 'lockout') {
-    const locked = relay.state === 'lockout'
+  // the guess: no clock, and no wait after a wrong pick (11 Nov 2026). The pick is crossed off and
+  // the room guesses again at once.
+  if (isGuessing(relay)) {
     const crossed = relay.crossed ?? []
     return (
       <div className="moment relay vote papered">
         <p className="crest">{relay.round ?? `Grid ${relay.grid}`} is drawn</p>
-        <p className="moment-text">{locked ? 'Not that one.' : host ? 'Look at the paper. Tap the room’s guess.' : 'Look at the paper. Tell the host your guess.'}</p>
+        <p className="moment-text">{guessLine(relay, host ? 'host' : 'guest')}</p>
         {host ? <HostRelayPanel relay={relay} nightId={night.nightId} inline /> : (
           <div className="options">
             {(relay.options ?? []).map((o, i) => {
@@ -139,7 +154,6 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
             })}
           </div>
         )}
-        {locked && <Bar endsAt={relay.lockoutEndsAt} total={LOCKOUT_MS} serverNow={serverNow} />}
       </div>
     )
   }

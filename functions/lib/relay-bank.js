@@ -1,8 +1,9 @@
 // The Relay Drawing's pictures (docs/handoff-2026-10-22.md §7, the Claude Doc
-// "The Relay Drawing · How to Play"): a practice smiley, then three rounds,
-// 3 × 3, 4 × 4 and 5 × 5.
+// "The Relay Drawing · How to Play"): three rounds, 3 × 3, 4 × 4 and 5 × 5.
+// (A practice smiley came first until 11 Nov 2026; Jon took the practice
+// round out.)
 //
-// The practice smiley is public (everyone sees it explained first). The three
+// The smiley is public (Sir Irwin's slide 3 shows one square of it). The three
 // real pictures are SEALED: a bank Jon never sees, at sealed/relay_pictures,
 // written by scripts/generate-relay-pictures.mjs (blind, counts only) or by
 // Jenna. The drawing reads it on the party night only; a rehearsal, or a bank
@@ -56,8 +57,9 @@ export function namesAny(name, list) {
 }
 
 const arc = (from, to, bulge) => ({ kind: 'arc', from, to, bulge })
-// The practice round: the whole face fills the 3 × 3 grid, square by square
-// as the How to Play page describes it. No single square gives it away.
+// The public sample (the practice round until 11 Nov 2026): the whole face
+// fills the 3 × 3 grid, square by square as the How to Play page describes
+// it. No single square gives it away. Slide 3 shows its B1 square (relay.js).
 export const PRACTICE = {
   name: 'A smiley face',
   decoys: ['A sun', 'A clock', 'A cookie'],
@@ -128,11 +130,14 @@ export function gridOf(p, size, number, seed) {
   }
 }
 
-// The night's four grids: the practice smiley, then one bank picture per
-// round when the bank has a good one, else the stand-in grid for that round.
+// The night's three grids: one bank picture per round when the bank has a
+// good one, else the stand-in grid for that round. No practice grid since
+// 11 Nov 2026 (Jon: "I don't need a practice round in Act 6"); the smiley
+// above stays public, as slide 3's example square and a name no real picture
+// may use. Each grid carries its own round as `number` (1 to 3).
 // Returns { grids, fromBank } where fromBank counts the rounds the bank filled.
 export function relayGrids({ bank = null, standIn, seed }) {
-  const grids = [gridOf(PRACTICE, 3, 0, seed)]
+  const grids = []
   let fromBank = 0
   for (const round of [1, 2, 3]) {
     const good = (bank?.pictures ?? []).filter(p => Number(p?.round) === round && !checkPicture(p, round).length)

@@ -523,7 +523,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
         continue
       }
       if (p.state === 'turn') turns++
-      clock += p.state === 'intro' ? relay.INTRO_MS : p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : p.state === 'lockout' ? relay.LOCKOUT_MS : relay.TURN_MS
+      clock += p.state === 'intro' ? relay.INTRO_MS : p.state === 'walk' ? Math.max(relay.WALK_MS, relay.PULL_MS) : relay.TURN_MS
       await run.advanceRelay(db, { nightId, now: clock })
     }
     throw new Error('the drawing never finished')
