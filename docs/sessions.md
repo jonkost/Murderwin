@@ -9,6 +9,15 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, later · Claude Code (the big Start button in the workshop, and the pages tidied)
+
+- Jon: "in the workshop. Clean out everything we do not need at this point and give me the big button there."
+- **The button** (`app/src/components/StartNight.jsx`, `lib/startNight.js`, `lib/startNightApi.js`): first on Home and on Game night. The same call as the phone's (`hostCommand` `create` with `{ real, introAt }`; the admin is let through), the same times (a test holds them to `play/src/lib/start.js`), a line that says which night is on, and a question before a night that is on is ended.
+- **Tidied, nothing deleted:** Home keeps the button, Your next three and the questions in view; the games to try, the secrets' counts, the lists, the notes and who has been writing are under one line, Everything else. Game night keeps the devices, the videos box and the freeze in view; the hosts' names, the codes to print, the awards, the replay, the old party box, Try the games, the morning after and On the night are under Less often. The old party box says to leave it alone (it only matters for a night started from the terminal, and it turns the Game test tab off).
+- **Tried:** in the preview (`?preview=1`): Home and Game night. The button itself was not pressed against the live game from the workshop.
+- **Left:** a site deploy on Jon's word. Which pages or panels Jon wants gone altogether is his to say: I folded, I did not remove.
+- **Decisions:** none.
+
 ## 12 Nov 2026 · Claude Code (the big Start button, a page to send to each screen, the countdown, the intro on its own)
 
 - Jon: "All devices will be put in their place. I will have a big start night button on my phone. It gives me something I can airdrop 1 by 1 to the devices. They launch their page in full screen in chrome. I just leave it on that screen all night and the magic happens. Jazz music until 4:30, a count down on all screens before that. 4:30 intro goes. With the big start night button I just need a check box for it to trigger the real night, otherwise it defaults to a runthrough and I can advance in my web app if needed." And: "Make sure I have the files for the study to launch that game in the airdrop."

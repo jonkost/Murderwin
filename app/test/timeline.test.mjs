@@ -5,7 +5,7 @@ import night from '../../seed/night.json' with { type: 'json' }
 import tasksFile from '../../seed/tasks.json' with { type: 'json' }
 import { AREAS, ADDITIONS, UI_LABELS, COUNTED_UI_LABELS, STATION_LABELS, TAB_KINDS } from '../src/lib/content.js'
 import { TIMELINE, NEEDS, MOMENT_KEYS, TIMELINE_LISTS, STANDIN_LISTS, momentName, nightTimeline, timelineItems, timelineProgress, bucketProgress, listStatus, taskWhen, taskStandin, taskNotYou, OWNERS, ownerOf, taskBy, byLabel, leftByOwner, leftLine, nextCards, unfiled, momentOptions, openDecisions, decisionsForJon, isRetiredDecision, RETIRED_MOMENT, firstSentence } from '../src/lib/timeline.js'
-import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029, RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029, RETIRED_FOR_MEMORY_RESEND_1029, RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS, ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS, SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031, ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS, MUSIC_SHORTCUTS_1031_TASKS, ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS, RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101, ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS, ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105, SWEEP_1106_DECISIONS, POSTMORTEM_1111_TASKS, MEDIA_1111_TASKS, WALKTHROUGH_1111_TASKS, SETUP_1111_TASKS, START_1112_TASKS } from '../src/lib/timelineTasks.js'
+import { TIMELINE_TASKS, TIMELINE_DECISIONS, RETIRED_FOR_TIMELINE, STANDIN_SOUND_TASKS, ALL_TIMELINE_TASKS, HANDOFF_TASKS, RETIRED_FOR_HANDOFF, HANDOFF_BUILT_TASKS, RETIRED_FOR_BUILT, AUDIT_TASKS, RETIRED_FOR_AUDIT, FILED_FOR_AUDIT, AUDIT_DECISIONS, FILED_DECISIONS_FOR_AUDIT, ANSWERED_FOR_AUDIT, SECRET_LINES_TASKS, SECRET_LINES_DECISIONS, RETIRED_FOR_SECRET_LINES, FILED_FOR_SECRET_LINES, CLEANUP_TASKS, CLEANUP_DECISIONS, RETIRED_FOR_CLEANUP, REWRITTEN_FOR_CLEANUP, REFILED_FOR_CLEANUP, NEWS_CAST_TASKS, RETIRED_FOR_NEWS_CAST, FILED_FOR_NEWS_CAST, REWRITTEN_FOR_NEWS_CAST, ANSWERED_FOR_NEWS_CAST, FILED_DECISIONS_FOR_NEWS_CAST, REFILED_FOR_NEWS_CAST, SUPERSEDED_FOR_NEWS_CAST, ITEM4_TASKS, RETIRED_FOR_ITEM4, ITEM4_DECISIONS, RETIRED_FOR_CUE_LIST_3, REWRITTEN_FOR_CUE_LIST_3, CUE_LIST_3_DECISIONS, CUE_LIST_TASKS, CUE_LIST_DECISIONS, ANSWERED_FOR_CUE_LIST, RETIRED_FOR_CUE_LIST, REWRITTEN_FOR_CUE_LIST, RETIRED_FOR_GAME_TEST_1026, RETIRED_FOR_BOO_1027, BOO_1027_TASKS, TURNS_1028_TASKS, TURNS_1028_DECISIONS, RETIRED_FOR_PHONE_LOOK_1028, PHONE_LOOK_1028_TASKS, PHONE_LOOK_1028_DECISIONS, ARCADE_1028_TASKS, RETIRED_FOR_WINNERS_1029, WINNERS_1029_TASKS, MICE_PETS_1029_TASKS, FILED_FOR_MICE_PETS_1029, REWRITTEN_FOR_MICE_PETS_1029, ARCADE_MENU_1029_TASKS, FILED_FOR_ARCADE_MENU_1029, RETIRED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_TASKS, ANSWERED_FOR_ARCADE_REWORK_1029, ARCADE_REWORK_1029_DECISIONS, REWRITTEN_FOR_ARCADE_REWORK_1029, RETIRED_FOR_MEMORY_RESEND_1029, RETIRED_FOR_NEVER_A_NOTE_1029, NEVER_A_NOTE_1029_TASKS, NEVER_A_NOTE_1029_DECISIONS, ARCADE_PLAYTEST_1030_TASKS, FILED_FOR_ARCADE_PLAYTEST_1030, ARCADE_PLAYTEST_1030_DECISIONS, SALEM_1031_TASKS, RETIRED_FOR_SALEM_1031, ARCADE_PLAYTEST_1031_TASKS, FILED_FOR_ARCADE_PLAYTEST_1031, ARCADE_PLAYTEST_1031_DECISIONS, MUSIC_SHORTCUTS_1031_TASKS, ARCADE_NOTES_1101_TASKS, FILED_FOR_ARCADE_NOTES_1101, ARCADE_NOTES_1101_DECISIONS, RETIRED_FOR_STUDY_STOP_1101, FILED_FOR_STUDY_STOP_1101, ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS, ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105, SWEEP_1106_DECISIONS, POSTMORTEM_1111_TASKS, MEDIA_1111_TASKS, WALKTHROUGH_1111_TASKS, SETUP_1111_TASKS, START_1112_TASKS, WORKSHOP_1112_TASKS } from '../src/lib/timelineTasks.js'
 import { planAddition, applyPlan } from '../src/lib/additions.js'
 
 // The night, in order: every beat has a place, every list and label is
@@ -1468,7 +1468,7 @@ test('the arcade notes migration (1 Nov 2026): before the Study\'s stop; five do
 test('the Study stop migration (1 Nov 2026): last; card 557 done by number and title, a line on the blackout sound, which stays open, one on the tech run for Pause and one on the rules deck\'s card; plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-01-study-stop')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-9), add, 'the migration before the two of 5 Nov 2026, the sweep of 6 Nov and the postmortem of 11 Nov')
+  assert.equal(ADDITIONS.at(-10), add, 'the migration before the two of 5 Nov 2026, the sweep of 6 Nov and the postmortem of 11 Nov')
   assert.ok(add.retireTasks === RETIRED_FOR_STUDY_STOP_1101 && add.fileTasks === FILED_FOR_STUDY_STOP_1101)
   assert.ok(!add.tasks && !add.decisions && !add.rewriteTasks && !add.answerDecisions, 'no new cards, nothing answered')
   assert.deepEqual(RETIRED_FOR_STUDY_STOP_1101.map(r => r.order), [557])
@@ -1505,7 +1505,7 @@ test('the Study stop migration (1 Nov 2026): last; card 557 done by number and t
 test('the arcade on the night (5 Nov 2026): last; card 515 done by number and title, two jobs for Jon, lines on his try and the tech run, three questions open with their defaults; plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-05-arcade-night')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-8), add, 'the migration before the three cards of the same session, the sweep of 6 Nov and the postmortem of 11 Nov')
+  assert.equal(ADDITIONS.at(-9), add, 'the migration before the three cards of the same session, the sweep of 6 Nov and the postmortem of 11 Nov')
   assert.ok(add.tasks === ARCADE_NIGHT_1105_TASKS && add.retireTasks === RETIRED_FOR_ARCADE_NIGHT_1105 && add.fileTasks === FILED_FOR_ARCADE_NIGHT_1105 && add.decisions === ARCADE_NIGHT_1105_DECISIONS)
   assert.deepEqual(ARCADE_NIGHT_1105_TASKS.map(t => [t.order, t.who, t.moment, t.status, t.by]), [[558, 'Jon', 'act4.entryway', 'todo', '2026-11-11'], [559, 'Jon', 'act4.entryway', 'todo', '2026-11-11']])
   assert.deepEqual(RETIRED_FOR_ARCADE_NIGHT_1105.map(r => r.order), [515])
@@ -1538,7 +1538,7 @@ test('the arcade on the night (5 Nov 2026): last; card 515 done by number and ti
 test('the three cards (5 Nov 2026): last; roomMusic answered as the Canon has it, 518, 530 and 311 done by number and title, the two old household cards retired and the two new ones added, never erased; plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-05-three-cards')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-7), add, 'the migration before the sweep of 6 Nov and the postmortem of 11 Nov')
+  assert.equal(ADDITIONS.at(-8), add, 'the migration before the sweep of 6 Nov and the postmortem of 11 Nov')
   assert.ok(add.answerDecisions === ANSWERED_FOR_THREE_CARDS_1105 && add.retireTasks === RETIRED_FOR_THREE_CARDS_1105 && add.retireItems === RETIRED_ITEMS_FOR_THREE_CARDS_1105 && add.appendItems === APPENDED_ITEMS_FOR_THREE_CARDS_1105)
   assert.ok(!add.tasks && !add.decisions && !add.fileTasks, 'no new cards or questions')
   assert.deepEqual(Object.keys(ANSWERED_FOR_THREE_CARDS_1105), ['roomMusic'])
@@ -1573,7 +1573,7 @@ test('the three cards (5 Nov 2026): last; roomMusic answered as the Canon has it
 test('the sweep (6 Nov 2026): before the postmortem; one question open with its default, arcadePause, at the Entryway; plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-06-sweep')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-6), add, 'the migration before the postmortem of 11 Nov')
+  assert.equal(ADDITIONS.at(-7), add, 'the migration before the postmortem of 11 Nov')
   assert.ok(add.decisions === SWEEP_1106_DECISIONS && !add.tasks && !add.retireTasks && !add.fileTasks, 'one question, nothing else')
   assert.deepEqual(SWEEP_1106_DECISIONS.map(d => [d.key, d.moment, d.answer, d.options.length]), [['arcadePause', 'act4.entryway', null, 2]])
   for (const d of SWEEP_1106_DECISIONS) for (const line of [d.question, d.note, ...d.options]) assert.ok(!plain.test(line) && !PLAIN.test(line), `plain words: ${line.slice(0, 40)}`)
@@ -1588,7 +1588,7 @@ test('the sweep (6 Nov 2026): before the postmortem; one question open with its 
 test('the postmortem (11 Nov 2026): last; three done cards and two jobs for Jon, new numbers, plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-11-postmortem')
   const plain = /\b(npm|kiosk|deploy|repo|seed|stand-in|preview|terminal|callable|prop|state|constant)\b|\.env|—/i
-  assert.equal(ADDITIONS.at(-5), add, 'the last migration')
+  assert.equal(ADDITIONS.at(-6), add, 'the last migration')
   assert.ok(add.tasks === POSTMORTEM_1111_TASKS && !add.retireTasks && !add.fileTasks && !add.decisions, 'new cards, nothing else')
   assert.deepEqual(POSTMORTEM_1111_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [
     [560, 'Claude Code', 'after', 'done'], [561, 'Claude Code', 'setup', 'done'], [562, 'Claude Code', 'act5.irwin', 'done'],
@@ -1656,9 +1656,8 @@ test('the setup address (11 Nov 2026, late): one done card and one job for Jon, 
   assert.equal(again.tasks.length, state.tasks.length, 'once only')
 })
 
-test('the big Start button (12 Nov 2026): last; one done card and two jobs for Jon, new numbers, plain; once only', () => {
+test('the big Start button (12 Nov 2026): one done card and two jobs for Jon, new numbers, plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-12-start')
-  assert.equal(ADDITIONS.at(-1), add, 'the last migration')
   assert.ok(add.tasks === START_1112_TASKS && !add.retireTasks && !add.fileTasks && !add.decisions, 'new cards, nothing else')
   assert.deepEqual(START_1112_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [
     [573, 'Claude Code', 'setup', 'done'], [574, 'Jon', 'setup', 'todo'], [575, 'Jon', 'setup', 'todo'],
@@ -1670,6 +1669,24 @@ test('the big Start button (12 Nov 2026): last; one done card and two jobs for J
   }
   const state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
   assert.equal(state.tasks.length, before.tasks.length + 3, 'three new cards')
+  const again = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
+  assert.equal(again.tasks.length, state.tasks.length, 'once only')
+})
+
+test('the workshop's Start button (12 Nov 2026, later): last; one done card, new numbers, plain; once only', () => {
+  const { before, add, newId } = boardThrough('2026-11-12-workshop')
+  assert.equal(ADDITIONS.at(-1), add, 'the last migration')
+  assert.ok(add.tasks === WORKSHOP_1112_TASKS && !add.retireTasks && !add.fileTasks && !add.decisions, 'new cards, nothing else')
+  assert.deepEqual(WORKSHOP_1112_TASKS.map(t => [t.order, t.who, t.moment, t.status]), [
+    [576, 'Claude Code', 'setup', 'done'],
+  ])
+  for (const t of WORKSHOP_1112_TASKS) {
+    assert.ok(MOMENT_KEYS.includes(t.moment), `${t.order} is filed on a row`)
+    for (const line of [t.title, t.detail]) assert.ok(!PLAIN.test(line), `plain words: ${line.slice(0, 40)}`)
+    assert.ok(!before.tasks.some(b => b.order === t.order), `${t.order} is a new number`)
+  }
+  const state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
+  assert.equal(state.tasks.length, before.tasks.length + 1, 'one new card')
   const again = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
   assert.equal(again.tasks.length, state.tasks.length, 'once only')
 })

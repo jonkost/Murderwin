@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StartNight from '../components/StartNight'
 import { Link } from 'react-router-dom'
 import { subscribeArea, subscribeHistory, subscribeTasks, subscribeDecisions, whoAmI } from '../lib/store'
 import { AREAS, AREA_GROUPS, GROUP_WHY, TAB_KINDS, goalOf, goalForTab, tabsOf } from '../lib/content'
@@ -92,6 +93,8 @@ export default function Dashboard() {
 
   return (
     <main className="dash">
+      <StartNight />
+
       <section className="panel">
         <h2>Your next three</h2>
         <p className="why">Your open cards, soonest first: the ones with a date, then the rest in the order of the night.</p>
@@ -127,7 +130,9 @@ export default function Dashboard() {
         </ul>
       </section>
 
-      <section className="panel">
+      <details className="panel more">
+        <summary>Everything else: the games to try, the secrets’ counts, the lists</summary>
+      <section className="panel inner">
         <h2>The secrets, made blind</h2>
         <p className="why">{SECRET_ROWS_WHY}</p>
         {counts === null ? <p className="hint">Counting…</p>
@@ -145,15 +150,14 @@ export default function Dashboard() {
             )}
       </section>
 
-      <section className="panel">
+      <section className="panel inner">
         <h2>Try the games</h2>
         <p className="why">Every game in Acts 4 and 6, and the Parlour Games, ready to try before the night. Tell Claude Code what to fix from there: your note goes on the Timeline.</p>
         <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
         <p className="night-line"><Link className="primary dl" to="/postmortem">Postmortem: how the last run went</Link></p>
       </section>
 
-      <details className="panel more">
-        <summary>The lists (nothing left for you to write)</summary>
+        <h3>The lists (nothing left for you to write)</h3>
         <p className="why">You write nothing more (23 October): Claude chat writes what is left, and Claude Code copies it in. Open a list to read it or fix a word. Where it says {STANDIN_NOTE}, or {LEFT_OUT_NOTE}, the night runs fine with the list as it is.</p>
         {AREA_GROUPS.map(group => (
           <div className="map-group" key={group}>

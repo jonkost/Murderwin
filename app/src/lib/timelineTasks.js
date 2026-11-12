@@ -1188,3 +1188,9 @@ export const START_1112_TASKS = [
   { order: 575, moment: 'setup', status: 'todo', who: 'Jon', by: '2026-11-13', title: 'Try the big Start button as a run-through, with every screen', detail: 'Make Google Chrome the usual browser on each Mac once, so a page you send opens there. Then press Start a run-through on your phone, send each screen its page, click once on each, and watch: the countdown on every screen, then five minutes later the intro video on the Parlour TV with sound. Say on the Postmortem page what was slow or went wrong.' },
 ]
 
+// 12 Nov 2026, later ("in the workshop. Clean out everything we do not need
+// at this point and give me the big button there"). One done card.
+export const WORKSHOP_1112_TASKS = [
+  { order: 576, moment: 'setup', status: 'done', who: 'Claude Code', title: 'The big Start button in the workshop, and the pages tidied', detail: 'Done 12 Nov 2026. Home and Game night both open with the big Start button and its box, This is the real night, and a line that says which night is on now. If a night is on, it asks before ending it. On Home, what you need now stays in view: the button, your next three, and the questions only you can answer. The rest is under one line, Everything else. On Game night, the devices, the videos box and the freeze stay in view, and the rest is under Less often. Nothing was deleted. The old party box is in there too: leave it alone, the big button has its own.' },
+]
+

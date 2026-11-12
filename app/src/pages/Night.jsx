@@ -4,10 +4,12 @@ import QRCode from 'qrcode'
 import { subscribeGame, saveGame, whoAmI, subscribeReplay } from '../lib/store'
 import { replayView, cleanSeed } from '../lib/replay'
 import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
+import StartNight from '../components/StartNight'
 
-// Game night: the two hosts' names, the square code for the Act 1 slide,
-// and how guests join. The night itself is run from the hosts' phones (the
-// Host tab), never from here, so nothing on the night needs this page.
+// Game night: the big Start button first (12 Nov 2026), then the devices,
+// the videos box and the freeze. Everything used less often is folded away
+// under one line. Once started, the night is run from the hosts' phones (the
+// Host tab), never from here.
 
 import { PLAY_URL } from '../lib/config'
 
@@ -135,55 +137,13 @@ export default function Night() {
         <div className="banner error" role="alert">SAVE FAILED. Check your signal and try again.</div>
       )}
 
+      <StartNight />
+
       <section className="panel">
         <h2>The devices</h2>
         <p className="why">Every screen and machine for each room, with the address to open on it, how to start it and how to tell it is working. Not the phones.</p>
         <p className="night-line"><Link className="primary dl" to="/devices">Every device, room by room</Link></p>
       </section>
-
-      <section className="panel">
-        <h2>Try the games</h2>
-        <p className="why">Every game in Acts 4 and 6, and the Parlour Games, to try before the night on the device it runs on. A test never touches the party night.</p>
-        <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
-        <p className="night-line"><Link className="primary dl" to="/postmortem">Postmortem: how the last run went</Link></p>
-      </section>
-
-      <section className="panel">
-        <h2>The two hosts <span className={`save-dot ${status}`}>{status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span></h2>
-        <p className="why">Type the name each of you will type on your phone. That name gets the Professor and the Host tab. Everyone else types any name and is dealt a character.</p>
-        {HOSTS.map(h => (
-          <label key={h.key} className="field">
-            <span>{h.label}</span>
-            <input type="text" maxLength={30} placeholder={h.placeholder} value={draft[h.key] ?? ''}
-              onChange={e => change(h.key, e.target.value)} />
-          </label>
-        ))}
-        <p className="hint">Takes effect the next time a night is started from a phone.</p>
-      </section>
-
-      <section className="panel">
-        <h2>Sir Irwin's two awards</h2>
-        <p className="why">At the end, Sir Irwin's Favorite always goes to Jessa's character and his Least Favorite to Jake's. Type the name each of them will type on their phone. Left empty, the game looks for Jessa and Jake.</p>
-        {IRWIN_SEATS.map(h => (
-          <label key={h.key} className="field">
-            <span>{h.label}</span>
-            <input type="text" maxLength={30} placeholder={h.placeholder} value={draft[h.key] ?? ''}
-              onChange={e => change(h.key, e.target.value)} />
-          </label>
-        ))}
-      </section>
-
-      <section className="panel">
-        <h2>Rehearsal or the real thing</h2>
-        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats’ leans, the bag packing and the drawing pictures stay sealed, and where a secret would show, a rehearsal shows a note in square brackets instead. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
-        <label className="field check">
-          <input type="checkbox" checked={draft.party_night === true} onChange={e => change('party_night', e.target.checked)} />
-          <span>This is the party night</span>
-        </label>
-        <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
-      </section>
-
-      <Replay game={game} onSave={patch => { setStatus('saving'); saveGame(patch, latest.current).then(() => setStatus('saved')).catch(() => setStatus('error')) }} />
 
       <section className="panel">
         <h2>The bulletin videos</h2>
@@ -209,6 +169,21 @@ export default function Night() {
           : <p className="hint">Only Jon can freeze or unfreeze.</p>}
       </section>
 
+      <details className="panel more">
+        <summary>Less often: the hosts’ names, the codes to print, the awards, a replay, the old party box, the morning after</summary>
+      <section className="panel">
+        <h2>The two hosts <span className={`save-dot ${status}`}>{status === 'saved' ? 'saved ✓' : status === 'saving' ? 'saving…' : 'not saved'}</span></h2>
+        <p className="why">Type the name each of you will type on your phone. That name gets the Professor and the Host tab. Everyone else types any name and is dealt a character.</p>
+        {HOSTS.map(h => (
+          <label key={h.key} className="field">
+            <span>{h.label}</span>
+            <input type="text" maxLength={30} placeholder={h.placeholder} value={draft[h.key] ?? ''}
+              onChange={e => change(h.key, e.target.value)} />
+          </label>
+        ))}
+        <p className="hint">Takes effect the next time a night is started from a phone.</p>
+      </section>
+
       <section className="panel">
         <h2>The square code for the Act 1 slide</h2>
         <p className="why">Save the picture and drop it on the slide. Guests scan it, type their name, and get their character.</p>
@@ -228,6 +203,38 @@ export default function Night() {
       </section>
 
       <section className="panel">
+        <h2>Sir Irwin's two awards</h2>
+        <p className="why">At the end, Sir Irwin's Favorite always goes to Jessa's character and his Least Favorite to Jake's. Type the name each of them will type on their phone. Left empty, the game looks for Jessa and Jake.</p>
+        {IRWIN_SEATS.map(h => (
+          <label key={h.key} className="field">
+            <span>{h.label}</span>
+            <input type="text" maxLength={30} placeholder={h.placeholder} value={draft[h.key] ?? ''}
+              onChange={e => change(h.key, e.target.value)} />
+          </label>
+        ))}
+      </section>
+
+      <Replay game={game} onSave={patch => { setStatus('saving'); saveGame(patch, latest.current).then(() => setStatus('saved')).catch(() => setStatus('error')) }} />
+
+      <section className="panel">
+        <h2>The old party box</h2>
+        <p className="hint">The big Start button has its own box now, so leave this one alone. It only matters for a night started from the terminal, and while it is ticked the Game test tab is off.</p>
+        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats’ leans, the bag packing and the drawing pictures stay sealed, and where a secret would show, a rehearsal shows a note in square brackets instead. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
+        <label className="field check">
+          <input type="checkbox" checked={draft.party_night === true} onChange={e => change('party_night', e.target.checked)} />
+          <span>This is the party night</span>
+        </label>
+        <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
+      </section>
+
+      <section className="panel">
+        <h2>Try the games</h2>
+        <p className="why">Every game in Acts 4 and 6, and the Parlour Games, to try before the night on the device it runs on. A test never touches the party night.</p>
+        <p className="night-line"><Link className="primary dl" to="/game-test">Game test</Link></p>
+        <p className="night-line"><Link className="primary dl" to="/postmortem">Postmortem: how the last run went</Link></p>
+      </section>
+
+      <section className="panel">
         <h2>After the party</h2>
         <p className="why">The morning after, open the case that ran: who did it, to whom, why, and everything the game kept from you. It stays shut until the party night’s reveal has played, on the party day or later.</p>
         <p className="night-line"><Link className="ghost dl" to="/morning">The morning after</Link></p>
@@ -242,6 +249,7 @@ export default function Night() {
         </ol>
         <p className="hint">If a phone dies, that person types the same name on any other phone and their character follows.</p>
       </section>
+      </details>
     </main>
   )
 }

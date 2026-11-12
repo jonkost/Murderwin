@@ -256,7 +256,8 @@ game; it serves the lights and the speakers.
 *The big Start button (12 Nov).* This is the whole setup once every machine
 is in its place:
 
-1. On your phone, open the game. Tap the big button. With the box **This is
+1. On your phone, open the game (or open the workshop: the same button is
+   first on Home and on Game night). Tap the big button. With the box **This is
    the real night** unticked it says Start a run-through, which is a
    rehearsal; ticked, it says Start the REAL night, and it only works on the
    party day. If an old night is still on, the same button is at the bottom

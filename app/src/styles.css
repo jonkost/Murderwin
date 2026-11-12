@@ -574,3 +574,10 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .pm-here li, .pm-all li { border: 1px solid var(--line); border-radius: var(--r-control); padding: 0.55rem 0.8rem; background: var(--field); overflow-wrap: anywhere; }
 .pm-when { display: block; font-size: 0.85rem; opacity: 0.75; }
 .gt-feedback input[type="date"] { width: 100%; font-size: 1.05rem; min-height: 48px; }
+
+/* ---- The big Start button (12 Nov 2026) ---- */
+.start-panel { border-color: var(--accent); }
+.start-big { display: block; width: 100%; max-width: 28rem; min-height: 4.5rem; font-size: 1.5rem; font-weight: 700; border-radius: var(--r-panel); margin: 0.6rem 0; }
+.start-real { font-size: 1.1rem; }
+.start-done { font-weight: 600; margin: 0.6rem 0 0; }
+.panel.more .panel.inner { border: 0; padding: 0; margin: 0.8rem 0 1.2rem; background: none; box-shadow: none; }
