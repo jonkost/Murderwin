@@ -295,7 +295,8 @@ test('the phone on the night wears the approved look: the seal and no act’s na
   assert.ok(step.includes("quiet={onWay ? `Cannot scan? I am with ${name}` : 'Not yet, call me later'}"), 'every working control stays')
   assert.ok(step.includes('onQuiet={() => (onWay ? call(callMeet, { cat: lights.cat }) : call(callNotYet, {}))}'))
   assert.ok(step.includes('onGo={() => { goNow(); openScanner() }}'), 'the one button opens the camera inside the app')
-  assert.ok(step.includes("onGo={() => { onMet?.(lights.cat); call(callLeave, {}) }}"), 'Done after a cat: the small win, and the house is told')
+  assert.ok(step.includes("onGo={async () => { const cat = lights.cat; if (await call(callLeave, {})) onMet?.(cat) }}"), 'Done after a cat: the house is told, and the small win comes when it has heard (never over an error)')
+  assert.ok(cards.includes("try { await fn({ nightId, ...args }); return true } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')); return false } finally { setBusy(false) }"))
   assert.ok(!/eyebrow|Your next step|lights\.text|lights\.title/.test(step), 'no label, no second sentence')
   const { CAT_SHORT } = await import('../src/lib/rooms.js')
   assert.deepEqual(CAT_SHORT, { granolia: 'Granolia', zimothy: 'Zimothy', boo: 'Boo', salem: 'Salem', irwin: 'Sir Irwin' }, 'Scan Boo’s code, never Scan Miss’s code')
@@ -306,7 +307,10 @@ test('the phone on the night wears the approved look: the seal and no act’s na
   assert.ok(room.includes("quiet={going && !play ? 'Can’t scan? We’re here' : null} onQuiet={scan}"), 'the group that cannot scan still gets in')
   assert.ok(!/Round \$\{|step\.hook|step\.chime|eyebrow/.test(room), 'no round number, no hook, no chime line')
   // a cat is talking: its card first, Done under it, then the small win over the page with the four faces
-  assert.ok(rest.includes("const reading = look && lights?.step === 'with'") && rest.indexOf('{cards.map(c => <Card') < rest.indexOf('{reading && step}'))
+  assert.ok(rest.includes("const reading = look && lights?.step === 'with'"))
+  // the cat's own card, Done right under it, then the older cats' cards: Done is never buried under them
+  assert.ok(rest.includes("const talking = reading ? cards.findIndex(c => c.kind === 'testimony' && c.cat === lights.cat) : -1"))
+  assert.ok(rest.indexOf('{first.map(card)}') < rest.indexOf('{reading && step}') && rest.indexOf('{reading && step}') < rest.indexOf('{older.map(card)}'))
   assert.ok(rest.includes('{met && createPortal(<SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />, document.body)}'), 'over the whole phone, the camera button included')
   const { metCats } = await import('../src/lib/night.js')
   const session = { cards: [{ kind: 'testimony', act: 2, cat: 'boo' }, { kind: 'testimony', act: 2, cat: 'salem', note: true }, { kind: 'testimony', act: 4, cat: 'zimothy' }, { kind: 'notice', act: 2 }] }
@@ -371,4 +375,32 @@ test('the phone’s Rules tab is the cards to swipe: one idea a card, a picture 
   assert.ok(rest.includes("{shown === 'rules' && (lookOn('rules') ? <RulesSwipe /> : <Rules content={content} />)}"))
   assert.equal(RULE_CARDS.length, 9)
   for (const c of RULE_CARDS) assert.ok(PICTURES[c.who] && words(c.title) <= 4, c.title)
+})
+
+// From the review of 12 Nov 2026, before the practice night: the phone on a short screen, and the layers.
+test('a short phone still shows the one button, the small win’s Done never covers the faces, and the camera button steps aside', () => {
+  const css = read('../src/look/look.css')
+  // the room above the Now card shrinks with the phone's own height, so the button and Not yet stay above the tab bar
+  assert.ok(css.includes('--peek: min(254px, 65.1vw, max(64px, calc(var(--vh) * 100 - 500px)));'), 'as drawn on a tall phone, less on a short one')
+  assert.ok(css.includes('@supports (height: 1svh) { .lk-now-wrap { --vh: 1svh; } }'), 'the height that is really in view')
+  assert.ok(css.includes('.lk-now-wrap.peeked { padding-top: var(--peek); }'))
+  assert.ok(css.includes('--ch: min(274px, 70.3vw, calc(var(--peek) / 0.71 - 6px));'), 'and the cat shrinks with it')
+  // the small win: the cat's room comes from the phone's height, and Done is last in the column, never laid over the faces
+  assert.ok(css.includes('--art: clamp(110px, calc(var(--vh) * 100 - 430px), 286px);'))
+  assert.ok(css.includes('.lk-smallwin > .lk-go { flex: none; margin-top: auto;') && !/\.lk-smallwin > \.lk-go \{[^}]*position: absolute/.test(css))
+  // the phone's own sizes are px and vw: an older iPhone does not know container units
+  const phone = css.slice(css.indexOf('/* ---- the phone'), css.indexOf('/* ---- celebrate(level)'))
+  const guest = phone.replace(/\.lk-smallwin \{[^}]*\}/, '') // the small win is a container only for its confetti
+  assert.ok(!/\d(cqw|cqh)/.test(guest), 'no container units in what a guest’s phone lays itself out with')
+  // the camera button never sits over a page laid over the tabs, or over a room's game
+  const scan = read('../src/screens/scan.css')
+  assert.ok(scan.includes('body:has(.rest .overlay) .scan-button, body:has(.lk-sheet) .scan-button, body:has(.salem-play) .scan-button { display: none; }'))
+  const app = read('../src/App.jsx')
+  assert.ok(app.includes("const inGame = n.act === 4 && !!s?.act4?.here && !s?.act4?.paid") && app.includes("scanOn = !over && !heldCard && lock !== 'over' && !inGame"))
+  // a refusal from a scan goes when the guest's step moves on, whichever way they got in
+  assert.ok(app.includes("const stepKey = [night.data?.act, sd?.lights?.step, sd?.lights?.cat, sd?.act4?.room, sd?.act4?.here, sd?.act4?.paid].join('|')"))
+  assert.ok(app.includes('useEffect(() => { setMeetNote(null) }, [stepKey])'))
+  // a pause never moves the tab bar: no filter on the shell that holds the fixed parts
+  const styles = read('../src/styles.css')
+  assert.ok(styles.includes('.paused-shell { opacity: 0.55; pointer-events: none; }') && styles.includes('.paused-shell :is(.sheet, .top, .moment, .window) { filter: grayscale(0.4); }'))
 })

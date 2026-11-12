@@ -133,6 +133,12 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
   const lead = over ? null : night.act >= 1 ? beatLine(night) ?? 'Talk to people' : 'The game will find you'
   const reading = look && lights?.step === 'with'
   const step = lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} onMet={look ? setMet : null} />
+  // the cat's own card, then Done right under it, then the older cats' cards (they never leave Now): from
+  // the second cat on, a Done under them all would be off the screen, and the cat's queue would wait on it
+  const talking = reading ? cards.findIndex(c => c.kind === 'testimony' && c.cat === lights.cat) : -1
+  const first = reading ? cards.slice(0, talking + 1) : cards
+  const older = reading ? cards.slice(talking + 1) : []
+  const card = c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />
   return (
     <div className={look ? 'now now-look' : 'now'}>
       {/* over the whole phone, the camera button and the tabs included, until Done */}
@@ -150,8 +156,9 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
           <p className="quiet-line">{quiet}</p>
         </div>
       )}
-      {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />)}
+      {first.map(card)}
       {reading && step}
+      {older.map(card)}
     </div>
   )
 }

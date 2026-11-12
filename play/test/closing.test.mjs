@@ -97,7 +97,7 @@ test('The End on every phone: on top of Now, the result under it, the tabs still
   assert.equal(lockFor(over, {}), 'over')
   const rest = src('screens/Rest.jsx')
   const now = rest.slice(rest.indexOf('function Now('), rest.indexOf('function You('))
-  assert.ok(now.indexOf('{over && <PhoneEnd />}') >= 0 && now.indexOf('{over && <PhoneEnd />}') < now.indexOf('cards.map(c => <Card'), 'The End first, the result card under it')
+  assert.ok(now.indexOf('{over && <PhoneEnd />}') >= 0 && now.indexOf('{over && <PhoneEnd />}') < now.indexOf('{first.map(card)}'), 'The End first, the result card under it')
   assert.ok(rest.includes("const newest = [over && 'the-end',"), 'the phone goes to Now once at The End')
   assert.ok(rest.includes('<nav className='), 'the tabs stay')
   assert.ok(src('App.jsx').includes("over={lock === 'over'}"))

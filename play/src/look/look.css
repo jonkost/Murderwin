@@ -209,7 +209,7 @@
 .lk-phone-head { flex: none; height: 76px; box-sizing: border-box; padding: 14px 16px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .lk-phone-seal { width: 46px; height: 46px; display: block; }
 .lk-phone-head.titled { height: 92px; padding: 20px 16px 0 20px; }
-.lk-phone-head .lk-big { font-size: min(46px, 11.8cqw); }
+.lk-phone-head .lk-big { font-size: min(46px, 11.8vw); }
 .lk-phone-head.titled + .lk-phone-body { padding-top: 12px; }
 .lk-scan { width: 48px; height: 48px; flex: none; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--lk-brass); background: #0c2634; color: var(--lk-brass-hi); display: flex; align-items: center; justify-content: center; }
 .lk-scan svg { width: 24px; height: 24px; display: block; }
@@ -224,7 +224,7 @@
 /* a parchment card: the brass double line, Manor-blue ink */
 .lk-pcard { position: relative; box-sizing: border-box; background: var(--lk-paper); color: var(--lk-blue); border-radius: 14px; padding: 30px 22px 24px; display: flex; flex-direction: column; gap: 20px;
   box-shadow: inset 0 0 0 2px var(--lk-brass), inset 0 0 0 5px var(--lk-paper), inset 0 0 0 6px rgba(166, 162, 83, 0.75), 0 18px 30px rgba(0, 0, 0, 0.45); }
-.lk-lead { margin: 0; font-family: var(--lk-display); font-weight: 400; font-size: min(52px, 13.3cqw); line-height: 1.04; color: var(--lk-blue); text-wrap: balance; }
+.lk-lead { margin: 0; font-family: var(--lk-display); font-weight: 400; font-size: min(52px, 13.3vw); line-height: 1.04; color: var(--lk-blue); text-wrap: balance; }
 .lk-press { transition: transform 110ms ease; }
 .lk-press:active { transform: scale(0.97); }
 /* the one button: wax red, pulsing softly */
@@ -237,10 +237,14 @@
 .lk-quiet { display: block; width: 100%; min-height: 44px; margin: -8px 0 -10px; padding: 4px; background: none; border: 0; font-family: inherit; font-size: 17px; font-weight: 600; color: var(--lk-wine); text-decoration: underline; text-decoration-color: rgba(89, 47, 50, 0.45); text-underline-offset: 0.2em; cursor: pointer; }
 
 /* 7. the Now tab: one card, its room's cat looking over the top */
-.lk-now-wrap { position: relative; isolation: isolate; }
-.lk-now-wrap.peeked { padding-top: min(254px, 65.1cqw); }
+/* The room above the card is the drawing's 254px on a tall phone and less on a short one (--peek), worked
+   out from the phone's own height, so the one button and Not yet are never under the tab bar. The phone's
+   sizes are in px and vw, not container units: an older iPhone does not know those. */
+.lk-now-wrap { position: relative; isolation: isolate; --vh: 1vh; --peek: min(254px, 65.1vw, max(64px, calc(var(--vh) * 100 - 500px))); }
+@supports (height: 1svh) { .lk-now-wrap { --vh: 1svh; } }
+.lk-now-wrap.peeked { padding-top: var(--peek); }
 /* the cat's lowest third is behind the card, whatever its shape */
-.lk-now-wrap > .lk-cat { left: calc(50% + min(57px, 14.6cqw)); top: calc(min(254px, 65.1cqw) - 0.71 * var(--w) / var(--r)); --cw: min(232px, 59.5cqw); --ch: min(274px, 70.3cqw); margin-left: calc(var(--w) / -2); z-index: -1; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5)); }
+.lk-now-wrap > .lk-cat { left: calc(50% + min(57px, 14.6vw)); top: calc(var(--peek) - 0.71 * var(--w) / var(--r)); --cw: min(232px, 59.5vw); --ch: min(274px, 70.3vw, calc(var(--peek) / 0.71 - 6px)); margin-left: calc(var(--w) / -2); z-index: -1; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.5)); }
 .lk-clock { margin: -6px 0 0; font-family: var(--lk-display); color: var(--lk-red); text-align: center; }
 .lk-clock b { display: inline-block; font-weight: 400; font-size: 64px; line-height: 1; animation: lk-beat 1s ease-in-out infinite; }
 @keyframes lk-beat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.14); } 30% { transform: scale(1); } }
@@ -264,7 +268,7 @@
 
 /* 8. the vote: The Vote, the time left as a bar, three rows, Lock in */
 .lk-vote { display: flex; flex-direction: column; }
-.lk-vote-title { font-size: min(46px, 11.8cqw); margin: 6px 4px 14px; }
+.lk-vote-title { font-size: min(46px, 11.8vw); margin: 6px 4px 14px; }
 .lk-timebar { display: flex; align-items: center; gap: 12px; margin: 0 4px 14px; }
 .lk-timebar i { flex: 1; height: 8px; border-radius: 4px; background: var(--lk-deep); overflow: hidden; display: block; }
 .lk-timebar b { display: block; height: 100%; background: var(--lk-brass); border-radius: 4px; transition: width 1s linear; }
@@ -278,8 +282,8 @@
 .lk-mark.empty { background: #e3d7bd; color: var(--lk-wine); }
 .lk-row-words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .lk-row-label { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lk-wine); }
-.lk-row-pick { font-family: var(--lk-display); font-size: min(28px, 7.2cqw); line-height: 1.05; color: var(--lk-blue); overflow-wrap: anywhere; }
-.lk-row-pick.long { font-size: min(21px, 5.4cqw); line-height: 1.1; }
+.lk-row-pick { font-family: var(--lk-display); font-size: min(28px, 7.2vw); line-height: 1.05; color: var(--lk-blue); overflow-wrap: anywhere; }
+.lk-row-pick.long { font-size: min(21px, 5.4vw); line-height: 1.1; }
 .lk-row-pick.empty { font-family: var(--serif); font-style: italic; font-size: 20px; color: #7a6c58; }
 .lk-row-sub { font-family: var(--serif); font-weight: 600; font-size: 15px; line-height: 1.1; color: var(--lk-wine); }
 .lk-row-go { width: 24px; height: 24px; flex: none; color: var(--lk-wine); }
@@ -289,7 +293,7 @@
 @keyframes lk-pulse-brass { 0%, 100% { box-shadow: 0 0 0 0 rgba(214, 207, 134, 0.6); } 50% { box-shadow: 0 0 0 12px rgba(214, 207, 134, 0); } }
 .lk-locked { text-align: center; align-items: center; gap: 14px; padding: 34px 22px 30px; }
 .lk-locked img { width: 120px; height: 120px; filter: drop-shadow(0 8px 12px rgba(60, 10, 14, 0.45)); animation: lk-thunk 0.5s cubic-bezier(0.5, 0, 0.9, 0.4) 1; }
-.lk-locked .lk-lead { font-size: min(34px, 8.7cqw); }
+.lk-locked .lk-lead { font-size: min(34px, 8.7vw); }
 @keyframes lk-thunk { 0% { transform: scale(2.6) rotate(-24deg); opacity: 0; } 70% { transform: scale(0.92) rotate(-12deg); opacity: 1; } 100% { transform: scale(1) rotate(-12deg); } }
 /* the picker: a sheet over the phone */
 .lk-sheet { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: rgba(0, 12, 18, 0.72); animation: lk-fade 160ms ease-out 1; }
@@ -306,18 +310,22 @@
 @keyframes lk-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lk-up { from { transform: translate3d(0, 30%, 0); opacity: 0.4; } to { transform: none; opacity: 1; } }
 
-/* 9. a small win, filling the phone */
-.lk-smallwin { position: fixed; inset: 0; z-index: 60; isolation: isolate; overflow: hidden; container-type: size; background: var(--lk-blue); color: var(--lk-paper); display: flex; flex-direction: column; align-items: center; }
-.lk-smallwin.framed { position: absolute; }
+/* 9. a small win, filling the phone. Its sizes come from the phone's own height (--art is the cat's
+   room), so on a short phone the cat is smaller and Done, last in the column, never covers the faces. */
+.lk-smallwin { position: fixed; inset: 0; z-index: 60; isolation: isolate; overflow: hidden; container-type: size; box-sizing: border-box; background: var(--lk-blue); color: var(--lk-paper); display: flex; flex-direction: column; align-items: center;
+  --vh: 1vh; --art: clamp(110px, calc(var(--vh) * 100 - 430px), 286px);
+  padding: clamp(28px, calc(var(--vh) * 13.3), 112px) 16px max(24px, calc(16px + env(safe-area-inset-bottom, 0px))); }
+@supports (height: 1svh) { .lk-smallwin { --vh: 1svh; } }
+.lk-smallwin.framed { position: absolute; --art: 286px; padding-top: 112px; padding-bottom: 56px; }
 .lk-smallwin .lk-ground.tall .lk-veil { background: rgba(0, 25, 37, 0.6); }
 .lk-smallwin .lk-ground.tall .lk-vignette { background: radial-gradient(ellipse at 50% 30%, rgba(214, 207, 134, 0.24) 0%, rgba(0, 25, 37, 0) 48%, rgba(0, 9, 14, 0.74) 100%); }
 .lk-smallwin .lk-confetti, .lk-smallwin .lk-twinkle { z-index: -1; }
-.lk-smallwin-art { position: relative; flex: none; margin-top: 13.3cqh; width: 76.9cqw; height: 33.9cqh; }
-.lk-smallwin-art .lk-cat { left: 50%; top: 50%; --cw: 76.9cqw; --ch: 33.9cqh; margin: calc(var(--w) / var(--r) / -2) 0 0 calc(var(--w) / -2); filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.55)); }
-.lk-smallwin .lk-stamp { left: 73%; top: 77%; width: 26.7cqw; height: 26.7cqw; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5)); }
-.lk-smallwin > .lk-big { margin: 5.9cqh 20px 0; text-align: center; font-size: min(40px, 10.26cqw); line-height: 1.06; text-shadow: 0 6px 18px rgba(0, 0, 0, 0.6); }
+.lk-smallwin-art { position: relative; flex: none; width: min(300px, 76.9vw); height: var(--art); }
+.lk-smallwin-art .lk-cat { left: 50%; top: 50%; --cw: min(300px, 76.9vw); --ch: var(--art); margin: calc(var(--w) / var(--r) / -2) 0 0 calc(var(--w) / -2); filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.55)); }
+.lk-smallwin .lk-stamp { left: 73%; top: 77%; width: min(104px, calc(var(--art) * 0.364)); height: min(104px, calc(var(--art) * 0.364)); filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5)); }
+.lk-smallwin > .lk-big { margin: clamp(14px, calc(var(--vh) * 5.9), 50px) 4px 0; text-align: center; font-size: min(40px, 10.26vw); line-height: 1.06; text-shadow: 0 6px 18px rgba(0, 0, 0, 0.6); }
 .lk-smallwin > .lk-big span { display: block; }
-.lk-faces { list-style: none; margin: 3.9cqh 0 0; padding: 0; display: flex; justify-content: center; gap: 14px; }
+.lk-faces { list-style: none; margin: clamp(12px, calc(var(--vh) * 3.9), 33px) 0 0; padding: 0; flex: none; display: flex; justify-content: center; gap: 14px; }
 .lk-faces li { position: relative; width: 62px; height: 62px; box-sizing: border-box; border-radius: 16px; padding: 5px; }
 .lk-faces li.met { border: 2px solid var(--lk-brass); background: var(--lk-paper); }
 .lk-faces li.unmet { border: 2px dashed #5d7a89; background: #0c2634; }
@@ -328,7 +336,7 @@
 .lk-face > span { position: relative; display: block; overflow: hidden; width: min(100%, calc(100% * var(--r, 1))); aspect-ratio: var(--r, 1); }
 .lk-faces b { position: absolute; right: -8px; top: -8px; width: 22px; height: 22px; border-radius: 50%; background: var(--lk-red); color: var(--lk-paper); display: flex; align-items: center; justify-content: center; }
 .lk-faces b svg { width: 13px; height: 13px; display: block; }
-.lk-smallwin > .lk-go { position: absolute; left: 16px; right: 16px; bottom: max(56px, calc(24px + env(safe-area-inset-bottom, 0px))); width: auto; animation: none; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); }
+.lk-smallwin > .lk-go { flex: none; margin-top: auto; animation: none; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); }
 
 /* ---- celebrate(level): the little wins' pieces (lib/celebrate.js) ------------- */
 

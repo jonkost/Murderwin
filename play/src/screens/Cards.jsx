@@ -118,10 +118,11 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
   if (!lights) return null
   const onWayKey = `onmyway-${lights.cat}`
   const onWay = lights.step === 'go' && !!notes?.seen?.[onWayKey]
+  // true when the house heard it (a preview hears everything)
   const call = async (fn, args) => {
-    if (nightId === 'preview') return
+    if (nightId === 'preview') return true
     setBusy(true); setMsg(null)
-    try { await fn({ nightId, ...args }) } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')) } finally { setBusy(false) }
+    try { await fn({ nightId, ...args }); return true } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')); return false } finally { setBusy(false) }
   }
   const goNow = () => { if (uid && uid !== 'preview') writeNotes(uid, { seen: { [onWayKey]: true } }).catch(() => {}) }
   const short = (lights.catName ?? 'the cat').split(' ')[0]
@@ -140,7 +141,7 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
     )
     // the cat's own card is above this one: read it, then Done, and the small win (You met ...)
     if (lights.step === 'with') return (
-      <NowCard lead={`${name} is talking to you`} button="Done" busy={busy} onGo={() => { onMet?.(lights.cat); call(callLeave, {}) }}>{trouble}</NowCard>
+      <NowCard lead={`${name} is talking to you`} button="Done" busy={busy} onGo={async () => { const cat = lights.cat; if (await call(callLeave, {})) onMet?.(cat) }}>{trouble}</NowCard>
     )
     const lead = lights.variant === 'supper' ? 'Supper is in the Orangerie' : lights.step === 'done' ? 'Back to the Parlour' : 'Wait in the Parlour'
     return <NowCard who="irwin" n={lights.step === 'done' ? 2 : 0} lead={lead}>{trouble}</NowCard>

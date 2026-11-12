@@ -19,6 +19,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 .scan-button svg { width: 24px; height: 24px; display: block; }
+/* The button sits over the tabs only. A page laid over them (a Parlour Game in Act 4, Allow again, the
+   vote's picker) is drawn inside the page's own layer, under this button, so the button steps aside. */
+body:has(.rest .overlay) .scan-button, body:has(.lk-sheet) .scan-button, body:has(.salem-play) .scan-button { display: none; }
 .scan-button:active { transform: scale(0.96); }
 
 .viewfinder {

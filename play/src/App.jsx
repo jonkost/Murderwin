@@ -81,6 +81,11 @@ export default function App() {
     try { const u = new URL(window.location.href); u.searchParams.delete('meet'); window.history.replaceState(null, '', u) } catch { /* the address stays; harmless */ }
     callMeet({ nightId, cat }).then(() => setMeetNote(null)).catch(e => setMeetNote(troubleLine(e, 'The cat did not answer. Try the code again.')))
   }, [activeKey, nightId])
+  // A refusal ("Not this room") belongs to the step it was said on. It goes when this guest's step moves
+  // on, whichever way they got there: a scan, Cannot scan?, a groupmate's scan, the chime, the next act.
+  const sd = session.data
+  const stepKey = [night.data?.act, sd?.lights?.step, sd?.lights?.cat, sd?.act4?.room, sd?.act4?.here, sd?.act4?.paid].join('|')
+  useEffect(() => { setMeetNote(null) }, [stepKey])
 
   // Off the network, or the house has not confirmed the night for twenty
   // seconds (a dead LAN looks exactly like this): say so, and since when.
@@ -206,7 +211,9 @@ export default function App() {
     // the cards under the tabs are told whether the night is a rehearsal: their
     // Rehearsal text tag never shows on the party night (Cards.jsx, 29 Oct 2026).
     // Rest is the only way to those cards, so it never goes without this.
-    scanOn = !over && !heldCard && lock !== 'over'
+    // never in a room's game: Salem's colors fill the phone there, and there is nothing to scan
+    const inGame = n.act === 4 && !!s?.act4?.here && !s?.act4?.paid
+    scanOn = !over && !heldCard && lock !== 'over' && !inGame
     base = <RehearsalNight.Provider value={isRehearsalNight(n)}><Rest uid={uid} night={n} session={s} content={content.data} notes={notes} ui={ui} serverNow={serverNow} onTour={() => setTour(true)} meetNote={meetNote} ballot={ballot} over={lock === 'over'} /></RehearsalNight.Provider>
   }
   return <>{banner}{strip}<div className={over ? 'beneath covered' : heldCard ? 'beneath paused-shell' : 'beneath'} inert={over || heldCard || undefined} aria-hidden={over || undefined}>{base}</div>{scanOn && <ScanButton nightId={nightId} onNote={setMeetNote} />}{top}</>
