@@ -233,6 +233,7 @@
 .lk-go:disabled { opacity: 0.6; animation: none; }
 @keyframes lk-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(191, 25, 37, 0.55); } 50% { box-shadow: 0 0 0 10px rgba(191, 25, 37, 0); } }
 /* a working control under the button (Not yet) */
+.lk-pcard .trouble { margin: 0; font-size: 16px; line-height: 1.3; color: #8f1d24; }
 .lk-quiet { display: block; width: 100%; min-height: 44px; margin: -8px 0 -10px; padding: 4px; background: none; border: 0; font-family: inherit; font-size: 17px; font-weight: 600; color: var(--lk-wine); text-decoration: underline; text-decoration-color: rgba(89, 47, 50, 0.45); text-underline-offset: 0.2em; cursor: pointer; }
 
 /* 7. the Now tab: one card, its room's cat looking over the top */
@@ -280,6 +281,7 @@
 .lk-row-pick { font-family: var(--lk-display); font-size: min(28px, 7.2cqw); line-height: 1.05; color: var(--lk-blue); overflow-wrap: anywhere; }
 .lk-row-pick.long { font-size: min(21px, 5.4cqw); line-height: 1.1; }
 .lk-row-pick.empty { font-family: var(--serif); font-style: italic; font-size: 20px; color: #7a6c58; }
+.lk-row-sub { font-family: var(--serif); font-weight: 600; font-size: 15px; line-height: 1.1; color: var(--lk-wine); }
 .lk-row-go { width: 24px; height: 24px; flex: none; color: var(--lk-wine); }
 .lk-lock { margin-top: 14px; width: 100%; height: 68px; border: 0; border-radius: 14px; background: var(--lk-red); color: var(--lk-paper); font-family: var(--lk-display); font-size: 30px; line-height: 1; cursor: pointer; }
 .lk-lock:disabled { background: #50242a; color: rgba(241, 232, 214, 0.5); }
@@ -297,6 +299,8 @@
 .lk-picks { list-style: none; margin: 0; padding: 4px 10px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 .lk-pick { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 8px; background: none; border: 0; border-bottom: 1px solid rgba(166, 162, 83, 0.45); text-align: left; font-family: var(--serif); font-weight: 600; font-size: 18px; line-height: 1.2; color: var(--lk-ink); cursor: pointer; }
 .lk-pick:active { background: rgba(166, 162, 83, 0.2); }
+.lk-pick > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lk-pick small { font-weight: 400; font-size: 14px; color: #6a5b48; }
 .lk-pick .lk-head, .lk-pick .lk-mark { width: 48px; height: 48px; border-radius: 10px; }
 .lk-pick .lk-mark { font-size: 24px; }
 @keyframes lk-fade { from { opacity: 0; } to { opacity: 1; } }

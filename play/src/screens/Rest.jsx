@@ -5,12 +5,14 @@ import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
 import { Ballot, BallotSent } from './Windows'
 import { beatLine } from '../lib/flow'
-import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, voteIn, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
+import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, voteIn, metCats, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
 import Act4 from './Act4'
 import Spoken from './Spoken'
 import Allow from './Allow'
 import TabIcon from './TabIcon'
 import { PhoneEnd } from './Closing'
+import { lookOn } from '../look/look'
+import { NowCard, SmallWin } from '../look/parts'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -45,7 +47,6 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
   const character = characterById(content, session.characterId)
   const script = actScript(content, night.act)
-  const act = ACTS[night.act]
   const tabs = session.host ? [...TABS, { key: 'host', label: 'Host' }] : TABS
   const shown = tabs.some(t => t.key === tab) ? tab : 'you'
   const now = nowCards(session, notes, night.act, { over })
@@ -60,21 +61,15 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
   return (
     <main className="rest papered">
-      <header className="act">
-        {night.act >= 1 && act ? (
-          <>
-            <p className="act-num">Act {night.act} · {act.plain}</p>
-            <h1 className="act-name">{script.banner || act.name}</h1>
-          </>
-        ) : (
-          <>
-            <p className="act-num">Sirwin Manor</p>
-            <p className="act-objective">{ui.LOBBY}</p>
-          </>
-        )}
+      {/* The top of every tab (the look Jon approved, 12 Nov 2026): the seal, and the camera button top right
+          (ScanButton, mounted by App). No act's name. While the vote is open on Now, its title sits here. */}
+      <header className="top">
+        {ballot && !ballot.sent && shown === 'now'
+          ? <h1 className="top-title">The Vote</h1>
+          : <img className="top-seal" src={`${import.meta.env.BASE_URL}brand/seal.png`} alt="Sirwin Manor" />}
       </header>
 
-      <section className="sheet" aria-live="polite">
+      <section className={shown === 'now' ? 'sheet sheet-now' : 'sheet'} aria-live="polite">
         {shown === 'now' && <Now uid={uid} night={night} session={session} content={content} notes={notes} cards={now} lights={lights} rooms={rooms} meetNote={meetNote} serverNow={serverNow} ballot={ballot} over={over} objective={script.objective} />}
         {shown === 'you' && <You character={character} session={session} content={content} ui={ui} onTour={onTour} />}
         {shown === 'clues' && <Clues session={session} />}
@@ -111,21 +106,34 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
     : night.act >= 1 ? beatLine(night) ?? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.' // A5: the beat's own line where it has one
   const voting = ballot && !ballot.sent
   const locked = !voting && (!!ballot?.sent || voteIn(night, session))
+  // The look Jon approved (12 Nov 2026, docs/look-approved.html, screens 7 and 9). With nothing to do the
+  // phone is one card: the beat's own line where it has one (lib/flow.js), else Talk to people, Sir Irwin
+  // looking over it; no act's name, no second sentence. While a cat is talking its card comes first and the
+  // step's Done under it; Done brings the small win (You met Miss Boo LaRue, the four faces) over the page.
+  const look = lookOn('now')
+  const [met, setMet] = useState(null)
+  const idle = cards.length === 0 && !lights && !rooms && !voting && !locked
+  const lead = over ? null : night.act >= 1 ? beatLine(night) ?? 'Talk to people' : 'The game will find you'
+  const reading = look && lights?.step === 'with'
+  const step = lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} onMet={look ? setMet : null} />
   return (
-    <div className="now">
+    <div className={look ? 'now now-look' : 'now'}>
+      {met && <SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />}
       {over && <PhoneEnd />}
       {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />}
       {locked && <BallotSent />}
-      {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}
+      {!reading && step}
       {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
       {rooms && meetNote && <p className="trouble" role="status">{meetNote}</p>}
-      {cards.length === 0 && !lights && !rooms && !voting && !locked && (
+      {idle && look && lead && <NowCard who="irwin" n={night.act ?? 0} lead={lead.replace(/\.$/, '')} />}
+      {idle && !look && (
         <div className="quiet-now">
           {objective && !over && night.act >= 1 && <p className="quiet-lead">{objective}</p>}
           <p className="quiet-line">{quiet}</p>
         </div>
       )}
       {cards.map(c => <Card key={c.id} card={c} uid={uid} notes={notes} nightId={night.nightId} over={over} />)}
+      {reading && step}
     </div>
   )
 }

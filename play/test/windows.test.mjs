@@ -89,7 +89,8 @@ test('the vote is a card on Now with the tabs reachable: App hands the window to
   assert.match(now, /const voting = ballot && !ballot\.sent\n/)
   assert.match(now, /const locked = !voting && \(!!ballot\?\.sent \|\| voteIn\(night, session\)\)\n/)
   assert.match(now, /\{locked && <BallotSent \/>\}/)
-  assert.match(now, /cards\.length === 0 && !lights && !rooms && !voting && !locked && \(/, 'the quiet line stays away while the vote or its locked-in card is up')
+  assert.match(now, /const idle = cards\.length === 0 && !lights && !rooms && !voting && !locked\n/, 'the quiet card stays away while the vote or its locked-in card is up')
+  assert.match(now, /\{idle && look && lead && <NowCard /, 'and when it shows it is the one card')
   const { voteIn } = await import('../src/lib/night.js')
   const chose = { ballot: { murderer: 'a', motive: 3, victim: 'b', defaulted: false } }
   assert.equal(voteIn({ act: 7, beat: 'ballot' }, chose), true)

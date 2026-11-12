@@ -359,6 +359,7 @@ export function VoteCard({ people = PEOPLE, motives = MOTIVES, onLock = null, on
     if (sound) { unlock(); play('seal') }
     onLock?.(picks)
   }
+  // a person is { id, name } and, on the night, { sub: the guest's own name, portrait: their character's id }
   const person = id => people.find(p => p.id === id)
   const motive = n => motives.find(m => m.n === n)
   const shown = row => {
@@ -366,6 +367,7 @@ export function VoteCard({ people = PEOPLE, motives = MOTIVES, onLock = null, on
     if (v == null) return null
     return row.kind === 'person' ? person(v)?.name : motive(v)?.rhyme
   }
+  const subOf = row => (row.kind === 'person' && picks[row.key] != null ? person(picks[row.key])?.sub ?? null : null)
   if (locked) return <VoteLocked />
   const row = open ? ROWS.find(r => r.key === open) : null
   return (
@@ -384,10 +386,11 @@ export function VoteCard({ people = PEOPLE, motives = MOTIVES, onLock = null, on
             <li key={r.key}>
               <button type="button" className="lk-row lk-press" disabled={busy} onClick={() => setOpen(r.key)}>
                 {v == null ? <span className="lk-mark empty" aria-hidden="true">?</span>
-                  : r.kind === 'person' ? <Head id={v} /> : <span className="lk-mark" aria-hidden="true">{v}</span>}
+                  : r.kind === 'person' ? <Head id={person(v)?.portrait ?? v} /> : <span className="lk-mark" aria-hidden="true">{v}</span>}
                 <span className="lk-row-words">
                   <span className="lk-row-label">{r.label}</span>
                   <span className={`lk-row-pick${v == null ? ' empty' : (shown(r) ?? '').length > 18 ? ' long' : ''}`}>{shown(r) ?? 'Tap to choose'}</span>
+                  {subOf(r) && <span className="lk-row-sub">{subOf(r)}</span>}
                 </span>
                 <svg className="lk-row-go" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
@@ -403,7 +406,7 @@ export function VoteCard({ people = PEOPLE, motives = MOTIVES, onLock = null, on
             <ul className="lk-picks">
               {row.kind === 'person'
                 ? people.map(p => (
-                  <li key={p.id}><button type="button" className="lk-pick" onClick={() => choose(row, p.id)}><Head id={p.id} />{p.name}</button></li>
+                  <li key={p.id}><button type="button" className="lk-pick" onClick={() => choose(row, p.id)}><Head id={p.portrait ?? p.id} /><span>{p.name}{p.sub && <small>{p.sub}</small>}</span></button></li>
                 ))
                 : motives.map(m => (
                   <li key={m.n}><button type="button" className="lk-pick" onClick={() => choose(row, m.n)}><span className="lk-mark" aria-hidden="true">{m.n}</span>{m.rhyme}</button></li>

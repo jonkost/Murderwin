@@ -8,6 +8,10 @@ import { Questions } from './Windows'
 import Spoken from './Spoken'
 import { salemView, salemPassDue } from '../lib/salem'
 import { SalemCount, useSalemWins } from './SalemCount'
+import { CAT_SHORT } from '../lib/rooms'
+import { lookOn } from '../look/look'
+import { NowCard } from '../look/parts'
+import { openScanner } from './ScanButton'
 
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9).
 // The phone shows where the group goes this round (sessions/{uid}.act4,
@@ -58,6 +62,24 @@ export default function Act4({ step, session, nightId, uid, serverNow, notes }) 
       <div className="overlay" role="dialog" aria-modal="true" aria-label="Parlour Game">
         <Questions w={game} nightId={nightId} serverNow={serverNow} onDone={() => setGame(null)} />
       </div>
+    )
+  }
+  // The look Jon approved (12 Nov 2026, screen 7): until the group is in its room's game the phone is one
+  // card. Where to go, and the one button; the room's cat looks over the top. No round number, no hook, no
+  // chime line. Can't scan? stays for a phone that cannot. A waiting Parlour Game is the one button when
+  // the guest is free for it (never in a game room).
+  const inGame = room && step.here && !step.paid
+  if (lookOn('now') && !inGame) {
+    const play = free && games.length > 0
+    const going = !!room && !step.paid && !step.over
+    const lead = play ? 'A Parlour Game is waiting' : going ? `Go to ${room.name}` : step.over || step.paid ? 'Back to the Parlour' : 'Wait in the Parlour'
+    return (
+      <NowCard who={going ? room.cat : 'irwin'} n={step.round ?? 0} lead={lead} busy={busy}
+        button={play ? 'Play' : going ? `Scan ${CAT_SHORT[room.cat]}’s code` : null} icon={play ? null : 'scan'}
+        onGo={play ? () => setGame(games[0]) : openScanner}
+        quiet={going && !play ? 'Can’t scan? We’re here' : null} onQuiet={scan}>
+        {msg && <p className="trouble" role="status">{msg}</p>}
+      </NowCard>
     )
   }
   return (

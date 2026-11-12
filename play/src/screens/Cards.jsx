@@ -3,7 +3,10 @@ import { callMeet, callLeave, callNotYet, callLockIn } from '../firebase'
 import { writeNotes } from '../lib/hooks'
 import { faceUrl, buzzOnce } from '../lib/night'
 import { portraitUrls } from '../lib/content'
-import { catPictureUrl } from '../lib/rooms'
+import { catPictureUrl, CAT_SHORT } from '../lib/rooms'
+import { lookOn } from '../look/look'
+import { NowCard } from '../look/parts'
+import { openScanner } from './ScanButton'
 import { chime } from '../lib/permissions'
 import { troubleLine } from '../lib/trouble'
 import { TraceView } from './Kiosk'
@@ -102,7 +105,7 @@ export function Birthday({ seed }) {
 // the same button, no penalty); in the room, scan the code; read the cat and
 // tap Done. The phone buzzes once when it calls its guest. A guest whose
 // phone cannot scan taps "I am with …" in the room instead.
-export function LightsStep({ lights, uid, nightId, notes, note = null }) {
+export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = null }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
   const buzzKey = lights?.step === 'go' ? `lights-go-${lights.cat}-${lights.at?.seconds ?? ''}` : null
@@ -121,6 +124,26 @@ export function LightsStep({ lights, uid, nightId, notes, note = null }) {
   }
   const goNow = () => { if (uid && uid !== 'preview') writeNotes(uid, { seen: { [onWayKey]: true } }).catch(() => {}) }
   const short = (lights.catName ?? 'the cat').split(' ')[0]
+  // The look Jon approved (12 Nov 2026, docs/look-approved.html, screen 7): one card. Where to go, and the
+  // one button; the room's cat looks over the top. Every working control stays: Not yet, call me later
+  // (the same on every phone), and Cannot scan? once the guest is on the way. The scan button opens the
+  // camera inside the app (A12); a phone that cannot scan taps Cannot scan? in the room, as before.
+  if (lookOn('now')) {
+    const name = CAT_SHORT[lights.cat] ?? short
+    const trouble = msg || note ? <p className="trouble" role="status">{msg || note}</p> : null
+    if (lights.step === 'go') return (
+      <NowCard who={lights.cat} n={lights.at?.seconds ?? 0} lead={`Go to ${lights.room ?? 'the room'}`} button={`Scan ${name}’s code`} icon="scan" busy={busy}
+        onGo={() => { goNow(); openScanner() }}
+        quiet={onWay ? `Cannot scan? I am with ${name}` : 'Not yet, call me later'}
+        onQuiet={() => (onWay ? call(callMeet, { cat: lights.cat }) : call(callNotYet, {}))}>{trouble}</NowCard>
+    )
+    // the cat's own card is above this one: read it, then Done, and the small win (You met ...)
+    if (lights.step === 'with') return (
+      <NowCard lead={`${name} is talking to you`} button="Done" busy={busy} onGo={() => { onMet?.(lights.cat); call(callLeave, {}) }}>{trouble}</NowCard>
+    )
+    const lead = lights.variant === 'supper' ? 'Supper is in the Orangerie' : lights.step === 'done' ? 'Back to the Parlour' : 'Wait in the Parlour'
+    return <NowCard who="irwin" n={lights.step === 'done' ? 2 : 0} lead={lead}>{trouble}</NowCard>
+  }
   return (
     <section className={`dealt lights lights-${lights.step}`}>
       <p className="eyebrow">Your next step</p>

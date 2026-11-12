@@ -1,6 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Viewfinder from './Viewfinder'
 import './scan.css'
+
+// The Now card's one button (Scan Salem's code) opens the same viewfinder: it
+// asks by a window event, so the card needs to know nothing about this button.
+// With no button on the page (a held card, the end) nothing happens, and the
+// card's own "Cannot scan?" still works.
+export const SCAN_OPEN = 'scan-open'
+export function openScanner() {
+  try { window.dispatchEvent(new Event(SCAN_OPEN)) } catch { /* no page */ }
+}
 
 // The camera inside the app (handoff 11 Nov 2026, A12): a small round button,
 // top right, on every tab. A tap opens the full-screen viewfinder, and only
@@ -10,6 +19,11 @@ import './scan.css'
 // drawing, the blackout or a pause, and taking it away stops the camera.
 export default function ScanButton({ nightId, onNote = () => {} }) {
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const on = () => setOpen(true)
+    window.addEventListener(SCAN_OPEN, on)
+    return () => window.removeEventListener(SCAN_OPEN, on)
+  }, [])
   return (
     <>
       <button type="button" className="scan-button" aria-label="Scan a code" onClick={() => setOpen(true)}>

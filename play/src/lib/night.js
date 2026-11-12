@@ -228,6 +228,13 @@ export function nowCards(session, notes, act, { over = false } = {}) {
     .reverse()
 }
 
+// The cats this guest has met in Act 2 (each left a card), for the four faces
+// on the small win. `also`: the one being met right now.
+export function metCats(session, also = null) {
+  const met = cardsOf(session).filter(c => c.kind === 'testimony' && c.act === 2 && !c.note && c.cat).map(c => c.cat)
+  return [...new Set(also ? [...met, also] : met)]
+}
+
 // This phone's result card (Act 7), whenever it was dealt. Null until the results.
 export function resultCard(session) {
   return cardsOf(session).find(c => c.kind === 'result') ?? null

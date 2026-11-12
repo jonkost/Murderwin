@@ -7,6 +7,8 @@ import { THANKS, answerOutcome, outcomeForError } from '../lib/windows'
 import { troubleLine } from '../lib/trouble'
 import { Seal } from './Moments'
 import { HostLine, Result } from './Cards'
+import { lookOn } from '../look/look'
+import { VoteCard, VoteLocked } from '../look/parts'
 
 // The moments when every phone lights up at once: a Parlour Game and the
 // vote. The same on every phone, measured against the server's clock.
@@ -107,6 +109,7 @@ export function Questions({ w, nightId, serverNow, onDone }) {
 const EMPTY_DRAFT = { step: 0, pick: { murderer: null, motive: null, victim: null } }
 
 export function Ballot({ w, night, session, content, nightId, serverNow, onDone, card = false, draft = null, onDraft = null }) {
+  useTick(500)
   const [local, setLocal] = useState(EMPTY_DRAFT)
   const { step, pick } = onDraft ? (draft ?? EMPTY_DRAFT) : local
   const put = (next) => (onDraft ? onDraft(next) : setLocal(next))
@@ -115,7 +118,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const people = useMemo(() => Object.entries(night.roster ?? {})
-    .map(([key, r]) => ({ key, name: r.name, character: characterById(content, r.characterId)?.name ?? '' }))
+    .map(([key, r]) => ({ key, name: r.name, characterId: r.characterId ?? null, character: characterById(content, r.characterId)?.name ?? '' }))
     .sort((a, b) => a.name.localeCompare(b.name)), [night.roster, content])
   const list = motives(content)
   const steps = [
@@ -125,12 +128,30 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   ]
   const cur = steps[step]
 
-  const send = async () => {
+  const send = async (p = pick) => {
     setBusy(true); setError(null)
     try {
-      await callBallot({ nightId, murderer: pick.murderer, motive: pick.motive, victim: pick.victim })
+      await callBallot({ nightId, murderer: p.murderer, motive: p.motive, victim: p.victim })
       onDone?.()
     } catch (e) { setError(troubleLine(e, 'The Manor did not hear that. Try again.')); setBusy(false) }
+  }
+
+  // The look Jon approved (12 Nov 2026, docs/look-approved.html, screen 8): The Vote, a bar for the time
+  // left, three rows with each pick's portrait, Lock in. Tap a row, pick, come back. A seat shows as its
+  // character (the name the big screen uses) with the guest's own name under it. The picks are still
+  // App's draft, so a look at Clues or Motives loses nothing, and Lock in sends exactly what the rows show.
+  if (card && lookOn('vote')) {
+    const folk = people.map(p => ({ id: p.key, name: p.character || p.name, sub: p.character ? p.name : null, portrait: p.characterId }))
+    const total = Math.max(1, (ms(w.closesAt) - ms(w.opensAt)) / 1000)
+    return (
+      <section className="ballot-look" aria-label="The vote">
+        <VoteCard title={false} people={folk} motives={list} busy={busy} left={secondsLeft(w, serverNow)} of={total}
+          initial={{ murderer: pick.murderer, motive: pick.motive, ghost: pick.victim }}
+          onPick={p => put({ step: 0, pick: { murderer: p.murderer ?? null, motive: p.motive ?? null, victim: p.ghost ?? null } })}
+          onLock={p => send({ murderer: p.murderer, motive: p.motive, victim: p.ghost })} />
+        {error && <p className="trouble" role="alert">{error}</p>}
+      </section>
+    )
   }
 
   const Box = card ? 'section' : 'div'
@@ -145,7 +166,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
       </ul>
       <div className="host-row">
         <button className="chip" disabled={busy} onClick={() => goTo(0)}>Change</button>
-        <button className="big" disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Lock in'}</button>
+        <button className="big" disabled={busy} onClick={() => send()}>{busy ? 'Sending…' : 'Lock in'}</button>
       </div>
       {error && <p className="trouble" role="alert">{error}</p>}
       <Clock w={w} serverNow={serverNow} />
@@ -176,6 +197,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
 // so it stays through a reload). Nothing to tap, and no other words: the
 // reveal takes the phone when it starts.
 export function BallotSent() {
+  if (lookOn('vote')) return <VoteLocked />
   return (
     <section className="dealt notice ballot-sent" aria-label="Locked in">
       <Seal />

@@ -268,6 +268,8 @@ export function roomCode(which, night) {
   if (night.phase === 'paused') return null
   return ROOM_CODE_CATS[which] ?? null
 }
+// What a guest calls each of them in a button (Scan Boo's code).
+export const CAT_SHORT = { granolia: 'Granolia', zimothy: 'Zimothy', boo: 'Boo', salem: 'Salem', irwin: 'Sir Irwin' }
 export const CAT_NAMES = { granolia: 'Granolia Lickspittle', zimothy: 'Zimothy Clawford, Esq.', boo: 'Miss Boo LaRue', salem: 'Salem Crooknog', irwin: 'Sir Irwin' }
 export const CAT_ROOMS = { granolia: 'the Study', zimothy: 'the Library', boo: 'the Entryway', salem: 'the Orangerie' }
 export function codeWords(cat) {

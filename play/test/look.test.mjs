@@ -274,3 +274,62 @@ test('a room’s rules card on the night is the approved game card: the name in 
   // the code is big enough to scan from where a group stands: wider than the approved stand-in box
   assert.ok(css.includes('.lk-code { position: absolute; left: 72.2cqw; top: 57.5cqh; width: 17.8cqw;'))
 })
+
+// Handoff 12 Nov 2026, job 2: the phone. One card on Now, the vote with portraits, the small win, the top bar.
+test('the phone on the night wears the approved look: the seal and no act’s name, one card on Now, every working control kept', async () => {
+  const { LOOK } = await import('../src/look/look.js')
+  assert.ok(LOOK.now && LOOK.vote, 'on')
+  const rest = read('../src/screens/Rest.jsx')
+  // the top of every tab: the seal, never the act's name; the vote's title while it is open on Now
+  const top = rest.slice(rest.indexOf('<header className="top">'), rest.indexOf('</header>'))
+  assert.ok(top.includes('<img className="top-seal" src={`${import.meta.env.BASE_URL}brand/seal.png`} alt="Sirwin Manor" />'))
+  assert.ok(top.includes('<h1 className="top-title">The Vote</h1>'))
+  assert.ok(!/act-num|act-name|Act \{night\.act\}|\.plain|\.banner/.test(rest), 'no act’s name anywhere on the phone’s page')
+  // nothing to do: one card, the beat's own line (or Talk to people), Sir Irwin looking over it, and no second sentence
+  assert.ok(rest.includes("const lead = over ? null : night.act >= 1 ? beatLine(night) ?? 'Talk to people' : 'The game will find you'"))
+  assert.ok(rest.includes("{idle && look && lead && <NowCard who=\"irwin\" n={night.act ?? 0} lead={lead.replace(/\\.$/, '')} />}"))
+  // Act 2: where to go and the one button; Not yet, call me later is the same on every phone, and Cannot scan? once on the way
+  const cards = read('../src/screens/Cards.jsx')
+  const step = cards.slice(cards.indexOf("if (lookOn('now')) {"), cards.indexOf('<section className={`dealt lights lights-${lights.step}`}>'))
+  assert.ok(step.includes("lead={`Go to ${lights.room ?? 'the room'}`} button={`Scan ${name}’s code`} icon=\"scan\""))
+  assert.ok(step.includes("quiet={onWay ? `Cannot scan? I am with ${name}` : 'Not yet, call me later'}"), 'every working control stays')
+  assert.ok(step.includes('onQuiet={() => (onWay ? call(callMeet, { cat: lights.cat }) : call(callNotYet, {}))}'))
+  assert.ok(step.includes('onGo={() => { goNow(); openScanner() }}'), 'the one button opens the camera inside the app')
+  assert.ok(step.includes("onGo={() => { onMet?.(lights.cat); call(callLeave, {}) }}"), 'Done after a cat: the small win, and the house is told')
+  assert.ok(!/eyebrow|Your next step|lights\.text|lights\.title/.test(step), 'no label, no second sentence')
+  const { CAT_SHORT } = await import('../src/lib/rooms.js')
+  assert.deepEqual(CAT_SHORT, { granolia: 'Granolia', zimothy: 'Zimothy', boo: 'Boo', salem: 'Salem', irwin: 'Sir Irwin' }, 'Scan Boo’s code, never Scan Miss’s code')
+  // Act 4: the same card until the group is in its room's game; a waiting Parlour Game is the one button when the guest is free
+  const act4 = read('../src/screens/Act4.jsx')
+  const room = act4.slice(act4.indexOf("if (lookOn('now') && !inGame) {"), act4.indexOf('<section className={`dealt act4 act4-${step.room}`}>'))
+  assert.ok(room.includes("const lead = play ? 'A Parlour Game is waiting' : going ? `Go to ${room.name}` : step.over || step.paid ? 'Back to the Parlour' : 'Wait in the Parlour'"))
+  assert.ok(room.includes("quiet={going && !play ? 'Can’t scan? We’re here' : null} onQuiet={scan}"), 'the group that cannot scan still gets in')
+  assert.ok(!/Round \$\{|step\.hook|step\.chime|eyebrow/.test(room), 'no round number, no hook, no chime line')
+  // a cat is talking: its card first, Done under it, then the small win over the page with the four faces
+  assert.ok(rest.includes("const reading = look && lights?.step === 'with'") && rest.indexOf('{cards.map(c => <Card') < rest.indexOf('{reading && step}'))
+  assert.ok(rest.includes('{met && <SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />}'))
+  const { metCats } = await import('../src/lib/night.js')
+  const session = { cards: [{ kind: 'testimony', act: 2, cat: 'boo' }, { kind: 'testimony', act: 2, cat: 'salem', note: true }, { kind: 'testimony', act: 4, cat: 'zimothy' }, { kind: 'notice', act: 2 }] }
+  assert.deepEqual(metCats(session), ['boo'], 'a cat that only left a note at supper was not met, and Act 4 is not a visit')
+  assert.deepEqual(metCats(session, 'granolia'), ['boo', 'granolia'])
+  assert.deepEqual(metCats(null), [])
+  // the tabs as drawn: Manor-deep bar, brass word and a brass mark over the lit tab
+  const css = read('../src/styles.css')
+  assert.ok(css.includes(".tab.on::before { content: ''; position: absolute; top: 0; left: 12px; right: 12px; height: 3px; background: #A6A253; border-radius: 0 0 3px 3px; }"))
+  assert.ok(css.includes(".rest.papered::before { position: fixed; opacity: 1; -webkit-mask: none; mask: none; background: linear-gradient(rgba(0, 25, 37, 0.62), rgba(0, 25, 37, 0.62)), url('/play/brand/wallpaper-phone.jpg') center / cover; }"), 'the wallpaper under the veil, as drawn')
+})
+
+test('the vote on the night is the approved card: three rows with each pick’s portrait, the time as a bar, Lock in', () => {
+  const win = read('../src/screens/Windows.jsx')
+  const vote = win.slice(win.indexOf("if (card && lookOn('vote')) {"), win.indexOf("const Box = card ? 'section' : 'div'"))
+  assert.ok(vote.includes("const folk = people.map(p => ({ id: p.key, name: p.character || p.name, sub: p.character ? p.name : null, portrait: p.characterId }))"), 'a seat is its character (as on the big screen), the guest’s own name under it, the character’s portrait')
+  assert.ok(vote.includes('left={secondsLeft(w, serverNow)} of={total}'), 'the time left, on the server’s clock, as a bar')
+  assert.ok(vote.includes("onLock={p => send({ murderer: p.murderer, motive: p.motive, victim: p.ghost })}"), 'Lock in sends exactly what the rows show: the third row is the Ghost')
+  assert.ok(vote.includes("onPick={p => put({ step: 0, pick: { murderer: p.murderer ?? null, motive: p.motive ?? null, victim: p.ghost ?? null } })}"), 'the picks stay App’s, so a look at Clues loses nothing')
+  assert.ok(!/Your three|of 3|crest/.test(vote), 'no steps and no label')
+  assert.ok(win.includes("export function BallotSent() {\n  if (lookOn('vote')) return <VoteLocked />"))
+  const parts = read('../src/look/parts.jsx')
+  assert.ok(parts.includes("export function VoteLocked({ line = 'Locked in. Eyes on the big screen.' })"))
+  assert.ok(parts.includes(": r.kind === 'person' ? <Head id={person(v)?.portrait ?? v} />"), 'each pick’s portrait, cut to the head')
+  assert.ok(parts.includes("if (!onLock) setLocked(true)"), 'on the night the card waits for the house to say the vote is in')
+})
