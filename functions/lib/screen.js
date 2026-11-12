@@ -290,10 +290,14 @@ export async function play(db, nightId, id, { now = Date.now(), clips = null, vi
 
 // A cue stamped ahead called off before its moment (a pause in the blackout's lead): a fresh record with no
 // sound, so a page holding the cue lets it go and nothing plays.
-export async function callOff(db, nightId, id, { now = Date.now() } = {}) {
+// `at` (the last look of 12 Nov 2026): the stamp of the cue this caller means. A press that was paused, resumed
+// and pressed again inside its lead has a newer scream on the record by the time the old press wakes: that one
+// is not the old press's to call off.
+export async function callOff(db, nightId, id, { now = Date.now(), at = null } = {}) {
   const snap = await db.doc(soundsPath(nightId)).get()
   const cur = snap.exists ? snap.data().current : null
   if (!cur || cur.id !== id || cur.ahead !== true) return { ok: true, calledOff: false }
+  if (at != null && msOf(cur.at) !== Number(at)) return { ok: true, calledOff: false }
   await db.doc(soundsPath(nightId)).set({ current: { id: null, at: new Date(now), calledOff: true } })
   return { ok: true, calledOff: true }
 }

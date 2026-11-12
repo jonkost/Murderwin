@@ -12,7 +12,9 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, nameKey } from '../lib/night.js'
-import { hostCommand, player, clockTick, MOVE_CLAIM_MS } from '../lib/run.js'
+import { hostCommand, player, clockTick, MOVE_CLAIM_MS, POWER_BACKSTOP_MS } from '../lib/run.js'
+import { pressBlackout } from '../lib/blackout.js'
+import * as screen from '../lib/screen.js'
 import { tickParlour, parlourPath } from '../lib/windows.js'
 import { isFillInUid } from '../lib/seats.js'
 import { act4Path, act4PrivatePath } from '../lib/act4.js'
@@ -161,6 +163,75 @@ test('a Blackout test\'s dark refuses a Pause too, and the test still ends by it
   assert.equal(tried, true)
   assert.deepEqual(r, { ok: true, test: true })
   assert.equal(nightOf(db, nightId).phase, 'act'); assert.equal(nightOf(db, nightId).blackout, null)
+})
+
+// The last look of 12 Nov 2026: Pause, Resume and Blackout again, all inside the first press's two-second lead.
+// The first press, waking at its old dark mark, used to call off whatever scream was on the record: the new one.
+test('an old press that was paused never calls off a newer press\'s scream', async () => {
+  const { db, nightId, P, sleep, clock } = await beforeTheDark()
+  let second = null
+  const r = await hostCommand(db, { nightId, command: 'blackout', now: P, clock, sleep: async waitMs => {
+    if (!second) {
+      await host(db, nightId, 'pause', undefined, P + 300)
+      await host(db, nightId, 'resume', undefined, P + 600)
+      // the second press, as the Blackout command makes it: new marks, and its own scream stamped for its own dark
+      second = await pressBlackout(db, nightId, { now: P + 900 })
+      await screen.play(db, nightId, 'blackout', { now: second.darkAt.getTime(), ahead: true })
+    }
+    await sleep(waitMs)
+  } })
+  assert.deepEqual(r, { ok: true, powerReturned: false, dark: false }, 'the first press is over')
+  const cur = soundOf(db, nightId)
+  assert.equal(cur.id, 'blackout', 'the second press\'s scream is still in hand')
+  assert.equal(cur.ahead, true)
+  assert.equal(ms(cur.at), second.darkAt.getTime())
+  assert.equal(ms(nightOf(db, nightId).blackout.pressAt), P + 900, 'and its marks are still on')
+  // the pure rule: a call-off names the stamp it means
+  assert.deepEqual(await screen.callOff(db, nightId, 'blackout', { now: P + 2000, at: P + 2000 }), { ok: true, calledOff: false })
+  assert.deepEqual(await screen.callOff(db, nightId, 'blackout', { now: P + 2000, at: second.darkAt.getTime() }), { ok: true, calledOff: true })
+})
+
+// The last look of 12 Nov 2026: if the Blackout's own command died in the dark, nothing ever returned the power,
+// and every phone is black in the dark. The minute's tick is the backstop.
+test('the power always comes back: a Blackout command that dies in the dark is finished by the tick, once', async () => {
+  const { db, nightId, P, sleep, clock } = await beforeTheDark()
+  await assert.rejects(hostCommand(db, { nightId, command: 'blackout', now: P, clock, sleep: async waitMs => {
+    await sleep(waitMs)
+    if (nightOf(db, nightId).phase === 'blackout') throw new Error('the instance was cut')
+  } }), /instance was cut/)
+  const n = nightOf(db, nightId)
+  assert.equal(n.phase, 'blackout'); assert.equal(n.act, 1)
+  const powerAt = ms(n.blackout.powerAt)
+  assert.equal(powerAt, P + BLACKOUT_LEAD_MS + BLACKOUT_POWER_MS)
+  assert.equal(db.store.get(`cases/${nightId}`), undefined)
+  // a tick inside the dark, and one just after the power's mark, leave the command to do its own work
+  for (const at of [powerAt - 1000, powerAt + 1000, powerAt + POWER_BACKSTOP_MS]) {
+    await host(db, nightId, 'tick', undefined, at)
+    assert.equal(nightOf(db, nightId).phase, 'blackout')
+  }
+  // the next one returns the power: Act 2, the role cards, the case dealt
+  const back = await host(db, nightId, 'tick', undefined, powerAt + POWER_BACKSTOP_MS + 1)
+  assert.deepEqual(back, { ok: true, power: 'returned' })
+  assert.equal(nightOf(db, nightId).phase, 'prompt'); assert.equal(nightOf(db, nightId).act, 2)
+  assert.equal(nightOf(db, nightId).blackout, null)
+  assert.ok(db.store.get(`cases/${nightId}`), 'the case is dealt')
+  const roles = Object.values(db.store.get(`nights/${nightId}/private/deck`).uids).map(uid => (db.store.get(`sessions/${uid}`).cards ?? []).filter(c => c.kind === 'role').length)
+  assert.ok(roles.length >= 3 && roles.every(k => k === 1), 'one role card a seat')
+  // and never twice: later ticks are ordinary ticks
+  const again = await host(db, nightId, 'tick', undefined, powerAt + POWER_BACKSTOP_MS + 60_000)
+  assert.notEqual(again.power, 'returned')
+  assert.equal(nightOf(db, nightId).act, 2)
+})
+
+test('a Blackout that runs whole is never touched by the tick', async () => {
+  const { db, nightId, P, sleep, clock } = await beforeTheDark()
+  let ticked = 0
+  const r = await hostCommand(db, { nightId, command: 'blackout', now: P, clock, sleep: async waitMs => {
+    await sleep(waitMs)
+    if (nightOf(db, nightId).phase === 'blackout') { const t = await host(db, nightId, 'tick', undefined, clock()); assert.notEqual(t.power, 'returned'); ticked++ }
+  } })
+  assert.ok(ticked >= 1)
+  assert.deepEqual(r, { ok: true, powerReturned: true }, 'the command returned the power itself')
 })
 
 // The final check of 12 Nov 2026: after a game's last answer, a clock could open the next game before the

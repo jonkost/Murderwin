@@ -936,8 +936,9 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
 // Every seat that chose nothing for the night's window gets a random choice,
 // so a no-show is never a pattern. Safe to call again: a seat is picked for
 // once. settleWindow calls it as a window closes on its clock; run.js calls it
-// when a window closed because every seat dealt it had answered, so a seat
-// that joined after the window opened still gets its pick.
+// when a window closed because every seat dealt it had answered, so in the
+// vote a seat that joined after it opened still gets its pick (a Parlour Game
+// is dealt only to the seats there when it opens: a late seat sits it out).
 // `onlyId` (the final check of 12 Nov 2026): the window the caller means. After a game's last answer a clock
 // can open the next game before this runs; without the id every seat got a random pick for the NEW game at
 // once, and nobody played it.

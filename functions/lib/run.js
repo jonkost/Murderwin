@@ -42,6 +42,9 @@ export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'p
 // later (lib/blackout.js). The waits are on the server, inside the Blackout
 // command, so no phone counts them; the tests pass their own sleep.
 export { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS }
+// How long after the power's mark the minute's tick waits before it returns the power itself (the Blackout
+// command returns it at the mark; this is only for a command that died in the dark).
+export const POWER_BACKSTOP_MS = 10_000
 const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 // The Blackout's waits run to its marks (review 12 Nov 2026): `until(t)` sleeps for the time left until t on
@@ -454,8 +457,10 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
         tx.update(ref, { phase: 'blackout', phaseAt: FieldValue.serverTimestamp(), pausedFrom: null })
         return true
       })
-      if (!dark) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now() }); return { ok: true, powerReturned: false, dark: false } }
-      await screen.onPhase(db, nightId, 'blackout', { now: darkAt, sound: false })
+      if (!dark) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now(), at: darkAt }); return { ok: true, powerReturned: false, dark: false } }
+      // the TV's own dark; if that one write fails the house is dark all the same (every screen follows the
+      // phase and the marks), and the power must still come back, so it never stops the command
+      try { await screen.onPhase(db, nightId, 'blackout', { now: darkAt, sound: false }) } catch (e) { console.error('the TV was not told of the dark', e?.code ?? e?.name ?? 'error') }
       await until(powerAt)
       // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
       const r = await powerReturns(db, nightId, { now: powerAt })
@@ -590,6 +595,18 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return { ok: true, hall: arg }
     }
     case 'tick': {
+      // The power always comes back (the last look of 12 Nov 2026; the client rule: the dark is at most five
+      // seconds and the power returns on its own). If the Blackout's own command died in the dark, nothing
+      // else would ever return it, and every phone is black in the dark, so nothing could be pressed. The
+      // tick returns it, POWER_BACKSTOP_MS or more after its mark. powerReturns is a claim, so the case is
+      // dealt once whatever else is running.
+      if (n.phase === 'blackout' && n.act === 1) {
+        const powerAt = deal.ms(n.blackout?.powerAt) || (deal.ms(n.phaseAt) ? deal.ms(n.phaseAt) + BLACKOUT_POWER_MS : 0)
+        if (powerAt && now > powerAt + POWER_BACKSTOP_MS) {
+          const back = await powerReturns(db, nightId, { now })
+          if (!back.already) return { ok: true, power: 'returned' }
+        }
+      }
       // the once-a-minute clock (the schedule in index.js, the Host tab while Acts 2 and 4 run):
       // settles a window past its close and its grace, moves the Act 2 line on, pops up a Parlour
       // Game that is due, then the supper chime and Act 4's rounds (clockTick); a paused night is left alone
@@ -659,7 +676,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       // before any page starts it, and the marks come off so that no screen flashes dark either. The Blackout
       // command, waking at its dark mark, finds the night paused and returns with nothing to do.
       if (command === 'pause' && !r?.already && blackoutStage(n.blackout, now) === 'press') {
-        await screen.callOff(db, nightId, 'blackout', { now })
+        await screen.callOff(db, nightId, 'blackout', { now, at: deal.ms(n.blackout?.darkAt) || null })
         await clearBlackout(db, nightId, n.blackout)
       }
       // the room screens follow (screen.js); a second Pause or Resume that changed nothing moves no screen either
@@ -726,8 +743,9 @@ async function afterLights(db, nightId, r, now = Date.now()) {
 
 // A window closed because the last seat dealt it answered (handoff 11 Nov 2026,
 // A6: "When anything is entered by the last person, automatically continue").
-// A seat that joined after the window opened still gets its random pick. This
-// runs inside the last seat's own call, so it never throws: that seat's answer
+// In the vote, a seat that joined after it opened still gets its random pick
+// (a Parlour Game is dealt only to the seats there when it opens, so a late
+// seat sits that one game out). This runs inside the last seat's own call, so it never throws: that seat's answer
 // is in, whatever happens here, and the minute's tick and the host's Next are
 // the fallback.
 async function afterAllIn(db, nightId, windowId = null) {
