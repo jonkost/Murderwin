@@ -1,0 +1,9 @@
+{
+  "_about": "One plain line a phone shows on its Now tab in a beat where nothing else tells the guest what to do or where to go (A5, 12 Nov 2026; Jon: one line at most, no flavor text). Keyed act/beat. Only the beats that need one: a beat whose notice, cat step, Act 4 step, game, drawing or Act 7 screen already says it has no line here. functions/test/flow.test.mjs walks every beat and fails on a phone with nothing. Open copy; Jon may change any line.",
+  "lines": {
+    "1/arrive": "Have a look around your phone.",
+    "1/rules": "Eyes on the Parlour TV.",
+    "2/supper": "Supper is served in the Orangerie.",
+    "3/bulletin": "Supper is in the Orangerie."
+  }
+}
