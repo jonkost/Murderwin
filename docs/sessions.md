@@ -72,7 +72,10 @@ not pushed)
 
 **For Jon**
 
-- A short moving preview was sent to him as a file.
+- A short moving preview was sent to him as a file, and then, on his
+  asking ("Give me a demo clip"), a 26 second clip at the TV's own size, with
+  no sound. Both are drawn from the game's own path and his own five face
+  pictures, not filmed from a screen.
 - It is on the screens once he says publish. Until then the idle screens
   show the room's name, as this morning.
 - His to say if he wants it otherwise: the bedroom's screen while its door
