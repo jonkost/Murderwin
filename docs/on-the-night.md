@@ -463,6 +463,8 @@ the screen awake by itself where the iPad lets it.
   are dealt, so press it as often as you like before the guests come. The
   string lights need a fourth Shortcut for the dark, Off Murderwin Strings
   (a Home scene with the strings off); without it they stay as they are.
+  Blackout pressed while a test runs does nothing and says "A Blackout test
+  is running. Press Blackout again in a few seconds."
 - Act 2 begins when the power returns. Every phone buzzes (where it can) and
   shows one button, "Sorry for the interruption, continue here". The tap
   brings up that phone's role card, with no button and no early tap, for

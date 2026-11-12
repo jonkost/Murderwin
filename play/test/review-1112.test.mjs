@@ -11,6 +11,12 @@ const NOW = 1_800_000_000_000
 const DARK = NOW + 2_000
 const scream = (at = DARK, more = { ahead: true }) => ({ current: { id: 'blackout', at, ...more } })
 
+test('S6 a real Blackout pressed while a Blackout test runs: the Host tab says to press again in a few seconds', () => {
+  const host = src('../src/screens/Host.jsx')
+  assert.ok(host.includes("case 'blackout': return r.already === 'test' ? 'A Blackout test is running. Press Blackout again in a few seconds.'"))
+  assert.ok(host.includes(": r.already ? 'Already dark. The power comes back on its own.'"), 'the real dark keeps its line')
+})
+
 // ---- S5: the scream in hand at the press, played at the dark mark exactly -------------
 
 test('S5 a cue stamped ahead starts on its stamp, with no lead; any other keeps its lead', () => {

@@ -23,7 +23,13 @@ import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
 import { setIpad } from './ipad.js'
-import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout } from './blackout.js'
+import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout, blackoutRunning } from './blackout.js'
+
+// Is the press that is running a Blackout test?
+async function testRunning(db, nightId, now) {
+  const b = (await db.doc(`nights/${nightId}`).get()).data()?.blackout
+  return b?.test === true && blackoutRunning(b, now)
+}
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -414,7 +420,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       if (n.phase === 'blackout') return { ok: true, already: true }
       if (n.act !== 1) throw new NightError('invalid', 'The blackout ends Act 1. To move the night, press an act.')
       const marks = await pressBlackout(db, nightId, { now })
-      if (!marks) return { ok: true, already: true }
+      // a Blackout test still running refuses the real one (no case is dealt over a test), and the reply says so
+      // (review 12 Nov 2026), so the Host tab can say to press again in a few seconds
+      if (!marks) return { ok: true, already: await testRunning(db, nightId, now) ? 'test' : true }
       const darkAt = marks.darkAt.getTime()
       const powerAt = marks.powerAt.getTime()
       // review 12 Nov 2026 ("those cues need to get tight as hell"): the scream is written at the press, stamped

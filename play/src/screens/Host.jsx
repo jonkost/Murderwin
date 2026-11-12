@@ -49,7 +49,8 @@ const PRESSED_WORDS = {
 function describe(command, r) {
   switch (command) {
     case 'create': return 'New night started. Type your name again to rejoin it.'
-    case 'blackout': return r.already ? 'Already dark. The power comes back on its own.'
+    case 'blackout': return r.already === 'test' ? 'A Blackout test is running. Press Blackout again in a few seconds.'
+      : r.already ? 'Already dark. The power comes back on its own.'
       : r.powerReturned ? 'The power is back. Every phone says sorry for the interruption, then shows its card for fifteen seconds.'
       : 'The power did not come back from this press: the night was paused, moved or brought back by hand during the dark. The line above says where the night is; Power returns · Act 2 lights while it is still dark.'
     case 'blackout-test': return blackoutTestReply(r)

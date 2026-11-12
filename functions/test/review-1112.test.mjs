@@ -279,6 +279,28 @@ test('S5 a pause in the lead calls the scream off: no dark, and the doc names no
   assert.equal(cur.calledOff, true)
 })
 
+// ---- S6: a real Blackout pressed while a Blackout test runs ---------------------------
+
+test('S6 a real Blackout during a Blackout test is refused, deals nothing, and says a test is running; after it, it works', async () => {
+  const { db, nightId, P, sleep, clock } = await inTheDark({ lag: 0 })
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), forceRehearsal: true })
+  let during = null
+  await hostCommand(db, { nightId, command: 'blackout-test', now: P, clock, sleep: async waitMs => {
+    await sleep(waitMs)
+    if (!during) during = await hostCommand(db, { nightId, command: 'blackout', now: clock(), sleep: () => { throw new Error('never waits') } })
+  } })
+  assert.deepEqual(during, { ok: true, already: 'test' })
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'no case dealt over a test')
+  assert.equal(nightOf(db, nightId).act, 1)
+  // a second real press while a real one runs still answers plainly
+  const r = await hostCommand(db, { nightId, command: 'blackout', now: P + 30_000, sleep: async () => {
+    const again = await hostCommand(db, { nightId, command: 'blackout', now: P + 30_500, sleep: () => { throw new Error('never waits') } })
+    assert.equal(again.already, true)
+  } })
+  assert.deepEqual(r, { ok: true, powerReturned: true })
+  assert.equal(nightOf(db, nightId).act, 2)
+})
+
 test('S2 a Next with no `from` (the workshop, the brain, the fake players) moves as it always has', async () => {
   const { db, nightId } = await intoRounds()
   const r = await host(db, nightId, 'next', undefined, T0 + 1_000)
