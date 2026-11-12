@@ -32,6 +32,13 @@
 export const DEFAULT_SHORTCUT_LEAD_MS = 1500
 export const DEFAULT_AFTER_LEAD_MS = 0
 export const MAX_SHORTCUT_LEAD_MS = 10_000
+// The after Shortcut is never started more than this long before the power's mark (the dark is five seconds:
+// a longer lead would bring the house back before it had gone dark), and never before the dark mark itself.
+export const MAX_AFTER_LEAD_MS = 4_000
+// When the blackout ends sooner than its marks said, the after Shortcut waits until the dark one has had this
+// long to land (the check of 12 Nov 2026): two Home scenes started together race, light by light, and the one
+// that turns the house off could be the last word on some of them.
+export const DARK_SETTLE_MS = 2_500
 
 const nameOf = v => (typeof v === 'string' && v.trim() ? v.trim() : null)
 const leadOf = (v, fallback) => {
@@ -46,11 +53,22 @@ export function blackoutShortcutsOf(sheet) {
   const after = nameOf(b.afterShortcut)
   return {
     dark: dark ? { name: dark, leadMs: leadOf(b.shortcutLeadMs, DEFAULT_SHORTCUT_LEAD_MS) } : null,
-    after: after ? { name: after, leadMs: leadOf(b.afterLeadMs, DEFAULT_AFTER_LEAD_MS) } : null,
+    after: after ? { name: after, leadMs: Math.min(MAX_AFTER_LEAD_MS, leadOf(b.afterLeadMs, DEFAULT_AFTER_LEAD_MS)) } : null,
   }
 }
 
-// What is wrong with the sheet's blackout block, for sceneProblems (one line each).
+// How long the after Shortcut still has to wait, given when the dark one was sent (null: it was not): nought in
+// the ordinary blackout (six and a half seconds lie between them), up to DARK_SETTLE_MS when the blackout was
+// called off or ended by hand just after the lights' Shortcut went out.
+export function afterWaitMs(darkSentAt, now = Date.now()) {
+  if (darkSentAt === null || darkSentAt === undefined) return 0
+  return Math.min(DARK_SETTLE_MS, Math.max(0, darkSentAt + DARK_SETTLE_MS - now))
+}
+
+// What is wrong with the sheet's two names and two leads, one line each. Never fatal (the check of 12 Nov
+// 2026): the leads are tuned by hand on the night, and one mistyped number must not switch off the music, the
+// Hue scenes and the projector with it. The brain says these lines when it starts and uses blackoutShortcutsOf's
+// own fallbacks: the usual lead for a bad number, no Shortcut for a bad name.
 export function blackoutShortcutProblems(cfg) {
   const out = []
   const b = cfg?.blackout
@@ -108,7 +126,7 @@ export const NO_PRESS = Object.freeze({ key: null, live: false, ranDark: false, 
 // When each Shortcut is due for these marks (ms), or null for one that is not named.
 export function blackoutShortcutTimes(marks, cfg = {}) {
   if (!marks) return { darkAt: null, afterAt: null }
-  const afterAt = cfg.after ? Math.max(marks.pressAt, marks.powerAt - cfg.after.leadMs) : null
+  const afterAt = cfg.after ? Math.max(marks.darkAt, marks.powerAt - cfg.after.leadMs) : null // never before the dark itself
   const darkAt = cfg.dark ? Math.max(marks.pressAt, marks.darkAt - cfg.dark.leadMs) : null
   return { darkAt, afterAt }
 }

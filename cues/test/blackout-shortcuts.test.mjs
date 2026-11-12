@@ -8,10 +8,10 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   blackoutShortcutsOf, blackoutShortcutProblems, nameOnThisMac, blackoutShortcutCheck, blackoutShortcutTimes, stepBlackoutShortcuts,
-  NO_PRESS, DEFAULT_SHORTCUT_LEAD_MS, DEFAULT_AFTER_LEAD_MS, MAX_SHORTCUT_LEAD_MS,
+  afterWaitMs, NO_PRESS, DEFAULT_SHORTCUT_LEAD_MS, DEFAULT_AFTER_LEAD_MS, MAX_SHORTCUT_LEAD_MS, MAX_AFTER_LEAD_MS, DARK_SETTLE_MS,
 } from '../lib/blackoutShortcuts.js'
 import { sceneProblems } from '../lib/scenes.js'
-import { createStringsMirror } from '../lib/strings.js'
+import { createStringsMirror, createShortcutRunner, RETRY_IN_PROGRESS_MS } from '../lib/strings.js'
 
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 const SHEET = JSON.parse(read('../scenes.json'))
@@ -60,7 +60,20 @@ test('a broken blackout block is named, and stops nothing else on the sheet', ()
   assert.equal(blackoutShortcutProblems({ blackout: { afterLeadMs: 'now' } }).length, 1)
   assert.equal(blackoutShortcutProblems({ blackout: { afterLeadMs: 99_999 } }).length, 1)
   assert.deepEqual(blackoutShortcutProblems({ blackout: [] }), ['blackout is not an object'])
-  assert.ok(sceneProblems({ ...SHEET, blackout: { leadMs: 2000, shortcut: 12 } }).includes('blackout.shortcut is not a Shortcut\'s name or null'))
+  // never fatal (the check of 12 Nov 2026): the leads are tuned by hand on the night, and one mistyped number
+  // must not switch off the music, the Hue scenes and the projector. The sheet's own check does not look at them...
+  for (const slip of [{ shortcutLeadMs: 12_000 }, { shortcutLeadMs: -300 }, { shortcutLeadMs: '15O0' }, { afterShortcut: '' }, { shortcut: 5 }, { afterLeadMs: true }]) {
+    const cfg = { ...SHEET, blackout: { ...SHEET.blackout, ...slip } }
+    assert.deepEqual(sceneProblems(cfg), [], `the sheet stays on with ${JSON.stringify(slip)}`)
+    assert.equal(blackoutShortcutProblems(cfg).length, 1, 'and the slip is named')
+  }
+  // ...the brain says the slip when it starts and uses the usual value
+  assert.equal(blackoutShortcutsOf({ blackout: { shortcut: 'Blackout', shortcutLeadMs: '15O0' } }).dark.leadMs, DEFAULT_SHORTCUT_LEAD_MS)
+  assert.equal(blackoutShortcutsOf({ blackout: { shortcut: 'Blackout', shortcutLeadMs: 12_000 } }).dark.leadMs, MAX_SHORTCUT_LEAD_MS)
+  assert.equal(blackoutShortcutsOf({ blackout: { shortcut: 5, afterShortcut: 'AfterBlackOut' } }).dark, null)
+  const src = read('../cues.mjs')
+  assert.ok(src.includes('for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; the usual value is used instead`)'))
+  assert.ok(!read('../lib/scenes.js').includes('out.push(...blackoutShortcutProblems'), 'not part of the check that can switch the sheet off')
 })
 
 test('a name is found as this Mac spells it: Jon wrote "afterblackout", the Shortcut is "AfterBlackOut"', () => {
@@ -170,6 +183,44 @@ test('one of the two alone, and leads of every size', () => {
   assert.deepEqual(busy.ran.map(r => r[1]), ['dark', 'after'])
 })
 
+// The check of 12 Nov 2026: a pause in the lead just after the lights' Shortcut went out sent the after one a
+// fraction of a second behind it. Two Home scenes started together race light by light, so "off" could be the
+// last word on some lights, for a blackout that was called off.
+test('the house is brought back only once the lights\' Shortcut has had time to land', () => {
+  assert.equal(DARK_SETTLE_MS, 2500)
+  // the ordinary blackout: six and a half seconds lie between the two, so there is nothing to wait for
+  assert.equal(afterWaitMs(P + 505, P + 7005), 0)
+  // called off 0.3 s after the lights' Shortcut went out: wait the rest of the two and a half seconds
+  assert.equal(afterWaitMs(P + 505, P + 805), 2200)
+  // Power returns by hand just as it went out
+  assert.equal(afterWaitMs(P + 505, P + 505), DARK_SETTLE_MS)
+  // long after, or the dark one never went out for this press: at once
+  assert.equal(afterWaitMs(P + 505, P + 60_000), 0)
+  assert.equal(afterWaitMs(null, P), 0)
+  assert.equal(afterWaitMs(undefined, P), 0)
+  // a clock that jumped back never makes it wait longer than the settle
+  assert.equal(afterWaitMs(P + 5000, P), DARK_SETTLE_MS)
+  // the brain's program: the dark one's moment is kept, the after one waits on a timer, and a new press takes a waiting one off
+  const src = read('../cues.mjs')
+  assert.ok(src.includes('const wait = afterWaitMs(darkSentAt, now)'))
+  assert.ok(src.includes('if (wait > 0) afterTimer = setTimeout(() => { afterTimer = null; runBlackoutShortcut(which, name) }, wait)'))
+  assert.ok(src.includes("clearTimeout(afterTimer); afterTimer = null // a new press: its own after one will bring the house back"))
+})
+
+test('the after Shortcut can never bring the house back before it has gone dark', () => {
+  // a lead longer than the dark is cut to four seconds, and the moment itself is never before the dark mark
+  assert.equal(MAX_AFTER_LEAD_MS, 4000)
+  assert.equal(blackoutShortcutsOf({ blackout: { afterShortcut: 'AfterBlackOut', afterLeadMs: 6000 } }).after.leadMs, MAX_AFTER_LEAD_MS)
+  assert.equal(blackoutShortcutsOf({ blackout: { afterShortcut: 'AfterBlackOut', afterLeadMs: 1500 } }).after.leadMs, 1500)
+  assert.deepEqual(blackoutShortcutTimes(MARKS, { dark: CFG.dark, after: { name: 'AfterBlackOut', leadMs: 9000 } }), { darkAt: P + 500, afterAt: P + 2000 })
+  // even so configured by hand, the order holds: off first, back no sooner than the dark mark
+  const odd = play([P + 100, P + 505, P + 1005, P + 2005, P + 7005], { cfg: { dark: CFG.dark, after: { name: 'AfterBlackOut', leadMs: 9000 } } })
+  assert.deepEqual(odd.ran, [[505, 'dark', 'Blackout'], [2005, 'after', 'AfterBlackOut']])
+  // and with the lights' Shortcut on the mark itself, both still run, in order
+  const tight = play([P + 100, P + 2005, P + 2010, P + 7005], { cfg: { dark: { name: 'Blackout', leadMs: 0 }, after: { name: 'AfterBlackOut', leadMs: 4000 } } })
+  assert.deepEqual(tight.ran.map(r => r[1]), ['dark', 'after'])
+})
+
 test('the strings are sent their colour again once the house is back: Jon\'s scene has them in it, at full', async () => {
   const sent = []
   const lights = { show: async setting => { sent.push(setting) } }
@@ -188,25 +239,83 @@ test('the strings are sent their colour again once the house is back: Jon\'s sce
   assert.deepEqual(sent[1], colours.decor)
 })
 
+// The check of 12 Nov 2026: a Home scene with an accessory that does not answer runs on for a minute, and a second
+// run of the same scene is refused until it ends. The runner tries a refused run again every second and a half; for
+// the blackout's lights a try that lands late, as the power returns, is worse than none.
+test('the lights\' Shortcut is not tried again once its moment has passed; any other run is tried as before', async () => {
+  let clock = 10_000
+  const tries = []
+  const run = async name => { tries.push([name, clock]); throw new Error('Action set execution in progress.') }
+  // the head start is real time on the Mac and a refusal comes back at once, well inside it: here the head start
+  // never ends, and the wait between tries moves the test's clock on
+  const HEAD = 750
+  const wait = ms => (ms === HEAD ? new Promise(() => {}) : new Promise(resolve => { clock += ms; resolve() }))
+  const runner = createShortcutRunner({ tag: 'blackout', run, wait, headStartMs: HEAD, now: () => clock })
+  // the dark mark is 1500 ms away, and a second of grace after it: tries at 0 and at 1500, not at 3000
+  await assert.rejects(runner.fire('Blackout', { retryUntil: 10_000 + 1500 + 1000 }), /its moment has passed/)
+  assert.deepEqual(tries.map(t => t[1] - 10_000), [0, RETRY_IN_PROGRESS_MS])
+  // with no deadline the same refusal is tried for thirty seconds, as it always was (the music, the strings)
+  tries.length = 0
+  await assert.rejects(runner.fire('AfterBlackOut'), /still busy with the last action after 30 s/)
+  assert.equal(tries.length, 21)
+  // a deadline already behind us: one try, no second
+  tries.length = 0
+  await assert.rejects(runner.fire('Blackout', { retryUntil: clock - 1 }), /its moment has passed/)
+  assert.equal(tries.length, 1)
+  // a run that is taken at once is untouched by a deadline
+  const fine = createShortcutRunner({ tag: 'blackout', run: async () => {}, wait, headStartMs: HEAD, now: () => clock })
+  const r = await fine.fire('Blackout', { retryUntil: clock + 5 })
+  assert.ok(r.done && !r.dropped)
+})
+
+test('a forget that comes while a colour is being sent is not lost', async () => {
+  const sent = []
+  let release = null
+  const lights = { show: setting => new Promise(resolve => { sent.push(setting); release = resolve }) }
+  const colours = { decor: { hue: 32 }, off: { off: true } }
+  const m = createStringsMirror({ lights, colours })
+  m.update('decor')            // the first send is in flight (the Shortcut is still running)
+  await new Promise(r => setImmediate(r))
+  assert.equal(sent.length, 1)
+  m.forget()                   // Jon's scene has just changed the strings behind its back
+  release()                    // ...and the first send now finishes
+  await new Promise(r => setImmediate(r))
+  assert.equal(sent.length, 2, 'the colour is sent again: the first send no longer says what the strings show')
+  release()
+  await new Promise(r => setImmediate(r))
+  assert.equal(m.shown(), 'decor')
+  assert.equal(sent.length, 2, 'and then it rests')
+})
+
 test('the brain\'s program runs them on the marks, through one runner, and never in fake mode', () => {
   const src = read('../cues.mjs')
-  assert.ok(src.includes("import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutTimes, stepBlackoutShortcuts, NO_PRESS } from './lib/blackoutShortcuts.js'"))
+  assert.ok(src.includes("import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutProblems, blackoutShortcutTimes, stepBlackoutShortcuts, afterWaitMs, NO_PRESS } from './lib/blackoutShortcuts.js'"))
   // woken at the two Shortcuts' own moments as well as at the marks
   assert.ok(src.includes('const due = blackoutShortcutTimes(m, blackoutCfg)'))
   assert.ok(src.includes('for (const at of [m.darkAt, m.powerAt, due.darkAt, due.afterAt]) if (at && at > now) marksTimers.push(setTimeout(apply, at - now + 5))'))
   // stepped on every plan: each change of the night, each timer
   const apply = src.slice(src.indexOf('function apply() {'), src.indexOf('function playSound(a)'))
   assert.ok(apply.includes('stepBlackout(now)'))
-  assert.ok(src.includes('const r = stepBlackoutShortcuts(blackoutState, { marks: blackoutMarkTimes(docs.night), now, cfg: blackoutCfg })'))
+  assert.ok(src.includes('const r = stepBlackoutShortcuts(blackoutState, { marks, now, cfg: blackoutCfg })'))
+  // only in Act 1, where the blackout is: a test later in a practice night leaves the two scenes out (the Study's walls, the strings under a game)
+  assert.ok(src.includes('const marks = Number(docs.night?.act ?? 0) <= 1 ? blackoutMarkTimes(docs.night) : null'))
   // one runner for the two: the after one replaces a dark one still waiting on Apple Home
   assert.equal(src.split("createShortcutRunner({ tag: 'blackout', log })").length - 1, 1)
-  assert.ok(src.includes('blackoutRunner.fire(name).catch('))
+  assert.ok(src.includes('blackoutRunner.fire(name, { retryUntil }).then('))
+  // a run Apple Home never took is said, and the dark one is not tried again after its moment
+  assert.ok(src.includes('r => { if (r?.dropped) log(`[blackout] Apple Home was still busy with the last run of ${name}, so it did not run this time`) },'))
+  assert.ok(src.includes("runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS })"))
   // fake mode only says what it would do
   assert.ok(src.includes('if (FAKE) log(`[blackout] would run the Shortcut "${name}"'))
   // the strings again, a few seconds after the house is back
   assert.ok(src.includes("if (which === 'after') setTimeout(() => { strings.forget(); mirrorStrings() }, STRINGS_AGAIN_MS)"))
   // checked against this Mac's list when the brain starts, with the rest; and an off switch
   assert.ok(src.includes('const b = blackoutShortcutCheck(blackoutSheet, have)'))
+  // one the sheet names that is not on this Mac is looked for again each minute, and counts in the check's own answer
+  assert.ok(src.includes('const blackoutMissing = () => !!((blackoutSheet.dark && !blackoutCfg.dark) || (blackoutSheet.after && !blackoutCfg.after))'))
+  assert.ok(src.includes('process.exit(r && !r.missing.length && !blackoutMissing() ? 0 : 1)'))
+  // the strings' dark is left to Jon's scene only when they have no way of their own to go off
+  assert.ok(src.includes('stringsOffLeftToBlackout = !!blackoutCfg.dark && stringsByShortcuts && !stringsPaired && !have.includes(stringShortcutNames.off)'))
   assert.ok(src.includes('blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet)'))
   // neither is the music's stop: that stays its own Shortcut on the sheet
   assert.equal(SHEET.musicShortcuts.off, 'PANIC')

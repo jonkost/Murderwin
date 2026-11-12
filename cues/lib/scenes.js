@@ -19,7 +19,6 @@
 
 import { SOUND_IDS, SOUND_STALE_MS, phaseOf, stamp, blackoutStageOf } from './cues.js'
 import { musicShortcutProblems } from './shortcutMusic.js'
-import { blackoutShortcutProblems } from './blackoutShortcuts.js'
 
 // The drawing is running while public/relay.state is one of these.
 export const DRAWING_RUNNING = ['intro', 'walk', 'turn', 'vote', 'lockout']
@@ -327,7 +326,8 @@ export function sceneProblems(cfg, { soundIds = SOUND_IDS } = {}) {
   }
   if (cfg.offForTheNight) out.push('offForTheNight is gone since 25 Oct 2026: the newscast cut is "cut" (acts, beats, trigger)')
   out.push(...musicShortcutProblems(cfg))
-  out.push(...blackoutShortcutProblems(cfg)) // Jon's two Shortcuts for the blackout (12 Nov 2026)
+  // (the blackout's two Shortcuts are not checked here: a slip in a name or a lead there is said at the start and
+  // the usual value used, lib/blackoutShortcuts.js, so tuning a number by hand can never switch this whole sheet off)
   if (cfg.cut) {
     checkActs('cut', cfg.cut.acts)
     if (!Array.isArray(cfg.cut.beats) || !cfg.cut.beats.length || !cfg.cut.beats.every(b => typeof b === 'string' && b.trim())) out.push('cut.beats is not a list of beat names')

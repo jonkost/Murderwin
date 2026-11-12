@@ -466,23 +466,35 @@ the screen awake by itself where the iPad lets it.
   (the house back) as the power returns; a few seconds later it sends the
   string lights their warm colour again, since your scene turns them on at
   full. Neither one stops the music: that is still a Shortcut called PANIC,
-  which this Mac does not have yet (below, under Sound test).
+  which this Mac does not have yet (below, under Sound test). The brain
+  runs the two only in Act 1, where the blackout is.
   A **Pause** in the two seconds before the dark (Susan's phone,
-  say) calls the blackout off, with no scream and no dark: press Blackout
-  again when you are ready. A Pause in the five dark seconds does nothing
+  say) calls the blackout off, with no scream and no dark on the screens:
+  press Blackout again when you are ready. If it comes after the first
+  half second, your Blackout Shortcut has already gone out, so the house
+  lights blink off; the brain brings them back with AfterBlackOut two or
+  three seconds later. A Pause in the five dark seconds does nothing
   (12 November: it used to leave the house dark with no button anywhere);
   the power comes back by itself, and you can pause after that.
 - **Blackout test**, beside Blackout on the Host tab, on a practice night
   only: the same two seconds, the same dark everywhere and the same five
-  seconds, then everything comes back as it was. No act changes and no roles
+  seconds, then everything comes back (the house lights to your
+  AfterBlackOut scene). No act changes and no roles
   are dealt, so press it as often as you like before the guests come. It
   runs your Blackout and AfterBlackOut Shortcuts too, so it is how you
   time them by eye: if the house lights go out after the screens, make
   `shortcutLeadMs` bigger in `cues/scenes.json` (it starts at 1500, a
   second and a half before the dark); if they go out before the screens,
-  make it smaller; then start the brain's program again. Your Blackout
-  Shortcut turns the string lights off with the rest, so the Off Murderwin
-  Strings Shortcut is no longer needed.
+  make it smaller; then start the brain's program again (a mistyped
+  number there is said in the brain's window and the usual one used: it
+  switches nothing else off). Press the test in Act 1, before the guests
+  come: later in the night it leaves your two Shortcuts out, so a game's
+  lights are not disturbed. If a light in your Blackout scene shows No
+  Response in the Home app, take it out of the scene: one that does not
+  answer keeps the scene busy for a minute, and a second Blackout inside
+  that minute is refused by Apple Home (the brain's window says so). Your
+  Blackout Shortcut turns the string lights off with the rest, so the Off
+  Murderwin Strings Shortcut is no longer needed.
   Blackout pressed while a test runs does nothing and says "A Blackout test
   is running. Press Blackout again in a few seconds."
 - Act 2 begins when the power returns. Every phone buzzes (where it can) and

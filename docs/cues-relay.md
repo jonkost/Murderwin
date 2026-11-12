@@ -248,8 +248,18 @@ Shortcuts apps are yours.)
   that differs only in capitals is still found, and the brain says when it
   starts which it will run. Time them with the Host tab's **Blackout test**:
   lights after the screens, make `shortcutLeadMs` bigger; before, smaller;
-  then start the brain's program again. In fake mode the key `b` plays a
-  pretend press, to read the order in the window. Neither Shortcut has a
+  then start the brain's program again (a slip in one of these numbers or
+  names is said in the window and the usual value used; it never switches
+  the rest of the sheet off). The two run only in Act 1, so a Blackout
+  test later in a practice night does not switch the Study's walls or the
+  strings under a game. Blackout is not tried again once its moment has
+  passed: if Apple Home is still busy with the last run of that scene (a
+  light with No Response keeps a scene busy for a minute), the window says
+  so and only the lights on the Hue bridge go dark that time. When a
+  blackout ends early just after Blackout went out (a Pause in the lead),
+  AfterBlackOut waits two and a half seconds from it, so the two scenes do
+  not race. In fake mode the key `b` plays a pretend press, to read the
+  order in the window. Neither Shortcut has a
   HomePod in it, so neither stops the music: that is still *PANIC*, below.
   A few seconds after AfterBlackOut the brain sends the string lights their
   warm colour again (House Default turns them on at full). House Default

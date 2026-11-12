@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutTimes, stepBlackoutShortcuts, NO_PRESS } from './lib/blackoutShortcuts.js'
+import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutProblems, blackoutShortcutTimes, stepBlackoutShortcuts, afterWaitMs, NO_PRESS } from './lib/blackoutShortcuts.js'
 import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes, stamp } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
@@ -63,7 +63,7 @@ import { Hue, sameSceneName } from './lib/hue.js'
 import { planScenes, emptySceneState, sceneProblems, sceneNames, playlistNamesOf, ducksFor, unduckDelayMs, afterCake, brainPlaysId, cueSoundsRoad } from './lib/scenes.js'
 import { createMusic, followTrack } from './lib/music.js'
 import { createShortcutMusic, shortcutsFor } from './lib/shortcutMusic.js'
-import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, stringsWanted, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck, createShortcutRunner } from './lib/strings.js'
+import { StringLights, ShortcutLights, TwoWayLights, shortcutColours, STRING_SHORTCUTS, createStringsMirror, stringsColour, stringsWanted, nextChangeAt, salemToMirror, DEFAULT_STRING_COLOURS, OFF as STRINGS_OFF, createProjectorSwitch, projectorShortcutNames, listShortcuts, shortcutsNeeded, shortcutCheck, createShortcutRunner } from './lib/strings.js'
 import { demoNight } from './lib/demo.js'
 import { autoDriver } from './lib/fillins.js' // a practice night's fill-in players (A4): their clock starts with the night
 
@@ -211,7 +211,14 @@ let canStop = null
 // (cues/scenes.json blackout.shortcut and blackout.afterShortcut), run on the blackout's marks. `blackoutCfg`
 // is the pair as this Mac spells them; one that is not on this Mac is not run.
 const blackoutSheet = blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet) // BLACKOUT_SHORTCUTS=off in cues/.env leaves them out
+// a slip in one of the two names or leads is said here and the usual value used: it never switches the sheet off
+if (sheet && !offSwitch(env.BLACKOUT_SHORTCUTS)) for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; the usual value is used instead`)
 let blackoutCfg = blackoutSheet
+// is one the sheet names not on this Mac (yet)? Then the list is read again each minute until it is
+const blackoutMissing = () => !!((blackoutSheet.dark && !blackoutCfg.dark) || (blackoutSheet.after && !blackoutCfg.after))
+// With Jon's Blackout Shortcut on this Mac and no Off Shortcut of the strings' own (and no pairing), the strings'
+// dark is left to his scene, which has them in it: the mirror is not asked for "off" (it would only fail and say so)
+let stringsOffLeftToBlackout = false
 async function checkShortcuts({ quiet = false } = {}) {
   const blackoutNamed = !!(blackoutSheet.dark || blackoutSheet.after)
   if (!shortcutNames.length && !blackoutNamed) { if (!quiet) log('Shortcuts: none to check (MUSIC_SHORTCUTS, STRINGS_SHORTCUTS and PROJECTOR_SHORTCUTS are all off in cues/.env)'); return null }
@@ -222,9 +229,12 @@ async function checkShortcuts({ quiet = false } = {}) {
   }
   if (blackoutNamed) {
     const b = blackoutShortcutCheck(blackoutSheet, have)
+    const was = `${blackoutCfg.dark?.name ?? ''}/${blackoutCfg.after?.name ?? ''}`
     blackoutCfg = { dark: b.dark, after: b.after }
-    if (!quiet) for (const line of b.lines) log(line)
+    // at the start every line; on the minute's look only when something changed (a Shortcut made or renamed meanwhile)
+    if (!quiet || was !== `${b.dark?.name ?? ''}/${b.after?.name ?? ''}`) for (const line of b.lines) log(line)
   }
+  stringsOffLeftToBlackout = !!blackoutCfg.dark && stringsByShortcuts && !stringsPaired && !have.includes(stringShortcutNames.off)
   if (!shortcutNames.length) return { missing: [], lines: [], stop: 'none' }
   // with Jon's Blackout Shortcut on this Mac the string lights go dark with the rest of the house (his scene has
   // them in it), so their own Off Shortcut is not needed and its absence is not worth a line
@@ -238,7 +248,7 @@ async function checkShortcuts({ quiet = false } = {}) {
 }
 if (CHECK_SHORTCUTS) {
   const r = await checkShortcuts()
-  process.exit(r && !r.missing.length ? 0 : 1)
+  process.exit(r && !r.missing.length && !blackoutMissing() ? 0 : 1)
 }
 if (SPEAKERS) {
   const m = createMusic({ fake: FAKE, log })
@@ -467,7 +477,8 @@ let stringsTimer = null
 function mirrorStrings() {
   const now = Date.now()
   const salem = salemToMirror(docs.salem, practiceSalem)
-  strings.update(stringsWanted(salem, docs.night, now))
+  const want = stringsWanted(salem, docs.night, now)
+  if (!(want === STRINGS_OFF && stringsOffLeftToBlackout)) strings.update(want)
   const next = nextChangeAt(salem, now)
   clearTimeout(stringsTimer)
   stringsTimer = next ? setTimeout(mirrorStrings, next - now) : null
@@ -500,19 +511,49 @@ function scheduleMarks() {
 // as the power returns. One runner for the two, so the after one always replaces a dark one still waiting on
 // Apple Home, and the house is never left dark. A few seconds after the house is back the string lights are
 // sent their colour again: his scene has them in it, at full.
+// When the blackout ends sooner than its marks said (a Pause in the lead after the lights' Shortcut went out,
+// Power returns by hand), the after one waits until the dark one has had a moment to land (afterWaitMs): two
+// Home scenes started together race light by light, and "off" could be the last word on some. A new press
+// meanwhile takes the waiting one off: that press brings the house back itself.
 const blackoutRunner = createShortcutRunner({ tag: 'blackout', log })
 const STRINGS_AGAIN_MS = 4000
 let blackoutState = NO_PRESS
+let darkSentAt = null
+let afterTimer = null
+// The dark one is not tried again once its moment has passed (a Home scene still busy with its last run is
+// refused and tried again every second and a half): lights that go out late, as the power returns, are worse
+// than lights that stay on. And a run Apple Home never took is said, in one line.
+const DARK_RETRY_GRACE_MS = 1000
+function runBlackoutShortcut(which, name, { retryUntil = null } = {}) {
+  if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : 'the house back'})`)
+  else {
+    log(`[blackout] ${name}`)
+    blackoutRunner.fire(name, { retryUntil }).then(
+      r => { if (r?.dropped) log(`[blackout] Apple Home was still busy with the last run of ${name}, so it did not run this time`) },
+      e => log(`[blackout] the ${name} Shortcut did not run: ${e?.message ?? 'no reason'}`),
+    )
+  }
+  if (which === 'after') setTimeout(() => { strings.forget(); mirrorStrings() }, STRINGS_AGAIN_MS)
+}
 function stepBlackout(now) {
-  const r = stepBlackoutShortcuts(blackoutState, { marks: blackoutMarkTimes(docs.night), now, cfg: blackoutCfg })
+  // Only in Act 1, where the blackout is (and a Blackout test before the guests come): a test pressed later in a
+  // practice night still darkens the screens and the Hue lights, but leaves Jon's two scenes out, so the Study's
+  // walls and the strings are not switched under a game. A press left behind by an act jump counts as ended.
+  const marks = Number(docs.night?.act ?? 0) <= 1 ? blackoutMarkTimes(docs.night) : null
+  const r = stepBlackoutShortcuts(blackoutState, { marks, now, cfg: blackoutCfg })
   blackoutState = r.state
   for (const { which, name } of r.run) {
-    if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : 'the house back'})`)
-    else {
-      log(`[blackout] ${name}`)
-      blackoutRunner.fire(name).catch(e => log(`[blackout] the ${name} Shortcut did not run: ${e?.message ?? 'no reason'}`))
+    if (which === 'dark') {
+      clearTimeout(afterTimer); afterTimer = null // a new press: its own after one will bring the house back
+      darkSentAt = now
+      runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS })
+      continue
     }
-    if (which === 'after') setTimeout(() => { strings.forget(); mirrorStrings() }, STRINGS_AGAIN_MS)
+    const wait = afterWaitMs(darkSentAt, now)
+    darkSentAt = null
+    clearTimeout(afterTimer)
+    if (wait > 0) afterTimer = setTimeout(() => { afterTimer = null; runBlackoutShortcut(which, name) }, wait)
+    else { afterTimer = null; runBlackoutShortcut(which, name) }
   }
 }
 
@@ -630,7 +671,7 @@ if (!OFFLINE) {
   })
   // once a minute; while the stop's Shortcut is missing, look again first, so
   // the Host tab's line goes within a minute of the Shortcut being made
-  setInterval(async () => { if (canStop === false) await checkShortcuts({ quiet: true }); heartbeat() }, PRESENCE_MS)
+  setInterval(async () => { if (canStop === false || blackoutMissing()) await checkShortcuts({ quiet: true }); heartbeat() }, PRESENCE_MS)
 }
 
 // ---- the heartbeat: a presence row once a minute, so the Host tab's house

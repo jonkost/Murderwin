@@ -253,7 +253,10 @@ export const RETRY_FOR_MS = 30_000
 // for that run, for a Shortcut whose late failure is not harmless (the stop
 // for the music, 11 Nov 2026: "partially succeeded" there means a HomePod may
 // still be playing). A cancelled run stays quiet either way.
-export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
+// fire(name, { retryUntil }): a run whose moment passes is not tried again once the next try would come after
+// `retryUntil` (ms): it fails instead. For the blackout's lights (12 Nov 2026): a Blackout that lands late, as
+// the power returns, is worse than one that never comes.
+export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)), now = () => Date.now() } = {}) {
   const pending = new Set()
   let warned = false
   let seq = 0
@@ -269,7 +272,7 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
     else log(`[${tag}] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); it may still have done its job`)
   }
 
-  async function fire(name, { onLate = null } = {}) {
+  async function fire(name, { onLate = null, retryUntil = null } = {}) {
     const mine = ++seq
     let waited = 0
     for (;;) {
@@ -286,6 +289,7 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
         if (!/in progress/i.test(e?.message ?? '')) throw e
         if (mine !== seq) return { done, dropped: true } // a newer run wants something else now
         if (waited >= RETRY_FOR_MS) throw new Error(`shortcut ${name}: Apple Home was still busy with the last action after ${Math.round(waited / 1000)} s`)
+        if (retryUntil !== null && now() + RETRY_IN_PROGRESS_MS > retryUntil) throw new Error(`shortcut ${name}: Apple Home was still busy with its last run, and its moment has passed`)
         await wait(RETRY_IN_PROGRESS_MS)
         waited += RETRY_IN_PROGRESS_MS
         if (mine !== seq) return { done, dropped: true }
@@ -403,6 +407,7 @@ export function createStringsMirror({ lights = null, colours, log = () => {}, fa
   let busy = false
   let failing = false
   let triedAt = -Infinity
+  let forgotten = 0     // counts forget(): a send that was in flight when one came does not get to say what is shown
 
   async function send() {
     if (busy) return
@@ -410,9 +415,11 @@ export function createStringsMirror({ lights = null, colours, log = () => {}, fa
     try {
       while (wanted !== shown) {
         const colour = wanted
+        const before = forgotten
         triedAt = now()
         try {
           await lights.show(colours[colour])
+          if (before !== forgotten) continue // forgotten meanwhile: what they show is not known, so send again
           shown = colour
           if (failing) { failing = false; log('[strings] the string lights are answering again') }
         } catch {
@@ -434,7 +441,7 @@ export function createStringsMirror({ lights = null, colours, log = () => {}, fa
 
   // Something else has changed the strings (a Home scene of Jon's that has them in it, 12 Nov 2026): what they
   // show is no longer known, so the next update sends the wanted colour again.
-  function forget() { shown = null }
+  function forget() { shown = null; forgotten++ }
 
   return { update, forget, shown: () => shown }
 }
