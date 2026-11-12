@@ -87,22 +87,32 @@ door).
   Music 60%*, *Credit Roll Music*, and for Act 4 three in a row, *Default
   Jazz*, then *Lightbulb Moment Music* (the Study's HomePod), then *Get Off
   My Grass Game Music* (the Orangerie's), from the first round until
-  dessert, when *Default Jazz* brings every HomePod back. Your *PANIC*
-  Shortcut, which stops all four HomePods, is the stop: the brain runs it
-  for the house rules, the blackout, bulletin 1's video, the newscast and
-  The End. The Music app then plays
-  only the cake's song. On this road the music does not dip under a cue
-  sound (the HomePods play their own stream), and the chimes and recordings
-  reach the HomePods by AirPlay as before: try one chime over the jazz on
-  the tech run, and if the jazz does not come back after it, say so. Each
+  dessert, when *Default Jazz* brings every HomePod back. Your *AudioPanic*
+  Shortcut is the stop (you made it on 12 November; it runs your Home scene
+  PANIC, which pauses the four HomePods): the brain runs it for the house
+  rules, the blackout, bulletin 1's video, Sir Irwin's speech and the
+  newscast, and when you press Silence. The Music app then plays
+  only the cake's song. On this road the music does not dip under a chime
+  (the HomePods play their own stream, and since 12 November the chimes
+  come from the room screens and the phones). The one exception is bulletin
+  2 at supper: the brain speaks it from its own speakers, and the jazz
+  stops under it and comes back after (below). Each
   Shortcut goes through the same runner as the string lights (step 18):
   three quarters of a second and the next one goes, whatever Apple Home is
   still waiting on. One more thing the first real run taught (31 October):
-  Apple Home refuses any Shortcut while it is still carrying out the last
-  one's Home action ("Action set execution in progress"), and a HomePod
-  audio action stays in progress for ten to twenty seconds. So the brain
+  Apple Home refuses a Shortcut while it is still carrying out the last
+  run of that Shortcut's Home scene ("Action set execution in progress"),
+  and a HomePod audio action stays in progress for ten to twenty seconds.
+  (On 31 October the Shortcuts refused all ran a scene that was already
+  under way; whether Apple Home also refuses a different scene meanwhile,
+  the lights' *Blackout* while the music's pause is still going, has not
+  been tried: see the stop, below.) So the brain
   tries a refused Shortcut again every second and a half for up to thirty
-  seconds, quietly, and drops it if a newer cue has come meanwhile; in Act 4
+  seconds, quietly, and drops it if a newer cue has come meanwhile (since
+  12 November a stop that is still waiting on Apple Home gives way at once
+  to a newer play or stop, so the music that follows a stop is never kept
+  waiting behind it: around the blackout the stop is asked for three times,
+  at the press, at the dark and at the power's return); in Act 4
   the two rooms' music waits for the house jazz to finish first. Two music
   changes within twenty seconds of each other still reach the HomePods, a
   little late.
@@ -261,19 +271,52 @@ Shortcuts apps are yours.)
   AfterBlackOut waits two and a half seconds from it, so the two scenes do
   not race. In fake mode the key `b` plays a pretend press, to read the
   order in the window. Neither Shortcut has a
-  HomePod in it, so neither stops the music: that is still *PANIC*, below.
+  HomePod in it, so neither stops the music: that is *AudioPanic*, below.
   A few seconds after AfterBlackOut the brain sends the string lights their
   warm colour again (House Default turns them on at full). House Default
   also turns the Study's walls on at full; the Study's game takes them back
   at the first touch. `BLACKOUT_SHORTCUTS=off` in `cues/.env` leaves both
   out.
-- **PANIC is a scene but not yet a Shortcut (12 November).** The Home app
-  has a scene called PANIC that pauses four speakers; this Mac has no
-  Shortcut by that name, and the brain can only run Shortcuts, so nothing
-  stops the music yet. In Shortcuts: duplicate *Blackout*, name the copy
-  PANIC, and choose the scene PANIC in it. Also add *TV Wonder* (the Office)
-  to the PANIC scene: Intense Music, Credit Roll and the Study's music play
-  on it, and PANIC does not pause it.
+- **The stop is your AudioPanic Shortcut (12 November).** You made it that
+  day, and the sheet names it (`musicShortcuts.off` in `cues/scenes.json`):
+  keep the name as it is, or change both together. It has one step, your
+  Home scene PANIC, which pauses the four HomePods. `npm start --
+  --check-shortcuts` (it runs none of them) says whether every Shortcut the
+  brain needs is on this Mac. Around a blackout the brain asks for the stop
+  three times: at the press, at the dark and at the power's return. The
+  first Blackout test with the jazz playing is also the first time the
+  stop and your *Blackout* Shortcut run within the same second. The music
+  should stop at the press, the house lights should still go out, and the
+  jazz should come back with the power. If the window says "the Blackout
+  Shortcut did not run" about two seconds after the press, Apple Home would
+  not take the lights while the pause was going: tell Claude Code. The
+  first thing to try is `shortcutLeadMs` at 2000 in the sheet's `blackout`
+  line, so the lights' Shortcut starts with the press and not half a second
+  after the stop.
+- **TV Wonder is not in the PANIC scene.** The Study's music and the two
+  Intense Music scenes play on TV Wonder (the TV in the Study) as well as
+  on the HomePods, and nothing ever stops it: from the first round of Act 4
+  it plays to the end of the night, through Sir Irwin's speech, the cake's
+  song and the reveal. One of two things in the Home app puts it right.
+  Add TV Wonder to the PANIC scene, paused like the others (one change: it
+  then stops with the rest, but at dessert it still plays the Study's music
+  over the jazz until the cake or Sir Irwin). Or take TV Wonder out of the
+  Study's scene and the two Intense scenes (three changes: the Study's
+  HomePod carries the music alone, and there is nothing to stop).
+- **The supper bulletin (12 November).** The brain speaks bulletin 2 from
+  its own speakers, and while it speaks, the jazz stops and comes back
+  after: the sheet's `duck` is *AudioPanic* too. Until that day it was
+  *Default Jazz 20%*, which cannot do it. That Shortcut plays the same Home
+  scene as *Default Jazz* and then sets this Mac's own volume to 20 percent,
+  so it turned down the bulletin itself and left the HomePods as loud.
+  *Default Jazz 20%* (the drawing's intro) and the two Intense Shortcuts
+  still do that to this Mac in Acts 6 and 7 (20, 35 and 60 percent), and it
+  stays there: on 12 November it stood at 60. Turn the brain's volume all
+  the way up before every night, or the Orangerie's chimes and the supper
+  bulletin come out quiet. If you would rather the jazz went quiet under the
+  bulletin than stopped, it takes a Home scene of yours with the HomePods
+  at a low level and a Shortcut that runs it and nothing else; name it as
+  the sheet's `duck`.
 - The four HomePods are not one AirPlay group, and since 12 November none
   is needed: the cue sounds (the chimes, the stings, the scream) come from
   every room screen and phone, and the music from each HomePod by your
@@ -340,8 +383,8 @@ Shortcuts apps are yours.)
    the right music on the right HomePods, and in Shortcuts one shortcut per
    scene, named exactly *Default Jazz*, *Default Jazz 20%*, *Lightbulb
    Moment Music*, *Get Off My Grass Game Music*, *Intense Music 35%*,
-   *Intense Music 60%*, *Credit Roll Music* and *PANIC* (the stop: all four
-   HomePods). Make *Default
+   *Intense Music 60%*, *Credit Roll Music* and *AudioPanic* (the stop: a
+   scene that pauses all four HomePods). Make *Default
    Jazz* play on every HomePod, and the two room ones on their own HomePod
    only: in Act 4 the brain runs the jazz first and the two rooms after it.
    Set the volume inside every scene's audio action (31 October: with none

@@ -388,8 +388,10 @@ the screen awake by itself where the iPad lets it.
    corner until you do; on the party night there is no note, so just tap
    once (the brain's
    browser too: since 12 November it is the Orangerie's speaker for the
-   chimes, so keep that Mac's sound on its own speakers, turned up, not a
-   HomePod). Each shows
+   chimes, so keep that Mac's sound on its own speakers, turned all the
+   way up, not a HomePod; your Default Jazz 20% and Intense Music
+   Shortcuts turn that Mac down late in the night and leave it there, so
+   turn it up again before every night). Each shows
    its loop, once your files are in `play/public/loops`, or its room's
    splash until then. They follow the night
    on their own. Two are touched on purpose: the memory match in Act 4, and
@@ -465,9 +467,10 @@ the screen awake by itself where the iPad lets it.
   the mark and not only the lights on the Hue bridge, and *AfterBlackOut*
   (the house back) as the power returns; a few seconds later it sends the
   string lights their warm colour again, since your scene turns them on at
-  full. Neither one stops the music: that is still a Shortcut called PANIC,
-  which this Mac does not have yet (below, under Sound test). The brain
-  runs the two only in Act 1, where the blackout is.
+  full. Neither one stops the music: that is your *AudioPanic* Shortcut,
+  which the brain runs at the press, and again at the dark and at the
+  power's return (below, under Sound test). The brain runs the two lights
+  Shortcuts only in Act 1, where the blackout is.
   A **Pause** in the two seconds before the dark (Susan's phone,
   say) calls the blackout off, with no scream and no dark on the screens:
   press Blackout again when you are ready. If it comes after the first
@@ -849,14 +852,17 @@ the screen awake by itself where the iPad lets it.
   sound on every room screen and phone at once; it is harmless at any time
   and moves nothing. **Silence** tells the brain to stop the music on the
   HomePods. If the brain has no Shortcut to stop the music, a red line above
-  the list says so and names the Shortcut to make (today PANIC); until
+  the list says so and names the Shortcut to make; until
   it exists, Silence and every "music off" do nothing, the blackout's
-  included. On 12 November the Home app has a scene called PANIC (it pauses
-  four speakers) but this Mac has no Shortcut by that name: in Shortcuts,
-  duplicate Blackout, call the copy PANIC, and choose the scene PANIC in
-  it. Add TV Wonder to that scene as well: Intense Music, Credit Roll and
-  the Study's music play on it, and PANIC does not pause it. The brain's window
-  says the same when it starts, with any other missing Shortcut.
+  included. Since 12 November the brain has it: your *AudioPanic* Shortcut,
+  which runs your Home scene PANIC and pauses the four HomePods. Keep that
+  name. TV Wonder (the Study's TV) is not in the PANIC scene: the Study's
+  music and the Intense Music play on it, and nothing stops it, so from Act
+  4 it plays on through Sir Irwin's speech and the reveal. In the Home app,
+  add it to the PANIC scene, or take it out of the Study's scene and the two
+  Intense scenes. At supper the jazz stops while the brain speaks the
+  bulletin and comes back after it. The brain's window
+  says when it starts whether any Shortcut it needs is missing.
 - **Cake!** shows above Next in Act 5 only. Pressed while Sir Irwin's
   countdown is on the TV, it plays the song and dims the lights but leaves
   his motive cards on the screen. **At the paper** and the drawing's four

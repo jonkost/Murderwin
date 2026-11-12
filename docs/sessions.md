@@ -9,6 +9,99 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, midday · Claude Code (the music's stop: Jon's AudioPanic Shortcut)
+
+Jon: "audioPanic is made".
+
+**What it is** (read from the Mac's own records, nothing run): the Shortcut
+is on the brain as *AudioPanic*. One step: his Home scene PANIC, which
+pauses four HomePods (the Orangerie's, the bedroom's, the Parlour's and the
+Study's). The sheet was still asking for a Shortcut called PANIC.
+
+**What changed** (the brain's own code and sheet: nothing to publish; it
+takes hold the next time the brain's program is started)
+
+- `cues/scenes.json` `musicShortcuts.off` is *AudioPanic*. Jon was not asked
+  to rename it. `npm start -- --check-shortcuts` (names only) now says all 10
+  Shortcuts the brain runs are on this Mac, and a pretend press in fake mode
+  shows the order: the stop at the press, *Blackout* half a second later,
+  the dark, *AfterBlackOut* and the lights back.
+- The stop is a real Shortcut for the first time, and the brain asks for it
+  three times around a blackout (the press, the dark, the power). Apple Home
+  refuses a Shortcut whose scene is still being carried out, and a refused
+  stop used to ask again for up to thirty seconds with the music's queue
+  waiting behind it. Now a stop that is still waiting gives way at once to a
+  newer play or stop (`cues/lib/shortcutMusic.js` `stopNow`, the runner's
+  `stillWanted`), so the jazz after a Blackout test, or Act 2's, is never
+  kept waiting behind a stop that is already old. One new test, which fails
+  without the change.
+- **The supper bulletin.** The sheet's `duck` (the Shortcut the brain runs
+  while it speaks bulletin 2) was *Default Jazz 20%*. That Shortcut plays
+  the same Home scene as *Default Jazz* and then sets this Mac's own volume
+  to 20 percent: it turned down the bulletin itself, left the HomePods as
+  loud, and left the brain at 20 percent for the rest of the night. The
+  `duck` is *AudioPanic* now: the jazz stops while the bulletin plays and
+  comes back after it. A test keeps a Shortcut with a percent in its name
+  out of that place. And the jazz waits for that stop to land (or eight
+  seconds) before it can come back, so a bulletin that ends at once can
+  never leave the stop with the last word.
+- Five reviewers checked it in two rounds, read only, with no sound: one drove the real
+  stop against a pretend Apple Home on a pretend clock, old code beside new
+  (the change breaks nothing and removes waits and false lines in capitals
+  when the pause is slow); one walked the blackout as a whole; one walked
+  the night's music speaker by speaker, and found the supper bulletin and
+  TV Wonder; then one replayed the supper bulletin every way it can go
+  (the jazz always came back), and one read every word written for Jon
+  against the code.
+- The guides (`docs/on-the-night.md`, `docs/cues-relay.md`), `CLAUDE.md`,
+  the settings template (`cues/.env.example`), the media check's last line,
+  and the board: card 593 done; card 594 for Claude Code (below); card 582
+  reworded to Jon's one job; notes on his practice card 585 and his older
+  music card 551. The board's update shows after the next publish.
+
+**For Jon**
+
+- **TV Wonder.** The Study's music and the two Intense Music scenes play on
+  TV Wonder (the Study's TV) as well as on the HomePods, and the PANIC scene
+  does not pause it, so from the first round of Act 4 it plays to the end of
+  the night: through Sir Irwin's speech, the cake's song and the reveal. In
+  the Home app, either add TV Wonder to the PANIC scene (one change; at
+  dessert it still plays the Study's music over the jazz until the cake or
+  Sir Irwin), or take it out of the Study's scene and the two Intense scenes
+  (three changes; nothing left to stop). Card 582.
+- The brain's own volume stood at 60 on 12 Nov (read, not changed): turn
+  it all the way up before the practice night.
+- On the practice night, a Blackout test with the jazz playing is the first
+  real try: the music should stop at the press, the house lights should
+  still go out, and the jazz should come back with the power.
+
+**Known, and left as it is**
+
+- Nobody may run audio, so one thing is unproven: that Apple Home lets the
+  lights' Shortcut run while the music's pause is still being carried out.
+  HomeKit keeps "in progress" per scene, and on 31 Oct a newer music scene
+  did start while an older one was under way, so it should. If it does not,
+  the brain's window says "the Blackout Shortcut did not run" about two
+  seconds after the press and only the lights on the Hue bridge go dark;
+  the first thing to try is `blackout.shortcutLeadMs` at 2000, which starts
+  the lights' Shortcut with the press.
+- The sheet's `cueSpeechDelaySeconds` (wait two seconds after the sounder
+  before the brain speaks) is not wired into the brain's program: it speaks
+  at once, and each recording's own second of silence is the only gap. Card
+  594, after the practice night.
+- A stop whose Home scene only partly ran (a HomePod that does not answer)
+  is not said in the brain's window when a newer stop has already taken its
+  place, as at the blackout. Listen for a HomePod still playing in the dark.
+- *Default Jazz 20%* (the drawing's intro) and the two Intense Shortcuts set
+  this Mac's volume (20, 35 and 60 percent), not the HomePods', and it
+  stays there. Everyone is in the Parlour by then, so it harms little that
+  night, but the next night starts with the brain turned down: on 12 Nov it
+  stood at 60, left by the walk-through. Jon turns it all the way up before
+  every night (card 585). This may be part of why 11 Nov felt quiet.
+- The published Host tab still names PANIC in its warning; the warning only
+  shows if the brain cannot find the stop. The next publish carries the
+  right name.
+
 ## 12 Nov 2026, mid-morning · Claude Code (Jon's two Shortcuts for the blackout)
 
 Jon: "I have added 2 new shortcuts to help with the black out. Blackout and
