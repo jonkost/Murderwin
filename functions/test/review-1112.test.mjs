@@ -73,7 +73,10 @@ test('S1 a real seat that never answers still gets the one-minute clock and its 
   assert.equal(early.windowSettled, false, 'not before its minute and the grace')
   const tick = await host(db, nightId, 'tick', undefined, ms(w.closesAt) + GRACE_MS)
   assert.equal(tick.windowSettled, true)
-  assert.equal(nightOf(db, nightId).window.settled, true)
+  // the night's window is this game, closed, or already the next one: a scheduled game can fall due in this same
+  // tick (the times come from the night's own seed; about one night in fifteen, which made this test fail now and then)
+  const after = nightOf(db, nightId).window
+  assert.ok(after.id === w.id ? after.settled === true : after.settled === false, 'this game is closed')
   assert.equal(sessionOf(db, uids[1]).answers[w.id].defaulted, true, 'the silent phone got the random pick')
   assert.equal(sessionOf(db, uids[0]).answers[w.id].defaulted, false)
 })
