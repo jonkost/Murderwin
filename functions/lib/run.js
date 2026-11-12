@@ -23,7 +23,7 @@ import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
 import { setIpad } from './ipad.js'
-import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout, blackoutRunning } from './blackout.js'
+import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout, blackoutRunning, blackoutStage } from './blackout.js'
 
 // Is the press that is running a Blackout test?
 async function testRunning(db, nightId, now) {
@@ -263,6 +263,13 @@ async function act4Entered(db, nightId, beat) {
   const round = roundOf(beat)
   return !round || (pub.phase === 'rounds' && Number(pub.round) >= round)
 }
+// The host's own move into an Act 4 round, on a practice night with fill-in players, takes that round's claim
+// too (the check of 12 Nov 2026): Next used to take none, so a clock that landed while the round was still
+// being entered (the beat written, the round's record not yet) started the round a second time, with a second
+// chime. Whether the claim was free or not, the host's move goes ahead. The party night has no claims at all.
+async function claimForHost(db, nightId, n, act, beat, now) {
+  if (n?.fillIns && n.forceRehearsal === true && Number(act) === 4 && roundOf(beat)) await claimMove(db, nightId, beat, now)
+}
 async function claimMove(db, nightId, key, now) {
   const ref = db.doc(act4.act4PrivatePath(nightId))
   return db.runTransaction(async tx => {
@@ -367,6 +374,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       if (deal.beatSpec(to.act, to.beat)?.action === 'results') await finale.requireNamed(db, nightId) // the screen names all three first
       // Act 1 begins: copy the latest workshop lines (rules, bios, cat cards) to the phones first
       if (n.act === 0) await night.publishContent(db, nightId)
+      await claimForHost(db, nightId, n, to.act, to.beat, now)
       return enterBeat(db, nightId, to.act, to.beat, { now })
     }
     case 'back': {
@@ -382,6 +390,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       if (arg !== n.beat) await refuseIfDrawing(db, nightId, n)
       if (spec.action === 'results') await finale.requireNamed(db, nightId)
       await settleIfDue(db, nightId, now)
+      await claimForHost(db, nightId, n, n.act, arg, now)
       return enterBeat(db, nightId, n.act, arg, { now })
     }
     case 'act': {
@@ -630,6 +639,14 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
     default: {
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       const r = await night.hostCommand(db, { nightId, command, arg, now })
+      // A pause in the blackout's lead (the press made, the dark not yet come; the check of 12 Nov 2026): the
+      // scream is already in every page's hand, stamped for the dark (S5), so it is called off here, at once,
+      // before any page starts it, and the marks come off so that no screen flashes dark either. The Blackout
+      // command, waking at its dark mark, finds the night paused and returns with nothing to do.
+      if (command === 'pause' && !r?.already && blackoutStage(n.blackout, now) === 'press') {
+        await screen.callOff(db, nightId, 'blackout', { now })
+        await clearBlackout(db, nightId, n.blackout)
+      }
       // the room screens follow (screen.js); a second Pause or Resume that changed nothing moves no screen either
       if (['pause', 'resume'].includes(command) && !r?.already) await screen.onPhase(db, nightId, command, { now })
       return r
