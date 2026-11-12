@@ -95,7 +95,9 @@ export default function Dashboard() {
     <main className="dash">
       <StartNight />
 
-      <section className="panel">
+      <details className="panel more">
+        <summary>From the build: old jobs, questions, the lists</summary>
+      <section className="panel inner">
         <h2>Your next three</h2>
         <p className="why">Your open cards, soonest first: the ones with a date, then the rest in the order of the night.</p>
         {tasks === null ? <p className="hint">Counting…</p>
@@ -116,7 +118,7 @@ export default function Dashboard() {
         <p className="night-line"><Link className="ghost dl" to="/timeline">All your cards on the Timeline</Link></p>
       </section>
 
-      <section className="panel">
+      <section className="panel inner">
         <h2>Questions only you can answer</h2>
         {saveErr && <div className="banner error" role="alert">SAVE FAILED. That answer was not recorded. Pick and confirm again.</div>}
         <p className="why">{decisions === null ? 'Counting…' : asks.length === 0 ? 'None. Every question on the board has an answer.' : 'Pick an answer and confirm it. Until you do, the game runs on the default.'}</p>
@@ -130,8 +132,6 @@ export default function Dashboard() {
         </ul>
       </section>
 
-      <details className="panel more">
-        <summary>Everything else: the games to try, the secrets’ counts, the lists</summary>
       <section className="panel inner">
         <h2>The secrets, made blind</h2>
         <p className="why">{SECRET_ROWS_WHY}</p>

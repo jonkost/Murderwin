@@ -688,15 +688,15 @@ export function StartNight({ ui, again = false }) {
   return (
     <div className="start-night">
       <p className="start-who">{ui['START NIGHT']}</p>
-      <button className="big start-go" disabled={busy} onClick={start}>{busy ? 'Starting…' : real ? 'Start the REAL night' : 'Start a run-through'}</button>
+      <button className="big start-go" disabled={busy} onClick={start}>{busy ? 'Starting…' : 'Start the night'}</button>
       <label className="start-real">
         <input type="checkbox" checked={real} disabled={busy} onChange={e => setReal(e.target.checked)} />
         <span>This is the real night</span>
       </label>
       <p className="start-note">
         {real
-          ? at ? `The party, with the real secrets. The intro goes at ${clockWords(at)} on its own.` : 'The party, with the real secrets. It is past half past four, so Next starts the intro.'
-          : 'A practice: nothing real is used. The intro goes five minutes after you start, or sooner with Next.'}
+          ? at ? `The real night. The intro plays at ${clockWords(at)}.` : 'The real night. Press Next to play the intro.'
+          : 'A practice night. The intro plays in five minutes.'}
       </p>
       {error && <p className="trouble" role="alert">{error}</p>}
     </div>

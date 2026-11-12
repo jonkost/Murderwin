@@ -52,7 +52,7 @@ test('the intro video: at The house rules, from the beat\'s start, not long afte
 test('the phone, the Host tab and the room screens use them; no setup words on a room screen', () => {
   const host = read('../src/screens/Host.jsx')
   assert.ok(host.includes("callHost({ command: 'create', arg: { real, introAt: introAtFor({ real }) } })"), 'the big button sends the tick box and the time')
-  assert.ok(host.includes('This is the real night') && host.includes("real ? 'Start the REAL night' : 'Start a run-through'"), 'a run-through unless the box is ticked')
+  assert.ok(host.includes('This is the real night') && host.includes("{busy ? 'Starting…' : 'Start the night'}") && host.includes('A practice night. The intro plays in five minutes.'), 'a run-through unless the box is ticked')
   assert.ok(host.includes('<StartNight ui={{ \'START NIGHT\': \'Start a new night\' }} again />'), 'the same button on the Host tab')
   assert.ok(host.includes('navigator.share({ title: s.room, url: s.url })'), 'each screen is sent from the share sheet')
   const kiosk = read('../src/screens/Kiosk.jsx')

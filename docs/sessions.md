@@ -9,6 +9,14 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, night · Claude Code (plain words, a smaller workshop)
+
+- Jon: "You can kill all the timeline and where are we. Development is done. I won't be testing the individual games anymore, it's all about the 1 game... Don't call it start run through, I need clean wording. I need it simple."
+- The button says **Start the night** everywhere, with the box This is the real night; one short line under it ("A practice night. The intro plays in five minutes." or "The real night. The intro plays at 4:30 pm.").
+- The workshop's menu is Home, Game night, For Jenna, Devices, Sign out. Timeline, Where we are and Game test are off the menu; their pages still open at their addresses, and the board still feeds `npm --prefix scripts run board`. Home is the Start button, with everything from the build under one line.
+- Deployed the same night (the site only), on Jon's word to get the test running.
+- **Decisions:** Jon: development is done; the workshop needs no Timeline, Where we are or Game test.
+
 ## 12 Nov 2026, later · Claude Code (the big Start button in the workshop, and the pages tidied)
 
 - Jon: "in the workshop. Clean out everything we do not need at this point and give me the big button there."

@@ -375,7 +375,8 @@ test('the status chip, the sent notes, and every open note as plain text', () =>
 
 test('a rail tab, the routes, one callable and only public reads', () => {
   const app = src('App.jsx')
-  assert.ok(/<NavLink to="\/game-test" className="rail-link">Game test<\/NavLink>/.test(app), 'Jon asked for a tab called Game test')
+  // off the menu since 12 Nov 2026 (Jon: "Development is done. I won't be testing the individual games anymore"); the page stays at its address
+  assert.ok(!/NavLink to="\/(game-test|timeline|status)"/.test(app), 'Game test, Timeline and Where we are are off the menu')
   assert.ok(!/NavLink to="\/study-test"/.test(app), 'one link: the rail is full on a phone')
   assert.ok(app.includes('<Route path="/game-test" element={<GameTest />} />'))
   assert.ok(app.includes('path="/study-test"'), 'the old address still works')

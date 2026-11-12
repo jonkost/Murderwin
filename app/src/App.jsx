@@ -91,11 +91,9 @@ function Shell({ user }) {
         <Link to="/" className="brand"><img className="brand-seal" src="/workshop/seal.png" alt="" /><span>Workshop</span></Link>
         {frozen.frozen && <span className="rail-frozen" title={frozen.banner}>{FROZEN_CHIP}</span>}
         <NavLink to="/" end className="rail-link">Home</NavLink>
-        <NavLink to="/timeline" className="rail-link">Timeline</NavLink>
-        <NavLink to="/status" className="rail-link">Where we are</NavLink>
         <NavLink to="/night" className="rail-link">Game night</NavLink>
         <NavLink to="/jenna" className="rail-link">For Jenna</NavLink>
-        <NavLink to="/game-test" className="rail-link">Game test</NavLink>
+        <NavLink to="/devices" className="rail-link">Devices</NavLink>
         <button className="rail-link quiet" onClick={signOutUser}>Sign out</button>
       </nav>
       <Routes>
