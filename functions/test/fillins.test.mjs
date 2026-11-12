@@ -169,12 +169,16 @@ test('a real phone that types a fill-in\'s name takes the seat: the mark goes, t
 
 // ---- the party night is untouched ------------------------------------------------
 
-test('guard 2: the server ignores the number on the real night: the party day\'s real start seats nobody', async () => {
+test('guard 2: the server refuses fill-ins on the real night, before anything is made; the real start with none is as ever', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
   const day = PARTY_DAY + 3 * 60 * 60_000
-  const r = await hostCommand(db, { command: 'create', arg: { real: true, introAt: day + 60 * 60_000, fillIns: 6 }, now: day })
-  assert.equal(r.ok, true, 'the start is never refused over the number')
+  for (const fillIns of [1, 6, 8, '6']) {
+    await assert.rejects(hostCommand(db, { command: 'create', arg: { real: true, introAt: day + 60 * 60_000, fillIns }, now: day }), e => e.code === 'invalid' && /practice nights only/.test(e.message), `${fillIns} refused`)
+  }
+  assert.equal([...db.store.keys()].filter(k => k.startsWith('nights/')).length, 0, 'no night was made')
+  const r = await hostCommand(db, { command: 'create', arg: { real: true, introAt: day + 60 * 60_000, fillIns: 0 }, now: day })
+  assert.equal(r.ok, true)
   assert.equal(r.fillIns, undefined)
   const n = nightOf(db, r.nightId)
   assert.equal(n.forceRehearsal, false, 'the party night')
@@ -872,7 +876,7 @@ test('F01 with fill-ins: a whole practice night, eight seats, Start to The End; 
   assert.deepEqual([s.moves.locked, s.moves.voted], [6, 6], 'six taps of Locked in and six votes, each a fill-in\'s own')
   assert.ok(s.moves.answered >= 6 * 3, 'and every Parlour Game answered in time')
   assert.ok(s.drawers >= 1 && s.drawers <= 2, 'only the two real players were ever called to the paper')
-  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'nothing sealed but the bag count when the night is made')
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed/')), [], 'nothing sealed: a practice night reads its own case, never the party\'s packing (bags.js packingFor)')
   assert.equal(lines.length, 1)
   assert.match(lines[0], /^Fill-in night: 8 seats \(6 fill-ins\), 4 groups, 4 rounds, 4 early chimes; .* PASS$/)
   assert.ok(!/murderer|ghost|motive/i.test(lines[0]), 'counts only')
@@ -884,4 +888,17 @@ test('F01 with fill-ins: a whole practice night, eight seats, Start to The End; 
     assert.deepEqual([o.ok, o.checks, o.error], [true, [], null], `${fillIns} fill-ins and ${real.length} real`)
     assert.deepEqual([o.seats, o.over, o.ballots, o.results], [fillIns + real.length, true, fillIns + real.length, fillIns + real.length])
   }
+})
+
+test('F01 with fill-ins and the brain off: nothing runs the fill-ins, and the whole night still never waits on one', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const lines = []
+  const s = await fillInNight({ db, fillIns: 6, real: ['Jon', 'Sue'], start: PRACTICE_START, driver: false, log: l => lines.push(l) })
+  assert.equal(s.error, null)
+  assert.deepEqual(s.checks, [], 'every gate moved on the real players\' own taps')
+  assert.equal(s.ok, true)
+  assert.deepEqual([s.seats, s.fillIns, s.groups, s.rounds, s.earlyChimes, s.ballots, s.results, s.over], [8, 6, 4, 4, 4, 8, 8, true])
+  assert.deepEqual([s.moves.locked, s.moves.answered, s.moves.voted], [0, 0, 0], 'no fill-in moved on its own clock')
+  assert.match(lines[0], /PASS$/)
 })

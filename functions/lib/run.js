@@ -19,6 +19,7 @@ import * as safeguards from './safeguards.js'
 import * as act4 from './act4.js'
 import { recordArcadeScore } from './arcade.js'
 import { PARTY_DAY } from './morning.js'
+import { isFillInUid } from './seats.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -132,12 +133,14 @@ export const REAL_NIGHT_MESSAGE = 'The real night can only be started on the par
 
 // Fill-in players (the polish pass, job A4, 11 Nov 2026; lib/fillins.js): a
 // practice night may ask for 0 to 8 seats with no phone, and they are seated
-// here, once Arrivals is open, before any guest taps a name. On the real
-// night the number is ignored, not refused: the phone never sends one with
-// the box ticked, and a refusal could only ever block the Start button on
-// the party day. The fill-in code is loaded only when a practice asks for it.
+// here, once Arrivals is open, before any guest taps a name. With the
+// real-night box ticked a number is refused, before anything is made (the
+// phone never sends one then: lib/start.js fillInArg). The fill-in code is
+// loaded only when a practice asks for it.
+export const FILL_INS_REAL_MESSAGE = 'Fill-in players are for practice nights only. Untick the box, or set Fill-in players to 0.'
 export async function startEvening(db, { real = false, introAt = null, fillIns = 0, now = Date.now() } = {}) {
   if (real && now < PARTY_DAY) throw new NightError('closed', REAL_NIGHT_MESSAGE)
+  if (real && Number(fillIns) > 0) throw new NightError('invalid', FILL_INS_REAL_MESSAGE)
   const made = await night.createNight(db, { forceRehearsal: !real })
   const at = Math.round(Number(introAt))
   const when = Number.isFinite(at) && at > now && at - now <= INTRO_MAX_MS ? at : null
@@ -201,8 +204,10 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
   }
   if (n.act === 4) {
     const due = await act4.due(db, nightId, now)
-    // a practice night with fill-in players: one clock takes each move (claimMove, below); any other night, as ever
-    if (due && n.fillIns && n.forceRehearsal === true && !(await claimMove(db, nightId, `${n.beat}_${due}`, now))) return { moved: null }
+    // a practice night with fill-in players: one clock takes each move (claimMove, below); any other night, as ever.
+    // The claim is named for where the move goes (round2, finish): each is made once a night, and a clock that read
+    // the night after another moved its beat, but before the round's own record caught up, finds the claim taken.
+    if (due && n.fillIns && n.forceRehearsal === true && (n.beat === due || !(await claimMove(db, nightId, due, now)))) return { moved: null }
     if (due === 'finish') { await act4.finishRounds(db, nightId, { now }); return { moved: 'finish' } }
     if (due && deal.beatSpec(4, due)) { await enterBeat(db, nightId, 4, due, { now }); return { moved: due } }
   }
@@ -608,6 +613,24 @@ async function afterAllIn(db, nightId) {
   }
 }
 
+// A practice night with fill-in players (A4, 11 Nov 2026): when a real
+// player's Lock in leaves only fill-ins still to vote, they vote at once
+// (fillins.js voteNow), so the vote closes on the real players' own last tap,
+// with every seat counted, whether or not anything is running the fill-ins.
+// Asked only on a practice night that has them; never throws, since that
+// player's ballot is in whatever happens here.
+async function fillInsVoteNow(db, nightId, uid, now) {
+  try {
+    if (isFillInUid(uid)) return
+    const n = (await db.doc(`nights/${nightId}`).get()).data()
+    if (!n?.fillIns || n.forceRehearsal !== true) return
+    const fillins = await import('./fillins.js')
+    await fillins.voteNow(db, nightId, { now })
+  } catch (e) {
+    console.error('fill-ins not voted', e?.code ?? e?.name ?? 'error')
+  }
+}
+
 // What a player phone may call, besides join.
 export const player = {
   answer: (db, args) => deal.answer(db, args),
@@ -615,6 +638,7 @@ export const player = {
   ballot: async (db, args) => {
     const { closed, ...reply } = await deal.castBallot(db, args)
     if (closed) await afterAllIn(db, args.nightId)
+    else if (!reply.already) await fillInsVoteNow(db, args.nightId, args.uid, args.now ?? Date.now())
     return reply
   },
   relayVote: (db, args) => relay.vote(db, args),

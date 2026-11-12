@@ -31,7 +31,9 @@ export const PRACTICE_START = Date.parse('2026-11-12T23:00:00Z') // the practice
 const STEP_MS = 2_000 // the driver's own pace
 const AFTER_PAUSES = Math.max(PAUSES.answer[1], PAUSES.vote[1], PAUSES.lock[1]) + 2 * STEP_MS
 
-export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], start = PRACTICE_START, log = () => {} } = {}) {
+// `driver: false` is the brain switched off: nothing ever runs the fill-ins' moves. Each step is then only
+// the night's own clock (run.clockTick, as the Host tab's tick keeps it), and the night must still never wait.
+export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], start = PRACTICE_START, driver = true, log = () => {} } = {}) {
   let now = start
   const summary = { nightId: null, seats: 0, fillIns: 0, checks: [], moves: { locked: 0, answered: 0, voted: 0 }, passes: 0, groups: 0, rounds: 0, earlyChimes: 0, ballots: 0, results: 0, drawers: 0, over: false, error: null, ok: false }
   const fail = code => { if (!summary.checks.includes(code)) summary.checks.push(code) }
@@ -51,6 +53,7 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
   const next = () => host('next')
   // one pass of the fill-ins' moves, as the driver makes every two seconds
   const pass = async () => {
+    if (!driver) { summary.passes++; const c = await run.clockTick(db, nightId, now); return { ok: true, on: true, did: 0, ...(c.moved ? { clock: c.moved } : {}), why: (await nightDoc()).phase === 'act' ? undefined : 'held' } }
     const r = await stepFillIns(db, nightId, { now })
     summary.passes++
     for (const k of ['locked', 'answered', 'voted']) summary.moves[k] += r[k] ?? 0
@@ -73,14 +76,17 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
       }
       // the real players have answered at once: within twenty seconds every fill-in has too
       await wait(AFTER_PAUSES)
-      for (const uid of fills) want((await sessionOf(uid)).answers?.[w.id]?.defaulted === false, 'FILL-ANSWER')
+      if (driver) for (const uid of fills) want((await sessionOf(uid)).answers?.[w.id]?.defaulted === false, 'FILL-ANSWER')
     } else if (w.kind === 'ballot') {
       await wait(AFTER_PAUSES) // the fill-ins vote within twenty seconds
       const keys = Object.keys(n.roster)
-      for (const uid of fills) { const b = (await sessionOf(uid)).ballot; want(b && b.defaulted === false && keys.includes(b.murderer), 'FILL-VOTE') }
+      if (driver) for (const uid of fills) { const b = (await sessionOf(uid)).ballot; want(b && b.defaulted === false && keys.includes(b.murderer), 'FILL-VOTE') }
       for (const uid of realUids) {
         try { await run.player.ballot(db, { nightId, uid, murderer: keys[0], motive: night.MOTIVES[0].n, victim: keys[1], ghost: keys[1], now }) } catch (e) { if (!(e instanceof night.NightError)) throw e }
       }
+      // the vote closes on the real players' own last Lock in, with every seat counted, driver or none
+      want((await nightDoc()).window?.settled === true, 'VOTE-WAITS')
+      for (const uid of fills) { const b = (await sessionOf(uid)).ballot; want(b && b.defaulted === false && keys.includes(b.murderer), 'FILL-VOTE') }
     }
     // any other kind is left to its clock, and so is whatever this one still waits for
     const after = (await nightDoc()).window
@@ -141,7 +147,7 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
     want((await nightDoc()).beat === 'groups', 'GROUPS') // the clock dealt the group cards
     await wait(AFTER_PAUSES)
     const pubLocked = Object.keys((await db.doc(act4.act4Path(nightId)).get()).data().locked ?? {})
-    want(pubLocked.length === summary.fillIns, 'FILL-LOCK') // every fill-in tapped Locked in on its own
+    want(pubLocked.length === (driver ? summary.fillIns : 0), 'FILL-LOCK') // every fill-in tapped Locked in on its own (none, with no driver)
     want((await nightDoc()).beat === 'groups', 'ROUND-EARLY') // and the rounds still wait for the real players
     for (const uid of realUids) await run.player.lockIn(db, { nightId, uid, now })
     want((await nightDoc()).beat === 'round1', 'LOCKED') // at once: no fill-in was waited for
@@ -170,7 +176,7 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
         const lit = await host('light-up')
         for (const uid of realUids) { const game = (await sessionOf(uid)).windows?.[lit.id]; if (game) await run.player.answer(db, { nightId, uid, windowId: lit.id, picks: game.beats.map(b => b.choices[1].k), now }) }
         await wait(AFTER_PAUSES)
-        for (const uid of await fillUids()) want((await sessionOf(uid)).answers?.[lit.id]?.defaulted === false, 'FILL-WAITING')
+        if (driver) for (const uid of await fillUids()) want((await sessionOf(uid)).answers?.[lit.id]?.defaulted === false, 'FILL-WAITING')
       }
       // the real players' own room, played to its end
       for (const g of mine) {

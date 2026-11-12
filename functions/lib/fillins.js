@@ -198,6 +198,38 @@ export async function stepFillIns(db, nightId, { now = Date.now() } = {}) {
   return { ...base, did: moves.locked + moves.answered + moves.voted, ...moves, ...(clock ? { clock } : {}) }
 }
 
+// The vote, the moment only fill-ins are left to lock in (run.js calls this
+// after each real player's ballot): every fill-in still to vote casts its
+// own, at once, through the same call a phone makes, and the last of them
+// closes the vote. So the vote closes on the real players' own last tap with
+// every seat counted, even with nothing running the fill-ins (the brain
+// off). Does nothing while a real player is still choosing, on the real
+// night, or from the party day on. Returns counts only.
+export async function voteNow(db, nightId, { now = Date.now() } = {}) {
+  if (now >= PARTY_DAY) return { ok: true, voted: 0 }
+  const night = (await db.doc(`nights/${nightId}`).get()).data()
+  if (!night || night.forceRehearsal !== true || !night.fillIns) return { ok: true, voted: 0 }
+  const w = night.window
+  if (!w || w.kind !== 'ballot' || w.settled) return { ok: true, voted: 0 }
+  const uids = (await db.doc(`nights/${nightId}/private/deck`).get()).data()?.uids ?? {}
+  const seats = fillInKeys(night.roster).map(key => ({ key, uid: uids[key] })).filter(s => isFillInUid(s.uid))
+  const left = []
+  for (const seat of seats) {
+    const s = (await db.doc(`sessions/${seat.uid}`).get()).data()
+    if (s?.status === 'active' && s.windows?.[w.id] && !s.ballot) left.push(seat)
+  }
+  // a real player is still choosing: the fill-ins keep to their own pauses
+  if (!left.length || (w.answered ?? 0) + left.length < Number(w.of)) return { ok: true, voted: 0 }
+  let voted = 0
+  for (const { key, uid } of left) {
+    try {
+      const r = await run.player.ballot(db, { nightId, uid, ...ballotFor(nightId, key, night), now })
+      if (r?.ok && !r.already) voted++
+    } catch (e) { if (!(e instanceof NightError)) throw e }
+  }
+  return { ok: true, voted }
+}
+
 // The live night's pass, for the `fillIns` callable: finds the night that is
 // on, steps it, and leaves a heartbeat (presence/fillins-<nightId>, at most
 // every thirty seconds) so the Host tab can say the fill-ins are playing
