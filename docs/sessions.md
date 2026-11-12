@@ -15,8 +15,9 @@ Jon, on seeing that none of the six loops was in: "For the loops just make
 the classic dvd screen saver with the cats and dog face picture when it
 bounces off the edge of the screen."
 
-**What it is** (built, tested, reviewed; committed; not published, not
-pushed)
+**What it is** (built, tested, reviewed; 2b97322 the code, a0ec85d the
+guides and the media check, b0ecaa3 the board and the notes; not published,
+not pushed)
 
 - A room screen with nothing to show plays a screen saver. One of the
   household's five face pictures (Sir Irwin, Granolia, Miss Boo LaRue,
