@@ -21,7 +21,7 @@ and the Study's two walls with them) and House Default (the house back: the
 lights at set levels, the strings and the walls on at full). Neither has a
 HomePod in it.
 
-**What changed** (04e8635 and e090e73, the brain's own code: nothing to publish)
+**What changed** (04e8635, e090e73 and b04db46, the brain's own code: nothing to publish)
 
 - The brain runs *Blackout* `shortcutLeadMs` before the dark mark (1500 to
   start, so about half a second after the press: a Home scene takes a second
@@ -41,8 +41,10 @@ HomePod in it.
 - Fake mode has a key, `b`, for a pretend press with its marks: the order
   was read there (the music's stop, Blackout, the dark's Hue scene and hall
   bulb, AfterBlackOut, the lights back).
-- Three reviewers tried to break it, then two more the follow-up (e090e73).
-  From them: a mistyped number in the blackout block can never switch the
+- Three reviewers tried to break it, then two more the follow-up (e090e73),
+  whose five small points are b04db46 (a Blackout still waiting on Apple
+  Home is dropped when the blackout is called off; a paused night with the
+  marks on is a blackout being called off). From them: a mistyped number in the blackout block can never switch the
   whole sheet off (it is said and the usual value used); when a blackout is
   called off just after Blackout went out, AfterBlackOut waits two and a
   half seconds from it, so the two scenes do not race; Blackout is not
