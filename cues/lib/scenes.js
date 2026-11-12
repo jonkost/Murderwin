@@ -115,19 +115,19 @@ export function studyWants(docs = {}, cfg) {
   return (s.states ?? []).includes(docs.study?.state) ? 'playing' : 'idle'
 }
 
-// Boo's music (27 Oct 2026, Jon): in `boo.acts` the Parlour HomePod
-// (`boo.speaker`) leaves the house music, so Susan's MacBook Pro can play
-// on it; outside them it is in the house music. Returns
-// 'lent' | 'house', or null with no `boo` on the sheet.
-export function speakerWants(docs = {}, cfg) {
-  const b = cfg?.boo
-  const m = momentOf(docs.night)
-  if (!b || !m) return null
-  return (b.acts ?? []).includes(m.act) && m.phase !== 'blackout' ? 'lent' : 'house'
+// (The Parlour HomePod is no longer lent to Susan's MacBook Pro in Act 4:
+// the sheet's `boo` block, a leftover from the Entryway's first game, went on
+// 11 Nov 2026. Every HomePod stays in the house music all night.)
+
+// `moment` is the act, beat and phase the planner last saw, as one word: the
+// stop is sent again when it moves while the sheet still wants silence.
+export function emptySceneState() {
+  return { music: null, hue: null, projector: null, playlist: null, cut: null, study: null, moment: null, cakeCmd: null, musicCmd: null, sceneCmd: null }
 }
 
-export function emptySceneState() {
-  return { music: null, hue: null, projector: null, playlist: null, cut: null, study: null, speaker: null, cakeCmd: null, musicCmd: null, sceneCmd: null }
+// The moment as one word, for telling when the night has moved.
+export function momentKey(m) {
+  return m ? `${m.act}/${m.beat ?? ''}/${m.phase}` : null
 }
 
 function playAction(cfg, key, why) {
@@ -144,10 +144,12 @@ function fresh(at, now) {
 //   { type: 'music', do: 'pause', why }                           stop the music
 //   { type: 'scene', name, why }                                  recall every Hue scene with that name
 //   { type: 'projector', do: 'on'|'off', why }                     the projector's plug
-//   { type: 'cake', song, volume, seconds, why: 'host' }           play that one song; the sheet comes back after
-//   { type: 'speaker', name, do: 'off'|'on', why: 'boo' }           that HomePod out of the house music, or back in
+//   { type: 'cake', song, volume, seconds, speakers?, why: 'host' } play that one song; the sheet comes back after
 // `why` is 'sheet' (scenes.json), 'host' (a Host tab button), 'study' (the
-// dim study scene) or 'cake' (the candles).
+// dim study scene) or 'cake' (the candles). A stop with `again: true` is the
+// sheet's stop sent a second time: the night moved on (the rules, then the
+// blackout) and the sheet still wants silence, so the brain asks again
+// rather than trust that the first stop reached every HomePod (11 Nov 2026).
 export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now(), cfg = null) {
   const actions = []
   const state = { ...emptySceneState(), ...prev }
@@ -159,11 +161,16 @@ export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now()
   state.cut = ck && (prev.cut === ck || cutTriggered(docs, cfg)) ? ck : null
 
   const t = targetFor(docs, cfg, { cut: !!state.cut })
+  const mk = momentKey(m)
   if (t.music !== null && t.music !== prev.music) {
     if (t.music === OFF) actions.push({ type: 'music', do: 'pause', why: 'sheet' })
     else if (cfg.playlists?.[t.music]) { actions.push(playAction(cfg, t.music, 'sheet')); state.playlist = t.music }
     state.music = t.music
+  } else if (t.music === OFF && prev.music === OFF && prev.moment && mk && mk !== prev.moment) {
+    // still silence, and the night has moved: the stop once more
+    actions.push({ type: 'music', do: 'pause', why: 'sheet', again: true })
   }
+  if (mk) state.moment = mk
   if (t.hue !== null && t.hue !== prev.hue) {
     actions.push({ type: 'scene', name: t.hue, why: 'sheet' })
     state.hue = t.hue
@@ -182,14 +189,6 @@ export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now()
     state.study = want
   }
 
-  // Boo's speaker: out of the house music in her acts, back when they end
-  // (edge-triggered like the dim study: nothing until her act first comes)
-  if (cfg.boo) {
-    const want = speakerWants(docs, cfg)
-    if (want !== prev.speaker && (want === 'lent' || prev.speaker === 'lent')) actions.push({ type: 'speaker', name: cfg.boo.speaker, do: want === 'lent' ? 'off' : 'on', why: 'boo' })
-    state.speaker = want
-  }
-
   // Cake! (the Host tab's button, public/cues.cake.at): once per stamp, while
   // fresh: the song and the candles. The brain forgets the music and the
   // scene when the song ends, so the sheet puts them back.
@@ -200,7 +199,7 @@ export function planScenes(prev = emptySceneState(), docs = {}, now = Date.now()
     if (key !== prev.cakeCmd) {
       state.cakeCmd = key
       if (fresh(at, now)) {
-        actions.push({ type: 'cake', song: cfg.cake.song, volume: cfg.cake.volume, seconds: cfg.cake.seconds, why: 'host' })
+        actions.push({ type: 'cake', song: cfg.cake.song, volume: cfg.cake.volume, seconds: cfg.cake.seconds, ...(cfg.cake.speakers !== undefined ? { speakers: cfg.cake.speakers } : {}), why: 'host' })
         if (cfg.cake.hue) actions.push({ type: 'scene', name: cfg.cake.hue, why: 'cake' })
       }
     }
@@ -259,11 +258,16 @@ export function ducksFor(action) {
 // tail, or for a chime whose bulletin plays on the TV as video, until
 // videoHoldSeconds after the cue began (0 on the sheet since 25 Oct: the
 // sheet stops the music for the news video itself).
+// `elsewhere` (11 Nov 2026): the cue's sound is played by the screens and
+// the phones, so nothing finishes here to time the tail by; the music stays
+// down for SCREEN_CUE_HOLD_MS from the cue's start, long enough for a sting.
 export const DUCK_TAIL_MS = 800
-export function unduckDelayMs(action, startedAt, now, cfg) {
-  if (!action?.video) return DUCK_TAIL_MS
+export const SCREEN_CUE_HOLD_MS = 3500
+export function unduckDelayMs(action, startedAt, now, cfg, { elsewhere = false } = {}) {
+  const tail = elsewhere ? Math.max(DUCK_TAIL_MS, startedAt + SCREEN_CUE_HOLD_MS - now) : DUCK_TAIL_MS
+  if (!action?.video) return tail
   const hold = Math.max(0, Number(cfg?.videoHoldSeconds) || 0) * 1000
-  return Math.max(DUCK_TAIL_MS, startedAt + hold - now)
+  return Math.max(tail, startedAt + hold - now)
 }
 
 // Every Hue scene name the sheet uses: the ones Jon makes in the Hue app.
@@ -330,11 +334,11 @@ export function sceneProblems(cfg, { soundIds = SOUND_IDS } = {}) {
     for (const k of ['playing', 'idle']) if (typeof cfg.study[k] !== 'string' || !cfg.study[k].trim()) out.push(`study.${k} is not a scene name`)
     if (!Array.isArray(cfg.study.states) || !cfg.study.states.length || !cfg.study.states.every(s => typeof s === 'string' && s.trim())) out.push('study.states is not a list of the study\'s states')
   }
-  if (cfg.boo) {
-    checkActs('boo', cfg.boo.acts)
-    if (typeof cfg.boo.speaker !== 'string' || !cfg.boo.speaker.trim()) out.push('boo.speaker is not a speaker name')
-  }
+  if (cfg.boo) out.push('boo is gone since 11 Nov 2026: no HomePod is lent in Act 4, so take the boo block out')
+  if (cfg.cueSounds !== undefined && !CUE_SOUND_ROADS.includes(cfg.cueSounds)) out.push('cueSounds is not "screens" or "brain"')
+  if (cfg.cueSpeechDelaySeconds !== undefined && !(Number(cfg.cueSpeechDelaySeconds) >= 0 && Number(cfg.cueSpeechDelaySeconds) <= 10)) out.push('cueSpeechDelaySeconds is not 0 to 10 seconds')
   if (cfg.cake) {
+    if (cfg.cake.speakers !== undefined && !cakeSpeakersOk(cfg.cake.speakers)) out.push('cake.speakers is not "homepods", "mac" or a list of speaker names')
     if (typeof cfg.cake.song !== 'string' || !cfg.cake.song.trim()) out.push('cake.song is not a song name')
     if (!isLevel(cfg.cake.volume)) out.push('cake.volume is not 0 to 100')
     if (cfg.cake.hue !== undefined && cfg.cake.hue !== null && (typeof cfg.cake.hue !== 'string' || !cfg.cake.hue.trim())) out.push('cake.hue is not a scene name or null')
@@ -352,4 +356,40 @@ export function sceneProblems(cfg, { soundIds = SOUND_IDS } = {}) {
 
 function isLevel(v) {
   return Number.isInteger(v) && v >= 0 && v <= 100
+}
+
+// Who makes a cue's sound (11 Nov 2026, "the game felt quiet"). "screens",
+// the default: every room screen and every phone plays the cue itself, the
+// moment it is called (a chime, a sting, the scream, bulletin 2's sounder),
+// so the brain plays no cue sound at all: it only speaks the recordings that
+// only it has (bulletin 2), a moment after the sounder (cueSpeechDelayMs).
+// "brain": the brain plays every cue from its own sound output as well, as
+// it did before 11 Nov; beside the screens that is an echo about a second
+// late, so it is for a night when the screens' sound has failed.
+export const CUE_SOUND_ROADS = ['screens', 'brain']
+export function cueSoundsRoad(cfg) {
+  return cfg?.cueSounds === 'brain' ? 'brain' : 'screens'
+}
+
+// Does the brain play this cue's own sound (its id) from its own output?
+// Its recordings, when it has any to speak, play here either way.
+export function brainPlaysId(action, cfg) {
+  return action?.type === 'sound' && !!action.id && cueSoundsRoad(cfg) === 'brain'
+}
+
+// How long the brain waits before it speaks, after a cue whose sound the
+// screens and phones are playing: long enough for the sounder to ring out,
+// so the first word is never under it. cueSpeechDelaySeconds on the sheet.
+export const CUE_SPEECH_DELAY_MS = 2000
+export function cueSpeechDelayMs(cfg) {
+  const s = Number(cfg?.cueSpeechDelaySeconds)
+  return Number.isFinite(s) && s >= 0 ? Math.round(s * 1000) : CUE_SPEECH_DELAY_MS
+}
+
+// Where the cake's song plays: "homepods" (every HomePod the Music app can
+// see, the default), "mac" (the Music app's own output, as before 11 Nov), or
+// a list of speaker names from the Music app's AirPlay list.
+function cakeSpeakersOk(v) {
+  if (v === 'homepods' || v === 'mac') return true
+  return Array.isArray(v) && v.length > 0 && v.every(n => typeof n === 'string' && n.trim())
 }

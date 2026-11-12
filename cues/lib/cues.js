@@ -202,9 +202,12 @@ export function plan(prev, next, now = Date.now(), { readClip = clipReader() } =
 // night). `sound` is 'ok', 'fallback' (a chime with no file of its own: the
 // one chime plays), 'missing' or null (recordings alone). `onTv` counts the
 // recordings the Parlour TV plays as video instead.
-export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0, onTv = 0 } = {}) {
+// `elsewhere` (11 Nov 2026): the cue's own sound is played by the room screens
+// and the phones, not here (cues/scenes.json cueSounds).
+export function playLine({ sound = null, recordings = 0, missing = 0, unknown = 0, onTv = 0, elsewhere = false } = {}) {
   const parts = []
   if (sound) parts.push(sound === 'ok' ? 'sound playing' : sound === 'fallback' ? 'sound playing (the one chime stands in)' : 'sound file missing; skipped')
+  if (elsewhere) parts.push('a cue for the screens and phones: they play it, nothing plays here')
   if (onTv) parts.push(`bulletin on the TV as video: ${onTv} recording${onTv === 1 ? '' : 's'} not played here`)
   if (recordings || unknown) {
     let b = `bulletin: ${recordings + unknown} recording${recordings + unknown === 1 ? '' : 's'}`
@@ -232,10 +235,15 @@ export function stamp(t) {
 // shape every phone writes to presence/{uid} (firestore.rules allows exactly
 // these keys), with the guest key 'cues'. The caller adds `at` as a server
 // timestamp. Written once a minute.
+// `canStop` (11 Nov 2026): the one yes-or-no the rules let a row carry
+// (`sound`) says, for the brain's row, whether the brain can stop the music:
+// false while the Shortcut the sheet names for the stop is not on this Mac
+// (the Host tab then says so, play/src/lib/house.js), true when it is, and
+// left out when the question does not arise (the music is not on that road).
 export const PRESENCE_KEY = 'cues'
 export const PRESENCE_MS = 60_000
-export function presenceRow(nightId) {
-  return { nightId: nightId ?? null, guestKey: PRESENCE_KEY }
+export function presenceRow(nightId, { canStop = null } = {}) {
+  return { nightId: nightId ?? null, guestKey: PRESENCE_KEY, ...(typeof canStop === 'boolean' ? { sound: canStop } : {}) }
 }
 
 // Sound files are named after the event id, nothing else. First match wins.

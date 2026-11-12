@@ -10,13 +10,14 @@ import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
+import { useCueSounds } from '../lib/useCueSounds'
 import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
@@ -48,8 +49,9 @@ import Spoken from './Spoken'
 //
 // What the living room shows comes from nights/{id}/public/screen (written
 // by the server beat by beat: news, bulletin, Sir Irwin, the door, Talk it
-// over, the vote) and public/sounds (the bell in the corner, and this
-// screen's own chime). Three things sit in the corners of a kiosk: a small "tap to wake"
+// over, the vote) and public/sounds (the bell in the corner, and the cue itself: since
+// 11 Nov 2026 every room screen plays each cue's sound in full, lib/
+// useCueSounds.js). Three things sit in the corners of a kiosk: a small "tap to wake"
 // (bottom right, until the first tap or key anywhere on the page) so the
 // browser lets it make a sound, a bell for three seconds whenever a sound is
 // called for, and a dot that says whether the house can still be heard. The
@@ -150,7 +152,7 @@ export default function Kiosk({ which }) {
     <>
       {body}
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
-      <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />
+      <Bell sounds={sounds} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} tv={which === 'living'} scope={nightId} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} woke={sound} />
     </>
@@ -242,8 +244,10 @@ const WAKE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']
 
 // A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
 // house's kit: fuller and much louder than the two beeps before it (handoff
-// 11 Nov 2026, A2: "It was hard to hear the chimes").
-const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime', stamp: 'stamp', sealed: 'seal' }
+// 11 Nov 2026, A2: "It was hard to hear the chimes"). These are the screen's
+// own small moments (the drawing's turns, a name card cutting in); the
+// night's cues are the Bell's (below), which plays each one in full.
+const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', stamp: 'stamp', sealed: 'seal' }
 function chime(kind) {
   playSound(KIOSK_SOUNDS[kind] ?? 'ding')
 }
@@ -637,8 +641,11 @@ export function VotedScreen({ night }) {
 // One tap, once per load, so the browser lets this screen make a sound: a
 // small control in the bottom right corner, never over the content. The
 // first tap or key anywhere on the page counts, so nobody has to find the
-// corner; the screen works without it (the chime is only a fallback for the
-// bell). `hidden` takes the control away and keeps the listener: the kiosk
+// corner (main.jsx arms that for every page, lib/cueSounds.js installUnlock).
+// The screen shows everything without it, but makes no sound: since 11 Nov
+// 2026 the room screens are the house's speakers for every cue, so the Host
+// tab says which screens have their sound on.
+// `hidden` takes the control away and keeps the listener: the kiosk
 // hides it while the room is dark and on the party night (Jon, 29 Oct 2026:
 // no setup words in front of the guests), where the first tap or key
 // anywhere still wakes the sound.
@@ -663,21 +670,22 @@ export function Wake({ hidden = false, woke: known = null }) {
   )
 }
 
-// A bell for three seconds whenever the night calls for a sound, and this
-// screen's own small chime, so a cue never silently vanishes. `silent`
-// (26 Oct 2026): the brain's own browser (?kiosk=orangerie) shows the bell
-// but never chimes, since the brain's sound output is the HomePods, where the
-// real sound is already playing; a chime there would sound every cue twice.
-export function Bell({ sounds, serverNow, silent = false }) {
-  const lastAt = useRef(0)
-  const at = ms(sounds?.current?.at)
-  useEffect(() => {
-    if (!at || at === lastAt.current) return
-    const first = lastAt.current === 0
-    lastAt.current = at
-    if (!first && !silent && soundFresh(sounds, serverNow())) chime('cue')
-  }, [at])
-  const shown = bellShown(sounds, serverNow())
+// A bell for three seconds whenever the night calls for a sound, and the
+// sound itself. Since 11 Nov 2026 (handoff A2, layer 1) every room screen is
+// one of the house's speakers: it plays the cue in full the moment the night
+// calls it (lib/useCueSounds.js: the cue's own file when one is on the site,
+// else a fuller sound made in code), in step with every other screen and
+// every phone. Until then it was one soft beep beside the brain's speakers.
+// `sounds` is the live view of nights/{id}/public/sounds (useDoc).
+// `silent`: the brain's own browser (?kiosk=orangerie) and a Mac's second
+// display (?kiosk=decor) show the bell and never sound: the second display
+// sits beside its room's own screen, and the brain's browser makes no sound
+// by design (the Host tab has no sound mark for it; the phones in the
+// Orangerie carry the cue there).
+// `tv`: the Parlour TV does not chime over a bulletin it plays as video.
+export function Bell({ sounds, serverNow, silent = false, tv = false, scope = null }) {
+  useCueSounds(sounds, serverNow, { silent, tv, scope })
+  const shown = bellShown(sounds?.data, serverNow())
   return <div className={`kiosk-bell${shown ? ' ring' : ''}`} aria-hidden={!shown} aria-label="a sound is playing">&#9835;</div>
 }
 

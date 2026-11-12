@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
+import { useCueSounds } from './lib/useCueSounds'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
 import { clockFor, doorCardHolds, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
@@ -32,6 +33,12 @@ export default function App() {
   // The heartbeat names this guest only while the phone holds an active
   // character on this night; a handed-over phone at the doors reports nobody.
   const serverNow = useServerClock(uid, nightId, presenceKey(session.data, nightId))
+  // Every phone is one of the house's speakers (handoff 11 Nov 2026, A2): the moment the night calls a
+  // sound (a chime, a sting, the scream), this phone plays it, with every other phone and room screen.
+  // Read here, above every screen the phone can show, so a dark phone still screams at the blackout. The
+  // same cue at the same moment on every phone, whatever its role: never a tell.
+  const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
+  useCueSounds(sounds, serverNow, { scope: nightId })
   const online = useOnline()
   const ui = useMemo(() => uiLines(content.data), [content.data])
   const [tour, setTour] = useState(false)

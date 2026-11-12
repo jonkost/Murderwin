@@ -136,6 +136,81 @@ export function runShortcut(name, { timeoutMs = SHORTCUT_TIMEOUT_MS, execFileImp
   })
 }
 
+// Every Shortcut on this Mac, by name: `shortcuts list`, which only reads
+// (it runs nothing, plays nothing and switches nothing). Rejects when the
+// tool is not here (this is not a Mac) or will not answer. 11 Nov 2026: the
+// sheet named a Shortcut to stop the music that was never made, so every stop
+// the brain sent failed while its window said "off". The relay now reads this
+// list when it starts and says, one line each, which of the Shortcuts it will
+// run are missing (shortcutsNeeded and shortcutCheck, below).
+export function listShortcuts({ execFileImpl = execFile, timeoutMs = 10_000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const child = execFileImpl('shortcuts', ['list'], { timeout: timeoutMs }, (err, stdout, stderr) => {
+      if (err) return reject(new Error(String(stderr ?? '').trim().replace(/^Error:\s*/i, '') || err.code || err.message || 'no answer'))
+      resolve(String(stdout ?? '').split('\n').map(l => l.trim()).filter(Boolean))
+    })
+    child?.stdin?.end?.()
+  })
+}
+
+// Every Shortcut the brain will run tonight, each with what it is for, from
+// the roads that are switched on: [{ name, tag, key, does }]. `music` is the
+// sheet's musicShortcuts table (null when the music is not on that road),
+// `strings` the three colour names, `projector` the two plug names. `key` is
+// the table's key ('off' is the stop); `does` finishes the sentence "so ...".
+export function shortcutsNeeded({ music = null, strings = null, projector = null } = {}) {
+  const out = []
+  const list = v => (Array.isArray(v) ? v : v == null ? [] : [v]).filter(n => typeof n === 'string' && n.trim()).map(n => n.trim())
+  for (const [key, v] of Object.entries(music ?? {})) {
+    for (const name of list(v)) {
+      const does = key === 'off' ? 'the brain cannot stop the music'
+        : key === 'duck' ? 'the music will not go quiet under a recording'
+          : key === 'cake' ? 'the Music app plays the cake\'s song instead'
+            : `the music setting "${key}" will not play`
+      out.push({ name, tag: 'music', key, does })
+    }
+  }
+  for (const [colour, name] of Object.entries(strings ?? {})) {
+    for (const n of list(name)) out.push({ name: n, tag: 'strings', key: colour, does: `the string lights will not turn ${colour === 'decor' ? 'back to their warm glow' : colour} (the phones carry the colour)` })
+  }
+  for (const [state, name] of Object.entries(projector ?? {})) {
+    for (const n of list(name)) out.push({ name: n, tag: 'projector', key: state, does: `the projector's plug will not switch ${state}` })
+  }
+  return out
+}
+
+// The needed Shortcuts against the Mac's own list. Names must match exactly;
+// one that differs only in capitals or spaces is named beside it, since that
+// is the likeliest slip. Returns { missing, lines, stop }:
+//   missing  the needed ones that are not on this Mac (each once per name and use)
+//   lines    what to print, one line a missing Shortcut, the stop first and in capitals,
+//            or one line that all are here
+//   stop     'ok' | 'missing' | 'none' (no stop is named, or the music is not on this road)
+export function shortcutCheck(needed = [], have = []) {
+  const here = new Set(have)
+  const loose = n => String(n).toLowerCase().replace(/\s+/g, ' ').trim()
+  const near = name => have.find(h => h !== name && loose(h) === loose(name)) ?? null
+  const seen = new Set()
+  const missing = []
+  for (const s of needed) {
+    const id = `${s.tag}/${s.key}/${s.name}`
+    if (here.has(s.name) || seen.has(id)) continue
+    seen.add(id)
+    missing.push({ ...s, near: near(s.name) })
+  }
+  const stops = needed.filter(s => s.tag === 'music' && s.key === 'off')
+  const stop = !stops.length ? 'none' : stops.some(s => !here.has(s.name)) ? 'missing' : 'ok'
+  const hint = s => (s.near ? ` (there is one called "${s.near}": the two names must match exactly)` : '')
+  const lines = [...missing].sort((a, b) => Number(b.key === 'off' && b.tag === 'music') - Number(a.key === 'off' && a.tag === 'music')).map(s => (
+    s.tag === 'music' && s.key === 'off'
+      ? `[music] THE BRAIN CANNOT STOP THE MUSIC: no Shortcut called "${s.name}" on this Mac${hint(s)}. Make one in the Shortcuts app, named exactly that, that stops all four HomePods (docs/cues-relay.md). Until then every "music off" tonight does nothing`
+      : `[${s.tag}] no Shortcut called "${s.name}" on this Mac${hint(s)}, so ${s.does}`
+  ))
+  const names = new Set(needed.map(s => s.name)).size
+  if (!lines.length && names) lines.push(`Shortcuts: all ${names} the brain runs are on this Mac`)
+  return { missing, lines, stop }
+}
+
 export const SHORTCUT_HEAD_START_MS = 750
 export const SHORTCUT_TIMEOUT_MS = 90_000
 // "Action set execution in progress." (the music check, 31 Oct 2026): Apple
@@ -158,14 +233,19 @@ export const RETRY_FOR_MS = 30_000
 // nothing when it fails late (the music check, 31 Oct 2026: a Home audio
 // scene still setting up fails with "Action set execution failed" when the
 // next one starts; the newer one is the one that counts).
+// fire(name, { onLate }): `onLate(e)` takes the place of the one late line
+// for that run, for a Shortcut whose late failure is not harmless (the stop
+// for the music, 11 Nov 2026: "partially succeeded" there means a HomePod may
+// still be playing). A cancelled run stays quiet either way.
 export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
   const pending = new Set()
   let warned = false
   let seq = 0
+  const cancelled = e => !!e?.cancelled || /cancelled/i.test(e?.message ?? '')
 
   // The job was most likely done; say once what is wrong, until a run succeeds.
   function late(name, e) {
-    if (e?.cancelled || /cancelled/i.test(e?.message ?? '')) return
+    if (cancelled(e)) return
     if (warned) return
     warned = true
     const secs = Math.round((e?.took ?? 0) / 1000)
@@ -173,7 +253,7 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
     else log(`[${tag}] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); it may still have done its job`)
   }
 
-  async function fire(name) {
+  async function fire(name, { onLate = null } = {}) {
     const mine = ++seq
     let waited = 0
     for (;;) {
@@ -195,7 +275,10 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
         if (mine !== seq) return { done, dropped: true }
         continue
       }
-      if (!over) p.catch(e => { if (mine === seq) late(name, e) })
+      if (!over) p.catch(e => {
+        if (mine !== seq) return
+        if (onLate) { if (!cancelled(e)) onLate(e) } else late(name, e)
+      })
       return { done }
     }
   }
