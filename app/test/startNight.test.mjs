@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { introAtFor, startWords, liveLine, INTRO_TIME, RUN_THROUGH_MS } from '../src/lib/startNight.js'
+import { introAtFor, startWords, liveLine, INTRO_TIME, RUN_THROUGH_MS, SCREENS, screenUrl } from '../src/lib/startNight.js'
+import { SETUP_ROOMS, SECOND_DISPLAY } from '../../play/src/lib/setup.js'
 import * as phone from '../../play/src/lib/start.js'
 
 const src = p => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8')
@@ -33,4 +34,11 @@ test('the button is first on Home and Game night, and what was folded away is st
   for (const kept of ['The secrets, made blind', 'Try the games', 'The lists (nothing left for you to write)', 'Your own notes', 'Who has been writing']) assert.ok(home.indexOf(kept) > home.indexOf('<details className="panel more">'), `${kept} is under the fold`)
   for (const kept of ['The two hosts', 'Sir Irwin\'s two awards', 'The old party box', 'The square code for the Act 1 slide', 'The four room codes', 'After the party', '<Replay ']) assert.ok(night.indexOf(kept) > night.indexOf('<details className="panel more">'), `${kept} is under the fold`)
   for (const up of ['The devices', 'The bulletin videos', 'Freeze the workshop']) assert.ok(night.indexOf(up) < night.indexOf('<details className="panel more">'), `${up} stays in view`)
+})
+
+test('the send list under the button: the same rooms as the phone\'s, no joining first', () => {
+  assert.deepEqual(SCREENS.map(s => [s.kiosk, s.room, s.machine]), [...SETUP_ROOMS, SECOND_DISPLAY].map(r => [r.kiosk, r.room, r.machine]))
+  assert.equal(screenUrl('https://example.test/play/', 'living'), 'https://example.test/play/?kiosk=living')
+  const c = src('components/StartNight.jsx')
+  assert.ok(c.includes('navigator.share({ title: s.room, url })') && c.includes('navigator.clipboard.writeText(url)'), 'the share sheet, or the address copied')
 })

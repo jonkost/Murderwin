@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { startWords, liveLine, REPLACE_ASK, AFTER_START } from '../lib/startNight'
+import { startWords, liveLine, REPLACE_ASK, AFTER_START, SCREENS, screenUrl } from '../lib/startNight'
+import { PLAY_URL } from '../lib/config'
 import { startNight } from '../lib/startNightApi'
 import { gameTestApi } from '../lib/gameTestApi'
 
@@ -15,6 +15,17 @@ export default function StartNight() {
   const [live, setLive] = useState(null)
   useEffect(() => gameTestApi().subscribeLive(setLive, () => setLive({ nightId: null, night: null })), [])
   const words = startWords({ real })
+  const [note, setNote] = useState(null)
+  const send = async (s) => {
+    const url = screenUrl(PLAY_URL, s.kiosk)
+    setNote(null)
+    try {
+      if (navigator.share) await navigator.share({ title: s.room, url })
+      else { await navigator.clipboard.writeText(url); setNote(`Copied the address for ${s.room}.`) }
+    } catch (e) {
+      if (e?.name !== 'AbortError') setNote('That did not send. Tap it again.')
+    }
+  }
   const start = async () => {
     if (live?.nightId && live?.night && !window.confirm(REPLACE_ASK)) return
     setBusy(true); setMsg(null); setErr(null)
@@ -39,7 +50,17 @@ export default function StartNight() {
       <p className="hint">{words.note}</p>
       {msg && <p className="start-done" role="status">{msg}</p>}
       {err && <div className="banner error" role="alert">{err}</div>}
-      <p className="night-line"><Link className="ghost dl" to="/devices">Every screen and its address</Link></p>
+      <h3 className="send-head">Send each screen its page</h3>
+      <p className="hint">Tap Send, pick AirDrop, pick the machine. Its page opens there; click once on it to make it full screen.</p>
+      <ul className="send-list">
+        {SCREENS.map(s => (
+          <li key={s.kiosk}>
+            <span className="send-name">{s.room}<small>{s.machine}</small></span>
+            <button className="ghost" onClick={() => send(s)}>Send</button>
+          </li>
+        ))}
+      </ul>
+      {note && <p className="start-done" role="status">{note}</p>}
     </section>
   )
 }

@@ -42,4 +42,23 @@ export function liveLine(live) {
 }
 
 export const REPLACE_ASK = 'Start a new night? The night that is on now ends for every phone and screen.'
-export const AFTER_START = 'Started. On your phone, tap your name, then send each screen its page from the Host tab.'
+export const AFTER_START = 'Started. Send each screen its page, below. On your phone, tap your name to run the night.'
+
+// Each room screen's page, to send to its machine (AirDrop from the share
+// sheet), right under the Start button so no phone has to join first. The
+// same rooms as the phone's Host tab (play/src/lib/setup.js; a test holds
+// the two lists together).
+export const SCREENS = [
+  { kiosk: 'living', room: 'The Parlour TV', machine: 'Jon’s work MacBook Pro, on the TV' },
+  { kiosk: 'study', room: 'The Study', machine: 'M1 MacBook Air, by the walls' },
+  { kiosk: 'boo', room: 'The Entryway: Boo’s arcade', machine: 'Susan’s work MacBook Pro, in Chrome, with the big Stream Deck' },
+  { kiosk: 'orangerie', room: 'The Orangerie', machine: 'Jon’s M3 MacBook Air (the brain), facing the table' },
+  { kiosk: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro' },
+  { kiosk: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library' },
+  { kiosk: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro' },
+  { kiosk: 'pose', room: 'The Entryway: Boo’s camera', machine: 'Jenna’s iPad Pro, facing the group at the deck' },
+  { kiosk: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen' },
+]
+export function screenUrl(playUrl, kiosk) {
+  return `${String(playUrl ?? '').split('?')[0]}?kiosk=${kiosk}`
+}
