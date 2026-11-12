@@ -145,7 +145,7 @@ function pieceStrokes(s, t0, t1, depth = 0) {
   }
   if (Math.abs(dev) < 0.02) return [{ kind: 'line', from: a, to: b }]
   const bulge = dev / chord
-  if (Math.abs(bulge) > 0.45 && depth < 4) {
+  if (Math.abs(bulge) > 0.55 && depth < 4) {
     const tm = (t0 + t1) / 2
     return [...pieceStrokes(s, t0, tm, depth + 1), ...pieceStrokes(s, tm, t1, depth + 1)]
   }
