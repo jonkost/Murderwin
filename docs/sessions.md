@@ -18,7 +18,9 @@ look, Jon's own rule slides, the words) and
 document... Focus on the fun factor." Then "Yes to all 8", then, to the nine
 drawings, "yes this is great". Built on main by Claude Code with helper
 builders in their own worktrees, each job its own commits, merged and tested
-together. **Not deployed, not pushed.**
+together. Reviewed on the morning of 12 Nov (below), then **published on
+Jon's "Yes, publish", about 9:40 am** (43db081, a full publish from the main folder);
+**not pushed.**
 
 **What changed**
 
@@ -132,12 +134,33 @@ film, after a reload of the TV, repeats the start of slide 1.
 the three rounds; the maker's target was 18, and a night uses one a round).
 The practice bank has 18. Counts only; nobody saw them.
 
+**The publish (12 Nov, about 9:40 am, Jon: "Yes, publish")**
+
+- A full publish from the main folder at 43db081: the site, the rules, the
+  storage rules and the functions. Every one of the 26 functions updated or
+  created (`fillIns` is new); `eliminate` (the old last round) and `posePhoto`
+  (Boo's camera) are deleted.
+- The rules carried one change, the one Jon was told of: a presence row may
+  hold `sound`, a yes or no. The rules test passed before it went out
+  (`PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" npm run test:rules`): a
+  phone never reads sealed, cases, private or another phone, and the admin
+  never reads sealed or cases.
+- Checked after: every file on the live site is the build's own (255 files
+  byte for byte and 33 large ones by size, 288 in all); the live
+  functions are the code's, name for name; `npm run media -- --live`.
+- The Study station zip is new (the walls glow again after the blackout): on
+  the brain's Desktop and in storage. The Study's Mac also takes the new code
+  by itself the next time Start the Study is opened.
+- Not done by Claude Code, on purpose: the brain's program was not started
+  (it plays sound and runs Shortcuts; Jon starts it for the night, and it has
+  new code), and nothing was played aloud.
+- Every phone and screen left open since before the publish runs the old
+  page until it is reloaded once by hand (the old page had no self-reload);
+  from this build on they reload themselves at a quiet moment, except a Mac
+  screen in full screen, which is reloaded by hand.
+
 **What is left**
 
-- Publish, on Jon's word: a full publish from the main folder (the site, the
-  rules, the functions), then a new Study station zip, then the brain
-  restarted. Two functions go (the old last round, the camera's photo) and
-  new ones come (the fill-ins' clock, the nudge).
 - Only Jon: two Shortcuts on the brain (PANIC, Off Murderwin Strings); the
   iPad's Home Screen icon and Guided Access; Deck ready on Susan's Mac; his
   Special thanks lines; rule card 25; and on the practice night, his ears and
