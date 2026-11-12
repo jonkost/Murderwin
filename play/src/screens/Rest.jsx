@@ -9,6 +9,7 @@ import Act4 from './Act4'
 import Spoken from './Spoken'
 import Allow from './Allow'
 import TabIcon from './TabIcon'
+import { PhoneEnd } from './Closing'
 import {
   ACTS, CATS, actScript, bioFor, cardTone, characterById, motiveNotes, motives, npcCards, portraitFit, portraitUrls, rules,
   smalltalk, statusLine, stopWords, STOP_MEANINGS,
@@ -53,7 +54,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
   // rooms, the ballot), the phone goes to Now on its own.
   const lights = lightsStep(session, night.act)
   const rooms = act4Step(session, night.act)
-  const newest = [now[0]?.id, ballot?.w?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
+  const newest = [over && 'the-end', now[0]?.id, ballot?.w?.id, lights && `${lights.step}-${lights.cat}`, rooms && `${rooms.round}-${rooms.room}-${rooms.here}-${rooms.paid}`, meetNote].filter(Boolean).join('|') || null
   useEffect(() => { if (newest) setTab('now') }, [newest])
 
   return (
@@ -111,6 +112,7 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
   const locked = !voting && (!!ballot?.sent || voteIn(night, session))
   return (
     <div className="now">
+      {over && <PhoneEnd />}
       {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />}
       {locked && <BallotSent />}
       {lights && <LightsStep lights={lights} uid={uid} nightId={night.nightId} notes={notes} note={meetNote} />}

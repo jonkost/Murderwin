@@ -66,6 +66,8 @@ Granolia, the Parlour. The device codes are in the key at the end.
 | 22 | The credits | Fun music at 35%. | The credit graphics roll on the Parlour TV; the other displays show their looping graphics. | Back to default. | The app is locked, with a thank-you-for-playing sign. |
 | 23 | The End | — | Every screen goes black; the projector is off. | — | The app is open for players to see everything; the content stays locked, and the app stays like this for good. |
 
+Changed since by Jon's word of 11 November 2026 (`docs/handoff-2026-11-11-polish.md`, job C1), his row above kept as he wrote it: at cue 23 every screen and every phone shows The End (in lights, Sir Irwin, his birthday line, paw prints) instead of black, the lights go to Default and the projector stays on as at the vote; the credits at cue 22 end on Special thanks (when Jon's lines are in) and the dedication to Sydney; then Jon's **Good night** on his phone closes the night, every screen keeping The End.
+
 ## Key
 
 | Device | Job | Code |

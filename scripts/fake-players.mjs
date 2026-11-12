@@ -63,7 +63,7 @@ const root = join(here, '..')
 export function ensureSeed() {
   const dest = join(root, 'functions', 'seed')
   mkdirSync(dest, { recursive: true })
-  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json', 'bag-lines.json', 'bag-items.json', 'game-names.json']) {
+  for (const f of ['characters.json', 'motives.json', 'night.json', 'families.json', 'woof-news.json', 'cat-lines.json', 'bag-lines.json', 'bag-items.json', 'game-names.json', 'credits.json']) {
     const from = join(root, 'seed', f)
     if (existsSync(from)) copyFileSync(from, join(dest, f))
   }
@@ -456,9 +456,14 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await bracketCheck('reveal') // all three named, the closing story
     const r7 = await next() // results
     const results = await countCards('result')
-    const theEnd = await next() // The End (25 Oct 2026): the screens black, the night over for good
+    const theEnd = await next() // The End (C1, 11 Nov 2026): The End on every screen, the night over for good
     if (!theEnd.over || (await nightDoc()).over !== true) summary.checks.push('END')
-    actLine(7, [`${ballots} ballots`, `${results} results`, theEnd.over ? 'the end' : 'THE END DID NOT COME'])
+    // Good night, the host phone's last button: the night stays on The End, and a second press changes nothing
+    const goodNight = await host('good-night')
+    const again = await host('good-night')
+    const closed = await nightDoc()
+    if (!goodNight.goodNight || !again.already || closed.goodNight !== true || closed.beat !== 'end' || closed.over !== true) summary.checks.push('GOOD NIGHT')
+    actLine(7, [`${ballots} ballots`, `${results} results`, theEnd.over ? 'the end' : 'THE END DID NOT COME', closed.goodNight === true ? 'good night' : 'NO GOOD NIGHT'])
     summary.tally = { of: r7.of, murderer: r7.murderer, motive: r7.motive, victim: r7.victim }
     say(`Tally: of ${r7.of} ballots, murderer right on ${r7.murderer}, motive on ${r7.motive}, victim on ${r7.victim}`)
     summary.secrets = await secretsUsed()

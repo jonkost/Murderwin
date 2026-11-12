@@ -17,6 +17,36 @@ export const EPILOGUE_AFTER_MS = 12_000
 export const JOURNEY_AFTER_MS = 27_000
 export const CREDITS_AFTER_MS = 52_000
 export const LAST_AFTER_MS = 125_000
+// The credits' last places (handoff 11 Nov 2026, C1): Special thanks closes the roll when Jon's lines are in
+// (credits.special; the roll runs that much longer, so nothing is rushed, and an empty list takes no time),
+// then the Dedication, one card held for eight seconds, then Sir Irwin's last card.
+export const DEDICATION_MS = 8_000
+export const SPECIAL_LINE_MS = 2_500
+
+const specialOf = (finale) => (Array.isArray(finale?.credits?.special) ? finale.credits.special.filter(t => String(t ?? '').trim()) : [])
+const dedicationOf = (finale) => (finale?.credits?.dedication?.line ? finale.credits.dedication : null)
+
+// When each part of the end starts, in ms after the Victim's name (finale.victimAt).
+export function creditsTimes(finale) {
+  const roll = LAST_AFTER_MS + specialOf(finale).length * SPECIAL_LINE_MS
+  return { credits: CREDITS_AFTER_MS, dedication: roll, last: roll + (dedicationOf(finale) ? DEDICATION_MS : 0) }
+}
+
+// The order of the end, as the TV shows it: the roll's places, the dedication, the last card. A place with
+// nothing in it is not there at all (the room's split before any Parlour Game, Special thanks before Jon's lines).
+export function creditsOrder(finale) {
+  const c = finale?.credits ?? {}
+  return [
+    'awards', 'numbers',
+    ...((c.splits ?? []).length ? ['splits'] : []),
+    'thanks',
+    ...(specialOf(finale).length ? ['special'] : []),
+    ...(dedicationOf(finale) ? ['dedication'] : []),
+    'last',
+  ]
+}
+export const specialThanks = specialOf
+export const dedication = dedicationOf
 export const HOST_STAGES = ['stats', 'murderer', 'motive', 'victim']
 export const NEXT_NAME = { stats: 'murderer', murderer: 'motive', motive: 'victim', victim: null }
 
@@ -31,14 +61,17 @@ export function elapsed(finale, now) {
 //  stats | awards | graph: on the clock, before any name
 //  murderer | motive | victim: once the host has pressed that far (the clock no longer matters)
 //  done: the closing story, a while after the Victim
+//  journey | credits | dedication | last: after the story, on the clock from the Victim (creditsTimes)
 export function finaleStage(finale, now) {
   if (!finale) return 'stats'
   const stage = HOST_STAGES.includes(finale.stage) ? finale.stage : 'stats'
   if (stage !== 'stats') {
     if (stage === 'victim' && finale.epilogue && finale.victimAt) {
       const since = (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt)
-      if (since >= LAST_AFTER_MS) return 'last'
-      if (since >= CREDITS_AFTER_MS) return 'credits'
+      const times = creditsTimes(finale)
+      if (since >= times.last) return 'last'
+      if (since >= times.dedication) return 'dedication'
+      if (since >= times.credits) return 'credits'
       if (since >= JOURNEY_AFTER_MS) return 'journey'
       if (since >= EPILOGUE_AFTER_MS) return 'done'
     }

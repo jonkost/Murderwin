@@ -27,6 +27,7 @@ import { stopOf } from './parlour.js'
 import { closingStage, closingVideoStage } from './news.js'
 import { play, bulletinVideo } from './screen.js'
 import { arcadePath, arcadeAwards, arcadeAchievements } from './arcade.js'
+import { SPECIAL_THANKS, DEDICATION } from './closing.js' // the credits' last places (seed/credits.json, C1)
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
 export const revealPath = (nightId) => `nights/${nightId}/private/reveal`
@@ -89,7 +90,6 @@ export const COUNTERS = [
   { key: 'forgot', label: 'Things Granolia forgot tonight', note: "She's forgotten the count." },
 ]
 export const THANKS = ['Granolia Lickspittle', 'Miss Boo LaRue', 'Zimothy Clawford, Esq.', 'Salem Crooknog', 'Sir Irwin', 'Jon', 'Susan', 'Jenna']
-export const IN_MEMORY = { line: 'In loving memory of Sydney, the original good boy', photo: 'household/sydney.jpg' }
 export const LAST_CARD = { cat: 'irwin', line: 'Can we play again?' }
 
 // Every top scorer, ties included; nobody when nobody scored.
@@ -319,7 +319,7 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
     arcade: { games: arcade.games.map(g => ({ game: g.game, title: g.title, name: g.name, score: g.score })), overall: arcade.overall ? { name: arcade.overall.name, points: arcade.overall.points } : null },
     graph: { points, running, sides, hush, high, low, clues: clueLevels },
-    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
+    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], special: [...SPECIAL_THANKS], dedication: { ...DEDICATION }, last: LAST_CARD },
     news: {}, cardAt: {},
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,

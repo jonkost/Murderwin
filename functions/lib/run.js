@@ -20,6 +20,7 @@ import * as act4 from './act4.js'
 import { recordArcadeScore } from './arcade.js'
 import { PARTY_DAY } from './morning.js'
 import { isFillInUid } from './seats.js'
+import { goodNight } from './closing.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -71,7 +72,7 @@ async function enterBeat(db, nightId, act, beat, { now = Date.now(), run = true,
   }
   // The End (the 'end' action, deal.end) sets nights/{id}.over; any other beat takes it off again, so a Back
   // from The End or an act jump in a rehearsal opens the night back up (25 Oct 2026, the cue list)
-  const leavingEnd = spec?.action === 'end' ? {} : { over: FieldValue.delete(), overAt: FieldValue.delete() }
+  const leavingEnd = spec?.action === 'end' ? {} : { over: FieldValue.delete(), overAt: FieldValue.delete(), goodNight: FieldValue.delete(), goodNightAt: FieldValue.delete() }
   await ref.update({ act, beat, beatAt: FieldValue.serverTimestamp(), phase, pausedFrom: null, ...leavingEnd })
   // the hall bulb: green for the welcome from Act 1's first beat, red from the power's return (powerReturns
   // writes it); here only when nothing has set it yet (cue list 25 Oct 2026)
@@ -531,6 +532,9 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
     case 'spill':
       // Spill the Beans: the engine decides silently (safeguards.js); { did: false } carries no reason
       return safeguards.spill(db, { nightId, now })
+    case 'good-night':
+      // after The End, the host's phone closes the night (closing.js); the house stays on The End, jazz and Default
+      return goodNight(db, nightId, { now })
     case 'hush':
       // the Hush: that role's answers move no dial from now on; no phone changes
       return safeguards.hush(db, { nightId, role: arg, now })

@@ -1,0 +1,12 @@
+{
+  "_about": [
+    "The last places in the end credits on the Parlour TV (handoff 11 Nov 2026, C1). Safe content: nothing here is a secret.",
+    "specialThanks: Jon's lines, one a line, shown under Special thanks after Thank you. While the list is empty the place shows nothing, takes no time and leaves no gap. Put the lines here, in order, then npm --prefix functions run seed.",
+    "dedication: one card after the roll, held for eight seconds, before Sir Irwin's last card. line: Jon's words exactly (12 Nov 2026). photo: the picture's address under play/public/, or null for the words alone."
+  ],
+  "specialThanks": [],
+  "dedication": {
+    "line": "For Sydney, The Best Big Brother A Pup Could Ask For",
+    "photo": "household/sydney.jpg"
+  }
+}

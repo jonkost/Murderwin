@@ -11,6 +11,7 @@ import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleM
 import { hostRelayControl, guessReply, paperReply, guessWaiting } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
 import { troubleLine } from '../lib/trouble'
+import GoodNight from './GoodNight'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -171,6 +172,7 @@ export default function Host({ night, content, serverNow }) {
       {house.missing && <p className="host-msg trouble" role="alert">{house.missing}</p>}
 
       <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} act4={act4.data} />
+      <GoodNight night={night} finale={finale.data} serverNow={serverNow} />
       <RevealPanel night={night} finale={finale.data} busy={busy} run={run} serverNow={serverNow} />
 
       <h3>The acts</h3>

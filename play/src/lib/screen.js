@@ -39,6 +39,7 @@ export function ms(t) {
 // the reveal's reel takes the screen. Both come before the open door, which
 // would otherwise show again the moment the vote closed.
 export function livingView({ night, relay, screen, finale, captionsOnly = false } = {}) {
+  if (isOver(night)) return 'end' // The End: a card, never the dark (C1)
   const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return 'dark'
   if (night?.phase === 'paused') return 'paused'
@@ -63,14 +64,16 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
 
 // The bedroom, the study and every other room screen go dark with everyone
 // else, and stay dark when the host pauses in the middle of the blackout or
-// the prompt. The End (cue 23, 25 Oct 2026): every screen goes black and stays
-// black once the night is over (nights/{id}.over, or Act 7's end beat), and a
-// screen that reads public/screen is dark on a black doc with no title (the
-// titled one is the pause card).
+// the prompt. A screen that reads public/screen is dark on a black doc with no
+// title (the titled one is the pause card). The End is never dark (C1, 11 Nov
+// 2026): once the night is over (nights/{id}.over, or Act 7's end beat) every
+// screen shows The End card, for good (lib/closing.js roomEnded), whatever the
+// screen doc says (the end beat still writes a black doc, for a page from
+// before the card).
 export function roomDark(night, screen = null) {
+  if (isOver(night)) return false
   const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return true
-  if (isOver(night)) return true
   return screen?.kind === 'black' && !screen.title
 }
 

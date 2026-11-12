@@ -375,7 +375,7 @@ test('F18 the finale: the canon lines as strings, no slowest, the graph from the
   assert.ok(f.credits.awards.every(a => Object.keys(a).sort().join() === 'line,name,title'), 'each award is a title, a name and a line')
   assert.deepEqual(f.achievements, [], 'the early reel carries only what the host gave; the end credits\' awards show once, after the reveal')
   assert.equal(f.schedule.awards, f.schedule.graph, 'nothing given: the reel goes straight to the graph')
-  assert.ok(f.credits.thanks.includes('Jenna') && f.credits.memory.line.includes('Sydney') && f.credits.last.line === 'Can we play again?')
+  assert.ok(f.credits.thanks.includes('Jenna') && f.credits.dedication.line.includes('Sydney') && Array.isArray(f.credits.special) && f.credits.last.line === 'Can we play again?')
   assert.equal(f.credits.counters.length, 4)
   assert.deepEqual(f.news, {}, 'no closing bulletin before the first name')
   assert.ok(!/tie/i.test(JSON.stringify(f.stats)), 'a tie is never shown as one')

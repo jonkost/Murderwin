@@ -33,7 +33,7 @@ live, or which way the hidden pair have pulled.
 | `?kiosk=study` | The study screen on the M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia; her code during the Act 2 cat visits; her rules card between groups in Act 4; the Study's loop outside Act 4. |
 | `?kiosk=memory` | Your iPad Pro, back on its small stand in the Library with Zimothy, Act 4 (its third station; the older family iPad only if you answer *olderIpad* that it stays) | In Duplicate (the memory match): three boards of 6, 10 and 14 pairs, all fourteen traces as art, with file-folder backs. Clearing the third crosses one wrong motive off that group's list, and Zimothy names whoever found the most pairs, just for fun. Between groups, Zimothy's rules card; outside Act 4, the Library's loop. |
 | `?kiosk=memory&play=1` | Any iPad or computer, any day | In Duplicate on its own, just for fun: three fresh boards, no case, no clues, nothing sent. |
-| `?kiosk=boo` | Susan's work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night; it never moves (since 5 November; the projector on the landing before). Google Chrome, the deck connected once from the arcade's practice page first: the night's screen has no Connect button | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Miss Boo LaRue's Arcade in Act 4: her rules card with the code between groups; the group that scans in plays its visit on the deck with their names in the group's order, each of the first two players gets the group's clue about the Ghost on the screen and their phone after their fifth game, a trio's third gets Boo's line, the winner, free play, and the chime at the end of the round on the house's clock; black at The End. |
+| `?kiosk=boo` | Susan's work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night; it never moves (since 5 November; the projector on the landing before). Google Chrome, the deck connected once from the arcade's practice page first: the night's screen has no Connect button | Its loop from Act 1 (Sir Irwin's portrait and Boo walking), Boo's code during the Act 2 cat visits, Miss Boo LaRue's Arcade in Act 4: her rules card with the code between groups; the group that scans in plays its visit on the deck with their names in the group's order, each of the first two players gets the group's clue about the Ghost on the screen and their phone after their fifth game, a trio's third gets Boo's line, the winner, free play, and the chime at the end of the round on the house's clock; The End at the end. |
 | `?kiosk=boo&play=1` (and `&visit=1`) | A Mac in Google Chrome with the Stream Deck + XL plugged in, any day (the workshop's Game test tab and the Devices page) | Miss Boo LaRue's Arcade on its own: five little games on the Stream Deck + XL's keys and dials, with Boo on the screen; free play, no night, no case, nothing sent. With no Stream Deck the deck drawn on the screen plays them. `&visit=1` practises a group's visit: five tokens each, one a game (one round of each, 30 October), turns, fifty seconds a game, each player's clue on the screen once all five of their games are played (31 October; in practice the square-bracket line), Boo's line for a trio's third player, the winner with each player's scores on a key, free play, and the chime fifteen minutes in, when Boo says "Be on your way." `docs/boo-arcade.md` has the whole game. |
 | `?kiosk=bedroom` | Your iPad Pro, carried into the bedroom after Act 4 (its last station), door closed, from Act 6 | Closed until the third picture is named, with the bedroom's loop behind "The door is closed"; then the trace and Sir Irwin's line for it. |
 
@@ -60,7 +60,8 @@ Every screen is dark from the blackout, through the five seconds and the
 role cards, until the host's first Next in Act 2. While the night is paused
 the TV and the iPad go near-black with "One moment"; the other room screens
 stay as they are, and the Study's clock stands still. At "The End" (the host's last Next, after
-everyone's result) every screen goes black and stays black. On a rehearsal
+everyone's result) every screen shows The End and keeps it, for good (since
+12 November, job C1). On a rehearsal
 night every slot that would show a secret shows a stand-in in square
 brackets.
 
@@ -148,16 +149,22 @@ brackets.
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
   part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
   journey, the end credits (with the end-credit awards, which show only
-  here), and Irwin's "Can we play again?" Through the reveal every
+  here, and Special thanks at the very end once Jon's lines are in
+  `seed/credits.json`), the dedication to Sydney (his photo and Jon's words,
+  one card for eight seconds), and Irwin's "Can we play again?" Through the reveal every
   guest's phone is locked on "Eyes on the screen."; through the credits it
   shows its own result with "Thank you for playing."; the two host phones
   keep their tabs. **Hold the screen** on your Host tab stops the TV where
   it is: on a rehearsal the TV says Held, and on the party night only your
   Host tab says so ("The screen is held where it is.").
 - *The End.* The host's last Next, after everyone's result (25 October, cue
-  23): the TV goes black (kind `black`), every other screen goes black with
-  it and the projector is off, and every phone opens up for good with
-  everything readable, the result kept on its Now tab.
+  23; a card since 12 November, job C1): every room screen, second displays
+  included, shows The End in lights, Sir Irwin, "Happy first birthday, Sir
+  Irwin" and one burst of paw prints, and keeps it. The lights go to
+  Default and the projector stays on. Every phone opens up for good with
+  everything readable, The End on top of its Now tab and the result under
+  it. Then the host's **Good night** on the Host tab: every screen keeps The
+  End.
 
 ## The room screens in Act 2
 
@@ -268,7 +275,7 @@ On a rehearsal, and on a screen opened before any night is started, all
 three show. On the party night only the bell does (your rule of 29 October:
 no setup words in front of the guests). None of them ever covers the
 screen, and none of them shows while a room is dark: the blackout, the role
-cards, the "One moment" pause on the TV and the iPad, and The End. A screen
+cards, and the "One moment" pause on the TV and the iPad. A screen
 that reloads during the blackout stays black.
 
 - *Tap once to wake.* A small note in the bottom right corner. Browsers will
@@ -332,10 +339,11 @@ are other moments' and never reach their cards). The square is
 drawn by `play/src/lib/qr.js` `useQr(text, width)` (moved out of Host.jsx,
 which re-exports it). `play/src/lib/screen.js`: `livingView` returns `join`
 for kind `join` (never on the iPad, which keeps its words or its crest);
-`roomDark(night, screen)` is also true once the night is over
-(`nights/{id}.over` or Act 7's `end` beat, `isOver`) and on a black screen
-doc with no title, so every kiosk goes black at The End through the one
-rule. `play/src/screens/Rooms.jsx`: `Loop` (a muted looping `<video>` shown
+`roomDark(night, screen)` is true on a black screen doc with no title and
+false once the night is over (`nights/{id}.over` or Act 7's `end` beat,
+`isOver`): since 12 November (C1) the kiosk dispatch draws `Closing.jsx`
+`RoomEnd` (the look's `TheEnd`) first for every kind once
+`lib/closing.js` `roomEnded`, and `livingView` answers `end`. `play/src/screens/Rooms.jsx`: `Loop` (a muted looping `<video>` shown
 from `onLoadedData`, which also calls `play()`; transparent with `opacity: 0`
 rather than `display: none` until then, since Safari autoplays only a video
 it counts as on screen; its children until the first frame and on `onError`;
@@ -462,7 +470,7 @@ kiosk-code-orangerie | kiosk-rules-study | kiosk-rules-library |
 kiosk-rules-entryway | kiosk-rules-orangerie |
 kiosk-birthday | kiosk-loop-living | kiosk-loop-ipad | kiosk-loop-study |
 kiosk-loop-memory | kiosk-loop-boo | kiosk-loop-bedroom |
-kiosk-loop-orangerie | kiosk-quiet | kiosk-end`. The list grows as screens
+kiosk-loop-orangerie | kiosk-quiet | kiosk-end | kiosk-finale-dedication`. The list grows as screens
 are added: `KIOSK` in `Preview.jsx` is the source.
 
 *No setup words in front of the guests (Jon, 29 Oct 2026).*
