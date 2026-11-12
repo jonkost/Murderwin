@@ -62,7 +62,7 @@ test('a bulletin clip that is refused sound plays silent, and one that will not 
   assert.ok(!body.includes('v.play().catch(() => {})'), 'the old swallow, which left the clip on its first frame, is gone')
   // the intro video already did this
   const kiosk = read('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes('v.play().catch(() => { v.muted = true; v.play().catch(() => onOver()) })'))
+  assert.ok(kiosk.includes('v.play().catch(() => { v.muted = true; v.play().catch(() => onOver(false)) })'))
   // the setup page says what its tap does
   assert.ok(read('../src/screens/Setup.jsx').includes('That tap turns its sound on.'))
 })

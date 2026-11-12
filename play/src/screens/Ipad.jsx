@@ -11,10 +11,10 @@ import { addHomeScreenManifest } from '../lib/homescreen'
 // Nothing reloads: each body is the same one its own address shows
 // (?kiosk=memory, ?kiosk=bedroom), and the heartbeat stays kiosk-ipad.
 // Kiosk.jsx has already drawn the dark (the blackout, the prompt, The End).
-export default function IpadScreen({ night, nightId, relay, trace, finale, screen, cues, content, memory, rotation, serverNow }) {
+export default function IpadScreen({ night, nightId, relay, trace, finale, screen, cues, content, memory, memoryKnown = true, rotation, serverNow }) {
   const show = ipadShows({ night, relay, cues })
   if (show === 'code') return night.phase === 'paused' ? <OneMoment /> : <RoomCode cat="zimothy" />
-  if (show === 'memory') return <MemoryRounds board={memory} night={night} nightId={nightId} content={content} rotation={rotation} />
+  if (show === 'memory') return <MemoryRounds board={memory} known={memoryKnown} night={night} nightId={nightId} content={content} rotation={rotation} />
   if (show === 'bedroom') return <Bedroom relay={relay} trace={trace} />
   if (show === 'captions') return <Living night={night} relay={relay} trace={trace} finale={finale} screen={screen} cues={cues} content={content} serverNow={serverNow} nightId={nightId} captionsOnly />
   return <Idle title="The Library" line="" loop="memory" />

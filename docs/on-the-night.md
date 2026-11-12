@@ -242,8 +242,8 @@ them.
 
 | Machine | Its job | How it starts |
 |---|---|---|
-| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the music (the playlists from the Music app, or since 31 Oct the music Shortcuts through Apple Home, one Home scene per setting, with the Study's and the Orangerie's own music in Act 4), the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6; on again when the power returns and for the ballot, and left on at The End) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
-| The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
+| The brain (your M3 MacBook Air) | The W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the music (the playlists from the Music app, or since 31 Oct the music Shortcuts through Apple Home, one Home scene per setting, with the Study's and the Orangerie's own music in Act 4), the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6; on again when the power returns and for the ballot, and left on at The End) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. Since 12 November that browser is the Orangerie's speaker for the cue sounds (the chimes, the stings, the scream), like every room screen: the brain's own program plays only the recordings now. | Ethernet in, sleep off. The Mac's sound on its own speakers, turned up, not a HomePod (through one, every cue from this screen comes out about two seconds late). `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table, tapped once. |
+| The speakers (four HomePods) | The music (each HomePod plays its own, started and stopped by your Shortcuts) and the cake's song: the Entryway, the Study, the Orangerie and the Parlour. Since 12 November the cue sounds come from every room screen and phone instead, with no delay. | Nothing to choose on the brain: leave its sound on the Mac's own speakers. |
 | Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing, the three questions over everyone's portraits while the room talks it over, the vote's clock and the reveal, then The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
 | Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, The End at the end. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open `/setup` in the same Chrome: the line under Boo's button says Deck ready, or what to do (Press Connect once, with the button right there): the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
@@ -387,8 +387,9 @@ the screen awake by itself where the iPad lets it.
    a rehearsal a small "tap once to wake" note sits in the bottom right
    corner until you do; on the party night there is no note, so just tap
    once (the brain's
-   browser shows the bell but rings nothing: the brain's own sound already
-   comes out of the HomePods, so a tap there is harmless). Each shows
+   browser too: since 12 November it is the Orangerie's speaker for the
+   chimes, so keep that Mac's sound on its own speakers, turned up, not a
+   HomePod). Each shows
    its loop, once your files are in `play/public/loops`, or its room's
    splash until then. They follow the night
    on their own. Two are touched on purpose: the memory match in Act 4, and
@@ -789,9 +790,11 @@ the screen awake by itself where the iPad lets it.
   end. After Act 5 the list is closed.
 - **Pause, Irwin needs the garden** stops the clocks that decide the night:
   the Parlour Games, the vote, the rounds, the Study,
-  the drawing and the reveal. **Resume** carries them on from where they
-  stopped, and no clue is lost. The line for the cats, Salem's round and Boo's
-  show run on, so a long pause can end them, and a bulletin that fell due in
+  the drawing and the reveal, and since 12 November a Get Off My Lawn! round
+  (the Orangerie's board stands still) and the intro video and rules film on
+  the Parlour TV. **Resume** carries them on from where they
+  stopped, and no clue is lost. The line for the cats and Boo's arcade
+  run on, so a long pause can end them, and a bulletin that fell due in
   the pause plays straight after Resume. A pause takes the tabs off every
   phone, this tab with them, so **Resume** is on the pause card on your phone
   and Susan's, or on the strip across the top if a Parlour Game or the vote

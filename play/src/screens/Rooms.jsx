@@ -233,8 +233,11 @@ export function Orangerie({ night, salem = null, rotation = null, serverNow = nu
   // a group is at play while public/salem (functions/lib/act4.js) says intro, playing or passed;
   // idle and cleared are between groups, when the code to scan is back (26 Oct 2026)
   const busy = ['intro', 'playing', 'passed'].includes(salem?.state)
-  // while a group plays, the room's board (31 Oct 2026, Jon's note 10012): the colour, the count, the slips
-  if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={serverNow} />
+  // while a group plays, the room's board (31 Oct 2026, Jon's note 10012): the colour, the count, the slips.
+  // In a pause the board stands still where it was, like the phones under their pause card: Resume moves
+  // the round's times on by the pause, so the round picks up exactly there (functions/lib/night.js, 12 Nov 2026)
+  const clock = night.phase === 'paused' && night.pausedAt ? () => ms(night.pausedAt) : serverNow
+  if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={clock} />
   return (
     <RulesCard id="orangerie" line={RULES_LINES.orangerie} pick={salem?.groupId ?? night.beat} code={!busy}>
       <p className="kiosk-line">{busy ? 'Eyes on your phones.' : 'The next group will be along.'}</p>
@@ -483,11 +486,12 @@ export function GameName({ id, extra = null }) {
 // Once the third board is clear, Zimothy names whoever found the most pairs
 // (28 Oct 2026, just for fun), from the server's count (public/memory.pairsBy),
 // so a screen that reloads names the same winner.
-export function MemoryRounds({ board, night, nightId, content = null, rotation = null }) {
+export function MemoryRounds({ board, night, nightId, content = null, rotation = null, known = true }) {
   const boardId = board?.boardId ?? null
   const step = board?.step ?? 0
   // the third board cleared is a big win (B4; the approved look, screen 4): Solved!, then Zimothy names his winner
-  const won = useJustWon(!!board?.cleared)
+  // (`known`: the board's record has arrived, so a screen that reloads onto a cleared board does not play it again)
+  const won = useJustWon(!!board?.cleared, known)
   // outside Act 4 the Library's loop; in Act 4, between groups, the rules card with Zimothy's line and the room's code
   if (!night || night.act !== 4) return <Idle title="Sirwin Manor" line="The Library" loop="memory" />
   if (!boardId) return (

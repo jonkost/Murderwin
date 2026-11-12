@@ -22,8 +22,9 @@ const TRIED_KEY = 'murderwin-reloaded-for'
 
 // The drawing's running states (functions/lib/relay.js RUNNING).
 const DRAWING = ['intro', 'walk', 'turn', 'vote', 'lockout']
-// The rooms whose screen is a game through Act 4's rounds.
-const GAME_ROOMS = ['study', 'memory', 'boo', 'orangerie']
+// The rooms whose screen is a game through Act 4's rounds. The iPad is In Duplicate then (?kiosk=ipad,
+// 12 Nov 2026): a reload in the middle of a board would deal the group a fresh look at it.
+const GAME_ROOMS = ['study', 'memory', 'boo', 'orangerie', 'ipad']
 // The Parlour TV's films and timed cards: bulletin 1, bulletin 2, Sir Irwin, the open door.
 const FILM_SCREENS = ['news', 'bulletin', 'irwin', 'door']
 // A window is still in play this long after it closes (the server's grace, and the settle after it).
@@ -39,8 +40,10 @@ export function isNewer(remote, local) {
 // `typing`: a text box has the cursor (a half-typed note is kept by a short wait, never by a reload).
 // `fullscreen`: the browser's own full screen from a click on a room screen, which a reload would leave
 // with nobody there to click again, so the browser's bar would show in the room: such a screen waits.
-export function mayReload({ page = 'phone', which = null, night = null, session = null, relay = null, screen = null, now = Date.now(), typing = false, fullscreen = false } = {}) {
-  if (typing) return false
+// `overlay`: something is open over the page (a Parlour Game the guest is part-way through in Act 4,
+// which has no window on the night's own record; a cat's page): a reload would lose their place in it.
+export function mayReload({ page = 'phone', which = null, night = null, session = null, relay = null, screen = null, now = Date.now(), typing = false, fullscreen = false, overlay = false } = {}) {
+  if (typing || overlay) return false
   if (page === 'room' && fullscreen) return false
   if (page === 'room' && which === 'practice') return false // a practice game on its own page: never mid-game
   if (!night) return true                      // the doors, a quiet house
@@ -72,6 +75,11 @@ function typingNow() {
   const el = typeof document !== 'undefined' ? document.activeElement : null
   return !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.isContentEditable === true)
 }
+// Is something open over the page? Every card that opens over a phone is drawn in an .overlay (a Parlour
+// Game), the look's sheet (a cat's page) or the viewfinder (the camera).
+function overlayNow() {
+  return typeof document !== 'undefined' && !!document.querySelector('.overlay, .lk-sheet, .viewfinder')
+}
 function triedFor() { try { return sessionStorage.getItem(TRIED_KEY) } catch { return null } }
 function markTried(stamp) { try { sessionStorage.setItem(TRIED_KEY, stamp) } catch { /* no storage: a reload is still safe */ } }
 
@@ -101,7 +109,7 @@ export function useFreshness(read) {
         let state = {}
         try { state = readRef.current?.() ?? {} } catch { state = {} }
         const fullscreen = typeof document !== 'undefined' && !!document.fullscreenElement
-        if (mayReload({ ...state, typing: typingNow(), fullscreen })) {
+        if (mayReload({ ...state, typing: typingNow(), fullscreen, overlay: overlayNow() })) {
           markTried(newer)
           window.location.reload()
           return

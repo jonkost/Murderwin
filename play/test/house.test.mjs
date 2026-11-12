@@ -94,7 +94,7 @@ test('the Study\'s clock stands still in a pause, on the Host tab and the Study\
 test('a group that has finished is not expected back: the rules card waits for the next group, and the finished page names nobody', () => {
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   // A8 (12 Nov 2026): the card's line comes from studyState (lib/studyview.js, tested in a8-study.test.mjs)
-  assert.ok(kiosk.includes("line={view === 'ready' ? SAY.idle : view === 'done' ? STUDY_DONE_LINE : ''}"), 'a paid group is not invited to begin again')
+  assert.ok(kiosk.includes("line={stale ? '' : view === 'ready' ? SAY.idle : view === 'done' ? STUDY_DONE_LINE : ''} code={view !== 'done'}"), 'a paid group is not invited to begin again: its line says done, and its card has no code to scan (the review of 12 Nov 2026)')
   assert.ok(!kiosk.includes('className="study-group"'), 'no names on the game page at all now')
   assert.ok(kiosk.includes("s.map && s.state !== 'done' && (hexesFor(s) ? <HexHint"), 'and the wall map of a group stopped while stuck on a pattern does not stay behind')
 })

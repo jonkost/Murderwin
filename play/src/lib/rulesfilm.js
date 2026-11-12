@@ -113,6 +113,46 @@ export function rulesFilmAt(night, now, film = filmTimeline()) {
   return { startedAt, index: slide.index, slide, into, voice, count: film.slides.length, total: film.total }
 }
 
+// The Parlour TV at The house rules, moment by moment: the intro video, then
+// the film (the review of 12 Nov 2026). The film's clock is the server's, so
+// a screen that reloads joins at the right slide; but a video is a video, and
+// one that started late or stalled on the wifi ends a little after its time.
+// So that the video's end is never cut and the film's first words are never
+// lost:
+//   - the intro plays until it ends on this screen, up to INTRO_GRACE_MS past
+//     the film's time (a video that never ends gives way to the film then);
+//   - between the video's end and the first slide the screen holds dark,
+//     never the join code;
+//   - a film that had to wait for the video runs that far behind the clock
+//     for its whole length (`lag`), so every recording still plays whole.
+// `over` is what this screen knows of its own intro video: null while it has
+// not ended, else { at: the beat's start it belonged to, played: it ran to
+// its end (false: no file, or the browser refused it), lag }.
+// Answers { show: 'intro', startedAt } | { show: 'film', at } | { show: 'gap' }
+// or null (the join code).
+export const INTRO_GRACE_MS = 6000
+export function rulesScreenAt(night, now, over = null, film = filmTimeline()) {
+  if (!night || night.phase !== 'act' || night.act !== 1 || night.beat !== 'rules') return null
+  const beatAt = millis(night.beatAt)
+  if (!beatAt || now < beatAt) return null
+  const filmAt = beatAt + INTRO_MS + AFTER_INTRO_MS
+  const done = !!over && over.at === beatAt
+  if (!done && now < filmAt + INTRO_GRACE_MS) return { show: 'intro', startedAt: beatAt }
+  const played = done && over.played === true
+  const lag = played ? Math.min(INTRO_GRACE_MS, Math.max(0, Number(over.lag) || 0)) : 0
+  const at = rulesFilmAt(night, now - lag, film)
+  if (at) return { show: 'film', at }
+  if (played && now < filmAt + lag) return { show: 'gap' }
+  return null
+}
+// How far behind the clock the film runs on a screen whose intro video ended at `now`: nothing when the
+// video ended on time, else how late it was.
+export function introLag(night, now) {
+  const beatAt = millis(night?.beatAt)
+  if (!beatAt) return 0
+  return Math.min(INTRO_GRACE_MS, Math.max(0, now - (beatAt + INTRO_MS + AFTER_INTRO_MS)))
+}
+
 // How long the intro and the rules take together, in whole minutes, for the host's words.
 export function rulesMinutes(film = filmTimeline()) {
   return Math.round((INTRO_MS + AFTER_INTRO_MS + film.total) / 60_000)

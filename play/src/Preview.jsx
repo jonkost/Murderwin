@@ -334,6 +334,9 @@ const KIOSK = {
   // A8 (12 Nov 2026): Granolia's map on the real wall's layout, drawn as the wall hangs; and the ready card
   'kiosk-study-map': (night, serverNow) => <Study study={STUDY({ hint: 'map', misses: 4, map: [10, 3, 7, 1], layout: [[7787, 310, 224], [1295, 511, 224], [3869, 210, 166], [8588, 411, 166], [5517, 612, 166], [15090, 813, 166], [7456, 109, 108], [6844, 712, 108], [4930, 913, 108], [5065, 612, 50]].map(([id, x, y]) => ({ id, x, y })) })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-study-ready': (night, serverNow) => <Study study={STUDY({ state: 'idle', startedAt: null })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
+  // the group due has played: done, and no code to scan again; and the station gone quiet: its one line (the review of 12 Nov 2026)
+  'kiosk-study-paid': (night, serverNow) => <Study study={STUDY({ state: 'idle', startedAt: null })} rotation={{ ...STUDY_ROTATION, finished: { g1: true } }} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
+  'kiosk-study-quiet': (night, serverNow) => <Study study={STUDY({ state: 'idle', startedAt: null, updatedAt: stamp(Date.now() - 5 * 60_000) })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" rotation={MEMORY_GROUP} />,
   'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
   // the third board clear: Zimothy names whoever found the most pairs (30 in all), or everyone tied

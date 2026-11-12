@@ -139,7 +139,7 @@ test('the shared games: the night and the practice play the same component, and 
   assert.ok(!/BooPoses|BooMoments|BooRunway|booMoment|PoseCamera/.test(act4 + rooms + practice + main), 'the old Entryway show and its camera are gone from the phones, the screens and the practices')
   assert.match(rooms, /export function BooRoom[\s\S]*?<BooArcade key=\{`\$\{held\.groupId\}-\$\{held\.startsAt\}`\} night=\{nightProps\} \/>/, 'the night\'s Entryway screen is the arcade, in its night mode')
   assert.match(practice, /<SalemRounds /)
-  assert.match(rooms, /export function Orangerie[\s\S]*?<SalemBoard doc=\{salem\} names=\{groupNames\(rotation, salem\.groupId\)\} serverNow=\{serverNow\} \/>/, 'the night\'s Orangerie screen is SalemBoard while a group plays (31 Oct 2026)')
+  assert.match(rooms, /export function Orangerie[\s\S]*?<SalemBoard doc=\{salem\} names=\{groupNames\(rotation, salem\.groupId\)\} serverNow=\{clock\} \/>/, 'the night\'s Orangerie screen is SalemBoard while a group plays (31 Oct 2026), on the night\'s clock, which stands still in a pause (12 Nov 2026)')
   assert.match(practice, /export function OrangeriePractice[\s\S]*?<SalemBoard key=\{p\.runId \?\? 'practice'\} doc=\{p\.game\} names=\{p\.players\.map\(x => x\.name\)\} serverNow=\{serverNow\} practice \/>/, 'the practice\'s board is the same component, on the practice record in the night\'s shape')
   assert.match(main, /'orangerie-wall': OrangeriePractice/, 'routed from ?kiosk=orangerie&practice=1')
   // the practice sends only through gameTest, reads only its own records, and its clock names no night

@@ -149,7 +149,7 @@ test('the Act 4 rules cards: each room\'s game, its host\'s line the same as the
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"), 'cleared is not busy')
   const kiosk = src('../src/screens/Kiosk.jsx')
   // A8 (12 Nov 2026): the Study's card is one line, Granolia's start line (the workshop's IDLE) while a group is due, and the code with no words
-  assert.ok(kiosk.includes('<RulesCard id="study" line={view === \'ready\' ? SAY.idle'), 'the Study, one line')
+  assert.ok(kiosk.includes('<RulesCard id="study" line={stale ? \'\' : view === \'ready\' ? SAY.idle'), 'the Study, one line (when the station has gone quiet, that one line is Granolia has dozed off: two ran past the frame)')
   assert.ok(kiosk.includes('className="papered study-ready" words="">'), 'its code with no caption')
   assert.ok(kiosk.indexOf('const stale = s.updatedAt') < kiosk.indexOf('<RulesCard id="study"'), 'the station\'s silence is known before the card')
   // in Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
@@ -372,7 +372,9 @@ test('Salem\'s board on the Orangerie\'s screen while a group plays (31 Oct 2026
   assert.ok(board.includes("catPictureUrl('salem', pick, BASE)"), 'Salem\'s picture, varied')
   // on the night: while the group is at play, and only with the kiosk\'s clock; between groups the rules card and the code as before
   assert.ok(rooms.includes("const busy = ['intro', 'playing', 'passed'].includes(salem?.state)"))
-  assert.ok(rooms.includes('if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={serverNow} />'))
+  assert.ok(rooms.includes('if (busy && serverNow) return <SalemBoard doc={salem} names={groupNames(rotation, salem.groupId)} serverNow={clock} />'))
+  // in a pause the board stands still where it was, like the phones under their pause card (the review of 12 Nov 2026)
+  assert.ok(rooms.includes("const clock = night.phase === 'paused' && night.pausedAt ? () => ms(night.pausedAt) : serverNow"))
   assert.ok(rooms.indexOf('if (win) return') < rooms.indexOf('if (busy && serverNow) return <SalemBoard'), 'the winner first, once cleared')
   // the samples and the Game test tab\'s tries
   const preview = src('../src/Preview.jsx')

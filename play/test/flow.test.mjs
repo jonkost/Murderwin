@@ -46,6 +46,14 @@ test('A5 a phone reloads only while it is idle or dark', () => {
   assert.equal(phone({ night: at(7, 'result') }), false, 'the credits')
   assert.equal(phone({ night: { ...at(7, 'end'), over: true } }), true, 'The End')
   assert.equal(phone({ night: at(3, 'down'), typing: true }), false, 'never under a half-typed note')
+  // the review of 12 Nov 2026: an Act 4 Parlour Game played from the Parlour has no window on the night's record,
+  // so the phone itself says when something is open over the page (a game part-way through, a cat's page, the camera)
+  assert.equal(phone({ night: at(4, 'round2'), session: { act4: { room: 'parlour' } }, overlay: true }), false, 'part-way through a waiting Parlour Game')
+  assert.equal(phone({ night: at(3, 'down'), overlay: true }), false, 'a cat\'s page is open')
+  const fresh = read('../src/lib/freshness.js')
+  assert.ok(fresh.includes("document.querySelector('.overlay, .lk-sheet, .viewfinder')"), 'the page looks for what is open over it')
+  assert.ok(fresh.includes('overlay: overlayNow()'), 'at every look')
+  assert.ok(read('../src/screens/Act4.jsx').includes('<div className="overlay" role="dialog" aria-modal="true" aria-label="Parlour Game">'), 'the waiting game is drawn in an overlay')
 })
 
 test('A5 a room screen reloads only while it is idle or dark, never in a film, a game or out of its full screen', () => {
@@ -58,7 +66,8 @@ test('A5 a room screen reloads only while it is idle or dark, never in a film, a
   assert.equal(room('living', { night: at(6, 'door'), screen: { kind: 'door' } }), false, 'the door')
   assert.equal(room('living', { night: at(6, 'talk'), screen: { kind: 'talk' } }), true)
   assert.equal(room('living', { night: at(7, 'reveal') }), false, 'the reveal and the closing film')
-  for (const which of ['study', 'memory', 'boo', 'orangerie']) {
+  // the iPad too (the review of 12 Nov 2026): through the rounds it is In Duplicate, on its one page
+  for (const which of ['study', 'memory', 'boo', 'orangerie', 'ipad']) {
     assert.equal(room(which, { night: at(4, 'round3') }), false, `${which}: its game through the rounds`)
     assert.equal(room(which, { night: at(5, 'roam') }), true, `${which}: its loop after`)
   }

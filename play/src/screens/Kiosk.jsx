@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
 import { callRelayAdvance, callRelayGuess, callIntroDue } from '../firebase'
-import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/start'
+import { countdownLeft, countdownText, INTRO_VIDEO } from '../lib/start'
 import { HEX_CENTRES, LINE_BARS, hexPoints, hexesFor } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
@@ -14,7 +14,7 @@ import { studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
-import { rulesFilmAt } from '../lib/rulesfilm'
+import { rulesScreenAt, introLag } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
@@ -129,7 +129,7 @@ export default function Kiosk({ which }) {
     window.addEventListener('keydown', go)
     return () => { window.removeEventListener('pointerup', go); window.removeEventListener('keydown', go) }
   }, [])
-  const [introOver, setIntroOver] = useState(0) // the intro video that has played to its end on this screen (its start time)
+  const [introOver, setIntroOver] = useState(null) // this screen's intro video is over: { at: its start time, played: to its end, lag } (lib/rulesfilm.js)
 
   const n = night.data
   const r = relay.data
@@ -143,11 +143,11 @@ export default function Kiosk({ which }) {
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
   const setup = showSetup(n, { looked })
-  // The house rules: the Parlour TV plays the intro video from the moment the beat began (lib/start.js)
-  const intro = n && n.phase === 'act' ? introPlaying(n, serverNow()) : null
-  // ...and then the rules as a film, Jon's 28 recordings each over its slide (lib/rulesfilm.js, 11 Nov 2026),
-  // from just after the intro until the last slide; then the join code comes back. No second tab.
-  const film = which === 'living' && n ? rulesFilmAt(n, serverNow()) : null
+  // The house rules: the Parlour TV plays the intro video from the moment the beat began, and then the rules
+  // as a film, Jon's 28 recordings each over its slide (11 Nov 2026), until the last slide; then the join
+  // code comes back. No second tab. The video is never cut and no join code shows between the two
+  // (lib/rulesfilm.js rulesScreenAt, 12 Nov 2026).
+  const rules = which === 'living' && n ? rulesScreenAt(n, serverNow(), introOver) : null
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
   // a second display names its room in its address (?kiosk=decor&room=study); with no room, or the look's splash off, the crest
@@ -157,17 +157,18 @@ export default function Kiosk({ which }) {
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
   else if (ended) body = <RoomEnd />
   else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />
-  else if (which === 'ipad') body = <IpadScreen night={n} nightId={nightId} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} memory={memory.data} rotation={rotation.data} serverNow={serverNow} />
+  else if (which === 'ipad') body = <IpadScreen night={n} nightId={nightId} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} memory={memory.data} memoryKnown={memory.loaded} rotation={rotation.data} serverNow={serverNow} />
   else if (code) body = <RoomCode cat={code} />
-  else if (film) body = <RulesFilm at={film} />
-  else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
+  else if (rules?.show === 'intro') body = <IntroVideo startedAt={rules.startedAt} serverNow={serverNow} onOver={played => setIntroOver({ at: rules.startedAt, played, lag: played ? introLag(n, serverNow()) : 0 })} />
+  else if (rules?.show === 'film') body = <RulesFilm at={rules.at} />
+  else if (rules?.show === 'gap') body = <Dark />
   // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a
   // room; it counts down with the rest and goes dark with the room (the blackout, the role cards, The End)
   // (&room=study or &room=living: its room's splash, smaller and calmer, once the look's splash is on; B2)
   else if (which === 'decor') body = <Idle title="Sirwin Manor" line="" loop={null} room={decorRoom} calm />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
-  else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
-  else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
+  else if (which === 'study') body = <Study study={study.data} known={study.loaded} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
+  else if (which === 'memory') body = <MemoryRounds board={memory.data} known={memory.loaded} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
   else if (which === 'boo') body = <BooRoom boo={boo.data} night={n} nightId={nightId} rotation={rotation.data} serverNow={serverNow} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
@@ -201,20 +202,22 @@ export function IntroCountdown({ night, nightId, serverNow }) {
 
 // The intro video on the Parlour TV at The house rules. It starts where the beat's clock says, so a screen
 // that reloads joins it part-way. A browser nobody clicked may refuse sound: it plays silent rather than
-// leave the TV black. No file, or the film over: the join code comes back (onOver).
+// leave the TV black. onOver(played): true when the video ran to its end (the screen then holds dark for the
+// moment before the film's first slide), false when there is no file or the browser will not play it (the
+// join code comes back until the film).
 const INTRO_MUTED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mute') === '1'
 function IntroVideo({ startedAt, serverNow, onOver }) {
   const ref = useRef(null)
   const begin = (e) => {
     const v = e.currentTarget
     const off = (serverNow() - startedAt) / 1000
-    if (Number.isFinite(v.duration) && off >= v.duration) { onOver(); return }
+    if (Number.isFinite(v.duration) && off >= v.duration) { onOver(true); return }
     if (off > 1) v.currentTime = off
-    v.play().catch(() => { v.muted = true; v.play().catch(() => onOver()) })
+    v.play().catch(() => { v.muted = true; v.play().catch(() => onOver(false)) })
   }
   return (
     <div className="kiosk intro-video">
-      <video ref={ref} src={`${import.meta.env.BASE_URL}${INTRO_VIDEO}`} playsInline muted={INTRO_MUTED} onLoadedMetadata={begin} onEnded={onOver} onError={onOver} />
+      <video ref={ref} src={`${import.meta.env.BASE_URL}${INTRO_VIDEO}`} playsInline muted={INTRO_MUTED} onLoadedMetadata={begin} onEnded={() => onOver(true)} onError={() => onOver(false)} />
     </div>
   )
 }
@@ -1059,12 +1062,13 @@ export function TugOfWar({ graph }) {
 // `content` (26 Oct 2026): the published content, so the card's host line is
 // the workshop's when Jon wrote one (rulesLine), as on the phones.
 const STUDY_RUNNING = ['playing', 'reproducing', 'entering']
-export function Study({ study, rotation, serverNow, lines = null, night = null, content = null }) {
+export function Study({ study, rotation, serverNow, lines = null, night = null, content = null, known = true }) {
   const L = lines ?? studyLines(null)
   const SAY = { idle: L.IDLE, playing: L.PLAYING, reproducing: L.REPRODUCING, entering: L.ENTERING, slow: L.SLOW, map: L.MAP, halfColour: L['HALF COLOUR'], halfNumber: L['HALF NUMBER'], neither: L.NEITHER, time: L.TIME, solved: L.SOLVED, capped: L.CAPPED }
   const s = study ?? { state: 'idle' }
   // a room solved is a big win (B4; the approved look, screen 4): Solved!, for a few seconds, then the finished page
-  const won = useJustWon(s.state === 'done' && s.outcome !== 'capped')
+  // (`known`: the Study's record has arrived, so a screen that reloads onto a solved game does not play it again)
+  const won = useJustWon(s.state === 'done' && s.outcome !== 'capped', known)
   // the group due has been paid and the chime has not come yet: nobody is expected here (1 Nov 2026): studyState says done
   // the station has sent nothing for ninety seconds: said on the rules card and on the game alike, in
   // Granolia's world, never the station's (Jon, 29 Oct 2026: no setup words in front of the guests)
@@ -1074,8 +1078,10 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   // (the workshop's IDLE line when Jon wrote one); a group that has played: done; nobody due: no line.
   if (night?.act === 4 && (s.state === 'idle' || s.state === 'absent' || !s.state)) {
     const view = studyState(s, rotation)
+    // a group that has played is not asked to scan again: no code on its done card; and when the station has gone
+    // quiet its one line is the one that matters (two lines run past the card's frame), the review of 12 Nov 2026
     return (
-      <RulesCard id="study" line={view === 'ready' ? SAY.idle : view === 'done' ? STUDY_DONE_LINE : ''} pick={s.groupId ?? night.beat} className="papered study-ready" words="">
+      <RulesCard id="study" line={stale ? '' : view === 'ready' ? SAY.idle : view === 'done' ? STUDY_DONE_LINE : ''} code={view !== 'done'} pick={s.groupId ?? night.beat} className="papered study-ready" words="">
         <ReadyHexes />
         {stale && <p className="kiosk-next">Granolia has dozed off. Find a host.</p>}
       </RulesCard>

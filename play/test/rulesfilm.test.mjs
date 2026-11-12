@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { RULES_SLIDES, filmTimeline, rulesFilmAt, rulesMinutes, rulesAudioUrl, rulesPictureUrl, OWN_SLIDES, INTRO_MS, AFTER_INTRO_MS, BUMPER_IN_MS, BUMPER_OUT_MS, SILENT_SLIDE_MS } from '../src/lib/rulesfilm.js'
+import { RULES_SLIDES, filmTimeline, rulesFilmAt, rulesScreenAt, introLag, INTRO_GRACE_MS, rulesMinutes, rulesAudioUrl, rulesPictureUrl, OWN_SLIDES, INTRO_MS, AFTER_INTRO_MS, BUMPER_IN_MS, BUMPER_OUT_MS, SILENT_SLIDE_MS } from '../src/lib/rulesfilm.js'
 import { PICTURES } from '../src/look/look.js'
 import { SETUP_EXTRAS } from '../src/lib/setup.js'
 
@@ -120,13 +120,66 @@ test('the film plays only at The house rules, from just after the intro to the l
   assert.equal(rulesFilmAt({ ...NIGHT, beatAt: { toMillis: () => BEAT } }, start + 10).index, 0)
 })
 
+// The review of 12 Nov 2026: the film used to take the screen at its time whatever the video was doing (a video
+// that started late lost its last seconds to slide 1), and the join code flashed between the two.
+test('the intro video is never cut, no join code shows between it and the film, and the film loses none of its words', () => {
+  const film = filmTimeline()
+  const filmAt = BEAT + INTRO_MS + AFTER_INTRO_MS
+  // while the video plays: the intro
+  assert.deepEqual(rulesScreenAt(NIGHT, BEAT + 1000, null), { show: 'intro', startedAt: BEAT })
+  // the video ended on time: dark for the moment before the first slide, never the join code
+  const onTime = { at: BEAT, played: true, lag: introLag(NIGHT, BEAT + INTRO_MS) }
+  assert.equal(onTime.lag, 0)
+  assert.deepEqual(rulesScreenAt(NIGHT, BEAT + INTRO_MS + 10, onTime), { show: 'gap' })
+  assert.deepEqual(rulesScreenAt(NIGHT, filmAt - 1, onTime), { show: 'gap' })
+  assert.equal(rulesScreenAt(NIGHT, filmAt, onTime).show, 'film')
+  assert.equal(rulesScreenAt(NIGHT, filmAt, onTime).at.index, 0)
+  // the video is running late (it stalled on the wifi): it keeps the screen past the film's time, up to the grace
+  assert.equal(rulesScreenAt(NIGHT, filmAt + 2000, null).show, 'intro')
+  assert.equal(rulesScreenAt(NIGHT, filmAt + INTRO_GRACE_MS - 1, null).show, 'intro')
+  // ...and ends three seconds late: the film starts then, from its first moment, and runs three seconds behind
+  const late = { at: BEAT, played: true, lag: introLag(NIGHT, filmAt + 3000) }
+  assert.equal(late.lag, 3000)
+  const first = rulesScreenAt(NIGHT, filmAt + 3000, late)
+  assert.equal(first.show, 'film'); assert.equal(first.at.index, 0); assert.equal(first.at.into, 0)
+  const speaking = rulesScreenAt(NIGHT, filmAt + 3000 + BUMPER_IN_MS + 2000, late)
+  assert.ok(Math.abs(speaking.at.voice - 2) < 0.001, 'every recording still plays from its first word')
+  assert.equal(rulesScreenAt(NIGHT, filmAt + film.total + 2999, late).at.index, 27, 'to the last slide')
+  assert.equal(rulesScreenAt(NIGHT, filmAt + film.total + 3000, late), null, 'then the join code')
+  // a video that never ends gives way to the film at the grace
+  const stuck = rulesScreenAt(NIGHT, filmAt + INTRO_GRACE_MS, null)
+  assert.equal(stuck.show, 'film'); assert.equal(stuck.at.index, 0)
+  assert.equal(introLag(NIGHT, filmAt + 60_000), INTRO_GRACE_MS, 'the film never runs further behind than the grace')
+  assert.equal(introLag({ ...NIGHT, beatAt: null }, filmAt), 0)
+  // no file, or a browser that will not play it: the join code until the film, then the film on the clock
+  const none = { at: BEAT, played: false, lag: 0 }
+  assert.equal(rulesScreenAt(NIGHT, BEAT + 5000, none), null)
+  assert.equal(rulesScreenAt(NIGHT, filmAt + 10, none).show, 'film')
+  // a screen that reloads part-way knows nothing of its video: mid-film it goes straight to its slide
+  assert.equal(rulesScreenAt(NIGHT, filmAt + film.slides[6].at + 100, null).at.index, 6)
+  // what a screen knew belongs to one start of the beat: after a pause the start has moved on, and the video picks up
+  const moved = { ...NIGHT, beatAt: BEAT + 60_000 }
+  assert.deepEqual(rulesScreenAt(moved, BEAT + 60_000 + 30_000, onTime), { show: 'intro', startedAt: BEAT + 60_000 })
+  // never outside The house rules, in a pause, or before the beat
+  assert.equal(rulesScreenAt({ ...NIGHT, phase: 'paused' }, BEAT + 1000, null), null)
+  assert.equal(rulesScreenAt({ ...NIGHT, beat: 'arrive' }, BEAT + 1000, null), null)
+  assert.equal(rulesScreenAt(NIGHT, BEAT - 1, null), null)
+  assert.equal(rulesScreenAt(null, BEAT, null), null)
+  // Firestore's own time stamps work too
+  assert.equal(rulesScreenAt({ ...NIGHT, beatAt: { toMillis: () => BEAT } }, BEAT + 10, null).show, 'intro')
+})
+
 test('the Parlour TV plays it by itself, and there is no second tab any more', () => {
   const kiosk = read('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes("const film = which === 'living' && n ? rulesFilmAt(n, serverNow()) : null"), 'the Parlour TV only (never the iPad’s words-only page)')
-  const film = kiosk.indexOf('else if (film) body = <RulesFilm at={film} />')
-  const intro = kiosk.indexOf("else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo")
+  assert.ok(kiosk.includes("const rules = which === 'living' && n ? rulesScreenAt(n, serverNow(), introOver) : null"), 'the Parlour TV only (never the iPad’s words-only page)')
+  const intro = kiosk.indexOf("else if (rules?.show === 'intro') body = <IntroVideo")
+  const film = kiosk.indexOf("else if (rules?.show === 'film') body = <RulesFilm at={rules.at} />")
+  const gap = kiosk.indexOf("else if (rules?.show === 'gap') body = <Dark />")
   const dark = kiosk.indexOf('else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />')
-  assert.ok(dark > 0 && film > dark && intro > film, 'after the dark, before the intro’s own check: a screen that reloads mid-film goes straight to its slide')
+  assert.ok(dark > 0 && intro > dark && film > intro && gap > film, 'after the dark: the intro, the film, or the dark moment between them (rulesScreenAt says which)')
+  // the video says how it ended: to its end (true), or no file and a refused play (false: the join code until the film)
+  assert.ok(kiosk.includes('onEnded={() => onOver(true)} onError={() => onOver(false)}'))
+  assert.ok(kiosk.includes('lag: played ? introLag(n, serverNow()) : 0'), 'a film that waited for the video runs that far behind')
   const screen = read('../src/screens/RulesFilm.jsx')
   assert.ok(screen.includes('a.currentTime = voice'), 'a reload joins the voice where the clock says')
   assert.ok(screen.includes("p.catch(() => {})"), 'a screen refused sound still turns its slides')

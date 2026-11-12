@@ -342,14 +342,29 @@ test('the vote on the night is the approved card: three rows with each pick’s 
 // and the small ones on the phone.
 test('every win gets a moment: Solved! on the Study and the Library, and the small wins on the phone', async () => {
   const kiosk = read('../src/screens/Kiosk.jsx')
-  assert.ok(kiosk.includes("const won = useJustWon(s.state === 'done' && s.outcome !== 'capped')"), 'the Study solved (never a game the clock stopped)')
+  assert.ok(kiosk.includes("const won = useJustWon(s.state === 'done' && s.outcome !== 'capped', known)"), 'the Study solved (never a game the clock stopped)')
   assert.ok(kiosk.includes('if (won) return <BigWin word="Solved!" who="granolia" className="full" />'))
   const rooms = read('../src/screens/Rooms.jsx')
-  assert.ok(rooms.includes('const won = useJustWon(!!board?.cleared)') && rooms.includes('if (won) return <BigWin word="Solved!" who="zimothy" className="full" />'), 'the Library’s third board cleared')
+  assert.ok(rooms.includes('const won = useJustWon(!!board?.cleared, known)') && rooms.includes('if (won) return <BigWin word="Solved!" who="zimothy" className="full" />'), 'the Library’s third board cleared')
   // a win shows once, for a few seconds, and never again on a reload
   const win = read('../src/lib/useWin.js')
-  assert.ok(win.includes('const rose = was.current === false && !!on') && win.includes('if (!rose) return undefined'), 'only when it turns true while the screen is up')
+  assert.ok(win.includes('rose: was === false && !!on') && win.includes('if (!rose) return undefined'), 'only when it turns true while the screen is up')
   assert.ok(win.includes('export const WIN_MS = 4200'))
+  // ...and nothing is first sight until the game's own record has arrived (the review of 12 Nov 2026): a room
+  // screen draws as soon as the night is in, a moment before its game's record, so a reload onto a solved game
+  // saw not-won, then won, and played Solved! again
+  const { winStep } = await import('../src/lib/useWin.js')
+  let w = winStep(null, false, false)           // the night is in, the game's record is not
+  assert.deepEqual(w, { was: null, rose: false })
+  w = winStep(w.was, true, true)                // the record lands: already solved
+  assert.deepEqual(w, { was: true, rose: false }, 'a reload onto a solved game does not play it again')
+  w = winStep(null, false, true)                // a game under way
+  w = winStep(w.was, true, true)                // solved while the screen is up
+  assert.deepEqual(w, { was: true, rose: true }, 'a game solved in front of the room does')
+  assert.deepEqual(winStep(true, true, true), { was: true, rose: false }, 'once')
+  assert.ok(win.includes('if (!known) return undefined'))
+  assert.ok(kiosk.includes('known={study.loaded}') && kiosk.includes('known={memory.loaded}') && kiosk.includes('memoryKnown={memory.loaded}'), 'each screen says when its record is in')
+  assert.ok(read('../src/screens/Ipad.jsx').includes('known={memoryKnown}'), 'the iPad\'s In Duplicate too')
   // the phone
   const rest = read('../src/screens/Rest.jsx')
   assert.ok(rest.includes("if (!crossed[n]) { play('scratch'); celebrate('small', { at: el, quiet: true }) }"), 'a motive crossed off: a pencil scratch and a sparkle')
