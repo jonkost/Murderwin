@@ -42,6 +42,19 @@ changed)
   (about a day).
 - No card on the board yet: it rides with the build if he says yes.
 
+**Not the one he meant.** Jon, on seeing it: "No the breed reveal that I
+asked for yesterday. I'm looking into it now." What the records on this Mac
+hold of yesterday: in another Claude Code session on 11 Nov, about 6:30 pm,
+he wrote "Please make sure that in act 7 it has the guess for irwins
+breeds", and to the question that followed, "oops skip for now". Nothing was
+drawn or built there, so a mock-up of his, if there is one, is in a Claude
+chat. Note his own words: a guess, in Act 7. The page above is left as it
+is and nothing follows from it unless he says so.
+
+The same evening he asked for a picture of the dedication page ("The for
+Sydney page"): the live game's own card, taken at the TV's size, was sent to
+him.
+
 ## 12 Nov 2026, late afternoon · Claude Code (the idle screens' screen saver)
 
 **Pushed** that evening, on Jon's "Push": main, everything from 11 and 12
