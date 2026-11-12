@@ -9,6 +9,80 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, afternoon · Claude Code (the site published again; a page of pictures of the media)
+
+Jon: "Yes, publish", and while it ran: "When finished, please provide me
+with visuals about updated media content."
+
+**The publish** (the site only, about 4:05 pm, from the main folder at
+88ec4aa; the server and the rules were not touched; not pushed)
+
+- What it carries: the board's two waiting updates
+  (`2026-11-12-blackout-shortcuts` and `2026-11-12-audio-panic`) and the Host
+  tab's name for the music's stop, *AudioPanic*, which the page takes from
+  the cue sheet. Since the morning's publish (43db081) nothing under
+  `functions/` had changed but one test, and no rules and no seed. The server
+  reads only `blackout.leadMs` from the sheet, and that is still 2000.
+- Before it: every test, the checks and three fake nights again on this
+  exact code. A copy of the live site was kept and compared with the new
+  build, file by file: 280 of 288 the same, every picture, video and sound
+  among them; three small files changed and five bundles had new names. Four
+  checkers each tried to break one claim (site only is enough; exactly these
+  files change; no device is harmed; the board's updates land right). Three
+  said go. The fourth found the point below.
+- **A publish takes the last build's hashed files off the site.** A phone
+  reloads itself within a minute at a quiet moment, but a room screen in
+  full screen never does (`play/src/lib/freshness.js` `mayReload`). So Boo's
+  screen, if it was opened since the morning and clicked, would later have
+  asked for a Stream Deck file that was gone: the deck would not go dark at
+  the blackout or light for the arcade, with nothing on the screen to say
+  why. The four late-loaded files of the morning's build were copied back
+  into the new build before it went (`hosting/play/assets/`: the old main
+  bundle, the look book, the Stream Deck part, the code reader), so a page
+  on either build finds its parts. `npm run deploy:site` builds again and
+  would have dropped them, so the publish was
+  `firebase deploy --only hosting` of the checked folder.
+- After it: all 292 files on the site match the folder (259 byte for byte,
+  33 large ones by size), the site's stamp is the new build's, the four kept
+  files answer, `/setup` leads to the setup page, and the look book and the
+  setup page open with no error.
+- The board: the built-in browser is not signed in as Jon, so the two
+  updates land when he next opens or reloads the workshop. Then there are
+  new cards 592 and 593 (done) and 594 (to do), card 582 has its TV Wonder
+  title, and cards 585 and 551 each have one more note. At the time of
+  writing the board showed five open Claude Code cards and no 594 yet.
+
+**The page of pictures** (for Jon; not in the repo)
+
+- No media file changed in this publish, so the page shows what is in the
+  game now, in the order of the night, and what came in on 11 and 12
+  November: a still of each of the 62 videos, his 28 rule slides with each
+  recording's length, the supper bulletin's 27 recordings and Sir Irwin's 8
+  voice lines as lengths, Sydney's photo, the new picture of Granolia, the
+  nine cue sounds, and the six loops that are not in, which is fine. Its
+  counts are the media check's own.
+- One self-contained page, made by a script in the session's scratch folder
+  that only reads the media folders and takes one silent frame from each
+  video. Nothing was played. Two checkers went over its numbers and its
+  words before it was sent to Jon as a file. Every number held; their
+  points were words (it said "you sent" of Sir Irwin's voice, which the Mac
+  speaks; a date under every picture, now one mark on each part; what-ifs
+  taken out).
+
+**For Jon**
+
+- Open the workshop once, or reload it if it is open, so the new cards land.
+- Phones and screens take the new site by themselves at a quiet moment. A
+  room screen in full screen stays as it is and misses only the Host tab's
+  wording.
+- From before, still his: the brain's volume all the way up, TV Wonder
+  (card 582), the Blackout test tonight (card 585).
+
+**For the next publish** (Claude Code): while screens may be open, keep the
+last build's late-loaded files in the new build the same way, and publish
+the checked folder, not `npm run deploy:site`. No card: it is a step of the
+publish, not a job.
+
 ## 12 Nov 2026, midday · Claude Code (the music's stop: Jon's AudioPanic Shortcut)
 
 Jon: "audioPanic is made".
