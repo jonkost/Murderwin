@@ -9,6 +9,39 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, evening · Claude Code (a first mock-up of Sir Irwin's breed reveal)
+
+Jon: "Give me the mock up of the breed reveal". None existed: the 11 Nov
+handoff only says "Irwin's breed moment ... Jon will say what it is and when
+it plays" and "build nothing yet", and nothing by that name was in the repo,
+his artifacts or any other session.
+
+**What was made** (a design page only; nothing in the game is built or
+changed)
+
+- A design canvas in his claude.ai account, "Murderwin: the breed reveal"
+  (https://claude.ai/artifact/5riVroeHE1g5xzkLF7FNCj), eight screens in the
+  look he approved on 12 Nov, with his own pictures of Sir Irwin.
+- Three designers each proposed one way to stage it (the showman, the room
+  plays, the simplest thing that lands). They agreed on the shape, and the
+  mock-up is that: at dessert, right after the cake song and before Sir
+  Irwin speaks, one new Host button, *Breed!*, beside *Cake!*. The Parlour
+  TV asks "What is Sir Irwin?", shows his breeds one at a time, smallest
+  share first, holds on a question mark, then the biggest lands as a big
+  win, and a card with all of them stays. An optional part: every phone
+  takes a guess first, the TV shows what the room said, and each phone gets
+  a small win ("You called it", or "You were right too").
+- Every name and number on it is a sample ("First breed 55%"). Nobody here
+  knows Sir Irwin's result and none was guessed.
+
+**For Jon, before anything is built**
+
+- The breeds and each share (adding to 100), or the word that Jenna types
+  them in so he is surprised too.
+- Which size: the TV alone (a few hours) or with the room's guess first
+  (about a day).
+- No card on the board yet: it rides with the build if he says yes.
+
 ## 12 Nov 2026, late afternoon · Claude Code (the idle screens' screen saver)
 
 **Pushed** that evening, on Jon's "Push": main, everything from 11 and 12
