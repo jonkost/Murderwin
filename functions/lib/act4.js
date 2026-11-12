@@ -90,12 +90,12 @@ export const DIRECTIONS = {
   parlour: 'Wait in the Parlour this round.',
 }
 export const ACT4_TEXT = {
-  warn: { title: 'Two minutes!', text: 'Behind Closed Doors starts in two minutes. Keep your phone close.', button: 'Got it' },
+  warn: { title: 'Two minutes!', text: 'Keep your phone close.', button: 'Got it' },
   arrive: 'Scan the code on the wall.',
   chime: 'Time to move.',
   paid: 'Done. Back to the Parlour.',
   over: { title: 'Back to the Parlour', text: 'Everyone to the Parlour.' },
-  screen: { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' },
+  screen: { title: 'Find your group', line: 'Look at your phone.' },
   group: 'From now on, only share with your group.',
   alone: 'From now on, keep what you learn to yourself.',
 }
@@ -104,8 +104,8 @@ export const ACT4_TEXT = {
 // motive crossed off; the bag hint follows on the same card.
 export const REWARD_LINES = {
   study: { done: 'Granolia remembers one more thing.', capped: 'Granolia remembers one more thing.' },
-  library: { done: 'Order. Restored. Strike [RHYME] from your list; it was not that. Invoice to follow.', capped: 'Time, and my patience, are billable. Leave the files. Here is what you have earned anyway: strike [RHYME] from your list; it was not that.' },
-  orangerie: { done: "Huh. You lot can follow instructions. Backwards ones, anyway. Here's what I know.", capped: "Time's up. The sprinklers are on a timer. Here's what I know anyway, since you tried." },
+  library: { done: 'Order restored. Strike [RHYME] from your list; it was not that.', capped: 'Time is billable. Strike [RHYME] from your list anyway; it was not that.' },
+  orangerie: { done: "Huh, you lot followed the backwards ones. Here's what I know.", capped: "Time's up. Here's what I know anyway, since you tried." },
   // the arcade (5 Nov 2026, card 515): no cross-off; the bag hint about the Ghost is the prize, and a trio's
   // third player gets Boo's line instead (Jon's words, 28 Oct 2026)
   entryway: { done: 'You amused me, darling. Keep it.', capped: "Time, darling. Here's your prize anyway." },
@@ -324,7 +324,7 @@ async function directGroups(db, nightId, rot, round, { now = Date.now(), over = 
     const room = over ? PARLOUR : roomFor(rot, grp.id, round)
     const step = over
       ? { room: PARLOUR, cat: null, title: ACT4_TEXT.over.title, text: ui['ACT4 OVER'] ?? ACT4_TEXT.over.text, round, rounds: rot.rounds, over: true }
-      : directionFor(room, { round, rounds: rot.rounds, tip: room === PARLOUR ? parlourTip(c, grp.id, round, nightId) : null, ui })
+      : directionFor(room, { round, rounds: rot.rounds, ui }) // no tip under the Parlour's line since 12 Nov 2026 (Jon: no tips on a guest's screen)
     for (const m of grp.members) {
       const g = byKey[m.key]
       if (!g) continue

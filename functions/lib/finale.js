@@ -64,8 +64,8 @@ export const DEFAULT_EPILOGUE = 'And so it was [MURDERER]. Not for money, not fo
 // from the FINAL sliders, never the hidden leans (G31). A tie shows everyone
 // tied. Answers a phone was given when its window closed do not count.
 export const AWARD_TEXT = Object.freeze({
-  irwinFavourite: { title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy. But a toy.' },
-  irwinLeast: { title: "Sir Irwin's Least Favorite", line: 'He thinks you\'re wonderful. From across the room. But treats are still very welcome. You can toss them.' },
+  irwinFavourite: { title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy, though.' },
+  irwinLeast: { title: "Sir Irwin's Least Favorite", line: 'He thinks you\'re wonderful, from across the room. Treats are still welcome.' },
   quickest: { title: 'Quickest Paw', line: 'First to answer the Parlour Games, again and again.' },
   slowest: { title: 'Took Their Sweet Time', line: 'Thought hard about every Parlour Game. Very hard.' },
   napping: { title: 'Napping With Irwin', line: 'Missed the most Parlour Games. Sir Irwin understands.' },

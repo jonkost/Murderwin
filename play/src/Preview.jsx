@@ -108,24 +108,24 @@ const BAGS = {
   ghost: bagLines.act4.salem[4].replace('___', '(a clue word)'),
 }
 const CARDS = {
-  meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'Four cats and the birthday boy live here. See how each stands with you in the Cats tab.', button: 'I have met them' },
+  meet: { id: '1-meet-meet', act: 1, beat: 'meet', kind: 'notice', key: 'meet', title: 'The household', text: 'See how each cat stands with you in the Cats tab.', button: 'I have met them' },
   orient: { id: '2-orient-orient', act: 2, beat: 'orient', kind: 'notice', key: 'orient', title: 'Where things are', text: 'The tabs at the bottom. Clues collects what you are told. Notes is yours alone. Motives: cross off as you go.', button: 'Got it' },
-  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV. Watch it.', button: 'I watched it' },
-  peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: 'Take a quiet look in your own bag. Show nobody yet.', button: 'I have looked' },
+  news: { id: '2-news-news', act: 2, beat: 'news', kind: 'notice', key: 'news', title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV.', button: 'I watched it' },
+  peek: { id: '2-peek-peek', act: 2, beat: 'peek', kind: 'notice', key: 'peek', title: 'Your bag', text: 'Look in your own bag. Show nobody yet.', button: 'I have looked' },
   // every cat: its name, its room, its motive hint, its bag clue and the footer (23 Oct 2026)
   testimony: { id: '2-cat-cat-salem', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crooknog', room: 'the Orangerie', lines: [], hint: { text: HINTS.salem }, bag: { text: BAGS.salem }, saved: 'Saved to your Clues.' },
   testimony2: { id: '2-cat-cat-zimothy', act: 2, beat: 'cat', kind: 'testimony', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', room: 'the Library', lines: [], hint: { text: HINTS.zimothy }, bag: { text: BAGS.zimothy }, saved: 'Saved to your Clues.' },
-  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone charging in the Parlour. Bring your bag: the table may share.', button: 'Phone is down' },
-  warn: { id: '4-warn-warn', act: 4, beat: 'warn', kind: 'notice', key: 'act4-warn', title: 'Two minutes!', text: 'Behind Closed Doors starts in two minutes. Keep your phone close.', button: 'Got it' },
+  dinner: { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: 'Supper', text: 'Leave your phone charging in the Parlour. Bring your bag to the Orangerie.', button: 'Phone is down' },
+  warn: { id: '4-warn-warn', act: 4, beat: 'warn', kind: 'notice', key: 'act4-warn', title: 'Two minutes!', text: 'Keep your phone close.', button: 'Got it' },
   // the Act 4 group card in the server's words (functions/lib/act4.js): portraits, character names, Locked in
   group: { id: '4-groups-group', act: 4, beat: 'groups', kind: 'group', group: 'g1', lockIn: true, title: "You're teamed up with Roger Arms and Ignatius Fume", text: 'From now on, only share with your group.',
     members: [{ key: 'jessa', name: 'Jessa', characterName: 'Dorothy Rye', characterId: 'rye' }, { key: 'jacob', name: 'Jacob', characterName: 'Roger Arms', characterId: 'arms' }, { key: 'mari', name: 'Mari', characterName: 'Ignatius Fume', characterId: 'fume' }] },
-  library: { id: '4-room-library-g1', act: 4, beat: 'round2', kind: 'clue', room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: 'From the Library', text: `Order. Restored. Strike number 9, “${motivesSeed.motives[8]?.rhyme}” from your list; it was not that. Invoice to follow.`, cross: 9, bag: { text: BAGS.ghost } },
+  library: { id: '4-room-library-g1', act: 4, beat: 'round2', kind: 'clue', room: 'library', cat: 'zimothy', catName: 'Zimothy Clawford, Esq.', title: 'From the Library', text: `Order restored. Strike number 9, “${motivesSeed.motives[8]?.rhyme}” from your list; it was not that.`, cross: 9, bag: { text: BAGS.ghost } },
   clue: { id: '4-round1-study-clue', act: 4, beat: 'round1', kind: 'clue', title: 'From the Study', placeholder: true, text: 'Something was left behind.', trace: { level: 4, trace: 'flour', label: null } },
   // the cake notice carries the Happy Birthday Irwin picture (cue 12, 25 Oct 2026; the phone draws it from `image`)
   roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Go where you like. Talk about the bags now, out loud, in any detail.', button: 'Cake acquired', image: 'birthday' },
   irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say, on the Parlour TV. Go to the Parlour.', button: 'On my way' },
-  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'See what the bedroom shows, then come back to the Parlour.', button: 'I have seen it' },
   // Talk it over, the last beat of Act 6 (11 Nov 2026): no window, no clock
   talk: { id: '6-talk-talk', act: 6, beat: 'talk', kind: 'notice', key: 'talk', title: 'Talk it over', text: 'The vote is next.', button: 'Got it' },
   eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
@@ -231,7 +231,7 @@ const FINALE = (agoMs, stage = 'stats', extra = {}) => ({
     // the end-credit awards, in the credits only
     awards: [
       { name: 'Jessa and Mari', title: "Granolia's Favorite", line: null },
-      { name: 'Iris DeVine', title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy. But a toy.' },
+      { name: 'Iris DeVine', title: "Sir Irwin's Favorite", line: 'He would share his toy with you. Not his good toy, though.' },
     ],
     counters: [{ key: 'barks', label: 'Times Irwin barked', value: 412 }, { key: 'salemWrong', label: 'Times Salem was wrong', note: 'He disputes this number.', value: 61 }],
     splits: [{ q: 'Cake or pie?', a: { text: 'Cake', count: 6 }, b: { text: 'Pie', count: 3 } }],
@@ -257,7 +257,7 @@ const SCREEN = (kind, extra = {}) => ({ kind, title: '', lines: [], at: stamp(PH
 // the join and birthday cards' words, as functions/lib/screen.js writes them (JOIN_CARDS, BIRTHDAY_CARD); open words
 const JOIN_CARDS = {
   join: { title: 'Scan to join', lines: ['Point your phone\'s camera at the square, then type your name.'] },
-  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone before Act 4.'] },
+  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone.'] },
 }
 const BIRTHDAY_CARD = { title: 'Happy Birthday, Sir Irwin!', lines: ['One candle. One very good boy.'] }
 // W-O-O-F News from the open bank: bulletin 1 (the opening, one family line, the sign-off) and
@@ -311,8 +311,8 @@ const KIOSK = {
   'kiosk-talk-4': (night, serverNow) => <Living night={talkNight(night, NIGHT.roster)} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={TALK_SCREEN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-talk-14': (night, serverNow) => <Living night={talkNight(night, FOURTEEN)} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={TALK_SCREEN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-ipad': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'Supper Is Served', act: 3, beat: 'groups', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
-  'kiosk-living-done': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now() - 12000), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  'kiosk-living-hold': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now()), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-done': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now() - 12000), lines: ['The light outside the bedroom is green.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-living-hold': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now()), lines: ['The light outside the bedroom is green.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-rules': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('intro')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-relay-called': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('walk')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-relay-square': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('turn')} trace={null} finale={null} screen={SCREEN('idle')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
@@ -437,8 +437,8 @@ const LIGHTS_WORDS = {
   wait: ['In the Parlour', 'Wait in the Parlour. You\'ll be called.'],
   later: ['Back in the queue', 'We\'ll call you again.'],
   go: ['Your turn', '[CAT] is waiting in [ROOM]. Go alone.'],
-  with: ['[CAT] is talking to you', 'For you alone. Tap Done when you have read it.'],
-  done: ['Back to the Parlour', 'All four cats seen. Tell nobody what you heard. The chime calls everyone to supper.'],
+  with: ['[CAT] is talking to you', 'For you alone.'],
+  done: ['Back to the Parlour', 'All four cats seen. Tell nobody what you heard.'],
   supper: ['Supper is served', 'Supper is served in the Orangerie.'],
 }
 function LIGHTS(variant, cat = 'salem') {

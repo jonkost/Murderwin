@@ -10,7 +10,7 @@
 
 export const THANKS = {
   title: 'Thanks',
-  text: 'Your answers are in. Keep your phone on you.',
+  text: 'Your answers are in.',
   button: 'Done',
 }
 

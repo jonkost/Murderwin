@@ -104,7 +104,7 @@ export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes, stag
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text role-card">{card ? card.text : ui.ORIENT}</p>
-      <p className="moment-sub">Act {night.act} begins. Eyes on your own phone.</p>
+      <p className="moment-sub">Eyes on your own phone.</p>
     </div>
   )
 }

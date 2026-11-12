@@ -550,7 +550,7 @@ export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
       )}
       <p className="kiosk-crest">All three drawings named</p>
       <p className="kiosk-big">The door is open.</p>
-      <p className="kiosk-line">{screen?.lines?.[0] ?? 'The light outside the bedroom is green. Go and see.'}</p>
+      <p className="kiosk-line">{screen?.lines?.[0] ?? 'The light outside the bedroom is green.'}</p>
     </div>
   )
 }
@@ -755,7 +755,7 @@ export function Bedroom({ relay, trace }) {
   return (
     <div className="kiosk bedroom open">
       <p className="kiosk-crest">The bedroom · what was left behind</p>
-      {trace ? <TraceView trace={trace} /> : <p className="kiosk-line">The door is open. Something was left behind; it is on its way to this screen.</p>}
+      {trace ? <TraceView trace={trace} /> : <p className="kiosk-line">Something was left behind.</p>}
     </div>
   )
 }
@@ -841,7 +841,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
     <div className="kiosk finale journey">
       <p className="kiosk-crest">All night, two of you were pulling</p>
       <TugOfWar graph={finale.graph} />
-      <p className="kiosk-line">Every Parlour Game answer from two phones moved this. Nobody knew. Not even them.</p>
+      <p className="kiosk-line">Their Parlour Game answers moved this. Nobody knew.</p>
       {(finale.graph?.clues ?? []).length > 0 && (
         <ul className="journey-clues">
           {finale.graph.clues.map(c => <li key={c.label}><span>{c.label}</span><span className="clue-level">{'●'.repeat(c.level)}{'○'.repeat(5 - c.level)}</span></li>)}
@@ -1150,7 +1150,7 @@ function StudyWalls() {
         <svg viewBox={`-10 -10 ${lw + 20} ${lh + 20}`}>
           {LINE_BARS.map(([a, b], i) => <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} className="wall-bar" />)}
         </svg>
-        <figcaption><b>2.</b> The lines: after three patterns, note the colour and count the lit bars.</figcaption>
+        <figcaption><b>2.</b> The lines: after three patterns, note the color and count the lit bars.</figcaption>
       </figure>
     </div>
   )

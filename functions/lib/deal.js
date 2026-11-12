@@ -60,26 +60,26 @@ export const ROLE_CARDS = {
 }
 
 export const NOTICES = {
-  meet: { title: 'The household', text: 'Four cats and the birthday boy live here. See how each stands with you in the Cats tab.', button: 'I have met them' },
-  introduce: { title: 'Say who you are', text: 'Out loud: your name and your profession. Nothing else.', button: 'I have said it' },
+  meet: { title: 'The household', text: 'See how each cat stands with you in the Cats tab.', button: 'I have met them' },
+  introduce: { title: 'Say who you are', text: 'Out loud: your name and your profession.', button: 'I have said it' },
   ready: { title: 'Settle in', text: 'Keep your phone on you.', button: 'Ready' },
-  orient: { title: 'Where things are', text: 'The tabs at the bottom. Clues collects what you are told. Notes is yours alone. Motives: cross off as you go.', button: 'Got it' },
-  news: { title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV. Watch it.', button: 'I watched it' },
+  orient: { title: 'Where things are', text: 'Your clues, notes and motives are in the tabs below.', button: 'Got it' },
+  news: { title: 'Eyes up', text: 'W-O-O-F News is on the Parlour TV.', button: 'I watched it' },
   // after the news (handoff 23 Oct §9.4): a quiet look in your own bag, shown to nobody
-  peek: { title: 'Your bag', text: 'Take a quiet look in your own bag. Show nobody yet.', button: 'I have looked' },
-  checkin: { title: 'Check-in', text: 'Read your clues. Cross off what you can. Then in to supper.', button: 'Done' },
+  peek: { title: 'Your bag', text: 'Look in your own bag. Show nobody yet.', button: 'I have looked' },
+  checkin: { title: 'Check-in', text: 'Cross off what you can, then go in to supper.', button: 'Done' },
   // supper (cue 8, 25 Oct 2026): the phone stays in the Parlour, charging
-  down: { title: 'Supper', text: 'Supper is in the Orangerie. Leave your phone charging in the Parlour. Bring your bag: the table may share.', button: 'Phone is down' },
+  down: { title: 'Supper', text: 'Leave your phone charging in the Parlour. Bring your bag to the Orangerie.', button: 'Phone is down' },
   bulletin: { title: 'The bulletin', text: 'Talk it over. Cross off what you can.', button: 'Heard it' },
   // the dinner wrap-up (cue 10, 25 Oct 2026): the first of the two motive prompts
-  motives: { title: 'Your motives', text: 'Open the Motives tab. Cross off every motive ruled out so far.', button: 'Will do' },
-  roam: { title: 'Cake', text: 'Go where you like. Talk about the bags now, out loud, in any detail.', button: 'Cake acquired' },
-  irwin: { title: 'The chime', text: 'Sir Irwin has something to say, on the Parlour TV. Go to the Parlour.', button: 'On my way' },
+  motives: { title: 'Your motives', text: 'In the Motives tab, cross off every motive ruled out so far.', button: 'Will do' },
+  roam: { title: 'Cake', text: 'Talk about your bags now, out loud, in any detail.', button: 'Cake acquired' },
+  irwin: { title: 'The chime', text: 'Go to the Parlour. Sir Irwin is on the TV.', button: 'On my way' },
   // after Sir Irwin (cue 14, 25 Oct 2026): the second motive prompt
-  update: { title: 'Your motives', text: 'You heard Sir Irwin. Update your Motives tab.', button: 'Will do' },
+  update: { title: 'Your motives', text: 'Update your Motives tab.', button: 'Will do' },
   // Act 6 opens (cue 15, 25 Oct 2026): the break line before the two games
-  break: { title: 'The Final Hour', text: 'Two Parlour Games, then the final event. Stretch your legs.', button: 'Noted' },
-  door: { title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  break: { title: 'Stretch your legs', text: 'Two Parlour Games are next.', button: 'Noted' },
+  door: { title: 'The door is open', text: 'See what the bedroom shows, then come back to the Parlour.', button: 'I have seen it' },
   // Act 6 ends in talk (handoff 11 Nov 2026, A6). No window, no clock: people talk, and the host starts the vote
   talk: { title: 'Talk it over', text: 'The vote is next.', button: 'Got it' },
   eyes: { title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
@@ -284,8 +284,8 @@ export const LIGHTS_TEXT = {
   later: { title: 'Back in the queue', text: 'We\'ll call you again.' },
   go: { title: 'Your turn', text: '[CAT] is waiting in [ROOM]. Go alone.' },
   next: { title: 'Your turn', text: 'Time\'s up. [CAT] is waiting in [ROOM].' },
-  with: { title: '[CAT] is talking to you', text: 'For you alone. Tap Done when you have read it.' },
-  done: { title: 'Back to the Parlour', text: 'All four cats seen. Tell nobody what you heard. The chime calls everyone to supper.' },
+  with: { title: '[CAT] is talking to you', text: 'For you alone.' },
+  done: { title: 'Back to the Parlour', text: 'All four cats seen. Tell nobody what you heard.' },
   supper: { title: 'Supper is served', text: 'Supper is served in the Orangerie.' },
 }
 // After "On my way" (the phone's own step, no server call), and the cards' footer.
@@ -800,7 +800,7 @@ async function applyPoints(db, nightId, key, windowId, picks, c, act = null) {
 // SALEM FRIEND wins.
 export const SALEM_FRIEND = {
   title: 'True Friend of the Groundskeeper',
-  text: "Well, I'll be. Salem has chosen you. He likes the cut of your jib. You've earned his rarest honor: True Friend of the Groundskeeper. From now on, he'll tell it to you straight. Don't let it go to your head. And stay off the lawn.",
+  text: "Salem has chosen you: a True Friend of the Groundskeeper. From now on, he'll tell it to you straight.",
   button: 'Keep it',
 }
 export async function salemPetted(db, nightId, { arg, now = Date.now() } = {}) {

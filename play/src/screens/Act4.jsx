@@ -84,11 +84,9 @@ export default function Act4({ step, session, nightId, uid, serverNow, notes }) 
   }
   return (
     <section className={`dealt act4 act4-${step.room}`}>
-      <p className="eyebrow">{step.over ? 'Behind Closed Doors' : `Round ${step.round} of ${step.rounds}`}</p>
       {step.chime && !step.here && !step.paid && <p className="gloss">{step.chime}</p>}
       {room && <CatFace cat={room.cat} name={step.catName} size="l" />}
       <h3>{step.title}</h3>
-      {step.hook && !step.here && <p className="game-hook">{step.hook}</p>}
       {!step.paid && !step.here && <p><Spoken text={step.text} /></p>}
       {room && !step.here && !step.paid && (
         <>

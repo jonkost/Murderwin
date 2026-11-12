@@ -20,7 +20,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
         <>
           {character && <CharacterCard character={character} />}
           <p className="moment-text">{bioFor(content, character)}</p>
-          <p className="gloss">Your name and job are public. Everything else is yours.</p>
+          <p className="gloss">Your name and job are public.</p>
         </>
       ),
     },
@@ -29,7 +29,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
       body: (
         <>
           {session.bag ? <p className="bag-big">{session.bag}</p> : <p className="moment-text">The host will hand you one.</p>}
-          <p className="moment-text">Collect the bag with this number. Look inside your own. Keep it closed unless someone asks.</p>
+          <p className="moment-text">Collect the bag with this number. Keep it closed unless someone asks.</p>
         </>
       ),
     },
@@ -48,7 +48,7 @@ export default function Welcome({ uid, session, content, ui, onDone }) {
               </li>
             ))}
           </ul>
-          <p className="gloss">They talk. Sir Irwin never lies. How each one feels about you is on the Cats tab.</p>
+          <p className="gloss">Sir Irwin never lies.</p>
         </>
       ),
     },

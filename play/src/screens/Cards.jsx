@@ -147,7 +147,6 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
   }
   return (
     <section className={`dealt lights lights-${lights.step}`}>
-      <p className="eyebrow">Your next step</p>
       {lights.cat && lights.step !== 'done' && lights.step !== 'wait' && <CatFace cat={lights.cat} name={lights.catName} size="l" />}
       <h3>{lights.title}</h3>
       <p>{onWay ? lights.arrive : lights.text}</p>
@@ -222,7 +221,7 @@ function Group({ card, uid, nightId, notes, onDone }) {
       <p>{card.text}</p>
       {card.lockIn
         ? (locked
-          ? <p className="locked-in"><CatFace cat="irwin" name="Sir Irwin" /> <span>Locked in. Sir Irwin is wagging. The chime sends your group to its first room.</span></p>
+          ? <p className="locked-in"><CatFace cat="irwin" name="Sir Irwin" /> <span>Locked in. The chime sends your group to its first room.</span></p>
           : <button className="big" disabled={busy} onClick={lockIn}>Locked in</button>)
         : <button className="big" onClick={onDone}>Got it</button>}
     </section>
@@ -238,7 +237,7 @@ function Station({ card, uid, notes, onDone }) {
   const meet = () => writeNotes(uid, { seen: { [metKey]: true } }).catch(() => {})
   return (
     <section className={`dealt station station-${card.station}`}>
-      <p className="eyebrow">Station · {card.title}</p>
+      <h3>{card.title}</h3>
       {card.station === 'cat' && <CatFace cat={card.cat} name={card.catName} size="l" />}
       <HostLine host={card.host} />
       {card.station === 'bags' && card.property && <p className="property">Something <strong>{card.property}</strong></p>}
@@ -282,7 +281,6 @@ export function Clue({ card, uid = null, notes = null }) {
 function Award({ card, onDone }) {
   return (
     <section className="dealt award">
-      <p className="eyebrow">Achievement</p>
       <h3>{card.title}</h3>
       {card.text && <p>{card.text}</p>}
       <button className="big" onClick={onDone}>{card.button || 'Keep it'}</button>

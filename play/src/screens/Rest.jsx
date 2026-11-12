@@ -176,11 +176,10 @@ function You({ character, session, content, ui, onTour }) {
           <p className="eyebrow">{ui['YOUR ROLE']}</p>
           {showRole
             ? <p className="role-card role-again">{role.text}</p>
-            : <p className="gloss role-hint">Your card from when the power came back. Nobody else can see it.</p>}
+            : <p className="gloss role-hint">Nobody else can see it.</p>}
           <button className="quiet" onClick={() => setShowRole(v => !v)} aria-expanded={showRole}>{showRole ? ui['HIDE ROLE'] : ui['SHOW ROLE']}</button>
         </section>
       )}
-      <p className="gloss">{ui.RETICULE}</p>
       {onTour && <button className="quiet" onClick={onTour}>Show me around again</button>}
       <AllowAgain />
       {idle && (
@@ -251,7 +250,7 @@ function Motives({ uid, content, notes }) {
   if (!list.length) return <p className="moment-text">The motives are on their way.</p>
   return (
     <div>
-      <p className="gloss">Tap a motive to cross it off. Only you see this.</p>
+      <p className="gloss">Tap a motive to cross it off.</p>
       <ol className="motives">
         {list.map(m => (
           <li key={m.n} className="motive-row">
@@ -333,7 +332,6 @@ function Notes({ uid, notes }) {
   const line = notesLine(text, stored, { failed })
   return (
     <div className="notes">
-      <p className="gloss">Only you can read these.</p>
       <textarea className="notes-box" value={text} onChange={onChange} onBlur={flush} rows={10} aria-label="Your notes"
         placeholder="Who said what, and what you make of it." autoCapitalize="sentences" />
       <p className="gloss saved notes-line">{line}</p>
@@ -360,7 +358,7 @@ function Cats({ session, content, ui, act }) {
   const friend = salemFriendNote(session)
   return (
     <div>
-      <p className="gloss">How each of them feels about you. Tap one for more.</p>
+      <p className="gloss">Tap a cat for more.</p>
       <ul className="gauges">
         {cards.map(cat => {
           const level = cat.key === 'irwin' ? 5 : stopOf(session.affection?.[cat.key] ?? 3) // kept in half steps; shown at the nearest stop

@@ -54,8 +54,8 @@ export const VOTE_CARD = { title: 'The vote', lines: THREE_QUESTIONS }
 // The words beside the join code (screen kind `join`, 25 Oct 2026): "Scan to join"
 // through Act 1, and at the dinner wrap-up the code for anyone who needs to rejoin.
 export const JOIN_CARDS = {
-  join: { title: 'Scan to join', lines: ['Point your phone\'s camera at the square, then type your name.'] },
-  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone before Act 4.'] },
+  join: { title: 'Scan to join', lines: ['Point your camera at the square, then type your name.'] },
+  rejoin: { title: 'Need to rejoin? Scan here.', lines: ['Everyone back on their phone.'] },
 }
 
 // The sound catalogue. A file in media/ per id (media/README.md); the cue
@@ -87,7 +87,7 @@ export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something t
 export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
 export const NEWS_QUIET = 'W-O-O-F News has nothing more on that just now.'
 // The Act 4 title card on the Parlour TV (§9.5).
-export const ACT4_TITLE = { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' }
+export const ACT4_TITLE = { title: 'Find your group', line: 'Look at your phone.' }
 // Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
 // shows. Open copy, from docs/handoff-2026-10-22.md §5; the workshop's
 // ui_copy IRWIN FIVE to IRWIN ONE lines win.
@@ -376,7 +376,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     // the Act 4 title card: silent, jazz from the HomePods
     doc = screenDoc('title', { ...base, title: ACT4_TITLE.title, lines: [ACT4_TITLE.line], rehearsal: !!night.rehearsal })
   } else if (kind === 'door') {
-    doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: Math.max(DOOR_HOLD_MS, DOOR_LINE.voice ? DOOR_LINE.ms : 0), rehearsal: !!night.rehearsal }) // held at least as long as Sir Irwin's door line (lib/slide-voice.js)
+    doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green.'], holdMs: Math.max(DOOR_HOLD_MS, DOOR_LINE.voice ? DOOR_LINE.ms : 0), rehearsal: !!night.rehearsal }) // held at least as long as Sir Irwin's door line (lib/slide-voice.js)
   } else if (kind === 'talk' || kind === 'vote') {
     // Talk it over (Act 6's last beat) and the vote (Act 7): the three questions, nothing else
     const card = kind === 'talk' ? TALK_CARD : VOTE_CARD
@@ -389,7 +389,7 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
   } else if (kind === 'black') {
     doc = screenDoc('black', { ...base, title: '', lines: [], captions: null })
   } else {
-    doc = screenDoc('idle', { ...base, title: NIGHT.acts[String(act)]?.name ?? 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal })
+    doc = screenDoc('idle', { ...base, title: 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal })
   }
   const r = await writeScreen(db, nightId, doc)
   let sound = null
@@ -490,7 +490,7 @@ export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
       const dark = night.phase === 'blackout' || night.phase === 'prompt'
       const doc = dark
         ? screenDoc('black', { now, title: '', act, beat, captions: null })
-        : screenDoc('idle', { now, act, beat, title: NIGHT.acts[String(act)]?.name ?? 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal, captions: prev.captions ?? null })
+        : screenDoc('idle', { now, act, beat, title: 'Sirwin Manor', lines: [], rehearsal: !!night.rehearsal, captions: prev.captions ?? null })
       await writeScreen(db, nightId, doc)
       return { ok: true, kind: doc.kind }
     }
