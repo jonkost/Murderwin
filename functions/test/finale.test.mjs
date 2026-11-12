@@ -14,9 +14,11 @@ import { relayPaths, TURN_MS, WALK_MS, PULL_MS, VOTE_MS } from '../lib/relay.js'
 import { NEWS, closingParts, closingStage } from '../lib/news.js'
 
 // A throwaway night. The rehearsal case the dealer makes is never printed.
+// The closing bulletin is video by default since 11 Nov 2026; these nights tick the Game night box
+// Show the words instead (bulletinVideo: false), the recordings' road, and the film's own tests untick it.
 async function party(n = 6) {
   const db = new FakeFirestore()
-  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', bulletinVideo: false })
   const { nightId } = await createNight(db)
   const names = ['Jon', 'Susan', 'Jessa', 'Jacob', 'Stanley', 'Jeanette', 'Matthew', 'Marie', 'René', 'Guest'].slice(0, n)
   const uids = {}

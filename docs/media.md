@@ -21,9 +21,9 @@ media -- --live` also says which files are online.
 |---|---|---|---|
 | The nine cue sounds (the chime, the blackout, the stings) | `media/` | `chime-phone`, `blackout`, then the optional ones. The list is in `media/README.md`. | Nothing to publish. Start the brain again. |
 | The W-O-O-F News sound recordings (40 lines) | `media/` | Each file named as its line in the Recording Script, for example `bulletin2-food-3.m4a`. The list is in `media/README.md`. | Nothing to publish. Start the brain again. |
-| The bulletin videos (13 parts: bulletin 1 and the closing bulletin) | `play/public/video/` | `newsflash-opening.mp4` and so on. The list is in `play/public/video/README.md`. | `npm run deploy:site`, then tick **The bulletins are videos** on the workshop's Game night page. |
+| The bulletin videos (13 parts: bulletin 1 and the closing bulletin) | `play/public/video/` | `newsflash-opening.mp4` and so on. The list is in `play/public/video/README.md`. | `npm run deploy:site`. They play by themselves. The box **Show the words instead** on the workshop's Game night page turns them off. |
 | The closing bulletin's own clips (11 Nov 2026) | `play/public/video/` | From your folder: `woof-close-name-<character>.mp4` (you saying each name, 14), `woof-close-motive-<number>.mp4` (19) and `woof-close-field-trans-static.mov` (the static). The import turns each name clip into two videos, the Murderer card and the Ghost card with your voice (`woof-close-murderer-…`, `woof-close-ghost-…`), from the still cards in `play/public/reveal/`. | `npm run deploy` (the whole thing the first time, since the timing is new), with the videos box ticked. |
-| The intro video | `play/public/video/sirwin-intro.mp4` (from `Sirwin_Intro.mov`) | The game does not play it. Once published it is at `https://murderwin-at-sirwin-manor.web.app/play/video/sirwin-intro.mp4` for the second tab. | `npm run deploy:site`. |
+| The intro video | `play/public/video/sirwin-intro.mp4` (from `Sirwin_Intro.mov`) | The Parlour TV plays it by itself at The house rules (since 12 Nov 2026). | `npm run deploy:site`. |
 | The five loops for the idle screens | `play/public/loops/` | `living.mp4`, `study.mp4`, `memory.mp4`, `bedroom.mp4`, `boo.mp4` (and `orangerie.mp4` if you make one). | `npm run deploy:site`. |
 | Sydney's photo for the end credits | `play/public/household/` | `sydney.jpg` | `npm run deploy:site`. |
 | The cats' and Sir Irwin's pictures | `play/public/household/faces/` and `full/` | Exact names in `play/public/household/README.md`. | `npm run deploy:site`. If you swap a face, ask Claude Code to fit it again. |
@@ -33,9 +33,10 @@ Not files in the Murderwin folder:
 - **The music.** Three playlists in the Music app on the brain: Murderwin ·
   Jazz, Murderwin · Intense and Murderwin · Credits, and the song Happy
   Birthday for Dogs for Cake!.
-- **The intro video and the rules deck.** They play from a second browser tab
-  on the Mac that drives the Parlour TV, at "The house rules". The game does
-  not play them, so they can live anywhere on that Mac.
+- **The rules deck.** It plays from a second browser tab on the Mac that
+  drives the Parlour TV, at "The house rules", after the intro video (the
+  game plays the intro by itself). The game does not play the deck, so it can
+  live anywhere on that Mac.
 
 Rules that hold for every file:
 

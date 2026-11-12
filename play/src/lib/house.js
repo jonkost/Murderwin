@@ -39,10 +39,13 @@ export const MACHINES = [
   { key: 'kiosk-study', label: 'Study screen' },
   { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
-  { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
-  { key: 'kiosk-pose', label: 'Boo’s camera' },          // ?kiosk=pose, Jenna's iPad Pro facing the group at the arcade in Act 4 (its row was missing until 25 Oct 2026)
-  { key: 'cues', label: 'Hall light and sounds' },
+  { key: 'kiosk-orangerie', label: 'Orangerie screen', quiet: true }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
+  { key: 'kiosk-pose', label: 'Boo’s camera', quiet: true },          // ?kiosk=pose, Jenna's iPad Pro facing the group at the arcade in Act 4 (its row was missing until 25 Oct 2026)
+  { key: 'cues', label: 'Hall light and sounds', quiet: true },
 ]
+export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
+// `quiet`: a machine that makes no sound of its own by design (the brain's browser, whose
+// sound is the HomePods'; the camera; the brain itself), so it has no sound mark.
 
 // Act 2's cat visits: night.lightsProgress = { done, total }, written by the
 // server whenever the line moves (guests who have seen all four cats, and
@@ -85,7 +88,7 @@ export function studyNames(group) {
   return group.members.map(m => m.characterName || m.name).filter(Boolean).join(', ')
 }
 
-export function houseView({ night, study, rotation, presence = {}, now = Date.now() } = {}) {
+export function houseView({ night, study, rotation, presence = {}, sound = {}, now = Date.now() } = {}) {
   const w = night?.window
   const windowOpen = !!(w && !w.settled && now < ms(w.closesAt))
   const roster = night?.roster ?? {}
@@ -97,7 +100,12 @@ export function houseView({ night, study, rotation, presence = {}, now = Date.no
   const quietFor = heard ? clock(now - heard) : null
 
   // the room screens and the cue relay, from their presence rows
-  const machines = MACHINES.map(m => ({ ...m, alive: now - (presence[m.key] ?? 0) < QUIET_MS }))
+  // `sound` (11 Nov 2026): true or false for a room screen that is up (has a person clicked it, so its
+  // browser lets it make sound and play a video with sound?), null for a quiet machine or one that is down
+  const machines = MACHINES.map(m => {
+    const alive = now - (presence[m.key] ?? 0) < QUIET_MS
+    return { ...m, alive, sound: alive && !m.quiet ? sound[m.key] === true : null }
+  })
 
   // the group due, and its clock
   const groupId = study?.groupId ?? null

@@ -14,6 +14,7 @@ import { ACTS, studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
+import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | pose | orangerie.
@@ -84,7 +85,11 @@ export default function Kiosk({ which }) {
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
   const sounds = useDoc(nightId ? `nights/${nightId}/public/sounds` : null)
   const cues = useDoc(nightId && living ? `nights/${nightId}/public/cues` : null)
-  const serverNow = useServerClock(uid, nightId, `kiosk-${which}`) // the iPad is kiosk-ipad, its own row on the Host tab
+  // Is this page allowed to make sound yet? A browser lets a page play sound, and a video with its sound,
+  // only once a person has clicked or tapped it (or the page that opened it: the setup page's button
+  // counts). The heartbeat says so, and the Host tab shows it beside this screen's dot (11 Nov 2026).
+  const sound = useScreenSound()
+  const serverNow = useServerClock(uid, nightId, `kiosk-${which}`, { sound }) // the iPad is kiosk-ipad, its own row on the Host tab
   const online = useOnline()
   useTick(250)
   // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
@@ -139,7 +144,7 @@ export default function Kiosk({ which }) {
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
       <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />
       {setup && <StaleDot view={night} online={online} />}
-      <Wake hidden={dark || !setup} />
+      <Wake hidden={dark || !setup} woke={sound} />
     </>
   )
 }
@@ -199,32 +204,38 @@ export function OneMoment() {
 export { Idle }
 
 // The browser lets a page make a sound only after a tap. The first tap on a
-// kiosk makes (or resumes) the one AudioContext every chime uses.
+// kiosk wakes the page's one AudioContext (lib/soundkit.js), which every
+// chime here and the arcade's sounds share.
 export function wakeAudio() {
-  try {
-    const ctx = chime.ctx ?? (chime.ctx = new (window.AudioContext || window.webkitAudioContext)())
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {})
-    return ctx
-  } catch { return null }
+  const ctx = audioContext()
+  unlockSound()
+  return ctx
 }
 
-// A short chime from the kiosk's own speaker (no AirPlay spin-up).
+// Is this page's sound on? It asks once as the page opens (a page opened by a
+// tap on the setup page is already allowed), and again on every click, tap or
+// key, so one click anywhere turns it on. A browser that will not say stays
+// "not yet", which is the safe thing to show a host.
+export function useScreenSound() {
+  const [on, setOn] = useState(() => soundReady())
+  useEffect(() => {
+    let live = true
+    const settle = r => { if (live) setOn(r === 'ok') }
+    unlockSound().then(settle)
+    const wake = () => { unlockSound().then(settle) }
+    window.addEventListener('pointerdown', wake)
+    window.addEventListener('keydown', wake)
+    return () => { live = false; window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', wake) }
+  }, [])
+  return on
+}
+
+// A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
+// house's kit: fuller and much louder than the two beeps before it (handoff
+// 11 Nov 2026, A2: "It was hard to hear the chimes").
+const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime' }
 function chime(kind) {
-  try {
-    const ctx = chime.ctx ?? (chime.ctx = new (window.AudioContext || window.webkitAudioContext)())
-    const notes = kind === 'end' ? [880, 660] : kind === 'right' ? [660, 880, 1100] : kind === 'wrong' ? [330, 262] : [660]
-    notes.forEach((f, i) => {
-      const o = ctx.createOscillator(), g = ctx.createGain()
-      o.frequency.value = f; o.type = 'sine'
-      g.gain.value = 0.0001
-      o.connect(g); g.connect(ctx.destination)
-      const t = ctx.currentTime + i * 0.18
-      g.gain.setValueAtTime(0.0001, t)
-      g.gain.exponentialRampToValueAtTime(0.3, t + 0.02)
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35)
-      o.start(t); o.stop(t + 0.4)
-    })
-  } catch {}
+  playSound(KIOSK_SOUNDS[kind] ?? 'ding')
 }
 
 export function Living({ night, relay, trace, finale, screen = null, cues = null, content = null, serverNow, nightId, captionsOnly = false }) {
@@ -526,18 +537,22 @@ export function Board({ night, content, title = 'The deduction round', compact =
 // hides it while the room is dark and on the party night (Jon, 29 Oct 2026:
 // no setup words in front of the guests), where the first tap or key
 // anywhere still wakes the sound.
-export function Wake({ hidden = false }) {
-  const [woke, setWoke] = useState(() => chime.ctx?.state === 'running')
+// `woke`: the page's own sound state when its owner keeps it (the room
+// screens, useScreenSound); the arcade's practice page has none to pass and
+// the control keeps its own.
+export function Wake({ hidden = false, woke: known = null }) {
+  const [own, setOwn] = useState(() => soundReady())
+  const woke = known ?? own
   useEffect(() => {
-    if (woke) return
-    const wake = () => { wakeAudio(); setWoke(true) }
+    if (known != null || own) return
+    const wake = () => { wakeAudio(); setOwn(true) }
     window.addEventListener('pointerdown', wake)
     window.addEventListener('keydown', wake)
     return () => { window.removeEventListener('pointerdown', wake); window.removeEventListener('keydown', wake) }
-  }, [woke])
+  }, [known, own])
   if (woke || hidden) return null
   return (
-    <button type="button" className="kiosk-wake" onClick={() => { wakeAudio(); setWoke(true) }}>
+    <button type="button" className="kiosk-wake" onClick={() => { wakeAudio(); setOwn(true) }}>
       Tap once to wake this screen
     </button>
   )
@@ -555,7 +570,7 @@ export function Bell({ sounds, serverNow, silent = false }) {
     if (!at || at === lastAt.current) return
     const first = lastAt.current === 0
     lastAt.current = at
-    if (!first && !silent && soundFresh(sounds, serverNow())) chime('start')
+    if (!first && !silent && soundFresh(sounds, serverNow())) chime('cue')
   }, [at])
   const shown = bellShown(sounds, serverNow())
   return <div className={`kiosk-bell${shown ? ' ring' : ''}`} aria-hidden={!shown} aria-label="a sound is playing">&#9835;</div>

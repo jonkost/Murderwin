@@ -84,8 +84,11 @@ service cloud.firestore {
     // Heartbeat from each phone (online dots on the Host tab, clock skew).
     match /presence/{uid} {
       allow read: if isAdmin() || isHost() || (signedIn() && request.auth.uid == uid);
+      // `sound` (11 Nov 2026): a room screen says whether its browser lets it make sound yet,
+      // so the Host tab can show it. A yes or a no, nothing else.
       allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['nightId', 'guestKey', 'at']);
+        && request.resource.data.keys().hasOnly(['nightId', 'guestKey', 'at', 'sound'])
+        && (!('sound' in request.resource.data) || request.resource.data.sound is bool);
       allow delete: if false;
     }
 

@@ -243,6 +243,9 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--line); }
 .dot.on { background: var(--good); }
 .dot.hidden { background: transparent; }
+/* a room screen's sound mark on the Host tab (11 Nov 2026): on, or not yet (nobody has clicked that screen) */
+.sound-on { color: var(--good); }
+.sound-off { color: #f0a090; }
 .house { margin-top: 1rem; }
 .machines { list-style: none; margin: 0 0 0.4rem; padding: 0; display: grid; gap: 0.3rem; }
 .machines li { display: grid; grid-template-columns: auto 1fr; column-gap: 0.6rem; align-items: center; padding: 0.25rem 0; }

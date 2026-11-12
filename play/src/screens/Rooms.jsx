@@ -307,10 +307,24 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
   useEffect(() => { setI(0); setDone(false); played.current = 0 }, [key])
   // a screen that reloads long after the bulletin began shows the words, not the start again
   const late = startedAt && serverNow ? serverNow() - startedAt > 10 * 60_000 : false
+  // A screen nobody has clicked is refused sound by its browser. Until 11 Nov 2026 the clip then sat
+  // on its first frame for good: no picture, no sound, and the film never ended. Now it plays silent,
+  // with its words under it, and the film carries on; a clip that will not play at all is skipped.
+  // (The Host tab shows which screens have their sound on, so it is one click before the guests come.)
   useEffect(() => {
     const v = ref.current
-    if (!v || done || late) return
-    v.play().catch(() => {}) // a screen nobody tapped may refuse sound: the words are there anyway
+    if (!v || done || late) return undefined
+    let live = true
+    const started = v.play()
+    if (started?.catch) {
+      started.catch(() => {
+        if (!live) return
+        v.muted = true
+        const silent = v.play()
+        if (silent?.catch) silent.catch(() => { if (live) skip.current?.() })
+      })
+    }
+    return () => { live = false }
   }, [i, done, late])
   // `onDone(n)` (11 Nov 2026): the last clip is over; n is how many clips really played (0: no file at all)
   const next = ok => {
@@ -318,6 +332,8 @@ export function BulletinVideo({ clips = [], lines = [], title = 'W-O-O-F News', 
     if (i + 1 < clips.length) setI(i + 1)
     else { setDone(true); onDone?.(played.current) }
   }
+  const skip = useRef(null)
+  skip.current = () => next(false)
   const words = (
     <div className="kiosk-lines video-words">
       {lines.map((l, k) => <p key={k} className="kiosk-line"><Spoken text={l} /></p>)}

@@ -233,10 +233,13 @@ test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and 
   assert.ok(kiosk.includes('const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError'), 'looked: signed in and the night read, or the sign-in failed')
   assert.ok(kiosk.includes('const setup = showSetup(n, { looked })'))
   assert.ok(kiosk.includes('{setup && <StaleDot view={night} online={online} />}'), 'no dot on the party night')
-  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} />'), 'no wake note on the party night, nor in the dark')
+  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} woke={sound} />'), 'no wake note on the party night, nor in the dark')
   const wake = kiosk.slice(kiosk.indexOf('export function Wake('), kiosk.indexOf('export function Bell('))
   assert.ok(wake.indexOf("window.addEventListener('pointerdown', wake)") >= 0 && wake.indexOf("window.addEventListener('pointerdown', wake)") < wake.indexOf('if (woke || hidden) return null'), 'the listener is set whether or not the note shows')
-  assert.ok(wake.includes('}, [woke])'), 'hiding the note never takes the listener away')
+  assert.ok(wake.includes('}, [known, own])') && !/\}, \[[^\]]*hidden[^\]]*\]\)/.test(wake), 'hiding the note never takes the listener away')
+  // on a room screen the page itself listens (useScreenSound, 11 Nov 2026), always, so the first tap wakes the sound whatever shows
+  const listens = kiosk.slice(kiosk.indexOf('export function useScreenSound('), kiosk.indexOf('const KIOSK_SOUNDS'))
+  assert.ok(listens.includes("window.addEventListener('pointerdown', wake)") && listens.includes("window.addEventListener('keydown', wake)") && listens.includes('}, [])'), 'the page listens from its first moment to its last')
   // the bell is not a setup mark: it shows on every night
   assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the bell on every night')
 })
@@ -319,7 +322,7 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   assert.ok(kiosk.includes('`kiosk-${which}`'), 'the heartbeat key is the kiosk name itself')
   assert.ok(!kiosk.includes("which === 'ipad' ? 'living'"), 'the iPad never borrows the TV key')
   // the wake control: a corner control that never shows while the room is dark, nor on the party night (29 Oct 2026)
-  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} />'), 'the wake control is hidden while dark and on the party night')
+  assert.ok(kiosk.includes('<Wake hidden={dark || !setup} woke={sound} />'), 'the wake control is hidden while dark and on the party night')
   assert.ok(kiosk.includes("window.addEventListener('pointerdown', wake)"), 'any tap on the page wakes the screen')
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   const wake = css.split('\n').find(l => l.startsWith('.kiosk-wake {')) ?? ''

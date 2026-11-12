@@ -272,7 +272,7 @@ test('the join code on the TV, the rejoin code under the ballot clock, the birth
   assert.ok(main.includes('orangerie'), 'main.jsx names the kiosk')
   // the brain's browser shows the bell but never chimes: the brain's sound output is the HomePods, where the real sound already plays (26 Oct 2026)
   assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the Orangerie kiosk is silent')
-  assert.ok(kiosk.includes('if (!first && !silent && soundFresh(sounds, serverNow())) chime(\'start\')'), 'silent skips the chime, the bell still shows')
+  assert.ok(kiosk.includes('if (!first && !silent && soundFresh(sounds, serverNow())) chime(\'cue\')'), 'silent skips the chime, the bell still shows')
   // the Host tab's dots: the Orangerie screen and Boo\'s camera
   const keys = MACHINES.map(m => m.key)
   assert.ok(keys.includes('kiosk-orangerie') && keys.includes('kiosk-pose'), 'both rows')

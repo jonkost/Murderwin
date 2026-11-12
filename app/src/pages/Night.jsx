@@ -147,10 +147,10 @@ export default function Night() {
 
       <section className="panel">
         <h2>The bulletin videos</h2>
-        <p className="why">Bulletin 1 and the closing bulletin are video on the Parlour TV (decided 23 October). Until this box is ticked, the brain plays your recordings and the TV shows the words, so a night never goes silent. Tick it after Claude Code has put the videos in and put them live.</p>
+        <p className="why">Bulletin 1 and the closing bulletin play as video on the Parlour TV. Leave this box alone. Tick it only if the videos will not play: then the TV shows the words and the brain plays the sound recordings.</p>
         <label className="field check">
-          <input type="checkbox" checked={draft.bulletinVideo === true} onChange={e => change('bulletinVideo', e.target.checked)} />
-          <span>The bulletins are videos</span>
+          <input type="checkbox" checked={draft.bulletinVideo === false} onChange={e => change('bulletinVideo', !e.target.checked)} />
+          <span>Show the words instead</span>
         </label>
       </section>
 

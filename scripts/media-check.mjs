@@ -39,7 +39,7 @@ export const MURDERER_CLIPS = filmIds('murderer')
 export const GHOST_CLIPS = filmIds('ghost')
 export const MOTIVE_CLIPS = filmIds('motive')
 export const CUT_CLIPS = FILM.cut?.clip ? [FILM.cut.clip] : []
-// On the site for the Parlour TV's second tab; the game does not play it.
+// The intro video: the Parlour TV plays it by itself at The house rules (since 12 Nov 2026).
 export const EXTRA_VIDEOS = ['sirwin-intro']
 
 // The folder the brain plays from: MEDIA_DIR in cues/.env, else media/.
@@ -117,9 +117,9 @@ export function report({ media, video, loops, household, sizes = {} }) {
       { title: 'The Ghost name cards (one a character)', ids: GHOST_CLIPS, need: 'A missing one is skipped: the name card shows without Mic saying it.' },
       { title: 'The motives (one a motive)', ids: MOTIVE_CLIPS, need: 'A missing one is skipped: the motive card shows without Mic saying it.' },
       { title: 'The static cut', ids: CUT_CLIPS, need: 'Fine: the motive card cuts in without it.' },
-      { title: 'The intro video (for the second tab; the game does not play it)', ids: EXTRA_VIDEOS, need: 'Fine: play it from your own file.' },
+      { title: 'The intro video (the Parlour TV plays it at The house rules)', ids: EXTRA_VIDEOS, need: 'Without it the join code stays up and no intro plays.' },
     ],
-    then: 'npm run deploy:site, then tick The bulletins are videos on the workshop\'s Game night page.',
+    then: 'npm run deploy:site. They play by themselves; the box Show the words instead on the workshop\'s Game night page turns them off.',
   }))
   out.push(...folderLines({
     title: '3. The loops (every idle screen)',
@@ -135,7 +135,7 @@ export function report({ media, video, loops, household, sizes = {} }) {
   const big = Object.entries(sizes).filter(([, b]) => b > LOOP_MAX_BYTES).map(([f]) => f)
   if (big.length) out.push(`  Over 30 MB (slow to start on the house wifi): ${big.join(', ')}`)
   out.push('', '4. Sydney\'s photo (the end credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. His card shows his name only.'}`, '  Then: npm run deploy:site.')
-  out.push('', '5. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  The intro video and the rules deck: a second browser tab on the Parlour TV\'s Mac. The game does not play them.')
+  out.push('', '5. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  The rules deck: a second browser tab on the Parlour TV\'s Mac, after the intro video. The game plays the intro by itself, not the deck.')
   return out
 }
 

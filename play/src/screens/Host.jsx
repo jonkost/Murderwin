@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
-import { usePresence, useTick, useDoc } from '../lib/hooks'
+import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
-import { houseView, QUIET_MS } from '../lib/house'
+import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
 import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
@@ -92,7 +92,9 @@ export { useQr }
 export default function Host({ night, content, serverNow }) {
   const [busy, setBusy] = useState(null)
   const [msg, setMsg] = useState(null)
-  const presence = usePresence(night.nightId)
+  // who has been heard from, and which room screens have their sound on (a screen nobody has clicked
+  // since it loaded is refused sound by its browser: its videos would play silent)
+  const { seen: presence, sound: screenSound } = usePresenceRows(night.nightId)
   const qr = useQr(PLAY_URL)
   useTick(night.act === 1 && night.beat === 'arrive' && night.introAt ? 1000 : 15_000) // online dots age out on their own; the countdown to the intro ticks by the second
   const live = night.nightId && night.nightId !== 'preview'
@@ -141,7 +143,7 @@ export default function Host({ night, content, serverNow }) {
   const hostKeys = new Set(Object.values(night.hosts ?? {}).map(h => h.key))
   const now = Date.now()
   const clock = serverNow ? serverNow() : now
-  const house = houseView({ night, study: study.data, rotation: rotation.data, presence, now: clock })
+  const house = houseView({ night, study: study.data, rotation: rotation.data, presence, sound: screenSound, now: clock })
   const left = countdownLeft(night, clock) // the countdown to the intro (lib/start.js)
   const startDrawing = () => {
     // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
@@ -158,7 +160,7 @@ export default function Host({ night, content, serverNow }) {
         <br />{isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'}
       </p>
       {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, on its own. Next goes sooner.</p>}
-      {night.act <= 1 && <SendScreens presence={presence} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
+      {night.act <= 1 && <SendScreens presence={presence} sound={screenSound} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
       {/* a cat's hint or the Study's trace that never came (card 529): counts only, never which */}
@@ -275,6 +277,8 @@ export function HousePanel({ house, cues, night, busy, run }) {
           <li key={m.key}>
             <span className={m.alive ? 'dot on' : 'dot'} aria-label={m.alive ? `${m.label} is alive` : `${m.label} is quiet`} />
             <span className="who-name">{m.label}</span>
+            {m.sound === true && <span className="who-char sound-on">Sound on</span>}
+            {m.sound === false && <span className="who-char sound-off">No sound yet. Click once on that screen.</span>}
           </li>
         ))}
       </ul>
@@ -706,7 +710,7 @@ export function StartNight({ ui, again = false }) {
 // After the start: each room screen's page, to send to its machine (AirDrop
 // from the share sheet), with a dot once that screen has been heard from.
 // Setup words, on the host's phone only.
-export function SendScreens({ presence = {}, now = Date.now(), open = false }) {
+export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open = false }) {
   const [note, setNote] = useState(null)
   const send = async (s) => {
     setNote(null)
@@ -723,14 +727,16 @@ export function SendScreens({ presence = {}, now = Date.now(), open = false }) {
   return (
     <details className="send-screens" open={open || undefined}>
       <summary>Send each screen its page · {up} of {links.length} up</summary>
-      <p className="gloss">Tap Send, pick AirDrop, pick the machine. Its page opens there; click once on it to make it full screen.</p>
+      <p className="gloss">Tap Send, pick AirDrop, pick the machine. Its page opens there. Click once on it: that makes it full screen and turns its sound on.</p>
       <ul className="send-list">
         {links.map(s => {
           const on = now - (presence[s.presenceKey] ?? 0) < QUIET_MS
           return (
             <li key={s.key}>
               <span className={on ? 'dot on' : 'dot'} aria-label={on ? 'this screen is up' : 'not heard from yet'} />
-              <span className="send-name">{s.room}<small>{s.machine}</small></span>
+              <span className="send-name">{s.room}<small>{s.machine}</small>{on && !QUIET_SCREENS.has(s.presenceKey) && (sound[s.presenceKey] === true
+                ? <small className="sound-on">Sound on</small>
+                : <small className="sound-off">No sound yet. Click once on that screen.</small>)}</span>
               <button className="chip" onClick={() => send(s)}>Send</button>
             </li>
           )

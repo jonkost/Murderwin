@@ -81,7 +81,9 @@ let ctx = null
 let out = null
 let noise = null
 
-function context(w = globalThis.window) {
+// The page's one AudioContext, made on first use. Everything that makes a sound
+// shares it (the kit, the room screens' chimes, the arcade), so one tap wakes them all.
+export function audioContext(w = globalThis.window) {
   if (ctx) return ctx
   const AC = w?.AudioContext || w?.webkitAudioContext
   if (!AC) return null
@@ -105,7 +107,7 @@ function context(w = globalThis.window) {
 // this device), like lib/permissions.js. Only Safari has audioSession: with
 // it set to playback, an iPhone on silent still plays the house's chimes.
 export async function unlock(w = globalThis.window) {
-  const c = context(w)
+  const c = audioContext(w)
   if (!c) return 'none'
   try { if (w?.navigator?.audioSession) w.navigator.audioSession.type = 'playback' } catch { /* not this browser */ }
   try {

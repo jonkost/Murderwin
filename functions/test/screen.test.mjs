@@ -200,9 +200,12 @@ test('the seed names a screen and a sound only from the catalogues', () => {
 
 const NEVER_PUBLIC = ['"roles"', '"dialSign"', '"dialMap"', '"dial"', '"dialLog"', '"parlourPlan"', '"leans"', '"listeners"', '"solving"', '"murderer"', '"ghost"', '"victim"', '"motive"', '"screenSalt"']
 
-async function party() {
+// `words` (11 Nov 2026): the Game night box Show the words instead, ticked. The bulletins are video by
+// default now, so the walks that follow the recordings and the words tick it; party({ words: false }) is
+// the night as Jon runs it.
+async function party({ words = true } = {}) {
   const db = new FakeFirestore()
-  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', ...(words ? { bulletinVideo: false } : {}) })
   db.store.set('safe_content/openers', { items: [{ id: 'o1', cat: 'irwin', text: 'Oh! You are all here.', order: 0 }] })
   const { nightId } = await createNight(db)
   const phones = { jon: 'uid-jon', jessa: 'uid-jessa', jacob: 'uid-jacob', marie: 'uid-marie' }
@@ -269,7 +272,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS_STAND_IN, NEWS.bulletin1.signoff.text])
   assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
-  assert.ok(!news.video, 'until the video box is ticked the bulletin is the recordings with the words on screen')
+  assert.ok(!news.video, 'with Show the words instead ticked, the bulletin is the recordings with the words on screen')
   assert.ok(!CLIP_IDS.some(id => JSON.stringify(news).includes(`"${id}"`)), 'no recording is named on the screen')
   assert.deepEqual(news.captions.lines, news.lines)
   const newsSound = await currentSound(db, nightId)
@@ -587,12 +590,28 @@ test('the cue relay carries the same catalogue', () => {
   for (const id of SOUND_IDS) assert.ok(src.includes(`'${id}'`), `cues.js lists ${id}`)
 })
 
-test('bulletin video: off until the Game night box is ticked, then a flag only', async () => {
+test('bulletin video: on by default (handoff 11 Nov 2026, A14); the Game night box is the off-switch, and the screen carries a flag only', async () => {
   const { bulletinVideo } = await import('../lib/screen.js')
   const db = new FakeFirestore()
-  assert.equal(await bulletinVideo(db), false, 'no meta/game: the recordings play')
+  assert.equal(await bulletinVideo(db), true, 'no meta/game: the Parlour TV plays the videos')
   db.store.set('meta/game', { host_jonathan: 'Jon' })
-  assert.equal(await bulletinVideo(db), false, 'not ticked: the recordings play')
+  assert.equal(await bulletinVideo(db), true, 'the box never touched: the videos play')
   db.store.set('meta/game', { bulletinVideo: true })
-  assert.equal(await bulletinVideo(db), true, 'ticked: the Parlour TV plays the videos')
+  assert.equal(await bulletinVideo(db), true, 'the old on-switch, still ticked in the live game: the videos play')
+  db.store.set('meta/game', { bulletinVideo: false })
+  assert.equal(await bulletinVideo(db), false, 'Show the words instead: the recordings play, the words show')
+
+  // the night as Jon runs it: bulletin 1 reaches the Parlour TV as video, and the brain is told to stay quiet
+  const { db: live, nightId } = await party({ words: false })
+  let now = 1_000_000
+  const host = (command) => hostCommand(live, { nightId, command, now: (now += 1000), sleep: noSleep })
+  for (let i = 0; i < 5; i++) await host('next')
+  assert.equal(live.store.get(`nights/${nightId}`).beat, 'ready')
+  await host('blackout')
+  await host('next') // news
+  const news = live.store.get(`nights/${nightId}/public/screen`)
+  assert.equal(news.kind, 'news')
+  assert.equal(news.video, true, 'a flag only')
+  assert.ok(!CLIP_IDS.some(id => JSON.stringify(news).includes(`"${id}"`)), 'no recording is named on the screen')
+  assert.equal((await currentSound(live, nightId)).video, true, 'the brain leaves the bulletin to the TV')
 })
