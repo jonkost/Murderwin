@@ -659,7 +659,8 @@ links to it.
   and all). Then **Next** once more for "The End": every screen goes black,
   the projector is off, and every phone opens up for good with everything
   readable: the result on Now, the clues, the notes. The Host tab says the
-  night is over. **Back one** from "The End" opens the night up again, for a
+  night is over. The brain lets go of the hall light there: it stays green,
+  and your own light controls work again. **Back one** from "The End" opens the night up again, for a
   rehearsal that wants to see the result twice. A pause during the ballot
   keeps the card on every phone, greyed out, until you resume, like any other
   window.
