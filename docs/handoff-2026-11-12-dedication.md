@@ -1,6 +1,8 @@
 # Handoff, 12 November 2026: the dedication
 
-From Claude chat, for Claude Code. Written 12 November 2026, 6:50 am. Not applied yet.
+From Claude chat, for Claude Code. Written 12 November 2026, 6:50 am.
+
+**Applied 12 November 2026** by Claude Code: the dedication card shows Sydney's photo in a round brass frame, set at 50% across and 70% down, above Jon's words exactly as he wrote them, in two lines broken after the comma. The words live in `seed/credits.json` (the old `IN_MEMORY` is gone). `npm run media` says the photo is in. Not deployed and not pushed (Jon's word).
 
 The same words as the last section of the Claude Doc: https://claude.ai/artifact/NJuSLuD5nQcaKTz599UYUU
 

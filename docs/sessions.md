@@ -62,7 +62,9 @@ together. **Not deployed, not pushed.**
   for Special thanks, The End as a card with jazz, and Good night on Jon's
   phone.
 - **The words** (B3 and the 12 Nov word rule): a title, one line, one button,
-  on every guest screen, with a test.
+  on every guest screen, with a test. Every line that changed, old and new,
+  is in `docs/words-changed-2026-11-12.md`; what is worth saying to the room
+  is in `docs/read-aloud.md`.
 - `npm run media` names the stand-in tones, the rules film's slides, Sir
   Irwin's voice and the loud cue sounds. `CLAUDE.md` and
   `docs/on-the-night.md` say what is now true.
@@ -70,7 +72,8 @@ together. **Not deployed, not pushed.**
 **Made on the brain, not in git:** Jon's 28 slide pictures and recordings
 (`play/public/rules/`), Sir Irwin's eight voice files (`play/public/voice/`),
 the loud copy of the scream (`play/public/sound/`), the practice picture bank
-(in the database, unseen), and fresh screen files on the Desktop.
+(18 pictures, six a round, in the database, unseen), and fresh screen files on
+the Desktop.
 
 **What is left**
 
