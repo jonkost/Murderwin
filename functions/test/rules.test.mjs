@@ -76,6 +76,12 @@ test('L04 a signed-in phone reads public night state and its own session, never 
     await assertFails(setDoc(doc(me, `nights/${NIGHT}`), { act: 7 }))
     await assertFails(setDoc(doc(me, 'public_state/active'), { nightId: 'mine' }))
     await assertFails(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'a', at: new Date(), extra: 1 }))
+    // a room screen may say whether its sound is on (11 Nov 2026): a yes or a no, and nothing else new
+    await assertSucceeds(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'kiosk-living', at: new Date(), sound: true }))
+    await assertSucceeds(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'kiosk-living', at: new Date(), sound: false }))
+    await assertFails(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'kiosk-living', at: new Date(), sound: 'yes' }))
+    await assertFails(setDoc(doc(me, `presence/${PHONE}`), { nightId: NIGHT, guestKey: 'kiosk-living', at: new Date(), sound: true, build: 'x' }))
+    await assertFails(setDoc(doc(me, `presence/${OTHER}`), { nightId: NIGHT, guestKey: 'kiosk-living', at: new Date(), sound: true }))
     await assertFails(getDoc(doc(me, 'safe_content/ui_copy')))
     await assertFails(setDoc(doc(me, 'safe_content/ui_copy'), { items: [] }))
 
