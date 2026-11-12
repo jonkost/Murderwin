@@ -1,6 +1,6 @@
 # Sirwin Manor — Parlour Games for Claude Code
 
-Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees), 23 October (what is done, what was left out) and 24 October (Act 4's games wait on the phone, from `docs/handoff-2026-10-23.md` §3). Put this file at `docs/parlour-games.md` in the repo.
+Written 21 October 2026, updated 22 October (five, five and two; see `docs/handoff-2026-10-22.md`, which wins where this doc disagrees), 23 October (what is done, what was left out) and 24 October (Act 4's games wait on the phone, from `docs/handoff-2026-10-23.md` §3), and 12 November (A5: only in their own beats, nothing carried into Act 6, none after the drawing starts). Put this file at `docs/parlour-games.md` in the repo.
 Canon wins any disagreement. If something here conflicts with Canon, stop and ask Jon.
 
 "Parlour Games" is the name (13 Oct) for what were the push and pull questions. Renamed everywhere.
@@ -9,10 +9,11 @@ Canon wins any disagreement. If something here conflicts with Canon, stop and as
 
 ## What happens on the night
 
-- **Twelve Parlour Games a night: five in Act 2, five in Act 4, two at the start of Act 6** (decided 22 Oct; replaces "four per act"). The twelve are one budget for the whole night. A game an act runs out of time for moves to the next act; one Act 6 cannot fit is skipped.
+- **Twelve Parlour Games a night: five in Act 2, five in Act 4, two at the start of Act 6** (decided 22 Oct; replaces "four per act"). The twelve are one budget for the whole night. A game Act 2 runs out of time for moves to Act 4. Since 12 Nov (A5) nothing moves into Act 6: what Act 4 left is dropped there, so Act 6 plays its own two and no more.
+- **A game opens only in its own beats (12 Nov, A5):** Act 2's cat visits, Act 4's rounds, and Act 6's games. One that falls due in any other beat (the news flash, the bag peek, supper, the group cards) waits for the next of its beats. None opens while the night is paused or dark, while a W-O-O-F News bulletin is playing, while Sir Irwin is on the screen, or from the moment the drawing starts: when it starts, every game still unplayed is dropped for good (no window, no points), so nothing comes at the door, in Talk it over, or in Act 7. The server keeps this rule (`functions/lib/flow.js`), for the minute's clock and for **Parlour Game now** alike: that button shows only in the cat visits and the Act 4 rounds, and is refused anywhere else.
 - **In Acts 2 and 4 they come at random times**, never back to back, so nobody knows when the next one is coming. The times are rolled from the Parlour plan's seed, stored with the case.
 - **Act 4 is different (24 Oct): its games wait on the phone.** Groups are in game rooms, so a game never pops up over a room. When one is due, every phone gets it at the same moment, but it waits: whenever the guest is not in a game room (in the Parlour, after their room has paid, or once the rounds are over) the phone says "A Parlour Game is waiting. Play it when you have a moment." with a Play button. It has no sixty-second clock. Each guest still gets five. Any a guest never played get a random answer when Act 4 ends, no penalty. The Murderer's and the Ghost's answers move the dial exactly as before. **Parlour Game now** on the Host tab, in Act 4, puts one more waiting game on every phone.
-- **In Act 6 both sets come at the start**, before the Relay Drawing. None pops up during the drawing.
+- **In Act 6 both sets come at the start**, before the Relay Drawing: the first the moment the act opens, the second about 90 seconds later. When the second has closed, the drawing starts by itself (12 Nov, A5). Jon's Next goes to the drawing sooner and drops what is left. None pops up during the drawing or after it.
   - Defaults (Jon may change): at least 4 minutes apart, and none in the first 2 or last 2 minutes of an act.
   - If a phone is on another screen (a cat greeting, a notice; the Act 2 safe puzzle was taken out on 23 October), the Parlour Game shows on top. When it's done, the phone goes back to exactly where it was.
 - **Every phone lights up at the same moment** with one set (in Act 4, it arrives at the same moment and waits): three questions in a row, two answers each. Tap one.
