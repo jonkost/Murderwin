@@ -5,7 +5,7 @@ import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView, QUIET_MS } from '../lib/house'
-import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks } from '../lib/start'
+import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
@@ -718,6 +718,7 @@ export function SendScreens({ presence = {}, now = Date.now(), open = false }) {
     }
   }
   const links = screenLinks(PLAY_URL)
+  const second = secondDisplayLink(PLAY_URL)
   const up = links.filter(s => now - (presence[s.presenceKey] ?? 0) < QUIET_MS).length
   return (
     <details className="send-screens" open={open || undefined}>
@@ -734,6 +735,11 @@ export function SendScreens({ presence = {}, now = Date.now(), open = false }) {
             </li>
           )
         })}
+        <li key={second.key}>
+          <span className="dot hidden" aria-hidden="true" />
+          <span className="send-name">{second.room}<small>{second.machine}</small></span>
+          <button className="chip" onClick={() => send(second)}>Send</button>
+        </li>
       </ul>
       {note && <p className="host-msg" role="status">{note}</p>}
     </details>

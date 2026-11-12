@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SETUP_ROOMS, SETUP_EXTRAS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
+import { SETUP_ROOMS, SETUP_EXTRAS, SECOND_DISPLAY, SETUP_LAST_KEY, setupHref } from '../lib/setup'
 
 // The setup page (lib/setup.js): which screen is this? One tap opens that
 // room's screen. The last room this machine opened is marked, so on the party
@@ -34,6 +34,15 @@ export default function Setup() {
             )}
           </li>
         ))}
+      </ul>
+      <ul className="setup-list">
+        <li className="setup-room">
+          <button type="button" className="setup-go" onClick={() => window.location.assign(setupHref(BASE, SECOND_DISPLAY))}>
+            <span className="setup-name">{SECOND_DISPLAY.room}</span>
+            <span className="setup-machine">{SECOND_DISPLAY.machine}</span>
+            <span className="setup-when">{SECOND_DISPLAY.when}</span>
+          </button>
+        </li>
       </ul>
       <ul className="setup-extras">
         {SETUP_EXTRAS.map(x => <li key={x.key}><a href={`${BASE}${x.path}`} target="_blank" rel="noreferrer">{x.label}</a> <span>{x.note}</span></li>)}

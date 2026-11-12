@@ -266,6 +266,9 @@ is in its place:
    there. Click once on it and it goes full screen. A dot turns on beside the
    room when the house has heard from it. (For a link to open in Chrome, make
    Chrome that Mac's usual browser once.)
+   A Mac with two screens (the Parlour's, the Study's): send it A second
+   display as well and drag that window to its other screen. It shows the
+   crest and the countdown, and goes dark with the room.
 3. The Study: double-click Start the Study in the Study station folder on
    the Mac by the walls. It starts the walls and the Stream Deck and opens
    the Study's page. The folder is sent to that Mac once, by AirDrop from

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { introAtFor, countdownLeft, countdownText, clockWords, screenLinks, introPlaying, RUN_THROUGH_MS, INTRO_LATE_MS } from '../src/lib/start.js'
+import { introAtFor, countdownLeft, countdownText, clockWords, screenLinks, secondDisplayLink, introPlaying, RUN_THROUGH_MS, INTRO_LATE_MS } from '../src/lib/start.js'
 import { SETUP_ROOMS } from '../src/lib/setup.js'
 import { MACHINES } from '../src/lib/house.js'
 
@@ -61,4 +61,13 @@ test('the phone, the Host tab and the room screens use them; no setup words on a
   assert.ok(kiosk.includes('requestFullscreen'), 'the first click goes full screen')
   const count = kiosk.slice(kiosk.indexOf('function IntroCountdown'), kiosk.indexOf('const INTRO_MUTED'))
   assert.ok(!/Connect|Chrome|AirDrop|full screen/i.test(count.replace(/\/\/.*$/gm, '')), 'the countdown says only when the evening begins')
+})
+
+test('a Mac\'s second display has a page of its own: the crest, sent like the rest, silent', () => {
+  assert.equal(secondDisplayLink('https://example.test/play/').url, 'https://example.test/play/?kiosk=decor')
+  const kiosk = read('../src/screens/Kiosk.jsx')
+  assert.ok(kiosk.includes("else if (which === 'decor') body = <Idle title=\"Sirwin Manor\" line=\"\" loop={null} />"), 'the crest and nothing else')
+  assert.ok(kiosk.indexOf('roomDark(n, living ? screen.data : null)) body = <Dark />') < kiosk.indexOf("which === 'decor') body"), 'dark with the room first')
+  assert.ok(kiosk.includes("silent={which === 'orangerie' || which === 'decor'}"), 'it never chimes: the room\'s own screen does')
+  assert.ok(read('../src/screens/Host.jsx').includes('send(second)') && read('../src/screens/Setup.jsx').includes('SECOND_DISPLAY'), 'on the Host tab\'s list and the setup page')
 })

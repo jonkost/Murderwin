@@ -238,7 +238,7 @@ test('F31 no setup words in front of the guests (Jon, 29 Oct 2026): the dot and 
   assert.ok(wake.indexOf("window.addEventListener('pointerdown', wake)") >= 0 && wake.indexOf("window.addEventListener('pointerdown', wake)") < wake.indexOf('if (woke || hidden) return null'), 'the listener is set whether or not the note shows')
   assert.ok(wake.includes('}, [woke])'), 'hiding the note never takes the listener away')
   // the bell is not a setup mark: it shows on every night
-  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />"), 'the bell on every night')
+  assert.ok(kiosk.includes("<Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />"), 'the bell on every night')
 })
 
 test('F31 nothing in the corners beside a near-black screen, the bell ringing or not (29 Oct 2026)', () => {

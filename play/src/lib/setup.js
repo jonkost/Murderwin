@@ -18,6 +18,9 @@ export const SETUP_ROOMS = [
 ]
 
 // The second tab on the Parlour TV's Mac: the game does not play the intro video.
+// A Mac with two displays (the Parlour's, the Study's): its other screen gets the crest page, so no desktop shows.
+export const SECOND_DISPLAY = { key: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen', kiosk: 'decor', when: 'All night: the crest, the countdown, dark with the room' }
+
 export const SETUP_EXTRAS = [
   { key: 'intro', label: 'The intro video', note: 'For a second tab on the Parlour TV’s Mac.', path: 'video/sirwin-intro.mp4' },
 ]

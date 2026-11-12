@@ -123,6 +123,9 @@ export default function Kiosk({ which }) {
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
   else if (code) body = <RoomCode cat={code} />
   else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
+  // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a
+  // room; it counts down with the rest and goes dark with the room (the blackout, the role cards, The End)
+  else if (which === 'decor') body = <Idle title="Sirwin Manor" line="" loop={null} />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
@@ -134,7 +137,7 @@ export default function Kiosk({ which }) {
     <>
       {body}
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
-      <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />
+      <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie' || which === 'decor'} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} />
     </>
