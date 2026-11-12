@@ -603,7 +603,7 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
   assert.equal(doorReached(null), false)
 })
 
-test('a pause before any screen, then a resume, leaves the beat\'s screen up and not One moment; a pause in the dark stays dark', async () => {
+test('a pause before any screen, then a resume, leaves the beat\'s screen up and not One moment; a pause in the dark is refused and the TV stays dark', async () => {
   const { db, nightId } = await party()
   let now = 2_000_000
   const host = (command, arg, extra = {}) => hostCommand(db, { nightId, command, arg, now, ...extra })
@@ -618,21 +618,28 @@ test('a pause before any screen, then a resume, leaves the beat\'s screen up and
   assert.equal(screen().kind, 'idle', 'nothing was parked: the beat\'s idle screen, not One moment')
   assert.equal(screen().title, 'Sirwin Manor')
   assert.ok(!isPauseCard(screen()))
-  // into Act 1, blackout, then a pause taken during the five seconds of dark (the Blackout's own wait,
-  // 25 Oct 2026): the power does not come back on its own, the TV stays dark throughout, and after the
-  // resume the night is still in the dark for Power returns by hand
+  // into Act 1, blackout, then a pause pressed during the five seconds of dark (the Blackout's own wait): refused
+  // since 12 Nov 2026 (a night paused in the dark stayed dark for good, with no Resume on any phone). The TV
+  // stays dark throughout, never One moment, and the power comes back by itself
   await host('next'); await host('next'); await host('next'); await host('next')
   const dark = await host('blackout', undefined, { sleep: async waitMs => {
     if (waitMs !== BLACKOUT_POWER_MS) return // the lead before the dark (A1, 11 Nov 2026)
     assert.equal(screen().kind, 'black'); assert.equal(screen().title, '')
-    await host('pause')
+    await assert.rejects(host('pause'), /The power comes back in a few seconds/)
+    assert.equal(screen().kind, 'black'); assert.equal(screen().title, '', 'still dark, not One moment')
   } })
-  assert.deepEqual(dark, { ok: true, powerReturned: false })
+  assert.deepEqual(dark, { ok: true, powerReturned: true })
+  assert.equal(db.store.get(`nights/${nightId}`).phase, 'prompt')
+  assert.equal(screen().kind, 'black'); assert.equal(screen().title, '', 'dark through the role cards too')
+  // a pause during the role cards parks that dark screen, and the resume puts it back
+  now += 10_000
+  await host('pause')
   assert.equal(screen().title, 'One moment')
   assert.equal(screen().parked.kind, 'black')
+  now += 5_000
   await host('resume')
   assert.equal(screen().kind, 'black'); assert.equal(screen().title, '', 'dark again, not One moment')
-  assert.equal(db.store.get(`nights/${nightId}`).phase, 'blackout')
+  assert.equal(db.store.get(`nights/${nightId}`).phase, 'prompt')
 })
 
 test('the cue relay carries the same catalogue', () => {

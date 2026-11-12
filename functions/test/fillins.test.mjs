@@ -544,12 +544,18 @@ test('Locked in: each fill-in taps it three to ten seconds after its group card,
   assert.deepEqual([early.on, early.act, early.seats, early.did], [true, 4, 6, 0])
   assert.deepEqual(locked(), [])
   // each seat at its own moment: not a millisecond before its pause, and on the pass at it
+  // (the night's id is random, so two seats can share a pause to the millisecond: the second then taps on the
+  // first one's pass, at its own moment, and never before it; the final check of 12 Nov 2026 found this test
+  // failing about once in thirty runs on exactly that)
+  let lastAt = null
   for (const key of [...keys].sort((a, b) => pauseMs(nightId, a, 'lock') - pauseMs(nightId, b, 'lock'))) {
     const at = T0 + pauseMs(nightId, key, 'lock')
+    if (locked().includes(key)) { assert.equal(at, lastAt, 'tapped already only on a pass at its own moment'); continue }
     await stepFillIns(db, nightId, { now: at - 1 })
     assert.ok(!locked().includes(key), 'not before its pause')
     const r = await stepFillIns(db, nightId, { now: at })
     assert.ok(locked().includes(key) && r.locked >= 1, 'on the pass at its pause')
+    lastAt = at
   }
   assert.deepEqual(locked(), keys)
   const again = await stepFillIns(db, nightId, { now: T0 + PAUSES.lock[1] + 1_000 })

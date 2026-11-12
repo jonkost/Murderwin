@@ -353,22 +353,28 @@ test('F11 the blackout returns the power on its own five seconds later on the se
     assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.id, 'blackout', 'no power sound: the blackout\'s stays the last')
     assert.equal(db.store.get(`nights/${nightId}/public/screen`).kind, 'black', 'the TV stays dark through the prompt')
   }
-  // a pause taken during the five seconds: the power stays off and nothing is un-paused; after the resume the
-  // night is still in the dark, for Power returns by hand
+  // a pause pressed during the five dark seconds is refused (the final check of 12 Nov 2026: a night paused in
+  // the dark stayed dark for good, with no Resume on any phone, since every phone is black in the dark): the
+  // power returns by itself as ever, and the pause can be pressed after it
   {
     const { db, nightId } = await party()
     const now = 5_000_000
     for (let i = 0; i < 5; i++) await hostCommand(db, { nightId, command: 'next', now }) // Act 1's five beats
-    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: waitMs => waitMs === BLACKOUT_POWER_MS && hostCommand(db, { nightId, command: 'pause', now: now + 1000 }) })
-    assert.deepEqual(r, { ok: true, powerReturned: false })
+    let refused = 0
+    const r = await hostCommand(db, { nightId, command: 'blackout', now, sleep: async waitMs => {
+      if (waitMs !== BLACKOUT_POWER_MS) return
+      assert.equal(night(db, nightId).phase, 'blackout')
+      await assert.rejects(hostCommand(db, { nightId, command: 'pause', now: now + BLACKOUT_LEAD_MS + 1000 }), /The power comes back in a few seconds/)
+      refused++
+    } })
+    assert.equal(refused, 1)
+    assert.deepEqual(r, { ok: true, powerReturned: true })
     const n = night(db, nightId)
-    assert.equal(n.phase, 'paused'); assert.equal(n.pausedFrom, 'blackout'); assert.equal(n.act, 1)
-    assert.equal(db.store.get(`cases/${nightId}`), undefined, 'no case dealt in the dark')
-    await assert.rejects(hostCommand(db, { nightId, command: 'power', now: now + 2000 }), /paused/)
-    await hostCommand(db, { nightId, command: 'resume', now: now + 3000 })
-    assert.equal(night(db, nightId).phase, 'blackout')
-    await hostCommand(db, { nightId, command: 'power', now: now + 4000 })
-    assert.equal(night(db, nightId).phase, 'prompt'); assert.equal(night(db, nightId).act, 2)
+    assert.equal(n.phase, 'prompt'); assert.equal(n.act, 2); assert.equal(n.pausedFrom ?? null, null)
+    assert.ok(db.store.get(`cases/${nightId}`), 'the case is dealt as the power returns')
+    // once the power is back the pause works again
+    await hostCommand(db, { nightId, command: 'pause', now: now + 10_000 })
+    assert.equal(night(db, nightId).phase, 'paused'); assert.equal(night(db, nightId).pausedFrom, 'prompt')
   }
   // the two landing together: Power returns typed on the brain during the five seconds wins, the
   // Blackout's own return finds the night already out of the dark and does nothing, so the case is

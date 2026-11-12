@@ -467,13 +467,23 @@ function msOf(t) {
 }
 function pathGet(obj, path) { return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj) }
 
+// A pause in the dark is refused (the final check of 12 Nov 2026). The dark is
+// five seconds and the power returns by itself; a night paused in it stayed
+// dark for good, because the power's return needs the blackout phase and every
+// phone, the two hosts' included, is black in the dark, so nothing could press
+// Resume. One transaction: a Pause and the Blackout's own dark write (run.js,
+// a transaction too) landing in the same instant cannot overtake each other.
+export const DARK_PAUSE_MESSAGE = 'The power comes back in a few seconds. Pause after that.'
 export async function pauseNight(db, { nightId, now = Date.now() } = {}) {
   const ref = db.doc(`nights/${nightId}`)
-  const night = (await ref.get()).data()
-  if (!night) throw new NightError('no-night', 'No such night.')
-  if (night.phase === 'paused') return { ok: true, already: true }
-  await ref.update({ phase: 'paused', pausedFrom: night.phase, phaseAt: FieldValue.serverTimestamp(), pausedAt: new Date(now) })
-  return { ok: true }
+  return db.runTransaction(async tx => {
+    const night = (await tx.get(ref)).data()
+    if (!night) throw new NightError('no-night', 'No such night.')
+    if (night.phase === 'paused') return { ok: true, already: true }
+    if (night.phase === 'blackout') throw new NightError('invalid', DARK_PAUSE_MESSAGE)
+    tx.update(ref, { phase: 'paused', pausedFrom: night.phase, phaseAt: FieldValue.serverTimestamp(), pausedAt: new Date(now) })
+    return { ok: true }
+  })
 }
 
 export async function resumeNight(db, { nightId, now = Date.now() } = {}) {

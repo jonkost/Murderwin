@@ -459,7 +459,11 @@ the screen awake by itself where the iPad lets it.
   everyone else's; after your own card the Host tab is back, on Act 2's
   first beat. The button only works in Act 1 (in any other act it is greyed
   out and the Manor refuses it), and a second press in the dark changes
-  nothing.
+  nothing. A **Pause** in the two seconds before the dark (Susan's phone,
+  say) calls the blackout off, with no scream and no dark: press Blackout
+  again when you are ready. A Pause in the five dark seconds does nothing
+  (12 November: it used to leave the house dark with no button anywhere);
+  the power comes back by itself, and you can pause after that.
 - **Blackout test**, beside Blackout on the Host tab, on a practice night
   only: the same two seconds, the same dark everywhere and the same five
   seconds, then everything comes back as it was. No act changes and no roles

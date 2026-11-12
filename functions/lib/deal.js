@@ -938,10 +938,14 @@ export async function settleWindow(db, nightId, { now = Date.now(), force = fals
 // once. settleWindow calls it as a window closes on its clock; run.js calls it
 // when a window closed because every seat dealt it had answered, so a seat
 // that joined after the window opened still gets its pick.
-export async function fillDefaults(db, nightId, { night = null, list = null } = {}) {
+// `onlyId` (the final check of 12 Nov 2026): the window the caller means. After a game's last answer a clock
+// can open the next game before this runs; without the id every seat got a random pick for the NEW game at
+// once, and nobody played it.
+export async function fillDefaults(db, nightId, { night = null, list = null, onlyId = null } = {}) {
   if (!night || !list) ({ night, list } = await guests(db, nightId))
   const w = night.window
   if (!w) return { ok: true, settled: 0 }
+  if (onlyId && w.id !== onlyId) return { ok: true, settled: 0 }
   const c = await readCase(db, nightId)
   // a seeded rehearsal picks the same answer for the same silent phone (seed.js)
   const seed = await nightSeed(db, nightId)

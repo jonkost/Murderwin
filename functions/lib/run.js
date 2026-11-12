@@ -419,8 +419,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       // Act 1 ends in the dark (cue 4): every phone and screen goes black with the blackout sound. Five
       // seconds later, on the server's clock, the power comes back on its own (cue 5, blackoutAuto,
       // 25 Oct 2026): the same sequence as Power returns, timed five seconds after the press. A night
-      // paused or moved during those seconds is left as it is; Power returns by hand does it when the
-      // host is ready. Act 1 only: since the return moves the night to Act 2 on its own, a press in
+      // moved or brought back by hand during those seconds is left as it is (a pause in the dark is
+      // refused since 12 Nov 2026: it left the house dark for good). Act 1 only: since the return moves the night to Act 2 on its own, a press in
       // any other act is refused (the act buttons move the night), and a second press in the dark
       // changes nothing.
       // Since 11 Nov 2026 (A1, lib/blackout.js) three marks: the press writes them and the brain stops
@@ -440,10 +440,21 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       const until = blackoutClock(now, sleep, clock)
       await screen.play(db, nightId, 'blackout', { now: darkAt, ahead: true })
       await until(darkAt)
-      // paused or moved during the lead: no dark at all, the marks come off and the scream is called off
-      const still = (await ref.get()).data()
-      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now() }); return { ok: true, powerReturned: false, dark: false } }
-      await night.hostCommand(db, { nightId, command: 'blackout', arg, now: darkAt })
+      // The dark, in one transaction (the final check of 12 Nov 2026): only while the night is still playing
+      // Act 1 and this press's own marks are still on it. Paused or moved during the lead: no dark at all,
+      // the marks come off and the scream is called off. A pause in the lead takes the marks off itself (the
+      // default branch, below), so a pause that was already resumed still ends this press: never a dark with
+      // no scream and no marks. And a Pause landing in this same instant cannot be overtaken (night.pauseNight
+      // is a transaction too): either it is in first and there is no dark, or the dark is in first and the
+      // pause is refused until the power is back.
+      const dark = await db.runTransaction(async tx => {
+        const cur = (await tx.get(ref)).data()
+        if (!cur || cur.phase === 'paused' || cur.act !== 1 || deal.ms(cur.blackout?.pressAt) !== marks.pressAt.getTime()) return false
+        // the same write as night.hostCommand 'blackout'
+        tx.update(ref, { phase: 'blackout', phaseAt: FieldValue.serverTimestamp(), pausedFrom: null })
+        return true
+      })
+      if (!dark) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now() }); return { ok: true, powerReturned: false, dark: false } }
       await screen.onPhase(db, nightId, 'blackout', { now: darkAt, sound: false })
       await until(powerAt)
       // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
@@ -637,6 +648,10 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       // the Hush: that role's answers move no dial from now on; no phone changes
       return safeguards.hush(db, { nightId, role: arg, now })
     default: {
+      // A pause in the dark is refused (the final check of 12 Nov 2026; night.pauseNight says why, and refuses
+      // on the phase in its own transaction). The marks say dark a moment before the phase does, and a
+      // Blackout test's dark has no phase at all: both are refused here.
+      if (command === 'pause' && blackoutStage(n.blackout, now) === 'dark') throw new NightError('invalid', night.DARK_PAUSE_MESSAGE)
       // pause, resume (every deadline shifts by the pause length: night.PAUSE_SHIFTED lists the fields), handover, and the base commands
       const r = await night.hostCommand(db, { nightId, command, arg, now })
       // A pause in the blackout's lead (the press made, the dark not yet come; the check of 12 Nov 2026): the
@@ -715,9 +730,9 @@ async function afterLights(db, nightId, r, now = Date.now()) {
 // runs inside the last seat's own call, so it never throws: that seat's answer
 // is in, whatever happens here, and the minute's tick and the host's Next are
 // the fallback.
-async function afterAllIn(db, nightId) {
+async function afterAllIn(db, nightId, windowId = null) {
   try {
-    await deal.fillDefaults(db, nightId)
+    await deal.fillDefaults(db, nightId, { onlyId: windowId }) // only the window that closed, never one a clock has opened since
   } catch (e) {
     console.error('after the last answer', e?.code ?? e?.name ?? 'error')
   }
@@ -746,8 +761,8 @@ async function fillInsVoteNow(db, nightId, uid, now) {
 // Act 6 the second game opens (windows.tickParlour) and after it the drawing
 // starts (clockTick). Never throws: the answer is in, and the minute's tick and
 // the host's Next are the fallback.
-async function afterGameIn(db, nightId, now) {
-  await afterAllIn(db, nightId)
+async function afterGameIn(db, nightId, now, windowId = null) {
+  await afterAllIn(db, nightId, windowId)
   try {
     await windows.tickParlour(db, nightId, now)
     await clockTick(db, nightId, now)
@@ -776,7 +791,7 @@ export const player = {
   answer: async (db, args) => {
     const { closed, ...reply } = await deal.answer(db, args)
     const now = args.now ?? Date.now()
-    if (closed) await afterGameIn(db, args.nightId, now)
+    if (closed) await afterGameIn(db, args.nightId, now, args.windowId ?? null)
     else if (!reply.already && !reply.late) await fillInsAnswerNow(db, args.nightId, args.uid, now)
     return reply
   },
