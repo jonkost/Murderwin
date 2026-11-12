@@ -54,7 +54,8 @@ test('the real blackout: Press writes the marks (the music stops), Dark the lead
   } })
   assert.deepEqual(r, { ok: true, powerReturned: true })
   const marks = [now, now + 2000, now + 7000, false]
-  assert.deepEqual(seen[0], { waitMs: BLACKOUT_LEAD_MS, phase: 'act', marks, sound: null }, 'Press: the marks, still lit, no scream yet')
+  // since the review of 12 Nov 2026 the scream is in hand at the press, stamped for the dark mark (every page plays it then)
+  assert.deepEqual(seen[0], { waitMs: BLACKOUT_LEAD_MS, phase: 'act', marks, sound: ['blackout', now + 2000] }, 'Press: the marks, still lit, the scream stamped for the dark')
   assert.deepEqual(seen[1], { waitMs: BLACKOUT_POWER_MS, phase: 'blackout', marks, sound: ['blackout', now + 2000] }, 'Dark: the phase and the scream, stamped at the dark mark')
   assert.equal(seen.length, 2)
   const n = night(db, nightId)

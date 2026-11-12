@@ -37,6 +37,22 @@ export const PAUSE_HELD = new Set(['next', 'back', 'beat', 'act', 'light-up', 'p
 // command, so no phone counts them; the tests pass their own sleep.
 export { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS }
 const realSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+// The Blackout's waits run to its marks (review 12 Nov 2026): `until(t)` sleeps for the time left until t on
+// the clock, never a fixed length, so the reads and writes before it do not stretch the lead or the dark. On
+// the server the clock is the real one; a test's own sleep (and a `clock` it may pass) is a clock that starts
+// at the press and moves only when it sleeps, so a test can see each wait's length.
+export function blackoutClock(start, sleep = realSleep, clock = null) {
+  let virtual = start
+  const now = clock ?? (sleep === realSleep ? () => Date.now() : () => virtual)
+  const until = async t => {
+    const left = Math.max(0, t - now())
+    virtual += left
+    if (left > 0) await sleep(left)
+  }
+  until.now = now
+  return until
+}
 // The six Hue scenes Jon makes in the Hue app (his cue list, 25 Oct 2026;
 // cues/scenes.json names the same six); the brain recalls one by name when
 // the host asks (public/cues.scene).
@@ -316,7 +332,7 @@ async function powerReturns(db, nightId, { now = Date.now() } = {}) {
   return { ok: true }
 }
 
-export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep } = {}) {
+export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep, clock = null } = {}) {
   // the phone's big Start the night button sends { real, introAt } (12 Nov 2026), and on a practice night
   // { fillIns } too (A4, 11 Nov 2026); a plain create is a night at the doors
   if (command === 'create' && arg && typeof arg === 'object') return startEvening(db, { real: arg.real === true, introAt: arg.introAt, fillIns: arg.fillIns, now })
@@ -400,15 +416,21 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       const marks = await pressBlackout(db, nightId, { now })
       if (!marks) return { ok: true, already: true }
       const darkAt = marks.darkAt.getTime()
-      await sleep(BLACKOUT_LEAD_MS)
-      // paused or moved during the lead: no dark at all, and the marks come off
+      const powerAt = marks.powerAt.getTime()
+      // review 12 Nov 2026 ("those cues need to get tight as hell"): the scream is written at the press, stamped
+      // for the dark mark, so every page has it in hand and starts it on the mark; each wait runs to its mark
+      // (the time left, never a fixed length), so the reads and writes on the way do not stretch the dark
+      const until = blackoutClock(now, sleep, clock)
+      await screen.play(db, nightId, 'blackout', { now: darkAt, ahead: true })
+      await until(darkAt)
+      // paused or moved during the lead: no dark at all, the marks come off and the scream is called off
       const still = (await ref.get()).data()
-      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); return { ok: true, powerReturned: false, dark: false } }
+      if (still?.phase === 'paused' || still?.act !== 1) { await clearBlackout(db, nightId, marks); await screen.callOff(db, nightId, 'blackout', { now: until.now() }); return { ok: true, powerReturned: false, dark: false } }
       await night.hostCommand(db, { nightId, command: 'blackout', arg, now: darkAt })
-      await screen.onPhase(db, nightId, 'blackout', { now: darkAt })
-      await sleep(BLACKOUT_POWER_MS)
+      await screen.onPhase(db, nightId, 'blackout', { now: darkAt, sound: false })
+      await until(powerAt)
       // if the night was paused, moved, or brought back by hand during the wait, this press returns nothing
-      const r = await powerReturns(db, nightId, { now: darkAt + BLACKOUT_POWER_MS })
+      const r = await powerReturns(db, nightId, { now: powerAt })
       return { ok: true, powerReturned: !r.already }
     }
     case 'blackout-test': {
@@ -420,9 +442,10 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       const marks = await pressBlackout(db, nightId, { now, test: true })
       if (!marks) return { ok: true, already: true }
       const darkAt = marks.darkAt.getTime()
-      await sleep(BLACKOUT_LEAD_MS)
-      await screen.play(db, nightId, 'blackout', { now: darkAt })
-      await sleep(BLACKOUT_POWER_MS)
+      const until = blackoutClock(now, sleep, clock)
+      await screen.play(db, nightId, 'blackout', { now: darkAt, ahead: true }) // in hand at the press, played at the dark (review 12 Nov)
+      await until(darkAt)
+      await until(marks.powerAt.getTime())
       await clearBlackout(db, nightId, marks)
       return { ok: true, test: true }
     }

@@ -4,6 +4,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, nameKey } from '../lib/night.js'
 import { hostCommand, player, clockTick, MOVE_CLAIM_MS } from '../lib/run.js'
 import { act4Path, act4PrivatePath } from '../lib/act4.js'
+import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS } from '../lib/blackout.js'
 import { ms } from '../lib/deal.js'
 import { GRACE_MS, parlourPath, dueSlot, tickParlour } from '../lib/windows.js'
 import { closeParlour } from '../lib/flow.js'
@@ -212,6 +213,70 @@ test('S4 a Parlour Game claimed as the drawing started is dropped for good', asy
   assert.equal(r.reason, 'drawing')
   assert.equal(nightOf(db, nightId).window.id, first.id, 'nothing opens over the drawing')
   assert.equal((await tickParlour(db, nightId, T0 + 600_000)).opened, false, 'and never after it')
+})
+
+// ---- S5: the blackout's waits run to its marks; the scream is in hand at the press ----------------
+
+// A party in Act 1's last beat, on a clock that moves only when the test says: every write takes `lag` ms.
+async function inTheDark({ lag = 300 } = {}) {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  for (const name of ['Jon', 'Susan', 'Mabel']) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  const P = 9_000_000
+  for (let i = 0; i < 5; i++) await host(db, nightId, 'next', undefined, P)
+  const t = { now: P }
+  const events = []
+  for (const m of ['_set', '_update']) {
+    const real = db[m].bind(db)
+    db[m] = (path, data, ...rest) => {
+      t.now += lag
+      const r = real(path, data, ...rest)
+      if (path === `nights/${nightId}/public/sounds`) events.push({ what: 'sound', at: t.now, id: db.store.get(path)?.current?.id, stamp: ms(db.store.get(path)?.current?.at), ahead: db.store.get(path)?.current?.ahead === true })
+      if (path === `nights/${nightId}`) { const ph = db.store.get(path)?.phase; if (events.at(-1)?.phase !== ph) events.push({ what: 'phase', at: t.now, phase: ph }) }
+      return r
+    }
+  }
+  const sleeps = []
+  const sleep = async waitMs => { sleeps.push(waitMs); t.now += waitMs }
+  return { db, nightId, P, t, events, sleeps, sleep, clock: () => t.now }
+}
+
+test('S5 the real Blackout: the scream written at the press for the dark mark; each wait runs to its mark, so the dark is five seconds, not six', async () => {
+  const { db, nightId, P, events, sleeps, sleep, clock } = await inTheDark()
+  const r = await hostCommand(db, { nightId, command: 'blackout', now: P, sleep, clock })
+  assert.deepEqual(r, { ok: true, powerReturned: true })
+  const darkAt = P + BLACKOUT_LEAD_MS
+  const powerAt = darkAt + BLACKOUT_POWER_MS
+  const scream = events.find(e => e.what === 'sound')
+  const dark = events.find(e => e.what === 'phase' && e.phase === 'blackout')
+  const power = events.find(e => e.what === 'phase' && e.phase === 'prompt')
+  assert.ok(scream.at < darkAt, 'the scream is in hand before the dark')
+  assert.deepEqual([scream.id, scream.stamp, scream.ahead], ['blackout', darkAt, true], 'stamped for the dark mark, ahead')
+  assert.equal(events.filter(e => e.what === 'sound').length, 1, 'written once: the dark does not write it again')
+  assert.ok(dark.at >= darkAt && dark.at <= darkAt + 300, `the dark's write lands one write after its mark (${dark.at - darkAt} ms)`)
+  assert.ok(power.at >= powerAt && power.at <= powerAt + 300, `the power's write lands one write after its mark (${power.at - powerAt} ms), not the reads and writes of the dark on top`)
+  assert.ok(sleeps[0] < BLACKOUT_LEAD_MS && sleeps[1] < BLACKOUT_POWER_MS, 'each wait is the time left, not a fixed length')
+})
+
+test('S5 the Blackout test: the scream at the press for the dark, the marks off at the power\'s mark', async () => {
+  const { db, nightId, P, t, events, sleep, clock } = await inTheDark()
+  db.store.set(`nights/${nightId}`, { ...nightOf(db, nightId), forceRehearsal: true })
+  await hostCommand(db, { nightId, command: 'blackout-test', now: P, sleep, clock })
+  const scream = events.find(e => e.what === 'sound')
+  assert.ok(scream.at < P + BLACKOUT_LEAD_MS)
+  assert.deepEqual([scream.stamp, scream.ahead], [P + BLACKOUT_LEAD_MS, true])
+  assert.ok(t.now >= P + BLACKOUT_LEAD_MS + BLACKOUT_POWER_MS && t.now <= P + BLACKOUT_LEAD_MS + BLACKOUT_POWER_MS + 600)
+  assert.equal(nightOf(db, nightId).blackout, null)
+})
+
+test('S5 a pause in the lead calls the scream off: no dark, and the doc names no sound', async () => {
+  const { db, nightId, P, sleep, clock } = await inTheDark({ lag: 0 })
+  const r = await hostCommand(db, { nightId, command: 'blackout', now: P, clock, sleep: async waitMs => { await sleep(waitMs); if (nightOf(db, nightId).phase === 'act') await host(db, nightId, 'pause', undefined, P + 500) } })
+  assert.deepEqual(r, { ok: true, powerReturned: false, dark: false })
+  const cur = db.store.get(`nights/${nightId}/public/sounds`).current
+  assert.equal(cur.id, null)
+  assert.equal(cur.calledOff, true)
 })
 
 test('S2 a Next with no `from` (the workshop, the brain, the fake players) moves as it always has', async () => {

@@ -276,14 +276,26 @@ export async function recordingKey(db) {
 // never names a family or a level.
 // `video`: the Parlour TV plays these recordings as video with its own sound,
 // so the brain plays the id and skips the clips (cues/, handoff §2b.7).
-export async function play(db, nightId, id, { now = Date.now(), clips = null, video = false } = {}) {
+// `ahead` (review 12 Nov 2026, the blackout's scream): `now` is a moment still to come, and every page and the
+// brain start the cue exactly then (play/src/lib/cueSounds.js cueDue), not the usual short lead after it.
+export async function play(db, nightId, id, { now = Date.now(), clips = null, video = false, ahead = false } = {}) {
   const list = (clips ?? []).filter(x => CLIP_IDS.includes(x))
   // id null: recorded lines only (the closing bulletin between the reveal's cards)
   if (id === null ? !list.length : !SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
   const key = list.length ? await recordingKey(db) : null
   const sent = key ? list.map(x => clipCode(key, x)) : list
-  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(sent.length ? { clips: sent } : {}), ...(video && sent.length ? { video: true } : {}) } })
+  await db.doc(soundsPath(nightId)).set({ current: { id, at: new Date(now), ...(sent.length ? { clips: sent } : {}), ...(video && sent.length ? { video: true } : {}), ...(ahead ? { ahead: true } : {}) } })
   return { ok: true, sound: id }
+}
+
+// A cue stamped ahead called off before its moment (a pause in the blackout's lead): a fresh record with no
+// sound, so a page holding the cue lets it go and nothing plays.
+export async function callOff(db, nightId, id, { now = Date.now() } = {}) {
+  const snap = await db.doc(soundsPath(nightId)).get()
+  const cur = snap.exists ? snap.data().current : null
+  if (!cur || cur.id !== id || cur.ahead !== true) return { ok: true, calledOff: false }
+  await db.doc(soundsPath(nightId)).set({ current: { id: null, at: new Date(now), calledOff: true } })
+  return { ok: true, calledOff: true }
 }
 
 export async function currentSound(db, nightId) {
@@ -461,10 +473,11 @@ export async function birthday(db, nightId, { now = Date.now() } = {}) {
 // back. A second pause on top of the first changes nothing (the parked
 // screen is kept), and a resume with nothing parked puts up the beat's idle
 // screen rather than leaving "One moment" on the TV.
-export async function onPhase(db, nightId, command, { now = Date.now() } = {}) {
+export async function onPhase(db, nightId, command, { now = Date.now(), sound = true } = {}) {
   if (command === 'blackout') {
     await writeScreen(db, nightId, screenDoc('black', { now, title: '' }))
-    await play(db, nightId, 'blackout', { now })
+    // the Blackout's own press wrote the scream already, ahead, for this moment (sound: false; review 12 Nov)
+    if (sound) await play(db, nightId, 'blackout', { now })
     return { ok: true, kind: 'black', sound: 'blackout' }
   }
   if (command === 'power') {
