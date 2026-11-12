@@ -86,7 +86,8 @@ export function secondDisplayLink(playUrl) {
   const base = String(playUrl ?? '').split('?')[0]
   return { key: SECOND_DISPLAY.key, room: SECOND_DISPLAY.room, machine: SECOND_DISPLAY.machine, url: `${base}?kiosk=${SECOND_DISPLAY.kiosk}`, presenceKey: null }
 }
-// The two Macs' own screens, each with its room's splash (12 Nov 2026), then the plain one for any other.
+// The two Macs' own screens, then the one for any other second screen: all three play the screen saver since the
+// evening of 12 Nov 2026, and are named for it (lib/setup.js).
 export function secondDisplayLinks(playUrl) {
   const base = String(playUrl ?? '').split('?')[0]
   return [...SECOND_DISPLAY_ROOMS.map(r => ({ key: r.key, room: r.room, machine: r.machine, url: `${base}?kiosk=${r.kiosk}&${r.query}`, presenceKey: null })), secondDisplayLink(playUrl)]

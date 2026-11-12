@@ -150,7 +150,8 @@ export default function Kiosk({ which }) {
   const rules = which === 'living' && n ? rulesScreenAt(n, serverNow(), introOver) : null
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
-  // a second display names its room in its address (?kiosk=decor&room=study); with no room, or the look's splash off, the crest
+  // a second display names its room in its address (?kiosk=decor&room=study): that room's splash, or with no room the crest,
+  // is what shows if a face of the screen saver will not load (it plays the screen saver since the evening of 12 Nov 2026)
   const decorRoom = which === 'decor' && SPLASHES[DECOR_ROOM] ? DECOR_ROOM : null
   let body
   if (standalone) body = <MemoryStandalone />
@@ -162,9 +163,10 @@ export default function Kiosk({ which }) {
   else if (rules?.show === 'intro') body = <IntroVideo startedAt={rules.startedAt} serverNow={serverNow} onOver={played => setIntroOver({ at: rules.beat, played, lag: played ? introLag(n, serverNow()) : 0 })} />
   else if (rules?.show === 'film') body = <RulesFilm at={rules.at} />
   else if (rules?.show === 'gap') body = <Dark />
-  // a Mac's second display (12 Nov 2026, ?kiosk=decor): the house's crest and nothing else, so no desktop shows in a
-  // room; it counts down with the rest and goes dark with the room (the blackout, the role cards, The End)
-  // (&room=study or &room=living: its room's splash, smaller and calmer, once the look's splash is on; B2)
+  // a Mac's second display (12 Nov 2026, ?kiosk=decor): a page of its own, so no desktop shows in a room; it counts
+  // down with the rest and goes dark with the room (the blackout, the role cards; The End is the End card). Since that
+  // evening it plays the screen saver (Jon: "I want to have this on the second screenes"; Rooms.jsx Idle, lib/saver.js
+  // saverPlace); the crest, or with &room=study or &room=living that room's splash, smaller and calmer, is the fallback
   else if (which === 'decor') body = <Idle title="Sirwin Manor" line="" loop={null} room={decorRoom} calm />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} known={study.loaded} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />

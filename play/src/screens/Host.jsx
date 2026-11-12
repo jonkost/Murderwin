@@ -771,7 +771,7 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
   }
   const links = screenLinks(PLAY_URL)
   const second = secondDisplayLink(PLAY_URL)
-  const seconds = secondDisplayLinks(PLAY_URL).filter(s => s.key !== second.key) // the two Macs' own screens, each with its room's splash
+  const seconds = secondDisplayLinks(PLAY_URL).filter(s => s.key !== second.key) // the two Macs' own screens: the screen saver, each from its own start
   const up = links.filter(s => now - (presence[s.presenceKey] ?? 0) < QUIET_MS).length
   return (
     <details className="send-screens" open={open || undefined}>
