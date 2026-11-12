@@ -248,9 +248,10 @@ Shortcuts apps are yours.)
   that differs only in capitals is still found, and the brain says when it
   starts which it will run. Time them with the Host tab's **Blackout test**:
   lights after the screens, make `shortcutLeadMs` bigger; before, smaller;
-  then start the brain's program again (a slip in one of these numbers or
-  names is said in the window and the usual value used; it never switches
-  the rest of the sheet off). The two run only in Act 1, so a Blackout
+  then start the brain's program again (a slip in one of these numbers is
+  said in the window and the usual value used, and a slip in a name leaves
+  that one Shortcut out; neither switches the rest of the sheet off, as
+  long as the file is still valid JSON). The two run only in Act 1, so a Blackout
   test later in a practice night does not switch the Study's walls or the
   strings under a game. Blackout is not tried again once its moment has
   passed: if Apple Home is still busy with the last run of that scene (a

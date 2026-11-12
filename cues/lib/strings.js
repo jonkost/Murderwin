@@ -256,6 +256,8 @@ export const RETRY_FOR_MS = 30_000
 // fire(name, { retryUntil }): a run whose moment passes is not tried again once the next try would come after
 // `retryUntil` (ms): it fails instead. For the blackout's lights (12 Nov 2026): a Blackout that lands late, as
 // the power returns, is worse than one that never comes.
+// fire(name, { stillWanted }): asked before each new try; false drops the run quietly, like a newer one would
+// (the blackout was called off while its lights' Shortcut was still waiting on Apple Home).
 export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, headStartMs = SHORTCUT_HEAD_START_MS, timeoutMs = SHORTCUT_TIMEOUT_MS, log = () => {}, wait = ms => new Promise(r => setTimeout(r, ms)), now = () => Date.now() } = {}) {
   const pending = new Set()
   let warned = false
@@ -272,7 +274,7 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
     else log(`[${tag}] the ${name} Shortcut did not finish after ${secs} s (${e?.message ?? 'no reason'}); it may still have done its job`)
   }
 
-  async function fire(name, { onLate = null, retryUntil = null } = {}) {
+  async function fire(name, { onLate = null, retryUntil = null, stillWanted = null } = {}) {
     const mine = ++seq
     let waited = 0
     for (;;) {
@@ -288,11 +290,13 @@ export function createShortcutRunner({ tag = 'shortcut', run = runShortcut, head
       } catch (e) {
         if (!/in progress/i.test(e?.message ?? '')) throw e
         if (mine !== seq) return { done, dropped: true } // a newer run wants something else now
+        if (stillWanted && !stillWanted()) return { done, dropped: true } // nobody wants this run any more
         if (waited >= RETRY_FOR_MS) throw new Error(`shortcut ${name}: Apple Home was still busy with the last action after ${Math.round(waited / 1000)} s`)
         if (retryUntil !== null && now() + RETRY_IN_PROGRESS_MS > retryUntil) throw new Error(`shortcut ${name}: Apple Home was still busy with its last run, and its moment has passed`)
         await wait(RETRY_IN_PROGRESS_MS)
         waited += RETRY_IN_PROGRESS_MS
         if (mine !== seq) return { done, dropped: true }
+        if (stillWanted && !stillWanted()) return { done, dropped: true }
         continue
       }
       if (!over) p.catch(e => {

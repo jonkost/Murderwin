@@ -487,7 +487,8 @@ the screen awake by itself where the iPad lets it.
   second and a half before the dark); if they go out before the screens,
   make it smaller; then start the brain's program again (a mistyped
   number there is said in the brain's window and the usual one used: it
-  switches nothing else off). Press the test in Act 1, before the guests
+  switches nothing else off, as long as the file itself still reads; the
+  window says at the start if it does not). Press the test in Act 1, before the guests
   come: later in the night it leaves your two Shortcuts out, so a game's
   lights are not disturbed. If a light in your Blackout scene shows No
   Response in the Home app, take it out of the scene: one that does not

@@ -212,7 +212,7 @@ let canStop = null
 // is the pair as this Mac spells them; one that is not on this Mac is not run.
 const blackoutSheet = blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet) // BLACKOUT_SHORTCUTS=off in cues/.env leaves them out
 // a slip in one of the two names or leads is said here and the usual value used: it never switches the sheet off
-if (sheet && !offSwitch(env.BLACKOUT_SHORTCUTS)) for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; the usual value is used instead`)
+if (sheet && !offSwitch(env.BLACKOUT_SHORTCUTS)) for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; ${/LeadMs/.test(line) ? 'the usual value is used instead' : 'that Shortcut is not run'}`)
 let blackoutCfg = blackoutSheet
 // is one the sheet names not on this Mac (yet)? Then the list is read again each minute until it is
 const blackoutMissing = () => !!((blackoutSheet.dark && !blackoutCfg.dark) || (blackoutSheet.after && !blackoutCfg.after))
@@ -520,15 +520,16 @@ const STRINGS_AGAIN_MS = 4000
 let blackoutState = NO_PRESS
 let darkSentAt = null
 let afterTimer = null
+let darkLive = null // the dark run still wanted, if any: one that is waiting on Apple Home is dropped once the house is to come back
 // The dark one is not tried again once its moment has passed (a Home scene still busy with its last run is
 // refused and tried again every second and a half): lights that go out late, as the power returns, are worse
 // than lights that stay on. And a run Apple Home never took is said, in one line.
 const DARK_RETRY_GRACE_MS = 1000
-function runBlackoutShortcut(which, name, { retryUntil = null } = {}) {
+function runBlackoutShortcut(which, name, { retryUntil = null, stillWanted = null } = {}) {
   if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : 'the house back'})`)
   else {
     log(`[blackout] ${name}`)
-    blackoutRunner.fire(name, { retryUntil }).then(
+    blackoutRunner.fire(name, { retryUntil, stillWanted }).then(
       r => { if (r?.dropped) log(`[blackout] Apple Home was still busy with the last run of ${name}, so it did not run this time`) },
       e => log(`[blackout] the ${name} Shortcut did not run: ${e?.message ?? 'no reason'}`),
     )
@@ -539,16 +540,21 @@ function stepBlackout(now) {
   // Only in Act 1, where the blackout is (and a Blackout test before the guests come): a test pressed later in a
   // practice night still darkens the screens and the Hue lights, but leaves Jon's two scenes out, so the Study's
   // walls and the strings are not switched under a game. A press left behind by an act jump counts as ended.
-  const marks = Number(docs.night?.act ?? 0) <= 1 ? blackoutMarkTimes(docs.night) : null
+  // A paused night with marks still on it is a blackout being called off (the pause lands a moment before the
+  // marks come off): it counts as ended at once, so the lights' Shortcut is not sent for it.
+  const marks = Number(docs.night?.act ?? 0) <= 1 && docs.night?.phase !== 'paused' ? blackoutMarkTimes(docs.night) : null
   const r = stepBlackoutShortcuts(blackoutState, { marks, now, cfg: blackoutCfg })
   blackoutState = r.state
   for (const { which, name } of r.run) {
     if (which === 'dark') {
       clearTimeout(afterTimer); afterTimer = null // a new press: its own after one will bring the house back
       darkSentAt = now
-      runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS })
+      const token = {}
+      darkLive = token
+      runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS, stillWanted: () => darkLive === token })
       continue
     }
+    darkLive = null // the house is to come back: a dark run still waiting on Apple Home is not tried again
     const wait = afterWaitMs(darkSentAt, now)
     darkSentAt = null
     clearTimeout(afterTimer)
@@ -707,7 +713,7 @@ if (FAKE && process.stdin.isTTY) {
       // seconds after that); the marks come off as the power returns. For reading the timeline in this window.
       const t = Date.now()
       const lead = Number(sheet?.blackout?.leadMs) >= 0 ? Number(sheet.blackout.leadMs) : 2000
-      docs = { ...docs, night: { act: 1, beat: 'ready', phase: 'act', ...docs.night, blackout: { pressAt: t, darkAt: t + lead, powerAt: t + lead + 5000 } } }
+      docs = { ...docs, night: { beat: 'ready', ...docs.night, act: 1, phase: 'act', blackout: { pressAt: t, darkAt: t + lead, powerAt: t + lead + 5000 } } }
       apply()
       setTimeout(() => { docs = { ...docs, night: { ...docs.night, blackout: null } }; apply() }, lead + 5300)
     }

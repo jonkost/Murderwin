@@ -72,7 +72,8 @@ test('a broken blackout block is named, and stops nothing else on the sheet', ()
   assert.equal(blackoutShortcutsOf({ blackout: { shortcut: 'Blackout', shortcutLeadMs: 12_000 } }).dark.leadMs, MAX_SHORTCUT_LEAD_MS)
   assert.equal(blackoutShortcutsOf({ blackout: { shortcut: 5, afterShortcut: 'AfterBlackOut' } }).dark, null)
   const src = read('../cues.mjs')
-  assert.ok(src.includes('for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; the usual value is used instead`)'))
+  // a bad number: the usual one is used; a bad name: that Shortcut is left out; each said once at the start
+  assert.ok(src.includes("for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; ${/LeadMs/.test(line) ? 'the usual value is used instead' : 'that Shortcut is not run'}`)"))
   assert.ok(!read('../lib/scenes.js').includes('out.push(...blackoutShortcutProblems'), 'not part of the check that can switch the sheet off')
 })
 
@@ -266,6 +267,19 @@ test('the lights\' Shortcut is not tried again once its moment has passed; any o
   const fine = createShortcutRunner({ tag: 'blackout', run: async () => {}, wait, headStartMs: HEAD, now: () => clock })
   const r = await fine.fire('Blackout', { retryUntil: clock + 5 })
   assert.ok(r.done && !r.dropped)
+  // a refused run nobody wants any more (the blackout was called off meanwhile) is dropped, quietly, not tried again
+  tries.length = 0
+  let wanted = true
+  const waitThenCancel = ms => (ms === HEAD ? new Promise(() => {}) : new Promise(resolve => { clock += ms; wanted = false; resolve() }))
+  const called = createShortcutRunner({ tag: 'blackout', run, wait: waitThenCancel, headStartMs: HEAD, now: () => clock })
+  const off = await called.fire('Blackout', { retryUntil: clock + 60_000, stillWanted: () => wanted })
+  assert.equal(off.dropped, true)
+  assert.equal(tries.length, 1, 'one try, then the call-off: no second')
+  // and one that was never wanted is not even waited for
+  tries.length = 0
+  const never = await called.fire('Blackout', { stillWanted: () => false })
+  assert.equal(never.dropped, true)
+  assert.equal(tries.length, 1)
 })
 
 test('a forget that comes while a colour is being sent is not lost', async () => {
@@ -298,13 +312,16 @@ test('the brain\'s program runs them on the marks, through one runner, and never
   assert.ok(apply.includes('stepBlackout(now)'))
   assert.ok(src.includes('const r = stepBlackoutShortcuts(blackoutState, { marks, now, cfg: blackoutCfg })'))
   // only in Act 1, where the blackout is: a test later in a practice night leaves the two scenes out (the Study's walls, the strings under a game)
-  assert.ok(src.includes('const marks = Number(docs.night?.act ?? 0) <= 1 ? blackoutMarkTimes(docs.night) : null'))
+  // ...and never for a paused night: a pause with the marks still on is a blackout being called off
+  assert.ok(src.includes("const marks = Number(docs.night?.act ?? 0) <= 1 && docs.night?.phase !== 'paused' ? blackoutMarkTimes(docs.night) : null"))
   // one runner for the two: the after one replaces a dark one still waiting on Apple Home
   assert.equal(src.split("createShortcutRunner({ tag: 'blackout', log })").length - 1, 1)
-  assert.ok(src.includes('blackoutRunner.fire(name, { retryUntil }).then('))
+  assert.ok(src.includes('blackoutRunner.fire(name, { retryUntil, stillWanted }).then('))
   // a run Apple Home never took is said, and the dark one is not tried again after its moment
   assert.ok(src.includes('r => { if (r?.dropped) log(`[blackout] Apple Home was still busy with the last run of ${name}, so it did not run this time`) },'))
-  assert.ok(src.includes("runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS })"))
+  assert.ok(src.includes("runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS, stillWanted: () => darkLive === token })"))
+  // once the house is to come back, a dark run still waiting on Apple Home is not tried again
+  assert.ok(src.includes('darkLive = null // the house is to come back: a dark run still waiting on Apple Home is not tried again'))
   // fake mode only says what it would do
   assert.ok(src.includes('if (FAKE) log(`[blackout] would run the Shortcut "${name}"'))
   // the strings again, a few seconds after the house is back
