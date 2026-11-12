@@ -62,7 +62,8 @@ door).
   video, with its own sound, the brain rings the chime but does not play
   those recordings, so you never hear them twice. The music stops for the
   news beat and is cut at the newscast (the table below), so nothing plays
-  under a video. Bulletin 2 is always sound on the HomePods.
+  under a video. Bulletin 2 is always sound, from the brain's own sound
+  output (its own speakers since 12 November, in the Orangerie at supper).
 - **Music.** Apple Music on the brain plays into the same speakers as the
   cues. There are three playlists (Jazz, Intense, Credits) and the brain
   picks one, at the right volume, as the night moves (the table below): the
@@ -231,8 +232,13 @@ Shortcuts apps are yours.)
   names, the song in the library, the six scenes, the dim study scene's lamp,
   the Patio light in the Decor strings scene, the projector's plug in Home
   with its two scenes and two Shortcuts.
-- The four HomePods are not one AirPlay group yet. Make the group on the
-  brain and pick it as the sound output.
+- The four HomePods are not one AirPlay group, and since 12 November none
+  is needed: the cue sounds (the chimes, the stings, the scream) come from
+  every room screen and phone, and the music from each HomePod by your
+  Shortcuts. Leave the brain's sound on the Mac's own speakers, turned up:
+  its browser is the Orangerie's speaker for the cues, and through a HomePod
+  each one would come out about two seconds late. Bulletin 2's recording
+  plays from the same place, in the Orangerie, where everyone is at supper.
 - The brain is on Wi-Fi for now: its network cable adapter showed no link.
   Wi-Fi works; a cable is only steadier.
 
