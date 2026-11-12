@@ -400,15 +400,24 @@ links to it.
   list): the chime plays on every room screen and phone, so the room hears
   them work. Act 1
   ends with
-  **Blackout**: every phone and screen goes black, the thunder and the crash
-  play, the hall bulb goes out and the projector's plug goes off, and five
-  seconds later the power comes back on its own (*blackoutAuto*, the cue
+  **Blackout**: the music stops at once, and two seconds later, all at the
+  same moment, every phone and screen goes black with one white flash (an old
+  TV switching off), the scream plays, the hall bulb, the Hue lights and the
+  string lights go out, both Study walls and both Stream Decks go dark, and
+  the projector's plug goes off. Five seconds after the dark the power comes
+  back on its own (*blackoutAuto*, the cue
   list's default; the projector takes a moment to warm up). Your phone goes dark
   too, with nothing to press. Five seconds later it shows the same button as
   everyone else's; after your own card the Host tab is back, on Act 2's
   first beat. The button only works in Act 1 (in any other act it is greyed
   out and the Manor refuses it), and a second press in the dark changes
   nothing.
+- **Blackout test**, beside Blackout on the Host tab, on a practice night
+  only: the same two seconds, the same dark everywhere and the same five
+  seconds, then everything comes back as it was. No act changes and no roles
+  are dealt, so press it as often as you like before the guests come. The
+  string lights need a fourth Shortcut for the dark, Off Murderwin Strings
+  (a Home scene with the strings off); without it they stay as they are.
 - Act 2 begins when the power returns. Every phone buzzes (where it can) and
   shows one button, "Sorry for the interruption, continue here". The tap
   brings up that phone's role card, with no button and no early tap, for
@@ -1387,6 +1396,26 @@ moves only a night with `gameTest: true` (through `run.hostCommand`: `act`,
 `replace` is sent (the page asks first), and refuses Act 4 with fewer than
 two in the roster. The admin commands check the caller's uid against
 `ADMIN_UIDS` in `functions/index.js`.
+
+*Added 12 Nov* (A1, the blackout hits). The blackout is one timeline on the
+server: `functions/lib/blackout.js` writes `nights/{id}.blackout =
+{ pressAt, darkAt, powerAt, test }`, `darkAt` the lead later
+(`cues/scenes.json` `blackout.leadMs`, 2000, copied into `functions/seed`, so
+a change needs a functions deploy) and `powerAt` `BLACKOUT_POWER_MS` after
+that. `run.js` `blackout` writes the marks (the music stops at the press:
+the brain's `momentOf` gives 'press'), sleeps the lead, flips the phase at
+`darkAt` (abandoned and the marks cleared if paused or moved meanwhile),
+sleeps the power and runs `powerReturns`, which clears the marks.
+`blackout-test` is refused unless `forceRehearsal || rehearsal`, writes the
+same marks, changes no phase, act, beat, screen or case, and clears them.
+Every device goes dark on its own server clock between the marks, the phase
+the backstop: the phone and room screens (`play/src/lib/blackout.js`,
+`useBlackoutMarks`, `isDark`, `roomDark`; the flash is `blackout.css`), the
+brain (`cues/lib/cues.js` `phaseOf(night, now)`, `hallColour`, `scheduleMarks`
+in `cues.mjs`; the strings' `off` and its Shortcut Off Murderwin Strings), the
+Study (`station/lib/follow.js` timers, `runner.dark`; the backlight back to
+`DECK_BRIGHTNESS` 90) and the arcade deck (`play/src/lib/useDeckDark.js`,
+`reopenDeck({ steal: false })`, backlight back to `arcadeDeck.BRIGHTNESS`).
 
 *Added 25 Oct, evening* (the cue list, step 3: the blackout and the role
 card). `run.hostCommand` `blackout` is refused outside Act 1 (`invalid`,
