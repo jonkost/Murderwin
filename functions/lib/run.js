@@ -680,9 +680,45 @@ async function fillInsVoteNow(db, nightId, uid, now) {
   }
 }
 
+// A Parlour Game closed on its last answer (review 12 Nov 2026, A6 step 6): the
+// seats that joined late get their pick, then the night carries on at once: in
+// Act 6 the second game opens (windows.tickParlour) and after it the drawing
+// starts (clockTick). Never throws: the answer is in, and the minute's tick and
+// the host's Next are the fallback.
+async function afterGameIn(db, nightId, now) {
+  await afterAllIn(db, nightId)
+  try {
+    await windows.tickParlour(db, nightId, now)
+    await clockTick(db, nightId, now)
+  } catch (e) {
+    console.error('after the last answer', e?.code ?? e?.name ?? 'error')
+  }
+}
+
+// The same for a Parlour Game as fillInsVoteNow is for the vote: when a real
+// phone's answer leaves only fill-ins to answer, they answer at once.
+async function fillInsAnswerNow(db, nightId, uid, now) {
+  try {
+    if (isFillInUid(uid)) return
+    const n = (await db.doc(`nights/${nightId}`).get()).data()
+    if (!n?.fillIns || n.forceRehearsal !== true) return
+    const fillins = await import('./fillins.js')
+    await fillins.answerNow(db, nightId, { now })
+  } catch (e) {
+    console.error('fill-ins not answered', e?.code ?? e?.name ?? 'error')
+  }
+}
+
 // What a player phone may call, besides join.
 export const player = {
-  answer: (db, args) => deal.answer(db, args),
+  // a Parlour Game: the reply is { ok }, { ok, already } or { ok, late }, whoever answered last
+  answer: async (db, args) => {
+    const { closed, ...reply } = await deal.answer(db, args)
+    const now = args.now ?? Date.now()
+    if (closed) await afterGameIn(db, args.nightId, now)
+    else if (!reply.already && !reply.late) await fillInsAnswerNow(db, args.nightId, args.uid, now)
+    return reply
+  },
   // the vote: the reply is { ok } or { ok, already }, whoever locked in last
   ballot: async (db, args) => {
     const { closed, ...reply } = await deal.castBallot(db, args)

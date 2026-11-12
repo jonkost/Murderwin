@@ -99,10 +99,14 @@ export function playsAtStart(act) {
 }
 
 // Which game, if any, is due now. Pure, for the tick and the tests.
-export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {}) {
+// backToBack (Act 6, which plays its games at the start): a game after the first is due the moment the
+// one before it has closed (the caller only asks with no window open), so two games answered quickly
+// are not held to the gap (review 12 Nov 2026).
+export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000, backToBack = false } = {}) {
   if (!sched || isClosed(sched)) return null // the drawing has started: nothing opens again (A5)
   for (let i = 0; i < (sched.count ?? 0); i++) {
     if (sched.fired?.[i]) continue
+    if (backToBack && i > 0 && sched.fired?.[i - 1]) return i
     if (now < ms(sched[`due${i}`])) return null
     if (sched.lastAt && now < ms(sched.lastAt) + gapMs) return null
     return i
@@ -128,7 +132,9 @@ export async function tickParlour(db, nightId, now) {
     const snap = await tx.get(ref)
     const sched = snap.exists ? snap.data() : null
     if (!sched || sched.act !== Number(night.act)) return null
-    const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour) })
+    // Act 6: the game before closed on its last answer, so the next follows at once (review 12 Nov 2026);
+    // one the clock closed keeps the short gap
+    const i = dueSlot(sched, { now, gapMs: gapMsFor(night.act, NIGHT.parlour), backToBack: playsAtStart(night.act) && cur.window?.allIn === true })
     if (i === null) return null
     tx.update(ref, { [`fired.${i}`]: true, lastAt: new Date(now) })
     return { i, entry: sched.slots?.[i] ?? { act: sched.act, slot: i } }

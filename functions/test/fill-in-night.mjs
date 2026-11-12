@@ -74,6 +74,10 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
         const set = (await sessionOf(uid)).windows?.[w.id]
         if (set) await run.player.answer(db, { nightId, uid, windowId: w.id, picks: set.beats.map(b => b.choices[0].k), now })
       }
+      // the game closes on the real players' own last answer, every fill-in answering at once, driver or none (review 12 Nov 2026)
+      const shut = (await nightDoc()).window
+      want(shut?.id !== w.id || shut.settled === true, 'GAME-WAITS')
+      for (const uid of fills) want((await sessionOf(uid)).answers?.[w.id]?.defaulted === false, 'FILL-ANSWER')
       // the real players have answered at once: within twenty seconds every fill-in has too
       await wait(AFTER_PAUSES)
       if (driver) for (const uid of fills) want((await sessionOf(uid)).answers?.[w.id]?.defaulted === false, 'FILL-ANSWER')
@@ -90,7 +94,7 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
     }
     // any other kind is left to its clock, and so is whatever this one still waits for
     const after = (await nightDoc()).window
-    if (after && !after.settled) { now = Math.max(now, deal.ms(after.closesAt) + 6_000); await host('tick') }
+    if (after && !after.settled && after.id === w.id) { now = Math.max(now, deal.ms(after.closesAt) + 6_000); await host('tick') }
     return w.kind
   }
 
@@ -211,6 +215,7 @@ export async function fillInNight({ db, fillIns = 6, real = ['Jon', 'Sue'], star
       await handleWindow()
       // more Parlour Games may be due at this beat (Act 6 plays its own back to back): the tick opens the next
       for (let more = 0; more < 6 && (await nightDoc()).act === 6; more++) {
+        if (await handleWindow()) continue // the next of Act 6 opened on the last answer of the one before
         now += 3 * 60_000
         await host('tick')
         if (!(await handleWindow())) break
