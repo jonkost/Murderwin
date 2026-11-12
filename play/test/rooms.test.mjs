@@ -346,7 +346,7 @@ test('G57 and G58 the screens: the Library names its winner once the third board
   // the Orangerie: once cleared, by place in the group, from the rotation the kiosk now reads
   assert.ok(rooms.includes("const win = salem?.state === 'cleared' ? fewestSlips(groupNames(rotation, salem.groupId), salem.slipsBy, salem.feltBy) : null"))
   assert.ok(rooms.includes("line={win.names.length > 1 ? SALEM_SCREEN_LINES.tie : SALEM_SCREEN_LINES.winner}") && rooms.includes("plain={winnerPlain(win, 'Fewest slips')}"))
-  assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups, and Boo\'s (the arcade\'s players, 5 Nov 2026)')
+  assert.ok(kiosk.includes("which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo' || which === 'ipad') ? `nights/${nightId}/public/rotation`"), 'the Orangerie kiosk reads the groups, and Boo\'s (the arcade\'s players, 5 Nov 2026)')
   assert.ok(kiosk.includes('<Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />'))
   // every phone says whether it can feel a shake as the clean mark passes
   assert.ok(act4.includes('passed(doc.attempt, motion.ok)') && act4.includes('passed={(attempt, felt) => callSalemPassed({ nightId, attempt, felt })}'))

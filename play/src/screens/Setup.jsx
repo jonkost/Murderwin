@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { SETUP_ROOMS, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
+import SetupDeck from './SetupDeck'
+import { SETUP_ROOMS, SETUP_SPARES, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
 
 // The setup page (lib/setup.js): which screen is this? One tap opens that
 // room's screen. The last room this machine opened is marked, so on the party
@@ -26,15 +27,24 @@ export default function Setup() {
               <span className="setup-machine">{r.machine}</span>
               <span className="setup-when">{r.when}{r.key === last ? ' · This machine last time' : ''}</span>
             </button>
-            {r.first && (
-              <div className="setup-first">
-                <button type="button" onClick={() => go(r, r.first)}>{r.first.label}</button>
-                <p>{r.first.note}</p>
-              </div>
-            )}
+            {r.deck && <SetupDeck auto={last === r.key} />}
           </li>
         ))}
       </ul>
+      <details className="setup-spares">
+        <summary>Another device for the iPad’s jobs</summary>
+        <ul className="setup-list">
+          {SETUP_SPARES.map(r => (
+            <li key={r.key} className="setup-room">
+              <button type="button" className="setup-go" onClick={() => go(r)}>
+                <span className="setup-name">{r.room}</span>
+                <span className="setup-machine">{r.machine}</span>
+                <span className="setup-when">{r.when}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
       <ul className="setup-list">
         {SECOND_DISPLAY_ROOMS.map(r => (
           <li key={r.key} className="setup-room">

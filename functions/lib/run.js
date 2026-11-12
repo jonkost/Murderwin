@@ -22,6 +22,7 @@ import { PARTY_DAY } from './morning.js'
 import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
+import { setIpad } from './ipad.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -541,6 +542,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
     case 'tv-trace':
       // the living room TV shows the trace after the door (the bedroom screen's fallback); 'off' takes it down
       return screen.tvTrace(db, nightId, arg !== 'off', { now })
+    case 'ipad':
+      return setIpad(db, nightId, arg, { now }) // the Host tab's row The iPad shows (ipad.js)
     case 'spill':
       // Spill the Beans: the engine decides silently (safeguards.js); { did: false } carries no reason
       return safeguards.spill(db, { nightId, now })

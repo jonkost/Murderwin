@@ -24,6 +24,7 @@
     "media": "node scripts/media-check.mjs",
     "media-import": "node scripts/media-import.mjs",
     "rules-film": "node scripts/rules-film.mjs",
-    "irwin-voice": "node scripts/irwin-voice.mjs"
+    "irwin-voice": "node scripts/irwin-voice.mjs",
+    "screen-files": "node scripts/screen-files.mjs"
   }
 }

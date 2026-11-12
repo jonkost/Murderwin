@@ -10,7 +10,7 @@ import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
-import { ACTS, studyLines, uiLines } from '../lib/content'
+import { studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
@@ -24,14 +24,17 @@ import { celebrate } from '../lib/celebrate'
 import { RoomEnd, CreditsDedication, SpecialThanks } from './Closing'
 import { roomEnded } from '../lib/closing'
 import { useFreshness } from '../lib/freshness'
+import IpadScreen, { useRoomScreenDevice } from './Ipad'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
 // server whenever a deadline has passed. (The study kiosk lives with the
-// station: ?kiosk=study.) The iPad (?kiosk=ipad) is the living room screen
-// with the words only: it keeps the news and the bulletin up through dinner.
+// station: ?kiosk=study.) The iPad (?kiosk=ipad, 12 Nov 2026) is one page all
+// night that follows the night by itself (screens/Ipad.jsx, lib/ipad.js): the
+// Library's splash, Zimothy's code, the supper captions (the living room
+// screen with the words only), In Duplicate, then the bedroom.
 // The memory match (?kiosk=memory, the iPad in the Library in Act 4)
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's screen (?kiosk=boo, Susan's MacBook
@@ -82,11 +85,11 @@ export default function Kiosk({ which }) {
   const night = useDoc(nightId ? `nights/${nightId}` : null)
   const relay = useDoc(nightId ? `nights/${nightId}/public/relay` : null)
   const study = useDoc(nightId && which === 'study' ? `nights/${nightId}/public/study` : null)
-  const rotation = useDoc(nightId && (which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo') ? `nights/${nightId}/public/rotation` : null) // the Orangerie's too (28 Oct 2026): Salem names his winner; Boo's (5 Nov 2026): the arcade's players
+  const rotation = useDoc(nightId && (which === 'study' || which === 'memory' || which === 'orangerie' || which === 'boo' || which === 'ipad') ? `nights/${nightId}/public/rotation` : null) // the Orangerie's too (28 Oct 2026): Salem names his winner; Boo's (5 Nov 2026): the arcade's players
   const content = useDoc(nightId && (which === 'study' || which === 'memory' || living) ? `nights/${nightId}/public/content` : null) // the memory kiosk too (26 Oct 2026): Zimothy's card follows the workshop's host line
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
-  const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
+  const memory = useDoc(nightId && (which === 'memory' || which === 'ipad') && !standalone ? `nights/${nightId}/public/memory` : null)
   const boo = useDoc(nightId && which === 'boo' ? `nights/${nightId}/public/boo` : null)
   const salem = useDoc(nightId && which === 'orangerie' ? `nights/${nightId}/public/salem` : null) // the Orangerie's rules card varies its picture by the group due
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
@@ -101,6 +104,7 @@ export default function Kiosk({ which }) {
   const online = useOnline()
   useTick(250)
   useFreshness(() => ({ page: 'room', which: standalone ? 'practice' : which, night: night.data, relay: relay.data, screen: screen.data, now: serverNow() })) // a newer site: reload at a quiet moment (A5)
+  useRoomScreenDevice() // the Home Screen manifest and the screen kept awake (screens/Ipad.jsx)
   // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
   // a browser tab, and a browser only goes full screen on a person's own click). Once a load, never on a
   // touch screen (an iPad's full screen is its own), and Escape still leaves it.
@@ -143,6 +147,7 @@ export default function Kiosk({ which }) {
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
   else if (ended) body = <RoomEnd />
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
+  else if (which === 'ipad') body = <IpadScreen night={n} nightId={nightId} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} memory={memory.data} rotation={rotation.data} serverNow={serverNow} />
   else if (code) body = <RoomCode cat={code} />
   else if (film) body = <RulesFilm at={film} />
   else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
@@ -351,9 +356,8 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'card' && screen?.kind === 'news' && screen.video) return <BulletinVideo clips={newsClips(screen.lines ?? [])} lines={screen.lines ?? []} startedAt={ms(screen.at)} serverNow={serverNow} />
   if (view === 'card') return <ScreenCard screen={screen} />
   if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
-    const act = ACTS[night.act]
     // the loop (cue 1 and every "back to the loop" cue): the Parlour's on the TV, the Library's on the iPad
-    return <Idle title="Sirwin Manor" line={night.act ? `Act ${night.act} · ${act?.plain ?? ''}` : 'The doors are open.'} loop={captionsOnly ? 'memory' : 'living'} />
+    return <Idle title="Sirwin Manor" line={captionsOnly ? 'The Library' : 'The Parlour'} loop={captionsOnly ? 'memory' : 'living'} />
   }
 
   // Sir Irwin's rules slides, one at a time on the server's clock, each up

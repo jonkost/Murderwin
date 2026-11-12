@@ -8,12 +8,17 @@
 export const SETUP_ROOMS = [
   { key: 'living', room: 'The Parlour TV', machine: 'Jon’s work MacBook Pro, on the TV', kiosk: 'living', when: 'All night' },
   { key: 'study', room: 'The Study', machine: 'M1 MacBook Air, by the walls', kiosk: 'study', when: 'All night' },
-  { key: 'boo', room: 'The Entryway: Boo’s arcade', machine: 'Susan’s work MacBook Pro, in Chrome, with the big Stream Deck', kiosk: 'boo', when: 'All night',
-    first: { label: 'First: connect the Stream Deck', kiosk: 'boo', query: 'play=1', note: 'Once, before the guests come. Quit the Stream Deck app, press Connect on the page that opens, then come back here and tap the button above.' } },
+  // under Boo's button, the Stream Deck line and its one button (12 Nov 2026, A11: screens/SetupDeck.jsx, lib/deckline.js)
+  { key: 'boo', room: 'The Entryway: Boo’s arcade', machine: 'Susan’s work MacBook Pro, in Chrome, with the big Stream Deck', kiosk: 'boo', when: 'All night', deck: true },
   { key: 'orangerie', room: 'The Orangerie', machine: 'Jon’s M3 MacBook Air (the brain), facing the table', kiosk: 'orangerie', when: 'All night' },
-  { key: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro', kiosk: 'ipad', when: 'Act 2, then on its stand in the Orangerie for supper' },
-  { key: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library', kiosk: 'memory', when: 'Act 4' },
-  { key: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro', kiosk: 'bedroom', when: 'From Act 6' },
+  { key: 'ipad', room: 'The iPad', machine: 'Jon’s iPad Pro, carried room to room', kiosk: 'ipad', when: 'All night: it follows the night by itself' },
+]
+
+// The iPad's one page shows In Duplicate in Act 4 and the bedroom from the drawing on (12 Nov 2026, A10).
+// These two addresses stay for any other device, under a fold on the setup page.
+export const SETUP_SPARES = [
+  { key: 'memory', room: 'In Duplicate, on another device', machine: 'Only if the iPad is busy or dead', kiosk: 'memory', when: 'Act 4' },
+  { key: 'bedroom', room: 'The bedroom, on another device', machine: 'Only if the iPad is busy or dead', kiosk: 'bedroom', when: 'From Act 6' },
 ]
 
 // A Mac with two displays (the Parlour's, the Study's): its other screen gets the crest page, so no desktop shows.

@@ -1,8 +1,9 @@
 // The permissions screen at sign-in (docs/handoff-2026-10-23.md §9.10): one
 // Allow button, then a check beside each line. Motion, for Salem's Motion
 // Game in Act 4; sound, so the phone's own chime can play; and the screen
-// kept awake. No notifications, ever, and no camera (guests scan the room
-// codes with the phone's own camera). An iPhone may ask again after a reload,
+// kept awake. No notifications, ever, and the camera is not asked for here:
+// only at the first tap on the scan button (screens/ScanButton.jsx, 12 Nov
+// 2026); a no there leaves the phone's own camera. An iPhone may ask again after a reload,
 // so the You tab keeps a quiet Allow again link.
 //
 // Each ask returns 'ok', 'denied' or 'none' (this phone cannot). Nothing here

@@ -14,20 +14,20 @@ const NIGHT = { nightId: 'n1', act: 1, beat: 'arrive', phase: 'act', roster: {} 
 // clip plays silent rather than freeze.
 
 test('a room screen that is up says whether its sound is on; the Host tab shows it beside its dot', () => {
-  const presence = { 'kiosk-living': NOW - 1000, 'kiosk-study': NOW - 1000, 'kiosk-orangerie': NOW - 1000, 'kiosk-memory': NOW - QUIET_MS - 1, cues: NOW - 1000 }
-  const sound = { 'kiosk-living': true, 'kiosk-study': false, 'kiosk-orangerie': true, 'kiosk-memory': true }
+  const presence = { 'kiosk-living': NOW - 1000, 'kiosk-study': NOW - 1000, 'kiosk-orangerie': NOW - 1000, 'kiosk-boo': NOW - QUIET_MS - 1, cues: NOW - 1000 }
+  const sound = { 'kiosk-living': true, 'kiosk-study': false, 'kiosk-orangerie': true, 'kiosk-boo': true }
   const by = Object.fromEntries(houseView({ night: NIGHT, presence, sound, now: NOW }).machines.map(m => [m.key, m]))
   assert.equal(by['kiosk-living'].sound, true, 'clicked: sound on')
   assert.equal(by['kiosk-study'].sound, false, 'up, but nobody has clicked it yet')
-  assert.equal(by['kiosk-memory'].sound, null, 'a screen that is down says nothing about its sound')
-  assert.equal(by['kiosk-bedroom'].sound, null)
+  assert.equal(by['kiosk-boo'].sound, null, 'a screen that is down says nothing about its sound')
+  assert.equal(by['kiosk-ipad'].sound, null)
   // the brain's own browser makes no sound by design (its sound is the HomePods'), and the brain is not a screen
   assert.equal(by['kiosk-orangerie'].sound, null)
   assert.equal(by.cues.sound, null)
   assert.ok(QUIET_SCREENS.has('kiosk-orangerie') && QUIET_SCREENS.has('cues') && !QUIET_SCREENS.has('kiosk-living'))
   // a screen whose heartbeat carries no word on sound (an older page) is shown as not yet: the safe thing to tell a host
   assert.equal(houseView({ night: NIGHT, presence, now: NOW }).machines.find(m => m.key === 'kiosk-living').sound, false)
-  assert.equal(houseView({ night: NIGHT, presence, now: NOW }).machines.length, MACHINES.length)
+  assert.equal(houseView({ night: NIGHT, presence, now: NOW }).machines.length, MACHINES.filter(m => !m.spare).length, 'a spare address that is not up has no row (A10)')
 
   const host = read('../src/screens/Host.jsx')
   assert.ok(host.includes('m.sound === true') && host.includes('m.sound === false'), 'the house panel shows both')

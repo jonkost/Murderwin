@@ -275,6 +275,14 @@ export async function chooseDeck({ hid, load = loadLibrary, locks, steal = false
   return share(() => openFirst(chosen, h, load, locksOf(locks), steal))
 }
 
+// Lets go of the open deck, if this tab has one, without blanking it: the
+// setup page's check (lib/deckline.js) opens the deck to see it works and
+// gives it straight back, so the night's screen can open it. Never throws.
+export async function releaseDeck() {
+  const deck = live()
+  if (deck) await letGo(deck)
+}
+
 // The deck's presses as the arcade's events: a key is { kind: 'key', index }
 // (0 to 35), a dial pressed is { kind: 'press', dial } (0 to 5, left to right),
 // a dial turned is { kind: 'turn', dial, amount } (clockwise is positive; a

@@ -30,8 +30,9 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(v.station.quietFor, '0:45')
   const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
   // the Orangerie's screen on the brain's browser has its row since 25 Oct 2026 (the cue list); Boo's camera's row went with the camera (11 Nov 2026)
-  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, 'kiosk-boo': false, 'kiosk-orangerie': false, cues: true })
-  assert.equal(v.machines.length, MACHINES.length)
+  // the two spare addresses (In Duplicate and the bedroom on another device, 12 Nov 2026) show only while heard from
+  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-study': false, 'kiosk-boo': false, 'kiosk-orangerie': false, cues: true })
+  assert.equal(v.machines.length, MACHINES.filter(m => !m.spare).length)
   const quiet = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g2', updatedAt: stamp(NOW - QUIET_MS - 1000) }, rotation: ROTATION, now: NOW })
   assert.equal(quiet.station.alive, false)
   assert.equal(quiet.station.quietFor, '2:01')
@@ -145,12 +146,12 @@ test('X-4 the memory match iPad has its own dot: the key its heartbeat carries',
   // in Act 4 the iPad Pro runs as ?kiosk=memory and heartbeats as kiosk-memory (Kiosk.jsx),
   // so "The iPad" may go quiet while the memory match is alive, and the host can tell which
   // 26 Oct 2026, Jon's key: the memory match is the iPad Pro's third station, so the dot says so
-  assert.ok(MACHINES.some(m => m.key === 'kiosk-memory' && m.label === 'iPad Pro (memory match)'))
+  assert.ok(MACHINES.some(m => m.key === 'kiosk-memory' && m.label === 'In Duplicate (another device)'))
   const presence = { 'kiosk-memory': NOW - 20_000, 'kiosk-ipad': NOW - 5 * 60_000 }
   const by = Object.fromEntries(houseView({ night: NIGHT, presence, now: NOW }).machines.map(m => [m.key, m.alive]))
   assert.equal(by['kiosk-memory'], true)
   assert.equal(by['kiosk-ipad'], false)
-  assert.equal(houseView({ night: NIGHT, presence: { 'kiosk-memory': NOW - QUIET_MS - 1 }, now: NOW }).machines.find(m => m.key === 'kiosk-memory').alive, false)
+  assert.equal(houseView({ night: NIGHT, presence: { 'kiosk-memory': NOW - QUIET_MS - 1 }, now: NOW }).machines.find(m => m.key === 'kiosk-memory'), undefined, 'a spare that went quiet has no row')
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes('`kiosk-${which}`'), 'the memory kiosk heartbeats as kiosk-memory')
 })
