@@ -92,6 +92,6 @@ test('npm run media names the stand-in tones, Sir Irwin’s voice and the loud c
   assert.ok(made.includes('(npm run web-sounds): 1 in.'))
   const all = report({ media: { dir: '/m', files: [] }, video: { dir: '/v', files: [] }, loops: { dir: '/l', files: [] }, household: { file: '/s.jpg', there: true }, standIn: ['chime-news'], voice: { files: [] }, web: { files: [] } }).join('\n')
   assert.ok(all.includes('Still stand-in tones, not real sounds: chime-news.'))
-  assert.ok(all.includes('a screen with no loop shows its room\'s splash, with its cat') && !/crest/.test(all), 'no screen shows a crest any more')
+  assert.ok(all.includes('a screen with no loop plays the screen saver, the five faces crossing the screen') && !/crest|splash/.test(all), 'no screen shows a crest any more, and since 12 Nov 2026 an idle screen plays the screen saver')
   assert.ok(all.includes('6. Sydney\'s photo (the dedication in the credits)') && all.includes('AudioPanic to stop it all') && !/Credits\)/.test(all), 'the night ends on jazz: no credits playlist')
 })

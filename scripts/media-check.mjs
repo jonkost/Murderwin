@@ -169,8 +169,8 @@ export function report({ media, video, loops, household, rules = null, sizes = {
     files: loops.files,
     endings: ['mp4'],
     groups: [
-      { title: 'The five loops', ids: LOOPS, need: 'Fine: a screen with no loop shows its room\'s splash, with its cat.' },
-      { title: 'The Orangerie loop (optional)', ids: OPTIONAL_LOOPS, need: 'Fine: Salem\'s splash shows.' },
+      { title: 'The five loops', ids: LOOPS, need: 'Fine: a screen with no loop plays the screen saver, the five faces crossing the screen.' },
+      { title: 'The Orangerie loop (optional)', ids: OPTIONAL_LOOPS, need: 'Fine: the screen saver plays.' },
     ],
     then: 'npm run deploy:site.',
   }))

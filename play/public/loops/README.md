@@ -1,10 +1,16 @@
 # The loops
 
-The looping graphics every idle screen plays (your cue list, 25 October 2026:
-"unless otherwise cued, every active screen shows a looping graphic"). Drop
-each file in this folder with exactly this name, then `npm run deploy:site`.
-Until a file is in, that screen shows its crest and a line instead, so nothing
-waits on them. The files stay local on your Mac and go up with the deploy,
+**Not needed since 12 November 2026.** You said: "For the loops just make the
+classic dvd screen saver with the cats and dog face picture when it bounces
+off the edge of the screen." So every idle room screen now plays that screen
+saver: one of the five faces, Sir Irwin and the four cats, crosses the screen,
+turns at every edge and becomes the next face there. There is nothing to make.
+
+This folder still works, in case you ever want a looping video on one screen
+(your cue list, 25 October 2026: "unless otherwise cued, every active screen
+shows a looping graphic"). Drop a file in this folder with exactly its name
+below, then `npm run deploy:site`, and that screen plays it in place of the
+screen saver. The files stay local on your Mac and go up with the deploy,
 like the sounds in `media/`: they are never committed (`.gitignore` keeps
 everything in this folder but this page out of the repo).
 
@@ -16,9 +22,9 @@ everything in this folder but this page out of the repo).
 | `bedroom.mp4` | The bedroom screen (`?kiosk=bedroom`), behind "The door is closed" | Salem in the bedroom. |
 | `boo.mp4` | The projector (`?kiosk=boo`) | Sir Irwin's portrait and Boo walking, mapped to the space above the Parlour. |
 
-Those five are the ones to make. A sixth, `orangerie.mp4`, is optional: the
-brain's browser in the Orangerie (`?kiosk=orangerie`) plays it if it is there
-and shows its crest if not.
+None of them is needed: each is optional. So is a sixth, `orangerie.mp4`, for
+the brain's browser in the Orangerie (`?kiosk=orangerie`), which plays it if
+it is there and the screen saver if not.
 
 Rules for the files:
 
@@ -34,5 +40,5 @@ Rules for the files:
   so there is nothing they could know.
 
 A loop plays from the moment the browser has its first frame. If a file will
-not play (wrong codec, a typo in the name), the crest shows and nothing else
-changes: check the name against the table above and the file's codec.
+not play (wrong codec, a typo in the name), the screen saver plays and nothing
+else changes: check the name against the table above and the file's codec.
