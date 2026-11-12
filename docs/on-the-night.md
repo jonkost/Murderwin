@@ -234,11 +234,11 @@ them.
 
 | Machine | Its job | How it starts |
 |---|---|---|
-| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the music (the playlists from the Music app, or since 31 Oct the music Shortcuts through Apple Home, one Home scene per setting, with the Study's and the Orangerie's own music in Act 4), the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6, and at The End; on again when the power returns and for the ballot) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
+| The brain (your M3 MacBook Air) | The nine sounds, the W-O-O-F News recordings (only bulletin 2's once the bulletins are videos), the music (the playlists from the Music app, or since 31 Oct the music Shortcuts through Apple Home, one Home scene per setting, with the Study's and the Orangerie's own music in Act 4), the Hue scenes, the hall light, the projector's plug (off for the blackout, from the drawing's intro to the end of Act 6; on again when the power returns and for the ballot, and left on at The End) and the Orangerie string lights. The spare host. Its browser is the Orangerie's screen (`?kiosk=orangerie`): Salem's code in Act 2, the Get Off My Lawn! rules card between groups in Act 4 and Salem's board (the colour, the count, the slips) while a group plays, its loop otherwise. That browser shows the bell for every cue but rings nothing: the real sound comes from the brain itself. | Ethernet in, sleep off. `cd cues && npm start` in a terminal window you can see. It prints counts only, never a name. A browser, full screen, at `?kiosk=orangerie`, facing the Orangerie table. |
 | The speakers (four HomePods) | Every sound, recording and the music, played from the brain: the Entryway, the Study, the Orangerie and the Parlour. | On the brain, choose the AirPlay group that includes the Orangerie HomePod as the sound output. |
-| Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing, the three questions over everyone's portraits while the room talks it over, the vote's clock and the reveal, then black at The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
+| Your work MacBook Pro on the TV | The Parlour screen, all night: the join code in Act 1 and again at the dinner wrap-up (with the intro video and the rules film at The house rules, which it plays by itself), the blackout, bulletin 1, Sir Irwin's prompts while guests wait in Acts 2 and 4, the Act 4 title card, Sir Irwin's countdown, the drawing, the three questions over everyone's portraits while the room talks it over, the vote's clock and the reveal, then The End. In the drawing you tap the room's guess on your own phone; this screen's four names still take a tap, the fallback, so keep the trackpad within reach. | A browser, full screen, at `https://murderwin-at-sirwin-manor.web.app/play/?kiosk=living` |
 | Study M1 Air | Granolia's Lightbulb Moment (the light puzzle) and Granolia's screen. | Double-click *Start the Study* in the Study station folder (it keeps the Mac awake and starts the station again if it stops), and a browser at `?kiosk=study`. Quit the Elgato app first. With its second screen plugged in (the question *studySecondScreen*; the default): the browser full screen on the second screen, facing the walls, and the station's window on the Mac's own screen. |
-| Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, black at The End. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
+| Susan's work MacBook Pro | In the Entryway with the Stream Deck + XL on USB, all night, and it never moves (`?kiosk=boo`, since 5 Nov; the projector on the landing before): its loop from Act 1, Boo's code in Act 2, Miss Boo LaRue's Arcade in Act 4 (her rules card with the code between groups; the group that scans in plays its visit on the deck, the first two players get the group's clue about the Ghost on the screen and their phones, a trio's third gets Boo's line, and the chime ends it), its loop again, The End at the end. | Google Chrome (Safari cannot reach the Stream Deck), the Stream Deck app quit, the sound on the Mac's own speakers, full screen, sleep off, lid open. Before the guests come, open the arcade's practice page from the Game test tab in the same Chrome and tap Connect the Stream Deck once: the night's screen has no Connect button and remembers the deck. Then open the address and tap it once. |
 | Your iPad Pro | Roaming, four stations in turn. Act 2: in the Library with Zimothy, showing his code during the cat visits and bulletin 1's words (`?kiosk=ipad`). Act 3: on its stand in the Orangerie, bulletin 2's words through supper and the wrap-up (the same address). Act 4: back on its small stand in the Library as In Duplicate, the memory match (`?kiosk=memory`). From Act 6: the bedroom screen, door closed (`?kiosk=bedroom`). | From its Home Screen icons, so no Safari bars show. Once, before the night: open each of its three addresses in Safari, tap Share, then Add to Home Screen (if it asks, keep Open as Web App on), and name it: the Library (`?kiosk=ipad`, also supper), In Duplicate (`?kiosk=memory`), the bedroom (`?kiosk=bedroom`). On the night, open each station from its icon. Tap it once after each move. Three moves: to the Orangerie on your way in to supper, to the Library before **Start Act 4**, into the bedroom after Act 4. |
 | The older family iPad | Out, unless you say it stays (the question *olderIpad* on the board; your key has no older iPad). If it stays: In Duplicate on its small stand in the Library all night (`?kiosk=memory`), and your iPad Pro stays in the Orangerie from supper until it goes to the bedroom. | Nothing, by default. If it stays: Safari, full screen, tap it once. |
 | Susan's 8th-gen iPad | Decor (the picture frame). Never a cue. If a guest needs a device, take the decor off and hand it over. | The plain game address, if it is needed. |
@@ -661,17 +661,28 @@ links to it.
   seconds). The cards come up when each film ends, so wait for the cards
   before the next press. A film with no file shows the words instead. After the
   Victim, on their own: the closing story, the dial's journey, the end
-  credits and
+  credits (Special thanks at the end of the roll once your lines are in
+  `seed/credits.json`; until then nothing shows there), the dedication to
+  Sydney (his photo and your words, eight seconds) and
   Sir Irwin's last card, about two minutes. **Hold the screen**
   stops it where it is (a toast, a photograph); **Carry on** resumes, and
   nothing on the screen is skipped. **Next** for everyone's result only works
   once all three are named: every guest's phone shows its own three answers
   against the truth with "Thank you for playing." under them and no tabs,
   while the credits roll (your phone and Susan's show the result on Now, tabs
-  and all). Then **Next** once more for "The End": every screen goes black,
-  the projector is off, and every phone opens up for good with everything
-  readable: the result on Now, the clues, the notes. The Host tab says the
-  night is over. The brain lets go of the hall light there: it stays green,
+  and all). While the result is up, the Host tab says how long the credits
+  have left ("The credits finish in 1:05. Then Next for The End."): wait for
+  it, so the credits are seen. Then **Next** once more for "The End": every
+  room screen and every phone shows The End (in lights, Sir Irwin, "Happy
+  first birthday, Sir Irwin", one burst of paw prints), the lights go to
+  Default, the projector stays on, and every phone opens up for good with
+  everything readable: The End on top of Now with the result under it, the
+  clues, the notes. Last, on the Host tab under Run the night, press **Good
+  night**: the night is over for good, every screen keeps The End and the
+  house keeps its music and its everyday lights. The Host tab then says "The
+  night is over. Good night." Pressing it twice is harmless. You open and
+  close the night from your phone: nothing in the last beats needs the
+  workshop or a laptop. The brain lets go of the hall light there: it stays green,
   and your own light controls work again. **Back one** from "The End" opens the night up again, for a
   rehearsal that wants to see the result twice. A pause during the vote
   keeps the card on every phone, greyed out, until you resume, like any other
@@ -736,7 +747,7 @@ links to it.
 | 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), the practice, then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
-| 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits and Sir Irwin's last card. At "The End": black. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen goes black and the projector is off. |
+| 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits, the dedication and Sir Irwin's last card. At "The End": The End, Sir Irwin and paw prints, for good. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen shows The End and the projector stays on. |
 
 Outside Act 4 the study screen is on its loop (its crest until the file is
 in) unless a round is under way; in Act 4, between groups, it shows
@@ -1156,8 +1167,19 @@ join code: `livingView` returns `join` for kind `join` and `JoinScreen` draws
 `RejoinCode` sits under the ballot clock on the TV only. The birthday card:
 `BirthdayScreen` on the TV (kind `birthday`, Irwin's picture varied by
 `screen.at`), `Cards.jsx` `Birthday` on the phone from `card.image`. The End:
-`roomDark(night, screen)` is true once `isOver(night)` or on a black doc with
-no title, so every kiosk goes dark through the one rule. The new kiosk
+since 12 Nov (C1) `roomDark(night, screen)` is false once `isOver(night)`
+(it is true on a black doc with no title), and the kiosk dispatch draws
+`Closing.jsx` `RoomEnd` (the look's `TheEnd`) first for every kind once
+`lib/closing.js` `roomEnded(night)`; `livingView` answers `end`. The phone
+draws `PhoneEnd` on top of Now (`Rest.jsx`). The credits' `special` and
+`dedication` come from `seed/credits.json` (`functions/lib/closing.js`);
+`lib/finale.js` `creditsTimes` puts the dedication at the roll's end for
+`DEDICATION_MS` (8000), the roll longer by `SPECIAL_LINE_MS` a line of
+special thanks. Host command `good-night` (`closing.goodNight`) writes
+`nights/{id}.goodNight` and `goodNightAt` once, only when `over`; Back from
+The End deletes them with `over` (`run.enterBeat`). The Host tab mounts
+`GoodNight.jsx`. Tests: `functions/test/closing.test.mjs`,
+`play/test/closing.test.mjs`. The new kiosk
 `?kiosk=orangerie` (`Rooms.jsx` `Orangerie`, reads `public/salem` for the
 group due, and since 28 Oct `public/rotation` for Salem's winner) comes before the Living fallback; `play/src/lib/house.js` MACHINES
 gains `kiosk-orangerie`. Tests: `play/test/rooms.test.mjs`,
