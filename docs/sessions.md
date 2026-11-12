@@ -16,8 +16,9 @@ the classic dvd screen saver with the cats and dog face picture when it
 bounces off the edge of the screen."
 
 **What it is** (built, tested, reviewed; 2b97322 the code, a0ec85d the
-guides and the media check, b0ecaa3 the board and the notes; not published,
-not pushed)
+guides and the media check, b0ecaa3 the board and the notes; then b395c1a
+and 8915028, faster with a face kept for ten edges; then 39caf3c, c47ecef
+and 274aff2, the second screens; not published, not pushed)
 
 - A room screen with nothing to show plays a screen saver. One of the
   household's five face pictures (Sir Irwin, Granolia, Miss Boo LaRue,
@@ -74,6 +75,12 @@ not pushed)
   it is: the part that draws it is tested by reading its source and in the
   browser, not by a render test.
 - Every test, the checks and three fake nights pass (play 390, app 165).
+- The second screens: one reviewer walked every place the idle screen is
+  drawn and every state of a second screen (the dark, The End, the
+  countdown, silent as before) and found nothing wrong; its notes were three
+  stale comments, now put right. Every test, the checks and the fake nights
+  pass (play 392). The real page was seen playing it on a second screen, and
+  the setup page was seen with its three lines.
 - The second version (faster, a face kept for ten edges): one reviewer
   sampled an hour of it at every millisecond for all six screens and four
   screen shapes and found nothing odd, and read every word that describes
