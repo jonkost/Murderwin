@@ -98,7 +98,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 
       <nav className={session.host ? 'tabs eight' : 'tabs'} aria-label="Your Reticule">
         {tabs.map(t => (
-          <button key={t.key} className={`${t.key === shown ? 'tab on' : 'tab'}${t.key === 'clues' && bounce ? ' bounce' : ''}`} onClick={() => setTab(t.key)} aria-current={t.key === shown ? 'page' : undefined}>
+          <button key={t.key} className={`${t.key === shown ? 'tab on' : 'tab'}${t.key === 'clues' && bounce ? ' bounce' : ''}`} onClick={() => { play('tick', { volume: 0.5 }); setTab(t.key) }} aria-current={t.key === shown ? 'page' : undefined}>
             <span className="tab-mark"><TabIcon name={t.key} />{t.key === 'now' && waiting > 0 && shown !== 'now' ? <span className="badge" aria-label={`${waiting} waiting`} /> : null}</span>
             <span className="tab-word">{t.label}</span>
           </button>
