@@ -27,6 +27,8 @@ export const callJoin = httpsCallable(functions, 'join')
 export const callHost = httpsCallable(functions, 'hostCommand')
 // The relay drawing (Act 6): nudge the clock, cast a pick.
 export const callRelayAdvance = httpsCallable(functions, 'relayAdvance')
+// the countdown reached the intro's time (functions/lib/run.js introDue)
+export const callIntroDue = httpsCallable(functions, 'introDue')
 export const callRelayVote = httpsCallable(functions, 'relayVote')
 export const callRelayGuess = httpsCallable(functions, 'relayGuess')
 // The study station's calls (station/station.mjs uses the same name).

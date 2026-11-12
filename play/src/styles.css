@@ -1297,3 +1297,25 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .setup-first button { padding: 0.6rem 1rem; background: none; border: 1px solid var(--line); border-radius: 0.6rem; }
 .setup-first p, .setup-extras span { color: var(--dim); font-size: 0.95rem; margin: 0.3rem 0 0; }
 .setup-extras a { color: var(--ink); font-size: 1.1rem; }
+
+/* ---- The big Start the night button, and the screens to send (12 Nov 2026) ---- */
+.start-night { display: grid; gap: 0.7rem; justify-items: center; width: 100%; max-width: 24rem; margin: 0 auto; }
+.start-who { margin: 0; color: var(--dim); font-size: var(--t-small); }
+.start-go { width: 100%; min-height: 4.5rem; font-size: 1.5rem; font-weight: 700; }
+.start-real { display: flex; align-items: center; gap: 0.7rem; font-size: 1.15rem; min-height: 2.75rem; cursor: pointer; }
+.start-real input { width: 1.6rem; height: 1.6rem; }
+.start-note { margin: 0; color: var(--dim); font-size: 0.95rem; text-align: center; }
+.send-screens { margin: 0.8rem 0; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--card); }
+.send-screens summary { font-weight: 700; font-size: 1.1rem; min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; }
+.send-list { list-style: none; padding: 0; margin: 0.4rem 0 0; display: grid; gap: 0.5rem; }
+.send-list li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.6rem; }
+.send-name { display: grid; font-weight: 600; }
+.send-name small { font-weight: 400; color: var(--dim); font-size: 0.85rem; }
+.send-list .chip { min-height: 2.75rem; min-width: 4.5rem; }
+
+/* the countdown to the intro, across the bottom of every room screen while the guests arrive */
+.kiosk-countdown { position: fixed; left: 3vw; bottom: 3vh; z-index: 60; pointer-events: none; }
+.kiosk-countdown span { display: inline-block; padding: 0.5em 1.2em; border-radius: 0.6em; background: rgba(0, 25, 37, 0.85); color: var(--ink); font-size: clamp(1.4rem, 3.2vw, 3.4rem); font-variant-numeric: tabular-nums; }
+.kiosk-countdown b { font-weight: 700; margin-left: 0.4em; }
+.kiosk.intro-video { background: #000; display: flex; align-items: center; justify-content: center; padding: 0; }
+.kiosk.intro-video video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }

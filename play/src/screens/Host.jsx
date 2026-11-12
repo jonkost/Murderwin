@@ -4,7 +4,8 @@ import { callHost, callRelayGuess } from '../firebase'
 import { usePresence, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
-import { houseView } from '../lib/house'
+import { houseView, QUIET_MS } from '../lib/house'
+import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
@@ -93,7 +94,7 @@ export default function Host({ night, content, serverNow }) {
   const [msg, setMsg] = useState(null)
   const presence = usePresence(night.nightId)
   const qr = useQr(PLAY_URL)
-  useTick(15_000) // online dots age out on their own
+  useTick(night.act === 1 && night.beat === 'arrive' && night.introAt ? 1000 : 15_000) // online dots age out on their own; the countdown to the intro ticks by the second
   const live = night.nightId && night.nightId !== 'preview'
   const study = useDoc(live ? `nights/${night.nightId}/public/study` : null)
   const rotation = useDoc(live ? `nights/${night.nightId}/public/rotation` : null)
@@ -139,7 +140,9 @@ export default function Host({ night, content, serverNow }) {
   const people = Object.entries(roster).map(([key, r]) => ({ key, ...r })).sort((a, b) => a.name.localeCompare(b.name))
   const hostKeys = new Set(Object.values(night.hosts ?? {}).map(h => h.key))
   const now = Date.now()
-  const house = houseView({ night, study: study.data, rotation: rotation.data, presence, now: serverNow ? serverNow() : now })
+  const clock = serverNow ? serverNow() : now
+  const house = houseView({ night, study: study.data, rotation: rotation.data, presence, now: clock })
+  const left = countdownLeft(night, clock) // the countdown to the intro (lib/start.js)
   const startDrawing = () => {
     // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
     const underWay = ['walk', 'turn', 'vote', 'lockout', 'done'].includes(relay.data?.state)
@@ -154,6 +157,8 @@ export default function Host({ night, content, serverNow }) {
         <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
         <br />{isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'}
       </p>
+      {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, on its own. Next goes sooner.</p>}
+      {night.act <= 1 && <SendScreens presence={presence} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
       {/* a cat's hint or the Study's trace that never came (card 529): counts only, never which */}
@@ -240,7 +245,7 @@ export default function Host({ night, content, serverNow }) {
 
       <h3>A fresh night</h3>
       <p className="gloss">Only for rehearsals or if tonight must start over. It deals new characters to everyone, and every phone must tap its name again.</p>
-      <button className="chip wide" disabled={!!busy} onClick={() => run('create')}>Start a new night</button>
+      <StartNight ui={{ 'START NIGHT': 'Start a new night' }} again />
     </div>
   )
 }
@@ -664,24 +669,74 @@ export function Safeguards({ night, busy, run }) {
 
 // On the doors screen while nothing is live: the host bootstraps the first
 // night from any phone. Once a night is live only host phones may start another.
-export function StartNight({ ui }) {
+export function StartNight({ ui, again = false }) {
+  const [real, setReal] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const start = async () => {
     setBusy(true)
     setError(null)
     try {
-      await callHost({ command: 'create' })
+      await callHost({ command: 'create', arg: { real, introAt: introAtFor({ real }) } })
+      if (again) setBusy(false) // the Host tab stays up until this phone taps its name on the new night
     } catch (e) {
       setError(troubleLine(e, 'The Manor did not answer.'))
       setBusy(false)
     }
   }
+  const at = introAtFor({ real })
   return (
     <div className="start-night">
-      <button className="quiet" disabled={busy} onClick={start}>{busy ? 'Starting…' : ui['START NIGHT']}</button>
+      <p className="start-who">{ui['START NIGHT']}</p>
+      <button className="big start-go" disabled={busy} onClick={start}>{busy ? 'Starting…' : real ? 'Start the REAL night' : 'Start a run-through'}</button>
+      <label className="start-real">
+        <input type="checkbox" checked={real} disabled={busy} onChange={e => setReal(e.target.checked)} />
+        <span>This is the real night</span>
+      </label>
+      <p className="start-note">
+        {real
+          ? at ? `The party, with the real secrets. The intro goes at ${clockWords(at)} on its own.` : 'The party, with the real secrets. It is past half past four, so Next starts the intro.'
+          : 'A practice: nothing real is used. The intro goes five minutes after you start, or sooner with Next.'}
+      </p>
       {error && <p className="trouble" role="alert">{error}</p>}
     </div>
+  )
+}
+
+// After the start: each room screen's page, to send to its machine (AirDrop
+// from the share sheet), with a dot once that screen has been heard from.
+// Setup words, on the host's phone only.
+export function SendScreens({ presence = {}, now = Date.now(), open = false }) {
+  const [note, setNote] = useState(null)
+  const send = async (s) => {
+    setNote(null)
+    try {
+      if (navigator.share) await navigator.share({ title: s.room, url: s.url })
+      else { await navigator.clipboard.writeText(s.url); setNote(`Copied the address for ${s.room}.`) }
+    } catch (e) {
+      if (e?.name !== 'AbortError') setNote('That did not send. Tap it again.')
+    }
+  }
+  const links = screenLinks(PLAY_URL)
+  const up = links.filter(s => now - (presence[s.presenceKey] ?? 0) < QUIET_MS).length
+  return (
+    <details className="send-screens" open={open || undefined}>
+      <summary>Send each screen its page · {up} of {links.length} up</summary>
+      <p className="gloss">Tap Send, pick AirDrop, pick the machine. Its page opens there; click once on it to make it full screen.</p>
+      <ul className="send-list">
+        {links.map(s => {
+          const on = now - (presence[s.presenceKey] ?? 0) < QUIET_MS
+          return (
+            <li key={s.key}>
+              <span className={on ? 'dot on' : 'dot'} aria-label={on ? 'this screen is up' : 'not heard from yet'} />
+              <span className="send-name">{s.room}<small>{s.machine}</small></span>
+              <button className="chip" onClick={() => send(s)}>Send</button>
+            </li>
+          )
+        })}
+      </ul>
+      {note && <p className="host-msg" role="status">{note}</p>}
+    </details>
   )
 }
 

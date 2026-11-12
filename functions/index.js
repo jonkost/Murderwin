@@ -242,6 +242,15 @@ export const relayAdvance = onCall({ cors: true }, wrap(async req => {
   return run.player.relayAdvance(db, { nightId })
 }))
 
+// The countdown on the room screens has reached the intro's time (12 Nov 2026):
+// a room screen, a phone at the party or a host says so, and the server, on
+// its own clock, moves Arrivals to The house rules once (run.js introDue).
+export const introDue = onCall({ cors: true }, wrap(async req => {
+  const { nightId } = req.data ?? {}
+  await atTheParty(req, nightId)
+  return run.introDue(db, { nightId })
+}))
+
 // The phones no longer vote (22 Oct): kept so an old phone gets a kind answer.
 export const relayVote = onCall({ cors: true }, wrap(async req => {
   requireUid(req)

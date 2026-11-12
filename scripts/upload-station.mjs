@@ -7,12 +7,14 @@
 // site is public.
 //
 //   npm --prefix scripts run upload-station
+//   npm --prefix scripts run upload-station -- --desktop   also leaves "Study station.zip" on this Mac's
+//                                                          Desktop, to AirDrop to the Mac by the walls
 //
 // Prints the size only, never a setting.
 
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, rmSync, statSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { copyFileSync, cpSync, mkdtempSync, readFileSync, rmSync, statSync, existsSync } from 'node:fs'
+import { tmpdir, homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import 'dotenv/config'
@@ -52,6 +54,8 @@ async function main() {
         cacheControl: 'no-store',
       },
     })
+    // never inside the repo: the zip holds station/.env
+    if (process.argv.includes('--desktop')) { copyFileSync(zip, join(homedir(), 'Desktop', 'Study station.zip')); say('Left a copy on the Desktop: Study station.zip') }
     say(`PASS: saved the Study station zip, ${Math.round(statSync(zip).size / 1e6)} MB`)
   } finally {
     rmSync(work, { recursive: true, force: true })

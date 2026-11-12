@@ -253,6 +253,30 @@ game; it serves the lights and the speakers.
 
 ## Start order, and how you know each one is alive
 
+*The big Start button (12 Nov).* This is the whole setup once every machine
+is in its place:
+
+1. On your phone, open the game. Tap the big button. With the box **This is
+   the real night** unticked it says Start a run-through, which is a
+   rehearsal; ticked, it says Start the REAL night, and it only works on the
+   party day. If an old night is still on, the same button is at the bottom
+   of its Host tab under A fresh night.
+2. Type your name. The Host tab opens with *Send each screen its page*: tap
+   Send beside a room, pick AirDrop, pick that room's machine. Its page opens
+   there. Click once on it and it goes full screen. A dot turns on beside the
+   room when the house has heard from it. (For a link to open in Chrome, make
+   Chrome that Mac's usual browser once.)
+3. The Study: double-click Start the Study in the Study station folder on
+   the Mac by the walls. It starts the walls and the Stream Deck and opens
+   the Study's page. The folder is sent to that Mac once, by AirDrop from
+   the brain's Desktop (Study station.zip).
+4. Leave every screen alone. The jazz plays and every room screen counts
+   down "The evening begins in". On the real night the intro goes at 4:30 pm;
+   on a run-through, five minutes after you start. At that moment the music
+   stops, the lights dim and the Parlour TV plays the intro video on its
+   own. When it ends the join code comes back, and you carry on with Next.
+   Next before the time starts the intro at once.
+
 *One address for every screen (11 Nov).* On each machine type
 `murderwin-at-sirwin-manor.web.app/setup`. The page asks "Which screen is
 this?" with one big button per room: the Parlour TV, the Study, Boo's arcade,

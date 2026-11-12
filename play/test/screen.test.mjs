@@ -248,7 +248,7 @@ test('F31 nothing in the corners beside a near-black screen, the bell ringing or
   assert.ok(!/\.kiosk\.dark ~ [^{]*\{[^}]*opacity/.test(css), 'never a dim mark left in the dark')
   // the rule finds them because the corners come after the screen, and both near-black screens carry .kiosk.dark
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  const from = kiosk.indexOf('      {body}\n      <Bell ')
+  const from = kiosk.indexOf('      {body}\n      {!dark')
   const corners = kiosk.slice(from, kiosk.indexOf('</>', from))
   const at = (t) => { const i = corners.indexOf(t); assert.ok(i >= 0, t); return i }
   for (const mark of ['<Bell ', '<StaleDot ', '<Wake ']) assert.ok(at('{body}') < at(mark), `${mark.trim()} after the screen`)

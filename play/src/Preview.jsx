@@ -13,12 +13,12 @@ import catLines from '../../seed/cat-lines.json'
 import bagLines from '../../seed/bag-lines.json'
 import { GAME_NAMES } from './lib/rooms'
 import Relay, { RelayDone } from './screens/Relay'
-import { Living, Bedroom, Study, Dark as KioskDark } from './screens/Kiosk'
+import { Living, Bedroom, Study, Dark as KioskDark, IntroCountdown } from './screens/Kiosk'
 import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import { PoseCamera } from './screens/Pose'
 import BooArcade from './screens/Arcade'
 import { SalemRounds } from './screens/Act4'
-import { HousePanel, ResumeNight } from './screens/Host'
+import { HousePanel, ResumeNight, StartNight } from './screens/Host'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 import Allow from './screens/Allow'
@@ -379,6 +379,8 @@ const KIOSK = {
   'kiosk-living-vote': (night, serverNow) => <Living night={{ ...night, act: 6 }} relay={relayDoc('vote')} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
   // ---- the cue list's screens (25 Oct 2026) ----
   // the join code on the Parlour TV: Act 1 (scan to join) and the dinner wrap-up (rejoin), the server's words
+  // while the guests arrive: the join code with the countdown to the intro across the bottom (12 Nov 2026)
+  'kiosk-countdown': (night, serverNow) => <><Living night={{ ...night, act: 1, beat: 'arrive' }} relay={null} trace={null} finale={null} screen={SCREEN('join', { ...JOIN_CARDS.join, act: 1, beat: 'arrive', rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" /><IntroCountdown night={{ ...night, phase: 'act', act: 1, beat: 'arrive', introAt: Date.now() + 272000, beatAt: stamp(Date.now() - 28000) }} nightId={null} serverNow={serverNow} /></>,
   'kiosk-join': (night, serverNow) => <Living night={{ ...night, act: 1, beat: 'arrive' }} relay={null} trace={null} finale={null} screen={SCREEN('join', { ...JOIN_CARDS.join, act: 1, beat: 'arrive', rehearsal: false })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-rejoin': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'wrap' }} relay={null} trace={null} finale={null} screen={SCREEN('join', { ...JOIN_CARDS.rejoin, act: 3, beat: 'wrap', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   // Act 2's cat visits: each room's cat code (the study Mac, the iPad Pro in the Library, the projector, the brain's browser)
@@ -481,6 +483,10 @@ export default function Preview({ screen }) {
   if (KIOSK[which]) return KIOSK[which](night, serverNow)
   switch (which) {
     case 'doors': body = <Moment text={ui.DOORS} crest />; break
+    // the big Start the night button, with its real-night tick box (12 Nov 2026)
+    case 'doors-start': body = <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />; break
+    // the Host tab at Arrivals: the countdown to the intro and each screen's page to send
+    case 'host-start': body = <Rest uid="preview" night={{ ...night, act: 1, beat: 'arrive', introAt: Date.now() + 272000, beatAt: stamp(Date.now() - 28000) }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     case 'welcome': body = <Welcome uid="preview" session={SESSION} content={CONTENT} ui={ui} onDone={() => {}} />; break
     case 'questions': body = <QuestionsPreview />; break
     // the ballot as a card on Now (25 Oct 2026, cue 19), then the small card once this phone has sent its three

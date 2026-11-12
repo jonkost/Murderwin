@@ -58,6 +58,14 @@ update() {
   rm -f .manifest.new
 }
 
+# The Study's own page, once, in Google Chrome when this Mac has it (12 Nov
+# 2026: one double-click sets the whole room up). Click once on the page and
+# it goes full screen. Never from the repo's own station/ (the brain).
+if [ ! -d ../.git ]; then
+  PAGE="https://murderwin-at-sirwin-manor.web.app/play/?kiosk=study"
+  open -a "Google Chrome" "$PAGE" 2>/dev/null || open "$PAGE"
+fi
+
 while true; do
   update
   caffeinate -dimsu node station.mjs

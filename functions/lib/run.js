@@ -18,6 +18,7 @@ import * as finale from './finale.js'
 import * as safeguards from './safeguards.js'
 import * as act4 from './act4.js'
 import { recordArcadeScore } from './arcade.js'
+import { PARTY_DAY } from './morning.js'
 
 const { NightError } = night
 const ACT_KEYS = Object.keys(deal.NIGHT.acts).map(Number)
@@ -111,12 +112,58 @@ async function onSolving(db, nightId, act, beat, now) {
   }
 }
 
+// ---- the big Start the night button (Jon, 12 Nov 2026) --------------------------
+// "I will have a big start night button on my phone... Jazz music until 4:30,
+// a count down on all screens before that. 4:30 intro goes. I just need a
+// check box for it to trigger the real night, otherwise it defaults to a
+// runthrough and I can advance in my web app if needed."
+//
+// One call makes the night and opens Act 1's Arrivals at once, so the jazz,
+// the hall bulb and the join code are up from the tap. nights/{id}.introAt
+// (ms) is when the intro goes: every room screen counts down to it, and at
+// that moment the night moves to The house rules on its own (introDue: the
+// first screen to reach zero asks, the minute's tick is the fallback), where
+// the music stops, the lights dim and the Parlour TV plays the intro video.
+// Next goes sooner. A real night reads the sealed lists, so the tick box is
+// refused before the party day; a run-through is a rehearsal like any other.
+export const INTRO_MAX_MS = 12 * 60 * 60_000
+export const INTRO_EARLY_MS = 1_500 // a screen's clock may run this far ahead of the server's
+export const REAL_NIGHT_MESSAGE = 'The real night can only be started on the party day, Sunday 15 November. Untick the box for a run-through.'
+
+export async function startEvening(db, { real = false, introAt = null, now = Date.now() } = {}) {
+  if (real && now < PARTY_DAY) throw new NightError('closed', REAL_NIGHT_MESSAGE)
+  const made = await night.createNight(db, { forceRehearsal: !real })
+  const at = Math.round(Number(introAt))
+  const when = Number.isFinite(at) && at > now && at - now <= INTRO_MAX_MS ? at : null
+  await db.doc(`nights/${made.nightId}`).update({ introAt: when })
+  await enterBeat(db, made.nightId, 1, 'arrive', { now })
+  return { ...made, ok: true, act: 1, beat: 'arrive', real, introAt: when }
+}
+
+// The intro's time: Arrivals becomes The house rules, once. Never while the
+// night is paused or dark, never from any other beat, and never when the host
+// came back to Arrivals after the time had passed (Back stays where it is put).
+export async function introDue(db, { nightId, now = Date.now() } = {}) {
+  if (!nightId) throw new NightError('invalid', 'Which night?')
+  const snap = await db.doc(`nights/${nightId}`).get()
+  const n = snap.exists ? snap.data() : null
+  if (!n || n.phase !== 'act' || n.act !== 1 || n.beat !== 'arrive') return { ok: true, moved: false }
+  const at = deal.ms(n.introAt)
+  if (!at || now < at - INTRO_EARLY_MS) return { ok: true, moved: false }
+  if (deal.ms(n.beatAt) >= at) return { ok: true, moved: false }
+  await enterBeat(db, nightId, 1, 'rules', { now })
+  return { ok: true, moved: true }
+}
+
+
 // The clock for Acts 2 and 4 (the minute tick, and the Host tab's own while
 // those acts run): the supper chime once every guest has seen all four cats
 // (F24), and Act 4's warning, lock-in and rounds.
 export async function clockTick(db, nightId, now = Date.now(), { allSeen = false } = {}) {
   const n = (await db.doc(`nights/${nightId}`).get()).data()
   if (!n || n.phase !== 'act') return { moved: null }
+  // the intro's time has come and no screen said so (introDue below): the minute's tick is the fallback
+  if (n.act === 1 && n.beat === 'arrive' && (await introDue(db, { nightId, now })).moved) return { moved: 'rules' }
   if (n.act === 2 && n.beat === 'cat' && allSeen) {
     await enterBeat(db, nightId, 2, 'supper', { now })
     return { moved: 'supper' }
@@ -193,6 +240,8 @@ async function powerReturns(db, nightId, { now = Date.now() } = {}) {
 }
 
 export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep } = {}) {
+  // the phone's big Start the night button sends { real, introAt } (12 Nov 2026); a plain create is a night at the doors
+  if (command === 'create' && arg && typeof arg === 'object') return startEvening(db, { real: arg.real === true, introAt: arg.introAt, now })
   if (command === 'create') return night.hostCommand(db, { nightId, command, arg })
   if (!nightId) throw new NightError('invalid', 'Which night?')
   const ref = db.doc(`nights/${nightId}`)

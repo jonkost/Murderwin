@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuthUid, useDoc, useServerClock, useTick, useOnline } from '../lib/hooks'
-import { callRelayAdvance, callRelayGuess } from '../firebase'
+import { callRelayAdvance, callRelayGuess, callIntroDue } from '../firebase'
+import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/start'
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { PoseCamera, PoseShot } from './Pose'
@@ -86,6 +87,22 @@ export default function Kiosk({ which }) {
   const serverNow = useServerClock(uid, nightId, `kiosk-${which}`) // the iPad is kiosk-ipad, its own row on the Host tab
   const online = useOnline()
   useTick(250)
+  // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
+  // a browser tab, and a browser only goes full screen on a person's own click). Once a load, never on a
+  // touch screen (an iPad's full screen is its own), and Escape still leaves it.
+  useEffect(() => {
+    if (typeof document === 'undefined' || navigator.maxTouchPoints > 0) return
+    let done = false
+    const go = (e) => {
+      if (done || e.key === 'Escape') return
+      done = true
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+    window.addEventListener('pointerup', go)
+    window.addEventListener('keydown', go)
+    return () => { window.removeEventListener('pointerup', go); window.removeEventListener('keydown', go) }
+  }, [])
+  const [introOver, setIntroOver] = useState(0) // the intro video that has played to its end on this screen (its start time)
 
   const n = night.data
   const r = relay.data
@@ -96,6 +113,8 @@ export default function Kiosk({ which }) {
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
   const setup = showSetup(n, { looked })
+  // The house rules: the Parlour TV plays the intro video from the moment the beat began (lib/start.js)
+  const intro = n && n.phase === 'act' ? introPlaying(n, serverNow()) : null
   // Act 2's cat visits: this room's cat code, whatever else the room would show
   const code = roomCode(which, n)
   let body
@@ -103,6 +122,7 @@ export default function Kiosk({ which }) {
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} />
   else if (roomDark(n, living ? screen.data : null)) body = <Dark />
   else if (code) body = <RoomCode cat={code} />
+  else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
   else if (which === 'bedroom') body = <Bedroom relay={r} trace={trace.data} />
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
@@ -113,10 +133,48 @@ export default function Kiosk({ which }) {
   return (
     <>
       {body}
+      {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
       <Bell sounds={sounds.data} serverNow={serverNow} silent={which === 'orangerie'} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} />
     </>
+  )
+}
+
+// While the guests arrive, every room screen counts down to the intro (nights/{id}.introAt, on the server's
+// clock). At zero the screen tells the server, which moves the night on its own clock (run.js introDue); it
+// asks again every five seconds until the beat has moved, so one lost call never strands the room.
+export function IntroCountdown({ night, nightId, serverNow }) {
+  const left = countdownLeft(night, serverNow())
+  const asked = useRef(0)
+  useEffect(() => {
+    if (left !== 0 || !nightId) return
+    const t = Date.now()
+    if (t - asked.current < 5000) return
+    asked.current = t
+    callIntroDue({ nightId }).catch(() => {})
+  })
+  if (left == null) return null
+  return <div className="kiosk-countdown"><span>The evening begins in<b>{countdownText(left)}</b></span></div>
+}
+
+// The intro video on the Parlour TV at The house rules. It starts where the beat's clock says, so a screen
+// that reloads joins it part-way. A browser nobody clicked may refuse sound: it plays silent rather than
+// leave the TV black. No file, or the film over: the join code comes back (onOver).
+const INTRO_MUTED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mute') === '1'
+function IntroVideo({ startedAt, serverNow, onOver }) {
+  const ref = useRef(null)
+  const begin = (e) => {
+    const v = e.currentTarget
+    const off = (serverNow() - startedAt) / 1000
+    if (Number.isFinite(v.duration) && off >= v.duration) { onOver(); return }
+    if (off > 1) v.currentTime = off
+    v.play().catch(() => { v.muted = true; v.play().catch(() => onOver()) })
+  }
+  return (
+    <div className="kiosk intro-video">
+      <video ref={ref} src={`${import.meta.env.BASE_URL}${INTRO_VIDEO}`} playsInline muted={INTRO_MUTED} onLoadedMetadata={begin} onEnded={onOver} onError={onOver} />
+    </div>
   )
 }
 
