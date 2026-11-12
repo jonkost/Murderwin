@@ -18,6 +18,7 @@ import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
+import { useFreshness } from '../lib/freshness'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -94,6 +95,7 @@ export default function Kiosk({ which }) {
   const serverNow = useServerClock(uid, nightId, `kiosk-${which}`, { sound }) // the iPad is kiosk-ipad, its own row on the Host tab
   const online = useOnline()
   useTick(250)
+  useFreshness(() => ({ page: 'room', which: standalone ? 'practice' : which, night: night.data, relay: relay.data, screen: screen.data, now: serverNow() })) // a newer site: reload at a quiet moment (A5)
   // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
   // a browser tab, and a browser only goes full screen on a person's own click). Once a load, never on a
   // touch screen (an iPad's full screen is its own), and Escape still leaves it.

@@ -4,6 +4,7 @@ import Host from './Host'
 import Clues from './Clues'
 import { Card, CatFace, LightsStep } from './Cards'
 import { Ballot, BallotSent } from './Windows'
+import { beatLine } from '../lib/flow'
 import { nowCards, roleCard, stopOf, lightsStep, act4Step, salemFriendNote, voteIn, notesLine, notesReconcile, notesAfterRefusal, NOTES_SAVE_MS } from '../lib/night'
 import Act4 from './Act4'
 import Spoken from './Spoken'
@@ -106,7 +107,7 @@ export default function Rest({ uid, night, session, content, notes, ui, onTour, 
 // when there is nothing to do, not over every screen.
 function Now({ uid, night, session, content, notes, cards, lights = null, rooms = null, meetNote = null, serverNow, ballot = null, over = false, objective = '' }) {
   const quiet = over ? 'That is the end of the night. Everything you were told is still here to read.'
-    : night.act >= 1 ? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.'
+    : night.act >= 1 ? beatLine(night) ?? 'Nothing to do just now. Talk to people.' : 'The game will find you when it starts.' // A5: the beat's own line where it has one
   const voting = ballot && !ballot.sent
   const locked = !voting && (!!ballot?.sent || voteIn(night, session))
   return (

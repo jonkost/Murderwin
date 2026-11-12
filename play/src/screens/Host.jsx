@@ -11,6 +11,7 @@ import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleM
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
 import { troubleLine } from '../lib/trouble'
+import { parlourBeat } from '../lib/flow'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -111,7 +112,7 @@ export default function Host({ night, content, serverNow }) {
   // its own; this tab, while it is the one showing, nudges it every twenty
   // seconds, so a chime comes up to twenty seconds late, not a minute.
   useEffect(() => {
-    if (!live || ![2, 4].includes(night.act)) return
+    if (!live || ![2, 4, 6].includes(night.act)) return // Act 6 too: the drawing starts once its two games are done (A5)
     const tick = () => callHost({ nightId: night.nightId, command: 'tick' }).catch(() => {})
     const id = setInterval(tick, 20_000)
     return () => clearInterval(id)
@@ -423,8 +424,8 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
       </div>
       <div className="host-row">
         <button className="chip" disabled={!!busy || !here || idx === 0 && night.act <= 2} onClick={() => run('back')}>Back one</button>
-        {/* not at Talk it over: a game there would hold Start the vote back until it closed */}
-        {[2, 4, 6].includes(night.act) && here?.action !== 'notice:talk' && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
+        {/* only in the cat visits and the Act 4 rounds; Act 6 plays its own two by itself (A5; the server refuses elsewhere) */}
+        {parlourBeat(night.act, night.beat) && night.act !== 6 && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
       </div>
       {beats.length > 0 && (
         <details className="run-beats">

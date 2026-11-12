@@ -24,7 +24,7 @@ export const HOST_COMMANDS = [
   { name: 'next', arg: '', what: 'The next beat. The one button that runs the night.' },
   { name: 'back', arg: '', what: 'One beat back, dealing nothing.' },
   { name: 'beat', arg: '<key>', what: 'Jump to a named beat of the current act and run it.' },
-  { name: 'light-up', arg: '', what: 'A Parlour Game on every phone, any time in Acts 2, 4 and 6 (in Act 4 it waits on each phone until the guest is free).' },
+  { name: 'light-up', arg: '', what: 'A Parlour Game on every phone, in the cat visits of Act 2 or an Act 4 round (in Act 4 it waits on each phone until the guest is free). Act 6 plays its own two by itself.' },
   { name: 'supper', arg: '', what: "Supper's ready (Act 2): close the cat queue and send everyone to supper; the cats a guest has not seen leave a note." },
   { name: 'start-act4', arg: '', what: 'Start Act 4 (end of supper): the two-minute warning, then the groups and the fifteen-minute rounds on their own.' },
   { name: 'scene', arg: '<name>', what: 'Recall one of the six Hue scenes by hand (Murderwin Default, Dimmed, Blackout, Drawing, Candles, Study Dim). The brain does it.' },

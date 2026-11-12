@@ -418,7 +418,10 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const first6 = await answerWindow()
     const rest6 = await allParlours()
     const p6 = { games: (first6 ? 1 : 0) + rest6.games, answered: first6 + rest6.answered }
-    await next() // the drawing starts
+    // Act 6 plays its own two and no more, and once the last has closed the drawing starts by itself on the tick (A5)
+    if (p6.games > deal.NIGHT.parlour.counts['6']) summary.checks.push('FLOW')
+    await host('tick')
+    if ((await nightDoc()).beat !== 'drawing') { summary.checks.push('FLOW'); await next() }
     const drawing = await playDrawing()
     await next() // the door
     await bracketCheck('door') // the trace behind the bedroom door

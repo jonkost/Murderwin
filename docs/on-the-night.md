@@ -1052,7 +1052,8 @@ night", "Go to Act 4", "Go to Act 6" and "Parlour Game now". Its rules:
 - The first time a test night reaches Act 2 or later, every phone shows the
   "Sorry for the interruption, continue here" button, then its role card
   for fifteen seconds, for this test night only, and carries on by itself.
-- "Parlour Game now" works in Acts 2, 4 and 6.
+- "Parlour Game now" works in the cat visits of Act 2 and the Act 4 rounds:
+  go to that beat first. Act 6 plays its own two by itself.
 
 *On the party night the party box turns testing off.* While "This is the
 party night" is ticked on the Game night page, or the live night is the

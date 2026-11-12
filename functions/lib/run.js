@@ -338,6 +338,7 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       if (![2, 4, 6].includes(n.act)) throw new NightError('invalid', 'The phones light up in Acts 2, 4 and 6.')
       // only in the games' own beats, and never over a bulletin, Sir Irwin, the drawing or anything after it (A5)
       if (await flow.parlourHold(db, nightId, n, now)) throw new NightError('invalid', flow.NOT_NOW)
+      if (n.act === 6) throw new NightError('invalid', flow.ACT6_OWN) // its own two, by themselves, and no more
       if (n.act === 4) return deal.dealWaitingGame(db, nightId, { now, act: 4 })
       await settleIfDue(db, nightId, now)
       return deal.openWindow(db, nightId, 'questions', { now, act: n.act }) // no beat: a fresh window every press

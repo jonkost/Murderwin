@@ -66,6 +66,7 @@ export async function parlourHold(db, nightId, night, now = Date.now()) {
 
 // The host's button refuses with one plain line.
 export const NOT_NOW = 'Not now. A Parlour Game opens in the cat visits, the Act 4 rounds and the two games of Act 6.'
+export const ACT6_OWN = 'Act 6 plays its own two games by itself, then the drawing starts.'
 
 // The schedule is closed: nothing in it opens again (the drawing has started, or Act 6's games are done).
 export function isClosed(sched) { return !!sched?.closed }

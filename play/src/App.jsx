@@ -11,6 +11,7 @@ import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
 import Allow from './screens/Allow'
 import { keepAwake } from './lib/permissions'
+import { useFreshness } from './lib/freshness'
 import { Questions, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { ResumeNight, StartNight } from './screens/Host'
@@ -40,6 +41,7 @@ export default function App() {
   // opens Clues or Motives while deciding (the Now pane unmounts), or a pause, comes back to the same step
   const [draft, setDraft] = useState(null)
   useTick(1000) // windows close on the server's clock; re-check once a second
+  useFreshness(() => ({ page: 'phone', night: night.data, session: session.data, relay: relay.data, now: serverNow() })) // a newer site: reload at a quiet moment (A5)
 
   // Notes are kept per night: a phone that rehearsed starts the party clean.
   useEffect(() => { setNotesNight(nightId) }, [nightId])
