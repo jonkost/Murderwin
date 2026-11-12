@@ -1673,7 +1673,7 @@ test('the big Start button (12 Nov 2026): one done card and two jobs for Jon, ne
   assert.equal(again.tasks.length, state.tasks.length, 'once only')
 })
 
-test('the workshop's Start button (12 Nov 2026, later): last; one done card, new numbers, plain; once only', () => {
+test('the Start button in the workshop (12 Nov 2026, later): last; one done card, new numbers, plain; once only', () => {
   const { before, add, newId } = boardThrough('2026-11-12-workshop')
   assert.equal(ADDITIONS.at(-1), add, 'the last migration')
   assert.ok(add.tasks === WORKSHOP_1112_TASKS && !add.retireTasks && !add.fileTasks && !add.decisions, 'new cards, nothing else')
