@@ -344,6 +344,7 @@ test('spill is off once the news is on the screen, once the study has paid out, 
     await hostCommand(db, { nightId, command: 'blackout', now, sleep: async () => {
       assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now }), { ok: true, did: false }, 'not in the dark')
     } })
+    await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now }) // the cat visits (A5)
     await hostCommand(db, { nightId, command: 'light-up', now })
     assert.deepEqual(await hostCommand(db, { nightId, command: 'spill', now: now + 1000 }), { ok: true, did: false })
   }
@@ -373,6 +374,7 @@ test('hush: that role\'s answers move no dial from then on; the other role still
   // a field name, not a substring: Dr. Paige Shushwell's name contains the letters "hush"
   for (const uid of [ghostUid, murdererUid]) assert.equal(/"(hush|hushed|hushedAt|exposure)"\s*:/.test(JSON.stringify(session(db, uid))), false, 'no phone carries a trace of it')
 
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now }) // the cat visits (A5)
   const w = await hostCommand(db, { nightId, command: 'light-up', now })
   await player.answer(db, { nightId, uid: ghostUid, windowId: w.id, picks: bestPicks(db, nightId, w.id, c.ghost), now: now + 1000 })
   assert.equal(caseOf(db, nightId).dial, 0, 'the hushed Ghost moved nothing')

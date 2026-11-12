@@ -76,6 +76,7 @@ test('G26 every question in the bank has exactly two answers, and every phone is
   const { nightId } = await createNight(db)
   for (let i = 0; i < 4; i++) await join(db, { uid: `u${i}`, nightId, name: `Guest ${i}` })
   await hostCommand(db, { nightId, command: 'act', arg: 2 })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat' }) // a Parlour Game opens only in the cat visits (A5)
   const { id } = await hostCommand(db, { nightId, command: 'light-up' })
   for (let i = 0; i < 4; i++) for (const b of db.store.get(`sessions/u${i}`).windows[id].beats) assert.deepEqual(b.choices.map(c => c.k), ['a', 'b'])
 })
@@ -198,7 +199,7 @@ test('F13 a Detective\'s answer warms the listening cat when it matches the lean
   for (let i = 0; i < 5; i++) await join(db, { uid: `u${i}`, nightId, name: `Guest ${i}` })
   let now = 4_000_000
   await hostCommand(db, { nightId, command: 'act', arg: 2, now })
-  await hostCommand(db, { nightId, command: 'next', now })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now }) // the cat visits: the games' own beat (A5)
   now = ms(db.store.get(parlourPath(nightId)).due0)
   await hostCommand(db, { nightId, command: 'tick', now })
   const w = db.store.get(`nights/${nightId}`).window

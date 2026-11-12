@@ -341,7 +341,7 @@ test('a pause freezes every clock and resume moves them all on by the pause leng
   for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob']]) await join(db, { uid, nightId, name })
   const t0 = 1_000_000
   await runCommand(db, { nightId, command: 'act', arg: 2, now: t0 })
-  await runCommand(db, { nightId, command: 'beat', arg: 'orient', now: t0 })
+  await runCommand(db, { nightId, command: 'beat', arg: 'cat', now: t0 }) // the cat visits: a Parlour Game opens only here (A5)
   await runCommand(db, { nightId, command: 'light-up', now: t0 })
   const night = () => db.store.get(`nights/${nightId}`)
   const due0 = msOf(db.store.get(`nights/${nightId}/private/parlour`).due0)

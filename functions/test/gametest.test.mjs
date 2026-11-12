@@ -395,8 +395,8 @@ test('night-act, night-beat and night-parlour move the live test night with the 
   assert.deepEqual(await gameTestRequest(db, admin({ command: 'night-act', act: 2, now: T0 })), { ok: true })
   assert.equal(liveNight(db).act, 2)
   assert.equal(liveNight(db).rehearsal, true, 'a throwaway case, dealt blind')
-  assert.deepEqual(await gameTestRequest(db, admin({ command: 'night-beat', beat: 'news', now: T0 + 1000 })), { ok: true })
-  assert.equal(liveNight(db).beat, 'news')
+  assert.deepEqual(await gameTestRequest(db, admin({ command: 'night-beat', beat: 'cat', now: T0 + 1000 })), { ok: true })
+  assert.equal(liveNight(db).beat, 'cat') // the cat visits: a Parlour Game opens only in its own beats (A5)
   assert.deepEqual(await gameTestRequest(db, admin({ command: 'night-parlour', now: T0 + 2000 })), { ok: true })
   assert.equal(liveNight(db).window.kind, 'questions', 'every phone lights up with a Parlour Game')
 

@@ -1,7 +1,7 @@
 {
   "_about": "The shape of the night: seven acts, each a list of beats the host steps through with one button. Structure only, no content. Both the phones (play/) and the Cloud Functions (functions/) read this file, so the host button, the server and every phone agree on what happens next. Added 13 Oct 2026. A beat may name a screen (what the Parlour TV shows: news, bulletin, irwin, door, talk, vote) and a sound (an id from functions/lib/screen.js SOUND_IDS, played once per beat; soundOnce skips it when that sound was the last one played). Added 18 Oct 2026. Updated 24 Oct 2026 (docs/handoff-2026-10-23.md): Act 2 adds the bag peek and ends with supper; Act 4 is four game rooms on a ten-minute clock (act4). Updated 25 Oct 2026 to Jon's cue list (docs/cue-list.md, docs/handoff-2026-10-25.md): Act 1 gains the house rules and shows the join code on the Parlour TV throughout (screen join); Act 3 ends with the dinner wrap-up (the motives prompt, the join code again); Act 5's cake beat chimes the phones and ends with the motives update; Act 6's games beat carries the break notice; Act 7 ends with The End (action end: nights/{id}.over, the screens black). Updated 11 Nov 2026 (docs/handoff-2026-11-11-polish.md, A6): Act 6 ends with Talk it over (a notice, no window: nothing else comes after the door), and the vote is one card that closes when the last seat locks in.",
   "parlour": {
-    "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game an act runs out of time for carries into the next act; one Act 6 cannot fit is not played. Act 6 (atStart) plays its games back to back as the act opens, startGapSec apart, before the drawing (22 Oct). actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.",
+    "_about": "The Parlour Games pop up on their own, twelve a night in Acts 2, 4 and 6 (counts: how many are planned in each), at random times rolled from the case seed (docs/parlour-games.md, 21 Oct 2026). The twelve are one budget for the night (Jon, 22 Oct): a game Act 2 runs out of time for carries into Act 4. A game opens only in its own beats (beats: Act 2's cat visits, Act 4's rounds, Act 6's games); one that falls due in any other beat waits (A5, 12 Nov 2026). Act 6 (atStart) plays its own two and no more, back to back as the act opens, startGapSec apart: nothing carries into it, and once the last has closed the drawing starts by itself. When the drawing starts every game still unplayed is dropped for good. actMinutes is how long each act is planned to run; none pops up in the first or last edgeMin minutes, and two are at least minGapMin apart. Jon may change any of these.",
     "counts": {
       "2": 5,
       "4": 5,
@@ -17,7 +17,12 @@
     "atStart": [
       6
     ],
-    "startGapSec": 90
+    "startGapSec": 90,
+    "beats": {
+      "2": ["cat"],
+      "4": ["round1", "round2", "round3", "round4", "round5"],
+      "6": ["games"]
+    }
   },
   "solving": {
     "_about": "How the case gets solved (docs/solving-the-case.md; docs/handoff-2026-10-23.md §3, 23 Oct 2026). W-O-O-F News bulletin 1 rules out exactly one wrong motive family for everyone. Each guest is given two of the other wrong families; every guest visits all four cats and EVERY cat gives a motive hint about one of those two and a bag clue about the Murderer, at the rung its affection sets at the scan. One guest at a cat at a time; a guest called to a cat who has not scanned in goMinutes, or is still with the cat after withMinutes, gets the cat's lines on the phone anyway and the next guest is called. 'Not yet, call me later' puts a guest back in the queue and they are not called again for laterMinutes. Jon may change any of these.",

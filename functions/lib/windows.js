@@ -20,6 +20,7 @@ import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
 import { PARLOUR_ACTS, carriedTimes, gapMsFor } from './parlour.js'
 import { isHushed } from './ledger.js'
+import { parlourHold, isClosed } from './flow.js'
 
 // A phone that taps inside the grace after closesAt is still heard; after
 // that the server's default has fired and the tap is a late one.
@@ -74,9 +75,10 @@ export async function startParlour(db, nightId, act, { now = Date.now() } = {}) 
   const caseSnap = await db.doc(`cases/${nightId}`).get()
   const planned = caseSnap.exists ? caseSnap.data().parlourPlan : null
   const own = (planned?.acts?.[act] ?? []).map((p, slot) => ({ act: Number(act), slot, atMs: Number(p.atMs) || 0 }))
-  // the games the act before ran out of time for come along, first in line
+  // the games the act before ran out of time for come along, first in line; never into Act 6, which plays
+  // its own two and no more (A5, 12 Nov 2026): what Act 4 left is dropped there
   let carried = []
-  if (prev && PARLOUR_ACTS.includes(Number(prev.act)) && Number(prev.act) < Number(act)) {
+  if (!playsAtStart(act) && prev && PARLOUR_ACTS.includes(Number(prev.act)) && Number(prev.act) < Number(act)) {
     const was = Array.isArray(prev.slots) ? prev.slots : Array.from({ length: prev.count ?? 0 }, (_, slot) => ({ act: prev.act, slot }))
     carried = was.filter((_, i) => !prev.fired?.[i]).map(e => ({ act: Number(e.act), slot: Number(e.slot) }))
   }
@@ -98,7 +100,7 @@ export function playsAtStart(act) {
 
 // Which game, if any, is due now. Pure, for the tick and the tests.
 export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {}) {
-  if (!sched) return null
+  if (!sched || isClosed(sched)) return null // the drawing has started: nothing opens again (A5)
   for (let i = 0; i < (sched.count ?? 0); i++) {
     if (sched.fired?.[i]) continue
     if (now < ms(sched[`due${i}`])) return null
@@ -109,20 +111,20 @@ export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {})
 }
 
 export async function tickParlour(db, nightId, now) {
-  const night = (await db.doc(`nights/${nightId}`).get()).data()
+  const nightRef = db.doc(`nights/${nightId}`)
+  const night = (await nightRef.get()).data()
   if (!night || night.phase !== 'act' || !PARLOUR_ACTS.includes(Number(night.act))) return { opened: false }
-  // ---- A6's guard (handoff 11 Nov 2026, the ending), for A5 (the flow) to absorb into its own rule ----
-  // No Parlour Game opens over Talk it over, Act 6's last beat: the host's Start the vote must never be
-  // refused because a game popped up while people were talking. The vote, the reveal and the credits
-  // are Act 7, which is not a Parlour act, so the line above already keeps games out of them.
-  if (beatSpec(night.act, night.beat)?.action === 'notice:talk') return { opened: false, reason: 'talk' }
-  // ---- end of A6's guard ----
+  // A5 (12 Nov 2026): only in the games' own beats, never over a bulletin, Sir Irwin, the drawing, the door,
+  // Talk it over, the vote, the reveal or the credits (flow.js). A game due anywhere else waits.
+  const hold = await parlourHold(db, nightId, night, now)
+  if (hold) return { opened: false, reason: hold }
   if (night.window && !night.window.settled) return { opened: false, reason: 'window-open' }
-  const relay = (await db.doc(`nights/${nightId}/public/relay`).get()).data()
-  if (relay && RUNNING.includes(relay.state)) return { opened: false, reason: 'drawing' }
   const ref = db.doc(parlourPath(nightId))
-  // claim the slot in one transaction, so two ticks in the same second open it once
+  // claim the slot in one transaction, so two ticks in the same second open it once; the night is read
+  // inside it too, so a Next that lands meanwhile sends the claim round again and the new beat decides
   const slot = await db.runTransaction(async tx => {
+    const cur = (await tx.get(nightRef)).data()
+    if (!cur || cur.phase !== 'act' || Number(cur.act) !== Number(night.act) || cur.beat !== night.beat || (cur.window && !cur.window.settled)) return null
     const snap = await tx.get(ref)
     const sched = snap.exists ? snap.data() : null
     if (!sched || sched.act !== Number(night.act)) return null
