@@ -143,7 +143,6 @@ export function JoinScreen({ screen, loop = 'living' }) {
         {qr && <img className="code-qr" src={qr} alt="the code to join" />}
         <p className="join-title">{screen?.title ?? 'Scan to join'}</p>
         {(screen?.lines ?? []).map((l, i) => <p key={i} className="kiosk-line join-line">{l}</p>)}
-        {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
       </div>
     </div>
   )
@@ -185,7 +184,6 @@ export function BirthdayScreen({ screen }) {
       <Picture src={src} className="birthday-irwin" />
       <p className="birthday-title">{screen?.title ?? 'Happy Birthday, Sir Irwin!'}</p>
       {(screen?.lines ?? []).map((l, i) => <p key={i} className="kiosk-line">{l}</p>)}
-      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -297,7 +295,6 @@ export function Prompts({ screen, serverNow }) {
       <img className="prompts-irwin" src={`${BASE}household/full/${encodeURIComponent('Irwin 5.png')}`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
       <p className="kiosk-crest">{screen?.title || 'Sir Irwin has ideas'}</p>
       <p className="kiosk-big prompt-line" key={line}><Spoken text={line} /></p>
-      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }

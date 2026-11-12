@@ -3,9 +3,11 @@
 // Functions (index.js) and the terminal host script (scripts/host.mjs).
 //
 // SEAL RULE: nothing in this file reads sealed/* or cases/*, with two
-// narrow exceptions. createNight reads sealed/bags on every night, rehearsals
-// included, for the highest bag number only (packedBagCount), so every
-// guest's bag number is a real one; no item ever leaves that function. And a
+// narrow exceptions. createNight reads sealed/bags on the party night only
+// (and its dry run), for the highest bag number only (packedBagCount), so
+// every guest's bag number is a real one; no item ever leaves that function.
+// A practice night never reads it (handoff 11 Nov 2026, job A3): it deals
+// PLANNING_BAGS numbers, one for each bag of the practice packing. And a
 // guest who joins after the power has returned is handed to deal.dealRoleTo
 // (loaded at call time, never at import), which adds them to the case as a
 // detective and deals their role card. Nothing from the case comes back
@@ -177,10 +179,12 @@ export async function createNight(db, { label, forceRehearsal, dryRun = false, g
   const date = new Date()
   const nightId = `${date.toISOString().slice(0, 10).replace(/-/g, '')}-${randomBytes(2).toString('hex')}`
   const pool = CHARACTERS.filter(c => !c.host).map(c => c.id)
-  // Bag numbers come from the packing when one exists (sealed/bags, read here
-  // with the Admin SDK; only the count is used, never an item), so every
-  // guest's bag is a real one. With no packing yet, fourteen numbers, one per character.
-  const bagCount = await packedBagCount(db) ?? Math.max(PLANNING_BAGS, 14)
+  // On the party night bag numbers come from the packing when one exists
+  // (sealed/bags, read here with the Admin SDK; only the count is used, never
+  // an item), so every guest's bag is a real one. With no packing yet,
+  // fourteen numbers, one per character. A practice night reads nothing
+  // sealed: ten numbers, the bags of its own practice packing (bags.js).
+  const bagCount = forceRehearsal ? PLANNING_BAGS : (await packedBagCount(db)) ?? Math.max(PLANNING_BAGS, 14)
   const batch = db.batch()
   batch.set(db.doc(`nights/${nightId}`), {
     nightId,

@@ -44,9 +44,9 @@ import { randomInt } from 'node:crypto'
 import { NightError, MOTIVES, CHARACTERS, characterById, readArea, GAME_NAMES } from './night.js'
 import { NIGHT, guests, dealCard, labelled, readCase, ensureCase, ms, CAT_NAMES, FREE_TIME_TIPS } from './deal.js'
 import { makeGroups, rotationPath, studyPath, finishStudy } from './station.js'
-import { readPacking } from './bags.js'
+import { packingFor } from './bags.js'
 import { nightSeed, pickFor } from './seed.js'
-import { bagPlan, bagLine, bagStandIn, CAT_SHORT } from './bagclues.js'
+import { bagPlan, bagLine } from './bagclues.js'
 import { memoryPick } from './families.js'
 import { noteDealt } from './ledger.js'
 import { stopOf } from './parlour.js'
@@ -111,8 +111,11 @@ export const REWARD_LINES = {
 export const ARCADE_THIRD_LINE = "Didn't I give you enough? Now be off! I'm done playing games." // play/src/lib/arcade.js THIRD_LINE; a test keeps them equal
 // How many of a group get a clue at the arcade: the first two in the group's order; a trio's third gets the line
 export const ARCADE_CLUES = 2
-// On a rehearsal night the cross-off is a stand-in too (Jon, 23 Oct 2026).
-export function crossStandIn() { return "[Zimothy's cross-off appears here: one wrong motive]" }
+// A reward line with no motive to cross off (a case with no solving plan; it should never happen):
+// the sentence that would have named one is left out, so no blank is ever read aloud.
+export function withoutCross(said) {
+  return String(said ?? '').match(/[^.!?]+[.!?]+/g)?.filter(x => !x.includes('[RHYME]')).join('').trim() || String(said ?? '').replace(/\s*\[RHYME\]/g, '').trim()
+}
 
 function shuffled(list, pick = randomInt) {
   const a = [...list]
@@ -431,31 +434,30 @@ async function rewardOf(db, nightId, gid, room, { outcome = 'done' } = {}) {
   const rung = Number.isFinite(had) ? had : await groupRung(db, uids, cat)
   const salt = c?.screenSalt ?? nightId
   const ui = labelled(await readArea(db, 'ui_copy'))
-  // the bag hint about the Ghost: from the packing on the party night, a stand-in on a rehearsal
-  let bag
-  if (!c || c.rehearsal) bag = { text: bagStandIn(cat, 4), placeholder: true }
-  else {
-    const packing = await readPacking(db)
-    const inPlay = [...new Set(Object.values(night.roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
-    const plan = bagPlan(packing, { bag: night.roster?.[c.ghost]?.bag, inPlay, seed: `${salt}\u0000bag4\u0000${gid}` })
-    const fill = bagLine(plan, { cat, act: 4, rung, seed: `${salt}\u0000bag4\u0000${gid}\u0000${cat}` })
-    bag = { text: fill.text, placeholder: false }
-    await db.doc(`cases/${nightId}`).update({ [`bagClues.act4.${gid}.${cat}`]: { rung, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null } })
-  }
-  // the cross-off (Zimothy's match): always paid, whatever the affection. The Entryway crosses
-  // nothing off (Jon, 29 Oct 2026): the arcade pays a clue about the Ghost, no motive
+  // the bag hint about the Ghost, from the night's packing on every night (bags.js packingFor decides
+  // which: the sealed one on the party night only, never on a practice night). With no packing for
+  // that bag the cat says its own line with no clue word in it (bagclues.bagLine). What it named is
+  // kept in the case, so the rung, and with it the words, stay as they were first worked out
+  const packing = await packingFor(db, c)
+  const inPlay = [...new Set(Object.values(night.roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
+  const plan = c ? bagPlan(packing, { bag: night.roster?.[c.ghost]?.bag, inPlay, seed: `${salt}\u0000bag4\u0000${gid}` }) : null
+  const fill = bagLine(plan, { cat, act: 4, rung, seed: `${salt}\u0000bag4\u0000${gid}\u0000${cat}` })
+  const bag = { text: fill.text, placeholder: false }
+  if (c) await db.doc(`cases/${nightId}`).update({ [`bagClues.act4.${gid}.${cat}`]: { rung, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null } })
+  // the cross-off (Zimothy's match): always paid, whatever the affection, on a practice night as on
+  // the party night (11 Nov 2026). The Entryway crosses nothing off (Jon, 29 Oct 2026): the arcade pays a
+  // clue about the Ghost, no motive
   let cross = null
   if (room === 'library') cross = await crossOff(db, nightId, gid, 'memory', members)
   const said = ui[`REWARD ${room.toUpperCase()} ${outcome === 'done' ? 'DONE' : 'CAPPED'}`] ?? REWARD_LINES[room][outcome === 'done' ? 'done' : 'capped']
   const rhyme = cross ? MOTIVES.find(m => m.n === cross)?.rhyme ?? '' : ''
-  const rehearsal = !c || !!c.rehearsal
   const text = said.includes('[RHYME]')
-    ? (rehearsal ? said.replace(/strike \[RHYME\][^.]*\./i, crossStandIn(room)) : said.replace(/\[RHYME\]/g, `number ${cross}, “${rhyme}”`))
+    ? (cross ? said.replace(/\[RHYME\]/g, `number ${cross}, “${rhyme}”`) : withoutCross(said))
     : said
   const base = {
     id: `4-room-${room}-${gid}`, act: 4, beat: night.act === 4 ? night.beat : 'rooms', kind: 'clue', room, cat, catName: CAT_NAMES[cat],
-    title: `From ${ROOMS[room].name}`, placeholder: rehearsal,
-    ...(cross && !rehearsal ? { cross } : {}),
+    title: `From ${ROOMS[room].name}`, placeholder: false,
+    ...(cross ? { cross } : {}),
   }
   const third = ui['REWARD ENTRYWAY THIRD'] ?? ARCADE_THIRD_LINE
   const cardFor = place => (room === 'entryway' && place >= ARCADE_CLUES ? { ...base, text: third, third: true } : { ...base, text, bag })

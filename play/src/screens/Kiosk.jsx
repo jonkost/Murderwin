@@ -61,10 +61,10 @@ import Spoken from './Spoken'
 // them ever covers the content, and none of them shows while the room is
 // dark, the bell ringing or not (styles.css hides all three beside a
 // near-black screen: the blackout, the role cards, the pause card, The End):
-// a kiosk that reloads during the blackout stays near-black. On a rehearsal
-// night a red REHEARSAL band runs across the top of every room screen (never
-// on the party night, never in the blackout, the role cards or The End; it
-// stays over the pause card, as it does on the phones through a pause).
+// a kiosk that reloads during the blackout stays near-black. No room screen
+// says which kind of night it is (11 Nov 2026): the red REHEARSAL band went
+// first, then the small word Rehearsal under the TV's screens, since a
+// practice night now shows real lines. The Host tab says which night it is.
 
 const DECOR_ROOM = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('room')
 
@@ -316,7 +316,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
       </div>
     )
   }
-  if (view === 'captions') return <Captions captions={captionsOf(screen)} rehearsal={screen?.rehearsal} />
+  if (view === 'captions') return <Captions captions={captionsOf(screen)} />
   if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
@@ -444,7 +444,6 @@ export function ScreenCard({ screen }) {
         : <div className="kiosk-lines">
             {text.map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>}
-      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -474,7 +473,7 @@ export function IrwinFace({ mood }) {
 export { MemoryRounds as MemoryMatch } from './Rooms'
 
 // The iPad's view: the words of the last news, bulletin or Irwin, kept up.
-export function Captions({ captions, rehearsal = false }) {
+export function Captions({ captions }) {
   if (!captions) return <Idle title="Sirwin Manor" line="Nothing to read yet." loop="memory" />
   return (
     <div className={`kiosk captions ${captions.kind ?? ''}`}>
@@ -482,7 +481,6 @@ export function Captions({ captions, rehearsal = false }) {
       <div className="kiosk-lines">
         {(captions.lines ?? []).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
       </div>
-      {rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -636,16 +634,10 @@ export function Bedroom({ relay, trace }) {
 // 4 just the picture · 5 the picture and its name          (Jon, 22 Oct 2026)
 // The doc carries only what the level allows (any phone can read it): one
 // picture, or at level 3 two pictures in no particular order, and the name
-// only at level 5.
+// only at level 5. A practice night shows the picture too, from its own
+// throwaway case (11 Nov 2026): no note in brackets, no Rehearsal word.
 export function TraceView({ trace, compact = false }) {
   const level = Math.max(1, Math.min(5, Number(trace?.level) || 3))
-  // a rehearsal night: the slot says what would show, never the picture (Jon, 23 Oct 2026)
-  if (trace?.standIn) return (
-    <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
-      <p className="kiosk-big trace-standin">{trace.standIn}</p>
-      {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
-    </div>
-  )
   const base = import.meta.env.BASE_URL
   const src = (id) => `${base}traces/${id}.png`
   const images = level === 3 ? (trace.images ?? []) : trace.trace ? [trace.trace] : []
@@ -661,7 +653,6 @@ export function TraceView({ trace, compact = false }) {
       {level === 5 && trace.label && <p className="trace-label">{trace.label}</p>}
       {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
       {level < 5 && <p className="kiosk-next">{level === 3 ? 'Something was left behind. One of these two.' : 'Something was left behind.'}</p>}
-      {trace.placeholder && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -695,8 +686,9 @@ export function Finale({ night, finale, content = null, serverNow }) {
   const filmRang = useRef(null)
   const stage = finaleStage(finale, now)
   // the host's hold freezes the screen on every night; the word "Held" is for the host, so it shows only on a
-  // rehearsal, like the Rehearsal tag (Jon, 29 Oct 2026: no setup words in front of the guests). On the party
-  // night the Host tab's reveal panel says the screen is held.
+  // practice night (Jon, 29 Oct 2026: no setup words in front of the guests). On the party night the Host
+  // tab's reveal panel says the screen is held. The small word Rehearsal that sat under these screens is gone
+  // (11 Nov 2026: a practice night shows real lines and looks like the party night; the Host tab says which it is).
   const held = !!finale.holdAt
   if (stage === 'stats' || stage === 'awards') return (
     <div className={`kiosk finale ${stage}`}>
@@ -780,7 +772,6 @@ export function Finale({ night, finale, content = null, serverNow }) {
       )}
       {stage !== 'done' && rv.captions.map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
-      {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
       {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
   )

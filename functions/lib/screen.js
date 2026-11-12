@@ -65,16 +65,17 @@ export const MAX_IRWIN_WORDS = 12
 // Safe defaults, used only when the workshop list is empty.
 export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something to say.', closer: 'That is everything. I am a good boy.' }
 // Bulletin 1's lines are the open W-O-O-F News bank (seed/woof-news.json).
-// This stand-in shows only for a case with no family to cross off, such as a
-// rehearsal. On the party night (card 530, 5 Nov 2026) it never shows: the
-// plain words below take its place, and the Host tab is told (noteMissingLine
-// 'news'); the check G61 proves every stand-in case has its line.
+// A practice night plays both bulletins whole and shows Sir Irwin's real cards,
+// from that night's own throwaway case (Jon, 11 Nov 2026; the bracketed
+// stand-ins of 23 Oct are gone).
+// A case with no family for the news to cross off never shows a note about
+// the game (card 530, 5 Nov 2026), on the party night or on a practice night:
+// the plain words NEWS_QUIET take the line's place, and the Host tab is told
+// (noteMissingLine 'news'); the check G61 proves every stand-in case has its
+// line. The house's note, NEWS_FLASH_PLACEHOLDER, is only for no case at all,
+// which cannot happen on a night.
 export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
 export const NEWS_QUIET = 'W-O-O-F News has nothing more on that just now.'
-// On a rehearsal night every sealed slot is a bracketed stand-in (Jon, 23 Oct 2026).
-export const NEWS_STAND_IN = "[W-O-O-F News crosses off one family of motives here]"
-export const BULLETIN2_STAND_IN = level => `[W-O-O-F News hints at the real family here, plainness ${level} of 5]`
-export const IRWIN_STAND_IN = count => `[Sir Irwin's ${count} motive card${count === 1 ? '' : 's'} appear here]`
 // The Act 4 title card on the Parlour TV (§9.5).
 export const ACT4_TITLE = { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' }
 // Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
@@ -328,30 +329,31 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     const rehearsal = c?.rehearsal !== false
     const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js); on a
-      // rehearsal the family's line is a bracketed stand-in. As video on the Parlour TV (23 Oct).
+      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js): the opening,
+      // the family's own line and the sign-off, with all three recordings, on a practice night as on
+      // the party night (11 Nov 2026). As video on the Parlour TV (23 Oct).
       const b = bulletin1(c)
-      // a rehearsal plays the opening and the sign-off only: the family's recording is a sealed slot too
-      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
+      clips = b.clips
       video = await bulletinVideo(db)
-      // no family to cross off (it should never happen, G61): a rehearsal shows the house's note, the party night plain words, and the Host tab is told (card 530)
-      const lines = rehearsal && !b.placeholder ? [b.lines[0], NEWS_STAND_IN, ...b.lines.slice(2)]
-        : b.placeholder ? [...b.lines.slice(0, 1), rehearsal ? NEWS_FLASH_PLACEHOLDER : NEWS_QUIET, ...b.lines.slice(1)] : b.lines
-      if (b.placeholder && !rehearsal) await noteMissingLine(db, nightId, 'news')
+      // no family to cross off (it should never happen, G61): plain words on the party night and on a practice
+      // night alike, and the Host tab is told (card 530); the house's note only when there is no case at all
+      const lines = b.placeholder ? [...b.lines.slice(0, 1), c ? NEWS_QUIET : NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines
+      if (b.placeholder && c) await noteMissingLine(db, nightId, 'news')
       // `video: true` only: the TV works out each part's file from the open bank by its words, so no
       // recording's name ever goes on a public doc (a clip id names a family; news.js)
       doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) }, video: video ? true : null })
     } else if (kind === 'bulletin') {
+      // bulletin 2: the real family's own line at the dial's level, and its recording, on every night
       const b = bulletin2(c, dialBand(c?.dial))
-      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
-      const lines = rehearsal && !b.placeholder ? [b.lines[0], BULLETIN2_STAND_IN(b.level), ...b.lines.slice(2)] : b.lines
+      clips = b.clips
+      const lines = b.lines
       doc = screenDoc('bulletin', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)
       const clue = irwinMotiveClue(c, { seed, ui: labelled(await linesOf(db, nightId, 'ui_copy')) })
       const lines = irwinLines({ ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
-      // on a rehearsal the cards are one bracketed stand-in that says how many would show
-      const choices = rehearsal && clue.choices.length ? [{ n: 0, rhyme: IRWIN_STAND_IN(clue.choices.length) }] : clue.choices
+      // his motive cards, the real one among them, on every night
+      const choices = clue.choices
       const said = [...lines.slice(0, -1), ...choices.map(x => (x.n ? `${x.n}. ${x.rhyme}` : x.rhyme)), ...lines.slice(-1)]
       doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
       if (run) await db.doc(`nights/${nightId}/private/dialClues`).set({ irwin: clue.mood }, { merge: true }) // for the end credits

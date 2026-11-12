@@ -94,7 +94,7 @@ export function runCaseGroup({ count = 1000, seeds = null } = {}) {
 export async function runDryGroup() {
   const { FakeFirestore } = await import('../functions/test/fake-firestore.mjs')
   const summary = await fakeNight({ db: new FakeFirestore(), log: () => {} })
-  const failed = summary.ok ? [] : [...summary.checks, ...summary.seal.failed.slice(0, 5)].map(id => ({ id: String(id).split(':')[0], name: CHECK_NAMES[id] ?? 'The fake night', seed: 'fake night' }))
+  const failed = summary.ok ? [] : [...summary.checks, ...summary.seal.failed.slice(0, 5)].map(id => ({ id: String(id).split(':')[0], name: CHECK_NAMES[String(id).split(':')[0]] ?? 'The fake night', seed: 'fake night' }))
   if (!summary.ok && !failed.length) failed.push({ id: 'DRY', name: summary.error ? 'The fake night stopped' : 'The fake night', seed: 'fake night' })
   return { passed: summary.ok ? 1 : 0, total: 1, failed }
 }

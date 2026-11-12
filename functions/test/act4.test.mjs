@@ -8,7 +8,7 @@ import { FREE_TIME_TIPS, lightsProgressOf, lightsPath, ms } from '../lib/deal.js
 import {
   ACT4_TEXT, DIRECTIONS, ROOMS, ROOM_KEYS, PARLOUR, roomFor, readRotation, act4Path, salemPath, booPath, memoryPath, parlourTip,
   salemFlips, salemColourAt, SALEM_CLEAN_MS, SALEM_LEAD_MS, SALEM_ROUNDS, SALEM_MAX_SLIPS, SALEM_SEGMENTS, SALEM_GRACE_MS, ROUND_MS, ARCADE_THIRD_LINE, ARCADE_CLUES,
-  addPairsBy, plusOne, markAt, PLACES_MAX,
+  addPairsBy, plusOne, markAt, PLACES_MAX, REWARD_LINES, withoutCross,
 } from '../lib/act4.js'
 import { rehearsalCase } from '../lib/case.js'
 import { ABSENT_SLOT_MS } from '../lib/station.js'
@@ -16,7 +16,8 @@ import { ABSENT_SLOT_MS } from '../lib/station.js'
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9):
 // the warning, the group cards, four game rooms on a fifteen-minute clock, the
 // rewards. Every case is the dealer's throwaway case in a fake Firestore,
-// made and dropped here; the packing is a bracketed stand-in. Nothing is printed.
+// made and dropped here; the packing at sealed/bags is a bracketed stand-in,
+// read on the party nights here and never on a practice night. Nothing is printed.
 
 const NAMES = ['Jon', 'Jessa', 'Jacob', 'Marie', 'Pat', 'Sam', 'Lee', 'Ana', 'Rene', 'Lou']
 
@@ -184,18 +185,48 @@ test('G48 Boo speaks to every group in Act 4 at any affection, and every room\'s
   }
 })
 
-test('F28 a rehearsal: the rooms pay bracketed stand-ins for the cross-off and the bag hint, never a motive', async () => {
+test('F28 a practice night: the rooms pay for real, Zimothy\'s cross-off with its rhyme and a bag hint about the Ghost with no blank and no bracket, and the packing is never read', async () => {
   const { db, nightId, now } = await party(6)
+  const reads = []
+  const get = db._get.bind(db)
+  db._get = path => { reads.push(path); return get(path) }
   const rot = await intoRounds(db, nightId, now)
   for (let r = 1; r <= rot.rounds; r++) await host(db, nightId, 'next', now)
+  const c = db.store.get(`cases/${nightId}`)
+  assert.equal(c.rehearsal, true)
   for (const g of rot.groups) {
-    for (const x of cardsOf(db, uidOf(db, nightId, g.members[0].key), 'clue').filter(y => y.room)) {
-      assert.equal(x.placeholder, true)
-      assert.equal(x.cross, undefined)
-      assert.match(x.bag.text, /bag clue about the Ghost appears here\]$/)
-      if (x.room === 'library') assert.match(x.text, /cross-off appears here/)
+    for (const m of g.members) {
+      const rooms = cardsOf(db, uidOf(db, nightId, m.key), 'clue').filter(y => y.room)
+      assert.deepEqual(rooms.map(x => x.room).sort(), [...ROOM_KEYS].sort(), 'all four rooms paid')
+      for (const x of rooms) {
+        assert.equal(x.placeholder, false)
+        assert.ok(x.bag.text.length > 10 && x.bag.placeholder === false, 'a bag hint about the Ghost')
+        assert.ok(!/___|\[|\]/.test(x.text + x.bag.text), `no blank and no bracket (${x.room}: ${x.text.length} and ${x.bag.text.length})`)
+        if (x.room === 'library') {
+          assert.ok(MOTIVES.some(mm => mm.n === x.cross), 'one wrong motive crossed off, for real')
+          assert.notEqual(x.cross, c.motive, 'never the real one (G51)')
+          assert.equal(x.cross, c.solving.memory[g.id], 'the one the case picked for this group')
+          assert.ok(x.text.includes(`number ${x.cross}, “${MOTIVES.find(mm => mm.n === x.cross).rhyme}”`), 'Zimothy names it')
+        } else assert.equal(x.cross, undefined, 'only the Library crosses a motive off')
+      }
     }
+    for (const cat of ['granolia', 'zimothy', 'salem', 'boo']) assert.ok(c.bagClues.act4[g.id][cat], 'the case records what each bag hint named, on a practice night too')
   }
+  assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), [], 'a practice night never reads sealed/bags, though one sits in the database')
+})
+
+test('a reward line with no motive to cross off leaves out the sentence that would have named one', () => {
+  for (const said of Object.values(REWARD_LINES.library)) {
+    const out = withoutCross(said)
+    assert.ok(out.length > 10 && !/\[|\]|strike|it was not that/i.test(out), 'no blank, and nothing about striking a motive')
+    assert.ok(said.startsWith(out.split('. ')[0]), 'the cat\'s own opening words stay')
+  }
+  assert.equal(withoutCross(REWARD_LINES.library.done), 'Order. Restored. Invoice to follow.')
+  assert.equal(withoutCross(REWARD_LINES.library.capped), 'Time, and my patience, are billable. Leave the files.')
+  // a workshop line that is one sentence, or has no full stop at all, still loses the blank
+  assert.equal(withoutCross('Strike [RHYME] from your list.'), 'Strike from your list.')
+  assert.equal(withoutCross('Strike [RHYME] from your list'), 'Strike from your list')
+  assert.equal(withoutCross('Well done.'), 'Well done.')
 })
 
 test('Salem\'s Motion Game: red means go, green means freeze; a slip restarts the round; thirty seconds clean passes; three rounds pay Salem', async () => {

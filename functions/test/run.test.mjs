@@ -105,8 +105,11 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     for (const t of all) {
       assert.equal(t.outcome, undefined, 'no pass, no partial, no brush-off, no greeting-only cat')
       assert.deepEqual(t.lines, [], 'the cat says only its hint and its bag clue')
-      assert.match(t.hint?.text ?? '', /^\[(Granolia|Zimothy|Boo|Salem)'s motive hint appears here\]$/, 'a rehearsal: the motive hint is a bracketed stand-in')
-      assert.match(t.bag?.text ?? '', /^\[(Granolia|Zimothy|Boo|Salem)'s bag clue about the Murderer appears here\]$/, 'and so is the bag clue')
+      // a practice night plays for real (11 Nov 2026): the cat's own hint line and bag clue, never a note in brackets
+      assert.ok(t.hint?.text?.length > 10 && t.hint.placeholder === false && !t.hint.none, 'a practice night: the motive hint is a real line')
+      assert.ok(t.bag?.text?.length > 10 && t.bag.placeholder === false, 'and so is the bag clue')
+      assert.ok(!/___|\[|\]/.test(t.hint.text + t.bag.text), 'no blank and no bracket in either')
+      assert.equal(t.placeholder, false)
       if (t.cat === 'granolia') assert.equal(t.room, 'the Study')
     }
     assert.equal(session(db, uid).lights.step, 'done')
@@ -200,8 +203,11 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     const rooms = cards(db, uid, 'clue').filter(x => x.room)
     assert.deepEqual(rooms.map(x => x.room).sort(), [...ROOM_KEYS].sort(), 'every room paid its reward at the chime')
     for (const x of rooms) {
-      assert.match(x.bag.text, /bag clue about the Ghost appears here\]$/, 'a rehearsal: the Ghost bag hint is a stand-in')
-      assert.equal(x.cross, undefined, 'and no motive is crossed off for real')
+      // a practice night plays for real (11 Nov 2026): a real bag hint about the Ghost, and Zimothy's real cross-off
+      assert.equal(x.placeholder, false)
+      assert.ok(x.bag.text.length > 10 && x.bag.placeholder === false && !/___|\[|\]/.test(x.text + x.bag.text), 'a practice night: the Ghost bag hint is a real line')
+      if (x.room === 'library') assert.ok(MOTIVES.some(m => m.n === x.cross) && x.cross !== db.store.get(`cases/${nightId}`).motive, 'Zimothy crosses off a wrong motive')
+      else assert.equal(x.cross, undefined, 'only the Library crosses a motive off')
     }
     assert.ok(cards(db, uid, 'clue').some(x => x.id.endsWith('study-clue')), 'the study paid out its trace slot')
   }

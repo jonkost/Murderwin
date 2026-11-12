@@ -138,12 +138,22 @@ test('BK-11 each name card cuts in only after its lead-in has played; the words 
   assert.ok(kiosk.includes('filmRang.current !== filmKey'))
 })
 
-test('F31 Held shows on the Parlour TV only on a rehearsal, like the Rehearsal tag; on the party night the Host tab says so (Jon, 29 Oct 2026)', () => {
+test('F31 Held shows on the Parlour TV only on a practice night; on the party night the Host tab says so (Jon, 29 Oct 2026). The small word Rehearsal is on no room screen (11 Nov 2026)', () => {
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   const finale = kiosk.slice(kiosk.indexOf('export function Finale('), kiosk.indexOf('// The calculating bar'))
   assert.equal((finale.match(/<p className="kiosk-next">Held<\/p>/g) ?? []).length, 3, 'the counting, the graph slot and the reveal')
   assert.equal((finale.match(/\{held && finale\.rehearsal && <p className="kiosk-next">Held<\/p>\}/g) ?? []).length, 3, 'every one behind the rehearsal test')
-  assert.ok(finale.includes('{finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}'), 'the same test as the Rehearsal tag')
+  // a practice night shows real lines and looks like the party night (handoff 11 Nov 2026, job A3): the
+  // word Rehearsal that sat under the TV's screens is gone from every room screen, and so is the trace's
+  // note in brackets. The Host tab says which night it is.
+  const rooms = readFileSync(new URL('../src/screens/Rooms.jsx', import.meta.url), 'utf8')
+  for (const [name, text] of [['Kiosk.jsx', kiosk], ['Rooms.jsx', rooms]]) {
+    assert.ok(!/>\s*Rehearsal\s*</.test(text), `${name} draws no Rehearsal word`)
+    assert.ok(!/screen\??\.rehearsal|trace\??\.placeholder|trace\??\.standIn/.test(text), `${name} reads no rehearsal flag off a screen or a trace`)
+  }
+  assert.ok(!readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8').includes('trace-standin'))
+  const hostTab = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(hostTab.includes("isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'"), 'the Host tab still says which night it is')
   // the hold itself still stops the screen on every night
   assert.ok(kiosk.includes("animationPlayState: finale.holdAt ? 'paused' : 'running'"), 'the bar and the credits stand still')
   // and the host still knows: the Host tab's reveal panel says so and offers Carry on
