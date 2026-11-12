@@ -25,13 +25,14 @@ const BASE = 'https://murderwin-at-sirwin-manor.web.app/play/'
 
 test('seven sections in the order of the night, each named, filed under a real moment, with three to five steps', () => {
   // Miss Boo LaRue's Arcade is the Entryway's game (on the night since 5 Nov 2026)
-  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'arcade', 'parlour', 'drawing', 'deduction'])
+  // the last section is the ending since 11 Nov 2026: Talk it over and the vote, where a round after the door used to be
+  assert.deepEqual(SECTION_KEYS, ['study', 'memory', 'salem', 'arcade', 'parlour', 'drawing', 'ending'])
   const named = Object.fromEntries(gameNames.games.map(g => [g.id, g.name]))
   assert.equal(named.entryway, "Miss Boo LaRue's Arcade")
   assert.deepEqual(SECTIONS.map(s => s.name), [
-    named.study, named.library, named.orangerie, named.entryway, 'The Parlour Games', named.drawing, 'The deduction round',
+    named.study, named.library, named.orangerie, named.entryway, 'The Parlour Games', named.drawing, 'Talk it over and the vote',
   ])
-  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.eliminate'])
+  assert.deepEqual(SECTIONS.map(s => s.moment), ['act4.study', 'act4.puzzle', 'act4.orangerie', 'act4.entryway', 'act2.parlour', 'act6.drawing', 'act6.talk'])
   for (const s of SECTIONS) {
     assert.ok(MOMENT_KEYS.includes(s.moment), `${s.key}: ${s.moment} is a row on the Timeline`)
     assert.ok(s.steps.length >= 3 && s.steps.length <= 5, `${s.key}: 3 to 5 steps`)
@@ -47,7 +48,9 @@ test('every sample screen named here exists on the phones, and the practices and
   // 26, plus the host's two drawing screens (At the paper, the four names) from the cue list, 25 Oct 2026, Boo's whole show, 27 Oct,
   // the arcade's three, 28 Oct: a player's clue, a trio's third player, the chime; and the two
   // just-for-fun winners, 29 Oct: Zimothy's after the third board, Salem's on the Orangerie's screen
-  assert.equal(names.length, 34) // 31 Oct 2026: Salem's board on the Orangerie's screen, a round; 11 Nov 2026: Boo's camera's sample went
+  assert.equal(names.length, 39) // 31 Oct 2026: Salem's board on the Orangerie's screen, a round; 11 Nov 2026: Boo's camera's sample went, and the ending's seven took the place of the old round's two
+  const ending = SECTIONS.find(s => s.key === 'ending').tries.map(t => t.params.preview)
+  assert.deepEqual(ending, ['kiosk-talk', 'kiosk-talk-14', 'talk', 'kiosk-ballot', 'kiosk-voted', 'ballot', 'ballot-sent'])
   assert.ok(names.includes('kiosk-memory-winner') && names.includes('kiosk-orangerie-winner'), 'both winners')
   assert.ok(SECTIONS.find(s => s.key === 'salem').devices.includes('orangerie'), 'a note on Salem can be about the Orangerie’s screen')
   for (const n of [...names, 'questions']) {

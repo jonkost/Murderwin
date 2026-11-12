@@ -58,7 +58,7 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'living', name: 'The Parlour screen', machine: 'Jon’s work MacBook Pro on the TV', kiosk: 'living',
-        what: 'All night: the join code through Act 1 and again at the dinner wrap-up (the intro video and the rules slides from a second browser tab: switch back to the game tab for the next beat), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, the Happy Birthday Irwin card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the board, the ballot and the reveal, then black at The End. In the drawing you tap the room’s guess on your own phone; this screen’s names still take a tap, the fallback.',
+        what: 'All night: the join code through Act 1 and again at the dinner wrap-up (the intro video and the rules slides from a second browser tab: switch back to the game tab for the next beat), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, the Happy Birthday Irwin card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the three questions over everyone’s portraits while the room talks it over, the vote and the reveal, then black at The End. In the drawing you tap the room’s guess on your own phone; this screen’s names still take a tap, the fallback.',
         start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can play sound and video. Then leave the trackpad within reach: the TV’s names are the fallback for the drawing’s guess in Act 6.'],
         alive: 'The join code, or the crest or its loop, and a waiting line. On your Host tab, under The house, its dot is green (on a rehearsal the screen has its own dot too, bottom left).',
       },

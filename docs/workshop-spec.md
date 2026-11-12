@@ -266,7 +266,7 @@ workshop:
   answer pad), In Duplicate, Get Off My Lawn! (a practice any phones join),
   Boo's Catwalk (a practice show on the wall and the phones), the Parlour
   Games (every set in the bank as a phone shows it), Sir Irwin Needs a Hand
-  and the deduction round (samples, and the whole game on a test night). A
+  and the ending, Talk it over and the vote (samples, and the whole game on a test night). A
   test night strip starts and moves a rehearsal of the tab's own; the party
   box turns it off. Each game has It works, a chip (Not tried yet, Works,
   Needs a fix) and a note box (typed or spoken) that files a Timeline card

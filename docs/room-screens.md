@@ -131,13 +131,18 @@ brackets.
   hall light goes green and the bedroom screen shows the trace. If the
   bedroom screen has died, press **Show the trace on the TV** on the Host tab: after
   ten seconds the TV shows the trace, the same as the bedroom would.
-- *Act 6, the deduction round* (after the door opens: settled by default,
-  you may change it), *and the Act 7 ballot.* The board: every character at
-  the party with the thing they struck out beneath. A phone that chose nothing gets a strike picked for
-  it, and the board shows it the same way as everyone else's. During the
-  ballot the TV adds the two-minute clock and the trace, if there is one,
-  and a small rejoin code under the clock, "Need to rejoin? Scan here.", for
-  a phone that went to sleep (cue 19).
+- *Act 6, Talk it over* (11 Nov 2026; the last beat of the act). The three
+  questions, Who did it? Why? Who is the Ghost?, over everyone at the party
+  standing in a line, each as the character they play, with their own name
+  beneath: one row up to eight guests, two rows beyond. No clock and nothing
+  to tap. It stays up until you press Start the vote.
+- *The Act 7 vote.* The same three questions, the trace beside the clock if
+  there is one, a small rejoin code under the clock, "Need to rejoin? Scan
+  here.", for a phone that went to sleep (cue 19), and a row of wax seals,
+  one a guest. Each seal is pressed as a guest locks in, with a thunk from
+  the TV, and the count sits under them ("3 of 9 locked in"): a count, never
+  who and never what. When the vote closes the TV says "The votes are in."
+  until the reveal starts.
 - *Act 7.* The stats and the achievements you gave during the night, while
   the Manor counts. Then W-O-O-F News. Each name you press plays the next
   part of the closing bulletin (as video on the TV once The bulletins are videos is ticked on the Game night page; until then the brain plays the recording and the TV shows the words), then shows its card (Murderer, Motive, Victim) once that part has played; the motive's card carries its picture once drawn. Then the closing story, the dial's
@@ -355,8 +360,9 @@ the README kept), so they deploy from Jon's Mac like the sounds in `media/`.
 `functions/lib/screen.js` writes two public docs any phone may read:
 
 - `nights/{id}/public/screen` `{ kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, choices?, mood?, parked?, prompts?, video? }`,
-  kind one of `idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday | join`
-  (`birthday` is written only by the Cake! host command, `screen.birthday`, never by a beat;
+  kind one of `idle | black | news | bulletin | irwin | door | talk | vote | trace | prompts | title | birthday | join`
+  (`talk` and `vote`, 11 Nov 2026: the three questions, `screen.TALK_CARD` and `screen.VOTE_CARD`, written by Act 6's `talk` beat and Act 7's `ballot` beat; the TV draws the portraits, the clock and the seals itself;
+  `birthday` is written only by the Cake! host command, `screen.birthday`, never by a beat;
   `join` is written by every Act 1 beat and by Act 3's `wrap`, with the words from `screen.JOIN_CARDS`
   beside a square the TV draws itself from the play address, so the doc carries no address; `black` is
   also the `end` beat's screen, and `nights/{id}.over` is true from The End until a Back or an act jump).
@@ -415,10 +421,10 @@ parts' `holdMs` have passed (`news.closingStage`; a hold pushes it back).
 
 `play/src/lib/screen.js` holds the pure client rules (`livingView`
 precedence, `roomDark(night, screen)`, `captionsOf`, `doorStage`, `doorSlideOf`, `slideAt`,
-`boardRows`, `bellShown`, `soundFresh`, `dotState`, `heardText`, `showSetup`), tested
+`castOf`, `castRows`, `voteCount`, `bellShown`, `soundFresh`, `dotState`, `heardText`, `showSetup`), tested
 under node in `play/test/screen.test.mjs`; `relayRules` and `showRules` are
 still exported but no screen uses them. `play/src/screens/Kiosk.jsx` renders them
-(`ScreenCard`, `IrwinFace`, `Captions`, `Board`, `DoorScreen`, `Bedroom`,
+(`ScreenCard`, `IrwinFace`, `Captions`, `TalkScreen`, `VoteScreen`, `VotedScreen`, `DoorScreen`, `Bedroom`,
 `TraceView`, `MemoryMatch`, `Finale` with `CalcBar`, `StatsReel`,
 `AwardsReel`, `Credits`, `TugOfWar`, the drawing's `Portrait` and `Guess`,
 `Study`, `Dark`, `OneMoment`, `Wake`, `Bell`, `StaleDot`), and
@@ -434,7 +440,7 @@ calls `arcadeClue` and `arcadeScore` (5 Nov); the memory kiosk reads
 and the iPad subscribe to `public/content` for the character names on the
 board; the study kiosk for Granolia's lines. Previews (`play/src/Preview.jsx`
 `KIOSK`): `?preview=kiosk-news | kiosk-rehearsal | kiosk-bulletin |
-kiosk-irwin | kiosk-black | kiosk-paused | kiosk-board | kiosk-ipad | kiosk-living-done |
+kiosk-irwin | kiosk-black | kiosk-paused | kiosk-talk | kiosk-talk-4 | kiosk-talk-14 | kiosk-voted | kiosk-ipad | kiosk-living-done |
 kiosk-living-hold | kiosk-living-rules | kiosk-living-turn |
 kiosk-living-vote | kiosk-relay-called | kiosk-relay-square |
 kiosk-relay-guess | kiosk-bedroom-closed | kiosk-bedroom-1 to

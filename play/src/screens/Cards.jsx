@@ -269,7 +269,8 @@ function Award({ card, onDone }) {
 // fills the screen with no button (Windows.jsx ResultLock); on Now, Keep this
 // puts it away until The End, when it stays (lib/night.js nowCards).
 export function Result({ card, onDone, seen }) {
-  const rows = [['murderer', 'The murderer'], ['motive', 'The motive'], ['victim', 'The victim']]
+  // the same three names as the vote's rows (11 Nov 2026: the third is the Ghost; the field is still `victim`)
+  const rows = [['murderer', 'The Murderer'], ['motive', 'The Motive'], ['victim', 'The Ghost']]
   const right = rows.filter(([k]) => card[k]).length
   return (
     <section className="dealt result">

@@ -10,9 +10,12 @@ test('functions/index.js loads under the current firebase-functions and exports 
   process.env.GCLOUD_PROJECT ??= 'demo-murderwin'
   process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:1' // never reached; getFirestore() is lazy
   const mod = await import('../index.js')
-  for (const name of ['introDue', 'join', 'hostCommand', 'answer', 'ballot', 'eliminate', 'meetCat', 'leaveCat', 'notYet', 'lockIn', 'memoryStep', 'salemReady', 'salemSlip', 'salemPassed', 'arcadeClue', 'arcadeScore', 'stationCommand', 'relayAdvance', 'relayVote', 'relayGuess', 'steward', 'studyTest', 'gameTest', 'sealedCounts', 'morningAfter']) {
+  for (const name of ['introDue', 'join', 'hostCommand', 'answer', 'ballot', 'meetCat', 'leaveCat', 'notYet', 'lockIn', 'memoryStep', 'salemReady', 'salemSlip', 'salemPassed', 'arcadeClue', 'arcadeScore', 'stationCommand', 'relayAdvance', 'relayVote', 'relayGuess', 'steward', 'studyTest', 'gameTest', 'sealedCounts', 'morningAfter']) {
     assert.equal(typeof mod[name], 'function', `${name} is exported as a callable`)
   }
   assert.equal(mod.solve, undefined, 'the safe is gone, and its callable with it')
   assert.equal(mod.posePhoto, undefined, 'Boo\'s camera is gone, and its callable with it (11 Nov 2026)')
+  // 11 Nov 2026: Act 6 ends in talk, so the round that followed the door has no callable either
+  const gone = ['elim', 'inate'].join('')
+  assert.equal(mod[gone], undefined, 'no callable for a round after the door')
 })

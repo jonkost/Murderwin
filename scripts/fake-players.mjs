@@ -7,7 +7,7 @@
 // beat does what the room would do: dismisses notices, goes to its cat when
 // the phone sends it (one guest at a cat at a time), answers every Parlour
 // Game, finishes the study for each group, clears the memory match, guesses
-// in the drawing, strikes one thing out, casts a ballot. The first two phones
+// in the drawing, is told to talk it over, casts its vote. The first two phones
 // are the hosts (the names on the Game night form), so they play the two
 // Professors, and bots play them like every other seat (F02). It checks the
 // Act 2 rooms (F20, F21) and that the motive funnel leaves the real motive
@@ -413,7 +413,7 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     await next() // update your motives (25 Oct 2026)
     actLine(5, [`${await countCards('notice', 5)} notices`, `${funnel.crossed} motives crossed off by the Library`])
 
-    // ---- Act 6: the two Parlour Games at the start, the drawing, the door, the deduction round
+    // ---- Act 6: the two Parlour Games at the start, the drawing, the door, Talk it over
     await next() // the games: the first is on every phone at once
     const first6 = await answerWindow()
     const rest6 = await allParlours()
@@ -422,25 +422,29 @@ export async function fakeNight({ db, log = console.log, realSecrets = false, ph
     const drawing = await playDrawing()
     await next() // the door
     await bracketCheck('door') // the trace behind the bedroom door
-    await next() // the deduction round
+    // Talk it over (11 Nov 2026): one notice on every phone and nothing else. No window opens, so
+    // nothing has to be closed before the host starts the vote
+    const windowBefore = (await nightDoc()).window?.id ?? null
+    await next()
     const n6 = await nightDoc()
+    let told = 0
+    for (const uid of uids) if (cardsOf(await sessionOf(uid), 'notice').some(c => c.key === 'talk')) told++
+    if (n6.beat !== 'talk' || told !== uids.length || (n6.window?.id ?? null) !== windowBefore) summary.checks.push('TALK')
     const keys = Object.keys(n6.roster ?? {})
-    let struck = 0
-    for (const uid of uids) {
-      const target = randomInt(2) ? { kind: 'person', key: choice(keys) } : { kind: 'motive', n: choice(night.MOTIVES).n }
-      await run.player.eliminate(db, { nightId, uid, target }); struck++
-    }
-    await host('settle-now')
     await sealCheck('before-reveal')
-    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} guesses (${drawing.misses} misses)`, `${struck} strikes`])
+    actLine(6, [`${p6.games} Parlour Games, ${p6.answered} answers`, `drawing done in ${drawing.turns} turns and ${drawing.votes} guesses (${drawing.misses} misses)`, `${told} told to talk it over`])
 
-    // ---- Act 7: the ballot, the reveal, every phone's result
-    await next() // ballot
+    // ---- Act 7: the vote, the reveal, every phone's result
+    await next() // Start the vote
     let ballots = 0
     for (const uid of uids) {
+      // not a moment before the last phone locks in
+      if ((await nightDoc()).window?.settled) summary.checks.push('VOTE')
       await run.player.ballot(db, { nightId, uid, murderer: choice(keys), motive: choice(night.MOTIVES).n, victim: choice(keys) }); ballots++
     }
-    await host('settle-now')
+    // the vote closed the moment the last phone locked in: nothing to settle, and nobody was picked for
+    const voted = (await nightDoc()).window
+    if (voted?.kind !== 'ballot' || !voted.settled || !voted.allIn) summary.checks.push('VOTE')
     await next() // reveal: the reel on the screen, no name out yet
     for (let i = 0; i < 3; i++) await host('reveal-stage') // the Murderer, the Motive, the Victim, one press each
     await bracketCheck('reveal') // all three named, the closing story

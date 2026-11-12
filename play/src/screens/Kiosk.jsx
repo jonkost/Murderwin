@@ -5,12 +5,12 @@ import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
 import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
-import { portraitUrls } from '../lib/content'
+import { portraitUrls, portraitFit } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
@@ -47,9 +47,9 @@ import Spoken from './Spoken'
 // End every screen goes black (lib/screen.js roomDark).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
-// by the server beat by beat: news, bulletin, Sir Irwin, the door, the
-// board) and public/sounds (the bell in the corner, and this screen's own
-// chime). Three things sit in the corners of a kiosk: a small "tap to wake"
+// by the server beat by beat: news, bulletin, Sir Irwin, the door, Talk it
+// over, the vote) and public/sounds (the bell in the corner, and this
+// screen's own chime). Three things sit in the corners of a kiosk: a small "tap to wake"
 // (bottom right, until the first tap or key anywhere on the page) so the
 // browser lets it make a sound, a bell for three seconds whenever a sound is
 // called for, and a dot that says whether the house can still be heard. The
@@ -243,7 +243,7 @@ const WAKE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']
 // A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
 // house's kit: fuller and much louder than the two beeps before it (handoff
 // 11 Nov 2026, A2: "It was hard to hear the chimes").
-const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime' }
+const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime', stamp: 'stamp', sealed: 'seal' }
 function chime(kind) {
   playSound(KIOSK_SOUNDS[kind] ?? 'ding')
 }
@@ -294,30 +294,37 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     lastState.current = key
   }, [relay?.state, relay?.turnIndex, relay?.lastResult, relay?.crossed?.length])
 
+  // the vote: a wax seal's thunk each time a seat locks in, and the stamp with its two notes as the vote
+  // closes. A screen that opens part-way through rings nothing for what it missed.
+  const voteHeard = useRef({ id: null, n: 0, settled: false })
+  const vote = night?.window?.kind === 'ballot' ? night.window : null
+  const voteId = vote?.id ?? null
+  const voteN = vote?.answered ?? 0
+  const voteSettled = !!vote?.settled
+  useEffect(() => {
+    if (!voteId) return
+    const heard = voteHeard.current
+    if (heard.id === voteId) {
+      if (voteSettled && !heard.settled) chime('sealed')
+      else if (voteN > heard.n) chime('stamp')
+    }
+    voteHeard.current = { id: voteId, n: voteN, settled: voteSettled }
+  }, [voteId, voteN, voteSettled])
+
   if (view === 'dark') return <Dark />
   if (view === 'paused') return <OneMoment />
   // Act 7: the finale runs on this screen against the server's clock
   if (view === 'finale') return <Finale night={night} finale={finale} content={content} serverNow={serverNow} />
-  // Act 7: while the phones decide, the clock is on the big screen, with the
-  // trace when there is one (the drawing may have been cut, or never run)
-  // and the board of strikes from the deduction round beneath
-  if (view === 'ballot') {
-    const left = Math.max(0, Math.ceil((ms(night.window.closesAt) - serverNow()) / 1000))
-    return (
-      <div className="kiosk ballot-screen">
-        <p className="kiosk-crest">Two minutes to decide</p>
-        {trace ? <TraceView trace={trace} compact /> : <p className="kiosk-big">Decide.</p>}
-        <div className="ballot-clock">
-          <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
-          {/* the rejoin code under the clock (cue 19, 25 Oct 2026): a phone that slept finds its way back */}
-          {!captionsOnly && <RejoinCode />}
-        </div>
-        <Board night={night} content={content} compact />
-      </div>
-    )
-  }
+  // Act 7: while the phones vote, the three questions and the clock are on the
+  // big screen, with the trace when there is one (the drawing may have been
+  // cut, or never run) and one wax seal for every seat, stamped as each locks
+  // in: a count, never who and never what
+  if (view === 'ballot') return <VoteScreen night={night} screen={screen} trace={trace} serverNow={serverNow} captionsOnly={captionsOnly} />
+  // the vote has closed: nothing is named until the reveal's reel takes the screen
+  if (view === 'voted') return <VotedScreen night={night} />
   if (view === 'captions') return <Captions captions={captionsOf(screen)} />
-  if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
+  // Talk it over (the last beat of Act 6): the three questions over everyone's portraits
+  if (view === 'talk') return <TalkScreen night={night} screen={screen} content={content} />
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
   if (view === 'title') return <TitleCard screen={screen} />
@@ -513,24 +520,114 @@ export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
   )
 }
 
-// The deduction round and the ballot: every character at the party with
-// their strike beneath. A strike the server made for a silent phone looks
-// the same as a chosen one. A row with no strike yet says so.
-export function Board({ night, content, title = 'The deduction round', compact = false }) {
-  const rows = boardRows({ night, characters: content?.characters ?? [], motives: content?.motives ?? [] })
+// ---- the ending: Talk it over, the vote, the votes are in (handoff 11 Nov 2026, A6) ----
+
+// The three questions the night comes down to. The server writes them on the
+// screen doc (functions/lib/screen.js THREE_QUESTIONS); these are the same
+// words, for a doc that carries none.
+const THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']
+function ThreeQuestions({ lines = null }) {
+  const qs = Array.isArray(lines) && lines.length ? lines : THREE_QUESTIONS
+  return <ul className="three-questions">{qs.map(q => <li key={q}>{q}</li>)}</ul>
+}
+
+// One of the cast, standing: the drawing fills the box top to bottom whatever
+// empty space its file has round it (lib/content.js portraitFit), so everyone
+// in the line-up is the same height with their feet on one line.
+function CastFigure({ characterId }) {
+  const [i, setI] = useState(0)
+  useEffect(() => setI(0), [characterId])
+  const urls = characterId ? portraitUrls(characterId) : []
+  if (!urls[i]) return <span className="cast-figure" aria-hidden="true" />
+  const fit = portraitFit(characterId)
+  const tall = 100 / Math.max(0.05, fit.bottom - fit.top) // the file's height, as a share of the box
+  const middle = (fit.left + fit.right) / 2
   return (
-    <div className={`kiosk board${compact ? ' compact' : ''}`}>
-      {!compact && <p className="kiosk-crest">{title}</p>}
-      <ul className="board-rows">
-        {rows.map(r => (
-          <li key={r.key} className={r.strike ? `struck ${r.strike.kind}` : 'waiting'}>
-            <span className="board-name">{r.name}</span>
-            <span className="board-char">{r.characterName}</span>
-            <span className="board-strike">{r.strike ? r.strike.text : 'choosing'}</span>
-          </li>
+    <span className="cast-figure" aria-hidden="true">
+      <img src={urls[i]} alt="" style={{ height: `${tall}%`, top: `${-fit.top * tall}%`, transform: `translateX(${-middle * 100}%)` }} onError={() => setI(i + 1)} />
+    </span>
+  )
+}
+
+// Talk it over, the last beat of Act 6: the three questions over everyone at
+// the party, each as the character they play. No clock and nothing to tap:
+// the room talks, and the host starts the vote.
+export function TalkScreen({ night, screen = null, content = null }) {
+  const cast = castOf({ night, characters: content?.characters ?? [] })
+  const rows = []
+  let at = 0
+  for (const n of castRows(cast.length)) { rows.push(cast.slice(at, at + n)); at += n }
+  return (
+    <div className={`kiosk talk-screen rows-${rows.length}`}>
+      <p className="kiosk-crest">{screen?.title || 'Talk it over'}</p>
+      <ThreeQuestions lines={screen?.lines} />
+      <div className="cast">
+        {rows.map((row, r) => (
+          <ul key={r} className="cast-row">
+            {row.map(p => (
+              <li key={p.key}>
+                <CastFigure characterId={p.characterId} />
+                <span className="cast-name">{p.characterName || p.name}</span>
+                {p.characterName && <span className="cast-guest">{p.name}</span>}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// One wax seal a seat, pressed as each locks in, and the count in words. A
+// count only: the screen never shows who has voted, or for what.
+function VoteSeals({ count, all = false }) {
+  if (!count || !count.of) return null
+  const n = all ? count.of : count.n
+  const words = all ? 'The votes are in' : `${n} of ${count.of} locked in`
+  return (
+    <div className="vote-seals" role="status" aria-label={words}>
+      <ul aria-hidden="true">
+        {Array.from({ length: count.of }, (_, i) => (
+          <li key={i} className={i < n ? 'in' : ''}><img src={`${import.meta.env.BASE_URL}brand/seal.png`} alt="" /></li>
         ))}
       </ul>
-      {!rows.length && <p className="kiosk-line">Nobody is at the party yet.</p>}
+      {!all && <p className="vote-count">{words}</p>}
+    </div>
+  )
+}
+
+// The vote on the big screen: the three questions, the trace when there is
+// one, the clock, the way back for a phone that slept, and the seals. Between
+// the beat and its window (a moment) there is no clock yet.
+export function VoteScreen({ night, screen = null, trace = null, serverNow, captionsOnly = false }) {
+  const w = night?.window?.kind === 'ballot' ? night.window : null
+  const left = w ? Math.max(0, Math.ceil((ms(w.closesAt) - serverNow()) / 1000)) : null
+  return (
+    <div className="kiosk ballot-screen">
+      <p className="kiosk-crest">{w?.title || screen?.title || 'The vote'}</p>
+      <ThreeQuestions lines={screen?.lines} />
+      <div className={trace ? 'vote-middle with-trace' : 'vote-middle'}>
+        {trace && <TraceView trace={trace} compact />}
+        <div className="ballot-clock">
+          {left != null && <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>}
+          {/* the rejoin code under the clock (cue 19, 25 Oct 2026): a phone that slept finds its way back */}
+          {!captionsOnly && <RejoinCode />}
+        </div>
+      </div>
+      <VoteSeals count={voteCount(night)} />
+    </div>
+  )
+}
+
+// The vote has closed (the last seat locked in, or the two minutes ran out
+// and the house picked for whoever had not). Every seal is pressed; nobody is
+// named until the reveal.
+export function VotedScreen({ night }) {
+  return (
+    <div className="kiosk ballot-screen voted">
+      <p className="kiosk-crest">The vote</p>
+      <p className="kiosk-big">The votes are in.</p>
+      <VoteSeals count={voteCount(night)} all />
     </div>
   )
 }

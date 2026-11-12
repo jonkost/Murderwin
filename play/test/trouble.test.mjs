@@ -19,7 +19,7 @@ test('F31 a server sentence shows without its [400], [409] or [403]', () => {
   assert.equal(troubleLine({ code: 'functions/invalid-argument', message: 'Not yet. Wait in the Parlour; your phone will call you. [400]' }, FALLBACK), 'Not yet. Wait in the Parlour; your phone will call you.')
   assert.equal(troubleLine({ code: 'functions/already-exists', message: 'This phone is already Jon. Find the host to change it. [409]' }, FALLBACK), 'This phone is already Jon. Find the host to change it.')
   assert.equal(troubleLine({ code: 'functions/permission-denied', message: 'Only a host can do that. [403]' }, FALLBACK), 'Only a host can do that.')
-  assert.equal(troubleLine({ code: 'functions/failed-precondition', message: 'The ballot is not open. [400]' }, FALLBACK), 'The ballot is not open.')
+  assert.equal(troubleLine({ code: 'functions/failed-precondition', message: 'The vote is not open. [400]' }, FALLBACK), 'The vote is not open.')
   assert.equal(troubleLine({ code: 'functions/not-found', message: 'This phone is not at the party. [404]' }, FALLBACK), 'This phone is not at the party.')
   assert.equal(troubleLine({ code: 'functions/resource-exhausted', message: 'Every character is spoken for tonight. Find the host. [429]' }, FALLBACK), 'Every character is spoken for tonight. Find the host.')
   assert.equal(troubleLine({ code: 'functions/invalid-argument', message: 'Which cat?' }, FALLBACK), 'Which cat?', 'a question is a sentence, and no bracket is fine too')
@@ -125,7 +125,7 @@ test('F31 no screen shows a failed call\'s raw message: every one goes through t
     ['play/src/screens/Cards.jsx', 'The house did not answer. Try again.', 1],
     ['play/src/screens/Act4.jsx', 'The house did not answer. Try again.', 1],
     ['play/src/screens/Join.jsx', 'The Manor did not answer. Try again.', 1],
-    ['play/src/screens/Windows.jsx', 'The Manor did not hear that. Try again.', 3],
+    ['play/src/screens/Windows.jsx', 'The Manor did not hear that. Try again.', 2], // a Parlour Game, and the vote (three until 11 Nov 2026)
     // the Host tab: true whether the connection dropped or a function broke (the Manor did answer then)
     ['play/src/screens/Host.jsx', 'press it again.', 3],
     ['play/src/screens/Host.jsx', 'The Manor did not answer.', 1],

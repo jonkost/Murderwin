@@ -1,6 +1,6 @@
 // Pure rules for the room screens (the Parlour TV, the iPad, the
-// bedroom and the study): which view to show, the board rows, the door's
-// hold, the bell, the corner dot and when it shows. No React, no Firebase,
+// bedroom and the study): which view to show, the cast for Talk it over,
+// the door's hold, the bell, the corner dot and when it shows. No React, no Firebase,
 // so play/test can run them under node --test. Everything here reads public
 // docs any phone may read, and nothing it returns names a role, a dial value
 // or a motive that is still in play.
@@ -23,12 +23,18 @@ export function ms(t) {
 
 // The living room screen, in order of precedence: the host's phase first
 // (dark through the blackout and the prompt, "One moment" while paused),
-// then the finale, the ballot clock, a drawing under way, the board, the
-// open door, a card (news, bulletin, Irwin), the prompts, the title card, the
-// join code (Act 1 and the dinner wrap-up, 25 Oct 2026), the birthday card
-// (the Cake! button, 25 Oct 2026) and finally the idle crest.
+// then the finale, the vote's clock, a drawing under way, the vote once it
+// has closed ("The votes are in."), Talk it over, the open door, a card
+// (news, bulletin, Irwin), the prompts, the title card, the join code (Act 1
+// and the dinner wrap-up, 25 Oct 2026), the birthday card (the Cake! button,
+// 25 Oct 2026) and finally the idle crest.
 // A pause taken during the blackout or the prompt keeps the room dark: the
 // phase the night was paused from decides, the same as on the phones.
+// The vote (11 Nov 2026): 'ballot' while its window is open, and for the
+// moment between the beat and its window (the TV draws the questions with no
+// clock yet, never the door again); 'voted' once the window is settled, until
+// the reveal's reel takes the screen. Both come before the open door, which
+// would otherwise show again the moment the vote closed.
 export function livingView({ night, relay, screen, finale, captionsOnly = false } = {}) {
   const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return 'dark'
@@ -38,7 +44,8 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   if (night?.window?.kind === 'ballot' && !night.window.settled) return 'ballot'
   if (RELAY_RUNNING.includes(relay?.state)) return 'relay'
   if (captionsOnly) return screen?.captions || CAPTION_KINDS.includes(screen?.kind) ? 'captions' : 'idle'
-  if (screen?.kind === 'board') return 'board'
+  if (screen?.kind === 'vote') return night?.window?.kind === 'ballot' && night.window.settled ? 'voted' : 'ballot'
+  if (screen?.kind === 'talk') return 'talk'
   if (relay?.state === 'done' || screen?.kind === 'door') return 'door'
   if (CAPTION_KINDS.includes(screen?.kind)) return 'card'
   // Sir Irwin's sharing prompts (Act 2's cat visits, Act 4's rounds) and the Act 4 title card
@@ -83,24 +90,36 @@ export function doorStage({ screen, cues, trace, now } = {}) {
   return 'open'
 }
 
-// The elimination board: one row per character at the party, their strike
-// beneath. A strike the server picked for a silent phone looks exactly like
-// one that was chosen: the row never carries `defaulted`.
-export function boardRows({ night, characters = [], motives = [] } = {}) {
+// Everyone at the party, for Talk it over on the Parlour TV (handoff 11 Nov
+// 2026, A6): the three questions over everyone's portraits. One entry a
+// guest, by name: who they are, and who they play. Nothing here knows a role,
+// and the order says nothing (it is the alphabet).
+export function castOf({ night, characters = [] } = {}) {
   const roster = night?.roster ?? {}
-  const strikes = night?.eliminations ?? {}
   const charName = id => characters.find(c => c.id === id)?.name ?? ''
-  const rows = Object.entries(roster).map(([key, r]) => {
-    const s = strikes[key]
-    let strike = null
-    if (s?.kind === 'person') strike = { kind: 'person', text: `not ${roster[s.key]?.name ?? 'someone'}` }
-    else if (s?.kind === 'motive') {
-      const m = motives.find(x => Number(x.n) === Number(s.n))
-      strike = { kind: 'motive', text: `not ${m ? `${m.n}. ${m.rhyme}` : `motive ${s.n}`}` }
-    }
-    return { key, name: r.name, characterName: charName(r.characterId), strike }
-  })
-  return rows.sort((a, b) => a.name.localeCompare(b.name))
+  return Object.entries(roster)
+    .map(([key, r]) => ({ key, name: r?.name ?? '', characterId: r?.characterId ?? null, characterName: charName(r?.characterId) }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+// How the portraits sit under the questions: one row up to eight, two rows
+// beyond (the party is about nine; the cast is fourteen at most).
+export function castRows(count) {
+  const n = Math.max(0, Math.floor(Number(count) || 0))
+  if (n <= 8) return [n]
+  const top = Math.ceil(n / 2)
+  return [top, n - top]
+}
+
+// The vote's count on the Parlour TV: how many seats have locked in, of how
+// many were dealt the vote. Numbers only, never who and never what; null when
+// the night's window is not the vote. An older night's window has no `of`:
+// the roster's size stands in.
+export function voteCount(night) {
+  const w = night?.window
+  if (!w || w.kind !== 'ballot') return null
+  const of = Math.max(0, Math.floor(Number(w.of) || Object.keys(night?.roster ?? {}).length))
+  const n = Math.max(0, Math.min(of, Math.floor(Number(w.answered) || 0)))
+  return { n, of }
 }
 
 // The bell in the corner: three seconds from the moment a sound was called

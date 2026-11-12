@@ -28,13 +28,13 @@ test('the film has the manifest’s 28 slides, in order, each with its recording
     // plain American English, no dashes, nothing a guest would not say out loud
     assert.ok(!/colour|favourite|whilst|—|–/.test([s.title, ...s.lines].join(' ')), s.file)
   }
-  // the deduction round is out of the night: the slide for Act 6 does not speak of it
+  // the round that used to follow the door is out of the night: the slide for Act 6 does not speak of it
   const act6 = RULES_SLIDES.find(s => s.file === 'rules-25-act6-the-final-hour')
-  assert.ok(!/ruled out|out loud|deduction|change your mind/i.test(act6.lines.join(' ')))
+  assert.ok(!/ruled out|out loud|change your mind/i.test(act6.lines.join(' ')))
   assert.equal(rulesAudioUrl('rules-01-cover', '/play/'), '/play/rules/rules-01-cover.m4a')
 })
 
-test('the lengths the film runs on are in, and rule 25’s recording stops before the deduction round', () => {
+test('the lengths the film runs on are in, and rule 25’s recording stops before the round that used to follow the door', () => {
   for (const s of RULES_SLIDES) assert.ok(lengths.slides[s.file] > 5 && lengths.slides[s.file] < 90, `${s.file}: ${lengths.slides[s.file]} s`)
   assert.equal(Object.keys(lengths.slides).length, 28)
   assert.ok(lengths.intro > 60 && lengths.intro < 240, 'the intro video was measured')

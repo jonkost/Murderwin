@@ -180,17 +180,25 @@ export const SECTIONS = [
     ],
   },
   {
-    key: 'deduction', name: 'The deduction round', where: 'Act 6 · the Parlour', moment: 'act6.eliminate',
-    what: 'Each player publicly strikes out one thing, and the Parlour TV shows every character with what they struck.',
+    // 11 Nov 2026 (the polish pass, A6): Act 6 ends in talk and the host starts the vote. The round that
+    // came after the door before then is gone, and its samples with it.
+    key: 'ending', name: 'Talk it over and the vote', where: 'Acts 6 and 7 · the Parlour', moment: 'act6.talk',
+    what: 'After the door the room just talks. The Parlour TV shows the three questions over everyone’s portraits, and you start the vote from your phone. The vote is one card with three rows, and it closes the moment the last person locks in.',
     devices: ['phone', 'tv'],
     steps: [
-      'Open the phone sample and strike out one thing.',
-      'Open the board on the Parlour TV computer: every character, with what they struck beneath.',
-      'On a test night: after the door opens in Act 6, Next on your phone’s Host tab starts the round.',
+      'Open the Parlour TV samples: the three questions over the portraits, then the vote with its clock and its seals.',
+      'Open the phone samples: the vote card, then Locked in.',
+      'On a test night: after the door opens in Act 6, Next on your phone’s Host tab opens Talk it over. The button then reads Start the vote.',
+      'Vote on every phone that joined. When the last one locks in, the TV says the votes are in.',
     ],
     tries: [
-      preview('eliminate', 'Strike out one thing, a sample', 'phone'),
-      preview('kiosk-board', 'The board of what everyone struck, a sample', 'tv'),
+      preview('kiosk-talk', 'Talk it over on the TV, nine guests, a sample', 'tv'),
+      preview('kiosk-talk-14', 'Talk it over with all fourteen characters, a sample', 'tv'),
+      preview('talk', 'Talk it over on a phone, a sample', 'phone'),
+      preview('kiosk-ballot', 'The vote on the TV, three of nine locked in, a sample', 'tv'),
+      preview('kiosk-voted', 'The votes are in, a sample', 'tv'),
+      preview('ballot', 'The vote card on a phone, a sample', 'phone'),
+      preview('ballot-sent', 'Locked in, a sample', 'phone'),
     ],
   },
 ]

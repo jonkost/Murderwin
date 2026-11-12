@@ -3,7 +3,7 @@ import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
+import { clockFor, doorCardHolds, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
 import { troubleLine } from './lib/trouble'
 import { RehearsalNight } from './screens/Cards'
 import Join from './screens/Join'
@@ -11,7 +11,7 @@ import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
 import Allow from './screens/Allow'
 import { keepAwake } from './lib/permissions'
-import { Questions, Eliminate, EyesLock, ResultLock } from './screens/Windows'
+import { Questions, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { ResumeNight, StartNight } from './screens/Host'
 import Relay, { RelayDone, ms } from './screens/Relay'
@@ -117,9 +117,9 @@ export default function App() {
     return <Welcome uid={uid} session={s} content={content.data} ui={ui} onDone={() => setTour(false)} />
   }
 
-  // Every phone lights up at once: questions, the deduction round, the ballot.
+  // Every phone lights up at once: a Parlour Game, and the vote.
   // Where each shows is lib/night.js placement: a Parlour Game on top of the
-  // screen, the deduction round as the screen, the ballot as a card on Now.
+  // screen, the vote as a card on Now.
   // During a pause the clock stands still at the moment of the pause, so an
   // open window stays on screen, disabled, until the host resumes. A pause
   // takes the tabs off every phone, the Host tab's Resume with them, so the
@@ -133,7 +133,6 @@ export default function App() {
   if (w && sent !== w.id && where !== 'card') {
     const done = () => setSent(w.id)
     if (w.kind === 'questions') screen = <Questions w={w} nightId={nightId} serverNow={clock} onDone={done} />
-    if (w.kind === 'eliminate') screen = <Eliminate w={w} night={n} session={s} content={content.data} nightId={nightId} serverNow={clock} onDone={done} />
   }
   const held = screen && paused ? <><PausedStrip ui={ui} foot={resume} /><div className="paused-shell" inert>{screen}</div></> : screen
   const over = Boolean(screen) && where === 'overlay'
@@ -149,12 +148,13 @@ export default function App() {
   const strip = heldCard ? <PausedStrip ui={ui} foot={resume} /> : null
   if (paused && !over && !heldCard) return <>{banner}<Moment text={ui.PAUSED} crest foot={resume} /></>
 
-  // The ballot (Act 7; a card since 25 Oct 2026, Jon's cue list, cue 19) goes
+  // The vote (Act 7; a card since 25 Oct 2026, Jon's cue list, cue 19) goes
   // down to Rest for the Now tab, with every tab reachable: the window, whether
-  // this phone has sent its three (a small card then, until the session has
-  // its ballot and the window closes for it), the tap that says it has, the
-  // clock (the server's, frozen in a pause: the one that opened the window,
-  // so the card's bar and the window agree), and the picks so far (above).
+  // this phone has sent its three (the locked-in card then; once the session
+  // has its ballot Rest keeps that card up by itself, lib/night.js voteIn),
+  // the tap that says it has, the clock (the server's, frozen in a pause: the
+  // one that opened the window, so the card's bar and the window agree), and
+  // the picks so far (above).
   const ballot = where === 'card'
     ? { w, sent: sent === w.id, onDone: () => setSent(w.id), clock, draft: draft?.id === w.id ? draft : null, onDraft: (d) => setDraft({ id: w.id, ...d }) }
     : null
@@ -183,7 +183,8 @@ export default function App() {
     base = <ResultLock card={resultCard(s)} />
   } else if (drawing) {
     base = <Relay uid={uid} night={n} session={s} relay={r} serverNow={serverNow} rules={relayRules(ui['RELAY RULES'])} />
-  } else if (lock !== 'over' && doneKey && !notes.seen[doneKey]) {
+  } else if (lock !== 'over' && doneKey && !notes.seen[doneKey] && doorCardHolds(n)) {
+    // only while the night is at the drawing or the door: Talk it over and the vote must reach every phone
     base = <RelayDone uid={uid} relay={r} seenKey={doneKey} />
   } else {
     // the cards under the tabs are told whether the night is a rehearsal: their

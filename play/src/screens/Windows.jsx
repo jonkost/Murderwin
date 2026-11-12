@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { callAnswer, callBallot, callEliminate } from '../firebase'
+import { callAnswer, callBallot } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { characterById, motives } from '../lib/content'
 import { ms, secondsLeft } from '../lib/night'
@@ -8,11 +8,12 @@ import { troubleLine } from '../lib/trouble'
 import { Seal } from './Moments'
 import { HostLine, Result } from './Cards'
 
-// The moments when every phone lights up at once. Each one is a full
-// screen, the same on every phone, measured against the server's clock.
-// Nothing here shows a number for points, and nothing closes early: when
-// the time is up the phone simply goes back to rest, and the server picks
-// for anyone who did not.
+// The moments when every phone lights up at once: a Parlour Game and the
+// vote. The same on every phone, measured against the server's clock.
+// Nothing here shows a number for points. A window closes when the last
+// seat has answered or when its time is up, whichever is first (handoff
+// 11 Nov 2026); then the phone simply goes back to rest, and the server
+// picks for anyone who did not.
 
 function Clock({ w, serverNow }) {
   useTick(500)
@@ -91,11 +92,14 @@ export function Questions({ w, nightId, serverNow, onDone }) {
   )
 }
 
-// Act 7: the murderer, the motive, the victim. Two minutes. Since 25 Oct 2026
+// Act 7, the vote: the Murderer, the Motive, the Ghost. Since 25 Oct 2026
 // (Jon's cue list, cue 19) it is a card on the Now tab (`card`), so every tab
 // stays reachable while a guest decides: the same three steps and the same
 // clock, inside the Now grid instead of filling the screen. The full-screen
-// shape is kept for the preview and as a fallback.
+// shape is kept for the preview and as a fallback. Since 11 Nov 2026 there is
+// no host line on it, the third pick is the Ghost, and both lists of people
+// show everyone, this phone's own guest included: the rules tell the Murderer
+// to name themself.
 // The picks so far, before anything is sent. As a card (`onDraft` given) they
 // are App's, so a guest who looks at Clues or Motives while deciding comes
 // back to the same step with the same picks; the full-screen shape keeps
@@ -117,7 +121,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   const steps = [
     { key: 'murderer', title: 'Who did it?' },
     { key: 'motive', title: 'Why?' },
-    { key: 'victim', title: 'Who died?' },
+    { key: 'victim', title: 'Who is the Ghost?' },
   ]
   const cur = steps[step]
 
@@ -131,17 +135,17 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
 
   const Box = card ? 'section' : 'div'
   if (step === 3) return (
-    <Box className={card ? 'dealt ballot-card' : 'moment window papered'} aria-label={card ? w.title || 'The ballot' : undefined}>
+    <Box className={card ? 'dealt ballot-card' : 'moment window papered'} aria-label={card ? w.title || 'The vote' : undefined}>
       {!card && <Seal />}
       <p className="crest">Your three</p>
       <ul className="summary">
-        <li><span className="dim">Murderer</span> {people.find(p => p.key === pick.murderer)?.name}</li>
-        <li><span className="dim">Motive</span> {list.find(m => m.n === pick.motive)?.rhyme}</li>
-        <li><span className="dim">Victim</span> {people.find(p => p.key === pick.victim)?.name}</li>
+        <li><span className="dim">The Murderer</span> {people.find(p => p.key === pick.murderer)?.name}</li>
+        <li><span className="dim">The Motive</span> {list.find(m => m.n === pick.motive)?.rhyme}</li>
+        <li><span className="dim">The Ghost</span> {people.find(p => p.key === pick.victim)?.name}</li>
       </ul>
       <div className="host-row">
         <button className="chip" disabled={busy} onClick={() => goTo(0)}>Change</button>
-        <button className="big" disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Lock it in'}</button>
+        <button className="big" disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Lock in'}</button>
       </div>
       {error && <p className="trouble" role="alert">{error}</p>}
       <Clock w={w} serverNow={serverNow} />
@@ -149,16 +153,15 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   )
 
   return (
-    <Box className={card ? 'dealt ballot-card' : 'moment window ballot papered'} aria-label={card ? w.title || 'The ballot' : undefined}>
-      {card && <h3>{w.title || 'The ballot'}</h3>}
+    <Box className={card ? 'dealt ballot-card' : 'moment window ballot papered'} aria-label={card ? w.title || 'The vote' : undefined}>
+      {card && <h3>{w.title || 'The vote'}</h3>}
       <p className="crest">{cur.title} · {step + 1} of 3</p>
-      {step === 0 && <HostLine host={w.host} />}
       <ul className="pick-list">
         {cur.key === 'motive'
           ? list.map(m => (
             <li key={m.n}><button className={pick.motive === m.n ? 'pick on' : 'pick'} onClick={() => choose('motive', m.n)}>
               <span className="n">{m.n}</span><span>{m.rhyme}</span></button></li>))
-          : people.filter(p => p.key !== session.guestKey || cur.key === 'victim').map(p => (
+          : people.map(p => (
             <li key={p.key}><button className={pick[cur.key] === p.key ? 'pick on' : 'pick'} onClick={() => choose(cur.key, p.key)}>
               <span>{p.name}</span><span className="dim">{p.character}</span></button></li>))}
       </ul>
@@ -168,14 +171,16 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   )
 }
 
-// After Lock it in: a small card in the ballot's place until this phone's
-// ballot comes back from the server and the window closes for it. Nothing to
-// tap; it goes on its own.
+// After Lock in: this card in the vote's place, for as long as the night is
+// on the vote (lib/night.js voteIn: Rest draws it from the session's ballot,
+// so it stays through a reload). Nothing to tap, and no other words: the
+// reveal takes the phone when it starts.
 export function BallotSent() {
   return (
-    <section className="dealt notice ballot-sent" aria-label="Your three are in">
-      <h3>Your three are in</h3>
-      <p>The Manor has them. Eyes on the Parlour screen for the reveal.</p>
+    <section className="dealt notice ballot-sent" aria-label="Locked in">
+      <Seal />
+      <h3>Locked in.</h3>
+      <p>Eyes on the big screen.</p>
     </section>
   )
 }
@@ -203,63 +208,5 @@ export function ResultLock({ card }) {
       {card && <Result card={card} seen />}
       <p className="moment-text">Thank you for playing.</p>
     </div>
-  )
-}
-
-// Act 6: commit to one thing it is not. A person or a motive. Say it out loud too.
-export function Eliminate({ w, night, session, content, nightId, serverNow, onDone }) {
-  const [mode, setMode] = useState(null) // person | motive
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
-  const people = Object.entries(night.roster ?? {})
-    .filter(([key]) => key !== session.guestKey)
-    .map(([key, r]) => ({ key, name: r.name, character: characterById(content, r.characterId)?.name ?? '' }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-  const list = motives(content)
-  const send = async (target) => {
-    setBusy(true); setError(null)
-    try { await callEliminate({ nightId, target }); onDone?.() }
-    catch (e) { setError(troubleLine(e, 'The Manor did not hear that. Try again.')); setBusy(false) }
-  }
-  return (
-    <div className="moment window eliminate papered">
-      <p className="crest">The deduction round</p>
-      {!mode ? (
-        <>
-          <h1 className="ask">Name one thing it is not.</h1>
-          <p className="moment-sub">Out loud, to the room. Then tap it here.</p>
-          <div className="choices">
-            <button className="choice" onClick={() => setMode('person')}>A person</button>
-            <button className="choice" onClick={() => setMode('motive')}>A motive</button>
-          </div>
-        </>
-      ) : (
-        <ul className="pick-list">
-          {mode === 'motive'
-            ? list.map(m => <li key={m.n}><button className="pick" disabled={busy} onClick={() => send({ kind: 'motive', n: m.n })}><span className="n">{m.n}</span><span>{m.rhyme}</span></button></li>)
-            : people.map(p => <li key={p.key}><button className="pick" disabled={busy} onClick={() => send({ kind: 'person', key: p.key })}><span>{p.name}</span><span className="dim">{p.character}</span></button></li>)}
-        </ul>
-      )}
-      {mode && <button className="quiet" onClick={() => setMode(null)}>Back</button>}
-      {error && <p className="trouble" role="alert">{error}</p>}
-      <Clock w={w} serverNow={serverNow} />
-    </div>
-  )
-}
-
-// The room's commitments so far, on the Now tab once the round has run.
-export function Eliminations({ night, content }) {
-  const list = motives(content)
-  const rows = Object.values(night.eliminations ?? {}).sort((a, b) => ms(a.at) - ms(b.at))
-  if (!rows.length) return null
-  return (
-    <section className="dealt eliminations">
-      <h3>What the room has ruled out</h3>
-      <ul>
-        {rows.map((e, i) => (
-          <li key={i}><strong>{e.name}</strong>: not {e.kind === 'person' ? (night.roster?.[e.key]?.name ?? e.key) : (list.find(m => m.n === e.n)?.rhyme ?? `motive ${e.n}`)}</li>
-        ))}
-      </ul>
-    </section>
   )
 }

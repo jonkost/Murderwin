@@ -11,7 +11,7 @@
 // lengths the film's clock runs on. The originals are never touched. Nothing
 // is played: ffmpeg reads and writes files.
 //
-// Rule 25 ends with the deduction round, which the handoff took out of the
+// Rule 25 ends with the round that used to follow the door, which the handoff took out of the
 // night ("Then each of us says, out loud, one thing we have ruled out. Your
 // last chance... to change your mind."). The film stops that recording at the
 // pause before that sentence (CUTS, below). If a new recording has no pause
@@ -35,7 +35,7 @@ const KINDS = ['.wav', '.m4a', '.mp3', '.aif', '.aiff']
 // start of the pause before the cut sentence. `near` is how far the pause may
 // have moved in a retake before the script stops trusting it.
 export const CUTS = {
-  'rules-25-act6-the-final-hour': { at: 35.68, near: 1.2, why: 'the deduction round, which is out of the night' },
+  'rules-25-act6-the-final-hour': { at: 35.68, near: 1.2, why: 'the round that used to follow the door, which is out of the night' },
 }
 
 export const RULES_FILES = RULES_SLIDES.map(s => s.file)

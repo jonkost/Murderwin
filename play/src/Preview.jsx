@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Join from './screens/Join'
 import Rest from './screens/Rest'
 import Welcome from './screens/Welcome'
-import { Questions, Ballot, Eliminate, EyesLock, ResultLock } from './screens/Windows'
+import { Questions, Ballot, EyesLock, ResultLock } from './screens/Windows'
 import { Dark, Moment, Blackout, Prompt, Offline, PausedStrip } from './screens/Moments'
 import { uiLines } from './lib/content'
 import { slideTime } from './lib/screen'
@@ -30,14 +30,16 @@ import { setFromAddress } from './lib/gametest'
 // (seed/woof-news.json, seed/cat-lines.json), picked here by hand: no case
 // is behind them.
 //
-// Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, kiosk-ballot,
-// kiosk-ballot-no-trace, kiosk-finale, kiosk-finale-awards, kiosk-finale-graph,
+// Room screens: kiosk-bedroom-closed, kiosk-bedroom-1 … 5, the ending (11 Nov 2026): kiosk-talk
+// (Talk it over, nine guests), kiosk-talk-4 and kiosk-talk-14 (one row, two rows), kiosk-ballot (the
+// vote, three of nine locked in), kiosk-ballot-no-trace and kiosk-voted (the votes are in),
+// kiosk-finale, kiosk-finale-awards, kiosk-finale-graph,
 // kiosk-finale-leadin (a name pressed, its lead-in still playing), kiosk-finale-film and
 // kiosk-finale-film-victim (the closing bulletin as video; add &mute=1), kiosk-finale-reveal,
 // kiosk-finale-done, kiosk-finale-credits, kiosk-living-turn, kiosk-living-vote, kiosk-study,
 // kiosk-study-fallback (full-bleed, as on the MacBooks), and the screens the
 // beats name: kiosk-news, kiosk-bulletin, kiosk-irwin, kiosk-black,
-// kiosk-board, kiosk-ipad, kiosk-living-done, kiosk-living-hold (Sir Irwin's
+// kiosk-ipad, kiosk-living-done, kiosk-living-hold (Sir Irwin's
 // door slide), kiosk-living-rules (slide 3 and its square), Sir Irwin's
 // prompts and the Act 4 title (kiosk-prompts, kiosk-title), the memory match on
 // the iPad Pro (since 26 Oct 2026; kiosk-memory, kiosk-memory-clear, kiosk-memory-standalone;
@@ -61,7 +63,7 @@ import { setFromAddress } from './lib/gametest'
 // then one per thing a phone is dealt: act1, orient, news, peek, wait, go,
 // go-onmyway, later, testimony (a cat's hint and bag clue), back, questions,
 // supper, dinner, warn, groups, room-study, room-salem, room-parlour, room-paid,
-// roam, irwin, door, eliminate, ballot (a card on Now since 25 Oct 2026),
+// roam, irwin, door, talk (Talk it over, 11 Nov 2026), ballot (the vote, a card on Now since 25 Oct 2026),
 // ballot-sent, ballot-screen (the old full-screen shape), eyes and result-lock
 // (Act 7's locks), result and reveal (Now at The End), clues, cats-friend, and
 // the relay screens relay-walk … relay-done (relay-walk-host and relay-vote-host:
@@ -123,6 +125,8 @@ const CARDS = {
   roam: { id: '5-roam-roam', act: 5, beat: 'roam', kind: 'notice', key: 'roam', title: 'Cake', text: 'Go where you like. Talk about the bags now, out loud, in any detail.', button: 'Cake acquired', image: 'birthday' },
   irwin: { id: '5-irwin-irwin', act: 5, beat: 'irwin', kind: 'notice', key: 'irwin', title: 'The chime', text: 'Sir Irwin has something to say, on the Parlour TV. Go to the Parlour.', button: 'On my way' },
   door: { id: '6-door-door', act: 6, beat: 'door', kind: 'notice', key: 'door', title: 'The door is open', text: 'The hall light is green. See what the bedroom shows, then back to the Parlour.', button: 'I have seen it' },
+  // Talk it over, the last beat of Act 6 (11 Nov 2026): no window, no clock
+  talk: { id: '6-talk-talk', act: 6, beat: 'talk', kind: 'notice', key: 'talk', title: 'Talk it over', text: 'The vote is next.', button: 'Got it' },
   eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
   award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crooknog's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
   result: { id: '7-result-result', act: 7, beat: 'result', kind: 'result', murderer: true, motive: false, victim: true, defaulted: false, picks: { murderer: 'Jacob', motive: 'A sneeze set free, for all to see', victim: 'Mari' } },
@@ -150,10 +154,10 @@ function QuestionsPreview() {
   )
 }
 
+// a window as the server shapes it: Boo's line on a Parlour Game; the vote has no host line (11 Nov 2026)
 function windowDoc(kind, ms) {
-  const host = kind === 'questions' ? { cat: 'boo', line: 'Choose carefully, darling. Everyone\'s watching. Mostly me.' }
-    : kind === 'ballot' ? { cat: 'salem', line: 'Forty years I\'ve kept these grounds, and I\'ve never seen so many people trampling on them. Name the Murderer, the motive and the victim.' } : null
-  return { id: `${kind}-preview`, kind, title: '', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + ms), settled: false, ...(host ? { host } : {}),
+  const host = kind === 'questions' ? { cat: 'boo', line: 'Choose carefully, darling. Everyone\'s watching. Mostly me.' } : null
+  return { id: `${kind}-preview`, kind, title: kind === 'ballot' ? 'The vote' : '', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + ms), settled: false, ...(host ? { host } : {}),
     mine: kind === 'questions' ? { kind, beats: SET } : { kind } }
 }
 
@@ -281,16 +285,27 @@ const quietly = () => Promise.resolve()
 function PhoneGame({ room, children }) {
   return <main className="practice papered"><section className={`dealt act4 act4-${room}`}>{children}</section></main>
 }
-// nine guests with a strike each, two of them picked by the server for a silent phone: the board must not tell
+// nine guests, the size of the party, and all fourteen characters, the most there can be
 const NINE = { ...NIGHT.roster, lee: { name: 'Lee', characterId: 'leech', bag: 2 }, ana: { name: 'Ana', characterId: 'devine', bag: 4 }, kit: { name: 'Kit', characterId: 'barnes', bag: 5 }, ren: { name: 'Ren', characterId: 'steeps', bag: 7 }, oli: { name: 'Oli', characterId: 'vayne', bag: 9 } }
-const STRIKES = Object.fromEntries(Object.keys(NINE).map((k, i) => [k, i % 2 ? { kind: 'motive', n: (i * 3) % 19 + 1, name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 1 ? { defaulted: true } : {}) } : { kind: 'person', key: Object.keys(NINE)[(i + 2) % 9], name: NINE[k].name, at: stamp(PHASE_AT), ...(i === 4 ? { defaulted: true } : {}) }]))
+const GUEST_NAMES = ['Ana', 'Ben', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jon', 'Kit', 'Lee', 'Mari', 'Susan']
+const FOURTEEN = Object.fromEntries(charactersSeed.characters.map((c, i) => [GUEST_NAMES[i].toLowerCase(), { name: GUEST_NAMES[i], characterId: c.id, bag: i + 1 }]))
+// the ending on the Parlour TV (11 Nov 2026), as the server shapes it: the three questions on the screen doc, a count on the vote's window
+const THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']
+const TALK_SCREEN = SCREEN('talk', { title: 'Talk it over', lines: THREE_QUESTIONS, act: 6, beat: 'talk', rehearsal: false })
+const VOTE_SCREEN = SCREEN('vote', { title: 'The vote', lines: THREE_QUESTIONS, act: 7, beat: 'ballot', rehearsal: false })
+const VOTE_WINDOW = (extra = {}) => ({ id: 'ballot-7-ballot', kind: 'ballot', title: 'The vote', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + 120000), settled: false, of: 9, answered: 3, ...extra })
+const talkNight = (night, roster) => ({ ...night, act: 6, beat: 'talk', roster })
 const KIOSK = {
   'kiosk-news': (night, serverNow) => <Living night={{ ...night, act: 2, beat: 'news' }} relay={null} trace={null} finale={null} screen={SCREEN('news', { title: 'W-O-O-F News', lines: NEWS_LINES })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-bulletin': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'bulletin' }} relay={null} trace={null} finale={null} screen={BULLETIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-irwin': (night, serverNow) => <Living night={{ ...night, act: 5, beat: 'irwin' }} relay={null} trace={null} finale={null} screen={IRWIN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-black': (night, serverNow) => <Living night={{ ...night, act: 1, beat: 'ready', phase: 'blackout' }} relay={null} trace={null} finale={null} screen={SCREEN('black')} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-paused': (night, serverNow) => <Living night={{ ...night, phase: 'paused' }} relay={null} trace={null} finale={null} screen={SCREEN('black', { title: 'One moment' })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
-  'kiosk-board': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'eliminate', roster: NINE, eliminations: STRIKES, window: { id: 'e', kind: 'eliminate', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 90000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={SCREEN('board', { title: 'The deduction round', act: 6, beat: 'eliminate' })} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  // Talk it over (11 Nov 2026), the last beat of Act 6: the three questions over everyone's portraits. Nine guests (two rows),
+  // four (one row), and all fourteen characters
+  'kiosk-talk': (night, serverNow) => <Living night={talkNight(night, NINE)} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={TALK_SCREEN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-talk-4': (night, serverNow) => <Living night={talkNight(night, NIGHT.roster)} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={TALK_SCREEN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
+  'kiosk-talk-14': (night, serverNow) => <Living night={talkNight(night, FOURTEEN)} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={TALK_SCREEN} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-ipad': (night, serverNow) => <Living night={{ ...night, act: 3, beat: 'groups' }} relay={null} trace={null} finale={null} screen={SCREEN('idle', { title: 'Supper Is Served', act: 3, beat: 'groups', captions: { kind: 'bulletin', lines: BULLETIN.lines, at: stamp(PHASE_AT) } })} content={CONTENT} serverNow={serverNow} nightId="preview" captionsOnly />,
   'kiosk-living-done': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now() - 12000), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
   'kiosk-living-hold': (night, serverNow) => <Living night={{ ...night, act: 6, beat: 'door' }} relay={relayDoc('done')} trace={TRACE(3)} finale={null} screen={SCREEN('door', { title: 'The door is open', act: 6, beat: 'door', holdMs: 10000, at: stamp(Date.now()), lines: ['The light outside the bedroom is green. Go and see.'] })} cues={{ hall: 'green', tvTrace: true }} content={CONTENT} serverNow={serverNow} nightId="preview" />,
@@ -304,8 +319,11 @@ const KIOSK = {
   'kiosk-bedroom-3': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(3)} />,
   'kiosk-bedroom-4': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(4)} />,
   'kiosk-bedroom-5': () => <Bedroom relay={{ doorOpen: true }} trace={TRACE(5)} />,
-  'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} serverNow={serverNow} nightId="preview" />,
-  'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, window: { id: 'b', kind: 'ballot', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 120000), settled: false } }} relay={null} trace={null} finale={null} serverNow={serverNow} nightId="preview" />,
+  // the vote on the TV (11 Nov 2026): the three questions, the trace beside the clock, a seal for every seat (three of nine in);
+  // with no trace (the drawing was cut); and the moment it has closed
+  'kiosk-ballot': (night, serverNow) => <Living night={{ ...night, act: 7, beat: 'ballot', roster: NINE, window: VOTE_WINDOW() }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={VOTE_SCREEN} serverNow={serverNow} nightId="preview" />,
+  'kiosk-ballot-no-trace': (night, serverNow) => <Living night={{ ...night, act: 7, beat: 'ballot', roster: NINE, window: VOTE_WINDOW({ answered: 7 }) }} relay={null} trace={null} finale={null} screen={VOTE_SCREEN} serverNow={serverNow} nightId="preview" />,
+  'kiosk-voted': (night, serverNow) => <Living night={{ ...night, act: 7, beat: 'ballot', roster: NINE, window: VOTE_WINDOW({ answered: 9, settled: true, allIn: true }) }} relay={{ state: 'done', doorOpen: true }} trace={TRACE(3)} finale={null} screen={VOTE_SCREEN} serverNow={serverNow} nightId="preview" />,
   'kiosk-study': (night, serverNow) => <Study study={STUDY()} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-memory': (night) => <MemoryRounds board={MEMORY()} night={{ ...night, act: 4 }} nightId="preview" rotation={MEMORY_GROUP} />,
   'kiosk-memory-clear': (night) => <MemoryRounds board={MEMORY(true)} night={{ ...night, act: 4 }} nightId="preview" />,
@@ -456,6 +474,7 @@ const DEALT = {
   roam: { act: 5, beat: 'roam', cards: [CARDS.roam] },
   irwin: { act: 5, beat: 'irwin', cards: [CARDS.irwin] },
   door: { act: 6, beat: 'door', cards: [CARDS.door] },
+  talk: { act: 6, beat: 'talk', cards: [CARDS.talk] },
   // the reveal and the result lock the phone (eyes, result-lock, below); these two are what Now holds
   // once The End opens the phone up again (25 Oct 2026): the result stays, the eyes notice waits its tap
   reveal: { act: 7, beat: 'end', cards: [CARDS.eyes], over: true },
@@ -463,7 +482,7 @@ const DEALT = {
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
 }
 
-export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'eliminate', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'paused-host', 'superseded']
+export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'talk', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'paused-host', 'superseded']
 
 export default function Preview({ screen }) {
   const ui = uiLines(CONTENT)
@@ -491,7 +510,6 @@ export default function Preview({ screen }) {
     // Act 7's locks (cues 20 to 22): eyes on the screen through the reveal; the result with a thank-you through the credits
     case 'eyes': body = <EyesLock />; break
     case 'result-lock': body = <ResultLock card={CARDS.result} />; break
-    case 'eliminate': body = <Eliminate w={windowDoc('eliminate', 90000)} night={{ ...night, act: 6 }} session={SESSION} content={CONTENT} nightId="preview" serverNow={serverNow} />; break
     case 'relay-walk': body = <Relay uid="preview" night={night} session={{ ...SESSION, guestKey: 'jon' }} relay={relayDoc('walk')} serverNow={serverNow} />; break
     // the host's phone (25 Oct 2026): At the paper under the walk's bar, the four names as buttons at the guess; nightId 'preview' keeps them inert
     case 'relay-walk-host': body = <Relay uid="preview" night={night} session={{ ...SESSION, host: 'jonathan' }} relay={relayDoc('walk')} serverNow={serverNow} />; break
@@ -527,7 +545,7 @@ export default function Preview({ screen }) {
     default:
       if (dealt) {
         body = (
-          <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, over: dealt.over || undefined, eliminations: dealt.act === 6 ? { jon: { kind: 'motive', n: 4, name: 'Jon', at: stamp(PHASE_AT) } } : undefined }}
+          <Rest uid="preview" night={{ ...night, act: dealt.act, beat: dealt.beat, rehearsal: true, over: dealt.over || undefined }}
             session={{ ...SESSION, cards: dealt.cards, lights: dealt.lights, act4: dealt.act4, windows: dealt.windows, group: 'g1' }} content={CONTENT} notes={{ seen: dealt.seen ?? {} }} ui={ui} serverNow={serverNow} onTour={() => {}} over={!!dealt.over} />
         )
       } else {

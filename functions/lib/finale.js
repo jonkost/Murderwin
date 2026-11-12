@@ -262,7 +262,7 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   put(CANON_LABELS[2], hard.length ? hard.join(', ') : 'None')
 
   // 4. the guest who answered the most Parlour Games before the bell, out of the Parlour Games
-  // their phone was dealt (the eliminate and ballot windows are not Parlour Games)
+  // their phone was dealt (the vote's window is not a Parlour Game)
   const answered = s => Object.values(s.answers ?? {}).filter(a => a && !a.defaulted).length
   const gamesDealt = s => Object.values(s.windows ?? {}).filter(w => w?.kind === 'questions').length || 1
   const quick = best(people, ({ s }) => (answered(s) > 0 ? answered(s) : null), pick)

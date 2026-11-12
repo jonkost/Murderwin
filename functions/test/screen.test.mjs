@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
-import { hostCommand, studyFinished, advanceRelay, guessRelay, player } from '../lib/run.js'
+import { hostCommand, studyFinished, advanceRelay, guessRelay } from '../lib/run.js'
 import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
@@ -11,7 +11,7 @@ import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS, TALK_CARD, VOTE_CARD,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
@@ -82,7 +82,11 @@ test('checkScreen refuses a forbidden key at any depth and an unknown kind; writ
   assert.equal(await readScreen(db, 'n'), null)
   await writeScreen(db, 'n', screenDoc('news', { lines: ['a'] }))
   assert.equal((await readScreen(db, 'n')).kind, 'news')
-  assert.ok(SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('black'))
+  assert.ok(SCREEN_KINDS.includes('black'))
+  // 11 Nov 2026: the board went with the round that filled it; Talk it over and the vote each have a kind
+  assert.ok(!SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('talk') && SCREEN_KINDS.includes('vote'))
+  for (const card of [TALK_CARD, VOTE_CARD]) assert.deepEqual(card.lines, ['Who did it?', 'Why?', 'Who is the Ghost?'], 'the three questions, open words')
+  assert.ok(checkScreen(screenDoc('talk', TALK_CARD)).ok && checkScreen(screenDoc('vote', VOTE_CARD)).ok)
   assert.ok(SCREEN_KINDS.includes('birthday'), 'the Happy Birthday Irwin card is a kind of its own (Cake!, 25 Oct 2026)')
   assert.ok(SCREEN_KINDS.includes('join'), 'the join code on the Parlour TV is a kind of its own (cues 3 and 10, 25 Oct 2026)')
   // the join screen carries words only: the TV draws the square from the play address itself
@@ -190,7 +194,8 @@ test('the seed names a screen and a sound only from the catalogues', () => {
   assert.equal(beatSpec(3, 'bulletin').action, 'arm:bulletin', 'bulletin 2 is armed, then plays itself')
   assert.equal(beatSpec(5, 'irwin').screen, 'irwin')
   assert.equal(beatSpec(6, 'door').screen, 'door')
-  assert.equal(beatSpec(6, 'eliminate').screen, 'board')
+  assert.equal(beatSpec(6, 'talk').screen, 'talk')
+  assert.equal(beatSpec(7, 'ballot').screen, 'vote')
   assert.equal(beatSpec(6, 'door').soundOnce, true)
 })
 
@@ -214,7 +219,7 @@ async function party({ words = true } = {}) {
   return { db, nightId, phones }
 }
 
-test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
+test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, the three questions at 6/talk and 7/ballot, black on blackout and pause; every sound once; nothing forbidden', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   const sounds = new Set()
@@ -404,7 +409,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(screen().kind, 'idle')
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin', 'no sound of its own')
 
-  // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, the board
+  // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, then Talk it over
   await next() // Act 6 opens on its two Parlour Games
   now += NIGHT.windows.questions.ms + 1
   await next() // the drawing
@@ -434,15 +439,20 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
   await host('tv-trace', 'off')
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, false)
-  await next() // eliminate
-  assert.equal(screen().kind, 'board')
-  for (const uid of uids) await player.eliminate(db, { nightId, uid, target: { kind: 'motive', n: 2 }, now })
-  now += 91_000
-  await host('settle')
+  await next() // Talk it over: the three questions on the TV, no window, no sound of its own
+  assert.equal(nightDoc().beat, 'talk')
+  assert.equal(screen().kind, 'talk')
+  assert.equal(screen().title, TALK_CARD.title)
+  assert.deepEqual(screen().lines, ['Who did it?', 'Why?', 'Who is the Ghost?'])
+  assert.notEqual(nightDoc().window?.beat, 'talk', 'talking opens no window: nothing to tap, no clock')
+  assert.deepEqual((await currentSound(db, nightId)).at, stingAt, 'the music and the sounds stay as at the door')
+  assert.equal(Object.keys(nightDoc()).some(k => /^elim/.test(k)), false, 'the night keeps no board of strikes')
 
-  // Act 7: the board stays through the ballot; the reveal and the result each have a sting
-  await next() // ballot
-  assert.equal(screen().kind, 'board')
+  // Act 7: the vote keeps the three questions up (the TV adds the clock and the count); the reveal and the result each have a sting
+  await next() // the vote
+  assert.equal(nightDoc().window.kind, 'ballot')
+  assert.equal(screen().kind, 'vote')
+  assert.equal(screen().title, VOTE_CARD.title)
   now += 121_000
   await host('settle')
   await next() // reveal
@@ -464,7 +474,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   for (const id of SOUND_IDS) assert.ok(sounds.has(id), `sound ${id} was played`)
   for (const id of sounds) assert.ok(SOUND_IDS.includes(id), `${id} is in the catalogue`)
   // the kinds the acceptance line names
-  for (const k of ['2/news:news', '3/bulletin:bulletin', '5/irwin:irwin', '6/door:door', '6/eliminate:board']) assert.ok(seen.includes(k), k)
+  for (const k of ['2/news:news', '3/bulletin:bulletin', '5/irwin:irwin', '6/door:door', '6/talk:talk', '7/ballot:vote']) assert.ok(seen.includes(k), k)
   // and the night doc itself never grew a screen field
   assert.equal(nightDoc().screen, undefined)
 })
@@ -584,7 +594,7 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
   assert.equal(doorReached({ act: 6, beat: 'drawing' }), false)
   assert.equal(doorReached({ act: 6, beat: 'door' }), true)
-  assert.equal(doorReached({ act: 6, beat: 'eliminate' }), true)
+  assert.equal(doorReached({ act: 6, beat: 'talk' }), true)
   assert.equal(doorReached({ act: 7, beat: 'ballot' }), true)
   assert.equal(doorReached({ act: 5, beat: 'irwin' }), false)
   assert.equal(doorReached(null), false)

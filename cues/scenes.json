@@ -58,7 +58,7 @@
       "beats": {
         "drawing": { "music": "jazzLow", "hue": "Murderwin Dimmed", "projector": "off" },
         "door": { "music": "intense60", "hue": "Murderwin Drawing", "projector": "off" },
-        "eliminate": { "music": "intense60", "hue": "Murderwin Drawing", "projector": "off" }
+        "talk": { "music": "intense60", "hue": "Murderwin Drawing", "projector": "off" }
       }
     },
     "7": {

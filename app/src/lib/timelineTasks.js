@@ -76,7 +76,8 @@ export const TIMELINE_TASKS = [
   // Act 6
   { order: 180, moment: 'act6.drawing', status: 'todo', who: 'Jon', title: 'The paper roll and the markers', detail: 'Measure the roll: the cell size and the paper width are still open in the drawing game.' },
   sound(181, 'act6.door', 'sting-door', 'the third drawing is named and the bedroom door opens'),
-  { order: 182, moment: 'act6.eliminate', status: 'todo', who: 'Jon and Claude', title: 'Design how a trace is matched to a person', detail: 'Not designed yet (21 Oct). How players link a trace to a character in the Big Solve. A short session with Claude.' },
+  // filed under act6.talk since 11 Nov 2026: the beat it was first filed under went with the round after the door
+  { order: 182, moment: 'act6.talk', status: 'todo', who: 'Jon and Claude', title: 'Design how a trace is matched to a person', detail: 'Not designed yet (21 Oct). How players link a trace to a character in the Big Solve. A short session with Claude.' },
 
   // Act 7
   sound(190, 'act7.reveal', 'sting-reveal', 'the reveal begins on the living room screen'),
@@ -254,7 +255,8 @@ export const AUDIT_DECISIONS = [
   { key: 'bulletin2Known', moment: 'act3.bulletin', question: 'You record all 25 lines of bulletin 2, so on the night you will know which family the line points at, even an obscure one. Accept that, or have someone else record them?', options: ['Accept it', 'Someone else records them'], answer: null },
   { key: 'dialMapping', moment: 'allnight', question: 'The rules say each night decides blind how the Murderer’s and the Ghost’s answers move the dial. As built, it is fixed: the Ghost pushes toward clear, the Murderer toward foggy. Keep it fixed, or have Claude Code build the blind mapping?', options: ['Keep it fixed (as built)', 'Build the blind mapping'], answer: null },
   { key: 'act4Granolia', moment: 'act4.groups', question: 'The Act 4 cat station: may it send a group to Granolia, or does it skip her, since her room, the Study, holds the light puzzle?', options: ['Skip Granolia in Act 4 (she is in the Study)', 'Granolia may be the cat too'], answer: 'Skip Granolia in Act 4 (she is in the Study)', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
-  { key: 'solveOrder', moment: 'act6.eliminate', question: 'The deduction round: after the bedroom door opens, or before the drawing?', options: ['After the door, as built', 'Before the drawing'], answer: 'After the door, as built', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
+  // the round this asked about is gone (Jon, 11 Nov 2026: Act 6 ends in Talk it over), and its beat with it, so the seed is filed under act6.talk
+  { key: 'solveOrder', moment: 'act6.talk', question: 'The round where each player rules one thing out: after the bedroom door opens, or before the drawing?', options: ['After the door, as built', 'Before the drawing'], answer: 'After the door, as built', answeredBy: 'settled by default', note: 'Settled by default on 23 Oct 2026, as built. You may change it.' },
 ]
 
 // Older decisions with no moment, filed where they belong.

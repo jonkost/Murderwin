@@ -236,19 +236,32 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   await assert.rejects(next, /still running/) // the phones stay on the drawing until it is done or cleared
   await hostCommand(db, { nightId, command: 'relay-reset', now })
   await next() // door
-  await next() // eliminate
-  const ew = night(db, nightId).window
-  assert.equal(ew.kind, 'eliminate')
-  await player.eliminate(db, { nightId, uid: uids[0], target: { kind: 'motive', n: 3 }, now })
-  await player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'jacob' }, now })
-  await assert.rejects(() => player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'nobody' }, now }), /Pick/)
-  now += NIGHT.windows.eliminate.ms + 1
+  for (const uid of uids) assert.equal(cards(db, uid, 'notice').at(-1).key, 'door')
+  // Talk it over (11 Nov 2026), the last beat of Act 6: one plain notice on every phone, and nothing
+  // else. No window, no clock, no board of strikes, and no call a phone could make
+  const before = night(db, nightId).window
+  await next()
+  assert.equal(night(db, nightId).act, 6)
+  assert.equal(night(db, nightId).beat, 'talk')
+  assert.equal(beatsOf(6).at(-1).key, 'talk', 'talk ends Act 6')
+  for (const uid of uids) {
+    const card = cards(db, uid, 'notice').at(-1)
+    assert.deepEqual([card.key, card.title, card.text], ['talk', 'Talk it over', 'The vote is next.'])
+    assert.ok(card.button, 'one tap puts it away')
+  }
+  assert.deepEqual(night(db, nightId).window, before, 'talking opens no window: the last one is still the Parlour Game from the start of the act')
+  assert.equal(before.settled, true)
+  assert.equal(Object.keys(night(db, nightId)).some(k => /^elim/.test(k)), false, 'the night keeps no board')
+  assert.equal(Object.keys(player).some(k => /^elim/.test(k)), false, 'and no phone can call for one')
+  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'questions'], 'two kinds of window: a Parlour Game and the vote')
 
-  // Act 7: ballot, reveal, result
+  // Act 7: the vote, the reveal, the result
   await next()
   const bw = night(db, nightId).window
   assert.equal(bw.kind, 'ballot')
-  assert.equal(Object.keys(night(db, nightId).eliminations).length, 4, 'two picked, two defaulted')
+  assert.equal(bw.title, 'The vote')
+  assert.equal(bw.of, 4, 'four seats were dealt the vote')
+  assert.equal(bw.host, undefined, 'no host line on the vote: three rows and Lock in')
   await player.ballot(db, { nightId, uid: uids[1], murderer: m, motive: c.motive, victim: g, now })
   await assert.rejects(() => player.ballot(db, { nightId, uid: uids[2], murderer: 'nobody', motive: 1, victim: g, now }), /party/)
   await assert.rejects(next, /still choosing/)

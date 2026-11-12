@@ -146,14 +146,17 @@ still there for jumping about in a rehearsal.
 - *Act 6.* A break note (two games, then the final event in the Parlour), two
   Parlour Games, then the Relay Drawing (every phone says to be in the
   Parlour while Sir Irwin explains it; your phone buzzes when
-  you are called to the paper), the door, then the deduction round: every
-  phone picks one thing it is not, a person or a motive, and the room's picks
-  are listed on every Now tab.
-- *Act 7* (the cue list, 25 Oct 2026). Salem opens the ballot: who, why, who
-  died, as a card on the Now tab with every tab reachable, so a guest can read
-  their clues while they decide; two minutes on the server's clock, never
-  closing early; a phone that does not pick gets a random pick. After Lock it
-  in a small "Your three are in" card holds the place. Then two locks on every
+  you are called to the paper), the door, then Talk it over (11 Nov 2026):
+  one note, "Talk it over. The vote is next.", and nothing else. No window
+  and no clock: the room talks until the host presses Start the vote.
+- *Act 7* (the cue list, 25 Oct 2026; the vote, 11 Nov 2026). The vote is a
+  card on the Now tab with every tab reachable, so a guest can read their
+  clues while they decide: the Murderer, the Motive and the Ghost, then Lock
+  in. Nobody hosts it, and a guest may pick themself. It closes the moment
+  the last guest locks in; the two minutes on the server's clock are the
+  backstop, and a phone that never picks gets a random pick then. After Lock
+  in, "Locked in. Eyes on the big screen." holds the place until the reveal.
+  Then two locks on every
   guest's phone: "Eyes on the screen." with no tabs for the reveal with the
   closing bulletin, then its own result (three ticks or crosses and what it
   said) with "Thank you for playing." under it while the credits roll; the two
@@ -161,11 +164,13 @@ still there for jumping about in a rehearsal.
   the tabs are back, the result stays on Now, and everything is readable for
   good.
 
-**Windows.** The Parlour Games, the deduction round and the ballot are windows: every
-phone at once, a bar counting down against the server's clock, and they never
-close early. When the time is up the phone goes back to rest and the server
-picks for anyone who did not, so a no-show is never a pattern. The Next
-button waits for the window to run out.
+**Windows.** The Parlour Games and the vote are windows: every phone at once,
+a bar counting down against the server's clock. The vote closes when the last
+guest has locked in, or when its time is up, whichever is first (11 Nov
+2026); a Parlour Game still runs its full minute. When a window's time is up
+the phone goes back to rest and the server picks for anyone who did not, so a
+no-show is never a pattern. The Next button waits for an open window, and
+the host's own buttons never close one early.
 
 **Rehearsing.** Start a night, join from a few phones (or a few browser tabs
 in private windows), and press Next. The first time roles are needed the
@@ -457,8 +462,8 @@ secret.
   Groundskeeper card, and three stars sit by Salem on their Cats tab. When
   they open Salem there, they see his honour text. Not for you or Susan.
 - **Act 6 opens on its two Parlour Games** (22 October), one after the
-  other, then you press Next for the drawing. The deduction round comes
-  after the door opens (settled by default; you may change it).
+  other, then you press Next for the drawing. After the door opens the room
+  talks it over, and you start the vote (11 Nov 2026).
 - **The Act 4 cat station never sends a group to Granolia**, because her
   room, the Study, holds the light puzzle (settled by default; you may
   change it).
@@ -555,7 +560,7 @@ phone keeps reading only its own session.
 `seed/night.json` holds the acts, their beats and the windows; `functions/`
 copies it in `npm run seed` and `play/src/lib/night.js` imports it. Each beat
 has an `action` the server runs on entry: `notice:<key>`, `deal:encounter`,
-`arm:bulletin`, `window:eliminate|ballot`, `groups`, `rotate`,
+`arm:bulletin`, `window:ballot`, `groups`, `rotate`,
 `relay:start`, `reveal`, `results`, `end` (The End, 25 Oct 2026:
 `nights/{id}.over`, once). The Parlour Games have no beat (see
 Windows below); no beat uses `window:questions` any more, though `light-up`
@@ -566,8 +571,10 @@ still opens one.
   enters the first beat of Act 2), `light-up` (a questions window any time in
   Acts 2, 4, 6), `settle` (random picks for the rest, only after `closesAt`),
   `relay-*`. Everything else falls through to `night.js`. Player callables:
-  `answer`, `ballot`, `eliminate` (plus the relay pair). `solve`, the Act 2
+  `answer`, `ballot` (plus the relay pair). `solve`, the Act 2
   safe, was removed on 23 Oct; the next `npm run deploy` asks to delete it.
+  The callable for the round that followed the door went on 11 Nov 2026: the
+  next deploy of the functions asks to delete that one too.
 - `functions/lib/deal.js` is the dealer. Cards go into `sessions/{uid}.cards[]`
   once each, by id, so a repeated Next never doubles a card. Kinds: `role`,
   `notice`, `go`, `testimony`, `group`, `station` (with `testimony`,
@@ -715,7 +722,7 @@ still opens one.
   questions | checkin | dinner | groups | study | cat |
   bags | puzzle4 | memory-clue | checkin4 | award | roam | irwin |
   relay-walk | relay-draw | relay-turn | relay-vote | relay-lockout |
-  relay-done | door | eliminate | ballot | ballot-sent | eyes | result-lock |
+  relay-done | door | talk | ballot | ballot-sent | eyes | result-lock |
   result | reveal | clues | cats |
   cats-act4 | cats-friend | rehearsal | you | offline | host | paused |
   paused-host | paused-window | paused-window-host | superseded | tour, plus the room screens (`kiosk-*` and `host-house*`, listed in

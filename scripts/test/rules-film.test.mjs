@@ -16,7 +16,7 @@ test('the importer knows the 28 recordings by the manifest’s names', () => {
   assert.equal(root.scripts['rules-film'], 'node scripts/rules-film.mjs')
 })
 
-test('rule 25 is stopped at the pause before the deduction round, and left whole when a retake has no pause there', () => {
+test('rule 25 is stopped at the pause before the round that used to follow the door, and left whole when a retake has no pause there', () => {
   const cut = CUTS['rules-25-act6-the-final-hour']
   assert.ok(cut && cut.at > 30 && cut.at < 40)
   // the pauses measured in Jon's take of 11 Nov 2026

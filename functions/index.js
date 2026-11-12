@@ -93,11 +93,9 @@ export const ballot = onCall({ cors: true }, wrap(async req => {
   return run.player.ballot(db, { uid, nightId, murderer, motive, victim })
 }))
 
-export const eliminate = onCall({ cors: true }, wrap(async req => {
-  const uid = requireUid(req)
-  const { nightId, target } = req.data ?? {}
-  return run.player.eliminate(db, { uid, nightId, target })
-}))
+// (Act 6 has no window of its own after the door since 11 Nov 2026, Jon: "I did
+// not ask for that, and that needs to go away". It ends in talk; the vote is
+// `ballot`, above.)
 
 // Act 2, Lights Out: the guest scans the code in a cat's room (the play URL
 // with ?meet=<cat>), taps Done when they have read the cat, or Not yet, call
