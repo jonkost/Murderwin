@@ -16,6 +16,7 @@ on the Canon.
 - **Built:** `/setup` (`firebase.json` sends it to `/play/?setup=1`; `play/src/screens/Setup.jsx`, `play/src/lib/setup.js`): "Which screen is this?", one button per room screen, the machine's last choice marked, a second button under Boo's for connecting the deck. No sign-in, no night, nothing written but the browser's own note. A test holds it to the Devices page's list.
 - A code Jon sent from the work MacBook Pro was the workshop's "not on the staff list" code. Not added: that Mac needs only the Parlour TV page.
 - **Tried:** in the preview: the page, a tap through to the Parlour screen, the mark on return. Not on the other machines.
+- **Deployed** that night on Jon's "Yes, publish" (ba395b1, the site only, not pushed): `/setup` answers with its redirect and the live page is the build's own file.
 - **Left:** the study station on the M1 Air (card 474) is still the hard part of setup; the Stream Deck's connect is still a step. Card 572 asks Jon what is still hard.
 - **Decisions:** none.
 
