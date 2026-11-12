@@ -843,6 +843,18 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .salem-play .salem-count, .salem-play .slip, .salem-play .salem-round { position: relative; z-index: 1; }
 .salem-play .salem-count { text-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.5); }
 .salem-play .salem-round { position: absolute; }
+/* Get Off My Lawn!'s countdown (A9, 12 Nov 2026): the round, the clean seconds big, the slips left */
+.salem-countdown { display: grid; justify-items: center; gap: 0.4rem; margin: 0; text-align: center; color: #fff; }
+.salem-countdown p { margin: 0; }
+.salem-countdown-round { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.5); }
+.salem-countdown-clean { font-size: 7rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.5); }
+.salem-countdown-clean.last { animation: salem-last 1s ease-in-out infinite; }
+.salem-countdown-slips { font-size: 1.3rem; font-weight: 600; text-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.5); }
+.salem-play .salem-countdown { position: relative; z-index: 1; }
+.salem-countdown.board .salem-countdown-round, .salem-countdown.board .salem-countdown-slips { font-size: min(3vw, 4.6vh); }
+.salem-countdown.board .salem-countdown-clean { font-size: min(11vw, 19vh); }
+@keyframes salem-last { 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .salem-countdown-clean.last { animation: none; } }
 
 /* The Game test tab's practice page (?practice=salem): one card, the night's game in it */
 .practice { min-height: 100vh; min-height: 100dvh; padding: 1.2rem 1rem 3rem; max-width: 34rem; margin: 0 auto; display: grid; align-content: start; gap: 1rem; background: var(--bg); }

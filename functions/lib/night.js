@@ -418,6 +418,7 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
 //     from the first touch, and freezes both itself by watching this night's
 //     phase, station/lib/follow.js)
 //   nights/{id}/public/boo: slotEndsAt (the round's end again: the arcade's Mac rings its chime there)
+//   nights/{id}/public/salem: roundEndsAt, gameEndsAt (Get Off My Lawn!'s two and a half and eight minutes)
 //   nights/{id}/public/finale: at (the reel's start; its schedule is offsets from it),
 //     victimAt, and cardAt.<stage> (when the TV may show a name card)
 // Keep PAUSE_SHIFTED current when a new deadline is added anywhere.
@@ -426,6 +427,7 @@ export const PAUSE_SHIFTED = {
   'public/relay': ['introEndsAt', 'turnEndsAt', 'walkEndsAt', 'voteEndsAt', 'lockoutEndsAt'],
   'public/study': ['slotEndsAt'],
   'public/boo': ['slotEndsAt'], // the arcade's chime, the round's end (act4.js booIdle, 5 Nov 2026)
+  'public/salem': ['roundEndsAt', 'gameEndsAt'], // Get Off My Lawn!'s limits (A9, 12 Nov 2026, lib/salemlimits.js)
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
   'public/act4': ['warnEndsAt', 'lockEndsAt', 'roundStartsAt', 'roundEndsAt'], // Act 4's clock (act4.js)

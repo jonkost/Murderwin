@@ -542,6 +542,19 @@ links to it.
     against the phone that caused it, and a phone that cannot feel a shake
     is left out. A tie names everyone tied. It stays up until the chime and
     changes nothing.
+    Since 12 Nov (A9; Jon: "if you're not doing well, you get stuck"):
+    every phone in the game and Salem's board show "Round 2 of 3", the
+    thirty clean seconds as a big number counting down, and "3 slips
+    left"; after a slip, one line: "Someone moved. From the top!" (or
+    "Someone froze."). No group can be stuck: a round passes by itself on
+    its fifth slip or two and a half minutes after its Ready, and eight
+    minutes after the group scans in Salem lets them through and pays the
+    hint as if they had cleared it. A round passed is a wax seal, the game
+    cleared a burst of paw prints, a slip a soft buzz (the board shows them
+    without the sound). The speed is unchanged. Nothing for you to do. If
+    the Orangerie's screen ever stands still while the phones play, reload
+    it; since 12 Nov the room screens keep nothing on the machine, so the
+    workshop open in the same Chrome cannot stall them.
   - The Entryway: Miss Boo LaRue's Arcade, on Susan's MacBook Pro and the
     Stream Deck + XL (since 5 Nov).
     The group scans Boo's code on her rules card, and the visit starts with
@@ -962,7 +975,10 @@ page have no night at all: nothing is paid and no clue is dealt.
   practice too (since 28 Oct: stop the brain and start it again once to
   pick this up). Tap "Stop" when you are done. Up to twelve phones. The
   practice names no winner: the sample "After the third round: Salem names
-  who slipped least" shows what the screen shows on the night.
+  who slipped least" shows what the screen shows on the night. The practice
+  keeps the night's limits (12 Nov): the fifth slip or two and a half
+  minutes passes a round, and eight minutes after the first Ready it ends,
+  so nobody is stuck in it.
 - *Miss Boo LaRue's Arcade* (the Entryway). Built 28 October to try,
   changed from your playtests on 30 and 31 October and 1 November, and on
   the night since 5 November (your call of
@@ -1379,7 +1395,20 @@ Host tab's Save key writes). The `gameTest` callable
 `public_state/game_test_salem` with the Admin SDK, on the real game's own
 rules and timing (`act4.salemFlips`; `game_test_boo` went on
 5 Nov, the arcade's practice needs no night), and
-never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. The
+never reads or writes `nights/*`, `cases/*` or `sealed/*` for it. Since
+12 Nov (A9) both the night (`act4.js`) and the practice take their limits
+from `functions/lib/salemlimits.js`: a Ready writes `roundEndsAt` (150 s,
+never past the game's), `gameEndsAt` (480 s from `salemArrive` on the night,
+from the first Ready in the practice), `maxSlips` and `letThrough`; both
+times are in `night.js` `PAUSE_SHIFTED`. The phones' rule for saying
+"passed" is `play/src/lib/salem.js` `salemPassDue` (clean, round, game), and
+`salemView` feeds `play/src/screens/SalemCount.jsx` on the phones
+(`SalemRounds`) and the board (`SalemBoard`), with `useSalemWins` calling
+`celebrate`. `functions/test/a9-lawn.test.mjs` plays the worst group and
+proves eight minutes. Room screens (`?kiosk=`, `?setup=`, `?practice=`) use
+`memoryLocalCache` (`play/src/firebase.js`): the workshop's multi-tab
+persistent cache and the phones' single-tab one on the same origin were the
+likely cause of the Orangerie's page standing still on 11 Nov. The
 practice pages are `play/src/screens/Practice.jsx`: `?practice=salem` and
 `?kiosk=orangerie&practice=1`, which take the server's time from the
 callable's `clock` and never write `presence/{uid}`. `?preview=questions&set=<base64url>`

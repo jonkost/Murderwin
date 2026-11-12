@@ -6,6 +6,8 @@ import { troubleLine } from '../lib/trouble'
 import { CatFace, HostLine } from './Cards'
 import { Questions } from './Windows'
 import Spoken from './Spoken'
+import { salemView, salemPassDue } from '../lib/salem'
+import { SalemCount, useSalemWins } from './SalemCount'
 
 // Act 4, Behind Closed Doors (docs/handoff-2026-10-23.md §3, §9.5 to §9.9).
 // The phone shows where the group goes this round (sessions/{uid}.act4,
@@ -23,8 +25,8 @@ import Spoken from './Spoken'
 export const SALEM_LINES = {
   intro: 'RED: shake. GREEN: freeze. Yes, backwards.',
   ready: 'Phones in hand.',
-  slipGreen: 'Someone moved on green. Again.',
-  slipRed: 'Someone froze on red. Again.',
+  slipGreen: 'Someone moved. From the top!', // A9: lib/salem.js SALEM_WORDS shows these now
+  slipRed: 'Someone froze. From the top!',
   passed: 'Not bad. For people.',
   cleared: "Huh. You lot can follow instructions. Here's what I know.",
   noSensor: "This phone can't feel a shake. Just watch.",
@@ -215,20 +217,15 @@ function SalemGame({ nightId, uid, serverNow, groupId }) {
 // just-for-fun winner on the Orangerie's screen (28 Oct 2026).
 export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines = SALEM_LINES }) {
   const sent = useRef({})
-  const [slipShown, setSlipShown] = useState(null)
   useTick(100)
   const now = serverNow()
   const playing = doc.state === 'playing'
   const started = playing && now >= ms(doc.startsAt)
   const colour = started ? salemColourAt(doc, now) : null
-
-  // a fresh attempt after a slip: say whose kind of slip it was, for a moment
-  useEffect(() => {
-    if (!doc?.lastSlip || !doc.attempt) return
-    setSlipShown(doc.lastSlip)
-    const id = setTimeout(() => setSlipShown(null), 3000)
-    return () => clearTimeout(id)
-  }, [doc?.attempt, doc?.lastSlip])
+  // the round, the clean seconds, the slips left, and the one line after a slip (A9, 12 Nov 2026)
+  const view = salemView(doc, now)
+  // a round passed, the game cleared, a slip: celebrate (B4)
+  useSalemWins(doc)
 
   // the rules, checked ten times a second on this phone; each attempt reports once
   useEffect(() => {
@@ -245,10 +242,11 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
       Promise.resolve(slip(doc.attempt, s)).catch(() => { sent.current[key] = false })
     }
   })
-  // thirty seconds clean: any phone may say so
+  // thirty seconds clean, or the round's two and a half minutes, or the game's eight (A9): any phone may say so
   useEffect(() => {
-    if (!playing || now < ms(doc.cleanAt)) return
-    const key = `passed-${doc.attempt}`
+    const due = salemPassDue(doc, now)
+    if (!due) return
+    const key = due === 'game' ? `game-${doc.state}-${doc.round}` : `passed-${doc.attempt}`
     if (sent.current[key]) return
     sent.current[key] = true
     Promise.resolve(passed(doc.attempt, motion.ok)).catch(() => { sent.current[key] = false })
@@ -279,8 +277,8 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
     <div className={`salem-play ${colour ?? 'wait'}`} role="status" aria-live="assertive" aria-label={colour ?? 'get ready'}>
       <SalemHead motion={motion} />
       {!started && <p className="salem-count">{count}</p>}
-      {!started && slipShown && <p className="slip">{slipShown === 'green' ? lines.slipGreen : lines.slipRed}</p>}
-      <p className="salem-round" aria-hidden="true">{[1, 2, 3].map(r => <span key={r} className={r < doc.round ? 'done' : r === doc.round ? 'now' : ''} />)}</p>
+      {!started && view.restart && <p className="slip">{view.restart}</p>}
+      <SalemCount doc={doc} now={now} />
     </div>
   )
 }

@@ -278,7 +278,7 @@ const BOO_IDLE = { groupId: 'g1', state: 'idle', startsAt: null, slotEndsAt: sta
 const SALEM_ROUND = (() => {
   const start = PHASE_AT + 3000
   const flips = [0, 3500, 6000, 9500, 11000, 14500, 17000, 21000, 23500, 27000].map((t, i) => ({ at: stamp(start + t), colour: i % 2 ? 'green' : 'red' }))
-  return { state: 'playing', round: 2, attempt: 1, startsAt: stamp(start), cleanAt: stamp(start + 30000), flips }
+  return { state: 'playing', round: 2, attempt: 1, startsAt: stamp(start), cleanAt: stamp(start + 30000), flips, slips: 2, maxSlips: 5, lastSlip: 'green' } // A9: the countdown's slips
 })()
 const NO_SENSOR = { ok: false, mag: 0, lastShakeAt: 0 }
 const quietly = () => Promise.resolve()
