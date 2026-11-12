@@ -282,7 +282,8 @@ for (const word of ['tulip-4471', 'heron-2024', 'otter-1215']) test(`F28 a pract
   look('the door')
 
   // ---- and from before the night was made to here, nothing under sealed/ was read, scanned or written
-  assert.deepEqual(touched, [], 'a practice night touches nothing sealed')
+  // but the drawing's practice bank, read once (job A7, 12 Nov 2026: the party's three docs, never)
+  assert.deepEqual(touched, ['get sealed/relay_pictures_practice'], 'a practice night touches nothing sealed but the practice pictures')
   for (const [path, data] of Object.entries(secrets)) assert.ok(same(db.store.get(path), data), 'the sealed store is as it was')
   assert.ok(looks.length === 6 && looks.every(n => n > 300) && looks.at(-1) > 1500, `every look read the night's words (${looks.join(', ')} strings)`)
 })

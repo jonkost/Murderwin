@@ -118,9 +118,10 @@ test('F01, F24, F28 and L03 eight fake phones walk a whole practice night: real 
   // the deal is random: a trace with no look-alike at the party is the only warning a night may carry
   assert.ok(lines.some(l => caseLine(l, 'rehearsal')), 'Case: rehearsal')
   // a practice night reads no lean, no picture and no packing, not even its count of bags (handoff
-  // 11 Nov 2026, job A3): nothing under sealed/ is read, scanned or written, from before the night is made
-  assert.deepEqual(touched, [], 'a practice night touches nothing sealed')
-  assert.deepEqual([...reads].filter(p => p.startsWith('sealed')), [], 'and reads nothing sealed')
+  // 11 Nov 2026, job A3): nothing under sealed/ is read, scanned or written, from before the night is made,
+  // but the drawing's own practice bank, read once (job A7, 12 Nov 2026); here it is not there, so stand-ins
+  assert.deepEqual(touched, ['get sealed/relay_pictures_practice'], 'a practice night touches nothing sealed but the practice pictures')
+  assert.deepEqual([...reads].filter(p => p.startsWith('sealed')), ['sealed/relay_pictures_practice'], 'and reads nothing else sealed')
   for (const [path, data] of Object.entries(secrets)) assert.deepEqual(db.store.get(path), data, 'the sealed store is as it was')
   assert.ok(lines.includes('Party secrets used: the cats\' leans for 0 sets, the packing on 0 of 64 bag clues, the picture bank for 0 of 3 drawing rounds'))
   // the cats' bag lines name real clue words all the same, from the night's own practice packing: one line

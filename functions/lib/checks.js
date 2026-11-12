@@ -55,7 +55,7 @@ export const CHECK_NAMES = {
   PK1: 'Ten bags of four or five, one food, the pairs written out',
   PK2: 'With two bags sitting out, nearly every bag keeps two clue words',
   LN1: 'Every Parlour Game question has a lean for every cat',
-  RP1: 'The drawing has a good picture for each of its three rounds',
+  RP1: 'The drawing has a good picture for each of its three rounds, in the party bank and the practice bank',
 }
 
 // ---------------------------------------------------------------------------
@@ -523,11 +523,19 @@ export function leanChecks(table, sets = []) {
   return [{ id: 'LN1', pass: of > 0 && filled === of, count: filled, of }]
 }
 
-// RP1 on the drawing's picture bank (sealed/relay_pictures).
-export function pictureChecks(bank) {
+// RP1 on the drawing's two picture banks (sealed/relay_pictures for the
+// party, sealed/relay_pictures_practice for a practice night; 12 Nov 2026):
+// a good picture for every round in each bank, and no party picture with
+// the name of a practice one (Jon sees those). Counts only: the good rounds
+// of six, never a name.
+export function pictureChecks(bank, practice = null) {
   const rounds = Object.keys(ROUND_SIZES).map(Number)
-  const good = rounds.filter(r => (bank?.pictures ?? []).some(p => Number(p?.round) === r && !checkPicture(p, r).length)).length
-  return [{ id: 'RP1', pass: good === rounds.length, count: good, of: rounds.length }]
+  const goodIn = b => rounds.filter(r => (b?.pictures ?? []).some(p => Number(p?.round) === r && !checkPicture(p, r).length)).length
+  const key = n => String(n ?? '').trim().toLowerCase()
+  const burned = new Set((practice?.pictures ?? []).map(p => key(p?.name)).filter(Boolean))
+  const shared = (bank?.pictures ?? []).filter(p => burned.has(key(p?.name))).length
+  const good = goodIn(bank) + goodIn(practice)
+  return [{ id: 'RP1', pass: good === 2 * rounds.length && shared === 0, count: good, of: 2 * rounds.length }]
 }
 
 export { ALL_MOTIVES, familyOf }

@@ -372,13 +372,13 @@ test('F29 At the paper ends the walk now and the square shows at once; refused i
 
 test('the picture bank refuses the samples, a star, every trace and every motive-card object, in the name or any of the three wrong names', () => {
   const square = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`${'ABCDE'[i]}1`, [{ kind: 'line', from: [0, 0], to: [1, 1] }]]))
-  const pic = (name, decoys = ['A kite', 'A tree', 'A fish']) => ({ name, decoys, cells: square(3) })
-  assert.deepEqual(checkPicture(pic('A kite', ['A tree', 'A fish', 'A cloud']), 1), [], 'a plain picture passes')
+  const pic = (name, decoys = ['A ladder', 'A tree', 'A boat']) => ({ name, decoys, cells: square(3) })
+  assert.deepEqual(checkPicture(pic('A ladder', ['A tree', 'A boat', 'A cloud']), 1), [], 'a plain picture passes')
   for (const w of ['star', 'smiley', 'house', 'diamond']) assert.ok(checkPicture(pic(`A ${w}`), 1).includes('disqualified'), w)
-  assert.ok(checkPicture(pic('A kite', ['A tree', 'A starfish', 'A cloud']), 1).includes('disqualified'), 'a sample among the wrong names counts too')
+  assert.ok(checkPicture(pic('A ladder', ['A tree', 'A starfish', 'A cloud']), 1).includes('disqualified'), 'a sample among the wrong names counts too')
   for (const w of NEVER_WORDS) {
     assert.ok(checkPicture(pic(`A ${w}`), 1).includes('never'), `${w} as the name`)
-    assert.ok(checkPicture(pic('A kite', ['A tree', `Two ${w}s`, 'A cloud']), 1).includes('never'), `${w} as a wrong name, plural`)
+    assert.ok(checkPicture(pic('A ladder', ['A tree', `Two ${w}s`, 'A cloud']), 1).includes('never'), `${w} as a wrong name, plural`)
   }
   // the words the audit named (handoff §3 and the drawn traces) are all on it
   for (const w of ['boot', 'spectacles', 'candle', 'cup', 'picture', 'vial', 'sand', 'iodine', 'elbow patch']) assert.ok(TRACE_WORDS.includes(w), w)

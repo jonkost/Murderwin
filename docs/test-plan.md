@@ -232,7 +232,7 @@ Run on the server from Jenna's page ("Run the checks"), never in a terminal. Eac
 - **G43** Every bag has at least two clue words (on the real packing).
 - **PK2** With two bags sitting out (eight guests), nearly every bag still keeps two clue words: at least nine in ten, over 200 random draws.
 - **LN1** Every Parlour Game question has a lean for every cat.
-- **RP1** The drawing has a good picture for each of its three rounds.
+- **RP1** The drawing has a good picture for each of its three rounds, in the party bank and in the practice bank (a count of six), and no party picture has the name of a practice one (12 Nov 2026).
 
 ---
 

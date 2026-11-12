@@ -50,7 +50,7 @@ function previewApi() {
           { id: 'G43', name: 'Every bag has at least two clue words', pass: true, count: 10, of: 10 },
           { id: 'PK2', name: 'With two bags sitting out, nearly every bag keeps two clue words', pass: true, count: 1580, of: 1600 },
           { id: 'LN1', name: 'Every Parlour Game question has a lean for every cat', pass: false, count: 0, of: 24 },
-          { id: 'RP1', name: 'The drawing has a good picture for each of its three rounds', pass: true, count: 3, of: 3 },
+          { id: 'RP1', name: 'The drawing has a good picture for each of its three rounds, in the party bank and the practice bank', pass: true, count: 6, of: 6 },
         ] }
         default: throw new Error('Which op?')
       }
