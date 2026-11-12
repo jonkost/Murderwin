@@ -53,6 +53,7 @@ import { stopOf } from './parlour.js'
 import { seededUnit } from './case.js'
 import { play } from './screen.js'
 import { hostLine } from './hosts.js'
+import { hasFillIns, isFillIn, seatsToWaitFor } from './seats.js'
 
 const CFG = NIGHT.act4 ?? {}
 export const ROUND_MS = (Number(CFG.roundMinutes) || 15) * 60_000
@@ -149,6 +150,39 @@ export async function readRotation(db, nightId) {
   return snap.exists ? snap.data() : null
 }
 
+// A practice night with fill-in players (the polish pass, job A4, 11 Nov
+// 2026; lib/seats.js). The real players walk the rooms together: up to three
+// of them are one group, even when that puts the Murderer and the Ghost side
+// by side (nothing leaks: they are together all act, and it is a practice).
+// More than three are grouped among themselves, as on any night. The fill-ins
+// take the other walks, in groups marked `fill`: no room screen ever waits
+// for one (setRooms), and each is paid at the chime like any group that did
+// not finish. At most four groups in all, so nobody real sits a round out in
+// the Parlour. Never called on a night with no fill-in seat.
+export const FILL_NIGHT_GROUPS = 4
+export function fillNightGroups(keys, roster, { apart = [], pick = randomInt } = {}) {
+  const cap = Math.min(MAX_GROUPS, FILL_NIGHT_GROUPS)
+  const real = keys.filter(k => !isFillIn(roster[k]))
+  const fill = keys.filter(k => isFillIn(roster[k]))
+  const out = []
+  if (real.length && real.length <= 3) out.push({ members: shuffled(real, pick) })
+  else if (real.length) for (const members of makeGroups(real, { apart, pickInt: pick, maxGroups: Math.max(1, cap - 1) })) out.push({ members })
+  const left = Math.max(1, cap - out.length)
+  if (fill.length === 1) out.push({ members: fill, fill: true })
+  else if (fill.length) for (const members of makeGroups(fill, { pickInt: pick, maxGroups: left })) out.push({ members, fill: true })
+  return out
+}
+
+// The fill-in groups of a rotation, by id, as the roster stands now: a group
+// is one only while every member is still a fill-in, so a guest who takes a
+// fill-in's seat brings that group back onto the room screens. On a night
+// with no fill group (the party, every ordinary rehearsal) nothing is read.
+async function fillGroupIds(db, nightId, rot) {
+  if (!(rot?.groups ?? []).some(g => g.fill)) return new Set()
+  const roster = (await db.doc(`nights/${nightId}`).get()).data()?.roster ?? {}
+  return new Set(rot.groups.filter(g => g.fill && g.members.every(m => isFillIn(roster[m.key]))).map(g => g.id))
+}
+
 // The groups, once: pairs and trios, at most five groups, the Murderer and the
 // Ghost never together (station.makeGroups), and the walk round the rooms.
 export async function makeRooms(db, nightId, { force = false, pick = null } = {}) {
@@ -162,9 +196,15 @@ export async function makeRooms(db, nightId, { force = false, pick = null } = {}
   if (!pick) pick = pickFor(seed, 'rooms')
   const keys = seed ? Object.keys(roster).sort() : Object.keys(roster)
   const apart = [c?.murderer, c?.ghost].filter(Boolean)
-  const groups = makeGroups(keys, { apart, pickInt: pick, maxGroups: MAX_GROUPS }).map((members, i) => ({
+  // a practice night with fill-in players has its own grouping (fillNightGroups, below); every other night,
+  // the party among them, makes exactly the call it always has, with the same random draws
+  const made = hasFillIns(roster)
+    ? fillNightGroups(keys, roster, { apart, pick })
+    : makeGroups(keys, { apart, pickInt: pick, maxGroups: MAX_GROUPS }).map(members => ({ members }))
+  const groups = made.map(({ members, fill }, i) => ({
     id: `g${i + 1}`,
     members: members.map(k => ({ key: k, name: roster[k].name, characterId: roster[k].characterId, characterName: characterById(roster[k].characterId)?.name ?? '' })),
+    ...(fill ? { fill: true } : {}),
   }))
   const order = shuffled(groups.map(g => g.id), pick)
   const rooms = shuffled(ROOM_KEYS, pick)
@@ -310,7 +350,13 @@ export async function startRound(db, nightId, round, { now = Date.now() } = {}) 
 
 // Each game room ready for the group due there this round.
 async function setRooms(db, nightId, rot, round, { now = Date.now(), endsAt = null, pick = null } = {}) {
-  const due = room => (round >= 1 && round <= rot.rounds ? groupIn(rot, room, round) : null)
+  // a practice night's fill-in group is never set on a room's screen: nobody is coming, so the room stays
+  // at rest and the chime pays the group like any that did not finish (fillGroupIds; empty on any other night)
+  const fill = await fillGroupIds(db, nightId, rot)
+  const due = room => {
+    const gid = round >= 1 && round <= rot.rounds ? groupIn(rot, room, round) : null
+    return gid && fill.has(gid) ? null : gid
+  }
   if (!pick) pick = pickFor(await nightSeed(db, nightId), 'memory', round)
   // the study: the station follows public/study.groupId (station/lib/follow.js)
   await db.doc(studyPath(nightId)).set({ groupId: due('study'), reassignedFrom: null, slotEndsAt: endsAt }, { merge: true })
@@ -346,7 +392,8 @@ export async function due(db, nightId, now = Date.now()) {
   if (!pub?.phase) return null
   if (pub.phase === 'warn' && now >= ms(pub.warnEndsAt)) return 'groups'
   if (pub.phase === 'groups') {
-    const keys = Object.keys(night.roster ?? {})
+    // everyone at the party; on a practice night with fill-in players, the real players only (lib/seats.js)
+    const keys = seatsToWaitFor(night.roster ?? {})
     const allLocked = keys.length > 0 && keys.every(k => pub.locked?.[k])
     if (allLocked || now >= ms(pub.lockEndsAt)) return 'round1'
   }

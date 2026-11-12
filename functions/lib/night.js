@@ -270,7 +270,18 @@ export async function join(db, { uid, nightId, name }) {
   return result
 }
 
-async function joinOnly(db, { uid, nightId, name }) {
+// A fill-in player's seat (the polish pass, job A4, 11 Nov 2026; lib/seats.js
+// and lib/fillins.js): the same seat a phone gets, a name, a character from
+// the deck and a bag, under a made-up uid no phone holds, marked fillIn on the
+// roster and on its session. Practice nights only: refused on any other
+// night, whoever asks. Nothing is dealt here; the night deals to it like any
+// guest. A real phone that later joins under the same name takes the seat
+// over the usual way (join, below), and the mark goes with the fill-in.
+export async function seatFillIn(db, { uid, nightId, name }) {
+  return joinOnly(db, { uid, nightId, name, fillIn: true })
+}
+
+async function joinOnly(db, { uid, nightId, name, fillIn = false }) {
   if (!uid) throw new NightError('unauthenticated', 'Sign in first.')
   const clean = String(name ?? '').trim().replace(/\s+/g, ' ')
   const key = nameKey(clean)
@@ -295,8 +306,11 @@ async function joinOnly(db, { uid, nightId, name }) {
       throw new NightError('already-joined', `This phone is already ${existing.guestName}. Find the host to change it.`)
     }
     if (!night.joinOpen) throw new NightError('closed', 'The doors are closed for now. Find the host.')
+    // a fill-in is seated on a practice night and nowhere else, whatever the caller thinks the night is
+    if (fillIn && night.forceRehearsal !== true) throw new NightError('closed', 'Fill-in players are for practice nights only.')
 
     const hostFor = Object.entries(night.hosts ?? {}).find(([, h]) => h.key === key)?.[0] ?? null
+    if (fillIn && hostFor) throw new NightError('invalid', 'A fill-in player cannot take a host’s name.')
     const roster = night.roster ?? {}
     const entry = roster[key] ?? null
     const oldUid = entry ? (deck.uids?.[key] ?? null) : null
@@ -340,10 +354,13 @@ async function joinOnly(db, { uid, nightId, name }) {
     if (oldSession) {
       tx.set(oldSessionSnap.ref, { status: 'superseded', supersededAt: FieldValue.serverTimestamp() }, { merge: true })
     }
+    // (the fillIn mark is written only for a fill-in's seat: a phone's join writes exactly the keys it always has,
+    // and since the whole entry is replaced, a phone that takes a fill-in's seat over drops the mark)
     tx.update(nightRef, {
       [`roster.${key}`]: {
         name: displayName, characterId, bag,
         joinedAt: entry?.joinedAt ?? FieldValue.serverTimestamp(),
+        ...(fillIn ? { fillIn: true } : {}),
       },
     })
     tx.update(deckRef, { [`uids.${key}`]: uid, ...(parked ? { [`handed.${key}`]: FieldValue.delete() } : {}) })
@@ -354,6 +371,7 @@ async function joinOnly(db, { uid, nightId, name }) {
       host: hostFor, // the two hosts get the Host tab on their own phone
       status: 'active',
       joinedAt: FieldValue.serverTimestamp(),
+      ...(fillIn ? { fillIn: true } : {}),
     })
     return { ok: true, characterId, resumed: false }
   })

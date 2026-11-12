@@ -81,6 +81,31 @@ function clock(msLeft) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
+// Fill-in players (the polish pass, job A4, 11 Nov 2026): a practice night's
+// seats with no phone, marked night.roster.<key>.fillIn by the server
+// (functions/lib/seats.js). The real night never has one, so everything
+// below is null, or today's count, on it.
+export function fillInSeats(night) {
+  return Object.values(night?.roster ?? {}).filter(r => r?.fillIn === true).length
+}
+// The Host tab's line above Who is here, or null when the night has no fill-in.
+export function fillInLine(night) {
+  const n = fillInSeats(night)
+  if (!n) return null
+  return `${n === 1 ? '1 fill-in player has' : `${n} fill-in players have`} no phone. The night never waits for them.`
+}
+// Act 4's Locked in count: who the rounds wait for. Everyone; on a practice
+// night with fill-in players, the real players only (the server's rule,
+// functions/lib/seats.js seatsToWaitFor).
+export function lockedInCount(act4, night) {
+  const roster = night?.roster ?? {}
+  const locked = act4?.locked ?? {}
+  if (!fillInSeats(night)) return { locked: Object.keys(locked).length, of: Object.keys(roster).length }
+  const real = Object.keys(roster).filter(k => roster[k]?.fillIn !== true)
+  const seats = real.length ? real : Object.keys(roster)
+  return { locked: seats.filter(k => locked[k]).length, of: seats.length }
+}
+
 // Who the study greets: the character names when the rotation carries them,
 // the guests' own names otherwise.
 export function studyNames(group) {

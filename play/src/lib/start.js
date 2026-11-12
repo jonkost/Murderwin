@@ -19,6 +19,34 @@ export function introAtFor({ real = false, now = Date.now() } = {}) {
   return d.getTime() > now ? d.getTime() : null
 }
 
+// Fill-in players (the polish pass, job A4, 11 Nov 2026): on a practice night
+// the Start card can seat 0 to 8 players with no phone, who play along on
+// their own (functions/lib/fillins.js). Never on the real night: the row is
+// not shown with the box ticked or from the party day on, the number is not
+// sent, and the server seats nobody on a real night whatever it is sent.
+export const MAX_FILL_INS = 8
+// The party day, the same moment the server holds (functions/lib/morning.js PARTY_DAY; a test keeps them equal).
+export const PARTY_DAY = Date.parse('2026-11-15T12:00:00Z')
+export function fillInCount(n) {
+  const k = Math.floor(Number(n))
+  return Number.isFinite(k) ? Math.max(0, Math.min(MAX_FILL_INS, k)) : 0
+}
+// Does the Start card show the Fill-in players row? A practice night before the party day, and nothing else.
+export function fillInsOffered({ real = false, now = Date.now() } = {}) {
+  return !real && now < PARTY_DAY
+}
+// What the Start button adds to its call: { fillIns } on a practice night that asked for some, nothing otherwise.
+export function fillInArg({ real = false, fillIns = 0, now = Date.now() } = {}) {
+  const n = fillInCount(fillIns)
+  return fillInsOffered({ real, now }) && n > 0 ? { fillIns: n } : {}
+}
+// The line under the button, for a practice night with fill-ins.
+export function fillInWords(n) {
+  const k = fillInCount(n)
+  if (!k) return ''
+  return k === 1 ? '1 fill-in player joins with no phone.' : `${k} fill-in players join with no phone.`
+}
+
 const millis = t => (t?.toMillis ? t.toMillis() : Number(t) || 0)
 
 // What is left before the intro, in ms, or null when nothing is counting:

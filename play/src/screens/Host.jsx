@@ -4,8 +4,8 @@ import { callHost, callRelayGuess } from '../firebase'
 import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
-import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
-import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink } from '../lib/start'
+import { houseView, fillInLine, lockedInCount, QUIET_MS, QUIET_SCREENS } from '../lib/house'
+import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, MAX_FILL_INS, fillInArg, fillInsOffered, fillInWords } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
@@ -145,6 +145,7 @@ export default function Host({ night, content, serverNow }) {
   const clock = serverNow ? serverNow() : now
   const house = houseView({ night, study: study.data, rotation: rotation.data, presence, sound: screenSound, now: clock })
   const left = countdownLeft(night, clock) // the countdown to the intro (lib/start.js)
+  const fillLine = fillInLine(night) // null on every night with no fill-in player
   const startDrawing = () => {
     // a drawing under way (or done, with the trace behind the door) is kept; the host is asked before it is wiped
     const underWay = ['walk', 'turn', 'vote', 'lockout', 'done'].includes(relay.data?.state)
@@ -228,18 +229,22 @@ export default function Host({ night, content, serverNow }) {
       <h3>Who is here</h3>
       {people.length === 0 && <p className="gloss">Nobody has typed their name yet.</p>}
       {house.answered && <p className="gloss">{house.answered.n} of {house.answered.of} have answered. Who is online shows again when the window closes.</p>}
+      {/* a practice night's fill-in players (11 Nov 2026): seats with no phone. Never on the real night. */}
+      {fillLine && <p className="gloss fill-ins">{fillLine}</p>}
       <ul className="here">
         {people.map(r => {
           const online = house.showGuests && now - (presence[r.key] ?? 0) < 2 * 60 * 1000
           const character = characterById(content, r.characterId)
+          // a fill-in has no phone: no dot to watch, and nothing to hand on
+          const fill = r.fillIn === true
           return (
             <li key={r.key}>
-              {house.showGuests
+              {house.showGuests && !fill
                 ? <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
                 : <span className="dot hidden" aria-hidden="true" />}
-              <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}</span>
+              <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}{fill ? ' · fill-in' : ''}</span>
               <span className="who-char">{(character?.name ?? r.characterId)} · bag {r.bag}</span>
-              <button className="chip handover" disabled={!!busy} onClick={() => run('handover', r.key)} title="Wipe this phone so someone else can use it">Hand this phone on</button>
+              {!fill && <button className="chip handover" disabled={!!busy} onClick={() => run('handover', r.key)} title="Wipe this phone so someone else can use it">Hand this phone on</button>}
             </li>
           )
         })}
@@ -352,7 +357,8 @@ function act4Line(act4, night, now) {
   if (!act4?.phase) return null
   const left = t => { const s = Math.max(0, Math.ceil((Number(t?.toMillis?.() ?? t) - now) / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
   if (act4.phase === 'warn') return `Two-minute warning: the group cards in ${left(act4.warnEndsAt)}.`
-  if (act4.phase === 'groups') return `${Object.keys(act4.locked ?? {}).length} of ${Object.keys(night.roster ?? {}).length} locked in. The rounds start when everyone is, or in ${left(act4.lockEndsAt)}.`
+  // (on a practice night with fill-in players the count is of the real players: the rounds wait for them only)
+  if (act4.phase === 'groups') { const c = lockedInCount(act4, night); return `${c.locked} of ${c.of} locked in. The rounds start when everyone is, or in ${left(act4.lockEndsAt)}.` }
   if (act4.phase === 'rounds') return `Round ${act4.round} of ${act4.rounds}: the chime in ${left(act4.roundEndsAt)}. Next moves everyone on now.`
   return 'The rounds are over. Everyone is back in the Parlour. Next goes on to Act 5.'
 }
@@ -673,15 +679,21 @@ export function Safeguards({ night, busy, run }) {
 
 // On the doors screen while nothing is live: the host bootstraps the first
 // night from any phone. Once a night is live only host phones may start another.
+// Fill-in players (11 Nov 2026, the polish pass): on a practice night the card
+// can seat 0 to 8 players with no phone, who play along on their own. The row
+// starts at nought every time, is never shown with the real-night box ticked
+// (or from the party day on), and the number is never sent then
+// (lib/start.js fillInArg); the server seats nobody on a real night anyway.
 export function StartNight({ ui, again = false }) {
   const [real, setReal] = useState(false)
+  const [fillIns, setFillIns] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const start = async () => {
     setBusy(true)
     setError(null)
     try {
-      await callHost({ command: 'create', arg: { real, introAt: introAtFor({ real }) } })
+      await callHost({ command: 'create', arg: { real, introAt: introAtFor({ real }), ...fillInArg({ real, fillIns }) } })
       if (again) setBusy(false) // the Host tab stays up until this phone taps its name on the new night
     } catch (e) {
       setError(troubleLine(e, 'The Manor did not answer.'))
@@ -689,6 +701,7 @@ export function StartNight({ ui, again = false }) {
     }
   }
   const at = introAtFor({ real })
+  const offered = fillInsOffered({ real })
   return (
     <div className="start-night">
       <p className="start-who">{ui['START NIGHT']}</p>
@@ -697,10 +710,18 @@ export function StartNight({ ui, again = false }) {
         <input type="checkbox" checked={real} disabled={busy} onChange={e => setReal(e.target.checked)} />
         <span>This is the real night</span>
       </label>
+      {offered && (
+        <div className="start-fill" role="group" aria-label="Fill-in players">
+          <span className="start-fill-name">Fill-in players</span>
+          <button type="button" className="chip" disabled={busy || fillIns <= 0} onClick={() => setFillIns(n => Math.max(0, n - 1))} aria-label="One fewer fill-in player">−</button>
+          <b className="start-fill-count" aria-live="polite">{fillIns}</b>
+          <button type="button" className="chip" disabled={busy || fillIns >= MAX_FILL_INS} onClick={() => setFillIns(n => Math.min(MAX_FILL_INS, n + 1))} aria-label="One more fill-in player">+</button>
+        </div>
+      )}
       <p className="start-note">
         {real
           ? at ? `The real night. The intro plays at ${clockWords(at)}.` : 'The real night. Press Next to play the intro.'
-          : 'A practice night. The intro plays in five minutes.'}
+          : `A practice night. The intro plays in five minutes.${offered && fillIns > 0 ? ` ${fillInWords(fillIns)}` : ''}`}
       </p>
       {error && <p className="trouble" role="alert">{error}</p>}
     </div>

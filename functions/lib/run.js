@@ -130,14 +130,33 @@ export const INTRO_MAX_MS = 12 * 60 * 60_000
 export const INTRO_EARLY_MS = 1_500 // a screen's clock may run this far ahead of the server's
 export const REAL_NIGHT_MESSAGE = 'The real night can only be started on the party day, Sunday 15 November. Untick the box for a run-through.'
 
-export async function startEvening(db, { real = false, introAt = null, now = Date.now() } = {}) {
+// Fill-in players (the polish pass, job A4, 11 Nov 2026; lib/fillins.js): a
+// practice night may ask for 0 to 8 seats with no phone, and they are seated
+// here, once Arrivals is open, before any guest taps a name. On the real
+// night the number is ignored, not refused: the phone never sends one with
+// the box ticked, and a refusal could only ever block the Start button on
+// the party day. The fill-in code is loaded only when a practice asks for it.
+export async function startEvening(db, { real = false, introAt = null, fillIns = 0, now = Date.now() } = {}) {
   if (real && now < PARTY_DAY) throw new NightError('closed', REAL_NIGHT_MESSAGE)
   const made = await night.createNight(db, { forceRehearsal: !real })
   const at = Math.round(Number(introAt))
   const when = Number.isFinite(at) && at > now && at - now <= INTRO_MAX_MS ? at : null
   await db.doc(`nights/${made.nightId}`).update({ introAt: when })
   await enterBeat(db, made.nightId, 1, 'arrive', { now })
-  return { ...made, ok: true, act: 1, beat: 'arrive', real, introAt: when }
+  const seated = !real && Number(fillIns) > 0 ? await seatFillIns(db, made.nightId, fillIns, now) : 0
+  return { ...made, ok: true, act: 1, beat: 'arrive', real, introAt: when, ...(seated ? { fillIns: seated } : {}) }
+}
+
+// The night is made and live by now, so a seat that could not be made never fails the start:
+// the Host tab's list shows who is seated.
+async function seatFillIns(db, nightId, count, now) {
+  try {
+    const fillins = await import('./fillins.js')
+    return (await fillins.seatFillIns(db, nightId, count, { now })).seated ?? 0
+  } catch (e) {
+    console.error('fill-ins not seated', e?.code ?? e?.name ?? 'error')
+    return 0
+  }
 }
 
 // The intro's time: Arrivals becomes The house rules, once. Never while the
@@ -240,8 +259,9 @@ async function powerReturns(db, nightId, { now = Date.now() } = {}) {
 }
 
 export async function hostCommand(db, { nightId, command, arg, now = Date.now(), sleep = realSleep } = {}) {
-  // the phone's big Start the night button sends { real, introAt } (12 Nov 2026); a plain create is a night at the doors
-  if (command === 'create' && arg && typeof arg === 'object') return startEvening(db, { real: arg.real === true, introAt: arg.introAt, now })
+  // the phone's big Start the night button sends { real, introAt } (12 Nov 2026), and on a practice night
+  // { fillIns } too (A4, 11 Nov 2026); a plain create is a night at the doors
+  if (command === 'create' && arg && typeof arg === 'object') return startEvening(db, { real: arg.real === true, introAt: arg.introAt, fillIns: arg.fillIns, now })
   if (command === 'create') return night.hostCommand(db, { nightId, command, arg })
   if (!nightId) throw new NightError('invalid', 'Which night?')
   const ref = db.doc(`nights/${nightId}`)
