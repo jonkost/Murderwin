@@ -115,12 +115,12 @@ export function turnNames(rotation, groupId) {
 export const ALL_TRACES = [...new Set(characters.characters.map(c => c.trace).filter(Boolean))]
 export const ZIMOTHY_LINES = {
   rounds: [
-    'Disaster. Sir Irwin bounded through my office, and my files are everywhere. Match the pairs and put the first drawer back.',
+    'Disaster. My files are everywhere. Match the pairs.',
     'The second drawer. Worse. He went through twice.',
-    "The whole cabinet. Every file I own. Do this and I'll strike a motive from your list and waive my fee. Just this once.",
+    "The whole cabinet. Do this and I'll strike a motive from your list.",
   ],
   cleared: 'Order. Restored.',
-  standalone: 'Order restored. Sir Irwin is already back in the office.',
+  standalone: 'Order restored.',
   // naming the winner at the end of the visit (28 Oct 2026): transactional, as ever
   winner: "The sharpest clerk at the table. I'd hire you. Cheaply.",
   tie: "A tie. I'll split the credit and bill you both.",
@@ -317,8 +317,8 @@ export const ROOM_GAME = { study: 'study', memory: 'library', boo: 'entryway', o
 // Boo's for her arcade (5 Nov 2026). The defaults only: rulesLine, below, puts the
 // workshop's own words first.
 export const RULES_LINES = {
-  study: "Oh! You're here! The wall flashes a pattern. Touch the same lights in the same order. Do that three times, then press the colour and the number on the buttons, and press submit. Made a mistake? Press undo. I used to know the whole pattern, but... yeah.",
-  library: "Disaster. Sir Irwin bounded through my office, and my files are everywhere. I keep everything in duplicate, so match each pair and put my records back in order. Do it, and I'll strike one motive from your list. I'll waive my fee, just this once.",
+  study: "Oh! You're here! Copy the wall's pattern three times, then press the color, the number and submit.",
+  library: "Disaster. My files are everywhere. Match each pair, and I'll strike one motive from your list.",
   orangerie: "Forty years I've kept these grounds, and now you want to play on 'em. Fine. Watch the lights, not your phones. RED means GO: shake that thing like it owes you money. GREEN means FREEZE. Yes, backwards. I've done everything backwards for forty years and nobody's complained.",
   entryway: "Darling. Welcome to my arcade. Five little games, one coin each, and you take turns. Amuse me, and I'll tell you something about the one who screamed. I'm always judging.",
 }
