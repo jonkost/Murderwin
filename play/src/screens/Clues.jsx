@@ -22,10 +22,9 @@ export default function Clues({ session }) {
   }
   return (
     <div className="clues">
-      <p className="gloss">Newest first. Share it out loud, or keep it.</p>
       {[...byAct.entries()].map(([act, list]) => (
         <section key={act} className="clues-act">
-          <h3 className="eyebrow">Act {act} · {ACTS[act]?.plain}</h3>
+          <h3 className="eyebrow">{ACTS[act]?.plain}</h3>
           {list.map(c => <ClueCard key={c.id} card={c} />)}
         </section>
       ))}

@@ -15,29 +15,29 @@ export const ACTS = {
 }
 
 export const CATS = [
-  { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. Only one year old, so he knows less than he thinks. If Irwin and anyone disagree, Irwin is right.' },
-  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Lives alone in the study. Honest, and forgetful: what she tells you is true, though she may forget part of it, and she is cheerfully confident about all of it.' },
-  { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Not staff. Guarded, not snobbish. In Act 2 she only speaks to people she has decided about; in Act 4 she talks to every group.' },
+  { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. If Irwin and anyone disagree, Irwin is right.' },
+  { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Honest, and forgetful: what she tells you is true, though she may forget part of it.' },
+  { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Guarded, not snobbish.' },
   { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate and rationed. Openly transactional. Where money is involved, he shades it.' },
-  { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper', blurb: 'Been here longer than anyone, which is why nobody questions him when he is wrong. Confidently backwards more often than not.' },
+  { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper', blurb: 'Confidently backwards more often than not.' },
 ]
 
 export const DEFAULT_UI = {
-  DOORS: 'The doors open at four. Make yourself comfortable.',
+  DOORS: 'The doors open at four.',
   JOIN: 'Who are you?',
   'JOIN BUTTON': 'That’s me',
-  'JOIN AGAIN': 'Back on a new phone? Tap your name and your character follows.',
-  LOBBY: 'The doors are open. Drinks are in the parlour. The game will find you when it starts.',
+  'JOIN AGAIN': 'Back on a new phone? Tap your name.',
+  LOBBY: 'Drinks are in the Parlour.',
   BAG: 'Collect bag number',
-  OFFLINE: 'The Manor cannot hear your phone. Stay where you are. It will reconnect on its own, and nothing is lost.',
+  OFFLINE: 'Reconnecting on its own. Nothing is lost.',
   PAUSED: 'Sir Irwin requires the garden. Back shortly.',
-  SUPERSEDED: 'This character has moved to another phone. Tap your name to bring it back here, or type another name to join as someone else.',
+  SUPERSEDED: 'This character moved to another phone. Tap your name to bring it back, or type a new name.',
   POWER: 'The power is back. Keep your eyes on your own phone.',
   // The one button after the blackout (Jon's cue list, cue 5, 25 Oct 2026); the role card follows it for fifteen seconds, then the main page on its own.
   CONTINUE: 'Sorry for the interruption, continue here',
   // Shown in the card's place on a phone that has no role card yet (a late arrival): the same shape as everyone else's screen.
   ORIENT: 'The power is back. The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on.',
-  'PAUSED BY HOST': 'Paused by the host. Nothing on this phone can run out. It carries on when the host says.',
+  'PAUSED BY HOST': 'Paused by the host. Nothing can run out.',
   'YOUR ROLE': 'Your role',
   'SHOW ROLE': 'Show me my card',
   'HIDE ROLE': 'Put it away',
@@ -65,7 +65,7 @@ export const DEFAULT_RULES = [
 ]
 
 export const DEFAULT_STATUS = {
-  IN: { irwin: 'Sir Irwin adores you. He adores everyone.', granolia: 'Granolia has decided you are a learner. She will tell you everything.', boo: 'Miss Boo has decided about you, and in your favour.', zimothy: 'Mr. Clawford finds you a person of standing.', salem: 'Salem reckons you have done an honest day’s work.' },
+  IN: { irwin: 'Sir Irwin adores you. He adores everyone.', granolia: 'Granolia has decided you are a learner. She will tell you everything.', boo: 'Miss Boo has decided about you, and in your favor.', zimothy: 'Mr. Clawford finds you a person of standing.', salem: 'Salem reckons you have done an honest day’s work.' },
   WARMING: { irwin: 'Sir Irwin adores you.', granolia: 'Granolia likes you well enough. She may forget your name.', boo: 'Miss Boo is still deciding about you.', zimothy: 'Mr. Clawford will see you, briefly.', salem: 'Salem tolerates you.' },
   LOCKED: { irwin: 'Sir Irwin adores you.', granolia: 'Granolia has not placed you yet.', boo: 'Miss Boo looks through you.', zimothy: 'Mr. Clawford’s door is closed to you.', salem: 'Salem has no time for the likes of you.' },
 }
@@ -94,10 +94,10 @@ export const DEFAULT_STUDY_LINES = {
   ENTERING: 'Press the color and the number of bars, then Submit.',
   SLOW: 'Again, slower. I have all day. Well. Fifteen minutes.',
   MAP: 'Here, I have numbered them for you. Follow the numbers.',
-  'HALF COLOUR': 'The number is right, dear. Look at the colour again.',
-  'HALF NUMBER': 'The colour is right, dear. Count the bars again.',
+  'HALF COLOUR': 'The number is right, dear. Look at the color again.',
+  'HALF NUMBER': 'The color is right, dear. Count the bars again.',
   NEITHER: 'Neither half, I am afraid. Look again at both.',
-  TIME: 'Two minutes left, dear. Not that I am counting. I am counting.',
+  TIME: 'Two minutes left, dear.',
   SOLVED: 'Well done. Your clue is on your phones.',
   CAPPED: "Time's up. Your clue is on your phones.",
 }
@@ -199,9 +199,9 @@ export function npcCards(content) {
 // What each stop means for you, low to high: how much of its hint a cat
 // gives you (the higher the stop, the more it says). Plain words, no numbers.
 export const STOP_MEANINGS = [
-  'Little or nothing. This cat has not warmed to you yet.',
-  'A little, at best. This cat is still deciding about you.',
-  'Some of what this cat knows. The next Parlour Game may tip it.',
+  'Little or nothing.',
+  'A little, at best.',
+  'Some of what this cat knows.',
   'Most of what this cat knows.',
   'Everything this cat knows.',
 ]
