@@ -193,10 +193,10 @@ export const CUT_MIN_MS = 30000 // but no game is cut shorter than this
 
 // ---- the words ----
 
-// The practice clue: the house's rehearsal stand-in, word for word
-// (functions/lib/bagclues.js bagStandIn('boo', 4); a test keeps them equal).
-// On the night each player's bag clue about the Ghost shows here instead,
-// as the house deals it (a rehearsal night deals the same stand-in).
+// The practice page's clue: a note in brackets, for the arcade's own practice
+// page and the workshop's preview only (no night behind them). On a night,
+// a practice night too, each player's bag clue about the Ghost shows here
+// instead, as the house deals it: Boo's real line (11 Nov 2026).
 export const STAND_IN_CLUE = "[Boo's bag clue about the Ghost appears here]"
 export const CLUE_NOTE = 'Practice: on the night, your own clue about the Ghost shows here.'
 export const CLUE_WAIT = 'One moment, darling.' // on the night, until the house has answered
@@ -206,7 +206,7 @@ export const FAREWELL_LINE = 'Be on your way.'
 
 // Boo's lines, by moment: arch and bored, "darling"; when she is pleased the
 // alley cat slips through. Never a number, a rule or a word about the case,
-// never her hint ladder, her Parlour Game lines or the Catwalk's verdicts,
+// never her hint ladder or her Parlour Game lines,
 // and no cat sounds (docs/cat-info.md). What to do is always a plain line.
 export const BOO_LINES = {
   home: 'Darling. Pick a game. Try to keep up.',

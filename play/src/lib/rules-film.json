@@ -25,9 +25,10 @@
     "rules-22-act3-supper-is-served": 31.7,
     "rules-23-act4-behind-closed-doors": 60.3,
     "rules-24-act5-one-candle": 24,
-    "rules-25-act6-the-final-hour": 35.8,
+    "rules-25-act6-the-final-hour": 45,
     "rules-26-act7-unmasked": 35.7,
     "rules-27-keep-your-secret": 16.1,
     "rules-28-good-luck": 11.1
-  }
+  },
+  "pictures": true
 }

@@ -14,7 +14,7 @@
 // and ok flags. The dial and its log are sealed until the Act 7 graph.
 
 import { NightError, readArea } from './night.js'
-import { settleWindow, openWindow, dealWaitingGame, ms, PARLOUR, NIGHT, tickLights, runAction } from './deal.js'
+import { settleWindow, openWindow, dealWaitingGame, ms, PARLOUR, NIGHT, tickLights, runAction, beatSpec } from './deal.js'
 import { tickBulletin } from './screen.js'
 import { DIAL_SIGN } from './case.js'
 import { RUNNING } from './relay.js'
@@ -111,6 +111,12 @@ export function dueSlot(sched, { now, gapMs = PARLOUR.minGapMin * 60_000 } = {})
 export async function tickParlour(db, nightId, now) {
   const night = (await db.doc(`nights/${nightId}`).get()).data()
   if (!night || night.phase !== 'act' || !PARLOUR_ACTS.includes(Number(night.act))) return { opened: false }
+  // ---- A6's guard (handoff 11 Nov 2026, the ending), for A5 (the flow) to absorb into its own rule ----
+  // No Parlour Game opens over Talk it over, Act 6's last beat: the host's Start the vote must never be
+  // refused because a game popped up while people were talking. The vote, the reveal and the credits
+  // are Act 7, which is not a Parlour act, so the line above already keeps games out of them.
+  if (beatSpec(night.act, night.beat)?.action === 'notice:talk') return { opened: false, reason: 'talk' }
+  // ---- end of A6's guard ----
   if (night.window && !night.window.settled) return { opened: false, reason: 'window-open' }
   const relay = (await db.doc(`nights/${nightId}/public/relay`).get()).data()
   if (relay && RUNNING.includes(relay.state)) return { opened: false, reason: 'drawing' }

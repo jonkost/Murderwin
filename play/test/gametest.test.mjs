@@ -16,13 +16,13 @@ import { salemColourAt, SALEM_GRACE_MS } from '../src/lib/night.js'
 const src = (p) => readFileSync(new URL(p, import.meta.url), 'utf8')
 const SAMPLE = [{ q: 'Sample?', choices: [{ k: 'a', text: 'Yes' }, { k: 'b', text: 'No' }] }]
 
-test('the address picks the practice page: Salem or Boo on a phone, Boo on the wall, nothing else', () => {
+test('the address picks the practice page: Salem on a phone, his board on the brain, nothing else', () => {
   assert.equal(practiceParam('?practice=salem'), 'salem')
-  assert.equal(practiceParam('?practice=boo'), null, 'Boo\'s Catwalk practices went with the Catwalk (5 Nov 2026)')
+  assert.equal(practiceParam('?practice=boo'), null, 'the arcade practises on its own page')
   assert.equal(practiceParam('?kiosk=boo&practice=1'), null)
   assert.equal(practiceParam('?kiosk=orangerie&practice=1'), 'orangerie-wall', 'Salem\'s board on the brain\'s browser (31 Oct 2026)')
-  assert.equal(practiceParam('?kiosk=pose&practice=1'), 'pose-wall')
-  assert.equal(practiceParam('?kiosk=living&practice=1'), null, 'only Boo\'s camera and the Orangerie have a practice screen')
+  assert.equal(practiceParam('?kiosk=pose&practice=1'), null, 'Boo\'s camera went (11 Nov 2026)')
+  assert.equal(practiceParam('?kiosk=living&practice=1'), null, 'only the Orangerie has a practice screen')
   assert.equal(practiceParam('?kiosk=orangerie'), null, 'the night\'s Orangerie screen is not the practice')
   assert.equal(practiceParam('?kiosk=boo'), null, 'the night\'s Entryway screen is not a practice')
   assert.equal(practiceParam('?practice=study'), null)
@@ -136,7 +136,7 @@ test('the shared games: the night and the practice play the same component, and 
   const rooms = src('../src/screens/Rooms.jsx')
   const main = src('../src/main.jsx')
   assert.match(act4, /function SalemGame[\s\S]*?<SalemRounds /, 'the night plays SalemRounds')
-  assert.ok(!/BooPoses|BooMoments|BooRunway|booMoment/.test(act4 + rooms + practice), 'the Catwalk is gone from the phones, the screens and the practices (5 Nov 2026)')
+  assert.ok(!/BooPoses|BooMoments|BooRunway|booMoment|PoseCamera/.test(act4 + rooms + practice + main), 'the old Entryway show and its camera are gone from the phones, the screens and the practices')
   assert.match(rooms, /export function BooRoom[\s\S]*?<BooArcade key=\{`\$\{held\.groupId\}-\$\{held\.startsAt\}`\} night=\{nightProps\} \/>/, 'the night\'s Entryway screen is the arcade, in its night mode')
   assert.match(practice, /<SalemRounds /)
   assert.match(rooms, /export function Orangerie[\s\S]*?<SalemBoard doc=\{salem\} names=\{groupNames\(rotation, salem\.groupId\)\} serverNow=\{serverNow\} \/>/, 'the night\'s Orangerie screen is SalemBoard while a group plays (31 Oct 2026)')
@@ -148,7 +148,7 @@ test('the shared games: the night and the practice play the same component, and 
   // that row is the browser's, and a room screen in another tab is let in by it
   assert.ok(!/useServerClock|setDoc|'presence'|`presence|firebase\/firestore/.test(practice), 'a practice never writes presence or any doc')
   assert.match(practice, /callGameTest\(\{ command: 'clock' \}\)/)
-  assert.equal((practice.match(/= usePracticeClock\(uid\)/g) ?? []).length, 2, 'both of Salem\'s practices measure the clock that way (his board since 31 Oct 2026); the camera\'s pretend visit needs no clock')
+  assert.equal((practice.match(/= usePracticeClock\(uid\)/g) ?? []).length, 2, 'both of Salem\'s practices measure the clock that way (his board since 31 Oct 2026)')
   assert.ok(!practice.includes('<Kiosk'), 'the practice wall is not a room screen')
   assert.match(main, /Practicing \? <Practicing \/> : kiosk \? <Kiosk which=\{kiosk\} \/>/, '?kiosk=boo&practice=1 is routed before the room screens')
   // the night's game still pays through its own calls
@@ -157,7 +157,7 @@ test('the shared games: the night and the practice play the same component, and 
   assert.match(act4, /callSalemPassed\(\{ nightId, attempt, felt \}\)/, 'and says whether this phone can feel a shake (G58)')
   assert.match(rooms, /callArcadeClue\(\{ nightId, groupId: held\.groupId, place \}\)/, 'the Entryway screen asks the house for each player\'s clue (5 Nov 2026)')
   assert.match(rooms, /callArcadeScore\(\{ nightId, guestKey: key, game: rec\.game, score: rec\.score \}\)/, 'and sends each counted round\'s score')
-  assert.ok(!/callBooDone/.test(act4 + rooms), 'the Catwalk\'s call is gone')
+  assert.ok(!/callBooDone|callPosePhoto/.test(act4 + rooms + src('../src/firebase.js')), 'the old show\'s call and the camera\'s are gone')
   // a preview's Parlour Game ends on Thanks and sends nothing
   const windows = src('../src/screens/Windows.jsx')
   assert.match(windows, /if \(nightId === 'preview'\) \{ setSent\(true\); return \}/)

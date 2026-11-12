@@ -40,12 +40,11 @@ export const MACHINES = [
   { key: 'kiosk-memory', label: 'iPad Pro (memory match)' }, // ?kiosk=memory, the same iPad Pro back in the Library in Act 4; quiet once it is in the bedroom
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
   { key: 'kiosk-orangerie', label: 'Orangerie screen', quiet: true }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list)
-  { key: 'kiosk-pose', label: 'Boo’s camera', quiet: true },          // ?kiosk=pose, Jenna's iPad Pro facing the group at the arcade in Act 4 (its row was missing until 25 Oct 2026)
   { key: 'cues', label: 'Hall light and sounds', quiet: true },
 ]
 export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
 // `quiet`: a machine that makes no sound of its own by design (the brain's browser, whose
-// sound is the HomePods'; the camera; the brain itself), so it has no sound mark.
+// sound is the HomePods'; the brain itself), so it has no sound mark.
 
 // Act 2's cat visits: night.lightsProgress = { done, total }, written by the
 // server whenever the line moves (guests who have seen all four cats, and
@@ -61,9 +60,9 @@ export function catVisits(night) {
 // A cat's motive hint, the Study's trace or the news flash's family that was
 // missing when it was dealt (cards 529 and 530): night.missingLines =
 // { hint, study, news }, written by the server, a count of each. Never which
-// cat, guest, group or family. On the party
-// night the guest read the house's plain words; on a rehearsal, the note in
-// brackets with its Rehearsal text tag.
+// cat, guest, group or family. The guest read the house's plain words, on the
+// party night and on a practice night alike (11 Nov 2026: a practice night
+// plays for real; until then a rehearsal showed a note in brackets).
 export function missingLineWords(night) {
   const count = k => Math.max(0, Math.floor(Number(night?.missingLines?.[k]) || 0))
   const times = n => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`)
@@ -72,8 +71,7 @@ export function missingLineWords(night) {
   if (count('study')) said.push(`The Study had no trace ready for a group ${times(count('study'))}.`)
   if (count('news')) said.push(`The news flash had no family to cross off ${times(count('news'))}.`)
   if (!said.length) return null
-  const party = night?.forceRehearsal === false
-  return `${said.join(' ')} ${party ? 'The guests read plain words instead.' : 'On a rehearsal the card shows the note in brackets.'} Nothing to do: the game goes on.`
+  return `${said.join(' ')} The guests read plain words instead. Nothing to do: the game goes on.`
 }
 
 function clock(msLeft) {
@@ -124,7 +122,9 @@ export function houseView({ night, study, rotation, presence = {}, sound = {}, n
 
   return {
     windowOpen,
-    answered: windowOpen ? { n: w.answered ?? 0, of: guestCount } : null,
+    // `of`: the seats dealt this window (the server's count, 11 Nov 2026), so a guest who joined after it
+    // opened is not counted as still to answer; an older window has none, and the roster's size stands in
+    answered: windowOpen ? { n: w.answered ?? 0, of: Number(w.of) > 0 ? Number(w.of) : guestCount } : null,
     showGuests: !windowOpen, // per-guest dots only while no window is open
     station: { alive: stationAlive, quietFor, state: study?.state ?? 'idle' },
     machines,

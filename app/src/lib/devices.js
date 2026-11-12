@@ -1,9 +1,9 @@
 // Every device the night needs, room by room, not counting anyone's own
 // phone (22 Oct 2026, Jon: "a link for each device I need to have ready for
 // each room and overall game play"; the device table of 23 Oct 2026; Jon's
-// key in docs/cue-list.md, built 26 Oct 2026: Susan's MacBook Pro feeds the
-// projector all night and never moves, the iPad Pro roams through four
-// stations, Jenna's iPad Pro is Boo's camera, the brain's browser is the
+// key in docs/cue-list.md, built 26 Oct 2026: Susan's MacBook Pro is Boo's
+// screen in the Entryway all night and never moves (since 5 Nov 2026), the
+// iPad Pro roams through four stations, the brain's browser is the
 // Orangerie's screen, and the older family iPad is out unless Jon says it
 // stays, the question olderIpad). Sources: docs/on-the-night.md (which Mac
 // does what, the start order) and docs/room-screens.md (the room screens).
@@ -58,7 +58,7 @@ export const DEVICE_ROOMS = [
     devices: [
       {
         key: 'living', name: 'The Parlour screen', machine: 'Jon’s work MacBook Pro on the TV', kiosk: 'living',
-        what: 'All night: the join code through Act 1 and again at the dinner wrap-up (the intro video and the rules slides from a second browser tab: switch back to the game tab for the next beat), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, the Happy Birthday Irwin card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the board, the ballot and the reveal, then black at The End. In the drawing you tap the room’s guess on your own phone; this screen’s names still take a tap, the fallback.',
+        what: 'All night: the join code through Act 1 and again at the dinner wrap-up (the intro video and the rules slides from a second browser tab: switch back to the game tab for the next beat), the blackout, bulletin 1, Sir Irwin’s prompts while guests wait in Acts 2 and 4, the Act 4 title card, the Happy Birthday Irwin card, Sir Irwin’s countdown, Sir Irwin Needs a Hand, the three questions over everyone’s portraits while the room talks it over, the vote and the reveal, then black at The End. In the drawing you tap the room’s guess on your own phone; this screen’s names still take a tap, the fallback.',
         start: ['Open the address in a browser, full screen.', 'Tap anywhere once to wake it, so it can play sound and video. Then leave the trackpad within reach: the TV’s names are the fallback for the drawing’s guess in Act 6.'],
         alive: 'The join code, or the crest or its loop, and a waiting line. On your Host tab, under The house, its dot is green (on a rehearsal the screen has its own dot too, bottom left).',
       },
@@ -96,7 +96,7 @@ export const DEVICE_ROOMS = [
   },
   {
     key: 'entryway', room: 'The Entryway',
-    why: 'Boo’s room, the front hall: her code in Act 2 and Miss Boo LaRue’s Arcade in Act 4 on Susan’s MacBook Pro and the Stream Deck + XL (since 5 Nov 2026; Boo’s Catwalk on the projector before), with her camera facing the group at the deck.',
+    why: 'Boo’s room, the front hall: her code in Act 2 and Miss Boo LaRue’s Arcade in Act 4 on Susan’s MacBook Pro and the Stream Deck + XL.',
     devices: [
       {
         key: 'boo', name: 'Boo’s screen', machine: 'Susan’s work MacBook Pro in the Entryway with the Stream Deck + XL on USB, all night', kiosk: 'boo',
@@ -104,12 +104,6 @@ export const DEVICE_ROOMS = [
         start: ['In Google Chrome (Safari cannot reach the Stream Deck), with the Stream Deck app quit and the Stream Deck + XL plugged in. Sleep off, lid open, the sound on the Mac’s own speakers.', 'Before the guests arrive, open the arcade’s practice page from the Game test tab in the same browser and tap Connect the Stream Deck once: the night’s screen has no Connect button and remembers the deck.', 'Then open this address, full screen, and tap once to wake it, so the games can make their sounds.'],
         alive: 'Its loop, or Boo’s rules card with a waiting line, on the screen.',
         note: 'With no Stream Deck the deck is drawn on the screen and the mouse and the keyboard play the games: the clues and the chime come the same.',
-      },
-      {
-        key: 'pose', name: 'Boo’s camera (nice to have)', machine: 'Jenna’s iPad Pro, on its stand in the Entryway, facing the group at the deck, Act 4 only', kiosk: 'pose',
-        what: 'Shows the group to itself like a mirror and takes one photo of each group a minute into its visit to the arcade, for the end credits. Jenna is at the house to pack the bags and never plays, so her iPad is free all night. Without it the arcade runs the same and the credits have no photos.',
-        start: ['Before Start Act 4, stand it facing where the group stands at the Stream Deck.', 'Open the address in Safari, full screen, and tap Turn on the camera. Allow the camera when the iPad asks.'],
-        alive: 'The room on the screen, like a mirror, and a waiting line.',
       },
     ],
   },
@@ -191,7 +185,7 @@ export const SWITCH_ON = [
   'The brain: network cable in, sleep off, then double-click Start the brain on its desktop. When the night begins, the bulb outside the bedroom turns green for the welcome; it goes out for the blackout and comes back red.',
   'The party box, then your phone, before any guest arrives. On the Game night page, tick This is the party night. Then open the game on your phone, tap Host? Start the night and type your name. The Host tab says This is the party night: the box worked. Until a night is live, every phone that opens the game shows that button.',
   'The study: on the M1 Air, quit the Elgato app and double-click Start the study on its desktop. Once its window says the station is up, minimise the window.',
-  'The screens: the Parlour TV, the study screen, the iPad Pro in the Library with Zimothy, Susan’s MacBook Pro in the Entryway with the Stream Deck + XL, and the brain’s own browser facing the Orangerie table. On each machine type one short address, murderwin-at-sirwin-manor.web.app/setup, and tap that machine’s room (or open each address below). Make it full screen and tap once to wake it. The iPad Pro moves three times in the night: to the Orangerie for supper, back to the Library before Start Act 4, into the bedroom after Act 4. Jenna’s iPad Pro, Boo’s camera, comes out before Start Act 4.',
+  'The screens: the Parlour TV, the study screen, the iPad Pro in the Library with Zimothy, Susan’s MacBook Pro in the Entryway with the Stream Deck + XL, and the brain’s own browser facing the Orangerie table. On each machine type one short address, murderwin-at-sirwin-manor.web.app/setup, and tap that machine’s room (or open each address below). Make it full screen and tap once to wake it. The iPad Pro moves three times in the night: to the Orangerie for supper, back to the Library before Start Act 4, into the bedroom after Act 4.',
   'The rooms: the four room codes on the walls (none in the Parlour), the paper roll and markers in the Library with the iPad Pro’s small stand, the Orangerie table set. Jenna packs the bags where nobody who plays can see.',
   'The guests: they scan the square code at the door, type their name and tap Allow. Watch the green dots fill in on your Host tab.',
 ]
@@ -204,9 +198,8 @@ export const WHEN_ONE_DIES = [
   ['The Parlour TV', 'Open the Parlour screen in a browser on the brain and put it by the TV; the iPad Pro has a job of its own all night. The drawing’s guesses are on your phone anyway. The Orangerie then has its printed code, which is all Salem’s game needs.'],
   ['The bedroom screen', 'Nobody goes to the bedroom. Press Show the trace on the TV, under The Big Solve on the Host tab.'],
   ['The iPad Pro, at any of its stations', 'Carry on. Zimothy’s code in Act 2 is also printed, bulletin 2’s words also show on the Parlour TV, In Duplicate is paid at the chime anyway, and the trace goes to the TV with Show the trace on the TV. Susan’s 8th-gen iPad can take any station: open that station’s address on it.'],
-  ['Boo’s wall or the study station', 'Carry on. The group is paid at the chime anyway.'],
-  ['The projector', 'Carry on, or open Boo’s wall on any screen the group can see. If its plug never came back on after the blackout or the drawing, switch it on by hand in the Home app; the brain carries on.'],
-  ['Boo’s camera (Jenna’s iPad Pro)', 'Carry on. The catwalk runs the same; the end credits have no photo for that group.'],
+  ['Boo’s screen or the study station', 'Carry on. The group is paid at the chime anyway.'],
+  ['The projector', 'Carry on. Nothing is shown on it now, and the brain carries on whether its plug answers or not.'],
   ['The Orangerie screen (the brain’s browser)', 'Carry on. Salem’s game is on the phones, and the printed code serves Act 2 and Act 4.'],
   ['Get Off My Lawn!', 'Nothing to do. A phone that cannot feel a shake never slips, and the phones turn red and green whatever the lights do.'],
   ['The hall bulb', 'The TV says the door is open, and the phones say the light is green, regardless.'],

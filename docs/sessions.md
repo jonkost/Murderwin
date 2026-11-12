@@ -9,6 +9,17 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, after the test · Claude Code (the brain lets go of the hall light)
+
+Jon: "Yes, fix it". Found at the end of the walk-through: after The End the
+brain kept setting the hall bulb green every five seconds, over Jon's own
+light controls. Now, at The End (`nights/{id}.over`) and when no night is
+live, the brain lets go: the bulb stays as it is and nothing is re-sent
+(`cues/lib/cues.js` `hallColour` answers `free`, `cues/cues.mjs` `setHall`).
+Back one from The End takes the bulb again. A test covers it. It is the
+brain's own code, so nothing to publish: it is in force the next time the
+brain is started. Not tried on the real bulb.
+
 ## 12 Nov 2026, after the test · Claude Code (the evening ended by hand)
 
 - Jon: "Can you end this evenings game. The green light clue is still live and over riding my light controls." The night was at The End, and the brain was still setting the hall bulb green every five seconds.

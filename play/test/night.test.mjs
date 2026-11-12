@@ -306,19 +306,23 @@ test('CL-8 a rehearsal night: no band on a phone, the Host tab says which night 
 })
 
 // Never a note about the game on a guest's screen (card 529): a clue that
-// came with no words says so in brackets on a rehearsal only.
-test('G59 a clue with no words: the note in brackets on a rehearsal only, the Study\'s plain words on the party night', async () => {
+// came with no words shows the Study's plain words, on the party night and on
+// a practice night alike (11 Nov 2026: a practice night plays for real).
+test('G59 a clue with no words: the Study\'s plain words on every night, never a note in brackets', async () => {
   const { readFileSync } = await import('node:fs')
   const cards = readFileSync(new URL('../src/screens/Cards.jsx', import.meta.url), 'utf8')
   const from = cards.indexOf('export function Clue(')
   const clue = cards.slice(from, cards.indexOf('\n}\n', from))
-  assert.ok(clue.includes('const rehearsal = useContext(RehearsalNight)'))
-  assert.ok(clue.includes("card.text || (rehearsal ? '(Nothing came through. Ask the host.)' : CLUE_QUIET)"))
+  assert.ok(clue.includes('<Spoken text={card.text || CLUE_QUIET} />'))
+  assert.ok(!clue.includes('RehearsalNight') && !clue.includes('Nothing came through'), 'the same on a practice night: no note about the game')
   const quiet = cards.match(/const CLUE_QUIET = '([^']+)'/)?.[1]
   const station = readFileSync(new URL('../../functions/lib/station.js', import.meta.url), 'utf8')
   assert.equal(quiet, station.match(/export const STUDY_QUIET = '([^']+)'/)?.[1], 'the same words as the Study\'s')
   assert.ok(quiet && !/[()[\]]/.test(quiet), 'plain words, no brackets')
-  // a cat's hint line is drawn as it comes: the server sends plain words on the party night, the note only on a rehearsal
+  // a cat's hint line is drawn as it comes: the server sends plain words on every night (the note only with no case at all)
+  const deal = readFileSync(new URL('../../functions/lib/deal.js', import.meta.url), 'utf8')
+  assert.ok(deal.includes("if (!line?.text) return { hint: c ? { text: HINT_QUIET.replace('[CAT]', CAT_NAMES[cat] ?? 'The cat'), placeholder: false, none: true } : { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }"))
+  assert.ok(station.includes('if (!reveal) return c ? { ...base, text: STUDY_QUIET, placeholder: false, none: true } : { ...base, text: STUDY_PLACEHOLDER, placeholder: true, none: true }'))
   assert.ok(cards.includes("card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}>"))
 })
 

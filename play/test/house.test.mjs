@@ -29,8 +29,8 @@ test('station and machine dots: alive within two minutes, quiet after, with how 
   assert.equal(v.station.alive, true)
   assert.equal(v.station.quietFor, '0:45')
   const by = Object.fromEntries(v.machines.map(m => [m.key, m.alive]))
-  // two rows since 25 Oct 2026 (the cue list): the Orangerie's screen on the brain's browser, and Boo's camera (functions/lib/pose.js looks for its heartbeat)
-  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, 'kiosk-boo': false, 'kiosk-orangerie': false, 'kiosk-pose': false, cues: true })
+  // the Orangerie's screen on the brain's browser has its row since 25 Oct 2026 (the cue list); Boo's camera's row went with the camera (11 Nov 2026)
+  assert.deepEqual(by, { 'kiosk-living': true, 'kiosk-ipad': false, 'kiosk-bedroom': false, 'kiosk-study': false, 'kiosk-memory': false, 'kiosk-boo': false, 'kiosk-orangerie': false, cues: true })
   assert.equal(v.machines.length, MACHINES.length)
   const quiet = houseView({ night: NIGHT, study: { state: 'idle', groupId: 'g2', updatedAt: stamp(NOW - QUIET_MS - 1000) }, rotation: ROTATION, now: NOW })
   assert.equal(quiet.station.alive, false)
@@ -159,7 +159,7 @@ test('F31 every room screen has its own dot on the Host tab, now that the screen
   // every kiosk Kiosk.jsx names has a row, by the key its heartbeat carries (`kiosk-${which}`)
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   const kiosks = (kiosk.match(/\/play\/\?kiosk=([a-z |]+)\./)?.[1] ?? '').split('|').map(s => s.trim()).filter(Boolean)
-  assert.deepEqual([...kiosks].sort(), ['bedroom', 'boo', 'ipad', 'living', 'memory', 'orangerie', 'pose', 'study'])
+  assert.deepEqual([...kiosks].sort(), ['bedroom', 'boo', 'ipad', 'living', 'memory', 'orangerie', 'study'])
   for (const k of kiosks) assert.ok(MACHINES.some(m => m.key === `kiosk-${k}` && m.label), `${k} has a row`)
   // each row a dot: green while heard from in the last two minutes
   const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
@@ -194,8 +194,10 @@ test('G59 a cat\'s hint or the Study\'s trace that never came: the Host tab says
   const party = { ...NIGHT, forceRehearsal: false }
   assert.equal(missingLineWords({ ...party, missingLines: { hint: 1 } }), 'A cat had no motive hint ready for a guest once. The guests read plain words instead. Nothing to do: the game goes on.')
   assert.equal(missingLineWords({ ...party, missingLines: { hint: 2, study: 3 } }), 'A cat had no motive hint ready for a guest twice. The Study had no trace ready for a group 3 times. The guests read plain words instead. Nothing to do: the game goes on.')
-  assert.match(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { study: 1 } }), /^The Study had no trace ready for a group once\. On a rehearsal the card shows the note in brackets\./)
-  assert.match(missingLineWords({ ...NIGHT, missingLines: { study: 1 } }), /On a rehearsal/, 'a night that is not marked the party is a rehearsal')
+  // a practice night plays for real (11 Nov 2026): the guests read the same plain words there, so the Host tab says the same
+  assert.equal(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { study: 1 } }), 'The Study had no trace ready for a group once. The guests read plain words instead. Nothing to do: the game goes on.')
+  assert.equal(missingLineWords({ ...NIGHT, missingLines: { study: 1 } }), missingLineWords({ ...party, missingLines: { study: 1 } }), 'the same words on every kind of night')
+  assert.ok(!/rehearsal|bracket/i.test(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { hint: 1, study: 1, news: 1 } })), 'no note in brackets to speak of any more')
   // counts only: no cat, guest or group in the words, whatever else the doc carries
   const words = missingLineWords({ ...party, missingLines: { hint: 1, study: 1, jon: 5, boo: 2 } })
   for (const name of ['Boo', 'Salem', 'Zimothy', 'Granolia', 'Jon', 'Jessa', 'g1', '5']) assert.ok(!words.includes(name), name)

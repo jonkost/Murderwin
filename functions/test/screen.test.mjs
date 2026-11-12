@@ -3,18 +3,19 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
-import { hostCommand, studyFinished, advanceRelay, guessRelay, player } from '../lib/run.js'
+import { hostCommand, studyFinished, advanceRelay, guessRelay } from '../lib/run.js'
 import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
-  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
+  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
-  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, NEWS_STAND_IN, BULLETIN2_STAND_IN, JOIN_CARDS,
+  screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS, TALK_CARD, VOTE_CARD,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
 import { NEWS, CLIP_IDS, clipCode } from '../lib/news.js'
+import { irwinOptions, irwinCount } from '../lib/families.js'
 
 // Everything here is a throwaway: the dealer's own rehearsal case in a fake
 // Firestore, and bracketed stand-ins made in the test. Nothing is printed.
@@ -81,7 +82,11 @@ test('checkScreen refuses a forbidden key at any depth and an unknown kind; writ
   assert.equal(await readScreen(db, 'n'), null)
   await writeScreen(db, 'n', screenDoc('news', { lines: ['a'] }))
   assert.equal((await readScreen(db, 'n')).kind, 'news')
-  assert.ok(SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('black'))
+  assert.ok(SCREEN_KINDS.includes('black'))
+  // 11 Nov 2026: the board went with the round that filled it; Talk it over and the vote each have a kind
+  assert.ok(!SCREEN_KINDS.includes('board') && SCREEN_KINDS.includes('talk') && SCREEN_KINDS.includes('vote'))
+  for (const card of [TALK_CARD, VOTE_CARD]) assert.deepEqual(card.lines, ['Who did it?', 'Why?', 'Who is the Ghost?'], 'the three questions, open words')
+  assert.ok(checkScreen(screenDoc('talk', TALK_CARD)).ok && checkScreen(screenDoc('vote', VOTE_CARD)).ok)
   assert.ok(SCREEN_KINDS.includes('birthday'), 'the Happy Birthday Irwin card is a kind of its own (Cake!, 25 Oct 2026)')
   assert.ok(SCREEN_KINDS.includes('join'), 'the join code on the Parlour TV is a kind of its own (cues 3 and 10, 25 Oct 2026)')
   // the join screen carries words only: the TV draws the square from the play address itself
@@ -189,7 +194,8 @@ test('the seed names a screen and a sound only from the catalogues', () => {
   assert.equal(beatSpec(3, 'bulletin').action, 'arm:bulletin', 'bulletin 2 is armed, then plays itself')
   assert.equal(beatSpec(5, 'irwin').screen, 'irwin')
   assert.equal(beatSpec(6, 'door').screen, 'door')
-  assert.equal(beatSpec(6, 'eliminate').screen, 'board')
+  assert.equal(beatSpec(6, 'talk').screen, 'talk')
+  assert.equal(beatSpec(7, 'ballot').screen, 'vote')
   assert.equal(beatSpec(6, 'door').soundOnce, true)
 })
 
@@ -213,7 +219,7 @@ async function party({ words = true } = {}) {
   return { db, nightId, phones }
 }
 
-test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, board at 6/eliminate, black on blackout and pause; every sound once; nothing forbidden', async () => {
+test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin at 5/irwin, door at 6/door, the three questions at 6/talk and 7/ballot, black on blackout and pause; every sound once; nothing forbidden', async () => {
   const { db, nightId, phones } = await party()
   const uids = Object.values(phones)
   const sounds = new Set()
@@ -263,13 +269,17 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal((await currentSound(db, nightId)).id, 'blackout', 'the blackout\'s sound stays the last: the power has none')
   assert.deepEqual(await host('power'), { ok: true, already: true })
 
-  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off;
-  // on a rehearsal night the family's line is a bracketed stand-in and its recording is not played
+  // Act 2: W-O-O-F News bulletin 1: the opening, the line for the one family crossed off, the sign-off.
+  // A practice night plays it whole (11 Nov 2026): the family's own line, and its recording with the
+  // other two. Compared here with the bank, never printed.
   await next() // news
   const news = screen()
   assert.equal(news.kind, 'news')
   const c2 = db.store.get(`cases/${nightId}`)
-  assert.deepEqual(news.lines, [NEWS.bulletin1.opening.text, NEWS_STAND_IN, NEWS.bulletin1.signoff.text])
+  assert.equal(c2.rehearsal, true)
+  const crossed = NEWS.bulletin1.families[c2.solving.newsOut[0]]
+  assert.ok(news.lines.length === 3 && news.lines[0] === NEWS.bulletin1.opening.text && news.lines[1] === crossed.text && news.lines[2] === NEWS.bulletin1.signoff.text, 'the opening, the crossed-off family\'s own line, the sign-off')
+  assert.ok(!news.lines.some(l => /[[\]]/.test(l)), 'no note in brackets')
   assert.notEqual(c2.solving.newsOut[0], c2.solving.family, 'never the real family')
   assert.equal(news.rehearsal, true)
   assert.ok(!news.video, 'with Show the words instead ticked, the bulletin is the recordings with the words on screen')
@@ -277,7 +287,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.deepEqual(news.captions.lines, news.lines)
   const newsSound = await currentSound(db, nightId)
   assert.equal(newsSound.id, 'chime-news')
-  assert.deepEqual(newsSound.clips, ['newsflash-opening', 'newsflash-signoff'])
+  assert.ok(newsSound.clips.length === 3 && newsSound.clips[0] === 'newsflash-opening' && newsSound.clips[1] === crossed.clip && newsSound.clips[2] === 'newsflash-signoff', 'all three recordings, the family\'s own in the middle')
   assert.ok(!newsSound.video, 'the brain plays the recordings')
   await next() // peek: the TV goes idle, the captions ride along for the iPad
   assert.equal(screen().kind, 'idle')
@@ -321,9 +331,13 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(bulletin.kind, 'bulletin')
   const c = db.store.get(`cases/${nightId}`)
   const level = Math.min(5, Math.max(1, 3 + Math.sign(c.dial) * Math.round(Math.abs(c.dial) / 4)))
-  assert.deepEqual(bulletin.lines, [NEWS.bulletin2.opening.text, BULLETIN2_STAND_IN(level), NEWS.bulletin2.signoff.text], 'a rehearsal: the real family\'s slot, at the dial, as a stand-in')
+  // a practice night plays it whole (11 Nov 2026): the real family's own line at the dial's level, and its recording
+  const real = NEWS.bulletin2.families[c.solving.family][level - 1]
+  assert.ok(bulletin.lines.length === 3 && bulletin.lines[0] === NEWS.bulletin2.opening.text && bulletin.lines[1] === real.text && bulletin.lines[2] === NEWS.bulletin2.signoff.text, 'the opening, the real family\'s line at the dial\'s level, the sign-off')
+  assert.ok(!bulletin.lines.some(l => /[[\]]/.test(l)), 'no note in brackets')
   assert.equal((await currentSound(db, nightId)).id, 'sounder-bulletin')
-  assert.equal((await currentSound(db, nightId)).clips.length, 2, 'the opening and the sign-off; never the family\'s recording on a rehearsal')
+  const b2 = (await currentSound(db, nightId)).clips
+  assert.ok(b2.length === 3 && b2[0] === NEWS.bulletin2.opening.clip && b2[1] === real.clip && b2[2] === NEWS.bulletin2.signoff.clip, 'all three recordings, the family\'s own in the middle')
   for (const uid of Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)) assert.ok(db.store.get(`sessions/${uid}`).cards.some(x => x.key === 'bulletin'), 'every phone hears about it')
   await host('tick')
   assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
@@ -374,9 +388,15 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(irwin.lines[0], 'Oh! You are all here.')
   assert.ok(Object.values(IRWIN_OPTION_LINES).includes(irwin.lines[1]), 'the countdown line straight after the opener')
   assert.equal('irwin' in db.store.get(`cases/${nightId}`), false, 'the case carries no Irwin lines at all')
-  assert.equal(irwin.choices.length, 1, 'a rehearsal: one stand-in for the cards')
-  assert.match(irwin.choices[0].rhyme, /^\[Sir Irwin's [1-5] motive cards? appear here\]$/)
+  // a practice night shows his real cards (11 Nov 2026): the motives the case gives him at the dial's band,
+  // in number order with their rhymes, the real one among them. Worked out here from the case, never printed.
   assert.ok(irwin.mood >= 1 && irwin.mood <= 5, 'one of his five moods')
+  const c5 = db.store.get(`cases/${nightId}`)
+  const cards5 = irwinOptions(c5, { band: irwin.mood, seed: c5.screenSalt })
+  assert.equal(irwin.choices.length, irwinCount(irwin.mood), 'five cards at dial 1 down to one at dial 5')
+  assert.ok(irwin.choices.every((x, i) => x.n === cards5[i] && x.rhyme === MOTIVES.find(m => m.n === x.n)?.rhyme), 'his motive cards, as the case deals them')
+  assert.ok(irwin.choices.some(x => x.n === c5.motive), 'the real motive is always among them')
+  assert.ok(!irwin.choices.some(x => /[[\]]/.test(x.rhyme)) && !irwin.captions.lines.some(l => /[[\]]/.test(l)), 'no note in brackets, on the TV or in the captions')
   const names = castNames(nightDoc().roster)
   for (const l of irwin.lines) {
     if (!Object.values(IRWIN_OPTION_LINES).includes(l)) assert.ok(l.split(' ').length <= 12, 'his own lines stay short; the countdown line is kept whole')
@@ -389,7 +409,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(screen().kind, 'idle')
   assert.equal((await currentSound(db, nightId)).id, 'chime-irwin', 'no sound of its own')
 
-  // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, the board
+  // Act 6: the drawing (the kiosk shows the relay itself), the door sting from the relay, the door, then Talk it over
   await next() // Act 6 opens on its two Parlour Games
   now += NIGHT.windows.questions.ms + 1
   await next() // the drawing
@@ -422,15 +442,20 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
   await host('tv-trace', 'off')
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, false)
-  await next() // eliminate
-  assert.equal(screen().kind, 'board')
-  for (const uid of uids) await player.eliminate(db, { nightId, uid, target: { kind: 'motive', n: 2 }, now })
-  now += 91_000
-  await host('settle')
+  await next() // Talk it over: the three questions on the TV, no window, no sound of its own
+  assert.equal(nightDoc().beat, 'talk')
+  assert.equal(screen().kind, 'talk')
+  assert.equal(screen().title, TALK_CARD.title)
+  assert.deepEqual(screen().lines, ['Who did it?', 'Why?', 'Who is the Ghost?'])
+  assert.notEqual(nightDoc().window?.beat, 'talk', 'talking opens no window: nothing to tap, no clock')
+  assert.deepEqual((await currentSound(db, nightId)).at, stingAt, 'the music and the sounds stay as at the door')
+  assert.equal(Object.keys(nightDoc()).some(k => /^elim/.test(k)), false, 'the night keeps no board of strikes')
 
-  // Act 7: the board stays through the ballot; the reveal and the result each have a sting
-  await next() // ballot
-  assert.equal(screen().kind, 'board')
+  // Act 7: the vote keeps the three questions up (the TV adds the clock and the count); the reveal and the result each have a sting
+  await next() // the vote
+  assert.equal(nightDoc().window.kind, 'ballot')
+  assert.equal(screen().kind, 'vote')
+  assert.equal(screen().title, VOTE_CARD.title)
   now += 121_000
   await host('settle')
   await next() // reveal
@@ -452,7 +477,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   for (const id of SOUND_IDS) assert.ok(sounds.has(id), `sound ${id} was played`)
   for (const id of sounds) assert.ok(SOUND_IDS.includes(id), `${id} is in the catalogue`)
   // the kinds the acceptance line names
-  for (const k of ['2/news:news', '3/bulletin:bulletin', '5/irwin:irwin', '6/door:door', '6/eliminate:board']) assert.ok(seen.includes(k), k)
+  for (const k of ['2/news:news', '3/bulletin:bulletin', '5/irwin:irwin', '6/door:door', '6/talk:talk', '7/ballot:vote']) assert.ok(seen.includes(k), k)
   // and the night doc itself never grew a screen field
   assert.equal(nightDoc().screen, undefined)
 })
@@ -479,6 +504,27 @@ test('G53 on a party night bulletin 2 plays the real family\'s own line at the d
       assert.ok((await currentSound(db, nightId)).clips.includes(line.clip), `G53 motive ${m.n} dial ${dial}: its recording`)
     }
   }
+})
+
+test('G61 a news flash with no family to cross off: the house\'s plain words on the party night and on a practice night alike, and the Host tab is told; the house\'s note only with no case at all', async () => {
+  const news = { act: 2, beat: 'news', spec: { screen: 'news', sound: 'chime-news' }, now: 2_000_000 }
+  for (const rehearsal of [false, true]) {
+    const { db, nightId } = await party()
+    await hostCommand(db, { nightId, command: 'act', arg: 2, now: 1_000_000 }) // the case is dealt
+    const c = db.store.get(`cases/${nightId}`)
+    db.store.set(`cases/${nightId}`, { ...c, rehearsal, solving: { ...c.solving, newsOut: [] } }) // a hole: it never happens (the check G61)
+    await onBeat(db, nightId, news)
+    const doc = db.store.get(`nights/${nightId}/public/screen`)
+    assert.deepEqual(doc.lines, [NEWS.bulletin1.opening.text, NEWS_QUIET, NEWS.bulletin1.signoff.text], rehearsal ? 'a practice night' : 'the party night')
+    assert.ok(!doc.lines.some(l => /[()[\]]/.test(l)), 'never a note in brackets')
+    assert.deepEqual(db.store.get(`nights/${nightId}`).missingLines, { news: 1 }, 'the Host tab is told: a count, never which family')
+    assert.deepEqual((await currentSound(db, nightId)).clips, [NEWS.bulletin1.opening.clip, NEWS.bulletin1.signoff.clip], 'the opening and the sign-off play')
+  }
+  const { db, nightId } = await party()
+  await onBeat(db, nightId, news)
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'no case at all')
+  assert.deepEqual(db.store.get(`nights/${nightId}/public/screen`).lines, [NEWS.bulletin1.opening.text, NEWS_FLASH_PLACEHOLDER, NEWS.bulletin1.signoff.text])
+  assert.equal(db.store.get(`nights/${nightId}`).missingLines, undefined)
 })
 
 test('F27 chime-phone plays at every "look at your phone" moment: supper, the Act 4 groups, every round and the call back to the Parlour, dessert, and the Act 6 Parlour Games', async () => {
@@ -551,7 +597,7 @@ test('onBeat with Back writes the screen but plays nothing; onPhase on an unknow
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)
   assert.equal(doorReached({ act: 6, beat: 'drawing' }), false)
   assert.equal(doorReached({ act: 6, beat: 'door' }), true)
-  assert.equal(doorReached({ act: 6, beat: 'eliminate' }), true)
+  assert.equal(doorReached({ act: 6, beat: 'talk' }), true)
   assert.equal(doorReached({ act: 7, beat: 'ballot' }), true)
   assert.equal(doorReached({ act: 5, beat: 'irwin' }), false)
   assert.equal(doorReached(null), false)

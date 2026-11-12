@@ -7,7 +7,7 @@
 // times and sets, the Act 2 queue, the Act 4 groups and rooms, the memory
 // boards, the drawing's pictures and order, the trace look-alikes, and the
 // answer picked for a phone that did not answer. Not the clock: Salem's
-// colours and Boo's poses keep their own timing.
+// colours keep their own timing.
 //
 // The party night is never seeded: its deal keeps crypto randomness
 // (CLAUDE.md, the case deal), and the Game night page greys the Replay box

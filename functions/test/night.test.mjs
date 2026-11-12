@@ -33,7 +33,7 @@ test('createNight deals a private deck, publishes content, and goes live', async
   const deck = db.store.get(`nights/${r.nightId}/private/deck`)
   assert.equal(deck.order.length, 12, 'twelve non-Professor characters in the draw')
   assert.equal(new Set(deck.order).size, 12)
-  assert.equal(deck.bags.length, 14, 'one bag number per possible character')
+  assert.equal(deck.bags.length, 10, 'a practice night: the ten bags of its own practice packing (11 Nov 2026)')
   assert.equal(db.store.get('public_state/active').nightId, r.nightId)
   const content = db.store.get(`nights/${r.nightId}/public/content`)
   assert.equal(content.motives.length, 19)
@@ -457,16 +457,30 @@ test('F15 the Act 4 groups write where the house stands with each cat; nothing b
 })
 
 
-test('the deck deals only the bag numbers the packer packed; fourteen when there is no packing', async () => {
-  const bare = seeded()
+test('the party night\'s deck deals only the bag numbers the packer packed, fourteen when there is no packing; a practice night deals 1 to 10 and never reads the packing', async () => {
+  // every path the night asks the database for
+  const watched = db => { const reads = []; const get = db._get.bind(db); db._get = path => { reads.push(path); return get(path) }; return reads }
+  const bagsOf = (db, id) => db.store.get(`nights/${id}/private/deck`).bags
+  // the party night (the box ticked, or an explicit caller): the packer's own count
+  const bare = seeded({ host_jonathan: 'Jon', host_susan: 'Susan', party_night: true })
   const a = await createNight(bare)
-  assert.equal(bare.store.get(`nights/${a.nightId}/private/deck`).bags.length, 14)
+  assert.equal(bare.store.get(`nights/${a.nightId}`).forceRehearsal, false)
+  assert.equal(bagsOf(bare, a.nightId).length, 14)
   const packed = seeded()
-  packed.store.set('sealed/bags', { properties: { '[a property]': [2, 7], '[another]': [1, 10, 4] } })
-  const b = await createNight(packed)
-  const bags = packed.store.get(`nights/${b.nightId}/private/deck`).bags
-  assert.equal(bags.length, 10)
-  assert.deepEqual([...bags].sort((x, y) => x - y), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  packed.store.set('sealed/bags', { properties: { '[a property]': [2, 7], '[another]': [1, 12, 4] } })
+  const reads = watched(packed)
+  const b = await createNight(packed, { forceRehearsal: false })
+  assert.deepEqual([...bagsOf(packed, b.nightId)].sort((x, y) => x - y), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), ['sealed/bags'], 'the party night reads the packing for its count of bags')
+  // a practice night (the default), a Game test night, and the Start button's run-through: ten numbers
+  // whatever the packing says, and nothing under sealed/ is read (handoff 11 Nov 2026, job A3)
+  reads.length = 0
+  for (const opts of [{}, { forceRehearsal: true }, { gameTest: true }, { forceRehearsal: true, dryRun: true }]) {
+    const c = await createNight(packed, opts)
+    assert.equal(packed.store.get(`nights/${c.nightId}`).forceRehearsal, true)
+    assert.deepEqual([...bagsOf(packed, c.nightId)].sort((x, y) => x - y), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  }
+  assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), [], 'a practice night reads nothing sealed, not even the count of bags')
 })
 
 test('a pause moves Sir Irwin\'s slides and the closing bulletin\'s waiting name cards on by its length', async () => {

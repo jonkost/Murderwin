@@ -18,6 +18,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, resolve, extname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SOUND_IDS, REQUIRED_SOUND_IDS, CHIME_FALLBACK, CLIP_IDS, SOUND_EXTENSIONS } from '../cues/lib/cues.js'
+import { RULES_FILES, RULES_DIR, LENGTHS_JSON } from './rules-film.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -86,9 +87,25 @@ export function folderLines({ title, where, files, endings, groups, then }) {
   return out
 }
 
+// The rules film: Jon's 28 recordings and his own 28 slides as pictures, both made by npm run rules-film.
+// `own` is what the film goes by (rules-film.json `pictures`): it shows his slides only when all 28 were in.
+export function rulesLines({ dir, files, own = false }) {
+  const out = ['', '4. The rules film (the Parlour TV plays it by itself, after the intro video)', `  Folder: ${dir}`]
+  if (!files) return [...out, '  This folder does not exist yet.']
+  const n = RULES_FILES.length
+  const voices = RULES_FILES.filter(f => files.includes(`${f}.m4a`)).length
+  const slides = RULES_FILES.filter(f => files.includes(`${f}.jpg`)).length
+  out.push(`  Your recordings: ${voices} of ${n} in.${voices < n ? ' A slide with no recording shows in silence.' : ''}`)
+  if (slides === n && own) out.push(`  Your own slides: ${slides} of ${n} in. The film shows your own slides.`)
+  else if (slides === n) out.push(`  Your own slides: ${slides} of ${n} in, but the film has not been told. Run npm run rules-film again.`)
+  else out.push(`  Your own slides: ${slides} of ${n} in. The film shows drawn slides until all ${n} are in.`)
+  out.push('  Then: npm run deploy:site. To make them again: npm run rules-film -- "<your exports folder>".')
+  return out
+}
+
 const ls = dir => (existsSync(dir) ? readdirSync(dir).filter(f => { try { return statSync(join(dir, f)).isFile() } catch { return false } }) : null)
 
-export function report({ media, video, loops, household, sizes = {} }) {
+export function report({ media, video, loops, household, rules = null, sizes = {} }) {
   const out = ['Where the media goes, and what is in.']
   out.push(...folderLines({
     title: '1. The sounds and the news recordings (the brain plays them)',
@@ -134,16 +151,18 @@ export function report({ media, video, loops, household, sizes = {} }) {
   }))
   const big = Object.entries(sizes).filter(([, b]) => b > LOOP_MAX_BYTES).map(([f]) => f)
   if (big.length) out.push(`  Over 30 MB (slow to start on the house wifi): ${big.join(', ')}`)
-  out.push('', '4. Sydney\'s photo (the end credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. His card shows his name only.'}`, '  Then: npm run deploy:site.')
-  out.push('', '5. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself (the rules film\'s 28 recordings: npm run rules-film).')
+  if (rules) out.push(...rulesLines(rules))
+  out.push('', '5. Sydney\'s photo (the end credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. His card shows his name only.'}`, '  Then: npm run deploy:site.')
+  out.push('', '6. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
   return out
 }
 
 // Which deployed files the site has. A missing file answers with a web page, not a video.
-async function liveLines({ video, loops, household }) {
+async function liveLines({ video, loops, household, rules }) {
   const want = [
     ...(video.files ?? []).filter(f => f.endsWith('.mp4')).map(f => `video/${f}`),
     ...(loops.files ?? []).filter(f => f.endsWith('.mp4')).map(f => `loops/${f}`),
+    ...(rules?.files ?? []).filter(f => /^rules-\d\d-.*\.(m4a|jpg)$/.test(f)).map(f => `rules/${f}`),
     ...(household.there ? ['household/sydney.jpg'] : []),
   ]
   if (!want.length) return ['', 'On the site: nothing to look for yet.']
@@ -157,6 +176,11 @@ async function liveLines({ video, loops, household }) {
   return ['', off.length ? `On the site: ${want.length - off.length} of ${want.length} are online. Not yet deployed: ${off.join(', ')}` : `On the site: all ${want.length} are online.`]
 }
 
+// Has the film been told Jon's own slides are in? (rules-film.json, written by npm run rules-film)
+function ownSlides() {
+  try { return JSON.parse(readFileSync(LENGTHS_JSON, 'utf8')).pictures === true } catch { return false }
+}
+
 async function main() {
   const envPath = join(root, 'cues', '.env')
   const mDir = mediaDir(existsSync(envPath) ? readFileSync(envPath, 'utf8') : '')
@@ -168,6 +192,7 @@ async function main() {
     video: { dir: vDir, files: ls(vDir) },
     loops: { dir: lDir, files: ls(lDir) },
     household: { file: syd, there: existsSync(syd) },
+    rules: { dir: RULES_DIR, files: ls(RULES_DIR), own: ownSlides() },
   }
   const sizes = Object.fromEntries((state.loops.files ?? []).map(f => [f, statSync(join(lDir, f)).size]))
   for (const line of report({ ...state, sizes })) console.log(line)

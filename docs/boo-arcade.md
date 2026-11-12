@@ -505,18 +505,17 @@ speakers: through a HomePod they come about two seconds late.
 - *arcadeClueRung* (5 November, built): each player's clue is the group's hint at the group's
   average affection with Boo, like every other room's. The other way: each player's own
   affection, which would give a pair two different hints and could point at one bag.
-- *arcadeCamera* (5 November, built): Boo's camera takes one photo of each group a minute into
-  its visit, in place of the Catwalk's last pose. The other way: the camera goes with the Catwalk.
+- *arcadeCamera* is answered (11 November): no camera. Boo's camera, its page, its practice and
+  its photos in the end credits are deleted; Jenna's iPad has no job on the night.
 - *ghostProof* (new 29 October, after you said "there is not enough to reveal the ghost"): the
   Ghost's clues are only in Act 4, and nothing proves they are enough. Should Claude Code build the
   Ghost check itself, instead of waiting for Claude chat's patch? Default: wait. Only you answer
   it, on the board.
-- *arcadeSound* (5 November, on the board): the arcade's sounds come from the Mac's own
-  speakers, as the setup says, since over AirPlay a blip lands two seconds after the press. The
-  brain still lends the Parlour HomePod to Susan's Mac through Act 4 (your call of 27 October,
-  for the Catwalk's music), so the Parlour has no house music then and the HomePod plays nothing.
-  Your call: leave it, or have the brain keep the HomePod in the house music (one line in
-  `cues/scenes.json`).
+- *arcadeSound* is answered (11 November): the arcade plays on the Mac's own speakers, as the
+  setup says, since over AirPlay a blip lands two seconds after the press, and the Parlour
+  HomePod belongs in the house music. Until the brain stops lending that HomePod to Susan's Mac
+  through Act 4 (`boo` in `cues/scenes.json`; the sound job of the 11 November handoff takes it
+  out), the Parlour has no house music then and the HomePod plays nothing.
 - *A player the chime catches before their clue* is settled by the build (5 November): the house
   deals every member's card at the chime, so the clue is on their phone, and the screen names
   them. A trio usually runs out of time: the question *arcadeTrioTime*.
@@ -578,8 +577,9 @@ asks `onClue(place)` once a place as the clue or third stage opens and shows the
 `arcadeClueText` (`CLUE_WAIT` until then), sends every counted record through `onRecord` to
 `arcadeScore` with the guest key from the rotation, and shows no Connect, practice button, band
 or wake corner (the kiosk keeps the band and the wake). Boo's Catwalk, its practice (`boo-start`,
-`boo-stop`, `public_state/game_test_boo`), `booDone`, `booShow` and `booMoment` are deleted; the
-pose camera follows the visit (`play/src/lib/pose.js`).
+`boo-stop`, `public_state/game_test_boo`), `booDone`, `booShow` and `booMoment` are deleted, and
+since 11 November so is Boo's camera (`?kiosk=pose`, the `posePhoto` callable and the photos in
+the end credits).
 
 **The route.** `play/src/main.jsx` sends `?kiosk=boo&play=1` to `BooArcade`
 (`play/src/screens/Arcade.jsx`) before `Practicing` and the kiosks, keeping the substring

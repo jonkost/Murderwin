@@ -471,3 +471,12 @@ test('the relay watches the night doc as well as the public docs (the study too)
   // offline mode never signs in
   assert.ok(src.indexOf('if (!OFFLINE) {') < src.indexOf('initializeApp(firebaseConfig)'))
 })
+
+test('at The End the brain lets go of the hall bulb, and takes it back if the host goes Back', () => {
+  assert.equal(hallColour({ night: { over: true, phase: 'act' }, cues: { hall: 'green' }, relay: { doorOpen: true } }), 'free')
+  assert.equal(hallColour({ night: { over: true, phase: 'blackout' } }), 'free', 'The End wins over everything')
+  const end = plan({ hall: 'green', sound: null }, { night: { over: true }, cues: { hall: 'green' } })
+  assert.deepEqual(end.actions, [{ type: 'hall', colour: 'free' }])
+  assert.deepEqual(plan(end.state, { night: { over: true }, cues: { hall: 'green' } }).actions, [], 'said once')
+  assert.deepEqual(plan(end.state, { night: {}, cues: { hall: 'green' } }).actions, [{ type: 'hall', colour: 'green' }])
+})

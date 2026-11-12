@@ -10,8 +10,8 @@
 // up data, no case), a practice that never touches a night (?practice=), or
 // a game on its own that never touches a night either: the standalone memory
 // match (?kiosk=memory&play=1) and Miss Boo LaRue's Arcade (?kiosk=boo&play=1,
-// &visit=1 for a practice visit; 28 Oct 2026, on the night since 5 Nov 2026,
-// when it took Boo's Catwalk's place). The two room screens a test night needs are
+// &visit=1 for a practice visit; 28 Oct 2026, on the night since 5 Nov 2026).
+// The two room screens a test night needs are
 // marked `night`, so the page turns them off while the party box is ticked
 // or the live night is the party or a dry run.
 
@@ -31,7 +31,7 @@ export const DEVICES = {
   tv: 'On the Parlour TV computer',
   ipad: 'On the iPad in the Library', // kept for notes filed before 26 Oct 2026; new ones say ipadpro
   ipadpro: 'On the iPad Pro',
-  projector: 'On the projector computer or any screen',
+  projector: 'On the projector computer or any screen', // kept for notes filed before 5 Nov 2026; no section offers it now
   study: 'On the study computer',
   bedroom: 'On the bedroom screen',
   walls: 'At the study walls',
@@ -113,8 +113,8 @@ export const SECTIONS = [
     // the night since 5 Nov 2026 (card 515): the Entryway's screen runs the same arcade
     // for the group that scans in, with the house's clues and the chime on its clock.
     key: 'arcade', name: NAME.entryway, where: 'Act 4 · the Entryway', moment: 'act4.entryway',
-    what: 'Five little games on the Stream Deck + XL’s keys and dials, with Boo on the Mac’s screen. In a group’s visit everyone has five tokens, one for each game, and the players take turns; after all five of their games each of the first two players gets the group’s clue about the Ghost on the screen and on their own phone, and a trio’s third gets Boo’s line. Then free play until the chime. On the night the Entryway’s screen runs it for the group that scans in, and Boo’s camera takes one photo of each group a minute in.',
-    devices: ['deck', 'ipadpro'],
+    what: 'Five little games on the Stream Deck + XL’s keys and dials, with Boo on the Mac’s screen. In a group’s visit everyone has five tokens, one for each game, and the players take turns; after all five of their games each of the first two players gets the group’s clue about the Ghost on the screen and on their own phone, and a trio’s third gets Boo’s line. Then free play until the chime. On the night the Entryway’s screen runs it for the group that scans in.',
+    devices: ['deck'],
     steps: [
       'Open it on a Mac in Google Chrome (Safari cannot reach the Stream Deck). Quit the Stream Deck app first, then plug in the Stream Deck + XL. Set the Mac’s sound output to its own speakers first: through a HomePod the sounds come about two seconds late.',
       'Tap Connect the Stream Deck once and pick it from the list. The Mac’s screen then becomes the scoreboard: the Stream Deck is the game. No Stream Deck? Play the deck on the screen with the mouse, or the keyboard: the arrow keys play, the space bar presses.',
@@ -131,8 +131,6 @@ export const SECTIONS = [
       preview('kiosk-arcade-clue', 'A player’s clue after their fifth game, a sample', 'deck'),
       preview('kiosk-arcade-third', 'A trio’s third player: Boo’s line instead of a clue, a sample', 'deck'),
       preview('kiosk-arcade-farewell', 'At the chime: Be on your way, a sample', 'deck'),
-      { key: 'camera', label: 'Boo’s camera, a practice photo (kept on the iPad)', device: 'ipadpro', params: { kiosk: 'pose', practice: '1' } },
-      preview('kiosk-pose', 'Boo’s camera, a sample', 'ipadpro'),
     ],
   },
   {
@@ -182,17 +180,25 @@ export const SECTIONS = [
     ],
   },
   {
-    key: 'deduction', name: 'The deduction round', where: 'Act 6 · the Parlour', moment: 'act6.eliminate',
-    what: 'Each player publicly strikes out one thing, and the Parlour TV shows every character with what they struck.',
+    // 11 Nov 2026 (the polish pass, A6): Act 6 ends in talk and the host starts the vote. The round that
+    // came after the door before then is gone, and its samples with it.
+    key: 'ending', name: 'Talk it over and the vote', where: 'Acts 6 and 7 · the Parlour', moment: 'act6.talk',
+    what: 'After the door the room just talks. The Parlour TV shows the three questions over everyone’s portraits, and you start the vote from your phone. The vote is one card with three rows, and it closes the moment the last person locks in.',
     devices: ['phone', 'tv'],
     steps: [
-      'Open the phone sample and strike out one thing.',
-      'Open the board on the Parlour TV computer: every character, with what they struck beneath.',
-      'On a test night: after the door opens in Act 6, Next on your phone’s Host tab starts the round.',
+      'Open the Parlour TV samples: the three questions over the portraits, then the vote with its clock and its seals.',
+      'Open the phone samples: the vote card, then Locked in.',
+      'On a test night: after the door opens in Act 6, Next on your phone’s Host tab opens Talk it over. The button then reads Start the vote.',
+      'Vote on every phone that joined. When the last one locks in, the TV says the votes are in.',
     ],
     tries: [
-      preview('eliminate', 'Strike out one thing, a sample', 'phone'),
-      preview('kiosk-board', 'The board of what everyone struck, a sample', 'tv'),
+      preview('kiosk-talk', 'Talk it over on the TV, nine guests, a sample', 'tv'),
+      preview('kiosk-talk-14', 'Talk it over with all fourteen characters, a sample', 'tv'),
+      preview('talk', 'Talk it over on a phone, a sample', 'phone'),
+      preview('kiosk-ballot', 'The vote on the TV, three of nine locked in, a sample', 'tv'),
+      preview('kiosk-voted', 'The votes are in, a sample', 'tv'),
+      preview('ballot', 'The vote card on a phone, a sample', 'phone'),
+      preview('ballot-sent', 'Locked in, a sample', 'phone'),
     ],
   },
 ]

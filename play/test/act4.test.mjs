@@ -171,10 +171,6 @@ test('F26 every colour change in Salem\'s game reaches every phone in the group 
   assert.ok(worst <= 500, `F26 the latest a phone shows a change is ${Math.round(worst)} ms after its time`)
 })
 
-// Boo's music through the Parlour HomePod (Jon, 27 Oct 2026): the wall runs
-// the music ahead of itself by the AirPlay delay, so the scratch lands on
-// STRIKE A POSE. Two seconds on the night's wall, none in practice;
-// &airplay=<seconds> sets it, 0 to 5.
 test('the memory match takes turns: the group by its own names, nobody known and no turns', () => {
   const rotation = { groups: [{ id: 'g1', members: [{ name: 'Ann', characterName: 'Lady A' }, { name: '', characterName: 'Lord B' }, { name: 'Cy' }] }, { id: 'g2', members: [{ name: 'Di' }] }] }
   assert.deepEqual(turnNames(rotation, 'g1'), ['Ann', 'Lord B', 'Cy'])

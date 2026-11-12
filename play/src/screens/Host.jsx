@@ -5,7 +5,8 @@ import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView, QUIET_MS, QUIET_SCREENS } from '../lib/house'
-import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink } from '../lib/start'
+import { OWN_SLIDES } from '../lib/rulesfilm'
+import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, secondDisplayLinks } from '../lib/start'
 import { achievementsOf, namesReady, secondsUntilNames, NEXT_NAME, ms as finaleMs } from '../lib/finale'
 import { hostRelayControl, guessReply, paperReply, guessWaiting } from '../lib/relayhost'
 import { Figure } from '../lib/draw'
@@ -161,6 +162,7 @@ export default function Host({ night, content, serverNow }) {
         <br />{isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'}
       </p>
       {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, on its own. Next goes sooner.</p>}
+      {night.act === 1 && <p className="gloss">{OWN_SLIDES ? 'The rules film shows your own 28 slides.' : 'The rules film shows drawn slides: your own 28 are not in yet.'}</p>}
       {night.act <= 1 && <SendScreens presence={presence} sound={screenSound} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
       {night.caseWarning && <p className="host-msg trouble" role="alert">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
@@ -228,7 +230,7 @@ export default function Host({ night, content, serverNow }) {
 
       <h3>Who is here</h3>
       {people.length === 0 && <p className="gloss">Nobody has typed their name yet.</p>}
-      {house.answered && <p className="gloss">{house.answered.n} of {house.answered.of} have answered. Who is online shows again when the window closes.</p>}
+      {house.answered && <p className="gloss">{house.answered.n} of {house.answered.of} have {night.window?.kind === 'ballot' ? 'locked in' : 'answered'}. Who is online shows again when the window closes.</p>}
       <ul className="here">
         {people.map(r => {
           const online = house.showGuests && now - (presence[r.key] ?? 0) < 2 * 60 * 1000
@@ -365,11 +367,16 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
   const here = idx >= 0 ? beats[idx] : null
   const after = idx >= 0 && idx + 1 < beats.length ? beats[idx + 1] : null
   const nextAct = night.act >= 1 && night.act < 7 && !after ? ACTS[night.act + 1] : null
+  // the beat Next goes to: the next of this act, else the first of the next act. When that beat opens the
+  // vote, the button says so (11 Nov 2026: Talk it over ends Act 6, and the host starts the vote)
+  const upNext = after ?? (nextAct ? beatsOf(night.act + 1)[0] ?? null : null)
+  const startsVote = upNext?.action === 'window:ballot'
   const w = night.window
   const open = w && !w.settled
   const left = open && serverNow ? secondsLeft(w, serverNow) : 0
   const nextLabel = night.phase === 'blackout' ? 'Dark: the power comes back on its own'
     : night.act === 0 ? 'Begin Act 1'
+    : startsVote ? 'Start the vote'
     : after ? `Next: ${after.name}`
     : night.act === 1 ? 'Then: Blackout'
     : nextAct ? `Next: Act ${night.act + 1}, ${nextAct.plain}`
@@ -406,16 +413,19 @@ function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null }) {
       )}
       {open && (
         <p className="host-msg" role="status">
-          {w.title}: {left > 0 ? `${left} seconds left.` : 'time is up.'}
+          {/* the vote says how many are in: a count, never who. It closes by itself when the last one is */}
+          {w.title}: {w.kind === 'ballot' && w.of ? `${w.answered ?? 0} of ${w.of} locked in. ` : ''}{left > 0 ? `${left} seconds left.` : 'time is up.'}
           {left === 0 && <> <button className="chip" disabled={!!busy} onClick={() => run('settle')}>Pick for the rest</button></>}
         </p>
       )}
+      {!open && w?.kind === 'ballot' && here?.action === 'window:ballot' && <p className="host-msg" role="status">The votes are in.</p>}
       <div className="host-row">
         <button className="big wide" disabled={!canNext} onClick={() => run('next')}>{nextLabel}</button>
       </div>
       <div className="host-row">
         <button className="chip" disabled={!!busy || !here || idx === 0 && night.act <= 2} onClick={() => run('back')}>Back one</button>
-        {[2, 4, 6].includes(night.act) && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
+        {/* not at Talk it over: a game there would hold Start the vote back until it closed */}
+        {[2, 4, 6].includes(night.act) && here?.action !== 'notice:talk' && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
       </div>
       {beats.length > 0 && (
         <details className="run-beats">
@@ -730,6 +740,7 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
   }
   const links = screenLinks(PLAY_URL)
   const second = secondDisplayLink(PLAY_URL)
+  const seconds = secondDisplayLinks(PLAY_URL).filter(s => s.key !== second.key) // the two Macs' own screens, each with its room's splash
   const up = links.filter(s => now - (presence[s.presenceKey] ?? 0) < QUIET_MS).length
   return (
     <details className="send-screens" open={open || undefined}>
@@ -748,6 +759,13 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
             </li>
           )
         })}
+        {seconds.map(s => (
+          <li key={s.key}>
+            <span className="dot hidden" aria-hidden="true" />
+            <span className="send-name">{s.room}<small>{s.machine}</small></span>
+            <button className="chip" onClick={() => send(s)}>Send</button>
+          </li>
+        ))}
         <li key={second.key}>
           <span className="dot hidden" aria-hidden="true" />
           <span className="send-name">{second.room}<small>{second.machine}</small></span>

@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, slideTime, boardRows, bellShown, soundFresh, dotState, heardText, showSetup, relayRules, showRules,
+  livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, slideTime, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup, relayRules, showRules,
   DEFAULT_RELAY_RULES, BELL_MS, DOOR_HOLD_MS, SLIDE_FALLBACK_MS,
 } from '../src/lib/screen.js'
 import { STALE_MS } from '../src/lib/clock.js'
@@ -13,17 +13,30 @@ const stamp = (t) => ({ toMillis: () => t })
 const NOW = 20_000_000
 const NIGHT = { act: 2, beat: 'news', phase: 'act', roster: { jon: { name: 'Jon', characterId: 'prof-jonathan' }, jessa: { name: 'Jessa', characterId: 'rye' } } }
 
-test('the living room: the phase wins, then the finale, the ballot, a drawing, the board, the door, a card, idle', () => {
+test('the living room: the phase wins, then the finale, the vote, a drawing, the votes are in, Talk it over, the door, a card, idle', () => {
   assert.equal(livingView({ night: { ...NIGHT, phase: 'blackout' }, screen: { kind: 'news' } }), 'dark')
   assert.equal(livingView({ night: { ...NIGHT, phase: 'prompt' }, screen: { kind: 'news' } }), 'dark')
   assert.equal(livingView({ night: { ...NIGHT, phase: 'paused' }, screen: { kind: 'news' } }), 'paused')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'black', title: 'One moment' } }), 'paused')
   assert.equal(livingView({ night: NIGHT, screen: { kind: 'black', title: '' } }), 'dark')
-  assert.equal(livingView({ night: { ...NIGHT, act: 7 }, finale: { at: 1 }, screen: { kind: 'board' } }), 'finale')
-  assert.equal(livingView({ night: { ...NIGHT, window: { kind: 'ballot', settled: false } }, screen: { kind: 'board' } }), 'ballot')
-  assert.equal(livingView({ night: { ...NIGHT, window: { kind: 'ballot', settled: true } }, screen: { kind: 'board' } }), 'board')
+  // the ending (11 Nov 2026): Talk it over, the vote, the votes are in, then the reveal's reel
+  const done = { state: 'done', doorOpen: true }
+  const talk = { ...NIGHT, act: 6, beat: 'talk', window: { kind: 'questions', settled: true } }
+  const vote = { ...NIGHT, act: 7, beat: 'ballot' }
+  assert.equal(livingView({ night: talk, relay: done, screen: { kind: 'talk' } }), 'talk', 'Talk it over beats the open door')
+  assert.equal(livingView({ night: { ...talk, phase: 'paused' }, relay: done, screen: { kind: 'talk' } }), 'paused', 'the pause still wins')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: false } }, relay: done, screen: { kind: 'vote' } }), 'ballot')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: false } }, relay: done, screen: { kind: 'talk' } }), 'ballot', 'the open vote shows whatever the screen doc still says')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'questions', settled: true } }, relay: done, screen: { kind: 'vote' } }), 'ballot', 'between the beat and its window: the vote with no clock yet, never the door again')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: true } }, relay: done, screen: { kind: 'vote' } }), 'voted', 'the vote has closed: not the door, not the vote')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: true } }, relay: null, screen: { kind: 'vote' } }), 'voted', 'with the drawing cut too')
+  assert.equal(livingView({ night: { ...vote, beat: 'reveal', window: { kind: 'ballot', settled: true } }, relay: done, finale: { at: 1 }, screen: { kind: 'vote' } }), 'finale')
+  assert.equal(livingView({ night: { ...NIGHT, act: 7 }, finale: { at: 1 }, screen: { kind: 'vote' } }), 'finale')
+  // the iPad (words only) never shows the questions or the votes-are-in card: its words, or its crest; the open vote's clock it does show, as before
+  assert.equal(livingView({ night: talk, relay: done, screen: { kind: 'talk' }, captionsOnly: true }), 'idle')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: true } }, relay: done, screen: { kind: 'vote' }, captionsOnly: true }), 'idle')
+  assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: false } }, relay: done, screen: { kind: 'vote' }, captionsOnly: true }), 'ballot')
   for (const state of ['walk', 'turn', 'vote', 'lockout']) assert.equal(livingView({ night: NIGHT, relay: { state }, screen: { kind: 'news' } }), 'relay')
-  assert.equal(livingView({ night: NIGHT, relay: { state: 'done' }, screen: { kind: 'board' } }), 'board', 'the board beats the open door once the round starts')
   assert.equal(livingView({ night: NIGHT, relay: { state: 'done' }, screen: { kind: 'idle' } }), 'door')
   assert.equal(livingView({ night: NIGHT, relay: { state: 'idle' }, screen: { kind: 'door' } }), 'door', 'the door beat shows the door even when the drawing was cut')
   for (const kind of ['news', 'bulletin', 'irwin']) assert.equal(livingView({ night: NIGHT, screen: { kind } }), 'card')
@@ -156,32 +169,62 @@ test('BK-13 Sir Irwin\'s slides: each up for its own time, slide 3 with the prac
   assert.ok(kiosk.includes('{s.cell.label}'), 'with its label')
 })
 
-test('the board: nine rows, a strike each, defaulted ones indistinguishable, sorted by name', () => {
-  const names = ['Ana', 'Ben', 'Cal', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy']
-  const roster = Object.fromEntries(names.map((n, i) => [n.toLowerCase(), { name: n, characterId: i % 2 ? 'rye' : 'arms' }]))
-  const keys = Object.keys(roster)
-  const eliminations = Object.fromEntries(keys.map((k, i) => [k, i % 2
-    ? { kind: 'motive', n: i + 1, name: roster[k].name, at: stamp(NOW), ...(i === 1 ? { defaulted: true } : {}) }
-    : { kind: 'person', key: keys[(i + 1) % 9], name: roster[k].name, at: stamp(NOW), ...(i === 4 ? { defaulted: true } : {}) }]))
+test('Talk it over: everyone at the party under the three questions, by name, as the character they play; one row up to eight, two beyond', () => {
+  const names = ['Ivy', 'Ana', 'Hal', 'Ben', 'Gus', 'Cal', 'Fay', 'Dee', 'Eve']
+  const roster = Object.fromEntries(names.map((n, i) => [n.toLowerCase(), { name: n, characterId: i % 2 ? 'rye' : 'arms', bag: i + 1 }]))
   const characters = [{ id: 'rye', name: 'Dorothy Rye' }, { id: 'arms', name: 'Roger Arms' }]
-  const motives = Array.from({ length: 19 }, (_, i) => ({ n: i + 1, rhyme: `rhyme ${i + 1}` }))
-  const rows = boardRows({ night: { roster, eliminations }, characters, motives })
-  assert.equal(rows.length, 9)
-  assert.deepEqual(rows.map(r => r.name), names)
-  for (const r of rows) {
-    assert.ok(r.strike, `${r.name} has a strike`)
-    assert.ok(!('defaulted' in r) && !('defaulted' in r.strike), 'a defaulted strike looks like any other')
-    assert.ok(r.strike.text.startsWith('not '))
-    assert.ok(r.characterName === 'Dorothy Rye' || r.characterName === 'Roger Arms')
+  const cast = castOf({ night: { roster }, characters })
+  assert.equal(cast.length, 9)
+  assert.deepEqual(cast.map(p => p.name), [...names].sort(), 'by name: the order says nothing')
+  for (const p of cast) {
+    assert.deepEqual(Object.keys(p).sort(), ['characterId', 'characterName', 'key', 'name'], 'who they are and who they play, nothing else (no bag, no role)')
+    assert.ok(p.characterName === 'Dorothy Rye' || p.characterName === 'Roger Arms')
   }
-  assert.equal(JSON.stringify(rows).includes('defaulted'), false)
-  assert.equal(rows.find(r => r.name === 'Ben').strike.text, 'not 2. rhyme 2')
-  assert.equal(rows.find(r => r.name === 'Ana').strike.text, 'not Ben')
-  // a row with no strike yet, and an unknown motive number, still render
-  const partial = boardRows({ night: { roster: { x: { name: 'X' } }, eliminations: { x: { kind: 'motive', n: 99 } } } })
-  assert.equal(partial[0].strike.text, 'not motive 99')
-  assert.equal(boardRows({ night: { roster: { x: { name: 'X' } } } })[0].strike, null)
-  assert.deepEqual(boardRows({}), [])
+  // a character the content does not carry still gets a place, by the guest's name
+  assert.deepEqual(castOf({ night: { roster: { x: { name: 'X', characterId: 'unknown' } } } }), [{ key: 'x', name: 'X', characterId: 'unknown', characterName: '' }])
+  assert.deepEqual(castOf({}), [])
+  // the rows: everyone on one line up to eight; nine or more on two, the longer one on top
+  assert.deepEqual(castRows(0), [0])
+  assert.deepEqual(castRows(3), [3])
+  assert.deepEqual(castRows(8), [8])
+  assert.deepEqual(castRows(9), [5, 4])
+  assert.deepEqual(castRows(14), [7, 7])
+  for (let n = 1; n <= 14; n++) assert.equal(castRows(n).reduce((a, b) => a + b, 0), n, `everyone has a place at ${n}`)
+})
+
+test('the vote on the TV: a count of the seats locked in, never who and never what', () => {
+  const roster = { a: { name: 'A' }, b: { name: 'B' }, c: { name: 'C' } }
+  assert.equal(voteCount({ roster }), null, 'no window')
+  assert.equal(voteCount({ roster, window: { kind: 'questions', of: 3, answered: 1 } }), null, 'a Parlour Game is not the vote')
+  assert.deepEqual(voteCount({ roster, window: { kind: 'ballot', of: 3 } }), { n: 0, of: 3 })
+  assert.deepEqual(voteCount({ roster, window: { kind: 'ballot', of: 3, answered: 2 } }), { n: 2, of: 3 })
+  assert.deepEqual(voteCount({ roster, window: { kind: 'ballot', of: 3, answered: 9 } }), { n: 3, of: 3 }, 'never more than the seats')
+  assert.deepEqual(voteCount({ roster, window: { kind: 'ballot', answered: 1 } }), { n: 1, of: 3 }, 'an older window has no count of seats: the roster stands in')
+  assert.deepEqual(Object.keys(voteCount({ roster, window: { kind: 'ballot', of: 3, answered: 2, settled: true } })), ['n', 'of'])
+  // the TV draws it as one seal a seat and the count in words; nothing that reads as holding the room up (F09)
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('`${n} of ${count.of} locked in`'), 'the count in words')
+  assert.ok(kiosk.includes('The votes are in.'), 'the card once the vote has closed')
+  for (const c of ['export function TalkScreen', 'export function VoteScreen', 'export function VotedScreen', 'function VoteSeals', 'function CastFigure']) assert.ok(kiosk.includes(c), c)
+  assert.ok(kiosk.includes("if (view === 'talk') return <TalkScreen night={night} screen={screen} content={content} />"))
+  assert.ok(kiosk.includes("if (view === 'voted') return <VotedScreen night={night} />"))
+  assert.ok(kiosk.includes("if (view === 'ballot') return <VoteScreen night={night} screen={screen} trace={trace} serverNow={serverNow} captionsOnly={captionsOnly} />"))
+  const ending = kiosk.slice(kiosk.indexOf('// ---- the ending'), kiosk.indexOf('// ---- the three corners'))
+  assert.ok(ending.length > 1000, 'the ending\'s screens are read')
+  assert.ok(!/\.roles?\b|defaulted|murderer|victim|\.ballot\b|\bpicks?\b/i.test(ending.replace(/\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '')), 'the TV reads no pick, no role and nobody\'s ballot')
+  // the three questions: the same words as the server writes on the screen doc
+  const server = readFileSync(new URL('../../functions/lib/screen.js', import.meta.url), 'utf8')
+  for (const src of [kiosk, server]) assert.ok(src.includes("THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']"))
+  // their sizes are capped by the screen's height, so nine figures and the questions fit a 16:9 TV
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+  for (const rule of [
+    '.three-questions li { font-family: var(--serif); font-weight: 600; font-size: min(5.6vw, 9.5vh);',
+    '.cast-figure { position: relative; display: block; width: 100%; height: min(40vh, 22vw); }',
+    '.kiosk.talk-screen.rows-2 .cast-figure { height: min(23vh, 19vw); }',
+    '.vote-seals li { width: min(4.6vw, 7.6vh); height: min(4.6vw, 7.6vh);',
+    '.kiosk.ballot-screen .trace.compact .trace-frame { width: 30vh; height: 30vh; }',
+  ]) assert.ok(css.includes(rule), rule)
+  assert.ok(!/board-rows|\.kiosk\.board\b/.test(css), 'the board\'s styles went with it')
 })
 
 test('the bell: three seconds from the sound stamp; a stale sound rings nothing', () => {
@@ -284,7 +327,9 @@ test('the relay rules: three lines from the workshop or the defaults, on the fir
 
 test('the previews cover every screen the plan names, and the kiosk has the three corners', () => {
   const preview = readFileSync(new URL('../src/Preview.jsx', import.meta.url), 'utf8')
-  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-board', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'host-house-act2',
+  for (const k of ['kiosk-news', 'kiosk-bulletin', 'kiosk-irwin', 'kiosk-black', 'kiosk-ipad', 'kiosk-living-done', 'kiosk-living-hold', 'kiosk-finale-leadin', 'host-house-act2',
+    // the ending (11 Nov 2026): Talk it over with four, nine and fourteen at the party, the vote, the votes are in
+    'kiosk-talk', 'kiosk-talk-4', 'kiosk-talk-14', 'kiosk-ballot', 'kiosk-ballot-no-trace', 'kiosk-voted',
     // the cue list's screens (25 Oct 2026): the join and rejoin codes, the four room codes, the four rules cards and Boo's arcade (5 Nov 2026), the birthday card, every loop slot, The End
     'kiosk-join', 'kiosk-rejoin', 'kiosk-code-study', 'kiosk-code-library', 'kiosk-code-entryway', 'kiosk-code-orangerie',
     'kiosk-rules-study', 'kiosk-rules-library', 'kiosk-rules-entryway', 'kiosk-boo', 'kiosk-rules-orangerie', 'kiosk-birthday',
@@ -305,7 +350,8 @@ test('the previews cover every screen the plan names, and the kiosk has the thre
   assert.ok(rooms.includes('<FolderBack />') && !rooms.includes('✦') && !kiosk.includes('✦'), 'the card backs are file folders')
   // CL-8 (changed 11 Nov 2026): no REHEARSAL band on a room screen; a rehearsal looks like the party night
   assert.ok(!kiosk.includes('RehearsalBand'), 'no band on a room screen')
-  for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function Board', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
+  for (const c of ['function Wake', 'function Bell', 'function StaleDot', 'function TalkScreen', 'function VoteScreen', 'function ScreenCard', 'function Captions', 'function DoorScreen', 'function OneMoment', 'function Dark']) assert.ok(kiosk.includes(c), c)
+  assert.ok(!kiosk.includes('function Board') && !preview.includes('kiosk-board'), 'the board went with the round that filled it (11 Nov 2026)')
   assert.ok(kiosk.includes("which === 'ipad'"), 'the iPad alias')
   assert.ok(!kiosk.includes('—'), 'no em dash on a room screen')
   // the real W-O-O-F News lines, Sir Irwin's five motives and the memory match's boards (measured in the room left, 26 Oct 2026) fit a

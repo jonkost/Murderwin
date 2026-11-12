@@ -105,8 +105,11 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     for (const t of all) {
       assert.equal(t.outcome, undefined, 'no pass, no partial, no brush-off, no greeting-only cat')
       assert.deepEqual(t.lines, [], 'the cat says only its hint and its bag clue')
-      assert.match(t.hint?.text ?? '', /^\[(Granolia|Zimothy|Boo|Salem)'s motive hint appears here\]$/, 'a rehearsal: the motive hint is a bracketed stand-in')
-      assert.match(t.bag?.text ?? '', /^\[(Granolia|Zimothy|Boo|Salem)'s bag clue about the Murderer appears here\]$/, 'and so is the bag clue')
+      // a practice night plays for real (11 Nov 2026): the cat's own hint line and bag clue, never a note in brackets
+      assert.ok(t.hint?.text?.length > 10 && t.hint.placeholder === false && !t.hint.none, 'a practice night: the motive hint is a real line')
+      assert.ok(t.bag?.text?.length > 10 && t.bag.placeholder === false, 'and so is the bag clue')
+      assert.ok(!/___|\[|\]/.test(t.hint.text + t.bag.text), 'no blank and no bracket in either')
+      assert.equal(t.placeholder, false)
       if (t.cat === 'granolia') assert.equal(t.room, 'the Study')
     }
     assert.equal(session(db, uid).lights.step, 'done')
@@ -200,8 +203,11 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     const rooms = cards(db, uid, 'clue').filter(x => x.room)
     assert.deepEqual(rooms.map(x => x.room).sort(), [...ROOM_KEYS].sort(), 'every room paid its reward at the chime')
     for (const x of rooms) {
-      assert.match(x.bag.text, /bag clue about the Ghost appears here\]$/, 'a rehearsal: the Ghost bag hint is a stand-in')
-      assert.equal(x.cross, undefined, 'and no motive is crossed off for real')
+      // a practice night plays for real (11 Nov 2026): a real bag hint about the Ghost, and Zimothy's real cross-off
+      assert.equal(x.placeholder, false)
+      assert.ok(x.bag.text.length > 10 && x.bag.placeholder === false && !/___|\[|\]/.test(x.text + x.bag.text), 'a practice night: the Ghost bag hint is a real line')
+      if (x.room === 'library') assert.ok(MOTIVES.some(m => m.n === x.cross) && x.cross !== db.store.get(`cases/${nightId}`).motive, 'Zimothy crosses off a wrong motive')
+      else assert.equal(x.cross, undefined, 'only the Library crosses a motive off')
     }
     assert.ok(cards(db, uid, 'clue').some(x => x.id.endsWith('study-clue')), 'the study paid out its trace slot')
   }
@@ -230,19 +236,32 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
   await assert.rejects(next, /still running/) // the phones stay on the drawing until it is done or cleared
   await hostCommand(db, { nightId, command: 'relay-reset', now })
   await next() // door
-  await next() // eliminate
-  const ew = night(db, nightId).window
-  assert.equal(ew.kind, 'eliminate')
-  await player.eliminate(db, { nightId, uid: uids[0], target: { kind: 'motive', n: 3 }, now })
-  await player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'jacob' }, now })
-  await assert.rejects(() => player.eliminate(db, { nightId, uid: uids[1], target: { kind: 'person', key: 'nobody' }, now }), /Pick/)
-  now += NIGHT.windows.eliminate.ms + 1
+  for (const uid of uids) assert.equal(cards(db, uid, 'notice').at(-1).key, 'door')
+  // Talk it over (11 Nov 2026), the last beat of Act 6: one plain notice on every phone, and nothing
+  // else. No window, no clock, no board of strikes, and no call a phone could make
+  const before = night(db, nightId).window
+  await next()
+  assert.equal(night(db, nightId).act, 6)
+  assert.equal(night(db, nightId).beat, 'talk')
+  assert.equal(beatsOf(6).at(-1).key, 'talk', 'talk ends Act 6')
+  for (const uid of uids) {
+    const card = cards(db, uid, 'notice').at(-1)
+    assert.deepEqual([card.key, card.title, card.text], ['talk', 'Talk it over', 'The vote is next.'])
+    assert.ok(card.button, 'one tap puts it away')
+  }
+  assert.deepEqual(night(db, nightId).window, before, 'talking opens no window: the last one is still the Parlour Game from the start of the act')
+  assert.equal(before.settled, true)
+  assert.equal(Object.keys(night(db, nightId)).some(k => /^elim/.test(k)), false, 'the night keeps no board')
+  assert.equal(Object.keys(player).some(k => /^elim/.test(k)), false, 'and no phone can call for one')
+  assert.deepEqual(Object.keys(NIGHT.windows).sort(), ['ballot', 'questions'], 'two kinds of window: a Parlour Game and the vote')
 
-  // Act 7: ballot, reveal, result
+  // Act 7: the vote, the reveal, the result
   await next()
   const bw = night(db, nightId).window
   assert.equal(bw.kind, 'ballot')
-  assert.equal(Object.keys(night(db, nightId).eliminations).length, 4, 'two picked, two defaulted')
+  assert.equal(bw.title, 'The vote')
+  assert.equal(bw.of, 4, 'four seats were dealt the vote')
+  assert.equal(bw.host, undefined, 'no host line on the vote: three rows and Lock in')
   await player.ballot(db, { nightId, uid: uids[1], murderer: m, motive: c.motive, victim: g, now })
   await assert.rejects(() => player.ballot(db, { nightId, uid: uids[2], murderer: 'nobody', motive: 1, victim: g, now }), /party/)
   await assert.rejects(next, /still choosing/)

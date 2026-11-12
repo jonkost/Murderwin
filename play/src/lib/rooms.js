@@ -29,7 +29,9 @@ export function promptShown(prompts, now) {
 
 // Bulletin 1's parts, from the words on the screen: each line found in the
 // open bank (seed/woof-news.json) by its text. A line the bank does not have
-// (a rehearsal's stand-in) has no video and is skipped.
+// (the house's plain words where a family's line is missing) has no video
+// and is skipped. A practice night's bulletin carries the family's own line,
+// so all three parts play (11 Nov 2026).
 export function newsClips(lines = []) {
   const parts = [news.bulletin1.opening, ...Object.values(news.bulletin1.families), news.bulletin1.signoff]
   return lines.map(t => parts.find(p => p.text === t)?.clip).filter(Boolean)
@@ -247,9 +249,8 @@ export async function sendUntilHeard(send, { live = () => true, wait = sleep, mi
 // Every idle screen plays a looping graphic once Jon's file is in
 // (play/public/loops/<name>.mp4, see loops/README.md); the crest shows until
 // then, and whenever the file is missing or will not play. The iPad Pro plays
-// the Library's loop (it stands with Zimothy in Act 2); Boo's camera has no
-// loop, it is a mirror. The Orangerie's file is optional: the brain's browser
-// shows its crest without one.
+// the Library's loop (it stands with Zimothy in Act 2). The Orangerie's file
+// is optional: the brain's browser shows its crest without one.
 export const LOOP_OF = { living: 'living', study: 'study', memory: 'memory', ipad: 'memory', boo: 'boo', bedroom: 'bedroom', orangerie: 'orangerie' }
 export function loopFor(which) { return LOOP_OF[which] ?? null }
 export function loopUrl(which, base = import.meta.env?.BASE_URL ?? '/') {

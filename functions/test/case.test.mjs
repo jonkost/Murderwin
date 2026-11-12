@@ -4,7 +4,9 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES } from '../lib/night.js'
 import { hostCommand } from '../lib/run.js'
 import { buildCaseForNight, ensureCase, catHintCard, hintLine, HINT_PLACEHOLDER, HINT_QUIET, CAT_NAMES, CAT_ROOMS } from '../lib/deal.js'
-import { FAMILIES } from '../lib/families.js'
+import { FAMILIES, hintsOf, familyForCat } from '../lib/families.js'
+import { hintLine as catHintLine } from '../lib/cats.js'
+import { stopOf } from '../lib/parlour.js'
 import { buildCase, rehearsalCase, CASE_KEYS, DIAL_SIGN } from '../lib/case.js'
 import { studyClueCard } from '../lib/station.js'
 import { walkLights } from './lights-walk.mjs'
@@ -33,10 +35,12 @@ const RETIRED_KEYS = ['kernels', 'variant', 'salemAnchors', 'salemTruthIndex', '
 // ---- a throwaway night ---------------------------------------------------
 // Traces at this party: elbow-patch, white-sand, glasses, picture. Every one
 // has a look-alike among the others, so the cast-lock check is quiet.
-async function party({ partyNight = false, characters = ['shushwell', 'vayne'], guests = ['Jon', 'Susan', 'Jessa', 'Jacob'] } = {}) {
+// `reads`: a list that collects every doc path the database is asked for, from before the night is made.
+async function party({ partyNight = false, characters = ['shushwell', 'vayne'], guests = ['Jon', 'Susan', 'Jessa', 'Jacob'], reads = null } = {}) {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan', ...(partyNight ? { party_night: true } : {}) })
   db.store.set('sealed/parlour_leans', { sets: { 'synthetic-set': { 0: { boo: 'a' } } } })
+  if (reads) { const get = db._get.bind(db); db._get = path => { reads.push(path); return get(path) } }
   const { nightId } = await createNight(db)
   const deck = db.store.get(`nights/${nightId}/private/deck`)
   deck.order = [...characters, ...deck.order.filter(id => !characters.includes(id))]
@@ -123,10 +127,10 @@ test('the power beat on a party night deals a party case and reads only the lean
   assertNothingLeaked()
 })
 
-test('L03 with forceRehearsal (the default) the night gets a rehearsal case and reads nothing sealed', async () => {
-  const { db, nightId } = await party()
+test('L03 with forceRehearsal (the default) the night gets a rehearsal case and reads nothing sealed, from the moment the night is made', async () => {
+  const reads = []
+  const { db, nightId } = await party({ reads })
   assert.equal(night(db, nightId).forceRehearsal, true)
-  const reads = watchReads(db)
   await toPower(db, nightId, 2_000_000)
   const c = db.store.get(`cases/${nightId}`)
   assert.equal(c.rehearsal, true)
@@ -164,8 +168,8 @@ test('a roster whose traces have no partner sets caseWarning trace-partner, and 
 
 // ---- dealing through one path -------------------------------------------
 
-async function wholeNight({ partyNight }) {
-  const { db, nightId, uids } = await party({ partyNight })
+async function wholeNight({ partyNight, reads = null }) {
+  const { db, nightId, uids } = await party({ partyNight, reads })
   // a throwaway packing in brackets: every bag has two words, each word in two or three bags
   db.store.set('sealed/bags', { words: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [String(i + 1), { [`(synthetic-${i % 4})`]: ['touch'], [`(synthetic-${4 + (i % 3)})`]: ['smell'] }])) })
   const now = 5_000_000
@@ -223,21 +227,59 @@ test('a whole party night: every cat\'s card is the cat, its room, its open hint
   assertNothingLeaked()
 })
 
-test('F28 the same walk on a rehearsal night: every hint and bag clue is a bracketed stand-in, the study clue is marked placeholder', async () => {
-  const { db, uids, c } = await wholeNight({ partyNight: false })
+// A practice night plays for real (handoff 11 Nov 2026, job A3; Jon: "I want actual clues... I don't want
+// the insert text"). The lines are compared with what the case says, in the test, and never printed: a
+// failure shows lengths.
+test('F28 the same walk on a practice night: every hint is the cat\'s real line for this throwaway case, every bag clue a line of the cat\'s own, every room\'s card real, and nothing sealed is read from the moment the night is made', async () => {
+  const reads = []
+  const { db, nightId, uids } = await wholeNight({ partyNight: false, reads })
+  // on through the last rounds, so every room has paid every group
+  for (let i = 0; i < 6 && night(db, nightId).act === 4; i++) await hostCommand(db, { nightId, command: 'next', now: 5_000_000 })
+  assert.equal(night(db, nightId).act, 5)
+  const c = db.store.get(`cases/${nightId}`)
   assert.equal(c.rehearsal, true)
-  for (const uid of Object.values(uids)) {
-    for (const t of cards(db, uid, 'testimony')) {
+  assert.deepEqual(reads.filter(p => p.startsWith('sealed/')), [], 'no lean, no packing, not even its count of bags')
+  let clues = 0, crossed = 0, traces = 0
+  for (const [key, uid] of Object.entries(uids)) {
+    const fams = hintsOf(c.solving, key)
+    assert.equal(fams.length, 2, 'two wrong families a guest')
+    const all = cards(db, uid, 'testimony')
+    assert.equal(all.length, 4, 'all four cats')
+    for (const t of all) {
+      assert.deepEqual(Object.keys(t).sort(), ['act', 'at', 'bag', 'beat', 'cat', 'catName', 'hint', 'id', 'kind', 'lines', 'placeholder', 'room', 'saved'], 'the same card as the party night\'s')
       assert.deepEqual(t.lines, [])
-      assert.match(t.hint.text, /^\[\w+'s motive hint appears here\]$/)
-      assert.match(t.bag.text, /^\[\w+'s bag clue about the Murderer appears here\]$/)
-      assert.equal(t.placeholder, true)
+      // the dealer's own working (deal.js greetGuest): the family this cat talks about, at the guest's affection with it
+      const family = familyForCat(fams, { cat: t.cat, seed: `${c.screenSalt}\u0000${key}` })
+      const level = stopOf(db.store.get(`sessions/${uid}`).affection[t.cat])
+      const want = catHintLine(c, { cat: t.cat, level, act: 2, family, seed: `${c.screenSalt}\u0000${key}\u0000${t.cat}`, bonusFamilies: [...fams, ...c.solving.newsOut] })
+      assert.ok(want.text && t.hint.text === want.text, `F28 ${t.cat}: the cat's real line for this case (lengths ${t.hint.text.length} and ${want.text?.length ?? 0})`)
+      assert.ok(t.hint.placeholder === false && !t.hint.none, 'a real line, not a note')
+      assert.ok(t.bag.text.length > 10 && t.bag.placeholder === false, 'the bag clue is a line of the cat\'s own')
+      assert.ok(!/___|\[|\]/.test(t.hint.text + t.bag.text), 'no blank and no bracket in either')
+      assert.equal(t.placeholder, false)
     }
-    for (const k of cards(db, uid, 'clue')) assert.equal(k.placeholder, true)
+    for (const k of cards(db, uid, 'clue')) {
+      clues++
+      assert.equal(k.placeholder, false)
+      assert.ok(k.text.length > 10 && !/___|\[|\]/.test(k.text + (k.bag?.text ?? '')), 'no blank and no bracket on a room\'s card')
+      if (k.room && !k.third) assert.ok(k.bag?.text.length > 10 && k.bag.placeholder === false, 'each room pays a bag hint about the Ghost')
+      if (k.room === 'library') {
+        crossed++
+        assert.ok(MOTIVES.some(m => m.n === k.cross) && k.cross !== c.motive, 'Zimothy crosses off a wrong motive, for real')
+        assert.ok(k.text.includes(`number ${k.cross}, “${MOTIVES.find(m => m.n === k.cross).rhyme}”`), 'and names it')
+      } else assert.equal(k.cross, undefined)
+      if (k.id.endsWith('-study-clue')) { traces++; assert.ok(k.trace?.level >= 1 && (k.trace.trace || k.trace.images?.length === 2), 'the Study pays the trace as a picture') }
+    }
   }
-  assert.equal(c.bagClues, undefined, 'a rehearsal reads no packing and records no fill')
-  assert.equal(studyClueCard(c, 4, 'round1').placeholder, true)
-  // a case with no family for the guest carries the marked stand-in, and its card says so
+  const guests = Object.keys(uids).length
+  assert.deepEqual([clues, crossed, traces], [5 * guests, guests, guests], 'four rooms and the Study\'s trace for everyone: one cross-off and one trace each')
+  // what each bag clue named is kept in the case on a practice night too (the rung stays put for the arcade)
+  assert.equal(Object.keys(c.bagClues.act2).length, guests)
+  assert.equal(Object.keys(c.bagClues.act4).length, 2, 'both groups')
+  // the Study's card carries the trace it is given; with none, the house's plain words (it never happens: G59)
+  assert.equal(studyClueCard(c, 4, 'round1', { level: 4, trace: 'ink', label: null }).placeholder, false)
+  assert.ok(studyClueCard(c, 4, 'round1').none === true && studyClueCard(c, 4, 'round1').placeholder === false)
+  // with no case at all a missing hint is the house's note, and its card says so
   const { hint } = hintLine(null, null, { cat: 'boo' })
   assert.equal(hint.text, HINT_PLACEHOLDER)
   const card = catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint })
@@ -246,22 +288,25 @@ test('F28 the same walk on a rehearsal night: every hint and bag clue is a brack
   assertNothingLeaked()
 })
 
-test('G59 a missing hint: the house\'s note on a rehearsal, the house\'s plain words on the party night, never a note; a hole in the bank counts as missing', () => {
+test('G59 a missing hint: the house\'s plain words on the party night and on a practice night alike, never a note about the game; a hole in the bank counts as missing', () => {
   const party = hintLine({ rehearsal: false, motive: 1 }, null, { cat: 'boo' })
   assert.deepEqual(party, { hint: { text: 'Miss Boo LaRue has nothing to tell you about the motive.', placeholder: false, none: true }, ruled: null })
   assert.equal(party.hint.text, HINT_QUIET.replace('[CAT]', CAT_NAMES.boo))
   assert.ok(!/[()[\]]/.test(party.hint.text), 'no note in brackets on the party night')
   assert.equal(catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint: party.hint }).placeholder, false, 'a card the phone shows plain')
   for (const cat of ['granolia', 'salem', 'zimothy']) assert.equal(hintLine({ rehearsal: false }, null, { cat }).hint.text, `${CAT_NAMES[cat]} has nothing to tell you about the motive.`)
+  // a practice night plays for real (11 Nov 2026): the same plain words, the same card, as the party night
   const rehearsal = hintLine({ rehearsal: true, motive: 1 }, null, { cat: 'boo' })
-  assert.deepEqual(rehearsal.hint, { text: HINT_PLACEHOLDER, placeholder: true, none: true })
+  assert.deepEqual(rehearsal, party)
+  // only with no case at all (it cannot happen on a night) is it the house's note, marked as one
+  assert.deepEqual(hintLine(null, null, { cat: 'boo' }).hint, { text: HINT_PLACEHOLDER, placeholder: true, none: true })
   // a family the bank has no line for throws inside the cats' code: missing, not a crash
   const broken = hintLine({ rehearsal: false, motive: 1 }, 'no-such-family', { cat: 'salem', level: 2 })
   assert.equal(broken.hint.none, true)
   assert.equal(broken.ruled, null)
 })
 
-test('G59 a guest the case has no family for: on the party night all four cats say the house\'s plain words, on a rehearsal the note; the Host tab is told a count, and everyone else hears a real line', async () => {
+test('G59 a guest the case has no family for: on the party night and on a practice night all four cats say the house\'s plain words, never a note; the Host tab is told a count, and everyone else hears a real line', async () => {
   for (const partyNight of [true, false]) {
     const { db, nightId, uids } = await party({ partyNight })
     db.store.set('sealed/bags', { words: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [String(i + 1), { [`(synthetic-${i % 4})`]: ['touch'], [`(synthetic-${4 + (i % 3)})`]: ['smell'] }])) })
@@ -278,17 +323,14 @@ test('G59 a guest the case has no family for: on the party night all four cats s
     await walkLights(db, nightId, { now })
     const jon = cards(db, uids.jon, 'testimony')
     assert.equal(jon.length, 4, 'all four cats still see him')
+    assert.equal(db.store.get(`cases/${nightId}`).rehearsal, !partyNight)
     for (const t of jon) {
+      // the same on both kinds of night (a practice night plays for real, 11 Nov 2026)
       assert.equal(t.hint.none, true)
-      if (partyNight) {
-        assert.equal(t.hint.text, `${CAT_NAMES[t.cat]} has nothing to tell you about the motive.`)
-        assert.equal(t.hint.placeholder, false)
-        assert.equal(t.placeholder, false)
-        assert.ok(!/[()[\]]/.test(t.hint.text), 'never a note in brackets')
-      } else {
-        assert.equal(t.hint.text, HINT_PLACEHOLDER)
-        assert.equal(t.placeholder, true)
-      }
+      assert.equal(t.hint.text, `${CAT_NAMES[t.cat]} has nothing to tell you about the motive.`)
+      assert.equal(t.hint.placeholder, false)
+      assert.equal(t.placeholder, false)
+      assert.ok(!/[()[\]]/.test(t.hint.text), 'never a note in brackets')
     }
     for (const [name, uid] of Object.entries(uids)) {
       if (name === 'jon') continue

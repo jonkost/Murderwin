@@ -111,7 +111,7 @@ test('G11 and G12 pickPartner: in play only, never the excluded trace, Professor
   assert.equal(pickPartner('coffee', ['elbow-patch']), 'elbow-patch', 'a Professor when nobody else fits')
 })
 
-test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a rehearsal shows a bracketed stand-in', async () => {
+test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hall green, and never a name or a role; a practice night shows the picture too, never a note in brackets', async () => {
   for (const [dial, rehearsal] of [[0, false], [9, false], [-9, false], [-4, false], [4, false], [0, true], [9, true]]) {
     const { db, nightId } = await party(8)
     const t = { now: 5_000_000 }
@@ -135,15 +135,14 @@ test('G10, G11, G12 and G13 revealTrace writes the contract shape, turns the hal
       const inPlay = Object.values(night(db, nightId).roster).map(x => CHARACTERS.find(ch => ch.id === x.characterId).trace)
       assert.ok(inPlay.includes(doc.partner))
     } else assert.equal(doc.partner, null)
-    assert.equal(doc.placeholder, rehearsal)
+    assert.equal(c.rehearsal, rehearsal)
+    assert.equal(doc.placeholder, false, 'a practice night plays for real (11 Nov 2026)')
     // what the room screens read carries only what the level allows: the dial's work is not undone by one read
     const pub = db.store.get(`nights/${nightId}/public/trace`)
     assert.equal(pub.level, doc.level)
     assert.ok(!('partner' in pub), 'the public doc never says which picture is the real one')
-    if (rehearsal) {
-      assert.equal(pub.standIn, `[the Murderer's trace, level ${doc.level}]`)
-      assert.ok(!('trace' in pub) && !('images' in pub), 'a rehearsal never shows the picture (Jon, 23 Oct)')
-    } else if (doc.level === 3) {
+    assert.ok(!('standIn' in pub) && pub.placeholder === false && !Object.values(pub).some(v => typeof v === 'string' && /[[\]]/.test(v)), 'no stand-in on any night: the picture, at its level')
+    if (doc.level === 3) {
       assert.ok(!('trace' in pub), 'at level 3 the public doc never says which of the two is the real one')
       assert.deepEqual([...pub.images].sort(), [doc.trace, doc.partner].sort())
     } else {
@@ -465,22 +464,20 @@ test('the Host tab\'s Hush reaches the Act 7 screen: a Hush line in the reel, hu
   assert.equal(f2.spotlight.length, 2)
 })
 
-test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the eliminate or ballot windows', async () => {
+test('Quickest on the Parlour Games counts only the Parlour Games a phone was dealt, not the vote\'s window', async () => {
   const { db, nightId, uids, names } = await party(4)
   const t = { now: 7_600_000 }
   await firstParlour(db, nightId, t)
   await answerAll(db, nightId, uids, names, t)
   t.now = ms(night(db, nightId).window.closesAt) + 1
   await hostCommand(db, { nightId, command: 'settle', now: t.now })
-  // the two windows that are not Parlour Games land on every phone too
+  // the one window that is not a Parlour Game, the vote, lands on every phone too
   const { openWindow } = await import('../lib/deal.js')
-  for (const [kind, act, beat] of [['eliminate', 6, 'eliminate'], ['ballot', 7, 'ballot']]) {
-    await openWindow(db, nightId, kind, { now: t.now, act, beat })
-    t.now = ms(night(db, nightId).window.closesAt) + 1
-    await hostCommand(db, { nightId, command: 'settle', now: t.now })
-  }
+  await openWindow(db, nightId, 'ballot', { now: t.now, act: 7, beat: 'ballot' })
+  t.now = ms(night(db, nightId).window.closesAt) + 1
+  await hostCommand(db, { nightId, command: 'settle', now: t.now })
   const anyone = db.store.get(`sessions/${uids[names[0].toLowerCase()]}`)
-  assert.equal(Object.keys(anyone.windows).length, 3, 'three windows on the phone')
+  assert.equal(Object.keys(anyone.windows).length, 2, 'two windows on the phone')
   const f = await finaleDoc(db, nightId, db.store.get(`cases/${nightId}`), t.now)
   const quick = f.stats.find(s => s.label === 'Quickest on the Parlour Games')
   assert.match(quick.value, /, 1 of 1$/, `one Parlour Game dealt, one answered: ${quick.value}`)

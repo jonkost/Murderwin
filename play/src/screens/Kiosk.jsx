@@ -4,15 +4,14 @@ import { callRelayAdvance, callRelayGuess, callIntroDue } from '../firebase'
 import { countdownLeft, countdownText, introPlaying, INTRO_VIDEO } from '../lib/start'
 import { HEX_CENTRES, LINE_BARS, hexPoints } from '../lib/walls'
 import { Prompts, TitleCard, BulletinVideo, MemoryRounds, MemoryStandalone, BooRoom, GameName, Idle, Loop, RoomCode, RulesCard, JoinScreen, RejoinCode, BirthdayScreen, Orangerie, Picture } from './Rooms'
-import { PoseCamera, PoseShot } from './Pose'
 import { newsClips, closingSequence, loopFor, roomCode, rulesLine, catPictureUrl } from '../lib/rooms'
-import { portraitUrls } from '../lib/content'
+import { portraitUrls, portraitFit } from '../lib/content'
 import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
 import { ACTS, studyLines, uiLines } from '../lib/content'
-import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, boardRows, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
+import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, soundFresh, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, CREDITS_AFTER_MS, LAST_AFTER_MS } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesFilmAt } from '../lib/rulesfilm'
@@ -21,7 +20,7 @@ import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
 
-// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | pose | orangerie.
+// The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
 // phone. It shows the room what the public night state says and nothing
 // more. The living room kiosk is also the relay's clock: it nudges the
@@ -32,12 +31,10 @@ import Spoken from './Spoken'
 // shows the boards for the group in the Library this round; with &play=1 it is
 // the same game on its own, for fun. Boo's screen (?kiosk=boo, Susan's MacBook
 // Pro in the Entryway with the Stream Deck + XL) is Miss Boo LaRue's Arcade
-// in Act 4 (screens/Rooms.jsx BooRoom, 5 Nov 2026; her Catwalk until then);
+// in Act 4 (screens/Rooms.jsx BooRoom, 5 Nov 2026);
 // with &play=1 it is the arcade on its own (screens/Arcade.jsx, 28 Oct 2026),
 // which main.jsx sends there before this file: no sign-in, no presence, no
-// night. Boo's camera (?kiosk=pose, the iPad facing the group at the deck) follows the
-// same show and photographs each group's last pose for the end credits
-// (screens/Pose.jsx). The Orangerie's screen (?kiosk=orangerie, the brain's
+// night. The Orangerie's screen (?kiosk=orangerie, the brain's
 // browser) shows Salem's code in Act 2 and the Get Off My Lawn! rules card in
 // Act 4 (screens/Rooms.jsx Orangerie).
 //
@@ -51,9 +48,9 @@ import Spoken from './Spoken'
 // End every screen goes black (lib/screen.js roomDark).
 //
 // What the living room shows comes from nights/{id}/public/screen (written
-// by the server beat by beat: news, bulletin, Sir Irwin, the door, the
-// board) and public/sounds (the bell in the corner, and this screen's own
-// chime). Three things sit in the corners of a kiosk: a small "tap to wake"
+// by the server beat by beat: news, bulletin, Sir Irwin, the door, Talk it
+// over, the vote) and public/sounds (the bell in the corner, and this
+// screen's own chime). Three things sit in the corners of a kiosk: a small "tap to wake"
 // (bottom right, until the first tap or key anywhere on the page) so the
 // browser lets it make a sound, a bell for three seconds whenever a sound is
 // called for, and a dot that says whether the house can still be heard. The
@@ -65,10 +62,10 @@ import Spoken from './Spoken'
 // them ever covers the content, and none of them shows while the room is
 // dark, the bell ringing or not (styles.css hides all three beside a
 // near-black screen: the blackout, the role cards, the pause card, The End):
-// a kiosk that reloads during the blackout stays near-black. On a rehearsal
-// night a red REHEARSAL band runs across the top of every room screen (never
-// on the party night, never in the blackout, the role cards or The End; it
-// stays over the pause card, as it does on the phones through a pause).
+// a kiosk that reloads during the blackout stays near-black. No room screen
+// says which kind of night it is (11 Nov 2026): the red REHEARSAL band went
+// first, then the small word Rehearsal under the TV's screens, since a
+// practice night now shows real lines. The Host tab says which night it is.
 
 const DECOR_ROOM = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('room')
 
@@ -85,7 +82,7 @@ export default function Kiosk({ which }) {
   const trace = useDoc(nightId && which !== 'study' && which !== 'memory' ? `nights/${nightId}/public/trace` : null)
   const standalone = which === 'memory' && new URLSearchParams(window.location.search).get('play') === '1'
   const memory = useDoc(nightId && which === 'memory' && !standalone ? `nights/${nightId}/public/memory` : null)
-  const boo = useDoc(nightId && (which === 'boo' || which === 'pose') ? `nights/${nightId}/public/boo` : null)
+  const boo = useDoc(nightId && which === 'boo' ? `nights/${nightId}/public/boo` : null)
   const salem = useDoc(nightId && which === 'orangerie' ? `nights/${nightId}/public/salem` : null) // the Orangerie's rules card varies its picture by the group due
   const finale = useDoc(nightId && living ? `nights/${nightId}/public/finale` : null)
   const screen = useDoc(nightId && living ? `nights/${nightId}/public/screen` : null)
@@ -148,7 +145,6 @@ export default function Kiosk({ which }) {
   else if (which === 'study') body = <Study study={study.data} rotation={rotation.data} serverNow={serverNow} lines={studyLines(content.data)} night={n} content={content.data} />
   else if (which === 'memory') body = <MemoryRounds board={memory.data} night={n} nightId={nightId} content={content.data} rotation={rotation.data} />
   else if (which === 'boo') body = <BooRoom boo={boo.data} night={n} nightId={nightId} rotation={rotation.data} serverNow={serverNow} />
-  else if (which === 'pose') body = <PoseCamera boo={n.act === 4 ? boo.data : null} nightId={nightId} serverNow={serverNow} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
   return (
@@ -248,7 +244,7 @@ const WAKE_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']
 // A short sound from the kiosk's own speaker (no AirPlay spin-up), from the
 // house's kit: fuller and much louder than the two beeps before it (handoff
 // 11 Nov 2026, A2: "It was hard to hear the chimes").
-const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime' }
+const KIOSK_SOUNDS = { start: 'ding', right: 'sparkle', wrong: 'buzz', end: 'tick', cue: 'chime', stamp: 'stamp', sealed: 'seal' }
 function chime(kind) {
   playSound(KIOSK_SOUNDS[kind] ?? 'ding')
 }
@@ -302,30 +298,37 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     lastCrossed.current = isGuessing(relay) ? (relay.crossed?.length ?? 0) : 0
   }, [relay?.state, relay?.turnIndex, relay?.lastResult, relay?.crossed?.length])
 
+  // the vote: a wax seal's thunk each time a seat locks in, and the stamp with its two notes as the vote
+  // closes. A screen that opens part-way through rings nothing for what it missed.
+  const voteHeard = useRef({ id: null, n: 0, settled: false })
+  const vote = night?.window?.kind === 'ballot' ? night.window : null
+  const voteId = vote?.id ?? null
+  const voteN = vote?.answered ?? 0
+  const voteSettled = !!vote?.settled
+  useEffect(() => {
+    if (!voteId) return
+    const heard = voteHeard.current
+    if (heard.id === voteId) {
+      if (voteSettled && !heard.settled) chime('sealed')
+      else if (voteN > heard.n) chime('stamp')
+    }
+    voteHeard.current = { id: voteId, n: voteN, settled: voteSettled }
+  }, [voteId, voteN, voteSettled])
+
   if (view === 'dark') return <Dark />
   if (view === 'paused') return <OneMoment />
   // Act 7: the finale runs on this screen against the server's clock
   if (view === 'finale') return <Finale night={night} finale={finale} content={content} serverNow={serverNow} />
-  // Act 7: while the phones decide, the clock is on the big screen, with the
-  // trace when there is one (the drawing may have been cut, or never run)
-  // and the board of strikes from the deduction round beneath
-  if (view === 'ballot') {
-    const left = Math.max(0, Math.ceil((ms(night.window.closesAt) - serverNow()) / 1000))
-    return (
-      <div className="kiosk ballot-screen">
-        <p className="kiosk-crest">Two minutes to decide</p>
-        {trace ? <TraceView trace={trace} compact /> : <p className="kiosk-big">Decide.</p>}
-        <div className="ballot-clock">
-          <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
-          {/* the rejoin code under the clock (cue 19, 25 Oct 2026): a phone that slept finds its way back */}
-          {!captionsOnly && <RejoinCode />}
-        </div>
-        <Board night={night} content={content} compact />
-      </div>
-    )
-  }
-  if (view === 'captions') return <Captions captions={captionsOf(screen)} rehearsal={screen?.rehearsal} />
-  if (view === 'board') return <Board night={night} content={content} title={screen?.title} />
+  // Act 7: while the phones vote, the three questions and the clock are on the
+  // big screen, with the trace when there is one (the drawing may have been
+  // cut, or never run) and one wax seal for every seat, stamped as each locks
+  // in: a count, never who and never what
+  if (view === 'ballot') return <VoteScreen night={night} screen={screen} trace={trace} serverNow={serverNow} captionsOnly={captionsOnly} />
+  // the vote has closed: nothing is named until the reveal's reel takes the screen
+  if (view === 'voted') return <VotedScreen night={night} />
+  if (view === 'captions') return <Captions captions={captionsOf(screen)} />
+  // Talk it over (the last beat of Act 6): the three questions over everyone's portraits
+  if (view === 'talk') return <TalkScreen night={night} screen={screen} content={content} />
   if (view === 'door') return <DoorScreen screen={screen} cues={cues} trace={trace} relay={relay} serverNow={serverNow} />
   if (view === 'prompts') return <Prompts screen={screen} serverNow={serverNow} />
   if (view === 'title') return <TitleCard screen={screen} />
@@ -453,7 +456,6 @@ export function ScreenCard({ screen }) {
         : <div className="kiosk-lines">
             {text.map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
           </div>}
-      {screen?.rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -483,7 +485,7 @@ export function IrwinFace({ mood }) {
 export { MemoryRounds as MemoryMatch } from './Rooms'
 
 // The iPad's view: the words of the last news, bulletin or Irwin, kept up.
-export function Captions({ captions, rehearsal = false }) {
+export function Captions({ captions }) {
   if (!captions) return <Idle title="Sirwin Manor" line="Nothing to read yet." loop="memory" />
   return (
     <div className={`kiosk captions ${captions.kind ?? ''}`}>
@@ -491,7 +493,6 @@ export function Captions({ captions, rehearsal = false }) {
       <div className="kiosk-lines">
         {(captions.lines ?? []).map((l, i) => <p key={i} className="kiosk-line"><Spoken text={l} /></p>)}
       </div>
-      {rehearsal && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -524,24 +525,114 @@ export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
   )
 }
 
-// The deduction round and the ballot: every character at the party with
-// their strike beneath. A strike the server made for a silent phone looks
-// the same as a chosen one. A row with no strike yet says so.
-export function Board({ night, content, title = 'The deduction round', compact = false }) {
-  const rows = boardRows({ night, characters: content?.characters ?? [], motives: content?.motives ?? [] })
+// ---- the ending: Talk it over, the vote, the votes are in (handoff 11 Nov 2026, A6) ----
+
+// The three questions the night comes down to. The server writes them on the
+// screen doc (functions/lib/screen.js THREE_QUESTIONS); these are the same
+// words, for a doc that carries none.
+const THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']
+function ThreeQuestions({ lines = null }) {
+  const qs = Array.isArray(lines) && lines.length ? lines : THREE_QUESTIONS
+  return <ul className="three-questions">{qs.map(q => <li key={q}>{q}</li>)}</ul>
+}
+
+// One of the cast, standing: the drawing fills the box top to bottom whatever
+// empty space its file has round it (lib/content.js portraitFit), so everyone
+// in the line-up is the same height with their feet on one line.
+function CastFigure({ characterId }) {
+  const [i, setI] = useState(0)
+  useEffect(() => setI(0), [characterId])
+  const urls = characterId ? portraitUrls(characterId) : []
+  if (!urls[i]) return <span className="cast-figure" aria-hidden="true" />
+  const fit = portraitFit(characterId)
+  const tall = 100 / Math.max(0.05, fit.bottom - fit.top) // the file's height, as a share of the box
+  const middle = (fit.left + fit.right) / 2
   return (
-    <div className={`kiosk board${compact ? ' compact' : ''}`}>
-      {!compact && <p className="kiosk-crest">{title}</p>}
-      <ul className="board-rows">
-        {rows.map(r => (
-          <li key={r.key} className={r.strike ? `struck ${r.strike.kind}` : 'waiting'}>
-            <span className="board-name">{r.name}</span>
-            <span className="board-char">{r.characterName}</span>
-            <span className="board-strike">{r.strike ? r.strike.text : 'choosing'}</span>
-          </li>
+    <span className="cast-figure" aria-hidden="true">
+      <img src={urls[i]} alt="" style={{ height: `${tall}%`, top: `${-fit.top * tall}%`, transform: `translateX(${-middle * 100}%)` }} onError={() => setI(i + 1)} />
+    </span>
+  )
+}
+
+// Talk it over, the last beat of Act 6: the three questions over everyone at
+// the party, each as the character they play. No clock and nothing to tap:
+// the room talks, and the host starts the vote.
+export function TalkScreen({ night, screen = null, content = null }) {
+  const cast = castOf({ night, characters: content?.characters ?? [] })
+  const rows = []
+  let at = 0
+  for (const n of castRows(cast.length)) { rows.push(cast.slice(at, at + n)); at += n }
+  return (
+    <div className={`kiosk talk-screen rows-${rows.length}`}>
+      <p className="kiosk-crest">{screen?.title || 'Talk it over'}</p>
+      <ThreeQuestions lines={screen?.lines} />
+      <div className="cast">
+        {rows.map((row, r) => (
+          <ul key={r} className="cast-row">
+            {row.map(p => (
+              <li key={p.key}>
+                <CastFigure characterId={p.characterId} />
+                <span className="cast-name">{p.characterName || p.name}</span>
+                {p.characterName && <span className="cast-guest">{p.name}</span>}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// One wax seal a seat, pressed as each locks in, and the count in words. A
+// count only: the screen never shows who has voted, or for what.
+function VoteSeals({ count, all = false }) {
+  if (!count || !count.of) return null
+  const n = all ? count.of : count.n
+  const words = all ? 'The votes are in' : `${n} of ${count.of} locked in`
+  return (
+    <div className="vote-seals" role="status" aria-label={words}>
+      <ul aria-hidden="true">
+        {Array.from({ length: count.of }, (_, i) => (
+          <li key={i} className={i < n ? 'in' : ''}><img src={`${import.meta.env.BASE_URL}brand/seal.png`} alt="" /></li>
         ))}
       </ul>
-      {!rows.length && <p className="kiosk-line">Nobody is at the party yet.</p>}
+      {!all && <p className="vote-count">{words}</p>}
+    </div>
+  )
+}
+
+// The vote on the big screen: the three questions, the trace when there is
+// one, the clock, the way back for a phone that slept, and the seals. Between
+// the beat and its window (a moment) there is no clock yet.
+export function VoteScreen({ night, screen = null, trace = null, serverNow, captionsOnly = false }) {
+  const w = night?.window?.kind === 'ballot' ? night.window : null
+  const left = w ? Math.max(0, Math.ceil((ms(w.closesAt) - serverNow()) / 1000)) : null
+  return (
+    <div className="kiosk ballot-screen">
+      <p className="kiosk-crest">{w?.title || screen?.title || 'The vote'}</p>
+      <ThreeQuestions lines={screen?.lines} />
+      <div className={trace ? 'vote-middle with-trace' : 'vote-middle'}>
+        {trace && <TraceView trace={trace} compact />}
+        <div className="ballot-clock">
+          {left != null && <p className="kiosk-count">{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>}
+          {/* the rejoin code under the clock (cue 19, 25 Oct 2026): a phone that slept finds its way back */}
+          {!captionsOnly && <RejoinCode />}
+        </div>
+      </div>
+      <VoteSeals count={voteCount(night)} />
+    </div>
+  )
+}
+
+// The vote has closed (the last seat locked in, or the two minutes ran out
+// and the house picked for whoever had not). Every seal is pressed; nobody is
+// named until the reveal.
+export function VotedScreen({ night }) {
+  return (
+    <div className="kiosk ballot-screen voted">
+      <p className="kiosk-crest">The vote</p>
+      <p className="kiosk-big">The votes are in.</p>
+      <VoteSeals count={voteCount(night)} all />
     </div>
   )
 }
@@ -640,16 +731,10 @@ export function Bedroom({ relay, trace }) {
 // 4 just the picture · 5 the picture and its name          (Jon, 22 Oct 2026)
 // The doc carries only what the level allows (any phone can read it): one
 // picture, or at level 3 two pictures in no particular order, and the name
-// only at level 5.
+// only at level 5. A practice night shows the picture too, from its own
+// throwaway case (11 Nov 2026): no note in brackets, no Rehearsal word.
 export function TraceView({ trace, compact = false }) {
   const level = Math.max(1, Math.min(5, Number(trace?.level) || 3))
-  // a rehearsal night: the slot says what would show, never the picture (Jon, 23 Oct 2026)
-  if (trace?.standIn) return (
-    <div className={`trace level-${level}${compact ? ' compact' : ''}`}>
-      <p className="kiosk-big trace-standin">{trace.standIn}</p>
-      {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
-    </div>
-  )
   const base = import.meta.env.BASE_URL
   const src = (id) => `${base}traces/${id}.png`
   const images = level === 3 ? (trace.images ?? []) : trace.trace ? [trace.trace] : []
@@ -665,7 +750,6 @@ export function TraceView({ trace, compact = false }) {
       {level === 5 && trace.label && <p className="trace-label">{trace.label}</p>}
       {trace.irwinLine && <p className="trace-irwin"><Spoken text={trace.irwinLine} /></p>}
       {level < 5 && <p className="kiosk-next">{level === 3 ? 'Something was left behind. One of these two.' : 'Something was left behind.'}</p>}
-      {trace.placeholder && <p className="kiosk-next">Rehearsal</p>}
     </div>
   )
 }
@@ -699,8 +783,9 @@ export function Finale({ night, finale, content = null, serverNow }) {
   const filmRang = useRef(null)
   const stage = finaleStage(finale, now)
   // the host's hold freezes the screen on every night; the word "Held" is for the host, so it shows only on a
-  // rehearsal, like the Rehearsal tag (Jon, 29 Oct 2026: no setup words in front of the guests). On the party
-  // night the Host tab's reveal panel says the screen is held.
+  // practice night (Jon, 29 Oct 2026: no setup words in front of the guests). On the party night the Host
+  // tab's reveal panel says the screen is held. The small word Rehearsal that sat under these screens is gone
+  // (11 Nov 2026: a practice night shows real lines and looks like the party night; the Host tab says which it is).
   const held = !!finale.holdAt
   if (stage === 'stats' || stage === 'awards') return (
     <div className={`kiosk finale ${stage}`}>
@@ -731,7 +816,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
       {hushLines(finale).map(t => <p key={t} className="kiosk-next">{t}</p>)}
     </div>
   )
-  if (stage === 'credits') return <Credits finale={finale} now={now} nightId={night?.nightId} />
+  if (stage === 'credits') return <Credits finale={finale} now={now} />
   if (stage === 'last') return (
     <div className="kiosk finale last">
       <img className="last-irwin" src={`${import.meta.env.BASE_URL}household/full/Irwin 5.png`} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
@@ -784,7 +869,6 @@ export function Finale({ night, finale, content = null, serverNow }) {
       )}
       {stage !== 'done' && rv.captions.map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
-      {finale.rehearsal && <p className="kiosk-next">Rehearsal</p>}
       {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
   )
@@ -841,7 +925,7 @@ function AwardsReel({ finale, now }) {
 // The end credits: the achievements the host gave, then the end-credit
 // awards (credits.awards), the joke counters, the room's split on every
 // Parlour Game, the thanks, and Sydney. One slow roll on the server's clock.
-function Credits({ finale, now, nightId = null }) {
+function Credits({ finale, now }) {
   const c = finale.credits ?? {}
   const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - CREDITS_AFTER_MS)
   const span = LAST_AFTER_MS - CREDITS_AFTER_MS
@@ -863,12 +947,6 @@ function Credits({ finale, now, nightId = null }) {
         <ul className="splits">
           {(c.splits ?? []).map((q, i) => <li key={i}><span className="split-q">{q.q}</span><span>{q.a.text} {q.a.count} · {q.b.text} {q.b.count}</span></li>)}
         </ul>
-        {(c.poses ?? []).length > 0 && nightId && (
-          <>
-            <p className="kiosk-crest">At the arcade</p>
-            <div className="pose-credits">{c.poses.map(p => <CreditPose key={p.groupId} nightId={nightId} pose={p} />)}</div>
-          </>
-        )}
         <p className="kiosk-crest">Thank you</p>
         <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
         {c.memory && (
@@ -880,12 +958,6 @@ function Credits({ finale, now, nightId = null }) {
       </div>
     </div>
   )
-}
-
-// One group's photo in the credits, from its own doc (nights/{id}/public/pose-<group>).
-function CreditPose({ nightId, pose }) {
-  const doc = useDoc(nightId && nightId !== 'preview' ? `nights/${nightId}/public/pose-${pose.groupId}` : null)
-  return <PoseShot src={doc.data?.image ?? pose.image ?? null} names={pose.names} />
 }
 
 function Epilogue({ text }) {

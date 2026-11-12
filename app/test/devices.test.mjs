@@ -12,7 +12,10 @@ const handled = (k) => k === 'living' || new RegExp(`which === '${k}'`).test(kio
 
 test('every room screen the client answers has a device, and every kiosk address is answered or says why not', () => {
   // orangerie joined on 25 Oct 2026 (the brain's browser, the cue list)
-  for (const k of ['living', 'bedroom', 'study', 'ipad', 'memory', 'boo', 'pose', 'orangerie']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
+  for (const k of ['living', 'bedroom', 'study', 'ipad', 'memory', 'boo', 'orangerie']) assert.ok(DEVICES.some(d => d.kiosk === k), `a device opens ?kiosk=${k}`)
+  // Boo's camera went on 11 Nov 2026 (Jon: "anything regarding the camera for it"): no device, no address, no row when it dies
+  assert.ok(!DEVICES.some(d => d.kiosk === 'pose' || /camera/i.test(`${d.name} ${d.machine} ${d.what}`)), 'no camera on the Devices page')
+  assert.ok(![...SWITCH_ON, ...WHEN_ONE_DIES.flat()].some(s => /camera|Jenna.s iPad/i.test(s)), 'and none in the start order or the fixes')
   for (const d of DEVICES.filter(x => x.kiosk)) {
     if (handled(d.kiosk)) assert.ok(!d.pending, `${d.key}: the client answers ?kiosk=${d.kiosk} now, so drop the pending note`)
     else assert.ok(d.pending, `${d.key}: ?kiosk=${d.kiosk} is not answered yet, so the page must say why`)
@@ -20,18 +23,17 @@ test('every room screen the client answers has a device, and every kiosk address
 })
 
 // Jon's device key (docs/cue-list.md, 25 Oct 2026; built 26 Oct): Susan's
-// MacBook Pro feeds the projector all night and never moves, the iPad Pro
-// roams through its stations, Jenna's iPad Pro is Boo's camera, the brain's
-// browser is the Orangerie's screen, and the older family iPad is out unless
-// Jon answers olderIpad the other way.
-test('the devices follow Jon’s key: the iPad Pro’s stations are one machine, Susan’s MacBook Pro never moves, Jenna’s iPad is the camera, the older iPad is out', () => {
+// MacBook Pro never moves (Boo's screen in the Entryway since 5 Nov), the
+// iPad Pro roams through its stations, the brain's browser is the
+// Orangerie's screen, and the older family iPad is out unless Jon answers
+// olderIpad the other way. Jenna's iPad has no job (11 Nov 2026).
+test('the devices follow Jon’s key: the iPad Pro’s stations are one machine, Susan’s MacBook Pro never moves, the older iPad is out', () => {
   const byKiosk = (k) => DEVICES.find(d => d.kiosk === k && !d.query)
   const ipadRooms = new Set(['ipad', 'memory', 'bedroom'].map(k => byKiosk(k).room))
   assert.equal(ipadRooms.size, 1, 'the iPad Pro’s three addresses sit together under one heading')
   for (const k of ['ipad', 'memory', 'bedroom']) assert.match(byKiosk(k).machine, /iPad Pro/, `${k} is the iPad Pro`)
   assert.match(byKiosk('boo').machine, /Susan.s work MacBook Pro in the Entryway with the Stream Deck \+ XL.*all night/, 'Susan’s MacBook Pro is Boo’s screen all night (the arcade, 5 Nov 2026)')
   assert.ok(!/Susan/.test(byKiosk('bedroom').machine), 'the bedroom screen is not Susan’s MacBook Pro any more')
-  assert.match(byKiosk('pose').machine, /Jenna.s iPad Pro/, 'Boo’s camera is Jenna’s iPad Pro')
   assert.match(byKiosk('orangerie').machine, /brain/, 'the Orangerie screen is the brain’s browser')
   const older = DEVICES.find(d => d.key === 'older')
   assert.ok(older && !older.kiosk && !older.plain, 'the older family iPad is listed with no address')

@@ -43,7 +43,7 @@ export default function Morning() {
         {status?.opened && <p className="why">Opened{status.openedAt ? ` ${new Date(status.openedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : ''}{status.label ? `: ${status.label}` : ''}. Everything below is the party night as it ended, from the archive.</p>}
         {status?.ready && !status.opened && (
           <>
-            <p className="why">The party is over. Open the case that ran: who did it, to whom, why, and everything the game kept from you all night. It is copied into an archive first; nothing is moved, except Boo’s camera’s photos from the arcade, which leave the game site for the archive.</p>
+            <p className="why">The party is over. Open the case that ran: who did it, to whom, why, and everything the game kept from you all night. It is copied into an archive first; nothing is moved.</p>
             <label className="field">
               <span>Type OPEN to open the case</span>
               <input type="text" value={word} onChange={e => setWord(e.target.value)} autoComplete="off" />
@@ -114,15 +114,6 @@ function CaseView({ view }) {
         {view.drawing.length === 0 ? <p className="hint">The drawing did not run.</p>
           : <ul className="morning-bags">{view.drawing.map(d => <li key={d.round}><b>Round {d.round}</b>: {d.picture}</li>)}</ul>}
       </section>
-      {(view.poses ?? []).length > 0 && (
-        <section className="panel">
-          <h2>At the arcade</h2>
-          <p className="why">Each group at the deck, a minute into its visit. Long-press or right-click a photo to save it.</p>
-          <div className="morning-poses">
-            {view.poses.map((p, i) => <figure key={i}><img src={p.image} alt={`The last pose of ${p.names.join(', ')}`} /><figcaption>{p.names.join(', ')}</figcaption></figure>)}
-          </div>
-        </section>
-      )}
     </>
   )
 }

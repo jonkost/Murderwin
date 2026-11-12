@@ -236,7 +236,7 @@ Irwin's lines, by level (replace the 5 Oct draft in READ-FIRST):
 4. "I fetched it! Here it is! I don't know what it's called, but I fetched it!"
 5. "I fetched it, and I even know its name! Can we play again? Please?"
 
-Settled by default, as built: the deduction round comes after the bedroom door opens. Jon may change it.
+After the bedroom door opens the room talks it over, and Jon starts the vote from his phone (11 Nov 2026: the round that came after the door is gone).
 
 **Trace linking is closed** (22 Oct). Players link traces to characters from the portraits, which show each trace. One gap: the Medium's portrait needs a candle (her trace is lilac candle wax). That's an art task for Jon.
 

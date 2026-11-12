@@ -14,7 +14,7 @@ const NAMES = {
   drawing: ['Sir Irwin Needs a Hand', 'Three drawings open the door. He only has paws.'],
 }
 
-test('the game names: five, each name and hook exactly as Jon wrote them; the deduction round has none', () => {
+test('the game names: five, each name and hook exactly as Jon wrote them', () => {
   assert.deepEqual(Object.keys(GAME_NAMES).sort(), Object.keys(NAMES).sort())
   for (const [id, [name, hook]] of Object.entries(NAMES)) {
     assert.equal(GAME_NAMES[id].name, name, id)

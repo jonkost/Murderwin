@@ -23,7 +23,6 @@ import { studyTestRequest } from './lib/studytest.js'
 import { gameTestRequest } from './lib/gametest.js'
 import { sealedCounts as countSealed } from './lib/counts.js'
 import { morningOp } from './lib/morning.js'
-import { savePose, fromPoseCamera } from './lib/pose.js'
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 initializeApp()
@@ -94,11 +93,9 @@ export const ballot = onCall({ cors: true }, wrap(async req => {
   return run.player.ballot(db, { uid, nightId, murderer, motive, victim })
 }))
 
-export const eliminate = onCall({ cors: true }, wrap(async req => {
-  const uid = requireUid(req)
-  const { nightId, target } = req.data ?? {}
-  return run.player.eliminate(db, { uid, nightId, target })
-}))
+// (Act 6 has no window of its own after the door since 11 Nov 2026, Jon: "I did
+// not ask for that, and that needs to go away". It ends in talk; the vote is
+// `ballot`, above.)
 
 // Act 2, Lights Out: the guest scans the code in a cat's room (the play URL
 // with ?meet=<cat>), taps Done when they have read the cat, or Not yet, call
@@ -165,16 +162,6 @@ export const salemPassed = onCall({ cors: true }, wrap(async req => {
   return run.player.salemPassed(db, { uid, nightId, attempt, felt: felt === true })
 }))
 
-// Act 4, the Entryway: the iPad Pro facing the catwalk (?kiosk=pose) sends
-// its photo of the group's last pose, for the end credits (lib/pose.js).
-export const posePhoto = onCall({ cors: true }, wrap(async req => {
-  const uid = requireUid(req)
-  const { nightId, groupId, image } = req.data ?? {}
-  if (!nightId) throw new HttpsError('invalid-argument', 'Which night?')
-  if (!(await fromPoseCamera(db, { uid, nightId, isAdmin: ADMIN_UIDS.includes(uid) }))) throw new HttpsError('permission-denied', 'Only Boo’s camera sends the photos.')
-  return savePose(db, { nightId, groupId, image })
-}))
-
 // Act 4, the Entryway: the arcade's clue moment (card 515, 5 Nov 2026). The
 // Mac (?kiosk=boo, by its own presence row) asks for the clue of the player
 // at `place` in the group's order once their fifth game is played: that
@@ -220,7 +207,7 @@ export const studyTest = onCall({ cors: true }, wrap(async req => {
 }))
 
 // The Game test (the workshop's Game test tab, lib/gametest.js): the
-// practices of Get Off My Lawn! and Boo's Catwalk, on their own docs and
+// practice of Get Off My Lawn!, on its own doc and
 // never a night's, and a test night that is always a rehearsal. Opening,
 // stopping and the test night are the admin's only; any signed-in phone may
 // join the Salem practice and play it.

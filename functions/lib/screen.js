@@ -3,7 +3,7 @@
 // the cue relay plays. One public doc each:
 //
 //   nights/{id}/public/screen  { kind, title, lines[], at, holdMs, rehearsal, act, beat, captions, struck, parked, choices, mood, prompts, video }
-//     kind: idle | black | news | bulletin | irwin | board | door | trace | prompts | title | birthday | join
+//     kind: idle | black | news | bulletin | irwin | door | talk | vote | trace | prompts | title | birthday | join
 //     prompts: Sir Irwin's sharing prompts (bagclues.js), one at a time on the TV:
 //       { lines[], order[], startedAt, everyMs }, open lines, so the order says nothing
 //     video: true when the Parlour TV plays the bulletin as video (meta/game.bulletinVideo); the TV
@@ -39,7 +39,15 @@ const NIGHT = JSON.parse(readFileSync(joinPath(here, '..', 'seed', 'night.json')
 // `birthday` is the Happy Birthday Irwin card the Cake! button puts on the Parlour TV (cue 13, 25 Oct 2026).
 // `join` is the join code on the Parlour TV: Act 1's beats and the dinner wrap-up name it (cues 3 and 10);
 // the TV draws the square itself from the play address, so the doc carries words only.
-export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'board', 'door', 'trace', 'prompts', 'title', 'birthday', 'join']
+// `talk` is Talk it over, the last beat of Act 6, and `vote` is the vote in Act 7 (handoff 11 Nov 2026, A6):
+// the three questions on the Parlour TV. The TV draws the portraits, the clock and the count itself.
+export const SCREEN_KINDS = ['idle', 'black', 'news', 'bulletin', 'irwin', 'door', 'talk', 'vote', 'trace', 'prompts', 'title', 'birthday', 'join']
+
+// The three questions the night comes down to, on the Parlour TV while the room talks and while it
+// votes. Open words, the same every night: nothing here knows the answer.
+export const THREE_QUESTIONS = ['Who did it?', 'Why?', 'Who is the Ghost?']
+export const TALK_CARD = { title: 'Talk it over', lines: THREE_QUESTIONS }
+export const VOTE_CARD = { title: 'The vote', lines: THREE_QUESTIONS }
 
 // The words beside the join code (screen kind `join`, 25 Oct 2026): "Scan to join"
 // through Act 1, and at the dinner wrap-up the code for anyone who needs to rejoin.
@@ -65,16 +73,17 @@ export const MAX_IRWIN_WORDS = 12
 // Safe defaults, used only when the workshop list is empty.
 export const DEFAULT_IRWIN = { opener: 'Oh! Everyone is here. I have something to say.', closer: 'That is everything. I am a good boy.' }
 // Bulletin 1's lines are the open W-O-O-F News bank (seed/woof-news.json).
-// This stand-in shows only for a case with no family to cross off, such as a
-// rehearsal. On the party night (card 530, 5 Nov 2026) it never shows: the
-// plain words below take its place, and the Host tab is told (noteMissingLine
-// 'news'); the check G61 proves every stand-in case has its line.
+// A practice night plays both bulletins whole and shows Sir Irwin's real cards,
+// from that night's own throwaway case (Jon, 11 Nov 2026; the bracketed
+// stand-ins of 23 Oct are gone).
+// A case with no family for the news to cross off never shows a note about
+// the game (card 530, 5 Nov 2026), on the party night or on a practice night:
+// the plain words NEWS_QUIET take the line's place, and the Host tab is told
+// (noteMissingLine 'news'); the check G61 proves every stand-in case has its
+// line. The house's note, NEWS_FLASH_PLACEHOLDER, is only for no case at all,
+// which cannot happen on a night.
 export const NEWS_FLASH_PLACEHOLDER = '(Here the news flash crosses off one family of motives for everyone.)'
 export const NEWS_QUIET = 'W-O-O-F News has nothing more on that just now.'
-// On a rehearsal night every sealed slot is a bracketed stand-in (Jon, 23 Oct 2026).
-export const NEWS_STAND_IN = "[W-O-O-F News crosses off one family of motives here]"
-export const BULLETIN2_STAND_IN = level => `[W-O-O-F News hints at the real family here, plainness ${level} of 5]`
-export const IRWIN_STAND_IN = count => `[Sir Irwin's ${count} motive card${count === 1 ? '' : 's'} appear here]`
 // The Act 4 title card on the Parlour TV (§9.5).
 export const ACT4_TITLE = { title: 'Act 4 · Behind Closed Doors', line: 'Look at your phone and find your group.' }
 // Sir Irwin's countdown (Act 5): how sure he sounds, by how many cards he
@@ -328,30 +337,31 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     const rehearsal = c?.rehearsal !== false
     const seed = screenSeed(c, nightId) // the case's secret, never the public night id
     if (kind === 'news') {
-      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js); on a
-      // rehearsal the family's line is a bracketed stand-in. As video on the Parlour TV (23 Oct).
+      // W-O-O-F News bulletin 1: one wrong family crossed off for everyone (news.js): the opening,
+      // the family's own line and the sign-off, with all three recordings, on a practice night as on
+      // the party night (11 Nov 2026). As video on the Parlour TV (23 Oct).
       const b = bulletin1(c)
-      // a rehearsal plays the opening and the sign-off only: the family's recording is a sealed slot too
-      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
+      clips = b.clips
       video = await bulletinVideo(db)
-      // no family to cross off (it should never happen, G61): a rehearsal shows the house's note, the party night plain words, and the Host tab is told (card 530)
-      const lines = rehearsal && !b.placeholder ? [b.lines[0], NEWS_STAND_IN, ...b.lines.slice(2)]
-        : b.placeholder ? [...b.lines.slice(0, 1), rehearsal ? NEWS_FLASH_PLACEHOLDER : NEWS_QUIET, ...b.lines.slice(1)] : b.lines
-      if (b.placeholder && !rehearsal) await noteMissingLine(db, nightId, 'news')
+      // no family to cross off (it should never happen, G61): plain words on the party night and on a practice
+      // night alike, and the Host tab is told (card 530); the house's note only when there is no case at all
+      const lines = b.placeholder ? [...b.lines.slice(0, 1), c ? NEWS_QUIET : NEWS_FLASH_PLACEHOLDER, ...b.lines.slice(1)] : b.lines
+      if (b.placeholder && c) await noteMissingLine(db, nightId, 'news')
       // `video: true` only: the TV works out each part's file from the open bank by its words, so no
       // recording's name ever goes on a public doc (a clip id names a family; news.js)
       doc = screenDoc('news', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) }, video: video ? true : null })
     } else if (kind === 'bulletin') {
+      // bulletin 2: the real family's own line at the dial's level, and its recording, on every night
       const b = bulletin2(c, dialBand(c?.dial))
-      clips = rehearsal && !b.placeholder ? [b.clips[0], ...b.clips.slice(2)] : b.clips
-      const lines = rehearsal && !b.placeholder ? [b.lines[0], BULLETIN2_STAND_IN(b.level), ...b.lines.slice(2)] : b.lines
+      clips = b.clips
+      const lines = b.lines
       doc = screenDoc('bulletin', { ...base, title: 'W-O-O-F News', lines, rehearsal, captions: { kind, lines, at: new Date(now) } })
     } else {
       const voice = await irwinVoice(db)
       const clue = irwinMotiveClue(c, { seed, ui: labelled(await linesOf(db, nightId, 'ui_copy')) })
       const lines = irwinLines({ ...voice, names: castNames(night.roster), optionLine: clue.optionLine })
-      // on a rehearsal the cards are one bracketed stand-in that says how many would show
-      const choices = rehearsal && clue.choices.length ? [{ n: 0, rhyme: IRWIN_STAND_IN(clue.choices.length) }] : clue.choices
+      // his motive cards, the real one among them, on every night
+      const choices = clue.choices
       const said = [...lines.slice(0, -1), ...choices.map(x => (x.n ? `${x.n}. ${x.rhyme}` : x.rhyme)), ...lines.slice(-1)]
       doc = screenDoc('irwin', { ...base, title: 'Sir Irwin', lines, choices, mood: clue.mood, rehearsal, captions: { kind, lines: said, at: new Date(now) } })
       if (run) await db.doc(`nights/${nightId}/private/dialClues`).set({ irwin: clue.mood }, { merge: true }) // for the end credits
@@ -365,8 +375,10 @@ export async function onBeat(db, nightId, { act, beat, spec = null, phase = 'act
     doc = screenDoc('title', { ...base, title: ACT4_TITLE.title, lines: [ACT4_TITLE.line], rehearsal: !!night.rehearsal })
   } else if (kind === 'door') {
     doc = screenDoc('door', { ...base, title: 'The door is open', lines: ['The light outside the bedroom is green. Go and see.'], holdMs: DOOR_HOLD_MS, rehearsal: !!night.rehearsal })
-  } else if (kind === 'board') {
-    doc = screenDoc('board', { ...base, title: 'The deduction round', lines: ['Each of you has struck one thing out. Here is the board.'], rehearsal: !!night.rehearsal })
+  } else if (kind === 'talk' || kind === 'vote') {
+    // Talk it over (Act 6's last beat) and the vote (Act 7): the three questions, nothing else
+    const card = kind === 'talk' ? TALK_CARD : VOTE_CARD
+    doc = screenDoc(kind, { ...base, title: card.title, lines: card.lines, rehearsal: !!night.rehearsal })
   } else if (kind === 'join') {
     // the join code (cues 3 and 10, 25 Oct 2026): Act 1's beats say scan to join; the dinner wrap-up says rejoin.
     // The captions ride along at the wrap-up, so the Orangerie iPad keeps bulletin 2's words up.

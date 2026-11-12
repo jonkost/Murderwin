@@ -262,6 +262,8 @@ if (CHECK_PROJECTOR) {
 // The hall bulb: red, green, or off in the blackout (25 Oct 2026).
 let wantHall = null
 async function setHall(colour) {
+  // The End, or no night at all: let go. The bulb stays as it is and nothing is re-sent.
+  if (colour === 'free') { if (wantHall) log('[hall] let go: the bulb is yours again'); wantHall = null; return }
   wantHall = colour
   if (FAKE || !hue) { log(`[hall] would turn ${colour}`); return }
   if (!env.HUE_HALL_LIGHT_ID) { log('[hall] no HUE_HALL_LIGHT_ID set'); return }
@@ -448,6 +450,7 @@ if (!OFFLINE) {
     log('night:', nightId ?? 'none')
     state = { hall: null, sound: null }
     sceneState = emptySceneState()
+    if (!nightId) setHall('free')
     watchNight(nightId)
     heartbeat()
   })

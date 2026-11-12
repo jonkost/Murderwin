@@ -161,7 +161,7 @@ test('the hall light by hand, and the answered count on an open window names nob
   assert.ok(!JSON.stringify(night(db, nightId).window).includes('jessa'), 'a count, never who')
 })
 
-test('G59 a study with no trace to pay: the house\'s plain words on the party night, the note on a rehearsal, never a note in brackets on the party night; the Host tab told once a group', async () => {
+test('G59 a study with no trace to pay: the house\'s plain words on the party night and on a practice night alike, never a note in brackets; the Host tab told once a group', async () => {
   for (const rehearsal of [false, true]) {
     const { db, nightId } = await party(6)
     const t = { now: 12_000_000 }
@@ -179,16 +179,13 @@ test('G59 a study with no trace to pay: the house\'s plain words on the party ni
     assert.ok(ks.length >= 2)
     for (const k of ks) {
       const [card] = cards(db, uidOf(db, nightId, k), 'clue')
+      // the same on both kinds of night (a practice night plays for real, 11 Nov 2026)
       assert.equal(card.none, true)
       assert.equal(card.trace, undefined)
-      if (rehearsal) {
-        assert.equal(card.text, STUDY_PLACEHOLDER)
-        assert.equal(card.placeholder, true)
-      } else {
-        assert.equal(card.text, STUDY_QUIET)
-        assert.equal(card.placeholder, false)
-        assert.ok(!/[()[\]]/.test(card.text), 'never a note in brackets')
-      }
+      assert.equal(card.text, STUDY_QUIET)
+      assert.notEqual(card.text, STUDY_PLACEHOLDER)
+      assert.equal(card.placeholder, false)
+      assert.ok(!/[()[\]]/.test(card.text), 'never a note in brackets')
     }
     assert.deepEqual(night(db, nightId).missingLines, { study: 1 }, 'one count for the group, never who')
     // the same group again pays nothing more and counts nothing more

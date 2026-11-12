@@ -11,11 +11,22 @@
 // lengths the film's clock runs on. The originals are never touched. Nothing
 // is played: ffmpeg reads and writes files.
 //
-// Rule 25 ends with the deduction round, which the handoff took out of the
-// night ("Then each of us says, out loud, one thing we have ruled out. Your
-// last chance... to change your mind."). The film stops that recording at the
-// pause before that sentence (CUTS, below). If a new recording has no pause
-// near that time, it is left whole and the script says so.
+// Every recording plays whole (Jon, 12 Nov 2026: "Do not change the rule
+// cards!" ... "The 28 slides and VO."). On 11 Nov the film stopped rule 25
+// early, at the pause before its last two sentences; that cut is gone. The
+// machinery for a cut stays (CUTS, cutPoint), empty, in case Jon ever asks
+// for one.
+//
+// THE PICTURES ARE JON'S OWN SLIDES (12 Nov 2026: "Do not change the rule
+// cards!"). Each recording plays over the slide he made for it, as a picture:
+// play/public/rules/<name>.jpg, 1920 by 1080, not in git. They come from his
+// rules deck. If the folder (or the one above it) holds the deck as a PDF with
+// exactly 28 pages, each page becomes its slide's picture (pdftoppm). On 12
+// Nov the PDF in his exports folder was an older copy with 27 pages, so the
+// pictures were drawn from the deck's own 28 slide files instead, exactly as
+// written. Never reword, restyle or reorder them. The lengths file says
+// whether all 28 pictures are in (`pictures`); until they are, the film falls
+// back to the slides drawn in code.
 //
 // It prints names, lengths and counts. Nothing here is sealed.
 import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs'
@@ -32,11 +43,10 @@ const INTRO = join(root, 'play', 'public', 'video', 'sirwin-intro.mp4')
 const KINDS = ['.wav', '.m4a', '.mp3', '.aif', '.aiff']
 
 // Where a recording is stopped early: seconds into the ORIGINAL file, at the
-// start of the pause before the cut sentence. `near` is how far the pause may
-// have moved in a retake before the script stops trusting it.
-export const CUTS = {
-  'rules-25-act6-the-final-hour': { at: 35.68, near: 1.2, why: 'the deduction round, which is out of the night' },
-}
+// start of the pause before the cut sentence; `near` is how far the pause may
+// have moved in a retake before the script stops trusting it. Empty: nothing
+// of Jon's is cut (12 Nov 2026).
+export const CUTS = {}
 
 export const RULES_FILES = RULES_SLIDES.map(s => s.file)
 
@@ -93,6 +103,35 @@ function convert(src, out, stopAt) {
   return run('ffmpeg', args)
 }
 
+// The deck as a PDF, in the folder or the one above it: the newest whose name speaks of rules.
+export function findDeckPdf(folder) {
+  const found = []
+  for (const dir of [folder, join(folder, '..')]) {
+    let names = []
+    try { names = readdirSync(dir) } catch { continue }
+    for (const n of names) if (/\.pdf$/i.test(n) && /rule/i.test(n) && !/script/i.test(n)) found.push(join(dir, n))
+  }
+  return found.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0] ?? null
+}
+export function pdfPages(file) {
+  const r = run('pdfinfo', [file])
+  return r.ok ? Number(/Pages:\s+(\d+)/.exec(r.out)?.[1]) || 0 : 0
+}
+// Each page of a 28-page deck becomes its slide's picture. Returns how many were written.
+function slidesFromPdf(pdf, dir) {
+  let made = 0
+  RULES_FILES.forEach((name, i) => {
+    const base = join(dir, name)
+    const r = run('pdftoppm', ['-f', String(i + 1), '-l', String(i + 1), '-singlefile', '-jpeg', '-jpegopt', 'quality=90', '-scale-to-x', '1920', '-scale-to-y', '1080', pdf, base])
+    if (r.ok && existsSync(`${base}.jpg`)) made += 1
+  })
+  return made
+}
+// How many of the 28 slide pictures are in.
+export function slidePictures(dir = RULES_DIR) {
+  return RULES_FILES.filter(name => existsSync(join(dir, `${name}.jpg`))).length
+}
+
 export function importRules(folder, { dir = RULES_DIR, json = LENGTHS_JSON, log = console.log } = {}) {
   if (!existsSync(folder)) throw new Error(`No folder at ${folder}`)
   mkdirSync(dir, { recursive: true })
@@ -123,10 +162,18 @@ export function importRules(folder, { dir = RULES_DIR, json = LENGTHS_JSON, log 
     if (lengths.slides[name] == null && existsSync(join(dir, `${name}.m4a`)) && before?.slides?.[name]) lengths.slides[name] = before.slides[name]
   }
   if (!lengths.intro && before?.intro) lengths.intro = before.intro
+  // Jon's own slides: from the deck's PDF when it has all 28 pages, else whatever pictures are already in
+  const pdf = findDeckPdf(folder)
+  const pages = pdf ? pdfPages(pdf) : 0
+  if (pdf && pages === RULES_FILES.length) notes.push(`slides: ${slidesFromPdf(pdf, dir)} of ${RULES_FILES.length} drawn from ${basename(pdf)}`)
+  else if (pdf) notes.push(`slides: ${basename(pdf)} has ${pages} pages, not ${RULES_FILES.length}, so it was not used (an older copy of the deck?)`)
+  const pictures = slidePictures(dir)
+  lengths.pictures = pictures === RULES_FILES.length
   writeFileSync(json, `${JSON.stringify(lengths, null, 2)}\n`)
   const total = Object.values(lengths.slides).reduce((a, b) => a + b, 0)
   log(`The rules film: ${Object.keys(lengths.slides).length} of ${RULES_FILES.length} recordings in, ${Math.round(total)} seconds of voice.`)
   log(`The intro video: ${lengths.intro ? `${lengths.intro} seconds` : 'not in play/public/video (the film still plays, after 112 seconds)'}.`)
+  log(lengths.pictures ? `The slides: Jon's own, ${pictures} of ${RULES_FILES.length} pictures in.` : `The slides: ${pictures} of ${RULES_FILES.length} of Jon's own are in, so the film shows the slides drawn in code until all are.`)
   for (const n of notes) log(`  ${n}`)
   if (missing.length) log(`  Missing (each plays as a silent slide): ${missing.join(', ')}`)
   log('Then: npm run deploy:site from this folder (the recordings are not in git).')

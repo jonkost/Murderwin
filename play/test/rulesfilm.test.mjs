@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { RULES_SLIDES, filmTimeline, rulesFilmAt, rulesMinutes, rulesAudioUrl, INTRO_MS, AFTER_INTRO_MS, BUMPER_IN_MS, BUMPER_OUT_MS, SILENT_SLIDE_MS } from '../src/lib/rulesfilm.js'
+import { RULES_SLIDES, filmTimeline, rulesFilmAt, rulesMinutes, rulesAudioUrl, rulesPictureUrl, OWN_SLIDES, INTRO_MS, AFTER_INTRO_MS, BUMPER_IN_MS, BUMPER_OUT_MS, SILENT_SLIDE_MS } from '../src/lib/rulesfilm.js'
 import { PICTURES } from '../src/look/look.js'
 import { SETUP_EXTRAS } from '../src/lib/setup.js'
 
@@ -28,23 +28,46 @@ test('the film has the manifest’s 28 slides, in order, each with its recording
     // plain American English, no dashes, nothing a guest would not say out loud
     assert.ok(!/colour|favourite|whilst|—|–/.test([s.title, ...s.lines].join(' ')), s.file)
   }
-  // the deduction round is out of the night: the slide for Act 6 does not speak of it
+  // the round that used to follow the door is out of the night: the slide for Act 6 does not speak of it
   const act6 = RULES_SLIDES.find(s => s.file === 'rules-25-act6-the-final-hour')
-  assert.ok(!/ruled out|out loud|deduction|change your mind/i.test(act6.lines.join(' ')))
+  assert.ok(!/ruled out|out loud|change your mind/i.test(act6.lines.join(' ')))
   assert.equal(rulesAudioUrl('rules-01-cover', '/play/'), '/play/rules/rules-01-cover.m4a')
 })
 
-test('the lengths the film runs on are in, and rule 25’s recording stops before the deduction round', () => {
+test('the lengths the film runs on are in, and every recording plays whole (Jon, 12 Nov 2026)', () => {
   for (const s of RULES_SLIDES) assert.ok(lengths.slides[s.file] > 5 && lengths.slides[s.file] < 90, `${s.file}: ${lengths.slides[s.file]} s`)
   assert.equal(Object.keys(lengths.slides).length, 28)
   assert.ok(lengths.intro > 60 && lengths.intro < 240, 'the intro video was measured')
-  assert.ok(lengths.slides['rules-25-act6-the-final-hour'] < 38, 'cut at the pause before "Then each of us says, out loud..." (the whole take was 45 seconds)')
+  assert.ok(lengths.slides['rules-25-act6-the-final-hour'] > 43, 'rule 25 plays whole, all 45 seconds: nothing of Jon’s is cut')
   // the recordings themselves are not in git, like the videos; their lengths and the page about them are
   const ignore = read('../../.gitignore')
   assert.ok(ignore.includes('play/public/rules/*') && ignore.includes('!play/public/rules/README.md'))
   const mins = rulesMinutes()
   assert.ok(mins >= 13 && mins <= 18, `the intro and the rules together: about ${mins} minutes`)
   assert.ok(read('../../seed/night.json').includes('about sixteen minutes') === (mins === 16), 'the host’s words say how long it really is')
+})
+
+// Handoff 12 Nov 2026, job 1 (Jon: "Do not change the rule cards!" ... "The 28 slides and VO."): the film's
+// pictures are Jon's own 28 slides, whole, with nothing drawn over them. The slides drawn in code are only
+// what shows when his pictures are not in.
+test('the film shows Jon’s own slide for each recording, whole, and the drawn slide only when his picture is missing', () => {
+  assert.equal(OWN_SLIDES, lengths.pictures === true, 'the film goes by what the importer found')
+  assert.equal(OWN_SLIDES, true, 'Jon’s 28 slides are in (12 Nov 2026)')
+  assert.equal(rulesPictureUrl('rules-17-traces', '/play/'), '/play/rules/rules-17-traces.jpg', 'a slide’s picture has its recording’s name')
+  const screen = read('../src/screens/RulesFilm.jsx')
+  const own = screen.slice(screen.indexOf('if (OWN_SLIDES && !lost[slide.file])'), screen.indexOf('return (\n    <div className="lk-screen lk-rules full">'))
+  assert.ok(own.includes('className="lk-rules-slide" src={rulesPictureUrl(slide.file, BASE)}'), 'his slide, by its name')
+  assert.ok(own.includes('onError={() => setLost('), 'a picture that will not load falls back to the drawn slide')
+  assert.ok(own.includes('<audio ref={audio} key={slide.file} src={rulesAudioUrl(slide.file, BASE)}'), 'his recording plays over it')
+  // nothing of ours is drawn over his slide: no cat, no words, no counter, no bar
+  assert.ok(!/<Cat|<Ground|lk-words|lk-rules-n"|lk-rules-bar|lk-label|slide\.lines|slide\.label/.test(own), 'his slide is whole')
+  const css = read('../src/look/look.css')
+  assert.ok(css.includes('.lk-rules-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;'), 'the whole slide, never cropped or stretched')
+  // his pictures are not in git, like his recordings
+  assert.ok(read('../../.gitignore').includes('play/public/rules/*'))
+  // the Host tab says which set the film shows
+  const host = read('../src/screens/Host.jsx')
+  assert.ok(host.includes("{OWN_SLIDES ? 'The rules film shows your own 28 slides.' : 'The rules film shows drawn slides: your own 28 are not in yet.'}"))
 })
 
 test('the timeline: a still moment, the voice, a still moment, then the next slide, with no gaps', () => {

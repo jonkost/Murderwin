@@ -37,6 +37,9 @@ export function Card({ card, uid, notes, nightId = null, over = false }) {
 // rehearsal night only, never on the party night (Jon, 29 Oct 2026). A page
 // App does not draw keeps it: the workshop's previews, whose sample nights
 // are rehearsals, like a room screen with no night live (lib/screen.js showSetup).
+// Since 11 Nov 2026 no night deals a card marked `placeholder` (a practice
+// night shows real lines), so on a night the tag never shows; only a sample
+// card in a preview still carries one.
 export const RehearsalNight = createContext(true)
 
 export function Rehearsal({ card }) {
@@ -227,11 +230,11 @@ function Station({ card, uid, notes, onDone }) {
 // picture as the bedroom door, never a name), a cat's reward line with a
 // crossed-off motive, and the cat's bag hint about the Ghost; with a button
 // that crosses the motive off the Motives tab. A clue with no words shows the
-// note in brackets on a rehearsal only; on the party night, the house's plain
-// words, the Study's own (functions/lib/station.js STUDY_QUIET; card 529).
+// house's plain words, the Study's own (functions/lib/station.js STUDY_QUIET;
+// card 529), on the party night and on a practice night alike: never a note
+// about the game (11 Nov 2026).
 const CLUE_QUIET = 'Nothing for you this time.'
 export function Clue({ card, uid = null, notes = null }) {
-  const rehearsal = useContext(RehearsalNight)
   const n = Number(card.cross) || null
   const crossed = n && !!notes?.crossed?.[n]
   const cross = () => { if (uid && uid !== 'preview') writeNotes(uid, { crossed: { [n]: true } }).catch(() => {}) }
@@ -241,7 +244,7 @@ export function Clue({ card, uid = null, notes = null }) {
         {card.cat && <CatFace cat={card.cat} name={card.catName} />}
         <h3>{card.title}</h3>
       </header>
-      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || (rehearsal ? '(Nothing came through. Ask the host.)' : CLUE_QUIET)} /></p>}
+      {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || CLUE_QUIET} /></p>}
       {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
       {n && uid && (crossed ? <p className="gloss">Crossed off.</p> : <button className="chip" onClick={cross}>Cross it off</button>)}
       <Rehearsal card={card} />
@@ -266,7 +269,8 @@ function Award({ card, onDone }) {
 // fills the screen with no button (Windows.jsx ResultLock); on Now, Keep this
 // puts it away until The End, when it stays (lib/night.js nowCards).
 export function Result({ card, onDone, seen }) {
-  const rows = [['murderer', 'The murderer'], ['motive', 'The motive'], ['victim', 'The victim']]
+  // the same three names as the vote's rows (11 Nov 2026: the third is the Ghost; the field is still `victim`)
+  const rows = [['murderer', 'The Murderer'], ['motive', 'The Motive'], ['victim', 'The Ghost']]
   const right = rows.filter(([k]) => card[k]).length
   return (
     <section className="dealt result">

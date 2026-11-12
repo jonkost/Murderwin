@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Murderwin: the approved look (12 Nov 2026)</title>
+<style>
+body { margin: 0; padding: 40px 48px 80px; background: #00121b; color: #F1E8D6; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+h1 { margin: 0 0 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 40px; font-weight: 700; }
+h2 { margin: 0 0 6px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; color: #d6cf86; }
+p { margin: 0 0 12px; max-width: 860px; font-size: 17px; line-height: 1.5; }
+p.note { font-size: 15px; color: #c9d3d8; }
+section { margin: 44px 0 0; }
+.frame { overflow: hidden; background: #001925; box-shadow: 0 0 0 1px #214050, 0 16px 30px rgba(0,0,0,0.5); }
+iframe { border: 0; display: block; transform-origin: top left; }
+code { font-size: 0.92em; color: #d6cf86; }
+</style>
+</head>
+<body>
+<h1>The approved look</h1>
+<p>Jon said yes to these nine screens on 12 November 2026: &ldquo;yes this is great.&rdquo; They were drawn by Claude chat on a canvas Claude Code cannot open, so they are kept here, exactly as drawn.</p>
+<p>For Claude Code: each screen is plain HTML and CSS inside a <code>&lt;template&gt;</code> in this file. Read the source for the sizes, colors, type and movement, and build the real screens to match (handoff of 12 Nov). The pictures are the game's own, from <code>play/public</code>, cut to each picture's own edges. Open this file from the <code>docs</code> folder so the pictures load.</p>
+<p>On every screen: the navy and red wallpaper, dimmed by about half behind words; Abril Fatface for the big words; brass double lines; parchment cards; one wax-red button at most; and only the words a player needs.</p>
+<section>
+<h2>1 · Room splash: The Study</h2>
+<p class="note">Words: the room&#x27;s name, and the cat&#x27;s name on the red bar. Nothing else. Picture: Granola 1. The name sits in a marquee frame with slow bulbs; a few twinkles; the cat floats; the wallpaper drifts.</p>
+<div class="frame" style="width: 768px; height: 432px; border-radius: 0"><iframe id="s1" title="1 · Room splash: The Study" width="1280" height="720" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s1">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-36px); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 0.9; }
+  18% { opacity: 0.68; }
+  22% { opacity: 0.95; }
+  61% { opacity: 0.74; }
+  66% { opacity: 1; }
+}
+@keyframes bulb {
+  0%, 100% { opacity: 0.28; box-shadow: none; }
+  35% { opacity: 1; box-shadow: 0 0 10px 2px rgba(214,207,134,0.75); }
+}
+@keyframes twinkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.2; }
+  50% { transform: scale(1); opacity: 1; }
+}
+.drift { animation: drift 18s ease-in-out infinite alternate; }
+.floaty { animation: floaty 7s ease-in-out infinite; }
+.flicker { animation: flicker 4.2s ease-in-out infinite; }
+.twinkle { animation: twinkle 2.4s ease-in-out infinite; }
+.bulbs i { display: block; width: 12px; height: 12px; border-radius: 50%; background: #d6cf86; animation: bulb 2.4s ease-in-out infinite; }
+.bulbs i:nth-child(3n+2) { animation-delay: 0.8s; }
+.bulbs i:nth-child(3n) { animation-delay: 1.6s; }
+@media (prefers-reduced-motion: reduce) {
+  .drift, .floaty, .flicker, .twinkle { animation: none; }
+  .bulbs i { animation: none; opacity: 1; }
+}
+</style>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper drift" aria-hidden="true" style="position: absolute; left: -40px; top: -24px; width: 1360px; height: 768px"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.5)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 66% 48%, rgba(0,25,37,0) 28%, rgba(0,9,14,0.86) 100%)"></div>
+<div class="flicker" aria-hidden="true" style="position: absolute; left: 640px; top: 30px; width: 640px; height: 640px; border-radius: 50%; background: radial-gradient(circle, rgba(214,207,134,0.26) 0%, rgba(214,207,134,0) 66%)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 20px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 28px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<div style="position: absolute; left: 84px; top: 176px; width: 640px; box-sizing: border-box; border: 3px solid #A6A253; background: #00121b; padding: 18px 26px 20px; display: flex; flex-direction: column; gap: 10px">
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 112px; line-height: 1; text-align: center; white-space: nowrap; color: #F1E8D6">The Study</h1>
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<div style="position: absolute; left: 84px; bottom: 74px; display: flex; flex-direction: column; align-items: flex-start">
+<div aria-hidden="true" style="width: 100%; height: 4px; background: #A6A253"></div>
+<div style="background: #BF1925; color: #F1E8D6; font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 42px; line-height: 1; padding: 14px 30px 16px">Granolia Lickspittle</div>
+</div>
+
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 724px; top: 96px; width: 28px; height: 28px"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 1196px; top: 104px; width: 22px; height: 22px; animation-delay: 0.7s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 1204px; top: 430px; width: 26px; height: 26px; animation-delay: 1.3s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 716px; top: 484px; width: 20px; height: 20px; animation-delay: 0.4s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+
+<div class="floaty" style="position: absolute; left: 760px; bottom: 36px; width: 412px; height: 620px; filter: drop-shadow(0 18px 26px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Granola%201.png" alt="Granolia Lickspittle" style="position: absolute; max-width: none; width: 158.117%; left: -35.559%; top: -1.541%"></span>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>2 · A Mac&#x27;s second display</h2>
+<p class="note">Words: the room&#x27;s name. Picture: Granola 2, and the seal. Calm: the cat floats, nothing else moves.</p>
+<div class="frame" style="width: 576px; height: 360px; border-radius: 0"><iframe id="s2" title="2 · A Mac&#x27;s second display" width="960" height="600" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s2">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-30px); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.drift { animation: drift 20s ease-in-out infinite alternate; }
+.floaty { animation: floaty 8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .drift, .floaty { animation: none; }
+}
+</style>
+<div style="width: 960px; height: 600px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper drift" aria-hidden="true" style="position: absolute; left: -34px; top: -22px; width: 1028px; height: 644px"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.55)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 72% 66%, rgba(214,207,134,0.16) 0%, rgba(0,25,37,0) 40%, rgba(0,9,14,0.88) 100%)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 16px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 23px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<span aria-hidden="true" style="position: absolute; left: 60px; top: 52px; width: 96px; height: 96px; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.5)); display: block"><span style="position: absolute; left: 0.195%; top: 0%; width: 99.609%; height: 100%; overflow: hidden"><img src="../play/public/brand/seal.png" alt="" style="position: absolute; max-width: none; width: 100.392%; left: 0%; top: 0%"></span></span>
+
+<div style="position: absolute; left: 64px; top: 168px; display: flex; flex-direction: column; gap: 16px">
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 84px; line-height: 1; white-space: nowrap; color: #F1E8D6; text-shadow: 0 6px 18px rgba(0,0,0,0.55)">The Study</h1>
+<div aria-hidden="true" style="width: 220px; height: 9px; box-sizing: border-box; border-top: 3px solid #A6A253; border-bottom: 1px solid #A6A253"></div>
+</div>
+
+<div class="floaty" style="position: absolute; right: 44px; bottom: 50px; width: 430px; height: 283px; filter: drop-shadow(0 14px 20px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Granola%202.png" alt="Granolia Lickspittle" style="position: absolute; max-width: none; width: 106.157%; left: -4.388%; top: -15.054%"></span>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>3 · Act 4 game card: Get Off My Lawn!</h2>
+<p class="note">Words: the game&#x27;s name, its three steps, and Scan to start under the room code (the dashed box stands in for the real code). Picture: Salem 2. Marquee bulbs round the name.</p>
+<div class="frame" style="width: 768px; height: 432px; border-radius: 0"><iframe id="s3" title="3 · Act 4 game card: Get Off My Lawn!" width="1280" height="720" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s3">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-36px); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes bulb {
+  0%, 100% { opacity: 0.28; box-shadow: none; }
+  35% { opacity: 1; box-shadow: 0 0 10px 2px rgba(214,207,134,0.75); }
+}
+.drift { animation: drift 18s ease-in-out infinite alternate; }
+.floaty { animation: floaty 6s ease-in-out infinite; }
+.bulbs i { display: block; width: 12px; height: 12px; border-radius: 50%; background: #d6cf86; animation: bulb 1.2s ease-in-out infinite; }
+.bulbs i:nth-child(3n+2) { animation-delay: 0.4s; }
+.bulbs i:nth-child(3n) { animation-delay: 0.8s; }
+@media (prefers-reduced-motion: reduce) {
+  .drift, .floaty { animation: none; }
+  .bulbs i { animation: none; opacity: 1; }
+}
+</style>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper drift" aria-hidden="true" style="position: absolute; left: -40px; top: -24px; width: 1360px; height: 768px"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.5)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 40%, rgba(0,25,37,0) 26%, rgba(0,9,14,0.86) 100%)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 20px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 28px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<div style="position: absolute; left: 84px; top: 120px; width: 770px; box-sizing: border-box; border: 3px solid #A6A253; background: #00121b; padding: 18px 26px 20px; display: flex; flex-direction: column; gap: 10px">
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 80px; line-height: 1; text-align: center; white-space: nowrap; color: #F1E8D6">Get Off My Lawn!</h1>
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<div style="position: absolute; left: 84px; top: 344px; width: 770px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+<div style="box-sizing: border-box; background: #F1E8D6; color: #1d1a16; border: 2px solid #A6A253; outline: 1px solid #A6A253; outline-offset: -8px; padding: 26px 22px 28px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 72px; line-height: 1; color: #BF1925">1</div>
+<div style="font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 30px; line-height: 1.2">Scan Salem's code.</div>
+</div>
+<div style="box-sizing: border-box; background: #F1E8D6; color: #1d1a16; border: 2px solid #A6A253; outline: 1px solid #A6A253; outline-offset: -8px; padding: 26px 22px 28px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 72px; line-height: 1; color: #BF1925">2</div>
+<div style="font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 30px; line-height: 1.2">Red means shake.</div>
+</div>
+<div style="box-sizing: border-box; background: #F1E8D6; color: #1d1a16; border: 2px solid #A6A253; outline: 1px solid #A6A253; outline-offset: -8px; padding: 26px 22px 28px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 72px; line-height: 1; color: #BF1925">3</div>
+<div style="font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 30px; line-height: 1.2">Green means freeze.</div>
+</div>
+</div>
+
+<div class="floaty" style="position: absolute; left: 948px; top: 56px; width: 205px; height: 390px; filter: drop-shadow(0 16px 22px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Salem%202.png" alt="Salem Crooknog" style="position: absolute; max-width: none; width: 210.97%; left: -50.211%; top: -7.55%"></span>
+</div>
+
+<div style="position: absolute; left: 930px; top: 462px; width: 240px; box-sizing: border-box; background: #F1E8D6; color: #1d1a16; border: 2px solid #A6A253; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 14px 24px rgba(0,0,0,0.45)">
+<div style="width: 124px; height: 124px; box-sizing: border-box; border: 2px dashed #592F32; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; color: #592F32">ROOM CODE</div>
+<div style="font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 22px">Scan to start</div>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>4 · A big win on a room screen</h2>
+<p class="note">Words: Solved! Picture: Granola 4, hopping. The seal stamps in, paw prints burst out, twinkles.</p>
+<div class="frame" style="width: 768px; height: 432px; border-radius: 0"><iframe id="s4" title="4 · A big win on a room screen" width="1280" height="720" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s4">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  10% { transform: scale(1.06); opacity: 1; }
+  16%, 100% { transform: scale(1); opacity: 1; }
+}
+@keyframes stamp {
+  0%, 14% { transform: rotate(-12deg) scale(2.6); opacity: 0; }
+  22% { transform: rotate(-12deg) scale(0.94); opacity: 1; }
+  27%, 100% { transform: rotate(-12deg) scale(1); opacity: 1; }
+}
+@keyframes burst {
+  0%, 8% { transform: translate(var(--fx), var(--fy)) rotate(var(--r)) scale(0.2); opacity: 0; }
+  14% { opacity: 1; }
+  46%, 86% { transform: translate(0, 0) rotate(var(--r)) scale(1); opacity: 1; }
+  100% { transform: translate(0, 0) rotate(var(--r)) scale(1); opacity: 0; }
+}
+@keyframes twinkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.2; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@keyframes hop {
+  0%, 30%, 60%, 100% { transform: translateY(0); }
+  15%, 45% { transform: translateY(-30px); }
+}
+.pop { animation: pop 3.6s ease-out infinite; }
+.stamp { animation: stamp 3.6s ease-out infinite; }
+.paw { animation: burst 3.6s ease-out infinite; }
+.twinkle { animation: twinkle 1.6s ease-in-out infinite; }
+.hop { animation: hop 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pop, .stamp, .paw, .twinkle, .hop { animation: none; }
+}
+</style>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.5)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(214,207,134,0.2) 0%, rgba(0,25,37,0) 46%, rgba(0,9,14,0.86) 100%)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 20px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 28px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 150px; top: 96px; width: 56px; height: 56px; --fx: 462px; --fy: 236px; --r: -24deg; transform: rotate(-24deg)"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 330px; top: 56px; width: 44px; height: 44px; --fx: 288px; --fy: 282px; --r: 12deg; transform: rotate(12deg)"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 566px; top: 50px; width: 40px; height: 40px; --fx: 54px; --fy: 290px; --r: -8deg; transform: rotate(-8deg)"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 830px; top: 54px; width: 48px; height: 48px; --fx: -214px; --fy: 282px; --r: 18deg; transform: rotate(18deg)"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 1150px; top: 400px; width: 56px; height: 56px; --fx: -538px; --fy: -68px; --r: 30deg; transform: rotate(30deg)"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 1090px; top: 560px; width: 44px; height: 44px; --fx: -472px; --fy: -222px; --r: -16deg; transform: rotate(-16deg)"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 930px; top: 590px; width: 52px; height: 52px; --fx: -316px; --fy: -256px; --r: 22deg; transform: rotate(22deg)"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 720px; top: 610px; width: 40px; height: 40px; --fx: -100px; --fy: -270px; --r: -10deg; transform: rotate(-10deg)"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 520px; top: 600px; width: 48px; height: 48px; --fx: 96px; --fy: -264px; --r: 14deg; transform: rotate(14deg)"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="paw" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 370px; top: 590px; width: 44px; height: 44px; --fx: 248px; --fy: -252px; --r: -28deg; transform: rotate(-28deg)"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 204px; top: 250px; width: 34px; height: 34px"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 96px; top: 330px; width: 22px; height: 22px; animation-delay: 0.5s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 1012px; top: 440px; width: 30px; height: 30px; animation-delay: 0.9s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 700px; top: 96px; width: 20px; height: 20px; animation-delay: 0.3s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 1010px; top: 108px; width: 26px; height: 26px; animation-delay: 1.1s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 610px; top: 470px; width: 24px; height: 24px; animation-delay: 0.7s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+
+<div style="position: absolute; left: 0; top: 150px; width: 1280px; display: flex; flex-direction: column; align-items: center; gap: 18px">
+<h1 class="pop" style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 200px; line-height: 1; white-space: nowrap; color: #F1E8D6; text-shadow: 0 8px 24px rgba(0,0,0,0.55)">Solved!</h1>
+<div aria-hidden="true" style="width: 360px; height: 9px; box-sizing: border-box; border-top: 3px solid #A6A253; border-bottom: 1px solid #A6A253"></div>
+</div>
+
+<span class="stamp" aria-hidden="true" style="position: absolute; left: 1034px; top: 150px; width: 170px; height: 170px; transform: rotate(-12deg); filter: drop-shadow(0 10px 18px rgba(0,0,0,0.5)); display: block"><span style="position: absolute; left: 0.195%; top: 0%; width: 99.609%; height: 100%; overflow: hidden"><img src="../play/public/brand/seal.png" alt="" style="position: absolute; max-width: none; width: 100.392%; left: 0%; top: 0%"></span></span>
+
+<div class="hop" style="position: absolute; left: 76px; bottom: 44px; width: 225px; height: 280px; filter: drop-shadow(0 12px 16px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Granola%204.png" alt="Granolia Lickspittle" style="position: absolute; max-width: none; width: 136.364%; left: -11%; top: -1.096%"></span>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>5 · The End</h2>
+<p class="note">Words: The End, and Happy first birthday, Sir Irwin. Picture: Irwin 4. Marquee bulbs, and confetti falling across the whole screen, behind the words.</p>
+<div class="frame" style="width: 768px; height: 432px; border-radius: 0"><iframe id="s5" title="5 · The End" width="1280" height="720" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s5">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes bulb {
+  0%, 100% { opacity: 0.28; box-shadow: none; }
+  35% { opacity: 1; box-shadow: 0 0 12px 3px rgba(214,207,134,0.78); }
+}
+@keyframes fall {
+  from { transform: translateY(-80px) rotate(0deg); }
+  to { transform: translateY(820px) rotate(220deg); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.bulbs i { display: block; width: 14px; height: 14px; border-radius: 50%; background: #d6cf86; animation: bulb 1.2s ease-in-out infinite; }
+.bulbs i:nth-child(3n+2) { animation-delay: 0.4s; }
+.bulbs i:nth-child(3n) { animation-delay: 0.8s; }
+.fall { animation: fall 7s linear infinite; }
+.floaty { animation: floaty 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .fall, .floaty { animation: none; }
+  .bulbs i { animation: none; opacity: 1; }
+}
+</style>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.5)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 78% 52%, rgba(214,207,134,0.22) 0%, rgba(0,25,37,0) 40%, rgba(0,9,14,0.88) 100%)"></div>
+
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 60px; top: -50px; width: 26px; height: 26px; animation-duration: 7.5s; animation-delay: -1s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 168px; top: -50px; width: 32px; height: 32px; animation-duration: 6.2s; animation-delay: -3.4s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 276px; top: -50px; width: 22px; height: 22px; animation-duration: 8.4s; animation-delay: -5.2s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 384px; top: -50px; width: 30px; height: 30px; animation-duration: 6.8s; animation-delay: -0.4s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 492px; top: -50px; width: 24px; height: 24px; animation-duration: 7.9s; animation-delay: -4.1s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 600px; top: -50px; width: 34px; height: 34px; animation-duration: 6.5s; animation-delay: -2.6s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 708px; top: -50px; width: 24px; height: 24px; animation-duration: 8.8s; animation-delay: -6.3s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 806px; top: -50px; width: 28px; height: 28px; animation-duration: 7.2s; animation-delay: -2.1s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 904px; top: -50px; width: 22px; height: 22px; animation-duration: 6.4s; animation-delay: -4.8s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 1002px; top: -50px; width: 30px; height: 30px; animation-duration: 8.1s; animation-delay: -0.9s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 1100px; top: -50px; width: 26px; height: 26px; animation-duration: 6.9s; animation-delay: -5.6s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 1196px; top: -50px; width: 32px; height: 32px; animation-duration: 7.7s; animation-delay: -3s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 112px; top: -50px; width: 10px; height: 18px; background: #BF1925; animation-duration: 5.6s; animation-delay: -2.2s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 226px; top: -50px; width: 10px; height: 18px; background: #d6cf86; animation-duration: 6.6s; animation-delay: -4.4s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 438px; top: -50px; width: 10px; height: 18px; background: #F1E8D6; animation-duration: 5.9s; animation-delay: -0.7s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 552px; top: -50px; width: 10px; height: 18px; background: #BF1925; animation-duration: 7.1s; animation-delay: -5s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 760px; top: -50px; width: 10px; height: 18px; background: #d6cf86; animation-duration: 6.1s; animation-delay: -3.1s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 858px; top: -50px; width: 10px; height: 18px; background: #F1E8D6; animation-duration: 5.4s; animation-delay: -1.6s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 1052px; top: -50px; width: 10px; height: 18px; background: #BF1925; animation-duration: 6.8s; animation-delay: -4.2s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 1150px; top: -50px; width: 10px; height: 18px; background: #d6cf86; animation-duration: 5.8s; animation-delay: -0.3s"></div>
+
+<div aria-hidden="true" style="position: absolute; inset: 20px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 28px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<div style="position: absolute; left: 84px; top: 150px; width: 700px; box-sizing: border-box; border: 3px solid #A6A253; background: #00121b; padding: 18px 26px 20px; display: flex; flex-direction: column; gap: 10px">
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 150px; line-height: 1; text-align: center; white-space: nowrap; color: #F1E8D6">The End</h1>
+<div class="bulbs" aria-hidden="true" style="display: flex; justify-content: space-between"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<p style="position: absolute; left: 84px; top: 424px; width: 700px; margin: 0; text-align: center; font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 44px; line-height: 1.2; color: #d6cf86; text-shadow: 0 4px 14px rgba(0,0,0,0.6)">Happy first birthday, Sir Irwin.</p>
+
+<div class="floaty" style="position: absolute; left: 800px; bottom: 36px; width: 445px; height: 560px; filter: drop-shadow(0 18px 26px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Irwin%204.png" alt="Sir Irwin" style="position: absolute; max-width: none; width: 142.993%; left: -33.746%; top: -2.195%"></span>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>6 · Credits: the dedication</h2>
+<p class="note">Words: the dedication line. Picture: Sydney&#x27;s photo, when Jon sends it (the dashed circle stands in). A soft glow; nothing else moves.</p>
+<div class="frame" style="width: 768px; height: 432px; border-radius: 0"><iframe id="s6" title="6 · Credits: the dedication" width="1280" height="720" style="transform: scale(0.6)"></iframe></div>
+<template data-screen="s6">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-wide.jpg); background-size: cover; background-position: center; }
+@keyframes flicker {
+  0%, 100% { opacity: 0.9; }
+  18% { opacity: 0.66; }
+  22% { opacity: 0.95; }
+  61% { opacity: 0.72; }
+  66% { opacity: 1; }
+}
+.flicker { animation: flicker 4.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .flicker { animation: none; }
+}
+</style>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.68)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, rgba(0,25,37,0) 22%, rgba(0,9,14,0.9) 100%)"></div>
+<div class="flicker" aria-hidden="true" style="position: absolute; left: 380px; top: 28px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, rgba(214,207,134,0.24) 0%, rgba(214,207,134,0) 66%)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 20px; border: 2px solid rgba(166,162,83,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 28px; border: 1px solid rgba(166,162,83,0.34)"></div>
+
+<div style="position: absolute; left: 0; top: 124px; width: 1280px; display: flex; flex-direction: column; align-items: center; gap: 28px">
+<div style="width: 280px; height: 280px; box-sizing: border-box; border-radius: 50%; border: 4px solid #A6A253; background: #0c2634; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 30px rgba(0,0,0,0.5)">
+<div style="width: 244px; height: 244px; box-sizing: border-box; border-radius: 50%; border: 1px dashed #A6A253; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; font-weight: 600; letter-spacing: 0.16em; line-height: 1.5; color: #d6cf86">SYDNEY'S<br>PHOTO</div>
+</div>
+<div aria-hidden="true" style="width: 240px; height: 9px; box-sizing: border-box; border-top: 3px solid #A6A253; border-bottom: 1px solid #A6A253"></div>
+<p style="margin: 0; max-width: 880px; text-align: center; font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 48px; line-height: 1.2; color: #F1E8D6">In loving memory of Sydney, the original good boy</p>
+</div>
+</div>
+</template>
+</section>
+<section>
+<h2>7 · Phone: Now</h2>
+<p class="note">Words: where to go, and one button. Picture: the room&#x27;s cat looking over the card (Salem 3), the seal, top left. The camera button is top right on every tab. The button pulses.</p>
+<div class="frame" style="width: 390px; height: 844px; border-radius: 28px"><iframe id="s7" title="7 · Phone: Now" width="390" height="844" style="transform: scale(1.0)"></iframe></div>
+<template data-screen="s7">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-phone.jpg); background-size: cover; background-position: center; }
+@keyframes peek {
+  0%, 100% { transform: translateY(14px); }
+  50% { transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(191,25,37,0.55); }
+  50% { box-shadow: 0 0 0 10px rgba(191,25,37,0); }
+}
+.peek { animation: peek 5s ease-in-out infinite; }
+.pulse { animation: pulse 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .peek, .pulse { animation: none; }
+}
+</style>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.62)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 30%, rgba(214,207,134,0.14) 0%, rgba(0,25,37,0) 46%, rgba(0,9,14,0.72) 100%)"></div>
+
+<header style="position: absolute; left: 0; right: 0; top: 0; height: 76px; box-sizing: border-box; padding: 14px 16px 0; display: flex; align-items: center; justify-content: space-between">
+<span aria-hidden="true" style="width: 46px; height: 46px; display: block; position: relative"><span style="position: absolute; left: 0.195%; top: 0%; width: 99.609%; height: 100%; overflow: hidden"><img src="../play/public/brand/seal.png" alt="" style="position: absolute; max-width: none; width: 100.392%; left: 0%; top: 0%"></span></span>
+<button aria-label="Scan a code" style="width: 48px; height: 48px; flex: none; border-radius: 50%; border: 2px solid #A6A253; background: #0c2634; color: #d6cf86; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+</button>
+</header>
+
+<div class="peek" style="position: absolute; left: 136px; top: 136px; width: 232px; height: 274px; filter: drop-shadow(0 10px 14px rgba(0,0,0,0.5))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Salem%203.png" alt="Salem Crooknog" style="position: absolute; max-width: none; width: 128.535%; left: -20.651%; top: -4%"></span>
+</div>
+
+<main style="position: absolute; left: 16px; right: 16px; top: 330px">
+<section style="box-sizing: border-box; background: #F1E8D6; color: #001925; border-radius: 14px; padding: 30px 22px 24px; display: flex; flex-direction: column; gap: 20px; box-shadow: inset 0 0 0 2px #A6A253, inset 0 0 0 5px #F1E8D6, inset 0 0 0 6px rgba(166,162,83,0.75), 0 18px 30px rgba(0,0,0,0.45)">
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 52px; line-height: 1.04; color: #001925">Go to the<br>Orangerie</h1>
+<button class="pulse" style="width: 100%; height: 64px; border: 0; border-radius: 12px; background: #BF1925; color: #F1E8D6; font-family: inherit; font-size: 21px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path><path d="M9 9h6v6H9z"></path></svg>
+<span>Scan Salem's code</span>
+</button>
+</section>
+</main>
+
+<nav aria-label="Tabs" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; box-sizing: border-box; background: #00121b; border-top: 1px solid #214050; display: flex; padding: 0 2px 8px">
+<button aria-current="page" style="flex: 1; min-width: 0; position: relative; background: none; border: 0; padding: 0; color: #d6cf86; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 12px; right: 12px; height: 3px; background: #A6A253; border-radius: 0 0 3px 3px"></span>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span>Now</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c1.5-4 4.5-5.5 8-5.5s6.5 1.5 8 5.5"></path></svg>
+<span>You</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="11" cy="11" r="6"></circle><path d="M16 16l4.5 4.5"></path></svg>
+<span>Clues</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7M9 16h7"></path></svg>
+<span>Notes</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M4 7l2 2 3-3M12 7h8M4 15l2 2 3-3M12 15h8"></path></svg>
+<span>Motives</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M5 9l1-5 4 3h4l4-3 1 5c1 5-2 10-7 10S4 14 5 9z"></path></svg>
+<span>Cats</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"></path><path d="M9 9h6M9 13h6"></path></svg>
+<span>Rules</span>
+</button>
+</nav>
+</div>
+</template>
+</section>
+<section>
+<h2>8 · Phone: The vote</h2>
+<p class="note">Words: The Vote, three rows (The Murderer, The Motive, The Ghost) and Lock in. Pictures: the portrait of each pick, cut to the head. The time left is a bar. Lock in pulses. The names shown are samples.</p>
+<div class="frame" style="width: 390px; height: 844px; border-radius: 28px"><iframe id="s8" title="8 · Phone: The vote" width="390" height="844" style="transform: scale(1.0)"></iframe></div>
+<template data-screen="s8">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-phone.jpg); background-size: cover; background-position: center; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(214,207,134,0.6); }
+  50% { box-shadow: 0 0 0 12px rgba(214,207,134,0); }
+}
+.pulse { animation: pulse 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pulse { animation: none; }
+}
+</style>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.68)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(214,207,134,0.1) 0%, rgba(0,25,37,0) 46%, rgba(0,9,14,0.72) 100%)"></div>
+
+<header style="position: absolute; left: 0; right: 0; top: 0; height: 92px; box-sizing: border-box; padding: 20px 16px 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h1 style="margin: 0; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 46px; line-height: 1; color: #F1E8D6">The Vote</h1>
+<button aria-label="Scan a code" style="width: 48px; height: 48px; flex: none; border-radius: 50%; border: 2px solid #A6A253; background: #0c2634; color: #d6cf86; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+</button>
+</header>
+
+<div style="position: absolute; left: 20px; right: 20px; top: 104px; display: flex; align-items: center; gap: 12px">
+<div aria-hidden="true" style="flex: 1; height: 8px; border-radius: 4px; background: #00121b; overflow: hidden">
+<div style="width: 60%; height: 100%; background: #A6A253; border-radius: 4px"></div>
+</div>
+<div style="font-size: 18px; font-weight: 600; color: #d6cf86; font-variant-numeric: tabular-nums">1:12</div>
+</div>
+
+<main style="position: absolute; left: 16px; right: 16px; top: 142px; display: flex; flex-direction: column; gap: 12px">
+<button style="box-sizing: border-box; width: 100%; min-height: 124px; background: #F1E8D6; color: #001925; border: 0; border-radius: 14px; padding: 16px 14px 16px 18px; display: flex; align-items: center; gap: 16px; text-align: left; font-family: inherit; cursor: pointer; box-shadow: inset 0 0 0 2px #A6A253, inset 0 0 0 5px #F1E8D6, inset 0 0 0 6px rgba(166,162,83,0.75), 0 10px 20px rgba(0,0,0,0.4)">
+<span style="width: 84px; height: 84px; flex: none; box-sizing: border-box; border-radius: 16px; border: 2px solid #A6A253; background: #e3d7bd; display: block; position: relative; overflow: hidden"><img src="../play/public/portraits/steeps.png" alt="" style="position: absolute; max-width: none; width: 221.22%; left: -51.061%; top: -4.907%"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.2em; color: #592F32">THE MURDERER</span>
+<span style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 28px; line-height: 1.05; color: #001925">Jasper Steeps</span>
+</span>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#592F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+<button style="box-sizing: border-box; width: 100%; min-height: 124px; background: #F1E8D6; color: #001925; border: 0; border-radius: 14px; padding: 16px 14px 16px 18px; display: flex; align-items: center; gap: 16px; text-align: left; font-family: inherit; cursor: pointer; box-shadow: inset 0 0 0 2px #A6A253, inset 0 0 0 5px #F1E8D6, inset 0 0 0 6px rgba(166,162,83,0.75), 0 10px 20px rgba(0,0,0,0.4)">
+<span aria-hidden="true" style="width: 84px; height: 84px; flex: none; box-sizing: border-box; border-radius: 16px; border: 2px solid #A6A253; background: #592F32; color: #F1E8D6; display: flex; align-items: center; justify-content: center; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 46px; line-height: 1">8</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.2em; color: #592F32">THE MOTIVE</span>
+<span style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 28px; line-height: 1.05; color: #001925">The dairy air</span>
+</span>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#592F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+<button style="box-sizing: border-box; width: 100%; min-height: 124px; background: #F1E8D6; color: #001925; border: 0; border-radius: 14px; padding: 16px 14px 16px 18px; display: flex; align-items: center; gap: 16px; text-align: left; font-family: inherit; cursor: pointer; box-shadow: inset 0 0 0 2px #A6A253, inset 0 0 0 5px #F1E8D6, inset 0 0 0 6px rgba(166,162,83,0.75), 0 10px 20px rgba(0,0,0,0.4)">
+<span style="width: 84px; height: 84px; flex: none; box-sizing: border-box; border-radius: 16px; border: 2px solid #A6A253; background: #e3d7bd; display: block; position: relative; overflow: hidden"><img src="../play/public/portraits/devine.png" alt="" style="position: absolute; max-width: none; width: 250.45%; left: -65.315%; top: -7.057%"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.2em; color: #592F32">THE GHOST</span>
+<span style="font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 28px; line-height: 1.05; color: #001925">Iris DeVine</span>
+</span>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#592F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+<button class="pulse" style="margin-top: 14px; width: 100%; height: 68px; border: 0; border-radius: 14px; background: #BF1925; color: #F1E8D6; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-size: 30px; line-height: 1; cursor: pointer">Lock in</button>
+</main>
+
+<nav aria-label="Tabs" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; box-sizing: border-box; background: #00121b; border-top: 1px solid #214050; display: flex; padding: 0 2px 8px">
+<button aria-current="page" style="flex: 1; min-width: 0; position: relative; background: none; border: 0; padding: 0; color: #d6cf86; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<span aria-hidden="true" style="position: absolute; top: 0; left: 12px; right: 12px; height: 3px; background: #A6A253; border-radius: 0 0 3px 3px"></span>
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span>Now</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c1.5-4 4.5-5.5 8-5.5s6.5 1.5 8 5.5"></path></svg>
+<span>You</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><circle cx="11" cy="11" r="6"></circle><path d="M16 16l4.5 4.5"></path></svg>
+<span>Clues</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7M9 16h7"></path></svg>
+<span>Notes</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M4 7l2 2 3-3M12 7h8M4 15l2 2 3-3M12 15h8"></path></svg>
+<span>Motives</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M5 9l1-5 4 3h4l4-3 1 5c1 5-2 10-7 10S4 14 5 9z"></path></svg>
+<span>Cats</span>
+</button>
+<button style="flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: #9fb1ba; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer">
+<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"></path><path d="M9 9h6M9 13h6"></path></svg>
+<span>Rules</span>
+</button>
+</nav>
+</div>
+</template>
+</section>
+<section>
+<h2>9 · Phone: A small win</h2>
+<p class="note">Words: You met Miss Boo LaRue, and Done. Pictures: Boo 4, and the four cat faces (met: full color with a tick; not met: gray). The seal stamps in; confetti and twinkles.</p>
+<div class="frame" style="width: 390px; height: 844px; border-radius: 28px"><iframe id="s9" title="9 · Phone: A small win" width="390" height="844" style="transform: scale(1.0)"></iframe></div>
+<template data-screen="s9">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; }
+.paper { background-image: url(../play/public/brand/wallpaper-phone.jpg); background-size: cover; background-position: center; }
+@keyframes pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  10% { transform: scale(1.06); opacity: 1; }
+  16%, 100% { transform: scale(1); opacity: 1; }
+}
+@keyframes stamp {
+  0%, 14% { transform: rotate(-12deg) scale(2.6); opacity: 0; }
+  22% { transform: rotate(-12deg) scale(0.94); opacity: 1; }
+  27%, 100% { transform: rotate(-12deg) scale(1); opacity: 1; }
+}
+@keyframes fall {
+  from { transform: translateY(-80px) rotate(0deg); }
+  to { transform: translateY(940px) rotate(220deg); }
+}
+@keyframes twinkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.2; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 3px #d6cf86, 0 0 10px 2px rgba(214,207,134,0.35); }
+  50% { box-shadow: 0 0 0 3px #d6cf86, 0 0 20px 6px rgba(214,207,134,0.7); }
+}
+.pop { animation: pop 3.6s ease-out infinite; }
+.stamp { animation: stamp 3.6s ease-out infinite; }
+.fall { animation: fall 7s linear infinite; }
+.twinkle { animation: twinkle 1.6s ease-in-out infinite; }
+.glow { animation: glow 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pop, .stamp, .fall, .twinkle, .glow { animation: none; }
+}
+</style>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; box-sizing: border-box; background: #001925; color: #F1E8D6; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif">
+<div class="paper" aria-hidden="true" style="position: absolute; inset: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,25,37,0.6)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(214,207,134,0.24) 0%, rgba(0,25,37,0) 48%, rgba(0,9,14,0.74) 100%)"></div>
+
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 24px; top: -50px; width: 22px; height: 22px; animation-duration: 7.5s; animation-delay: -1s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 80px; top: -50px; width: 26px; height: 26px; animation-duration: 6.2s; animation-delay: -3.4s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 138px; top: -50px; width: 18px; height: 18px; animation-duration: 8.4s; animation-delay: -5.2s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 196px; top: -50px; width: 24px; height: 24px; animation-duration: 6.8s; animation-delay: -0.4s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 252px; top: -50px; width: 20px; height: 20px; animation-duration: 7.9s; animation-delay: -4.1s"><g fill="#BF1925"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 306px; top: -50px; width: 26px; height: 26px; animation-duration: 6.5s; animation-delay: -2.6s"><g fill="#F1E8D6"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<svg class="fall" viewBox="0 0 48 48" aria-hidden="true" style="position: absolute; left: 350px; top: -50px; width: 20px; height: 20px; animation-duration: 8.8s; animation-delay: -6.3s"><g fill="#d6cf86"><ellipse cx="24" cy="31" rx="11" ry="9"></ellipse><ellipse cx="10" cy="19" rx="4.5" ry="6"></ellipse><ellipse cx="19" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="29" cy="11" rx="4.5" ry="6"></ellipse><ellipse cx="38" cy="19" rx="4.5" ry="6"></ellipse></g></svg>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 52px; top: -50px; width: 8px; height: 15px; background: #BF1925; animation-duration: 5.6s; animation-delay: -2.2s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 112px; top: -50px; width: 8px; height: 15px; background: #d6cf86; animation-duration: 6.6s; animation-delay: -4.4s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 170px; top: -50px; width: 8px; height: 15px; background: #F1E8D6; animation-duration: 5.9s; animation-delay: -0.7s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 226px; top: -50px; width: 8px; height: 15px; background: #BF1925; animation-duration: 7.1s; animation-delay: -5s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 282px; top: -50px; width: 8px; height: 15px; background: #d6cf86; animation-duration: 6.1s; animation-delay: -3.1s"></div>
+<div class="fall" aria-hidden="true" style="position: absolute; left: 334px; top: -50px; width: 8px; height: 15px; background: #F1E8D6; animation-duration: 5.4s; animation-delay: -1.6s"></div>
+
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 30px; top: 150px; width: 26px; height: 26px"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 338px; top: 120px; width: 20px; height: 20px; animation-delay: 0.5s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 22px; top: 372px; width: 18px; height: 18px; animation-delay: 0.9s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#F1E8D6"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 190px; top: 78px; width: 22px; height: 22px; animation-delay: 0.3s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+<svg class="twinkle" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 346px; top: 470px; width: 22px; height: 22px; animation-delay: 1.1s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#d6cf86"></path></svg>
+
+<div class="pop" style="position: absolute; left: 45px; top: 112px; width: 300px; height: 286px; filter: drop-shadow(0 14px 20px rgba(0,0,0,0.55))">
+<span style="display: block; position: relative; width: 100%; height: 100%; overflow: hidden"><img src="../play/public/household/full/Boo%204.png" alt="Miss Boo LaRue" style="position: absolute; max-width: none; width: 100.806%; left: 0%; top: -1.408%"></span>
+</div>
+<span class="stamp" aria-hidden="true" style="position: absolute; left: 264px; top: 332px; width: 104px; height: 104px; transform: rotate(-12deg); filter: drop-shadow(0 8px 14px rgba(0,0,0,0.5)); display: block"><span style="position: absolute; left: 0.195%; top: 0%; width: 99.609%; height: 100%; overflow: hidden"><img src="../play/public/brand/seal.png" alt="" style="position: absolute; max-width: none; width: 100.392%; left: 0%; top: 0%"></span></span>
+
+<h1 style="position: absolute; left: 20px; right: 20px; top: 448px; margin: 0; text-align: center; font-family: 'Abril Fatface', 'Bodoni 72', Didot, Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1.06; color: #F1E8D6; text-shadow: 0 6px 18px rgba(0,0,0,0.6)">You met<br>Miss Boo LaRue</h1>
+
+<div style="position: absolute; left: 0; right: 0; top: 566px; display: flex; justify-content: center; gap: 14px">
+<div style="position: relative; width: 62px; height: 62px; box-sizing: border-box; border-radius: 16px; border: 2px solid #A6A253; background: #F1E8D6; padding: 5px">
+<span style="display: block; position: relative; width: 100%; height: 100%"><span style="position: absolute; left: 0%; top: 2.376%; width: 100%; height: 95.248%; overflow: hidden"><img src="../play/public/household/faces/Granola%20Face.png" alt="Granolia, met" style="position: absolute; max-width: none; width: 106.383%; left: 0%; top: -8.34%"></span></span>
+<span aria-hidden="true" style="position: absolute; right: -8px; top: -8px; width: 22px; height: 22px; border-radius: 50%; background: #BF1925; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 24 24" fill="none" stroke="#F1E8D6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px"><path d="M5 12l5 5 9-10"></path></svg></span>
+</div>
+<div class="glow" style="position: relative; width: 62px; height: 62px; box-sizing: border-box; border-radius: 16px; border: 2px solid #A6A253; background: #F1E8D6; padding: 5px; box-shadow: 0 0 0 3px #d6cf86, 0 0 14px 4px rgba(214,207,134,0.5)">
+<span style="display: block; position: relative; width: 100%; height: 100%"><span style="position: absolute; left: 9.016%; top: 0%; width: 81.967%; height: 100%; overflow: hidden"><img src="../play/public/household/faces/Boo%20Face.png" alt="Miss Boo LaRue, met" style="position: absolute; max-width: none; width: 125%; left: -11.333%; top: -1.298%"></span></span>
+<span aria-hidden="true" style="position: absolute; right: -8px; top: -8px; width: 22px; height: 22px; border-radius: 50%; background: #BF1925; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 24 24" fill="none" stroke="#F1E8D6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px"><path d="M5 12l5 5 9-10"></path></svg></span>
+</div>
+<div style="position: relative; width: 62px; height: 62px; box-sizing: border-box; border-radius: 16px; border: 2px dashed #5d7a89; background: #0c2634; padding: 5px">
+<span style="display: block; position: relative; width: 100%; height: 100%; filter: grayscale(1); opacity: 0.4"><span style="position: absolute; left: 0%; top: 2.725%; width: 100%; height: 94.549%; overflow: hidden"><img src="../play/public/household/faces/Zimmy%20Face.png" alt="Zimothy, not met yet" style="position: absolute; max-width: none; width: 100.942%; left: 0%; top: -1.495%"></span></span>
+</div>
+<div style="position: relative; width: 62px; height: 62px; box-sizing: border-box; border-radius: 16px; border: 2px dashed #5d7a89; background: #0c2634; padding: 5px">
+<span style="display: block; position: relative; width: 100%; height: 100%; filter: grayscale(1); opacity: 0.4"><span style="position: absolute; left: 2.965%; top: 0%; width: 94.07%; height: 100%; overflow: hidden"><img src="../play/public/household/faces/Salem%20Face.png" alt="Salem, not met yet" style="position: absolute; max-width: none; width: 116.732%; left: -10.35%; top: -4.978%"></span></span>
+</div>
+</div>
+
+<button style="position: absolute; left: 16px; right: 16px; bottom: 56px; height: 64px; border: 0; border-radius: 12px; background: #BF1925; color: #F1E8D6; font-family: inherit; font-size: 21px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4)">Done</button>
+</div>
+</template>
+</section>
+<script>
+document.querySelectorAll('template[data-screen]').forEach(function (t) {
+  var frame = document.getElementById(t.dataset.screen);
+  frame.srcdoc = '<!doctype html><html lang="en"><head><meta charset="utf-8"><base href="' + document.baseURI + '"></head><body>' + t.innerHTML + '</body></html>';
+});
+</script>
+</body>
+</html>

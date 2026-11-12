@@ -28,8 +28,11 @@ export function phaseOf(night) {
 // welcome, off in the blackout, red from the power's return, green at the
 // unlock). The blackout wins over whatever the cues doc says; the server
 // writes the colour for every other moment, and the door opening turns it
-// green even before the cues doc catches up.
+// green even before the cues doc catches up. At The End (nights/{id}.over,
+// 12 Nov 2026) the answer is 'free': the brain lets go of the bulb, leaves it
+// as it is and stops re-sending, so the house's own controls work again.
 export function hallColour({ night, cues, relay } = {}) {
+  if (night?.over === true) return 'free'
   if (phaseOf(night) === 'blackout') return 'off'
   if (cues?.hall === 'green' || relay?.doorOpen) return 'green'
   if (cues?.hall === 'red') return 'red'

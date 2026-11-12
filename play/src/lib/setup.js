@@ -14,11 +14,17 @@ export const SETUP_ROOMS = [
   { key: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro', kiosk: 'ipad', when: 'Act 2, then on its stand in the Orangerie for supper' },
   { key: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library', kiosk: 'memory', when: 'Act 4' },
   { key: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro', kiosk: 'bedroom', when: 'From Act 6' },
-  { key: 'pose', room: 'The Entryway: Boo’s camera', machine: 'Jenna’s iPad Pro, facing the group at the deck', kiosk: 'pose', when: 'Act 4, nice to have' },
 ]
 
 // A Mac with two displays (the Parlour's, the Study's): its other screen gets the crest page, so no desktop shows.
 export const SECOND_DISPLAY = { key: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen', kiosk: 'decor', when: 'All night: the crest, the countdown, dark with the room' }
+
+// A Mac's own screen beside its room screen (Jon, 11 Nov 2026: "a small something on the MacBook Air... and on the
+// MacBook Pro screen as it's sitting next to the Parlour TV"): its room's splash, smaller and calmer, dark with the room.
+export const SECOND_DISPLAY_ROOMS = [
+  { key: 'decor-living', room: 'The Parlour: the Mac’s own screen', machine: 'Jon’s work MacBook Pro, beside the TV', kiosk: 'decor', query: 'room=living', when: 'All night: Sir Irwin, small and calm; dark with the room' },
+  { key: 'decor-study', room: 'The Study: the Mac’s own screen', machine: 'M1 MacBook Air, by the walls', kiosk: 'decor', query: 'room=study', when: 'All night: Granolia, small and calm; dark with the room' },
+]
 
 // Nothing extra to open since 11 Nov 2026: the Parlour TV plays the intro video and the rules film by
 // itself at The house rules, so there is no second tab.

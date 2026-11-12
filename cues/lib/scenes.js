@@ -117,7 +117,7 @@ export function studyWants(docs = {}, cfg) {
 
 // Boo's music (27 Oct 2026, Jon): in `boo.acts` the Parlour HomePod
 // (`boo.speaker`) leaves the house music, so Susan's MacBook Pro can play
-// Boo's Catwalk on it; outside them it is in the house music. Returns
+// on it; outside them it is in the house music. Returns
 // 'lent' | 'house', or null with no `boo` on the sheet.
 export function speakerWants(docs = {}, cfg) {
   const b = cfg?.boo

@@ -8,7 +8,8 @@ const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 
 test('the setup page (11 Nov 2026): one short address, a button for every room screen of the night', () => {
   // every room screen the night has (main.jsx's list), once each
-  assert.deepEqual(SETUP_ROOMS.map(r => r.kiosk).sort(), ['bedroom', 'boo', 'ipad', 'living', 'memory', 'orangerie', 'pose', 'study'])
+  assert.deepEqual(SETUP_ROOMS.map(r => r.kiosk).sort(), ['bedroom', 'boo', 'ipad', 'living', 'memory', 'orangerie', 'study'])
+  assert.ok(!SETUP_ROOMS.some(r => /camera/i.test(`${r.room} ${r.machine} ${r.when}`)), 'no camera button (Boo\'s camera went, 11 Nov 2026)')
   assert.equal(new Set(SETUP_ROOMS.map(r => r.key)).size, SETUP_ROOMS.length)
   // the address each button opens
   assert.equal(setupHref('/play/', SETUP_ROOMS[0]), '/play/?kiosk=living')

@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Ground, Cat } from '../look/parts'
-import { RULES_SLIDES, rulesAudioUrl } from '../lib/rulesfilm'
+import { RULES_SLIDES, rulesAudioUrl, rulesPictureUrl, OWN_SLIDES } from '../lib/rulesfilm'
 
 // The rules film on the Parlour TV (handoff 11 Nov 2026, A14; lib/rulesfilm.js):
 // one slide at a time on the server's clock, Jon's recording for it playing
-// from the TV's own sound. `at` is rulesFilmAt's answer for this moment, so a
+// from the TV's own sound. The slide is Jon's own, as a picture, whole (handoff
+// 12 Nov 2026, job 1); the slide drawn in code is only what shows when his
+// pictures are not in. `at` is rulesFilmAt's answer for this moment, so a
 // screen that reloads part-way lands on the right slide and joins the voice
 // where it has got to. A screen nobody has clicked is refused sound by its
 // browser: the slides still turn, and the Host tab has said so beforehand
@@ -28,6 +30,19 @@ export default function RulesFilm({ at }) {
     if (p?.catch) p.catch(() => {})
   }, [index, speaking, startedAt])
   const next = RULES_SLIDES[index + 1]
+  // Jon's own slide for this recording, whole, with nothing drawn over it (12 Nov 2026: "Do not change
+  // the rule cards!"). A picture that is missing or will not load falls back to the slide drawn in code.
+  const [lost, setLost] = useState({})
+  if (OWN_SLIDES && !lost[slide.file]) {
+    return (
+      <div className="lk-screen lk-rules-own full">
+        <img key={`slide-${slide.file}`} className="lk-rules-slide" src={rulesPictureUrl(slide.file, BASE)} alt={slide.title} onError={() => setLost(l => ({ ...l, [slide.file]: true }))} />
+        {slide.voiceMs > 0 && <audio ref={audio} key={slide.file} src={rulesAudioUrl(slide.file, BASE)} preload="auto" muted={MUTED} />}
+        {next && <audio key={`next-${next.file}`} src={rulesAudioUrl(next.file, BASE)} preload="auto" muted />}
+        {next && <img key={`next-slide-${next.file}`} className="lk-rules-next" src={rulesPictureUrl(next.file, BASE)} alt="" />}
+      </div>
+    )
+  }
   return (
     <div className="lk-screen lk-rules full">
       <Ground />
