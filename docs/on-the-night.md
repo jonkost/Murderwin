@@ -531,8 +531,8 @@ the screen awake by itself where the iPad lets it.
   Library to its stand on the Orangerie table: it shows bulletin 2's words
   during the meal by itself.
 - Act 3: phones down, supper in the Orangerie. Every phone says to leave it
-  here in the Parlour, charging, and to bring the bag to the table; the whole
-  table may share what is in them. Near the end of supper,
+  here in the Parlour, charging, and to bring the bag to the Orangerie. Tell
+  the table it may share what is in them (`docs/read-aloud.md`). Near the end of supper,
   press **Next** when it says "Next: Arm the bulletin". Your phone says only
   "Armed." W-O-O-F News bulletin 2 plays on its own 3 to 5 minutes later
   through the HomePods (the Orangerie one too), with the words on the iPad
@@ -674,8 +674,8 @@ the screen awake by itself where the iPad lets it.
   what Sir Irwin said, and the TV goes back to its loop.
   Before you press **Next** for Act 6, check the iPad Pro is in the bedroom
   and the door is closed.
-- Act 6 opens with a note on every phone (two Parlour Games on their way,
-  then the final event in the Parlour, a good moment for a stretch) and the
+- Act 6 opens with a note on every phone (Stretch your legs: two Parlour
+  Games are next; the rest you say aloud, `docs/read-aloud.md`) and the
   two Parlour Games, back to back. When the second has closed, Sir Irwin
   Needs a Hand (the Relay Drawing) starts by itself; **Next** (or **Start the
   drawing**) starts it sooner, and any game not yet played is dropped. Sir Irwin explains it on the TV,
@@ -839,7 +839,7 @@ the screen awake by itself where the iPad lets it.
 | 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. At "The house rules" it plays the intro video and then the rules film by itself, and the join code comes back. | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro, in the Library, keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad Pro in the Library (`?kiosk=ipad`; `?kiosk=memory` shows his code too), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
 | 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
-| 4 | The title card ("Act 4 · Behind Closed Doors"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
+| 4 | The title card ("Find your group"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
 | 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits, the dedication and Sir Irwin's last card. At "The End": The End, Sir Irwin and paw prints, for good. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen shows The End and the projector stays on. |
