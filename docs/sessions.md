@@ -9,6 +9,12 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, after the test · Claude Code (the evening ended by hand)
+
+- Jon: "Can you end this evenings game. The green light clue is still live and over riding my light controls." The night was at The End, and the brain was still setting the hall bulb green every five seconds.
+- Done: the brain and the night log stopped; `public_state/active` removed, so no night is live (the night's own record is kept for the postmortem; every phone and screen shows the doors).
+- **Found, not fixed:** after The End the brain keeps holding the hall bulb. It should let go of the lights when the night is over.
+
 ## 12 Nov 2026, during the test · Claude Code (Get Off My Lawn! could trap a group)
 
 - Jon, mid-test: "we are stuck in the get off my grass game." The live record showed three players on round 3, attempt 43, 28 slips (17, 10 and 13 by phone). Round 3 changed colour every 1.5 to 2.6 seconds with half a second to react, and one slip by anyone restarts all three.
