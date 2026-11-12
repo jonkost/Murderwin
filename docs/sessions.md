@@ -9,6 +9,74 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, late afternoon · Claude Code (the idle screens' screen saver)
+
+Jon, on seeing that none of the six loops was in: "For the loops just make
+the classic dvd screen saver with the cats and dog face picture when it
+bounces off the edge of the screen."
+
+**What it is** (built, tested, reviewed; committed; not published, not
+pushed)
+
+- A room screen with nothing to show plays a screen saver. One of the
+  household's five face pictures (Sir Irwin, Granolia, Miss Boo LaRue,
+  Zimothy, Salem; his own art in `play/public/household/faces/`) crosses the
+  screen in a straight line, turns at every edge, and becomes the next face
+  each time it meets one. About every seven minutes it lands square in a
+  corner; between two of those it comes close and misses.
+- It takes the place of the room's splash on those screens (the room's name
+  in lights, approved that morning). The splash now shows only if a face
+  picture will not load, or the five are not in after four seconds. A Mac's
+  second display keeps its splash. The join code keeps its seal. The dark,
+  the cat codes, the films and the games come before the idle screen as
+  before, so none of them can show it.
+- Built as part of the room screens' own page, not as video files: a file
+  has one shape and would stop short of the edge on a screen of another
+  shape (a 16:9 file on a Mac or the iPad). The page measures its own screen,
+  so the square meets the real edge everywhere. No loop files are needed; one
+  dropped into `play/public/loops/` still plays in the saver's place.
+- How: `play/src/lib/saver.js` works out whose face and where from the wall
+  clock alone (a reload, or a screen coming back to idle, carries on from the
+  same place; each room screen starts somewhere else along the path).
+  `Saver` in `play/src/screens/Rooms.jsx` draws five stacked pictures, shows
+  one, and moves one square with a frame loop; `Idle` plays it on a screen
+  with a loop of its own. `/play/?look=1` shows it as number 12, and
+  `/play/?look=1&show=saver&room=study` fills the window, with no night.
+
+**Checked**
+
+- In a real browser: it meets the left, right, top and bottom edges within a
+  pixel and changes face there; all seven idle previews
+  (`/play/?preview=kiosk-loop-living` and the rest) play it with no words and
+  no error.
+- Two reviewers tried to break it (the code; the night, screen by screen and
+  act by act). Both: ready, with notes. Fixed from them: each face had its
+  own box, so a face hopped up to forty pixels as it changed; now one square
+  carries every face and nothing hops (each face's own edge is within a
+  twentieth of its size of the square's). A screen whose pictures never came
+  would have stayed blank; now the splash shows after four seconds. Left as
+  it is: the part that draws it is tested by reading its source and in the
+  browser, not by a render test.
+- Every test, the checks and three fake nights pass (play 390, app 165).
+
+**The board, the guides, the Canon**
+
+- A new update, `2026-11-12-screen-saver`: card 595 (done); his loops card
+  492 closed, nothing to make; his folder card 567 reworded to the one thing
+  left, where his new picture of Sir Irwin should show. It lands with the
+  next publish.
+- `docs/on-the-night.md`, `docs/media.md`, the loops folder's own page and
+  the media check's words say an idle screen plays the screen saver. The
+  Canon's Screens line is changed to match.
+
+**For Jon**
+
+- A short moving preview was sent to him as a file.
+- It is on the screens once he says publish. Until then the idle screens
+  show the room's name, as this morning.
+- His to say if he wants it otherwise: the bedroom's screen while its door
+  is closed, and the Parlour TV when it has no card, now play the saver too.
+
 ## 12 Nov 2026, afternoon · Claude Code (the site published again; a page of pictures of the media)
 
 Jon: "Yes, publish", and while it ran: "When finished, please provide me

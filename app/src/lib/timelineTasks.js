@@ -1275,3 +1275,19 @@ export const FILED_FOR_AUDIO_PANIC_1112 = [
   { order: 551, title: 'The music through the Shortcuts: the levels, the rooms, and one hearing', note: '(12 Nov 2026: the stop is your AudioPanic Shortcut now. Nothing called PANIC is needed. What is left is TV Wonder, card 582.)' },
 ]
 
+// 12 Nov 2026, later still, Jon: "For the loops just make the classic dvd
+// screen saver with the cats and dog face picture when it bounces off the
+// edge of the screen." An idle room screen plays that screen saver now: one
+// done card, his loops card closed (nothing to make), and his folder card
+// reworded to the one thing it still asks, where his new picture of Sir Irwin
+// shows (the loops are settled, and Sydney's photo is in the credits).
+export const SCREEN_SAVER_1112_TASKS = [
+  { order: 595, moment: 'setup', status: 'done', who: 'Claude Code', title: 'An idle room screen plays a screen saver: the five faces', detail: 'Done 12 Nov 2026, on your word ("For the loops just make the classic dvd screen saver with the cats and dog face picture when it bounces off the edge of the screen"). A room screen with nothing to do shows one of the five faces, Sir Irwin, Granolia, Miss Boo LaRue, Zimothy or Salem, crossing the screen in a straight line. It turns at every edge and becomes the next face each time it meets one. About every seven minutes it lands square in a corner. On those screens it takes the place of the room’s name in lights; a Mac’s own second screen keeps its room’s name. No loop videos are needed any more: if you ever make one for a screen, it still plays there in place of the screen saver. The look book shows it as number 12. It is on the screens once the site is published.', tech: 'play/src/lib/saver.js (whose face and where, from the clock on the wall alone), play/src/screens/Rooms.jsx Saver and Idle, play/test/saver.test.mjs. /play/?look=1&show=saver&room=study fills the window with it, with no night.' },
+]
+export const RETIRED_FOR_SCREEN_SAVER_1112 = [
+  { order: 492, title: 'The five loops: short silent videos for the idle screens', detail: 'Not needed since 12 Nov 2026. You said: "For the loops just make the classic dvd screen saver with the cats and dog face picture when it bounces off the edge of the screen." Every idle room screen plays that screen saver now, so there are no videos to make. If you ever make one for a screen, give it to Claude Code: it still plays there in place of the screen saver.' },
+]
+export const REWRITTEN_FOR_SCREEN_SAVER_1112 = [
+  { order: 567, title: 'Still missing from your folder: the five loops, Sydney’s photo, and where Irwin’s new portrait goes', set: { title: 'Your new picture of Sir Irwin: say where it should show', detail: 'Two of the three things this card asked for are settled (12 Nov 2026): the idle screens play a screen saver of the five faces, so no loops are needed, and Sydney’s photo is in the credits. One is left. Your new picture of Sir Irwin replaced the old framed one, and no screen in the game shows that picture today. Tell Claude Code where you want it, or that it can stay unused.' } },
+]
+
