@@ -26,6 +26,12 @@
 //   npm run fake-night                       in-process, against an in-memory stand-in Firestore
 //   npm run fake-night -- --emulator         against the local emulators (npm run emulate first)
 //   npm run fake-night -- --phones 3         that many fake phones in place of eight (a small walk-through)
+//   npm run fake-night -- --phones 2 --fill-ins 6
+//                                            a practice night from the big Start button with that many
+//                                            fill-in players (seats with no phone, A4): walked twice, once
+//                                            with their clock running (npm run fill-ins) and once with the
+//                                            brain off; each time no step of the night may wait on a fill-in.
+//                                            In memory only (functions/test/fill-in-night.mjs)
 //   npm run fake-night -- --seed tulip-4471  a rehearsal dealt from that seed word (functions/lib/seed.js):
 //                                            the same deal as any night from that word; the fake
 //                                            phones' own taps still differ. Every rehearsal prints its word
@@ -628,6 +634,20 @@ async function main() {
     db = new FakeFirestore()
   }
   const pAt = args.indexOf('--phones')
+  const fAt = args.indexOf('--fill-ins')
+  if (fAt >= 0) {
+    const fillIns = Math.floor(Number(args[fAt + 1]))
+    const real = pAt >= 0 ? Math.floor(Number(args[pAt + 1])) : 2
+    if (has('--live') || has('--emulator') || realSecrets || seed !== null) {
+      console.log('Refusing: --fill-ins is a practice night in memory, on its own.')
+      return 2
+    }
+    if (!(fillIns >= 1 && fillIns <= 8) || !(real >= 1 && real + fillIns <= 14)) {
+      console.log('--fill-ins takes a number from 1 to 8, and --phones with it at most 14 seats in all.')
+      return 2
+    }
+    return fillInNights({ fillIns, real })
+  }
   const phones = pAt >= 0 ? Math.floor(Number(args[pAt + 1])) : PHONES
   if (!(phones >= 1 && phones <= 14)) {
     console.log('--phones takes a number from 1 to 14.')
@@ -635,6 +655,27 @@ async function main() {
   }
   const summary = await fakeNight({ db, realSecrets, seed, phones })
   return summary.ok ? 0 : 1
+}
+
+// A practice night with fill-in players (A4, 11 Nov 2026), twice: with the
+// fill-ins' clock running and with the brain off. Counts only: the lines are
+// fill-in-night.mjs's own, which name no role, character, clue or vote.
+export const FAKE_NAMES = ['Jon', 'Sue', 'Amy', 'Ben', 'Cass', 'Dev']
+async function fillInNights({ fillIns, real }) {
+  ensureSeed()
+  const { FakeFirestore } = await import('../functions/test/fake-firestore.mjs')
+  const { fillInNight } = await import('../functions/test/fill-in-night.mjs')
+  const names = Array.from({ length: real }, (_, i) => FAKE_NAMES[i] ?? `Guest ${i + 1}`)
+  let ok = true
+  for (const driver of [true, false]) {
+    const db = new FakeFirestore()
+    db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+    console.log(`Fill-in players: ${real} phones and ${fillIns} fill-ins, ${driver ? 'their clock running' : 'the brain off, nothing running them'}`)
+    const s = await fillInNight({ db, fillIns, real: names, driver, log: line => console.log(line) })
+    ok = ok && s.ok
+  }
+  console.log(ok ? 'PASS' : 'FAIL')
+  return ok ? 0 : 1
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

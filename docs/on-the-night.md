@@ -863,7 +863,16 @@ bag number, and any role by the same deal as everyone, so a fill-in can be
 the Murderer or the Ghost, and all of them are names in the vote and the
 reveal. Your Host tab lists them under Who is here, marked "fill-in", with
 no dot and no **Hand this phone on** (there is no phone), and one line above
-the list says how many there are.
+the list says how many there are and whether they are playing along. The
+workshop's Start button has the same row (a 0 to 8 list).
+
+They play along on their own, with human pauses: each taps Locked in a few
+seconds after its group card, answers every Parlour Game in 5 to 20 seconds
+and votes within 20 seconds. Nothing to start: the cue relay on the brain
+sees a practice night with fill-ins and runs their clock (its window prints
+lines starting "fill-ins:", counts only). `npm run fill-ins` on the brain
+does the same on its own, if the relay is not running. If neither is, the
+house's own clock still moves them, only later.
 
 The night never waits for a fill-in:
 
@@ -877,8 +886,11 @@ The night never waits for a fill-in:
   fill-in group, and each of those groups is paid its reward at the chime,
   like any group that did not finish.
 - The drawing calls only the people with phones to the paper.
-- A Parlour Game or the vote picks for a fill-in when it closes, as it does
-  for any phone that did not answer.
+- The vote closes the moment the last of you locks in: any fill-in still
+  choosing votes then, at once. A Parlour Game picks for a fill-in when it
+  closes, as it does for any phone that did not answer.
+- In Act 4, when your group has finished its room, the chime comes about
+  thirty seconds later instead of at the round's fifteen minutes.
 
 A fill-in never speaks, so nobody can ask one what a cat said or look in its
 bag: on a fill-in night the motive is worked out from the bulletins, your
@@ -888,8 +900,8 @@ the join screen and take that seat, character, cards and all; the names are
 not on the tap list, so nobody takes one by accident.
 
 The real night can never have a fill-in: the row is hidden with the box
-ticked and from the party day on, the server throws the number away on a
-real night, and it refuses to seat one on any night that is not a practice.
+ticked and from the party day on, the server refuses a number on a real
+night, and it refuses to seat one on any night that is not a practice.
 
 *Playing a rehearsal again.* Every rehearsal is dealt from a seed word,
 like tulip-4471. The Game night page's "Play a rehearsal again" lists the
