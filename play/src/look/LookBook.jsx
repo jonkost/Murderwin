@@ -68,7 +68,7 @@ function Show({ show, params }) {
   if (show === 'game') return <GameCard id={game} turn={fixed ?? turn + 1} codeUrl={codeUrl(game)} className="full" />
   if (show === 'win') return <BigWin word={params.get('word') || 'Solved!'} who={params.get('who') || 'granolia'} sound={false} className="full" />
   if (show === 'end') return <TheEnd burst={!params.has('still')} className="full" />
-  if (show === 'dedication') return <Dedication photo={params.has('photo') ? `${BASE}household/sydney.jpg` : null} className="full" />
+  if (show === 'dedication') return <Dedication photo={`${BASE}household/sydney.jpg`} className="full" />
   // the phone screens, filling the window: on a phone they are life size
   if (show === 'now') return <div className="lk-fullphone"><Phone on="now"><NowSample state={NOW_STATES[params.get('state')] ? params.get('state') : 'room'} /></Phone></div>
   if (show === 'rules') return <div className="lk-fullphone"><Phone on="rules"><RulesSwipe /></Phone></div>
@@ -147,7 +147,7 @@ export default function LookBook() {
           <button type="button" className="lk-open" onClick={() => open('show=end')}>See it fill the screen</button>
         </Section>
 
-        <Section n="6" title="The dedication" line="One card in the credits. The photo goes in the round frame when it is in.">
+        <Section n="6" title="The dedication" line="One card in the credits, held for eight seconds.">
           <Dedication photo={`${BASE}household/sydney.jpg`} className="lk-tv" />
           <button type="button" className="lk-open" onClick={() => open('show=dedication')}>See it fill the screen</button>
         </Section>

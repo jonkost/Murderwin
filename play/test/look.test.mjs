@@ -162,10 +162,18 @@ test('the glitz Jon kept: slow bulbs, twinkles, the seal stamping in, paw prints
   // the big win: one big word, the seal, the cat hopping, and no card
   const win = parts.slice(parts.indexOf('export function BigWin('), parts.indexOf('// 5. The End'))
   assert.ok(win.includes("word = 'Solved!'") && win.includes('<img className="lk-stamp"') && win.includes('move="hop"') && !/lk-card|lk-pcard/.test(win))
-  // the dedication: the photo in a round brass frame above the line, no heading, and nothing standing in for him
-  const ded = parts.slice(parts.indexOf('export function Dedication('), parts.indexOf('// ---- the phone'))
-  assert.ok(ded.includes("line = 'In loving memory of Sydney, the original good boy'") && ded.includes('{photo && !lost && <span className="lk-photo">') && !/<h[1-6]|lk-label/.test(ded))
-  assert.ok(css.includes('.lk-photo { display: block; width: 21.875cqw; height: 21.875cqw; box-sizing: border-box; border-radius: 50%;'))
+  // the dedication (Jon, 12 Nov: "It should read 'For Sydney, The Best Big Brother A Pup Could Ask For'"): his words
+  // exactly, his capitals and his comma, nothing added; two lines, broken after the comma and nowhere else; Sydney's
+  // photo in a round brass frame above them, set so his nose stays inside the circle; no heading; nothing stands in for him
+  const ded = parts.slice(parts.indexOf('// 6. The dedication'), parts.indexOf('// ---- the phone'))
+  assert.ok(ded.includes("export const DEDICATION = 'For Sydney, The Best Big Brother A Pup Could Ask For'"))
+  assert.ok(ded.includes("export function Dedication({ line = DEDICATION, photo = null, className = '' })"))
+  assert.ok(ded.includes('{photo && !lost && <span className="lk-photo">') && !/<h[1-6]|lk-label/.test(ded))
+  assert.ok(ded.includes("return at < 0 ? [line, ''] : [line.slice(0, at + 1), line.slice(at + 1).trim()]"), 'broken after the first comma, and nowhere else')
+  assert.ok(!/In loving memory|original good boy/.test(parts + read('../src/look/LookBook.jsx')), 'the old line is gone from the look')
+  assert.ok(css.includes('.lk-photo img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 70%; display: block; }'))
+  assert.ok(css.includes('.lk-dedication-line span { display: block; white-space: nowrap;'), 'neither line breaks again')
+  assert.ok(existsSync(new URL('../public/household/sydney.jpg', import.meta.url)), 'Sydney’s photo is in the folder')
   // less movement when a device asks for it
   assert.ok(css.includes('@media (prefers-reduced-motion: reduce)') && css.includes('.lk-confetti { display: none; }'))
 })

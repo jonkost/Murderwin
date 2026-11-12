@@ -197,19 +197,28 @@ export function TheEnd({ line = 'Happy first birthday, Sir Irwin.', burst = true
   )
 }
 
-// 6. The dedication, one card in the credits: the photo in a round brass
-// frame above the line. No heading. With no photo (or one that will not
-// load) the frame is left off: nothing stands in for him.
-export function Dedication({ line = 'In loving memory of Sydney, the original good boy', photo = null, className = '' }) {
+// 6. The dedication, one card in the credits: Sydney's photo in a round
+// brass frame above Jon's words, exactly as he wrote them (12 Nov 2026: "It
+// should read 'For Sydney, The Best Big Brother A Pup Could Ask For'"), his
+// capitals and his comma kept, nothing added. Two lines, broken after the
+// comma and nowhere else: the second a little smaller. No heading. A photo
+// that will not load leaves the frame off: nothing stands in for him.
+export const DEDICATION = 'For Sydney, The Best Big Brother A Pup Could Ask For'
+export function dedicationLines(line = DEDICATION) {
+  const at = line.indexOf(',')
+  return at < 0 ? [line, ''] : [line.slice(0, at + 1), line.slice(at + 1).trim()]
+}
+export function Dedication({ line = DEDICATION, photo = null, className = '' }) {
   const [lost, setLost] = useState(false)
   useEffect(() => setLost(false), [photo])
+  const [first, second] = dedicationLines(line)
   return (
     <div className={`lk-screen lk-dedication${className ? ` ${className}` : ''}`}>
       <Ground still />
       <div className="lk-dedication-in">
-        {photo && !lost && <span className="lk-photo"><img src={photo} alt="" onError={() => setLost(true)} /></span>}
+        {photo && !lost && <span className="lk-photo"><img src={photo} alt="Sydney" onError={() => setLost(true)} /></span>}
         <Rule />
-        <p className="lk-dedication-line">{line}</p>
+        <p className="lk-dedication-line"><span>{first}</span>{second && <span>{second}</span>}</p>
       </div>
     </div>
   )
