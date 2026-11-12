@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Children, useEffect, useMemo, useRef, useState } from 'react'
 import { callMemoryStep, callArcadeClue, callArcadeScore } from '../firebase'
 import { useTick } from '../lib/hooks'
 import { useQr } from '../lib/qr'
@@ -6,7 +6,7 @@ import { PLAY_URL } from '../lib/config'
 import { ms, salemColourAt } from '../lib/night'
 import BooArcade from './Arcade'
 import { STAND_IN_CLUE } from '../lib/arcade'
-import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
+import { promptShown, videoUrl, MEMORY_ROUNDS, ALL_TRACES, ZIMOTHY_LINES, SALEM_SCREEN_LINES, standaloneBoards, sendUntilHeard, UNHEARD_LINE, turnNames, groupNames, mostPairs, fewestSlips, andList, winnerPlain, GAME_NAMES, loopUrl, meetUrl, codeWords, CAT_NAMES, catPicture, catPictureUrl, RULES_LINES, rulesLine } from '../lib/rooms'
 import Spoken from './Spoken'
 
 // The room screens added on 23 Oct 2026 (docs/handoff-2026-10-23.md):
@@ -29,7 +29,7 @@ import Spoken from './Spoken'
 //                   the Get Off My Lawn! rules card in Act 4, its loop otherwise
 // Everything here reads public docs and open lines only.
 
-import { Splash } from '../look/parts'
+import { Splash, GameCard } from '../look/parts'
 import { lookOn, SPLASH_OF, splashNow } from '../look/look'
 
 const BASE = import.meta.env.BASE_URL
@@ -152,9 +152,30 @@ export function JoinScreen({ screen, loop = 'living' }) {
 // line, the cat's picture (varied by `pick`: the group due or the round, so it
 // changes through the night) and the room's code to scan on arrival. `frame`
 // names one picture instead (Boo's walking frames during her intro).
+//
+// In the look Jon approved (12 Nov 2026, docs/look-approved.html, screen 3) the
+// card is the game's name in lights, its three steps as numbered cards, Scan
+// to start by the room's code, and the room's cat. The host's long line is
+// off the screen ("Anywhere there is random text that is not mission critical
+// lose it"), and so are the lines that only fill the wait (CARD_FILLER): what
+// a room still says under the steps is a working line (Eyes on your phones.).
+export const CARD_FILLER = /^(The next group will be along\.|Expecting .+\.)$/
+export function cardNotes(children) {
+  return Children.toArray(children).filter(c => !(typeof c?.props?.children === 'string' && CARD_FILLER.test(c.props.children)))
+}
 export function RulesCard({ id, line, pick = null, code = true, frame = null, className = '', children = null }) {
   const game = GAME_NAMES[id]
   const cat = game?.host ?? null
+  if (lookOn('game') && game) {
+    const notes = cardNotes(children)
+    return (
+      <div className={`kiosk rules-card rules-look rules-${id}${className ? ` ${className}` : ''}`}>
+        <GameCard id={id} file={frame ?? catPicture(cat, pick)} codeUrl={code && cat ? meetUrl(cat, PLAY_URL) : null} className="full">
+          {notes.length > 0 && <div className="lk-game-notes">{notes}</div>}
+        </GameCard>
+      </div>
+    )
+  }
   const src = frame ? `${BASE}household/full/${encodeURIComponent(frame)}` : catPictureUrl(cat, pick, BASE)
   return (
     <div className={`kiosk rules-card rules-${id}${className ? ` ${className}` : ''}`}>

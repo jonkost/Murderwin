@@ -253,3 +253,23 @@ test('celebrate is safe on a phone: the burst lands where the win is, and a miss
   assert.ok(src.includes('const el = at instanceof Element ? at : page ? null : host') && src.includes('if (!el) return spec.ms'), 'a miss shakes its card or its box, never the body (the tab bar would jump)')
   assert.ok(src.includes("matchMedia?.('(prefers-reduced-motion: reduce)')"), 'less movement when the phone asks for it: the sound, no pieces')
 })
+
+// Handoff 12 Nov 2026, job 2: "Switch the look on." The night's own room screens draw the approved game card.
+test('a room’s rules card on the night is the approved game card: the name in lights, three steps, the code, the cat', async () => {
+  const { LOOK } = await import('../src/look/look.js')
+  assert.equal(LOOK.game, true)
+  const rooms = read('../src/screens/Rooms.jsx')
+  const card = rooms.slice(rooms.indexOf('export const CARD_FILLER'), rooms.indexOf('// ---- the Happy Birthday Irwin card'))
+  assert.ok(card.includes("if (lookOn('game') && game) {"), 'the look is on for every room’s card')
+  assert.ok(card.includes('<GameCard id={id} file={frame ?? catPicture(cat, pick)} codeUrl={code && cat ? meetUrl(cat, PLAY_URL) : null} className="full">'), 'the room’s own cat picture and the room’s own code')
+  // the host's long line is off the screen, and so are the lines that only fill the wait
+  const look = card.slice(card.indexOf("if (lookOn('game') && game) {"), card.indexOf('const src = frame'))
+  assert.ok(!/\{line\}|<Spoken|Scan the code to begin/.test(look), 'no host’s paragraph and no old caption')
+  const filler = new RegExp(card.match(/export const CARD_FILLER = \/(.+)\/\n/)[1])
+  for (const gone of ['The next group will be along.', 'Expecting Mabel, Gus.']) assert.ok(filler.test(gone), `“${gone}” is not said`)
+  for (const kept of ['Eyes on your phones.', 'Eyes on the deck.', 'Granolia has dozed off. Find a host.', 'Touch any hexagon to start.']) assert.ok(!filler.test(kept), `“${kept}” is a working line and stays`)
+  const css = read('../src/look/look.css')
+  assert.ok(css.includes('.lk-game-notes .study-walls { display: none; }'), 'the card carries no drawing of the walls')
+  // the code is big enough to scan from where a group stands: wider than the approved stand-in box
+  assert.ok(css.includes('.lk-code { position: absolute; left: 72.2cqw; top: 57.5cqh; width: 17.8cqw;'))
+})

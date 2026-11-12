@@ -135,6 +135,10 @@
 .lk-steps b { font-family: var(--lk-display); font-weight: 400; font-size: 5.625cqw; line-height: 1; color: var(--lk-red); }
 .lk-steps span { font-family: var(--serif); font-weight: 600; font-size: 2.34cqw; line-height: 1.2; }
 .lk-game-line { position: absolute; left: 6.5625cqw; top: 82.5cqh; width: 60.16cqw; margin: 0; font-family: var(--serif); font-weight: 600; font-size: 2.6cqw; line-height: 1.2; color: var(--lk-brass-hi); text-shadow: 0 0.3cqw 1cqw rgba(0, 0, 0, 0.6); }
+/* what a room still says under the steps: its working lines, never a drawing */
+.lk-game-notes { position: absolute; left: 6.5625cqw; top: 83cqh; width: 60.16cqw; display: flex; flex-direction: column; gap: 0.6cqw; }
+.lk-game-notes > * { margin: 0; text-align: left; font-family: var(--serif); font-weight: 600; font-size: 2.34cqw; line-height: 1.2; color: var(--lk-brass-hi); text-shadow: 0 0.3cqw 1cqw rgba(0, 0, 0, 0.6); }
+.lk-game-notes .study-walls { display: none; }
 .lk-game .lk-cat { left: 81.1cqw; top: 31cqh; --cw: 21cqw; --ch: 46cqh; margin: calc(var(--w) / var(--r) / -2) 0 0 calc(var(--w) / -2); animation-duration: 6s; filter: drop-shadow(0 1.25cqw 1.7cqw rgba(0, 0, 0, 0.55)); }
 /* the room's code: big enough to scan from where the group stands */
 .lk-code { position: absolute; left: 72.2cqw; top: 57.5cqh; width: 17.8cqw; box-sizing: border-box; margin: 0; background: var(--lk-paper); color: var(--lk-ink); border: max(1px, 0.156cqw) solid var(--lk-brass); padding: 1.25cqw; display: flex; flex-direction: column; align-items: center; gap: 0.7cqw; box-shadow: 0 1.1cqw 1.9cqw rgba(0, 0, 0, 0.45); }
