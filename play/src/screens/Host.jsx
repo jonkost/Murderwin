@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import SoundList from './SoundList'
+import BlackoutTest, { BLACKOUT_TEST_PRESSED, blackoutTestReply } from './BlackoutTest'
 import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
 import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
@@ -38,7 +39,8 @@ const PHASE_WORDS = {
 // answers, for the one command that takes its time on purpose: the Blackout
 // waits five seconds on the server before the power returns (25 Oct 2026).
 const PRESSED_WORDS = {
-  blackout: 'Blackout. The power comes back on its own in five seconds.',
+  blackout: 'Blackout. The music stops now, the dark comes in two seconds, the power five seconds after.',
+  'blackout-test': BLACKOUT_TEST_PRESSED,
 }
 
 function describe(command, r) {
@@ -47,6 +49,7 @@ function describe(command, r) {
     case 'blackout': return r.already ? 'Already dark. The power comes back on its own.'
       : r.powerReturned ? 'The power is back. Every phone says sorry for the interruption, then shows its card for fifteen seconds.'
       : 'The power did not come back from this press: the night was paused, moved or brought back by hand during the dark. The line above says where the night is; Power returns · Act 2 lights while it is still dark.'
+    case 'blackout-test': return blackoutTestReply(r)
     case 'publish': return `Sent ${r.lines} lines to the phones.`
     case 'act': return `Act ${r.act} is on.`
     case 'relay-start': return r.already ? 'A drawing is already on the paper. It is kept. Clear it first if you want a fresh one.' : `The drawing has started: ${r.turns} turns.`
@@ -184,6 +187,7 @@ export default function Host({ night, content, serverNow }) {
       <div className="host-row">
         <button className="big wide" disabled={!!busy || night.act !== 1 || night.phase === 'blackout'} onClick={() => run('blackout')} title="Ends Act 1. The power comes back on its own five seconds later">Blackout</button>
         <button className="big wide" disabled={!!busy || night.phase !== 'blackout'} onClick={() => run('power')}>Power returns · Act 2</button>
+        <BlackoutTest night={night} busy={busy} run={run} />
         {night.phase === 'paused'
           ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
           : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}

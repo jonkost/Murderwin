@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { useCueSounds } from './lib/useCueSounds'
+import { useBlackoutMarks } from './lib/useBlackout'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
 import { clockFor, doorCardHolds, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
@@ -47,6 +48,7 @@ export default function App() {
   // opens Clues or Motives while deciding (the Now pane unmounts), or a pause, comes back to the same step
   const [draft, setDraft] = useState(null)
   useTick(1000) // windows close on the server's clock; re-check once a second
+  useBlackoutMarks(night.data, serverNow) // and at the blackout's marks exactly (A1)
 
   // Notes are kept per night: a phone that rehearsed starts the party clean.
   useEffect(() => { setNotesNight(nightId) }, [nightId])
@@ -89,6 +91,7 @@ export default function App() {
   if (!night.loaded && !night.data) return <Dark />
   const n = night.data
   if (!n) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />
+  if (isDark(n, serverNow())) return <Blackout hit /> // every phone, a phone at the doors too (A1)
   // No REHEARSAL band on a phone (Jon, 11 Nov 2026): a rehearsal looks like the party night. The Host tab says which it is.
 
   const s = session.data && session.data.nightId === nightId ? session.data : null
@@ -105,7 +108,7 @@ export default function App() {
   // keeps the screen up on the frozen clock, so nothing bright appears in the
   // dark room either way. Until this phone's notes have loaded the screen
   // stays dark rather than flash the button at a phone that already tapped.
-  if (isDark(n)) return <Blackout />
+  if (isDark(n, serverNow())) return <Blackout hit />
   const clock = clockFor(n, serverNow)
   if (showsPrompt(n, notes, clock)) {
     if (!notesDoc.loaded) return <Blackout />

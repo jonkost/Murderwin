@@ -79,8 +79,8 @@ test('The End (cue 23, 25 Oct 2026): every room screen goes black once the night
   assert.equal(livingView({ night: { act: 7, beat: 'end', phase: 'act', over: true }, screen: { kind: 'black', title: '' } }), 'dark')
   // every kiosk goes through roomDark with the screen doc the TV reads, and the dispatch darkens before any room branch
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null)) body = <Dark />"), 'the dark branch comes first')
-  assert.ok(kiosk.indexOf('body = <Dark />') < kiosk.indexOf("else if (code) body = <RoomCode"), 'dark before the room code')
+  assert.ok(kiosk.includes("roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />"), 'the dark branch comes first')
+  assert.ok(kiosk.indexOf('body = <Dark hit=') < kiosk.indexOf("else if (code) body = <RoomCode"), 'dark before the room code')
 })
 
 test('a pause during the blackout or the prompt keeps every room screen dark', () => {
@@ -300,7 +300,7 @@ test('F31 nothing in the corners beside a near-black screen, the bell ringing or
   const corners = kiosk.slice(from, kiosk.indexOf('</>', from))
   const at = (t) => { const i = corners.indexOf(t); assert.ok(i >= 0, t); return i }
   for (const mark of ['<Bell ', '<StaleDot ', '<Wake ']) assert.ok(at('{body}') < at(mark), `${mark.trim()} after the screen`)
-  assert.ok(kiosk.includes('<div className="kiosk dark" aria-label="Sirwin Manor" />'), 'the dark')
+  assert.ok(kiosk.includes('<div className={`kiosk dark${hit ? \' blackout-hit\' : \'\'}`} aria-label="Sirwin Manor" />'), 'the dark')
   assert.ok(kiosk.includes('<div className="kiosk dark paused">'), 'the pause card')
 })
 

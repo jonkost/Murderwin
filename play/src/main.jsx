@@ -14,6 +14,7 @@ import { setupParam } from './lib/setup'
 import { lookParam } from './look/look'
 import { installUnlock } from './lib/cueSounds'
 import './styles.css'
+import './blackout.css'
 
 // Every page, phone or room screen: the first tap or key anywhere wakes the page's sound, and so does the
 // first one after any reload (handoff 11 Nov 2026, A2). A browser lets a page make sound only after a tap,

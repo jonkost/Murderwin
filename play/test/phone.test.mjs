@@ -71,7 +71,7 @@ test('F11 after the blackout: one button, Sorry for the interruption, continue h
   assert.equal(isDark({ phase: 'blackout' }), true)
   assert.equal(isDark({ phase: 'paused', pausedFrom: 'blackout' }), true, 'a pause in the dark stays dark')
   const app = read('play/src/App.jsx')
-  assert.match(app, /if \(isDark\(n\)\) return <Blackout \/>/)
+  assert.match(app, /if \(isDark\(n, serverNow\(\)\)\) return <Blackout hit \/>/) // the marks count too (A1, 11 Nov 2026)
   assert.match(app, /const clock = clockFor\(n, serverNow\)\s*if \(showsPrompt\(n, notes, clock\)\) \{/, 'the gate is the pure rule, on the server clock frozen in a pause')
   // a reloading phone stays dark until its own notes have loaded, rather than flash the button at one that already tapped
   assert.match(app, /if \(!notesDoc\.loaded\) return <Blackout \/>/)

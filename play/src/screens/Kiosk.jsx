@@ -18,6 +18,8 @@ import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import { useCueSounds } from '../lib/useCueSounds'
+import { useBlackoutMarks } from '../lib/useBlackout'
+import { blackoutHit } from '../lib/blackout'
 import Spoken from './Spoken'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
@@ -96,6 +98,7 @@ export default function Kiosk({ which }) {
   const serverNow = useServerClock(uid, nightId, `kiosk-${which}`, { sound }) // the iPad is kiosk-ipad, its own row on the Host tab
   const online = useOnline()
   useTick(250)
+  useBlackoutMarks(night.data, serverNow) // dark at the blackout's marks exactly (A1)
   // The first click or key on a room screen makes it full screen (12 Nov 2026: a page sent to a Mac opens in
   // a browser tab, and a browser only goes full screen on a person's own click). Once a load, never on a
   // touch screen (an iPad's full screen is its own), and Escape still leaves it.
@@ -117,7 +120,7 @@ export default function Kiosk({ which }) {
   const r = relay.data
   // dark: the blackout and the prompt (paused or not), The End (the night is over),
   // or a black screen the server wrote; nothing in the corners shows while the room is dark
-  const dark = !!n && (roomDark(n, living ? screen.data : null) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
+  const dark = !!n && (roomDark(n, living ? screen.data : null, serverNow()) || (living && livingView({ night: n, relay: r, screen: screen.data, finale: finale.data, captionsOnly: which === 'ipad' }) === 'dark'))
   // the dot and the wake note: on a rehearsal and with no night live, never on the party night (Jon,
   // 29 Oct 2026), and not until this screen has looked for its night, so a reload never flashes them
   const looked = uid ? active.loaded && (!nightId || night.loaded) : !!signInError
@@ -134,7 +137,7 @@ export default function Kiosk({ which }) {
   let body
   if (standalone) body = <MemoryStandalone />
   else if (!uid || !nightId || !n) body = <Idle title="Sirwin Manor" line="The house is quiet." loop={loopFor(which)} room={decorRoom} calm={which === 'decor'} />
-  else if (roomDark(n, living ? screen.data : null)) body = <Dark />
+  else if (roomDark(n, living ? screen.data : null, serverNow())) body = <Dark hit={blackoutHit(n, serverNow())} />
   else if (code) body = <RoomCode cat={code} />
   else if (film) body = <RulesFilm at={film} />
   else if (which === 'living' && intro && introOver !== intro.startedAt) body = <IntroVideo startedAt={intro.startedAt} serverNow={serverNow} onOver={() => setIntroOver(intro.startedAt)} />
@@ -197,8 +200,9 @@ function IntroVideo({ startedAt, serverNow, onOver }) {
 }
 
 // Every screen is dark through the blackout and the prompt: near-black, nothing on it.
-export function Dark() {
-  return <div className="kiosk dark" aria-label="Sirwin Manor" />
+// `hit`: the blackout itself (A1): one white flash, then the old-TV squeeze to black (blackout.css).
+export function Dark({ hit = false }) {
+  return <div className={`kiosk dark${hit ? ' blackout-hit' : ''}`} aria-label="Sirwin Manor" />
 }
 
 // The host's pause, on a room screen: near-black with two words.

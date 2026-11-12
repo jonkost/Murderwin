@@ -7,6 +7,7 @@
 
 import { isStale, secondsSinceHeard } from './clock.js'
 import { effectivePhase, isOver, isRehearsalNight } from './night.js'
+import { inBlackout } from './blackout.js'
 
 export const BELL_MS = 3_000
 export const SOUND_FRESH_MS = 30_000
@@ -64,9 +65,10 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
 // black once the night is over (nights/{id}.over, or Act 7's end beat), and a
 // screen that reads public/screen is dark on a black doc with no title (the
 // titled one is the pause card).
-export function roomDark(night, screen = null) {
+export function roomDark(night, screen = null, now = Date.now()) {
   const phase = effectivePhase(night)
   if (phase === 'blackout' || phase === 'prompt') return true
+  if (inBlackout(night, now)) return true // the blackout's marks (A1): dark at darkAt on the server's clock
   if (isOver(night)) return true
   return screen?.kind === 'black' && !screen.title
 }
