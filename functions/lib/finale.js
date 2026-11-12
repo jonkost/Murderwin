@@ -26,7 +26,6 @@ import { spotlightLines, isHushed, HUSH_ROLES } from './ledger.js' // the Hush: 
 import { stopOf } from './parlour.js'
 import { closingStage, closingVideoStage } from './news.js'
 import { play, bulletinVideo } from './screen.js'
-import { posesFor } from './pose.js'
 import { arcadePath, arcadeAwards, arcadeAchievements } from './arcade.js'
 
 export const finalePath = (nightId) => `nights/${nightId}/public/finale`
@@ -316,13 +315,11 @@ export async function finaleDoc(db, nightId, c, now = Date.now(), { pick = pickI
   if (!achievements.length) schedule.awards = schedule.graph // nothing to show: straight to the graph
 
   const spotlight = spotlightLines(c) // the Hush, if the host ever tapped it; absent otherwise
-  // the arcade: each group at the deck, when the Entryway's camera took one (pose.js; the Catwalk's last pose until 5 Nov 2026)
-  const poses = await posesFor(db, nightId, rot)
   return {
     at: new Date(now), stage: 'stats', schedule, stats, achievements,
     arcade: { games: arcade.games.map(g => ({ game: g.game, title: g.title, name: g.name, score: g.score })), overall: arcade.overall ? { name: arcade.overall.name, points: arcade.overall.points } : null },
     graph: { points, running, sides, hush, high, low, clues: clueLevels },
-    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), poses, thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
+    credits: { awards, counters: jokeCounters(nightId), splits: roomSplits(people), thanks: [...THANKS, ...people.map(p => p.guest.name)], memory: IN_MEMORY, last: LAST_CARD },
     news: {}, cardAt: {},
     names: {}, epilogue: null, victimAt: null, holdAt: null, held: 0,
     rehearsal: !!c?.rehearsal,

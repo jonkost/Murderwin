@@ -99,7 +99,7 @@ export function caseChecks(c, { roster, packing = null, rng, reroll = true }) {
   // G59: never the house's note where a line should be: every guest and a late joiner, every cat, every rung, and the Study
   add('G59', everyLineOk(c, roster))
 
-  // G47 and G51: the groups walk the rooms; Zimothy crosses off one a group (Boo's went with her Catwalk, 29 Oct 2026)
+  // G47 and G51: the groups walk the rooms; Zimothy crosses off one a group (the Entryway crosses nothing off since 29 Oct 2026)
   const groups = keys.length >= 2 ? makeGroups(keys, { apart: [c.murderer, c.ghost].filter(Boolean), pickInt: rng }) : []
   const order = groups.map((_, i) => `g${i + 1}`)
   const rot = { order, rooms: [...ROOM_KEYS], rounds: roundsFor(order.length) }

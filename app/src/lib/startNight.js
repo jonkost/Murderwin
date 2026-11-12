@@ -56,7 +56,6 @@ export const SCREENS = [
   { kiosk: 'ipad', room: 'The Library: Zimothy’s code', machine: 'Jon’s iPad Pro' },
   { kiosk: 'memory', room: 'The Library: In Duplicate', machine: 'Jon’s iPad Pro, back in the Library' },
   { kiosk: 'bedroom', room: 'The bedroom', machine: 'Jon’s iPad Pro' },
-  { kiosk: 'pose', room: 'The Entryway: Boo’s camera', machine: 'Jenna’s iPad Pro, facing the group at the deck' },
   { kiosk: 'decor', room: 'A second display', machine: 'Any Mac with two screens: its other screen' },
 ]
 export function screenUrl(playUrl, kiosk) {

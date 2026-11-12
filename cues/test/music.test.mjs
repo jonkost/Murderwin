@@ -269,7 +269,7 @@ test('Boo\'s speaker (27 Oct 2026): out of the house music and back in by its na
   await m.speaker({ name: 'Parlor', on: false })
   assert.deepEqual(calls.map(c => c.args), [['off', 'Living Room'], ['on', 'Living Room'], ['off', 'Parlor']])
   assert.deepEqual(lines, [
-    '[music] Living Room is out of the house music, for Boo\'s Catwalk',
+    '[music] Living Room is out of the house music, for Susan\'s MacBook Pro',
     '[music] Living Room is back in the house music',
     '[music] no speaker called "Parlor" in Music\'s AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)',
   ])

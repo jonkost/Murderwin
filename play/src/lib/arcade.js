@@ -206,7 +206,7 @@ export const FAREWELL_LINE = 'Be on your way.'
 
 // Boo's lines, by moment: arch and bored, "darling"; when she is pleased the
 // alley cat slips through. Never a number, a rule or a word about the case,
-// never her hint ladder, her Parlour Game lines or the Catwalk's verdicts,
+// never her hint ladder or her Parlour Game lines,
 // and no cat sounds (docs/cat-info.md). What to do is always a plain line.
 export const BOO_LINES = {
   home: 'Darling. Pick a game. Try to keep up.',

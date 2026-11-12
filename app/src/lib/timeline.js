@@ -116,7 +116,7 @@ export const ACT4_ROOMS = [
   { key: 'study', name: 'The Study: Granolia’s Lightbulb Moment', room: 'study' },
   { key: 'puzzle', name: 'The Library: In Duplicate', room: 'library' },
   { key: 'orangerie', name: 'The Orangerie: Get Off My Lawn!', room: 'orangerie' },
-  { key: 'entryway', name: 'The Entryway: Miss Boo LaRue’s Arcade', room: 'entryway' }, // Boo's Catwalk until 5 Nov 2026
+  { key: 'entryway', name: 'The Entryway: Miss Boo LaRue’s Arcade', room: 'entryway' },
   { key: 'checkin', name: 'In the Parlour', what: 'A group with no room this round waits here: Sir Irwin’s prompts on the TV, a Parlour Game when one is waiting on the phone.' },
 ]
 const ACT4_START = ['warn', 'groups']

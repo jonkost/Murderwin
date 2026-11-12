@@ -56,8 +56,6 @@ export const callSalemSlip = httpsCallable(functions, 'salemSlip')
 export const callSalemPassed = httpsCallable(functions, 'salemPassed')
 export const callArcadeScore = httpsCallable(functions, 'arcadeScore')
 export const callArcadeClue = httpsCallable(functions, 'arcadeClue')
-// the Entryway iPad's photo of a group at the arcade, for the end credits (?kiosk=pose)
-export const callPosePhoto = httpsCallable(functions, 'posePhoto')
 // The workshop's Game test tab: a practice of Get Off My Lawn! on its own
 // record (public_state/game_test_salem), never a night's.
 // { command: 'salem-join' | 'salem-ready' | 'salem-slip' | 'salem-passed', ... }

@@ -1,7 +1,7 @@
 // Miss Boo LaRue's Arcade: the sounds (docs/boo-arcade.md, 28 Oct 2026).
 // Short effects made on the spot from sine notes and a little noise, with
-// the envelope of the kiosk's own chime (screens/Kiosk.jsx chime()) and the
-// record scratch of Boo's catwalk (screens/Rooms.jsx scratch()). No sound
+// the envelope of the kiosk's own chime (screens/Kiosk.jsx chime()) and a
+// record scratch. No sound
 // files: the house's recordings live only on the brain.
 //
 // sfx(ctx, name) plays one through the AudioContext the page passes
@@ -74,9 +74,9 @@ function tone(ctx, hz, t, ring, peak) {
   o.start(t); o.stop(t + ring + 0.05)
 }
 
-// Knock It Off the Table: the thing scraping off the edge (the catwalk's
+// Knock It Off the Table: the thing scraping off the edge (a
 // record scratch, noise swept from 2400 down to 300 Hz over 0.35 s) and the
-// thud as it lands (the catwalk's kick, 140 down to 42 Hz). Returns when both
+// thud as it lands (a kick, 140 down to 42 Hz). Returns when both
 // are over.
 const SCRAPE = 0.35
 function knock(ctx, t) {

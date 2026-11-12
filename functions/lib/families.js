@@ -8,8 +8,8 @@
 //         the four cats they visit privately name only those two (or the one
 //         the news took), at each cat's rung (handoff 23 Oct §10.4), so no
 //         guest alone can name the real family before supper (G45).
-//  Act 4  Zimothy's memory match and Boo's catwalk each cross one wrong
-//         motive off a group's list.
+//  Act 4  Zimothy's memory match crosses one wrong motive off a group's
+//         list (the Entryway crosses nothing off since 29 Oct 2026).
 //  Act 5  Sir Irwin's countdown: five motive cards at dial 1 down to one at
 //         dial 5; the real one is always among them (22 Oct 2026).
 //
@@ -24,7 +24,7 @@
 //   newsOut: [key]            the wrong families the Act 2 news flash rules out
 //   hints: { guestKey: [key, key] }  the two wrong families a guest's four cats may name (Act 2)
 //   memory: { groupId: n }    the motive the memory match crossed off for a group (Act 4)
-//   boo: { groupId: n }       the motive Boo's catwalk crossed off for a group (Act 4)
+//   boo: { groupId: n }       empty since 29 Oct 2026: the Entryway crosses nothing off (kept so an older case still reads)
 //   struck: [n]               the motives the Act 3 bulletin struck (screen.js)
 // }
 
@@ -135,8 +135,9 @@ export function familyForCat(families, { cat, seed = '' } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Act 4's cross-offs: Zimothy's memory match and Boo's catwalk each take one
-// wrong motive off a group's list (tag 'memory' or 'boo'), never the same one
+// Act 4's cross-off: Zimothy's memory match takes one wrong motive off a
+// group's list (tag 'memory'; the tag 'boo' is the Entryway's old one, which
+// nothing deals since 29 Oct 2026), never the same one
 // for two groups, never the real one (G51).
 // It is one the group might still have: not in a family the news or a
 // member's hint ruled out, not struck by the bulletin, not crossed off for

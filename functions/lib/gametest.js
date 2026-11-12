@@ -14,8 +14,8 @@
 //     done     Jon pressed Stop
 //     attempt never goes back to 0, not even when the practice is opened
 //     again: a phone that stayed on the page counts its reports by attempt.
-//   (Boo's Catwalk practice, boo-start and boo-stop, went with the Catwalk, 5 Nov 2026:
-//   Miss Boo LaRue's Arcade practises on its own page, ?kiosk=boo&play=1.)
+//   (Miss Boo LaRue's Arcade practises on its own page, ?kiosk=boo&play=1;
+//   the commands boo-start and boo-stop went on 5 Nov 2026.)
 //
 //   salem-open, salem-stop                        the admin only
 //   salem-join { name }, clock                    any signed-in phone
