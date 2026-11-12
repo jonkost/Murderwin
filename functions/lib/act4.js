@@ -442,8 +442,8 @@ async function rewardOf(db, nightId, gid, room, { outcome = 'done' } = {}) {
     bag = { text: fill.text, placeholder: false }
     await db.doc(`cases/${nightId}`).update({ [`bagClues.act4.${gid}.${cat}`]: { rung, word: fill.word ?? null, sense: fill.sense ?? null, right: fill.right ?? null } })
   }
-  // the cross-off (Zimothy's match): always paid, whatever the affection. Boo's went with her
-  // Catwalk (Jon, 29 Oct 2026): the arcade pays a clue about the Ghost, no motive
+  // the cross-off (Zimothy's match): always paid, whatever the affection. The Entryway crosses
+  // nothing off (Jon, 29 Oct 2026): the arcade pays a clue about the Ghost, no motive
   let cross = null
   if (room === 'library') cross = await crossOff(db, nightId, gid, 'memory', members)
   const said = ui[`REWARD ${room.toUpperCase()} ${outcome === 'done' ? 'DONE' : 'CAPPED'}`] ?? REWARD_LINES[room][outcome === 'done' ? 'done' : 'capped']
@@ -779,8 +779,7 @@ export function salemColourAt(doc, now) {
 // game (arcadeClue, above), Boo's line for a trio's third, the winner, free
 // play, and the chime at the round's end, which the cap pays (payRound:
 // every member's card, a phone that has its card already unchanged). Each
-// counted round's score comes to arcade.js recordArcadeScore. Boo's Catwalk,
-// the three poses, went with the projector (29 Oct 2026).
+// counted round's score comes to arcade.js recordArcadeScore.
 //
 // public/boo { groupId, state: idle | visit, startsAt, slotEndsAt, act4Round, at }
 //   slotEndsAt is the round's end, when the Mac rings the chime; a pause

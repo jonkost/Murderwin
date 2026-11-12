@@ -256,7 +256,7 @@ export function createMusic({ run = runOsascript, fake = false, log = () => {}, 
       if (fake) { log(`[music] would ${on ? 'add' : 'take'} ${name} ${on ? 'to' : 'out of'} the house music`); return }
       const r = await run(SCRIPTS.speaker, [on ? 'on' : 'off', String(name)])
       if (r === 'missing') log(`[music] no speaker called "${name}" in Music's AirPlay list; npm start -- --speakers lists them (cues/scenes.json, boo.speaker)`)
-      else log(on ? `[music] ${name} is back in the house music` : `[music] ${name} is out of the house music, for Boo's Catwalk`)
+      else log(on ? `[music] ${name} is back in the house music` : `[music] ${name} is out of the house music, for Susan's MacBook Pro`)
     })
   }
 

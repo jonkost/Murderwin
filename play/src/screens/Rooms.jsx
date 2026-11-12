@@ -16,7 +16,7 @@ import Spoken from './Spoken'
 //   ?kiosk=memory   Zimothy's memory match in three rounds, all fourteen traces
 //   ?kiosk=memory&play=1   the same game on its own, no case, no clues
 //   ?kiosk=boo      the Entryway: Miss Boo LaRue's Arcade on Susan's MacBook Pro and the
-//                   Stream Deck + XL (BooRoom, 5 Nov 2026; Boo's Catwalk until then)
+//                   Stream Deck + XL (BooRoom, 5 Nov 2026)
 // And on 25 Oct 2026, for Jon's cue list (docs/cue-list.md, DESIGN section 6):
 //   Idle and Loop   every idle screen's looping graphic, the crest until the file is in
 //   RoomCode        each room's cat code during Act 2's cat visits (cue 7)
@@ -520,7 +520,7 @@ export function FolderBack() {
 // ---- the Entryway: Miss Boo LaRue's Arcade (?kiosk=boo) ----------------------
 
 // Susan's MacBook Pro in the Entryway with the Stream Deck + XL (5 Nov 2026,
-// card 515; Boo's Catwalk, the three poses on the projector, went on 29 Oct).
+// card 515).
 // Outside Act 4 its loop; in Act 4 the rules card with Boo's line and the
 // room's code between groups, and the arcade itself (screens/Arcade.jsx, in
 // its night mode) while the group due here is at the deck: the house says
