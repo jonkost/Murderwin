@@ -8,7 +8,7 @@ import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
 import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
-  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER,
+  SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET,
   dialBand, irwinLines, dogFilter, castNames,
   checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
   screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS,
@@ -491,6 +491,27 @@ test('G53 on a party night bulletin 2 plays the real family\'s own line at the d
       assert.ok((await currentSound(db, nightId)).clips.includes(line.clip), `G53 motive ${m.n} dial ${dial}: its recording`)
     }
   }
+})
+
+test('G61 a news flash with no family to cross off: the house\'s plain words on the party night and on a practice night alike, and the Host tab is told; the house\'s note only with no case at all', async () => {
+  const news = { act: 2, beat: 'news', spec: { screen: 'news', sound: 'chime-news' }, now: 2_000_000 }
+  for (const rehearsal of [false, true]) {
+    const { db, nightId } = await party()
+    await hostCommand(db, { nightId, command: 'act', arg: 2, now: 1_000_000 }) // the case is dealt
+    const c = db.store.get(`cases/${nightId}`)
+    db.store.set(`cases/${nightId}`, { ...c, rehearsal, solving: { ...c.solving, newsOut: [] } }) // a hole: it never happens (the check G61)
+    await onBeat(db, nightId, news)
+    const doc = db.store.get(`nights/${nightId}/public/screen`)
+    assert.deepEqual(doc.lines, [NEWS.bulletin1.opening.text, NEWS_QUIET, NEWS.bulletin1.signoff.text], rehearsal ? 'a practice night' : 'the party night')
+    assert.ok(!doc.lines.some(l => /[()[\]]/.test(l)), 'never a note in brackets')
+    assert.deepEqual(db.store.get(`nights/${nightId}`).missingLines, { news: 1 }, 'the Host tab is told: a count, never which family')
+    assert.deepEqual((await currentSound(db, nightId)).clips, [NEWS.bulletin1.opening.clip, NEWS.bulletin1.signoff.clip], 'the opening and the sign-off play')
+  }
+  const { db, nightId } = await party()
+  await onBeat(db, nightId, news)
+  assert.equal(db.store.get(`cases/${nightId}`), undefined, 'no case at all')
+  assert.deepEqual(db.store.get(`nights/${nightId}/public/screen`).lines, [NEWS.bulletin1.opening.text, NEWS_FLASH_PLACEHOLDER, NEWS.bulletin1.signoff.text])
+  assert.equal(db.store.get(`nights/${nightId}`).missingLines, undefined)
 })
 
 test('F27 chime-phone plays at every "look at your phone" moment: supper, the Act 4 groups, every round and the call back to the Parlour, dessert, and the Act 6 Parlour Games', async () => {

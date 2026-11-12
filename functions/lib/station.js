@@ -51,10 +51,12 @@ export function makeGroups(keys, { apart = [], pickInt = randomInt, maxGroups = 
 // person. At level 3 the second option is never the Murderer's trace, so the
 // study never spoils the door. The station never sees any of it.
 export const STUDY_PLACEHOLDER = '(The study pays out the trace the victim left behind, when the three jewels are lit or the fifteen minutes are up.)'
-// On the party night a trace that is missing never shows that note (card
-// 529): the group reads the house's plain words (the question quietWords on
-// the board), and dealStudy tells the Host tab. Either way the card is marked
-// `none`. The checks make sure it never happens (G59).
+// A trace that is missing never shows that note (card 529), on the party
+// night or on a practice night (11 Nov 2026): the group reads the house's
+// plain words (the question quietWords on the board), and dealStudy tells the
+// Host tab. The note is only for no case at all, which cannot happen on a
+// night. Either way the card is marked `none`. The checks make sure it never
+// happens (G59).
 export const STUDY_QUIET = 'Nothing for you this time.'
 
 // The pay-out, worked out once per group: { level, trace, label } or, at level 3, { level, images }.
@@ -72,7 +74,7 @@ export async function studyReveal(db, { c, roster = {}, pick = randomInt }) {
 // 11 Nov 2026; the bracketed stand-in of 23 Oct is gone).
 export function studyClueCard(c, act, beat, reveal = null) {
   const base = { id: `${act}-${beat}-study-clue`, act, beat, kind: 'clue', title: 'From the Study' }
-  if (!reveal) return c && !c.rehearsal ? { ...base, text: STUDY_QUIET, placeholder: false, none: true } : { ...base, text: STUDY_PLACEHOLDER, placeholder: true, none: true }
+  if (!reveal) return c ? { ...base, text: STUDY_QUIET, placeholder: false, none: true } : { ...base, text: STUDY_PLACEHOLDER, placeholder: true, none: true }
   return { ...base, text: 'Something was left behind.', trace: reveal, placeholder: false }
 }
 

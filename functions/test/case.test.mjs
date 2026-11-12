@@ -276,10 +276,10 @@ test('F28 the same walk on a practice night: every hint is the cat\'s real line 
   // what each bag clue named is kept in the case on a practice night too (the rung stays put for the arcade)
   assert.equal(Object.keys(c.bagClues.act2).length, guests)
   assert.equal(Object.keys(c.bagClues.act4).length, 2, 'both groups')
-  // the Study's card carries the trace it is given; with none, the house's note (it never happens: G59)
+  // the Study's card carries the trace it is given; with none, the house's plain words (it never happens: G59)
   assert.equal(studyClueCard(c, 4, 'round1', { level: 4, trace: 'ink', label: null }).placeholder, false)
-  assert.equal(studyClueCard(c, 4, 'round1').placeholder, true)
-  // a case with no family for the guest carries the marked stand-in, and its card says so
+  assert.ok(studyClueCard(c, 4, 'round1').none === true && studyClueCard(c, 4, 'round1').placeholder === false)
+  // with no case at all a missing hint is the house's note, and its card says so
   const { hint } = hintLine(null, null, { cat: 'boo' })
   assert.equal(hint.text, HINT_PLACEHOLDER)
   const card = catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint })
@@ -288,22 +288,25 @@ test('F28 the same walk on a practice night: every hint is the cat\'s real line 
   assertNothingLeaked()
 })
 
-test('G59 a missing hint: the house\'s note on a rehearsal, the house\'s plain words on the party night, never a note; a hole in the bank counts as missing', () => {
+test('G59 a missing hint: the house\'s plain words on the party night and on a practice night alike, never a note about the game; a hole in the bank counts as missing', () => {
   const party = hintLine({ rehearsal: false, motive: 1 }, null, { cat: 'boo' })
   assert.deepEqual(party, { hint: { text: 'Miss Boo LaRue has nothing to tell you about the motive.', placeholder: false, none: true }, ruled: null })
   assert.equal(party.hint.text, HINT_QUIET.replace('[CAT]', CAT_NAMES.boo))
   assert.ok(!/[()[\]]/.test(party.hint.text), 'no note in brackets on the party night')
   assert.equal(catHintCard({ id: 'x', act: 2, beat: 'cat', cat: 'boo', hint: party.hint }).placeholder, false, 'a card the phone shows plain')
   for (const cat of ['granolia', 'salem', 'zimothy']) assert.equal(hintLine({ rehearsal: false }, null, { cat }).hint.text, `${CAT_NAMES[cat]} has nothing to tell you about the motive.`)
+  // a practice night plays for real (11 Nov 2026): the same plain words, the same card, as the party night
   const rehearsal = hintLine({ rehearsal: true, motive: 1 }, null, { cat: 'boo' })
-  assert.deepEqual(rehearsal.hint, { text: HINT_PLACEHOLDER, placeholder: true, none: true })
+  assert.deepEqual(rehearsal, party)
+  // only with no case at all (it cannot happen on a night) is it the house's note, marked as one
+  assert.deepEqual(hintLine(null, null, { cat: 'boo' }).hint, { text: HINT_PLACEHOLDER, placeholder: true, none: true })
   // a family the bank has no line for throws inside the cats' code: missing, not a crash
   const broken = hintLine({ rehearsal: false, motive: 1 }, 'no-such-family', { cat: 'salem', level: 2 })
   assert.equal(broken.hint.none, true)
   assert.equal(broken.ruled, null)
 })
 
-test('G59 a guest the case has no family for: on the party night all four cats say the house\'s plain words, on a rehearsal the note; the Host tab is told a count, and everyone else hears a real line', async () => {
+test('G59 a guest the case has no family for: on the party night and on a practice night all four cats say the house\'s plain words, never a note; the Host tab is told a count, and everyone else hears a real line', async () => {
   for (const partyNight of [true, false]) {
     const { db, nightId, uids } = await party({ partyNight })
     db.store.set('sealed/bags', { words: Object.fromEntries(Array.from({ length: 10 }, (_, i) => [String(i + 1), { [`(synthetic-${i % 4})`]: ['touch'], [`(synthetic-${4 + (i % 3)})`]: ['smell'] }])) })
@@ -320,17 +323,14 @@ test('G59 a guest the case has no family for: on the party night all four cats s
     await walkLights(db, nightId, { now })
     const jon = cards(db, uids.jon, 'testimony')
     assert.equal(jon.length, 4, 'all four cats still see him')
+    assert.equal(db.store.get(`cases/${nightId}`).rehearsal, !partyNight)
     for (const t of jon) {
+      // the same on both kinds of night (a practice night plays for real, 11 Nov 2026)
       assert.equal(t.hint.none, true)
-      if (partyNight) {
-        assert.equal(t.hint.text, `${CAT_NAMES[t.cat]} has nothing to tell you about the motive.`)
-        assert.equal(t.hint.placeholder, false)
-        assert.equal(t.placeholder, false)
-        assert.ok(!/[()[\]]/.test(t.hint.text), 'never a note in brackets')
-      } else {
-        assert.equal(t.hint.text, HINT_PLACEHOLDER)
-        assert.equal(t.placeholder, true)
-      }
+      assert.equal(t.hint.text, `${CAT_NAMES[t.cat]} has nothing to tell you about the motive.`)
+      assert.equal(t.hint.placeholder, false)
+      assert.equal(t.placeholder, false)
+      assert.ok(!/[()[\]]/.test(t.hint.text), 'never a note in brackets')
     }
     for (const [name, uid] of Object.entries(uids)) {
       if (name === 'jon') continue

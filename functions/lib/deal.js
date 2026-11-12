@@ -291,22 +291,23 @@ export const SAVED_TEXT = 'Saved to your Clues.'
 // The note at supper for a guest with cats still unvisited (Jon called supper early).
 export const SUPPER_NOTE = { title: "Supper's ready!", text: "The cats you haven't met left you a note:", button: 'Read them' }
 
-// The motive hint and the bag clue on a cat's card. A case with no family for
-// the guest (or a cat with no line) carries this marked stand-in, which names
-// nothing. A practice night shows the cat's real line, from that night's own
-// throwaway case, exactly as the party night does (Jon, 11 Nov 2026: "I want
-// actual clues... I don't want the insert text"; the bracketed stand-ins of
-// 23 Oct are gone).
-// On the party night a missing line never shows the house's note (card 529):
-// the guest reads the house's plain words, HINT_QUIET (the question
-// quietWords on the board), and greetGuest tells the Host tab. Either way the
-// hint is marked `none`. The checks make sure it never happens (G59).
+// The motive hint and the bag clue on a cat's card. A practice night shows
+// the cat's real line, from that night's own throwaway case, exactly as the
+// party night does (Jon, 11 Nov 2026: "I want actual clues... I don't want
+// the insert text"; the bracketed stand-ins of 23 Oct are gone).
+// A missing line (a case with no family for the guest, or a cat with no line)
+// never shows a note about the game (card 529), on the party night or on a
+// practice night: the guest reads the house's plain words, HINT_QUIET (the
+// question quietWords on the board), and greetGuest tells the Host tab. Only
+// with no case at all (it cannot happen on a night) is it the house's note,
+// HINT_PLACEHOLDER. Either way the hint is marked `none`. The checks make
+// sure it never happens (G59).
 export const HINT_PLACEHOLDER = '(Here the cat would rule something out.)'
 export const HINT_QUIET = '[CAT] has nothing to tell you about the motive.'
 export function hintLine(c, family, { cat = null, level = 3, act = 2, seed = '', exclude = [], bonusFamilies = null } = {}) {
   let line = null
   try { line = family && cat ? catHintLine(c, { cat, level, act, family, seed, exclude, bonusFamilies }) : null } catch { line = null } // a hole in the bank is a missing line
-  if (!line?.text) return { hint: c && !c.rehearsal ? { text: HINT_QUIET.replace('[CAT]', CAT_NAMES[cat] ?? 'The cat'), placeholder: false, none: true } : { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
+  if (!line?.text) return { hint: c ? { text: HINT_QUIET.replace('[CAT]', CAT_NAMES[cat] ?? 'The cat'), placeholder: false, none: true } : { text: HINT_PLACEHOLDER, placeholder: true, none: true }, ruled: null }
   return { hint: { text: line.text, placeholder: false }, ruled: { families: line.families, motives: line.motives } }
 }
 

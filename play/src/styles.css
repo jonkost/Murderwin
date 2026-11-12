@@ -859,7 +859,6 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk.video-screen { background: #000; padding: 0; gap: 0; }
 .bulletin-video { width: 100vw; max-height: calc(88vh - var(--band-h)); background: #000; }
 .video-caption { margin: 0; padding: 1vh 4vw; font-size: min(2.6vw, 3.6vh); text-align: center; }
-.trace-standin { color: var(--dim); font-style: italic; }
 
 /* the memory match's three boards (6, 10 and 14 pairs: 4 by 3, 5 by 4, 7 by 4) fit any screen, the band included
    (26 Oct 2026): the screen is exactly one screen high, the fit box takes what Zimothy's words leave, and the

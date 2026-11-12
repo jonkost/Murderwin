@@ -194,8 +194,10 @@ test('G59 a cat\'s hint or the Study\'s trace that never came: the Host tab says
   const party = { ...NIGHT, forceRehearsal: false }
   assert.equal(missingLineWords({ ...party, missingLines: { hint: 1 } }), 'A cat had no motive hint ready for a guest once. The guests read plain words instead. Nothing to do: the game goes on.')
   assert.equal(missingLineWords({ ...party, missingLines: { hint: 2, study: 3 } }), 'A cat had no motive hint ready for a guest twice. The Study had no trace ready for a group 3 times. The guests read plain words instead. Nothing to do: the game goes on.')
-  assert.match(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { study: 1 } }), /^The Study had no trace ready for a group once\. On a rehearsal the card shows the note in brackets\./)
-  assert.match(missingLineWords({ ...NIGHT, missingLines: { study: 1 } }), /On a rehearsal/, 'a night that is not marked the party is a rehearsal')
+  // a practice night plays for real (11 Nov 2026): the guests read the same plain words there, so the Host tab says the same
+  assert.equal(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { study: 1 } }), 'The Study had no trace ready for a group once. The guests read plain words instead. Nothing to do: the game goes on.')
+  assert.equal(missingLineWords({ ...NIGHT, missingLines: { study: 1 } }), missingLineWords({ ...party, missingLines: { study: 1 } }), 'the same words on every kind of night')
+  assert.ok(!/rehearsal|bracket/i.test(missingLineWords({ ...NIGHT, forceRehearsal: true, missingLines: { hint: 1, study: 1, news: 1 } })), 'no note in brackets to speak of any more')
   // counts only: no cat, guest or group in the words, whatever else the doc carries
   const words = missingLineWords({ ...party, missingLines: { hint: 1, study: 1, jon: 5, boo: 2 } })
   for (const name of ['Boo', 'Salem', 'Zimothy', 'Granolia', 'Jon', 'Jessa', 'g1', '5']) assert.ok(!words.includes(name), name)

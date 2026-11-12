@@ -701,14 +701,14 @@ links to it.
   no motive hint for a guest or the Study no trace for a group. For example:
   "A cat had no motive hint ready for a guest once. The guests read plain
   words instead. Nothing to do: the game goes on." It says how many times,
-  never which cat, guest or group. On the party night the guest read the
-  house's own plain words in its place, never a note about the game: "Miss
-  Boo LaRue has nothing to tell you about the motive." (with that cat's
-  name), or from the Study, "Nothing for you this time." On a rehearsal the
-  card shows the note in brackets instead, marked Rehearsal text. The checks
-  prove it should never happen (G59); if you see it on a rehearsal, tell
-  Claude Code. Which words the guests read is yours to choose: the question
-  *quietWords* on the board.
+  never which cat, guest or group. The guest read the house's own plain
+  words in its place, never a note about the game: "Miss Boo LaRue has
+  nothing to tell you about the motive." (with that cat's name), or from the
+  Study, "Nothing for you this time." A practice night shows the same plain
+  words (since 11 November; before that it showed a note in brackets). The
+  checks prove it should never happen (G59); if you see it on a practice
+  night, tell Claude Code. Which words the guests read is yours to choose:
+  the question *quietWords* on the board.
 
 ## What each screen shows
 
@@ -732,10 +732,12 @@ the question *promptScreen* on the board lets you choose). While the night is
 paused the Parlour TV and the iPad go near-black with "One moment"; the other
 room screens stay as they are, and the Study's clock stands still. The phones
 say where to look.
-On a
-rehearsal night the Host tab says "This night is a rehearsal", and every
-slot that would show a secret shows a stand-in in square brackets instead;
-on the party night the Host tab says "This is the party night" and the stand-ins are gone.
+A practice night looks like the party night on every screen (11 November):
+real clues, real hints and real reveals, from that night's own throwaway
+case, with no note in square brackets and no word Rehearsal on any room
+screen. The one place that says which night it is: the top of the Host tab,
+"This night is a rehearsal" or "This is the party night". Check that line
+before the guests arrive on Sunday.
 
 ## When something dies
 
@@ -809,10 +811,28 @@ says so, ask Claude Code.
   page.
 
 A night started on the real game with the party box unticked is a rehearsal
-too: a throwaway case, a stand-in in square brackets wherever a secret would
-show (the cats' hints, the bag clues, the cross-offs, the trace, the news
-line), stand-in drawing pictures, and "This night is a rehearsal" on the Host
-tab.
+too: a practice night. It deals its own throwaway case and plays it for real
+(your word of 11 November: "I want actual clues. I want actual hints, I want
+actual reveals. I don't want the insert text."):
+
+- every cat's real motive hint and bag clue, for that night's case;
+- both W-O-O-F News bulletins whole, with all three recordings each;
+- Sir Irwin's real motive cards, Zimothy's real cross-off (with Cross it off
+  on the phone), and the trace as a picture in the Study and behind the
+  bedroom door;
+- Boo's real line on the arcade's screen.
+
+What it shows is true only for that practice night. Sunday is dealt fresh,
+and nothing from a practice carries over. A practice night reads nothing of
+Sunday's secrets: not the real packing (not even its count of bags), not the
+cats' leans, not the real drawing pictures. Its bag clues name real clue
+words from ten practice bags the game packs in memory from your item list,
+so no real bag matches a practice clue. The drawing's pictures are still
+stand-ins on a practice night for now: its practice pictures are a separate
+job. The Host tab says "This night is a rehearsal".
+
+Cards are dealt once. A practice night that was already running when this
+was published keeps the cards it had, so start a fresh one.
 
 *Playing a rehearsal again.* Every rehearsal is dealt from a seed word,
 like tulip-4471. The Game night page's "Play a rehearsal again" lists the
@@ -964,7 +984,8 @@ page have no night at all: nothing is paid and no clue is dealt.
   has gone, so the coins left are the games left; fifty seconds a game (the last one shorter when time runs
   short); each player's
   clue on the screen once all five of their games are played (31 October;
-  in practice, a line in square brackets), Boo's line instead for a trio's
+  on this practice page, which has no night behind it, a line in square
+  brackets; on a night, a practice night too, Boo's real line), Boo's line instead for a trio's
   third player, Boo's winner (the keys 1, 2 and 3 put each player's five
   scores up; it stays until you tap the touch strip), then free play until
   the chime fifteen minutes in, when Boo
@@ -1294,8 +1315,17 @@ reads the leans (`sealed/parlour_leans`, into `parlourPlan`), the packing
 (`sealed/relay_pictures`), and the run prints `Party secrets used` with
 counts only (lean sets, packed bags cards, rounds from the bank of 3).
 Without `--real-secrets` the case is a rehearsal (`Case: rehearsal`) and reads
-none of them; `createNight` reads `sealed/bags` on every night, for the bag
-count only. Without `--live` it uses the emulator (`--emulator`) or an
+none of them, and nothing else under `sealed/` (since 11 Nov `createNight`
+reads `sealed/bags` for the bag count on the party night and its dry run
+only; a practice night deals ten bag numbers of its own). Its bag clues are
+filled from a practice packing made in memory (`functions/lib/bags.js`
+`packingFor` decides which packing a night reads; `practicePacking` makes
+one from `seed/bag-items.json` with the packer's rules copied into
+`functions/lib/packing.js`, keyed on the case's `screenSalt`). The run also
+prints `Real lines (F28)`: the count of strings with a square bracket in
+every phone's session, the night doc and the public docs, at eight looks
+(it must be none), and `Bag clues`: how many bag lines named a clue word.
+Without `--live` it uses the emulator (`--emulator`) or an
 in-memory stand-in for Firestore (the default, no services at all).
 
 *The Game test tab* (24 Oct). `app/src/pages/GameTest.jsx` at

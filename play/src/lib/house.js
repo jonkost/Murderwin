@@ -61,9 +61,9 @@ export function catVisits(night) {
 // A cat's motive hint, the Study's trace or the news flash's family that was
 // missing when it was dealt (cards 529 and 530): night.missingLines =
 // { hint, study, news }, written by the server, a count of each. Never which
-// cat, guest, group or family. On the party
-// night the guest read the house's plain words; on a rehearsal, the note in
-// brackets with its Rehearsal text tag.
+// cat, guest, group or family. The guest read the house's plain words, on the
+// party night and on a practice night alike (11 Nov 2026: a practice night
+// plays for real; until then a rehearsal showed a note in brackets).
 export function missingLineWords(night) {
   const count = k => Math.max(0, Math.floor(Number(night?.missingLines?.[k]) || 0))
   const times = n => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`)
@@ -72,8 +72,7 @@ export function missingLineWords(night) {
   if (count('study')) said.push(`The Study had no trace ready for a group ${times(count('study'))}.`)
   if (count('news')) said.push(`The news flash had no family to cross off ${times(count('news'))}.`)
   if (!said.length) return null
-  const party = night?.forceRehearsal === false
-  return `${said.join(' ')} ${party ? 'The guests read plain words instead.' : 'On a rehearsal the card shows the note in brackets.'} Nothing to do: the game goes on.`
+  return `${said.join(' ')} The guests read plain words instead. Nothing to do: the game goes on.`
 }
 
 function clock(msLeft) {
