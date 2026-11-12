@@ -219,7 +219,7 @@ function Group({ card, uid, nightId, notes, onDone }) {
       <p>{card.text}</p>
       {card.lockIn
         ? (locked
-          ? <p className="locked-in"><CatFace cat="irwin" name="Sir Irwin" /> <span>Locked in. Sir Irwin is wagging. The chime sends your group to its first room.</span></p>
+          ? <p className="locked-in"><CatFace cat="irwin" name="Sir Irwin" /> <span>Locked in. The chime sends your group to its first room.</span></p>
           : <button className="big" disabled={busy} onClick={lockIn}>Locked in</button>)
         : <button className="big" onClick={onDone}>Got it</button>}
     </section>

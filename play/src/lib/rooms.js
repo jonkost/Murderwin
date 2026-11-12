@@ -115,21 +115,21 @@ export function turnNames(rotation, groupId) {
 export const ALL_TRACES = [...new Set(characters.characters.map(c => c.trace).filter(Boolean))]
 export const ZIMOTHY_LINES = {
   rounds: [
-    'Disaster. My files are everywhere. Match the pairs.',
-    'The second drawer. Worse. He went through twice.',
+    'Disaster: my files are everywhere. Match the pairs.',
+    'The second drawer. He went through it twice.',
     "The whole cabinet. Do this and I'll strike a motive from your list.",
   ],
   cleared: 'Order. Restored.',
   standalone: 'Order restored.',
   // naming the winner at the end of the visit (28 Oct 2026): transactional, as ever
-  winner: "The sharpest clerk at the table. I'd hire you. Cheaply.",
+  winner: "The sharpest clerk at the table. I'd hire you, cheaply.",
   tie: "A tie. I'll split the credit and bill you both.",
 }
 // Salem on the Orangerie's screen, naming the steadiest at the end of the
 // visit (28 Oct 2026). His lines on the phones are SALEM_LINES (screens/Act4.jsx).
 export const SALEM_SCREEN_LINES = {
   winner: "That one barely trampled my lawn. Don't let it go to your head.",
-  tie: "A tie. Can't tell you lot apart. Never could.",
+  tie: "A tie. Can't tell you lot apart, never could.",
 }
 
 // ---- the just-for-fun winners (Jon, 28 Oct 2026) -------------------------------

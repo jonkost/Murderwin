@@ -1145,7 +1145,7 @@ function StudyWalls() {
         <svg viewBox={`-10 -10 ${lw + 20} ${lh + 20}`}>
           {LINE_BARS.map(([a, b], i) => <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} className="wall-bar" />)}
         </svg>
-        <figcaption><b>2.</b> The lines: after three patterns, note the colour and count the lit bars.</figcaption>
+        <figcaption><b>2.</b> The lines: after three patterns, note the color and count the lit bars.</figcaption>
       </figure>
     </div>
   )

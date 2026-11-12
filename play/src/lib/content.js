@@ -15,10 +15,10 @@ export const ACTS = {
 }
 
 export const CATS = [
-  { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'The birthday boy. Never lies. If Irwin and anyone disagree, Irwin is right.' },
+  { key: 'irwin', name: 'Sir Irwin', tag: 'the dog', blurb: 'Never lies. If Irwin and anyone disagree, Irwin is right.' },
   { key: 'granolia', name: 'Granolia Lickspittle', tag: 'taken in by the family when no one else would', blurb: 'Honest, and forgetful: what she tells you is true, though she may forget part of it.' },
   { key: 'boo', name: 'Miss Boo LaRue', tag: 'family friend and socialite', blurb: 'Guarded, not snobbish.' },
-  { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate and rationed. Openly transactional. Where money is involved, he shades it.' },
+  { key: 'zimothy', name: 'Zimothy Clawford, Esq.', tag: 'the old family solicitor', blurb: 'Accurate, rationed and openly transactional. Where money is involved, he shades it.' },
   { key: 'salem', name: 'Salem Crooknog', tag: 'the long-time groundskeeper', blurb: 'Confidently backwards more often than not.' },
 ]
 
