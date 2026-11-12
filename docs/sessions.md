@@ -21,7 +21,7 @@ and the Study's two walls with them) and House Default (the house back: the
 lights at set levels, the strings and the walls on at full). Neither has a
 HomePod in it.
 
-**What changed** (04e8635, the brain's own code: nothing to publish)
+**What changed** (04e8635 and e090e73, the brain's own code: nothing to publish)
 
 - The brain runs *Blackout* `shortcutLeadMs` before the dark mark (1500 to
   start, so about half a second after the press: a Home scene takes a second
@@ -41,6 +41,14 @@ HomePod in it.
 - Fake mode has a key, `b`, for a pretend press with its marks: the order
   was read there (the music's stop, Blackout, the dark's Hue scene and hall
   bulb, AfterBlackOut, the lights back).
+- Three reviewers tried to break it, then two more the follow-up (e090e73).
+  From them: a mistyped number in the blackout block can never switch the
+  whole sheet off (it is said and the usual value used); when a blackout is
+  called off just after Blackout went out, AfterBlackOut waits two and a
+  half seconds from it, so the two scenes do not race; Blackout is not
+  tried again after its moment (a scene still busy with its last run is
+  refused by Apple Home); the two run only in Act 1; the strings are not
+  asked for "off" when their dark is left to Blackout.
 - The guides (`docs/on-the-night.md`, `docs/cues-relay.md`), the board
   (card 592 done; card 582 reworded to the one Shortcut still missing; a
   note on card 585) and `CLAUDE.md`.
