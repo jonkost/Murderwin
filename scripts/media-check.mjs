@@ -19,6 +19,8 @@ import { dirname, join, resolve, extname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SOUND_IDS, REQUIRED_SOUND_IDS, CHIME_FALLBACK, CLIP_IDS, SOUND_EXTENSIONS } from '../cues/lib/cues.js'
 import { RULES_FILES, RULES_DIR, LENGTHS_JSON } from './rules-film.mjs'
+import { isStandIn, WEB_SOUND_DIR } from './web-sounds.mjs'
+import { VOICE_DIR } from './irwin-voice.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -105,7 +107,29 @@ export function rulesLines({ dir, files, own = false }) {
 
 const ls = dir => (existsSync(dir) ? readdirSync(dir).filter(f => { try { return statSync(join(dir, f)).isFile() } catch { return false } }) : null)
 
-export function report({ media, video, loops, household, rules = null, sizes = {} }) {
+// Which of the cue sounds in the media folder are still the stand-in tones (scripts/web-sounds.mjs isStandIn):
+// the brain counts them as in, but they are two-second tones, and since 12 Nov 2026 the screens and phones
+// make a fuller sound of their own for those. `bytesOf(file)` reads one file, or null.
+export function standIns(files, bytesOf) {
+  return SOUND_IDS.filter(id => {
+    const f = found(files ?? [], id, SOUND_EXTENSIONS)
+    if (!f) return false
+    try { const b = bytesOf(f); return !!b && isStandIn(id, b) } catch { return false }
+  })
+}
+// Sir Irwin's voice for the drawing's slides, and the loud copies of Jon's own cue sounds: both made by a
+// command, both not in git, both shipped with the site.
+export function madeLines({ voice, web }) {
+  const out = ['', '5. Made on this Mac, and shipped with the site']
+  const voices = (voice?.files ?? []).filter(f => /^irwin-(slide-\d|door)\.m4a$/.test(f)).length
+  out.push(`  Sir Irwin's voice for the drawing (npm run irwin-voice): ${voices} of 8 in.${voices < 8 ? ' A slide with no voice turns in silence, on time.' : ''}`)
+  const webs = (web?.files ?? []).filter(f => /\.mp3$/.test(f)).length
+  out.push(`  Your own cue sounds, made loud for the screens and phones (npm run web-sounds): ${webs} in. Every other cue is the house's own sound, made by the screens.`)
+  out.push('  Then: npm run deploy:site.')
+  return out
+}
+
+export function report({ media, video, loops, household, rules = null, sizes = {}, standIn = [], voice = null, web = null }) {
   const out = ['Where the media goes, and what is in.']
   out.push(...folderLines({
     title: '1. The sounds and the news recordings (the brain plays them)',
@@ -122,6 +146,7 @@ export function report({ media, video, loops, household, rules = null, sizes = {
     ],
     then: 'nothing to deploy. Restart the brain so it counts them. One second of silence at the start of each.',
   }))
+  if (standIn.length) out.push(`  Still stand-in tones, not real sounds: ${standIn.join(', ')}. Fine: the screens and phones make a fuller sound of their own for these.`)
   out.push(...folderLines({
     title: '2. The bulletin videos (the Parlour TV plays them)',
     where: video.dir,
@@ -144,25 +169,28 @@ export function report({ media, video, loops, household, rules = null, sizes = {
     files: loops.files,
     endings: ['mp4'],
     groups: [
-      { title: 'The five loops', ids: LOOPS, need: 'A screen with no loop shows its crest.' },
-      { title: 'The Orangerie loop (optional)', ids: OPTIONAL_LOOPS, need: 'Fine: the crest shows.' },
+      { title: 'The five loops', ids: LOOPS, need: 'Fine: a screen with no loop shows its room\'s splash, with its cat.' },
+      { title: 'The Orangerie loop (optional)', ids: OPTIONAL_LOOPS, need: 'Fine: Salem\'s splash shows.' },
     ],
     then: 'npm run deploy:site.',
   }))
   const big = Object.entries(sizes).filter(([, b]) => b > LOOP_MAX_BYTES).map(([f]) => f)
   if (big.length) out.push(`  Over 30 MB (slow to start on the house wifi): ${big.join(', ')}`)
   if (rules) out.push(...rulesLines(rules))
-  out.push('', '5. Sydney\'s photo (the end credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. His card shows his name only.'}`, '  Then: npm run deploy:site.')
-  out.push('', '6. Not files in this folder', '  The music: three playlists in the Music app on the brain (Murderwin · Jazz, Intense, Credits) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
+  if (voice || web) out.push(...madeLines({ voice, web }))
+  out.push('', '6. Sydney\'s photo (the dedication in the credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. The dedication shows its words with no photo.'}`, '  Then: npm run deploy:site.')
+  out.push('', '7. Not files in this folder', '  The music: your music Shortcuts on the brain (Default Jazz, Default Jazz 20%, Intense Music 35% and 60%, the two game musics, and PANIC to stop it all) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
   return out
 }
 
 // Which deployed files the site has. A missing file answers with a web page, not a video.
-async function liveLines({ video, loops, household, rules }) {
+async function liveLines({ video, loops, household, rules, voice, web }) {
   const want = [
     ...(video.files ?? []).filter(f => f.endsWith('.mp4')).map(f => `video/${f}`),
     ...(loops.files ?? []).filter(f => f.endsWith('.mp4')).map(f => `loops/${f}`),
     ...(rules?.files ?? []).filter(f => /^rules-\d\d-.*\.(m4a|jpg)$/.test(f)).map(f => `rules/${f}`),
+    ...(voice?.files ?? []).filter(f => f.endsWith('.m4a')).map(f => `voice/${f}`),
+    ...(web?.files ?? []).filter(f => f.endsWith('.mp3')).map(f => `sound/${f}`),
     ...(household.there ? ['household/sydney.jpg'] : []),
   ]
   if (!want.length) return ['', 'On the site: nothing to look for yet.']
@@ -193,7 +221,10 @@ async function main() {
     loops: { dir: lDir, files: ls(lDir) },
     household: { file: syd, there: existsSync(syd) },
     rules: { dir: RULES_DIR, files: ls(RULES_DIR), own: ownSlides() },
+    voice: { dir: VOICE_DIR, files: ls(VOICE_DIR) },
+    web: { dir: WEB_SOUND_DIR, files: ls(WEB_SOUND_DIR) },
   }
+  state.standIn = standIns(state.media.files, f => readFileSync(join(mDir, f)))
   const sizes = Object.fromEntries((state.loops.files ?? []).map(f => [f, statSync(join(lDir, f)).size]))
   for (const line of report({ ...state, sizes })) console.log(line)
   if (process.argv.includes('--live')) for (const line of await liveLines(state)) console.log(line)

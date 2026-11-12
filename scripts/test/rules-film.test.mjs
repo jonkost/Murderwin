@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, utimesSync, readFileSync } from 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RULES_FILES, CUTS, cutPoint, findRecordings, findDeckPdf, slidePictures } from '../rules-film.mjs'
-import { rulesLines } from '../media-check.mjs'
+import { rulesLines, standIns, madeLines, report } from '../media-check.mjs'
 
 // The rules film's importer (handoff 11 Nov 2026, A14): pure parts only. Nothing here runs ffmpeg or plays a sound.
 
@@ -77,4 +77,21 @@ test('npm run media says whether the film shows Jon’s own slides or the drawn 
   // the pictures were copied in by hand and the film was never told
   assert.ok(rulesLines({ dir: '/r', files: [...voices, ...pictures], own: false }).join('\n').includes('Run npm run rules-film again.'))
   assert.ok(rulesLines({ dir: '/r', files: null }).join('\n').includes('does not exist yet'))
+})
+
+// Handoff 11 Nov 2026, Media: "npm run media counts the stand-in tones as in. Make it say stand-in."
+test('npm run media names the stand-in tones, Sir Irwin’s voice and the loud cue sounds, and no screen shows a crest any more', async () => {
+  const { samplesFor, wavBytes } = await import('../make-placeholder-sounds.mjs').catch(() => ({}))
+  // a file that is not a stand-in tone is never called one, whatever its name
+  assert.deepEqual(standIns(['blackout.wav', 'chime-phone.wav'], () => Buffer.from('not a tone')), [])
+  assert.deepEqual(standIns(null, () => null), [])
+  assert.deepEqual(standIns(['chime-phone.wav'], () => { throw new Error('unreadable') }), [], 'a file that cannot be read is left alone')
+  if (samplesFor && wavBytes) assert.deepEqual(standIns(['chime-phone.wav', 'blackout.wav'], f => (f === 'chime-phone.wav' ? wavBytes(samplesFor('chime-phone')) : Buffer.from('his own scream'))), ['chime-phone'])
+  const made = madeLines({ voice: { files: ['irwin-slide-1.m4a', 'irwin-door.m4a', 'README.md', '.made.json'] }, web: { files: ['blackout.mp3', 'README.md'] } }).join('\n')
+  assert.ok(made.includes('Sir Irwin\'s voice for the drawing (npm run irwin-voice): 2 of 8 in. A slide with no voice turns in silence, on time.'))
+  assert.ok(made.includes('(npm run web-sounds): 1 in.'))
+  const all = report({ media: { dir: '/m', files: [] }, video: { dir: '/v', files: [] }, loops: { dir: '/l', files: [] }, household: { file: '/s.jpg', there: true }, standIn: ['chime-news'], voice: { files: [] }, web: { files: [] } }).join('\n')
+  assert.ok(all.includes('Still stand-in tones, not real sounds: chime-news.'))
+  assert.ok(all.includes('a screen with no loop shows its room\'s splash, with its cat') && !/crest/.test(all), 'no screen shows a crest any more')
+  assert.ok(all.includes('6. Sydney\'s photo (the dedication in the credits)') && all.includes('PANIC to stop it all') && !/Credits\)/.test(all), 'the night ends on jazz: no credits playlist')
 })
