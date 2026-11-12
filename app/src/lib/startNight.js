@@ -31,6 +31,18 @@ export function startWords({ real = false, now = Date.now() } = {}) {
   }
 }
 
+// Fill-in players (A4, 11 Nov 2026): a practice night may seat 0 to 8 players
+// with no phone. The same rule as the phone's (play/src/lib/start.js): never
+// with the real-night box ticked, never from the party day on; the server
+// refuses a number on the real night too (functions/lib/run.js).
+export const MAX_FILL_INS = 8
+export const PARTY_DAY = Date.parse('2026-11-15T12:00:00Z')
+export function fillInsOffered({ real = false, now = Date.now() } = {}) { return !real && now < PARTY_DAY }
+export function fillInArg({ real = false, fillIns = 0, now = Date.now() } = {}) {
+  const n = Math.max(0, Math.min(MAX_FILL_INS, Math.floor(Number(fillIns)) || 0))
+  return fillInsOffered({ real, now }) && n > 0 ? { fillIns: n } : {}
+}
+
 // The night that is on now, in one line. `live` is { nightId, night } from the workshop's watcher (gameTestApi).
 export function liveLine(live) {
   if (!live) return 'Looking for the night…'

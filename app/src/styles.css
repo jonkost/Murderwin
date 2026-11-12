@@ -575,6 +575,8 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .start-panel { border-color: var(--accent); }
 .start-big { display: block; width: 100%; max-width: 28rem; min-height: 4.5rem; font-size: 1.5rem; font-weight: 700; border-radius: var(--r-panel); margin: 0.6rem 0; }
 .start-real { font-size: 1.1rem; }
+.start-fill { font-size: 1.1rem; display: flex; align-items: center; gap: 0.6rem; }
+.start-fill select { font-size: 1.1rem; min-height: 2.75rem; }
 .start-done { font-weight: 600; margin: 0.6rem 0 0; }
 .panel.more .panel.inner { border: 0; padding: 0; margin: 0.8rem 0 1.2rem; background: none; box-shadow: none; }
 
