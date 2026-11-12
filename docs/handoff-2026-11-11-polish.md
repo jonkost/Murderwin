@@ -8,7 +8,7 @@ From Claude chat, for Claude Code. Written 11 November 2026, late evening.
 - **B2, steps 1 and 3:** out. A splash has no inviting line and no tips (Jon's word rule of 12 Nov).
 - **A2:** the music can only be stopped once Jon makes a Shortcut called PANIC on the brain; the strings go dark in the blackout once he makes Off Murderwin Strings. The eight stand-in cue sounds are the house's own sounds made by the screens and phones, not files.
 - **A4:** fill-in players do not visit the cats; they are kept out of the cat line, so no cat ever waits on one. The server moves them, and the brain's relay only runs their clock.
-- **A7:** Sir Irwin's voice is the macOS voice Eddy (no Premium or Enhanced voice is installed). The practice bank of pictures is made (18, six a round); the party's bank is made after it.
+- **A7:** Sir Irwin's voice is the macOS voice Eddy (no Premium or Enhanced voice is installed). The practice bank of pictures is made (18, six a round), and so is the party's (12 Nov: 17, six, six and five a round; a night uses one a round, and nobody saw them).
 - **A11:** the file that opens Chrome by name is made by `npm run screen-files`, on the brain's Desktop, since a page sent from the phone cannot choose a browser.
 - **C1:** Special thanks shows nothing until Jon's lines are in `seed/credits.json`.
 
