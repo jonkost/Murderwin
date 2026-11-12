@@ -100,11 +100,17 @@ can hear the room disagree with itself.
 Big Solve*). It tells you nothing.
 
 **Sir Irwin's rules.** The TV shows Irwin's seven rules slides, one after another, on the
-server's clock. Each slide stays up long enough to read: about 5 seconds, plus 0.4 seconds a
-word. The longest slide (42 words) stays up about 22 seconds. All seven take about two
-minutes. Slide 3 ("A turn") shows one square of a smiley face, B1, beside its words, as his
-example. Slide 6 says *Three grids, each bigger than the last. Small, medium, BIG.* Nothing is
-recorded: anyone may read the slides aloud. Every guest's phone says *Be in the Parlour for the
+server's clock. Sir Irwin reads each one aloud from the TV's own speaker (11 November): one
+sound file a slide, made on the brain by `npm run irwin-voice` (the Mac's best English voice),
+or your own recording with the same name (`play/public/voice/README.md`). A slide stays up for
+its recording plus one second: all seven take about a minute and a quarter. A slide with no
+file stays up its old time, about 5 seconds plus 0.4 seconds a word, and is silent. The words
+always show on the screen, and they are the same list the voice is made from
+(`seed/irwin-lines.json`). The TV has sound only once that screen has been clicked (the Host
+tab says *Sound on*); a screen with no sound still turns its slides on time. His door line
+("Pawsome!") has a recording too, played as the door opens. Slide 3 ("A turn") shows one
+square of a smiley face, B1, beside its words, as his example. Slide 6 says *Three grids, each
+bigger than the last. Small, medium, BIG.* Every guest's phone says *Be in the Parlour for the
 final event. Eyes on the main screen.* (the cue list's cue 16, 25 Oct 2026); the two host phones
 keep their tabs through the slides, since Pause lives on the Host tab.
 
@@ -188,7 +194,7 @@ second option at level 3 is never the Ghost's trace here, and never the Murderer
 
 | | |
 |---|---|
-| Irwin's slides | About 5 s plus 0.4 s a word each: about 2 minutes for all seven. |
+| Irwin's slides | Each one his recording plus 1 s: about 1.2 minutes for all seven (with no recordings, about 5 s plus 0.4 s a word each: about 2 minutes). |
 | Turn | 15 s, fixed, whatever the grid (Jon, 25 October; was 10 s). |
 | Walk to the paper | Up to 20 s, a limit: the host's *At the paper* ends it the moment the drawer is there (25 October). The same 20 s at the start of each grid, to pull the paper down. |
 | Turns in total | Round 1 up to 9 + round 2 up to 11 + round 3 up to 13 = up to 33 (42 while there was a practice round). The server's budget allows 44. |
@@ -462,8 +468,21 @@ pages in front of an older server drop nobody out of the drawing; there the name
 server's ten seconds (`guessWaiting`). Take the word out of the clients after the party.
 
 **Irwin's slides.** `relay.IRWIN_SLIDES` (seven) are written to `public/relay.slides` at start.
-Each carries its own `ms` (`slideMs(text)` = `SLIDE_BASE_MS` 5 s + `SLIDE_WORD_MS` 0.4 s a
-word) and slide 3 carries `cell`, the public smiley's B1 (`relay-bank.PRACTICE.cells.B1`). `introEndsAt` is start plus `INTRO_MS`, the sum. The kiosk's `screen.slideAt(relay, now)` picks the slide showing; a doc
+Their words are `seed/irwin-lines.json` (copied to `functions/seed/` by `npm run seed`), read by
+`functions/lib/slide-voice.js`, which is also what `scripts/irwin-voice.mjs` speaks. Each slide
+carries `id` (`irwin-slide-1` to `-7`) and its own `ms` from `slide-voice.lineTiming`: with a
+recording, its length plus `VOICE_PAD_MS` (1 s), and `voice` (the id) and `voiceMs`; with none,
+`slideMs(text)` = `SLIDE_BASE_MS` 5 s + `SLIDE_WORD_MS` 0.4 s a word, and `voice: null`. The
+lengths are `seed/irwin-voice.json` (in git), written by `npm run irwin-voice` with a key of the
+words each file was made from (`wordsKey`): a length whose key no longer matches its slide's
+words counts as no recording, so the voice never says what the screen does not show. The TV
+(`screens/IrwinVoice.jsx`, `lib/irwinvoice.js`) plays `play/public/voice/<voice>.m4a` (not in
+git) as the slide shows, joining part-way after a reload; a refused play holds nothing, since
+the slide's time is the server's. `&mute=1` keeps it silent. The script never overwrites a file
+it did not make (its marker, `play/public/voice/.made.json`, holds a hash of each file it made),
+turns a `.wav`/`.mp3`/`.aif` of Jon's into the `.m4a`, and remakes its own file when the words
+change. The door slide carries the same fields, and the door's screen holds at least as long as
+its line (`functions/lib/screen.js`). Slide 3 carries `cell`, the public smiley's B1 (`relay-bank.PRACTICE.cells.B1`). `introEndsAt` is start plus `INTRO_MS`, the sum. The kiosk's `screen.slideAt(relay, now)` picks the slide showing; a doc
 with no per-slide `ms` falls back to `timing.slideMs`. `IRWIN_DOOR_SLIDE` is written as
 `doorSlide` when the last round is named; `screen.doorSlideOf` puts it on the TV above "The
 door is open" until the trace takes the screen.
@@ -584,5 +603,5 @@ drawing, Clear re-opens the door, and F29 (the fifteen-second turn, the twenty-s
 the 26-minute budget over 400 stand-in sets, and At the paper: it ends the walk now, is refused
 in every other state and while paused, and a pause shifts the walk).
 `play/test/relayhost.test.mjs` covers the host's controls, the words at a turn and at the guess,
-the buzz and the old `lockout` word on the clients. `scripts/test/generate-relay-pictures.test.mjs` covers the
+the buzz and the old `lockout` word on the clients. The voice (A7 step 3): `functions/test/a7-voice.test.mjs` (the words and the voice one list, the timeline with and without a recording, a stale length unused), `scripts/test/irwin-voice.test.mjs` (the voice picked, never overwriting a file the command did not make, the lengths written) and `play/test/a7-drawing.test.mjs` (where the voice starts, the TV never timed by its sound, the wins and the buzz, the words at a turn). `scripts/test/generate-relay-pictures.test.mjs` covers the
 command on a memory db with its stdout checked for content. Throwaway night, nothing persisted.

@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react'
 import { callRelayAdvance } from '../firebase'
 import { useTick, writeNotes } from '../lib/hooks'
 import { Cell, Figure } from '../lib/draw'
-import { isGuessing, guessLine, wrongPick } from '../lib/relayhost'
+import { isGuessing, guessLine, wrongPick, pictureNamed } from '../lib/relayhost'
+import { play as playSound } from '../lib/soundkit'
+import { celebrate } from '../lib/celebrate'
 import { Seal } from './Moments'
 import { HostRelayPanel } from './Host'
 
@@ -19,6 +21,9 @@ import { HostRelayPanel } from './Host'
 // is crossed off, the phone buzzes, and the room guesses again at once); the
 // words at a turn are "{Name} is drawing." and "Describe this square!", and
 // on the drawer's own phone "Draw what they say!".
+
+// Was this phone watching the room guess the last picture? Then the door card that follows plays the win.
+let watchedLastGuess = false
 
 // A server timestamp, a Date, or a plain millisecond number (the study station sends numbers).
 export function ms(t) {
@@ -76,10 +81,20 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
   const lastCrossed = useRef(crossedCount)
   useEffect(() => {
     if (wrongPick(lastCrossed.current, relay)) {
+      playSound('buzz')
       try { navigator.vibrate?.(250) } catch {}
     }
     lastCrossed.current = crossedCount
   }, [crossedCount, relay.lastResult])
+
+  // a picture named: a medium win on every phone (the TV has the big one). The last picture opens the
+  // door, and this screen gives way to the door card, which plays it (RelayDone, below).
+  const seenGrid = useRef(isGuessing(relay) ? relay.grid : 0)
+  useEffect(() => {
+    if (pictureNamed(seenGrid.current, relay)) celebrate('medium')
+    seenGrid.current = isGuessing(relay) ? relay.grid : relay.state === 'walk' ? 0 : seenGrid.current
+    watchedLastGuess = isGuessing(relay) && relay.grid >= (relay.gridCount ?? 3)
+  }, [relay.state, relay.grid, relay.lastResult])
 
   // Sir Irwin's slides on the TV (cue 16, 25 Oct 2026): every phone says to be in the Parlour
   if (relay.state === 'intro') {
@@ -164,6 +179,8 @@ export default function Relay({ uid, night, session, relay, serverNow, rules = n
 // The door is open: one line, a hide button, then the phone goes back to rest.
 export function RelayDone({ uid, relay, seenKey }) {
   const hide = () => writeNotes(uid, { seen: { [seenKey]: true } }).catch(() => {})
+  // the third picture named, seen live on this phone: a medium win (a phone that opens on the door stays quiet)
+  useEffect(() => { if (watchedLastGuess) { watchedLastGuess = false; celebrate('medium') } }, [])
   return (
     <div className="moment relay papered">
       <Seal />

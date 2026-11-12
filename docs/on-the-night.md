@@ -97,6 +97,11 @@ them.
   countdown and on the motive's card at the reveal. A motive with no
   picture shows its rhyme alone, so the game works with none, some or all
   of them. `npm run deploy` after adding them.
+- *Sir Irwin's voice for the drawing.* `npm run irwin-voice` on the brain
+  makes his eight lines (seven slides and the door) with the Mac's voice,
+  silently, into `play/public/voice/`. To use your own voice instead, save a
+  recording there with the same name and run it again; yours is never
+  replaced (`play/public/voice/README.md`). Then `npm run deploy`.
 - *Put the game live.* `npm run deploy`. This is the one line to run whenever
   Claude says a build is done. It builds the workshop and the phone client,
   refuses to go on if either came out empty, and then publishes the site, the
@@ -598,7 +603,9 @@ links to it.
   two Parlour Games, back to back. Wait until the second has
   ended on your own phone, then **Next** starts Sir Irwin Needs a Hand (the
   Relay Drawing; or **Start the drawing**). Sir Irwin explains it on the TV,
-  each slide up long enough to read (about two minutes in all), while every
+  reading each slide aloud from the TV's own speaker (about a minute and a
+  quarter in all; click the TV once before the night so the Host tab says
+  *Sound on*, or the slides turn silently on time), while every
   phone says to be in the Parlour for the final event and the brain switches
   the projector off for the drawing (its plug comes back on for the ballot);
   then three rounds, each grid bigger than the last. There is no practice
@@ -612,8 +619,9 @@ links to it.
   *Draw what they say!* When a grid is full
   the room agrees and tells you, and you tap the room's guess on your own
   phone: the four names, A to D (the TV's own names still take a tap, the
-  fallback, with the trackpad). A wrong one is crossed off with a buzz from
-  the TV, every screen says *Not that one. Guess again.*, and you tap the
+  fallback, with the trackpad). A right one is a big win on the TV and a
+  smaller one on every phone. A wrong one is crossed off with a buzz from
+  the TV and the phones, every screen says *Not that one. Guess again.*, and you tap the
   next guess straight away: there is no wait (11 November). While the drawing
   runs your phone shows it like everyone else's, with At the paper and the
   four names on it, so you never have to find the Host tab; Susan's phone has

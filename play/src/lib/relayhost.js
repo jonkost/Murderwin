@@ -57,6 +57,15 @@ export function wrongPick(seen, relay) {
   return (relay.crossed?.length ?? 0) > (Number(seen) || 0)
 }
 
+// Was a picture just named? `seen` is the grid this screen watched the room
+// guess (0 when it was not watching a guess). True when the next grid's walk
+// has started after a right pick: the moment for a phone's win. The last
+// picture opens the door instead (state `done`), which the door card plays.
+export function pictureNamed(seen, relay) {
+  const g = Number(seen) || 0
+  return g > 0 && relay?.state === 'walk' && relay.lastResult === 'right' && Number(relay.grid) > g
+}
+
 // What the host's phone says after a tapped guess, from the server's reply.
 // A right guess on the last grid opens the door; any other right guess calls
 // the next player. Nothing here can name a picture: the server only says

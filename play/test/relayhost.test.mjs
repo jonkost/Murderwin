@@ -57,8 +57,8 @@ test('A7 no wait after a wrong pick: the screens say Not that one. Guess again.,
   assert.ok(tv.length > 200, 'the TV\'s guess was found')
   assert.ok(!/Countdown|lockoutEndsAt/.test(tv), 'no countdown on the TV\'s guess')
   assert.match(tv, /guessLine\(relay, 'tv'\)/)
-  assert.match(kiosk, /else if \(wrongPick\(lastCrossed\.current, relay\)\) chime\('wrong'\)/, 'the TV buzzes as a pick is crossed off')
-  assert.match(relay, /if \(wrongPick\(lastCrossed\.current, relay\)\) \{\s*try \{ navigator\.vibrate/, 'and the phones buzz')
+  assert.match(kiosk, /else if \(wrongPick\(lastCrossed\.current, relay\)\) celebrate\('miss'/, 'the TV buzzes as a pick is crossed off')
+  assert.match(relay, /if \(wrongPick\(lastCrossed\.current, relay\)\) \{\s*playSound\('buzz'\)\s*try \{ navigator\.vibrate/, 'and the phones buzz')
 })
 
 test('A7 an older server\'s lockout is still read as the guess, so a publish of the pages alone drops nobody out of the drawing', () => {

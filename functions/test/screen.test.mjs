@@ -5,7 +5,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
 import { hostCommand, studyFinished, advanceRelay, guessRelay } from '../lib/run.js'
 import { beatsOf, beatSpec, traceLevel, ms, NIGHT } from '../lib/deal.js'
-import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS } from '../lib/relay.js'
+import { relayPaths, vote, advance, VOTE_MS, WALK_MS, TURN_MS, PULL_MS, IRWIN_DOOR_SLIDE } from '../lib/relay.js'
 import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET,
@@ -436,7 +436,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.equal(db.store.get(`nights/${nightId}/public/cues`)?.tvTrace, undefined)
   await next() // the door: the sting is not played twice
   assert.equal(screen().kind, 'door')
-  assert.equal(screen().holdMs, 10_000)
+  assert.equal(screen().holdMs, Math.max(10_000, IRWIN_DOOR_SLIDE.voice ? IRWIN_DOOR_SLIDE.ms : 0), 'ten seconds, or Sir Irwin\'s door line if that is longer')
   assert.deepEqual((await currentSound(db, nightId)).at, stingAt, 'soundOnce: the relay already played the door sting')
   await host('tv-trace')
   assert.equal(db.store.get(`nights/${nightId}/public/cues`).tvTrace, true)

@@ -396,17 +396,18 @@ test('start needs at least two people', async () => {
   await assert.rejects(start(db, { nightId }), e => e.code === 'invalid')
 })
 
-test('Sir Irwin\'s slides: each stays up five seconds plus 0.4 a word, in the order of the How to Play doc; slide 3 carries the public smiley\'s B1 square; slide 6 promises three grids and no practice', () => {
+test('Sir Irwin\'s slides: each stays up for its recording plus a second, or five seconds plus 0.4 a word with none, in the order of the How to Play doc; slide 3 carries the public smiley\'s B1 square; slide 6 promises three grids and no practice', () => {
   assert.deepEqual(IRWIN_SLIDES.map(s => s.title), ['Sir Irwin Needs a Hand', 'The idea', 'A turn', 'The shouting', 'Guessing', 'The rounds', 'The clue'])
   for (const s of IRWIN_SLIDES) {
     const words = s.text.trim().split(/\s+/).length
-    assert.equal(s.ms, SLIDE_BASE_MS + SLIDE_WORD_MS * words, s.title)
-    assert.equal(s.ms, slideMs(s.text))
+    // a voiced slide (lib/slide-voice.js, A7 step 3): its recording and one second; a silent one: the old rule
+    if (s.voice) assert.equal(s.ms, s.voiceMs + 1_000, s.title)
+    else { assert.equal(s.ms, SLIDE_BASE_MS + SLIDE_WORD_MS * words, s.title); assert.equal(s.ms, slideMs(s.text)) }
   }
   assert.equal(INTRO_MS, IRWIN_SLIDES.reduce((a, s) => a + s.ms, 0))
   const idea = IRWIN_SLIDES.find(s => s.title === 'The idea')
-  assert.ok(idea.ms >= 21_000 && idea.ms <= 23_000, 'the longest slide gets about 22 seconds')
-  assert.ok(INTRO_MS >= 100_000 && INTRO_MS <= 115_000, 'all seven take about 1.8 minutes')
+  assert.ok(idea.ms >= 8_000 && idea.ms <= 23_000, 'the longest slide gets about 15 to 22 seconds')
+  assert.ok(INTRO_MS >= 50_000 && INTRO_MS <= 115_000, 'all seven take one to two minutes')
   // slide 6, the rounds (Jon, 11 Nov 2026: no practice round)
   assert.equal(IRWIN_SLIDES[5].text, 'Three grids, each bigger than the last. Small, medium, BIG.')
   assert.ok(!IRWIN_SLIDES.some(s => /practice/i.test(s.text)), 'no slide promises a practice')

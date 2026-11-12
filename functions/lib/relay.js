@@ -39,6 +39,7 @@ import { generateSet, cellLabel } from './relay-gen.js'
 import { NightError, characterById, GAME_NAMES } from './night.js'
 import { relayGrids, BANK_DOC, PRACTICE } from './relay-bank.js'
 import { nightSeed, pickFor } from './seed.js'
+import { IRWIN_LINES, lineTiming } from './slide-voice.js'
 
 // Fifteen seconds a turn, whatever the grid (Jon, 25 Oct 2026, the cue list:
 // "really fun, but tricky" at ten). The walk is a limit of twenty seconds, not
@@ -48,33 +49,27 @@ export const WALK_MS = 20_000      // at most: the next drawer walks to the pape
 export const PULL_MS = 20_000      // at most: pull the paper down to the next grid, At the paper ends it sooner
 export const VOTE_MS = 45_000      // walk to look, then pick; closes early when all present are in
 // (No wait after a wrong pick since 11 Nov 2026: LOCKOUT_MS and the `lockout` state are gone.)
-// Each of Sir Irwin's rules slides stays up long enough to read aloud: five
-// seconds, and 0.4 of a second a word (the 42-word slide gets about 22 s, all
-// seven about 1.8 minutes). Nothing is recorded, so the room reads them.
-// Tune both in the weekend rehearsal.
-export const SLIDE_BASE_MS = 5_000
-export const SLIDE_WORD_MS = 400
-// Words the way the workshop and windows.wordCount count them (kept here so
-// this file needs nothing from windows.js, which imports it).
-const words = text => String(text ?? '').trim().split(/\s+/).filter(Boolean).length
-export function slideMs(text) { return SLIDE_BASE_MS + SLIDE_WORD_MS * words(text) }
+// Each of Sir Irwin's rules slides stays up for his recording plus one second
+// (11 Nov 2026, A7: one sound file a slide, made by npm run irwin-voice and
+// played by the Parlour TV); a slide with no recording keeps the old timing,
+// five seconds and 0.4 of a second a word, and is silent (lib/slide-voice.js).
+export { SLIDE_BASE_MS, SLIDE_WORD_MS, slideMs } from './slide-voice.js'
 // Sir Irwin's rules slides (the Relay Drawing How to Play doc): on the main
-// display after the Act 6 Parlour Games, then slide 8 when the door opens.
-// Slide 3 points at "this arc in B1": it carries the public smiley's B1
-// square (relay-bank.js PRACTICE) for the TV to draw beside the text.
-const SLIDE_TEXT = [
-  { title: GAME_NAMES.drawing?.name ?? 'Welcome', hook: GAME_NAMES.drawing?.hook ?? null, text: "Hi! Hi! It's me, Sir Irwin! I smelled something important behind the bedroom door, but it's shut. I don't do doorknobs. Will you help me?" },
-  { title: 'The idea', text: "The door has a lock with three secret pictures. It only opens when we name all three. I asked the cats. They're my best friends, and they said they'd help me. I think they're coming. But maybe you can help me too?" },
-  { title: 'A turn', text: 'First I call a name. That person goes to the Library and faces the paper. Only THEN does the screen show the square, like this arc in B1.', cell: { label: 'B1', strokes: PRACTICE.cells.B1 } },
-  { title: 'The shouting', text: "Everyone else stays here and tells them what to draw. Words only! No pointing. I can't point either, and I'm doing fine." },
-  { title: 'Guessing', text: "Think you know the picture? Pick it from the list. Wrong guesses get crossed off. That's okay. Boo crosses me off all the time. It's how she says hello." },
-  { title: 'The rounds', text: 'Three grids, each bigger than the last. Small, medium, BIG.' },
-  { title: 'The clue', text: "Name all three and the door opens. Then I'll sniff out whatever's in there and bring it straight to you. Helping is my favorite! Ready? Paws on the paper. Let's go!" },
-]
-// slides = [{ title, text, ms, cell? }]: the TV shows slide i from the sum of the earlier ms.
-export const IRWIN_SLIDES = SLIDE_TEXT.map(s => ({ ...s, ms: slideMs(s.text) }))
+// display after the Act 6 Parlour Games, then the door slide when the door
+// opens. The words are seed/irwin-lines.json, the same list his voice is made
+// from, so what he says is what the screen shows. Slide 1's title is the
+// game's name; slide 3 points at "this arc in B1": it carries the public
+// smiley's B1 square (relay-bank.js PRACTICE) for the TV to draw beside the text.
+const SLIDE_EXTRA = {
+  'irwin-slide-1': { title: GAME_NAMES.drawing?.name ?? 'Welcome', hook: GAME_NAMES.drawing?.hook ?? null },
+  'irwin-slide-3': { cell: { label: 'B1', strokes: PRACTICE.cells.B1 } },
+}
+const SLIDE_TEXT = IRWIN_LINES.slides.map(l => ({ id: l.id, title: l.title, ...SLIDE_EXTRA[l.id], text: l.text }))
+// slides = [{ id, title, text, ms, voice, voiceMs, cell? }]: the TV shows slide i from the sum of the
+// earlier ms, and plays play/public/voice/<voice>.m4a with it when voice is set (never for a silent one).
+export const IRWIN_SLIDES = SLIDE_TEXT.map(s => ({ ...s, ...lineTiming(s) }))
 export const INTRO_MS = IRWIN_SLIDES.reduce((sum, s) => sum + s.ms, 0)
-export const IRWIN_DOOR_SLIDE = { title: 'The door', text: "Pawsome! The light by the door went from dark gray to... lighter gray! I think that means it's open! I don't really do colors. Let's go in!" }
+export const IRWIN_DOOR_SLIDE = { id: IRWIN_LINES.door.id, title: IRWIN_LINES.door.title, text: IRWIN_LINES.door.text, ...lineTiming(IRWIN_LINES.door) }
 export const TIMING = { turnMs: TURN_MS, walkMs: WALK_MS, pullMs: PULL_MS, voteMs: VOTE_MS, introMs: INTRO_MS }
 
 // The time budget: the drawing itself (every turn plus the walk before it, at

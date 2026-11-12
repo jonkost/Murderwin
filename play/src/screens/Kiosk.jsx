@@ -19,6 +19,8 @@ import RulesFilm from './RulesFilm'
 import { SPLASHES, lookOn } from '../look/look'
 import { unlock as unlockSound, play as playSound, soundReady, audioContext } from '../lib/soundkit'
 import Spoken from './Spoken'
+import IrwinVoice from './IrwinVoice'
+import { celebrate } from '../lib/celebrate'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -288,11 +290,12 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
     if (!relay) return
     const key = `${relay.state}:${relay.turnIndex}:${relay.lastResult}:${relay.crossed?.length}`
     if (lastState.current && lastState.current !== key) {
-      if (relay.state === 'walk' && relay.lastResult === 'right') chime('right')
-      else if (wrongPick(lastCrossed.current, relay)) chime('wrong')
+      // a picture named is a big win (handoff B4); a wrong pick is crossed off with a buzz and a shake
+      if (relay.state === 'walk' && relay.lastResult === 'right') celebrate('big')
+      else if (wrongPick(lastCrossed.current, relay)) celebrate('miss', { at: document.querySelector('.kiosk-options') })
       else if (relay.state === 'walk') chime('end')
       else if (relay.state === 'turn') chime('start')
-      else if (relay.state === 'done') chime('right')
+      else if (relay.state === 'done') celebrate('big')
     }
     lastState.current = key
     lastCrossed.current = isGuessing(relay) ? (relay.crossed?.length ?? 0) : 0
@@ -349,7 +352,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   // for its own time. A slide with a square (slide 3: the practice smiley's
   // B1) draws it the way a turn does, dark, with its label beside the words.
   if (relay.state === 'intro') {
-    const { index, slide: s, count } = slideAt(relay, serverNow())
+    const { index, slide: s, count, into } = slideAt(relay, serverNow())
     return (
       <div className={`kiosk relay-slide${s?.cell ? ' with-cell' : ''}`}>
         <IrwinFace mood={5} />
@@ -364,6 +367,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
               </div>
             </div>
           : <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>)}
+        {s?.voice && !captionsOnly && <IrwinVoice key={`${ms(relay.startedAt)}:${index}`} id={s.voice} voiceMs={s.voiceMs} into={into} />}
       </div>
     )
   }
@@ -516,6 +520,7 @@ export function DoorScreen({ screen, cues, trace, relay = null, serverNow }) {
         <div className="door-slide">
           <IrwinFace mood={5} />
           <p className="kiosk-line slide-text"><Spoken text={slide.text} /></p>
+          {slide.voice && <IrwinVoice key={`door:${ms(relay.finishedAt)}`} id={slide.voice} voiceMs={slide.voiceMs} into={serverNow() - ms(relay.finishedAt)} />}
         </div>
       )}
       <p className="kiosk-crest">All three drawings named</p>

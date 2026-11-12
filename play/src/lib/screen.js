@@ -192,7 +192,7 @@ export function slideAt(relay, now) {
   let index = 0
   let from = 0
   while (index < slides.length - 1 && t >= from + lengths[index]) { from += lengths[index]; index++ }
-  return { index, slide: slides[index], count: slides.length }
+  return { index, slide: slides[index], count: slides.length, into: t - from } // into: ms into this slide, for its voice
 }
 
 // Three rules lines for the drawing, from the workshop's RELAY RULES line
