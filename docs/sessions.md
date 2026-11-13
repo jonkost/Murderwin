@@ -15,8 +15,43 @@ Jon: "Can we get voices reading for the pets. Do the plan/run of the game
 make sense? Does it seem fun. I'm worried I'll be too stressed to fully
 enjoy."
 
-**The pets' voices** (built and tested, the site only; switched off and kept
-off the site: it waits for his answer, the board's question *petVoices*)
+**Published, the site only, 12 Nov at about 10:47 pm** (353d519, on Jon's
+"Publish it all"; the fourth publish of the day; not pushed)
+
+- What went out: the Host tab's guards and the party-day warning, the
+  workshop's Game night cards and Devices page, the two lines for the host
+  to say, the board's new cards, all five pets' voices (834 MP3s; `goOut`
+  all; the question *petVoices* answered yes) with the Hear button and Sir
+  Irwin's dessert speech, and Sir Irwin's eight drawing lines in his new
+  voice.
+- "Slow it down" came with the publish and was taken as Sir Irwin, the one
+  voice at full pace: 0.82 now (his dessert lines run 1.7 to 3.6 words a
+  second). His drawing lines are at the same pace, slide 3 at 0.9, so that
+  every line ends at least 0.9 seconds before its slide moves on: the
+  server still holds the old lengths (`seed/irwin-voice.json` is unchanged
+  on purpose, so there was no server change). The eight old robotic files
+  are kept in `pet-voices/irwin-slides/old-robotic/`.
+- The steps: `hosting/` matched the live site before (297 of 297) and a
+  copy was kept; the site was built and checked; the 14 older page parts an
+  open room screen may still be running were put back; `firebase deploy
+  --only hosting`; and every one of the 1,136 files matched the live site
+  after (1,103 byte for byte, 33 large ones by size). The Study's code did
+  not change. A voice file that does not exist answers 404, which the page
+  takes as no voice. A browser keeps a voice file an hour at most, so no
+  screen can still hold an old robotic slide line by Sunday.
+- A third review, of the accent and the note-lowering steps (two readers,
+  then refuters): the accent reads back as the moved sounds on every one of
+  Sir Irwin's lines. Small fixes: a word touching a bracket keeps its plain
+  sounds; a number in digits is moved like a word; an accent's table is
+  never changed in place (a changed table gets a new name); a test holds the
+  two lists of accents together.
+- Not done: a push, the server, the rules. Not heard on a real phone or TV
+  by anyone: card 603 is Jon's. The press of Hear on a phone page was not
+  finished in the browser (Jon's message cut it short); the button showed
+  and its file loaded, and the tests cover the press.
+
+**The pets' voices** (built, tested and published that night; the board's
+question *petVoices* is answered: yes, all five)
 
 - Every line a pet can say comes from an open bank of templates, so every
   one can be made ahead. `scripts/pet-lines.mjs` lists every way each line
@@ -63,11 +98,11 @@ off the site: it waits for his answer, the board's question *petVoices*)
   chocolatey with a long a, Ew as "yew"). The card's words never change, and
   the file's name still comes from the card's words
   (`play/src/lib/petvoice.js`), the same way in the script and on the page.
-- Off until he says yes, by the folder and not by care: the files are made
-  into `pet-voices/`, which is no part of the site, so no publish can ship
-  them. `npm run pet-voices -- --on` copies them into the site's folder
-  (`--on irwin`: his only) and `--off` empties it. A test fails if a voice
-  file is left in the site's folder.
+- Off until he said yes, by the folder and not by care: the files are made
+  into `pet-voices/`, which is no part of the site, so no publish could
+  ship them by accident. `npm run pet-voices -- --on` copies them into the
+  site's folder (`--on irwin`: his only) and `--off` empties it. `goOut` in
+  the cast file holds his answer, and a test holds the site's folder to it.
 - On a phone (`play/src/screens/PetVoice.jsx`, `lib/voicekit.js`, through the
   page's one sound): every cat card has a Hear button, and the cat speaks
   when it is pressed. Speaking by itself at the cat's door was built first
