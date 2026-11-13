@@ -72,10 +72,12 @@ export function modelVoices(files) {
   return (files ?? []).filter(f => f.endsWith(end)).map(f => f.slice(0, -end.length)).sort()
 }
 
-// The voice each pet gets, its pace (1 is the voice's own) and its pitch (1
-// is the voice's own; above 1 is younger and smaller, below 1 bigger and
-// deeper): its own from the cast when the model on this Mac has it, else
-// nothing. A pet with no natural voice stays silent:
+// The voice each pet gets, its pace (1 is the voice's own), its pitch (1 is
+// the voice's own; above 1 is younger and smaller, below 1 bigger and
+// deeper) and, for a voice that is to be "low but like a child", how far its
+// note is brought down afterwards with its size kept (lower: 1 is not at
+// all, 0.7 is about six notes down): its own from the cast when the model on
+// this Mac has it, else nothing. A pet with no natural voice stays silent:
 // there is no robotic stand-in.
 export function castFor(file, have = []) {
   const out = {}
@@ -84,7 +86,7 @@ export function castFor(file, have = []) {
     // a voice may be a blend of two, "ff_siwis,af_bella": then the model must have each
     const parts = String(want.voice ?? '').split(',').map(v => v.trim()).filter(Boolean)
     const here = parts.length > 0 && parts.every(v => have.includes(v))
-    out[who] = { voice: here ? parts.join(',') : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, asked: want.voice ?? null }
+    out[who] = { voice: here ? parts.join(',') : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, lower: Number(want.lower) || 1, asked: want.voice ?? null }
   }
   return out
 }
@@ -118,10 +120,10 @@ export function saidFor(saidAs = {}, voice = '') {
 //   'make'    not there yet, not in the list (a run was stopped half way), or made from other words,
 //             another voice, pace or pitch, or the old robotic way
 //   'mute'    the model on this Mac has no voice for the pet
-export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1 }) {
+export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1, lower = 1 }) {
   if (!spoken) return 'silent'
   if (!voice) return exists ? 'keep' : 'mute'
-  if (exists && made && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch) return 'keep'
+  if (exists && made && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch && (made.lower ?? 1) === lower) return 'keep'
   return 'make'
 }
 
@@ -131,7 +133,7 @@ export function plan(lines, { cast, marker = {}, present = new Set(), only = nul
     const id = petVoiceId(l.who, l.text)
     const c = cast[l.who] ?? {}
     const spoken = forVoice(speakable(l.text, l.who), saidFor(saidAs, c.voice))
-    return { who: l.who, id, spoken, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, what: decide({ spoken, exists: present.has(id), made: marker[id] ?? null, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1 }) }
+    return { who: l.who, id, spoken, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1, what: decide({ spoken, exists: present.has(id), made: marker[id] ?? null, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1 }) }
   })
 }
 
@@ -279,9 +281,20 @@ async function tidyOne(row, from, dir) {
   const part = join(dir, `${row.id}${PART}`)
   const out = join(dir, `${row.id}${PET_VOICE_EXT}`)
   if (!existsSync(wav)) return false
+  // "low but like a child": the note is brought down and the voice's size kept (Rubber Band, a tool that is
+  // already on this Mac; with it missing, the line is not made rather than made wrong)
+  let from44 = wav
+  if (row.lower && row.lower !== 1) {
+    const even = join(from, `${row.id}.44.wav`)
+    const low = join(from, `${row.id}.low.wav`)
+    const a = await run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-ar', '44100', even])
+    const b = a.ok ? await run('rubberband', ['-q', '-3', '-F', '-f', String(row.lower), even, low]) : a
+    if (!b.ok || !existsSync(low)) return false
+    from44 = low
+  }
   const trim = 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05'
   const filters = [trim, 'areverse', trim, 'areverse', 'loudnorm=I=-16:TP=-1.5:LRA=11']
-  const made = await run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', wav, '-af', filters.join(','), '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', part])
+  const made = await run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', from44, '-af', filters.join(','), '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', part])
   const ok = made.ok && existsSync(part) && statSync(part).size > 1000
   try { if (ok) renameSync(part, out); else rmSync(part, { force: true }) } catch { return false }
   return ok
@@ -362,7 +375,7 @@ async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, 
   for (const who of PETS) {
     if (only && who !== only) continue
     const c = cast[who]
-    log(`${who}: ${c.voice ? `${c.voice}, pace ${c.speed}, pitch ${c.pitch}` : `no voice (${c.asked ?? 'none named'} is not in the model on this Mac)`}`)
+    log(`${who}: ${c.voice ? `${c.voice}, pace ${c.speed}, pitch ${c.pitch}${c.lower !== 1 ? `, note lowered to ${c.lower}` : ''}` : `no voice (${c.asked ?? 'none named'} is not in the model on this Mac)`}`)
   }
   const todo = rows.filter(r => r.what === 'make')
   if (dry) {
@@ -379,7 +392,7 @@ async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, 
       let saved = 0
       await pool(todo, async row => {
         const ok = await tidyOne(row, tmp, dir)
-        if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, by: ENGINE }
+        if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, lower: row.lower, by: ENGINE }
         else failed++
         // saved as it goes, so a run that is stopped has little to make again
         if (ok && ++saved % 25 === 0) writeFileSync(markerPath, `${JSON.stringify(marker)}\n`)
