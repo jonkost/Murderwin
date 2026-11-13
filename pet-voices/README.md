@@ -44,4 +44,35 @@ voice each number is. His picks are in `seed/pet-voices.json`.
 If the voices are on the site's folder, run `npm run pet-voices -- --on`
 again after any change, then publish: the site's folder is a copy.
 
+## Sir Irwin's drawing lines
+
+His eight lines for the drawing (seven slides, and one when the door opens)
+are in the same voice and at the same pace as his dessert speech, but they
+are not made by `npm run pet-voices`: they are made by hand, below. So when
+his pace or voice changes, they are made again too. `irwin-slides/` keeps
+them: `new/` is what is in the site's folder, `pace-0.82/` is the set that
+went out on 12 November, `old-robotic/` the first set, and `jobs.json` the
+list they were made from.
+
+Each line must end before its slide moves on. A slide stays up for the
+length the server knows (`seed/irwin-voice.json`) plus one second, so a new
+line must be no longer than that length. Slide 3 is the tight one: it
+cannot be slower than pace 0.9, so it stays there when his pace is slower.
+
+### For Claude Code
+
+- Do not run `npm run irwin-voice` for this. It would take the new files
+  for Jon's own recordings and write their lengths into
+  `seed/irwin-voice.json`, which the server reads: a change to the server.
+- Copy `irwin-slides/jobs.json`, set each job's `speed` to his pace and
+  `out` to a scratch folder, and run
+  `/usr/local/bin/python3 scripts/pet-voices-kokoro.py <jobs file>`.
+- Turn each WAV into the site's file with the same recipe as
+  `scripts/irwin-voice.mjs` (trim both ends, `loudnorm=I=-16:TP=-1.5:LRA=11`,
+  mono, 48 kHz, AAC 128k, `+faststart`), measure it with `ffprobe`, and
+  check it against its length in `seed/irwin-voice.json` plus one second,
+  with 0.9 seconds to spare.
+- Copy the files into `play/public/voice/` and `irwin-slides/new/`. They go
+  out with the next publish of the site.
+
 These files are not saved in git.
