@@ -28,8 +28,9 @@
 //
 // This command is silent: the model writes files and plays nothing. The
 // voices are in seed/pet-voices.json (one a pet: its voice, pace and pitch,
-// and a few respelled words). A pet whose voice, pace or pitch changed
-// there, or a line whose respelling changed, is made again.
+// where wanted lower and accent, and a few respelled words). A pet whose
+// voice, pace, pitch, lower or accent changed there, or a line whose
+// respelling changed, is made again.
 //
 // Every file named <pet>-<key>.mp3 in pet-voices/ is this command's own. The
 // list pet-voices/.made.json says how each was made; a file that is not in
@@ -56,7 +57,9 @@ export const PET_VOICE_SITE = join(root, 'play', 'public', 'voice', 'pets')   //
 export const CAST_JSON = join(root, 'seed', 'pet-voices.json')
 export const MARKER = '.made.json'
 export const LOCK = '.making'                                                 // holds the number of the run that is making them now
-export const ACCENTS = ['aussie', 'aussie-light']                             // accents the talker can give a voice (scripts/pet-voices-kokoro.py ACCENTS)
+// Accents the talker can give a voice (scripts/pet-voices-kokoro.py ACCENTS: the same names, a test holds
+// them together). Only the name is kept beside each made file, so a changed table gets a new name.
+export const ACCENTS = ['aussie', 'aussie-light']
 export const ENGINE = 'kokoro'                                                // the natural voice model; a file made any other way is an old robotic one
 const TALKER = join(here, 'pet-voices-kokoro.py')
 const MODEL_FOLDER = 'models--mlx-community--Kokoro-82M-bf16'
@@ -119,9 +122,10 @@ export function saidFor(saidAs = {}, voice = '', accent = null) {
 
 // What to do with one line's file.
 //   'silent'  the pet says nothing on this line (the house describes the cat)
-//   'keep'    there, and the list says it was made from these words, in this voice, at this pace and pitch
+//   'keep'    there, and the list says it was made from these words, in this voice, at this pace and pitch,
+//             with this lower and this accent
 //   'make'    not there yet, not in the list (a run was stopped half way), or made from other words,
-//             another voice, pace or pitch, or the old robotic way
+//             another voice, pace, pitch, lower or accent, or the old robotic way
 //   'mute'    the model on this Mac has no voice for the pet
 export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1, lower = 1, accent = null }) {
   if (!spoken) return 'silent'
@@ -378,6 +382,8 @@ async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, 
   for (const who of PETS) {
     if (only && who !== only) continue
     const c = cast[who]
+    const wanted = castFile.cast?.[who]?.accent
+    if (wanted && !c.accent) log(`${who}: the accent "${wanted}" is not one the talker knows, so none is used.`)
     log(`${who}: ${c.voice ? `${c.voice}, pace ${c.speed}, pitch ${c.pitch}${c.lower !== 1 ? `, note lowered to ${c.lower}` : ''}${c.accent ? `, accent ${c.accent}` : ''}` : `no voice (${c.asked ?? 'none named'} is not in the model on this Mac)`}`)
   }
   const todo = rows.filter(r => r.what === 'make')

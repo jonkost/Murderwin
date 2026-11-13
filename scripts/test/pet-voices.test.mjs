@@ -168,7 +168,8 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   assert.equal(castFor({ cast: { irwin: { voice: 'bm_daniel', accent: 'aussie' } } }, ['bm_daniel']).irwin.accent, 'aussie')
   assert.equal(castFor({ cast: { irwin: { voice: 'bm_daniel', accent: 'klingon' } } }, ['bm_daniel']).irwin.accent, null, 'an accent nobody built is no accent')
   const talkerSrc = read('../pet-voices-kokoro.py')
-  for (const a of ACCENTS) assert.ok(talkerSrc.includes(`"${a}": [`), `the talker knows ${a}`)
+  const talkerAccents = [...talkerSrc.matchAll(/^ {4}"([a-z-]+)": \[/gm)].map(m => m[1])
+  assert.deepEqual(talkerAccents.sort(), [...ACCENTS].sort(), 'the maker and the talker know the same accents, no more and no fewer')
   assert.deepEqual(saidFor({ all: { a: 'b' }, american: { c: 'd' }, british: { e: 'f' } }, 'am_puck', 'aussie'), { a: 'b', e: 'f' }, 'an Australian accent is built on the British reading, whatever the voice')
   assert.equal(castFor(file, [file.cast.zimothy.voice]).boo.voice, null, 'a pet whose voice the model lacks stays silent: there is no robotic stand-in')
   assert.equal(castFor(file, []).irwin.voice, null, 'and with no model on the Mac nobody speaks')
@@ -311,6 +312,7 @@ test('Jon\'s casting, chosen by ear from numbered auditions (12 Nov 2026), is he
   assert.deepEqual(cast.salem, { voice: 'bm_lewis', speed: 0.95, pitch: 1 }, 'Salem: a rough British man')
   assert.deepEqual(cast.zimothy, { voice: 'bm_george', speed: 0.88, pitch: 1 }, 'Zimothy: an old British man')
   // "Please give me young boy Aussie options. Forget the low and slow." and then "12 Irwin - 5"
-  assert.deepEqual(cast.irwin, { voice: 'bm_daniel', speed: 1, pitch: 1.3, accent: 'aussie-light' }, 'Sir Irwin: a young boy, with the lighter Australian accent')
+  // and with "Publish it all": "Slow it down" (taken as Sir Irwin, the one voice at full pace)
+  assert.deepEqual(cast.irwin, { voice: 'bm_daniel', speed: 0.82, pitch: 1.3, accent: 'aussie-light' }, 'Sir Irwin: a young boy, with the lighter Australian accent, slowed down')
   assert.equal(new Set(Object.values(cast).map(c => c.voice)).size, 5, 'five different voices')
 })

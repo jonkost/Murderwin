@@ -32,6 +32,9 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 MODEL = "mlx-community/Kokoro-82M-bf16"
 
 # The model's signs for the long vowels: A as in "day", I as in "my", Y as in "boy", W as in "now".
+# The maker remembers only an accent's NAME beside each file it made. So never change a table in place: give
+# the changed table a new name (and add the name to ACCENTS in scripts/pet-voices.mjs), or the files made
+# under the old table are kept as if nothing had changed. Jon chose "aussie-light" by ear on 12 Nov 2026.
 ACCENTS = {
     "aussie": [("A", "I"), ("I", "Y"), ("ɑː", "aː")],  # the broad shift, in sounds the model knows well
     "aussie-light": [("A", "æɪ"), ("I", "ɑɪ"), ("W", "æʊ"), ("ɑː", "aː")],  # the same shift, half way
@@ -59,11 +62,14 @@ def accented(text, rules, g2p):
     out = ""
     for k in tokens:
         sounds = k.phonemes
-        if sounds and any(c.isalpha() for c in k.text):
+        if sounds and any(c.isalnum() for c in k.text):
             new = shift(sounds, rules)
             if new.endswith("ə") and len(new) > 2:
                 new = new[:-1] + "ɐ"  # the open "-er" at the end of a word
-            out += f"[{k.text}](/{new}/)" if new != sounds else k.text
+            # a word that touches a bracket would break the [word](/sounds/) form and be read out as letters:
+            # such a word keeps its plain British sounds
+            plain = new == sounds or any(c in "[]()" for c in k.text + new)
+            out += k.text if plain else f"[{k.text}](/{new}/)"
         else:
             out += k.text
         out += k.whitespace or ""
