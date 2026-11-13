@@ -27,19 +27,21 @@
 // pet speaks and no Hear button shows.
 //
 // This command is silent: the model writes files and plays nothing. The
-// voices are in seed/pet-voices.json (one a pet, and how fast). A pet whose
-// voice or pace changed there has its files made again.
+// voices are in seed/pet-voices.json (one a pet: its voice, pace and pitch,
+// and a few respelled words). A pet whose voice, pace or pitch changed
+// there, or a line whose respelling changed, is made again.
 //
-// A file this command did not make is never touched (the marker,
-// pet-voices/.made.json, says which ones it made), so a recording of Jon's
-// own, saved under the same name, wins and stays.
+// Every file named <pet>-<key>.mp3 in pet-voices/ is this command's own. The
+// list pet-voices/.made.json says how each was made; a file that is not in
+// the list (a run was stopped half way) is simply made again. If the voices
+// are on the site's folder, run --on again after any change, then publish.
 //
 // Nothing sealed is read or made: every line here is from an open bank, and
 // which ones a night deals is the night's secret. For Sir Irwin's dessert
 // speech it reads the workshop's own words (the openers, closers and UI
 // lists: safe content), so the voice says what the screen will show. It
 // prints counts and names of pets and voices, never a line.
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync, copyFileSync, renameSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { tmpdir, homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -58,6 +60,9 @@ export const ENGINE = 'kokoro'                                                //
 const TALKER = join(here, 'pet-voices-kokoro.py')
 const MODEL_FOLDER = 'models--mlx-community--Kokoro-82M-bf16'
 const WORKERS = 6
+const TMP_PREFIX = 'pet-voices-run-'                                          // a run's working folder in the Mac's temporary folder
+const PART = `.part${PET_VOICE_EXT}`                                          // a file still being written: never under its final name
+const TALKERS = 2                                                             // the model runs twice side by side, half the lines each
 
 // ---- the pure parts (scripts/test/pet-voices.test.mjs) ----
 
@@ -76,14 +81,17 @@ export function castFor(file, have = []) {
   const out = {}
   for (const who of PETS) {
     const want = file?.cast?.[who] ?? {}
-    out[who] = { voice: have.includes(want.voice) ? want.voice : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, asked: want.voice ?? null }
+    // a voice may be a blend of two, "ff_siwis,af_bella": then the model must have each
+    const parts = String(want.voice ?? '').split(',').map(v => v.trim()).filter(Boolean)
+    const here = parts.length > 0 && parts.every(v => have.includes(v))
+    out[who] = { voice: here ? parts.join(',') : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, asked: want.voice ?? null }
   }
   return out
 }
 
 // The words as the voice is given them. A few words are spelled the way they
-// sound (seed/pet-voices.json saidAs), because the voice would read them
-// wrongly: "Hmph" letter by letter, for one. Whole words only, and a capital
+// sound (seed/pet-voices.json saidAs; saidFor picks the table for a voice),
+// because the voice would read them wrongly: "Hmph" letter by letter, for one. Whole words only, and a capital
 // stays a capital. The card's words never change: only what the voice is told.
 export function forVoice(spoken, saidAs = {}) {
   let out = String(spoken ?? '')
@@ -95,17 +103,25 @@ export function forVoice(spoken, saidAs = {}) {
   return out
 }
 
+// The respellings for one voice: the ones for every voice, and on top the
+// ones for its accent. (A British voice knows "chocolatey"; an American one
+// reads it with a long a unless it is spelled "chocolaty".) Voices whose
+// name starts with b are British, as in scripts/pet-voices-kokoro.py.
+export function saidFor(saidAs = {}, voice = '') {
+  const british = String(voice ?? '').startsWith('b')
+  return { ...(saidAs?.all ?? {}), ...((british ? saidAs?.british : saidAs?.american) ?? {}) }
+}
+
 // What to do with one line's file.
 //   'silent'  the pet says nothing on this line (the house describes the cat)
-//   'own'     a file is there that this command did not make: Jon's. Never touched.
-//   'keep'    made by this command, from these words, in this voice, at this pace and pitch
-//   'make'    not there yet, or made from other words, another voice or the old robotic way
+//   'keep'    there, and the list says it was made from these words, in this voice, at this pace and pitch
+//   'make'    not there yet, not in the list (a run was stopped half way), or made from other words,
+//             another voice, pace or pitch, or the old robotic way
 //   'mute'    the model on this Mac has no voice for the pet
 export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1 }) {
   if (!spoken) return 'silent'
-  if (exists && !made) return 'own'
   if (!voice) return exists ? 'keep' : 'mute'
-  if (exists && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch) return 'keep'
+  if (exists && made && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch) return 'keep'
   return 'make'
 }
 
@@ -113,8 +129,8 @@ export function decide({ spoken, exists, made = null, voice = null, speed = null
 export function plan(lines, { cast, marker = {}, present = new Set(), only = null, saidAs = {} } = {}) {
   return lines.filter(l => !only || l.who === only).map(l => {
     const id = petVoiceId(l.who, l.text)
-    const spoken = forVoice(speakable(l.text, l.who), saidAs)
     const c = cast[l.who] ?? {}
+    const spoken = forVoice(speakable(l.text, l.who), saidFor(saidAs, c.voice))
     return { who: l.who, id, spoken, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, what: decide({ spoken, exists: present.has(id), made: marker[id] ?? null, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1 }) }
   })
 }
@@ -127,18 +143,23 @@ export function robotic(marker) {
 
 // Which files go into the site's folder for these pets: every made file whose
 // name starts with one of their names. `have` is the store's file names.
+// Nothing else goes: not a file still being written, not a sample, not the list.
 export function forSite(have, pets = PETS) {
   const wanted = pets.filter(p => PETS.includes(p))
-  return have.filter(f => f.endsWith(PET_VOICE_EXT) && wanted.some(p => f.startsWith(`${p}-`))).sort()
+  if (!wanted.length) return []
+  const line = new RegExp(`^(${wanted.join('|')})-[0-9a-z]+\\${PET_VOICE_EXT}$`)
+  return (have ?? []).filter(f => line.test(f)).sort()
 }
 
 // What is on the site's folder now, in plain words: 'none', 'all five pets', or the pets by name.
-export function onSiteWords(siteFiles, storeFiles) {
-  const on = PETS.filter(p => siteFiles.some(f => f.startsWith(`${p}-`) && f.endsWith(PET_VOICE_EXT)))
+// `older`: some file there is not the same as the kept one (a voice was changed since --on).
+export function onSiteWords(siteFiles, storeFiles, { older = false } = {}) {
+  const on = PETS.filter(p => forSite(siteFiles, [p]).length > 0)
   if (!on.length) return 'none (the voices are off)'
   const whole = on.every(p => forSite(siteFiles, [p]).length === forSite(storeFiles, [p]).length)
   const names = on.length === PETS.length ? 'all five pets' : on.join(', ')
-  return whole ? names : `${names} (not every file: run --on again)`
+  if (!whole) return `${names} (not every file: run --on again)`
+  return older ? `${names} (older than the kept ones: run --on again)` : names
 }
 
 // Files this command made for lines nobody can say any more (words changed
@@ -149,24 +170,57 @@ export function stale(marker, rows) {
 }
 
 // Is another run making the voices now? (Two at once would each save the
-// list of what it made over the other's, and a file missing from that list
-// counts as Jon's own and is never made again.) `lockText` is what the lock
-// file holds; `alive` says whether a run with that number is still going.
+// list of what it made over the other's, and write the same files.)
+// `lockText` is what the lock file holds; `alive` says whether a run with
+// that number is still going.
 export function busyWith(lockText, alive, me) {
   const other = Number(String(lockText ?? '').trim())
   return Number.isInteger(other) && other > 0 && other !== me && alive(other) ? other : null
 }
 
-// Counts for the report: { who: { make, keep, own, silent, mute } }.
+// Counts for the report: { who: { make, keep, silent, mute } }.
 export function tally(rows) {
   const out = {}
-  for (const r of rows) { out[r.who] ??= { make: 0, keep: 0, own: 0, silent: 0, mute: 0 }; out[r.who][r.what]++ }
+  for (const r of rows) { out[r.who] ??= { make: 0, keep: 0, silent: 0, mute: 0 }; out[r.who][r.what]++ }
   return out
+}
+
+// What was asked for on the command line. `wrong` lists what was not
+// understood: then nothing is done (a mistyped pet's name after --on must
+// never mean "every pet").
+export function readArgs(args = []) {
+  const at = args.indexOf('--only')
+  const one = at >= 0 ? args[at + 1] ?? '' : null
+  const onAt = args.indexOf('--on')
+  const named = onAt >= 0 ? args.slice(onAt + 1).filter(a => !a.startsWith('--')) : []
+  return {
+    dry: args.includes('--dry'),
+    workshop: !args.includes('--no-workshop'),
+    off: args.includes('--off'),
+    on: onAt >= 0,
+    only: one && PETS.includes(one) ? one : null,
+    pets: named.length ? named.filter(a => PETS.includes(a)) : PETS,
+    wrong: [...(at >= 0 && !PETS.includes(one) ? [`--only ${one || '(no name)'}`] : []), ...named.filter(a => !PETS.includes(a))],
+  }
 }
 
 // ---- the Mac's parts ----
 
 const list = dir => { try { return readdirSync(dir) } catch { return [] } }
+const voiceFiles = dir => list(dir).filter(f => f.endsWith(PET_VOICE_EXT) && !f.endsWith(PART))
+const alive = pid => { try { process.kill(pid, 0); return true } catch { return false } }
+
+// The number of another run that is making the voices now, or null.
+function otherRun(dir) {
+  let text = ''
+  try { text = readFileSync(join(dir, LOCK), 'utf8') } catch { /* nobody is making them */ }
+  return busyWith(text, alive, process.pid)
+}
+
+// Is any voice file in the site's folder not the same as the kept one? (By size: a voice that changed is a file that changed.)
+function siteOlder(site, store) {
+  return voiceFiles(site).some(f => { try { return statSync(join(site, f)).size !== statSync(join(store, f)).size } catch { return true } })
+}
 
 // The voices of the model on this Mac (none when the model is not here).
 function voicesOnThisMac() {
@@ -183,13 +237,18 @@ const run = (bin, args) => new Promise(resolve => {
   p.on('close', code => resolve({ ok: code === 0, err }))
 })
 
-// The model says every line in one go, each into its own file in `dir`. It
-// plays nothing and downloads nothing. Resolves to why it could not, or null.
+// The model says every line, each into its own file in `dir`: two copies of
+// it side by side, half the lines each. It plays nothing and downloads
+// nothing. Resolves to why it could not, or null.
 function sayAll(rows, dir, log) {
-  const jobs = rows.map(r => ({ id: r.id, voice: r.voice, speed: r.speed, pitch: r.pitch, text: r.spoken, out: join(dir, `${r.id}.wav`) }))
-  const jobsPath = join(dir, 'jobs.json')
-  writeFileSync(jobsPath, JSON.stringify(jobs))
-  return new Promise(resolve => {
+  const chunks = Array.from({ length: Math.min(TALKERS, rows.length) }, () => [])
+  rows.forEach((r, i) => chunks[i % chunks.length].push(r))
+  const done = chunks.map(() => 0)
+  let told = 0
+  const one = (chunk, k) => new Promise(resolve => {
+    const jobs = chunk.map(r => ({ id: r.id, voice: r.voice, speed: r.speed, pitch: r.pitch, text: r.spoken, out: join(dir, `${r.id}.wav`) }))
+    const jobsPath = join(dir, `jobs-${k}.json`)
+    writeFileSync(jobsPath, JSON.stringify(jobs))
     const p = spawn(process.env.PET_VOICE_PYTHON || 'python3', [TALKER, jobsPath], { stdio: ['ignore', 'pipe', 'ignore'] })
     let buf = '', last = ''
     p.stdout.on('data', d => {
@@ -198,24 +257,34 @@ function sayAll(rows, dir, log) {
         const line = buf.slice(0, i).trim()
         buf = buf.slice(i + 1)
         const step = /^PROGRESS (\d+) of (\d+)$/.exec(line)
-        if (step && Number(step[1]) % 100 === 0) log(`  ${step[1]} of ${step[2]} said`)
+        if (step) {
+          done[k] = Number(step[1])
+          const hundreds = Math.floor(done.reduce((a, b) => a + b, 0) / 100)
+          if (hundreds > told) { told = hundreds; log(`  ${hundreds * 100} of ${rows.length} said`) }
+        }
         if (/^(DONE|NO-MODEL)\b/.test(line)) last = line
       }
     })
     p.on('error', () => resolve('python3 was not found'))
     p.on('close', () => resolve(last.startsWith('NO-MODEL') ? 'the voice model is not on this Mac' : last.startsWith('DONE') ? null : 'the voice model stopped early'))
   })
+  return Promise.all(chunks.map(one)).then(whys => whys.find(Boolean) ?? null)
 }
 
-// Trim the quiet at each end, even the loudness, and write a small MP3.
+// Trim the quiet at each end, even the loudness, and write a small MP3. It is
+// written beside its place and moved in only when it is whole, so a half
+// written file is never under a line's name.
 async function tidyOne(row, from, dir) {
   const wav = join(from, `${row.id}.wav`)
+  const part = join(dir, `${row.id}${PART}`)
   const out = join(dir, `${row.id}${PET_VOICE_EXT}`)
   if (!existsSync(wav)) return false
   const trim = 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05'
   const filters = [trim, 'areverse', trim, 'areverse', 'loudnorm=I=-16:TP=-1.5:LRA=11']
-  const made = await run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', wav, '-af', filters.join(','), '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', out])
-  return made.ok && existsSync(out) && statSync(out).size > 1000
+  const made = await run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', wav, '-af', filters.join(','), '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', part])
+  const ok = made.ok && existsSync(part) && statSync(part).size > 1000
+  try { if (ok) renameSync(part, out); else rmSync(part, { force: true }) } catch { return false }
+  return ok
 }
 
 async function pool(items, worker, size = WORKERS) {
@@ -229,9 +298,10 @@ async function pool(items, worker, size = WORKERS) {
 
 // The workshop's own words for Sir Irwin's dessert speech, when it has any
 // (safe content; the same lists the server reads at dessert, functions/lib/screen.js).
+// null when they could not be read: then no file is cleared away as out of date.
 async function workshopWords(log) {
   const key = join(root, 'scripts', 'service-account.json')
-  if (!existsSync(key)) { log('Sir Irwin: the game\'s own words (no way into the workshop from here).'); return {} }
+  if (!existsSync(key)) { log('Sir Irwin: the game\'s own words (no way into the workshop from here).'); return null }
   try {
     process.env.GOOGLE_APPLICATION_CREDENTIALS ??= key
     const { openDb } = await import('../functions/lib/connect.js')
@@ -246,7 +316,7 @@ async function workshopWords(log) {
     return words
   } catch (e) {
     log(`Sir Irwin: the game's own words (the workshop could not be read: ${e?.code ?? e?.name ?? 'error'}).`)
-    return {}
+    return null
   }
 }
 
@@ -255,34 +325,39 @@ export async function makePetVoices({ dir = PET_VOICE_DIR, dry = false, only = n
   const have = voicesOnThisMac()
   if (!have.length) log('The natural voice model is not on this Mac, so no voice can be made here.')
   const cast = castFor(castFile, have)
-  const lines = allPetLines({ workshop: workshop ? await workshopWords(log) : {} })
+  const words = workshop ? await workshopWords(log) : null // null: not read (not asked for, or it could not be)
+  const lines = allPetLines({ workshop: words ?? {} })
   mkdirSync(dir, { recursive: true })
   const markerPath = join(dir, MARKER)
   // one run at a time
-  const lockPath = join(dir, LOCK)
-  let lockText = ''
-  try { lockText = readFileSync(lockPath, 'utf8') } catch { /* nobody is making them */ }
-  const alive = pid => { try { process.kill(pid, 0); return true } catch { return false } }
-  if (!dry && busyWith(lockText, alive, process.pid)) {
+  if (!dry && otherRun(dir)) {
     log('Another run is making the voices right now. Wait for it to finish, then run this again.')
     return { rows: [], made: 0, failed: 0, busy: true }
   }
+  const lockPath = join(dir, LOCK)
   if (!dry) writeFileSync(lockPath, `${process.pid}\n`)
   try {
-    return await makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, markerPath })
+    // files for lines nobody can say any more are cleared only on a run that looked at every line:
+    // every pet, and the workshop's own words for Sir Irwin read
+    return await makeThem({ dir, dry, only, canClear: !only && words !== null, log, castFile, cast, lines, markerPath })
   } finally {
     if (!dry) { try { rmSync(lockPath, { force: true }) } catch { /* gone */ } }
   }
 }
 
-async function makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, markerPath }) {
+async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, markerPath }) {
   let marker = {}
   try { marker = JSON.parse(readFileSync(markerPath, 'utf8')) } catch { /* the first run */ }
+  // what a stopped run left behind: files still being written, and its working folder
+  if (!dry) {
+    for (const f of list(dir)) if (f.endsWith(PART)) { try { rmSync(join(dir, f), { force: true }) } catch { /* gone */ } }
+    for (const d of list(tmpdir())) if (d.startsWith(TMP_PREFIX)) { try { rmSync(join(tmpdir(), d), { recursive: true, force: true }) } catch { /* gone */ } }
+  }
   // the old robotic files go first, whatever else this run does
   const old = dry ? [] : robotic(marker)
   for (const id of old) { for (const end of [PET_VOICE_EXT, '.m4a']) { try { rmSync(join(dir, `${id}${end}`), { force: true }) } catch { /* gone */ } } delete marker[id] }
   if (old.length) { writeFileSync(markerPath, `${JSON.stringify(marker)}\n`); log(`  ${old.length} files in the old robotic voices taken away.`) }
-  const present = new Set(list(dir).filter(f => f.endsWith(PET_VOICE_EXT)).map(f => f.slice(0, -PET_VOICE_EXT.length)))
+  const present = new Set(voiceFiles(dir).map(f => f.slice(0, -PET_VOICE_EXT.length)))
   const rows = plan(lines, { cast, marker, present, only, saidAs: castFile.saidAs })
   for (const who of PETS) {
     if (only && who !== only) continue
@@ -291,13 +366,13 @@ async function makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, 
   }
   const todo = rows.filter(r => r.what === 'make')
   if (dry) {
-    for (const [who, t] of Object.entries(tally(rows))) log(`  ${who}: ${t.make} to make, ${t.keep} kept, ${t.own} your own, ${t.silent} with nothing to say${t.mute ? `, ${t.mute} with no voice` : ''}`)
+    for (const [who, t] of Object.entries(tally(rows))) log(`  ${who}: ${t.make} to make, ${t.keep} kept, ${t.silent} with nothing to say${t.mute ? `, ${t.mute} with no voice` : ''}`)
     log(`${todo.length} of ${rows.length} lines would be made. Nothing was made.`)
     return { rows, made: 0, failed: 0 }
   }
   let failed = 0
   if (todo.length) {
-    const tmp = mkdtempSync(join(tmpdir(), 'pet-voices-'))
+    const tmp = mkdtempSync(join(tmpdir(), TMP_PREFIX))
     try {
       const why = await sayAll(todo, tmp, log)
       if (why) log(`  The voices could not all be made: ${why}.`)
@@ -306,27 +381,28 @@ async function makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, 
         const ok = await tidyOne(row, tmp, dir)
         if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, by: ENGINE }
         else failed++
-        // saved as it goes, so a run that is stopped leaves no file that looks like one of Jon's own
+        // saved as it goes, so a run that is stopped has little to make again
         if (ok && ++saved % 25 === 0) writeFileSync(markerPath, `${JSON.stringify(marker)}\n`)
       })
     } finally {
       try { rmSync(tmp, { recursive: true, force: true }) } catch { /* gone */ }
     }
   }
-  // files of its own for lines nobody can say any more (never on a run that left some lines out on purpose:
-  // one pet only, or the game's own words only for Sir Irwin)
+  // files for lines nobody can say any more (never on a run that did not look at every line: one pet only,
+  // the game's own words only for Sir Irwin, or the workshop could not be read)
   let cleared = 0
-  if (!only && workshop) for (const id of stale(marker, rows)) { try { rmSync(join(dir, `${id}${PET_VOICE_EXT}`), { force: true }) } catch { /* gone */ } delete marker[id]; cleared++ }
+  if (canClear) for (const id of stale(marker, rows)) { try { rmSync(join(dir, `${id}${PET_VOICE_EXT}`), { force: true }) } catch { /* gone */ } delete marker[id]; cleared++ }
   writeFileSync(markerPath, `${JSON.stringify(marker)}\n`)
-  const after = new Set(list(dir).filter(f => f.endsWith(PET_VOICE_EXT)).map(f => f.slice(0, -PET_VOICE_EXT.length)))
+  const after = new Set(voiceFiles(dir).map(f => f.slice(0, -PET_VOICE_EXT.length)))
   for (const [who, t] of Object.entries(tally(rows))) {
     const withVoice = rows.filter(r => r.who === who && r.spoken && after.has(r.id)).length
     const toSay = rows.filter(r => r.who === who && r.spoken).length
-    log(`  ${who}: ${withVoice} of ${toSay} lines have a voice (${t.make} made now, ${t.keep} kept, ${t.own} your own; ${t.silent} with nothing to say)`)
+    log(`  ${who}: ${withVoice} of ${toSay} lines have a voice (${t.make} made now, ${t.keep} kept; ${t.silent} with nothing to say)`)
   }
-  if (cleared) log(`  ${cleared} old files of its own taken away (their words are gone from the banks).`)
+  if (cleared) log(`  ${cleared} old files taken away (their words are gone from the banks).`)
   if (failed) log(`  ${failed} could not be made. Run it again.`)
-  log(`On the site's folder now: ${onSiteWords(list(PET_VOICE_SITE), list(dir))}. To put them on: npm run pet-voices -- --on (only on Jon's word).`)
+  const onSite = onSiteWords(list(PET_VOICE_SITE), list(dir), { older: siteOlder(PET_VOICE_SITE, dir) })
+  log(`On the site's folder now: ${onSite}. To put them on: npm run pet-voices -- --on (only on Jon's word).`)
   return { rows, made: todo.length - failed, failed }
 }
 
@@ -343,17 +419,15 @@ export function setSite({ on = false, pets = PETS, store = PET_VOICE_DIR, site =
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const args = process.argv.slice(2)
-  const at = args.indexOf('--only')
-  const only = at >= 0 ? args[at + 1] : null
-  if (only && !PETS.includes(only)) { console.log(`--only takes one of: ${PETS.join(', ')}.`); process.exit(2) }
-  if (args.includes('--off')) { setSite({ on: false }); process.exit(0) }
-  if (args.includes('--on')) {
-    const named = args.slice(args.indexOf('--on') + 1).filter(a => PETS.includes(a))
-    setSite({ on: true, pets: named.length ? named : PETS })
+  const asked = readArgs(process.argv.slice(2))
+  if (asked.wrong.length) { console.log(`Not understood: ${asked.wrong.join(', ')}. The pets are: ${PETS.join(', ')}. Nothing was done.`); process.exit(2) }
+  if (asked.off) { setSite({ on: false }); process.exit(0) }
+  if (asked.on) {
+    if (otherRun(PET_VOICE_DIR)) { console.log('A run is making the voices right now. Wait for it to finish, then run this again. Nothing was copied.'); process.exit(2) }
+    setSite({ on: true, pets: asked.pets })
     process.exit(0)
   }
-  makePetVoices({ dry: args.includes('--dry'), only, workshop: !args.includes('--no-workshop') })
+  makePetVoices({ dry: asked.dry, only: asked.only, workshop: asked.workshop })
     .then(r => process.exit(r.failed ? 1 : 0))
     .catch(e => { console.log(`FAIL: ${e?.name ?? 'Error'} (${String(e?.message ?? '').slice(0, 120)})`); process.exit(1) })
 }

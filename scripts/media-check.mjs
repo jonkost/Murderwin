@@ -138,7 +138,7 @@ export function madeLines({ voice, web, pets = null }) {
   const voices = (voice?.files ?? []).filter(f => /^irwin-(slide-\d|door)\.m4a$/.test(f)).length
   out.push(`  Sir Irwin's voice for the drawing (npm run irwin-voice): ${voices} of 8 in.${voices < 8 ? ' A slide with no voice turns in silence, on time.' : ''}`)
   // the pets' voices (12 Nov 2026): a file for every line a pet can say; a line with none is shown and not said
-  if (pets) out.push(`  The pets' voices, a file for every line a pet can say (npm run pet-voices): ${pets.have} of ${pets.of} made, and kept off the site.${pets.have < pets.of ? ' A line with no file is shown and not said.' : ''} In the site's folder for the next publish: ${pets.onSite ?? 'none (the voices are off)'}.`)
+  if (pets) out.push(`  The pets' voices, a file for every line a pet can say (npm run pet-voices): ${pets.have} of ${pets.of} made, in a folder that is no part of the site.${pets.have < pets.of ? ' A line with no file is shown and not said.' : ''} In the site's folder for the next publish: ${pets.onSite ?? 'none (the voices are off)'}.`)
   const webs = (web?.files ?? []).filter(f => /\.mp3$/.test(f)).length
   out.push(`  Your own cue sounds, made loud for the screens and phones (npm run web-sounds): ${webs} in. Every other cue is the house's own sound, made by the screens.`)
   out.push('  Then: npm run deploy:site.')

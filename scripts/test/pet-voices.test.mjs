@@ -4,7 +4,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, readdirSync, rmSyn
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { catHintLines, catBagLines, irwinLines, allPetLines, clueWords } from '../pet-lines.mjs'
-import { modelVoices, castFor, forVoice, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, busyWith, ENGINE } from '../pet-voices.mjs'
+import { modelVoices, castFor, forVoice, saidFor, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, busyWith, readArgs, ENGINE } from '../pet-voices.mjs'
 import { PETS, PET_VOICE_EXT, petVoiceId, petVoiceUrl, voiceKey, speakable, tidyWords, irwinSpeech, speechFresh, SPEECH_FRESH_MS } from '../../play/src/lib/petvoice.js'
 import { hintLine, HINT_CATS } from '../../functions/lib/cats.js'
 import { FAMILIES, ALL_MOTIVES, familyOf } from '../../functions/lib/families.js'
@@ -155,8 +155,9 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   assert.deepEqual(Object.keys(file.cast).sort(), [...PETS].sort(), 'a voice for each of the five')
   assert.equal(new Set(Object.values(file.cast).map(c => c.voice)).size, 5, 'five different voices')
   for (const c of Object.values(file.cast)) {
-    assert.match(c.voice, /^[ab][fm]_[a-z]+$/, 'a voice of the natural model (American or British): never one of the Mac\'s own robotic ones')
-    assert.ok(c.speed >= 0.85 && c.speed <= 1.2, 'near the voice\'s own pace')
+    assert.match(c.voice, /^[abf][fm]_[a-z]+(,[abf][fm]_[a-z]+)?$/, 'a voice of the natural model (American, British or French, or a blend of two): never one of the Mac\'s own robotic ones')
+    assert.ok(c.speed >= 0.7 && c.speed <= 1.2, 'near the voice\'s own pace (Jon asked for the girls to speak slower)')
+    assert.ok(c.speed / (c.pitch ?? 1) >= 0.6, 'and never asked of the model slower than it speaks well')
     assert.ok((c.pitch ?? 1) >= 0.8 && (c.pitch ?? 1) <= 1.35, 'and never so far from its own pitch that it stops sounding like a person')
   }
   const all = Object.values(file.cast).map(c => c.voice)
@@ -164,21 +165,34 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   assert.deepEqual(cast.zimothy, { voice: file.cast.zimothy.voice, speed: file.cast.zimothy.speed, pitch: file.cast.zimothy.pitch ?? 1, asked: file.cast.zimothy.voice })
   assert.equal(castFor(file, [file.cast.zimothy.voice]).boo.voice, null, 'a pet whose voice the model lacks stays silent: there is no robotic stand-in')
   assert.equal(castFor(file, []).irwin.voice, null, 'and with no model on the Mac nobody speaks')
-  // the words as the voice is given them: a few are spelled the way they sound
-  assert.equal(forVoice('Hmph. Nobody up at the big house asks the help.', file.saidAs), 'Humph. Nobody up at the big house asks the help.', 'not read out letter by letter')
-  assert.equal(forVoice('Something chocolatey-ish. And chocolatey.', file.saidAs), 'Something chocolaty-ish. And chocolaty.')
-  assert.equal(forVoice('Ew. Do I know you?', file.saidAs), 'Eew. Do I know you?')
-  assert.equal(forVoice('A new pew, a few stewed newts.', file.saidAs), 'A new pew, a few stewed newts.', 'whole words only')
-  assert.equal(forVoice('hmph, he said', file.saidAs), 'humph, he said', 'a small letter stays small')
+  // a blend of two voices: the model must have both
+  const blend = { cast: { boo: { voice: 'ff_siwis, af_bella', speed: 0.8, pitch: 0.97 } } }
+  assert.equal(castFor(blend, ['ff_siwis', 'af_bella']).boo.voice, 'ff_siwis,af_bella')
+  assert.equal(castFor(blend, ['af_bella']).boo.voice, null)
+  // the words as the voice is given them: a few are spelled the way they sound, and which ones goes by the voice's accent
+  const us = saidFor(file.saidAs, 'af_bella'), gb = saidFor(file.saidAs, 'bm_lewis')
+  assert.equal(forVoice('Hmph. Nobody up at the big house asks the help.', us), 'Humph. Nobody up at the big house asks the help.', 'not read out letter by letter')
+  assert.equal(forVoice('Hmph. Now scat.', gb), 'Humph. Now scat.', 'in either accent')
+  assert.equal(forVoice('Something chocolatey-ish. And chocolatey.', us), 'Something chocolaty-ish. And chocolaty.', 'an American voice reads chocolatey with a long a')
+  assert.equal(forVoice('Something chocolatey.', gb), 'Something chocolatey.', 'a British voice knows the word as it is spelled')
+  assert.equal(forVoice('Ew. Do I know you?', us), 'Eew. Do I know you?')
+  assert.equal(forVoice('A new pew, a few stewed newts.', us), 'A new pew, a few stewed newts.', 'whole words only')
+  assert.equal(forVoice('hmph, he said', us), 'humph, he said', 'a small letter stays small')
   assert.equal(forVoice('Hello.', {}), 'Hello.')
   assert.equal(forVoice('Hello.', null), 'Hello.')
-  assert.equal(forVoice(null, file.saidAs), '')
+  assert.equal(forVoice(null, us), '')
+  assert.deepEqual(saidFor({ all: { a: 'b' }, american: { c: 'd' }, british: { e: 'f' } }, 'bf_lily'), { a: 'b', e: 'f' })
+  assert.deepEqual(saidFor({ all: { a: 'b' }, american: { c: 'd' }, british: { e: 'f' } }, 'am_onyx'), { a: 'b', c: 'd' })
+  assert.deepEqual(saidFor(undefined, 'am_onyx'), {})
+  assert.deepEqual(saidFor({ all: { a: 'b' } }, null), { a: 'b' })
+  assert.deepEqual(Object.keys(file.saidAs).sort(), ['all', 'american', 'british'])
   const said = allPetLines().map(l => speakable(l.text, l.who))
-  for (const from of Object.keys(file.saidAs)) assert.ok(said.some(t => forVoice(t, { [from]: 'X' }) !== t), `${from} is still a word in some line`)
+  for (const table of Object.values(file.saidAs)) for (const from of Object.keys(table)) assert.ok(said.some(t => forVoice(t, { [from]: 'X' }) !== t), `${from} is still a word in some line`)
   // one line's file
   const mine = { spoken: 'Hello.', voice: 'bm_george', speed: 0.95, by: ENGINE }
   assert.equal(decide({ spoken: '', exists: false }), 'silent')
-  assert.equal(decide({ spoken: 'Hello.', exists: true, made: null, voice: 'bm_george', speed: 0.95 }), 'own', 'a file it did not make is Jon\'s: never touched')
+  assert.equal(decide({ spoken: 'Hello.', exists: true, made: null, voice: 'bm_george', speed: 0.95 }), 'make', 'a file that is not in the list (a run was stopped half way) is made again')
+  assert.equal(decide({ spoken: 'Hello.', exists: true, made: null, voice: null }), 'keep', 'with no model on the Mac, what is there stays')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: mine, voice: 'bm_george', speed: 0.95 }), 'keep')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: mine, voice: 'bm_lewis', speed: 0.95 }), 'make', 'a new voice for the pet: made again')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: mine, voice: 'bm_george', speed: 1 }), 'make', 'a new pace: made again')
@@ -193,13 +207,24 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   const lines = [{ who: 'boo', text: 'Ew. Do I know you?' }, { who: 'boo', text: 'Boo looks you up and down. She says nothing about any bag.' }, { who: 'salem', text: 'Hmph. Now scat.' }]
   const id = petVoiceId('boo', 'Ew. Do I know you?')
   const rows = plan(lines, { cast, marker: {}, present: new Set([id]), saidAs: file.saidAs })
-  assert.deepEqual(rows.map(r => r.what), ['own', 'silent', 'make'])
+  assert.deepEqual(rows.map(r => r.what), ['make', 'silent', 'make'])
   assert.equal(rows[2].spoken, 'Humph. Now scat.', 'the voice is told the word as it sounds')
   assert.equal(rows[2].id, petVoiceId('salem', 'Hmph. Now scat.'), 'and the file is still named by the card\'s own words')
   assert.deepEqual([rows[2].voice, rows[2].speed, rows[2].pitch], [file.cast.salem.voice, file.cast.salem.speed, file.cast.salem.pitch ?? 1])
-  assert.deepEqual(tally(rows), { boo: { make: 0, keep: 0, own: 1, silent: 1, mute: 0 }, salem: { make: 1, keep: 0, own: 0, silent: 0, mute: 0 } })
+  assert.deepEqual(tally(rows), { boo: { make: 1, keep: 0, silent: 1, mute: 0 }, salem: { make: 1, keep: 0, silent: 0, mute: 0 } })
   assert.deepEqual(plan(lines, { cast: castFor(file, []), only: 'salem' }).map(r => [r.who, r.what]), [['salem', 'mute']])
-  assert.deepEqual(stale({ 'boo-old': {}, [id]: {} }, rows), ['boo-old'], 'its own file for a line nobody can say any more')
+  assert.deepEqual(stale({ 'boo-old': {}, [id]: {} }, rows), ['boo-old'], 'a file for a line nobody can say any more')
+  // what was asked for on the command line: a mistyped name is never read as "every pet"
+  assert.deepEqual(readArgs([]), { dry: false, workshop: true, off: false, on: false, only: null, pets: PETS, wrong: [] })
+  assert.deepEqual(readArgs(['--on']).pets, PETS, '--on alone: all five')
+  assert.deepEqual([readArgs(['--on', 'irwin']).pets, readArgs(['--on', 'irwin']).wrong], [['irwin'], []])
+  assert.deepEqual(readArgs(['--on', 'Irwin']).wrong, ['Irwin'], 'a capital letter is a different word: refused')
+  assert.deepEqual(readArgs(['--on', 'irwn', 'boo']).wrong, ['irwn'])
+  assert.equal(readArgs(['--only', 'boo']).only, 'boo')
+  assert.deepEqual(readArgs(['--only']).wrong, ['--only (no name)'])
+  assert.deepEqual(readArgs(['--only', 'bo']).wrong, ['--only bo'])
+  assert.deepEqual([readArgs(['--dry', '--no-workshop']).dry, readArgs(['--dry', '--no-workshop']).workshop], [true, false])
+  assert.equal(readArgs(['--off']).off, true)
   // one run at a time: a second one would save its list of what it made over the first one's
   const going = pid => pid === 4242
   assert.equal(busyWith('4242\n', going, 100), 4242, 'another run is making them')
@@ -212,6 +237,8 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   const src = read('../pet-voices.mjs')
   assert.ok(!/log\([^)]*\.(text|spoken)\b/.test(src), 'no log of a line\'s words')
   assert.ok(!/['"]say['"]/.test(src), 'the Mac\'s own robotic voices are not used')
+  assert.ok(src.includes('renameSync(part, out)'), 'a file is moved under its line\'s name only when it is whole')
+  assert.ok(src.includes('canClear: !only && words !== null'), 'nothing is cleared as out of date on a run that did not look at every line')
   const talker = read('../pet-voices-kokoro.py')
   assert.ok(talker.includes('os.environ.setdefault("HF_HUB_OFFLINE", "1")'), 'the model is never downloaded: it is on the Mac or no voice is made')
   assert.ok(!/sounddevice|afplay|\.play\(|play\s*=\s*True/.test(talker), 'nothing is ever played')
@@ -227,7 +254,7 @@ test('the voices are off until Jon says yes: made into a folder that is no part 
   assert.ok(src.includes("export const PET_VOICE_SITE = join(root, 'play', 'public', 'voice', 'pets')"), 'the site\'s folder is a different one')
   assert.ok(/^pet-voices\/\*$/m.test(read('../../.gitignore')), 'and the kept folder is not in git')
   // what goes to the site: the pets' own files only, never the marker or a sample
-  const store = ['irwin-a.mp3', 'irwin-b.mp3', 'boo-a.mp3', '.made.json', 'README.md', 'Pets-voices-sample.mp3', 'salem-old.m4a', 'auditions']
+  const store = ['irwin-a.mp3', 'irwin-b.mp3', 'boo-a.mp3', '.made.json', '.making', 'README.md', 'Pets-voices-sample.mp3', 'salem-old.m4a', 'zimothy-x.part.mp3', 'auditions']
   assert.deepEqual(forSite(store), ['boo-a.mp3', 'irwin-a.mp3', 'irwin-b.mp3'])
   assert.deepEqual(forSite(store, ['irwin']), ['irwin-a.mp3', 'irwin-b.mp3'], 'Sir Irwin only')
   assert.deepEqual(forSite(store, ['the butler']), [])
@@ -235,6 +262,8 @@ test('the voices are off until Jon says yes: made into a folder that is no part 
   assert.equal(onSiteWords(['irwin-a.mp3', 'irwin-b.mp3'], store), 'irwin')
   assert.equal(onSiteWords(['irwin-a.mp3'], store), 'irwin (not every file: run --on again)')
   assert.equal(onSiteWords(['irwin-a.mp3', 'irwin-b.mp3', 'boo-a.mp3'], store), 'irwin, boo')
+  assert.equal(onSiteWords(['irwin-a.mp3', 'irwin-b.mp3'], store, { older: true }), 'irwin (older than the kept ones: run --on again)', 'a voice changed since they were put on')
+  assert.equal(onSiteWords([], store, { older: true }), 'none (the voices are off)')
   // on, one pet, and off again, in a folder of its own
   const tmp = mkdtempSync(join(tmpdir(), 'pet-voices-test-'))
   try {
@@ -251,8 +280,24 @@ test('the voices are off until Jon says yes: made into a folder that is no part 
     assert.deepEqual(readdirSync(site), ['README.md'], 'off: every voice file gone from the site\'s folder, nothing else touched')
     assert.equal(readdirSync(kept).length, store.length, 'and the kept folder is never emptied')
   } finally { rmSync(tmp, { recursive: true, force: true }) }
-  // as it stands in the repo: nothing of the pets is in the site's folder (a publish would ship it)
+  // as it stands in the repo: the site's folder holds what Jon has said yes to, and nothing more
+  // (seed/pet-voices.json goOut: none until he says yes, then irwin or all, set in the same change as --on)
+  const goOut = JSON.parse(read('../../seed/pet-voices.json')).goOut
+  assert.ok(['none', 'irwin', 'all'].includes(goOut), 'his answer is one of the three')
   let onSite = []
   try { onSite = readdirSync(new URL('../../play/public/voice/pets/', import.meta.url)).filter(f => /\.(mp3|m4a)$/.test(f)) } catch { /* no such folder: none */ }
-  assert.deepEqual(onSite, [], 'the pets\' voices are off the site until Jon says yes (npm run pet-voices -- --off)')
+  if (goOut === 'none') assert.deepEqual(onSite, [], 'the pets\' voices are off the site until Jon says yes (npm run pet-voices -- --off)')
+  if (goOut === 'irwin') assert.deepEqual(onSite.filter(f => !f.startsWith('irwin-')), [], 'Sir Irwin only')
+})
+
+test('Jon\'s casting, chosen by ear from numbered auditions (12 Nov 2026), is held as he chose it', () => {
+  const { cast } = JSON.parse(read('../../seed/pet-voices.json'))
+  // "Boo - 4, Granola - 4, Salem - 2, Zimmy - 1"; "the lines need to be slower for the girls"; "Garnola speed 2";
+  // "Is there a British boo since the rest are British?" and then "10 boo - 1"
+  assert.deepEqual(cast.granolia, { voice: 'bf_lily', speed: 0.74, pitch: 1.18 }, 'Granolia: a British girl at a kid\'s pitch, speed two')
+  assert.deepEqual(cast.boo, { voice: 'bf_emma', speed: 0.8, pitch: 0.94 }, 'Boo: British, a little lower, slow')
+  assert.deepEqual(cast.salem, { voice: 'bm_lewis', speed: 0.95, pitch: 1 }, 'Salem: a rough British man')
+  assert.deepEqual(cast.zimothy, { voice: 'bm_george', speed: 0.88, pitch: 1 }, 'Zimothy: an old British man')
+  // Sir Irwin is not chosen yet ("I don\'t love the Irwin ones"; "slow and low but like a child"): any voice of the model
+  assert.ok(cast.irwin.voice && cast.irwin.voice !== cast.boo.voice)
 })
