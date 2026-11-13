@@ -270,11 +270,16 @@ game; it serves the lights and the speakers.
 is in its place:
 
 1. On your phone, open the game (or open the workshop: the same button is
-   first on Home and on Game night). Tap the big button. With the box **This is
-   the real night** unticked it says Start a run-through, which is a
-   rehearsal; ticked, it says Start the REAL night, and it only works on the
-   party day. If an old night is still on, the same button is at the bottom
-   of its Host tab under A fresh night.
+   first on Home and on Game night). Tap the big button, **Start the night**.
+   With the box **This is the real night** unticked it starts a practice
+   night; ticked, the real night, which only works on the party day. On the
+   party day itself an unticked box asks first ("Today is the party. This
+   starts a practice night, not the real night."), and a practice night that
+   is on says so in red at the top of your Host tab: with the box forgotten,
+   the party would run on the practice case, bags and pictures. If an old
+   night is still on, the same button is at the bottom of its Host tab under
+   A fresh night; it asks before it replaces the night that is on. Start the
+   real night before the first guest comes.
    On a practice night the card also has **Fill-in players**: tap plus for up
    to eight seats with no phone, so two of you can play a full-size night
    (see "Fill-in players" under Rehearsing, below). It starts at nought every
@@ -292,9 +297,9 @@ is in its place:
    Open Anyway beside it and type the Mac's password; after that a
    double-click opens it. A work Mac may not let it run at all: then make
    Chrome its usual browser.)
-   A Mac with two screens (the Parlour's, the Study's): send it A second
-   display as well and drag that window to its other screen. It shows the
-   crest and the countdown, and goes dark with the room.
+   A Mac with two screens (the Parlour's, the Study's): send it its own
+   line that begins The screen saver as well, and drag that window to its
+   other screen. It plays the five faces, and goes dark with the room.
 3. The Study: double-click Start the Study in the Study station folder on
    the Mac by the walls. It starts the walls and the Stream Deck and opens
    the Study's page. The folder is sent to that Mac once, by AirDrop from
@@ -347,9 +352,14 @@ the screen awake by itself where the iPad lets it.
    projector on it; the brain switches it through two Shortcuts on the
    brain, Projector Murderwin On and Projector Murderwin Off (each runs a
    Home scene for the plug), so it must be on and in Home before the night.
-2. *The brain.* `cd cues && npm start`. Alive when the terminal prints a
-   line saying what is on (music, Hue scenes, the projector, string lights)
-   and sits there waiting. Above that line it counts the sound files: a line
+2. *The brain.* Double-click *Start the brain* on its Desktop (made 12
+   November; it is a link to `cues/Start the brain.command`, and does what
+   `cd cues && npm start` does). A window opens and stays open all night; it
+   keeps the Mac awake, starts the relay again if it ever stops, and opens
+   the Orangerie's page in the browser, which you click once. A second
+   double-click while it runs only says it is already running. Alive when
+   the window prints a line saying what is on (music, Hue scenes, the
+   projector, string lights) and sits there waiting. Above that line it counts the sound files: a line
    saying how many optional sounds have no file is fine (those moments are
    silent). It stops only if the chime or the blackout sound has no file:
    then run the stand-in step under "The nine sounds" above and start it
@@ -358,14 +368,15 @@ the screen awake by itself where the iPad lets it.
    blackout, red when the power returns, and green again when the drawing
    is done. If it prints `failed` and `retrying`, the bridge address in
    `cues/.env` is wrong; the night runs on without the lights.
-3. *The party box, then your phone.* On the workshop's Game night page, tick
-   "This is the party night" (untick it after the party). Then open the game
-   on your phone, tap "Host? Start the night", type your name. Do it before
+3. *Your phone.* The big button above: tick **This is the real night**, tap
+   **Start the night**, type your name. (The old party box on the Game night
+   page is not part of this: leave it unticked.) Do it before
    any guest arrives: until a night is live, every phone that opens the game
-   shows that button. If a rehearsal
-   night is still on, press **Start a new night** on its Host tab instead.
+   shows that button. If a practice
+   night is still on, use the same button under A fresh night at the bottom
+   of its Host tab; it asks first.
    The Host tab appears. Its top lines say "This is the party night": the box worked. If they say
-   "This night is a rehearsal", stop, tick the box and start a new night. Under
+   "This is a practice night", stop, and start a new night with the box ticked. Under
    "Who is here", a green dot sits beside every phone the house has heard
    from in the last two minutes. That dot is how you know a phone is alive
    all night.
@@ -449,9 +460,9 @@ the screen awake by itself where the iPad lets it.
   music and dims the lights for them. The film has sound only if that screen
   has been clicked once since it opened: the Host tab says Sound on beside
   the Parlour screen when it has. When the rules reach the
-  sound test, press **Phone chime** (under The house, in the Sound test
-  list): the chime plays on every room screen and phone, so the room hears
-  them work. Act 1
+  sound test, press **Phone chime** (on the Run the night card while the
+  film plays; also under The house, in the Sound test list): the chime plays
+  on every room screen and phone, so the room hears them work. Act 1
   ends with
   **Blackout**: the music stops at once, and two seconds later, all at the
   same moment, every phone and screen goes black with one white flash (an old
@@ -514,17 +525,18 @@ the screen awake by itself where the iPad lets it.
   your first **Next** (the question *promptScreen* on the board: cue 5 has
   the loop come back at once).
   **Power returns · Act 2** is the hand button for a power that did not come
-  back on its own (the night was paused during the five seconds). In the
-  dark no phone has a Host tab, so it is pressed from the brain:
-  `node functions/host.mjs power`, after `node functions/host.mjs resume` if
-  the night was paused. Pressing it once the power is back does nothing, and
+  back on its own. That should never be needed: a pause in the dark is
+  refused, and if the power ever stays off the clock brings it back within
+  about a minute. In the dark no phone has a Host tab, so by hand it is
+  pressed from the brain: `node functions/host.mjs power`. Pressing it once
+  the power is back does nothing, and
   if it and the automatic return land in the same second the power comes
   back once.
 - The Parlour Games pop up on their own: twelve a night, about five in Act 2
   and five in Act 4 at times nobody knows, you included, and two at the very
   start of Act 6, one after the other. Boo opens each one. Every phone at
-  once, the same three questions, sixty seconds on the server's clock, and it
-  never closes early. It sits on top of whatever the phone was showing and
+  once, the same three questions, sixty seconds on the server's clock, or
+  until every phone has answered, whichever comes first. It sits on top of whatever the phone was showing and
   hands it back when it is done. A game comes only in its own beats: the cat
   visits, the Act 4 rounds and Act 6's games; one that falls due anywhere
   else (the news, the bag peek, supper, the group cards) waits, and none
@@ -566,7 +578,8 @@ the screen awake by itself where the iPad lets it.
   have seen all four".
 - Supper: when everyone has seen all four cats, the supper chime rings on
   its own and every phone says supper is served in the Orangerie. To call
-  it sooner, press **Supper's ready**. A guest with cats still unvisited
+  it sooner, press **Supper's ready** (it shows on the Run the night card
+  during the cat visits only). A guest with cats still unvisited
   gets those cats' lines on the phone as a note ("The cats you haven't met
   left you a note"). On your way in to supper, carry the iPad Pro from the
   Library to its stand on the Orangerie table: it shows bulletin 2's words
@@ -582,8 +595,8 @@ the screen awake by itself where the iPad lets it.
   **Next** for "Dinner wrap-up": every phone asks for the motives to be
   crossed off from what has been learned so far, and the Parlour TV shows the
   join code again for anyone who needs to rejoin. Everyone must be back on
-  their phone; then press **Start Act 4** (it shows on your Host tab in
-  Act 3).
+  their phone; then press **Start Act 4** (it shows on the Run the night
+  card at the dinner wrap-up only, so it can never skip the bulletin).
 - Act 4, Behind Closed Doors: four game rooms, pairs and trios, about an
   hour. Before you press it: carry the iPad Pro from the Orangerie back to
   its small stand in the Library (In Duplicate comes up on it by itself in
@@ -718,8 +731,11 @@ the screen awake by itself where the iPad lets it.
 - Act 6 opens with a note on every phone (Stretch your legs: two Parlour
   Games are next; the rest you say aloud, `docs/read-aloud.md`) and the
   two Parlour Games, back to back. When the second has closed, Sir Irwin
-  Needs a Hand (the Relay Drawing) starts by itself; **Next** (or **Start the
-  drawing**) starts it sooner, and any game not yet played is dropped. Sir Irwin explains it on the TV,
+  Needs a Hand (the Relay Drawing) starts by itself: press nothing. (**Next**
+  starts it sooner, and any game not yet played is dropped. **Start the
+  drawing**, under The Big Solve, is only for a drawing that failed to start,
+  and asks first outside Act 6.) The drawing takes your whole phone, so its
+  screen carries **Pause, Irwin needs the garden** too. Sir Irwin explains it on the TV,
   reading each slide aloud from the TV's own speaker (about a minute and a
   quarter in all; click the TV once before the night so the Host tab says
   *Sound on*, or the slides turn silently on time), while every
@@ -745,8 +761,9 @@ the screen awake by itself where the iPad lets it.
   them too. While it
   runs, **Next** refuses to leave it. When the third picture is named, the TV
   shows Sir Irwin's "Pawsome!" door slide, the hall light goes green and the
-  bedroom screen shows the trace. **Next** tells every phone the door is open,
-  and everyone goes to look.
+  bedroom screen shows the trace. Every phone, yours too, says the door is
+  open: tap Hide this on yours to get your tabs back, then **Next** (the
+  button reads Next: The door opens), and everyone goes to look.
 - Talk it over (11 Nov 2026, your note: "There can just be conversation
   between people"). When everyone is back from the bedroom, press **Next**
   once more (the button reads Next: Talk it over). It is the last beat of
@@ -759,7 +776,7 @@ the screen awake by itself where the iPad lets it.
 - **Clear the drawing** wipes the drawing and shuts the door again. The trace
   only comes out when a drawing is finished, so after a clear press
   **Start the drawing** and finish it. Never press it after the door has
-  opened. (It is one tap with no question; a guard on it is not built yet.)
+  opened. (Since 12 November it asks first.)
 - Act 7, the vote: **Start the vote** opens it on every phone as a card on
   the Now tab, so a guest can still open their Clues, Notes and Motives while
   they decide (your cue list, cue 19). Each guest picks the Murderer, the
@@ -820,6 +837,15 @@ the screen awake by itself where the iPad lets it.
 
 ## Any time, from your Host tab
 
+*Buttons that ask first (12 November, the review before the party).* Nothing
+on the Host tab ends, rewinds or skips part of a live night by one stray tap
+any more. These ask "are you sure" first: the seven act numbers,
+**Clear the drawing**, **Start the drawing** outside Act 6,
+**Hand this phone on**, **Blackout** before Ready for the dark, **Next** in
+the middle of an Act 4 round or while the credits still roll, **Back one**
+during the reveal, and the Start button under A fresh night. At Ready for
+the dark the big button at the top is the **Blackout** itself.
+
 - **Salem petted**, Acts 1 to 6: when the real Salem lets a guest pet him,
   tap their name on the Host tab, then Yes. Their Salem tells them the truth
   from then on. Never you or Susan.
@@ -844,8 +870,9 @@ the screen awake by itself where the iPad lets it.
   get back here.
 - The house: scenes. The brain changes the music and the Hue scenes on its
   own as the night moves. If you want one by hand: **Default**, **Dimmed**,
-  **Blackout**, **Drawing**, **Candles** or **Study Dim** recalls that
-  scene, and the music has **Play**, **Pause** and **Next playlist**. Your
+  **Lights off** (the scene Murderwin Blackout; one button on the tab is
+  called Blackout, the one that ends Act 1), **Drawing**, **Candles** or
+  **Study Dim** recalls that scene, and the music has **Play**, **Pause** and **Next playlist**. Your
   choice holds until the night's next change. The buttons never say why.
 - The hall light: **Red** and **Green**, under The house, if the bulb ever
   needs setting by hand.
@@ -949,7 +976,7 @@ guest's Allow tap, also with the ring switch off.
 |---|---|
 | A guest's phone | They tap their name on any other phone (the old iPhone 11 is for this). Their character, bag, cards and cat standings follow. Their Notes box and their crossed-off motives stay on the old phone, so if they can, read the notes across before the swap. The old phone says the character has moved. |
 | A borrowed phone that must change hands | **Hand this phone on** wipes it. The next person types their own name; the previous owner taps theirs on another phone and gets their character, bag, cards and cat standings back. Their Notes box and their crossed-off motives stay with the wiped phone and are gone, so if they can, read the notes across before the swap. (One tap or ask twice is the open question *handOn*.) |
-| Your phone | Tap your name on Susan's phone or the old iPhone 11; the Host tab moves with you. The brain is the spare host: `node functions/host.mjs status` says where the night is, `node functions/host.mjs next` presses Next. It needs the key file described at the top of `functions/host.mjs`. |
+| Your phone | Use Susan's phone: it has the same Host tab. To play on, tap your name on the old iPhone 11; your character and the Host tab move with you. The brain is the spare host: `node functions/host.mjs status` says where the night is, `node functions/host.mjs next` presses Next. It needs the key file described at the top of `functions/host.mjs`. |
 | The Parlour screen | Open `?kiosk=living` in a browser on the brain and put it by the TV (the iPad Pro has a job of its own all night). The drawing's guesses are on your phone anyway; the spare screen shows the squares. |
 | The iPad Pro, at any of its stations | Carry on. In Act 2 Zimothy's printed code does its job; at supper bulletin 2's words also show on the Parlour TV; in Act 4 In Duplicate is paid at the chime anyway; in Act 6 press **Show the trace on the TV**. Susan's 8th-gen iPad can take any station: open that station's address on it. |
 | Your phone, during the drawing | Susan's phone has the same **At the paper** and the same four names. Failing both, the TV's own names take a tap (the trackpad), and a walk nobody ends runs its twenty seconds on its own. |
@@ -964,9 +991,9 @@ guest's Allow tap, also with the ring switch off.
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
 | A cat's hint or the Study's trace never came (a red line at the top of your Host tab) | Nothing to do. The guest read plain words in its place and the game goes on. The line says how many times, never which. |
 | The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
-| The brain | Nothing waits on it. Start `cd cues && npm start` again; it never replays an old cue, and it puts the right music and scene back. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers, the music and the recorded voices (only bulletin 2's once the bulletins are videos); the words still show on the TV and the iPad. Once the box is ticked, the bulletin videos play from the TV itself. |
+| The brain | Nothing waits on it. Double-click *Start the brain* on its Desktop again (or `cd cues && npm start`); it never replays an old cue, and it puts the right music and scene back. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers, the music and the recorded voices (only bulletin 2's once the bulletins are videos); the words still show on the TV and the iPad. Once the box is ticked, the bulletin videos play from the TV itself. |
 | A W-O-O-F News recording or video does not play | The words are on the screens anyway. For bulletin 2, check that `cues/.env` has the same key word as the study, then restart the brain. For a video, check its file is in `play/public/video` and deployed. |
-| The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, **Pause, Irwin needs the garden**. |
+| The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, turn Wi-Fi off on your phone so it uses mobile data, then **Pause, Irwin needs the garden**. |
 | The wrong group walks into the study | Before they finish, tap **This group is in the study** on the Host tab and pick the group that is actually in there; the study pays them. If you miss it, the group that was due is paid. Carry on. |
 | Somebody gives a hidden role away out loud | **Hush the Murderer** or **Hush the Ghost**, whichever role was given away. Nothing on any phone changes. From then on that player's Parlour Game answers stop moving the clarity dial (their cats still warm and cool as usual, so nothing looks different), and the reveal says one line about it. You never learn who it was from the button. |
 | The story itself needs to change (a guess that landed too early, a secret blurted) | **Spill the Beans**. The Manor decides on its own whether the story can still change, and says nothing either way; the phone's message is the same whether it worked or not. It can only change before any clue has reached anyone (the news, a cat's hint or bag clue, or any Act 4 room's reward), so in practice only at the very start of Act 2, before the news. If it did, the Murderer stays, everyone keeps their character, and the rest is re-drawn. |

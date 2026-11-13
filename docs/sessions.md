@@ -9,6 +9,119 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, night · Claude Code (the night walked in the code in Jon's place; the Host tab asks first; Game night's two cards)
+
+Jon: "I won't have time to play through today. Is the game solid and able to
+run smoothly? Please make the game setup and the show run game aspect of my
+app portal is well built and simple."
+
+**How it was checked, in his place**
+
+- Every test (functions 437, cues 126, station 90, app 173, play 397,
+  scripts 98), the 1,000 stand-in cases, and whole fake nights at every party
+  size from 2 to 14 phones, twice each, and with fill-in players: all pass.
+  One phone alone stops at Start Act 4 ("Groups need at least two people"),
+  which is right. Six phones with eight fill-ins is refused: fourteen
+  characters, two kept for the hosts.
+- The party's three sealed lists, numbers only, through the game's own
+  count-only readers (`functions/lib/counts.js` and the Steward's `checks`):
+  the packing is made, ten bags; 51 of 51 questions have a lean for every
+  cat; nine of nine pictures; PK1, G43, PK2, LN1 and RP1 pass. No night was
+  live. The hosts' names on the Game night form are empty, which is fine:
+  the game looks for Jon and Susan.
+- The media check: every video, bulletin 2 recording, rule slide and
+  recording is in. Missing only the sound-only fallbacks for bulletin 1 and
+  the closing bulletin, which matter only if the videos box is ticked.
+- The brain's relay in pretend mode: every sound has a file, all ten
+  Shortcuts it runs are on this Mac (none was run).
+- Ten checkers walked the setup and the night in the code (five walks, each
+  finding then attacked by a second reader): the setup, the night beat by
+  beat on the Host tab, recovery when things die, the clocks and the party
+  sizes, and the paths only the real night takes. Then a second pass of ten
+  reviewed the fixes. No runtime error and no dead end was found in the
+  changes.
+
+**What the walk found, and what was done** (the site only; no server change)
+
+- *One stray tap could end or rewind a live night.* On the Host tab each of
+  these asks first now: the seven act numbers, a beat tapped in the beat
+  list, Clear the drawing, Start the drawing outside Act 6, Hand this phone
+  on, Blackout before Ready for the dark, Next in the middle of an Act 4
+  round (from the last round it says it goes on to Act 5) or while the
+  credits roll, Back one in the reveal, and Start the night under A fresh
+  night. The question is the browser's own confirm through one helper,
+  `askFirst` (`play/src/lib/ask.js`): where a browser swallows the dialog
+  and answers "no" at once, the press goes through as before, so a question
+  can never make a dead button.
+- *Buttons that sat above Next for a whole act.* Supper's ready shows only
+  during the cat visits (one slip on the three beats before skipped every
+  cat). Start Act 4 shows only at the dinner wrap-up, where it is the one
+  big button (one slip earlier skipped bulletin 2, which is on the clue
+  path). At Ready for the dark the big button is the Blackout itself. The
+  rules film's Phone chime is on the card while the film plays. With four
+  rounds the last round's button reads Next: Act 5, not Next: Fifth round.
+  The reveal panel no longer says "Press Next for everyone's result" on the
+  result and The End. The Host tab nudges the clock in Act 7 too, so a vote
+  that ran out closes within twenty seconds. The scene chip Blackout is
+  Lights off. The brain's row is "The brain: music and lights". The host's
+  drawing screen has Pause at each walk and guess.
+- *The party as a practice night by mistake.* With the box forgotten on
+  Sunday the party would have run on the practice case, the practice bags
+  and the practice pictures, and looked the same. The box still starts
+  unticked (a pre-ticked box could start a real night by habit, and the
+  real night shows the party's pictures). On the party day a practice start
+  asks first, the note under the button is a warning, and a practice night
+  that is on says so in red on the Host tab (`onPartyDay`, the phone and
+  the workshop; a test holds the two copies equal).
+- *The setup pages had fallen behind.* The Devices page sent the cue sounds
+  through the brain to the HomePods, opened a second tab on the Parlour TV,
+  started the night from the old party box and promised a Start the brain
+  button that did not exist. It is rewritten to the night as it starts now
+  (`SWITCH_ON`, nine steps), and the button exists:
+  `cues/Start the brain.command`, with a link on the brain's Desktop. The
+  Game night page has two cards under the Start button, Set up the house
+  and Run the night (`app/src/lib/runSheet.js`); tests hold every press on
+  the card to a button on the phone and every count of Nexts to the night's
+  beats. The old party box says to leave it alone.
+- *Words.* Four host lines in `seed/night.json` (the drawing starts by
+  itself; tap Hide this after the third picture; where the chime is;
+  bulletin 2 comes from the brain's own speakers), `docs/run-sheet.md`,
+  `docs/on-the-night.md`, `docs/cues-relay.md`, the setup page.
+
+**Found and left, each for a reason**
+
+- A guest who first joins after Start Act 4 has no group and no Act 4 clues
+  (card 598). The fix is in the server, three days out. On the night: tag
+  along with a pair.
+- The drawing still calls a guest who has gone home: that turn is lost,
+  about thirty-five seconds (card 599). The same reason.
+- The real night's own start cannot be tried before Sunday (the server
+  refuses it). The dry run on the real secrets (card 466) is the nearest
+  test. It starts a real night on the live database for a few minutes, and
+  anything left open would follow it and make its sounds, so it waits for
+  Jon's word with the house quiet.
+- The clocks make the night about four and a half hours from the doors at
+  4:00, with the vote between about 8:10 and 8:45 pm. The Canon still says
+  two to two and a half hours and a reveal at about 8:00: older than the
+  fifteen-minute rounds. Not changed: Jon's to say.
+- The server's refusal of an early real night still says "run-through".
+  One word, at the next server publish.
+- His breed handoff (`docs/handoff-2026-11-12-breed.md`, copied in at 6:26
+  pm) is not applied. It adds a pick-3 between the vote and the reveal. By
+  its own rule it is left out unless tested two hours before a practice
+  night. Now the decision breedMoment on the board, default left out.
+- This Mac's Documents folder is in iCloud. A search of the whole project
+  folder stalled twice for two minutes while iCloud was busy. No sound file
+  the brain plays has been moved off the Mac (checked).
+
+**Decisions taken**: none of Jon's. Mine, within his word of the same
+evening (simple, fixes only): questions rather than removed buttons; the
+real-night box left unticked by default; no server change.
+
+**Left for Jon**: say publish (the site only). Double-click Start the brain
+once before Sunday. The dry run, when the house is quiet. The breed moment,
+yes or no.
+
 ## 12 Nov 2026, evening · Claude Code (a first mock-up of Sir Irwin's breed reveal)
 
 Jon: "Give me the mock up of the breed reveal". None existed: the 11 Nov

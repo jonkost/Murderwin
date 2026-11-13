@@ -547,17 +547,18 @@ After changing any of them, stop the relay (Control-C) and start it again.
       through Apple Home" (or "not set up" for whatever is decoration).
 - [ ] A browser on this Mac, full screen, at the play address with
       `?kiosk=orangerie`, facing the Orangerie table (Salem's code in Act 2,
-      the Get Off My Lawn! card in Act 4; it shows the bell but rings
-      nothing, the real sounds are this Mac's).
+      the Get Off My Lawn! card in Act 4). *Start the brain* on the Desktop
+      opens it; click once on it. Since 12 Nov 2026 it plays the Orangerie's
+      chimes itself, like every room screen, so this Mac's sound stays on its
+      own speakers, turned all the way up, never a HomePod.
 - [ ] Start the night from the Host tab: the log says `[hall] green`,
       `[lights] Murderwin Default`, `[projector] on` and `[music] Murderwin ·
       Jazz at 55`, and the house agrees. If it says `failed … retrying`,
       check the bridge address.
 - [ ] The two required sound files, `chime-phone` and `blackout`, are in
-      `media/` (the relay will not start without them) and the Mac's output
-      is the right speaker group. Press **Sound test** on the Host tab during
-      the rules and listen in every room. Or play one by hand:
-      `afplay media/chime-phone.m4a` (or `.wav` for a stand-in).
+      `media/` (the relay will not start without them). The chimes come from
+      the room screens and the phones, not from this Mac: press a chime in
+      the **Sound test** list on the Host tab and listen in every room.
 - [ ] The Orangerie HomePod is in that speaker group (bulletin 2 plays there
       during supper). Play `afplay media/sounder-bulletin.wav` (or `.m4a`, or
       the chime if you recorded no sounder) and listen in the Orangerie.
