@@ -4,7 +4,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, readdirSync, rmSyn
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { catHintLines, catBagLines, irwinLines, allPetLines, clueWords } from '../pet-lines.mjs'
-import { modelVoices, castFor, forVoice, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, ENGINE } from '../pet-voices.mjs'
+import { modelVoices, castFor, forVoice, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, busyWith, ENGINE } from '../pet-voices.mjs'
 import { PETS, PET_VOICE_EXT, petVoiceId, petVoiceUrl, voiceKey, speakable, tidyWords, irwinSpeech, speechFresh, SPEECH_FRESH_MS } from '../../play/src/lib/petvoice.js'
 import { hintLine, HINT_CATS } from '../../functions/lib/cats.js'
 import { FAMILIES, ALL_MOTIVES, familyOf } from '../../functions/lib/families.js'
@@ -200,6 +200,14 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   assert.deepEqual(tally(rows), { boo: { make: 0, keep: 0, own: 1, silent: 1, mute: 0 }, salem: { make: 1, keep: 0, own: 0, silent: 0, mute: 0 } })
   assert.deepEqual(plan(lines, { cast: castFor(file, []), only: 'salem' }).map(r => [r.who, r.what]), [['salem', 'mute']])
   assert.deepEqual(stale({ 'boo-old': {}, [id]: {} }, rows), ['boo-old'], 'its own file for a line nobody can say any more')
+  // one run at a time: a second one would save its list of what it made over the first one's
+  const going = pid => pid === 4242
+  assert.equal(busyWith('4242\n', going, 100), 4242, 'another run is making them')
+  assert.equal(busyWith('4242', going, 4242), null, 'this run itself is not another')
+  assert.equal(busyWith('777', going, 100), null, 'a run that has ended left its note behind: go ahead')
+  assert.equal(busyWith('', going, 100), null)
+  assert.equal(busyWith('not a number', going, 100), null)
+  assert.equal(busyWith(null, going, 100), null)
   // it never prints a line, never uses the Mac's own voices, never plays and never downloads
   const src = read('../pet-voices.mjs')
   assert.ok(!/log\([^)]*\.(text|spoken)\b/.test(src), 'no log of a line\'s words')

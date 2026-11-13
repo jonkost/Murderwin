@@ -53,6 +53,7 @@ export const PET_VOICE_DIR = join(root, 'pet-voices')                         //
 export const PET_VOICE_SITE = join(root, 'play', 'public', 'voice', 'pets')   // where the site finds them, once Jon says yes
 export const CAST_JSON = join(root, 'seed', 'pet-voices.json')
 export const MARKER = '.made.json'
+export const LOCK = '.making'                                                 // holds the number of the run that is making them now
 export const ENGINE = 'kokoro'                                                // the natural voice model; a file made any other way is an old robotic one
 const TALKER = join(here, 'pet-voices-kokoro.py')
 const MODEL_FOLDER = 'models--mlx-community--Kokoro-82M-bf16'
@@ -145,6 +146,15 @@ export function onSiteWords(siteFiles, storeFiles) {
 export function stale(marker, rows) {
   const wanted = new Set(rows.map(r => r.id))
   return Object.keys(marker).filter(id => !wanted.has(id))
+}
+
+// Is another run making the voices now? (Two at once would each save the
+// list of what it made over the other's, and a file missing from that list
+// counts as Jon's own and is never made again.) `lockText` is what the lock
+// file holds; `alive` says whether a run with that number is still going.
+export function busyWith(lockText, alive, me) {
+  const other = Number(String(lockText ?? '').trim())
+  return Number.isInteger(other) && other > 0 && other !== me && alive(other) ? other : null
 }
 
 // Counts for the report: { who: { make, keep, own, silent, mute } }.
@@ -248,6 +258,24 @@ export async function makePetVoices({ dir = PET_VOICE_DIR, dry = false, only = n
   const lines = allPetLines({ workshop: workshop ? await workshopWords(log) : {} })
   mkdirSync(dir, { recursive: true })
   const markerPath = join(dir, MARKER)
+  // one run at a time
+  const lockPath = join(dir, LOCK)
+  let lockText = ''
+  try { lockText = readFileSync(lockPath, 'utf8') } catch { /* nobody is making them */ }
+  const alive = pid => { try { process.kill(pid, 0); return true } catch { return false } }
+  if (!dry && busyWith(lockText, alive, process.pid)) {
+    log('Another run is making the voices right now. Wait for it to finish, then run this again.')
+    return { rows: [], made: 0, failed: 0, busy: true }
+  }
+  if (!dry) writeFileSync(lockPath, `${process.pid}\n`)
+  try {
+    return await makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, markerPath })
+  } finally {
+    if (!dry) { try { rmSync(lockPath, { force: true }) } catch { /* gone */ } }
+  }
+}
+
+async function makeThem({ dir, dry, only, workshop, log, castFile, cast, lines, markerPath }) {
   let marker = {}
   try { marker = JSON.parse(readFileSync(markerPath, 'utf8')) } catch { /* the first run */ }
   // the old robotic files go first, whatever else this run does
@@ -273,10 +301,13 @@ export async function makePetVoices({ dir = PET_VOICE_DIR, dry = false, only = n
     try {
       const why = await sayAll(todo, tmp, log)
       if (why) log(`  The voices could not all be made: ${why}.`)
+      let saved = 0
       await pool(todo, async row => {
         const ok = await tidyOne(row, tmp, dir)
         if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, by: ENGINE }
         else failed++
+        // saved as it goes, so a run that is stopped leaves no file that looks like one of Jon's own
+        if (ok && ++saved % 25 === 0) writeFileSync(markerPath, `${JSON.stringify(marker)}\n`)
       })
     } finally {
       try { rmSync(tmp, { recursive: true, force: true }) } catch { /* gone */ }
