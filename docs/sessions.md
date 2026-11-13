@@ -9,6 +9,113 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 12 Nov 2026, late night · Claude Code (voices for the pets; is the night fun, and Jon's own load)
+
+Jon: "Can we get voices reading for the pets. Do the plan/run of the game
+make sense? Does it seem fun. I'm worried I'll be too stressed to fully
+enjoy."
+
+**The pets' voices** (built and tested, the site only; switched off and kept
+off the site: it waits for his answer, the board's question *petVoices*)
+
+- Every line a pet can say comes from an open bank of templates, so every
+  one can be made ahead. `scripts/pet-lines.mjs` lists every way each line
+  can be filled: 834 lines (the four cats' motive hints and bag lines, Sir
+  Irwin's dessert speech and the nineteen rhymes). A test draws the dealer
+  twelve thousand times and finds every dealt line in the list.
+- First made with this Mac's own voices (`say`). Jon heard the sample: "I
+  need better voices. not robotic at all." Those files are gone and that way
+  is closed. A natural voice model was already on this Mac (Kokoro, through
+  the mlx-audio package, there since May): free, nothing downloaded, nothing
+  sent anywhere. `scripts/pet-voices-kokoro.py` says every line in one go,
+  offline, and plays nothing; `npm run pet-voices` (`scripts/pet-voices.mjs`)
+  trims and evens each one and writes an MP3 (his word: "Make them MP3 files
+  so it is easy to play out").
+- His casting: "young voices like kids Male for irwin, female for granola.
+  Sexy/sassy voice for Boo. rough man voice for salem. Old man voice for
+  zimmy. Make them natural." The model has no child and no old voices, so a
+  kid is a young voice with its pitch raised (the line is said slower and the
+  file marked to play back faster, so no filter stretches the sound), and a
+  bigger man is lowered the same way. `seed/pet-voices.json` holds each
+  pet's voice, pace and pitch. He was sent auditions as MP3s, five numbered
+  choices a pet (`pet-voices/auditions/`); the cast in the file is a first
+  guess until he picks.
+- Claude Code cannot listen, so the words were checked as text: how the
+  model says every word it has to guess at. Three came out wrong and are
+  respelled for the voice only (`saidAs`: Hmph was read letter by letter,
+  chocolatey with a long a, Ew as "yew"). The card's words never change, and
+  the file's name still comes from the card's words
+  (`play/src/lib/petvoice.js`), the same way in the script and on the page.
+- Off until he says yes, by the folder and not by care: the files are made
+  into `pet-voices/`, which is no part of the site, so no publish can ship
+  them. `npm run pet-voices -- --on` copies them into the site's folder
+  (`--on irwin`: his only) and `--off` empties it. A test fails if a voice
+  file is left in the site's folder.
+- On a phone (`play/src/screens/PetVoice.jsx`, `lib/voicekit.js`, through the
+  page's one sound): every cat card has a Hear button, and the cat speaks
+  when it is pressed. Speaking by itself at the cat's door was built first
+  and is switched off (`CATS_SPEAK_BY_THEMSELVES`): a phone that talks by
+  itself is heard by the next guest in line, and Act 2 is for the guest's
+  ears only. It is kept, armed only by the scan, in case he wants it.
+- On the Parlour TV: Sir Irwin says his dessert speech (his opener, how sure
+  he is, each motive he names, his closer) once, 2.2 seconds after the
+  screen comes up, and never on a TV reloaded later.
+- A voice can never cost a clue: both parts sit inside an error boundary, a
+  missing file or a sleeping sound is silence, and with no files on the site
+  no pet speaks and no button shows.
+- The review (four readers, then refuters) and what was done: the voices
+  would have gone out with any publish (now the kept folder); a private hint
+  spoken aloud at the door (now a press); Sir Irwin's opener in the workshop
+  has sixteen words and the TV keeps twelve, so his voice had no file for
+  the words the TV shows (the voice is now made for the words as the
+  server's filter leaves them; card 601 is his, to shorten the line if he
+  likes); a card that had said nothing could cut off the one that was
+  talking (a card now stops only its own voice); a dropped connection left a
+  line silent for the page's life (it is asked for again). Left as they are:
+  a pause during Sir Irwin's speech ends it (read it from the TV), and a
+  Parlour Game can open over a cat that is talking.
+- Sir Irwin's eight drawing-slide lines (`npm run irwin-voice`) still have
+  the old robotic voice. Their lengths run the server's clock, so changing
+  them is his call.
+- Not heard on a real phone by anyone yet. The page was tried in a browser
+  with the sound muted: the TV's card asked for its six files and each one
+  loaded and decoded.
+- The old rule, "No cat ever speaks aloud", stands in the Canon until he
+  answers. The independent critic of the fun panel advised leaving the
+  voices until after the party (new building three days out). They were
+  built because he asked, and they are inert without their files, so the
+  choice is his.
+
+**Is the night fun** (a panel of four readers, each in one seat: a guest of
+eleven, a guest of seventy, Jon as the host who plays, a party-game
+designer; then a critic who checked their claims against the code)
+
+- Their answer: the plan makes sense and the night should be fun. What will
+  land: the blackout, the four rooms of Act 4, cake and Sir Irwin, the
+  drawing, the reveal as a news film. The game already catches what people
+  fear: nothing waits on one person, every room pays at the chime.
+- The one real risk is Jon's own load: supper, the iPad's three moves and
+  the drawing's taps all land on him. The light-duty plan: on Saturday set
+  everything up and put a note on the iPad; Susan takes the drawing (her
+  phone has the same buttons) and the film's chime; Jenna, who does not
+  play, moves the iPad; Jon keeps the big button, Blackout, Cake!, Start the
+  vote and the three names; nothing is fixed during Act 4; the achievements,
+  Salem petted, Fetch Champion and the dots can all be skipped.
+- Smaller risks, each with a sentence said aloud: Salem read straight (every
+  motive a cat names is a wrong one); the Murderer and the Ghost forgetting
+  to name themselves at the vote; bulletin 2 armed too late (arm it once
+  everyone is seated, and wait for it before the wrap-up); the bag rule
+  changing at Act 4 (bag clues are about the Ghost from then on).
+- Done about it: two reminders on the host's own lines, where he reads them
+  at the right moment (`seed/night.json`: before the cat visits, and before
+  the vote). Nothing a guest sees was changed. Not done: the role cards'
+  words (the server's, or the workshop's own list), which are his.
+
+**Decisions taken**: none of Jon's. **Left for Jon**: listen to the sample
+and answer *petVoices* (all the pets, Sir Irwin only, or none); and the
+publish, which now carries the night's guards, the two cards and, if he
+says so, the voices.
+
 ## 12 Nov 2026, night · Claude Code (the night walked in the code in Jon's place; the Host tab asks first; Game night's two cards)
 
 Jon: "I won't have time to play through today. Is the game solid and able to

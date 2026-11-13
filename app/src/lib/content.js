@@ -34,6 +34,7 @@ import {
   ARCADE_NIGHT_1105_TASKS, RETIRED_FOR_ARCADE_NIGHT_1105, FILED_FOR_ARCADE_NIGHT_1105, ARCADE_NIGHT_1105_DECISIONS, SWEEP_1106_DECISIONS, POSTMORTEM_1111_TASKS, MEDIA_1111_TASKS, WALKTHROUGH_1111_TASKS, SETUP_1111_TASKS, START_1112_TASKS, WORKSHOP_1112_TASKS, POLISH_1112_TASKS, RETIRED_FOR_POLISH_1112, FILED_FOR_POLISH_1112, ANSWERED_FOR_POLISH_1112, REVIEW_1112_TASKS, RETIRED_FOR_REVIEW_1112, FILED_FOR_REVIEW_1112, BLACKOUT_SHORTCUTS_1112_TASKS, REWRITTEN_FOR_BLACKOUT_SHORTCUTS_1112, FILED_FOR_BLACKOUT_SHORTCUTS_1112, AUDIO_PANIC_1112_TASKS, REWRITTEN_FOR_AUDIO_PANIC_1112, FILED_FOR_AUDIO_PANIC_1112,
   SCREEN_SAVER_1112_TASKS, RETIRED_FOR_SCREEN_SAVER_1112, REWRITTEN_FOR_SCREEN_SAVER_1112,
   NIGHT_GUARDS_1112_TASKS, RETIRED_FOR_NIGHT_GUARDS_1112, FILED_FOR_NIGHT_GUARDS_1112, NIGHT_GUARDS_1112_DECISIONS,
+  PET_VOICES_1112_TASKS, PET_VOICES_1112_DECISIONS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1136,6 +1137,19 @@ export const ADDITIONS = [
     retireTasks: RETIRED_FOR_NIGHT_GUARDS_1112,
     fileTasks: FILED_FOR_NIGHT_GUARDS_1112,
     decisions: NIGHT_GUARDS_1112_DECISIONS,
+  },
+  {
+    // 12 Nov, late, Jon: "Can we get voices reading for the pets", then "I
+    // need better voices. not robotic at all." Every pet has a natural voice,
+    // made as files on this Mac and kept off the site: a cat at a press of
+    // Hear on a guest's own phone, Sir Irwin on the Parlour TV at dessert
+    // (600, done, switched off). Whether they go out for Sunday is his call,
+    // since until now no cat spoke aloud: the decision petVoices. Found on
+    // the way: his opener in the workshop is longer than the TV keeps (601,
+    // his, nothing broken).
+    id: '2026-11-12-pet-voices',
+    tasks: PET_VOICES_1112_TASKS,
+    decisions: PET_VOICES_1112_DECISIONS,
   },
 ]
 

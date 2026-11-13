@@ -576,6 +576,20 @@ the screen awake by itself where the iPad lets it.
   is still with a cat after five, gets the cat's lines on the phone and the
   next guest is called. Your Host tab counts it: "Cat visits: N of M guests
   have seen all four".
+- The pets' voices (built 12 November, on your word "Can we get voices
+  reading for the pets"; natural voices since your "not robotic at all").
+  They are off until you say yes: the files are made and kept in a folder
+  that is no part of the site, so no publish can send them out by accident.
+  When they are on: every cat card on a phone has a Hear button, and the cat
+  says its lines in its own voice when the guest presses it. A cat never
+  speaks by itself, so nobody is overheard by surprise. At dessert Sir Irwin
+  says his speech and the motives he names on the Parlour TV, after his
+  chime, by himself. The words always show. If you pause while Sir Irwin is
+  speaking he stops and does not start again: read his words out from the
+  TV. `npm run pet-voices` makes the files (silently),
+  `npm run pet-voices -- --on` puts them on the site at the next publish,
+  `npm run pet-voices -- --off` takes them off, and `seed/pet-voices.json`
+  names each pet's voice.
 - Supper: when everyone has seen all four cats, the supper chime rings on
   its own and every phone says supper is served in the Orangerie. To call
   it sooner, press **Supper's ready** (it shows on the Run the night card
