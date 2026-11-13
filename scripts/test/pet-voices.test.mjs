@@ -310,6 +310,7 @@ test('Jon\'s casting, chosen by ear from numbered auditions (12 Nov 2026), is he
   assert.deepEqual(cast.boo, { voice: 'ff_siwis', speed: 0.8, pitch: 1 }, 'Boo: the French woman\'s voice, slow, her lines as they are written')
   assert.deepEqual(cast.salem, { voice: 'bm_lewis', speed: 0.95, pitch: 1 }, 'Salem: a rough British man')
   assert.deepEqual(cast.zimothy, { voice: 'bm_george', speed: 0.88, pitch: 1 }, 'Zimothy: an old British man')
-  // Sir Irwin is not chosen yet ("Please give me young boy Aussie options. Forget the low and slow."): any voice of the model
-  assert.ok(cast.irwin.voice && cast.irwin.voice !== cast.boo.voice)
+  // "Please give me young boy Aussie options. Forget the low and slow." and then "12 Irwin - 5"
+  assert.deepEqual(cast.irwin, { voice: 'bm_daniel', speed: 1, pitch: 1.3, accent: 'aussie-light' }, 'Sir Irwin: a young boy, with the lighter Australian accent')
+  assert.equal(new Set(Object.values(cast).map(c => c.voice)).size, 5, 'five different voices')
 })

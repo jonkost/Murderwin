@@ -26,8 +26,8 @@ and nothing else changes.
 
 Jon's casting (12 November), each chosen by ear: Granolia is a British girl
 (a kid), slow; Boo a French woman's voice, slow; Salem a rough British man;
-Zimothy an old British man. Sir Irwin is to be a young Australian boy, and
-is not chosen yet (`accent` gives a voice the Australian vowels). Each pet's voice, pace and pitch are in
+Zimothy an old British man; Sir Irwin a young Australian boy (a British
+boy's voice; `accent` gives it the Australian vowels). Each pet's voice, pace and pitch are in
 `seed/pet-voices.json`,
 with the other voices to choose from. A pitch above 1 makes a voice younger
 and smaller (that is how a kid is made); below 1, bigger and deeper. `lower`

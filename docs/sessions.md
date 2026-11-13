@@ -52,8 +52,11 @@ off the site: it waits for his answer, the board's question *petVoices*)
   this Mac) to "Please give me young boy Aussie options. Forget the low and
   slow." The model has no Australian voice, so the talker gives a British
   boy's voice the accent by moving each word's vowels the Australian way
-  (`accent` in the cast; checked as text on every one of his lines). He has
-  six such try-outs (file 12); his lines are a first guess until he picks.
+  (`accent` in the cast; checked as text on every one of his lines). From
+  six such try-outs he chose "12 Irwin - 5": a British boy's voice at a
+  boy's pitch with the lighter accent. All 834 lines are made in the five
+  chosen voices, and he was sent one clip of the whole cast stitched from
+  the real files (file 13).
 - Claude Code cannot listen, so the words were checked as text: how the
   model says every word it has to guess at. Three came out wrong and are
   respelled for the voice only (`saidAs`: Hmph was read letter by letter,
