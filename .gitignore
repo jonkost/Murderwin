@@ -66,6 +66,10 @@ play/public/rules/*
 # Sir Irwin's voice for the drawing's slides (play/public/voice/README.md, npm run irwin-voice): made on Jon's Mac, deployed from it
 play/public/voice/*
 !play/public/voice/README.md
+
+# the pets' voices (pet-voices/README.md, npm run pet-voices): made on Jon's Mac and kept here, off the site, until he says they go out
+pet-voices/*
+!pet-voices/README.md
 # the cue sounds the room screens and phones play (play/public/sound/README.md): made from media/ by npm run web-sounds, not kept in git, like the videos
 play/public/sound/*
 !play/public/sound/README.md

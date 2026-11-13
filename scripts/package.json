@@ -13,6 +13,7 @@
     "night-log": "node postmortem.mjs record",
     "postmortem": "node postmortem.mjs report",
     "media": "node media-check.mjs",
+    "pet-voices": "node pet-voices.mjs",
     "media-import": "node media-import.mjs",
     "web-sounds": "node web-sounds.mjs"
   },

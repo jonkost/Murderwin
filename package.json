@@ -22,6 +22,7 @@
     "night-log": "npm --prefix scripts run night-log",
     "postmortem": "npm --prefix scripts run postmortem --",
     "media": "node scripts/media-check.mjs",
+    "pet-voices": "node scripts/pet-voices.mjs",
     "media-import": "node scripts/media-import.mjs",
     "web-sounds": "node scripts/web-sounds.mjs",
     "rules-film": "node scripts/rules-film.mjs",

@@ -21,6 +21,9 @@ import { SOUND_IDS, REQUIRED_SOUND_IDS, CHIME_FALLBACK, CLIP_IDS, SOUND_EXTENSIO
 import { RULES_FILES, RULES_DIR, LENGTHS_JSON } from './rules-film.mjs'
 import { isStandIn, WEB_SOUND_DIR } from './web-sounds.mjs'
 import { VOICE_DIR } from './irwin-voice.mjs'
+import { PET_VOICE_DIR, PET_VOICE_SITE, onSiteWords } from './pet-voices.mjs'
+import { allPetLines } from './pet-lines.mjs'
+import { petVoiceId, speakable, PET_VOICE_EXT } from '../play/src/lib/petvoice.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -117,19 +120,32 @@ export function standIns(files, bytesOf) {
     try { const b = bytesOf(f); return !!b && isStandIn(id, b) } catch { return false }
   })
 }
+// The pets' voices: how many of the lines a pet can say (the game's own words; the workshop's own for Sir
+// Irwin are on top of these) have their file made, in pet-voices/, and which pets' files are in the site's
+// folder, where the next publish would pick them up (none until Jon says yes).
+export function petVoiceCount(dir = PET_VOICE_DIR, site = PET_VOICE_SITE) {
+  const ls2 = d => { try { return readdirSync(d) } catch { return [] } }
+  const files = ls2(dir)
+  const present = new Set(files.filter(f => f.endsWith(PET_VOICE_EXT)).map(f => f.slice(0, -PET_VOICE_EXT.length)))
+  const wanted = allPetLines().filter(l => speakable(l.text, l.who)).map(l => petVoiceId(l.who, l.text))
+  return { have: wanted.filter(id => present.has(id)).length, of: wanted.length, onSite: onSiteWords(ls2(site), files) }
+}
+
 // Sir Irwin's voice for the drawing's slides, and the loud copies of Jon's own cue sounds: both made by a
 // command, both not in git, both shipped with the site.
-export function madeLines({ voice, web }) {
+export function madeLines({ voice, web, pets = null }) {
   const out = ['', '5. Made on this Mac, and shipped with the site']
   const voices = (voice?.files ?? []).filter(f => /^irwin-(slide-\d|door)\.m4a$/.test(f)).length
   out.push(`  Sir Irwin's voice for the drawing (npm run irwin-voice): ${voices} of 8 in.${voices < 8 ? ' A slide with no voice turns in silence, on time.' : ''}`)
+  // the pets' voices (12 Nov 2026): a file for every line a pet can say; a line with none is shown and not said
+  if (pets) out.push(`  The pets' voices, a file for every line a pet can say (npm run pet-voices): ${pets.have} of ${pets.of} made, and kept off the site.${pets.have < pets.of ? ' A line with no file is shown and not said.' : ''} In the site's folder for the next publish: ${pets.onSite ?? 'none (the voices are off)'}.`)
   const webs = (web?.files ?? []).filter(f => /\.mp3$/.test(f)).length
   out.push(`  Your own cue sounds, made loud for the screens and phones (npm run web-sounds): ${webs} in. Every other cue is the house's own sound, made by the screens.`)
   out.push('  Then: npm run deploy:site.')
   return out
 }
 
-export function report({ media, video, loops, household, rules = null, sizes = {}, standIn = [], voice = null, web = null }) {
+export function report({ media, video, loops, household, rules = null, sizes = {}, standIn = [], voice = null, web = null, pets = null }) {
   const out = ['Where the media goes, and what is in.']
   out.push(...folderLines({
     title: '1. The sounds and the news recordings (the brain plays them)',
@@ -177,7 +193,7 @@ export function report({ media, video, loops, household, rules = null, sizes = {
   const big = Object.entries(sizes).filter(([, b]) => b > LOOP_MAX_BYTES).map(([f]) => f)
   if (big.length) out.push(`  Over 30 MB (slow to start on the house wifi): ${big.join(', ')}`)
   if (rules) out.push(...rulesLines(rules))
-  if (voice || web) out.push(...madeLines({ voice, web }))
+  if (voice || web) out.push(...madeLines({ voice, web, pets }))
   out.push('', '6. Sydney\'s photo (the dedication in the credits)', `  File: ${household.file}`, `  ${household.there ? 'In.' : 'Not in. The dedication shows its words with no photo.'}`, '  Then: npm run deploy:site.')
   out.push('', '7. Not files in this folder', '  The music: your music Shortcuts on the brain (Default Jazz, Default Jazz 20%, Intense Music 35% and 60%, the two game musics, and AudioPanic to stop it all) and the song Happy Birthday for Dogs.', '  Nothing else: the Parlour TV plays the intro and the rules film by itself.')
   return out
@@ -222,6 +238,7 @@ async function main() {
     household: { file: syd, there: existsSync(syd) },
     rules: { dir: RULES_DIR, files: ls(RULES_DIR), own: ownSlides() },
     voice: { dir: VOICE_DIR, files: ls(VOICE_DIR) },
+    pets: petVoiceCount(),
     web: { dir: WEB_SOUND_DIR, files: ls(WEB_SOUND_DIR) },
   }
   state.standIn = standIns(state.media.files, f => readFileSync(join(mDir, f)))

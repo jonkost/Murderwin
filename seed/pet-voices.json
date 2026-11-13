@@ -1,0 +1,43 @@
+{
+  "_about": "The pets' voices (12 Nov 2026, Jon: \"Can we get voices reading for the pets\", then \"I need better voices. not robotic at all.\", then his casting: \"young voices like kids Male for irwin, female for granola. Sexy/sassy voice for Boo. rough man voice for salem. Old man voice for zimmy. Make them natural. Make them MP3 files\"). For each pet: which natural voice reads it, its pace (1 is the voice's own; 1.1 a little faster, 0.9 a little slower) and its pitch (1 is the voice's own; above 1 is younger and smaller, about 1.2 for a child; below 1 is bigger and deeper). The voices belong to the voice model that is already on this Mac (Kokoro, through mlx-audio): free, nothing downloaded, nothing leaves the Mac. npm run pet-voices makes an MP3 for every line a pet can say, silently, into pet-voices/ (kept off the site until Jon says yes). To change a pet's voice, change it here and run it again: that pet's files are made again. saidAs: a few words spelled the way they sound, for the voice only; the card's words never change.",
+  "engine": "kokoro",
+  "cast": {
+    "irwin": {
+      "voice": "am_eric",
+      "speed": 1.0,
+      "pitch": 1.25
+    },
+    "granolia": {
+      "voice": "af_jessica",
+      "speed": 1.0,
+      "pitch": 1.18
+    },
+    "boo": {
+      "voice": "af_bella",
+      "speed": 0.95,
+      "pitch": 1.0
+    },
+    "zimothy": {
+      "voice": "bm_george",
+      "speed": 0.88,
+      "pitch": 1.0
+    },
+    "salem": {
+      "voice": "am_onyx",
+      "speed": 0.92,
+      "pitch": 0.9
+    }
+  },
+  "saidAs": {
+    "Hmph": "Humph",
+    "chocolatey": "chocolaty",
+    "Ew": "Eew"
+  },
+  "otherVoices": {
+    "American women": "af_heart af_bella af_nicole af_aoede af_kore af_sarah af_nova af_sky af_alloy af_jessica af_river",
+    "American men": "am_fenrir am_michael am_puck am_echo am_eric am_liam am_onyx am_adam am_santa",
+    "British women": "bf_emma bf_isabella bf_alice bf_lily",
+    "British men": "bm_george bm_fable bm_lewis bm_daniel"
+  },
+  "castNote": "Provisional until Jon picks from the auditions sent on 12 Nov (pet-voices/auditions/, five numbered choices a pet; which-voice-is-which.json there says what each number is)."
+}
