@@ -27,6 +27,18 @@ export function introAtFor({ real = false, now = Date.now() } = {}) {
 export const MAX_FILL_INS = 8
 // The party day, the same moment the server holds (functions/lib/morning.js PARTY_DAY; a test keeps them equal).
 export const PARTY_DAY = Date.parse('2026-11-15T12:00:00Z')
+// The party day itself: from the moment the server takes the real box (PARTY_DAY) through
+// that night's small hours. On it a practice start asks first, and a practice night that is
+// on says so in red on the Host tab (12 Nov 2026: with the box forgotten, the party would
+// run on the practice case, the practice bags and the practice pictures, and look the same).
+export const PARTY_DAY_MS = 20 * 60 * 60_000
+export function onPartyDay(now = Date.now()) {
+  return now >= PARTY_DAY && now < PARTY_DAY + PARTY_DAY_MS
+}
+export const PRACTICE_ASK = 'Today is the party. This starts a practice night, not the real night. Start a practice night anyway? To start the real night, press Cancel and tick This is the real night.'
+export const PRACTICE_NOTE = 'A practice night, not the party. For the party, tick This is the real night.'
+// A host phone on a live night starts another: the same question the workshop's button asks.
+export const REPLACE_ASK = 'Start a new night? The night that is on now ends for every phone and screen.'
 export function fillInCount(n) {
   const k = Math.floor(Number(n))
   return Number.isFinite(k) ? Math.max(0, Math.min(MAX_FILL_INS, k)) : 0

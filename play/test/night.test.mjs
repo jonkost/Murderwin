@@ -299,7 +299,7 @@ test('CL-8 a rehearsal night: no band on a phone, the Host tab says which night 
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   assert.ok(!app.includes('RehearsalBand') && !app.includes('{band}'), 'no band on a phone')
   const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
-  assert.ok(host.includes("isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'"), 'the Host tab says which night it is')
+  assert.ok(host.includes("isRehearsalNight(night) ? 'This is a practice night' : 'This is the party night'"), 'the Host tab says which night it is')
   // the practice pages keep theirs, saying PRACTICE
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   assert.ok(/\.rehearsal-band \{[^}]*position: fixed; top: 0;/.test(css), 'the band is fixed across the top')

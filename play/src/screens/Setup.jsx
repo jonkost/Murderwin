@@ -18,7 +18,7 @@ export default function Setup() {
   return (
     <main className="setup">
       <h1>Which screen is this?</h1>
-      <p className="setup-sub">Tap this machine’s room. That tap turns its sound on. Then click once on the page to make it full screen.</p>
+      <p className="setup-sub">Tap this machine’s room. That tap turns its sound on. Then click once on the page to make it full screen. Wrong room? Open this page again and tap the right one.</p>
       <ul className="setup-list">
         {SETUP_ROOMS.map(r => (
           <li key={r.key} className={r.key === last ? 'setup-room last' : 'setup-room'}>

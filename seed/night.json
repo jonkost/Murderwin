@@ -60,7 +60,7 @@
         {
           "key": "rules",
           "name": "The house rules",
-          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video and then the rules, by itself: about sixteen minutes. When it ends the join code comes back. Press Next when the room is ready; Next also goes sooner. The sound-test chime is the Sound test button.",
+          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video and then the rules, by itself: about sixteen minutes. When it ends the join code comes back. Press Next when the room is ready; Next also goes sooner. When the film asks for a chime, press Phone chime, just below.",
           "screen": "join"
         },
         {
@@ -138,7 +138,7 @@
         {
           "key": "bulletin",
           "name": "Arm the bulletin",
-          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, on the HomePods with its words on the Orangerie iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When supper is over, press Next for the dinner wrap-up.",
+          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, from the brain's own speakers in the Orangerie, with its words on the iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When supper is over, press Next for the dinner wrap-up.",
           "action": "arm:bulletin"
         },
         {
@@ -244,14 +244,14 @@
         {
           "key": "games",
           "name": "Two Parlour Games",
-          "what": "Every phone gets the break note (two games, then the final event, a good moment for a stretch), and Boo hosts the last two Parlour Games, one after the other. Press Next for the drawing once both are done.",
+          "what": "Every phone gets the break note (two games, then the final event, a good moment for a stretch), and Boo hosts the last two Parlour Games, one after the other. The drawing starts by itself when the second is done: press nothing here.",
           "action": "notice:break",
           "sound": "chime-phone"
         },
         {
           "key": "drawing",
           "name": "The drawing",
-          "what": "The relay drawing. While Sir Irwin explains it on the TV every phone says: be in the Parlour for the final event. Then three rounds, with no practice round. The game calls a player to the paper in the Library; press At the paper when they are there and the TV shows one square. The room describes it and tells you its guess; you tap it on your phone (the TV's names still take a tap). A wrong guess is crossed off and the room guesses again at once.",
+          "what": "The relay drawing. While Sir Irwin explains it on the TV every phone says: be in the Parlour for the final event. Then three rounds, with no practice round. The game calls a player to the paper in the Library; press At the paper when they are there and the TV shows one square. The room describes it and tells you its guess; you tap it on your phone (the TV's names still take a tap). A wrong guess is crossed off and the room guesses again at once. When the third picture is named, every phone says the door is open: tap Hide this on yours, then Next.",
           "action": "relay:start"
         },
         {

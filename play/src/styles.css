@@ -298,6 +298,8 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .host-relay .host-options button.option:disabled { cursor: default; }
 .host-relay .host-options button.option:disabled:not(.out) { opacity: 0.7; }
 .host-relay .host-msg { width: 100%; box-sizing: border-box; }
+/* the Pause on the host's drawing screen (12 Nov 2026): small, centred, well clear of At the paper and the guesses */
+.host-relay.inline .relay-pause { justify-content: center; margin-top: 1.6rem; }
 
 /* ---- the room screens ---- */
 .kiosk { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2vw; background: var(--bg); color: var(--ink); }
@@ -1315,6 +1317,8 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .start-fill .chip { min-width: 2.75rem; min-height: 2.75rem; font-size: 1.4rem; line-height: 1; }
 .start-fill-count { min-width: 1.4rem; text-align: center; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
 .start-note { margin: 0; color: var(--dim); font-size: 0.95rem; text-align: center; }
+/* the party day with the real-night box unticked (12 Nov 2026): the note is a warning */
+.start-note.trouble { color: #f0a090; font-weight: 600; }
 .send-screens { margin: 0.8rem 0; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--card); }
 .send-screens summary { font-weight: 700; font-size: 1.1rem; min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; }
 .send-list { list-style: none; padding: 0; margin: 0.4rem 0 0; display: grid; gap: 0.5rem; }

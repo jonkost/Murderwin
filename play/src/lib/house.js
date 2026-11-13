@@ -40,7 +40,7 @@ export const MACHINES = [
   { key: 'kiosk-memory', label: 'In Duplicate (another device)', spare: true }, // ?kiosk=memory on another device; the iPad's page shows In Duplicate itself
   { key: 'kiosk-boo', label: 'Boo’s screen (the arcade)' }, // Susan's MacBook Pro in the Entryway with the Stream Deck + XL as ?kiosk=boo (5 Nov 2026)
   { key: 'kiosk-orangerie', label: 'Orangerie screen' }, // the brain's browser as ?kiosk=orangerie (25 Oct 2026, the cue list); a speaker for the cues since 11 Nov 2026
-  { key: 'cues', label: 'Hall light and sounds', quiet: true },
+  { key: 'cues', label: 'The brain: music and lights', quiet: true }, // the cue relay ("Hall light and sounds" until 12 Nov 2026; the cue sounds are the screens' own now)
 ]
 export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.key))
 // `quiet`: a machine that makes no sound of its own by design (the brain itself, whose cue

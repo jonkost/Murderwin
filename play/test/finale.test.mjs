@@ -153,7 +153,7 @@ test('F31 Held shows on the Parlour TV only on a practice night; on the party ni
   }
   assert.ok(!readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8').includes('trace-standin'))
   const hostTab = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
-  assert.ok(hostTab.includes("isRehearsalNight(night) ? 'This night is a rehearsal' : 'This is the party night'"), 'the Host tab still says which night it is')
+  assert.ok(hostTab.includes("isRehearsalNight(night) ? 'This is a practice night' : 'This is the party night'"), 'the Host tab still says which night it is')
   // the hold itself still stops the screen on every night
   assert.ok(kiosk.includes("animationPlayState: finale.holdAt ? 'paused' : 'running'"), 'the bar and the credits stand still')
   // and the host still knows: the Host tab's reveal panel says so and offers Carry on

@@ -18,7 +18,8 @@ import { RoomEnd } from './screens/Closing'
 import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
 import BooArcade from './screens/Arcade'
 import { SalemRounds } from './screens/Act4'
-import { HousePanel, ResumeNight, StartNight } from './screens/Host'
+import { HousePanel, ResumeNight, StartNight, RunPanel, RevealPanel, HostRelayPanel } from './screens/Host'
+import GoodNight from './screens/GoodNight'
 import { houseView } from './lib/house'
 import { generateSet } from '../../functions/lib/relay-gen.js'
 import Allow from './screens/Allow'
@@ -505,7 +506,7 @@ export default function Preview({ screen }) {
   const serverNow = () => Date.now()
   const which = screen === 'tour' ? TOUR[step] : screen
   const dealt = DEALT[which]
-  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' ? 'host' : which === 'notes' ? 'notes' : which === 'cats' || which === 'cats-act4' || which === 'cats-friend' ? 'cats' : 'you') } catch {}
+  try { localStorage.setItem('reticule-tab', dealt ? (dealt.tab ?? 'now') : which === 'host' || which === 'host-at' ? 'host' : which === 'notes' ? 'notes' : which === 'cats' || which === 'cats-act4' || which === 'cats-friend' ? 'cats' : 'you') } catch {}
   let body
   if (KIOSK[which]) return KIOSK[which](night, serverNow)
   switch (which) {
@@ -553,6 +554,23 @@ export default function Preview({ screen }) {
     case 'paused-window': body = <><PausedStrip ui={ui} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break
     case 'cats-act4': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2' }} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 }, groupAffection: { granolia: 2, boo: 3, zimothy: 4, salem: 4 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'host': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + 60000), settled: false } }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
+    // Run the night on its own, with the documents the live tab reads (12 Nov 2026), to try the presses that ask first:
+    // ?preview=host-run&act=4&beat=round4 (a round with ten minutes left, four rounds in all),
+    // ?preview=host-run&act=7&beat=result (the credits still rolling), ?preview=host-run&act=7&beat=reveal
+    case 'host-run': {
+      const q = new URLSearchParams(window.location.search)
+      const act = Number(q.get('act')) || 4, beat = q.get('beat') || 'round4'
+      const n = { ...night, act, beat }
+      const act4 = act === 4 ? { phase: 'rounds', round: 4, rounds: 4, roundEndsAt: stamp(Date.now() + 600000) } : null
+      const fin = act === 7 ? FINALE(200000, beat === 'reveal' ? 'murderer' : 'victim', { sinceVictim: 20000 }) : null
+      const said = (command) => { window.__ran = [...(window.__ran ?? []), command] }
+      body = <div className="host"><RunPanel night={n} busy={null} run={said} serverNow={serverNow} finale={fin} act4={act4} onBlackout={() => said('blackout')} /><GoodNight night={n} finale={fin} serverNow={serverNow} /><RevealPanel night={n} finale={fin} busy={null} run={said} serverNow={serverNow} /></div>
+      break
+    }
+    // the host's own controls on the drawing screen, with the Pause under them: ?preview=host-relay
+    case 'host-relay': body = <div className="moment relay"><HostRelayPanel relay={relayDoc('walk')} nightId="preview" inline /></div>; break
+    // the Host tab at any beat, to look at Run the night there (12 Nov 2026): ?preview=host-at&act=1&beat=ready
+    case 'host-at': { const q = new URLSearchParams(window.location.search); body = <Rest uid="preview" night={{ ...night, act: Number(q.get('act')) || 1, beat: q.get('beat') || 'arrive' }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break }
     case 'cats': body = <Rest uid="preview" night={night} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     // the Notes tab (25 Oct 2026): the box with some words already in it
     case 'notes': body = <Rest uid="preview" night={night} session={SESSION} content={CONTENT} notes={{ seen: {}, crossed: {}, buzzed: {}, continued: {}, text: '[Your own notes land here: who said what, and what you make of it.]' }} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
