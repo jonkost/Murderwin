@@ -14,9 +14,9 @@
       "pitch": 1.18
     },
     "boo": {
-      "voice": "bf_emma",
+      "voice": "ff_siwis",
       "speed": 0.8,
-      "pitch": 0.94
+      "pitch": 1.0
     },
     "zimothy": {
       "voice": "bm_george",
@@ -45,5 +45,5 @@
     "British women": "bf_emma bf_isabella bf_alice bf_lily",
     "British men": "bm_george bm_fable bm_lewis bm_daniel"
   },
-  "castNote": "Jon picked by ear from numbered auditions on 12 Nov 2026 (pet-voices/auditions/; which-voice-is-which.json there says what each number is). First: \"Boo - 4, Granola - 4, Salem - 2, Zimmy - 1\". Then: \"This pitch is good for the cats but the lines need to be slower for the girls.\" and, on two slower speeds: \"Garnola speed 2\" (Granolia 0.74). For Boo he asked \"Is there a British boo since the rest are British? Or French American\" and chose \"10 boo - 1\": the British Boo (bf_emma, a little lower, slow), no French accent. Sir Irwin's is still a first guess: \"I don't love the Irwin ones give more options\", \"a dum-dum voice for Irwin. Slow and low but like a child.\" (file 9 has six such to choose from)."
+  "castNote": "Jon picked by ear from numbered auditions on 12 Nov 2026 (pet-voices/auditions/; which-voice-is-which.json there says what each number is). First: \"Boo - 4, Granola - 4, Salem - 2, Zimmy - 1\". Then: \"This pitch is good for the cats but the lines need to be slower for the girls.\" and, on two slower speeds: \"Garnola speed 2\" (Granolia 0.74). Boo went through \"French English\", \"Is there a British boo since the rest are British? Or French American\", \"10 boo - 1\" (a British Boo) and then, last: \"Boo needs to be 8 Boo - 1 the French one\": the French woman's voice (ff_siwis) reading her lines as they are written, slow. Sir Irwin is not chosen: \"Can you get a young boy Australian accent for Irwin\", \"Not low\", \"Please give me young boy Aussie options. Forget the low and slow.\""
 }

@@ -4,7 +4,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, readdirSync, rmSyn
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { catHintLines, catBagLines, irwinLines, allPetLines, clueWords } from '../pet-lines.mjs'
-import { modelVoices, castFor, forVoice, saidFor, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, busyWith, readArgs, ENGINE } from '../pet-voices.mjs'
+import { modelVoices, castFor, forVoice, saidFor, decide, plan, robotic, stale, tally, forSite, onSiteWords, setSite, busyWith, readArgs, ENGINE, ACCENTS } from '../pet-voices.mjs'
 import { PETS, PET_VOICE_EXT, petVoiceId, petVoiceUrl, voiceKey, speakable, tidyWords, irwinSpeech, speechFresh, SPEECH_FRESH_MS } from '../../play/src/lib/petvoice.js'
 import { hintLine, HINT_CATS } from '../../functions/lib/cats.js'
 import { FAMILIES, ALL_MOTIVES, familyOf } from '../../functions/lib/families.js'
@@ -163,7 +163,13 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   }
   const all = Object.values(file.cast).map(c => c.voice)
   const cast = castFor(file, all)
-  assert.deepEqual(cast.zimothy, { voice: file.cast.zimothy.voice, speed: file.cast.zimothy.speed, pitch: file.cast.zimothy.pitch ?? 1, lower: file.cast.zimothy.lower ?? 1, asked: file.cast.zimothy.voice })
+  assert.deepEqual(cast.zimothy, { voice: file.cast.zimothy.voice, speed: file.cast.zimothy.speed, pitch: file.cast.zimothy.pitch ?? 1, lower: file.cast.zimothy.lower ?? 1, accent: null, asked: file.cast.zimothy.voice })
+  // an accent the model has no voice for: only the ones the talker knows, and the talker's own list says the same
+  assert.equal(castFor({ cast: { irwin: { voice: 'bm_daniel', accent: 'aussie' } } }, ['bm_daniel']).irwin.accent, 'aussie')
+  assert.equal(castFor({ cast: { irwin: { voice: 'bm_daniel', accent: 'klingon' } } }, ['bm_daniel']).irwin.accent, null, 'an accent nobody built is no accent')
+  const talkerSrc = read('../pet-voices-kokoro.py')
+  for (const a of ACCENTS) assert.ok(talkerSrc.includes(`"${a}": [`), `the talker knows ${a}`)
+  assert.deepEqual(saidFor({ all: { a: 'b' }, american: { c: 'd' }, british: { e: 'f' } }, 'am_puck', 'aussie'), { a: 'b', e: 'f' }, 'an Australian accent is built on the British reading, whatever the voice')
   assert.equal(castFor(file, [file.cast.zimothy.voice]).boo.voice, null, 'a pet whose voice the model lacks stays silent: there is no robotic stand-in')
   assert.equal(castFor(file, []).irwin.voice, null, 'and with no model on the Mac nobody speaks')
   // a blend of two voices: the model must have both
@@ -201,6 +207,8 @@ test('the maker: natural voices only; what it makes, keeps and never touches', (
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: { ...mine, pitch: 1.2 }, voice: 'bm_george', speed: 0.95, pitch: 1.2 }), 'keep')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: mine, voice: 'bm_george', speed: 0.95, lower: 0.7 }), 'make', 'a note brought down: made again')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: { ...mine, lower: 0.7 }, voice: 'bm_george', speed: 0.95, lower: 0.7 }), 'keep')
+  assert.equal(decide({ spoken: 'Hello.', exists: true, made: mine, voice: 'bm_george', speed: 0.95, accent: 'aussie' }), 'make', 'a new accent: made again')
+  assert.equal(decide({ spoken: 'Hello.', exists: true, made: { ...mine, accent: 'aussie' }, voice: 'bm_george', speed: 0.95, accent: 'aussie' }), 'keep')
   assert.equal(decide({ spoken: 'Hello there.', exists: true, made: mine, voice: 'bm_george', speed: 0.95 }), 'make', 'new words: made again')
   assert.equal(decide({ spoken: 'Hello.', exists: true, made: { spoken: 'Hello.', voice: 'Daniel', rate: 170 }, voice: 'bm_george', speed: 0.95 }), 'make', 'a file in one of the old robotic voices is made again')
   assert.equal(decide({ spoken: 'Hello.', exists: false, voice: 'bm_george', speed: 0.95 }), 'make')
@@ -297,11 +305,11 @@ test('the voices are off until Jon says yes: made into a folder that is no part 
 test('Jon\'s casting, chosen by ear from numbered auditions (12 Nov 2026), is held as he chose it', () => {
   const { cast } = JSON.parse(read('../../seed/pet-voices.json'))
   // "Boo - 4, Granola - 4, Salem - 2, Zimmy - 1"; "the lines need to be slower for the girls"; "Garnola speed 2";
-  // "Is there a British boo since the rest are British?" and then "10 boo - 1"
+  // "10 boo - 1" (a British Boo), and then, last: "Boo needs to be 8 Boo - 1 the French one"
   assert.deepEqual(cast.granolia, { voice: 'bf_lily', speed: 0.74, pitch: 1.18 }, 'Granolia: a British girl at a kid\'s pitch, speed two')
-  assert.deepEqual(cast.boo, { voice: 'bf_emma', speed: 0.8, pitch: 0.94 }, 'Boo: British, a little lower, slow')
+  assert.deepEqual(cast.boo, { voice: 'ff_siwis', speed: 0.8, pitch: 1 }, 'Boo: the French woman\'s voice, slow, her lines as they are written')
   assert.deepEqual(cast.salem, { voice: 'bm_lewis', speed: 0.95, pitch: 1 }, 'Salem: a rough British man')
   assert.deepEqual(cast.zimothy, { voice: 'bm_george', speed: 0.88, pitch: 1 }, 'Zimothy: an old British man')
-  // Sir Irwin is not chosen yet ("I don\'t love the Irwin ones"; "slow and low but like a child"): any voice of the model
+  // Sir Irwin is not chosen yet ("Please give me young boy Aussie options. Forget the low and slow."): any voice of the model
   assert.ok(cast.irwin.voice && cast.irwin.voice !== cast.boo.voice)
 })

@@ -14,6 +14,10 @@ smaller (above 1) or bigger and deeper (below 1): the line is said slower or fas
 the file is marked to play back that much faster or slower, so the pace comes out as asked and the
 sound itself is never stretched or squeezed by a filter. 1.2 is about a child; 0.9 a bigger man.
 
+accent (optional) gives a voice an accent the model has no voice for. "aussie" and "aussie-light": every
+word is read the British way (no r after a vowel), its vowels are moved the way an Australian moves them
+(day towards "die", my towards "moy"), and the model is handed those sounds for the word.
+
 It plays nothing: it only writes files. It downloads nothing: if the model is not on this Mac it
 says NO-MODEL and stops, and no pet gets a voice. It prints counts only, never a line's words.
 """
@@ -26,6 +30,44 @@ os.environ.setdefault("HF_HUB_OFFLINE", "1")  # never download: the model is on 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 MODEL = "mlx-community/Kokoro-82M-bf16"
+
+# The model's signs for the long vowels: A as in "day", I as in "my", Y as in "boy", W as in "now".
+ACCENTS = {
+    "aussie": [("A", "I"), ("I", "Y"), ("ɑː", "aː")],  # the broad shift, in sounds the model knows well
+    "aussie-light": [("A", "æɪ"), ("I", "ɑɪ"), ("W", "æʊ"), ("ɑː", "aː")],  # the same shift, half way
+}
+
+
+def shift(sounds, rules):
+    """Move a word's vowels: each rule once, left to right, never a moved vowel moved again."""
+    out, i = "", 0
+    while i < len(sounds):
+        for a, b in rules:
+            if sounds.startswith(a, i):
+                out += b
+                i += len(a)
+                break
+        else:
+            out += sounds[i]
+            i += 1
+    return out
+
+
+def accented(text, rules, g2p):
+    """The line with each changed word followed by its new sounds, in the form the model's reader takes: [word](/sounds/)."""
+    _, tokens = g2p(text)
+    out = ""
+    for k in tokens:
+        sounds = k.phonemes
+        if sounds and any(c.isalpha() for c in k.text):
+            new = shift(sounds, rules)
+            if new.endswith("ə") and len(new) > 2:
+                new = new[:-1] + "ɐ"  # the open "-er" at the end of a word
+            out += f"[{k.text}](/{new}/)" if new != sounds else k.text
+        else:
+            out += k.text
+        out += k.whitespace or ""
+    return out
 
 
 def main(path):
@@ -45,11 +87,16 @@ def main(path):
         try:
             voice = job["voice"]
             lang = "b" if voice.startswith("b") else "a"  # a British voice reads with British sounds
+            text = job["text"]
+            rules = ACCENTS.get(job.get("accent") or "")
+            if rules:
+                lang = "b"  # the accent is built on the British reading, whatever the voice
+                text = accented(text, rules, model._get_pipeline("b").g2p)
             pitch = min(1.5, max(0.7, float(job.get("pitch") or 1.0)))
             speed = float(job.get("speed") or 1.0) / pitch
             parts = [
                 np.array(r.audio, dtype=np.float32).reshape(-1)
-                for r in model.generate(text=job["text"], voice=voice, speed=speed, lang_code=lang)
+                for r in model.generate(text=text, voice=voice, speed=speed, lang_code=lang)
             ]
             audio = np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
             if audio.size < 2400 or not np.isfinite(audio).all():

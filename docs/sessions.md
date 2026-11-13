@@ -42,14 +42,18 @@ off the site: it waits for his answer, the board's question *petVoices*)
   over the evening: "Boo - 4, Granola - 4, Salem - 2, Zimmy - 1"; "This
   pitch is good for the cats but the lines need to be slower for the girls";
   "Garnola speed 2"; "French English"; "Is there a British boo since the
-  rest are British? Or French American"; "10 boo - 1". Where it stands, and
-  a test holds it: Granolia is a British girl at a kid's pitch, slow; Boo is
-  a British woman, a little low and slow (the French accent, made by
-  spelling the sounds, was tried and not chosen); Salem is a rough British
-  man; Zimothy an old British man. Sir Irwin is not chosen: "I don't love
-  the Irwin ones give more options", "I do kind of a dum-dum voice for
-  Irwin. Slow and low but like a child." He has six slow, low try-outs
-  (file 9); his lines are a first guess until he picks.
+  rest are British? Or French American"; "10 boo - 1"; and last, "Boo needs
+  to be 8 Boo - 1 the French one". Where it stands, and a test holds it:
+  Granolia is a British girl at a kid's pitch, slow; Boo is the model's
+  French woman's voice reading her lines as they are written, slow; Salem
+  is a rough British man; Zimothy an old British man. Sir Irwin is not
+  chosen. He went from "a dum-dum voice ... Slow and low but like a child"
+  (a note brought down with its size kept, `lower`, by a tool already on
+  this Mac) to "Please give me young boy Aussie options. Forget the low and
+  slow." The model has no Australian voice, so the talker gives a British
+  boy's voice the accent by moving each word's vowels the Australian way
+  (`accent` in the cast; checked as text on every one of his lines). He has
+  six such try-outs (file 12); his lines are a first guess until he picks.
 - Claude Code cannot listen, so the words were checked as text: how the
   model says every word it has to guess at. Three came out wrong and are
   respelled for the voice only (`saidAs`: Hmph was read letter by letter,

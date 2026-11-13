@@ -25,9 +25,9 @@ and nothing else changes.
 ## Who sounds like what
 
 Jon's casting (12 November), each chosen by ear: Granolia is a British girl
-(a kid), slow; Boo a British woman, a little low and slow; Salem a rough
-British man; Zimothy an old British man. Sir Irwin is to be slow and low but
-like a child, and is not chosen yet. Each pet's voice, pace and pitch are in
+(a kid), slow; Boo a French woman's voice, slow; Salem a rough British man;
+Zimothy an old British man. Sir Irwin is to be a young Australian boy, and
+is not chosen yet (`accent` gives a voice the Australian vowels). Each pet's voice, pace and pitch are in
 `seed/pet-voices.json`,
 with the other voices to choose from. A pitch above 1 makes a voice younger
 and smaller (that is how a kid is made); below 1, bigger and deeper. `lower`

@@ -56,6 +56,7 @@ export const PET_VOICE_SITE = join(root, 'play', 'public', 'voice', 'pets')   //
 export const CAST_JSON = join(root, 'seed', 'pet-voices.json')
 export const MARKER = '.made.json'
 export const LOCK = '.making'                                                 // holds the number of the run that is making them now
+export const ACCENTS = ['aussie', 'aussie-light']                             // accents the talker can give a voice (scripts/pet-voices-kokoro.py ACCENTS)
 export const ENGINE = 'kokoro'                                                // the natural voice model; a file made any other way is an old robotic one
 const TALKER = join(here, 'pet-voices-kokoro.py')
 const MODEL_FOLDER = 'models--mlx-community--Kokoro-82M-bf16'
@@ -76,8 +77,10 @@ export function modelVoices(files) {
 // the voice's own; above 1 is younger and smaller, below 1 bigger and
 // deeper) and, for a voice that is to be "low but like a child", how far its
 // note is brought down afterwards with its size kept (lower: 1 is not at
-// all, 0.7 is about six notes down): its own from the cast when the model on
-// this Mac has it, else nothing. A pet with no natural voice stays silent:
+// all, 0.7 is about six notes down), and an accent the model has no voice
+// for (accent: "aussie" or "aussie-light"; the talker moves each word's
+// vowels): its own from the cast when the model on this Mac has it, else
+// nothing. A pet with no natural voice stays silent:
 // there is no robotic stand-in.
 export function castFor(file, have = []) {
   const out = {}
@@ -86,7 +89,7 @@ export function castFor(file, have = []) {
     // a voice may be a blend of two, "ff_siwis,af_bella": then the model must have each
     const parts = String(want.voice ?? '').split(',').map(v => v.trim()).filter(Boolean)
     const here = parts.length > 0 && parts.every(v => have.includes(v))
-    out[who] = { voice: here ? parts.join(',') : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, lower: Number(want.lower) || 1, asked: want.voice ?? null }
+    out[who] = { voice: here ? parts.join(',') : null, speed: Number(want.speed) || 1, pitch: Number(want.pitch) || 1, lower: Number(want.lower) || 1, accent: ACCENTS.includes(want.accent) ? want.accent : null, asked: want.voice ?? null }
   }
   return out
 }
@@ -109,8 +112,8 @@ export function forVoice(spoken, saidAs = {}) {
 // ones for its accent. (A British voice knows "chocolatey"; an American one
 // reads it with a long a unless it is spelled "chocolaty".) Voices whose
 // name starts with b are British, as in scripts/pet-voices-kokoro.py.
-export function saidFor(saidAs = {}, voice = '') {
-  const british = String(voice ?? '').startsWith('b')
+export function saidFor(saidAs = {}, voice = '', accent = null) {
+  const british = String(voice ?? '').startsWith('b') || ACCENTS.includes(accent) // an Australian accent is built on the British reading
   return { ...(saidAs?.all ?? {}), ...((british ? saidAs?.british : saidAs?.american) ?? {}) }
 }
 
@@ -120,10 +123,10 @@ export function saidFor(saidAs = {}, voice = '') {
 //   'make'    not there yet, not in the list (a run was stopped half way), or made from other words,
 //             another voice, pace or pitch, or the old robotic way
 //   'mute'    the model on this Mac has no voice for the pet
-export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1, lower = 1 }) {
+export function decide({ spoken, exists, made = null, voice = null, speed = null, pitch = 1, lower = 1, accent = null }) {
   if (!spoken) return 'silent'
   if (!voice) return exists ? 'keep' : 'mute'
-  if (exists && made && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch && (made.lower ?? 1) === lower) return 'keep'
+  if (exists && made && made.by === ENGINE && made.spoken === spoken && made.voice === voice && made.speed === speed && (made.pitch ?? 1) === pitch && (made.lower ?? 1) === lower && (made.accent ?? null) === accent) return 'keep'
   return 'make'
 }
 
@@ -132,8 +135,8 @@ export function plan(lines, { cast, marker = {}, present = new Set(), only = nul
   return lines.filter(l => !only || l.who === only).map(l => {
     const id = petVoiceId(l.who, l.text)
     const c = cast[l.who] ?? {}
-    const spoken = forVoice(speakable(l.text, l.who), saidFor(saidAs, c.voice))
-    return { who: l.who, id, spoken, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1, what: decide({ spoken, exists: present.has(id), made: marker[id] ?? null, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1 }) }
+    const spoken = forVoice(speakable(l.text, l.who), saidFor(saidAs, c.voice, c.accent))
+    return { who: l.who, id, spoken, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1, accent: c.accent ?? null, what: decide({ spoken, exists: present.has(id), made: marker[id] ?? null, voice: c.voice ?? null, speed: c.speed ?? null, pitch: c.pitch ?? 1, lower: c.lower ?? 1, accent: c.accent ?? null }) }
   })
 }
 
@@ -248,7 +251,7 @@ function sayAll(rows, dir, log) {
   const done = chunks.map(() => 0)
   let told = 0
   const one = (chunk, k) => new Promise(resolve => {
-    const jobs = chunk.map(r => ({ id: r.id, voice: r.voice, speed: r.speed, pitch: r.pitch, text: r.spoken, out: join(dir, `${r.id}.wav`) }))
+    const jobs = chunk.map(r => ({ id: r.id, voice: r.voice, speed: r.speed, pitch: r.pitch, accent: r.accent, text: r.spoken, out: join(dir, `${r.id}.wav`) }))
     const jobsPath = join(dir, `jobs-${k}.json`)
     writeFileSync(jobsPath, JSON.stringify(jobs))
     const p = spawn(process.env.PET_VOICE_PYTHON || 'python3', [TALKER, jobsPath], { stdio: ['ignore', 'pipe', 'ignore'] })
@@ -375,7 +378,7 @@ async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, 
   for (const who of PETS) {
     if (only && who !== only) continue
     const c = cast[who]
-    log(`${who}: ${c.voice ? `${c.voice}, pace ${c.speed}, pitch ${c.pitch}${c.lower !== 1 ? `, note lowered to ${c.lower}` : ''}` : `no voice (${c.asked ?? 'none named'} is not in the model on this Mac)`}`)
+    log(`${who}: ${c.voice ? `${c.voice}, pace ${c.speed}, pitch ${c.pitch}${c.lower !== 1 ? `, note lowered to ${c.lower}` : ''}${c.accent ? `, accent ${c.accent}` : ''}` : `no voice (${c.asked ?? 'none named'} is not in the model on this Mac)`}`)
   }
   const todo = rows.filter(r => r.what === 'make')
   if (dry) {
@@ -392,7 +395,7 @@ async function makeThem({ dir, dry, only, canClear, log, castFile, cast, lines, 
       let saved = 0
       await pool(todo, async row => {
         const ok = await tidyOne(row, tmp, dir)
-        if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, lower: row.lower, by: ENGINE }
+        if (ok) marker[row.id] = { spoken: row.spoken, voice: row.voice, speed: row.speed, pitch: row.pitch, lower: row.lower, accent: row.accent, by: ENGINE }
         else failed++
         // saved as it goes, so a run that is stopped has little to make again
         if (ok && ++saved % 25 === 0) writeFileSync(markerPath, `${JSON.stringify(marker)}\n`)
