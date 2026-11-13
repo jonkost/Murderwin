@@ -9,6 +9,37 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 13 Nov 2026, morning · Claude Code (Sir Irwin's pace, half way)
+
+Jon, having heard the published voice: "Yes, good", and a few minutes
+later: "Irwin is too slow now. split the difference".
+
+- **What changed:** Sir Irwin's pace is 0.91, half way between the 1 Jon
+  picked by ear ("12 Irwin - 5") and the 0.82 that went out last night
+  (`seed/pet-voices.json`; the cast test holds it). His 28 dessert lines are
+  made again (together 97 seconds before, 87 now; every one shorter, every
+  one decodes). Seven of his eight drawing lines are made again the same
+  way; slide 3 stays as published, since it was at 0.9 already (0.82 never
+  fitted its slide). Every drawing line ends at least 0.9 seconds before its
+  slide moves on, so `seed/irwin-voice.json` and the server are untouched.
+  Last night's eight drawing files are kept in
+  `pet-voices/irwin-slides/pace-0.82/`.
+- **Where it stands:** made, measured and copied into the site's folder
+  (`npm run pet-voices -- --on`); the scripts' tests (107) and the phone's
+  tests (403) pass. **Not published:** the live site keeps the 0.82 lines
+  until Jon says publish. He has clip 16 ("16 Sir Irwin - half way", the
+  same four lines as clip 15, 22 seconds where that was 24) to hear first.
+- **Pushed:** Jon pushed everything himself at 8:04 am (his own commit
+  415c8a9, the practice nights' logs and a picture of the join screen in
+  `docs/postmortems/`), so the "not pushed" notes of 12 Nov are put right.
+  This morning's commit is not pushed.
+- **The board:** five open Claude Code cards, none from the Game test tab
+  and no postmortem note. No new card.
+- **Left:** his word to publish (the site only: the 35 changed sound
+  files); card 603, hearing the pets on a real phone and the Parlour TV. A
+  phone that has already played a line may keep the old one for up to an
+  hour after a publish.
+
 ## 12 Nov 2026, late night · Claude Code (voices for the pets; is the night fun, and Jon's own load)
 
 Jon: "Can we get voices reading for the pets. Do the plan/run of the game
