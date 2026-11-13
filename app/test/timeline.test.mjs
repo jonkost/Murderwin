@@ -1982,7 +1982,7 @@ test('the pets’ voices (12 Nov 2026, Jon’s word): last; one done card, one s
   assert.match(q.question, /Until now the rule was that no cat speaks aloud/)
   assert.match(q.question, /when the guest presses Hear/)
   assert.match(q.note, /^Default: built, switched off, and kept off the site until you say\./)
-  assert.match(q.note, /Claude Code sent you a 45-second sample on 12 Nov/)
+  assert.match(q.note, /the ones you picked by ear from the auditions Claude Code sent you on 12 Nov/)
   assert.match(q.note, /nobody is overheard by surprise/)
   const state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
   assert.equal(state.tasks.length, before.tasks.length + 2, 'two new cards')

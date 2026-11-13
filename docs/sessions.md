@@ -38,8 +38,18 @@ off the site: it waits for his answer, the board's question *petVoices*)
   file marked to play back faster, so no filter stretches the sound), and a
   bigger man is lowered the same way. `seed/pet-voices.json` holds each
   pet's voice, pace and pitch. He was sent auditions as MP3s, five numbered
-  choices a pet (`pet-voices/auditions/`); the cast in the file is a first
-  guess until he picks.
+  choices a pet (`pet-voices/auditions/`), and picked by ear, in ten files
+  over the evening: "Boo - 4, Granola - 4, Salem - 2, Zimmy - 1"; "This
+  pitch is good for the cats but the lines need to be slower for the girls";
+  "Garnola speed 2"; "French English"; "Is there a British boo since the
+  rest are British? Or French American"; "10 boo - 1". Where it stands, and
+  a test holds it: Granolia is a British girl at a kid's pitch, slow; Boo is
+  a British woman, a little low and slow (the French accent, made by
+  spelling the sounds, was tried and not chosen); Salem is a rough British
+  man; Zimothy an old British man. Sir Irwin is not chosen: "I don't love
+  the Irwin ones give more options", "I do kind of a dum-dum voice for
+  Irwin. Slow and low but like a child." He has six slow, low try-outs
+  (file 9); his lines are a first guess until he picks.
 - Claude Code cannot listen, so the words were checked as text: how the
   model says every word it has to guess at. Three came out wrong and are
   respelled for the voice only (`saidAs`: Hmph was read letter by letter,
@@ -56,7 +66,8 @@ off the site: it waits for his answer, the board's question *petVoices*)
   when it is pressed. Speaking by itself at the cat's door was built first
   and is switched off (`CATS_SPEAK_BY_THEMSELVES`): a phone that talks by
   itself is heard by the next guest in line, and Act 2 is for the guest's
-  ears only. It is kept, armed only by the scan, in case he wants it.
+  ears only. It is kept, armed only by the scan (or Cannot scan? I am
+  with ...), in case he wants it.
 - On the Parlour TV: Sir Irwin says his dessert speech (his opener, how sure
   he is, each motive he names, his closer) once, 2.2 seconds after the
   screen comes up, and never on a TV reloaded later.
@@ -74,6 +85,21 @@ off the site: it waits for his answer, the board's question *petVoices*)
   line silent for the page's life (it is asked for again). Left as they are:
   a pause during Sir Irwin's speech ends it (read it from the TV), and a
   Parlour Game can open over a cat that is talking.
+- A second review, of the natural-voice build (four readers, then
+  refuters; the words were checked as text for each voice's accent and came
+  out sound). Fixed from it: a run that was stopped left files the list did
+  not hold, and those counted as Jon's own recordings and were never made
+  again (there is no "own recording" rule now: a file not in the list is
+  simply made again, and a file is moved under its line's name only when it
+  is whole); when the workshop could not be read, Sir Irwin's files for the
+  workshop's own words were cleared away (nothing is cleared now on a run
+  that did not look at every line); a mistyped pet's name after `--on` put
+  every pet on the site (refused now, as is `--on` while a run is making
+  them); a card that had once spoken could later stop another card's voice
+  (each voice carries its card's mark); a file that would not decode was
+  asked for again and again. `seed/pet-voices.json` `goOut` is Jon's answer
+  on whether the voices go out (none), and a test holds the site's folder
+  to it, so the test does not turn red by itself on his yes.
 - Sir Irwin's eight drawing-slide lines (`npm run irwin-voice`) still have
   the old robotic voice. Their lengths run the server's clock, so changing
   them is his call.

@@ -24,15 +24,21 @@ and nothing else changes.
 
 ## Who sounds like what
 
-Jon's casting (12 November): kid-like voices for Sir Irwin (a boy) and
-Granolia (a girl), sexy and sassy for Boo, a rough man for Salem, an old man
-for Zimothy. Each pet's voice, pace and pitch are in `seed/pet-voices.json`,
+Jon's casting (12 November), each chosen by ear: Granolia is a British girl
+(a kid), slow; Boo a British woman, a little low and slow; Salem a rough
+British man; Zimothy an old British man. Sir Irwin is to be slow and low but
+like a child, and is not chosen yet. Each pet's voice, pace and pitch are in
+`seed/pet-voices.json`,
 with the other voices to choose from. A pitch above 1 makes a voice younger
 and smaller (that is how the two kids are made); below 1, bigger and deeper.
 Change a pet there and run `npm run pet-voices`: that pet's lines are made
 again (a few minutes).
 
-`auditions/` holds the five numbered choices for each pet that Jon was sent,
-and `which-voice-is-which.json` there says which voice each number is.
+`auditions/` holds what Jon was sent to choose from by ear, each file with
+its choices numbered aloud, and `which-voice-is-which.json` there says which
+voice each number is. His picks are in `seed/pet-voices.json`.
+
+If the voices are on the site's folder, run `npm run pet-voices -- --on`
+again after any change, then publish: the site's folder is a copy.
 
 These files are not saved in git.

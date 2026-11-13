@@ -74,10 +74,13 @@ takes them along. `npm run pet-voices -- --on irwin` copies Sir Irwin's only.
 
 empties this folder again.
 
+After any change to a voice, run `npm run pet-voices -- --on` again before
+you publish: this folder is a copy of the kept one.
+
 ## Use your own voice
 
-For one line: save your recording, as an MP3, in `pet-voices/` under that
-line's own file name, in place of the one that was made. The command never replaces a file it
-did not make. (With eight hundred lines this is for a favourite few.)
+Not by hand: the file names come from each line's words, and the command
+makes a file again when that pet's voice changes. If you want to record a
+line yourself, tell Claude Code which line.
 
 These files are not saved in git either.
