@@ -9,8 +9,9 @@ The voices are natural ones, from a voice model that is already on this Mac
 and nothing leaves the Mac. The Mac's own voices, the robotic ones, are not
 used (Jon, 12 November 2026: "I need better voices. not robotic at all.").
 
-The files are **not** part of the site while they sit here. No publish can
-ship them by accident.
+The files are **not** part of the site while they sit here: a copy of them
+goes into the site's folder only with `--on`. They are on since 12 November
+2026 (Jon: "Publish it all"; `goOut` in `seed/pet-voices.json` says so).
 
 | To do this | Run this |
 | --- | --- |

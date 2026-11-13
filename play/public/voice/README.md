@@ -40,9 +40,10 @@ Since 12 November 2026 every pet can have a voice of its own. The folder
 hundred, with names worked out from the words themselves, so nobody has to
 file them.
 
-**The folder is empty until Jon says yes.** The files are made and kept in
-`pet-voices/`, at the top of the project, which is no part of the site. With
-none here, no pet speaks and no Hear button shows, and nothing else changes.
+**The voices are on since 12 November 2026** (Jon: "Publish it all"). The
+files are made and kept in `pet-voices/`, at the top of the project, and
+copied here. With none here, no pet speaks and no Hear button shows, and
+nothing else changes.
 
 | Who | Where it is heard |
 | --- | --- |

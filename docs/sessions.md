@@ -46,8 +46,8 @@ off the site: it waits for his answer, the board's question *petVoices*)
   to be 8 Boo - 1 the French one". Where it stands, and a test holds it:
   Granolia is a British girl at a kid's pitch, slow; Boo is the model's
   French woman's voice reading her lines as they are written, slow; Salem
-  is a rough British man; Zimothy an old British man. Sir Irwin is not
-  chosen. He went from "a dum-dum voice ... Slow and low but like a child"
+  is a rough British man; Zimothy an old British man. Sir Irwin went from
+  "a dum-dum voice ... Slow and low but like a child"
   (a note brought down with its size kept, `lower`, by a tool already on
   this Mac) to "Please give me young boy Aussie options. Forget the low and
   slow." The model has no Australian voice, so the talker gives a British

@@ -35,6 +35,7 @@ import {
   SCREEN_SAVER_1112_TASKS, RETIRED_FOR_SCREEN_SAVER_1112, REWRITTEN_FOR_SCREEN_SAVER_1112,
   NIGHT_GUARDS_1112_TASKS, RETIRED_FOR_NIGHT_GUARDS_1112, FILED_FOR_NIGHT_GUARDS_1112, NIGHT_GUARDS_1112_DECISIONS,
   PET_VOICES_1112_TASKS, PET_VOICES_1112_DECISIONS,
+  VOICES_OUT_1112_TASKS, VOICES_OUT_1112_ANSWERS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1150,6 +1151,16 @@ export const ADDITIONS = [
     id: '2026-11-12-pet-voices',
     tasks: PET_VOICES_1112_TASKS,
     decisions: PET_VOICES_1112_DECISIONS,
+  },
+  {
+    // 12 Nov, near midnight, Jon: "Publish it all" (and "Slow it down", taken
+    // as Sir Irwin). The pets' voices go out in the voices he picked by ear,
+    // with Sir Irwin's eight drawing lines in his new voice (602, done), and
+    // the question petVoices is answered: yes, all five. One small card of
+    // his: nobody has heard them on a real phone yet (603).
+    id: '2026-11-12-voices-out',
+    tasks: VOICES_OUT_1112_TASKS,
+    answerDecisions: VOICES_OUT_1112_ANSWERS,
   },
 ]
 
