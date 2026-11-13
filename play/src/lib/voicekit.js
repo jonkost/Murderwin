@@ -32,12 +32,14 @@ export function voiceBuffer(url, { fetchImpl = globalThis.fetch, ctx = audioCont
   if (!url || !ctx || typeof fetchImpl !== 'function') return Promise.resolve(null)
   if (!buffers.has(url)) {
     buffers.set(url, (async () => {
+      let data
       try {
         const res = await fetchImpl(url)
         if (!res?.ok) return null
         if (/text\/html/i.test(String(res.headers?.get?.('content-type') ?? ''))) return null
-        return await decode(ctx, await res.arrayBuffer())
+        data = await res.arrayBuffer()
       } catch { buffers.delete(url); return null } // a dropped connection: asked for again the next time it is wanted
+      try { return await decode(ctx, data) } catch { return null } // a file that is not a sound stays no voice: it is not asked for again
     })())
   }
   return buffers.get(url)
@@ -50,7 +52,11 @@ export async function hasVoice(urls, opts) {
   return found.some(Boolean)
 }
 
-export function stopVoice() {
+// Stop the voice that is talking. With an `owner` (the card that started
+// it), only if that card's voice is the one talking: a card that leaves the
+// screen never cuts off another card's voice.
+export function stopVoice(owner = null) {
+  if (owner && speaking?.owner !== owner) return
   const was = speaking
   speaking = null
   try { was?.stop() } catch { /* already done */ }
@@ -58,8 +64,9 @@ export function stopVoice() {
 
 // Say these files, one after another. Resolves to the seconds it will take,
 // or 0 when nothing was said (no voice, or the page's sound is asleep).
-// `wake` is for a press: it wakes the page's sound first.
-export async function sayVoices(urls, { gapMs = 350, wake = false, ctx = audioContext(), fetchImpl = globalThis.fetch, w = globalThis.window } = {}) {
+// `wake` is for a press: it wakes the page's sound first. `owner` is the
+// card that asked, so that only it can stop this voice later (stopVoice).
+export async function sayVoices(urls, { gapMs = 350, wake = false, owner = null, ctx = audioContext(), fetchImpl = globalThis.fetch, w = globalThis.window } = {}) {
   try {
     if (!ctx) return 0
     if (wake && !soundReady()) await wakeSound(w)
@@ -78,7 +85,7 @@ export async function sayVoices(urls, { gapMs = 350, wake = false, ctx = audioCo
       at += buffer.duration + gapMs / 1000
       return src
     })
-    const me = { stop() { for (const s of sources) { try { s.stop() } catch { /* never started, or over */ } } try { gain.disconnect() } catch { /* gone */ } } }
+    const me = { owner, stop() { for (const s of sources) { try { s.stop() } catch { /* never started, or over */ } } try { gain.disconnect() } catch { /* gone */ } } }
     speaking = me
     sources.at(-1).onended = () => { if (speaking === me) speaking = null; try { gain.disconnect() } catch { /* gone */ } }
     return Math.max(0, at - ctx.currentTime - gapMs / 1000)

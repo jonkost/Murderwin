@@ -65,6 +65,36 @@ test('saying a card: the lines one after another, a gap between, lines with no v
   stopVoice() // twice is nothing
 })
 
+test('a card stops only its own voice, and a file that is not a sound is asked for once', async () => {
+  resetVoices()
+  const ctx = fakeCtx()
+  let fetched = 0
+  const files = site({ '/v/a.mp3': 2, '/v/b.mp3': 3, '/v/bad.mp3': 'broken' })
+  const fetchImpl = async url => { fetched++; return files(url) }
+  const cardA = {}, cardB = {}
+  await sayVoices(['/v/a.mp3'], { ctx, fetchImpl, owner: cardA })
+  await sayVoices(['/v/b.mp3'], { ctx, fetchImpl, owner: cardB }) // B cuts in: A's voice stops
+  assert.ok(ctx.started[0].src.stopped, 'a new voice cuts in')
+  stopVoice(cardA) // card A leaves the screen while B is talking
+  assert.ok(!ctx.started[1].src.stopped, 'a card that leaves never stops another card\'s voice')
+  stopVoice(cardB)
+  assert.ok(ctx.started[1].src.stopped, 'its own, it stops')
+  await sayVoices(['/v/a.mp3'], { ctx, fetchImpl, owner: cardA })
+  stopVoice() // no owner: whoever is talking (Sir Irwin's card going from the TV)
+  assert.ok(ctx.started[2].src.stopped)
+  // a file that will not decode: no voice, and it is not fetched again and again
+  fetched = 0
+  assert.equal(await voiceBuffer('/v/bad.mp3', { ctx, fetchImpl }), null)
+  assert.equal(await voiceBuffer('/v/bad.mp3', { ctx, fetchImpl }), null)
+  assert.equal(fetched, 1, 'asked for once')
+  // a dropped connection is not remembered: the next card that wants the line asks again
+  let drops = 0
+  const dropping = async () => { drops++; throw new Error('offline') }
+  assert.equal(await voiceBuffer('/v/gone.mp3', { ctx, fetchImpl: dropping }), null)
+  assert.equal(await voiceBuffer('/v/gone.mp3', { ctx, fetchImpl: dropping }), null)
+  assert.equal(drops, 2, 'asked for again')
+})
+
 test('nothing is said, and nothing throws, when there is no voice or the page\'s sound is asleep', async () => {
   resetVoices()
   const fetchImpl = site({ '/v/a.m4a': 2 })
@@ -94,16 +124,16 @@ test('on the page: a cat speaks when its Hear button is pressed, never by surpri
   assert.ok(cards.includes('{card.cat && card.bag?.text && <HearIt who={card.cat} lines={[card.bag.text]} cardId={card.id} />}'), 'the room\'s card, never by itself')
   assert.equal((cards.match(/<HearIt /g) ?? []).length, 2, 'and nowhere else on a phone')
   // it speaks by itself once a card, and only when its sound is awake; a press wakes the sound
-  assert.ok(voice.includes('if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) { mine.current = true; sayVoices(urls).then(seconds => { if (seconds > 0) markSaid(cardId) }) }'), 'once, only on the phone that has just scanned this cat, and only counted when it really spoke')
-  // a card stops only a voice it started itself: one that said nothing never cuts off the card that is talking
-  assert.ok(voice.includes('return () => { live = false; if (mine.current) { mine.current = false; stopVoice() } }'), 'a card that leaves the screen stops its own voice, no one else\'s')
+  assert.ok(voice.includes('if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) sayVoices(urls, { owner: me.current }).then(seconds => { if (seconds > 0) markSaid(cardId) })'), 'once, only on the phone that has just scanned this cat, and only counted when it really spoke')
+  // a card stops only a voice it started itself (lib/voicekit.js stopVoice with an owner)
+  assert.ok(voice.includes('return () => { live = false; stopVoice(me.current) }'), 'a card that leaves the screen stops its own voice, no one else\'s')
   // the scan, and "Cannot scan? I am with ...", are what arm it; nothing else does
   const finder = read('../src/screens/Viewfinder.jsx')
   assert.ok(finder.indexOf('armVoice(target.cat)') > 0 && finder.indexOf('armVoice(target.cat)') < finder.indexOf('callMeet({ nightId, cat: target.cat })'), 'the scan arms the cat\'s voice before it tells the house')
   assert.ok(cards.includes('const meetByHand = () => { armVoice(lights.cat); return call(callMeet, { cat: lights.cat }) }'), 'and so does Cannot scan? I am with ...')
   assert.equal((cards.match(/meetByHand/g) ?? []).length, 3, 'both Cannot scan? buttons go through it')
   for (const f of ['../src/App.jsx', '../src/screens/Act4.jsx', '../src/screens/Rest.jsx']) assert.ok(!read(f).includes('armVoice'), `${f} never arms a voice`)
-  assert.ok(voice.includes('onClick={() => { markSaid(cardId); mine.current = true; sayVoices(urls, { wake: true }) }}'), 'a press wakes the page\'s sound')
+  assert.ok(voice.includes('onClick={() => { markSaid(cardId); sayVoices(urls, { wake: true, owner: me.current }) }}'), 'a press wakes the page\'s sound, and the voice is marked as this card\'s')
   assert.ok(voice.includes('if (!found) return null'), 'a card with no voice has no button')
   // whatever breaks in a voice, the card around it stands
   assert.ok(voice.includes('static getDerivedStateFromError() { return { broken: true } }') && voice.includes('render() { return this.state.broken ? null : this.props.children }'), 'the boundary shows nothing when a voice breaks')

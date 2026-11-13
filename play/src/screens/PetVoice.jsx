@@ -43,9 +43,9 @@ function markSaid(id) {
 function HearItInner({ who, lines, cardId = null, auto = false }) {
   const urls = useMemo(() => (lines ?? []).map(l => petVoiceUrl(who, l, BASE)).filter(Boolean), [who, (lines ?? []).join('\n')])
   const [found, setFound] = useState(false)
-  // did this card start a voice? Only then does it stop the voice when it leaves the screen: a card that
-  // said nothing must never cut off the one that is talking (the older cards move on the page at a scan)
-  const mine = useRef(false)
+  // this card's own mark on a voice it starts: when the card leaves the screen it stops that voice and no
+  // other, so a card never cuts off the one that is talking (the older cards move on the page at a scan)
+  const me = useRef({})
   useEffect(() => {
     let live = true
     setFound(false)
@@ -56,13 +56,13 @@ function HearItInner({ who, lines, cardId = null, auto = false }) {
       // alone with the cat, at its door: it speaks once, by itself, when the page's sound is awake. Only on
       // the phone that has just scanned this cat's code (lib/voicekit.js armVoice): a card that came any
       // other way waits for the button
-      if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) { mine.current = true; sayVoices(urls).then(seconds => { if (seconds > 0) markSaid(cardId) }) }
+      if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) sayVoices(urls, { owner: me.current }).then(seconds => { if (seconds > 0) markSaid(cardId) })
     })
-    return () => { live = false; if (mine.current) { mine.current = false; stopVoice() } }
+    return () => { live = false; stopVoice(me.current) }
   }, [urls.join('|'), auto, cardId])
   if (!found) return null
   return (
-    <button type="button" className="chip hear-it" onClick={() => { markSaid(cardId); mine.current = true; sayVoices(urls, { wake: true }) }}>
+    <button type="button" className="chip hear-it" onClick={() => { markSaid(cardId); sayVoices(urls, { wake: true, owner: me.current }) }}>
       <span aria-hidden="true">🔊</span> Hear {PET_SHORT[who] ?? 'it'}
     </button>
   )
