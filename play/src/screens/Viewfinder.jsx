@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { callMeet } from '../firebase'
+import { armVoice } from '../lib/voicekit'
 import { PLAY_URL } from '../lib/config'
 import { scanTarget, SCAN_LINES } from '../lib/scan'
 import { startScanner } from '../lib/scanner'
@@ -35,6 +36,7 @@ export default function Viewfinder({ nightId, onNote, onClose }) {
       done.current = true
       playSound('ding')
       if (target.kind === 'meet' && nightId && nightId !== 'preview') {
+        armVoice(target.cat) // the cat may speak by itself on this phone, which has just scanned its code (lib/voicekit.js)
         callMeet({ nightId, cat: target.cat }).then(() => onNote(null)).catch(e => onNote(troubleLine(e, 'The cat did not answer. Try the code again.')))
       }
       onClose()

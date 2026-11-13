@@ -12,6 +12,9 @@ import { chime } from '../lib/permissions'
 import { troubleLine } from '../lib/trouble'
 import { TraceView } from './Kiosk'
 import Spoken from './Spoken'
+import { HearIt } from './PetVoice'
+import { armVoice } from '../lib/voicekit'
+import { CATS_SPEAK_BY_THEMSELVES } from '../lib/petvoice'
 
 // Everything a phone is dealt during an act, one component per kind of card.
 // Every card that needs an answer has a required tap before it goes away
@@ -125,6 +128,8 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
     try { await fn({ nightId, ...args }); return true } catch (e) { setMsg(troubleLine(e, 'The house did not answer. Try again.')); return false } finally { setBusy(false) }
   }
   const goNow = () => { if (uid && uid !== 'preview') writeNotes(uid, { seen: { [onWayKey]: true } }).catch(() => {}) }
+  // "Cannot scan? I am with ...": the guest says they are at the cat's door, so its voice may speak by itself here (lib/voicekit.js)
+  const meetByHand = () => { armVoice(lights.cat); return call(callMeet, { cat: lights.cat }) }
   const short = (lights.catName ?? 'the cat').split(' ')[0]
   // The look Jon approved (12 Nov 2026, docs/look-approved.html, screen 7): one card. Where to go, and the
   // one button; the room's cat looks over the top. Every working control stays: Not yet, call me later
@@ -137,7 +142,7 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
       <NowCard who={lights.cat} n={lights.at?.seconds ?? 0} lead={`Go to ${lights.room ?? 'the room'}`} button={`Scan ${name}’s code`} icon="scan" busy={busy}
         onGo={() => { goNow(); openScanner() }}
         quiet={onWay ? `Cannot scan? I am with ${name}` : 'Not yet, call me later'}
-        onQuiet={() => (onWay ? call(callMeet, { cat: lights.cat }) : call(callNotYet, {}))}>{trouble}</NowCard>
+        onQuiet={() => (onWay ? meetByHand() : call(callNotYet, {}))}>{trouble}</NowCard>
     )
     // the cat's own card is above this one: read it, then Done, and the small win (You met ...)
     if (lights.step === 'with') return (
@@ -157,7 +162,7 @@ export function LightsStep({ lights, uid, nightId, notes, note = null, onMet = n
           <button className="quiet" disabled={busy} onClick={() => call(callNotYet, {})}>Not yet, call me later</button>
         </div>
       )}
-      {lights.step === 'go' && onWay && <button className="quiet" disabled={busy} onClick={() => call(callMeet, { cat: lights.cat })}>Cannot scan? I am with {short}</button>}
+      {lights.step === 'go' && onWay && <button className="quiet" disabled={busy} onClick={meetByHand}>Cannot scan? I am with {short}</button>}
       {lights.step === 'with' && <button className="big" disabled={busy} onClick={() => call(callLeave, {})}>Done</button>}
       {(msg || note) && <p className="trouble" role="status">{msg || note}</p>}
     </section>
@@ -187,6 +192,9 @@ export function Testimony({ card, compact = false }) {
       )}
       {card.hint?.text && <p className={card.hint.placeholder ? 'hint-line placeholder' : 'hint-line'}><Spoken text={card.hint.text} /></p>}
       {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
+      {/* the cat's own voice (12 Nov 2026; PetVoice.jsx): at a press of Hear. By itself, at the cat's door only (never a note
+          left at supper, never in the Clues list), only if lib/petvoice.js CATS_SPEAK_BY_THEMSELVES is switched on */}
+      <HearIt who={card.cat} lines={[...lines, card.hint?.text, card.bag?.text].filter(Boolean)} cardId={card.id} auto={CATS_SPEAK_BY_THEMSELVES && !compact && !card.note} />
       {!compact && card.saved && <p className="gloss saved">{card.saved}</p>}
     </section>
   )
@@ -271,6 +279,8 @@ export function Clue({ card, uid = null, notes = null }) {
       </header>
       {card.trace ? <TraceView trace={{ ...card.trace, placeholder: false }} compact /> : <p><Spoken text={card.text || CLUE_QUIET} /></p>}
       {card.bag?.text && <p className={card.bag.placeholder ? 'bag-line placeholder' : 'bag-line'}><Spoken text={card.bag.text} /></p>}
+      {/* a room's cat on its bag hint: at a press only, since a whole group gets this card at once */}
+      {card.cat && card.bag?.text && <HearIt who={card.cat} lines={[card.bag.text]} cardId={card.id} />}
       {n && uid && (crossed ? <p className="gloss">Crossed off.</p> : <button className="chip" onClick={cross}>Cross it off</button>)}
       <Rehearsal card={card} />
     </section>

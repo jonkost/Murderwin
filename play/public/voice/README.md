@@ -32,3 +32,52 @@ itself. Say the words on the slide (they are in `seed/irwin-lines.json`).
 
 These files are not saved in git. They stay on this Mac and go up with a
 deploy from this folder.
+
+# The pets' voices (the folder `pets`)
+
+Since 12 November 2026 every pet can have a voice of its own. The folder
+`pets` holds one small MP3 for every line a pet can say: about eight
+hundred, with names worked out from the words themselves, so nobody has to
+file them.
+
+**The folder is empty until Jon says yes.** The files are made and kept in
+`pet-voices/`, at the top of the project, which is no part of the site. With
+none here, no pet speaks and no Hear button shows, and nothing else changes.
+
+| Who | Where it is heard |
+| --- | --- |
+| Granolia, Miss Boo LaRue, Zimothy and Salem | On a guest's own phone, when the guest presses Hear on that cat's card. A cat never speaks by itself. |
+| Sir Irwin | On the Parlour TV at dessert: his speech and the motives he names, once, as they come up. |
+
+The words always show, voice or no voice.
+
+## Make them
+
+    npm run pet-voices
+
+It makes what is missing, one voice a pet, into `pet-voices/`, and plays
+nothing while it works. The voices are natural ones, from a voice model that
+is already on this Mac: free, nothing downloaded, nothing sent anywhere. Each
+pet's voice, pace and pitch are in `seed/pet-voices.json`, with the others to
+choose from (Jon's casting: kid-like for Sir Irwin and Granolia, sexy and
+sassy for Boo, a rough man for Salem, an old man for Zimothy). To change one,
+change it there and run it again: that pet's files are made again.
+
+## Turn them on, and off
+
+    npm run pet-voices -- --on
+
+copies every pet's files into this folder, and the next publish of the site
+takes them along. `npm run pet-voices -- --on irwin` copies Sir Irwin's only.
+
+    npm run pet-voices -- --off
+
+empties this folder again.
+
+## Use your own voice
+
+For one line: save your recording, as an MP3, in `pet-voices/` under that
+line's own file name, in place of the one that was made. The command never replaces a file it
+did not make. (With eight hundred lines this is for a favourite few.)
+
+These files are not saved in git either.

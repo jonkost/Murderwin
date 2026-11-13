@@ -1333,3 +1333,6 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk-countdown b { font-weight: 700; margin-left: 0.4em; }
 .kiosk.intro-video { background: #000; display: flex; align-items: center; justify-content: center; padding: 0; }
 .kiosk.intro-video video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
+
+/* A pet's voice on its card (12 Nov 2026): one small button under the cat's words. */
+.hear-it { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.6rem 0 0; }

@@ -23,6 +23,7 @@ import { useBlackoutMarks } from '../lib/useBlackout'
 import { blackoutHit } from '../lib/blackout'
 import { useDeckDark } from '../lib/useDeckDark'
 import Spoken from './Spoken'
+import { IrwinSpeech } from './PetVoice'
 import IrwinVoice from './IrwinVoice'
 import { celebrate } from '../lib/celebrate'
 import { RoomEnd, CreditsDedication, SpecialThanks } from './Closing'
@@ -372,7 +373,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (view === 'birthday') return <BirthdayScreen screen={screen} />
   // bulletin 1 as video on the Parlour TV (23 Oct 2026); the words show if there is no video
   if (view === 'card' && screen?.kind === 'news' && screen.video) return <BulletinVideo clips={newsClips(screen.lines ?? [])} lines={screen.lines ?? []} startedAt={ms(screen.at)} serverNow={serverNow} />
-  if (view === 'card') return <ScreenCard screen={screen} />
+  if (view === 'card') return <ScreenCard screen={screen} serverNow={serverNow} />
   if (view === 'idle' || !relay || relay.state === 'idle' || !relay.state) {
     // the loop (cue 1 and every "back to the loop" cue): the Parlour's on the TV, the Library's on the iPad
     return <Idle title="Sirwin Manor" line={captionsOnly ? 'The Library' : 'The Parlour'} loop={captionsOnly ? 'memory' : 'living'} />
@@ -474,12 +475,14 @@ function Guess({ relay, nightId }) {
 
 // News (Act 2), the bulletin (Act 3) and Sir Irwin (Act 5): a title and a
 // few lines, nothing else.
-export function ScreenCard({ screen }) {
+export function ScreenCard({ screen, serverNow = null }) {
   const text = screen?.lines ?? []
   return (
     <div className={`kiosk card-screen ${screen?.kind ?? ''}`}>
       <p className="kiosk-crest">{screen?.title ?? ''}</p>
       {screen?.kind === 'irwin' && <IrwinFace mood={screen.mood} />}
+      {/* Sir Irwin says his dessert speech as it comes up, once (12 Nov 2026; PetVoice.jsx). Only here, on the Parlour TV. */}
+      {screen?.kind === 'irwin' && serverNow && <IrwinSpeech screen={screen} serverNow={serverNow} />}
       {screen?.kind === 'irwin' && Array.isArray(screen.choices) && screen.choices.length > 0
         // the motives he names sit under "It was one of these…", before his sign-off
         ? <div className="kiosk-lines">
