@@ -5,11 +5,16 @@ import { subscribeGame, saveGame, whoAmI, subscribeReplay } from '../lib/store'
 import { replayView, cleanSeed } from '../lib/replay'
 import { frozenState, freezePatch, unfreezePatch } from '../lib/frozen'
 import StartNight from '../components/StartNight'
+import { SWITCH_ON, stepParts } from '../lib/devices'
+import { RUN_INTRO, RUN_SHEET, piecesOf } from '../lib/runSheet'
 
-// Game night: the big Start button first (12 Nov 2026), then the devices,
-// the videos box and the freeze. Everything used less often is folded away
-// under one line. Once started, the night is run from the hosts' phones (the
-// Host tab), never from here.
+// Game night: the big Start button first (12 Nov 2026), then the two cards
+// for the day itself (the same evening, Jon: the setup and the running of
+// the show must be simple): Set up the house, the order to bring everything
+// up, and Run the night, what he presses act by act. Then the videos box and
+// the freeze. Everything used less often is folded away under one line. Once
+// started, the night is run from the hosts' phones (the Host tab), never
+// from here.
 
 import { PLAY_URL } from '../lib/config'
 
@@ -140,9 +145,22 @@ export default function Night() {
       <StartNight />
 
       <section className="panel">
-        <h2>The devices</h2>
-        <p className="why">Every screen and machine for each room, with the address to open on it, how to start it and how to tell it is working. Not the phones.</p>
-        <p className="night-line"><Link className="primary dl" to="/devices">Every device, room by room</Link></p>
+        <h2>Set up the house</h2>
+        <p className="why">On the day, in this order.</p>
+        <ol className="night-steps">
+          {SWITCH_ON.map((s, i) => { const [lead, rest] = stepParts(s); return <li key={i}>{lead && <b>{lead}: </b>}{rest}</li> })}
+        </ol>
+        <p className="night-line"><Link className="primary dl" to="/devices">The devices, room by room</Link> <span className="hint">Each machine’s address, and what to do when one dies.</span></p>
+      </section>
+
+      <section className="panel">
+        <h2>Run the night</h2>
+        <p className="why">{RUN_INTRO}</p>
+        <ul className="audit run-sheet">
+          {RUN_SHEET.map(r => (
+            <li key={r.title}><b>{r.title}.</b> {piecesOf(r.text).map((x, i) => x.press ? <b key={i}>{x.text}</b> : <span key={i}>{x.text}</span>)}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="panel">
@@ -156,7 +174,7 @@ export default function Night() {
 
       <section className="panel">
         <h2>Freeze the workshop</h2>
-        <p className="why">There is no fixed date: press it when the lists are final, Thursday 12 to Saturday 14 November, after the second tech run. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
+        <p className="why">Press it once before the party, when the lists are final. Every list goes read-only, and the phones keep the words exactly as they are now: nothing typed after this can change a phone mid-night. Unfreeze if something really must change, then freeze again.</p>
         {frozen.frozen
           ? <p className="night-line"><b>Frozen for the party</b> since {frozen.since.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.</p>
           : <p className="night-line">Not frozen. The lists can be edited and the phones pick up new words.</p>}
@@ -181,7 +199,7 @@ export default function Night() {
               onChange={e => change(h.key, e.target.value)} />
           </label>
         ))}
-        <p className="hint">Takes effect the next time a night is started from a phone.</p>
+        <p className="hint">Left empty, they are Jon and Susan. Takes effect the next time a night is started.</p>
       </section>
 
       <section className="panel">
@@ -219,12 +237,12 @@ export default function Night() {
       <section className="panel">
         <h2>The old party box</h2>
         <p className="hint">The big Start button has its own box now, so leave this one alone. It only matters for a night started from the terminal, and while it is ticked the Game test tab is off.</p>
-        <p className="why">Every night you start is a rehearsal unless this box is ticked: the cats’ leans, the bag packing and the drawing pictures stay sealed, and where a secret would show, a rehearsal shows a note in square brackets instead. Tick it on the day of the party, before you start the night from your phone. Untick it again afterwards.</p>
+        <p className="why">The Start the night button never reads this box. Its own box, This is the real night, is the one to tick on the day. Leave this one unticked.</p>
         <label className="field check">
           <input type="checkbox" checked={draft.party_night === true} onChange={e => change('party_night', e.target.checked)} />
           <span>This is the party night</span>
         </label>
-        <p className="hint">{draft.party_night === true ? 'Ticked: the next night started from a phone uses the sealed content.' : 'Not ticked: the next night started from a phone is a rehearsal.'}</p>
+        <p className="hint">{draft.party_night === true ? 'Ticked: the Game test tab is off, and a night started from the terminal uses the sealed content. Untick it.' : 'Not ticked, as it should be.'}</p>
       </section>
 
       <section className="panel">
@@ -240,15 +258,6 @@ export default function Night() {
         <p className="night-line"><Link className="ghost dl" to="/morning">The morning after</Link></p>
       </section>
 
-      <section className="panel">
-        <h2>On the night</h2>
-        <ol className="night-steps">
-          <li>On your phone, open the game and tap <b>Host? Start the night</b>. Type your name.</li>
-          <li>Your phone gets a <b>Host</b> tab: the doors, the seven acts, Blackout, Power returns, Pause, who is here. Susan’s phone too.</li>
-          <li>Guests scan the slide, type their name, and are dealt a character and a bag number.</li>
-        </ol>
-        <p className="hint">If a phone dies, that person types the same name on any other phone and their character follows.</p>
-      </section>
       </details>
     </main>
   )

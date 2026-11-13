@@ -275,7 +275,7 @@ export const ACT4_NEEDS_TWO = 'Act 4 needs at least two phones in the test night
 // Lines the strip shows beside its buttons.
 export const ROLE_CARD_FIRST = 'The first time a test night goes to Act 2 or later, every phone shows the Sorry for the interruption, continue here button, then its role card for 15 seconds, for this test night only, and carries on by itself.'
 export const PARTY_DAY = '2026-11-15'
-export const TICK_AGAIN = 'Today is the party. Tick the party box on the Game night page again before you start the party night.'
+export const TICK_AGAIN = 'Today is the party. Start it with the Start the night button, with This is the real night ticked. Leave the old party box alone.'
 
 // "Act 4, Behind Closed Doors", or the doors before Act 1.
 export function actWords(n) {

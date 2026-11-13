@@ -20,13 +20,27 @@ export function clockWords(at) {
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`
 }
 
-// What the button and the line under it say.
+// The party day itself, the same hours as the phone's (play/src/lib/start.js onPartyDay; a test holds
+// them equal): from the moment the server takes the real box through that night's small hours. On it a
+// practice start asks first and the note under the button is a warning (12 Nov 2026: with the box
+// forgotten, the party would run on the practice case, the practice bags and the practice pictures).
+export const PARTY_DAY_MS = 20 * 60 * 60_000
+export function onPartyDay(now = Date.now()) {
+  return now >= PARTY_DAY && now < PARTY_DAY + PARTY_DAY_MS
+}
+export const PRACTICE_ASK = 'Today is the party. This starts a practice night, not the real night. Start a practice night anyway? To start the real night, press Cancel and tick This is the real night.'
+export const PRACTICE_NOTE = 'A practice night, not the party. For the party, tick This is the real night.'
+
+// What the button and the line under it say. `warn` is true on the party day with the box unticked.
 export function startWords({ real = false, now = Date.now() } = {}) {
   const at = introAtFor({ real, now })
+  const warn = !real && onPartyDay(now)
   return {
     button: 'Start the night',
+    warn,
     note: real
-      ? at ? `The real night. The intro plays at ${clockWords(at)}.` : 'The real night. Press Next on your phone to play the intro.'
+      ? at ? `The real night. The intro plays at ${clockWords(at)}. Start it before the first guest comes.` : 'The real night. Press Next on your phone to play the intro.'
+      : warn ? PRACTICE_NOTE
       : 'A practice night. The intro plays in five minutes.',
   }
 }
@@ -54,7 +68,7 @@ export function liveLine(live) {
 }
 
 export const REPLACE_ASK = 'Start a new night? The night that is on now ends for every phone and screen.'
-export const AFTER_START = 'Started. Send each screen its page, below. On your phone, tap your name to run the night.'
+export const AFTER_START = 'Started. Send each screen its page, below. On your phone, open the game and type your name: the Host tab opens.'
 
 // Each room screen's page, to send to its machine (AirDrop from the share
 // sheet), right under the Start button so no phone has to join first. The

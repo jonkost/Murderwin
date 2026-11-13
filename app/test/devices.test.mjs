@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
-import { DEVICE_ROOMS, DEVICES, SWITCH_ON, WHEN_ONE_DIES, deviceUrl } from '../src/lib/devices.js'
+import { readFileSync, existsSync, statSync } from 'node:fs'
+import { DEVICE_ROOMS, DEVICES, SWITCH_ON, WHEN_ONE_DIES, deviceUrl, stepParts } from '../src/lib/devices.js'
 
 // The devices page: every room screen the phone client knows is listed,
 // every address is one the client answers, and nothing is a guest's phone.
@@ -81,7 +81,52 @@ test('what Jon reads is plain: no Terminal, no commands, no file names; the exac
   const night = [...SWITCH_ON, ...WHEN_ONE_DIES.flat(), ...DEVICES.flatMap(d => d.start)]
   assert.ok(!night.some(s => /ask claude code to start/i.test(s)), 'no machine waits on Claude Code to start')
   assert.ok(DEVICES.find(d => d.key === 'brain').start.some(s => s.includes('Double-click Start the brain')))
-  assert.ok(DEVICES.find(d => d.key === 'study').start.some(s => s.includes('Double-click Start the study')))
+  assert.ok(DEVICES.find(d => d.key === 'study').start.some(s => s.includes('Double-click Start the Study')))
+})
+
+// 12 Nov 2026, the review before the party (Jon could not play the night through, so the setup was walked
+// in the code instead). The page had fallen behind the night: it sent the cue sounds through the brain to
+// the HomePods, opened a second tab on the Parlour TV, started the night from the old party box, and
+// promised a Start the brain button that did not exist.
+test('the setup words are the night as it starts today', () => {
+  const by = (key) => DEVICES.find(d => d.key === key)
+  const jon = (d) => [d.name, d.machine, d.what, d.alive, d.note, ...d.start].filter(Boolean).join(' ')
+  // the button the page promises is there, and runs
+  const button = new URL('../../cues/Start the brain.command', import.meta.url)
+  assert.ok(existsSync(button), 'cues/Start the brain.command exists')
+  assert.ok((statSync(button).mode & 0o111) !== 0, 'and can be run by a double-click')
+  assert.match(read('../../cues/Start the brain.command'), /^\s*node cues\.mjs "\$@"$/m, 'it starts the relay')
+  assert.ok(existsSync(new URL('../../station/Start the Study.command', import.meta.url)), 'and so does Start the Study')
+  assert.ok(!DEVICES.some(d => /Until it exists/.test(d.tech ?? '')), 'nothing still waits on a button to be made')
+  // the sounds: every room screen and phone plays its own, so the brain stays on its own speakers
+  assert.match(jon(by('brain')), /own speakers, not a HomePod/)
+  assert.ok(!/AirPlay group/.test(jon(by('speakers'))), 'the HomePods are not the brain’s sound output')
+  assert.match(jon(by('speakers')), /every room screen and phone/)
+  assert.ok(!/rings nothing/.test(jon(by('orangerie'))), 'the Orangerie’s screen plays its own chimes')
+  // the Parlour TV plays the intro and the rules by itself
+  assert.ok(!/second browser tab/.test(jon(by('living'))), 'no second tab on the Parlour TV')
+  assert.ok(!DEVICES.some(d => /black at The End/.test(d.what)), 'The End is a card, not black')
+  // the night starts from the big button with its own box, before the first guest
+  const start = SWITCH_ON.find(s => /Start the night/.test(s))
+  assert.ok(start, 'the order says to start the night')
+  assert.match(start, /tick This is the real night/)
+  assert.match(start, /before the first guest/)
+  assert.ok(![...SWITCH_ON, ...WHEN_ONE_DIES.flat()].some(s => /party box|Host\? Start the night|This is the party night\. Then/.test(s)), 'never the old party box or the old button')
+  assert.ok(SWITCH_ON.findIndex(s => /Start the brain/.test(s)) < SWITCH_ON.indexOf(start), 'the brain is up before the night starts, so the jazz plays')
+  assert.ok(SWITCH_ON.some(s => /Start the Study in the Study station folder/.test(s)), 'the Study’s button is in its folder')
+  assert.ok(SWITCH_ON.some(s => /setup/.test(s) && /Send each screen its page/.test(s)), 'both ways to open a screen')
+  // every step opens with what it is about, for the pages to show in bold
+  for (const step of SWITCH_ON) { const [lead, rest] = stepParts(step); assert.ok(lead && rest && `${lead}: ${rest}` === step, step.slice(0, 30)) }
+  assert.deepEqual(stepParts('No lead here'), ['', 'No lead here'])
+  // when something dies
+  const fix = (what) => WHEN_ONE_DIES.find(([w]) => w === what)[1]
+  assert.match(fix('Your phone'), /Susan’s phone: it has the same Host tab/)
+  assert.ok(!/Tap your name on Susan/.test(fix('Your phone')), 'Susan’s phone holds Susan: no name to tap there')
+  assert.match(fix('The wifi'), /mobile data/)
+  assert.match(fix('The brain'), /Double-click Start the brain/)
+  assert.match(fix('The brain'), /stay as they are and stop changing/, 'a dead brain stops nothing: the music and lights hold')
+  assert.match(start, /If your phone opens on an old night, use A fresh night/, 'and the step covers a practice night left on')
+  assert.match(fix('A guest’s phone'), /Notes stay on the old phone/)
 })
 
 // 28 Oct 2026: Miss Boo LaRue’s Arcade on its own page; 29 Oct, the review: through a

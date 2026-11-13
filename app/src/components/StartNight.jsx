@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { startWords, liveLine, REPLACE_ASK, AFTER_START, SCREENS, screenUrl, MAX_FILL_INS, fillInsOffered } from '../lib/startNight'
+import { startWords, liveLine, REPLACE_ASK, AFTER_START, SCREENS, screenUrl, MAX_FILL_INS, fillInsOffered, onPartyDay, PRACTICE_ASK } from '../lib/startNight'
 import { PLAY_URL } from '../lib/config'
 import { startNight } from '../lib/startNightApi'
 import { gameTestApi } from '../lib/gameTestApi'
@@ -28,6 +28,8 @@ export default function StartNight() {
     }
   }
   const start = async () => {
+    // on the party day a practice start asks first (12 Nov 2026): the box forgotten must never run the party on practice secrets
+    if (!real && onPartyDay() && !window.confirm(PRACTICE_ASK)) return
     if (live?.nightId && live?.night && !window.confirm(REPLACE_ASK)) return
     setBusy(true); setMsg(null); setErr(null)
     try {
@@ -56,7 +58,7 @@ export default function StartNight() {
           </select>
         </label>
       )}
-      <p className="hint">{words.note}</p>
+      {words.warn ? <div className="banner error" role="alert">{words.note}</div> : <p className="hint">{words.note}</p>}
       {msg && <p className="start-done" role="status">{msg}</p>}
       {err && <div className="banner error" role="alert">{err}</div>}
       <h3 className="send-head">Send each screen its page</h3>
