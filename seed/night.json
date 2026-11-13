@@ -107,7 +107,7 @@
         {
           "key": "peek",
           "name": "Bag peek",
-          "what": "Every phone: take a quiet look inside your own bag, here in the Parlour, and show nobody yet.",
+          "what": "Every phone: take a quiet look inside your own bag, here in the Parlour, and show nobody yet. Before you press Next for the cat visits, say: every motive a cat names is a wrong one, even when Salem says it started there.",
           "action": "notice:peek"
         },
         {
@@ -266,7 +266,7 @@
         {
           "key": "talk",
           "name": "Talk it over",
-          "what": "Everyone talks. Every phone says the vote is next, and the Parlour TV shows the three questions over everyone's portraits. No taps and no clock; the music stays as at the door. Press Start the vote when the room is ready.",
+          "what": "Everyone talks. Every phone says the vote is next, and the Parlour TV shows the three questions over everyone's portraits. No taps and no clock; the music stays as at the door. Before the vote, say: Murderer, name yourself as the Murderer. Ghost, name yourself as the Ghost. Press Start the vote when the room is ready.",
           "action": "notice:talk",
           "screen": "talk"
         }
