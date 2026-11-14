@@ -40,6 +40,34 @@ later: "Irwin is too slow now. split the difference".
   phone that has already played a line may keep the old one for up to an
   hour after a publish.
 
+**Later the same morning, before any publish: a new direction for Sir
+Irwin.** Jon: "Lets go with a young British circa 1900, I feel the vibe of
+Pip from great expectations".
+
+- **Clip 17** went to him: six young British boy voices, plain British, the
+  same two lines each, at pace 0.91 (`pet-voices/auditions/`; the list there
+  says which is which). Measured, not heard: numbers 1 and 2 sit lowest (an
+  older boy), number 4 highest (the youngest).
+- **The 1900 way of speaking** was designed three ways and each design
+  checked against the model's own sounds and all 36 of his lines, as text
+  only (a workflow of six agents). What they agreed on is built into the
+  talker as two new accents, `pip-light` (the short -y of "very" and
+  "pretty", the closer vowel of "wagging" where a word is stressed, "air"
+  and "care" as a glide) and `pip-fuller` (the same, with "orf" for off and
+  "gawn" for gone). Turned down, each for a reason found in the check: a
+  tapped r (the model's tap is the American one: "veddy"), an older "oh"
+  (the model has only the American one), "hw" in when and what, a dropped
+  g. The new tables are patterns, where the Australian ones are plain
+  swaps; the Australian tables give exactly what they gave (72 of 72
+  checks). `pip-light` changes 26 different words in 19 of his 36 lines,
+  `pip-fuller` 30 in 21; every sound is one the model has.
+- **Clip 18** went to him: voice 1 said three ways, plain, `pip-light`,
+  `pip-fuller`.
+- **Where it stands:** the cast is unchanged (still the Australian boy at
+  0.91, made and unpublished; the live site still has 0.82). On his two
+  picks: set the cast, make his 36 lines again, check the drawing lines
+  against their slides, send him the result, publish on his word.
+
 ## 12 Nov 2026, late night · Claude Code (voices for the pets; is the night fun, and Jon's own load)
 
 Jon: "Can we get voices reading for the pets. Do the plan/run of the game

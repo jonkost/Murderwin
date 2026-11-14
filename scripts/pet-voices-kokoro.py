@@ -16,13 +16,16 @@ sound itself is never stretched or squeezed by a filter. 1.2 is about a child; 0
 
 accent (optional) gives a voice an accent the model has no voice for. "aussie" and "aussie-light": every
 word is read the British way (no r after a vowel), its vowels are moved the way an Australian moves them
-(day towards "die", my towards "moy"), and the model is handed those sounds for the word.
+(day towards "die", my towards "moy"), and the model is handed those sounds for the word. "pip-light" and
+"pip-fuller" (13 Nov 2026, Jon: "a young British circa 1900, I feel the vibe of Pip from great expectations"):
+the British reading with a few sounds said the way a well-mannered English boy said them about 1900.
 
 It plays nothing: it only writes files. It downloads nothing: if the model is not on this Mac it
 says NO-MODEL and stops, and no pet gets a voice. It prints counts only, never a line's words.
 """
 import json
 import os
+import re
 import sys
 import wave
 
@@ -38,7 +41,27 @@ MODEL = "mlx-community/Kokoro-82M-bf16"
 ACCENTS = {
     "aussie": [("A", "I"), ("I", "Y"), ("ɑː", "aː")],  # the broad shift, in sounds the model knows well
     "aussie-light": [("A", "æɪ"), ("I", "ɑɪ"), ("W", "æʊ"), ("ɑː", "aː")],  # the same shift, half way
+    "pip-light": [
+        (r"(?<=..)i(?=[zd]?$)", "ɪ"),  # the short -y at the end of very, pretty, only ("the" is left alone)
+        (r"(?<=[ˈˌ])a(?![ːɪʊ])", "æ"),  # the closer vowel of cat, wagging, that: only where the word is stressed
+        (r"ɛː", "ɛə"),  # air, care, there: a glide again, not today's long flat sound
+    ],
+    "pip-fuller": [
+        (r"(?<=..)i(?=[zd]?$)", "ɪ"),
+        (r"(?<=[ˈˌ])a(?![ːɪʊ])", "æ"),
+        (r"ɛː", "ɛə"),
+        (r"ɒ(?=[fθs](?:[tsk]|ᵊn|ɪz|ɪŋ|$))", "ɔː"),  # off, crossed, often, lost: "orf", "crawssed"
+        (r"^ɡ([ˈˌ]?)ɒn$", r"ɡ\1ɔːn"),  # gone: "gawn"
+    ],
 }
+
+# These tables are patterns (Python re), tried in order on each word's sounds, where the Australian ones are
+# plain swaps. They were designed and checked as text on 13 Nov 2026 (three designs, each checked against the
+# model's own sounds and all of Sir Irwin's lines): every sound they write is one the model has, and no word
+# of his turns into another word. Left out on purpose, each one checked and turned down: a tapped r (the
+# model's tap is the American one, so "very" comes out "veddy"), an older "oh" (the model only has the
+# American one), "hw" in when and what, and a dropped g.
+PATTERN_ACCENTS = {"pip-light", "pip-fuller"}
 
 
 def shift(sounds, rules):
@@ -56,16 +79,23 @@ def shift(sounds, rules):
     return out
 
 
-def accented(text, rules, g2p):
+def repattern(sounds, rules):
+    """Move a word's sounds by patterns: each rule in order, on the whole word."""
+    for pattern, to in rules:
+        sounds = re.sub(pattern, to, sounds)
+    return sounds
+
+
+def accented(text, rules, g2p, patterns=False):
     """The line with each changed word followed by its new sounds, in the form the model's reader takes: [word](/sounds/)."""
     _, tokens = g2p(text)
     out = ""
     for k in tokens:
         sounds = k.phonemes
         if sounds and any(c.isalnum() for c in k.text):
-            new = shift(sounds, rules)
-            if new.endswith("ə") and len(new) > 2:
-                new = new[:-1] + "ɐ"  # the open "-er" at the end of a word
+            new = repattern(sounds, rules) if patterns else shift(sounds, rules)
+            if not patterns and new.endswith("ə") and len(new) > 2:
+                new = new[:-1] + "ɐ"  # the open "-er" at the end of a word: Australian, so not for the 1900 tables
             # a word that touches a bracket would break the [word](/sounds/) form and be read out as letters:
             # such a word keeps its plain British sounds
             plain = new == sounds or any(c in "[]()" for c in k.text + new)
@@ -94,10 +124,11 @@ def main(path):
             voice = job["voice"]
             lang = "b" if voice.startswith("b") else "a"  # a British voice reads with British sounds
             text = job["text"]
-            rules = ACCENTS.get(job.get("accent") or "")
+            name = job.get("accent") or ""
+            rules = ACCENTS.get(name)
             if rules:
                 lang = "b"  # the accent is built on the British reading, whatever the voice
-                text = accented(text, rules, model._get_pipeline("b").g2p)
+                text = accented(text, rules, model._get_pipeline("b").g2p, patterns=name in PATTERN_ACCENTS)
             pitch = min(1.5, max(0.7, float(job.get("pitch") or 1.0)))
             speed = float(job.get("speed") or 1.0) / pitch
             parts = [

@@ -59,7 +59,7 @@ export const MARKER = '.made.json'
 export const LOCK = '.making'                                                 // holds the number of the run that is making them now
 // Accents the talker can give a voice (scripts/pet-voices-kokoro.py ACCENTS: the same names, a test holds
 // them together). Only the name is kept beside each made file, so a changed table gets a new name.
-export const ACCENTS = ['aussie', 'aussie-light']
+export const ACCENTS = ['aussie', 'aussie-light', 'pip-light', 'pip-fuller']
 export const ENGINE = 'kokoro'                                                // the natural voice model; a file made any other way is an old robotic one
 const TALKER = join(here, 'pet-voices-kokoro.py')
 const MODEL_FOLDER = 'models--mlx-community--Kokoro-82M-bf16'
@@ -81,7 +81,8 @@ export function modelVoices(files) {
 // deeper) and, for a voice that is to be "low but like a child", how far its
 // note is brought down afterwards with its size kept (lower: 1 is not at
 // all, 0.7 is about six notes down), and an accent the model has no voice
-// for (accent: "aussie" or "aussie-light"; the talker moves each word's
+// for (accent: "aussie" or "aussie-light", or "pip-light" or "pip-fuller"
+// for an English boy of about 1900; the talker moves each word's
 // vowels): its own from the cast when the model on this Mac has it, else
 // nothing. A pet with no natural voice stays silent:
 // there is no robotic stand-in.
@@ -116,7 +117,7 @@ export function forVoice(spoken, saidAs = {}) {
 // reads it with a long a unless it is spelled "chocolaty".) Voices whose
 // name starts with b are British, as in scripts/pet-voices-kokoro.py.
 export function saidFor(saidAs = {}, voice = '', accent = null) {
-  const british = String(voice ?? '').startsWith('b') || ACCENTS.includes(accent) // an Australian accent is built on the British reading
+  const british = String(voice ?? '').startsWith('b') || ACCENTS.includes(accent) // every accent is built on the British reading
   return { ...(saidAs?.all ?? {}), ...((british ? saidAs?.british : saidAs?.american) ?? {}) }
 }
 
