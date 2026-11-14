@@ -102,6 +102,15 @@ and the bar's page arrived in `docs/` at 9:29.
   all pass; no night is live; the party's three sealed lists are made (10
   bags, 51 of 51 leans, the pictures) and Jenna's five checks pass; every
   media file is in.
+- **4:49 pm, Jon: "Trigger blackout now", "For testing purposes".** No
+  night was live and the brain was not running, so only the house lights
+  could be tried: his Blackout Shortcut, five seconds, then AfterBlackOut,
+  through the brain's own runner (`cues/lib/strings.js` runShortcut). Both
+  ran, and both came back "partially succeeded": Apple Home says one light
+  in each scene did not answer. No sound was made (the scream and the
+  music's stop wait for his word), and no screen went dark (that needs a
+  night). A first try a minute earlier did nothing: a plain `shortcuts run`
+  waits on its input and was cut off.
 - **Left, and Jon's:** the dry run on the real lists (card 466: every
   screen closed, his phone off the game); the reveal's quiet films (605);
   `tallyLength`; hearing the pets on a real phone (603); TV Wonder in his
