@@ -1226,6 +1226,15 @@ export async function roleCardsFor(db, { log = defaultLog } = {}) {
 
 export const ROLE_CARD_ID = '2-power-role'
 
+// The role's own name, shown in bold under the card's paragraph (Jon, 14 Nov 2026: "have it say Murder or Ghost
+// or Detective - bold under the paragraph just to be clear"). It rides on the role card and nowhere else: a
+// session still carries no role field of its own, and only that phone can read its own cards. Every card has
+// one, so the cards stay the same shape on every phone. Never logged.
+export const ROLE_NAMES = { MURDERER: 'Murderer', GHOST: 'Ghost', DETECTIVE: 'Detective' }
+export function roleName(role) {
+  return ROLE_NAMES[String(role ?? 'detective').toUpperCase()] ?? ROLE_NAMES.DETECTIVE
+}
+
 // The role card's text (safe copy): the workshop's line for that role, else
 // the default. Shared with safeguards.js, which replaces cards after a spill.
 export async function roleCardTexts(db) { return labelled(await readArea(db, 'role_cards')) }
@@ -1252,7 +1261,7 @@ export async function dealRoleTo(db, nightId, uid, { written = null } = {}) {
   const cards = written ?? await roleCardsFor(db)
   const role = roleOf(c, s.guestKey).toUpperCase()
   const text = cards[role] ?? ROLE_CARDS[role] ?? ROLE_CARDS.DETECTIVE
-  const card = { id: ROLE_CARD_ID, act: 2, beat: 'orient', kind: 'role', text }
+  const card = { id: ROLE_CARD_ID, act: 2, beat: 'orient', kind: 'role', text, roleName: roleName(role) }
   const dealt = await dealCard(db, uid, card)
   return { ok: true, dealt: dealt ? 1 : 0 }
 }

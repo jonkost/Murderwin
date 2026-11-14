@@ -207,6 +207,7 @@ test('a late joiner after the power returns gets one role card as a detective; a
   const role = cardsOf(db, 'u-stan', 'role')
   assert.equal(role.length, 1)
   assert.equal(role[0].id, '2-power-role', 'the same card id as everyone else')
+  assert.equal(role[0].roleName, 'Detective', 'and the same bold name as any Detective\'s card (14 Nov 2026)')
   assert.equal(db.store.get(`cases/${nightId}`).roles.stanley, 'detective', 'never promoted')
   assert.equal(sessionOf(db, 'u-stan').role, undefined, 'no session carries a role field')
   // the power pressed again deals nothing twice, to anyone

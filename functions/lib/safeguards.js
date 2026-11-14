@@ -74,10 +74,13 @@ async function replaceRoleCards(db, nightId, list, c) {
     const held = Array.isArray(s.cards) ? s.cards : []
     const i = held.findIndex(x => x.id === deal.ROLE_CARD_ID)
     if (i < 0) continue
-    const text = deal.roleCardText(deal.roleOf(c, g.key), cards)
-    if (held[i].text === text) continue
+    const role = deal.roleOf(c, g.key)
+    const text = deal.roleCardText(role, cards)
+    const roleName = deal.roleName(role)
+    // untouched when it already says the same (a card dealt before 14 Nov 2026 has no name: its words decide)
+    if (held[i].text === text && (held[i].roleName === undefined || held[i].roleName === roleName)) continue
     const next = [...held]
-    next[i] = { ...held[i], text, at: new Date() }
+    next[i] = { ...held[i], text, roleName, at: new Date() }
     await ref.update({ cards: next })
     changed++
   }

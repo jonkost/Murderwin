@@ -5,7 +5,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, player, studyFinished } from '../lib/run.js'
-import { finaleDoc, ROLE_CARD_ID, ROLE_CARDS } from '../lib/deal.js'
+import { finaleDoc, ROLE_CARD_ID, ROLE_CARDS, ROLE_NAMES, roleName } from '../lib/deal.js'
 import { rerollCase, rehearsalCase, buildCase, CASE_KEYS } from '../lib/case.js'
 import { MOTIVES } from '../lib/night.js'
 import { spill, hush, spillAllowed, noteDealt, spillBlocked, isHushed, spotlightLines, BLOCKING_KINDS, HUSH_ROLES } from '../lib/safeguards.js'
@@ -161,7 +161,9 @@ test('G23 spill before any clue: the motive and the Ghost change, the Murderer s
     const cards = session(db, uid).cards
     assert.equal(cards.filter(x => x.id === ROLE_CARD_ID).length, 1, 'one role card per phone')
     assert.equal(roleCardOf(db, uid).text, ROLE_CARDS[after.roles[k].toUpperCase()])
+    assert.equal(roleCardOf(db, uid).roleName, ROLE_NAMES[after.roles[k].toUpperCase()], 'and the bold name under it moved with the words (14 Nov 2026)')
   }
+  assert.deepEqual([roleName('murderer'), roleName('GHOST'), roleName('detective'), roleName(undefined), roleName('nonsense')], ['Murderer', 'Ghost', 'Detective', 'Detective', 'Detective'])
   assert.equal(roleCardOf(db, uidOf(db, nightId, before.ghost)).text, ROLE_CARDS.DETECTIVE)
   assert.equal(roleCardOf(db, uidOf(db, nightId, after.ghost)).text, ROLE_CARDS.GHOST)
   assert.equal(roleCardOf(db, uidOf(db, nightId, after.murderer)), cardsBefore[after.murderer] ? roleCardOf(db, uidOf(db, nightId, after.murderer)) : null)

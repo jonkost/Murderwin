@@ -81,7 +81,14 @@ test('F01 and G01 the whole night, one Next at a time: every phone gets the same
     assert.ok(role[0].text.length > 40)
     assert.equal(cards(db, uid, 'notice').at(-1).key, 'orient')
     assert.equal(session(db, uid).role, undefined, 'a session never carries its role as a field')
+    // the role's own name rides on the card, for the bold line under its paragraph (14 Nov 2026): the name of the
+    // role the case holds for that guest, on every card, so the cards stay the same shape
+    const key = Object.entries(night(db, nightId).roster).find(([, r]) => r.uid === uid)?.[0]
+      ?? Object.entries(db.store.get(`nights/${nightId}/private/deck`).uids).find(([, u]) => u === uid)?.[0]
+    assert.equal(role[0].roleName, { murderer: 'Murderer', ghost: 'Ghost', detective: 'Detective' }[c.roles[key]], 'the card says which role it is')
+    assert.deepEqual(Object.keys(role[0]).sort(), ['act', 'at', 'beat', 'id', 'kind', 'roleName', 'text'], 'and carries nothing else')
   }
+  assert.deepEqual(uids.map(uid => cards(db, uid, 'role')[0].roleName).filter(n => n !== 'Detective').sort(), ['Ghost', 'Murderer'], 'one Murderer, one Ghost, the rest Detectives')
   // pressing Power once the power is back changes nothing: nothing is dealt twice
   assert.deepEqual(await hostCommand(db, { nightId, command: 'power', now }), { ok: true, already: true })
   for (const uid of uids) assert.equal(cards(db, uid, 'role').length, 1)
