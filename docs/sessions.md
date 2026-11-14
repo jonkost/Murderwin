@@ -90,9 +90,21 @@ Pip from great expectations".
   following from largest to smallest; answered in the comment's thread. It
   is a drawing only: the breed moment is still not built (the decision
   breedMoment, default left out).
-- **Left:** his word to publish Sir Irwin's voice (the site only: 36
-  changed sound files); card 603; Start Here's status note, which the docs
-  connector would not open this morning.
+- **Published, the site only, 13 Nov at about 9:58 pm** (dde3cf0, on
+  Jon's "Yes, publish"). Before: the built folder matched the live site
+  (1,136 of 1,136) and every test passed (functions 433, cues 126, station
+  90, app 175, play 403, scripts 107). The new build against the live one:
+  1,080 files the same, 38 changed (his 28 dessert lines, his 8 drawing
+  lines, the page's own stamp and its index), the cats' 806 lines byte for
+  byte as they were. The 18 older page parts were kept for any screen left
+  open. After: 1,140 of 1,140 files match the live site, and a dessert
+  line and slide 3 fetched from the site are the new files byte for byte.
+  The server and the rules were not touched. The checks and the fake
+  nights were not run again: nothing they cover changed.
+- **Left:** card 603 (nobody has heard the pets on a real phone or the
+  Parlour TV); a phone or screen that has already played one of his lines
+  may keep the old one for up to an hour; not pushed (four commits since
+  Jon's push of the morning). Start Here has the day's note.
 
 ## 12 Nov 2026, late night · Claude Code (voices for the pets; is the night fun, and Jon's own load)
 
