@@ -9,6 +9,88 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 14 Nov 2026, later that evening · Claude Code (the role's name on the role card; the Host tab says what is yours and what is a fail-safe)
+
+Jon, three notes at once: "Has the bottom of the "your role" that states
+your position, have it say Murder or Ghost or Detective - bold under the
+paragraph just to be clear. The hall green/red? I think you mean the
+orangerie. I need the host side to have clear instructions that I fail
+safes vs what I need to manually do. I asked if I should not saying I do.
+Do you even read what I say?"
+
+- **The last one first.** He had asked whether a Shortcut for the scream
+  would be better, and the answer he got was a job: build it, and how. The
+  straight answer is no, he does not need one: the scream already comes
+  from the Parlour TV and every phone on the dark, and the lights only
+  stayed on because the brain was not running. The brain's side stays
+  built and does nothing without a Shortcut called Scream. The card that
+  asked him to make one (608) is withdrawn; it was never published. **A
+  question from Jon gets its answer first, in a line, and no job he did
+  not ask for.**
+- **The role card.** Under its paragraph every role card now says its
+  role in bold: Murderer, Ghost or Detective. On the card after the
+  blackout, and on the You tab while the card is shown. The phone never
+  knew its role's name, only the paragraph, so the server now puts the
+  name on the card (`functions/lib/deal.js` `roleName`; after a Spill,
+  `safeguards.js`), and the phone shows what the card carries (no phone
+  works a role out). It needs the server as well as the site.
+- **The hall light.** It is not the Orangerie. It is the Hue bulb outside
+  the bedroom door ("Jonny's light" in Home), which his own cue list calls
+  the bedroom lock light: green means the bedroom is open, red that it is
+  locked. The Orangerie's red and green are the string lights in Get Off
+  My Lawn!, which have no button. The Host tab, its replies, the workshop's
+  Devices page and the guide now say The bedroom lock light. The command
+  the tab sends is still `hall`.
+- **The Host tab.** Nothing was taken off it.
+  - The card at the top says two lines at every one of the night's 31
+    steps (`play/src/lib/hostSteps.js`): By itself (what the house does
+    with no press) and You (what is his to say or press, each button in
+    bold). Nine checkers read a first draft step by step against the
+    server's code and the guide and corrected most of it: the three times
+    the iPad is carried, the bulletin to wait for, where a stray Next
+    would skip part of the night, and that the lock light turns green when
+    the third picture is named, not at the door beat.
+  - Where the night moves on by itself there is no big button: Arrivals
+    while the intro counts down, the cat visits, Act 4 until the rounds
+    are over, Act 6's two games. The card says Nothing to press, and Next
+    is a small fail-safe under it, Go on now, which asks first. The first
+    picture of the new card showed a big red Next beside the words "Do not
+    press Next": that is why. The big button comes back if a clock is a
+    minute and a half past its time, or a drawing was started by hand, so
+    he is never left with only the small one. While the drawing runs the
+    card offers no Next (the house refuses it), and at The End the one
+    button is Good night.
+  - Next asks first while the rules film is still playing: Phone chime
+    sits just above it for sixteen minutes.
+  - Below the card, five bands, each with one line: Yours, when it
+    happens (Pause, Salem petted, Fetch Champion, Achievements); The house
+    and the guests; Fail-safes (the bedroom lock light, the lights, the
+    music, The iPad shows, Make the groups, Start the drawing, the trace
+    on the TV), each saying what happens by itself and when to press; If
+    something goes wrong (the act numbers, the second Blackout, Power
+    returns, Spill and Hush, Clear the drawing, the doors); Before the
+    guests come (Sound test, Blackout test, the station key, A fresh
+    night). The second Blackout, Power returns, Start the drawing, and
+    Cake! after its own beat are small buttons now.
+- **Reviewed.** Four readers and nineteen checkers on the finished work.
+  One real fault of the new card, found and fixed: Start the drawing by
+  hand at Act 6's games would have left the card saying Nothing to press
+  for good. Also from it: the big Next back when Act 4's record is truly
+  missing, the beat's own words for an act reached by its number before
+  the roles are out, six more seconds on the film's question, and a dozen
+  wordings. A class named "you" met the You tab's rule and centred a line:
+  seen in the first picture, renamed.
+- **Checked.** Tests: play 419, app 179, functions 433, scripts 107, cues
+  137, station 90. Both sites build. Pictures taken at a phone's width in
+  a hidden browser and sent to Jon as one page
+  (`media/renders/Host tab and role card - 14 Nov.html`, not in git).
+  The workshop's run card and the guide (`docs/on-the-night.md`: a new
+  block at the top of Running the night, and four out-of-date lines the
+  checkers found) say the same as the tab.
+- **Not published.** It needs a whole publish: the site, and the server for
+  the role's name. Start the party night after it, not before.
+- **The board:** 609 (the role's name) and 610 (the Host tab), both done.
+
 ## 14 Nov 2026, evening · Claude Code (the blackout test; a Shortcut for the scream on the HomePods)
 
 Jon, about 4:55 pm: "I started a test night tested blackout got a scream but
@@ -73,12 +155,14 @@ it be better if I could build a short cut for it?"
   lands on the dark, and whether AudioPanic at the press can still cut it
   off on a slow HomePod, only his ear can say, with the Blackout test in
   Act 1 and the brain running. The lead is `soundLeadMs`: bigger is sooner.
-- **The board:** 607 (done), 608 (Jon: make the Shortcut and try it). They
-  land when the site is next published and the workshop opened.
-- **Left, and Jon's:** make the Scream Shortcut (a Home scene that plays
-  his scream on the four HomePods, Repeat and Autoplay off; a Shortcut
-  called exactly Scream that runs it), start the brain, a fresh practice
-  night, Blackout test in Act 1, and say sooner, later or cut off.
+- **The board:** 607 (done). It lands when the site is next published and
+  the workshop opened. (A card 608 that asked Jon to make the Shortcut was
+  withdrawn the same evening, before it was ever published: he had asked
+  whether he should, not to be given the job. See the entry above.)
+- **Only if he ever wants it:** a Home scene that plays his scream on the
+  four HomePods (Repeat and Autoplay off), a Shortcut called exactly Scream
+  that runs it, then the brain started, a fresh practice night and the
+  Blackout test in Act 1.
 
 ## 14 Nov 2026, morning · Claude Code (the intro, the rules and the reveal on film; the credits' speed)
 

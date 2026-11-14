@@ -39,6 +39,7 @@ import {
   CREDITS_SPEED_1114_TASKS,
   IRWIN_BAR_1114_TASKS, IRWIN_BAR_1114_DECISIONS,
   SCREAM_1114_TASKS,
+  HOST_CLARITY_1114_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1186,10 +1187,19 @@ export const ADDITIONS = [
   {
     // 14 Nov 2026, evening: Jon tested the blackout with the brain not
     // running, so the lights stayed on, and asked whether a Shortcut could
-    // put the scream on the HomePods. The brain's side is built (607, done);
-    // making the Shortcut called Scream and trying it is his (608).
+    // put the scream on the HomePods. The brain's side is built (607, done).
+    // He asked whether he should make one, not to be given the job: the
+    // answer was no need, so no card asks him to.
     id: '2026-11-14-scream-shortcut',
     tasks: SCREAM_1114_TASKS,
+  },
+  {
+    // 14 Nov 2026, evening: the role card says its role in bold (609), and
+    // the Host tab says what happens by itself and what is the host's, with
+    // the fail-safes marked and the hall light named as the bedroom lock
+    // light (610). Both done.
+    id: '2026-11-14-host-clarity',
+    tasks: HOST_CLARITY_1114_TASKS,
   },
 ]
 
