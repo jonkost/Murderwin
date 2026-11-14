@@ -3,7 +3,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { finaleStage, creditsTimes, creditsOrder, CREDITS_AFTER_MS, LAST_AFTER_MS, DEDICATION_MS, SPECIAL_LINE_MS } from '../src/lib/finale.js'
+import { finaleStage, creditsTimes, creditsOrder, anchored, countingBar, CREDITS_AFTER_MS, LAST_AFTER_MS, DEDICATION_MS, SPECIAL_LINE_MS } from '../src/lib/finale.js'
 import { roomEnded, nightClosed, creditsLeft, minutesText, dedicationPhoto } from '../src/lib/closing.js'
 import { roomDark, livingView } from '../src/lib/screen.js'
 import { lockFor, phoneLock } from '../src/lib/night.js'
@@ -120,4 +120,50 @@ test('Good night on the Host tab: only at The End, then one line; the credits\' 
   assert.equal(creditsLeft(d, victimAt + LAST_AFTER_MS + DEDICATION_MS), null)
   assert.equal(creditsLeft({ ...d, stage: 'motive' }, victimAt), null)
   assert.equal(minutesText(65), '1:05')
+})
+
+// 14 Nov 2026: the credits' roll and the counting bar are CSS animations that follow the server's clock. The
+// screen redraws four times a second, and each redraw handed the browser a new start, so the browser counted
+// twice: the roll was over in half its 73 seconds and the Parlour TV stood empty until the dedication.
+test('an animation on the server\'s clock keeps its start between redraws, and takes a new one only when its key changes', () => {
+  const first = anchored(null, 'roll', 1200)
+  assert.deepEqual(first, { key: 'roll', at: 1200 })
+  // a quarter of a second later, and again: the same start, the very same object
+  assert.equal(anchored(first, 'roll', 1450), first, 'a redraw does not move the start')
+  assert.equal(anchored(anchored(first, 'roll', 1450), 'roll', 1700).at, 1200)
+  // a hold, a carry-on or a longer roll is a new key: the start is worked out again
+  assert.deepEqual(anchored(first, 'roll|held', 9000), { key: 'roll|held', at: 9000 })
+  // the two animations on the Parlour TV use it, and neither hands the browser the moving time any more
+  const kiosk = src('screens/Kiosk.jsx')
+  for (const name of ['calc-bar', 'credits-roll']) {
+    const tag = kiosk.split('\n').find(l => l.includes(`className="${name}"`))
+    assert.ok(tag, `${name} is drawn`)
+    assert.match(tag, /key=\{key\}/, `${name}: a new start is a new animation`)
+    assert.match(tag, /animationDelay: `-\$\{from\}ms`/, `${name}: the kept start`)
+    assert.doesNotMatch(tag, /animationDelay: `-\$\{(since|t)\}ms`/, `${name}: never the moving time`)
+  }
+  assert.equal((kiosk.match(/= useAnchored\(key, /g) ?? []).length, 2, 'both go through useAnchored')
+  // the hook itself keeps the start, and no key takes in anything that moves with the clock
+  const hook = kiosk.slice(kiosk.indexOf('function useAnchored('), kiosk.indexOf('function CalcBar('))
+  assert.ok(hook.includes('kept.current = anchored(kept.current, key, at)') && hook.includes('return kept.current.at'), 'useAnchored hands back the kept start, never the new one')
+  const keys = kiosk.slice(kiosk.indexOf('function useAnchored(')).split('\n').filter(l => /^\s*const key = `/.test(l)) // the two after the hook: the bar's and the roll's
+  assert.equal(keys.length, 2, 'one key for the bar, one for the roll')
+  for (const k of keys) assert.doesNotMatch(k, /\bnow\b|\bsince\b|\$\{t\}/, 'a key that moved with the clock would rebuild the animation four times a second')
+})
+
+test('the counting bar goes on from where it stood after a hold and a carry-on', () => {
+  const bar = (f, now) => countingBar(f, now)
+  const t0 = 1_000_000
+  const fresh = { at: new Date(t0), schedule: { graph: 50_000 }, held: 0, holdAt: null }
+  assert.deepEqual(bar(fresh, t0 + 10_000), { span: 50_000, t: 10_000 })
+  assert.deepEqual(bar({ ...fresh, schedule: {} }, t0 + 60_000), { span: 50_000, t: 50_000 }, 'the default length, and never past its end')
+  // held at 10 s: it stands still however long the hold lasts
+  const holding = { ...fresh, holdAt: new Date(t0 + 10_000) }
+  assert.deepEqual(bar(holding, t0 + 45_000), { span: 50_000, t: 10_000 })
+  // carried on 60 s later, as functions/lib/finale.js go() writes it: the graph mark and held both move on by the hold
+  const carried = { ...fresh, schedule: { graph: 110_000 }, held: 60_000, holdAt: null }
+  assert.deepEqual(bar(carried, t0 + 70_000), { span: 50_000, t: 10_000 }, 'the same place, the same length')
+  assert.deepEqual(bar(carried, t0 + 75_000), { span: 50_000, t: 15_000 }, 'and on from there at its own pace')
+  // a second hold later on works the same way
+  assert.deepEqual(bar({ ...carried, holdAt: new Date(t0 + 80_000) }, t0 + 200_000), { span: 50_000, t: 20_000 })
 })

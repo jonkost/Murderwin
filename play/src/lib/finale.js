@@ -57,6 +57,29 @@ export function elapsed(finale, now) {
   return Math.max(0, t)
 }
 
+// Where an animation that follows the server's clock starts from (the counting bar, the credits' roll).
+// It is worked out once and kept, and the browser counts on from there by itself. Handing the browser a
+// new start with every redraw, four times a second, made it count twice: the roll ran at double speed, was
+// over in half its time, and the Parlour TV stood empty for the other half before the dedication (found
+// 14 Nov 2026 by filming the reveal; a preview page never redraws, so it never showed). The start is worked
+// out again only when the key changes: what the animation is timed against is new (a hold, a carry-on, a
+// new start), and then the animation is started again from there.
+export function anchored(prev, key, at) {
+  return prev && prev.key === key ? prev : { key, at }
+}
+
+// The counting bar's own clock: how long it runs and how far it has got, with the host's holds taken out.
+// A carry-on leaves finale.at where it was and moves every later mark on by the hold's length (the graph
+// mark too) and adds that length to `held`; taking `held` off both sides, the bar goes on from where it
+// stood, where it used to jump forward by the whole hold (14 Nov 2026, from the review of the fix above).
+// The bar shows only before the graph mark, and every hold before that mark has moved it on.
+export function countingBar(finale, now) {
+  const held = Math.max(0, Number(finale?.held) || 0)
+  const span = Math.max(1000, (finale?.schedule?.graph ?? 50_000) - held)
+  const t = Math.min(span, Math.max(0, elapsed(finale, now) - held))
+  return { span, t }
+}
+
 // What the screen shows right now.
 //  stats | awards | graph: on the clock, before any name
 //  murderer | motive | victim: once the host has pressed that far (the clock no longer matters)

@@ -12,7 +12,7 @@ import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost
 import { ms } from './Relay'
 import { studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes } from '../lib/finale'
+import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes, anchored, countingBar } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesScreenAt, introLag } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
@@ -920,12 +920,22 @@ export function Finale({ night, finale, content = null, serverNow }) {
 // The calculating bar: starts fast and slows, pure CSS against the schedule.
 // A screen that loads late lands at the right point (a negative delay), and
 // a hold pauses it where it stands.
+// An animation's start, kept from the first draw until its key changes (lib/finale.js anchored): this
+// screen redraws four times a second, and a start that moved on with every redraw ran the animation twice
+// as fast. The element carries the same key, so a new start is a new animation.
+function useAnchored(key, at) {
+  const kept = useRef(null)
+  kept.current = anchored(kept.current, key, at)
+  return kept.current.at
+}
+
 function CalcBar({ finale, now }) {
-  const span = Math.max(1000, finale.schedule?.graph ?? 50_000)
-  const t = Math.min(span, elapsed(finale, now))
+  const { span, t } = countingBar(finale, now)
+  const key = `${ms(finale.at)}|${span}|${finale.held ?? 0}|${finale.holdAt ? ms(finale.holdAt) : 'run'}`
+  const from = useAnchored(key, t)
   return (
     <div className="calc" role="progressbar" aria-label="the Manor is counting" aria-valuemin={0} aria-valuemax={span} aria-valuenow={t}>
-      <div className="calc-bar" style={{ animationDuration: `${span}ms`, animationDelay: `-${t}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }} />
+      <div key={key} className="calc-bar" style={{ animationDuration: `${span}ms`, animationDelay: `-${from}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }} />
     </div>
   )
 }
@@ -975,9 +985,12 @@ function Credits({ finale, now }) {
   const since = Math.max(0, (finale.holdAt ? ms(finale.holdAt) : now) - ms(finale.victimAt) - times.credits)
   const span = times.dedication - times.credits
   const climb = Math.min(1, since / 20_000)
+  // the roll's start is kept (useAnchored): a hold, a carry-on (the server moves victimAt on) or a longer roll is a new key
+  const key = `${ms(finale.victimAt)}|${times.credits}|${span}|${finale.holdAt ? ms(finale.holdAt) : 'run'}`
+  const from = useAnchored(key, since)
   return (
     <div className="kiosk finale credits">
-      <div className="credits-roll" style={{ animationDuration: `${span}ms`, animationDelay: `-${since}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }}>
+      <div key={key} className="credits-roll" style={{ animationDuration: `${span}ms`, animationDelay: `-${from}ms`, animationPlayState: finale.holdAt ? 'paused' : 'running' }}>
         <p className="kiosk-crest">Awards</p>
         <ul className="awards-reel">
           {creditsAwards(finale).map((a, i) => (
