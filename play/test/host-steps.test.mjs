@@ -10,6 +10,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { HOST_STEPS, hostStep, pressesOf, piecesOf, movesByItself, goOnAsk, drawingRuns, LATE_MS, GAMES_MS } from '../src/lib/hostSteps.js'
 import { rulesStillPlaying, filmTimeline, INTRO_MS, AFTER_INTRO_MS, INTRO_GRACE_MS } from '../src/lib/rulesfilm.js'
+import { isRehearsalNight } from '../src/lib/night.js'
 
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8')
 const night = JSON.parse(read('../../seed/night.json'))
@@ -256,4 +257,42 @@ test('the host is never left with only the small chip: a clock that failed, or a
   for (const state of ['intro', 'walk', 'turn', 'vote', 'done']) assert.equal(at(6, 'games', { beatAt: T0 - 60_000, relay: { state } }), false, `a drawing is ${state}: the night will not leave the games by itself`)
   assert.equal(at(6, 'games', { beatAt: T0 - GAMES_MS - 1 }), false, 'no drawing after five minutes: Next is back')
   assert.equal(at(6, 'games', {}), true, 'no time to go by: as the games')
+})
+
+// 14 Nov 2026, Jon: "I need a way to end the night when testing."
+test('a practice night can be ended from the Host tab: it asks first, stops the music, then the night is gone; never on the party night', () => {
+  const body = host.slice(host.indexOf('export default function Host('), host.indexOf('// A band of the Host tab'))
+  // the button sits right under the line that says this is a practice night, above the card
+  assert.ok(body.includes('<EndPractice night={night} disabled={!!busy} />'))
+  assert.ok(body.indexOf("'This is a practice night' : 'This is the party night'") < body.indexOf('<EndPractice '))
+  assert.ok(body.indexOf('<EndPractice ') < body.indexOf('<RunPanel '), 'above the card: easy to find when trying things')
+  // one button, drawn only on a practice night, and the press checks again
+  const end = host.slice(host.indexOf('export function EndPractice('), host.indexOf('// The one button a pause leaves'))
+  assert.ok(end.includes('if (!isRehearsalNight(night)) return null'), 'the party night: nothing is drawn')
+  assert.ok(end.includes('<button className="chip" disabled={busy || disabled} onClick={end}>End this practice night</button>'))
+  assert.equal(isRehearsalNight({ forceRehearsal: false }), false, 'the party night')
+  assert.equal(isRehearsalNight({ forceRehearsal: true }), true)
+  assert.equal(isRehearsalNight({}), true, 'a night with no word either way is a practice night')
+  // it asks first, in plain words that say what goes
+  assert.match(host, /export const END_PRACTICE_ASK = 'End this practice night\? The music stops, every phone and screen goes back to the start, and what was played is thrown away\.'/)
+  assert.ok(end.includes('if (!askFirst(END_PRACTICE_ASK)) return'), 'never by one stray tap')
+  assert.ok(end.indexOf('if (!isRehearsalNight(night)) return //') > 0 && end.indexOf('if (!isRehearsalNight(night)) return //') < end.indexOf('askFirst(END_PRACTICE_ASK)'), 'and never the party night, whatever drew the button')
+  // the music first (the Host tab goes with the night, and nothing else could stop it), then a moment for the brain to hear it, then the night
+  const music = end.indexOf("await callHost({ nightId: night.nightId, command: 'music', arg: 'pause' }).catch(() => {})")
+  const wait = end.indexOf('await new Promise(r => setTimeout(r, END_PRACTICE_WAIT_MS))')
+  const gone = end.indexOf("await callHost({ nightId: night.nightId, command: 'discard-night' })")
+  assert.ok(music > 0 && wait > music && gone > wait, 'in that order')
+  assert.match(host, /export const END_PRACTICE_WAIT_MS = 2500/)
+  // a failure says so and leaves the night as it was; the button is never left greyed out
+  assert.ok(end.includes("setMsg(`That didn’t work: ${troubleLine(e, 'press it again.')}`)") && end.includes('} finally {\n      setBusy(false)'))
+  // it is on the pause card of a host's phone too, so Pause then End works from anywhere (the drawing's screen has Pause)
+  assert.ok(host.includes('{night && <EndPractice night={night} disabled={busy} />}'))
+  assert.ok(read('../src/App.jsx').includes('<ResumeNight nightId={nightId} night={n} />'))
+  // the Manor's own command does the work, and it refuses a real night's case (the server is not changed)
+  const discard = read('../../functions/lib/discard.js')
+  assert.ok(discard.includes("if (c.rehearsal === false) return { ok: false, reason: 'real-case' }"))
+  assert.ok(discard.includes("await activeRef.set({ nightId: null, since: FieldValue.serverTimestamp() })"), 'no night is live afterwards')
+  assert.ok(read('../../functions/lib/run.js').includes("case 'discard-night':\n      return discard.discardNight(db, { nightId })"))
+  // with no night live every phone is at the doors, with Start the night
+  assert.ok(read('../src/App.jsx').includes('if (!nightId) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />'))
 })

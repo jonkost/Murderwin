@@ -542,8 +542,8 @@ export default function Preview({ screen }) {
     case 'superseded': body = <Join night={night} ui={ui} notice={ui.SUPERSEDED} />; break
     case 'paused': body = <Moment text={ui.PAUSED} crest />; break
     // the two host phones (1 Nov 2026): Resume on the pause card, and on the strip over a held window
-    case 'paused-host': body = <Moment text={ui.PAUSED} crest foot={<ResumeNight nightId="preview" />} />; break
-    case 'paused-window-host': body = <><PausedStrip ui={ui} foot={<ResumeNight nightId="preview" />} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break
+    case 'paused-host': body = <Moment text={ui.PAUSED} crest foot={<ResumeNight nightId="preview" night={night} />} />; break
+    case 'paused-window-host': body = <><PausedStrip ui={ui} foot={<ResumeNight nightId="preview" night={night} />} /><div className="paused-shell" inert><Questions w={windowDoc('questions', 60000)} nightId="preview" serverNow={() => PHASE_AT + 20000} /></div></>; break
     case 'blackout': body = <Blackout />; break
     // after the blackout (25 Oct 2026): the one button, then the role card with no button
     case 'prompt-continue': body = <Prompt uid="preview" night={night} ui={ui} serverNow={serverNow} promptKey="prompt-2" stage="continue" card={CARDS.role} notes={null} />; break

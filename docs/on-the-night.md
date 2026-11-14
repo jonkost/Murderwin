@@ -492,6 +492,23 @@ Nothing was taken off the tab. It is laid out by whose each button is.
   in the Orangerie. The Orangerie's red and green are the string lights in
   Get Off My Lawn!, which the brain runs by itself and which have no button.
   Older lines further down this guide still say "hall": they mean this bulb.
+- **End this practice night** (14 November: "I need a way to end the
+  night when testing"). On a practice night only, in two places: at the
+  top of the tab, right under the line "This is a practice night", and on
+  the pause card under Resume. So from anywhere, the drawing's screen
+  included, it is Pause, then End this practice night. It asks first. Then
+  the music stops, the practice night is thrown away, and every phone and
+  screen goes back to the start: the phones to the doors with Start the
+  night, the room screens to their screen saver. It takes a few seconds,
+  and for a moment a phone may show the list of names: wait, and the doors
+  come. If a phone stays on the names, tap your name and end the night
+  again. The lights stay as they are (your AfterBlackOut Shortcut puts the
+  house back if a room is left dim), and if music is still playing
+  afterwards, run your AudioPanic Shortcut. On the party night the button
+  is not there at all, and the Manor refuses to throw a real night away.
+  With no night on, any phone at the doors shows Start the night, as it
+  always has: on the party day, end a practice night just before you start
+  the real one on your own phone, before the guests come.
 - *The iPad is carried three times,* the one job only your hands can do,
   and the card says each at its moment: to its stand on the supper table as
   everyone goes in, back to the Library before Start Act 4, and into the

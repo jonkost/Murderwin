@@ -144,7 +144,7 @@ export default function App() {
   // two host phones carry that one button, on the pause card or on the strip
   // over a held window, and nothing else stays live (1 Nov 2026).
   const paused = n.phase === 'paused'
-  const resume = paused && s.host ? <ResumeNight nightId={nightId} /> : null
+  const resume = paused && s.host ? <ResumeNight nightId={nightId} night={n} /> : null
   const w = openWindow(n, s, clock)
   const where = placement(w)
   let screen = null

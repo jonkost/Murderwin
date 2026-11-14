@@ -42,6 +42,11 @@ const PHASE_WORDS = {
   paused: 'paused, Sir Irwin requires the garden',
 }
 
+// Ending a practice night from the Host tab (14 Nov 2026, Jon: "I need a way to end the night when testing").
+// The question it asks first, and how long the music's stop is given to reach the brain before the night goes.
+export const END_PRACTICE_ASK = 'End this practice night? The music stops, every phone and screen goes back to the start, and what was played is thrown away.'
+export const END_PRACTICE_WAIT_MS = 2500
+
 // What the Host tab says the moment a button is pressed, before the Manor
 // answers, for the one command that takes its time on purpose: the Blackout
 // waits five seconds on the server before the power returns (25 Oct 2026).
@@ -192,6 +197,8 @@ export default function Host({ night, content, serverNow }) {
         <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
         <br />{isRehearsalNight(night) ? 'This is a practice night' : 'This is the party night'}
       </p>
+      {/* a practice night is ended from here, right under the line that says it is one. Never drawn on the party night. */}
+      <EndPractice night={night} disabled={!!busy} />
       {/* the party day with a practice night on (the box forgotten, or yesterday's night still up): said in red, with where to put it right */}
       {isRehearsalNight(night) && onPartyDay(clock) && <p className="host-msg trouble" role="alert">Today is the party, and this is a practice night. For the party: at the bottom of this tab, tick This is the real night, then press Start the night.</p>}
       {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, by itself. To hold it for late guests, press Back one once it starts.</p>}
@@ -1017,9 +1024,46 @@ export function SendScreens({ presence = {}, sound = {}, now = Date.now(), open 
   )
 }
 
+// End this practice night (14 Nov 2026, Jon: "I need a way to end the night when testing"). One button, on a
+// practice night only: at the top of the Host tab, and on the pause card of the two host phones (a pause is
+// the one thing a host can always reach, the drawing's screen included, so Pause then this always works).
+// It asks first. Then the music first (the Host tab goes with the night, and nothing else could stop it), a
+// moment for the brain to hear that, and the night itself through the host command discard-night, which is the
+// Manor's own way of throwing a rehearsal night away (functions/lib/discard.js): the night, its throwaway
+// case and every phone's seat are deleted and no night is live, so every phone is back at the doors with
+// Start the night. Never the party night: nothing is drawn there, the press checks again, and the Manor
+// refuses to throw a real night's case away.
+export function EndPractice({ night, disabled = false }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+  if (!isRehearsalNight(night)) return null
+  const end = async () => {
+    if (!isRehearsalNight(night)) return // never the party night, whatever drew the button
+    if (!askFirst(END_PRACTICE_ASK)) return
+    setBusy(true)
+    setMsg('Ending the practice night. The music stops first.')
+    try {
+      await callHost({ nightId: night.nightId, command: 'music', arg: 'pause' }).catch(() => {})
+      await new Promise(r => setTimeout(r, END_PRACTICE_WAIT_MS))
+      await callHost({ nightId: night.nightId, command: 'discard-night' })
+    } catch (e) {
+      setMsg(`That didn’t work: ${troubleLine(e, 'press it again.')}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="host-row end-practice">
+      <button className="chip" disabled={busy || disabled} onClick={end}>End this practice night</button>
+      {msg && <p className="host-msg" role="status">{msg}</p>}
+    </div>
+  )
+}
+
 // The one button a pause leaves on the two host phones (App.jsx, 1 Nov 2026):
 // the pause takes the tabs off every phone, the Host tab's own Resume with them.
-export function ResumeNight({ nightId }) {
+// (Since 14 Nov 2026 a practice night's pause card carries End this practice night under it; never the party night's.)
+export function ResumeNight({ nightId, night = null }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const resume = async () => {
@@ -1038,6 +1082,7 @@ export function ResumeNight({ nightId }) {
     <div className="resume-night">
       <button className="big" disabled={busy} onClick={resume}>Resume</button>
       {error && <p className="trouble" role="alert">{error}</p>}
+      {night && <EndPractice night={night} disabled={busy} />}
     </div>
   )
 }

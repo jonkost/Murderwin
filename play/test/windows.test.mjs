@@ -130,11 +130,11 @@ test('the vote is a card on Now with the tabs reachable: App hands the window to
 // for a long time nothing on a phone could carry on (1 Nov 2026). The two host
 // phones get that one button and nothing else: no tab, no room game and no
 // other Host tab button stays live in a pause.
-test('a pause leaves the two host phones one button, Resume, wherever the pause shows, and leaves guests none', async () => {
+test('a pause leaves the two host phones one button, Resume (and on a practice night End this practice night), wherever the pause shows, and leaves guests none', async () => {
   const { readFileSync } = await import('node:fs')
   const read = f => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8')
   const app = read('App.jsx')
-  assert.match(app, /const resume = paused && s\.host \? <ResumeNight nightId=\{nightId\} \/> : null/, 'a host phone in a pause, never a guest and never outside a pause')
+  assert.match(app, /const resume = paused && s\.host \? <ResumeNight nightId=\{nightId\} night=\{n\} \/> : null/, 'a host phone in a pause, never a guest and never outside a pause')
   // all three places a pause shows carry it, and it sits outside anything inert
   assert.match(app, /<><PausedStrip ui=\{ui\} foot=\{resume\} \/><div className="paused-shell" inert>\{screen\}<\/div><\/>/, 'the strip over a held Parlour Game')
   assert.match(app, /const strip = heldCard \? <PausedStrip ui=\{ui\} foot=\{resume\} \/> : null/, 'the strip over the vote card')
@@ -153,6 +153,13 @@ test('a pause leaves the two host phones one button, Resume, wherever the pause 
   assert.match(button, /await callHost\(\{ nightId, command: 'resume' \}\)/)
   assert.match(button, /That didn’t work: \$\{troubleLine\(e, 'press it again\.'\)\}/)
   assert.match(button, /<button className="big" disabled=\{busy\} onClick=\{resume\}>Resume<\/button>/)
+  // 14 Nov 2026 (Jon: "I need a way to end the night when testing"): a practice night's pause card also carries
+  // End this practice night, so Pause then End works from anywhere, the drawing's screen included. It is the
+  // EndPractice button, which draws nothing on the party night: there the pause card is Resume and nothing else.
+  assert.match(button, /\{night && <EndPractice night=\{night\} disabled=\{busy\} \/>\}/)
+  assert.equal((button.match(/<button/g) ?? []).length, 1, 'Resume is the only button the pause card draws itself')
+  const end = host.slice(host.indexOf('export function EndPractice('), host.indexOf('// The one button a pause leaves'))
+  assert.ok(end.includes('if (!isRehearsalNight(night)) return null'), 'nothing on the party night')
 })
 
 test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the result beat, open for good at The End, and nowCards keeps the result when the night is over', async () => {
