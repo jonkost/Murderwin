@@ -87,8 +87,18 @@ Do you even read what I say?"
   The workshop's run card and the guide (`docs/on-the-night.md`: a new
   block at the top of Running the night, and four out-of-date lines the
   checkers found) say the same as the tab.
-- **Not published.** It needs a whole publish: the site, and the server for
-  the role's name. Start the party night after it, not before.
+- **Published on 14 November at about 6:54 pm, on Jon's "Yes, publish": the site
+  and the server** (013876d; the security rules were not touched: they have
+  not changed). The checks first: all clear (22,042 of 22,042 stand-in
+  checks, the pretend night, the five leak checks). The last build still
+  equalled the live site (1,147 of 1,147) and was kept. The server: all 26
+  functions updated, none added or taken away. The site: 3 pages and 6 new
+  bundles changed, every media file the same, and the 30 older bundles
+  kept for screens left open. Afterwards 1,153 of 1,153 files matched
+  the live site. Not pushed. The practice night from the afternoon's
+  blackout test was live through it, at Act 2, and was not touched. The
+  party night is to be started after this, so its role cards carry their
+  names.
 - **Later, Jon: "I need a way to end the night when testing."** A practice
   night could only be left by starting another night or walking it to The
   End. Now, on a practice night only, the Host tab has **End this practice
@@ -103,7 +113,8 @@ Do you even read what I say?"
   phone is then at the doors with Start the night, and the room screens on
   their screen saver. The lights stay as they are. The button is never
   drawn on the party night, the press checks again, and the server refuses
-  a real case. The site only: no server change. Reviewed by two readers
+  a real case. The site only: no server change (it went out with the
+  publish above, at about 6:54 pm). Reviewed by two readers
   with a checker for each finding: nothing that could reach the party
   night; from it came the pause card's button, a longer wait for the
   music's stop, and three lines in the guide.
