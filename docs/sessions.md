@@ -111,6 +111,9 @@ and the bar's page arrived in `docs/` at 9:29.
   music's stop wait for his word), and no screen went dark (that needs a
   night). A first try a minute earlier did nothing: a plain `shortcuts run`
   waits on its input and was cut off.
+  Jon, asked whether the house went dark and came back: "Yes". He also
+  asked "No scream ?": on the night the room screens and the phones make
+  the scream, so a by-hand test has none unless he says the sound may run.
 - **Left, and Jon's:** the dry run on the real lists (card 466: every
   screen closed, his phone off the game); the reveal's quiet films (605);
   `tallyLength`; hearing the pets on a real phone (603); TV Wonder in his
