@@ -9,6 +9,77 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 14 Nov 2026, evening · Claude Code (the blackout test; a Shortcut for the scream on the HomePods)
+
+Jon, about 4:55 pm: "I started a test night tested blackout got a scream but
+it didn't kill the lights and play the scream through all the HomePods. Would
+it be better if I could build a short cut for it?"
+
+- **Why the lights stayed on.** The brain was not running on this Mac (no
+  program, checked), so nothing ran his Blackout Shortcut or stopped the
+  music. A practice night was live and had moved to Act 2, so the real
+  Blackout had been pressed. The scream he heard came from a screen or a
+  phone: on the night those make the scream, and the HomePods were never
+  part of it. The brain can only reach a HomePod through his Shortcuts.
+- **Built, on the brain only (no site or server change):** the brain now
+  looks for a third Shortcut, **Scream** (`cues/scenes.json` `blackout`:
+  `soundShortcut`, `soundLeadMs` 1000). If it is on this Mac the brain runs
+  it a second before the dark, once a press, on a runner of its own so it
+  can never push the lights' Shortcut out. If it is not, the brain says so
+  in one line when it starts and the night runs as before. The brain looks
+  for it only when it starts: make the Shortcut, then start the brain.
+- **The music's stop and the scream.** AudioPanic pauses the same four
+  HomePods. So the scream is never sent sooner than half a second after the
+  brain last asked for the stop; the stop the brain would send again at the
+  dark is held back (for five seconds from when the scream is due, and
+  never into the last half second before the power returns, so the stops at
+  the power's return always go); and from the scream's send a stop that
+  Apple Home refused or failed, and that is waiting to be tried again, is
+  dropped (`supersede` in `cues/lib/shortcutMusic.js`). A blackout called
+  off, or a house on its way back, takes a scream still waiting on Apple
+  Home off.
+- **A slip of my own, found before it ever ran.** In the brain's program a
+  line that began with a bracket came after a `log(...)` line, and
+  JavaScript reads that as a call on the line before it. It would have
+  thrown at every blackout Shortcut, the lights' two as well. The first
+  review (ten agents) did not see it; reading the finished code did. The
+  tests now cut the brain's own blackout code out of the program and run it
+  with stand-ins (with the slip put back, seven tests fail), and one test
+  refuses any such line in the brain's code. The rest of the repo was
+  scanned for the same slip: none.
+- **Reviewed twice.** The first pass (two readers, each finding checked by
+  a second) gave eight small findings, all applied: the hold bounded by the
+  power's mark, the scream's token, the start-up check for a sheet that
+  names only the scream, the check's exit code (a missing optional Scream
+  fails nothing), two tests that claimed more than they showed, and the
+  guides' wording. The second pass, on the finished code (three readers,
+  each finding checked by a second), found nothing that throws and three
+  things worth doing, all done: a stop still waiting to be tried again is
+  dropped at the scream's send; the brain does not read this Mac's Shortcut
+  list each minute for the scream's sake (each read replaces what it knows
+  of the lights' two as well); and the words about the numbers are exact.
+  Left as it is, and only Jon's ear can settle it: the scream waits half a
+  second after the stop is asked for, not after Apple Home has carried it
+  out.
+- **Checked without sound.** `node cues.mjs --check-shortcuts` (it runs
+  none): all ten the brain runs are on this Mac, Blackout and AfterBlackOut
+  too, Scream not yet. The whole program in fake mode with no Firebase and
+  a stand-in for the Shortcuts tool that lists a pretend Scream and runs
+  nothing: at a pretend press the order was AudioPanic, Blackout, Scream a
+  second after the press, the second stop held back at the dark, then
+  AfterBlackOut and the jazz at the power's return. Tests: cues 137,
+  functions 433, scripts 107, app 178, play 410, station 90.
+- **Not tried, and cannot be without Jon:** any sound. Whether the scream
+  lands on the dark, and whether AudioPanic at the press can still cut it
+  off on a slow HomePod, only his ear can say, with the Blackout test in
+  Act 1 and the brain running. The lead is `soundLeadMs`: bigger is sooner.
+- **The board:** 607 (done), 608 (Jon: make the Shortcut and try it). They
+  land when the site is next published and the workshop opened.
+- **Left, and Jon's:** make the Scream Shortcut (a Home scene that plays
+  his scream on the four HomePods, Repeat and Autoplay off; a Shortcut
+  called exactly Scream that runs it), start the brain, a fresh practice
+  night, Blackout test in Act 1, and say sooner, later or cut off.
+
 ## 14 Nov 2026, morning · Claude Code (the intro, the rules and the reveal on film; the credits' speed)
 
 Jon: "I would like to see the rendering of the intro video right into the

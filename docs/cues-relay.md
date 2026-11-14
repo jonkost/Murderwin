@@ -112,7 +112,8 @@ door).
   12 November a stop that is still waiting on Apple Home gives way at once
   to a newer play or stop, so the music that follows a stop is never kept
   waiting behind it: around the blackout the stop is asked for three times,
-  at the press, at the dark and at the power's return); in Act 4
+  at the press, at the dark and at the power's return, and with a *Scream*
+  Shortcut on the brain the one at the dark is held back); in Act 4
   the two rooms' music waits for the house jazz to finish first. Two music
   changes within twenty seconds of each other still reach the HomePods, a
   little late.
@@ -276,14 +277,60 @@ Shortcuts apps are yours.)
   warm colour again (House Default turns them on at full). House Default
   also turns the Study's walls on at full; the Study's game takes them back
   at the first touch. `BLACKOUT_SHORTCUTS=off` in `cues/.env` leaves both
-  out.
+  out, and the scream's Shortcut with them.
+- **The scream on the HomePods (14 November, optional).** A third Shortcut,
+  *Scream*, that you build. The brain cannot reach a HomePod by itself, so
+  without it the scream comes from the room screens and the phones only,
+  which make it on the dark either way.
+  - **How to build it.** The same way as your music ones: a Home scene that
+    plays your scream on the four HomePods, once, with Repeat and Autoplay
+    off, and a Shortcut called exactly *Scream* whose one step runs that
+    scene. Do not build it by sending this Mac's own sound to the HomePods:
+    the Orangerie's screen and bulletin 2 play from this Mac's speakers, and
+    they would follow it there for the rest of the night.
+  - **When it runs.** Its name and its number are in `cues/scenes.json`
+    under `blackout`: `soundShortcut` and `soundLeadMs` (1000 to start: the
+    brain starts it a second before the dark). Time it by ear with the Host
+    tab's **Blackout test**, pressed in Act 1 (like the lights' two it runs
+    only there). HomePods scream after the lights die: make the number
+    bigger. They scream before the lights die, or the scream is cut off as
+    it starts: make it smaller. Then start the brain's program again. Above
+    1500 the number changes nothing when the music was playing at the press
+    (above 2000 when it was already off): the scream never starts before
+    the press, and never sooner than half a second after the brain asks for
+    the music's stop, so that the stop is asked for first.
+  - **The music's stop.** *AudioPanic* pauses the same four HomePods, so the
+    brain holds back the stop it would send again at the dark: for five
+    seconds from when the scream is due, and never into the last half
+    second before the power returns. From the scream's send, a stop that
+    Apple Home refused or failed and that is waiting to be tried again is
+    dropped too, or it would land in the middle of the scream. The stop at
+    the press and the stops at the power's return go as ever. All this
+    costs little, because the scream takes the HomePods over from any music
+    still on them.
+  - **What it can never do.** It has a runner of its own, so it cannot push
+    the lights' Shortcut out. It is not tried again once the dark is two
+    seconds old, once the blackout is called off, or once the house is
+    coming back. With no Shortcut of that name on this Mac the brain says
+    so in one line when it starts and the night runs as before. Make the
+    Shortcut first and then start the brain (or start it again): the brain
+    looks for it only when it starts, and its window then says
+    `[blackout] the scream on the HomePods: "Scream" 1000 ms before the
+    dark`. (It is not looked for each minute like a missing lights'
+    Shortcut: every such look replaces what the brain knows of the lights'
+    two as well, and that is not worth risking for an extra.)
+  - **When you try it,** leave half a minute between two Blackout tests.
+    Apple Home stays busy with the last run of a scene for ten to twenty
+    seconds, and would refuse the next scream.
 - **The stop is your AudioPanic Shortcut (12 November).** You made it that
   day, and the sheet names it (`musicShortcuts.off` in `cues/scenes.json`):
   keep the name as it is, or change both together. It has one step, your
   Home scene PANIC, which pauses the four HomePods. `npm start --
   --check-shortcuts` (it runs none of them) says whether every Shortcut the
   brain needs is on this Mac. Around a blackout the brain asks for the stop
-  three times: at the press, at the dark and at the power's return. The
+  three times: at the press, at the dark and at the power's return (with a
+  *Scream* Shortcut on the brain the one at the dark is held back, so that
+  it does not cut the scream off). The
   first Blackout test with the jazz playing is also the first time the
   stop and your *Blackout* Shortcut run within the same second. The music
   should stop at the press, the house lights should still go out, and the

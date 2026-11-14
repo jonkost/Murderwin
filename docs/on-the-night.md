@@ -485,6 +485,24 @@ the screen awake by itself where the iPad lets it.
   which the brain runs at the press, and again at the dark and at the
   power's return (below, under Sound test). The brain runs the two lights
   Shortcuts only in Act 1, where the blackout is.
+  Since 14 November a third Shortcut of yours may join them, *Scream*: it
+  plays your scream on the four HomePods, once, with nothing after it (the
+  brain cannot reach a HomePod by itself). Build it the way you built your
+  music ones: a Home scene that plays the scream on the four HomePods, with
+  Repeat and Autoplay off, and a Shortcut called exactly *Scream* that runs
+  that scene. Do not build it by sending this Mac's own sound to the
+  HomePods. Make it before you start the brain: the brain looks for it only
+  when it starts, and says in its window whether it found it. The brain
+  starts it a second before the dark, and while it
+  plays it holds back the music's stop that it would send again at the
+  dark, which would cut the scream off; the stops at the power's return go
+  as ever. With no Shortcut called Scream on the brain nothing changes.
+  Either way the room screens and the phones still make their own scream
+  on the dark. Time it by ear with the Blackout test, pressed in Act 1:
+  if the HomePods scream after the lights die, make `soundLeadMs` bigger in
+  `cues/scenes.json` (it starts at 1000); if they scream before, or the
+  scream is cut off as it starts, smaller; then start the brain's program
+  again. Leave half a minute between two tests.
   A **Pause** in the two seconds before the dark (Susan's phone,
   say) calls the blackout off, with no scream and no dark on the screens:
   press Blackout again when you are ready. If it comes after the first
@@ -506,8 +524,12 @@ the screen awake by itself where the iPad lets it.
   number there is said in the brain's window and the usual one used: it
   switches nothing else off, as long as the file itself still reads; the
   window says at the start if it does not). Press the test in Act 1, before the guests
-  come: later in the night it leaves your two Shortcuts out, so a game's
-  lights are not disturbed. If a light in your Blackout scene shows No
+  come: later in the night it leaves your Shortcuts out (the lights' two
+  and Scream, if you have made it), so a game's lights are not disturbed.
+  The brain must be running for any of them: with it off, the screens and
+  phones still go dark and scream, and the house lights and the music stay
+  as they are (14 November: that is what a test with the brain off looked
+  like). If a light in your Blackout scene shows No
   Response in the Home app, take it out of the scene: one that does not
   answer keeps the scene busy for a minute, and a second Blackout inside
   that minute is refused by Apple Home (the brain's window says so). Your

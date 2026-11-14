@@ -38,6 +38,7 @@ import {
   VOICES_OUT_1112_TASKS, VOICES_OUT_1112_ANSWERS,
   CREDITS_SPEED_1114_TASKS,
   IRWIN_BAR_1114_TASKS, IRWIN_BAR_1114_DECISIONS,
+  SCREAM_1114_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1181,6 +1182,14 @@ export const ADDITIONS = [
     id: '2026-11-14-irwin-bar',
     tasks: IRWIN_BAR_1114_TASKS,
     decisions: IRWIN_BAR_1114_DECISIONS,
+  },
+  {
+    // 14 Nov 2026, evening: Jon tested the blackout with the brain not
+    // running, so the lights stayed on, and asked whether a Shortcut could
+    // put the scream on the HomePods. The brain's side is built (607, done);
+    // making the Shortcut called Scream and trying it is his (608).
+    id: '2026-11-14-scream-shortcut',
+    tasks: SCREAM_1114_TASKS,
   },
 ]
 
