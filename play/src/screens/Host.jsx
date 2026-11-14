@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import SoundList from './SoundList'
+import { stopWarning } from '../lib/soundList'
 import BlackoutTest, { BLACKOUT_TEST_PRESSED, blackoutTestReply } from './BlackoutTest'
 import { useQr } from '../lib/qr'
 import { callHost, callRelayGuess } from '../firebase'
@@ -7,7 +8,7 @@ import { usePresenceRows, useTick, useDoc } from '../lib/hooks'
 import { ACTS, characterById } from '../lib/content'
 import { beatsOf, beatSpec, secondsLeft, isRehearsalNight } from '../lib/night'
 import { houseView, fillInLine, lockedInCount, QUIET_MS, QUIET_SCREENS } from '../lib/house'
-import { OWN_SLIDES } from '../lib/rulesfilm'
+import { OWN_SLIDES, rulesStillPlaying } from '../lib/rulesfilm'
 import { introAtFor, clockWords, countdownLeft, countdownText, screenLinks, secondDisplayLink, secondDisplayLinks, MAX_FILL_INS, fillInArg, fillInsOffered, fillInWords, onPartyDay, PRACTICE_ASK, PRACTICE_NOTE, REPLACE_ASK } from '../lib/start'
 import { creditsLeft } from '../lib/closing'
 import { askFirst } from '../lib/ask'
@@ -18,6 +19,7 @@ import { troubleLine } from '../lib/trouble'
 import GoodNight from './GoodNight'
 import { parlourBeat } from '../lib/flow'
 import IpadPanel from './IpadPanel'
+import { hostStep, piecesOf, movesByItself, goOnAsk, drawingRuns } from '../lib/hostSteps'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -60,7 +62,7 @@ function describe(command, r) {
     case 'publish': return `Sent ${r.lines} lines to the phones.`
     case 'act': return `Act ${r.act} is on.`
     case 'relay-start': return r.already ? 'A drawing is already on the paper. It is kept. Clear it first if you want a fresh one.' : `The drawing has started: ${r.turns} turns.`
-    case 'relay-reset': return 'The drawing is cleared. The door is shut again and the hall light is red.'
+    case 'relay-reset': return 'The drawing is cleared. The door is shut again and the bedroom lock light is red.'
     case 'groups': return r.already ? 'The groups are set. They stay as they are.' : `${r.groups} groups made${r.trios ? `, ${r.trios} of three` : ''}, ${r.rounds} rounds.`
     case 'study-finish': return r.repeated ? 'That group was already paid.' : 'The group in the study is paid. The rounds go on with the clock.'
     case 'supper': return r.already ? 'Supper is already called.' : 'Supper is called. Every phone says so, and the cats a guest missed left a note.'
@@ -70,7 +72,7 @@ function describe(command, r) {
     case 'study-reassign': return r.already ? 'That group was already the one due.' : 'Noted. The study pays that group when it finishes.'
     case 'study-tick': return r.ticked ? 'The study slot ran out: the group is paid and the house has moved on.' : 'Nothing to move yet.'
     case 'tick': return r.windowSettled ? `The window had run out: picked for ${r.settled} phones.` : r.clock ? 'The clock moved the night on.' : 'Every clock is where it should be.'
-    case 'hall': return `The hall light is ${r.hall}.`
+    case 'hall': return `The bedroom lock light is ${r.hall}.`
     case 'sound-test': return 'That sound is playing on every room screen and phone.'
     case 'cake': return r.card === false
       ? 'Happy Birthday for Dogs on every HomePod and the candles scene. Sir Irwin’s countdown stays on the TV. The jazz comes back when the song ends.'
@@ -192,7 +194,7 @@ export default function Host({ night, content, serverNow }) {
       </p>
       {/* the party day with a practice night on (the box forgotten, or yesterday's night still up): said in red, with where to put it right */}
       {isRehearsalNight(night) && onPartyDay(clock) && <p className="host-msg trouble" role="alert">Today is the party, and this is a practice night. For the party: at the bottom of this tab, tick This is the real night, then press Start the night.</p>}
-      {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, on its own. Next goes sooner. To hold it for late guests, press Back one once it starts.</p>}
+      {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, by itself. To hold it for late guests, press Back one once it starts.</p>}
       {night.act === 1 && <p className="gloss">{OWN_SLIDES ? 'The rules film shows your own 28 slides.' : 'The rules film shows drawn slides: your own 28 are not in yet.'}</p>}
       {night.act <= 1 && <SendScreens presence={presence} sound={screenSound} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
@@ -200,67 +202,33 @@ export default function Host({ night, content, serverNow }) {
       {/* a cat's hint or the Study's trace that never came (card 529): counts only, never which */}
       {house.missing && <p className="host-msg trouble" role="alert">{house.missing}</p>}
 
-      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} act4={act4.data} onBlackout={blackout} />
+      <RunPanel night={night} busy={busy} run={run} serverNow={serverNow} finale={finale.data} act4={act4.data} act4Loaded={act4.loaded && !act4.error && !(act4.data == null && act4.fromCache)} relay={relay.data} onBlackout={blackout} />
       <GoodNight night={night} finale={finale.data} serverNow={serverNow} />
       <RevealPanel night={night} finale={finale.data} busy={busy} run={run} serverNow={serverNow} />
 
-      <h3>The acts</h3>
-      <div className="host-row">
-        {Object.entries(ACTS).map(([n, a]) => (
-          <button key={n} className={Number(n) === night.act ? 'chip on' : 'chip'} disabled={!!busy}
-            onClick={() => goToAct(Number(n))} title={a.name}>
-            {n}
-          </button>
-        ))}
-      </div>
-      <div className="host-row">
-        <button className="big wide" disabled={!!busy || night.act !== 1 || night.phase === 'blackout'} onClick={blackout} title="Ends Act 1. The power comes back on its own five seconds later">Blackout</button>
-        <button className="big wide" disabled={!!busy || night.phase !== 'blackout'} onClick={() => run('power')}>Power returns · Act 2</button>
-        <BlackoutTest night={night} busy={busy} run={run} />
-        {night.phase === 'paused'
-          ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
-          : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
-      </div>
-
-      <HousePanel house={house} cues={cues.data} night={night} busy={busy} run={run} brainSound={screenSound.cues} />
-      <IpadPanel night={night} cues={cues.data} relay={relay.data} busy={busy} run={run} />
-      <ScenesPanel busy={busy} run={run} />
-      <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
+      {/* ------------------------------------------------------------------------------------------------
+          Below the card, five bands (14 Nov 2026, Jon: "I need the host side to have clear instructions
+          that I fail safes vs what I need to manually do"): what only the host can do, the house and the
+          guests at a glance, what the house does by itself (each button there is a fail-safe), what is only
+          for putting a night right, and what is for before the guests come. Every button is where its band
+          says; none was taken away.
+          ------------------------------------------------------------------------------------------------ */}
+      <Band title="Yours, when it happens">Only you can know when these happen. Everything else that is yours to press is at the top of this tab.</Band>
+      <section className="pause-panel">
+        <h3>Pause</h3>
+        <p className="gloss">Stops the night’s clocks: the games, the rounds, the drawing, the films. The music keeps playing. Your phone then shows one button, Resume.</p>
+        <div className="host-row">
+          {night.phase === 'paused'
+            ? <button className="chip wide" disabled={!!busy} onClick={() => run('resume')}>Resume</button>
+            : <button className="chip wide" disabled={!!busy} onClick={() => run('pause')}>Pause, Irwin needs the garden</button>}
+        </div>
+      </section>
       <SalemPanel night={night} busy={busy} run={run} />
       <FetchPanel night={night} busy={busy} run={run} />
+      <AchievementsPanel night={night} content={content} awards={awards.data} busy={busy} run={run} />
 
-      <Safeguards night={night} busy={busy} run={run} />
-
-      <h3>The groups (Act 4)</h3>
-      <p className="gloss">Start Act 4 makes the pairs and trios and their walk round the four rooms. Press this only if you need the groups before then; made groups are kept.</p>
-      <div className="host-row">
-        <button className="chip wide" disabled={!!busy} onClick={() => run('groups')}>Make the groups</button>
-      </div>
-      <StationKey busy={busy} run={run} />
-
-      <h3>The Big Solve (Act 6)</h3>
-      <p className="gloss">Starts the relay drawing on every phone and the Parlour screen. It tells you nothing. A drawing already on the paper is kept unless you say restart. While it runs your phone shows the drawing like everyone else's, with At the paper and the room's guess on it.</p>
-      <div className="host-row">
-        <button className="big wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
-        <button className="chip wide" disabled={!!busy} onClick={() => sure('Clear the drawing? The door shuts and the trace goes. Only a whole new drawing brings it back.', () => run('relay-reset'))}>Clear the drawing</button>
-        <button className="chip wide" disabled={!!busy} onClick={() => run('tv-trace', cues.data?.tvTrace ? 'off' : undefined)} title="If the bedroom screen has died, the TV shows the trace after the door opens">{cues.data?.tvTrace ? 'Take the trace off the TV' : 'Show the trace on the TV'}</button>
-      </div>
-      {/* unreachable while the drawing runs (App.jsx makes Relay.jsx the whole phone then, and Relay.jsx carries the live copy); kept for the day the drawing surface changes */}
-      <HostRelayPanel relay={relay.data} nightId={night.nightId} />
-
-      <h3>The doors</h3>
-      <div className="host-row">
-        <button className="chip wide" disabled={!!busy} onClick={() => run(night.joinOpen ? 'join-close' : 'join-open')}>
-          {night.joinOpen ? 'Close the doors' : 'Open the doors'}
-        </button>
-        <button className="chip wide" disabled={!!busy} onClick={() => run('publish')}>Resend rules &amp; bios</button>
-      </div>
-      {qr && (
-        <figure className="host-qr">
-          <img src={qr} alt="Square code that opens the game" />
-          <figcaption>Let a guest scan this, then tap their name.</figcaption>
-        </figure>
-      )}
+      <Band title="The house and the guests">Who and what has been heard from. Mostly to look at.</Band>
+      <HousePanel house={house} night={night} busy={busy} run={run} brainSound={screenSound.cues} />
 
       <h3>Who is here</h3>
       {people.length === 0 && <p className="gloss">Nobody has typed their name yet.</p>}
@@ -285,26 +253,137 @@ export default function Host({ night, content, serverNow }) {
           )
         })}
       </ul>
+      {people.length > 0 && <p className="gloss">Hand this phone on: only when a guest must move to another phone. It wipes theirs, and they tap their name on the new one.</p>}
+      {qr && (
+        <figure className="host-qr">
+          <img src={qr} alt="Square code that opens the game" />
+          <figcaption>A guest who needs to get in: let them scan this, then tap their name.</figcaption>
+        </figure>
+      )}
+
+      <Band title="Fail-safes">The house does all of this by itself. Press one only if something did not happen.</Band>
+      <LockLight cues={cues.data} busy={busy} run={run} />
+      <ScenesPanel busy={busy} run={run} />
+      <IpadPanel night={night} cues={cues.data} relay={relay.data} busy={busy} run={run} />
+
+      <h3>The groups (Act 4)</h3>
+      <p className="gloss">The pairs and trios, and their walk round the four rooms, are made when you press Start Act 4. Press this only if you need the groups before then; made groups are kept.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy} onClick={() => run('groups')}>Make the groups</button>
+      </div>
+
+      <h3>The drawing (Act 6)</h3>
+      <p className="gloss">By itself: the drawing starts when Act 6’s second game is done, on every phone and the Parlour TV. Press Start the drawing only if it has not started; a drawing already on the paper is kept unless you say restart. Show the trace on the TV: after the door opens, only if the bedroom screen has died.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy} onClick={startDrawing}>Start the drawing</button>
+        <button className="chip wide" disabled={!!busy} onClick={() => run('tv-trace', cues.data?.tvTrace ? 'off' : undefined)} title="If the bedroom screen has died, the TV shows the trace after the door opens">{cues.data?.tvTrace ? 'Take the trace off the TV' : 'Show the trace on the TV'}</button>
+      </div>
+      {/* unreachable while the drawing runs (App.jsx makes Relay.jsx the whole phone then, and Relay.jsx carries the live copy); kept for the day the drawing surface changes */}
+      <HostRelayPanel relay={relay.data} nightId={night.nightId} />
+
+      <Band title="If something goes wrong">Only to put a night right. Never on a night that is going well.</Band>
+      <h3>Move the night by hand</h3>
+      <p className="gloss">The night moves on with the big button at the top and the house’s own clocks. An act number moves the whole night there, and asks first.</p>
+      <div className="host-row">
+        {Object.entries(ACTS).map(([n, a]) => (
+          <button key={n} className={Number(n) === night.act ? 'chip on' : 'chip'} disabled={!!busy}
+            onClick={() => goToAct(Number(n))} title={a.name}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <p className="gloss">Blackout here is the same press as the big button at Ready for the dark. Power returns is not needed: the power comes back by itself five seconds after the dark, and within a minute or so if that ever fails. Your phone is dark then too.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy || night.act !== 1 || night.phase === 'blackout'} onClick={blackout} title="Ends Act 1. The power comes back on its own five seconds later">Blackout</button>
+        <button className="chip wide" disabled={!!busy || night.phase !== 'blackout'} onClick={() => run('power')}>Power returns · Act 2</button>
+      </div>
+
+      <Safeguards night={night} busy={busy} run={run} />
+
+      <h3>Clear the drawing</h3>
+      <p className="gloss">Never during the party: it shuts the door and takes the trace away. Only a whole new drawing brings them back. It asks first.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy} onClick={() => sure('Clear the drawing? The door shuts and the trace goes. Only a whole new drawing brings it back.', () => run('relay-reset'))}>Clear the drawing</button>
+      </div>
+
+      <h3>The doors</h3>
+      <p className="gloss">By itself: the doors stay open all night, so a guest can get back in by the code. Close them only to stop new people joining. The phones get the rules and bios by themselves; Resend is only for after you change words in the workshop.</p>
+      <div className="host-row">
+        <button className="chip wide" disabled={!!busy} onClick={() => run(night.joinOpen ? 'join-close' : 'join-open')}>
+          {night.joinOpen ? 'Close the doors' : 'Open the doors'}
+        </button>
+        <button className="chip wide" disabled={!!busy} onClick={() => run('publish')}>Resend rules &amp; bios</button>
+      </div>
+
+      <Band title="Before the guests come">Setting up and trying things. Not for the party itself.</Band>
+      <section className="sound-test">
+        <h3>Sound test</h3>
+        <p className="gloss">Each sound once, on every room screen and every phone. Never during the party: The scream screams on every phone. Silence is the same as Pause on the music.</p>
+        <SoundList busy={busy} run={run} brainSound={screenSound.cues} brainAlive={!!house.machines.find(m => m.key === 'cues')?.alive} />
+      </section>
+      {isRehearsalNight(night) && night.phase !== 'blackout' && (
+        <section className="blackout-test">
+          <h3>Blackout test</h3>
+          <p className="gloss">Practice nights only. The same dark and the same scream, then everything comes back. Nothing in the night moves. Press it in Act 1, with the brain running.</p>
+          <div className="host-row">
+            <BlackoutTest night={night} busy={busy} run={run} />
+          </div>
+        </section>
+      )}
+      <h3>The Study’s station key</h3>
+      <p className="gloss">Typed once, when the Study’s Mac is set up. The same words go on that Mac.</p>
+      <StationKey busy={busy} run={run} />
 
       <h3>A fresh night</h3>
-      <p className="gloss">Starts a new night in place of this one: new characters for everyone, and every phone types its name again. It asks first.</p>
+      <p className="gloss">Never once the party has begun: it starts a new night in place of this one, with new characters for everyone, and every phone types its name again. It asks first.</p>
       <StartNight ui={{ 'START NIGHT': 'Start a new night' }} again />
     </div>
+  )
+}
+
+// A band of the Host tab (14 Nov 2026): a plain heading and one line that says whose the buttons under it are.
+export function Band({ title, children }) {
+  return (
+    <header className="host-band">
+      <h2>{title}</h2>
+      <p>{children}</p>
+    </header>
+  )
+}
+
+// The bedroom lock light by hand. Until 14 Nov 2026 this row read "Hall light" (Jon: "The hall green/red? I
+// think you mean the orangerie"). It is the Hue bulb outside the bedroom door: "the bedroom lock light" in his
+// cue list, `hall` in the code and in the server's command, which keeps its name. It is not in the Orangerie:
+// the Orangerie's red and green are the string lights of Get Off My Lawn!, which no button here touches.
+export function LockLight({ cues, busy, run }) {
+  const hall = cues?.hall ?? null
+  return (
+    <section className="lock-light">
+      <h3>The bedroom lock light</h3>
+      <p className="gloss">The bulb outside the bedroom door: green means the bedroom is open, red means it is locked. By itself it is green for the welcome, off in the blackout, red when the power returns, and green when the third picture is named. Press a colour only if the bulb shows the wrong one.</p>
+      <div className="host-row">
+        <span className="gloss">Now: {hall ?? 'not set'}</span>
+        <button className="chip" disabled={!!busy || hall === 'red'} onClick={() => run('hall', 'red')}>Red</button>
+        <button className="chip" disabled={!!busy || hall === 'green'} onClick={() => run('hall', 'green')}>Green</button>
+      </div>
+    </section>
   )
 }
 
 // The house at a glance: the study station, the room screens (the memory
 // match iPad among them) and the cue relay (alive when heard from within two
 // minutes), Act 2's cat visits as a count, the group due in the study and
-// its clock, a picker for the group that actually walked in, and the hall
-// light by hand. Everything here is a count, a name or a dot.
+// its clock, and a picker for the group that actually walked in. Everything
+// here is a count, a name or a dot. (The light by hand and the Sound test
+// were here until 14 Nov 2026: they are under Fail-safes and Before the
+// guests come now.)
 // While a window is open the per-guest dots are hidden (see houseView).
-export function HousePanel({ house, cues, night, busy, run, brainSound = null }) {
+export function HousePanel({ house, night, busy, run, brainSound = null }) {
   const [picking, setPicking] = useState(false)
   const s = house.station
   const st = house.study
-  const hall = cues?.hall ?? null
   const act4 = night.act === 4
+  const stopNote = stopWarning(brainSound, !!house.machines.find(m => m.key === 'cues')?.alive)
   return (
     <section className="house">
       <h3>The house</h3>
@@ -324,6 +403,9 @@ export function HousePanel({ house, cues, night, busy, run, brainSound = null })
         ))}
       </ul>
       {night.caseWarning && <p className="gloss">{String(night.caseWarning).split(',').map(k => CASE_WARNINGS[k] ?? k).join(' ')}</p>}
+      {/* the brain says it cannot stop the music (its stop Shortcut is missing): said here, in the house's own
+          status, as well as beside Silence in the Sound test (which moved to Before the guests come, 14 Nov 2026) */}
+      {stopNote && <p className="gloss sound-off" role="status">{stopNote}</p>}
       {/* Act 2: a count of who has finished the cats, so the host knows when to press Next. Never which cat or hint. */}
       {house.catVisits && <p className="gloss cat-visits">Cat visits: {house.catVisits.done} of {house.catVisits.of} guests have seen all four.</p>}
       {act4 && (
@@ -335,6 +417,7 @@ export function HousePanel({ house, cues, night, busy, run, brainSound = null })
             </p>
           ) : <p className="gloss">Nobody is due in the study.</p>}
           {!s.alive && <p className="gloss">Station quiet{s.quietFor ? ` since ${s.quietFor} ago` : ''}. The slots run on this phone's clock.</p>}
+          <p className="gloss">By itself: each round’s chime pays the Study’s group. Finish this group now pays it early. This group is in the study is for when a different group walked in.</p>
           <div className="host-row">
             {st && !st.paid && <button className="chip" disabled={!!busy} onClick={() => run('study-finish')}>Finish this group now</button>}
             {house.canReassign && !picking && <button className="chip" disabled={!!busy} onClick={() => setPicking(true)}>This group is in the study</button>}
@@ -349,13 +432,6 @@ export function HousePanel({ house, cues, night, busy, run, brainSound = null })
           )}
         </div>
       )}
-      <div className="host-row">
-        <span className="gloss">Hall light: {hall ?? 'not set'}</span>
-        <button className="chip" disabled={!!busy || hall === 'red'} onClick={() => run('hall', 'red')}>Red</button>
-        <button className="chip" disabled={!!busy || hall === 'green'} onClick={() => run('hall', 'green')}>Green</button>
-      </div>
-      {/* Sound test (11 Nov 2026, A2): each cue once on every room screen and phone, and Silence */}
-      <SoundList busy={busy} run={run} brainSound={brainSound} brainAlive={!!house.machines.find(m => m.key === 'cues')?.alive} />
     </section>
   )
 }
@@ -373,11 +449,13 @@ const SCENE_BUTTONS = [['Murderwin Default', 'Default'], ['Murderwin Dimmed', 'D
 function ScenesPanel({ busy, run }) {
   return (
     <section className="scenes">
-      <h3>The house: scenes</h3>
+      <h3>The lights</h3>
+      <p className="gloss">By itself: the brain sets the lights for every moment of the night. Press one only if the lights are wrong. Lights off is only the lights: it is not the Blackout.</p>
       <div className="host-row">
         {SCENE_BUTTONS.map(([name, label]) => <button key={name} className="chip" disabled={!!busy} onClick={() => run('scene', name)}>{label}</button>)}
       </div>
-      <p className="gloss">Music on the brain:</p>
+      <h3>The music</h3>
+      <p className="gloss">By itself: the brain starts and stops the music for every moment. Pause if music plays when it should be quiet. Play if it is quiet when it should play. Next playlist is not needed on the night.</p>
       <div className="host-row">
         <button className="chip" disabled={!!busy} onClick={() => run('music', 'play')}>Play</button>
         <button className="chip" disabled={!!busy} onClick={() => run('music', 'pause')}>Pause</button>
@@ -394,11 +472,11 @@ function act4Line(act4, night, now) {
   if (act4.phase === 'warn') return `Two-minute warning: the group cards in ${left(act4.warnEndsAt)}.`
   // (on a practice night with fill-in players the count is of the real players: the rounds wait for them only)
   if (act4.phase === 'groups') { const c = lockedInCount(act4, night); return `${c.locked} of ${c.of} locked in. The rounds start when everyone is, or in ${left(act4.lockEndsAt)}.` }
-  if (act4.phase === 'rounds') return `Round ${act4.round} of ${act4.rounds}: the chime in ${left(act4.roundEndsAt)}. Next moves everyone on now.`
+  if (act4.phase === 'rounds') return `Round ${act4.round} of ${act4.rounds}: the chime comes by itself in ${left(act4.roundEndsAt)}.`
   return 'The rounds are over. Everyone is back in the Parlour. Next goes on to Act 5.'
 }
 
-export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null, onBlackout = null }) {
+export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = null, act4Loaded = true, relay = null, onBlackout = null }) {
   useTick(1000)
   const beats = beatsOf(night.act)
   const idx = beats.findIndex(b => b.key === night.beat)
@@ -440,7 +518,12 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
   const roundLeftMs = night.act === 4 && act4?.phase === 'rounds' ? Number(act4.roundEndsAt?.toMillis?.() ?? act4.roundEndsAt) - clock : 0
   const credits = night.act === 7 && here?.action === 'results' ? creditsLeft(finale, clock) : null
   const next = () => {
+    // the intro and the rules film run sixteen minutes with Phone chime just above this button: one slip here
+    // cut the film off for the whole room, with no way back but the whole film again (14 Nov 2026, the review)
+    if (rulesStillPlaying(night, clock) && !askFirst('The rules film is still playing. Stop it and go on?')) return
     if (roundLeftMs > 60_000 && !askFirst(pastRounds ? 'End the last round and go on to Act 5 now?' : 'End this round for every group now?')) return
+    // Act 4 with no word from the house on where it stands: the rounds may still be running, so Next asks
+    if (night.act === 4 && !act4 && !askFirst(goOnAsk(4))) return
     if (credits > 0 && !askFirst('The credits are still rolling. Go to The End now?')) return
     run('next', { from: `${night.act ?? 0}/${night.beat ?? ''}` })
   }
@@ -448,13 +531,44 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
     if (night.act === 7 && here?.action === 'reveal' && !askFirst('Go back one beat? The screen forgets the reveal and starts it again.')) return
     run('back')
   }
+  // Where the night moves on by itself there is no big button: the card says Nothing to press, and Next is a
+  // fail-safe under it, Go on now, which asks first (lib/hostSteps.js movesByItself, 14 Nov 2026). At the cat
+  // visits the hand way is Supper's ready, just above, so no second button does the same thing.
+  // (Act 4's record still loading, or only guessed from this phone's own memory: undefined, and nothing invites a
+  // press; truly not there: null, and Next is back. A clock long past its time, or a drawing started by hand,
+  // brings the big button back too: the host is never left with only the small chip.)
+  const itself = movesByItself({
+    act: night.act, beat: night.beat, phase: night.phase, now: clock,
+    counting: countdownLeft(night, clock) != null, introAt: night.introAt, beatAt: night.beatAt,
+    act4: act4Loaded ? act4 : undefined, relay,
+  })
+  const goOnShown = itself && !(night.act === 2 && night.beat === 'cat')
+  // While the drawing runs the server refuses Next, so the card does not offer it (Sir Irwin's slides too: the
+  // host phones keep this tab through them). At The End the last press is Good night, just under the card: a
+  // dead big button saying "The night is over" above it helped nobody.
+  const drawing = drawingRuns({ act: night.act, beat: night.beat, relay })
+  const ended = night.act === 7 && here?.action === 'end'
+  const goOn = () => { if (askFirst(goOnAsk(night.act))) run('next', { from: `${night.act ?? 0}/${night.beat ?? ''}` }) }
+  // The beat's two lines (lib/hostSteps.js, 14 Nov 2026): what the house does by itself, and what is the
+  // host's to say or press. A beat the file does not know shows its own words from seed/night.json.
+  // (An act reached by its number before the roles are out sits in the role cards' phase and starts on Next: its
+  // lines would say the night moves by itself, which it does not there. The beat's own words show instead. The
+  // one beat that is meant to be in that phase is Orientation, straight after the blackout.)
+  const jumped = night.phase === 'prompt' && !(night.act === 2 && night.beat === 'orient')
+  const step = jumped ? null : hostStep(night.act, night.beat)
+  const words = text => piecesOf(text).map((p, i) => (p.press ? <strong key={i}>{p.text}</strong> : p.text))
   return (
     <section className="run">
       <h3>Run the night</h3>
       {here ? (
         <>
           <p className="run-here"><strong>{here.name}</strong></p>
-          <p className="gloss run-what">{here.what}</p>
+          {step ? (
+            <div className="run-steps">
+              <p className="run-step run-auto"><span className="run-label">By itself</span>{words(step.auto)}</p>
+              <p className="run-step run-yours"><span className="run-label">You</span>{words(step.you)}</p>
+            </div>
+          ) : <p className="gloss run-what">{here.what}</p>}
         </>
       ) : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
       {naming && <p className="host-msg" role="status">The screen is revealing. Name all three below, then press Next.</p>}
@@ -480,7 +594,8 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
       {night.act === 5 && (
         // Cake! (cue 13, 25 Oct 2026): when the cake is served. The brain plays the song and dims the lights; the TV shows the card.
         <div className="host-row">
-          <button className="big wide" disabled={!!busy} onClick={() => run('cake')} title="Happy Birthday for Dogs on every HomePod, the candles, the birthday card on the TV. The jazz comes back when the song ends">Cake!</button>
+          {/* big only at the Cake beat, where it is the press; small while Sir Irwin speaks and after, so it is not beside Next as a second big button */}
+          <button className={night.beat === 'roam' ? 'big wide' : 'chip wide'} disabled={!!busy} onClick={() => run('cake')} title="Happy Birthday for Dogs on every HomePod, the candles, the birthday card on the TV. The jazz comes back when the song ends">Cake!</button>
         </div>
       )}
       {open && (
@@ -496,10 +611,19 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
         <div className="host-row">
           {blackoutNow
             ? <button className="big wide" disabled={!!busy} onClick={onBlackout} title="Ends Act 1. The power comes back on its own five seconds later">Blackout</button>
-            : <button className="big wide" disabled={!canNext} onClick={next}>{nextLabel}</button>}
+            : itself
+              ? <p className="host-msg run-itself" role="status">Nothing to press. This moves on by itself.</p>
+              : drawing
+                ? <p className="host-msg run-itself" role="status">Nothing to press here. The drawing is running.</p>
+                : ended
+                  ? null
+                  : <button className="big wide" disabled={!canNext} onClick={next}>{nextLabel}</button>}
         </div>
       )}
+      {/* under the big button: fail-safes, said so (14 Nov 2026) */}
+      <p className="gloss run-spares">Fail-safes, not needed on a night that is going well:</p>
       <div className="host-row">
+        {goOnShown && <button className="chip" disabled={!canNext} onClick={goOn}>{nextLabel.replace(/^Next: /, 'Go on now: ')}</button>}
         <button className="chip" disabled={!!busy || !here || idx === 0 && night.act <= 2} onClick={back}>Back one</button>
         {/* only in the cat visits and the Act 4 rounds; Act 6 plays its own two by itself (A5; the server refuses elsewhere) */}
         {parlourBeat(night.act, night.beat) && night.act !== 6 && <button className="chip" disabled={!!busy || open} onClick={() => run('light-up')}>Parlour Game now</button>}
@@ -763,7 +887,7 @@ export function Safeguards({ night, busy, run }) {
   }
   return (
     <section className="safeguards">
-      <h3>If something goes wrong</h3>
+      <h3>Spill the Beans and the Hush</h3>
       <p className="gloss">Spill the Beans asks the Manor to change the story, if it still can. It works through Act 5 and never says whether it did. The Hush is for when someone has been found out: say which role out loud was given away, and their answers stop counting. Nobody is told.</p>
       <div className="host-row">
         <button className="chip wide" disabled={!!busy || afterFive || !started || !!confirm} onClick={() => ask('spill')}>Spill the Beans</button>

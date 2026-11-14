@@ -20,7 +20,12 @@ test('the Sound test list: every cue once, by its id, and Silence; the ids are t
   assert.ok(list.includes("onClick={() => run('sound-test', id)}"))
   assert.ok(list.includes("onClick={() => run('music', 'pause')}>Silence</button>"))
   const host = src('../src/screens/Host.jsx')
-  assert.ok(host.includes("<SoundList busy={busy} run={run} brainSound={brainSound} brainAlive={!!house.machines.find(m => m.key === 'cues')?.alive} />"))
+  // the list is under Before the guests come since 14 Nov 2026 (it plays on every guest's phone: never in the party)
+  assert.ok(host.includes("<SoundList busy={busy} run={run} brainSound={screenSound.cues} brainAlive={!!house.machines.find(m => m.key === 'cues')?.alive} />"))
+  assert.ok(host.indexOf('<Band title="Before the guests come">') < host.indexOf('<SoundList busy={busy}'))
+  // the brain's "cannot stop the music" warning stays in the house's status, near the top of the tab
+  assert.ok(host.includes("const stopNote = stopWarning(brainSound, !!house.machines.find(m => m.key === 'cues')?.alive)"))
+  assert.ok(host.includes('{stopNote && <p className="gloss sound-off" role="status">{stopNote}</p>}'), 'said once aloud: the copy beside Silence is the alert')
   assert.ok(host.includes('brainSound={screenSound.cues}'))
   assert.ok(!host.includes('The chime on every HomePod'), 'no HomePod words for the screens\' sounds')
   const run = src('../../functions/lib/run.js')

@@ -104,6 +104,8 @@ export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes, stag
       <Seal />
       <p className="crest">Sirwin Manor</p>
       <p className="moment-text role-card">{card ? card.text : ui.ORIENT}</p>
+      {/* the role's own name, bold under the paragraph, as the card carries it (Jon, 14 Nov 2026: "just to be clear") */}
+      {card?.roleName && <p className="role-name"><strong>{card.roleName}</strong></p>}
       <p className="moment-sub">Eyes on your own phone.</p>
     </div>
   )

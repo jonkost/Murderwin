@@ -60,7 +60,7 @@
         {
           "key": "rules",
           "name": "The house rules",
-          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video and then the rules, by itself: about sixteen minutes. When it ends the join code comes back. Press Next when the room is ready; Next also goes sooner. When the film asks for a chime, press Phone chime, just below.",
+          "what": "The music stops, the lights dim, and the Parlour TV plays the intro video and then the rules, by itself: about sixteen minutes. When it ends the join code comes back. When the film asks for a chime, press Phone chime, just below. Do not press Next while the film plays: it cuts the film off (it asks first). Press Next when the film has ended and the room is ready.",
           "screen": "join"
         },
         {
@@ -257,7 +257,7 @@
         {
           "key": "door",
           "name": "The door opens",
-          "what": "The hall light goes green. The bedroom screen shows the trace. Everyone goes to look.",
+          "what": "The Parlour TV says the door is open, and every phone sends its guest to see what the bedroom shows. The bedroom lock light went green when the third picture was named. When everyone is back in the Parlour, press Next.",
           "action": "notice:door",
           "screen": "door",
           "sound": "sting-door",

@@ -444,6 +444,59 @@ the screen awake by itself where the iPad lets it.
 
 ## Running the night, in order
 
+*The Host tab since 14 November (your words: "I need the host side to have
+clear instructions that I fail safes vs what I need to manually do").*
+Nothing was taken off the tab. It is laid out by whose each button is.
+
+- *The card at the top, Run the night,* says two things at every step.
+  *By itself*: what the house does with no press (the phones, the TV, the
+  music and the lights). *You*: what is yours to say or press, with each
+  button's name in bold, ending with the press that moves the night on.
+- *A big button is yours to press.* (At the Cake beat there are two, in
+  the order the card says: Cake!, then Next.) Where the night
+  moves on by itself there is no big button at all: the card says "Nothing
+  to press. This moves on by itself." That is Arrivals while the intro's
+  countdown runs, the cat visits, all of Act 4 until the rounds are over,
+  and Act 6's two games. Next is still there for those moments as a
+  fail-safe, a small button called **Go on now** under the line "Fail-safes,
+  not needed on a night that is going well", and it asks first (not at the
+  cat visits, where the press by hand is **Supper's ready**). If a clock is
+  a minute and a half past its time and the night has not moved, or you
+  started the drawing by hand, the big Next comes back, so you are never
+  left with only the small button. While the drawing runs the card shows no
+  Next at all (the house refuses it then), and at The End the one button is
+  **Good night**.
+- *Next asks first while the rules film is still playing.* Phone chime
+  sits just above it for sixteen minutes, and one slip used to cut the film
+  off for the whole room.
+- *Below the card, five bands, each with one line that says whose its
+  buttons are:*
+  1. *Yours, when it happens*: Pause, Salem petted, Fetch Champion and
+     Achievements. Only you can know when these happen.
+  2. *The house and the guests*: the dots for every machine and every
+     guest, the group in the Study in Act 4, Hand this phone on, and the
+     square code for a guest who needs to get in. Mostly to look at.
+  3. *Fail-safes*: the house does all of this by itself, and each one says
+     what happens by itself and when to press. The bedroom lock light, the
+     lights, the music, The iPad shows, Make the groups, Start the drawing
+     and Show the trace on the TV.
+  4. *If something goes wrong*: only to put a night right. The act numbers,
+     the second Blackout, Power returns, Spill the Beans and the Hush, Clear
+     the drawing, and the doors.
+  5. *Before the guests come*: the Sound test, the Blackout test, the
+     Study's station key and A fresh night. Not for the party itself.
+- **The bedroom lock light** is what this guide and the tab used to call the
+  hall light or the hall bulb. It is the bulb outside the bedroom door
+  ("Jonny's light" in the Home app, "the bedroom lock light" in your cue
+  list): green means the bedroom is open, red means it is locked. It is not
+  in the Orangerie. The Orangerie's red and green are the string lights in
+  Get Off My Lawn!, which the brain runs by itself and which have no button.
+  Older lines further down this guide still say "hall": they mean this bulb.
+- *The iPad is carried three times,* the one job only your hands can do,
+  and the card says each at its moment: to its stand on the supper table as
+  everyone goes in, back to the Library before Start Act 4, and into the
+  bedroom (door shut) at the start of Act 5.
+
 - **Next** is the one button. It does whatever the next beat needs on every
   phone at once and tells you only how many phones it reached. The beat you
   are on and what it is for are written above the button. If the clock moved
@@ -456,7 +509,7 @@ the screen awake by itself where the iPad lets it.
   Parlour TV plays the intro and then the rules film by itself, your own 28
   slides each with your recording for it, whole, about sixteen minutes in
   all (the Host tab says in Act 1 whether the film shows your own slides), and the
-  join code comes back when it ends (Next goes sooner). The brain stops the
+  join code comes back when it ends (Next cuts the film off, and since 14 November it asks first). The brain stops the
   music and dims the lights for them. The film has sound only if that screen
   has been clicked once since it opened: the Host tab says Sound on beside
   the Parlour screen when it has. When the rules reach the
@@ -584,7 +637,7 @@ the screen awake by itself where the iPad lets it.
   Boo in the Entryway. Every guest visits all four. The phone says "Your
   turn"; the guest taps On my way, goes alone, scans the code in the room
   (every room screen shows its cat's code through the visits: the study
-  screen, the iPad Pro in the Library, the projector in the Entryway, the
+  screen, the iPad Pro in the Library, Boo's screen in the Entryway, the
   brain's browser in the Orangerie; the printed codes are the fallback;
   `?kiosk=ipad` and `?kiosk=memory` both show Zimothy's code, since both
   expect the Library, so the Library's code is on your iPad Pro in Act 2
@@ -626,8 +679,9 @@ the screen awake by itself where the iPad lets it.
   the table it may share what is in them (`docs/read-aloud.md`). Near the end of supper,
   press **Next** when it says "Next: Arm the bulletin". Your phone says only
   "Armed." W-O-O-F News bulletin 2 plays on its own 3 to 5 minutes later
-  through the HomePods (the Orangerie one too), with the words on the iPad
-  Pro on the table.
+  from the brain's own speakers in the Orangerie, with the words on the iPad
+  Pro on the table and on the Parlour TV. Wait for it to play before you
+  press Next again.
   Every phone gets a notice when it plays, yours too. When supper is over,
   **Next** for "Dinner wrap-up": every phone asks for the motives to be
   crossed off from what has been learned so far, and the Parlour TV shows the
@@ -748,9 +802,8 @@ the screen awake by itself where the iPad lets it.
   After Act 4, carry the iPad Pro from the Library into the bedroom and
   close the door. It shows the Library's picture until the drawing starts,
   then "The door is closed" until the third picture is named.
-  Susan's MacBook Pro stays by the projector all night: the brain turns the
-  projector off for the drawing and on again for the ballot.
-- Act 5: the dessert chime plays on every HomePod, and every phone shows the
+  Susan's MacBook Pro stays in the Entryway all night, as Boo's screen.
+- Act 5: the dessert chime plays on every room screen and phone, and every phone shows the
   Happy Birthday Irwin card over the cake notice (one of Sir Irwin's pictures
   and the greeting); everyone wanders. Every screen is on its loop. When the
   cake is served, press **Cake!**
@@ -797,7 +850,7 @@ the screen awake by itself where the iPad lets it.
   four names on it, so you never have to find the Host tab; Susan's phone has
   them too. While it
   runs, **Next** refuses to leave it. When the third picture is named, the TV
-  shows Sir Irwin's "Pawsome!" door slide, the hall light goes green and the
+  shows Sir Irwin's "Pawsome!" door slide, the bedroom lock light goes green and the
   bedroom screen shows the trace. Every phone, yours too, says the door is
   open: tap Hide this on yours to get your tabs back, then **Next** (the
   button reads Next: The door opens), and everyone goes to look.
@@ -909,19 +962,19 @@ the dark the big button at the top is the **Blackout** itself.
   is held greyed out behind it. Every other phone shows
   the same with no button. The tabs come back at Resume on Now: tap Host to
   get back here.
-- The house: scenes. The brain changes the music and the Hue scenes on its
+- The lights and the music, under Fail-safes. The brain changes the music and the Hue scenes on its
   own as the night moves. If you want one by hand: **Default**, **Dimmed**,
   **Lights off** (the scene Murderwin Blackout; one button on the tab is
   called Blackout, the one that ends Act 1), **Drawing**, **Candles** or
   **Study Dim** recalls that scene, and the music has **Play**, **Pause** and **Next playlist**. Your
   choice holds until the night's next change. The buttons never say why.
-- The hall light: **Red** and **Green**, under The house, if the bulb ever
-  needs setting by hand.
-- **Sound test**, under The house: a short list, one button a cue (Phone
+- The bedroom lock light: **Red** and **Green**, under Fail-safes, if the bulb ever
+  needs setting by hand. Green means the bedroom is open, red that it is locked.
+- **Sound test**, under Before the guests come: a short list, one button a cue (Phone
   chime, News chime, The scream, Bulletin sounder, Solved, Sir Irwin, The
   door, The reveal, The result) and **Silence**. A cue button plays that one
-  sound on every room screen and phone at once; it is harmless at any time
-  and moves nothing. **Silence** tells the brain to stop the music on the
+  sound on every room screen and phone at once, the guests' phones too, so it
+  is for before the guests come; it moves nothing. **Silence** tells the brain to stop the music on the
   HomePods. If the brain has no Shortcut to stop the music, a red line above
   the list says so and names the Shortcut to make; until
   it exists, Silence and every "music off" do nothing, the blackout's
@@ -958,7 +1011,7 @@ the dark the big button at the top is the **Blackout** itself.
 |---|---|---|
 | 1 | The join code, big, with "Scan to join", through the whole act, with the Parlour's loop beside it. At "The house rules" it plays the intro video and then the rules film by itself, and the join code comes back. | Every other screen on its loop (its crest until the file is in): the projector from Act 1. |
 | 2 | W-O-O-F News bulletin 1: as video once the box is ticked on the Game night page, until then the words with the recordings. Then, during the cat visits, Sir Irwin's prompts, a new one every three minutes. | The iPad Pro, in the Library, keeps bulletin 1's words up. Then, through the cat visits, every room screen shows its cat's code, big: Granolia's in the study, Zimothy's on the iPad Pro in the Library (`?kiosk=ipad`; `?kiosk=memory` shows his code too), Boo's on the wall from the projector, Salem's on the brain's browser in the Orangerie. The printed codes are the fallback. |
-| 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording on the HomePods, kept up through the wrap-up. Every other screen on its loop. |
+| 3 | Bulletin 2's words, when it plays. At "Dinner wrap-up", the join code again, for anyone who needs to rejoin. | The iPad Pro, carried to its stand in the Orangerie for supper: bulletin 2's words, with the recording from the brain's own speakers, kept up through the wrap-up. Every other screen on its loop. |
 | 4 | The title card ("Find your group"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
@@ -1031,7 +1084,7 @@ guest's Allow tap, also with the ring switch off.
 | A room code will not scan | The camera button top right reads it inside the game; the phone's own camera still works too. Try the other copy: the one on the room's screen or the printed one. Act 2: the phone has "Cannot scan? I am with" the cat; or the guest waits, and after four minutes the phone shows the cat anyway and calls the next guest. Act 4: the phone has "Cannot scan? We are in" the room. |
 | The study station | Keep going. The group in the study is paid at the chime, and Granolia's lines show on their phones. |
 | A cat's hint or the Study's trace never came (a red line at the top of your Host tab) | Nothing to do. The guest read plain words in its place and the game goes on. The line says how many times, never which. |
-| The hall bulb | The TV says the door is open and the phones say the light is green regardless. |
+| The bedroom lock light | The TV says the door is open and the phones say the light is green regardless. |
 | The brain | Nothing waits on it. Double-click *Start the brain* on its Desktop again (or `cd cues && npm start`); it never replays an old cue, and it puts the right music and scene back. The TV rings its own small chime and shows the bell for every cue, so the room loses the big speakers, the music and the recorded voices (only bulletin 2's once the bulletins are videos); the words still show on the TV and the iPad. Once the box is ticked, the bulletin videos play from the TV itself. |
 | A W-O-O-F News recording or video does not play | The words are on the screens anyway. For bulletin 2, check that `cues/.env` has the same key word as the study, then restart the brain. For a video, check its file is in `play/public/video` and deployed. |
 | The wifi | Phones show a red strip, keep what they had, and catch up on their own when it returns. Nothing is lost. If it is out for long, turn Wi-Fi off on your phone so it uses mobile data, then **Pause, Irwin needs the garden**. |

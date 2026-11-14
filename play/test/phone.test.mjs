@@ -98,6 +98,16 @@ test('F06 every role card needs the same tap: one continue button, one card with
   assert.ok(row.length > 100, 'found the You tab\'s role row')
   assert.ok(!roleWords.test(row.replace(/role-row|role-card|role-again|role-hint|showRole|setShowRole|roleCard|YOUR ROLE|SHOW ROLE|HIDE ROLE|const role\b|\brole &&|\{role\.text\}/g, '')), 'the You tab treats every role card alike')
   assert.equal((row.match(/<button/g) ?? []).length, 1, 'one button on the You tab: show or put it away')
+  // The role's own name, bold under the paragraph (Jon, 14 Nov 2026: "have it say Murder or Ghost or Detective -
+  // bold under the paragraph just to be clear"). The phone shows the name the card carries and never works one
+  // out: the same line of code for every role, and nothing at all for a card with no name (an older night).
+  assert.ok(prompt.includes('{card?.roleName && <p className="role-name"><strong>{card.roleName}</strong></p>}'), 'on the card after the blackout')
+  assert.ok(prompt.indexOf('className="moment-text role-card"') < prompt.indexOf('className="role-name"'), 'under the paragraph')
+  assert.ok(prompt.indexOf('className="role-name"') < prompt.indexOf('Eyes on your own phone.'))
+  assert.ok(row.includes('{role.roleName && <p className="role-name"><strong>{role.roleName}</strong></p>}'), 'and on the You tab, when the card is shown')
+  assert.ok(row.indexOf('{role.text}') < row.indexOf('className="role-name"'), 'under the paragraph there too')
+  assert.ok(row.indexOf('className="role-name"') < row.indexOf('Nobody else can see it.'), 'only while the card is shown: put away, the name is away too')
+  assert.match(read('play/src/styles.css'), /\.role-name \{[^}]*font-weight: 700/)
 })
 
 // ---- F09 ---------------------------------------------------------------------

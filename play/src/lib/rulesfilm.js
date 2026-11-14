@@ -159,6 +159,18 @@ export function introLag(night, now) {
   return Math.min(INTRO_GRACE_MS, Math.max(0, now - (beatAt + INTRO_MS + AFTER_INTRO_MS)))
 }
 
+// Is the intro or the rules film still on the Parlour TV, as far as the clock can tell? The host's Next asks
+// first then (Host.jsx RunPanel, 14 Nov 2026): Next at The house rules moves the night on at once, and the TV
+// drops the film for the join code. False once the film's time is up, and at any other beat. The film can
+// run up to INTRO_GRACE_MS behind the clock on a TV whose intro video ended late, so that much is added: the
+// question is asked until the last slide is over on every screen.
+export function rulesStillPlaying(night, now, film = filmTimeline()) {
+  if (!night || night.act !== 1 || night.beat !== 'rules') return false
+  const beatAt = millis(night.beatAt)
+  if (!beatAt) return false
+  return now < beatAt + INTRO_MS + AFTER_INTRO_MS + film.total + INTRO_GRACE_MS
+}
+
 // How long the intro and the rules take together, in whole minutes, for the host's words.
 export function rulesMinutes(film = filmTimeline()) {
   return Math.round((INTRO_MS + AFTER_INTRO_MS + film.total) / 60_000)

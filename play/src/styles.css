@@ -463,6 +463,22 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .run h3 { margin: 0 0 0.4rem; }
 .run-here { margin: 0; font-size: 1.15rem; }
 .run-what { margin: 0.2rem 0 0.6rem; }
+/* The beat's two lines (14 Nov 2026): what the house does by itself, and what is the host's to do. Their class
+   names are their own (run-auto, run-yours): a plain "you" met the You tab's rule and centred the line. */
+.run-steps { display: grid; gap: 0.45rem; margin: 0.35rem 0 0.7rem; }
+.run-step { margin: 0; line-height: 1.4; }
+.run-step.run-auto { color: var(--dim); font-size: 0.95rem; }
+.run-step.run-yours { font-size: 1.05rem; }
+.run-label { display: block; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--dim); }
+.run-step.run-yours .run-label { color: var(--brand-parchment); }
+.run-step strong { font-weight: 700; }
+.run-spares { margin: 0.7rem 0 0; }
+.run .host-msg.run-itself { margin: 0; width: 100%; box-sizing: border-box; text-align: center; font-weight: 600; }
+/* The Host tab's bands: a plain heading and one line that says whose the buttons under it are. */
+.host-band { margin: 1.9rem 0 0; padding: 0.9rem 0 0; border-top: 2px solid var(--line); }
+.host-band h2 { margin: 0; font-size: 1.05rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.host-band p { margin: 0.25rem 0 0; color: var(--dim); font-size: var(--t-small); }
+.host-band + h3, .host-band + section h3 { margin-top: 0.9rem; }
 .run .host-msg { margin: 0 0 0.6rem; }
 .run-beats { margin-top: 0.4rem; }
 .run-beats summary { cursor: pointer; margin: 0; }
@@ -514,6 +530,10 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .role-row .eyebrow { margin: 0; color: var(--dim); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .role-row .role-hint { margin: 0; }
 .role-row .role-again { margin: 0; font-size: 1.15rem; }
+/* The role's own name, bold under the card's paragraph (Jon, 14 Nov 2026: "just to be clear"). */
+.role-name { margin: 0; font-family: var(--serif); font-size: 1.7rem; font-weight: 700; letter-spacing: 0.02em; line-height: 1.2; }
+.role-name strong { font-weight: 700; }
+.role-row .role-name { font-size: 1.4rem; }
 /* the offline strip says how long ago the house was last heard from */
 .offline-since { display: block; font-size: 0.85rem; opacity: 0.85; margin-top: 0.2rem; }
 /* a window the host has paused: still there, nothing can be tapped, the clock stands still */

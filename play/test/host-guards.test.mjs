@@ -57,7 +57,7 @@ test('the buttons that can undo a live night each ask first', () => {
   assert.ok(host.includes("if (night.beat !== 'ready' && !askFirst("), 'an early Blackout asks')
   assert.ok(!host.includes("onClick={() => run('blackout')}"), 'both Blackout buttons go through the question')
   // Next in the middle of an Act 4 round, Next over the credits, Back one in the reveal
-  assert.ok(host.includes("if (roundLeftMs > 60_000 && !askFirst(pastRounds ? 'End the last round and go on to Act 5 now?' : 'End this round for every group now?')) return"), 'Next mid-round asks, and from the last round it says where OK goes')
+  assert.ok(host.includes("if (roundLeftMs > 60_000 && !askFirst(pastRounds ? 'End the last round and go on to Act 5 now?' : 'End this round for every group now?')) return"), 'Next mid-round asks, and from the last round it says where OK goes (since 14 Nov 2026 the rounds show Go on now in its place, which asks every time: lib/hostSteps.js goOnAsk)')
   assert.ok(host.includes("if (credits > 0 && !askFirst('The credits are still rolling. Go to The End now?')) return"), 'Next over the credits asks')
   assert.ok(host.includes("if (night.act === 7 && here?.action === 'reveal' && !askFirst("), 'Back one in the reveal asks')
   assert.ok(!host.includes("onClick={() => run('back')}"), 'Back one is never bare')
@@ -83,7 +83,7 @@ test('a button shows only at its own moment, and the big button at the top is th
   assert.ok(beatsOf(1).at(-1).key === 'ready', 'Act 1 ends on Ready for the dark')
   assert.ok(host.includes("const blackoutNow = night.act === 1 && !!here && !after && night.phase !== 'blackout' && !!onBlackout"), 'at the last beat of Act 1')
   assert.ok(host.includes('<button className="big wide" disabled={!!busy} onClick={onBlackout}'), 'the big button presses Blackout')
-  assert.ok(host.includes('onBlackout={blackout}'), 'the same press as the button under The acts')
+  assert.ok(host.includes('onBlackout={blackout}'), 'the same press as the button under Move the night by hand')
   // the chime the rules film asks for is on the card during the film
   assert.ok(host.includes("{night.act === 1 && night.beat === 'rules' && ("), 'Phone chime at The house rules')
   assert.ok(host.includes("onClick={() => run('sound-test', 'chime-phone')}"), 'the same cue as the Sound test list')

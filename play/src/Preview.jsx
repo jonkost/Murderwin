@@ -132,7 +132,7 @@ const CARDS = {
   eyes: { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 'Eyes on the screen', text: 'Watch the Parlour TV.', button: 'Watching' },
   award: { id: '3-award-2', act: 3, beat: 'down', kind: 'award', title: "Crooknog's Confidant", text: 'First to pet Salem.', button: 'Keep it' },
   result: { id: '7-result-result', act: 7, beat: 'result', kind: 'result', murderer: true, motive: false, victim: true, defaulted: false, picks: { murderer: 'Jacob', motive: 'A sneeze set free, for all to see', victim: 'Mari' } },
-  role: { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text: 'The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Name all three before the night is out.' },
+  role: { id: '2-power-role', act: 2, beat: 'orient', kind: 'role', text: 'The Manor has lost someone tonight. Nobody has noticed, and nobody knows why. Walk, talk, and play on. Name all three before the night is out.', roleName: 'Detective' },
 }
 
 const SET = [
@@ -366,24 +366,24 @@ const KIOSK = {
   // the group's phones in the Orangerie (28 Oct 2026): Salem's rule, then a live round
   'salem-rule': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={{ state: 'intro' }} serverNow={serverNow} motion={{ ...NO_SENSOR, ok: true }} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
   'salem-round': (night, serverNow) => <PhoneGame room="orangerie"><SalemRounds doc={SALEM_ROUND} serverNow={serverNow} motion={NO_SENSOR} ready={quietly} slip={quietly} passed={quietly} /></PhoneGame>,
-  // the Host tab's house panel: station and screens alive, a group in the study, the hall light
+  // the Host tab's house panel: station and screens alive, a group in the study
   'host-house': (night) => {
     const n = { ...night, act: 4, beat: 'station2' }
     const presence = { 'kiosk-living': Date.now(), 'kiosk-bedroom': Date.now() - 5 * 60_000, 'kiosk-memory': Date.now(), cues: Date.now() }
     const house = houseView({ night: n, study: STUDY(), rotation: STUDY_ROTATION, presence, now: Date.now() })
-    return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /></div>
+    return <div className="host"><HousePanel house={house} night={n} busy={null} run={() => {}} /></div>
   },
   // the same with a Parlour Game open and no station in the room: a count of answers, nothing per guest
   'host-house-window': (night) => {
     const n = { ...night, act: 4, beat: 'station3', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(Date.now()), closesAt: stamp(Date.now() + 60000), settled: false, answered: 2 } }
     const house = houseView({ night: n, study: { state: 'absent', groupId: 'g2', slotEndsAt: stamp(Date.now() + 7 * 60_000), updatedAt: stamp(Date.now() - 9 * 60_000) }, rotation: STUDY_ROTATION, presence: { 'kiosk-living': Date.now() }, now: Date.now() })
-    return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /><p className="gloss">{house.answered.n} of {house.answered.of} have answered.</p></div>
+    return <div className="host"><HousePanel house={house} night={n} busy={null} run={() => {}} /><p className="gloss">{house.answered.n} of {house.answered.of} have answered.</p></div>
   },
   // Act 2: the cat visits as a count, so the host knows when to press Next
   'host-house-act2': (night) => {
     const n = { ...night, act: 2, beat: 'cat', lightsProgress: { done: 3, total: 9 } }
     const house = houseView({ night: n, study: null, rotation: null, presence: { 'kiosk-living': Date.now(), 'kiosk-ipad': Date.now(), cues: Date.now() }, now: Date.now() })
-    return <div className="host"><HousePanel house={house} cues={{ hall: 'red' }} night={n} busy={null} run={() => {}} /></div>
+    return <div className="host"><HousePanel house={house} night={n} busy={null} run={() => {}} /></div>
   },
   'kiosk-study-fallback': (night, serverNow) => <Study study={STUDY({ state: 'playing', elementsOk: false, layout: [1, 2, 3, 4, 5, 6].map((id, i) => ({ id, x: i * 100, y: 0 })), fallbackPattern: [2, 5, 2, 4] })} rotation={STUDY_ROTATION} serverNow={serverNow} night={{ ...night, act: 4, beat: 'round2' }} />,
   'kiosk-finale': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(2000)} serverNow={serverNow} nightId="preview" />,
@@ -555,7 +555,8 @@ export default function Preview({ screen }) {
     case 'cats-act4': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2' }} session={{ ...SESSION, affection: { irwin: 5, granolia: 4, boo: 1, zimothy: 3, salem: 2 }, groupAffection: { granolia: 2, boo: 3, zimothy: 4, salem: 4 } }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} onTour={() => {}} />; break
     case 'host': body = <Rest uid="preview" night={{ ...night, act: 4, beat: 'station2', window: { id: 'q', kind: 'questions', title: 'Every phone lights up', opensAt: stamp(PHASE_AT), closesAt: stamp(PHASE_AT + 60000), settled: false } }} session={{ ...SESSION, guestKey: 'jon', characterId: 'prof-jonathan', bag: 3, host: 'jonathan' }} content={CONTENT} notes={null} ui={ui} serverNow={serverNow} />; break
     // Run the night on its own, with the documents the live tab reads (12 Nov 2026), to try the presses that ask first:
-    // ?preview=host-run&act=4&beat=round4 (a round with ten minutes left, four rounds in all),
+    // ?preview=host-run&act=4&beat=round4 (a round with ten minutes left, four rounds in all: since 14 Nov 2026 it
+    // shows Nothing to press and the small Go on now, which asks first),
     // ?preview=host-run&act=7&beat=result (the credits still rolling), ?preview=host-run&act=7&beat=reveal
     case 'host-run': {
       const q = new URLSearchParams(window.location.search)

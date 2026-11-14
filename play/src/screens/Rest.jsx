@@ -182,7 +182,11 @@ function You({ character, session, content, ui, onTour }) {
         <section className="role-row" aria-label={ui['YOUR ROLE']}>
           <p className="eyebrow">{ui['YOUR ROLE']}</p>
           {showRole
-            ? <p className="role-card role-again">{role.text}</p>
+            ? <>
+              <p className="role-card role-again">{role.text}</p>
+              {/* the role's own name, bold under the paragraph, as the card carries it (Jon, 14 Nov 2026) */}
+              {role.roleName && <p className="role-name"><strong>{role.roleName}</strong></p>}
+            </>
             : <p className="gloss role-hint">Nobody else can see it.</p>}
           <button className="quiet" onClick={() => setShowRole(v => !v)} aria-expanded={showRole}>{showRole ? ui['HIDE ROLE'] : ui['SHOW ROLE']}</button>
         </section>

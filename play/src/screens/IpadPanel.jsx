@@ -13,6 +13,7 @@ export default function IpadPanel({ night, cues = null, relay = null, busy, run 
   return (
     <section className="ipad-panel">
       <h3>The iPad shows</h3>
+      <p className="gloss">By itself: the iPad follows the night (Auto). You only carry it. Pick a page only if it shows the wrong one; a pick lasts until the next act.</p>
       <div className="host-row">
         {IPAD_CHOICES.map(c => (
           <button key={c.key} type="button" className={c.key === lit ? 'chip on' : 'chip'} aria-pressed={c.key === lit}

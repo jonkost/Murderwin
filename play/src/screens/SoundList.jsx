@@ -6,7 +6,6 @@ export default function SoundList({ busy, run, brainSound = null, brainAlive = f
   const warning = stopWarning(brainSound, brainAlive)
   return (
     <div className="sound-list">
-      <p className="gloss">Sound test, on every room screen and phone:</p>
       {warning && <p className="gloss sound-off" role="alert">{warning}</p>}
       <div className="host-row">
         {SOUND_TEST_LIST.map(([id, label]) => (
