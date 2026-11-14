@@ -1,4 +1,4 @@
-// Jon's two Shortcuts for the blackout (12 Nov 2026: "I have added 2 new
+// Jon's Shortcuts for the blackout: two for the lights, and since 14 Nov a third for the scream (12 Nov 2026: "I have added 2 new
 // shortcuts to help with the black out. Blackout and afterblackout. Please use
 // these if it helps make the blackout hit hard.").
 //
@@ -27,6 +27,23 @@
 // writes the same marks, so both run there too: that is how the two leads are
 // tuned by eye, before the guests come.
 //
+//
+// The scream on the HomePods (14 Nov 2026, Jon, after a test: the blackout "didn't ... play the scream through
+// all the HomePods. Would it be better if I could build a short cut for it?"). The brain cannot reach a HomePod
+// by itself: only his Shortcuts can. So a third Shortcut may be named, blackout.soundShortcut ("Scream": it
+// plays his scream on the four HomePods, once), started soundLeadMs before the dark mark (1000 to start: a
+// HomePod takes a moment to begin), once a press, never more than SOUND_LATE_MS after the dark has come and
+// never once the house is to come back. The room screens and the phones still make their own scream on the
+// mark, as before: with no Shortcut of that name nothing changes. Two things keep the music's stop (AudioPanic,
+// which pauses the same four HomePods) from cutting the scream off (cues.mjs):
+//   - the scream is never sent sooner than SOUND_AFTER_STOP_MS after the brain last asked for the stop (the one
+//     at the press), so on the HomePods the scream is the newer word;
+//   - the stop the brain would send a second time at the dark is held back, from the scream's send for
+//     SOUND_GUARD_MS and never into the last SOUND_GUARD_END_MS before the power's mark (soundGuardUntil), so
+//     the stops at the power's return always go. Holding it back costs little: the scream takes the HomePods
+//     over from any music still on them, and plays once.
+// A blackout called off, or a house on its way back, takes a scream still waiting on Apple Home off.
+//
 // Pure: no I/O, no clock of its own. cues/cues.mjs runs what this says.
 
 export const DEFAULT_SHORTCUT_LEAD_MS = 1500
@@ -39,6 +56,16 @@ export const MAX_AFTER_LEAD_MS = 4_000
 // long to land (the check of 12 Nov 2026): two Home scenes started together race, light by light, and the one
 // that turns the house off could be the last word on some of them.
 export const DARK_SETTLE_MS = 2_500
+// The scream's Shortcut: started this long before the dark (tuned by ear with the Blackout test), not at all
+// once the dark is this old, and for this long after it starts the second stop of the music is held back.
+export const DEFAULT_SOUND_LEAD_MS = 1000
+export const SOUND_LATE_MS = 2_000
+export const SOUND_GUARD_MS = 5_000
+// ...and that hold never runs into this last stretch before the power's mark, however late the scream went out
+export const SOUND_GUARD_END_MS = 500
+// The scream is never sent sooner than this after the brain last asked for the music's stop: both act on the
+// same HomePods, and the scream must be the newer word there.
+export const SOUND_AFTER_STOP_MS = 500
 
 const nameOf = v => (typeof v === 'string' && v.trim() ? v.trim() : null)
 const leadOf = (v, fallback) => {
@@ -46,14 +73,16 @@ const leadOf = (v, fallback) => {
   return v !== null && v !== undefined && v !== '' && Number.isFinite(n) && n >= 0 ? Math.min(MAX_SHORTCUT_LEAD_MS, Math.round(n)) : fallback
 }
 
-// The sheet's two names and leads: { dark: { name, leadMs } | null, after: { name, leadMs } | null }.
+// The sheet's names and leads: { dark, after, sound }, each { name, leadMs } or null.
 export function blackoutShortcutsOf(sheet) {
   const b = sheet?.blackout ?? {}
   const dark = nameOf(b.shortcut)
   const after = nameOf(b.afterShortcut)
+  const sound = nameOf(b.soundShortcut)
   return {
     dark: dark ? { name: dark, leadMs: leadOf(b.shortcutLeadMs, DEFAULT_SHORTCUT_LEAD_MS) } : null,
     after: after ? { name: after, leadMs: Math.min(MAX_AFTER_LEAD_MS, leadOf(b.afterLeadMs, DEFAULT_AFTER_LEAD_MS)) } : null,
+    sound: sound ? { name: sound, leadMs: leadOf(b.soundLeadMs, DEFAULT_SOUND_LEAD_MS) } : null,
   }
 }
 
@@ -74,10 +103,10 @@ export function blackoutShortcutProblems(cfg) {
   const b = cfg?.blackout
   if (b === undefined || b === null) return out
   if (typeof b !== 'object' || Array.isArray(b)) return ['blackout is not an object']
-  for (const k of ['shortcut', 'afterShortcut']) {
+  for (const k of ['shortcut', 'afterShortcut', 'soundShortcut']) {
     if (Object.hasOwn(b, k) && b[k] !== null && !nameOf(b[k])) out.push(`blackout.${k} is not a Shortcut's name or null`)
   }
-  for (const k of ['shortcutLeadMs', 'afterLeadMs']) {
+  for (const k of ['shortcutLeadMs', 'afterLeadMs', 'soundLeadMs']) {
     if (Object.hasOwn(b, k) && b[k] !== null && !(Number.isFinite(Number(b[k])) && Number(b[k]) >= 0 && Number(b[k]) <= MAX_SHORTCUT_LEAD_MS && typeof b[k] !== 'boolean' && b[k] !== '')) {
       out.push(`blackout.${k} is not a number of milliseconds from 0 to ${MAX_SHORTCUT_LEAD_MS}`)
     }
@@ -96,15 +125,15 @@ export function nameOnThisMac(want, have = []) {
   return have.find(h => loose(h) === loose(w)) ?? null
 }
 
-// The two Shortcuts against this Mac's list: the names to run (null for one
+// The Shortcuts against this Mac's list: the names to run (null for one
 // that is not here) and what to say, one line each.
 //   have: this Mac's Shortcut names, or null when the list could not be read (then the sheet's names are tried as they are)
 export function blackoutShortcutCheck(cfg, have = null) {
   const lines = []
-  const out = { dark: cfg?.dark ?? null, after: cfg?.after ?? null }
+  const out = { dark: cfg?.dark ?? null, after: cfg?.after ?? null, sound: cfg?.sound ?? null }
   if (!Array.isArray(have)) return { ...out, lines }
-  const why = { dark: 'so only the lights on the Hue bridge go dark in the blackout', after: 'so only the lights on the Hue bridge come back after it' }
-  for (const which of ['dark', 'after']) {
+  const why = { dark: 'so only the lights on the Hue bridge go dark in the blackout', after: 'so only the lights on the Hue bridge come back after it', sound: 'so the scream comes from the room screens and the phones only, as before' }
+  for (const which of ['dark', 'after', 'sound']) {
     const c = out[which]
     if (!c) continue
     const real = nameOnThisMac(c.name, have)
@@ -118,23 +147,32 @@ export function blackoutShortcutCheck(cfg, have = null) {
     if (out.after) parts.push(`"${out.after.name}" ${out.after.leadMs ? `${out.after.leadMs} ms before the power returns` : 'as the power returns'}`)
     lines.push(`[blackout] the house lights: ${parts.join(', then ')}`)
   }
+  if (out.sound) lines.push(`[blackout] the scream on the HomePods: "${out.sound.name}" ${out.sound.leadMs} ms before the dark`)
   return { ...out, lines }
 }
 
-export const NO_PRESS = Object.freeze({ key: null, live: false, ranDark: false, ranAfter: false })
+// Until when the music's second stop is held back, for a scream sent at `now` (ms): SOUND_GUARD_MS, and never
+// into the last SOUND_GUARD_END_MS before the power's mark, so the stops at the power's return are always sent.
+export function soundGuardUntil(marks, now) {
+  const until = now + SOUND_GUARD_MS
+  return marks?.powerAt ? Math.min(until, marks.powerAt - SOUND_GUARD_END_MS) : until
+}
+
+export const NO_PRESS = Object.freeze({ key: null, live: false, ranDark: false, ranAfter: false, ranSound: false })
 
 // When each Shortcut is due for these marks (ms), or null for one that is not named.
 export function blackoutShortcutTimes(marks, cfg = {}) {
-  if (!marks) return { darkAt: null, afterAt: null }
+  if (!marks) return { darkAt: null, afterAt: null, soundAt: null }
   const afterAt = cfg.after ? Math.max(marks.darkAt, marks.powerAt - cfg.after.leadMs) : null // never before the dark itself
   const darkAt = cfg.dark ? Math.max(marks.pressAt, marks.darkAt - cfg.dark.leadMs) : null
-  return { darkAt, afterAt }
+  const soundAt = cfg.sound ? Math.max(marks.pressAt, marks.darkAt - cfg.sound.leadMs) : null
+  return { darkAt, afterAt, soundAt }
 }
 
 // One step. `marks`: { pressAt, darkAt, powerAt } in ms (lib/cues.js
 // blackoutMarkTimes), or null when the night carries none; `cfg`: the two
 // Shortcuts to run (blackoutShortcutCheck's dark and after). Returns
-// { state, run: [{ which: 'dark' | 'after', name }], nextAt }: what to run
+// { state, run: [{ which: 'dark' | 'sound' | 'after', name }], nextAt }: what to run
 // now, in order, and when to step again (null: nothing more is due).
 export function stepBlackoutShortcuts(state = NO_PRESS, { marks = null, now = Date.now(), cfg = {} } = {}) {
   const run = []
@@ -145,13 +183,18 @@ export function stepBlackoutShortcuts(state = NO_PRESS, { marks = null, now = Da
     return { state: NO_PRESS, run, nextAt: null }
   }
   let s = state
-  if (s.key !== marks.pressAt) s = { key: marks.pressAt, live: now < marks.powerAt, ranDark: false, ranAfter: false }
+  if (s.key !== marks.pressAt) s = { key: marks.pressAt, live: now < marks.powerAt, ranDark: false, ranAfter: false, ranSound: false }
   if (!s.live) return { state: s, run, nextAt: null } // first seen after its power's mark: nothing of it is the brain's to do
-  const { darkAt, afterAt } = blackoutShortcutTimes(marks, cfg)
+  const { darkAt, afterAt, soundAt } = blackoutShortcutTimes(marks, cfg)
   const afterDue = afterAt !== null && now >= afterAt
   if (cfg.dark && !s.ranDark && now >= darkAt && now < marks.powerAt && !afterDue) {
     run.push({ which: 'dark', name: cfg.dark.name })
     s = { ...s, ranDark: true }
+  }
+  // the scream on the HomePods: once a press, in its moment only (a scream as the power returns is worse than none)
+  if (cfg.sound && !s.ranSound && now >= soundAt) {
+    if (now <= marks.darkAt + SOUND_LATE_MS && !afterDue) run.push({ which: 'sound', name: cfg.sound.name })
+    s = { ...s, ranSound: true }
   }
   if (cfg.after && !s.ranAfter && afterDue) {
     // only what went dark is brought back (or, with no dark Shortcut named, the after one runs for itself)
@@ -161,5 +204,6 @@ export function stepBlackoutShortcuts(state = NO_PRESS, { marks = null, now = Da
   const pending = []
   if (cfg.dark && !s.ranDark && darkAt > now) pending.push(darkAt)
   if (cfg.after && !s.ranAfter && afterAt > now) pending.push(afterAt)
+  if (cfg.sound && !s.ranSound && soundAt > now) pending.push(soundAt)
   return { state: s, run, nextAt: pending.length ? Math.min(...pending) : null }
 }

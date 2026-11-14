@@ -30,6 +30,9 @@
 //   playTrack / nowPlaying / speakers the Music app's (the cake song): `fallback`
 //   idle()                            every Shortcut still running has finished
 //   stopped()                         true, false or null: did the last stop run?
+//   supersede()                       a newer word has come from elsewhere (the scream's
+//                                     Shortcut takes the HomePods over, 14 Nov 2026): a stop
+//                                     still waiting to be tried again is dropped; nothing runs
 //
 // THE STOP IS HONEST (11 Nov 2026). The sheet named a stop Shortcut that was
 // not on the brain, so every "music off" of a whole evening failed while the
@@ -201,6 +204,14 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
     return enqueue(() => stopNow(list, mine, 1))
   }
 
+  // A newer word has come from elsewhere (14 Nov 2026: the blackout's Scream Shortcut plays on the same HomePods
+  // the stop pauses). A stop that Apple Home refused and that is waiting to ask again, or one that failed and is
+  // to be tried once more, is old from here on and is dropped, as a newer play or stop would drop it. Nothing is
+  // run and nothing else changes: a stop that has already started carries on.
+  function supersede() {
+    ++seq
+  }
+
   // Under a recording the brain speaks (bulletin 2): the duck Shortcut, when
   // the sheet names one and music is on. A plain cue does nothing here.
   function duck({ speech = false } = {}) {
@@ -283,6 +294,7 @@ export function createShortcutMusic({ names = {}, runner = null, fallback = null
     idle: () => chain.then(() => run.idle()),
     running: () => run.running(),
     stopped: () => stopOk,
+    supersede,
     road: 'shortcuts',
   }
 }

@@ -54,7 +54,7 @@ import { spawn } from 'node:child_process'
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutProblems, blackoutShortcutTimes, stepBlackoutShortcuts, afterWaitMs, NO_PRESS } from './lib/blackoutShortcuts.js'
+import { blackoutShortcutsOf, blackoutShortcutCheck, blackoutShortcutProblems, blackoutShortcutTimes, stepBlackoutShortcuts, afterWaitMs, soundGuardUntil, NO_PRESS, SOUND_AFTER_STOP_MS, SOUND_LATE_MS } from './lib/blackoutShortcuts.js'
 import { plan, parseEnv, bridgeHostProblem, presenceRow, PRESENCE_MS, SOUND_IDS, CLIP_IDS, soundFileReport, soundFilesLines, recordingFiles, clipReader, playLine, blackoutMarkTimes, stamp } from './lib/cues.js'
 import { createPlayer } from './lib/player.js'
 import { connectAuthEmulator } from 'firebase/auth'
@@ -207,20 +207,25 @@ const shortcutNames = shortcutsNeeded({
 // is not on the Shortcut road); false: the stop's Shortcut is not on this Mac.
 // The heartbeat carries it to the Host tab, which says so in plain words.
 let canStop = null
-// Jon's two Shortcuts for the blackout (12 Nov 2026, lib/blackoutShortcuts.js): named on the sheet
-// (cues/scenes.json blackout.shortcut and blackout.afterShortcut), run on the blackout's marks. `blackoutCfg`
-// is the pair as this Mac spells them; one that is not on this Mac is not run.
+// Jon's Shortcuts for the blackout (12 Nov 2026, lib/blackoutShortcuts.js): named on the sheet
+// (cues/scenes.json blackout.shortcut and blackout.afterShortcut for the lights, and since 14 Nov
+// blackout.soundShortcut for the scream on the HomePods), run on the blackout's marks. `blackoutCfg`
+// is the three as this Mac spells them; one that is not on this Mac is not run.
 const blackoutSheet = blackoutShortcutsOf(offSwitch(env.BLACKOUT_SHORTCUTS) ? null : sheet) // BLACKOUT_SHORTCUTS=off in cues/.env leaves them out
 // a slip in one of the two names or leads is said here and the usual value used: it never switches the sheet off
 if (sheet && !offSwitch(env.BLACKOUT_SHORTCUTS)) for (const line of blackoutShortcutProblems(sheet)) log(`cues/scenes.json: ${line}; ${/LeadMs/.test(line) ? 'the usual value is used instead' : 'that Shortcut is not run'}`)
 let blackoutCfg = blackoutSheet
-// is one the sheet names not on this Mac (yet)? Then the list is read again each minute until it is
+// is one of the lights' two that the sheet names not on this Mac (yet)? Then the list is read again each minute
+// until it is. The scream's Shortcut is optional and is NOT a reason to read the list again (the review of 14 Nov
+// 2026): every such read replaces what the brain knows of the lights' two as well, and a read that came back
+// short in the minute of the blackout would leave the house lit. A Scream made while the brain runs is found
+// when the brain is started again. Its absence fails no check.
 const blackoutMissing = () => !!((blackoutSheet.dark && !blackoutCfg.dark) || (blackoutSheet.after && !blackoutCfg.after))
 // With Jon's Blackout Shortcut on this Mac and no Off Shortcut of the strings' own (and no pairing), the strings'
 // dark is left to his scene, which has them in it: the mirror is not asked for "off" (it would only fail and say so)
 let stringsOffLeftToBlackout = false
 async function checkShortcuts({ quiet = false } = {}) {
-  const blackoutNamed = !!(blackoutSheet.dark || blackoutSheet.after)
+  const blackoutNamed = !!(blackoutSheet.dark || blackoutSheet.after || blackoutSheet.sound)
   if (!shortcutNames.length && !blackoutNamed) { if (!quiet) log('Shortcuts: none to check (MUSIC_SHORTCUTS, STRINGS_SHORTCUTS and PROJECTOR_SHORTCUTS are all off in cues/.env)'); return null }
   let have
   try { have = await listShortcuts() } catch (e) {
@@ -229,10 +234,10 @@ async function checkShortcuts({ quiet = false } = {}) {
   }
   if (blackoutNamed) {
     const b = blackoutShortcutCheck(blackoutSheet, have)
-    const was = `${blackoutCfg.dark?.name ?? ''}/${blackoutCfg.after?.name ?? ''}`
-    blackoutCfg = { dark: b.dark, after: b.after }
+    const was = `${blackoutCfg.dark?.name ?? ''}/${blackoutCfg.after?.name ?? ''}/${blackoutCfg.sound?.name ?? ''}`
+    blackoutCfg = { dark: b.dark, after: b.after, sound: b.sound }
     // at the start every line; on the minute's look only when something changed (a Shortcut made or renamed meanwhile)
-    if (!quiet || was !== `${b.dark?.name ?? ''}/${b.after?.name ?? ''}`) for (const line of b.lines) log(line)
+    if (!quiet || was !== `${b.dark?.name ?? ''}/${b.after?.name ?? ''}/${b.sound?.name ?? ''}`) for (const line of b.lines) log(line)
   }
   stringsOffLeftToBlackout = !!blackoutCfg.dark && stringsByShortcuts && !stringsPaired && !have.includes(stringShortcutNames.off)
   if (!shortcutNames.length) return { missing: [], lines: [], stop: 'none' }
@@ -500,13 +505,13 @@ function scheduleMarks() {
   marksTimers = []
   if (!m) return
   const now = Date.now()
-  // ...and at the moments Jon's two blackout Shortcuts are due (a little before the dark, and at the power's return)
+  // ...and at the moments Jon's blackout Shortcuts are due (the lights' a little before the dark, the scream's too, and the house back at the power's return)
   const due = blackoutShortcutTimes(m, blackoutCfg)
-  for (const at of [m.darkAt, m.powerAt, due.darkAt, due.afterAt]) if (at && at > now) marksTimers.push(setTimeout(apply, at - now + 5))
+  for (const at of [m.darkAt, m.powerAt, due.darkAt, due.afterAt, due.soundAt]) if (at && at > now) marksTimers.push(setTimeout(apply, at - now + 5))
 }
 
-// Jon's two Shortcuts for the blackout (12 Nov 2026: "Please use these if it helps make the blackout hit
-// hard"; lib/blackoutShortcuts.js says when each runs). "Blackout" is his Home scene with every light in the
+// Jon's Shortcuts for the blackout (12 Nov 2026: "Please use these if it helps make the blackout hit
+// hard"; lib/blackoutShortcuts.js says when each runs; the scream's, 14 Nov, is further down). "Blackout" is his Home scene with every light in the
 // house off, started a little before the dark mark so it lands on it; "AfterBlackOut" brings the house back
 // as the power returns. One runner for the two, so the after one always replaces a dark one still waiting on
 // Apple Home, and the house is never left dark. A few seconds after the house is back the string lights are
@@ -516,20 +521,55 @@ function scheduleMarks() {
 // Home scenes started together race light by light, and "off" could be the last word on some. A new press
 // meanwhile takes the waiting one off: that press brings the house back itself.
 const blackoutRunner = createShortcutRunner({ tag: 'blackout', log })
+// The scream has a runner of its own (14 Nov 2026): on one runner a newer run drops an older one that is still
+// waiting on Apple Home, and the scream, sent half a second after the lights' Shortcut, must never cost the house its dark.
+const screamRunner = createShortcutRunner({ tag: 'blackout', log })
 const STRINGS_AGAIN_MS = 4000
 let blackoutState = NO_PRESS
 let darkSentAt = null
 let afterTimer = null
+// The scream on the HomePods (14 Nov 2026; blackout.soundShortcut). The music's stop is AudioPanic, which pauses
+// the same four HomePods, so two things keep it from cutting the scream off:
+//   - `soundQuietUntil`: from the scream's send until then (lib/blackoutShortcuts.js soundGuardUntil: five
+//     seconds, and never into the last half second before the power's mark) the stop the brain would send a
+//     second time at the dark is held back (apply). The stops at the power's return always go;
+//   - `stopAskedAt`: the scream goes out last in a plan and never sooner than SOUND_AFTER_STOP_MS after the brain
+//     last asked for the stop (sendScream), so the stop is asked for first; and at its send any stop still waiting
+//     to be tried again is dropped (music.supersede), so on the HomePods the scream is the newer word.
+// `soundLive` is the scream still wanted: one waiting on Apple Home is not tried again once the blackout is
+// called off or the house is to come back.
+let soundQuietUntil = null
+const screamPlaying = (now) => soundQuietUntil !== null && now < soundQuietUntil
+let soundLive = null
+let screamToSend = null
+let stopAskedAt = null
+function sendScream(now) {
+  const { name, token, retryUntil } = screamToSend
+  screamToSend = null
+  // if Apple Home is still busy it is tried again only while its moment lasts (a late scream is worse than none).
+  // From its send the scream is the newest word on the HomePods: a stop that Apple Home refused or failed, and
+  // that is waiting to be tried again, is dropped (music.supersede), or it would land in the middle of the scream.
+  const go = () => {
+    if (soundLive !== token) return
+    music?.supersede?.()
+    runBlackoutShortcut('sound', name, { retryUntil, stillWanted: () => soundLive === token })
+  }
+  const wait = stopAskedAt === null ? 0 : SOUND_AFTER_STOP_MS - (now - stopAskedAt)
+  if (wait > 0) setTimeout(go, wait)
+  else go()
+}
 let darkLive = null // the dark run still wanted, if any: one that is waiting on Apple Home is dropped once the house is to come back
 // The dark one is not tried again once its moment has passed (a Home scene still busy with its last run is
 // refused and tried again every second and a half): lights that go out late, as the power returns, are worse
 // than lights that stay on. And a run Apple Home never took is said, in one line.
 const DARK_RETRY_GRACE_MS = 1000
 function runBlackoutShortcut(which, name, { retryUntil = null, stillWanted = null } = {}) {
-  if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : 'the house back'})`)
+  if (FAKE) log(`[blackout] would run the Shortcut "${name}" (${which === 'dark' ? 'every light in the house off' : which === 'sound' ? 'the scream on the HomePods' : 'the house back'})`)
   else {
+    // (picked first, on a line of its own: a line that begins with a bracket would be read as a call on the line before it)
+    const runner = which === 'sound' ? screamRunner : blackoutRunner
     log(`[blackout] ${name}`)
-    blackoutRunner.fire(name, { retryUntil, stillWanted }).then(
+    runner.fire(name, { retryUntil, stillWanted }).then(
       r => { if (r?.dropped) log(`[blackout] Apple Home was still busy with the last run of ${name}, so it did not run this time`) },
       e => log(`[blackout] the ${name} Shortcut did not run: ${e?.message ?? 'no reason'}`),
     )
@@ -545,6 +585,9 @@ function stepBlackout(now) {
   const marks = Number(docs.night?.act ?? 0) <= 1 && docs.night?.phase !== 'paused' ? blackoutMarkTimes(docs.night) : null
   const r = stepBlackoutShortcuts(blackoutState, { marks, now, cfg: blackoutCfg })
   blackoutState = r.state
+  // no blackout on (called off in its lead, over, or the night past Act 1): a scream still waiting is taken off,
+  // and no stop is held back for it
+  if (!marks) { soundLive = null; soundQuietUntil = null; screamToSend = null }
   for (const { which, name } of r.run) {
     if (which === 'dark') {
       clearTimeout(afterTimer); afterTimer = null // a new press: its own after one will bring the house back
@@ -554,7 +597,18 @@ function stepBlackout(now) {
       runBlackoutShortcut(which, name, { retryUntil: marks ? marks.darkAt + DARK_RETRY_GRACE_MS : now + DARK_RETRY_GRACE_MS, stillWanted: () => darkLive === token })
       continue
     }
+    if (which === 'sound') {
+      // the scream on the HomePods: sent at the end of this plan, after the music's own actions (sendScream)
+      const token = {}
+      soundLive = token
+      soundQuietUntil = soundGuardUntil(marks, now)
+      screamToSend = { name, token, retryUntil: (marks ? marks.darkAt : now) + SOUND_LATE_MS }
+      continue
+    }
     darkLive = null // the house is to come back: a dark run still waiting on Apple Home is not tried again
+    soundLive = null // ...nor a scream, and the stops at the power's return are never held back
+    soundQuietUntil = null
+    screamToSend = null
     const wait = afterWaitMs(darkSentAt, now)
     darkSentAt = null
     clearTimeout(afterTimer)
@@ -573,11 +627,17 @@ function apply() {
   sceneState = scene.state
   for (const a of scene.actions) {
     if (a.type === 'music' && a.do === 'pause' && a.why === 'host') cakeQuiet = cakeSeq // the host's own stop ends a cake song for good
-    if (a.type === 'music' && music) { if (a.do === 'play') music.play(a); else music.pause() }
+    if (a.type === 'music' && music) {
+      if (a.do === 'play') music.play(a)
+      // the stop sent a second time at the dark would pause the HomePods under the scream: held back while it plays
+      else if (a.again && screamPlaying(now)) log('[music] the second stop is held back while the scream plays on the HomePods')
+      else { stopAskedAt = now; music.pause() }
+    }
     if (a.type === 'scene' && scenesOn) recallScene(a.name)
     if (a.type === 'projector') projector.set(a.do)
     if (a.type === 'cake') serveCake(a)
   }
+  if (screamToSend) sendScream(now) // after the music's own actions: a stop sent in this same plan is ahead of it
   for (const a of actions) {
     if (a.type === 'hall') setHall(a.colour)
     // stamped ahead (the scream, written at the Blackout's press; review 12 Nov 2026): played at its moment, if the
@@ -733,7 +793,7 @@ log(cueSoundsRoad(sheet) === 'brain'
 // Which of the Shortcuts the brain runs are not on this Mac (it only reads the
 // list). Then, with the music through the Music app and a cake on the sheet:
 // is the song there? Both before the guests come, not at the moment itself.
-if (shortcutNames.length || blackoutSheet.dark || blackoutSheet.after) { await checkShortcuts(); heartbeat() }
+if (shortcutNames.length || blackoutSheet.dark || blackoutSheet.after || blackoutSheet.sound) { await checkShortcuts(); heartbeat() }
 if (!FAKE && sheet?.cake && musicApp && !(musicByShortcuts && shortcutsFor(sheet.musicShortcuts, 'cake').length)) {
   musicApp.hasTrack(sheet.cake.song).then(has => {
     if (has === false) log(`[cake] NO SONG called "${sheet.cake.song}" in the Music library on this Mac: Cake! will light the candles and play nothing. Add the song (docs/cues-relay.md)`)

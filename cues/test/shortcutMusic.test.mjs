@@ -456,3 +456,55 @@ test('a setting of several Shortcuts lets each finish before the next, or waits 
   await playing
   await m.idle()
 })
+
+// 14 Nov 2026: the blackout's Scream Shortcut plays on the HomePods the stop pauses. From the scream's send a stop
+// that is still waiting to be tried again is old, and is dropped, or it would land in the middle of the scream.
+test('supersede: a stop still waiting on Apple Home, or about to be tried once more, is dropped; nothing is run, and a stop that already ran stands', async () => {
+  // refused "in progress" and waiting to ask again
+  {
+    const logs = []
+    const { runner, tried, gates, free } = busyStop(logs)
+    const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l) })
+    await m.pause() // an earlier stop: its Home scene is still under way
+    m.pause() // the press: refused, waiting to ask once more
+    await settle(); await settle()
+    assert.equal(gates.length, 1, 'waiting on Apple Home')
+    m.supersede() // the scream goes out
+    gates[0]()
+    await settle(); await settle()
+    assert.equal(gates.length, 1, 'no longer waiting to ask again')
+    free() // the earlier stop's Home scene is done
+    await m.idle()
+    assert.deepEqual(tried, ['AudioPanic', 'AudioPanic'], 'not asked a third time')
+    assert.ok(!logs.some(l => /NOT STOPPED|MAY NOT/.test(l)), 'and nothing in capitals: it gave way, it did not fail')
+    assert.equal(m.stopped(), true, 'the stop that ran still stands')
+  }
+  // failed outright, and to be tried once more in three seconds
+  {
+    const logs = []
+    const { runner, tried } = runnerWith((name, n) => { if (name === 'AudioPanic' && n === 1) throw new Error('shortcut AudioPanic: Action set execution failed.') }, logs)
+    const waits = []
+    const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l), wait: ms => new Promise(r => waits.push({ ms, r })) })
+    await m.pause()
+    assert.equal(waits[0].ms, STOP_RETRY_MS)
+    m.supersede()
+    waits[0].r()
+    await settle(); await settle(); await m.idle()
+    assert.deepEqual(tried, ['AudioPanic'], 'the second try is dropped')
+  }
+  // nothing waiting: nothing happens, and the next stop and the next play run as ever
+  {
+    const logs = []
+    const { runner, tried } = runnerWith(() => {}, logs)
+    const m = createShortcutMusic({ names: SHEET.musicShortcuts, runner, log: l => logs.push(l) })
+    await m.pause()
+    m.supersede()
+    await settle()
+    assert.deepEqual(tried, ['AudioPanic'])
+    await m.pause()
+    await m.play({ playlist: 'jazz' })
+    await m.idle()
+    assert.deepEqual(tried, ['AudioPanic', 'AudioPanic', 'Default Jazz'])
+    assert.equal(m.stopped(), true)
+  }
+})
