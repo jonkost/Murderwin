@@ -2093,17 +2093,20 @@ test('14 Nov 2026, evening: the brain can run a Scream Shortcut in the blackout 
   assert.equal(again.tasks.length, state.tasks.length, 'once only')
 })
 
-test('14 Nov 2026, evening: the role card says its role in bold, and the Host tab says what happens by itself and what is the host\'s (both done)', () => {
+test('14 Nov 2026, evening: the role card says its role in bold, the Host tab says what happens by itself and what is the host\'s, and a practice night can be ended (all done)', () => {
   const { before, add, newId } = boardThrough('2026-11-14-host-clarity')
   assert.equal(ADDITIONS.at(-1), add, 'the last migration')
   assert.ok(add.tasks === HOST_CLARITY_1114_TASKS && !add.decisions && !add.answerDecisions && !add.retireTasks && !add.fileTasks && !add.rewriteTasks)
-  assert.deepEqual(HOST_CLARITY_1114_TASKS.map(t => [t.order, t.who, t.status, t.moment]), [[609, 'Claude Code', 'done', 'act2.orient'], [610, 'Claude Code', 'done', 'allnight']])
+  assert.deepEqual(HOST_CLARITY_1114_TASKS.map(t => [t.order, t.who, t.status, t.moment]), [[609, 'Claude Code', 'done', 'act2.orient'], [610, 'Claude Code', 'done', 'allnight'], [611, 'Claude Code', 'done', 'setup']])
   for (const card of HOST_CLARITY_1114_TASKS) {
     assert.ok(MOMENT_KEYS.includes(card.moment))
     for (const line of [card.title, card.detail]) assert.ok(!PLAIN.test(line) && !/—/.test(line), `plain words: ${line.slice(0, 40)}`)
     assert.ok(!before.tasks.some(b => b.order === card.order), 'a new number')
   }
-  const [role, tab] = HOST_CLARITY_1114_TASKS
+  const [role, tab, end] = HOST_CLARITY_1114_TASKS
+  assert.match(end.detail, /End this practice night\. The pause card has it too, under Resume/)
+  assert.match(end.detail, /It asks first\./)
+  assert.match(end.detail, /On the party night the button is not there/)
   assert.match(role.detail, /Murderer, Ghost or Detective/)
   assert.match(role.detail, /Each phone only ever sees its own/)
   assert.match(role.detail, /needs the server as well as the site/)
@@ -2112,7 +2115,7 @@ test('14 Nov 2026, evening: the role card says its role in bold, and the Host ta
   assert.match(tab.detail, /the bulb outside the bedroom door, not the Orangerie/)
   assert.match(tab.detail, /The bedroom lock light/)
   const state = applyPlan(planAddition(add, before, { newId, now: 1 }), before)
-  assert.equal(state.tasks.length, before.tasks.length + 2, 'two new cards')
+  assert.equal(state.tasks.length, before.tasks.length + 3, 'three new cards')
   const again = applyPlan(planAddition(add, state, { newId, now: 2 }), state)
   assert.equal(again.tasks.length, state.tasks.length, 'once only')
 })

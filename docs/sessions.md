@@ -89,7 +89,26 @@ Do you even read what I say?"
   checkers found) say the same as the tab.
 - **Not published.** It needs a whole publish: the site, and the server for
   the role's name. Start the party night after it, not before.
-- **The board:** 609 (the role's name) and 610 (the Host tab), both done.
+- **Later, Jon: "I need a way to end the night when testing."** A practice
+  night could only be left by starting another night or walking it to The
+  End. Now, on a practice night only, the Host tab has **End this practice
+  night** at the top, right under the line that says it is one, and the
+  pause card has it under Resume (a pause is the one thing a host can
+  always reach, the drawing's screen included). It asks
+  first, stops the music (once the night is gone the tab is gone, and
+  nothing else could), and then sends the Manor's own command for throwing
+  a rehearsal night away, which was already on the server
+  (`discard-night`, `functions/lib/discard.js`: the night, its throwaway
+  case, every seat, presence row and notes branch, and no night live). Every
+  phone is then at the doors with Start the night, and the room screens on
+  their screen saver. The lights stay as they are. The button is never
+  drawn on the party night, the press checks again, and the server refuses
+  a real case. The site only: no server change. Reviewed by two readers
+  with a checker for each finding: nothing that could reach the party
+  night; from it came the pause card's button, a longer wait for the
+  music's stop, and three lines in the guide.
+- **The board:** 609 (the role's name), 610 (the Host tab) and 611 (ending
+  a practice night), all done.
 
 ## 14 Nov 2026, evening · Claude Code (the blackout test; a Shortcut for the scream on the HomePods)
 

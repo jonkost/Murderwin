@@ -1197,7 +1197,8 @@ export const ADDITIONS = [
     // 14 Nov 2026, evening: the role card says its role in bold (609), and
     // the Host tab says what happens by itself and what is the host's, with
     // the fail-safes marked and the hall light named as the bedroom lock
-    // light (610). Both done.
+    // light (610). A practice night can be ended from the Host tab (611).
+    // All done.
     id: '2026-11-14-host-clarity',
     tasks: HOST_CLARITY_1114_TASKS,
   },
