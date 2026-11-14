@@ -86,9 +86,27 @@ and the bar's page arrived in `docs/` at 9:29.
 - **For Jon:** files 3 and 4 in `media/renders/` (the reveal with the bar,
   and the count alone). One question on the board, `tallyLength`, default as
   built.
-- **Where it stands:** every test passes; committed; **not published and
-  not pushed**. The live site still has the double-speed credits and the
-  plain bar until Jon says publish (the site only).
+- **Published, the site only, 14 Nov at about 10:25 am, and pushed**
+  (70338ed, on Jon's "Push it all make it ready for the night"). Before: the
+  built folder matched the live site (1,140 of 1,140). The new build against
+  the live one: 1,113 files the same, three changed (the two index pages and
+  the build's stamp), seven new (the page's new parts and the bar's page);
+  the 24 older page parts were kept for any screen left open. After: 1,147
+  of 1,147 files match the live site, and the bar's page fetched from the
+  site is the repo's file byte for byte. The server needed nothing: since
+  the last full publish only the host's own words in `seed/night.json`
+  changed, and the page reads those, not the server.
+- **Ready for the night, checked at 10:30 am (numbers only):** every test
+  (functions 433, cues 126, station 90, app 177, play 410, scripts 107); the
+  checks, all clear; whole pretend nights with 2, 4, 9, 12 and 14 guests,
+  all pass; no night is live; the party's three sealed lists are made (10
+  bags, 51 of 51 leans, the pictures) and Jenna's five checks pass; every
+  media file is in.
+- **Left, and Jon's:** the dry run on the real lists (card 466: every
+  screen closed, his phone off the game); the reveal's quiet films (605);
+  `tallyLength`; hearing the pets on a real phone (603); TV Wonder in his
+  PANIC scene (582); his Special thanks lines; open the workshop once so the
+  board's new cards land; reload any screen left open.
 
 ## 13 Nov 2026, morning · Claude Code (Sir Irwin's pace, half way)
 
