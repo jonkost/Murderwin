@@ -63,10 +63,36 @@ Pip from great expectations".
   `pip-fuller` 30 in 21; every sound is one the model has.
 - **Clip 18** went to him: voice 1 said three ways, plain, `pip-light`,
   `pip-fuller`.
-- **Where it stands:** the cast is unchanged (still the Australian boy at
-  0.91, made and unpublished; the live site still has 0.82). On his two
-  picks: set the cast, make his 36 lines again, check the drawing lines
-  against their slides, send him the result, publish on his word.
+- **Where it stood at midday:** the cast unchanged, waiting for his picks.
+
+**The same evening (about 9:45 pm): his picks, and the breed canvas.**
+
+- Jon: "17 Irwin 3 - slightly deeper, slower". Clip 19 went to him: that
+  voice at four strengths. Then: "19-4. for irwins voice".
+- **Sir Irwin's voice is set:** a blend of two British voices
+  (`bm_daniel,bf_alice`), pace 0.82, pitch 1.12, plain British, no accent
+  (`seed/pet-voices.json`; the cast test holds it). He picked nothing from
+  clip 18, so the two 1900 ways of speaking stay in the talker unused.
+- His 28 dessert lines are made again (94 seconds together; every one
+  decodes) and his eight drawing lines too. Seven are at 0.82; slide 3 is
+  at 0.89, the slowest pace at which it ends 0.9 seconds before its slide
+  moves on (the model's pace moves in steps: 0.88 gave 9.6 seconds, 0.9
+  gave 8.4, and the spoken parts shrank together, so no word was lost).
+  All eight fit; `seed/irwin-voice.json` and the server are untouched. The
+  Australian sets are kept in `pet-voices/irwin-slides/`.
+- All of it is in the site's folder (`npm run pet-voices -- --on`); the
+  scripts' tests (107) and the phone's tests (403) pass. Clip 20 went to
+  him: the voice as it will go out. **Not published:** the live site still
+  has the Australian voice at 0.82.
+- **The breed canvas** (a comment of his on it, sent to this session: "Do
+  the reveal from the largest breed to the smallest but percentage"): the
+  canvas now shows the biggest breed landing first, then the rest
+  following from largest to smallest; answered in the comment's thread. It
+  is a drawing only: the breed moment is still not built (the decision
+  breedMoment, default left out).
+- **Left:** his word to publish Sir Irwin's voice (the site only: 36
+  changed sound files); card 603; Start Here's status note, which the docs
+  connector would not open this morning.
 
 ## 12 Nov 2026, late night · Claude Code (voices for the pets; is the night fun, and Jon's own load)
 

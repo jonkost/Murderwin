@@ -4,10 +4,9 @@
   "goOut": "all",
   "cast": {
     "irwin": {
-      "voice": "bm_daniel",
-      "speed": 0.91,
-      "pitch": 1.3,
-      "accent": "aussie-light"
+      "voice": "bm_daniel,bf_alice",
+      "speed": 0.82,
+      "pitch": 1.12
     },
     "granolia": {
       "voice": "bf_lily",
@@ -46,5 +45,5 @@
     "British women": "bf_emma bf_isabella bf_alice bf_lily",
     "British men": "bm_george bm_fable bm_lewis bm_daniel"
   },
-  "castNote": "Jon picked every voice by ear from numbered auditions on 12 Nov 2026 (pet-voices/auditions/; which-voice-is-which.json there says what each number is). \"Boo - 4, Granola - 4, Salem - 2, Zimmy - 1\"; \"This pitch is good for the cats but the lines need to be slower for the girls.\"; \"Garnola speed 2\" (Granolia 0.74). Boo, after \"French English\", \"Is there a British boo since the rest are British? Or French American\" and \"10 boo - 1\", last: \"Boo needs to be 8 Boo - 1 the French one\" (the French woman's voice, her lines as written, slow). Sir Irwin, after \"a dum-dum voice ... Slow and low but like a child\", last: \"Please give me young boy Aussie options. Forget the low and slow.\" and \"12 Irwin - 5\": a British boy's voice at a boy's pitch with the lighter Australian accent. Then, with \"Publish it all\": \"Slow it down\", taken as Sir Irwin, the one voice at full pace: his pace went to 0.82, and he said \"Yes, good\". The next morning, 13 Nov, having heard it: \"Irwin is too slow now. split the difference\": his pace is 0.91, half way between the 1 he picked by ear and the 0.82."
+  "castNote": "Jon picked every voice by ear from numbered auditions on 12 Nov 2026 (pet-voices/auditions/; which-voice-is-which.json there says what each number is). \"Boo - 4, Granola - 4, Salem - 2, Zimmy - 1\"; \"This pitch is good for the cats but the lines need to be slower for the girls.\"; \"Garnola speed 2\" (Granolia 0.74). Boo, after \"French English\", \"Is there a British boo since the rest are British? Or French American\" and \"10 boo - 1\", last: \"Boo needs to be 8 Boo - 1 the French one\" (the French woman's voice, her lines as written, slow). Sir Irwin, after \"a dum-dum voice ... Slow and low but like a child\", last: \"Please give me young boy Aussie options. Forget the low and slow.\" and \"12 Irwin - 5\": a British boy's voice at a boy's pitch with the lighter Australian accent. Then, with \"Publish it all\": \"Slow it down\", taken as Sir Irwin, the one voice at full pace: his pace went to 0.82, and he said \"Yes, good\". The next morning, 13 Nov, having heard it: \"Irwin is too slow now. split the difference\": his pace went to 0.91, half way between the 1 he picked by ear and the 0.82 (made, never published). Later that morning he changed the voice itself: \"Lets go with a young British circa 1900, I feel the vibe of Pip from great expectations\"; from six young British boy voices, \"17 Irwin 3 - slightly deeper, slower\" (a blend of two British voices), and from four strengths of that, \"19-4. for irwins voice\": the deeper one at the slower pace, plain British with no accent (he did not pick one of the 1900 ways of speaking from clip 18)."
 }

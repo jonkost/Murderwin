@@ -27,8 +27,10 @@ and nothing else changes.
 
 Jon's casting (12 November), each chosen by ear: Granolia is a British girl
 (a kid), slow; Boo a French woman's voice, slow; Salem a rough British man;
-Zimothy an old British man; Sir Irwin a young Australian boy (a British
-boy's voice; `accent` gives it the Australian vowels). Each pet's voice, pace and pitch are in
+Zimothy an old British man; Sir Irwin a young British boy, a little deep
+and slow (since 13 November: a blend of two British voices, plain British;
+before that a young Australian boy, which `accent` made from a British
+voice). Each pet's voice, pace and pitch are in
 `seed/pet-voices.json`,
 with the other voices to choose from. A pitch above 1 makes a voice younger
 and smaller (that is how a kid is made); below 1, bigger and deeper. `lower`
@@ -50,14 +52,18 @@ His eight lines for the drawing (seven slides, and one when the door opens)
 are in the same voice and at the same pace as his dessert speech, but they
 are not made by `npm run pet-voices`: they are made by hand, below. So when
 his pace or voice changes, they are made again too. `irwin-slides/` keeps
-them: `new/` is what is in the site's folder, `pace-0.82/` is the set that
-went out on 12 November, `old-robotic/` the first set, and `jobs.json` the
-list they were made from.
+them: `new/` is what is in the site's folder, `pace-0.82/` is the
+Australian set that went out on 12 November, `aussie-pace-0.91/` the
+Australian set that was made on 13 November and never went out,
+`old-robotic/` the first set, and `jobs.json` the list `new/` was made
+from.
 
 Each line must end before its slide moves on. A slide stays up for the
 length the server knows (`seed/irwin-voice.json`) plus one second, so a new
 line must be no longer than that length. Slide 3 is the tight one: it
-cannot be slower than pace 0.9, so it stays there when his pace is slower.
+needs a quicker pace than the rest (0.89 in the British boy's voice, where
+the rest are at 0.82). The model's pace moves in steps, so try a few
+paces close together and take the slowest that fits.
 
 ### For Claude Code
 
