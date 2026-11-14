@@ -37,6 +37,7 @@ import {
   PET_VOICES_1112_TASKS, PET_VOICES_1112_DECISIONS,
   VOICES_OUT_1112_TASKS, VOICES_OUT_1112_ANSWERS,
   CREDITS_SPEED_1114_TASKS,
+  IRWIN_BAR_1114_TASKS, IRWIN_BAR_1114_DECISIONS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1170,6 +1171,16 @@ export const ADDITIONS = [
     // Claude Code that waits for Jon's word (605).
     id: '2026-11-14-credits-speed',
     tasks: CREDITS_SPEED_1114_TASKS,
+  },
+  {
+    // 14 Nov 2026, later: the handoffs of 9 and 14 Nov. Sir Irwin's progress
+    // bar is on the Parlour TV while the Manor counts (606, done). One
+    // question for Jon, with its default built: tallyLength. The other two
+    // of 9 Nov, tallyCut and tallyDial, come in already answered by what is
+    // built.
+    id: '2026-11-14-irwin-bar',
+    tasks: IRWIN_BAR_1114_TASKS,
+    decisions: IRWIN_BAR_1114_DECISIONS,
   },
 ]
 

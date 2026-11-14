@@ -807,7 +807,11 @@ the screen awake by itself where the iPad lets it.
   votes, the vote closes when they run out, and the house picks for them
   within a minute (or press **Pick for the rest**). A guest who joined after
   the vote opened is not waited for. **Next**
-  starts the TV: the stats, the achievements you gave, then the graph, and
+  starts the TV: Sir Irwin's progress bar while the Manor counts (he runs
+  along it after the butterfly, bows half way, and watches it fly off when
+  the bar is full; the stats and the achievements you gave come and go under
+  it, one at a time; if the bar ever fails to load, the plain bar and lists
+  show instead and nothing is held up), then W-O-O-F News, Stay tuned, and
   every guest's phone locks on "Eyes on the screen." with no tabs (yours and
   Susan's keep their tabs: the Host tab runs the reveal). Nobody
   is named until you press. When the Host tab says the screen is ready, press
@@ -936,7 +940,7 @@ the dark the big button at the top is the **Blackout** itself.
 | 4 | The title card ("Find your group"), then Sir Irwin's prompts during the rounds. | The study: Granolia's Lightbulb Moment. The iPad Pro, back in the Library: In Duplicate, and after the third board Zimothy's winner (most pairs). Susan's MacBook Pro in the Entryway: Miss Boo LaRue's Arcade on the Stream Deck + XL, its rules card and code between groups, each player's clue on the screen at their moment. The group's phones in the Orangerie: Get Off My Lawn!, with the rules card and the code on the brain's browser in the room, and Salem's winner (fewest slips) there once a group clears it. Between groups each room's screen shows its game's rules card: the name and its line, the host cat's words, the cat's picture (changing with the groups) and the room's code. |
 | 5 | The Happy Birthday Irwin card from **Cake!** while the cake is served, with his full picture. Then Sir Irwin: his opener, the countdown line, the motive cards (each with its picture once drawn, else the rhyme alone), his closer. | Every screen on its loop. The bedroom screen (the iPad Pro), once it is in: "The door is closed", its loop behind the words. |
 | 6 | Sir Irwin Needs a Hand: his rules slides (the first one carries the game's name), then each called player's picture and character name, the black square with its label, and the four names to guess from (you tap the room's guess on your phone; a tap here still works). Then the "Pawsome!" slide, "The door is open", and, while the room talks it over, the three questions over everyone's portraits. | The projector is off from the drawing's intro (the brain switches its plug). In the bedroom, on the iPad Pro: the trace, from the moment the third picture is named. |
-| 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then the stats, the achievements you gave, the graph, each name card as you press (the closing bulletin, as video once the box is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits, the dedication and Sir Irwin's last card. At "The End": The End, Sir Irwin and paw prints, for good. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen shows The End and the projector stays on. |
+| 7 | The vote: the three questions, the trace, the clock with a small rejoin code under it, and a wax seal for every guest, pressed as each one locks in; then "The votes are in." Then Sir Irwin's progress bar with the stats and the achievements you gave under it, one at a time, then Stay tuned, each name card as you press (the closing bulletin, as video unless Show the words instead is ticked; the motive's card with its picture once drawn), the closing story, the dial's journey, the end credits, the dedication and Sir Irwin's last card. At "The End": The End, Sir Irwin and paw prints, for good. | In the bedroom: the trace. The projector is back on from the ballot, with its loop. At "The End" every screen shows The End and the projector stays on. |
 
 Outside Act 4 the study screen is on its loop (its crest until the file is
 in) unless a round is under way; in Act 4, between groups, it shows

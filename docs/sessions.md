@@ -51,9 +51,44 @@ rules and the reveal sequence".
   ticked. Put right.
 - **The board:** cards 604 (done) and 605 (Claude Code, waits for his
   word).
+- **Where it stood at 7:15 am:** every test passing; committed; not
+  published, not pushed.
+
+**Later the same morning: Sir Irwin's progress bar.** Jon: "Do you have the
+irwin animation progress bar", then "there is a handover doc now". Claude
+chat had made the bar with him on 9 Nov, but it was only in his claude.ai
+project; `docs/handoff-2026-11-14-irwin-bar.md`, `docs/handoff-2026-11-09.md`
+and the bar's page arrived in `docs/` at 9:29.
+
+- **Applied.** The bar's page is `play/public/irwin-progress-bar.html`. While
+  the Manor counts, the Parlour TV shows it in a frame over the old counting
+  screen (`play/src/screens/IrwinBar.jsx`, `play/src/lib/irwinbar.js`); the
+  plain bar and lists stay underneath and show if the bar has not said it is
+  ready in a second and a half. Its cards are the stats, then the
+  achievements the host gave. Site only; the server and the night's clock
+  are untouched.
+- **Checked in Chrome with the redraws on:** the bar fills evenly and is
+  full at about 47.6 of 50 seconds, about two seconds before the screen
+  moves on; a page loaded 25 seconds in starts at about 53 per cent; a hold
+  stands it still and the carry-on goes on from there; a page loaded during
+  a hold shows the night's own card; with the file missing the screen is
+  dark for a second and a half, then the plain bar and lists.
+- **Found by filming it:** the frame was squeezed to a strip ten pixels
+  high, because its state was a class called "bar" and an old `.bar` rule
+  took it. The measurements, which read the page's numbers, had all passed.
+  The state is a data attribute now.
+- **The review** (three readers, eight checkers) found four more, all done:
+  a screen loaded during a hold would have shown the preview's sample
+  cards; the font held the bar's script back; a carry-on started his bow
+  again; a practice night's word Held was hidden.
+- **Differences from the handoff** are listed at its top (the bar is given
+  the count less 2.4 seconds so its ending is seen).
+- **For Jon:** files 3 and 4 in `media/renders/` (the reveal with the bar,
+  and the count alone). One question on the board, `tallyLength`, default as
+  built.
 - **Where it stands:** every test passes; committed; **not published and
-  not pushed**. The live site still has the double-speed credits until Jon
-  says publish (the site only).
+  not pushed**. The live site still has the double-speed credits and the
+  plain bar until Jon says publish (the site only).
 
 ## 13 Nov 2026, morning · Claude Code (Sir Irwin's pace, half way)
 
