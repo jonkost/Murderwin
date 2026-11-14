@@ -1,0 +1,362 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}[hidden]{display:none!important}</style></head><body><title>Irwin's Progress Bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<style>
+/* Layout: one 16:9 screen (the Parlour TV). The bar sits in the top third, Irwin runs on it, achievements fade in and out in the big space underneath. A quiet row of preview controls below. Single dark look, from the Sirwin Manor rules deck. */
+:root{
+  color-scheme:dark;
+  --navy:#001925; --panel:#06283a; --rule:#1d4254;
+  --cream:#F1E8D6; --muted:#8fa3ad;
+  --irwin:#CD6300; --wing:#6BE4CF; --red:#bf1925;
+  --display:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --text:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+html,body{height:100%}
+body{background:var(--navy);color:var(--cream);font-family:var(--text);font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(26px,4.4vw,40px);line-height:1.15;text-wrap:balance;margin:4px 0 0}
+.lede{color:var(--muted);max-width:60ch;margin:6px 0 0}
+
+/* the 16:9 screen */
+.stage{position:relative;aspect-ratio:16/9;max-width:100%;container-type:inline-size;background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.meta{position:absolute;left:12.5%;right:12.5%;top:34.2%;display:flex;justify-content:space-between;gap:2cqw;font-size:1.25cqw;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.meta b{color:var(--cream);font-weight:600;font-variant-numeric:tabular-nums}
+.card{position:absolute;left:8%;right:8%;top:41%;bottom:5%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2cqw;text-align:center;opacity:0;will-change:opacity,transform}
+.card .tag{font-size:1.45cqw;letter-spacing:.22em;text-transform:uppercase;color:var(--wing)}
+.card .ttl{font-family:var(--display);font-weight:600;font-size:5cqw;line-height:1.1;text-wrap:balance;color:var(--cream)}
+.card .det{font-size:2.5cqw;line-height:1.35;color:var(--muted);max-width:64cqw;text-wrap:balance}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+button{font:inherit;color:var(--cream);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:9px 18px;cursor:pointer;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--irwin);border-color:var(--irwin);color:#1b0d00;font-weight:600}
+button[aria-pressed="true"]{background:var(--cream);border-color:var(--cream);color:var(--navy);font-weight:600}
+:focus-visible{outline:2px solid var(--wing);outline-offset:2px}
+.seg{display:flex;gap:6px;align-items:center}
+.seg span{font-size:14px;color:var(--muted);margin-right:4px}
+input[type=range]{flex:1 1 220px;min-width:0;accent-color:var(--irwin);height:44px}
+.note{color:var(--muted);font-size:14px;margin:0}
+details{border-top:1px solid var(--rule);padding-top:14px;color:var(--muted)}
+summary{cursor:pointer;color:var(--cream);font-weight:600}
+details ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:68ch}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;color:var(--cream)}
+
+/* ?embed=1 : only the screen, filling the window */
+body.embed{background:var(--navy);overflow:hidden}
+body.embed.clear{background:transparent}
+body.embed .wrap{padding:0;max-width:none;height:100%;justify-content:center;align-items:center;gap:0}
+body.embed .stage{width:min(100vw,177.78vh);border:0;border-radius:0;background:transparent}
+body.embed .chrome{display:none}
+</style>
+
+<div class="wrap">
+  <header class="chrome">
+    <div class="eyebrow">Sirwin Manor · Act 7 · Cue 20</div>
+    <h1>Irwin's progress bar</h1>
+    <p class="lede">The Parlour TV while the picks are counted. Irwin chases the butterfly, the achievements come and go underneath, then it cuts to the newscast.</p>
+  </header>
+
+  <div class="stage" id="screen">
+    <svg id="stage" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Irwin the dog runs along a progress bar, chasing a butterfly">
+      <rect id="track" x="200" y="278" width="1200" height="12" rx="6" fill="#F1E8D6" fill-opacity=".14"/>
+      <rect id="fill" x="200" y="278" width="0" height="12" rx="6" fill="#CD6300"/>
+      <g id="dog" fill="#CD6300"></g>
+      <g id="bfly" fill="#6BE4CF"><path id="wingL"/><path id="wingR"/></g>
+    </svg>
+    <div class="meta"><span>Tallying the submissions</span><b id="pct">0%</b></div>
+    <div class="card" id="card" aria-live="off"><div class="tag" id="cardTag"></div><div class="ttl" id="cardTtl"></div><div class="det" id="cardDet"></div></div>
+  </div>
+
+  <div class="controls chrome">
+    <button class="primary" id="playBtn" type="button">Pause</button>
+    <button id="restartBtn" type="button">Restart</button>
+    <div class="seg"><span>Length</span>
+      <button id="lenShort" type="button" aria-pressed="true">30 sec</button>
+      <button id="lenFull" type="button" aria-pressed="false">2 min</button>
+    </div>
+    <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Progress">
+  </div>
+  <p class="note chrome">The achievements shown here are samples. On the night the game fills in the real ones.</p>
+
+  <details class="chrome">
+    <summary>Notes for Claude Code</summary>
+    <ul>
+      <li>One file, no outside code. The art is traced from Jon's picture. The full brief is <code>docs/handoff-2026-11-09.md</code>.</li>
+      <li><code>?embed=1</code> shows only the 16:9 screen, filling the window. Add <code>&amp;clear=1</code> for a clear background.</li>
+      <li><code>IrwinBar.start({seconds, elapsed, cards, onDone})</code> runs the whole screen. <code>cards</code> is a list of <code>{tag, title, detail}</code>.</li>
+      <li>From a parent page: post <code>{type:'irwin:start', seconds, elapsed, cards}</code> to the frame. It posts <code>{type:'irwin:done'}</code> back when the bar is full.</li>
+      <li><code>IrwinBar.setProgress(0 to 1)</code> drives the bar by hand instead.</li>
+      <li>The frame posts <code>{type:'irwin:ready'}</code> to its parent once it is drawn, and again whenever it is sent <code>{type:'irwin:hello'}</code> (added 14 Nov 2026 with the wiring).</li>
+      <li>Near the top of the script: <code>S</code> is Irwin's size, <code>BOW</code> is when he bows.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+(function(){
+'use strict';
+const DATA = {"paths":{"fore":"M434,447.2L425.8,449.2L420,452L415.8,455L411,459.8L408,464L404.2,472.8L403.2,478L403.2,481.2L402.2,482.2L399.8,482.2L399,483L400,501.2L403,541.2L407,580L412,612L418,637.8L419.8,643L421.8,645L422.5,648.2L424.2,652L426.5,655.2L429.8,658.5L433,660.8L438.2,663L441.8,663.8L448.2,663.8L454.5,662L460.2,658.5L463.5,655.2L465.8,652L467.5,648.2L468.5,644.5L469.2,643.8L474.2,643.5L474,642.5L468,634.2L462.2,623.2L460.8,605.5L460.8,584L462.8,561.8L466.8,541.8L469,534.2L472.8,524.8L472.8,478L470.8,469.8L468,464L465,459.8L459,454L453.2,450.5L447.2,448.2L442,447.2Z","paw":"M425,626.8L422,633.2L421.2,639.2L420.8,640L419.2,640.5L419.2,641.8L424,655L430,666.5L435,673.2L441.5,678.8L451.8,683.5L459.5,685.2L463,683L475.2,682.8L484.5,680.5L492.2,676.8L496.2,673.8L498.8,671L499.8,668.2L499.8,665.8L497.2,661L497.2,658L490,655.8L486,653.8L478.8,648L472.2,640.5L469.2,640L468.8,639.2L468.2,634.5L463,624.5L458.2,620L454.5,618L449.8,616.5L440.2,616.5L435.5,618L429.8,621.5Z","upper":"M456.8,350.2L449.5,350L445.8,350.5L439.5,352.2L434.2,354.8L430.2,357.5L425.8,361.8L423,365.2L419.8,371.2L418.2,375.5L417,381.8L403.2,477.2L403,484.5L404.2,491.5L407.8,499.8L410.5,503.8L414.8,508.2L420.2,512.2L425.5,514.8L433.2,516.8L440.5,517L444.2,516.5L450.5,514.8L455.8,512.2L459.8,509.5L464.2,505.2L467,501.8L470.2,495.8L471.8,491.5L473,485.2L486.8,389.8L487,382.5L485.8,375.5L482.2,367.2L479.5,363.2L475.2,358.8L469.8,354.8L464.5,352.2Z","thigh":"M137.2,309L126.8,306.5L119.5,305.5L103.2,305.2L93.2,306.5L84.5,308.5L70.8,313.5L58,320.5L45.2,330.5L40.5,335.2L34,343L29.2,350L25.5,357L27.2,363.8L31,372.8L31,375.2L29,382.2L28.5,388.2L28.5,395.8L30,410L32,419.8L41,453.2L46,474.2L49,490.8L50.8,511L50,530.2L46.8,553.2L44,559.8L35,571.5L31.8,577.2L35.5,587L39.2,592L45,596.5L51,599L54.5,599.8L61.5,599.8L65,599L71,596.5L76.8,592L80.5,587L82,584L83.5,578.5L84.5,577.8L87.5,577.8L169.8,481.8L172.8,477.5L176.5,468L186,457L192.2,447.5L196.5,439.2L201,427.2L203.5,416.8L204.5,409.5L204.5,390.5L203.5,383.2L201,372.8L198,364.2L193.2,354.2L188.5,346.5L181.8,337.8L174.8,330.5L169.2,325.8L155.8,316.8L145.8,312Z","foot":"M53,548.5L47.2,550.5L46,555.5L44,559.8L35,571.5L30,580.5L27,588.2L25,596L24,604.2L24.2,620.2L26,636.2L30,663.5L32.2,687.2L35,696.5L38,702L44.2,708.8L50,712.2L51.5,713.8L52.5,716.8L87.5,716.8L88.2,716L94.2,714.5L97.2,712L101.2,710.2L102.8,708L102.8,705L100.8,700.5L95.5,693.8L84.8,683L74.5,674L69,667.5L65,659L63.8,654L63.2,642.2L63.8,636.2L65.8,626.5L71.8,609L83,586.5L88,578.5L91.8,574.5L84.8,574.2L84,573.8L83,567L80.5,561L76.8,556L73.2,553L68,550L63,548.5Z","tail":"M174.8,114.8L163,109L152.5,105L142.5,102L129.8,99.2L109.8,97L94.8,97L84,98L72.5,100L65,102L53.2,106.2L44.2,110.8L37,115.2L28.2,122.2L22,128.8L15.2,137.5L8.2,150.2L5.2,157.8L2,168.8L1,175.5L0,177L0,192.8L0.8,194L1,203L3,223.2L5,237.8L8,254L14,277.5L18,289L23,300.8L31.2,314.5L31,316L29,319.5L28.8,321.5L32.2,325.2L36.5,328.5L42.2,331.5L49.2,333.5L59,333.8L64,332.8L71,330L77.8,325.2L83,319.2L85.8,314.5L87.2,310.8L88.8,304L88.8,296L88,292.8L88,275L89,272.5L88.8,268.8L87.8,265.5L85.8,252.8L84.8,240.8L84.8,227.2L85.8,217L87.8,207L92,195L96,188.5L100.8,184L105.2,182.2L108.2,182.2L110.5,182.8L114.2,184.8L119,189.2L130,203.2L138.8,211.8L148.8,218.5L153,220.5L160,222.8L165.5,223.8L173.8,224L181.8,223.5L191.5,221.8L206,217.8L218.2,213.5L222.2,211.5L225.5,208.5L227.8,204.2L228.8,200.5L228.8,191.5L225.8,179.5L218.2,162.8L209.5,148.5L196.8,132.5L185,121.5Z","head":"M639,41L635.8,41L634.8,41.5L631.2,45L624.2,56.5L620.2,65L619,65.8L611.5,50L604.8,39.5L601.5,36.2L599.2,35L595.8,35L593.5,36.2L588,43.2L580,58.8L569.2,85L559.8,111.2L545.5,120L535.2,128L527.5,135L513,150.5L502,164.8L495.8,174.2L495.8,175.8L511.8,192.5L511.8,193.5L506,199.8L500.2,208L496,216.2L492.5,226.2L490.2,239.2L490.2,250.8L491.2,258.2L493,265.5L496,273.8L499.2,280.2L503,286.2L509.2,294L515.2,299.8L520.8,304L526.8,307.8L537,312.5L546.2,315.2L556.2,316.8L567.8,316.8L577.8,315.2L587,312.5L597.2,307.8L603.2,304L611.8,297.2L612.5,297.5L620.8,306.2L623,305.8L626.8,302L629.8,295.5L630.8,289.5L630.8,284.2L629.8,276.8L630,270.2L630.8,265.2L633.2,256.8L636.8,248.5L641,240.8L646.2,233L651.2,227L668.8,234.5L684.5,239.8L697.8,242.8L704.8,243.8L708,243.8L713.5,242.8L719.2,240.5L725.2,236.8L734.5,228.2L739.8,222L745.8,213.5L754.5,198L754.8,196.8L753,195L696,169.2L695.2,168.5L694.8,161.2L690.8,148.5L685,136.2L680.8,130.2L674.8,124.5L664.5,118.2L650.5,113L644.8,111.8L642.8,110.5L642.8,101.8L643.8,85.8L643.8,63L642.8,50.8L641.8,45.5L640.5,42.5Z","body":"M629.8,275.5L512.2,152.8L511.5,152.8L502,164.8L491,182L481.2,188L448.2,212L430,223.8L409.5,235L394,241.8L385,245L374.2,248L364.2,250L350.8,251.2L303.2,250.2L275.5,250.2L237.2,251.2L195,254L160.5,258L142,261L122.5,265L103.5,270L91,274.2L89,273.2L88.2,275L88.2,288.8L87.8,289.5L83.5,281.5L80.2,277.2L76.2,273.5L71,270L65.8,267.8L59,266.2L51,266.2L44.2,267.8L35.8,272L32.2,274.8L28.5,278.8L25,284L23.5,287.2L21.2,296L25.2,305L31.2,314.5L31,316L26.2,326L24,335.5L24,350.2L27,363L31,372.8L31,375.2L29,382.2L28.5,388.2L28.5,395.8L30,410L32,419.8L41,454.5L42.5,457.8L52.2,458L55.5,461.2L62.8,467L75.8,474.5L89,479.2L95.8,480.8L103.8,481.8L116.2,481.8L128,480L137.5,477.2L144.2,474.5L153.5,469.5L161.2,464L168.2,457.8L210.5,457.8L212,456.8L215,456.8L236,459.8L276.8,463.8L336.5,467.8L382,469.8L397,469.8L399,471.8L526,471.8L562.8,430L570.5,419L575.5,409.8L587.5,394.5L595.5,381.2L603.5,363.8L609.8,344L613.8,322.5L614.8,309.8L615.5,308.8L619.2,307.8L624.2,304.8L627.5,300.8L629.8,295.5L630.8,289.5L630.8,284.2Z","wingL":"M939.5,128.2L934.8,131L932,133.5L928.2,138.5L925.2,144.5L923,150.8L921.2,158.8L921,174L923,183.5L926.2,192.2L930.2,200L935,207.2L940,213.5L947.8,221.8L955.2,228.5L962,233.5L963.5,235.2L952.2,248.5L947.2,257L944.8,265.2L944.8,270L945.5,273L947.2,276.2L953,281L960,284.5L971.2,287.8L977.5,288.5L985.5,288.5L993,287.5L1002,284.8L1006.2,282.5L1008.8,280.2L1010.8,275L1011.8,267L1012.2,266.2L1013.2,266.5L1013.5,265.8L1013.5,169L1013,168.5L1011.5,168.5L1002.8,159.2L988.2,146L979,139L970.8,133.8L961.2,129.2L953.5,127L943.5,127Z","wingR":"M1082.5,127.2L1078.5,126.5L1069.2,127L1062,129.2L1052,134.2L1043,140.2L1034.5,147L1027,153.8L1012.5,168.8L1011,168.2L1010.5,168.8L1010.5,271.5L1010.8,272.2L1011.5,270.5L1011.8,267L1012.5,266.2L1014,275L1015.8,279.8L1019.2,283L1025.2,285.8L1033,287.8L1040,288.5L1048.5,288.2L1057.5,286.8L1066,283.8L1073.5,279.8L1077.5,276L1079.5,272.2L1080,265L1077.8,257.5L1072.5,248.5L1066.8,241.2L1061.2,235.5L1061.2,234.5L1073.2,224.8L1081.8,216.2L1087.8,209L1092.8,201.8L1096.8,194.5L1100.5,185.2L1102.8,176L1103.2,170.8L1102.8,158L1100.8,149.8L1097.8,142L1094,135.8L1089.5,131Z"},"joints":{"dF_art":[38,-28],"dB_art":[40,-22],"shoulder":[452,385],"elbow":[438,482],"wrist":[445,640],"r_elbow":35,"r_wrist":24,"hip":[110,400],"hock":[58,574],"r_hip":95,"r_hock":26,"r_rump":82,"tail":[55,300],"r_tail":34,"head":[562,245],"head_axis":[0.72,-0.69],"r_head":72,"neck_overlap":28,"bfly_center":[1012,215]}};
+const P = DATA.paths, J = DATA.joints;
+const BOW = [0.47, 0.55];        // progress window for the play bow
+const MIN_BOW_HOLD = 2.4;        // seconds
+const S = 0.12;                  // art scale (how big Irwin is)
+const W = 1600, BAR_X = 200, BAR_W = 1200, GROUND = 280;
+const BASE_ROT = 4.3;            // levels his paws on the bar
+const DF = [38,-12], DB = [40,-12];   // far-side leg offsets
+const NOSE = [752,197];
+const BF_C = J.bfly_center;
+const CARD_SPAN = [0.03, 0.97];  // achievements show between these progress points
+const DONE_AFTER = 1.6;          // seconds at 100% before "done" fires
+
+// Samples for the preview only. The game sends the real list.
+const SAMPLE_CARDS = [
+  {tag:'Sample · Cat favourite', title:"Granolia's Favorite", detail:'A guest name goes here'},
+  {tag:'Sample · Speed', title:'Quickest Paw', detail:'A guest name goes here'},
+  {tag:'Sample · Achievement', title:'Covered in Fur', detail:'A guest name goes here'},
+  {tag:'Sample · Boo Arcade', title:'Whack-a-Mouse Top Score', detail:'A guest name and score go here'},
+  {tag:'Sample · Achievement', title:'True Friend of the Groundskeeper', detail:'A guest name goes here'},
+  {tag:'Sample · Puzzle', title:'Bright Sparks', detail:'A group goes here'}
+];
+
+const $ = id => document.getElementById(id);
+const svg = $('stage'), dogG = $('dog');
+const NS = 'http://www.w3.org/2000/svg';
+const D2R = Math.PI/180, TAU = Math.PI*2;
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const smooth = x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
+const lerp = (a,b,k)=>a+(b-a)*k;
+
+// ---- affine helpers [a,b,c,d,e,f]
+const mul=(m,n)=>[m[0]*n[0]+m[2]*n[1],m[1]*n[0]+m[3]*n[1],m[0]*n[2]+m[2]*n[3],m[1]*n[2]+m[3]*n[3],m[0]*n[4]+m[2]*n[5]+m[4],m[1]*n[4]+m[3]*n[5]+m[5]];
+const rot=(deg,p)=>{const c=Math.cos(deg*D2R),s=Math.sin(deg*D2R);return [c,s,-s,c,p[0]-c*p[0]+s*p[1],p[1]-s*p[0]-c*p[1]]};
+const tr=(x,y)=>[1,0,0,1,x,y];
+const ap=(m,p)=>[m[0]*p[0]+m[2]*p[1]+m[4],m[1]*p[0]+m[3]*p[1]+m[5]];
+const mstr=m=>'matrix('+m.map(v=>+v.toFixed(3)).join(' ')+')';
+
+// ---- build the pieces
+const piece = {};
+function add(name, shape){const p=document.createElementNS(NS,'path');p.setAttribute('d',P[shape]);dogG.appendChild(p);piece[name]=p}
+['bfThigh','bfFoot'].forEach((n,i)=>add(n,['thigh','foot'][i]));
+['ffUpper','ffFore','ffPaw'].forEach((n,i)=>add(n,['upper','fore','paw'][i]));
+add('tail','tail');add('body','body');add('head','head');
+['bnThigh','bnFoot'].forEach((n,i)=>add(n,['thigh','foot'][i]));
+['fnUpper','fnFore','fnPaw'].forEach((n,i)=>add(n,['upper','fore','paw'][i]));
+$('wingL').setAttribute('d',P.wingL);$('wingR').setAttribute('d',P.wingR);
+
+// contact points (art coordinates) used to rest him on the ground in the bow
+const C_PAW=[[428,676],[445,686],[470,687],[490,680],[498,668]];
+const C_FORE=[[403,495],[408,540],[414,590],[420,640]];
+const C_ELBOW=[];for(let a=0;a<12;a++)C_ELBOW.push([J.elbow[0]+J.r_elbow*Math.cos(a*TAU/12),J.elbow[1]+J.r_elbow*Math.sin(a*TAU/12)]);
+const C_FOOT=[[36,700],[45,712],[70,716],[95,714],[104,705]];
+
+// ---- poses
+const sp=x=>0.5*(x+Math.sqrt(x*x+0.03));          // soft "positive part", no kinks
+function frontLeg(th){
+  const sh=-36*Math.sin(th), el=46*sp(Math.cos(th));
+  return {sh, el, wr:-0.6*(sh+el)};
+}
+function backLeg(th){
+  return {hip:36*Math.sin(th), hock:13-42*sp(-Math.cos(th))};
+}
+function runPose(ph, aim){
+  const th=TAU*ph, pitch=6*Math.sin(th+0.6);
+  return {
+    body:BASE_ROT+pitch, hop:34*(0.5+0.5*Math.sin(th)),
+    tail:-8+13*Math.sin(2*th-0.8),
+    head:aim,
+    fn:frontLeg(th), ff:frontLeg(th-0.5), bn:backLeg(th), bf:backLeg(th-0.5)
+  };
+}
+function standPose(t, headAim, excited){
+  const wag=(excited?16:9)*Math.sin(t*(excited?19:11));
+  const z={sh:0,el:0,wr:0}, zb={hip:0,hock:0};
+  return {body:BASE_ROT+0.6*Math.sin(t*2.1), hop:0, tail:wag, head:headAim, fn:z, ff:z, bn:zb, bf:zb};
+}
+let BOW_ROT=30;
+function bowPose(t, b, aim){
+  b = b===undefined ? BOW_ROT : b;
+  const wig=1.2*Math.sin(t*17), d=b-BASE_ROT;
+  const f={sh:14-b, el:-96, wr:78}, f2={sh:20-b, el:-100, wr:78};
+  const h={hip:-d-3, hock:3}, h2={hip:-d+2, hock:-2};
+  return {body:b+wig, hop:0, tail:-d+6+17*Math.sin(t*26), head:aim===undefined?-d-9:aim, fn:f, ff:f2, bn:h, bf:h2};
+}
+function mix(a,b,k){
+  if(k<=0)return a; if(k>=1)return b;
+  const L=(x,y)=>x+(y-x)*k, o={};
+  for(const key of ['body','hop','tail','head'])o[key]=L(a[key],b[key]);
+  for(const key of ['fn','ff'])o[key]={sh:L(a[key].sh,b[key].sh),el:L(a[key].el,b[key].el),wr:L(a[key].wr,b[key].wr)};
+  for(const key of ['bn','bf'])o[key]={hip:L(a[key].hip,b[key].hip),hock:L(a[key].hock,b[key].hock)};
+  return o;
+}
+
+// ---- forward kinematics (art coordinates, hip stays put)
+function fk(pose){
+  const root=rot(pose.body,J.hip), m={};
+  m.body=root; m.tail=mul(root,rot(pose.tail,J.tail)); m.head=mul(root,rot(pose.head,J.head));
+  const front=(pre,base,a)=>{m[pre+'Upper']=mul(base,rot(a.sh,J.shoulder));m[pre+'Fore']=mul(m[pre+'Upper'],rot(a.el,J.elbow));m[pre+'Paw']=mul(m[pre+'Fore'],rot(a.wr,J.wrist))};
+  const back=(pre,base,a)=>{m[pre+'Thigh']=mul(base,rot(a.hip,J.hip));m[pre+'Foot']=mul(m[pre+'Thigh'],rot(a.hock,J.hock))};
+  front('fn',root,pose.fn); front('ff',mul(root,tr(DF[0],DF[1])),pose.ff);
+  back('bn',root,pose.bn);  back('bf',mul(root,tr(DB[0],DB[1])),pose.bf);
+  return m;
+}
+const maxY=(m,pts)=>{let y=-1e9;for(const p of pts){const v=m[1]*p[0]+m[3]*p[1]+m[5];if(v>y)y=v}return y};
+function lowFront(m){return Math.max(maxY(m.fnPaw,C_PAW),maxY(m.ffPaw,C_PAW),maxY(m.fnFore,C_FORE),maxY(m.ffFore,C_FORE),maxY(m.fnFore,C_ELBOW),maxY(m.ffFore,C_ELBOW))}
+function lowBack(m){return Math.max(maxY(m.bnFoot,C_FOOT),maxY(m.bfFoot,C_FOOT))}
+
+// solve the bow tilt so elbows and back paws touch the ground together
+(function(){let lo=8,hi=50;for(let i=0;i<24;i++){const b=(lo+hi)/2,m=fk(bowPose(0.0001,b));if(lowFront(m)-lowBack(m)<0)lo=b;else hi=b}BOW_ROT=(lo+hi)/2})();
+const LOW_STAND=(()=>{const m=fk(standPose(0,0,false));return Math.max(lowFront(m),lowBack(m))})();
+
+// ---- state
+let progress=0, f=0, bowLin=0, bowHold=0, bowDone=false, endLin=0, endT=0, doneFired=false;
+let phase=0, t=0, headAim=0;
+let playing=false, duration=30, auto=false, frozen=null;
+const EMBED=new URLSearchParams(location.search).get('embed');
+// in the frame the bar starts with no cards (14 Nov 2026): the samples are for the preview page only, and a
+// screen loaded while the host holds the count is told where the bar stands before it is ever started
+let cards=EMBED?[]:SAMPLE_CARDS, onDone=null, shownCard=-2;
+const xMin=()=>BAR_X+NOSE[0]*S+4, xMax=()=>BAR_X+BAR_W-46;
+const eOf=(p,wantBow)=>p<BOW[0]?p:(wantBow||p<BOW[1])?BOW[0]:BOW[0]+(p-BOW[1])*(1-BOW[0])/(1-BOW[1]);
+
+function step(dt,real){
+  t+=dt;
+  // the bar itself goes by the real time between frames (14 Nov 2026): on a screen that drops frames it
+  // would otherwise fall behind the game's clock and be cut off before it is full
+  if(auto&&playing)progress=Math.min(1,progress+(real===undefined?dt:real)/duration);
+  const p=progress;
+  if(p<BOW[0]-0.001){bowDone=false;bowHold=0}
+  const wantBow=!bowDone&&p>=BOW[0];
+  if(wantBow){bowHold+=dt;if(p>=BOW[1]&&bowHold>=MIN_BOW_HOLD)bowDone=true}
+  // he waits during the bow, then makes up the ground afterwards
+  f+=(eOf(p,wantBow)-f)*(1-Math.exp(-dt*4));
+  bowLin=clamp(bowLin+(wantBow?dt/0.55:-dt/0.45),0,1);
+  const done=p>=1;
+  endLin=clamp(endLin+(done?dt/0.6:-dt/0.3),0,1);
+  endT=done?endT+dt:0;
+  phase=(phase+dt*2.3*(1-smooth(bowLin))*(1-smooth(endLin)))%1;
+  if(endT>DONE_AFTER&&!doneFired){
+    doneFired=true;
+    try{if(onDone)onDone()}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('irwin:done'))}catch(e){}
+    try{if(window.parent!==window)window.parent.postMessage({type:'irwin:done'},'*')}catch(e){}
+  }
+  if(!EMBED&&auto&&playing&&endT>DONE_AFTER+3){reset()}   // the preview starts over
+}
+
+function setCard(i,c){
+  if(i===shownCard)return; shownCard=i;
+  $('cardTag').textContent=c?c.tag||'':''; $('cardTtl').textContent=c?c.title||'':''; $('cardDet').textContent=c?c.detail||'':'';
+}
+function renderCards(){
+  const el=$('card'), p=progress, n=cards.length;
+  let op=0, rise=0;
+  if(!EMBED&&doneFired){
+    setCard(-1,{tag:'Next · Cue 21',title:'Cut to the newscast',detail:'W-O-O-F News, on the Parlour TV'});
+    op=smooth((endT-DONE_AFTER)/0.5);
+  }else if(n&&p>=CARD_SPAN[0]&&p<CARD_SPAN[1]){
+    const x=(p-CARD_SPAN[0])/(CARD_SPAN[1]-CARD_SPAN[0])*n, i=Math.min(n-1,Math.floor(x)), u=x-i;
+    const slot=(CARD_SPAN[1]-CARD_SPAN[0])*duration/n, fw=auto?clamp(0.7/slot,0.04,0.3):0.12;
+    setCard(i,cards[i]);
+    const a=smooth(u/fw); op=a*smooth((1-u)/fw); rise=1-a;
+  }
+  el.style.opacity=op.toFixed(3);
+  el.style.transform='translateY('+(rise*1.1).toFixed(2)+'cqw)';
+}
+
+function render(){
+  const k=smooth(bowLin), en=smooth(endLin);
+  const pose=mix(mix(runPose(phase,headAim),standPose(t,headAim,true),en),bowPose(t,undefined,headAim),k);
+  const m=fk(pose);
+  const runLow=LOW_STAND+170*Math.sin((pose.body-BASE_ROT)*D2R)+pose.hop;
+  const low=lerp(runLow,Math.max(lowFront(m),lowBack(m)),k);
+  const noseX=xMin()+f*(xMax()-xMin());
+  // art -> screen
+  const ox=noseX-(NOSE[0]-J.hip[0])*S, base=[S,0,0,S,ox-J.hip[0]*S,GROUND-low*S];
+  for(const n in piece)piece[n].setAttribute('transform',mstr(mul(base,m[n])));
+  // where his nose sits before he turns his head: the butterfly hovers off this in the bow
+  const refHead=lerp(-3,-(BOW_ROT-BASE_ROT)-9,k);
+  const nose=ap(mul(base,mul(m.body,rot(refHead,J.head))),NOSE), neck=ap(mul(base,m.head),J.head);
+  const dt=render.dt||0;
+
+  // butterfly: flutters just ahead, hovers over his nose in the bow, flies off at the end
+  const u=S/0.25, restNoseY=GROUND-(LOW_STAND-NOSE[1])*S;
+  let bx=noseX+(36+9*Math.sin(t*1.3))*u, by=restNoseY+(-8+17*Math.sin(t*2.2))*u;
+  bx=lerp(bx,nose[0]+(25+3*Math.sin(t*1.7))*u,k); by=lerp(by,nose[1]+(-7+4*Math.sin(t*2.6))*u,k);
+  const away=en*en; bx+=away*220; by-=away*(restNoseY+60);
+  const flap=0.16+0.84*Math.abs(Math.cos(t*14));
+  const bm=mul(mul(tr(bx,by),rot(10*Math.sin(t*2.2),[0,0])),[S*flap,0,0,S,0,0]);
+  const wt=mstr(mul(bm,tr(-BF_C[0],-BF_C[1])));
+  $('wingL').setAttribute('transform',wt);$('wingR').setAttribute('transform',wt);
+
+  // he keeps his eyes on the butterfly the whole time
+  const want=Math.atan2(by-neck[1],bx-neck[0])/D2R-Math.atan2(NOSE[1]-J.head[1],NOSE[0]-J.head[0])/D2R-pose.body;
+  headAim+=(clamp(want,-32,24)-headAim)*(1-Math.exp(-dt*10));
+
+  $('fill').setAttribute('width',Math.max(0,BAR_W*progress).toFixed(1));
+  $('pct').textContent=Math.round(progress*100)+'%';
+  renderCards();
+  if(document.activeElement!==$('scrub'))$('scrub').value=Math.round(progress*1000);
+}
+
+let last=0;
+function frame(now){
+  if(!last)last=now;
+  const real=Math.max(0,(now-last)/1000||0), dt=Math.min(0.05,real);last=now;
+  if(!frozen){step(dt,real);render.dt=dt;render()}
+  requestAnimationFrame(frame);
+}
+
+// ---- controls + public API
+const playBtn=$('playBtn');
+function syncBtn(){playBtn.textContent=playing?'Pause':'Play'}
+function reset(){progress=0;f=0;bowLin=0;bowHold=0;bowDone=false;endLin=0;endT=0;doneFired=false;shownCard=-2}
+function play(seconds){if(seconds)duration=seconds;if(progress>=1)reset();auto=true;playing=true;syncBtn()}
+function pause(){playing=false;syncBtn()}
+function start(o){
+  o=o||{};
+  const nd=+o.seconds>0?+o.seconds:120, np=clamp((+o.elapsed||0)/nd,0,1);
+  // a start that lands where the bar already stands (the host's carry-on after a hold) keeps his pose and the
+  // butterfly as they are: starting over made him leave his bow and the butterfly fly off twice (14 Nov 2026)
+  if(Math.abs(np-progress)>0.02){reset();if(np>=BOW[1]){bowDone=true}f=eOf(np,false)}
+  if(Array.isArray(o.cards)){cards=o.cards;shownCard=-2}
+  onDone=typeof o.onDone==='function'?o.onDone:null;
+  duration=nd;
+  progress=np;
+  auto=true;playing=true;syncBtn();
+}
+playBtn.onclick=()=>{playing?pause():play()};
+$('restartBtn').onclick=()=>{reset();play()};
+function setLen(s){duration=s;$('lenShort').setAttribute('aria-pressed',s===30);$('lenFull').setAttribute('aria-pressed',s===120)}
+$('lenShort').onclick=()=>setLen(30);$('lenFull').onclick=()=>setLen(120);
+$('scrub').oninput=e=>{progress=e.target.value/1000;if(progress<1)doneFired=false;playing=false;auto=true;syncBtn()};
+setInterval(syncBtn,300);
+
+window.IrwinBar={
+  start, play, pause, reset,
+  setCards(list){cards=Array.isArray(list)?list:[];shownCard=-2},
+  setProgress(p){auto=false;playing=false;progress=clamp(+p||0,0,1);if(progress<1)doneFired=false},
+  _freeze(o){frozen=o;if(!o)return;progress=o.p||0;f=o.f===undefined?progress:o.f;bowLin=o.k||0;endLin=o.end||0;phase=o.phi||0;t=o.t||0;render.dt=0;render()}
+};
+const ready=()=>{try{if(window.parent!==window)window.parent.postMessage({type:'irwin:ready'},'*')}catch(e){}};
+window.addEventListener('message',ev=>{
+  const d=ev.data; if(!d||typeof d!=='object')return;
+  if(d.type==='irwin:hello')ready();
+  else if(d.type==='irwin:start')start(d);
+  else if(d.type==='irwin:progress'){if(Array.isArray(d.cards))window.IrwinBar.setCards(d.cards);window.IrwinBar.setProgress(d.p)}
+  else if(d.type==='irwin:cards')window.IrwinBar.setCards(d.cards);
+});
+
+const q=new URLSearchParams(location.search);
+if(EMBED){document.body.classList.add('embed');if(q.get('clear'))document.body.classList.add('clear')}
+const secs=parseFloat(q.get('seconds'));
+render.dt=0;render();
+if(secs>0)start({seconds:secs});
+else if(!EMBED&&!matchMedia('(prefers-reduced-motion: reduce)').matches)play();
+else syncBtn();
+requestAnimationFrame(frame);
+ready();
+})();
+</script>
+</body></html>

@@ -10,6 +10,7 @@ import { motivePictureUrl } from '../lib/motives'
 import { Cell, Figure } from '../lib/draw'
 import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
+import IrwinBar from './IrwinBar'
 import { studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes, anchored, countingBar } from '../lib/finale'
@@ -829,8 +830,12 @@ export function Finale({ night, finale, content = null, serverNow }) {
   // tab's reveal panel says the screen is held. The small word Rehearsal that sat under these screens is gone
   // (11 Nov 2026: a practice night shows real lines and looks like the party night; the Host tab says which it is).
   const held = !!finale.holdAt
+  // While the Manor counts: Irwin's progress bar fills the screen (handoff 14 Nov 2026; IrwinBar.jsx), with the
+  // stats and the achievements as its cards. The plain bar and lists below stay drawn underneath it and show if
+  // the bar never loads. It is the first child in both stages, so it is one bar from the stats to the awards.
   if (stage === 'stats' || stage === 'awards') return (
     <div className={`kiosk finale ${stage}`}>
+      <IrwinBar finale={finale} now={now} />
       <p className="kiosk-crest">While the Manor counts</p>
       <CalcBar finale={finale} now={now} />
       {stage === 'stats' ? <StatsReel finale={finale} now={now} /> : <AwardsReel finale={finale} now={now} />}
