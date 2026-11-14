@@ -813,7 +813,7 @@ the screen awake by itself where the iPad lets it.
   is named until you press. When the Host tab says the screen is ready, press
   **Name the Murderer**, then **Name the Motive**, then **Name the Victim**,
   each when the room is ready for it. Each press plays its part of the
-  closing W-O-O-F News bulletin (as video on the TV once The bulletins are videos is ticked; until then the brain plays the recordings and the words show); the card shows once its
+  closing W-O-O-F News bulletin (as video on the TV; only if the Game night box Show the words instead is ticked does the brain play the recordings while the words show); the card shows once its
   lead-in part has played, and the next press cuts off anything still
   playing. As video (11 Nov 2026) each press is one short film: for the
   Murderer, Ava in the studio, Mic outside, then the Murderer's name card

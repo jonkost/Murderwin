@@ -36,6 +36,7 @@ import {
   NIGHT_GUARDS_1112_TASKS, RETIRED_FOR_NIGHT_GUARDS_1112, FILED_FOR_NIGHT_GUARDS_1112, NIGHT_GUARDS_1112_DECISIONS,
   PET_VOICES_1112_TASKS, PET_VOICES_1112_DECISIONS,
   VOICES_OUT_1112_TASKS, VOICES_OUT_1112_ANSWERS,
+  CREDITS_SPEED_1114_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1161,6 +1162,14 @@ export const ADDITIONS = [
     id: '2026-11-12-voices-out',
     tasks: VOICES_OUT_1112_TASKS,
     answerDecisions: VOICES_OUT_1112_ANSWERS,
+  },
+  {
+    // 14 Nov 2026: filming the reveal for Jon showed the end credits at double
+    // speed and the Parlour TV left empty before the dedication. Put right
+    // (604). The reveal's films are quieter than the intro: a card for
+    // Claude Code that waits for Jon's word (605).
+    id: '2026-11-14-credits-speed',
+    tasks: CREDITS_SPEED_1114_TASKS,
   },
 ]
 

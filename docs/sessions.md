@@ -9,6 +9,52 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 14 Nov 2026, morning · Claude Code (the intro, the rules and the reveal on film; the credits' speed)
+
+Jon: "I would like to see the rendering of the intro video right into the
+rules and the reveal sequence".
+
+- **Three videos for him**, in `media/renders/` on the brain (not in git),
+  each sent to his phone (the two long ones as smaller copies: a file over
+  30 MB does not reach it):
+  1. the joins of the intro and the rules film, one minute;
+  2. the whole intro and rules film, 16 minutes;
+  3. the reveal as the Parlour TV plays it, five minutes, with a made-up
+     answer drawn at random.
+- **How they were made.** Six agents first read the code for the exact
+  order, files and timings of both sequences and for the preview pages
+  (three readers, each checked by a second). The intro and rules video is
+  laid out with ffmpeg from the page's own numbers. The reveal is filmed
+  from the real page: a small temporary page mounts the Parlour TV's own
+  screen and feeds it the finale the way the server shapes it, a silent
+  hidden Chrome films every frame, and the films' sound is laid under at
+  the moments the page started them. The house music and the card chimes
+  are not in it. The tools are kept in `media/renders/tools/`.
+- **Found by filming, and fixed:** the end credits rolled at double speed
+  and the TV then stood empty for about 36 seconds before the dedication;
+  the counting bar ran twice as fast too. The screen redraws four times a
+  second and wrote the moving time into the animation's delay each time.
+  Measured in Chrome with the redraws on: 7.0 screen heights in ten seconds
+  before, 3.5 after; the last line now leaves at 72.6 of 73 seconds. The
+  fix keeps the start between redraws (`play/src/lib/finale.js` anchored
+  and countingBar, `Kiosk.jsx` useAnchored). A review workflow (two
+  readers, two checkers) found the fix right in every state (a hold, a
+  carry-on, a reload, a longer roll) and two things, both done: the test
+  now pins the hook and the keys, and the bar goes on from where it stood
+  after a hold.
+- **Measured and left for Jon:** the reveal's films are about 5 dB quieter
+  than the intro, the rules and bulletin 1 (card 605); the portrait on the
+  name cards is very small; the Motive card has no picture; the vote's time
+  bar trails its clock by about a second (left).
+- **The guide:** `docs/on-the-night.md` said the closing bulletin is video
+  once a box is ticked; it is video unless Show the words instead is
+  ticked. Put right.
+- **The board:** cards 604 (done) and 605 (Claude Code, waits for his
+  word).
+- **Where it stands:** every test passes; committed; **not published and
+  not pushed**. The live site still has the double-speed credits until Jon
+  says publish (the site only).
+
 ## 13 Nov 2026, morning · Claude Code (Sir Irwin's pace, half way)
 
 Jon, having heard the published voice: "Yes, good", and a few minutes
