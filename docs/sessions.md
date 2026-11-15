@@ -199,9 +199,19 @@ this current game." and "Keep going".
   (dry run 1 of 1, leak checks 5 of 5); pretend nights pass with 2 to 14
   guests, and with fill-in players mixed in; both builds. No sound was run,
   no Shortcut, and not the brain.
-- **Not published.** The site and the server have both changed (the rules
-  have not). A publish waits for Jon's word; after it, every room screen
-  needs its one click again for its sound.
+- **Published on 15 November at about 3:25 am, on Jon's "Yes": the site and
+  the server** (3cb0dcf; the security rules were not touched: they have not
+  changed since the last publish). First, every test again (the same
+  numbers as above) and the checks: all clear. The last build still
+  equalled the live site (1,153 of 1,153) and was kept. The server: all 26
+  functions updated, none added or taken away; the clock's new revision
+  started and ran cleanly. The site: 3 pages and 5 new bundles changed,
+  every media file the same, and the 35 older bundles kept for screens left
+  open (32 of the phones' and screens', 3 of the workshop's). Afterwards
+  1,158 of 1,158 files matched the live site, and the live page loads the
+  new code. No night was live. The Study station's own code did not
+  change. Not pushed. Every room screen needs its one click
+  again for its sound, and the party night is started after this publish.
 - **Known and left:** Sir Irwin explains the drawing over Intense Music at
   35%, and his door line comes under the door's sting and the music coming
   up (both for Jon's ear). A chime the brain does not play can still cut
