@@ -9,6 +9,90 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 15 Nov 2026, noon · Claude Code (a how-to-play video for every game)
+
+Jon, the party day: "Render out all the instruction videos for all the
+games". No such videos existed, so they were made from what the game
+already says: each game's own card and its host's own words.
+
+- **What was made.** Five videos, 1920 by 1080, in
+  `media/renders/instructions/` on the brain (not in git): 1 Granolia's
+  Lightbulb Moment (23 s), 2 In Duplicate (21 s), 3 Get Off My Lawn! (32 s),
+  4 Miss Boo LaRue's Arcade (1 min 43 s, with a smaller copy for a phone),
+  5 Sir Irwin Needs a Hand (1 min 14 s). All five were sent to Jon.
+- **The four room games.** The room's real card (`GameCard`, the approved
+  look: the name in lights, the three steps, the cat, the room's code).
+  The host says its hello (`RULES_LINES`, a sentence at a time, shown under
+  the steps as it is said), then the three steps (`GAME_STEPS`), each lit
+  as it is said. Boo's goes on to her five little games, one screen each:
+  the game's name in lights and its `how` line from `lib/arcade.js`, each
+  sentence coming up as she says it. The voices are the cast's
+  (`seed/pet-voices.json`), made by the pets' own talker into files; a word
+  in capitals is given to the voice as a plain word. Nothing was played
+  aloud.
+- **Sir Irwin Needs a Hand.** The real Parlour TV (`Living`) on his seven
+  slides, each for the server's own time, with his own voice files laid at
+  each slide's start. The page's clock stops short of the slides' end, so
+  it never asks a server to move a night on.
+- **How.** `media/renders/tools/games/` (its page is the tools' README):
+  `make-voices.mjs` (the lines and each video's timeline),
+  `gameHarness.jsx` (copied into `play/` only while filming, taken out
+  again: never committed or published), `../record.mjs` (now films at a
+  bigger size when asked) and `assemble-games.mjs`. Two things met on the
+  way: a change to the filming page while a take ran reloaded it (the
+  Library was filmed again), and 28 voice lines mixed straight into the
+  video ran on without end, so the sound is now built by itself first, to
+  its exact length.
+- **Checked:** stills from every video, read; each file's length and
+  loudness (about -16 to -19 LUFS, peaks under -4 dB). **Not checked:
+  nobody has listened to the new lines.** Jon's ear is the first.
+- **Not changed:** the site, the server, the night. Nothing in the game
+  plays these videos; they are files to watch or to play from any screen.
+- **The board:** card 615 (done, All night), in the day's own migration
+  `2026-11-15-welcome`, which no workshop had loaded yet. App tests 181 of
+  181. The Canon and Start Here are untouched: nothing was decided and
+  nothing of the game's status changed.
+
+## 15 Nov 2026, late morning · Claude Code (the welcome screen with the Wi-Fi code)
+
+Jon, the party day, first asking "How do I make a qr code for our WIFI?"
+(answered: the Passwords app, Wi-Fi, the network, Show Network QR Code),
+then sending the picture: "Add this to a fun welcome screen that will play
+as people come in for my wifi access. make it a screen saver using all the
+characters it rows with each row slide them in opposite directions."
+
+- **What it is.** One page, `Welcome screen.html`, with everything inside
+  it: no internet needed, nothing of the game read or changed. The copy to
+  use is in the *Murderwin screens* folder on the brain's Desktop; the
+  tools that make it, and its README, are in `media/welcome/` (not in git).
+  Three rows slide across the whole screen: the fourteen characters (one
+  scale for all, so each keeps the height Jon drew) waddle left, the five
+  household faces bob to the right, the fourteen again (another order)
+  waddle left. Each row's track holds it three times and moves by exactly
+  one row a loop, so the loop has no seam. In front, the approved look's
+  marquee card: Welcome, to Sirwin Manor, the brass rule, the code on
+  parchment in the house's own QR colours (`lib/qr.js`), Scan for Wi-Fi,
+  and the wax seal on its corner. Full screen on the first click or key
+  (as the room screens), the screen kept awake (Screen Wake Lock), the
+  pointer hidden when still. An upright screen shows two rows, smaller.
+- **The code, never read.** It holds the house's Wi-Fi password, so its
+  words were never decoded: `qr_grid.py` read the squares from Jon's
+  picture (every finder and timing square fitting, every pixel agreeing),
+  the page draws them crisp, and `qr_hash.swift` compares codes by a
+  fingerprint only. His picture, the clean drawing and screenshots of the
+  page at 1920x1080, 1280x800, 1024x768, 768x1024, 2560x1080 and 3840x2160
+  all give the same fingerprint. The page, the picture and the grid live on
+  the brain only (`media/` is not in git): never on the site, never in git,
+  never sent anywhere. The fingerprint itself is kept out of git too.
+- **The board and the guide.** Card 614 (done, Arrivals), migration
+  `2026-11-15-welcome`; it reaches the workshop with its next publish. The
+  timeline test's pinned migrations moved back by one. `docs/on-the-night.md`
+  has a paragraph on the welcome screen under *Which machine does what*: if
+  the Mac by the door also shows a room's game screen, close the welcome
+  screen at 4:30, when the intro starts.
+- **Checked:** the app tests (181 of 181) and the play tests (445 of 445).
+  Nothing of the site or the server changed; nothing to publish.
+
 ## 14 Nov 2026, night · Claude Code (the deep scan of the night: the setup, the timing, the blackout, every cue, the game's logic and its order)
 
 Jon: "do a deep scan insuring the night runs smooth. This including setup,

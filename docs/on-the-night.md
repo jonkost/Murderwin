@@ -266,6 +266,18 @@ The game itself lives on the internet at https://murderwin-at-sirwin-manor.web.a
 Every phone and every screen only needs the wifi. The brain does not serve the
 game; it serves the lights and the speakers.
 
+*The welcome screen (15 Nov).* *Welcome screen* in the *Murderwin screens*
+folder on the brain's Desktop is a page of its own for a screen by the front
+door while the guests arrive: your Wi-Fi code on a card, Welcome to Sirwin
+Manor above it and Scan for Wi-Fi under it, and the fourteen characters and
+the five pets parading behind it in three rows. AirDrop it to that Mac, open
+it in Google Chrome (or double-click it) and click once: it fills the screen.
+Escape leaves full screen; Command-W closes it. It needs no internet and is
+not part of the game, so nothing on the night changes it and it does not go
+dark with the house. If that Mac also shows a room's game screen, close the
+welcome screen at 4:30, when the intro starts. Your Wi-Fi password is inside
+its code: it stays on the Macs, never in git or on the site.
+
 ## Start order, and how you know each one is alive
 
 *The big Start button (12 Nov).* This is the whole setup once every machine

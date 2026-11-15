@@ -41,6 +41,7 @@ import {
   SCREAM_1114_TASKS,
   HOST_CLARITY_1114_TASKS,
   DEEP_SCAN_1114_TASKS,
+  WELCOME_1115_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1208,6 +1209,14 @@ export const ADDITIONS = [
     // new lines (613). Both done; they reach the house with a publish.
     id: '2026-11-14-deep-scan',
     tasks: DEEP_SCAN_1114_TASKS,
+  },
+  {
+    // 15 Nov 2026, the party day: a welcome screen with Jon's Wi-Fi code and
+    // the whole household parading behind it in rows (614, done). A page on
+    // the brain only, never in git or on the site; nothing of the game changed.
+    // The same day, later: five how-to-play videos, one a game, on the brain (615, done).
+    id: '2026-11-15-welcome',
+    tasks: WELCOME_1115_TASKS,
   },
 ]
 
