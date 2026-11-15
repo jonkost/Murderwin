@@ -66,9 +66,19 @@ again.
   setup-page buttons are in italics, since bold is for the Host tab's (its
   test now reads the welcome row's words too, `scripts/test/docs.test.mjs`).
   Every package's tests and the checks pass (all clear).
-- **Left:** it reaches the house only with a publish of the site and the
-  server (the host command), on Jon's word; then he adds the welcome on the
-  door Mac's setup page. Card 616 (done).
+- **Published** 15 Nov at about 2:50 pm on Jon's "published when done": the
+  host command first (`firebase deploy --only functions:hostCommand`; the
+  rest of the server is as published at 3:25 am, its code the same but for
+  the welcome), then the site (b82ffdb), with the louder chimes (d4d8918)
+  and the re-levelled news films from another session. The 37 older play
+  bundles and four workshop ones were kept for screens left open, and 62
+  iCloud copies in `hosting/` (none on the live site) were moved into
+  `.git/icloud-copies-2026-11-15/hosting-afternoon/` before the build.
+  1,164 of 1,164 files matched the live site (1,138 byte for byte, the 26
+  large ones by size). Not pushed.
+- **Left:** on the door Mac, Jon adds the welcome on its setup page, in the
+  tab of its room screen. Every room screen needs its one click again for
+  its sound. Card 616 (done).
 
 ## 15 Nov 2026, noon · Claude Code (a how-to-play video for every game)
 
