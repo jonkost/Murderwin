@@ -423,10 +423,15 @@ the screen awake by itself where the iPad lets it.
      on them (the taps then read 0: that is not a teaching problem): check
      they are switched on, close that window and the Study's page, then
      double-click *Start the Study* again (only a fresh start tries the wall
-     again). If they stay down, the Study still plays: the screen shows each
-     pattern, and the Stream Deck's number keys 1 to 6 stand in for the
-     hexagons. `DOWN` beside `lines` alone is fine: the colour and the count
-     show on the screen.
+     again). If they stay down, the Study still plays, on the Stream Deck,
+     but nothing in the Study says so: its screen still says Touch any
+     hexagon to start, and the keys stay dark until the colour and the
+     count. So tell the room before the rounds start: in the Study, the
+     number keys stand in for the hexagons (1, 2, 3 down the third column,
+     4, 5, 6 down the fourth). Any number key starts the game; the screen
+     then shows six numbered circles with the order on the ones that light,
+     and the group presses those numbers in that order. `DOWN` beside
+     `lines` alone is fine: the colour and the count show on the screen.
    Then minimise that window (the yellow button at its top
    left): it keeps running, and the Study's guests see only the game, never
    the station's lines (your rule of 29 October: no setup words in front of
@@ -774,7 +779,8 @@ Nothing was taken off the tab. It is laid out by whose each button is.
   groups (nobody sees them yet). Two minutes later, on its own: the chime,
   the title card on the Parlour TV, and every phone shows its group as
   portraits with a Locked in button. The rounds start when everyone is
-  locked in, or two minutes after that. Each round is fifteen minutes (31 Oct 2026; it was ten) on the
+  locked in (a name you handed on is not waited for, and Locked in on your
+  Host tab leaves it out), or two minutes after that. Each round is fifteen minutes (31 Oct 2026; it was ten) on the
   server's clock: the chime sends every group to a room, and every group
   visits all four rooms once:
   - The Study: Granolia's Lightbulb Moment (the light puzzle), upstairs.

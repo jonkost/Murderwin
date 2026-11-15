@@ -26,7 +26,9 @@ this current game." and "Keep going".
   writes at once, the words), and nine more on what those had missed. Each
   finding was tried against the code by checkers, about two hundred in all,
   before anything changed; most were refuted or already handled. What stood
-  was fixed with a test each, and five reviewers read the fixes.
+  was fixed with a test each, and five reviewers read the fixes; three
+  more read the fixes those led to, two more the fixes after those, and
+  two more the last of them (each finding tried by two checkers).
 - **The Host tab asks first** (`askFirst`, which fails open) before: Next
   or Start Act 4 while bulletin 2 is armed and has not played
   (`hostSteps.js` `newsWaiting`, `NEWS_ASK`: an early Start Act 4 let the
@@ -78,9 +80,8 @@ this current game." and "Keep going".
   (`irwinvoice.js` `slideInto`: the room heard him start mid-word). Boo's
   arcade stands still in a pause (`Rooms.jsx` `BooRoom`: on the live clock
   it rang in the pause and ended the visit), its round's bar stands still
-  with it (`arcade.js` `nightRoundEnd`: it flickered), its farewell waits
-  for the house's chime, and on the night it leaves the round's chime to
-  the house (`Arcade.jsx`: it rang its own as well). "The votes are in."
+  with it (`arcade.js` `nightRoundEnd`: it flickered), and its farewell
+  waits for the house's chime. "The votes are in."
   holds until the reveal's reel comes (`screen.js`: the open door came back
   for two seconds). No words flash under the Victim's card, and a film
   that could not play keeps its words (`finale.js` `revealWords`). The
@@ -136,7 +137,7 @@ this current game." and "Keep going".
   return looks the same for a few seconds, and on a night's second
   blackout the tab showed it in red; until then it says the power is coming
   back, and Next stays off. Act 4's last chime rings once when two clocks
-  reach the end together (`act4.js` `claimFinishChime`: playing it first had
+  reach the end together (`act4.js` `ringFinishChime`: playing it first had
   made a second ring possible). A tick that lands while a call is still on
   its way to the phone leaves it to the call, so the phone buzzes once
   (`deal.js` `SETTLE_GRACE_MS`). Four guide lines: a pause holds the cat
@@ -145,9 +146,56 @@ this current game." and "Keep going".
   its taps read 0; the party night is never thrown away, at any time; Start
   the brain is in the folder Murderwin screens on the Desktop. Each fix has
   a test that fails without it.
-- **Checked** (numbers only): tests play 442, functions 450 (446 pass, 2
-  skipped, 2 to do), app 180, scripts 107, cues 137, station 90, none
-  failing; `npm run checks` says all clear
+- **Put right after the second review** (three readers on those fixes).
+  Act 4's last chime is written in the same commit as its claim
+  (`act4.js` `ringFinishChime`, with `screen.js` `cueRecord`, the record
+  `play()` writes): the claim written alone could stand with no chime,
+  when the clock that took it failed before the chime, or when its commit
+  landed, the answer was lost and the database ran it again, which then
+  found the claim and rang nothing. Boo's arcade rings its own chime on
+  the night again: held back, the Entryway's game stopped in silence at
+  the round's end, up to a minute before the house's chime; when the house
+  moves the round on first, the arcade's next step starts with no sounds
+  (`play/test/arcade.test.mjs` holds both; the third review found the two
+  could still ring a second apart, below).
+  Locked in leaves out a seat handed on, on the Host tab and on the server
+  (`house.js` `lockedInCount`, `act4.js` `due`): the count said 6 of 7
+  under 6 joined, and the rounds waited the full two minutes for a seat
+  with no phone. The guide's Study lines: with DOWN beside elements
+  nothing in the Study says the number keys stand in (its screen still
+  says to touch a hexagon, and the keys stay dark until the colour and the
+  count), so the host tells the room before the rounds start, which keys
+  they are, that any one starts, and to press the numbers the screen
+  lights in its order. Each fix has a test that fails without it.
+- **Put right after the third review** (two readers on those fixes). The
+  arcade's chime and the house's could still ring a second apart on Susan's
+  Mac: the house's clock that moves the round on often lands a second or so
+  after the round's end, and then its bells came just after the arcade's
+  four notes (on about a third of round ends). The arcade now holds its own
+  chime two seconds and rings it only if the house's has not come by then
+  (`arcade.js` `CHIME_HOLD_MS` and `heldChimeSounds`, `Arcade.jsx`; `Rooms.jsx`
+  `BooRoom` keeps the house's last chime from `public/sounds`, which
+  `Kiosk.jsx` passes it): when the house's chime comes within those two
+  seconds it is the only one; when the house's clock comes later, Boo's
+  chime is the Entryway's stop and the house's follows when it moves the
+  round on, as before. A page opened again after its round had ended (a
+  reload while the farewell holds) rang the chime afresh, and opened eight
+  seconds or more after the end it went through to free play before the
+  house moved on; it now opens
+  straight in the farewell, silent, naming nobody as out of time
+  (`arcadeEnded`). Run in a muted, hidden Chrome on the real page through a
+  round's end three ways: with no chime from the house, Boo's at 2.1
+  seconds; with the house's half a second after the end, Boo's never;
+  opened five seconds after the end, the farewell at once, silent; no
+  errors. Each fix has a test that fails without it. Two more readers then
+  read this change, and two checkers tried each thing they found: nothing
+  stood (a pause in the two seconds after a round's end lets Boo's chime
+  ring in the pause and the house's after Resume, the same pair as when
+  the house's clock is late; one test pins the older rule the hold leans
+  on, as its words say).
+- **Checked** (numbers only, after the last fix): tests play 445,
+  functions 453 (449 pass, 2 skipped, 2 to do), app 180, scripts 107, cues
+  137, station 90, none failing; `npm run checks` says all clear
   (dry run 1 of 1, leak checks 5 of 5); pretend nights pass with 2 to 14
   guests, and with fill-in players mixed in; both builds. No sound was run,
   no Shortcut, and not the brain.
