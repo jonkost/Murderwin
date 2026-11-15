@@ -9,6 +9,63 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 15 Nov 2026, afternoon and evening · Claude Code (a practice night run live, its fixes, and a whole publish)
+
+Jon ran a practice night (20261115-3a73, four joined) with Claude Code on
+Remote Control, and sent notes as he went. Published at about 5:05 pm on his
+"Everything": the site and the server (885eb38; all 26 functions; 1,219 of
+1,219 files matched the live site, 48 older files kept for screens left
+open). No night was live at the publish. Not pushed.
+
+What went wrong in the house, none of it the game's code:
+
+- **The brain was not running** at the start, and its Terminal window was
+  closed again later ("Sorry I didn't know terminal had to run on the
+  brain"). Started twice by Claude Code. A first start said "already
+  running": the guard had matched Claude Code's own shell, whose command
+  held the words it looks for.
+- **The six Hue scenes are not on the bridge** (`npm start -- --scenes`: 25
+  scenes, every Murderwin one MISSING), so no light scene set all night.
+- **Apple Home refused Shortcuts** ("Action set execution failed"):
+  Lightbulb Moment Music (TV Wonder), Default Jazz twice, AudioPanic once.
+- The Entryway's Stream Deck connected from `/setup` (Check the Stream Deck,
+  Connect). The Orangerie's page sat behind the Claude window on the brain.
+- The Parlour TV did not play the reveal's films (the server had marked them
+  to play and all 54 are on the site: the page wanted its click).
+- The credits and Sydney's card never played: The End came 51 seconds after
+  the Victim (the brain's log), a second before the credits begin.
+- The breed vote is not built (the decision breedMoment, default out).
+
+Built on his notes, all published:
+
+- A pet's voice plays to its end when its card leaves the screen (a tab
+  change or the news cut it off): `PetVoice.jsx`.
+- **Granolia speaks in the Study**: 48 lines made in her voice (her twelve
+  moments and the colour-and-number line, 36 ways), `StudyVoice` on the
+  Study's screen, silent in a pause. 882 voice files on the site.
+- **The Study's hexagons count in** with the bars and hold 0.9 s before the
+  first light; the count is 0.7 s a step (`station/lib/runner.js`). It
+  reaches the M1 Air when Start the Study is closed and opened again.
+- The Cats tab has no second dot (the house's status stays as words).
+- **The guess page** is two by two, or four drawings with names when the
+  bank has the wrong names drawn: `generate-relay-decoys.mjs` (blind, counts
+  only) added `decoyCells` to both banks (practice 18 of 18, party 17 of
+  17); `relay-bank.js` `hasDecoyDrawings`, `gridOf`.
+- The ballot offers only the motives the guest has not crossed off
+  (`ballotMotives`); a picked one stays, all crossed off shows them all.
+- Sir Irwin's rules slides and the vote's TV screen sit on Manor blue with
+  the wallpaper ("the Irwin background"); level 2's blur is 10px.
+- **Jenna's packing list** is each bag's number and the names of the things
+  in it, nothing else (built blind).
+
+iCloud made 508 copies (" 2.mp3") of voice files when the new ones were
+copied into the site's folder; moved to `.git/icloud-copies-2026-11-15b/`
+before the publish.
+
+Left: nobody has heard Granolia's Study lines or seen the new pages on a
+real device; no board card was added for this session; the Hue scenes; TV
+Wonder; whether to build the breed vote.
+
 ## 15 Nov 2026, afternoon · Claude Code (the Wi-Fi welcome inside the game, with Hide the welcome)
 
 Jon, the party day, of the welcome screen: "will in loop?" (yes), then "can
