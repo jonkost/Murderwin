@@ -75,7 +75,9 @@ again.
   iCloud copies in `hosting/` (none on the live site) were moved into
   `.git/icloud-copies-2026-11-15/hosting-afternoon/` before the build.
   1,164 of 1,164 files matched the live site (1,138 byte for byte, the 26
-  large ones by size). Not pushed.
+  large ones by size). Pushed at about 3 pm on Jon's "Yes, push", with
+  everything since the morning's push (8190520): seven commits of the day,
+  checked first for any trace of the Wi-Fi code (none).
 - **Left:** on the door Mac, Jon adds the welcome on its setup page, in the
   tab of its room screen. Every room screen needs its one click again for
   its sound. Card 616 (done).
