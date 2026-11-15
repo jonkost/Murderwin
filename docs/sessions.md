@@ -9,6 +9,132 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 14 Nov 2026, night · Claude Code (the deep scan of the night: the setup, the timing, the blackout, every cue, the game's logic and its order)
+
+Jon: "do a deep scan insuring the night runs smooth. This including setup,
+timing, the blackout, all cues, the logic of the game play, the correct
+order. Everything needs to be tight as possible." Then, while it ran: "end
+this current game." and "Keep going".
+
+- **The afternoon's practice night is ended** (20261114-7e46, at about
+  7:28 pm, by the host command `discard-night`, on his word). No night is
+  live: every phone is at the doors, the room screens on their screen saver.
+- **How it was done.** Thirty-five readers walked the night in the code in
+  six runs: twelve in the night's order (the setup, each act, the reveal,
+  The End), fourteen by a way of looking (the clocks, the pause, the
+  blackout, the cues and the sound, the screens, the two host phones, two
+  writes at once, the words), and nine more on what those had missed. Each
+  finding was tried against the code by checkers, about two hundred in all,
+  before anything changed; most were refuted or already handled. What stood
+  was fixed with a test each, and five reviewers read the fixes.
+- **The Host tab asks first** (`askFirst`, which fails open) before: Next
+  or Start Act 4 while bulletin 2 is armed and has not played
+  (`hostSteps.js` `newsWaiting`, `NEWS_ASK`: an early Start Act 4 let the
+  news play over the Act 4 title card, cut off by its chime); Back one at
+  Your result and at The End (it played the result's sting, the jazz and
+  the lights again over Mic's last words, or took The End and Good night
+  off every screen); Cake! while Sir Irwin speaks; a new Study key word
+  (the brain reads it once when it starts, so a new word stopped the Study
+  and bulletin 2); the Sound test on the party night (`SoundList.jsx`
+  `SOUND_TEST_ASK`; a practice night plays at one touch, as before).
+- **The Host tab's other changes.** At Ready for the dark it says so when
+  the brain has gone quiet while the room screens have not (`house.js`
+  `isBrainQuiet`), and after the dark what to press if the power came back
+  only part way (`halfPower`). Make the groups stays grey until after the
+  blackout (its press deals the case it needs). In the reveal, the next
+  name and Hold the screen wait while a name's film plays (a second press
+  cut the film before Mic said the name). Spill the Beans answers the same
+  words whether it worked or not, and tells the host to have everyone read
+  their card again (a spill that worked changes two role cards with no
+  buzz). A line that said the slots run on this phone's clock is gone. The
+  card at the top now says: before the Blackout, check the number joined is
+  the number playing; at Sir Irwin, tell the room to cross off while his
+  cards are up; before Act 6, offer a break; at Talk it over, how the two
+  hidden roles vote (on their phones, in secret); in the reveal, press Next
+  once the Victim's card is up; and bulletin 2 plays three to six minutes
+  after it is armed (three to five plus the minute's tick; `seed/night.json`
+  too).
+- **The phones.** Sorry for the interruption waits for the role card, at
+  most five seconds from the power's return (`night.js` `cardOnItsWay`,
+  `Moments.jsx`: a quick tap showed the stand-in words, then the card
+  swapped in). A tapped name at the doors asks first (`Join.jsx`). A phone
+  whose first sign-in fails tries again every three seconds (`lib/signin.js`
+  `keepSignedIn`: it sat on Reconnecting for good). The review found the
+  first version of that retry threw on every phone and never tried again:
+  a browser refuses its `setTimeout` called as a method of another object
+  ("Illegal invocation"), and Node does not, so the tests passed. It now
+  calls the page's own timers as plain functions (`PAGE_TIMERS`), and
+  `play/test/signin.test.mjs` runs it under browser-strict timers with
+  none passed, as the page does. True Friend of the
+  Groundskeeper shows on Now (a card with no act never showed), and the Eyes
+  on the screen card goes at The End (`nowCards`). The two host phones nudge
+  the clock every twenty seconds through Act 6's two games, whatever they
+  show (`hostNudges`, `App.jsx`), so a game the clock closed no longer waits
+  up to a minute, twice. A phone lowered in Get Off My Lawn!'s cheer never
+  starts the round over (`Act4.jsx`).
+- **The screens.** Sir Irwin's first drawing slide starts at its start
+  (`irwinvoice.js` `slideInto`: the room heard him start mid-word). Boo's
+  arcade stands still in a pause (`Rooms.jsx` `BooRoom`: on the live clock
+  it rang in the pause and ended the visit), and its farewell waits for the
+  house's chime (`Arcade.jsx`). "The votes are in." holds until the reveal's
+  reel comes (`screen.js`: the open door came back for two seconds). No
+  words flash under the Victim's card (`finale.js` `revealWords`). The
+  credits' Thank you names each person once (`uniqueNames`: the hosts who
+  play are guests too). A Mac's second screen (`?kiosk=decor`) sends no
+  heartbeat (`hooks.js`: it shares the room screen's sign-in, so the Host
+  tab's dot and Sound on came and went, and Boo's arcade could be refused
+  its clue).
+- **The server.** The party night can never be thrown away (`discard.js`).
+  A drawing whose start fails lets its claim go, so the next clock tries
+  again (`run.js`, `flow.js` `releaseGamesDone`). A pause holds the cat
+  visits' clocks too (`night.js` `PAUSE_SHIFTED` has `private/lights`).
+  Act 4's last chime is played first, before the pay-outs (`act4.js`
+  `finishRounds`: it came after them, too late for any page to play it).
+  Two cards dealt to one phone at the same moment both land (`deal.js`
+  `dealCard` and `salemPetted`, `station.js` `dealOnce`, `finale.js`'s
+  award card: one transaction each; the second write could drop the first).
+  A phone whose Act 2 card was left on Wait by two moves at once is put
+  right at the next clock, twenty seconds while the Host tab is open and a
+  minute at most (`deal.js` `settleLights` in `tickLights`;
+  `functions/test/races-1114.test.mjs`). And a guest who first arrives
+  during the cat visits, or after the groups are made, no longer changes
+  the bag words the others are being given (`deal.js` `heldBags`: the cat
+  line keeps the bags held when it was made, in `private/lights`
+  `inPlay`; `act4.js` `rewardOf`: the grouped seats' bags only;
+  `functions/test/latebag.test.mjs`, which fails with either half undone):
+  a guest could hear two different true words and pin the Murderer's bag
+  (on about 2 in 100 nights with such a late guest). Left at first as
+  rare; put in because the server is being published anyway.
+- **The brain.** The bedroom lock light turns red at once at the power's
+  return (`cues/lib/cues.js` `hallColour`: the welcome's green came back
+  for a few seconds, until the server's red), and the cake's song stops
+  with the Music app paused (`cues/cues.mjs` `serveCake`). Both take effect
+  when the brain is next started. The screen files never move Start the
+  brain aside (`scripts/screen-files.mjs`).
+- **The guide** (`docs/on-the-night.md`, the Devices page and Set up the
+  house, `docs/run-sheet.md`, `docs/cues-relay.md`, `docs/read-aloud.md`):
+  the Parlour TV must be in Google Chrome, not Safari (in Safari its films
+  play silent though it says Sound on); the Study's window must say taps
+  taught for 10, and a Stream Deck line or DOWN beside elements means close
+  it and start the Study again; keep the workshop off the phones on the day,
+  and reload the game if the Host tab stops changing; what each new
+  question asks; the bedroom lock light by its name.
+- **Checked** (numbers only): TESTS_LINE; `npm run checks` says all clear
+  (dry run 1 of 1, leak checks 5 of 5); pretend nights pass with 2 to 14
+  guests, and with fill-in players mixed in; both builds. No sound was run,
+  no Shortcut, and not the brain.
+- **Not published.** The site and the server have both changed (the rules
+  have not). A publish waits for Jon's word; after it, every room screen
+  needs its one click again for its sound.
+- **Known and left:** Sir Irwin explains the drawing over Intense Music at
+  35%, and his door line comes under the door's sting and the music coming
+  up (both for Jon's ear). A chime the brain does not play can still cut
+  off bulletin 2 while the brain speaks it (only if a host presses one
+  then). The Spill's card rewrite is not one transaction (a Spill works
+  only before any clue, when nothing else writes the cards). The Game test
+  tab's box words (the tab is off the menu).
+- Decisions: none taken.
+
 ## 14 Nov 2026, later that evening · Claude Code (the role's name on the role card; the Host tab says what is yours and what is a fail-safe)
 
 Jon, three notes at once: "Has the bottom of the "your role" that states

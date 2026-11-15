@@ -40,6 +40,7 @@ import {
   IRWIN_BAR_1114_TASKS, IRWIN_BAR_1114_DECISIONS,
   SCREAM_1114_TASKS,
   HOST_CLARITY_1114_TASKS,
+  DEEP_SCAN_1114_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1201,6 +1202,12 @@ export const ADDITIONS = [
     // All done.
     id: '2026-11-14-host-clarity',
     tasks: HOST_CLARITY_1114_TASKS,
+  },
+  {
+    // 14 Nov 2026, night: the deep scan of the night. What was put right (612) and the guide's
+    // new lines (613). Both done; they reach the house with a publish.
+    id: '2026-11-14-deep-scan',
+    tasks: DEEP_SCAN_1114_TASKS,
   },
 ]
 
