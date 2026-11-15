@@ -38,6 +38,22 @@ test('wifi-welcome: hide and show land on the night doc, and nothing else moves'
   assert.equal(n.beat, 'arrive')
 })
 
+test('wifi-welcome: a hide holds through the intro and a Back one to Arrivals, until Show the welcome', async () => {
+  // as the guide says (the review, 15 Nov): Back one for a late guest brings the welcome back only if it was not hidden
+  const db = new FakeFirestore()
+  const nightId = await arrivals(db)
+  await hostCommand(db, { nightId, command: 'wifi-welcome', arg: 'hide', now: T0 + 1000 })
+  await hostCommand(db, { nightId, command: 'next', now: T0 + 2000 })
+  let n = (await db.doc(`nights/${nightId}`).get()).data()
+  assert.equal(n.beat, 'rules', 'the intro')
+  await hostCommand(db, { nightId, command: 'back', now: T0 + 3000 })
+  n = (await db.doc(`nights/${nightId}`).get()).data()
+  assert.equal(n.beat, 'arrive', 'held at Arrivals for a late guest')
+  assert.equal(n.wifiWelcome.hidden, true, 'still hidden: the Host tab says so and offers Show the welcome')
+  await hostCommand(db, { nightId, command: 'wifi-welcome', arg: 'show', now: T0 + 4000 })
+  assert.equal((await db.doc(`nights/${nightId}`).get()).data().wifiWelcome.hidden, false)
+})
+
 test('wifi-welcome: only hide or show, and a pause does not hold it', async () => {
   const db = new FakeFirestore()
   const nightId = await arrivals(db)

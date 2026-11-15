@@ -16,6 +16,7 @@ const scriptsOf = p => Object.keys(JSON.parse(read(p)).scripts ?? {})
 
 const runbook = read('docs/on-the-night.md')
 const hostJsx = read('play/src/screens/Host.jsx') + read('play/src/screens/SoundList.jsx') + read('play/src/lib/soundList.js') + read('play/src/screens/BlackoutTest.jsx') // the Host tab's own parts (11 Nov 2026)
+  + read('play/src/lib/wifiwelcome.js') // its Hide the welcome row's words (15 Nov 2026); the setup page's buttons are in italics
 const spans = (text, re) => [...text.matchAll(re)].map(m => m[1])
 
 test('on-the-night.md: every npm command it names is a script that exists', () => {

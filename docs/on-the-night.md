@@ -272,16 +272,21 @@ Sirwin Manor above it and Scan for Wi-Fi under it, and the fourteen
 characters and the five pets parading behind it in three rows. Since the
 afternoon of 15 Nov the game shows it on the screen by the front door:
 AirDrop the file to that Mac; there, in Google Chrome, in the tab of its
-room screen (or a new one), open the setup page
-(`murderwin-at-sirwin-manor.web.app/setup`), press **Add the welcome** under
-*The Wi-Fi welcome* and pick the file, then tap that Mac's room as usual and
-click the screen once. From Start the night, that screen shows the welcome
-while the guests arrive, and its own screen comes back by itself when the
-intro starts at 4:30 (Back one to Arrivals brings the welcome back for late
-guests). **Hide the welcome** on the Host tab, under the countdown, takes it
-down sooner; **Show the welcome** brings it back. Nothing to close or
-reload, and the screen stays full screen. Never on the Parlour TV, which
-shows the join code. **Take it off this Mac** on the setup page removes it.
+room screen (not a new tab: two room screens on one Mac play every chime
+twice), open the setup page (`murderwin-at-sirwin-manor.web.app/setup`),
+press *Add the welcome* under *The Wi-Fi welcome* and pick the file, then
+tap that Mac's room as usual and click the screen once. From Start the
+night, that screen shows the welcome while the guests arrive, with the
+mouse arrow hidden, and its own screen comes back by itself when the intro
+starts at 4:30 (Back one to Arrivals brings the welcome back for late
+guests, unless you pressed Hide the welcome: then press Show the welcome).
+**Hide the welcome** on the Host tab, under the countdown, takes it down
+sooner; **Show the welcome** brings it back. Nothing to close or reload,
+and the screen stays full screen. Never on the Parlour TV, which shows the
+join code. It stays on that Mac until *Take it off this Mac* on the setup
+page, after the party. If that Mac's Chrome is run by Susan's work
+(chrome://management says so), a picked file may go to her work's own
+checks: there, open the file in its own tab instead, as below.
 On a Mac with no game screen the file still opens by itself: a double-click,
 Google Chrome or Safari, click once (full screen and awake; Escape leaves,
 Command-W closes). Your Wi-Fi password is inside its code: it stays in the

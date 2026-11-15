@@ -38,11 +38,13 @@ export function wifiWelcomeShown(night, { kept = false, which = null } = {}) {
   return night.wifiWelcome?.hidden !== true
 }
 
-// The Host tab's row, at Arrivals only: its line, its button and what the button sends.
+// The Host tab's row, at Arrivals only: its line, its button and what the button sends. The tab cannot know
+// whether any Mac keeps the page (it lives in that Mac's browser alone), so the line names the Mac it was added to.
+// A hide holds until Show the welcome, through the intro and a Back one to Arrivals.
 export function wifiWelcomeButton(night) {
   const hidden = night?.wifiWelcome?.hidden === true
   return {
-    line: hidden ? 'The Wi-Fi welcome is hidden.' : 'The Wi-Fi welcome shows until the intro.',
+    line: hidden ? 'The Wi-Fi welcome is hidden.' : 'The Mac you added the Wi-Fi welcome to shows it until the intro.',
     label: hidden ? 'Show the welcome' : 'Hide the welcome',
     arg: hidden ? 'show' : 'hide',
   }

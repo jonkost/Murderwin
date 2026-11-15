@@ -27,7 +27,8 @@ again.
   runs none of its script and takes no click (so the room's first click still
   makes it full screen and wakes its sound), never drawn again at the
   screen's redraws. It goes by itself when the intro starts (Back one to
-  Arrivals brings it back), and never on the Parlour TV (the join code). The
+  Arrivals brings it back, unless it was hidden: a hide holds until Show the
+  welcome), and never on the Parlour TV (the join code). The
   countdown stays mounted underneath and moves the night on at 4:30 as before
   (`Kiosk.jsx`).
 - **The Host tab**, at Arrivals only, under the countdown: one line and
@@ -46,6 +47,25 @@ again.
   countdown showed; a second tab taking it off, then adding it again, changed
   the open room screen with no reload; no errors. The Host tab's row was
   seen in the preview (`?preview=host-start`).
+- **Reviewed** by three readers (the room screens, the Host tab and the
+  server, privacy and failure), each finding tried by two checkers before
+  any change; all minor, all put right: the guide said Back one brings the
+  welcome back, and a hide holds (the guide and the card say so, a server
+  test pins it); the Host tab's line said the welcome was up, which it
+  cannot know (it now names the Mac it was added to); the mouse arrow stayed
+  on the card, since the page's own hide-when-still is a script the frame
+  never runs (`html:has(.kiosk-wifi-welcome)` hides it while the welcome
+  shows; measured in Chrome: none over the whole screen, back with it
+  hidden, the setup page untouched); and "the tab of its room screen (or a
+  new one)" could leave two room screens on the door Mac, every chime twice
+  (now "not a new tab"). Privacy held: nothing reads the browser's storage
+  wholesale or sends it anywhere, the frame has no script, form, link or
+  request, and the server gets only `{ hidden, at }`. Noted in the guide: a
+  work Chrome may send a picked file to its own checks (open the file in its
+  own tab there), and Take it off this Mac after the party. The guide's
+  setup-page buttons are in italics, since bold is for the Host tab's (its
+  test now reads the welcome row's words too, `scripts/test/docs.test.mjs`).
+  Every package's tests and the checks pass (all clear).
 - **Left:** it reaches the house only with a publish of the site and the
   server (the host command), on Jon's word; then he adds the welcome on the
   door Mac's setup page. Card 616 (done).

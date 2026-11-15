@@ -41,7 +41,8 @@ test('the welcome shows only at Arrivals, while the night plays, on a machine th
 })
 
 test('the Host tab’s row: one line, one button, and what it sends', () => {
-  assert.deepEqual(wifiWelcomeButton(ARRIVE), { line: 'The Wi-Fi welcome shows until the intro.', label: 'Hide the welcome', arg: 'hide' })
+  // the tab cannot know which Mac keeps the page, so it never says the welcome is up as a fact (the review, 15 Nov)
+  assert.deepEqual(wifiWelcomeButton(ARRIVE), { line: 'The Mac you added the Wi-Fi welcome to shows it until the intro.', label: 'Hide the welcome', arg: 'hide' })
   assert.deepEqual(wifiWelcomeButton({ ...ARRIVE, wifiWelcome: { hidden: true } }), { line: 'The Wi-Fi welcome is hidden.', label: 'Show the welcome', arg: 'show' })
   assert.equal(wifiWelcomeButton(null).arg, 'hide')
   // the server takes exactly these two words
@@ -92,6 +93,8 @@ test('the room screen shows the page whole, with no script, and lets its first c
   const rule = css.match(/\.kiosk-wifi-welcome \{[^}]*\}/)?.[0] ?? ''
   assert.match(rule, /pointer-events: none/, 'the room screen’s first click still makes it full screen and wakes its sound')
   assert.match(rule, /z-index: 70/)
+  // no mouse arrow on the card while it shows: the page's own hide-when-still is a script, which cannot run there
+  assert.match(css, /html:has\(\.kiosk-wifi-welcome\), html:has\(\.kiosk-wifi-welcome\) \* \{ cursor: none !important; \}/)
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.match(kiosk, /wifiWelcomeShown\(n, \{ kept: !!keptWelcome, which \}\)/)
   assert.match(kiosk, /<IntroCountdown [^>]*\/>\}\n\s*\{welcome && <WifiWelcomeOverlay/, 'drawn after the countdown, which stays mounted and moves the night on')

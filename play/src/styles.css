@@ -1372,6 +1372,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 /* the Wi-Fi welcome (15 Nov 2026): the kept page over the whole room screen while the guests arrive, above the
    countdown, under the corner marks; it takes no click, so the room screen's first click still lands */
 .kiosk-wifi-welcome { position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; margin: 0; padding: 0; display: block; z-index: 70; pointer-events: none; background: #001925; }
+/* and no mouse arrow on its card while it shows: the page's own hide-when-still cannot run in the frame, and the
+   room screen under the frame decides the arrow (the review, 15 Nov); a click still lands anywhere */
+html:has(.kiosk-wifi-welcome), html:has(.kiosk-wifi-welcome) * { cursor: none !important; }
 .kiosk.intro-video { background: #000; display: flex; align-items: center; justify-content: center; padding: 0; }
 .kiosk.intro-video video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
 
