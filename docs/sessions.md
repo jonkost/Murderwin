@@ -95,7 +95,8 @@ Do you even read what I say?"
   functions updated, none added or taken away. The site: 3 pages and 6 new
   bundles changed, every media file the same, and the 30 older bundles
   kept for screens left open. Afterwards 1,153 of 1,153 files matched
-  the live site. Not pushed. The practice night from the afternoon's
+  the live site. Pushed the same evening, on his "Yes, push", with
+  everything since the morning's push. The practice night from the afternoon's
   blackout test was live through it, at Act 2, and was not touched. The
   party night is to be started after this, so its role cards carry their
   names.
