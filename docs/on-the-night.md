@@ -271,12 +271,14 @@ folder on the brain's Desktop is a page of its own for a screen by the front
 door while the guests arrive: your Wi-Fi code on a card, Welcome to Sirwin
 Manor above it and Scan for Wi-Fi under it, and the fourteen characters and
 the five pets parading behind it in three rows. AirDrop it to that Mac, open
-it in Google Chrome (or double-click it) and click once: it fills the screen.
-Escape leaves full screen; Command-W closes it. It needs no internet and is
-not part of the game, so nothing on the night changes it and it does not go
-dark with the house. If that Mac also shows a room's game screen, close the
-welcome screen at 4:30, when the intro starts. Your Wi-Fi password is inside
-its code: it stays on the Macs, never in git or on the site.
+it in Google Chrome or Safari (a double-click) and click once: it fills the
+screen and keeps the screen awake. Escape leaves full screen; Command-W
+closes it. It needs no internet and is not part of the game, so nothing on
+the night changes it and it does not go dark with the house. If that Mac
+also shows a room's game screen, close the welcome screen at 4:30, when the
+intro starts, then reload the game screen (Command-R) and click it once, so
+it is full screen again. Your Wi-Fi password is inside its code: it stays on
+the Macs, never in git or on the site.
 
 ## Start order, and how you know each one is alive
 

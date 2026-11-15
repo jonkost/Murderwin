@@ -68,13 +68,15 @@ characters it rows with each row slide them in opposite directions."
   Three rows slide across the whole screen: the fourteen characters (one
   scale for all, so each keeps the height Jon drew) waddle left, the five
   household faces bob to the right, the fourteen again (another order)
-  waddle left. Each row's track holds it three times and moves by exactly
-  one row a loop, so the loop has no seam. In front, the approved look's
+  waddle left. Each row is three copies end to end, each sliding one row's
+  width a loop and jumping back only while wholly off the screen, so the
+  loop has no seam. In front, the approved look's
   marquee card: Welcome, to Sirwin Manor, the brass rule, the code on
   parchment in the house's own QR colours (`lib/qr.js`), Scan for Wi-Fi,
-  and the wax seal on its corner. Full screen on the first click or key
-  (as the room screens), the screen kept awake (Screen Wake Lock), the
-  pointer hidden when still. An upright screen shows two rows, smaller.
+  and the wax seal on its corner. Full screen on a click or key (as the
+  room screens, and again after Escape), the screen kept awake (Screen Wake
+  Lock), the pointer hidden when still. An upright screen shows two rows,
+  smaller.
 - **The code, never read.** It holds the house's Wi-Fi password, so its
   words were never decoded: `qr_grid.py` read the squares from Jon's
   picture (every finder and timing square fitting, every pixel agreeing),
@@ -89,9 +91,35 @@ characters it rows with each row slide them in opposite directions."
   timeline test's pinned migrations moved back by one. `docs/on-the-night.md`
   has a paragraph on the welcome screen under *Which machine does what*: if
   the Mac by the door also shows a room's game screen, close the welcome
-  screen at 4:30, when the intro starts.
+  screen at 4:30, when the intro starts, then reload the game screen and
+  click it once (opened in that Mac's Chrome, the welcome page is a tab
+  beside it and knocks it out of full screen, and a room screen asks for
+  full screen only once a load).
+- **The review (early afternoon; four readers, three skeptics, all on the
+  page in a hidden Chrome and this Mac's own WebKit).** Fixed: in Safari the
+  one click spent itself on full screen, so the screen's wake was refused
+  and the door's screen would have slept at the Mac's display-off time (the
+  wake is now asked for first, inside the same click or key); a key such as
+  Shift before the click spent the only full-screen try (any click or key
+  now asks again, never Escape or a key held with Command); the whole
+  screen held a frame at every loop's end (now each copy jumps on its own,
+  off the screen: a 40-second film showed eight jumps, and no frame held
+  at any of them);
+  the wax seal sat on a marquee bulb and the frame lines; the brass rule
+  had grey ends; heads and feet of the outer rows peeked round the card;
+  the twinkles crossed the faces. The tools now read relative paths from
+  their own folder and refuse to write inside the repo outside `media/`
+  (run from the repo's root they would have written the code into an
+  unignored `build/`). The page is now in the *Murderwin screens* folder
+  (it was not). Jon's preview clip is made from the same page with a
+  stand-in code (`standin_grid.swift`), since a picture of the real page is
+  never sent anywhere.
 - **Checked:** the app tests (181 of 181) and the play tests (445 of 445).
-  Nothing of the site or the server changed; nothing to publish.
+  Nothing of the site or the server changed; nothing to publish. After the
+  review: the code gives the right fingerprint at 1920x1080, 1280x800,
+  1024x768, 768x1024, 2560x1080 and 3840x2160, every row's copies meet end
+  to end and cover the screen at each, and the Desktop copy is the same
+  file as the one built.
 
 ## 14 Nov 2026, night · Claude Code (the deep scan of the night: the setup, the timing, the blackout, every cue, the game's logic and its order)
 
