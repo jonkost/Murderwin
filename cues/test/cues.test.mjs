@@ -13,6 +13,10 @@ test('hall: red when the night says red, green when it says green or the door is
   assert.equal(hallColour({ cues: { hall: 'red' } }), 'red')
   assert.equal(hallColour({ cues: { hall: 'green' } }), 'green')
   assert.equal(hallColour({ cues: { hall: 'red' }, relay: { doorOpen: true } }), 'green', 'the door opening wins')
+  // 14 Nov 2026, the deep scan: the power's return writes the role cards' phase before the server's red
+  assert.equal(hallColour({ night: { act: 2, phase: 'prompt' }, cues: { hall: 'green' } }), 'red', 'red from the power’s return, not the welcome’s green')
+  assert.equal(hallColour({ night: { act: 2, phase: 'paused', pausedFrom: 'prompt' }, cues: { hall: 'green' } }), 'red', 'and through a pause there')
+  assert.equal(hallColour({ night: { act: 2, phase: 'act' }, cues: { hall: 'green' } }), 'green', 'after the prompt the server’s colour rules')
   assert.equal(hallColour({ relay: { doorOpen: true } }), 'green', 'no cues doc at all still turns green')
 })
 

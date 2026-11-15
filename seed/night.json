@@ -138,7 +138,7 @@
         {
           "key": "bulletin",
           "name": "Arm the bulletin",
-          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 5 minutes later, from the brain's own speakers in the Orangerie, with its words on the iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When supper is over, press Next for the dinner wrap-up.",
+          "what": "Near the end of supper, press Next to arm W-O-O-F News bulletin 2. It plays on its own 3 to 6 minutes later, from the brain's own speakers in the Orangerie, with its words on the iPad. Your phone says only Armed. The phones get the bulletin notice when it plays. When supper is over, press Next for the dinner wrap-up.",
           "action": "arm:bulletin"
         },
         {
@@ -266,7 +266,7 @@
         {
           "key": "talk",
           "name": "Talk it over",
-          "what": "Everyone talks. Every phone says the vote is next, and the Parlour TV shows the three questions over everyone's portraits. No taps and no clock; the music stays as at the door. Before the vote, say: Murderer, name yourself as the Murderer. Ghost, name yourself as the Ghost. Press Start the vote when the room is ready.",
+          "what": "Everyone talks. Phones say the vote is next; the TV shows the three questions. No taps, no clock; the music stays as at the door. Say: at the vote, on your phone: if you are the Murderer, pick yourself as the Murderer. If you are the Ghost, pick yourself as the Ghost. Keep it secret. Then press Start the vote.",
           "action": "notice:talk",
           "screen": "talk"
         }

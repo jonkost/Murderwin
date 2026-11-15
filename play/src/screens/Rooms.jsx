@@ -673,10 +673,14 @@ export function BooRoom({ boo, night, nightId, rotation = null, serverNow }) {
     const members = (rotation?.groups ?? []).find(g => g.id === held.groupId)?.members ?? []
     const players = members.map(m => ({ name: m.name || m.characterName || '', key: m.key }))
     const preview = nightId === 'preview'
+    // in a pause public/boo.slotEndsAt stays where it was until Resume moves it on, so the arcade reads the
+    // night's clock stopped at the pause, as the Orangerie's board does: the deck plays on and the chime waits
+    // for the moved end (14 Nov 2026, the deep scan: on the live clock it rang in the pause and ended the visit)
+    const clock = night.phase === 'paused' && night.pausedAt ? () => ms(night.pausedAt) : serverNow
     const nightProps = {
       players: players.length ? players : [{ name: '', key: null }],
       slotEndsAt: ms(boo?.slotEndsAt) || held.startsAt + 15 * 60_000,
-      serverNow,
+      serverNow: clock,
       seed: held.startsAt,
       chime: gone,
       onClue: place => (preview ? Promise.resolve(STAND_IN_CLUE) : callArcadeClue({ nightId, groupId: held.groupId, place }).then(r => r?.data?.text ?? null)),

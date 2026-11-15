@@ -3819,3 +3819,16 @@ test('G55 the visit\'s free play keeps the house\'s chime (6 Nov 2026): a pause 
   assert.equal(after.mode, 'free')
   assert.equal(after.stage, 'home')
 })
+
+test('G55 on the night the farewell holds until the house has moved the round on (14 Nov 2026, the deep scan)', () => {
+  const page = uncommented(src('../src/screens/Arcade.jsx'))
+  assert.match(page, /if \(n && a\.stage === 'farewell' && !n\.chime\) return show\(a, now\)\s*move\(arcadeStep\(a, now\), now\)/)
+  assert.match(page, /if \(!live \|\| !a\) return\s*if \(nightRef\.current && a\.stage === 'farewell' && !nightRef\.current\.chime\) return\s*const now = performance\.now\(\)/)
+})
+
+test('G55 on the night a press on the Stream Deck makes the games\' sounds: every visit is a fresh arcade and the kiosk keeps the wake, so it never waits for a click of its own; the practice page still does (14 Nov 2026, the deep scan)', () => {
+  const page = uncommented(src('../src/screens/Arcade.jsx'))
+  assert.match(page, /const heardRef = useRef\(!!night\)/, 'on the night the gate starts open: sfx still plays only once the page\'s AudioContext runs')
+  assert.match(page, /function play\(events\) \{\s*if \(!heardRef\.current \|\| !events\?\.length\) return\s*const ctx = wakeAudio\(\)/, 'the practice page waits for its first click, as before')
+  assert.equal((page.match(/heardRef\.current = true/g) ?? []).length, 1, 'and its first click is still the only other way in')
+})

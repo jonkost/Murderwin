@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { walkLights } from './lights-walk.mjs'
-import { createNight, join, MOTIVES, CHARACTERS } from '../lib/night.js'
+import { createNight, join, MOTIVES, CHARACTERS, PAUSE_SHIFTED } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
 import { NIGHT, beatsOf, lightsPath, LIGHTS_CATS, CAT_ROOMS, GO_MS, LATER_MS, ms, revealTrace } from '../lib/deal.js'
 import { memoryBoards, memoryPath, MEMORY_ROUNDS, ALL_TRACES } from '../lib/act4.js'
@@ -415,6 +415,26 @@ test('F21 every player is always told where to go next: through the waves, a no-
   }
   told()
   assert.ok(Object.keys(uids).length === 9)
+})
+
+test('F21b a pause in the cat visits holds the line: nobody is moved on for the pause (14 Nov 2026, the deep scan)', async () => {
+  const now = 4_000_000
+  const { db, nightId } = await lightsParty(9, now)
+  const deck = db.store.get(`nights/${nightId}/private/deck`).uids
+  const [reader, walker] = Object.entries(db.store.get(lightsPath(nightId)).guests).filter(([, g]) => g.step === 'go').map(([k, g]) => ({ k, cat: g.cat }))
+  const lines = () => db.store.get(`sessions/${deck[walker.k]}`).cards.filter(c => c.kind === 'testimony').length
+  await player.meetCat(db, { nightId, uid: deck[reader.k], cat: reader.cat, now: now + 30_000 })
+  await hostCommand(db, { nightId, command: 'pause', now: now + 60_000 })
+  await hostCommand(db, { nightId, command: 'resume', now: now + 360_000 })
+  await hostCommand(db, { nightId, command: 'tick', now: now + 361_000 })
+  assert.equal(stepOf(db, deck[walker.k]), 'go', 'still called: three minutes left')
+  assert.equal(lines(), 0, 'no cat lines without the visit')
+  assert.equal(stepOf(db, deck[reader.k]), 'with')
+  await hostCommand(db, { nightId, command: 'tick', now: now + 300_000 + GO_MS - 1 })
+  assert.equal(stepOf(db, deck[walker.k]), 'go', 'not a moment early')
+  await hostCommand(db, { nightId, command: 'tick', now: now + 300_000 + GO_MS })
+  assert.equal(lines(), 1, 'moved on at their own four minutes')
+  assert.deepEqual(PAUSE_SHIFTED['private/lights'], LIGHTS_CATS.map(cat => `cats.${cat}.since`))
 })
 
 // ---- F22 and F23: Not yet, and the queue never stalls ---------------------------

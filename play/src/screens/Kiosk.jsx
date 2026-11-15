@@ -13,7 +13,7 @@ import { ms } from './Relay'
 import IrwinBar from './IrwinBar'
 import { studyLines, uiLines } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
-import { finaleStage, shownStats, shownAchievements, revealView, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes, anchored, countingBar } from '../lib/finale'
+import { finaleStage, shownStats, shownAchievements, revealView, revealWords, uniqueNames, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes, anchored, countingBar } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
 import { rulesScreenAt, introLag } from '../lib/rulesfilm'
 import RulesFilm from './RulesFilm'
@@ -26,6 +26,7 @@ import { useDeckDark } from '../lib/useDeckDark'
 import Spoken from './Spoken'
 import { IrwinSpeech } from './PetVoice'
 import IrwinVoice from './IrwinVoice'
+import { slideInto } from '../lib/irwinvoice'
 import { celebrate } from '../lib/celebrate'
 import { RoomEnd, CreditsDedication, SpecialThanks } from './Closing'
 import { roomEnded } from '../lib/closing'
@@ -399,7 +400,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
               </div>
             </div>
           : <p className="kiosk-line slide-text"><Spoken text={s.text} /></p>)}
-        {s?.voice && !captionsOnly && <IrwinVoice key={`${ms(relay.startedAt)}:${index}`} id={s.voice} voiceMs={s.voiceMs} into={into} />}
+        {s?.voice && !captionsOnly && <IrwinVoice key={`${ms(relay.startedAt)}:${index}`} id={s.voice} voiceMs={s.voiceMs} into={slideInto(index, into)} />}
       </div>
     )
   }
@@ -915,7 +916,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
           ))}
         </div>
       )}
-      {stage !== 'done' && rv.captions.map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
+      {stage !== 'done' && revealWords(finale, stage, rv).map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>
@@ -1011,7 +1012,7 @@ function Credits({ finale, now }) {
           {(c.splits ?? []).map((q, i) => <li key={i}><span className="split-q">{q.q}</span><span>{q.a.text} {q.a.count} · {q.b.text} {q.b.count}</span></li>)}
         </ul>
         <p className="kiosk-crest">Thank you</p>
-        <ul className="thanks">{(c.thanks ?? []).map(t => <li key={t}>{t}</li>)}</ul>
+        <ul className="thanks">{uniqueNames(c.thanks).map(t => <li key={t}>{t}</li>)}</ul>
         <SpecialThanks finale={finale} />
       </div>
     </div>

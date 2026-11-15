@@ -41,6 +41,7 @@ test('the heartbeat carries the sound mark, and falls back to the plain row if t
   assert.ok(hooks.includes('export function useServerClock(uid, nightId, guestKey, extra = null)'))
   assert.ok(hooks.includes("e?.code !== 'permission-denied'") && hooks.includes('plain.current = true'), 'a refused row is sent again without the extras')
   assert.ok(hooks.includes('await setDoc(ref, row)'), 'so a room screen never falls silent to the house')
+  assert.ok(hooks.includes("if (!uid || guestKey === 'kiosk-decor') return"), 'a Mac’s own screen sends no heartbeat: its browser’s one row stays the room screen’s (14 Nov 2026)')
   const kiosk = read('../src/screens/Kiosk.jsx')
   assert.ok(kiosk.includes('useServerClock(uid, nightId, `kiosk-${which}`, { sound })'))
   assert.ok(kiosk.includes('export function useScreenSound()'))

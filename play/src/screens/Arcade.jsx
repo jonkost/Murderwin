@@ -209,7 +209,7 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   const [problem, setProblem] = useState(null)
   const heldRef = useRef(null) // the connected deck: { deck, painter, off }
   const attachRef = useRef(null)
-  const heardRef = useRef(false)
+  const heardRef = useRef(!!night) // on the night the kiosk keeps the wake (Kiosk.jsx useScreenSound) and every visit is a fresh mount: it never waits for a click of its own (14 Nov 2026)
   const [heard, setHeard] = useState(false)
   const mainRef = useRef(null)
   const inputRef = useRef(null)
@@ -266,6 +266,7 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   function input(ev) {
     const a = arcadeRef.current
     if (!live || !a) return
+    if (nightRef.current && a.stage === 'farewell' && !nightRef.current.chime) return // the farewell holds (tick): no press opens free play before the house moves on
     const now = performance.now()
     move(arcadeInput(a, ev, now), now, true)
   }
@@ -281,6 +282,10 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
       if (Math.abs((a.roundEndsAt ?? 0) - want) > 500) a = arcadeRoundEnds(a, want)
       if (n.chime) a = arcadeChime(a, now)
     }
+    // on the night Boo's farewell holds until the house has moved the round on (its clock can be a minute
+    // behind her chime): free play never opens in between, so no game keeps her code from the next group
+    // (14 Nov 2026, the deep scan)
+    if (n && a.stage === 'farewell' && !n.chime) return show(a, now)
     move(arcadeStep(a, now), now)
   }
   function ring() {

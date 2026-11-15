@@ -35,6 +35,10 @@ test('the phones and the board show it, and celebrate', () => {
   assert.match(act4, /<SalemCount doc=\{doc\} now=\{now\} \/>/)
   assert.match(act4, /useSalemWins\(doc\)/)
   assert.match(act4, /salemPassDue\(doc, now\)/)
+  // 14 Nov 2026, the deep scan: once the thirty clean seconds are done on the phone's clock, it sends no slip
+  // (the server took a slip there as a new start: the group did the thirty seconds again)
+  const slipEffect = act4.slice(act4.indexOf('if (!started || !colour || !motion.ok) return'), act4.indexOf('const s = salemSlip('))
+  assert.ok(slipEffect.includes('if (salemPassDue(doc, now)) return'), 'the slip check stands down once the pass is due')
   const rooms = src('../src/screens/Rooms.jsx')
   assert.match(rooms, /<SalemCount doc=\{doc\} now=\{now\} className="board" \/>/)
   assert.match(rooms, /useSalemWins\(doc, \{ quiet: true \}\)/)

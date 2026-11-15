@@ -250,6 +250,9 @@ export function SalemRounds({ doc, serverNow, motion, ready, slip, passed, lines
   // the rules, checked ten times a second on this phone; each attempt reports once
   useEffect(() => {
     if (!started || !colour || !motion.ok) return
+    // the thirty clean seconds are done on this phone's clock: the pass is on its way, and a phone lowered in
+    // the cheer must never start the round over (14 Nov 2026, the deep scan)
+    if (salemPassDue(doc, now)) return
     const key = `${doc.attempt}`
     if (sent.current[key]) return
     const local = Date.now()

@@ -24,3 +24,12 @@ export function voiceFrom(intoMs, voiceMs) {
   if (!(len > 0) || into >= len - 300) return null
   return into < 500 ? 0 : +(into / 1000).toFixed(2)
 }
+
+// Slide 1's clock starts on the server about a second before the TV hears of the drawing, so a TV within
+// its first two seconds starts the greeting from the top (its 8.7 s recording fits its 11.3 s slide).
+// Later (a reload), and on every other slide, the voice joins where the clock says (voiceFrom).
+// 14 Nov 2026, the deep scan: the room heard him start mid-word.
+export const FIRST_SLIDE_GRACE_MS = 2_000
+export function slideInto(index, intoMs) {
+  return index === 0 && Number(intoMs) < FIRST_SLIDE_GRACE_MS ? 0 : intoMs
+}

@@ -103,6 +103,31 @@ test('S1 Act 6: both games answered on the real phones go on to the drawing with
   assert.equal(db.store.get(parlourPath(nightId)).closed, true, 'and no game opens after it')
 })
 
+
+test('S1 Act 6: a drawing that fails to start after the games is started by the next clock (14 Nov 2026, the deep scan)', async () => {
+  const { db, nightId, uids } = await practice()
+  await host(db, nightId, 'act', 2)
+  await host(db, nightId, 'act', 6)
+  const first = nightOf(db, nightId).window
+  for (const [i, uid] of uids.entries()) await player.answer(db, { nightId, uid, windowId: first.id, picks: picksOf(db, uid, first.id), now: T0 + 10_000 + i })
+  // the practice picture bank's read fails once as the second game closes, as a dropped connection would
+  const doc = db.doc.bind(db)
+  let failed = false
+  db.doc = path => {
+    const d = doc(path)
+    if (path === 'sealed/relay_pictures_practice' && !failed) d.get = async () => { failed = true; throw Object.assign(new Error('unavailable'), { code: 'unavailable' }) }
+    return d
+  }
+  const second = nightOf(db, nightId).window
+  for (const [i, uid] of uids.entries()) await player.answer(db, { nightId, uid, windowId: second.id, picks: picksOf(db, uid, second.id), now: T0 + 20_000 + i })
+  assert.equal(failed, true)
+  assert.equal(nightOf(db, nightId).beat, 'games', 'the start failed: the night is still at the games')
+  assert.equal(db.store.get(parlourPath(nightId)).closed, false, 'and the claim is let go')
+  assert.equal((await clockTick(db, nightId, T0 + 40_000)).moved, 'drawing', 'the next clock starts it')
+  assert.equal(nightOf(db, nightId).beat, 'drawing')
+  assert.equal(db.store.get(relayPaths(nightId).pub).state, 'intro')
+  assert.equal(db.store.get(parlourPath(nightId)).closed, true, 'and no game opens after it')
+})
 test('S1 the party night (no fill-ins) closes on the last real answer too', async () => {
   const db = new FakeFirestore()
   db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })

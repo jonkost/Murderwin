@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { voiceUrl, voiceFrom } from '../src/lib/irwinvoice.js'
+import { voiceUrl, voiceFrom, slideInto } from '../src/lib/irwinvoice.js'
 import { pictureNamed } from '../src/lib/relayhost.js'
 import { slideAt } from '../src/lib/screen.js'
 
@@ -26,6 +26,13 @@ test('A7 where the voice starts: from the top, part-way for a screen that joins 
   assert.equal(voiceFrom(0, 0), null, 'no recording: silent')
 })
 
+test('A7 slide 1 on a TV that hears of the drawing a second late starts the greeting from the top (14 Nov 2026)', () => {
+  assert.equal(voiceFrom(slideInto(0, 1_400), 10_300), 0, 'from the top')
+  assert.equal(voiceFrom(slideInto(0, 1_999), 10_300), 0)
+  assert.equal(voiceFrom(slideInto(0, 2_500), 10_300), 2.5, 'a reload later joins part-way')
+  assert.equal(slideInto(1, 1_400), 1_400, 'other slides follow the clock')
+})
+
 test('A7 the slides turn on the server\'s clock, voiced or not, and say how far into a slide the clock is', () => {
   const slides = [{ ms: 5_000, voice: 'irwin-slide-1', voiceMs: 4_000 }, { ms: 9_000, voice: null }, { ms: 3_000, voice: 'irwin-slide-3', voiceMs: 2_000 }]
   const relay = { slides, introEndsAt: 100_000 } // started at 83 000
@@ -37,7 +44,7 @@ test('A7 the slides turn on the server\'s clock, voiced or not, and say how far 
 
 test('A7 the TV plays the voice the server names, and its time is never the sound\'s', () => {
   const kiosk = sourceOf('Kiosk.jsx')
-  assert.match(kiosk, /\{s\?\.voice && !captionsOnly && <IrwinVoice key=\{`\$\{ms\(relay\.startedAt\)\}:\$\{index\}`\} id=\{s\.voice\} voiceMs=\{s\.voiceMs\} into=\{into\} \/>\}/)
+  assert.match(kiosk, /\{s\?\.voice && !captionsOnly && <IrwinVoice key=\{`\$\{ms\(relay\.startedAt\)\}:\$\{index\}`\} id=\{s\.voice\} voiceMs=\{s\.voiceMs\} into=\{slideInto\(index, into\)\} \/>\}/)
   assert.match(kiosk, /\{slide\.voice && <IrwinVoice key=\{`door:/)
   const voice = sourceOf('IrwinVoice.jsx')
   assert.match(voice, /if \(p\?\.catch\) p\.catch\(\(\) => \{\}\)/, 'a refused play is let go')

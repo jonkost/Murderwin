@@ -148,6 +148,25 @@ export function releasedNames(finale) {
 //   cards: the cards on screen, in canon order
 //   fresh: the card that just cut in (null while its lead-in plays)
 //   captions: [{ who, text }] under the cards
+// As video the film has just said every part, so the screen draws no words under a card once it is up
+// (revealWords; 14 Nov 2026, the deep scan: the Victim's sign-off and the studio's close flashed there for
+// three seconds). While a lead-in waits with no film, its words still show.
+export function revealWords(finale, stage, rv) {
+  return finale?.video?.[stage] && !rv?.waiting ? [] : (rv?.captions ?? [])
+}
+
+// The credits' Thank you, each name once (14 Nov 2026, the deep scan): the hosts who play are guests too, so Jon
+// and Susan came twice. The first spelling is kept; case and spaces never make a second name.
+export function uniqueNames(list = []) {
+  const seen = new Set()
+  return (Array.isArray(list) ? list : []).filter(t => {
+    const k = String(t ?? '').trim().toLowerCase()
+    if (!k || seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+}
+
 export function revealView(finale, now) {
   const released = releasedNames(finale)
   const stage = released[released.length - 1] ?? null

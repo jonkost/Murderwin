@@ -30,6 +30,9 @@ test('the living room: the phase wins, then the finale, the vote, a drawing, the
   assert.equal(livingView({ night: { ...vote, window: { kind: 'questions', settled: true } }, relay: done, screen: { kind: 'vote' } }), 'ballot', 'between the beat and its window: the vote with no clock yet, never the door again')
   assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: true } }, relay: done, screen: { kind: 'vote' } }), 'voted', 'the vote has closed: not the door, not the vote')
   assert.equal(livingView({ night: { ...vote, window: { kind: 'ballot', settled: true } }, relay: null, screen: { kind: 'vote' } }), 'voted', 'with the drawing cut too')
+  // the reveal's beat writes its screen (idle) a moment before the reel arrives (14 Nov 2026, the deep scan)
+  assert.equal(livingView({ night: { ...vote, beat: 'reveal', window: { kind: 'ballot', settled: true } }, relay: done, screen: { kind: 'idle' } }), 'voted', 'the reveal before its reel: the votes are in, never the open door again')
+  assert.equal(livingView({ night: { ...vote, beat: 'reveal', window: { kind: 'ballot', settled: true } }, relay: null, screen: null }), 'voted', 'with no screen doc at all')
   assert.equal(livingView({ night: { ...vote, beat: 'reveal', window: { kind: 'ballot', settled: true } }, relay: done, finale: { at: 1 }, screen: { kind: 'vote' } }), 'finale')
   assert.equal(livingView({ night: { ...NIGHT, act: 7 }, finale: { at: 1 }, screen: { kind: 'vote' } }), 'finale')
   // the iPad (words only) never shows the questions or the votes-are-in card: its words, or its crest; the open vote's clock it does show, as before

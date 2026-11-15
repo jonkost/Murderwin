@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { PARTY_DAY, PARTY_DAY_MS, onPartyDay, PRACTICE_ASK, PRACTICE_NOTE, REPLACE_ASK } from '../src/lib/start.js'
-import { beatsOf } from '../src/lib/night.js'
+import { beatsOf, hostNudges } from '../src/lib/night.js'
 import { askFirst, INSTANT_MS } from '../src/lib/ask.js'
 
 // The review before the party (12 Nov 2026; Jon could not play the night through, so the
@@ -61,6 +61,20 @@ test('the buttons that can undo a live night each ask first', () => {
   assert.ok(host.includes("if (credits > 0 && !askFirst('The credits are still rolling. Go to The End now?')) return"), 'Next over the credits asks')
   assert.ok(host.includes("if (night.act === 7 && here?.action === 'reveal' && !askFirst("), 'Back one in the reveal asks')
   assert.ok(!host.includes("onClick={() => run('back')}"), 'Back one is never bare')
+  // 14 Nov 2026, the deep scan: four more presses that cut something for the whole room
+  assert.ok(host.includes("if (rulesStillPlaying(night, clock) && !askFirst('The rules film is still playing. Stop it and go back to Arrivals?')) return"), 'Back one during the rules film asks')
+  assert.ok(host.includes("if (night.act === 1 && night.beat === 'meet' && !askFirst('Go back to The house rules? The intro and the rules film play again from the top.')) return"), 'Back one into the rules film asks')
+  // 14 Nov 2026, the deep scan: Back one at Your result and at The End asks too
+  assert.ok(host.includes("if (night.act === 7 && here?.action === 'results' && !askFirst('Go back to The reveal?"), 'Back one at Your result asks')
+  assert.ok(host.includes("if (night.act === 7 && here?.action === 'end' && !askFirst('Go back to Your result?"), 'Back one at The End asks')
+  assert.deepEqual(beatsOf(7).map(b => b.action), ['window:ballot', 'reveal', 'results', 'end'], 'the beats those questions name')
+  assert.ok(host.includes("if (victimFilmLeft > 0 && !askFirst('The Victim’s film is still playing. Show everyone their result now?')) return"), 'Next over the Victim’s film asks')
+  assert.ok(host.includes('disabled={!!busy || !ready || held || playing} onClick={() => run(\'reveal-stage\')}'), 'the next name waits for the film before it, on the clock')
+  assert.ok(host.includes('onClick={callSupper}') && !host.includes("onClick={() => run('supper')}"), 'Supper’s ready goes through its question')
+  assert.ok(host.includes('if (left > 0 && !askFirst(`Call supper now?'), 'and asks while a guest still has cats to see')
+  const sounds = read('../src/screens/SoundList.jsx')
+  assert.ok(sounds.includes("const play = id => { if (!ask || askFirst(SOUND_TEST_ASK)) run('sound-test', id) }"), 'a Sound test chip asks first on the party night')
+  assert.ok(host.includes('ask={!isRehearsalNight(night)}'), 'only on the party night')
   // the beat list under All of Act N's beats jumps the night too
   assert.ok(host.includes("onClick={() => { if (askFirst(`Move the whole night to ${b.name}? Every phone and screen follows.`)) run('beat', b.key) }}"), 'a beat tapped in the list asks')
   assert.ok(!host.includes("onClick={() => run('beat', b.key)}"), 'and is never bare')
@@ -100,6 +114,60 @@ test('a button shows only at its own moment, and the big button at the top is th
   // the reveal panel never tells him to press Next for a result he is already on
   assert.ok(host.includes("if (action === 'end') return null"), 'gone at The End')
   assert.ok(host.includes("'All three are named. The credits run on their own.'"), 'and true on Your result')
+})
+
+test('a name tapped at the doors asks first; typing a name does not; the hosts stay on the list (14 Nov 2026, the deep scan)', () => {
+  const join = read('../src/screens/Join.jsx')
+  assert.ok(join.includes("import { askFirst } from '../lib/ask'"))
+  assert.ok(join.includes("onClick={() => { if (askFirst(`Are you ${r.name}? ${r.name}’s game moves to this phone.`)) go(r.name) }}>{r.name}</button>"))
+  assert.ok(!join.includes('onClick={() => go(r.name)}'), 'never a bare tap')
+  assert.ok(!join.includes('window.confirm('), 'askFirst, which fails open')
+  assert.ok(join.includes('.filter(r => r?.fillIn !== true)'), 'only fill-ins are left off: the hosts stay listed')
+  assert.ok(join.includes('onSubmit={e => { e.preventDefault(); go() }}'), 'typing a name is unchanged')
+})
+
+test('Make the groups is grey until the roles are out (14 Nov 2026, the deep scan)', () => {
+  assert.ok(host.includes("disabled={!!busy || !(night.act >= 2)} onClick={() => run('groups')}>Make the groups</button>"))
+  assert.ok(!host.includes("disabled={!!busy} onClick={() => run('groups')}"))
+  assert.ok(host.includes('made groups are kept. It stays grey until after the blackout.'))
+  const grey = act => !(act >= 2)
+  for (const a of [undefined, null, 0, 1]) assert.equal(grey(a), true, String(a))
+  for (const a of [2, 3, 4, 5, 6, 7]) assert.equal(grey(a), false, String(a))
+})
+
+test('the station key box says to leave it alone, names both Macs that hold the word, and asks before a save (14 Nov 2026, the deep scan)', () => {
+  assert.ok(host.includes('Leave this alone: the word is saved, and the Study’s Mac and the brain both hold it.'))
+  assert.ok(host.includes("case 'station-key': return 'Saved. If that was a new word,"))
+  assert.ok(host.includes("if (key.trim() && askFirst(STATION_KEY_ASK)) run('station-key', key.trim())"))
+  assert.ok(!host.includes('The same words go on that Mac.') && !host.includes('station/.env on the study Mac'))
+})
+
+test('Act 6\'s two games: the host phones nudge the clock whatever they show, only in that beat (14 Nov 2026, the deep scan)', () => {
+  const n = { phase: 'act', act: 6, beat: 'games' }
+  const jon = { host: 'jonathan', status: 'active', nightId: 'N1' }
+  assert.equal(hostNudges(n, jon, 'N1'), true)
+  assert.equal(hostNudges(n, { ...jon, host: 'susan' }, 'N1'), true)
+  assert.equal(hostNudges(n, { ...jon, host: null }, 'N1'), false, 'a guest')
+  assert.equal(hostNudges({ ...n, beat: 'drawing' }, jon, 'N1'), false)
+  assert.equal(hostNudges({ phase: 'act', act: 7, beat: 'ballot' }, jon, 'N1'), false)
+  assert.equal(hostNudges({ ...n, phase: 'paused' }, jon, 'N1'), false)
+  assert.equal(hostNudges(n, { ...jon, nightId: 'N0' }, 'N1'), false, 'another night')
+  assert.equal(hostNudges(n, { ...jon, status: 'superseded' }, 'N1'), false)
+  assert.equal(hostNudges(n, jon, null), false)
+  assert.deepEqual(beatsOf(6).map(b => b.key), ['games', 'drawing', 'door', 'talk'])
+  const app = read('../src/App.jsx')
+  const at = app.indexOf('const nudging = hostNudges(night.data, sd, nightId)')
+  assert.ok(at > 0 && at < app.indexOf('\n  if (authError) return'), 'a hook, before the first return')
+  assert.ok(app.includes("const id = setInterval(() => { callHost({ nightId, command: 'tick' }).catch(() => {}) }, 20_000)"))
+  assert.ok(app.includes('}, [nudging, nightId])'))
+})
+
+test('Spill the Beans: one fixed reply, the same whether it worked, and it tells the host to have everyone read their card again (14 Nov 2026, the deep scan)', () => {
+  const m = host.match(/case 'spill': return '([^']*)'/)
+  assert.ok(m, 'one fixed string')
+  assert.ok(m[1].includes('read your card again'))
+  const start = host.indexOf('export function Safeguards')
+  assert.ok(host.slice(start, start + 3000).includes('read your card again, quietly'))
 })
 
 test('askFirst: yes is yes, a real no is no, and a dialog the browser swallowed never makes a dead button', () => {

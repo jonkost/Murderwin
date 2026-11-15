@@ -36,6 +36,9 @@ async function docsWhere(db, collection, field, value) {
 export function discardable({ night, c }) {
   if (!night) return { ok: true, reason: 'no-night' }
   if (night.dryRun === true) return { ok: true, reason: 'dry-run' }
+  // the party night (its box ticked) is never thrown away, before its case is dealt too (14 Nov 2026, the deep
+  // scan: before the deal a terminal's discard-night took the real night, every seat and every session with it)
+  if (night.forceRehearsal === false) return { ok: false, reason: 'real-night' }
   if (!c) return { ok: true, reason: 'no-case' }
   if (c.rehearsal === false) return { ok: false, reason: 'real-case' }
   return { ok: true, reason: 'rehearsal' }
@@ -49,7 +52,7 @@ export async function discardNight(db, { nightId } = {}) {
   const night = nightSnap.exists ? nightSnap.data() : null
   const c = caseSnap.exists ? caseSnap.data() : null
   const verdict = discardable({ night, c })
-  if (!verdict.ok) throw new NightError('invalid', 'This night has a real case. It is not a rehearsal, so it cannot be discarded.')
+  if (!verdict.ok) throw new NightError('invalid', verdict.reason === 'real-night' ? 'This is the party night. It cannot be discarded.' : 'This night has a real case. It is not a rehearsal, so it cannot be discarded.')
 
   const counts = { case: 0, night: 0, subdocs: 0, sessions: 0, presence: 0, notes: 0, active: 0 }
 

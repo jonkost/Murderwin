@@ -3,17 +3,20 @@ import { doc, collection, query, where, onSnapshot, setDoc, getDocFromServer, se
 import { auth, db, signInAnonymously, onAuthStateChanged } from '../firebase'
 import { notesPatch } from './night'
 import { isStale, secondsSinceHeard, watchWake, skewFrom } from './clock'
+import { keepSignedIn } from './signin'
 
 export { isStale, secondsSinceHeard, STALE_MS } from './clock'
 
 // Anonymous session: the phone signs itself in the first time it opens and
 // keeps that identity (the session doc hangs off it) until the browser data
-// is cleared. No account, no password, no prompt.
+// is cleared. No account, no password, no prompt. A first sign-in that fails
+// is tried again every three seconds until it lands (lib/signin.js, 14 Nov 2026).
 export function useAuthUid() {
   const [state, setState] = useState({ uid: null, error: null })
-  useEffect(() => onAuthStateChanged(auth, user => {
-    if (user) setState({ uid: user.uid, error: null })
-    else signInAnonymously(auth).catch(error => setState({ uid: null, error }))
+  useEffect(() => keepSignedIn({
+    auth, onAuthStateChanged, signInAnonymously,
+    onUser: user => setState({ uid: user.uid, error: null }),
+    onError: error => setState({ uid: null, error }),
   }), [])
   return state
 }
@@ -62,7 +65,10 @@ export function useServerClock(uid, nightId, guestKey, extra = null) {
   const plain = useRef(false)
   const extraKey = extra ? JSON.stringify(extra) : ''
   useEffect(() => {
-    if (!uid) return
+    // A Mac's own screen beside its room screen (?kiosk=decor) shares that browser's sign-in, so its one row
+    // too: it sends no heartbeat, or the Host tab's dot and Sound on for that room would come and go, and Boo's
+    // arcade could be refused its clue (14 Nov 2026, the deep scan). Its clock is the Mac's own.
+    if (!uid || guestKey === 'kiosk-decor') return
     const ref = doc(db, 'presence', uid)
     let stopped = false
     let last = 0

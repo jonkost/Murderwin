@@ -59,10 +59,16 @@ export function phaseOf(night, now = Date.now()) {
 // green even before the cues doc catches up. At The End (nights/{id}.over,
 // 12 Nov 2026) the answer is 'free': the brain lets go of the bulb, leaves it
 // as it is and stops re-sending, so the house's own controls work again.
+// The role cards' phase (prompt) comes only after the power's return, when the bedroom is locked: red at once.
+// The server writes its own red a few seconds later, after the deal, and until then the welcome's green came
+// back for a moment (14 Nov 2026, the deep scan). A Blackout test never enters the prompt, so its green returns.
 export function hallColour({ night, cues, relay } = {}, now = Date.now()) {
   if (night?.over === true) return 'free'
-  if (phaseOf(night, now) === 'blackout') return 'off'
-  if (cues?.hall === 'green' || relay?.doorOpen) return 'green'
+  const phase = phaseOf(night, now)
+  if (phase === 'blackout') return 'off'
+  if (relay?.doorOpen) return 'green'
+  if (phase === 'prompt') return 'red'
+  if (cues?.hall === 'green') return 'green'
   if (cues?.hall === 'red') return 'red'
   return null
 }

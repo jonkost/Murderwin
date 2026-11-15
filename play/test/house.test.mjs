@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { houseView, studyNames, catVisits, missingLineWords, studyStopAt, studyMsLeft, QUIET_MS, MACHINES, STUDY_CAP_MS, STUDY_STOP_EARLY_MS } from '../src/lib/house.js'
+import { houseView, studyNames, catVisits, missingLineWords, studyStopAt, studyMsLeft, isBrainQuiet, QUIET_MS, MACHINES, STUDY_CAP_MS, STUDY_STOP_EARLY_MS } from '../src/lib/house.js'
 
 // The Host tab's house panel, as a pure view over the public docs. Fixtures
 // are throwaway shapes, never content.
@@ -205,4 +205,22 @@ test('G59 a cat\'s hint or the Study\'s trace that never came: the Host tab says
   // the Host tab shows it at the top, beside the case warning
   const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
   assert.ok(host.includes('{house.missing && <p className="host-msg trouble" role="alert">{house.missing}</p>}'))
+})
+
+test('the brain quiet at the blackout: measured between server-stamped rows, never by this phone\'s clock (14 Nov 2026)', () => {
+  const t = 1_800_000_000_000
+  assert.equal(isBrainQuiet({ cues: t, 'kiosk-living': t + 30_000 }), false, 'all well')
+  assert.equal(isBrainQuiet({ cues: t, 'kiosk-living': t + QUIET_MS - 1_000 }), false, 'a second short')
+  assert.equal(isBrainQuiet({ cues: t, 'kiosk-living': t + QUIET_MS + 1 }), true, 'just past')
+  assert.equal(isBrainQuiet({ 'kiosk-living': t, 'kiosk-boo': t - 5_000 }), true, 'no row from the brain at all')
+  assert.equal(isBrainQuiet({}), false)
+  assert.equal(isBrainQuiet(undefined), false)
+  assert.equal(isBrainQuiet(null), false)
+  assert.equal(isBrainQuiet({ cues: t, 'kiosk-living': t }), false, 'every row six minutes old (a cached paint, a phone just woken): equal, so quiet is false')
+  assert.equal(isBrainQuiet({ cues: t, jon: t + 10 * 60_000 }), false, 'a fresh guest row over a quiet house says nothing')
+  assert.equal(isBrainQuiet({ cues: t + 10 * 60_000, 'kiosk-living': t }), false, 'stale screens, a fresh brain')
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes('brainQuiet={isBrainQuiet(presence)}'))
+  assert.ok(host.includes('relay = null, tv = undefined, onBlackout = null, brainQuiet = false }) {'))
+  assert.ok(host.includes('{blackoutNow && brainQuiet && <p className="host-msg trouble" role="alert">The brain is not running'))
 })

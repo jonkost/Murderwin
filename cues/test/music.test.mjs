@@ -338,4 +338,9 @@ test('is the song in the library? yes, no, or cannot tell: asked before anything
   assert.ok(cake.includes("a.speakers !== 'mac'"), 'cake.speakers "mac" keeps the song on this Mac')
   assert.ok(cake.includes('if (cakeQuiet === mine)') && src.includes("if (a.type === 'music' && a.do === 'pause' && a.why === 'host') cakeQuiet = cakeSeq"), 'the host\'s own stop ends the song for good')
   assert.ok(cake.includes("if (started !== 'playing') {"), 'a song that did not start never leaves the room in silence for its length')
+  // 14 Nov 2026: the song over (or its time up), the Music app itself stops before it lets go of the HomePods: its
+  // play goes on to the next song of the library, which would play on from this Mac's own speakers
+  const tail = cake.slice(at('await followTrack('))
+  assert.ok(tail.includes('await musicApp?.pause()') && tail.indexOf('await musicApp?.pause()') < tail.indexOf('await music.releaseSpeakers()'), 'the Music app stops, then lets go')
+  assert.ok(!tail.includes('await music.pause()'), 'the Music app only: no AudioPanic just before the jazz')
 })

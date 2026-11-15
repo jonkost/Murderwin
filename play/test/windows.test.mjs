@@ -191,7 +191,9 @@ test('the Act 7 locks: eyes on the reveal, the result with a thank-you on the re
   const kept = { ...EMPTY_NOTES, seen: { '7-result-result': true, '7-reveal-eyes': true } }
   assert.deepEqual(nowCards(session, kept, 7).map(c => c.id), [], 'during the night a kept result leaves Now')
   assert.deepEqual(nowCards(session, kept, 7, { over: true }).map(c => c.id), ['7-result-result'], 'at The End the result stays, the tapped notice does not')
-  assert.deepEqual(nowCards(session, EMPTY_NOTES, 7, { over: true }).map(c => c.id), ['7-result-result', '7-reveal-eyes'], 'an untapped notice still waits its tap')
+  assert.deepEqual(nowCards(session, EMPTY_NOTES, 7, { over: true }).map(c => c.id), ['7-result-result'], 'the reveal’s Eyes on the screen card goes at The End, tapped or not: the TV says The End (14 Nov 2026)')
+  const other = { id: '7-reveal-other', act: 7, beat: 'reveal', kind: 'notice', key: 'other', title: '(t)', text: '(t)', button: 'OK' }
+  assert.deepEqual(nowCards({ cards: [other, result] }, EMPTY_NOTES, 7, { over: true }).map(c => c.id), ['7-result-result', '7-reveal-other'], 'any other untapped notice still waits its tap')
   assert.equal(resultCard(session)?.id, '7-result-result')
   assert.equal(resultCard({ cards: [eyes] }), null)
   // the screens: the locks have no tabs and nothing to tap; the result card on a lock has no Keep this

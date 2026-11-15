@@ -457,6 +457,8 @@ export const PAUSE_SHIFTED = {
   'public/finale': ['at', 'holdAt', 'victimAt', 'cardAt.murderer', 'cardAt.motive', 'cardAt.victim'],
   'private/parlour': [...Array.from({ length: 12 }, (_, i) => `due${i}`), 'lastAt'], // windows.js MAX_PARLOUR_SLOTS
   'public/act4': ['warnEndsAt', 'lockEndsAt', 'roundStartsAt', 'roundEndsAt'], // Act 4's clock (act4.js)
+  // Act 2's cat line: a called guest's four minutes, a reader's five (deal.js tickLights); 14 Nov 2026, the deep scan
+  'private/lights': ['cats.granolia.since', 'cats.salem.since', 'cats.zimothy.since', 'cats.boo.since'],
 }
 
 function msOf(t) {

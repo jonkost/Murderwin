@@ -20,6 +20,9 @@ import { SETUP_ROOMS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, setupHref } from '..
 
 export const LIVE_PLAY = 'https://murderwin-at-sirwin-manor.web.app/play/'
 export const OLD_FOLDER = 'Not needed any more'
+// Never moved aside: the brain's own start (its link lives in this folder since 13 Nov 2026; the deep scan
+// of 14 Nov found the tidy-up would have put it under Not needed any more)
+export const NEVER_MOVED = new Set(['Start the brain.command'])
 const NAMES = {
   living: 'Parlour TV', study: 'Study', boo: 'Entryway - Boo’s arcade', orangerie: 'Orangerie', ipad: 'iPad',
   'decor-living': 'Parlour - the Mac’s own screen', 'decor-study': 'Study - the Mac’s own screen', decor: 'Second display',
@@ -64,7 +67,7 @@ export function writeScreenFiles(folder, files = screenFiles()) {
   const keep = new Set(files.map(f => f.name))
   const moved = []
   for (const old of readdirSync(folder)) {
-    if (!/\.(webloc|command)$/.test(old) || keep.has(old)) continue
+    if (!/\.(webloc|command)$/.test(old) || keep.has(old) || NEVER_MOVED.has(old)) continue
     mkdirSync(join(folder, OLD_FOLDER), { recursive: true })
     renameSync(join(folder, old), join(folder, OLD_FOLDER, old))
     moved.push(old)

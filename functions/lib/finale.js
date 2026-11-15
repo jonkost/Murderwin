@@ -486,16 +486,16 @@ export async function award(db, nightId, { arg, now = Date.now() } = {}) {
   if (!snap.exists) await ref.set({ awards: { [id]: entry } })
   else await ref.update({ [`awards.${id}`]: entry })
   // the card on the phone: a required tap, then it goes away (the screen shows it again at the end)
+  // in one transaction, like dealCard (14 Nov 2026, the deep scan): a room's card dealt to the same phone at the same moment is kept
   const sessionRef = db.doc(`sessions/${guest.uid}`)
-  const sSnap = await sessionRef.get()
-  let dealt = false
-  if (sSnap.exists) {
+  const cardId = `${night.act ?? 0}-award-${n}`
+  const dealt = await db.runTransaction(async tx => {
+    const sSnap = await tx.get(sessionRef)
+    if (!sSnap.exists) return false
     const cards = sSnap.data().cards ?? []
-    const cardId = `${night.act ?? 0}-award-${n}`
-    if (!cards.some(c => c.id === cardId)) {
-      await sessionRef.update({ cards: [...cards, { id: cardId, act: night.act ?? 0, beat: night.beat ?? null, kind: 'award', title: item.title, text: item.line, button: 'Keep it', at: new Date(now) }] })
-      dealt = true
-    }
-  }
+    if (cards.some(c => c.id === cardId)) return false
+    tx.update(sessionRef, { cards: [...cards, { id: cardId, act: night.act ?? 0, beat: night.beat ?? null, kind: 'award', title: item.title, text: item.line, button: 'Keep it', at: new Date(now) }] })
+    return true
+  })
   return { ok: true, dealt, awards: Object.keys(have).length + 1 }
 }

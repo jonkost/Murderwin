@@ -48,6 +48,15 @@ export const QUIET_SCREENS = new Set(MACHINES.filter(m => m.quiet).map(m => m.ke
 // `spare`: an address only another device opens when the iPad is busy or dead (12 Nov 2026, A10):
 // its row shows only while it is heard from, so the Host tab has no grey dot for it all night.
 
+// Has the brain gone quiet while the room screens have not (14 Nov 2026, the deep scan)? Then the Blackout would
+// darken only the screens and the phones. Measured between the rows, all stamped by the server, never by this
+// phone's clock: a cached paint, a phone just woken or one off the wifi has every row equally old.
+export function isBrainQuiet(presence = {}) {
+  const screens = Object.entries(presence ?? {}).filter(([k]) => k.startsWith('kiosk-')).map(([, at]) => Number(at) || 0)
+  const newest = screens.length ? Math.max(...screens) : 0
+  return newest > 0 && newest - (Number(presence?.cues) || 0) > QUIET_MS
+}
+
 // Act 2's cat visits: night.lightsProgress = { done, total }, written by the
 // server whenever the line moves (guests who have seen all four cats, and
 // guests in the line). A count only, never which cat or which hint.

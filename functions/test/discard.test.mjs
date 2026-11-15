@@ -4,6 +4,7 @@ import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join, canHost } from '../lib/night.js'
 import { hostCommand } from '../lib/run.js'
 import { discardNight, discardable, markDryRun } from '../lib/discard.js'
+import { PARTY_DAY } from '../lib/morning.js'
 
 // A throwaway night with four phones, walked to Act 2 so a rehearsal case,
 // cards, a window and presence rows all exist. Nothing here is a real case.
@@ -115,4 +116,19 @@ test('settle-now closes a window early on a dry run night only', async () => {
   const r = await hostCommand(db, { nightId, command: 'settle-now', now: 0 })
   assert.equal(r.settled, uids.length)
   assert.equal(db.store.get(`nights/${nightId}`).window.settled, true)
+})
+
+test('the party night is never discarded, before its case is dealt too; a dry run still is (14 Nov 2026, the deep scan)', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const day = PARTY_DAY + 9 * 60 * 60_000
+  const { nightId } = await hostCommand(db, { command: 'create', arg: { real: true, introAt: day + 30 * 60_000 }, now: day })
+  await join(db, { uid: 'u1', nightId, name: 'Someone' })
+  await assert.rejects(() => hostCommand(db, { nightId, command: 'discard-night', now: day }), /party night/)
+  assert.ok(db.store.has(`nights/${nightId}`), 'the night stays')
+  assert.ok(db.store.has('sessions/u1'), 'and its guests')
+  assert.equal(db.store.get('public_state/active').nightId, nightId, 'still the live night')
+  assert.equal(discardable({ night: { forceRehearsal: false, dryRun: false }, c: null }).reason, 'real-night')
+  assert.equal(discardable({ night: { forceRehearsal: false, dryRun: true }, c: { rehearsal: false } }).ok, true, 'the fake players: a dry run on the real secrets')
+  assert.equal(discardable({ night: { forceRehearsal: true }, c: null }).ok, true, 'a practice night still ends')
 })

@@ -50,6 +50,9 @@ export function livingView({ night, relay, screen, finale, captionsOnly = false 
   if (RELAY_RUNNING.includes(relay?.state)) return 'relay'
   if (captionsOnly) return screen?.captions || CAPTION_KINDS.includes(screen?.kind) ? 'captions' : 'idle'
   if (screen?.kind === 'vote') return night?.window?.kind === 'ballot' && night.window.settled ? 'voted' : 'ballot'
+  // the reveal's beat writes its screen a moment before its reel (the finale doc): "The votes are in." holds until
+  // the reel comes, never the open door again for two seconds (14 Nov 2026, the deep scan)
+  if (night?.act === 7 && night?.window?.kind === 'ballot' && night.window.settled) return 'voted'
   if (screen?.kind === 'talk') return 'talk'
   if (relay?.state === 'done' || screen?.kind === 'door') return 'door'
   if (CAPTION_KINDS.includes(screen?.kind)) return 'card'

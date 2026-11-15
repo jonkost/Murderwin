@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { writeNotes } from '../lib/hooks'
-import { buzzOnce } from '../lib/night'
+import { buzzOnce, cardOnItsWay } from '../lib/night'
 
 // The in-between screens. Every one of them is a real state, never an
 // error view, and they look the same on every phone in the room.
@@ -83,7 +83,9 @@ export function RehearsalBand({ on, label = 'PRACTICE' }) {
 // shows the same shape of screen with the orientation line in the card's
 // place, so no phone in the room looks different from the rest.
 export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes, stage }) {
-  const buzzKey = card?.id ?? promptKey
+  // the one button, and its one buzz, wait for this phone's own card: at most five seconds (lib/night.js cardOnItsWay)
+  const waiting = cardOnItsWay(night, card, serverNow)
+  const buzzKey = waiting ? null : (card?.id ?? promptKey)
   useEffect(() => {
     if (!uid || uid === 'preview') return
     const vibrate = typeof navigator !== 'undefined' && navigator.vibrate ? p => navigator.vibrate(p) : null
@@ -95,7 +97,7 @@ export function Prompt({ uid, night, ui, serverNow, promptKey, card, notes, stag
       <div className="moment prompt">
         <Seal />
         <p className="crest">Sirwin Manor</p>
-        <button className="big" onClick={continueHere}>{ui.CONTINUE}</button>
+        {!waiting && <button className="big" onClick={continueHere}>{ui.CONTINUE}</button>}
       </div>
     )
   }

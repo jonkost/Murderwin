@@ -8,7 +8,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { HOST_STEPS, hostStep, pressesOf, piecesOf, movesByItself, goOnAsk, drawingRuns, LATE_MS, GAMES_MS } from '../src/lib/hostSteps.js'
+import { HOST_STEPS, hostStep, pressesOf, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK, LATE_MS, GAMES_MS } from '../src/lib/hostSteps.js'
 import { rulesStillPlaying, filmTimeline, INTRO_MS, AFTER_INTRO_MS, INTRO_GRACE_MS } from '../src/lib/rulesfilm.js'
 import { isRehearsalNight } from '../src/lib/night.js'
 
@@ -64,6 +64,10 @@ test('where the night moves by itself the card says so, and where a stray Next w
   // where the host must wait for something to finish first, the line says what a stray press would cut off
   assert.match(you('1/rules'), /Do not press Next while the film plays/)
   assert.match(you('5/irwin'), /Do not press Next or Cake! until he has finished/)
+  // 14 Nov 2026, the deep scan: his cards leave the TV at that Next, so the room crosses off while they are up
+  assert.match(you('5/irwin'), /while his cards are up/)
+  assert.match(you('5/irwin'), /press \*\*Next\*\* \(his cards leave the TV\)\.$/)
+  assert.match(you('5/update'), /if you need a break, take it now\. When everyone is back in the Parlour, press \*\*Next\*\* for Act 6\./)
   // the press that moves the night on is the last thing the line says
   for (const k of ['1/rules', '1/meet', '1/introduce', '2/orient', '2/news', '2/peek', '2/supper', '3/down', '3/bulletin', '5/roam', '5/irwin', '5/update', '6/drawing', '6/door', '7/ballot', '7/reveal', '7/result']) {
     assert.match(you(k), /press \*\*Next\*\*[^*]*\.$/i, k)
@@ -78,7 +82,10 @@ test('where the night moves by itself the card says so, and where a stray Next w
   assert.match(you('5/roam'), /Carry the iPad from the Library into the bedroom and shut the door/)
   // what the host says out loud is kept from the beat's own words
   assert.match(you('2/peek'), /every motive a cat names is a wrong one, even when Salem says it started there/)
-  assert.match(you('6/talk'), /Murderer, name yourself as the Murderer\. Ghost, name yourself as the Ghost\./)
+  // said aloud with "at the vote, on your phone", so nobody takes it as a call to confess (14 Nov 2026, the deep scan)
+  const said = /at the vote, on your phone: if you are the Murderer, pick yourself as the Murderer\. If you are the Ghost, pick yourself as the Ghost\. Keep it secret\./
+  assert.match(you('6/talk'), said)
+  assert.match(JSON.parse(readFileSync(new URL('../../seed/night.json', import.meta.url), 'utf8')).acts['6'].beats.find(b => b.key === 'talk').what, said, 'the beat\'s own words say the same')
   // the light: red at the power's return, green when the third picture is named (not at the door beat)
   assert.match(HOST_STEPS['2/orient'].auto, /The bedroom lock light turns red/)
   assert.match(HOST_STEPS['6/drawing'].auto, /When the third picture is named, the bedroom lock light turns green/)
@@ -224,7 +231,8 @@ test('where the night moves by itself the card has no big button: Nothing to pre
   assert.ok(run.includes('? <p className="host-msg run-itself" role="status">Nothing to press here. The drawing is running.</p>'))
   assert.ok(run.includes("const ended = night.act === 7 && here?.action === 'end'") && run.includes(': ended\n                  ? null'), 'no dead big button above Good night')
   // Cake! is big only at the Cake beat; small while Sir Irwin speaks and after
-  assert.ok(run.includes("<button className={night.beat === 'roam' ? 'big wide' : 'chip wide'} disabled={!!busy} onClick={() => run('cake')}"))
+  assert.ok(run.includes("<button className={night.beat === 'roam' ? 'big wide' : 'chip wide'} disabled={!!busy} onClick={() => { if (night.beat !== 'irwin' || askFirst('Sir Irwin’s speech is on the TV. Play the birthday song over it now?')) run('cake') }}"), 'Cake! asks first only while Sir Irwin is on the TV (14 Nov 2026)')
+  assert.ok(!run.includes("onClick={() => run('cake')}"), 'never bare')
   // Next is still there as a fail-safe, small, under the words that say so, and it asks first
   assert.ok(run.includes("{goOnShown && <button className=\"chip\" disabled={!canNext} onClick={goOn}>{nextLabel.replace(/^Next: /, 'Go on now: ')}</button>}"))
   assert.ok(run.includes("const goOn = () => { if (askFirst(goOnAsk(night.act))) run('next', { from: `${night.act ?? 0}/${night.beat ?? ''}` }) }"))
@@ -295,4 +303,36 @@ test('a practice night can be ended from the Host tab: it asks first, stops the 
   assert.ok(read('../../functions/lib/run.js').includes("case 'discard-night':\n      return discard.discardNight(db, { nightId })"))
   // with no night live every phone is at the doors, with Start the night
   assert.ok(read('../src/App.jsx').includes('if (!nightId) return <Moment text={ui.DOORS} crest foot={<StartNight ui={ui} />} />'))
+})
+
+test('bulletin 2 armed, not yet played: Next and Start Act 4 ask first, and the card says so (14 Nov 2026, the deep scan)', () => {
+  const before = { kind: 'idle', captions: { kind: 'news', lines: [] } }
+  const played = { kind: 'bulletin', captions: { kind: 'bulletin', lines: [] } }
+  const carried = { kind: 'join', captions: { kind: 'bulletin', lines: [] } }
+  const pausedAfter = { kind: 'black', title: 'One moment', captions: { kind: 'bulletin', lines: [] } }
+  assert.equal(newsWaiting({ act: 3, beat: 'bulletin', screen: before }), true)
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: { kind: 'join', captions: { kind: 'news' } } }), true)
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: null }), true, 'no screen doc at all: ask')
+  assert.equal(newsWaiting({ act: 3, beat: 'bulletin', screen: played }), false)
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: carried }), false, 'the captions ride along at the wrap-up')
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: pausedAfter }), false, 'the pause card keeps the captions')
+  assert.equal(newsWaiting({ act: 3, beat: 'bulletin', screen: undefined }), false, 'not heard from the house yet: nothing asks')
+  assert.equal(newsWaiting({ act: 3, beat: 'down', screen: before }), false, 'before it is armed')
+  assert.equal(newsWaiting({ act: 4, beat: 'warn', screen: before }), false)
+  for (const k of ['bulletin', 'wrap']) assert.ok(NEWS_ASK[k].startsWith('The news has not played yet.'), k)
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes("newsWaiting, NEWS_ASK } from '../lib/hostSteps'"))
+  assert.ok(host.includes("const tv = useDoc(live && night.act === 3 ? `nights/${night.nightId}/public/screen` : null)"))
+  assert.ok(host.includes('tv={tv.loaded && !tv.error && !tv.fromCache ? tv.data : undefined}'))
+  assert.equal(host.split('if (newsLate && !askFirst(NEWS_ASK[night.beat])) return').length - 1, 2, 'Next and Start Act 4')
+  assert.ok(host.includes('onClick={pressStartAct4}>Start Act 4</button>'))
+  assert.ok(!host.includes("onClick={() => run('start-act4')}"))
+  assert.ok(host.includes('{newsLate && <p className="host-msg" role="status">The news has not played yet.</p>}'))
+})
+
+test('the power back only part way: Next is off and the card says press 1, then Blackout (14 Nov 2026, the deep scan)', () => {
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes("const halfPower = night.act === 2 && night.phase === 'prompt' && !here"))
+  assert.ok(host.includes('!naming && !halfPower'))
+  assert.ok(host.includes('The power came back only part way. Under Move the night by hand, press 1, then Blackout just below it, and say yes to both.'))
 })

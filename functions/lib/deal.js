@@ -161,15 +161,19 @@ export async function guests(db, nightId) {
 }
 
 // Add one card to a phone, once. Cards carry an id; dealing the same id twice
-// is a no-op, so "Next" pressed twice never doubles a card.
+// is a no-op, so "Next" pressed twice never doubles a card. One transaction (14 Nov
+// 2026, the deep scan): two cards dealt to one phone at the same moment (Supper's
+// ready while the guest scans a cat) both land; a plain read and write lost one.
 export async function dealCard(db, uid, card) {
   const ref = db.doc(`sessions/${uid}`)
-  const snap = await ref.get()
-  if (!snap.exists) return false
-  const cards = snap.data().cards ?? []
-  if (cards.some(c => c.id === card.id)) return false
-  await ref.update({ cards: [...cards, { ...card, at: new Date() }] })
-  return true
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) return false
+    const cards = snap.data().cards ?? []
+    if (cards.some(c => c.id === card.id)) return false
+    tx.update(ref, { cards: [...cards, { ...card, at: new Date() }] })
+    return true
+  })
 }
 
 export function noticeCard(key, act, beat, overrides = {}) {
@@ -437,10 +441,16 @@ export function allSeen(state) {
 
 // What the cats' bag clues read on the night: the night's packing (bags.js
 // packingFor decides which: the sealed one on the party night only, never on a
-// practice night), and the bags the guests at the party hold.
-async function bagContext(db, c, roster) {
+// practice night), and the bags the guests at the party hold. `held`: the line's own list, taken when
+// the line was made (dealEncounter), so a guest who first joins during the visits never moves another
+// guest's word (one guest, one true word: G46; 14 Nov 2026, the deep scan, functions/test/latebag.test.mjs).
+// A seat is never taken off the roster, so with no late seat this is the roster as it stands.
+function heldBags(roster) {
+  return [...new Set(Object.values(roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
+}
+async function bagContext(db, c, roster, held = null) {
   const packing = await packingFor(db, c)
-  const inPlay = [...new Set(Object.values(roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
+  const inPlay = Array.isArray(held) && held.length ? held : heldBags(roster)
   return { packing, inPlay }
 }
 
@@ -454,7 +464,7 @@ async function followLights(db, nightId, r, { now = Date.now() } = {}) {
   const byKey = Object.fromEntries(list.map(g => [g.key, g]))
   const ui = labelled(await readArea(db, 'ui_copy'))
   const c = r.greet.length ? await readCase(db, nightId) : null
-  const bags = r.greet.length ? await bagContext(db, c, night.roster) : null
+  const bags = r.greet.length ? await bagContext(db, c, night.roster, r.state?.inPlay) : null
   let greeted = 0
   for (const { key, cat, note } of r.greet) {
     const g = byKey[key]
@@ -513,11 +523,13 @@ export async function dealEncounter(db, nightId, act, beat, { now = Date.now(), 
   // the line is the guests with a phone: a practice night's fill-in players stay out of it (seats.js
   // lineGuests), so no cat waits on one and supper comes when the real players have seen all four.
   // On any other night this is every guest, in the same order.
-  const list = lineGuests((await guests(db, nightId)).list)
+  const seated = await guests(db, nightId)
+  const list = lineGuests(seated.list)
   const seed = await nightSeed(db, nightId)
   const { routes, queues } = planWaves((seed ? byKey(list) : list).map(g => g.key), pick ?? pickFor(seed, 'waves'))
   const state = {
     act, beat, startedAt: new Date(now),
+    inPlay: heldBags(seated.night.roster), // the bags every bag clue of the visits is planned on (bagContext)
     cats: Object.fromEntries(LIGHTS_CATS.map(cat => [cat, { queue: queues[cat], at: null, since: null }])),
     guests: Object.fromEntries(list.map(g => [g.key, { route: routes[g.key], cat: routes[g.key][0], met: [], step: 'wait', since: now }])),
   }
@@ -604,6 +616,46 @@ export async function notYet(db, { nightId, uid, now = Date.now() }) {
   return { ok: true }
 }
 
+// Every phone held to the line as it stands (14 Nov 2026, the deep scan). Two moves a few
+// milliseconds apart each tell the phones from their own snapshot, after their commits, and the
+// older can land last: a called guest's phone stayed on Wait, and that cat sat idle up to four
+// minutes. The tick puts such a phone right. Plain reads find a phone whose step or cat differs
+// from the line (the usual answer is none, and nothing is written); each one found is re-read with
+// the line in one transaction and written only if it still differs, so a move that lands meanwhile
+// is never undone. Only the step and the cat are compared, never the words.
+export async function settleLights(db, nightId, list, { now = Date.now() } = {}) {
+  const lightsRef = db.doc(lightsPath(nightId))
+  const flagsOf = st => ({ movedOn: !!st.movedOn, supper: !!st.supper, later: !!st.later })
+  const differs = (st, have) => {
+    const want = lightsCard(st.step, st.cat, {}, flagsOf(st))
+    return have?.variant !== want.variant || (have?.cat ?? null) !== want.cat
+  }
+  const lights = await lightsRef.get()
+  const line = lights.exists ? (lights.data().guests ?? {}) : {}
+  const off = []
+  for (const g of list) {
+    if (!g.uid || !line[g.key]) continue
+    const s = await db.doc(`sessions/${g.uid}`).get()
+    if (s.exists && differs(line[g.key], s.data().lights)) off.push(g)
+  }
+  if (!off.length) return 0
+  const ui = labelled(await readArea(db, 'ui_copy'))
+  let fixed = 0
+  for (const g of off) {
+    const ref = db.doc(`sessions/${g.uid}`)
+    const wrote = await db.runTransaction(async tx => {
+      const l = await tx.get(lightsRef)
+      const s = await tx.get(ref)
+      const st = l.exists ? l.data().guests?.[g.key] : null
+      if (!st || !s.exists || !differs(st, s.data().lights)) return false
+      tx.update(ref, { lights: { ...lightsCard(st.step, st.cat, ui, flagsOf(st)), at: new Date(now) } })
+      return true
+    })
+    if (wrote) fixed++
+  }
+  return fixed
+}
+
 // The clock (the tick, once a minute, and the Host tab while Act 2 runs): a
 // guest who never turned up, or never tapped Done, gets that cat's lines and
 // is moved on; a guest who joined after the line was made gets a route
@@ -639,7 +691,8 @@ export async function tickLights(db, nightId, now = Date.now()) {
   })
   if (r.none) return { ok: true, moved: 0, allSeen: false }
   const f = await followLights(db, nightId, r, { now })
-  return { ok: true, moved: new Set(r.changed).size, allSeen: f.allSeen || allSeen(r.state) }
+  const settled = await settleLights(db, nightId, list, { now })
+  return { ok: true, moved: new Set(r.changed).size, settled, allSeen: f.allSeen || allSeen(r.state) }
 }
 
 // Supper (F24): every guest who has a cat still unvisited gets that cat's
@@ -809,17 +862,20 @@ export async function salemPetted(db, nightId, { arg, now = Date.now() } = {}) {
   const uid = deck.uids?.[key]
   if (!uid) throw new NightError('no-guest', 'Pick a guest who is at the party.')
   const ref = db.doc(`sessions/${uid}`)
-  const s = (await ref.get()).data()
-  if (!s) throw new NightError('no-guest', 'Pick a guest who is at the party.')
-  if (s.host) throw new NightError('invalid', 'Not for the two hosts.')
-  if (s.salemFriend) return { ok: true, already: true }
   const ui = labelled(await readArea(db, 'ui_copy'))
-  const cards = s.cards ?? []
-  await ref.update({
-    'affection.salem': 5, salemFriend: true,
-    cards: [...cards, { id: 'salem-friend', act: null, beat: null, kind: 'notice', key: 'salem-friend', title: SALEM_FRIEND.title, text: ui['SALEM FRIEND'] ?? SALEM_FRIEND.text, button: SALEM_FRIEND.button, at: new Date(now) }],
+  // one transaction, like dealCard (14 Nov 2026, the deep scan): a card dealt to this phone at the same moment is kept
+  return db.runTransaction(async tx => {
+    const s = (await tx.get(ref)).data()
+    if (!s) throw new NightError('no-guest', 'Pick a guest who is at the party.')
+    if (s.host) throw new NightError('invalid', 'Not for the two hosts.')
+    if (s.salemFriend) return { ok: true, already: true }
+    const cards = s.cards ?? []
+    tx.update(ref, {
+      'affection.salem': 5, salemFriend: true,
+      cards: [...cards, { id: 'salem-friend', act: null, beat: null, kind: 'notice', key: 'salem-friend', title: SALEM_FRIEND.title, text: ui['SALEM FRIEND'] ?? SALEM_FRIEND.text, button: SALEM_FRIEND.button, at: new Date(now) }],
+    })
+    return { ok: true }
   })
-  return { ok: true }
 }
 
 function validPicks(set, picks) {

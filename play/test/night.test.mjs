@@ -157,6 +157,15 @@ test('the role card is kept all night, readable from You, never listed among the
   assert.deepEqual(nowCards(session, { seen: {} }, 2).map(c => c.kind), ['testimony'])
 })
 
+test('True Friend of the Groundskeeper (dealt with no act, at any time) shows on Now in the act it lands, until tapped', () => {
+  // 14 Nov 2026, the deep scan: the card from the host's Salem petted carried act null and never reached Now
+  const friend = { id: 'salem-friend', act: null, beat: null, kind: 'notice', key: 'salem-friend', title: '(the honour)', text: '(words)', button: 'Keep it' }
+  const other = { id: '3-down-down', act: 3, beat: 'down', kind: 'notice', key: 'down', title: '(supper)', text: '(words)', button: 'OK' }
+  for (const act of [2, 3, 4, 5]) assert.ok(nowCards({ cards: [friend] }, { seen: {} }, act).some(c => c.id === 'salem-friend'), `in Act ${act}`)
+  assert.deepEqual(nowCards({ cards: [friend] }, { seen: { 'salem-friend': true } }, 4), [], 'gone once tapped')
+  assert.deepEqual(nowCards({ cards: [other, friend] }, { seen: {} }, 2).map(c => c.id), ['salem-friend'], 'another act’s card still stays off Now')
+})
+
 test('the hint cat says its hint line alone; a card of a kind the phone no longer shows never appears', async () => {
   const hint = { id: '2-cat-testimony', act: 2, beat: 'cat', kind: 'testimony', cat: 'salem', catName: 'Salem Crooknog', room: 'the Orangerie', lines: [], hint: { text: '(a hint line)' } }
   const greet = { id: '2-cat-greet-boo', act: 2, beat: 'cat', kind: 'testimony', cat: 'boo', catName: 'Miss Boo LaRue', room: 'the Entryway', lines: ['(a greeting)'] }
@@ -372,4 +381,14 @@ test('CL-24 a True Friend sees the honour again at the top of Salem\'s row', asy
   assert.ok(server.includes(SALEM_FRIEND.text), 'the same default words as the server')
   const rest = readFileSync(new URL('../src/screens/Rest.jsx', import.meta.url), 'utf8')
   assert.ok(rest.includes("{cat.key === 'salem' && friend && <p className=\"friend-note\">"), 'shown at the top of Salem\'s open row')
+})
+
+test('at The End the reveal’s Eyes on the screen card is gone from Now; before it, it stays (14 Nov 2026)', () => {
+  const session = { cards: [
+    { id: '7-reveal-eyes', act: 7, beat: 'reveal', kind: 'notice', key: 'eyes', title: 't', text: 't', button: 'b' },
+    { id: '7-results-result', act: 7, beat: 'results', kind: 'result' },
+  ] }
+  const ids = over => nowCards(session, {}, 7, { over }).map(c => c.id)
+  assert.ok(ids(false).includes('7-reveal-eyes'))
+  assert.deepEqual(ids(true), ['7-results-result'], 'the result stays, the old card goes')
 })

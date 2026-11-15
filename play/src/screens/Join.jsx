@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { callJoin } from '../firebase'
 import { troubleLine } from '../lib/trouble'
+import { askFirst } from '../lib/ask'
 import { Seal } from './Moments'
 
 // "Who are you?" — type your name, and the game hands you a character.
@@ -67,7 +68,8 @@ export default function Join({ night, ui, notice = null }) {
           <ul className="names">
             {roster.map(r => (
               <li key={r.name}>
-                <button className="name" disabled={busy} onClick={() => go(r.name)}>{r.name}</button>
+                {/* a tap moves that guest's whole game here, role card and all, and sends their phone to the doors: asked first (14 Nov 2026) */}
+                <button className="name" disabled={busy} onClick={() => { if (askFirst(`Are you ${r.name}? ${r.name}’s game moves to this phone.`)) go(r.name) }}>{r.name}</button>
               </li>
             ))}
           </ul>

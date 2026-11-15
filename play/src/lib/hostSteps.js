@@ -31,7 +31,7 @@ export const HOST_STEPS = {
   },
   '1/ready': {
     auto: 'Every phone says: keep your phone on you. Nothing more happens until you press.',
-    you: 'When the room is settled, press **Blackout**. Then press nothing: the dark, the scream, the power and the role cards all come by themselves.',
+    you: 'First check the number joined, at the top, is the number playing (a name nobody plays gets a role: press **Hand this phone on** beside it). Then press **Blackout**. Then press nothing: the dark, the power and the role cards come by themselves.',
   },
   '2/orient': {
     auto: 'Every phone shows one button, then its role card for fifteen seconds, then where things are. The bedroom lock light turns red. The TV stays dark and the music stays off.',
@@ -58,7 +58,7 @@ export const HOST_STEPS = {
     you: 'Tell the table they may share what is in their bags. Near the end of supper, press **Next** to arm the news.',
   },
   '3/bulletin': {
-    auto: 'Your phone says Armed. Three to five minutes later the news plays in the Orangerie, from the brain’s own speakers, with its words on the iPad and the Parlour TV.',
+    auto: 'Your phone says Armed. Three to six minutes later the news plays in the Orangerie, from the brain’s own speakers, with its words on the iPad and the Parlour TV.',
     you: 'Wait for the news to play. When supper is over, press **Next**.',
   },
   '3/wrap': {
@@ -99,11 +99,11 @@ export const HOST_STEPS = {
   },
   '5/irwin': {
     auto: 'The chime, the music stops, and Sir Irwin speaks on the Parlour TV with his motive cards. Every phone says: go to the Parlour.',
-    you: 'Watch. Do not press Next or Cake! until he has finished. Then press **Next**.',
+    you: 'Watch. Do not press Next or Cake! until he has finished. Then say: cross off on your Motives tab now, while his cards are up. When the room is done, press **Next** (his cards leave the TV).',
   },
   '5/update': {
     auto: 'Every phone asks for the motives to be updated from what Sir Irwin said. The jazz comes back.',
-    you: 'Give the room a minute. Check the iPad is in the bedroom with the door shut. Then press **Next** for Act 6.',
+    you: 'Give the room a minute. Check the iPad is in the bedroom with the door shut. Say: if you need a break, take it now. When everyone is back in the Parlour, press **Next** for Act 6.',
   },
   '6/games': {
     auto: 'Every phone gets a break note, then two Parlour Games, one after the other. When the second closes, the drawing starts by itself.',
@@ -119,7 +119,7 @@ export const HOST_STEPS = {
   },
   '6/talk': {
     auto: 'Every phone says the vote is next, and the TV shows the three questions. There is no clock: the night waits for you.',
-    you: 'Say: Murderer, name yourself as the Murderer. Ghost, name yourself as the Ghost. When the room is ready, press **Start the vote**.',
+    you: 'Say: at the vote, on your phone: if you are the Murderer, pick yourself as the Murderer. If you are the Ghost, pick yourself as the Ghost. Keep it secret. When the room is ready, press **Start the vote**.',
   },
   '7/ballot': {
     auto: 'Every guest votes on their phone. The vote closes when the last one locks in, or at two minutes, and the house picks for anyone who did not.',
@@ -127,7 +127,7 @@ export const HOST_STEPS = {
   },
   '7/reveal': {
     auto: 'Every guest’s phone says: eyes on the screen. The Parlour TV counts with Sir Irwin’s bar for about eighty seconds, then waits for you.',
-    you: 'Press **Name the Murderer**, **Name the Motive** and **Name the Victim**, each only when the card before it is up on the TV. Then press **Next**.',
+    you: 'Press **Name the Murderer**, **Name the Motive** and **Name the Victim**, each only when the card before it is up on the TV. When the Victim’s card is up too, press **Next**.',
   },
   '7/result': {
     auto: 'Every guest’s phone shows its own result. The TV plays the story, the credits, the dedication and Sir Irwin’s last card: about two minutes.',
@@ -187,6 +187,18 @@ export function movesByItself({ act, beat, phase, now = Date.now(), counting = f
 export const DRAWING_ON = ['intro', 'walk', 'turn', 'vote', 'lockout']
 export function drawingRuns({ act, beat, relay = null } = {}) {
   return act === 6 && beat === 'drawing' && DRAWING_ON.includes(relay?.state)
+}
+
+// Bulletin 2 armed, not yet played (14 Nov 2026, the deep scan): the screen doc's kind, or the captions it carries
+// through the wrap-up, says it has played. `screen` undefined: not heard from the house yet, so nothing asks.
+// Before this, Start Act 4 pressed early let the news play over the Act 4 title card, cut off by its chime.
+export const NEWS_ASK = {
+  bulletin: 'The news has not played yet. It plays by itself a few minutes after you armed it. Go on to the wrap-up anyway?',
+  wrap: 'The news has not played yet. If Act 4 starts now, it may be cut off. Start Act 4 anyway?',
+}
+export function newsWaiting({ act, beat, screen } = {}) {
+  if (Number(act) !== 3 || !['bulletin', 'wrap'].includes(beat) || screen === undefined) return false
+  return !(screen?.kind === 'bulletin' || screen?.captions?.kind === 'bulletin')
 }
 
 // What Go on now asks before it moves a night that would have moved by itself.

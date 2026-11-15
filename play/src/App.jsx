@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { callMeet } from './firebase'
+import { callHost, callMeet } from './firebase'
 import { useAuthUid, useDoc, useServerClock, useOnline, useTick, setNotesNight, handoverReset, lastHandoverSeen, isStale, secondsSinceHeard } from './lib/hooks'
 import { useCueSounds } from './lib/useCueSounds'
 import { useBlackoutMarks } from './lib/useBlackout'
 import { uiLines } from './lib/content'
 import { relayRules } from './lib/screen'
-import { clockFor, doorCardHolds, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
+import { clockFor, doorCardHolds, hostNudges, isDark, isRehearsalNight, lockFor, meetParam, needsHandoverReset, notesFor, openWindow, placement, presenceKey, promptKeyOf, promptStage, resultCard, roleCard, showsPrompt, wantsWelcome } from './lib/night'
 import { troubleLine } from './lib/trouble'
 import { RehearsalNight } from './screens/Cards'
 import Join from './screens/Join'
@@ -86,6 +86,14 @@ export default function App() {
   const sd = session.data
   const stepKey = [night.data?.act, sd?.lights?.step, sd?.lights?.cat, sd?.act4?.room, sd?.act4?.here, sd?.act4?.paid].join('|')
   useEffect(() => { setMeetNote(null) }, [stepKey])
+  // Act 6's two games move on by the server's clock: the two host phones nudge it every twenty seconds in that
+  // beat, whatever they show, as the Host tab does while it is open (14 Nov 2026, the deep scan; lib/night.js hostNudges)
+  const nudging = hostNudges(night.data, sd, nightId)
+  useEffect(() => {
+    if (!nudging) return undefined
+    const id = setInterval(() => { callHost({ nightId, command: 'tick' }).catch(() => {}) }, 20_000)
+    return () => clearInterval(id)
+  }, [nudging, nightId])
 
   // Off the network, or the house has not confirmed the night for twenty
   // seconds (a dead LAN looks exactly like this): say so, and since when.

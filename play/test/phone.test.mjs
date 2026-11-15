@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { promptStage, promptKeyOf, showsPrompt, PROMPT_HOLD_MS, EMPTY_NOTES, clockFor, isDark, stopOf, roleCard } from '../src/lib/night.js'
+import { promptStage, promptKeyOf, showsPrompt, PROMPT_HOLD_MS, EMPTY_NOTES, clockFor, isDark, stopOf, roleCard, cardOnItsWay, CARD_WAIT_MS } from '../src/lib/night.js'
 import { stopWords, STOP_MEANINGS, DEFAULT_UI } from '../src/lib/content.js'
 import { THANKS } from '../src/lib/windows.js'
 
@@ -78,6 +78,20 @@ test('F11 after the blackout: one button, Sorry for the interruption, continue h
   assert.match(app, /return <Prompt [^\n]*serverNow=\{clock\}[^\n]*stage=\{promptStage\(n, notes, clock\)\}/)
   assert.equal(DEFAULT_UI.CONTINUE, 'Sorry for the interruption, continue here')
   assert.ok(!/hide/i.test(DEFAULT_UI.ORIENT), 'the orientation line no longer says to hide anything')
+})
+
+test('the power\'s return: the button waits for this phone\'s own card, at most five seconds (14 Nov 2026, the deep scan)', () => {
+  const T = 1_000_000
+  const n = { act: 2, beat: 'orient', phase: 'prompt', phaseAt: stamp(T) }
+  const card = { id: '2-power-role', kind: 'role', text: '(a card)' }
+  assert.equal(cardOnItsWay(n, null, () => T + 800), true)
+  assert.equal(cardOnItsWay(n, card, () => T + 800), false)
+  assert.equal(cardOnItsWay(n, null, () => T + CARD_WAIT_MS - 1), true)
+  assert.equal(cardOnItsWay(n, null, () => T + CARD_WAIT_MS), false)
+  for (const m of [{ ...n, phase: 'act' }, { ...n, phase: 'paused', pausedFrom: 'prompt' }, { ...n, phaseAt: null }]) assert.equal(cardOnItsWay(m, null, () => T + 800), false)
+  const prompt = sourceOf('play/src/screens/Moments.jsx', 'Prompt')
+  assert.ok(prompt.includes('{!waiting && <button className="big" onClick={continueHere}>{ui.CONTINUE}</button>}'))
+  assert.ok(prompt.includes('const buzzKey = waiting ? null : (card?.id ?? promptKey)'))
 })
 
 // ---- F06 ---------------------------------------------------------------------

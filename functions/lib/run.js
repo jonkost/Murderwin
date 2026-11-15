@@ -234,7 +234,9 @@ export async function clockTick(db, nightId, now = Date.now(), { allSeen = false
   }
   // Act 6's games beat: once its last game has closed, the drawing starts by itself (A5). Once only
   if (await flow.claimGamesDone(db, nightId, n, { now })) {
-    try { await enterBeat(db, nightId, 6, 'drawing', { now }); return { moved: 'drawing' } } catch (e) { return { moved: null, held: e?.code ?? 'failed' } }
+    // a start that failed lets its claim go, so the next clock tries again (14 Nov 2026, the deep scan: one failed read
+    // left the night at the games with no drawing and the Host tab saying Nothing to press)
+    try { await enterBeat(db, nightId, 6, 'drawing', { now }); return { moved: 'drawing' } } catch (e) { await flow.releaseGamesDone(db, nightId); return { moved: null, held: e?.code ?? 'failed' } }
   }
   if (n.act === 4) {
     const due = await act4.due(db, nightId, now)

@@ -78,15 +78,18 @@ export function studyClueCard(c, act, beat, reveal = null) {
   return { ...base, text: 'Something was left behind.', trace: reveal, placeholder: false }
 }
 
-// Add one card to a phone, once (the same rule as the dealer's).
+// Add one card to a phone, once (the same rule as the dealer's, in one transaction like
+// dealCard: a card dealt to the same phone at the same moment is kept; 14 Nov 2026).
 async function dealOnce(db, uid, card) {
   const ref = db.doc(`sessions/${uid}`)
-  const snap = await ref.get()
-  if (!snap.exists) return false
-  const cards = snap.data().cards ?? []
-  if (cards.some(x => x.id === card.id)) return false
-  await ref.update({ cards: [...cards, { ...card, at: new Date() }] })
-  return true
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) return false
+    const cards = snap.data().cards ?? []
+    if (cards.some(x => x.id === card.id)) return false
+    tx.update(ref, { cards: [...cards, { ...card, at: new Date() }] })
+    return true
+  })
 }
 
 // Has the study station reported in lately? (Within two minutes.)

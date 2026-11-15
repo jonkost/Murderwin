@@ -219,12 +219,17 @@ export const KEEPS = new Set(['testimony', 'clue', 'result', 'role'])
 // At The End (`over`, the cue list's cue 23, 25 Oct 2026) the result card stays
 // on Now however many times it was put away: the phone is open for good, and
 // the result is what it opens on.
+// A card dealt with no act (only True Friend of the Groundskeeper, from the host's Salem petted, which can come
+// at any time) shows in whichever act it lands, until it is tapped (14 Nov 2026, the deep scan: it never showed).
+// At The End the reveal's "Eyes on the screen" card goes too: nobody could tap it under the reveal's lock, and it
+// sat under the result telling the room to watch a TV that says The End (14 Nov 2026, the deep scan).
 export function nowCards(session, notes, act, { over = false } = {}) {
   const seen = notes?.seen ?? {}
   return cardsOf(session)
-    .filter(c => c.act === act)
+    .filter(c => c.act === act || c.act == null)
     .filter(c => c.kind !== 'role')
     .filter(c => !(TRANSIENT.has(c.kind) && seen[c.id] && !(over && c.kind === 'result')))
+    .filter(c => !(over && c.kind === 'notice' && c.key === 'eyes'))
     .reverse()
 }
 
@@ -377,6 +382,16 @@ export function showsPrompt(night, notes, serverNow) {
   return phase === 'act' && night?.act === 2 && night?.beat === beatsOf(2)[0]?.key
 }
 
+// The power is back but this phone's role card is still on its way (dealt seat by seat, one to three seconds after
+// the power): the button waits for it, at most CARD_WAIT_MS from the power's return (14 Nov 2026, the deep scan:
+// a quick tap showed the stand-in words, then the card swapped in). The phone redraws once a second.
+export const CARD_WAIT_MS = 5_000
+export function cardOnItsWay(night, card, serverNow) {
+  if (card || night?.phase !== 'prompt') return false
+  const at = ms(night.phaseAt)
+  return at > 0 && serverNow() - at < CARD_WAIT_MS
+}
+
 // Is this window open on this phone right now, and still unanswered? During a
 // pause the clock the phone passes in stands still at the moment of the pause,
 // so a window that was open stays open (disabled) until the host resumes.
@@ -486,4 +501,12 @@ export function clockFor(night, serverNow) {
     return () => frozen
   }
   return serverNow
+}
+
+// Act 6's two games (14 Nov 2026, the deep scan): the break note sends every phone to Now, which closes the Host
+// tab and its twenty-second nudge, so a game the clock closed waited up to a minute more for the server's own
+// tick, twice. The two host phones nudge it from App.jsx in that beat, whatever they show. Never paused.
+// (session.host is 'jonathan' or 'susan', never true: keep the !!.)
+export function hostNudges(night, session, nightId) {
+  return !!nightId && !!session?.host && session.status === 'active' && session.nightId === nightId && night?.phase === 'act' && Number(night?.act) === 6 && night?.beat === 'games'
 }

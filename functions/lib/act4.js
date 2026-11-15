@@ -376,14 +376,17 @@ export async function finishRounds(db, nightId, { now = Date.now() } = {}) {
   const pubRef = db.doc(act4Path(nightId))
   const pub = (await pubRef.get()).data() ?? {}
   if (pub.phase === 'done') return { ok: true, already: true, done: true }
+  // the call back to the Parlour (handoff §2b: chime-phone at every "look at your phone"), first, as every round's
+  // chime is (run.enterBeat): it carries this clock's start as its stamp, and a page lets go of a cue it hears of
+  // more than 3.35 seconds after it (play/src/lib/cueSounds.js cueDue), so it never waits on the pay-outs below
+  // (14 Nov 2026, the deep scan: after them it came too late, and the last chime of Act 4 was never heard)
+  if (pub.phase === 'rounds') await play(db, nightId, 'chime-phone', { now })
   if (rot && pub.phase === 'rounds' && pub.round >= 1) await payRound(db, nightId, rot, pub.round, { outcome: 'capped', now })
   await pubRef.set({ phase: 'done', roundEndsAt: null, doneAt: new Date(now) }, { merge: true })
   if (rot) {
     await setRooms(db, nightId, rot, 0, { now })
     await directGroups(db, nightId, rot, pub.round ?? 0, { now, over: true })
   }
-  // the call back to the Parlour (handoff §2b: chime-phone at every "look at your phone")
-  if (pub.phase === 'rounds') await play(db, nightId, 'chime-phone', { now })
   return { ok: true, done: true }
 }
 
@@ -526,7 +529,10 @@ async function rewardOf(db, nightId, gid, room, { outcome = 'done' } = {}) {
   // that bag the cat says its own line with no clue word in it (bagclues.bagLine). What it named is
   // kept in the case, so the rung, and with it the words, stay as they were first worked out
   const packing = await packingFor(db, c)
-  const inPlay = [...new Set(Object.values(night.roster ?? {}).map(r => Number(r?.bag)).filter(Number.isFinite))]
+  // the bags of the seats the groups were made from: a seat that first comes later has no group and never
+  // moves a group's word (one group, one true word: G46; 14 Nov 2026, the deep scan, test/latebag.test.mjs)
+  const grouped = new Set(rot.groups.flatMap(g => g.members.map(m => m.key)))
+  const inPlay = [...new Set(Object.entries(night.roster ?? {}).filter(([k]) => grouped.has(k)).map(([, r]) => Number(r?.bag)).filter(Number.isFinite))]
   const plan = c ? bagPlan(packing, { bag: night.roster?.[c.ghost]?.bag, inPlay, seed: `${salt}\u0000bag4\u0000${gid}` }) : null
   const fill = bagLine(plan, { cat, act: 4, rung, seed: `${salt}\u0000bag4\u0000${gid}\u0000${cat}` })
   const bag = { text: fill.text, placeholder: false }

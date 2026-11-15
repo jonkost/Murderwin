@@ -118,3 +118,23 @@ export async function claimGamesDone(db, nightId, night, { now = Date.now() } = 
     return true
   })
 }
+
+// A drawing start that failed after the claim (run.js clockTick's catch): while the night is still at the
+// games the claim is let go, so the next clock tries again; once the beat has moved it stands. Never throws.
+// 14 Nov 2026, the deep scan.
+export async function releaseGamesDone(db, nightId) {
+  try {
+    const ref = db.doc(scheduleOf(nightId))
+    const nightRef = db.doc(`nights/${nightId}`)
+    return await db.runTransaction(async tx => {
+      const cur = (await tx.get(nightRef)).data()
+      const snap = await tx.get(ref)
+      if (!snap.exists || snap.data().auto !== true || Number(cur?.act) !== 6 || cur?.beat !== 'games') return false
+      tx.update(ref, { closed: false, closedAt: null, auto: false })
+      return true
+    })
+  } catch (e) {
+    console.error('the drawing claim was not let go', e?.code ?? e?.name ?? 'error')
+    return false
+  }
+}

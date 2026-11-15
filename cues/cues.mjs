@@ -454,6 +454,10 @@ async function serveCake(a) {
   else if (byShortcut) await sleep(seconds * 1000) // a Home scene's song cannot be followed: the sheet's seconds
   else await followTrack({ name: a.song, seconds, started, nowPlaying: () => music.nowPlaying(), log })
   if (mine !== cakeSeq) return // a newer press has the song now, and the speakers with it
+  // the song is over, or its time is up: the Music app stops before it lets go of the HomePods, or it would play
+  // on from this Mac's own speakers (its play goes on to the next song in the library by itself; 14 Nov 2026)
+  await musicApp?.pause()
+  if (mine !== cakeSeq) return
   if (onPods) await music.releaseSpeakers()
   if (mine !== cakeSeq) return
   if (cakeQuiet === mine) { log('[cake] the song was stopped by hand: the lights come back, the music stays off'); lightsBack(); return }

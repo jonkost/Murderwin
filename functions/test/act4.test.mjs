@@ -635,3 +635,32 @@ test('G58 Get Off My Lawn!\'s just-for-fun winner: each slip counts against the 
   await host(db, nightId, 'next', t)
   assert.ok(!doc().slipsBy && !doc().feltBy, 'the next group\'s doc is new')
 })
+
+test('the call back to the Parlour chimes first, on the clock\'s own stamp, before the cap pays a room or turns a phone (14 Nov 2026)', async () => {
+  const { db, nightId, now } = await party(9)
+  const rot = await intoRounds(db, nightId, now)
+  for (let r = 1; r < rot.rounds; r++) await host(db, nightId, 'next', now) // to the last round, no room finished
+  const writes = []
+  const set = db._set.bind(db)
+  const update = db._update.bind(db)
+  db._set = (path, data, opts) => { writes.push({ path, keys: Object.keys(data ?? {}) }); return set(path, data, opts) }
+  db._update = (path, fields) => { writes.push({ path, keys: Object.keys(fields ?? {}) }); return update(path, fields) }
+  const end = ms(db.store.get(act4Path(nightId)).roundEndsAt) + 1
+  assert.equal((await host(db, nightId, 'tick', end)).clock, 'finish', 'the clock ends the last round')
+  const chime = writes.findIndex(w => w.path === `nights/${nightId}/public/sounds`)
+  assert.ok(chime >= 0, 'the call back to the Parlour chimes')
+  const cur = db.store.get(`nights/${nightId}/public/sounds`).current
+  assert.equal(cur.id, 'chime-phone')
+  assert.equal(ms(cur.at), end, 'stamped with the clock that ended the round: a page lets a cue go 3.35 s after its stamp')
+  const paid = writes.findIndex(w => w.path === `nights/${nightId}/private/act4` && w.keys.some(k => k.startsWith('paid.')))
+  const phone = writes.findIndex(w => w.path.startsWith('sessions/') && w.keys.some(k => k === 'cards' || k.startsWith('act4')))
+  assert.ok(paid > chime, 'no room is paid before the chime is written')
+  assert.ok(phone > chime, 'no phone is dealt a card or turned before the chime is written')
+  // the cap still does all it did: every room paid, everyone back in the Parlour
+  for (const g of rot.groups) for (const m of g.members) {
+    const uid = uidOf(db, nightId, m.key)
+    assert.equal(session(db, uid).act4.over, true)
+    assert.deepEqual(cardsOf(db, uid, 'clue').filter(x => x.room).map(x => x.room).sort(), [...ROOM_KEYS].sort())
+  }
+  assert.equal(db.store.get(act4Path(nightId)).phase, 'done')
+})

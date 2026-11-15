@@ -128,7 +128,7 @@ test('BK-11 each name card cuts in only after its lead-in has played; the words 
   // the TV draws from revealView, with the character's portrait on the people's cards
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes('const rv = revealView(finale, '))
-  assert.ok(kiosk.includes('rv.cards.map(') && kiosk.includes('rv.captions.map('))
+  assert.ok(kiosk.includes('rv.cards.map(') && kiosk.includes('revealWords(finale, stage, rv).map('), 'the words through revealWords (14 Nov 2026: none under a card its film has said)')
   assert.ok(kiosk.includes('className="reveal-portrait"'))
   // the chime sounds as a card cuts in, never for a screen reloaded during the story, the journey or the credits
   assert.ok(kiosk.includes('NAME_STAGES.includes(freshStage) && !finale.video?.[freshStage] ? revealView(finale, serverNow()).fresh : null'))
@@ -161,6 +161,7 @@ test('F31 Held shows on the Parlour TV only on a practice night; on the party ni
   const panel = host.slice(host.indexOf('export function RevealPanel('), host.indexOf('export function AchievementsPanel('))
   assert.ok(panel.includes("held ? 'The screen is held where it is.'"), 'the reveal panel says the screen is held')
   assert.ok(panel.includes('>Carry on</button>') && panel.includes('>Hold the screen</button>'), 'and offers Carry on')
+  assert.ok(panel.includes("disabled={!!busy || playing} onClick={() => run('finale-hold')}"), 'Hold the screen waits while a film plays, on the server clock (14 Nov 2026)')
 })
 
 test('a named card finds its character for the portrait, by id, by character name, or by a unique guest name', () => {
@@ -209,4 +210,29 @@ test('F18 the dial\'s journey is shown only after the reveal: after the Victim\'
   assert.match(journey, /finale\.graph\.clues\.map\(c => <li key=\{c\.label\}><span>\{c\.label\}<\/span><span className="clue-level">\{'●'\.repeat\(c\.level\)\}\{'○'\.repeat\(5 - c\.level\)\}<\/span><\/li>\)/, 'F18 each dial clue at the level it landed, as five dots')
   const graphSlot = finale.slice(finale.indexOf("if (stage === 'graph') return ("), finale.indexOf("if (stage === 'journey') return ("))
   assert.ok(!graphSlot.includes('TugOfWar') && !graphSlot.includes('clues'), 'F18 the graph slot before the names shows none of it')
+})
+
+// The deep scan of 14 Nov 2026: no words under a name's card once its film has said them, and each name once
+// in the credits' Thank you.
+test('as video, a name’s card has no words under it; with no film the lead-in’s words still show', async () => {
+  const { revealWords } = await import('../src/lib/finale.js')
+  const parts = [{ who: 'a', text: 'one' }, { who: 'b', text: 'two', card: true }, { who: 'c', text: 'three' }]
+  const up = { cards: ['victim'], fresh: 'victim', waiting: false, captions: parts.slice(2) }
+  const lead = { cards: [], fresh: null, waiting: true, captions: parts.slice(0, 2) }
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', up), [], 'the film said them: nothing flashes under the card')
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', lead), parts.slice(0, 2), 'a lead-in still waiting (no film drawn) keeps its words')
+  assert.deepEqual(revealWords({ video: {} }, 'victim', up), parts.slice(2), 'words mode: unchanged')
+  assert.deepEqual(revealWords(null, 'victim', up), parts.slice(2))
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes("{stage !== 'done' && revealWords(finale, stage, rv).map("))
+  assert.ok(!kiosk.includes('rv.captions.map('), 'the old drawing of every caption is gone')
+})
+
+test('the credits thank each name once, the first spelling kept', async () => {
+  const { uniqueNames } = await import('../src/lib/finale.js')
+  assert.deepEqual(uniqueNames(['Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'jon', ' Susan ', 'Rene', '']), ['Sir Irwin', 'Jon', 'Susan', 'Jenna', 'Jessa', 'Rene'])
+  assert.deepEqual(uniqueNames(undefined), [])
+  assert.deepEqual(uniqueNames('Jon'), [])
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes('<ul className="thanks">{uniqueNames(c.thanks).map('))
 })
