@@ -210,8 +210,23 @@ this current game." and "Keep going".
   open (32 of the phones' and screens', 3 of the workshop's). Afterwards
   1,158 of 1,158 files matched the live site, and the live page loads the
   new code. No night was live. The Study station's own code did not
-  change. Not pushed. Every room screen needs its one click
-  again for its sound, and the party night is started after this publish.
+  change. Pushed later that morning (below). Every room screen needs its one
+  click again for its sound, and the party night is started after this publish.
+- **Pushed on 15 November at about 7:15 am, on Jon's "Yes"** (the seven
+  commits since fd20e48 and this note; GitHub had nothing new, so a plain
+  push; a scan of the seven commits found no key, no private or sealed file
+  and no email). The first `git fetch` failed ("bad object refs/heads/main
+  2"): early that morning iCloud had left copies of files whose names end in
+  a space and a number, most of them cloud-only (the cause is not known), and
+  GitHub Desktop's own fetch had hung on one for an hour (stopped by hand).
+  Moved, nothing deleted, into `.git/icloud-copies-2026-11-15/`, which git
+  never reads: ten in `.git/refs`, 492 beside the pet voices in
+  `play/public/voice/pets`, and two in `play/src/screens`, which the play
+  tests read file by file. Then the fetch worked and the play tests passed
+  again (445 of 445). Every real file in `play/public` matched the live site
+  (1,076 of 1,076, the 834 voices among them); the brain's `cues` and
+  `media`, `hosting`, the server, the seed and the Study had no copies and
+  nothing cloud-only.
 - **Known and left:** Sir Irwin explains the drawing over Intense Music at
   35%, and his door line comes under the door's sting and the music coming
   up (both for Jon's ear). A chime the brain does not play can still cut
