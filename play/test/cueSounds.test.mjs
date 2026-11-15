@@ -438,3 +438,12 @@ test('every room screen plays the cues through its bell, the brain\'s own browse
   assert.ok(kiosk.includes("silent={which === 'decor'} tv={which === 'living'} scope={nightId}"))
   assert.ok(!kiosk.includes("which === 'ipad'} scope"), 'the iPad shows the words only, so it chimes for the news like any other screen')
 })
+
+test('the cues play loud (15 Nov 2026): driven three times harder, and the soft clip never passes 0.94', async () => {
+  const { CUE_DRIVE, softClipCurve } = await import('../src/lib/cueSounds.js')
+  assert.ok(CUE_DRIVE >= 3, 'three times harder into the limiter')
+  const curve = softClipCurve()
+  const top = Math.max(...curve.map(Math.abs))
+  assert.ok(top <= 0.94 + 1e-6 && top > 0.93, 'the loudest a peak can be is 0.94 of full')
+  assert.ok(Math.abs(curve[(curve.length - 1) / 2]) < 1e-6, 'silence stays silence')
+})

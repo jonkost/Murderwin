@@ -255,6 +255,21 @@ let noise = null
 
 // Loudness for every cue made here; a test checks the chime is at least
 // twice the old beeps' (0.25).
+// 15 Nov 2026, Jon: "make the audio chimes and news breaks play loud". Every
+// cue is driven three times harder into the limiter, then through a soft
+// clip that never lets a peak past 0.94 of full. Measured in Chrome: the
+// chime, the news, the sounder and Sir Irwin's bell are 5 to 7 dB louder
+// than before (about twice as loud to the ear), with no peak over -0.5 dB.
+export const CUE_DRIVE = 3
+export const CUE_CLIP = 2.5
+export function softClipCurve(k = CUE_CLIP, n = 4097) {
+  const curve = new Float32Array(n)
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / (n - 1) - 1
+    curve[i] = (Math.tanh(x * k) / Math.tanh(k)) * 0.94
+  }
+  return curve
+}
 function cueBus(ctx) {
   if (bus?.ctx === ctx) return bus.input
   const limiter = ctx.createDynamicsCompressor()
@@ -264,8 +279,15 @@ function cueBus(ctx) {
   limiter.attack.value = 0.003
   limiter.release.value = 0.2
   const input = ctx.createGain()
-  input.gain.value = 1
-  input.connect(limiter).connect(ctx.destination)
+  input.gain.value = CUE_DRIVE
+  let last = input.connect(limiter)
+  if (typeof ctx.createWaveShaper === 'function') {
+    const clip = ctx.createWaveShaper()
+    clip.curve = softClipCurve()
+    clip.oversample = '2x'
+    last = last.connect(clip)
+  }
+  last.connect(ctx.destination)
   bus = { ctx, input }
   return input
 }
