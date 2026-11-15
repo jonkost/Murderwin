@@ -202,3 +202,72 @@ test('the last chime of Act 4 rings once when two clocks reach the end of the la
   assert.deepEqual(chimes.map(t => t - end), [0], 'one chime, the first clock\'s, at the round\'s end')
   assert.equal(db.store.get(act4Path(nightId)).phase, 'done', 'and the rounds are over')
 })
+
+// A night of nine at the end of Act 4's last round, for the two tests below.
+async function atLastRound() {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  for (const name of ['Jon', 'Jessa', 'Jacob', 'Marie', 'Pat', 'Sam', 'Lee', 'Ana', 'Rene']) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  const now = 1_000_000
+  const host = (command, at, arg) => hostCommand(db, { nightId, command, arg, now: at })
+  await host('act', now, 3)
+  await host('start-act4', now)
+  await host('next', now)
+  await host('next', now)
+  const rot = await readRotation(db, nightId)
+  for (let r = 1; r < rot.rounds; r++) await host('next', now)
+  assert.equal(db.store.get(act4Path(nightId)).round, rot.rounds, 'the last round is on')
+  return { db, nightId, host, end: ms(db.store.get(act4Path(nightId)).roundEndsAt) + 1 }
+}
+
+test('the last chime of Act 4 is written in the same commit as its claim: a commit whose answer was lost, run again, still rings once (the deep scan’s second review)', async () => {
+  const { db, nightId, host, end } = await atLastRound()
+  const chimes = []
+  const set = db._set.bind(db)
+  db._set = (path, data, opts) => { if (path === `nights/${nightId}/public/sounds` && data?.current?.id === 'chime-phone') chimes.push(ms(data.current.at)); return set(path, data, opts) }
+  // like the real database: the claim's commit lands, the answer is lost on its way back, and the function is run
+  // again, which now finds the claim taken
+  const realTx = db.runTransaction.bind(db)
+  let replayed = false
+  db.runTransaction = async fn => {
+    let claims = false
+    const first = await realTx(tx => fn({ ...tx, update: (ref, fields) => { if (ref.path === act4Path(nightId) && fields && 'finishChimeAt' in fields) claims = true; return tx.update(ref, fields) } }))
+    if (!claims || replayed) return first
+    replayed = true
+    return realTx(fn)
+  }
+  await host('tick', end)
+  db.runTransaction = realTx
+  db._set = set
+  assert.equal(replayed, true, 'the claim was run again')
+  assert.deepEqual(chimes.map(t => t - end), [0], 'the chime rang once, at the round\'s end: it landed with the claim')
+  assert.equal(db.store.get(act4Path(nightId)).phase, 'done', 'and the rounds are over')
+  // a later clock rings nothing more
+  await host('tick', end + 60_000)
+  assert.equal(db.store.get(`nights/${nightId}/public/sounds`).current.at.getTime(), end, 'no second chime')
+})
+
+test('Locked in: the rounds start when every seat with a phone is in, and a seat handed on is not waited for (the deep scan’s second review)', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  const names = ['Jon', 'Jessa', 'Jacob', 'Marie', 'Pat', 'Sam']
+  for (const name of names) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  const now = 1_000_000
+  const host = (command, at, arg) => hostCommand(db, { nightId, command, arg, now: at })
+  const night = () => db.store.get(`nights/${nightId}`)
+  await host('handover', now, 'sam') // a name nobody plays, handed on at the doors
+  assert.equal(night().roster.sam.handed, true)
+  await host('act', now, 3)
+  await host('start-act4', now)
+  await host('next', now) // the group cards
+  assert.equal(night().beat, 'groups')
+  const lockEndsAt = ms(db.store.get(act4Path(nightId)).lockEndsAt)
+  const at = now + 1_000
+  assert.ok(at < lockEndsAt, 'well inside the two minutes')
+  for (const name of names.slice(0, -2)) await player.lockIn(db, { nightId, uid: `u-${name.toLowerCase()}`, now: at })
+  assert.equal(night().beat, 'groups', 'a seat with a phone is still to come')
+  await player.lockIn(db, { nightId, uid: 'u-pat', now: at })
+  assert.equal(night().beat, 'round1', 'every seat with a phone is in: the round starts, with no wait for the seat handed on')
+})

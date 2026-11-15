@@ -288,6 +288,14 @@ export async function play(db, nightId, id, { now = Date.now(), clips = null, vi
   return { ok: true, sound: id }
 }
 
+// The record play() writes for a plain cue (no clips, no video, not ahead), for a caller that must write the cue
+// inside its own transaction: Act 4's last chime, written in the same commit as its claim (act4.js ringFinishChime;
+// the deep scan's second review, 14 Nov 2026). A test holds the two the same.
+export function cueRecord(id, now = Date.now()) {
+  if (!SOUND_IDS.includes(id)) throw new NightError('invalid', 'No such sound.')
+  return { current: { id, at: new Date(now) } }
+}
+
 // A cue stamped ahead called off before its moment (a pause in the blackout's lead): a fresh record with no
 // sound, so a page holding the cue lets it go and nothing plays.
 // `at` (the last look of 12 Nov 2026): the stamp of the cue this caller means. A press that was paused, resumed

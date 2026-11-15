@@ -52,7 +52,7 @@ import { memoryPick } from './families.js'
 import { noteDealt } from './ledger.js'
 import { stopOf } from './parlour.js'
 import { seededUnit } from './case.js'
-import { play } from './screen.js'
+import { soundsPath, cueRecord } from './screen.js'
 import { hostLine } from './hosts.js'
 import { hasFillIns, isFillIn, seatsToWaitFor } from './seats.js'
 
@@ -383,7 +383,7 @@ export async function finishRounds(db, nightId, { now = Date.now() } = {}) {
   // One chime, whichever clock comes first (the deep scan's review): two clocks a few seconds apart (the minute's tick
   // and a Host tab's nudge, or a Parlour Game's last answer) both find the rounds phase while the first is still
   // paying the rooms, and each rang it. The pay-outs and the rest still run on every clock: each is safe twice.
-  if (pub.phase === 'rounds' && await claimFinishChime(db, pubRef, now)) await play(db, nightId, 'chime-phone', { now })
+  if (pub.phase === 'rounds') await ringFinishChime(db, nightId, pubRef, now)
   if (rot && pub.phase === 'rounds' && pub.round >= 1) await payRound(db, nightId, rot, pub.round, { outcome: 'capped', now })
   await pubRef.set({ phase: 'done', roundEndsAt: null, doneAt: new Date(now) }, { merge: true })
   if (rot) {
@@ -393,16 +393,22 @@ export async function finishRounds(db, nightId, { now = Date.now() } = {}) {
   return { ok: true, done: true }
 }
 
-// The last chime's claim, taken in a transaction: a clock that finds it taken in the last fifteen seconds leaves the
-// chime alone. A clock that took it and then failed lets the next one, after that, ring it (the phase is still rounds).
+// The last chime and its claim, in one transaction: a clock that finds the claim taken in the last fifteen seconds
+// leaves the chime alone. The chime is written in the same commit as the claim (the deep scan's second review): a
+// claim written alone could stand with no chime, when the clock that took it failed before the chime, or when its
+// commit landed, the answer was lost and the transaction was run again; the next clock then found the claim and the
+// chime was never heard. Now either both land or neither, and a clock that fails before its commit leaves the next
+// one free to ring (the phase is still rounds). Returns whether this clock rang it.
 export const FINISH_CHIME_CLAIM_MS = 15_000
-async function claimFinishChime(db, pubRef, now) {
+async function ringFinishChime(db, nightId, pubRef, now) {
+  const soundsRef = db.doc(soundsPath(nightId))
   return db.runTransaction(async tx => {
     const p = (await tx.get(pubRef)).data() ?? {}
     if (p.phase !== 'rounds') return false
     const at = ms(p.finishChimeAt)
     if (at && Math.abs(now - at) < FINISH_CHIME_CLAIM_MS) return false
     tx.update(pubRef, { finishChimeAt: new Date(now) })
+    tx.set(soundsRef, cueRecord('chime-phone', now)) // the record play() writes for a plain cue (screen.js)
     return true
   })
 }
@@ -416,8 +422,10 @@ export async function due(db, nightId, now = Date.now()) {
   if (!pub?.phase) return null
   if (pub.phase === 'warn' && now >= ms(pub.warnEndsAt)) return 'groups'
   if (pub.phase === 'groups') {
-    // everyone at the party; on a practice night with fill-in players, the real players only (lib/seats.js)
-    const keys = seatsToWaitFor(night.roster ?? {})
+    // everyone at the party; on a practice night with fill-in players, the real players only (lib/seats.js); never a
+    // seat handed on, which has no phone to lock in with (the deep scan's second review: the rounds waited the full
+    // two minutes for it, and the Host tab's count, play/src/lib/house.js lockedInCount, leaves it out the same way)
+    const keys = seatsToWaitFor(night.roster ?? {}).filter(k => night.roster?.[k]?.handed !== true)
     const allLocked = keys.length > 0 && keys.every(k => pub.locked?.[k])
     if (allLocked || now >= ms(pub.lockEndsAt)) return 'round1'
   }

@@ -1528,6 +1528,33 @@ export function nightRoundEnd(roundEndsAt, { slotEndsAt = 0, serverNowMs = 0, pa
   return paused || Math.abs((roundEndsAt ?? 0) - want) > 500 ? want : null
 }
 
+// On the night: the arcade's own chime waits CHIME_HOLD_MS after its round's end (Arcade.jsx play and tick), then
+// sounds only if the house has not chimed since about the round's end, and has not moved the round on. The house's
+// clock moves the round on at its next tick, which often lands within a second or two of the round's end; then its
+// chime, on this Mac and on every phone, is the one heard. Otherwise Boo's chime is the stop, a moment late. (The deep
+// scan's third review, 15 Nov 2026: about a third of round ends rang the two a second apart.) `held.roundEnd` is the
+// round's end on the house's clock; `night.houseChimeAt` the house's latest chime-phone on the same clock.
+export const CHIME_HOLD_MS = 2000
+export const HOUSE_CHIME_SLACK_MS = 5000
+export function heldChimeSounds(held, night) {
+  if (!night || night.chime) return false
+  return !(Number(night.houseChimeAt) >= Number(held?.roundEnd ?? 0) - HOUSE_CHIME_SLACK_MS)
+}
+
+// On the night: a visit opened after its round has already ended (the Entryway's page reloaded while the farewell
+// held): straight into the farewell, silent, naming nobody as out of time, since this page cannot know who reached
+// their clue (the house deals every card at its chime anyway). Rung afresh it chimed a second time, and a page opened
+// eight seconds or more after the end went through to free play before the house moved on. (The third review.)
+export function arcadeEnded(a, now) {
+  const s = copy(a)
+  s.events = []
+  if (s.mode === 'visit' && s.stage !== 'farewell') ring(s, now)
+  s.events = []
+  s.pending = []
+  s.thirdPending = false
+  return s
+}
+
 // The Ring the chime button: the round ends now.
 export function arcadeChime(a, now) {
   const s = copy(a)

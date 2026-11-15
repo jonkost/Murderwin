@@ -661,9 +661,13 @@ export const BOO_INTRO = RULES_LINES.entryway
 const visitOf = boo => (boo?.state === 'visit' && boo.groupId ? { groupId: boo.groupId, startsAt: ms(boo.startsAt) } : null)
 const sameVisit = (a, b) => !!a && !!b && a.groupId === b.groupId && a.startsAt === b.startsAt
 
-export function BooRoom({ boo, night, nightId, rotation = null, serverNow }) {
+export function BooRoom({ boo, night, nightId, rotation = null, serverNow, sound = null }) {
   const [held, setHeld] = useState(null) // the visit on the screen, kept through its farewell
   const [stage, setStage] = useState(null) // the arcade's stage, from the page
+  // the house's latest chime-phone on its clock (`sound`: public/sounds.current, from the kiosk), kept even once another
+  // cue takes the record's place: the arcade's own chime waits a moment for it (lib/arcade.js heldChimeSounds; 15 Nov 2026)
+  const houseChime = useRef(0)
+  if (sound?.id === 'chime-phone') houseChime.current = Math.max(houseChime.current, ms(sound.at) || 0)
   const visit = visitOf(boo)
   useEffect(() => { if (visit && !sameVisit(held, visit)) { setStage(null); setHeld(visit) } }, [visit?.groupId, visit?.startsAt]) // eslint-disable-line react-hooks/exhaustive-deps
   const gone = !!held && !sameVisit(held, visit) // the round moved on: the chime, then the farewell, then the card
@@ -684,6 +688,7 @@ export function BooRoom({ boo, night, nightId, rotation = null, serverNow }) {
       paused: night.phase === 'paused', // the round's clock stands still with it (lib/arcade.js nightRoundEnd)
       seed: held.startsAt,
       chime: gone,
+      houseChimeAt: houseChime.current,
       onClue: place => (preview ? Promise.resolve(STAND_IN_CLUE) : callArcadeClue({ nightId, groupId: held.groupId, place }).then(r => r?.data?.text ?? null)),
       onRecord: rec => {
         const key = players[rec.player]?.key

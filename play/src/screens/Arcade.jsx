@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, SCORE_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
   MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample, arcadeClueText, arcadeRoundEnds, nightRoundEnd,
+  CHIME_HOLD_MS, heldChimeSounds, arcadeEnded,
 } from '../lib/arcade'
 import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
 import { deckSupported, reopenDeck, chooseDeck, deckEvents, deckPainter, watchPlugs, deckProblem } from '../lib/arcadeDeck'
@@ -167,8 +168,10 @@ function opening(sample, night) {
   const now = performance.now()
   if (sample) return { now, arcade: arcadeSample(sample, now), setup: false }
   if (night) {
-    const roundMs = Math.max(1000, (night.slotEndsAt ?? 0) - night.serverNow())
-    return { now, arcade: newArcade({ mode: 'visit', players: night.players.map(p => p.name), seed: night.seed ?? Date.now(), now, roundMs, night: true }), setup: false }
+    const left = (night.slotEndsAt ?? 0) - night.serverNow()
+    const arcade = newArcade({ mode: 'visit', players: night.players.map(p => p.name), seed: night.seed ?? Date.now(), now, roundMs: Math.max(1000, left), night: true })
+    // opened after the round's end (a reload while the farewell held): the farewell at once, silent (lib/arcade.js arcadeEnded)
+    return { now, arcade: left <= 0 ? arcadeEnded(arcade, now) : arcade, setup: false }
   }
   let p
   try { p = new URLSearchParams(window.location.search) } catch { p = new URLSearchParams() }
@@ -185,6 +188,8 @@ function opening(sample, night) {
 // `night` (5 Nov 2026), from the Entryway's screen: { players: [{ name }],
 // slotEndsAt (the round's end, the house's clock), serverNow(), seed,
 // chime (true once the house has moved the round on: the chime rings now),
+// houseChimeAt (the house's latest chime-phone, on its clock: the arcade's own
+// chime waits a moment and gives way to it, lib/arcade.js heldChimeSounds),
 // onClue(place) -> Promise<text> (asks the house for that player's clue and
 // deals it to their phone), onRecord(record), onStage(stage) }. The page
 // re-renders with the newest `night`, so a pause that moves the round's end
@@ -210,6 +215,7 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   const heldRef = useRef(null) // the connected deck: { deck, painter, off }
   const attachRef = useRef(null)
   const heardRef = useRef(!!night) // on the night the kiosk keeps the wake (Kiosk.jsx useScreenSound) and every visit is a fresh mount: it never waits for a click of its own (14 Nov 2026)
+  const chimeRef = useRef(null) // on the night: the arcade's own chime, held a moment for the house's ({ at, roundEnd }; play, tick)
   const [heard, setHeard] = useState(false)
   const mainRef = useRef(null)
   const inputRef = useRef(null)
@@ -233,9 +239,17 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   function play(events) {
     if (!heardRef.current || !events?.length) return
     const ctx = wakeAudio()
-    // on the night the round's chime is the house's: this Mac's Bell plays it with every phone, so the
-    // arcade's own would ring it twice (the deep scan's review, 14 Nov 2026). The games' sounds stay.
-    for (const name of events) if (!(nightRef.current && name === 'chime')) sfx(ctx, name)
+    for (const name of events) {
+      // on the night the arcade's own chime waits a moment for the house's (tick, lib/arcade.js heldChimeSounds):
+      // held back for good, the Entryway's stop was silent (the second review); played at once, about a third of
+      // round ends rang it and the house's a second apart (the third review, 15 Nov 2026). When the house moves the
+      // round on first, arcadeStep has dropped it already
+      if (name === 'chime' && nightRef.current) {
+        if (!chimeRef.current) chimeRef.current = { at: performance.now(), roundEnd: nightRef.current.slotEndsAt ?? 0 }
+        continue
+      }
+      sfx(ctx, name)
+    }
   }
   function move(next, now, pressed = false) {
     const pop = popOf(arcadeRef.current, next)
@@ -275,6 +289,12 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   function tick() {
     let a = arcadeRef.current
     const now = performance.now()
+    // the night's held chime (play): once its moment is past, Boo's chime, unless the house has chimed meanwhile
+    const held = chimeRef.current
+    if (held && now - held.at >= CHIME_HOLD_MS) {
+      chimeRef.current = null
+      if (heardRef.current && heldChimeSounds(held, nightRef.current)) sfx(wakeAudio(), 'chime')
+    }
     if (!a) return show(null, now)
     const n = nightRef.current
     if (n && a.mode === 'visit' && a.stage !== 'farewell') {

@@ -10,7 +10,7 @@ import { stationCommand, studyPath, rotationPath } from '../lib/station.js'
 import {
   SOUND_IDS, SCREEN_KINDS, FORBIDDEN_SCREEN_KEYS, DEFAULT_IRWIN, DEFAULT_RELAY_RULES, NEWS_FLASH_PLACEHOLDER, NEWS_QUIET,
   dialBand, irwinLines, dogFilter, castNames,
-  checkScreen, screenDoc, writeScreen, readScreen, play, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
+  checkScreen, screenDoc, writeScreen, readScreen, play, cueRecord, currentSound, soundsPath, onBeat, onPhase, tvTrace, relayRules, labelled,
   screenSeed, doorReached, isPauseCard, IRWIN_OPTION_LINES, JOIN_CARDS, TALK_CARD, VOTE_CARD,
 } from '../lib/screen.js'
 import { rehearsalCase, screenSalt } from '../lib/case.js'
@@ -673,4 +673,16 @@ test('bulletin video: on by default (handoff 11 Nov 2026, A14); the Game night b
   assert.equal(news.video, true, 'a flag only')
   assert.ok(!CLIP_IDS.some(id => JSON.stringify(news).includes(`"${id}"`)), 'no recording is named on the screen')
   assert.equal((await currentSound(live, nightId)).video, true, 'the brain leaves the bulletin to the TV')
+})
+
+test('cueRecord is the record play() writes for a plain cue: Act 4’s last chime writes it inside its own transaction (the deep scan’s second review)', async () => {
+  const db = new FakeFirestore()
+  for (const id of SOUND_IDS) {
+    await play(db, 'n-cue', id, { now: 5_000 })
+    assert.deepEqual(db.store.get(soundsPath('n-cue')), cueRecord(id, 5_000), `${id}: the same record`)
+  }
+  assert.throws(() => cueRecord('no-such-sound', 5_000), e => e.code === 'invalid', 'no record for a sound that is not one')
+  const act4 = readFileSync(new URL('../lib/act4.js', import.meta.url), 'utf8')
+  assert.ok(act4.includes("tx.set(soundsRef, cueRecord('chime-phone', now))"), 'the last chime is written in the claim’s own commit')
+  assert.ok(!/await play\(db, nightId, 'chime-phone'/.test(act4.slice(act4.indexOf('async function finishRounds'), act4.indexOf('export async function due'))), 'and not by a second write after it')
 })

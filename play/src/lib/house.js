@@ -118,13 +118,16 @@ export function fillInLine(night, presence = {}, now = Date.now()) {
 }
 // Act 4's Locked in count: who the rounds wait for. Everyone; on a practice
 // night with fill-in players, the real players only (the server's rule,
-// functions/lib/seats.js seatsToWaitFor).
+// functions/lib/seats.js seatsToWaitFor). Never a seat handed on: it has no
+// phone to lock in with, and the rounds do not wait for it (functions/lib/act4.js
+// due; 14 Nov 2026, the deep scan's second review: it said 6 of 7 under 6 joined).
 export function lockedInCount(act4, night) {
   const roster = night?.roster ?? {}
   const locked = act4?.locked ?? {}
-  if (!fillInSeats(night)) return { locked: Object.keys(locked).length, of: Object.keys(roster).length }
-  const real = Object.keys(roster).filter(k => roster[k]?.fillIn !== true)
-  const seats = real.length ? real : Object.keys(roster)
+  const held = Object.keys(roster).filter(k => roster[k]?.handed !== true)
+  if (!fillInSeats(night)) return { locked: Object.keys(locked).filter(k => roster[k]?.handed !== true).length, of: held.length }
+  const real = held.filter(k => roster[k]?.fillIn !== true)
+  const seats = real.length ? real : held
   return { locked: seats.filter(k => locked[k]).length, of: seats.length }
 }
 

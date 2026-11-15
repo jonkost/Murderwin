@@ -136,6 +136,14 @@ test('the Host tab marks a fill-in, offers no phone to hand on, and counts the r
   assert.deepEqual(lockedInCount({ locked: { jon: true, mabel: true } }, night), { locked: 1, of: 2 }, 'the real players only')
   assert.deepEqual(lockedInCount({ locked: { jon: true, sue: true } }, night), { locked: 2, of: 2 })
   assert.deepEqual(lockedInCount(null, night), { locked: 0, of: 2 })
+  // a seat handed on has no phone to lock in with, and the rounds do not wait for it (functions/lib/act4.js due;
+  // the deep scan's second review, 14 Nov 2026: the count said 6 of 7 under 6 joined)
+  const handed = { roster: { ...plain.roster, amy: { name: 'Amy', handed: true } } }
+  assert.deepEqual(lockedInCount({ locked: { jon: true, sue: true } }, handed), { locked: 2, of: 2 }, 'a seat handed on is out of the count')
+  assert.deepEqual(lockedInCount({ locked: { jon: true, gone: true } }, handed), { locked: 2, of: 2 }, 'and every other key on the doc still counts, as it always has')
+  const handedReal = { roster: { ...night.roster, sue: { name: 'Sue', handed: true } } }
+  assert.deepEqual(lockedInCount({ locked: { jon: true } }, handedReal), { locked: 1, of: 1 }, 'with fill-ins too: the real players with a phone')
+  assert.deepEqual(lockedInCount({ locked: {} }, { roster: { jon: { name: 'Jon', handed: true }, mabel: { name: 'Mabel', fillIn: true } } }), { locked: 0, of: 1 }, 'no real player with a phone: the fill-ins, as the server waits for them')
   const host = read('../src/screens/Host.jsx')
   assert.ok(host.includes("{fill ? ' · fill-in' : ''}"), 'marked beside the name')
   assert.ok(host.includes('{!fill && r.handed !== true && <button className="chip handover"'), 'no Hand this phone on for a seat with no phone')
