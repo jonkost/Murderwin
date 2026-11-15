@@ -11,7 +11,7 @@ import { Cell, Figure } from '../lib/draw'
 import { isGuessing, guessWaiting, guessLine, wrongPick } from '../lib/relayhost'
 import { ms } from './Relay'
 import IrwinBar from './IrwinBar'
-import { studyLines, uiLines } from '../lib/content'
+import { studyLines, uiLines, studyWordsLine } from '../lib/content'
 import { livingView, roomDark, captionsOf, doorStage, doorSlideOf, slideAt, castOf, castRows, voteCount, bellShown, dotState, heardText, showSetup } from '../lib/screen'
 import { finaleStage, shownStats, shownAchievements, revealView, revealWords, uniqueNames, revealCharacterId, creditsAwards, elapsed, hushLines, creditsTimes, anchored, countingBar } from '../lib/finale'
 import { studyMsLeft } from '../lib/house'
@@ -24,7 +24,7 @@ import { useBlackoutMarks } from '../lib/useBlackout'
 import { blackoutHit } from '../lib/blackout'
 import { useDeckDark } from '../lib/useDeckDark'
 import Spoken from './Spoken'
-import { IrwinSpeech } from './PetVoice'
+import { IrwinSpeech, StudyVoice } from './PetVoice'
 import IrwinVoice from './IrwinVoice'
 import { slideInto } from '../lib/irwinvoice'
 import { celebrate } from '../lib/celebrate'
@@ -396,7 +396,7 @@ export function Living({ night, relay, trace, finale, screen = null, cues = null
   if (relay.state === 'intro') {
     const { index, slide: s, count, into } = slideAt(relay, serverNow())
     return (
-      <div className={`kiosk relay-slide${s?.cell ? ' with-cell' : ''}`}>
+      <div className={`kiosk relay-slide papered${s?.cell ? ' with-cell' : ''}`}>
         <IrwinFace mood={5} />
         {s && <p className="kiosk-crest">{s.title} · {index + 1} of {count}</p>}
         {s?.hook && <p className="game-hook">{s.hook}</p>}
@@ -466,14 +466,19 @@ function Guess({ relay, nightId }) {
     setBusy(true)
     try { await callRelayGuess({ nightId, pick: i }) } catch {} finally { setBusy(false) }
   }
+  const opts = relay.options ?? []
+  const named = opts.every(o => o.name)
+  const drawn = named && opts.length > 0 && opts.every(o => o.cells && o.size)
   return (
     <div className="kiosk vote">
       <p className="kiosk-crest">{relay.round ?? `Grid ${relay.grid}`} · {relay.gridSize} by {relay.gridSize}</p>
       <p className="kiosk-line">{guessLine(relay, 'tv')}</p>
-      <div className="kiosk-options">
+      <div className={`kiosk-options${drawn ? ' drawn' : named ? ' named' : ''}`}>
         {(relay.options ?? []).map((o, i) => (
           <button key={i} className={`kiosk-option${crossed.includes(i) ? ' out' : ''}`} disabled={busy || locked || crossed.includes(i)} onClick={() => pick(i)}>
             <span className="letter">{'ABCD'[i]}</span>
+            {/* a name with its example drawing over it (15 Nov 2026), a name alone, or a stand-in round's drawing alone */}
+            {o.name && o.cells && <Figure size={o.size} cells={o.cells} crossed={crossed.includes(i)} />}
             {o.name ? <span className="option-name">{o.name}</span> : <Figure size={o.size} cells={o.cells} crossed={crossed.includes(i)} />}
           </button>
         ))}
@@ -657,7 +662,7 @@ export function VoteScreen({ night, screen = null, trace = null, serverNow, capt
   const w = night?.window?.kind === 'ballot' ? night.window : null
   const left = w ? Math.max(0, Math.ceil((ms(w.closesAt) - serverNow()) / 1000)) : null
   return (
-    <div className="kiosk ballot-screen">
+    <div className="kiosk ballot-screen papered">
       <p className="kiosk-crest">{w?.title || screen?.title || 'The vote'}</p>
       <ThreeQuestions lines={screen?.lines} />
       <div className={trace ? 'vote-middle with-trace' : 'vote-middle'}>
@@ -678,7 +683,7 @@ export function VoteScreen({ night, screen = null, trace = null, serverNow, capt
 // named until the reveal.
 export function VotedScreen({ night }) {
   return (
-    <div className="kiosk ballot-screen voted">
+    <div className="kiosk ballot-screen voted papered">
       <p className="kiosk-crest">The vote</p>
       <p className="kiosk-big">The votes are in.</p>
       <VoteSeals count={voteCount(night)} all />
@@ -1129,7 +1134,7 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
   if (s.hint === 'slow') line = SAY.slow
   if (s.hint === 'map') line = SAY.map
   if (s.state === 'entering' && s.granolia?.hint === 'half') line = s.granolia.colourRight ? SAY.halfNumber : s.granolia.numberRight ? SAY.halfColour : SAY.neither
-  if (s.state === 'entering' && s.granolia?.hint === 'words' && s.lines) line = `It is ${s.lines.colour}, and the number is ${['one', 'two', 'three', 'four', 'five', 'six'][s.lines.number - 1]}. Press those.`
+  if (s.state === 'entering' && s.granolia?.hint === 'words' && s.lines) line = studyWordsLine(s.lines.colour, s.lines.number)
   if (s.warned && s.state !== 'done' && !s.hint && s.state !== 'entering') line = SAY.time
   if (s.state === 'done') line = s.outcome === 'capped' ? SAY.capped : SAY.solved
 
@@ -1152,6 +1157,8 @@ export function Study({ study, rotation, serverNow, lines = null, night = null, 
             </div>
           </div>
           <p className="granolia-says"><Spoken text={line} /></p>
+          {/* Granolia says the line as it comes up (15 Nov 2026); never in a pause, never over Solved! */}
+          <StudyVoice line={night?.phase === 'paused' ? '' : line} />
           {s.state === 'entering' && (
             <p className="study-entry">{s.entry?.colour ?? '…'} and {s.entry?.number ?? '…'}</p>
           )}

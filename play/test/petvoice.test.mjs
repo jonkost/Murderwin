@@ -126,7 +126,7 @@ test('on the page: a cat speaks when its Hear button is pressed, never by surpri
   // it speaks by itself once a card, and only when its sound is awake; a press wakes the sound
   assert.ok(voice.includes('if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) sayVoices(urls, { owner: me.current }).then(seconds => { if (seconds > 0) markSaid(cardId) })'), 'once, only on the phone that has just scanned this cat, and only counted when it really spoke')
   // a card stops only a voice it started itself (lib/voicekit.js stopVoice with an owner)
-  assert.ok(voice.includes('return () => { live = false; stopVoice(me.current) }'), 'a card that leaves the screen stops its own voice, no one else\'s')
+  assert.ok(voice.includes('return () => { live = false }') && !voice.includes('stopVoice(me.current)'), 'a card that leaves the screen never stops its voice: it plays on in another part of the app (Jon, 15 Nov 2026)')
   // the scan, and "Cannot scan? I am with ...", are what arm it; nothing else does
   const finder = read('../src/screens/Viewfinder.jsx')
   assert.ok(finder.indexOf('armVoice(target.cat)') > 0 && finder.indexOf('armVoice(target.cat)') < finder.indexOf('callMeet({ nightId, cat: target.cat })'), 'the scan arms the cat\'s voice before it tells the house')
@@ -169,4 +169,23 @@ test('if the cats are ever switched to speak by themselves: only on the phone th
   assert.ok(ARM_MS >= 15_000 && ARM_MS <= 60_000, 'long enough for the card to come, short enough to mean this visit')
   armVoice(null)
   assert.equal(takeArmedVoice(null, 0), false)
+})
+
+test('Granolia says her Study lines: the screen asks for the file of the words it shows, and the colours are the station\'s', async () => {
+  const { STUDY_COLOURS, studySaidLines, studyWordsLine, DEFAULT_STUDY_LINES } = await import('../src/lib/content.js')
+  const { COLOURS } = await import('../../station/lib/study.js')
+  const { petVoiceUrl } = await import('../src/lib/petvoice.js')
+  const { existsSync, readFileSync } = await import('node:fs')
+  assert.deepEqual(STUDY_COLOURS, COLOURS, 'the six colours the Study can name')
+  const said = studySaidLines()
+  assert.equal(said.length, Object.keys(DEFAULT_STUDY_LINES).length + 36)
+  assert.ok(said.includes(studyWordsLine('pink', 4)))
+  // every one has its file in the site's folder
+  for (const line of said) {
+    const file = new URL(`../public/${petVoiceUrl('granolia', line, '')}`, import.meta.url)
+    assert.ok(existsSync(file), 'a Study line has a voice file')
+  }
+  const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
+  assert.ok(kiosk.includes("<StudyVoice line={night?.phase === 'paused' ? '' : line} />"), 'the Study\'s screen says the line it shows, and nothing in a pause')
+  assert.ok(kiosk.includes('line = studyWordsLine(s.lines.colour, s.lines.number)'), 'the colour-and-number line is built by the one function the voice list uses')
 })

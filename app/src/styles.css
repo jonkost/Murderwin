@@ -587,3 +587,13 @@ a.dl { display: inline-block; text-decoration: none; color: #fff; }
 .send-name { display: grid; font-weight: 600; }
 .send-name small { font-weight: 400; opacity: 0.75; font-size: 0.85rem; }
 .send-list .ghost { min-height: 44px; min-width: 5rem; }
+
+/* Jenna's packing list, as plain as it gets (15 Nov 2026): each bag's number, and what goes in it */
+.pack-list .pack-bag { border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; padding: 0.8rem 1rem; margin: 0.8rem 0; break-inside: avoid; }
+.pack-list .pack-bag h3 { font-size: 1.6rem; margin: 0 0 0.4rem; }
+.pack-list .pack-items { margin: 0; padding-left: 1.3rem; }
+.pack-list .pack-items li { font-size: 1.15rem; line-height: 1.5; }
+@media print {
+  .pack-list .pack-bag { border-color: #000; }
+  .pack-list .linkish { display: none; }
+}

@@ -101,6 +101,20 @@ export const DEFAULT_STUDY_LINES = {
   SOLVED: 'Well done. Your clue is on your phones.',
   CAPPED: "Time's up. Your clue is on your phones.",
 }
+// The line that tells a stuck group its colour and number outright (the
+// Study's screen, screens/Kiosk.jsx), and every line Granolia can say there,
+// so a voice file can be made for each (15 Nov 2026, Jon: "Please build the
+// VOs for the study lines"; scripts/pet-lines.mjs).
+export const STUDY_COLOURS = ['red', 'yellow', 'green', 'blue', 'pink', 'white'] // station/lib/study.js COLOURS; a test holds them together
+export const STUDY_NUMBER_WORDS = ['one', 'two', 'three', 'four', 'five', 'six']
+export function studyWordsLine(colour, number) {
+  return `It is ${colour}, and the number is ${STUDY_NUMBER_WORDS[number - 1]}. Press those.`
+}
+export function studySaidLines(lines = DEFAULT_STUDY_LINES) {
+  const out = Object.values(lines)
+  for (const c of STUDY_COLOURS) for (let n = 1; n <= 6; n++) out.push(studyWordsLine(c, n))
+  return out
+}
 export function studyLines(content) {
   const out = { ...DEFAULT_STUDY_LINES }
   for (const it of items(content, 'study_lines')) {

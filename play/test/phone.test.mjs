@@ -206,3 +206,19 @@ test('F31 a guest\'s phone names no device, app or browser and shows no address'
   assert.ok(!SETUP_WORDS.test("library: 'The game is on the screen.',") && !SETUP_WORDS.test('W-O-O-F News is on the Parlour TV. Watch it.') && !SETUP_WORDS.test('Keep your phone close.'))
   assert.equal(drawn("import { callMeet } from '../firebase'\nimport {\n  a,\n} from '../lib/firebase'\nconst x = 1 // on the iPad").trim(), 'const x = 1', 'imports and comments are not on the screen')
 })
+
+test('the ballot offers only the motives not crossed off; a picked one stays; all crossed off shows them all', async () => {
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../src/screens/Windows.jsx', import.meta.url), 'utf8')
+  const body = /export function ballotMotives\(list, crossed, picked = null\) \{([\s\S]*?)\n\}/.exec(src)
+  assert.ok(body, 'the rule is one function')
+  const ballotMotives = new Function('list', 'crossed', 'picked', body[1].replace('picked = null', 'picked'))
+  const list = [{ n: 1 }, { n: 2 }, { n: 3 }]
+  assert.deepEqual(ballotMotives(list, { 2: true }, null).map(m => m.n), [1, 3])
+  assert.deepEqual(ballotMotives(list, { 2: true }, 2).map(m => m.n), [1, 2, 3])
+  assert.deepEqual(ballotMotives(list, { 1: true, 2: true, 3: true }, null).map(m => m.n), [1, 2, 3])
+  assert.deepEqual(ballotMotives(list, null, null).map(m => m.n), [1, 2, 3])
+  assert.ok(src.includes('const list = ballotMotives(all, crossed, pick.motive)'))
+  const rest = readFileSync(new URL('../src/screens/Rest.jsx', import.meta.url), 'utf8')
+  assert.ok(rest.includes('crossed={notes?.crossed ?? null} card />'), 'the Now tab hands the ballot the guest\'s own crossings')
+})

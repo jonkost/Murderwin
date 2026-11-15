@@ -83,7 +83,7 @@ test('the vote is a card on Now with the tabs reachable: App hands the window to
   assert.match(rest, /ballot\?\.w\?\.id/, 'the phone jumps to Now when the ballot opens')
   assert.match(rest, /\(ballot && !ballot\.sent \? 1 : 0\)/, 'the Now badge counts an unsent ballot')
   const now = rest.slice(rest.indexOf('function Now('))
-  assert.match(now, /\{voting && <Ballot [^\n]*serverNow=\{ballot\.clock\} onDone=\{ballot\.onDone\} draft=\{ballot\.draft\} onDraft=\{ballot\.onDraft\} card \/>\}/, 'the card variant, on the clock that came down with the window, with the picks so far')
+  assert.match(now, /\{voting && <Ballot [^\n]*serverNow=\{ballot\.clock\} onDone=\{ballot\.onDone\} draft=\{ballot\.draft\} onDraft=\{ballot\.onDraft\} crossed=\{notes\?\.crossed \?\? null\} card \/>\}/, 'the card variant, on the clock that came down with the window, with the picks so far')
   // the locked-in card (11 Nov 2026): from the tap, and then from the session's own ballot for as long as the night is on
   // the vote, so it no longer vanishes a second after the tap, and Now never falls back to "Nothing to do" under it
   assert.match(now, /const voting = ballot && !ballot\.sent\n/)

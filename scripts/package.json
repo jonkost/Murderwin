@@ -5,6 +5,7 @@
   "scripts": {
     "leans": "node generate-leans.mjs",
     "relay-pictures": "node generate-relay-pictures.mjs",
+    "relay-decoys": "node generate-relay-decoys.mjs",
     "pack-bags": "node pack-bags.mjs",
     "checks": "node checks.mjs",
     "board": "node board.mjs",

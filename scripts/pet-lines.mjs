@@ -12,6 +12,10 @@
 //   Sir Irwin at dessert (Act 5): his opener, the line that says how sure he
 //       is, each of the nineteen motive rhymes, his closer
 //       (functions/lib/screen.js)
+//   Granolia in the Study (Act 4): her one line for each moment of the light
+//       game, and the line that says a colour and a number outright, every
+//       colour with every number (play/src/lib/content.js; the game's own
+//       words: a line the workshop reworded is simply not said)
 //
 // A test samples the dealer thousands of times and checks every line it
 // deals is in this list (scripts/test/pet-voices.test.mjs).
@@ -23,6 +27,7 @@ import { FAMILIES, ALL_MOTIVES, motivesOf, familyOf } from '../functions/lib/fam
 import { BAG_LINES, BAG_CATS, SENSES, templateOf, fillLine, unfilled } from '../functions/lib/bagclues.js'
 import { IRWIN_OPTION_LINES, DEFAULT_IRWIN, dogFilter, castNames } from '../functions/lib/screen.js'
 import { tidyWords } from '../play/src/lib/petvoice.js'
+import { studySaidLines } from '../play/src/lib/content.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const seed = name => JSON.parse(readFileSync(join(here, '..', 'seed', name), 'utf8'))
@@ -121,11 +126,16 @@ export function irwinLines({ workshop = {}, motives = seed('motives.json').motiv
   return out
 }
 
+// Granolia's lines on the Study's screen (15 Nov 2026).
+export function studyVoiceLines() {
+  return studySaidLines().map(text => ({ who: 'granolia', text }))
+}
+
 // All of them, each once.
 export function allPetLines(opts = {}) {
   const seen = new Set()
   const out = []
-  for (const line of [...catHintLines(), ...catBagLines(opts.words), ...irwinLines(opts)]) {
+  for (const line of [...catHintLines(), ...catBagLines(opts.words), ...irwinLines(opts), ...studyVoiceLines()]) {
     const text = tidyWords(line.text)
     const key = `${line.who}|${text}`
     if (!text || seen.has(key)) continue

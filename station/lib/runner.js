@@ -22,7 +22,13 @@ export const LINES_WAIT = [200, 140, 70], LINES_WAIT_LOW = [90, 60, 30]
 export const BREATHE_TENTHS = 25 // each way, in tenths of a second
 const DIM = ELEMENTS_REST, LIT = [255, 255, 255], OFF = [0, 0, 0], GREEN = [0, 255, 0], RED = [255, 0, 0]
 export const DECK_BRIGHTNESS = 90 // the deck's backlight when the power returns (A1)
-export const COUNTDOWN_MS = 500   // each step of the Lines' green 3, 2, 1
+export const COUNTDOWN_MS = 700   // each step of the green 3, 2, 1 (500 until 15 Nov 2026)
+// The hexagons count in too, and then hold still a moment before the first
+// light (15 Nov 2026, Jon: "It's hard to see when it starts and then turn
+// around I missed the first one": the count was only on the Lines, the other
+// wall, so a group watching it turned to the hexagons a light too late).
+export const COUNT_BLINK_MS = 250 // how long the hexagons are bright at each count
+export const LEAD_IN_MS = 900     // dim and still, after the count, before the first light
 // a report the server answered with a refusal (a group it does not know, say), not a dropped line
 const refused = (err) => /invalid|permission|not-found|failed-precondition/.test(String(err?.code ?? ''))
 function allPanels(wall, rgb) { return Object.fromEntries(wall.panels.map(p => [p.id, rgb])) }
@@ -121,8 +127,8 @@ export function createRunner({
       case 'elements.replay': return
       case 'elements.play': {
         // with the wall down the pattern plays on the screen instead: same timing, no frames to send.
-        // The Lines' countdown is the lead-in; without the Lines, a short pause.
-        if (!linesOk) await sleep(500)
+        // The count on both walls is the lead-in, then a still moment so every eye is on the hexagons.
+        await sleep(LEAD_IN_MS)
         for (const id of e.panels) {
           await safe(elements, elementsOk, () => elements.frame({ ...allPanels(elements, DIM), [id]: LIT }, 1))
           await sleep(e.onMs)
@@ -136,10 +142,21 @@ export function createRunner({
       case 'lines.rest': return e.waiting ? waitLook(lines, linesOk, LINES_WAIT, LINES_WAIT_LOW) : safe(lines, linesOk, () => lines.frame(allPanels(lines, LINES_REST), 10))
       case 'lines.show': return safe(lines, linesOk, () => linesCount(e.number, COLOUR_RGB[e.colour], 3))
       // green 3, 2, 1, then dark while the hexagons play
-      case 'lines.countdown': return safe(lines, linesOk, async () => {
-        for (const n of [3, 2, 1]) { await linesCount(n, GREEN, 1); await sleep(COUNTDOWN_MS) }
-        await lines.frame(allPanels(lines, OFF), 1)
-      })
+      // and the hexagons blink at each count, all together, so the wall that is about to play says so itself
+      case 'lines.countdown': return Promise.all([
+        safe(lines, linesOk, async () => {
+          for (const n of [3, 2, 1]) { await linesCount(n, GREEN, 1); await sleep(COUNTDOWN_MS) }
+          await lines.frame(allPanels(lines, OFF), 1)
+        }),
+        safe(elements, elementsOk, async () => {
+          for (let n = 0; n < 3; n++) {
+            await elements.frame(allPanels(elements, LIT), 1)
+            await sleep(COUNT_BLINK_MS)
+            await elements.frame(allPanels(elements, DIM), 1)
+            await sleep(COUNTDOWN_MS - COUNT_BLINK_MS)
+          }
+        }),
+      ])
       // a wrong pair: one red flash, then the pair again
       case 'lines.wrong': return linesRed().then(() => safe(lines, linesOk, () => linesCount(e.show.number, COLOUR_RGB[e.show.colour], 1)))
       case 'lines.celebrate': return safe(lines, linesOk, async () => { await lines.frame(allPanels(lines, LIT), 2); await sleep(1200); await lines.frame(allPanels(lines, LINES_REST), 8) })

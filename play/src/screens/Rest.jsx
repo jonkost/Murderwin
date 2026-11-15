@@ -144,7 +144,7 @@ function Now({ uid, night, session, content, notes, cards, lights = null, rooms 
       {/* over the whole phone, the camera button and the tabs included, until Done */}
       {met && createPortal(<SmallWin who={met} met={metCats(session, met)} onDone={() => setMet(null)} />, document.body)}
       {over && <PhoneEnd />}
-      {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} card />}
+      {voting && <Ballot w={ballot.w} night={night} session={session} content={content} nightId={night.nightId} serverNow={ballot.clock} onDone={ballot.onDone} draft={ballot.draft} onDraft={ballot.onDraft} crossed={notes?.crossed ?? null} card />}
       {locked && <BallotSent />}
       {!reading && step}
       {rooms && <Act4 step={rooms} session={session} nightId={night.nightId} uid={uid} serverNow={serverNow} notes={notes} />}
@@ -418,7 +418,8 @@ function About({ text }) {
 
 // A picture of a slider, not a control. Remembers the last stop it showed so
 // the marker slides from there when the tab opens on a new value. `house`
-// adds the smaller second marker for the group (Act 4 only). Never a number.
+// adds the group's word after the guest's own (Act 4 only): words alone, no
+// second marker (15 Nov 2026, Jon: "The dots here are confusing"). Never a number.
 function Slider({ level, words, locked = false, house = null }) {
   const key = `stop-${words.length}-${level}`
   const [shown, setShown] = useState(() => {
@@ -441,7 +442,6 @@ function Slider({ level, words, locked = false, house = null }) {
       <div className="track">
         {words.map((w, i) => <span key={w} className={`stop${i + 1 <= level ? ' lit' : ''}`} />)}
         <span className="marker" style={{ left: `${pct}%` }} />
-        {house && <span className="marker house" style={{ left: `${((house - 1) / 4) * 100}%` }} title="the house" />}
       </div>
       <p className="stop-word">{words[level - 1]}{locked && <span className="locked"> · <span aria-hidden="true">🔒</span> Locked</span>}{house && <span className="house-word"> · the house: {words[house - 1]}</span>}</p>
     </div>

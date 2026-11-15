@@ -16,7 +16,7 @@
 // night reads the practice bank and never the party's; the party night reads
 // the party's and never the practice one (bankDocFor, readBank).
 //
-// sealed/relay_pictures = { pictures: [{ id, round: 1|2|3, name, decoys: [3 names], cells: { A1: [stroke] } }] }
+// sealed/relay_pictures = { pictures: [{ id, round: 1|2|3, name, decoys: [3 names], cells: { A1: [stroke] }, decoyCells?: [3 × cells] }] }
 // Strokes are relay-gen.js's: line, arc, circle, dot, in cell-local 0..1.
 // The smiley, the house and the diamond pattern are the style samples, and a
 // star was Jon's example of the art: none may ever be a real picture. Nor may
@@ -128,6 +128,32 @@ export function checkPicture(p, round) {
   return [...new Set(bad)]
 }
 
+// A wrong name's example drawing (15 Nov 2026, Jon: "There should be example
+// drawings ... For the multiple choice"): a picture may carry `decoyCells`,
+// three drawings in the order of its three wrong names, made blind by
+// scripts/generate-relay-decoys.mjs. Nobody copies these by hand, so only
+// their shape is checked: squares of this grid, strokes the TV can draw.
+// A picture without three good ones shows its four names alone, as before.
+export function goodCells(cells, size) {
+  if (!cells || typeof cells !== 'object' || Array.isArray(cells)) return false
+  const labels = new Set(Array.from({ length: size * size }, (_, i) => cellLabel(Math.floor(i / size), i % size)))
+  const drawn = Object.entries(cells).filter(([, s]) => Array.isArray(s) && s.length)
+  if (drawn.length < 2) return false
+  for (const [label, strokes] of drawn) {
+    if (!labels.has(label)) return false
+    for (const s of strokes) {
+      if (!KINDS.includes(s?.kind)) return false
+      if (s.kind === 'line' || s.kind === 'arc') { if (!inUnit(s.from) || !inUnit(s.to)) return false } else if (!inUnit(s.at)) return false
+      if (s.kind === 'arc' && !(typeof s.bulge === 'number' && Math.abs(s.bulge) <= 0.6)) return false
+      if (s.kind === 'circle' && !(typeof s.r === 'number' && s.r > 0 && s.r <= 0.5)) return false
+    }
+  }
+  return true
+}
+export function hasDecoyDrawings(p, size) {
+  return Array.isArray(p?.decoyCells) && Array.isArray(p?.decoys) && p.decoyCells.length === 3 && p.decoys.length === 3 && p.decoyCells.every(c => goodCells(c, size))
+}
+
 function unit(...parts) {
   const h = createHash('sha256').update(parts.map(String).join('\u0000')).digest()
   return h.readUInt32BE(0) / 0x100000000
@@ -141,10 +167,12 @@ function shuffle(list, seed, tag) {
 export function gridOf(p, size, number, seed) {
   const cells = Object.fromEntries(Object.entries(p.cells).filter(([, s]) => Array.isArray(s) && s.length))
   const options = shuffle([p.name, ...p.decoys], seed, `options-${number}`)
+  const drawn = hasDecoyDrawings(p, size)
   return {
     number, size, cells,
     order: shuffle(Object.keys(cells).sort(), seed, `order-${number}`),
-    options: options.map(name => ({ name })),
+    // with a drawing beside each name when the picture has all three wrong names drawn
+    options: options.map(name => (drawn ? { name, cells: name === p.name ? cells : p.decoyCells[p.decoys.indexOf(name)] } : { name })),
     answer: options.indexOf(p.name),
     named: true,
   }

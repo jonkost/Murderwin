@@ -110,7 +110,15 @@ export function Questions({ w, nightId, serverNow, onDone }) {
 // them itself.
 const EMPTY_DRAFT = { step: 0, pick: { murderer: null, motive: null, victim: null } }
 
-export function Ballot({ w, night, session, content, nightId, serverNow, onDone, card = false, draft = null, onDraft = null }) {
+// The motives a ballot offers: the ones this guest has not crossed off on the Motives tab (15 Nov 2026, Jon:
+// "The vote motives should only show the ones not crossed off"). One already picked stays; a guest who crossed
+// off every one sees them all, so the vote is never an empty list. To vote for a crossed-off motive, uncross it.
+export function ballotMotives(list, crossed, picked = null) {
+  const left = (list ?? []).filter(m => !crossed?.[m.n] || m.n === picked)
+  return left.length ? left : (list ?? [])
+}
+
+export function Ballot({ w, night, session, content, nightId, serverNow, onDone, card = false, draft = null, onDraft = null, crossed = null }) {
   useTick(500)
   const [local, setLocal] = useState(EMPTY_DRAFT)
   const { step, pick } = onDraft ? (draft ?? EMPTY_DRAFT) : local
@@ -122,7 +130,8 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
   const people = useMemo(() => Object.entries(night.roster ?? {})
     .map(([key, r]) => ({ key, name: r.name, characterId: r.characterId ?? null, character: characterById(content, r.characterId)?.name ?? '' }))
     .sort((a, b) => a.name.localeCompare(b.name)), [night.roster, content])
-  const list = motives(content)
+  const all = motives(content)
+  const list = ballotMotives(all, crossed, pick.motive)
   const steps = [
     { key: 'murderer', title: 'Who did it?' },
     { key: 'motive', title: 'Why?' },
@@ -163,7 +172,7 @@ export function Ballot({ w, night, session, content, nightId, serverNow, onDone,
       <p className="crest">Your three</p>
       <ul className="summary">
         <li><span className="dim">The Murderer</span> {people.find(p => p.key === pick.murderer)?.name}</li>
-        <li><span className="dim">The Motive</span> {list.find(m => m.n === pick.motive)?.rhyme}</li>
+        <li><span className="dim">The Motive</span> {all.find(m => m.n === pick.motive)?.rhyme}</li>
         <li><span className="dim">The Ghost</span> {people.find(p => p.key === pick.victim)?.name}</li>
       </ul>
       <div className="host-row">

@@ -60,22 +60,19 @@ function Packing({ api }) {
   if (!bags) return <section className="panel"><p>…</p></section>
   if (!bags.packed) return <section className="panel"><h2>The packing list</h2><p className="why">The bags have not been packed yet. When Jon runs the packer, the list appears here.</p></section>
   const rows = packingRows(bags)
+  // The plainest list there is (15 Nov 2026, Jon: "simple bag and what goes in each"): every bag on one page,
+  // its number, and under it what goes in. No steps, no ticks, no clue words, no looks-like notes, no rules paragraph.
   return (
-    <section className="panel">
+    <section className="panel pack-list">
       <h2>The packing list</h2>
-      <p className="why">Ten bags, four or five things each: one food, at least one thing to touch, and extras. Pack exactly what is listed; the order inside a bag does not matter. A line that starts with <b>2</b> means two single candies of that kind. Where a line says what it looks like, any one that matches will do (the six balls are each their own). Nobody who is playing may see this page or the packed bags open.</p>
-      <p className="hint">Packed {bags.packedAt ? new Date(bags.packedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''}{bags.packedBy ? ` by the ${bags.packedBy}` : ''}.</p>
+      <p className="hint"><b>2</b> means two of them. <button type="button" className="linkish" onClick={() => window.print()}>Print</button></p>
       {rows.map(b => (
-        <div key={b.n} className="bag">
+        <div key={b.n} className="bag pack-bag">
           <h3>Bag {b.n}</h3>
-          <ol>
-            {b.items.map(it => (
-              <li key={it.id}>
-                <b>{it.name}</b>{it.looks ? <span> · {it.looks}</span> : null}
-                {it.words ? <span className="hint"> ({it.words})</span> : null}
-              </li>
-            ))}
-          </ol>
+          <ul className="pack-items">
+            {/* the thing's name and nothing else (Jon: "Its easy to see what it is. Thing, color if needed."): where the colour matters it is in the name already (Red ball) */}
+            {b.items.map(it => <li key={it.id}>{it.name}</li>)}
+          </ul>
         </div>
       ))}
     </section>

@@ -14,6 +14,9 @@ import { hasVoice, sayVoices, stopVoice, takeArmedVoice } from '../lib/voicekit'
 //                 the card can also speak once by itself. Never in a group,
 //                 at supper, on a phone the house moved on without a scan,
 //                 or twice.)
+//   StudyVoice    on the Study's screen: Granolia says her one line each time
+//                 it changes (15 Nov 2026, Jon: "Please build the VOs for the
+//                 study lines"). A line with no file is silent.
 //   IrwinSpeech   on the Parlour TV: Sir Irwin says his dessert speech as it
 //                 comes up, once. A TV reloaded later stays quiet.
 //
@@ -43,8 +46,9 @@ function markSaid(id) {
 function HearItInner({ who, lines, cardId = null, auto = false }) {
   const urls = useMemo(() => (lines ?? []).map(l => petVoiceUrl(who, l, BASE)).filter(Boolean), [who, (lines ?? []).join('\n')])
   const [found, setFound] = useState(false)
-  // this card's own mark on a voice it starts: when the card leaves the screen it stops that voice and no
-  // other, so a card never cuts off the one that is talking (the older cards move on the page at a scan)
+  // this card's own mark on a voice it starts. A voice goes on to its end when its card leaves the screen
+  // (15 Nov 2026, Jon: "make the voice overs on the phone play if you go to a different part of the app":
+  // a tab change or the news coming up cut it off). The next Hear press takes its place
   const me = useRef({})
   useEffect(() => {
     let live = true
@@ -58,7 +62,7 @@ function HearItInner({ who, lines, cardId = null, auto = false }) {
       // other way waits for the button
       if (auto && !alreadySaid(cardId) && takeArmedVoice(who)) sayVoices(urls, { owner: me.current }).then(seconds => { if (seconds > 0) markSaid(cardId) })
     })
-    return () => { live = false; stopVoice(me.current) }
+    return () => { live = false }
   }, [urls.join('|'), auto, cardId])
   if (!found) return null
   return (
@@ -92,4 +96,23 @@ function IrwinSpeechInner({ screen, serverNow = null }) {
 
 export function IrwinSpeech(props) {
   return <Quiet><IrwinSpeechInner {...props} /></Quiet>
+}
+
+// Granolia in the Study: her line, said when it comes up and when it changes.
+// A short wait first, so a line that only flashes by (Watch, between two
+// patterns) is not started and cut, and the room's chime rings before her.
+const STUDY_VOICE_WAIT_MS = 450
+function StudyVoiceInner({ line }) {
+  const url = line ? petVoiceUrl('granolia', line, BASE) : null
+  useEffect(() => {
+    if (!url) return undefined
+    hasVoice([url])
+    const timer = setTimeout(() => { sayVoices([url]) }, STUDY_VOICE_WAIT_MS)
+    return () => { clearTimeout(timer) }
+  }, [url])
+  return null
+}
+
+export function StudyVoice(props) {
+  return <Quiet><StudyVoiceInner {...props} /></Quiet>
 }

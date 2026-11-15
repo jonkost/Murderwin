@@ -316,7 +316,7 @@ export async function advance(db, { nightId, now = Date.now() } = {}) {
         tx.update(db.doc(pub), {
           state: 'vote', gridDone, cell: null, drawerKey: null, drawerName: null, drawerCharacterId: null, nextKey: null, nextName: null, nextCharacterId: null,
           turnEndsAt: null, voteEndsAt: null,
-          options: g.options.map(o => (o.name ? { name: o.name } : { size: o.size ?? g.size, cells: o.cells })),
+          options: g.options.map(o => (o.name ? { name: o.name, ...(o.cells ? { size: g.size, cells: o.cells } : {}) } : { size: o.size ?? g.size, cells: o.cells })),
           crossed: [], lastResult: null,
         })
         return { moved: true, state: 'vote' }

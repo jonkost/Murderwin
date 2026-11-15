@@ -589,7 +589,8 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .gauge-more .trust strong { color: var(--good); }
 
 /* ---- the trace, the ballot screen and the finale (room screens) ---- */
-.kiosk.ballot-screen { background: var(--brand-charcoal); }
+/* the vote on the Parlour TV sits on Manor blue with the house wallpaper (15 Nov 2026, Jon: "Vote needs the Irwin background"); it was charcoal */
+.kiosk.ballot-screen { background: var(--kiosk-ground); --paper-opacity: 0.22; --paper-size: 120vw; }
 .trace { display: flex; flex-direction: column; align-items: center; gap: 1.2vw; }
 .trace-frame { position: relative; width: 56vh; height: 56vh; border-radius: 1.2vh; background: var(--brand-parchment); overflow: hidden; box-shadow: 0 12px 70px rgba(0,0,0,0.6); }
 .trace.compact .trace-frame { width: 42vh; height: 42vh; }
@@ -597,7 +598,8 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 /* Jon's ladder (22 Oct): 1 black and white and hazy, 2 colour and less hazy, 3 two similar options side by side, 4 the picture, 5 the picture and its name */
 .trace.level-1 .trace-img { filter: grayscale(1) blur(14px) contrast(0.7); opacity: 0.85; }
 .trace.level-1 .trace-haze { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(241,232,214,0.15), rgba(60,50,40,0.7) 75%); }
-.trace.level-2 .trace-img { filter: blur(5px); }
+/* level 2 was blur(5px): on the TV it was nearly sharp (15 Nov 2026, Jon: "The level 2 blur needs to be more blurred"); still in colour and less hazy than level 1's 14px */
+.trace.level-2 .trace-img { filter: blur(10px); }
 .trace.level-2 .trace-haze { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(241,232,214,0), rgba(60,50,40,0.3) 80%); }
 .trace-pair { display: flex; gap: 3vw; justify-content: center; }
 .trace.level-3 .trace-frame { width: 40vh; height: 40vh; }
@@ -783,7 +785,10 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 
 /* The Relay Drawing on the main display (22 Oct): Irwin's slides, the called drawer, the black box, the guess */
 /* the drawing's screens are black, and Sir Irwin's slides read from the left (Jon, 26 Oct) */
-.kiosk.relay-slide, .kiosk.called, .kiosk.vote { background: #000; }
+.kiosk.called, .kiosk.vote { background: #000; }
+/* Sir Irwin's rules slides sit on the house's own ground, Manor blue with the wallpaper, like the Study's game
+   (15 Nov 2026, Jon: "The intro to the act 6 game rules should have the Irwin background"); the drawing itself stays black */
+.kiosk.relay-slide { background: var(--kiosk-ground); --paper-opacity: 0.22; --paper-size: 120vw; }
 .relay-slide { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1rem; text-align: left; padding: 4vh 8vw; }
 .relay-slide .irwin-mood, .relay-slide .irwin-face { align-self: flex-start; }
 .relay-slide .slide-text { font-size: 2.4vw; max-width: 60rem; }
@@ -795,6 +800,21 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .kiosk-options button.kiosk-option:disabled { cursor: default; }
 .option-name { font-size: 2.2vw; font-weight: 700; }
 .kiosk-option.out .option-name, .option-name.crossed { text-decoration: line-through; opacity: 0.45; }
+/* The guess with four names (15 Nov 2026, Jon: "Clean this page up": four in a row ran off the TV's edge and
+   the letter sat on the name): two by two in the middle of the screen, the letter beside its name, big. */
+.kiosk.vote { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4vh 5vw; box-sizing: border-box; overflow: hidden; }
+.kiosk.vote > .kiosk-line { font-size: min(4vw, 6vh); margin: 1vh 0 0; }
+.kiosk-options.named { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: min(2.4vw, 3vh); width: 100%; max-width: 84vw; margin: 4vh auto 0; }
+.kiosk-options.named button.kiosk-option { display: flex; align-items: center; gap: 2vw; padding: 2.6vh 2.4vw; text-align: left; min-width: 0; }
+.kiosk-options.named .kiosk-option .letter { position: static; flex: none; font-size: min(3.6vw, 5.4vh); line-height: 1.2; padding: 0 1.1vw; border-radius: 0.6vw; }
+.kiosk-options.named .option-name { font-size: min(3.6vw, 5.4vh); line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
+/* The same four with an example drawing over each name (15 Nov 2026, Jon: "There should be example drawings"):
+   four across, the drawing, then the letter and the name under it. */
+.kiosk-options.drawn { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: min(1.8vw, 2.4vh); width: 100%; max-width: min(92vw, 150vh); margin: 3vh auto 0; }
+.kiosk-options.drawn button.kiosk-option { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; align-items: center; column-gap: 1vw; row-gap: 1.4vh; padding: 1.2vw; text-align: left; min-width: 0; }
+.kiosk-options.drawn .kiosk-option .figure-art { grid-column: 1 / -1; grid-row: 1; width: 100%; height: auto; border-radius: 0.6vw; }
+.kiosk-options.drawn .kiosk-option .letter { position: static; grid-row: 2; font-size: min(2.4vw, 3.8vh); line-height: 1.2; padding: 0 0.8vw; border-radius: 0.5vw; }
+.kiosk-options.drawn .option-name { grid-row: 2; font-size: min(2.2vw, 3.6vh); line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
 .door-slide { padding-bottom: 0; }
 /* slide 3: the practice smiley's B1 square, dark like a turn, its label beside the words */
 .slide-with-cell { display: flex; align-items: center; justify-content: flex-start; gap: 4vw; max-width: 90vw; }
