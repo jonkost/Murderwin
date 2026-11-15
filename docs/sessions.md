@@ -19,7 +19,7 @@ already says: each game's own card and its host's own words.
   `media/renders/instructions/` on the brain (not in git): 1 Granolia's
   Lightbulb Moment (23 s), 2 In Duplicate (21 s), 3 Get Off My Lawn! (32 s),
   4 Miss Boo LaRue's Arcade (1 min 43 s, with a smaller copy for a phone),
-  5 Sir Irwin Needs a Hand (1 min 14 s). All five were sent to Jon.
+  5 Sir Irwin Needs a Hand (1 min 17 s, with a smaller copy). All five were sent to Jon.
 - **The four room games.** The room's real card (`GameCard`, the approved
   look: the name in lights, the three steps, the cat, the room's code).
   The host says its hello (`RULES_LINES`, a sentence at a time, shown under
@@ -30,10 +30,17 @@ already says: each game's own card and its host's own words.
   (`seed/pet-voices.json`), made by the pets' own talker into files; a word
   in capitals is given to the voice as a plain word. Nothing was played
   aloud.
-- **Sir Irwin Needs a Hand.** The real Parlour TV (`Living`) on his seven
-  slides, each for the server's own time, with his own voice files laid at
-  each slide's start. The page's clock stops short of the slides' end, so
-  it never asks a server to move a night on.
+- **Sir Irwin Needs a Hand.** First made as the real Parlour TV shows his
+  seven slides (white words on black). Jon, on seeing the five: "Lets give
+  Irwins game the some graphic treatment". Made again in the look of the
+  other four (1 min 17 s): the name in lights, each slide a numbered paper
+  card with its title, each sentence coming up as he says it, his picture
+  changing with the slide, and slide 3's square (B1) where a room's code
+  sits. His own seven voice files, each slide for the server's own time.
+  His recordings are whole slides, so each sentence's start is found from
+  the pauses in the recording (19 of 20 found at a pause, one placed
+  between its neighbours by letters). **The video only: the Parlour TV's
+  own slides on the night are as they were, and nothing was published.**
 - **How.** `media/renders/tools/games/` (its page is the tools' README):
   `make-voices.mjs` (the lines and each video's timeline),
   `gameHarness.jsx` (copied into `play/` only while filming, taken out
