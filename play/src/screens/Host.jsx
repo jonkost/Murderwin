@@ -20,6 +20,7 @@ import GoodNight from './GoodNight'
 import { parlourBeat } from '../lib/flow'
 import IpadPanel from './IpadPanel'
 import { hostStep, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK, halfPowerStuck } from '../lib/hostSteps'
+import { wifiWelcomeButton } from '../lib/wifiwelcome'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -103,6 +104,7 @@ function describe(command, r) {
     // the same words whether it worked or not; a spill that worked changes two role cards with no buzz (14 Nov 2026, the deep scan)
     case 'spill': return 'Noted. The Manor has decided on its own whether the story could still change, and says nothing either way. Now say to everyone: the Manor may have shuffled the case, so open You and read your card again, quietly.'
     case 'ipad': return r.ipad === 'auto' ? 'The iPad follows the night.' : 'The iPad has switched. Auto again from the next act.'
+    case 'wifi-welcome': return r.hidden ? 'The Wi-Fi welcome is hidden. The room screen under it shows again.' : 'The Wi-Fi welcome is back until the intro.'
     case 'hush': return r.already ? 'Already hushed. Nothing more to do.' : 'Hushed. Nothing on any phone changes. From now on that player’s answers move nothing, and the reveal will say so.'
     default: return 'Done.'
   }
@@ -208,6 +210,9 @@ export default function Host({ night, content, serverNow }) {
       {/* the party day with a practice night on (the box forgotten, or yesterday's night still up): said in red, with where to put it right */}
       {isRehearsalNight(night) && onPartyDay(clock) && <p className="host-msg trouble" role="alert">Today is the party, and this is a practice night. For the party: at the bottom of this tab, tick This is the real night, then press Start the night.</p>}
       {left != null && <p className="host-msg" role="status">The intro goes at {clockWords(night.introAt)}, in {countdownText(left)}, by itself. To hold it for late guests, press Back one once it starts.</p>}
+      {/* the Wi-Fi welcome on the screen by the door (15 Nov 2026, Jon: "can I have the ability to advance it from the host
+          panel"): at Arrivals only, since it goes by itself when the intro starts (lib/wifiwelcome.js) */}
+      {night.act === 1 && night.beat === 'arrive' && <WifiWelcomeRow night={night} busy={busy} run={run} />}
       {night.act === 1 && <p className="gloss">{OWN_SLIDES ? 'The rules film shows your own 28 slides.' : 'The rules film shows drawn slides: your own 28 are not in yet.'}</p>}
       {night.act <= 1 && <SendScreens presence={presence} sound={screenSound} now={clock} open={night.act === 1 && night.beat === 'arrive'} />}
       {msg && <p className="host-msg" role="status">{msg}</p>}
@@ -353,6 +358,18 @@ export default function Host({ night, content, serverNow }) {
       <h3>A fresh night</h3>
       <p className="gloss">Never once the party has begun: it starts a new night in place of this one, with new characters for everyone, and every phone types its name again. It asks first.</p>
       <StartNight ui={{ 'START NIGHT': 'Start a new night' }} again />
+    </div>
+  )
+}
+
+// The Wi-Fi welcome's row (15 Nov 2026): one line and one small button. It shows on a room screen whose Mac
+// keeps the welcome (the setup page), until the intro; this hides it sooner, or brings it back.
+export function WifiWelcomeRow({ night, busy, run }) {
+  const b = wifiWelcomeButton(night)
+  return (
+    <div className="host-row wifi-welcome-row">
+      <span className="gloss">{b.line}</span>
+      <button className="chip" disabled={!!busy} onClick={() => run('wifi-welcome', b.arg)}>{b.label}</button>
     </div>
   )
 }

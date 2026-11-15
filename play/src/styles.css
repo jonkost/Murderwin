@@ -243,6 +243,7 @@ h1, h2, h3, .who, .act-name { font-family: var(--serif); font-weight: 600; }
 .host-row.end-practice { margin: 0.5rem 0 0; }
 .host-msg { background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.6rem 0.9rem; margin: 0.8rem 0 0; }
 .host-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.4rem 0; }
+.host-row.wifi-welcome-row { align-items: center; }
 .chip {
   min-height: 2.9rem; min-width: 2.9rem; padding: 0.4rem 0.9rem;
   background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; font-size: 1rem;
@@ -1334,6 +1335,13 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .setup-first button { padding: 0.6rem 1rem; background: none; border: 1px solid var(--line); border-radius: 0.6rem; }
 .setup-first p, .setup-extras span { color: var(--dim); font-size: 0.95rem; margin: 0.3rem 0 0; }
 .setup-extras a { color: var(--ink); font-size: 1.1rem; }
+.setup-wifi-welcome { margin: 0 0 1.6rem; }
+.setup-wifi-welcome h2 { font-size: 1.5rem; margin: 0 0 0.4rem; }
+.setup-wifi-welcome-add { cursor: pointer; }
+.setup-wifi-welcome-add input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.setup-wifi-welcome-add:focus-within { border-color: var(--ink); }
+.setup-wifi-welcome-on { margin: 0 0 1rem; font-size: 1.1rem; }
+.setup-wifi-welcome-off { margin-left: 0.6rem; padding: 0.6rem 1rem; background: none; border: 1px solid var(--line); border-radius: 0.6rem; color: var(--ink); font: inherit; font-size: 1rem; }
 
 /* ---- The big Start the night button, and the screens to send (12 Nov 2026) ---- */
 .start-night { display: grid; gap: 0.7rem; justify-items: center; width: 100%; max-width: 24rem; margin: 0 auto; }
@@ -1361,6 +1369,9 @@ button.link { background: none; border: 0; color: var(--dim); text-decoration: u
 .kiosk-countdown { position: fixed; right: 6vw; bottom: 9vh; z-index: 60; pointer-events: none; }
 .kiosk-countdown span { display: inline-block; padding: 0.5em 1.2em; border-radius: 0.6em; background: rgba(0, 12, 18, 0.9); border: 0.2vh solid var(--brand-brass); color: var(--ink); font-size: clamp(1.4rem, 3.2vw, 3.4rem); font-variant-numeric: tabular-nums; }
 .kiosk-countdown b { font-weight: 700; margin-left: 0.4em; }
+/* the Wi-Fi welcome (15 Nov 2026): the kept page over the whole room screen while the guests arrive, above the
+   countdown, under the corner marks; it takes no click, so the room screen's first click still lands */
+.kiosk-wifi-welcome { position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; margin: 0; padding: 0; display: block; z-index: 70; pointer-events: none; background: #001925; }
 .kiosk.intro-video { background: #000; display: flex; align-items: center; justify-content: center; padding: 0; }
 .kiosk.intro-video video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
 

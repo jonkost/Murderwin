@@ -23,6 +23,7 @@ import { isFillInUid } from './seats.js'
 import { goodNight } from './closing.js'
 import * as flow from './flow.js'
 import { setIpad } from './ipad.js'
+import { setWifiWelcome } from './wifiwelcome.js'
 import { BLACKOUT_LEAD_MS, BLACKOUT_POWER_MS, pressBlackout, clearBlackout, blackoutRunning, blackoutStage } from './blackout.js'
 
 // Is the press that is running a Blackout test?
@@ -657,6 +658,8 @@ export async function hostCommand(db, { nightId, command, arg, now = Date.now(),
       return screen.tvTrace(db, nightId, arg !== 'off', { now })
     case 'ipad':
       return setIpad(db, nightId, arg, { now }) // the Host tab's row The iPad shows (ipad.js)
+    case 'wifi-welcome':
+      return setWifiWelcome(db, nightId, arg, { now }) // the Host tab's Hide the welcome, at Arrivals (wifiwelcome.js)
     case 'spill':
       // Spill the Beans: the engine decides silently (safeguards.js); { did: false } carries no reason
       return safeguards.spill(db, { nightId, now })

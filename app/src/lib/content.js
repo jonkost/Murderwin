@@ -42,6 +42,7 @@ import {
   HOST_CLARITY_1114_TASKS,
   DEEP_SCAN_1114_TASKS,
   WELCOME_1115_TASKS,
+  WELCOME_HOST_1115_TASKS,
   ANSWERED_FOR_THREE_CARDS_1105, RETIRED_FOR_THREE_CARDS_1105, RETIRED_ITEMS_FOR_THREE_CARDS_1105, APPENDED_ITEMS_FOR_THREE_CARDS_1105,
 } from './timelineTasks.js'
 
@@ -1217,6 +1218,13 @@ export const ADDITIONS = [
     // The same day, later: five how-to-play videos, one a game, on the brain (615, done).
     id: '2026-11-15-welcome',
     tasks: WELCOME_1115_TASKS,
+  },
+  {
+    // 15 Nov 2026, the afternoon: the Wi-Fi welcome inside the game, shown on the room screen of the Mac by the
+    // front door while the guests arrive, with Hide the welcome on the Host tab (616, done; it reaches the house
+    // with a publish of the site and the server). Its own migration: the one before may already have loaded.
+    id: '2026-11-15-welcome-host',
+    tasks: WELCOME_HOST_1115_TASKS,
   },
 ]
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import SetupDeck from './SetupDeck'
+import { SetupWifiWelcome } from './WifiWelcome'
 import { SETUP_ROOMS, SETUP_SPARES, SETUP_EXTRAS, SECOND_DISPLAY, SECOND_DISPLAY_ROOMS, SETUP_LAST_KEY, setupHref } from '../lib/setup'
 
 // The setup page (lib/setup.js): which screen is this? One tap opens that
@@ -64,6 +65,7 @@ export default function Setup() {
           </button>
         </li>
       </ul>
+      <SetupWifiWelcome />
       <ul className="setup-extras">
         {SETUP_EXTRAS.map(x => <li key={x.key}><a href={`${BASE}${x.path}`} target="_blank" rel="noreferrer">{x.label}</a> <span>{x.note}</span></li>)}
       </ul>

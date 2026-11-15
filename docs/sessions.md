@@ -9,6 +9,47 @@ WORK). A Claude chat's session gets its entry when its handoff is applied.
 Jobs are not tracked here: they live on the workshop Timeline. Decisions live
 on the Canon.
 
+## 15 Nov 2026, afternoon · Claude Code (the Wi-Fi welcome inside the game, with Hide the welcome)
+
+Jon, the party day, of the welcome screen: "will in loop?" (yes), then "can
+I have the ability to advance it from the host panel". Until now the welcome
+was a page of its own, opened beside a room screen; at 4:30 it had to be
+closed by hand, and the room screen reloaded and clicked to be full screen
+again.
+
+- **The setup page** (`/setup`) has a new part, *The Wi-Fi welcome*: **Add
+  the welcome** picks the page (`Welcome screen.html`) and keeps it in that
+  browser alone (localStorage, `murderwin.wifiWelcome.page`); a wrong file is
+  refused in plain words; **Take it off this Mac** removes it
+  (`play/src/screens/WifiWelcome.jsx`, `play/src/lib/wifiwelcome.js`).
+- **The room screen** of that Mac draws the page over itself while the night
+  is at Act 1's Arrivals (phase act, not paused), in a sandboxed frame that
+  runs none of its script and takes no click (so the room's first click still
+  makes it full screen and wakes its sound), never drawn again at the
+  screen's redraws. It goes by itself when the intro starts (Back one to
+  Arrivals brings it back), and never on the Parlour TV (the join code). The
+  countdown stays mounted underneath and moves the night on at 4:30 as before
+  (`Kiosk.jsx`).
+- **The Host tab**, at Arrivals only, under the countdown: one line and
+  **Hide the welcome** (then **Show the welcome**). The host command
+  `wifi-welcome hide|show` writes `nights/{id}.wifiWelcome = { hidden, at }`,
+  which every room screen already reads; a pause does not hold it
+  (`functions/lib/wifiwelcome.js`, `run.js`, `commands.js`). The rules are
+  unchanged: only the server writes the night.
+- **Checked:** the play tests (451), the server's (455: 451 pass, 2 skipped
+  and 2 to do, as before) and the workshop's (182) pass; the site builds. In a
+  hidden Chrome on the dev server, with the stand-in page only (never the
+  real code): the setup page refused a wrong file and kept the stand-in
+  whole; the preview room screen (`?preview=kiosk-wifi-welcome`) drew it full
+  screen, sandboxed and moving, with the click falling through to the room
+  and the stand-in's fingerprint read from the picture; with it hidden, the
+  countdown showed; a second tab taking it off, then adding it again, changed
+  the open room screen with no reload; no errors. The Host tab's row was
+  seen in the preview (`?preview=host-start`).
+- **Left:** it reaches the house only with a publish of the site and the
+  server (the host command), on Jon's word; then he adds the welcome on the
+  door Mac's setup page. Card 616 (done).
+
 ## 15 Nov 2026, noon · Claude Code (a how-to-play video for every game)
 
 Jon, the party day: "Render out all the instruction videos for all the

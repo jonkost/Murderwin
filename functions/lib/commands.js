@@ -47,6 +47,7 @@ export const HOST_COMMANDS = [
   { name: 'sound-test', arg: '[cue]', what: 'One cue sound on every room screen and phone (the chime with no cue named), so the room hears them work. Nothing else moves.' },
   { name: 'cake', arg: '', what: 'Cake! (Act 5): the brain plays Happy Birthday for Dogs on every HomePod and dims the lights for the candles; the Parlour TV shows the birthday card. The jazz comes back when the song ends.' },
   { name: 'ipad', arg: '<auto|code|captions|memory|bedroom>', what: 'What the iPad shows, at once, until the act changes: Zimothy’s code, the supper captions, In Duplicate or the bedroom. Auto follows the night.' },
+  { name: 'wifi-welcome', arg: '<hide|show>', what: 'The Wi-Fi welcome on the screen by the door, while the guests arrive: hide it before the intro takes it down by itself, or show it again. The page stays on that Mac; nothing of it is on the server.' },
   { name: 'tv-trace', arg: '[off]', what: 'Show the trace on the living room TV once the door is open (if the bedroom screen has died). Say off to take it down.' },
   // Act 7 on the living room screen (finale.js)
   { name: 'reveal-stage', arg: '', what: 'Put the next name on the screen: the Murderer, then the Motive, then the Victim.' },

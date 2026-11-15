@@ -16,6 +16,8 @@ import Relay, { RelayDone } from './screens/Relay'
 import { Living, Bedroom, Study, IntroCountdown } from './screens/Kiosk'
 import { RoomEnd } from './screens/Closing'
 import { MemoryRounds, MemoryStandalone, BooRoom, Idle, RoomCode, Orangerie } from './screens/Rooms'
+import { useKeptWifiWelcome, WifiWelcomeOverlay } from './screens/WifiWelcome'
+import { wifiWelcomeShown } from './lib/wifiwelcome'
 import BooArcade from './screens/Arcade'
 import { SalemRounds } from './screens/Act4'
 import { HousePanel, ResumeNight, StartNight, RunPanel, RevealPanel, HostRelayPanel } from './screens/Host'
@@ -430,6 +432,9 @@ const KIOSK = {
   'kiosk-loop-bedroom': () => <Bedroom relay={null} trace={null} />,
   'kiosk-loop-orangerie': (night) => <Orangerie night={{ ...night, act: 5, beat: 'roam' }} salem={null} />,
   'kiosk-quiet': () => <Idle title="Sirwin Manor" line="The house is quiet." loop="living" />,
+  // the Entryway's screen at Arrivals, with the Wi-Fi welcome the setup page kept in this browser (15 Nov 2026): the
+  // welcome over the room's screen and its countdown, as Kiosk draws it; &hidden=1 is after Hide the welcome
+  'kiosk-wifi-welcome': (night, serverNow) => <WifiWelcomeRoom night={{ ...night, act: 1, beat: 'arrive', phase: 'act', introAt: Date.now() + 25 * 60_000, ...(new URLSearchParams(window.location.search).has('hidden') ? { wifiWelcome: { hidden: true } } : {}) }} serverNow={serverNow} />,
   // The End (cue 23): every screen black
   'kiosk-end': () => <RoomEnd />,
   'kiosk-finale-dedication': (night, serverNow) => <Living night={{ ...night, act: 7 }} relay={null} trace={TRACE(3)} finale={FINALE(200000, 'victim', { sinceVictim: 127000 })} serverNow={serverNow} nightId="preview" />,
@@ -494,6 +499,17 @@ const DEALT = {
   reveal: { act: 7, beat: 'end', cards: [CARDS.eyes], over: true },
   result: { act: 7, beat: 'end', cards: [CARDS.result], over: true },
   clues: { act: 4, beat: 'round3', cards: [CARDS.testimony2, CARDS.testimony, CARDS.clue, CARDS.library], tab: 'clues' },
+}
+
+function WifiWelcomeRoom({ night, serverNow }) {
+  const kept = useKeptWifiWelcome()
+  return (
+    <>
+      <BooRoom boo={null} night={night} nightId="preview" serverNow={serverNow} />
+      <IntroCountdown night={night} nightId="preview" serverNow={serverNow} />
+      {wifiWelcomeShown(night, { kept: !!kept, which: 'boo' }) && <WifiWelcomeOverlay page={kept} />}
+    </>
+  )
 }
 
 export const TOUR = ['doors', 'join', 'allow', 'welcome', 'lobby', 'act1', 'blackout', 'prompt-continue', 'prompt', 'orient', 'news', 'peek', 'wait', 'go', 'go-onmyway', 'later', 'testimony', 'back', 'questions', 'supper', 'dinner', 'warn', 'groups', 'room-study', 'room-salem', 'room-parlour', 'room-paid', 'award', 'roam', 'irwin', 'relay-walk', 'relay-walk-host', 'relay-draw', 'relay-turn', 'relay-vote', 'relay-vote-host', 'relay-lockout', 'relay-done', 'door', 'talk', 'ballot', 'ballot-sent', 'eyes', 'result-lock', 'result', 'reveal', 'clues', 'notes', 'cats', 'cats-friend', 'host', 'paused', 'paused-host', 'superseded']

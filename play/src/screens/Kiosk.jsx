@@ -35,6 +35,8 @@ import IpadScreen, { useRoomScreenDevice } from './Ipad'
 import { HexHint, ReadyHexes, studyState, STUDY_DONE_LINE } from './StudyHexes'
 import { BigWin } from '../look/parts'
 import { useJustWon } from '../lib/useWin'
+import { useKeptWifiWelcome, WifiWelcomeOverlay } from './WifiWelcome'
+import { wifiWelcomeShown } from '../lib/wifiwelcome'
 
 // The room screens: /play/?kiosk=living | bedroom | study | ipad | memory | boo | orangerie.
 // A kiosk is a browser on a MacBook pointed at the host, signed in anonymously like a
@@ -133,6 +135,8 @@ export default function Kiosk({ which }) {
     return () => { window.removeEventListener('pointerup', go); window.removeEventListener('keydown', go) }
   }, [])
   const [introOver, setIntroOver] = useState(null) // this screen's intro video is over: { at: the beat it belonged to, played: to its end, lag } (lib/rulesfilm.js)
+  // The Wi-Fi welcome (15 Nov 2026): the page the setup page kept in this browser, if any (screens/WifiWelcome.jsx)
+  const keptWelcome = useKeptWifiWelcome()
 
   const n = night.data
   const r = relay.data
@@ -177,10 +181,15 @@ export default function Kiosk({ which }) {
   else if (which === 'boo') body = <BooRoom boo={boo.data} night={n} nightId={nightId} rotation={rotation.data} serverNow={serverNow} sound={sounds.data?.current ?? null} />
   else if (which === 'orangerie') body = <Orangerie night={n} salem={salem.data} rotation={rotation.data} serverNow={serverNow} />
   else body = <Living night={n} relay={r} trace={trace.data} finale={finale.data} screen={screen.data} cues={cues.data} content={content.data} serverNow={serverNow} nightId={nightId} captionsOnly={which === 'ipad'} />
+  // The Wi-Fi welcome over the whole screen while the guests arrive, on a machine that keeps it (never the
+  // Parlour TV), until the intro or the Host tab's Hide the welcome (lib/wifiwelcome.js). The room's own screen
+  // runs on underneath it: the countdown still moves the night on at its time, and the first click still lands.
+  const welcome = !standalone && !dark && wifiWelcomeShown(n, { kept: !!keptWelcome, which })
   return (
     <>
       {body}
       {!dark && !standalone && <IntroCountdown night={n} nightId={nightId} serverNow={serverNow} />}
+      {welcome && <WifiWelcomeOverlay page={keptWelcome} />}
       <Bell sounds={sounds} serverNow={serverNow} silent={which === 'decor'} tv={which === 'living'} scope={nightId} />
       {setup && <StaleDot view={night} online={online} />}
       <Wake hidden={dark || !setup} woke={sound} />

@@ -267,18 +267,26 @@ Every phone and every screen only needs the wifi. The brain does not serve the
 game; it serves the lights and the speakers.
 
 *The welcome screen (15 Nov).* *Welcome screen* in the *Murderwin screens*
-folder on the brain's Desktop is a page of its own for a screen by the front
-door while the guests arrive: your Wi-Fi code on a card, Welcome to Sirwin
-Manor above it and Scan for Wi-Fi under it, and the fourteen characters and
-the five pets parading behind it in three rows. AirDrop it to that Mac, open
-it in Google Chrome or Safari (a double-click) and click once: it fills the
-screen and keeps the screen awake. Escape leaves full screen; Command-W
-closes it. It needs no internet and is not part of the game, so nothing on
-the night changes it and it does not go dark with the house. If that Mac
-also shows a room's game screen, close the welcome screen at 4:30, when the
-intro starts, then reload the game screen (Command-R) and click it once, so
-it is full screen again. Your Wi-Fi password is inside its code: it stays on
-the Macs, never in git or on the site.
+folder on the brain's Desktop is your Wi-Fi code on a card, Welcome to
+Sirwin Manor above it and Scan for Wi-Fi under it, and the fourteen
+characters and the five pets parading behind it in three rows. Since the
+afternoon of 15 Nov the game shows it on the screen by the front door:
+AirDrop the file to that Mac; there, in Google Chrome, in the tab of its
+room screen (or a new one), open the setup page
+(`murderwin-at-sirwin-manor.web.app/setup`), press **Add the welcome** under
+*The Wi-Fi welcome* and pick the file, then tap that Mac's room as usual and
+click the screen once. From Start the night, that screen shows the welcome
+while the guests arrive, and its own screen comes back by itself when the
+intro starts at 4:30 (Back one to Arrivals brings the welcome back for late
+guests). **Hide the welcome** on the Host tab, under the countdown, takes it
+down sooner; **Show the welcome** brings it back. Nothing to close or
+reload, and the screen stays full screen. Never on the Parlour TV, which
+shows the join code. **Take it off this Mac** on the setup page removes it.
+On a Mac with no game screen the file still opens by itself: a double-click,
+Google Chrome or Safari, click once (full screen and awake; Escape leaves,
+Command-W closes). Your Wi-Fi password is inside its code: it stays in the
+browser of the Mac you added it to, never in git, on the site or on the
+server.
 
 ## Start order, and how you know each one is alive
 
@@ -330,7 +338,8 @@ practice, on every Mac:
    the Study's page. The folder is sent to that Mac once, by AirDrop from
    the brain's Desktop (Study station.zip).
 4. Leave every screen alone. The jazz plays and every room screen counts
-   down "The evening begins in". On the real night the intro goes at 4:30 pm;
+   down "The evening begins in" (the one with the Wi-Fi welcome shows the
+   welcome instead, until the intro). On the real night the intro goes at 4:30 pm;
    on a run-through, five minutes after you start. At that moment the music
    stops, the lights dim and the Parlour TV plays the intro video on its
    own, then the rules film straight after it, about sixteen minutes in all.
