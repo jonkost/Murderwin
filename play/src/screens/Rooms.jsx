@@ -681,6 +681,7 @@ export function BooRoom({ boo, night, nightId, rotation = null, serverNow }) {
       players: players.length ? players : [{ name: '', key: null }],
       slotEndsAt: ms(boo?.slotEndsAt) || held.startsAt + 15 * 60_000,
       serverNow: clock,
+      paused: night.phase === 'paused', // the round's clock stands still with it (lib/arcade.js nightRoundEnd)
       seed: held.startsAt,
       chime: gone,
       onClue: place => (preview ? Promise.resolve(STAND_IN_CLUE) : callArcadeClue({ nightId, groupId: held.groupId, place }).then(r => r?.data?.text ?? null)),

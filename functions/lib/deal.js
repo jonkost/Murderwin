@@ -623,9 +623,14 @@ export async function notYet(db, { nightId, uid, now = Date.now() }) {
 // from the line (the usual answer is none, and nothing is written); each one found is re-read with
 // the line in one transaction and written only if it still differs, so a move that lands meanwhile
 // is never undone. Only the step and the cat are compared, never the words.
+// A guest whose place in the line moved in the last few seconds is left to that move (the deep scan's review): its own
+// follow-up may still be on its way to the phone, and a write from here meanwhile made a called phone buzz twice. A
+// phone that really missed its write is put right by the next tick, twenty seconds or a minute on.
+export const SETTLE_GRACE_MS = 5_000
 export async function settleLights(db, nightId, list, { now = Date.now() } = {}) {
   const lightsRef = db.doc(lightsPath(nightId))
   const flagsOf = st => ({ movedOn: !!st.movedOn, supper: !!st.supper, later: !!st.later })
+  const settled = st => now - ms(st?.since) >= SETTLE_GRACE_MS
   const differs = (st, have) => {
     const want = lightsCard(st.step, st.cat, {}, flagsOf(st))
     return have?.variant !== want.variant || (have?.cat ?? null) !== want.cat
@@ -634,7 +639,7 @@ export async function settleLights(db, nightId, list, { now = Date.now() } = {})
   const line = lights.exists ? (lights.data().guests ?? {}) : {}
   const off = []
   for (const g of list) {
-    if (!g.uid || !line[g.key]) continue
+    if (!g.uid || !line[g.key] || !settled(line[g.key])) continue
     const s = await db.doc(`sessions/${g.uid}`).get()
     if (s.exists && differs(line[g.key], s.data().lights)) off.push(g)
   }
@@ -647,7 +652,7 @@ export async function settleLights(db, nightId, list, { now = Date.now() } = {})
       const l = await tx.get(lightsRef)
       const s = await tx.get(ref)
       const st = l.exists ? l.data().guests?.[g.key] : null
-      if (!st || !s.exists || !differs(st, s.data().lights)) return false
+      if (!st || !settled(st) || !s.exists || !differs(st, s.data().lights)) return false
       tx.update(ref, { lights: { ...lightsCard(st.step, st.cat, ui, flagsOf(st)), at: new Date(now) } })
       return true
     })

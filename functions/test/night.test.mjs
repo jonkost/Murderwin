@@ -499,3 +499,31 @@ test('a pause moves Sir Irwin\'s slides and the closing bulletin\'s waiting name
   assert.equal(f.cardAt.motive, undefined, 'a card not pressed yet stays unset')
   assert.ok(PAUSE_SHIFTED['public/relay'].includes('introEndsAt') && PAUSE_SHIFTED['public/finale'].includes('cardAt.victim'))
 })
+
+test('a seat handed on says so on the roster, gets no role, and tapping the name again takes the mark away (14 Nov 2026, the deep scan\'s review)', async () => {
+  const db = seeded()
+  const { nightId } = await createNight(db)
+  for (const [uid, name] of [['u-jon', 'Jon'], ['u-jessa', 'Jessa'], ['u-jacob', 'Jacob'], ['u-marie', 'Marie']]) await join(db, { uid, nightId, name })
+  const roster = () => db.store.get(`nights/${nightId}`).roster
+  assert.ok(Object.values(roster()).every(r => r.handed === undefined), 'no seat is marked at the doors')
+  // a guest moving to another phone: the seat says so until the name is tapped again
+  await runCommand(db, { nightId, command: 'handover', arg: 'jessa', now: 1_000_000 })
+  assert.equal(roster().jessa.handed, true, 'the seat has no phone now, and says so')
+  assert.equal(roster().jessa.name, 'Jessa', 'it keeps its name')
+  assert.equal(roster().jacob.handed, undefined, 'only that seat')
+  await join(db, { uid: 'u-spare', nightId, name: 'Jessa' })
+  assert.deepEqual(Object.keys(roster().jessa).sort(), ['bag', 'characterId', 'joinedAt', 'name'], 'tapped again: the seat is written afresh, with no mark')
+  // the wrong name at the doors: handed on, then the right one typed on the same phone; the stray seat stays marked
+  await runCommand(db, { nightId, command: 'handover', arg: 'marie', now: 1_000_001 })
+  await join(db, { uid: 'u-marie', nightId, name: 'Mari' })
+  assert.equal(roster().marie.handed, true)
+  assert.equal(roster().mari.handed, undefined)
+  // the deal goes by the phones: the marked seat gets no role, every other seat one
+  await runCommand(db, { nightId, command: 'act', arg: 2 })
+  const roles = db.store.get(`cases/${nightId}`).roles
+  assert.equal(roles.marie, undefined, 'the stray seat is dealt no role')
+  for (const k of ['jon', 'jessa', 'jacob', 'mari']) assert.ok(roles[k], `${k} has a role`)
+  // a uid nobody holds is refused as before, and nothing is marked
+  await assert.rejects(runCommand(db, { nightId, command: 'handover', arg: 'marie' }), e => e.code === 'no-guest')
+  assert.equal(Object.keys(roster()).length, 5, 'no seat is ever made by a mark')
+})

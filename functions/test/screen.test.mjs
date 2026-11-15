@@ -325,6 +325,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   assert.ok(wait >= 3 * 60_000 && wait <= 5 * 60_000, 'three to five minutes')
   await host('tick')
   assert.notEqual(screen().kind, 'bulletin', 'not early')
+  assert.equal(nightDoc().newsPlayedAt, undefined, 'and the night does not say it has played')
   now = ms(sched.dueAt)
   await host('tick')
   const bulletin = screen()
@@ -341,6 +342,7 @@ test('F27 and L07 the night walk: news at 2/news, bulletin at 3/bulletin, irwin 
   for (const uid of Object.values(db.store.get(`nights/${nightId}/private/deck`).uids)) assert.ok(db.store.get(`sessions/${uid}`).cards.some(x => x.key === 'bulletin'), 'every phone hears about it')
   await host('tick')
   assert.equal(db.store.get(`nights/${nightId}/private/bulletin`).played, true, 'once')
+  assert.ok(nightDoc().newsPlayedAt, 'the night says it has played, for the Host tab after a step back from Act 4 (the deep scan’s review)')
   assert.deepEqual(screen().captions.lines, bulletin.lines, 'captions stay up through supper')
   // the dinner wrap-up (cue 10, 25 Oct 2026): the join code again for anyone who needs to rejoin, the
   // captions still riding along for the Orangerie iPad

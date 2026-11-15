@@ -420,10 +420,13 @@ the screen awake by itself where the iPad lets it.
      and double-click *Start the Study* again.
    - `DOWN` beside `elements` (it also says `elements: cannot reach the
      wall`) means the white hexagons did not answer, and no group can play
-     on them: check they are switched on, close that window and the Study's
-     page, then double-click *Start the Study* again (only a fresh start tries
-     the wall again). `DOWN` beside `lines` alone is fine: the colour and the
-     count show on the screen.
+     on them (the taps then read 0: that is not a teaching problem): check
+     they are switched on, close that window and the Study's page, then
+     double-click *Start the Study* again (only a fresh start tries the wall
+     again). If they stay down, the Study still plays: the screen shows each
+     pattern, and the Stream Deck's number keys 1 to 6 stand in for the
+     hexagons. `DOWN` beside `lines` alone is fine: the colour and the count
+     show on the screen.
    Then minimise that window (the yellow button at its top
    left): it keeps running, and the Study's guests see only the game, never
    the station's lines (your rule of 29 October: no setup words in front of
@@ -552,8 +555,8 @@ Nothing was taken off the tab. It is laid out by whose each button is.
   again. The lights stay as they are (your AfterBlackOut Shortcut puts the
   house back if a room is left dim), and if music is still playing
   afterwards, run your AudioPanic Shortcut. On the party night the button
-  is not there at all, and once the roles are out the Manor refuses to
-  throw a real night away.
+  is not there at all, and the Manor refuses to throw the party night away
+  at any time.
   With no night on, any phone at the doors shows Start the night, as it
   always has: on the party day, end a practice night just before you start
   the real one on your own phone, before the guests come.
@@ -1048,9 +1051,9 @@ the brain, then press **Blackout** once the line has gone.
   the round starts again from its 3, 2, 1, with no slip counted) and the
   intro video and rules film on the Parlour TV. **Resume** carries them on
   from where they stopped, and no clue is lost. Boo's arcade plays on through
-  a pause, and its chime waits for the round's real end. In the cat visits,
-  keep a pause under two minutes: a longer one can send a guest on from a cat
-  they were walking to. A bulletin that fell due in
+  a pause, and its chime waits for the round's real end. A pause holds the
+  cat visits too: nobody is sent on from a cat for the time it lasted, and a
+  guest who tapped Not yet may be called as soon as you press Resume. A bulletin that fell due in
   the pause plays straight after Resume. A pause takes the tabs off every
   phone, this tab with them, so **Resume** is on the pause card on your phone
   and Susan's, or on the strip across the top if a Parlour Game or the vote

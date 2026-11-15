@@ -600,7 +600,7 @@ After changing any of them, stop the relay (Control-C) and start it again.
 
 ## On the day
 
-*Parts of this list are older than 11 November: the brain starts from Start the brain on its Desktop, and with the music through
+*Parts of this list are older than 11 November: the brain starts from Start the brain, in the folder Murderwin screens on its Desktop, and with the music through
 Apple Home the log names your Shortcut (`[music] Default Jazz`), and
 bulletin 2 plays from this Mac's own speakers, not a HomePod. For the night,
 go by `docs/on-the-night.md`.*
@@ -613,7 +613,7 @@ go by `docs/on-the-night.md`.*
       through Apple Home" (or "not set up" for whatever is decoration).
 - [ ] A browser on this Mac, full screen, at the play address with
       `?kiosk=orangerie`, facing the Orangerie table (Salem's code in Act 2,
-      the Get Off My Lawn! card in Act 4). *Start the brain* on the Desktop
+      the Get Off My Lawn! card in Act 4). *Start the brain* (in Murderwin screens on the Desktop)
       opens it; click once on it. Since 12 Nov 2026 it plays the Orangerie's
       chimes itself, like every room screen, so this Mac's sound stays on its
       own speakers, turned all the way up, never a HomePod.

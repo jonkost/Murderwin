@@ -1518,6 +1518,16 @@ export function arcadeRoundEnds(a, roundEndsAt) {
   return s
 }
 
+// On the night: the round's end on this page's own clock (`now`, performance.now), from the house's
+// slotEndsAt and serverNow. Read again only once it is half a second out (the two clocks wander), and on
+// every tick in a pause, where serverNow stands still at the pause and the end must stand still with it.
+// Null: keep the end as it is. (The deep scan's review, 14 Nov 2026: with the half second alone, the
+// Entryway's clock flipped between two seconds all through a pause.)
+export function nightRoundEnd(roundEndsAt, { slotEndsAt = 0, serverNowMs = 0, paused = false } = {}, now) {
+  const want = now + (slotEndsAt - serverNowMs)
+  return paused || Math.abs((roundEndsAt ?? 0) - want) > 500 ? want : null
+}
+
 // The Ring the chime button: the round ends now.
 export function arcadeChime(a, now) {
   const s = copy(a)

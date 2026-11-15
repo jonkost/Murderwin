@@ -19,7 +19,7 @@ import { troubleLine } from '../lib/trouble'
 import GoodNight from './GoodNight'
 import { parlourBeat } from '../lib/flow'
 import IpadPanel from './IpadPanel'
-import { hostStep, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK } from '../lib/hostSteps'
+import { hostStep, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK, halfPowerStuck } from '../lib/hostSteps'
 
 // The host's buttons, on the host's own phone. Nothing here needs a Google
 // sign-in: the two guests marked "— host:" on the guest list get this tab.
@@ -164,6 +164,9 @@ export default function Host({ night, content, serverNow }) {
 
   const roster = night.roster ?? {}
   const people = Object.entries(roster).map(([key, r]) => ({ key, ...r })).sort((a, b) => a.name.localeCompare(b.name))
+  // a seat handed on has no phone, so it gets no role at the blackout: it stays on the list, marked, and out of the
+  // count (14 Nov 2026, the deep scan's review: the count at Ready for the dark could never come right after one)
+  const joined = people.filter(p => p.handed !== true).length
   const hostKeys = new Set(Object.values(night.hosts ?? {}).map(h => h.key))
   const now = Date.now()
   const clock = serverNow ? serverNow() : now
@@ -197,7 +200,7 @@ export default function Host({ night, content, serverNow }) {
     <div className="host">
       <p className="host-status">
         {night.act ? `Act ${night.act} · ${ACTS[night.act]?.plain}` : 'Before Act 1'} · {PHASE_WORDS[night.phase] ?? night.phase}
-        <br />Doors {night.joinOpen ? 'open' : 'closed'} · {people.length} joined
+        <br />Doors {night.joinOpen ? 'open' : 'closed'} · {joined} joined
         <br />{isRehearsalNight(night) ? 'This is a practice night' : 'This is the party night'}
       </p>
       {/* a practice night is ended from here, right under the line that says it is one. Never drawn on the party night. */}
@@ -256,9 +259,9 @@ export default function Host({ night, content, serverNow }) {
               {house.showGuests && !fill
                 ? <span className={online ? 'dot on' : 'dot'} aria-label={online ? 'phone is here' : 'phone not seen lately'} />
                 : <span className="dot hidden" aria-hidden="true" />}
-              <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}{fill ? ' · fill-in' : ''}</span>
+              <span className="who-name">{r.name}{hostKeys.has(r.key) ? ' · host' : ''}{fill ? ' · fill-in' : ''}{r.handed === true ? ' · handed on' : ''}</span>
               <span className="who-char">{(character?.name ?? r.characterId)} · bag {r.bag}</span>
-              {!fill && <button className="chip handover" disabled={!!busy} onClick={() => sure(`Wipe ${r.name}’s phone? Their crossed-off motives and notes go, and they must tap their name again.`, () => run('handover', r.key))} title="Wipe this phone so someone else can use it">Hand this phone on</button>}
+              {!fill && r.handed !== true && <button className="chip handover" disabled={!!busy} onClick={() => sure(`Wipe ${r.name}’s phone? Their crossed-off motives and notes go, and they must tap their name again.`, () => run('handover', r.key))} title="Wipe this phone so someone else can use it">Hand this phone on</button>}
             </li>
           )
         })}
@@ -530,7 +533,7 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
   // so the card showed two big buttons for one press)
   const startsAct4 = night.act === 3 && night.beat === 'wrap'
   // bulletin 2 armed but not yet played: Next and Start Act 4 ask first (14 Nov 2026, the deep scan)
-  const newsLate = newsWaiting({ act: night.act, beat: night.beat, screen: tv })
+  const newsLate = newsWaiting({ act: night.act, beat: night.beat, screen: tv, played: !!night.newsPlayedAt })
   const pressStartAct4 = () => {
     if (newsLate && !askFirst(NEWS_ASK[night.beat])) return
     run('start-act4')
@@ -614,7 +617,9 @@ export function RunPanel({ night, busy, run, serverNow, finale = null, act4 = nu
             </div>
           ) : <p className="gloss run-what">{here.what}</p>}
         </>
-      ) : halfPower ? <p className="host-msg trouble" role="alert">The power came back only part way. Under Move the night by hand, press 1, then Blackout just below it, and say yes to both.</p>
+      ) : halfPower ? (halfPowerStuck(finaleMs(night.phaseAt), clock)
+          ? <p className="host-msg trouble" role="alert">The power came back only part way. Under Move the night by hand, press 1, then Blackout just below it, and say yes to both.</p>
+          : <p className="gloss">The power is coming back.</p>)
         : <p className="gloss">Nothing has started. Begin when the room is in.</p>}
       {naming && <p className="host-msg" role="status">The screen is revealing. Name all three below, then press Next.</p>}
       {night.act === 4 && act4 && <p className="host-msg" role="status">{act4Line(act4, night, serverNow ? serverNow() : Date.now())}</p>}

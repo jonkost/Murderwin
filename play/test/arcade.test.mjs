@@ -5,7 +5,7 @@ import {
   ARCADE_NAME, COLS, ROWS, KEY_COUNT, DIALS, keyAt, rowOf, colOf, LEFT_DIAL, RIGHT_DIAL, MENU_KEYS, BACK_KEY, EXIT_DIAL, SCORE_KEYS, STRIP_WIDTH,
   TABLE_ENDS, TABLE_WAYS, tableEndCol, tableStartCol,
   TOKENS, MAX_PLAYERS, CLUE_AFTER_GAMES, ROUND_MS, FREE_GAME_MS, GAME_MS, CLUE_KEEP_MS, CUT_MIN_MS,
-  STAND_IN_CLUE, CLUE_NOTE, CLUE_WAIT, THIRD_LINE, FAREWELL_LINE, BOO_LINES, arcadeClueText, arcadeRoundEnds,
+  STAND_IN_CLUE, CLUE_NOTE, CLUE_WAIT, THIRD_LINE, FAREWELL_LINE, BOO_LINES, arcadeClueText, arcadeRoundEnds, nightRoundEnd,
   GAMES, KNOCK_OBJECTS, PETS, FRIEND_NAMES, TAIL_FRIENDS, FUR_PAIRS, MENU_FACES, GAME_FACES, FACE_IDS, SOUND_NAMES, BOO_PICTURES, nextRand, hashOf, MARK_LABELS,
   newGame, stepGame, inputGame, gameFaces, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample,
   HIT_MS, MISS_MS, STRIKES_OUT, STRIKE_WORDS_MS, DIAL_MAX_KEYS,
@@ -3583,7 +3583,7 @@ test('L09 the page: one 16 ms loop, stopped when it goes; the deck only through 
   for (const part of ['screen.score', 'screen.timeLeftMs', 'screen.tally.value', 'screen.tally.label', 'screen.said', 'screen.facts']) assert.ok(page.includes(part), `the scoreboard shows ${part}`)
   // the sounds
   assert.ok(!/AudioContext/.test(page), 'no AudioContext of its own')
-  assert.match(page, /const ctx = wakeAudio\(\)\s*for \(const name of events\) sfx\(ctx, name\)/)
+  assert.match(page, /const ctx = wakeAudio\(\)\s*for \(const name of events\) if \(!\(nightRef\.current && name === 'chime'\)\) sfx\(ctx, name\)/) // on the night the chime is the house's (14 Nov 2026)
   assert.match(page, /<RehearsalBand on=\{live && visit && !night\} label="PRACTICE" \/>/) // on the night the kiosk's own band shows (5 Nov 2026)
   assert.match(page, /\{live && !night \? <Wake \/> : null\}/, 'the wake corner, never on a sample, and on the night the kiosk keeps it (5 Nov 2026)')
   assert.ok(!/localStorage|sessionStorage|indexedDB|fetch\(/.test(page), 'it keeps nothing and sends nothing')
@@ -3831,4 +3831,38 @@ test('G55 on the night a press on the Stream Deck makes the games\' sounds: ever
   assert.match(page, /const heardRef = useRef\(!!night\)/, 'on the night the gate starts open: sfx still plays only once the page\'s AudioContext runs')
   assert.match(page, /function play\(events\) \{\s*if \(!heardRef\.current \|\| !events\?\.length\) return\s*const ctx = wakeAudio\(\)/, 'the practice page waits for its first click, as before')
   assert.equal((page.match(/heardRef\.current = true/g) ?? []).length, 1, 'and its first click is still the only other way in')
+})
+
+// The deep scan's review (14 Nov 2026): in a pause the house's clock stands still, and with only the half-second
+// rule the Entryway's round clock flipped between two seconds all through it; now it is read again on every tick
+// in a pause. And on the night the round's chime is the house's (the Mac's Bell plays it with every phone), so the
+// arcade's own chime is never played there, or it rang twice. Replayed on the real library.
+test('on the night the round clock stands still through a pause, and the arcade leaves the round\'s chime to the house', () => {
+  const pausedAt = 1_000_000
+  const slotEndsAt = pausedAt + 251_300 // 4:11.3 left when the pause came
+  const replay = rule => {
+    let a = newArcade({ mode: 'visit', players: ['A', 'B'], now: 0 })
+    const shown = new Set()
+    for (let now = 0; now <= 20_000; now += 100) { // twenty seconds of the page's own clock, a tick every tenth
+      const want = rule(a.roundEndsAt, now)
+      if (want != null) a = arcadeRoundEnds(a, want)
+      shown.add(arcadeView(a, now).screen.clockMs)
+    }
+    return shown
+  }
+  const paused = replay((end, now) => nightRoundEnd(end, { slotEndsAt, serverNowMs: pausedAt, paused: true }, now))
+  assert.deepEqual([...paused], [252_000], 'one time on the clock, held for the whole pause')
+  const halfSecondOnly = replay((end, now) => nightRoundEnd(end, { slotEndsAt, serverNowMs: pausedAt, paused: false }, now))
+  assert.ok(halfSecondOnly.size >= 2, 'the old rule alone, in the same pause, flips')
+  // on the live clock: kept within half a second, read again past it
+  assert.equal(nightRoundEnd(10_000, { slotEndsAt: 20_000, serverNowMs: 10_000 }, 0), null)
+  assert.equal(nightRoundEnd(10_400, { slotEndsAt: 20_000, serverNowMs: 10_000 }, 0), null)
+  assert.equal(nightRoundEnd(10_600, { slotEndsAt: 20_000, serverNowMs: 10_000 }, 0), 10_000)
+  const page = uncommented(src('../src/screens/Arcade.jsx'))
+  assert.ok(page.includes('const want = nightRoundEnd(a.roundEndsAt, { slotEndsAt: n.slotEndsAt ?? 0, serverNowMs: n.serverNow(), paused: !!n.paused }, now)'))
+  assert.ok(page.includes('if (want != null) a = arcadeRoundEnds(a, want)'))
+  assert.ok(!page.includes('Math.abs((a.roundEndsAt ?? 0) - want) > 500'), 'the rule lives in the library now')
+  assert.ok(page.includes("for (const name of events) if (!(nightRef.current && name === 'chime')) sfx(ctx, name)"), 'the night\'s chime is the house\'s')
+  const rooms = uncommented(src('../src/screens/Rooms.jsx'))
+  assert.ok(rooms.includes("paused: night.phase === 'paused',"), 'the Entryway tells the arcade the night is paused')
 })

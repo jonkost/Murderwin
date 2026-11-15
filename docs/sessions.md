@@ -65,7 +65,9 @@ this current game." and "Keep going".
   ("Illegal invocation"), and Node does not, so the tests passed. It now
   calls the page's own timers as plain functions (`PAGE_TIMERS`), and
   `play/test/signin.test.mjs` runs it under browser-strict timers with
-  none passed, as the page does. True Friend of the
+  none passed, as the page does. Run in headless Chrome, the real file
+  with a first sign-in that fails now signs in on its second try. True
+  Friend of the
   Groundskeeper shows on Now (a card with no act never showed), and the Eyes
   on the screen card goes at The End (`nowCards`). The two host phones nudge
   the clock every twenty seconds through Act 6's two games, whatever they
@@ -75,10 +77,13 @@ this current game." and "Keep going".
 - **The screens.** Sir Irwin's first drawing slide starts at its start
   (`irwinvoice.js` `slideInto`: the room heard him start mid-word). Boo's
   arcade stands still in a pause (`Rooms.jsx` `BooRoom`: on the live clock
-  it rang in the pause and ended the visit), and its farewell waits for the
-  house's chime (`Arcade.jsx`). "The votes are in." holds until the reveal's
-  reel comes (`screen.js`: the open door came back for two seconds). No
-  words flash under the Victim's card (`finale.js` `revealWords`). The
+  it rang in the pause and ended the visit), its round's bar stands still
+  with it (`arcade.js` `nightRoundEnd`: it flickered), its farewell waits
+  for the house's chime, and on the night it leaves the round's chime to
+  the house (`Arcade.jsx`: it rang its own as well). "The votes are in."
+  holds until the reveal's reel comes (`screen.js`: the open door came back
+  for two seconds). No words flash under the Victim's card, and a film
+  that could not play keeps its words (`finale.js` `revealWords`). The
   credits' Thank you names each person once (`uniqueNames`: the hosts who
   play are guests too). A Mac's second screen (`?kiosk=decor`) sends no
   heartbeat (`hooks.js`: it shares the room screen's sign-in, so the Host
@@ -119,7 +124,30 @@ this current game." and "Keep going".
   it and start the Study again; keep the workshop off the phones on the day,
   and reload the game if the Host tab stops changing; what each new
   question asks; the bedroom lock light by its name.
-- **Checked** (numbers only): TESTS_LINE; `npm run checks` says all clear
+- **Put right after the review of the fixes.** A seat handed on says
+  "handed on" on Who is here and leaves the count at the top (`night.js`
+  `handover` marks `roster.<key>.handed`; tapping the name again writes the
+  seat afresh, with no mark): the new line at Ready for the dark asked for
+  a count that could never come right after a handover, and a second press
+  on that name was refused. The Host tab knows bulletin 2 has played after
+  a step back from Act 4 (`screen.js` `tickBulletin` writes `newsPlayedAt`
+  on the night, after the news; `newsWaiting` reads it). The half-power
+  alert waits half a minute (`hostSteps.js` `halfPowerStuck`): a working
+  return looks the same for a few seconds, and on a night's second
+  blackout the tab showed it in red; until then it says the power is coming
+  back, and Next stays off. Act 4's last chime rings once when two clocks
+  reach the end together (`act4.js` `claimFinishChime`: playing it first had
+  made a second ring possible). A tick that lands while a call is still on
+  its way to the phone leaves it to the call, so the phone buzzes once
+  (`deal.js` `SETTLE_GRACE_MS`). Four guide lines: a pause holds the cat
+  visits (the guide said keep it under two minutes); with DOWN beside
+  elements the Study still plays, on the Stream Deck's number keys, and
+  its taps read 0; the party night is never thrown away, at any time; Start
+  the brain is in the folder Murderwin screens on the Desktop. Each fix has
+  a test that fails without it.
+- **Checked** (numbers only): tests play 442, functions 450 (446 pass, 2
+  skipped, 2 to do), app 180, scripts 107, cues 137, station 90, none
+  failing; `npm run checks` says all clear
   (dry run 1 of 1, leak checks 5 of 5); pretend nights pass with 2 to 14
   guests, and with fill-in players mixed in; both builds. No sound was run,
   no Shortcut, and not the brain.
@@ -132,7 +160,13 @@ this current game." and "Keep going".
   off bulletin 2 while the brain speaks it (only if a host presses one
   then). The Spill's card rewrite is not one transaction (a Spill works
   only before any clue, when nothing else writes the cards). The Game test
-  tab's box words (the tab is off the menu).
+  tab's box words (the tab is off the menu). An ordinary Act 4 round's
+  chime can still ring twice if two clocks reach its end within a second
+  or two (the party night's Act 4 moves have no claims, as before; rare,
+  since the Host tab nudges only while it is showing). A seat handed on
+  and never tapped again (a wrong name at the doors once guests are in)
+  keeps its character and bag: the bag clues still count its bag in play,
+  and Act 4 still puts it in a group, as before.
 - Decisions: none taken.
 
 ## 14 Nov 2026, later that evening · Claude Code (the role's name on the role card; the Host tab says what is yours and what is a fail-safe)

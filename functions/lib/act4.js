@@ -380,7 +380,10 @@ export async function finishRounds(db, nightId, { now = Date.now() } = {}) {
   // chime is (run.enterBeat): it carries this clock's start as its stamp, and a page lets go of a cue it hears of
   // more than 3.35 seconds after it (play/src/lib/cueSounds.js cueDue), so it never waits on the pay-outs below
   // (14 Nov 2026, the deep scan: after them it came too late, and the last chime of Act 4 was never heard)
-  if (pub.phase === 'rounds') await play(db, nightId, 'chime-phone', { now })
+  // One chime, whichever clock comes first (the deep scan's review): two clocks a few seconds apart (the minute's tick
+  // and a Host tab's nudge, or a Parlour Game's last answer) both find the rounds phase while the first is still
+  // paying the rooms, and each rang it. The pay-outs and the rest still run on every clock: each is safe twice.
+  if (pub.phase === 'rounds' && await claimFinishChime(db, pubRef, now)) await play(db, nightId, 'chime-phone', { now })
   if (rot && pub.phase === 'rounds' && pub.round >= 1) await payRound(db, nightId, rot, pub.round, { outcome: 'capped', now })
   await pubRef.set({ phase: 'done', roundEndsAt: null, doneAt: new Date(now) }, { merge: true })
   if (rot) {
@@ -388,6 +391,20 @@ export async function finishRounds(db, nightId, { now = Date.now() } = {}) {
     await directGroups(db, nightId, rot, pub.round ?? 0, { now, over: true })
   }
   return { ok: true, done: true }
+}
+
+// The last chime's claim, taken in a transaction: a clock that finds it taken in the last fifteen seconds leaves the
+// chime alone. A clock that took it and then failed lets the next one, after that, ring it (the phase is still rounds).
+export const FINISH_CHIME_CLAIM_MS = 15_000
+async function claimFinishChime(db, pubRef, now) {
+  return db.runTransaction(async tx => {
+    const p = (await tx.get(pubRef)).data() ?? {}
+    if (p.phase !== 'rounds') return false
+    const at = ms(p.finishChimeAt)
+    if (at && Math.abs(now - at) < FINISH_CHIME_CLAIM_MS) return false
+    tx.update(pubRef, { finishChimeAt: new Date(now) })
+    return true
+  })
 }
 
 // What the clock should do now, for run.js: the beat to enter, 'finish', or null.

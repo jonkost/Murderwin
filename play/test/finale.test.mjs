@@ -128,7 +128,7 @@ test('BK-11 each name card cuts in only after its lead-in has played; the words 
   // the TV draws from revealView, with the character's portrait on the people's cards
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
   assert.ok(kiosk.includes('const rv = revealView(finale, '))
-  assert.ok(kiosk.includes('rv.cards.map(') && kiosk.includes('revealWords(finale, stage, rv).map('), 'the words through revealWords (14 Nov 2026: none under a card its film has said)')
+  assert.ok(kiosk.includes('rv.cards.map(') && kiosk.includes('revealWords(finale, stage, rv, filmDone[filmKey]).map('), 'the words through revealWords (14 Nov 2026: none under a card its film has said)')
   assert.ok(kiosk.includes('className="reveal-portrait"'))
   // the chime sounds as a card cuts in, never for a screen reloaded during the story, the journey or the credits
   assert.ok(kiosk.includes('NAME_STAGES.includes(freshStage) && !finale.video?.[freshStage] ? revealView(finale, serverNow()).fresh : null'))
@@ -219,12 +219,17 @@ test('as video, a nameâ€™s card has no words under it; with no film the lead-inâ
   const parts = [{ who: 'a', text: 'one' }, { who: 'b', text: 'two', card: true }, { who: 'c', text: 'three' }]
   const up = { cards: ['victim'], fresh: 'victim', waiting: false, captions: parts.slice(2) }
   const lead = { cards: [], fresh: null, waiting: true, captions: parts.slice(0, 2) }
-  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', up), [], 'the film said them: nothing flashes under the card')
-  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', lead), parts.slice(0, 2), 'a lead-in still waiting (no film drawn) keeps its words')
-  assert.deepEqual(revealWords({ video: {} }, 'victim', up), parts.slice(2), 'words mode: unchanged')
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', up, 3), [], 'the film played and said them: nothing flashes under the card')
+  // the deep scan's review: a film that could not play (no file, or the TV refused it) keeps its words, the only
+  // fallback left; so does a film this screen never ran (reloaded after it)
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', up, 0), parts.slice(2), 'no clip played: the words stay')
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', up), parts.slice(2), 'never ran here: the words stay')
+  assert.deepEqual(revealWords({ video: { victim: true } }, 'victim', lead, 3), parts.slice(0, 2), 'a lead-in still waiting (no film drawn) keeps its words')
+  assert.deepEqual(revealWords({ video: {} }, 'victim', up, 3), parts.slice(2), 'words mode: unchanged')
   assert.deepEqual(revealWords(null, 'victim', up), parts.slice(2))
   const kiosk = readFileSync(new URL('../src/screens/Kiosk.jsx', import.meta.url), 'utf8')
-  assert.ok(kiosk.includes("{stage !== 'done' && revealWords(finale, stage, rv).map("))
+  assert.ok(kiosk.includes("{stage !== 'done' && revealWords(finale, stage, rv, filmDone[filmKey]).map("))
+  assert.ok(kiosk.includes('onDone={n => setFilmDone(d => ({ ...d, [filmKey]: n }))}'), 'the count it is given is the clips the film played')
   assert.ok(!kiosk.includes('rv.captions.map('), 'the old drawing of every caption is gone')
 })
 

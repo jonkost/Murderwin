@@ -138,7 +138,7 @@ test('the Host tab marks a fill-in, offers no phone to hand on, and counts the r
   assert.deepEqual(lockedInCount(null, night), { locked: 0, of: 2 })
   const host = read('../src/screens/Host.jsx')
   assert.ok(host.includes("{fill ? ' · fill-in' : ''}"), 'marked beside the name')
-  assert.ok(host.includes('{!fill && <button className="chip handover"'), 'no Hand this phone on for a seat with no phone')
+  assert.ok(host.includes('{!fill && r.handed !== true && <button className="chip handover"'), 'no Hand this phone on for a seat with no phone')
   assert.ok(host.includes('{house.showGuests && !fill'), 'and no dot to watch')
   assert.ok(host.includes('fillInLine(night, presence, clock)') && host.includes('{fillLine && <p className="gloss fill-ins">{fillLine}</p>}'), 'one line above the list, on the server\'s clock, only on a night that has them')
   // nobody takes a fill-in's seat by a stray tap: the join screen offers only guests with a phone

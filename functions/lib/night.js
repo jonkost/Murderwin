@@ -413,7 +413,13 @@ export async function handover(db, { nightId, arg, now = Date.now() } = {}) {
   for (const f of CARRIED_FIELDS) if (s[f] !== undefined) parked[f] = s[f]
   const batch = db.batch()
   if (key) batch.update(deckRef, { [`uids.${key}`]: FieldValue.delete(), [`handed.${key}`]: parked })
-  const wiped = { cards: [], windows: {}, answers: {}, status: 'handed', handedAt: new Date(now), generation: now }
+  // The seat says so on the roster, where the Host tab can see it (14 Nov 2026, the deep scan's review): it has no
+  // phone now, so it gets no role at the blackout (the deal goes by the phones, deal.js guests) and is left out of the
+  // tab's count of who has joined. Tapping the name again on any phone writes the whole seat afresh (join), and the
+  // mark goes with it. Only a seat the roster holds is marked: a mark alone would make a seat with no name.
+  const nightRef = db.doc(`nights/${nightId}`)
+  if (key && (await nightRef.get()).data()?.roster?.[key]?.name) batch.update(nightRef, { [`roster.${key}.handed`]: true })
+  const wiped ={ cards: [], windows: {}, answers: {}, status: 'handed', handedAt: new Date(now), generation: now }
   for (const f of CARRIED_FIELDS) if (!(f in wiped) && s[f] !== undefined) wiped[f] = FieldValue.delete()
   batch.update(ref, wiped)
   // the phone keeps its uid through the reset, so its notes go too (crossed-off motives, prompts seen)

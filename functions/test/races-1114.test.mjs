@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { FakeFirestore } from './fake-firestore.mjs'
 import { createNight, join } from '../lib/night.js'
 import { hostCommand, player } from '../lib/run.js'
-import { dealCard, lightsPath, settleLights, guests } from '../lib/deal.js'
+import { dealCard, lightsPath, settleLights, guests, ms } from '../lib/deal.js'
+import { act4Path, readRotation } from '../lib/act4.js'
 
 // The deep scan of 14 Nov 2026, the two races (C-races). Every night here is a
 // throwaway rehearsal in a fake Firestore; assertions are about ids, steps and
@@ -123,4 +124,81 @@ test('the forced race: a called guest’s Wait, landing after the call, is undon
     assert.equal(phone(ux).cat, line().guests[x].cat)
   }
   assert.equal(found, 1, 'the race was reproduced, then put right')
+})
+
+// The review of the deep scan's fixes (14 Nov 2026, night): two more races, each forced here in the fake.
+
+test('a tick that lands while a call is still on its way to the phone leaves it to the call: the phone buzzes once', async () => {
+  const db = new FakeFirestore()
+  const { nightId } = await createNight(db)
+  for (const name of NAMES) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  const T0 = 1_800_000_000_000
+  await hostCommand(db, { nightId, command: 'act', arg: 2, now: T0 })
+  await hostCommand(db, { nightId, command: 'beat', arg: 'cat', now: T0 })
+  const deck = db.store.get(`nights/${nightId}/private/deck`).uids
+  const line = () => db.store.get(lightsPath(nightId)).guests
+  const [xKey, x] = Object.entries(line()).find(([, g]) => g.step === 'go')
+  await player.meetCat(db, { nightId, uid: deck[xKey], cat: x.cat, now: T0 + 10_000 })
+  // every write of a phone's Go, with its stamp (the phone's buzz is keyed on the stamp's second, Cards.jsx)
+  const goWrites = []
+  const upd = db._update.bind(db)
+  db._update = (path, fields) => { if (path.startsWith('sessions/') && fields?.lights?.step === 'go') goWrites.push({ path, at: new Date(fields.lights.at).getTime() }); return upd(path, fields) }
+  // the leave's own write to the newly called phone is slow, as a real network can be
+  const realDoc = db.doc.bind(db)
+  let open; const gate = new Promise(r => { open = r })
+  let held = null
+  db.doc = path => {
+    const ref = realDoc(path)
+    if (!path.startsWith('sessions/')) return ref
+    return { ...ref, update: async f => { if (!held && f?.lights?.step === 'go') { held = path; await gate } return ref.update(f) } }
+  }
+  const leaving = player.leaveCat(db, { nightId, uid: deck[xKey], now: T0 + 20_000 })
+  await new Promise(r => setTimeout(r, 5))
+  assert.ok(held, 'the call is on its way to the phone')
+  await hostCommand(db, { nightId, command: 'tick', now: T0 + 21_500 }) // a tick a second and a half on
+  open(); await leaving
+  db.doc = realDoc
+  db._update = upd
+  const mine = goWrites.filter(w => w.path === held)
+  assert.equal(mine.length, 1, 'the called phone is written once, so it buzzes once')
+  const calledKey = Object.entries(deck).find(([, u]) => `sessions/${u}` === held)[0]
+  assert.equal(db.store.get(held).lights.step, line()[calledKey].step, 'and it says what the line says')
+})
+
+test('the last chime of Act 4 rings once when two clocks reach the end of the last round together', async () => {
+  const db = new FakeFirestore()
+  db.store.set('meta/game', { host_jonathan: 'Jon', host_susan: 'Susan' })
+  const { nightId } = await createNight(db)
+  for (const name of ['Jon', 'Jessa', 'Jacob', 'Marie', 'Pat', 'Sam', 'Lee', 'Ana', 'Rene']) await join(db, { uid: `u-${name.toLowerCase()}`, nightId, name })
+  const now = 1_000_000
+  const host = (command, at, arg) => hostCommand(db, { nightId, command, arg, now: at })
+  await host('act', now, 3)
+  await host('start-act4', now)
+  await host('next', now)
+  await host('next', now)
+  const rot = await readRotation(db, nightId)
+  for (let r = 1; r < rot.rounds; r++) await host('next', now)
+  assert.equal(db.store.get(act4Path(nightId)).round, rot.rounds, 'the last round is on')
+  const chimes = []
+  const set = db._set.bind(db)
+  db._set = (path, data, opts) => { if (path === `nights/${nightId}/public/sounds` && data?.current?.id === 'chime-phone') chimes.push(ms(data.current.at)); return set(path, data, opts) }
+  // the first clock's pay-outs are slow (one phone's mark held), and a second clock comes two seconds on
+  const realDoc = db.doc.bind(db)
+  let open; const gate = new Promise(r => { open = r })
+  let held = false
+  db.doc = path => {
+    const ref = realDoc(path)
+    if (!path.startsWith('sessions/')) return ref
+    return { ...ref, update: async f => { if (!held && f && Object.keys(f).includes('act4.paid')) { held = true; await gate } return ref.update(f) } }
+  }
+  const end = ms(db.store.get(act4Path(nightId)).roundEndsAt) + 1
+  const first = host('tick', end)
+  await new Promise(r => setTimeout(r, 5))
+  assert.equal(held, true, 'the first clock is still paying the rooms')
+  await host('tick', end + 2_000)
+  open(); await first
+  db.doc = realDoc
+  db._set = set
+  assert.deepEqual(chimes.map(t => t - end), [0], 'one chime, the first clock\'s, at the round\'s end')
+  assert.equal(db.store.get(act4Path(nightId)).phase, 'done', 'and the rounds are over')
 })

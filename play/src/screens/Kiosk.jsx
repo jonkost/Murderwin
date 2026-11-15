@@ -916,7 +916,7 @@ export function Finale({ night, finale, content = null, serverNow }) {
           ))}
         </div>
       )}
-      {stage !== 'done' && revealWords(finale, stage, rv).map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
+      {stage !== 'done' && revealWords(finale, stage, rv, filmDone[filmKey]).map((p, i) => <p key={i} className="news-caption"><span className="news-who">{p.who}</span> {p.text}</p>)}
       {stage === 'done' && finale.epilogue && <Epilogue text={finale.epilogue} />}
       {held && finale.rehearsal && <p className="kiosk-next">Held</p>}
     </div>

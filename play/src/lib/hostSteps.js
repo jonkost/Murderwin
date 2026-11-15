@@ -31,7 +31,7 @@ export const HOST_STEPS = {
   },
   '1/ready': {
     auto: 'Every phone says: keep your phone on you. Nothing more happens until you press.',
-    you: 'First check the number joined, at the top, is the number playing (a name nobody plays gets a role: press **Hand this phone on** beside it). Then press **Blackout**. Then press nothing: the dark, the power and the role cards come by themselves.',
+    you: 'Check the number joined at the top is the number playing. A name nobody plays gets a role: press **Hand this phone on** beside it, and it leaves the count. Then press **Blackout**. Then press nothing: the dark, the power and the role cards come by themselves.',
   },
   '2/orient': {
     auto: 'Every phone shows one button, then its role card for fifteen seconds, then where things are. The bedroom lock light turns red. The TV stays dark and the music stays off.',
@@ -196,9 +196,20 @@ export const NEWS_ASK = {
   bulletin: 'The news has not played yet. It plays by itself a few minutes after you armed it. Go on to the wrap-up anyway?',
   wrap: 'The news has not played yet. If Act 4 starts now, it may be cut off. Start Act 4 anyway?',
 }
-export function newsWaiting({ act, beat, screen } = {}) {
-  if (Number(act) !== 3 || !['bulletin', 'wrap'].includes(beat) || screen === undefined) return false
+// `played`: the night's own mark (nights/{id}.newsPlayedAt, the deep scan's review): after a step back from Act 4 the
+// screen no longer carries it, and the tab said the news had not played when it had.
+export function newsWaiting({ act, beat, screen, played = false } = {}) {
+  if (played || Number(act) !== 3 || !['bulletin', 'wrap'].includes(beat) || screen === undefined) return false
   return !(screen?.kind === 'bulletin' || screen?.captions?.kind === 'bulletin')
+}
+
+// The power back only part way (Act 2's prompt with no beat of its own): a working return looks the same for a few
+// seconds, since its beat is written last (functions/lib/run.js powerReturns), and on a night's second blackout the
+// Host tab shows it (its prompt seen already). So the card says so only once it has lasted half a minute; until then,
+// the power is coming back (the deep scan's review). Next stays off all the while.
+export const HALF_POWER_SAID_MS = 30_000
+export function halfPowerStuck(phaseAtMs, clock) {
+  return clock - (Number(phaseAtMs) || 0) > HALF_POWER_SAID_MS
 }
 
 // What Go on now asks before it moves a night that would have moved by itself.

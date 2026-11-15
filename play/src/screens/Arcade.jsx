@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ARCADE_NAME, KEY_COUNT, DIALS, keyAt, rowOf, colOf, MENU_KEYS, SCORE_KEYS, BACK_KEY, TOKENS, MAX_PLAYERS, GAMES, BOO_PICTURES,
-  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample, arcadeClueText, arcadeRoundEnds,
+  MENU_FACES, FACE_IDS, CLUE_MIN_MS, WINNER_MIN_MS, newArcade, arcadeStep, arcadeInput, arcadeChime, arcadeBack, arcadeExit, arcadeView, arcadeSample, arcadeClueText, arcadeRoundEnds, nightRoundEnd,
 } from '../lib/arcade'
 import { STRIP_W, loadArt, faceUrl, faceRgba, faceSolid, stripRgba, stripUrl, coinUrl } from '../lib/arcadeArt'
 import { deckSupported, reopenDeck, chooseDeck, deckEvents, deckPainter, watchPlugs, deckProblem } from '../lib/arcadeDeck'
@@ -233,7 +233,9 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
   function play(events) {
     if (!heardRef.current || !events?.length) return
     const ctx = wakeAudio()
-    for (const name of events) sfx(ctx, name)
+    // on the night the round's chime is the house's: this Mac's Bell plays it with every phone, so the
+    // arcade's own would ring it twice (the deep scan's review, 14 Nov 2026). The games' sounds stay.
+    for (const name of events) if (!(nightRef.current && name === 'chime')) sfx(ctx, name)
   }
   function move(next, now, pressed = false) {
     const pop = popOf(arcadeRef.current, next)
@@ -278,8 +280,8 @@ export default function BooArcade({ sample = null, onRecord = null, night = null
     if (n && a.mode === 'visit' && a.stage !== 'farewell') {
       // the chime on the house's clock: the round's end, which a pause moves on; or at once, when the round
       // has moved on. In the visit's free play too, so Next never leaves a game running for the next group
-      const want = now + ((n.slotEndsAt ?? 0) - n.serverNow())
-      if (Math.abs((a.roundEndsAt ?? 0) - want) > 500) a = arcadeRoundEnds(a, want)
+      const want = nightRoundEnd(a.roundEndsAt, { slotEndsAt: n.slotEndsAt ?? 0, serverNowMs: n.serverNow(), paused: !!n.paused }, now)
+      if (want != null) a = arcadeRoundEnds(a, want)
       if (n.chime) a = arcadeChime(a, now)
     }
     // on the night Boo's farewell holds until the house has moved the round on (its clock can be a minute

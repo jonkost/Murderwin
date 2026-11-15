@@ -445,6 +445,10 @@ export async function tickBulletin(db, nightId, now = Date.now()) {
   const nightSnap = await db.doc(`nights/${nightId}`).get()
   const night = nightSnap.exists ? nightSnap.data() : {}
   const r = await onBeat(db, nightId, { act: night.act ?? 3, beat: night.beat ?? null, spec: { screen: 'bulletin', sound: 'sounder-bulletin' }, now })
+  // That it has played, where the Host tab can see it (14 Nov 2026, the deep scan's review): the screen's own mark is
+  // gone after a step back from Act 4, and the tab then said the news had not played. Never in the way of the news:
+  // written after it, and a write that fails changes nothing.
+  if (nightSnap.exists) await db.doc(`nights/${nightId}`).update({ newsPlayedAt: new Date(now) }).catch(() => {})
   // the level it played at stays with the private schedule, for the solver checks and the end credits
   await ref.update({ level: dialBand((await caseOf(db, nightId))?.dial) })
   return { played: true, sound: r.sound }

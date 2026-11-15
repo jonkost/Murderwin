@@ -8,7 +8,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { HOST_STEPS, hostStep, pressesOf, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK, LATE_MS, GAMES_MS } from '../src/lib/hostSteps.js'
+import { HOST_STEPS, hostStep, pressesOf, piecesOf, movesByItself, goOnAsk, drawingRuns, newsWaiting, NEWS_ASK, LATE_MS, GAMES_MS, halfPowerStuck, HALF_POWER_SAID_MS } from '../src/lib/hostSteps.js'
 import { rulesStillPlaying, filmTimeline, INTRO_MS, AFTER_INTRO_MS, INTRO_GRACE_MS } from '../src/lib/rulesfilm.js'
 import { isRehearsalNight } from '../src/lib/night.js'
 
@@ -321,7 +321,11 @@ test('bulletin 2 armed, not yet played: Next and Start Act 4 ask first, and the 
   assert.equal(newsWaiting({ act: 4, beat: 'warn', screen: before }), false)
   for (const k of ['bulletin', 'wrap']) assert.ok(NEWS_ASK[k].startsWith('The news has not played yet.'), k)
   const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
-  assert.ok(host.includes("newsWaiting, NEWS_ASK } from '../lib/hostSteps'"))
+  assert.ok(host.includes("newsWaiting, NEWS_ASK, halfPowerStuck } from '../lib/hostSteps'"))
+  // a step back from Act 4: the screen has lost its mark, and the night’s own says the news has played (the deep scan’s review)
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: { kind: 'join', captions: null }, played: true }), false)
+  assert.equal(newsWaiting({ act: 3, beat: 'wrap', screen: { kind: 'join', captions: null }, played: false }), true)
+  assert.ok(host.includes('newsWaiting({ act: night.act, beat: night.beat, screen: tv, played: !!night.newsPlayedAt })'))
   assert.ok(host.includes("const tv = useDoc(live && night.act === 3 ? `nights/${night.nightId}/public/screen` : null)"))
   assert.ok(host.includes('tv={tv.loaded && !tv.error && !tv.fromCache ? tv.data : undefined}'))
   assert.equal(host.split('if (newsLate && !askFirst(NEWS_ASK[night.beat])) return').length - 1, 2, 'Next and Start Act 4')
@@ -335,4 +339,21 @@ test('the power back only part way: Next is off and the card says press 1, then 
   assert.ok(host.includes("const halfPower = night.act === 2 && night.phase === 'prompt' && !here"))
   assert.ok(host.includes('!naming && !halfPower'))
   assert.ok(host.includes('The power came back only part way. Under Move the night by hand, press 1, then Blackout just below it, and say yes to both.'))
+  // a working return looks the same for a few seconds (its beat is written last): the card says so only after half a
+  // minute, and until then that the power is coming back; Next stays off all the while (the deep scan’s review)
+  assert.equal(HALF_POWER_SAID_MS, 30_000)
+  assert.equal(halfPowerStuck(1_000_000, 1_029_000), false, 'a return still finishing')
+  assert.equal(halfPowerStuck(1_000_000, 1_031_000), true, 'half a minute on: only part way')
+  assert.equal(halfPowerStuck(0, 1_000_000), true, 'no stamp: said at once, as before')
+  assert.ok(host.includes('halfPowerStuck(finaleMs(night.phaseAt), clock)'))
+  assert.ok(host.includes('<p className="gloss">The power is coming back.</p>'))
+})
+
+test('a seat handed on is marked on Who is here and left out of the count, so the count at Ready for the dark can come right (the deep scan’s review)', () => {
+  const host = readFileSync(new URL('../src/screens/Host.jsx', import.meta.url), 'utf8')
+  assert.ok(host.includes('const joined = people.filter(p => p.handed !== true).length'))
+  assert.ok(host.includes('· {joined} joined') && !host.includes('{people.length} joined'))
+  assert.ok(host.includes("{r.handed === true ? ' · handed on' : ''}"), 'marked beside the name')
+  assert.ok(host.includes('{!fill && r.handed !== true && <button className="chip handover"'), 'and no second press on it')
+  assert.match(HOST_STEPS["1/ready"].you, /press \*\*Hand this phone on\*\* beside it, and it leaves the count/)
 })

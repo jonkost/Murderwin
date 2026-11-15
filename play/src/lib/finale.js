@@ -150,9 +150,11 @@ export function releasedNames(finale) {
 //   captions: [{ who, text }] under the cards
 // As video the film has just said every part, so the screen draws no words under a card once it is up
 // (revealWords; 14 Nov 2026, the deep scan: the Victim's sign-off and the studio's close flashed there for
-// three seconds). While a lead-in waits with no film, its words still show.
-export function revealWords(finale, stage, rv) {
-  return finale?.video?.[stage] && !rv?.waiting ? [] : (rv?.captions ?? [])
+// three seconds). Only once this screen has played the film (`played`: the clips it played, BulletinVideo's
+// onDone): a film that could not play (0), or one this screen never ran (reloaded after it), keeps its words,
+// the only fallback left (the deep scan's review). While a lead-in waits with no film, its words still show.
+export function revealWords(finale, stage, rv, played) {
+  return finale?.video?.[stage] && !rv?.waiting && played > 0 ? [] : (rv?.captions ?? [])
 }
 
 // The credits' Thank you, each name once (14 Nov 2026, the deep scan): the hosts who play are guests too, so Jon
