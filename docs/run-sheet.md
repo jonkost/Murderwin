@@ -5,14 +5,16 @@ they were at commit b248cae. Other builders changed the sounds and the
 ending the same night: where this page and those two files disagree, the
 files win. Each row keeps to what the seed says.
 
-Your Host tab's big button always names the next beat. The other presses
+A big button on your Host tab is yours to press. Where the night moves on
+by itself there is none: the small Go on now is the fail-safe (in the cat
+visits, Supper's ready), and it asks first. The other presses
 are in the last column: Phone chime, Blackout, Supper's ready, Start Act 4,
 Cake!, At the paper and the room's guesses, Hide this, the three names and
-Good night. "The game" means the night moves on by itself; you can always
-press Next sooner. Checked against the code on 12 Nov 2026, evening: the
-buttons that could undo a live night each ask first now, Supper's ready
-shows only during the cat visits, Start Act 4 only at the dinner wrap-up,
-and at Ready for the dark the big button is the Blackout itself.
+Good night. "The game" means the night moves on by itself. Checked against
+the code on 12 Nov 2026, evening: the buttons that could undo a live night
+each ask first now, Supper's ready shows only during the cat visits,
+Start Act 4 only at the dinner wrap-up, and at Ready for the dark the big
+button is the Blackout itself.
 
 Parlour Games come only in three places: the cat visits (Act 2), the Act 4
 rounds (they wait on the phone), and the start of Act 6 (two, then the
@@ -28,14 +30,14 @@ drawing starts by itself). Never after the drawing starts.
 | Ready for the dark | TV: join code. Phones: keep your phone on you. | Jazz. | You: **Blackout**. |
 | (the blackout) | Everything near-black, five seconds. | The blackout sound. Music off. | The game: the power comes back by itself. |
 | **Act 2, Lights Out** | | | |
-| Orientation | Phones: Sorry for the interruption, then the role card (15 s), then where things are. TV dark through the role cards. | Jazz. | You: Next. |
+| Orientation | Phones: Sorry for the interruption, then the role card (15 s), then where things are. TV dark through the role cards. | No music until the Bag peek. | You: Next. |
 | News flash | TV: W-O-O-F News bulletin 1. Phones: watch it. | The news chime. Music off, lights dimmed. | You: Next. |
 | Bag peek | Phones: look in your own bag. | Jazz. | You: Next. |
-| The cat visits | Phones call guests to the cats one at a time. TV: Sir Irwin's prompts. Parlour Games pop up. | Jazz. | The game: supper once everyone has seen all four cats. Or you: Supper's ready. |
+| The cat visits | Phones call guests to the cats one at a time. TV: Sir Irwin's prompts. Parlour Games pop up. | Jazz. | The game: supper once everyone has seen all four cats. Or you: Supper's ready. To skip the visits: Next to The cat visits, then Supper's ready at once; never an act number or the beat list before them. |
 | Supper | Phones: supper is served in the Orangerie. | The phone chime. | You: Next. |
 | **Act 3, Supper Is Served** | | | |
 | Phones down | Phones: leave it charging in the Parlour, bring your bag. | Jazz. | You: Next. |
-| Arm the bulletin | Phones down. The bulletin plays by itself 3 to 5 minutes later, words on the iPad. | Jazz, then bulletin 2. | You: Next, when supper is over. |
+| Arm the bulletin | Phones down. The bulletin plays by itself 3 to 6 minutes later, words on the iPad. | Jazz; it stops while bulletin 2 plays and comes back after. | You: Next, when supper is over. |
 | Dinner wrap-up | Phones: cross off motives. TV: the join code. | Jazz. | You: Start Act 4. |
 | **Act 4, Behind Closed Doors** | | | |
 | Two-minute warning | Phones: two minutes. | Jazz. | The game, after two minutes. |
@@ -53,5 +55,5 @@ drawing starts by itself). Never after the drawing starts.
 | **Act 7, Unmasked** | | | |
 | The vote | Phones: one card, pick three, Lock in. TV: the three questions. | Intense music. | The game closes the vote when the last one locks in (or at two minutes). Then you: Next. |
 | The reveal | TV: Murderer, then Motive, then Victim. Phones: eyes on the screen. | The reveal sting. Music cut for the closing bulletin. | You: name the three, then Next. |
-| Your result | Phones: your own result and a thank-you. TV: the credits. | The result sting. The credits music. | You: Next, when the credits end (your phone counts them down). |
+| Your result | Phones: your own result and a thank-you. TV: the credits. | The result sting. The jazz comes back. | You: Next, when the credits end (your phone counts them down). |
 | The End | Every screen: The End card. Phones open for good. | Jazz, the lights on Default. | You: **Good night**. |

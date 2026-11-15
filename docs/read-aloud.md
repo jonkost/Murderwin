@@ -52,11 +52,15 @@ every character carries a trace." "Only tell your group."
 
 "Go where you like. You may talk about the bags now, out loud, in any detail."
 
+## Act 5 · Update your motives
+
+"If you need a break, take it now. The final event is next, here in the Parlour."
+
 ## Act 6 · Two Parlour Games
 
-"Two Parlour Games, then the final event in the Parlour. Stretch your legs."
+"Two quick Parlour Games on your phone, then the final event starts, right here."
 
 ## Act 6 · The door opens
 
-"The hall light is green. Go and see what the bedroom shows, then come back to
-the Parlour."
+"The bedroom lock light is green. Go and see what the bedroom shows, then come
+back to the Parlour."

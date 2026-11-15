@@ -21,6 +21,10 @@ door).
 
 ## What it does
 
+*Parts of this list are older than 11 November: the sounds, bulletin 2's
+speakers, the music and the projector at The End. For the night, go by
+`docs/on-the-night.md`.*
+
 - **The hall light.** The bulb outside the bedroom is green while the guests
   arrive (the welcome), goes out with everything else in the blackout, turns
   red when the power returns and stays red until the third drawing is named
@@ -156,6 +160,9 @@ door).
 
 ### When the music, the lights and the projector change
 
+*This table is older than 11 November: the music and the projector now
+differ at several rows. For the night, go by `docs/on-the-night.md`.*
+
 | Cue | Moment | Music | Lights (Hue scene) | Projector |
 |---|---|---|---|---|
 | 1 | You start the night (Act 1): the welcome | Jazz, 55 | Murderwin Default | on |
@@ -195,6 +202,9 @@ mistake in it, the relay says so in one line and runs without music, scenes
 and the projector; the hall light and the sounds carry on.
 
 ### Your buttons
+
+*Older than 11 November: the Host tab's headings and the music's settings
+have changed since. For the night, go by `docs/on-the-night.md`.*
 
 - **Sound test** (Host tab, under The house): the chime on every HomePod,
   for the sound-test moment in the rules.
@@ -402,6 +412,10 @@ Shortcuts apps are yours.)
 
 **The music**
 
+*Older than 11 November: there is no credits music now (the jazz plays for
+the credits), the drawing's intro is at 20, and Boo's speaker (8b) is gone.
+For the night, go by `docs/on-the-night.md`.*
+
 6. **Make the three playlists** in the Music app on the brain, named exactly:
    - `Murderwin · Jazz`: light jazz, the house's music for most of the night
      (at 55; at 30 for the drawing's intro).
@@ -585,6 +599,11 @@ them on the night.
 After changing any of them, stop the relay (Control-C) and start it again.
 
 ## On the day
+
+*Parts of this list are older than 11 November: the brain starts from Start the brain on its Desktop, and with the music through
+Apple Home the log names your Shortcut (`[music] Default Jazz`), and
+bulletin 2 plays from this Mac's own speakers, not a HomePod. For the night,
+go by `docs/on-the-night.md`.*
 
 - [ ] The Mac is on mains power, sleep off, ethernet in (if the cable will
       not link, as on 24 October, Wi-Fi works too).
